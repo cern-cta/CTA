@@ -44,6 +44,15 @@ void CppCppOraCnvWriter::startSQLFile() {
   QTextStream stream(&file);
   insertFileintoStream(stream, "castor/db/oracleHeader.sql");
   file.close();
+  openFile(file, "castor/db/oracleGeneratedHeader.sql",
+           IO_WriteOnly | IO_Truncate);
+  file.close();
+  openFile(file, "castor/db/oracleGeneratedCore.sql",
+           IO_WriteOnly | IO_Truncate);
+  file.close();
+  openFile(file, "castor/db/oracleGeneratedTrailer.sql",
+           IO_WriteOnly | IO_Truncate);
+  file.close();  
 }
 
 //=============================================================================
@@ -72,6 +81,9 @@ void CppCppOraCnvWriter::endSQLFile() {
            "castor/db/oracle.sql",
            IO_WriteOnly | IO_Append);
   QTextStream stream(&file);
+  insertFileintoStream(stream, "castor/db/oracleGeneratedHeader.sql");
+  insertFileintoStream(stream, "castor/db/oracleGeneratedCore.sql");
+  insertFileintoStream(stream, "castor/db/oracleGeneratedTrailer.sql");
   insertFileintoStream(stream, "castor/db/oracleTrailer.sql");
   file.close();
 }
@@ -508,11 +520,19 @@ void CppCppOraCnvWriter::writeConstants() {
 // writeSqlStatements
 //=============================================================================
 void CppCppOraCnvWriter::writeSqlStatements() {
-  QFile file;
+  QFile file, hFile, tFile;
+  openFile(hFile,
+           "castor/db/oracleGeneratedHeader.sql",
+           IO_WriteOnly | IO_Append);
+  QTextStream hStream(&hFile);
   openFile(file,
-           "castor/db/oracle.sql",
+           "castor/db/oracleGeneratedCore.sql",
            IO_WriteOnly | IO_Append);
   QTextStream stream(&file);
+  openFile(tFile,
+           "castor/db/oracleGeneratedTrailer.sql",
+           IO_WriteOnly | IO_Append);
+  QTextStream tStream(&tFile);
   stream << "/* SQL statements for type "
          << m_classInfo->className
          << " */"
@@ -609,11 +629,49 @@ void CppCppOraCnvWriter::writeSqlStatements() {
                << capitalizeFirstLetter(secondMember->typeName)
                << " (parent);"
                << endl;
+        hStream << getIndent()
+                << "ALTER TABLE "
+                << capitalizeFirstLetter(firstMember->typeName)
+                << "2"
+                << capitalizeFirstLetter(secondMember->typeName)
+                << endl << getIndent()
+                << "  DROP CONSTRAINT fk_"
+                << capitalizeFirstLetter(firstMember->typeName)
+                << "2"
+                << capitalizeFirstLetter(secondMember->typeName)
+                << "_Parent" << endl << getIndent()
+                << "  DROP CONSTRAINT fk_"
+                << capitalizeFirstLetter(firstMember->typeName)
+                << "2"
+                << capitalizeFirstLetter(secondMember->typeName)
+                << "_Child;" << endl;
+        tStream << getIndent()
+                << "ALTER TABLE "
+                << capitalizeFirstLetter(firstMember->typeName)
+                << "2"
+                << capitalizeFirstLetter(secondMember->typeName)
+                << endl << getIndent()
+                << "  ADD CONSTRAINT fk_"
+                << capitalizeFirstLetter(firstMember->typeName)
+                << "2"
+                << capitalizeFirstLetter(secondMember->typeName)
+                << "_Parent FOREIGN KEY (Parent) REFERENCES "
+                << capitalizeFirstLetter(firstMember->typeName)
+                << " (id)" << endl << getIndent()
+                << "  ADD CONSTRAINT fk_"
+                << capitalizeFirstLetter(firstMember->typeName)
+                << "2"
+                << capitalizeFirstLetter(secondMember->typeName)
+                << "_Child FOREIGN KEY (Child) REFERENCES "
+                << capitalizeFirstLetter(secondMember->typeName)
+                << " (id);" << endl;
       }
     }
   }
   stream << endl;
+  hFile.close();
   file.close();
+  tFile.close();
 }
 
 //=============================================================================
