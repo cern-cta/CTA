@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.22 $ $Date: 2001/01/24 08:40:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.23 $ $Date: 2001/01/26 08:07:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -37,6 +37,7 @@ extern char *sys_errlist[];
 #endif
 char *devtype;
 char *dvrname;
+char errbuf[512];
 char func[16];
 char hostname[CA_MAXHOSTNAMELEN+1];
 int jid;
@@ -107,6 +108,7 @@ char	**argv;
 		sonyraw = 0;
 #endif
 
+	(void) Ctape_seterrbuf (errbuf, sizeof(errbuf));
 	devinfo = Ctape_devinfo (devtype);
 	pwd = getpwuid (uid);
 	strcpy (name, pwd->pw_name);
@@ -260,7 +262,8 @@ freedrv:
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
  
-	c = send2tpd (NULL, sendbuf, msglen, NULL, 0);
+	if (c = send2tpd (NULL, sendbuf, msglen, NULL, 0))
+		usrmsg (func, "%s", errbuf);
 	if (c < 0) c = serrno;
 	exit (c);
 }

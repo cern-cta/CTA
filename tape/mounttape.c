@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.28 $ $Date: 2001/01/24 08:38:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.29 $ $Date: 2001/01/26 08:07:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -43,6 +43,7 @@ extern char *sys_errlist[];
 #endif
 char *devtype;
 char *dvrname;
+char errbuf[512];
 char func[16];
 gid_t gid;
 char hostname[CA_MAXHOSTNAMELEN+1];
@@ -69,7 +70,6 @@ char	**argv;
 	char *dgn;
 	char *drive;
 	char *dvn;
-	char errbuf[512];
 	int get_reply;
 	char hdr1[81];
 	char hdr2[81];
@@ -159,6 +159,7 @@ char	**argv;
 #endif
 
 	c = 0;
+	(void) Ctape_seterrbuf (errbuf, sizeof(errbuf));
 	devinfo = Ctape_devinfo (devtype);
 	gethostname (hostname, CA_MAXHOSTNAMELEN+1);
 
@@ -766,7 +767,8 @@ char *dvn;
 		unmarshall_WORD (rbp, *ux);
 		unmarshall_STRING (rbp, loader);
 		unmarshall_STRING (rbp, dvn);
-	}
+	} else
+		usrmsg (func, "%s", errbuf);
 	return (c);
 }
 
@@ -812,6 +814,8 @@ int mode;
 	marshall_LONG (q, msglen);      /* update length field */
  
 	c = send2tpd (NULL, sendbuf, msglen, NULL, 0);
+	if (c < 0)
+		usrmsg (func, "%s", errbuf);
 	return (c);
 }
 

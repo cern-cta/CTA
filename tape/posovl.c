@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.21 $ $Date: 2001/01/24 08:40:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.22 $ $Date: 2001/01/26 08:07:32 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -33,6 +33,7 @@ extern char *sys_errlist[];
 #endif
 char *devtype;
 char *dvrname;
+char errbuf[512];
 char func[16];
 gid_t gid;
 char hostname[CA_MAXHOSTNAMELEN+1];
@@ -137,6 +138,7 @@ char	**argv;
 #endif
 
 	c = 0;
+	(void) Ctape_seterrbuf (errbuf, sizeof(errbuf));
 	gethostname (hostname, CA_MAXHOSTNAMELEN+1);
 
 	signal (SIGINT, positkilled);
@@ -324,7 +326,8 @@ char	**argv;
                 marshall_STRING (sbp, actual_hdr1);
                 marshall_STRING (sbp, hdr2);
 		sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
-	}
+	} else
+		usrmsg (func, "%s", errbuf);
 reply:
 	if (c < 0) c = serrno;
 	if (c) {
