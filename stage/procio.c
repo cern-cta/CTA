@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.125 2001/05/31 12:42:49 jdurand Exp $
+ * $Id: procio.c,v 1.126 2001/06/07 15:16:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.125 $ $Date: 2001/05/31 12:42:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.126 $ $Date: 2001/06/07 15:16:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -443,7 +443,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		if ((stcp_input = (struct stgcat_entry *) calloc(nstcp_input,sizeof(struct stgcat_entry))) == NULL ||
 			(nstpp_input > 0  && (stpp_input = (struct stgpath_entry *) calloc(nstpp_input,sizeof(struct stgpath_entry))) == NULL)) {
 			sendrep(rpfd, MSG_ERR, "STG02 - memory allocation error (%s)\n", strerror(errno));
-			c = SYERR;
+			c = (api_out != 0) ? SEINTERNAL : SYERR;
 			goto reply;
 		}
 		for (i = 0; i < nstcp_input; i++) {
@@ -510,12 +510,12 @@ void procioreq(req_type, magic, req_data, clienthost)
 		char uidstr[8];
 		sprintf (uidstr, "%d", stgreq.uid);
 		sendrep (rpfd, MSG_ERR, STG11, uidstr);
-		c = SYERR;
+		c = (api_out != 0) ? SEUSERUNKN : SYERR;
 		goto reply;
 	}
 	if ((gr = Cgetgrgid (stgreq.gid)) == NULL) {
 		sendrep (rpfd, MSG_ERR, STG36, stgreq.gid);
-		c = SYERR;
+		c = (api_out != 0) ? SEUSERUNKN : SYERR;
 		goto reply;
 	}
 	strncpy (stgreq.group, gr->gr_name, CA_MAXGRPNAMELEN);
@@ -662,14 +662,14 @@ void procioreq(req_type, magic, req_data, clienthost)
 				if (nhsmfiles == 0) {
 					if ((hsmfiles   = (char **)             malloc(sizeof(char *))) == NULL) {
 						sendrep (rpfd, MSG_ERR, STG33, "malloc", strerror(errno));
-						c = SYERR;
+						c = (api_out != 0) ? SEINTERNAL : SYERR;
 						goto reply;
 					}
 				} else {
 					char **dummy = hsmfiles;
 					if ((dummy  = (char **)             realloc(hsmfiles,(nhsmfiles+1) * sizeof(char *))) == NULL) {
 						sendrep (rpfd, MSG_ERR, STG33, "realloc", strerror(errno));
-						c = SYERR;
+						c = (api_out != 0) ? SEINTERNAL : SYERR;
 						goto reply;
 					}
 					hsmfiles = dummy;
@@ -811,14 +811,14 @@ void procioreq(req_type, magic, req_data, clienthost)
 				if (nhsmfiles == 0) {
 					if ((hsmfiles   = (char **)             malloc(sizeof(char *))) == NULL) {
 						sendrep (rpfd, MSG_ERR, STG33, "malloc", strerror(errno));
-						c = SYERR;
+						c = (api_out != 0) ? SEINTERNAL : SYERR;
 						goto reply;
 					}
 				} else {
 					char **dummy = hsmfiles;
 					if ((dummy  = (char **)             realloc(hsmfiles,(nhsmfiles+1) * sizeof(char *))) == NULL) {
 						sendrep (rpfd, MSG_ERR, STG33, "realloc", strerror(errno));
-						c = SYERR;
+						c = (api_out != 0) ? SEINTERNAL : SYERR;
 						goto reply;
 					}
 					hsmfiles = dummy;
@@ -1329,10 +1329,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 			case 'h':
 				memset(&Cnsfileid,0,sizeof(struct Cns_fileid));
 				if (Cns_statx(hsmfiles[ihsmfiles], &Cnsfileid, &Cnsfilestat) != 0) {
+					int save_serrno = serrno;
 					setegid(start_passwd.pw_gid);
 					seteuid(start_passwd.pw_uid);
 					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_statx", sstrerror(serrno));
-					c = USERR;
+					c = (api_out != 0) ? save_serrno : USERR;
 					goto reply;
 				}
 				strcpy(stgreq.u1.h.server,Cnsfileid.server);
@@ -1343,10 +1344,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 				break;
 			case 'm':
 				if (rfio_stat(hsmfiles[ihsmfiles], &filemig_stat) < 0) {
+					int save_serrno = rfio_serrno();
 					setegid(start_passwd.pw_gid);
 					seteuid(start_passwd.pw_uid);
 					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat", rfio_serror());
-					c = USERR;
+					c = (api_out != 0) ? save_serrno : USERR;
 					goto reply;
 				}
 				hsmmtime = filemig_stat.st_mtime;
@@ -1479,9 +1481,10 @@ void procioreq(req_type, magic, req_data, clienthost)
 				if (rfio_stat (stcp->ipath, &st) < 0) {
 					stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
 					if (delfile (stcp, 0, 1, 1, "not on disk", 0, 0, 0, 1) < 0) {
+						int save_serrno = rfio_serrno();
 						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 										 "rfio_unlink", rfio_serror());
-						c = SYERR;
+						c = (api_out != 0) ? save_serrno : SYERR;
 						goto reply;
 					}
 					goto notstaged;
@@ -1491,10 +1494,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 					 * is known to the stager.
 					 */
 					if (delfile (stcp, 0, 1, 1, "mtime in nameserver > last access time", stgreq.uid, stgreq.gid, 0, 1) < 0) {
+						int save_serrno = rfio_serrnor();
 						sendrep (rpfd, MSG_ERR,
 										 STG02, stcp->ipath,
 										 "rfio_unlink", rfio_serror());
-						c = SYERR;
+						c = (api_out != 0) ? save_serrno : SYERR;
 						goto reply;
 					}
 					goto notstaged;
@@ -1507,10 +1511,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 					if (((stcp->status == (STAGEIN|STAGED|STAGED_LSZ)) || ((stcp->status == (STAGEIN|STAGED)) && (stcp->t_or_d != 't'))) &&
 							(stgreq.size > stcp->size)) {
 						if (delfile (stcp, 0, 1, 1, "larger req", stgreq.uid, stgreq.gid, 0, 1) < 0) {
+							int save_serrno = rfio_serrno();
 							sendrep (rpfd, MSG_ERR,
 											 STG02, stcp->ipath,
 											 "rfio_unlink", rfio_serror());
-							c = SYERR;
+							c = (api_out != 0) ? save_serrno : SYERR;
 							goto reply;
 						}
 						goto notstaged;
@@ -1676,9 +1681,10 @@ void procioreq(req_type, magic, req_data, clienthost)
 				break;
 			case STAGED:
 				if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1) < 0) {
+					int save_serrno = rfio_serrno();
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 									 "rfio_unlink", rfio_serror());
-					c = SYERR;
+					c = (api_out != 0) ? save_serrno : SYERR;
 					goto reply;
 				}
 				break;
@@ -1693,9 +1699,10 @@ void procioreq(req_type, magic, req_data, clienthost)
 					goto reply;
 				}
 				if (delfile (stcp, 1, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1) < 0) {
+					int save_serrno = rfio_serrno();
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 									 "rfio_unlink", rfio_serror());
-					c = SYERR;
+					c = (api_out != 0) ? save_serrno : SYERR;
 					goto reply;
 				}
 				break;
@@ -1825,11 +1832,12 @@ void procioreq(req_type, magic, req_data, clienthost)
 			case STAGED:
 				if (stcp->poolname[0] && strcmp (stcp->ipath, upath)) {
 					if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1) < 0) {
+ 						int save_serrno = rfio_serrno();
 						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 										 "rfio_unlink", rfio_serror());
 						global_c_stagewrt++;
 						global_c_stagewrt_SYERR++;
-						c = SYERR;
+						c = (api_out != 0) ? save_serrno : SYERR;
 						goto stagewrt_continue_loop;
 					}
 				} else {
@@ -1912,21 +1920,23 @@ void procioreq(req_type, magic, req_data, clienthost)
 					/* immediately to the correct disk file associated with this HSM file */
 					/* We compare the size of the disk file with the size in Name Server */
 					if (api_out != 0 && (nstpp_input != nstcp_input)) {
+						int save_serrno = serrno;
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
 						/* Note - per construction u1.m.xfile and u1.h.xfile points to same string */
-						sendrep (rpfd, MSG_ERR, STG119, stcp_input[ihsmfiles].u1.m.xfile);
+						sendrep (rpfd, MSG_ERR, STG119, stcp_input[ihsmfiles].u1.h.xfile);
 						global_c_stagewrt++;
-						c = USERR;
+						c = (api_out != 0) ? save_serrno : USERR;
 						goto stagewrt_continue_loop;
 					}
 
 					if (rfio_stat((api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, &filemig_stat) < 0) {
+						int save_serrno = rfio_serrno();
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
 						sendrep (rpfd, MSG_ERR, STG02, (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, "rfio_stat", rfio_serror());
 						global_c_stagewrt++;
-						c = USERR;
+						c = (api_out != 0) ? save_serrno : USERR;
 						goto stagewrt_continue_loop;
 					}
 					/* If mtime of disk file is < mtime in nameserver : this is an obsolete version - no migration */
@@ -2013,20 +2023,22 @@ void procioreq(req_type, magic, req_data, clienthost)
 					}
 					*/
 				} else if (nohsmcreat_flag != 0) {
+					int save_serrno = serrno;
 					setegid(start_passwd.pw_gid);
 					seteuid(start_passwd.pw_uid);
 					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_statx", sstrerror(serrno));
 					global_c_stagewrt++;
-					c = USERR;
+					c = (api_out != 0) ? save_serrno : USERR;
 					goto stagewrt_continue_loop;
 				} else {
 					/* It is not point to try to migrated something of zero size */
 					if (rfio_stat((api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, &filemig_stat) < 0) {
+						int save_serrno = rfio_serrno();
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
 						sendrep (rpfd, MSG_ERR, STG02, (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, "rfio_stat", rfio_serror());
 						global_c_stagewrt++;
-						c = USERR;
+						c = (api_out != 0) ? save_serrno : USERR;
 						goto stagewrt_continue_loop;
 					}
 					if (filemig_stat.st_size <= 0) {
@@ -2050,11 +2062,12 @@ void procioreq(req_type, magic, req_data, clienthost)
 					/* SET_CORRECT_OKMODE; */
 					SET_CORRECT_EUID_EGID;
 					if (Cns_creatx(hsmfiles[ihsmfiles], stagewrt_Cns_creatx_mode, &Cnsfileid) != 0) {
+						int save_serrno = serrno;
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
 						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_creatx", sstrerror(serrno));
 						global_c_stagewrt++;
-						c = USERR;
+						c = (api_out != 0) ? save_serrno : USERR;
 						goto stagewrt_continue_loop;
 					}
 					strcpy(stgreq.u1.h.server,Cnsfileid.server);
@@ -2067,11 +2080,12 @@ void procioreq(req_type, magic, req_data, clienthost)
 			case 'm':
 				/* Overwriting an existing non-CASTOR HSM file is not allowed */
 				if (rfio_stat(hsmfiles[ihsmfiles], &filemig_stat) == 0) {
+					int save_serrno = rfio_serrno();
 					setegid(start_passwd.pw_gid);
 					seteuid(start_passwd.pw_uid);
 					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat", "file already exists");
 					global_c_stagewrt++;
-					c = USERR;
+					c = (api_out != 0) ? save_serrno : USERR;
 					goto stagewrt_continue_loop;
 				}
 				break;
@@ -2091,22 +2105,24 @@ void procioreq(req_type, magic, req_data, clienthost)
 							correct_size = (u_signed64) (stgreq.size * ONE_MB);
 						}
 					} else {
+						int save_serrno = rfio_serrno();
 						sendrep (rpfd, MSG_ERR, STG02, upath,
 							"rfio_stat", rfio_serror());
 						global_c_stagewrt++;
-						c = USERR;
+						c = (api_out != 0) ? save_serrno : USERR;
 						goto stagewrt_continue_loop;
 					}
 				}
 				/* We set the size in the name server */
 				SET_CORRECT_EUID_EGID;
 				if (Cns_setfsize(NULL,&Cnsfileid,correct_size) != 0) {
+ 					int save_serrno = serrno;
 					setegid(start_passwd.pw_gid);
 					seteuid(start_passwd.pw_uid);
 					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_setfsize", sstrerror(serrno));
 					global_c_stagewrt++;
 					global_c_stagewrt_SYERR++;
-					c = SYERR;
+					c = (api_out != 0) ? save_serrno : SYERR;
 					goto stagewrt_continue_loop;
 				}
 				setegid(start_passwd.pw_gid);
@@ -2156,9 +2172,10 @@ void procioreq(req_type, magic, req_data, clienthost)
 
 				if (stcp->u1.h.tppool[0] == '\0') {
 					if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) {
+						int save_serrno = serrno;
 						sendrep (rpfd, MSG_ERR, STG132, stcp->u1.h.xfile, sstrerror(serrno));
 						global_c_stagewrt++;
-						c = USERR;
+						c = (api_out != 0) ? serrno : USERR;
 						delreq(stcp,0);
 						goto stagewrt_continue_loop;
 					}
@@ -2190,7 +2207,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					/* This entry is in the pool anyway and this is not for internal migration */
 					if (update_migpool(&stcp,1,Aflag ? 0 : 1) != 0) {
 						global_c_stagewrt++;
-						c = USERR;
+						c = (api_out != 0) ? serrno : USERR;
 						delreq(stcp,0);
 						goto stagewrt_continue_loop;
 					}
@@ -2210,14 +2227,14 @@ void procioreq(req_type, magic, req_data, clienthost)
 							/* the uid/gid under which migration will effectively run might be different (case of stage:st) */
 							if (euid_egid(&euid,&egid,tppool,NULL,stcp,(iokstagewrt == 0) ? &stcx : NULL,&tppool,0) != 0) {
 								global_c_stagewrt++;
-								c = USERR;
+								c = (api_out != 0) ? serrno : USERR;
 								delreq(stcp,0);
 								goto stagewrt_exit_loop;
 							}
 						}
 						if (verif_euid_egid(euid,egid,user_waitq,group_waitq) != 0) {
 								global_c_stagewrt++;
-								c = USERR;
+								c = (api_out != 0) ? serrno : USERR;
 								delreq(stcp,0);
 								goto stagewrt_exit_loop;
 						}

@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.134 2001/04/30 06:44:46 jdurand Exp $
+ * $Id: poolmgr.c,v 1.135 2001/06/07 15:16:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.134 $ $Date: 2001/04/30 06:44:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.135 $ $Date: 2001/06/07 15:16:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3019,7 +3019,9 @@ int upd_fileclass(pool_p,stcp)
     strcpy(Cnsfileid.server,stcp->u1.h.server);
     Cnsfileid.fileid = stcp->u1.h.fileid;
     if (Cns_statx(stcp->u1.h.xfile, &Cnsfileid, &Cnsfilestat) != 0) {
+      int save_serrno = serrno;
       sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_statx", sstrerror(serrno));
+      serrno = save_serrno;
       return(-1);
     }
     if (stcp->u1.h.fileclass != Cnsfilestat.fileclass) {
@@ -3047,7 +3049,9 @@ int upd_fileclass(pool_p,stcp)
     int j, k, have_duplicate, nb_duplicate, new_nbtppools;
 
     if (Cns_queryclass(stcp->u1.h.server, stcp->u1.h.fileclass, NULL, &Cnsfileclass) != 0) {
+      int save_serrno = serrno;
       sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_queryclass", sstrerror(serrno));
+      serrno = save_serrno;
       return(-1);
     }
 
@@ -3060,11 +3064,13 @@ int upd_fileclass(pool_p,stcp)
     /* We check that this fileclass does not contain values that we cannot sustain */
     if ((sav_nbcopies = Cnsfileclass.nbcopies) < 0) {
       sendrep (rpfd, MSG_ERR, STG126, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, Cnsfileclass.nbcopies);
+      serrno = EINVAL;
       return(-1);
     }
     /* We check that the number of tape pools is valid */
     if (Cnsfileclass.nbtppools < 0) {
       sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_queryclass", "returns invalid number of tape pool - invalid fileclass - Please contact your admin");
+      serrno = EINVAL;
       return(-1);
     }
 
@@ -3072,6 +3078,7 @@ int upd_fileclass(pool_p,stcp)
     if ((sav_nbcopies == 0) || (Cnsfileclass.nbtppools == 0)) {
       if ((sav_nbcopies > 0) || (Cnsfileclass.nbtppools > 0)) {
         sendrep (rpfd, MSG_ERR, STG138, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, sav_nbcopies, Cnsfileclass.nbtppools);
+        serrno = EINVAL;
         return(-1);
       }
       /* Here we are sure that both nbcopies and nbtpools are equal to zero */
@@ -3139,6 +3146,7 @@ int upd_fileclass(pool_p,stcp)
     if (nbfileclasses <= 0) {
       if ((fileclasses = (struct fileclass *) malloc(sizeof(struct fileclass))) == NULL) {
         sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "malloc", strerror(errno));
+        serrno = SEINTERNAL;
         return(-1);
       }
       nbfileclasses = 0;
@@ -3149,6 +3157,7 @@ int upd_fileclass(pool_p,stcp)
       if ((dummy = (struct fileclass *)
            malloc((nbfileclasses + 1) * sizeof(struct fileclass))) == NULL) {
         sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "malloc", strerror(errno));
+        serrno = SEINTERNAL;
         return(-1);
       }
       /* We copy old content */
@@ -3199,6 +3208,7 @@ int upd_fileclass(pool_p,stcp)
           if (((pool_p->migr->fileclass            = (struct fileclass **) malloc(sizeof(struct fileclass *))) == NULL) || 
               ((pool_p->migr->fileclass_predicates = (struct predicates *) malloc(sizeof(struct predicates))) == NULL)) {
             sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "malloc", strerror(errno));
+            serrno = SEINTERNAL;
             return(-1);
           }
           pool_p->migr->nfileclass = 0;
@@ -3209,12 +3219,14 @@ int upd_fileclass(pool_p,stcp)
           if ((dummy = (struct fileclass **) 
                 realloc(pool_p->migr->fileclass,(pool_p->migr->nfileclass + 1) * sizeof(struct fileclass *))) == NULL) {
             sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "realloc", strerror(errno));
+            serrno = SEINTERNAL;
             return(-1);
           } else {
             if ((dummy2 = (struct predicates *)
                 realloc(pool_p->migr->fileclass_predicates,(pool_p->migr->nfileclass + 1) * sizeof(struct predicates))) == NULL) {
               free(dummy);
               sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "realloc", strerror(errno));
+              serrno = SEINTERNAL;
               return(-1);
             }
           }
@@ -3449,6 +3461,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr)
         /* If we already updated it - we check consistency */
         if (*euid != fileclasses[i].Cnsfileclass.uid) {
           sendrep(rpfd, MSG_ERR, STG118, last_fileclass_euid, fileclasses[i].Cnsfileclass.name, tppool, "uid", *euid, fileclasses[i].Cnsfileclass.uid);
+          serrno = EINVAL;
           return(-1);
         }
       }
@@ -3463,6 +3476,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr)
         /* If we already updated it - we check consistency */
         if (*egid != fileclasses[i].Cnsfileclass.gid) {
           sendrep(rpfd, MSG_ERR, STG118, last_fileclass_egid, fileclasses[i].Cnsfileclass.name, tppool, "gid", *egid, fileclasses[i].Cnsfileclass.gid);
+          serrno = EINVAL;
           return(-1);
         }
       }
@@ -3481,6 +3495,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr)
       /* There is an explicit filter on group id - current's stcp_check->gid have to match it */
       if ((*egid != stcp_check->gid) && (stcp_check->gid != start_passwd.pw_gid)) {
         sendrep(rpfd, MSG_ERR, STG125, stcp_check->user, "gid", stcp_check->gid, "group", *egid, stcp_check->u1.h.xfile);
+        serrno = EINVAL;
         return(-1);
       }
       /* We check compatibility of uid */
@@ -3488,6 +3503,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr)
         /* There is an explicit filter on user id - current's stcp_check->uid have to match it */
         if ((*euid != stcp_check->uid) && (stcp_check->uid != start_passwd.pw_uid)) {
           sendrep(rpfd, MSG_ERR, STG125, stcp_check->user, "uid", stcp_check->uid, "user", *euid, stcp_check->u1.h.xfile);
+          serrno = EINVAL;
           return(-1);
         } else {
           /* Current's stcp_check's uid is matching ok */
@@ -3507,6 +3523,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr)
         /* There is an explicit filter on user id - current's stcp_check->uid have to match it */
         if ((*euid != stcp_check->uid) && (stcp_check->uid != start_passwd.pw_uid)) {
           sendrep(rpfd, MSG_ERR, STG125, stcp_check->user, "uid", stcp_check->uid, "user", *euid, stcp_check->u1.h.xfile);
+          serrno = EINVAL;
           return(-1);
         } else {
           /* Current's stcp_check's uid is matching ok */

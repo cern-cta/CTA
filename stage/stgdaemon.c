@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.136 2001/06/07 07:25:43 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.137 2001/06/07 15:16:33 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.136 $ $Date: 2001/06/07 07:25:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.137 $ $Date: 2001/06/07 15:16:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -3234,20 +3234,22 @@ int verif_euid_egid(euid,egid,username,group)
 	if ((this_passwd = Cgetpwuid(euid)) == NULL) {
 		stglogit(func, "### Cannot Cgetpwuid(%d) (%s)\n",(int) euid, strerror(errno));
 		stglogit(func, "### Please check existence of uid %d in password file\n", (int) euid);
+        serrno = SEUSERUNKN;
  		return(-1);
 	}
 
 	/* We verify that the found gid matches the parameter on the stack */
 	if (egid != this_passwd->pw_gid) {
 		stglogit(func, "### Gid %d does not match uid %d (primary gid is %d)\n", (int) egid, (int) euid, (int) this_passwd->pw_gid);
-		serrno = EINVAL;
 		stglogit(func, "### Please check existence of pair [uid,gid]=[%d,%d] in password file\n", (int) euid, (int) egid);
+		serrno = EINVAL;
  		return(-1);
 	}
 	/* We get group name */
 	if ((this_gr = Cgetgrgid(egid)) == NULL) {
 		stglogit(func, "### Cannot Cgetgrgid(%d) (%s)\n",egid,strerror(errno));
 		stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", egid, this_passwd->pw_name);
+        serrno = SEUSERUNKN;
  		return(-1);
 	}
 	if (username != NULL) strcpy(username,this_passwd->pw_name);
