@@ -1,5 +1,5 @@
 /*
- * $Id: Cstage_ifce.c,v 1.11 2001/11/30 11:24:11 jdurand Exp $
+ * $Id: Cstage_ifce.c,v 1.12 2001/12/19 17:18:02 jdurand Exp $
  */
 
 /*
@@ -19,7 +19,7 @@
 #include "Cstage_ifce.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.11 $ $Date: 2001/11/30 11:24:11 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.12 $ $Date: 2001/12/19 17:18:02 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -49,6 +49,9 @@ int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,castor,alloc)
 		tape->status      =   stcp->status;
 		tape->blksize     =   stcp->blksize;
 		tape->retentd     =   stcp->u1.t.retentd;
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+		tape->side        =   stcp->u1.t.side;
+#endif
 		tape->lrecl       =   stcp->lrecl;
 		tape->uid         =   stcp->uid;
 		tape->gid         =   stcp->gid;
@@ -217,113 +220,102 @@ int DLL_DECL Cdb2stcp(stcp,tape,disk,hsm,castor,alloc)
 	memset(stcp,0,sizeof(struct stgcat_entry));
 
 	if (tape != NULL) {
-		stcp->blksize     =         tape->blksize;
-		/* No filler member in tape database */
-		stcp->charconv    =         tape->charconv;
-		stcp->keep        =         tape->keep;
-		stcp->lrecl       =         tape->lrecl;
+		stcp->reqid       =         tape->reqid;
 		stcp->nread       =         tape->nread;
-		strcpy(stcp->poolname,      tape->poolname);
-		strcpy(stcp->recfm,         tape->recfm);
 		stcp->size        =         tape->size;
-		strcpy(stcp->ipath,         tape->ipath);
-		stcp->t_or_d      =         't';
-		strcpy(stcp->group,         tape->group);
-		strcpy(stcp->user,          tape->user);
+		stcp->nbaccesses  =         tape->nbaccesses;
+		stcp->status      =         tape->status;
+		stcp->blksize     =         tape->blksize;
+		stcp->u1.t.retentd =        tape->retentd;
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+		stcp->u1.t.side    =        tape->side;
+#endif
+		stcp->lrecl       =         tape->lrecl;
 		stcp->uid         =         tape->uid;
 		stcp->gid         =         tape->gid;
 		stcp->mask        =         tape->mask;
-		stcp->reqid       =         tape->reqid;
-		stcp->status      =         tape->status;
 		stcp->actual_size =         tape->actual_size;
 		stcp->c_time      =         tape->c_time;
 		stcp->a_time      =         tape->a_time;
-		stcp->nbaccesses  =         tape->nbaccesses;
+		strcpy(stcp->poolname,      tape->poolname);
+		strcpy(stcp->ipath,         tape->ipath);
+		strcpy(stcp->group,         tape->group);
+		strcpy(stcp->user,          tape->user);
+		stcp->keep        =         tape->keep;
+		strcpy(stcp->u1.t.lbl,      tape->lbl);
+		strcpy(stcp->recfm,         tape->recfm);
 		strcpy(stcp->u1.t.den,      tape->den);
 		strcpy(stcp->u1.t.dgn,      tape->dgn);
 		strcpy(stcp->u1.t.fid,      tape->fid);
-		stcp->u1.t.filstat  =       tape->filstat;
 		strcpy(stcp->u1.t.fseq,     tape->fseq);
-		strcpy(stcp->u1.t.lbl,      tape->lbl);
-		stcp->u1.t.retentd =        tape->retentd;
 		strcpy(stcp->u1.t.tapesrvr, tape->tapesrvr);
-		stcp->u1.t.E_Tflags =       tape->E_Tflags;
 		for (i = 0; i < MAXVSN; i++) {
 			strcpy(stcp->u1.t.vid[i], tape->vid[i]);
 			strcpy(stcp->u1.t.vsn[i], tape->vsn[i]);
 		}
+		stcp->u1.t.filstat  =       tape->filstat;
+		stcp->charconv    =         tape->charconv;
+ 		stcp->u1.t.E_Tflags =       tape->E_Tflags;
+		stcp->t_or_d      =         't';
 	} else if (disk != NULL) {
-		stcp->blksize     =      disk->blksize;
-		/* No filler member in disk database */
-		/* No charconv member in disk database */
-		stcp->keep        =      disk->keep;
-		stcp->lrecl       =      disk->lrecl;
+		stcp->reqid       =      disk->reqid;
 		stcp->nread       =      disk->nread;
-		strcpy(stcp->poolname,   disk->poolname);
-		strcpy(stcp->recfm,      disk->recfm);
 		stcp->size        =      disk->size;
-		strcpy(stcp->ipath,      disk->ipath);
-		stcp->t_or_d      =      'd';
-		strcpy(stcp->group,      disk->group);
-		strcpy(stcp->user,       disk->user);
+		stcp->nbaccesses  =      disk->nbaccesses;
+		stcp->status      =      disk->status;
+		stcp->blksize     =      disk->blksize;
+		stcp->lrecl       =      disk->lrecl;
 		stcp->uid         =      disk->uid;
 		stcp->gid         =      disk->gid;
 		stcp->mask        =      disk->mask;
-		stcp->reqid       =      disk->reqid;
-		stcp->status      =      disk->status;
 		stcp->actual_size =      disk->actual_size;
 		stcp->c_time      =      disk->c_time;
 		stcp->a_time      =      disk->a_time;
-		stcp->nbaccesses  =      disk->nbaccesses;
+		strcpy(stcp->recfm,      disk->recfm);
+		strcpy(stcp->poolname,   disk->poolname);
+		strcpy(stcp->ipath,      disk->ipath);
+		strcpy(stcp->group,      disk->group);
+		strcpy(stcp->user,       disk->user);
+		stcp->keep        =      disk->keep;
 		strcpy(stcp->u1.d.xfile, disk->xfile);
 		strcpy(stcp->u1.d.Xparm, disk->Xparm);
+		stcp->t_or_d      =      'd';
 	} else if (hsm != NULL) {
-		/* No blksize member in hsm database */
-		/* No filler member in hsm database */
-		/* No charconv member in hsm database */
-		stcp->keep        =      hsm->keep;
-		/* No lrecl member in hsm database */
+		stcp->reqid       =      hsm->reqid;
 		stcp->nread       =      hsm->nread;
-		strcpy(stcp->poolname,   hsm->poolname);
-		/* No recfm member in hsm database */
 		stcp->size        =      hsm->size;
-		strcpy(stcp->ipath,      hsm->ipath);
-		stcp->t_or_d      =      'm';
-		strcpy(stcp->group,      hsm->group);
-		strcpy(stcp->user,       hsm->user);
+		stcp->nbaccesses  =      hsm->nbaccesses;
+		stcp->status      =      hsm->status;
 		stcp->uid         =      hsm->uid;
 		stcp->gid         =      hsm->gid;
 		stcp->mask        =      hsm->mask;
-		stcp->reqid       =      hsm->reqid;
-		stcp->status      =      hsm->status;
 		stcp->actual_size =      hsm->actual_size;
 		stcp->c_time      =      hsm->c_time;
 		stcp->a_time      =      hsm->a_time;
-		stcp->nbaccesses  =      hsm->nbaccesses;
+		strcpy(stcp->poolname,   hsm->poolname);
+		strcpy(stcp->ipath,      hsm->ipath);
+		strcpy(stcp->group,      hsm->group);
+		strcpy(stcp->user,       hsm->user);
+		stcp->keep        =      hsm->keep;
 		strcpy(stcp->u1.m.xfile, hsm->xfile);
+		stcp->t_or_d      =      'm';
 	} else if (castor != NULL) {
-		/* No blksize member in castor database */
-		/* No filler member in castor database */
-		/* No charconv member in castor database */
-		stcp->keep        =      castor->keep;
-		/* No lrecl member in castor database */
+		stcp->reqid       =      castor->reqid;
 		stcp->nread       =      castor->nread;
-		strcpy(stcp->poolname,   castor->poolname);
-		/* No recfm member in castor database */
 		stcp->size        =      castor->size;
-		strcpy(stcp->ipath,      castor->ipath);
-		stcp->t_or_d      =      'h';
-		strcpy(stcp->group,      castor->group);
-		strcpy(stcp->user,       castor->user);
+		stcp->nbaccesses  =      castor->nbaccesses;
+		stcp->status      =      castor->status;
 		stcp->uid         =      castor->uid;
 		stcp->gid         =      castor->gid;
 		stcp->mask        =      castor->mask;
-		stcp->reqid       =      castor->reqid;
-		stcp->status      =      castor->status;
 		stcp->actual_size =      castor->actual_size;
 		stcp->c_time      =      castor->c_time;
 		stcp->a_time      =      castor->a_time;
-		stcp->nbaccesses  =      castor->nbaccesses;
+		strcpy(stcp->poolname,   castor->poolname);
+		strcpy(stcp->ipath,      castor->ipath);
+		strcpy(stcp->group,      castor->group);
+		strcpy(stcp->user,       castor->user);
+		stcp->keep        =      castor->keep;
 		strcpy(stcp->u1.h.xfile, castor->xfile);
 		strcpy(stcp->u1.h.server, castor->server);
 		stcp->u1.h.fileid =      castor->fileid;
@@ -331,31 +323,27 @@ int DLL_DECL Cdb2stcp(stcp,tape,disk,hsm,castor,alloc)
 		strcpy(stcp->u1.h.tppool, castor->tppool);
 		stcp->u1.h.retenp_on_disk = castor->retenp_on_disk;
 		stcp->u1.h.mintime_beforemigr = castor->mintime_beforemigr;
+		stcp->t_or_d      =      'h';
 	} else if (alloc != NULL) {
-		/* No blksize member in alloc database */
-		/* No filler member in alloc database */
-		/* No charconv member in alloc database */
-		stcp->keep        =      alloc->keep;
-		/* No lrecl member in alloc database */
+		stcp->reqid       =      alloc->reqid;
 		stcp->nread       =      alloc->nread;
-		strcpy(stcp->poolname,   alloc->poolname);
-		/* No recfm member in alloc database */
 		stcp->size        =      alloc->size;
-		strcpy(stcp->ipath,      alloc->ipath);
-		stcp->t_or_d      =      'a';
-		strcpy(stcp->group,      alloc->group);
-		strcpy(stcp->user,       alloc->user);
+		stcp->nbaccesses  =      alloc->nbaccesses;
+		stcp->status      =      alloc->status;
 		stcp->uid         =      alloc->uid;
 		stcp->gid         =      alloc->gid;
 		stcp->mask        =      alloc->mask;
-		stcp->reqid       =      alloc->reqid;
-		stcp->status      =      alloc->status;
 		stcp->actual_size =      alloc->actual_size;
 		stcp->c_time      =      alloc->c_time;
 		stcp->a_time      =      alloc->a_time;
-		stcp->nbaccesses  =      alloc->nbaccesses;
+		strcpy(stcp->poolname,   alloc->poolname);
+		strcpy(stcp->ipath,      alloc->ipath);
+		strcpy(stcp->group,      alloc->group);
+		strcpy(stcp->user,       alloc->user);
+		stcp->keep        =      alloc->keep;
 		strcpy(stcp->u1.d.xfile, alloc->xfile);
 		strcpy(stcp->u1.d.Xparm, alloc->Xparm);
+		stcp->t_or_d      =      'a';
 	} else {
 		return(-1);
 	}
