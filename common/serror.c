@@ -355,6 +355,23 @@ char *sys_dlferrlist[EDLFMAXERR-EDLFBASEOFF+2] =
 
 /*
  *------------------------------------------------------------------------
+ * Expert service specific error messages
+ *------------------------------------------------------------------------
+ */
+char *sys_experrlist[EEXPMAXERR-EEXPBASEOFF+2] =
+        {"Error 0",
+         "Expert service not active",
+	 "Illegal request",
+	 "Can't open the configuration file",
+	 "Request wasn't found in the configuration file",
+	 "Configuration file format error",
+	 "Can't launch execv()",
+	 "Can't change to working directory",
+         "BAD ERROR NUMBER"
+        };
+
+/*
+ *------------------------------------------------------------------------
  * VDQM (Volume & Drive Queue Manager) specific error messages
  *------------------------------------------------------------------------
  */
@@ -524,6 +541,11 @@ size_t  buflen;
          * DLF specific error messages
          */
         tmpstr = sys_dlferrlist[n-EDLFBASEOFF];
+    } else if ((n>EEXPBASEOFF) && (n<=EEXPMAXERR)) {
+        /*
+         * Expert service specific error messages
+         */
+        tmpstr = sys_experrlist[n-EEXPBASEOFF];
      } else if ((n>EVQBASEOFF) && (n<=EVQMAXERR)) {
         /*
          * VDQM (Volume & Drive Queue Manager) specific error messages
