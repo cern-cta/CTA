@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.103 $ $Release$ $Date: 2005/01/10 17:10:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.104 $ $Release$ $Date: 2005/01/17 14:45:04 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -479,6 +479,7 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
     unsigned int nb =
       m_bestTapeCopyForStreamStatement->executeUpdate();
     if (nb == 0) {
+      rollback();
       castor::exception::NoEntry e;
       e.getMessage() << "No TapeCopy found";
       throw e;
