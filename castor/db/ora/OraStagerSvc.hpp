@@ -162,7 +162,8 @@ namespace castor {
          * The matching TapeCopies entry must have the status
          * TAPECOPY_WAITINSTREAMS.
          * Before return this function atomically updates the
-         * matching catalog entry Stream status to STREAM_RUNNING.
+         * matching catalog entry Stream status to STREAM_RUNNING and
+         * the matching catalog entry TapeCopy status to TAPECOPY_SELECTED.
          * @param searchItem the Stream information used for the search
          * @return vector with all waiting TapeCopies
          * @exception in case of error

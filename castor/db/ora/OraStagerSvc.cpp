@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2004/10/22 15:57:13 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2004/10/25 08:09:58 $ $Author: sponcec3 $
  *
  *
  *
@@ -173,7 +173,8 @@ castor::db::ora::OraStagerSvc::segmentsForTape
     }
   }
   if (result.size() > 0) {
-    cnvSvc()->updateRep(0, searchItem, true);
+    castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+    cnvSvc()->updateRep(&ad, searchItem, true);
   }
   return result;
 }
@@ -206,6 +207,11 @@ bool castor::db::ora::OraStagerSvc::anyTapeCopyForStream
     bool result = 
       oracle::occi::ResultSet::END_OF_FETCH == rset->next();
     m_anyTapeCopyForStreamStatement->closeResultSet(rset);
+    if (result) {
+      searchItem->setStatus(castor::stager::STREAM_WAITMOUNT);
+      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+      cnvSvc()->updateRep(&ad, searchItem, true);
+    }
     return result;
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
@@ -262,7 +268,6 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
       e.getMessage() << "No TapeCopy found";
       throw e;
     }
-    
     // Create result
     castor::stager::TapeCopyForMigration* result =
       new castor::stager::TapeCopyForMigration();
