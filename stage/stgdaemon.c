@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.133 2001/05/17 11:31:35 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.134 2001/05/17 12:20:17 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.133 $ $Date: 2001/05/17 11:31:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.134 $ $Date: 2001/05/17 12:20:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -1178,10 +1178,6 @@ add2wq (clienthost, req_user, req_uid, req_gid, rtcp_user, rtcp_group, rtcp_uid,
 		} else {
 			wqp->save_nbsubreqid = nbwf;
 		}
-	}
-	if (wqp->use_subreqid != 0) {
-		wqp->save_subreqid = *save_subreqid = (int *) calloc (nbwf, sizeof(int));
-		wqp->save_nbsubreqid = nbwf;
 	}
 	*wfp = wqp->wf;
 	return (wqp);
