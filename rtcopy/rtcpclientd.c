@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/08/05 15:38:39 $ $Author: motiakov $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/10/12 06:49:42 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/08/05 15:38:39 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/10/12 06:49:42 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -51,8 +51,7 @@ WSADATA wsadata;
 #include <dlf_api.h>
 #include <rtcp_constants.h>
 #include <vdqm_api.h>
-#include "castor/BaseObject.h"
-#include "castor/Constants.h"
+#include <castor/Constants.h>
 #include <castor/stager/TapeStatusCodes.h>
 #include <castor/stager/SegmentStatusCodes.h>
 #include <rtcp.h>
@@ -71,7 +70,6 @@ typedef struct rtcpcld_RequestList {
   struct rtcpcld_RequestList *prev;
 } rtcpcld_RequestList_t;
 rtcpcld_RequestList_t *requestList = NULL;
-tape_list_t *vidChildTape = NULL;
 
 extern int rtcp_InitLog _PROTO((char *, FILE *, FILE *, SOCKET *));
 extern int Cinitdaemon _PROTO((char *, void (*)(int)));
@@ -255,7 +253,7 @@ static int getTapeRequestItem(
                     "MODE",
                     DLF_MSG_PARAM_INT,
                     mode,
-                    "VWPID",
+                    "WORKPID",
                     DLF_MSG_PARAM_INT,
                     pid,
                     RTCPCLD_LOG_WHERE
@@ -450,7 +448,7 @@ static int checkVdqmReqs()
   return(0);
 }
 
-void  wait4VidWorker(
+void  wait4Worker(
                      signo
                      )
   int signo; 
@@ -458,7 +456,7 @@ void  wait4VidWorker(
   return;
 }
 
-void checkVidWorkerExit() 
+void checkWorkerExit() 
 {
   int pid, status, rc = 0, sig=0, value = 0, stopped = 0;
   rtcpcld_RequestList_t *item = NULL;
@@ -485,7 +483,9 @@ void checkVidWorkerExit()
       (void)dlf_write(
                       mainUuid,
                       DLF_LVL_SYSTEM,
-                      RTCPCLD_MSG_VIDWORKER_ENDED,
+                      (item->tape->tapereq.mode == WRITE_ENABLE ?
+                       RTCPCLD_MSG_MIGRATOR_ENDED : 
+                       RTCPCLD_MSG_RECALLER_ENDED),
                       (struct Cns_fileid *)NULL,
                       5,
                       "",
@@ -497,7 +497,7 @@ void checkVidWorkerExit()
                       "VOLREQID",
                       DLF_MSG_PARAM_INT,
                       item->tape->tapereq.VolReqID,
-                      "VWPID",
+                      "WORKPID",
                       DLF_MSG_PARAM_INT,
                       pid,
                       (stopped == 1 ? "STOPPED" : 
@@ -508,18 +508,18 @@ void checkVidWorkerExit()
       if ( value != 0 ) {
         (void)rtcpcld_setVIDFailedStatus(item->tape);
       }
-      (void)rtcpcld_delTape(&(item->tape));
       CLIST_DELETE(requestList,item);
+      (void)rtcpcld_cleanupTape(item->tape);
       free(item);
     }
   }
   return;
 }
 
-static int startVidWorker(
-                          s,
-                          tape
-                          ) 
+static int startWorker(
+                       s,
+                       tape
+                       ) 
      SOCKET *s;
      tape_list_t *tape;
 {
@@ -527,35 +527,27 @@ static int startVidWorker(
   int usePipe = 0;
   int rc, c, i, argc, maxfds;
   char **argv, volReqIDStr[16], sideStr[16], tStartRequestStr[16], keyStr[16];
-  char usePipeStr[16];
+  char usePipeStr[16], startFseqStr[16];
   char cmd[CA_MAXLINELEN+1], cmdline[CA_MAXLINELEN+1];
 
-  if ( s == NULL || *s == INVALID_SOCKET || 
-       tape == NULL || *tape->tapereq.vid == '\0' ) {
+  if ( (s == NULL) || (*s == INVALID_SOCKET) || 
+       (tape == NULL) || (tape->dbRef == NULL) || (tape->dbRef->key == 0) ||
+       (*tape->tapereq.vid == '\0') ) {
     serrno = EINVAL;
     return(-1);
   }
 
-  sprintf(cmd,"%s/%s",BIN,RTCPCLD_VIDWORKER_CMD);
-  
-  rc = rtcpcld_findTapeKey(tape,&key);
-  if ( rc == -1 ) {
-    (void)dlf_write(
-                    mainUuid,
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_SYSCALL,
-                    (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+2,
-                    "SYSCALL",
-                    DLF_MSG_PARAM_STR,
-                    "rtcpcld_findTapeKey()",
-                    "ERROR_STR",
-                    DLF_MSG_PARAM_STR,
-                    strerror(errno),
-                    RTCPCLD_LOG_WHERE
-                    );
-    return(-1);
+  if ( tape->tapereq.mode == WRITE_ENABLE ) {
+    if ( tape->file == NULL ) {
+      serrno = EINVAL;
+      return(-1);
+    }
+    sprintf(cmd,"%s/%s",BIN,RTCPCLD_MIGRATOR_CMD);
+  } else {
+    sprintf(cmd,"%s/%s",BIN,RTCPCLD_RECALLER_CMD);
   }
+
+  key = tape->dbRef->key;
   
 #ifndef _WIN32
 #if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(sgi)
@@ -587,14 +579,15 @@ static int startVidWorker(
   }
   usePipe = c;
   /*
-   * Count number of arguments
+   * Count number of arguments. The first 9 are always provided
    */
-  argc=10; 
+  argc=9; 
   /* 
    * argv[0] = cmd plus the require options
    * -U <uuid> -V <vid> -s <side> -r/-w -k <key>
    */
   if ( *tape->tapereq.dgn != '\0' ) argc+=2;
+  if ( tape->tapereq.mode == WRITE_ENABLE ) argc+=2;
   if ( *tape->tapereq.density != '\0' ) argc+=2;
   if ( tape->tapereq.VolReqID > 0 ) argc+=2;
   if ( *tape->tapereq.label != '\0' ) argc+=2;
@@ -623,20 +616,23 @@ static int startVidWorker(
   argv[0] = cmd;
   argv[1] = "-V";
   argv[2] = tape->tapereq.vid;
-  if ( tape->tapereq.mode == WRITE_ENABLE ) argv[3] = "-w";
-  else argv[3] = "-r";
-  argv[4] = "-s";
+  argv[3] = "-s";
   sprintf(sideStr,"%d",tape->tapereq.side);
-  argv[5] = sideStr;
-  argv[6] = "-U";
-  argv[7] = rtcp_voidToString((void *)&mainUuid,sizeof(mainUuid));
-  argv[8] = "-k";
+  argv[4] = sideStr;
+  argv[5] = "-U";
+  argv[6] = rtcp_voidToString((void *)&mainUuid,sizeof(mainUuid));
+  argv[7] = "-k";
   sprintf(keyStr,"%ld",key);  
-  argv[9] = keyStr;
-  c = 10;
+  argv[8] = keyStr;
+  c = 9;
   if ( *tape->tapereq.dgn != '\0' ) {
     argv[c++] = "-g";
     argv[c++] = tape->tapereq.dgn;
+  }
+  if ( tape->tapereq.mode == WRITE_ENABLE ){
+    argv[c++] = "-f";
+    sprintf(startFseqStr,"%d",tape->file->filereq.tape_fseq);
+    argv[c++] = startFseqStr;
   }
   if ( *tape->tapereq.density != '\0' ) {
     argv[c++] = "-d";
@@ -818,7 +814,7 @@ int rtcpcld_main(
   if ( maxfd < *notificationSocket ) maxfd = *notificationSocket;
   maxfd++;
   memset(&sa,'\0',sizeof(sa));
-  sa.sa_handler = (void (*)(int))wait4VidWorker;
+  sa.sa_handler = (void (*)(int))wait4Worker;
   (void)sigaction(SIGCHLD,&sa,NULL);
 #endif /* _WIN32 */
   rc = 0;
@@ -839,7 +835,7 @@ int rtcpcld_main(
                 );
     save_errno = errno;
     timeout_cp = timeout;
-    checkVidWorkerExit();
+    checkWorkerExit();
     if ( rc < 0 ) {
       if ( save_errno == EINTR ) continue;
       errno = save_errno;
@@ -955,7 +951,7 @@ int rtcpcld_main(
                         "VOLREQID",
                         DLF_MSG_PARAM_INT,
                         tape->tapereq.VolReqID,
-                        "VWPID",
+                        "WORKPID",
                         DLF_MSG_PARAM_INT,
                         pid
                         );
@@ -977,12 +973,12 @@ int rtcpcld_main(
       free(rtcpdSocket);
       rtcpdSocket = NULL;
 #endif /* !_WIN32 */
-      rc = startVidWorker(&acceptSocket,tape);
+      rc = startWorker(&acceptSocket,tape);
       if ( rc == -1 ) {
         (void)dlf_write(
                         childUuid,
                         DLF_LVL_ERROR,
-                        RTCPCLD_MSG_VWFAILED,
+                        RTCPCLD_MSG_WFAILED,
                         (struct Cns_fileid *)NULL,
                         RTCPCLD_NB_PARAMS+1,
                         "ERROR_STR",
@@ -990,7 +986,7 @@ int rtcpcld_main(
                         sstrerror(serrno),
                         RTCPCLD_LOG_WHERE
                         );
-        rc = rtcpcld_updateVIDStatus(tape, TAPE_WAITVDQM, TAPE_FAILED);
+        rc = rtcpcld_updateVIDStatus(tape, TAPE_WAITDRIVE, TAPE_FAILED);
       }
       break;    
     } else {
