@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.26 $ $Date: 2002/07/27 10:08:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.27 $ $Date: 2003/10/29 08:32:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -169,6 +169,26 @@ vmgr_dbrec_addr *rec_addr;
 	return (0);
 }
 
+vmgr_delete_tag_entry(dbfd, rec_addr)
+struct vmgr_dbfd *dbfd;
+vmgr_dbrec_addr *rec_addr;
+{
+	char func[22];
+	char rowid_value[19];
+	struct sqlca sqlca;
+
+	strcpy (func, "vmgr_delete_tag_entry");
+	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+	EXEC SQL DELETE FROM vmgr_tape_tag WHERE ROWID = :rowid_value;
+	if (sqlca.sqlcode) {
+		vmgrlogit (func, "DELETE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		return (-1);
+	}
+	return (0);
+}
+
 vmgr_delete_tape_entry(dbfd, rec_addr)
 struct vmgr_dbfd *dbfd;
 vmgr_dbrec_addr *rec_addr;
@@ -211,13 +231,13 @@ vmgr_dbrec_addr *rec_addr;
 	struct sqlca sqlca;
 	EXEC SQL DECLARE denmap_cursor CURSOR FOR
 		SELECT
-		 MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY
+		 MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY, NATIVE_CAPACITY
 		FROM vmgr_tape_denmap
 		WHERE md_model = :model AND md_media_letter = :media_letter AND
 		 md_density = :density;
 	EXEC SQL DECLARE denmap_cursor4upd CURSOR FOR
 		SELECT ROWID,
-		 MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY
+		 MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY, NATIVE_CAPACITY
 		FROM vmgr_tape_denmap
 		WHERE md_model = :model AND md_media_letter = :media_letter AND
 		 md_density = :density
@@ -235,7 +255,7 @@ vmgr_dbrec_addr *rec_addr;
 		EXEC SQL FETCH denmap_cursor4upd INTO
 		 :rowid_value,
 		 :denmap_entry->md_model, :denmap_entry->md_media_letter,
-		 :denmap_entry->md_density;
+		 :denmap_entry->md_density, :denmap_entry->native_capacity;
 	} else {
 		EXEC SQL OPEN denmap_cursor;
 		if (sqlca.sqlcode) {
@@ -246,7 +266,7 @@ vmgr_dbrec_addr *rec_addr;
 		}
 		EXEC SQL FETCH denmap_cursor INTO
 		 :denmap_entry->md_model, :denmap_entry->md_media_letter,
-		 :denmap_entry->md_density;
+		 :denmap_entry->md_density, :denmap_entry->native_capacity;
 	}
 	switch (sqlca.sqlcode) {
 	case 0:
@@ -406,13 +426,13 @@ vmgr_dbrec_addr *rec_addr;
 	EXEC SQL DECLARE model_cursor CURSOR FOR
 		SELECT
 		 M_MODEL, M_MEDIA_LETTER,
-		 NATIVE_CAPACITY, MEDIA_COST_GB
+		 MEDIA_COST
 		FROM vmgr_tape_media
 		WHERE m_model = :model;
 	EXEC SQL DECLARE model_cursor4upd CURSOR FOR
 		SELECT ROWID,
 		 M_MODEL, M_MEDIA_LETTER,
-		 NATIVE_CAPACITY, MEDIA_COST_GB
+		 MEDIA_COST
 		FROM vmgr_tape_media
 		WHERE m_model = :model
 		FOR UPDATE;
@@ -429,7 +449,7 @@ vmgr_dbrec_addr *rec_addr;
 		EXEC SQL FETCH model_cursor4upd INTO
 		 :rowid_value,
 		 :model_entry->m_model, :model_entry->m_media_letter,
-		 :model_entry->native_capacity, :model_entry->media_cost_GB;
+		 :model_entry->media_cost;
 	} else {
 		EXEC SQL OPEN model_cursor;
 		if (sqlca.sqlcode) {
@@ -440,7 +460,7 @@ vmgr_dbrec_addr *rec_addr;
 		}
 		EXEC SQL FETCH model_cursor INTO
 		 :model_entry->m_model, :model_entry->m_media_letter,
-		 :model_entry->native_capacity, :model_entry->media_cost_GB;
+		 :model_entry->media_cost;
 	}
 	switch (sqlca.sqlcode) {
 	case 0:
@@ -574,6 +594,67 @@ vmgr_dbrec_addr *rec_addr;
 		 :side_entry->vid, :side_entry->side, :side_entry->poolname,
 		 :side_entry->status, :side_entry->estimated_free_space,
 		 :side_entry->nbfiles;
+	}
+	switch (sqlca.sqlcode) {
+	case 0:
+		if (lock)
+			memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+		return (0);
+	case 1403:
+		serrno = ENOENT;
+		break;
+	default:
+		vmgrlogit (func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+	}
+	return (-1);
+}
+
+vmgr_get_tag_by_vid(dbfd, vid, tag_entry, lock, rec_addr)
+struct vmgr_dbfd *dbfd;
+char *vid;
+struct vmgr_tape_tag *tag_entry;
+int lock;
+vmgr_dbrec_addr *rec_addr;
+{
+	char func[19];
+	char rowid_value[20];
+	struct sqlca sqlca;
+	EXEC SQL DECLARE tag_cursor CURSOR FOR
+		SELECT
+		 VID, TEXT
+		FROM vmgr_tape_tag
+		WHERE vid = :vid;
+	EXEC SQL DECLARE tag_cursor4upd CURSOR FOR
+		SELECT ROWID,
+		 VID, TEXT
+		FROM vmgr_tape_tag
+		WHERE vid = :vid
+		FOR UPDATE;
+
+	strcpy (func, "vmgr_get_tag_by_vid");
+	if (lock) {
+		EXEC SQL OPEN tag_cursor4upd;
+		if (sqlca.sqlcode) {
+			vmgrlogit (func, "OPEN CURSOR error: %.*s\n",
+			    sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+			serrno = SEINTERNAL;
+			return (-1);
+		}
+		EXEC SQL FETCH tag_cursor4upd INTO
+		 :rowid_value,
+		 :tag_entry->vid, :tag_entry->text;
+	} else {
+		EXEC SQL OPEN tag_cursor;
+		if (sqlca.sqlcode) {
+			vmgrlogit (func, "OPEN CURSOR error: %.*s\n",
+			    sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+			serrno = SEINTERNAL;
+			return (-1);
+		}
+		EXEC SQL FETCH tag_cursor INTO
+		 :tag_entry->vid, :tag_entry->text;
 	}
 	switch (sqlca.sqlcode) {
 	case 0:
@@ -758,10 +839,10 @@ struct vmgr_tape_denmap *denmap_entry;
 
 	strcpy (func, "vmgr_insert_denmap_entry");
 	EXEC SQL INSERT INTO vmgr_tape_denmap
-		(MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY)
+		(MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY, NATIVE_CAPACITY)
 		VALUES
 		(:denmap_entry->md_model, :denmap_entry->md_media_letter,
-		 :denmap_entry->md_density);
+		 :denmap_entry->md_density, :denmap_entry->native_capacity);
 	switch (sqlca.sqlcode) {
 	case 0:
 		return (0);
@@ -854,10 +935,10 @@ struct vmgr_tape_media *model_entry;
 
 	strcpy (func, "vmgr_insert_model_entry");
 	EXEC SQL INSERT INTO vmgr_tape_media
-		(M_MODEL, M_MEDIA_LETTER, NATIVE_CAPACITY, MEDIA_COST_GB)
+		(M_MODEL, M_MEDIA_LETTER, MEDIA_COST)
 		VALUES
 		(:model_entry->m_model, :model_entry->m_media_letter,
-		 :model_entry->native_capacity, :model_entry->media_cost_GB);
+		 :model_entry->media_cost);
 	switch (sqlca.sqlcode) {
 	case 0:
 		return (0);
@@ -946,6 +1027,37 @@ struct vmgr_tape_side *side_entry;
 	return (-1);
 }
 
+vmgr_insert_tag_entry(dbfd, tag_entry)
+struct vmgr_dbfd *dbfd;
+struct vmgr_tape_tag *tag_entry;
+{
+	char func[22];
+	struct sqlca sqlca;
+
+	strcpy (func, "vmgr_insert_tag_entry");
+	EXEC SQL INSERT INTO vmgr_tape_tag
+		(VID,  TEXT)
+		VALUES
+		(:tag_entry->vid, :tag_entry->text);
+	switch (sqlca.sqlcode) {
+	case 0:
+		return (0);
+	case -1:
+		serrno = EEXIST;
+		break;
+	case -1631:
+	case -1632:
+	case -1654:
+		serrno = ENOSPC;
+		break;
+	default:
+		vmgrlogit (func, "INSERT error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+	}
+	return (-1);
+}
+
 vmgr_insert_tape_entry(dbfd, tape_entry)
 struct vmgr_dbfd *dbfd;
 struct vmgr_tape_info *tape_entry;
@@ -996,9 +1108,9 @@ DBLISTPTR *dblistptr;
 	struct sqlca sqlca;
 	EXEC SQL DECLARE list_denmap_cursor CURSOR FOR
 		SELECT
-		 MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY
+		 MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY, NATIVE_CAPACITY
 		FROM vmgr_tape_denmap
-		ORDER BY md_model, md_media_letter;
+		ORDER BY md_model, md_media_letter, native_capacity;
 
 	strcpy (func, "vmgr_list_denmap_entry");
 	if (endlist)
@@ -1014,7 +1126,7 @@ DBLISTPTR *dblistptr;
 	}
 	EXEC SQL FETCH list_denmap_cursor INTO
 	 :denmap_entry->md_model, :denmap_entry->md_media_letter,
-	 :denmap_entry->md_density;
+	 :denmap_entry->md_density, :denmap_entry->native_capacity;
 	switch (sqlca.sqlcode) {
 	case 0:
 		return (0);
@@ -1125,7 +1237,7 @@ DBLISTPTR *dblistptr;
 	struct sqlca sqlca;
 	EXEC SQL DECLARE list_model_cursor CURSOR FOR
 		SELECT
-		 M_MODEL, M_MEDIA_LETTER, NATIVE_CAPACITY, MEDIA_COST_GB
+		 M_MODEL, M_MEDIA_LETTER, MEDIA_COST
 		FROM vmgr_tape_media
 		ORDER BY m_model, m_media_letter;
 
@@ -1143,7 +1255,7 @@ DBLISTPTR *dblistptr;
 	}
 	EXEC SQL FETCH list_model_cursor INTO
 	 :model_entry->m_model, :model_entry->m_media_letter,
-	 :model_entry->native_capacity, :model_entry->media_cost_GB;
+	 :model_entry->media_cost;
 	switch (sqlca.sqlcode) {
 	case 0:
 		return (0);
@@ -1368,8 +1480,7 @@ struct vmgr_tape_media *model_entry;
 	strcpy (func, "vmgr_update_model_entry");
 	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
 	EXEC SQL UPDATE vmgr_tape_media SET
-		NATIVE_CAPACITY = :model_entry->native_capacity,
-		MEDIA_COST_GB = :model_entry->media_cost_GB
+		MEDIA_COST = :model_entry->media_cost
 		WHERE ROWID = :rowid_value;
 	if (sqlca.sqlcode) {
 		vmgrlogit (func, "UPDATE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
@@ -1426,6 +1537,29 @@ struct vmgr_tape_side *side_entry;
 		STATUS = :side_entry->status,
 		ESTIMATED_FREE_SPACE = :side_entry->estimated_free_space,
 		NBFILES = :side_entry->nbfiles
+		WHERE ROWID = :rowid_value;
+	if (sqlca.sqlcode) {
+		vmgrlogit (func, "UPDATE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		return (-1);
+	}
+	return (0);
+}
+
+vmgr_update_tag_entry(dbfd, rec_addr, tag_entry)
+struct vmgr_dbfd *dbfd;
+vmgr_dbrec_addr *rec_addr;
+struct vmgr_tape_tag *tag_entry;
+{
+	char func[22];
+	char rowid_value[19];
+	struct sqlca sqlca;
+
+	strcpy (func, "vmgr_update_tag_entry");
+	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+	EXEC SQL UPDATE vmgr_tape_tag SET
+		TEXT = :tag_entry->text
 		WHERE ROWID = :rowid_value;
 	if (sqlca.sqlcode) {
 		vmgrlogit (func, "UPDATE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
