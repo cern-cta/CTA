@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.53 2002/05/15 06:37:54 jdurand Exp $
+ * $Id: stage_api.h,v 1.54 2002/05/31 08:18:42 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -243,6 +243,24 @@ EXTERN_C int  DLL_DECL  stage_put_hsm _PROTO((char *, int, stage_hsm_t *));
 EXTERN_C int DLL_DECL stage_ping _PROTO(());
 #else
 EXTERN_C int DLL_DECL stage_ping _PROTO((u_signed64, char *));
+#endif
+
+/* ----------------------------- */
+/* Generic STAGE_INIT interface  */
+/* ----------------------------- */
+#ifdef hpux
+EXTERN_C int DLL_DECL stage_init _PROTO(());
+#else
+EXTERN_C int DLL_DECL stage_init _PROTO((u_signed64, char *));
+#endif
+
+/* --------------------------------- */
+/* Generic STAGE_SHUTDOWN interface  */
+/* --------------------------------- */
+#ifdef hpux
+EXTERN_C int DLL_DECL stage_shutdown _PROTO(());
+#else
+EXTERN_C int DLL_DECL stage_shutdown _PROTO((u_signed64, char *));
 #endif
 
 /* ------------------------------------------ */
