@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.91 2001/02/13 13:00:37 jdurand Exp $
+ * $Id: poolmgr.c,v 1.92 2001/02/14 15:27:44 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.91 $ $Date: 2001/02/13 13:00:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.92 $ $Date: 2001/02/14 15:27:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3045,7 +3045,7 @@ void check_retenp_on_disk() {
 
 		if (stcp->t_or_d != 'h') continue;      /* Not a CASTOR file */
 		if (stcp->keep) continue;               /* Has -K option */
-		if (((stcp->status & STAGEOUT) != STAGEOUT) || ((stcp->status & STAGEWRT) != STAGEWRT)) continue; /* Not coming from a STAGEOUT or a STAGEWRT request */
+		if ((! ISSTAGEOUT(stcp)) || (! ISSTAGEWRT(stcp))) continue; /* Not coming from a STAGEOUT or a STAGEWRT request */
 		if ((stcp->status & STAGED) != STAGED) continue; /* Not STAGEd */
 		if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) continue; /* Unknown fileclass */
 		if (((int) (this_time - stcp->a_time)) > retenp_on_disk(ifileclass)) { /* Lifetime exceeds ? */

@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.55 2001/02/13 17:36:26 jdurand Exp $
+ * $Id: procupd.c,v 1.56 2001/02/14 15:27:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.55 $ $Date: 2001/02/13 17:36:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.56 $ $Date: 2001/02/14 15:27:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -617,8 +617,8 @@ procupdreq(req_data, clienthost)
 		wqp->status = rc;
 		if (rc != ENOSPC) goto reply;
 		if ((*stcp->poolname == '\0') ||
-				((stcp->status & STAGEWRT) == STAGEWRT) ||
-				((stcp->status & STAGEPUT) == STAGEPUT) ||
+				ISSTAGEWRT(stcp) ||
+				ISSTAGEPUT(stcp) ||
 				wqp->nb_clnreq++ > MAXRETRY) {
 			c = ENOSPC;
 			goto reply;
@@ -679,14 +679,13 @@ procupdreq(req_data, clienthost)
 		}
 	}
 	if ((wfp->size_yet_recalled >= wfp->size_to_recall) ||
-		((rc == 0) && (((stcp->status & STAGEWRT) == STAGEWRT) || (stcp->status & STAGEPUT) == STAGEPUT))) {
+		((rc == 0) && (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)))) {
 		/* Note : wfp->size_to_recall is zero if it not a recall of CASTOR file(s) */
 		/* (always the case it it is not a recall of CASTOR file) */
 		wqp->nb_subreqs--;
 		wqp->nbdskf--;
 		rpfd = wqp->rpfd;
-		if (((stcp->status & STAGEWRT) == STAGEWRT) ||
-			((stcp->status & STAGEPUT) == STAGEPUT)) {
+		if (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) {
 			n = 1;
 			if (wqp->nb_subreqs == 0 && wqp->nbdskf > 0) {
 				n += wqp->nbdskf;
@@ -706,8 +705,7 @@ procupdreq(req_data, clienthost)
 				if (! stcp->keep && stcp->nbaccesses <= 1) {
 					/* No -K option and only one access */
 					struct stgcat_entry *stcp_search, *stcp_found;
-					if (((stcp->status == STAGEWRT) ||
-						((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR))) &&
+					if (ISSTAGEWRT(stcp) &&
 						(stcp->poolname[0] == '\0')) {
 						if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 							update_migpool(stcp,-1,0);
@@ -716,7 +714,7 @@ procupdreq(req_data, clienthost)
 					} else {
 						struct stgcat_entry *save_stcp = stcp;
 						int save_status = stcp->status;
-						if ((save_stcp->t_or_d == 'h') && (((save_stcp->status & 0xF) == STAGEWRT) || ((save_stcp->status & 0xF) == STAGEPUT)) && HAVE_SENSIBLE_STCP(save_stcp)) {
+						if ((save_stcp->t_or_d == 'h') && (ISSTAGEWRT(save_stcp) || ISSTAGEPUT(save_stcp)) && HAVE_SENSIBLE_STCP(save_stcp)) {
 							/* If this entry is a CASTOR file and has tppool[0] != '\0' this must/might be */
 							/* a corresponding stcp entry with the stageout matching STAGEOUT|CAN_BE_MIGR|BEING_MIGR */
 							stcp_found = NULL;

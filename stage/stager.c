@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.124 2001/02/13 13:01:44 jdurand Exp $
+ * $Id: stager.c,v 1.125 2001/02/14 15:27:45 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.124 $ $Date: 2001/02/13 13:01:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.125 $ $Date: 2001/02/14 15:27:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -532,7 +532,7 @@ int main(argc, argv)
 	}
 
 	if (concat_off_fseq > 0) {
-		if (((stcs->status & STAGEWRT) == STAGEWRT) || ((stcs->status & STAGEPUT) == STAGEPUT)) {
+		if (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)) {
 			/* By precaution, we allow concat_off only for stagein here again */
 			SAVE_EID;
     	    sendrep(rpfd, MSG_ERR, "### concat_off option not allowed in write-to-tape\n");
@@ -558,7 +558,7 @@ int main(argc, argv)
 		}
 	}
     if (use_subreqid != 0) {
-		if (((stcs->status & STAGEWRT) == STAGEWRT) || ((stcs->status & STAGEPUT) == STAGEPUT)) {
+		if (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)) {
 			/* By precaution, we disallow async callbacks if anything but stagein */
 			SAVE_EID;
     	    sendrep(rpfd, MSG_ERR, "### async callback is not allowed in write-to-tape\n");
@@ -633,7 +633,7 @@ int main(argc, argv)
 			free(stcs);
 			exit(SYERR);
 		}
-		if (((stcs->status & STAGEWRT) == STAGEWRT) || ((stcs->status & STAGEPUT) == STAGEPUT)) {
+		if (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)) {
 			if (stcs->t_or_d == 'h') {
 				int have_tppool = 0;
 				/* We check if there the tppool member is specified for any of the */
@@ -1556,7 +1556,7 @@ int stagewrt_castor_hsm_file() {
 			}
 		}
 #ifndef FULL_STAGEWRT_HSM
-		if ((stcs->status & STAGEWRT) == STAGEWRT) {
+		if (ISSTAGEWRT(stcs)) {
 			/* Here we support limitation of number of bytes in write-to-tape */
 			if (stcp->size > 0) {
 				u_signed64 new_totalsize;
@@ -2030,7 +2030,7 @@ int filecopy(stcp, key, hostname)
 		sprintf (command+strlen(command), " -X %s", stcp->u1.d.Xparm);
 
 	/* Writing file */
-	if (((stcp->status & STAGEWRT) == STAGEWRT) || ((stcp->status & STAGEPUT) == STAGEPUT)) {
+	if (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) {
 		sprintf (command+strlen(command), " -s %d",(int) stcp->actual_size);
 		sprintf (command+strlen(command), " %s", stcp->ipath);
 		if (stcp->t_or_d == 'm')
@@ -2082,7 +2082,7 @@ int filecopy(stcp, key, hostname)
 
 void cleanup() {
 	/* Safety cleanup - executed ONLY in case of write-to-tape */
-	if (((stcs->status & STAGEWRT) == STAGEWRT) || ((stcs->status & STAGEPUT) == STAGEPUT)) {
+	if (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)) {
 		if (vid[0] != '\0') {
 #ifdef STAGER_DEBUG
 			SAVE_EID;
@@ -2567,7 +2567,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 							}
 #endif /* CONCAT_OFF */
 						} else {
-							if (((stcs->status & STAGEWRT) == STAGEWRT) || ((stcs->status & STAGEPUT) == STAGEPUT)) {
+							if (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)) {
 								/* equivalent to tpwrite -V <vid> -q<j_ok> f1 f2 ... */
 								/* If the last tape file is yet computed */
 								/* we ask to concat, not otherwise */
@@ -2818,7 +2818,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.tape_fseq = hsm_fseq[ihsm];
 #ifndef SKIP_FILEREQ_MAXSIZE
 			/* Here we support maxsize in the rtcopy structure only if explicit STAGEWRT */
-			if ((stcs->status & STAGEWRT) == STAGEWRT) {
+			if (ISSTAGEWRT(stcs)) {
 #ifndef FULL_STAGEWRT_HSM
 				/* Here we support limitation of number of bytes in write-to-tape */
 				if (stcp->size > 0) {
@@ -3109,8 +3109,8 @@ int stager_hsm_callback(tapereq,filereq)
 	if (((filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED)) ||
 		((filereq->cprc <  0) && ((filereq->err.severity & RTCP_FAILED) == RTCP_FAILED) &&
 			(
-				(filereq->err.errorcode == ENOSPC && (((stcs->status & STAGEWRT) == STAGEWRT) ||
-														((stcs->status & STAGEPUT) == STAGEPUT))) ||
+				(filereq->err.errorcode == ENOSPC && (ISSTAGEWRT(stcs) ||
+														ISSTAGEPUT(stcs))) ||
 				((stcs->status & STAGEIN) == STAGEIN)
 			)
 		)
@@ -3125,7 +3125,7 @@ int stager_hsm_callback(tapereq,filereq)
 		RESTORE_EID;
 #endif
 
- 		if (((stcs->status & STAGEWRT) == STAGEWRT) || ((stcs->status & STAGEPUT) == STAGEPUT)) {
+ 		if (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)) {
 			/* This is the tpwrite callback */
 			int tape_flag = filereq->cprc < 0 ? TAPE_FULL : (stager_client_callback_i == iend ? 0 : TAPE_BUSY);
 
@@ -3363,7 +3363,7 @@ int stager_hsm_callback(tapereq,filereq)
 				tapereq->err.errorcode == ETUNREC) {
 				/* serrno was not of any help but we can anyway detect there was something serious with this tape */
 				SAVE_EID;
- 				if (((stcs->status & STAGEWRT) == STAGEWRT) || ((stcs->status & STAGEPUT) == STAGEPUT)) {
+ 				if (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)) {
 					sendrep(rpfd, MSG_ERR, "### [%s] For tape %s, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) and filereq->err.errorcode=%d (0x%lx) - Safety action is to flag the tape as read-only\n",
 						castor_hsm,
 						tapereq->vid,
@@ -3527,6 +3527,6 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 }
 
 /*
- * Last Update: "Tuesday 13 February, 2001 at 13:34:54 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Wednesday 14 February, 2001 at 16:13:40 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
 
