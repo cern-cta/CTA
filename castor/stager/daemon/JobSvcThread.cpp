@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.1 2004/12/02 17:57:34 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.2 2004/12/03 15:54:23 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.1 $ $Date: 2004/12/02 17:57:34 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.2 $ $Date: 2004/12/03 15:54:23 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -179,7 +179,8 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
     /* Casting the request */
     /* ------------------- */
     STAGER_LOG_DEBUG(NULL, "Casting Request");
-    req = (castor::stager::GetUpdateStartRequest*)(output);
+    req = dynamic_cast<castor::stager::GetUpdateStartRequest*>
+      ((castor::stager::Request*)(output));
     if (0 == req) {
       castor::exception::Internal e;
       e.getMessage() << "Request cast error";
@@ -265,7 +266,9 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
     /* Fill DiskCopy with SubRequest           */
     /* --------------------------------------- */
     STAGER_LOG_DEBUG(NULL,"Filling DiskCopy with SubRequest");
-    svcs->fillObj(&ad, dc, castor::OBJ_SubRequest);
+    if (0 != dc) {
+      svcs->fillObj(&ad, dc, castor::OBJ_SubRequest);
+    }
 
   } catch (castor::exception::Exception e) {
     serrno = e.code();
