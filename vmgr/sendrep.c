@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.1 $ $Date: 1999/12/15 11:30:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.2 $ $Date: 1999/12/15 14:55:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -49,7 +49,7 @@ sendrep(va_alist) va_dcl
 		vsprintf (prtbuf, msg, args);
 		marshall_LONG (rbp, strlen (prtbuf) + 1);
 		marshall_STRING (rbp, prtbuf);
-		nslogit (func, "%s", prtbuf);
+		vmgrlogit (func, "%s", prtbuf);
 		break;
 	case MSG_DATA:
 		n = va_arg (args, int);
@@ -67,7 +67,7 @@ sendrep(va_alist) va_dcl
 	va_end (args);
 	repsize = rbp - repbuf;
 	if (netwrite (rpfd, repbuf, repsize) != repsize) {
-		nslogit (func, VMG02, "write", neterror());
+		vmgrlogit (func, VMG02, "send", neterror());
 		if (rep_type == VMGR_RC)
 			netclose (rpfd);
 		return (-1);

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.4 $ $Date: 1999/11/12 09:03:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.5 $ $Date: 1999/12/15 14:50:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -19,7 +19,6 @@ static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.4 $ $Date: 1999
 #include "Ctape.h"
 #include "marshall.h"
 #include "net.h"
-extern char *sys_errlist[];
 sendrep(va_alist) va_dcl
 {
 	va_list args;
@@ -66,7 +65,7 @@ sendrep(va_alist) va_dcl
 	va_end (args);
 	repsize = rbp - repbuf;
 	if (netwrite (rpfd, repbuf, repsize) != repsize) {
-		tplogit (func, TP002, "write", sys_errlist[errno]);
+		tplogit (func, TP002, "send", neterror());
 		if (rep_type == TAPERC)
 			close (rpfd);
 		return (-1);
