@@ -1,5 +1,5 @@
 /*
- * $Id: rfdir.c,v 1.8 2000/09/18 15:49:15 obarring Exp $
+ * $Id: rfdir.c,v 1.9 2000/09/20 14:48:59 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.8 $ $Date: 2000/09/18 15:49:15 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.9 $ $Date: 2000/09/20 14:48:59 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
@@ -178,6 +178,7 @@ struct dirstack **ds;
    if ( ds == NULL ) return(NULL);
    tmp = *ds;
    *ds = (*ds)->prev;
+   free(tmp->dir);
    free(tmp);
    return(*ds);
 }
