@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.14 $ $Date: 2001/04/20 13:19:17 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.15 $ $Date: 2001/06/11 07:32:42 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -111,18 +111,19 @@ int DLL_DECL netconnect_timeout(fd, addr, addr_size, timeout)
   if ( timeout >= 0 && rc != -1 ) {
     time_t time_start = time(NULL);
     int time_elapsed = 0;
-    int nloop = 0;              /* To give it a try at least once */
     for (;;) {
-      time_elapsed = (int) (time(NULL) - time_start);
-      if ((time_elapsed >= timeout) && (nloop > 0)) {
-        rc = -1;
-        serrno = SETIMEDOUT;
+      rc = _net_connectable(fd, timeout - time_elapsed);
+      if ( (rc == -1) && (errno == EINTR) ) {
+        time_elapsed = (int) (time(NULL) - time_start);
+        if (time_elapsed >= timeout) {
+          rc = -1;
+          serrno = SETIMEDOUT;
+          break;
+        }
+        continue;
+      } else {
         break;
       }
-      nloop++;
-      rc = _net_connectable(fd, timeout - time_elapsed);
-      if ( (rc == -1) && (errno == EINTR) ) continue;
-      else break;
     }
   }
 
@@ -161,7 +162,6 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
 #endif
   time_t time_start;
   int time_elapsed;
-  int nloop = 0;               /* To give it a try at least once */
 
   /* If n <= 0 (on some systems size_t can be lower than zero) it is an app. error */
   if (n <= 0) {
@@ -189,15 +189,6 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
   time_elapsed = 0;
 
   while (nleft > 0) {
-
-    time_elapsed = (int) (time(NULL) - time_start);
-    if ((time_elapsed >= timeout) && (nloop > 0)) {
-      /* Timeout */
-      serrno = SETIMEDOUT;
-      flag = -1;
-      break;
-    }
-    nloop++;
 
     if ((select_status = _net_readable(fd, timeout - time_elapsed)) <= 0) {
       if (select_status == 0) {
@@ -233,6 +224,15 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
       nleft -= nread;
       ptr   += nread;
     }
+    if (nleft > 0) {
+      time_elapsed = (int) (time(NULL) - time_start);
+      if (time_elapsed >= timeout) {
+        /* Timeout */
+        serrno = SETIMEDOUT;
+        flag = -1;
+        break;
+      }
+    }
   }
 
 #ifndef _WIN32
@@ -264,7 +264,6 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
   int     select_status = 0;
   time_t time_start;
   int time_elapsed;
-  int nloop = 0;
 
   /* If n <= 0 (on some systems size_t can be lower than zero) it is an app. error */
   if (n <= 0) {
@@ -292,15 +291,6 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
 
   while (nleft > 0) {
 
-    time_elapsed = (int) (time(NULL) - time_start);
-    if ((time_elapsed >= timeout) && (nloop > 0)) {
-      /* Timeout */
-      serrno = SETIMEDOUT;
-      flag = -1;
-      break;
-    }
-    nloop++;
-
     if ((select_status = _net_writable(fd, timeout - time_elapsed)) <= 0) {
       if (select_status == 0) {
         /* Timeout */
@@ -326,6 +316,15 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
     } else {
       nleft -= nwritten;
       ptr   += nwritten;
+    }
+    if (nleft > 0) {
+      time_elapsed = (int) (time(NULL) - time_start);
+      if (time_elapsed >= timeout) {
+        /* Timeout */
+        serrno = SETIMEDOUT;
+        flag = -1;
+        break;
+      }
     }
   }
 
