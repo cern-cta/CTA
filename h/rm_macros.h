@@ -280,7 +280,7 @@
 	unmarshall_HYPER(p, (rmjob)->processid);              \
 	unmarshall_STRING(p, (rmjob)->partitionmask);         \
 	unmarshall_STRING(p, (rmjob)->requestid);             \
-	unmarshall_STRING(p, (rmjob)->subreqiestid);          \
+	unmarshall_STRING(p, (rmjob)->subrequestid);          \
 }
 
 #define overwrite_RMJOB(out,in) {                                                   \
