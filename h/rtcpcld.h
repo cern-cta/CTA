@@ -188,6 +188,9 @@ int rtcpcld_getTapeFseq _PROTO((
 int rtcpcld_getAndIncrementTapeFseq _PROTO((
                                             void
                                             ));
+int rtcpcld_lockTape _PROTO((
+                             void
+                             ));
 int rtcpcld_unlockTape _PROTO((
                                void
                                ));
