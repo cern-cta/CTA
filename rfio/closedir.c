@@ -1,5 +1,5 @@
 /*
- * $Id: closedir.c,v 1.5 2000/05/03 13:42:34 obarring Exp $
+ * $Id: closedir.c,v 1.6 2000/05/29 16:41:58 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: closedir.c,v $ $Revision: 1.5 $ $Date: 2000/05/03 13:42:34 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: closedir.c,v $ $Revision: 1.6 $ $Date: 2000/05/29 16:41:58 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* closedir.c      Remote File I/O - close a directory                     */
@@ -21,7 +21,7 @@ static char sccsid[] = "@(#)$RCSfile: closedir.c,v $ $Revision: 1.5 $ $Date: 200
  * remote directory close
  */
 
-int rfio_closedir(dirp)
+int DLL_DECL rfio_closedir(dirp)
 RDIR *dirp;
 {
    char     rfio_buf[BUFSIZ];

@@ -1,5 +1,5 @@
 /*
- * $Id: rename.c,v 1.7 2000/05/24 14:58:38 obarring Exp $
+ * $Id: rename.c,v 1.8 2000/05/29 16:42:04 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rename.c,v $ $Revision: 1.7 $ $Date: 2000/05/24 14:58:38 $ CERN/IT/PDP/DM Antony Simmins";
+static char sccsid[] = "@(#)$RCSfile: rename.c,v $ $Revision: 1.8 $ $Date: 2000/05/29 16:42:04 $ CERN/IT/PDP/DM Antony Simmins";
 #endif /* not lint */
 
 /* rename.c       Remote File I/O - change the name of a file           */
@@ -25,7 +25,7 @@ static char sccsid[] = "@(#)$RCSfile: rename.c,v $ $Revision: 1.7 $ $Date: 2000/
 ** NB This does not implement a rename across hosts
 */
 
-int  rfio_rename(fileo, filen)  /* Remote rename	                */
+int  DLL_DECL rfio_rename(fileo, filen)  /* Remote rename               */
 char		*fileo,		/* remote old path  			*/
    *filen;		/* remote new path            		*/
 {

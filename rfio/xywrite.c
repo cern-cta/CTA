@@ -1,5 +1,5 @@
 /*
- * $Id: xywrite.c,v 1.3 1999/12/09 13:47:23 jdurand Exp $
+ * $Id: xywrite.c,v 1.4 2000/05/29 16:42:08 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: xywrite.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:23 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: xywrite.c,v $ $Revision: 1.4 $ $Date: 2000/05/29 16:42:08 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* xywrite.c    Remote File I/O - Write a Fortran Logical Unit          */
@@ -31,9 +31,9 @@ static char sccsid[] = "@(#)$RCSfile: xywrite.c,v $ $Revision: 1.3 $ $Date: 1999
 #include "rfio.h"               /* remote file I/O definitions          */
 #include <stdlib.h>
 
-extern int 	switch_write();
+extern int DLL_DECL switch_write();
 
-int
+int DLL_DECL 
 rfio_xywrite(lun, buf, nrec, nwrit, chopt, irc)
 int     lun, nrec, nwrit;
 char    *buf, *chopt;
@@ -145,7 +145,7 @@ void XYWRIT(flun, fbuf, fnrec, fnwrit, fchopt, firc)
 #endif  /* hpux && !PPU || AIX && !EXTNAME */
 
 #if defined(_WIN32)
-void _stdcall XYWRIT(flun, fbuf, fnrec, fnwrit, fchopt, fchoptl, firc)
+void DLL_DECL _stdcall XYWRIT(flun, fbuf, fnrec, fnwrit, fchopt, fchoptl, firc)
 #else
 void xywrit_(flun, fbuf, fnrec, fnwrit, fchopt, firc, fchoptl)
 #endif

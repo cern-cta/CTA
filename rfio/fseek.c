@@ -1,5 +1,5 @@
 /*
- * $Id: fseek.c,v 1.3 1999/12/09 13:46:45 jdurand Exp $
+ * $Id: fseek.c,v 1.4 2000/05/29 16:42:00 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fseek.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:46:45 $ CERN/IT/PDP/DM Fabien Collin";
+static char sccsid[] = "@(#)$RCSfile: fseek.c,v $ $Revision: 1.4 $ $Date: 2000/05/29 16:42:00 $ CERN/IT/PDP/DM Fabien Collin";
 #endif /* not lint */
 
 /* fseek.c      Remote File I/O - fseek library call */
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: fseek.c,v $ $Revision: 1.3 $ $Date: 1999/1
 /*
  * Remote file fseek
  */
-int rfio_fseek(fp, offset, whence)  
+int DLL_DECL rfio_fseek(fp, offset, whence)  
      RFILE *fp;
      long int offset;
      int whence;

@@ -1,5 +1,5 @@
 /*
- * $Id: switch_req.c,v 1.3 1999/12/09 13:47:20 jdurand Exp $
+ * $Id: switch_req.c,v 1.4 2000/05/29 16:42:06 obarring Exp $
  */
 
 /*
@@ -15,7 +15,7 @@
 #define RFIO_KERNEL     1               /* KERNEL part of the programs  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: switch_req.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:20 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: switch_req.c,v $ $Revision: 1.4 $ $Date: 2000/05/29 16:42:06 $ CERN/IT/PDP/DM Felix Hassine";
 #endif
 
 #include "rfio.h"                       /* Remote file I/O              */
@@ -33,7 +33,7 @@ static char sccsid[] = "@(#)$RCSfile: switch_req.c,v $ $Revision: 1.3 $ $Date: 1
 #define frdc_		FRDC
 #endif  /* CRAY */
 
-int switch_open(access, lun, filename, filen, lrecl,append,trunc,mod)
+int DLL_DECL switch_open(access, lun, filename, filen, lrecl,append,trunc,mod)
 int     *access		;
 LONG	*lun		;
 char 	*filename	;
@@ -83,7 +83,7 @@ int 	mod		;
 
 }
 
-int switch_write(access,lun,ptr,nwrit,nrec,mod)
+int DLL_DECL switch_write(access,lun,ptr,nwrit,nrec,mod)
 int     access          ;
 LONG    *lun            ;
 char 	*ptr		;
@@ -130,7 +130,7 @@ int 	mod 		;
 }
 
 
-int switch_read(access,ptlun,buffer1,nwant,nrec,readopt,ngot,mod)
+int DLL_DECL switch_read(access,ptlun,buffer1,nwant,nrec,readopt,ngot,mod)
 int  	access	;
 int 	*ptlun  	;
 char 	*buffer1;
@@ -197,7 +197,7 @@ int 	mod	;
 
 }
 
-int switch_close(lun)
+int DLL_DECL switch_close(lun)
 int	*lun;
 {
 	int irc;

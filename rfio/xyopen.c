@@ -1,5 +1,5 @@
 /*
- * $Id: xyopen.c,v 1.5 1999/12/10 19:48:21 baran Exp $
+ * $Id: xyopen.c,v 1.6 2000/05/29 16:42:07 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:48:21 $ CERN/IT/PDP/DM Frederic Hemmer, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.6 $ $Date: 2000/05/29 16:42:07 $ CERN/IT/PDP/DM Frederic Hemmer, F. Hassine";
 #endif /* not lint */
 
 /* xyopen.c     Remote File I/O - Open a Fortran Logical Unit           */
@@ -40,14 +40,14 @@ static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.5 $ $Date: 1999/
 #include <pwd.h>
 #include <Cpwd.h>
 
-RFILE *ftnlun[MAXFTNLUN];       /* Fortran logical units                */
+RFILE DLL_DECL *ftnlun[MAXFTNLUN];       /* Fortran logical units       */
 
-extern int	switch_open();
+extern int DLL_DECL switch_open();
 #ifndef linux
 extern char *sys_errlist[];     /* system error list                    */
 #endif
 
-int rfio_xysock(lun) 
+int DLL_DECL rfio_xysock(lun) 
 int lun ;
 {
    if ( ftnlun[lun] == NULL ) 
@@ -56,7 +56,7 @@ int lun ;
       return ftnlun[lun]->s ;
 }
 		 
-int rfio_xyopen(name,node,lun,lrecl,chopt,irc)
+int DLL_DECL rfio_xyopen(name,node,lun,lrecl,chopt,irc)
 char    *name, *node, *chopt;
 int     lun, lrecl;
 int     *irc;
@@ -350,7 +350,7 @@ _fcd    fchopt;
 #endif  /* hpux && !PPU || AIX && !EXTNAME */
 
 #if defined(_WIN32)
-void _stdcall XYOPEN(flun, flrecl, fchopt, fchoptl, firc)
+void DLL_DECL _stdcall XYOPEN(flun, flrecl, fchopt, fchoptl, firc)
 #else
 void xyopen_(flun, flrecl, fchopt, firc, fchoptl)
 #endif
@@ -422,7 +422,7 @@ _fcd    fname, fnode, fchopt;
 #endif  /* hpux && !PPU || AIX && !EXTNAME */
 
 #if defined(_WIN32)
-void _stdcall XYOPN(fname, fnamel, fnode, fnodel, flun, flrecl, fchopt, fchoptl, firc)
+void DLL_DECL _stdcall XYOPN(fname, fnamel, fnode, fnodel, flun, flrecl, fchopt, fchoptl, firc)
 #else
 void xyopn_(fname, fnode, flun, flrecl, fchopt, firc, fnamel, fnodel, fchoptl)
 #endif

@@ -1,5 +1,5 @@
 /*
- * $Id: chmod.c,v 1.6 2000/05/03 13:42:33 obarring Exp $
+ * $Id: chmod.c,v 1.7 2000/05/29 16:41:57 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: chmod.c,v $ $Revision: 1.6 $ $Date: 2000/05/03 13:42:33 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: chmod.c,v $ $Revision: 1.7 $ $Date: 2000/05/29 16:41:57 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* chmod.c       Remote File I/O - change file mode                     */
@@ -17,7 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: chmod.c,v $ $Revision: 1.6 $ $Date: 2000/0
 
 #include "rfio.h"               /* Remote File I/O general definitions  */
 
-int  rfio_chmod(dirpath, mode)     /* Remote chmod	                */
+int DLL_DECL rfio_chmod(dirpath, mode)     /* Remote chmod	        */
 char		*dirpath;          /* remote directory path             */
 int		mode;              /* remote directory mode             */
 {

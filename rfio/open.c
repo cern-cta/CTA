@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.9 2000/05/09 10:36:41 obarring Exp $
+ * $Id: open.c,v 1.10 2000/05/29 16:42:03 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.9 $ $Date: 2000/05/09 10:36:41 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.10 $ $Date: 2000/05/29 16:42:03 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */
@@ -124,7 +124,7 @@ int     s;
 }
 
 
-int rfio_open(filepath, flags, mode)
+int DLL_DECL rfio_open(filepath, flags, mode)
 char    *filepath ;
 int     flags,mode ;
 {

@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.6 2000/05/02 06:13:43 baud Exp $
+ * $Id: read.c,v 1.7 2000/05/29 16:42:04 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.6 $ $Date: 2000/05/02 06:13:43 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.7 $ $Date: 2000/05/29 16:42:04 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* read.c       Remote File I/O - read  a file                          */
@@ -33,7 +33,7 @@ static int rfio_preread();
 /*
  * Remote file read
  */
-int rfio_read(s, ptr, size)
+int DLL_DECL rfio_read(s, ptr, size)
 char    *ptr;
 int     s, size;
 {

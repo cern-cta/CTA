@@ -1,5 +1,5 @@
 /*
- * $Id: lockf.c,v 1.4 1999/12/09 13:46:48 jdurand Exp $
+ * $Id: lockf.c,v 1.5 2000/05/29 16:42:01 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lockf.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:46:48 $ CERN/IT/PDP/DM Antony Simmins";
+static char sccsid[] = "@(#)$RCSfile: lockf.c,v $ $Revision: 1.5 $ $Date: 2000/05/29 16:42:01 $ CERN/IT/PDP/DM Antony Simmins";
 #endif /* not lint */
 
 /* lockf.c       Remote File I/O - record locking on files		*/
@@ -18,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: lockf.c,v $ $Revision: 1.4 $ $Date: 1999/1
 #include "rfio.h"               /* Remote File I/O general definitions  */
 
 
-int  rfio_lockf(sd, op, siz)   	/* Remote lockf	                	*/
+int DLL_DECL rfio_lockf(sd, op, siz)   	/* Remote lockf              	*/
 int		sd,		/* file descriptor	 		*/
    op;		/* lock operation	            	*/
 long		siz;		/* locked region			*/

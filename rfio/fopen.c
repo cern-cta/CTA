@@ -1,5 +1,5 @@
 /*
- * $Id: fopen.c,v 1.3 1999/12/09 13:46:44 jdurand Exp $
+ * $Id: fopen.c,v 1.4 2000/05/29 16:42:00 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fopen.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:46:44 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fopen.c,v $ $Revision: 1.4 $ $Date: 2000/05/29 16:42:00 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fopen.c      Remote File I/O - open a binary file                    */
@@ -24,7 +24,7 @@ static char sccsid[] = "@(#)$RCSfile: fopen.c,v $ $Revision: 1.3 $ $Date: 1999/1
 /*
  * Remote file open
  */
-RFILE   *rfio_fopen(file, mode) 
+RFILE DLL_DECL *rfio_fopen(file, mode) 
 	char * file ;  
 	char * mode ; 
 {

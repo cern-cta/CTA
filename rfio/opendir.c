@@ -1,5 +1,5 @@
 /*
- * $Id: opendir.c,v 1.7 2000/05/03 13:42:36 obarring Exp $
+ * $Id: opendir.c,v 1.8 2000/05/29 16:42:03 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.7 $ $Date: 2000/05/03 13:42:36 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.8 $ $Date: 2000/05/29 16:42:03 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* opendir.c       Remote File I/O - open a directory                   */
@@ -109,7 +109,7 @@ int s;
    return(0);
 }
 
-RDIR *rfio_opendir(dirpath)
+RDIR DLL_DECL *rfio_opendir(dirpath)
 char *dirpath;
 {
    char rh[1];
@@ -117,7 +117,7 @@ char *dirpath;
    return(rfio_opendir_ext(dirpath,(uid_t)0,(gid_t)0,0,rh,rh));
 }
 
-RDIR *rfio_opendir_ext(dirpath,uid,gid,passwd,reqhost,vmstr)
+RDIR DLL_DECL *rfio_opendir_ext(dirpath,uid,gid,passwd,reqhost,vmstr)
 char *dirpath;
 uid_t uid;
 gid_t gid;

@@ -1,5 +1,5 @@
 /*
- * $Id: xyread.c,v 1.3 1999/12/09 13:47:23 jdurand Exp $
+ * $Id: xyread.c,v 1.4 2000/05/29 16:42:07 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: xyread.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:23 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: xyread.c,v $ $Revision: 1.4 $ $Date: 2000/05/29 16:42:07 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* xyread.c     Remote File I/O - Read a Fortran Logical Unit           */
@@ -31,9 +31,9 @@ static char sccsid[] = "@(#)$RCSfile: xyread.c,v $ $Revision: 1.3 $ $Date: 1999/
 #include "rfio.h"               /* remote file I/O definitions          */
 #include <stdlib.h>
 
-extern int switch_read();
+extern int DLL_DECL switch_read();
 
-int
+int DLL_DECL
 rfio_xyread(lun, buf, nrec, nwant, ngot, chopt, irc)
 int     lun, nrec, nwant;
 char    *buf, *chopt;
@@ -154,7 +154,7 @@ void XYREAD(flun, fbuf, fnrec, fnwant, fngot, fchopt, firc)
 #endif  /* hpux && !PPU || AIX && !EXTNAME */
 
 #if defined(_WIN32)
-void _stdcall XYREAD(flun, fbuf, fnrec, fnwant, fngot, fchopt, fchoptl, firc)
+void DLL_DECL _stdcall XYREAD(flun, fbuf, fnrec, fnwant, fngot, fchopt, fchoptl, firc)
 #else
 void xyread_(flun, fbuf, fnrec, fnwant, fngot, fchopt, firc, fchoptl)
 #endif

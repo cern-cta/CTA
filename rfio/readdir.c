@@ -1,5 +1,5 @@
 /*
- * $Id: readdir.c,v 1.6 2000/05/03 13:42:37 obarring Exp $
+ * $Id: readdir.c,v 1.7 2000/05/29 16:42:04 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readdir.c,v $ $Revision: 1.6 $ $Date: 2000/05/03 13:42:37 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: readdir.c,v $ $Revision: 1.7 $ $Date: 2000/05/29 16:42:04 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* readdir.c       Remote File I/O - read  a directory entry            */
@@ -29,7 +29,7 @@ static char sccsid[] = "@(#)$RCSfile: readdir.c,v $ $Revision: 1.6 $ $Date: 2000
 
 static int s_key = -1;
 
-struct dirent *rfio_readdir(dirp)
+struct dirent DLL_DECL *rfio_readdir(dirp)
 RDIR *dirp;
 {
    int status ;		/* Status and return code from remote   */

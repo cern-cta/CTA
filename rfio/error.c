@@ -1,5 +1,5 @@
 /*
- * $Id: error.c,v 1.5 1999/12/10 19:43:46 baran Exp $
+ * $Id: error.c,v 1.6 2000/05/29 16:41:59 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: error.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:43:46 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: error.c,v $ $Revision: 1.6 $ $Date: 2000/05/29 16:41:59 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* error.c      Remote File I/O - error numbers and message handling    */
@@ -24,7 +24,6 @@ static char sccsid[] = "@(#)$RCSfile: error.c,v $ $Revision: 1.5 $ $Date: 1999/1
 /*
  * RFIO global error number.
  */
-/* int rfio_errno= 0 ; */
 
 #ifndef linux 
 extern char * sys_errlist[];
@@ -37,7 +36,7 @@ char *rfio_serror() ;
 /*
  * Get remote error string corresponding to code.
  */
-char *rfio_errmsg_r (s, code, buf, buflen)   
+char DLL_DECL *rfio_errmsg_r (s, code, buf, buflen)   
 int     s;
 int     code;
 char 	*buf;
@@ -87,7 +86,7 @@ size_t 	buflen;
 
 static int rfio_error_key = -1;
 
-char *rfio_errmsg(s, code) 
+char DLL_DECL *rfio_errmsg(s, code) 
 int     s;
 int     code;
 {
@@ -99,7 +98,7 @@ int     code;
 }
 
 
-char *rfio_serror_r(buf, buflen)                /* print an error message               	*/
+char DLL_DECL *rfio_serror_r(buf, buflen)   /* print an error message  */
 char *buf;
 size_t buflen;   
 {
@@ -158,7 +157,7 @@ size_t buflen;
 
 static int rfio_serror_key = -1;
 
-char *rfio_serror() 
+char DLL_DECL *rfio_serror() 
 {
    char *buf = NULL;
    int buflen = 256;
@@ -168,7 +167,7 @@ char *rfio_serror()
 }
 
 
-void rfio_perror(umsg)
+void DLL_DECL rfio_perror(umsg)
 char *umsg ;
 {
    char *errmsg ;

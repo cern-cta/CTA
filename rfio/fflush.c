@@ -1,5 +1,5 @@
 /*
- * $Id: fflush.c,v 1.3 1999/12/09 13:46:43 jdurand Exp $
+ * $Id: fflush.c,v 1.4 2000/05/29 16:42:00 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fflush.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:46:43 $ CERN/IT/PDP/DM Antoine Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fflush.c,v $ $Revision: 1.4 $ $Date: 2000/05/29 16:42:00 $ CERN/IT/PDP/DM Antoine Trannoy";
 #endif /* not lint */
 
 /* fflush.c     Remote File I/O - flush a binary file                   */
@@ -23,7 +23,7 @@ static char sccsid[] = "@(#)$RCSfile: fflush.c,v $ $Revision: 1.3 $ $Date: 1999/
  * Remote file flush
  * If the file is remote, this is a dummy operation.
  */
-int rfio_fflush(fp)      
+int DLL_DECL rfio_fflush(fp)      
 	RFILE *fp;             
 {
 	int     status;

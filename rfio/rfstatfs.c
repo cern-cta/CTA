@@ -1,5 +1,5 @@
 /*
- * $Id: rfstatfs.c,v 1.3 1999/12/09 13:47:15 jdurand Exp $
+ * $Id: rfstatfs.c,v 1.4 2000/05/29 16:42:05 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfstatfs.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:15 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: rfstatfs.c,v $ $Revision: 1.4 $ $Date: 2000/05/29 16:42:05 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #define RFIO_KERNEL 1
@@ -38,7 +38,7 @@ static char sccsid[] = "@(#)$RCSfile: rfstatfs.c,v $ $Revision: 1.3 $ $Date: 199
 #endif
 #include <rfio.h>
 
-int rfstatfs(path, statfsbuf )
+int DLL_DECL rfstatfs(path, statfsbuf )
 char *path ;
 struct rfstatfs *statfsbuf ;
 {

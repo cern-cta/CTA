@@ -1,5 +1,5 @@
 /*
- * $Id: symlink.c,v 1.7 2000/05/03 13:42:38 obarring Exp $
+ * $Id: symlink.c,v 1.8 2000/05/29 16:42:06 obarring Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: symlink.c,v $ $Revision: 1.7 $ $Date: 2000/05/03 13:42:38 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: symlink.c,v $ $Revision: 1.8 $ $Date: 2000/05/29 16:42:06 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #define RFIO_KERNEL     1
@@ -177,13 +177,13 @@ char *n2 ;
    return(status) ;
 }
 
-int rfio_unlink(path)
+int DLL_DECL rfio_unlink(path)
 char *path ;
 {
    return( rfio_wlink("",path)) ;
 }
 
-int rfio_symlink(name1,name2)
+int DLL_DECL rfio_symlink(name1,name2)
 char *name1, *name2;
 {
    return( rfio_wlink( name1, name2 ) ) ;

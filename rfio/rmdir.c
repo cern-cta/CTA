@@ -1,5 +1,5 @@
 /*
- * $Id: rmdir.c,v 1.5 2000/05/03 13:42:37 obarring Exp $
+ * $Id: rmdir.c,v 1.6 2000/05/29 16:42:05 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmdir.c,v $ $Revision: 1.5 $ $Date: 2000/05/03 13:42:37 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rmdir.c,v $ $Revision: 1.6 $ $Date: 2000/05/29 16:42:05 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* rmdir.c       Remote File I/O - make a directory file                */
@@ -18,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: rmdir.c,v $ $Revision: 1.5 $ $Date: 2000/0
 #include "rfio.h"               /* Remote File I/O general definitions  */
 
 
-int  rfio_rmdir(dirpath)           /* Remote rmdir	                */
+int  DLL_DECL rfio_rmdir(dirpath)           /* Remote rmdir             */
 char		*dirpath;          /* remote directory path             */
 {
 	static char     buf[256];       /* General input/output buffer          */

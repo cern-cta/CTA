@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.8 2000/05/25 09:58:49 obarring Exp $
+ * $Id: mstat.c,v 1.9 2000/05/29 16:42:02 obarring Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.8 $ $Date: 2000/05/25 09:58:49 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.9 $ $Date: 2000/05/29 16:42:02 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -22,6 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.8 $ $Date: 2000/0
 #else
 #include <sys/param.h>
 #endif
+#include <osdep.h>
 #include "log.h"
 #define RFIO_KERNEL 1
 #include "rfio.h"
@@ -40,7 +41,7 @@ static connects tab[MAXMCON]; /* UP TO MAXMCON connections simultaneously */
 extern int rfio_smstat() ;
 
 
-int rfio_mstat(file,statb)
+int DLL_DECL rfio_mstat(file,statb)
 char *file ;
 struct stat *statb;
 
@@ -130,7 +131,7 @@ struct stat *statb;
 static int pw_key = -1;
 static int old_uid_key = -1;
 
-rfio_smstat(s,filename,statbuf,reqst) 
+int DLL_DECL rfio_smstat(s,filename,statbuf,reqst) 
 int s ;
 char * filename ;
 struct stat *statbuf ;
@@ -249,7 +250,7 @@ int reqst ;
 
 }
 
-int rfio_end()
+int DLL_DECL rfio_end()
 {
    int i,j=0 ;
    char buf[256];

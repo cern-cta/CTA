@@ -1,5 +1,5 @@
 /*
- * $Id: lstat.c,v 1.6 2000/05/03 13:42:35 obarring Exp $
+ * $Id: lstat.c,v 1.7 2000/05/29 16:42:02 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lstat.c,v $ $Revision: 1.6 $ $Date: 2000/05/03 13:42:35 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: lstat.c,v $ $Revision: 1.7 $ $Date: 2000/05/29 16:42:02 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* lstat.c       Remote File I/O - get file status   */
@@ -23,7 +23,7 @@ static int pw_key = -1;
 static int old_uid_key = -1;
 
 
-int  rfio_lstat(filepath, statbuf)      /* Remote file lstat 		*/
+int DLL_DECL rfio_lstat(filepath, statbuf)      /* Remote file lstat	*/
 char    *filepath;              	/* remote file path  		*/
 struct stat *statbuf;           	/* status buffer 		*/
 {

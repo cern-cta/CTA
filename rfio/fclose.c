@@ -1,5 +1,5 @@
 /*
- * $Id: fclose.c,v 1.4 1999/12/09 13:46:41 jdurand Exp $
+ * $Id: fclose.c,v 1.5 2000/05/29 16:41:59 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fclose.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:46:41 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fclose.c,v $ $Revision: 1.5 $ $Date: 2000/05/29 16:41:59 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fclose.c     Remote File I/O - close a binary file                   */
@@ -20,7 +20,7 @@ static char sccsid[] = "@(#)$RCSfile: fclose.c,v $ $Revision: 1.4 $ $Date: 1999/
 #include "rfio.h"    
 
 
-int rfio_fclose(fp)             /* Remote file close                    */
+int DLL_DECL rfio_fclose(fp)             /* Remote file close           */
 RFILE *fp;                      /* Remote file pointer                  */
 {
    static char     buf[256];       /* General input/output buffer          */

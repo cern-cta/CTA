@@ -1,5 +1,5 @@
 /*
- * $Id: pclose.c,v 1.5 1999/12/10 19:46:04 baran Exp $
+ * $Id: pclose.c,v 1.6 2000/05/29 16:42:03 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:46:04 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.6 $ $Date: 2000/05/29 16:42:03 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* pclose.c      Remote command I/O - close a popened command 		*/
@@ -27,7 +27,7 @@ extern char     *sys_errlist[]; /* External error list          	*/
 /*
  * remote pclose
  */
-int rfio_pclose(fs)    
+int DLL_DECL rfio_pclose(fs)    
 RFILE 	*fs ;
 {
    char   * p  ; 

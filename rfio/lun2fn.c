@@ -1,5 +1,5 @@
 /*
- * $Id: lun2fn.c,v 1.5 1999/12/10 19:44:21 baran Exp $
+ * $Id: lun2fn.c,v 1.6 2000/05/29 16:42:02 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lun2fn.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:44:21 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: lun2fn.c,v $ $Revision: 1.6 $ $Date: 2000/05/29 16:42:02 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* lun2fn.c     Remote File I/O - translate FORTRAN LUN to file name    */
@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)$RCSfile: lun2fn.c,v $ $Revision: 1.5 $ $Date: 1999/
 
 extern char     *getenv();
 
-char *
+char * DLL_DECL 
 lun2fn(lun)                     /* find file name corresponding to lun  */
 int     lun;
 {

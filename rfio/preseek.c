@@ -1,5 +1,5 @@
 /*
- * $Id: preseek.c,v 1.5 1999/12/17 19:09:38 jdurand Exp $
+ * $Id: preseek.c,v 1.6 2000/05/29 16:42:04 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: preseek.c,v $ $Revision: 1.5 $ $Date: 1999/12/17 19:09:38 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: preseek.c,v $ $Revision: 1.6 $ $Date: 2000/05/29 16:42:04 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* preseek.c      Remote File I/O - preseeking.		*/
@@ -31,7 +31,7 @@ static char sccsid[] = "@(#)$RCSfile: preseek.c,v $ $Revision: 1.5 $ $Date: 1999
 /*
  * Remote file seek
  */
-int rfio_preseek(s,iov,iovnb)   
+int DLL_DECL rfio_preseek(s,iov,iovnb)   
 int      s ;
 int  iovnb ;
 struct iovec *iov ;
@@ -188,9 +188,9 @@ struct iovec *iov ;
 int PRESEE(sptr,iov,iovnbptr) 
 #else 
 #if defined(_AIX)
-int presee(sptr,iov,iovnbptr)
+int DLL_DECL presee(sptr,iov,iovnbptr)
 #else	
-int presee_(sptr,iov,iovnbptr)
+int DLL_DECL presee_(sptr,iov,iovnbptr)
 #endif	/* AIX	*/
 #endif	/* CRAY	*/	
 int 	    * sptr ;

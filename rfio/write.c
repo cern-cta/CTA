@@ -1,5 +1,5 @@
 /*
- * $Id: write.c,v 1.5 1999/12/17 19:09:39 jdurand Exp $
+ * $Id: write.c,v 1.6 2000/05/29 16:42:07 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.5 $ $Date: 1999/12/17 19:09:39 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.6 $ $Date: 2000/05/29 16:42:07 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* write.c      Remote File I/O - write a file                          */
@@ -24,7 +24,7 @@ static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.5 $ $Date: 1999/1
 /*
  * Remote file write
  */
-int rfio_write(s, ptr, size)
+int DLL_DECL rfio_write(s, ptr, size)
 char    *ptr;
 int     s, size;
 {
