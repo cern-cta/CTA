@@ -268,7 +268,6 @@ castor::db::ora::OraCnvSvc::getIds(const unsigned int nids)
     try {
       m_getIdStatement =
         getConnection()->createStatement(s_getIdStatementString);
-      m_getIdStatement->setAutoCommit(true);
       m_getIdStatement->registerOutParam(2, oracle::occi::OCCIINT, sizeof(int));
     } catch (oracle::occi::SQLException e) {
       if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
