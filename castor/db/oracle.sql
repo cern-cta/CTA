@@ -236,7 +236,7 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER, tapeCopyS
     AND Stream2TapeCopy.child = TapeCopy.id
     AND Stream2TapeCopy.parent = streamId
     AND TapeCopy.status = tapeCopyStatus
-   ORDER by FileSystem.weight DESC;
+   ORDER by FileSystem.weight DESC, FileSystem.fsDeviation ASC;
 BEGIN
  OPEN c1;
  FETCH c1 INTO diskServerName, mountPoint, deviation, fsDiskServer, path, dci, fileSystemId, castorFileId, fileId, nsHost, fileSize, tapeCopyId;
@@ -245,6 +245,7 @@ BEGIN
  UPDATE Stream SET status = newStreamStatus WHERE id = streamId;
  UPDATE FileSystem SET weight = weight - deviation
   WHERE diskServer = fsDiskServer;
+ UPDATE FileSystem SET fsDeviation = 2 * deviation WHERE id = fileSystemId;
 END;
 
 /* PL/SQL method implementing bestFileSystemForSegment */
