@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.1 $ $Date: 2002/11/29 08:51:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.2 $ $Date: 2003/09/08 17:10:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -15,11 +15,11 @@ static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.1 $ $Date: 2002
 #include <netinet/in.h>
 #endif
 #include <string.h>
-#include <varargs.h>
+#include <stdarg.h>
 #include "marshall.h"
 #include "net.h"
 #include "rmc.h"
-sendrep(va_alist) va_dcl
+sendrep(int rpfd, int rep_type, ...)
 {
 	va_list args;
 	char func[16];
@@ -39,9 +39,7 @@ sendrep(va_alist) va_dcl
 	strcpy (func, "sendrep");
 	rbp = repbuf;
 	marshall_LONG (rbp, RMC_MAGIC);
-	va_start (args);
-	rpfd = va_arg (args, int);
-	rep_type = va_arg (args, int);
+	va_start (args, msg);
 	marshall_LONG (rbp, rep_type);
 	switch (rep_type) {
 	case MSG_ERR:
