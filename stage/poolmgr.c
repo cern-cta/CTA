@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.221 2002/09/30 14:32:40 jdurand Exp $
+ * $Id: poolmgr.c,v 1.222 2002/09/30 15:44:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.221 $ $Date: 2002/09/30 14:32:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.222 $ $Date: 2002/09/30 15:44:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -163,6 +163,7 @@ void killmigovl _PROTO((int));
 int isvalidpool _PROTO((char *));
 int max_setretenp _PROTO((char *));
 void migpoolfiles_log_callback _PROTO((int, char *));
+char migpoolfiles_migrname[CA_MAXMIGRNAMELEN+1];
 int isuserlevel _PROTO((char *));
 void poolmgr_wait4child _PROTO(());
 int selectfs _PROTO((char *, u_signed64 *, char *, int, int));
@@ -225,6 +226,13 @@ signed64 get_put_failed_retenp _PROTO((struct stgcat_entry *));
 #define seteuid(euid) setresuid(-1,euid,-1)
 #define setegid(egid) setresgid(-1,egid,-1)
 #endif
+
+#define SETEID(thiseuid,thisegid) {              \
+	setegid(start_passwd.pw_gid);                \
+	seteuid(start_passwd.pw_uid);                \
+	setegid(thisegid);                           \
+	seteuid(thiseuid);                           \
+}
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
@@ -3245,6 +3253,7 @@ int migrate_files(pool_p)
 		/* @@@@ END OF EXCEPTIONNAL @@@@ */
 		rfio_mstat_reset();  /* Reset permanent RFIO stat connections */
 		rfio_munlink_reset(); /* Reset permanent RFIO unlink connections */
+		strcpy(migpoolfiles_migrname,pool_p->migr->name); /* To have migrator name in mig_log file */
 		exit(rc_castor2shift(migpoolfiles(pool_p)));
 	} else {  /* we are in the parent */
 		struct pool *pool_n;
@@ -4163,14 +4172,15 @@ void migpoolfiles_log_callback(level,message)
 	int level;
 	char *message;
 {
-	/*
-	  char func[16];
+	uid_t save_euid;
+	gid_t save_egid;
+	extern struct passwd start_passwd;         /* Generic uid/gid at startup (admin) */
 
-	  if (level == MSG_OUT) {
-	  strcpy (func, "migpoolfiles");
-	  stglogit(func,"%s",message);
-	  }
-	*/
+	save_euid = geteuid();
+	save_egid = getegid();
+	SETEID(0,0);
+	stgmiglogit(migpoolfiles_migrname,"%s",message);
+	SETEID(save_euid,save_egid);
 	return;
 }
 
@@ -4178,7 +4188,7 @@ void stageclr_log_callback(level,message)
 	int level;
 	char *message;
 {
-	stglogit("stageclr","%s",message);
+	stglogit("stageclr","%s",message); /* stageclr's are always done under original's uid [root] */
 	return;
 }
 
