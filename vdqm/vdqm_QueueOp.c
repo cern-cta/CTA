@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.5 $ $Date: 1999/09/27 15:28:27 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.6 $ $Date: 1999/11/02 09:49:04 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1280,8 +1280,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
             DrvReq->status = DrvReq->status & ~VDQM_VOL_UNMOUNT;
         }
         if ((DrvReq->status & VDQM_UNIT_RELEASE) &&
-            !(DrvReq->status & VDQM_UNIT_FREE) &&
-            (*DrvReq->volid != '\0' || *drvrec->drv.volid != '\0' ) ) {
+            !(DrvReq->status & VDQM_UNIT_FREE) ) { 
             /*
              * Reset assign status (drive is being released!).
              */
@@ -1291,7 +1290,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
              */
             drvrec->drv.VolReqID = 0;
             drvrec->drv.jobID = 0;
-           /*
+            /*
              * Delete from queue and free memory allocated for 
              * previous volume request on this drive
              */
@@ -1300,42 +1299,45 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                 free(drvrec->vol);
             }
             drvrec->vol = NULL;
-            /*
-             * Consistency check: if input request contains a volid it
-             * should correspond to the one in the drive record. This
-             * is not fatal but should be logged.
-             */
-            if ( *DrvReq->volid != '\0' && strcmp(DrvReq->volid,drvrec->drv.volid) ) {
-                log(LOG_ERR,"(ID %d)vdqm_NewDrvReq(): drive %s@%s inconsistent release on %s (should be %s), jobID=%d\n",thID,
-                    drvrec->drv.drive,drvrec->drv.server,
-                    DrvReq->volid,drvrec->drv.volid,drvrec->drv.jobID);
-            }
-            /*
-             * Fill in current volid in case we need to request an unmount.
-             */
-            if ( *DrvReq->volid == '\0' ) strcpy(DrvReq->volid,drvrec->drv.volid);
-            /*
-             * If a volume is mounted but current job ended: check if there
-             * are any other valid request for the same volume.
-             */
-            rc = AnyVolRecForMountedVol(dgn_context,drvrec,&volrec);
-            if ( rc == -1 || volrec == NULL ) {
-                if ( rc == -1 ) 
-                    log(LOG_ERR,"(ID %d)vdqm_NewDrvReq(): AnyVolRecForVolid() returned error\n",thID);
+
+            if ((*DrvReq->volid != '\0' || *drvrec->drv.volid != '\0' ) ) {
                 /*
-                 * No, there wasn't another job for that volume. Tell the
-                 * drive to unmount the volume
+                 * Consistency check: if input request contains a volid it
+                 * should correspond to the one in the drive record. This
+                 * is not fatal but should be logged.
                  */
-                DrvReq->status  = VDQM_VOL_UNMOUNT;
-            } else {
-                volrec->drv = drvrec;
-                drvrec->vol = volrec;
-                volrec->vol.DrvReqID = drvrec->drv.DrvReqID;
-                drvrec->drv.VolReqID = volrec->vol.VolReqID;
-                drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_RELEASE;
+                if ( *DrvReq->volid != '\0' && 
+                     strcmp(DrvReq->volid,drvrec->drv.volid) ) {
+                   log(LOG_ERR,"(ID %d)vdqm_NewDrvReq(): drive %s@%s inconsistent release on %s (should be %s), jobID=%d\n",thID,
+                       drvrec->drv.drive,drvrec->drv.server,
+                       DrvReq->volid,drvrec->drv.volid,drvrec->drv.jobID);
+                }
+                /*
+                 * Fill in current volid in case we need to request an unmount.
+                 */
+                if ( *DrvReq->volid == '\0' ) strcpy(DrvReq->volid,drvrec->drv.volid);
+                /*
+                 * If a volume is mounted but current job ended: check if there
+                 * are any other valid request for the same volume.
+                 */
+                rc = AnyVolRecForMountedVol(dgn_context,drvrec,&volrec);
+                if ( rc == -1 || volrec == NULL ) {
+                    if ( rc == -1 ) 
+                        log(LOG_ERR,"(ID %d)vdqm_NewDrvReq(): AnyVolRecForVolid() returned error\n",thID);
+                    /*
+                     * No, there wasn't another job for that volume. Tell the
+                     * drive to unmount the volume
+                     */
+                    DrvReq->status  = VDQM_VOL_UNMOUNT;
+                } else {
+                    volrec->drv = drvrec;
+                    drvrec->vol = volrec;
+                    volrec->vol.DrvReqID = drvrec->drv.DrvReqID;
+                    drvrec->drv.VolReqID = volrec->vol.VolReqID;
+                    drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_RELEASE;
+                }
             }
-        }
-        
+        } 
         /*
          * If unit is free, reset dynamic data in drive record
          */
