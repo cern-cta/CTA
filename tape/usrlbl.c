@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.5 $ $Date: 2000/01/26 08:02:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.6 $ $Date: 2000/04/18 14:11:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	usrlbl - user callable routines to read/write header and trailer labels */
@@ -179,20 +179,24 @@ char	*path;
 {
 	int c;
 	struct devlblinfo  *dlip;
-	char hdr1[81], hdr2[81];
+	char hdr1[80], hdr2[80];
+	char vol1[80];
 
 	if (getlabelinfo (path, &dlip) < 0)
 		return (-1);
 	if (dlip->fseq == 1) {
 		if ((c = rwndtape (tapefd, path)) < 0) return (c);
 		if (dlip->lblcode != NL) {
+			memcpy (vol1, dlip->vol1, 80);
+			memcpy (hdr1, dlip->hdr1, 80);
+			memcpy (hdr2, dlip->hdr2, 80);
 
 			/* set expiration date = creation date */
 
 			memcpy (hdr1 + 47, hdr1 + 41, 6);
 
-			if (dlip->lblcode == SL) asc2ebc (dlip->vol1, 80);
-			if ((c = writelbl (tapefd, path, dlip->vol1)) < 0) return (c);
+			if (dlip->lblcode == SL) asc2ebc (vol1, 80);
+			if ((c = writelbl (tapefd, path, vol1)) < 0) return (c);
 			if (dlip->lblcode == SL) asc2ebc (hdr1, 80);
 			if ((c = writelbl (tapefd, path, hdr1)) < 0) return (c);
 			if (dlip->lblcode == SL) asc2ebc (hdr2, 80);
