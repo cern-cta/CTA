@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.101 $ $Date: 2001/09/21 10:28:00 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.102 $ $Date: 2001/09/21 12:04:07 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -881,13 +881,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                     }
                     lrecl = 0;
                 }
-                /*
-                 * Check nb written bytes. Note, xywrite() errors already
-                 * handled above.
-                 */
-                if ( rc == -1 ||
-                     (((Uformat == FALSE) || ((convert & NOF77CW) != 0)) &&
-                      (rc != nb_bytes)) ) {
+                if ( rc != nb_bytes ) {
                     /*
                      * In case of ENOSPC we will have to return
                      * to ask the stager for a new path
@@ -938,9 +932,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
         } else {
             rc = 0;
         }
-        if ((convert & FIXVAR) == 0 &&
-            ((Uformat == FALSE) || ((convert & NOF77CW) != 0)) ) 
-            databufs[i]->data_length -= rc;
+        if ((convert & FIXVAR) == 0 ) databufs[i]->data_length -= rc;
         else databufs[i]->data_length = 0;
 
         file->diskbytes_sofar += (u_signed64)rc;
