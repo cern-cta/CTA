@@ -1,8 +1,8 @@
-.\" $RCSfile: Ctape_mount.man,v $ $Revision: 1.7 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_mount.man,v $ $Revision: 1.8 $ $Date: 1999/09/08 12:24:46 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_MOUNT l "$Date: 1999/09/08 12:06:03 $"
+.TH CTAPE_MOUNT l "$Date: 1999/09/08 12:24:46 $"
 .SH NAME
 Ctape_mount \- send a request to the tape daemon to have a tape mounted
 .SH SYNOPSIS
