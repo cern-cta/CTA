@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.1 2004/11/04 19:07:28 bcouturi Exp $
+ * $Id: stager_client_api_put.cpp,v 1.2 2004/11/08 17:29:40 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.1 $ $Date: 2004/11/04 19:07:28 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.2 $ $Date: 2004/11/08 17:29:40 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -77,9 +77,9 @@ class PutResponseHandler : public castor::client::IResponseHandler {
 /* ================= */
 
 EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
-					struct stage_prepareToPut_filereq **requests,
+					struct stage_prepareToPut_filereq *requests,
 					int nbreqs,
-					struct stage_prepareToPut_fileresp ***responses,
+					struct stage_prepareToPut_fileresp **responses,
 					int *nbresps,
 					char **requestId) {
 
@@ -116,6 +116,7 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
     subreq->setProtocol(sprotocol);
     subreq->setFileName(sfilename);
     req.addSubRequests(subreq);
+    subreq->setRequest(&req);
 
     client.sendRequest(&req, &rh);
 

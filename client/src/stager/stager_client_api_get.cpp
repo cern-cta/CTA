@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.1 2004/11/04 19:07:28 bcouturi Exp $
+ * $Id: stager_client_api_get.cpp,v 1.2 2004/11/08 17:29:40 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.1 $ $Date: 2004/11/04 19:07:28 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.2 $ $Date: 2004/11/08 17:29:40 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -72,9 +72,9 @@ class PrepareToGetResponseHandler : public castor::client::IResponseHandler {
 
 
 EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
-					struct stage_prepareToGet_filereq **requests,
+					struct stage_prepareToGet_filereq *requests,
 					int nbreqs,
-					struct stage_prepareToGet_fileresp ***responses,
+					struct stage_prepareToGet_fileresp **responses,
 					int *nbresps,
 					char **requestId) {
 
@@ -100,20 +100,21 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
     for(int i=0; i<nbreqs; i++) {
       castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
 
-      if (requests[i]->protocol) {
-	std::string sprotocol(requests[i]->protocol);
+      if (requests[i].protocol) {
+	std::string sprotocol(requests[i].protocol);
 	subreq->setProtocol(sprotocol);
       }    
 
-      if (!(requests[i]->filename)) {
+      if (!(requests[i].filename)) {
 	serrno = EINVAL;
 	stage_errmsg(func, "filename in request %d is NULL", i);
 	return -1;
       }
 
       req.addSubRequests(subreq);
-      std::string sfilename(requests[i]->filename);
+      std::string sfilename(requests[i].filename);
       subreq->setFileName(sfilename);
+      subreq->setRequest(&req);
 
     }
 
@@ -209,6 +210,7 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
     std::string sfilename(filename);
     subreq->setFileName(sfilename);
     req.addSubRequests(subreq);
+    subreq->setRequest(&req);
 
     client.sendRequest(&req, &rh);
 

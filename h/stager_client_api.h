@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/05 16:48:59 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/08 17:29:08 $ $Author: bcouturi $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.5 $
- * @date $Date: 2004/11/05 16:48:59 $
+ * @version $Revision: 1.6 $
+ * @date $Date: 2004/11/08 17:29:08 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.5 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.6 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -218,9 +218,9 @@ struct stage_prepareToGet_fileresp {
  *       should be freed by the client.
  */
 EXTERN_C int DLL_DECL stage_prepareToGet _PROTO((const char *userTag,
-						 struct stage_prepareToGet_filereq **requests,
+						 struct stage_prepareToGet_filereq *requests,
 						 int nbreqs,
-						 struct stage_prepareToGet_fileresp ***responses,
+						 struct stage_prepareToGet_fileresp **responses,
 						 int *nbresps,
 						 char **requestId));
 
@@ -295,7 +295,7 @@ struct stage_get_fileresp {
 EXTERN_C int DLL_DECL stage_get _PROTO ((const char *userTag,
 					 const char *protocol,
 					 const char *filename,
-					 struct stage_get_fileresp ** response,
+					 struct stage_get_fileresp **response,
 					 char **requestId));
 
 
@@ -344,9 +344,9 @@ EXTERN_C int stage_getNext _PROTO((const char *reqId,
  *       should be freed by the client.
  */
 EXTERN_C int DLL_DECL stage_prepareToUpdate _PROTO((const char *userTag,
-						    struct stage_prepareToGet_filereq **requests,
+						    struct stage_prepareToGet_filereq *requests,
 						    int nbreqs,
-						    struct stage_prepareToGet_fileresp ***responses,
+						    struct stage_prepareToGet_fileresp **responses,
 						    int *nbresps,
 						    char **requestId));
 
@@ -376,7 +376,7 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate _PROTO((const char *userTag,
 EXTERN_C int DLL_DECL stage_update _PROTO ((const char *userTag,
 					 const char *protocol,
 					 const char *filename,
-					 struct stage_get_fileresp ** response,
+					 struct stage_get_fileresp **response,
 					 char **requestId));
 
 
@@ -448,9 +448,9 @@ struct stage_prepareToPut_fileresp {
  *       should be freed by the client.
  */
 EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
-					 struct stage_prepareToPut_filereq **requests,
+					 struct stage_prepareToPut_filereq *requests,
 					 int nbreqs,
-					 struct stage_prepareToPut_fileresp ***responses,
+					 struct stage_prepareToPut_fileresp **responses,
 					 int *nbresps,
 					 char **requestId);
 
@@ -492,7 +492,7 @@ EXTERN_C int DLL_DECL stage_put _PROTO((const char *userTag,
 					const char *protocol,
 					const char *filename,
 					int mode,
-					struct stage_put_fileresp ** response,
+					struct stage_put_fileresp **response,
 					char **requestId));
 
 
@@ -575,9 +575,9 @@ struct stage_fileresp {
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_putDone _PROTO((struct stage_filereq **requests,
+EXTERN_C int DLL_DECL stage_putDone _PROTO((struct stage_filereq *requests,
 					    int nbreqs,
-					    struct stage_fileresp ***responses,
+					    struct stage_fileresp **responses,
 					    int *nbresps,
 					    char **requestId));
 
@@ -619,9 +619,9 @@ struct stage_updateFileStatus_filereq {
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_updateFileStatus _PROTO((struct stage_filereq **requests,
+EXTERN_C int DLL_DECL stage_updateFileStatus _PROTO((struct stage_filereq *requests,
 						     int nbreqs,
-						     struct stage_fileresp ***responses,
+						     struct stage_fileresp **responses,
 						     int *nbresps,
 						     char **requestId));
 
@@ -646,9 +646,9 @@ EXTERN_C int DLL_DECL stage_updateFileStatus _PROTO((struct stage_filereq **requ
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_rm(struct stage_filereq **requests,
+EXTERN_C int DLL_DECL stage_rm(struct stage_filereq *requests,
 			       int nbreqs,
-			       struct stage_fileresp ***responses,
+			       struct stage_fileresp **responses,
 			       int *nbresps,
 			       char **requestId);
 
@@ -675,9 +675,9 @@ EXTERN_C int DLL_DECL stage_rm(struct stage_filereq **requests,
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_releaseFiles _PROTO((struct stage_filereq **requests,
+EXTERN_C int DLL_DECL stage_releaseFiles _PROTO((struct stage_filereq *requests,
 						 int nbreqs,
-						 struct stage_fileresp ***responses,
+						 struct stage_fileresp **responses,
 						 int *nbresps,
 						 char **requestId));
 
@@ -789,9 +789,9 @@ struct stage_filequery_resp {
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_filequery _PROTO((struct stage_query_req **requests,
+EXTERN_C int DLL_DECL stage_filequery _PROTO((struct stage_query_req *requests,
 					      int nbreqs,
-					      struct stage_filequery_resp ***responses,
+					      struct stage_filequery_resp **responses,
 					      int *nbresps));
 
 
@@ -862,11 +862,11 @@ struct stage_subrequestquery_resp {
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_requestquery _PROTO((struct stage_query_req **requests,
+EXTERN_C int DLL_DECL stage_requestquery _PROTO((struct stage_query_req *requests,
 						 int nbreqs,
-						 struct stage_requestquery_resp ***responses,
+						 struct stage_requestquery_resp **responses,
 						 int *nbresps,
-						 struct stage_subrequestquery_resp ***subresponses,
+						 struct stage_subrequestquery_resp **subresponses,
 						 int *nbsubresps));
 
 
@@ -907,9 +907,9 @@ struct stage_findrequest_resp {
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_findrequest _PROTO((struct stage_query_req **requests,
+EXTERN_C int DLL_DECL stage_findrequest _PROTO((struct stage_query_req *requests,
 						int nbreqs,
-						struct stage_findrequest_resp ***responses,
+						struct stage_findrequest_resp **responses,
 						int *nbresps));
 
 
@@ -940,16 +940,11 @@ EXTERN_C int DLL_DECL stage_seterrbuf(char *buffer, int buflen);
  * Macro to create a function that allocates a list of STRCNAME structures
  */
 #define ALLOC_STRUCT_LIST(STRCNAME)                    \
-  EXTERN_C int create_##STRCNAME(struct stage_##STRCNAME ***ptr, int nb) {       \
+  EXTERN_C int create_##STRCNAME(struct stage_##STRCNAME **ptr, int nb) {       \
   struct stage_##STRCNAME **ptrlist;                                    \
-  int i; \
   if (ptr == NULL || nb <=0) return -1; \
-  ptrlist = (struct stage_##STRCNAME **)calloc(nb, sizeof(struct stage_##STRCNAME *)); \
+  ptrlist = (struct stage_##STRCNAME *)calloc(nb, sizeof(struct stage_##STRCNAME)); \
   if (ptrlist < 0) return -1; \
-  for (i=0; i<nb; i++) { \
-    ptrlist[i] = (struct stage_##STRCNAME *)calloc(1, sizeof(struct stage_##STRCNAME)); \
-    if (ptrlist[i]== NULL) return -1; \
-  } \
   *ptr = ptrlist; \
   return 0; \
 }
@@ -958,7 +953,7 @@ EXTERN_C int DLL_DECL stage_seterrbuf(char *buffer, int buflen);
  * Macro to create a function that frees a list of STRCNAME structures
  */
 #define FREE_STRUCT_LIST(STRCNAME)                      \
-  EXTERN_C int free_##STRCNAME(struct stage_##STRCNAME **ptr, int nb) {	\
+  EXTERN_C int free_##STRCNAME(struct stage_##STRCNAME *ptr, int nb) {	\
   int i;                                                \
   if (ptr == NULL || nb <=0) return -1;                 \
   for (i=0; i<nb; i++) {                                \
@@ -972,13 +967,14 @@ EXTERN_C int DLL_DECL stage_seterrbuf(char *buffer, int buflen);
  * Macro to declare a function that allocates a list of STRCNAME structures
  */
 #define ALLOC_STRUCT_LIST_DECL(STRCNAME)                    \
-  EXTERN_C int create_##STRCNAME(struct stage_##STRCNAME ***ptr, int nb);
+  EXTERN_C int create_##STRCNAME(struct stage_##STRCNAME **ptr, int nb);
 
 /**
  * Macro to declare a function that frees a list of STRCNAME structures
  */
 #define FREE_STRUCT_LIST_DECL(STRCNAME)                      \
   EXTERN_C int free_##STRCNAME(struct stage_##STRCNAME **ptr, int nb);
+
 
 ALLOC_STRUCT_LIST_DECL(prepareToGet_filereq)
 ALLOC_STRUCT_LIST_DECL(prepareToGet_fileresp)
