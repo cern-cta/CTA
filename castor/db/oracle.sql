@@ -548,6 +548,7 @@ BEGIN
   VALUES (rpath, ids_seq.nextval, 0, cfId, 5) -- status WAITFS
   RETURNING id INTO dcId;
  INSERT INTO Id2Type (id, type) VALUES (dcId, 5); -- OBJ_DiskCopy
+ COMMIT;
  -- link SubRequest and DiskCopy
  UPDATE SubRequest SET diskCopy = dcId WHERE id = srId;
  COMMIT;
@@ -608,7 +609,7 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN
   BEGIN
     -- lock table to be atomic
-    LOCK TABLE CastorFile in exclusive mode;
+    LOCK TABLE CastorFile, Id2Type in exclusive mode;
     -- retry the select in case a creation was done in between
     SELECT id, fileSize INTO rid, rfs FROM CastorFile
       WHERE fileId = fid AND nsHost = nh;
