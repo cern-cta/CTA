@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.13 $ $Date: 2000/02/07 15:52:16 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.14 $ $Date: 2000/02/10 16:53:51 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -100,7 +100,7 @@ int rtcpd_Assign(tape_list_t *tape) {
      */
     status = VDQM_UNIT_ASSIGN;
     value = tapereq->VolReqID;
-    jobID = getpid();
+    jobID = getpgrp();
 
     rtcp_log(LOG_DEBUG,"rtcpd_Assign() VolReqID=%d, dgn=%s, unit=%s, jobID=%d\n",
         tapereq->VolReqID,tapereq->dgn,tapereq->unit,jobID);
@@ -145,7 +145,7 @@ int rtcpd_Deassign(int VolReqID,
         status = VDQM_UNIT_ASSIGN;
         if ( VolReqID > 0 ) value = VolReqID;
         else value = tapereq->VolReqID;
-        jobID = (int)getpid();
+        jobID = (int)getpgrp();
 
         rtcp_log(LOG_DEBUG,"rtcpd_Deassign() ASSIGN volreq ID %d -> jobID %d\n",
             value,jobID);
@@ -224,7 +224,7 @@ int rtcpd_Mount(tape_list_t *tape) {
     }
     tapereq = &tape->tapereq;
     filereq = &tape->file->filereq;
-    jobID = getpid();
+    jobID = getpgrp();
 
     if ( *filereq->tape_path == '\0' ) 
         sprintf(filereq->tape_path,"PATH%d",jobID);
