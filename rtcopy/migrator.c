@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.26 $ $Release$ $Date: 2004/12/08 17:49:26 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.27 $ $Release$ $Date: 2004/12/09 12:25:39 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.26 $ $Release$ $Date: 2004/12/08 17:49:26 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.27 $ $Release$ $Date: 2004/12/09 12:25:39 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -186,6 +186,7 @@ int migratorCallbackFileCopied(
                                    file
                                    );
       if ( blkid != NULL ) free(blkid);
+      if ( castorFileId != NULL ) free(castorFileId);
       serrno = save_serrno;
       return(-1);
     }
@@ -228,6 +229,7 @@ int migratorCallbackFileCopied(
                                      file
                                    );
         if ( blkid != NULL ) free(blkid);
+        if ( castorFileId != NULL ) free(castorFileId);
         serrno = save_serrno;
         return(-1);
       }
@@ -238,6 +240,7 @@ int migratorCallbackFileCopied(
       if ( rc == -1 ) {
         LOG_SYSCALL_ERR("rtcpcld_updcFileMigrated()");
         if ( blkid != NULL ) free(blkid);
+        if ( castorFileId != NULL ) free(castorFileId);
         return(-1);
       }
       /*
@@ -274,12 +277,14 @@ int migratorCallbackFileCopied(
     if ( rtcpcld_lockTape() == -1 ) {
       LOG_SYSCALL_ERR("rtcpcld_lockTape()");
       if ( blkid != NULL ) free(blkid);
+      if ( castorFileId != NULL ) free(castorFileId);
       return(-1);
     }
     rtcpcld_cleanupFile(file);
     if ( rtcpcld_unlockTape() == -1 ) {
       LOG_SYSCALL_ERR("rtcpcld_unlockTape()");
       if ( blkid != NULL ) free(blkid);
+      if ( castorFileId != NULL ) free(castorFileId);
       return(-1);
     }
   } else {
@@ -293,11 +298,13 @@ int migratorCallbackFileCopied(
     if ( rc == -1 ) {
       LOG_SYSCALL_ERR("rtcpcld_updcMigrFailed()");
       if ( blkid != NULL ) free(blkid);
+      if ( castorFileId != NULL ) free(castorFileId);
       return(-1);
     }
   }
 
   if ( blkid != NULL ) free(blkid);
+  if ( castorFileId != NULL ) free(castorFileId);
   return(0);
 }
 
@@ -452,7 +459,7 @@ int migratorCallback(
     func = "processTapePositionCallback";
     if ( (tapereq->tprc != 0) ||
          (filereq->cprc != 0) ) {
-      msgNo = RTCPCLD_MSG_CALLBACK_CP;
+      msgNo = RTCPCLD_MSG_COPYFAILED;
       func = "processFileCopyCallback";
       rc = migratorCallbackFileCopied(
                                       tapereq,
@@ -467,6 +474,10 @@ int migratorCallback(
                                     tapereq,
                                     filereq
                                     );
+    if ( (tapereq->tprc != 0) ||
+         (filereq->cprc != 0) ) {
+      msgNo = RTCPCLD_MSG_COPYFAILED;
+    }
     break;
   case RTCP_REQUEST_MORE_WORK:
     msgNo = RTCPCLD_MSG_CALLBACK_GETW;
@@ -483,7 +494,7 @@ int migratorCallback(
     func = "unprocessedCallback";
     if ( (tapereq->tprc != 0) ||
          (filereq->cprc != 0) ) {
-      msgNo = RTCPCLD_MSG_CALLBACK_CP;
+      msgNo = RTCPCLD_MSG_COPYFAILED;
       func = "processFileCopyCallback";
       rc = migratorCallbackFileCopied(
                                       tapereq,

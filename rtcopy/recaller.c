@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/12/08 15:37:28 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/12/09 12:25:39 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/12/08 15:37:28 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/12/09 12:25:39 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -517,7 +517,7 @@ int recallerCallback(
     if ( file != NULL ) file->filereq.proc_status = filereq->proc_status;
     if ( (tapereq->tprc != 0) ||
          (filereq->cprc != 0) ) {
-      msgNo = RTCPCLD_MSG_CALLBACK_CP;
+      msgNo = RTCPCLD_MSG_COPYFAILED;
       func = "processFileCopyCallback";
       rc = recallerCallbackFileCopied(
                                       tapereq,
@@ -535,6 +535,10 @@ int recallerCallback(
                                     filereq
                                     );
     if ( rc == -1 ) save_serrno = serrno;
+    if ( (tapereq->tprc != 0) ||
+         (filereq->cprc != 0) ) {
+      msgNo = RTCPCLD_MSG_COPYFAILED;
+    }
     break;
   case RTCP_REQUEST_MORE_WORK:
     msgNo = RTCPCLD_MSG_CALLBACK_GETW;
@@ -555,7 +559,7 @@ int recallerCallback(
     if ( file != NULL ) file->filereq.proc_status = filereq->proc_status;
     if ( (tapereq->tprc != 0) ||
          (filereq->cprc != 0) ) {
-      msgNo = RTCPCLD_MSG_CALLBACK_CP;
+      msgNo = RTCPCLD_MSG_COPYFAILED;
       func = "processFileCopyCallback";
       rc = recallerCallbackFileCopied(
                                       tapereq,
