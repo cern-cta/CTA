@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.6 1999/12/09 13:47:40 jdurand Exp $
+ * $Id: stgconvert.c,v 1.7 2000/01/06 13:29:56 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:47:40 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.7 $ $Date: 2000/01/06 13:29:56 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -27,7 +27,7 @@ static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.6 $ $Date: 19
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <log.h>
+#include <ctype.h>
 
 /* =============================================================== */
 /* Local headers for threads : to be included before ANYTHING else */
@@ -37,10 +37,12 @@ static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.6 $ $Date: 19
 #include "Cstage_db.h"              /* Generated STAGE/Cdb header */
 #include "stage.h"                  /* SHIFT's header */
 #include "serrno.h"                 /* CASTOR's serrno */
+#include "u64subr.h"
 
 /* =============== */
 /* Local variables */
 /* =============== */
+int warns = 1;
 
 /* ====== */
 /* Macros */
@@ -62,22 +64,104 @@ static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.6 $ $Date: 19
 
 #define CDB_USERNAME "Cdb_Stage_User"
 #define CDB_PASSWORD "Cdb_Stage_Password"
+#define FREQUENCY 1000
 
-#ifdef __STDC__
-#define CONST const
-#else
-#define CONST
-#endif
+#define STCCMP_VAL(member) {                                                    \
+  printf("%10s : %10d ... %10d ... %10s ... %10s\n", #member ,                  \
+         (int) stcp1->member,(int) stcp2->member,                               \
+         stcp1->member == stcp2->member ? "OK" : "NOT OK",                      \
+         memcmp(&(stcp1->member),&(stcp2->member),sizeof(stcp1->member)) == 0 ? \
+         "OK" : "NOT OK");                                                      \
+  if (stcp1->member != stcp2->member || memcmp(&(stcp1->member),&(stcp2->member),sizeof(stcp1->member)) != 0) {   \
+    printf("... Dump of %s entry in catalog:\n", #member );                     \
+    stgconvert_dump((char *) &(stcp1->member),sizeof(stcp1->member));           \
+    printf("... Dump of %s entry in Cdb:\n", #member );                         \
+    stgconvert_dump((char *) &(stcp2->member),sizeof(stcp2->member));           \
+  }                                                                             \
+}
+
+#define STCCMP_CHAR(member) {                                                   \
+  printf("%10s : %10c ... %10c ... %10s ... %10s\n", #member ,                  \
+         stcp1->member != '\0' ? stcp1->member : ' ',stcp2->member != '\0' ? stcp2->member : ' ',                 \
+         stcp1->member == stcp2->member ? "OK" : "NOT OK",                      \
+         memcmp(&(stcp1->member),&(stcp2->member),sizeof(stcp1->member)) == 0 ? \
+         "OK" : "NOT OK");                                                      \
+  if (stcp1->member != stcp2->member || memcmp(&(stcp1->member),&(stcp2->member),sizeof(stcp1->member)) != 0) {   \
+    printf("... Dump of %s entry in catalog:\n", #member );                     \
+    stgconvert_dump(&(stcp1->member),sizeof(stcp1->member));                    \
+    printf("... Dump of %s entry in Cdb:\n", #member );                         \
+    stgconvert_dump(&(stcp2->member),sizeof(stcp2->member));                    \
+  }                                                                             \
+}
+
+#define STCCMP_STRING(member) {                                                 \
+  printf("%10s : %10s ... %10s ... %10s ... %10s\n", #member ,                  \
+         stcp1->member,stcp2->member,                                           \
+         strcmp(stcp1->member,stcp2->member) == 0 ? "OK" : "NOT OK",            \
+         memcmp(stcp1->member,stcp2->member,sizeof(stcp1->member)) == 0 ?       \
+         "OK" : "NOT OK");                                                      \
+  if (strcmp(stcp1->member,stcp2->member) != 0 || memcmp(stcp1->member,stcp2->member,sizeof(stcp1->member)) != 0) {   \
+    printf("... Dump of %s entry in catalog:\n", #member );                     \
+    stgconvert_dump(stcp1->member,sizeof(stcp1->member));                       \
+    printf("... Dump of %s entry in Cdb:\n", #member );                         \
+    stgconvert_dump(stcp2->member,sizeof(stcp2->member));                       \
+  }                                                                             \
+}
+
+#define STPCMP_VAL(member) {                                                    \
+  printf("%10s : %10d ... %10d ... %10s ... %10s\n", #member ,                  \
+         (int) stpp1->member,(int) stpp2->member,                               \
+         stpp1->member == stpp2->member ? "OK" : "NOT OK",                      \
+         memcmp(&(stpp1->member),&(stpp2->member),sizeof(stpp1->member)) == 0 ? \
+         "OK" : "NOT OK");                                                      \
+  if (stpp1->member != stpp2->member || memcmp(&(stpp1->member),&(stpp2->member),sizeof(stpp1->member)) != 0) {   \
+    printf("... Dump of %s entry in catalog:\n", #member );                     \
+    stgconvert_dump((char *) &(stpp1->member),sizeof(stpp1->member));           \
+    printf("... Dump of %s entry in Cdb:\n", #member );                         \
+    stgconvert_dump((char *) &(stpp2->member),sizeof(stpp2->member));           \
+  }                                                                             \
+}
+
+#define STPCMP_CHAR(member) {                                                   \
+  printf("%10s : %10c ... %10c ... %10s ... %10s\n", #member ,                  \
+         stpp1->member != '\0' ? stpp1->member : ' ',stpp2->member != '\0' ? stpp2->member : ' ',                 \
+         stpp1->member == stpp2->member ? "OK" : "NOT OK",                      \
+         memcmp(&(stpp1->member),&(stpp2->member),sizeof(stpp1->member)) == 0 ? \
+         "OK" : "NOT OK");                                                      \
+  if (stpp1->member != stpp2->member || memcmp(&(stpp1->member),&(stpp2->member),sizeof(stpp1->member)) != 0) {   \
+    printf("... Dump of %s entry in catalog:\n", #member );                     \
+    stgconvert_dump(&(stpp1->member),sizeof(stpp1->member));                    \
+    printf("... Dump of %s entry in Cdb:\n", #member );                         \
+    stgconvert_dump(&(stpp2->member),sizeof(stpp2->member));                    \
+  }                                                                             \
+}
+
+#define STPCMP_STRING(member) {                                                 \
+  printf("%10s : %10s ... %10s ... %10s ... %10s\n", #member ,                  \
+         stpp1->member,stpp2->member,                                           \
+         strcmp(stpp1->member,stpp2->member) == 0 ? "OK" : "NOT OK",            \
+         memcmp(stpp1->member,stpp2->member,sizeof(stpp1->member)) == 0 ?       \
+         "OK" : "NOT OK");                                                      \
+  if (strcmp(stpp1->member,stpp2->member) != 0 || memcmp(stpp1->member,stpp2->member,sizeof(stpp1->member)) != 0) {   \
+    printf("... Dump of %s entry in catalog:\n", #member );                     \
+    stgconvert_dump(stpp1->member,sizeof(stpp1->member));                       \
+    printf("... Dump of %s entry in Cdb:\n", #member );                         \
+    stgconvert_dump(stpp2->member,sizeof(stpp2->member));                       \
+  }                                                                             \
+}
 
 /* =================== */
 /* Internal prototypes */
 /* =================== */
 void stgconvert_usage _PROTO(());
-int stcpcmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
-int stppcmp _PROTO((struct stgpath_entry *, struct stgpath_entry *));
+int stcpcmp _PROTO((struct stgcat_entry *, struct stgcat_entry *, int));
+int stppcmp _PROTO((struct stgpath_entry *, struct stgpath_entry *, int));
+void stcpprint _PROTO((struct stgcat_entry *, struct stgcat_entry *));
+void stppprint _PROTO((struct stgpath_entry *, struct stgpath_entry *));
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
 int stgdb_stppcmp _PROTO((CONST void *, CONST void *));
-
+void stgconvert_dump _PROTO((char *, unsigned int));
+void stgconvert_dump2 _PROTO((char *, char *, unsigned int));
 
 int main(argc,argv)
      int argc;
@@ -104,6 +188,7 @@ int main(argc,argv)
   int Cdb_db_opened = 0;
   int no_stgcat = 0;
   int no_stgpath = 0;
+  int bindiff = 0;
   int maxstcp = -1;
   int maxstpp = -1;
   char *error = NULL;
@@ -120,9 +205,14 @@ int main(argc,argv)
   struct stgcat_alloc alloc;
   Cdb_off_t Cdb_offset;
   char t_or_d = '\0';
+  char tmpbuf[21];
+  int frequency = FREQUENCY;
 
-  while ((c = getopt(argc,argv,"c:Cg:hl:Lu:p:t:v")) != EOF) {
+  while ((c = getopt(argc,argv,"bc:Cg:hl:Ln:u:p:qt:v")) != EOF) {
     switch (c) {
+    case 'b':
+      bindiff = 1;
+      break;
     case 'c':
       maxstcp = atoi(optarg);
       break;
@@ -140,6 +230,12 @@ int main(argc,argv)
       break;
     case 'L':
       no_stgpath = 1;
+      break;
+    case 'n':
+      frequency = atoi(optarg);
+      break;
+    case 'q':
+      warns = 0;
       break;
     case 'u':
       Cdb_username = optarg;
@@ -256,26 +352,30 @@ int main(argc,argv)
   /* he will overwrite existing non-zero length files. We then check if that's really what */
   /* he wants to do.                                                                       */
   if (convert_direction == CASTOR_TO_SHIFT) {
-    if ((no_stgcat == 0  && stgcat_statbuff.st_size > 0) || 
-        (no_stgpath == 0 && stgpath_statbuff.st_size > 0)) {
-      int answer;
-
-      printf("### WARNING : You are going to truncate a SHIFT catalog that is of non-zero length\n");
-      if (no_stgcat == 0) {
-        printf("### Current %s length  : 0x%lx\n",stgcat,(unsigned long) stgcat_statbuff.st_size);
+    if (warns != 0) {
+      if ((no_stgcat == 0  && stgcat_statbuff.st_size > 0) || 
+          (no_stgpath == 0 && stgpath_statbuff.st_size > 0)) {
+        int answer;
+        
+        printf("### Warning : You are going to truncate a SHIFT catalog that is of non-zero length\n");
+        if (no_stgcat == 0) {
+          printf("### Current %s length  : %s\n",stgcat,
+                 u64tostr((u_signed64) stgcat_statbuff.st_size, tmpbuf, 0));
+        }
+        if (no_stgpath == 0) {
+          printf("### Current %s length : %s\n",stgpath,
+                 u64tostr((u_signed64) stgpath_statbuff.st_size, tmpbuf, 0));
+        }
+        printf("### Do you really want to proceed (y/n) ? ");
+        
+        answer = getchar();
+        if (answer != 'y' && answer != 'Y') {
+          rc = EXIT_FAILURE;
+          goto stgconvert_return;
+        }
+        /* User said yes. This means that we are going to truncate the files if they already exist */
+        /* and have non-zero length.                                                               */
       }
-      if (no_stgpath == 0) {
-        printf("### Current %s length : 0x%lx\n",stgpath,(unsigned long) stgpath_statbuff.st_size);
-      }
-      printf("### Do you really want to proceed (y/n) ? ");
-      
-      answer = getchar();
-      if (answer != 'y' && answer != 'Y') {
-        rc = EXIT_FAILURE;
-        goto stgconvert_return;
-      }
-      /* User said yes. This means that we are going to truncate the files if they already exist */
-      /* and have non-zero length.                                                               */
     }
   }
 
@@ -331,6 +431,7 @@ int main(argc,argv)
           rc = EXIT_FAILURE;
           goto stgconvert_return;
         }
+        printf("... Loading %s\n",stgcat);
         if (read(stgcat_fd,stcs,stgcat_statbuff.st_size) != stgcat_statbuff.st_size) {
           printf("### read error, %s\n",strerror(errno));
           rc = EXIT_FAILURE;
@@ -338,7 +439,7 @@ int main(argc,argv)
         }
       }
       stce = stcs;
-      stce += stgcat_statbuff.st_size;
+      stce += (stgcat_statbuff.st_size/sizeof(struct stgcat_entry));
       /* We count the number of entries in the catalog */
       for (stcp = stcs; stcp < stce; stcp++) {
         if (stcp->reqid == 0) {
@@ -357,6 +458,7 @@ int main(argc,argv)
           rc = EXIT_FAILURE;
           goto stgconvert_return;
         }
+        printf("... Loading %s\n",stgpath);
         if (read(stgpath_fd,stps,stgpath_statbuff.st_size) != stgpath_statbuff.st_size) {
           printf("### read error, %s\n",strerror(errno));
           rc = EXIT_FAILURE;
@@ -364,7 +466,7 @@ int main(argc,argv)
         }
       }
       stpe = stps;
-      stpe += stgpath_statbuff.st_size;
+      stpe += (stgpath_statbuff.st_size/sizeof(struct stgpath_entry));
       for (stpp = stps; stpp < stpe; stpp++) {
         struct stgpath_entry *stpp2;
         struct stgpath_entry *stppok;
@@ -385,6 +487,8 @@ int main(argc,argv)
       i = 0;
       for (stcp = stcs; stcp < stce; stcp++) {
         if (stcp->reqid == 0) {
+          printf("==> %6d over a total of %6d stgcat entries have been transfered\n",
+                 i,nstcp);
           break;
         }
         ++i;
@@ -407,8 +511,11 @@ int main(argc,argv)
                    ,tape.reqid
                    ,sstrerror(serrno));
           } else {
-            printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_tape\" [c_time=0x%lx,VID[0]=%s,FSEQ=%s] at offset 0x%lx\n",
-                   i,nstcp,tape.reqid,tape.c_time,tape.vid[0],tape.fseq,(unsigned long) Cdb_offset);
+            if (i == 1 || i % frequency == 0) {
+              printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_tape\" [c_time=0x%lx,VID[0]=%s,FSEQ=%s] at offset %s\n",
+                     i,nstcp,tape.reqid,(unsigned long) tape.c_time,tape.vid[0],tape.fseq,
+                     u64tostr((u_signed64) Cdb_offset, tmpbuf, 0));
+            }
           }
           break;
         case 'd':
@@ -417,8 +524,11 @@ int main(argc,argv)
                    ,disk.reqid
                    ,sstrerror(serrno));
           } else {
-            printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_disk\" [c_time=0x%lx,xfile=%s] at offset 0x%lx\n",
-                   i,nstcp,disk.reqid,disk.c_time,disk.xfile,(unsigned long) Cdb_offset);
+            if (i == 1 || i % frequency == 0) {
+              printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_disk\" [c_time=0x%lx,xfile=%s] at offset %s\n",
+                     i,nstcp,disk.reqid,(unsigned long) disk.c_time,disk.xfile,
+                     u64tostr((u_signed64) Cdb_offset, tmpbuf, 0));
+            }
           }
           break;
         case 'm':
@@ -427,8 +537,11 @@ int main(argc,argv)
                    ,hsm.reqid
                    ,sstrerror(serrno));
           } else {
-            printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_hsm\" [c_time=0x%lx,xfile=%s] at offset 0x%lx\n",
-                   i,nstcp,hsm.reqid,hsm.c_time,hsm.xfile,(unsigned long) Cdb_offset);
+            if (i == 1 || i % frequency == 0) {
+              printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_hsm\" [c_time=0x%lx,xfile=%s] at offset %s\n",
+                     i,nstcp,hsm.reqid,(unsigned long) hsm.c_time,hsm.xfile,
+                     u64tostr((u_signed64) Cdb_offset, tmpbuf, 0));
+            }
           }
           break;
         case 'a':
@@ -437,8 +550,11 @@ int main(argc,argv)
                    ,alloc.reqid
                    ,sstrerror(serrno));
           } else {
-            printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_alloc\" [c_time=0x%lx,xfile=%s] at offset 0x%lx\n",
-                   i,nstcp,alloc.reqid,alloc.c_time,alloc.xfile,(unsigned long) Cdb_offset);
+            if (i == 1 || i % frequency == 0) {
+              printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_alloc\" [c_time=0x%lx,xfile=%s] at offset %s\n",
+                     i,nstcp,alloc.reqid,(unsigned long) alloc.c_time,alloc.xfile,
+                     u64tostr((u_signed64) Cdb_offset, tmpbuf, 0));
+            }
           }
           break;
         default:
@@ -458,6 +574,8 @@ int main(argc,argv)
       i = 0;
       for (stpp = stps; stpp < stpe; stpp++) {
         if (stpp->reqid == 0) {
+          printf("==> %6d over a total of %6d stgcat entries have been transfered\n",
+                 i,nstpp);
           break;
         }
         ++i;
@@ -468,18 +586,25 @@ int main(argc,argv)
           printf("### stpp2Cdb (eg. stgpath -> Cdb on-the-fly) conversion error for reqid = %d\n",stpp->reqid);
         }
 
-        /* stgpath can have multiple entries - We silently deleted previous one it it */
-        /* exists.                                                                    */
+        /* stgpath can have multiple entries - We silently delete previous one if it */
+        /* exists.                                                                   */
         if (Cdb_keyfind(&Cdb_db,"stgcat_link","stgcat_link_per_reqid","w",&link,&Cdb_offset) == 0) {
+          if (warns != 0) {
+            printf("### Warning (harmless) : stpp entry with reqid %6d yet exists at offset %s.\n",
+                   link.reqid,
+                   u64tostr((u_signed64) Cdb_offset, tmpbuf, 0));
+          }
           if (Cdb_delete(&Cdb_db,"stgcat_link",&Cdb_offset) != 0) {
             printf("### Cannot delete previous stgpath occurence for reqid=%d\n",link.reqid);
             if (Cdb_unlock(&Cdb_db,"stgcat_link",&Cdb_offset) != 0) {
-              printf("### Cannot remove lock in Cdb at offset 0x%lx\n",(unsigned long) Cdb_offset);
+              printf("### Cannot remove lock in Cdb at offset %s\n",
+                     u64tostr((u_signed64) Cdb_offset, tmpbuf, 0));
             }
             continue;
           }
           if (Cdb_unlock(&Cdb_db,"stgcat_link",&Cdb_offset) != 0) {
-            printf("### Cannot remove lock in Cdb at offset 0x%lx\n",(unsigned long) Cdb_offset);
+            printf("### Cannot remove lock in Cdb at offset %s\n",
+                   u64tostr((u_signed64) Cdb_offset, tmpbuf, 0));
           }
         }
 
@@ -489,8 +614,11 @@ int main(argc,argv)
                  ,stpp->reqid
                  ,sstrerror(serrno));
         } else {
-          printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_link\" [upath=%s] at offset 0x%lx\n",
-                 i,nstpp,link.reqid,link.upath,(unsigned long) Cdb_offset);
+          if (i == 1 || i % frequency == 0) {
+            printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_link\" [upath=%s] at offset %s\n",
+                   i,nstpp,link.reqid,link.upath,
+                   u64tostr((u_signed64) Cdb_offset, tmpbuf, 0));
+          }
         }
       }
     }
@@ -552,7 +680,10 @@ int main(argc,argv)
         if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
           printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
         } else {
-          printf("--> (%6d) reqid = %d OK\n",++i,thisstcp.reqid);
+          ++i;
+          if (i == 1 || i % frequency == 0) {
+            printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+          }
         }
 
       }
@@ -595,7 +726,10 @@ int main(argc,argv)
         if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
           printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
         } else {
-          printf("--> (%6d) reqid = %d OK\n",++i,thisstcp.reqid);
+          ++i;
+          if (i == 1 || i % frequency == 0) {
+            printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+          }
         }
       }
 
@@ -637,7 +771,10 @@ int main(argc,argv)
         if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
           printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
         } else {
-          printf("--> (%6d) reqid = %d OK\n",++i,thisstcp.reqid);
+          ++i;
+          if (i == 1 || i % frequency == 0) {
+            printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+          }
         }
       }
 
@@ -679,7 +816,10 @@ int main(argc,argv)
         if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
           printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
         } else {
-          printf("--> (%6d) reqid = %d OK\n",++i,thisstcp.reqid);
+          ++i;
+          if (i == 1 || i % frequency == 0) {
+            printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+          }
         }
       }
 
@@ -709,15 +849,19 @@ int main(argc,argv)
                 printf("### lseek error on \"%s\" (%s)\n",stgcat,strerror(errno));
                 printf("### No stgcat sorting possible\n");
               } else {
+                printf("... Re-loading %s\n",stgcat);
                 if (read(stgcat_fd,stcpall,statbuff.st_size) != statbuff.st_size) {
                   printf("### read error on \"%s\" (%s)\n",stgcat,strerror(errno));
                   printf("### No stgcat sorting possible\n");
                 } else {
-                  qsort(stcpall,statbuff.st_size, sizeof(struct stgcat_entry), &stgdb_stcpcmp);
+                  printf("... Sorting %s content\n",stgcat);
+                  qsort(stcpall,statbuff.st_size/sizeof(struct stgcat_entry),
+                        sizeof(struct stgcat_entry), &stgdb_stcpcmp);
                   if (lseek(stgcat_fd,0,SEEK_SET) < 0) {
                     printf("### lseek error on \"%s\" (%s)\n",stgcat,strerror(errno));
                     printf("### No stgcat sorted output possible\n");
                   } else {
+                    printf("... Saving %s\n",stgcat);
                     if (write(stgcat_fd,stcpall,statbuff.st_size) != statbuff.st_size) {
                       printf("### write error on \"%s\" (%s)\n",stgcat,strerror(errno));
                       printf("### Sorted stgcat output probably corrupted\n");
@@ -763,7 +907,10 @@ int main(argc,argv)
           if (write(stgpath_fd,&thisstpp,sizeof(struct stgpath_entry)) != sizeof(struct stgpath_entry)) {
             printf("### write() error on %s (%s)\n",stgpath,strerror(errno));
           } else {
-            printf("--> (%6d) reqid = %d converted back\n",++i,thisstpp.reqid);
+            ++i;
+            if (i == 1 || i % frequency == 0) {
+              printf("--> (%6d) reqid = %d converted back\n",i,thisstpp.reqid);
+            }
           }
         }
       }
@@ -793,15 +940,19 @@ int main(argc,argv)
                 printf("### lseek error on \"%s\" (%s)\n",stgpath,strerror(errno));
                 printf("### No stgpath sorting possible\n");
               } else {
+                printf("... Re-loading %s\n",stgpath);
                 if (read(stgpath_fd,stppall,statbuff.st_size) != statbuff.st_size) {
                   printf("### read error on \"%s\" (%s)\n",stgpath,strerror(errno));
                   printf("### No stgpath sorting possible\n");
                 } else {
-                  qsort(stppall,statbuff.st_size, sizeof(struct stgpath_entry), &stgdb_stppcmp);
+                  printf("... Sorting %s content\n",stgpath);
+                  qsort(stppall,statbuff.st_size/sizeof(struct stgpath_entry),
+                        sizeof(struct stgpath_entry), &stgdb_stppcmp);
                   if (lseek(stgpath_fd,0,SEEK_SET) < 0) {
                     printf("### lseek error on \"%s\" (%s)\n",stgpath,strerror(errno));
                     printf("### No stgpath sorted output possible\n");
                   } else {
+                    printf("... Saving %s\n",stgpath);
                     if (write(stgpath_fd,stppall,statbuff.st_size) != statbuff.st_size) {
                       printf("### write error on \"%s\" (%s)\n",stgpath,strerror(errno));
                       printf("### Sorted stgpath output probably corrupted\n");
@@ -833,6 +984,7 @@ int main(argc,argv)
           rc = EXIT_FAILURE;
           goto stgconvert_return;
         }
+        printf("... Loading %s\n",stgcat);
         if (read(stgcat_fd,stcs,stgcat_statbuff.st_size) != stgcat_statbuff.st_size) {
           printf("### read error, %s\n",strerror(errno));
           rc = EXIT_FAILURE;
@@ -840,7 +992,7 @@ int main(argc,argv)
         }
       }
       stce = stcs;
-      stce += stgcat_statbuff.st_size;
+      stce += (stgcat_statbuff.st_size/sizeof(struct stgcat_entry));
       /* We count the number of entries in the catalog */
       for (stcp = stcs; stcp < stce; stcp++) {
         if (stcp->reqid == 0) {
@@ -859,6 +1011,7 @@ int main(argc,argv)
           rc = EXIT_FAILURE;
           goto stgconvert_return;
         }
+        printf("... Loading %s\n",stgpath);
         if (read(stgpath_fd,stps,stgpath_statbuff.st_size) != stgpath_statbuff.st_size) {
           printf("### read error, %s\n",strerror(errno));
           rc = EXIT_FAILURE;
@@ -866,7 +1019,7 @@ int main(argc,argv)
         }
       }
       stpe = stps;
-      stpe += stgpath_statbuff.st_size;
+      stpe += (stgpath_statbuff.st_size/sizeof(struct stgpath_entry));
       for (stpp = stps; stpp < stpe; stpp++) {
         if (stpp->reqid == 0) {
           break;
@@ -909,7 +1062,7 @@ int main(argc,argv)
             break;
           }
           if (stcp->reqid == thisstcp.reqid) {
-            cmp_status = stcpcmp(stcp,&thisstcp);
+            cmp_status = stcpcmp(stcp,&thisstcp,bindiff);
             /* We put reqid to its minus version so that we will know */
             /* that this value has been previously scanned... */
             stcp->reqid *= -1;
@@ -917,13 +1070,19 @@ int main(argc,argv)
           }
         }
 
+        ++i;
         if (cmp_status == -2) {
-          printf("### (%6d/%6d) reqid = %d is NOT IN %s\n",++i,nstcp,thisstcp.reqid,stgcat);
+          printf("### (%6d/%6d) reqid = %d is NOT IN %s\n",i,nstcp,thisstcp.reqid,stgcat);
           global_stgcat_cmp_status = -1;
         } else if (cmp_status == 0) {
-          printf("... (%6d/%6d) reqid = %d Comparison OK\n",++i,nstcp,thisstcp.reqid);
+          if (i == 1 || i % frequency == 0) {
+            printf("... (%6d/%6d) reqid = %d Comparison OK\n",i,nstcp,thisstcp.reqid);
+          }
         } else {
-          printf("### (%6d/%6d) reqid = %d is NOT THE SAME\n",++i,nstcp,thisstcp.reqid);
+          printf("### (%6d/%6d) reqid = %d is NOT THE SAME\n",i,nstcp,thisstcp.reqid);
+          stcp->reqid *= -1;
+          stcpprint(stcp,&thisstcp);
+          stcp->reqid *= -1;
           global_stgcat_cmp_status = -1;
         }
 
@@ -968,20 +1127,26 @@ int main(argc,argv)
             break;
           }
           if (stcp->reqid == thisstcp.reqid) {
-            cmp_status = stcpcmp(stcp,&thisstcp);
+            cmp_status = stcpcmp(stcp,&thisstcp,bindiff);
             /* We put reqid to its minus version so that we will know */
             /* that this value has been previously scanned... */
             stcp->reqid *= -1;
             break;
           }
         }
+        ++i;
         if (cmp_status == -2) {
-          printf("### (%6d/%6d) reqid = %d is NOT IN %s\n",++i,nstcp,thisstcp.reqid,stgcat);
+          printf("### (%6d/%6d) reqid = %d is NOT IN %s\n",i,nstcp,thisstcp.reqid,stgcat);
           global_stgcat_cmp_status = -1;
         } else if (cmp_status == 0) {
-          printf("... (%6d/%6d) reqid = %d Comparison OK\n",++i,nstcp,thisstcp.reqid);
+          if (i == 1 || i % frequency == 0) {
+            printf("... (%6d/%6d) reqid = %d Comparison OK\n",i,nstcp,thisstcp.reqid);
+          }
         } else {
-          printf("### (%6d/%6d) reqid = %d is NOT THE SAME\n",++i,nstcp,thisstcp.reqid);
+          printf("### (%6d/%6d) reqid = %d is NOT THE SAME\n",i,nstcp,thisstcp.reqid);
+          stcp->reqid *= -1;
+          stcpprint(stcp,&thisstcp);
+          stcp->reqid *= -1;
           global_stgcat_cmp_status = -1;
         }
       }
@@ -1025,20 +1190,26 @@ int main(argc,argv)
             break;
           }
           if (stcp->reqid == thisstcp.reqid) {
-            cmp_status = stcpcmp(stcp,&thisstcp);
+            cmp_status = stcpcmp(stcp,&thisstcp,bindiff);
             /* We put reqid to its minus version so that we will know */
             /* that this value has been previously scanned... */
             stcp->reqid *= -1;
             break;
           }
         }
+        ++i;
         if (cmp_status == -2) {
-          printf("### (%6d/%6d) reqid = %d is NOT IN %s\n",++i,nstcp,thisstcp.reqid,stgcat);
+          printf("### (%6d/%6d) reqid = %d is NOT IN %s\n",i,nstcp,thisstcp.reqid,stgcat);
           global_stgcat_cmp_status = -1;
         } else if (cmp_status == 0) {
-          printf("... (%6d/%6d) reqid = %d Comparison OK\n",++i,nstcp,thisstcp.reqid);
+          if (i == 1 || i % frequency == 0) {
+            printf("... (%6d/%6d) reqid = %d Comparison OK\n",i,nstcp,thisstcp.reqid);
+          }
         } else {
-          printf("### (%6d/%6d) reqid = %d is NOT THE SAME\n",++i,nstcp,thisstcp.reqid);
+          printf("### (%6d/%6d) reqid = %d is NOT THE SAME\n",i,nstcp,thisstcp.reqid);
+          stcp->reqid *= -1;
+          stcpprint(stcp,&thisstcp);
+          stcp->reqid *= -1;
           global_stgcat_cmp_status = -1;
         }
       }
@@ -1082,20 +1253,26 @@ int main(argc,argv)
             break;
           }
           if (stcp->reqid == thisstcp.reqid) {
-            cmp_status = stcpcmp(stcp,&thisstcp);
+            cmp_status = stcpcmp(stcp,&thisstcp,bindiff);
             /* We put reqid to its minus version so that we will know */
             /* that this value has been previously scanned... */
             stcp->reqid *= -1;
             break;
           }
         }
+        ++i;
         if (cmp_status == -2) {
-          printf("### (%6d/%6d) reqid = %d is NOT IN %s\n",++i,nstcp,thisstcp.reqid,stgcat);
+          printf("### (%6d/%6d) reqid = %d is NOT IN %s\n",i,nstcp,thisstcp.reqid,stgcat);
           global_stgcat_cmp_status = -1;
         } else if (cmp_status == 0) {
-          printf("... (%6d/%6d) reqid = %d Comparison OK\n",++i,nstcp,thisstcp.reqid);
+          if (i == 1 || i % frequency == 0) {
+            printf("... (%6d/%6d) reqid = %d Comparison OK\n",i,nstcp,thisstcp.reqid);
+          }
         } else {
-          printf("### (%6d/%6d) reqid = %d is NOT THE SAME\n",++i,nstcp,thisstcp.reqid);
+          printf("### (%6d/%6d) reqid = %d is NOT THE SAME\n",i,nstcp,thisstcp.reqid);
+          stcp->reqid *= -1;
+          stcpprint(stcp,&thisstcp);
+          stcp->reqid *= -1;
           global_stgcat_cmp_status = -1;
         }
       }
@@ -1131,7 +1308,7 @@ int main(argc,argv)
         int cmp_status = -2;
 
         if (Cdb2stpp(&thisstpp,&link) != 0) {
-          printf("### stpp2Cdb (eg. stgpath -> Cdb on-the-fly) conversion error for reqid = %d\n",link.reqid);
+          printf("### Cdb2stpp (eg. stgpath -> Cdb on-the-fly) conversion error for reqid = %d\n",link.reqid);
           continue;
         }
 
@@ -1142,20 +1319,26 @@ int main(argc,argv)
           /* It will compare all the version containing the same reqid, up to the last one ! */
           /* eg up to the correct one.                                                       */
           if (stpp->reqid == thisstpp.reqid) {
-            cmp_status = stppcmp(stpp,&thisstpp);
+            cmp_status = stppcmp(stpp,&thisstpp,bindiff);
             /* We put reqid to its minus version so that we will know */
             /* that this value has been previously scanned... */
             stpp->reqid *= -1;
             /* break; */
           }
         }
+        ++i;
         if (cmp_status == -2) {
-          printf("### (%6d/%6d) reqid = %d is NOT IN %s\n",++i,nstpp,thisstpp.reqid,stgpath);
+          printf("### (%6d/%6d) reqid = %d is NOT IN %s\n",i,nstpp,thisstpp.reqid,stgpath);
           global_stgcat_cmp_status = -1;
         } else if (cmp_status == 0) {
-          printf("... (%6d/%6d) reqid = %d Comparison OK\n",++i,nstpp,thisstpp.reqid);
+          if (i == 1 || i % frequency == 0) {
+            printf("... (%6d/%6d) reqid = %d Comparison OK\n",i,nstpp,thisstpp.reqid);
+          }
         } else {
-          printf("### (%6d/%6d) reqid = %d is NOT THE SAME\n",++i,nstpp,thisstpp.reqid);
+          printf("### (%6d/%6d) reqid = %d is NOT THE SAME\n",i,nstpp,thisstpp.reqid);
+          stpp->reqid *= -1;
+          stppprint(stpp,&thisstpp);
+          stpp->reqid *= -1;
           global_stgcat_cmp_status = -1;
         }
       }
@@ -1167,11 +1350,30 @@ int main(argc,argv)
         }
       }
 
-      printf("[### NOTA ### stgpath catalog in Cdb contains unique versions vs. reqid, while yours can]\n");
-      printf("[             contain multiple ones vs. reqid. That is, only the last reqid is compared.]\n");
-      printf("[             This behaviour is normal, and if the global status below is OK, then you  ]\n");
-      printf("[             are done well with stpath conversion.                                     ]\n");
+      printf("... Comparison finished, global status : %d (%s)\n",
+             global_stgcat_cmp_status,
+             global_stgcat_cmp_status == 0 ? "OK" : "NOT OK");
+      
+      /* If i != nstpp, we verify that i corresponds exactly to the number of unique entries */
+      if (i != nstpp && i > 0) {
 
+        printf("[### NOTA ### stgpath catalog in Cdb contains unique versions vs. reqid, while yours can]\n");
+        printf("[             contain multiple ones vs. reqid. That is, only the last reqid is compared.]\n");
+        printf("[             This behaviour is normal, and if the global status below is OK, then you  ]\n");
+        printf("[             are done well with stpath conversion.                                     ]\n");
+        printf("... %d != %d (total entries in %s). Checking the number of unique entries vs. reqid in the disk catalog version\n",
+               i,nstpp,stgpath);
+        
+        for (stpp = stps; stpp < stpe; stpp++) {
+          if (stpp->reqid == 0) {
+            break;
+          }
+          if (stpp->reqid > 0) {
+            printf("### %s member with reqid = %d is not seen in the dump back\n",stgpath,stpp->reqid);
+            global_stgcat_cmp_status = -1;
+          }
+        }
+      }
     }
 
     printf("... Comparison finished, global status : %d (%s)\n",
@@ -1209,6 +1411,7 @@ void stgconvert_usage() {
          "\n"
          "Options are:\n"
          "  -h                Print this help and exit\n"
+         "  -b                Do a binary diff when doing SHIFT cmp CASTOR\n"
          "  -C                Do nothing about stgcat\n"
          "  -c <number>       maximum number to convert from SHIFT to CASTOR for stgcat\n"
          "  -g <number>       Convert direction, where\n"
@@ -1217,8 +1420,10 @@ void stgconvert_usage() {
          "                    -g %2d means: CASTOR -> SHIFT\n"
          "  -l <number>       maximum number to convert from SHIFT to CASTOR for stgpath\n"
          "  -L                Do nothing about stgpath\n"
+         "  -n                Output frequency. Default is every %d entries\n"
          "  -u                Cdb username. Defaults to \"%s\"\n"
          "  -p                Cdb password. Defaults to \"%s\"\n"
+         "  -q                Do not print warnings\n"
          "  -t <type>         Restrict stgcat catalog to data of type:\n"
          "                    \"t\" (tape)\n"
          "                    \"d\" (disk)\n"
@@ -1245,20 +1450,27 @@ void stgconvert_usage() {
          "  stgconvert -g %2d /usr/spool/stage/stgcat.new /usr/spool/stage/stgpath.new\n"
          "\n"
          "Comments to castor-support@listbox.cern.ch\n"
-         "\n"
-         ,SHIFT_TO_CASTOR,SHIFT_CMP_CASTOR,CASTOR_TO_SHIFT,CDB_USERNAME,CDB_PASSWORD
-         ,SHIFT_TO_CASTOR,SHIFT_CMP_CASTOR,CASTOR_TO_SHIFT
+         "\n",
+         SHIFT_TO_CASTOR,SHIFT_CMP_CASTOR,CASTOR_TO_SHIFT,
+         FREQUENCY,
+         CDB_USERNAME,CDB_PASSWORD,
+         SHIFT_TO_CASTOR,SHIFT_CMP_CASTOR,CASTOR_TO_SHIFT
          );
 }
 
-int stcpcmp(stcp1,stcp2)
+int stcpcmp(stcp1,stcp2,bindiff)
      struct stgcat_entry *stcp1;
      struct stgcat_entry *stcp2;
+     int bindiff;
 {
   int i;
 
   if (stcp1 == NULL || stcp2 == NULL) {
     return(-2);
+  }
+
+  if (bindiff != 0) {
+    return(memcmp(stcp1,stcp2,sizeof(struct stgcat_entry)));
   }
 
   if (       stcp1->blksize               != stcp2->blksize      ||
@@ -1286,6 +1498,12 @@ int stcpcmp(stcp1,stcp2)
     printf("### ... Common part differs\n");
     return(-1);
   }
+
+  if (stcp1->t_or_d != stcp2->t_or_d) {
+    printf("### ... t_or_d differs\n");
+    return(-1);
+  }
+
   switch (stcp1->t_or_d) {
   case 't':
     if (strcmp(stcp1->u1.t.den,stcp2->u1.t.den) != 0           ||
@@ -1330,12 +1548,84 @@ int stcpcmp(stcp1,stcp2)
   return(0);
 }
 
-int stppcmp(stpp1,stpp2)
+void stcpprint(stcp1,stcp2)
+     struct stgcat_entry *stcp1;
+     struct stgcat_entry *stcp2;
+{
+  int i;
+
+  if (stcp1 == NULL || stcp2 == NULL) {
+    return;
+  }
+
+  printf("----------------------------------------------------------------\n");
+  printf("%10s : %10s ... %10s ... %10s ... %10s\n","What","Catalog","Cdb",
+         "Status","Bin Status");
+  printf("----------------------------------------------------------------\n");
+  STCCMP_VAL(blksize);
+  STCCMP_STRING(filler);
+  STCCMP_CHAR(charconv);
+  STCCMP_CHAR(keep);
+  STCCMP_VAL(lrecl);
+  STCCMP_VAL(nread);
+  STCCMP_STRING(poolname);
+  STCCMP_STRING(recfm);
+  STCCMP_VAL(size);
+  STCCMP_STRING(ipath);
+  STCCMP_CHAR(t_or_d);
+  STCCMP_STRING(group);
+  STCCMP_STRING(user);
+  STCCMP_VAL(uid);
+  STCCMP_VAL(gid);
+  STCCMP_VAL(mask);
+  STCCMP_VAL(reqid);
+  STCCMP_VAL(status);
+  STCCMP_VAL(actual_size);
+  STCCMP_VAL(c_time);
+  STCCMP_VAL(a_time);
+  STCCMP_VAL(nbaccesses);
+  if (stcp1->t_or_d == stcp2->t_or_d) {
+    switch (stcp1->t_or_d) {
+    case 't':
+      STCCMP_STRING(u1.t.den);
+      STCCMP_STRING(u1.t.dgn);
+      STCCMP_STRING(u1.t.fid);
+      STCCMP_CHAR(u1.t.filstat);
+      STCCMP_STRING(u1.t.fseq);
+      STCCMP_STRING(u1.t.lbl);
+      STCCMP_VAL(u1.t.retentd);
+      STCCMP_STRING(u1.t.tapesrvr);
+      STCCMP_CHAR(u1.t.E_Tflags);
+      for (i = 0; i < MAXVSN; i++) {
+        STCCMP_STRING(u1.t.vid[i]);
+        STCCMP_STRING(u1.t.vsn[i]);
+      }
+      break;
+    case 'd':
+    case 'a':
+      STCCMP_STRING(u1.d.xfile);
+      STCCMP_STRING(u1.d.Xparm);
+      break;
+    case 'm':
+      STCCMP_STRING(u1.m.xfile);
+      break;
+    }
+  }
+  printf("... Total dump of entry in catalog and in Cdb:\n");
+  stgconvert_dump2((char *) stcp1,(char *) stcp2, sizeof(struct stgcat_entry));
+}
+
+int stppcmp(stpp1,stpp2,bindiff)
      struct stgpath_entry *stpp1;
      struct stgpath_entry *stpp2;
+     int bindiff;
 {
   if (stpp1 == NULL || stpp2 == NULL) {
     return(-2);
+  }
+
+  if (bindiff != 0) {
+    return(memcmp(stpp1,stpp2,sizeof(struct stgpath_entry)));
   }
 
   if (stpp1->reqid != stpp2->reqid ||
@@ -1364,8 +1654,10 @@ int stgdb_stcpcmp(p1,p2)
     } else if (stcp1->reqid > stcp2->reqid) {
       return(1);
     } else {
-      printf("### Warning : two elements in stgcat have same c_time (%d) and reqid (%d)\n",
-             (int) stcp1->c_time, (int) stcp1->reqid);
+      if (warns != 0) {
+        printf("### Warning : two elements in stgcat have same c_time (%d) and reqid (%d)\n",
+               (int) stcp1->c_time, (int) stcp1->reqid);
+      }
       return(0);
     }
   }
@@ -1383,8 +1675,59 @@ int stgdb_stppcmp(p1,p2)
   } else if (stpp1->reqid > stpp2->reqid) {
     return(1);
   } else {
-    printf("### Warning : two elements in stgpath have same reqid (%d)\n",(int) stpp1->reqid);
+    if (warns != 0) {
+      printf("### Warning : two elements in stgpath have same reqid (%d)\n",(int) stpp1->reqid);
+    }
     return(0);
   }
 }
 
+void stppprint(stpp1,stpp2)
+     struct stgpath_entry *stpp1;
+     struct stgpath_entry *stpp2;
+{
+  if (stpp1 == NULL || stpp2 == NULL) {
+    return;
+  }
+
+  printf("----------------------------------------------------------------\n");
+  printf("%10s : %10s ... %10s ... %10s ... %10s\n","What","Catalog","Cdb",
+         "Status","Bin Status");
+  printf("----------------------------------------------------------------\n");
+  STPCMP_VAL(reqid);
+  STPCMP_STRING(upath);
+  printf("... Total dump of entry in catalog and in Cdb:\n");
+  stgconvert_dump2((char *) stpp1,(char *) stpp2, sizeof(struct stgpath_entry));
+}
+
+void stgconvert_dump(buffer, size)
+     char *buffer;
+     unsigned int size;
+{
+  int i;
+  for (i = 0; i < size; i++) {
+    printf("... Byte No %3d | 0x%2x (hex) %3d (dec) %c (char)\n",
+           (int) i,
+           (unsigned char) buffer[i],
+           (unsigned char) buffer[i],
+           isprint(buffer[i]) ? buffer[i] : ' ');
+  }
+}
+
+void stgconvert_dump2(buffer1, buffer2, size)
+     char *buffer1;
+     char *buffer2;
+     unsigned int size;
+{
+  int i;
+  for (i = 0; i < size; i++) {
+    printf("... Byte No %3d | 0x%2x (hex) %3d (dec) %c (char) | 0x%2x (hex) %3d (dec) %c (char)\n",
+           (int) i,
+           (unsigned char) buffer1[i],
+           (unsigned char) buffer1[i],
+           isprint(buffer1[i]) ? buffer1[i] : ' ',
+           (unsigned char) buffer2[i],
+           (unsigned char) buffer2[i],
+           isprint(buffer2[i]) ? buffer2[i] : ' ');
+  }
+}
