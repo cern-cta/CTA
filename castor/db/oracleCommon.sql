@@ -34,6 +34,7 @@ BEGIN
   FROM DiskServer, FileSystem, DiskCopy, CastorFile, TapeCopy, Stream2TapeCopy
   WHERE DiskServer.id = FileSystem.diskserver
     AND FileSystem.id = DiskCopy.filesystem
+    AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
     AND DiskCopy.castorfile = CastorFile.id
     AND TapeCopy.castorfile = Castorfile.id
     AND Stream2TapeCopy.child = TapeCopy.id
@@ -71,6 +72,7 @@ SELECT DiskServer.name, FileSystem.mountPoint, DiskCopy.path, DiskCopy.id
     AND Request.svcclass = DiskPool2SvcClass.child
     AND FileSystem.diskpool = DiskPool2SvcClass.parent
     AND FileSystem.free > CastorFile.fileSize
+    AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
     AND DiskServer.id = FileSystem.diskServer
     AND ROWNUM < 2
   ORDER by FileSystem.weight DESC;
