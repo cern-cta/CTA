@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: log.man,v $ $Revision: 1.4 $ $Date: 2001/09/26 10:02:21 $ CERN IT-PDP/DC Frederic Hemmer
+.\" @(#)$RCSfile: log.man,v $ $Revision: 1.5 $ $Date: 2001/09/26 10:03:15 $ CERN IT-PDP/DC Frederic Hemmer
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DC
 .\" All rights reserved
 .\"
-.TH LOG 3 "$Date: 2001/09/26 10:02:21 $" CASTOR "Common Library Functions"
+.TH LOG 3 "$Date: 2001/09/26 10:03:15 $" CASTOR "Common Library Functions"
 .SH NAME
 log, initlog  \- log messages
 .SH SYNOPSIS
@@ -124,6 +124,6 @@ Sep 26 11:40:24 progname[1234,4]: This is another message with other possible ar
 .LP
 .fi
 .SH "SEE ALSO"
-syslog(3), Cthread(3)
+syslog(3), Cthread(3), stdio(3)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
