@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.19 2002/05/26 07:20:45 jdurand Exp $
+ * $Id: stager_castor.c,v 1.20 2002/06/11 21:09:10 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.19 $ $Date: 2002/05/26 07:20:45 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.20 $ $Date: 2002/06/11 21:09:10 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -2535,13 +2535,14 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 	/* We fill the content of the array */
 	for (stcp = stcs; stcp < stce; stcp++) {
 		/* This is an hsm request */
-		if (hsm_totalsize == NULL || hsm_transferedsize == NULL) {
+		if ((hsm_totalsize == NULL) || (hsm_transferedsize == NULL) || (hsm_ignore == NULL)) {
 			serrno = SEINTERNAL;
 			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "No hsm_totalsize or hsm_transferedsize array (should be != NULL)",sstrerror(serrno));
 			RESTORE_EID;
 			return(-1);
 		}
+		if (hsm_ignore[ihsm] != 0) continue;
 		if ((ihsm = hsmidx_vs_ipath(stcp->ipath)) < 0) {
 			if ((ihsm = hsmidx(stcp)) < 0) {
 				serrno = SEINTERNAL;
@@ -2551,7 +2552,6 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				return(-1);
 			}
 		}
-		if (hsm_ignore[ihsm] != 0) continue;
 		if (hsm_totalsize[ihsm] == 0) {
 			serrno = SEINTERNAL;
 			SAVE_EID;
