@@ -131,7 +131,7 @@ int want_reply;
 			return (SYERR);
 		}
 	}
-	if ((n = netwrite (stg_s, reqp, reql)) <= 0) {
+	if ((n = netwrite_timeout (stg_s, reqp, reql, STGTIMEOUT)) != reql) {
 		if (n == 0)
 			fprintf (stderr, STG02, "", "send", sys_serrlist[SERRNO]);
 		else
@@ -149,7 +149,7 @@ int want_reply;
 	}
 
 	while (1) {
-		if ((n = netread (stg_s, repbuf, 3 * LONGSIZE)) <= 0) {
+		if ((n = netread_timeout (stg_s, repbuf, 3 * LONGSIZE)) != (3 * LONGSIZE)) {
 			if (n == 0)
 				fprintf (stderr, STG02, "", "recv", sys_serrlist[SERRNO]);
 			else
@@ -172,7 +172,7 @@ int want_reply;
 			(void) netclose (stg_s);
 			break;
 		}
-		if ((n = netread (stg_s, repbuf, c)) <= 0) {
+		if ((n = netread_timeout (stg_s, repbuf, c, STGTIMEOUT)) != c) {
 			if (n == 0)
 				fprintf (stderr, STG02, "", "recv", sys_serrlist[SERRNO]);
 			else

@@ -114,7 +114,7 @@ sendrep(va_alist) va_dcl
 sndmsg:
 	va_end (args);
 	repsize = rbp - repbuf;
-	if (netwrite (rpfd, repbuf, repsize) != repsize) {
+	if (netwrite_timeout (rpfd, repbuf, repsize, STGTIMEOUT) != repsize) {
 		stglogit (func, STG02, "", "write", sys_errlist[errno]);
 		if (rep_type == STAGERC)
 			close (rpfd);

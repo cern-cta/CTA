@@ -25,6 +25,12 @@ static char sccsid[] = "@(#)procalloc.c	1.8 09/05/97 CERN CN-PDP/DH Jean-Philipp
 #if SACCT
 #include "../h/sacct.h"
 #endif
+#ifdef DB
+#include <Cdb_api.h>
+#include <errno.h>
+#include "wrapdb.h"
+#endif
+
 extern char *optarg;
 extern int optind;
 extern char defpoolname[MAXPOOLNAMELEN];
@@ -33,6 +39,9 @@ extern int reqid;
 extern int rpfd;
 extern struct stgcat_entry *stce;	/* end of stage catalog */
 extern struct stgcat_entry *stcs;	/* start of stage catalog */
+#ifdef DB
+extern db_fd **db_stgcat;       /* DB connection on STGCAT catalog */
+#endif
 struct waitq *add2wq();
 
 procallocreq(req_data, clienthost)
@@ -145,8 +154,21 @@ char *clienthost;
 	stcp->c_time = time (0);
 	stcp->a_time = stcp->c_time;
 	stcp->nbaccesses++;
-	if ((c = build_ipath (upath, stcp, pool_user)) < 0) {
+	c = build_ipath (upath, stcp, pool_user);
+#ifdef DB
+	if (wrapCdb_store(db_stgcat, stcp->reqid, stcp, sizeof(struct stgcat_entry), DB_ALWAYS, 0) != 0) {
+		sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
+		goto reply;
+	}
+#endif /* DB */
+	if (c < 0) {
 		stcp->status |= WAITING_SPC;
+#ifdef DB
+		if (wrapCdb_store(db_stgcat, stcp->reqid, stcp, sizeof(struct stgcat_entry), DB_ALWAYS, 0) != 0) {
+			sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
+			goto reply;
+		}
+#endif /* DB */
 		if (!wqp) wqp = add2wq (clienthost, user,
 			stcp->uid, stcp->gid, clientpid,
 			Upluspath, reqid, STAGEALLOC, nbdskf, &wfp);
@@ -182,8 +204,16 @@ char *clienthost;
 	c = 0;
 	if (! wqp) goto reply;
 	free (argv);
+#ifdef DB
+	if (stcp != NULL)
+		free(stcp);
+#endif /* DB */
 	return;
 reply:
+#ifdef DB
+	if (stcp != NULL)
+		free(stcp);
+#endif /* DB */
 	free (argv);
 #if SACCT
 	stageacct (STGCMDC, stgreq.uid, stgreq.gid, clienthost,
@@ -192,10 +222,19 @@ reply:
 	sendrep (rpfd, STAGERC, STAGEALLOC, c);
 	if (c && wqp) {
 		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
+#ifdef DB
+			if (wrapCdb_fetch(db_stgcat,wfp->subreqid,(void **) &stcp, NULL, 0) != 0) {
+					sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
+				if (stcp != NULL)
+					free(stcp);
+				return;
+			}
+#else /* DB */
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (wfp->subreqid == stcp->reqid)
 					break;
 			}
+#endif /* DB */
 			if (! wfp->waiting_on_req)
 				updfreespace (stcp->poolname, stcp->ipath,
 					stcp->size*1024*1024);
@@ -203,6 +242,10 @@ reply:
 		}
 		rmfromwq (wqp);
 	}
+#ifdef DB
+	if (stcp != NULL)
+		free(stcp);
+#endif /* DB */
 }
 
 procgetreq(req_data, clienthost)
@@ -292,6 +335,55 @@ char *clienthost;
 	else
 		basename++;
 	found = 0;
+#ifdef DB
+	if (Cdb_altkey_rewind(db_stgcat, "u1.d.xfile") == 0) {
+		size_t db_size;
+		char *db_key = NULL;
+		char *db_data = NULL;
+		while (Cdb_altkey_nextrec(db_stgcat, "u1.d.xfile", &db_key, (void **) &db_data, &db_size) != 0) {
+			char *ptr, *ptrmax;
+			ptrmax = ptr = db_data;
+			ptrmax += db_size;
+			do {
+				size_t stcp_size;
+				int reqid;
+
+				reqid = atoi(ptr);
+				/* In case of a string, sizeof() == strlen() + 1 */
+				/* ptr points to the reqid (as a string, e.g. a master key) */
+				if (wrapCdb_fetch(db_stgcat,reqid,(void **) &stcp, NULL, 0) == 0) {
+					if (stcp != NULL) {
+						if (stcp->t_or_d != 'a') goto docontinue;
+						if (*poolname && strcmp (poolname, stcp->poolname)) goto docontinue;
+						if ((p = strrchr (stcp->u1.d.xfile, '/')) == NULL)
+							p = stcp->u1.d.xfile;
+						else
+							p++;
+						if (strcmp (p, basename)) goto docontinue;
+						p = strrchr (stcp->ipath, '/');
+						*p = '\0';
+						q = strrchr (stcp->ipath, '/');
+						if (strcmp (q+1, pool_user) == 0) {
+							*p = '/';
+							found = 1;
+							break;
+						}
+						*p = '/';
+						wrapCdb_store(db_stgcat,stcp->reqid,stcp,sizeof(struct stgcat_entry),DB_ALWAYS,0);
+					}
+				}
+			docontinue:
+				ptr += (strlen(ptr) + 1);
+			} while (ptr < ptrmax);
+		}
+		if (db_key != NULL)
+			free(db_key);
+		if (db_data != NULL)
+			free(db_data);
+		if (stcp != NULL)
+			free(stcp);
+	}
+#else /* DB */
 	for (stcp = stcs; stcp < stce; stcp++) {
 		if (stcp->reqid == 0) break;
 		if (stcp->t_or_d != 'a') continue;
@@ -311,6 +403,7 @@ char *clienthost;
 		}
 		*p = '/';
 	}
+#endif /* DB */
 	if (found == 0 ||
 	    stcp->status != (STAGEALLOC|STAGED)) {
 		sendrep (rpfd, MSG_ERR, STG22);
@@ -319,6 +412,13 @@ char *clienthost;
 	}
 	stcp->a_time = time (0);
 	stcp->nbaccesses++;
+#ifdef DB
+	if (wrapCdb_store(db_stgcat, stcp->reqid, stcp, sizeof(struct stgcat_entry), DB_ALWAYS, 0) != 0) {
+		sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
+		c = SYERR;
+		goto reply;
+	}
+#endif /* DB */
 	if (Pflag)
 		sendrep (rpfd, MSG_OUT, "%s\n", stcp->ipath);
 	if (*upath && strcmp (stcp->ipath, upath))

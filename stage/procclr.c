@@ -25,6 +25,11 @@ static char sccsid[] = "@(#)procclr.c	1.10 08/26/98 CERN CN-PDP/DH Jean-Philippe
 #if SACCT
 #include "../h/sacct.h"
 #endif
+#ifdef DB
+#include <Cdb_api.h>
+#include "wrapdb.h"
+#endif /* DB */
+
 extern char *optarg;
 extern int optind;
 extern char *rfio_serror();
@@ -37,6 +42,10 @@ extern struct stgcat_entry *stcs;	/* start of stage catalog */
 extern struct stgpath_entry *stpe;	/* end of stage path catalog */
 extern struct stgpath_entry *stps;	/* start of stage path catalog */
 extern struct waitq *waitqp;
+#ifdef DB
+extern db_fd **db_stgcat;
+extern db_fd **db_stgpath;
+#endif /* DB */
 
 procclrreq(req_data, clienthost)
 char *req_data;
@@ -70,6 +79,13 @@ char *clienthost;
 	char *user;
 	char vid[MAXVSN][7];
 	char *xfile = NULL;
+#ifdef DB
+	char *stgpoolname_entry = NULL;
+	size_t stgpoolname_size;
+	char *stgpoolname_tosearch = NULL;
+	char *stgupath_entry = NULL;
+	char *stgipath_entry = NULL;
+#endif /* DB */
 
 	poolname[0] = '\0';
 	rbp = req_data;
@@ -167,6 +183,16 @@ char *clienthost;
 		poolflag = -1;
 	found = 0;
 	if (linkname) {
+#ifdef DB
+	if (Cdb_altkey_fetch(db_stgpath, "upath", linkname, (void **) &stgupath_entry, NULL) == 0) {
+		if (wrapCdb_fetch(db_stgpath, atoi(stgupath_entry), (void **) &stpp, NULL, 0) == 0) {
+			sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
+			found = 1;
+		}
+	}
+	if (stgupath_entry != NULL)
+		free(stgupath_entry);
+#else /* DB */
 		for (stpp = stps; stpp < stpe; stpp++) {
 			if (stpp->reqid == 0) break;
 			if (strcmp (linkname, stpp->upath) == 0) {
@@ -174,6 +200,7 @@ char *clienthost;
 				break;
 			}
 		}
+#endif /* DB */
 		if (found) {
 			dellink (stpp);
 			savepath ();
@@ -183,6 +210,16 @@ char *clienthost;
 			goto reply;
 		}
 	} else if (path) {
+#ifdef DB
+		if (Cdb_altkey_fetch(db_stgpath, "upath", path, (void **) &stgupath_entry, NULL) == 0) {
+			if (wrapCdb_fetch(db_stgpath, atoi(stgupath_entry), (void **) &stpp, NULL, 0) == 0) {
+				sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
+				found = 1;
+			}
+		}
+		if (stgupath_entry != NULL)
+			free(stgupath_entry);
+#else /* DB */
 		for (stpp = stps; stpp < stpe; stpp++) {
 			if (stpp->reqid == 0) break;
 			if (strcmp (path, stpp->upath) == 0) {
@@ -190,10 +227,18 @@ char *clienthost;
 				break;
 			}
 		}
+#endif /* DB */
 		if (found) {
+#ifdef DB
+			if (wrapCdb_fetch(db_stgcat, stpp->reqid, (void **) &stcp, NULL, 0) != 0) {
+				c = SYERR;
+				goto reply;
+			}
+#else /* DB */
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (stpp->reqid == stcp->reqid) break;
 			}
+#endif /* DB */
 			if (cflag && stcp->poolname[0] &&
 			    enoughfreespace (stcp->poolname, minfree)) {
 				c = ENOUGHF;
@@ -209,6 +254,38 @@ char *clienthost;
 				goto reply;
 			}
 		} else {
+#ifdef DB
+			if (Cdb_altkey_fetch(db_stgcat, "ipath", path, (void **) &stgipath_entry, NULL) == 0) {
+				int thisreqid = atoi(stgipath_entry);
+				stglogit("procclrreq","Got ipath=%s\n",path);
+				found = 1;
+				stglogit("procclrreq","Now fetching main reqid=%d\n",thisreqid);
+				if (wrapCdb_fetch(db_stgcat, thisreqid, (void **) &stcp, NULL, 0) != 0) {
+					c = SYERR;
+					goto reply;
+				}
+				if (cflag && stcp->poolname[0] &&
+					enoughfreespace (stcp->poolname, minfree)) {
+					stglogit("procclrreq","Returning ENOUGHF\n");
+					c = ENOUGHF;
+					goto reply;
+				}
+				if (cflag && uid == 0 &&
+					checklastaccess (stcp->poolname, stcp->a_time)) {
+					stglogit("procclrreq","Returning EBUSY\n");
+					c = EBUSY;
+					goto reply;
+				}
+				if ((i = check_delete (stcp, gid, uid,
+										group, user, rflag)) > 0) {
+					stglogit("procclrreq","Returning check_delete status: %d\n",i);
+					c = i;
+					goto reply;
+				}
+			}
+			if (stgipath_entry != NULL)
+				free(stgipath_entry);
+#else /* DB */
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (stcp->reqid == 0) break;
 				if (strcmp (path, stcp->ipath) == 0) {
@@ -231,12 +308,90 @@ char *clienthost;
 				}
 			}
 		}
+#endif /* DB */
 		if (! found) {
 			sendrep (rpfd, MSG_ERR, STG33, path, "file not found");
 			c = USERR;
 			goto reply;
 		}
 	} else {
+#ifdef DB
+		/* We loop on the "poolname" database */
+		size_t db_size;
+		char *db_key = NULL;
+		char *db_data = NULL;
+    
+		Cdb_altkey_rewind(db_stgcat, "poolname");
+		while (Cdb_altkey_nextrec(db_stgcat, "poolname", &db_key, (void **) &db_data, &db_size) == 0) {
+			char *ptr, *ptrmax;
+
+			if (poolflag < 0) {	/* -p NOPOOL */
+				if (db_key[0]) continue;
+			} else if (*poolname && strcmp (poolname, db_key)) continue;
+
+			ptrmax = ptr = db_data;
+			ptrmax += db_size;
+			do {
+				int reqid;
+
+				reqid = atoi(ptr);
+				if (wrapCdb_fetch(db_stgcat, reqid, (void **) &stcp, NULL, 0) == 0) {
+					if (numvid) {
+   						if (stcp->t_or_d != 't') goto docontinue;
+						for (j = 0; j < numvid; j++)
+							if (strcmp (stcp->u1.t.vid[0], vid[j]) == 0) break;
+						if (j == numvid) goto docontinue;
+					}
+					if (lbl) {
+						if (stcp->t_or_d != 't') goto docontinue;
+						if (strcmp (lbl, stcp->u1.t.lbl)) goto docontinue;
+					}
+				   	if (fseq) {
+						if (stcp->t_or_d != 't') goto docontinue;
+						if (strcmp (fseq, stcp->u1.t.fseq)) goto docontinue;
+					}
+					if (xfile) {
+						if (stcp->t_or_d != 'd') goto docontinue;
+						if (strcmp (xfile, stcp->u1.d.xfile)) goto docontinue;
+					}
+					if (mfile) {
+						if (stcp->t_or_d != 'm') goto docontinue;
+						if (strcmp (mfile, stcp->u1.m.xfile)) goto docontinue;
+					}
+					found = 1;
+					if (cflag && stcp->poolname[0] &&
+						enoughfreespace (stcp->poolname, minfree)) {
+						c = ENOUGHF;
+						if (db_key != NULL)
+							free(db_key);
+						if (db_data != NULL)
+							free(db_data);
+						if (stcp != NULL)
+							free(stcp);
+						goto reply;
+					}
+					if ((i = check_delete (stcp, gid, uid, group, user, rflag)) > 0) {
+						c = i;
+						if (db_key != NULL)
+							free(db_key);
+						if (db_data != NULL)
+							free(db_data);
+						if (stcp != NULL)
+							free(stcp);
+						goto reply;
+					}
+				}
+			docontinue:
+				ptr += (strlen(ptr) + 1);
+			} while (ptr < ptrmax);
+		}
+		if (db_key != NULL)
+			free(db_key);
+		if (db_data != NULL)
+			free(db_data);
+		if (stcp != NULL)
+			free(stcp);
+#else /* DB */
 		for (stcp = stcs; stcp < stce; stcp++) {
 			if (stcp->reqid == 0) break;
 			if (poolflag < 0) {	/* -p NOPOOL */
@@ -276,12 +431,17 @@ char *clienthost;
 			}
 			stcp += i;
 		}
+#endif /* DB */
 		if (! found) {
 			sendrep (rpfd, MSG_ERR, STG33, "", "file not found");
 			c = USERR;
 		}
 	}
 reply:
+#ifdef DB
+	if (stcp != NULL)
+		free(stcp);
+#endif
 	free (argv);
 	sendrep (rpfd, STAGERC, STAGECLR, c);
 }

@@ -24,6 +24,11 @@ static char sccsid[] = "@(#)procupd.c	1.21 08/26/98 CERN IT-PDP/DM Jean-Philippe
 #if SACCT
 #include "../h/sacct.h"
 #endif
+#ifdef DB
+#include <Cdb_api.h>
+#include "wrapdb.h"
+#endif /* DB */
+
 extern char *optarg;
 extern int optind;
 extern char *rfio_serror();
@@ -33,6 +38,10 @@ extern int rpfd;
 extern struct stgcat_entry *stce;	/* end of stage catalog */
 extern struct stgcat_entry *stcs;	/* start of stage catalog */
 extern struct waitq *waitqp;
+#ifdef DB
+extern db_fd **db_stgcat;
+extern db_fd **db_stgpath;
+#endif /* DB */
 
 procupdreq(req_data, clienthost)
 char *req_data;
@@ -77,6 +86,9 @@ char *clienthost;
 	struct waitf *wfp;
 	struct waitq *wqp;
 	int Zflag = 0;
+#ifdef DB
+  int changed;
+#endif /* DB */
 
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);	/* login name */
@@ -199,6 +211,10 @@ char *clienthost;
 		if (! wfp->waiting_on_req) break;
 	subreqid = wfp->subreqid;
 	found = 0;
+#ifdef DB
+    if (wrapCdb_fetch(db_stgcat, subreqid, (void **) &stcp, NULL, 0) == 0)
+      found = 1;
+#else /* DB */
 	for (stcp = stcs; stcp < stce; stcp++) {
 		if (stcp->reqid == 0) break;
 		if (stcp->reqid == subreqid) {
@@ -206,6 +222,7 @@ char *clienthost;
 			break;
 		}
 	}
+#endif /* DB */
 	if (! found) {
 		sendrep (rpfd, MSG_ERR, STG22);
 		c = USERR;
@@ -219,6 +236,13 @@ char *clienthost;
 				wqp->clnreq_reqid = upd_reqid;
 				wqp->clnreq_rpfd = rpfd;
 				stcp->status |= WAITING_SPC;
+#ifdef DB
+                if (wrapCdb_store(db_stgcat,stcp->reqid,stcp,sizeof(struct stgcat_entry),DB_ALWAYS,0) != 0) {
+                  sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
+                  c = SYERR;
+                  goto reply;
+                }
+#endif
 				strcpy (wqp->waiting_pool, stcp->poolname);
 				if (c = cleanpool (stcp->poolname)) goto reply;
 				return;
@@ -230,7 +254,15 @@ char *clienthost;
 				p = strrchr (stcp->ipath, '/') + 1;
 				sprintf (p, "%s.%s.%s",
 				    stcp->u1.t.vid[0], fseq, stcp->u1.t.lbl);
+#ifdef DB
+                if (wrapCdb_store(db_stgcat,stcp->reqid,stcp,sizeof(struct stgcat_entry),DB_ALWAYS,0) != 0) {
+                  sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
+                  c = SYERR;
+                  goto reply;
+                }
+#else
 				savereqs ();
+#endif /* DB */
 			}
 		}
 		sendrep (rpfd, MSG_OUT, stcp->ipath);
@@ -247,16 +279,77 @@ char *clienthost;
 	stglogit (func, STG97, dsksrvr, strrchr (stcp->ipath, '/')+1,
 		stcp->user, stcp->group,
 		clienthost, dvn, ifce, size, waiting_time, transfer_time, rc);
-	if (stcp->status == STAGEIN && rfio_stat (stcp->ipath, &st) == 0)
+	if (stcp->status == STAGEIN && rfio_stat (stcp->ipath, &st) == 0) {
 		stcp->actual_size = st.st_size;
+#ifdef DB
+        if (wrapCdb_store(db_stgcat,stcp->reqid,stcp,sizeof(struct stgcat_entry),DB_ALWAYS,0) != 0) {
+          sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
+          c = SYERR;
+          goto reply;
+        }
+#endif
+    }
 #if SACCT
 	stageacct (STGFILS, wqp->uid, wqp->gid, wqp->clienthost,
 		wqp->reqid, wqp->req_type, wqp->nretry, rc, stcp, clienthost);
 #endif
 	if (rc == 211) {	/* no more file on tape */
-		/* flag previous file as last file on tape */
-		cur = stcp;
 		sprintf (prevfseq, "%d", atoi (stcp->u1.t.fseq) - 1);
+#ifdef DB
+        if ((cur = (struct stgcat_entry *) calloc(1,sizeof(struct stgcat_entry))) == NULL) {
+          stglogit (func, STG05);
+          exit (SYERR);
+        }
+        {
+          /* We loop on the "status" database */
+          size_t db_size;
+          char *db_key = NULL;
+          char *db_data = NULL;
+          Cdb_altkey_rewind(db_stgcat, "status");
+          while (Cdb_altkey_nextrec(db_stgcat, "status", &db_key, (void **) &db_data, &db_size) != 0) {
+            char *ptr, *ptrmax;
+            int thisstatus = atoi(db_key);
+            
+            if ((stcp->status & 0xF0) != STAGED) continue;
+            ptrmax = ptr = db_data;
+            ptrmax += db_size;
+            do {
+              size_t stcp_size;
+              int reqid;
+              
+              reqid = atoi(ptr);
+              /* In case of a string, sizeof() == strlen() + 1 */
+              /* ptr points to the reqid (as a string, e.g. a master key) */
+              if (wrapCdb_fetch(db_stgcat,reqid,(void **) &stcp, NULL, 0) == 0) {
+                if (stcp->t_or_d != 't') goto docontinue;
+                for (j = 0; j < MAXVSN; j++)
+                  if (strcmp (cur->u1.t.vid[j], stcp->u1.t.vid[j])) break;
+                if (j < MAXVSN) goto docontinue;
+                for (j = 0; j < MAXVSN; j++)
+                  if (strcmp (cur->u1.t.vsn[j], stcp->u1.t.vsn[j])) break;
+                if (j < MAXVSN) goto docontinue;
+                if (strcmp (cur->u1.t.lbl, stcp->u1.t.lbl)) goto docontinue;
+                if (strcmp (prevfseq, stcp->u1.t.fseq)) goto docontinue;
+                stcp->status |= LAST_TPFILE;
+                if (wrapCdb_store(db_stgcat,stcp->reqid,stcp,sizeof(struct stgcat_entry),DB_ALWAYS,0) != 0) {
+                  sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
+                }
+                break;
+              }
+            docontinue:
+              ptr += (strlen(ptr) + 1);
+            } while (ptr < ptrmax);
+          }
+          if (stcp != NULL)
+            free(stcp);
+          if (db_key != NULL)
+            free(db_key);
+          if (db_data != NULL)
+            free(db_data);
+        }
+#else /* DB */
+		/* flag previous file as last file on tape */
+        cur = stcp;
 		for (stcp = stcs; stcp < stce; stcp++) {
 			if (stcp->reqid == 0) break;
 			if (stcp->t_or_d != 't') continue;
@@ -272,11 +365,23 @@ char *clienthost;
 			stcp->status |= LAST_TPFILE;
 			break;
 		}
+#endif /* DB */
+#ifdef DB
+        if (cur != NULL)
+          free(cur);
+#endif /* DB */
 		wqp->nb_subreqs = i;
 		for ( ; i < wqp->nbdskf; i++, wfp++) {
 			for (stcp = stcs; stcp < stce; stcp++) {
+#ifdef DB
+              if (wrapCdb_fetch(db_stgcat, wfp->subreqid, (void **) &stcp, NULL, 0)) {
+                sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
+                continue;
+              }
+#else /* DB */
 				if (wfp->subreqid == stcp->reqid)
 					break;
+#endif /* DB */
 			}
 			if (wfp->waiting_on_req) {
 				delreq (stcp);
@@ -323,19 +428,65 @@ char *clienthost;
 		wqp->clnreq_reqid = upd_reqid;
 		wqp->clnreq_rpfd = rpfd;
 		stcp->status |= WAITING_SPC;
+#ifdef DB
+        if (wrapCdb_store(db_stgcat,stcp->reqid,stcp,sizeof(struct stgcat_entry),DB_ALWAYS,0) != 0) {
+          sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
+        }
+#endif /* DB */
 		strcpy (wqp->waiting_pool, stcp->poolname);
 		if (c = cleanpool (stcp->poolname)) goto reply;
 		return;
 	}
-	if (blksize > 0) stcp->blksize = blksize;
-	if (lrecl > 0) stcp->lrecl = lrecl;
-	if (recfm) strncpy (stcp->recfm, recfm, 3);
-	if (stcp->recfm[0] == 'U') stcp->lrecl = 0;
-	else if (stcp->lrecl == 0) stcp->lrecl = stcp->blksize;
-	if (fid) strcpy (stcp->u1.t.fid, fid);
+	if (blksize > 0) {
+      stcp->blksize = blksize;
+#ifdef DB
+      ++changed;
+#endif /* DB */
+    }
+	if (lrecl > 0) {
+      stcp->lrecl = lrecl;
+#ifdef DB
+      ++changed;
+#endif /* DB */
+    }
+	if (recfm) {
+      strncpy (stcp->recfm, recfm, 3);
+#ifdef DB
+      ++changed;
+#endif /* DB */
+    }
+	if (stcp->recfm[0] == 'U') {
+      stcp->lrecl = 0;
+#ifdef DB
+      ++changed;
+#endif /* DB */
+    }
+	else if (stcp->lrecl == 0) {
+      stcp->lrecl = stcp->blksize;
+#ifdef DB
+      ++changed;
+#endif /* DB */
+    }
+	if (fid) {
+      strcpy (stcp->u1.t.fid, fid);
+#ifdef DB
+      ++changed;
+#endif /* DB */
+    }
 	if (fseq &&
-	    (stcp->u1.t.fseq[0] == 'u' || stcp->u1.t.fseq[0] == 'n'))
-		strcpy (stcp->u1.t.fseq, fseq);
+	    (stcp->u1.t.fseq[0] == 'u' || stcp->u1.t.fseq[0] == 'n')) {
+      strcpy (stcp->u1.t.fseq, fseq);
+#ifdef DB
+      ++changed;
+#endif /* DB */
+    }
+#ifdef DB
+  if (changed) {
+    if (wrapCdb_store(db_stgcat,stcp->reqid,stcp,sizeof(struct stgcat_entry),DB_ALWAYS,0) != 0) {
+      sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
+    }
+  }
+#endif /* DB */
 	wqp->nb_subreqs--;
 	wqp->nbdskf--;
 	rpfd = wqp->rpfd;
@@ -346,8 +497,15 @@ char *clienthost;
 			wqp->nbdskf = 0;
 		}
 		for (i = 0; i < n; i++, wfp++) {
+#ifdef DB
+          if (wrapCdb_fetch(db_stgcat, wfp->subreqid, (void **) &stcp, NULL, 0) != 0) {
+            sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
+            continue;
+          }
+#else /* DB */
 			for (stcp = stcs; stcp < stce; stcp++)
 				if (stcp->reqid == wfp->subreqid) break;
+#endif
 			if (wqp->copytape)
 				sendinfo2cptape (rpfd, stcp);
 			if (! stcp->keep && stcp->nbaccesses <= 1) {
@@ -357,9 +515,22 @@ char *clienthost;
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 						"rfio_unlink", rfio_serror());
 					stcp->status |= STAGED;
+#ifdef DB
+                    if (wrapCdb_store(db_stgcat,stcp->reqid,stcp,sizeof(struct stgcat_entry),DB_ALWAYS,0)) {
+                      sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
+                      continue;
+                    }
+#endif /* DB */
 				}
-			} else
+			} else {
 				stcp->status |= STAGED;
+#ifdef DB
+            if (wrapCdb_store(db_stgcat,stcp->reqid,stcp,sizeof(struct stgcat_entry),DB_ALWAYS,0) != 0) {
+              sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
+              continue;
+            }
+#endif /* DB */
+            }
 		}
 		i = 0;		/* reset these variables changed by the above loop */
 		wfp = wqp->wf;	/* and needed in the loop below */
@@ -369,6 +540,12 @@ char *clienthost;
 			stcp->status |= STAGED_TPE;
 		if (rc == LIMBYSZ || rc == TPE_LSZ)
 			stcp->status |= STAGED_LSZ;
+#ifdef DB
+        if (wrapCdb_store(db_stgcat,stcp->reqid,stcp,sizeof(struct stgcat_entry),DB_ALWAYS,0) != 0) {
+          sendrep (rpfd, MSG_ERR, STG102, __FILE__, __LINE__, errno, db_strerror(errno));
+          goto reply;
+        }
+#endif /* DB */
 		if (wqp->copytape)
 			sendinfo2cptape (rpfd, stcp);
 		if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
@@ -388,6 +565,10 @@ char *clienthost;
 	}
 	if (rc == MNYPARI) wqp->status = rc;
 reply:
+#ifdef DB
+    if (stcp != NULL)
+      free(stcp);
+#endif /* DB */
 	free (argv);
 	reqid = upd_reqid;
 	rpfd = upd_rpfd;
