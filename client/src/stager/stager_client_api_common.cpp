@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.11 2005/02/01 10:48:30 bcouturi Exp $
+ * $Id: stager_client_api_common.cpp,v 1.12 2005/02/01 16:37:40 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.11 $ $Date: 2005/02/01 10:48:30 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.12 $ $Date: 2005/02/01 16:37:40 $ CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
@@ -172,13 +172,21 @@ EXTERN_C char *stage_requestStatusName(int statusCode) {
   return ret;
 }
 
+#define NB_FILE_STATUS 7
+static char* stage_fileStatusNameStr[NB_FILE_STATUS] = {
+  "INVALID_STATUS",
+  "STAGEOUT",
+  "STAGEIN",
+  "STAGED",
+  "CANBEMIGR",
+  "WAITINGMIGR",
+  "BEINGMIGR"};
+
 EXTERN_C char *stage_fileStatusName(int statusCode) {
   char *ret = STATUS_NA;
   if (statusCode >= 0 
-      && statusCode < (sizeof(castor::stager::DiskCopyStatusCodesStrings)/
-		       sizeof(castor::stager::DiskCopyStatusCodesStrings[0]))) {
-    char *tmp = strchr((char *)castor::stager::DiskCopyStatusCodesStrings[statusCode], '_');
-    ret = tmp+1;
+      && statusCode < NB_FILE_STATUS) {
+    ret = stage_fileStatusNameStr[statusCode];
   }
   return ret;
 }

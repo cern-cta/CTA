@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.19 $ $Release$ $Date: 2005/02/01 10:47:21 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.20 $ $Release$ $Date: 2005/02/01 16:37:40 $ $Author: bcouturi $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.19 $
- * @date $Date: 2005/02/01 10:47:21 $
+ * @version $Revision: 1.20 $
+ * @date $Date: 2005/02/01 16:37:40 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.19 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.20 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -1127,6 +1127,18 @@ EXTERN_C char* DLL_DECL stage_statusName _PROTO((int statusCode));
  */
 EXTERN_C char* DLL_DECL stage_requestStatusName _PROTO((int statusCode));
 
+/**
+ * Possible file status codes
+ */
+enum stage_fileStatus {
+  FILE_INVALID_STATUS=0,
+  FILE_STAGEOUT=1,
+  FILE_STAGEIN=2,
+  FILE_STAGED=3,
+  FILE_CANBEMIGR=4,
+  FILE_WAITINGMIGR=5,
+  FILE_BEINGMIGR=6
+};
 
 /**
  * stage_fileStatusName
@@ -1138,7 +1150,6 @@ EXTERN_C char* DLL_DECL stage_requestStatusName _PROTO((int statusCode));
  * @returns The status name as char*
  */
 EXTERN_C char* DLL_DECL stage_fileStatusName _PROTO((int statusCode));
-
 
 
 ////////////////////////////////////////////////////////////
