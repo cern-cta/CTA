@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.18 2005/01/27 12:37:19 jdurand Exp $
+ * $Id: JobSvcThread.cpp,v 1.19 2005/02/01 13:52:17 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.18 $ $Date: 2005/01/27 12:37:19 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.19 $ $Date: 2005/02/01 13:52:17 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -332,7 +332,8 @@ namespace castor {
         /* Invoking the method                */
         /* ---------------------------------- */
         STAGER_LOG_DEBUG(NULL, "Invoking disk2DiskCopyDone");
-        stgSvc->disk2DiskCopyDone(uReq->diskCopyId());
+        stgSvc->disk2DiskCopyDone(uReq->diskCopyId(), 
+                                  (castor::stager::DiskCopyStatusCodes)uReq->status());
 
       } catch (castor::exception::Exception e) {
         serrno = e.code();
