@@ -1,10 +1,10 @@
-.\" $Id: rc_castor2shift.man,v 1.1 2002/10/05 07:24:23 jdurand Exp $
+.\" $Id: rc_castor2shift.man,v 1.2 2002/12/13 15:06:26 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rc_castor2shift.man,v $ $Revision: 1.1 $ $Date: 2002/10/05 07:24:23 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: rc_castor2shift.man,v $ $Revision: 1.2 $ $Date: 2002/12/13 15:06:26 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH RC_CASTOR2SHIFT "3" "$Date: 2002/10/05 07:24:23 $" "CASTOR" "Stage Library Functions"
+.TH RC_CASTOR2SHIFT "3" "$Date: 2002/12/13 15:06:26 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 rc_castor2shift \- Convert a CASTOR error number to a process exit code
 .SH SYNOPSIS
@@ -39,7 +39,7 @@ converted to LIMBYSZ (197)
 .I EACCES,EINVAL,ENOENT,EPERM,SENAMETOOLONG,SENOSHOST
 converted to USERR (1)
 .TP
-.I SESYSERR,SEOPNOTSUP,SECONNDROP,SECOMERR
+.I SESYSERR,SEOPNOTSUP,SECONNDROP,SECOMERR,SETIMEDOUT
 converted to SYERR (2)
 .TP
 .I ESTNACT
@@ -60,6 +60,8 @@ converted to LNKNSUP (189)
 .I ECUPVNACT
 converted to SHIFT_ECUPVNACT (187)
 .RE
+
+All unsupported error numbers are mapped to UNERR (3).
 
 .SH RETURN VALUE
 Depends on the 
