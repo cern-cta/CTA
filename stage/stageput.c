@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.23 2001/07/23 09:10:06 jdurand Exp $
+ * $Id: stageput.c,v 1.24 2001/09/18 21:17:28 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.23 $ $Date: 2001/07/23 09:10:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.24 $ $Date: 2001/09/18 21:17:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -228,7 +228,7 @@ int main(argc, argv)
 		case 'q':
 			break;
 		case 'U':
-			fun = strtol (Coptarg, &dp, 10);
+			stage_strtoi(&fun, Coptarg, &dp, 10);
 			if (*dp != '\0') {
 				fprintf (stderr, STG06, "-U\n");
 				errflg++;

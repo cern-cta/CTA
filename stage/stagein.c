@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.35 2001/07/23 09:10:06 jdurand Exp $
+ * $Id: stagein.c,v 1.36 2001/09/18 21:16:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.35 $ $Date: 2001/07/23 09:10:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.36 $ $Date: 2001/09/18 21:16:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -412,7 +412,7 @@ int main(argc, argv)
 			stagetape++;
 			break;
 		case 'U':
-			fun = strtol (Coptarg, &dp, 10);
+			stage_strtoi(&fun, Coptarg, &dp, 10);
 			if (*dp != '\0') {
 				fprintf (stderr, STG06, "-U\n");
 				errflg++;
@@ -533,9 +533,9 @@ int main(argc, argv)
 							int qvalue;
 							/* TMS says that this volume is VIDMAPped */
 							/* We verify consistency with -q option value */
-							qvalue = (int) strtol(qopt, &dp, 10);
-							if ((qvalue == LONG_MIN) ||
-								(qvalue == LONG_MAX) ||
+							stage_strtoi(&qvalue, qopt, &dp, 10);
+							if ((qvalue == INT_MIN) ||
+								(qvalue == INT_MAX) ||
 								(*dp != '-') ||
 								((*dp == '-') && (*(dp+1) != '\0'))) {
 								fprintf (stderr, STG06, "-q");
@@ -803,6 +803,7 @@ int main(argc, argv)
 		}
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
+        break;
 	}
 #if defined(_WIN32)
 	WSACleanup();
@@ -931,18 +932,18 @@ int tmscheck(vid, vsn, dgn, den, lbl, fseq1, fseq2)
       /*              the indexes 84 to 88 contains the 2nd   fseq of a vidmapped volume */
       memcpy(tmpfseq, tmrepbuf + 78, 5);
       tmpfseq[5] = '\0';
-      *fseq1 = (int) strtol(tmpfseq, &dp, 10);
-      if ((*fseq1 == LONG_MIN) || (*fseq1 == LONG_MAX) || (*dp != '\0')) {
+      stage_strtoi(fseq1, tmpfseq, &dp, 10);
+      if ((*fseq1 == INT_MIN) || (*fseq1 == INT_MAX) || (*dp != '\0')) {
         *fseq1 = -1;
-		fprintf (stderr, STG02, tmpfseq, "strtol", strerror(errno));
+		fprintf (stderr, STG02, tmpfseq, "stage_strtoi", strerror(errno));
 		errflg++;
       }
       memcpy(tmpfseq, tmrepbuf + 84, 5);
       tmpfseq[5] = '\0';
-      *fseq2 = (int) strtol(tmpfseq, &dp, 10);
-      if ((*fseq2 == LONG_MIN) || (*fseq2 == LONG_MAX) || (*dp != '\0')) {
+      stage_strtoi(fseq2, tmpfseq, &dp, 10);
+      if ((*fseq2 == INT_MIN) || (*fseq2 == INT_MAX) || (*dp != '\0')) {
         *fseq2 = -1;
-		fprintf (stderr, STG02, tmpfseq, "strtol", strerror(errno));
+		fprintf (stderr, STG02, tmpfseq, "stage_strtoi", strerror(errno));
 		errflg++;
       }
     }
