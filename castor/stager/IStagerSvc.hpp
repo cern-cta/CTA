@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.41 $ $Release$ $Date: 2005/01/24 11:17:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.42 $ $Release$ $Date: 2005/01/25 13:46:05 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -148,14 +148,13 @@ namespace castor {
        * TAPECOPY_WAITINSTREAMS and will be changed to status SELECTED.
        * Before return this function atomically updates the
        * matching catalog entry Stream status to STREAM_RUNNING.
+       * The changes in the database are automatically commited
        * @param searchItem the Stream information used for the search
-       * @param autocommit whether to commit the changes
        * @return the best waiting TapeCopy (or 0 if none).
        * @exception in case of error
        */
       virtual castor::stager::TapeCopyForMigration*
-      bestTapeCopyForStream(castor::stager::Stream* searchItem,
-                            bool autocommit)
+      bestTapeCopyForStream(castor::stager::Stream* searchItem)
         throw (castor::exception::Exception) = 0;
 
       /*

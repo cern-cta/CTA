@@ -172,8 +172,7 @@ int Cstager_IStagerSvc_anyTapeCopyForStream
 int Cstager_IStagerSvc_bestTapeCopyForStream
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_Stream_t* searchItem,
- struct Cstager_TapeCopyForMigration_t** tapeCopy,
- char autocommit);
+ struct Cstager_TapeCopyForMigration_t** tapeCopy);
 
 /*
  * Gets the streams associated to the given TapePool

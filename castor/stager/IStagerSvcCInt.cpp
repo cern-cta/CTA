@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2005/01/24 11:17:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2005/01/25 13:46:05 $ $Author: sponcec3 $
  *
  *
  *
@@ -159,12 +159,11 @@ extern "C" {
   int Cstager_IStagerSvc_bestTapeCopyForStream
   (Cstager_IStagerSvc_t* stgSvc,
    castor::stager::Stream* searchItem,
-   castor::stager::TapeCopyForMigration** tapecopy,
-   char autocommit) {
+   castor::stager::TapeCopyForMigration** tapecopy) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      *tapecopy = stgSvc->stgSvc->bestTapeCopyForStream
-        (searchItem, autocommit);
+      *tapecopy =
+        stgSvc->stgSvc->bestTapeCopyForStream(searchItem);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

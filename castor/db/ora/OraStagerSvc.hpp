@@ -161,8 +161,7 @@ namespace castor {
          * @exception in case of error
          */
         virtual castor::stager::TapeCopyForMigration*
-        bestTapeCopyForStream(castor::stager::Stream*  searchItem,
-                              bool autocommit)
+        bestTapeCopyForStream(castor::stager::Stream*  searchItem)
           throw (castor::exception::Exception);
 
         /*

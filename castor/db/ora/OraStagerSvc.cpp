@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.113 $ $Release$ $Date: 2005/01/25 09:56:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.114 $ $Release$ $Date: 2005/01/25 13:46:05 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -455,8 +455,7 @@ bool castor::db::ora::OraStagerSvc::anyTapeCopyForStream
 // -----------------------------------------------------------------------
 castor::stager::TapeCopyForMigration*
 castor::db::ora::OraStagerSvc::bestTapeCopyForStream
-(castor::stager::Stream* searchItem,
- bool autocommit)
+(castor::stager::Stream* searchItem)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -481,6 +480,7 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
         (9, oracle::occi::OCCIDOUBLE);
       m_bestTapeCopyForStreamStatement->registerOutParam
         (10, oracle::occi::OCCIDOUBLE);
+      m_bestTapeCopyForStreamStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
     m_bestTapeCopyForStreamStatement->setDouble(1, searchItem->id());
@@ -526,10 +526,6 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
          it != result->segments().end();
          it++) {
       cnvSvc()->fillObj(&ad, *it, OBJ_Tape);
-    }
-    // commit
-    if (autocommit) {
-      cnvSvc()->commit();
     }
     // return
     return result;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2005/01/24 11:17:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2005/01/25 13:46:05 $ $Author: sponcec3 $
  *
  *
  *
@@ -141,8 +141,7 @@ bool castor::stager::RemoteStagerSvc::anyTapeCopyForStream
 // -----------------------------------------------------------------------
 castor::stager::TapeCopyForMigration*
 castor::stager::RemoteStagerSvc::bestTapeCopyForStream
-(castor::stager::Stream* searchItem,
- bool autocommit)
+(castor::stager::Stream* searchItem)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()
