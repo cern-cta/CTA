@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.51 $ $Date: 2000/04/03 14:27:32 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.52 $ $Date: 2000/04/03 15:41:59 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -539,6 +539,7 @@ static int rtcpd_ResetRequest(tape_list_t *tape) {
                 filereq->bytes_out = 0;
                 fl->diskbytes_sofar = 0;
                 fl->tapebytes_sofar = 0;
+                fl->end_index = -1;
                 if ( mode == WRITE_DISABLE ) filereq->bytes_in = 0;
                 filereq->err.severity = RTCP_OK;
                 filereq->err.errorcode = 0;
@@ -574,6 +575,11 @@ static int rtcpd_ResetRequest(tape_list_t *tape) {
                                fltmp->filereq.concat);
                         fltmp->filereq.proc_status = RTCP_WAITING;
                         fltmp->filereq.err = filereq->err;
+                        fltmp->filereq.bytes_out = 0;
+                        fltmp->diskbytes_sofar = 0;
+                        fltmp->tapebytes_sofar = 0;
+                        fltmp->end_index = -1;
+                        if ( mode == WRITE_DISABLE ) fltmp->filereq.bytes_in = 0;
                     }
                 }
             }
@@ -935,11 +941,15 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
             jobID = tapereq->jobID;
             strcpy(unit,tapereq->unit);
             strcpy(dgn,tapereq->dgn);
-            Tservice = (tapereq->TEndUnmount - tapereq->TStartRequest);
+            Tservice = ((time_t)tapereq->TEndUnmount - 
+                        (time_t)tapereq->TStartRequest);
             if ( Twait == 0 ) 
-                Twait = (tapereq->TStartMount - tapereq->TStartRequest);
-            Twait += (tapereq->TEndMount - tapereq->TStartMount);
-            Twait += (tapereq->TEndUnmount - tapereq->TStartUnmount);
+                Twait = ((time_t)tapereq->TStartMount - 
+                         (time_t)tapereq->TStartRequest);
+            Twait += ((time_t)tapereq->TEndMount - 
+                      (time_t)tapereq->TStartMount);
+            Twait += ((time_t)tapereq->TEndUnmount - 
+                      (time_t)tapereq->TStartUnmount);
             tmpfile = nextfile = nexttape->file;
             while ( nextfile != NULL ) {
                 filereq = &(nextfile->filereq);
@@ -952,10 +962,12 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
                      */
                     if ( tapereq->mode == WRITE_DISABLE ||
                         (filereq->concat & CONCAT) == 0 ) {
-                        Ttransfer += max(
+                        Ttransfer += (time_t)max(
                                   (time_t)filereq->TEndTransferDisk,
                                   (time_t)filereq->TEndTransferTape) -
-                                  filereq->TEndPosition;
+                                  (time_t)max(
+                                      (time_t)filereq->TStartTransferDisk,
+                                      (time_t)filereq->TStartTransferTape);
                     }
 
                     if ( tapereq->mode == WRITE_ENABLE &&
@@ -995,14 +1007,13 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
         rtcp_log(LOG_INFO,"total number of Kbytes transferred is %d\n",totKBSz);
         rtcp_log(LOG_INFO,"waiting time was %d seconds\n",Twait);
         rtcp_log(LOG_INFO,"service time was %d seconds\n",Tservice);
-        if ( Ttransfer > 0 ) {
-            if ( mode == WRITE_ENABLE )
-                rtcp_log(LOG_INFO,"cpdsktp: Data transfer bandwidth (%s) is %d KB/sec\n",
-                         ifce,totKBSz/Ttransfer); 
-            else
-                rtcp_log(LOG_INFO,"cptpdsk: Data transfer bandwidth (%s) is %d KB/sec\n",
-                         ifce,totKBSz/Ttransfer);
-        }
+        if ( Ttransfer <= 0 ) Ttransfer = 1;
+        if ( mode == WRITE_ENABLE )
+            rtcp_log(LOG_INFO,"cpdsktp: Data transfer bandwidth (%s) is %d KB/sec\n",
+                     ifce,totKBSz/Ttransfer); 
+        else
+            rtcp_log(LOG_INFO,"cptpdsk: Data transfer bandwidth (%s) is %d KB/sec\n",
+                     ifce,totKBSz/Ttransfer);
         rtcp_log(LOG_INFO,"request successful\n");
     } else {
         rtcp_log(LOG_INFO,"request failed\n");
@@ -1520,6 +1531,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
                 rc = -1;
                 break;
             }
+            nextfile->end_index = -1;
             nextfile->filereq = filereq;
             if ( nexttape == NULL ) {
                 rtcp_log(LOG_ERR,"rtcpd_MainCntl() invalid request sequence\n");
