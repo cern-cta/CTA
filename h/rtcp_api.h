@@ -3,6 +3,9 @@
 #define RTCP_API_H
 
 #include <osdep.h>
+#include <Ctape_constants.h>
+#include <rtcp_constants.h>
+#include <rtcp.h>
 
 EXTERN_C int DLL_DECL rtcpc _PROTO((tape_list_t *));
 EXTERN_C int DLL_DECL rtcpcCallTMS _PROTO((tape_list_t *));
