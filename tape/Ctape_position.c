@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.10 $ $Date: 1999/12/24 07:29:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.11 $ $Date: 2000/03/31 07:45:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_position - send a request to the tape daemon to get the tape
@@ -39,8 +39,9 @@ int lrecl;
 int retentd;
 int flags;
 {
+	char actual_fid[CA_MAXFIDLEN+1];
 	int actual_fseq;
-	int c, i, n;
+	int c;
 	int errflg = 0;
 	char func[16];
 	char fullpath[CA_MAXPATHLEN+1];
@@ -49,6 +50,7 @@ int flags;
 	char hdr1[81], hdr2[81];
 	int jid;
 	int msglen;
+	int n;
 	char *q;
 	char *rbp;
 	char repbuf[251];
@@ -122,7 +124,11 @@ int flags;
 	marshall_LONG (sbp, Qlast);
 	marshall_WORD (sbp, filstat);
 	if (fid) {
-		marshall_STRING (sbp, fid);
+		q = fid;
+		if ((n = strlen (fid) - 17) > 0) q += n;
+		strcpy (actual_fid, q);
+		UPPER (actual_fid);
+		marshall_STRING (sbp, actual_fid);
 	} else {
 		marshall_STRING (sbp, "");
 	}
