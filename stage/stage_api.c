@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.18 2001/06/07 14:42:04 jdurand Exp $
+ * $Id: stage_api.c,v 1.19 2001/06/08 13:52:51 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -231,8 +231,8 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   euid = geteuid();             /* Get current effective uid */
   egid = getegid();             /* Get current effective gid */
 #if defined(_WIN32)
-  if (euid < 0 || egid < 0) {
-    serrno = SEUSERUNKN;
+  if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
+    serrno = SENOMAPFND;
     return (-1);
   }
 #endif
@@ -894,8 +894,8 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   euid = geteuid();             /* Get current effective uid */
   egid = getegid();             /* Get current effective gid */
 #if defined(_WIN32)
-  if (euid < 0 || egid < 0) {
-    serrno = SEUSERUNKN;
+  if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
+    serrno = SENOMAPFND;
     return (-1);
   }
 #endif
@@ -1303,8 +1303,8 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   euid = geteuid();             /* Get current effective uid */
   egid = getegid();             /* Get current effective gid */
 #if defined(_WIN32)
-  if (euid < 0 || egid < 0) {
-    serrno = SEUSERUNKN;
+  if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
+    serrno = SENOMAPFND;
     return (-1);
   }
 #endif
@@ -1582,8 +1582,8 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   euid = geteuid();             /* Get current effective uid */
   egid = getegid();             /* Get current effective gid */
 #if defined(_WIN32)
-  if (euid < 0 || egid < 0) {
-    serrno = SEUSERUNKN;
+  if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
+    serrno = SENOMAPFND;
     return (-1);
   }
 #endif
