@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.17 $ $Date: 2001/10/23 06:24:45 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.18 $ $Date: 2002/09/04 07:35:10 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -163,8 +163,8 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
   time_t time_start;
   int time_elapsed;
 
-  /* If n <= 0 (on some systems size_t can be lower than zero) it is an app. error */
-  if (n <= 0) {
+  /* If n < 0 it is an app. error */
+  if (n < 0) {
     serrno = EINVAL;
     return(-1);
   }
@@ -265,8 +265,8 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
   time_t time_start;
   int time_elapsed;
 
-  /* If n <= 0 (on some systems size_t can be lower than zero) it is an app. error */
-  if (n <= 0) {
+  /* If n < 0 it is an app. error */
+  if (n < 0) {
     serrno = EINVAL;
     return(-1);
   }

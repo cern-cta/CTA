@@ -171,7 +171,7 @@ int     nbytes;
 {
     register int    n, nb;
  
-    if (nbytes <= 0) {
+    if (nbytes < 0) {
       serrno = EINVAL;
       return(-1);
     }
@@ -243,7 +243,7 @@ int     nbytes;
 {
     register int    n, nb;
  
-    if (nbytes <= 0) {
+    if (nbytes < 0) {
       serrno = EINVAL;
       return(-1);
     }
