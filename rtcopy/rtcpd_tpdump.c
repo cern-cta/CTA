@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.5 $ $Date: 2000/03/31 14:43:03 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.6 $ $Date: 2000/05/17 15:27:22 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -57,11 +57,15 @@ int dmp_usrmsg(int dmpmsg_level, char *format, ...) {
     va_start(args,format);
     vsprintf(msgtxtbuf,format,args);
     va_end(args);
+    /*
+     * Make sure the string is terminated
+     */
+    msgtxtbuf[RTCP_SHIFT_BUFSZ-1] = '\0'; 
 
     if ( dmpmsg_level == MSG_OUT ) {
-        rtcp_log(LOG_NOTICE,msgtxtbuf);
+        rtcp_log(LOG_NOTICE,"%s",msgtxtbuf);
     } else {
-        rtcp_log(LOG_ERR,msgtxtbuf);
+        rtcp_log(LOG_ERR,"%s",msgtxtbuf);
     }
     return(0);
 }
