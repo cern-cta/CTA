@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.72 2000/05/29 07:56:27 jdurand Exp $
+ * $Id: stager.c,v 1.73 2000/05/29 15:55:28 jdurand Exp $
  */
 
 /*
@@ -14,7 +14,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.72 $ $Date: 2000/05/29 07:56:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.73 $ $Date: 2000/05/29 15:55:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -637,12 +637,12 @@ int stagein_castor_hsm_file() {
 		}
 		/* check permissions in parent directory, get file size */
 #ifdef STAGER_DEBUG
-		sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] Calling Cns_statx(%s,&statbuf,&Cnsfileid)\n",castor_hsm);
+		sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] Calling Cns_statx(%s,&Cnsfileid,&statbuf)\n",castor_hsm);
 #endif
         SETEID(stcp->uid,stcp->gid);
 		strcpy(Cnsfileid.server,stcp->u1.h.server);
 		Cnsfileid.fileid = stcp->u1.h.fileid;
-		if (Cns_statx (castor_hsm, &statbuf, &Cnsfileid) < 0) {
+		if (Cns_statx (castor_hsm, &Cnsfileid, &statbuf) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_statx (with invariants)",
 							 sstrerror (serrno));
 			RETURN (USERR);
@@ -1006,12 +1006,12 @@ int stagewrt_castor_hsm_file() {
 		struct Cns_fileid Cnsfileid;
 
 #ifdef STAGER_DEBUG
-        sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] Calling Cns_statx(%s,&statbuf_check,&Cnsfileid)\n",castor_hsm);
+        sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] Calling Cns_statx(%s,&Cnsfileid,&statbuf_check)\n",castor_hsm);
 #endif
         SETEID(stcp->uid,stcp->gid);
 		strcpy(Cnsfileid.server,stcp->u1.h.server);
 		Cnsfileid.fileid = stcp->u1.h.fileid;
-        if (Cns_statx(castor_hsm, &statbuf_check, &Cnsfileid) != 0) {
+        if (Cns_statx(castor_hsm, &Cnsfileid, &statbuf_check) != 0) {
             sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_statx (with invariants)",
                      "file already exists and is non-zero size");
             RETURN (USERR);

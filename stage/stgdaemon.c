@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.41 2000/05/29 07:56:28 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.42 2000/05/29 15:55:29 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.41 $ $Date: 2000/05/29 07:56:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.42 $ $Date: 2000/05/29 15:55:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1459,7 +1459,7 @@ fork_exec_stager(wqp)
 			if (wfp->waiting_on_req < 0) wfp->waiting_on_req = 0;
 			for (stcp = stcs; stcp < stce; stcp++)
 				if (stcp->reqid == wfp->subreqid) break;
-			write (pfd[1], stcp, sizeof(struct stgcat_entry));
+			write (pfd[1], (char *) stcp, sizeof(struct stgcat_entry));
 		}
 		close (pfd[1]);
 	}
