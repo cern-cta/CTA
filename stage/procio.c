@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.187 2002/08/31 06:39:52 jdurand Exp $
+ * $Id: procio.c,v 1.188 2002/08/31 07:48:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.187 $ $Date: 2002/08/31 06:39:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.188 $ $Date: 2002/08/31 07:48:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -31,6 +31,7 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.187 $ $Date: 200
 #ifndef _WIN32
 #include <unistd.h>
 #include <sys/times.h>
+
 struct _stage_times {
 	struct tms tms;
 	clock_t     time;
@@ -643,7 +644,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			errflg++;
 			break;
  		}
-		if (openflags == O_RDONLY) rdonly_flag = 1; /* Note: we do not do a bit test */
+		if (! (((openflags & O_RDWR) == O_RDWR) || ((openflags & O_WRONLY) == O_WRONLY))) rdonly_flag = 1;
 		if ((flags & STAGE_DEFERRED) == STAGE_DEFERRED) Aflag = 1;
 		if ((flags & STAGE_COFF)  == STAGE_COFF) concat_off = 1;
 		if ((flags & STAGE_UFUN)  == STAGE_UFUN) Uflag = 1;
