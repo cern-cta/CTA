@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_reserve.man,v $ $Revision: 1.4 $ $Date: 2000/02/03 10:44:39 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: Ctape_reserve.man,v $ $Revision: 1.5 $ $Date: 2001/07/25 06:06:49 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_RESERVE 3 "$Date: 2000/02/03 10:44:39 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_RESERVE 3 "$Date: 2001/07/25 06:06:49 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_reserve \- reserve tape resources
 .SH SYNOPSIS
@@ -69,6 +69,9 @@ Service unknown.
 .TP
 .B SECOMERR
 Communication error.
+.TP
+.B SEUSERUNKN
+User unknown.
 .TP
 .B ETDNP
 Tape daemon is not running.
