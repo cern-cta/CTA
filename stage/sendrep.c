@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.28 2002/09/20 06:14:29 jdurand Exp $
+ * $Id: sendrep.c,v 1.29 2003/03/12 11:08:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.28 $ $Date: 2002/09/20 06:14:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.29 $ $Date: 2003/03/12 11:08:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -215,13 +215,31 @@ int sendrep(va_alist) va_dcl
 		errno = serrno = 0;
 		if (netwrite_timeout (*rpfd, (rep_type == API_STCP_OUT ? api_stcp_out : (rep_type == API_STPP_OUT ? api_stpp_out : repbuf)), repsize, STGTIMEOUT) != repsize) {
 			stglogit (func, STG02, "", "write", errno ? strerror(errno) : sstrerror(serrno));
-			if ((errno == EPIPE) ||
-				(errno == ECONNRESET) ||
-				(errno == ECHILD) ||
-				(errno == ENOENT) ||
-				(errno == ENOTCONN) ||
-				(errno == EBADF) ||
-				(errno == EACCES)) {
+			/* ENOENT exist everywhere */
+			/* Other errnos almost everywhere, I guess */
+			if ((errno == ENOENT)
+#ifdef EPIPE
+				|| (errno == EPIPE)
+#endif
+#ifdef ECONNRESET
+				|| (errno == ECONNRESET)
+#endif
+#ifdef ECHILD
+				|| (errno == ECHILD)
+#endif
+#ifdef ENOTCONN
+				|| (errno == ENOTCONN)
+#endif
+#ifdef EBADF
+				|| (errno == EBADF)
+#endif
+#ifdef EHOSTUNREACH
+				|| (errno == EHOSTUNREACH)
+#endif
+#ifdef EACCES
+				|| (errno == EACCES)
+#endif
+				) {
 				stglogit (func, STG02, "", "write", "Closing connection");
 				netclose (*rpfd);
 				*rpfd = -1;
