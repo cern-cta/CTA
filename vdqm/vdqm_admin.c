@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_admin.c,v $ $Revision: 1.4 $ $Date: 2002/10/25 13:04:02 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_admin.c,v $ $Revision: 1.5 $ $Date: 2003/08/29 08:41:43 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -74,14 +74,20 @@ int main(int argc, char *argv[]) {
     char *keyvalues[] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
     int reqid,jobid,port;
     int *ikeyvalues[] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+    int sizes[] = {0,0,0,0,0,0,0,0,0};
 
     keyvalues[0] = dgn;
+    sizes[0] = sizeof(dgn)-1;
     keyvalues[1] = server;
+    sizes[1] = sizeof(server)-1;
     keyvalues[2] = drive;
+    sizes[2] = sizeof(drive)-1;
     ikeyvalues[3] = &reqid;
     ikeyvalues[4] = &jobid;
     keyvalues[5] = match;
+    sizes[5] = sizeof(match)-1;
     keyvalues[6] = vid;
+    sizes[6] = sizeof(vid)-1;
     ikeyvalues[7] = &port;
 
     if ( argc > 1 ) for (i=0; *cmds[i] != '\0' && strcmp(cmds[i],argv[1]) != 0; i++);
@@ -118,11 +124,19 @@ int main(int argc, char *argv[]) {
                 usage(cmds[i],keyw);
                 exit(2);
             }
-            if ( keyvalues[k] != NULL && argv[j+1] != NULL ) 
+            if ( keyvalues[k] != NULL && argv[j+1] != NULL ) {
+                if ( strlen(argv[j+1]) > sizes[k] ) {
+                    fprintf(stderr,"'%s' is too long (length>%d) for the option '%s'\n",
+                            argv[j+1],sizes[k],keyw[k]);
+                    usage(cmds[i],keyw);
+                    exit(2);
+                }
                 strcpy(keyvalues[k],argv[j+1]);
+            }
             if ( ikeyvalues[k] != NULL && argv[j+1] != NULL ) 
                 *ikeyvalues[k] = atoi(argv[j+1]);
         }
+
         if ( icmds[i] == VDQM_PING ) {
             rc = vdqm_PingServer(NULL,dgn,reqid);
             if ( rc >= 0 ) {
