@@ -51,7 +51,8 @@ castor::stager::Segment::Segment() throw() :
   m_severity(0),
   m_id(),
   m_tape(0),
-  m_copy(0) {
+  m_copy(0),
+  m_status(SegmentStatusCodes(0)) {
   memset(m_blockid, 0, 4 * sizeof(unsigned char));
 };
 

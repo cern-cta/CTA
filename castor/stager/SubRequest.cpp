@@ -43,7 +43,8 @@ castor::stager::SubRequest::SubRequest() throw() :
   m_poolName(""),
   m_xsize(),
   m_id(),
-  m_request(0) {
+  m_request(0),
+  m_status(SubRequestStatusCodes(0)) {
 };
 
 //------------------------------------------------------------------------------
