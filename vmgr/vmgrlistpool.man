@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrlistpool.man,v $ $Revision: 1.2 $ $Date: 2000/03/20 14:38:08 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrlistpool.man,v $ $Revision: 1.3 $ $Date: 2000/03/20 14:47:34 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRLISTPOOL 1 "$Date: 2000/03/20 14:38:08 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRLISTPOOL 1 "$Date: 2000/03/20 14:47:34 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrlistpool \- query a given pool or list all existing tape pools in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -30,7 +30,6 @@ default         -        -       49.18TB
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or >0 if the operation
 failed.
-.SH SEE ALSO
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .BR vmgr_enterpool(3) ,
