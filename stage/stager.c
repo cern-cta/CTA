@@ -877,9 +877,20 @@ int stagewrt_castor_hsm_file() {
         stcp_end = stce;
       }
       if (istart < 0 || iend < 0) {
-        /* Impossible to satisfy this request */
-        serrno = ENOSPC;
-        sendrep (rpfd, MSG_ERR, STG02, "stagewrt_castor_hsm_file", "Impossible to satisfy request",sstrerror(serrno));
+        /* Impossible to satisfy entirely this request for the first file - it will probably be fragmented */
+        for (stcp = stcs; stcp < stce; stcp++, i++) {
+          if (hsm_transferedsize[i] >= hsm_totalsize[i]) {
+            /* Yet transfered */
+            continue;
+          }
+          istart = iend = i;
+          break;
+        }
+      }
+      if (istart < 0 || iend < 0) {
+        /* This cannot be */
+        serrno = SEINTERNAL;
+        sendrep (rpfd, MSG_ERR, STG02, "stagewrt_castor_hsm_file", "Cannot find where to begin",sstrerror(serrno));
         RETURN (USERR);
       }
 
@@ -936,8 +947,10 @@ int stagewrt_castor_hsm_file() {
         for (j = istart; j <= iend; j++, i++) {
           if (rtcpcreqs[0]->file[i].filereq.err.errorcode == ETPARIT ||
               rtcpcreqs[0]->file[i].filereq.err.errorcode == ETUNREC ||
+              rtcpcreqs[0]->file[i].filereq.err.errorcode == ETLBL ||
               rtcpcreqs[0]->tapereq.err.errorcode == ETPARIT ||
-              rtcpcreqs[0]->tapereq.err.errorcode == ETUNREC) {
+              rtcpcreqs[0]->tapereq.err.errorcode == ETUNREC ||
+              rtcpcreqs[0]->tapereq.err.errorcode == ETLBL) {
             sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Flaging tape to DISABLED");
             Flags |= DISABLED;
             break;
@@ -1026,6 +1039,7 @@ int stage_tape() {
       switch (rtcpcreqs[0]->tapereq.err.errorcode) {
       case ETPARIT:
       case ETUNREC:
+      case ETLBL:
         sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc","Tape should be disabled - Contact responsibles");
         RETURN (SYERR);
         break;
@@ -1039,7 +1053,8 @@ int stage_tape() {
 
       for (i = 0; i < nbcat_ent; i++) {
         if (rtcpcreqs[0]->file[i].filereq.err.errorcode == ETPARIT || 
-            rtcpcreqs[0]->file[i].filereq.err.errorcode == ETUNREC) {
+            rtcpcreqs[0]->file[i].filereq.err.errorcode == ETUNREC ||
+            rtcpcreqs[0]->file[i].filereq.err.errorcode == ETLBL) {
           sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc","Tape should be disabled - Contact responsibles");
           RETURN (SYERR);
           break;
