@@ -1,5 +1,5 @@
 /*
- * $RCSfile: Cgetopt.h,v $ $Revision: 1.3 $ $Date: 2000/05/31 10:35:17 $ Jean-Damien Durand IT-PDP/DM
+ * $RCSfile: Cgetopt.h,v $ $Revision: 1.4 $ $Date: 2001/02/01 18:07:49 $ Jean-Damien Durand IT-PDP/DM
  */
 
 /*
@@ -61,5 +61,6 @@ EXTERN_C  char DLL_DECL *Coptarg;
 #endif /* _REENTRANT || _TREAD_SAFE */
 
 EXTERN_C int DLL_DECL Cgetopt _PROTO((int, char * CONST *, CONST char *));
+EXTERN_C int DLL_DECL Cgetopt_long _PROTO((int, char **, char *, Coptions_t *, int *));
 
 #endif /* __Cgetopt_h */
