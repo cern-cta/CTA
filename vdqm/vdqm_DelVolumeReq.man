@@ -1,0 +1,179 @@
+.\"
+.\" @(#)$RCSfile: vdqm_DelVolumeReq.man,v $ $Revision: 1.1 $ $Date: 2000/08/09 10:54:31 $ CERN IT-PDP/DM O.Barring
+.\"
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\"
+.TH VDQM_DELVOLUMEREQ l "$Date: 2000/08/09 10:54:31 $" "CASTOR" "VDQM Library Functions"
+.SH NAME
+.PP
+vdqm_DelVolumeReq \- delete a volume request in VDQM
+.SH SYNOPSIS
+.br
+\fB#include "Castor_limits.h"\fR
+.br
+\fB#include "osdep.h"\fR
+.br
+\fB#include "net.h"\fR
+.br
+\fB#include "vdqm_api.h"\fR
+.sp
+.BI "int vdqm_DelVolumeReq ("
+.br
+.BI "                const vdqmnw_t *" nw ,
+.br
+.BI "                int " reqID ,
+.br
+.BI "                char *" VID ,
+.br
+.BI "                const char *" dgn ,
+.br
+.BI "                const char *" server,
+.br
+.BI "                const char *" unit ,
+.br
+.BI "                int " client_port );
+.SH PARAMETERS
+.I nw
+\- points to a structure containing internal VDQM API network information returned
+by a prior call to 
+.B vdqm_Connect(3).
+If this parameter is NULL, which is the recommended usage,
+.B vdqm_DelVolumeReq
+will internally call 
+.B vdqm_Connect(3)
+and
+.B vdqm_Disconnect(3)
+to open and close the connection with the VDQM server.
+.PP
+.I reqID
+\- the VDQM request identifier returned by
+.B vdqm_SendVolReq(3)
+.PP
+.I VID
+\- the VID of the volume requested in call to
+.B vdqm_SendVolReq(3)
+.PP
+.I dgn
+\- character string specifying the device group name associated with the volume.
+.PP
+.I server
+\- character string specifying the tape server requested in the call to
+.B vdqm_SendVolReq(3).
+The server parameter is currently not checked and may be set to NULL.
+.PP
+.I unit
+\- character string specifying the drive unit name requested in the call to
+.B vdqm_SendVolReq(3)
+The unit parameter is currently not checked and may be set to NULL.
+.PP
+.I client_port
+\- client port number provided in the call to
+.B vdqm_SendVolReq(3)
+.PP
+.SH DESCRIPTION
+.B vdqm_DelVolumeReq
+sends a delete volume request to the VDQM server. When successful the specified 
+volume request will be completely removed from the VDQM database. The request 
+will fail if the specified request is already assigned a drive by VDQM.
+However, if the request is assigned to a drive, the drive status will have
+its
+.B VDQM_UNIT_UNKNOWN
+bit set, which indicates that the client has aborted the request while it
+was running. This is the normal unit status while RTCOPY cleans up an aborted
+request.
+
+.SH EXAMPLE
+Here follows an example showing how call
+.B vdqm_DelVolumeReq 
+to delete the request specified on command line from the VDQM database.
+.P
+.nf
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <Castor_limits.h>
+#include <serrno.h>
+#include <osdep.h>
+#include <net.h>
+#include <Ctape_constants.h>
+#include <Ctape_api.h>
+#include <vdqm_api.h>
+
+int main(int argc, char *argv) {
+    int rc, reqID, client_port;
+    char *VID, *dgn;
+
+    if ( argc < 4 ) {
+        fprintf(stderr,"Usage: %s reqID VID dgn client_port\n",argv[0]);
+        exit(2);
+    }
+    reqID = atoi(argv[1]);
+    vid = argv[2];
+    dgn = argv[3];
+    client_port = atoi(argv[4]);
+
+    /*
+     * Request to delete the specified volume request
+     */
+    rc = \fBvdqm_DelVolumeReq\fP(NULL,reqID,VID,dgn,NULL,NULL,client_port);
+    if ( rc == -1 ) {
+        fprintf(stderr,"vdqm_DelVolumeReq(): %s\\n",sstrerror(serrno));
+        exit(1);
+    }
+    exit(0);
+}
+.fi
+
+.SH RETURN VALUES
+.PP
+On successful completion, the
+.B vdqm_DelVolumeReq
+function returns 0. Otherwise, a value of \-1 is returned and
+.B serrno
+is set to indicate the error.
+.SH ERRORS
+.PP
+If the
+.B vdqm_DelVolumeReq
+function fails,
+.B serrno
+may be set to one of the following values:
+.TP
+.B SEINTERNAL
+Unexpected internal error 
+.TP
+.B SENOSSERV
+VDQM service unknown.
+.TP
+.B SENOSHOST
+VDQM host unknown.
+.TP
+.B SECOMERR
+A network library call failed when trying to establish the connection
+with the VDQM server.
+.TP
+.B EINVAL
+A parameter or combination of parameters is invalid. For instance if
+any of the required parameters VID, device group name (dgn)
+is a NULL pointer.
+.TP
+.B EVQSYERR
+A fatal system call (e.g. calloc()) failure in VDQM server.
+.TP
+.B EVQHOLD
+The server is in HOLD status. This is normally a temporary error due
+to VDQM server maintenance. Client should retry after a short delay.
+.TP
+.B EVQREQASS
+The specified volume request is assigned to a drive.
+.TP
+.B EVQNOSVOL
+Specified volume request was not found in the VDQM database.
+
+.SH SEE ALSO
+.BR vdqm_Connect(3), 
+.BR vdqm_Disconnect(3)
+.BR vdqm_SendVolReq(3)
