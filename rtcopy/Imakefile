@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.14 $ $Date: 2004/10/12 16:09:56 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.15 $ $Date: 2004/10/18 06:57:10 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -196,12 +196,12 @@ IPROGS_C = FileName($(BIN),ProgramTargetName(tpread)) \
 	   FileName($(BIN),ProgramTargetName(tpwrite)) \
 	   FileName($(BIN),ProgramTargetName(rtcpcldCleanupDB)) \
 	   FileName($(BIN),ProgramTargetName(dumptape)) $(IPROGS_RTSTAT)
-PROGS_D = ProgramTargetName(rtcpclientd) \
-	  ProgramTargetName(recaller) \
-	  ProgramTargetName(migrator)
-IPROGS_D = FileName($(BIN),ProgramTargetName(rtcpclientd)) \
-	   FileName($(BIN),ProgramTargetName(recaller)) \
-	   FileName($(BIN),ProgramTargetName(migrator))
+PROGS_D += ProgramTargetName(rtcpclientd) \
+	   ProgramTargetName(recaller) \
+	   ProgramTargetName(migrator)
+IPROGS_D += FileName($(BIN),ProgramTargetName(rtcpclientd)) \
+	    FileName($(BIN),ProgramTargetName(recaller)) \
+	    FileName($(BIN),ProgramTargetName(migrator))
 EPROGS_C = FileName($(EXPORTBIN),tpread) FileName($(EXPORTBIN),tpwrite) \
 	   FileName($(EXPORTBIN),dumptape) \
 	   FileName($(EXPORTBIN),rtcpcldCleanupDB) \
@@ -219,10 +219,10 @@ EMANPAGES_C = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tpread.$(MANSUFFIX)
 #if BuildRtcopyServer
 DEPLIB += DepLibraryTargetName(tape,tape)
 GLOBLIB += -L../tape -ltape
-PROGS_D = ProgramTargetName(rtcpd) \
-	  ProgramTargetName(killjid)
-IPROGS_D = FileName($(BIN),ProgramTargetName(rtcpd)) \
-	   FileName($(BIN),ProgramTargetName(killjid))
+PROGS_D += ProgramTargetName(rtcpd) \
+	   ProgramTargetName(killjid)
+IPROGS_D += FileName($(BIN),ProgramTargetName(rtcpd)) \
+	    FileName($(BIN),ProgramTargetName(killjid))
 EPROGS_S =
 MANPAGES_S = FileName($(MANDIR),rtcpd.$(MANSUFFIX)) \
 	     FileName($(MANDIR),killjid.$(MANSUFFIX))
@@ -303,7 +303,7 @@ NormalProgramTarget(recaller,$(RECALLER_OBJS) $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS)
 
 NormalProgramTarget(migrator,$(MIGRATOR_OBJS) $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
 
-NormalProgramTarget(rtcpclientd,$(RTCPCLIENTD_OJBS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
+NormalProgramTarget(rtcpclientd,$(RTCPCLIENTD_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 
 NormalProgramTarget(rtcpcldCleanupDB,$(RTCPCLD_CLEANUP_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 
