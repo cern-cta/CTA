@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.130 2001/03/02 18:16:49 jdurand Exp $
+ * $Id: stager.c,v 1.131 2001/03/06 15:15:52 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.130 $ $Date: 2001/03/02 18:16:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.131 $ $Date: 2001/03/06 15:15:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -2104,7 +2104,7 @@ int filecopy(stcp, key, hostname)
 			sendrep (rpfd, MSG_ERR, STG02, stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.d.xfile,
 					"stage_updc_filcp", sstrerror (serrno));
 			RESTORE_EID;
-			RETURN (USERR);
+			return(USERR);
 		}
 #ifdef STAGER_DEBUG
 		SAVE_EID;
@@ -2160,7 +2160,7 @@ int filecopy(stcp, key, hostname)
 	if (rf == NULL) {
 		/* This way we will sure that it will be logged... */
 		sendrep(rpfd, MSG_ERR, "STG02 - %s : %s\n", command, rfio_serror());
-		RETURN (SYERR);
+		return(SYERR);
 	}
 
 	while ((c = rfio_pread (buf, 1, sizeof(buf)-1, rf)) > 0) {
@@ -2174,7 +2174,7 @@ int filecopy(stcp, key, hostname)
 	if (c != 0) {
 		sendrep(rpfd, MSG_ERR, "STG02 - %s : %s\n", "rfio_pclose", rfio_serror());
 	}
-	RETURN (c);
+	return(c);
 }
 
 void cleanup() {
@@ -3642,6 +3642,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Thursday 01 March, 2001 at 20:03:57 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Tuesday 06 March, 2001 at 16:15:21 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
