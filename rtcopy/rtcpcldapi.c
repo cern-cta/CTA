@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.59 $ $Release$ $Date: 2004/08/24 08:58:27 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.60 $ $Release$ $Date: 2004/09/15 16:43:02 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.59 $ $Date: 2004/08/24 08:58:27 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.60 $ $Date: 2004/09/15 16:43:02 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1685,6 +1685,9 @@ int rtcpcldc(tape)
         ~RTCP_RESELECT_SERV;
       fl->filereq.cprc = 0;
       if ( fl->filereq.proc_status != RTCP_FINISHED ){
+        fl->filereq.err.errorcode = 0;
+        fl->filereq.err.severity = 0;
+        *fl->filereq.err.errmsgtxt = '\0';
         rc = addSegment(
                         clientCntx,
                         fl,
