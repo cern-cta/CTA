@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.20 2000/10/27 14:04:33 jdurand Exp $
+ * $Id: stagein.c,v 1.21 2000/12/05 09:57:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.20 $ $Date: 2000/10/27 14:04:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.21 $ $Date: 2000/12/05 09:57:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -97,6 +97,7 @@ int main(argc, argv)
 	int stagedisk = 0;
 	int stagemig = 0;
 	int stagetape = 0;
+	int copytape = 0;
 	int uflag = 0;
 	uid_t uid;
 	char vid[MAXVSN][7];
@@ -329,6 +330,7 @@ int main(argc, argv)
 			break;
 		case 'z':
 			stagetape++;
+			copytape++;
 			break;
 		case '?':
 			errflg++;
@@ -342,15 +344,18 @@ int main(argc, argv)
 		fprintf (stderr, STG07);
 		errflg++;
 	}
-	if (stagetape && stagedisk) {
+	/* In the following stagetape is exclusive with all other types of stagein, except */
+	/* if stagetape == copytape == 1, in which case this means that only option -z */
+	/* triggered the stagetape flag */
+	if (stagetape && stagedisk && (! (stagetape == 1 && copytape == 1))) {
 		fprintf (stderr, STG35, "-I", "-dEfglnoqSTtVv");
 		errflg++;
 	}
-	if (stagetape && stagemig) {
+	if (stagetape && stagemig && (! (stagetape == 1 && copytape == 1))) {
 		fprintf (stderr, STG35, "-dEfglnoqSTtVv", "-M");
 		errflg++;
 	}
-	if (stagedisk && stagemig) {
+	if (stagedisk && stagemig && (! (stagetape == 1 && copytape == 1))) {
 		fprintf (stderr, STG35, "-I", "-M");
 		errflg++;
 	}
