@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/07/21 09:10:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/08/30 14:39:57 $ $Author: sponcec3 $
  *
  *
  *
@@ -132,14 +132,15 @@ void *castor::rh::Server::processRequest(void *param) throw() {
     fr = dynamic_cast<castor::rh::Request*>(obj);
     if (0 == fr) {
       delete obj;
-      clog() << "Client did not send a valid Request object."
+      clog() << ERROR
+             << "Client did not send a valid Request object."
              << std::endl;
       ack.setStatus(false);
       ack.setErrorCode(EINVAL);
       ack.setErrorMessage("Invalid Request object sent to server.");
     }
   } catch (castor::exception::Exception e) {
-    clog() << "Unable to read Request object from socket."
+    clog() << ERROR << "Unable to read Request object from socket."
            << std::endl;
     ack.setStatus(false);
     ack.setErrorCode(EINVAL);
