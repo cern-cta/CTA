@@ -176,14 +176,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Fill the database with objects of type Request refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepRequest(castor::stager::StageGetNextRequest* obj)
-          throw (castor::exception::Exception);
-
-        /**
          * Fill the database with objects of type SubRequest refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -224,14 +216,6 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjSvcClass(castor::stager::StageGetNextRequest* obj)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type Request refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjRequest(castor::stager::StageGetNextRequest* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -319,18 +303,6 @@ namespace castor {
 
         /// SQL update statement object for member svcClass
         oracle::occi::Statement *m_updateSvcClassStatement;
-
-        /// SQL checkExist statement for member parent
-        static const std::string s_checkRequestExistStatementString;
-
-        /// SQL checkExist statement object for member parent
-        oracle::occi::Statement *m_checkRequestExistStatement;
-
-        /// SQL update statement for member parent
-        static const std::string s_updateRequestStatementString;
-
-        /// SQL update statement object for member parent
-        oracle::occi::Statement *m_updateRequestStatement;
 
         /// SQL select statement for member subRequests
         static const std::string s_selectSubRequestStatementString;

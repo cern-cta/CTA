@@ -61,7 +61,7 @@ CREATE TABLE rh_SubRequest (retryCounter NUMBER, fileName VARCHAR(255), protocol
 
 /* SQL statements for type StageGetNextRequest */
 DROP TABLE rh_StageGetNextRequest;
-CREATE TABLE rh_StageGetNextRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, parent INTEGER, client INTEGER, parent INTEGER);
+CREATE TABLE rh_StageGetNextRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER, parent INTEGER);
 
 /* SQL statements for type StageUpdcRequest */
 DROP TABLE rh_StageUpdcRequest;

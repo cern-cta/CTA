@@ -660,34 +660,34 @@ CppBaseWriter::AssocList CppBaseWriter::createAssocsList() {
     for(UMLAssociation *a = ci.plainAssociations.first();
         0 != a;
         a = ci.plainAssociations.next()) {
-      singleAssocToPairList(a, result);
+      singleAssocToPairList(a, result, ci);
     }
     for(UMLAssociation *a = ci.aggregations.first();
         0 != a;
         a = ci.aggregations.next()) {
-      singleAssocToPairList(a, result);
+      singleAssocToPairList(a, result, ci);
     }
     for(UMLAssociation *a = ci.compositions.first();
         0 != a;
         a = ci.compositions.next()) {
-      singleAssocToPairList(a, result);
+      singleAssocToPairList(a, result, ci);
     }
   }
   // Current class
   for(UMLAssociation *a = m_classInfo->plainAssociations.first();
       0 != a;
       a = m_classInfo->plainAssociations.next()) {
-    singleAssocToPairList(a, result);
+    singleAssocToPairList(a, result, *m_classInfo);
   }
   for(UMLAssociation *a = m_classInfo->aggregations.first();
       0 != a;
       a = m_classInfo->aggregations.next()) {
-    singleAssocToPairList(a, result);
+    singleAssocToPairList(a, result, *m_classInfo);
   }
   for(UMLAssociation *a = m_classInfo->compositions.first();
       0 != a;
       a = m_classInfo->compositions.next()) {
-    singleAssocToPairList(a, result);
+    singleAssocToPairList(a, result, *m_classInfo);
   }
   return result;
 }
@@ -721,10 +721,11 @@ CppBaseWriter::MemberList CppBaseWriter::createMembersList() {
 // singleAssocToPairList
 //=============================================================================
 void CppBaseWriter::singleAssocToPairList (UMLAssociation *a,
-                                           AssocList &list) {
+                                           AssocList &list,
+                                           ClassifierInfo &ci) {
   Assoc* as;
-  if (m_classInfo->id() == a->getRoleAId() ||
-      m_classInfo->allSuperclassIds.contains(a->getRoleAId())) {
+  if (ci.id() == a->getRoleAId() ||
+      ci.allSuperclassIds.contains(a->getRoleAId())) {
     as = new Assoc(AssocType(parseMulti(a->getMultiB()),
                              parseMulti(a->getMultiA()),
                              parseAssocKind(a->getAssocType(), true)),

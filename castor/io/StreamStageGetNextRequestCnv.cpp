@@ -161,7 +161,6 @@ void castor::io::StreamStageGetNextRequestCnv::marshalObject(castor::IObject* ob
     // Mark object as done
     alreadyDone.insert(obj);
     cnvSvc()->marshalObject(obj->svcClass(), address, alreadyDone);
-    cnvSvc()->marshalObject(obj->parent(), address, alreadyDone);
     address->stream() << obj->subRequests().size();
     for (std::vector<castor::stager::SubRequest*>::iterator it = obj->subRequests().begin();
          it != obj->subRequests().end();
@@ -191,8 +190,6 @@ castor::IObject* castor::io::StreamStageGetNextRequestCnv::unmarshalObject(casto
     dynamic_cast<castor::stager::StageGetNextRequest*>(object);
   IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));
-  IObject* objParent = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setParent(dynamic_cast<castor::stager::Request*>(objParent));
   unsigned int subRequestsNb;
   ad.stream() >> subRequestsNb;
   for (unsigned int i = 0; i < subRequestsNb; i++) {

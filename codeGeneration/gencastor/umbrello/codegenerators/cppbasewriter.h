@@ -356,7 +356,8 @@ class CppBaseWriter : public CppCastorWriter {
    * Skip the associations with multiplicity not equal to 1
    */
   void singleAssocToPairList(UMLAssociation *a,
-                             AssocList &list);
+                             AssocList &list,
+                             ClassifierInfo &ci);
   
  public:
   /**
