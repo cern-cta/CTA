@@ -21,7 +21,6 @@ struct cmd_args {
   char *filename;
   char *protocol;
   char *usertag;
-  char *service_class;
   int display_reqid;
   mode_t mode;
   u_signed64 size;
@@ -144,10 +143,10 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
       }
       break;
     case 'S':
-      if (args->service_class!= NULL) {
+      if (args->opts.service_class!= NULL) {
 	errflg++;
       } else {
-      	args->service_class = Coptarg;
+      	args->opts.service_class = Coptarg;
       }
       break;
     case 'h':
