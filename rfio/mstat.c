@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.17 2001/11/13 17:22:18 jdurand Exp $
+ * $Id: mstat.c,v 1.18 2001/11/14 10:44:27 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.17 $ $Date: 2001/11/13 17:22:18 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.18 $ $Date: 2001/11/14 10:44:27 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -32,16 +32,18 @@ static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.17 $ $Date: 2001/
 #include <Cglobals.h>
 #include <Cpwd.h>
 
+#ifdef _WIN32
+typedef int _rfio_pgrp_t;
+#else
+typedef pid_t _rfio_pgrp_t;
+#endif
+
 typedef struct socks {
   char host[CA_MAXHOSTNAMELEN+1];
   int s ;
   int sec;
   int Tid;
-#ifdef _WIN32
-  int pid;
-#else
-  pid_t pid;
-#endif
+  _rfio_pgrp_t pgrp;
 } mstat_connects ;
 static mstat_connects mstat_tab[MAXMCON]; /* UP TO MAXMCON connections simultaneously */
 
@@ -49,6 +51,7 @@ EXTERN_C int DLL_DECL rfio_smstat _PROTO((int, char *, struct stat *, int));
 static int rfio_mstat_allocentry _PROTO((char *, int, int, int));
 static int rfio_mstat_findentry _PROTO((char *,int));
 static int rfio_end_this _PROTO((int,int));
+static int rfio_mstat_findpgrp _PROTO((int));
 
 int DLL_DECL rfio_mstat(file,statb)
      char *file ;
@@ -119,7 +122,7 @@ int DLL_DECL rfio_mstat(file,statb)
         else
           rc = rfio_smstat(fd,filename,statb,RQST_STAT);
         if ( rc != -1 ) {
-          TRACE(2,"rfio","rfio_mstat() overflow connect table, Tid=%d. Closing %d",Tid,fd);
+          TRACE(2,"rfio","rfio_mstat() overflow connect table, host=%s, Tid=%d. Closing %d",host,Tid,fd);
           (void)close(fd);
         }
         fd = -1;
@@ -261,39 +264,49 @@ int DLL_DECL rfio_smstat(s,filename,statbuf,reqst)
 
 }
 
+static int rfio_mstat_findpgrp(Tid)
+     int Tid;
+{
+  if (Tid < 0) {
+    return(getpid());
+  } else {
+#ifdef linux
+    return(getpgrp());
+#else
+    return(getpid());
+#endif
+  }
+}
+
 int DLL_DECL rfio_end()
 {
   int i,Tid, j=0 ;
   char buf[256];
   char *p=buf ;
   int rc = 0;
-#ifdef _WIN32
-  int pid = getpid();
-#else
-  pid_t pid = getpid();
-#endif
+  _rfio_pgrp_t pgrp;
 
   INIT_TRACE("RFIO_TRACE");
 
   Cglobals_getTid(&Tid);
+  pgrp = rfio_mstat_findpgrp(Tid);
 
-  TRACE(3,"rfio","rfio_end entered, Tid=%d", Tid);
+  TRACE(3,"rfio","rfio_end entered, Tid=%d, pgrp=%d", Tid, (int) pgrp);
 
-
+  TRACE(3,"rfio","rfio_end: Lock mstat_tab");
   if (Cmutex_lock((void *) mstat_tab,-1) != 0) {
-    TRACE(3,"rfio","rfio_end : Cmutex_lock(mstat_tab,-1) error No %d (%s)", errno, strerror(errno));
+    TRACE(3,"rfio","rfio_end: Cmutex_lock(mstat_tab,-1) error No %d (%s)", errno, strerror(errno));
     END_TRACE();
     return(-1);
   }
   for (i = 0; i < MAXMCON; i++) {
-    /* TRACE(3,"rfio","mstat_tab[i]={host=\"%s\", s=%d, sec=%d, Tid=%d}", mstat_tab[i].host, mstat_tab[i].s, mstat_tab[i].sec, mstat_tab[i].Tid); */
-    if ((mstat_tab[i].pid > 0) && (mstat_tab[i].pid != pid)) {
-      TRACE(3,"rfio","rfio_end: mstat_tab[%d].s=%d : Found different pid=%d (current pid is %d) - Cleaning this entry", i, mstat_tab[i].s, mstat_tab[i].pid, pid);
+    if ((mstat_tab[i].pgrp > 0) && (mstat_tab[i].pgrp != pgrp)) {
+      TRACE(3,"rfio","rfio_end: mstat_tab[%d].s=%d - Found different pgrp=%d (current pgrp is %d) - Cleaning this entry", i, mstat_tab[i].s, mstat_tab[i].pgrp, pgrp);
       mstat_tab[i].s = -1;
       mstat_tab[i].host[0] = '\0';
       mstat_tab[i].sec = -1;
       mstat_tab[i].Tid = -1;
-      mstat_tab[i].pid = 0;
+      mstat_tab[i].pgrp = 0;
       continue;
     }
     if (mstat_tab[i].Tid == Tid) {
@@ -301,7 +314,7 @@ int DLL_DECL rfio_end()
         marshall_WORD(p, RFIO_MAGIC);
         marshall_WORD(p, RQST_END);
         marshall_LONG(p, j);
-        TRACE(3,"rfio","rfio_end: close(mstat_tab[%d].s=%d), Tid=%d",i,mstat_tab[i].s, Tid);
+        TRACE(3,"rfio","rfio_end: close(mstat_tab[%d].s=%d), host=%s, Tid=%d",i,mstat_tab[i].s, mstat_tab[i].host, Tid);
         if (netwrite_timeout(mstat_tab[i].s,buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
           TRACE(3, "rfio", "rfio_end: netwrite_timeout(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
           rc = -1;
@@ -312,12 +325,13 @@ int DLL_DECL rfio_end()
       mstat_tab[i].host[0] = '\0';
       mstat_tab[i].sec = -1;
       mstat_tab[i].Tid = -1;
-      mstat_tab[i].pid = 0;
+      mstat_tab[i].pgrp = 0;
     }
   }
    
+  TRACE(3,"rfio","rfio_end: Unlock mstat_tab");
   if (Cmutex_unlock((void *) mstat_tab) != 0) {
-    TRACE(3,"rfio","rfio_end : Cmutex_unlock(mstat_tab) error No %d (%s)", errno, strerror(errno));
+    TRACE(3,"rfio","rfio_end: Cmutex_unlock(mstat_tab) error No %d (%s)", errno, strerror(errno));
     rc = -1;
   }
 
@@ -335,32 +349,29 @@ static int rfio_end_this(s,flag)
   char buf[256];
   char *p=buf ;
   int rc = 0;
-#ifdef _WIN32
-  int pid = getpid();
-#else
-  pid_t pid = getpid();
-#endif
+  _rfio_pgrp_t pgrp;
 
   INIT_TRACE("RFIO_TRACE");
 
   Cglobals_getTid(&Tid);
+  pgrp = rfio_mstat_findpgrp(Tid);
 
-  TRACE(3,"rfio","rfio_end_this(s=%d,flag=%d) entered, Tid=%d", s, flag, Tid);
+  TRACE(3,"rfio","rfio_end_this(s=%d,flag=%d) entered, Tid=%d, pgrp=%d", s, flag, Tid, (int) pgrp);
 
+  TRACE(3,"rfio","rfio_end: Lock mstat_tab");
   if (Cmutex_lock((void *) mstat_tab,-1) != 0) {
-    TRACE(3,"rfio","rfio_end_this : Cmutex_lock(mstat_tab,-1) error No %d (%s)", errno, strerror(errno));
+    TRACE(3,"rfio","rfio_end_this: Cmutex_lock(mstat_tab,-1) error No %d (%s)", errno, strerror(errno));
     END_TRACE();
     return(-1);
   }
   for (i = 0; i < MAXMCON; i++) {
-    /* TRACE(3,"rfio","mstat_tab[i]={host=\"%s\", s=%d, sec=%d, Tid=%d}", mstat_tab[i].host, mstat_tab[i].s, mstat_tab[i].sec, mstat_tab[i].Tid); */
-    if ((mstat_tab[i].pid > 0) && (mstat_tab[i].pid != pid)) {
-      TRACE(3,"rfio","rfio_end_this: mstat_tab[%d].s=%d : Found different pid=%d (current pid is %d) - Cleaning this entry", i, mstat_tab[i].s, mstat_tab[i].pid, pid);
+    if ((mstat_tab[i].pgrp > 0) && (mstat_tab[i].pgrp != pgrp)) {
+      TRACE(3,"rfio","rfio_end_this: mstat_tab[%d].s=%d - Found different pgrp=%d (current pgrp is %d) - Cleaning this entry", i, mstat_tab[i].s, mstat_tab[i].pgrp, pgrp);
       mstat_tab[i].s = -1;
       mstat_tab[i].host[0] = '\0';
       mstat_tab[i].sec = -1;
       mstat_tab[i].Tid = -1;
-      mstat_tab[i].pid = 0;
+      mstat_tab[i].pgrp = 0;
       continue;
     }
     if (mstat_tab[i].Tid == Tid) {
@@ -369,7 +380,7 @@ static int rfio_end_this(s,flag)
           marshall_WORD(p, RFIO_MAGIC);
           marshall_WORD(p, RQST_END);
           marshall_LONG(p, j);
-          TRACE(3,"rfio","rfio_end_this: close(mstat_tab[%d].s=%d), Tid=%d",i,mstat_tab[i].s, Tid);
+          TRACE(3,"rfio","rfio_end_this: close(mstat_tab[%d].s=%d), host=%s, Tid=%d",i,mstat_tab[i].s, mstat_tab[i].host, Tid);
           if (netwrite_timeout(mstat_tab[i].s,buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
             TRACE(3, "rfio", "rfio_end_this: netwrite_timeout(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
           }
@@ -379,13 +390,14 @@ static int rfio_end_this(s,flag)
         mstat_tab[i].host[0] = '\0';
         mstat_tab[i].sec = -1;
         mstat_tab[i].Tid = -1;
-        mstat_tab[i].pid = 0;
+        mstat_tab[i].pgrp = 0;
       }
     }
   }
    
+  TRACE(3,"rfio","rfio_end: Unlock mstat_tab");
   if (Cmutex_unlock((void *) mstat_tab) != 0) {
-    TRACE(3,"rfio","rfio_end_this : Cmutex_unlock(mstat_tab) error No %d (%s)", errno, strerror(errno));
+    TRACE(3,"rfio","rfio_end_this: Cmutex_unlock(mstat_tab) error No %d (%s)", errno, strerror(errno));
     rc = -1;
   }
 
@@ -404,29 +416,30 @@ static int rfio_mstat_allocentry(hostname,Tid,s,sec)
 {
   int i;
   int rc;
-#ifdef _WIN32
-  int pid = getpid();
-#else
-  pid_t pid = getpid();
-#endif
+  _rfio_pgrp_t pgrp;
+
+  pgrp = rfio_mstat_findpgrp(Tid);
 
   INIT_TRACE("RFIO_TRACE");
 
+  TRACE(3,"rfio","rfio_mstat_allocentry entered, Tid=%d, pgrp=%d", Tid, (int) pgrp);
+
+  TRACE(3,"rfio","rfio_mstat_allocentry: Lock mstat_tab");
   if (Cmutex_lock((void *) mstat_tab,-1) != 0) {
-    TRACE(3,"rfio","rfio_mstat_allocentry : Cmutex_lock(mstat_tab,-1) error No %d (%s)", errno, strerror(errno));
+    TRACE(3,"rfio","rfio_mstat_allocentry: Cmutex_lock(mstat_tab,-1) error No %d (%s)", errno, strerror(errno));
     END_TRACE();
     return(-1);
   }
   /* Scan it */
 
   for (i = 0; i < MAXMCON; i++) {
-    if ((mstat_tab[i].pid > 0) && (mstat_tab[i].pid != pid)) {
-      TRACE(3,"rfio","rfio_mstat_allocentry: mstat_tab[%d].s=%d : Found different pid=%d (current pid is %d) - Cleaning this entry", i, mstat_tab[i].s, mstat_tab[i].pid, pid);
+    if ((mstat_tab[i].pgrp > 0) && (mstat_tab[i].pgrp != pgrp)) {
+      TRACE(3,"rfio","rfio_mstat_allocentry: mstat_tab[%d].s=%d - Found different pgrp=%d (current pgrp is %d) - Cleaning this entry", i, mstat_tab[i].s, mstat_tab[i].pgrp, pgrp);
       mstat_tab[i].s = -1;
       mstat_tab[i].host[0] = '\0';
       mstat_tab[i].sec = -1;
       mstat_tab[i].Tid = -1;
-      mstat_tab[i].pid = 0;
+      mstat_tab[i].pgrp = 0;
     }
     if (mstat_tab[i].host[0] == '\0') {
       rc = i;
@@ -435,7 +448,7 @@ static int rfio_mstat_allocentry(hostname,Tid,s,sec)
       mstat_tab[i].Tid = Tid;
       mstat_tab[i].s = s;
       mstat_tab[i].sec = sec;
-      mstat_tab[i].pid = pid;
+      mstat_tab[i].pgrp = pgrp;
       goto _rfio_mstat_allocentry_return;
     }
   }
@@ -444,8 +457,9 @@ static int rfio_mstat_allocentry(hostname,Tid,s,sec)
   rc = -1;
   
  _rfio_mstat_allocentry_return:
+  TRACE(3,"rfio","rfio_mstat_allocentry: Unlock mstat_tab");
   if (Cmutex_unlock((void *) mstat_tab) != 0) {
-    TRACE(3,"rfio","rfio_mstat_allocentry : Cmutex_unlock(mstat_tab) error No %d (%s)", errno, strerror(errno));
+    TRACE(3,"rfio","rfio_mstat_allocentry: Cmutex_unlock(mstat_tab) error No %d (%s)", errno, strerror(errno));
     END_TRACE();
     return(-1);
   }
@@ -462,29 +476,30 @@ static int rfio_mstat_findentry(hostname,Tid)
 {
   int i;
   int rc;
-#ifdef _WIN32
-  int pid = getpid();
-#else
-  pid_t pid = getpid();
-#endif
+  _rfio_pgrp_t pgrp;
+
+  pgrp = rfio_mstat_findpgrp(Tid);
 
   INIT_TRACE("RFIO_TRACE");
 
+  TRACE(3,"rfio","rfio_mstat_findentry entered, Tid=%d, pgrp=%d", Tid, (int) pgrp);
+
+  TRACE(3,"rfio","rfio_mstat_findentry: Lock mstat_tab");
   if (Cmutex_lock((void *) mstat_tab,-1) != 0) {
-    TRACE(3,"rfio","rfio_mstat_findentry : Cmutex_lock(mstat_tab,-1) error No %d (%s)", errno, strerror(errno));
+    TRACE(3,"rfio","rfio_mstat_findentry: Cmutex_lock(mstat_tab,-1) error No %d (%s)", errno, strerror(errno));
     END_TRACE();
     return(-1);
   }
   /* Scan it */
 
   for (i = 0; i < MAXMCON; i++) {
-    if ((mstat_tab[i].pid > 0) && (mstat_tab[i].pid != pid)) {
-      TRACE(3,"rfio","rfio_mstat_findentry: mstat_tab[%d].s=%d : Found different pid=%d (current pid is %d) - Cleaning this entry", i, mstat_tab[i].s, mstat_tab[i].pid, pid);
+    if ((mstat_tab[i].pgrp > 0) && (mstat_tab[i].pgrp != pgrp)) {
+      TRACE(3,"rfio","rfio_mstat_findentry: mstat_tab[%d].s=%d - Found different pgrp=%d (current pgrp is %d) - Cleaning this entry", i, mstat_tab[i].s, mstat_tab[i].pgrp, pgrp);
       mstat_tab[i].s = -1;
       mstat_tab[i].host[0] = '\0';
       mstat_tab[i].sec = -1;
       mstat_tab[i].Tid = -1;
-      mstat_tab[i].pid = 0;
+      mstat_tab[i].pgrp = 0;
     }
     if ((strcmp(mstat_tab[i].host,hostname) == 0) && (mstat_tab[i].Tid == Tid)) {
       rc = i;
@@ -496,8 +511,9 @@ static int rfio_mstat_findentry(hostname,Tid)
   rc = -1;
 
  _rfio_mstat_findentry_return:
+  TRACE(3,"rfio","rfio_mstat_findentry: Unlock mstat_tab");
   if (Cmutex_unlock((void *) mstat_tab) != 0) {
-    TRACE(3,"rfio","rfio_mstat_findentry : Cmutex_unlock(mstat_tab) error No %d (%s)", errno, strerror(errno));
+    TRACE(3,"rfio","rfio_mstat_findentry: Cmutex_unlock(mstat_tab) error No %d (%s)", errno, strerror(errno));
     END_TRACE();
     return(-1);
   }

@@ -1,5 +1,5 @@
 /*
- * $Id: msymlink.c,v 1.3 2001/11/13 17:37:07 jdurand Exp $
+ * $Id: msymlink.c,v 1.4 2001/11/14 10:44:28 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.3 $ $Date: 2001/11/13 17:37:07 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.4 $ $Date: 2001/11/14 10:44:28 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -28,15 +28,17 @@ static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.3 $ $Date: 200
 #include <unistd.h>
 #endif
 
+#ifdef _WIN32
+typedef int _rfio_pgrp_t;
+#else
+typedef pid_t _rfio_pgrp_t;
+#endif
+
 typedef struct socks {
   char host[CA_MAXHOSTNAMELEN+1];
   int s ;
   int Tid;
-#ifdef _WIN32
-  int pid;
-#else
-  pid_t pid;
-#endif
+  _rfio_pgrp_t pgrp;
 } msymlink_connects ;
 static msymlink_connects msymlink_tab[MAXMCON]; /* UP TO MAXMCON connections simultaneously */
 
@@ -44,6 +46,7 @@ static int rfio_smsymlink _PROTO((int,  char *, char *));
 static int rfio_msymlink_allocentry _PROTO((char *, int, int));
 static int rfio_msymlink_findentry _PROTO((char *,int));
 static int rfio_symend_this _PROTO((int,int));
+static int rfio_msymlink_findpgrp _PROTO((int));
 
 int DLL_DECL rfio_msymlink(n1,file2)
      char *n1 ;
@@ -102,7 +105,7 @@ int DLL_DECL rfio_msymlink(n1,file2)
     } else {
       rc = rfio_smsymlink(fd,n1,filename) ;
       if ( rc != -1 ) {
-        TRACE(2,"rfio","rfio_msymlink() overflow connect table, Tid=%d. Closing %d",Tid,fd);
+        TRACE(2,"rfio","rfio_msymlink() overflow connect table, host=%s, Tid=%d. Closing %d",host,Tid,fd);
         (void)close(fd);
       }
       fd = -1;
@@ -221,38 +224,49 @@ static int rfio_smsymlink(s,n1,filename)
   return(0) ;
 }
 
+static int rfio_msymlink_findpgrp(Tid)
+     int Tid;
+{
+  if (Tid < 0) {
+    return(getpid());
+  } else {
+#ifdef linux
+    return(getpgrp());
+#else
+    return(getpid());
+#endif
+  }
+}
+
 int DLL_DECL rfio_symend()
 {
   int i,Tid, j=0 ;
   char buf[256];
   char *p=buf ;
   int rc = 0;
-#ifdef _WIN32
-  int pid = getpid();
-#else
-  pid_t pid = getpid();
-#endif
+  _rfio_pgrp_t pgrp;
 
   INIT_TRACE("RFIO_TRACE");
 
   Cglobals_getTid(&Tid);
+  pgrp = rfio_msymlink_findpgrp(Tid);
 
-  TRACE(3,"rfio","rfio_symend entered, Tid=%d", Tid);
+  TRACE(3,"rfio","rfio_symend entered, Tid=%d, pgrp=%d", Tid, (int) pgrp);
 
 
+  TRACE(3,"rfio","rfio_symend: Lock msymlink_tab");
   if (Cmutex_lock((void *) msymlink_tab,-1) != 0) {
-    TRACE(3,"rfio","rfio_symend : Cmutex_lock(msymlink_tab,-1) error No %d (%s)", errno, strerror(errno));
+    TRACE(3,"rfio","rfio_symend: Cmutex_lock(msymlink_tab,-1) error No %d (%s)", errno, strerror(errno));
     END_TRACE();
     return(-1);
   }
   for (i = 0; i < MAXMCON; i++) {
-    /* TRACE(3,"rfio","msymlink_tab[i]={host=\"%s\", s=%d, Tid=%d}", msymlink_tab[i].host, msymlink_tab[i].s, msymlink_tab[i].Tid); */
-    if ((msymlink_tab[i].pid > 0) && (msymlink_tab[i].pid != pid)) {
-      TRACE(3,"rfio","rfio_symend: msymlink_tab[%d].s=%d : Found different pid=%d (current pid is %d) - Cleaning this entry", i, msymlink_tab[i].s, msymlink_tab[i].pid, pid);
+    if ((msymlink_tab[i].pgrp > 0) && (msymlink_tab[i].pgrp != pgrp)) {
+      TRACE(3,"rfio","rfio_symend: msymlink_tab[%d].s=%d - Found different pgrp=%d (current pgrp is %d) - Cleaning this entry", i, msymlink_tab[i].s, msymlink_tab[i].pgrp, pgrp);
       msymlink_tab[i].s = -1;
       msymlink_tab[i].host[0] = '\0';
       msymlink_tab[i].Tid = -1;
-      msymlink_tab[i].pid = 0;
+      msymlink_tab[i].pgrp = 0;
       continue;
     }
     if (msymlink_tab[i].Tid == Tid) {
@@ -260,7 +274,7 @@ int DLL_DECL rfio_symend()
         marshall_WORD(p, RFIO_MAGIC);
         marshall_WORD(p, RQST_END);
         marshall_LONG(p, j);
-        TRACE(3,"rfio","rfio_symend: close(msymlink_tab[%d].s=%d), Tid=%d",i,msymlink_tab[i].s, Tid);
+        TRACE(3,"rfio","rfio_symend: close(msymlink_tab[%d].s=%d), host=%s, Tid=%d",i,msymlink_tab[i].s, msymlink_tab[i].host, Tid);
         if (netwrite_timeout(msymlink_tab[i].s,buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
           TRACE(3, "rfio", "rfio_symend: write(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
           rc = -1;
@@ -270,12 +284,13 @@ int DLL_DECL rfio_symend()
       msymlink_tab[i].s = -1;
       msymlink_tab[i].host[0] = '\0';
       msymlink_tab[i].Tid = -1;
-      msymlink_tab[i].pid = 0;
+      msymlink_tab[i].pgrp = 0;
     }
   }
    
+  TRACE(3,"rfio","rfio_symend: Unlock msymlink_tab");
   if (Cmutex_unlock((void *) msymlink_tab) != 0) {
-    TRACE(3,"rfio","rfio_symend : Cmutex_unlock(msymlink_tab) error No %d (%s)", errno, strerror(errno));
+    TRACE(3,"rfio","rfio_symend: Cmutex_unlock(msymlink_tab) error No %d (%s)", errno, strerror(errno));
     rc = -1;
   }
 
@@ -293,31 +308,28 @@ static int rfio_symend_this(s,flag)
   char buf[256];
   char *p=buf ;
   int rc = 0;
-#ifdef _WIN32
-  int pid = getpid();
-#else
-  pid_t pid = getpid();
-#endif
+  _rfio_pgrp_t pgrp;
 
   INIT_TRACE("RFIO_TRACE");
 
   Cglobals_getTid(&Tid);
+  pgrp = rfio_msymlink_findpgrp(Tid);
 
-  TRACE(3,"rfio","rfio_symend_this(s=%d,flag=%d) entered, Tid=%d", s, flag, Tid);
+  TRACE(3,"rfio","rfio_symend_this(s=%d,flag=%d) entered, Tid=%d, pgrp=%d", s, flag, Tid, (int) pgrp);
 
+  TRACE(3,"rfio","rfio_symend_this: Lock msymlink_tab");
   if (Cmutex_lock((void *) msymlink_tab,-1) != 0) {
-    TRACE(3,"rfio","rfio_symend_this : Cmutex_lock(msymlink_tab,-1) error No %d (%s)", errno, strerror(errno));
+    TRACE(3,"rfio","rfio_symend_this: Cmutex_lock(msymlink_tab,-1) error No %d (%s)", errno, strerror(errno));
     END_TRACE();
     return(-1);
   }
   for (i = 0; i < MAXMCON; i++) {
-    /* TRACE(3,"rfio","msymlink_tab[i]={host=\"%s\", s=%d, sec=%d, Tid=%d}", msymlink_tab[i].host, msymlink_tab[i].s, msymlink_tab[i].sec, msymlink_tab[i].Tid); */
-    if ((msymlink_tab[i].pid > 0) && (msymlink_tab[i].pid != pid)) {
-      TRACE(3,"rfio","rfio_symend_this: msymlink_tab[%d].s=%d : Found different pid=%d (current pid is %d) - Cleaning this entry", i, msymlink_tab[i].s, msymlink_tab[i].pid, pid);
+    if ((msymlink_tab[i].pgrp > 0) && (msymlink_tab[i].pgrp != pgrp)) {
+      TRACE(3,"rfio","rfio_symend_this: msymlink_tab[%d].s=%d - Found different pgrp=%d (current pgrp is %d) - Cleaning this entry", i, msymlink_tab[i].s, msymlink_tab[i].pgrp, pgrp);
       msymlink_tab[i].s = -1;
       msymlink_tab[i].host[0] = '\0';
       msymlink_tab[i].Tid = -1;
-      msymlink_tab[i].pid = 0;
+      msymlink_tab[i].pgrp = 0;
       continue;
     }
     if (msymlink_tab[i].Tid == Tid) {
@@ -326,7 +338,7 @@ static int rfio_symend_this(s,flag)
           marshall_WORD(p, RFIO_MAGIC);
           marshall_WORD(p, RQST_END);
           marshall_LONG(p, j);
-          TRACE(3,"rfio","rfio_symend_this: close(msymlink_tab[%d].s=%d), Tid=%d",i,msymlink_tab[i].s, Tid);
+          TRACE(3,"rfio","rfio_symend_this: close(msymlink_tab[%d].s=%d), host=%s, Tid=%d",i,msymlink_tab[i].s, msymlink_tab[i].host, Tid);
           if (netwrite_timeout(msymlink_tab[i].s,buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
             TRACE(3, "rfio", "rfio_symend_this: netwrite_timeout(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
           }
@@ -335,13 +347,14 @@ static int rfio_symend_this(s,flag)
         msymlink_tab[i].s = -1;
         msymlink_tab[i].host[0] = '\0';
         msymlink_tab[i].Tid = -1;
-        msymlink_tab[i].pid = 0;
+        msymlink_tab[i].pgrp = 0;
       }
     }
   }
    
+  TRACE(3,"rfio","rfio_symend_this: Unlock msymlink_tab");
   if (Cmutex_unlock((void *) msymlink_tab) != 0) {
-    TRACE(3,"rfio","rfio_symend_this : Cmutex_unlock(msymlink_tab) error No %d (%s)", errno, strerror(errno));
+    TRACE(3,"rfio","rfio_symend_this: Cmutex_unlock(msymlink_tab) error No %d (%s)", errno, strerror(errno));
     rc = -1;
   }
 
@@ -359,28 +372,27 @@ static int rfio_msymlink_allocentry(hostname,Tid,s)
 {
   int i;
   int rc;
-#ifdef _WIN32
-  int pid = getpid();
-#else
-  pid_t pid = getpid();
-#endif
+  _rfio_pgrp_t pgrp;
+
+  pgrp = rfio_msymlink_findpgrp(Tid);
 
   INIT_TRACE("RFIO_TRACE");
 
+  TRACE(3,"rfio","rfio_msymlink_allocentry: Lock msymlink_tab");
   if (Cmutex_lock((void *) msymlink_tab,-1) != 0) {
-    TRACE(3,"rfio","rfio_msymlink_allocentry : Cmutex_lock(msymlink_tab,-1) error No %d (%s)", errno, strerror(errno));
+    TRACE(3,"rfio","rfio_msymlink_allocentry: Cmutex_lock(msymlink_tab,-1) error No %d (%s)", errno, strerror(errno));
     END_TRACE();
     return(-1);
   }
   /* Scan it */
 
   for (i = 0; i < MAXMCON; i++) {
-    if ((msymlink_tab[i].pid > 0) && (msymlink_tab[i].pid != pid)) {
-      TRACE(3,"rfio","rfio_msymlink_allocentry: msymlink_tab[%d].s=%d : Found different pid=%d (current pid is %d) - Cleaning this entry", i, msymlink_tab[i].s, msymlink_tab[i].pid, pid);
+    if ((msymlink_tab[i].pgrp > 0) && (msymlink_tab[i].pgrp != pgrp)) {
+      TRACE(3,"rfio","rfio_msymlink_allocentry: msymlink_tab[%d].s=%d - Found different pgrp=%d (current pgrp is %d) - Cleaning this entry", i, msymlink_tab[i].s, msymlink_tab[i].pgrp, pgrp);
       msymlink_tab[i].s = -1;
       msymlink_tab[i].host[0] = '\0';
       msymlink_tab[i].Tid = -1;
-      msymlink_tab[i].pid = 0;
+      msymlink_tab[i].pgrp = 0;
     }
     if (msymlink_tab[i].host[0] == '\0') {
       rc = i;
@@ -388,7 +400,7 @@ static int rfio_msymlink_allocentry(hostname,Tid,s)
       msymlink_tab[i].host[CA_MAXHOSTNAMELEN] = '\0';
       msymlink_tab[i].Tid = Tid;
       msymlink_tab[i].s = s;
-      msymlink_tab[i].pid = pid;
+      msymlink_tab[i].pgrp = pgrp;
       goto _rfio_msymlink_allocentry_return;
     }
   }
@@ -397,8 +409,9 @@ static int rfio_msymlink_allocentry(hostname,Tid,s)
   rc = -1;
   
  _rfio_msymlink_allocentry_return:
+  TRACE(3,"rfio","rfio_msymlink_allocentry: Unlock msymlink_tab");
   if (Cmutex_unlock((void *) msymlink_tab) != 0) {
-    TRACE(3,"rfio","rfio_msymlink_allocentry : Cmutex_unlock(msymlink_tab) error No %d (%s)", errno, strerror(errno));
+    TRACE(3,"rfio","rfio_msymlink_allocentry: Cmutex_unlock(msymlink_tab) error No %d (%s)", errno, strerror(errno));
     END_TRACE();
     return(-1);
   }
@@ -415,28 +428,27 @@ static int rfio_msymlink_findentry(hostname,Tid)
 {
   int i;
   int rc;
-#ifdef _WIN32
-  int pid = getpid();
-#else
-  pid_t pid = getpid();
-#endif
+  _rfio_pgrp_t pgrp;
+
+  pgrp = rfio_msymlink_findpgrp(Tid);
 
   INIT_TRACE("RFIO_TRACE");
 
+  TRACE(3,"rfio","rfio_msymlink_findentry: Lock msymlink_tab");
   if (Cmutex_lock((void *) msymlink_tab,-1) != 0) {
-    TRACE(3,"rfio","rfio_msymlink_findentry : Cmutex_lock(msymlink_tab,-1) error No %d (%s)", errno, strerror(errno));
+    TRACE(3,"rfio","rfio_msymlink_findentry: Cmutex_lock(msymlink_tab,-1) error No %d (%s)", errno, strerror(errno));
     END_TRACE();
     return(-1);
   }
   /* Scan it */
 
   for (i = 0; i < MAXMCON; i++) {
-    if ((msymlink_tab[i].pid > 0) && (msymlink_tab[i].pid != pid)) {
-      TRACE(3,"rfio","rfio_msymlink_findentry: msymlink_tab[%d].s=%d : Found different pid=%d (current pid is %d) - Cleaning this entry", i, msymlink_tab[i].s, msymlink_tab[i].pid, pid);
+    if ((msymlink_tab[i].pgrp > 0) && (msymlink_tab[i].pgrp != pgrp)) {
+      TRACE(3,"rfio","rfio_msymlink_findentry: msymlink_tab[%d].s=%d - Found different pgrp=%d (current pgrp is %d) - Cleaning this entry", i, msymlink_tab[i].s, msymlink_tab[i].pgrp, pgrp);
       msymlink_tab[i].s = -1;
       msymlink_tab[i].host[0] = '\0';
       msymlink_tab[i].Tid = -1;
-      msymlink_tab[i].pid = 0;
+      msymlink_tab[i].pgrp = 0;
     }
     if ((strcmp(msymlink_tab[i].host,hostname) == 0) && (msymlink_tab[i].Tid == Tid)) {
       rc = i;
@@ -448,8 +460,9 @@ static int rfio_msymlink_findentry(hostname,Tid)
   rc = -1;
 
  _rfio_msymlink_findentry_return:
+  TRACE(3,"rfio","rfio_msymlink_findentry: Unlock msymlink_tab");
   if (Cmutex_unlock((void *) msymlink_tab) != 0) {
-    TRACE(3,"rfio","rfio_msymlink_findentry : Cmutex_unlock(msymlink_tab) error No %d (%s)", errno, strerror(errno));
+    TRACE(3,"rfio","rfio_msymlink_findentry: Cmutex_unlock(msymlink_tab) error No %d (%s)", errno, strerror(errno));
     END_TRACE();
     return(-1);
   }

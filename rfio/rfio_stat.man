@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_stat.man,v 1.8 2001/11/13 17:10:22 jdurand Exp $
+.\" $Id: rfio_stat.man,v 1.9 2001/11/14 10:44:28 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_stat.man,v $ $Revision: 1.8 $ $Date: 2001/11/13 17:10:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_stat.man,v $ $Revision: 1.9 $ $Date: 2001/11/14 10:44:28 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_STAT 3 "$Date: 2001/11/13 17:10:22 $" CASTOR "Rfio Library Functions"
+.TH RFIO_STAT 3 "$Date: 2001/11/14 10:44:28 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_stat \- get information about a file or directory
 .SH SYNOPSIS
@@ -61,6 +61,8 @@ failed. In the latter case,
 is set appropriately.
 .SH NOTES
 Multiple connections using rfio_mstat are thread-safe and process-wide, therefore a forked child cannot share file descriptors opened with rfio_mstat by its parent.
+.P
+Multiple connections behaviour is undefined if you work in a multi-threaded environment and with threads \fBnot\fP created using the CASTOR's \fBCthread\fP interface.
 .SH ERRORS
 .TP 1.3i
 .B ENOENT
@@ -107,6 +109,7 @@ Communication error.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .BR rfio_chmod(3) ,
-.BR rfio_chown(3)
+.BR rfio_chown(3) ,
+.BR Cthread(3)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_symlink.man,v 1.3 2001/11/13 17:25:53 jdurand Exp $
+.\" $Id: rfio_symlink.man,v 1.4 2001/11/14 10:44:28 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_symlink.man,v $ $Revision: 1.3 $ $Date: 2001/11/13 17:25:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_symlink.man,v $ $Revision: 1.4 $ $Date: 2001/11/14 10:44:28 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_SYMLINK 3 "$Date: 2001/11/13 17:25:53 $" CASTOR "Rfio Library Functions"
+.TH RFIO_SYMLINK 3 "$Date: 2001/11/14 10:44:28 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_symlink \- create a symbolic link to a file
 .SH SYNOPSIS
@@ -53,6 +53,8 @@ failed. In the latter case,
 is set appropriately.
 .SH NOTES
 Multiple connections using rfio_msymlink are thread-safe and process-wide, therefore a forked child cannot share file descriptors opened with rfio_msymlink by its parent.
+.P
+Multiple connections behaviour is undefined if you work in a multi-threaded environment and with threads \fBnot\fP created using the CASTOR's \fBCthread\fP interface.
 .SH ERRORS
 .TP 1.3i
 .B ENOENT
@@ -111,6 +113,7 @@ Not supported on Windows.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .BR rfio_readlink(3) ,
-.BR rfio_unlink(3)
+.BR rfio_unlink(3) ,
+.BR Cthread(3)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
