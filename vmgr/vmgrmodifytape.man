@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrmodifytape.man,v $ $Revision: 1.3 $ $Date: 2001/01/30 08:20:56 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrmodifytape.man,v $ $Revision: 1.4 $ $Date: 2001/01/31 12:38:37 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRMODIFYTAPE 1 "$Date: 2001/01/30 08:20:56 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRMODIFYTAPE 1 "$Date: 2001/01/31 12:38:37 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrmodifytape \- modify an existing tape volume entry in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -21,10 +21,6 @@ vmgrmodifytape \- modify an existing tape volume entry in the CASTOR Volume Mana
 .BI -v " vsn"
 ] [
 .BI --ma " manufacturer"
-] [
-.BI --ml " media_letter"
-] [
-.BI --mo " model"
 ] [
 .BI --po " poolname"
 ] [
@@ -77,14 +73,6 @@ It must be at most six characters long.
 .TP
 .I manufacturer
 is an alphanumeric field CA_MAXMANUFLEN bytes long.
-.TP
-.I media_letter
-is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood),
-"J" for IBM 3590, "R" for STK 9840.
-.TP
-.I model
-is the model of cartridge.
-It must be at most CA_MAXMODELLEN characters long.
 .TP
 .I poolname
 is the tape pool name. It must be at most CA_MAXPOOLNAMELEN characters long.

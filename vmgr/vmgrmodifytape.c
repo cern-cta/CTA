@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrmodifytape.c,v $ $Revision: 1.2 $ $Date: 2000/09/04 09:53:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrmodifytape.c,v $ $Revision: 1.3 $ $Date: 2001/01/31 12:38:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrmodifytape - modify an existing tape volume */
@@ -25,17 +25,12 @@ char **argv;
 	char *lbltype = NULL;
 	static struct Coptions longopts[] = {
 		{"manufacturer", REQUIRED_ARGUMENT, 0, OPT_MANUFACTURER},
-		{"media_letter", REQUIRED_ARGUMENT, 0, OPT_MEDIA_LETTER},
-		{"ml", REQUIRED_ARGUMENT, 0, OPT_MEDIA_LETTER},
-		{"model", REQUIRED_ARGUMENT, 0, OPT_MODEL},
 		{"pool", REQUIRED_ARGUMENT, 0, 'P'},
 		{"sn", REQUIRED_ARGUMENT, 0, OPT_SN},
 		{"status", REQUIRED_ARGUMENT, 0, OPT_STATUS},
 		{0, 0, 0, 0}
 	};
 	char *manufacturer = NULL;
-	char *media_letter = NULL;
-	char *model = NULL;
 	char *pool_name = NULL;
 	char *sn = NULL;
 	int status = -1;
@@ -47,12 +42,6 @@ char **argv;
                 switch (c) {
 		case OPT_MANUFACTURER:
 			manufacturer = Coptarg;
-                        break;
-                case OPT_MEDIA_LETTER:
-			media_letter = Coptarg;
-                        break;
-                case OPT_MODEL:
-			model = Coptarg;
                         break;
                 case OPT_SN:
 			sn = Coptarg;
@@ -96,13 +85,13 @@ char **argv;
         if (errflg) {
                 fprintf (stderr, "usage: %s %s%s%s", argv[0],
 		    "[-d density] [-g dgn] [-l lbltype] [-P pool_name] -V vid\n",
-		    "[-v vsn] [--ma manufacturer] [--ml media_letter] [--mo model]\n",
-		    "[--pool pool_name] [--sn serial_number] [--st status]\n");
+		    "[-v vsn] [--ma manufacturer] [--pool pool_name]\n",
+		    "[--sn serial_number] [--st status]\n");
                 exit (USERR);
         }
  
-	if (vmgr_modifytape (vid, vsn, dgn, density, lbltype, model,
-	    media_letter, manufacturer, sn, pool_name, status) < 0) {
+	if (vmgr_modifytape (vid, vsn, dgn, density, lbltype,
+	    manufacturer, sn, pool_name, status) < 0) {
 		fprintf (stderr, "vmgrmodifytape %s: %s\n", vid, sstrerror(serrno));
 		exit (USERR);
 	}
