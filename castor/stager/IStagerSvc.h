@@ -375,7 +375,7 @@ int Cstager_IStagerSvc_selectSvcClass(struct Cstager_IStagerSvc_t* stgSvc,
  * Cstager_IStagerSvc_errorMsg
  */
 int Cstager_IStagerSvc_selectCastorFile(struct Cstager_IStagerSvc_t* stgSvc,
-                                        struct Cstager_CastorFile_t** svcClass,
+                                        struct Cstager_CastorFile_t** castorFile,
                                         const u_signed64 fileId);
 
 /**
