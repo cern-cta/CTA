@@ -1,5 +1,5 @@
 /*
- * $Id: Cpool.c,v 1.9 1999/10/14 12:01:35 jdurand Exp $
+ * $Id: Cpool.c,v 1.10 1999/10/15 14:34:26 jdurand Exp $
  */
 
 #include <Cpool_api.h>
@@ -35,7 +35,7 @@ int Cpool_debug = 0;
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.9 $ $Date: 1999/10/14 12:01:35 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.10 $ $Date: 1999/10/15 14:34:26 $ CERN IT-PDP/DM Jean-Damien Durand";
 
 /* ------------------------------------ */
 /* Mutex static variables a-la-Cthread  */
@@ -559,11 +559,12 @@ void *_Cpool_starter(arg)
             sizeof(void *)) {
 #ifdef CPOOL_DEBUG
           /* Cthread_mutex_lock(&lock_cpool_debug); */
-          if (Cpool_debug != 0)
+          if (Cpool_debug != 0) {
             log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : serrno No %d (%s)\n",
                 _Cpool_self(),_Cthread_self(),serrno,sstrerror(serrno));
             log(LOG_INFO,"[Cpool  [%2d][%2d]] . bis repetita .  : serrno No %d (%s)\n",
                 _Cpool_self(),_Cthread_self(),serrno,sstrerror(serrno));
+          }
           /* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
           if (serrno == SETIMEDOUT) {
