@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_label.man,v $ $Revision: 1.5 $ $Date: 2000/02/03 10:44:37 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_label.man,v $ $Revision: 1.6 $ $Date: 2000/02/03 11:28:48 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_LABEL 3 "$Date: 2000/02/03 10:44:37 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_LABEL 3 "$Date: 2000/02/03 11:28:48 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_label \- send a request to the tape daemon to have a tape mounted,
 the existing label checked and a new label written
@@ -11,14 +11,16 @@ the existing label checked and a new label written
 .br
 \fB#include "Ctape_api.h"\fR
 .sp
-.BI "int Ctape_label (char *" vid ,
+.BI "int Ctape_label (char *" path ,
+.BI "char *" vid ,
 .BI "int " partition ,
 .BI "char *" dgn ,
 .BI "char *" density ,
 .BI "char *" drive ,
 .BI "char *" vsn ,
 .BI "char *" lbltype ,
-.BI "int " nbhdr );
+.BI "int " nbhdr ,
+.BI "int " vdqm_reqid );
 .SH DESCRIPTION
 .B Ctape_label
 checks with TMS if the tape identified by
@@ -30,6 +32,11 @@ checks if the tape is blank
 (if not, the operator will be asked for confirmation)
 and writes the new label.
 In case of failure the drive is freed.
+.TP
+.I path
+specifies the pathname relative to the current directory or the full pathname
+which is used by the application program. If it is null, a pathname is generated
+internally using tempnam().
 .TP
 .I vid
 is the volume visual identifier.
@@ -121,6 +128,10 @@ only a VOL1 record is written; if
 VOL1 and HDR1 are written (this is the default); if
 .BR 2 ,
 VOL1, HDR1 and HDR2 are written to tape.
+.TP
+.I vdqm_reqid
+is the request identifier assigned by vdqm.
+It should be zero in case vdqm is not used.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
@@ -184,3 +195,8 @@ No sense data available.
 .TP
 .B ETRSLT
 Reselect server requested by operator.
+.TP
+.B ETVBSY
+Volume busy or inaccessible.
+.SH SEE ALSO
+.BR vdqm_SendVolReq(3)
