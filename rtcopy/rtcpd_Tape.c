@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.66 $ $Date: 2000/06/14 11:23:01 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.67 $ $Date: 2000/07/07 09:44:08 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -330,7 +330,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
             databufs[i]->data_length));
         j = *firstblk;
         for (;;) {
-            if ( Uformat == FALSE ) {
+            if ( (Uformat == FALSE) || ((Uformat == TRUE) && (convert & NOF77CW) != 0) ) {
                 /*
                  * Fix record format
                  */
