@@ -1,7 +1,10 @@
 /*
- * $Id: Cthread.c,v 1.6 1999/07/20 13:49:49 obarring Exp $
+ * $Id: Cthread.c,v 1.7 1999/07/20 20:05:11 jdurand Exp $
  *
  * $Log: Cthread.c,v $
+ * Revision 1.7  1999/07/20 20:05:11  jdurand
+ * Changed _Cglobals_init call to Cglobals_init
+ *
  * Revision 1.6  1999/07/20 13:49:49  obarring
  * Remove references to Cthread_errno.h
  *
@@ -2461,7 +2464,7 @@ void _Cthread_once(void) {
   Cmtx.next  = NULL;
   Cspec.next = NULL;
   _Cthread_once_status = 0;
-  _Cglobals_init(Cthread_getspecific,Cthread_setspecific); /* Initialize globals */
+  Cglobals_init(Cthread_getspecific,Cthread_setspecific); /* Initialize globals */
   return;
 #endif /* ifndef _CTHREAD */
 }
