@@ -43,7 +43,6 @@ castor::stager::FileSystem::FileSystem() throw() :
   m_free(),
   m_weight(0.0),
   m_fsDeviation(0.0),
-  m_randomize(0),
   m_mountPoint(""),
   m_id(),
   m_diskPool(0),
@@ -81,7 +80,6 @@ void castor::stager::FileSystem::print(std::ostream& stream,
   stream << indent << "free : " << m_free << std::endl;
   stream << indent << "weight : " << m_weight << std::endl;
   stream << indent << "fsDeviation : " << m_fsDeviation << std::endl;
-  stream << indent << "randomize : " << m_randomize << std::endl;
   stream << indent << "mountPoint : " << m_mountPoint << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);

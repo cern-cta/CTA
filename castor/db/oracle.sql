@@ -85,7 +85,7 @@ CREATE TABLE rh_DiskCopy (path VARCHAR(255), id INTEGER PRIMARY KEY, fileSystem 
 
 /* SQL statements for type FileSystem */
 DROP TABLE rh_FileSystem;
-CREATE TABLE rh_FileSystem (free INTEGER, weight float, fsDeviation float, randomize NUMBER, mountPoint VARCHAR(255), id INTEGER PRIMARY KEY, diskPool INTEGER, diskserver INTEGER);
+CREATE TABLE rh_FileSystem (free INTEGER, weight float, fsDeviation float, mountPoint VARCHAR(255), id INTEGER PRIMARY KEY, diskPool INTEGER, diskserver INTEGER);
 
 /* SQL statements for type SvcClass */
 DROP TABLE rh_SvcClass;

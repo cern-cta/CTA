@@ -94,7 +94,6 @@ void castor::io::StreamFileSystemCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->free();
   ad->stream() << obj->weight();
   ad->stream() << obj->fsDeviation();
-  ad->stream() << obj->randomize();
   ad->stream() << obj->mountPoint();
   ad->stream() << obj->id();
 }
@@ -118,9 +117,6 @@ castor::IObject* castor::io::StreamFileSystemCnv::createObj(castor::IAddress* ad
   float fsDeviation;
   ad->stream() >> fsDeviation;
   object->setFsDeviation(fsDeviation);
-  int randomize;
-  ad->stream() >> randomize;
-  object->setRandomize(randomize);
   std::string mountPoint;
   ad->stream() >> mountPoint;
   object->setMountPoint(mountPoint);

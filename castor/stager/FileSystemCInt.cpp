@@ -156,22 +156,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_FileSystem_randomize
-  //----------------------------------------------------------------------------
-  int Cstager_FileSystem_randomize(castor::stager::FileSystem* instance, int* var) {
-    *var = instance->randomize();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_FileSystem_setRandomize
-  //----------------------------------------------------------------------------
-  int Cstager_FileSystem_setRandomize(castor::stager::FileSystem* instance, int new_var) {
-    instance->setRandomize(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_FileSystem_mountPoint
   //----------------------------------------------------------------------------
   int Cstager_FileSystem_mountPoint(castor::stager::FileSystem* instance, const char** var) {

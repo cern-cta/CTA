@@ -160,24 +160,7 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_randomize
-       * @return the value of m_randomize
-       */
-      int randomize() const {
-        return m_randomize;
-      }
-
-      /**
-       * Set the value of m_randomize
-       * @param new_var the new value of m_randomize
-       */
-      void setRandomize(int new_var) {
-        m_randomize = new_var;
-      }
-
-      /**
        * Get the value of m_mountPoint
-       * Mount point of this file system on the disk server
        * @return the value of m_mountPoint
        */
       std::string mountPoint() const {
@@ -186,7 +169,6 @@ namespace castor {
 
       /**
        * Set the value of m_mountPoint
-       * Mount point of this file system on the disk server
        * @param new_var the new value of m_mountPoint
        */
       void setMountPoint(std::string new_var) {
@@ -266,9 +248,6 @@ namespace castor {
 
       float m_fsDeviation;
 
-      int m_randomize;
-
-      /// Mount point of this file system on the disk server
       std::string m_mountPoint;
 
       /// The id of this object

@@ -127,24 +127,12 @@ int Cstager_FileSystem_fsDeviation(struct Cstager_FileSystem_t* instance, float*
 int Cstager_FileSystem_setFsDeviation(struct Cstager_FileSystem_t* instance, float new_var);
 
 /**
- * Get the value of randomize
- */
-int Cstager_FileSystem_randomize(struct Cstager_FileSystem_t* instance, int* var);
-
-/**
- * Set the value of randomize
- */
-int Cstager_FileSystem_setRandomize(struct Cstager_FileSystem_t* instance, int new_var);
-
-/**
  * Get the value of mountPoint
- * Mount point of this file system on the disk server
  */
 int Cstager_FileSystem_mountPoint(struct Cstager_FileSystem_t* instance, const char** var);
 
 /**
  * Set the value of mountPoint
- * Mount point of this file system on the disk server
  */
 int Cstager_FileSystem_setMountPoint(struct Cstager_FileSystem_t* instance, const char* new_var);
 
