@@ -1,14 +1,14 @@
 /*
- * $Id: vmgr_api.h,v 1.28 2002/03/05 16:41:55 baud Exp $
+ * $Id: vmgr_api.h,v 1.29 2003/10/14 12:29:11 baud Exp $
  */
 
 /*
- * Copyright (C) 1999-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: vmgr_api.h,v $ $Revision: 1.28 $ $Date: 2002/03/05 16:41:55 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr_api.h,v $ $Revision: 1.29 $ $Date: 2003/10/14 12:29:11 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _VMGR_API_H
@@ -73,4 +73,5 @@ EXTERN_C int DLL_DECL vmgr_seterrbuf _PROTO((char *, int));
 EXTERN_C int DLL_DECL vmgr_tpmounted _PROTO((const char *, int, int));
 EXTERN_C int DLL_DECL vmgr_updatetape _PROTO((const char *, int, u_signed64, int, int, int));
 EXTERN_C int DLL_DECL vmgrcheck _PROTO((char *, char *, char *, char *, char *, int, uid_t, gid_t));
+EXTERN_C int DLL_DECL vmgrchecki _PROTO((char *, char *, char *, char *, char *, int, uid_t, gid_t, char *));
 #endif
