@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.16 $ $Date: 2000/07/28 15:29:42 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.17 $ $Date: 2000/10/06 08:58:26 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -37,34 +37,6 @@ extern int tpread_command;
 static int AbortFlag = 0;
 
 extern int rtcp_InitLog(char *, FILE *, FILE *, SOCKET *);
-
-static int CheckRetry(tape_list_t *tape) {
-    tape_list_t *tl;
-    file_list_t *fl;
-
-    if ( tape == NULL ) return(FALSE);
-    /*
-     * Make sure nothing failed seriously
-     */
-    CLIST_ITERATE_BEGIN(tape,tl) {
-        if ( (tl->tapereq.err.severity & RTCP_FAILED) != 0 ) return(FALSE);
-        CLIST_ITERATE_BEGIN(tl->file,fl) {
-            if ( (fl->filereq.err.severity & RTCP_FAILED) != 0 ) return(FALSE);
-        } CLIST_ITERATE_END(tl->file,fl);
-    } CLIST_ITERATE_END(tape,tl);
-    /*
-     * Now check if a retry is possible
-     */
-    CLIST_ITERATE_BEGIN(tape,tl) {
-        if ( (tl->tapereq.err.severity & RTCP_RESELECT_SERV) != 0 &&
-             (tl->tapereq.err.severity & RTCP_FAILED) == 0 ) return(TRUE);
-        CLIST_ITERATE_BEGIN(tl->file,fl) {
-            if ( (fl->filereq.err.severity & RTCP_RESELECT_SERV) != 0 &&
-                 (fl->filereq.err.severity & RTCP_FAILED) == 0 ) return(TRUE);
-        } CLIST_ITERATE_END(tl->file,fl);
-    } CLIST_ITERATE_END(tape,tl);
-    return(FALSE);
-}
 
 int CntlC_handler(int sig) {
     AbortFlag = 1;
@@ -107,7 +79,7 @@ int main(int argc, char *argv[]) {
             save_serrno = serrno;
             if ( AbortFlag != 0 ) break;
             if ( rc == -1 ) {
-                if ( CheckRetry(tape) == TRUE ) {
+                if ( rtcpc_CheckRetry(tape) == TRUE ) {
                     if ( dont_change_srv == 0 ) 
                         rtcp_log(LOG_INFO,"Re-selecting another tape server\n");
                     else rtcp_log(LOG_INFO,"Re-select another tape drive on %s\n",
