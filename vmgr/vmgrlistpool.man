@@ -1,0 +1,38 @@
+.\" @(#)$RCSfile: vmgrlistpool.man,v $ $Revision: 1.1 $ $Date: 2000/03/20 13:39:58 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRLISTPOOL 1 "$Date: 2000/03/20 13:39:58 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrlistpool \- query a given pool or list all existing tape pools in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B vmgrlistpool
+[
+.BI -P "  pool_name"
+]
+.SH DESCRIPTION
+.B vmgrlistpool
+queries a given pool or lists all existing tape pools in the CASTOR Volume Manager.
+.TP
+.I pool_name
+is the name of the tape pool.
+It must be at most CA_MAXPOOLNAMELEN characters long.
+.SH EXAMPLES
+.nf
+.ft CW
+vmgrlistpool -P alicemdc
+alicemdc alicemdc z2      48.83TB
+
+vmgrlistpool -P default
+default -        -       49.18TB
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR vmgr_enterpool(3) ,
+.BR vmgrenterpool(1) ,
+.B vmgr_querypool(3)

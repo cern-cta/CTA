@@ -1,0 +1,88 @@
+.\" @(#)$RCSfile: vmgrlisttape.man,v $ $Revision: 1.1 $ $Date: 2000/03/20 13:39:59 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRLISTTAPE 1 "$Date: 2000/03/20 13:39:59 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrlisttape \- query the CASTOR Volume Manager about a tape or list all existing tapes
+.SH SYNOPSIS
+.B vmgrlisttape
+[
+.BI -V " vid"
+] [
+.B -x
+]
+.SH DESCRIPTION
+.B vmgrlisttape
+queries the CASTOR Volume Manager about a given tape or lists all existing tapes
+in tabular form:
+.HP 1.2i
+vid		volume visual identifier.
+.HP
+vsn		magnetically recorded volume serial number of the tape.
+.HP
+dgn		device group name corresponding to the tape.
+.HP
+density		alphanumeric density.
+.HP
+lbltype		label type.
+.HP
+model		model of cartridge.
+.HP
+media_letter	media identification letter. For example
+"A", "B" or "C" for SD3 (Redwood), "J" for IBM 3590, "R" for STK 9840.
+.HP
+manufacturer
+.HP
+sn		cartridge serial number.
+.HP
+poolname
+.HP
+free_space
+.HP
+nbfiles		number of files written on the tape.
+.HP
+rcount		number of times the volume has been mounted for read.
+.HP
+wcount		number of times the volume has been mounted for write.
+.HP
+rtime		indicates the last time the volume was mounted for read.
+.HP
+wtime		indicates the last time the volume was mounted for write.
+.HP
+status		can be
+.BR FULL ,
+.BR BUSY ,
+.BR RDONLY ,
+.B EXPORTED
+or
+.BR DISABLED .
+.SH OPTIONS
+.TP
+.BI \-V " vid"
+restricts the list to the tape having this volume visual identifier.
+It must be at most CA_MAXVIDLEN characters long.
+.TP
+.B \-x
+extended format.
+If this option is not set, only vid, vsn, dgn, density, lbltype, poolname,
+free_space, last access (read or write) and status are given.
+.SH EXAMPLES
+.nf
+.ft CW
+vmgrlisttape -V RT0001
+RT0001 RT0001 9840R3 20GC     al default          20.00GB 00000000
+
+vmgrlisttape -V RT0001 -x
+RT0001 RT0001 9840R3 20GC     al default          20.00GB 9840   R STK \\
+        123456789                      0     0     0 00000000 00000000
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR vmgr_entertape(3) ,
+.BR vmgrentertape(1) ,
+.B vmgr_querytape(3)
