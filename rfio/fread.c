@@ -1,5 +1,5 @@
 /*
- * $Id: fread.c,v 1.5 2000/06/05 06:14:10 baud Exp $
+ * $Id: fread.c,v 1.6 2000/09/20 13:52:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fread.c,v $ $Revision: 1.5 $ $Date: 2000/06/05 06:14:10 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fread.c,v $ $Revision: 1.6 $ $Date: 2000/09/20 13:52:50 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fread.c      Remote File I/O - write a binary file                   */
@@ -67,10 +67,11 @@ int DLL_DECL rfio_fread(ptr, size, items, fp)
 	 * Checking magic number
 	 */
 	if ( fp->magic != RFIO_MAGIC) {
+		int fps = fp->s;
 		serrno = SEBADVERSION ; 
 		TRACE(2,"rfio","rfio_fread() : Bad magic number  ") ;
-		(void) close(fp->s) ;
 		free((char *)fp);
+		(void) close(fps) ;
 		END_TRACE();
 		return 0 ;
 	}

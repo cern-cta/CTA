@@ -1,5 +1,5 @@
 /*
- * $Id: closedir.c,v 1.7 2000/09/01 08:01:26 obarring Exp $
+ * $Id: closedir.c,v 1.8 2000/09/20 13:52:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: closedir.c,v $ $Revision: 1.7 $ $Date: 2000/09/01 08:01:26 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: closedir.c,v $ $Revision: 1.8 $ $Date: 2000/09/20 13:52:50 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* closedir.c      Remote File I/O - close a directory                     */
@@ -62,9 +62,9 @@ RDIR *dirp;
     */
    if ( rdirfdt[s]->magic != RFIO_MAGIC ) {
       serrno = SEBADVERSION ;
-      (void) close(s) ;
       free((char *)rdirfdt[s]);
-      rdirfdt[s] = 0;
+      rdirfdt[s] = NULL;
+      (void) close(s) ;
       END_TRACE();
       return(-1);
    }

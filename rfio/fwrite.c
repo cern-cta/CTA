@@ -1,5 +1,5 @@
 /*
- * $Id: fwrite.c,v 1.5 2000/06/05 06:14:10 baud Exp $
+ * $Id: fwrite.c,v 1.6 2000/09/20 13:52:51 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fwrite.c,v $ $Revision: 1.5 $ $Date: 2000/06/05 06:14:10 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fwrite.c,v $ $Revision: 1.6 $ $Date: 2000/09/20 13:52:51 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fwrite.c     Remote File I/O - write a binary file                   */
@@ -60,9 +60,10 @@ int DLL_DECL rfio_fwrite(ptr, size, items, fp)
 	 * Checking magic number
 	 */
 	if ( fp->magic != RFIO_MAGIC) {
+		int fps = fp->s;
 		serrno = SEBADVERSION ; 
-		(void) close(fp->s) ;
 		free((char *)fp);
+		(void) close(fps) ;
 		END_TRACE();
 		return 0 ;
 	}

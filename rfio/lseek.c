@@ -1,5 +1,5 @@
 /*
- * $Id: lseek.c,v 1.7 2000/05/29 16:42:01 obarring Exp $
+ * $Id: lseek.c,v 1.8 2000/09/20 13:52:51 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lseek.c,v $ $Revision: 1.7 $ $Date: 2000/05/29 16:42:01 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: lseek.c,v $ $Revision: 1.8 $ $Date: 2000/09/20 13:52:51 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* lseek.c      Remote File I/O - move read/write file mark.	*/
@@ -69,9 +69,9 @@ int    how ;
     */
    if ( rfilefdt[s]->magic != RFIO_MAGIC) {
       serrno = SEBADVERSION ;
-      (void) close(s);
       free((char *)rfilefdt[s]);
       rfilefdt[s] = NULL ;
+      (void) close(s);
       END_TRACE();
       return -1 ;
    }

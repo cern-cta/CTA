@@ -1,5 +1,5 @@
 /*
- * $Id: fflush.c,v 1.4 2000/05/29 16:42:00 obarring Exp $
+ * $Id: fflush.c,v 1.5 2000/09/20 13:52:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fflush.c,v $ $Revision: 1.4 $ $Date: 2000/05/29 16:42:00 $ CERN/IT/PDP/DM Antoine Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fflush.c,v $ $Revision: 1.5 $ $Date: 2000/09/20 13:52:50 $ CERN/IT/PDP/DM Antoine Trannoy";
 #endif /* not lint */
 
 /* fflush.c     Remote File I/O - flush a binary file                   */
@@ -58,9 +58,10 @@ int DLL_DECL rfio_fflush(fp)
 	 * Checking magic number
 	 */
 	if ( fp->magic != RFIO_MAGIC) {
+		int fps = fp->s;
 		serrno = SEBADVERSION ; 
-		(void) close(fp->s) ;
 		free((char *)fp);
+		(void) close(fps) ;
 		END_TRACE() ;
 		return -1 ;
 	}

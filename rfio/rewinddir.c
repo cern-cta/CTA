@@ -1,5 +1,5 @@
 /*
- * $Id: rewinddir.c,v 1.8 2000/09/01 08:01:26 obarring Exp $
+ * $Id: rewinddir.c,v 1.9 2000/09/20 13:52:52 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rewinddir.c,v $ $Revision: 1.8 $ $Date: 2000/09/01 08:01:26 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rewinddir.c,v $ $Revision: 1.9 $ $Date: 2000/09/20 13:52:52 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* rewinddir.c      Remote File I/O - rewind a directory                     */
@@ -66,9 +66,9 @@ RDIR *dirp;
     */
    if ( rdirfdt[*s]->magic != RFIO_MAGIC ) {
       serrno = SEBADVERSION ;
-      (void) close(*s) ;
       free((char *)rdirfdt[*s]);
-      rdirfdt[*s] = 0;
+      rdirfdt[*s] = NULL;
+      (void) close(*s) ;
       END_TRACE();
       return(-1);
    }

@@ -1,5 +1,5 @@
 /*
- * $Id: opendir.c,v 1.9 2000/09/01 08:01:26 obarring Exp $
+ * $Id: opendir.c,v 1.10 2000/09/20 13:52:51 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.9 $ $Date: 2000/09/01 08:01:26 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.10 $ $Date: 2000/09/20 13:52:51 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* opendir.c       Remote File I/O - open a directory                   */
@@ -99,12 +99,12 @@ int s;
 	 END_TRACE();
 	 return(-1);
       }
-      TRACE(2, "rfio", "closing %d",s) ;
-      (void) close(s) ;
       TRACE(2, "rfio", "freeing RFIO directory descriptor at 0X%X", rdirfdt[s]);
       (void) free((char *)rdirfdt[s]->dp.dd_buf);
       (void) free((char *)rdirfdt[s]);
       rdirfdt[s] = NULL;
+      TRACE(2, "rfio", "closing %d",s) ;
+      (void) close(s) ;
    }
    END_TRACE();
    return(0);

@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.9 2000/06/16 15:31:31 obarring Exp $
+ * $Id: read.c,v 1.10 2000/09/20 13:52:51 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.9 $ $Date: 2000/06/16 15:31:31 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.10 $ $Date: 2000/09/20 13:52:51 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* read.c       Remote File I/O - read  a file                          */
@@ -115,9 +115,9 @@ int     s, size;
     */
    if (rfilefdt[s]->magic != RFIO_MAGIC) {
       serrno = SEBADVERSION ;
-      (void) close(s) ;
       free((char *)rfilefdt[s]);
       rfilefdt[s] = NULL;
+      (void) close(s) ;
       END_TRACE();
       return(-1);
    }

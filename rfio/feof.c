@@ -1,5 +1,5 @@
 /*
- * $Id: feof.c,v 1.3 1999/12/09 13:46:42 jdurand Exp $
+ * $Id: feof.c,v 1.4 2000/09/20 13:52:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: feof.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:46:42 $ CERN/IT/PDP/DM Antoine Trannoy";
+static char sccsid[] = "@(#)$RCSfile: feof.c,v $ $Revision: 1.4 $ $Date: 2000/09/20 13:52:50 $ CERN/IT/PDP/DM Antoine Trannoy";
 #endif /* not lint */
 
 /* feof.c      Remote File I/O - tell if the eof has been reached       */
@@ -60,9 +60,10 @@ int rfio_feof(fp)
 	 * Checking magic number
 	 */
 	if ( fp->magic != RFIO_MAGIC) {
+		int fps = fp->s;
 		serrno = SEBADVERSION ; 
-		(void) close(fp->s) ;
 		free((char *)fp);
+		(void) close(fps) ;
 		END_TRACE() ;
 		return -1 ;
 	}

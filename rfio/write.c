@@ -1,5 +1,5 @@
 /*
- * $Id: write.c,v 1.8 2000/06/16 15:31:31 obarring Exp $
+ * $Id: write.c,v 1.9 2000/09/20 13:52:52 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.8 $ $Date: 2000/06/16 15:31:31 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.9 $ $Date: 2000/09/20 13:52:52 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* write.c      Remote File I/O - write a file                          */
@@ -99,9 +99,9 @@ int     s, size;
     */
    if (rfilefdt[s]->magic != RFIO_MAGIC) {
       serrno = SEBADVERSION ; 
-      (void) close(s) ;
       free((char *)rfilefdt[s]);
       rfilefdt[s] = NULL ;
+      (void) close(s) ;
       END_TRACE();
       return(-1);
    }

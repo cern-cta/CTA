@@ -1,5 +1,5 @@
 /*
- * $Id: fseek.c,v 1.4 2000/05/29 16:42:00 obarring Exp $
+ * $Id: fseek.c,v 1.5 2000/09/20 13:52:51 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fseek.c,v $ $Revision: 1.4 $ $Date: 2000/05/29 16:42:00 $ CERN/IT/PDP/DM Fabien Collin";
+static char sccsid[] = "@(#)$RCSfile: fseek.c,v $ $Revision: 1.5 $ $Date: 2000/09/20 13:52:51 $ CERN/IT/PDP/DM Fabien Collin";
 #endif /* not lint */
 
 /* fseek.c      Remote File I/O - fseek library call */
@@ -68,10 +68,11 @@ int DLL_DECL rfio_fseek(fp, offset, whence)
    * Checking magic number
    */
   if (fp->magic != RFIO_MAGIC) {
+    int fps = fp->s;
     serrno = SEBADVERSION; 
     TRACE(2,"rfio","rfio_fseek() : Bad magic number");
-    (void) close(fp->s);
     free((char *)fp);
+    (void) close(fps);
     END_TRACE();
     return -1;
   }

@@ -1,5 +1,5 @@
 /*
- * $Id: pclose.c,v 1.6 2000/05/29 16:42:03 obarring Exp $
+ * $Id: pclose.c,v 1.7 2000/09/20 13:52:51 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.6 $ $Date: 2000/05/29 16:42:03 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.7 $ $Date: 2000/09/20 13:52:51 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* pclose.c      Remote command I/O - close a popened command 		*/
@@ -33,6 +33,7 @@ RFILE 	*fs ;
    char   * p  ; 
    int  status ;
    int i ;
+   int fss ;
    int remoteio = 0 ;
    char     buf[256];       /* General input/output buffer          */
 
@@ -81,9 +82,10 @@ RFILE 	*fs ;
    marshall_WORD(p, RQST_PCLOSE);
    TRACE(2, "rfio", "rfio_pclose: sending %d bytes",RQSTSIZE) ;
    if (netwrite_timeout(fs->s, buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
+      fss = fs->s;
       TRACE(2, "rfio", "rfio_pclose: write(): ERROR occured (errno=%d)", errno);
-      (void)close(fs->s) ;
       (void) free((char *)fs) ;
+      (void)close(fss) ;
       END_TRACE() ;
       return -1 ;
    }
@@ -101,7 +103,8 @@ RFILE 	*fs ;
    /*
     * freeing RFILE pointer
     */
-   (void) close(fs->s) ;
+   fss = fs->s;
    (void) free((char *)fs) ;
+   (void) close(fs->s) ;
    return status ;
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.10 2000/05/29 16:42:03 obarring Exp $
+ * $Id: open.c,v 1.11 2000/09/20 13:52:51 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.10 $ $Date: 2000/05/29 16:42:03 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.11 $ $Date: 2000/09/20 13:52:51 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */
@@ -112,11 +112,11 @@ int     s;
 	 TRACE(2, "rfio", "freeing I/O buffer at 0X%X", rfilefdt[s]->_iobuf.base);
 	 (void) free(rfilefdt[s]->_iobuf.base);
       }
-      TRACE(2, "rfio", "closing %d",s) ;
-      (void) close(s) ;
       TRACE(2, "rfio", "freeing RFIO descriptor at 0X%X", rfilefdt[s]);
       (void) free((char *)rfilefdt[s]);
       rfilefdt[s] = NULL;
+      TRACE(2, "rfio", "closing %d",s) ;
+      (void) close(s) ;
       (void)rfio_HsmIf_close(s);
    }
    END_TRACE();
