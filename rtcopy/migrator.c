@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.33 $ $Release$ $Date: 2005/01/14 22:14:40 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.34 $ $Release$ $Date: 2005/01/16 13:27:34 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.33 $ $Release$ $Date: 2005/01/14 22:14:40 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.34 $ $Release$ $Date: 2005/01/16 13:27:34 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -618,6 +618,7 @@ int migratorCallback(
   }
   if ( blkid != NULL ) free(blkid);
   if ( castorFileId != NULL ) free(castorFileId);
+  (void)rtcpcld_doCommit();
   return(rc);
 }
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.113 $ $Release$ $Date: 2005/01/15 19:36:03 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.114 $ $Release$ $Date: 2005/01/16 13:27:33 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.113 $ $Release$ $Date: 2005/01/15 19:36:03 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.114 $ $Release$ $Date: 2005/01/16 13:27:33 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -224,6 +224,27 @@ static int getStgSvc(
   *stgSvc = svc;
   return(0);
 }
+
+int rtcpcld_doCommit()
+{
+  struct C_Services_t **svcs = NULL;
+  struct C_BaseAddress_t *baseAddr = NULL;
+  struct C_IAddress_t *iAddr;
+  int rc = 0;
+
+  rc = getDbSvc(&svcs);
+  if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
+  rc = C_BaseAddress_create(&baseAddr);
+  if ( rc == -1 ) return(-1);
+
+  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
+  iAddr = C_BaseAddress_getIAddress(baseAddr);
+
+  rc = C_Services_commit(*svcs,iAddr);
+  return(rc);
+}
+
 
 /**
  * Update the memory copy of the tape and all attached segments from the database.
@@ -1698,7 +1719,7 @@ int nextSegmentToMigrate(
                         RTCPCLD_NB_PARAMS+4,
                         "SYSCALL",
                         DLF_MSG_PARAM_STR,
-                        "rfio_stat()",
+                        "rfio_stat64()",
                         "ERROR_STR",
                         DLF_MSG_PARAM_STR,
                         rfio_serror(),
