@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/17 14:47:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/19 16:47:47 $ $Author: sponcec3 $
  *
  * 
  *
@@ -34,6 +34,7 @@
 #include "castor/IObject.hpp"
 #include "castor/IClient.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/exception/Exception.hpp"
 #include <iostream>
 
 int main (int argc, char** argv) {
@@ -64,8 +65,9 @@ int main (int argc, char** argv) {
   castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
   try {
     svcs->createRep(&ad, fr, true);
-  } catch (castor::Exception e) {
-    std::cout << "Error caught in createRep :" << std::endl
+  } catch (castor::exception::Exception e) {
+    std::cout << "Error caught in createRep : "
+              << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
     // release the memory
     delete svcs;
@@ -79,8 +81,9 @@ int main (int argc, char** argv) {
   try{
     castor::IObject* fr2Obj = svcs->createObj(&ad2);
     fr2 = dynamic_cast<castor::rh::FileRequest*>(fr2Obj);
-  } catch (castor::Exception e) {
-    std::cout << "Error caught in createObj :" << std::endl
+  } catch (castor::exception::Exception e) {
+    std::cout << "Error caught in createObj : "
+              << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
     delete svcs;
     delete fr;
