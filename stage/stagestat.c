@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.12 2000/10/27 14:04:34 jdurand Exp $
+ * $Id: stagestat.c,v 1.13 2000/12/12 14:13:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.12 $ $Date: 2000/10/27 14:04:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.13 $ $Date: 2000/12/12 14:13:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -26,6 +26,7 @@ static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.12 $ $Date: 2
 #include <osdep.h>
 #include "Cpwd.h"
 #include "Cgrp.h"
+#include "Cgetopt.h"
 
 /* Macro to swap byte order */
 
@@ -33,7 +34,6 @@ static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.12 $ $Date: 2
 									 a=((unsigned int)a<<16)|((unsigned int)a>>16);
 
 
-extern char *optarg;			/* command line optional argument */
 #if !defined(linux)
 extern char *sys_errlist[];
 #endif
@@ -149,33 +149,35 @@ main(argc, argv)
 	int aflag = 0;			/* sort on num accesses */	
 
 	acctfile[0] = '\0';
-	while ((c = getopt (argc, argv, "e:f:s:p:S:")) != EOF) {
+	Coptind = 1;
+	Copterr = 1;
+	while ((c = Cgetopt (argc, argv, "e:f:s:p:S:")) != -1) {
 	switch (c) {
 	case 'e':
-			if ((endtime = cvt_datime (optarg)) < 0) {
-				fprintf (stderr, "incorrect time value %s\n", optarg);
+			if ((endtime = cvt_datime (Coptarg)) < 0) {
+				fprintf (stderr, "incorrect time value %s\n", Coptarg);
 				errflg++;
 			}
 			break;
 	case 'f':
-			strcpy (acctfile, optarg);
+			strcpy (acctfile, Coptarg);
 			break;
 	case 's':
-			if ((starttime = cvt_datime (optarg)) < 0) {
-				fprintf (stderr, "incorrect time value %s\n", optarg);
+			if ((starttime = cvt_datime (Coptarg)) < 0) {
+				fprintf (stderr, "incorrect time value %s\n", Coptarg);
 				errflg++;
 			}
 			break;
 	case 'p':
 			pflag++;
-			strcpy (poolname, optarg);
+			strcpy (poolname, Coptarg);
 			break;
 	case 'S':
-			if (strcmp (optarg, "t") == 0) tflag++;
-			else if (strcmp (optarg, "a") == 0) aflag++;
+			if (strcmp (Coptarg, "t") == 0) tflag++;
+			else if (strcmp (Coptarg, "a") == 0) aflag++;
 			else {
 				fprintf (stderr,"Incorrect or no sort criteria given %s\n",
-								 optarg);
+								 Coptarg);
 				errflg++;
 			}
 			break;

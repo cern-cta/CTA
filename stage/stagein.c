@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.22 2000/12/11 08:27:41 jdurand Exp $
+ * $Id: stagein.c,v 1.23 2000/12/12 14:13:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.22 $ $Date: 2000/12/11 08:27:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.23 $ $Date: 2000/12/12 14:13:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -36,10 +36,10 @@ static char sccsid[] = "@(#)RCSfile$ $Revision: 1.22 $ $Date: 2000/12/11 08:27:4
 #include "stage.h"
 #include "Cpwd.h"
 #include "Cgrp.h"
+#include "Cgetopt.h"
+
 extern	char	*getenv();
 extern	char	*getconfent();
-extern	int	optind;
-extern	char	*optarg;
 #if !defined(linux)
 extern	char	*sys_errlist[];
 #endif
@@ -141,16 +141,18 @@ int main(argc, argv)
 	numvid = 0;
 	numvsn = 0;
 	memset (vsn, 0, sizeof(vsn));
-	while ((c = getopt (argc, argv, "A:b:C:c:d:E:F:f:Gg:h:I:KL:l:M:N:nop:q:S:s:Tt:U:u:V:v:X:z")) != EOF) {
+	Coptind = 1;
+	Copterr = 1;
+	while ((c = Cgetopt (argc, argv, "A:b:C:c:d:E:F:f:Gg:h:I:KL:l:M:N:nop:q:S:s:Tt:U:u:V:v:X:z")) != -1) {
 		switch (c) {
 		case 'd':
 			stagetape++;
 			dflag++;
-			if (strlen (optarg) > sizeof(den) - 1) {
+			if (strlen (Coptarg) > sizeof(den) - 1) {
 				fprintf (stderr, STG06, "-d\n");
 				errflg++;
 			} else
-				strcpy (den, optarg);
+				strcpy (den, Coptarg);
 			break;
 		case 'E':
 			stagetape++;
@@ -179,14 +181,14 @@ int main(argc, argv)
 		case 'g':
 			stagetape++;
 			gflag++;
-			if (strlen (optarg) > sizeof(dgn) - 1) {
+			if (strlen (Coptarg) > sizeof(dgn) - 1) {
 				fprintf (stderr, STG06, "-g\n");
 				errflg++;
 			} else
-				strcpy (dgn, optarg);
+				strcpy (dgn, Coptarg);
 			break;
 		case 'h':
-			stghost = optarg;
+			stghost = Coptarg;
 			break;
 		case 'I':
 			stagedisk++;
@@ -194,11 +196,11 @@ int main(argc, argv)
 		case 'l':
 			stagetape++;
 			lflag++;
-			if (strlen (optarg) > sizeof(lbl) - 1) {
+			if (strlen (Coptarg) > sizeof(lbl) - 1) {
 				fprintf (stderr, STG06, "-l\n");
 				errflg++;
 			} else
-				strcpy (lbl, optarg);
+				strcpy (lbl, Coptarg);
 			break;
 		case 'M':
 			if (stagemig == nhsmfiles) {
@@ -226,18 +228,18 @@ int main(argc, argv)
 					char *dummy;
 
 					/* Check if the option -M is attached or not */
-					if (strstr(argv[optind - 1],"-M") == argv[optind - 1]) {
+					if (strstr(argv[Coptind - 1],"-M") == argv[Coptind - 1]) {
 						attached = 1;
 					}
 					/* We want to know if there is no ':' in the string or, if there is such a ':' */
 					/* if there is no '/' before (then is will indicate a hostname)                */
-					if (! ISCASTOR(optarg)) {
+					if (! ISCASTOR(Coptarg)) {
 						/* We prepend HSM_HOST only for non CASTOR-like files */
-						if ((dummy = strchr(optarg,':')) == NULL || (dummy != optarg && strrchr(dummy,'/') == NULL)) {
+						if ((dummy = strchr(Coptarg,':')) == NULL || (dummy != Coptarg && strrchr(dummy,'/') == NULL)) {
 							if ((hsm_host = getenv("HSM_HOST")) != NULL) {
 								strcpy (hsm_path, hsm_host);
 								strcat (hsm_path, ":");
-								strcat (hsm_path, optarg);
+								strcat (hsm_path, Coptarg);
 								if ((hsmfiles[nhsmfiles] = (char *) malloc((attached != 0 ? 2 : 0) + strlen(hsm_path) + 1)) == NULL) {
 									fprintf(stderr,"malloc error (%s)\n",strerror(errno));
 									errflg++;
@@ -252,7 +254,7 @@ int main(argc, argv)
 							} else if ((hsm_host = getconfent("STG", "HSM_HOST",0)) != NULL) {
 								strcpy (hsm_path, hsm_host);
 								strcat (hsm_path, ":");
-								strcat (hsm_path, optarg);
+								strcat (hsm_path, Coptarg);
 								if ((hsmfiles[nhsmfiles] = (char *) malloc((attached != 0 ? 2 : 0) + strlen(hsm_path) + 1)) == NULL) {
 									fprintf(stderr,"malloc error (%s)\n",strerror(errno));
 									errflg++;
@@ -268,7 +270,7 @@ int main(argc, argv)
 								fprintf (stderr, STG54);
 								errflg++;
 							}
-							argv[optind - 1] = hsmfiles[nhsmfiles - 1];
+							argv[Coptind - 1] = hsmfiles[nhsmfiles - 1];
 						} else {
 							/* Here we believe that the user gave a hostname */
 							hsmfiles[nhsmfiles++] = NULL;
@@ -278,11 +280,11 @@ int main(argc, argv)
 						hsmfiles[nhsmfiles++] = NULL;
 					}
 				} else {
-					fprintf (stderr, "Cannot parse hsm file %s\n", optarg);
+					fprintf (stderr, "Cannot parse hsm file %s\n", Coptarg);
 					errflg++;
 				}
 			} else {
-				fprintf (stderr, "Cannot parse hsm file %s\n", optarg);
+				fprintf (stderr, "Cannot parse hsm file %s\n", Coptarg);
 				errflg++;
 			}
 			break;
@@ -293,7 +295,7 @@ int main(argc, argv)
 			stagetape++;
 			break;
 		case 'p':
-			poolname = optarg;
+			poolname = Coptarg;
 			pflag++;
 			break;
 		case 'q':
@@ -309,7 +311,7 @@ int main(argc, argv)
 			stagetape++;
 			break;
 		case 'U':
-			fun = strtol (optarg, &dp, 10);
+			fun = strtol (Coptarg, &dp, 10);
 			if (*dp != '\0') {
 				fprintf (stderr, STG06, "-U\n");
 				errflg++;
@@ -339,7 +341,7 @@ int main(argc, argv)
 		}
 	}
 	if (req_type != STAGEIN && req_type != STAGEOUT &&
-			optind >= argc && fun == 0) {
+			Coptind >= argc && fun == 0) {
 		fprintf (stderr, STG07);
 		errflg++;
 	}
@@ -474,7 +476,7 @@ int main(argc, argv)
 	marshall_WORD (sbp, pid);
 	
 	marshall_WORD (sbp, nargs);
-	for (i = 0; i < optind; i++)
+	for (i = 0; i < Coptind; i++)
 		marshall_STRING (sbp, argv[i]);
 	if (numvsn || numvid) {		/* tape staging */
 		if (vflag == 0) {
@@ -502,7 +504,7 @@ int main(argc, argv)
 		marshall_STRING (sbp, "-u");
 		marshall_STRING (sbp, pool_user);
 	}
-	for (i = optind; i < argc; i++) {
+	for (i = Coptind; i < argc; i++) {
 		if ((c = build_linkname (argv[i], path, sizeof(path), req_type)) == SYERR) {
 #if defined(_WIN32)
 			WSACleanup();

@@ -1,5 +1,5 @@
 /*
- * $Id: getlisttp.c,v 1.8 2000/03/23 01:41:03 jdurand Exp $
+ * $Id: getlisttp.c,v 1.9 2000/12/12 14:13:40 jdurand Exp $
  */
 
 /*
@@ -8,14 +8,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getlisttp.c,v $ $Revision: 1.8 $ $Date: 2000/03/23 01:41:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getlisttp.c,v $ $Revision: 1.9 $ $Date: 2000/12/12 14:13:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <sys/types.h>
 #include <string.h>
 #include "stage.h"
-extern char *optarg;
+#include "Cgetopt.h"
 
 getlist_of_vid(opt, v, num)
 		 char *opt;
@@ -26,7 +26,7 @@ getlist_of_vid(opt, v, num)
 	char *p;
 
 	if (*num == 0) {
-		p = strtok (optarg, ":");
+		p = strtok (Coptarg, ":");
 		while (p != NULL) {
 			if (*num >= MAXVSN) {
 				fprintf (stderr, STG14);

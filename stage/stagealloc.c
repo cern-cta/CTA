@@ -1,5 +1,5 @@
 /*
- * $Id: stagealloc.c,v 1.16 2000/11/24 14:06:23 jdurand Exp $
+ * $Id: stagealloc.c,v 1.17 2000/12/12 14:13:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.16 $ $Date: 2000/11/24 14:06:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.17 $ $Date: 2000/12/12 14:13:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -28,10 +28,10 @@ static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.16 $ $Date: 
 #include "stage.h"
 #include "Cpwd.h"
 #include "Cgrp.h"
+#include "Cgetopt.h"
+
 extern	char	*getenv();
 extern	char	*getconfent();
-extern	int	optind;
-extern	char	*optarg;
 static gid_t gid;
 static int pid;
 static struct passwd *pw;
@@ -83,7 +83,9 @@ int main(argc, argv)
 		exit (USERR);
 	}
 #endif
-	while ((c = getopt (argc, argv, "Gh:Pp:s:U:u:")) != EOF) {
+	Coptind = 1;
+	Copterr = 1;
+	while ((c = Cgetopt (argc, argv, "Gh:Pp:s:U:u:")) != -1) {
 		switch (c) {
 		case 'G':
 			Gflag++;
@@ -104,14 +106,14 @@ int main(argc, argv)
 			}
 			break;
 		case 'h':
-			stghost = optarg;
+			stghost = Coptarg;
 			break;
 		case 'p':
-			poolname = optarg;
+			poolname = Coptarg;
 			pflag++;
 			break;
 		case 'U':
-			fun = strtol (optarg, &dp, 10);
+			fun = strtol (Coptarg, &dp, 10);
 			if (*dp != '\0') {
 				fprintf (stderr, STG06, "-U\n");
 				errflg++;
@@ -127,7 +129,7 @@ int main(argc, argv)
 			break;
 		}
 	}
-	if (optind >= argc && fun == 0) {
+	if (Coptind >= argc && fun == 0) {
 		fprintf (stderr, STG07);
 		errflg++;
 	}
@@ -184,7 +186,7 @@ int main(argc, argv)
 	marshall_WORD (sbp, pid);
 
 	marshall_WORD (sbp, nargs);
-	for (i = 0; i < optind; i++)
+	for (i = 0; i < Coptind; i++)
 		marshall_STRING (sbp, argv[i]);
 	if (pflag == 0 && poolname) {
 		marshall_STRING (sbp, "-p");
@@ -200,7 +202,7 @@ int main(argc, argv)
 		exit (SYERR);
 	}
 #endif
-	if (optind < argc) {
+	if (Coptind < argc) {
 		if ((c = build_linkname (argv[i], path, sizeof(path), STAGEALLOC)) == SYERR) {
 #if defined(_WIN32)
 			WSACleanup();

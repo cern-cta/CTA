@@ -1,5 +1,5 @@
 /*
- * $Id: stageget.c,v 1.12 2000/10/27 14:04:33 jdurand Exp $
+ * $Id: stageget.c,v 1.13 2000/12/12 14:13:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.12 $ $Date: 2000/10/27 14:04:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.13 $ $Date: 2000/12/12 14:13:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -27,10 +27,10 @@ static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.12 $ $Date: 20
 #include "marshall.h"
 #include "stage.h"
 #include "Cpwd.h"
+#include "Cgetopt.h"
+
 extern	char	*getenv();
 extern	char	*getconfent();
-extern	int	optind;
-extern	char	*optarg;
 static gid_t gid;
 static struct passwd *pw;
 char *stghost;
@@ -62,13 +62,15 @@ int main(argc, argv)
 	nargs = argc;
 	uid = getuid();
 	gid = getgid();
-	while ((c = getopt (argc, argv, "h:Pp:U:u:")) != EOF) {
+	Coptind = 1;
+	Copterr = 1;
+	while ((c = Cgetopt (argc, argv, "h:Pp:U:u:")) != -1) {
 		switch (c) {
 		case 'h':
-			stghost = optarg;
+			stghost = Coptarg;
 			break;
 		case 'U':
-			fun = strtol (optarg, &dp, 10);
+			fun = strtol (Coptarg, &dp, 10);
 			if (*dp != '\0') {
 				fprintf (stderr, STG06, "-U\n");
 				errflg++;
@@ -82,7 +84,7 @@ int main(argc, argv)
 			break;
 		}
 	}
-	if (optind >= argc && fun == 0) {
+	if (Coptind >= argc && fun == 0) {
 		fprintf (stderr, STG07);
 		errflg++;
 	}
@@ -116,7 +118,7 @@ int main(argc, argv)
 	marshall_WORD (sbp, gid);
 
 	marshall_WORD (sbp, nargs);
-	for (i = 0; i < optind; i++)
+	for (i = 0; i < Coptind; i++)
 		marshall_STRING (sbp, argv[i]);
 	if (uflag == 0 && pool_user) {
 		marshall_STRING (sbp, "-u");

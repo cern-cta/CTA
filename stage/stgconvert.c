@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.26 2000/07/24 10:49:18 jdurand Exp $
+ * $Id: stgconvert.c,v 1.27 2000/12/12 14:13:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.26 $ $Date: 2000/07/24 10:49:18 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.27 $ $Date: 2000/12/12 14:13:42 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -44,6 +44,7 @@ static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.26 $ $Date: 2
 #include "Cdb_error.h"
 #include "Cdb_lock.h"
 #include "Cdb_config.h"
+#include "Cgetopt.h"
 
 /* =============== */
 /* Local variables */
@@ -188,8 +189,6 @@ int main(argc,argv)
 		 char **argv;
 {
 	/* For options */
-	extern char *optarg;
-	extern int optind, opterr, optopt;
 	int errflg = 0;
 	int c;
 	int convert_direction = 0;         /* 1 : CASTOR/CDB -> CASTOR/DISK, -1 : CASTOR/DISK -> CASTOR/CDB */
@@ -239,8 +238,9 @@ int main(argc,argv)
 	void *output;                              /* If local_access != 0 */
 	size_t output_size;                        /* If local_access != 0 */
 
-
-	while ((c = getopt(argc,argv,"0bc:Cg:hl:Ln:u:p:qQt:v")) != EOF) {
+	Coptind = 1;
+	Copterr = 1;
+	while ((c = Cgetopt(argc,argv,"0bc:Cg:hl:Ln:u:p:qQt:v")) != -1) {
 		switch (c) {
 		case '0':
 			local_access = 1;
@@ -249,10 +249,10 @@ int main(argc,argv)
 			bindiff = 1;
 			break;
 		case 'c':
-			maxstcp = atoi(optarg);
+			maxstcp = atoi(Coptarg);
 			break;
 		case 'g':
-			convert_direction = atoi(optarg);
+			convert_direction = atoi(Coptarg);
 			break;
 		case 'h':
 			help = 1;
@@ -261,13 +261,13 @@ int main(argc,argv)
 			no_stgcat = 1;
 			break;
 		case 'l':
-			maxstpp = atoi(optarg);
+			maxstpp = atoi(Coptarg);
 			break;
 		case 'L':
 			no_stgpath = 1;
 			break;
 		case 'n':
-			frequency = atoi(optarg);
+			frequency = atoi(Coptarg);
 			break;
 		case 'q':
 			warns = 0;
@@ -276,20 +276,20 @@ int main(argc,argv)
 			nodump = 1;
 			break;
 		case 'u':
-			Cdb_username = optarg;
+			Cdb_username = Coptarg;
 			break;
 		case 'p':
-			Cdb_password = optarg;
+			Cdb_password = Coptarg;
 			break;
 		case 't':
-			if (strcmp(optarg,"t") != 0 &&
-					strcmp(optarg,"d") != 0 &&
-					strcmp(optarg,"m") != 0 &&
-					strcmp(optarg,"a") != 0) {
+			if (strcmp(Coptarg,"t") != 0 &&
+					strcmp(Coptarg,"d") != 0 &&
+					strcmp(Coptarg,"m") != 0 &&
+					strcmp(Coptarg,"a") != 0) {
 				printf("### Only \"t\", \"d\", \"m\" or \"a\" is allowed to -t option value.\n");
 				return(EXIT_FAILURE);
 			}
-			t_or_d = optarg[0];
+			t_or_d = Coptarg[0];
 			break;
 		case 'v':
 			printf("%s\n",sccsid);
@@ -300,14 +300,14 @@ int main(argc,argv)
 			break;
 		default:
 			++errflg;
-			printf("?? getopt returned character code 0%o (octal) 0x%lx (hex) %d (int) '%c' (char) ?\n"
+			printf("?? Cgetopt returned character code 0%o (octal) 0x%lx (hex) %d (int) '%c' (char) ?\n"
 						 ,c,(unsigned long) c,c,(char) c);
 			break;
 		}
 	}
 
 	if (errflg != 0) {
-		printf("### getopt error\n");
+		printf("### Cgetopt error\n");
 		stgconvert_usage();
 		return(EXIT_FAILURE);
 	}
@@ -326,7 +326,7 @@ int main(argc,argv)
 		return(EXIT_FAILURE);
 	}
 
-	if (optind >= argc || optind > (argc - 2)) {
+	if (Coptind >= argc || Coptind > (argc - 2)) {
 		printf("?? Exactly two parameters are requested\n");
 		stgconvert_usage();
 		return(EXIT_FAILURE);
@@ -339,8 +339,8 @@ int main(argc,argv)
 		return(EXIT_FAILURE);
 	}
 
-	stgcat = argv[optind];
-	stgpath = argv[optind+1];
+	stgcat = argv[Coptind];
+	stgpath = argv[Coptind+1];
 
 	if (convert_direction == CASTORCDB_TO_CASTORDISK) {
 		if (no_stgcat == 0) {

@@ -1,5 +1,5 @@
 /*
-	$Id: check_Cdbentry.c,v 1.8 2000/06/06 10:13:11 jdurand Exp $
+	$Id: check_Cdbentry.c,v 1.9 2000/12/12 14:13:40 jdurand Exp $
 */
 
 #include "Cstage_db.h"
@@ -30,6 +30,7 @@
 #include "serrno.h"                 /* CASTOR's serrno */
 #include "Cstage_ifce.h"            /* Conversion routines */
 #include "u64subr.h"
+#include "Cgetopt.h"
 
 /* ====== */
 /* Macros */
@@ -82,8 +83,6 @@ int main(argc,argv)
 		 char **argv;
 {
 	/* For options */
-	extern char *optarg;
-	extern int optind, opterr, optopt;
 	int errflg = 0;
 	int c;
 	int help = 0;
@@ -126,7 +125,9 @@ int main(argc,argv)
 	int iargv;
 	int stgpath_mode = 0;
 
-	while ((c = getopt(argc,argv,"Chu:p:")) != EOF) {
+	Coptind = 1;
+	Copterr = 1;
+	while ((c = Cgetopt(argc,argv,"Chu:p:")) != -1) {
 		switch (c) {
 		case 'C':
 			stgpath_mode = 1;
@@ -135,10 +136,10 @@ int main(argc,argv)
 			help = 1;
 			break;
 		case 'u':
-			Cdb_username = optarg;
+			Cdb_username = Coptarg;
 			break;
 		case 'p':
-			Cdb_password = optarg;
+			Cdb_password = Coptarg;
 			break;
 		case '?':
 			++errflg;
@@ -146,14 +147,14 @@ int main(argc,argv)
 			break;
 		default:
 			++errflg;
-			printf("?? getopt returned character code 0%o (octal) 0x%lx (hex) %d (int) '%c' (char) ?\n"
+			printf("?? Cgetopt returned character code 0%o (octal) 0x%lx (hex) %d (int) '%c' (char) ?\n"
 						 ,c,(unsigned long) c,c,(char) c);
 			break;
 		}
 	}
 
 	if (errflg != 0) {
-		printf("### getopt error\n");
+		printf("### Cgetopt error\n");
 		check_Cdbentry_usage();
 		return(EXIT_FAILURE);
 	}
@@ -163,15 +164,15 @@ int main(argc,argv)
 		return(EXIT_SUCCESS);
 	}
 
-	if (optind >= argc) {
-		printf("?? getopt parsing error\n");
+	if (Coptind >= argc) {
+		printf("?? Cgetopt parsing error\n");
 		check_Cdbentry_usage();
 		return(EXIT_FAILURE);
 	}
 
 	/* Check the arguments */
 	if (stgpath_mode == 0) {
-      for (iargv = optind; iargv < argc; iargv++) {
+      for (iargv = Coptind; iargv < argc; iargv++) {
         if ((reqid = atoi(argv[iargv])) <= 0) {
           printf("### one of the argument is <= 0\n");
           check_Cdbentry_usage();
@@ -218,7 +219,7 @@ int main(argc,argv)
 	Cdb_db_opened = -1;
 
 	/* Loop on the arguments */
-	for (iargv = optind; iargv < argc; iargv++) {
+	for (iargv = Coptind; iargv < argc; iargv++) {
 		int global_find_status = 0;
         char *upath;
 

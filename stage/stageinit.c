@@ -1,5 +1,5 @@
 /*
- * $Id: stageinit.c,v 1.11 2000/10/27 14:04:33 jdurand Exp $
+ * $Id: stageinit.c,v 1.12 2000/12/12 14:13:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.11 $ $Date: 2000/10/27 14:04:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.12 $ $Date: 2000/12/12 14:13:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -24,8 +24,7 @@ static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.11 $ $Date: 2
 #include "marshall.h"
 #include "stage.h"
 #include "Cpwd.h"
-extern	char	*optarg;
-extern	int	optind;
+#include "Cgetopt.h"
 
 void cleanup _PROTO((int));
 void usage _PROTO((char *));
@@ -50,10 +49,12 @@ int main(argc, argv)
 	
 	uid = getuid();
 	gid = getgid();
-	while ((c = getopt (argc, argv, "Fh:")) != EOF) {
+	Coptind = 1;
+	Copterr = 1;
+	while ((c = Cgetopt (argc, argv, "Fh:")) != -1) {
 		switch (c) {
 		case 'h':
-			stghost = optarg;
+			stghost = Coptarg;
 			break;
 		case '?':
 			errflg++;
@@ -62,7 +63,7 @@ int main(argc, argv)
 			break;
 		}
 	}
-	if (argc > optind) {
+	if (argc > Coptind) {
 		fprintf (stderr, STG16);
 		errflg++;
 	}

@@ -1,5 +1,5 @@
 /*
- * $Id: stgpath_Cdbtest.c,v 1.5 2000/06/06 10:13:12 jdurand Exp $
+ * $Id: stgpath_Cdbtest.c,v 1.6 2000/12/12 14:13:42 jdurand Exp $
  */
 
 /* ============== */
@@ -23,6 +23,7 @@
 #include "stgdb_Cdb_ifce.h"
 #include "serrno.h"           /* See CASTOR/h            */
 #include "Cdb_api.h"
+#include "Cgetopt.h"
 
 /* ====== */
 /* Macros */
@@ -67,21 +68,19 @@ int main(argc,argv)
 	int ip;
 	char *found;
     int c;
-    extern char *optarg;
-    extern int optind;
-    extern int opterr;
-    extern int optopt;
     int errflg = 0;
     int max = -1;
     int imax = 0;
 
-    while ((c = getopt(argc,argv,"hn:")) != EOF) {
+	Coptind = 1;
+	Copterr = 1;
+    while ((c = Cgetopt(argc,argv,"hn:")) != -1) {
       switch (c) {
       case 'h':
         _stgpath_Cdbtest_usage();
         return(EXIT_SUCCESS);
       case 'n':
-        max = atoi(optarg);
+        max = atoi(Coptarg);
         break;
       case '?':
         ++errflg;
@@ -89,12 +88,12 @@ int main(argc,argv)
         break;
       default:
         ++errflg;
-        fprintf(stderr,"?? getopt returned character code 0%o (octal) 0x%lx (hex) %d (int) '%c' (char) ?\n"
+        fprintf(stderr,"?? Cgetopt returned character code 0%o (octal) 0x%lx (hex) %d (int) '%c' (char) ?\n"
                 ,c,(unsigned long) c,c,(char) c);  fflush(stderr);
         break;
       }
       if (errflg != 0) {
-        fprintf(stderr,"### getopt error\n"); fflush(stderr);
+        fprintf(stderr,"### Cgetopt error\n"); fflush(stderr);
         _stgpath_Cdbtest_usage();
         return(EXIT_FAILURE);
       }
@@ -120,7 +119,7 @@ int main(argc,argv)
 	}
 
 	/* Loop on logfiles */
-	for (i = optind; i < argc; i++) {
+	for (i = Coptind; i < argc; i++) {
 
 		/* Try to open logfile */
 		if ((fd = fopen(argv[i],"r")) == NULL) {

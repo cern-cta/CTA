@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.11 2000/10/27 14:04:33 jdurand Exp $
+ * $Id: stageqry.c,v 1.12 2000/12/12 14:13:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.11 $ $Date: 2000/10/27 14:04:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.12 $ $Date: 2000/12/12 14:13:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -28,9 +28,9 @@ static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.11 $ $Date: 20
 #include "stage.h"
 #include "Cpwd.h"
 #include "Cgrp.h"
+#include "Cgetopt.h"
+
 extern	char	*getconfent();
-extern	char	*optarg;
-extern	int	optind;
 
 void usage _PROTO((char *));
 void cleanup _PROTO((int));
@@ -70,7 +70,9 @@ int main(argc, argv)
 	}
 #endif
 	numvid = 0;
-	while ((c = getopt (argc, argv, "A:afGh:I:LlM:Pp:q:Q:SsTuV:x")) != EOF) {
+	Coptind = 1;
+	Copterr = 1;
+	while ((c = Cgetopt (argc, argv, "A:afGh:I:LlM:Pp:q:Q:SsTuV:x")) != -1) {
 		switch (c) {
 		case 'A':
 			Aflag = 1;
@@ -92,7 +94,7 @@ int main(argc, argv)
 			}
 			break;
 		case 'h':
-			stghost = optarg;
+			stghost = Coptarg;
 			break;
 		case 'M':
 			Mflag = 1;
@@ -107,7 +109,7 @@ int main(argc, argv)
 			break;
 		}
 	}
-	if (argc > optind) {
+	if (argc > Coptind) {
 		fprintf (stderr, STG16);
 		errflg++;
 	}

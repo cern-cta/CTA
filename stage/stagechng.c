@@ -1,5 +1,5 @@
 /*
- * $Id: stagechng.c,v 1.3 2000/10/27 14:04:32 jdurand Exp $
+ * $Id: stagechng.c,v 1.4 2000/12/12 14:13:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.3 $ $Date: 2000/10/27 14:04:32 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.4 $ $Date: 2000/12/12 14:13:41 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -26,8 +26,8 @@ static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.3 $ $Date: 20
 #include "marshall.h"
 #include "stage.h"
 #include "Cpwd.h"
-extern	int	optind;
-extern	char	*optarg;
+#include "Cgetopt.h"
+
 #if !defined(linux)
 extern	char	*sys_errlist[];
 #endif
@@ -71,10 +71,12 @@ int main(argc, argv)
 		exit (USERR);
 	}
 #endif
-	while ((c = getopt (argc, argv, "h:")) != EOF) {
+	Coptind = 1;
+	Copterr = 1;
+	while ((c = Cgetopt (argc, argv, "h:")) != -1) {
 		switch (c) {
 		case 'h':
-			stghost = optarg;
+			stghost = Coptarg;
 			break;
 		case '?':
 			errflg++;
@@ -83,7 +85,7 @@ int main(argc, argv)
 			break;
 		}
 	}
-	if (optind >= argc) {
+	if (Coptind >= argc) {
 		fprintf (stderr, STG07);
 		errflg++;
 	}
@@ -117,7 +119,7 @@ int main(argc, argv)
 	marshall_WORD (sbp, pid);
 
 	marshall_WORD (sbp, nargs);
-	for (i = 0; i < optind; i++)
+	for (i = 0; i < Coptind; i++)
 		marshall_STRING (sbp, argv[i]);
 #if defined(_WIN32)
 	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
@@ -125,7 +127,7 @@ int main(argc, argv)
 		exit (SYERR);
 	}
 #endif
-	for (i = optind; i < argc; i++) {
+	for (i = Coptind; i < argc; i++) {
 		if ((c = build_linkname (argv[i], path, sizeof(path), STAGEUPDC)) == SYERR) {
 #if defined(_WIN32)
 			WSACleanup();

@@ -1,5 +1,5 @@
 /*
- * $Id: shift_to_castor.c,v 1.8 2000/06/29 12:04:56 jdurand Exp $
+ * $Id: shift_to_castor.c,v 1.9 2000/12/12 14:13:40 jdurand Exp $
  */
 
 /* ============== */
@@ -22,6 +22,7 @@
 #include "stage_shift.h"
 #include "u64subr.h"
 #include "Cns_api.h"
+#include "Cgetopt.h"
 
 /* ====== */
 /* Macros */
@@ -101,13 +102,13 @@ int main(argc, argv)
 	int help = 0;
 	int skip_stgcat = 0;
 	int skip_stgpath = 0;
-	extern char *optarg;
-	extern int optind, opterr, optopt;
 	int errflg = 0;
 	char tmpbuf[21];
 	int answer;
 
-	while ((c = getopt(argc,argv,"hCLn:")) != EOF) {
+	Coptind = 1;
+	Copterr = 1;
+	while ((c = Cgetopt(argc,argv,"hCLn:")) != -1) {
 		switch (c) {
 		case 'h':
 			help = 1;
@@ -119,7 +120,7 @@ int main(argc, argv)
 			skip_stgpath = 1;
 			break;
 		case 'n':
-			frequency = atoi(optarg);
+			frequency = atoi(Coptarg);
 			break;
 		case '?':
 			++errflg;
@@ -127,14 +128,14 @@ int main(argc, argv)
 			break;
 		default:
 			++errflg;
-			printf("?? getopt returned character code 0%o (octal) 0x%lx (hex) %d (int) '%c' (char) ?\n"
+			printf("?? Cgetopt returned character code 0%o (octal) 0x%lx (hex) %d (int) '%c' (char) ?\n"
 						 ,c,(unsigned long) c,c,(char) c);
 			break;
 		}
 	}
 
 	if (errflg != 0) {
-		printf("### getopt error\n");
+		printf("### Cgetopt error\n");
 		shift_to_castor_usage();
 		return(EXIT_FAILURE);
 	}
@@ -144,16 +145,16 @@ int main(argc, argv)
 		return(EXIT_SUCCESS);
 	}
 
-	if (optind >= argc || optind > (argc - 4)) {
+	if (Coptind >= argc || Coptind > (argc - 4)) {
 		printf("?? Exactly four parameters are requested\n");
 		shift_to_castor_usage();
 		return(EXIT_FAILURE);
 	}
 
-	stgcat_in = argv[optind];
-	stgpath_in = argv[optind+1];
-	stgcat_out = argv[optind+2];
-	stgpath_out = argv[optind+3];
+	stgcat_in = argv[Coptind];
+	stgpath_in = argv[Coptind+1];
+	stgcat_out = argv[Coptind+2];
+	stgpath_out = argv[Coptind+3];
 
 	if (skip_stgcat == 0) {
 		if ((stgcat_in_fd = open(stgcat_in, FILE_OFLAG, FILE_MODE)) < 0) {

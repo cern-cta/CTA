@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.1 2000/06/16 14:34:22 jdurand Exp $
+ * $Id: procfilchg.c,v 1.2 2000/12/12 14:13:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.1 $ $Date: 2000/06/16 14:34:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.2 $ $Date: 2000/12/12 14:13:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -34,11 +34,10 @@ static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.1 $ $Date: 2
 #endif
 #include <serrno.h>
 #include "osdep.h"
+#include "Cgetopt.h"
 
 void procfilchgreq _PROTO((char *, char *));
 
-extern char *optarg;
-extern int optind;
 extern char func[16];
 extern int reqid;
 extern int rpfd;
@@ -69,20 +68,17 @@ procfilchgreq(req_data, clienthost)
 						 reqid, STAGEUPDC, 0, 0, NULL, "");
 #endif
 
-#ifdef linux
-	optind = 0;
-#else
-	optind = 1;
-#endif
-	while ((c = getopt (nargs, argv, "p:")) != EOF) {
+	Coptind = 1;
+	Copterr = 0;
+	while ((c = Cgetopt (nargs, argv, "p:")) != -1) {
 		switch (c) {
 		case 'p':
-			diskpool = optarg;
+			diskpool = Coptarg;
 			break;
 		}
 	}
-	if (nargs > optind) {
-		for  (i = optind; i < nargs; i++)
+	if (nargs > Coptind) {
+		for  (i = Coptind; i < nargs; i++)
 			if (c = upd_staged (STAGEFILCHG, clienthost, user, uid, gid, clientpid, argv[i]))
 				goto reply;
 	}
