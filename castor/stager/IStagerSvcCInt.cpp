@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2004/12/08 13:50:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2004/12/08 16:31:18 $ $Author: sponcec3 $
  *
  * 
  *
@@ -159,10 +159,29 @@ extern "C" {
   int Cstager_IStagerSvc_bestTapeCopyForStream
   (Cstager_IStagerSvc_t* stgSvc,
    castor::stager::Stream* searchItem,
-   castor::stager::TapeCopyForMigration** tapecopy) {
+   castor::stager::TapeCopyForMigration** tapecopy,
+   char autocommit) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      *tapecopy = stgSvc->stgSvc->bestTapeCopyForStream(searchItem);
+      *tapecopy = stgSvc->stgSvc->bestTapeCopyForStream
+        (searchItem, autocommit);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_streamsForTapePool
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_streamsForTapePool
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   castor::stager::TapePool * tapePool) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      stgSvc->stgSvc->streamsForTapePool(tapePool);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

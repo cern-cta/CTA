@@ -43,6 +43,7 @@ struct Cstager_Segment_t;
 struct Cstager_DiskCopy_t;
 struct Cstager_DiskPool_t;
 struct Cstager_SvcClass_t;
+struct Cstager_TapePool_t;
 struct Cstager_CastorFile_t;
 struct Cstager_DiskServer_t;
 struct Cstager_SubRequest_t;
@@ -159,8 +160,10 @@ int Cstager_IStagerSvc_anyTapeCopyForStream
  * matching catalog entry Stream status to STREAM_RUNNING.
  * @param stgSvc the IStagerSvc used
  * @param searchItem the Stream information used for the search
+ * @param autocommit whether to commit the changes
  * @param tapecopy the best waiting tapecopy or 0 if none found
  * In this later case, the serrno is set to ENOENT
+ * @param autocommit whether to commit the changes
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -169,7 +172,24 @@ int Cstager_IStagerSvc_anyTapeCopyForStream
 int Cstager_IStagerSvc_bestTapeCopyForStream
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_Stream_t* searchItem,
- struct Cstager_TapeCopyForMigration_t** tapeCopy);
+ struct Cstager_TapeCopyForMigration_t** tapeCopy,
+ char autocommit);
+
+/*
+ * Gets the streams associated to the given TapePool
+ * and link them to the pool. Takes a lock on the
+ * returned streams in the database and does not 
+ * commit.
+ * @param stgSvc the IStagerSvc used
+ * @param tapePool the tapePool to handle
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_streamsForTapePool
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_TapePool_t* tapePool);
 
 /**
  * Updates the database when a file recalled is over.

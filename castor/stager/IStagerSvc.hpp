@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.30 $ $Release$ $Date: 2004/12/08 13:50:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.31 $ $Release$ $Date: 2004/12/08 16:31:18 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -55,6 +55,7 @@ namespace castor {
     class DiskPool;
     class SvcClass;
     class FileClass;
+    class TapePool;
     class FileSystem;
     class DiskServer;
     class SubRequest;
@@ -148,11 +149,25 @@ namespace castor {
        * Before return this function atomically updates the
        * matching catalog entry Stream status to STREAM_RUNNING.
        * @param searchItem the Stream information used for the search
+       * @param autocommit whether to commit the changes
        * @return the best waiting TapeCopy (or 0 if none).
        * @exception in case of error
        */
       virtual castor::stager::TapeCopyForMigration*
-      bestTapeCopyForStream(castor::stager::Stream* searchItem)
+      bestTapeCopyForStream(castor::stager::Stream* searchItem,
+                            bool autocommit)
+        throw (castor::exception::Exception) = 0;
+
+      /*
+       * Gets the streams associated to the given TapePool
+       * and link them to the pool. Takes a lock on the
+       * returned streams in the database and does not 
+       * commit.
+       * @param tapePool the tapePool to handle
+       * @exception in case of error
+       */
+      virtual void streamsForTapePool
+      (castor::stager::TapePool* tapePool)
         throw (castor::exception::Exception) = 0;
 
       /**

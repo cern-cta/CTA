@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/12/08 13:50:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/12/08 16:31:18 $ $Author: sponcec3 $
  *
  *
  *
@@ -137,19 +137,32 @@ namespace castor {
 
       /*
        * Get the best TapeCopy currently waiting for a given Stream.
-       * Search the catalog for the best eligible TapeCopies that
+       * Search the catalog for the best eligible TapeCopy that
        * is waiting for the given Stream to become ready.
-       * The matching TapeCopies entry must have the status
-       * TAPECOPY_WAITINSTREAMS.
+       * The matching TapeCopy entry must have the status
+       * TAPECOPY_WAITINSTREAMS and will be changed to status SELECTED.
        * Before return this function atomically updates the
-       * matching catalog entry Stream status to STREAM_RUNNING and
-       * the matching catalog entry TapeCopy status to TAPECOPY_SELECTED.
+       * matching catalog entry Stream status to STREAM_RUNNING.
        * @param searchItem the Stream information used for the search
-       * @return vector with all waiting TapeCopies
+       * @param autocommit whether to commit the changes
+       * @return the best waiting TapeCopy (or 0 if none).
        * @exception in case of error
        */
       virtual castor::stager::TapeCopyForMigration*
-      bestTapeCopyForStream(castor::stager::Stream* searchItem)
+      bestTapeCopyForStream(castor::stager::Stream* searchItem,
+                            bool autocommit)
+        throw (castor::exception::Exception);
+
+      /*
+       * Gets the streams associated to the given TapePool
+       * and link them to the pool. Takes a lock on the
+       * returned streams in the database and does not 
+       * commit.
+       * @param tapePool the tapePool to handle
+       * @exception in case of error
+       */
+      virtual void streamsForTapePool
+      (castor::stager::TapePool* tapePool)
         throw (castor::exception::Exception);
 
       /**

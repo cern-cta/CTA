@@ -156,11 +156,25 @@ namespace castor {
          * matching catalog entry Stream status to STREAM_RUNNING and
          * the matching catalog entry TapeCopy status to TAPECOPY_SELECTED.
          * @param searchItem the Stream information used for the search
+         * @param autocommit whether to commit the changes
          * @return vector with all waiting TapeCopies
          * @exception in case of error
          */
         virtual castor::stager::TapeCopyForMigration*
-        bestTapeCopyForStream(castor::stager::Stream* searchItem)
+        bestTapeCopyForStream(castor::stager::Stream*  searchItem,
+                              bool autocommit)
+          throw (castor::exception::Exception);
+
+        /*
+         * Gets the streams associated to the given TapePool
+         * and link them to the pool. Takes a lock on the
+         * returned streams in the database and does not 
+         * commit.
+         * @param tapePool the tapePool to handle
+         * @exception in case of error
+         */
+        virtual void streamsForTapePool
+        (castor::stager::TapePool* tapePool)
           throw (castor::exception::Exception);
 
         /**
@@ -585,6 +599,12 @@ namespace castor {
 
         /// SQL statement object for function bestTapeCopyForStream
         oracle::occi::Statement *m_bestTapeCopyForStreamStatement;
+
+        /// SQL statement for function streamsForTapePool
+        static const std::string s_streamsForTapePoolStatementString;
+
+        /// SQL statement object for function streamsForTapePool
+        oracle::occi::Statement *m_streamsForTapePoolStatement;
 
         /// SQL statement for function bestFileSystemForSegment
         static const std::string s_bestFileSystemForSegmentStatementString;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.83 $ $Release$ $Date: 2004/12/08 13:50:41 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.84 $ $Release$ $Date: 2004/12/08 16:31:18 $ $Author: sponcec3 $
  *
  *
  *
@@ -39,8 +39,9 @@
 #include "castor/stager/DiskPool.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/TapeCopy.hpp"
-#include "castor/stager/DiskServer.hpp"
+#include "castor/stager/TapePool.hpp"
 #include "castor/stager/FileClass.hpp"
+#include "castor/stager/DiskServer.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/FileSystem.hpp"
@@ -100,6 +101,10 @@ const std::string castor::db::ora::OraStagerSvc::s_anyTapeCopyForStreamStatement
 /// SQL statement for bestTapeCopyForStream
 const std::string castor::db::ora::OraStagerSvc::s_bestTapeCopyForStreamStatementString =
   "BEGIN bestTapeCopyForStream(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13); END;";
+
+/// SQL statement for streamsForTapePool
+const std::string castor::db::ora::OraStagerSvc::s_streamsForTapePoolStatementString =
+  "SELECT id from Stream WHERE tapePool = :1 FOR UPDATE";
 
 /// SQL statement for bestFileSystemForSegment
 const std::string castor::db::ora::OraStagerSvc::s_bestFileSystemForSegmentStatementString =
@@ -171,6 +176,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_selectTapeStatement(0),
   m_anyTapeCopyForStreamStatement(0),
   m_bestTapeCopyForStreamStatement(0),
+  m_streamsForTapePoolStatement(0),
   m_bestFileSystemForSegmentStatement(0),
   m_fileRecalledStatement(0),
   m_subRequestToDoStatement(0),
@@ -223,6 +229,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_selectTapeStatement);
     deleteStatement(m_anyTapeCopyForStreamStatement);
     deleteStatement(m_bestTapeCopyForStreamStatement);
+    deleteStatement(m_streamsForTapePoolStatement);
     deleteStatement(m_bestFileSystemForSegmentStatement);
     deleteStatement(m_fileRecalledStatement);
     deleteStatement(m_subRequestToDoStatement);
@@ -247,6 +254,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_selectTapeStatement = 0;
   m_anyTapeCopyForStreamStatement = 0;
   m_bestTapeCopyForStreamStatement = 0;
+  m_streamsForTapePoolStatement = 0;
   m_bestFileSystemForSegmentStatement = 0;
   m_fileRecalledStatement = 0;
   m_subRequestToDoStatement = 0;
@@ -415,7 +423,8 @@ bool castor::db::ora::OraStagerSvc::anyTapeCopyForStream
 // -----------------------------------------------------------------------
 castor::stager::TapeCopyForMigration*
 castor::db::ora::OraStagerSvc::bestTapeCopyForStream
-(castor::stager::Stream* searchItem)
+(castor::stager::Stream* searchItem,
+ bool autocommit)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -492,7 +501,9 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
       cnvSvc()->fillObj(&ad, *it, OBJ_Tape);
     }
     // commit
-    cnvSvc()->commit();
+    if (autocommit) {
+      cnvSvc()->commit();
+    }
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
@@ -506,6 +517,76 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
       castor::exception::Internal ex;
       ex.getMessage()
         << "Error caught in bestTapeCopyForStream."
+        << std::endl << e.what();
+      throw ex;
+    }
+  }
+}
+
+// -----------------------------------------------------------------------
+// streamsForTapePool
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::streamsForTapePool
+(castor::stager::TapePool* tapePool)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_streamsForTapePoolStatement) {
+      m_streamsForTapePoolStatement =
+        createStatement(s_streamsForTapePoolStatementString);
+    }
+    // retrieve the object from the database
+    std::set<int> streamsList;
+    m_streamsForTapePoolStatement->setDouble(1, tapePool->id());
+    oracle::occi::ResultSet *rset =
+      m_streamsForTapePoolStatement->executeQuery();
+    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+      streamsList.insert(rset->getInt(1));
+    }
+    // Close ResultSet
+    m_streamsForTapePoolStatement->closeResultSet(rset);
+    // Update objects and mark old ones for deletion
+    std::vector<castor::stager::Stream*> toBeDeleted;
+    for (std::vector<castor::stager::Stream*>::iterator it =
+           tapePool->streams().begin();
+         it != tapePool->streams().end();
+         it++) {
+      std::set<int>::iterator item;
+      if ((item = streamsList.find((*it)->id())) == streamsList.end()) {
+        toBeDeleted.push_back(*it);
+      } else {
+        streamsList.erase(item);
+        cnvSvc()->updateObj((*it));
+      }
+    }
+    // Delete old objects
+    for (std::vector<castor::stager::Stream*>::iterator it = toBeDeleted.begin();
+         it != toBeDeleted.end();
+         it++) {
+      tapePool->removeStreams(*it);
+      (*it)->setTapePool(0);
+    }
+    // Create new objects
+    for (std::set<int>::iterator it = streamsList.begin();
+         it != streamsList.end();
+         it++) {
+      IObject* item = cnvSvc()->getObjFromId(*it);
+      castor::stager::Stream* remoteObj = 
+        dynamic_cast<castor::stager::Stream*>(item);
+      tapePool->addStreams(remoteObj);
+      remoteObj->setTapePool(tapePool);
+    }
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    if (1403 == e.getErrorCode()) {
+      // No Data Found exception
+      castor::exception::NoEntry e;
+      e.getMessage() << "No TapeCopy found";
+      throw e;
+    } else {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "Error caught in streamsForTapePool."
         << std::endl << e.what();
       throw ex;
     }
