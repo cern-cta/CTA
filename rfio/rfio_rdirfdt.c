@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_rdirfdt.c,v 1.1 2000/10/02 08:02:32 jdurand Exp $
+ * $Id: rfio_rdirfdt.c,v 1.2 2000/11/20 09:51:19 jdurand Exp $
  */
 
 /*
@@ -103,7 +103,6 @@ int DLL_DECL rfio_rdirfdt_findentry(s,scanflag)
       if (rdirfdt[i] != NULL) {
         if (rdirfdt[i]->s == s) {
           return(i);
-          break;
         }
       }
     }
@@ -133,13 +132,13 @@ int DLL_DECL rfio_rdirfdt_freeentry(s)
   if (Cmutex_unlock((void *) rdirfdt) != 0) {
     return(-1);
   }
-  return(0);
 #else /* _WIN32 */
   if ((s >= 0) && (s < MAXRFD) && (rdirfdt[s] != NULL)) {
     free((char *)rdirfdt[s]);
     rdirfdt[s] = NULL;
   }
 #endif /* _WIN32 */
+  return(0);
 }
 
 
