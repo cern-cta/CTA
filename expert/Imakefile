@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC
 COMM  All rights reserved
 COMM
-COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 2004/06/30 16:18:37 $ CERN IT-ADC Vitaly Motyakov
+COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Date: 2004/06/30 16:37:45 $ CERN IT-ADC Vitaly Motyakov
 COMM    Make expert programs.
 
 #include <Project.tmpl>
@@ -75,7 +75,7 @@ EXPORTMANPAGES = $(EXPORTMAN)/man1/expertd.$(MANSUFFIX) \
 CLIENT = LibraryTargetName(expert) \
 	 ProgramTargetName(expexec)
 
-IPROGS_C =	FileName($(BIN),ProgramTargetName(expexec))
+IPROGS_C =	
 
 EPROGS_C = 	$(EXPORTBIN)/expexec
 #endif
