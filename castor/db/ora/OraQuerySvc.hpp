@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/17 15:25:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/01/31 17:18:36 $ $Author: bcouturi $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -33,6 +33,7 @@
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/query/IQuerySvc.hpp"
 #include "occi.h"
+#include "castor/stager/DiskCopyInfo.hpp"
 #include <list>
 
 namespace castor {
@@ -86,7 +87,7 @@ namespace castor {
          * @return the list of DiskCopies available
          * @exception in case of error
          */
-        virtual std::list<castor::stager::DiskCopyForRecall*>
+        virtual std::list<castor::stager::DiskCopyInfo*>
         diskCopies4File (std::string fileId,
                          std::string nsHost)
           throw (castor::exception::Exception);

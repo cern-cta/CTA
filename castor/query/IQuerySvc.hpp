@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/12/17 15:25:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/01/31 17:18:36 $ $Author: bcouturi $
  *
  * 
  *
@@ -38,7 +38,7 @@ namespace castor {
   namespace stager {
     
     // Forward declaration
-    class DiskCopyForRecall;
+    class DiskCopyInfo;
     class CastorFile;
     
   }
@@ -62,7 +62,7 @@ namespace castor {
        * @return the list of DiskCopies available
        * @exception in case of error
        */
-      virtual std::list<castor::stager::DiskCopyForRecall*>
+      virtual std::list<castor::stager::DiskCopyInfo*>
       diskCopies4File (std::string fileId,
                        std::string nsHost)
         throw (castor::exception::Exception) = 0;

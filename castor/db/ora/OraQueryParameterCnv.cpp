@@ -78,7 +78,7 @@ const std::string castor::db::ora::OraQueryParameterCnv::s_deleteTypeStatementSt
 
 /// SQL update statement for member query
 const std::string castor::db::ora::OraQueryParameterCnv::s_updateQryRequestStatementString =
-"UPDATE QueryParameter SET query = : 1 WHERE id = :2";
+"UPDATE QueryParameter SET query = :1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

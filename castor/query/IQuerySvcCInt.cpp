@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IQuerySvcCInt.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/17 14:27:36 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IQuerySvcCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/01/31 17:18:36 $ $Author: bcouturi $
  *
  * 
  *
@@ -80,16 +80,16 @@ extern "C" {
   int Cquery_IQuerySvc_diskCopies4File
   (struct Cquery_IQuerySvc_t* qrySvc,
    char* fileId, char* nsHost,
-   castor::stager::DiskCopyForRecall*** diskCopies,
+   castor::stager::DiskCopyInfo*** diskCopies,
    unsigned int* diskCopiesNb) {
     if (!checkIQuerySvc(qrySvc)) return -1;
     try {
-      std::list<castor::stager::DiskCopyForRecall*> result =
+      std::list<castor::stager::DiskCopyInfo*> result =
         qrySvc->qrySvc->diskCopies4File(fileId, nsHost);
       *diskCopiesNb = result.size();
-      *diskCopies = (castor::stager::DiskCopyForRecall**)
-        malloc((*diskCopiesNb) * sizeof(castor::stager::DiskCopyForRecall*));
-      std::list<castor::stager::DiskCopyForRecall*>::iterator it =
+      *diskCopies = (castor::stager::DiskCopyInfo**)
+        malloc((*diskCopiesNb) * sizeof(castor::stager::DiskCopyInfo*));
+      std::list<castor::stager::DiskCopyInfo*>::iterator it =
         result.begin();
       for (int i = 0; i < *diskCopiesNb; i++, it++) {
         (*diskCopies)[i] = *it;

@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.4 2005/01/27 12:38:20 jdurand Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.5 2005/01/31 17:18:36 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.4 $ $Date: 2005/01/27 12:38:20 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.5 $ $Date: 2005/01/31 17:18:36 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -42,10 +42,11 @@ static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.
 #include "castor/stager/StageRequestQueryRequest.hpp"
 #include "castor/stager/RequestQueryType.hpp"
 #include "castor/stager/QueryParameter.hpp"
-#include "castor/stager/DiskCopyForRecall.hpp"
+#include "castor/stager/DiskCopyInfo.hpp"
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/rh/FileQueryResponse.hpp"
 #include "castor/query/IQuerySvc.hpp"
+
 
 
 #undef logfunc
@@ -139,6 +140,12 @@ namespace castor {
 
     namespace queryService {
 
+
+      /** Dummy status code for non existing files */
+      int naStatusCode = 10000;
+      
+
+
       /**
        * Sends a Response to a client
        * In case of error, on writes a message to the log
@@ -153,6 +160,20 @@ namespace castor {
           castor::replier::RequestReplier *rr =
             castor::replier::RequestReplier::getInstance();
           rr->sendResponse(client, res);
+        } catch (castor::exception::Exception e) {
+          serrno = e.code();
+          STAGER_LOG_DB_ERROR(NULL, func,
+                              e.getMessage().str().c_str());
+        }
+      }
+
+
+      void sendEndResponse(castor::IClient* client) {
+        char *func =  "castor::stager::sendEndResponse";
+        try {
+          STAGER_LOG_DEBUG(NULL, "Sending End Response");
+          castor::replier::RequestReplier *rr =
+            castor::replier::RequestReplier::getInstance();
           rr->sendEndResponse(client);
         } catch (castor::exception::Exception e) {
           serrno = e.code();
@@ -160,6 +181,7 @@ namespace castor {
                               e.getMessage().str().c_str());
         }
       }
+
 
       /**
        * Handles a fileQueryRequest and replies to client.
@@ -200,85 +222,116 @@ namespace castor {
           for(std::vector<QueryParameter*>::iterator it = params.begin();
               it != params.end();
               ++it) {
-            
-            std::string fid, nshost;
-            bool queryOk = false;
-            
+
             castor::stager::RequestQueryType ptype = (*it)->queryType();
             std::string pval = (*it)->value();
-            
-            switch(ptype) {
-            case REQUESTQUERYTYPE_FILENAME:
-              STAGER_LOG_VERBOSE(NULL, "Looking up file id from filename");
-              struct Cns_fileid Cnsfileid;
-              memset(&Cnsfileid,'\0',sizeof(Cnsfileid));
-              struct Cns_filestat Cnsfilestat;
-              if (Cns_statx(pval.c_str(),&Cnsfileid,&Cnsfilestat) != 0) {
-                std::stringstream sst;
-                sst << Cnsfileid.fileid;
-                fid = sst.str();
-                nshost = std::string(Cnsfileid.server);
-                queryOk = true;  
-              } else {
-                castor::exception::Exception e(serrno);
-                e.getMessage() << pval.c_str() << " not found";
-                throw e;
-              }
-              break;
-            case REQUESTQUERYTYPE_REQID:
-              break;
-            case REQUESTQUERYTYPE_USERTAG:
-              break;
-            case REQUESTQUERYTYPE_FILEID:
-              STAGER_LOG_VERBOSE(NULL, "Received fileif parameter");
-              std::string::size_type idx = pval.find('@');
-              if (idx == std::string::npos) {
-                // XXX Error
-              }
-              fid = pval.substr(0, idx);
-              nshost = pval.substr(idx + 1);
-              queryOk = true;
-              break;
-            }
-            
-            if (!queryOk) continue;
-            /* Invoking the method                */
-            /* ---------------------------------- */
-            STAGER_LOG_DEBUG(NULL, "Invoking diskCopies4File");
-            std::list<castor::stager::DiskCopyForRecall*> result =
-              qrySvc->diskCopies4File(fid, nshost);
 
-            if (result.size() == 0) {
-              castor::exception::Exception e(ENOENT);
-              e.getMessage() << pval.c_str() << " not in stager";
-              throw e;
-            }
+            try {
 
-            for(std::list<castor::stager::DiskCopyForRecall*>::iterator dcit 
-                  = result.begin();
-                dcit != result.end();
-                ++dcit) {
-
-              castor::stager::DiskCopyForRecall* diskcopy = *dcit;
-
-              /* Preparing the response */
-              /* ---------------------- */
-              STAGER_LOG_DEBUG(NULL, "Building Response");
-              castor::rh::FileQueryResponse res;
-              res.setStatus(diskcopy->status());
-              if (ptype ==  REQUESTQUERYTYPE_FILENAME) {
-                res.setFileName(pval);
-              } else if (ptype ==  REQUESTQUERYTYPE_FILEID) {  
-                //res.setFileId(pval);
+              
+              std::string fid, nshost;
+              bool queryOk = false;
+              int statcode;
+              
+              
+              switch(ptype) {
+              case REQUESTQUERYTYPE_FILENAME:
+                STAGER_LOG_DEBUG(NULL, "Looking up file id from filename");
+                struct Cns_fileid Cnsfileid;
+                memset(&Cnsfileid,'\0',sizeof(Cnsfileid));
+                struct Cns_filestat Cnsfilestat;
+                statcode =  Cns_statx(pval.c_str(),&Cnsfileid,&Cnsfilestat);
+                if (statcode == 0) {
+                  std::stringstream sst;
+                  sst << Cnsfileid.fileid;
+                  fid = sst.str();
+                  nshost = std::string(Cnsfileid.server);
+                  queryOk = true;  
+                } else {
+                  castor::exception::Exception e(serrno);
+                  e.getMessage() << pval.c_str() << " not found";
+                  throw e;
+                }
+                break;
+              case REQUESTQUERYTYPE_REQID:
+                break;
+              case REQUESTQUERYTYPE_USERTAG:
+                break;
+              case REQUESTQUERYTYPE_FILEID:
+                STAGER_LOG_DEBUG(NULL, "Received fileif parameter");
+                std::string::size_type idx = pval.find('@');
+                if (idx == std::string::npos) {
+                  break;
+                  // XXX Error
+                }
+                fid = pval.substr(0, idx);
+                nshost = pval.substr(idx + 1);
+                queryOk = true;
+                break;
               }
               
-              /* Sending the response */
-              /* -------------------- */
+              if (!queryOk) {
+                castor::exception::Exception e(serrno);
+                e.getMessage() << "Could not parse parameter: " 
+                               << ptype << "/" 
+                               << pval;
+                throw e;
+              }
+              
+              /* Invoking the method                */
+              /* ---------------------------------- */
+              STAGER_LOG_DEBUG(NULL, "Invoking diskCopies4File");
+              std::list<castor::stager::DiskCopyInfo*> result =
+                qrySvc->diskCopies4File(fid, nshost);
+              
+              if (result.size() == 0) {
+                castor::exception::Exception e(ENOENT);
+                e.getMessage() << pval.c_str() << " not in stager";
+                throw e;
+              }
+
+              
+              for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit 
+                    = result.begin();
+                  dcit != result.end();
+                  ++dcit) {
+                
+                castor::stager::DiskCopyInfo* diskcopy = *dcit;
+                
+                /* Preparing the response */
+                /* ---------------------- */
+                STAGER_LOG_DEBUG(NULL, "Building Response");
+                castor::rh::FileQueryResponse res;
+                res.setStatus(diskcopy->diskCopyStatus());
+                res.setFileName(pval);
+                
+                /* Sending the response */
+                /* -------------------- */
+                replyToClient(client, &res);
+                
+              }
+
+            } catch (castor::exception::Exception e) {
+              serrno = e.code();
+              error = e.getMessage().str();
+              STAGER_LOG_DB_ERROR(NULL, func,
+                                  e.getMessage().str().c_str());
+              
+              /* Send the execption to the client */
+              /* -------------------------------- */
+              castor::rh::FileQueryResponse res;
+              if (0 != serrno) {
+                res.setStatus(naStatusCode);
+                res.setFileName(pval);
+                res.setErrorCode(serrno);
+                res.setErrorMessage(error);  
+              }
+              
+              /* Reply To Client                */
+              /* ------------------------------ */
               replyToClient(client, &res);
-            
-            }
-            
-          }
+            } // End catch
+          } // End loop on all diskcopies
         } catch (castor::exception::Exception e) {
           serrno = e.code();
           error = e.getMessage().str();
@@ -290,6 +343,7 @@ namespace castor {
           /* Send the execption to the client */
           /* -------------------------------- */
           castor::rh::FileQueryResponse res;
+          res.setStatus(naStatusCode);
           if (0 != serrno) {
             res.setErrorCode(serrno);
             res.setErrorMessage(error);
@@ -301,6 +355,10 @@ namespace castor {
           replyToClient(client, &res);
 
         }  
+
+
+        sendEndResponse(client);
+        
       }
       
       

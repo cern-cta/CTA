@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/01/10 17:26:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/01/31 17:18:36 $ $Author: bcouturi $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -28,9 +28,14 @@
 #include "castor/IFactory.hpp"
 #include "castor/SvcFactory.hpp"
 #include "castor/db/ora/OraQuerySvc.hpp"
-#include "castor/stager/DiskCopyForRecall.hpp"
+#include "castor/stager/DiskCopyInfo.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/stager/DiskCopyStatusCodes.hpp"
+#include "castor/stager/TapeCopyStatusCodes.hpp"
+#include "castor/stager/SegmentStatusCodes.hpp"
+
 #include <string>
+#include <list>
 
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -44,7 +49,9 @@ OraQuerySvcFactory = s_factoryOraQuerySvc;
 //------------------------------------------------------------------------------
 /// SQL statement for tapesToDo
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4FileStatementString =
-  "SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, FileSystem.mountPoint, FileSystem.weight, DiskServer.name FROM CastorFile, DiskCopy, FileSystem, DiskServer WHERE CastorFile.fileId = :1 AND CastorFile.nsHost = :2 AND DiskCopy.castorFile = Castorfile.id AND DiskCopy.fileSystem = FileSystem.id and FileSystem.diskserver = DiskServer.id";
+"SELECT DiskCopy.id, DiskCopy.path, CastorFile.filesize, DiskCopy.status as dstatus, tapecopy.status as tstatus, NULL FROM CastorFile, DiskCopy, tapecopy WHERE CastorFile.fileId =  :1   AND CastorFile.nsHost = :2 AND DiskCopy.status in (0,2,4,5,6)  AND DiskCopy.castorFile = Castorfile.id   AND castorfile.id = tapecopy.castorfile (+) UNION SELECT DiskCopy.id, DiskCopy.path, CastorFile.filesize, DiskCopy.status, tapecopy.status, segment.status  FROM CastorFile, DiskCopy, tapecopy, segment    WHERE CastorFile.fileId =  :1   AND CastorFile.nsHost = :2 AND DiskCopy.status in (0,2,4,5,6)  AND DiskCopy.castorFile = Castorfile.id   AND castorfile.id = tapecopy.castorfile AND segment.copy = tapecopy.id (+)";
+
+
 
 // -----------------------------------------------------------------------
 // OraQuerySvc
@@ -90,7 +97,7 @@ void castor::db::ora::OraQuerySvc::reset() throw() {
 // -----------------------------------------------------------------------
 // diskCopies4File
 // -----------------------------------------------------------------------
-std::list<castor::stager::DiskCopyForRecall*>
+std::list<castor::stager::DiskCopyInfo*>
 castor::db::ora::OraQuerySvc::diskCopies4File
 (std::string fileId, std::string nsHost)
   throw (castor::exception::Exception) {
@@ -106,16 +113,19 @@ castor::db::ora::OraQuerySvc::diskCopies4File
     oracle::occi::ResultSet *rset =
       m_diskCopies4FileStatement->executeQuery();
     // Gather the results
-    std::list<castor::stager::DiskCopyForRecall*> result;
+    std::list<castor::stager::DiskCopyInfo*> result;
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      castor::stager::DiskCopyForRecall* item =
-        new castor::stager::DiskCopyForRecall();
-      item->setId(rset->getInt(1));
-      item->setPath(rset->getString(2));
-      item->setStatus((castor::stager::DiskCopyStatusCodes)rset->getInt(3));
-      item->setMountPoint(rset->getString(4));
-      item->setFsWeight(rset->getDouble(5));
-      item->setDiskServer(rset->getString(6));
+      castor::stager::DiskCopyInfo* item =
+        new castor::stager::DiskCopyInfo();
+       item->setId(rset->getInt(1));
+       item->setDiskCopyPath(rset->getString(2));
+      item->setSize(rset->getInt(3));
+      item->setDiskCopyStatus((castor::stager::DiskCopyStatusCodes)
+                              rset->getInt(4));
+      item->setDiskCopyStatus((castor::stager::TapeCopyStatusCodes)
+                              rset->getInt(5));
+      item->setDiskCopyStatus((castor::stager::SegmentStatusCodes)
+                              rset->getInt(6));
       result.push_back(item);
     }
     return result;
