@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tape_oper.man,v $ $Revision: 1.2 $ $Date: 1999/09/21 04:37:26 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: tape_oper.man,v $ $Revision: 1.3 $ $Date: 2000/01/10 14:22:28 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1996-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TAPE_OPER l "$Date: 1999/09/21 04:37:26 $"
+.TH TAPE_OPER l "$Date: 2000/01/10 14:22:28 $"
 .SH NAME
 tape_oper \- operator interface to tape subsystem
 .SH DESCRIPTION
@@ -47,8 +47,7 @@ the mount request is cancelled on the original drive and reissued for the drive
 .I drive_name
 .TP
 .B reselect server
-the mount request is cancelled and the drive is freed but if
-.B tpmnt
+the mount request is cancelled and the drive is freed but if the mount
 was issued from rtcopy, a new tape server is selected automatically.
 .RE
 .LP
@@ -61,6 +60,33 @@ and the request cancelled.
 When the drive has been repaired, the command
 .B tpconfig
 can be used to reenable production on it.
+.RE
+.LP
+TP041 - mount of
+.I vid
+on
+.I drive_name
+failed:
+.I reason
+.RS
+This message is sent in case of robotic mount/demount failure.
+For a mount failure, the possible actions are similar to the actions for TP020.
+For a demount failure, the problem must be corrected or
+.B cancel
+must be entered.
+.RE
+.LP
+TP062 - tape
+.I vid
+to be prelabelled has vsn
+.IR vsn ,
+ok to continue?
+.LP
+TP062 - tape
+.I vid
+to be prelabelled is an NL tape, ok to continue?
+.RS
+type "ok" or "yes" to continue, any other reply will cancel the prelabel.
 .RE
 .SH SEE ALSO
 .BR oper (l),
