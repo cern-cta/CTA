@@ -135,5 +135,5 @@ Sigfunc *_test_signal(signo, func)
 void reaper(signo)
      int signo;
 {
-  Cthread_exit((void *) &signo);
+	/* Cthread_exit((void *) &signo); */
 }
