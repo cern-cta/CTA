@@ -1,3 +1,6 @@
+/*
+ * $Id: rtcp_api.h,v 1.3 1999/12/09 13:46:20 jdurand Exp $
+ */
 
 #if !defined(RTCP_API_H)
 #define RTCP_API_H

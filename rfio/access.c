@@ -1,24 +1,14 @@
 /*
- * $Id: access.c,v 1.3 1999/12/09 08:44:54 baran Exp $
- *
- * $Log: access.c,v $
- * Revision 1.3  1999/12/09 08:44:54  baran
- * Thread-safe version
- *
- * Revision 1.2  1999/07/20 12:47:51  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
- *   on all control and data sockets.
- *
+ * $Id: access.c,v 1.4 1999/12/09 13:46:36 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1990,1991 by CERN/CN/SW/DC
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)access.c	1.4 5/6/98 Felix Hassine CN-PDP";
+static char sccsid[] = "@(#)$RCSfile: access.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:46:36 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* access.c       Remote File I/O - get access status 			*/

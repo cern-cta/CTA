@@ -1,10 +1,14 @@
 /*
+ * $Id: smc.h,v 1.3 1999/12/09 13:46:24 jdurand Exp $
+ */
+
+/*
  * Copyright (C) 1998-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: smc.h,v $ $Revision: 1.2 $ $Date: 1999/10/08 06:52:33 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: smc.h,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:46:24 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 struct robot_info {

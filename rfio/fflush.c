@@ -1,21 +1,14 @@
 /*
- * $Id: fflush.c,v 1.2 1999/07/20 12:47:57 jdurand Exp $
- *
- * $Log: fflush.c,v $
- * Revision 1.2  1999/07/20 12:47:57  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
- *   on all control and data sockets.
- *
+ * $Id: fflush.c,v 1.3 1999/12/09 13:46:43 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1990,1991 by CERN/CN/SW/DC
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)fflush.c	3.4 04/06/99 CERN CN-SW/DC Antoine Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fflush.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:46:43 $ CERN/IT/PDP/DM Antoine Trannoy";
 #endif /* not lint */
 
 /* fflush.c     Remote File I/O - flush a binary file                   */

@@ -1,8 +1,11 @@
 /*
- * $Id: rfio.h,v 1.3 1999/12/09 09:49:47 baran Exp $
+ * $Id: rfio.h,v 1.4 1999/12/09 13:46:19 jdurand Exp $
  *
  * $Log: rfio.h,v $
- * Revision 1.3  1999/12/09 09:49:47  baran
+ * Revision 1.4  1999/12/09 13:46:19  jdurand
+ * Fixed copyright and sccsid
+ *
+ * Revision 1.3  1999-12-09 10:49:47+01  baran
  * Included rfio_errno.h.  Removed declaration of rfio_errno.
  *
  * Revision 1.2  1999/07/20 20:07:22  jdurand
@@ -51,7 +54,7 @@
  * Remote file I/O C routines
  */
 
-/* extern int      rfio_errno;     /* global rfio error number             */
+/* extern int      rfio_errno;  */    /* global rfio error number             */
 extern int      rfio_fclose();  /* RFIO's fclose()                      */
 extern int	rfio_fflush();	/* RFIO's fflush()			*/
 extern int      rfio_fwrite();  /* RFIO's fwrite()                      */

@@ -1,21 +1,14 @@
 /*
- * $Id: rfdir.c,v 1.2 1999/07/20 12:48:10 jdurand Exp $
- *
- * $Log: rfdir.c,v $
- * Revision 1.2  1999/07/20 12:48:10  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
- *   on all control and data sockets.
- *
+ * $Id: rfdir.c,v 1.3 1999/12/09 13:47:07 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1998,1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1998-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)rfdir.c	1.10 14 Jan 1999 CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:07 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*

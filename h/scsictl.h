@@ -1,3 +1,6 @@
+/*
+ * $Id: scsictl.h,v 1.2 1999/12/09 13:46:22 jdurand Exp $
+ */
 
 /*
  * Copyright (C) 1995-1996 by CERN/CN/SW/SC

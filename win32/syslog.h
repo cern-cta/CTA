@@ -1,4 +1,8 @@
 /*
+ * $Id: syslog.h,v 1.2 1999/12/09 13:47:56 jdurand Exp $
+ */
+
+/*
  * Copyright (C) 1997 by CERN/IT/PDP/IP
  * All rights reserved
  */

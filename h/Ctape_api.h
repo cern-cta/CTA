@@ -1,10 +1,14 @@
 /*
+ * $Id: Ctape_api.h,v 1.5 1999/12/09 13:46:14 jdurand Exp $
+ */
+
+/*
  * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.4 $ $Date: 1999/11/19 17:01:18 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.5 $ $Date: 1999/12/09 13:46:14 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H

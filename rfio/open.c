@@ -1,24 +1,14 @@
 /*
- * $Id: open.c,v 1.3 1999/12/09 08:47:10 baran Exp $
- *
- * $Log: open.c,v $
- * Revision 1.3  1999/12/09 08:47:10  baran
- * Thread-safe version
- *
- * Revision 1.2  1999/07/20 12:48:03  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
- *   on all control and data sockets.
- *
+ * $Id: open.c,v 1.4 1999/12/09 13:46:56 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1990-1998 by CERN/IT/PDP/IP
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)open.c	3.25 06/04/98  F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:46:56 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */

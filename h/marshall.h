@@ -1,5 +1,9 @@
 /*
- * @(#)$RCSfile: marshall.h,v $ $Revision: 1.6 $ $Date: 1999/12/02 17:02:02 $ CERN IT-PDP/DM  Fabrizio Cane
+ * $Id: marshall.h,v 1.7 1999/12/09 13:46:16 jdurand Exp $
+ */
+
+/*
+ * @(#)$RCSfile: marshall.h,v $ $Revision: 1.7 $ $Date: 1999/12/09 13:46:16 $ CERN IT-PDP/DM  Fabrizio Cane
  */
 
 /*

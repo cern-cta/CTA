@@ -1,5 +1,9 @@
 /*
- * @(#)$RCSfile: dirent.h,v $ $Revision: 1.1 $ $Date: 1999/10/14 09:48:44 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * $Id: dirent.h,v 1.2 1999/12/09 13:47:51 jdurand Exp $
+ */
+
+/*
+ * @(#)$RCSfile: dirent.h,v $ $Revision: 1.2 $ $Date: 1999/12/09 13:47:51 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 /*

@@ -1,4 +1,8 @@
 /*
+ * $Id: ws_errmsg.h,v 1.3 1999/12/09 13:47:58 jdurand Exp $
+ */
+
+/*
  * @(#)ws_errmsg.h	1.1 12/11/98 CERN IT-PDP/IP Aneta Baran
  */
 

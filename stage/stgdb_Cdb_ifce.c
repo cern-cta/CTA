@@ -1,5 +1,10 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.2 1999/12/08 16:02:56 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.3 1999/12/09 13:47:42 jdurand Exp $
+ */
+
+/*
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * All rights reserved
  */
 
 #include <stdio.h>              /* Contains BUFSIZ */
@@ -17,7 +22,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.2 $ $Date: 1999/12/08 16:02:56 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:42 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));

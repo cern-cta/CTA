@@ -1,21 +1,14 @@
 /*
- * $Id: misc.c,v 1.2 1999/07/20 12:48:02 jdurand Exp $
- *
- * $Log: misc.c,v $
- * Revision 1.2  1999/07/20 12:48:02  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
- *   on all control and data sockets.
- *
+ * $Id: misc.c,v 1.3 1999/12/09 13:46:52 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1990-1997 by CERN/CN/SW/DC
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)misc.c	3.2 08/08/97 CERN CN-SW/DC Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: misc.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:46:52 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* misc.c       Remote File I/O - Miscellaneous utility functions       */

@@ -1,24 +1,14 @@
 /*
- * $Id: chmod.c,v 1.3 1999/12/09 08:44:27 baran Exp $
- *
- * $Log: chmod.c,v $
- * Revision 1.3  1999/12/09 08:44:27  baran
- * Thread-safe version
- *
- * Revision 1.2  1999/07/20 12:47:53  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
- *   on all control and data sockets.
- *
+ * $Id: chmod.c,v 1.4 1999/12/09 13:46:37 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1998 by CERN/IT/PDP
+ * Copyright (C) 1998-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)chmod.c	1.2 21 Jan 1999  CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: chmod.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:46:37 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* chmod.c       Remote File I/O - change file mode                     */

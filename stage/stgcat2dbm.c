@@ -1,3 +1,12 @@
+/*
+ * $Id: stgcat2dbm.c,v 1.3 1999/12/09 13:47:39 jdurand Exp $
+ */
+
+/*
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
 #include <errno.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -8,7 +17,7 @@
 extern char *sys_errlist[];
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgcat2dbm.c,v $ $Revision: 1.2 $ $Date: 1999/12/08 16:05:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgcat2dbm.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 main()

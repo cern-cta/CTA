@@ -1,3 +1,16 @@
+/*
+ * $Id: Cpool_test_next_index.c,v 1.2 1999/12/09 13:47:48 jdurand Exp $
+ */
+
+/*
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: Cpool_test_next_index.c,v $ $Revision: 1.2 $ $Date: 1999/12/09 13:47:48 $ CERN/IT/PDP/DM Jean-Damien Durand";
+#endif /* not lint */
+
 #include <Cpool_api.h>
 #include <stdio.h>
 #include <errno.h>

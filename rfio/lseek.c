@@ -1,24 +1,14 @@
 /*
- * $Id: lseek.c,v 1.3 1999/12/09 08:48:28 baran Exp $
- *
- * $Log: lseek.c,v $
- * Revision 1.3  1999/12/09 08:48:28  baran
- * Thread-safe version
- *
- * Revision 1.2  1999/07/20 12:48:01  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
- *   on all control and data sockets.
- *
+ * $Id: lseek.c,v 1.4 1999/12/09 13:46:50 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1990,1991 by CERN/CN/SW/DC
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)lseek.c	3.6 5/6/98 CERN CN-SW/DC F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: lseek.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:46:50 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* lseek.c      Remote File I/O - move read/write file mark.	*/

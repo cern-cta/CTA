@@ -1,10 +1,14 @@
 /*
+ * $Id: ws_errmsg.c,v 1.3 1999/12/09 13:47:57 jdurand Exp $
+ */
+
+/*
  * Copyright (C) 1990-1998 by CERN/IT/PDP/IP
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ws_errmsg.c	1.1 12/11/98 CERN IT-PDP/IP Aneta Baran";
+static char sccsid[] = "@(#)$RCSfile: ws_errmsg.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:57 $ CERN/IT/PDP/DM Aneta Baran";
 #endif /* not lint */
 
 #if defined(_WIN32)

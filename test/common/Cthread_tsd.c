@@ -1,3 +1,16 @@
+/*
+ * $Id: Cthread_tsd.c,v 1.2 1999/12/09 13:47:49 jdurand Exp $
+ */
+
+/*
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: Cthread_tsd.c,v $ $Revision: 1.2 $ $Date: 1999/12/09 13:47:49 $ CERN/IT/PDP/DM Jean-Damien Durand";
+#endif /* not lint */
+
 #include <Cthread_api.h>
 #include <errno.h>
 #include <stdio.h>

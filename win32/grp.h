@@ -1,4 +1,8 @@
 /*
+ * $Id: grp.h,v 1.2 1999/12/09 13:47:51 jdurand Exp $
+ */
+
+/*
  * @(#)grp.h	1.2 02/16/99 CERN CN-SW/DC Frederic Hemmer
  */
 

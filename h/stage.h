@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1993-1998 by CERN/CN/PDP/DH
- * All rights reserved
+ * $Id: stage.h,v 1.3 1999/12/09 13:46:24 jdurand Exp $
  */
 
 /*
- * static char sccsid[] = "@(#)stage.h	1.37 08/24/98 CERN IT-PDP/DM Jean-Philippe Baud";
+ * Copyright (C) 1993-1998 by CERN/CN/PDP/DH
+ * All rights reserved
  */
 
 			/* stage daemon constants and macros */

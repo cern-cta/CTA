@@ -1,16 +1,9 @@
 /*
- * $Id: switch_req.c,v 1.2 1999/07/20 12:48:33 jdurand Exp $
- *
- * $Log: switch_req.c,v $
- * Revision 1.2  1999/07/20 12:48:33  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
- *   on all control and data sockets.
- *
+ * $Id: switch_req.c,v 1.3 1999/12/09 13:47:20 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1990-1998 by CERN/CN/SW/DC
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  *
  * This is a file of functions that merge some code common
@@ -22,7 +15,7 @@
 #define RFIO_KERNEL     1               /* KERNEL part of the programs  */
 
 #ifndef lint
-static char sccsid[] = "@(#)switch_req.c	1.11 06/05/98  CERN CN-SW/DC F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: switch_req.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:20 $ CERN/IT/PDP/DM Felix Hassine";
 #endif
 
 #include "rfio.h"                       /* Remote file I/O              */

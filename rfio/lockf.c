@@ -1,24 +1,14 @@
 /*
- * $Id: lockf.c,v 1.3 1999/12/09 08:48:21 baran Exp $
- *
- * $Log: lockf.c,v $
- * Revision 1.3  1999/12/09 08:48:21  baran
- * Thread-safe version
- *
- * Revision 1.2  1999/07/20 12:48:00  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
- *   on all control and data sockets.
- *
+ * $Id: lockf.c,v 1.4 1999/12/09 13:46:48 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1994 by CERN/CN/PDP
+ * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)lockf.c	1.2 5/6/98 CERN CN-PDP Antony Simmins";
+static char sccsid[] = "@(#)$RCSfile: lockf.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:46:48 $ CERN/IT/PDP/DM Antony Simmins";
 #endif /* not lint */
 
 /* lockf.c       Remote File I/O - record locking on files		*/

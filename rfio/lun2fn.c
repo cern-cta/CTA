@@ -1,24 +1,14 @@
 /*
- * $Id: lun2fn.c,v 1.3 1999/12/09 08:54:50 baran Exp $
- *
- * $Log: lun2fn.c,v $
- * Revision 1.3  1999/12/09 08:54:50  baran
- * Thread-safe version
- *
- * Revision 1.2  1999/07/20 12:48:02  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
- *   on all control and data sockets.
- *
+ * $Id: lun2fn.c,v 1.4 1999/12/09 13:46:51 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1990-1997 by CERN/CN/SW/DC
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)lun2fn.c	3.4 10/21/97 CERN CN-SW/DC Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: lun2fn.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:46:51 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* lun2fn.c     Remote File I/O - translate FORTRAN LUN to file name    */

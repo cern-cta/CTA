@@ -1,3 +1,6 @@
+/*
+ * $Id: Cpwd.h,v 1.2 1999/12/09 13:46:12 jdurand Exp $
+ */
 
 /*
  * Copyright (C) 1999 by CERN/IT/PDP/DM
@@ -5,7 +8,7 @@
  */
 
 /*
- * $RCSfile: Cpwd.h,v $ $Revision: 1.1 $ $Date: 1999/11/22 17:54:36 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: Cpwd.h,v $ $Revision: 1.2 $ $Date: 1999/12/09 13:46:12 $ CERN IT-PDP/DM Olof Barring
  */
 
 

@@ -1,5 +1,10 @@
 /*
- * $Id: Cstage_ifce.c,v 1.3 1999/12/08 16:05:58 jdurand Exp $
+ * $Id: Cstage_ifce.c,v 1.4 1999/12/09 13:47:24 jdurand Exp $
+ */
+
+/*
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * All rights reserved
  */
 
 /*
@@ -14,7 +19,7 @@
 #include "stage.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.3 $ $Date: 1999/12/08 16:05:58 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:47:24 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 

@@ -1,10 +1,14 @@
 /*
+ * $Id: rfio_errno.h,v 1.2 1999/12/09 13:46:19 jdurand Exp $
+ */
+
+/*
  * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * $RCSfile: rfio_errno.h,v $ $Revision: 1.1 $ $Date: 1999/12/09 09:47:55 $
+ * $RCSfile: rfio_errno.h,v $ $Revision: 1.2 $ $Date: 1999/12/09 13:46:19 $
  */
 
 /* rfio_errno.h   Thread safe rfio_errno  */

@@ -1,4 +1,8 @@
 /*
+ * $Id: rfcntl.h,v 1.2 1999/12/09 13:46:18 jdurand Exp $
+ */
+
+/*
  * @(#)rfcntl.h	1.10 06/04/98  CERN CN-SW/DC Antoine Trannoy, Jean-Philippe Baud
  */
 

@@ -1,24 +1,14 @@
 /*
- * $Id: popen.c,v 1.3 1999/12/09 09:03:41 baran Exp $
- *
- * $Log: popen.c,v $
- * Revision 1.3  1999/12/09 09:03:41  baran
- * Thread-safe version
- *
- * Revision 1.2  1999/07/20 12:48:05  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
- *   on all control and data sockets.
- *
+ * $Id: popen.c,v 1.4 1999/12/09 13:47:00 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1994-1998 by CERN CN-PDP/CS
+ * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)popen.c	1.11 3/26/99 CERN CN-PDP/CS F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: popen.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:47:00 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* popen.c       Remote pipe I/O - open file a file                      */

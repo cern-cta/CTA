@@ -1,24 +1,14 @@
 /*
- * $Id: pread.c,v 1.3 1999/12/09 09:03:20 baran Exp $
- *
- * $Log: pread.c,v $
- * Revision 1.3  1999/12/09 09:03:20  baran
- * Thread-safe version
- *
- * Revision 1.2  1999/07/20 12:48:05  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
- *   on all control and data sockets.
- *
+ * $Id: pread.c,v 1.4 1999/12/09 13:47:01 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1993-1998 by CERN CN-SW/DC
+ * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)pread.c	1.7 09/03/98  CERN CN-SW/DC Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: pread.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:47:01 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* pread.c      Remote command I/O - read from a popened command	*/

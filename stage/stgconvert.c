@@ -1,6 +1,15 @@
 /*
- * $Id: stgconvert.c,v 1.5 1999/12/09 08:09:08 jdurand Exp $
+ * $Id: stgconvert.c,v 1.6 1999/12/09 13:47:40 jdurand Exp $
  */
+
+/*
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+#ifndef lint
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:47:40 $ CERN IT-PDP/DM Jean-Damien Durand";
+#endif
 
 /*
  * Conversion Program between SHIFT stager catalog and CASTOR/Cdb stager database
@@ -32,7 +41,6 @@
 /* =============== */
 /* Local variables */
 /* =============== */
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.5 $ $Date: 1999/12/09 08:09:08 $ CERN IT-PDP/DM Jean-Damien Durand";
 
 /* ====== */
 /* Macros */

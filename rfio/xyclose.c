@@ -1,21 +1,14 @@
 /*
- * $Id: xyclose.c,v 1.2 1999/07/20 12:48:35 jdurand Exp $
- *
- * $Log: xyclose.c,v $
- * Revision 1.2  1999/07/20 12:48:35  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
- *   on all control and data sockets.
- *
+ * $Id: xyclose.c,v 1.3 1999/12/09 13:47:22 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1990-1997 by CERN/CN/SW/DC
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)xyclose.c	3.11 5/6/98  CERN CN-SW/DC Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: xyclose.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:22 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* xyclose.c    Remote File I/O - Close a Fortran Logical Unit          */

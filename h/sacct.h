@@ -1,10 +1,14 @@
 /*
+ * $Id: sacct.h,v 1.4 1999/12/09 13:46:22 jdurand Exp $
+ */
+
+/*
  * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: sacct.h,v $ $Revision: 1.3 $ $Date: 1999/10/08 06:49:51 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: sacct.h,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:46:22 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Include file for CASTOR software accounting */
 

@@ -1,24 +1,14 @@
 /*
- * $Id: rewinddir.c,v 1.3 1999/12/09 09:04:14 baran Exp $
- *
- * $Log: rewinddir.c,v $
- * Revision 1.3  1999/12/09 09:04:14  baran
- * Thread-safe version
- *
- * Revision 1.2  1999/07/20 12:48:08  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
- *   on all control and data sockets.
- *
+ * $Id: rewinddir.c,v 1.4 1999/12/09 13:47:05 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1990-1997 by CERN/IT/PDP/IP
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)rewinddir.c	1.2 02 Jun 1998 O.Barring";
+static char sccsid[] = "@(#)$RCSfile: rewinddir.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:47:05 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* rewinddir.c      Remote File I/O - rewind a directory                     */

@@ -1,10 +1,14 @@
 /*
+ * $Id: log.h,v 1.5 1999/12/09 13:46:16 jdurand Exp $
+ */
+
+/*
  * Copyright (C) 1990-1999 by CERN CN-PDP/CS
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: log.h,v $ $Revision: 1.4 $ $Date: 1999/11/23 08:29:35 $ CERN CN-PDP/CS F. Hemmer
+ * @(#)$RCSfile: log.h,v $ $Revision: 1.5 $ $Date: 1999/12/09 13:46:16 $ CERN CN-PDP/CS F. Hemmer
  */
 
 /* log.h        generalized logging facilities                          */

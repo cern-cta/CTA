@@ -1,4 +1,8 @@
 /*
+ * $Id: shift.h,v 1.2 1999/12/09 13:46:24 jdurand Exp $
+ */
+
+/*
  * @(#)shift.h	1.2 09/15/95 CERN CN-SW/DC Frederic Hemmer
  */
 

@@ -1,21 +1,14 @@
 /*
- * $Id: setopt.c,v 1.2 1999/07/20 12:48:27 jdurand Exp $
- *
- * $Log: setopt.c,v $
- * Revision 1.2  1999/07/20 12:48:27  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
- *   on all control and data sockets.
- *
+ * $Id: setopt.c,v 1.3 1999/12/09 13:47:17 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1990,1991 by CERN/CN/SW/DC
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)setopt.c	1.3 9/1/95  CERN CN-SW/DC  F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: setopt.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:17 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 #define RFIO_KERNEL 1
 #include "rfio.h"               /* remote file I/O definitions          */

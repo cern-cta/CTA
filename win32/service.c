@@ -1,10 +1,14 @@
 /*
+ * $Id: service.c,v 1.2 1999/12/09 13:47:53 jdurand Exp $
+ */
+
+/*
  * Copyright (C) 1990-1999 by CERN/IT/PDP/IP
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)service.c	1.1 03/26/99 CERN IT-PDP/IP Aneta Baran";
+static char sccsid[] = "@(#)$RCSfile: service.c,v $ $Revision: 1.2 $ $Date: 1999/12/09 13:47:53 $ CERN/IT/PDP/DM Aneta Baran";
 #endif /* not lint */
 
 #if defined(_WIN32)

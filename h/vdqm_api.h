@@ -1,10 +1,14 @@
 /*
+ * $Id: vdqm_api.h,v 1.6 1999/12/09 13:46:27 jdurand Exp $
+ */
+
+/*
  * Copyright (C) 1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: vdqm_api.h,v $ $Revision: 1.5 $ $Date: 1999/11/21 14:26:57 $ CERN IT-PDP/DM Olof Barring
+ * @(#)$RCSfile: vdqm_api.h,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:46:27 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*

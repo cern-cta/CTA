@@ -1,21 +1,14 @@
 /*
- * $Id: alrm.c,v 1.2 1999/07/20 12:47:52 jdurand Exp $
- *
- * $Log: alrm.c,v $
- * Revision 1.2  1999/07/20 12:47:52  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
- *   on all control and data sockets.
- *
+ * $Id: alrm.c,v 1.3 1999/12/09 13:46:36 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1995-1997 by CERN/CN/PDP/SC
+ * Copyright (C) 1995-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)alrm.c	1.4 08/11/97  CERN CN-SW/DC Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: alrm.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:46:36 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 

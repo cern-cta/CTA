@@ -1,10 +1,14 @@
 /*
+ * $Id: procupd.c,v 1.7 1999/12/09 13:47:30 jdurand Exp $
+ */
+
+/*
  * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.6 $ $Date: 1999/12/08 15:57:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.7 $ $Date: 1999/12/09 13:47:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>

@@ -1,21 +1,14 @@
 /*
- * $Id: xywrite.c,v 1.2 1999/07/20 12:48:37 jdurand Exp $
- *
- * $Log: xywrite.c,v $
- * Revision 1.2  1999/07/20 12:48:37  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Timeouted version of RFIO. Using netread_timeout() and netwrite_timeout
- *   on all control and data sockets.
- *
+ * $Id: xywrite.c,v 1.3 1999/12/09 13:47:23 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1990-1997 by CERN/CN/SW/DC
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)xywrite.c	3.13 12/13/97  CERN CN-SW/DC Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: xywrite.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:23 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* xywrite.c    Remote File I/O - Write a Fortran Logical Unit          */
