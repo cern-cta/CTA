@@ -705,18 +705,14 @@ CppBaseWriter::MemberList CppBaseWriter::createMembersList() {
     for (UMLAttribute *at = ci.getAttList()->first();
          0 != at;
          at = ci.getAttList()->next()) {
-      pushPair (at->getName(),
-                at->getTypeName(),
-                result);
+      result.append(new Member(at->getName(), at->getTypeName()));
     }
   }
   // Current class
   for (UMLAttribute *at = m_classInfo->getAttList()->first();
        0 != at;
        at = m_classInfo->getAttList()->next()) {
-    pushPair (at->getName(),
-              at->getTypeName(),
-              result);
+    result.append(new Member(at->getName(), at->getTypeName()));
   }
   return result;
 }
@@ -726,48 +722,26 @@ CppBaseWriter::MemberList CppBaseWriter::createMembersList() {
 //=============================================================================
 void CppBaseWriter::singleAssocToPairList (UMLAssociation *a,
                                            AssocList &list) {
-
+  Assoc* as;
   if (m_classInfo->id() == a->getRoleAId() ||
       m_classInfo->allSuperclassIds.contains(a->getRoleAId())) {
-    pushPair (parseMulti(a->getMultiB()),
-              parseAssocKind(a->getAssocType(), true),
-              a->getRoleNameB(),
-              a->getObjectB()->getName(),
-              a->getObjectA()->getName(),
-              list);
+    as = new Assoc(AssocType(parseMulti(a->getMultiB()),
+                             parseMulti(a->getMultiA()),
+                             parseAssocKind(a->getAssocType(), true)),
+                   Member(a->getRoleNameB(),
+                          a->getObjectB()->getName()),
+                   Member(a->getRoleNameA(),
+                          a->getObjectA()->getName()));
   } else {
-    pushPair (parseMulti(a->getMultiA()),
-              parseAssocKind(a->getAssocType(), false),
-              a->getRoleNameA(),
-              a->getObjectA()->getName(),
-              a->getObjectB()->getName(),
-              list);
+    as = new Assoc(AssocType(parseMulti(a->getMultiA()),
+                             parseMulti(a->getMultiB()),
+                             parseAssocKind(a->getAssocType(), false)),
+                   Member(a->getRoleNameA(),
+                          a->getObjectA()->getName()),
+                   Member(a->getRoleNameB(),
+                          a->getObjectB()->getName()));
   }
-}
-
-//=============================================================================
-// pushPair
-//=============================================================================
-void CppBaseWriter::pushPair(QString first,
-                             QString second,
-                             MemberList &list) {
-  Member* p = new Member (first, second);
-  list.append(p);
-}
-
-//=============================================================================
-// pushPair
-//=============================================================================
-void CppBaseWriter::pushPair(Multiplicity mult,
-                             AssocKind kind,
-                             QString first,
-                             QString second,
-                             QString third,
-                             AssocList &list) {
-  Member p(first, second, third);
-  AssocType t(mult, kind);
-  Assoc* pp = new Assoc(t, p);
-  list.append(pp);
+  list.append(as);
 }
 
 //=============================================================================

@@ -141,7 +141,7 @@ void CppCppOraCnvWriter::writeConstants() {
        0 != mem;
        mem = members.next()) {
     if (n > 0) *m_stream << ", ";
-    *m_stream << mem->first;
+    *m_stream << mem->name;
     n++;
   }
   // create a list of associations
@@ -150,10 +150,10 @@ void CppCppOraCnvWriter::writeConstants() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE) {
       // One to One associations
       if (n > 0) *m_stream << ", ";
-      *m_stream << as->second.first;
+      *m_stream << as->remotePart.name;
       n++;
     }
   }
@@ -187,16 +187,16 @@ void CppCppOraCnvWriter::writeConstants() {
        0 != mem;
        mem = members.next()) {
     if (n > 0) *m_stream << ", ";
-    *m_stream << mem->first;
+    *m_stream << mem->name;
     n++;
   }
   // Go through the associations
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE) {
       if (n > 0) *m_stream << ", ";
-      *m_stream << as->second.first;
+      *m_stream << as->remotePart.name;
       n++;
     }
   }
@@ -217,20 +217,20 @@ void CppCppOraCnvWriter::writeConstants() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (mem->first == "id") continue;
+    if (mem->name == "id") continue;
     if (n > 0) *m_stream << ", ";
     n++;
-    *m_stream << mem->first << " = :" << n;
+    *m_stream << mem->name << " = :" << n;
   }
   // Go through the associations
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE) {
       // One to One associations
       if (n > 0) *m_stream << ", ";
       n++;
-      *m_stream << as->second.first << " = :" << n;
+      *m_stream << as->remotePart.name << " = :" << n;
     }
   }
   *m_stream << " WHERE id = :" << n+1
@@ -280,93 +280,93 @@ void CppCppOraCnvWriter::writeConstants() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_N ||
-        as->first.second == COMPOS_PARENT ||
-        as->first.second == AGGREG_PARENT) {
+    if (as->type.multiRemote == MULT_N ||
+        as->type.kind == COMPOS_PARENT ||
+        as->type.kind == AGGREG_PARENT) {
       *m_stream << getIndent()
                 << "/// SQL insert statement for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "const std::string "
                 << m_classInfo->fullPackageName
                 << "Ora" << m_classInfo->className
                 << "Cnv::s_insert"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "StatementString =" << endl << getIndent()
                 << "\"INSERT INTO rh_"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << " (Parent, Child) VALUES (:1, :2)\";"
                 << endl << endl << getIndent()
                 << "/// SQL delete statement for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "const std::string "
                 << m_classInfo->fullPackageName
                 << "Ora" << m_classInfo->className
                 << "Cnv::s_delete"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "StatementString =" << endl << getIndent()
                 << "\"DELETE FROM rh_"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << " WHERE Parent = :1 AND Child = :2\";"
                 << endl << endl << getIndent()
                 << "/// SQL select statement for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "const std::string "
                 << m_classInfo->fullPackageName
                 << "Ora" << m_classInfo->className
                 << "Cnv::s_"
-                << capitalizeFirstLetter(as->second.third)
-                << "2" << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->localPart.typeName)
+                << "2" << capitalizeFirstLetter(as->remotePart.typeName)
                 << "StatementString =" << endl << getIndent()
                 << "\"SELECT Child from rh_"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << " WHERE Parent = :1\";" << endl << endl;
-    } else if (as->first.second == COMPOS_CHILD ||
-               as->first.second == AGGREG_CHILD) {
+    } else if (as->type.kind == COMPOS_CHILD ||
+               as->type.kind == AGGREG_CHILD) {
       *m_stream << getIndent()
                 << "/// SQL insert statement for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "const std::string "
                 << m_classInfo->fullPackageName
                 << "Ora" << m_classInfo->className
                 << "Cnv::s_insert"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "StatementString =" << endl << getIndent()
                 << "\"INSERT INTO rh_"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << " (Parent, Child) VALUES (:1, :2)\";"
                 << endl << endl << getIndent()
                 << "/// SQL delete statement for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "const std::string "
                 << m_classInfo->fullPackageName
                 << "Ora" << m_classInfo->className
-                << "Cnv::s_delete" << capitalizeFirstLetter(as->second.second)
+                << "Cnv::s_delete" << capitalizeFirstLetter(as->remotePart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "StatementString =" << endl << getIndent()
                 << "\"DELETE FROM rh_"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << " WHERE Parent = :1 AND Child = :2\";"
                 << endl << endl;
     }
@@ -400,9 +400,9 @@ void CppCppOraCnvWriter::writeSqlStatements() {
        0 != mem;
        mem = members.next()) {
     if (n > 0) stream << ", ";
-    stream << mem->first << " "
-           << getSQLType(mem->second);
-    if (mem->first == "id") stream << " PRIMARY KEY";
+    stream << mem->name << " "
+           << getSQLType(mem->typeName);
+    if (mem->name == "id") stream << " PRIMARY KEY";
     n++;
   }
   // create a list of associations
@@ -411,10 +411,10 @@ void CppCppOraCnvWriter::writeSqlStatements() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE) {
       // One to One associations
       if (n > 0) stream << ", ";
-      stream << as->second.first << " INTEGER";
+      stream << as->remotePart.name << " INTEGER";
       n++;
     }
   }
@@ -423,17 +423,17 @@ void CppCppOraCnvWriter::writeSqlStatements() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.second == COMPOS_CHILD ||
-        as->first.second == AGGREG_CHILD) {
+    if (as->type.kind == COMPOS_CHILD ||
+        as->type.kind == AGGREG_CHILD) {
       stream << "DROP TABLE rh_"
-             << capitalizeFirstLetter(as->second.second)
+             << capitalizeFirstLetter(as->remotePart.typeName)
              << "2"
-             << capitalizeFirstLetter(as->second.third)
+             << capitalizeFirstLetter(as->localPart.typeName)
              << ";" << endl
              << "CREATE TABLE rh_"
-             << capitalizeFirstLetter(as->second.second)
+             << capitalizeFirstLetter(as->remotePart.typeName)
              << "2"
-             << capitalizeFirstLetter(as->second.third)
+             << capitalizeFirstLetter(as->localPart.typeName)
              << " (Parent INTEGER, Child INTEGER);"
              << endl;
     }
@@ -467,37 +467,37 @@ void CppCppOraCnvWriter::writeConstructors() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_N  ||
-        as->first.second == COMPOS_PARENT ||
-        as->first.second == AGGREG_PARENT) {
+    if (as->type.multiRemote == MULT_N  ||
+        as->type.kind == COMPOS_PARENT ||
+        as->type.kind == AGGREG_PARENT) {
       *m_stream << "," << endl << getIndent()
                 << "  m_insert"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement(0)," << endl << getIndent()
                 << "  m_delete"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement(0)," << endl << getIndent()
                 << "  m_"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement(0)";
-    } else if (as->first.second == COMPOS_CHILD ||
-               as->first.second == AGGREG_CHILD) {
+    } else if (as->type.kind == COMPOS_CHILD ||
+               as->type.kind == AGGREG_CHILD) {
       *m_stream << "," << endl << getIndent()
                 << "  m_insert"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "Statement(0)," << endl << getIndent()
                 << "  m_delete"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "Statement(0)";
     }
   }
@@ -554,32 +554,32 @@ void CppCppOraCnvWriter::writeReset() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_N ||
-        as->first.second == COMPOS_PARENT ||
-        as->first.second == AGGREG_PARENT) {
+    if (as->type.multiRemote == MULT_N ||
+        as->type.kind == COMPOS_PARENT ||
+        as->type.kind == AGGREG_PARENT) {
       *m_stream << getIndent()
                 << "deleteStatement(m_insert"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement);" << endl << getIndent()
                 << "deleteStatement(m_"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement);" << endl;
-    } else if (as->first.second == COMPOS_CHILD ||
-               as->first.second == AGGREG_CHILD) {
+    } else if (as->type.kind == COMPOS_CHILD ||
+               as->type.kind == AGGREG_CHILD) {
       *m_stream << getIndent()
                 << "deleteStatement(m_insert"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "Statement);" << endl << getIndent()
                 << "deleteStatement(m_delete"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "Statement);" << endl;
     }
   }
@@ -611,36 +611,36 @@ void CppCppOraCnvWriter::writeReset() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_N ||
-        as->first.second == COMPOS_PARENT ||
-        as->first.second == AGGREG_PARENT) {
+    if (as->type.multiRemote == MULT_N ||
+        as->type.kind == COMPOS_PARENT ||
+        as->type.kind == AGGREG_PARENT) {
       *m_stream << getIndent()
                 << "m_insert"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement = 0;" << endl << getIndent()
                 << "m_delete"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement = 0;" << endl << getIndent()
                 << "m_"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement = 0;" << endl;
-    } else if (as->first.second == COMPOS_CHILD ||
-               as->first.second == AGGREG_CHILD) {
+    } else if (as->type.kind == COMPOS_CHILD ||
+               as->type.kind == AGGREG_CHILD) {
       *m_stream << getIndent()
-                << "m_insert" << capitalizeFirstLetter(as->second.second)
+                << "m_insert" << capitalizeFirstLetter(as->remotePart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "Statement = 0;" << endl << getIndent()
                 << "m_delete"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "Statement = 0;" << endl;
     }
   }
@@ -691,16 +691,16 @@ void CppCppOraCnvWriter::writeFillRep() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (!isEnum(as->second.second)) {
-      if (as->first.first == MULT_ONE ||
-          as->first.first == MULT_N) {
+    if (!isEnum(as->remotePart.typeName)) {
+      if (as->type.multiRemote == MULT_ONE ||
+          as->type.multiRemote == MULT_N) {
         addInclude("\"castor/Constants.hpp\"");
         *m_stream << getIndent() << "case castor::OBJ_"
-                  << capitalizeFirstLetter(as->second.second)
+                  << capitalizeFirstLetter(as->remotePart.typeName)
                   << " :" << endl;
         m_indent++;
         *m_stream << getIndent() << "fillRep"
-                  << capitalizeFirstLetter(as->second.second)
+                  << capitalizeFirstLetter(as->remotePart.typeName)
                   << "(obj);" << endl << getIndent()
                   << "break;" << endl;
         m_indent--;
@@ -736,11 +736,11 @@ void CppCppOraCnvWriter::writeFillRep() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (!isEnum(as->second.second)) {
-      if (as->first.first == MULT_ONE) {
-        writeBasicMult1FillRep(as, n);
+    if (!isEnum(as->remotePart.typeName)) {
+      if (as->type.multiRemote == MULT_ONE) {
         n++;
-      } else if  (as->first.first == MULT_N) {
+        writeBasicMult1FillRep(as, n);
+      } else if  (as->type.multiRemote == MULT_N) {
         writeBasicMultNFillRep(as);
       }
     }
@@ -787,16 +787,16 @@ void CppCppOraCnvWriter::writeFillObj() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (!isEnum(as->second.second)) {
-      if (as->first.first == MULT_ONE ||
-          as->first.first == MULT_N) {
+    if (!isEnum(as->remotePart.typeName)) {
+      if (as->type.multiRemote == MULT_ONE ||
+          as->type.multiRemote == MULT_N) {
         addInclude("\"castor/Constants.hpp\"");
         *m_stream << getIndent() << "case castor::OBJ_"
-                  << capitalizeFirstLetter(as->second.second)
+                  << capitalizeFirstLetter(as->remotePart.typeName)
                   << " :" << endl;
         m_indent++;
         *m_stream << getIndent() << "fillObj"
-                  << capitalizeFirstLetter(as->second.second)
+                  << capitalizeFirstLetter(as->remotePart.typeName)
                   << "(obj);" << endl << getIndent()
                   << "break;" << endl;
         m_indent--;
@@ -822,15 +822,15 @@ void CppCppOraCnvWriter::writeFillObj() {
 
   // Now write the dedicated fillRep Methods
   MemberList members = createMembersList();
-  unsigned int n = members.count() - 1; // All but Id
+  unsigned int n = members.count();
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (!isEnum(as->second.second)) {
-      if (as->first.first == MULT_ONE) {
-        writeBasicMult1FillObj(as, n);
+    if (!isEnum(as->remotePart.typeName)) {
+      if (as->type.multiRemote == MULT_ONE) {
         n++;
-      } else if  (as->first.first == MULT_N) {
+        writeBasicMult1FillObj(as, n);
+      } else if  (as->type.multiRemote == MULT_N) {
         writeBasicMultNFillObj(as);
       }
     }
@@ -843,12 +843,12 @@ void CppCppOraCnvWriter::writeFillObj() {
 void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
                                                 unsigned int n) {
   writeWideHeaderComment("fillRep" +
-                         capitalizeFirstLetter(as->second.second),
+                         capitalizeFirstLetter(as->remotePart.typeName),
                          getIndent(), *m_stream);
   *m_stream << getIndent() << "void "
             << m_classInfo->packageName << "::Ora"
             << m_classInfo->className << "Cnv::fillRep"
-            << capitalizeFirstLetter(as->second.second)
+            << capitalizeFirstLetter(as->remotePart.typeName)
             << "("
             << fixTypeName(m_classInfo->className + "*",
                            getNamespace(m_classInfo->className),
@@ -890,7 +890,7 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
             << getIndent() << "throw ex;" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
-  writeSingleGetFromSelect(as->second, n, true);
+  writeSingleGetFromSelect(as->remotePart, n, true);
   // Close request
   *m_stream << getIndent() << "// Close resultset" << endl
             << getIndent()
@@ -900,38 +900,38 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
             << fixTypeName("DbAddress",
                            "castor::db",
                            m_classInfo->packageName)
-            << " ad(" << as->second.first
+            << " ad(" << as->remotePart.name
             << "Id, \" \", 0);" << endl << getIndent()
             << "// Check whether old object should be deleted"
             << endl << getIndent()
-            << "if (0 != " << as->second.first
+            << "if (0 != " << as->remotePart.name
             << "Id &&" << endl
             << getIndent() << "    0 != obj->"
-            << as->second.first << "() &&" << endl
+            << as->remotePart.name << "() &&" << endl
             << getIndent() << "    obj->"
-            << as->second.first << "()->id() != "
-            << as->second.first << "Id) {" << endl;
+            << as->remotePart.name << "()->id() != "
+            << as->remotePart.name << "Id) {" << endl;
   m_indent++;
   *m_stream << getIndent()
             << "cnvSvc()->deleteRepByAddress(&ad, false);"
             << endl << getIndent()
-            << as->second.first << "Id = 0;" << endl;
-  bool case1 = as->first.first == MULT_N ||
-    as->first.second == COMPOS_PARENT ||
-    as->first.second == AGGREG_PARENT;
-  bool case2 = as->first.second == COMPOS_CHILD ||
-    as->first.second == AGGREG_CHILD;
+            << as->remotePart.name << "Id = 0;" << endl;
+  bool case1 = as->type.multiRemote == MULT_N ||
+    as->type.kind == COMPOS_PARENT ||
+    as->type.kind == AGGREG_PARENT;
+  bool case2 = as->type.kind == COMPOS_CHILD ||
+    as->type.kind == AGGREG_CHILD;
   QString s1, s2, t1, t2;
   if (case2) {
-    s1 = as->second.second;
-    s2 = as->second.third;
+    s1 = as->remotePart.typeName;
+    s2 = as->localPart.typeName;
     t2 = "obj->id()";
-    t1 = QString("obj->") + as->second.first + "()->id()";
+    t1 = QString("obj->") + as->remotePart.name + "()->id()";
   } else {
-    s2 = as->second.second;
-    s1 = as->second.third;      
+    s2 = as->remotePart.typeName;
+    s1 = as->localPart.typeName;      
     t1 = "obj->id()";
-    t2 = QString("obj->") + as->second.first + "()->id()";
+    t2 = QString("obj->") + as->remotePart.name + "()->id()";
   }
   if (case1 || case2) {
     *m_stream << getIndent()
@@ -977,17 +977,17 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
   *m_stream << getIndent() << "}" << endl;
   *m_stream << getIndent() << "// Update object or create new one"
             << endl << getIndent()
-            << "if (" << as->second.first
+            << "if (" << as->remotePart.name
             << "Id == 0) {" << endl;
   m_indent++;
   *m_stream << getIndent()
             << "if (0 != obj->"
-            << as->second.first
+            << as->remotePart.name
             << "()) {" << endl;
   m_indent++;
   *m_stream << getIndent()
             << "cnvSvc()->createRep(&ad, obj->"
-            << as->second.first
+            << as->remotePart.name
             << "(), false);" << endl;
   if (case1 || case2) {
     *m_stream << getIndent()
@@ -1037,7 +1037,7 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
   m_indent++;
   *m_stream << getIndent()
             << "cnvSvc()->updateRep(&ad, obj->"
-            << as->second.first
+            << as->remotePart.name
             << "(), false);" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
@@ -1052,12 +1052,12 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
 void CppCppOraCnvWriter::writeBasicMult1FillObj(Assoc* as,
                                                 unsigned int n) {
   writeWideHeaderComment("fillObj" +
-                         capitalizeFirstLetter(as->second.second),
+                         capitalizeFirstLetter(as->remotePart.typeName),
                          getIndent(), *m_stream);
   *m_stream << getIndent() << "void "
             << m_classInfo->packageName << "::Ora"
             << m_classInfo->className << "Cnv::fillObj"
-            << capitalizeFirstLetter(as->second.second)
+            << capitalizeFirstLetter(as->remotePart.typeName)
             << "("
             << fixTypeName(m_classInfo->className + "*",
                            getNamespace(m_classInfo->className),
@@ -1100,7 +1100,7 @@ void CppCppOraCnvWriter::writeBasicMult1FillObj(Assoc* as,
             << getIndent() << "throw ex;" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
-  writeSingleGetFromSelect(as->second, n, true);
+  writeSingleGetFromSelect(as->remotePart, n, true);
   *m_stream << getIndent() << "// Close ResultSet"
             << endl << getIndent()
             << "m_selectStatement->closeResultSet(rset);"
@@ -1108,55 +1108,55 @@ void CppCppOraCnvWriter::writeBasicMult1FillObj(Assoc* as,
   *m_stream << getIndent()
             << "// Check whether something should be deleted"
             << endl << getIndent() <<"if (0 != obj->"
-            << as->second.first << "() &&" << endl
+            << as->remotePart.name << "() &&" << endl
             << getIndent()
-            << "    (0 == " << as->second.first
+            << "    (0 == " << as->remotePart.name
             << "Id ||" << endl
             << getIndent() << "     obj->"
-            << as->second.first
-            << "()->id() != " << as->second.first
+            << as->remotePart.name
+            << "()->id() != " << as->remotePart.name
             << "Id)) {" << endl;
   m_indent++;
   *m_stream << getIndent()
             << "delete obj->"
-            << as->second.first << "();" << endl
+            << as->remotePart.name << "();" << endl
             << getIndent()
             << "obj->set"
-            << capitalizeFirstLetter(as->second.first)
+            << capitalizeFirstLetter(as->remotePart.name)
             << "(0);" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
   *m_stream << getIndent()
             << "// Update object or create new one"
             << endl << getIndent()
-            << "if (0 != " << as->second.first
+            << "if (0 != " << as->remotePart.name
             << "Id) {" << endl;
   m_indent++;
   *m_stream << getIndent()
             << "if (0 == obj->"
-            << as->second.first << "()) {" << endl;
+            << as->remotePart.name << "()) {" << endl;
   m_indent++;
   *m_stream << getIndent() << "obj->set"
-            << capitalizeFirstLetter(as->second.first)
+            << capitalizeFirstLetter(as->remotePart.name)
             << endl << getIndent()
             << "  (dynamic_cast<"
-            << fixTypeName(as->second.second,
-                           getNamespace(as->second.second),
+            << fixTypeName(as->remotePart.typeName,
+                           getNamespace(as->remotePart.typeName),
                            m_classInfo->packageName)
             << "*>" << endl << getIndent()
-            << "   (cnvSvc()->getObjFromId(" << as->second.first
+            << "   (cnvSvc()->getObjFromId(" << as->remotePart.name
             << "Id)));"
             << endl;
   m_indent--;
   *m_stream << getIndent()
             << "} else if (obj->"
-            << as->second.first
-            << "()->id() == " << as->second.first
+            << as->remotePart.name
+            << "()->id() == " << as->remotePart.name
             << "Id) {" << endl;
   m_indent++;
   *m_stream << getIndent()
             << "cnvSvc()->updateObj(obj->"
-            << as->second.first
+            << as->remotePart.name
             << "());"
             << endl;
   m_indent--;
@@ -1172,13 +1172,13 @@ void CppCppOraCnvWriter::writeBasicMult1FillObj(Assoc* as,
 //=============================================================================
 void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
   writeWideHeaderComment("fillRep" +
-                         capitalizeFirstLetter(as->second.second),
+                         capitalizeFirstLetter(as->remotePart.typeName),
                          getIndent(), *m_stream);
   *m_stream << getIndent()
             << "void " << m_classInfo->packageName
             << "::Ora" << m_classInfo->className
             << "Cnv::fillRep"
-            << capitalizeFirstLetter(as->second.second)
+            << capitalizeFirstLetter(as->remotePart.typeName)
             << "("
             << fixTypeName(m_classInfo->className + "*",
                            getNamespace(m_classInfo->className),
@@ -1194,20 +1194,20 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
   *m_stream << getIndent() << "// check select statement"
             << endl << getIndent()
             << "if (0 == m_"
-            << capitalizeFirstLetter(as->second.third)
+            << capitalizeFirstLetter(as->localPart.typeName)
             << "2"
-            << capitalizeFirstLetter(as->second.second)
+            << capitalizeFirstLetter(as->remotePart.typeName)
             << "Statement) {" << endl;
   m_indent++;
   *m_stream << getIndent()
             << "m_"
-            << capitalizeFirstLetter(as->second.third)
+            << capitalizeFirstLetter(as->localPart.typeName)
             << "2"
-            << capitalizeFirstLetter(as->second.second)
+            << capitalizeFirstLetter(as->remotePart.typeName)
             << "Statement = createStatement(s_"
-            << capitalizeFirstLetter(as->second.third)
+            << capitalizeFirstLetter(as->localPart.typeName)
             << "2"
-            << capitalizeFirstLetter(as->second.second)
+            << capitalizeFirstLetter(as->remotePart.typeName)
             << "StatementString);"
             << endl;
   m_indent--;
@@ -1215,49 +1215,49 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
             << getIndent() << "// Get current database data"
             << endl << getIndent()
             << fixTypeName("set", "", "")
-            << "<int> " << as->second.first
+            << "<int> " << as->remotePart.name
             << "List;" << endl << getIndent()
             << "m_"
-            << capitalizeFirstLetter(as->second.third)
+            << capitalizeFirstLetter(as->localPart.typeName)
             << "2"
-            << capitalizeFirstLetter(as->second.second)
+            << capitalizeFirstLetter(as->remotePart.typeName)
             << "Statement->setDouble(1, obj->id());"
             << endl << getIndent()
             << "oracle::occi::ResultSet *rset = "
             << "m_"
-            << capitalizeFirstLetter(as->second.third)
+            << capitalizeFirstLetter(as->localPart.typeName)
             << "2"
-            << capitalizeFirstLetter(as->second.second)
+            << capitalizeFirstLetter(as->remotePart.typeName)
             << "Statement->executeQuery();"
             << endl << getIndent()
             << "while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {"
             << endl;
   m_indent++;
   *m_stream << getIndent()
-            << as->second.first
+            << as->remotePart.name
             << "List.insert(rset->getInt(1));"
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl
             << getIndent()
             << "m_"
-            << capitalizeFirstLetter(as->second.third)
+            << capitalizeFirstLetter(as->localPart.typeName)
             << "2"
-            << capitalizeFirstLetter(as->second.second)
+            << capitalizeFirstLetter(as->remotePart.typeName)
             << "Statement->closeResultSet(rset);"
             << endl << getIndent()
             << "// update segments and create new ones"
             << endl << getIndent() << "for ("
             << fixTypeName("vector", "", "")
             << "<"
-            << fixTypeName(as->second.second,
-                           getNamespace(as->second.second),
+            << fixTypeName(as->remotePart.typeName,
+                           getNamespace(as->remotePart.typeName),
                            m_classInfo->packageName)
             << "*>::iterator it = obj->"
-            << as->second.first
+            << as->remotePart.name
             << "().begin();" << endl << getIndent()
             << "     it != obj->"
-            << as->second.first
+            << as->remotePart.name
             << "().end();" << endl << getIndent()
             << "     it++) {"  << endl;
   m_indent++;
@@ -1265,60 +1265,60 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
             << fixTypeName("set", "", "")
             << "<int>::iterator item;" << endl
             << getIndent() << "if ((item = "
-            << as->second.first
+            << as->remotePart.name
             << "List.find((*it)->id())) == "
-            << as->second.first
+            << as->remotePart.name
             << "List.end()) {" << endl;
   m_indent++;
   *m_stream << getIndent()
             << "cnvSvc()->createRep(0, *it, false);"
             << endl;
-  if (as->first.second == COMPOS_PARENT ||
-      as->first.second == AGGREG_PARENT) {
+  if (as->type.kind == COMPOS_PARENT ||
+      as->type.kind == AGGREG_PARENT) {
     *m_stream << getIndent()
               << "if (0 == m_insert"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(as->localPart.typeName)
               << "2"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(as->remotePart.typeName)
               << "Statement) {" << endl;
     m_indent++;
     *m_stream << getIndent()
               << "m_insert"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(as->localPart.typeName)
               << "2"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(as->remotePart.typeName)
               << "Statement = createStatement(s_insert"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(as->localPart.typeName)
               << "2"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(as->remotePart.typeName)
               << "StatementString);"
               << endl;
     m_indent--;
     *m_stream << getIndent() << "}" << endl
               << getIndent()
               << "m_insert"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(as->localPart.typeName)
               << "2"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(as->remotePart.typeName)
               << "Statement->setDouble(1, obj->id());"
               << endl << getIndent()
               << "m_insert"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(as->localPart.typeName)
               << "2"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(as->remotePart.typeName)
               << "Statement->setDouble(2, (*it)->id());"
               << endl << getIndent()
               << "m_insert"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(as->localPart.typeName)
               << "2"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(as->remotePart.typeName)
               << "Statement->executeUpdate();"
               << endl;
   }
   m_indent--;
   *m_stream << getIndent() << "} else {" << endl;
   m_indent++;
-  *m_stream << getIndent() << as->second.first
+  *m_stream << getIndent() << as->remotePart.name
             << "List.erase(item);"
             << endl;
   *m_stream << getIndent()
@@ -1332,10 +1332,10 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
             << endl << getIndent() << "for ("
             << fixTypeName("set", "", "")
             << "<int>::iterator it = "
-            << as->second.first << "List.begin();"
+            << as->remotePart.name << "List.begin();"
             << endl << getIndent()
             << "     it != "
-            << as->second.first << "List.end();"
+            << as->remotePart.name << "List.end();"
             << endl << getIndent()
             << "     it++) {"  << endl;
   m_indent++;
@@ -1347,44 +1347,44 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
             << getIndent()
             << "cnvSvc()->deleteRepByAddress(&ad, false);"
             << endl;
-  if (as->first.second == COMPOS_PARENT ||
-      as->first.second == AGGREG_PARENT) {
+  if (as->type.kind == COMPOS_PARENT ||
+      as->type.kind == AGGREG_PARENT) {
     *m_stream << getIndent()
               << "if (0 == m_delete"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(as->localPart.typeName)
               << "2"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(as->remotePart.typeName)
               << "Statement) {" << endl;
     m_indent++;
     *m_stream << getIndent()
               << "m_delete"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(as->localPart.typeName)
               << "2"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(as->remotePart.typeName)
               << "Statement = createStatement(s_delete"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(as->localPart.typeName)
               << "2"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(as->remotePart.typeName)
               << "StatementString);"
               << endl;
     m_indent--;
     *m_stream << getIndent() << "}" << endl << getIndent()
               << "m_delete"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(as->localPart.typeName)
               << "2"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(as->remotePart.typeName)
               << "Statement->setDouble(1, obj->id());"
               << endl << getIndent()
               << "m_delete"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(as->localPart.typeName)
               << "2"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(as->remotePart.typeName)
               << "Statement->setDouble(2, *it);"
               << endl << getIndent()
               << "m_delete"
-              << capitalizeFirstLetter(as->second.third)
+              << capitalizeFirstLetter(as->localPart.typeName)
               << "2"
-              << capitalizeFirstLetter(as->second.second)
+              << capitalizeFirstLetter(as->remotePart.typeName)
               << "Statement->executeUpdate();"
               << endl;
   }
@@ -1399,13 +1399,13 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
 //=============================================================================
 void CppCppOraCnvWriter::writeBasicMultNFillObj(Assoc* as) {
   writeWideHeaderComment("fillObj" +
-                         capitalizeFirstLetter(as->second.second),
+                         capitalizeFirstLetter(as->remotePart.typeName),
                          getIndent(), *m_stream);
   *m_stream << getIndent()
             << "void " << m_classInfo->packageName
             << "::Ora" << m_classInfo->className
             << "Cnv::fillObj"
-            << capitalizeFirstLetter(as->second.second)
+            << capitalizeFirstLetter(as->remotePart.typeName)
             << "("
             << fixTypeName(m_classInfo->className + "*",
                            getNamespace(m_classInfo->className),
@@ -1422,20 +1422,20 @@ void CppCppOraCnvWriter::writeBasicMultNFillObj(Assoc* as) {
   *m_stream << getIndent() << "// Check select statement"
             << endl << getIndent()
             << "if (0 == m_"
-            << capitalizeFirstLetter(as->second.third)
+            << capitalizeFirstLetter(as->localPart.typeName)
             << "2"
-            << capitalizeFirstLetter(as->second.second)
+            << capitalizeFirstLetter(as->remotePart.typeName)
             << "Statement) {" << endl;
   m_indent++;
   *m_stream << getIndent()
             << "m_"
-            << capitalizeFirstLetter(as->second.third)
+            << capitalizeFirstLetter(as->localPart.typeName)
             << "2"
-            << capitalizeFirstLetter(as->second.second)
+            << capitalizeFirstLetter(as->remotePart.typeName)
             << "Statement = createStatement(s_"
-            << capitalizeFirstLetter(as->second.third)
+            << capitalizeFirstLetter(as->localPart.typeName)
             << "2"
-            << capitalizeFirstLetter(as->second.second)
+            << capitalizeFirstLetter(as->remotePart.typeName)
             << "StatementString);"
             << endl;
   m_indent--;
@@ -1444,26 +1444,26 @@ void CppCppOraCnvWriter::writeBasicMultNFillObj(Assoc* as) {
             << "// retrieve the object from the database"
             << endl << getIndent()
             << fixTypeName("set", "", "")
-            << "<int> " << as->second.first
+            << "<int> " << as->remotePart.name
             << "List;" << endl << getIndent()
             << "m_"
-            << capitalizeFirstLetter(as->second.third)
+            << capitalizeFirstLetter(as->localPart.typeName)
             << "2"
-            << capitalizeFirstLetter(as->second.second)
+            << capitalizeFirstLetter(as->remotePart.typeName)
             << "Statement->setDouble(1, obj->id());"
             << endl << getIndent()
             << "oracle::occi::ResultSet *rset = "
             << "m_"
-            << capitalizeFirstLetter(as->second.third)
+            << capitalizeFirstLetter(as->localPart.typeName)
             << "2"
-            << capitalizeFirstLetter(as->second.second)
+            << capitalizeFirstLetter(as->remotePart.typeName)
             << "Statement->executeQuery();"
             << endl << getIndent()
             << "while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {"
             << endl;
   m_indent++;
   *m_stream << getIndent()
-            << as->second.first
+            << as->remotePart.name
             << "List.insert(rset->getInt(1));"
             << endl;
   m_indent--;
@@ -1471,30 +1471,30 @@ void CppCppOraCnvWriter::writeBasicMultNFillObj(Assoc* as) {
             << getIndent() << "// Close ResultSet"
             << endl << getIndent()
             << "m_"
-            << capitalizeFirstLetter(as->second.third)
+            << capitalizeFirstLetter(as->localPart.typeName)
             << "2"
-            << capitalizeFirstLetter(as->second.second)
+            << capitalizeFirstLetter(as->remotePart.typeName)
             << "Statement->closeResultSet(rset);"
             << endl << getIndent()
             << "// Update objects and mark old ones for deletion"
             << endl << getIndent()
             << fixTypeName("vector", "", "") << "<"
-            << fixTypeName(as->second.second,
-                           getNamespace(as->second.second),
+            << fixTypeName(as->remotePart.typeName,
+                           getNamespace(as->remotePart.typeName),
                            m_classInfo->packageName)
             << "*> toBeDeleted;"
             << endl << getIndent()
             << "for ("
             << fixTypeName("vector", "", "")
             << "<"
-            << fixTypeName(as->second.second,
-                           getNamespace(as->second.second),
+            << fixTypeName(as->remotePart.typeName,
+                           getNamespace(as->remotePart.typeName),
                            m_classInfo->packageName)
             << "*>::iterator it = obj->"
-            << as->second.first
+            << as->remotePart.name
             << "().begin();" << endl << getIndent()
             << "     it != obj->"
-            << as->second.first
+            << as->remotePart.name
             << "().end();" << endl << getIndent()
             << "     it++) {"  << endl;
   m_indent++;
@@ -1502,9 +1502,9 @@ void CppCppOraCnvWriter::writeBasicMultNFillObj(Assoc* as) {
             << fixTypeName("set", "", "")
             << "<int>::iterator item;" << endl
             << getIndent() << "if ((item = "
-            << as->second.first
+            << as->remotePart.name
             << "List.find((*it)->id())) == "
-            << as->second.first
+            << as->remotePart.name
             << "List.end()) {" << endl;
   m_indent++;
   *m_stream << getIndent() << "toBeDeleted.push_back(*it);"
@@ -1512,7 +1512,7 @@ void CppCppOraCnvWriter::writeBasicMultNFillObj(Assoc* as) {
   m_indent--;
   *m_stream << getIndent() << "} else {" << endl;
   m_indent++;
-  *m_stream << getIndent() << as->second.first
+  *m_stream << getIndent() << as->remotePart.name
             << "List.erase(item);"
             << endl << getIndent()
             << "cnvSvc()->updateObj((*it));"
@@ -1527,8 +1527,8 @@ void CppCppOraCnvWriter::writeBasicMultNFillObj(Assoc* as) {
             << "for ("
             << fixTypeName("vector", "", "")
             << "<"
-            << fixTypeName(as->second.second,
-                           getNamespace(as->second.second),
+            << fixTypeName(as->remotePart.typeName,
+                           getNamespace(as->remotePart.typeName),
                            m_classInfo->packageName)
             << "*>::iterator it = toBeDeleted.begin();"
             << endl << getIndent()
@@ -1537,7 +1537,7 @@ void CppCppOraCnvWriter::writeBasicMultNFillObj(Assoc* as) {
             << "     it++) {"  << endl;
   m_indent++;
   *m_stream << getIndent() << "obj->remove"
-            << capitalizeFirstLetter(as->second.first)
+            << capitalizeFirstLetter(as->remotePart.name)
             << "(*it);" << endl << getIndent()
             << "delete (*it);" << endl;
   m_indent--;
@@ -1547,10 +1547,10 @@ void CppCppOraCnvWriter::writeBasicMultNFillObj(Assoc* as) {
             << endl << getIndent() << "for ("
             << fixTypeName("set", "", "")
             << "<int>::iterator it = "
-            << as->second.first << "List.begin();"
+            << as->remotePart.name << "List.begin();"
             << endl << getIndent()
             << "     it != "
-            << as->second.first << "List.end();"
+            << as->remotePart.name << "List.end();"
             << endl << getIndent()
             << "     it++) {"  << endl;
   m_indent++;
@@ -1558,10 +1558,10 @@ void CppCppOraCnvWriter::writeBasicMultNFillObj(Assoc* as) {
             << " = cnvSvc()->getObjFromId(*it);"
             << endl << getIndent()
             << "obj->add"
-            << capitalizeFirstLetter(as->second.first)
+            << capitalizeFirstLetter(as->remotePart.name)
             << "(dynamic_cast<"
-            << fixTypeName(as->second.second,
-                           getNamespace(as->second.second),
+            << fixTypeName(as->remotePart.typeName,
+                           getNamespace(as->remotePart.typeName),
                            m_classInfo->packageName)
             << "*>(item));" << endl;
   m_indent--;
@@ -1649,9 +1649,9 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE) {
       writeSingleSetIntoStatement
-        ("insert", as->second, n, true, isEnum(as->second.second));
+        ("insert", as->remotePart, n, true, isEnum(as->remotePart.typeName));
       n++;
     }
   }
@@ -1719,7 +1719,7 @@ void CppCppOraCnvWriter::writeUpdateRepContent() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (mem->first == "id") {
+    if (mem->name == "id") {
       idMem = mem;
       continue;
     }
@@ -1731,9 +1731,9 @@ void CppCppOraCnvWriter::writeUpdateRepContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE) {
       writeSingleSetIntoStatement
-        ("update", as->second, n, true, isEnum(as->second.second));
+        ("update", as->remotePart, n, true, isEnum(as->remotePart.typeName));
       n++;
     }
   }
@@ -1837,18 +1837,18 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
   // create a list of associations
   AssocList assocs = createAssocsList();
   // Go through dependant objects
-  for (Assoc* p = assocs.first();
-       0 != p;
-       p = assocs.next()) {
-    if (!isEnum(p->second.second) &&
-        p->first.second == COMPOS_PARENT) {
-      fixTypeName(p->second.second,
-                  getNamespace(p->second.second),
+  for (Assoc* as = assocs.first();
+       0 != as;
+       as = assocs.next()) {
+    if (!isEnum(as->remotePart.typeName) &&
+        as->type.kind == COMPOS_PARENT) {
+      fixTypeName(as->remotePart.typeName,
+                  getNamespace(as->remotePart.typeName),
                   m_classInfo->packageName);
-      if (p->first.first == MULT_ONE) {
+      if (as->type.multiRemote == MULT_ONE) {
         // One to one association
         *m_stream << getIndent() << "if (obj->"
-                  << p->second.first
+                  << as->remotePart.name
                   << "() != 0) {" << endl;
         m_indent++;
         fixTypeName("OraCnvSvc",
@@ -1856,23 +1856,23 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
                     m_classInfo->packageName);
         *m_stream << getIndent()
                   << "cnvSvc()->deleteRep(0, obj->"
-                  << p->second.first << "(), false);"
+                  << as->remotePart.name << "(), false);"
                   << endl;
         m_indent--;
         *m_stream << getIndent() << "}" << endl;
-      } else if (p->first.first == MULT_N) {
+      } else if (as->type.multiRemote == MULT_N) {
         // One to n association, loop over the vector
         *m_stream << getIndent() << "for ("
                   << fixTypeName("vector", "", "")
                   << "<"
-                  << fixTypeName(p->second.second,
-                                 getNamespace(p->second.second),
+                  << fixTypeName(as->remotePart.typeName,
+                                 getNamespace(as->remotePart.typeName),
                                  m_classInfo->packageName)
                   << "*>::iterator it = obj->"
-                  << p->second.first
+                  << as->remotePart.name
                   << "().begin();" << endl << getIndent()
                   << "     it != obj->"
-                  << p->second.first
+                  << as->remotePart.name
                   << "().end();" << endl << getIndent()
                   << "     it++) {"  << endl;
         m_indent++;
@@ -1892,36 +1892,36 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
   // Delete dependant objects
   if (! assocs.isEmpty()) {
     // Delete links to objects
-    for (Assoc* p = assocs.first();
-         0 != p;
-         p = assocs.next()) {
-      if (p->first.second == COMPOS_CHILD ||
-          p->first.second == AGGREG_CHILD) {
+    for (Assoc* as = assocs.first();
+         0 != as;
+         as = assocs.next()) {
+      if (as->type.kind == COMPOS_CHILD ||
+          as->type.kind == AGGREG_CHILD) {
         *m_stream << getIndent()
                   << "// Delete link to "
-                  << p->second.first << " object"
+                  << as->remotePart.name << " object"
                   << endl << getIndent()
                   << "if (0 != obj->"
-                  << p->second.first << "()) {" << endl;
+                  << as->remotePart.name << "()) {" << endl;
         m_indent++;
         *m_stream << getIndent()
                   << "// Check whether the statement is ok"
                   << endl << getIndent()
                   << "if (0 == m_delete"
-                  << capitalizeFirstLetter(p->second.second)
+                  << capitalizeFirstLetter(as->remotePart.typeName)
                   << "2"
-                  << capitalizeFirstLetter(p->second.third)
+                  << capitalizeFirstLetter(as->localPart.typeName)
                   << "Statement) {" << endl;
         m_indent++;
         *m_stream << getIndent()
                   << "m_delete"
-                  << capitalizeFirstLetter(p->second.second)
+                  << capitalizeFirstLetter(as->remotePart.typeName)
                   << "2"
-                  << capitalizeFirstLetter(p->second.third)
+                  << capitalizeFirstLetter(as->localPart.typeName)
                   << "Statement = createStatement(s_delete"
-                  << capitalizeFirstLetter(p->second.second)
+                  << capitalizeFirstLetter(as->remotePart.typeName)
                   << "2"
-                  << capitalizeFirstLetter(p->second.third)
+                  << capitalizeFirstLetter(as->localPart.typeName)
                   << "StatementString);"
                   << endl;
         m_indent--;
@@ -1930,22 +1930,22 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
                   << "// Delete links to objects"
                   << endl << getIndent()
                   << "m_delete"
-                  << capitalizeFirstLetter(p->second.second)
+                  << capitalizeFirstLetter(as->remotePart.typeName)
                   << "2"
-                  << capitalizeFirstLetter(p->second.third)
+                  << capitalizeFirstLetter(as->localPart.typeName)
                   << "Statement->setDouble(1, obj->"
-                  << p->second.first << "()->id());"
+                  << as->remotePart.name << "()->id());"
                   << endl << getIndent()
                   << "m_delete"
-                  << capitalizeFirstLetter(p->second.second)
+                  << capitalizeFirstLetter(as->remotePart.typeName)
                   << "2"
-                  << capitalizeFirstLetter(p->second.third)
+                  << capitalizeFirstLetter(as->localPart.typeName)
                   << "Statement->setDouble(2, obj->id());"
                   << endl << getIndent()
                   << "m_delete"
-                  << capitalizeFirstLetter(p->second.second)
+                  << capitalizeFirstLetter(as->remotePart.typeName)
                   << "2"
-                  << capitalizeFirstLetter(p->second.third)
+                  << capitalizeFirstLetter(as->localPart.typeName)
                   << "Statement->executeUpdate();"
                   << endl;
         m_indent--;
@@ -2041,10 +2041,10 @@ void CppCppOraCnvWriter::writeCreateObjContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
-      bool isenum = isEnum(as->second.second);
+    if (as->type.multiRemote == MULT_ONE) {
+      bool isenum = isEnum(as->remotePart.typeName);
       writeSingleGetFromSelect
-        (as->second, n, !isenum, isenum);
+        (as->remotePart, n, !isenum, isenum);
     n++;
     }
   }
@@ -2127,10 +2127,10 @@ void CppCppOraCnvWriter::writeUpdateObjContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE) {
       // Enums are a simple case
-      if (isEnum(as->second.second)) {
-        writeSingleGetFromSelect(as->second, n, false, true);
+      if (isEnum(as->remotePart.typeName)) {
+        writeSingleGetFromSelect(as->remotePart, n, false, true);
       } else {
         //writeBasicMult1FillObj
       }
@@ -2145,7 +2145,7 @@ void CppCppOraCnvWriter::writeUpdateObjContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_N) {
+    if (as->type.multiRemote == MULT_N) {
       // writeBasicMultNFillObj
     }
   }
@@ -2166,19 +2166,19 @@ void CppCppOraCnvWriter::writeUpdateObjContent() {
 //=============================================================================
 void
 CppCppOraCnvWriter::writeSingleSetIntoStatement(QString statement,
-                                                Member pair,
+                                                Member mem,
                                                 int n,
                                                 bool isAssoc,
                                                 bool isEnum) {
   // deal with arrays of chars
-  bool isArray = pair.second.find('[') > 0;
+  bool isArray = mem.typeName.find('[') > 0;
   if (isArray) {
-    int i1 = pair.second.find('[');
-    int i2 = pair.second.find(']');
-    QString length = pair.second.mid(i1+1, i2-i1-1);
+    int i1 = mem.typeName.find('[');
+    int i2 = mem.typeName.find(']');
+    QString length = mem.typeName.mid(i1+1, i2-i1-1);
     *m_stream << getIndent() << fixTypeName("string", "", "")
-              << " " << pair.first << "S((const char*)" << "obj->"
-              << pair.first << "(), " << length << ");"
+              << " " << mem.name << "S((const char*)" << "obj->"
+              << mem.name << "(), " << length << ");"
               << endl;
   }
   *m_stream << getIndent()
@@ -2186,19 +2186,19 @@ CppCppOraCnvWriter::writeSingleSetIntoStatement(QString statement,
   if (isAssoc) {
     *m_stream << "Double";
   } else {
-    *m_stream << getOraType(pair.second);
+    *m_stream << getOraType(mem.typeName);
   }
   *m_stream << "(" << n << ", ";
   if (isArray) {
-    *m_stream << pair.first << "S";
+    *m_stream << mem.name << "S";
   } else {
     if (isEnum)
       *m_stream << "(int)";
     *m_stream << "obj->"
-              << pair.first
+              << mem.name
               << "()";
     if (isAssoc && !isEnum) *m_stream << " ? obj->"
-                                      << pair.first
+                                      << mem.name
                                       << "()->id() : 0";
   }
   *m_stream << ");" << endl;
@@ -2207,34 +2207,34 @@ CppCppOraCnvWriter::writeSingleSetIntoStatement(QString statement,
 //=============================================================================
 // writeSingleGetFromSelect
 //=============================================================================
-void CppCppOraCnvWriter::writeSingleGetFromSelect(Member pair,
+void CppCppOraCnvWriter::writeSingleGetFromSelect(Member mem,
                                                   int n,
                                                   bool isAssoc,
                                                   bool isEnum) {
   *m_stream << getIndent();
   // deal with arrays of chars
-  bool isArray = pair.second.find('[') > 0;
+  bool isArray = mem.typeName.find('[') > 0;
   if (isAssoc) {
-    *m_stream << "u_signed64 " << pair.first
+    *m_stream << "u_signed64 " << mem.name
               << "Id = ";
   } else {
     *m_stream << "object->set"
-              << capitalizeFirstLetter(pair.first)
+              << capitalizeFirstLetter(mem.name)
               << "(";
   }
   if (isArray) {
     *m_stream << "("
-              << pair.second.left(pair.second.find('['))
+              << mem.typeName.left(mem.typeName.find('['))
               << "*)";
   }
   if (isEnum) {
     *m_stream << "(enum "
-              << fixTypeName(pair.second,
-                             getNamespace(pair.second),
+              << fixTypeName(mem.typeName,
+                             getNamespace(mem.typeName),
                              m_classInfo->packageName)
               << ")";
   }
-  if (isAssoc || pair.second == "u_signed64") {
+  if (isAssoc || mem.typeName == "u_signed64") {
     *m_stream << "(u_signed64)";
   }
   *m_stream << "rset->get";
@@ -2243,7 +2243,7 @@ void CppCppOraCnvWriter::writeSingleGetFromSelect(Member pair,
   } else if (isAssoc) {
     *m_stream << "Double";
   } else {
-    *m_stream << getOraType(pair.second);
+    *m_stream << getOraType(mem.typeName);
   }
   *m_stream << "(" << n << ")";
   if (isArray) *m_stream << ".data()";
@@ -2360,18 +2360,18 @@ void CppCppOraCnvWriter::printSQLError(QString name,
          mem = members.next()) {
       *m_stream << endl << getIndent()
                 << "                << \"  "
-                << mem->first << " : \" << obj->"
-                << mem->first << "() << std::endl";
+                << mem->name << " : \" << obj->"
+                << mem->name << "() << std::endl";
     }
     // Go through the associations
     for (Assoc* as = assocs.first();
          0 != as;
          as = assocs.next()) {
-      if (as->first.first == MULT_ONE) {
+      if (as->type.multiRemote == MULT_ONE) {
         *m_stream << endl << getIndent()
                   << "                << \"  "
-                  << as->second.first << " : \" << obj->"
-                  << as->second.first << "() << std::endl";
+                  << as->remotePart.name << " : \" << obj->"
+                  << as->remotePart.name << "() << std::endl";
       }
     }
   }

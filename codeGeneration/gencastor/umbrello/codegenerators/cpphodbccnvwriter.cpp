@@ -137,54 +137,54 @@ void CppHOdbcCnvWriter::writeMembers() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_N) {
+    if (as->type.multiRemote == MULT_N) {
       *m_stream << getIndent() 
                 << "/// SQL insert statement for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "static const std::string s_insert"
                 << m_classInfo->className << "2"
-                << capitalizeFirstLetter(as->second.first)
+                << capitalizeFirstLetter(as->remotePart.name)
                 << "StatementString;"
                 << endl << endl << getIndent()
                 << "/// SQL insert statement object for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "HSTMT m_insert"
                 << m_classInfo->className << "2"
-                << capitalizeFirstLetter(as->second.first)
+                << capitalizeFirstLetter(as->remotePart.name)
                 << "Statement;"
                 << endl << endl << getIndent() 
                 << "/// SQL delete statement for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "static const std::string s_delete"
                 << m_classInfo->className << "2"
-                << capitalizeFirstLetter(as->second.first)
+                << capitalizeFirstLetter(as->remotePart.name)
                 << "StatementString;"
                 << endl << endl << getIndent()
                 << "/// SQL delete statement object for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "HSTMT m_delete"
                 << m_classInfo->className << "2"
-                << capitalizeFirstLetter(as->second.first)
+                << capitalizeFirstLetter(as->remotePart.name)
                 << "Statement;"
                 << endl << endl << getIndent() 
                 << "/// SQL select statement for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "static const std::string s_"
                 << m_classInfo->className << "2"
-                << capitalizeFirstLetter(as->second.first)
+                << capitalizeFirstLetter(as->remotePart.name)
                 << "StatementString;"
                 << endl << endl << getIndent()
                 << "/// SQL select statement object for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "HSTMT m_"
                 << m_classInfo->className << "2"
-                << capitalizeFirstLetter(as->second.first)
+                << capitalizeFirstLetter(as->remotePart.name)
                 << "Statement;"
                 << endl << endl;
     }

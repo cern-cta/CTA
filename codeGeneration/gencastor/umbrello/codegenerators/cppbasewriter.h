@@ -279,13 +279,11 @@ class CppBaseWriter : public CppCastorWriter {
   /**
    * A Type describing a member.
    */
-  class Member : public QPair<QString,QString> {
-  public:
-    QString third;
-    Member(QString a, QString b, QString c) :
-      QPair<QString,QString>(a, b), third(c) {}
-    Member(QString a, QString b) :
-      QPair<QString,QString>(a, b), third() {}
+  struct Member {
+    QString name;
+    QString typeName;
+    Member(QString n, QString tn) :
+      name(n), typeName(tn) {}
   };
 
   /**
@@ -311,14 +309,26 @@ class CppBaseWriter : public CppCastorWriter {
   
   /**
    * A type describing the type of an association.
-   * This includes multiplicity and kind of association
+   * This includes multiplicities and kind of association
    */
-  typedef QPair<Multiplicity, AssocKind> AssocType;
-
+  struct AssocType {
+    Multiplicity multiRemote;
+    Multiplicity multiLocal;
+    AssocKind kind;
+    AssocType(Multiplicity mr, Multiplicity ml, AssocKind k) :
+      multiRemote(mr), multiLocal(ml), kind(k) {}
+  };
+  
   /**
    * A Type describing an associations
    */
-  typedef QPair<AssocType, Member> Assoc;
+  struct Assoc {
+    AssocType type;
+    Member remotePart;
+    Member localPart;
+    Assoc(AssocType t, Member rp, Member lp) :
+      type(t), remotePart(rp), localPart(lp){}
+  };
 
   /**
    * A Type describing a list of associations
@@ -347,23 +357,6 @@ class CppBaseWriter : public CppCastorWriter {
    */
   void singleAssocToPairList(UMLAssociation *a,
                              AssocList &list);
-
-  /**
-   * Adds a triplet of values to a list of members
-   */
-  void pushPair(QString first,
-                QString second,
-                MemberList &list);
-
-  /**
-   * Adds a triplet of values to a list of associations
-   */
-  void pushPair(Multiplicity mult,
-                AssocKind kind,
-                QString first,
-                QString second,
-                QString third,
-                AssocList &list);
   
  public:
   /**

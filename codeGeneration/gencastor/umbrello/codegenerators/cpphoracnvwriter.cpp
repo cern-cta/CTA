@@ -73,9 +73,9 @@ void CppHOraCnvWriter::writeFillRep() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (!isEnum(as->second.second)) {
-      if (as->first.first == MULT_ONE ||
-          as->first.first == MULT_N) {
+    if (!isEnum(as->remotePart.typeName)) {
+      if (as->type.multiRemote == MULT_ONE ||
+          as->type.multiRemote == MULT_N) {
         writeBasicFillRep(as);
       }
     }
@@ -118,9 +118,9 @@ void CppHOraCnvWriter::writeFillObj() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (!isEnum(as->second.second)) {
-      if (as->first.first == MULT_ONE ||
-          as->first.first == MULT_N) {
+    if (!isEnum(as->remotePart.typeName)) {
+      if (as->type.multiRemote == MULT_ONE ||
+          as->type.multiRemote == MULT_N) {
         writeBasicFillObj(as);
       }
     }
@@ -134,14 +134,14 @@ void CppHOraCnvWriter::writeFillObj() {
 void CppHOraCnvWriter::writeBasicFillRep(Assoc* as) {
   writeDocumentation
     (QString("Fill the database with objects of type ") +
-     capitalizeFirstLetter(as->second.second)
+     capitalizeFirstLetter(as->remotePart.typeName)
      + " refered by a given object.",
      "",
      QString("@param obj the original object\n") +
      "@exception Exception throws an Exception in case of error",
      *m_stream);
   *m_stream << getIndent() << "virtual void fillRep"
-            << capitalizeFirstLetter(as->second.second)
+            << capitalizeFirstLetter(as->remotePart.typeName)
             << "("
             << fixTypeName(m_classInfo->className + "*",
                            getNamespace(m_classInfo->className),
@@ -161,7 +161,7 @@ void CppHOraCnvWriter::writeBasicFillRep(Assoc* as) {
 void CppHOraCnvWriter::writeBasicFillObj(Assoc* as) {
   writeDocumentation
     (QString("Retrieve from the database objects of type ") +
-     capitalizeFirstLetter(as->second.second)
+     capitalizeFirstLetter(as->remotePart.typeName)
      + " refered by a given object.",
      "",
      QString("@param obj the original object\n") +
@@ -169,7 +169,7 @@ void CppHOraCnvWriter::writeBasicFillObj(Assoc* as) {
      *m_stream);
   *m_stream << getIndent()
             << "virtual void fillObj"
-            << capitalizeFirstLetter(as->second.second)
+            << capitalizeFirstLetter(as->remotePart.typeName)
             << "("
             << fixTypeName(m_classInfo->className + "*",
                            getNamespace(m_classInfo->className),
@@ -306,97 +306,97 @@ void CppHOraCnvWriter::writeMembers() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_N ||
-        as->first.second == COMPOS_PARENT ||
-        as->first.second == AGGREG_PARENT) {
+    if (as->type.multiRemote == MULT_N ||
+        as->type.kind == COMPOS_PARENT ||
+        as->type.kind == AGGREG_PARENT) {
       *m_stream << getIndent()
                 << "/// SQL insert statement for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "static const std::string s_insert"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "StatementString;"
                 << endl << endl << getIndent()
                 << "/// SQL insert statement object for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "oracle::occi::Statement *m_insert"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement;"
                 << endl << endl << getIndent()
                 << "/// SQL delete statement for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "static const std::string s_delete"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "StatementString;"
                 << endl << endl << getIndent()
                 << "/// SQL delete statement object for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "oracle::occi::Statement *m_delete"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement;"
                 << endl << endl << getIndent()
                 << "/// SQL select statement for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "static const std::string s_"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "StatementString;"
                 << endl << endl << getIndent()
                 << "/// SQL select statement object for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "oracle::occi::Statement *m_"
-                << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->localPart.typeName)
                 << "2"
-                << capitalizeFirstLetter(as->second.second)
+                << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement;"
                 << endl << endl;
-    } else if (as->first.second == COMPOS_CHILD ||
-               as->first.second == AGGREG_CHILD) {
+    } else if (as->type.kind == COMPOS_CHILD ||
+               as->type.kind == AGGREG_CHILD) {
       *m_stream << getIndent()
                 << "/// SQL insert statement for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "static const std::string s_insert"
-                << capitalizeFirstLetter(as->second.second)
-                << "2" << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->remotePart.typeName)
+                << "2" << capitalizeFirstLetter(as->localPart.typeName)
                 << "StatementString;"
                 << endl << endl << getIndent()
                 << "/// SQL insert statement object for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "oracle::occi::Statement *m_insert"
-                << capitalizeFirstLetter(as->second.second)
-                << "2" << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->remotePart.typeName)
+                << "2" << capitalizeFirstLetter(as->localPart.typeName)
                 << "Statement;"
                 << endl << endl << getIndent()
                 << "/// SQL delete statement for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "static const std::string s_delete"
-                << capitalizeFirstLetter(as->second.second)
-                << "2" << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->remotePart.typeName)
+                << "2" << capitalizeFirstLetter(as->localPart.typeName)
                 << "StatementString;"
                 << endl << endl << getIndent()
                 << "/// SQL delete statement object for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "oracle::occi::Statement *m_delete"
-                << capitalizeFirstLetter(as->second.second)
-                << "2" << capitalizeFirstLetter(as->second.third)
+                << capitalizeFirstLetter(as->remotePart.typeName)
+                << "2" << capitalizeFirstLetter(as->localPart.typeName)
                 << "Statement;"
                 << endl << endl;
     }

@@ -21,8 +21,8 @@
 #include "cppcppclasswriter.h"
 #include "cpphoracnvwriter.h"
 #include "cppcpporacnvwriter.h"
-#include "cpphodbccnvwriter.h"
-#include "cppcppodbccnvwriter.h"
+//#include "cpphodbccnvwriter.h"
+//#include "cppcppodbccnvwriter.h"
 #include "cpphstreamcnvwriter.h"
 #include "cppcppstreamcnvwriter.h"
 
@@ -40,8 +40,8 @@ CppWriter::CppWriter( UMLDoc *parent, const char *name ) :
   cppw = new CppCppClassWriter(m_doc, ".cpp file generator");
   orahw = new CppHOraCnvWriter(m_doc, "Oracle converter generator");
   oracppw = new CppCppOraCnvWriter(m_doc, "Oracle converter generator");
-  odbchw = new CppHOdbcCnvWriter(m_doc, "Odbc converter generator");
-  odbccppw = new CppCppOdbcCnvWriter(m_doc, "Odbc converter generator");
+  //odbchw = new CppHOdbcCnvWriter(m_doc, "Odbc converter generator");
+  //odbccppw = new CppCppOdbcCnvWriter(m_doc, "Odbc converter generator");
   streamhw = new CppHStreamCnvWriter(m_doc, "Stream converter generator");
   streamcppw = new CppCppStreamCnvWriter(m_doc, "Stream converter generator");
 }
@@ -55,8 +55,8 @@ CppWriter::~CppWriter() {
   delete cppw;
   delete orahw;
   delete oracppw;
-  delete odbchw;
-  delete odbccppw;
+  //delete odbchw;
+  //delete odbccppw;
   delete streamhw;
   delete streamcppw;
 }
@@ -88,8 +88,8 @@ void CppWriter::writeClass(UMLClassifier *c) {
     configGenerator(cppw);
     configGenerator(orahw);
     configGenerator(oracppw);
-    configGenerator(odbchw);
-    configGenerator(odbccppw);
+    //configGenerator(odbchw);
+    //configGenerator(odbccppw);
     configGenerator(streamhw);
     configGenerator(streamcppw);
     firstGeneration = false;
@@ -227,20 +227,20 @@ void CppWriter::writeClass(UMLClassifier *c) {
                       << "\nPlease check the access rights" << std::endl;
             return;
           }
-          QDir packageDirOdbc(m_outputDirectory.absPath() + "/castor/db/odbc");
-          if (! (packageDirOdbc.exists() || packageDirOdbc.mkdir(packageDirOdbc.absPath()) ) ) {
-            std::cerr << "Cannot create the package folder "
-                      << packageDirOdbc.absPath().ascii()
-                      << "\nPlease check the access rights" << std::endl;
-            return;
-          }
+//           QDir packageDirOdbc(m_outputDirectory.absPath() + "/castor/db/odbc");
+//           if (! (packageDirOdbc.exists() || packageDirOdbc.mkdir(packageDirOdbc.absPath()) ) ) {
+//             std::cerr << "Cannot create the package folder "
+//                       << packageDirOdbc.absPath().ascii()
+//                       << "\nPlease check the access rights" << std::endl;
+//             return;
+//           }
           // run generation
           int i = fileName.findRev('/') + 1;
           QString file = fileName.right(fileName.length()-i);
           runGenerator(orahw, "castor/db/ora/Ora" + file + "Cnv.hpp", c);
           runGenerator(oracppw, "castor/db/ora/Ora" + file + "Cnv.cpp", c);
-          runGenerator(odbchw, "castor/db/odbc/Odbc" + file + "Cnv.hpp", c);
-          runGenerator(odbccppw, "castor/db/odbc/Odbc" + file + "Cnv.cpp", c);
+//           runGenerator(odbchw, "castor/db/odbc/Odbc" + file + "Cnv.hpp", c);
+//           runGenerator(odbccppw, "castor/db/odbc/Odbc" + file + "Cnv.cpp", c);
         }
         obj = m_doc->findUMLObject(QString("IStreamable"),
                                    Uml::ot_Interface);

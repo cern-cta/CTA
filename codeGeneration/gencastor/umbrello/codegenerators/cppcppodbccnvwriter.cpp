@@ -91,7 +91,7 @@ void CppCppOdbcCnvWriter::writeConstants() {
        0 != mem;
        mem = members.next()) {
     if (n > 0) *m_stream << ", ";
-    *m_stream << mem->first;
+    *m_stream << mem->name;
     n++;
   }
   // create a list of associations
@@ -100,10 +100,10 @@ void CppCppOdbcCnvWriter::writeConstants() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE) {
       // One to One associations
       if (n > 0) *m_stream << ", ";
-      *m_stream << as->second.first;
+      *m_stream << as->remotePart.name;
       n++;
     }
   }
@@ -137,16 +137,16 @@ void CppCppOdbcCnvWriter::writeConstants() {
        0 != mem;
        mem = members.next()) {
     if (n > 0) *m_stream << ", ";
-    *m_stream << mem->first;
+    *m_stream << mem->name;
     n++;
   }
   // Go through the associations
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE) {
       if (n > 0) *m_stream << ", ";
-      *m_stream << as->second.first;
+      *m_stream << as->remotePart.name;
       n++;
     }
   }
@@ -167,20 +167,20 @@ void CppCppOdbcCnvWriter::writeConstants() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (mem->first == "id") continue;
+    if (mem->name == "id") continue;
     if (n > 0) *m_stream << ", ";
     n++;
-    *m_stream << mem->first << " = ?";
+    *m_stream << mem->name << " = ?";
   }
   // Go through the associations
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE) {
       // One to One associations
       if (n > 0) *m_stream << ", ";
       n++;
-      *m_stream << as->second.first << " = ?";
+      *m_stream << as->remotePart.name << " = ?";
     }
   }
   *m_stream << " WHERE id = ?"
@@ -230,48 +230,48 @@ void CppCppOdbcCnvWriter::writeConstants() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_N) {
+    if (as->type.multiRemote == MULT_N) {
       *m_stream << getIndent()
                 << "/// SQL insert statement for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "const std::string "
                 << m_classInfo->fullPackageName
                 << "Odbc" << m_classInfo->className
                 << "Cnv::s_insert" << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "StatementString =" << endl << getIndent()
                 << "\"INSERT INTO rh_"
                 << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << " (Parent, Child) VALUES (?, ?)\";"
                 << endl << endl << getIndent()
                 << "/// SQL delete statement for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "const std::string "
                 << m_classInfo->fullPackageName
                 << "Odbc" << m_classInfo->className
                 << "Cnv::s_delete" << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "StatementString =" << endl << getIndent()
                 << "\"DELETE FROM rh_"
                 << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << " WHERE Parent = :1\";"
                 << endl << endl << getIndent()
                 << "/// SQL select statement for member "
-                << as->second.first
+                << as->remotePart.name
                 << endl << getIndent()
                 << "const std::string "
                 << m_classInfo->fullPackageName
                 << "Odbc" << m_classInfo->className
                 << "Cnv::s_" << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "StatementString =" << endl << getIndent()
                 << "\"SELECT Child from rh_"
                 << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << " WHERE Parent = ?\";" << endl << endl;
     }
   }
@@ -304,9 +304,9 @@ void CppCppOdbcCnvWriter::writeSqlStatements() {
        0 != mem;
        mem = members.next()) {
     if (n > 0) stream << ", ";
-    stream << mem->first << " "
-           << getSQLType(mem->second);
-    if (mem->first == "id") stream << " PRIMARY KEY";
+    stream << mem->name << " "
+           << getSQLType(mem->typeName);
+    if (mem->name == "id") stream << " PRIMARY KEY";
     n++;
   }
   // create a list of associations
@@ -315,10 +315,10 @@ void CppCppOdbcCnvWriter::writeSqlStatements() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE) {
       // One to One associations
       if (n > 0) stream << ", ";
-      stream << as->second.first << " NUMBER";
+      stream << as->remotePart.name << " NUMBER";
       n++;
     }
   }
@@ -327,16 +327,16 @@ void CppCppOdbcCnvWriter::writeSqlStatements() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_N) {
+    if (as->type.multiRemote == MULT_N) {
       stream << "DROP TABLE rh_"
              << m_classInfo->className
              << "2"
-             << capitalizeFirstLetter(as->second.first)
+             << capitalizeFirstLetter(as->remotePart.name)
              << ";" << endl
              << "CREATE TABLE rh_"
              << m_classInfo->className
              << "2"
-             << capitalizeFirstLetter(as->second.first)
+             << capitalizeFirstLetter(as->remotePart.name)
              << " (Parent NUMBER, Child NUMBER);"
              << endl;
     }
@@ -374,16 +374,16 @@ void CppCppOdbcCnvWriter::writeConstructors() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_N) {
+    if (as->type.multiRemote == MULT_N) {
       *m_stream << "," << endl << getIndent()
                 << "  m_insert" << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "Statement(SQL_NULL_STMT)," << endl << getIndent()
                 << "  m_delete" << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "Statement(SQL_NULL_STMT)," << endl << getIndent()
                 << "  m_" << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "Statement(SQL_NULL_STMT)";
     }
   }
@@ -419,18 +419,18 @@ void CppCppOdbcCnvWriter::writeConstructors() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_N) {
+    if (as->type.multiRemote == MULT_N) {
       *m_stream << getIndent() << "deleteStatement(m_insert"
                 << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "Statement);" << endl
                 << getIndent() << "deleteStatement(m_delete"
                 << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "Statement);" << endl << getIndent()
                 << "deleteStatement(m_"
                 << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "Statement);";
     }
   }
@@ -492,37 +492,37 @@ void CppCppOdbcCnvWriter::writeCreateRepContent() {
                                     m_classInfo->packageName)
               << "> toBeSaved;"
               << endl;
-    for (Assoc* p = assocs.first();
-         0 != p;
-         p = assocs.next()) {
-      if (!isEnum(p->second.second)) {
-        fixTypeName(p->second.second,
-                    getNamespace(p->second.second),
+    for (Assoc* as = assocs.first();
+         0 != as;
+         as = assocs.next()) {
+      if (!isEnum(as->remotePart.typeName)) {
+        fixTypeName(as->remotePart.typeName,
+                    getNamespace(as->remotePart.typeName),
                     m_classInfo->packageName);
-        if (p->first.first == MULT_ONE) {
+        if (as->type.multiRemote == MULT_ONE) {
           // One to one association
           *m_stream << getIndent() << "if (alreadyDone.find(obj->"
-                    << p->second.first
+                    << as->remotePart.name
                     << "()) == alreadyDone.end() &&" << endl
                     << getIndent() << "    obj->"
-                    << p->second.first
+                    << as->remotePart.name
                     << "() != 0)" << endl
                     << getIndent()
                     << "  toBeSaved.push_back(obj->"
-                    << p->second.first << "());" << endl;
-        } else if (p->first.first == MULT_N) {
+                    << as->remotePart.name << "());" << endl;
+        } else if (as->type.multiRemote == MULT_N) {
           // One to n association, loop over the vector
           *m_stream << getIndent() << "for ("
                     << fixTypeName("vector", "", "")
                     << "<"
-                    << fixTypeName(p->second.second,
-                                   getNamespace(p->second.second),
+                    << fixTypeName(as->remotePart.typeName,
+                                   getNamespace(as->remotePart.typeName),
                                    m_classInfo->packageName)
                     << "*>::iterator it = obj->"
-                    << p->second.first
+                    << as->remotePart.name
                     << "().begin();" << endl << getIndent()
                     << "     it != obj->"
-                    << p->second.first
+                    << as->remotePart.name
                     << "().end();" << endl << getIndent()
                     << "     it++) {"  << endl;
           m_indent++;
@@ -599,9 +599,9 @@ void CppCppOdbcCnvWriter::writeCreateRepContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE) {
       writeSingleSetIntoStatement
-        ("insert", as->second, n, true, isEnum(as->second.second));
+        ("insert", as->remotePart, n, true, isEnum(as->remotePart.typeName));
       n++;
     }
   }
@@ -629,26 +629,26 @@ void CppCppOdbcCnvWriter::writeCreateRepContent() {
     *m_stream << getIndent() << "}" << endl;
     // Save links to objects for one to n associations
     bool first = true;
-    for (Assoc* p = assocs.first();
-         0 != p;
-         p = assocs.next()) {
-      if (p->first.first == MULT_N) {
+    for (Assoc* as = assocs.first();
+         0 != as;
+         as = assocs.next()) {
+      if (as->type.multiRemote == MULT_N) {
         if (first) {
           *m_stream << getIndent()
                     << "// Check whether the statement is ok"
                     << endl << getIndent()
                     << "if (SQL_NULL_STMT == m_insert"
                     << m_classInfo->className << "2"
-                    << capitalizeFirstLetter(p->second.first)
+                    << capitalizeFirstLetter(as->remotePart.name)
                     << "Statement) {" << endl;
           m_indent++;
           *m_stream << getIndent()
                     << "m_insert"
                     << m_classInfo->className << "2"
-                    << capitalizeFirstLetter(p->second.first)
+                    << capitalizeFirstLetter(as->remotePart.name)
                     << "Statement = createStatement(getConnection(), s_insert"
                     << m_classInfo->className << "2"
-                    << capitalizeFirstLetter(p->second.first)
+                    << capitalizeFirstLetter(as->remotePart.name)
                     << "StatementString);"
                     << endl;
           m_indent--;
@@ -658,7 +658,7 @@ void CppCppOdbcCnvWriter::writeCreateRepContent() {
                     << endl << getIndent()
                     << "m_insert"
                     << m_classInfo->className << "2"
-                    << capitalizeFirstLetter(p->second.first)
+                    << capitalizeFirstLetter(as->remotePart.name)
                     << "StatementParam1 = obj->id();"
                     << endl;
           first = false;
@@ -667,29 +667,29 @@ void CppCppOdbcCnvWriter::writeCreateRepContent() {
         *m_stream << getIndent() << "for ("
                   << fixTypeName("vector", "", "")
                   << "<"
-                  << fixTypeName(p->second.second,
-                                 getNamespace(p->second.second),
+                  << fixTypeName(as->remotePart.typeName,
+                                 getNamespace(as->remotePart.typeName),
                                  m_classInfo->packageName)
                   << "*>::iterator it = obj->"
-                  << p->second.first
+                  << as->remotePart.name
                   << "().begin();" << endl << getIndent()
                   << "     it != obj->"
-                  << p->second.first
+                  << as->remotePart.name
                   << "().end();" << endl << getIndent()
                   << "     it++) {"  << endl;
         m_indent++;
         *m_stream << getIndent()
                   << "m_insert"
                   << m_classInfo->className << "2"
-                  << capitalizeFirstLetter(p->second.first)
+                  << capitalizeFirstLetter(as->remotePart.name)
                   << "StatementParam2 = (*it)->id();"
                   << endl << getIndent()
                   << "SQLExecuteWrapper(m_insert"
                   << m_classInfo->className << "2"
-                  << capitalizeFirstLetter(p->second.first)
+                  << capitalizeFirstLetter(as->remotePart.name)
                   << "Statement, m_insert"
                   << m_classInfo->className << "2"
-                  << capitalizeFirstLetter(p->second.first)
+                  << capitalizeFirstLetter(as->remotePart.name)
                   << "StatementString);"
                   << endl;
         m_indent--;
@@ -753,37 +753,37 @@ void CppCppOdbcCnvWriter::writeUpdateRepContent() {
                                     m_classInfo->packageName)
               << "> toBeUpdated;"
               << endl;
-    for (Assoc* p = assocs.first();
-         0 != p;
-         p = assocs.next()) {
-      if (!isEnum(p->second.second)) {
-        fixTypeName(p->second.second,
-                    getNamespace(p->second.second),
+    for (Assoc* as = assocs.first();
+         0 != as;
+         as = assocs.next()) {
+      if (!isEnum(as->remotePart.typeName)) {
+        fixTypeName(as->remotePart.typeName,
+                    getNamespace(as->remotePart.typeName),
                     m_classInfo->packageName);
-        if (p->first.first == MULT_ONE) {
+        if (as->type.multiRemote == MULT_ONE) {
           // One to one association
           *m_stream << getIndent() << "if (alreadyDone.find(obj->"
-                    << p->second.first
+                    << as->remotePart.name
                     << "()) == alreadyDone.end() &&" << endl
                     << getIndent() << "    obj->"
-                    << p->second.first
+                    << as->remotePart.name
                     << "() != 0)" << endl
                     << getIndent()
                     << "  toBeUpdated.push_back(obj->"
-                    << p->second.first << "());" << endl;
-        } else if (p->first.first == MULT_N) {
+                    << as->remotePart.name << "());" << endl;
+        } else if (as->type.multiRemote == MULT_N) {
           // One to n association, loop over the vector
           *m_stream << getIndent() << "for ("
                     << fixTypeName("vector", "", "")
                     << "<"
-                    << fixTypeName(p->second.second,
-                                   getNamespace(p->second.second),
+                    << fixTypeName(as->remotePart.typeName,
+                                   getNamespace(as->remotePart.typeName),
                                    m_classInfo->packageName)
                     << "*>::iterator it = obj->"
-                    << p->second.first
+                    << as->remotePart.name
                     << "().begin();" << endl << getIndent()
                     << "     it != obj->"
-                    << p->second.first
+                    << as->remotePart.name
                     << "().end();" << endl << getIndent()
                     << "     it++) {"  << endl;
           m_indent++;
@@ -806,11 +806,11 @@ void CppCppOdbcCnvWriter::writeUpdateRepContent() {
   MemberList members = createMembersList();
   unsigned int n = 1;
   // Go through the members
-  Member* idMem;
+  Member* idMem = 0;
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
-    if (mem->first == "id") {
+    if (mem->name == "id") {
       idMem = mem;
       continue;
     }
@@ -821,9 +821,9 @@ void CppCppOdbcCnvWriter::writeUpdateRepContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE) {
       writeSingleSetIntoStatement
-        ("update", as->second, n, true, isEnum(as->second.second));
+        ("update", as->remotePart, n, true, isEnum(as->remotePart.typeName));
       n++;
     }
   }
@@ -935,37 +935,37 @@ void CppCppOdbcCnvWriter::writeDeleteRepContent() {
                                     m_classInfo->packageName)
               << "> toBeDeleted;"
               << endl;
-    for (Assoc* p = assocs.first();
-         0 != p;
-         p = assocs.next()) {
-      if (!isEnum(p->second.second)) {
-        fixTypeName(p->second.second,
-                    getNamespace(p->second.second),
+    for (Assoc* as = assocs.first();
+         0 != as;
+         as = assocs.next()) {
+      if (!isEnum(as->remotePart.typeName)) {
+        fixTypeName(as->remotePart.typeName,
+                    getNamespace(as->remotePart.typeName),
                     m_classInfo->packageName);
-        if (p->first.first == MULT_ONE) {
+        if (as->type.multiRemote == MULT_ONE) {
           // One to one association
           *m_stream << getIndent() << "if (alreadyDone.find(obj->"
-                    << p->second.first
+                    << as->remotePart.name
                     << "()) == alreadyDone.end() &&" << endl
                     << getIndent() << "    obj->"
-                    << p->second.first
+                    << as->remotePart.name
                     << "() != 0)" << endl
                     << getIndent()
                     << "  toBeDeleted.push_back(obj->"
-                    << p->second.first << "());" << endl;
-        } else if (p->first.first == MULT_N) {
+                    << as->remotePart.name << "());" << endl;
+        } else if (as->type.multiRemote == MULT_N) {
           // One to n association, loop over the vector
           *m_stream << getIndent() << "for ("
                     << fixTypeName("vector", "", "")
                     << "<"
-                    << fixTypeName(p->second.second,
-                                   getNamespace(p->second.second),
+                    << fixTypeName(as->remotePart.typeName,
+                                   getNamespace(as->remotePart.typeName),
                                    m_classInfo->packageName)
                     << "*>::iterator it = obj->"
-                    << p->second.first
+                    << as->remotePart.name
                     << "().begin();" << endl << getIndent()
                     << "     it != obj->"
-                    << p->second.first
+                    << as->remotePart.name
                     << "().end();" << endl << getIndent()
                     << "     it++) {"  << endl;
           m_indent++;
@@ -1019,25 +1019,25 @@ void CppCppOdbcCnvWriter::writeDeleteRepContent() {
     m_indent--;
     *m_stream << getIndent() << "}" << endl;
     // Save links to objects for one to n associations
-    for (Assoc* p = assocs.first();
-         0 != p;
-         p = assocs.next()) {
-      if (p->first.first == MULT_N) {
+    for (Assoc* as = assocs.first();
+         0 != as;
+         as = assocs.next()) {
+      if (as->type.multiRemote == MULT_N) {
         *m_stream << getIndent()
                   << "// Check whether the statement is ok"
                   << endl << getIndent()
                   << "if (SQL_NULL_STMT == m_delete"
                   << m_classInfo->className << "2"
-                  << capitalizeFirstLetter(p->second.first)
+                  << capitalizeFirstLetter(as->remotePart.name)
                   << "Statement) {" << endl;
         m_indent++;
         *m_stream << getIndent()
                   << "m_delete"
                   << m_classInfo->className << "2"
-                  << capitalizeFirstLetter(p->second.first)
+                  << capitalizeFirstLetter(as->remotePart.name)
                   << "Statement = createStatement(getConnection(), s_delete"
                   << m_classInfo->className << "2"
-                  << capitalizeFirstLetter(p->second.first)
+                  << capitalizeFirstLetter(as->remotePart.name)
                   << "StatementString);"
                   << endl;
         m_indent--;
@@ -1047,15 +1047,15 @@ void CppCppOdbcCnvWriter::writeDeleteRepContent() {
                   << endl << getIndent()
                   << "m_delete"
                   << m_classInfo->className << "2"
-                  << capitalizeFirstLetter(p->second.first)
+                  << capitalizeFirstLetter(as->remotePart.name)
                   << "StatementParam1 = obj->id();"
                   << endl << getIndent()
                   << "SQLExecuteWrapper(m_delete"
                   << m_classInfo->className << "2"
-                  << capitalizeFirstLetter(p->second.first)
+                  << capitalizeFirstLetter(as->remotePart.name)
                   << "Statement, m_delete"
                   << m_classInfo->className << "2"
-                  << capitalizeFirstLetter(p->second.first)
+                  << capitalizeFirstLetter(as->remotePart.name)
                   << "StatementString);"
                   << endl;
       }
@@ -1134,11 +1134,11 @@ void CppCppOdbcCnvWriter::writeCreateObjContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE) {
       // do not consider enums
-      if (isEnum(as->second.second)) continue;
+      if (isEnum(as->remotePart.typeName)) continue;
       // One to One association
-      writeSingleColBind(as->second, n, true);
+      writeSingleColBind(as->remotePart, n, true);
       n++;
     }
   }
@@ -1173,26 +1173,26 @@ void CppCppOdbcCnvWriter::writeCreateObjContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE) {
       // do not consider enums
-      if (isEnum(as->second.second)) continue;
+      if (isEnum(as->remotePart.typeName)) continue;
       // One to One association
-      writeSingleGetFromSelect(as->second, n, true);
+      writeSingleGetFromSelect(as->remotePart, n, true);
       *m_stream << getIndent()
                 << "IObject* obj"
-                << capitalizeFirstLetter(as->second.first)
+                << capitalizeFirstLetter(as->remotePart.name)
                 << " = getObjFromId("
-                << as->second.first
+                << as->remotePart.name
                 << "Id, newlyCreated);"
                 << endl << getIndent()
                 << "object->set"
-                << capitalizeFirstLetter(as->second.first)
+                << capitalizeFirstLetter(as->remotePart.name)
                 << "(dynamic_cast<"
-                << fixTypeName(as->second.second,
-                               getNamespace(as->second.second),
+                << fixTypeName(as->remotePart.typeName,
+                               getNamespace(as->remotePart.typeName),
                                m_classInfo->packageName)
                 << "*>(obj"
-                << capitalizeFirstLetter(as->second.first)
+                << capitalizeFirstLetter(as->remotePart.name)
                 << "));" << endl;
       n++;
     }
@@ -1206,7 +1206,7 @@ void CppCppOdbcCnvWriter::writeCreateObjContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_N) {
+    if (as->type.multiRemote == MULT_N) {
       if (first) {
         first = false;
         *m_stream << getIndent()
@@ -1215,20 +1215,20 @@ void CppCppOdbcCnvWriter::writeCreateObjContent() {
       }
       *m_stream << getIndent()
                 << "if (SQL_NULL_STMT == m_" << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "Statement) {" << endl;
       m_indent++;
       *m_stream << getIndent()
                 << "m_" << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "Statement = createStatement(getConnection(), s_"
                 << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "StatementString);"
                 << endl << getIndent()
                 << "SQLBindParameterWrapper(&"
                 << "m_" << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "Statement, 1, SQL_PARAM_INPUT,"
                 << endl << getIndent()
                 << "                        "
@@ -1236,12 +1236,12 @@ void CppCppOdbcCnvWriter::writeCreateObjContent() {
                 << endl << getIndent()
                 << "                        "
                 << "&m_" << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "StatementParameter, 0, 0,"
                 << endl << getIndent()
                 << "                        "
                 << "m_set" << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "StatementString);" << endl;
       m_indent--;
       *m_stream << getIndent() << "}" << endl
@@ -1249,13 +1249,13 @@ void CppCppOdbcCnvWriter::writeCreateObjContent() {
                 << endl << getIndent() << "int id;"
                 << endl << getIndent()
                 << "SQLFetchWrapper(m_" << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "Statement, m_" << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "StatementString);"
                 << endl << getIndent()
                 << "SQLBindColWrapper(m_" << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "Statement, 1, SQL_INTEGER,"
                 << endl << getIndent()
                 << "                  "
@@ -1263,13 +1263,13 @@ void CppCppOdbcCnvWriter::writeCreateObjContent() {
                 << endl << getIndent()
                 << "                  "
                 << "m_" << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "StatementString);"
                 << endl << getIndent()
                 << "while (SQLFetchWrapper(m_" << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "Statement, m_" << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "StatementString) {"
                 << endl;
       m_indent++;
@@ -1278,17 +1278,17 @@ void CppCppOdbcCnvWriter::writeCreateObjContent() {
                 << " = getObjFromId(id, newlyCreated);"
                 << endl << getIndent()
                 << "object->add"
-                << capitalizeFirstLetter(as->second.first)
+                << capitalizeFirstLetter(as->remotePart.name)
                 << "(dynamic_cast<"
-                << fixTypeName(as->second.second,
-                               getNamespace(as->second.second),
+                << fixTypeName(as->remotePart.typeName,
+                               getNamespace(as->remotePart.typeName),
                                m_classInfo->packageName)
                 << "*>(obj));" << endl;
       m_indent--;
       *m_stream << getIndent() << "}" << endl;
       *m_stream << getIndent()
                 << "m_" << m_classInfo->className
-                << "2" << capitalizeFirstLetter(as->second.first)
+                << "2" << capitalizeFirstLetter(as->remotePart.name)
                 << "Statement->closeResultSet(rset);" << endl;
     }
   }
@@ -1309,34 +1309,34 @@ void CppCppOdbcCnvWriter::writeUpdateObjContent() {
 //=============================================================================
 void
 CppCppOdbcCnvWriter::writeSingleSetIntoStatement(QString statement,
-                                                 Member pair,
+                                                 Member mem,
                                                  int n,
                                                  bool isAssoc,
                                                  bool isEnum) {
   // deal with arrays of chars
-  bool isArray = pair.second.find('[') > 0;
+  bool isArray = mem.typeName.find('[') > 0;
   if (isArray) {
-    int i1 = pair.second.find('[');
-    int i2 = pair.second.find(']');
-    QString length = pair.second.mid(i1+1, i2-i1-1);
+    int i1 = mem.typeName.find('[');
+    int i2 = mem.typeName.find(']');
+    QString length = mem.typeName.mid(i1+1, i2-i1-1);
     *m_stream << getIndent() << fixTypeName("string", "", "")
-              << " " << pair.first << "S((const char*)" << "obj->"
-              << pair.first << "(), " << length << ");"
+              << " " << mem.name << "S((const char*)" << "obj->"
+              << mem.name << "(), " << length << ");"
               << endl;
   }
   *m_stream << getIndent()
             << "m_" << statement << "StatementParam"
             << n << " = ";
   if (isArray) {
-    *m_stream << pair.first << "S";
+    *m_stream << mem.name << "S";
   } else {
     if (isEnum)
       *m_stream << "(int)";
     *m_stream << "obj->"
-              << pair.first
+              << mem.name
               << "()";
     if (isAssoc && !isEnum) *m_stream << " ? obj->"
-                                      << pair.first
+                                      << mem.name
                                       << "()->id() : 0";
   }
   *m_stream << ";" << endl;
@@ -1350,25 +1350,25 @@ void CppCppOdbcCnvWriter::writeSingleGetFromSelect(Member mem,
                                                    bool isAssoc) {
   *m_stream << getIndent() ;
   // deal with arrays of chars
-  bool isArray = mem.second.find('[') > 0;
+  bool isArray = mem.typeName.find('[') > 0;
   if (isAssoc) {
-    *m_stream << "u_signed64 " << mem.first
+    *m_stream << "u_signed64 " << mem.name
               << "Id = ";
   } else {
     *m_stream << "object->set"
-              << capitalizeFirstLetter(mem.first)
+              << capitalizeFirstLetter(mem.name)
               << "(";
   }
   if (isArray) {
     *m_stream << "("
-              << mem.second.left(mem.second.find('['))
+              << mem.typeName.left(mem.typeName.find('['))
               << "*)";
   }
   *m_stream << "rset->get";
   if (isAssoc) {
     *m_stream << "Int";
   } else {
-    *m_stream << getOdbcType(mem.second);
+    *m_stream << getOdbcType(mem.typeName);
   }
   *m_stream << "(" << n << ")";
   if (isArray) *m_stream << ".data()";

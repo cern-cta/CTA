@@ -104,16 +104,16 @@ void CppCppStreamCnvWriter::writeCreateRepContent() {
        0 != mem;
        mem = members.next()) {
     *m_stream << getIndent() << "ad->stream()";
-    if (mem->second.find('[') > 0) {
-      QString sl = mem->second;
+    if (mem->typeName.find('[') > 0) {
+      QString sl = mem->typeName;
       sl = sl.left(sl.find(']'));
       sl = sl.right(sl.length() - sl.find('[') - 1);
       int l = atoi(sl.ascii());
       for (int i = 0; i < l; i++) {
-        *m_stream << " << obj->" << mem->first << "()[" << i << "]";
+        *m_stream << " << obj->" << mem->name << "()[" << i << "]";
       }
     } else {
-      *m_stream << " << obj->" << mem->first << "()";
+      *m_stream << " << obj->" << mem->name << "()";
     }
     *m_stream << ";" << endl;
   }
@@ -123,9 +123,9 @@ void CppCppStreamCnvWriter::writeCreateRepContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE && isEnum(as->second.second)) {
+    if (as->type.multiRemote == MULT_ONE && isEnum(as->remotePart.typeName)) {
       *m_stream << getIndent() << "ad->stream() << obj->"
-                << as->second.first << "();" << endl;
+                << as->remotePart.name << "();" << endl;
     }
   }
 }
@@ -160,36 +160,36 @@ void CppCppStreamCnvWriter::writeCreateObjContent() {
        0 != mem;
        mem = members.next()) {
     *m_stream << getIndent()
-              << fixTypeName(mem->second,
-                             getNamespace(mem->second),
+              << fixTypeName(mem->typeName,
+                             getNamespace(mem->typeName),
                              m_classInfo->packageName)
-              << " " << mem->first;
+              << " " << mem->name;
     if (isLastTypeArray()) *m_stream << arrayPart();
     *m_stream << ";" << endl
               << getIndent() << "ad->stream()";
-    if (mem->second.find('[') > 0) {
-      QString sl = mem->second;
+    if (mem->typeName.find('[') > 0) {
+      QString sl = mem->typeName;
       sl = sl.left(sl.find(']'));
       sl = sl.right(sl.length() - sl.find('[') - 1);
       int l = atoi(sl.ascii());
       for (int i = 0; i < l; i++) {
-        *m_stream << " >> " << mem->first << "[" << i << "]";
+        *m_stream << " >> " << mem->name << "[" << i << "]";
       }
     } else {
-      *m_stream << " >> " << mem->first;
+      *m_stream << " >> " << mem->name;
     }
     *m_stream << ";" << endl
               << getIndent() << "object->set"
-              << capitalizeFirstLetter(mem->first)
+              << capitalizeFirstLetter(mem->name)
               << "(";
     if (isLastTypeArray()) {
       *m_stream << "("
-                << fixTypeName(mem->second,
-                               getNamespace(mem->second),
+                << fixTypeName(mem->typeName,
+                               getNamespace(mem->typeName),
                                m_classInfo->packageName)
                 << "*)";
     }
-    *m_stream << mem->first << ");" << endl;
+    *m_stream << mem->name << ");" << endl;
   }
   // create a list of associations
   AssocList assocs = createAssocsList();
@@ -197,17 +197,17 @@ void CppCppStreamCnvWriter::writeCreateObjContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE && isEnum(as->second.second)) {
+    if (as->type.multiRemote == MULT_ONE && isEnum(as->remotePart.typeName)) {
       *m_stream << getIndent() << "int "
-                << as->second.first << ";" << endl
+                << as->remotePart.name << ";" << endl
                 << getIndent() << "ad->stream() >> "
-                << as->second.first << ";" << endl
+                << as->remotePart.name << ";" << endl
                 << getIndent() << "object->set"
-                << capitalizeFirstLetter(as->second.first)
-                << "((" << fixTypeName(as->second.second,
-                                       getNamespace(as->second.second),
+                << capitalizeFirstLetter(as->remotePart.name)
+                << "((" << fixTypeName(as->remotePart.typeName,
+                                       getNamespace(as->remotePart.typeName),
                                        m_classInfo->packageName)
-                << ")" << as->second.first << ");" << endl;
+                << ")" << as->remotePart.name << ");" << endl;
     }
   }
   // Return result
@@ -274,34 +274,34 @@ void CppCppStreamCnvWriter::writeMarshal() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE) {
       // don't consider enums
-      if (isEnum(as->second.second)) continue;
+      if (isEnum(as->remotePart.typeName)) continue;
       // One to one association
-      fixTypeName(as->second.second,
-                  getNamespace(as->second.second),
+      fixTypeName(as->remotePart.typeName,
+                  getNamespace(as->remotePart.typeName),
                   m_classInfo->packageName);
       fixTypeName("StreamCnvSvc", "castor::io", m_classInfo->packageName);
       *m_stream << getIndent()
                 << "cnvSvc()->marshalObject(obj->"
-                << as->second.first
+                << as->remotePart.name
                 << "(), address, alreadyDone);"
                 << endl;
-    } else if (as->first.first == MULT_N) {
+    } else if (as->type.multiRemote == MULT_N) {
       // One to n association
       *m_stream << getIndent() << "address->stream() << obj->"
-                << as->second.first << "().size();"
+                << as->remotePart.name << "().size();"
                 << endl << getIndent() << "for ("
                 << fixTypeName("vector", "", "")
                 << "<"
-                << fixTypeName(as->second.second,
-                               getNamespace(as->second.second),
+                << fixTypeName(as->remotePart.typeName,
+                               getNamespace(as->remotePart.typeName),
                                m_classInfo->packageName)
                 << "*>::iterator it = obj->"
-                << as->second.first
+                << as->remotePart.name
                 << "().begin();" << endl << getIndent()
                 << "     it != obj->"
-                << as->second.first
+                << as->remotePart.name
                 << "().end();" << endl << getIndent()
                 << "     it++) {"  << endl;
       m_indent++;
@@ -373,9 +373,9 @@ void CppCppStreamCnvWriter::writeUnmarshal() {
        0 != as;
        as = assocs.next()) {
     if (first &&
-        ((as->first.first == MULT_ONE &&
-          !isEnum(as->second.second)) ||
-         as->first.first == MULT_N)) {
+        ((as->type.multiRemote == MULT_ONE &&
+          !isEnum(as->remotePart.typeName)) ||
+         as->type.multiRemote == MULT_N)) {
       // Get the precise object
       *m_stream << getIndent() << "// Fill object with associations"
                 << endl << getIndent() << m_originalPackage
@@ -386,46 +386,46 @@ void CppCppStreamCnvWriter::writeUnmarshal() {
                 << endl;
       first = false;
     }
-    if (as->first.first == MULT_ONE &&
-        !isEnum(as->second.second)) {
+    if (as->type.multiRemote == MULT_ONE &&
+        !isEnum(as->remotePart.typeName)) {
       fixTypeName("StreamCnvSvc", "castor::io", m_classInfo->packageName);
       *m_stream << getIndent()
                 << "IObject* obj"
-                << capitalizeFirstLetter(as->second.first)
+                << capitalizeFirstLetter(as->remotePart.name)
                 << " = cnvSvc()->unmarshalObject(ad, newlyCreated);"
                 << endl << getIndent()
                 << "obj->set"
-                << capitalizeFirstLetter(as->second.first)
+                << capitalizeFirstLetter(as->remotePart.name)
                 << "(dynamic_cast<"
-                << fixTypeName(as->second.second,
-                               getNamespace(as->second.second),
+                << fixTypeName(as->remotePart.typeName,
+                               getNamespace(as->remotePart.typeName),
                                m_classInfo->packageName)
                 << "*>(obj"
-                << capitalizeFirstLetter(as->second.first)
+                << capitalizeFirstLetter(as->remotePart.name)
                 << "));" << endl;
-    } else if (as->first.first == MULT_N) {
+    } else if (as->type.multiRemote == MULT_N) {
       *m_stream << getIndent() << "unsigned int "
-                << as->second.first << "Nb;" << endl
+                << as->remotePart.name << "Nb;" << endl
                 << getIndent() << "ad.stream() >> "
-                << as->second.first << "Nb;" << endl
+                << as->remotePart.name << "Nb;" << endl
                 << getIndent()
                 << "for (unsigned int i = 0; i < "
-                << as->second.first << "Nb; i++) {" << endl;
+                << as->remotePart.name << "Nb; i++) {" << endl;
       m_indent++;
       fixTypeName("StreamCnvSvc", "castor::io", m_classInfo->packageName);
       *m_stream << getIndent()
                 << "IObject* obj"
-                << capitalizeFirstLetter(as->second.first)
+                << capitalizeFirstLetter(as->remotePart.name)
                 << " = cnvSvc()->unmarshalObject(ad, newlyCreated);"
                 << endl << getIndent()
                 << "obj->add"
-                << capitalizeFirstLetter(as->second.first)
+                << capitalizeFirstLetter(as->remotePart.name)
                 << "(dynamic_cast<"
-                << fixTypeName(as->second.second,
-                               getNamespace(as->second.second),
+                << fixTypeName(as->remotePart.typeName,
+                               getNamespace(as->remotePart.typeName),
                                m_classInfo->packageName)
                 << "*>(obj"
-                << capitalizeFirstLetter(as->second.first)
+                << capitalizeFirstLetter(as->remotePart.name)
                 << "));" << endl;
       m_indent--;
       *m_stream << getIndent() << "}" << endl;
