@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.21 $ $Date: 2002/09/27 06:21:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.22 $ $Date: 2002/09/27 06:30:43 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEQRY l "$Date: 2002/09/27 06:21:53 $"
+.TH STAGEQRY l "$Date: 2002/09/27 06:30:43 $"
 .SH NAME
 stageqry \- give the status of all staged tapes
 .SH SYNOPSIS
@@ -514,7 +514,7 @@ gives CASTOR's waiting queue content.
 outputs only entries that have this given reqid.
 .TP
 .BI \-\-retenp
-gives current retention period on disk. This period will be showed in terms of either maximum timestamp, or generic keywords that are: AS_LONG_AS_POSSIBLE and INFINITE_LIFETIME, or Expired. The CASTOR files lifetime can be changed using the \fBstagesetretenp\fP command. A retention period of INFINITE_LIFETIME guarantees that the corresponding entry will never be purged. A retention period of AS_LONG_AS_POSSIBLE says that the corresponding entry can be purged if there is missing space into internal disks. Another value specifies that the corresponding entry will be automatically removed if local time of the stager daemon exceeds printed value, or will be removed almost immediated if it says Expired.
+gives current retention period on disk. This period will be showed in terms of either maximum timestamp, or generic keywords that are: AS_LONG_AS_POSSIBLE and INFINITE_LIFETIME, or Expired. The CASTOR files lifetime can be changed using the \fBstagechng\fP command. A retention period of INFINITE_LIFETIME guarantees that the corresponding entry will never be purged. A retention period of AS_LONG_AS_POSSIBLE says that the corresponding entry can be purged if there is missing space into internal disks. Another value specifies that the corresponding entry will be automatically removed if local time of the stager daemon exceeds printed value, or will be removed almost immediated if it says Expired.
 .\" .TP
 .\" .BI \-\-side " sidenumber "
 .\" outputs only entries coming from multi-sided media (like DVD). Only with
@@ -624,7 +624,7 @@ stageqry \-T
 .br
 4	Configuration error.
 .SH SEE ALSO
-\fBstagechng\fP(3)
+\fBstagechng\fP(3), \fBstage_struct\fP(3)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
 
