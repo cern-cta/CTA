@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_entermodel.man,v $ $Revision: 1.4 $ $Date: 2000/02/16 10:04:45 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_entermodel.man,v $ $Revision: 1.5 $ $Date: 2000/03/05 16:57:22 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_ENTERMODEL 3 "$Date: 2000/02/16 10:04:45 $" CASTOR "vmgr Library Functions"
+.TH VMGR_ENTERMODEL 3 "$Date: 2000/03/05 16:57:22 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_entermodel \- enter a new model of cartridge in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -50,7 +50,8 @@ The named model exists already.
 The length of
 .I model
 exceeds
-.BR CA_MAXMODELLEN .
+.B CA_MAXMODELLEN
+or native_capacity <= 0.
 .TP
 .B ENOSPC
 The volume manager database is full.
