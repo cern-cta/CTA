@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.220 2002/09/20 12:33:29 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.221 2002/09/20 17:58:52 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.220 $ $Date: 2002/09/20 12:33:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.221 $ $Date: 2002/09/20 17:58:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1035,7 +1035,6 @@ int main(argc,argv)
 				if ((rc_upd_fileclass = upd_fileclass(NULL,stcp,2,0,0)) < 0) {
 					/* Try to fetch fileclass only unless record was cleared */
 					if (serrno == ESTCLEARED) {
-						stcp++;
 						continue;
 					}
 					upd_fileclass(NULL,stcp,4,0,0);
@@ -1044,7 +1043,6 @@ int main(argc,argv)
 				if ((rc_upd_fileclass = upd_fileclass(NULL,stcp,0,0,0)) < 0) {
 					/* Try to fetch fileclass only unless record was cleared */
 					if (serrno == ESTCLEARED) {
-						stcp++;
 						continue;
 					}
 					upd_fileclass(NULL,stcp,4,0,0);
