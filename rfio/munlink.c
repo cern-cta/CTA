@@ -1,5 +1,5 @@
 /*
- * $Id: munlink.c,v 1.8 2002/02/26 08:04:14 jdurand Exp $
+ * $Id: munlink.c,v 1.9 2002/05/23 10:03:31 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.8 $ $Date: 2002/02/26 08:04:14 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.9 $ $Date: 2002/05/23 10:03:31 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -388,7 +388,7 @@ int DLL_DECL rfio_munlink_reset()
     return(-1);
   }
   for (i = 0; i < MAXMCON; i++) {
-    if (munlink_tab[i].s >= 0) {
+    if ((munlink_tab[i].s >= 0) && (munlink_tab[i].host[0] != '\0')) {
         TRACE(3,"rfio","rfio_munlink_reset: Resetting socket fd=%d, host=%s\n", munlink_tab[i].s, munlink_tab[i].host);
         netclose(munlink_tab[i].s);
     }

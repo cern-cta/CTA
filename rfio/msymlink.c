@@ -1,5 +1,5 @@
 /*
- * $Id: msymlink.c,v 1.9 2002/03/06 10:25:35 jdurand Exp $
+ * $Id: msymlink.c,v 1.10 2002/05/23 10:03:31 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.9 $ $Date: 2002/03/06 10:25:35 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.10 $ $Date: 2002/05/23 10:03:31 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -396,7 +396,7 @@ int DLL_DECL rfio_msymlink_reset()
     return(-1);
   }
   for (i = 0; i < MAXMCON; i++) {
-    if (msymlink_tab[i].s >= 0) {
+    if ((msymlink_tab[i].s >= 0) && (msymlink_tab[i].host[0] != '\0')) {
         TRACE(3,"rfio","rfio_msymlink_reset: Resetting socket fd=%d, host=%s\n", msymlink_tab[i].s, msymlink_tab[i].host);
         netclose(msymlink_tab[i].s);
     }

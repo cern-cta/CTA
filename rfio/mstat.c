@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.24 2002/02/26 06:47:45 jdurand Exp $
+ * $Id: mstat.c,v 1.25 2002/05/23 10:03:31 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.24 $ $Date: 2002/02/26 06:47:45 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.25 $ $Date: 2002/05/23 10:03:31 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -453,7 +453,7 @@ int DLL_DECL rfio_mstat_reset()
     return(-1);
   }
   for (i = 0; i < MAXMCON; i++) {
-    if (mstat_tab[i].s >= 0) {
+    if ((mstat_tab[i].s >= 0) && (mstat_tab[i].host[0] != '\0')) {
         TRACE(3,"rfio","rfio_mstat_reset: Resetting socket fd=%d, host=%s\n", mstat_tab[i].s, mstat_tab[i].host);
         netclose(mstat_tab[i].s);
     }
