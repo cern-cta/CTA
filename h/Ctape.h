@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.40 2002/11/06 10:06:51 baud Exp $
+ * $Id: Ctape.h,v 1.41 2002/11/28 06:43:45 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.40 $ $Date: 2002/11/06 10:06:51 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.41 $ $Date: 2002/11/28 06:43:45 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -292,7 +292,7 @@ struct tptab {		/* tape drive table */
 	char	dgn[CA_MAXDGNLEN+1];	/* device group name */
 	char	devtype[CA_MAXDVTLEN+1];	/* device type */
 	char	dvrname[7];	/* driver name */
-	char	loader[14];	/* manual, robot, fhs, acs or lmcp */
+	char	loader[CA_MAXRBTNAMELEN+1];	/* manual, robot, fhs, acs or lmcp */
 	int	ux;		/* index in drive table tptab */
 	int	devnum;		/* number of devices defined for this drive */
 	struct tpdev *devp;	/* pointer to tape device descriptions */
