@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrdeletelibrary.man,v $ $Revision: 1.1 $ $Date: 2002/01/17 08:48:34 $ CERN IT-DS/HSM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrdeletelibrary.man,v $ $Revision: 1.2 $ $Date: 2002/08/23 12:43:04 $ CERN IT-DS/HSM Jean-Philippe Baud
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH VMGRDELETELIBRARY 1 "$Date: 2002/01/17 08:48:34 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRDELETELIBRARY 1 "$Date: 2002/08/23 12:43:04 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrdeletelibrary \- remove the definition of a tape library from the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -15,11 +15,14 @@ removes the definition of a tape library from the CASTOR Volume Manager.
 .I library_name
 is the name of the tape library.
 It must be at most CA_MAXTAPELIBLEN characters long.
+.LP
+This command requires ADMIN privilege in the Cupv database.
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or >0 if the operation
 failed.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
+.BR Cupvlist(1) ,
 .BR vmgr_deletelibrary(3) ,
 .B vmgrenterlibrary(1)
 .SH AUTHOR

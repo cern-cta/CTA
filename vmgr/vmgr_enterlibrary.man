@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_enterlibrary.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 2001 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr_enterlibrary.man,v $ $Revision: 1.3 $ $Date: 2002/08/23 12:43:03 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_ENTERLIBRARY 3 "$Date: 2001/09/26 09:13:56 $" CASTOR "vmgr Library Functions"
+.TH VMGR_ENTERLIBRARY 3 "$Date: 2002/08/23 12:43:03 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_enterlibrary \- define a new tape library in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -23,6 +23,8 @@ It must be at most CA_MAXTAPELIBLEN characters long.
 .TP
 .I capacity
 is the total number of slots.
+.LP
+This function requires ADMIN privilege in the Cupv database.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
@@ -60,6 +62,7 @@ Communication error.
 Volume manager is not running or is being shutdown.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
+.BR Cupvlist(1) ,
 .BR vmgr_deletelibrary(3) ,
 .B vmgr_modifylibrary(3)
 .SH AUTHOR

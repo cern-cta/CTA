@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_modifymodel.man,v $ $Revision: 1.6 $ $Date: 2002/05/30 10:10:31 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_modifymodel.man,v $ $Revision: 1.7 $ $Date: 2002/08/23 12:43:04 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_MODIFYMODEL 3 "$Date: 2002/05/30 10:10:31 $" CASTOR "vmgr Library Functions"
+.TH VMGR_MODIFYMODEL 3 "$Date: 2002/08/23 12:43:04 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_modifymodel \- modify an existing model of cartridge in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -38,6 +38,8 @@ Only
 .I model
 is mandatory. When a pointer to an alphanumeric field is NULL or a numeric field
 value is negative or zero, the field is not modified.
+.LP
+This function requires ADMIN privilege in the Cupv database.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
@@ -71,6 +73,7 @@ Communication error.
 Volume manager is not running or is being shutdown.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
+.BR Cupvlist(1) ,
 .B vmgr_entermodel(3)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrenterdenmap.man,v $ $Revision: 1.3 $ $Date: 2001/09/26 09:13:57 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgrenterdenmap.man,v $ $Revision: 1.4 $ $Date: 2002/08/23 12:43:05 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRENTERDENMAP 1 "$Date: 2001/09/26 09:13:57 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRENTERDENMAP 1 "$Date: 2002/08/23 12:43:05 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrenterdenmap \- enter a new triplet model/media_letter/density in the CASTOR
 Volume Manager
@@ -44,6 +44,8 @@ is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood
 .I model
 is the model of cartridge.
 It must be at most CA_MAXMODELLEN characters long.
+.LP
+This command requires ADMIN privilege in the Cupv database.
 .SH EXAMPLES
 .nf
 .ft CW
@@ -56,6 +58,7 @@ This program returns 0 if the operation was successful or >0 if the operation
 failed.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
+.BR Cupvlist(1) ,
 .B vmgr_enterdenmap(3)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

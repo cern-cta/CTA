@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrdeletedenmap.man,v $ $Revision: 1.1 $ $Date: 2002/01/18 09:02:20 $ CERN IT-DS/HSM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrdeletedenmap.man,v $ $Revision: 1.2 $ $Date: 2002/08/23 12:43:04 $ CERN IT-DS/HSM Jean-Philippe Baud
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH VMGRDELETEDENMAP 1 "$Date: 2002/01/18 09:02:20 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRDELETEDENMAP 1 "$Date: 2002/08/23 12:43:04 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrdeletedenmap \- delete a triplet model/media_letter/density in the CASTOR
 Volume Manager
@@ -27,11 +27,14 @@ is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood
 .I model
 is the name of the media model.
 It must be at most CA_MAXMODELLEN characters long.
+.LP
+This command requires ADMIN privilege in the Cupv database.
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or >0 if the operation
 failed.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
+.BR Cupvlist(1) ,
 .BR vmgr_deletedenmap(3) ,
 .B vmgrenterdenmap(1)
 .SH AUTHOR
