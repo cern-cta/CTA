@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_ConvertData.c,v $ $Revision: 1.1 $ $Date: 1999/12/02 17:22:02 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_ConvertData.c,v $ $Revision: 1.2 $ $Date: 1999/12/03 08:42:32 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -127,7 +127,7 @@ int rtcpd_FixToVar(char *inbuf,
         p = inbuf_p + ((remlen > recordlength) ? recordlength : remlen) - 1;
         while ( (p >= inbuf_p) && *p == ' ' ) p--;
         nb_bytes = p - inbuf_p +1;
-        if ( nb_bytes > 0 ) memcpy(outbuf,inbuf,nb_bytes);
+        if ( nb_bytes > 0 ) memcpy(outbuf_p,inbuf_p,nb_bytes);
         outbuf_p += nb_bytes;
         *(outbuf_p++) = '\n';
         remlen -= recordlength;
