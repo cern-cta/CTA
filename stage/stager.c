@@ -720,7 +720,7 @@ int stagewrt_castor_hsm_file() {
 	for (stcp = stcs; stcp < stce; stcp++, i++) {
       if (rfio_stat (stcp->ipath, &statbuf) < 0) {
         sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_stat",
-                 sstrerror (serrno));
+                 rfio_serror());
         RETURN (USERR);
       }
       if (statbuf.st_size == 0) {
