@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_modifymodel.c,v $ $Revision: 1.3 $ $Date: 2000/04/03 12:40:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_modifymodel.c,v $ $Revision: 1.4 $ $Date: 2000/04/11 13:43:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_modifymodel - modify an existing model of cartridge */
@@ -75,7 +75,7 @@ vmgr_modifymodel(const char *model, char *media_letter, int native_capacity, int
 	if (media_letter) {
 		marshall_STRING (sbp, media_letter);
 	} else {
-		marshall_STRING (sbp, "");
+		marshall_STRING (sbp, " ");
 	}
 	marshall_LONG (sbp, native_capacity);
 	marshall_LONG (sbp, media_cost);

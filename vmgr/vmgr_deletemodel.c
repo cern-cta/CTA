@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_deletemodel.c,v $ $Revision: 1.5 $ $Date: 2000/04/03 12:38:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_deletemodel.c,v $ $Revision: 1.6 $ $Date: 2000/04/11 13:43:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_deletemodel - delete a model of cartridge */
@@ -75,7 +75,7 @@ vmgr_deletemodel(const char *model, char *media_letter)
 	if (media_letter) {
 		marshall_STRING (sbp, media_letter);
 	} else {
-		marshall_STRING (sbp, "");
+		marshall_STRING (sbp, " ");
 	}
  
 	msglen = sbp - sendbuf;
