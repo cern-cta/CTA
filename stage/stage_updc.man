@@ -1,10 +1,10 @@
-.\" $Id: stage_updc.man,v 1.1 2000/05/15 13:00:42 jdurand Exp $
+.\" $Id: stage_updc.man,v 1.2 2000/05/15 13:12:47 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_updc.man,v $ $Revision: 1.1 $ $Date: 2000/05/15 13:00:42 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_updc.man,v $ $Revision: 1.2 $ $Date: 2000/05/15 13:12:47 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGE_UPDC "3" "$Date: 2000/05/15 13:00:42 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_UPDC "3" "$Date: 2000/05/15 13:12:47 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_updc \- update the stager catalog
 .SH SYNOPSIS
@@ -19,7 +19,7 @@ The \fBstage_updc_filcp\fP and \fBstage_updc_tppos\fP API methods calls for an u
 .I stager
 catalog.
 .P
-The \fBstage_updc_tppos\fP method is typically used to indicate to the stager that there has been a successful tape positionning, whereas \fBstage_updc_filcp\fB indicates to the stager that the current subrequest corresponding to global request
+The \fBstage_updc_tppos\fP method is typically used to indicate to the stager that there has been a successful tape positionning, whereas \fBstage_updc_filcp\fP indicates to the stager that the current subrequest corresponding to global request
 .BI stageid
 is over.
 
