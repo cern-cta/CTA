@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.48 $ $Date: 2000/03/29 16:51:47 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.49 $ $Date: 2000/03/31 15:34:19 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -310,7 +310,8 @@ static int rtcpd_PrintCmd(tape_list_t *tape) {
                         (int)(filereq->maxsize/(1024*1024)));
             if ( filereq->position_method == TPPOSIT_FSEQ && qstr != NULL &&
                  strlen(qstr) + 6 < CA_MAXLINELEN ) {
-                if ( filereq->tape_fseq == fseq + 1 ) {
+                if ( filereq->tape_fseq == fseq + 1 &&
+                     (filereq->concat & (NOCONCAT_TO_EOD|CONCAT_TO_EOD)==0) ) {
                     if ( qstr[strlen(qstr)-1] != '-' )
                         sprintf(&qstr[strlen(qstr)],"-");
                 } else {
@@ -1059,7 +1060,7 @@ int rtcpd_WaitProcStatus(int what) {
     } 
     rtcp_log(LOG_DEBUG,"rtcpd_WaitProcStatus() current: %d, waiting for %d\n",
              proc_cntl.ProcError,what);
-    while ( (proc_cntl.ProcError & what) == 0 ) {
+    while ((proc_cntl.ProcError & (what|RTCP_FAILED|RTCP_RESELECT_SERV)) == 0) {
         rc = Cthread_cond_wait_ext(proc_cntl.ProcError_lock);
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"rtcpd_WaitProcStatus(): Cthread_wait_cond_ext(): %s\n",
