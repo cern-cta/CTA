@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.65 2000/12/22 13:54:09 jdurand Exp $
+ * $Id: poolmgr.c,v 1.66 2001/01/12 08:34:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.65 $ $Date: 2000/12/22 13:54:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.66 $ $Date: 2001/01/12 08:34:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -162,6 +162,11 @@ int getpoolconf(defpoolname)
 	if (nbmigrator)
 		migrators = (struct migrator *)
 			calloc (nbmigrator, sizeof(struct migrator));
+
+	/* Initialize sensible variables */
+	for (i = 0; i < nbmigrator; i++) {
+		migrators[i].migreqtime_last_end = time(NULL);
+	}
 
 	/* 2nd pass: count number of members in each pool and
 	   store migration policies parameters */
@@ -715,7 +720,7 @@ int cleanpool(poolname)
 		stglogit (func, STG02, "cleaner", "execl", sys_errlist[errno]);
 		exit (SYERR);
 	} else
-		pool_p->cleanreqtime = time (0);
+		pool_p->cleanreqtime = time(NULL);
 	return (0);
 }
 
@@ -809,7 +814,7 @@ int ismigovl(pid, status)
 	if (! found) return (0);
 	pool_p->migr->mig_pid = 0;
 	pool_p->migr->migreqtime = 0;
-	pool_p->migr->migreqtime_last_end = time(0);
+	pool_p->migr->migreqtime_last_end = time(NULL);
 	return (1);
 }
 
@@ -1448,14 +1453,14 @@ void checkfile2mig()
 			continue;
 		if (((pool_p->migr->migp->data_mig_threshold > 0) && (pool_p->migr->space_canbemig > pool_p->migr->migp->data_mig_threshold)) ||
 			((pool_p->migr->migp->freespace_threshold > 0) && ((pool_p->free * 100) < (pool_p->capacity * pool_p->migr->migp->freespace_threshold))) ||
-			((pool_p->migr->migp->time_interval > 0) && ((time(0) - pool_p->migr->migreqtime_last_end) > pool_p->migr->migp->time_interval))) {
+			((pool_p->migr->migp->time_interval > 0) && ((time(NULL) - pool_p->migr->migreqtime_last_end) > pool_p->migr->migp->time_interval))) {
           char tmpbuf1[21];
           char tmpbuf2[21];
           char tmpbuf3[21];
           stglogit("checkfile2mig", "STG98 - Predicates (OR of the following) returns true:\n");
           stglogit("checkfile2mig", "STG98 - 1) (%s) space_canbemig=%s > data_mig_threshold=%s ?\n", pool_p->migr->migp->data_mig_threshold > 0 ? "ON" : "OFF", u64tostru(pool_p->migr->space_canbemig, tmpbuf1, 0), u64tostru(pool_p->migr->migp->data_mig_threshold, tmpbuf2, 0));
           stglogit("checkfile2mig", "STG98 - 2) (%s) free=%s < (capacity=%s * freespace_threshold=%d%%)=%s ?\n", pool_p->migr->migp->freespace_threshold > 0 ? "ON" : "OFF", u64tostru(pool_p->free, tmpbuf3, 0), u64tostru(pool_p->capacity, tmpbuf1, 0), pool_p->migr->migp->freespace_threshold, u64tostru((pool_p->capacity * pool_p->migr->migp->freespace_threshold) / ((u_signed64) 100), tmpbuf2, 0));
-          stglogit("checkfile2mig", "STG98 - 3) (%s) last migrator ended %d seconds ago > %d seconds ?\n", pool_p->migr->migp->time_interval > 0 ? "ON" : "OFF", (int) (time(0) - pool_p->migr->migreqtime_last_end), pool_p->migr->migp->time_interval);
+          stglogit("checkfile2mig", "STG98 - 3) (%s) last migrator ended %d seconds ago > %d seconds ?\n", pool_p->migr->migp->time_interval > 0 ? "ON" : "OFF", (int) (time(NULL) - pool_p->migr->migreqtime_last_end), pool_p->migr->migp->time_interval);
 				migrate_files (pool_p->migr);
 		}
 	}
@@ -1503,7 +1508,7 @@ int migrate_files(migr_p)
                 migr_p->nbfiles_beingmig,
                 u64tostru(migr_p->space_beingmig, tmpbuf, 0),
                 pid);
-      migr_p->migreqtime = time (0);
+      migr_p->migreqtime = time(NULL);
       if ((migr_p->nbfiles_beingmig == 0) || (migr_p->space_beingmig == 0)) {
         int j;
         struct pool *pool_n;
