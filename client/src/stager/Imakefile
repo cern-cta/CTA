@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 2004/10/18 21:46:45 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Date: 2004/10/22 20:12:30 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -58,7 +58,7 @@ LDLIBS = wsock32.lib ws2_32.lib advapi32.lib
 #endif
 #endif
 
-CFLAGS = $(CCOPTIM) -I$(INCLUDES) -I$(INCLUDES_CPP) $(THREADFLAGS) $(STAGEFLAGS) $(STAGEHOST)
+CFLAGS = $(CCOPTIM) -I$(INCLUDES) -I$(INCLUDES_CPP) $(SECURITYFLAG) $(THREADFLAGS) $(STAGEFLAGS) $(STAGEHOST)
 #ifdef STAGE_LINK_STATIC
 DEPLIB = DepLibraryTargetName(lib,shift)
 GLOBLIB = -L../lib -lshift
@@ -81,10 +81,15 @@ DEPLIB += DepSharedLibraryTargetName(shlib,castorCommonOra)
 GLOBLIB += -L../shlib -lcastorCommonOra
 #endif
 
+#if BuildSecurity
+SECURITYFLAG=-DCSEC
+GLOBLIB += -ldl
+#endif
+
 STAGER_OBJS = stager.Osuf
 OBSOLETE_OBJS = stage_updc.Osuf stage_errmsg.Osuf stage_util.Osuf stage_api.Osuf buildupath.Osuf send2stgd_api.Osuf send2stgd_compat.Osuf
 
-STAGERLIB_OBJS = stager_api.Osuf $(OBSOLETE_OBJS)
+STAGERLIB_OBJS = stager_admin_api.Osuf $(OBSOLETE_OBJS)
 
 all: LibraryTargetName(stager) $(PROGS_STAGER)
 
