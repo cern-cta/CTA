@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.147 2001/07/19 08:21:22 jdurand Exp $
+ * $Id: poolmgr.c,v 1.148 2001/07/23 11:16:37 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.147 $ $Date: 2001/07/19 08:21:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.148 $ $Date: 2001/07/23 11:16:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -628,7 +628,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
       stglogit (func,".... GC %s\n",
 				*(pool_p->gc) != '\0' ? pool_p->gc : "<none>");
       stglogit (func,".... NO_FILE_CREATION %s\n",
-				(pool_p->no_file_creation ? "NO (== 0)" : "YES (!= 0)"));
+				(pool_p->no_file_creation ? "YES (!= 0)" : "NO (== 0)"));
       if (pool_p->max_setretenp < 0) {
         stglogit (func,".... MAX_SETRETENP <none>\n");
       } else {
