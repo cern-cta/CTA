@@ -532,12 +532,12 @@ BEGIN
       AND status = 2 -- TAPECOPY_WAITINSTREAMS
       AND ROWNUM < 2;
   IF nbRes > 0 THEN
-    UPDATE Stream SET status = 0 WHERE id = sid; -- STREAM_PENDING
+    UPDATE Stream SET status = 0, tape = 0 WHERE id = sid; -- STREAM_PENDING
   ELSE
     DELETE FROM Stream2TapeCopy WHERE Parent = sid;
     DELETE FROM Stream WHERE id = sid;
-    UPDATE Tape SET Stream = 0 WHERE Stream = sid;
   END IF;
+  UPDATE Tape SET Stream = 0 WHERE Stream = sid;
 END;
 
 /* PL/SQL method implementing bestFileSystemForJob */
