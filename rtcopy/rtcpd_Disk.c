@@ -4,11 +4,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.24 $ $Date: 2000/01/19 18:15:56 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.25 $ $Date: 2000/01/21 11:43:29 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
- * rtcpd_MainCntl.c - RTCOPY server main control thread
+ * rtcpd_Disk.c - RTCOPY server disk IO thread 
  */
 
 #include <stdlib.h>
@@ -93,6 +93,7 @@ int failure = -1;
 
 static int DiskIOstarted() {
     int rc;
+
     rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"DiskIOstarted(): Cthread_mutex_lock_ext(proc_cntl): %s\n",
@@ -111,6 +112,46 @@ static int DiskIOstarted() {
     rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"DiskIOstarted(): Cthread_mutex_unlock_ext(proc_cntl): %s\n",
+            sstrerror(serrno));
+        rtcpd_SetProcError(RTCP_FAILED);
+        return(-1);
+    }
+    return(0);
+}
+
+int rtcpd_WaitForPosition(tape_list_t *tape, file_list_t *file) {
+    int rc;
+
+    if ( tape == NULL || file == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+    if ( tape->tapereq.mode == WRITE_ENABLE ||
+         file->filereq.stageID == '\0' ) return(0);
+
+    rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"rtcpd_WaitForPosition(): Cthread_mutex_lock_ext(proc_cntl): %s\n",
+            sstrerror(serrno));
+        rtcpd_SetProcError(RTCP_FAILED);
+        return(-1);
+    }
+    while ( file->filereq.proc_status == RTCP_WAITING ) {
+        rc = Cthread_cond_wait_ext(proc_cntl.cntl_lock);
+        if ( rc == -1 ) {
+            rtcp_log(LOG_ERR,"rtcpd_WaitForPosition(): Cthread_cond_broadcast_ext(proc_cntl) : %s\n", 
+                sstrerror(serrno));
+            rtcpd_SetProcError(RTCP_FAILED);
+            return(-1);
+        }
+        if ( (rtcpd_CheckProcError() & RTCP_FAILED) != 0 ) {
+            (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+            return(0);
+        }
+    }
+    rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"rtcpd_WaitForPosition(): Cthread_mutex_lock_ext(proc_cntl): %s\n",
             sstrerror(serrno));
         rtcpd_SetProcError(RTCP_FAILED);
         return(-1);
@@ -1174,8 +1215,13 @@ static int DiskToMemory(int disk_fd, int pool_index,
     disk_fd = -1;
     severity = RTCP_OK;
     /*
-    DK_STATUS(RTCP_PS_STAGEUPDC);
-    (void)rtcpd_stageupdc(tape,file);
+     * For a stagein request (tape read from a stager) we must wait
+     * for the stageupdc after the tape position (in tapeIOthread)
+     * since the stager may have selected a new path.
+     * We have to be careful with setting processing error. If we
+    DK_STATUS(RTCP_PS_WAITMTX);
+    rc = rtcpd_WaitForPosition(tape, file);
+    DK_STATUS(RTCP_PS_NOBLOCKING);
     CHECK_PROC_ERR(file->tape,file,"rtcpd_WaitForPosition() error");
     if ( rc == 0 ) rc = DiskFileOpen(pool_index,tape,file);
     if ( (severity & RTCP_EOD) == 0 ) {

@@ -4,11 +4,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.14 $ $Date: 2000/01/19 11:02:11 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.15 $ $Date: 2000/01/21 11:43:32 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
- * rtcpd_MainCntl.c - RTCOPY server main control thread
+ * rtcpd_Tape.c - RTCOPY server tape IO thread
  */
 
 
@@ -71,6 +71,45 @@ extern int failure;
 
 static int last_block_done = 0;
 
+/*
+ * Signal to disk IO thread that file has been positioned (tape read with
+ * stager only).
+ */
+int rtcpd_SignalFilePositioned(tape_list_t *tape, file_list_t *file) {
+    int rc;
+
+    if ( tape == NULL || file == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+    if ( tape->tapereq.mode == WRITE_ENABLE ||
+         file->filereq.stageID == '\0' ) return(0);
+    rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_mutex_lock_ext(p
+roc_cntl): %s\n",
+            sstrerror(serrno));
+        rtcpd_SetProcError(RTCP_FAILED);
+        return(-1);
+    }
+    rc = Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_cond_broadcast_e
+xt(proc_cntl): %s\n",
+            sstrerror(serrno));
+        rtcpd_SetProcError(RTCP_FAILED);
+        return(-1);
+    }
+    rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_mutex_unlock_ext
+(proc_cntl): %s\n",
+                 sstrerror(serrno));
+        rtcpd_SetProcError(RTCP_FAILED);
+        return(-1);
+    }
+    return(0);
+}
 
 /*
  * Read from tape to memory
@@ -1098,6 +1137,12 @@ void *tapeIOthread(void *arg) {
                 TP_STATUS(RTCP_PS_STAGEUPDC);
                 rc = rtcpd_stageupdc(nexttape,nextfile);
                 TP_STATUS(RTCP_PS_NOBLOCKING);
+                CHECK_PROC_ERR(NULL,nextfile,"rtcpd_stageupdc() error");
+
+                TP_STATUS(RTCP_PS_WAITMTX);
+                rc = rtcpd_SignalFilePositioned(nexttape,nextfile);
+                TP_STATUS(RTCP_PS_NOBLOCKING);
+                CHECK_PROC_ERR(NULL,nextfile,"rtcpd_SignalFilePositioned() error");
 
                 /*
                  * Open the tape file
