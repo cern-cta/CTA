@@ -1,24 +1,10 @@
 /*
- * $Id: getuser.c,v 1.4 1999/07/29 10:48:56 obarring Exp $
- * $Log: getuser.c,v $
- * Revision 1.4  1999/07/29 10:48:56  obarring
- * Fixed infile declaration again...
- *
- * Revision 1.3  1999/07/29 07:40:41  obarring
- * Fix infile declaration
- *
- * Revision 1.2  1999/07/23 12:13:23  obarring
- * Make MT safe
- *
- */
-
-/*
- * Copyright (C) 1994-1999 by CERN IT-PDP/DM
+ * Copyright (C) 1994-1999 by CERN IT-PDP/DC
  * All rights reserved
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: getuser.c,v 1.4 1999/07/29 10:48:56 obarring Exp $";
+static char cvsId[] = "@(#)$RCSfile: getuser.c,v $ $Revision: 1.5 $ $Date: 1999/10/14 14:54:47 $ CERN IT-PDP/DC Felix Hassine";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -29,6 +15,9 @@ static char cvsId[] = "$Id: getuser.c,v 1.4 1999/07/29 10:48:56 obarring Exp $";
 #include <serrno.h>
 #include <log.h>
 
+#if defined(_WIN32)
+char *getenv();
+#endif
 #if !defined(linux)
 extern char     *sys_errlist[] ;        /* System error list  */
 #endif
