@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlflogstore.c,v $ $Revision: 1.4 $ $Date: 2003/11/06 07:27:10 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlflogstore.c,v $ $Revision: 1.5 $ $Date: 2003/12/28 12:01:59 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -43,9 +43,10 @@ static char sccsid[] = "@(#)$RCSfile: dlflogstore.c,v $ $Revision: 1.4 $ $Date: 
 #define	  DLF_KEY_MSGN   8
 #define	  DLF_KEY_MSG    9
 #define	  DLF_KEY_RQID  10
-#define	  DLF_KEY_NSINV 11
-#define	  DLF_KEY_SRQID 12
-#define	  DLF_KEY_TPVID 13
+#define	  DLF_KEY_SRQID 11
+#define	  DLF_KEY_TPVID 12
+#define   DLF_KEY_CNS   13
+#define   DLF_KEY_FID   14
 
 int DLL_DECL dlf_get_pair _PROTO((FILE*, char*, char*));
 int DLL_DECL dlf_iskeyword _PROTO((const char*));
@@ -70,7 +71,8 @@ static struct _dlf_keyword keywords[] = {
 	  { DLF_KEY_MSGN, "MSGN" },
 	  { DLF_KEY_MSG,  "MSG" },
 	  { DLF_KEY_RQID, "RQID" },
-	  { DLF_KEY_NSINV,"NSINV" },
+	  { DLF_KEY_CNS,  "CNS" },
+          { DLF_KEY_FID,  "FID" },
 	  { DLF_KEY_SRQID,"DLF.SRQID*" },
 	  { DLF_KEY_TPVID,"DLF.TPVID*" },
 	  {             0,"" } /* End of list */
@@ -303,6 +305,14 @@ int main(argc, argv)
 	    }
 	    strcpy (log_message.hostname, par_str_val);
 	    break;
+	  case DLF_KEY_CNS:
+	    if (strlen(par_str_val) > CA_MAXHOSTNAMELEN) {
+	      rv = -1;
+	      serrno = EDLFLOGFORMAT;
+	      break;
+	    }
+	    strcpy (log_message.ns_fileid.server, par_str_val);
+	    break;
 	  case DLF_KEY_LVL:
 	    for (i = 0; g_dlf_levels[i].lvl_id != 0 && strcmp(par_str_val, g_dlf_levels[i].lvl_name) != 0 ; i++);
 	    log_message.severity = g_dlf_levels[i].lvl_id;
@@ -351,8 +361,8 @@ int main(argc, argv)
 	  case DLF_KEY_RQID:
 	    rv = dlf_hex2uuid( par_str_val, log_message.request_id );
 	    break;
-	  case DLF_KEY_NSINV:
-	    rv = dlf_hex2u64 ( par_str_val, &log_message.ns_invariant );
+	  case DLF_KEY_FID:
+	    rv = dlf_hex2u64 ( par_str_val, &log_message.ns_fileid.fileid );
 	    break;
 	  case DLF_KEY_SRQID:
 	    rv = dlf_hex2uuid( par_str_val, sub_request_id );

@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.2 $ $Date: 2003/10/10 11:35:56 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.3 $ $Date: 2003/12/28 12:01:59 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -455,6 +455,44 @@ DBLISTPTR* dblistptr;
         }
 }
 
+dlf_get_ns_host_id (dbfd, hostname, host_id, dblistptr)
+struct dlf_dbfd* dbfd;
+const char* hostname;
+int* host_id;
+DBLISTPTR* dblistptr;
+{
+
+	char func[23];
+        struct sqlca sqlca;
+        EXEC SQL DECLARE l_ns_hostid_cursor CURSOR FOR
+                SELECT ns_host_id
+                FROM dlf_ns_host_map
+                WHERE ns_host_name = :hostname;
+
+	strcpy(func, "dlf_get_ns_host_id");
+
+        EXEC SQL OPEN l_ns_hostid_cursor;
+        if (sqlca.sqlcode) {
+                dlflogit (func, "OPEN CURSOR error: %.*s\n",
+                        sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+                serrno = SEINTERNAL;
+                return (-1);
+        }
+
+        EXEC SQL FETCH l_ns_hostid_cursor INTO :*host_id;
+        switch (sqlca.sqlcode) {
+        case 0:
+                return(0);
+        case 1403:
+                return(1);
+        default:
+                dlflogit(func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+                        sqlca.sqlerrm.sqlerrmc);
+                serrno = SEINTERNAL;
+                return(-1);
+        }
+}
+
 dlf_get_curr_host_sequence(dbfd, seq_no)
 struct dlf_dbfd *dbfd;
 int *seq_no;
@@ -489,6 +527,40 @@ int *seq_no;
         }
 }
 
+dlf_get_curr_ns_host_sequence(dbfd, seq_no)
+struct dlf_dbfd *dbfd;
+int *seq_no;
+{
+        char func[32];
+        struct sqlca sqlca;
+        EXEC SQL DECLARE l_ns_hostseq_cursor CURSOR FOR
+                SELECT ns_host_seq.currval
+                FROM dual;
+
+        strcpy(func, "dlf_get_curr_ns_host_sequence");
+
+        EXEC SQL OPEN l_ns_hostseq_cursor;
+        if (sqlca.sqlcode) {
+                dlflogit (func, "OPEN CURSOR error: %.*s\n",
+                        sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+                serrno = SEINTERNAL;
+                return(-1);
+        }
+
+        EXEC SQL FETCH l_ns_hostseq_cursor INTO :*seq_no;
+        switch (sqlca.sqlcode) {
+        case 0:
+                return(0);
+        case 1403:
+                return(1);
+        default:
+                dlflogit(func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+                        sqlca.sqlerrm.sqlerrmc);
+                serrno = SEINTERNAL;
+                return(-1);
+        }
+}
+
 dlf_insert_message_entry(dbfd, log_message)
 struct dlf_dbfd *dbfd;
 dlf_log_message_t *log_message;
@@ -496,6 +568,7 @@ dlf_log_message_t *log_message;
 
 	int rv;
 	int host_id;
+	int ns_host_id;
 	char func[32];
 	char rq_id_str[33];
 	char subrq_id_str[33];
@@ -557,6 +630,49 @@ dlf_log_message_t *log_message;
 		return (-1);
 	    }
 	}
+	/* Try to obtain the name server host id from the database */
+	rv =  dlf_get_ns_host_id (dbfd, log_message->ns_fileid.server, &ns_host_id, &dblistptr);
+
+	if (rv < 0)
+	  return (-1);
+	if (rv == 1) { /* Not found in the table */
+
+	    /* Try to insert new host in the table */
+
+	    EXEC SQL LOCK dlf_ns_host_map IN EXCLUSIVE MODE;
+	    EXEC SQL INSERT INTO dlf_ns_host_map (ns_host_id, ns_host_name)
+                VALUES (ns_host_seq.nextval, :log_message->ns_fileid.server);
+	    serrno = 0;
+	    if (sqlca.sqlcode) {
+		switch (sqlca.sqlcode)
+		{
+	    	    case -1:
+			serrno = EEXIST;
+			break;
+		    case -1631:
+		    case -1632:
+		    case -1654:
+			serrno = ENOSPC;
+			break;
+	    	    default:
+			dlflogit (func, "INSERT name server host error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+			sqlca.sqlerrm.sqlerrmc);
+			serrno = SEINTERNAL;
+	    	}
+	    	if (serrno != EEXIST) return (-1);
+	    }
+	    /* Obtain host id */
+	    if (serrno == EEXIST) {
+		rv =  dlf_get_ns_host_id (dbfd, log_message->ns_fileid.server, &ns_host_id, &dblistptr);
+	    }
+	    else {
+	        rv = dlf_get_curr_ns_host_sequence(dbfd, &ns_host_id);
+	    }
+ 	    if (rv != 0) {
+		dlflogit (func, "Get NS HOST ID Error.\n");
+		return (-1);
+	    }
+	}
 	/* Convert uuid to hex string */
 	suuid = dlf_uuid2hex(log_message->request_id, rq_id_str, sizeof(rq_id_str));
 	if (suuid == NULL) {
@@ -568,14 +684,14 @@ dlf_log_message_t *log_message;
 	msn = log_message->message_no;
 	fac = log_message->facility_no;
 	sev = log_message->severity;
-	(void) u64tostr (log_message->ns_invariant, nsi_str, -1);
+	(void) u64tostr (log_message->ns_fileid.fileid, nsi_str, -1);
 
 	EXEC SQL INSERT INTO dlf_messages 
-	   (msg_seq_no, time, time_usec, req_id, host_id, facility,
-	   severity, msg_no, pid, thread_id, ns_invariant)
+	   (msg_seq_no, time, time_usec, req_id, host_id, ns_host_id, facility,
+	   severity, msg_no, pid, thread_id, ns_file_id)
 	   VALUES
 	   (message_seq.nextval, TO_DATE(:log_message->time, 'YYYYMMDDHH24MISS'),
-	   :log_message->time_usec, :rq_id_str, :host_id,
+	   :log_message->time_usec, :rq_id_str, :host_id, :ns_host_id,
 	   :fac, :sev, :msn,
 	   :log_message->pid, :log_message->cid,
            TO_NUMBER(:nsi_str));

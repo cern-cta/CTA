@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_procreq.c,v $ $Revision: 1.3 $ $Date: 2003/11/03 09:28:40 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_procreq.c,v $ $Revision: 1.4 $ $Date: 2003/12/28 12:01:59 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
  
 #include <errno.h>
@@ -500,7 +500,10 @@ int *last;
 	unmarshall_UUID (rbp, log_message.request_id);
 	unmarshall_LONG (rbp, log_message.pid);
 	unmarshall_LONG (rbp, log_message.cid);
-	unmarshall_HYPER (rbp, log_message.ns_invariant);
+
+	if (unmarshall_STRINGN (rbp, log_message.ns_fileid.server, CA_MAXHOSTNAMELEN + 1) < 0)
+	  RETURN (EINVAL);
+	unmarshall_HYPER (rbp, log_message.ns_fileid.fileid);
 
 	unmarshall_BYTE (rbp, log_message.facility_no);
 	unmarshall_BYTE (rbp, log_message.severity);

@@ -1,9 +1,9 @@
 .lf 1 dlf_write.man
-.\" @(#)$RCSfile: dlf_write.man,v $ $Revision: 1.2 $ $Date: 2003/09/26 09:25:25 $ CERN IT-ADC Vitaly Motyakov
+.\" @(#)$RCSfile: dlf_write.man,v $ $Revision: 1.3 $ $Date: 2003/12/28 12:01:59 $ CERN IT-ADC Vitaly Motyakov
 .\" Copyright (C) 2003 by CERN/IT/ADC
 .\" All rights reserved
 .\"
-.TH DLF_WRITE 3 "$Date: 2003/09/26 09:25:25 $" CASTOR "DLF Library Functions"
+.TH DLF_WRITE 3 "$Date: 2003/12/28 12:01:59 $" CASTOR "DLF Library Functions"
 .SH NAME
 dlf_write \- write log message to the log destination(s)
 .SH SYNOPSIS
@@ -11,7 +11,7 @@ dlf_write \- write log message to the log destination(s)
 \fB#include "dlf_api.h"\fR
 .sp
 .BI "int dlf_write (Cuuid_t " request_id ", int " severity 
-.BI ", int " message_no ", u_signed64 " ns_invariant 
+.BI ", int " message_no ", struct Cns_fileid * " ns_invariant 
 .BI ", int " numparams ", ...)"
 .SH DESCRIPTION
 .B dlf_write
@@ -52,7 +52,13 @@ is the severity level of the message. It must be one of the following:
 is the message assigned number.
 .TP
 .I ns_invariant
-is the CASTOR name server invariant associated with this message.
+pointer to the structure containing the CASTOR name server invariant
+associated with this message. The CASTOR name server invariant consists
+of a host name of CASTOR name server used and a file identifier.
+This parameter must be set to NULL if there is no invariant associated
+with this log message. In this latter case the CASTOR name server
+string will be set to the string "N/A", and the file identifier
+will be set to 0 (zero).
 .TP
 .I numparams
 is the number of log message parameters passed to this function.
@@ -75,6 +81,11 @@ length. The parameter names for the tape VIDs and subrequest identifiers
 are ignored by this function but the argument must be present -
 it may contain any value but must be of type 
 .B const char *.
+The following strings are reserved by DLF itself and
+.B MUST NOT BE USED
+as parameter names: "DATE", "HOST", "LVL", "PRGN", "PROG", "PID", "TID",
+"MSGN", "MSG", "RQID", "CNS", "FID", "DLF.SRQIDn", "DLF.TPVIDn",
+wnere n is numeric.
 .TP
 .I parameter type
 is of type
