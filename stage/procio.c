@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.175 2002/04/11 10:08:07 jdurand Exp $
+ * $Id: procio.c,v 1.176 2002/04/12 06:42:52 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.175 $ $Date: 2002/04/11 10:08:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.176 $ $Date: 2002/04/12 06:42:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -147,6 +147,12 @@ typedef struct _stage_times _stage_times_t;
 		seteuid(stgreq.uid); \
 	} \
 }
+
+#ifdef HAVE_SENSIBLE_STCP
+#undef HAVE_SENSIBLE_STCP
+#endif
+/* This macro will check sensible part of the CASTOR HSM union */
+#define HAVE_SENSIBLE_STCP(stcp) (((stcp)->u1.h.xfile[0] != '\0') && ((stcp)->u1.h.server[0] != '\0') && ((stcp)->u1.h.fileid != 0) && ((stcp)->u1.h.fileclass != 0))
 
 extern char defpoolname[CA_MAXPOOLNAMELEN + 1];
 extern char defpoolname_in[CA_MAXPOOLNAMELEN + 1];
@@ -3001,14 +3007,65 @@ void procioreq(req_type, magic, req_data, clienthost)
 #endif
 	sendrep (rpfd, STAGERC, req_type, magic, c);
 	if (c && wqp) {
+		int found;
 		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
+			found = 0;
 			for (stcp = stcs; stcp < stce; stcp++) {
-				if (wfp->subreqid == stcp->reqid)
+				if (wfp->subreqid == stcp->reqid) {
+					found = 1;
 					break;
+				}
 			}
+			if (found == 0) continue;
 			if (! wfp->waiting_on_req)
 				updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
 							  (signed64) ((signed64) stcp->size * (signed64) ONE_MB));
+			if (ISSTAGEWRT(stcp) && (t_or_d == 'h') && HAVE_SENSIBLE_STCP(stcp)) {
+				/* This was a stagewrt on CASTOR hsm files. */
+				/* We have to find the corresponding record that is in STAGEOUT|CAN_BE_MIGR|BEING_MIGR */
+				struct stgcat_entry *stcp_search, *stcp_found;
+				struct stgcat_entry *save_stcp = stcp;
+				int logged_once = 0;
+
+				stcp_found = NULL;
+				for (stcp_search = stcs; stcp_search < stce; stcp_search++) {
+					if (stcp_search->reqid == 0) break;
+					if (! (ISCASTORBEINGMIG(stcp_search) || ISCASTORWAITINGMIG(stcp))) continue;
+					if ((strcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile) == 0) &&
+						(strcmp(stcp_search->u1.h.server,save_stcp->u1.h.server) == 0) &&
+						(stcp_search->u1.h.fileid == save_stcp->u1.h.fileid) &&
+						(stcp_search->u1.h.fileclass == save_stcp->u1.h.fileclass) &&
+						(strcmp(stcp_search->u1.h.tppool,save_stcp->u1.h.tppool) == 0)) {
+						if (stcp_found == NULL) {
+							stcp_found = stcp_search;
+							break;
+						}
+					}
+				}
+				if (stcp_found != NULL) {
+					update_migpool(&stcp_found,-1,0);
+					stcp_found->status = STAGEOUT | PUT_FAILED | CAN_BE_MIGR;
+#ifdef USECDB
+					if (stgdb_upd_stgcat(&dbfd,stcp_found) != 0) {
+						stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					}
+#endif
+					savereqs();
+				} else {
+					update_migpool(&stcp,-1,0);
+					if (! logged_once) {
+						/* Print this only once per migration request */
+						stglogit(func, "STG02 - Could not find corresponding original request - decrementing anyway migrator counters\n");
+						logged_once++;
+					}
+#ifdef USECDB
+					if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+						stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					}
+#endif
+					savereqs();
+				}
+			}
 			delreq(stcp,0);
 		}
 		rmfromwq (wqp);
