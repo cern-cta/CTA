@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.117 $ $Release$ $Date: 2005/01/31 10:49:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.118 $ $Release$ $Date: 2005/01/31 11:12:36 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -993,34 +993,38 @@ castor::db::ora::OraStagerSvc::requestToDo
     // Check whether the statements are ok
     if (0 == m_requestToDoStatement) {
       std::ostringstream stmtString;
-      stmtString
-        << "UPDATE RequestsStatus SET status = 'PROCESSING'"
-        << " WHERE status = 'NEW' AND ROWNUM < 2 AND "
-        << "(SELECT type FROM Id2Type WHERE Id2Type.id = RequestsStatus.id)"
-        << " IN (";
+      stmtString << "DECLARE  rid ROWID; BEGIN "
+                 << "SELECT /*+ FIRST_ROWS */ RequestsStatus.ROWID INTO rid "
+                 << "FROM RequestsStatus, Id2Type "
+                 << "WHERE RequestsStatus.status = 'NEW' "
+                 << "AND ROWNUM < 2 AND Id2Type.id = RequestsStatus.id "
+                 << "AND Id2Type.type IN (";
       for (std::vector<ObjectsIds>::const_iterator it = types.begin();
            it!= types.end();
            it++) {
         if (types.begin() != it) stmtString << ", ";
         stmtString << *it;
       }
-      stmtString
-        << ") RETURNING id INTO :1";
+      stmtString << ") ORDER BY RequestsStatus.id;"
+                 << "UPDATE RequestsStatus SET status = 'PROCESSING'"
+                 << " WHERE ROWID = rid RETURNING id INTO :1;"
+                 << "EXCEPTION WHEN NO_DATA_FOUND THEN :1 := 0;"
+                 << "END;";
       m_requestToDoStatement =
         createStatement(stmtString.str());
       m_requestToDoStatement->registerOutParam
         (1, oracle::occi::OCCIDOUBLE);
       m_requestToDoStatement->setAutoCommit(true);
     }
-    // execute the statement and see whether we found something
-    unsigned int nb =
-      m_requestToDoStatement->executeUpdate();
-    if (0 == nb) {
+    // execute the statement
+    m_requestToDoStatement->executeUpdate();
+    // see whether we've found something
+    u_signed64 id = (u_signed64)m_requestToDoStatement->getDouble(1);
+    if (0 == id) {
       // Found no Request to handle
       return 0;
     }
     // Create result
-    u_signed64 id = (u_signed64)m_requestToDoStatement->getDouble(1);
     IObject* obj = cnvSvc()->getObjFromId(id);
     if (0 == obj) {
       castor::exception::Internal ex;
