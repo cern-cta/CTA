@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.5 $ $Date: 1999/11/10 14:25:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.6 $ $Date: 1999/11/12 10:22:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -138,10 +138,10 @@ char	**argv;
 	c = 0;
 	gethostname (hostname, CA_MAXHOSTNAMELEN+1);
 
-        signal (SIGINT, positkilled);
+	signal (SIGINT, positkilled);
 
-        pwd = getpwuid (uid);
-        strcpy (name, pwd->pw_name);
+	pwd = getpwuid (uid);
+	strcpy (name, pwd->pw_name);
 
 	/* open device and check drive ready */
 
@@ -264,34 +264,34 @@ char	**argv;
 		}
 	}
 
-        /* Build UPDFIL request header */
- 
-        sbp = sendbuf;
-        marshall_LONG (sbp, TPMAGIC);
-        marshall_LONG (sbp, UPDFIL);
-        q = sbp;        /* save pointer. The next field will be updated */
-        msglen = 3 * LONGSIZE;
-        marshall_LONG (sbp, msglen);
- 
-        /* Build UPDFIL request body */
+	/* Build UPDFIL request header */
 
-        marshall_WORD (sbp, uid);
-        marshall_WORD (sbp, gid);
-        marshall_LONG (sbp, jid);
-        marshall_WORD (sbp, ux);
-        marshall_LONG (sbp, blksize);
-        marshall_LONG (sbp, blockid);
-        marshall_LONG (sbp, cfseq);
-        marshall_STRING (sbp, fid);
-        marshall_LONG (sbp, lrecl);
-        marshall_STRING (sbp, recfm);
+	sbp = sendbuf;
+	marshall_LONG (sbp, TPMAGIC);
+	marshall_LONG (sbp, UPDFIL);
+	q = sbp;        /* save pointer. The next field will be updated */
+	msglen = 3 * LONGSIZE;
+	marshall_LONG (sbp, msglen);
 
-        msglen = sbp - sendbuf;
-        marshall_LONG (q, msglen);      /* update length field */
- 
-        if ((c = send2tpd (NULL, sendbuf, msglen, NULL, 0)) == 0) {
+	/* Build UPDFIL request body */
+
+	marshall_WORD (sbp, uid);
+	marshall_WORD (sbp, gid);
+	marshall_LONG (sbp, jid);
+	marshall_WORD (sbp, ux);
+	marshall_LONG (sbp, blksize);
+	marshall_LONG (sbp, blockid);
+	marshall_LONG (sbp, cfseq);
+	marshall_STRING (sbp, fid);
+	marshall_LONG (sbp, lrecl);
+	marshall_STRING (sbp, recfm);
+
+	msglen = sbp - sendbuf;
+	marshall_LONG (q, msglen);      /* update length field */
+
+	if ((c = send2tpd (NULL, sendbuf, msglen, NULL, 0)) == 0) {
 		sbp = repbuf;
-                marshall_LONG (sbp, cfseq);
+		marshall_LONG (sbp, cfseq);
 		if (lblcode == AL || lblcode == SL) {
 			buildvollbl (vol1, vsn, lblcode, name);
 			if (mode == WRITE_DISABLE || filstat == APPEND)
