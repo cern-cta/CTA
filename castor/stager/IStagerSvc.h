@@ -88,7 +88,7 @@ int Cstager_IStagerSvc_segmentsForTape (struct Cstager_IStagerSvc_t* stgSvc,
  * Cstager_IStagerSvc_errorMsg
  */
 int Cstager_IStagerSvc_anySegmentsForTape(struct Cstager_IStagerSvc_t* stgSvc,
-                                          Cstager_Tape_t* searchItem);
+                                          struct Cstager_Tape_t* searchItem);
 
 /**
  * Get an array of the tapes to be processed.
