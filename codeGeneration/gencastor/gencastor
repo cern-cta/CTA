@@ -1,0 +1,38 @@
+#!/usr/bin/tcsh
+
+if ("$1" == "-h") then
+  echo "Usage :"
+  echo "  gencastor [-w castor_workdir] [-h] XMIFile"
+  exit
+else if ("$1" == "-w") then
+  set WORKDIR=$2
+else
+  set WORKDIR=`pwd`
+endif
+set TMPDIR=`mktemp /tmp/gencastor-XXXXXX`
+
+rm -rf ${TMPDIR}
+mkdir -p ${TMPDIR}/castor/db
+cp ${WORKDIR}/castor/db/oracleHeader.sql ${TMPDIR}/castor/db/
+cp ${WORKDIR}/castor/db/oracleTrailer.sql ${TMPDIR}/castor/db/
+
+/usr/bin/gencastor.bin -o ${TMPDIR} --nocrashhandler ${WORKDIR}/codeGeneration/RH.xmi
+set pushdsilent
+pushd ${TMPDIR}
+foreach f (`find . -type f`)
+  #echo $f
+  if !(-f ${WORKDIR}/${f}) then
+    echo "Creating $f"
+    cp ${TMPDIR}/${f} ${WORKDIR}/$f
+  else 
+    set d = `diff -q ${WORKDIR}/${f}  ${TMPDIR}/${f}`
+    #echo "Diff gave --$d--"
+    if ("$d" != "") then
+      echo "Upgrading $f"
+      cp ${TMPDIR}/${f} ${WORKDIR}/${f}
+    endif
+  endif
+end
+popd
+rm -rf ${TMPDIR}
+
