@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.36 $ $Date: 2002/08/22 12:03:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.37 $ $Date: 2002/12/17 08:28:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -182,8 +182,10 @@ char	**argv;
 #if VDQM
 	vdqm_status = VDQM_UNIT_ASSIGN;
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_UNIT_ASSIGN)\n");
-	vdqm_rc = vdqm_UnitStatus (NULL, NULL, dgn, NULL, drive, &vdqm_status,
-		&vdqm_reqid, jid);
+	while ((vdqm_rc = vdqm_UnitStatus (NULL, NULL, dgn, NULL, drive,
+		&vdqm_status, &vdqm_reqid, jid)) &&
+		(serrno == SECOMERR || serrno == EVQHOLD))
+			sleep (60);
 	tplogit (func, "vdqm_UnitStatus returned %s\n",
 		vdqm_rc ? sstrerror(serrno) : "ok");
 #endif
