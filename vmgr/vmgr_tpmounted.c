@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2000 by CERN/IT/PDP/DM
+ * Copyright (C) 2000-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_tpmounted.c,v $ $Revision: 1.2 $ $Date: 2000/04/03 12:40:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_tpmounted.c,v $ $Revision: 1.3 $ $Date: 2002/02/07 06:13:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_tpmounted - update tape volume access time/count */
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_tpmounted.c,v $ $Revision: 1.2 $ $Dat
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_tpmounted(const char *vid, int mode)
+vmgr_tpmounted(const char *vid, int mode, int jid)
 {
 	int c;
 	char func[16];
@@ -50,7 +50,7 @@ vmgr_tpmounted(const char *vid, int mode)
 	/* Build request header */
 
 	sbp = sendbuf;
-	marshall_LONG (sbp, VMGR_MAGIC);
+	marshall_LONG (sbp, VMGR_MAGIC2);
 	marshall_LONG (sbp, VMGR_TPMOUNTED);
 	q = sbp;        /* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
@@ -62,6 +62,7 @@ vmgr_tpmounted(const char *vid, int mode)
 	marshall_LONG (sbp, gid);
 	marshall_STRING (sbp, vid);
 	marshall_WORD (sbp, mode);
+	marshall_LONG (sbp, jid);
  
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
