@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.20 2000/05/02 14:14:53 jdurand Exp $
+ * $Id: procio.c,v 1.21 2000/05/08 10:50:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.20 $ $Date: 2000/05/02 14:14:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.21 $ $Date: 2000/05/08 10:50:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -25,6 +25,8 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.20 $ $Date: 2000
 #include <sys/time.h>
 #endif
 #include <sys/stat.h>
+#include <errno.h>
+
 #include "marshall.h"
 #undef  unmarshall_STRING
 #define unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
@@ -450,8 +452,8 @@ void procioreq(req_type, req_data, clienthost)
 	/* In case of hsm request verify the exact mapping between number of hsm files */
 	/* and number of disk files.                                                   */
 	if (nhsmfiles > 0) {
-			int nhpssfiles = 0;
-			int ncastorfiles = 0;
+		int nhpssfiles = 0;
+		int ncastorfiles = 0;
 
 		if (nbdskf != nhsmfiles) {
 			sendrep (rpfd, MSG_ERR, STG19);
@@ -470,31 +472,31 @@ void procioreq(req_type, req_data, clienthost)
 		}
 				/* We check that user do not mix different hsm types (hpss and castor) */
 		for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
-					if (ISHPSS(hsmfiles[ihsmfiles])) {
-						++nhpssfiles;
-					}
-					if (ISCASTOR(hsmfiles[ihsmfiles])) {
-						++ncastorfiles;
-					}
-				}
-				/* No recognizes type ? */
-				if (nhpssfiles == 0 && ncastorfiles == 0) {
-					sendrep (rpfd, MSG_ERR, "Cannot determine HSM file types (HPSS nor CASTOR)\n");
-					c = USERR;
-					goto reply;
-				}
-				/* At least one HPSS and one CASTOR */
-				if (nhpssfiles >  0 && ncastorfiles >  0) {
-					sendrep (rpfd, MSG_ERR, "HPSS (%d occurence%s) and CASTOR (%d occurence%s) files on the same command-line is not allowed\n",nhpssfiles,nhpssfiles > 1 ? "s" : "",ncastorfiles,ncastorfiles > 1 ? "s" : "");
-					c = USERR;
-					goto reply;
-				}
-				/* More than one HPSS not supported for the moment */
-				if (nhpssfiles > 1) {
-					sendrep (rpfd, MSG_ERR, "More than one HPSS (%d occurence%s) files on the same command-line is not allowed\n",nhpssfiles,nhpssfiles > 1 ? "s" : "");
-					c = USERR;
-					goto reply;
-				}
+			if (ISHPSS(hsmfiles[ihsmfiles])) {
+				++nhpssfiles;
+			}
+			if (ISCASTOR(hsmfiles[ihsmfiles])) {
+				++ncastorfiles;
+			}
+		}
+		/* No recognizes type ? */
+		if (nhpssfiles == 0 && ncastorfiles == 0) {
+			sendrep (rpfd, MSG_ERR, "Cannot determine HSM file types (HPSS nor CASTOR)\n");
+			c = USERR;
+			goto reply;
+		}
+		/* At least one HPSS and one CASTOR */
+		if (nhpssfiles >  0 && ncastorfiles >  0) {
+			sendrep (rpfd, MSG_ERR, "HPSS (%d occurence%s) and CASTOR (%d occurence%s) files on the same command-line is not allowed\n",nhpssfiles,nhpssfiles > 1 ? "s" : "",ncastorfiles,ncastorfiles > 1 ? "s" : "");
+			c = USERR;
+			goto reply;
+		}
+		/* More than one HPSS not supported for the moment */
+		if (nhpssfiles > 1) {
+			sendrep (rpfd, MSG_ERR, "More than one HPSS (%d occurence%s) files on the same command-line is not allowed\n",nhpssfiles,nhpssfiles > 1 ? "s" : "");
+			c = USERR;
+			goto reply;
+		}
 	} else {
 		if ((req_type == STAGEIN &&
 				 ! Uflag && nbdskf > nbtpf && trailing != '-') ||
@@ -959,9 +961,9 @@ void procputreq(req_data, clienthost)
 	char fseq[CA_MAXFSEQLEN + 1];
 	gid_t gid;
 	struct group *gr;
-	char *hsmfile;
 	int Iflag = 0;
 	int Mflag = 0;
+	int Migrationflag = 0;
 	char *name;
 	int nargs;
 	int nbdskf;
@@ -980,6 +982,11 @@ void procputreq(req_data, clienthost)
 	char vid[7];
 	struct waitf *wfp;
 	struct waitq *wqp;
+	char **hsmfiles = NULL;
+	struct stgcat_entry **hsmfilesstcp = NULL;
+	int nhsmfiles = 0;
+	int ihsmfiles;
+	int jhsmfiles;
 
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);  /* login name */
@@ -1001,12 +1008,13 @@ void procputreq(req_data, clienthost)
 		c = SYERR;
 		goto reply;
 	}
+
 #ifdef linux
 	optind = 0;
 #else
 	optind = 1;
 #endif
-	while ((c = getopt (nargs, argv, "Gh:I:M:q:U:V:")) != EOF) {
+	while ((c = getopt (nargs, argv, "Gh:I:mM:q:U:V")) != EOF) {
 		switch (c) {
 		case 'G':
 			break;
@@ -1017,8 +1025,28 @@ void procputreq(req_data, clienthost)
 			Iflag = 1;
 			break;
 		case 'M':
-			hsmfile = optarg;
 			Mflag = 1;
+			if (nhsmfiles == 0) {
+				if ((hsmfiles = (char **) malloc(sizeof(char *))) == NULL ||
+                    (hsmfilesstcp = (struct stgcat_entry **) malloc(sizeof(struct stgcat_entry *))) == NULL) {
+					c = SYERR;
+					goto reply;
+				}
+			} else {
+				char **dummy = hsmfiles;
+				struct stgcat_entry **dummy2 = hsmfilesstcp;
+				if ((dummy = (char **) realloc(hsmfiles,(nhsmfiles+1) * sizeof(char *))) == NULL) {
+					c = SYERR;
+					goto reply;
+				}
+				hsmfiles = dummy;
+				if ((dummy2 = (struct stgcat_entry **) realloc(hsmfilesstcp,(nhsmfiles+1) * sizeof(struct stgcat_entry *))) == NULL) {
+					c = SYERR;
+					goto reply;
+				}
+				hsmfilesstcp = dummy2;
+			}
+			hsmfiles[nhsmfiles++] = optarg;
 			break;
 		case 'q':       /* file sequence number(s) */
 			if ((q = strchr (optarg, '-')) != NULL) {
@@ -1048,6 +1076,9 @@ void procputreq(req_data, clienthost)
 			UPPER (vid);
 			numvid++;
 			break;
+		case 'm':       /* Global Migration flag */
+			Migrationflag++;
+			break;
 		}
 	}
 	if (Iflag && numvid)
@@ -1056,12 +1087,60 @@ void procputreq(req_data, clienthost)
 	if (Mflag && numvid)
 		errflg++;
 
+	if (Migrationflag && ! Mflag) /* Cannot force migration flag without hsm file */
+		errflg++;
+
 	if ((Iflag || Mflag) && (optind != nargs))
 		errflg++;
 
 	if (errflg) {
 		c = USERR;
 		goto reply;
+	}
+
+	/* In case of hsm request verify the exact mapping between number of hsm files */
+	/* and number of disk files.                                                   */
+	if (nhsmfiles > 0) {
+		int nhpssfiles = 0;
+		int ncastorfiles = 0;
+
+		/* We also check that there is NO redundant hsm files (multiple equivalent ones) */
+		for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
+			for (jhsmfiles = ihsmfiles + 1; jhsmfiles < nhsmfiles; jhsmfiles++) {
+				if (strcmp(hsmfiles[ihsmfiles],hsmfiles[jhsmfiles]) == 0) {
+					sendrep (rpfd, MSG_ERR, "Duplicate HSM file %s\n",hsmfiles[ihsmfiles]);
+					c = USERR;
+					goto reply;
+				}
+			}
+		}
+		/* We check that user do not mix different hsm types (hpss and castor) */
+		for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
+			if (ISHPSS(hsmfiles[ihsmfiles])) {
+				++nhpssfiles;
+			}
+			if (ISCASTOR(hsmfiles[ihsmfiles])) {
+				++ncastorfiles;
+			}
+		}
+		/* No recognizes type ? */
+		if (nhpssfiles == 0 && ncastorfiles == 0) {
+			sendrep (rpfd, MSG_ERR, "Cannot determine HSM file types (HPSS nor CASTOR)\n");
+			c = USERR;
+			goto reply;
+		}
+		/* At least one HPSS and one CASTOR */
+		if (nhpssfiles >  0 && ncastorfiles >  0) {
+			sendrep (rpfd, MSG_ERR, "HPSS (%d occurence%s) and CASTOR (%d occurence%s) files on the same command-line is not allowed\n",nhpssfiles,nhpssfiles > 1 ? "s" : "",ncastorfiles,ncastorfiles > 1 ? "s" : "");
+			c = USERR;
+			goto reply;
+		}
+		/* More than one HPSS not supported for the moment */
+		if (nhpssfiles > 1) {
+			sendrep (rpfd, MSG_ERR, "More than one HPSS (%d occurence%s) files on the same command-line is not allowed\n",nhpssfiles,nhpssfiles > 1 ? "s" : "");
+			c = USERR;
+			goto reply;
+		}
 	}
 
 	if (numvid) {
@@ -1107,46 +1186,87 @@ void procputreq(req_data, clienthost)
 			wfp++;
 		}
 	} else if (Mflag || Iflag) {
-		nbdskf = 1;
+		nbdskf = Mflag ? nhsmfiles : 1;
 		found = 0;
 		for (stcp = stcs; stcp < stce; stcp++) {
 			if (stcp->reqid == 0) break;
 			if (Mflag) {
 				if (stcp->t_or_d != 'm') continue;
-				if (strcmp (stcp->u1.m.xfile, hsmfile) != 0) continue;
+				for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
+					if (strcmp (stcp->u1.m.xfile, hsmfiles[ihsmfiles]) != 0) continue;
+					hsmfilesstcp[found++] = stcp;
+					break;
+				}
+				if (found == nhsmfiles) break;
 			} else {
 				if (stcp->t_or_d != 'd') continue;
 				if (strcmp (stcp->u1.d.xfile, externfile) != 0) continue;
+				found = 1;
+				break;
 			}
-			found = 1;
-			break;
 		}
-		if (found == 0 ||
-				(stcp->status != STAGEOUT &&
-				 stcp->status != (STAGEOUT|PUT_FAILED))) {
-			sendrep (rpfd, MSG_ERR, STG22);
-			c = USERR;
-			goto reply;
-		}
-		if (stcp->status == STAGEOUT) {
-			if (rfio_stat (stcp->ipath, &st) == 0)
-				stcp->actual_size = st.st_size;
-			updfreespace (stcp->poolname, stcp->ipath,
-										stcp->size*1024*1024 - (int)stcp->actual_size);
-		}
-		stcp->status = STAGEPUT;
-		stcp->a_time = time (0);
+		if (Iflag) {
+			if (found == 0 ||
+					(stcp->status != STAGEOUT &&
+					 stcp->status != (STAGEOUT|PUT_FAILED))) {
+				sendrep (rpfd, MSG_ERR, STG22);
+				c = USERR;
+				goto reply;
+			}
+			if (stcp->status == STAGEOUT) {
+				if (rfio_stat (stcp->ipath, &st) == 0)
+					stcp->actual_size = st.st_size;
+				updfreespace (stcp->poolname, stcp->ipath,
+											stcp->size*1024*1024 - (int)stcp->actual_size);
+			}
+			stcp->status = STAGEPUT;
+			stcp->a_time = time (0);
 #ifdef USECDB
-		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-			stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-		}
+			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+				stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+			}
 #endif
-		if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
-														clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
-		wfp->subreqid = stcp->reqid;
-		wqp->nbdskf++;
-		wqp->nb_subreqs++;
-		wfp++;
+			if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
+															clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
+			wfp->subreqid = stcp->reqid;
+			wqp->nbdskf++;
+			wqp->nb_subreqs++;
+			wfp++;
+		} else {
+			if (found != nhsmfiles) {
+				sendrep (rpfd, MSG_ERR, "You requested %d hsm files while I found %d of them\n",nhsmfiles,found);
+				c = USERR;
+				goto reply;
+			}
+			for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
+				if ((hsmfilesstcp[ihsmfiles]->status & 0xF) != STAGEOUT &&
+						 (hsmfilesstcp[ihsmfiles]->status & (STAGEOUT|PUT_FAILED)) != (STAGEOUT|PUT_FAILED)) {
+					sendrep (rpfd, MSG_ERR, STG22);
+					c = USERR;
+					goto reply;
+				}
+				if ((hsmfilesstcp[ihsmfiles]->status & 0xF)  == STAGEOUT) {
+					if (rfio_stat (hsmfilesstcp[ihsmfiles]->ipath, &st) == 0)
+						stcp->actual_size = st.st_size;
+					updfreespace (hsmfilesstcp[ihsmfiles]->poolname, hsmfilesstcp[ihsmfiles]->ipath,
+												hsmfilesstcp[ihsmfiles]->size*1024*1024 - (int) hsmfilesstcp[ihsmfiles]->actual_size);
+				}
+				hsmfilesstcp[ihsmfiles]->status = (STAGEPUT | (hsmfilesstcp[ihsmfiles]->status & 0xF0));
+				hsmfilesstcp[ihsmfiles]->a_time = time (0);
+#ifdef USECDB
+				if (stgdb_upd_stgcat(&dbfd,hsmfilesstcp[ihsmfiles]) != 0) {
+					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
+#endif
+				if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
+																clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp);
+				wfp->subreqid = hsmfilesstcp[ihsmfiles]->reqid;
+				wqp->nbdskf++;
+				wqp->nb_subreqs++;
+				wqp->Migrationflag = Migrationflag;
+				wfp++;
+			}
+		}
 	} else {
 		/* compute number of disk files */
 		nbdskf = nargs - optind;
@@ -1168,9 +1288,13 @@ void procputreq(req_data, clienthost)
 	if (! wqp) goto reply;
 	free (argv);
 	fork_exec_stager (wqp);
+	if (hsmfiles != NULL) free(hsmfiles);
+	if (hsmfilesstcp != NULL) free(hsmfilesstcp);
 	return;
  reply:
 	free (argv);
+	if (hsmfiles != NULL) free(hsmfiles);
+	if (hsmfilesstcp != NULL) free(hsmfilesstcp);
 #if SACCT
 	stageacct (STGCMDC, uid, gid, clienthost,
 						 reqid, STAGEPUT, 0, c, NULL, "");
@@ -1255,36 +1379,38 @@ isstaged(cur, p, poolflag, poolname)
 }
 
 unpackfseq(fseq, req_type, trailing, fseq_list)
-char *fseq;
-int req_type;
-char *trailing;
-fseq_elem **fseq_list;
+		 char *fseq;
+		 int req_type;
+		 char *trailing;
+		 fseq_elem **fseq_list;
 {
 	char *dp;
 	int i;
 	int n1, n2;
 	int nbtpf;
 	char *p, *q;
+	char tmp_fseq[CA_MAXFSEQLEN+1];
 
-	*trailing = *(fseq + strlen (fseq) - 1);
+	strcpy (tmp_fseq, fseq);
+	*trailing = *(tmp_fseq + strlen (tmp_fseq) - 1);
 	if (*trailing == '-') {
 		if (req_type != STAGEIN) {
 			sendrep (rpfd, MSG_ERR, STG18);
 			return (0);
 		}
-		*(fseq + strlen (fseq) - 1) = '\0';
+		*(tmp_fseq + strlen (tmp_fseq) - 1) = '\0';
 	}
-	switch (*fseq) {
+	switch (*tmp_fseq) {
 	case 'n':
 		if (req_type == STAGEIN) {
 			sendrep (rpfd, MSG_ERR, STG17, "-qn", "stagein");
 			return (0);
 		}
 	case 'u':
-		if (strlen (fseq) == 1) {
+		if (strlen (tmp_fseq) == 1) {
 			nbtpf = 1;
 		} else {
-			nbtpf = strtol (fseq + 1, &dp, 10);
+			nbtpf = strtol (tmp_fseq + 1, &dp, 10);
 			if (*dp != '\0') {
 				sendrep (rpfd, MSG_ERR, STG06, "-q");
 				return (0);
@@ -1292,13 +1418,13 @@ fseq_elem **fseq_list;
 		}
 		*fseq_list = (fseq_elem *) calloc (nbtpf, sizeof(fseq_elem));
 		for (i = 0; i < nbtpf; i++)
-			sprintf ((char *)(*fseq_list + i), "%c", *fseq);
+			sprintf ((char *)(*fseq_list + i), "%c", *tmp_fseq);
 		break;
 	default:
 		nbtpf = 0;
-		p = strtok (fseq, ",");
-		while (p) {
-			if (q = strchr (p, '-')) {
+		p = strtok (tmp_fseq, ",");
+		while (p != NULL) {
+			if ((q = strchr (p, '-')) != NULL) {
 				*q = '\0';
 				n2 = strtol (q + 1, &dp, 10);
 				if (*dp != '\0') {
@@ -1324,13 +1450,13 @@ fseq_elem **fseq_list;
 				return (0);
 			}
 			nbtpf += n2 - n1 + 1;
-			if (p = strtok (NULL, ",")) *(p - 1) = ',';
+			if ((p = strtok (NULL, ",")) != NULL) *(p - 1) = ',';
 		}
 		*fseq_list = (fseq_elem *) calloc (nbtpf, sizeof(fseq_elem));
 		nbtpf = 0;
-		p = strtok (fseq, ",");
-		while (p) {
-			if (q = strchr (p, '-')) {
+		p = strtok (tmp_fseq, ",");
+		while (p != NULL) {
+			if ((q = strchr (p, '-')) != NULL) {
 				*q = '\0';
 				n2 = strtol (q + 1, &dp, 10);
 				n1 = strtol (p, &dp, 10);
