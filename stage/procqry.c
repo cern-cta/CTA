@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.47 2001/02/04 22:15:01 jdurand Exp $
+ * $Id: procqry.c,v 1.48 2001/02/08 15:41:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.47 $ $Date: 2001/02/04 22:15:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.48 $ $Date: 2001/02/08 15:41:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -144,7 +144,7 @@ void procqryreq(req_type, req_data, clienthost)
 		 char *clienthost;
 {
 	char *afile = NULL;
-	char **argv;
+	char **argv = NULL;
 	int aflag = 0;
 	int c, j;
 	int errflg = 0;
@@ -584,7 +584,7 @@ void procqryreq(req_type, req_data, clienthost)
 			if (afile || mfile)
 				if (! noregexp_flag) regfree (&preg);
 #endif
-			free (argv);
+			if (argv != NULL) free (argv);
 			close (rpfd);
 			if (fseq_list != NULL) free(fseq_list);
 			return;
@@ -906,7 +906,7 @@ void procqryreq(req_type, req_data, clienthost)
 		if (! noregexp_flag) regfree (&preg);
 #endif
 	if (fseq_list != NULL) free(fseq_list);
-	free (argv);
+	if (argv != NULL) free (argv);
 	sendrep (rpfd, STAGERC, STAGEQRY, c);
 	if (pid == 0) {	/* we are in the child */
 #ifdef USECDB
