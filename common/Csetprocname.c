@@ -1,5 +1,5 @@
 /*
- * $Id: Csetprocname.c,v 1.3 2003/09/09 15:59:41 jdurand Exp $
+ * $Id: Csetprocname.c,v 1.4 2003/09/09 16:03:20 jdurand Exp $
  */
 
 /*
@@ -78,8 +78,6 @@ Csetprocname(CONST char *fmt, ...)
  * By using this file, you agree to the terms and conditions set
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
- *
- *      Id: varargs.h,v 1.7 2001/09/13 16:45:40 ca Exp
  */
 
 /*
@@ -260,7 +258,6 @@ int DLL_DECL Cinitsetprocname(argc, argv, envp)
 
 #if SPT_TYPE != SPT_BUILTIN
 
-/*VARARGS1*/
 static int
 __Csetprocname(CONST char *fmt, ...)
 {
@@ -432,7 +429,6 @@ static size_t __sm_strlcpy(dst, src, size)
 **		none.
 */
 
-/*VARARGS2*/
 int DLL_DECL 
 Csetprocname(CONST char *fmt, ...)
 {
