@@ -1,5 +1,5 @@
 /*
- * $Id: stager_tape.c,v 1.7 2002/04/11 10:37:08 jdurand Exp $
+ * $Id: stager_tape.c,v 1.8 2002/04/30 13:10:42 jdurand Exp $
  */
 
 /*
@@ -20,16 +20,12 @@
 #define USE_SUBREQID
 
 #ifdef STAGE_CSETPROCNAME
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 #define STAGE_CSETPROCNAME_FORMAT_TAPE "%s %s %s/%d.%d"
-#else
-#define STAGE_CSETPROCNAME_FORMAT_TAPE "%s %s %s/.%d"
-#endif
 #include "Csetprocname.h"
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.7 $ $Date: 2002/04/11 10:37:08 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.8 $ $Date: 2002/04/30 13:10:42 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -609,9 +605,7 @@ int stage_tape() {
 					 sav_argv0,
 					 "STARTING",
 					 rtcpcreqs[0]->tapereq.vid,
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 					 rtcpcreqs[0]->tapereq.side,
-#endif
 					 0
 					) != 0) {
 		stglogit(func, "### Csetprocname error, errno=%d (%s), serrno=%d (%s)\n", errno, strerror(errno), serrno, sstrerror(serrno));
@@ -638,15 +632,11 @@ int stage_tape() {
 		   		if ( dont_change_srv == 0 ) *tl->tapereq.server = '\0'; 
 			} CLIST_ITERATE_END(rtcpcreqs[0],tl);
 			SAVE_EID;
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 			if (rtcpcreqs[0]->tapereq.side > 0) {
 				sendrep (rpfd, MSG_ERR, STG202, rtcpcreqs[0]->tapereq.vid, rtcpcreqs[0]->tapereq.side, "rtcpc",sstrerror(save_serrno));
 			} else {
-#endif
 				sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc",sstrerror(save_serrno));
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 			}
-#endif
 			if (save_serrno == ETVBSY) {
 				sendrep (rpfd, MSG_ERR, "STG47 - Re-selecting another tape server in %d seconds\n", RETRYI);
 				sleep(RETRYI);
@@ -722,29 +712,21 @@ int stage_tape() {
 		}
 
 		SAVE_EID;
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 		if (rtcpcreqs[0]->tapereq.vid > 0) {
 			sendrep (rpfd, MSG_ERR, STG202, rtcpcreqs[0]->tapereq.vid, rtcpcreqs[0]->tapereq.side, "rtcpc", sstrerror(save_serrno));
 		} else {
-#endif
 			sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc", sstrerror(save_serrno));
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 		}
-#endif
 		RESTORE_EID;
 		RETURN ((save_serrno == ETHELD) ? ETHELDERR : USERR);
 
 	} else if (rtcp_rc > 0) {
 		SAVE_EID;
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 		if  (rtcpcreqs[0]->tapereq.side > 0) {
 			sendrep (rpfd, MSG_ERR, STG202, rtcpcreqs[0]->tapereq.vid, rtcpcreqs[0]->tapereq.side, "rtcpc","Unknown error code (>0)");
 		} else {
-#endif
 			sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc","Unknown error code (>0)");
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 		}
-#endif
 		RESTORE_EID;
 		RETURN (SYERR);
 #ifdef MAX_RTCPC_FILEREQ
@@ -916,9 +898,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 #else
 		strcpy((*rtcpcreqs_in)[i]->tapereq.server   , stcs->u1.t.tapesrvr );
 #endif /* TAPESRVR */
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 		(*rtcpcreqs_in)[i]->tapereq.side = stcs->u1.t.side;
-#endif
 		switch (stcs->status & 0xF) {
 		case STAGEWRT:
 		case STAGEPUT:
@@ -1252,7 +1232,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 #ifndef SKIP_FILEREQ_MAXSIZE
 		if (stcp->size > 0) {
 			/* filereq.maxsize is in bytes */
-			fl[j_ok].filereq.maxsize = (u_signed64) ((u_signed64) stcp->size * (u_signed64) ONE_MB);
+			fl[j_ok].filereq.maxsize = stcp->size;
 		}
 #endif
 		if (use_subreqid != 0) {
@@ -1461,9 +1441,7 @@ int stager_tape_callback(tapereq,filereq)
 					 sav_argv0,
 					 (filereq->cprc == 0 && filereq->proc_status == RTCP_FINISHED) ? "COPIED" : "COPYING",
 					 tapereq->vid,
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 					 tapereq->side,
-#endif
 					 filereq->tape_fseq
 					) != 0) {
 		stglogit(func, "### Csetprocname error, errno=%d (%s), serrno=%d (%s)\n", errno, strerror(errno), serrno, sstrerror(serrno));
