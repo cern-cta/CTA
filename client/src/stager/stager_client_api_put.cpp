@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.10 2004/12/03 09:28:14 bcouturi Exp $
+ * $Id: stager_client_api_put.cpp,v 1.11 2004/12/09 14:48:28 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.10 $ $Date: 2004/12/03 09:28:14 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.11 $ $Date: 2004/12/09 14:48:28 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -126,7 +126,7 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
     *nbresps = nbResponses;
     
 
-    for (int i=0; i<respvec.size(); i++) {
+    for (int i=0; i<(int)respvec.size(); i++) {
 
       // Casting the response into a FileResponse !
       castor::rh::FileResponse* fr = 
@@ -350,7 +350,7 @@ EXTERN_C int DLL_DECL stage_putDone(struct stage_filereq *requests,
     *nbresps = nbResponses;
     
 
-    for (int i=0; i<respvec.size(); i++) {
+    for (int i=0; i<(int)respvec.size(); i++) {
 
       // Casting the response into a FileResponse !
       castor::rh::FileResponse* fr = 
@@ -395,5 +395,5 @@ EXTERN_C int DLL_DECL stage_updateFileStatus _PROTO((struct stage_filereq *reque
 						     char **requestId,
 						     struct stage_options* opts)) {
 
-
+  return 0;
 }
