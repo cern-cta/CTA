@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_deletemodel.c,v $ $Revision: 1.1 $ $Date: 2000/01/03 07:56:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_deletemodel.c,v $ $Revision: 1.2 $ $Date: 2000/01/03 09:59:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_deletemodel - delete a model of cartridge */
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_deletemodel.c,v $ $Revision: 1.1 $ $D
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_deletemodel(const char *model)
+vmgr_deletemodel(const char *model, char *media_letter)
 {
 	int c;
 	char func[17];
@@ -66,6 +66,7 @@ vmgr_deletemodel(const char *model)
 	marshall_LONG (sbp, uid);
 	marshall_LONG (sbp, gid);
 	marshall_STRING (sbp, model);
+	marshall_STRING (sbp, media_letter);
  
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
