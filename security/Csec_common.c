@@ -85,7 +85,7 @@ int Csec_trace(char *func, char *msg, ...) {
     *prtbuf = '\0';
   funlen = strlen(prtbuf);
 
-  vsnprintf (prtbuf + funlen ,  SEPRTBUFSZ - funlen -1, msg, args);
+  vsnprintf (prtbuf + funlen ,  SECPRTBUFSZ - funlen -1, msg, args);
   prtbuf[SECPRTBUFSZ]='\0';
 
   if (thip->trace_file[0] != '\0') {
