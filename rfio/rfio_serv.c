@@ -928,10 +928,13 @@ char tmpbuf[21], tmpbuf2[21];
    char* username;
    int ret_flags = 0;
 
-   Csec_server_init_context(&ctx);
-   Csec_server_set_service_type(&ctx, CSEC_SERVICE_TYPE_DISK);
+   if (Csec_server_init_context(&ctx, CSEC_SERVICE_TYPE_DISK, NULL)<0) {
+     log(LOG_ERR, "Could not initailize context: %s\n", Csec_geterrmsg()); 
+     exit(1);
+   }
+
    if (Csec_server_establish_context(&ctx, s)<0) {
-     log(LOG_ERR, "Could not establish context !");
+     log(LOG_ERR, "Could not establish context: %s\n", Csec_geterrmsg());
      exit(1);
    }
    

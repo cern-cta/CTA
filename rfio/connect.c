@@ -338,8 +338,7 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
      int rc;
      
      TRACE(1, "rfio", "Going to establish security context !");
-     Csec_client_init_context(&ctx);
-     Csec_client_set_service_name(&ctx, s, CSEC_SERVICE_TYPE_DISK);
+     Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_DISK, NULL);
      
      TRACE(1, "rfio", "Service is %s", Csec_client_get_service_name(&ctx));
      rc = Csec_client_establish_context(&ctx, s);
