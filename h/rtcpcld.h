@@ -90,6 +90,10 @@ int rtcpcld_getStgSvc _PROTO((
                               ));
 #endif /* CASTOR_ISTAGERSVC_H */
 
+int rtcpcld_doCommit _PROTO((
+                             void
+                             ));
+
 int rtcpcld_InitNW  _PROTO((
                             SOCKET **
                             ));
