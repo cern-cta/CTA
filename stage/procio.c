@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.57 2000/11/07 09:55:02 jdurand Exp $
+ * $Id: procio.c,v 1.58 2000/11/11 08:45:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.57 $ $Date: 2000/11/07 09:55:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.58 $ $Date: 2000/11/11 08:45:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -79,7 +79,7 @@ extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, int, int, int,
 extern int nextreqid _PROTO(());
 int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *));
 int maxfseq_per_vid _PROTO((struct stgcat_entry *, int, char *, char *));
-extern void update_migpool _PROTO((struct stgcat_entry *, int, int));
+extern void update_migpool _PROTO((struct stgcat_entry *, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
 
 #ifdef MIN
@@ -1010,15 +1010,15 @@ void procioreq(req_type, req_data, clienthost)
 					c = USERR;
 					goto reply;
 				}
+				if ((stcp->status & (STAGEOUT|CAN_BE_MIGR)) == (STAGEOUT|CAN_BE_MIGR)) {
+					/* This is a file to delete from automatic migration */
+					update_migpool(stcp,-1);
+				}
 				if (delfile (stcp, 1, 1, 1, user, stgreq.uid, stgreq.gid, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 									 "rfio_unlink", rfio_serror());
 					c = SYERR;
 					goto reply;
-				}
-				if ((stcp->status & (STAGEOUT|CAN_BE_MIGR)) == (STAGEOUT|CAN_BE_MIGR)) {
-					/* This is a file to delete from automatic migration */
-					update_migpool(stcp,-1,0);
 				}
 				break;
 			default:
@@ -1805,7 +1805,7 @@ void procputreq(req_data, clienthost)
 					break;
 			}
 			if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-				update_migpool(stcp,-1,-1);
+				update_migpool(stcp,-1);
 				stcp->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
 			} else {
 				stcp->status = STAGEOUT|PUT_FAILED;

@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.46 2000/11/06 14:46:13 jdurand Exp $
+ * $Id: poolmgr.c,v 1.47 2000/11/11 08:45:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.46 $ $Date: 2000/11/06 14:46:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.47 $ $Date: 2000/11/11 08:45:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -78,7 +78,7 @@ struct sigaction sa_poolmgr;
 void print_pool_utilization _PROTO((int, char *, char *));
 char *selecttapepool _PROTO((char *));
 void procmigpoolreq _PROTO((char *, char *));
-int update_migpool _PROTO((struct stgcat_entry *, int, int));
+int update_migpool _PROTO((struct stgcat_entry *, int));
 void checkfile2mig _PROTO(());
 int migrate_files _PROTO((struct migrator *));
 int migpoolfiles _PROTO((struct migrator *));
@@ -1250,13 +1250,10 @@ void procmigpoolreq(req_data, clienthost)
 /* Flag means :                                       */
 /*  1             file put in stack can_be_migr       */
 /* -1             file removed from stack can_be_migr */
-/* Being means :                                      */
-/*  1             Remove file from stack being_migr if any */
 /* Returns: 0 (OK) or -1 (NOT OK) */
-int update_migpool(stcp,flag,Being)
+int update_migpool(stcp,flag)
 	struct stgcat_entry *stcp;
     int flag;
-    int Being;
 {
 	int i, ipool;
 	struct pool *pool_p;
@@ -1304,8 +1301,8 @@ int update_migpool(stcp,flag,Being)
 		} else {
 			pool_p->migr->space_canbemig -= stcp->actual_size;
 		}
-		if (Being) {
-			if ((stcp->status & BEING_MIGR) == BEING_MIGR) stcp->status &= ~BEING_MIGR;
+		if ((stcp->status & BEING_MIGR) == BEING_MIGR) {
+			stcp->status &= ~BEING_MIGR;
 			if (pool_p->migr->nbfiles_beingmig-- < 0) {
 				sendrep(rpfd, MSG_ERR, "STG02 - update_migpool : Internal error for pool %s, nbfiles_beingmig < 0 after automatic migration OK (resetted to 0)\n",
 						stcp->poolname);

@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.74 2000/11/07 09:55:04 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.75 2000/11/11 08:45:22 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.74 $ $Date: 2000/11/07 09:55:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.75 $ $Date: 2000/11/11 08:45:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -162,7 +162,7 @@ struct stgcat_entry *newreq _PROTO(());
 struct waitf *add2wf _PROTO((struct waitq *));
 int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct waitf *));
 extern void procmigpoolreq _PROTO((char *, char *));
-extern void update_migpool _PROTO((struct stgcat_entry *, int, int));
+extern void update_migpool _PROTO((struct stgcat_entry *, int));
 extern int iscleanovl _PROTO((int, int));
 extern int ismigovl _PROTO((int, int));
 extern int selectfs _PROTO((char *, int *, char *));
@@ -491,7 +491,7 @@ main(argc,argv)
 		} else if (stcp->status == (STAGEPUT | CAN_BE_MIGR)) {
 			stcp->status = STAGEOUT|CAN_BE_MIGR;
 			/* This is a file for automatic migration */
-			update_migpool(stcp,1,0);
+			update_migpool(stcp,1);
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -507,7 +507,7 @@ main(argc,argv)
 			}
 #endif
 			/* This is a file for automatic migration */
-			update_migpool(stcp,1,0);
+			update_migpool(stcp,1);
 			stcp++;
 		} else stcp++;
 	}
@@ -543,7 +543,7 @@ main(argc,argv)
 				} else if (! c) {
 					if ((stcp->status & (STAGEOUT | CAN_BE_MIGR)) == (STAGEOUT | CAN_BE_MIGR)) {
 						/* This is a file for automatic migration */
-						update_migpool(stcp,1,0);
+						update_migpool(stcp,1);
 					}
 				}
 			}
@@ -1420,7 +1420,7 @@ void checkwaitq()
 				case STAGEPUT:
 					if ((stcp->status & (CAN_BE_MIGR)) == CAN_BE_MIGR) {
 						/* This is a file coming from (automatic or not) migration */
-						update_migpool(stcp,-1,-1);
+						update_migpool(stcp,-1);
 						stcp->status = STAGEOUT | PUT_FAILED | CAN_BE_MIGR;
 					} else {
 						stcp->status = STAGEOUT | PUT_FAILED;
@@ -1585,7 +1585,7 @@ delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
 			if ((stcp->status & (STAGEPUT | CAN_BE_MIGR)) == (STAGEPUT | CAN_BE_MIGR) &&
 			    (stcp->status & PUT_FAILED) != PUT_FAILED) {
 				/* This is a file coming from (automatic or not) migration */
-				update_migpool(stcp,-1,-1);
+				update_migpool(stcp,-1);
 			}
 			updfreespace (stcp->poolname, stcp->ipath, (signed64) ((freersv) ?
 										((signed64) stcp->size * (signed64) ONE_MB) : ((signed64) actual_size)));
@@ -2081,7 +2081,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 					if (can_be_migr_flag) {
 						stcp->status |= CAN_BE_MIGR; /* Now status is STAGEOUT | CAN_BE_MIGR */
 						/* This is a file for automatic migration */
-						update_migpool(stcp,1,0);
+						update_migpool(stcp,1);
 					}
 				}
 			}
