@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.15 $ $Date: 2003/04/22 08:17:43 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.16 $ $Date: 2003/06/12 13:16:23 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -415,9 +415,17 @@ void shq_build_id_str(uid_t uid, gid_t gid, char *buf, int buf_size) {
 
     /* Printing the user name in the buffer */
     if (uname == NULL) {
+#ifdef _WIN32
+        ret = _snprintf(buf, buf_size, "%d,", uid);
+#else
         ret = snprintf(buf, buf_size, "%d,", uid);
+#endif
     } else {
+#ifdef _WIN32
+        ret = _snprintf(buf, buf_size, "%s,", uname);
+#else
         ret = snprintf(buf, buf_size, "%s,", uname);
+#endif
     }
     nb_chars += ret;
 
@@ -428,9 +436,17 @@ void shq_build_id_str(uid_t uid, gid_t gid, char *buf, int buf_size) {
     
     /* Printing the group name */
     if (gname == NULL) {
+#ifdef _WIN32
+        ret = _snprintf(buf + nb_chars, buf_size - nb_chars, "%d", gid);
+#else
         ret = snprintf(buf + nb_chars, buf_size - nb_chars, "%d", gid);
+#endif
     } else {
+#ifdef _WIN32
+        ret = _snprintf(buf + nb_chars, buf_size - nb_chars, "%s", gname);
+#else
         ret = snprintf(buf + nb_chars, buf_size - nb_chars, "%s", gname);
+#endif
     }
 
     /* In all cases set the last buffer char to '\0' to be sure */
