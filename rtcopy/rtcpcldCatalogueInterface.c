@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.26 $ $Release$ $Date: 2004/08/02 15:13:50 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.27 $ $Release$ $Date: 2004/08/02 16:25:31 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.26 $ $Release$ $Date: 2004/08/02 15:13:50 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.27 $ $Release$ $Date: 2004/08/02 16:25:31 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -2134,7 +2134,7 @@ int rtcpcld_setFileStatus(
     svcs = NULL;
     rc = getDbSvc(&svcs);
     if ( rc != -1 && svcs != NULL && *svcs != NULL ) 
-      rc = C_Services_updateRep(*svcs,iAddr,iObj,1);
+      rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,1);
     if ( rc == -1 ) {
       save_serrno = serrno;
       C_IAddress_delete(iAddr);
@@ -2147,7 +2147,7 @@ int rtcpcld_setFileStatus(
                         RTCPCLD_NB_PARAMS+4,
                         "DBSVCCALL",
                         DLF_MSG_PARAM_STR,
-                        (*svcs == NULL ? "getDbSvcs()" : "C_Services_updateRep()"),
+                        (*svcs == NULL ? "getDbSvcs()" : "C_Services_updateRepNoRec()"),
                         "ERROR_STR",
                         DLF_MSG_PARAM_STR,
                         sstrerror(serrno),
