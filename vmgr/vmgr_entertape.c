@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_entertape.c,v $ $Revision: 1.2 $ $Date: 1999/12/17 10:52:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_entertape.c,v $ $Revision: 1.3 $ $Date: 2000/03/01 16:23:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_entertape - enter a new tape volume */
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_entertape.c,v $ $Revision: 1.2 $ $Dat
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_entertape(const char *vid, char *vsn, char *dgn, char *density, char *lbltype, char *model, char *media_letter, char *manufacturer, char *sn, char *poolname)
+vmgr_entertape(const char *vid, char *vsn, char *dgn, char *density, char *lbltype, char *model, char *media_letter, char *manufacturer, char *sn, char *poolname, int status)
 {
 	int c;
 	char func[15];
@@ -107,6 +107,7 @@ vmgr_entertape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
 	} else {
 		marshall_STRING (sbp, "");
 	}
+	marshall_LONG (sbp, status);
  
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */

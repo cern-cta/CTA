@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_api.h,v 1.11 2000/02/19 08:24:47 baud Exp $
+ * $Id: vmgr_api.h,v 1.12 2000/03/01 16:23:47 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vmgr_api.h,v $ $Revision: 1.11 $ $Date: 2000/02/19 08:24:47 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr_api.h,v $ $Revision: 1.12 $ $Date: 2000/03/01 16:23:47 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _VMGR_API_H
@@ -34,7 +34,7 @@ extern int vmgr_deletepool(const char *);
 extern int vmgr_deletetape(const char *);
 extern int vmgr_entermodel(const char *, char *, int, int);
 extern int vmgr_enterpool(const char *, uid_t, gid_t);
-extern int vmgr_entertape(const char *, char *, char *, char *, char *, char *, char *, char *, char *, char *);
+extern int vmgr_entertape(const char *, char *, char *, char *, char *, char *, char *, char *, char *, char *, int);
 extern int vmgr_gettape(const char *, u_signed64, const char *, char *, char *, char *, char *, char *, int *, unsigned int *);
 extern int vmgr_modifymodel(const char *, char *, int, int);
 extern int vmgr_modifypool(const char *, uid_t, gid_t);
