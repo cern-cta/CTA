@@ -1,5 +1,5 @@
 /*
- * $Id: stager_usrmsg.c,v 1.17 2002/08/27 08:38:04 jdurand Exp $
+ * $Id: stager_usrmsg.c,v 1.18 2002/09/30 15:44:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.17 $ $Date: 2002/08/27 08:38:04 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.18 $ $Date: 2002/09/30 15:44:58 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /* stager_usrmsg.c - callback rtcp routine */
@@ -98,55 +98,3 @@ void stager_usrmsg(int level, ...)
 #endif
 	va_end(args);
 }
-
-/*
- * Version for automatic migration - Calls stgmiglogit
- *
- * stager_migmsg should be called with the following syntax
- * stager_migmsg(LOG_LEVEL,format[,value,...]) ;
- */
-
-#if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
-void stager_migmsg(va_alist)     va_dcl
-#else
-void stager_migmsg(int level, ...)
-#endif
-{
-	va_list args ;          /* Variable argument list               */
-	char    *format;        /* Format of the log message            */
-	char    line[BUFSIZ] ;  /* Formatted log message                */
-	int save_euid, save_egid;
-
-#if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
-	int     level;          /* Level of the message                 */
-
-	va_start(args);         /* initialize to beginning of list      */
-	level = va_arg(args, int);
-#else
-
-	va_start(args, level);
-#endif /* IRIX5 || __Lynx__ */
-
-	format = va_arg(args, char *);
-#if (defined(__osf__) && defined(__alpha))
-	vsprintf(line,format,args);
-#else
-	vsnprintf(line,BUFSIZ,format,args);
-#endif
-	line[BUFSIZ-1] = '\0';
-	save_euid = geteuid();
-	save_egid = getegid();
-	SETEID(0,0);
-#ifdef STAGER_DEBUG
-    /* In debug mode - we always want to have all messages in stager log-file */
-	stgmiglogit("migrator","%s",line);
-#else
-	if (level != LOG_DEBUG) stgmiglogit("migrator","%s",line);
-#endif
-	SETEID(save_euid,save_egid);
-	va_end(args);
-}
-
-
-
-
