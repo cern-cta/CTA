@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.7 $ $Date: 2001/02/28 10:15:40 $ CERN IT-PDP/DM Claire Redmond";
+static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.8 $ $Date: 2001/02/28 13:40:18 $ CERN IT-PDP/DM Claire Redmond";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1645,13 +1645,13 @@ getacctrec (fd_acct, accthdr, buf, swapped)
 
   if (first_rec == 1 && (accthdr->package > 255 || accthdr->package < 0)) {
 	*swapped = 1;
-	first_rec = 0;
   }
   if (*swapped) {
 	swap_it (accthdr->package);
 	swap_it (accthdr->len);
 	swap_it (accthdr->timestamp);
   }
+  first_rec = 0;
   if (accthdr->len <= 0 || accthdr->len > SACCT_BUFLEN) {
     fprintf (stderr, "corrupted accounting file: package=%d, len=%d, timestamp=%d, swapped=%d\n",
              accthdr->package,accthdr->len,accthdr->timestamp,*swapped);
