@@ -1012,7 +1012,7 @@ int stage_tape() {
 			
 	
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] Calling rtcpc()\n");
+	sendrep(rpfd, MSG_OUT, "[DEBUG-STAGETAPE] Calling rtcpc()\n");
 	STAGER_RTCP_DUMP(rtcpcreqs[0]);
 #endif
 
@@ -1340,10 +1340,18 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 					continue;
 				}
 				strcpy((*rtcpcreqs_in)[i]->tapereq.vid      , stcp->u1.t.vid[ivid]);
+#ifdef TMS
+				if (strcmp(stcp->u1.t.lbl,"blp") == 0) {
+#endif
+					strcpy((*rtcpcreqs_in)[i]->tapereq.label    , stcp->u1.t.lbl      );
+#ifdef TMS
+				}
+#endif
+#ifndef TMS
 				strcpy((*rtcpcreqs_in)[i]->tapereq.vsn      , stcp->u1.t.vsn[ivid]);
-				strcpy((*rtcpcreqs_in)[i]->tapereq.label    , stcp->u1.t.lbl      );
 				strcpy((*rtcpcreqs_in)[i]->tapereq.dgn      , stcp->u1.t.dgn      );
 				strcpy((*rtcpcreqs_in)[i]->tapereq.density  , stcp->u1.t.den      );
+#endif
 				strcpy((*rtcpcreqs_in)[i]->tapereq.server   , stcp->u1.t.tapesrvr );
 				switch (stcp->status) {
 				case STAGEWRT:
@@ -1606,10 +1614,18 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				continue;
 			}
 			strcpy((*rtcpcreqs_in)[i]->tapereq.vid     ,vid    );
+#ifdef TMS
+			if (strcmp(lbltype,"blp") == 0) {
+#endif
+				strcpy((*rtcpcreqs_in)[i]->tapereq.label   ,lbltype);
+#ifdef TMS
+			}
+#endif
+#ifndef TMS
 			strcpy((*rtcpcreqs_in)[i]->tapereq.vsn     ,vsn    );
-			strcpy((*rtcpcreqs_in)[i]->tapereq.label   ,lbltype);
 			strcpy((*rtcpcreqs_in)[i]->tapereq.dgn     ,dgn    );
 			strcpy((*rtcpcreqs_in)[i]->tapereq.density ,aden   );
+#endif
 			if ((*rtcpcreqs_in)[i]->file == NULL) {
 				/* First file for this VID */
 				if (((*rtcpcreqs_in)[i]->file = (file_list_t *) calloc(1,sizeof(file_list_t))) == NULL) {
