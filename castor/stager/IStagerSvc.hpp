@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/22 14:43:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2004/11/23 15:42:18 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -29,7 +29,6 @@
 #define STAGER_ISTAGERSVC_HPP 1
 
 // Include Files
-#include "castor/Constants.hpp"
 #include "castor/IService.hpp"
 #include "castor/exception/Exception.hpp"
 #include <vector>
