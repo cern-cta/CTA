@@ -4,7 +4,7 @@
  */
 
 /*
- * $RCSfile: rtcp.h,v $ $Revision: 1.15 $ $Date: 2000/08/03 09:22:39 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rtcp.h,v $ $Revision: 1.16 $ $Date: 2000/08/04 14:35:18 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -208,11 +208,12 @@ typedef struct rtcpDumpTapeRequest {
     int blocksize;
     int convert;
     int tp_err_action;
+    int startfile;
     int maxfile;
     int fromblock;
     int toblock;
 } rtcpDumpTapeRequest_t;
-#define RTCP_DUMPTAPEREQLEN(X) (7*LONGSIZE)
+#define RTCP_DUMPTAPEREQLEN(X) (8*LONGSIZE)
 
 /*
  * Circular lists of tape and file requests. (Client only)
