@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.17 $ $Date: 2000/10/03 07:48:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.18 $ $Date: 2001/07/26 15:44:32 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_mount - send a request to the tape daemon to have a tape mounted
@@ -162,12 +162,22 @@ int vdqm_reqid;
 #else
 	if (! vsn)
 		strcpy (actual_vsn, actual_vid);
+	else {
+		strcpy (actual_vsn, vsn);
+		UPPER (actual_vsn);
+	}
 	if (! dgn)
 		strcpy (actual_dgn, DEFDGN);
+	else
+		strcpy (actual_dgn, dgn);
 	if (! density)
 		strcpy (actual_den, "0");
+	else
+		strcpy (actual_den, density);
 	if (! lbltype)
 		strcpy (actual_lbltype, "sl");
+	else
+		strcpy (actual_lbltype, lbltype);
 #endif
  
         /* Build request header */
