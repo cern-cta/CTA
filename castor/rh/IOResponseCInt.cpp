@@ -60,6 +60,31 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_IOResponse_print
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_print(castor::rh::IOResponse* instance) {
+    instance->print();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_TYPE
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_TYPE(int* ret) {
+    *ret = castor::rh::IOResponse::TYPE();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_type
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_type(castor::rh::IOResponse* instance,
+                          int* ret) {
+    *ret = instance->type();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_IOResponse_fileName
   //----------------------------------------------------------------------------
   int Crh_IOResponse_fileName(castor::rh::IOResponse* instance, const char** var) {

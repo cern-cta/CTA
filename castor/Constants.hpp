@@ -88,7 +88,9 @@ namespace castor {
     OBJ_AbortResponse = 54,
     OBJ_RequestQueryResponse = 55,
     OBJ_FileQueryResponse = 56,
-    OBJ_FindReqResponse = 57
+    OBJ_FindReqResponse = 57,
+    OBJ_DiskCopyForRecall = 58,
+    OBJ_TapeCopyForMigration = 59
   };
     
   /**

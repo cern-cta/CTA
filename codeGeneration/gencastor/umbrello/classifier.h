@@ -231,10 +231,16 @@ public:
   UMLClassifierList findSuperAbstractConcepts ();
   
   /**
-   * Returns a list of interfaces which this concept implements.
+   * Returns a list of interfaces which this concept directly implements.
    * @return      list    a QPtrList of UMLClassifiers we implement.
    */
   UMLClassifierList findImplementedAbstractConcepts ();
+  
+  /**
+   * Returns a list of interfaces which this concept implements.
+   * @return      list    a QPtrList of UMLClassifiers we implement.
+   */
+  UMLClassifierList findAllImplementedAbstractConcepts ();
   
   /**
    * Returns a list of classes (no interfaces) which this concept implements.

@@ -58,6 +58,22 @@ struct Crh_FileResponse_t* Crh_IOResponse_getFileResponse(struct Crh_IOResponse_
 struct Crh_IOResponse_t* Crh_IOResponse_fromFileResponse(struct Crh_FileResponse_t* obj);
 
 /**
+ * Outputs this object in a human readable format
+ */
+int Crh_IOResponse_print(struct Crh_IOResponse_t* instance);
+
+/**
+ * Gets the type of this kind of objects
+ */
+int Crh_IOResponse_TYPE(int* ret);
+
+/**
+ * Gets the type of the object
+ */
+int Crh_IOResponse_type(struct Crh_IOResponse_t* instance,
+                        int* ret);
+
+/**
  * Get the value of fileName
  * The file name
  */

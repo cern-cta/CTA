@@ -25,7 +25,11 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/Constants.hpp"
+#include "castor/ObjectSet.hpp"
+#include "castor/rh/FileResponse.hpp"
 #include "castor/rh/IOResponse.hpp"
+#include <iostream>
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -44,4 +48,48 @@ castor::rh::IOResponse::IOResponse() throw() :
 //------------------------------------------------------------------------------
 castor::rh::IOResponse::~IOResponse() throw() {
 };
+
+//------------------------------------------------------------------------------
+// print
+//------------------------------------------------------------------------------
+void castor::rh::IOResponse::print(std::ostream& stream,
+                                   std::string indent,
+                                   castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# IOResponse #]" << std::endl;
+  if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
+    // Circular dependency, this object was already printed
+    stream << indent << "Back pointer, see above" << std::endl;
+    return;
+  }
+  // Call print on the parent class(es)
+  this->FileResponse::print(stream, indent, alreadyPrinted);
+  // Output of all members
+  stream << indent << "fileName : " << m_fileName << std::endl;
+  stream << indent << "server : " << m_server << std::endl;
+  stream << indent << "port : " << m_port << std::endl;
+  stream << indent << "protocol : " << m_protocol << std::endl;
+  alreadyPrinted.insert(this);
+}
+
+//------------------------------------------------------------------------------
+// print
+//------------------------------------------------------------------------------
+void castor::rh::IOResponse::print() const {
+  ObjectSet alreadyPrinted;
+  print(std::cout, "", alreadyPrinted);
+}
+
+//------------------------------------------------------------------------------
+// TYPE
+//------------------------------------------------------------------------------
+int castor::rh::IOResponse::TYPE() {
+  return OBJ_IOResponse;
+}
+
+//------------------------------------------------------------------------------
+// type
+//------------------------------------------------------------------------------
+int castor::rh::IOResponse::type() const {
+  return TYPE();
+}
 

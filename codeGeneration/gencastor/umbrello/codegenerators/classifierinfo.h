@@ -82,6 +82,7 @@ public:
 	UMLClassifierList superInterfaces;
 	UMLClassifierList superAbstracts;
 	UMLClassifierList implementedAbstracts;
+	UMLClassifierList allImplementedAbstracts;
 	UMLClassifierList subclasses;
 
 	/**

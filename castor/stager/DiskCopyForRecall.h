@@ -58,6 +58,22 @@ struct Cstager_DiskCopy_t* Cstager_DiskCopyForRecall_getDiskCopy(struct Cstager_
 struct Cstager_DiskCopyForRecall_t* Cstager_DiskCopyForRecall_fromDiskCopy(struct Cstager_DiskCopy_t* obj);
 
 /**
+ * Outputs this object in a human readable format
+ */
+int Cstager_DiskCopyForRecall_print(struct Cstager_DiskCopyForRecall_t* instance);
+
+/**
+ * Gets the type of this kind of objects
+ */
+int Cstager_DiskCopyForRecall_TYPE(int* ret);
+
+/**
+ * Gets the type of the object
+ */
+int Cstager_DiskCopyForRecall_type(struct Cstager_DiskCopyForRecall_t* instance,
+                                   int* ret);
+
+/**
  * Get the value of mountPoint
  * The mountpoint of the filesystem where the file to be recalled should be put
  */

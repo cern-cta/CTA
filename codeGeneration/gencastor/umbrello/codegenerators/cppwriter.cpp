@@ -44,6 +44,8 @@ CppWriter::CppWriter( UMLDoc *parent, const char *name ) :
   //odbccppw = new CppCppOdbcCnvWriter(m_doc, "Odbc converter generator");
   streamhw = new CppHStreamCnvWriter(m_doc, "Stream converter generator");
   streamcppw = new CppCppStreamCnvWriter(m_doc, "Stream converter generator");
+  m_noCnvs.insert(QString("DiskCopyForRecall"));
+  m_noCnvs.insert(QString("TapeCopyForMigration"));
 }
 
 CppWriter::~CppWriter() {
@@ -122,7 +124,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
     UMLObject* obj = m_doc->findUMLObject(QString("IObject"),
                                           Uml::ot_Interface);
     const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
-    if (classInfo.implementedAbstracts.contains(concept) ||
+    if (classInfo.allImplementedAbstracts.contains(concept) ||
         classInfo.className == "IObject") {
       UMLAttributeList param;
       UMLOperation* printOp =
@@ -162,7 +164,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
         printOp->setAbstract(true);
       }
       c->getOpList()->append(printOp);
-      // For concrete implementations
+      // For first level of concrete implementations
       if (!c->getAbstract()) {
         // TYPE method
         UMLOperation* typeOp = getDocument()->createOperation(c, "TYPE", &param);
@@ -171,13 +173,27 @@ void CppWriter::writeClass(UMLClassifier *c) {
         typeOp->setDoc("Gets the type of this kind of objects");
         typeOp->setStatic(true);
         c->getOpList()->append(typeOp);
-        // ID attribute
-        UMLClass* cl = dynamic_cast <UMLClass*>(c);
-        if (0 != cl) {
-          UMLAttribute* idAt =
-            new UMLAttribute(c, "id", m_doc->getUniqueID(), "u_signed64");
-          idAt->setDoc("The id of this object");
-          cl->getAttList()->append(idAt);
+        // check whether some ancester is non abstract
+        // If yes, don't redefine id
+        if (classInfo.allSuperclasses.count() ==
+            classInfo.implementedAbstracts.count()) {
+          // ID attribute
+          UMLClass* cl = dynamic_cast <UMLClass*>(c);
+          if (0 != cl) {
+            UMLAttribute* idAt =
+              new UMLAttribute(c, "id", m_doc->getUniqueID(), "u_signed64");
+            idAt->setDoc("The id of this object");
+            cl->getAttList()->append(idAt);
+          }
+        } else {
+          // We need to reimplement type here since it won't
+          // be reimplemented though it needs to be since it's
+          // calling the static TYPE method
+          UMLOperation* type2Op = getDocument()->createOperation(c, "type const", &param);
+          type2Op->setReturnType("int");
+          type2Op->setID(m_doc->getUniqueID());
+          type2Op->setDoc("Gets the type of the object");
+          c->getOpList()->append(type2Op);
         }
       }
     }
@@ -207,7 +223,8 @@ void CppWriter::writeClass(UMLClassifier *c) {
       // Determine whether persistency has to be implemented
       // It is implemented for concrete classes implementing
       // the IPersistent abstract interface
-      if (!c->getAbstract()) {
+      if (!c->getAbstract() &&
+          m_noCnvs.find(c->getName()) == m_noCnvs.end()) {
         UMLObject* obj = m_doc->findUMLObject(QString("IPersistent"),
                                               Uml::ot_Interface);
         const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);

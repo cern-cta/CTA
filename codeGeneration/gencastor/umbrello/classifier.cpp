@@ -282,6 +282,21 @@ UMLClassifierList UMLClassifier::findImplementedAbstractConcepts () {
   return result;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+UMLClassifierList UMLClassifier::findAllImplementedAbstractConcepts () {
+  // first get the list of objects we inherit from
+  UMLClassifierList superint = findAllSuperClassConcepts();
+  // now recursively find which interfaces we implement
+  UMLClassifierList result;
+  for (UMLClassifier *a = superint.first(); a; a = superint.next()) {
+    if (a->getAbstract()) result.append(a);
+    UMLClassifierList grandParents = a->findImplementedAbstractConcepts();
+    for (UMLClassifier *b = grandParents.first(); b; b = grandParents.next()) {
+      if (result.find(b) < 0) result.append(b);
+    }
+  }
+  return result;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////
 UMLClassifierList UMLClassifier::findImplementedClasses () {
   // first get the list of classes we inherit from
   UMLClassifierList superint = findSuperClassConcepts();

@@ -60,6 +60,31 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_print
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_print(castor::stager::DiskCopyForRecall* instance) {
+    instance->print();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_TYPE
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_TYPE(int* ret) {
+    *ret = castor::stager::DiskCopyForRecall::TYPE();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_type
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_type(castor::stager::DiskCopyForRecall* instance,
+                                     int* ret) {
+    *ret = instance->type();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_DiskCopyForRecall_mountPoint
   //----------------------------------------------------------------------------
   int Cstager_DiskCopyForRecall_mountPoint(castor::stager::DiskCopyForRecall* instance, const char** var) {

@@ -25,7 +25,11 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/Constants.hpp"
+#include "castor/ObjectSet.hpp"
+#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
+#include <iostream>
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -42,4 +46,46 @@ castor::stager::DiskCopyForRecall::DiskCopyForRecall() throw() :
 //------------------------------------------------------------------------------
 castor::stager::DiskCopyForRecall::~DiskCopyForRecall() throw() {
 };
+
+//------------------------------------------------------------------------------
+// print
+//------------------------------------------------------------------------------
+void castor::stager::DiskCopyForRecall::print(std::ostream& stream,
+                                              std::string indent,
+                                              castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# DiskCopyForRecall #]" << std::endl;
+  if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
+    // Circular dependency, this object was already printed
+    stream << indent << "Back pointer, see above" << std::endl;
+    return;
+  }
+  // Call print on the parent class(es)
+  this->DiskCopy::print(stream, indent, alreadyPrinted);
+  // Output of all members
+  stream << indent << "mountPoint : " << m_mountPoint << std::endl;
+  stream << indent << "diskServer : " << m_diskServer << std::endl;
+  alreadyPrinted.insert(this);
+}
+
+//------------------------------------------------------------------------------
+// print
+//------------------------------------------------------------------------------
+void castor::stager::DiskCopyForRecall::print() const {
+  ObjectSet alreadyPrinted;
+  print(std::cout, "", alreadyPrinted);
+}
+
+//------------------------------------------------------------------------------
+// TYPE
+//------------------------------------------------------------------------------
+int castor::stager::DiskCopyForRecall::TYPE() {
+  return OBJ_DiskCopyForRecall;
+}
+
+//------------------------------------------------------------------------------
+// type
+//------------------------------------------------------------------------------
+int castor::stager::DiskCopyForRecall::type() const {
+  return TYPE();
+}
 

@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 
+#include "../classifier.h"
 #include "classifierinfo.h"
 
 #include "../class.h"
@@ -105,8 +106,12 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
   superAbstracts = c->findSuperAbstractConcepts(); // list of interfaces/abstract classes  we inherit from
   superAbstracts.setAutoDelete(false);
 
-  implementedAbstracts = c->findImplementedAbstractConcepts(); // list of interfaces/abstract classes we implement
+  implementedAbstracts = c->findImplementedAbstractConcepts(); // list of interfaces/abstract classes we directly implement
   implementedAbstracts.setAutoDelete(false);
+
+  allImplementedAbstracts =
+    c->findAllImplementedAbstractConcepts(); // list of interfaces/abstract classes we implement
+  allImplementedAbstracts.setAutoDelete(false);
 
 	subclasses = c->getSubClasses();     // list of what inherits from us
 	subclasses.setAutoDelete(false);

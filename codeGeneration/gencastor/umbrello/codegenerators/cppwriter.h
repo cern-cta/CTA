@@ -19,6 +19,7 @@
 // Local includes
 #include "cppcastorwriter.h"
 #include "cppbasewriter.h"
+#include <set>
 
 class UMLOperation;
 class CppHClassWriter;
@@ -79,6 +80,12 @@ class CppWriter : public CppCastorWriter {
 
   // whether the next code generation will be the first one
   bool firstGeneration;
+
+  /**
+   * A List of specific classes for which no converter should
+   * be generated
+   */
+  std::set<QString> m_noCnvs;
 
 };
 

@@ -92,6 +92,8 @@ void castor::io::StreamIOResponseCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->fileSize();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
+  ad->stream() << obj->fileId();
+  ad->stream() << obj->subreqId();
   ad->stream() << obj->id();
   ad->stream() << obj->fileName();
   ad->stream() << obj->server();
@@ -124,6 +126,12 @@ castor::IObject* castor::io::StreamIOResponseCnv::createObj(castor::IAddress* ad
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
+  u_signed64 fileId;
+  ad->stream() >> fileId;
+  object->setFileId(fileId);
+  std::string subreqId;
+  ad->stream() >> subreqId;
+  object->setSubreqId(subreqId);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

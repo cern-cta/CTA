@@ -60,6 +60,31 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_print
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_print(castor::stager::TapeCopyForMigration* instance) {
+    instance->print();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_TYPE
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_TYPE(int* ret) {
+    *ret = castor::stager::TapeCopyForMigration::TYPE();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_type
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_type(castor::stager::TapeCopyForMigration* instance,
+                                        int* ret) {
+    *ret = instance->type();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_TapeCopyForMigration_diskServer
   //----------------------------------------------------------------------------
   int Cstager_TapeCopyForMigration_diskServer(castor::stager::TapeCopyForMigration* instance, const char** var) {

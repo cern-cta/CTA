@@ -59,6 +59,22 @@ struct Cstager_TapeCopy_t* Cstager_TapeCopyForMigration_getTapeCopy(struct Cstag
 struct Cstager_TapeCopyForMigration_t* Cstager_TapeCopyForMigration_fromTapeCopy(struct Cstager_TapeCopy_t* obj);
 
 /**
+ * Outputs this object in a human readable format
+ */
+int Cstager_TapeCopyForMigration_print(struct Cstager_TapeCopyForMigration_t* instance);
+
+/**
+ * Gets the type of this kind of objects
+ */
+int Cstager_TapeCopyForMigration_TYPE(int* ret);
+
+/**
+ * Gets the type of the object
+ */
+int Cstager_TapeCopyForMigration_type(struct Cstager_TapeCopyForMigration_t* instance,
+                                      int* ret);
+
+/**
  * Get the value of diskServer
  * The disk server on which the file to be migrated resides
  */

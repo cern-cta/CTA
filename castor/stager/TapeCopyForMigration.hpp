@@ -29,9 +29,13 @@
 
 // Include Files
 #include "castor/stager/TapeCopy.hpp"
+#include <iostream>
 #include <string>
 
 namespace castor {
+
+  // Forward declarations
+  class ObjectSet;
 
   namespace stager {
 
@@ -53,6 +57,32 @@ namespace castor {
        * Empty Destructor
        */
       virtual ~TapeCopyForMigration() throw();
+
+      /**
+       * Outputs this object in a human readable format
+       * @param stream The stream where to print this object
+       * @param indent The indentation to use
+       * @param alreadyPrinted The set of objects already printed.
+       * This is to avoid looping when printing circular dependencies
+       */
+      virtual void print(std::ostream& stream,
+                         std::string indent,
+                         castor::ObjectSet& alreadyPrinted) const;
+
+      /**
+       * Outputs this object in a human readable format
+       */
+      virtual void print() const;
+
+      /**
+       * Gets the type of this kind of objects
+       */
+      static int TYPE();
+
+      /**
+       * Gets the type of the object
+       */
+      int type() const;
 
       /**
        * Get the value of m_diskServer
