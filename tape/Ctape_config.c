@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_config.c,v $ $Revision: 1.7 $ $Date: 1999/09/20 14:54:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_config.c,v $ $Revision: 1.8 $ $Date: 1999/10/13 14:14:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_config - configure a drive up/down */
@@ -12,10 +12,10 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_config.c,v $ $Revision: 1.7 $ $Date:
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
-#include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
+#include <unistd.h>
 #include <netinet/in.h>
 #endif
 #include "Ctape.h"
@@ -43,8 +43,9 @@ int reason;
 	gid = getgid();
 #if defined(_WIN32)
 	if (uid < 0 || gid < 0) {
-		fprintf (stderr, TP053);
-		return (USERR);
+		Ctape_errmsg (func, TP053);
+		serrno = SENOMAPFND;
+		return (-1);
 	}
 #endif
 

@@ -4,17 +4,17 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_kill.c,v $ $Revision: 1.3 $ $Date: 1999/09/20 15:17:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_kill.c,v $ $Revision: 1.4 $ $Date: 1999/10/13 14:14:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_kill - cancel a tape mount or position request */
 
 #include <errno.h>
 #include <sys/types.h>
-#include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
+#include <unistd.h>
 #include <netinet/in.h>
 #endif
 #include "Ctape.h"
@@ -43,8 +43,9 @@ char *path;
 	gid = getgid();
 #if defined(_WIN32)
 	if (uid < 0 || gid < 0) {
-		fprintf (stderr, TP053);
-		return (USERR);
+		Ctape_errmsg (func, TP053);
+		serrno = SENOMAPFND;
+		return (-1);
 	}
 #endif
 	jid = findpgrp();
