@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.70 $ $Date: 2000/04/05 12:39:16 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.71 $ $Date: 2000/04/06 09:08:28 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -379,7 +379,12 @@ static int DiskFileOpen(int pool_index,
                 rtcp_log(LOG_ERR,
                  "DiskFileOpen() rfio_lseek(%d,%d,0x%x): errno = %d, serrno = %d, rfio_errno = %d\n",
                  disk_fd,(int)filereq->offset,SEEK_SET,errno,serrno,rfio_errno);
-            }
+            } else if ( rc != (int)filereq->offset ) {
+                rtcp_log(LOG_ERR,"rfio_lseek(%d,%d,%d) returned %d\n",
+                         disk_fd,(int)filereq->offset,SEEK_SET,rc);
+                save_serrno = SEINTERNAL;
+                rc = -1;
+            } else rc = 0;
         }
     } else if ( (*filereq->recfm == 'U') && 
                 ((filereq->convert & NOF77CW) == 0) ) {
