@@ -127,6 +127,10 @@ int rtcpcld_findFile _PROTO((
                              rtcpFileRequest_t *,
                              file_list_t **
                              ));
+int rtcpcld_nextFileToRecall _PROTO((
+                                     tape_list_t *,
+                                     file_list_t **
+                                     ));
 int rtcpcld_runWorker _PROTO((
                               tape_list_t *,
                               SOCKET *,
