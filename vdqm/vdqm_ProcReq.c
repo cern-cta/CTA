@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.8 $ $Date: 1999/12/20 15:45:40 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.9 $ $Date: 2000/02/28 17:56:28 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -15,11 +15,13 @@ static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.8 $ $Date:
 #if defined(_WIN32)
 #include <winsock2.h>
 extern char *geterr();
+typedef void * regex_t
 #else /* _WIN32 */
 #include <sys/param.h>
 #include <sys/types.h>                  /* Standard data types          */
 #include <sys/socket.h>
 #include <netinet/in.h>                 /* Internet data types          */
+#include <regex.h>
 #endif /* _WIN32 */
 #include <osdep.h>
 #include <log.h>
@@ -99,6 +101,9 @@ void *vdqm_ProcReq(void *arg) {
                 break;
             case VDQM_DEL_DRVREQ:
                 rc = vdqm_DelDrvReq(&driveRequest);
+                break;
+            case VDQM_DEDICATE_DRV:
+                rc = vdqm_DedicateDrv(&driveRequest);
                 break;
             case VDQM_GET_VOLQUEUE:
                 *dgn = '\0';

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.25 $ $Date: 2000/02/11 09:58:28 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.26 $ $Date: 2000/02/28 17:56:26 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -13,6 +13,11 @@ static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.25 $ $Date
 
 #include <stdlib.h>
 #include <time.h>
+#if !defined(_WIN32)
+#include <regex.h>
+#else /* _WIN32 */
+typedef void * regex_t
+#endif /* _WIN32 */
 #include <osdep.h>
 #include <net.h>
 #include <log.h>
@@ -259,9 +264,8 @@ static int VolMounted(const dgn_element_t *dgn_context,
 static int AnyFreeDrvOnSrv(const dgn_element_t *dgn_context,
                            vdqm_volrec_t *volrec,
                            vdqm_drvrec_t **freedrv) {
-    vdqm_drvrec_t *drv;
+    vdqm_drvrec_t *drv, *top;
     char *server, *drive, *volid;
-    int found;
 
     if ( INVALID_DGN_CONTEXT || volrec == NULL || 
         *volrec->vol.server == '\0' ) return(-1);
@@ -269,7 +273,11 @@ static int AnyFreeDrvOnSrv(const dgn_element_t *dgn_context,
     server = volrec->vol.server;
     drive = volrec->vol.drive;
     volid = volrec->vol.volid;
-    found = 0;
+    top = NULL;
+    /*
+     * First check whether client matches any dedicated drive on this
+     * server
+     */
     CLIST_ITERATE_BEGIN(dgn_context->drv_queue,drv) {
         if (!(drv->drv.status & VDQM_UNIT_UNKNOWN) &&
              (drv->drv.status & VDQM_UNIT_UP) &&
@@ -280,15 +288,39 @@ static int AnyFreeDrvOnSrv(const dgn_element_t *dgn_context,
                  (*drive == '\0' || !strcmp(drv->drv.drive,drive)) &&
                  ((drv->drv.status & VDQM_UNIT_RELEASE) || 
                   !VolMounted(dgn_context,volid)) ) {
-                strcpy(drive,drv->drv.drive);
-                *freedrv = drv;
-                found = 1;
-                break;
+                if ( *drv->drv.dedicate != '\0' && 
+                     vdqm_DrvMatch(volrec,drv) == 1 ) {
+                    if ( (top == NULL) || 
+                        (drv->drv.recvtime<top->drv.recvtime)) top = drv; 
+                }
             }
         }
     } CLIST_ITERATE_END(dgn_context->drv_queue,drv);
-    if ( found && *freedrv != NULL ) (*freedrv)->update = 1;
-    return(found);
+
+    if ( top == NULL ) {
+        CLIST_ITERATE_BEGIN(dgn_context->drv_queue,drv) {
+            if (!(drv->drv.status & VDQM_UNIT_UNKNOWN) &&
+                 (drv->drv.status & VDQM_UNIT_UP) &&
+                ((drv->drv.status & VDQM_UNIT_FREE) ||
+                 (drv->drv.status & VDQM_UNIT_RELEASE) &&
+                 !strcmp(drv->drv.volid,volid)) ) {
+                if ( !strcmp(drv->drv.server,server) &&
+                     (*drive == '\0' || !strcmp(drv->drv.drive,drive)) &&
+                     ((drv->drv.status & VDQM_UNIT_RELEASE) ||
+                      !VolMounted(dgn_context,volid)) ) {
+                        if ( (top == NULL) ||
+                             (drv->drv.recvtime<top->drv.recvtime)) top = drv;
+                }
+            }
+        } CLIST_ITERATE_END(dgn_context->drv_queue,drv);
+    }
+    if ( top != NULL ) {
+        strcpy(drive,top->drv.drive);
+        *freedrv = top;
+        (*freedrv)->update = 1;
+        return(1);
+    }
+    return(0);
 }
 
 
@@ -337,11 +369,16 @@ static int AnyVolRecForMountedVol(const dgn_element_t *dgn_context,
              (*vol->vol.drive == '\0' ||
               !strcmp(drv->drv.drive,vol->vol.drive)) ) {
             if ( (vol->vol.DrvReqID == 0) &&
-                (top == NULL || CmpVolRec(vol,top) == 1) )
+                (top == NULL || CmpVolRec(vol,top) == 1) &&
+                 (vdqm_DrvMatch(vol,drv) == 1) )
                 top = vol;
         }
     } CLIST_ITERATE_END(dgn_context->vol_queue,vol);
+
     if ( top != NULL ) {
+        /*
+         * There is a request for this volume. Check if eligible.
+         */
         vol = NULL;
         i = PopVolRecord(dgn_context,&vol);
         /*
@@ -381,6 +418,7 @@ static int AnyVolRecForDrv(const dgn_element_t *dgn_context,
     if ( INVALID_DGN_CONTEXT || drv == NULL ) return(-1);
     if ( volrec != NULL ) *volrec = NULL;
     top = NULL;
+
     CLIST_ITERATE_BEGIN(dgn_context->vol_queue,vol) {
         if ( (*vol->vol.server != '\0' &&
               !strcmp(drv->drv.server,vol->vol.server)) && 
@@ -389,7 +427,8 @@ static int AnyVolRecForDrv(const dgn_element_t *dgn_context,
             if  ( (vol->vol.DrvReqID == 0) &&
                   (top == NULL || CmpVolRec(vol,top) == 1) &&
                   (!strcmp(drv->drv.volid,vol->vol.volid) ||
-                   !VolMounted(dgn_context,vol->vol.volid)) ) top = vol;
+                   !VolMounted(dgn_context,vol->vol.volid)) &&
+                  vdqm_DrvMatch(vol,drv) == 1 ) top = vol;
         }
     } CLIST_ITERATE_END(dgn_context->vol_queue,vol);
     /*
@@ -401,7 +440,8 @@ static int AnyVolRecForDrv(const dgn_element_t *dgn_context,
             if (*vol->vol.server == '\0') {
                 if  ( (vol->vol.DrvReqID == 0) &&
                       (top == NULL || CmpVolRec(vol,top) == 1) &&
-                      !VolInUse(dgn_context,vol->vol.volid) ) top = vol;
+                      !VolInUse(dgn_context,vol->vol.volid) &&
+                       vdqm_DrvMatch(vol,drv) == 1 ) top = vol;
             }
         } CLIST_ITERATE_END(dgn_context->vol_queue,vol);
     }
@@ -536,20 +576,42 @@ static int DelDrvRecord(dgn_element_t *dgn_context,
 }
 
 static int PopDrvRecord(const dgn_element_t *dgn_context,
+                        vdqm_volrec_t *volrec,
                         vdqm_drvrec_t **drvrec) {
     vdqm_drvrec_t *drv, *top;
     
     if ( drvrec == NULL || INVALID_DGN_CONTEXT ) return(-1);
     
     top = NULL;
-    CLIST_ITERATE_BEGIN(dgn_context->drv_queue,drv) {
-        if ( !(drv->drv.status & VDQM_UNIT_UNKNOWN) &&
-              (drv->drv.status & VDQM_UNIT_UP) &&
-              (drv->drv.status & VDQM_UNIT_FREE) ) {
-            if ((top == NULL) ||
-                (drv->drv.recvtime<top->drv.recvtime)) top = drv;
-        }
-    } CLIST_ITERATE_END(dgn_context->drv_queue,drv);
+    if ( volrec != NULL ) {
+        /*
+         * If called with a volrec, we must first check if there
+         * any dedicated drives for this client. If so, they should
+         * be selected by preference.
+         */
+        CLIST_ITERATE_BEGIN(dgn_context->drv_queue,drv) {
+            if ( !(drv->drv.status & VDQM_UNIT_UNKNOWN) &&
+                  (drv->drv.status & VDQM_UNIT_UP) &&
+                  (drv->drv.status & VDQM_UNIT_FREE) ) {
+                if ( *drv->drv.dedicate != '\0' &&
+                     vdqm_DrvMatch(volrec,drv) == 1 ) {
+                    if ((top == NULL) ||
+                        (drv->drv.recvtime<top->drv.recvtime)) top = drv;
+                }
+            }
+        } CLIST_ITERATE_END(dgn_context->drv_queue,drv);
+    }
+
+    if ( top == NULL ) {
+        CLIST_ITERATE_BEGIN(dgn_context->drv_queue,drv) {
+            if ( !(drv->drv.status & VDQM_UNIT_UNKNOWN) &&
+                  (drv->drv.status & VDQM_UNIT_UP) &&
+                  (drv->drv.status & VDQM_UNIT_FREE) ) {
+                if ((top == NULL) ||
+                    (drv->drv.recvtime<top->drv.recvtime)) top = drv;
+            }
+        } CLIST_ITERATE_END(dgn_context->drv_queue,drv);
+    }
     if ( top != NULL ) top->update = 1;
     else vdqm_SetError(EVQNODRV);
     *drvrec = top;
@@ -705,7 +767,7 @@ static int SelectVolAndDrv(const dgn_element_t *dgn_context,
          * Either the volrec asked for a specific server/drive
          * which wasn't free or it accepts any server
          */
-        rc = PopDrvRecord(dgn_context,&drvrec);
+        rc = PopDrvRecord(dgn_context,volrec,&drvrec);
         if ( rc == -1 || drvrec == NULL ) {
             log(LOG_ERR,"SelectVolAndDrv(): PopDrvRecord() returned rc=%d, drvrec=0x%x\n",
                 rc,drvrec);
@@ -1735,7 +1797,7 @@ n",
         }
         /*
          * Loop until there is no more volume requests in queue or
-         * no free suitable drive
+         * no suitable free drive
          */
         for (;;) {
             /*
@@ -1807,6 +1869,53 @@ n",
     }
     FreeDgnContext(&dgn_context);
     return(0);
+}
+
+int vdqm_DedicateDrv(vdqmDrvReq_t *DrvReq) {
+    dgn_element_t *dgn_context;
+    vdqm_volrec_t *volrec;
+    vdqm_drvrec_t *drvrec;
+    int rc;
+
+    if ( DrvReq == NULL ) return(-1);
+    rc = 0;
+
+    log(LOG_INFO,"vdqm_DedicateDrv() dgn: %s, drive: %s@%s, dedicate=%s\n",
+        DrvReq->dgn,DrvReq->server,DrvReq->drive,DrvReq->dedicate);
+
+    /*
+     * Set DGN context
+     */
+    rc = SetDgnContext(&dgn_context,DrvReq->dgn);
+    if ( rc == -1 ) {
+        log(LOG_ERR,"vdqm_DedicateDrv() cannot set Dgn context for %s\n",
+            DrvReq->dgn);
+        return(-1);
+    }
+
+    /*
+     * Check whether the drive record already exists
+     */
+    drvrec = NULL;
+    rc = GetDrvRecord(dgn_context,DrvReq,&drvrec);
+
+    if ( rc < 0 || drvrec == NULL ) {
+        log(LOG_ERR,"vdqm_DedicateDrv(): unknown drive %s@%s\n",
+            DrvReq->drive,DrvReq->server);
+        FreeDgnContext(&dgn_context);
+        vdqm_SetError(ENOENT);
+        return(-1);
+    }
+    if ( *DrvReq->dedicate == '\0' ) {
+        rc = vdqm_ResetDedicate(drvrec);
+    } else {
+        strcpy(drvrec->drv.dedicate,DrvReq->dedicate);
+        rc = vdqm_SetDedicate(drvrec);
+        if ( rc == -1 ) vdqm_SetError(EINVAL);
+    }
+    drvrec->update = 1;
+    FreeDgnContext(&dgn_context);
+    return(rc);
 }
 
 int vdqm_GetQueuePos(vdqmVolReq_t *VolReq) {
