@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.66 2001/10/07 07:43:31 jdurand Exp $
+ * $Id: procqry.c,v 1.67 2001/11/30 11:57:06 jdurand Exp $
  */
 
 /*
@@ -8,13 +8,26 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.66 $ $Date: 2001/10/07 07:43:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.67 $ $Date: 2001/11/30 11:57:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
 #ifdef USECDB
 #undef USECDB
 #endif
+
+#ifdef SIXMONTHS
+#undef SIXMONTHS
+#endif
+#define SIXMONTHS (6*30*24*60*60)
+
+#if defined(_WIN32)
+static char strftime_format_sixmonthsold[] = "%b %d %Y";
+static char strftime_format[] = "%b %d %H:%M:%S";
+#else /* _WIN32 */
+static char strftime_format_sixmonthsold[] = "%b %e %Y";
+static char strftime_format[] = "%b %e %H:%M:%S";
+#endif /* _WIN32 */
 
 #include <errno.h>
 #include <stdlib.h>
@@ -63,6 +76,10 @@ void procqryreq _PROTO((int, int, char *, char *));
 void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int, int));
 int print_sorted_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int, int, int));
 void print_tape_info _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, int, int, int));
+signed64 get_stageout_retenp _PROTO((struct stgcat_entry *));
+signed64 get_put_failed_retenp _PROTO((struct stgcat_entry *));
+int get_retenp _PROTO((struct stgcat_entry *, char *));
+int get_mintime _PROTO((struct stgcat_entry *, char *));
 
 extern int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
 extern int req2argv _PROTO((char *, char ***));
@@ -83,10 +100,9 @@ extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
 extern int retenp_on_disk _PROTO((int));
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
-extern int get_retenp _PROTO((struct stgcat_entry *, char *));
 extern int mintime_beforemigr _PROTO((int));
-extern int get_mintime_beforemigr _PROTO((struct stgcat_entry *, char *));
 extern int get_mintime _PROTO((struct stgcat_entry *, char *));
+extern char *findpoolname _PROTO((char *));
 
 #if !defined(linux)
 extern char *sys_errlist[];
@@ -115,6 +131,8 @@ struct stgdb_fd *dbfd_query;
 #endif
 extern u_signed64 stage_uniqueid;
 extern struct fileclass *fileclasses;
+extern int nbpool;
+extern struct pool *pools;
 
 static int nbtpf;
 static int noregexp_flag;
@@ -910,7 +928,8 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		if ((lflag || ((stcp->status & 0xFFFFF0) == 0)) &&
 			(! (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp))) &&
 			(stcp->ipath[0] != '\0')) {
-			if (rfio_mstat(stcp->ipath, &st) == 0) {
+			PRE_RFIO;
+			if (RFIO_STAT(stcp->ipath, &st) == 0) {
 				int has_been_updated = 0;
 
 				if (st.st_size > stcp->actual_size) {
@@ -933,7 +952,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 #endif
 				}
 			} else {
-				stglogit (func, STG02, stcp->ipath, "rfio_mstat", rfio_serror());
+				stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
 			}
 		}
 		if (stcp->t_or_d == 't') {
@@ -1509,7 +1528,6 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		}
 		if (dump_flag != 0) dump_stcp(rpfd, stcp, &sendrep);
 	}
-	rfio_end();
  reply:
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 	if (afile || mfile)
@@ -1519,6 +1537,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	if (argv != NULL) free (argv);
 	sendrep (rpfd, STAGERC, STAGEQRY, c);
 	if (pid == 0) {	/* we are in the child */
+		rfio_end();
 #ifdef USECDB
 		if (stgdb_close(dbfd_query) != 0) {
 			stglogit(func, STG100, "close", sstrerror(serrno), __FILE__, __LINE__);
@@ -1664,7 +1683,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 		 int class_flag;
 {
 	/* We use the weight algorithm defined by Fabrizio Cane for DPM */
-
+	time_t thistime = time(NULL);
 	int found;
 	int j;
 	char *p;
@@ -1687,10 +1706,35 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 	scs = (struct sorted_ent *) calloc (nbcat_ent, sizeof(struct sorted_ent));
 	sci = scs;
 	for (stcp = stcs; stcp < stce; stcp++) {
+		int isstageout_exhausted;
+		int isput_failed_exhausted;
+		int isother_ok;
+		signed64 put_failed_retenp;
+		signed64 stageout_retenp;
+
 		if (stcp->reqid == 0) break;
+		/* Did user asked for a specific reqid ? */
 		if ((this_reqid > 0) && (stcp->reqid != this_reqid)) continue;
-		if ((stcp->status & 0xF0) != STAGED) continue;
+		/* STAGE_RDONLY is a temporarly status meaning that something else is happening on this file */
 		if (stcp->status == (STAGEIN|STAGED|STAGE_RDONLY)) continue;
+		/* ISWAITING says that we should not touch this file, waiting for migration request */
+        if (ISWAITING(stcp)) continue;
+		/* We are interested in: */
+		/* STAGED entries */
+		/* STAGEOUT entries that have expired retention period on disk */
+		/* PUT_FAILED entries that have expired retention period on disk */
+		isstageout_exhausted   = (   ISSTAGEOUT  (stcp)   &&     /* A STAGEOUT file */
+								 (!  ISCASTORMIG (stcp) ) &&     /* Not candidate for migration */
+								 (!  ISSTAGED    (stcp) ) &&     /* And not yet STAGED */
+								 (!  ISPUT_FAILED(stcp) ) &&     /* And not yet subject to a failed transfer */
+								 (  (stageout_retenp = get_stageout_retenp(stcp)) >= 0) && /* And with a retention period */
+								 (  (thistime - stcp->a_time) > stageout_retenp)); /* And with a exhausted retention period */
+		isput_failed_exhausted = (   ISSTAGEOUT  (stcp)   &&     /* A STAGEOUT file */
+								     ISPUT_FAILED(stcp)   &&     /* Subject to a failed transfer */
+								 (  (put_failed_retenp = get_put_failed_retenp(stcp)) >= 0) && /* And with a ret. period */
+								 (  (thistime - stcp->a_time) > put_failed_retenp)); /* That got exhausted */
+		isother_ok = ISSTAGED(stcp);
+		if (! (isstageout_exhausted || isput_failed_exhausted || isother_ok)) continue;
 		if (poolflag < 0) {	/* -p NOPOOL */
 			if (stcp->poolname[0]) continue;
 		} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
@@ -1763,7 +1807,8 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 			}
 		}
 		if (stcp->ipath[0] != '\0') {
-			if (rfio_mstat(stcp->ipath, &st) == 0) {
+			PRE_RFIO;
+			if (RFIO_STAT(stcp->ipath, &st) == 0) {
 				int has_been_updated = 0;
 
 				if (st.st_size > stcp->actual_size) {
@@ -1786,7 +1831,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 #endif
 				}
 			} else {
-				stglogit (func, STG02, stcp->ipath, "rfio_mstat", rfio_serror());
+				stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
 			}
 		}
 		sci->weight = (double)stcp->a_time;
@@ -1823,7 +1868,6 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 		sci->stcp = stcp;
 		sci++;
 	}
-	rfio_end();
 
 	/* output the sorted list */
 
@@ -1862,7 +1906,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 			}
 		}
 		if (req_type > STAGE_00) sendrep(rpfd, API_STCP_OUT, stcp, magic);
-		if (dump_flag != 0) dump_stcp(rpfd, stcp, &sendrep);
+		if (dump_flag != 0) dump_stcp(rpfd, scc->stcp, &sendrep);
 	}
 	free (scs);
 	return (0);
@@ -1919,6 +1963,220 @@ void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 	}
 }
 
+signed64 get_stageout_retenp(stcp)
+	struct stgcat_entry *stcp;
+{
+	int i;
+	struct pool *pool_p;
+
+	if ((stcp->t_or_d == 'h') && (stcp->u1.h.retenp_on_disk >= 0))
+		return((signed64) stcp->u1.h.retenp_on_disk);
+	if (nbpool == 0) return (-1);
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+		if (strcmp (stcp->poolname, pool_p->name) == 0) 
+			return((time_t) (pool_p->stageout_retenp * ONE_DAY));
+	return ((signed64) -1);
+}
+
+signed64 get_put_failed_retenp(stcp)
+	struct stgcat_entry *stcp;
+{
+	int i;
+	struct pool *pool_p;
+
+	if ((stcp->t_or_d == 'h') && (stcp->u1.h.retenp_on_disk >= 0))
+		return((signed64) stcp->u1.h.retenp_on_disk);
+	if (nbpool == 0) return (-1);
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+		if (strcmp (stcp->poolname, pool_p->name) == 0) 
+			return((time_t) (pool_p->put_failed_retenp * ONE_DAY));
+	return ((signed64) -1);
+}
+
+/* return value will be 0 or -1, where 0 means that timestr is trustable, -1 means that timestr would have has non-sense */
+/* timestr, if return value is zero, contains contains a human-readable format of retention period on disk */
+int get_retenp(stcp,timestr)
+     struct stgcat_entry *stcp;
+     char *timestr;
+{
+  signed64 this_retenp;
+  time_t this_time = time(NULL);
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+  struct tm tmstruc;
+#endif /* _REENTRANT || _THREAD_SAFE */
+  struct tm *tp;
+  int ifileclass;
+
+  /* Depending of the status of the stcp we will return the correct current retention period on disk */
+  switch (stcp->status) {
+  case STAGEOUT:
+    /* stageout entry */
+    if ((this_retenp = get_stageout_retenp(stcp)) >= 0) {
+      /* There is a stageout retention period */
+      if ((this_time - stcp->a_time) > this_retenp) {
+        strcpy(timestr,"Exhausted");
+      } else {
+        time_t dummy_retenp;
+        this_retenp += stcp->a_time;
+        dummy_retenp = (time_t) this_retenp;
+        /* Retention period not yet exhausted */
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+        localtime_r(&(dummy_retenp),&tmstruc);
+        tp = &tmstruc;
+#else
+        tp = localtime(&(dummy_retenp));
+#endif /* _REENTRANT || _THREAD_SAFE */
+        if ((this_retenp - this_time) > SIXMONTHS) {
+          strftime(timestr,64,strftime_format_sixmonthsold,tp);
+        } else {
+          strftime(timestr,64,strftime_format,tp);
+        }
+      }
+    } else {
+      strcpy(timestr,"INFINITE_LIFETIME");
+    }
+    break;
+  case STAGEOUT|PUT_FAILED:
+  case STAGEOUT|PUT_FAILED|CAN_BE_MIGR:
+    /* put_failed entry (castor or not) */
+    if ((this_retenp = get_put_failed_retenp(stcp)) >= 0) {
+      /* There is a put_failed retention period */
+      if ((this_time - stcp->a_time) > this_retenp) {
+        strcpy(timestr,"Exhausted");
+      } else {
+        time_t dummy_retenp;
+        this_retenp += stcp->a_time;
+        dummy_retenp = (time_t) this_retenp;
+        /* Retention period not yet exhausted */
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+        localtime_r(&(dummy_retenp),&tmstruc);
+        tp = &tmstruc;
+#else
+        tp = localtime(&(dummy_retenp));
+#endif /* _REENTRANT || _THREAD_SAFE */
+        if ((this_retenp - this_time) > SIXMONTHS) {
+          strftime(timestr,64,strftime_format_sixmonthsold,tp);
+        } else {
+          strftime(timestr,64,strftime_format,tp);
+        }
+      }
+    } else {
+      return(-1);
+    }
+    break;
+  default:
+    if ((stcp->status & (STAGEOUT|STAGED)) != (STAGEOUT|STAGED) &&
+        (stcp->status & (STAGEWRT|STAGED)) != (STAGEWRT|STAGED) &&
+        (stcp->status & ( STAGEIN|STAGED)) != ( STAGEIN|STAGED) &&
+        (stcp->status & (STAGEPUT|STAGED)) != (STAGEPUT|STAGED)) {
+      /* Not a STAGEd migrated file */
+      return(-1);
+    }
+    /* We distinguish between CASTOR entries and non-CASTOR entry */
+    switch (stcp->t_or_d) {
+    case 'h':
+      /* CASTOR entry */
+      if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) {
+        return(-1);
+      }
+      /* If no explicit value for retention period we take the default */
+      if ((this_retenp = stcp->u1.h.retenp_on_disk) < 0) this_retenp = retenp_on_disk(ifileclass);
+#ifdef hpux
+      /* hpux10 complaints: error 1654: Expression type is too large for switch expression.' */
+      switch ((time_t) this_retenp)
+#else
+      switch (this_retenp)
+#endif
+        {
+      case AS_LONG_AS_POSSIBLE:
+        strcpy(timestr,"AS_LONG_AS_POSSIBLE");
+        break;
+      case INFINITE_LIFETIME:
+        strcpy(timestr,"INFINITE_LIFETIME");
+        break;
+      default:
+        if ((this_time - stcp->a_time) > this_retenp) {
+          strcpy(timestr,"Exhausted");
+        } else {
+          time_t dummy_retenp;
+          this_retenp += stcp->a_time;
+          dummy_retenp = (time_t) this_retenp;
+          /* Retention period not yet exhausted */
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+          localtime_r(&(dummy_retenp),&tmstruc);
+          tp = &tmstruc;
+#else
+          tp = localtime(&(dummy_retenp));
+#endif /* _REENTRANT || _THREAD_SAFE */
+          if ((this_retenp - this_time) > SIXMONTHS) {
+            strftime(timestr,64,strftime_format_sixmonthsold,tp);
+          } else {
+            strftime(timestr,64,strftime_format,tp);
+          }
+        }
+        break;
+      }
+      break;
+    default:
+      return(-1);
+    }
+  }
+  /* Okay */
+  return(0);
+}
+
+/* return value will be 0 or -1, where 0 means that timestr is trustable, -1 means that timestr would have has non-sense */
+/* timestr, if return value is zero, contains contains a human-readable format of retention period on disk */
+int get_mintime(stcp,timestr)
+     struct stgcat_entry *stcp;
+     char *timestr;
+{
+  time_t this_mintime_beforemigr;
+  time_t this_time = time(NULL);
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+  struct tm tmstruc;
+#endif /* _REENTRANT || _THREAD_SAFE */
+  struct tm *tp;
+  int ifileclass;
+
+  if (stcp->t_or_d != 'h') return(-1);
+
+  /* Depending of the status of the stcp we will return the correct current retention period on disk */
+  switch (stcp->status) {
+  case STAGEOUT|CAN_BE_MIGR:
+    /* CASTOR entry */
+    if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) {
+      return(-1);
+    }
+    if ((this_mintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0) /* No explicit value */
+      this_mintime_beforemigr = mintime_beforemigr(ifileclass); /* So we take the default */
+    if ((this_time - stcp->a_time) > this_mintime_beforemigr) {
+      strcpy(timestr,"Exhausted");
+    } else {
+      time_t dummy_mintime_beforemigr;
+      this_mintime_beforemigr += stcp->a_time;
+      dummy_mintime_beforemigr = (time_t) this_mintime_beforemigr;
+      /* Retention period not yet exhausted */
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+      localtime_r(&(dummy_mintime_beforemigr),&tmstruc);
+      tp = &tmstruc;
+#else
+      tp = localtime(&(dummy_mintime_beforemigr));
+#endif /* _REENTRANT || _THREAD_SAFE */
+      if ((this_mintime_beforemigr - this_time) > SIXMONTHS) {
+        strftime(timestr,64,strftime_format_sixmonthsold,tp);
+      } else {
+        strftime(timestr,64,strftime_format,tp);
+      }
+    }
+    break;
+  default:
+    return(-1);
+  }
+  /* Okay */
+  return(0);
+}
+
 /*
- * Last Update: "Sunday 07 October, 2001 at 09:42:52 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Tuesday 13 November, 2001 at 17:46:30 CET by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
