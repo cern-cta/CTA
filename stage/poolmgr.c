@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.223 2002/09/30 16:54:11 jdurand Exp $
+ * $Id: poolmgr.c,v 1.224 2002/10/01 06:57:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.223 $ $Date: 2002/09/30 16:54:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.224 $ $Date: 2002/10/01 06:57:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -226,13 +226,6 @@ signed64 get_put_failed_retenp _PROTO((struct stgcat_entry *));
 #define seteuid(euid) setresuid(-1,euid,-1)
 #define setegid(egid) setresgid(-1,egid,-1)
 #endif
-
-#define SETEID(thiseuid,thisegid) {              \
-	setegid(start_passwd.pw_gid);                \
-	seteuid(start_passwd.pw_uid);                \
-	setegid(thisegid);                           \
-	seteuid(thiseuid);                           \
-}
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
@@ -4178,9 +4171,12 @@ void migpoolfiles_log_callback(level,message)
 
 	save_euid = geteuid();
 	save_egid = getegid();
-	SETEID(0,0);
+
+	setegid(start_passwd.pw_gid);              /* Move to admin (who knows) */
+	seteuid(start_passwd.pw_uid);
 	stgmiglogit(migpoolfiles_migrname,"%s",message);
-	SETEID(save_euid,save_egid);
+	setegid(save_egid);
+	seteuid(save_euid);
 	return;
 }
 
