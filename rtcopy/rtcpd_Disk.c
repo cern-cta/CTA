@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.18 $ $Date: 2000/01/13 13:11:32 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.19 $ $Date: 2000/01/19 11:14:31 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1173,6 +1173,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
     rc = 0;
     disk_fd = -1;
     severity = RTCP_OK;
+    /*
     rc = DiskFileOpen(pool_index,tape,file);
     if ( (severity & RTCP_EOD) == 0 ) {
     if ( rc == -1 ) {
