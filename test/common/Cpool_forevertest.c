@@ -39,7 +39,7 @@ int main(argc,argv)
 		exit(1);
 	}
 	
-	Cpool_debug = 1;
+	Cpool_debug = 0;
 	Cthread_debug = 0;
 
 	initlog("Cpool_forevertest",LOG_DEBUG,"");
@@ -81,25 +81,24 @@ void *master_thread(arg)
 	while (1) {
 		int k;
 
-		if ((k = Cpool_next_index_timeout(j,1)) < 0) {
+		log(LOG_ERR,"Cpool_next_index_timeout(%d,-1)\n", j);
+		if ((k = Cpool_next_index_timeout(j,-1)) < 0) {
 			log(LOG_ERR,"Cpool_next_index_timeout error: %s\n", sstrerror(errno));
-			log(LOG_ERR,"Cpool_assign\n");
 		} else {
 			log(LOG_ERR,"Cpool_next_index_timeout returned %d\n", k);
-			log(LOG_ERR,"Cpool_assign to thread %d\n", k);
 		}
-		if (Cpool_assign(j,testit,NULL,1) < 0) {
+		log(LOG_ERR,"Cpool_assign(%d,testit,NULL,-1)\n", j);
+		if (Cpool_assign(j,testit,NULL,-1) < 0) {
 			log(LOG_ERR,"Cpool_assign error: %s\n", sstrerror(errno));
 		}
 	}
 }
 
 void * testit (void *arg) {
-	/* Use a random number between 0 and 10M (we use usleep) */
-	int i;
+	/* Use a random number between 0 and 1M (we use usleep) */
 	unsigned long thattime;
 	
-	thattime = 1+(int) (10000000.0*rand()/(RAND_MAX+1.0));
+	thattime = 1+(int) (1000000.0*rand()/(RAND_MAX+1.0));
 	
 	log(LOG_ERR,"usleep(%ld)\n", thattime);
 	usleep(thattime);
