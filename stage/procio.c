@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.33 2000/07/04 10:08:22 jdurand Exp $
+ * $Id: procio.c,v 1.34 2000/08/07 10:11:17 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.33 $ $Date: 2000/07/04 10:08:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.34 $ $Date: 2000/08/07 10:11:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -92,11 +92,17 @@ void procioreq(req_type, req_data, clienthost)
 	char *fseq = NULL;
 	fseq_elem *fseq_list = NULL;
 	struct group *gr;
+	struct Cns_fileid *hsmfileids = NULL;
+	char **hsmfiles = NULL;
+	time_t *hsmmtimes = NULL;
+	int ihsmfiles;
+	int jhsmfiles;
 	char *name;
 	int nargs;
 	int nbdskf;
 	int nbtpf;
 	struct stgcat_entry *newreq();
+	int nhsmfiles = 0;
 	int no_upath = 0;
 	char *nread = NULL;
 	int numvid, numvsn;
@@ -116,12 +122,6 @@ void procioreq(req_type, req_data, clienthost)
 	char *user;
 	struct waitf *wfp;
 	struct waitq *wqp = NULL;
-	char **hsmfiles = NULL;
-	struct Cns_fileid *hsmfileids = NULL;
-	time_t *hsmmtimes = NULL;
-	int nhsmfiles = 0;
-	int ihsmfiles;
-	int jhsmfiles;
 
 	memset ((char *)&stgreq, 0, sizeof(stgreq));
 	rbp = req_data;
@@ -851,8 +851,8 @@ void procioreq(req_type, req_data, clienthost)
 			if ((c = build_ipath (upath, stcp, pool_user)) < 0) {
 				stcp->status |= WAITING_SPC;
 				if (!wqp) wqp = add2wq (clienthost, user,
-																stcp->uid, stcp->gid, clientpid,
-																Upluspath, reqid, req_type, nbdskf, &wfp);
+						stcp->uid, stcp->gid, clientpid,
+						Upluspath, reqid, req_type, nbdskf, &wfp);
 				wfp->subreqid = stcp->reqid;
 				strcpy (wfp->upath, upath);
 				wqp->nbdskf++;
@@ -865,7 +865,7 @@ void procioreq(req_type, req_data, clienthost)
 				strcpy (wqp->waiting_pool, stcp->poolname);
 			} else if (c) {
 				updfreespace (stcp->poolname, stcp->ipath,
-											stcp->size*1024*1024);
+							stcp->size*1024*1024);
 				delreq (stcp,1);
 				goto reply;
 			} else {
@@ -1056,7 +1056,7 @@ void procioreq(req_type, req_data, clienthost)
 			}
 			if (! wfp->waiting_on_req)
 				updfreespace (stcp->poolname, stcp->ipath,
-											stcp->size*1024*1024);
+					stcp->size*1024*1024);
 			delreq (stcp,0);
 		}
 		rmfromwq (wqp);
@@ -1287,7 +1287,7 @@ void procputreq(req_data, clienthost)
 				if (rfio_stat (stcp->ipath, &st) == 0)
 					stcp->actual_size = st.st_size;
 				updfreespace (stcp->poolname, stcp->ipath,
-											stcp->size*1024*1024 - (int)stcp->actual_size);
+					stcp->size*1024*1024 - (int)stcp->actual_size);
 			}
 			stcp->status = STAGEPUT;
 			stcp->a_time = time (0);
@@ -1337,7 +1337,7 @@ void procputreq(req_data, clienthost)
 				if (rfio_stat (stcp->ipath, &st) == 0)
 					stcp->actual_size = st.st_size;
 				updfreespace (stcp->poolname, stcp->ipath,
-											stcp->size*1024*1024 - (int)stcp->actual_size);
+					stcp->size*1024*1024 - (int)stcp->actual_size);
 			}
 			stcp->status = STAGEPUT;
 			stcp->a_time = time (0);
@@ -1433,6 +1433,7 @@ void procputreq(req_data, clienthost)
 			}
 			if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 				stcp->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
+				update_migpool(stcp,-1);
 			} else {
 				stcp->status = STAGEOUT|PUT_FAILED;
 			}
