@@ -1,11 +1,11 @@
 .\"
-.\" $Id: stage_put.man,v 1.1 2000/05/30 12:59:03 jdurand Exp $
+.\" $Id: stage_put.man,v 1.2 2000/05/30 13:02:13 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_put.man,v $ $Revision: 1.1 $ $Date: 2000/05/30 12:59:03 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_put.man,v $ $Revision: 1.2 $ $Date: 2000/05/30 13:02:13 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGE_PUT "3" "$Date: 2000/05/30 12:59:03 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_PUT "3" "$Date: 2000/05/30 13:02:13 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_put \- copy disk files to tape, to an external disk file or to a
 Hierarchical Storage Management System.
@@ -25,14 +25,15 @@ API call. The HSM file must be in state STAGEOUT or PUT_FAILED.
 .SH PARAMETERS
 .B stghost
 is the stager machine name that hosts the stage daemon. If this parameter is
+.P
 .B NULL
 , then default value is taken (either from configuration file, from environment variable
 .B STAGE_HOST
 , or from hardcoded value, "castor").
-.br
+.P
 .B Migrationflag
 , if different than zero, indicates the system that the corresponding HSM files will belong to automatic migration. That is, the HSM file stage will become STAGEOUT|CAN_BE_MIGR. The stageqry output on such HSM file will show CAN_BE_MIGR. The difference between something that belongs to automatic migration or not is the uid/gid under which the migration process will be done. For a user-level migration, it will be under the account "stage", for experiment-level migration, it will under one of the accounts of the HSM files to be migrated.
-.br
+.P
 .B hsmstruct
 is a linked list giving all the HSM files that have to be writen on tape. This structure is composed of the following members:
 .TP 1.9i
@@ -47,7 +48,8 @@ Size limitation. Will be ignored if equal to zero.
 .TP
 .B stage_hsm_t *next
 Pointer to next structure.
-.B NULL will indicate the end of the linked list.
+.B NULL
+will indicate the end of the linked list.
 .SH RETURN VALUE
 0 on success, -1 on failure.
 
