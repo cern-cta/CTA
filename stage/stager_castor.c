@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.9 2002/03/04 09:40:48 jdurand Exp $
+ * $Id: stager_castor.c,v 1.10 2002/03/04 17:41:02 jdurand Exp $
  */
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.9 $ $Date: 2002/03/04 09:40:48 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.10 $ $Date: 2002/03/04 17:41:02 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -915,7 +915,15 @@ int stagein_castor_hsm_file() {
     int ksegments;
     int save_serrno;
     int last_found;        /* In case of use_subreqid == 0 */
-
+	char fseq_for_log[1025]; /* 1024 characters max (+'\0') */
+	int last_fseq_for_log = -1;
+	char *p_fseq;
+	char this_string[CA_MAXFSEQLEN+1];
+	char *this_cont;
+	char *start_fseq = "";
+	char *cont_fseq = "-";
+	char *new_fseq = ",";
+	
     ALLOCHSM;
 
     /* Set CallbackClient */
@@ -1580,6 +1588,7 @@ int stagein_castor_hsm_file() {
 	stcp_end += nbcat_ent_current;
 
 	/* we fill temporary window [stcp_start,stcp_end] */
+	fseq_for_log[0] = '\0';
 	for (stcp = stcs, i = 0, stcp_tmp = stcp_start; stcp < stce; stcp++, i++) {
 		if ((hsm_vid[i] != NULL) && (hsm_side[i] >= 0)) {
 			*stcp_tmp = *stcp;
@@ -1588,8 +1597,56 @@ int stagein_castor_hsm_file() {
 				stcp_tmp->blksize = devinfo->defblksize;
 			}
 			stcp_tmp++;
+
+			/* Can we add something into fseq_for_log ? */
+			if (fseq_for_log[0] == '\0') {
+				/* First time */
+				this_cont = start_fseq;
+				p_fseq = fseq_for_log;
+			} else if (last_fseq_for_log == hsm_fseq[i] - 1) {
+				/* Continuation in tape sequence */
+				if ((this_cont == start_fseq) || (this_cont == new_fseq)) {
+					/* If previous time was first time or a new entry */
+					/* we want to point exactly to the null byte, e.g. at the end */
+					p_fseq += strlen(p_fseq);
+				}
+				this_cont = cont_fseq;
+			} else {
+				/* Not a continuation : we go exactly to the null byte */
+				p_fseq += strlen(p_fseq);
+				this_cont = new_fseq;
+			}
+			last_fseq_for_log = hsm_fseq[i];
+
+#if (defined(__osf__) && defined(__alpha))
+			sprintf (this_string, "%s%d", this_cont, hsm_fseq[i]);
+#else
+#if defined(_WIN32)
+			_snprintf (this_string, CA_MAXFSEQLEN, "%s%d", this_cont, hsm_fseq[i]);
+#else
+			snprintf (this_string, CA_MAXFSEQLEN, "%s%d", this_cont, hsm_fseq[i]);
+#endif
+#endif
+			this_string[CA_MAXFSEQLEN] = '\0';
+			/* p_fseq points somewhere in fseq string */
+			if ((strlen(fseq_for_log) - strlen(p_fseq) + strlen(this_string)) <= 1024) {
+				strcpy(p_fseq, this_string);
+			}
 		}
 	}
+
+
+#ifdef STAGER_DEBUG
+	SAVE_EID;
+	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] Use [vid,side,vsn,dgn,aden,lbltype]=[%s,%d,%s,%s,%s,%s], fseqs=%s\n",
+			vid,side,vmgr_tapeinfo.vsn,dgn,vmgr_tapeinfo.density,vmgr_tapeinfo.lbltype,fseq_for_log);
+	RESTORE_EID;
+#else
+	SAVE_EID;
+	stglogit (func, "Use [vid,side,vsn,dgn,aden,lbltype]=[%s,%d,%s,%s,%s,%s], fseqs=%s\n",
+			  vid,side,vmgr_tapeinfo.vsn,dgn,vmgr_tapeinfo.density,vmgr_tapeinfo.lbltype,fseq_for_log);
+	RESTORE_EID;
+#endif
 
 
 	/* We "interrogate" for the total number of structures */
