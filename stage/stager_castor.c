@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.29 2002/10/01 07:00:10 jdurand Exp $
+ * $Id: stager_castor.c,v 1.30 2002/11/06 13:22:58 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.29 $ $Date: 2002/10/01 07:00:10 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.30 $ $Date: 2002/11/06 13:22:58 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1730,7 +1730,14 @@ int stagein_castor_hsm_file() {
 			}
 		}
 	}
-
+	/* Makes sure fseq_for_log ends with '\n\0' */
+	fseq_for_log[1024] = '\0';
+	if (fseq_for_log[1023] != '\0') { /* Does not end here - logging too long */
+		fseq_for_log[1023] = '\n';    /* Forces a newline */
+		fseq_for_log[1022] = '.';     /* and log that */
+		fseq_for_log[1021] = '.';     /* there is something after */
+		fseq_for_log[1020] = '.';     /* that we do not log */
+	}
 
 #ifdef STAGER_DEBUG
 	SAVE_EID;
