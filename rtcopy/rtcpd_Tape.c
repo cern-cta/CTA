@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.74 $ $Date: 2000/10/02 09:44:25 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.75 $ $Date: 2000/11/08 14:01:39 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1200,7 +1200,7 @@ void *tapeIOthread(void *arg) {
          */
         rc = rtcpd_Assign(tape);
         if ( rc == -1 ) {
-            (void)rtcpd_Deassign(-1,&tape->tapereq);
+            (void)rtcpd_Deassign(-1,&tape->tapereq,NULL);
         }
         CHECK_PROC_ERR(tape,NULL,"rtcpd_Assign() error");
 #endif /* CTAPE_DUMMIES */
@@ -1212,7 +1212,7 @@ void *tapeIOthread(void *arg) {
         rc = rtcpd_Reserve(tape);
         TP_STATUS(RTCP_PS_NOBLOCKING);
         if ( rc == -1 ) {
-            (void)rtcpd_Deassign(-1,&tape->tapereq);
+            (void)rtcpd_Deassign(-1,&tape->tapereq,NULL);
         }
         CHECK_PROC_ERR(tape,NULL,"rtcpd_Reserv() error");
     }
@@ -1231,7 +1231,7 @@ void *tapeIOthread(void *arg) {
             rc = rtcpd_Mount(nexttape);
             TP_STATUS(RTCP_PS_NOBLOCKING);
             save_serrno = serrno; save_errno = errno;
-            if ( rc == -1 ) (void)rtcpd_Deassign(-1,&tape->tapereq);
+            if ( rc == -1 ) (void)rtcpd_Deassign(-1,&tape->tapereq,NULL);
             serrno = save_serrno; errno = save_errno;
             CHECK_PROC_ERR(nexttape,NULL,"rtcpd_Mount() error");
         }

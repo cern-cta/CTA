@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.53 $ $Date: 2000/10/23 12:31:34 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.54 $ $Date: 2000/11/08 14:01:38 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -143,7 +143,8 @@ int rtcpd_Assign(tape_list_t *tape) {
  * bad request structure or client did an exit...).
  */
 int rtcpd_Deassign(int VolReqID,
-                   rtcpTapeRequest_t *tapereq) {
+                   rtcpTapeRequest_t *tapereq,
+                   rtcpClientInfo_t *client) {
     int rc, status, jobID, value, save_serrno, save_errno;
     char vid[CA_MAXVIDLEN+1];
     tape_list_t *tape, *nexttape;
@@ -194,6 +195,13 @@ int rtcpd_Deassign(int VolReqID,
         *(nexttape->tapereq.vsn) = '\0';
         *(nexttape->tapereq.label) = '\0';
 
+        /*
+         * In case we are still root
+         */
+        if ( client != NULL && getgid() != (gid_t)client->gid ) 
+            (void)setgid((gid_t)client->gid);
+        if ( client != NULL && getuid() != (uid_t)client->uid ) 
+            (void)setuid((uid_t)client->uid);
 #if defined(CTAPE_DUMMIES)
         /*
          * If we run with dummy Ctape we need to assign the
@@ -557,7 +565,21 @@ int rtcpd_Position(tape_list_t *tape,
      */
     strcpy(tape_path,filereq->tape_path);
     while (do_retry) {
-        rtcp_log(LOG_DEBUG,"rtcpd_Position() Ctape_position(%s,0x%x,%d,%d,0x%x,%d,%d,0x%x,%s,%s,%d,%d,%d,0x%x)\n",filereq->tape_path,filereq->position_method,filereq->tape_fseq,file->tape_fsec,*filereq->blockid,tapereq->start_file,tapereq->end_file,filereq->check_fid,filereq->fid,filereq->recfm,filereq->blocksize,filereq->recordlength,filereq->retention,flags);
+        rtcp_log(LOG_DEBUG,"rtcpd_Position() Ctape_position(%s,0x%x,%d,%d,%d:%d:%d:%d,%d,%d,0x%x,%s,%s,%d,%d,%d,0x%x)\n",
+                 filereq->tape_path,
+                 filereq->position_method,
+                 filereq->tape_fseq,
+                 file->tape_fsec,
+                 (int)filereq->blockid[0],(int)filereq->blockid[1],
+                 (int)filereq->blockid[2],(int)filereq->blockid[3],
+                 tapereq->start_file,
+                 tapereq->end_file,
+                 filereq->check_fid,
+                 filereq->fid,
+                 filereq->recfm,
+                 filereq->blocksize,
+                 filereq->recordlength,
+                 filereq->retention,flags);
         serrno = errno = 0;
         rtcpd_ResetCtapeError();
         rc = Ctape_position(filereq->tape_path,
@@ -797,10 +819,11 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
     if ( *filereq->recfm == '\0' ) strcpy(filereq->recfm,recfm);
     if ( *filereq->recfm == '\0' ) strcpy(filereq->recfm,"U");
     if ( rc == 0 ) {
-        rtcp_log(LOG_DEBUG,"rtcpd_Info(%s) returned vid=%s, fseq=%d, fsec=%d, unit=%s, blocksize=%d, recordlength=%d, recfm=%s\n",
+        rtcp_log(LOG_DEBUG,"rtcpd_Info(%s) returned vid=%s, fseq=%d, fsec=%d, unit=%s, blocksize=%d, recordlength=%d, recfm=%s, blockid=%d:%d:%d:%d\n",
                  filereq->tape_path,tapereq->vid,filereq->tape_fseq,
                  file->tape_fsec,unit,filereq->blocksize,filereq->recordlength,
-                 recfm);
+                 recfm,(int)filereq->blockid[0],(int)filereq->blockid[1],
+                 (int)filereq->blockid[2],(int)filereq->blockid[3]);
         if ( fseq > 0 && (fseq != filereq->tape_fseq) ) {
             rtcp_log(LOG_ERR,"rtcpd_Info(%s) returned wrong TAPE FSEQ: %d (requested %d)\n",
                      filereq->tape_path,filereq->tape_fseq,fseq);
