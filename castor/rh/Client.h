@@ -81,23 +81,9 @@ int Crh_Client_print(struct Crh_Client_t* instance);
  */
 int Crh_Client_TYPE(int* ret);
 
-/***************************************/
-/* Implementation of IClient interface */
-/***************************************/
-
-/**
- * Reconnects to the client in case the connection was closed or lost
- */
-int Crh_Client_reconnect(struct Crh_Client_t* instance);
-
-/**
- * Disconnects from the client.
- */
-int Crh_Client_disconnect(struct Crh_Client_t* instance);
-
-/**
- */
-int Crh_Client_sendRep(struct Crh_Client_t* instance);
+/********************************************/
+/* Implementation of IClient abstract class */
+/********************************************/
 
 /**
  * Get the value of request

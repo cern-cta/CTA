@@ -93,30 +93,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Crh_Client_reconnect
-  //----------------------------------------------------------------------------
-  int Crh_Client_reconnect(castor::rh::Client* instance) {
-    instance->reconnect();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_Client_disconnect
-  //----------------------------------------------------------------------------
-  int Crh_Client_disconnect(castor::rh::Client* instance) {
-    instance->disconnect();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_Client_sendRep
-  //----------------------------------------------------------------------------
-  int Crh_Client_sendRep(castor::rh::Client* instance) {
-    instance->sendRep();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Crh_Client_request
   //----------------------------------------------------------------------------
   int Crh_Client_request(castor::rh::Client* instance, castor::stager::Request** var) {

@@ -82,26 +82,6 @@ namespace castor {
       static int TYPE();
 
       /********************************************/
-      /* Implementation of IClient abstract class */
-      /********************************************/
-      /**
-       * Reconnects to the client in case the connection was closed or lost
-       */
-      virtual void reconnect();
-
-      /**
-       * Disconnects from the client.
-       */
-      virtual void disconnect();
-
-      /**
-       */
-      virtual void sendRep();
-
-      /*********************************/
-      /* End of IClient abstract class */
-      /*********************************/
-      /********************************************/
       /* Implementation of IObject abstract class */
       /********************************************/
       /**

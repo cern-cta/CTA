@@ -39,6 +39,11 @@ struct Cstager_Request_t;
 //------------------------------------------------------------------------------
 
 /**
+ * Empty Constructor
+ */
+int C_IClient_create(struct C_IClient_t** obj);
+
+/**
  * Empty Destructor
  */
 int C_IClient_delete(struct C_IClient_t* obj);
@@ -52,20 +57,6 @@ struct C_IObject_t* C_IClient_getIObject(struct C_IClient_t* obj);
  * Dynamic cast from IObject
  */
 struct C_IClient_t* C_IClient_fromIObject(struct C_IObject_t* obj);
-
-/**
- * Reconnects to the client in case the connection was closed or lost
- */
-int C_IClient_reconnect(struct C_IClient_t* instance);
-
-/**
- * Disconnects from the client.
- */
-int C_IClient_disconnect(struct C_IClient_t* instance);
-
-/**
- */
-int C_IClient_sendRep(struct C_IClient_t* instance);
 
 /**
  * Outputs this object in a human readable format

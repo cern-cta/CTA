@@ -53,23 +53,14 @@ namespace castor {
   public:
 
     /**
+     * Empty Constructor
+     */
+    IClient() throw();
+
+    /**
      * Empty Destructor
      */
-    virtual ~IClient() throw() {};
-
-    /**
-     * Reconnects to the client in case the connection was closed or lost
-     */
-    virtual void reconnect() = 0;
-
-    /**
-     * Disconnects from the client.
-     */
-    virtual void disconnect() = 0;
-
-    /**
-     */
-    virtual void sendRep() = 0;
+    virtual ~IClient() throw();
 
     /**
      * Outputs this object in a human readable format
@@ -80,12 +71,12 @@ namespace castor {
      */
     virtual void print(std::ostream& stream,
                        std::string indent,
-                       castor::ObjectSet& alreadyPrinted) const = 0;
+                       castor::ObjectSet& alreadyPrinted) const;
 
     /**
      * Outputs this object in a human readable format
      */
-    virtual void print() const = 0;
+    virtual void print() const;
 
     /**
      * Get the value of m_request

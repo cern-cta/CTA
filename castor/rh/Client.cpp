@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/rh/Client.hpp"
@@ -37,6 +38,7 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::rh::Client::Client() throw() :
+  IClient(),
   m_ipAddress(0),
   m_port(0),
   m_id(0) {
@@ -60,6 +62,8 @@ void castor::rh::Client::print(std::ostream& stream,
     stream << indent << "Back pointer, see above" << std::endl;
     return;
   }
+  // Call print on the parent class(es)
+  this->castor::IClient::print(stream, indent, alreadyPrinted);
   // Output of all members
   stream << indent << "ipAddress : " << m_ipAddress << std::endl;
   stream << indent << "port : " << m_port << std::endl;
@@ -80,24 +84,6 @@ void castor::rh::Client::print() const {
 //------------------------------------------------------------------------------
 int castor::rh::Client::TYPE() {
   return OBJ_Client;
-}
-
-//------------------------------------------------------------------------------
-// reconnect
-//------------------------------------------------------------------------------
-void castor::rh::Client::reconnect() {
-}
-
-//------------------------------------------------------------------------------
-// disconnect
-//------------------------------------------------------------------------------
-void castor::rh::Client::disconnect() {
-}
-
-//------------------------------------------------------------------------------
-// sendRep
-//------------------------------------------------------------------------------
-void castor::rh::Client::sendRep() {
 }
 
 //------------------------------------------------------------------------------
