@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2001 by CERN/IT/PDP/DM
+ * Copyright (C) 2001-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tapetohsm.c,v $ $Revision: 1.2 $ $Date: 2001/05/04 10:37:21 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tapetohsm.c,v $ $Revision: 1.3 $ $Date: 2002/03/08 06:42:57 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tapetohsm - catalog in the CASTOR Name Server files from a non HSM tape */
@@ -46,7 +46,8 @@ char **argv;
 		usage (argv[0]);
 		goto prt_final_status;
 	}
-	if (*tape.vid == '\0' || *tape.model == '\0' || *tape.dgn == '\0') {
+	if (*tape.vid == '\0' || *tape.model == '\0' || *tape.library == '\0' ||
+	    *tape.density == '\0') {
 		c = USERR;
 		usage (argv[0]);
 		goto prt_final_status;
@@ -60,7 +61,8 @@ char **argv;
 	}
 #endif
 #if TMS
-	if (tmscheck (tape.vid, tape.vsn, tape.dgn, tape.density, tape.lbltype)) {
+	if (tmscheck (tape.vid, tape.vsn, tape.model, tape.library,
+	    tape.density, tape.lbltype)) {
 		c = USERR;
 		goto prt_final_status;
 	}
@@ -69,12 +71,12 @@ char **argv;
 	/* enter the tape in the Volume Manager */
 
 	if (verbose)
-		printf ("vmgr_entertape (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %x)\n",
-		    tape.vid, tape.vsn, tape.dgn, tape.density,
-		    tape.lbltype, tape.model, tape.media_letter, "", "",
+		printf ("vmgr_entertape (%s, %s, %s, %s, %s, %s, %s, %s, %s, %d, %s, %x)\n",
+		    tape.vid, tape.vsn, tape.library, tape.density,
+		    tape.lbltype, tape.model, tape.media_letter, "", "", 1,
 		    tape.poolname, TAPE_RDONLY);
-	if (vmgr_entertape (tape.vid, tape.vsn, tape.dgn, tape.density,
-	    tape.lbltype, tape.model, tape.media_letter, NULL, NULL,
+	if (vmgr_entertape (tape.vid, tape.vsn, tape.library, tape.density,
+	    tape.lbltype, tape.model, tape.media_letter, NULL, NULL, 1,
 	    tape.poolname, TAPE_RDONLY) < 0) {
 		fprintf (stderr, "vmgrentertape %s: %s\n", tape.vid, sstrerror(serrno));
 		c = USERR;
@@ -89,9 +91,9 @@ char **argv;
 		goto prt_final_status;
 
 	if (verbose)
-		printf ("vmgr_updatetape (%s, %s, 0, %d, 0)\n",
+		printf ("vmgr_updatetape (%s, 0, %s, 0, %d, 0)\n",
 		    tape.vid, u64tostr (BytesWritten, tmpbuf, 0), maxfseq);
-	if (vmgr_updatetape (tape.vid, BytesWritten, 0, maxfseq, 0) < 0) {
+	if (vmgr_updatetape (tape.vid, 0, BytesWritten, 0, maxfseq, 0) < 0) {
 		fprintf (stderr, "%s: %s\n", tape.vid, sstrerror(serrno));
 		errflg++;
 	}
@@ -112,6 +114,7 @@ int cmdline;
 	char *dp;
 	int errflg = 0;
 	static struct Coptions longopts[] = {
+		{"library", REQUIRED_ARGUMENT, 0, OPT_LIBRARY_NAME},
 		{"media_letter", REQUIRED_ARGUMENT, 0, OPT_MEDIA_LETTER},
 		{"ml", REQUIRED_ARGUMENT, 0, OPT_MEDIA_LETTER},
 		{"model", REQUIRED_ARGUMENT, 0, OPT_MODEL},
@@ -122,8 +125,16 @@ int cmdline;
 
 	Copterr = 1;
 	Coptind = 1;
-	while ((c = Cgetopt_long (nargs, argv, "d:g:il:M:P:q:s:V:v:", longopts, NULL)) != EOF) {
+	while ((c = Cgetopt_long (nargs, argv, "d:il:M:P:q:s:V:v:", longopts, NULL)) != EOF) {
 		switch (c) {
+		case OPT_LIBRARY_NAME:
+			if (strlen (Coptarg) > CA_MAXTAPELIBLEN) {
+				fprintf (stderr,
+				    "invalid library %s\n", Coptarg);
+				errflg++;
+			} else
+				strcpy (tape.library, Coptarg);
+			break;
 		case OPT_MEDIA_LETTER:
 			if (strlen (Coptarg) > CA_MAXMLLEN) {
 				fprintf (stderr, "%s: %s\n", Coptarg,
@@ -147,14 +158,6 @@ int cmdline;
 				errflg++;
 			} else
 				strcpy (tape.density, Coptarg);
-			break;
-		case 'g':
-			if (strlen (Coptarg) > CA_MAXDGNLEN) {
-				fprintf (stderr,
-				    "invalid dgn %s\n", Coptarg);
-				errflg++;
-			} else
-				strcpy (tape.dgn, Coptarg);
 			break;
 		case 'i':
 			if (! cmdline) {
@@ -198,6 +201,11 @@ int cmdline;
 			break;
 		case 's':
 			segattrs.segsize = strtou64 (Coptarg);
+			if (segattrs.segsize == 0) {
+				fprintf (stderr,
+				    "invalid size %s\n", Coptarg);
+				errflg++;
+			}
 			break;
 		case 'V':
 			if (strlen (Coptarg) > CA_MAXVIDLEN) {
@@ -223,6 +231,12 @@ int cmdline;
 			break;
 		}
 	}
+	if (segattrs.segsize == 0) {
+		fprintf (stderr, "size is mandatory\n");
+		errflg++;
+	}
+	if (segattrs.fseq == 0)
+		segattrs.fseq = 1;
 	return (errflg ? USERR : 0);
 }
 
@@ -282,6 +296,8 @@ procfile()
 
 	/* create the HSM file entry in the Name Server */
 
+	if (verbose)
+		printf ("Cns_creatx (%s)\n", hsm_path);
 	if (Cns_creatx (hsm_path, 0666, &file_uniqueid) < 0) {
 		fprintf (stderr, "%s: %s\n", hsm_path, sstrerror(serrno));
 		return (USERR);
@@ -353,10 +369,11 @@ FILE *s;
 }
 
 #if TMS
-tmscheck(vid, vsn, dgn, den, lbl)
+tmscheck(vid, vsn, model, library, den, lbl)
 char *vid;
 char *vsn;
-char *dgn;
+char *model;
+char *library;
 char *den;
 char *lbl;
 {
@@ -367,12 +384,13 @@ char *lbl;
 	int reqlen;
 	char tmrepbuf[132];
 	static char tmsden[6] = "     ";
-	static char tmsdgn[7] = "      ";
 	static char tmslbl[3] = "  ";
+	static char tmslibrary[9] = "        ";
+	static char tmsmodel[7] = "      ";
 	char tmsreq[80];
 	static char tmsvsn[7] = "      ";
 
-	sprintf (tmsreq, "VIDMAP %s QUERY (GENERIC SHIFT MESSAGE", vid);
+	sprintf (tmsreq, "QUERY VID %s", vid);
 	reqlen = strlen (tmsreq);
 	while (1) {
 		repsize = sizeof(tmrepbuf);
@@ -382,13 +400,7 @@ char *lbl;
 			break;
 		case 8:
 		case 100:
-		case 312:
-		case 315:
 			fprintf (stderr, "%s\n", tmrepbuf);
-			errflg++;
-			break;
-		case 12:
-			fprintf (stderr, "access to volume %s denied by TMS\n", vid);
 			errflg++;
 			break;
 		default:
@@ -411,23 +423,35 @@ char *lbl;
 		}
 	}
 
-	strncpy (tmsdgn, tmrepbuf+ 25, 6);
-	for  (j = 0; tmsdgn[j]; j++)
-		if (tmsdgn[j] == ' ') break;
-	tmsdgn[j] = '\0';
-	if (strcmp (tmsdgn, "CT1") == 0) strcpy (tmsdgn, "CART");
-	if (*dgn) {
-		if (strcmp (dgn, tmsdgn) != 0) {
+	strncpy (tmsmodel, tmrepbuf+ 16, 6);
+	for  (j = 0; tmsmodel[j]; j++)
+		if (tmsmodel[j] == ' ') break;
+	tmsmodel[j] = '\0';
+	if (*model) {
+		if (strcmp (model, tmsmodel) != 0) {
 			fprintf (stderr,
 			    "parameter inconsistency with TMS for vid %s: %s<->%s\n",
-			    vid, dgn, tmsdgn);
+			    vid, model, tmsmodel);
 			errflg++;
 		}
 	}
 
-	p = tmrepbuf + 32;
+	strncpy (tmslibrary, tmrepbuf+ 36, 8);
+	for  (j = 0; tmslibrary[j]; j++)
+		if (tmslibrary[j] == ' ') break;
+	tmslibrary[j] = '\0';
+	if (*library) {
+		if (strcmp (library, tmslibrary) != 0) {
+			fprintf (stderr,
+			    "parameter inconsistency with TMS for vid %s: %s<->%s\n",
+			    vid, library, tmslibrary);
+			errflg++;
+		}
+	}
+
+	p = tmrepbuf + 23;
 	while (*p == ' ') p++;
-	j = tmrepbuf + 40 - p;
+	j = tmrepbuf + 31 - p;
 	strncpy (tmsden, p, j);
 	tmsden[j] = '\0';
 	if (*den) {
@@ -439,10 +463,10 @@ char *lbl;
 		}
 	}
 
-	tmslbl[0] = tmrepbuf[74] - 'A' + 'a';
-	tmslbl[1] = tmrepbuf[75] - 'A' + 'a';
+	tmslbl[0] = tmrepbuf[32] - 'A' + 'a';
+	tmslbl[1] = tmrepbuf[33] - 'A' + 'a';
 	if (*lbl) {
-		if (strcmp (lbl, "blp") && strcmp (lbl, tmslbl)) {
+		if (strcmp (lbl, tmslbl)) {
 			fprintf (stderr,
 			    "parameter inconsistency with TMS for vid %s: %s<->%s\n",
 			    vid, lbl, tmslbl);
@@ -458,7 +482,7 @@ char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "%s%s%s",
-	    "[-d density] -g dgn [-i] [-l lbltype] [-M hsm_path_name]\n",
+	    "-d density [-i] [-l lbltype] [-M hsm_path_name]\n",
 	    "\t[-P pool_name] [-q file_sequence_number] [-s size] -V vid [-v vsn]\n",
-	    "\t[--ml media_letter] --mo model [--verbose]\n");
+	    "\t--li library_name [--ml media_letter] --mo model [--verbose]\n");
 }
