@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/06/28 10:05:09 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/06/28 15:00:54 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.15 $ $Date: 2004/06/28 10:05:09 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.16 $ $Date: 2004/06/28 15:00:54 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1254,7 +1254,7 @@ int rtcpcldc_appendFileReqs(tape,file)
    * rather than updating the whole tape + all segments.
    */
   fl = file;
-   CLIST_ITERATE_BEGIN(tpList->segments,rtcpcldSegm) 
+  CLIST_ITERATE_BEGIN(tpList->segments,rtcpcldSegm) 
     {
       if ( rtcpcldSegm->file == fl ) {
         segmIObj = Cstager_Segment_getIObject(rtcpcldSegm->segment);
@@ -1286,16 +1286,16 @@ int rtcpcldc_appendFileReqs(tape,file)
   return(0);
 }
 
-static int deleteFromDB(tpItem)
-     RtcpcldTapeList_t *tpItem;
+static int deleteFromDB(segmItem)
+     RtcpcldSegmentList_t *segmItem;
 {
   int rc, save_serrno;
   struct C_Services_t **dbSvc = NULL;
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr;
-  struct C_IObject_t *tapeIObj;
+  struct C_IObject_t *segmIObj;
   
-  if ( tpItem == NULL ) {
+  if ( segmItem == NULL ) {
     serrno = EINVAL;
     return(-1);
   }
@@ -1316,8 +1316,8 @@ static int deleteFromDB(tpItem)
     return(-1);
   }
 
-  tapeIObj = Cstager_Tape_getIObject(tpItem->tp);
-  rc = C_Services_deleteRep(*dbSvc,iAddr,tapeIObj,1);
+  segmIObj = Cstager_Segment_getIObject(segmItem->segment);
+  rc = C_Services_deleteRep(*dbSvc,iAddr,segmIObj,1);
   if ( rc != 0 ) {
     save_serrno = serrno;
     LOG_FAILED_CALL("C_Services_deleteRep()");
@@ -1436,11 +1436,11 @@ void rtcpcldc_cleanup(tape)
     while ( (tpItem = tpList) != NULL ) {
       while ( (segmItem = tpItem->segments) != NULL ) {
         CLIST_DELETE(tpItem->segments,segmItem);
+        (void)deleteFromDB(segmItem);
         segmItem->segment = NULL;
         free(segmItem);
       }
       CLIST_DELETE(tpList,tpItem);
-      (void)deleteFromDB(tpItem);
       if ( tpItem->tp != NULL ) Cstager_Tape_delete(tpItem->tp);
       tpItem->tp = NULL;
       free(tpItem);
@@ -1456,6 +1456,8 @@ int rtcpcldc(tape)
   struct C_Services_t **dbSvc;
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr;
+  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  enum Cstager_TapeStatusCodes_t currentStatus;
   tape_list_t *tl;
   file_list_t *fl;
   RtcpcldTapeList_t *rtcpcldTpList = NULL, *rtcpcldTp;
@@ -1500,6 +1502,17 @@ int rtcpcldc(tape)
   }
 
   (void)initOldStgUpdc(tape);
+
+  rc = rtcpcld_getStgDbSvc(&stgSvc);
+  if ( rc == -1 || stgSvc == NULL ) {
+    save_serrno = serrno;
+    LOG_FAILED_CALL("rtcpcld_getStgDbSvc()");
+    stgSvc = NULL;
+    (void)Cmutex_unlock(tape);
+    serrno = save_serrno;
+    return(-1);
+  }
+  
   CLIST_ITERATE_BEGIN(tape,tl) 
     {
       rtcpcldTp = (RtcpcldTapeList_t *)calloc(1,sizeof(RtcpcldTapeList_t));
@@ -1518,9 +1531,16 @@ int rtcpcldc(tape)
       }
       rtcpcldTp->tape = tl;
       serrno = 0;
-      rc = Cstager_Tape_create(&rtcpcldTp->tp);
+      /*      rc = Cstager_Tape_create(&rtcpcldTp->tp);*/
+      rc = Cstager_IStagerSvc_selectTape(
+                                         stgSvc,
+                                         &rtcpcldTp->tp,
+                                         tl->tapereq.vid,
+                                         tl->tapereq.side,
+                                         tl->tapereq.mode
+                                         );
       if ( rtcpcldTp->tp == NULL ) {
-        LOG_FAILED_CALL("Cstager_Tape_create()");
+        LOG_FAILED_CALL("Cstager_IStagerSvc_selectTape()");
         if ( serrno == 0 ) serrno = errno;
         save_serrno = serrno;
         (void)Cmutex_unlock(tape);
@@ -1531,8 +1551,17 @@ int rtcpcldc(tape)
       Cstager_Tape_setVid(rtcpcldTp->tp,tape->tapereq.vid);
       Cstager_Tape_setSide(rtcpcldTp->tp,tape->tapereq.side);
       Cstager_Tape_setTpmode(rtcpcldTp->tp,tape->tapereq.mode);
-      Cstager_Tape_setStatus(rtcpcldTp->tp,TAPE_PENDING);
-      rtcpcldTp->oldStatus = TAPE_PENDING;
+      Cstager_Tape_status(rtcpcldTp->tp,&currentStatus);
+      if ( currentStatus == TAPE_UNUSED ||
+           currentStatus == TAPE_FINISHED ||
+           currentStatus == TAPE_FAILED ||
+           currentStatus == TAPE_UNKNOWN ) {
+        Cstager_Tape_setStatus(rtcpcldTp->tp,TAPE_PENDING);
+        rtcpcldTp->oldStatus = TAPE_PENDING;
+      } else {
+        rtcpcldTp->oldStatus = currentStatus;
+      }
+
       rtcp_log(
                LOG_DEBUG,
                "Tape req: vid=%s, side=%d, mode=%d\n",
@@ -1594,9 +1623,9 @@ int rtcpcldc(tape)
   CLIST_ITERATE_BEGIN(rtcpcldTpList,rtcpcldTp) 
     {
       tapeIObj = Cstager_Tape_getIObject(rtcpcldTp->tp);
-      rc = C_Services_createRep(*dbSvc,iAddr,tapeIObj,1);
+      rc = C_Services_updateRep(*dbSvc,iAddr,tapeIObj,1);
       if ( rc != 0 ) {
-        LOG_FAILED_CALL("C_Services_createRep()");
+        LOG_FAILED_CALL("C_Services_updateRep()");
         save_serrno = serrno;
         rtcpcldTp->tape->tapereq.err.errorcode = serrno;
         strcpy(rtcpcldTp->tape->tapereq.err.errmsgtxt,
