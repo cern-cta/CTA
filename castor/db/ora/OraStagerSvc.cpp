@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.94 $ $Release$ $Date: 2004/12/17 11:13:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.95 $ $Release$ $Date: 2004/12/17 14:57:32 $ $Author: sponcec3 $
  *
- *
+ * Implementation of the IStagerSvc for Oracle
  *
  * @author Sebastien Ponce
  *****************************************************************************/
