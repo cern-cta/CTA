@@ -1,10 +1,10 @@
-.\" $Id: stage_clr_Hsm.man,v 1.1 2002/10/09 07:49:26 jdurand Exp $
+.\" $Id: stage_clr_Hsm.man,v 1.2 2002/11/06 08:36:42 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_clr_Hsm.man,v $ $Revision: 1.1 $ $Date: 2002/10/09 07:49:26 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_clr_Hsm.man,v $ $Revision: 1.2 $ $Date: 2002/11/06 08:36:42 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_CLR_HSM "3" "$Date: 2002/10/09 07:49:26 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_CLR_HSM "3" "$Date: 2002/11/06 08:36:42 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_clr_Hsm \- Asks for an HSM file to be removed
 .SH SYNOPSIS
@@ -56,11 +56,29 @@ If failure, the serrno variable might contain one of the following error codes:
 .B SENOMAPFND
 Can't open mapping database (Windows only)
 .TP
+.B EPERM
+Operation not permitted
+.TP
+.B EACCES
+Permission denied
+.TP
 .B EFAULT
 Bad address
 .TP
 .B EINVAL
 Invalid argument
+.TP
+.B EISDIR
+Is a directory
+.TP
+.B ENAMETOOLONG
+.I hsmname
+or one of its component is is too long.
+.TP
+.B ENOTDIR
+A component of 
+.I hsmname
+ prefix is not a directory.
 .TP
 .B ESTGROUP
 Invalid group
@@ -105,7 +123,7 @@ Stager not active (if you specify the STAGE_NORETRY flag - default is to retry f
 Host not known
 
 .SH SEE ALSO
-\fBstageclr\fP(1), \fBstage_setlog\fP(3)
+\fBCastor_limits\fP(3), \fBstageclr\fP(1), \fBstage_setlog\fP(3)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
