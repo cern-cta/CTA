@@ -26,29 +26,24 @@
 
 // Include Files
 #include "castor/ObjectSet.hpp"
-#include "castor/stager/ReqId.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "castor/stager/ReqIdRequest.hpp"
 #include "castor/stager/Request.hpp"
 #include <iostream>
 #include <string>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
 castor::stager::ReqIdRequest::ReqIdRequest() throw() :
-  Request() {
+  Request(),
+  m_parent(0) {
 };
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::ReqIdRequest::~ReqIdRequest() throw() {
-  for (unsigned int i = 0; i < m_reqidsVector.size(); i++) {
-    m_reqidsVector[i]->setRequest(0);
-    delete m_reqidsVector[i];
-  }
-  m_reqidsVector.clear();
 };
 
 //------------------------------------------------------------------------------
@@ -65,16 +60,11 @@ void castor::stager::ReqIdRequest::print(std::ostream& stream,
   // Call print on the parent class(es)
   this->Request::print(stream, indent, alreadyPrinted);
   alreadyPrinted.insert(this);
-  {
-    stream << indent << "Reqids : " << std::endl;
-    int i;
-    std::vector<ReqId*>::const_iterator it;
-    for (it = m_reqidsVector.begin(), i = 0;
-         it != m_reqidsVector.end();
-         it++, i++) {
-      stream << indent << "  " << i << " :" << std::endl;
-      (*it)->print(stream, indent + "    ", alreadyPrinted);
-    }
+  stream << indent << "Parent : " << std::endl;
+  if (0 != m_parent) {
+    m_parent->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
   }
 }
 

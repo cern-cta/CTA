@@ -32,7 +32,6 @@
 #include "osdep.h"
 #include <iostream>
 #include <string>
-#include <vector>
 
 namespace castor {
 
@@ -44,7 +43,6 @@ namespace castor {
 
     // Forward declarations
     class SvcClass;
-    class SubRequest;
 
     /**
      * class Request
@@ -257,35 +255,6 @@ namespace castor {
       }
 
       /**
-       * Add a SubRequest* object to the m_subRequestsVector list
-       */
-      void addSubRequests(SubRequest* add_object) {
-        m_subRequestsVector.push_back(add_object);
-      }
-
-      /**
-       * Remove a SubRequest* object from m_subRequestsVector
-       */
-      void removeSubRequests(SubRequest* remove_object) {
-        for (unsigned int i = 0; i < m_subRequestsVector.size(); i++) {
-          SubRequest* item = m_subRequestsVector[i];
-          if (item == remove_object) {
-            std::vector<SubRequest*>::iterator it = m_subRequestsVector.begin() + i;
-            m_subRequestsVector.erase(it);
-            return;
-          }
-        }
-      }
-
-      /**
-       * Get the list of SubRequest* objects held by m_subRequestsVector
-       * @return list of SubRequest* objects held by m_subRequestsVector
-       */
-      std::vector<SubRequest*>& subRequests() {
-        return m_subRequestsVector;
-      }
-
-      /**
        * Get the value of m_client
        * @return the value of m_client
        */
@@ -329,8 +298,6 @@ namespace castor {
       std::string m_userTag;
 
       SvcClass* m_svcClass;
-
-      std::vector<SubRequest*> m_subRequestsVector;
 
       castor::IClient* m_client;
 

@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/stager/Request.hpp"
+#include "castor/stager/ReqIdRequest.hpp"
 #include "castor/stager/StageGetNextRequest.hpp"
 #include "osdep.h"
 
@@ -47,16 +47,16 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StageGetNextRequest_getRequest
+  // Cstager_StageGetNextRequest_getReqIdRequest
   //----------------------------------------------------------------------------
-  castor::stager::Request* Cstager_StageGetNextRequest_getRequest(castor::stager::StageGetNextRequest* obj) {
+  castor::stager::ReqIdRequest* Cstager_StageGetNextRequest_getReqIdRequest(castor::stager::StageGetNextRequest* obj) {
     return obj;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StageGetNextRequest_fromRequest
+  // Cstager_StageGetNextRequest_fromReqIdRequest
   //----------------------------------------------------------------------------
-  castor::stager::StageGetNextRequest* Cstager_StageGetNextRequest_fromRequest(castor::stager::Request* obj) {
+  castor::stager::StageGetNextRequest* Cstager_StageGetNextRequest_fromReqIdRequest(castor::stager::ReqIdRequest* obj) {
     return dynamic_cast<castor::stager::StageGetNextRequest*>(obj);
   }
 
@@ -100,22 +100,6 @@ extern "C" {
   int Cstager_StageGetNextRequest_type(castor::stager::StageGetNextRequest* instance,
                                        int* ret) {
     *ret = instance->type();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageGetNextRequest_parent
-  //----------------------------------------------------------------------------
-  int Cstager_StageGetNextRequest_parent(castor::stager::StageGetNextRequest* instance, castor::stager::Request** var) {
-    *var = instance->parent();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageGetNextRequest_setParent
-  //----------------------------------------------------------------------------
-  int Cstager_StageGetNextRequest_setParent(castor::stager::StageGetNextRequest* instance, castor::stager::Request* new_var) {
-    instance->setParent(new_var);
     return 0;
   }
 

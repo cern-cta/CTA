@@ -32,7 +32,6 @@
 struct C_IClient_t;
 struct C_IObject_t;
 struct Cstager_Request_t;
-struct Cstager_SubRequest_t;
 struct Cstager_SvcClass_t;
 
 //------------------------------------------------------------------------------
@@ -181,21 +180,6 @@ int Cstager_Request_svcClass(struct Cstager_Request_t* instance, struct Cstager_
  * Set the value of svcClass
  */
 int Cstager_Request_setSvcClass(struct Cstager_Request_t* instance, struct Cstager_SvcClass_t* new_var);
-
-/**
- * Add a struct Cstager_SubRequest_t* object to the subRequests list
- */
-int Cstager_Request_addSubRequests(struct Cstager_Request_t* instance, struct Cstager_SubRequest_t* obj);
-
-/**
- * Remove a struct Cstager_SubRequest_t* object from subRequests
- */
-int Cstager_Request_removeSubRequests(struct Cstager_Request_t* instance, struct Cstager_SubRequest_t* obj);
-
-/**
- * Get the list of struct Cstager_SubRequest_t* objects held by subRequests
- */
-int Cstager_Request_subRequests(struct Cstager_Request_t* instance, struct Cstager_SubRequest_t*** var, int* len);
 
 /**
  * Get the value of client

@@ -29,7 +29,7 @@
 
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
-struct Cstager_Request_t;
+struct Cstager_ReqIdRequest_t;
 struct Cstager_StageGetNextRequest_t;
 
 //------------------------------------------------------------------------------
@@ -49,14 +49,14 @@ int Cstager_StageGetNextRequest_create(struct Cstager_StageGetNextRequest_t** ob
 int Cstager_StageGetNextRequest_delete(struct Cstager_StageGetNextRequest_t* obj);
 
 /**
- * Cast into Request
+ * Cast into ReqIdRequest
  */
-struct Cstager_Request_t* Cstager_StageGetNextRequest_getRequest(struct Cstager_StageGetNextRequest_t* obj);
+struct Cstager_ReqIdRequest_t* Cstager_StageGetNextRequest_getReqIdRequest(struct Cstager_StageGetNextRequest_t* obj);
 
 /**
- * Dynamic cast from Request
+ * Dynamic cast from ReqIdRequest
  */
-struct Cstager_StageGetNextRequest_t* Cstager_StageGetNextRequest_fromRequest(struct Cstager_Request_t* obj);
+struct Cstager_StageGetNextRequest_t* Cstager_StageGetNextRequest_fromReqIdRequest(struct Cstager_ReqIdRequest_t* obj);
 
 /**
  * Outputs this object in a human readable format
@@ -88,15 +88,5 @@ int Cstager_StageGetNextRequest_id(struct Cstager_StageGetNextRequest_t* instanc
  */
 int Cstager_StageGetNextRequest_type(struct Cstager_StageGetNextRequest_t* instance,
                                      int* ret);
-
-/**
- * Get the value of parent
- */
-int Cstager_StageGetNextRequest_parent(struct Cstager_StageGetNextRequest_t* instance, struct Cstager_Request_t** var);
-
-/**
- * Set the value of parent
- */
-int Cstager_StageGetNextRequest_setParent(struct Cstager_StageGetNextRequest_t* instance, struct Cstager_Request_t* new_var);
 
 #endif // CASTOR_STAGER_STAGEGETNEXTREQUEST_H

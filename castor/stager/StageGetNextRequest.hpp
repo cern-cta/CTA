@@ -28,7 +28,7 @@
 #define CASTOR_STAGER_STAGEGETNEXTREQUEST_HPP
 
 // Include Files
-#include "castor/stager/Request.hpp"
+#include "castor/stager/ReqIdRequest.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -44,7 +44,7 @@ namespace castor {
      * class StageGetNextRequest
      * 
      */
-    class StageGetNextRequest : public virtual Request {
+    class StageGetNextRequest : public virtual ReqIdRequest {
 
     public:
 
@@ -101,30 +101,12 @@ namespace castor {
       /*********************************/
       /* End of IObject abstract class */
       /*********************************/
-      /**
-       * Get the value of m_parent
-       * @return the value of m_parent
-       */
-      Request* parent() const {
-        return m_parent;
-      }
-
-      /**
-       * Set the value of m_parent
-       * @param new_var the new value of m_parent
-       */
-      void setParent(Request* new_var) {
-        m_parent = new_var;
-      }
-
     private:
 
     private:
 
       /// The id of this object
       u_signed64 m_id;
-
-      Request* m_parent;
 
     }; // end of class StageGetNextRequest
 

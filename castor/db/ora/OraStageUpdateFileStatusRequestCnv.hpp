@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/05 17:47:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/09 13:04:48 $ $Author: sponcec3 $
  *
  * 
  *
@@ -170,19 +170,19 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Fill the database with objects of type SvcClass refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepSvcClass(castor::stager::StageUpdateFileStatusRequest* obj)
-          throw (castor::exception::Exception, oracle::occi::SQLException);
-
-        /**
          * Fill the database with objects of type SubRequest refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepSubRequest(castor::stager::StageUpdateFileStatusRequest* obj)
+          throw (castor::exception::Exception, oracle::occi::SQLException);
+
+        /**
+         * Fill the database with objects of type SvcClass refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepSvcClass(castor::stager::StageUpdateFileStatusRequest* obj)
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
@@ -205,19 +205,19 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Retrieve from the database objects of type SvcClass refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjSvcClass(castor::stager::StageUpdateFileStatusRequest* obj)
-          throw (castor::exception::Exception);
-
-        /**
          * Retrieve from the database objects of type SubRequest refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjSubRequest(castor::stager::StageUpdateFileStatusRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type SvcClass refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjSvcClass(castor::stager::StageUpdateFileStatusRequest* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -278,18 +278,6 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL checkExist statement for member svcClass
-        static const std::string s_checkSvcClassExistStatementString;
-
-        /// SQL checkExist statement object for member svcClass
-        oracle::occi::Statement *m_checkSvcClassExistStatement;
-
-        /// SQL update statement for member svcClass
-        static const std::string s_updateSvcClassStatementString;
-
-        /// SQL update statement object for member svcClass
-        oracle::occi::Statement *m_updateSvcClassStatement;
-
         /// SQL select statement for member subRequests
         static const std::string s_selectSubRequestStatementString;
 
@@ -307,6 +295,18 @@ namespace castor {
 
         /// SQL remote update statement object for member subRequests
         oracle::occi::Statement *m_remoteUpdateSubRequestStatement;
+
+        /// SQL checkExist statement for member svcClass
+        static const std::string s_checkSvcClassExistStatementString;
+
+        /// SQL checkExist statement object for member svcClass
+        oracle::occi::Statement *m_checkSvcClassExistStatement;
+
+        /// SQL update statement for member svcClass
+        static const std::string s_updateSvcClassStatementString;
+
+        /// SQL update statement object for member svcClass
+        oracle::occi::Statement *m_updateSvcClassStatement;
 
         /// SQL update statement for member client
         static const std::string s_updateIClientStatementString;

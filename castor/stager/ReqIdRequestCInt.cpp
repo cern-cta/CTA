@@ -25,10 +25,9 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/stager/ReqId.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "castor/stager/ReqIdRequest.hpp"
 #include "castor/stager/Request.hpp"
-#include <vector>
 
 extern "C" {
 
@@ -63,31 +62,18 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ReqIdRequest_addReqids
+  // Cstager_ReqIdRequest_parent
   //----------------------------------------------------------------------------
-  int Cstager_ReqIdRequest_addReqids(castor::stager::ReqIdRequest* instance, castor::stager::ReqId* obj) {
-    instance->addReqids(obj);
+  int Cstager_ReqIdRequest_parent(castor::stager::ReqIdRequest* instance, castor::stager::FileRequest** var) {
+    *var = instance->parent();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ReqIdRequest_removeReqids
+  // Cstager_ReqIdRequest_setParent
   //----------------------------------------------------------------------------
-  int Cstager_ReqIdRequest_removeReqids(castor::stager::ReqIdRequest* instance, castor::stager::ReqId* obj) {
-    instance->removeReqids(obj);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_ReqIdRequest_reqids
-  //----------------------------------------------------------------------------
-  int Cstager_ReqIdRequest_reqids(castor::stager::ReqIdRequest* instance, castor::stager::ReqId*** var, int* len) {
-    std::vector<castor::stager::ReqId*> result = instance->reqids();
-    *len = result.size();
-    *var = (castor::stager::ReqId**) malloc((*len) * sizeof(castor::stager::ReqId*));
-    for (int i = 0; i < *len; i++) {
-      (*var)[i] = result[i];
-    }
+  int Cstager_ReqIdRequest_setParent(castor::stager::ReqIdRequest* instance, castor::stager::FileRequest* new_var) {
+    instance->setParent(new_var);
     return 0;
   }
 

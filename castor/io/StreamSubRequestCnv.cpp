@@ -39,7 +39,7 @@
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
-#include "castor/stager/Request.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "osdep.h"
@@ -189,7 +189,7 @@ castor::IObject* castor::io::StreamSubRequestCnv::unmarshalObject(castor::io::bi
   obj->setParent(dynamic_cast<castor::stager::SubRequest*>(objParent));
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objRequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setRequest(dynamic_cast<castor::stager::Request*>(objRequest));
+  obj->setRequest(dynamic_cast<castor::stager::FileRequest*>(objRequest));
   return object;
 }
 

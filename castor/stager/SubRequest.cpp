@@ -29,7 +29,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
-#include "castor/stager/Request.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -49,8 +49,8 @@ castor::stager::SubRequest::SubRequest() throw() :
   m_diskcopy(0),
   m_castorFile(0),
   m_parent(0),
-  m_request(0),
-  m_status(SubRequestStatusCodes(0)) {
+  m_status(SubRequestStatusCodes(0)),
+  m_request(0) {
 };
 
 //------------------------------------------------------------------------------
@@ -103,13 +103,13 @@ void castor::stager::SubRequest::print(std::ostream& stream,
   } else {
     stream << indent << "  null" << std::endl;
   }
+  stream << indent << "status : " << m_status << std::endl;
   stream << indent << "Request : " << std::endl;
   if (0 != m_request) {
     m_request->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }
-  stream << indent << "status : " << m_status << std::endl;
 }
 
 //------------------------------------------------------------------------------

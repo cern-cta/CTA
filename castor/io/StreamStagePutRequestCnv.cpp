@@ -163,13 +163,13 @@ void castor::io::StreamStagePutRequestCnv::marshalObject(castor::IObject* object
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->svcClass(), address, alreadyDone);
     address->stream() << obj->subRequests().size();
     for (std::vector<castor::stager::SubRequest*>::iterator it = obj->subRequests().begin();
          it != obj->subRequests().end();
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
+    cnvSvc()->marshalObject(obj->svcClass(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->client(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
@@ -190,9 +190,6 @@ castor::IObject* castor::io::StreamStagePutRequestCnv::unmarshalObject(castor::i
   // Fill object with associations
   castor::stager::StagePutRequest* obj = 
     dynamic_cast<castor::stager::StagePutRequest*>(object);
-  ad.setObjType(castor::OBJ_INVALID);
-  IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));
   unsigned int subRequestsNb;
   ad.stream() >> subRequestsNb;
   for (unsigned int i = 0; i < subRequestsNb; i++) {
@@ -200,6 +197,9 @@ castor::IObject* castor::io::StreamStagePutRequestCnv::unmarshalObject(castor::i
     IObject* objSubRequests = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addSubRequests(dynamic_cast<castor::stager::SubRequest*>(objSubRequests));
   }
+  ad.setObjType(castor::OBJ_INVALID);
+  IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setClient(dynamic_cast<castor::IClient*>(objClient));

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequestCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/04 10:26:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequestCInt.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/09 13:04:55 $ $Author: sponcec3 $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/stager/Request.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StageUpdateFileStatusRequest.hpp"
 #include "osdep.h"
 
@@ -47,16 +47,16 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StageUpdateFileStatusRequest_getRequest
+  // Cstager_StageUpdateFileStatusRequest_getFileRequest
   //----------------------------------------------------------------------------
-  castor::stager::Request* Cstager_StageUpdateFileStatusRequest_getRequest(castor::stager::StageUpdateFileStatusRequest* obj) {
+  castor::stager::FileRequest* Cstager_StageUpdateFileStatusRequest_getFileRequest(castor::stager::StageUpdateFileStatusRequest* obj) {
     return obj;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StageUpdateFileStatusRequest_fromRequest
+  // Cstager_StageUpdateFileStatusRequest_fromFileRequest
   //----------------------------------------------------------------------------
-  castor::stager::StageUpdateFileStatusRequest* Cstager_StageUpdateFileStatusRequest_fromRequest(castor::stager::Request* obj) {
+  castor::stager::StageUpdateFileStatusRequest* Cstager_StageUpdateFileStatusRequest_fromFileRequest(castor::stager::FileRequest* obj) {
     return dynamic_cast<castor::stager::StageUpdateFileStatusRequest*>(obj);
   }
 

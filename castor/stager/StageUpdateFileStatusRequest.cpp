@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequest.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/04 10:26:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequest.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/09 13:04:55 $ $Author: sponcec3 $
  *
  * 
  *
@@ -27,7 +27,7 @@
 // Include Files
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/stager/Request.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StageUpdateFileStatusRequest.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -37,7 +37,7 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::stager::StageUpdateFileStatusRequest::StageUpdateFileStatusRequest() throw() :
-  Request(),
+  FileRequest(),
   m_id() {
 };
 
@@ -59,7 +59,7 @@ void castor::stager::StageUpdateFileStatusRequest::print(std::ostream& stream,
     return;
   }
   // Call print on the parent class(es)
-  this->Request::print(stream, indent, alreadyPrinted);
+  this->FileRequest::print(stream, indent, alreadyPrinted);
   // Output of all members
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);

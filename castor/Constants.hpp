@@ -54,17 +54,10 @@ namespace castor {
     OBJ_FileSystem = 12,
     OBJ_IClient = 13,
     OBJ_MessageAck = 14,
-    OBJ_ReqId = 15,
     OBJ_ReqIdRequest = 16,
     OBJ_Request = 17,
     OBJ_Segment = 18,
-    OBJ_StageClrRequest = 19,
-    OBJ_StageFilChgRequest = 20,    
     OBJ_StageGetNextRequest = 21,    
-    OBJ_StageInRequest = 22,
-    OBJ_StageOutRequest = 23,
-    OBJ_StageQryRequest = 24,
-    OBJ_StageUpdcRequest = 25,
     OBJ_Stream = 26,
     OBJ_SubRequest = 27,
     OBJ_SvcClass = 28,
@@ -83,7 +76,11 @@ namespace castor {
     OBJ_StageRequestQueryRequest = 41,
     OBJ_StageRmRequest = 42,
     OBJ_StageUpdateFileStatusRequest = 43,
-    OBJ_StageUpdateRequest = 44
+    OBJ_StageUpdateRequest = 44,
+    OBJ_FileRequest = 45,
+    OBJ_QryRequest = 46,
+    OBJ_StagePutNextRequest = 48,
+    OBJ_StageUpdateNextRequest = 49
   };
     
   /**

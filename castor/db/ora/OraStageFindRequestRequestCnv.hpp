@@ -178,14 +178,6 @@ namespace castor {
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
-         * Fill the database with objects of type SubRequest refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepSubRequest(castor::stager::StageFindRequestRequest* obj)
-          throw (castor::exception::Exception, oracle::occi::SQLException);
-
-        /**
          * Fill the database with objects of type IClient refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -210,14 +202,6 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjSvcClass(castor::stager::StageFindRequestRequest* obj)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type SubRequest refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjSubRequest(castor::stager::StageFindRequestRequest* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -289,24 +273,6 @@ namespace castor {
 
         /// SQL update statement object for member svcClass
         oracle::occi::Statement *m_updateSvcClassStatement;
-
-        /// SQL select statement for member subRequests
-        static const std::string s_selectSubRequestStatementString;
-
-        /// SQL select statement object for member subRequests
-        oracle::occi::Statement *m_selectSubRequestStatement;
-
-        /// SQL delete statement for member subRequests
-        static const std::string s_deleteSubRequestStatementString;
-
-        /// SQL delete statement object for member subRequests
-        oracle::occi::Statement *m_deleteSubRequestStatement;
-
-        /// SQL remote update statement for member subRequests
-        static const std::string s_remoteUpdateSubRequestStatementString;
-
-        /// SQL remote update statement object for member subRequests
-        oracle::occi::Statement *m_remoteUpdateSubRequestStatement;
 
         /// SQL update statement for member client
         static const std::string s_updateIClientStatementString;

@@ -33,7 +33,7 @@
 struct C_IObject_t;
 struct Cstager_CastorFile_t;
 struct Cstager_DiskCopy_t;
-struct Cstager_Request_t;
+struct Cstager_FileRequest_t;
 struct Cstager_SubRequest_t;
 
 //------------------------------------------------------------------------------
@@ -219,16 +219,6 @@ int Cstager_SubRequest_removeChild(struct Cstager_SubRequest_t* instance, struct
 int Cstager_SubRequest_child(struct Cstager_SubRequest_t* instance, struct Cstager_SubRequest_t*** var, int* len);
 
 /**
- * Get the value of request
- */
-int Cstager_SubRequest_request(struct Cstager_SubRequest_t* instance, struct Cstager_Request_t** var);
-
-/**
- * Set the value of request
- */
-int Cstager_SubRequest_setRequest(struct Cstager_SubRequest_t* instance, struct Cstager_Request_t* new_var);
-
-/**
  * Get the value of status
  */
 int Cstager_SubRequest_status(struct Cstager_SubRequest_t* instance, enum Cstager_SubRequestStatusCodes_t* var);
@@ -237,5 +227,15 @@ int Cstager_SubRequest_status(struct Cstager_SubRequest_t* instance, enum Cstage
  * Set the value of status
  */
 int Cstager_SubRequest_setStatus(struct Cstager_SubRequest_t* instance, enum Cstager_SubRequestStatusCodes_t new_var);
+
+/**
+ * Get the value of request
+ */
+int Cstager_SubRequest_request(struct Cstager_SubRequest_t* instance, struct Cstager_FileRequest_t** var);
+
+/**
+ * Set the value of request
+ */
+int Cstager_SubRequest_setRequest(struct Cstager_SubRequest_t* instance, struct Cstager_FileRequest_t* new_var);
 
 #endif // CASTOR_STAGER_SUBREQUEST_H

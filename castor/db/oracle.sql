@@ -40,10 +40,6 @@ END;
 DROP TABLE Client;
 CREATE TABLE Client (ipAddress NUMBER, port NUMBER, id INTEGER PRIMARY KEY, request INTEGER);
 
-/* SQL statements for type StageInRequest */
-DROP TABLE StageInRequest;
-CREATE TABLE StageInRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), openflags NUMBER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
-
 /* SQL statements for type StagePrepareToGetRequest */
 DROP TABLE StagePrepareToGetRequest;
 CREATE TABLE StagePrepareToGetRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
@@ -92,37 +88,21 @@ CREATE TABLE StageRequestQueryRequest (flags INTEGER, userName VARCHAR(255), eui
 DROP TABLE StageFindRequestRequest;
 CREATE TABLE StageFindRequestRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
-/* SQL statements for type StageQryRequest */
-DROP TABLE StageQryRequest;
-CREATE TABLE StageQryRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
-
-/* SQL statements for type StageOutRequest */
-DROP TABLE StageOutRequest;
-CREATE TABLE StageOutRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), openmode NUMBER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
-
-/* SQL statements for type StageClrRequest */
-DROP TABLE StageClrRequest;
-CREATE TABLE StageClrRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
-
-/* SQL statements for type StageFilChgRequest */
-DROP TABLE StageFilChgRequest;
-CREATE TABLE StageFilChgRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
-
-/* SQL statements for type ReqId */
-DROP TABLE ReqId;
-CREATE TABLE ReqId (value VARCHAR(255), id INTEGER PRIMARY KEY, request INTEGER);
-
 /* SQL statements for type SubRequest */
 DROP TABLE SubRequest;
-CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR(255), protocol VARCHAR(255), poolName VARCHAR(255), xsize INTEGER, priority NUMBER, id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, request INTEGER, status INTEGER);
+CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR(255), protocol VARCHAR(255), poolName VARCHAR(255), xsize INTEGER, priority NUMBER, id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER);
 
 /* SQL statements for type StageGetNextRequest */
 DROP TABLE StageGetNextRequest;
-CREATE TABLE StageGetNextRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER, parent INTEGER);
+CREATE TABLE StageGetNextRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER);
 
-/* SQL statements for type StageUpdcRequest */
-DROP TABLE StageUpdcRequest;
-CREATE TABLE StageUpdcRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+/* SQL statements for type StagePutNextRequest */
+DROP TABLE StagePutNextRequest;
+CREATE TABLE StagePutNextRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER);
+
+/* SQL statements for type StageUpdateNextRequest */
+DROP TABLE StageUpdateNextRequest;
+CREATE TABLE StageUpdateNextRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type Tape */
 DROP TABLE Tape;

@@ -27,7 +27,7 @@
 // Include Files
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/stager/Request.hpp"
+#include "castor/stager/ReqIdRequest.hpp"
 #include "castor/stager/StageGetNextRequest.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -37,9 +37,8 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::stager::StageGetNextRequest::StageGetNextRequest() throw() :
-  Request(),
-  m_id(),
-  m_parent(0) {
+  ReqIdRequest(),
+  m_id() {
 };
 
 //------------------------------------------------------------------------------
@@ -60,16 +59,10 @@ void castor::stager::StageGetNextRequest::print(std::ostream& stream,
     return;
   }
   // Call print on the parent class(es)
-  this->Request::print(stream, indent, alreadyPrinted);
+  this->ReqIdRequest::print(stream, indent, alreadyPrinted);
   // Output of all members
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "Parent : " << std::endl;
-  if (0 != m_parent) {
-    m_parent->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
 }
 
 //------------------------------------------------------------------------------

@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/stager/Request.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StagePutDoneRequest.hpp"
 #include "osdep.h"
 
@@ -47,16 +47,16 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StagePutDoneRequest_getRequest
+  // Cstager_StagePutDoneRequest_getFileRequest
   //----------------------------------------------------------------------------
-  castor::stager::Request* Cstager_StagePutDoneRequest_getRequest(castor::stager::StagePutDoneRequest* obj) {
+  castor::stager::FileRequest* Cstager_StagePutDoneRequest_getFileRequest(castor::stager::StagePutDoneRequest* obj) {
     return obj;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StagePutDoneRequest_fromRequest
+  // Cstager_StagePutDoneRequest_fromFileRequest
   //----------------------------------------------------------------------------
-  castor::stager::StagePutDoneRequest* Cstager_StagePutDoneRequest_fromRequest(castor::stager::Request* obj) {
+  castor::stager::StagePutDoneRequest* Cstager_StagePutDoneRequest_fromFileRequest(castor::stager::FileRequest* obj) {
     return dynamic_cast<castor::stager::StagePutDoneRequest*>(obj);
   }
 

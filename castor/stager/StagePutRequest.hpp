@@ -28,7 +28,7 @@
 #define CASTOR_STAGER_STAGEPUTREQUEST_HPP
 
 // Include Files
-#include "castor/stager/Request.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -44,7 +44,7 @@ namespace castor {
      * class StagePutRequest
      * 
      */
-    class StagePutRequest : public virtual Request {
+    class StagePutRequest : public virtual FileRequest {
 
     public:
 

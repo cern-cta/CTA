@@ -31,7 +31,6 @@
 #include "castor/stager/Request.hpp"
 #include <iostream>
 #include <string>
-#include <vector>
 
 namespace castor {
 
@@ -41,11 +40,11 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
-    class ReqId;
+    class FileRequest;
 
     /**
      * class ReqIdRequest
-     * A request dealing with a set of reqids
+     * An abstract ancester for all requests refering to another one
      */
     class ReqIdRequest : public virtual Request {
 
@@ -78,37 +77,24 @@ namespace castor {
       virtual void print() const;
 
       /**
-       * Add a ReqId* object to the m_reqidsVector list
+       * Get the value of m_parent
+       * @return the value of m_parent
        */
-      void addReqids(ReqId* add_object) {
-        m_reqidsVector.push_back(add_object);
+      FileRequest* parent() const {
+        return m_parent;
       }
 
       /**
-       * Remove a ReqId* object from m_reqidsVector
+       * Set the value of m_parent
+       * @param new_var the new value of m_parent
        */
-      void removeReqids(ReqId* remove_object) {
-        for (unsigned int i = 0; i < m_reqidsVector.size(); i++) {
-          ReqId* item = m_reqidsVector[i];
-          if (item == remove_object) {
-            std::vector<ReqId*>::iterator it = m_reqidsVector.begin() + i;
-            m_reqidsVector.erase(it);
-            return;
-          }
-        }
-      }
-
-      /**
-       * Get the list of ReqId* objects held by m_reqidsVector
-       * @return list of ReqId* objects held by m_reqidsVector
-       */
-      std::vector<ReqId*>& reqids() {
-        return m_reqidsVector;
+      void setParent(FileRequest* new_var) {
+        m_parent = new_var;
       }
 
     private:
 
-      std::vector<ReqId*> m_reqidsVector;
+      FileRequest* m_parent;
 
     }; // end of class ReqIdRequest
 

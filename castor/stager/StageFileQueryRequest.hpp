@@ -28,7 +28,7 @@
 #define CASTOR_STAGER_STAGEFILEQUERYREQUEST_HPP
 
 // Include Files
-#include "castor/stager/Request.hpp"
+#include "castor/stager/QryRequest.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -44,7 +44,7 @@ namespace castor {
      * class StageFileQueryRequest
      * 
      */
-    class StageFileQueryRequest : public virtual Request {
+    class StageFileQueryRequest : public virtual QryRequest {
 
     public:
 

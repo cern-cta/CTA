@@ -28,12 +28,10 @@
 #include "castor/IClient.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/Request.hpp"
-#include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -56,11 +54,6 @@ castor::stager::Request::Request() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::Request::~Request() throw() {
-  for (unsigned int i = 0; i < m_subRequestsVector.size(); i++) {
-    m_subRequestsVector[i]->setRequest(0);
-    delete m_subRequestsVector[i];
-  }
-  m_subRequestsVector.clear();
   if (0 != m_client) {
     m_client->setRequest(0);
     delete m_client;
@@ -95,17 +88,6 @@ void castor::stager::Request::print(std::ostream& stream,
     m_svcClass->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
-  }
-  {
-    stream << indent << "SubRequests : " << std::endl;
-    int i;
-    std::vector<SubRequest*>::const_iterator it;
-    for (it = m_subRequestsVector.begin(), i = 0;
-         it != m_subRequestsVector.end();
-         it++, i++) {
-      stream << indent << "  " << i << " :" << std::endl;
-      (*it)->print(stream, indent + "    ", alreadyPrinted);
-    }
   }
   stream << indent << "Client : " << std::endl;
   if (0 != m_client) {

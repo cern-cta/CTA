@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.47 $ $Release$ $Date: 2004/11/05 14:24:45 $ $Author: bcouturi $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.48 $ $Release$ $Date: 2004/11/09 13:04:46 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -116,15 +116,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamFileSystemCnv.cpp \
               io/StreamMessageAckCnv.cpp \
               io/StreamPtrCnv.cpp \
-              io/StreamReqIdCnv.cpp \
               io/StreamSegmentCnv.cpp \
-              io/StreamStageClrRequestCnv.cpp \
-              io/StreamStageFilChgRequestCnv.cpp \
               io/StreamStageGetNextRequestCnv.cpp \
-              io/StreamStageInRequestCnv.cpp \
-              io/StreamStageOutRequestCnv.cpp \
-              io/StreamStageQryRequestCnv.cpp \
-              io/StreamStageUpdcRequestCnv.cpp \
               io/StreamStringResponseCnv.cpp \
               io/StreamSubRequestCnv.cpp \
               io/StreamTapeCnv.cpp \
@@ -169,33 +162,23 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/DiskServerCInt.cpp \
               stager/FileClass.cpp \
               stager/FileClassCInt.cpp \
+              stager/FileRequest.cpp \
+              stager/FileRequestCInt.cpp \
               stager/FileSystem.cpp \
               stager/FileSystemCInt.cpp \
               stager/IStagerSvcCInt.cpp \
               stager/SvcClass.cpp \
               stager/SvcClassCInt.cpp \
-              stager/ReqId.cpp \
-              stager/ReqIdCInt.cpp \
+              stager/QryRequest.cpp \
+              stager/QryRequestCInt.cpp \
               stager/ReqIdRequest.cpp \
               stager/ReqIdRequestCInt.cpp \
               stager/Request.cpp \
               stager/RequestCInt.cpp \
               stager/Segment.cpp \
               stager/SegmentCInt.cpp \
-              stager/StageClrRequest.cpp \
-              stager/StageClrRequestCInt.cpp \
-              stager/StageFilChgRequest.cpp \
-              stager/StageFilChgRequestCInt.cpp \
               stager/StageGetNextRequest.cpp \
               stager/StageGetNextRequestCInt.cpp \
-              stager/StageInRequest.cpp \
-              stager/StageInRequestCInt.cpp \
-              stager/StageOutRequest.cpp \
-              stager/StageOutRequestCInt.cpp \
-              stager/StageQryRequest.cpp \
-              stager/StageQryRequestCInt.cpp \
-              stager/StageUpdcRequest.cpp \
-              stager/StageUpdcRequestCInt.cpp \
 	      stager/StageFileQueryRequest.cpp \
 	      stager/StageFindRequestRequest.cpp \
 	      stager/StageGetNextRequest.cpp \
@@ -254,37 +237,15 @@ STGLIB_SRCS += DlfMsgSvc.cpp \
 
 STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
 
-STAGEIN_SRCS = client/StageIn.cpp client/StageInMain.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp
-STAGEOUT_SRCS = client/StageOut.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp
-STAGEUPDC_SRCS = client/StageUpdc.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp
-STAGEQRY_SRCS = client/StageQry.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp client/StageQryResponseHandler.cpp
-STAGECLR_SRCS = client/StageClr.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp
-CLIENTS_SRCS = $(STAGEIN_SRCS) $(STAGEOUT_SRCS) $(STAGEUPDC_SRCS) $(STAGEQRY_SRCS) $(STAGECLR_SRCS)
-STAGEIN_OBJS = $(STAGEIN_SRCS:.cpp=.Osuf)
-STAGEOUT_OBJS = $(STAGEOUT_SRCS:.cpp=.Osuf)
-STAGEUPDC_OBJS = $(STAGEUPDC_SRCS:.cpp=.Osuf)
-STAGEQRY_OBJS = $(STAGEQRY_SRCS:.cpp=.Osuf)
-STAGECLR_OBJS = $(STAGECLR_SRCS:.cpp=.Osuf)
-CLIENTS_OBJS = $(CLIENTS_SRCS:.cpp=.Osuf)
-
-PROGS_S = stagein stageout stageupdc stageqry stageclr
-PROGS_C = $(patsubst %,ProgramTargetName(%),$(PROGS_S))
-
 COMMONLIB = LibraryTargetName(castorClient)
 GLOBLIB = DepSharedLibraryTargetName(shlib,shift)
 LDFLAGS = $(DEBUG) $(MTLDFLAGS)
 LD = g++
 
-all: $(COMMONLIB) $(PROGS_C)
+all: $(COMMONLIB)
 
 MakeDepSharedLibrary(shlib,shift)
 NormalLibraryTarget(castorClient,$(STGLIB_OBJS))
-
-NormalProgramTarget(stagein,  $(STAGEIN_OBJS),  $(GLOBLIB),$(LIBS))
-NormalProgramTarget(stageout, $(STAGEOUT_OBJS), $(GLOBLIB),$(LIBS))
-NormalProgramTarget(stageupdc,$(STAGEUPDC_OBJS),$(GLOBLIB),$(LIBS))
-NormalProgramTarget(stageqry, $(STAGEQRY_OBJS) ,$(GLOBLIB),$(LIBS))
-NormalProgramTarget(stageclr, $(STAGECLR_OBJS), $(GLOBLIB),$(LIBS))
 
 MakeSubdirs(all,$(SUBDIRS))
 MakeCondSubdirs(clean,$(SUBDIRS),)
@@ -315,7 +276,7 @@ Makefiles:
 	done ;
 
 depend:
-	makedepend $(INCLUDES) $(STGLIB_SRCS) $(CLIENTS_SRCS) 2> /dev/null
+	makedepend $(INCLUDES) $(STGLIB_SRCS) 2> /dev/null
 	for i in $(DEPENDDIRS) ;\
 	do (if [ -d $$i ] ;\
 	    then \
@@ -327,7 +288,7 @@ depend:
 	    fi )\
 	done ;
 
-install: $(patsubst %,FileName($(BIN),%),$(PROGS_C))
+install:
 	for i in $(SUBDIRS) ;\
 	do (if [ -d $$i ] ;\
 	    then \
@@ -340,21 +301,15 @@ install: $(patsubst %,FileName($(BIN),%),$(PROGS_C))
 	done ;
 #endif
 
-InstallProgram(stagein,$(BIN),root,bin,755)
-InstallProgram(stageout,$(BIN),root,bin,755)
-InstallProgram(stageupdc,$(BIN),root,bin,755)
-InstallProgram(stageqry,$(BIN),root,bin,755)
-InstallProgram(stageclr,$(BIN),root,bin,755)
-
 exportman:
 
 clean::
 	@echo cleaning in CurDir
-	-@RemoveFiles($(STGLIB_OBJS) $(CLIENTS_OBJS))
+	-@RemoveFiles($(STGLIB_OBJS))
 
 clobber::	clean
 	@echo clobbering in CurDir
-	-@RemoveFiles($(COMMONLIB) $(PROGS_C))
+	-@RemoveFiles($(COMMONLIB))
 
 FORCE:
 

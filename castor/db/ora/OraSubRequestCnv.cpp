@@ -41,7 +41,7 @@
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
-#include "castor/stager/Request.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 
@@ -57,7 +57,7 @@ const castor::ICnvFactory& OraSubRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraSubRequestCnv::s_insertStatementString =
-"INSERT INTO SubRequest (retryCounter, fileName, protocol, poolName, xsize, priority, id, diskcopy, castorFile, parent, request, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12)";
+"INSERT INTO SubRequest (retryCounter, fileName, protocol, poolName, xsize, priority, id, diskcopy, castorFile, parent, status, request) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraSubRequestCnv::s_deleteStatementString =
@@ -65,7 +65,7 @@ const std::string castor::db::ora::OraSubRequestCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraSubRequestCnv::s_selectStatementString =
-"SELECT retryCounter, fileName, protocol, poolName, xsize, priority, id, diskcopy, castorFile, parent, request, status FROM SubRequest WHERE id = :1";
+"SELECT retryCounter, fileName, protocol, poolName, xsize, priority, id, diskcopy, castorFile, parent, status, request FROM SubRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraSubRequestCnv::s_updateStatementString =
@@ -104,7 +104,7 @@ const std::string castor::db::ora::OraSubRequestCnv::s_updateSubRequestStatement
 "UPDATE SubRequest SET parent = : 1 WHERE id = :2";
 
 /// SQL update statement for member request
-const std::string castor::db::ora::OraSubRequestCnv::s_updateRequestStatementString =
+const std::string castor::db::ora::OraSubRequestCnv::s_updateFileRequestStatementString =
 "UPDATE SubRequest SET request = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
@@ -124,7 +124,7 @@ castor::db::ora::OraSubRequestCnv::OraSubRequestCnv(castor::ICnvSvc* cnvSvc) :
   m_updateCastorFileStatement(0),
   m_checkSubRequestExistStatement(0),
   m_updateSubRequestStatement(0),
-  m_updateRequestStatement(0) {}
+  m_updateFileRequestStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -152,7 +152,7 @@ void castor::db::ora::OraSubRequestCnv::reset() throw() {
     deleteStatement(m_updateCastorFileStatement);
     deleteStatement(m_checkSubRequestExistStatement);
     deleteStatement(m_updateSubRequestStatement);
-    deleteStatement(m_updateRequestStatement);
+    deleteStatement(m_updateFileRequestStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -167,7 +167,7 @@ void castor::db::ora::OraSubRequestCnv::reset() throw() {
   m_updateCastorFileStatement = 0;
   m_checkSubRequestExistStatement = 0;
   m_updateSubRequestStatement = 0;
-  m_updateRequestStatement = 0;
+  m_updateFileRequestStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -205,8 +205,8 @@ void castor::db::ora::OraSubRequestCnv::fillRep(castor::IAddress* address,
     case castor::OBJ_SubRequest :
       fillRepSubRequest(obj);
       break;
-    case castor::OBJ_Request :
-      fillRepRequest(obj);
+    case castor::OBJ_FileRequest :
+      fillRepFileRequest(obj);
       break;
     default :
       castor::exception::InvalidArgument ex;
@@ -317,18 +317,18 @@ void castor::db::ora::OraSubRequestCnv::fillRepSubRequest(castor::stager::SubReq
 }
 
 //------------------------------------------------------------------------------
-// fillRepRequest
+// fillRepFileRequest
 //------------------------------------------------------------------------------
-void castor::db::ora::OraSubRequestCnv::fillRepRequest(castor::stager::SubRequest* obj)
+void castor::db::ora::OraSubRequestCnv::fillRepFileRequest(castor::stager::SubRequest* obj)
   throw (castor::exception::Exception, oracle::occi::SQLException) {
   // Check update statement
-  if (0 == m_updateRequestStatement) {
-    m_updateRequestStatement = createStatement(s_updateRequestStatementString);
+  if (0 == m_updateFileRequestStatement) {
+    m_updateFileRequestStatement = createStatement(s_updateFileRequestStatementString);
   }
   // Update local object
-  m_updateRequestStatement->setDouble(1, 0 == obj->request() ? 0 : obj->request()->id());
-  m_updateRequestStatement->setDouble(2, obj->id());
-  m_updateRequestStatement->executeUpdate();
+  m_updateFileRequestStatement->setDouble(1, 0 == obj->request() ? 0 : obj->request()->id());
+  m_updateFileRequestStatement->setDouble(2, obj->id());
+  m_updateFileRequestStatement->executeUpdate();
 }
 
 //------------------------------------------------------------------------------
@@ -350,8 +350,8 @@ void castor::db::ora::OraSubRequestCnv::fillObj(castor::IAddress* address,
   case castor::OBJ_SubRequest :
     fillObjSubRequest(obj);
     break;
-  case castor::OBJ_Request :
-    fillObjRequest(obj);
+  case castor::OBJ_FileRequest :
+    fillObjFileRequest(obj);
     break;
   default :
     castor::exception::InvalidArgument ex;
@@ -480,9 +480,9 @@ void castor::db::ora::OraSubRequestCnv::fillObjSubRequest(castor::stager::SubReq
 }
 
 //------------------------------------------------------------------------------
-// fillObjRequest
+// fillObjFileRequest
 //------------------------------------------------------------------------------
-void castor::db::ora::OraSubRequestCnv::fillObjRequest(castor::stager::SubRequest* obj)
+void castor::db::ora::OraSubRequestCnv::fillObjFileRequest(castor::stager::SubRequest* obj)
   throw (castor::exception::Exception) {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
@@ -510,7 +510,7 @@ void castor::db::ora::OraSubRequestCnv::fillObjRequest(castor::stager::SubReques
   if (0 != requestId) {
     if (0 == obj->request()) {
       obj->setRequest
-        (dynamic_cast<castor::stager::Request*>
+        (dynamic_cast<castor::stager::FileRequest*>
          (cnvSvc()->getObjFromId(requestId)));
     } else if (obj->request()->id() == requestId) {
       cnvSvc()->updateObj(obj->request());
@@ -555,8 +555,8 @@ void castor::db::ora::OraSubRequestCnv::createRep(castor::IAddress* address,
     m_insertStatement->setDouble(8, (type == OBJ_DiskCopy && obj->diskcopy() != 0) ? obj->diskcopy()->id() : 0);
     m_insertStatement->setDouble(9, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
     m_insertStatement->setDouble(10, (type == OBJ_SubRequest && obj->parent() != 0) ? obj->parent()->id() : 0);
-    m_insertStatement->setDouble(11, (type == OBJ_Request && obj->request() != 0) ? obj->request()->id() : 0);
-    m_insertStatement->setInt(12, (int)obj->status());
+    m_insertStatement->setInt(11, (int)obj->status());
+    m_insertStatement->setDouble(12, (type == OBJ_FileRequest && obj->request() != 0) ? obj->request()->id() : 0);
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -589,8 +589,8 @@ void castor::db::ora::OraSubRequestCnv::createRep(castor::IAddress* address,
                     << "  diskcopy : " << obj->diskcopy() << std::endl
                     << "  castorFile : " << obj->castorFile() << std::endl
                     << "  parent : " << obj->parent() << std::endl
-                    << "  request : " << obj->request() << std::endl
-                    << "  status : " << obj->status() << std::endl;
+                    << "  status : " << obj->status() << std::endl
+                    << "  request : " << obj->request() << std::endl;
     throw ex;
   }
 }
@@ -725,7 +725,7 @@ castor::IObject* castor::db::ora::OraSubRequestCnv::createObj(castor::IAddress* 
     object->setXsize((u_signed64)rset->getDouble(5));
     object->setPriority(rset->getInt(6));
     object->setId((u_signed64)rset->getDouble(7));
-    object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(12));
+    object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(11));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -778,7 +778,7 @@ void castor::db::ora::OraSubRequestCnv::updateObj(castor::IObject* obj)
     object->setXsize((u_signed64)rset->getDouble(5));
     object->setPriority(rset->getInt(6));
     object->setId((u_signed64)rset->getDouble(7));
-    object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(12));
+    object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(11));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

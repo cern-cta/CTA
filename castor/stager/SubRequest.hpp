@@ -43,7 +43,7 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
-    class Request;
+    class FileRequest;
     class DiskCopy;
     class CastorFile;
 
@@ -302,22 +302,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_request
-       * @return the value of m_request
-       */
-      Request* request() const {
-        return m_request;
-      }
-
-      /**
-       * Set the value of m_request
-       * @param new_var the new value of m_request
-       */
-      void setRequest(Request* new_var) {
-        m_request = new_var;
-      }
-
-      /**
        * Get the value of m_status
        * @return the value of m_status
        */
@@ -331,6 +315,22 @@ namespace castor {
        */
       void setStatus(SubRequestStatusCodes new_var) {
         m_status = new_var;
+      }
+
+      /**
+       * Get the value of m_request
+       * @return the value of m_request
+       */
+      FileRequest* request() const {
+        return m_request;
+      }
+
+      /**
+       * Set the value of m_request
+       * @param new_var the new value of m_request
+       */
+      void setRequest(FileRequest* new_var) {
+        m_request = new_var;
       }
 
     private:
@@ -368,9 +368,9 @@ namespace castor {
 
       std::vector<SubRequest*> m_childVector;
 
-      Request* m_request;
-
       SubRequestStatusCodes m_status;
+
+      FileRequest* m_request;
 
     }; // end of class SubRequest
 

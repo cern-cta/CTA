@@ -193,11 +193,11 @@ namespace castor {
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
-         * Fill the database with objects of type Request refered by a given object.
+         * Fill the database with objects of type FileRequest refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
-        virtual void fillRepRequest(castor::stager::SubRequest* obj)
+        virtual void fillRepFileRequest(castor::stager::SubRequest* obj)
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
@@ -236,11 +236,12 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Retrieve from the database objects of type Request refered by a given object.
+         * Retrieve from the database objects of type FileRequest refered by a given
+         * object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
-        virtual void fillObjRequest(castor::stager::SubRequest* obj)
+        virtual void fillObjFileRequest(castor::stager::SubRequest* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -318,10 +319,10 @@ namespace castor {
         oracle::occi::Statement *m_updateSubRequestStatement;
 
         /// SQL update statement for member request
-        static const std::string s_updateRequestStatementString;
+        static const std::string s_updateFileRequestStatementString;
 
         /// SQL update statement object for member request
-        oracle::occi::Statement *m_updateRequestStatement;
+        oracle::occi::Statement *m_updateFileRequestStatement;
 
       }; // end of class OraSubRequestCnv
 

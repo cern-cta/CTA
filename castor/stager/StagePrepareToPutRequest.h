@@ -29,7 +29,7 @@
 
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
-struct Cstager_Request_t;
+struct Cstager_FileRequest_t;
 struct Cstager_StagePrepareToPutRequest_t;
 
 //------------------------------------------------------------------------------
@@ -49,14 +49,14 @@ int Cstager_StagePrepareToPutRequest_create(struct Cstager_StagePrepareToPutRequ
 int Cstager_StagePrepareToPutRequest_delete(struct Cstager_StagePrepareToPutRequest_t* obj);
 
 /**
- * Cast into Request
+ * Cast into FileRequest
  */
-struct Cstager_Request_t* Cstager_StagePrepareToPutRequest_getRequest(struct Cstager_StagePrepareToPutRequest_t* obj);
+struct Cstager_FileRequest_t* Cstager_StagePrepareToPutRequest_getFileRequest(struct Cstager_StagePrepareToPutRequest_t* obj);
 
 /**
- * Dynamic cast from Request
+ * Dynamic cast from FileRequest
  */
-struct Cstager_StagePrepareToPutRequest_t* Cstager_StagePrepareToPutRequest_fromRequest(struct Cstager_Request_t* obj);
+struct Cstager_StagePrepareToPutRequest_t* Cstager_StagePrepareToPutRequest_fromFileRequest(struct Cstager_FileRequest_t* obj);
 
 /**
  * Outputs this object in a human readable format

@@ -41,10 +41,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/StageFileQueryRequest.hpp"
-#include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
-#include <set>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -96,18 +93,6 @@ const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_checkSvcClassE
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_updateSvcClassStatementString =
 "UPDATE StageFileQueryRequest SET svcClass = : 1 WHERE id = :2";
 
-/// SQL select statement for member subRequests
-const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_selectSubRequestStatementString =
-"SELECT id from SubRequest WHERE request = :1";
-
-/// SQL delete statement for member subRequests
-const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_deleteSubRequestStatementString =
-"UPDATE SubRequest SET request = 0 WHERE request = :1";
-
-/// SQL remote update statement for member subRequests
-const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_remoteUpdateSubRequestStatementString =
-"UPDATE SubRequest SET request = : 1 WHERE id = :2";
-
 /// SQL update statement for member client
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_updateIClientStatementString =
 "UPDATE StageFileQueryRequest SET client = : 1 WHERE id = :2";
@@ -127,9 +112,6 @@ castor::db::ora::OraStageFileQueryRequestCnv::OraStageFileQueryRequestCnv(castor
   m_deleteTypeStatement(0),
   m_checkSvcClassExistStatement(0),
   m_updateSvcClassStatement(0),
-  m_selectSubRequestStatement(0),
-  m_deleteSubRequestStatement(0),
-  m_remoteUpdateSubRequestStatement(0),
   m_updateIClientStatement(0) {}
 
 //------------------------------------------------------------------------------
@@ -156,9 +138,6 @@ void castor::db::ora::OraStageFileQueryRequestCnv::reset() throw() {
     deleteStatement(m_deleteTypeStatement);
     deleteStatement(m_checkSvcClassExistStatement);
     deleteStatement(m_updateSvcClassStatement);
-    deleteStatement(m_deleteSubRequestStatement);
-    deleteStatement(m_selectSubRequestStatement);
-    deleteStatement(m_remoteUpdateSubRequestStatement);
     deleteStatement(m_updateIClientStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -172,9 +151,6 @@ void castor::db::ora::OraStageFileQueryRequestCnv::reset() throw() {
   m_deleteTypeStatement = 0;
   m_checkSvcClassExistStatement = 0;
   m_updateSvcClassStatement = 0;
-  m_selectSubRequestStatement = 0;
-  m_deleteSubRequestStatement = 0;
-  m_remoteUpdateSubRequestStatement = 0;
   m_updateIClientStatement = 0;
 }
 
@@ -206,9 +182,6 @@ void castor::db::ora::OraStageFileQueryRequestCnv::fillRep(castor::IAddress* add
     switch (type) {
     case castor::OBJ_SvcClass :
       fillRepSvcClass(obj);
-      break;
-    case castor::OBJ_SubRequest :
-      fillRepSubRequest(obj);
       break;
     case castor::OBJ_IClient :
       fillRepIClient(obj);
@@ -262,54 +235,6 @@ void castor::db::ora::OraStageFileQueryRequestCnv::fillRepSvcClass(castor::stage
 }
 
 //------------------------------------------------------------------------------
-// fillRepSubRequest
-//------------------------------------------------------------------------------
-void castor::db::ora::OraStageFileQueryRequestCnv::fillRepSubRequest(castor::stager::StageFileQueryRequest* obj)
-  throw (castor::exception::Exception, oracle::occi::SQLException) {
-  // check select statement
-  if (0 == m_selectSubRequestStatement) {
-    m_selectSubRequestStatement = createStatement(s_selectSubRequestStatementString);
-  }
-  // Get current database data
-  std::set<int> subRequestsList;
-  m_selectSubRequestStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectSubRequestStatement->executeQuery();
-  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-    subRequestsList.insert(rset->getInt(1));
-  }
-  m_selectSubRequestStatement->closeResultSet(rset);
-  // update subRequests and create new ones
-  for (std::vector<castor::stager::SubRequest*>::iterator it = obj->subRequests().begin();
-       it != obj->subRequests().end();
-       it++) {
-    std::set<int>::iterator item;
-    if ((item = subRequestsList.find((*it)->id())) == subRequestsList.end()) {
-      cnvSvc()->createRep(0, *it, false, OBJ_Request);
-    } else {
-      // Check remote update statement
-      if (0 == m_remoteUpdateSubRequestStatement) {
-        m_remoteUpdateSubRequestStatement = createStatement(s_remoteUpdateSubRequestStatementString);
-      }
-      // Update remote object
-      m_remoteUpdateSubRequestStatement->setDouble(1, obj->id());
-      m_remoteUpdateSubRequestStatement->setDouble(2, (*it)->id());
-      m_remoteUpdateSubRequestStatement->executeUpdate();
-      subRequestsList.erase(item);
-    }
-  }
-  // Delete old links
-  for (std::set<int>::iterator it = subRequestsList.begin();
-       it != subRequestsList.end();
-       it++) {
-    if (0 == m_deleteSubRequestStatement) {
-      m_deleteSubRequestStatement = createStatement(s_deleteSubRequestStatementString);
-    }
-    m_deleteSubRequestStatement->setDouble(1, obj->id());
-    m_deleteSubRequestStatement->executeUpdate();
-  }
-}
-
-//------------------------------------------------------------------------------
 // fillRepIClient
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStageFileQueryRequestCnv::fillRepIClient(castor::stager::StageFileQueryRequest* obj)
@@ -336,9 +261,6 @@ void castor::db::ora::OraStageFileQueryRequestCnv::fillObj(castor::IAddress* add
   switch (type) {
   case castor::OBJ_SvcClass :
     fillObjSvcClass(obj);
-    break;
-  case castor::OBJ_SubRequest :
-    fillObjSubRequest(obj);
     break;
   case castor::OBJ_IClient :
     fillObjIClient(obj);
@@ -388,53 +310,6 @@ void castor::db::ora::OraStageFileQueryRequestCnv::fillObjSvcClass(castor::stage
     } else if (obj->svcClass()->id() == svcClassId) {
       cnvSvc()->updateObj(obj->svcClass());
     }
-  }
-}
-
-//------------------------------------------------------------------------------
-// fillObjSubRequest
-//------------------------------------------------------------------------------
-void castor::db::ora::OraStageFileQueryRequestCnv::fillObjSubRequest(castor::stager::StageFileQueryRequest* obj)
-  throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectSubRequestStatement) {
-    m_selectSubRequestStatement = createStatement(s_selectSubRequestStatementString);
-  }
-  // retrieve the object from the database
-  std::set<int> subRequestsList;
-  m_selectSubRequestStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectSubRequestStatement->executeQuery();
-  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-    subRequestsList.insert(rset->getInt(1));
-  }
-  // Close ResultSet
-  m_selectSubRequestStatement->closeResultSet(rset);
-  // Update objects and mark old ones for deletion
-  std::vector<castor::stager::SubRequest*> toBeDeleted;
-  for (std::vector<castor::stager::SubRequest*>::iterator it = obj->subRequests().begin();
-       it != obj->subRequests().end();
-       it++) {
-    std::set<int>::iterator item;
-    if ((item = subRequestsList.find((*it)->id())) == subRequestsList.end()) {
-      toBeDeleted.push_back(*it);
-    } else {
-      subRequestsList.erase(item);
-      cnvSvc()->updateObj((*it));
-    }
-  }
-  // Delete old objects
-  for (std::vector<castor::stager::SubRequest*>::iterator it = toBeDeleted.begin();
-       it != toBeDeleted.end();
-       it++) {
-    obj->removeSubRequests(*it);
-    delete (*it);
-  }
-  // Create new objects
-  for (std::set<int>::iterator it = subRequestsList.begin();
-       it != subRequestsList.end();
-       it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
-    obj->addSubRequests(dynamic_cast<castor::stager::SubRequest*>(item));
   }
 }
 
@@ -641,11 +516,6 @@ void castor::db::ora::OraStageFileQueryRequestCnv::deleteRep(castor::IAddress* a
     m_deleteStatement->executeUpdate();
     m_deleteStatusStatement->setDouble(1, obj->id());
     m_deleteStatusStatement->executeUpdate();
-    for (std::vector<castor::stager::SubRequest*>::iterator it = obj->subRequests().begin();
-         it != obj->subRequests().end();
-         it++) {
-      cnvSvc()->deleteRep(0, *it, false);
-    }
     if (obj->client() != 0) {
       cnvSvc()->deleteRep(0, obj->client(), false);
     }

@@ -27,7 +27,7 @@
 // Include Files
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/stager/Request.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StageUpdateRequest.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -37,7 +37,7 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::stager::StageUpdateRequest::StageUpdateRequest() throw() :
-  Request(),
+  FileRequest(),
   m_id() {
 };
 
@@ -59,7 +59,7 @@ void castor::stager::StageUpdateRequest::print(std::ostream& stream,
     return;
   }
   // Call print on the parent class(es)
-  this->Request::print(stream, indent, alreadyPrinted);
+  this->FileRequest::print(stream, indent, alreadyPrinted);
   // Output of all members
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);

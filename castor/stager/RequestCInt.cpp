@@ -28,10 +28,8 @@
 #include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
 #include "castor/stager/Request.hpp"
-#include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
-#include <vector>
 
 extern "C" {
 
@@ -226,35 +224,6 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_Request_setSvcClass(castor::stager::Request* instance, castor::stager::SvcClass* new_var) {
     instance->setSvcClass(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Request_addSubRequests
-  //----------------------------------------------------------------------------
-  int Cstager_Request_addSubRequests(castor::stager::Request* instance, castor::stager::SubRequest* obj) {
-    instance->addSubRequests(obj);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Request_removeSubRequests
-  //----------------------------------------------------------------------------
-  int Cstager_Request_removeSubRequests(castor::stager::Request* instance, castor::stager::SubRequest* obj) {
-    instance->removeSubRequests(obj);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Request_subRequests
-  //----------------------------------------------------------------------------
-  int Cstager_Request_subRequests(castor::stager::Request* instance, castor::stager::SubRequest*** var, int* len) {
-    std::vector<castor::stager::SubRequest*> result = instance->subRequests();
-    *len = result.size();
-    *var = (castor::stager::SubRequest**) malloc((*len) * sizeof(castor::stager::SubRequest*));
-    for (int i = 0; i < *len; i++) {
-      (*var)[i] = result[i];
-    }
     return 0;
   }
 

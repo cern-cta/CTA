@@ -29,7 +29,7 @@
 
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
-struct Cstager_Request_t;
+struct Cstager_QryRequest_t;
 struct Cstager_StageFindRequestRequest_t;
 
 //------------------------------------------------------------------------------
@@ -49,14 +49,14 @@ int Cstager_StageFindRequestRequest_create(struct Cstager_StageFindRequestReques
 int Cstager_StageFindRequestRequest_delete(struct Cstager_StageFindRequestRequest_t* obj);
 
 /**
- * Cast into Request
+ * Cast into QryRequest
  */
-struct Cstager_Request_t* Cstager_StageFindRequestRequest_getRequest(struct Cstager_StageFindRequestRequest_t* obj);
+struct Cstager_QryRequest_t* Cstager_StageFindRequestRequest_getQryRequest(struct Cstager_StageFindRequestRequest_t* obj);
 
 /**
- * Dynamic cast from Request
+ * Dynamic cast from QryRequest
  */
-struct Cstager_StageFindRequestRequest_t* Cstager_StageFindRequestRequest_fromRequest(struct Cstager_Request_t* obj);
+struct Cstager_StageFindRequestRequest_t* Cstager_StageFindRequestRequest_fromQryRequest(struct Cstager_QryRequest_t* obj);
 
 /**
  * Outputs this object in a human readable format

@@ -170,6 +170,14 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type FileRequest refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepFileRequest(castor::stager::StageGetNextRequest* obj)
+          throw (castor::exception::Exception, oracle::occi::SQLException);
+
+        /**
          * Fill the database with objects of type SvcClass refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -178,27 +186,11 @@ namespace castor {
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
-         * Fill the database with objects of type SubRequest refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepSubRequest(castor::stager::StageGetNextRequest* obj)
-          throw (castor::exception::Exception, oracle::occi::SQLException);
-
-        /**
          * Fill the database with objects of type IClient refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepIClient(castor::stager::StageGetNextRequest* obj)
-          throw (castor::exception::Exception, oracle::occi::SQLException);
-
-        /**
-         * Fill the database with objects of type Request refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepRequest(castor::stager::StageGetNextRequest* obj)
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
@@ -213,6 +205,15 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Retrieve from the database objects of type FileRequest refered by a given
+         * object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjFileRequest(castor::stager::StageGetNextRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Retrieve from the database objects of type SvcClass refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -221,27 +222,11 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Retrieve from the database objects of type SubRequest refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjSubRequest(castor::stager::StageGetNextRequest* obj)
-          throw (castor::exception::Exception);
-
-        /**
          * Retrieve from the database objects of type IClient refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjIClient(castor::stager::StageGetNextRequest* obj)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type Request refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjRequest(castor::stager::StageGetNextRequest* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -294,6 +279,12 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
+        /// SQL update statement for member parent
+        static const std::string s_updateFileRequestStatementString;
+
+        /// SQL update statement object for member parent
+        oracle::occi::Statement *m_updateFileRequestStatement;
+
         /// SQL checkExist statement for member svcClass
         static const std::string s_checkSvcClassExistStatementString;
 
@@ -306,35 +297,11 @@ namespace castor {
         /// SQL update statement object for member svcClass
         oracle::occi::Statement *m_updateSvcClassStatement;
 
-        /// SQL select statement for member subRequests
-        static const std::string s_selectSubRequestStatementString;
-
-        /// SQL select statement object for member subRequests
-        oracle::occi::Statement *m_selectSubRequestStatement;
-
-        /// SQL delete statement for member subRequests
-        static const std::string s_deleteSubRequestStatementString;
-
-        /// SQL delete statement object for member subRequests
-        oracle::occi::Statement *m_deleteSubRequestStatement;
-
-        /// SQL remote update statement for member subRequests
-        static const std::string s_remoteUpdateSubRequestStatementString;
-
-        /// SQL remote update statement object for member subRequests
-        oracle::occi::Statement *m_remoteUpdateSubRequestStatement;
-
         /// SQL update statement for member client
         static const std::string s_updateIClientStatementString;
 
         /// SQL update statement object for member client
         oracle::occi::Statement *m_updateIClientStatement;
-
-        /// SQL update statement for member parent
-        static const std::string s_updateRequestStatementString;
-
-        /// SQL update statement object for member parent
-        oracle::occi::Statement *m_updateRequestStatement;
 
       }; // end of class OraStageGetNextRequestCnv
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequest.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/04 10:26:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequest.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/09 13:04:55 $ $Author: sponcec3 $
  *
  * 
  *
@@ -28,7 +28,7 @@
 #define CASTOR_STAGER_STAGEUPDATEFILESTATUSREQUEST_HPP
 
 // Include Files
-#include "castor/stager/Request.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -44,7 +44,7 @@ namespace castor {
      * class StageUpdateFileStatusRequest
      * 
      */
-    class StageUpdateFileStatusRequest : public virtual Request {
+    class StageUpdateFileStatusRequest : public virtual FileRequest {
 
     public:
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequest.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/04 10:26:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequest.h,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/09 13:04:55 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,7 +29,7 @@
 
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
-struct Cstager_Request_t;
+struct Cstager_FileRequest_t;
 struct Cstager_StageUpdateFileStatusRequest_t;
 
 //------------------------------------------------------------------------------
@@ -49,14 +49,14 @@ int Cstager_StageUpdateFileStatusRequest_create(struct Cstager_StageUpdateFileSt
 int Cstager_StageUpdateFileStatusRequest_delete(struct Cstager_StageUpdateFileStatusRequest_t* obj);
 
 /**
- * Cast into Request
+ * Cast into FileRequest
  */
-struct Cstager_Request_t* Cstager_StageUpdateFileStatusRequest_getRequest(struct Cstager_StageUpdateFileStatusRequest_t* obj);
+struct Cstager_FileRequest_t* Cstager_StageUpdateFileStatusRequest_getFileRequest(struct Cstager_StageUpdateFileStatusRequest_t* obj);
 
 /**
- * Dynamic cast from Request
+ * Dynamic cast from FileRequest
  */
-struct Cstager_StageUpdateFileStatusRequest_t* Cstager_StageUpdateFileStatusRequest_fromRequest(struct Cstager_Request_t* obj);
+struct Cstager_StageUpdateFileStatusRequest_t* Cstager_StageUpdateFileStatusRequest_fromFileRequest(struct Cstager_FileRequest_t* obj);
 
 /**
  * Outputs this object in a human readable format

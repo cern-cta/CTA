@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/05 17:47:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/09 13:04:51 $ $Author: sponcec3 $
  *
  * 
  *
@@ -163,13 +163,13 @@ void castor::io::StreamStageUpdateFileStatusRequestCnv::marshalObject(castor::IO
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->svcClass(), address, alreadyDone);
     address->stream() << obj->subRequests().size();
     for (std::vector<castor::stager::SubRequest*>::iterator it = obj->subRequests().begin();
          it != obj->subRequests().end();
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
+    cnvSvc()->marshalObject(obj->svcClass(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->client(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
@@ -190,9 +190,6 @@ castor::IObject* castor::io::StreamStageUpdateFileStatusRequestCnv::unmarshalObj
   // Fill object with associations
   castor::stager::StageUpdateFileStatusRequest* obj = 
     dynamic_cast<castor::stager::StageUpdateFileStatusRequest*>(object);
-  ad.setObjType(castor::OBJ_INVALID);
-  IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));
   unsigned int subRequestsNb;
   ad.stream() >> subRequestsNb;
   for (unsigned int i = 0; i < subRequestsNb; i++) {
@@ -200,6 +197,9 @@ castor::IObject* castor::io::StreamStageUpdateFileStatusRequestCnv::unmarshalObj
     IObject* objSubRequests = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addSubRequests(dynamic_cast<castor::stager::SubRequest*>(objSubRequests));
   }
+  ad.setObjType(castor::OBJ_INVALID);
+  IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setClient(dynamic_cast<castor::IClient*>(objClient));

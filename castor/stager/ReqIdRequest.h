@@ -28,14 +28,14 @@
 #define CASTOR_STAGER_REQIDREQUEST_H
 
 // Include Files and Forward declarations for the C world
+struct Cstager_FileRequest_t;
 struct Cstager_ReqIdRequest_t;
-struct Cstager_ReqId_t;
 struct Cstager_Request_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class ReqIdRequest
-// A request dealing with a set of reqids
+// An abstract ancester for all requests refering to another one
 //------------------------------------------------------------------------------
 
 /**
@@ -64,18 +64,13 @@ struct Cstager_ReqIdRequest_t* Cstager_ReqIdRequest_fromRequest(struct Cstager_R
 int Cstager_ReqIdRequest_print(struct Cstager_ReqIdRequest_t* instance);
 
 /**
- * Add a struct Cstager_ReqId_t* object to the reqids list
+ * Get the value of parent
  */
-int Cstager_ReqIdRequest_addReqids(struct Cstager_ReqIdRequest_t* instance, struct Cstager_ReqId_t* obj);
+int Cstager_ReqIdRequest_parent(struct Cstager_ReqIdRequest_t* instance, struct Cstager_FileRequest_t** var);
 
 /**
- * Remove a struct Cstager_ReqId_t* object from reqids
+ * Set the value of parent
  */
-int Cstager_ReqIdRequest_removeReqids(struct Cstager_ReqIdRequest_t* instance, struct Cstager_ReqId_t* obj);
-
-/**
- * Get the list of struct Cstager_ReqId_t* objects held by reqids
- */
-int Cstager_ReqIdRequest_reqids(struct Cstager_ReqIdRequest_t* instance, struct Cstager_ReqId_t*** var, int* len);
+int Cstager_ReqIdRequest_setParent(struct Cstager_ReqIdRequest_t* instance, struct Cstager_FileRequest_t* new_var);
 
 #endif // CASTOR_STAGER_REQIDREQUEST_H

@@ -28,7 +28,7 @@
 #include "castor/IObject.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
-#include "castor/stager/Request.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "osdep.h"
@@ -285,22 +285,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_SubRequest_request
-  //----------------------------------------------------------------------------
-  int Cstager_SubRequest_request(castor::stager::SubRequest* instance, castor::stager::Request** var) {
-    *var = instance->request();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_SubRequest_setRequest
-  //----------------------------------------------------------------------------
-  int Cstager_SubRequest_setRequest(castor::stager::SubRequest* instance, castor::stager::Request* new_var) {
-    instance->setRequest(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_SubRequest_status
   //----------------------------------------------------------------------------
   int Cstager_SubRequest_status(castor::stager::SubRequest* instance, castor::stager::SubRequestStatusCodes* var) {
@@ -313,6 +297,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_SubRequest_setStatus(castor::stager::SubRequest* instance, castor::stager::SubRequestStatusCodes new_var) {
     instance->setStatus(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_request
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_request(castor::stager::SubRequest* instance, castor::stager::FileRequest** var) {
+    *var = instance->request();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setRequest
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setRequest(castor::stager::SubRequest* instance, castor::stager::FileRequest* new_var) {
+    instance->setRequest(new_var);
     return 0;
   }
 
