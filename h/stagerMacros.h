@@ -1,5 +1,5 @@
 /*
- * $Id: stagerMacros.h,v 1.2 2004/10/22 23:08:02 jdurand Exp $
+ * $Id: stagerMacros.h,v 1.3 2004/10/27 15:21:46 jdurand Exp $
  */
 
 #ifndef __stagerMacros_h
@@ -82,16 +82,16 @@
 #define STAGER_LOG_SIGNAL(fileid,value)       STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "SIGNAL NUMBER" ,  value)
 #define STAGER_LOG_SIGNAL_NAME(fileid,string) STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "SIGNAL NAME", string)
 #define STAGER_LOG_ENTER()                  { \
-  extern stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_ENTER ,NULL  ,NULL     ,NULL  );} \
+  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_ENTER ,NULL  ,NULL     ,NULL  );} \
 }
 #define STAGER_LOG_LEAVE()                  { \
-  extern stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_LEAVE ,NULL  ,NULL     ,NULL  ); return; } \
+  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_LEAVE ,NULL  ,NULL     ,NULL  ); return; } \
 }
 #define STAGER_LOG_RETURN(value)            { \
-  extern stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"RC"     ,value ); return(value);} \
+  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"RC"     ,value ); return(value);} \
 }
 #define STAGER_LOG_RETURN_NULL()  { \
-  extern stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"STRING" ,"NULL" ); return(NULL);} \
+  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"STRING" ,"NULL" ); return(NULL);} \
 }
 #define STAGER_LOG_SYSTEM(fileid,string)    STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "STRING", string)
 #define STAGER_LOG_STARTUP() { \
@@ -125,7 +125,7 @@
 }
 #define STAGER_LOG_IMPORTANT(fileid,string) STAGER_LOG(STAGER_MSG_IMPORTANT,fileid, "STRING", string)
 #define STAGER_LOG_DEBUG(fileid,string)     { \
-  extern stagerDebug; if (stagerDebug) {STAGER_LOG(STAGER_MSG_DEBUG ,fileid,"STRING" ,string);} \
+  extern int stagerDebug; if (stagerDebug) {STAGER_LOG(STAGER_MSG_DEBUG ,fileid,"STRING" ,string);} \
 }
 
 #define CALLIT(args) { \
