@@ -1,9 +1,9 @@
 /*
- * $Id: stage.h,v 1.11 2000/03/08 17:48:03 jdurand Exp $
+ * $Id: stage.h,v 1.12 2000/03/13 10:46:32 baud Exp $
  */
 
 /*
- * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
@@ -28,7 +28,8 @@
 #define REQBUFSZ 20000	/* must be >= max stage daemon request size */
 #define CHECKI	10	/* max interval to check for work to be done */
 #define	RETRYI	60
-#define STGMAGIC    0x13140701
+#define STGOLDMAGIC 0x13140701
+#define STGMAGIC    0x13140702
 #define STG	"stage"	/* service name in /etc/services */
 
 #define UPPER(s) \
@@ -169,7 +170,6 @@
 #define	MNYPARI	195	/* stagein stopped: too many tape errors, but -E keep */
 #define	REQKILD	196	/* request killed by user */
 #define	LIMBYSZ	197	/* limited by size */
-#define	ESTNACT 198	/* operators don't want staging */
 #define	ENOUGHF	199	/* enough free space */
 #else
 #define	USERR	  1*2	/* user error */
@@ -183,7 +183,6 @@
 #define	MNYPARI	195*2	/* stagein stopped: too many tape errors, but -E keep */
 #define	REQKILD	196*2	/* request killed by user */
 #define	LIMBYSZ	197*2	/* limited by size */
-#define	ESTNACT 198*2	/* operators don't want staging */
 #define	ENOUGHF	199*2	/* enough free space */
 #endif
 
