@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.7 2001/06/21 16:42:08 jdurand Exp $
+ * $Id: procfilchg.c,v 1.8 2001/06/21 16:52:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.7 $ $Date: 2001/06/21 16:42:08 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.8 $ $Date: 2001/06/21 16:52:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -239,7 +239,6 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 		}
 		/* User choosed the 'option' way of using stagechng */
 		for (stcp = stcs; stcp < stce; stcp++) {
-			struct stgcat_entry thisstcp;
 			struct Cns_fileid Cnsfileid;       /* For     CASTOR hsm IDs */
 			struct Cns_filestat Cnsfilestat;   /* For     CASTOR hsm stat() */
 			extern struct passwd start_passwd; /* Start uid/gid stage:st */
@@ -259,7 +258,6 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
 			if (strcmp(stcp->u1.h.xfile, hsmfile) != 0) continue; /* -M */
 			found++;
-			thisstcp = *stcp;
 			/* We check if we have permissions to do so using the NameServer */
 			memset(&Cnsfileid,0,sizeof(struct Cns_fileid));
 			strcpy(Cnsfileid.server,stcp->u1.h.server);
@@ -278,7 +276,6 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 
 			/* From now on we assume that permission to change parameters on this file is granted */
 
-			/* We will now work on thisstcp */
 			if (donestatus) { /* --status */
 				switch (thisstatus) {
 				case STAGEOUT|CAN_BE_MIGR:
@@ -286,14 +283,17 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 					switch (stcp->status) {
 					case STAGEOUT|CAN_BE_MIGR|PUT_FAILED:
 						/* We simulate a stageout followed by a stageupdc */
-						thisstcp.status = STAGEOUT;
+						stcp->status = STAGEOUT;
 						if ((c = upd_stageout(STAGEUPDC, NULL, NULL, 1, stcp)) != 0) {
 							if (c != CLEARED) {
 								goto reply;
 							} else {
 								/* This is not formally an error to do an updc on a zero-length file */
 								c = 0;
+								changed++;
 							}
+						} else {
+							changed++;
 						}
 						break;
 					default:
@@ -309,16 +309,14 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 				}
 				/* Either no executions */
 				/* Either success and upd_stageout will take care about updating the catalog */
-			} else {
-				if (changed) {
-					*stcp = thisstcp;
+			}
+			if (changed) {
 #ifdef USECDB
-					if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-						stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-					}
-#endif
-					savereqs();
+				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 				}
+#endif
+				savereqs();
             }
 		}
 		if (! found) {
