@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.71 $ $Date: 2000/05/19 07:25:02 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.72 $ $Date: 2000/05/24 12:17:43 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1049,11 +1049,13 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
     }
     totKBSz = (int)(totSz / 1024);
     totMBSz = totKBSz / 1024;
-    status = VDQM_UNIT_MBCOUNT;
-    rc = vdqm_UnitStatus(NULL,NULL,dgn,NULL,unit,&status,&totMBSz,jobID);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"vdqm_UnitStatus(VDQM_UNIT_MBCOUNT,%d MB): %s\n",
-                 totMBSz,sstrerror(serrno));
+    if ( totMBSz > 0 ) {
+        status = VDQM_UNIT_MBCOUNT;
+        rc = vdqm_UnitStatus(NULL,NULL,dgn,NULL,unit,&status,&totMBSz,jobID);
+        if ( rc == -1 ) {
+            rtcp_log(LOG_ERR,"vdqm_UnitStatus(VDQM_UNIT_MBCOUNT,%d MB): %s\n",
+                     totMBSz,sstrerror(serrno));
+        }
     }
 
     if ( (rtcpd_CheckProcError() & RTCP_OK) != 0 ) {
@@ -1391,8 +1393,8 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     rtcpFileRequest_t filereq;
     rtcpDumpTapeRequest_t dumpreq;
     rtcpHdr_t hdr;
-    SOCKET *client_socket;
-    rtcpClientInfo_t *client;
+    SOCKET *client_socket = NULL;
+    rtcpClientInfo_t *client = NULL;
     tape_list_t *tape, *nexttape;
     file_list_t *nextfile;
     int rc, retry, reqtype, errmsglen,status, save_errno, CLThId;
@@ -1467,6 +1469,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      */
     if ( rtcpd_CheckNoMoreTapes() != 0 ) {
         (void)rtcp_CloseConnection(accept_socket);
+        rtcpd_FreeResources(NULL,&client,NULL);
         return(-1);
     }
 
@@ -1475,6 +1478,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() vdqm_AcknClientAddr(): %s\n",
             sstrerror(serrno));
         (void)rtcp_CloseConnection(accept_socket);
+        rtcpd_FreeResources(NULL,&client,NULL);
         return(-1);
     }
 
@@ -1503,6 +1507,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() %s(%d,%d)@%s not authorised\n",
                  client->name,client->uid,client->gid,client->clienthost);
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
+        rtcpd_FreeResources(NULL,&client,NULL);
         return(-1);
     }
 
@@ -1514,6 +1519,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() malloc(): %s\n",
             sstrerror(errno));
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
+        rtcpd_FreeResources(NULL,&client,NULL);
         return(-1);
     }
     *client_socket = INVALID_SOCKET;
@@ -1524,6 +1530,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_ConnectToClient(%s,%d): %s\n",
                  client->clienthost,client->clientport,sstrerror(serrno));
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
+        rtcpd_FreeResources(&client_socket,&client,NULL);
         return(-1);
     }
     rc = rtcpd_InitProcCntl();
