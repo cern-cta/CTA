@@ -4,9 +4,10 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.10 $ $Date: 2000/08/23 14:00:30 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.11 $ $Date: 2001/01/30 13:31:18 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -35,6 +36,7 @@ static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.10 $ $Date: 2000/
 #include <Castor_limits.h>
 #include <log.h> 
 #include <net.h>
+#include <serrno.h>
 #include <Cnetdb.h>
 
 #ifndef _WIN32
@@ -297,3 +299,80 @@ char *host_name ;
     return 1;
 }
 
+int DLL_DECL CDoubleDnsLookup(SOCKET s, char *host) {
+    char tmphost[CA_MAXHOSTNAMELEN+1], *p;
+    struct sockaddr_in from;
+    struct hostent *hp;
+    int i;
+    int fromlen = sizeof(from);
+
+    if ( s == INVALID_SOCKET ) {
+        serrno = EBADF;
+        return(-1);
+    }
+    if ( getpeername(s,(struct sockaddr *)&from,&fromlen) == SOCKET_ERROR ) {
+        log(LOG_ERR, "CDoubleDnsLookup() getpeername(): %s\n",neterror());
+        serrno = SECOMERR;
+        return(-1);
+    }
+
+    if ( (hp = Cgethostbyaddr((void *)&from.sin_addr,sizeof(struct in_addr),from.sin_family)) == NULL ) {
+        log(LOG_ERR,"CDoubleDnsLookup() Cgethostbyaddr(): h_errno=%d, %s\n",
+            h_errno,neterror());
+        serrno = SECOMERR;
+        return(-1);
+    }
+    strcpy(tmphost,hp->h_name);
+
+    /*
+     * Only allow for on-site authorised hosts
+     */
+    if ( (i = isremote(from.sin_addr,tmphost)) != 0 ) {
+        if ( i == -1 ) return(-1);
+        if ( i == 1 ) return(0);
+    } 
+
+    if ( (p = strchr(tmphost,'.')) != NULL ) *p = '\0';
+    if ( host != NULL ) strcpy(host,tmphost);
+    if ( (hp = Cgethostbyname(tmphost)) == NULL ) {
+        log(LOG_ERR,"CDoubleDnsLookup() Cgethostbyname(): h_errno=%d, %s\n",
+            h_errno,neterror());
+        serrno = SECOMERR;
+        return(-1);
+    }
+    i = 0;
+    while (hp->h_addr_list[i] != NULL) {
+        log(LOG_DEBUG,"CDoubleDnsLookup() comparing %s with %s\n",
+            inet_ntoa(*(struct in_addr *)(hp->h_addr_list[i])),inet_ntoa(from.sin_addr));
+        if ( ((struct in_addr *)(hp->h_addr_list[i++]))->s_addr == from.sin_addr.s_addr ) return(1);
+    }
+    return(0);
+}
+
+int DLL_DECL isadminhost(SOCKET s, char *peerhost) {
+    int i, rc;
+#if defined(ADMIN_HOSTS)
+    char *defined_admin_hosts = ADMIN_HOSTS;
+#endif /* ADMIN_HOSTS */
+    char *admin_hosts, *admin_host;
+
+    rc = CDoubleDnsLookup(s,peerhost);
+    if ( rc == -1 ) return(-1);
+
+    admin_host = admin_hosts = NULL;
+    if ( admin_hosts == NULL ) admin_hosts = getenv("ADMIN_HOSTS");
+    if ( admin_hosts == NULL ) admin_hosts = getconfent("ADMIN","HOSTS",1);
+#if defined(ADMIN_HOSTS)
+    if ( admin_hosts == NULL ) admin_hosts = defined_admin_hosts;
+#endif /* ADMIN_HOSTS */
+
+    if ( (admin_hosts != NULL) && 
+         ((admin_host = strstr(admin_hosts,peerhost)) != NULL) ) {
+        i = strlen(peerhost);
+        if ( admin_host[i] == '\0' ||
+             admin_host[i] == ' ' ||
+             admin_host[i] == '\t' ||
+             admin_host[i] == ',' ) return(1);
+    }
+    return(0);
+}
