@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.177 2002/01/28 18:42:46 jdurand Exp $
+ * $Id: poolmgr.c,v 1.178 2002/01/30 10:23:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.177 $ $Date: 2002/01/28 18:42:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.178 $ $Date: 2002/01/30 10:23:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -171,11 +171,11 @@ int have_another_pool_with_export_hsm_option _PROTO((char *));
 int poolalloc _PROTO((struct pool *, int));
 int checklastaccess _PROTO((char *, time_t));
 int enoughfreespace _PROTO((char *, int));
-int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int));
+int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int));
 int upd_fileclasses _PROTO(());
 void upd_last_tppool_used _PROTO((struct fileclass *));
 char *next_tppool _PROTO((struct fileclass *));
-int euid_egid _PROTO((uid_t *, gid_t *, char *, struct migrator *, struct stgcat_entry *, struct stgcat_entry *, char **, int));
+int euid_egid _PROTO((uid_t *, gid_t *, char *, struct migrator *, struct stgcat_entry *, struct stgcat_entry *, char **, int, int));
 extern int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
 void stglogfileclass _PROTO((struct Cns_fileclass *));
 void printfileclass _PROTO((int, struct fileclass *));
@@ -2188,7 +2188,7 @@ int update_migpool(stcp,flag,immediate)
     goto update_migpool_return;
   }
   /* We check that this stcp have a known fileclass v.s. its pool migrator */
-  if ((ifileclass = upd_fileclass(pool_p,*stcp,0)) < 0) {
+  if ((ifileclass = upd_fileclass(pool_p,*stcp,0,0)) < 0) {
     rc = -1;
     goto update_migpool_return;
   }
@@ -2572,7 +2572,7 @@ int insert_in_migpool(stcp)
     stglogit(func, STG33, stcp->ipath, "New configuration makes it orphan of migrator");
     return(0);
   }
-  if ((ifileclass = upd_fileclass(pool_p,stcp,0)) < 0) {
+  if ((ifileclass = upd_fileclass(pool_p,stcp,0,0)) < 0) {
     return(-1);
   }
 
@@ -2597,7 +2597,7 @@ int insert_in_migpool(stcp)
     pool_p->migr->global_predicates.nbfiles_beingmig++;
     pool_p->migr->global_predicates.space_beingmig += stcp->actual_size;
   }
-  if ((ifileclass = upd_fileclass(pool_p,stcp,0)) >= 0) {
+  if ((ifileclass = upd_fileclass(pool_p,stcp,0,0)) >= 0) {
     if ((u_signed64) ((u_signed64) stcp->a_time + (u_signed64) thismintime_beforemigr) > (u_signed64) thistime) {
       pool_p->migr->fileclass_predicates[ifileclass].nbfiles_delaymig++;
       pool_p->migr->fileclass_predicates[ifileclass].space_delaymig += stcp->actual_size;
@@ -2788,7 +2788,7 @@ int migrate_files(pool_p)
         break;
       }
       if (okpoolname == 0) continue;    /* This stcp is not a candidate for migration */
-      if ((ifileclass = upd_fileclass(pool_p,stcp,0)) < 0) continue;
+      if ((ifileclass = upd_fileclass(pool_p,stcp,0,0)) < 0) continue;
       /* We update the fileclass within this migrator watch variables */
       pool_p->migr->fileclass_predicates[ifileclass].nbfiles_beingmig++;
       pool_p->migr->fileclass_predicates[ifileclass].nbfiles_to_mig++;
@@ -3068,7 +3068,7 @@ int migpoolfiles(pool_p)
     if (euid_egid(&(tppool_vs_stcp[found_tppool].euid),
                   &(tppool_vs_stcp[found_tppool].egid),
                   scc_found->stcp->u1.h.tppool,
-                  pool_p->migr, scc_found->stcp, NULL, NULL, 1) != 0) {
+                  pool_p->migr, scc_found->stcp, NULL, NULL, 1, 1) != 0) {
       free(scs);
       for (i = 0; i < ntppool_vs_stcp; i++) {
         if (tppool_vs_stcp[i].stcp != NULL) free(tppool_vs_stcp[i].stcp);
@@ -3103,7 +3103,7 @@ int migpoolfiles(pool_p)
 
         /* And we count how of them we got */
         ++nfiles_per_tppool;
-        if ((ifileclass = upd_fileclass(pool_p,scc->stcp,0)) >= 0) {
+        if ((ifileclass = upd_fileclass(pool_p,scc->stcp,0,1)) >= 0) {
           if (pool_p->migr->fileclass[ifileclass]->flag == 0) {
             /* This fileclass [ifileclass] was not yet counted for this tape pool [scc_found->stcp->u1.h.tpool] */
             pool_p->migr->fileclass[ifileclass]->streams++;
@@ -3388,7 +3388,7 @@ int migpoolfiles(pool_p)
       struct stgpath_entry *stpp;
       int ifileclass;
 
-      if ((ifileclass = upd_fileclass(pool_p,&(tppool_vs_stcp[j].stcp[k]),0)) < 0) {
+      if ((ifileclass = upd_fileclass(pool_p,&(tppool_vs_stcp[j].stcp[k]),0,1)) < 0) {
         stglogit(func, "### cannot determine fileclass of %s\n", tppool_vs_stcp[j].stcp[k].u1.h.xfile);
         /* Should never happen - by convention we put this stcp in first stream */
         l = 0;
@@ -3404,7 +3404,7 @@ int migpoolfiles(pool_p)
         /* We look if there is another stream that have enough room for us */
 
         while (1) {
-          if ((ifileclass = upd_fileclass(pool_p,&(tppool_vs_stcp[j].stcp[k]),0)) < 0) {
+          if ((ifileclass = upd_fileclass(pool_p,&(tppool_vs_stcp[j].stcp[k]),0,1)) < 0) {
             stglogit(func, "### cannot determine fileclass of %s\n", tppool_vs_stcp[j].stcp[k].u1.h.xfile);
             /* Should never happen - by convention we put this stcp in first stream */
             l = 0;
@@ -3696,10 +3696,11 @@ void poolmgr_wait4child(signo)
 #endif
 
 /* This routine created if necessary a new fileclass element in the fileclasses array */
-int upd_fileclass(pool_p,stcp,forced_Cns_statx)
+int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory)
      struct pool *pool_p;
      struct stgcat_entry *stcp;
 	 int forced_Cns_statx;
+	 int only_memory;
 {
   struct Cns_fileid Cnsfileid;
   struct Cns_filestat Cnsfilestat;
@@ -3729,12 +3730,14 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx)
 			sendrep(rpfd, MSG_ERR, STG173, stcp->u1.h.xfile, stcp->u1.h.fileclass, Cnsfilestat.fileclass, u64tostr((u_signed64) stcp->u1.h.fileid, tmpbuf, 0), stcp->u1.h.server);
 		}
 		stcp->u1.h.fileclass = Cnsfilestat.fileclass;
+		if (! only_memory) {
 #ifdef USECDB
-      if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-        stglogit ("upd_fileclass", STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-      }
+			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+				stglogit ("upd_fileclass", STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+			}
 #endif
-      savereqs();
+			savereqs();
+		}
     }
   }
 
@@ -4059,7 +4062,7 @@ char *next_tppool(fileclass)
   return(p);
 }
 
-int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr)
+int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr,only_memory)
      uid_t *euid;
      gid_t *egid;
      char *tppool;
@@ -4068,6 +4071,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr)
      struct stgcat_entry *stcp_check;   /* Used to check requestor compatible uid/gid */
      char **tppool_out;
      int being_migr;              /* We check CAN_BE_MIGR, BEING_MIGR otherwise - only if migr != NULL */
+	 int only_memory;
 {
   int i, j;
   char *p;
@@ -4093,7 +4097,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr)
       return(-1);
     }
     /* We need to know what is the fileclass for this stcp */
-    if ((i = upd_fileclass(NULL,stcp,0)) < 0) {
+    if ((i = upd_fileclass(NULL,stcp,0,only_memory)) < 0) {
       return(-1);
     }
     p = fileclasses[i].Cnsfileclass.tppools;
@@ -4489,7 +4493,7 @@ void check_delaymig() {
       if (stcp->reqid == 0) break;
       if (stcp->t_or_d != 'h') continue;      /* Not a CASTOR file */
 
-      if ((ifileclass = upd_fileclass(NULL,stcp,0)) < 0) continue; /* Unknown fileclass */
+      if ((ifileclass = upd_fileclass(NULL,stcp,0,0)) < 0) continue; /* Unknown fileclass */
 
       /* There is NO automatic deletion for any record that is waiting on something else */
       if (ISWAITING(stcp)) continue;
