@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_api.h,v 1.21 2000/08/28 05:46:12 baud Exp $
+ * $Id: vmgr_api.h,v 1.22 2001/01/03 08:06:59 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vmgr_api.h,v $ $Revision: 1.21 $ $Date: 2000/08/28 05:46:12 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr_api.h,v $ $Revision: 1.22 $ $Date: 2001/01/03 08:06:59 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _VMGR_API_H
@@ -53,7 +53,7 @@ EXTERN_C int DLL_DECL vmgr_gettape _PROTO((const char *, u_signed64, const char 
 EXTERN_C struct vmgr_tape_denmap DLL_DECL *vmgr_listdenmap _PROTO((int, vmgr_list *));
 EXTERN_C struct vmgr_tape_media DLL_DECL *vmgr_listmodel _PROTO((int, vmgr_list *));
 EXTERN_C struct vmgr_tape_pool DLL_DECL *vmgr_listpool _PROTO((int, vmgr_list *));
-EXTERN_C struct vmgr_tape_info DLL_DECL *vmgr_listtape _PROTO((int, vmgr_list *));
+EXTERN_C struct vmgr_tape_info DLL_DECL *vmgr_listtape _PROTO((char *, int, vmgr_list *));
 EXTERN_C int DLL_DECL vmgr_modifymodel _PROTO((const char *, char *, int, int));
 EXTERN_C int DLL_DECL vmgr_modifypool _PROTO((const char *, uid_t, gid_t));
 EXTERN_C int DLL_DECL vmgr_modifytape _PROTO((const char *, char *, char *, char *, char *, char *, char *, char *, char *, char *, int));
