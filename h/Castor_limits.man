@@ -1,8 +1,8 @@
-.\" $Id: Castor_limits.man,v 1.4 2000/09/21 15:38:06 jdurand Exp $
+.\" $Id: Castor_limits.man,v 1.5 2001/01/19 08:36:30 baud Exp $
 .\"
 .\" Man page for the CASTOR's limits header file Castor_limits.h
 .\"
-.TH CASTOR_LIMITS "4" "$Date: 2000/09/21 15:38:06 $" "CASTOR" "File Formats"
+.TH CASTOR_LIMITS "4" "$Date: 2001/01/19 08:36:30 $" "CASTOR" "File Formats"
 .SH NAME
 \fBCastor_limits\fP \- CASTOR internal limits
 
@@ -14,6 +14,11 @@ The \fBCastor_limits.h\fP header file contains all the common limits that all CA
 .br
 These are:
 .br
+.TP
+.B CA_MAXCLASNAMELEN
+maximum length for a fileclass name
+.br
+Default value: 15
 .TP
 .B CA_MAXCOMMENTLEN
 maximum length for user comments in metadata
@@ -79,6 +84,11 @@ Default value: 1023
 maximum length for a cartridge manufacturer
 .br
 Default value: 12
+.TP
+.B CA_MAXMLLEN
+maximum length for a cartridge media_letter
+.br
+Default value: 1
 .TP
 .B CA_MAXMODELLEN
 maximum length for a cartridge model
