@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.141 $ $Release$ $Date: 2005/03/23 10:06:18 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.142 $ $Release$ $Date: 2005/03/23 11:18:15 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -229,7 +229,7 @@ const std::string castor::db::ora::OraStagerSvc::s_putFailedStatementString =
 
 /// SQL statement for segmentsForTape
 const std::string castor::db::ora::OraStagerSvc::s_failedSegmentsStatementString =
-  "BEGIN failedSegment(:1); END;";
+  "BEGIN failedSegments(:1); END;";
 
 // -----------------------------------------------------------------------
 // OraStagerSvc
