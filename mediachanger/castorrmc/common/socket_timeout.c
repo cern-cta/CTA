@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.11 $ $Date: 2000/05/31 10:33:54 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.12 $ $Date: 2000/11/22 08:29:43 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -93,9 +93,15 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
       if (select_status == 0) {
         /* Timeout */
         serrno = SETIMEDOUT;
+        flag = -1;
+        break;
+      } else if (errno == EINTR) {
+        /* Interupted */
+        continue;
+      } else {
+        flag = -1;
+        break;
       }
-      flag = -1;
-      break;
     }
     if ((nread = recv(fd, ptr, nleft, 0)) < 0) {
       if (errno != EINTR) {
@@ -173,9 +179,15 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
       if (select_status == 0) {
         /* Timeout */
         serrno = SETIMEDOUT;
+        flag = -1;
+        break;
+      } else if (errno == EINTR) {
+        /* Interrupted */
+        continue;
+      } else {
+        flag = -1;
+        break;
       }
-      flag = -1;
-      break;
     }
     if ((nwritten = send(fd, ptr, nleft, 0)) <= 0) {
       if (errno != EINTR) {
