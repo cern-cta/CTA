@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.18 $ $Release$ $Date: 2005/02/03 10:31:24 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.19 $ $Release$ $Date: 2005/02/03 11:30:38 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.18 $ $Release$ $Date: 2005/02/03 10:31:24 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.19 $ $Release$ $Date: 2005/02/03 11:30:38 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -722,11 +722,10 @@ int rtcpcld_updateTape(
             bytesWritten = - filereq->bytes_in;
           }
           filesWritten = 0;
-          if ( (filereq->bytes_out > 0) && (filereq->host_bytes>0) ) {
-            compressionFactor = (filereq->host_bytes * 100) / filereq->bytes_out;
-          } else {
-            compressionFactor = 100;
-          }
+          /*
+           * Another hack, anything else than 100 would result in TBs free on tape..
+           */
+          compressionFactor = 100;
         } else {
           if ( (filereq->cprc == 0) || (filereq->host_bytes > 0) ) {
             bytesWritten = filereq->bytes_in;
