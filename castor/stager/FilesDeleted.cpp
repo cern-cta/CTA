@@ -48,6 +48,9 @@ castor::stager::FilesDeleted::FilesDeleted() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::FilesDeleted::~FilesDeleted() throw() {
+  for (unsigned int i = 0; i < m_filesVector.size(); i++) {
+    delete m_filesVector[i];
+  }
   m_filesVector.clear();
 };
 

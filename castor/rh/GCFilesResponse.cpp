@@ -48,6 +48,9 @@ castor::rh::GCFilesResponse::GCFilesResponse() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::rh::GCFilesResponse::~GCFilesResponse() throw() {
+  for (unsigned int i = 0; i < m_filesVector.size(); i++) {
+    delete m_filesVector[i];
+  }
   m_filesVector.clear();
 };
 
