@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.127 2001/03/28 12:53:33 jdurand Exp $
+ * $Id: poolmgr.c,v 1.128 2001/03/28 14:02:01 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.127 $ $Date: 2001/03/28 12:53:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.128 $ $Date: 2001/03/28 14:02:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3693,8 +3693,11 @@ void check_lifetime_on_disk() {
         if (ISSTAGEOUT(stcp) && (! ISCASTORMIG(stcp)) && ((stcp->status & STAGED) != STAGED) && ((stcp->status & PUT_FAILED) != PUT_FAILED) && (stageout_lifetime > 0) && ((time(NULL) - stcp->a_time) > stageout_lifetime)) {
           u_signed64 actual_size_block;
           struct stat st;
+          int save_reqid = reqid;
 
+          reqid = 0;
           stglogit (func, STG143, stcp->ipath, stageout_lifetime);
+          reqid = save_reqid;
           if (rfio_stat(stcp->ipath, &st) == 0) {
             stcp->actual_size = (u_signed64) st.st_size;
             if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks)) < stcp->actual_size) {
