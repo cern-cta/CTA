@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_stat.man,v 1.7 2001/09/26 09:13:53 jdurand Exp $
+.\" $Id: rfio_stat.man,v 1.8 2001/11/13 17:10:22 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_stat.man,v $ $Revision: 1.7 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_stat.man,v $ $Revision: 1.8 $ $Date: 2001/11/13 17:10:22 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_STAT 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
+.TH RFIO_STAT 3 "$Date: 2001/11/13 17:10:22 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_stat \- get information about a file or directory
 .SH SYNOPSIS
@@ -49,6 +49,7 @@ The last
 .B rfio_mstat
 call should be followed by a call to
 .BR rfio_end .
+See NOTES section below.
 .TP
 .I path
 specifies the logical pathname relative to the current directory or
@@ -58,6 +59,8 @@ This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
 .B serrno
 is set appropriately.
+.SH NOTES
+Multiple connections using rfio_mstat are thread-safe and process-wide, therefore a forked child cannot share file descriptors opened with rfio_mstat by its parent.
 .SH ERRORS
 .TP 1.3i
 .B ENOENT
