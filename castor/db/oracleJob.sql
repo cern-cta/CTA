@@ -275,7 +275,9 @@ BEGIN
  LOCK TABLE DiskCopy in share mode;
  -- check if recreation is possible (exception if not)
  BEGIN
-   SELECT id INTO dcid FROM TapeCopy WHERE status = 3; -- TAPECOPY_SELECTED
+   SELECT id INTO dcid FROM TapeCopy
+     WHERE status = 3 -- TAPECOPY_SELECTED
+     AND castorFile = cfId;
    -- We found something, thus we cannot recreate
    dcid := 0;
    COMMIT;
@@ -285,7 +287,9 @@ BEGIN
    NULL;
  END;
  BEGIN
-   SELECT id INTO dcid FROM DiskCopy WHERE status IN (1, 2, 5); -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS
+   SELECT id INTO dcid FROM DiskCopy
+     WHERE status IN (1, 2, 5) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS
+     AND castorFile = cfId;
    -- We found something, thus we cannot recreate
    dcid := 0;
    COMMIT;
