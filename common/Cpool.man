@@ -1,8 +1,12 @@
-.\"   $Id: Cpool.man,v 1.1.1.1 1999/07/20 08:03:08 jdurand Exp $
+.\"   $Id: Cpool.man,v 1.2 1999/08/24 15:49:20 jdurand Exp $
 .\"
 .\"   Man page for the CASTOR's Pool Interface (Cpool)
 .\"
 .\"   $Log: Cpool.man,v $
+.\"   Revision 1.2  1999/08/24 15:49:20  jdurand
+.\"   Changed Cpool_assign() behaviour when timeout == 0 (return immediately
+.\"   if no thread available)
+.\"
 .\"   Revision 1.1.1.1  1999/07/20 08:03:08  jdurand
 .\"   Imported Sources
 .\"
@@ -49,7 +53,7 @@ as returned by \fBCpool_create\fP, whose address is
 .I arg
 parameter. The last argument is a possible
 .I timeout
-, in seconds, which will apply if it is greater than zero.
+, in seconds, which will apply if it is greater than zero. If it is lower than zero, the assignment will wait forever until a thread is available. If it is equal to zero, the method will return immediately if no thread is available.
 .P
 Return value is 0 if success, or -1 in case of error.
 .SH NOTE

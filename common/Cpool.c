@@ -1,7 +1,11 @@
 /*
- * $Id: Cpool.c,v 1.3 1999/07/21 13:59:22 jdurand Exp $
+ * $Id: Cpool.c,v 1.4 1999/08/24 15:49:18 jdurand Exp $
  *
  * $Log: Cpool.c,v $
+ * Revision 1.4  1999/08/24 15:49:18  jdurand
+ * Changed Cpool_assign() behaviour when timeout == 0 (return immediately
+ * if no thread available)
+ *
  * Revision 1.3  1999/07/21 13:59:22  jdurand
  * For old AIX systems, fd_set is now known by including <sys/time.h>. So I put
  * it as an additional flag in Imakefile, used in Cpool.c and socket_timeout.c
@@ -1697,6 +1701,12 @@ CTHREAD_DECL Cpool_assign(int poolnb,
     Cthread_mutex_unlock(&lock_cpool_debug);
 #endif
     
+    if (timeout == 0) {
+      /* No thread immediately available, and timeout == 0 */
+      /* So we exit immediately                            */
+      return(-1);
+    }
+
     if (Cthread_mutex_lock(&lock_parent) != 0) {
       return(-1);
     }
@@ -1740,7 +1750,7 @@ CTHREAD_DECL Cpool_assign(int poolnb,
           return(-1);
         }
       } else {
-        /* No timeout : we wait, wait, wait... */
+        /* timeout < 0 : we wait, wait, wait... */
 #ifdef CPOOL_DEBUG
         Cthread_mutex_lock(&lock_cpool_debug);
         fprintf(stderr,"[Cpool  [%2d][%2d]] In Cpool_assign : Waiting condition on &lock_parent with no timeout\n",
