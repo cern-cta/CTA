@@ -1,5 +1,5 @@
 /*
- * castor.c,v 1.2 1999/12/09 13:39:06 jdurand Exp
+ * $Id: castor.c,v 1.4 2000/03/26 06:25:29 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)castor.c,v 1.2 1999/12/09 13:39:06 CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: castor.c,v $ $Revision: 1.4 $ $Date: 2000/03/26 06:25:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	castor - display current CASTOR version */
@@ -36,7 +36,7 @@ char **argv;
 			break;
 		case 'h':
 		default:
-			printf ("Please see documentation at http://wwwinfo.cern.ch/pdp/castor");
+			printf ("Please see documentation at http://wwwinfo.cern.ch/pdp/castor\n");
 			break;
 		}
 	}
