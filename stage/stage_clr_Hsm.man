@@ -1,10 +1,10 @@
-.\" $Id: stage_clr_Hsm.man,v 1.2 2002/11/06 08:36:42 jdurand Exp $
+.\" $Id: stage_clr_Hsm.man,v 1.3 2002/11/06 09:00:11 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_clr_Hsm.man,v $ $Revision: 1.2 $ $Date: 2002/11/06 08:36:42 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_clr_Hsm.man,v $ $Revision: 1.3 $ $Date: 2002/11/06 09:00:11 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_CLR_HSM "3" "$Date: 2002/11/06 08:36:42 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_CLR_HSM "3" "$Date: 2002/11/06 09:00:11 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_clr_Hsm \- Asks for an HSM file to be removed
 .SH SYNOPSIS
@@ -27,7 +27,11 @@ Can be zero or a bit-wise of the following values:
 The remove operation is done only if the free space in the pool is lower than a minimum, defined with disk pools on the stager daemon side.
 .TP
 .I STAGE_FORCE
-Delete found record even if it is in an intermediate state, protected against a\-priori user error.
+From administrator point of view, delete found record even if it is in an intermediate state, protected against a\-priori user error. If used together with the
+.I STAGE_REMOVEHSM
+ flag, this option forces the stager to unlink the
+.I hsmname
+on behalf of the caller, even if it is not found in the stage catalog.
 .TP
 .I STAGE_NODISK
 Prevent any disk access. Just remove the entry.
@@ -122,8 +126,11 @@ Stager not active (if you specify the STAGE_NORETRY flag - default is to retry f
 .B SENOSHOST
 Host not known
 
+.SH NOTES
+Privileges are verified using \fBCupv\fP.
+
 .SH SEE ALSO
-\fBCastor_limits\fP(3), \fBstageclr\fP(1), \fBstage_setlog\fP(3)
+\fBCastor_limits\fP(3), \fBstageclr\fP(1), \fBCupvcheck\fP(1), \fBstage_setlog\fP(3)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
