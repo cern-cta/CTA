@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.38 $ $Date: 2000/06/13 14:49:28 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.39 $ $Date: 2000/06/14 10:07:45 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cthread_api.h>
@@ -5476,7 +5476,7 @@ int DLL_DECL Csched_Get_priority_min(file,line,policy)
   {
     int min;
 
-    if ((min = sched_get_priority_min(policy)) < 0) {
+    if ((min = sched_get_priority_min(policy)) == -1) {
       errno = min;
       serrno = SECTHREADERR;
       return(-1);
@@ -5536,7 +5536,7 @@ int DLL_DECL Csched_Get_priority_max(file,line,policy)
   {
     int max;
 
-    if ((max = sched_get_priority_max(policy)) < 0) {
+    if ((max = sched_get_priority_max(policy)) == -1) {
       errno = max;
       serrno = SECTHREADERR;
       return(-1);
