@@ -5,7 +5,7 @@
 
 
 /*
- * $RCSfile: rtcp_api.h,v $ $Revision: 1.12 $ $Date: 2004/02/12 15:36:42 $ CERN IT/ADC Olof Barring
+ * $RCSfile: rtcp_api.h,v $ $Revision: 1.13 $ $Date: 2004/02/18 11:59:23 $ CERN IT/ADC Olof Barring
  */
 
 /*
@@ -20,6 +20,7 @@
 #include <Ctape_constants.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
+#include <net.h>
 typedef struct rtcpc_sockets {
     SOCKET *listen_socket;
     SOCKET accept_socket;
