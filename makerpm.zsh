@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-# $Id: makerpm.zsh,v 1.4 2005/01/22 09:04:05 jdurand Exp $
+# $Id: makerpm.zsh,v 1.5 2005/01/23 15:24:03 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -34,7 +34,7 @@ b=`echo ${MAJOR_CASTOR_VERSION} | sed 's/.*\.//g'`
 c=`echo ${MINOR_CASTOR_VERSION} | sed 's/\..*//g'`
 d=`echo ${MINOR_CASTOR_VERSION} | sed 's/.*\.//g'`
 
-# cd /tmp
+pushd ..
 foreach this (castor-*_${a}.${b}.${c}-${d}_*deb)
   dir=`echo $this | sed 's/\-[0-9].*//g' | sed 's/_/\-/g'`
   fakeroot rm -rf $dir
@@ -71,6 +71,8 @@ fi
   fakeroot rpmbuild -bb $spec
   cd ..
 end
+
+popd
 
 exit 0
 
