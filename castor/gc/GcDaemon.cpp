@@ -51,10 +51,10 @@
 #define  GCINTERVAL 300
 
 /*** for test only
-#define  GCDATAFILE "/tmp/gcdata.lst"
+     #define  GCDATAFILE "/tmp/gcdata.lst"
 
- std::vector<castor::stager::GCLocalFile*>*
-   ZselectFiles2Delete( std::string diskServer);
+     std::vector<castor::stager::GCLocalFile*>*
+     ZselectFiles2Delete( std::string diskServer);
 ***/
 
 //------------------------------------------------------------------------------
@@ -66,7 +66,7 @@ castor::gc::GcDaemon::GcDaemon() : m_foreground(false) {
   // XXX its length has currently to be hardcoded
   // XXX wherever you use it !!!
 
-  Cuuid_create(&m_uuid); 
+  Cuuid_create(&m_uuid);
   // Initializes Logging
   initLog("GC", SVC_DLFMSG);
   // Use our uuid to log
@@ -90,7 +90,7 @@ castor::gc::GcDaemon::~GcDaemon() throw() {
 int castor::gc::GcDaemon::start()
   throw (castor::exception::Exception) {
 
-  
+
   clog() << USAGE << " +++ Starting Garbage Collector Daemon... " << std::endl;
   // Switch to daemon mode
   int rc;
@@ -116,29 +116,29 @@ int castor::gc::GcDaemon::start()
            << svc->id() << " name: "
            << svc->name() << std::endl;
     return -1;
-  } 
-  
+  }
+
   char *p;
   //  Retrieve DiskServerName
   char diskServerName[CA_MAXHOSTNAMELEN];
   char gcglobalFS[20] = "Global FileSystem";
   char *gctarget;
-  // Get DiskServerName from /etc/castor/castor.conf: 
-  // example to serve global filesystem: "GC TARGET localhost" 
+  // Get DiskServerName from /etc/castor/castor.conf:
+  // example to serve global filesystem: "GC TARGET localhost"
   if ( (p = getenv ("GC_TARGET")) || (p = getconfent ("GC", "TARGET", 0)) ) {
-     gctarget = strcpy(diskServerName, p);
-     if ( (strcmp(gctarget, "localhost")) == 0) { gctarget = gcglobalFS; }
+    gctarget = strcpy(diskServerName, p);
+    if ( (strcmp(gctarget, "localhost")) == 0) { gctarget = gcglobalFS; }
   } else { // get real hostname
-     if (gethostname(diskServerName, CA_MAXHOSTNAMELEN) != 0) {
-        clog() << ERROR << "Cannot get disk server name." << std::endl;
-        return (-1);
-     }
-     gctarget = diskServerName;
+    if (gethostname(diskServerName, CA_MAXHOSTNAMELEN) != 0) {
+      clog() << ERROR << "Cannot get disk server name." << std::endl;
+      return (-1);
+    }
+    gctarget = diskServerName;
   }
 
   int lhostlen = strlen( diskServerName );
   for (int i = 0; i < lhostlen; i++) {
-     if (diskServerName[i] == '.') {diskServerName[i] = '\0'; break; }
+    if (diskServerName[i] == '.') {diskServerName[i] = '\0'; break; }
   }
   lhostlen = strlen( diskServerName );
 
@@ -148,181 +148,179 @@ int castor::gc::GcDaemon::start()
   char gcint[16];
   int  gcinterval;
   if ((p = getenv ("GC_INTERVAL")) || (p = getconfent ("GC", "INTERVAL", 0)))
-      gcinterval = atoi( strcpy (gcint, p) );
+    gcinterval = atoi( strcpy (gcint, p) );
   else
-      gcinterval = GCINTERVAL;
+    gcinterval = GCINTERVAL;
 
   // Log to DLF
   clog() << USAGE << "Garbage Collector started on " << gctarget
          << "; Sleep interval: " << gcinterval << " sec."
          << std::endl;
-  
 
- 
+
+
   // Main loop
   // XXX need to wake up on UDP with a time out ?
   // XXX To be discussed with Ben that has the code to do that
 
   for (;;) {
     int cid;
-    clog() << DEBUG 
-           << " Checking garbage on " << diskServerName 
+    clog() << DEBUG
+           << " Checking garbage on " << diskServerName
            << "... " << std::endl;
 
     // get new sleep interval if the environment has been changed
     int  gcintervalnew;
     if ((p = getenv ("GC_INTERVAL")) || (p = getconfent ("GC", "INTERVAL", 0)))
-         gcintervalnew = atoi( strcpy (gcint, p) );
+      gcintervalnew = atoi( strcpy (gcint, p) );
     else gcintervalnew = gcinterval;
     if ( gcintervalnew != gcinterval) {
-         gcinterval = gcintervalnew;
-         clog() << USAGE << " New sleep interval: " << gcinterval << " sec." << std::endl;
+      gcinterval = gcintervalnew;
+      clog() << USAGE << " New sleep interval: " << gcinterval << " sec." << std::endl;
     }
 
     // Retrieve list of files to delete
     std::vector<castor::stager::GCLocalFile*>* files2Delete = 0;
     try {
-          files2Delete = stgSvc->selectFiles2Delete(diskServerName);
+      files2Delete = stgSvc->selectFiles2Delete(diskServerName);
     } catch (castor::exception::Exception e) {
-          clog() << DEBUG << "No garbage files found - Nothing to do."
-                 << " Sleeping  " << gcinterval << " sec..." 
-                 << std::endl << e.getMessage().str();
-          sleep(gcinterval);
-          continue;
+      clog() << DEBUG << "No garbage files found - Nothing to do."
+             << " Sleeping  " << gcinterval << " sec..."
+             << std::endl << e.getMessage().str();
+      sleep(gcinterval);
+      continue;
     }
 
     // Fork a child if there are files to delete
     if (0 < files2Delete) {
-       clog() << USAGE << "Garbage files found. Starting removal..." << std::endl;
+      clog() << USAGE << "Garbage files found. Starting removal..." << std::endl;
 
-       cid = fork();
-       if(cid < 0) {
-             clog() << ERROR << " Fork child failed " << std::endl;
-             sleep(gcinterval);
-             continue;
-       }
-    } 
-    if (0 == cid) { // if a am a child
-       clog() << USAGE
-              << " Removing Garbage files ..." 
-              << std::endl;
-       // Loop over the files and delete them
-       std::vector<u_signed64*> deletedFiles;
-       double gcremovedsize  = 0;
-       long   gcfilesize     = 0;
-       long   gcfilestotal   = 0;
-       long   gcfilesfailed  = 0;
-       long   gcfilesremoved = 0;
-       for(std::vector<castor::stager::GCLocalFile*>::iterator it =
-           files2Delete->begin();
-           it != files2Delete->end();
-           it++) 
-       {
-         // delete  file it->fileName()
-         std::string gcfilename = (*it)->fileName();
-         if(0 < strlen(&gcfilename[0]) ) {
-            gcfilestotal++;
-            if ( (gcfilesize = GCremoveFilePath((*it)->fileName())) < 0 ) {
-               gcfilesfailed++;
-               clog() << DEBUG << "-Failed: " << (*it)->fileName() << std::endl;
-            } else {
-               gcfilesremoved++;
-               gcremovedsize =+ gcfilesize;
-               clog() << DEBUG << "Removed " << (*it)->fileName() << ": " 
-                               << gcfilesize << " KB" 
-                               << std::endl;
-               // Add the file to the list of deleted ones
-               u_signed64 gcfileid = (*it)->diskCopyId();
-               deletedFiles.push_back(&gcfileid);
-            }
-         }
-       } // end of delete files loop
+      cid = fork();
+      if(cid < 0) {
+        clog() << ERROR << " Fork child failed " << std::endl;
+        sleep(gcinterval);
+        continue;
+      }
+      if (0 == cid) { // if a am a child
+        clog() << USAGE
+               << " Removing Garbage files ..."
+               << std::endl;
+        // Loop over the files and delete them
+        std::vector<u_signed64*> deletedFiles;
+        double gcremovedsize  = 0;
+        long   gcfilesize     = 0;
+        long   gcfilestotal   = 0;
+        long   gcfilesfailed  = 0;
+        long   gcfilesremoved = 0;
+        for(std::vector<castor::stager::GCLocalFile*>::iterator it =
+              files2Delete->begin();
+            it != files2Delete->end();
+            it++) {
+          // delete  file it->fileName()
+          gcfilestotal++;
+          if ( (gcfilesize = GCremoveFilePath((*it)->fileName())) < 0 ) {
+            gcfilesfailed++;
+            clog() << WARNING << "-Failed: " << (*it)->fileName() << std::endl;
+          } else {
+            gcfilesremoved++;
+            gcremovedsize =+ gcfilesize;
+            clog() << DEBUG << "Removed " << (*it)->fileName() << ": "
+                   << gcfilesize << " KB"
+                   << std::endl;
+            // Add the file to the list of deleted ones
+            u_signed64 gcfileid = (*it)->diskCopyId();
+            deletedFiles.push_back(&gcfileid);
+          }
+        } // end of delete files loop
 
-       // log to DLF
-       if (0 < gcfilestotal) {
+        // log to DLF
+        if (0 < gcfilestotal) {
           gcremovedsize = gcremovedsize/1024;
           clog() << USAGE << "Files removed: "  << gcfilesremoved
-                          << "; Files failed: " << gcfilesfailed
-                          << "; Files total: "  << gcfilestotal
-                          << "; Space freed: "  << gcremovedsize << " KB;"
-                          << std::endl;
-       }
-       // Inform stager of the deletion
-       try {
-           stgSvc->filesDeleted(deletedFiles);
-       } catch (castor::exception::Exception e) {
-           clog() << ERROR << "Unable to inform stager of the files deleted: "
-                  << std::endl << e.getMessage().str()
-                  << "Files IDs: ";
-           for (std::vector<u_signed64*>::iterator it = deletedFiles.begin();
-                it != deletedFiles.end();
-                it++) {
-              clog() << **it << " ";
-           }
-           clog() << std::endl << e.getMessage().str();
-       }
-       exit(cid); // end child
-    }
-    clog() << "GC check finished on " << diskServerName 
-           << " - sleeping " << gcinterval << " sec..." 
-           << std::endl;
+                 << "; Files failed: " << gcfilesfailed
+                 << "; Files total: "  << gcfilestotal
+                 << "; Space freed: "  << gcremovedsize << " KB;"
+                 << std::endl;
+        }
+        // Inform stager of the deletion
+        try {
+          stgSvc->filesDeleted(deletedFiles);
+        } catch (castor::exception::Exception e) {
+          clog() << ERROR << "Unable to inform stager of the files deleted: "
+                 << std::endl << e.getMessage().str()
+                 << "Files IDs: ";
+          for (std::vector<u_signed64*>::iterator it = deletedFiles.begin();
+               it != deletedFiles.end();
+               it++) {
+            clog() << **it << " ";
+          }
+          clog() << std::endl << e.getMessage().str();
+        }
+        exit(0); // end child
+      } else {
+        // parent
+        clog() << "GC check finished on " << diskServerName
+               << " - sleeping " << gcinterval << " sec..."
+               << std::endl;
 
-    sleep(gcinterval);
+        sleep(gcinterval);
+      }
+    }
   } // End of main loop
 }
 /***
-// -----------------------------------------------------------------------
-// ZselectFiles2Delete - for test only - stager response emulator
-// -----------------------------------------------------------------------
-std::vector<castor::stager::GCLocalFile*>*
-   ZselectFiles2Delete (std::string diskServer)
-{
-   char gcdatafile[1024];
-   char gcfilename[1024];
+ // -----------------------------------------------------------------------
+ // ZselectFiles2Delete - for test only - stager response emulator
+ // -----------------------------------------------------------------------
+ std::vector<castor::stager::GCLocalFile*>*
+ ZselectFiles2Delete (std::string diskServer)
+ {
+ char gcdatafile[1024];
+ char gcfilename[1024];
 
-   strcpy(gcdatafile, GCDATAFILE);
-   std::ifstream gcfilelist( gcdatafile);
-   std::vector<castor::stager::GCLocalFile*>* result =
-          new std::vector<castor::stager::GCLocalFile*>;
+ strcpy(gcdatafile, GCDATAFILE);
+ std::ifstream gcfilelist( gcdatafile);
+ std::vector<castor::stager::GCLocalFile*>* result =
+ new std::vector<castor::stager::GCLocalFile*>;
 
-   if ( !gcfilelist.is_open() ) {
-       result = 0;
-       return result;
-   }
-   // Prepare the result vector to return
-   long i = -1;
-   while (! gcfilelist.eof() ) { 
-     gcfilelist.getline (gcfilename, 1024,'\n'); 
-     castor::stager::GCLocalFile res = new castor::stager::GCLocalFile();
-     res->setFileName((std::string)gcfilename);
-     result->push_back(res);
-     i++;
-   }
-   
-   std::cout << "Garbage files found: " << i << std::endl;
-   if( unlink( gcdatafile) < 0) {
-        std::cout << "---Failed to remove file list " << gcdatafile << std::endl;
-   } else {
-        std::cout << "===Removed file list " << gcdatafile << std::endl;
-   }
+ if ( !gcfilelist.is_open() ) {
+ result = 0;
+ return result;
+ }
+ // Prepare the result vector to return
+ long i = -1;
+ while (! gcfilelist.eof() ) {
+ gcfilelist.getline (gcfilename, 1024,'\n');
+ castor::stager::GCLocalFile res = new castor::stager::GCLocalFile();
+ res->setFileName((std::string)gcfilename);
+ result->push_back(res);
+ i++;
+ }
 
-   return result;
-}
+ std::cout << "Garbage files found: " << i << std::endl;
+ if( unlink( gcdatafile) < 0) {
+ std::cout << "---Failed to remove file list " << gcdatafile << std::endl;
+ } else {
+ std::cout << "===Removed file list " << gcdatafile << std::endl;
+ }
+
+ return result;
+ }
 ***/
 //------------------------------------------------------------------------------
 // GCremoveFilePath
 //------------------------------------------------------------------------------
 long castor::gc::GcDaemon::GCremoveFilePath( std::string gcfilepath)
 {
-   long gcfilesize = -1;
-    
-   if( (gcfilesize = GCgetFileSize( gcfilepath) ) < 0 ) {
-     return (-1);
-   }
-   if( unlink( &gcfilepath[0]) < 0) {
-     return (-1);
-   }
-   return (gcfilesize);
+  long gcfilesize = -1;
+
+  if( (gcfilesize = GCgetFileSize( gcfilepath) ) < 0 ) {
+    return (-1);
+  }
+  if( unlink( &gcfilepath[0]) < 0) {
+    return (-1);
+  }
+  return (gcfilesize);
 }
 
 //------------------------------------------------------------------------------
@@ -330,16 +328,16 @@ long castor::gc::GcDaemon::GCremoveFilePath( std::string gcfilepath)
 //------------------------------------------------------------------------------
 long castor::gc::GcDaemon::GCgetFileSize( std::string gcfilepath)
 {
-   struct stat 	gcfiledata;
-   long 	gcfilesize = -1;
+  struct stat  gcfiledata;
+  long  gcfilesize = -1;
 
-   if( stat(&gcfilepath[0], &gcfiledata) )
-   {
-     clog() << ERROR << "GCgetFileSize: Cannot stat file " << gcfilepath
-            << std::endl;
-     return (-1);
-   } else  gcfilesize = (long)gcfiledata.st_size;
-   return (gcfilesize);
+  if( stat(&gcfilepath[0], &gcfiledata) )
+  {
+    clog() << ERROR << "GCgetFileSize: Cannot stat file " << gcfilepath
+           << std::endl;
+    return (-1);
+  } else  gcfilesize = (long)gcfiledata.st_size;
+  return (gcfilesize);
 }
 
 //------------------------------------------------------------------------------
