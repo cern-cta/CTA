@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.150 $ $Release$ $Date: 2005/04/07 12:51:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.151 $ $Release$ $Date: 2005/04/07 13:05:15 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -2423,9 +2423,13 @@ void castor::db::ora::OraStagerSvc::filesDeleted
   try {
     // Deal with the list of diskcopy ids
     unsigned int nb = diskCopyIds.size();
+    // Compute actual length of the buffers : this
+    // may be different from the needed one, since
+    // Oracle does not like 0 length arrays....
+    unsigned int nba = nb == 0 ? 1 : nb;
     ub2 lens[nb];
-    unsigned char buffer[nb][21];
-    memset(buffer, 0, nb * 21);
+    unsigned char buffer[nba][21];
+    memset(buffer, 0, nba * 21);
     for (int i = 0; i < nb; i++) {
       oracle::occi::Number n = (double)(*(diskCopyIds[i]));
       oracle::occi::Bytes b = n.toBytes();
@@ -2435,7 +2439,7 @@ void castor::db::ora::OraStagerSvc::filesDeleted
     ub4 unused = nb;
     m_filesDeletedStatement->setDataBufferArray
       (1, buffer, oracle::occi::OCCI_SQLT_NUM,
-       nb, &unused, 21, lens);
+       nba, &unused, 21, lens);
     // execute the statement
     m_filesDeletedStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
