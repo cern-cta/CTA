@@ -192,7 +192,7 @@ int castor::gc::GcDaemon::start()
     }
 
     // Fork a child if there are files to delete
-    if (0 < files2Delete) {
+    if (0 < files2Delete->size()) {
       clog() << USAGE << "Garbage files found. Starting removal..." << std::endl;
 
       cid = fork();
@@ -228,8 +228,8 @@ int castor::gc::GcDaemon::start()
                    << gcfilesize << " KB"
                    << std::endl;
             // Add the file to the list of deleted ones
-            u_signed64 gcfileid = (*it)->diskCopyId();
-            deletedFiles.push_back(&gcfileid);
+            u_signed64 *gcfileid = new u_signed64((*it)->diskCopyId());
+            deletedFiles.push_back(gcfileid);
           }
         } // end of delete files loop
 
@@ -256,16 +256,21 @@ int castor::gc::GcDaemon::start()
           }
           clog() << std::endl << e.getMessage().str();
         }
+        // release memory
+        for (std::vector<u_signed64*>::iterator it =
+               deletedFiles.begin();
+             it != deletedFiles.end();
+             it++) {
+          delete *it;
+        }
         exit(0); // end child
-      } else {
-        // parent
-        clog() << "GC check finished on " << diskServerName
-               << " - sleeping " << gcinterval << " sec..."
-               << std::endl;
-
-        sleep(gcinterval);
       }
     }
+    clog() << "GC check finished on " << diskServerName
+           << " - sleeping " << gcinterval << " sec..."
+           << std::endl;
+    
+    sleep(gcinterval);
   } // End of main loop
 }
 /***
