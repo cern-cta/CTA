@@ -252,7 +252,7 @@ int castor::gc::GcDaemon::start()
            stgSvc->filesDeleted(deletedFiles);
        } catch (castor::exception::Exception e) {
            clog() << ERROR << "Unable to inform stager of the files deleted: "
-                  //<< std::endl << e.getMessage().str()
+                  << std::endl << e.getMessage().str()
                   << "Files IDs: ";
            for (std::vector<u_signed64*>::iterator it = deletedFiles.begin();
                 it != deletedFiles.end();
