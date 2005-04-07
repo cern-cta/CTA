@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.149 $ $Release$ $Date: 2005/04/07 08:38:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.150 $ $Release$ $Date: 2005/04/07 12:51:03 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -2433,11 +2433,11 @@ void castor::db::ora::OraStagerSvc::filesDeleted
       lens[i] = b.length();
     }
     ub4 unused = nb;
-    m_bestFileSystemForJobStatement->setDataBufferArray
+    m_filesDeletedStatement->setDataBufferArray
       (1, buffer, oracle::occi::OCCI_SQLT_NUM,
        nb, &unused, 21, lens);
     // execute the statement
-    m_bestFileSystemForJobStatement->executeUpdate();
+    m_filesDeletedStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()
