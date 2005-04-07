@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.148 $ $Release$ $Date: 2005/04/05 09:02:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.149 $ $Release$ $Date: 2005/04/07 08:38:54 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -122,6 +122,10 @@ const std::string castor::db::ora::OraStagerSvc::s_bestFileSystemForSegmentState
 /// SQL statement for fileRecalled
 const std::string castor::db::ora::OraStagerSvc::s_fileRecalledStatementString =
   "BEGIN fileRecalled(:1); END;";
+
+/// SQL statement for fileRecallFailed
+const std::string castor::db::ora::OraStagerSvc::s_fileRecallFailedStatementString =
+  "BEGIN fileRecallFailed(:1); END;";
 
 /// SQL statement for isSubRequestToSchedule
 const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStatementString =
@@ -244,6 +248,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_streamsForTapePoolStatement(0),
   m_bestFileSystemForSegmentStatement(0),
   m_fileRecalledStatement(0),
+  m_fileRecallFailedStatement(0),
   m_subRequestToDoStatement(0),
   m_requestToDoStatement(0),
   m_isSubRequestToScheduleStatement(0),
@@ -311,6 +316,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_streamsForTapePoolStatement);
     deleteStatement(m_bestFileSystemForSegmentStatement);
     deleteStatement(m_fileRecalledStatement);
+    deleteStatement(m_fileRecallFailedStatement);
     deleteStatement(m_subRequestToDoStatement);
     deleteStatement(m_requestToDoStatement);
     deleteStatement(m_isSubRequestToScheduleStatement);
@@ -350,6 +356,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_streamsForTapePoolStatement = 0;
   m_bestFileSystemForSegmentStatement = 0;
   m_fileRecalledStatement = 0;
+  m_fileRecallFailedStatement = 0;
   m_subRequestToDoStatement = 0;
   m_requestToDoStatement = 0;
   m_isSubRequestToScheduleStatement = 0;
@@ -762,6 +769,39 @@ void castor::db::ora::OraStagerSvc::fileRecalled
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in fileRecalled."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// fileRecallFailed
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::fileRecallFailed
+(castor::stager::TapeCopy* tapeCopy)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_fileRecallFailedStatement) {
+      m_fileRecallFailedStatement =
+        createStatement(s_fileRecallFailedStatementString);
+      m_fileRecallFailedStatement->setAutoCommit(true);
+    }
+    // execute the statement and see whether we found something
+    m_fileRecallFailedStatement->setDouble(1, tapeCopy->id());
+    unsigned int nb =
+      m_fileRecallFailedStatement->executeUpdate();
+    if (nb == 0) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "fileRecallFailed : unable to update SubRequest and DiskCopy status.";
+      throw ex;
+    }
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in fileRecallFailed."
       << std::endl << e.what();
     throw ex;
   }

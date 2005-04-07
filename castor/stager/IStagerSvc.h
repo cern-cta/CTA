@@ -192,10 +192,10 @@ int Cstager_IStagerSvc_streamsForTapePool
  struct Cstager_TapePool_t* tapePool);
 
 /**
- * Updates the database when a file recalled is over.
+ * Updates the database when a file recall is successfully over.
  * This includes updating the DiskCopy status to DISKCOPY_STAGED
- * (note that it is garanted that there is a single diskcopy in
- * status DISKCOPY_WAITTAPERECALL for this TapeCopy).
+ * (note that it is guaranteed that there is a single
+ * diskcopy in status DISKCOPY_WAITTAPERECALL for this TapeCopy).
  * It also includes updating the status of the corresponding
  * SubRequest to SUBREQUEST_RESTART and updating the status of
  * the SubRequests waiting on this recall to SUBREQUEST_RESTART
@@ -207,6 +207,25 @@ int Cstager_IStagerSvc_streamsForTapePool
  * Cstager_IStagerSvc_errorMsg
  */
 int Cstager_IStagerSvc_fileRecalled
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_TapeCopy_t* tapeCopy);
+
+/**
+ * Updates the database when a file recall failed.
+ * This includes updating the DiskCopy status to DISKCOPY_FAILED
+ * (note that it is garanted that there is a single
+ * diskcopy in status DISKCOPY_WAITTAPERECALL for this TapeCopy).
+ * It also includes updating the status of the corresponding
+ * SubRequest to SUBREQUEST_FAILED and updating the status of
+ * the SubRequests waiting on this recall to SUBREQUEST_FAILED
+ * @param stgSvc the IStagerSvc used
+ * @param tapeCopy the TapeCopy that was just recalled
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_fileRecallFailed
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_TapeCopy_t* tapeCopy);
 

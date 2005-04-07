@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.33 $ $Release$ $Date: 2005/04/05 08:19:58 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.34 $ $Release$ $Date: 2005/04/07 08:38:54 $ $Author: sponcec3 $
  *
  *
  *
@@ -173,9 +173,9 @@ namespace castor {
         throw (castor::exception::Exception);
 
       /**
-       * Updates the database when a file recalled is over.
+       * Updates the database when a file recall is successfully over.
        * This includes updating the DiskCopy status to DISKCOPY_STAGED
-       * and uuid (note that it is garanted that there is a single
+       * (note that it is guaranteed that there is a single
        * diskcopy in status DISKCOPY_WAITTAPERECALL for this TapeCopy).
        * It also includes updating the status of the corresponding
        * SubRequest to SUBREQUEST_RESTART and updating the status of
@@ -184,6 +184,20 @@ namespace castor {
        * @exception in case of error
        */
       virtual void fileRecalled(castor::stager::TapeCopy* tapeCopy)
+        throw (castor::exception::Exception);
+
+      /**
+       * Updates the database when a file recall failed.
+       * This includes updating the DiskCopy status to DISKCOPY_FAILED
+       * (note that it is garanted that there is a single
+       * diskcopy in status DISKCOPY_WAITTAPERECALL for this TapeCopy).
+       * It also includes updating the status of the corresponding
+       * SubRequest to SUBREQUEST_FAILED and updating the status of
+       * the SubRequests waiting on this recall to SUBREQUEST_FAILED
+       * @param tapeCopy the TapeCopy that was just recalled
+       * @exception in case of error
+       */
+      virtual void fileRecallFailed(castor::stager::TapeCopy* tapeCopy)
         throw (castor::exception::Exception);
 
       /**

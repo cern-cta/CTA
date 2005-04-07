@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2005/03/31 15:06:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2005/04/07 08:38:54 $ $Author: sponcec3 $
  *
  *
  *
@@ -185,6 +185,19 @@ void castor::stager::RemoteStagerSvc::streamsForTapePool
 // fileRecalled
 // -----------------------------------------------------------------------
 void castor::stager::RemoteStagerSvc::fileRecalled
+(castor::stager::TapeCopy* tapeCopy)
+  throw (castor::exception::Exception) {
+  castor::exception::NotSupported ex;
+  ex.getMessage()
+    << "RemoteStagerSvc implementation is not complete"
+    << std::endl << "This method is not supported.";
+  throw ex;
+}
+
+// -----------------------------------------------------------------------
+// fileRecallFailed
+// -----------------------------------------------------------------------
+void castor::stager::RemoteStagerSvc::fileRecallFailed
 (castor::stager::TapeCopy* tapeCopy)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;

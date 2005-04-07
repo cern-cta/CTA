@@ -559,6 +559,28 @@ UPDATE SubRequest SET status = 1, lastModificationTime = getTime()
 updateFsFileClosed(fsId, fileSize, fileSize);
 END;
 
+/* PL/SQL method implementing fileRecallFailed */
+CREATE OR REPLACE PROCEDURE fileRecallFailed(tapecopyId IN INTEGER) AS
+ SubRequestId NUMBER;
+ dci NUMBER;
+ fsId NUMBER;
+ fileSize NUMBER;
+BEGIN
+SELECT SubRequest.id, DiskCopy.id, SubRequest.xsize
+ INTO SubRequestId, dci, fileSize
+ FROM TapeCopy, SubRequest, DiskCopy
+ WHERE TapeCopy.id = tapecopyId
+  AND DiskCopy.castorFile = TapeCopy.castorFile
+  AND SubRequest.diskcopy = DiskCopy.id;
+UPDATE DiskCopy SET status = 4 WHERE id = dci RETURNING fileSystem into fsid; -- DISKCOPY_FAILED
+UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
+                      lastModificationTime = getTime()
+ WHERE id = SubRequestId;
+UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
+                      lastModificationTime = getTime()
+ WHERE parent = SubRequestId;
+END;
+
 /* PL/SQL method implementing castor package */
 CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR2(2048), status NUMBER, fsWeight NUMBER, mountPoint VARCHAR2(2048), diskServer VARCHAR2(2048));

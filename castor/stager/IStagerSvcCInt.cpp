@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2005/03/23 10:06:18 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2005/04/07 08:38:54 $ $Author: sponcec3 $
  *
  *
  *
@@ -197,6 +197,22 @@ extern "C" {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       stgSvc->stgSvc->fileRecalled(tapeCopy);
+      return 0;
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_fileRecallFailed
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_fileRecallFailed(Cstager_IStagerSvc_t* stgSvc,
+                                          castor::stager::TapeCopy* tapeCopy) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      stgSvc->stgSvc->fileRecallFailed(tapeCopy);
       return 0;
     } catch (castor::exception::Exception e) {
       serrno = e.code();
