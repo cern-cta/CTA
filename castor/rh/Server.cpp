@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2005/04/05 14:25:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2005/04/07 14:51:53 $ $Author: sponcec3 $
  *
  *
  *
@@ -41,6 +41,7 @@
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/QryRequest.hpp"
+#include "castor/stager/FilesDeleted.hpp"
 #include "castor/rh/Client.hpp"
 
 #include "castor/io/biniostream.h"
@@ -283,21 +284,30 @@ void castor::rh::Server::handleRequest
   ad.setCnvSvcType(castor::SVC_ORACNV);
   try {
     svcs()->createRep(&ad, fr, false);
+    // Store files for file requests
     castor::stager::FileRequest* filreq =
       dynamic_cast<castor::stager::FileRequest*>(fr);
     if (0 != filreq) {
       svcs()->fillRep(&ad, fr, OBJ_SubRequest, false);
     }
+    // Store client for requests
     castor::stager::Request* req =
       dynamic_cast<castor::stager::Request*>(fr);
     if (0 != req) {
       svcs()->createRep(&ad, req->client(), false);
       svcs()->fillRep(&ad, fr, OBJ_IClient, false);
     }
+    // Store parameters for query requests
     castor::stager::QryRequest* qryReq =
       dynamic_cast<castor::stager::QryRequest*>(fr);
     if (0 != qryReq) {
       svcs()->fillRep(&ad, qryReq, OBJ_QueryParameter, false);
+    }
+    // Store deletedFiles for filesDeleted
+    castor::stager::FilesDeleted* fdReq =
+      dynamic_cast<castor::stager::FilesDeleted*>(fr);
+    if (0 != fdReq) {
+      svcs()->fillRep(&ad, fdReq, OBJ_GCRemovedFile, false);
     }
     svcs()->commit(&ad);
     // "Request stored in DB" message
