@@ -45,6 +45,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define CupvHost	"castorcupv"
 #define PolicySpool	/etc/castor/expert
 #define CupvSpool	/var/spool/upv
+#define JobSpool	/var/spool/job
 #define RmMasterSpool	/var/spool/rmmaster
 #if defined(_WIN32)
 #define RmMasterConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\RMMASTERCONFIG
