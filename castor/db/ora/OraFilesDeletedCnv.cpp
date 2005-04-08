@@ -97,15 +97,15 @@ const std::string castor::db::ora::OraFilesDeletedCnv::s_updateIClientStatementS
 
 /// SQL select statement for member files
 const std::string castor::db::ora::OraFilesDeletedCnv::s_selectGCRemovedFileStatementString =
-"SELECT id from GCRemovedFile WHERE  = :1 FOR UPDATE";
+"SELECT id from GCRemovedFile WHERE request = :1 FOR UPDATE";
 
 /// SQL delete statement for member files
 const std::string castor::db::ora::OraFilesDeletedCnv::s_deleteGCRemovedFileStatementString =
-"UPDATE GCRemovedFile SET  = 0 WHERE id = :1";
+"UPDATE GCRemovedFile SET request = 0 WHERE id = :1";
 
 /// SQL remote update statement for member files
 const std::string castor::db::ora::OraFilesDeletedCnv::s_remoteUpdateGCRemovedFileStatementString =
-"UPDATE GCRemovedFile SET  = :1 WHERE id = :2";
+"UPDATE GCRemovedFile SET request = :1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -460,6 +460,7 @@ void castor::db::ora::OraFilesDeletedCnv::fillObjGCRemovedFile(castor::stager::F
        it != toBeDeleted.end();
        it++) {
     obj->removeFiles(*it);
+    (*it)->setRequest(0);
   }
   // Create new objects
   for (std::set<int>::iterator it = filesList.begin();
@@ -469,6 +470,7 @@ void castor::db::ora::OraFilesDeletedCnv::fillObjGCRemovedFile(castor::stager::F
     castor::stager::GCRemovedFile* remoteObj = 
       dynamic_cast<castor::stager::GCRemovedFile*>(item);
     obj->addFiles(remoteObj);
+    remoteObj->setRequest(obj);
   }
 }
 

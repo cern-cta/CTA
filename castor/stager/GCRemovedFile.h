@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GCRemovedFile.h,v $ $Revision: 1.1 $ $Release$ $Date: 2005/02/09 17:05:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: GCRemovedFile.h,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/08 08:50:48 $ $Author: sponcec3 $
  *
  * 
  *
@@ -30,6 +30,7 @@
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
 struct C_IObject_t;
+struct Cstager_FilesDeleted_t;
 struct Cstager_GCRemovedFile_t;
 
 //------------------------------------------------------------------------------
@@ -107,5 +108,15 @@ int Cstager_GCRemovedFile_id(struct Cstager_GCRemovedFile_t* instance, u_signed6
  * The id of this object
  */
 int Cstager_GCRemovedFile_setId(struct Cstager_GCRemovedFile_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of request
+ */
+int Cstager_GCRemovedFile_request(struct Cstager_GCRemovedFile_t* instance, struct Cstager_FilesDeleted_t** var);
+
+/**
+ * Set the value of request
+ */
+int Cstager_GCRemovedFile_setRequest(struct Cstager_GCRemovedFile_t* instance, struct Cstager_FilesDeleted_t* new_var);
 
 #endif // CASTOR_STAGER_GCREMOVEDFILE_H

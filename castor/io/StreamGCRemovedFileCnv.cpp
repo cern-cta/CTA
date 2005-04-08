@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamGCRemovedFileCnv.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/02/09 17:05:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamGCRemovedFileCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/08 08:50:47 $ $Author: sponcec3 $
  *
  * 
  *
@@ -37,6 +37,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
+#include "castor/stager/FilesDeleted.hpp"
 #include "castor/stager/GCRemovedFile.hpp"
 #include "osdep.h"
 
@@ -126,6 +127,7 @@ void castor::io::StreamGCRemovedFileCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
+    cnvSvc()->marshalObject(obj->request(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -142,6 +144,12 @@ castor::IObject* castor::io::StreamGCRemovedFileCnv::unmarshalObject(castor::io:
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
+  // Fill object with associations
+  castor::stager::GCRemovedFile* obj = 
+    dynamic_cast<castor::stager::GCRemovedFile*>(object);
+  ad.setObjType(castor::OBJ_INVALID);
+  IObject* objRequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setRequest(dynamic_cast<castor::stager::FilesDeleted*>(objRequest));
   return object;
 }
 

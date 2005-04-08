@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCRemovedFileCnv.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/02/09 17:05:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraGCRemovedFileCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/08 08:50:47 $ $Author: sponcec3 $
  *
  * 
  *
@@ -28,6 +28,7 @@
 #include "OraGCRemovedFileCnv.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/CnvFactory.hpp"
+#include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
@@ -37,6 +38,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
+#include "castor/stager/FilesDeleted.hpp"
 #include "castor/stager/GCRemovedFile.hpp"
 
 //------------------------------------------------------------------------------
@@ -51,7 +53,7 @@ const castor::ICnvFactory& OraGCRemovedFileCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraGCRemovedFileCnv::s_insertStatementString =
-"INSERT INTO GCRemovedFile (diskCopyId, id) VALUES (:1,ids_seq.nextval) RETURNING id INTO :2";
+"INSERT INTO GCRemovedFile (diskCopyId, id, request) VALUES (:1,ids_seq.nextval,:2) RETURNING id INTO :3";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraGCRemovedFileCnv::s_deleteStatementString =
@@ -59,7 +61,7 @@ const std::string castor::db::ora::OraGCRemovedFileCnv::s_deleteStatementString 
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraGCRemovedFileCnv::s_selectStatementString =
-"SELECT diskCopyId, id FROM GCRemovedFile WHERE id = :1";
+"SELECT diskCopyId, id, request FROM GCRemovedFile WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraGCRemovedFileCnv::s_updateStatementString =
@@ -73,6 +75,14 @@ const std::string castor::db::ora::OraGCRemovedFileCnv::s_storeTypeStatementStri
 const std::string castor::db::ora::OraGCRemovedFileCnv::s_deleteTypeStatementString =
 "DELETE FROM Id2Type WHERE id = :1";
 
+/// SQL existence statement for member request
+const std::string castor::db::ora::OraGCRemovedFileCnv::s_checkFilesDeletedExistStatementString =
+"SELECT id from FilesDeleted WHERE id = :1";
+
+/// SQL update statement for member request
+const std::string castor::db::ora::OraGCRemovedFileCnv::s_updateFilesDeletedStatementString =
+"UPDATE GCRemovedFile SET request = :1 WHERE id = :2";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -83,7 +93,9 @@ castor::db::ora::OraGCRemovedFileCnv::OraGCRemovedFileCnv(castor::ICnvSvc* cnvSv
   m_selectStatement(0),
   m_updateStatement(0),
   m_storeTypeStatement(0),
-  m_deleteTypeStatement(0) {}
+  m_deleteTypeStatement(0),
+  m_checkFilesDeletedExistStatement(0),
+  m_updateFilesDeletedStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -105,6 +117,8 @@ void castor::db::ora::OraGCRemovedFileCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_checkFilesDeletedExistStatement);
+    deleteStatement(m_updateFilesDeletedStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -113,6 +127,8 @@ void castor::db::ora::OraGCRemovedFileCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
+  m_checkFilesDeletedExistStatement = 0;
+  m_updateFilesDeletedStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -141,6 +157,9 @@ void castor::db::ora::OraGCRemovedFileCnv::fillRep(castor::IAddress* address,
     dynamic_cast<castor::stager::GCRemovedFile*>(object);
   try {
     switch (type) {
+    case castor::OBJ_FilesDeleted :
+      fillRepFilesDeleted(obj);
+      break;
     default :
       castor::exception::InvalidArgument ex;
       ex.getMessage() << "fillRep called for type " << type 
@@ -160,6 +179,38 @@ void castor::db::ora::OraGCRemovedFileCnv::fillRep(castor::IAddress* address,
 }
 
 //------------------------------------------------------------------------------
+// fillRepFilesDeleted
+//------------------------------------------------------------------------------
+void castor::db::ora::OraGCRemovedFileCnv::fillRepFilesDeleted(castor::stager::GCRemovedFile* obj)
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
+  if (0 != obj->request()) {
+    // Check checkFilesDeletedExist statement
+    if (0 == m_checkFilesDeletedExistStatement) {
+      m_checkFilesDeletedExistStatement = createStatement(s_checkFilesDeletedExistStatementString);
+    }
+    // retrieve the object from the database
+    m_checkFilesDeletedExistStatement->setDouble(1, obj->request()->id());
+    oracle::occi::ResultSet *rset = m_checkFilesDeletedExistStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("OraCnvSvc");
+      ad.setCnvSvcType(castor::SVC_ORACNV);
+      cnvSvc()->createRep(&ad, obj->request(), false);
+    }
+    // Close resultset
+    m_checkFilesDeletedExistStatement->closeResultSet(rset);
+  }
+  // Check update statement
+  if (0 == m_updateFilesDeletedStatement) {
+    m_updateFilesDeletedStatement = createStatement(s_updateFilesDeletedStatementString);
+  }
+  // Update local object
+  m_updateFilesDeletedStatement->setDouble(1, 0 == obj->request() ? 0 : obj->request()->id());
+  m_updateFilesDeletedStatement->setDouble(2, obj->id());
+  m_updateFilesDeletedStatement->executeUpdate();
+}
+
+//------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
 void castor::db::ora::OraGCRemovedFileCnv::fillObj(castor::IAddress* address,
@@ -169,12 +220,55 @@ void castor::db::ora::OraGCRemovedFileCnv::fillObj(castor::IAddress* address,
   castor::stager::GCRemovedFile* obj = 
     dynamic_cast<castor::stager::GCRemovedFile*>(object);
   switch (type) {
+  case castor::OBJ_FilesDeleted :
+    fillObjFilesDeleted(obj);
+    break;
   default :
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "fillObj called on type " << type 
                     << " on object of type " << obj->type() 
                     << ". This is meaningless.";
     throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObjFilesDeleted
+//------------------------------------------------------------------------------
+void castor::db::ora::OraGCRemovedFileCnv::fillObjFilesDeleted(castor::stager::GCRemovedFile* obj)
+  throw (castor::exception::Exception) {
+  // Check whether the statement is ok
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 requestId = (u_signed64)rset->getDouble(3);
+  // Close ResultSet
+  m_selectStatement->closeResultSet(rset);
+  // Check whether something should be deleted
+  if (0 != obj->request() &&
+      (0 == requestId ||
+       obj->request()->id() != requestId)) {
+    obj->request()->removeFiles(obj);
+    obj->setRequest(0);
+  }
+  // Update object or create new one
+  if (0 != requestId) {
+    if (0 == obj->request()) {
+      obj->setRequest
+        (dynamic_cast<castor::stager::FilesDeleted*>
+         (cnvSvc()->getObjFromId(requestId)));
+    } else {
+      cnvSvc()->updateObj(obj->request());
+    }
+    obj->request()->addFiles(obj);
   }
 }
 
@@ -195,15 +289,16 @@ void castor::db::ora::OraGCRemovedFileCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(2, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(3, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
     m_insertStatement->setDouble(1, obj->diskCopyId());
+    m_insertStatement->setDouble(2, (type == OBJ_FilesDeleted && obj->request() != 0) ? obj->request()->id() : 0);
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(2));
+    obj->setId((u_signed64)m_insertStatement->getDouble(3));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -229,7 +324,8 @@ void castor::db::ora::OraGCRemovedFileCnv::createRep(castor::IAddress* address,
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
                     << "  diskCopyId : " << obj->diskCopyId() << std::endl
-                    << "  id : " << obj->id() << std::endl;
+                    << "  id : " << obj->id() << std::endl
+                    << "  request : " << obj->request() << std::endl;
     throw ex;
   }
 }

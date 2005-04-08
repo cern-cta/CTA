@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GCRemovedFileCInt.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/02/09 17:05:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: GCRemovedFileCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/08 08:50:48 $ $Author: sponcec3 $
  *
  * 
  *
@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/stager/FilesDeleted.hpp"
 #include "castor/stager/GCRemovedFile.hpp"
 #include "osdep.h"
 
@@ -123,6 +124,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_GCRemovedFile_setId(castor::stager::GCRemovedFile* instance, u_signed64 new_var) {
     instance->setId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_GCRemovedFile_request
+  //----------------------------------------------------------------------------
+  int Cstager_GCRemovedFile_request(castor::stager::GCRemovedFile* instance, castor::stager::FilesDeleted** var) {
+    *var = instance->request();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_GCRemovedFile_setRequest
+  //----------------------------------------------------------------------------
+  int Cstager_GCRemovedFile_setRequest(castor::stager::GCRemovedFile* instance, castor::stager::FilesDeleted* new_var) {
+    instance->setRequest(new_var);
     return 0;
   }
 

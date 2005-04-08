@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCRemovedFileCnv.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/02/09 17:05:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraGCRemovedFileCnv.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/08 08:50:47 $ $Author: sponcec3 $
  *
  * 
  *
@@ -38,6 +38,14 @@ namespace castor {
   // Forward declarations
   class IObject;
   class ICnvSvc;
+
+  // Forward declarations
+  namespace stager {
+
+    // Forward declarations
+    class GCRemovedFile;
+
+  }; // end of namespace stager
 
   namespace db {
 
@@ -161,6 +169,14 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type FilesDeleted refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepFilesDeleted(castor::stager::GCRemovedFile* obj)
+          throw (castor::exception::Exception, oracle::occi::SQLException);
+
+        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -169,6 +185,15 @@ namespace castor {
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
                              unsigned int type)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type FilesDeleted refered by a given
+         * object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjFilesDeleted(castor::stager::GCRemovedFile* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -208,6 +233,18 @@ namespace castor {
 
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
+
+        /// SQL checkExist statement for member request
+        static const std::string s_checkFilesDeletedExistStatementString;
+
+        /// SQL checkExist statement object for member request
+        oracle::occi::Statement *m_checkFilesDeletedExistStatement;
+
+        /// SQL update statement for member request
+        static const std::string s_updateFilesDeletedStatementString;
+
+        /// SQL update statement object for member request
+        oracle::occi::Statement *m_updateFilesDeletedStatement;
 
       }; // end of class OraGCRemovedFileCnv
 

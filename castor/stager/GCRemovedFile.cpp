@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GCRemovedFile.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/02/09 17:05:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: GCRemovedFile.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/08 08:50:47 $ $Author: sponcec3 $
  *
  * 
  *
@@ -28,6 +28,7 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/stager/FilesDeleted.hpp"
 #include "castor/stager/GCRemovedFile.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -38,13 +39,17 @@
 //------------------------------------------------------------------------------
 castor::stager::GCRemovedFile::GCRemovedFile() throw() :
   m_diskCopyId(0),
-  m_id(0) {
+  m_id(0),
+  m_request(0) {
 };
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::GCRemovedFile::~GCRemovedFile() throw() {
+  if (0 != m_request) {
+    m_request->removeFiles(this);
+  }
 };
 
 //------------------------------------------------------------------------------
@@ -63,6 +68,12 @@ void castor::stager::GCRemovedFile::print(std::ostream& stream,
   stream << indent << "diskCopyId : " << m_diskCopyId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "Request : " << std::endl;
+  if (0 != m_request) {
+    m_request->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
 }
 
 //------------------------------------------------------------------------------

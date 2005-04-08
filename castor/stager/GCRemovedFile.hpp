@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GCRemovedFile.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/02/09 17:05:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: GCRemovedFile.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/08 08:50:48 $ $Author: sponcec3 $
  *
  * 
  *
@@ -39,6 +39,9 @@ namespace castor {
   class ObjectSet;
 
   namespace stager {
+
+    // Forward declarations
+    class FilesDeleted;
 
     /**
      * class GCRemovedFile
@@ -131,6 +134,22 @@ namespace castor {
         m_id = new_var;
       }
 
+      /**
+       * Get the value of m_request
+       * @return the value of m_request
+       */
+      FilesDeleted* request() const {
+        return m_request;
+      }
+
+      /**
+       * Set the value of m_request
+       * @param new_var the new value of m_request
+       */
+      void setRequest(FilesDeleted* new_var) {
+        m_request = new_var;
+      }
+
     private:
 
       /// Id of the DiskCopy reprensenting the deleted file in the catalog
@@ -138,6 +157,8 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
+
+      FilesDeleted* m_request;
 
     }; // end of class GCRemovedFile
 

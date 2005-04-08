@@ -61,7 +61,7 @@ CREATE TABLE FilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, 
 
 /* SQL statements for type GCRemovedFile */
 DROP TABLE GCRemovedFile;
-CREATE TABLE GCRemovedFile (diskCopyId INTEGER, id INTEGER PRIMARY KEY);
+CREATE TABLE GCRemovedFile (diskCopyId INTEGER, id INTEGER PRIMARY KEY, request INTEGER);
 
 /* SQL statements for type GCLocalFile */
 DROP TABLE GCLocalFile;
