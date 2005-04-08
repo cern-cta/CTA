@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2005/04/08 06:44:58 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2005/04/08 07:00:32 $ $Author: sponcec3 $
  *
  *
  *
@@ -770,7 +770,12 @@ void castor::stager::RemoteStagerSvc::filesDeleted
   client.sendRequest(&req, &rh);
   // no need to cleanup files since the ownership of its content
   // was transmitted to req and the deletion of req deleted it !
+  // Actually, req is no more owning the content of files since
+  // there was a copy of it inside sendRequest and the copy took
+  // over. So we even need to clear req to avoid the deletion.
   // Ok, I agree, it's not very nice...
+  // XXX FIX ALL THIS MESS
+  req.files().clear();
 }
 
 // -----------------------------------------------------------------------
