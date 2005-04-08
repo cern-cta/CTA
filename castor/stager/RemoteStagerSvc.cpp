@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2005/04/08 07:59:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2005/04/08 09:13:24 $ $Author: sponcec3 $
  *
  *
  *
@@ -759,6 +759,7 @@ void castor::stager::RemoteStagerSvc::filesDeleted
     castor::stager::GCRemovedFile* file =
       new castor::stager::GCRemovedFile;
     file->setDiskCopyId(**it);
+    file->setRequest(&req);
     // Here the owner ship of files[i] is transmitted to req !
     req.files().push_back(file);
     i++;
