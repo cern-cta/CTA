@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2005/04/07 08:38:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2005/04/08 06:44:58 $ $Author: sponcec3 $
  *
  *
  *
@@ -759,6 +759,7 @@ void castor::stager::RemoteStagerSvc::filesDeleted
        it != diskCopyIds.end();
        it++) {
     files[i].setDiskCopyId(**it);
+    // Here the owner ship of files[i] is transmitted to req !
     req.files().push_back(&(files[i]));
     i++;
   }
@@ -767,8 +768,9 @@ void castor::stager::RemoteStagerSvc::filesDeleted
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteStagerClientTimeout());
   client.sendRequest(&req, &rh);
-  // cleanup
-  delete[](files);
+  // no need to cleanup files since the ownership of its content
+  // was transmitted to req and the deletion of req deleted it !
+  // Ok, I agree, it's not very nice...
 }
 
 // -----------------------------------------------------------------------
