@@ -1106,7 +1106,7 @@ END;
 
 /* PL/SQL method implementing selectFiles2Delete */
 CREATE OR REPLACE PROCEDURE selectFiles2Delete
-(DiskServerName IN VARCHAR,
+(DiskServerName IN VARCHAR2,
  GCLocalFiles OUT castor.GCLocalFiles_Cur) AS
   files "numList";
 BEGIN
