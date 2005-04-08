@@ -254,8 +254,7 @@ int castor::gc::GcDaemon::start()
                it++) {
             clog() << **it << " ";
           }
-          clog() << std::endl << e.getMessage().str()
-                 << std::endl;
+          clog() << std::endl;
         }
         // release memory
         for (std::vector<u_signed64*>::iterator it =
