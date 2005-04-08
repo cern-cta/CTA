@@ -1334,7 +1334,7 @@ END;
 
 /* PL/SQL method implementing selectFiles2Delete */
 CREATE OR REPLACE PROCEDURE selectFiles2Delete
-(DiskServerName IN VARCHAR,
+(DiskServerName IN VARCHAR2,
  GCLocalFiles OUT castor.GCLocalFiles_Cur) AS
   files "numList";
 BEGIN
@@ -1363,6 +1363,7 @@ CREATE OR REPLACE PROCEDURE filesDeletedProc
   cfId NUMBER;
   nb NUMBER;
 BEGIN
+ IF fileIds.COUNT > 0 THEN
   -- Loop over the deleted files
   FOR i in fileIds.FIRST .. fileIds.LAST LOOP
     -- delete the DiskCopy
@@ -1391,6 +1392,7 @@ BEGIN
       END IF;
     END IF;
   END LOOP;
+ END IF;
 END;
 
 /* PL/SQL method implementing getUpdateDone */
