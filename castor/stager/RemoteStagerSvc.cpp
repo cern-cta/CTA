@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2005/04/08 07:00:32 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2005/04/08 07:59:34 $ $Author: sponcec3 $
  *
  *
  *
@@ -752,15 +752,15 @@ void castor::stager::RemoteStagerSvc::filesDeleted
   throw (castor::exception::Exception) {
   // Build the FilesDeletedRequest
   castor::stager::FilesDeleted req;
-  castor::stager::GCRemovedFile* files =
-    new castor::stager::GCRemovedFile[diskCopyIds.size()];
   int i = 0;
   for (std::vector<u_signed64*>::iterator it = diskCopyIds.begin();
        it != diskCopyIds.end();
        it++) {
-    files[i].setDiskCopyId(**it);
+    castor::stager::GCRemovedFile* file =
+      new castor::stager::GCRemovedFile;
+    file->setDiskCopyId(**it);
     // Here the owner ship of files[i] is transmitted to req !
-    req.files().push_back(&(files[i]));
+    req.files().push_back(file);
     i++;
   }
   // Build a response Handler
@@ -769,13 +769,7 @@ void castor::stager::RemoteStagerSvc::filesDeleted
   castor::client::BaseClient client(getRemoteStagerClientTimeout());
   client.sendRequest(&req, &rh);
   // no need to cleanup files since the ownership of its content
-  // was transmitted to req and the deletion of req deleted it !
-  // Actually, req is no more owning the content of files since
-  // there was a copy of it inside sendRequest and the copy took
-  // over. So we even need to clear req to avoid the deletion.
-  // Ok, I agree, it's not very nice...
-  // XXX FIX ALL THIS MESS
-  req.files().clear();
+  // was transmitted to req and the deletion of req will delete it !
 }
 
 // -----------------------------------------------------------------------
