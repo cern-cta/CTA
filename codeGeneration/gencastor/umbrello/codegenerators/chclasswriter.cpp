@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2005/03/18 13:58:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2005/04/08 08:52:10 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -422,7 +422,9 @@ void CHClassWriter::writeVectorAttributeAccessorMethods (QString fieldClassName,
   }
   // always allow getting the list of stuff
   writeDocumentation
-    ("Get the list of " + fieldClassName + " objects held by " + fieldName,
+    ("Get the list of " + fieldClassName + " objects held by " +
+     fieldName + ". Note that the caller is responsible " +
+     "for the deletion of the returned vector.",
      "", "", stream);
   stream << getIndent() << "int " << m_prefix << fieldName
          << "(" << convertType (m_classInfo->className,
