@@ -1,5 +1,5 @@
 /*
- * $Id: GcSvcThread.cpp,v 1.3 2005/03/31 15:13:35 jdurand Exp $
+ * $Id: GcSvcThread.cpp,v 1.4 2005/04/08 09:19:47 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.3 $ $Date: 2005/03/31 15:13:35 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.4 $ $Date: 2005/04/08 09:19:47 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -141,7 +141,7 @@ namespace castor {
   namespace stager {
 
     /**
-     * Handles a FilesDelted request and replies to client.
+     * Handles a FilesDeleted request and replies to client.
      * @param req the request to handle
      * @param client the client where to send the response
      * @param svcs the Services object to use
@@ -164,6 +164,9 @@ namespace castor {
         /* -------------------- */
         // cannot return 0 since we check the type before calling this method
         uReq = dynamic_cast<castor::stager::FilesDeleted*> (req);
+
+        // Fills it with files to be deleted
+        svcs->fillObj(&ad, req, castor::OBJ_GCRemovedFile);
 
         /* Invoking the method                */
         /* ---------------------------------- */
