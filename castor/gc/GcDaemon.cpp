@@ -266,7 +266,8 @@ int castor::gc::GcDaemon::start()
         exit(0); // end child
       }
     }
-    clog() << "GC check finished on " << diskServerName
+    clog() << DEBUG
+           << "GC check finished on " << diskServerName
            << " - sleeping " << gcinterval << " sec..."
            << std::endl;
     
