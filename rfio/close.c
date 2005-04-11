@@ -1,5 +1,5 @@
 /*
- * $Id: close.c,v 1.1 2005/04/11 15:03:05 jdurand Exp $
+ * $Id: close.c,v 1.2 2005/04/11 15:34:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: close.c,v $ $Revision: 1.1 $ $Date: 2005/04/11 15:03:05 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: close.c,v $ $Revision: 1.2 $ $Date: 2005/04/11 15:34:04 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* close.c      Remote File I/O - close a file                          */
@@ -20,28 +20,48 @@ static char sccsid[] = "@(#)$RCSfile: close.c,v $ $Revision: 1.1 $ $Date: 2005/0
 
 #include <stdlib.h>            /* malloc prototype */
 
+#if defined(CASTOR_ON_GLOBAL_FILESYSTEM)
+#include "rfio_lcastorfdt.h"
+#endif
+
 /*
  * remote file close
  */
 int DLL_DECL rfio_close(s)
 int     s;
 {
-   char     rfio_buf[BUFSIZ];
-   int      s_index;
+  char     rfio_buf[BUFSIZ];
+  int      s_index;
+  int rc;
+#if defined(CASTOR_ON_GLOBAL_FILESYSTEM)
+  int internal_fd= -1;
+  int internal_index;
+#endif
 
-   /* Remote file ? */
-   if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) != -1)
-   {
-      if (rfilefdt[s_index]->version3 == 1)
-      {
-	 /* New V3 stream protocol for sequential transfers */
-	 return(rfio_close_v3(s));
-      }
-      else
-	 return(rfio_close_v2(s));
-   }
-   else
-      return(rfio_close_v2(s));
+  /* Remote file ? */
+  if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) != -1) {
+    if (rfilefdt[s_index]->version3 == 1) {
+      /* New V3 stream protocol for sequential transfers */
+      rc = rfio_close_v3(s);
+    } else {
+      rc = rfio_close_v2(s);
+    }
+  } else {
+    rc = rfio_close_v2(s);
+  }
+
+#if defined(CASTOR_ON_GLOBAL_FILESYSTEM)
+  /* Was that file associated with an internal file descriptor ? */
+  if ((internal_index = rfio_lcastorfdt_findentry(s,&internal_fd,FINDLCASTOR_WITH_SCAN)) >= 0) {
+    if (internal_fd >= 0) {
+      /* yes: close this fd as well */
+      rfio_close(internal_fd);
+      /* and clean the table */
+      rfio_lcastorfdt_freeentry(internal_index);
+    }
+  }
+#endif
+
 }
 
 int rfio_close_v2(s)    

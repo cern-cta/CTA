@@ -38,7 +38,9 @@ static char sccsid[] = "@(#)rfio_HsmIf.c,v 1.58 2004/02/10 15:05:17 CERN/IT/PDP/
 #include "stage_api.h"
 #include "rfio.h"
 #include "osdep.h"
-
+#if defined(CASTOR_ON_GLOBAL_FILESYSTEM)
+#include "rfio_lcastorfdt.h"
+#endif
 
 #if defined(CNS_ROOT)
 typedef struct CnsFiles {
@@ -441,6 +443,17 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
 
 #if defined(CNS_ROOT)
     if ( rfio_HsmIf_IsCnsFile(path) ) {
+        char *mover_protocol_rfio = MOVER_PROTOCOL_RFIO;
+#if defined(CASTOR_ON_GLOBAL_FILESYSTEM)
+	char *mover_protocol_alt;
+	char *got_protocol;
+        /*
+         * Get the protocol used, default is MOVER_PROTOCOL_RFIO, i.e. "rfio"
+         */
+	if ((mover_protocol_alt = getenv("MOVER_PROTOCOL_RFIO")) != NULL) {
+	  mover_protocol_rfio = mover_protocol_alt;
+	}
+#endif
         /*
          * Check if an existing file is going to be updated
          */
@@ -469,7 +482,7 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
           TRACE(3,"rfio","Calling stage_open with: %s %x %x",
                 path, flags, mode);
           rc = stage_open(NULL,
-                          MOVER_PROTOCOL_RFIO,
+                          mover_protocol_rfio,
                           path,
                           flags,
                           mode,
@@ -500,11 +513,83 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
             return -1;
           }
 
-	  if (mode64) {
-	    rc = rfio_open64(url, flags, mode);
+#if defined(CASTOR_ON_GLOBAL_FILESYSTEM)
+	  got_protocol = response->protocol;
+	  if (strcmp(response->protocol,"file") == 0) {
+	    char *got_server;
+	    int got_port;
+	    char *got_filename;
+	    int internal_fd;
+	    char *rfio_path;
+	    int index;
+
+	    /* We are access a CASTOR file using a global filesystem */
+
+	    if ((rfio_path = (char *) malloc(strlen("rfio://") +
+					     strlen(response->server) +
+					     strlen(":") +
+					     strlen("2147483647") +
+					     strlen("/") +
+					     strlen(response->filename) + 1)) == NULL) {
+	      serrno = errno;
+	      free(response);
+	      return -1;
+	    }
+	    sprintf(rfio_path,"rfio://%s:%d/%s",response->server,response->port,response->filename);
+
+	    /* Instanciate the wrapper by opening internal remote connection */
+	    if (mode64) {
+	      internal_fd = rfio_open64(rfio_path, flags, mode);
+	    } else {
+	      internal_fd = rfio_open(rfio_path, flags, mode);
+	    }
+
+	    free(rfio_path);
+
+	    if (internal_fd < 0) {
+	      free(response);
+	      return -1;
+	    }
+
+	    /* Try to open the local file */
+	    if (mode64) {
+	      rc = rfio_open64(response->filename, flags, mode);
+	    } else {
+	      rc = rfio_open(response->filename, flags, mode);
+	    }
+
+	    if (rc < 0) {
+	      /* Oups */
+	      rfio_close(internal_fd);
+	    } else {
+	      /* Try to remember the tuple {user_fd=rc,internal_fd=internal_fd} */
+	      if ((index = rfio_lcastorfdt_allocentry(rc)) < 0) {
+		/* Oups */
+		rfio_close(internal_fd);
+		rfio_close(rc);
+		serrno = SEINTERNAL;
+		rc = -1;
+	      } else {
+		/* Fill the tuple in our internal table */
+		if (rfio_lcastorfdt_fillentry(index,rc,internal_fd) < 0) {
+		  /* Oups */
+		  rfio_close(internal_fd);
+		  rfio_close(rc);
+		  serrno = SEINTERNAL;
+		  rc = -1;
+		}
+	      }
+	    }
 	  } else {
-	    rc = rfio_open(url, flags, mode);
+#endif /* defined(CASTOR_ON_GLOBAL_FILESYSTEM) */
+	    if (mode64) {
+	      rc = rfio_open64(url, flags, mode);
+	    } else {
+	      rc = rfio_open(url, flags, mode);
+	    }
+#if defined(CASTOR_ON_GLOBAL_FILESYSTEM)
 	  }
+#endif /* defined(CASTOR_ON_GLOBAL_FILESYSTEM) */
           free(response);
           free(url); 
 
@@ -610,6 +695,17 @@ int DLL_DECL rfio_HsmIf_open_limbysz(const char *path, int flags, mode_t mode, u
 
 #if defined(CNS_ROOT)
     if ( rfio_HsmIf_IsCnsFile(path) ) {
+        char *mover_protocol_rfio = MOVER_PROTOCOL_RFIO;
+#if defined(CASTOR_ON_GLOBAL_FILESYSTEM)
+	char *mover_protocol_alt;
+	char *got_protocol;
+        /*
+         * Get the protocol used, default is MOVER_PROTOCOL_RFIO, i.e. "rfio"
+         */
+	if ((mover_protocol_alt = getenv("MOVER_PROTOCOL_RFIO")) != NULL) {
+	  mover_protocol_rfio = mover_protocol_alt;
+	}
+#endif
         /*
          * Check if an existing file is going to be updated
          */
@@ -639,7 +735,7 @@ int DLL_DECL rfio_HsmIf_open_limbysz(const char *path, int flags, mode_t mode, u
           TRACE(3,"rfio","Calling stage_open with: %s %x %x",
                 path, flags, mode);
           rc = stage_open(NULL,
-                          MOVER_PROTOCOL_RFIO,
+                          mover_protocol_rfio,
                           path,
                           flags,
                           mode,
@@ -670,11 +766,83 @@ int DLL_DECL rfio_HsmIf_open_limbysz(const char *path, int flags, mode_t mode, u
             return -1;
           }
 
-	  if (mode64) {
-	    rc = rfio_open64(url, flags, mode);
+#if defined(CASTOR_ON_GLOBAL_FILESYSTEM)
+	  got_protocol = response->protocol;
+	  if (strcmp(response->protocol,"file") == 0) {
+	    char *got_server;
+	    int got_port;
+	    char *got_filename;
+	    int internal_fd;
+	    char *rfio_path;
+	    int index;
+
+	    /* We are access a CASTOR file using a global filesystem */
+
+	    if ((rfio_path = (char *) malloc(strlen("rfio://") +
+					     strlen(response->server) +
+					     strlen(":") +
+					     strlen("2147483647") +
+					     strlen("/") +
+					     strlen(response->filename) + 1)) == NULL) {
+	      serrno = errno;
+	      free(response);
+	      return -1;
+	    }
+	    sprintf(rfio_path,"rfio://%s:%d/%s",response->server,response->port,response->filename);
+
+	    /* Instanciate the wrapper by opening internal remote connection */
+	    if (mode64) {
+	      internal_fd = rfio_open64(rfio_path, flags, mode);
+	    } else {
+	      internal_fd = rfio_open(rfio_path, flags, mode);
+	    }
+
+	    free(rfio_path);
+
+	    if (internal_fd < 0) {
+	      free(response);
+	      return -1;
+	    }
+
+	    /* Try to open the local file */
+	    if (mode64) {
+	      rc = rfio_open64(response->filename, flags, mode);
+	    } else {
+	      rc = rfio_open(response->filename, flags, mode);
+	    }
+
+	    if (rc < 0) {
+	      /* Oups */
+	      rfio_close(internal_fd);
+	    } else {
+	      /* Try to remember the tuple {user_fd=rc,internal_fd=internal_fd} */
+	      if ((index = rfio_lcastorfdt_allocentry(rc)) < 0) {
+		/* Oups */
+		rfio_close(internal_fd);
+		rfio_close(rc);
+		serrno = SEINTERNAL;
+		rc = -1;
+	      } else {
+		/* Fill the tuple in our internal table */
+		if (rfio_lcastorfdt_fillentry(index,rc,internal_fd) < 0) {
+		  /* Oups */
+		  rfio_close(internal_fd);
+		  rfio_close(rc);
+		  serrno = SEINTERNAL;
+		  rc = -1;
+		}
+	      }
+	    }
 	  } else {
-	    rc = rfio_open(url, flags, mode);
+#endif /* defined(CASTOR_ON_GLOBAL_FILESYSTEM) */
+	    if (mode64) {
+	      rc = rfio_open64(url, flags, mode);
+	    } else {
+	      rc = rfio_open(url, flags, mode);
+	    }
+#if defined(CASTOR_ON_GLOBAL_FILESYSTEM)
 	  }
+#endif /* defined(CASTOR_ON_GLOBAL_FILESYSTEM) */
           free(response);
           free(url); 
 
