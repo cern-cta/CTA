@@ -273,6 +273,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define UseExpert		YES
 #define UseMaui			YES
 #define UseStorageTank		NO
+#define UseCastorOnGlobalFileSystem	NO
 
 /* 
  * The following flag enables rfio client interface
