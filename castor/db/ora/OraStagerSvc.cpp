@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.151 $ $Release$ $Date: 2005/04/07 13:05:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.152 $ $Release$ $Date: 2005/04/12 16:14:53 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1438,7 +1438,7 @@ castor::db::ora::OraStagerSvc::selectSvcClass
       new castor::stager::SvcClass();
     result->setId((u_signed64)rset->getDouble(1));
     result->setNbDrives(rset->getInt(2));
-    result->setDefaultFileSize(rset->getInt(3));
+    result->setDefaultFileSize((u_signed64)rset->getDouble(3));
     result->setMaxReplicaNb(rset->getInt(4));
     result->setReplicationPolicy(rset->getString(5));
     result->setGcPolicy(rset->getString(6));
