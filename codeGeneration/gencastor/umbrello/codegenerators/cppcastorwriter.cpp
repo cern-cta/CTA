@@ -79,13 +79,15 @@ QString CppCastorWriter::computeFileName(UMLClassifier* concept, QString ext) {
   if (!package.isEmpty()) {
     name = package + "." + concept->getName();
     package.replace(QRegExp("\\."), "/");
+    package.replace(QString("::"),"/");
     package = "/" + package;
   } else {
     name = concept->getName();
   }
   
-  // Convert all "." to "/" : Platform-specific path separator
+  // Convert all "." and "::" to "/" : Platform-specific path separator
   name.replace(QRegExp("\\."),"/"); // Simple hack!
+  name.replace(QString("::"),"/");
   
   // if a package name exists check the existence of the package directory
   if (!package.isEmpty()) {

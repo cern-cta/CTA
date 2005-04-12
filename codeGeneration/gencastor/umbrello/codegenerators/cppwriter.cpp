@@ -22,6 +22,8 @@
 #include "cppcppclasswriter.h"
 #include "cpphoracnvwriter.h"
 #include "cppcpporacnvwriter.h"
+#include "cpphmycnvwriter.h"
+#include "cppcppmycnvwriter.h"
 //#include "cpphodbccnvwriter.h"
 //#include "cppcppodbccnvwriter.h"
 #include "cpphstreamcnvwriter.h"
@@ -42,6 +44,8 @@ CppWriter::CppWriter( UMLDoc *parent, const char *name ) :
   cppw = new CppCppClassWriter(m_doc, ".cpp file generator");
   orahw = new CppHOraCnvWriter(m_doc, "Oracle converter generator");
   oracppw = new CppCppOraCnvWriter(m_doc, "Oracle converter generator");
+  myhw = new CppHMyCnvWriter(m_doc, "MySql converter generator");
+  mycppw = new CppCppMyCnvWriter(m_doc, "MySql converter generator");
   //odbchw = new CppHOdbcCnvWriter(m_doc, "Odbc converter generator");
   //odbccppw = new CppCppOdbcCnvWriter(m_doc, "Odbc converter generator");
   streamhw = new CppHStreamCnvWriter(m_doc, "Stream converter generator");
@@ -52,13 +56,14 @@ CppWriter::CppWriter( UMLDoc *parent, const char *name ) :
 
 CppWriter::~CppWriter() {
   // delete Generators
-  // Create all needed generators
   delete hppw;
   delete hw;
   delete cw;
   delete cppw;
   delete orahw;
   delete oracppw;
+  delete myhw;
+  delete mycppw;
   //delete odbchw;
   //delete odbccppw;
   delete streamhw;
@@ -90,6 +95,8 @@ void CppWriter::writeClass(UMLClassifier *c) {
     configGenerator(cppw);
     configGenerator(orahw);
     configGenerator(oracppw);
+    configGenerator(myhw);
+    configGenerator(mycppw);
     //configGenerator(odbchw);
     //configGenerator(odbccppw);
     configGenerator(streamhw);
@@ -235,6 +242,13 @@ void CppWriter::writeClass(UMLClassifier *c) {
                         << "\nPlease check the access rights" << std::endl;
               return;
             }
+            QDir packageDirMysql(getPolicy()->getOutputDirectory().absPath() + "/castor/db/mysql");
+            if (! (packageDirMysql.exists() || packageDirMysql.mkdir(packageDirMysql.absPath()) ) ) {
+              std::cerr << "Cannot create the package folder "
+                        << packageDirMysql.absPath().ascii()
+                        << "\nPlease check the access rights" << std::endl;
+              return;
+            }
             //           QDir packageDirOdbc(getPolicy()->getOutputDirectory().absPath() + "/castor/db/odbc");
             //           if (! (packageDirOdbc.exists() || packageDirOdbc.mkdir(packageDirOdbc.absPath()) ) ) {
             //             std::cerr << "Cannot create the package folder "
@@ -242,11 +256,14 @@ void CppWriter::writeClass(UMLClassifier *c) {
             //                       << "\nPlease check the access rights" << std::endl;
             //             return;
             //           }
-            // run generation
+            
+	    // run generation
             int i = fileName.findRev('/') + 1;
             QString file = fileName.right(fileName.length()-i);
             runGenerator(orahw, "castor/db/ora/Ora" + file + "Cnv.hpp", c);
             runGenerator(oracppw, "castor/db/ora/Ora" + file + "Cnv.cpp", c);
+            runGenerator(myhw, "castor/db/mysql/My" + file + "Cnv.hpp", c);
+            runGenerator(mycppw, "castor/db/mysql/My" + file + "Cnv.cpp", c);
             //           runGenerator(odbchw, "castor/db/odbc/Odbc" + file + "Cnv.hpp", c);
             //           runGenerator(odbccppw, "castor/db/odbc/Odbc" + file + "Cnv.cpp", c);
           }

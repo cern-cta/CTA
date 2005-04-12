@@ -80,19 +80,21 @@ QString SimpleCodeGenerator::findFileName(UMLClassifier* concept, QString ext) {
         if (!package.isEmpty()) {
                 name = package + "." + concept->getName();
                 package.replace(QRegExp("\\."), "/");
+                package.replace(QString("::"), "/");
                 package = "/" + package;
         } else {
                 name = concept->getName();
         }
 
-        // Convert all "." to "/" : Platform-specific path separator
+        // Convert all "." and "::" to "/" : Platform-specific path separator
         name.replace(QRegExp("\\."),"/"); // Simple hack!
+        name.replace(QString("::"),"/");
         if (ext != ".java" && ext != ".pm" && ext != ".py" &&
             ext != ".cpp" && ext != ".hpp" && ext != ".h") {
                 package = package.lower();
                 name = name.lower();
         }
-
+	
         // if a package name exists check the existence of the package directory
         if (!package.isEmpty()) {
                 QDir packageDir(m_outputDirectory.absPath() + package);
