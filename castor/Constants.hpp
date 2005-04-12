@@ -127,7 +127,10 @@ namespace castor {
     SVC_STREAMCNV = 6,
     SVC_ORASTAGERSVC = 7,
     SVC_REMOTESTAGERSVC = 8,
-    SVC_ORAQUERYSVC = 9
+    SVC_ORAQUERYSVC = 9,
+    SVC_MYCNV = 10,
+    SVC_MYSTAGERSVC = 11,
+    SVC_MYQUERYSVC = 12
   };
 
   /**
@@ -137,7 +140,8 @@ namespace castor {
     REP_INVALID = 0,
     REP_ORACLE = 1,
     REP_ODBC = 2,
-    REP_STREAM = 3
+    REP_STREAM = 3,
+    REP_MYSQL = 4
   };
 
   /**
@@ -161,13 +165,13 @@ namespace castor {
    * Names of the differents Services, used to display
    * correctly the ServicesIds enum
    */
-  extern const char* ServicesIdStrings[10];
+  extern const char* ServicesIdStrings[13];
 
   /**
    * Names of the differents representations, used to display
    * correctly the RepresentationsIds enum
    */
-  extern const char* RepresentationsIdStrings[4];
+  extern const char* RepresentationsIdStrings[5];
     
 #ifdef __cplusplus
 } // end of namespace castor
