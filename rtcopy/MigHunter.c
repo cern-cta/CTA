@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.17 $ $Release$ $Date: 2005/03/31 08:59:25 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.18 $ $Release$ $Date: 2005/04/12 15:58:50 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.17 $ $Release$ $Date: 2005/03/31 08:59:25 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.18 $ $Release$ $Date: 2005/04/12 15:58:50 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -805,9 +805,11 @@ int streamCreator(
 }
 
 int startStreams(
-                 svcClass
+                 svcClass,
+                 initialSizeToTransfer
                  )
      struct Cstager_SvcClass_t *svcClass;
+     u_signed64 initialSizeToTransfer;
 {
   struct Cstager_TapePool_t **tapePoolArray = NULL, *newTapePool;
   struct Cstager_Stream_t **streamArray = NULL;
@@ -816,6 +818,7 @@ int startStreams(
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  u_signed64 sz;
   enum Cstager_StreamStatusCodes_t streamStatus;
   char *tapePoolName;
   int rc, i, j, nbTapePools = 0, nbStreams = 0;
@@ -848,12 +851,28 @@ int startStreams(
     Cstager_TapePool_name(tapePoolArray[i],(CONST char **)&tapePoolName);
     for ( j=0; j<nbStreams; j++ ) {
       Cstager_Stream_status(streamArray[j],&streamStatus);
-      if ( streamStatus == STREAM_CREATED ) {
+      Cstager_Stream_initialSizeToTransfer(streamArray[j],&sz);
+      if ( (streamStatus == STREAM_CREATED) ||
+           ((sz == 0) && (initialSizeToTransfer>0)) ) {
         if ( runAsDaemon == 0 ) {
           fprintf(stdout,"Start %d stream for tape pool %s\n",
                   j,tapePoolName);
         }
-        Cstager_Stream_setStatus(streamArray[j],STREAM_PENDING);
+        if ( streamStatus == STREAM_CREATED ) {
+          Cstager_Stream_setStatus(streamArray[j],STREAM_PENDING);
+        }
+        /*
+         * We don't know how much has been migrated so far because
+         * initialSizeToTransfer is never decremented. However, giving
+         * the initialSizeToTransfer for the new migr candidates should
+         * be a reasonable guess for the next vmgr_gettape()
+         */
+        if ( initialSizeToTransfer > 0 ) {
+          Cstager_Stream_setInitialSizeToTransfer(
+                                                  streamArray[j],
+                                                  initialSizeToTransfer
+                                                  );
+        }
         iObj = Cstager_Stream_getIObject(streamArray[j]);
         rc = C_Services_updateRep(
                                   dbSvc,
@@ -1116,6 +1135,28 @@ void freeFileClassArray(
   return;
 }
 
+void freeMigrCandidates(
+                        migrCandidates,
+                        nbMigrCandidates
+                        )
+     struct Cstager_TapeCopy_t **migrCandidates;
+     int nbMigrCandidates;
+{
+  int i;
+  struct Cstager_CastorFile_t *castorFile;
+  
+  if ( migrCandidates == NULL ) return;
+  
+  for ( i=0; i<nbMigrCandidates; i++ ) {
+    castorFile = NULL;
+    Cstager_TapeCopy_castorFile(migrCandidates[i],&castorFile);
+    if ( castorFile != NULL ) Cstager_CastorFile_delete(castorFile);
+    else Cstager_TapeCopy_delete(migrCandidates[i]);
+  }
+  free(migrCandidates);
+  return;
+}
+
 int addMigrationCandidatesToStreams(
                                     svcClass,
                                     tapeCopyArray,
@@ -1316,8 +1357,8 @@ int main(int argc, char *argv[])
         }
         continue;
       }
-      if ( migrCandidates != NULL ) free(migrCandidates);
-      freeFileClassArray(nsFileClassArray);
+      freeMigrCandidates(migrCandidates,nbMigrCandidates);
+      freeFileClassArray(nsFileClassArray,nbMigrCandidates);
       migrCandidates = NULL;
       nsFileClassArray = NULL;
       nbMigrCandidates = 0;
@@ -1411,7 +1452,8 @@ int main(int argc, char *argv[])
         }
       }
       /*
-       * Release the lock on streams
+       * Release the lock on streams. The adding of migration
+       * candidates can be a lenghty process...
        */
       rc = C_Services_commit(dbSvc,iAddr);
       if ( rc == -1 ) {
@@ -1448,18 +1490,16 @@ int main(int argc, char *argv[])
           fprintf(stdout,"Start the streams for %s\n",argv[i]);
         }
       }
-      if ( nbNewStreams > 0 ) {
-        rc = startStreams(svcClass);
-        if ( rc == -1 ) {
-          if ( runAsDaemon == 0 ) {
-            fprintf(stderr,"startStreams(%s): %s\n",
-                    argv[i],sstrerror(serrno));
-          } else {
-            LOG_SYSCALL_ERR("startStreams()");
-          }
-          (void)C_Services_rollback(dbSvc,iAddr);
-          continue;
+      rc = startStreams(svcClass,initialSizeToTransfer);
+      if ( rc == -1 ) {
+        if ( runAsDaemon == 0 ) {
+          fprintf(stderr,"startStreams(%s): %s\n",
+                  argv[i],sstrerror(serrno));
+        } else {
+          LOG_SYSCALL_ERR("startStreams()");
         }
+        (void)C_Services_rollback(dbSvc,iAddr);
+        continue;
       }
       rc = C_Services_commit(dbSvc,iAddr);
       if ( rc == -1 ) {
