@@ -1,5 +1,5 @@
 /*
- * $Id: close.c,v 1.2 2005/04/11 15:34:04 jdurand Exp $
+ * $Id: close.c,v 1.3 2005/04/12 19:17:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: close.c,v $ $Revision: 1.2 $ $Date: 2005/04/11 15:34:04 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: close.c,v $ $Revision: 1.3 $ $Date: 2005/04/12 19:17:42 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* close.c      Remote File I/O - close a file                          */
@@ -61,7 +61,7 @@ int     s;
     }
   }
 #endif
-
+  return(rc);
 }
 
 int rfio_close_v2(s)    
