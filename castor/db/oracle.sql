@@ -858,9 +858,12 @@ BEGIN
          AND DiskServer.status = 0; -- PRODUCTION
    ELSE
      -- Only DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
-     update SubRequest SET parent = (SELECT id FROM SubRequest where diskCopy = dci(1)),
-                           lastModificationTime = getTime() WHERE id = rsubreqId;
-     result := 0;  -- no nschedule
+     UPDATE SubRequest
+        SET parent = (SELECT id FROM SubRequest WHERE diskCopy = dci(1)),
+            status = 5, -- WAITSUBREQ
+            lastModificationTime = getTime()
+      WHERE id = rsubreqId;
+     result := 0;  -- no schedule
    END IF;
  ELSE
    -- In this case, schedule for recall
