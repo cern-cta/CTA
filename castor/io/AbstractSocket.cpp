@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AbstractSocket.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/08/19 14:44:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: AbstractSocket.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/04/14 15:15:58 $ $Author: sponcec3 $
  *
  *
  *
@@ -256,9 +256,11 @@ void castor::io::AbstractSocket::readBuffer(const unsigned int magic,
   // Now read the data
   n = header[1];
   *buf = (char*) malloc(n);
-  if (netread(m_socket, *buf, n) != n) {
+  if (int n2 = netread(m_socket, *buf, n) != n) {
     castor::exception::Exception ex(serrno);
-    ex.getMessage() << "Unable to receive data";
+    ex.getMessage() << "Unable to receive all data. "
+		    << "Got " << n2 << " bytes instead of "
+		    << n << ".";
     throw ex;
   }
 }
