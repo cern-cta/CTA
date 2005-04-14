@@ -633,7 +633,9 @@ STGSVCTESTCPPDIR = stgSvc
 #if BuildSecurity
 SECURITYDIR=security
 #endif
-
+#if BuildSchedPlugin
+SCHEDULERDIR=scheduler
+#endif
 
 /* Those directories are always defined because we always build at least */
 /* COMMON library */
