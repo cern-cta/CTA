@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Param.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/05 13:36:36 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Param.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/04/14 12:54:03 $ $Author: sponcec3 $
  *
  * A parameter for the DLF (Distributed Logging System)
  *
@@ -79,7 +79,37 @@ namespace castor {
       /**
        * Constructor for int
        */
-      Param(char* name, int value) :
+      Param(char* name, const long int value) :
+        m_deallocate(false) {
+        m_cParam.name = name;
+        m_cParam.type = DLF_MSG_PARAM_INT;
+        m_cParam.par.par_int = value;
+      };
+
+      /**
+       * Constructor for int
+       */
+      Param(char* name, const long unsigned int value) :
+        m_deallocate(false) {
+        m_cParam.name = name;
+        m_cParam.type = DLF_MSG_PARAM_INT;
+        m_cParam.par.par_int = value;
+      };
+
+      /**
+       * Constructor for int
+       */
+      Param(char* name, const int value) :
+        m_deallocate(false) {
+        m_cParam.name = name;
+        m_cParam.type = DLF_MSG_PARAM_INT;
+        m_cParam.par.par_int = value;
+      };
+
+      /**
+       * Constructor for int
+       */
+      Param(char* name, const unsigned int value) :
         m_deallocate(false) {
         m_cParam.name = name;
         m_cParam.type = DLF_MSG_PARAM_INT;

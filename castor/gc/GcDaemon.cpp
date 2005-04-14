@@ -66,11 +66,29 @@ castor::gc::GcDaemon::GcDaemon() : m_foreground(false) {
   // XXX its length has currently to be hardcoded
   // XXX wherever you use it !!!
 
-  Cuuid_create(&m_uuid);
-  // Initializes Logging
+  // Initializes Logging (old version)
   initLog("GC", SVC_DLFMSG);
-  // Use our uuid to log
-  clog() << m_uuid;
+
+  // Initializes Logging
+  castor::dlf::Message messages[] =
+    {{ 0, " - "},  // Reserved for old version
+     { 1, "Starting Garbage Collector Daemon"},
+     { 2, "Could not get RemoteStagerSvc"},
+     { 3, "Got a bad RemoteStagerSvc"},
+     { 4, "Cannot get disk server name"},
+     { 5, "Garbage Collector started successfully"},
+     { 6, "Checking for garbage"},
+     { 7, "Sleep interval changed"},
+     { 8, "Error caught while looking for garbage files"},
+     { 9, "Sleeping"},
+     {10, "Found files to garbage. Starting removal"},
+     {11, "Removed file successfully"},
+     {12, "Failed to remove file"},
+     {13, "Summary of files removed"},
+     {14, "Error caught while informing stager of the files deleted"},
+     {15, "No garbage files found"},
+     {-1, ""}};
+  castor::dlf::dlf_init("GC", messages);
 }
 
 //------------------------------------------------------------------------------
@@ -90,8 +108,8 @@ castor::gc::GcDaemon::~GcDaemon() throw() {
 int castor::gc::GcDaemon::start()
   throw (castor::exception::Exception) {
 
-
-  clog() << USAGE << " +++ Starting Garbage Collector Daemon... " << std::endl;
+  // "Starting Garbage Collector Daemon" message
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1);
   // Switch to daemon mode
   int rc;
   if (!m_foreground) {
@@ -105,16 +123,18 @@ int castor::gc::GcDaemon::start()
     castor::BaseObject::services()->
     service("RemoteStagerSvc", castor::SVC_REMOTESTAGERSVC);
   if (0 == svc) {
-    clog() << ERROR << "Could not get RemoteStagerSvc"
-           << std::endl;
+    // "Could not get RemoteStagerSvc" message
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2);
     return -1;
   }
   castor::stager::IStagerSvc *stgSvc =
     dynamic_cast<castor::stager::IStagerSvc*>(svc);
   if (0 == stgSvc) {
-    clog() << "ERROR " << "Got a bad RemoteStagerSvc - id: "
-           << svc->id() << " name: "
-           << svc->name() << std::endl;
+    // "Got a bad RemoteStagerSvc" message
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("ID", svc->id()),
+       castor::dlf::Param("Name", svc->name())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 2, params);
     return -1;
   }
 
@@ -130,7 +150,8 @@ int castor::gc::GcDaemon::start()
     if ( (strcmp(gctarget, "localhost")) == 0) { gctarget = gcglobalFS; }
   } else { // get real hostname
     if (gethostname(diskServerName, CA_MAXHOSTNAMELEN) != 0) {
-      clog() << ERROR << "Cannot get disk server name." << std::endl;
+      // "Cannot get disk server name" message
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4);
       return (-1);
     }
     gctarget = diskServerName;
@@ -152,22 +173,22 @@ int castor::gc::GcDaemon::start()
   else
     gcinterval = GCINTERVAL;
 
-  // Log to DLF
-  clog() << USAGE << "Garbage Collector started on " << gctarget
-         << "; Sleep interval: " << gcinterval << " sec."
-         << std::endl;
-
-
+  // "Garbage Collector started successfully" message
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("Machine", gctarget),
+     castor::dlf::Param("Sleep Interval", gcinterval)};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 5, 2, params);
 
   // Main loop
   // XXX need to wake up on UDP with a time out ?
   // XXX To be discussed with Ben that has the code to do that
 
   for (;;) {
-    clog() << DEBUG
-           << " Checking garbage on " << diskServerName
-	   << std::endl;
-
+    // "Checking for garbage" message
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Machine", gctarget)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 6, 1, params);
+    
     // get new sleep interval if the environment has been changed
     int  gcintervalnew;
     if ((p = getenv ("GC_INTERVAL")) || (p = getconfent ("GC", "INTERVAL", 0)))
@@ -175,7 +196,11 @@ int castor::gc::GcDaemon::start()
     else gcintervalnew = gcinterval;
     if ( gcintervalnew != gcinterval) {
       gcinterval = gcintervalnew;
-      clog() << USAGE << " New sleep interval: " << gcinterval << " sec." << std::endl;
+      // "Sleep interval changed" message
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Machine", gctarget),
+	 castor::dlf::Param("Sleep Interval", gcinterval)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 7, 2, params);
     }
 
     // Retrieve list of files to delete
@@ -183,19 +208,24 @@ int castor::gc::GcDaemon::start()
     try {
       files2Delete = stgSvc->selectFiles2Delete(diskServerName);
     } catch (castor::exception::Exception e) {
-      clog() << ERROR << "Error caught while looking for garbage files.\n"
-	     << e.getMessage().str() << std::endl;
-      clog() << DEBUG
-	     << "Sleeping " << gcinterval << " sec..."
-	     << std::endl;
+      // "Error caught while looking for garbage files" message
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Message", e.getMessage().str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 8, 1, params);
+      // "Sleeping" message
+      castor::dlf::Param params2[] =
+	{castor::dlf::Param("Duration", gcinterval)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 9, 1, params2);
       sleep(gcinterval);
       continue;
     }
 
     // Fork a child if there are files to delete
     if (0 < files2Delete->size()) {
-      clog() << USAGE << files2Delete->size()
-	     << " garbage files found. Starting removal..." << std::endl;
+      // "Found files to garbage. Starting removal" message
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Nb files", files2Delete->size())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 10, 1, params);
       
       // Loop over the files and delete them
       std::vector<u_signed64*> deletedFiles;
@@ -212,58 +242,60 @@ int castor::gc::GcDaemon::start()
 	  u_signed64 gcfilesize = gcRemoveFilePath((*it)->fileName());
 	  gcremovedsize =+ gcfilesize;
 	  gcfilesremoved++;
-	  clog() << DEBUG << "Removed " << (*it)->fileName() << ": "
-		 << gcfilesize << " KB"
-		 << std::endl;
+	  // "Removed file successfully" message
+	  castor::dlf::Param params[] =
+	    {castor::dlf::Param("File name", (*it)->fileName()),
+	     castor::dlf::Param("File size", gcfilesize)};
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 11, 2, params);
 	  // Add the file to the list of deleted ones
 	  u_signed64 *gcfileid = new u_signed64((*it)->diskCopyId());
 	  deletedFiles.push_back(gcfileid);
 	} catch (castor::exception::Exception e) {
 	  gcfilesfailed++;
-	  clog() << ERROR << "Failed to remove "
-		 << (*it)->fileName() << "\n"
-		 << e.getMessage().str() << std::endl;
+	  // "Failed to remove file" message
+	  castor::dlf::Param params[] =
+	    {castor::dlf::Param("File name", (*it)->fileName()),
+	     castor::dlf::Param("Error", e.getMessage().str())};
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 12, 2, params);
 	}
       } // end of delete files loop
       
         // log to DLF
       if (0 < gcfilestotal) {
-	gcremovedsize = gcremovedsize/1024;
-	clog() << USAGE << "Files removed: "  << gcfilesremoved
-	       << "; Files failed: " << gcfilesfailed
-	       << "; Files total: "  << gcfilestotal
-	       << "; Space freed: "  << gcremovedsize << " KB;"
-	       << std::endl;
+	// "Summary of files removed" message
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("Nb Files removed", gcfilesremoved),
+	   castor::dlf::Param("Nb Files failed", gcfilesfailed),
+	   castor::dlf::Param("Nb Files total", gcfilestotal),
+	   castor::dlf::Param("Space freed", gcremovedsize)};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 13, 4, params);
       }
       // Inform stager of the deletion
-      try {
-	stgSvc->filesDeleted(deletedFiles);
-      } catch (castor::exception::Exception e) {
-	clog() << ERROR << "Error caught while informing stager of the files deleted :\n"
-	       << e.getMessage().str()
-	       << "Files IDs : ";
-	for (std::vector<u_signed64*>::iterator it = deletedFiles.begin();
+      if (deletedFiles.size() > 0) {
+	try {
+	  stgSvc->filesDeleted(deletedFiles);
+	} catch (castor::exception::Exception e) {
+	  // "Error caught while informing stager..." message
+	  castor::dlf::Param params[] =
+	    {castor::dlf::Param("Error", e.getMessage().str())};
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 14, 1, params);
+	}
+	// release memory
+	for (std::vector<u_signed64*>::iterator it =
+	       deletedFiles.begin();
 	     it != deletedFiles.end();
 	     it++) {
-	  clog() << **it << " ";
+	  delete *it;
 	}
-	clog() << std::endl;
-      }
-      // release memory
-      for (std::vector<u_signed64*>::iterator it =
-	     deletedFiles.begin();
-	   it != deletedFiles.end();
-	   it++) {
-	delete *it;
       }
     } else {
-      clog() << DEBUG
-	     << "No garbage files found." << std::endl;
+      // "No garbage files found" message
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 15);
     }
-    clog() << DEBUG
-           << "Sleeping " << gcinterval << " sec..."
-           << std::endl;
-    
+    // "Sleeping" message
+    castor::dlf::Param params2[] =
+      {castor::dlf::Param("Duration", gcinterval)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 9, 1, params2);
     sleep(gcinterval);
   } // End of main loop
 }
