@@ -164,7 +164,6 @@ int castor::gc::GcDaemon::start()
   // XXX To be discussed with Ben that has the code to do that
 
   for (;;) {
-    int cid;
     clog() << DEBUG
            << " Checking garbage on " << diskServerName
 	   << std::endl;
@@ -184,9 +183,11 @@ int castor::gc::GcDaemon::start()
     try {
       files2Delete = stgSvc->selectFiles2Delete(diskServerName);
     } catch (castor::exception::Exception e) {
-      clog() << DEBUG << "Error caught while looking for garbage files."
-             << " Sleeping  " << gcinterval << " sec..."
-             << std::endl << e.getMessage().str();
+      clog() << ERROR << "Error caught while looking for garbage files.\n"
+	     << e.getMessage().str() << std::endl;
+      clog() << DEBUG
+	     << "Sleeping " << gcinterval << " sec..."
+	     << std::endl;
       sleep(gcinterval);
       continue;
     }
@@ -195,85 +196,72 @@ int castor::gc::GcDaemon::start()
     if (0 < files2Delete->size()) {
       clog() << USAGE << files2Delete->size()
 	     << " garbage files found. Starting removal..." << std::endl;
-
-      cid = fork();
-      if(cid < 0) {
-        clog() << ERROR << " Fork child failed " << std::endl;
-        sleep(gcinterval);
-        continue;
-      }
-      if (0 == cid) { // if a am a child
-        clog() << USAGE
-               << " Removing Garbage files ..."
-               << std::endl;
-        // Loop over the files and delete them
-        std::vector<u_signed64*> deletedFiles;
-        u_signed64 gcremovedsize  = 0;
-        long gcfilestotal   = 0;
-        long gcfilesfailed  = 0;
-        long gcfilesremoved = 0;
-        for(std::vector<castor::stager::GCLocalFile*>::iterator it =
-              files2Delete->begin();
-            it != files2Delete->end();
-            it++) {
-	  try {
-	    gcfilestotal++;
-	    u_signed64 gcfilesize = gcRemoveFilePath((*it)->fileName());
-            gcremovedsize =+ gcfilesize;
-            gcfilesremoved++;
-            clog() << DEBUG << "Removed " << (*it)->fileName() << ": "
-                   << gcfilesize << " KB"
-                   << std::endl;
-            // Add the file to the list of deleted ones
-            u_signed64 *gcfileid = new u_signed64((*it)->diskCopyId());
-            deletedFiles.push_back(gcfileid);
-	  } catch (castor::exception::Exception e) {
-            gcfilesfailed++;
-            clog() << ERROR << "Failed to remove "
-		   << (*it)->fileName() << "\n"
-		   << e.getMessage().str() << std::endl;
-          }
-        } // end of delete files loop
-
+      
+      // Loop over the files and delete them
+      std::vector<u_signed64*> deletedFiles;
+      u_signed64 gcremovedsize  = 0;
+      long gcfilestotal   = 0;
+      long gcfilesfailed  = 0;
+      long gcfilesremoved = 0;
+      for(std::vector<castor::stager::GCLocalFile*>::iterator it =
+	    files2Delete->begin();
+	  it != files2Delete->end();
+	  it++) {
+	try {
+	  gcfilestotal++;
+	  u_signed64 gcfilesize = gcRemoveFilePath((*it)->fileName());
+	  gcremovedsize =+ gcfilesize;
+	  gcfilesremoved++;
+	  clog() << DEBUG << "Removed " << (*it)->fileName() << ": "
+		 << gcfilesize << " KB"
+		 << std::endl;
+	  // Add the file to the list of deleted ones
+	  u_signed64 *gcfileid = new u_signed64((*it)->diskCopyId());
+	  deletedFiles.push_back(gcfileid);
+	} catch (castor::exception::Exception e) {
+	  gcfilesfailed++;
+	  clog() << ERROR << "Failed to remove "
+		 << (*it)->fileName() << "\n"
+		 << e.getMessage().str() << std::endl;
+	}
+      } // end of delete files loop
+      
         // log to DLF
-        if (0 < gcfilestotal) {
-          gcremovedsize = gcremovedsize/1024;
-          clog() << USAGE << "Files removed: "  << gcfilesremoved
-                 << "; Files failed: " << gcfilesfailed
-                 << "; Files total: "  << gcfilestotal
-                 << "; Space freed: "  << gcremovedsize << " KB;"
-                 << std::endl;
-        }
-        // Inform stager of the deletion
-        try {
-          stgSvc->filesDeleted(deletedFiles);
-        } catch (castor::exception::Exception e) {
-          clog() << ERROR << "Error caught while informing stager of the files deleted :\n"
-                 << e.getMessage().str()
-                 << "Files IDs : ";
-          for (std::vector<u_signed64*>::iterator it = deletedFiles.begin();
-               it != deletedFiles.end();
-               it++) {
-            clog() << **it << " ";
-          }
-          clog() << std::endl;
-        }
-        // release memory
-        for (std::vector<u_signed64*>::iterator it =
-               deletedFiles.begin();
-             it != deletedFiles.end();
-             it++) {
-          delete *it;
-        }
-        exit(0); // end child
+      if (0 < gcfilestotal) {
+	gcremovedsize = gcremovedsize/1024;
+	clog() << USAGE << "Files removed: "  << gcfilesremoved
+	       << "; Files failed: " << gcfilesfailed
+	       << "; Files total: "  << gcfilestotal
+	       << "; Space freed: "  << gcremovedsize << " KB;"
+	       << std::endl;
+      }
+      // Inform stager of the deletion
+      try {
+	stgSvc->filesDeleted(deletedFiles);
+      } catch (castor::exception::Exception e) {
+	clog() << ERROR << "Error caught while informing stager of the files deleted :\n"
+	       << e.getMessage().str()
+	       << "Files IDs : ";
+	for (std::vector<u_signed64*>::iterator it = deletedFiles.begin();
+	     it != deletedFiles.end();
+	     it++) {
+	  clog() << **it << " ";
+	}
+	clog() << std::endl;
+      }
+      // release memory
+      for (std::vector<u_signed64*>::iterator it =
+	     deletedFiles.begin();
+	   it != deletedFiles.end();
+	   it++) {
+	delete *it;
       }
     } else {
       clog() << DEBUG
 	     << "No garbage files found." << std::endl;
     }
     clog() << DEBUG
-           << "GC check finished on " << diskServerName
-           << " - sleeping " << gcinterval << " sec..."
+           << "Sleeping " << gcinterval << " sec..."
            << std::endl;
     
     sleep(gcinterval);
