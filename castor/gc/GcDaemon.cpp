@@ -167,7 +167,7 @@ int castor::gc::GcDaemon::start()
     int cid;
     clog() << DEBUG
            << " Checking garbage on " << diskServerName
-           << "... " << std::endl;
+	   << std::endl;
 
     // get new sleep interval if the environment has been changed
     int  gcintervalnew;
@@ -184,7 +184,7 @@ int castor::gc::GcDaemon::start()
     try {
       files2Delete = stgSvc->selectFiles2Delete(diskServerName);
     } catch (castor::exception::Exception e) {
-      clog() << DEBUG << "No garbage files found - Nothing to do."
+      clog() << DEBUG << "Error caught while looking for garbage files."
              << " Sleeping  " << gcinterval << " sec..."
              << std::endl << e.getMessage().str();
       sleep(gcinterval);
@@ -193,7 +193,8 @@ int castor::gc::GcDaemon::start()
 
     // Fork a child if there are files to delete
     if (0 < files2Delete->size()) {
-      clog() << USAGE << "Garbage files found. Starting removal..." << std::endl;
+      clog() << USAGE << files2Delete->size()
+	     << " garbage files found. Starting removal..." << std::endl;
 
       cid = fork();
       if(cid < 0) {
@@ -207,29 +208,30 @@ int castor::gc::GcDaemon::start()
                << std::endl;
         // Loop over the files and delete them
         std::vector<u_signed64*> deletedFiles;
-        double gcremovedsize  = 0;
-        long   gcfilesize     = 0;
-        long   gcfilestotal   = 0;
-        long   gcfilesfailed  = 0;
-        long   gcfilesremoved = 0;
+        u_signed64 gcremovedsize  = 0;
+        long gcfilestotal   = 0;
+        long gcfilesfailed  = 0;
+        long gcfilesremoved = 0;
         for(std::vector<castor::stager::GCLocalFile*>::iterator it =
               files2Delete->begin();
             it != files2Delete->end();
             it++) {
-          // delete  file it->fileName()
-          gcfilestotal++;
-          if ( (gcfilesize = GCremoveFilePath((*it)->fileName())) < 0 ) {
-            gcfilesfailed++;
-            clog() << WARNING << "-Failed: " << (*it)->fileName() << std::endl;
-          } else {
-            gcfilesremoved++;
+	  try {
+	    gcfilestotal++;
+	    u_signed64 gcfilesize = gcRemoveFilePath((*it)->fileName());
             gcremovedsize =+ gcfilesize;
+            gcfilesremoved++;
             clog() << DEBUG << "Removed " << (*it)->fileName() << ": "
                    << gcfilesize << " KB"
                    << std::endl;
             // Add the file to the list of deleted ones
             u_signed64 *gcfileid = new u_signed64((*it)->diskCopyId());
             deletedFiles.push_back(gcfileid);
+	  } catch (castor::exception::Exception e) {
+            gcfilesfailed++;
+            clog() << ERROR << "Failed to remove "
+		   << (*it)->fileName() << "\n"
+		   << e.getMessage().str() << std::endl;
           }
         } // end of delete files loop
 
@@ -265,6 +267,9 @@ int castor::gc::GcDaemon::start()
         }
         exit(0); // end child
       }
+    } else {
+      clog() << DEBUG
+	     << "No garbage files found." << std::endl;
     }
     clog() << DEBUG
            << "GC check finished on " << diskServerName
@@ -274,76 +279,35 @@ int castor::gc::GcDaemon::start()
     sleep(gcinterval);
   } // End of main loop
 }
-/***
- // -----------------------------------------------------------------------
- // ZselectFiles2Delete - for test only - stager response emulator
- // -----------------------------------------------------------------------
- std::vector<castor::stager::GCLocalFile*>*
- ZselectFiles2Delete (std::string diskServer)
- {
- char gcdatafile[1024];
- char gcfilename[1024];
 
- strcpy(gcdatafile, GCDATAFILE);
- std::ifstream gcfilelist( gcdatafile);
- std::vector<castor::stager::GCLocalFile*>* result =
- new std::vector<castor::stager::GCLocalFile*>;
-
- if ( !gcfilelist.is_open() ) {
- result = 0;
- return result;
- }
- // Prepare the result vector to return
- long i = -1;
- while (! gcfilelist.eof() ) {
- gcfilelist.getline (gcfilename, 1024,'\n');
- castor::stager::GCLocalFile res = new castor::stager::GCLocalFile();
- res->setFileName((std::string)gcfilename);
- result->push_back(res);
- i++;
- }
-
- std::cout << "Garbage files found: " << i << std::endl;
- if( unlink( gcdatafile) < 0) {
- std::cout << "---Failed to remove file list " << gcdatafile << std::endl;
- } else {
- std::cout << "===Removed file list " << gcdatafile << std::endl;
- }
-
- return result;
- }
-***/
 //------------------------------------------------------------------------------
 // GCremoveFilePath
 //------------------------------------------------------------------------------
-long castor::gc::GcDaemon::GCremoveFilePath( std::string gcfilepath)
-{
-  long gcfilesize = -1;
-
-  if( (gcfilesize = GCgetFileSize( gcfilepath) ) < 0 ) {
-    return (-1);
+u_signed64 castor::gc::GcDaemon::gcRemoveFilePath
+(std::string gcfilepath)
+  throw (castor::exception::Exception) {
+  u_signed64 gcfilesize = gcGetFileSize(gcfilepath);
+  if (unlink(gcfilepath.c_str()) < 0) {
+    castor::exception::Exception e(errno);
+    e.getMessage() << "gcRemoveFilePath : Cannot unlink file " << gcfilepath;
+    throw e;
   }
-  if( unlink( &gcfilepath[0]) < 0) {
-    return (-1);
-  }
-  return (gcfilesize);
+  return gcfilesize;
 }
 
 //------------------------------------------------------------------------------
 // GCgetFileSize
 //------------------------------------------------------------------------------
-long castor::gc::GcDaemon::GCgetFileSize( std::string gcfilepath)
-{
-  struct stat  gcfiledata;
-  long  gcfilesize = -1;
-
-  if( stat(&gcfilepath[0], &gcfiledata) )
-  {
-    clog() << ERROR << "GCgetFileSize: Cannot stat file " << gcfilepath
-           << std::endl;
-    return (-1);
-  } else  gcfilesize = (long)gcfiledata.st_size;
-  return (gcfilesize);
+u_signed64 castor::gc::GcDaemon::gcGetFileSize
+(std::string& gcfilepath)
+  throw (castor::exception::Exception) {
+  struct stat64  gcfiledata;
+  if (::stat64(&gcfilepath[0], &gcfiledata) ) {
+    castor::exception::Exception e(errno);
+    e.getMessage() << "gcGetFileSize : Cannot stat file " << gcfilepath;
+    throw e;
+  }
+  return gcfiledata.st_size;
 }
 
 //------------------------------------------------------------------------------

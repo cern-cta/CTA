@@ -31,6 +31,7 @@
 
 // Include Files
 #include "castor/BaseObject.hpp"
+#include "castor/exception/Exception.hpp"
 #include "Cuuid.h"
 
 namespace castor {
@@ -65,15 +66,25 @@ namespace castor {
        */
       void 	GCparseCommandLine(int argc, char *argv[]);
 
-      /**
-       * get size (bytes) of the file to be removed
-       */
-      long 	GCgetFileSize( std::string gcfilepath);
+    private:
 
       /**
-       * actually remove the file from local filesystem
+       * get size (in bytes) of a file
+       * @param gcfilepath the path of the file
+       * @return the size (in bytes) of the file
+       * @exception when the internal stat64 failed
        */
-      long 	GCremoveFilePath( std::string gcfilepath);
+      u_signed64 gcGetFileSize (std::string& gcfilepath)
+	throw (castor::exception::Exception);
+
+      /**
+       * actually remove the file from local filesystem.
+       * @param gcfilepath the path of the file to remove
+       * @return the size (in bytes) of the removed file
+       * @exception when the removing failed
+       */
+      u_signed64 gcRemoveFilePath (std::string gcfilepath)
+	throw (castor::exception::Exception);
 
     private:
       /**
