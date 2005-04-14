@@ -313,7 +313,9 @@ void castor::replier::ClientConnection::send()
 
   char *pc = (char *)buf;
 
-  int rc = write(m_fd, (char *)(buf), buflen);
+  // XXX netwrite needs a time out in order to avoid hangs
+  // XXX of the request replier
+  int rc = netwrite(m_fd, (char *)(buf), buflen);
   
   if (rc == -1) {
     if (errno == EAGAIN) {
