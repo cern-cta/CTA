@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2005/04/08 09:13:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2005/04/15 16:57:01 $ $Author: sponcec3 $
  *
  *
  *
@@ -55,6 +55,7 @@
 #include "castor/rh/GCFilesResponse.hpp"
 #include "castor/rh/StartResponse.hpp"
 #include "castor/exception/NotSupported.hpp"
+#include "castor/exception/Internal.hpp"
 #include <list>
 
 EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
@@ -697,11 +698,16 @@ public:
 
   virtual void handleResponse(castor::rh::Response& r)
     throw (castor::exception::Exception) {
+    if (0 != r.errorCode()) {
+      castor::exception::Exception e(r.errorCode());
+      e.getMessage() << r.errorMessage();
+      throw e;
+    }
     castor::rh::GCFilesResponse *resp =
       dynamic_cast<castor::rh::GCFilesResponse*>(&r);
-    if (0 != resp->errorCode()) {
-      castor::exception::Exception e(resp->errorCode());
-      e.getMessage() << resp->errorMessage();
+    if (0 == resp) {
+      castor::exception::Internal e;
+      e.getMessage() << "Could not cast response into GCFilesResponse";
       throw e;
     }
     for (std::vector<castor::stager::GCLocalFile*>::iterator
