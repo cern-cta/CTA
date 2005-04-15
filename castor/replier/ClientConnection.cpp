@@ -313,10 +313,20 @@ void castor::replier::ClientConnection::send()
 
   char *pc = (char *)buf;
 
-  // XXX netwrite needs a time out in order to avoid hangs
-  // XXX of the request replier
-  int rc = netwrite(m_fd, (char *)(buf), buflen);
-  
+  size_t written = 0;
+  ssize_t rc = 0;
+  while (written < buflen) {
+    rc = write(m_fd, (char *)(buf + written), buflen - written);
+    if (rc == -1) {
+      if (errno == EAGAIN) {
+        continue;
+      } else {
+        break;
+      }
+    }
+    written += rc;
+  }
+
   if (rc == -1) {
     if (errno == EAGAIN) {
       setStatus(RESEND);
@@ -342,7 +352,7 @@ void castor::replier::ClientConnection::send()
 	   << " msg:" << message.messageId 
 	   << " Send successful (isLast:"
 	   << ((message.isLast)?1:0)
-	   << ") rc:" << rc 
+	   << ") written:" << written
 	   <<  " (len:" << buflen << ")"
            << std::endl;   
     /* XXX Should this be done here ? */
