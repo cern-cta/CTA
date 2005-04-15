@@ -225,7 +225,7 @@ int castor::gc::GcDaemon::start()
       // "Found files to garbage. Starting removal" message
       castor::dlf::Param params[] =
 	{castor::dlf::Param("Nb files", files2Delete->size())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 10, 1, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 10, 1, params);
       
       // Loop over the files and delete them
       std::vector<u_signed64*> deletedFiles;
