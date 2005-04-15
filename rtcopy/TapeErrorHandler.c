@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/01 16:22:49 $ $Author: obarring $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.3 $ $Release$ $Date: 2005/04/15 13:11:46 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/01 16:22:49 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.3 $ $Release$ $Date: 2005/04/15 13:11:46 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -706,7 +706,7 @@ static int checkRecallRetry(
   rc = callExpert(WRITE_DISABLE,expertBuffer);
   if ( rc <= 0 ) {
     /*
-     * PUT_FAILED
+     *GET_FAILED
      */
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
@@ -1357,6 +1357,7 @@ int main(
           }
         } else if (serrno == ENOENT ) {
           (void)cleanupSegment(segm);
+        } else if ( serrno = SERTYEXHAUST ) {
         }
       } else {
         rc = checkRecallRetry(segm,tapeCopy);
@@ -1367,6 +1368,17 @@ int main(
           }
         } else if ( serrno == ENOENT ) {
           (void)cleanupSegment(segm);
+        } else if ( serrno == SERTYEXHAUST ) {
+          Cstager_TapeCopy_id(tapeCopy,&key);
+          rc = Cstager_IStagerSvc_fileRecallFailed(
+                                                   stgSvc,
+                                                   tapeCopy
+                                                   );
+          if ( rc == -1 ) {
+            LOG_DBCALLANDKEY_ERR("Cstager_IStagerSvc_fileRecallFailed()",
+                                 Cstager_IStagerSvc_errorMsg(stgSvc),
+                                 key);
+          }
         }
       }
       castorFile = NULL;
