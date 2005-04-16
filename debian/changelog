@@ -1,3 +1,10 @@
+castor (2.0.0-25) unstable; urgency=low
+
+  * Makes tank dependency outside of libshift
+  * Removed lsf/maui modes in rmnode
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Sat, 16 Apr 2005 20:59:06 +0200
+
 castor (2.0.0-24) unstable; urgency=low
 
   * makedeb fix
