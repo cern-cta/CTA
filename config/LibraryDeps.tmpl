@@ -4,12 +4,19 @@
  */
 
 /*
- * @(#)$RCSfile: LibraryDeps.tmpl,v $ $Revision: 1.2 $ $Date: 2005/04/14 09:26:17 $ CERN IT-ADC/CA Jean-Damien Durand
+ * @(#)$RCSfile: LibraryDeps.tmpl,v $ $Revision: 1.3 $ $Date: 2005/04/16 06:36:05 $ CERN IT-ADC/CA Jean-Damien Durand
  */
 
 /* ================================ */
 /* Hidden dependencies of libraries */
 /* ================================ */
+#if UseOracle
+#if !BuildOraCpp
+#undef BuildOraCpp
+#define BuildOraCpp YES
+#endif
+#endif
+
 #if BuildStageLibrary
 #if !BuildNameServerLibrary
 #undef BuildNameServerLibrary
