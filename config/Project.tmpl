@@ -613,7 +613,7 @@ RHCPPDIR = rh
 #if BuildGCCpp
 GCCPPDIR = gc
 #endif
-#if BuildCastorClientCPPLibrary
+#if BuildCastorClientCPPLibrary || BuildRHCpp || BuildGCCpp || BuildOraCpp
 COMMONCPPDIR = castor
 #endif
 #if BuildOraCpp
@@ -635,6 +635,9 @@ SECURITYDIR=security
 #endif
 #if BuildSchedPlugin
 SCHEDULERDIR=scheduler
+#endif
+#if BuildTankPerfMonLibrary
+TANKDIR=tank
 #endif
 
 /* Those directories are always defined because we always build at least */
