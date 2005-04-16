@@ -1,4 +1,4 @@
-/* $Id: rm_constants.h,v 1.14 2005/04/08 20:48:29 jdurand Exp $ */
+/* $Id: rm_constants.h,v 1.15 2005/04/16 18:44:43 jdurand Exp $ */
 
 #ifndef __rm_constants_h
 
@@ -246,10 +246,6 @@
 #define RM_FSSTATE 0x4000
 
 #define RM_NODEINFO 1
-
-#define RM_UNKNOWN_MODE -1
-#define RM_LSF_MODE 0
-#define RM_MAUI_MODE 1
 
 #ifndef CA_MAXDOMAINNAMELEN
 #define CA_MAXDOMAINNAMELEN CA_MAXHOSTNAMELEN
