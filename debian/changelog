@@ -1,3 +1,12 @@
+castor (2.0.0-23) unstable; urgency=low
+
+  * Trying to build 2.0.0-23, that contains:
+  * stager/rtcopy/RequestReplier fixes
+  * gcdaemon (C) replaced by gcDaemon (C++)
+  * etc...
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Sat, 16 Apr 2005 09:29:41 +0200
+
 castor (2.0.0-22) unstable; urgency=low
 
   * Fixed man pages rules in PROTO2/rtcopy/Imakefile
