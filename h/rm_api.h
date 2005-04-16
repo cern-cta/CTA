@@ -17,6 +17,7 @@ EXTERN_C int DLL_DECL rm_getoutbuf _PROTO((char **, int *));
 EXTERN_C int DLL_DECL rm_getlog    _PROTO((void (**)(int, char*)));
 EXTERN_C int DLL_DECL rm_errmsg _PROTO((char *, char *, ...));
 EXTERN_C int DLL_DECL rm_outmsg _PROTO((char *, char *, ...));
+EXTERN_C int DLL_DECL rm_killjob _PROTO((char *, int, u_signed64, struct rmjob *, int *, struct rmjob **));
 EXTERN_C int DLL_DECL rm_enterjob _PROTO((char *, int, u_signed64, struct rmjob *, int *, struct rmjob **));
 EXTERN_C int DLL_DECL rm_modifyjob _PROTO((char *, int, u_signed64, struct rmjob *, int *, struct rmjob **));
 EXTERN_C int DLL_DECL rm_deletejob _PROTO((char *, int, u_signed64, struct rmjob *, int *, struct rmjob **));
@@ -39,6 +40,11 @@ EXTERN_C int DLL_DECL funcrep_to_log _PROTO((int *, int, ...));
 EXTERN_C void DLL_DECL rm_time _PROTO((time_t, char *));
 EXTERN_C char DLL_DECL **C__funcrep_name _PROTO(());
 EXTERN_C int DLL_DECL rm_adminnode _PROTO((char *, int, char *, char *, u_signed64, char *, char *, char *, char *, char *, char *));
+EXTERN_C void DLL_DECL Crm_sleep _PROTO((int));
+EXTERN_C int  DLL_DECL Crm_strtoi _PROTO((int *,char *,char **, int));
+EXTERN_C int  DLL_DECL send2rmd _PROTO((char *, int, char *, int));
+EXTERN_C int  DLL_DECL rmdsend2user _PROTO((char *, int, char *, int));
+EXTERN_C int  DLL_DECL Crm_checkdir _PROTO((char *));
 
 #define funcrep_name (*C__funcrep_name())
 
