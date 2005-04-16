@@ -5,9 +5,9 @@
 # chkconfig: 345 70 35
 # description: GCDAEMON server daemon
 #
-# $Id: castor-gc-server.init,v 1.3 2005/03/11 08:43:09 jdurand Exp $
+# $Id: castor-gc-server.init,v 1.4 2005/04/16 06:39:17 jdurand Exp $
 #
-# @(#)$RCSfile: castor-gc-server.init,v $ $Revision: 1.3 $ $Date: 2005/03/11 08:43:09 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-gc-server.init,v $ $Revision: 1.4 $ $Date: 2005/04/16 06:39:17 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -35,15 +35,15 @@ else
 fi
 
 RETVAL=0
-prog="gcdaemon"
-PIDFILE=/var/run/gcdaemon.pid
+prog="gcDaemon"
+PIDFILE=/var/run/gcDaemon.pid
 PIDDIR=/var/run
-SUBSYS=/var/lock/subsys/gcdaemon
+SUBSYS=/var/lock/subsys/gcDaemon
 SUBSYSDIR=/var/lock/subsys
 [ -z "$SILENTSTOP" ] && SILENTSTOP=0
-GCDAEMON=/usr/bin/gcdaemon
+GCDAEMON=/usr/bin/gcDaemon
 OPTIONS=""
-SYSCONFIGGCDAEMON=/etc/sysconfig/gcdaemon
+SYSCONFIGGCDAEMON=/etc/sysconfig/gcDaemon
 
 #
 ## Blindly attempt to create useful directories
@@ -63,10 +63,10 @@ fi
 case "$1" in
   start)
 	echo $ECHOOPT "Starting $prog: "
-	ps -eo ppid,$format4comm | egrep '^[ \t]+1 gcdaemon' > /dev/null
+	ps -eo ppid,$format4comm | egrep '^[ \t]+1 gcDaemon' > /dev/null
 	if [ $? -eq 0 ]; then
-	    echo $ECHOOPT "gcdaemon already started: "
-	    [ -n "$FAILURE" ] && $FAILURE "gcdaemon already started: "
+	    echo $ECHOOPT "gcDaemon already started: "
+	    [ -n "$FAILURE" ] && $FAILURE "gcDaemon already started: "
 	    RETVAL=1
 	else
             if [ -r $SYSCONFIGGCDAEMON ]; then
@@ -97,7 +97,7 @@ case "$1" in
                 if [ $? -eq 0 ]; then
                     [ -d $SUBSYSDIR ] && touch $SUBSYS
 		    if [ -d $PIDDIR ]; then
-			pid=`ps -eo pid,ppid,$format4comm | grep " 1 gcdaemon" | awk '{print $1}'`
+			pid=`ps -eo pid,ppid,$format4comm | grep " 1 gcDaemon" | awk '{print $1}'`
                         # The point of $PIDFILE is that it kills only
                         # the master daemon.
 			rm -f $PIDFILE
@@ -105,16 +105,16 @@ case "$1" in
 			    echo $pid > $PIDFILE
 			    RETVAL=0
 			else
-			    echo $ECHOOPT "gcdaemon not started: "
-			    [ -n "$FAILURE" ] && $FAILURE "gcdaemon not started: "
+			    echo $ECHOOPT "gcDaemon not started: "
+			    [ -n "$FAILURE" ] && $FAILURE "gcDaemon not started: "
 			    RETVAL=1
 			fi
 		    else
 			RETVAL=0
 		    fi
                 else
-                    echo $ECHOOPT "gcdaemon not started: "
-                    [ -n "$FAILURE" ] && $FAILURE "gcdaemon not started: "
+                    echo $ECHOOPT "gcDaemon not started: "
+                    [ -n "$FAILURE" ] && $FAILURE "gcDaemon not started: "
                     RETVAL=1
                 fi
             fi
@@ -134,8 +134,8 @@ case "$1" in
 	    rm -f $PIDFILE
 	fi
     else
-        # gcdaemon might have been started by hand
-	pid=`ps -eo pid,ppid,$format4comm | grep " 1 gcdaemon" | awk '{print $1}'`
+        # gcDaemon might have been started by hand
+	pid=`ps -eo pid,ppid,$format4comm | grep " 1 gcDaemon" | awk '{print $1}'`
 	if [ -n "$pid" ]; then
 	    [ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Stopping $prog: "
 	    if [ $SILENTSTOP -eq 0 ]; then
@@ -145,8 +145,8 @@ case "$1" in
 	    fi
 	    RETVAL=$?
 	else
-	    [ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "gcdaemon already stopped: "
-	    [ $SILENTSTOP -eq 0 -a -n "$FAILURE" ] && $FAILURE "gcdaemon already stopped: "
+	    [ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "gcDaemon already stopped: "
+	    [ $SILENTSTOP -eq 0 -a -n "$FAILURE" ] && $FAILURE "gcDaemon already stopped: "
 	    RETVAL=1
 	fi
     fi
@@ -194,24 +194,24 @@ case "$1" in
 	RETVAL=$?
 	;;
     status)
-	pid=`ps -eo pid,ppid,$format4comm | grep " 1 gcdaemon" | awk '{print $1}'`
+	pid=`ps -eo pid,ppid,$format4comm | grep " 1 gcDaemon" | awk '{print $1}'`
 	if [ -n "$pid" ]; then
-	    echo $ECHOOPT "gcdaemon (pid $pid) is running..."
+	    echo $ECHOOPT "gcDaemon (pid $pid) is running..."
 	    $ECHO_SUCCESS
 	    $ECHO_END
 	else
 	    if [ -f $PIDFILE ]; then
 		pid=`head -1 $PIDFILE`
 		if [ "$pid" != "" ] ; then
-		    echo $ECHOOPT "gcdaemon dead but pid file exists"
+		    echo $ECHOOPT "gcDaemon dead but pid file exists"
 		    $ECHO_FAILURE
 		    $ECHO_END
 		fi
 	    else
 		if [ -f $SUBSYS ]; then
-		    echo $ECHOOPT "gcdaemon dead but subsys ($SUBSYS) locked"
+		    echo $ECHOOPT "gcDaemon dead but subsys ($SUBSYS) locked"
 		else
-		    echo $ECHOOPT "gcdaemon is stopped"
+		    echo $ECHOOPT "gcDaemon is stopped"
 		fi
 		$ECHO_FAILURE
 		$ECHO_END
