@@ -67,6 +67,7 @@ install: build
 	mkdir -p $(CURDIR)/debian/castor/usr/share/man/man4
 	mkdir -p $(CURDIR)/debian/castor/etc/castor
 	mkdir -p $(CURDIR)/debian/castor/etc/sysconfig
+	mkdir -p $(CURDIR)/debian/castor/usr/local/lsf/lib
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/castor
 	$(MAKE) exportman DESTDIR=$(CURDIR)/debian/castor EXPORTMAN=$(CURDIR)/debian/castor/usr/share/man
 	(cd clips; ../imake/imake -I../config DESTDIR=$(CURDIR)/debian/castor; make install DESTDIR=$(CURDIR)/debian/castor)
