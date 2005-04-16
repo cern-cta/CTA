@@ -251,6 +251,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildOraCpp             NO
 #define BuildCastorClientCPPLibrary	NO
 #define BuildCppTest	        NO
+#define BuildTankPerfMonLibrary	NO
 
 #define Accounting		YES
 #define ClientLogging           NO
