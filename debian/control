@@ -67,6 +67,12 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  Static and shared libraries for end-users
 
+Package: castor-lib-tankperfmon
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: castor (Cern Advanced STORage system)
+ Static and shared libraries for Tank ((c) IBM) filesystem monitoring
+
 Package: castor-lib-oracle
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
