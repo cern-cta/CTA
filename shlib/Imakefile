@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.33 $ $Date: 2005/01/25 14:41:58 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.34 $ $Date: 2005/04/16 18:45:56 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -21,10 +21,15 @@ COMM Libraries to include in SharedLibraryTargetName(shift)
 LIBRARIES0 = $(COMMONLIB) $(RFIOLIB) $(MSGLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHCLIENTLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB) $(RMCLIB) $(EXPERTLIB) $(RESOURCEMONITORINGLIB)
 LIBRARIES1 = $(RHORALIB)
 SHLIBREQLIBS1 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshift
+LIBRARIES2 = $(TANKLIB)
+SHLIBREQLIBS2 = $(SHLIBREQLIBS)
 
 ALL0=SharedLibraryTargetName(shift)
 #if BuildOraCpp
 ALL1=SharedLibraryTargetName(castorCommonOra)
+#endif
+#if BuildTankPerfMonLibrary
+ALL2=SharedLibraryTargetName(castorTankPerfMon)
 #endif
 
 #if BuildSecurity
@@ -58,21 +63,24 @@ EXPORTSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB4))
 
 #endif
 
-all:    $(ALL0) $(ALL1) $(ALLSEC)
+all:    $(ALL0) $(ALL1) $(ALL2) $(ALLSEC)
 
 INSTALL0=FileName($(LIB),SharedLibraryTargetName(shift))
 #if BuildOraCpp
 INSTALL1=FileName($(LIB),SharedLibraryTargetName(castorCommonOra))
 #endif
+#if BuildTankPerfMonLibrary
+INSTALL2=FileName($(LIB),SharedLibraryTargetName(castorTankPerfMon))
+#endif
 
-install: $(LIB) $(INSTALL0) $(INSTALL1) $(INSTALLSEC)
+install: $(LIB) $(INSTALL0) $(INSTALL1) $(INSTALL2) $(INSTALLSEC)
 
 EXPORT0=$(EXPORTLIB)/SharedLibraryTargetName(shift)
 #if BuildOraCpp
 EXPORT1=$(EXPORTLIB)/SharedLibraryTargetName(castorCommonOra)
 #endif
 #if BuildProtoCppStager
-EXPORT2=$(EXPORTLIB)/SharedLibraryTargetName(castorProto)
+EXPORT2=$(EXPORTLIB)/SharedLibraryTargetName(castorTankPerfMon)
 #endif
 
 export: $(EXPORT0) $(EXPORT1) $(EXPORT2) $(EXPORTSEC)
@@ -107,6 +115,19 @@ libcastorCommonOra.so: $(LIBRARIES1)
 	@-rm -f $@
 	@-ln -s $@.__MAJOR_CASTOR_VERSION__ $@
 
+libcastorTankPerfMon.so: $(LIBRARIES2)
+	@echo " making $@ in `pwd`"
+	@-rm -rf tmp
+	@mkdir tmp
+	@for i in $(LIBRARIES2) ;\
+	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
+	@(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libcastorTankPerfMon.so.__MAJOR_CASTOR_VERSION__ -o ../$@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ *.o $(SHLIBREQLIBS1))
+	@-rm -rf tmp
+	@-rm -f $@.__MAJOR_CASTOR_VERSION__
+	@-ln -s $@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ $@.__MAJOR_CASTOR_VERSION__
+	@-rm -f $@
+	@-ln -s $@.__MAJOR_CASTOR_VERSION__ $@
+
 shift.dll:	$(LIBRARIES0)
 	@echo  making $@ in CurDir
 	link /dll /noentry /nologo /out:$@ $**
@@ -115,15 +136,19 @@ libcastorCommonOra.dll:	$(LIBRARIES1)
 	@echo  making $@ in CurDir
 	link /dll /noentry /nologo /out:$@ $**
 
+libcastorTankPerfMon.dll:	$(LIBRARIES2)
+	@echo  making $@ in CurDir
+	link /dll /noentry /nologo /out:$@ $**
+
 MakeDir($(LIB),root,bin,0755)
 
 InstallSharedLibrary(shift,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
 InstallSharedLibrary(castorCommonOra,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
-InstallSharedLibrary(castorProto,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
+InstallSharedLibrary(castorTankPerfMon,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
 
 InstallSharedLibrary(shift,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
 InstallSharedLibrary(castorCommonOra,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
-InstallSharedLibrary(castorProto,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
+InstallSharedLibrary(castorTankPerfMon,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
 
 install.man:
 
@@ -210,6 +235,9 @@ SharedLibraryTargetName(Csec_plugin_KRB4): DepSharedLibraryTargetName(security,C
 #endif
 #endif
 
+#if BuildTankPerfMonLibrary
+MakeDepLibrary(tank,castorTankPerfMon)
+#endif
 
 FORCE:
 
