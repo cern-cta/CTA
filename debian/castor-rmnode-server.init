@@ -5,9 +5,9 @@
 # chkconfig: 345 74 31
 # description: RMNODE server daemon
 #
-# $Id: castor-rmnode-server.init,v 1.3 2005/03/11 08:43:09 jdurand Exp $
+# $Id: castor-rmnode-server.init,v 1.4 2005/04/16 18:37:18 jdurand Exp $
 #
-# @(#)$RCSfile: castor-rmnode-server.init,v $ $Revision: 1.3 $ $Date: 2005/03/11 08:43:09 $ CERN/IT/ADC/CA Vitaly Motyakov
+# @(#)$RCSfile: castor-rmnode-server.init,v $ $Revision: 1.4 $ $Date: 2005/04/16 18:37:18 $ CERN/IT/ADC/CA Vitaly Motyakov
 #
 
 sysname=`uname -s`
@@ -44,8 +44,7 @@ SUBSYSDIR=/var/lock/subsys
 RMNODE=/usr/bin/rmnode
 # Not yet supported
 RMNODELOGFILE=/var/log/rmnode
-# Maui mode
-OPTIONS="-m"
+OPTIONS=""
 SYSCONFIGRMNODE=/etc/sysconfig/rmnode
 
 #
