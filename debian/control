@@ -73,6 +73,12 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  Static and shared libraries for Tank ((c) IBM) filesystem monitoring
 
+Package: castor-lsf-plugin
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: castor (Cern Advanced STORage system)
+ Scheduler plugin for LSF 6.1 at least
+
 Package: castor-lib-oracle
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
