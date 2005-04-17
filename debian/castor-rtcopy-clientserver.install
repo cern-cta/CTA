@@ -1,5 +1,6 @@
-usr/bin/rtcpcldCleanupDB
 usr/bin/MigHunter
+usr/bin/TapeErrorHandler
 usr/bin/migrator
 usr/bin/recaller
 usr/bin/rtcpclientd
+usr/bin/rtcpcldCleanupDB
