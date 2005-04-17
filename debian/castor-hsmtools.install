@@ -1,3 +1,7 @@
+usr/bin/deleteFileClass
+usr/bin/enterFileClass
+usr/bin/enterSvcClass
+usr/bin/modifyFileClass
 usr/bin/reclaim
 usr/bin/repack
 usr/bin/tapetohsm
