@@ -1,3 +1,6 @@
+debian/castor/usr/share/man/man1/deleteFileClass.1castor
+debian/castor/usr/share/man/man1/enterFileClass.1castor
+debian/castor/usr/share/man/man1/modifyFileClass.1castor
 debian/castor/usr/share/man/man1/reclaim.1castor
 debian/castor/usr/share/man/man1/repack.1castor
 debian/castor/usr/share/man/man1/tapetohsm.1castor
