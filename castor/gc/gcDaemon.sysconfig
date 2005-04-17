@@ -1,9 +1,9 @@
 #
-# $Id: gcDaemon.sysconfig,v 1.1 2005/04/16 06:31:57 jdurand Exp $
+# $Id: gcDaemon.sysconfig,v 1.2 2005/04/17 05:41:33 jdurand Exp $
 #
-# @(#)$RCSfile: gcDaemon.sysconfig,v $ $Revision: 1.1 $ $Date: 2005/04/16 06:31:57 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: gcDaemon.sysconfig,v $ $Revision: 1.2 $ $Date: 2005/04/17 05:41:33 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
-# should any gcDaemon run?
+# should gcDaemon run?
 # any string but "yes" will equivalent to "NO"
 #
 RUN_GCDAEMON="yes"
@@ -15,3 +15,7 @@ RUN_GCDAEMON="yes"
 # should we run with another limit on the core file size than the default?
 # any string will be passed to ulimit -c
 ULIMIT_C=unlimited
+
+if [ -r /etc/sysconfig/castor ]; then
+  . /etc/sysconfig/castor
+fi
