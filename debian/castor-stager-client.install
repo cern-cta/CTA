@@ -1,1 +1,5 @@
 usr/bin/stagein
+usr/bin/stageqry
+usr/bin/stager_preparetoput
+usr/bin/stager_put
+usr/bin/stager_putdone
