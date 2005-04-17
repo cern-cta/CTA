@@ -79,6 +79,7 @@ install: build
 	install -o root -g bin -m 600 $(CURDIR)/debian/TPCONFIG $(CURDIR)/debian/castor/etc/castor
 	install -o root -g bin -m 600 $(CURDIR)/debian/VMGRCONFIG $(CURDIR)/debian/castor/etc/castor
 	install -o root -g bin -m 600 $(CURDIR)/castor/rh/rhserver.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/rhserver
+	install -o root -g bin -m 600 $(CURDIR)/castor/gc/gcDaemon.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/gcDaemon
 	install -o root -g bin -m 600 $(CURDIR)/expert/expertd.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/expertd
 	install -o root -g bin -m 600 $(CURDIR)/ns/nsdaemon.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/nsdaemon
 	install -o root -g bin -m 600 $(CURDIR)/resourcemonitoring/rmmaster.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/rmmaster
