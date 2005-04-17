@@ -175,14 +175,17 @@ debian/castor/usr/share/man/man3/vmgr_listlibrary.3castor
 debian/castor/usr/share/man/man3/vmgr_listmodel.3castor
 debian/castor/usr/share/man/man3/vmgr_listpool.3castor
 debian/castor/usr/share/man/man3/vmgr_listtape.3castor
+debian/castor/usr/share/man/man3/vmgr_listweight.3castor
 debian/castor/usr/share/man/man3/vmgr_modifylibrary.3castor
 debian/castor/usr/share/man/man3/vmgr_modifymodel.3castor
 debian/castor/usr/share/man/man3/vmgr_modifypool.3castor
 debian/castor/usr/share/man/man3/vmgr_modifytape.3castor
+debian/castor/usr/share/man/man3/vmgr_modifyweight.3castor
 debian/castor/usr/share/man/man3/vmgr_querylibrary.3castor
 debian/castor/usr/share/man/man3/vmgr_querymodel.3castor
 debian/castor/usr/share/man/man3/vmgr_querypool.3castor
 debian/castor/usr/share/man/man3/vmgr_querytape.3castor
+debian/castor/usr/share/man/man3/vmgr_queryweight.3castor
 debian/castor/usr/share/man/man3/vmgr_reclaim.3castor
 debian/castor/usr/share/man/man3/vmgr_seterrbuf.3castor
 debian/castor/usr/share/man/man3/vmgr_settag.3castor
