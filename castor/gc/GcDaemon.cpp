@@ -87,6 +87,7 @@ castor::gc::GcDaemon::GcDaemon() : m_foreground(false) {
      {13, "Summary of files removed"},
      {14, "Error caught while informing stager of the files deleted"},
      {15, "No garbage files found"},
+     {16, "Error caught while informing stager of the failed deletions"},
      {-1, ""}};
   castor::dlf::dlf_init("GC", messages);
 }
@@ -188,7 +189,7 @@ int castor::gc::GcDaemon::start()
     castor::dlf::Param params[] =
       {castor::dlf::Param("Machine", gctarget)};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 6, 1, params);
-    
+
     // get new sleep interval if the environment has been changed
     int  gcintervalnew;
     if ((p = getenv ("GC_INTERVAL")) || (p = getconfent ("GC", "INTERVAL", 0)))
@@ -198,8 +199,8 @@ int castor::gc::GcDaemon::start()
       gcinterval = gcintervalnew;
       // "Sleep interval changed" message
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Machine", gctarget),
-	 castor::dlf::Param("Sleep Interval", gcinterval)};
+        {castor::dlf::Param("Machine", gctarget),
+         castor::dlf::Param("Sleep Interval", gcinterval)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 7, 2, params);
     }
 
@@ -210,11 +211,11 @@ int castor::gc::GcDaemon::start()
     } catch (castor::exception::Exception e) {
       // "Error caught while looking for garbage files" message
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Message", e.getMessage().str())};
+        {castor::dlf::Param("Message", e.getMessage().str())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 8, 1, params);
       // "Sleeping" message
       castor::dlf::Param params2[] =
-	{castor::dlf::Param("Duration", gcinterval)};
+        {castor::dlf::Param("Duration", gcinterval)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 9, 1, params2);
       sleep(gcinterval);
       continue;
@@ -224,69 +225,90 @@ int castor::gc::GcDaemon::start()
     if (0 < files2Delete->size()) {
       // "Found files to garbage. Starting removal" message
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Nb files", files2Delete->size())};
+        {castor::dlf::Param("Nb files", files2Delete->size())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 10, 1, params);
-      
+
       // Loop over the files and delete them
       std::vector<u_signed64*> deletedFiles;
+      std::vector<u_signed64*> failedFiles;
       u_signed64 gcremovedsize  = 0;
       long gcfilestotal   = 0;
       long gcfilesfailed  = 0;
       long gcfilesremoved = 0;
       for(std::vector<castor::stager::GCLocalFile*>::iterator it =
-	    files2Delete->begin();
-	  it != files2Delete->end();
-	  it++) {
-	try {
-	  gcfilestotal++;
-	  u_signed64 gcfilesize = gcRemoveFilePath((*it)->fileName());
-	  gcremovedsize =+ gcfilesize;
-	  gcfilesremoved++;
-	  // "Removed file successfully" message
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("File name", (*it)->fileName()),
-	     castor::dlf::Param("File size", gcfilesize)};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 11, 2, params);
-	  // Add the file to the list of deleted ones
-	  u_signed64 *gcfileid = new u_signed64((*it)->diskCopyId());
-	  deletedFiles.push_back(gcfileid);
-	} catch (castor::exception::Exception e) {
-	  gcfilesfailed++;
-	  // "Failed to remove file" message
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("File name", (*it)->fileName()),
-	     castor::dlf::Param("Error", e.getMessage().str())};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 12, 2, params);
-	}
+            files2Delete->begin();
+          it != files2Delete->end();
+          it++) {
+        try {
+          gcfilestotal++;
+          u_signed64 gcfilesize = gcRemoveFilePath((*it)->fileName());
+          gcremovedsize =+ gcfilesize;
+          gcfilesremoved++;
+          // "Removed file successfully" message
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("File name", (*it)->fileName()),
+             castor::dlf::Param("File size", gcfilesize)};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 11, 2, params);
+          // Add the file to the list of deleted ones
+          u_signed64 *gcfileid = new u_signed64((*it)->diskCopyId());
+          deletedFiles.push_back(gcfileid);
+        } catch (castor::exception::Exception e) {
+          gcfilesfailed++;
+          // "Failed to remove file" message
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("File name", (*it)->fileName()),
+             castor::dlf::Param("Error", e.getMessage().str())};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 12, 2, params);
+          // Add the file to the list of failed ones
+          u_signed64 *gcfileid = new u_signed64((*it)->diskCopyId());
+          failedFiles.push_back(gcfileid);
+        }
       } // end of delete files loop
-      
+
         // log to DLF
       if (0 < gcfilestotal) {
-	// "Summary of files removed" message
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("Nb Files removed", gcfilesremoved),
-	   castor::dlf::Param("Nb Files failed", gcfilesfailed),
-	   castor::dlf::Param("Nb Files total", gcfilestotal),
-	   castor::dlf::Param("Space freed", gcremovedsize)};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 13, 4, params);
+        // "Summary of files removed" message
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Nb Files removed", gcfilesremoved),
+           castor::dlf::Param("Nb Files failed", gcfilesfailed),
+           castor::dlf::Param("Nb Files total", gcfilestotal),
+           castor::dlf::Param("Space freed", gcremovedsize)};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 13, 4, params);
       }
-      // Inform stager of the deletion
+      // Inform stager of the deletion/failure
       if (deletedFiles.size() > 0) {
-	try {
-	  stgSvc->filesDeleted(deletedFiles);
-	} catch (castor::exception::Exception e) {
-	  // "Error caught while informing stager..." message
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("Error", e.getMessage().str())};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 14, 1, params);
-	}
-	// release memory
-	for (std::vector<u_signed64*>::iterator it =
-	       deletedFiles.begin();
-	     it != deletedFiles.end();
-	     it++) {
-	  delete *it;
-	}
+        try {
+          stgSvc->filesDeleted(deletedFiles);
+        } catch (castor::exception::Exception e) {
+          // "Error caught while informing stager..." message
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Error", e.getMessage().str())};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 14, 1, params);
+        }
+        // release memory
+        for (std::vector<u_signed64*>::iterator it =
+               deletedFiles.begin();
+             it != deletedFiles.end();
+             it++) {
+          delete *it;
+        }
+      }
+      if (failedFiles.size() > 0) {
+        try {
+          stgSvc->filesDeletionFailed(failedFiles);
+        } catch (castor::exception::Exception e) {
+          // "Error caught while informing stager..." message
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Error", e.getMessage().str())};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 16, 1, params);
+        }
+        // release memory
+        for (std::vector<u_signed64*>::iterator it =
+               failedFiles.begin();
+             it != failedFiles.end();
+             it++) {
+          delete *it;
+        }
       }
     } else {
       // "No garbage files found" message
