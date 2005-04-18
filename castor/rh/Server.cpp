@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2005/04/18 09:18:13 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2005/04/18 14:56:48 $ $Author: sponcec3 $
  *
  *
  *
@@ -41,7 +41,7 @@
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/QryRequest.hpp"
-#include "castor/stager/FilesDeleted.hpp"
+#include "castor/stager/GCFileList.hpp"
 #include "castor/rh/Client.hpp"
 
 #include "castor/io/biniostream.h"
@@ -303,9 +303,9 @@ void castor::rh::Server::handleRequest
     if (0 != qryReq) {
       svcs()->fillRep(&ad, qryReq, OBJ_QueryParameter, false);
     }
-    // Store deletedFiles for filesDeleted
-    castor::stager::FilesDeleted* fdReq =
-      dynamic_cast<castor::stager::FilesDeleted*>(fr);
+    // Store deletedFiles for fileList
+    castor::stager::GCFileList* fdReq =
+      dynamic_cast<castor::stager::GCFileList*>(fr);
     if (0 != fdReq) {
       svcs()->fillRep(&ad, fdReq, OBJ_GCFile, false);
     }
