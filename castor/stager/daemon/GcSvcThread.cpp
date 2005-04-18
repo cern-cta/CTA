@@ -1,5 +1,5 @@
 /*
- * $Id: GcSvcThread.cpp,v 1.5 2005/04/18 13:59:24 sponcec3 Exp $
+ * $Id: GcSvcThread.cpp,v 1.6 2005/04/18 15:24:35 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.5 $ $Date: 2005/04/18 13:59:24 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.6 $ $Date: 2005/04/18 15:24:35 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -115,7 +115,7 @@ EXTERN_C int DLL_DECL stager_gc_select(void **output) {
       }
       std::stringstream msg;
       msg << "Found request " << req->id();
-      STAGER_LOG_DEBUG(NULL,msg.str().c_str());
+      STAGER_LOG_USAGE(NULL,msg.str().c_str());
       *output = req;
       rc = 0;
 
@@ -185,10 +185,10 @@ namespace castor {
           i++;
         }
         if (castor::OBJ_FilesDeleted == req->type()) {
-          STAGER_LOG_DEBUG(NULL, "Invoking filesDeleted");
+          STAGER_LOG_USAGE(NULL, "Invoking filesDeleted");
           stgSvc->filesDeleted(arg);
         } else {
-          STAGER_LOG_DEBUG(NULL, "Invoking filesDeletionFailed");
+          STAGER_LOG_USAGE(NULL, "Invoking filesDeletionFailed");
           stgSvc->filesDeletionFailed(arg);
         }
         delete[] argArray;
