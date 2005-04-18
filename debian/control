@@ -88,6 +88,7 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-lib-oracle
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Suggests: castor-db-config
 Description: castor (Cern Advanced STORage system)
  Static and shared libraries for Oracle access
 
