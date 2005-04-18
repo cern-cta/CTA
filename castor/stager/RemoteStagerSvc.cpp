@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2005/04/15 16:57:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2005/04/18 09:18:14 $ $Author: sponcec3 $
  *
  *
  *
@@ -40,11 +40,12 @@
 #include "castor/stager/FileSystem.hpp"
 #include "castor/stager/Files2Delete.hpp"
 #include "castor/stager/FilesDeleted.hpp"
+#include "castor/stager/FilesDeletionFailed.hpp"
 #include "castor/stager/GetUpdateDone.hpp"
 #include "castor/stager/GetUpdateFailed.hpp"
 #include "castor/stager/PutFailed.hpp"
 #include "castor/stager/GCLocalFile.hpp"
-#include "castor/stager/GCRemovedFile.hpp"
+#include "castor/stager/GCFile.hpp"
 #include "castor/stager/RemoteStagerSvc.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/GetUpdateStartRequest.hpp"
@@ -762,8 +763,37 @@ void castor::stager::RemoteStagerSvc::filesDeleted
   for (std::vector<u_signed64*>::iterator it = diskCopyIds.begin();
        it != diskCopyIds.end();
        it++) {
-    castor::stager::GCRemovedFile* file =
-      new castor::stager::GCRemovedFile;
+    castor::stager::GCFile* file =
+      new castor::stager::GCFile;
+    file->setDiskCopyId(**it);
+    file->setRequest(&req);
+    // Here the owner ship of files[i] is transmitted to req !
+    req.files().push_back(file);
+    i++;
+  }
+  // Build a response Handler
+  castor::client::BasicResponseHandler rh;
+  // Uses a BaseClient to handle the request
+  castor::client::BaseClient client(getRemoteStagerClientTimeout());
+  client.sendRequest(&req, &rh);
+  // no need to cleanup files since the ownership of its content
+  // was transmitted to req and the deletion of req will delete it !
+}
+
+// -----------------------------------------------------------------------
+// filesDeletionFailed
+// -----------------------------------------------------------------------
+void castor::stager::RemoteStagerSvc::filesDeletionFailed
+(std::vector<u_signed64*>& diskCopyIds)
+  throw (castor::exception::Exception) {
+  // Build the FilesDeletionFailedRequest
+  castor::stager::FilesDeletionFailed req;
+  int i = 0;
+  for (std::vector<u_signed64*>::iterator it = diskCopyIds.begin();
+       it != diskCopyIds.end();
+       it++) {
+    castor::stager::GCFile* file =
+      new castor::stager::GCFile;
     file->setDiskCopyId(**it);
     file->setRequest(&req);
     // Here the owner ship of files[i] is transmitted to req !

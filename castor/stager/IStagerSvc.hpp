@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.54 $ $Release$ $Date: 2005/04/07 08:38:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.55 $ $Release$ $Date: 2005/04/18 09:18:14 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -658,7 +658,7 @@ namespace castor {
 
       /**
        * Informs the stager of files effectively deleted.
-       * The DiskCopy id is geiven. The corresponding
+       * The DiskCopy id is given. The corresponding
        * DiskCopies will be deleted from the catalog
        * as well as the CastorFile if there is no other
        * copy.
@@ -666,6 +666,17 @@ namespace castor {
        * given by their id
        */
       virtual void filesDeleted
+      (std::vector<u_signed64*>& diskCopyIds)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Informs the stager of files for which deletion failed.
+       * The DiskCopy id is given. The corresponding
+       * DiskCopies will marked FAILED in the catalog.
+       * @param diskCopyIds the list of diskcopies for which
+       * deletion failed given by their id
+       */
+      virtual void filesDeletionFailed
       (std::vector<u_signed64*>& diskCopyIds)
         throw (castor::exception::Exception) = 0;
 

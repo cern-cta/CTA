@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2005/04/07 14:51:53 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2005/04/18 09:18:13 $ $Author: sponcec3 $
  *
  *
  *
@@ -307,7 +307,7 @@ void castor::rh::Server::handleRequest
     castor::stager::FilesDeleted* fdReq =
       dynamic_cast<castor::stager::FilesDeleted*>(fr);
     if (0 != fdReq) {
-      svcs()->fillRep(&ad, fdReq, OBJ_GCRemovedFile, false);
+      svcs()->fillRep(&ad, fdReq, OBJ_GCFile, false);
     }
     svcs()->commit(&ad);
     // "Request stored in DB" message

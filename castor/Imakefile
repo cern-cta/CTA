@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.85 $ $Release$ $Date: 2005/04/07 12:41:21 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.86 $ $Release$ $Date: 2005/04/18 09:18:11 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -131,11 +131,12 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamFileSystemCnv.cpp \
               io/StreamFiles2DeleteCnv.cpp \
               io/StreamFilesDeletedCnv.cpp \
+              io/StreamFilesDeletionFailedCnv.cpp \
               io/StreamGetUpdateStartRequestCnv.cpp \
               io/StreamGetUpdateStartResponseCnv.cpp \
               io/StreamGCFilesResponseCnv.cpp \
               io/StreamGCLocalFileCnv.cpp \
-              io/StreamGCRemovedFileCnv.cpp \
+              io/StreamGCFileCnv.cpp \
               io/StreamGetUpdateDoneCnv.cpp \
               io/StreamGetUpdateFailedCnv.cpp \
               io/StreamMessageAckCnv.cpp \
@@ -235,6 +236,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/Files2DeleteCInt.cpp \
               stager/FilesDeleted.cpp \
               stager/FilesDeletedCInt.cpp \
+              stager/FilesDeletionFailed.cpp \
+              stager/FilesDeletionFailedCInt.cpp \
               stager/GetUpdateDone.cpp \
               stager/GetUpdateDoneCInt.cpp \
               stager/GetUpdateFailed.cpp \
@@ -243,8 +246,10 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/GetUpdateStartRequestCInt.cpp \
               stager/GCLocalFile.cpp \
               stager/GCLocalFileCInt.cpp \
-              stager/GCRemovedFile.cpp \
-              stager/GCRemovedFileCInt.cpp \
+              stager/GCFile.cpp \
+              stager/GCFileCInt.cpp \
+              stager/GCFileList.cpp \
+              stager/GCFileListCInt.cpp \
               stager/IStagerSvcCInt.cpp \
               stager/MoverCloseRequest.cpp \
               stager/MoverCloseRequestCInt.cpp \

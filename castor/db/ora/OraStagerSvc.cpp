@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.152 $ $Release$ $Date: 2005/04/12 16:14:53 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.153 $ $Release$ $Date: 2005/04/18 09:18:12 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -48,11 +48,12 @@
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/Files2Delete.hpp"
 #include "castor/stager/FilesDeleted.hpp"
+#include "castor/stager/FilesDeletionFailed.hpp"
 #include "castor/stager/GetUpdateDone.hpp"
 #include "castor/stager/GetUpdateFailed.hpp"
 #include "castor/stager/PutFailed.hpp"
 #include "castor/stager/GCLocalFile.hpp"
-#include "castor/stager/GCRemovedFile.hpp"
+#include "castor/stager/GCFile.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/TapeCopyForMigration.hpp"
 #include "castor/db/ora/OraStagerSvc.hpp"
@@ -219,6 +220,10 @@ const std::string castor::db::ora::OraStagerSvc::s_selectFiles2DeleteStatementSt
 const std::string castor::db::ora::OraStagerSvc::s_filesDeletedStatementString =
   "BEGIN filesDeletedProc(:1); END;";
 
+/// SQL statement for filesDeleted
+const std::string castor::db::ora::OraStagerSvc::s_filesDeletionFailedStatementString =
+  "BEGIN filesDeletionFailedProc(:1); END;";
+
 /// SQL statement for getUpdateDone
 const std::string castor::db::ora::OraStagerSvc::s_getUpdateDoneStatementString =
   "BEGIN getUpdateDoneProc(:1); END;";
@@ -274,6 +279,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_anySegmentsForTapeStatement(0),
   m_selectFiles2DeleteStatement(0),
   m_filesDeletedStatement(0),
+  m_filesDeletionFailedStatement(0),
   m_getUpdateDoneStatement(0),
   m_getUpdateFailedStatement(0),
   m_putFailedStatement(0),
@@ -342,6 +348,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_anySegmentsForTapeStatement);
     deleteStatement(m_selectFiles2DeleteStatement);
     deleteStatement(m_filesDeletedStatement);
+    deleteStatement(m_filesDeletionFailedStatement);
     deleteStatement(m_getUpdateDoneStatement);
     deleteStatement(m_getUpdateFailedStatement);
     deleteStatement(m_putFailedStatement);
@@ -382,6 +389,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_anySegmentsForTapeStatement = 0;
   m_selectFiles2DeleteStatement = 0;
   m_filesDeletedStatement = 0;
+  m_filesDeletionFailedStatement = 0;
   m_getUpdateDoneStatement = 0;
   m_getUpdateFailedStatement = 0;
   m_putFailedStatement = 0;
@@ -2442,6 +2450,51 @@ void castor::db::ora::OraStagerSvc::filesDeleted
        nba, &unused, 21, lens);
     // execute the statement
     m_filesDeletedStatement->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to remove deleted files :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// filesDeletionFailed
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::filesDeletionFailed
+(std::vector<u_signed64*>& diskCopyIds)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_filesDeletionFailedStatement) {
+    m_filesDeletionFailedStatement =
+      createStatement(s_filesDeletionFailedStatementString);
+    m_filesDeletionFailedStatement->setAutoCommit(true);
+  }
+  // Execute statement and get result
+  unsigned long id;
+  try {
+    // Deal with the list of diskcopy ids
+    unsigned int nb = diskCopyIds.size();
+    // Compute actual length of the buffers : this
+    // may be different from the needed one, since
+    // Oracle does not like 0 length arrays....
+    unsigned int nba = nb == 0 ? 1 : nb;
+    ub2 lens[nb];
+    unsigned char buffer[nba][21];
+    memset(buffer, 0, nba * 21);
+    for (int i = 0; i < nb; i++) {
+      oracle::occi::Number n = (double)(*(diskCopyIds[i]));
+      oracle::occi::Bytes b = n.toBytes();
+      b.getBytes(buffer[i],b.length());
+      lens[i] = b.length();
+    }
+    ub4 unused = nb;
+    m_filesDeletionFailedStatement->setDataBufferArray
+      (1, buffer, oracle::occi::OCCI_SQLT_NUM,
+       nba, &unused, 21, lens);
+    // execute the statement
+    m_filesDeletionFailedStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()

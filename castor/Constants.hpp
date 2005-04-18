@@ -108,10 +108,12 @@ namespace castor {
     OBJ_FilesDeleted = 74,
     OBJ_GCFilesResponse = 75,
     OBJ_GCLocalFile = 76,
-    OBJ_GCRemovedFile = 77,
     OBJ_GetUpdateDone = 78,
     OBJ_GetUpdateFailed = 79,
-    OBJ_PutFailed = 80
+    OBJ_PutFailed = 80,
+    OBJ_GCFile = 81,
+    OBJ_GCFileList = 82,
+    OBJ_FilesDeletionFailed = 83
   };
     
   /**
@@ -159,7 +161,7 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[81];
+  extern const char* ObjectsIdStrings[84];
 
   /**
    * Names of the differents Services, used to display

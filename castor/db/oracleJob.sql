@@ -1170,6 +1170,22 @@ BEGIN
  END IF;
 END;
 
+/* PL/SQL method implementing filesDeleted */
+CREATE OR REPLACE PROCEDURE filesDeletionFailedProc
+(fileIds IN castor."cnumList") AS
+  cfId NUMBER;
+  nb NUMBER;
+BEGIN
+ IF fileIds.COUNT > 0 THEN
+  -- Loop over the deleted files
+  FOR i in fileIds.FIRST .. fileIds.LAST LOOP
+    -- set status of DiskCopy to FAILED
+    UPDATE DiskCopy SET status = 4 -- FAILED
+     WHERE id = fileIds(i);
+  END LOOP;
+ END IF;
+END;
+
 /* PL/SQL method implementing getUpdateDone */
 CREATE OR REPLACE PROCEDURE getUpdateDoneProc
 (subReqId IN NUMBER) AS

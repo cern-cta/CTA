@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2005/04/12 16:13:33 $ $Author: itglp $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2005/04/18 09:18:11 $ $Author: sponcec3 $
  *
  *
  *
@@ -30,7 +30,7 @@
 //=============================================================================
 // ObjectsIdStrings
 //=============================================================================
-const char* castor::ObjectsIdStrings[81] = {
+const char* castor::ObjectsIdStrings[84] = {
   "INVALID",
   "Ptr", // Only used for streaming for circular dependencies
   "CastorFile",
@@ -108,10 +108,13 @@ const char* castor::ObjectsIdStrings[81] = {
   "FilesDeleted",
   "GCFilesResponse",
   "GCLocalFile",
-  "GCRemovedFile",
+  "DELETED TYPE",
   "GetUpdateDone",
   "GetUpdateFailed",
-  "PutFailed"
+  "PutFailed",
+  "GCFile",
+  "GCFileList",
+  "FilesDeletionFailed"
 };
 
 //=============================================================================

@@ -663,7 +663,7 @@ namespace castor {
 
         /**
          * Informs the stager of files effectively deleted.
-         * The DiskCopy id is geiven. The corresponding
+         * The DiskCopy id is given. The corresponding
          * DiskCopies will be deleted from the catalog
          * as well as the CastorFile if there is no other
          * copy.
@@ -671,6 +671,17 @@ namespace castor {
          * given by their id
          */
         virtual void filesDeleted
+        (std::vector<u_signed64*>& diskCopyIds)
+          throw (castor::exception::Exception);
+
+        /**
+         * Informs the stager of files for which deletion failed.
+         * The DiskCopy id is given. The corresponding
+         * DiskCopies will marked FAILED in the catalog.
+         * @param diskCopyIds the list of diskcopies for which
+         * deletion failed given by their id
+         */
+        virtual void filesDeletionFailed
         (std::vector<u_signed64*>& diskCopyIds)
           throw (castor::exception::Exception);
 
@@ -944,6 +955,12 @@ namespace castor {
 
         /// SQL statement object for function filesDeleted
         oracle::occi::Statement *m_filesDeletedStatement;
+
+        /// SQL statement for function filesDeletionFailed
+        static const std::string s_filesDeletionFailedStatementString;
+
+        /// SQL statement object for function filesDeletionFailed
+        oracle::occi::Statement *m_filesDeletionFailedStatement;
 
         /// SQL statement for function getUpdateDone
         static const std::string s_getUpdateDoneStatementString;

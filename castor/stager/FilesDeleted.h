@@ -34,7 +34,8 @@
 struct C_IClient_t;
 struct C_IObject_t;
 struct Cstager_FilesDeleted_t;
-struct Cstager_GCRemovedFile_t;
+struct Cstager_GCFileList_t;
+struct Cstager_GCFile_t;
 struct Cstager_Request_t;
 struct Cstager_SvcClass_t;
 
@@ -54,6 +55,16 @@ int Cstager_FilesDeleted_create(struct Cstager_FilesDeleted_t** obj);
  * Empty Destructor
  */
 int Cstager_FilesDeleted_delete(struct Cstager_FilesDeleted_t* obj);
+
+/**
+ * Cast into GCFileList
+ */
+struct Cstager_GCFileList_t* Cstager_FilesDeleted_getGCFileList(struct Cstager_FilesDeleted_t* obj);
+
+/**
+ * Dynamic cast from GCFileList
+ */
+struct Cstager_FilesDeleted_t* Cstager_FilesDeleted_fromGCFileList(struct Cstager_GCFileList_t* obj);
 
 /**
  * Cast into Request
@@ -84,6 +95,26 @@ int Cstager_FilesDeleted_print(struct Cstager_FilesDeleted_t* instance);
  * Gets the type of this kind of objects
  */
 int Cstager_FilesDeleted_TYPE(int* ret);
+
+/***********************************************/
+/* Implementation of GCFileList abstract class */
+/***********************************************/
+
+/**
+ * Add a struct Cstager_GCFile_t* object to the files list
+ */
+int Cstager_FilesDeleted_addFiles(struct Cstager_FilesDeleted_t* instance, struct Cstager_GCFile_t* obj);
+
+/**
+ * Remove a struct Cstager_GCFile_t* object from files
+ */
+int Cstager_FilesDeleted_removeFiles(struct Cstager_FilesDeleted_t* instance, struct Cstager_GCFile_t* obj);
+
+/**
+ * Get the list of struct Cstager_GCFile_t* objects held by files. Note that the
+ * caller is responsible for the deletion of the returned vector.
+ */
+int Cstager_FilesDeleted_files(struct Cstager_FilesDeleted_t* instance, struct Cstager_GCFile_t*** var, int* len);
 
 /********************************************/
 /* Implementation of Request abstract class */
@@ -278,21 +309,5 @@ int Cstager_FilesDeleted_id(struct Cstager_FilesDeleted_t* instance, u_signed64*
  * The id of this object
  */
 int Cstager_FilesDeleted_setId(struct Cstager_FilesDeleted_t* instance, u_signed64 new_var);
-
-/**
- * Add a struct Cstager_GCRemovedFile_t* object to the files list
- */
-int Cstager_FilesDeleted_addFiles(struct Cstager_FilesDeleted_t* instance, struct Cstager_GCRemovedFile_t* obj);
-
-/**
- * Remove a struct Cstager_GCRemovedFile_t* object from files
- */
-int Cstager_FilesDeleted_removeFiles(struct Cstager_FilesDeleted_t* instance, struct Cstager_GCRemovedFile_t* obj);
-
-/**
- * Get the list of struct Cstager_GCRemovedFile_t* objects held by files. Note that
- * the caller is responsible for the deletion of the returned vector.
- */
-int Cstager_FilesDeleted_files(struct Cstager_FilesDeleted_t* instance, struct Cstager_GCRemovedFile_t*** var, int* len);
 
 #endif // CASTOR_STAGER_FILESDELETED_H

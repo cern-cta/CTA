@@ -59,9 +59,13 @@ CREATE TABLE Files2Delete (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, 
 DROP TABLE FilesDeleted;
 CREATE TABLE FilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
-/* SQL statements for type GCRemovedFile */
-DROP TABLE GCRemovedFile;
-CREATE TABLE GCRemovedFile (diskCopyId INTEGER, id INTEGER PRIMARY KEY, request INTEGER);
+/* SQL statements for type FilesDeletionFailed */
+DROP TABLE FilesDeletionFailed;
+CREATE TABLE FilesDeletionFailed (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+
+/* SQL statements for type GCFile */
+DROP TABLE GCFile;
+CREATE TABLE GCFile (diskCopyId INTEGER, id INTEGER PRIMARY KEY, request INTEGER);
 
 /* SQL statements for type GCLocalFile */
 DROP TABLE GCLocalFile;
@@ -1394,6 +1398,22 @@ BEGIN
         END IF;
       END IF;
     END IF;
+  END LOOP;
+ END IF;
+END;
+
+/* PL/SQL method implementing filesDeleted */
+CREATE OR REPLACE PROCEDURE filesDeletionFailedProc
+(fileIds IN castor."cnumList") AS
+  cfId NUMBER;
+  nb NUMBER;
+BEGIN
+ IF fileIds.COUNT > 0 THEN
+  -- Loop over the deleted files
+  FOR i in fileIds.FIRST .. fileIds.LAST LOOP
+    -- set status of DiskCopy to FAILED
+    UPDATE DiskCopy SET status = 4 -- FAILED
+     WHERE id = fileIds(i);
   END LOOP;
  END IF;
 END;
