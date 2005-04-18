@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AbstractSocket.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/04/15 16:55:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: AbstractSocket.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/04/18 15:08:42 $ $Author: sponcec3 $
  *
  *
  *
@@ -259,15 +259,13 @@ void castor::io::AbstractSocket::readBuffer(const unsigned int magic,
   ssize_t readBytes = 0;
   while (readBytes < n) {
     ssize_t nb = ::read(m_socket, (*buf)+readBytes, n - readBytes);
-    if (nb <=0 ) {
-      if (errno == EAGAIN) continue;
-      fprintf(stdout, "Got an error while reading from fd %d. errno = %d\n",
-	      m_socket, errno);
-    } else {
-      fprintf(stdout, "Read %d bytes from fd %d. %d bytes were to read in total\n",
-	      nb, m_socket, n);
+    if (nb == -1) {
+      if (errno == EAGAIN) {
+        continue;
+      } else {
+        break;
+      }
     }
-    if (nb == -1) break;
     readBytes += nb;
   }
   if (readBytes < n) {
