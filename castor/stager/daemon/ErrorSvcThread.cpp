@@ -1,5 +1,5 @@
 /*
- * $Id: ErrorSvcThread.cpp,v 1.1 2005/04/18 09:08:03 jdurand Exp $
+ * $Id: ErrorSvcThread.cpp,v 1.2 2005/04/18 14:18:56 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.1 $ $Date: 2005/04/18 09:08:03 $ CERN IT-FIO/DS Sebastien Ponce";
+static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.2 $ $Date: 2005/04/18 14:18:56 $ CERN IT-FIO/DS Sebastien Ponce";
 #endif
 
 /* ================================================================= */
@@ -36,11 +36,6 @@ static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.1 $ $Da
 #include "castor/exception/Internal.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/stager/Request.hpp"
-#include "castor/stager/FilesDeleted.hpp"
-#include "castor/stager/GCRemovedFile.hpp"
-#include "castor/stager/Files2Delete.hpp"
-#include "castor/stager/GCLocalFile.hpp"
-#include "castor/rh/GCFilesResponse.hpp"
 #include "castor/rh/BasicResponse.hpp"
 #undef logfunc
 
