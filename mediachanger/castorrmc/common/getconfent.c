@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.12 $ $Date: 2005/04/18 10:59:34 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.13 $ $Date: 2005/04/18 11:03:14 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -12,6 +12,8 @@ static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.12 $ $Date: 2
 #include "Cglobals.h"
 #include "serrno.h"
 #include "getconfent.h"
+#include "Csnprintf.h"
+#include "Castor_limits.h"
 
 #ifndef PATH_CONFIG
 #if defined(_WIN32)
@@ -40,7 +42,7 @@ static char *getconfent_r(filename,category, name, flags, buffer, bufsiz)
     char    *p, *cp;
     char    *getenv();
     int     found = 0;
-    char    path_config[256];
+    char    path_config[CA_MAXPATHLEN+1];
     char    *separator;
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
     char *last = NULL;
@@ -58,13 +60,15 @@ static char *getconfent_r(filename,category, name, flags, buffer, bufsiz)
 #if defined(_WIN32)
     if (strncmp (filename, "%SystemRoot%\\", 13) == 0 &&
         (p = getenv ("SystemRoot"))) {
-        sprintf (path_config, "%s\\%s", p, strchr (filename, '\\'));
+        Csnprintf (path_config, CA_MAXPATHLEN, "%s\\%s", p, strchr (filename, '\\'));
     } else {
 #endif
-        strcpy (path_config, filename);
+        strncpy (path_config, filename, CA_MAXPATHLEN);
 #if defined(_WIN32)
     }
 #endif
+    /* Who knows */
+    path_config[CA_MAXPATHLEN] = '\0';
 
     if ((fp = fopen(path_config,"r")) == NULL) {
         serrno = SENOCONFIG;
