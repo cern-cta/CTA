@@ -1,5 +1,5 @@
 /*
- * $Id: GcSvcThread.cpp,v 1.4 2005/04/08 09:19:47 sponcec3 Exp $
+ * $Id: GcSvcThread.cpp,v 1.5 2005/04/18 13:59:24 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.4 $ $Date: 2005/04/08 09:19:47 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.5 $ $Date: 2005/04/18 13:59:24 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -36,8 +36,8 @@ static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.4 $ $Date:
 #include "castor/exception/Internal.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/stager/Request.hpp"
-#include "castor/stager/FilesDeleted.hpp"
-#include "castor/stager/GCRemovedFile.hpp"
+#include "castor/stager/GCFileList.hpp"
+#include "castor/stager/GCFile.hpp"
 #include "castor/stager/Files2Delete.hpp"
 #include "castor/stager/GCLocalFile.hpp"
 #include "castor/rh/GCFilesResponse.hpp"
@@ -97,6 +97,7 @@ EXTERN_C int DLL_DECL stager_gc_select(void **output) {
     STAGER_LOG_VERBOSE(NULL,"Getting any request to do");
     std::vector<castor::ObjectsIds> types;
     types.push_back(castor::OBJ_FilesDeleted);
+    types.push_back(castor::OBJ_FilesDeletionFailed);
     types.push_back(castor::OBJ_Files2Delete);
     castor::stager::Request* req = stgSvc->requestToDo(types);
 
@@ -141,40 +142,41 @@ namespace castor {
   namespace stager {
 
     /**
-     * Handles a FilesDeleted request and replies to client.
+     * Handles FilesDeleted and FilesDeletionFailed requests
+     * and replies to client.
      * @param req the request to handle
      * @param client the client where to send the response
      * @param svcs the Services object to use
      * @param stgSvc the stager service to use
      * @param ad the address where to load/store objects in the DB
      */
-    void handle_filesDeleted(castor::stager::Request* req,
-                             castor::IClient *client,
-                             castor::Services* svcs,
-                             castor::stager::IStagerSvc* stgSvc,
-                             castor::BaseAddress &ad) {
+    void handle_filesDeletedOrFailed
+    (castor::stager::Request* req,
+     castor::IClient *client,
+     castor::Services* svcs,
+     castor::stager::IStagerSvc* stgSvc,
+     castor::BaseAddress &ad) {
       // Usefull Variables
-      char *func =  "castor::stager::filesDeleted";
+      char *func =  "castor::stager::filesDeletedOrFailed";
       std::string error;
-      castor::stager::FilesDeleted *uReq;
 
       try {
 
-        /* get the FilesDeleted */
-        /* -------------------- */
+        /* get the GCFileList */
+        /* ---------------- */
         // cannot return 0 since we check the type before calling this method
-        uReq = dynamic_cast<castor::stager::FilesDeleted*> (req);
+        castor::stager::GCFileList *uReq =
+          dynamic_cast<castor::stager::GCFileList*> (req);
 
         // Fills it with files to be deleted
-        svcs->fillObj(&ad, req, castor::OBJ_GCRemovedFile);
+        svcs->fillObj(&ad, req, castor::OBJ_GCFile);
 
         /* Invoking the method                */
         /* ---------------------------------- */
-        STAGER_LOG_DEBUG(NULL, "Invoking filesDeleted");
         std::vector<u_signed64*> arg;
         u_signed64* argArray = new u_signed64[uReq->files().size()];
         int i = 0;
-        for (std::vector<castor::stager::GCRemovedFile*>::iterator it =
+        for (std::vector<castor::stager::GCFile*>::iterator it =
                uReq->files().begin();
              it != uReq->files().end();
              it++) {
@@ -182,7 +184,13 @@ namespace castor {
           arg.push_back(&(argArray[i]));
           i++;
         }
-        stgSvc->filesDeleted(arg);
+        if (castor::OBJ_FilesDeleted == req->type()) {
+          STAGER_LOG_DEBUG(NULL, "Invoking filesDeleted");
+          stgSvc->filesDeleted(arg);
+        } else {
+          STAGER_LOG_DEBUG(NULL, "Invoking filesDeletionFailed");
+          stgSvc->filesDeletionFailed(arg);
+        }
         delete[] argArray;
 
       } catch (castor::exception::Exception e) {
@@ -368,7 +376,8 @@ EXTERN_C int DLL_DECL stager_gc_process(void *output) {
   switch (req->type()) {
 
   case castor::OBJ_FilesDeleted:
-    castor::stager::handle_filesDeleted
+  case castor::OBJ_FilesDeletionFailed:
+    castor::stager::handle_filesDeletedOrFailed
       (req, client, svcs, stgSvc, ad);
     break;
 
