@@ -1,5 +1,5 @@
 /*
- * $Id: stager_admin_api.h,v 1.13 2005/03/22 17:45:02 jdurand Exp $
+ * $Id: stager_admin_api.h,v 1.14 2005/04/18 09:08:02 jdurand Exp $
  */
 
 #ifndef stager_admin_api_h
@@ -18,6 +18,7 @@ EXTERN_C int DLL_DECL stager_configDebug             _PROTO((int *));
 EXTERN_C int DLL_DECL stager_configTrace             _PROTO((int *));
 EXTERN_C int DLL_DECL stager_configDbNbthread        _PROTO((int *));
 EXTERN_C int DLL_DECL stager_configGCNbthread        _PROTO((int *));
+EXTERN_C int DLL_DECL stager_configErrorNbthread        _PROTO((int *));
 EXTERN_C int DLL_DECL stager_configQueryNbthread     _PROTO((int *));
 EXTERN_C int DLL_DECL stager_configGetnextNbthread   _PROTO((int *));
 EXTERN_C int DLL_DECL stager_configJobNbthread       _PROTO((int *));

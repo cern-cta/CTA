@@ -20,8 +20,9 @@ enum {
   STAGER_SERVICE_GETNEXT = 2,
   STAGER_SERVICE_JOB     = 3,
   STAGER_SERVICE_GC      = 4,
+  STAGER_SERVICE_ERROR   = 5,
 
-  STAGER_SERVICE_MAX     = 5        /* Nb of services - Do not forget to update this variable */
+  STAGER_SERVICE_MAX     = 6        /* Nb of services - Do not forget to update this variable */
 };
 
 struct stagerService {
