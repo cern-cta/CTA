@@ -4,13 +4,14 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.11 $ $Date: 2000/05/31 10:33:53 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.12 $ $Date: 2005/04/18 10:59:34 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>
-#include <Cglobals.h>
-#include <serrno.h>
+#include "Cglobals.h"
+#include "serrno.h"
+#include "getconfent.h"
 
 #ifndef PATH_CONFIG
 #if defined(_WIN32)
@@ -25,14 +26,16 @@ static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.11 $ $Date: 2
 #endif /* _REENTRANT || _THREAD_SAFE */
 
 
-char DLL_DECL *getconfent_r(category, name, flags, buffer, bufsiz)
+static char *getconfent_r _PROTO((char *, char *, char *, int, char *, int));
+
+static char *getconfent_r(filename,category, name, flags, buffer, bufsiz)
+     char *filename;
      char *category;
      char *name;
      int flags;
      char *buffer;
      int bufsiz;
 {
-    char    *filename=PATH_CONFIG;
     FILE    *fp;
     char    *p, *cp;
     char    *getenv();
@@ -43,16 +46,25 @@ char DLL_DECL *getconfent_r(category, name, flags, buffer, bufsiz)
     char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
 
-    if ((p = getenv("PATH_CONFIG")) != NULL) {
+    if (filename == NULL) {
+      /* Use default config file is not in the parameters */
+      filename = PATH_CONFIG;
+      /* But give precedence to $PATH_CONFIG environment variable */
+      if ((p = getenv("PATH_CONFIG")) != NULL) {
         filename=p;
+      }
     }
+
 #if defined(_WIN32)
-    if (strncmp (filename, "%SystemRoot%\\", 13) == 0 &&   
-        (p = getenv ("SystemRoot")))
+    if (strncmp (filename, "%SystemRoot%\\", 13) == 0 &&
+        (p = getenv ("SystemRoot"))) {
         sprintf (path_config, "%s\\%s", p, strchr (filename, '\\'));
-    else
+    } else {
 #endif
         strcpy (path_config, filename);
+#if defined(_WIN32)
+    }
+#endif
 
     if ((fp = fopen(path_config,"r")) == NULL) {
         serrno = SENOCONFIG;
@@ -60,7 +72,7 @@ char DLL_DECL *getconfent_r(category, name, flags, buffer, bufsiz)
     }
 
     for (;;) {
-        p = fgets(buffer, bufsiz-1, fp);      
+        p = fgets(buffer, bufsiz-1, fp);
         if (p == NULL) {
             break;
         }
@@ -109,5 +121,21 @@ char DLL_DECL *getconfent(category, name, flags)
         return(NULL);
     }
 
-    return(getconfent_r(category,name,flags,value,BUFSIZ+1));
+    return(getconfent_r(NULL,category,name,flags,value,BUFSIZ+1));
+}
+
+char DLL_DECL *getconfent_fromfile(filename,category, name, flags)
+     char *filename;
+     char *category;
+     char *name;
+     int flags;
+{
+    char *value = NULL;
+
+    Cglobals_get(&value_key,(void **) &value,BUFSIZ+1);
+    if ( value == NULL ) {
+        return(NULL);
+    }
+
+    return(getconfent_r(filename,category,name,flags,value,BUFSIZ+1));
 }
