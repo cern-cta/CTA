@@ -30,6 +30,12 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  Distributed Logging Facility server
 
+Package: castor-db-config
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: castor (Cern Advanced STORage system)
+ Template Configuration File for CASTOR DB interface
+
 Package: castor-doc
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
