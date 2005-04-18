@@ -1,0 +1,15 @@
+# Should contain entries like:
+#
+#OraCnvSvc       user    ORACLE_USERNAME
+#OraCnvSvc       passwd  ORACLE_PASSWORD
+#OraCnvSvc       dbName  ORACLE_DBNAME
+#OraStagerSvc    user    ORACLE_USERNAME
+#OraStagerSvc    passwd  ORACLE_PASSWORD
+#OraStagerSvc    dbName  ORACLE_DBNAME
+#
+#MysqlCnvSvc       user    MYSQL_USERNAME
+#MysqlCnvSvc       passwd  MYSQL_PASSWORD
+#MysqlCnvSvc       dbName  MYSQL_DBNAME
+#MysqlStagerSvc    user    MYSQL_USERNAME
+#MysqlStagerSvc    passwd  MYSQL_PASSWORD
+#MysqlStagerSvc    dbName  MYSQL_DBNAME

@@ -71,13 +71,14 @@ install: build
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/castor
 	$(MAKE) exportman DESTDIR=$(CURDIR)/debian/castor EXPORTMAN=$(CURDIR)/debian/castor/usr/share/man
 	(cd clips; ../imake/imake -I../config DESTDIR=$(CURDIR)/debian/castor; make install DESTDIR=$(CURDIR)/debian/castor)
-	install -o root -g bin -m 600 $(CURDIR)/debian/CUPVCONFIG $(CURDIR)/debian/castor/etc/castor
-	install -o root -g bin -m 600 $(CURDIR)/debian/DLFCONFIG $(CURDIR)/debian/castor/etc/castor
-	install -o root -g bin -m 600 $(CURDIR)/debian/EXPCONFIG $(CURDIR)/debian/castor/etc/castor
-	install -o root -g bin -m 600 $(CURDIR)/debian/NSCONFIG $(CURDIR)/debian/castor/etc/castor
-	install -o root -g bin -m 600 $(CURDIR)/debian/RMNODECONFIG $(CURDIR)/debian/castor/etc/castor
-	install -o root -g bin -m 600 $(CURDIR)/debian/TPCONFIG $(CURDIR)/debian/castor/etc/castor
-	install -o root -g bin -m 600 $(CURDIR)/debian/VMGRCONFIG $(CURDIR)/debian/castor/etc/castor
+	install -o root -g bin -m 600 $(CURDIR)/debian/DBCONFIG $(CURDIR)/debian/castor/etc/castor/DBCONFIG
+	install -o root -g bin -m 600 $(CURDIR)/debian/CUPVCONFIG $(CURDIR)/debian/castor/etc/castor/CUPVCONFIG
+	install -o root -g bin -m 600 $(CURDIR)/debian/DLFCONFIG $(CURDIR)/debian/castor/etc/castor/DLFCONFIG
+	install -o root -g bin -m 600 $(CURDIR)/debian/EXPCONFIG $(CURDIR)/debian/castor/etc/castor/EXPCONFIG
+	install -o root -g bin -m 600 $(CURDIR)/debian/NSCONFIG $(CURDIR)/debian/castor/etc/castor/NSCONFIG
+	install -o root -g bin -m 600 $(CURDIR)/debian/RMNODECONFIG $(CURDIR)/debian/castor/etc/castor/RMNODECONFIG
+	install -o root -g bin -m 600 $(CURDIR)/debian/TPCONFIG $(CURDIR)/debian/castor/etc/castor/TPCONFIG
+	install -o root -g bin -m 600 $(CURDIR)/debian/VMGRCONFIG $(CURDIR)/debian/castor/etc/castor/VMGRCONFIG
 	install -o root -g bin -m 600 $(CURDIR)/castor/rh/rhserver.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/rhserver
 	install -o root -g bin -m 600 $(CURDIR)/castor/gc/gcDaemon.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/gcDaemon
 	install -o root -g bin -m 600 $(CURDIR)/expert/expertd.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/expertd
