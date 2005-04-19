@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.154 $ $Release$ $Date: 2005/04/19 08:43:50 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.155 $ $Release$ $Date: 2005/04/19 11:22:38 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -127,6 +127,11 @@ const std::string castor::db::ora::OraStagerSvc::s_fileRecalledStatementString =
 /// SQL statement for fileRecallFailed
 const std::string castor::db::ora::OraStagerSvc::s_fileRecallFailedStatementString =
   "BEGIN fileRecallFailed(:1); END;";
+
+/// SQL statement for subRequestFailedToDo
+const std::string castor::db::ora::OraStagerSvc::s_subRequestFailedToDoStatementString =
+  // 10 = SUBREQUEST_FAILED_ANSWERING, 7 = SUBREQUEST_FAILED
+  "UPDATE SubRequest SET status = 10 WHERE status = 7 AND ROWNUM < 2 RETURNING id, retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags INTO :1, :2, :3, :4, :5 ,:6 , :7, :8, :9";
 
 /// SQL statement for isSubRequestToSchedule
 const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStatementString =
@@ -255,6 +260,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_fileRecalledStatement(0),
   m_fileRecallFailedStatement(0),
   m_subRequestToDoStatement(0),
+  m_subRequestFailedToDoStatement(0),
   m_requestToDoStatement(0),
   m_isSubRequestToScheduleStatement(0),
   m_getUpdateStartStatement(0),
@@ -324,6 +330,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_fileRecalledStatement);
     deleteStatement(m_fileRecallFailedStatement);
     deleteStatement(m_subRequestToDoStatement);
+    deleteStatement(m_subRequestFailedToDoStatement);
     deleteStatement(m_requestToDoStatement);
     deleteStatement(m_isSubRequestToScheduleStatement);
     deleteStatement(m_getUpdateStartStatement);
@@ -365,6 +372,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_fileRecalledStatement = 0;
   m_fileRecallFailedStatement = 0;
   m_subRequestToDoStatement = 0;
+  m_subRequestFailedToDoStatement = 0;
   m_requestToDoStatement = 0;
   m_isSubRequestToScheduleStatement = 0;
   m_getUpdateStartStatement = 0;
@@ -1088,6 +1096,69 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in subRequestToDo."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// subRequestFailedToDo
+// -----------------------------------------------------------------------
+castor::stager::SubRequest*
+castor::db::ora::OraStagerSvc::subRequestFailedToDo()
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_subRequestToDoStatement) {
+      m_subRequestFailedToDoStatement =
+        createStatement(s_subRequestFailedToDoStatementString);
+      m_subRequestFailedToDoStatement->registerOutParam
+        (1, oracle::occi::OCCIDOUBLE);
+      m_subRequestFailedToDoStatement->registerOutParam
+        (2, oracle::occi::OCCIINT);
+      m_subRequestFailedToDoStatement->registerOutParam
+        (3, oracle::occi::OCCISTRING, 2048);
+      m_subRequestFailedToDoStatement->registerOutParam
+        (4, oracle::occi::OCCISTRING, 2048);
+      m_subRequestFailedToDoStatement->registerOutParam
+        (5, oracle::occi::OCCIDOUBLE);
+      m_subRequestFailedToDoStatement->registerOutParam
+        (6, oracle::occi::OCCIINT);
+      m_subRequestFailedToDoStatement->registerOutParam
+        (7, oracle::occi::OCCIINT);
+      m_subRequestFailedToDoStatement->registerOutParam
+        (8, oracle::occi::OCCIINT);
+      m_subRequestFailedToDoStatement->registerOutParam
+        (9, oracle::occi::OCCIINT);
+      m_subRequestFailedToDoStatement->setAutoCommit(true);
+    }
+    // execute the statement and see whether we found something
+    unsigned int nb =
+      m_subRequestFailedToDoStatement->executeUpdate();
+    if (0 == nb) {
+      // Found no SubRequest to handle
+      return 0;
+    }
+    // Create result
+    castor::stager::SubRequest* result =
+      new castor::stager::SubRequest();
+    result->setId((u_signed64)m_subRequestFailedToDoStatement->getDouble(1));
+    result->setRetryCounter(m_subRequestFailedToDoStatement->getInt(2));
+    result->setFileName(m_subRequestFailedToDoStatement->getString(3));
+    result->setProtocol(m_subRequestFailedToDoStatement->getString(4));
+    result->setXsize((u_signed64)m_subRequestFailedToDoStatement->getDouble(5));
+    result->setPriority(m_subRequestFailedToDoStatement->getInt(6));
+    result->setStatus
+      ((enum castor::stager::SubRequestStatusCodes)
+       m_subRequestFailedToDoStatement->getInt(7));
+    result->setModeBits(m_subRequestFailedToDoStatement->getInt(8));
+    result->setFlags(m_subRequestFailedToDoStatement->getInt(9));
+    // return
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in subRequestFailedToDo."
       << std::endl << e.what();
     throw ex;
   }

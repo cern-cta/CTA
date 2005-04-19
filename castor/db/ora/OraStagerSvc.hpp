@@ -268,6 +268,17 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Selects the next SubRequest in FAILED status the stager
+         * should deal with.
+         * Selects a SubRequest in FAILED status and move its status
+         * to FAILED_ANSWERING to avoid double processing.
+         * @return the SubRequest to process
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::SubRequest* subRequestFailedToDo()
+          throw (castor::exception::Exception);
+
+        /**
          * Selects the next request the stager should deal with.
          * Selects a Request in START status and move its status
          * PROCESSED to avoid double processing.
@@ -814,6 +825,12 @@ namespace castor {
 
         /// SQL statement object for function subRequestToDo
         oracle::occi::Statement *m_subRequestToDoStatement;
+
+        /// SQL statement for function subRequestFailedToDo
+        static const std::string s_subRequestFailedToDoStatementString;
+
+        /// SQL statement object for function subRequestFailedToDo
+        oracle::occi::Statement *m_subRequestFailedToDoStatement;
 
         /// SQL statement object for function requestToDo
         oracle::occi::Statement *m_requestToDoStatement;

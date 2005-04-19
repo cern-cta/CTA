@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2005/04/18 09:18:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2005/04/19 11:22:38 $ $Author: sponcec3 $
  *
  *
  *
@@ -258,6 +258,19 @@ castor::stager::RemoteStagerSvc::selectTape
 castor::stager::SubRequest*
 castor::stager::RemoteStagerSvc::subRequestToDo
 (std::vector<ObjectsIds> &types)
+  throw (castor::exception::Exception) {
+  castor::exception::NotSupported ex;
+  ex.getMessage()
+    << "RemoteStagerSvc implementation is not complete"
+    << std::endl << "This method is not supported.";
+  throw ex;
+}
+
+// -----------------------------------------------------------------------
+// subRequestFailedToDo
+// -----------------------------------------------------------------------
+castor::stager::SubRequest*
+castor::stager::RemoteStagerSvc::subRequestFailedToDo()
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()

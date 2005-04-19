@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.55 $ $Release$ $Date: 2005/04/18 09:18:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.56 $ $Release$ $Date: 2005/04/19 11:22:38 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -262,6 +262,17 @@ namespace castor {
        */
       virtual castor::stager::SubRequest* subRequestToDo
       (std::vector<ObjectsIds> &types)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Selects the next SubRequest in FAILED status the stager
+       * should deal with.
+       * Selects a SubRequest in FAILED status and move its status
+       * to FAILED_ANSWERING to avoid double processing.
+       * @return the SubRequest to process
+       * @exception Exception in case of error
+       */
+      virtual castor::stager::SubRequest* subRequestFailedToDo()
         throw (castor::exception::Exception) = 0;
 
       /**
