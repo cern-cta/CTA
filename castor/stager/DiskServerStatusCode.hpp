@@ -40,9 +40,9 @@ namespace castor {
      * Possible status codes for a DiskServer
      */
     enum DiskServerStatusCode {
-      DISKSERVER_PRODUCTION,
-      DISKSERVER_DRAINING,
-      DISKSERVER_DISABLED
+      DISKSERVER_PRODUCTION = 0,
+      DISKSERVER_DRAINING = 1,
+      DISKSERVER_DISABLED = 2
     }; // end of enum DiskServerStatusCode
 
     /**

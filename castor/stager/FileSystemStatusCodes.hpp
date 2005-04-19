@@ -40,9 +40,9 @@ namespace castor {
      * Possible status codes for a DiskServer
      */
     enum FileSystemStatusCodes {
-      FILESYSTEM_PRODUCTION,
-      FILESYSTEM_DRAINING,
-      FILESYSTEM_DISABLED
+      FILESYSTEM_PRODUCTION = 0,
+      FILESYSTEM_DRAINING = 1,
+      FILESYSTEM_DISABLED = 2
     }; // end of enum FileSystemStatusCodes
 
     /**
