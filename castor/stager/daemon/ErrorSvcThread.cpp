@@ -1,5 +1,5 @@
 /*
- * $Id: ErrorSvcThread.cpp,v 1.3 2005/04/19 11:24:19 sponcec3 Exp $
+ * $Id: ErrorSvcThread.cpp,v 1.4 2005/04/19 12:30:58 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.3 $ $Date: 2005/04/19 11:24:19 $ CERN IT-FIO/DS Sebastien Ponce";
+static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.4 $ $Date: 2005/04/19 12:30:58 $ CERN IT-FIO/DS Sebastien Ponce";
 #endif
 
 /* ================================================================= */
@@ -217,10 +217,7 @@ EXTERN_C int DLL_DECL stager_error_process(void *output) {
     serrno = e.code();
     STAGER_LOG_DB_ERROR(NULL,"stager_error_process",
                         e.getMessage().str().c_str());
-    if (subReq) delete subReq;
-    if (req) delete req;
-    if (stgSvc) stgSvc->release();
-    return -1;
+    client = 0;
   }
 
   /* ===========================================================
@@ -233,32 +230,52 @@ EXTERN_C int DLL_DECL stager_error_process(void *output) {
   subReq->setStatus(castor::stager::SUBREQUEST_FAILED_FINISHED);
 
   // Build response
-  castor::rh::FileResponse res;
-  res.setErrorCode(SEINTERNAL);
-  std::stringstream ss;
-  ss << "Could not retrieve file.\n"
-     << "Please report error and mention file name and the "
-     << "following request ID : " << req->id();
-  res.setErrorMessage(ss.str());
-  res.setStatus(castor::stager::SUBREQUEST_FAILED);
-  res.setCastorFileName(subReq->fileName());
-  res.setSubreqId(subReq->subreqId());
-
-  // Reply to client (and update DB)
-  try {
-    STAGER_LOG_DEBUG(NULL, "Sending Response");
-    castor::replier::RequestReplier *rr =
-      castor::replier::RequestReplier::getInstance();
-    rr->sendResponse(client, &res);
-    // We both update the DB and check whether this was
-    // the last subrequest of the request
-    if (!stgSvc->updateAndCheckSubRequest(subReq)) {
-      rr->sendEndResponse(client);
+  if (0 != client) {
+    castor::rh::FileResponse res;
+    res.setErrorCode(SEINTERNAL);
+    std::stringstream ss;
+    ss << "Could not retrieve file.\n"
+       << "Please report error and mention file name and the "
+       << "following request ID : " << req->id();
+    res.setErrorMessage(ss.str());
+    res.setStatus(castor::stager::SUBREQUEST_FAILED);
+    res.setCastorFileName(subReq->fileName());
+    res.setSubreqId(subReq->subreqId());
+  
+    // Reply to client
+    try {
+      STAGER_LOG_DEBUG(NULL, "Sending Response");
+      castor::replier::RequestReplier *rr = 0;
+      try {
+        rr = castor::replier::RequestReplier::getInstance();
+        rr->sendResponse(client, &res);
+      } catch (castor::exception::Exception e) {
+        serrno = e.code();
+        STAGER_LOG_DB_ERROR(NULL, func,
+                            e.getMessage().str().c_str());
+        rr = 0;
+      }
+      // We both update the DB and check whether this was
+      // the last subrequest of the request
+      if (!stgSvc->updateAndCheckSubRequest(subReq)) {
+        if (0 != rr) {
+          rr->sendEndResponse(client);
+        }
+      }
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      STAGER_LOG_DB_ERROR(NULL, func,
+                          e.getMessage().str().c_str());
     }
-  } catch (castor::exception::Exception e) {
-    serrno = e.code();
-    STAGER_LOG_DB_ERROR(NULL, func,
-                        e.getMessage().str().c_str());
+  } else {
+    // still update the DB to put the subrequest in FAILED_FINISHED
+    try {
+      stgSvc->updateAndCheckSubRequest(subReq);    
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      STAGER_LOG_DB_ERROR(NULL, func,
+                          e.getMessage().str().c_str());
+    }
   }
 
   // Cleanup
