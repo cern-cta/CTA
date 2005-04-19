@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.153 $ $Release$ $Date: 2005/04/18 09:18:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.154 $ $Release$ $Date: 2005/04/19 08:43:50 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -2255,10 +2255,19 @@ void castor::db::ora::OraStagerSvc::bestFileSystemForJob
     // lengths of the different arrays
     unsigned int fileSystemsL = fileSystems == 0 ? 0 : fileSystemsNb;
     unsigned int machinesL = machines == 0 ? 0 : fileSystemsNb;
+    // Compute actual length of the buffers : this
+    // may be different from the needed one, since
+    // Oracle does not like 0 length arrays....
+    unsigned int fileSystemsLa = fileSystemsL == 0 ? 1 : fileSystemsL;
+    unsigned int machinesLa = machinesL == 0 ? 1 : machinesL;
     // Find max length of the input parameters
-    ub2 lensFS[fileSystemsL], lensM[fileSystemsL];
+    ub2 lensFS[fileSystemsLa], lensM[machinesLa];
     unsigned int maxFS = 0;
     unsigned int maxM = 0;
+    // in case fileSystemsLa != fileSystemsL
+    lensFS[fileSystemsLa-1]= 0;
+    // in case machinesLa != machinesL
+    lensM[machinesLa-1]= 0;    
     for (int i = 0; i < fileSystemsL; i++) {
       lensFS[i] = strlen(fileSystems[i]);
       if (lensFS[i] > maxFS) maxFS = lensFS[i];
@@ -2267,11 +2276,6 @@ void castor::db::ora::OraStagerSvc::bestFileSystemForJob
       lensM[i] = strlen(machines[i]);
       if (lensM[i] > maxM) maxM = lensM[i];
     }
-    // Compute actual length of the buffers : this
-    // may be different from the needed one, since
-    // Oracle does not like 0 length arrays....
-    unsigned int fileSystemsLa = fileSystemsL == 0 ? 1 : fileSystemsL;
-    unsigned int machinesLa = machinesL == 0 ? 1 : machinesL;
     // Allocate buffer for giving the parameters to ORACLE
     char bufferFS[fileSystemsLa][maxFS];
     char bufferM[machinesLa][maxM];
