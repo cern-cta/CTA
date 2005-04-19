@@ -1,5 +1,5 @@
 /*
- * $Id: GcSvcThread.cpp,v 1.6 2005/04/18 15:24:35 sponcec3 Exp $
+ * $Id: GcSvcThread.cpp,v 1.7 2005/04/19 11:21:33 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.6 $ $Date: 2005/04/18 15:24:35 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.7 $ $Date: 2005/04/19 11:21:33 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -359,7 +359,7 @@ EXTERN_C int DLL_DECL stager_gc_process(void *output) {
     // If we fail here, we do NOT have enough information to
     // reply to the client !
     serrno = e.code();
-    STAGER_LOG_DB_ERROR(NULL,"stager_gc_select",
+    STAGER_LOG_DB_ERROR(NULL,"stager_gc_process",
                         e.getMessage().str().c_str());
     if (req) delete req;
     if (stgSvc) stgSvc->release();
