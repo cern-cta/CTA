@@ -1,5 +1,5 @@
 /*
- * $Id: ErrorSvcThread.cpp,v 1.2 2005/04/18 14:18:56 sponcec3 Exp $
+ * $Id: ErrorSvcThread.cpp,v 1.3 2005/04/19 11:24:19 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.2 $ $Date: 2005/04/18 14:18:56 $ CERN IT-FIO/DS Sebastien Ponce";
+static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.3 $ $Date: 2005/04/19 11:24:19 $ CERN IT-FIO/DS Sebastien Ponce";
 #endif
 
 /* ================================================================= */
@@ -21,7 +21,7 @@ static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.2 $ $Da
 /* ============== */
 /* System headers */
 /* ============== */
-#include <vector>
+#include <sstream>
 
 /* ============= */
 /* Local headers */
@@ -36,7 +36,12 @@ static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.2 $ $Da
 #include "castor/exception/Internal.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/stager/Request.hpp"
+#include "castor/stager/FileRequest.hpp"
+#include "castor/stager/SubRequest.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/rh/BasicResponse.hpp"
+#include "castor/rh/FileResponse.hpp"
+#include "castor/replier/RequestReplier.hpp"
 #undef logfunc
 
 #include "stager_service_helper.hpp"
@@ -88,12 +93,9 @@ EXTERN_C int DLL_DECL stager_error_select(void **output) {
     /* Get any new request to do    */
     /* ---------------------------- */
     STAGER_LOG_VERBOSE(NULL,"Getting any request to do");
-    std::vector<castor::ObjectsIds> types;
-    /* TODO: OBJ_FilesFailed */
-    /* types.push_back(castor::OBJ_FilesFailed); */
-    /* castor::stager::Request* req = stgSvc->requestToDo(types); */
+    castor::stager::SubRequest* subReq = stgSvc->subRequestFailedToDo();
 
-    if (0 == req) {
+    if (0 == subReq) {
       /* Nothing to do */
       STAGER_LOG_VERBOSE(NULL,"Nothing to do");
       serrno = ENOENT;
@@ -102,11 +104,11 @@ EXTERN_C int DLL_DECL stager_error_select(void **output) {
       /* Set uuid for the log */
       /* -------------------- */
       Cuuid_t request_uuid;
-      if (string2Cuuid(&request_uuid,(char *) req->reqId().c_str()) == 0) {
+      if (string2Cuuid(&request_uuid,(char *) subReq->subreqId().c_str()) == 0) {
         stager_request_uuid = request_uuid;
       }
       std::stringstream msg;
-      msg << "Found request " << req->id();
+      msg << "Found subRequest " << subReq->id();
       STAGER_LOG_DEBUG(NULL,msg.str().c_str());
       *output = req;
       rc = 0;
@@ -151,6 +153,118 @@ EXTERN_C int DLL_DECL stager_error_process(void *output) {
     return -1;
   }
 
-  /* TODO */
-  return 0;
+  /* ===========================================================
+   *
+   * 1) PREPARATION PHASE
+   * Retrieving request from the database
+   */
+
+  castor::stager::Request* req = 0;
+  castor::stager::SubRequest* subReq = 0;
+  castor::Services *svcs = 0;
+  castor::stager::IStagerSvc *stgSvc = 0;
+  castor::IClient *client = 0;
+
+  /* Setting the address to access Oracle */
+  /* ------------------------------------ */
+  castor::BaseAddress ad;
+  ad.setCnvSvcName("OraCnvSvc");
+  ad.setCnvSvcType(castor::SVC_ORACNV);
+
+  try {
+
+    /* Loading services */
+    /* ---------------- */
+    STAGER_LOG_VERBOSE(NULL,"Loading services");
+    svcs = castor::BaseObject::services();
+    castor::IService* svc =
+      svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
+    stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
+
+    /* Casting the subRequest */
+    /* ---------------------- */
+    STAGER_LOG_VERBOSE(NULL, "Casting SubRequest");
+    subReq = (castor::stager::SubRequest*)output;
+    if (0 == subReq) {
+      castor::exception::Internal e;
+      e.getMessage() << "Request cast error";
+      throw e;
+    }
+
+    /* Getting the request */
+    /* ------------------- */
+    svcs->fillObj(&ad, subReq, castor::OBJ_FileRequest);
+    req = subReq->request();
+    if (0 == req) {
+      castor::exception::Internal e;
+      e.getMessage() << "No request associated with subRequest ! Cannot answer !";
+      throw e;
+    }
+
+    /* Getting the client  */
+    /* ------------------- */
+    svcs->fillObj(&ad, req, castor::OBJ_IClient);
+    client = req->client();
+    if (0 == client) {
+      castor::exception::Internal e;
+      e.getMessage() << "No client associated with request ! Cannot answer !";
+      throw e;
+    }
+
+  } catch (castor::exception::Exception e) {
+    // If we fail here, we do NOT have enough information to
+    // reply to the client !
+    serrno = e.code();
+    STAGER_LOG_DB_ERROR(NULL,"stager_error_process",
+                        e.getMessage().str().c_str());
+    if (subReq) delete subReq;
+    if (req) delete req;
+    if (stgSvc) stgSvc->release();
+    return -1;
+  }
+
+  /* ===========================================================
+   *
+   * 2) CALLING PHASE
+   * At this point we can send a reply to the client
+   */
+
+  // Set the SubRequest in FINISH_FAILED status
+  subReq->setStatus(castor::stager::SUBREQUEST_FAILED_FINISHED);
+
+  // Build response
+  castor::rh::FileResponse res;
+  res.setErrorCode(SEINTERNAL);
+  std::stringstream ss;
+  ss << "Could not retrieve file.\n"
+     << "Please report error and mention file name and the "
+     << "following request ID : " << req->id();
+  res.setErrorMessage(ss.str());
+  res.setStatus(castor::stager::SUBREQUEST_FAILED);
+  res.setCastorFileName(subReq->fileName());
+  res.setSubreqId(subReq->subreqId());
+
+  // Reply to client (and update DB)
+  try {
+    STAGER_LOG_DEBUG(NULL, "Sending Response");
+    castor::replier::RequestReplier *rr =
+      castor::replier::RequestReplier::getInstance();
+    rr->sendResponse(client, &res);
+    // We both update the DB and check whether this was
+    // the last subrequest of the request
+    if (!stgSvc->updateAndCheckSubRequest(subReq)) {
+      rr->sendEndResponse(client);
+    }
+  } catch (castor::exception::Exception e) {
+    serrno = e.code();
+    STAGER_LOG_DB_ERROR(NULL, func,
+                        e.getMessage().str().c_str());
+  }
+
+  // Cleanup
+  if (subReq) delete subReq;
+  if (req) delete req;
+  if (stgSvc) stgSvc->release();
+  STAGER_LOG_RETURN(serrno == 0 ? 0 : -1);
+
 }
