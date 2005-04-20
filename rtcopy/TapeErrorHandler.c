@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.3 $ $Release$ $Date: 2005/04/15 13:11:46 $ $Author: obarring $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.4 $ $Release$ $Date: 2005/04/20 13:43:56 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.3 $ $Release$ $Date: 2005/04/15 13:11:46 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.4 $ $Release$ $Date: 2005/04/20 13:43:56 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -797,6 +797,47 @@ static int doMigrationRetry(
   return(0);
 }
 
+static int putFailed(
+                     tapeCopy
+                     )
+     struct Cstager_TapeCopy_t *tapeCopy;
+{
+  struct C_IObject_t *iObj = NULL;
+  struct C_Services_t *dbSvc;
+  struct C_BaseAddress_t *baseAddr;
+  struct C_IAddress_t *iAddr = NULL;
+  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  int rc;
+  ID_TYPE key;
+
+  if ( tapeCopy == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
+  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  if ( rc == -1 ) return(-1);
+
+  iObj = Cstager_TapeCopy_getIObject(tapeCopy);
+  Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_FAILED);
+  rc = C_Services_updateRep(
+                            dbSvc,
+                            iAddr,
+                            iObj,
+                            1
+                            );
+  if ( rc == -1 ) {
+    LOG_DBCALLANDKEY_ERR("C_Services_updateRep(segment)",
+                         C_Services_errorMsg(dbSvc),
+                         key);
+    C_IAddress_delete(iAddr);
+    return(-1);
+  }
+
+  if ( iAddr != NULL ) C_IAddress_delete(iAddr);
+  return(0);
+}
+
 /*
  * Check if the failed migration candidate is retryable:
  *  - castor file still exists
@@ -1358,6 +1399,10 @@ int main(
         } else if (serrno == ENOENT ) {
           (void)cleanupSegment(segm);
         } else if ( serrno = SERTYEXHAUST ) {
+          rc = putFailed(tapeCopy);
+          if ( rc == -1 ) {
+            LOG_SYSCALL_ERR("putFailed()");
+          }
         }
       } else {
         rc = checkRecallRetry(segm,tapeCopy);
