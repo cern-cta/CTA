@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.18 2005/02/15 09:58:57 bcouturi Exp $
+ * $Id: stager_client_api_get.cpp,v 1.19 2005/04/20 10:18:13 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.18 $ $Date: 2005/02/15 09:58:57 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.19 $ $Date: 2005/04/20 10:18:13 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -155,7 +155,9 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
         dynamic_cast<castor::rh::FileResponse*>(respvec[i]);
       if (0 == fr) {
         castor::exception::Exception e(SEINTERNAL);
-        e.getMessage() << "Error in dynamic cast, response was NOT a file response";
+        e.getMessage() << "Error in dynamic cast, response was NOT a file response.\n"
+                       << "Object type is "
+                       << castor::ObjectsIdStrings[respvec[i]->type()];
         throw e;
       }
 
