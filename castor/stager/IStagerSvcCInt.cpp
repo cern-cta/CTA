@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2005/04/07 08:38:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2005/04/20 14:45:52 $ $Author: sponcec3 $
  *
  *
  *
@@ -672,9 +672,9 @@ extern "C" {
       return -1;
     }
     return 0;
-    
+
   }
-  
+
   //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_resetStream
   //-------------------------------------------------------------------------
@@ -712,7 +712,7 @@ extern "C" {
       stgSvc->errorMsg = e.getMessage().str();
       return -1;
     }
-    return 0;    
+    return 0;
   }
 
   //-------------------------------------------------------------------------
@@ -731,7 +731,7 @@ extern "C" {
       stgSvc->errorMsg = e.getMessage().str();
       return -1;
     }
-    return 0;    
+    return 0;
   }
 
   //-------------------------------------------------------------------------
@@ -748,7 +748,7 @@ extern "C" {
       stgSvc->errorMsg = e.getMessage().str();
       return -1;
     }
-    return 0;    
+    return 0;
   }
 
   //-------------------------------------------------------------------------
@@ -765,9 +765,9 @@ extern "C" {
       stgSvc->errorMsg = e.getMessage().str();
       return -1;
     }
-    return 0;    
+    return 0;
   }
-  
+
   //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_putFailed
   //-------------------------------------------------------------------------
@@ -782,7 +782,7 @@ extern "C" {
       stgSvc->errorMsg = e.getMessage().str();
       return -1;
     }
-    return 0;    
+    return 0;
   }
 
   //-------------------------------------------------------------------------
@@ -802,6 +802,24 @@ extern "C" {
       for (int i = 0; i < *nbItems; i++) {
         (*segmentArray)[i] = result[i];
       }
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_stageRm
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_stageRm
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   const u_signed64 fileId,
+   const char* nsHost) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      stgSvc->stgSvc->stageRm(fileId, nsHost);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

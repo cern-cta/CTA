@@ -168,7 +168,7 @@ namespace castor {
         /*
          * Gets the streams associated to the given TapePool
          * and link them to the pool. Takes a lock on the
-         * returned streams in the database and does not 
+         * returned streams in the database and does not
          * commit.
          * @param tapePool the tapePool to handle
          * @exception in case of error
@@ -389,7 +389,7 @@ namespace castor {
          * @param fileSystem the selected FileSystem
          * @return the DiskCopy to use for the data access
          * @exception Exception in case of error
-         */      
+         */
         virtual castor::stager::DiskCopy* putStart
         (castor::stager::SubRequest* subreq,
          castor::stager::FileSystem* fileSystem)
@@ -578,7 +578,7 @@ namespace castor {
         (castor::stager::SubRequest* subreq,
          u_signed64 fileSize)
           throw (castor::exception::Exception);
-        
+
         /**
          * Implementation of the PutDone API. This is called
          * when a PrepareToPut is over. It involves
@@ -610,7 +610,7 @@ namespace castor {
          * @param fileSystems the list of allowed filesystems
          * according to job requirements (given by id). This
          * is the fileSystems' mountPoint, the corresponding
-         * machines are given by parameter machines. 
+         * machines are given by parameter machines.
          * A null array means that any filesystem is eligible
          * @param machines the machines on which the filesystems
          * in parameter fileSystems reside.
@@ -733,6 +733,20 @@ namespace castor {
          */
         virtual std::vector<castor::stager::Segment*>
         failedSegments()
+          throw (castor::exception::Exception);
+
+        /**
+         * Implements a single file stageRm.
+         * It throws a Busy exception in case the file is
+         * used by any request or is waiting for migration.
+         * Otherwise, it marks all the copies of the file
+         * as candidate for the garbage collection.
+         * @param fileId the fileId of the CastorFile
+         * @param nsHost the name server to use
+         * @exception in case of error or if the file is busy
+         */
+        virtual void stageRm
+        (const u_signed64 fileId, const std::string nsHost)
           throw (castor::exception::Exception);
 
       private:
@@ -963,7 +977,7 @@ namespace castor {
 
         /// SQL statement for function selectFiles2Delete
         static const std::string s_selectFiles2DeleteStatementString;
-        
+
         /// SQL statement object for function selectFiles2Delete
         oracle::occi::Statement *m_selectFiles2DeleteStatement;
 
@@ -1002,6 +1016,12 @@ namespace castor {
 
         /// SQL statement object for function failedSegments
         oracle::occi::Statement *m_failedSegmentsStatement;
+
+        /// SQL statement for function stageRm
+        static const std::string s_stageRmStatementString;
+
+        /// SQL statement object for function stageRm
+        oracle::occi::Statement *m_stageRmStatement;
 
       }; // end of class OraStagerSvc
 

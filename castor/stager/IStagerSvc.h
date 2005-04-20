@@ -19,12 +19,12 @@
  *
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * 
+ *
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_ISTAGERSVC_H 
+#ifndef CASTOR_ISTAGERSVC_H
 #define CASTOR_ISTAGERSVC_H 1
 
 #include "castor/Constants.h"
@@ -178,7 +178,7 @@ int Cstager_IStagerSvc_bestTapeCopyForStream
 /*
  * Gets the streams associated to the given TapePool
  * and link them to the pool. Takes a lock on the
- * returned streams in the database and does not 
+ * returned streams in the database and does not
  * commit.
  * @param stgSvc the IStagerSvc used
  * @param tapePool the tapePool to handle
@@ -302,7 +302,7 @@ int Cstager_IStagerSvc_selectTape(struct Cstager_IStagerSvc_t* stgSvc,
  * @param types the list of accepted types for the request
  * associated to the returned subrequest
  * @param nbTypes the number of types in the list
- * @param subreq the SubRequest to process 
+ * @param subreq the SubRequest to process
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -323,7 +323,7 @@ int Cstager_IStagerSvc_subRequestToDo
  * @param stgSvc the IStagerSvc used
  * @param types the list of accepted types for the request
  * @param nbTypes the number of types in the list
- * @param request the request to process 
+ * @param request the request to process
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -449,7 +449,7 @@ int Cstager_IStagerSvc_getUpdateStart
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
  * Cstager_IStagerSvc_errorMsg
- */      
+ */
 int Cstager_IStagerSvc_putStart
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_SubRequest_t* subreq,
@@ -747,7 +747,7 @@ int Cstager_IStagerSvc_resetStream
  * @param fileSystems the list of allowed filesystems
  * according to job requirements (given by id). This
  * is the fileSystems' mountPoint, the corresponding
- * machines are given by parameter machines. 
+ * machines are given by parameter machines.
  * A null array means that any filesystem is eligible
  * @param machines the machines on which the filesystems
  * in parameter fileSystems reside.
@@ -859,5 +859,24 @@ int Cstager_IStagerSvc_failedSegments
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_Segment_t*** segmentArray,
  int* nbItems);
+
+/*
+ * Implements a single file stageRm.
+ * It throws a Busy exception in case the file is
+ * used by any request or is waiting for migration.
+ * Otherwise, it marks all the copies of the file
+ * as candidate for the garbage collection.
+ * @param stgSvc the IStagerSvc used
+ * @param fileId the fileId of the CastorFile
+ * @param nsHost the name server to use
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_stageRm
+(struct Cstager_IStagerSvc_t* stgSvc,
+ const u_signed64 fileId,
+ const char* nsHost);
 
 #endif // CASTOR_ISTAGERSVC_H

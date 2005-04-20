@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.36 $ $Release$ $Date: 2005/04/19 11:22:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.37 $ $Release$ $Date: 2005/04/20 14:45:52 $ $Author: sponcec3 $
  *
  *
  *
@@ -724,6 +724,20 @@ namespace castor {
        */
       virtual std::vector<castor::stager::Segment*>
       failedSegments()
+        throw (castor::exception::Exception);
+
+      /**
+       * Implements a single file stageRm.
+       * It throws a Busy exception in case the file is
+       * used by any request or is waiting for migration.
+       * Otherwise, it marks all the copies of the file
+       * as candidate for the garbage collection.
+       * @param fileId the fileId of the CastorFile
+       * @param nsHost the name server to use
+       * @exception in case of error or if the file is busy
+       */
+      virtual void stageRm
+      (const u_signed64 fileId, const std::string nsHost)
         throw (castor::exception::Exception);
 
     protected:

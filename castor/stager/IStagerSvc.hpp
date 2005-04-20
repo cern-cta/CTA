@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.56 $ $Release$ $Date: 2005/04/19 11:22:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.57 $ $Release$ $Date: 2005/04/20 14:45:52 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -163,7 +163,7 @@ namespace castor {
       /*
        * Gets the streams associated to the given TapePool
        * and link them to the pool. Takes a lock on the
-       * returned streams in the database and does not 
+       * returned streams in the database and does not
        * commit.
        * @param tapePool the tapePool to handle
        * @exception in case of error
@@ -386,7 +386,7 @@ namespace castor {
        * @param fileSystem the selected FileSystem
        * @return the DiskCopy to use for the data access
        * @exception Exception in case of error
-       */      
+       */
       virtual castor::stager::DiskCopy* putStart
       (castor::stager::SubRequest* subreq,
        castor::stager::FileSystem* fileSystem)
@@ -605,7 +605,7 @@ namespace castor {
        * @param fileSystems the list of allowed filesystems
        * according to job requirements (given by id). This
        * is the fileSystems' mountPoint, the corresponding
-       * machines are given by parameter machines. 
+       * machines are given by parameter machines.
        * A null array means that any filesystem is eligible
        * @param machines the machines on which the filesystems
        * in parameter fileSystems reside.
@@ -717,7 +717,7 @@ namespace castor {
        */
       virtual void putFailed(u_signed64 subReqId)
         throw (castor::exception::Exception) = 0;
-      
+
       /*
        * Get an array of segments that are in SEGMENT_FAILED
        * status. This method does not take any lock on the segments
@@ -728,6 +728,20 @@ namespace castor {
        */
       virtual std::vector<castor::stager::Segment*>
       failedSegments()
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Implements a single file stageRm.
+       * It throws a Busy exception in case the file is
+       * used by any request or is waiting for migration.
+       * Otherwise, it marks all the copies of the file
+       * as candidate for the garbage collection.
+       * @param fileId the fileId of the CastorFile
+       * @param nsHost the name server to use
+       * @exception in case of error or if the file is busy
+       */
+      virtual void stageRm
+      (const u_signed64 fileId, const std::string nsHost)
         throw (castor::exception::Exception) = 0;
 
     }; // end of class IStagerSvc

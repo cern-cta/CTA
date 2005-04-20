@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.156 $ $Release$ $Date: 2005/04/19 14:55:32 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.157 $ $Release$ $Date: 2005/04/20 14:45:51 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -60,6 +60,7 @@
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Busy.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/NotSupported.hpp"
@@ -241,9 +242,13 @@ const std::string castor::db::ora::OraStagerSvc::s_getUpdateFailedStatementStrin
 const std::string castor::db::ora::OraStagerSvc::s_putFailedStatementString =
   "BEGIN putFailedProc(:1); END;";
 
-/// SQL statement for segmentsForTape
+/// SQL statement for failedSegments
 const std::string castor::db::ora::OraStagerSvc::s_failedSegmentsStatementString =
   "BEGIN failedSegments(:1); END;";
+
+/// SQL statement for stageRm
+const std::string castor::db::ora::OraStagerSvc::s_stageRmStatementString =
+  "BEGIN stageRm(:1, :2, :3); END;";
 
 // -----------------------------------------------------------------------
 // OraStagerSvc
@@ -289,7 +294,8 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_getUpdateDoneStatement(0),
   m_getUpdateFailedStatement(0),
   m_putFailedStatement(0),
-  m_failedSegmentsStatement(0) {
+  m_failedSegmentsStatement(0),
+  m_stageRmStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -360,6 +366,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_getUpdateFailedStatement);
     deleteStatement(m_putFailedStatement);
     deleteStatement(m_failedSegmentsStatement);
+    deleteStatement(m_stageRmStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;
@@ -402,6 +409,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_getUpdateFailedStatement = 0;
   m_putFailedStatement = 0;
   m_failedSegmentsStatement = 0;
+  m_stageRmStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -2714,3 +2722,47 @@ castor::db::ora::OraStagerSvc::failedSegments ()
   return result;
 }
 
+// -----------------------------------------------------------------------
+// stageRm
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::stageRm
+(const u_signed64 fileId, const std::string nsHost)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_stageRmStatement) {
+      m_stageRmStatement =
+        createStatement(s_stageRmStatementString);
+      m_stageRmStatement->registerOutParam
+        (3, oracle::occi::OCCIINT);
+      m_stageRmStatement->setAutoCommit(true);
+    }
+    // execute the statement and see whether we found something
+    m_stageRmStatement->setDouble(1, fileId);
+    m_stageRmStatement->setString(2, nsHost);
+    unsigned int nb = m_stageRmStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "stageRm : No return code after PL/SQL call.";
+      throw ex;
+    }
+    // In case of EBUSY, throw exception
+    int returnCode = m_stageRmStatement->getInt(3);
+    if (returnCode != 0) {
+      castor::exception::Busy e;
+      if (returnCode == 1) {
+        e.getMessage() << "The file is waiting for migration.";
+      } else {
+        e.getMessage() << "There is/are ongoing request(s) on this file.";
+      }
+      throw e;
+    }
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in stageRm."
+      << std::endl << e.what();
+    throw ex;
+  }
+}

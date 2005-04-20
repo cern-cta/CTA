@@ -1216,3 +1216,38 @@ BEGIN
   OPEN segments FOR SELECT * FROM Segment
                      WHERE Segment.status = 6; -- SEGMENT_FAILED
 END;
+
+/* PL/SQL method implementing stageRm */
+CREATE OR REPLACE PROCEDURE stageRm (fid IN INTEGER,
+                                     nh IN VARCHAR2,
+                                     ret OUT INTEGER) AS
+  cfId INTEGER;
+  nbRes INTEGER;
+BEGIN
+ -- Lock the access to the CastorFile
+ -- This, together with triggers will avoid new TapeCopies
+ -- or DiskCopies to be added
+ SELECT id INTO cfId FROM CastorFile
+  WHERE fileId = fid AND nsHost = nh FOR UPDATE;
+ -- check if removal is possible for TapeCopies
+ SELECT count(*) INTO nbRes FROM TapeCopy
+   WHERE status = 3 -- TAPECOPY_SELECTED
+   AND castorFile = cfId;
+ IF nbRes > 0 THEN
+   -- We found something, thus we cannot recreate
+   ret := 1;
+   RETURN;
+ END IF;
+ -- check if recreation is possible for SubRequests
+ SELECT count(*) INTO nbRes FROM SubRequest
+   WHERE castorFile = cfId;
+ IF nbRes > 0 THEN
+   -- We found something, thus we cannot recreate
+   ret := 2;
+   RETURN;
+ END IF;
+ -- set DiskCopies to GCCANDIDATE
+ UPDATE DiskCopy SET status = 8 -- GCCANDIDATE
+  WHERE castorFile = cfId AND status = 1; -- STAGED
+ ret := 0;
+END;
