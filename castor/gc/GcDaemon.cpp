@@ -257,8 +257,9 @@ int castor::gc::GcDaemon::start()
           // "Failed to remove file" message
           castor::dlf::Param params[] =
             {castor::dlf::Param("File name", (*it)->fileName()),
-             castor::dlf::Param("Error", e.getMessage().str())};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 12, 2, params);
+             castor::dlf::Param("Error", e.getMessage().str()),
+             castor::dlf::Param("Origin", strerror(e.code()))};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 12, 3, params);
           // Add the file to the list of failed ones
           u_signed64 *gcfileid = new u_signed64((*it)->diskCopyId());
           failedFiles.push_back(gcfileid);
