@@ -21,7 +21,7 @@ cp ${WORKDIR}/castor/db/oracleHeader.sql ${TMPDIR}/castor/db/
 cp ${WORKDIR}/castor/db/mysqlHeader.sql ${TMPDIR}/castor/db/
 cp ${WORKDIR}/castor/db/mysqlTrailer.sql ${TMPDIR}/castor/db/
 
-/local/castor/PROTO2/codeGeneration/gencastor/gencastor.bin -o ${TMPDIR} --nocrashhandler ${XMIFILE}
+/usr/bin/gencastor.bin -o ${TMPDIR} --nocrashhandler ${XMIFILE}
 if !($?) then
   #echo Abnormal termination
   #exit
