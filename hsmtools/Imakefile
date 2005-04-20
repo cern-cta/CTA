@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Date: 2005/04/20 12:51:30 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Date: 2005/04/20 16:17:49 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM    Make HSM admin tools.
 
@@ -82,7 +82,8 @@ PROGS =  ProgramTargetName(reclaim) \
 	 ProgramTargetName(modifyFileClass) \
 	 ProgramTargetName(deleteFileClass) \
 	 ProgramTargetName(enterSvcClass) \
-	 ProgramTargetName(modifySvcClass)
+	 ProgramTargetName(modifySvcClass) \
+	 ProgramTargetName(deleteSvcClass)
 IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(repack)) \
 	 FileName($(BIN),ProgramTargetName(tapetohsm)) \
@@ -90,7 +91,8 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(modifyFileClass)) \
 	 FileName($(BIN),ProgramTargetName(deleteFileClass)) \
 	 FileName($(BIN),ProgramTargetName(enterSvcClass)) \
-	 FileName($(BIN),ProgramTargetName(modifySvcClass))
+	 FileName($(BIN),ProgramTargetName(modifySvcClass)) \
+	 FileName($(BIN),ProgramTargetName(deleteSvcClass))
 EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/repack \
 	 $(EXPORTBIN)/tapetohsm \
@@ -98,7 +100,8 @@ EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/modifyFileClass \
 	 $(EXPORTBIN)/deleteFileClass \
 	 $(EXPORTBIN)/enterSvcClass \
-	 $(EXPORTBIN)/modifySvcClass
+	 $(EXPORTBIN)/modifySvcClass \
+	 $(EXPORTBIN)/deleteSvcClass
 
 all: $(PROGS)
 
@@ -110,6 +113,7 @@ NormalProgramTarget(modifyFileClass,modifyFileClass.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(deleteFileClass,deleteFileClass.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(enterSvcClass,enterSvcClass.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(modifySvcClass,modifySvcClass.Osuf,$(DEPLIB),$(LIBS))
+NormalProgramTarget(deleteSvcClass,deleteSvcClass.Osuf,$(DEPLIB),$(LIBS))
 
 MakeDepSharedLibrary(shlib,shift)
 MakeDepSharedLibrary(shlib,castorCommonOra)
@@ -139,6 +143,9 @@ IEXPORT(enterSvcClass,$(EXPORTBIN),755);
 
 InstallProgram(modifySvcClass,$(BIN),root,bin,755)
 IEXPORT(modifySvcClass,$(EXPORTBIN),755);
+
+InstallProgram(deleteSvcClass,$(BIN),root,bin,755)
+IEXPORT(deleteSvcClass,$(EXPORTBIN),755);
 
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
