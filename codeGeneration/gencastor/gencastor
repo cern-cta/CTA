@@ -15,10 +15,17 @@ set TMPDIR=`mktemp /tmp/gencastor-XXXXXX`
 
 rm -rf ${TMPDIR}
 mkdir -p ${TMPDIR}/castor/db
-cp ${WORKDIR}/castor/db/oracleHeader.sql ${TMPDIR}/castor/db/
 cp ${WORKDIR}/castor/db/oracleTrailer.sql ${TMPDIR}/castor/db/
+cp ${WORKDIR}/castor/db/oracleHeader.sql ${TMPDIR}/castor/db/
 
-/usr/bin/gencastor.bin -o ${TMPDIR} --nocrashhandler ${XMIFILE}
+cp ${WORKDIR}/castor/db/mysqlHeader.sql ${TMPDIR}/castor/db/
+cp ${WORKDIR}/castor/db/mysqlTrailer.sql ${TMPDIR}/castor/db/
+
+/local/castor/PROTO2/codeGeneration/gencastor/gencastor.bin -o ${TMPDIR} --nocrashhandler ${XMIFILE}
+if !($?) then
+  #echo Abnormal termination
+  #exit
+endif
 set pushdsilent
 pushd ${TMPDIR}
 foreach f (`find . -type f`)
