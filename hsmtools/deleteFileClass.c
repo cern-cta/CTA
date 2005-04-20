@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: deleteFileClass.c,v $ $Revision: 1.1 $ $Release$ $Date: 2005/01/20 13:34:37 $ $Author: obarring $
+ * @(#)$RCSfile: deleteFileClass.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/20 16:17:35 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: deleteFileClass.c,v $ $Revision: 1.1 $ $Release$ $Date: 2005/01/20 13:34:37 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: deleteFileClass.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/20 16:17:35 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -60,7 +60,7 @@ enum FileClassAttributes {
 
 static struct Coptions longopts[] = {
   {"help",NO_ARGUMENT,&help_flag,'h'},
-  {"name",REQUIRED_ARGUMENT,0,Name},
+  {"Name",REQUIRED_ARGUMENT,0,Name},
   {NULL, 0, NULL, 0}
 };
 
