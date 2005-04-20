@@ -1,5 +1,5 @@
 /*
- * $Id: ErrorSvcThread.cpp,v 1.4 2005/04/19 12:30:58 sponcec3 Exp $
+ * $Id: ErrorSvcThread.cpp,v 1.5 2005/04/20 10:04:28 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.4 $ $Date: 2005/04/19 12:30:58 $ CERN IT-FIO/DS Sebastien Ponce";
+static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.5 $ $Date: 2005/04/20 10:04:28 $ CERN IT-FIO/DS Sebastien Ponce";
 #endif
 
 /* ================================================================= */
@@ -75,7 +75,7 @@ EXTERN_C int DLL_DECL stager_error_select(void **output) {
     return -1;
   }
 
-  castor::stager::Request* req = 0;
+  castor::stager::SubRequest* subReq = 0;
   castor::Services *svcs;
   castor::stager::IStagerSvc *stgSvc;
 
@@ -93,7 +93,7 @@ EXTERN_C int DLL_DECL stager_error_select(void **output) {
     /* Get any new request to do    */
     /* ---------------------------- */
     STAGER_LOG_VERBOSE(NULL,"Getting any request to do");
-    castor::stager::SubRequest* subReq = stgSvc->subRequestFailedToDo();
+    subReq = stgSvc->subRequestFailedToDo();
 
     if (0 == subReq) {
       /* Nothing to do */
@@ -110,7 +110,7 @@ EXTERN_C int DLL_DECL stager_error_select(void **output) {
       std::stringstream msg;
       msg << "Found subRequest " << subReq->id();
       STAGER_LOG_DEBUG(NULL,msg.str().c_str());
-      *output = req;
+      *output = subReq;
       rc = 0;
 
     }
@@ -120,7 +120,7 @@ EXTERN_C int DLL_DECL stager_error_select(void **output) {
     STAGER_LOG_DB_ERROR(NULL,"stager_error_select",
                         e.getMessage().str().c_str());
     rc = -1;
-    if (req) delete req;
+    if (subReq) delete subReq;
   }
 
   // Cleanup
