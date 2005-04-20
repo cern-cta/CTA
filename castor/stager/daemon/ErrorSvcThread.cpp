@@ -1,5 +1,5 @@
 /*
- * $Id: ErrorSvcThread.cpp,v 1.5 2005/04/20 10:04:28 sponcec3 Exp $
+ * $Id: ErrorSvcThread.cpp,v 1.6 2005/04/20 10:26:27 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.5 $ $Date: 2005/04/20 10:04:28 $ CERN IT-FIO/DS Sebastien Ponce";
+static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.6 $ $Date: 2005/04/20 10:26:27 $ CERN IT-FIO/DS Sebastien Ponce";
 #endif
 
 /* ================================================================= */
@@ -40,7 +40,7 @@ static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.5 $ $Da
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/rh/BasicResponse.hpp"
-#include "castor/rh/FileResponse.hpp"
+#include "castor/rh/IOResponse.hpp"
 #include "castor/replier/RequestReplier.hpp"
 #undef logfunc
 
@@ -231,7 +231,9 @@ EXTERN_C int DLL_DECL stager_error_process(void *output) {
 
   // Build response
   if (0 != client) {
-    castor::rh::FileResponse res;
+    // XXX A BasicResponse or a FileResponse could be enough
+    // here but the client API would not like it !
+    castor::rh::IOResponse res;
     res.setErrorCode(SEINTERNAL);
     std::stringstream ss;
     ss << "Could not retrieve file.\n"
