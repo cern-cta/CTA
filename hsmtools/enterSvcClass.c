@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.1 $ $Release$ $Date: 2005/03/07 14:44:11 $ $Author: obarring $
+ * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/20 12:51:10 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.1 $ $Release$ $Date: 2005/03/07 14:44:11 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/20 12:51:10 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -177,6 +177,10 @@ int main(int argc, char *argv[])
   Copterr = 1;
   cmd = argv[0];
 
+  /* Initializing the C++ log */
+  /* Necessary at start of program and after any fork */
+  C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
+
   rc = C_Services_create(&svcs);
   if ( rc == -1 ) {
     fprintf(stderr,"Cannot create catalogue DB services: %s\n",
@@ -236,12 +240,14 @@ int main(int argc, char *argv[])
     return(0);
   }
 
+  svcClassOld = NULL;
   rc = Cstager_IStagerSvc_selectSvcClass(stgSvc,&svcClassOld,name);
-  if ( rc == 0 ) {
+  if ( (rc == 0) && (svcClassOld != NULL) ) {
     fprintf(stdout,
             "SvcClass %s already exists, please use 'modifySvcClass' command\n"
             "to change any attribute of an existing SvcClass\n",name);
     Cstager_SvcClass_print(svcClassOld);
+    return(1);
   }
 
   fprintf(stdout,"Adding SvcClass: %s\n",name);
@@ -270,12 +276,26 @@ int main(int argc, char *argv[])
     for ( i=0; i<nbTapePools; i++ ) {
       fprintf(stdout,"Add tape pool %s to SvcClass %s\n",tapePoolsArray[i],name);
       tapePool = NULL;
-      Cstager_TapePool_create(&tapePool);
-      if ( tapePool == NULL ) {
-        fprintf(stderr,"Cstager_TapePool_create(): %s\n",sstrerror(serrno));
+      rc = Cstager_IStagerSvc_selectTapePool(
+                                             stgSvc,
+                                             &tapePool,
+                                             tapePoolsArray[i]
+                                             );
+      if ( rc == -1 ) {
+        fprintf(stderr,"Cstager_IStagerSvc_selectTapePool(%s): %s, %s\n",
+                tapePoolsArray[i],
+                sstrerror(serrno),
+                Cstager_IStagerSvc_errorMsg(stgSvc));
         return(1);
       }
-      Cstager_TapePool_setName(tapePool,tapePoolsArray[i]);
+      if ( tapePool == NULL ) {
+        Cstager_TapePool_create(&tapePool);
+        if ( tapePool == NULL ) {
+          fprintf(stderr,"Cstager_TapePool_create(): %s\n",sstrerror(serrno));
+          return(1);
+        }
+        Cstager_TapePool_setName(tapePool,tapePoolsArray[i]);
+      }
       Cstager_TapePool_addSvcClasses(tapePool,svcClass);
       Cstager_SvcClass_addTapePools(svcClass,tapePool);
     }
@@ -284,7 +304,7 @@ int main(int argc, char *argv[])
                             iAddr,
                             iObj,
                             OBJ_TapePool,
-                            1
+                            0
                             );
     if ( rc == -1 ) {
       fprintf(stderr,"C_Services_fillRep(svcClass,OBJ_TapePool): %s, %s\n",
@@ -303,21 +323,35 @@ int main(int argc, char *argv[])
     for ( i=0; i<nbDiskPools; i++ ) {
       fprintf(stdout,"Add disk pool %s to SvcClass %s\n",diskPoolsArray[i],name);
       diskPool = NULL;
-      Cstager_DiskPool_create(&diskPool);
-      if ( diskPool == NULL ) {
-        fprintf(stderr,"Cstager_DiskPool_create(): %s\n",sstrerror(serrno));
+      rc = Cstager_IStagerSvc_selectDiskPool(
+                                             stgSvc,
+                                             &diskPool,
+                                             diskPoolsArray[i]
+                                             );
+      if ( rc == -1 ) {
+        fprintf(stderr,"Cstager_IStagerSvc_selectDiskPool(%s): %s, %s\n",
+                diskPoolsArray[i],
+                sstrerror(serrno),
+                Cstager_IStagerSvc_errorMsg(stgSvc));
         return(1);
       }
-      Cstager_DiskPool_setName(diskPool,diskPoolsArray[i]);
+      if ( diskPool == NULL ) {
+        Cstager_DiskPool_create(&diskPool);
+        if ( diskPool == NULL ) {
+          fprintf(stderr,"Cstager_DiskPool_create(): %s\n",sstrerror(serrno));
+          return(1);
+        }
+        Cstager_DiskPool_setName(diskPool,diskPoolsArray[i]);
+      }
       Cstager_DiskPool_addSvcClasses(diskPool,svcClass);
       Cstager_SvcClass_addDiskPools(svcClass,diskPool);
-    }
-       rc = C_Services_fillRep(
+    }  
+    rc = C_Services_fillRep(
                             svcs,
                             iAddr,
                             iObj,
                             OBJ_DiskPool,
-                            1
+                            0
                             );
     if ( rc == -1 ) {
       fprintf(stderr,"C_Services_fillRep(svcClass,OBJ_DiskPool): %s, %s\n",
@@ -325,6 +359,13 @@ int main(int argc, char *argv[])
               C_Services_errorMsg(svcs));
       return(1);
     }
+  }
+  rc = C_Services_commit(svcs,iAddr);
+  if ( rc == -1 ) {
+    fprintf(stderr,"C_Services_fillRep(svcClass,OBJ_DiskPool): %s, %s\n",
+            sstrerror(serrno),
+            C_Services_errorMsg(svcs));
+    return(1);
   }
   
   return(0);
