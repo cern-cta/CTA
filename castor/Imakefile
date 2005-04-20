@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.86 $ $Release$ $Date: 2005/04/18 09:18:11 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.87 $ $Release$ $Date: 2005/04/20 14:03:32 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -325,6 +325,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/TapeCopyStatusCodes.cpp \
               stager/TapeVid.cpp \
               exception/BadVersion.cpp \
+              exception/Busy.cpp \
               exception/Exception.cpp \
               exception/InvalidArgument.cpp \
               exception/Internal.cpp \
