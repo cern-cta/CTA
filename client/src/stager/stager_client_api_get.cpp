@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.19 2005/04/20 10:18:13 sponcec3 Exp $
+ * $Id: stager_client_api_get.cpp,v 1.20 2005/04/20 10:24:17 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.19 $ $Date: 2005/04/20 10:18:13 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.20 $ $Date: 2005/04/20 10:24:17 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -273,12 +273,12 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
       throw e;
     }
     
-    // Casting the response into a FileResponse !
+    // Casting the response into an IOResponse !
     castor::rh::IOResponse* fr = 
       dynamic_cast<castor::rh::IOResponse*>(respvec[0]);
       if (0 == fr) {
         castor::exception::Exception e(SEINTERNAL);
-        e.getMessage() << "Error in dynamic cast, response was NOT a file response";
+        e.getMessage() << "Error in dynamic cast, response was NOT an IOResponse";
         throw e;
       }
       (*response)->castor_filename = strdup(fr->castorFileName().c_str());
