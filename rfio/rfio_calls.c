@@ -1849,7 +1849,6 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
            status= -1 ;
            rcode= errno ;
            log(LOG_DEBUG,"ropen: open: %s\n",strerror(errno)) ;
-	   if(pfn != NULL) free (pfn);
            rfio_alrm(rcode,alarmbuf) ;
          }
          else {
@@ -3989,11 +3988,9 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
             status= -1 ;
             rcode= errno ;
             log(LOG_DEBUG,"ropen_v3: open: %s\n",strerror(errno)) ;
-	    if (pfn != NULL) free(pfn);
             /* rfio_alrm(rcode,alarmbuf) ; */
          }
          else  {
-	   if (pfn != NULL) free(pfn);
             /*
              * Getting current offset
              */
@@ -4002,6 +3999,7 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
             if ( status < 0 ) rcode= errno ;
          }
        }
+       if (pfn != NULL) free(pfn);
      }
 
      if (! status && fd >= 0)  {

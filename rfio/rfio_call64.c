@@ -832,7 +832,6 @@ char tmpbuf[21], tmpbuf2[21];
              CORRECT_FILENAME(filename), flags, mode, fd);
          if (fd < 0) {
            char alarmbuf[1024];
-	   if(pfn != NULL) free (pfn);
            sprintf(alarmbuf,"sropen64: %s", CORRECT_FILENAME(filename)) ;
            status= -1 ;
            rcode= errno ;
@@ -840,7 +839,6 @@ char tmpbuf[21], tmpbuf2[21];
            rfio_alrm(rcode,alarmbuf) ;
          }
          else {
-	   if(pfn != NULL) free (pfn);
            /*
             * Getting current offset
             */
@@ -856,6 +854,7 @@ char tmpbuf[21], tmpbuf2[21];
            else status = 0;
          }
        }
+       if(pfn != NULL) free (pfn);
      }
    }
 
@@ -2003,10 +2002,8 @@ char        *host;         /* Where the request comes from        */
           log(LOG_DEBUG,"ropen64_v3: open64(%s,0%o,0%o): %s\n",
               CORRECT_FILENAME(filename), ntohopnflg(flags), mode, strerror(errno)) ;
 #endif
-	  if(pfn != NULL) free (pfn);
          }
          else  {
-	   if(pfn != NULL) free (pfn);
            /* File is opened         */
            log(LOG_DEBUG,"ropen64_v3: open64(%s,0%o,0%o) returned %d \n",
                CORRECT_FILENAME(filename), ntohopnflg(flags), mode, fd) ;
@@ -2029,7 +2026,8 @@ char        *host;         /* Where the request comes from        */
              status = 0;
            }
          }
-       }
+	 if(pfn != NULL) free (pfn);
+      }
      }
 
      if (! status && fd >= 0)  {
