@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ConstantsCInt.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/04/21 09:24:32 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ConstantsCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/21 10:20:40 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,8 +29,37 @@
 
 extern "C" {
   
-  const char** C_ObjectsIdsStrings = &castor::ObjectsIdStrings[0];
-  const char** C_ServicesIdStrings = &castor::ServicesIdStrings[0];
-  const char** C_RepresentationsIdStrings = &castor::RepresentationsIdStrings[0];
+  // -----------------------------------------------------------------------
+  // C_ObjectsIdsStrings
+  // -----------------------------------------------------------------------
+  const char* C_ObjectsIdsStrings(unsigned int type) {
+    if (type < castor::ObjectsIdsNb) {
+      return castor::ObjectsIdStrings[type];
+    } else {
+      return "UNKNOWN";
+    }
+  }
+  
+  // -----------------------------------------------------------------------
+  // C_ServicesIdStrings
+  // -----------------------------------------------------------------------
+  const char* C_ServicesIdStrings(unsigned int type) {
+    if (type < castor::ServicesIdsNb) {
+      return castor::ServicesIdStrings[type];
+    } else {
+      return "UNKNOWN";
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // C_RepresentationsIdStrings
+  // -----------------------------------------------------------------------
+  const char* C_RepresentationsIdStrings(unsigned int type) {
+    if (type < castor::RepresentationsIdsNb) {
+      return castor::RepresentationsIdStrings[type];
+    } else {
+      return "UNKNOWN";
+    }
+  }
   
 }

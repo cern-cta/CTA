@@ -156,6 +156,20 @@ namespace castor {
    */
 #define RHSERVER_PORT 9002
 
+  /**
+   * Nb of objectIds currently existing
+   */
+  static const unsigned int ObjectsIdsNb = 84;
+
+  /**
+   * Nb of ServicesIds currently existing
+   */
+  static const unsigned int ServicesIdsNb = 13;
+
+  /**
+   * Nb of RepresentationsIds currently existing
+   */
+  static const unsigned int RepresentationsIdsNb = 5;
 
   /**
    * Names of the differents objects, used to display

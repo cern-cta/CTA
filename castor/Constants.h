@@ -31,9 +31,29 @@
 #define C_ServicesIds ServicesIds
 #define C_RepresentationsIds RepresentationsIds
 
-const char** C_ObjectsIdStrings;
-const char** C_ServicesIdStrings;
-const char** C_RepresentationsIdStrings;
+/**
+ * Returns the name of a given type
+ * @param type the type, as an id
+ * @return the name or "UNKNOWN" if type is not in
+ * the right range
+ */
+const char* C_ObjectsIdsStrings(unsigned int type);
+
+/**
+ * Returns the name of a given type
+ * @param type the type, as an id
+ * @return the name or "UNKNOWN" if type is not in
+ * the right range
+ */
+const char* C_ServicesIdsStrings(unsigned int type);
+
+/**
+ * Returns the name of a given type
+ * @param type the type, as an id
+ * @return the name or "UNKNOWN" if type is not in
+ * the right range
+ */
+const char* C_RepresentationsIdsStrings(unsigned int type);
 
 #include "Constants.hpp"
 
