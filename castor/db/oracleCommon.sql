@@ -1248,6 +1248,6 @@ BEGIN
  END IF;
  -- set DiskCopies to GCCANDIDATE
  UPDATE DiskCopy SET status = 8 -- GCCANDIDATE
-  WHERE castorFile = cfId AND status = 1; -- STAGED
+  WHERE castorFile = cfId AND status = 0; -- STAGED
  ret := 0;
 END;
