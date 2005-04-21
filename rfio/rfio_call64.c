@@ -788,7 +788,7 @@ char tmpbuf[21], tmpbuf2[21];
      }
      if ( !status ) {
        int rc;
-       char *pfn;
+       char *pfn = NULL;
        int need_user_check;
 
        log(LOG_DEBUG, "sropen64: uid %d gid %d mask %o ftype %d flags 0%o mode 0%o\n",
@@ -1973,7 +1973,7 @@ char        *host;         /* Where the request comes from        */
 #endif
       {
 	 int rc;
-	 char *pfn;
+	 char *pfn = NULL;
 	 rc = rfio_handle_open(CORRECT_FILENAME(filename),
 			       ntohopnflg(flags),
 			       mode,

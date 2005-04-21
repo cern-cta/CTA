@@ -1651,7 +1651,7 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
    extern char *rtuser;
 #endif /* HPSS */
    int rc;
-   char *pfn;
+   char *pfn = NULL;
 #if defined(_WIN32)
    struct thData *td;
    td = (struct thData*)TlsGetValue(tls_i);
@@ -3940,7 +3940,7 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
      if ( !status ) {
         int need_user_check = 1;
 	int rc;
-	char *pfn;
+	char *pfn = NULL;
 
        log(LOG_DEBUG, "ropen_v3: uid %d gid %d mask %o ftype %d flags %d mode %d\n",uid, gid, mask, ftype, flags, mode);
        log(LOG_DEBUG, "ropen_v3: account: %s\n", account);
