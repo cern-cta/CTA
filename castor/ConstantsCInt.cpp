@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      Constants.h
+ *                      Constants.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,24 +17,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
+ * @(#)$RCSfile: ConstantsCInt.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/04/21 09:24:32 $ $Author: sponcec3 $
  *
  * 
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_CONSTANTS_H 
-#define CASTOR_CONSTANTS_H 1
+// Include Files
+#include "castor/Constants.hpp"
 
-#define C_ObjectsIds ObjectsIds
-#define C_ServicesIds ServicesIds
-#define C_RepresentationsIds RepresentationsIds
-
-const char** C_ObjectsIdStrings;
-const char** C_ServicesIdStrings;
-const char** C_RepresentationsIdStrings;
-
-#include "Constants.hpp"
-
-#endif // CASTOR_CONSTANTS_H
+extern "C" {
+  
+  const char** C_ObjectsIdsStrings = &castor::ObjectsIdStrings[0];
+  const char** C_ServicesIdStrings = &castor::ServicesIdStrings[0];
+  const char** C_RepresentationsIdStrings = &castor::RepresentationsIdStrings[0];
+  
+}
