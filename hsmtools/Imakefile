@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Date: 2005/04/20 16:17:49 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Date: 2005/04/22 08:44:46 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM    Make HSM admin tools.
 
@@ -81,27 +81,33 @@ PROGS =  ProgramTargetName(reclaim) \
 	 ProgramTargetName(enterFileClass) \
 	 ProgramTargetName(modifyFileClass) \
 	 ProgramTargetName(deleteFileClass) \
+	 ProgramTargetName(printFileClass) \
 	 ProgramTargetName(enterSvcClass) \
 	 ProgramTargetName(modifySvcClass) \
-	 ProgramTargetName(deleteSvcClass)
+	 ProgramTargetName(deleteSvcClass) \
+	 ProgramTargetName(printSvcClass)
 IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(repack)) \
 	 FileName($(BIN),ProgramTargetName(tapetohsm)) \
 	 FileName($(BIN),ProgramTargetName(enterFileClass)) \
 	 FileName($(BIN),ProgramTargetName(modifyFileClass)) \
 	 FileName($(BIN),ProgramTargetName(deleteFileClass)) \
+	 FileName($(BIN),ProgramTargetName(printFileClass)) \
 	 FileName($(BIN),ProgramTargetName(enterSvcClass)) \
 	 FileName($(BIN),ProgramTargetName(modifySvcClass)) \
-	 FileName($(BIN),ProgramTargetName(deleteSvcClass))
+	 FileName($(BIN),ProgramTargetName(deleteSvcClass)) \
+	 FileName($(BIN),ProgramTargetName(printSvcClass))
 EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/repack \
 	 $(EXPORTBIN)/tapetohsm \
 	 $(EXPORTBIN)/enterFileClass \
 	 $(EXPORTBIN)/modifyFileClass \
 	 $(EXPORTBIN)/deleteFileClass \
+	 $(EXPORTBIN)/printFileClass \
 	 $(EXPORTBIN)/enterSvcClass \
 	 $(EXPORTBIN)/modifySvcClass \
-	 $(EXPORTBIN)/deleteSvcClass
+	 $(EXPORTBIN)/deleteSvcClass \
+	 $(EXPORTBIN)/printSvcClass
 
 all: $(PROGS)
 
@@ -111,9 +117,11 @@ NormalProgramTarget(tapetohsm,tapetohsm.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(enterFileClass,enterFileClass.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(modifyFileClass,modifyFileClass.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(deleteFileClass,deleteFileClass.Osuf,$(DEPLIB),$(LIBS))
+NormalProgramTarget(printFileClass,printFileClass.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(enterSvcClass,enterSvcClass.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(modifySvcClass,modifySvcClass.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(deleteSvcClass,deleteSvcClass.Osuf,$(DEPLIB),$(LIBS))
+NormalProgramTarget(printSvcClass,printSvcClass.Osuf,$(DEPLIB),$(LIBS))
 
 MakeDepSharedLibrary(shlib,shift)
 MakeDepSharedLibrary(shlib,castorCommonOra)
@@ -138,6 +146,9 @@ IEXPORT(modifyFileClass,$(EXPORTBIN),755);
 InstallProgram(deleteFileClass,$(BIN),root,bin,755)
 IEXPORT(deleteFileClass,$(EXPORTBIN),755);
 
+InstallProgram(printFileClass,$(BIN),root,bin,755)
+IEXPORT(printFileClass,$(EXPORTBIN),755);
+
 InstallProgram(enterSvcClass,$(BIN),root,bin,755)
 IEXPORT(enterSvcClass,$(EXPORTBIN),755);
 
@@ -146,6 +157,9 @@ IEXPORT(modifySvcClass,$(EXPORTBIN),755);
 
 InstallProgram(deleteSvcClass,$(BIN),root,bin,755)
 IEXPORT(deleteSvcClass,$(EXPORTBIN),755);
+
+InstallProgram(printSvcClass,$(BIN),root,bin,755)
+IEXPORT(printSvcClass,$(EXPORTBIN),755);
 
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
