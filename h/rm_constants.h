@@ -1,4 +1,4 @@
-/* $Id: rm_constants.h,v 1.15 2005/04/16 18:44:43 jdurand Exp $ */
+/* $Id: rm_constants.h,v 1.16 2005/04/22 11:11:45 jdurand Exp $ */
 
 #ifndef __rm_constants_h
 
@@ -226,6 +226,11 @@
 #endif
 #define RMNODE_PORT 15009
 
+#ifdef RMMASTER_LSF_PORT                      /* rmmaster port of internal daemon doing LSF dialog */
+#undef RMMASTER_LSF_PORT
+#endif
+#define RMMASTER_LSF_PORT 15010
+
 #define CRM_IFCONF_MAX 16 /* Max nb of network interfaces */
 #define CRM_IFCONF_MAXNAMELEN 16 /* Max length of an interface */
 
@@ -279,6 +284,7 @@
 #define RM_CHILD_DELETE_MODE   2
 #define RM_CHILD_QUERY_MODE    4
 #define RM_CHILD_RESUME_MODE   5
+#define RM_CHILD_PING_MODE     6
 
 #define RM_O_RDONLY            1
 #define RM_O_WRONLY            2
