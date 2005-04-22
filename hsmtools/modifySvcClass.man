@@ -1,0 +1,179 @@
+.\" @(#)$RCSfile: modifySvcClass.man,v $ $Revision: 1.1 $ $Date: 2005/04/22 16:41:29 $ CERN IT/ADC Olof Barring
+.\" Copyright (C) 2005 by CERN IT/ADC
+.\" All rights reserved
+.\"
+.TH MODIFYSCVCLASS 1 "$Date: 2005/04/22 16:41:29 $" CASTOR "stager catalogue administrative commands"
+.SH NAME
+modifySvcClass \- modify an existing service class in the stager catalogue
+.SH SYNOPSIS
+.B modifySvcClass
+[
+.BI -h, 
+.BI --help
+]
+.BI --Name " name"
+[
+.BI --NbDrives " nbDrives"
+]
+[
+.BI --DefaultFileSize " defaultFileSize"
+]
+[
+.BI --MaxReplicaNb " maxReplicaNb"
+]
+[
+.BI --GcPolicy " gcPolicy"
+]
+[
+.BI --MigratorPolicy " migratorPolicy"
+]
+[
+.BI --RecallerPolicy " recallerPolicy"
+]
+[
+.BI --ReplicationPolicy " replicationPolicy"
+]
+[
+.BI --AddTapePools " tapePool1:tapePool2:..."
+]
+[
+.BI --RemoveTapePools " tapePool1:tapePool2:..."
+]
+[
+.BI --AddDiskPools " diskPool1:diskPool2:..."
+]
+[
+.BI --RemoveDiskPools " diskPool1:diskPool2:..."
+]
+.SH DESCRIPTION
+.B modifySvcClass
+modifies an existing service class definition in the CASTOR stager catalogue
+.LP
+This command requires database client access to the stager catalogue
+.TP
+.BI \-h,
+.BI \-\-help
+Get usage information
+.TP
+.BI \-\-Name " name"
+is the name of an existing service class. An error is printed and the command
+fails if no service class with the specified name is found
+.TP
+.BI \-\-Nbdrives " nbDrives"
+The number of tape drives this service class is allowed to use concurrently
+for migration. There is no service class attribute to control the number tape drives used
+for tape recall.
+.TP
+.BI \-\-DefaultFileSize " defaultFileSize"
+The default file size allocation for
+.IR 'stagePut'
+requests not specifying any filesize.
+.TP
+.BI \-\-MaxReplicaNb " maxReplicaNb"
+Specifies the maximum number of disk resident replicas for a given CASTOR file
+allowed for files recalled or created in this service class. Note that specifying
+zero (0) replica, allows for an umlimited number of replicas (not recommended
+unless a replication policy is specified, see below). If this option is not
+specified or if a negative number is given, the default of one (1) replica is
+applied.
+.TP
+.BI \-\-GcPolicy " gcPolicy"
+Specifies the name of the garbage collection policy to be used for this service
+class. The policy should either be a database procedure or an executable external
+script known to the CASTOR expert system (see the
+.BI expertd(1castor)
+man-page).
+.TP
+.BI \-\-MigratorPolicy " migratorPolicy"
+Specifies the name of the migrator policy to be used for this service
+class. The policy should either be an executable external script known to the CASTOR
+expert system (see the
+.BI expertd(1castor)
+man-page).
+.TP
+.BI \-\-RecallerPolicy " recallerPolicy"
+Specifies the name of the recaller policy to be used for this service
+class. The policy should either be an executable external script known to the CASTOR
+expert system (see the
+.BI expertd(1castor)
+man-page).
+.TP
+.BI \-\-ReplicationPolicy " replicationPolicy"
+Specifies the name of the replication policy to be used for this service
+class. The policy should either be an executable external script known to the CASTOR
+expert system (see the
+.BI expertd(1castor)
+man-page). If a replication policy is specified, the
+.BI \-\-MaxReplicaNb
+option (see above) is ignored.
+.TP
+.BI \-\-AddTapePools " tapePool1:tapePool2:..."
+Lists the names of the tape pools that are to be added to the service class. If
+any of the specified tape pools does not exist in the stager catalog, it will be
+created and linked to the service class. If more than one tape pool is specified,
+the names should be separated by colon (:). A warning is printed if one or
+more of the specified tape pools are already associated with the service class.
+.TP
+.BI \-\-RemoveTapePools " tapePool1:tapePool2:..."
+Lists the names of the tape pools that are to be removed from the service class.
+ If more than one tape pool is specified, the names should be separated by
+colon (:).  A warning is printed if one or more of the specified tape pools
+are not associated with the service class.
+.TP
+.BI \-\-AddDiskPools " diskPool1:diskPool2:..."
+Lists the names of the disk pools that are to be added to the service class. If
+any of the specified disk pools does not exist in the stager catalog, it will be
+created and linked to the service class. If more than one disk pool is specified,
+the names should be separated by colon (:). A warning is printed if one or
+more of the specified disk pools are already associated with the service class.
+.BI \-\-RemoveDiskPools " diskPool1:diskPool2:..."
+Lists the names of the disk pools that are to be removed from the service class. If
+more than one disk pool is specified, the names should be separated by colon (:).
+A warning is printed if one or more of the specified disk pools are not associated
+with the service class.
+.LP
+A service class groups together the resources and the storage attributes and policies
+governing the disk resident files. The resources are composed by the disk pools
+that the service class should use for client user requests for creating new files
+as well as requests for files that need to be recalled from tape. The tape pools
+are only relevant for the tape migration.
+
+The SvcClass together with the FileClass attributes defined in the stager catalogue
+are used to determine, for instance, how many copies and which tape pools should
+be used when migrating the file to tape (see
+.B NOTES
+section below).
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+
+.B NOTES
+section below).
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH EXAMPLES
+.nf
+.ft CW
+modifySvcClass --Name public --RemoveTapePools user
+
+enterSvcClass --Name alicemdc6 --NbDrives 32 --AddTapePools alicemdc6_3592R0
+.ft
+.fi
+.SH SEE ALSO
+.BR enterSvcClass(1castor) ,
+.BR deleteSvcClass(1castor) ,
+.BR printSvcClass(1castor) ,
+.BR expertd(1castor)
+.SH NOTES
+The definition of FileClass and SvcClass classes in the stager catalogue is
+an important change with the new CASTOR stager. The previous CASTOR stgdaemon,
+toke the following important migration parameters from the CASTOR name server:
+number of copies on tape, the tape pools to be used and the maximum number of
+drives to be used when starting the migration streams. Those attributes are now
+defined in the FileClass and SvcClass tables of the stager catalogue. The
+basic motivation for this change was to be able to disentangle file attributes
+such as number of tape copies from resource attributes such as how many drives
+should be used for migration.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
