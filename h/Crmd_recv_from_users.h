@@ -26,10 +26,6 @@ extern int lsf_flag;
 extern int maui_flag;
 #endif
 extern char *appname;
-extern int pfd[2];
-extern int pfd2[2];
-extern FILE *pipe_in[2];
-extern FILE *pipe_out[2];
 
 /* External prototypes */
 EXTERN_C void *Crmd_recv_from_users _PROTO((void *));
@@ -37,8 +33,8 @@ EXTERN_C void *Crmd_recv_from_users_purge _PROTO((void *));
 EXTERN_C void DLL_DECL Crmd_exit _PROTO((int));
 EXTERN_C void DLL_DECL Crmd_recv_from_users_init _PROTO(());
 #ifdef LSF
-EXTERN_C void DLL_DECL Crmd_process_user_pipe_child _PROTO(());
-EXTERN_C int  DLL_DECL Crmd_process_user_pipe_master _PROTO((int *, u_signed64, struct rmjob *, LS_LONG_INT *));
+EXTERN_C int DLL_DECL Crmd_process_user_lsf_proxy _PROTO(());
+EXTERN_C int  DLL_DECL Crmd_process_user_lsf_request _PROTO((int *, u_signed64, struct rmjob *, LS_LONG_INT *));
 #endif
 
 #endif /* __Crmd_recv_from_users_h */
