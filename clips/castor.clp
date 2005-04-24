@@ -4,7 +4,7 @@
 ;
 ; PROPOSAL FOR 64BITS QUANTITIES: Use the u64subr.h syntax, e.g. with a unit
 ;
-; $Id: castor.clp,v 1.6 2005/02/18 09:00:41 jdurand Exp $
+; $Id: castor.clp,v 1.7 2005/04/24 09:31:04 jdurand Exp $
 ; (c) CASTOR CERN/IT/ADC/CA 2004 - Jean-Damien.Durand@cern.ch
 ;
 ; ====================
@@ -791,7 +791,7 @@
 					; instance adress
 		(default ?NONE)		; No default
 		(visibility public)	; Any instance can see that slot
-		(type INTEGER)		; Is a string
+		(type INTEGER)		; Is an integer
 	)
 )
 

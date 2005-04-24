@@ -1,4 +1,7 @@
-; $Id: castorweight.clp,v 1.7 2005/02/11 17:28:20 jdurand Exp $
+; $Id: castorweight.clp,v 1.8 2005/04/24 09:31:04 jdurand Exp $
+
+(load* fs_capabilities.clp)		; Load Filesystem specifities (maxIo in particular)
+
 ; (c) CASTOR CERN/IT/ADC/CA 2004 - Jean-Damien.Durand@cern.ch
 ;
 ; ============================================
@@ -637,8 +640,25 @@
 		(if (> ?diskserverNbTot 0) then
 			(bind ?thisFactor (/ ?thisFilesystemNbTot ?diskserverNbTot))
 		)
-		(if (> ?diskserverIo 0.) then
-			(bind ?thisFactor (/ ?thisFilesystemIoTot ?diskserverIo))
+		(bind ?maxIo (maxIo (nth$ ?index ?filesystemName)))
+		  (if (!= 0 ?*Debug*) then
+		    (printout t "[diskserverWeight] " ?diskserverName
+			      ":"
+			      (nth$ ?index ?filesystemName)
+			      " fileSystem max I/O is " ?maxIo crlf)
+		  )
+		(if (> ?maxIo 0.) then
+		  (if (!= 0 ?*Debug*) then
+		    (printout t "[diskserverWeight] " ?diskserverName
+			      ":"
+			      (nth$ ?index ?filesystemName)
+			      " Ignoring diskServer I/O that is " ?diskserverIo " in favour of fileSystem max I/O that is " ?maxIo crlf)
+		    (bind ?thisFactor (/ ?thisFilesystemIoTot ?maxIo))
+		  )
+		 else
+		 (if (> ?diskserverIo 0.) then
+			 (bind ?thisFactor (/ ?thisFilesystemIoTot ?diskserverIo))
+		 )
 		)
 		(bind ?thisWeight
 			(abs
