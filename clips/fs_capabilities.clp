@@ -5,9 +5,15 @@
 ; will have no effect
 
 (deffunction maxIo (?filesystemName)
-	(bind ?thisIo 0.)
 	(if (= 0 (str-compare ?filesystemName "/shift/lxfsrm505/data01/")) then
-		(return 70.)
+		(return 30.)
 	)
 	(return 0.)
+)
+
+(deffunction maxNbFd (?filesystemName)
+	(if (= 0 (str-compare ?filesystemName "/shift/lxfsrm505/data01/")) then
+		(return 5)
+	)
+	(return 0)
 )

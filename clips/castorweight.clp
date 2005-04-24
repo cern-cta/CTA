@@ -1,4 +1,4 @@
-; $Id: castorweight.clp,v 1.9 2005/04/24 09:58:29 jdurand Exp $
+; $Id: castorweight.clp,v 1.10 2005/04/24 15:14:41 jdurand Exp $
 
 (load* fs_capabilities.clp)		; Load Filesystem specifities (maxIo in particular)
 
@@ -636,17 +636,53 @@
 			    crlf
 		   )
 		)
-		(bind ?thisFactor 0.)
-		(if (> ?diskserverNbTot 0) then
-			(bind ?thisFactor (/ ?thisFilesystemNbTot ?diskserverNbTot))
+		(bind ?thisFactorNb 0.)
+		(bind ?thisFactorIo 0.)
+
+		; Number of file descriptors
+		; --------------------------
+
+		(bind ?maxNbFd (maxNbFd (nth$ ?index ?filesystemName)))
+		(if (!= 0 ?*Debug*) then
+		  (printout t "[diskserverWeight] " ?diskserverName
+		     ":"
+		      (nth$ ?index ?filesystemName)
+		     " fileSystem max NbFd is " ?maxNbFd crlf)
 		)
-		(bind ?maxIo (maxIo (nth$ ?index ?filesystemName)))
-		  (if (!= 0 ?*Debug*) then
+		(if (> ?maxNbFd 0) then
+		  (if (> ?diskserverNbTot ?maxNbFd) then
+		    (if (!= 0 ?*Debug*) then
+		      (printout t "[diskserverWeight] " ?diskserverName
+			        ":"
+			        (nth$ ?index ?filesystemName)
+			        " Ignoring diskServer Nb Fd Tot that is " ?diskserverNbTot " in favour of fileSystem Max Nb Fd Tot that is " ?maxNbFd crlf)
+			(bind ?thisFactorNb (/ ?thisFilesystemNbTot ?maxNbFd))
+		    )
+		   else
 		    (printout t "[diskserverWeight] " ?diskserverName
 			      ":"
 			      (nth$ ?index ?filesystemName)
-			      " fileSystem max I/O is " ?maxIo crlf)
+			      " Not Ignoring diskServer Nb Fd Tot  that is " ?diskserverNbTot " but still below fileSystem Max Nb Fd Tot that is " ?maxNbFd crlf)
+			(if (> ?diskserverNbTot 0) then
+				(bind ?thisFactorNb (/ ?thisFilesystemNbTot ?diskserverNbTot))
+			)
 		  )
+		 else
+		  (if (> ?diskserverNbTot 0) then
+			  (bind ?thisFactorNb (/ ?thisFilesystemNbTot ?diskserverNbTot))
+		  )
+		)
+
+		; I/O
+		; ---
+
+		(bind ?maxIo (maxIo (nth$ ?index ?filesystemName)))
+		(if (!= 0 ?*Debug*) then
+		  (printout t "[diskserverWeight] " ?diskserverName
+		     ":"
+		      (nth$ ?index ?filesystemName)
+		     " fileSystem max I/O is " ?maxIo crlf)
+		)
 		(if (> ?maxIo 0.) then
 		  (if (> ?diskserverIo ?maxIo) then
 		    (if (!= 0 ?*Debug*) then
@@ -654,7 +690,7 @@
 			        ":"
 			        (nth$ ?index ?filesystemName)
 			        " Ignoring diskServer I/O that is " ?diskserverIo " in favour of fileSystem max I/O that is " ?maxIo crlf)
-		      (bind ?thisFactor (/ ?thisFilesystemIoTot ?maxIo))
+		      (bind ?thisFactorIo (/ ?thisFilesystemIoTot ?maxIo))
 		    )
 		   else
 		    (printout t "[diskserverWeight] " ?diskserverName
@@ -662,14 +698,17 @@
 			      (nth$ ?index ?filesystemName)
 			      " Not Ignoring diskServer I/O that is " ?diskserverIo " but still below fileSystem max I/O that is " ?maxIo crlf)
 		      (if (> ?diskserverIo 0.) then
-			      (bind ?thisFactor (/ ?thisFilesystemIoTot ?diskserverIo))
+			      (bind ?thisFactorIo (/ ?thisFilesystemIoTot ?diskserverIo))
 		      )
 		  )
 		 else
 		 (if (> ?diskserverIo 0.) then
-			 (bind ?thisFactor (/ ?thisFilesystemIoTot ?diskserverIo))
+			 (bind ?thisFactorIo (/ ?thisFilesystemIoTot ?diskserverIo))
 		 )
 		)
+
+		(bind ?thisFactor (+ ?thisFactorNb ?thisFactorIo))
+
 		(bind ?thisWeight
 			(abs
 				(* ?diskserverWeight ?thisFactor)
