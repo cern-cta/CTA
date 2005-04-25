@@ -34,7 +34,7 @@ EXTERN_C void DLL_DECL Crmd_exit _PROTO((int));
 EXTERN_C void DLL_DECL Crmd_recv_from_users_init _PROTO(());
 #ifdef LSF
 EXTERN_C int DLL_DECL Crmd_process_user_lsf_proxy _PROTO(());
-EXTERN_C int  DLL_DECL Crmd_process_user_lsf_request _PROTO((int *, u_signed64, struct rmjob *, LS_LONG_INT *));
+EXTERN_C int  DLL_DECL Crmd_process_user_lsf_request _PROTO((int *, u_signed64, struct rmjob *, LS_LONG_INT *, int, char *));
 #endif
 
 #endif /* __Crmd_recv_from_users_h */
