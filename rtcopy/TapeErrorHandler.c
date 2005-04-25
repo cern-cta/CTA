@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.4 $ $Release$ $Date: 2005/04/20 13:43:56 $ $Author: obarring $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.5 $ $Release$ $Date: 2005/04/25 14:09:06 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.4 $ $Release$ $Date: 2005/04/20 13:43:56 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.5 $ $Release$ $Date: 2005/04/25 14:09:06 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1294,6 +1294,9 @@ int main(
   ID_TYPE key;
 
   C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
+  Cuuid_create(
+               &childUuid
+               );
   (void)rtcpcld_initLogging(tapeErrorHunterFacilityName);
 
   (void)Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer));
