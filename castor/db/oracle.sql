@@ -347,10 +347,7 @@ FOR EACH ROW
 WHEN (old.status = 3 AND new.status = 2) -- SELECTED AND WAITINSTREAMS
 BEGIN
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
-   WHERE FS IN (SELECT DiskCopy.FileSystem
-                  FROM DiskCopy, TapeCopy
-                 WHERE DiskCopy.CastorFile = TapeCopy.castorFile
-                   AND TapeCopy.id = :new.id)
+   WHERE FS IN (SELECT FileSystem FROM DiskCopy WHERE CastorFile = :new.castorFile)
      AND Stream IN (SELECT parent FROM Stream2TapeCopy WHERE child = :new.id);
 END;
 
