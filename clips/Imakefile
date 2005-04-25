@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2005 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 2005/01/13 15:31:09 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Date: 2005/04/25 15:02:31 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make clips programs.
 
@@ -10,7 +10,7 @@ COMM 	Make clips programs.
 
 SPOOL = PolicySpool
 
-IPROGS_CLIPS = FileName($(SPOOL),bestfs.clp) FileName($(SPOOL),castor.clp) FileName($(SPOOL),castorweight.clp) FileName($(SPOOL),replica.pl)
+IPROGS_CLIPS = FileName($(SPOOL),bestfs.clp) FileName($(SPOOL),castor.clp) FileName($(SPOOL),castorweight.clp) FileName($(SPOOL),replica.pl) FileName($(SPOOL),fs_capabilities.clp) 
 
 all:
 
@@ -19,6 +19,7 @@ install: $(SPOOL) $(IPROGS_CLIPS)
 MakeDir($(SPOOL),root,bin,0755)
 InstallNonExecFile(bestfs.clp,$(SPOOL),root,bin,0644)
 InstallNonExecFile(castor.clp,$(SPOOL),root,bin,0644)
+InstallNonExecFile(fs_capabilities.clp,$(SPOOL),root,bin,0644)
 InstallNonExecFile(castorweight.clp,$(SPOOL),root,bin,0644)
 InstallNonExecFile(replica.pl,$(SPOOL),root,bin,0644)
 
