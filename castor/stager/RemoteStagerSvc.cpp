@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2005/04/20 14:45:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2005/04/26 14:10:41 $ $Author: sponcec3 $
  *
  *
  *
@@ -584,7 +584,7 @@ void castor::stager::RemoteStagerSvc::disk2DiskCopyDone
 // -----------------------------------------------------------------------
 // recreateCastorFile
 // -----------------------------------------------------------------------
-castor::stager::DiskCopy*
+castor::stager::DiskCopyForRecall*
 castor::stager::RemoteStagerSvc::recreateCastorFile
 (castor::stager::CastorFile *castorFile,
  castor::stager::SubRequest *subreq)
@@ -612,20 +612,6 @@ void castor::stager::RemoteStagerSvc::prepareForMigration
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteStagerClientTimeout());
   client.sendRequest(&req, &rh);
-}
-
-// -----------------------------------------------------------------------
-// putDone
-// -----------------------------------------------------------------------
-void castor::stager::RemoteStagerSvc::putDone
-(u_signed64 cfId,
- u_signed64 fileSize)
-  throw (castor::exception::Exception) {
-  castor::exception::NotSupported ex;
-  ex.getMessage()
-    << "RemoteStagerSvc implementation is not complete"
-    << std::endl << "This method is not supported.";
-  throw ex;
 }
 
 // -----------------------------------------------------------------------

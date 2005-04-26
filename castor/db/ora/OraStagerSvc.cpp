@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.157 $ $Release$ $Date: 2005/04/20 14:45:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.158 $ $Release$ $Date: 2005/04/26 14:10:41 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -188,15 +188,11 @@ const std::string castor::db::ora::OraStagerSvc::s_disk2DiskCopyDoneStatementStr
 
 /// SQL statement for recreateCastorFile
 const std::string castor::db::ora::OraStagerSvc::s_recreateCastorFileStatementString =
-  "BEGIN recreateCastorFile(:1, :2, :3); END;";
+  "BEGIN recreateCastorFile(:1, :2, :3, :4, :5, :6); END;";
 
 /// SQL statement for prepareForMigration
 const std::string castor::db::ora::OraStagerSvc::s_prepareForMigrationStatementString =
   "BEGIN prepareForMigration(:1, :2, :3, :4, :5, :6); END;";
-
-/// SQL statement for putDone
-const std::string castor::db::ora::OraStagerSvc::s_putDoneStatementString =
-  "BEGIN putDoneFunc(:1, :2); END;";
 
 /// SQL statement for resetStream
 const std::string castor::db::ora::OraStagerSvc::s_resetStreamStatementString =
@@ -282,7 +278,6 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_disk2DiskCopyDoneStatement(0),
   m_recreateCastorFileStatement(0),
   m_prepareForMigrationStatement(0),
-  m_putDoneStatement(0),
   m_resetStreamStatement(0),
   m_bestFileSystemForJobStatement(0),
   m_updateFileSystemForJobStatement(0),
@@ -353,7 +348,6 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_disk2DiskCopyDoneStatement);
     deleteStatement(m_recreateCastorFileStatement);
     deleteStatement(m_prepareForMigrationStatement);
-    deleteStatement(m_putDoneStatement);
     deleteStatement(m_resetStreamStatement);
     deleteStatement(m_bestFileSystemForJobStatement);
     deleteStatement(m_updateFileSystemForJobStatement);
@@ -396,7 +390,6 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_disk2DiskCopyDoneStatement = 0;
   m_recreateCastorFileStatement = 0;
   m_prepareForMigrationStatement = 0;
-  m_putDoneStatement = 0;
   m_resetStreamStatement = 0;
   m_bestFileSystemForJobStatement = 0;
   m_updateFileSystemForJobStatement = 0;
@@ -2127,7 +2120,7 @@ void castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
 // -----------------------------------------------------------------------
 // recreateCastorFile
 // -----------------------------------------------------------------------
-castor::stager::DiskCopy*
+castor::stager::DiskCopyForRecall*
 castor::db::ora::OraStagerSvc::recreateCastorFile
 (castor::stager::CastorFile *castorFile,
  castor::stager::SubRequest *subreq)
@@ -2139,6 +2132,12 @@ castor::db::ora::OraStagerSvc::recreateCastorFile
         createStatement(s_recreateCastorFileStatementString);
       m_recreateCastorFileStatement->registerOutParam
         (3, oracle::occi::OCCIDOUBLE);
+      m_recreateCastorFileStatement->registerOutParam
+        (4, oracle::occi::OCCIINT);
+      m_recreateCastorFileStatement->registerOutParam
+        (5, oracle::occi::OCCISTRING, 2048);
+      m_recreateCastorFileStatement->registerOutParam
+        (6, oracle::occi::OCCISTRING, 2048);
       m_recreateCastorFileStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
@@ -2151,14 +2150,18 @@ castor::db::ora::OraStagerSvc::recreateCastorFile
         << "recreateCastorFile did not return any result.";
       throw ex;
     }
-    // return
+    // get the result
     u_signed64 id =
       (u_signed64)m_recreateCastorFileStatement->getDouble(3);
+    // case of No CastorFile, return 0
     if (0 == id) return 0;
-    castor::stager::DiskCopy *result =
-      new castor::stager::DiskCopy();
+    // Otherwise, build a DiskCopyForRecall
+    castor::stager::DiskCopyForRecall *result =
+      new castor::stager::DiskCopyRecall();
     result->setId(id);
-    result->setStatus(castor::stager::DISKCOPY_WAITFS);
+    result->setStatus(m_recreateCastorFileStatement->getInt(4));
+    result->setMountPoint(m_recreateCastorFileStatement->getString(5));
+    result->setDiskServer(m_recreateCastorFileStatement->getString(6));
     return result;
   } catch (oracle::occi::SQLException e) {
     rollback();
@@ -2242,34 +2245,6 @@ void castor::db::ora::OraStagerSvc::prepareForMigration
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in prepareForMigration."
-      << std::endl << e.what();
-    throw ex;
-  }
-}
-
-// -----------------------------------------------------------------------
-// putDone
-// -----------------------------------------------------------------------
-void castor::db::ora::OraStagerSvc::putDone
-(u_signed64 cfId,
- u_signed64 fileSize)
-  throw (castor::exception::Exception) {
-  try {
-    // Check whether the statements are ok
-    if (0 == m_putDoneStatement) {
-      m_putDoneStatement =
-        createStatement(s_putDoneStatementString);
-      m_putDoneStatement->setAutoCommit(true);
-    }
-    // execute the statement and see whether we found something
-    m_putDoneStatement->setDouble(1, cfId);
-    m_putDoneStatement->setDouble(2, fileSize);
-    unsigned int nb = m_putDoneStatement->executeUpdate();
-  } catch (oracle::occi::SQLException e) {
-    rollback();
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in putDone."
       << std::endl << e.what();
     throw ex;
   }

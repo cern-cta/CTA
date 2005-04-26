@@ -651,16 +651,23 @@ int Cstager_IStagerSvc_disk2DiskCopyDone
  enum Cstager_DiskCopyStatusCodes_t status);
 
 /**
- * Recreates a castorFile. This method cleans up the
- * database when a castor file is recreated. It first
+ * Recreates a castorFile.
+ * Depending on the context, this method cleans up the
+ * database when a castor file is recreated or gets
+ * the unique DiskCopy of a castor file.
+ * When called in the context of a Put inside a
+ * PrepareToPut, the method returns the unique DiskCopy
+ * associated to the castorFile. This DiskCopy can be
+ * either in WAITFS, WAITFS_SCHEDULING or STAGEOUT
+ * status and is linked to the SubRequest.
+ * In all others cases, the method first
  * checks whether the recreation is possible.
  * A recreation is considered to be possible if
  * no TapeCopy of the given file is in TAPECOPY_SELECTED
  * status and no DiskCopy of the file is in either
- * DISKCOPY_WAITFS or DISKCOPY_WAITTAPERECALL or
- * DISKCOPY_WAITDISK2DISKCOPY status.
- * When recreation is not possible, a null pointer is
- * returned.
+ * WAITFS, WAITFS_SCHEDULING, WAITTAPERECALL or
+ * WAITDISK2DISKCOPY status. When recreation is not
+ * possible, a null pointer is returned.
  * Else, all DiskCopies for the given file are marked
  * INVALID (that is those not in DISKCOPY_FAILED and
  * DISKCOPY_DELETED status) and all TapeCopies are
@@ -684,13 +691,19 @@ int Cstager_IStagerSvc_recreateCastorFile
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_CastorFile_t* castorFile,
  struct Cstager_SubRequest_t* subreq,
- struct Cstager_DiskCopy_t** diskCopy);
+ struct Cstager_DiskCopyForRecall_t** diskCopy);
 
 /**
- * Prepares a file for migration. This is called
- * when a put is over. It involves updating the file
- * size to the actual value, archiving the subrequest
- * and calling putDone.
+ * Prepares a file for migration, when needed.
+ * This is called both when a stagePut is over and when a
+ * putDone request is processed.
+ * In the case of a stagePut that in part of a PrepareToPut,
+ * it actually does not prepare the file for migration
+ * but only updates its size in DB and name server.
+ * Otherwise (stagePut with no prepare and putDone),
+ * it also updates the filesystem free space and creates
+ * the needed TapeCopies according to the FileClass of the
+ * castorFile.
  * @param stgSvc the IStagerSvc used
  * @param subreq The SubRequest handling the file to prepare
  * @param fileSize The actual size of the castor file
@@ -702,25 +715,6 @@ int Cstager_IStagerSvc_recreateCastorFile
 int Cstager_IStagerSvc_prepareForMigration
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_SubRequest_t* subreq,
- u_signed64 fileSize);
-
-/**
- * Implementation of the PutDone API. This is called
- * when a PrepareToPut is over. It involves
- * creating the needed TapeCopies according to the
- * FileClass of the castorFile.
- * @param stgSvc the IStagerSvc used
- * @param cfId The id of the CastorFile concerned
- * @param fileSize The actual size of the castor file.
- * This is only used to detect 0 length files
- * @return 0 : OK.
- * -1 : an error occurred and serrno is set to the corresponding error code
- * A detailed error message can be retrieved by calling
- * Cstager_IStagerSvc_errorMsg
- */
-int Cstager_IStagerSvc_putDone
-(struct Cstager_IStagerSvc_t* stgSvc,
- u_signed64 cfId,
  u_signed64 fileSize);
 
 /**

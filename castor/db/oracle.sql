@@ -427,7 +427,7 @@ CREATE INDEX I_FileSystem_Rate ON FileSystem(FileSystemRate(weight, deltaWeight,
 CREATE OR REPLACE PROCEDURE makeSubRequestWait(subreqId IN INTEGER, dci IN INTEGER) AS
 BEGIN
  UPDATE SubRequest
-  SET parent = (SELECT id FROM SubRequest WHERE diskCopy = dci),
+  SET parent = (SELECT id FROM SubRequest WHERE diskCopy = dci AND parent = 0), -- all wait on the original one
       status = 5, lastModificationTime = getTime() -- WAITSUBREQ
   WHERE SubRequest.id = subreqId;
 END;
@@ -781,9 +781,9 @@ SELECT SubRequest.id, DiskCopy.id, SubRequest.xsize
   AND DiskCopy.castorFile = TapeCopy.castorFile
   AND SubRequest.diskcopy = DiskCopy.id;
 UPDATE DiskCopy SET status = 0 WHERE id = dci RETURNING fileSystem into fsid; -- DISKCOPY_STAGED
-UPDATE SubRequest SET status = 1, lastModificationTime = getTime()
+UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
  WHERE id = SubRequestId; -- SUBREQUEST_RESTART
-UPDATE SubRequest SET status = 1, lastModificationTime = getTime()
+UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
  WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
 updateFsFileClosed(fsId, fileSize, fileSize);
 END;
@@ -838,7 +838,7 @@ BEGIN
    AND FileSystem.status = 0 -- PRODUCTION
    AND FileSystem.diskserver = DiskServer.id
    AND DiskServer.status = 0 -- PRODUCTION
-   AND DiskCopy.status IN (0, 1, 2, 5, 6, 10); -- STAGED, WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, CANBEMIGR
+   AND DiskCopy.status IN (0, 1, 2, 5, 6, 10, 11); -- STAGED, WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
  IF stat.COUNT > 0 THEN
    IF 0 MEMBER OF stat OR -- STAGED
       6 MEMBER OF stat OR -- STAGEOUT
@@ -914,9 +914,9 @@ BEGIN
   WHERE SubRequest.id = srId
     AND SubRequest.castorfile = DiskCopy.castorfile
     AND DiskCopy.filesystem = fileSystemId
-    AND DiskCopy.status IN (0, 1, 2, 5, 6, 10); -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT, CANBEMIGR
+    AND DiskCopy.status IN (0, 1, 2, 5, 6, 10, 11); -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
  -- If found local one, check whether to wait on it
- IF rstatus IN (1, 2, 5) THEN -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, Make SubRequest Wait
+ IF rstatus IN (1, 2, 5, 11) THEN -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING, Make SubRequest Wait
    makeSubRequestWait(srId, dci);
    dci := 0;
    rpath := '';
@@ -929,14 +929,14 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
   FROM DiskCopy, SubRequest, FileSystem, DiskServer
   WHERE SubRequest.id = srId
     AND SubRequest.castorfile = DiskCopy.castorfile
-    AND DiskCopy.status IN (0, 1, 2, 5, 6, 10) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT, CANBEMIGR
+    AND DiskCopy.status IN (0, 1, 2, 5, 6, 10, 11) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
     AND FileSystem.id = DiskCopy.fileSystem
     AND FileSystem.status = 0 -- PRODUCTION
     AND DiskServer.id = FileSystem.diskserver
     AND DiskServer.status = 0 -- PRODUCTION
     AND ROWNUM < 2;
   -- Found a DiskCopy, Check whether to wait on it
-  IF rstatus IN (2,5) THEN -- WAITTAPERECALL, WAITFS, Make SubRequest Wait
+  IF rstatus IN (2,5,11) THEN -- WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING, Make SubRequest Wait
     makeSubRequestWait(srId, dci);
     dci := 0;
     rpath := '';
@@ -949,7 +949,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
     FROM DiskCopy, SubRequest, FileSystem, DiskServer
     WHERE SubRequest.id = srId
       AND SubRequest.castorfile = DiskCopy.castorfile
-      AND DiskCopy.status IN (0, 1, 2, 5, 6, 10) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT, CANBEMIGR
+      AND DiskCopy.status IN (0, 1, 2, 5, 6, 10, 11) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
       AND FileSystem.id = DiskCopy.fileSystem
       AND FileSystem.status = 0 -- PRODUCTION
       AND DiskServer.id = FileSystem.diskServer
@@ -985,6 +985,10 @@ CREATE OR REPLACE PROCEDURE putStart
 BEGIN
  -- Get diskCopy Id
  SELECT diskCopy INTO rdcId FROM SubRequest WHERE SubRequest.id = srId;
+ -- In case the DiskCopy was in WAITFS_SCHEDULING, PUT the
+ -- waiting SubRequests in RESTART
+ UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0 -- SUBREQUEST_RESTART
+  WHERE parent = srId;
  -- link DiskCopy and FileSystem and update DiskCopyStatus
  UPDATE DiskCopy SET status = 6, -- DISKCOPY_STAGEOUT
                      fileSystem = fileSystemId
@@ -1030,50 +1034,90 @@ END;
 /* PL/SQL method implementing recreateCastorFile */
 CREATE OR REPLACE PROCEDURE recreateCastorFile(cfId IN INTEGER,
                                                srId IN INTEGER,
-                                               dcId OUT INTEGER) AS
+                                               dcId OUT INTEGER,
+                                               rstatus OUT INTEGER,
+                                               rmountPoint OUT VARCHAR2,
+                                               rdiskServer OUT VARCHAR2) AS
   rpath VARCHAR2(2048);
   nbRes INTEGER;
   fid INTEGER;
   nh VARCHAR2(2048);
-  unused CastorFile%ROWTYPE;
+  unused INTEGER;
+  contextPIPP INTEGER;
 BEGIN
  -- Lock the access to the CastorFile
  -- This, together with triggers will avoid new TapeCopies
  -- or DiskCopies to be added
- SELECT * INTO unused FROM CastorFile WHERE id = cfId FOR UPDATE;
- -- check if recreation is possible for TapeCopies
- SELECT count(*) INTO nbRes FROM TapeCopy
-   WHERE status = 3 -- TAPECOPY_SELECTED
-   AND castorFile = cfId;
- IF nbRes > 0 THEN
-   -- We found something, thus we cannot recreate
-   dcId := 0;
-   COMMIT;
-   RETURN;
- END IF;
- -- check if recreation is possible for DiskCopies
- SELECT count(*) INTO nbRes FROM DiskCopy
-   WHERE status IN (1, 2, 5, 6) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT
-   AND castorFile = cfId;
- IF nbRes > 0 THEN
-   -- We found something, thus we cannot recreate
-   dcId := 0;
-   COMMIT;
-   RETURN;
- END IF;
- -- delete all tapeCopies
- DELETE from TapeCopy WHERE castorFile = cfId;
- -- set DiskCopies to INVALID
- UPDATE DiskCopy SET status = 7 -- INVALID
-  WHERE castorFile = cfId AND status = 1; -- STAGED
- -- create new DiskCopy
- SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
- SELECT ids_seq.nextval INTO dcId FROM DUAL;
- buildPathFromFileId(fid, nh, dcId, rpath);
- INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime)
-  VALUES (rpath, dcId, 0, cfId, 5, getTime()); -- status WAITFS
- INSERT INTO Id2Type (id, type) VALUES (dcId, 5); -- OBJ_DiskCopy
- COMMIT;
+ SELECT id INTO unused FROM CastorFile WHERE id = cfId FOR UPDATE;
+ -- Determine the context (Put inside PrepareToPut ?)
+ BEGIN
+   -- check that we are a Put
+   SELECT StagePutRequest.id INTO unused
+     FROM StagePutRequest, SubRequest
+    WHERE SubRequest.id = srId
+      AND StagePutRequest.id = SubRequest.request;
+   -- check that there is a PrepareToPut going on
+   SELECT SubRequest.diskCopy INTO dcId
+     FROM StagePrepareToPut, SubRequest
+    WHERE SubRequest.CastorFile = cfId
+      AND StagePrepareToPut.id = SubRequest.request;
+   -- if we got here, we are a Put inside a PrepareToPut
+   contextPIPP := 1;
+ EXCEPTION WHEN NO_DATA_FOUND THEN
+   contextPIPP := 0;
+ END;
+ IF contextPIPP = 0 THEN
+  -- check if recreation is possible for TapeCopies
+  SELECT count(*) INTO nbRes FROM TapeCopy
+    WHERE status = 3 -- TAPECOPY_SELECTED
+    AND castorFile = cfId;
+  IF nbRes > 0 THEN
+    -- We found something, thus we cannot recreate
+    dcId := 0;
+    COMMIT;
+    RETURN;
+  END IF;
+  -- check if recreation is possible for DiskCopies
+  SELECT count(*) INTO nbRes FROM DiskCopy
+    WHERE status IN (1, 2, 5, 6) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT
+    AND castorFile = cfId;
+  IF nbRes > 0 THEN
+    -- We found something, thus we cannot recreate
+    dcId := 0;
+    COMMIT;
+    RETURN;
+  END IF;
+  -- delete all tapeCopies
+  DELETE from TapeCopy WHERE castorFile = cfId;
+  -- set DiskCopies to INVALID
+  UPDATE DiskCopy SET status = 7 -- INVALID
+   WHERE castorFile = cfId AND status = 1; -- STAGED
+  -- create new DiskCopy
+  SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
+  SELECT ids_seq.nextval INTO dcId FROM DUAL;
+  buildPathFromFileId(fid, nh, dcId, rpath);
+  INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime)
+   VALUES (rpath, dcId, 0, cfId, 5, getTime()); -- status WAITFS
+  rstatus := 5; -- WAITFS
+  rmountPoint := "";
+  rdiskServer := "";
+  INSERT INTO Id2Type (id, type) VALUES (dcId, 5); -- OBJ_DiskCopy
+  COMMIT;
+ ELSE
+  DECLARE
+   fsId INTEGER;
+   dsId INTEGER;
+  BEGIN
+   -- Retrieve the infos about the DiskCopy to be used
+   SELECT fileSystem, status INTO rstatus, fsId FROM DiskCopy WHERE id = dcId;
+   SELECT mountPoint, diskServer INTO rmountPoint, dsId
+     FROM FileSystem WHERE FileSystem.id = fsId;
+   SELECT name INTO rdiskServer FROM DiskServer WHERE id = dsId;
+   -- See whether we should wait on the previous Put Request
+   IF status = 11 THEN -- WAITFS_SCHEDULING
+    makeSubRequestWait(srId, dcId);
+   END IF;
+ END IF; 
  -- link SubRequest and DiskCopy
  UPDATE SubRequest SET diskCopy = dcId,
                        lastModificationTime = getTime() WHERE id = srId;
@@ -1111,6 +1155,7 @@ BEGIN
  END IF;
 END;
 
+
 /* PL/SQL method implementing prepareForMigration */
 CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
                                                  fs IN INTEGER,
@@ -1129,26 +1174,40 @@ BEGIN
  -- with triggers that we are the only ones to deal with its copies
  UPDATE CastorFile set fileSize = fs WHERE id = cfId
   RETURNING fileId, nsHost INTO fId, nh;
+ -- Determine the context (Put inside PrepareToPut ?)
+ BEGIN
+   -- check that we are a Put
+   SELECT StagePutRequest.id INTO unused
+     FROM StagePutRequest, SubRequest
+    WHERE SubRequest.id = srId
+      AND StagePutRequest.id = SubRequest.request;
+   -- check that there is a PrepareToPut going on
+   SELECT SubRequest.diskCopy INTO dcId
+     FROM StagePrepareToPut, SubRequest
+    WHERE SubRequest.CastorFile = cfId
+      AND StagePrepareToPut.id = SubRequest.request;
+   -- if we got here, we are a Put inside a PrepareToPut
+   contextPIPP := 1;
+ EXCEPTION WHEN NO_DATA_FOUND THEN
+   contextPIPP := 0;
+ END;
  -- get uid, gid and reserved space from Request
  SELECT euid, egid, xsize INTO userId, groupId, reservedSpace FROM SubRequest,
-      (SELECT euid, egid, id from StagePutRequest UNION
-       SELECT euid, egid, id from StagePrepareToPutRequest) Request
+     (SELECT euid, egid, id from StagePutRequest UNION
+      SELECT euid, egid, id from StagePrepareToPutRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
- -- update the FileSystem free space
- SELECT fileSystem into fsId from DiskCopy
-  WHERE castorFile = cfId AND status = 6;
- updateFsFileClosed(fsId, reservedSpace, fs);
+ -- If no PrepareToPut, update the FileSystem free space
+ IF contextPIPP = 0 THEN
+   SELECT fileSystem into fsId from DiskCopy
+    WHERE castorFile = cfId AND status = 6;
+   updateFsFileClosed(fsId, reservedSpace, fs);
+ END IF;
  -- archive Subrequest
  archiveSubReq(srId);
- -- if not inside a prepareToPut, create TapeCopies and update DiskCopy status
- BEGIN
-   SELECT StagePrepareToPutRequest.id INTO unused
-     FROM StagePrepareToPutRequest, SubRequest
-    WHERE StagePrepareToPutRequest.id = SubRequest.request
-      AND SubRequest.castorFile = cfId;
- EXCEPTION WHEN NO_DATA_FOUND THEN
+ -- If no PrepareToPut, create TapeCopies and update DiskCopy status
+ IF contextPIPP = 0 THEN
    putDoneFunc(cfId, fs);
- END;
+ END IF;
  COMMIT;
 END;
 

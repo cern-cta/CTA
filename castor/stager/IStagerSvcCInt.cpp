@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2005/04/20 14:45:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.49 $ $Release$ $Date: 2005/04/26 14:10:41 $ $Author: sponcec3 $
  *
  *
  *
@@ -626,7 +626,7 @@ extern "C" {
   (struct Cstager_IStagerSvc_t* stgSvc,
    castor::stager::CastorFile* castorFile,
    castor::stager::SubRequest *subreq,
-   castor::stager::DiskCopy** diskCopy) {
+   castor::stager::DiskCopyForRecall** diskCopy) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       *diskCopy = stgSvc->stgSvc->recreateCastorFile(castorFile, subreq);
@@ -654,25 +654,6 @@ extern "C" {
       return -1;
     }
     return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IStagerSvc_putDone
-  //-------------------------------------------------------------------------
-  int Cstager_IStagerSvc_putDone
-  (struct Cstager_IStagerSvc_t* stgSvc,
-   u_signed64 cfId,
-   u_signed64 fileSize) {
-    if (!checkIStagerSvc(stgSvc)) return -1;
-    try {
-      stgSvc->stgSvc->putDone(cfId, fileSize);
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      stgSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-
   }
 
   //-------------------------------------------------------------------------

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.57 $ $Release$ $Date: 2005/04/20 14:45:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.58 $ $Release$ $Date: 2005/04/26 14:10:41 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -531,16 +531,23 @@ namespace castor {
         throw (castor::exception::Exception) = 0;
 
       /**
-       * Recreates a castorFile. This method cleans up the
-       * database when a castor file is recreated. It first
+       * Recreates a castorFile.
+       * Depending on the context, this method cleans up the
+       * database when a castor file is recreated or gets
+       * the unique DiskCopy of a castor file.
+       * When called in the context of a Put inside a
+       * PrepareToPut, the method returns the unique DiskCopy
+       * associated to the castorFile. This DiskCopy can be
+       * either in WAITFS, WAITFS_SCHEDULING or STAGEOUT
+       * status and is linked to the SubRequest.
+       * In all others cases, the method first
        * checks whether the recreation is possible.
        * A recreation is considered to be possible if
        * no TapeCopy of the given file is in TAPECOPY_SELECTED
        * status and no DiskCopy of the file is in either
-       * DISKCOPY_WAITFS or DISKCOPY_WAITTAPERECALL or
-       * DISKCOPY_WAITDISK2DISKCOPY status.
-       * When recreation is not possible, a null pointer is
-       * returned.
+       * WAITFS, WAITFS_SCHEDULING, WAITTAPERECALL or
+       * WAITDISK2DISKCOPY status. When recreation is not
+       * possible, a null pointer is returned.
        * Else, all DiskCopies for the given file are marked
        * INVALID (that is those not in DISKCOPY_FAILED and
        * DISKCOPY_DELETED status) and all TapeCopies are
@@ -556,16 +563,22 @@ namespace castor {
        * or null if recreation is not possible
        * @exception Exception throws an Exception in case of error
        */
-      virtual castor::stager::DiskCopy* recreateCastorFile
+      virtual castor::stager::DiskCopyForRecall* recreateCastorFile
       (castor::stager::CastorFile *castorFile,
        castor::stager::SubRequest *subreq)
         throw (castor::exception::Exception) = 0;
 
       /**
-       * Prepares a file for migration. This is called
-       * when a put is over. It involves updating the file
-       * size to the actual value, archiving the subrequest
-       * and calling putDone.
+       * Prepares a file for migration, when needed.
+       * This is called both when a stagePut is over and when a
+       * putDone request is processed.
+       * In the case of a stagePut that in part of a PrepareToPut,
+       * it actually does not prepare the file for migration
+       * but only updates its size in DB and name server.
+       * Otherwise (stagePut with no prepare and putDone),
+       * it also updates the filesystem free space and creates
+       * the needed TapeCopies according to the FileClass of the
+       * castorFile.
        * @param subreq The SubRequest handling the file to prepare
        * @param fileSize The actual size of the castor file
        * @exception Exception throws an Exception in case of error
@@ -573,20 +586,6 @@ namespace castor {
       virtual void prepareForMigration
       (castor::stager::SubRequest* subreq,
        u_signed64 fileSize)
-        throw (castor::exception::Exception) = 0;
-
-      /**
-       * Implementation of the PutDone API. This is called
-       * when a PrepareToPut is over. It involves
-       * creating the needed TapeCopies according to the
-       * FileClass of the castorFile.
-       * @param cfId The id of the CastorFile concerned
-       * @param fileSize The actual size of the castor file.
-       * This is only used to detect 0 length files
-       * @exception Exception throws an Exception in case of error
-       */
-      virtual void putDone (u_signed64 cfId,
-                            u_signed64 fileSize)
         throw (castor::exception::Exception) = 0;
 
       /**
