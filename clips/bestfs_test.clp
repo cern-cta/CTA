@@ -4,6 +4,7 @@
 ; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 (clear)
 (load* castor.clp)			; Load CASTOR definitions
+(load* fstuning.clp)			; Load specific filesystem tunings
 (defmodule MAIN (import CASTOR ?ALL))	; Import CASTOR definition in MAIN space
 (batch* castorweight.clp)		; Load CASTOR weight rules
 (bind ?*Debug* 1)			; Debug mode (0=no,1=yes)

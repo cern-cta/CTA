@@ -4,7 +4,7 @@
 ;
 ; PROPOSAL FOR 64BITS QUANTITIES: Use the u64subr.h syntax, e.g. with a unit
 ;
-; $Id: castor.clp,v 1.7 2005/04/24 09:31:04 jdurand Exp $
+; $Id: castor.clp,v 1.8 2005/04/26 08:12:36 jdurand Exp $
 ; (c) CASTOR CERN/IT/ADC/CA 2004 - Jean-Damien.Durand@cern.ch
 ;
 ; ====================
@@ -47,7 +47,7 @@
 	?*procImportance* = 1.          ; How proc counts into a diskserver weight
 	?*loadImportance* = 2.          ; How load counts into a diskserver weight
 	?*ioImportance* = 5.            ; How i/o counts into a diskserver weight
-	?*streamImportance* = 1.        ; How number of streams counts into a diskserver weight
+	?*streamImportance* = 0.        ; How number of streams counts into a diskserver weight
 
 	;; Please make sure that filesystemReadImportance + filesystemWriteImportance gives 1.
 
@@ -61,9 +61,9 @@
 	?*readWriteImportance* = 0.66   ; How a read/write stream counts into a diskserver weight
 
 	;; You might want to make sure than a given fsDeviation is at least equal to...:
-	?*minReadWeight* = 0.5          ; Minimum value for a fsDeviation in read-only mode
-	?*minWriteWeight* = 0.5         ; Minimum value for a fsDeviation in write-only mode
-	?*minReadWriteWeight* = 0.5     ; Minimum value for a fsDeviation in read/write-only mode
+	?*minReadWeight* = 1.           ; Minimum value for a fsDeviation in read-only mode
+	?*minWriteWeight* = 1.          ; Minimum value for a fsDeviation in write-only mode
+	?*minReadWriteWeight* = 1.      ; Minimum value for a fsDeviation in read/write-only mode
 
 	?*minIo* = 0.                   ; Minimum i/o, forced if necessary
 )

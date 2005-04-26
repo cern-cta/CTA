@@ -1,19 +1,98 @@
-; Please put maxio per filesystem but not the theorical value, rather
-; something below, for example 40 MB/S here the max theor. value is 50.
-; 110 instead of 120, etc...
-; Otherwise, since we will not /always/ reach the max value, the maxio
-; will have no effect
-
 (deffunction maxIo (?filesystemName)
-	(if (= 0 (str-compare ?filesystemName "/shift/lxfsrm505/data01/")) then
-		(return 30.)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c1-1/")) then
+		(return 60.)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c2-1/")) then
+		(return 60.)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c3-1/")) then
+		(return 60.)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c4-1/")) then
+		(return 60.)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c5-1/")) then
+		(return 60.)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c6-1/")) then
+		(return 60.)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c7-1/")) then
+		(return 60.)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c8-1/")) then
+		(return 60.)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c9-1/")) then
+		(return 110.)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c10-1/")) then
+		(return 110.)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c11-1/")) then
+		(return 110.)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c12-1/")) then
+		(return 110.)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c13-1/")) then
+		(return 110.)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c14-1/")) then
+		(return 110.)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c15-1/")) then
+		(return 110.)
 	)
 	(return 0.)
 )
 
 (deffunction maxNbFd (?filesystemName)
-	(if (= 0 (str-compare ?filesystemName "/shift/lxfsrm505/data01/")) then
-		(return 5)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c1-1/")) then
+		(return 10)
 	)
-	(return 0)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c2-1/")) then
+		(return 10)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c3-1/")) then
+		(return 10)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c4-1/")) then
+		(return 10)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c5-1/")) then
+		(return 10)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c6-1/")) then
+		(return 10)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c7-1/")) then
+		(return 10)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c8-1/")) then
+		(return 10)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c9-1/")) then
+		(return 10)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c10-1/")) then
+		(return 10)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c11-1/")) then
+		(return 10)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c12-1/")) then
+		(return 10)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c13-1/")) then
+		(return 10)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c14-1/")) then
+		(return 10)
+	)
+	(if (= 0 (str-compare ?filesystemName "/tank/cern.ch/c-filesets/c15-1/")) then
+		(return 10)
+	)
+        (return 0)
 )
+
