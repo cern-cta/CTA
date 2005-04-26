@@ -1,4 +1,4 @@
-; $Id: castorweight.clp,v 1.10 2005/04/24 15:14:41 jdurand Exp $
+; $Id: castorweight.clp,v 1.11 2005/04/26 08:15:09 jdurand Exp $
 
 (load* fs_capabilities.clp)		; Load Filesystem specifities (maxIo in particular)
 
@@ -584,12 +584,6 @@
 	)
 
 	; Protection
-	(if (= 0 ?diskserverNbTot) then
-		(bind ?diskserverNbTot 1)
-	)
-	(if (= 0 ?diskserverIo) then
-		(bind ?diskserverIo 1)
-	)
 	; Compute relative weight of that filesystem : (N(fs)/Ntot + IO(fs)/IOtot)
 	; Note: historically we were distinguishing r/w/rw, but we moved to a model
 	; where there weight does not depend on the stream direction.
@@ -659,10 +653,12 @@
 			(bind ?thisFactorNb (/ ?thisFilesystemNbTot ?maxNbFd))
 		    )
 		   else
-		    (printout t "[diskserverWeight] " ?diskserverName
-			      ":"
-			      (nth$ ?index ?filesystemName)
-			      " Not Ignoring diskServer Nb Fd Tot  that is " ?diskserverNbTot " but still below fileSystem Max Nb Fd Tot that is " ?maxNbFd crlf)
+		    (if (!= 0 ?*Debug*) then
+		      (printout t "[diskserverWeight] " ?diskserverName
+			        ":"
+			        (nth$ ?index ?filesystemName)
+			        " Not Ignoring diskServer Nb Fd Tot  that is " ?diskserverNbTot " but still below fileSystem Max Nb Fd Tot that is " ?maxNbFd crlf)
+		    )
 			(if (> ?diskserverNbTot 0) then
 				(bind ?thisFactorNb (/ ?thisFilesystemNbTot ?diskserverNbTot))
 			)
@@ -693,10 +689,12 @@
 		      (bind ?thisFactorIo (/ ?thisFilesystemIoTot ?maxIo))
 		    )
 		   else
-		    (printout t "[diskserverWeight] " ?diskserverName
-			      ":"
-			      (nth$ ?index ?filesystemName)
-			      " Not Ignoring diskServer I/O that is " ?diskserverIo " but still below fileSystem max I/O that is " ?maxIo crlf)
+		    (if (!= 0 ?*Debug*) then
+		      (printout t "[diskserverWeight] " ?diskserverName
+			        ":"
+			        (nth$ ?index ?filesystemName)
+			        " Not Ignoring diskServer I/O that is " ?diskserverIo " but still below fileSystem max I/O that is " ?maxIo crlf)
+		    )
 		      (if (> ?diskserverIo 0.) then
 			      (bind ?thisFactorIo (/ ?thisFilesystemIoTot ?diskserverIo))
 		      )
