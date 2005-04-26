@@ -94,6 +94,9 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_GETFAILED,
     RTCPCLD_MSG_INVALSEGM,
     RTCPCLD_MSG_SHUTDOWN,
+    RTCPCLD_MSG_MIGRCANDS,
+    RTCPCLD_MSG_NBSTREAMS,
+    RTCPCLD_MSG_TOOMANYSTRS,
     RTCPCLD_MSG_RESERVED0,
     RTCPCLD_MSG_RESERVED1
 };
@@ -105,7 +108,7 @@ struct RtcpcldMessages {
 };
 #if defined(RTCPCLD_COMMON)
 struct RtcpcldMessages rtcpcldMessages[] = {
-    { RTCPCLD_MSG_STARTUP, DLF_LVL_SYSTEM, "rtcpcld server started"},
+    { RTCPCLD_MSG_STARTUP, DLF_LVL_SYSTEM, "Service startup"},
     { RTCPCLD_MSG_INITNW, DLF_LVL_ALERT, "rtcpcld_InitNW() failed to initialise network ports"},
     { RTCPCLD_MSG_LISTEN, DLF_LVL_ERROR, "rtcp_Listen() failed"},
     { RTCPCLD_MSG_SYSCALL, DLF_LVL_ERROR, "failed system call"},
@@ -177,6 +180,9 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_GETFAILED, DLF_LVL_WARNING,"Recall retry rejected by policy"},
     { RTCPCLD_MSG_INVALSEGM, DLF_LVL_ERROR,"Name server segment no longer valid"},
     { RTCPCLD_MSG_SHUTDOWN, DLF_LVL_ALERT,"Service shutdown"},
+    { RTCPCLD_MSG_MIGRCANDS, DLF_LVL_SYSTEM,"Checked for new migration candidates"},
+    { RTCPCLD_MSG_NBSTREAMS, DLF_LVL_SYSTEM,"Number of streams for SvcClass"},
+    { RTCPCLD_MSG_TOOMANYSTRS, DLF_LVL_WARNING,"SvcClass has too many streams"},
     { RTCPCLD_MSG_RESERVED0, DLF_LVL_DEBUG,""},
     { RTCPCLD_MSG_RESERVED1, DLF_LVL_DEBUG,""}
 };
