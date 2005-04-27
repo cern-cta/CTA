@@ -503,6 +503,31 @@
 #endif
 #endif
 
+
+/* --------------- */
+/* New VDQM Server */
+/* --------------- */
+#if BuildVDQMCpp
+#if !BuildOraCpp
+#undef BuildOraCpp
+#define BuildOraCpp YES
+#endif
+#if !BuildCastorClientCPPLibrary
+#undef BuildCastorClientCPPLibrary
+#define BuildCastorClientCPPLibrary YES
+#endif
+#if BuildDlfLibrary != YES
+#undef BuildDlfLibrary
+#define BuildDlfLibrary YES
+#endif
+#if !BuildStageLibrary
+#undef BuildStageLibrary
+#define BuildStageLibrary YES
+#endif
+#endif
+
+
+
 /* ------------------ */
 /* Garbage Collection */
 /* ------------------ */
@@ -610,10 +635,13 @@ EXPERTDIR = expert
 #if BuildRHCpp
 RHCPPDIR = rh
 #endif
+#if BuildVDQMCpp
+VDQMCPPDIR = vdqm
+#endif
 #if BuildGCCpp
 GCCPPDIR = gc
 #endif
-#if BuildCastorClientCPPLibrary || BuildRHCpp || BuildGCCpp || BuildOraCpp
+#if BuildCastorClientCPPLibrary || BuildRHCpp || BuildVDQMCpp  || BuildGCCpp || BuildOraCpp
 COMMONCPPDIR = castor
 #endif
 #if BuildOraCpp

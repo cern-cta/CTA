@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.88 $ $Release$ $Date: 2005/04/21 09:24:32 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.89 $ $Release$ $Date: 2005/04/27 14:56:18 $ $Author: mbraeger $
 #
 # Make Castor libraries and executables
 #
@@ -28,8 +28,8 @@
 
 RH_HOST=RhHost
 
-SUBDIRS = $(DBCPPDIR) $(RHCPPDIR) $(GCCPPDIR)
-DEPENDDIRS = $(DBCPPDIR) $(RHCPPDIR) $(GCCPPDIR)
+SUBDIRS = $(DBCPPDIR) $(RHCPPDIR) $(VDQMCPPDIR) $(GCCPPDIR)
+DEPENDDIRS = $(DBCPPDIR) $(RHCPPDIR) $(VDQMCPPDIR) $(GCCPPDIR)
 
 #if _AIX
 OSLIBS = -L FileName(..,shlib) -lshift
@@ -332,7 +332,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               exception/Internal.cpp \
               exception/NotSupported.cpp \
               exception/Communication.cpp \
-              exception/NoEntry.cpp
+              exception/NoEntry.cpp	\
+
 
 #if BuildSecurity
 STGLIB_SRCS += io/AuthServerSocket.cpp io/AuthClientSocket.cpp
