@@ -97,6 +97,7 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_MIGRCANDS,
     RTCPCLD_MSG_NBSTREAMS,
     RTCPCLD_MSG_TOOMANYSTRS,
+    RTCPCLD_MSG_DATALIMIT,
     RTCPCLD_MSG_RESERVED0,
     RTCPCLD_MSG_RESERVED1
 };
@@ -183,6 +184,7 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_MIGRCANDS, DLF_LVL_SYSTEM,"Checked for new migration candidates"},
     { RTCPCLD_MSG_NBSTREAMS, DLF_LVL_SYSTEM,"Number of streams for SvcClass"},
     { RTCPCLD_MSG_TOOMANYSTRS, DLF_LVL_WARNING,"SvcClass has too many streams"},
+    { RTCPCLD_MSG_DATALIMIT, DLF_LVL_SYSTEM,"Migration volume below threshold"},
     { RTCPCLD_MSG_RESERVED0, DLF_LVL_DEBUG,""},
     { RTCPCLD_MSG_RESERVED1, DLF_LVL_DEBUG,""}
 };
