@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2005/04/18 09:18:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2005/04/27 14:53:49 $ $Author: mbraeger $
  *
  *
  *
@@ -30,7 +30,7 @@
 //=============================================================================
 // ObjectsIdStrings
 //=============================================================================
-const char* castor::ObjectsIdStrings[84] = {
+const char* castor::ObjectsIdStrings[89] = {
   "INVALID",
   "Ptr", // Only used for streaming for circular dependencies
   "CastorFile",
@@ -114,13 +114,18 @@ const char* castor::ObjectsIdStrings[84] = {
   "PutFailed",
   "GCFile",
   "GCFileList",
-  "FilesDeletionFailed"
+  "FilesDeletionFailed",
+  "TapeRequest",
+  "CientIdentification",
+  "ExtendedDeviceGroup",
+  "TapeServer",
+  "TapeDrive"
 };
 
 //=============================================================================
 // ServicesIdStrings
 //=============================================================================
-const char* castor::ServicesIdStrings[13] =  {
+const char* castor::ServicesIdStrings[15] =  {
   "INVALID",
   "NOMSG",
   "DLFMSG",
@@ -133,7 +138,9 @@ const char* castor::ServicesIdStrings[13] =  {
   "ORAQUERYSVC",
   "MYCNV",
   "MYSTAGERSVC",
-  "MYQUERYSVC"
+  "MYQUERYSVC",
+  "MYVDQMSVC",
+  "ORAVDQMSVC"
 };
 
 //=============================================================================

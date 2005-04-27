@@ -113,7 +113,14 @@ namespace castor {
     OBJ_PutFailed = 80,
     OBJ_GCFile = 81,
     OBJ_GCFileList = 82,
-    OBJ_FilesDeletionFailed = 83
+    OBJ_FilesDeletionFailed = 83,
+    
+    //The vdqm objects
+    OBJ_TapeRequest = 84,
+    OBJ_CientIdentification = 85,
+    OBJ_ExtendedDeviceGroup = 86,
+    OBJ_TapeServer = 87,
+    OBJ_TapeDrive = 88
   };
     
   /**
@@ -132,7 +139,9 @@ namespace castor {
     SVC_ORAQUERYSVC = 9,
     SVC_MYCNV = 10,
     SVC_MYSTAGERSVC = 11,
-    SVC_MYQUERYSVC = 12
+    SVC_MYQUERYSVC = 12,
+    SVC_MYVDQMSVC = 13,
+    SVC_ORAVDQMSVC = 14
   };
 
   /**
@@ -159,12 +168,12 @@ namespace castor {
   /**
    * Nb of objectIds currently existing
    */
-  static const unsigned int ObjectsIdsNb = 84;
+  static const unsigned int ObjectsIdsNb = 89;
 
   /**
    * Nb of ServicesIds currently existing
    */
-  static const unsigned int ServicesIdsNb = 13;
+  static const unsigned int ServicesIdsNb = 15;
 
   /**
    * Nb of RepresentationsIds currently existing
@@ -175,13 +184,13 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[84];
+  extern const char* ObjectsIdStrings[89];
 
   /**
    * Names of the differents Services, used to display
    * correctly the ServicesIds enum
    */
-  extern const char* ServicesIdStrings[13];
+  extern const char* ServicesIdStrings[15];
 
   /**
    * Names of the differents representations, used to display
