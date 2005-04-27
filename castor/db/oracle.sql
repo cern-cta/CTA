@@ -1058,9 +1058,9 @@ BEGIN
       AND StagePutRequest.id = SubRequest.request;
    -- check that there is a PrepareToPut going on
    SELECT SubRequest.diskCopy INTO dcId
-     FROM StagePrepareToPut, SubRequest
+     FROM StagePrepareToPutRequest, SubRequest
     WHERE SubRequest.CastorFile = cfId
-      AND StagePrepareToPut.id = SubRequest.request;
+      AND StagePrepareToPutRequest.id = SubRequest.request;
    -- if we got here, we are a Put inside a PrepareToPut
    contextPIPP := 1;
  EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -1099,8 +1099,8 @@ BEGIN
   INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime)
    VALUES (rpath, dcId, 0, cfId, 5, getTime()); -- status WAITFS
   rstatus := 5; -- WAITFS
-  rmountPoint := "";
-  rdiskServer := "";
+  rmountPoint := '';
+  rdiskServer := '';
   INSERT INTO Id2Type (id, type) VALUES (dcId, 5); -- OBJ_DiskCopy
   COMMIT;
  ELSE
@@ -1114,9 +1114,10 @@ BEGIN
      FROM FileSystem WHERE FileSystem.id = fsId;
    SELECT name INTO rdiskServer FROM DiskServer WHERE id = dsId;
    -- See whether we should wait on the previous Put Request
-   IF status = 11 THEN -- WAITFS_SCHEDULING
+   IF rstatus = 11 THEN -- WAITFS_SCHEDULING
     makeSubRequestWait(srId, dcId);
    END IF;
+  END;
  END IF; 
  -- link SubRequest and DiskCopy
  UPDATE SubRequest SET diskCopy = dcId,
@@ -1167,6 +1168,7 @@ CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
   fsId INTEGER;
   reservedSpace NUMBER;
   unused INTEGER;
+  contextPIPP INTEGER;
 BEGIN
  -- get CastorFile
  SELECT castorFile INTO cfId FROM SubRequest where id = srId;
@@ -1182,10 +1184,10 @@ BEGIN
     WHERE SubRequest.id = srId
       AND StagePutRequest.id = SubRequest.request;
    -- check that there is a PrepareToPut going on
-   SELECT SubRequest.diskCopy INTO dcId
-     FROM StagePrepareToPut, SubRequest
+   SELECT SubRequest.diskCopy INTO unused
+     FROM StagePrepareToPutRequest, SubRequest
     WHERE SubRequest.CastorFile = cfId
-      AND StagePrepareToPut.id = SubRequest.request;
+      AND StagePrepareToPutRequest.id = SubRequest.request;
    -- if we got here, we are a Put inside a PrepareToPut
    contextPIPP := 1;
  EXCEPTION WHEN NO_DATA_FOUND THEN
