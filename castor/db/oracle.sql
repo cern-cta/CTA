@@ -464,8 +464,6 @@ BEGIN
         DELETE FROM StageRmRequest WHERE id = rid RETURNING client INTO rclient;
       WHEN 51 THEN -- StageReleaseFilesRequest
         DELETE FROM StageReleaseFilesRequest WHERE id = rid RETURNING client INTO rclient;
-      WHEN 43 THEN -- StageUpdateFileStatusRequest
-        DELETE FROM StageUpdateFileStatusRequest WHERE id = rid RETURNING client INTO rclient;
       WHEN 36 THEN -- StagePrepareToGetRequest
         DELETE FROM StagePrepareToGetRequest WHERE id = rid RETURNING client INTO rclient;
       WHEN 37 THEN -- StagePrepareToPutRequest
