@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.18 $ $Release$ $Date: 2005/04/12 15:58:50 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.19 $ $Release$ $Date: 2005/04/27 14:28:49 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.18 $ $Release$ $Date: 2005/04/12 15:58:50 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.19 $ $Release$ $Date: 2005/04/27 14:28:49 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -98,9 +98,13 @@ WSADATA wsadata;
 #include <rtcpcld.h>
 #include <rfio_api.h>
 #include <Cns_api.h>
+#include <expert_api.h>
 static int runAsDaemon = 0;
 static int legacyMode = 0;
 static int doCloneStream = 0;
+static char *cmdName = NULL;
+static struct Cstager_TapeCopy_t ***_migrCandidates = NULL;
+static int *_nbMigrCandidates = NULL;
 /** Global needed for determine which uuid to log
  */
 int inChild;
@@ -129,9 +133,8 @@ static int prepareForDBAccess(
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"getDbSvc(): %s\n",sstrerror(serrno));
-    } else {
-      LOG_SYSCALL_ERR("getDbSvc()");
     }
+    LOG_SYSCALL_ERR("getDbSvc()");
     return(-1);
   }
 
@@ -140,9 +143,8 @@ static int prepareForDBAccess(
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"getStgSvc(): %s\n",sstrerror(serrno));
-    } else {
-      LOG_SYSCALL_ERR("getStgSvc()");
     }
+    LOG_SYSCALL_ERR("getStgSvc()");
     return(-1);
   }
 
@@ -150,10 +152,9 @@ static int prepareForDBAccess(
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"C_BaseAddress_create(): %s\n",sstrerror(serrno));
-    } else {
-      LOG_SYSCALL_ERR("C_BaseAddress_create()");
     }
-    return(-11);
+    LOG_SYSCALL_ERR("C_BaseAddress_create()");
+    return(-1);
   }
   
   C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
@@ -196,9 +197,8 @@ int getSvcClass(
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"getSvcClass(): prepareForDBAccess(): %s\n",
               sstrerror(serrno));
-    } else {
-      LOG_SYSCALL_ERR("getSvcClass()");
     }
+    LOG_SYSCALL_ERR("getSvcClass()");
     return(-1);
   }
 
@@ -213,10 +213,9 @@ int getSvcClass(
               svcClassName,
               sstrerror(serrno),
               Cstager_IStagerSvc_errorMsg(stgSvc));
-    } else {
-      LOG_DBCALL_ERR("Cstager_IStagerSvc_selectSvcClass()",
-                     Cstager_IStagerSvc_errorMsg(stgSvc));
     }
+    LOG_DBCALL_ERR("Cstager_IStagerSvc_selectSvcClass()",
+                   Cstager_IStagerSvc_errorMsg(stgSvc));
     C_IAddress_delete(iAddr);
     return(-1);
   }
@@ -241,10 +240,9 @@ int getSvcClass(
       fprintf(stderr,"C_Services_fillObj(svcClass,OBJ_TapePool) %s, %s\n",
               sstrerror(serrno),
               C_Services_errorMsg(dbSvc));
-    } else {
-      LOG_DBCALL_ERR("C_Services_fillObj(svcClass,OBJ_TapePool)",
-                     C_Services_errorMsg(dbSvc));
     }
+    LOG_DBCALL_ERR("C_Services_fillObj(svcClass,OBJ_TapePool)",
+                   C_Services_errorMsg(dbSvc));
     C_IAddress_delete(iAddr);
     return(-1);
   }
@@ -281,9 +279,8 @@ int getStreamsFromDB(
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"getSvcClass(): prepareForDBAccess(): %s\n",
               sstrerror(serrno));
-    } else {
-      LOG_SYSCALL_ERR("prepareForDBAccess()");
     }
+    LOG_SYSCALL_ERR("prepareForDBAccess()");
     return(-1);
   }
   iObj = Cstager_TapePool_getIObject(tapePool);
@@ -293,15 +290,14 @@ int getStreamsFromDB(
       fprintf(stderr,"Cstager_IStagerSvc_streamsForTapePool %s, %s\n",
               sstrerror(serrno),
               Cstager_IStagerSvc_errorMsg(stgSvc));
-    } else {
-      LOG_DBCALL_ERR("Cstager_IStagerSvc_streamsForTapePool()",
-                     Cstager_IStagerSvc_errorMsg(stgSvc));
     }
+    LOG_DBCALL_ERR("Cstager_IStagerSvc_streamsForTapePool()",
+                   Cstager_IStagerSvc_errorMsg(stgSvc));
   }
   Cstager_TapePool_streams(tapePool,&streamArray,&_nbStreams);
   if ( nbStreams != NULL ) *nbStreams = _nbStreams;
   if ( streamArray != NULL ) free(streamArray);
-
+  
   C_IAddress_delete(iAddr);
   return(rc);
 }
@@ -384,9 +380,8 @@ int tapePoolCreator(
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"tapePoolCreator(): prepareForDBAccess(): %s\n",
               sstrerror(serrno));
-    } else {
-      LOG_SYSCALL_ERR("prepareForDBAccess()");
     }
+    LOG_SYSCALL_ERR("prepareForDBAccess()");
     return(-1);
   }
 
@@ -414,10 +409,9 @@ int tapePoolCreator(
             fprintf(stderr,"C_Services_fillRep(svcClass,OBJ_TapePool) %s, %s\n",
                     sstrerror(serrno),
                     C_Services_errorMsg(dbSvc));
-          } else {
-            LOG_DBCALL_ERR("C_Services_fillRep()",
-                           C_Services_errorMsg(dbSvc));
           }
+          LOG_DBCALL_ERR("C_Services_fillRep()",
+                         C_Services_errorMsg(dbSvc));
           (void)C_Services_rollback(dbSvc,iAddr);
           C_IAddress_delete(iAddr);
           return(-1);
@@ -431,10 +425,9 @@ int tapePoolCreator(
       fprintf(stderr,"C_Services_commit() %s, %s\n",
               sstrerror(serrno),
               C_Services_errorMsg(dbSvc));
-    } else {
-      LOG_DBCALL_ERR("C_Services_commit()",
-                     C_Services_errorMsg(dbSvc));
     }
+    LOG_DBCALL_ERR("C_Services_commit()",
+                   C_Services_errorMsg(dbSvc));
     C_IAddress_delete(iAddr);
     return(-1);
   }
@@ -467,9 +460,8 @@ int getStreamsForSvcClass(
     if ( rc == -1 ) {
       if ( runAsDaemon == 0 ) {
         fprintf(stderr,"getStreamsFromDB(): %s\n",sstrerror(serrno));
-      } else {
-        LOG_SYSCALL_ERR("getStreamsFromDB()");
       }
+      LOG_SYSCALL_ERR("getStreamsFromDB()");
       free(tapePoolArray);
       return(-1);
     }
@@ -514,9 +506,8 @@ void restoreMigrCandidates(
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"restoreMigrCandidates(): prepareForDBAccess(): %s\n",
               sstrerror(serrno));
-    } else {
-      LOG_SYSCALL_ERR("prepareForDBAccess()");
     }
+    LOG_SYSCALL_ERR("prepareForDBAccess()");
     return;
   }
   for ( i=0; i<nbMigrCandidates; i++ ) {
@@ -530,7 +521,7 @@ void restoreMigrCandidates(
         Cstager_TapeCopy_id(tapeCopy,&key);
         if ( runAsDaemon == 0 ) {
           fprintf(stdout,
-                  "Restore unassigned tapeCopy %d/%d (id=%s)",
+                  "Restore unassigned tapeCopy %d/%d (id=%s)\n",
                   i,nbMigrCandidates,
                   u64tostr(key,buf,0));
         }
@@ -548,11 +539,10 @@ void restoreMigrCandidates(
                     u64tostr(key,buf,0),
                     sstrerror(serrno),
                     C_Services_errorMsg(dbSvc));
-          } else {
-            LOG_DBCALLANDKEY_ERR("C_Services_updateRep(tapeCopy)",
-                                 C_Services_errorMsg(dbSvc),
-                                 key);
           }
+          LOG_DBCALLANDKEY_ERR("C_Services_updateRep(tapeCopy)",
+                               C_Services_errorMsg(dbSvc),
+                               key);
         }
       }
     }
@@ -591,9 +581,8 @@ int cloneStream(
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"closeStream(): prepareForDBAccess(): %s\n",
               sstrerror(serrno));
-    } else {
-      LOG_SYSCALL_ERR("prepareForDBAccess()");
     }
+    LOG_SYSCALL_ERR("prepareForDBAccess()");
     return(-1);
   }
 
@@ -609,10 +598,9 @@ int cloneStream(
       fprintf(stderr,"C_Services_fillObj(stream,OBJ_TapeCopy): %s, %s\n",
               sstrerror(serrno),
               C_Services_errorMsg(dbSvc));
-    } else {
-      LOG_DBCALL_ERR("C_Services_fillObj(stream,OBJ_TapeCopy)",
-                     C_Services_errorMsg(dbSvc));
     }
+    LOG_DBCALL_ERR("C_Services_fillObj(stream,OBJ_TapeCopy)",
+                   C_Services_errorMsg(dbSvc));
     C_IAddress_delete(iAddr);
     return(-1);
   }
@@ -642,10 +630,9 @@ int cloneStream(
       fprintf(stderr,"C_Services_fillRep(stream,OBJ_TapeCopy): %s, %s\n",
               sstrerror(serrno),
               C_Services_errorMsg(dbSvc));
-    } else {
-      LOG_DBCALL_ERR("C_Services_fillRep(stream,OBJ_TapeCopy)",
-                     C_Services_errorMsg(dbSvc));
     }
+    LOG_DBCALL_ERR("C_Services_fillRep(stream,OBJ_TapeCopy)",
+                   C_Services_errorMsg(dbSvc));
     C_IAddress_delete(iAddr);
     return(-1);
   }
@@ -670,6 +657,7 @@ int streamCreator(
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  char *svcClassName = NULL;
   int rc, nbTapePools, nbStreams, nbStreamsTotal, nbDrives, i, j;
   int *streamsPerTapePool = NULL, _nbNewStreams = 0;
 
@@ -697,9 +685,8 @@ int streamCreator(
   if ( streamsPerTapePool == NULL ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"calloc(): %s\n",strerror(errno));
-    } else {
-      LOG_SYSCALL_ERR("calloc()");
     }
+    LOG_SYSCALL_ERR("calloc()");
     serrno = SESYSERR;
     return(-1);
   }
@@ -711,9 +698,8 @@ int streamCreator(
   if ( streamsToClone == NULL ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"calloc(): %s\n",strerror(errno));
-    } else {
-      LOG_SYSCALL_ERR("calloc()");
     }
+    LOG_SYSCALL_ERR("calloc()");
     serrno = SESYSERR;
     return(-1);
   }
@@ -740,9 +726,8 @@ int streamCreator(
       if ( runAsDaemon == 0 ) {
         fprintf(stderr,"getSvcClass(): prepareForDBAccess(): %s\n",
                 sstrerror(serrno));
-      } else {
-        LOG_SYSCALL_ERR("prepareForDBAccess()");
       }
+      LOG_SYSCALL_ERR("prepareForDBAccess()");
       return(-1);
     }
   }
@@ -782,10 +767,9 @@ int streamCreator(
           fprintf(stderr,"C_Services_fillRep(tapePool,OBJ_Stream) %s, %s\n",
                   sstrerror(serrno),
                   C_Services_errorMsg(dbSvc));
-        } else {
-          LOG_DBCALL_ERR("C_Services_fillRep(tapePool,OBJ_Stream)",
-                         C_Services_errorMsg(dbSvc));
         }
+        LOG_DBCALL_ERR("C_Services_fillRep(tapePool,OBJ_Stream)",
+                       C_Services_errorMsg(dbSvc));
         C_IAddress_delete(iAddr);
         return(-1);
       }
@@ -795,7 +779,25 @@ int streamCreator(
       }
       _nbNewStreams++;
     }
+  } else if ( nbStreamsTotal < nbDrives ) {
+    Cstager_SvcClass_name(svcClass,(CONST char **)&svcClassName);
+    (void)dlf_write(
+                    mainUuid,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_TOOMANYSTRS),
+                    (struct Cns_fileid *)NULL,
+                    3,
+                    "SVCCLASS",
+                    DLF_MSG_PARAM_STR,
+                    (svcClassName != NULL ? svcClassName : "(unknown)"),
+                    "NBDRIVES",
+                    DLF_MSG_PARAM_INT,
+                    nbDrives,
+                    "NBSTREAMS",
+                    DLF_MSG_PARAM_INT,
+                    nbStreamsTotal
+                    );
   }
+  
 
   if ( iAddr != NULL ) C_IAddress_delete(iAddr);
   if ( streamsPerTapePool != NULL ) free(streamsPerTapePool);
@@ -837,9 +839,8 @@ int startStreams(
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"startStreams(): prepareForDBAccess(): %s\n",
               sstrerror(serrno));
-    } else {
-      LOG_SYSCALL_ERR("prepareForDBAccess()");
     }
+    LOG_SYSCALL_ERR("prepareForDBAccess()");
     return(-1);
   }
 
@@ -885,10 +886,9 @@ int startStreams(
             fprintf(stderr,"C_Services_updateRep(Stream) %s, %s\n",
                     sstrerror(serrno),
                     C_Services_errorMsg(dbSvc));
-          } else {
-            LOG_DBCALL_ERR("C_Services_updateRep()",
-                           C_Services_errorMsg(dbSvc));
           }
+          LOG_DBCALL_ERR("C_Services_updateRep()",
+                         C_Services_errorMsg(dbSvc));
           C_IAddress_delete(iAddr);
           return(-1);
         }
@@ -910,9 +910,13 @@ int addTapeCopyToStreams(
      struct Cstager_TapeCopy_t *tapeCopy;
      struct Cns_fileclass *fileClass;
 {
-  struct Cstager_TapePool_t **tapePoolArray = NULL, *newTapePool;
+  struct Cstager_TapePool_t **tapePoolArray = NULL;
   struct Cstager_Stream_t **streamArray = NULL;
-  char *tapePoolName;
+  struct Cstager_CastorFile_t *castorFile = NULL;
+  char *tapePoolName = NULL, *migratorPolicyName = NULL, *nsHost = NULL;
+  char castorFileName[CA_MAXPATHLEN+1];
+  struct Cns_filestat statbuf;
+  struct Cns_fileid fileId;
   int rc, i, j, nbTapePools = 0, nbStreams = 0, addedToStream = 0;
 
   if ( (svcClass == NULL) || (tapeCopy == NULL) ) {
@@ -923,12 +927,40 @@ int addTapeCopyToStreams(
     serrno = EINVAL;
     return(-1);
   }
+  Cstager_SvcClass_migratorPolicy(
+                                  svcClass,
+                                  (CONST char **)&migratorPolicyName
+                                  );
+  if ( (migratorPolicyName != NULL) && (*migratorPolicyName != '\0') ) {
+    Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
+    memset(&fileId,'\0',sizeof(fileId));
+    Cstager_CastorFile_fileId(castorFile,&(fileId.fileid));
+    nsHost = NULL;
+    Cstager_CastorFile_nsHost(castorFile,(CONST char **)&nsHost);
+    if ( nsHost != NULL ) {
+      strncpy(fileId.server,nsHost,sizeof(fileId.server)-1);
+    }
+    *castorFileName = '\0';
+    rc = Cns_statx(castorFileName,&fileId,&statbuf);
+    if ( rc == -1 ) {
+      if ( runAsDaemon == 0 ) {
+        fprintf(stderr,"Cns_statx(): %s\n",sstrerror(serrno));
+      }
+      LOG_SYSCALL_ERR("Cns_statx()");
+      return(-1);
+    }
+  }
 
   Cstager_SvcClass_tapePools(svcClass,&tapePoolArray,&nbTapePools);
   for ( i=0; i<nbTapePools; i++ ) {
     Cstager_TapePool_name(tapePoolArray[i],(CONST char **)&tapePoolName);
-    if ( (legacyMode == 0 ) ||
-         (findTapePoolInFileClass(fileClass,tapePoolName) == 1) ) {
+    if ( ((legacyMode == 1) &&
+          (findTapePoolInFileClass(fileClass,tapePoolName) == 1)) ||
+         ((legacyMode == 0) &&
+          (callExpert(migratorPolicyName,
+                      castorFileName,
+                      &statbuf,
+                      tapePoolName) == 1)) ) {
       addedToStream = 1;
       streamArray = NULL;
       Cstager_TapePool_streams(tapePoolArray[i],&streamArray,&nbStreams);
@@ -944,14 +976,83 @@ int addTapeCopyToStreams(
 }
 
 int callExpert(
-               migratorPolicy,
+               migratorPolicyName,
                castorFileName,
-               statbuf
+               statbuf,
+               tapePoolName
                )
-     char *migratorPolicy, *castorFileName;
+     char *migratorPolicyName, *castorFileName, *tapePoolName;
      struct Cns_filestat *statbuf;
 {
-  return(1);
+  char expertBuffer[2*(CA_MAXPATHLEN+1)+1*(CA_MAXPOOLNAMELEN+1)+2*22+7*11+1], *p, u64buf[22];
+  int msgLen, rc = 0, fd = -1;
+  int timeout = 30;
+  char answer[21]; /* migrate this file -> 1, don't migrate now -> 0 */
+
+  /*
+   * Arguments for migrator polic are:
+   * - migration policy name, e.g. "userFilePolicy.pl" (1024 chars)
+   * - tape pool name (17 chars)
+   * - castor file name, e.g. "/castor/cern.ch/user/m/me/myfile" (1024 chars)
+   * - fileid, 64bit castor bit-file id (22 chars)
+   * - filesize (64bit) (22 chars)
+   * - filemode, file permission mode, e.g. 0644 (11 chars)
+   * - uid, owner uid (11 chars)
+   * - gid, owner gid
+   * - atime, last access to file (11 chars)
+   * - mtime, last file modification (11 chars)
+   * - ctime, last file metadata modification (11 chars)
+   * - fileclass, castor file class identifier (11 chars)
+   */
+  memset(expertBuffer,'\0',sizeof(expertBuffer));
+  p = expertBuffer;
+  sprintf(p,"%s %s %s ",migratorPolicyName,tapePoolName,castorFileName);
+  p += strlen(p);
+  sprintf(p,"%s ",u64tostr(statbuf->fileid,u64buf,-1));
+  p += strlen(p);
+  sprintf(p,"%s ",u64tostr(statbuf->filesize,u64buf,-1));
+  p += strlen(p);
+  sprintf(p,"%d %d %d %d %d %d %d\n",
+          statbuf->filemode,
+          statbuf->uid,
+          statbuf->gid,
+          statbuf->atime,
+          statbuf->mtime,
+          statbuf->ctime,
+          statbuf->fileclass
+          );
+
+  
+  msgLen = strlen(expertBuffer);
+  rc = expert_send_request(&fd,EXP_RQ_MIGRATOR);
+
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("expert_send_request()");
+    return(-1);
+  }
+
+  rc = expert_send_data(fd,expertBuffer,msgLen);
+  if ( rc != msgLen ) {
+    LOG_SYSCALL_ERR("expert_send_data()");
+    return(-1);
+  }
+
+  memset(answer,'\0',sizeof(answer));
+  rc = expert_receive_data(fd,answer,sizeof(answer)-1,timeout);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("expert_receive_data()");
+    return(-1);
+  }
+
+  rc = atoi(answer);
+  if ( rc == 0 ) {
+    if ( runAsDaemon == 0 ) {
+      fprintf(stdout,"Policy returns skip from migration, %s\n",
+              expertBuffer);
+    }
+  }
+  
+  return(rc);
 }    
 
 int getMigrCandidates(
@@ -995,9 +1096,8 @@ int getMigrCandidates(
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"getMigrCandidates(): prepareForDBAccess(): %s\n",
               sstrerror(serrno));
-    } else {
-      LOG_SYSCALL_ERR("prepareForDBAccess()");
     }
+    LOG_SYSCALL_ERR("prepareForDBAccess()");
     return(-1);
   }
 
@@ -1012,10 +1112,9 @@ int getMigrCandidates(
       fprintf(stderr,"Cstager_IStagerSvc_selectTapeCopiesForMigration(): %s, %s\n",
               sstrerror(serrno),
               Cstager_IStagerSvc_errorMsg(stgSvc));
-    } else {
-      LOG_DBCALL_ERR("Cstager_IStagerSvc_selectTapeCopiesForMigration()",
-                     Cstager_IStagerSvc_errorMsg(stgSvc));
     }
+    LOG_DBCALL_ERR("Cstager_IStagerSvc_selectTapeCopiesForMigration()",
+                   Cstager_IStagerSvc_errorMsg(stgSvc));
     C_IAddress_delete(iAddr);
     return(-1);
   }
@@ -1024,10 +1123,6 @@ int getMigrCandidates(
     fileClassArray = (struct Cns_fileclass **)calloc(nbTapeCopies,
                                                      sizeof(struct Cns_fileclass *));
   }
-  Cstager_SvcClass_migratorPolicy(
-                                  svcClass,
-                                  (CONST char **)&migratorPolicy
-                                  );
   for ( i=0; i<nbTapeCopies; i++ ) {
     iObj = Cstager_TapeCopy_getIObject(tapeCopyArray[i]);
     rc = C_Services_fillObj(
@@ -1041,10 +1136,9 @@ int getMigrCandidates(
         fprintf(stderr,"C_Services_fillObj(tapeCopy,OBJ_CastorFile): %s, %s\n",
                 sstrerror(serrno),
                 C_Services_errorMsg(dbSvc));
-      } else {
-        LOG_DBCALL_ERR("C_Services_fillObj()",
-                       C_Services_errorMsg(dbSvc));
       }
+      LOG_DBCALL_ERR("C_Services_fillObj()",
+                     C_Services_errorMsg(dbSvc));
       continue;
     }
     castorFile = NULL;
@@ -1059,14 +1153,13 @@ int getMigrCandidates(
     }
     Cstager_CastorFile_fileSize(castorFile,&sz);
     *initialSizeToTransfer += sz;
-    if ( (legacyMode == 1) || (migratorPolicy != NULL && *migratorPolicy != '\0') ) {
+    if ( legacyMode == 1 ) {
       rc = Cns_statx(castorFileName,&fileId,&statbuf);
       if ( rc == -1 ) {
         if ( runAsDaemon == 0 ) {
           fprintf(stderr,"Cns_statx(): %s\n",sstrerror(serrno));
-        } else {
-          LOG_SYSCALL_ERR("Cns_statx()");
         }
+        LOG_SYSCALL_ERR("Cns_statx()");
         continue;
       }
       if ( legacyMode == 1 ) {
@@ -1081,27 +1174,12 @@ int getMigrCandidates(
           if ( runAsDaemon == 0 ) {
             fprintf(stderr,"Cns_queryclass(%d): %s\n",
                     statbuf.fileclass,sstrerror(serrno));
-          } else {
-            LOG_SYSCALL_ERR("Cns_Queryclass()");
           }
+          LOG_SYSCALL_ERR("Cns_Queryclass()");
           continue;
         }
         fileClassArray[i] = (struct Cns_fileclass *)calloc(1,sizeof(struct Cns_fileclass));
         memcpy(fileClassArray[i],&fileClass,sizeof(struct Cns_fileclass));
-      }
-      if ( migratorPolicy != NULL && *migratorPolicy != '\0') {
-        rc = callExpert(
-                        migratorPolicy,
-                        castorFileName,
-                        &statbuf
-                        );
-        if ( rc != 1 ) {
-          /*
-           * Not selected
-           * Push it back in waiting for migration
-           */
-          Cstager_TapeCopy_setStatus(tapeCopyArray[i],TAPECOPY_TOBEMIGRATED);
-        }
       }
     }
   }
@@ -1174,7 +1252,10 @@ int addMigrationCandidatesToStreams(
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  ID_TYPE key;
   int rc, i;
+  char *nsHost, buf[22];
+  struct Cns_fileid fileid;
 
   if ( svcClass == NULL ) {
     if ( runAsDaemon == 0 ) {
@@ -1189,9 +1270,8 @@ int addMigrationCandidatesToStreams(
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"addMigrationCandidatesToStreams(): prepareForDBAccess(): %s\n",
               sstrerror(serrno));
-    } else {
-      LOG_SYSCALL_ERR("prepareForDBAccess()");
     }
+    LOG_SYSCALL_ERR("prepareForDBAccess()");
     return(-1);
   }
 
@@ -1204,11 +1284,8 @@ int addMigrationCandidatesToStreams(
     if ( rc == -1 ) {
       if ( runAsDaemon == 0 ) {
         fprintf(stderr,"addTapeCopyToStreams(): %s\n",sstrerror(serrno));
-      } else {
-        LOG_SYSCALL_ERR("addTapeCopyToStreams()");
       }
-      C_IAddress_delete(iAddr);
-      return(-1);
+      LOG_SYSCALL_ERR("addTapeCopyToStreams()");
     }
 
     iObj = Cstager_TapeCopy_getIObject(tapeCopyArray[i]);
@@ -1225,23 +1302,57 @@ int addMigrationCandidatesToStreams(
           fprintf(stderr,"C_Services_fillRep(tapeCopy,OBJ_Stream): %s, %s\n",
                   sstrerror(serrno),
                   C_Services_errorMsg(dbSvc));
-        } else {
-          LOG_DBCALL_ERR("C_Services_fillRep(tapeCopy,OBJ_Stream)",
-                         C_Services_errorMsg(dbSvc));
         }
+        LOG_DBCALL_ERR("C_Services_fillRep(tapeCopy,OBJ_Stream)",
+                       C_Services_errorMsg(dbSvc));
         C_IAddress_delete(iAddr);
         return(-1);
       }
     } else {
       /*
-       * The tape copy was not added to a stream. Probably because
+       * The tape copy was not added to a stream. Maybe because
+       * of an error when calling policy engine or because
        * the number of TapePools exceeds the nbDrives in SvcClass.
        * Note that selectTapeCopiesForMigration() has set the
        * atomically set the status to TAPECOPY_WAITINSTREAMS. 
        * We should therefore reset the TapeCopy status to 
        * TAPECOPY_TOBEMIGRATED so that it is picked up next time
+       *
+       * In case of an error, we better set PUT_FAILED and log
+       * an alert for manual check.
        */
-      Cstager_TapeCopy_setStatus(tapeCopyArray[i],TAPECOPY_TOBEMIGRATED);
+      Cstager_TapeCopy_id(tapeCopyArray[i],&key);
+      Cstager_TapeCopy_setStatus(tapeCopyArray[i],TAPECOPY_FAILED);
+      Cstager_TapeCopy_castorFile(tapeCopyArray[i],&castorFile);
+      memset(&fileid,'\0',sizeof(fileid));
+      nsHost = NULL;
+      Cstager_CastorFile_fileId(castorFile,&(fileid.fileid));
+      Cstager_CastorFile_nsHost(castorFile,(CONST char **)&nsHost);
+      strcpy(fileid.server,nsHost);
+      if ( rc == -1 ) {
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_PUTFAILED),
+                        (struct Cns_fileid *)&fileid,
+                        RTCPCLD_NB_PARAMS+1,
+                        "DBKEY",
+                        DLF_MSG_PARAM_INT64,
+                        key,
+                        RTCPCLD_LOG_WHERE
+                        );
+        if ( runAsDaemon == 0 ) {
+          fprintf(stderr,"PUT_FAILED: %s@%s\n",u64tostr(fileid.fileid,buf,-1),
+                  fileid.server);
+        }
+      } else {
+        if ( runAsDaemon == 0 ) {
+          fprintf(stderr,"Reset to TAPECOPY_TOBEMIGRATED: %s@%s\n",
+                  u64tostr(fileid.fileid,buf,-1),
+                  fileid.server);
+        }
+        Cstager_TapeCopy_setStatus(tapeCopyArray[i],TAPECOPY_TOBEMIGRATED);
+      }
+      
       rc = C_Services_updateRep(
                                 dbSvc,
                                 iAddr,
@@ -1253,10 +1364,9 @@ int addMigrationCandidatesToStreams(
           fprintf(stderr,"C_Services_updateRep(tapeCopy): %s, %s\n",
                   sstrerror(serrno),
                   C_Services_errorMsg(dbSvc));
-        } else {
-          LOG_DBCALL_ERR("C_Services_updateRep(tapeCopy)",
-                         C_Services_errorMsg(dbSvc));
         }
+        LOG_DBCALL_ERR("C_Services_updateRep(tapeCopy)",
+                       C_Services_errorMsg(dbSvc));
         C_IAddress_delete(iAddr);
         return(-1);
       }
@@ -1266,6 +1376,31 @@ int addMigrationCandidatesToStreams(
   return(0);
 }
 
+static void shutdownService(
+                            signo
+                            )
+     int signo;
+{
+  (void)dlf_write(
+                  mainUuid,
+                  RTCPCLD_LOG_MSG(RTCPCLD_MSG_SHUTDOWN),
+                  (struct Cns_fileid *)NULL,
+                  1,
+                  "SIGNAL",
+                  DLF_MSG_PARAM_INT,
+                  signo
+                  );
+  if ( (_migrCandidates != NULL) && (_nbMigrCandidates != NULL) ) {
+    if ( runAsDaemon == 0 ) {
+      fprintf(stdout,"Trapped signal %d: Restore %d migration candidates\n",
+              signo,*_nbMigrCandidates);
+    }
+    restoreMigrCandidates(*_migrCandidates,*_nbMigrCandidates);
+  }
+  exit(0);
+  return;
+}
+
 void usage(char *cmd) 
 {
   fprintf(stdout,"Usage: %s [-d] [-L] [-t sleepTime(seconds)] svcClass1 svcClass2 svcClass3 ...\n"
@@ -1273,6 +1408,7 @@ void usage(char *cmd)
           "-d                     : run as runAsDaemon\n"
           "-L                     : Legacy mode, emulate old stgdaemon taking information from Cns\n"
           "-t sleepTime(seconds)  : sleep time (in seconds) between two checks. Default=300\n"
+          "-v volume(bytes)       : data volume threshold below migration will not start\n"
           "For instance:\n"
           "%s default\n",cmd,cmd);
   return;
@@ -1289,11 +1425,28 @@ int main(int argc, char *argv[])
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
   char *migHunterFacilityName = "MigHunter";
-  u_signed64 initialSizeToTransfer;
+  u_signed64 initialSizeToTransfer, volumeThreshold = 0;
   char buf[32];
   int c, rc, i, nbMigrCandidates = 0, nbOldStreams = 0, nbNewStreams = 0;
   time_t sleepTime = 0;
+#if !defined(_WIN32)
+  struct sigaction saOther;
+#endif /* _WIN32 */
 
+  _migrCandidates = &migrCandidates;
+  _nbMigrCandidates = &nbMigrCandidates;
+#if !defined(_WIN32)
+  memset(&saOther,'\0',sizeof(saOther));
+  saOther.sa_handler = SIG_IGN;
+  sigaction(SIGPIPE,&saOther,NULL);
+  sigaction(SIGXFSZ,&saOther,NULL);
+  saOther.sa_handler = shutdownService;
+  sigaction(SIGINT,&saOther,NULL);
+  sigaction(SIGTERM,&saOther,NULL);
+  sigaction(SIGABRT,&saOther,NULL);
+#endif /* _WIN32 */
+  
+  cmdName = argv[0];
   if ( argc <= 1 ) {
     usage(argv[0]);
     return(1);
@@ -1302,7 +1455,7 @@ int main(int argc, char *argv[])
   Coptind = 1;
   Copterr = 1;
   
-  while ( (c = Cgetopt(argc,argv,"CdLt:")) != -1 ) {
+  while ( (c = Cgetopt(argc,argv,"CdLt:v:")) != -1 ) {
     switch (c) {
     case 'C':
       doCloneStream = 1;
@@ -1316,6 +1469,9 @@ int main(int argc, char *argv[])
     case 't':
       sleepTime = atoi(Coptarg);
       break;
+    case 'v':
+      volumeThreshold = strutou64(Coptarg);
+      break;
     default:
       usage(argv[0]);
       return(2);
@@ -1323,10 +1479,26 @@ int main(int argc, char *argv[])
   }
   
   C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
+  Cuuid_create(
+               &mainUuid
+               );
+  (void)rtcpcld_initLogging(migHunterFacilityName);
+
+#if defined(__DATE__) && defined (__TIME__)
+  (void)dlf_write(
+                  mainUuid,
+                  RTCPCLD_LOG_MSG(RTCPCLD_MSG_STARTUP),
+                  (struct Cns_fileid *)NULL,
+                  3,
+                  "GENERATED_DATE",DLF_MSG_PARAM_STR,__DATE__,
+                  "GENERATED_TIME",DLF_MSG_PARAM_STR,__TIME__,
+                  "SERVICE",DLF_MSG_PARAM_STR,
+                  (cmdName != NULL ? cmdName : "(null)")
+                  );
+#endif /* __DATE__ && __TIME__ */
   
   if ( runAsDaemon == 1 ) {
     if ( (Cinitdaemon("MigHunter",SIG_IGN) == -1) ) exit(1);
-    (void)rtcpcld_initLogging(migHunterFacilityName);
     if ( sleepTime == 0 ) sleepTime = 300;
   }
   
@@ -1335,9 +1507,8 @@ int main(int argc, char *argv[])
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"getSvcClass(): prepareForDBAccess(): %s\n",
               sstrerror(serrno));
-    } else {
-      LOG_SYSCALL_ERR("prepareForDBAccess()");
     }
+    LOG_SYSCALL_ERR("prepareForDBAccess()");
     return(1);
   }
   do {
@@ -1352,9 +1523,8 @@ int main(int argc, char *argv[])
       if ( rc == -1 ) {
         if ( runAsDaemon == 0 ) {
           fprintf(stderr,"getSvcClass(): %s\n",sstrerror(serrno));
-        } else {
-          LOG_SYSCALL_ERR("getSvcClass()");
         }
+        LOG_SYSCALL_ERR("getSvcClass()");
         continue;
       }
       freeMigrCandidates(migrCandidates,nbMigrCandidates);
@@ -1377,14 +1547,26 @@ int main(int argc, char *argv[])
       if ( rc == -1 ) {
         if ( runAsDaemon == 0 ) {
           fprintf(stderr,"getMigrCandidates(%s): %s\n",argv[i],sstrerror(serrno));
-        } else {
-          LOG_SYSCALL_ERR("getMigrCandidates()");
         }
+        LOG_SYSCALL_ERR("getMigrCandidates()");
         continue;
       }
       if ( runAsDaemon == 0 ) {
         fprintf(stdout,"Found %d candidates for %s\n",nbMigrCandidates,argv[i]);
       }
+      (void)dlf_write(
+                      mainUuid,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_MIGRCANDS),
+                      (struct Cns_fileid *)NULL,
+                      2,
+                      "SVCCLASS",
+                      DLF_MSG_PARAM_STR,
+                      argv[i],
+                      "NBCANDS",
+                      DLF_MSG_PARAM_INT,
+                      nbMigrCandidates
+                      );
+      
       if ( runAsDaemon == 0 ) {
         fprintf(stdout,"Create new tape pools for %s if necessary\n",argv[i]);
       }
@@ -1399,9 +1581,8 @@ int main(int argc, char *argv[])
           if ( runAsDaemon == 0 ) {
             fprintf(stderr,"tapePoolCreator(%s): %s\n",
                     argv[i],sstrerror(serrno));
-          } else {
-            LOG_SYSCALL_ERR("tapePoolCreator()");
           }
+          LOG_SYSCALL_ERR("tapePoolCreator()");
           restoreMigrCandidates(migrCandidates,nbMigrCandidates);
           continue;
         }
@@ -1422,11 +1603,34 @@ int main(int argc, char *argv[])
         if ( runAsDaemon == 0 ) {
           fprintf(stderr,"getStreamsForSvcClass(%s): %s\n",
                   argv[i],sstrerror(serrno));
-        } else {
-          LOG_SYSCALL_ERR("getStreamsForSvcClass()");
         }
+        LOG_SYSCALL_ERR("getStreamsForSvcClass()");
         restoreMigrCandidates(migrCandidates,nbMigrCandidates);
         continue;
+      }
+      if ( (nbOldStreams <= 0) && (initialSizeToTransfer<volumeThreshold) ) {
+        if ( runAsDaemon == 0 ) {
+          fprintf(stdout,"Not enough data to migrate: %s < %s\n",
+                  u64tostr(initialSizeToTransfer,buf,-sizeof(buf)),
+                  u64tostr(volumeThreshold,buf,-sizeof(buf)));
+        }
+        (void)dlf_write(
+                        mainUuid,
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_DATALIMIT),
+                        (struct Cns_fileid *)NULL,
+                        3,
+                        "SVCCLASS",
+                        DLF_MSG_PARAM_STR,
+                        argv[i],
+                        "MIGRVOLUM",
+                        DLF_MSG_PARAM_INT64,
+                        initialSizeToTransfer,
+                        "THRESHOLD",
+                        DLF_MSG_PARAM_INT64,
+                        volumeThreshold
+                        );
+        (void)C_Services_rollback(dbSvc,iAddr);
+        restoreMigrCandidates(migrCandidates,nbMigrCandidates);
       }
       
       if ( (nbOldStreams >= 0) &&
@@ -1440,9 +1644,8 @@ int main(int argc, char *argv[])
           if ( runAsDaemon == 0 ) {
             fprintf(stderr,"streamCreator(%s): %s\n",
                     argv[i],sstrerror(serrno));
-          } else {
-            LOG_SYSCALL_ERR("streamCreator()");
           }
+          LOG_SYSCALL_ERR("streamCreator()");
           (void)C_Services_rollback(dbSvc,iAddr);
           restoreMigrCandidates(migrCandidates,nbMigrCandidates);
           continue;
@@ -1450,6 +1653,21 @@ int main(int argc, char *argv[])
         if ( runAsDaemon == 0 ) {
           fprintf(stdout,"%d new streams created for %s\n",nbNewStreams,argv[i]);
         }
+        (void)dlf_write(
+                        mainUuid,
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_NBSTREAMS),
+                        (struct Cns_fileid *)NULL,
+                        3,
+                        "SVCCLASS",
+                        DLF_MSG_PARAM_STR,
+                        argv[i],
+                        "NBOLDSTR",
+                        DLF_MSG_PARAM_INT,
+                        nbOldStreams,
+                        "NBNEWSTR",
+                        DLF_MSG_PARAM_INT,
+                        nbNewStreams
+                        );
       }
       /*
        * Release the lock on streams. The adding of migration
@@ -1460,9 +1678,8 @@ int main(int argc, char *argv[])
         if ( runAsDaemon == 0 ) {
           fprintf(stderr,"C_Services_commit(): %s\n",
                   sstrerror(serrno));
-        } else {
-          LOG_SYSCALL_ERR("C_Services_commit()");
         }
+        LOG_SYSCALL_ERR("C_Services_commit()");
       }
       if ( nbMigrCandidates > 0 ) {
         if ( runAsDaemon == 0 ) {
@@ -1479,9 +1696,8 @@ int main(int argc, char *argv[])
           if ( runAsDaemon == 0 ) {
             fprintf(stderr,"addMigrationCandidatesToStreams(%s): %s\n",
                     argv[i],sstrerror(serrno));
-          } else {
-            LOG_SYSCALL_ERR("addMigrationCandidatesToStreams()");
           }
+          LOG_SYSCALL_ERR("addMigrationCandidatesToStreams()");
           (void)C_Services_rollback(dbSvc,iAddr);
           restoreMigrCandidates(migrCandidates,nbMigrCandidates);
           continue;
@@ -1495,9 +1711,8 @@ int main(int argc, char *argv[])
         if ( runAsDaemon == 0 ) {
           fprintf(stderr,"startStreams(%s): %s\n",
                   argv[i],sstrerror(serrno));
-        } else {
-          LOG_SYSCALL_ERR("startStreams()");
         }
+        LOG_SYSCALL_ERR("startStreams()");
         (void)C_Services_rollback(dbSvc,iAddr);
         continue;
       }
@@ -1506,12 +1721,13 @@ int main(int argc, char *argv[])
         if ( runAsDaemon == 0 ) {
           fprintf(stderr,"C_Services_commit(): %s\n",
                   sstrerror(serrno));
-        } else {
-          LOG_SYSCALL_ERR("C_Services_commit()");
         }
+        LOG_SYSCALL_ERR("C_Services_commit()");
       }
     }
     sleep(sleepTime);
   } while (sleepTime > 0);
+
+  shutdownService(0);
   return(0);
 }
