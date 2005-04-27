@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.158 $ $Release$ $Date: 2005/04/26 14:10:41 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.159 $ $Release$ $Date: 2005/04/27 07:56:57 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -2157,9 +2157,10 @@ castor::db::ora::OraStagerSvc::recreateCastorFile
     if (0 == id) return 0;
     // Otherwise, build a DiskCopyForRecall
     castor::stager::DiskCopyForRecall *result =
-      new castor::stager::DiskCopyRecall();
+      new castor::stager::DiskCopyForRecall();
     result->setId(id);
-    result->setStatus(m_recreateCastorFileStatement->getInt(4));
+    result->setStatus((castor::stager::DiskCopyStatusCodes)
+                      m_recreateCastorFileStatement->getInt(4));
     result->setMountPoint(m_recreateCastorFileStatement->getString(5));
     result->setDiskServer(m_recreateCastorFileStatement->getString(6));
     return result;
