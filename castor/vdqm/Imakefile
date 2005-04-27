@@ -1,0 +1,98 @@
+#
+#                      castor/vdqm/Imakefile
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Release$ $Date: 2005/04/27 15:00:36 $ $Author: mbraeger $
+#
+# Make Castor vdqm library
+#
+# @author Matthias Braeger, Matthias.Braeger@cern.ch
+#
+
+#include <Project.tmpl>
+
+#if !defined(_WIN32)
+#if linux
+DEBUG  = -g -O0
+#else
+DEBUG  = -g
+#endif
+#endif
+
+INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
+CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
+
+LIBS = -lshift -lcastorCommonOra
+
+VDQMBIN_SRCS =ExtendedDeviceGroup.cpp \
+              ExtendedDeviceGroupCInt.cpp \
+              OldVdqmProtocol.cpp \
+              TapeDrive.cpp \
+              TapeDriveCInt.cpp \
+              TapeDriveStatusCodes.cpp \
+              TapeRequest.cpp \
+              TapeRequestCInt.cpp \
+              TapeRequestHandler.cpp \
+              TapeRequestStatusCode.cpp \
+              TapeServer.cpp \
+              TapeServerCInt.cpp \
+              VdqmServer.cpp \
+              VdqmServerSocket.cpp
+
+
+VDQMBIN_OBJS = $(VDQMBIN_SRCS:.cpp=.Osuf)
+
+DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift) \
+         DepSharedLibraryTargetName(FileName(..,shlib),castorCommonOra)
+
+LDFLAGS = -L FileName(..,FileName(..,shlib)) $(MTLDFLAGS)
+LD = g++
+
+all: ProgramTargetName(vdqmserver)
+
+NormalProgramTarget(vdqmserver,$(VDQMBIN_OBJS),$(DEPLIB),$(LIBS))
+
+MakeDepSharedLibrary(FileName(..,shlib),shift)
+MakeDepSharedLibrary(FileName(..,shlib),castorCommonOra)
+
+Makefiles:
+
+#if defined(_WIN32)
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend $(INCLUDES) $(VDQMBIN_SRCS) 2> /dev/null
+#endif
+
+install: FileName($(BIN),vdqmserver)
+
+InstallProgram(vdqmserver,$(BIN),root,bin,755)
+
+exportman:
+
+clean:
+	@echo cleaning in CurDir
+	-@RemoveFiles(FilesToClean)
+
+clobber:	clean
+	@echo clobbering in CurDir
+	-@RemoveFiles(ProgramTargetName(vdqmserver))
+
+FORCE:
+
