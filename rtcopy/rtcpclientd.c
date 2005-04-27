@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.28 $ $Release$ $Date: 2005/04/01 16:10:23 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/04/27 16:32:45 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.28 $ $Release$ $Date: 2005/04/01 16:10:23 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/04/27 16:32:45 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -75,6 +75,7 @@ rtcpcld_RequestList_t *requestList = NULL;
 
 static int port = -1;
 static pid_t tapeErrorHandlerPid = 0;
+static char *cmdName = NULL;
 
 static void startTapeErrorHandler _PROTO((void));
 extern int rtcp_InitLog _PROTO((char *, FILE *, FILE *, SOCKET *));
@@ -1019,13 +1020,14 @@ int rtcpcld_main(
   fd_set rd_set, wr_set, ex_set, rd_setcp, wr_setcp, ex_setcp;
   struct sockaddr_in sin ; /* Internet address */ 
   struct timeval timeout, timeout_cp;
-  char serverName[CA_MAXHOSTNAMELEN+1];
   SOCKET *rtcpdSocket = NULL;
   SOCKET *notificationSocket = NULL;
   SOCKET acceptSocket = INVALID_SOCKET;
   tape_list_t **tapeArray, *tape;
   rtcpTapeRequest_t tapereq;
+#if !defined(_WIN32)
   struct sigaction saOther;
+#endif /* _WIN32 */
   char *p = NULL;
 
   /* Initializing the C++ log */
@@ -1043,7 +1045,6 @@ int rtcpcld_main(
   sigaction(SIGABRT,&saOther,NULL);
 #endif /* _WIN32 */
 
-  gethostname(serverName,CA_MAXHOSTNAMELEN);
 #if defined(__DATE__) && defined (__TIME__)
   (void)dlf_write(
                   mainUuid,
@@ -1052,7 +1053,8 @@ int rtcpcld_main(
                   3,
                   "GENERATED_DATE",DLF_MSG_PARAM_STR,__DATE__,
                   "GENERATED_TIME",DLF_MSG_PARAM_STR,__TIME__,
-                  "SERVER",DLF_MSG_PARAM_STR,serverName
+                  "SERVICE",DLF_MSG_PARAM_STR,
+                  (cmdName != NULL ? cmdName : "(null)")
                   );
 #endif /* __DATE__ && __TIME__ */
 
@@ -1482,7 +1484,7 @@ int main(
   char *myUser, *myGroup;
   char *rtcpcldFacilityName = RTCPCLIENTD_FACILITY_NAME;
 
-
+  cmdName = argv[0];
 #ifdef RTCPCLD_USER
   myUser = RTCPCLD_USER;
 #else /* RTCPCLD_USER */
