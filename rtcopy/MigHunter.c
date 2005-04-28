@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.19 $ $Release$ $Date: 2005/04/27 14:28:49 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.20 $ $Release$ $Date: 2005/04/28 10:12:56 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.19 $ $Release$ $Date: 2005/04/27 14:28:49 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.20 $ $Release$ $Date: 2005/04/28 10:12:56 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -947,6 +947,14 @@ int addTapeCopyToStreams(
         fprintf(stderr,"Cns_statx(): %s\n",sstrerror(serrno));
       }
       LOG_SYSCALL_ERR("Cns_statx()");
+      return(-1);
+    }
+    rc = Cns_getpath(fileId.server,fileId.fileid,castorFileName);
+    if ( rc == -1 ) {
+      if ( runAsDaemon == 0 ) {
+        fprintf(stderr,"Cns_getpath(): %s\n",sstrerror(serrno));
+      }
+      LOG_SYSCALL_ERR("Cns_getpath()");
       return(-1);
     }
   }
