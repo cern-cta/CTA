@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.14 $ $Date: 2004/03/25 14:38:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.15 $ $Date: 2005/04/29 15:10:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -636,6 +636,7 @@ int ring;
 		c = acserr2act (0, status);
 		RETURN (c);
 	}
+	tplogit (func,"acs_mount Ok - returned %s\n", acs_status(status));
 	mount_req_id = -1;	/* no request id assigned by ACSLS yet */
 	RETURN (0);
 }
@@ -671,9 +672,12 @@ unsigned int force;
 		c = acserr2act (1, status);
 		RETURN (c);
 	}
+	tplogit (func,"acs_dismount Ok returned %s\n", acs_status(status));
 	dismount_req_id = -1;	/* no request id assigned by ACSLS yet */
 	do {
 		status = acs_response (UCHECKI, &s, &req_id, &rtype, rbuf);
+		tplogit (func, "acs_response returned %d/%s reqid:%d rtype:%d\n", 
+			 status, acs_status(status), req_id, rtype);
 		if (rtype == RT_ACKNOWLEDGE) {
 			dismount_req_id = req_id;
 			tplogit (func, "ACSLS req_id = %d\n", dismount_req_id);
@@ -681,10 +685,25 @@ unsigned int force;
 	} while (rtype != RT_FINAL);
 	dismount_req_id = 0;
 	if (status) {
-		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
+	        sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
 		usrmsg (func, "%s\n", msg);
 		c = acserr2act (1, status);
 		RETURN (c);
+	}
+
+	/* Added by BC 20050317 to process status code inside the rbuf */
+	{
+	  ACS_DISMOUNT_RESPONSE *dr;
+	  STATUS dismount_status;
+
+	  dr = (ACS_DISMOUNT_RESPONSE *)rbuf;
+
+	  if (dr->dismount_status) {
+	    sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (dr->dismount_status));
+	    usrmsg (func, "%s\n", msg);
+	    c = acserr2act (1, dr->dismount_status);
+	    RETURN (c);
+	  }
 	}
 	RETURN (0);
 }
@@ -700,6 +719,8 @@ acsmountresp()
 
 	strcpy (func, "acsmountresp");
 	status = acs_response (0, &s, &req_id, &rtype, rbuf);
+	tplogit (func, "acs_response returned %d/%s reqid:%d rtype:%d\n", 
+		 status, acs_status(status), req_id, rtype);
 	if (status == STATUS_PENDING)
 		return (0);
 	if (rtype == RT_ACKNOWLEDGE) {
@@ -715,6 +736,22 @@ acsmountresp()
 		c = acserr2act (0, status);
 		RETURN (c);
 	}
+
+	/* Added by BC 20050317 to process status code inside the rbuf */
+	{
+	  ACS_MOUNT_RESPONSE *dr;
+	  STATUS mount_status;
+
+	  dr = (ACS_MOUNT_RESPONSE *)rbuf;
+
+	  if (dr->mount_status) {
+	    sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (dr->mount_status));
+	    usrmsg (func, "%s\n", msg);
+	    c = acserr2act (1, dr->mount_status);
+	    RETURN (c);
+	  }
+	}
+
 	return (0);
 }
 
@@ -732,6 +769,8 @@ wait4acsfinalresp()
 	strcpy (func, "wait4acsfinalr");
 	do {
 		status = acs_response (UCHECKI, &s, &req_id, &rtype, rbuf);
+		tplogit (func, "acs_response returned %d/%s reqid:%d rtype:%d\n", 
+			 status, acs_status(status), req_id, rtype);
 		if (rtype == RT_ACKNOWLEDGE) {
 			tplogit (func, "ACSLS req_id = %d\n", req_id);
 		}
@@ -744,8 +783,24 @@ wait4acsfinalresp()
 		c = acserr2act (*action == 'm' ? 0 : 1, status);
 		RETURN (c);
 	}
+
+	/* Added by BC 20050317 to process status code inside the rbuf */
+	{
+	  ACS_MOUNT_RESPONSE *dr;
+	  STATUS mount_status;
+
+	  dr = (ACS_MOUNT_RESPONSE *)rbuf;
+
+	  if (dr->mount_status) {
+	    sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (dr->mount_status));
+	    usrmsg (func, "%s\n", msg);
+	    c = acserr2act (1, dr->mount_status);
+	    RETURN (c);
+	  }
+	}
 	return (0);
 }
+
 #endif
 #if DMSCAPI
 static int hostid = -1;
