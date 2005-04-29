@@ -177,7 +177,7 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_TPNOTRETRIED, DLF_LVL_ALERT,"Tape request failed without failed segments"},
     { RTCPCLD_MSG_CALL_TRACE, DLF_LVL_USAGE,"Tracing statement"},
     { RTCPCLD_MSG_POSTPONERETRY, DLF_LVL_WARNING,"Tape Error retry postponed"},
-    { RTCPCLD_MSG_PUTFAILED, DLF_LVL_ALERT,"Migration retry rejected by policy"},
+    { RTCPCLD_MSG_PUTFAILED, DLF_LVL_ALERT,"Migration failed for file"},
     { RTCPCLD_MSG_GETFAILED, DLF_LVL_WARNING,"Recall retry rejected by policy"},
     { RTCPCLD_MSG_INVALSEGM, DLF_LVL_ERROR,"Name server segment no longer valid"},
     { RTCPCLD_MSG_SHUTDOWN, DLF_LVL_ALERT,"Service shutdown"},
