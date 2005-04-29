@@ -28,11 +28,7 @@
 #define _ABSTRACTREQUESTHANDLER_HPP_
 
 #include "castor/BaseObject.hpp"
-#include "castor/IObject.hpp"
-
 #include "castor/exception/Exception.hpp"
-
-#include "h/vdqm.h"
 
 namespace castor {
 	//Forward declaration
@@ -47,9 +43,28 @@ namespace castor {
     class AbstractRequestHandler : public BaseObject {
 
     	public:
-			
+	      
+	      /**
+	       * Constructor
+	       */
+	      AbstractRequestHandler();
+	      
+    		
+				/**
+				 * Returns the next request from the database
+				 */
 				virtual castor::IObject *getRequest() 
 						throw (castor::exception::Exception) = 0;
+						
+			protected:
+			
+				/**
+	       * handles an incoming request
+	       * @param fr the request
+	       * @param cuuid its uuid (for logging purposes only)
+	       */
+				void handleRequest(castor::IObject* fr, Cuuid_t cuuid)
+  				throw (castor::exception::Exception);
      
 
     }; // class AbstractRequestHandler

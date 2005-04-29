@@ -34,6 +34,7 @@
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 
+#include "castor/IObject.hpp"
 #include "castor/Constants.hpp"
 
 #define VDQMSERV 1
@@ -272,4 +273,9 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 //   */
 //  newvolrec->update = 1;
 //  FreeDgnContext(&dgn_context);
+}
+
+castor::IObject* castor::vdqm::TapeRequestHandler::getRequest() 
+	throw (castor::exception::Exception) {
+//TODO: Implementation
 }

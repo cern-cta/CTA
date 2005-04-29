@@ -34,6 +34,8 @@ typedef struct vdqmHdr vdqmHdr_t;
 typedef struct vdqmVolReq vdqmVolReq_t;
 
 namespace castor {
+	//Forward declaration
+	class IObject;
 
   namespace vdqm {
 
@@ -56,6 +58,12 @@ namespace castor {
 			 */
 			void newTapeRequest(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) 
 				throw (castor::exception::Exception);
+				
+			/**
+			 * Returns the next TapeRequest from the database
+			 */
+			virtual castor::IObject* getRequest() 
+					throw (castor::exception::Exception);
        
        
     }; // class TapeRequestHandler

@@ -51,7 +51,7 @@
 #include "h/stager_service_api.h"
 
 
-#define VDQMSERV 1
+#define VDQMSERV
 
 #include <net.h>
 #include <vdqm.h>	//Needed for the client_connection
