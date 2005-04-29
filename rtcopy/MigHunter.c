@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.21 $ $Release$ $Date: 2005/04/29 08:38:49 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.22 $ $Release$ $Date: 2005/04/29 08:48:47 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.21 $ $Release$ $Date: 2005/04/29 08:38:49 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.22 $ $Release$ $Date: 2005/04/29 08:48:47 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1109,7 +1109,7 @@ static int callExpert(
    */
   memset(expertBuffer,'\0',sizeof(expertBuffer));
   p = expertBuffer;
-  sprintf(p,"%s %s %s %d",migratorPolicyName,tapePoolName,castorFileName,copyNb);
+  sprintf(p,"%s %s %s %d ",migratorPolicyName,tapePoolName,castorFileName,copyNb);
   p += strlen(p);
   sprintf(p,"%s ",u64tostr(statbuf->fileid,u64buf,-1));
   p += strlen(p);
