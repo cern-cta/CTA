@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.40 $ $Date: 2004/01/23 10:05:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.41 $ $Date: 2005/04/29 16:55:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -629,6 +629,9 @@ unload_loop1:
 	}
 
 	/* tape is mounted */
+
+
+    post_mount_check(tapefd, path, devtype);
     if (strcmp (devtype, "9840") == 0 ||
         strcmp (devtype, "9940") == 0 ||
         strcmp (devtype, "994B") == 0) {

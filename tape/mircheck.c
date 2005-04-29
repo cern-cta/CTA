@@ -108,3 +108,20 @@ int checktype;
     
 #endif
 }
+
+
+/*
+ * Function called after tape is mounted so as to perform some checks
+ */
+
+int
+post_mount_check(tapefd, path, devtype)
+int tapefd;
+char *path;
+char *devtype;
+{
+
+
+
+}
+
