@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.20 $ $Release$ $Date: 2005/04/28 10:12:56 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.21 $ $Release$ $Date: 2005/04/29 08:38:49 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.20 $ $Release$ $Date: 2005/04/28 10:12:56 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.21 $ $Release$ $Date: 2005/04/29 08:38:49 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -112,6 +112,95 @@ int inChild;
  */
 Cuuid_t childUuid, mainUuid;
 
+static int prepareForDBAccess _PROTO((
+                                      struct C_Services_t **,
+                                      struct Cstager_IStagerSvc_t **,
+                                      struct C_IAddress_t **
+                                      ));
+static int getSvcClass _PROTO((
+                               char *,
+                               struct Cstager_SvcClass_t **
+                               ));
+static int getStreamsFromDB _PROTO((
+                                    struct Cstager_TapePool_t *,
+                                    int *
+                                    ));
+static int findTapePoolInSvcClass _PROTO((
+                                          struct Cstager_SvcClass_t *,
+                                          char *
+                                          ));
+static int findTapePoolInFileClass _PROTO((
+                                           struct Cns_fileclass *,
+                                           char *
+                                           ));
+static int tapePoolCreator _PROTO((
+                                   struct Cstager_SvcClass_t *,
+                                   struct Cstager_TapeCopy_t **,
+                                   struct Cns_fileclass **,
+                                   int
+                                   ));
+static int getStreamsForSvcClass _PROTO((
+                                         struct Cstager_SvcClass_t *,
+                                         int *
+                                         ));
+static void restoreMigrCandidates _PROTO((
+                                          struct Cstager_TapeCopy_t **,
+                                          int
+                                          ));
+static int cloneStream _PROTO((
+                               struct Cstager_Stream_t *, 
+                               struct Cstager_Stream_t *
+                               ));
+static int streamCreator _PROTO((
+                                 struct Cstager_SvcClass_t *,
+                                 u_signed64,
+                                 int *
+                                 ));
+static int startStreams _PROTO((
+                                struct Cstager_SvcClass_t *,
+                                u_signed64
+                                ));
+static int addTapeCopyToStreams _PROTO((
+                                        struct Cstager_SvcClass_t *,
+                                        struct Cstager_TapeCopy_t *,
+                                        struct Cns_fileclass *
+                                        ));
+static int callExpert _PROTO((
+                              char *,
+                              char *,
+                              int,
+                              struct Cns_filestat *,
+                              char *
+                              ));
+static int getMigrCandidates _PROTO((
+                                     struct Cstager_SvcClass_t *,
+                                     struct Cstager_TapeCopy_t ***,
+                                     struct Cns_fileclass ***,
+                                     int *,
+                                     u_signed64 *
+                                     ));
+static void freeFileClassArray _PROTO((
+                                       struct Cns_fileclass **,
+                                       int
+                                       ));
+static void freeMigrCandidates _PROTO((
+                                       struct Cstager_TapeCopy_t **,
+                                       int
+                                       ));
+static int addMigrationCandidatesToStreams _PROTO((
+                                                   struct Cstager_SvcClass_t *,
+                                                   struct Cstager_TapeCopy_t **,
+                                                   struct Cns_fileclass **,
+                                                   int
+                                                   ));
+static void shutdownService _PROTO((
+                                    int
+                                    ));
+static void usage _PROTO((
+                          char *
+                          ));
+
+
 static int prepareForDBAccess(
                               _dbSvc,
                               _stgSvc,
@@ -169,10 +258,10 @@ static int prepareForDBAccess(
 }
      
 
-int getSvcClass(
-                svcClassName,
-                svcClass
-                )
+static int getSvcClass(
+                       svcClassName,
+                       svcClass
+                       )
      char *svcClassName;
      struct Cstager_SvcClass_t **svcClass;
 {
@@ -252,10 +341,10 @@ int getSvcClass(
   return(0);
 }
 
-int getStreamsFromDB(
-                     tapePool,
-                     nbStreams
-                     )
+static int getStreamsFromDB(
+                            tapePool,
+                            nbStreams
+                            )
      struct Cstager_TapePool_t *tapePool;
      int *nbStreams;
 {
@@ -302,10 +391,10 @@ int getStreamsFromDB(
   return(rc);
 }
 
-int findTapePoolInSvcClass(
-                           svcClass,
-                           tapePoolName
-                           )
+static int findTapePoolInSvcClass(
+                                  svcClass,
+                                  tapePoolName
+                                  )
      struct Cstager_SvcClass_t *svcClass;
      char *tapePoolName;
 {
@@ -330,10 +419,10 @@ int findTapePoolInSvcClass(
   return(0);
 }  
 
-int findTapePoolInFileClass(
-                            fileClass,
-                            tapePoolName
-                            )
+static int findTapePoolInFileClass(
+                                   fileClass,
+                                   tapePoolName
+                                   )
      struct Cns_fileclass *fileClass;
      char *tapePoolName;
 {
@@ -349,12 +438,12 @@ int findTapePoolInFileClass(
   return(0);
 }
 
-int tapePoolCreator(
-                    svcClass,
-                    tapeCopyArray,
-                    fileClass,
-                    nbTapeCopies
-                    )
+static int tapePoolCreator(
+                           svcClass,
+                           tapeCopyArray,
+                           fileClass,
+                           nbTapeCopies
+                           )
      struct Cstager_SvcClass_t *svcClass;
      struct Cstager_TapeCopy_t **tapeCopyArray;
      struct Cns_fileclass **fileClass;
@@ -435,10 +524,10 @@ int tapePoolCreator(
   return(0);
 }
 
-int getStreamsForSvcClass(
-                          svcClass,
-                          nbStreams
-                          )
+static int getStreamsForSvcClass(
+                                 svcClass,
+                                 nbStreams
+                                 )
      struct Cstager_SvcClass_t *svcClass;
      int *nbStreams;
 {
@@ -476,10 +565,10 @@ int getStreamsForSvcClass(
  * Restore the status of all migration candidates that have not been
  * attached to any streams.
  */
-void restoreMigrCandidates(
-                           migrCandidates,
-                           nbMigrCandidates
-                           )
+static void restoreMigrCandidates(
+                                  migrCandidates,
+                                  nbMigrCandidates
+                                  )
      struct Cstager_TapeCopy_t **migrCandidates;
      int nbMigrCandidates;
 {
@@ -557,10 +646,10 @@ void restoreMigrCandidates(
 /*
  * Add all old migration candidates from an existing to a new stream
  */
-int cloneStream(
-                oldStream,
-                newStream
-                )
+static int cloneStream(
+                       oldStream,
+                       newStream
+                       )
      struct Cstager_Stream_t *oldStream, *newStream;
 {
   struct C_IObject_t *iObj = NULL;
@@ -641,11 +730,11 @@ int cloneStream(
   return(0);
 }
 
-int streamCreator(
-                  svcClass,
-                  initialSizeToTransfer,
-                  nbNewStreams
-                  )
+static int streamCreator(
+                         svcClass,
+                         initialSizeToTransfer,
+                         nbNewStreams
+                         )
      struct Cstager_SvcClass_t *svcClass;
      u_signed64 initialSizeToTransfer;
      int *nbNewStreams;
@@ -806,10 +895,10 @@ int streamCreator(
   return(0);
 }
 
-int startStreams(
-                 svcClass,
-                 initialSizeToTransfer
-                 )
+static int startStreams(
+                        svcClass,
+                        initialSizeToTransfer
+                        )
      struct Cstager_SvcClass_t *svcClass;
      u_signed64 initialSizeToTransfer;
 {
@@ -901,11 +990,11 @@ int startStreams(
   return(0);
 }
 
-int addTapeCopyToStreams(
-                         svcClass,
-                         tapeCopy,
-                         fileClass
-                         )
+static int addTapeCopyToStreams(
+                                svcClass,
+                                tapeCopy,
+                                fileClass
+                                )
      struct Cstager_SvcClass_t *svcClass;
      struct Cstager_TapeCopy_t *tapeCopy;
      struct Cns_fileclass *fileClass;
@@ -917,7 +1006,7 @@ int addTapeCopyToStreams(
   char castorFileName[CA_MAXPATHLEN+1];
   struct Cns_filestat statbuf;
   struct Cns_fileid fileId;
-  int rc, i, j, nbTapePools = 0, nbStreams = 0, addedToStream = 0;
+  int rc, i, j, nbTapePools = 0, nbStreams = 0, addedToStream = 0, cpNb = -1;
 
   if ( (svcClass == NULL) || (tapeCopy == NULL) ) {
     if ( runAsDaemon == 0 ) {
@@ -932,6 +1021,7 @@ int addTapeCopyToStreams(
                                   (CONST char **)&migratorPolicyName
                                   );
   if ( (migratorPolicyName != NULL) && (*migratorPolicyName != '\0') ) {
+    Cstager_TapeCopy_copyNb(tapeCopy,&cpNb);
     Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
     memset(&fileId,'\0',sizeof(fileId));
     Cstager_CastorFile_fileId(castorFile,&(fileId.fileid));
@@ -967,6 +1057,7 @@ int addTapeCopyToStreams(
          ((legacyMode == 0) &&
           (callExpert(migratorPolicyName,
                       castorFileName,
+                      cpNb,
                       &statbuf,
                       tapePoolName) == 1)) ) {
       addedToStream = 1;
@@ -983,16 +1074,19 @@ int addTapeCopyToStreams(
   return(addedToStream);
 }
 
-int callExpert(
-               migratorPolicyName,
-               castorFileName,
-               statbuf,
-               tapePoolName
-               )
+static int callExpert(
+                      migratorPolicyName,
+                      castorFileName,
+                      copyNb,
+                      statbuf,
+                      tapePoolName
+                      )
      char *migratorPolicyName, *castorFileName, *tapePoolName;
+     int copyNb;
      struct Cns_filestat *statbuf;
 {
-  char expertBuffer[2*(CA_MAXPATHLEN+1)+1*(CA_MAXPOOLNAMELEN+1)+2*22+7*11+1], *p, u64buf[22];
+  char expertBuffer[2*(CA_MAXPATHLEN+1)+1*(CA_MAXPOOLNAMELEN+1)+2*22+8*11+1];
+  char *p, u64buf[22];
   int msgLen, rc = 0, fd = -1;
   int timeout = 30;
   char answer[21]; /* migrate this file -> 1, don't migrate now -> 0 */
@@ -1002,6 +1096,7 @@ int callExpert(
    * - migration policy name, e.g. "userFilePolicy.pl" (1024 chars)
    * - tape pool name (17 chars)
    * - castor file name, e.g. "/castor/cern.ch/user/m/me/myfile" (1024 chars)
+   * - copy number (dual tapecopy files) (11 chars)
    * - fileid, 64bit castor bit-file id (22 chars)
    * - filesize (64bit) (22 chars)
    * - filemode, file permission mode, e.g. 0644 (11 chars)
@@ -1014,7 +1109,7 @@ int callExpert(
    */
   memset(expertBuffer,'\0',sizeof(expertBuffer));
   p = expertBuffer;
-  sprintf(p,"%s %s %s ",migratorPolicyName,tapePoolName,castorFileName);
+  sprintf(p,"%s %s %s %d",migratorPolicyName,tapePoolName,castorFileName,copyNb);
   p += strlen(p);
   sprintf(p,"%s ",u64tostr(statbuf->fileid,u64buf,-1));
   p += strlen(p);
@@ -1063,13 +1158,13 @@ int callExpert(
   return(rc);
 }    
 
-int getMigrCandidates(
-                      svcClass,
-                      migrCandidates,
-                      nsFileClassArray,
-                      nbMigrCandidates,
-                      initialSizeToTransfer
-                      )
+static int getMigrCandidates(
+                             svcClass,
+                             migrCandidates,
+                             nsFileClassArray,
+                             nbMigrCandidates,
+                             initialSizeToTransfer
+                             )
      struct Cstager_SvcClass_t *svcClass;
      struct Cstager_TapeCopy_t ***migrCandidates;
      struct Cns_fileclass ***nsFileClassArray;
@@ -1199,11 +1294,12 @@ int getMigrCandidates(
   return(0);
 }
 
-void freeFileClassArray(
-                        nsFileClassArray,
-                        nbItems
-                        )
+static void freeFileClassArray(
+                               nsFileClassArray,
+                               nbItems
+                               )
      struct Cns_fileclass **nsFileClassArray;
+     int nbItems;
 {
   int i;
   if ( nsFileClassArray == NULL ) return;
@@ -1221,10 +1317,10 @@ void freeFileClassArray(
   return;
 }
 
-void freeMigrCandidates(
-                        migrCandidates,
-                        nbMigrCandidates
-                        )
+static void freeMigrCandidates(
+                               migrCandidates,
+                               nbMigrCandidates
+                               )
      struct Cstager_TapeCopy_t **migrCandidates;
      int nbMigrCandidates;
 {
@@ -1243,12 +1339,12 @@ void freeMigrCandidates(
   return;
 }
 
-int addMigrationCandidatesToStreams(
-                                    svcClass,
-                                    tapeCopyArray,
-                                    nsFileClassArray,
-                                    nbTapeCopies
-                                    )
+static int addMigrationCandidatesToStreams(
+                                           svcClass,
+                                           tapeCopyArray,
+                                           nsFileClassArray,
+                                           nbTapeCopies
+                                           )
      struct Cstager_SvcClass_t *svcClass;
      struct Cstager_TapeCopy_t **tapeCopyArray;
      struct Cns_fileclass **nsFileClassArray;
@@ -1409,7 +1505,11 @@ static void shutdownService(
   return;
 }
 
-void usage(char *cmd) 
+static void usage(
+                  cmd
+                  )
+     char *cmd;
+     
 {
   fprintf(stdout,"Usage: %s [-d] [-L] [-t sleepTime(seconds)] svcClass1 svcClass2 svcClass3 ...\n"
           "-C                     : clone tapecopies from existing to new streams (very slow!)\n"
