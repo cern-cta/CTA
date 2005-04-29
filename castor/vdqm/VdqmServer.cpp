@@ -50,8 +50,12 @@
 
 #include "h/stager_service_api.h"
 
-#include "h/vdqm.h" //Needed for the client_connection
-#include "h/vdqm_constants.h" //e.g. Magic Number of old vdqm protocol
+
+#define VDQMSERV 1
+
+#include <net.h>
+#include <vdqm.h>	//Needed for the client_connection
+#include <vdqm_constants.h>	//e.g. Magic Number of old vdqm protocol
 
 // Local Includes
 #include "VdqmServer.hpp"
@@ -210,22 +214,16 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params);
-    ack.setStatus(false);
-    ack.setErrorCode(EINVAL);
-    std::ostringstream stst;
-    stst << "Unable to read VDQM Protocol from socket."
-         << std::endl << e.getMessage().str();
-    ack.setErrorMessage(stst.str());
   }
 
 
 	if (magicNumber == VDQM_MAGIC) {
 		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1 );
-		handleOldVdqmRequest();
+		handleOldVdqmRequest(sock, magicNumber);
 	}
   else {
 		//New VDQM client ... not implemented yet
-		castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 13);
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 13);
 		
 		/*castor::IObject* obj = sock->readObject();
 		fr = dynamic_cast<castor::stager::Request*>(obj);
@@ -236,71 +234,22 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
     	ack.setStatus(false);
     	ack.setErrorCode(EINVAL);
     	ack.setErrorMessage("Invalid Request object sent to server.");
-    }
- 	}*/
+    }*/
+ 	}
 
 	
   delete sock;
   return 0;
 }
 
-//------------------------------------------------------------------------------
-// handleRequest: handles an incoming request
-//------------------------------------------------------------------------------
-void castor::vdqm::VdqmServer::handleRequest
-(castor::IObject* fr, Cuuid_t cuuid)
-  throw (castor::exception::Exception) {
-  // Stores it into Oracle
-  castor::BaseAddress ad;
-  ad.setCnvSvcName("OraCnvSvc");
-  ad.setCnvSvcType(castor::SVC_ORACNV);
-  try {
-    svcs()->createRep(&ad, fr, false);
-    // Store files for file requests
-    castor::stager::FileRequest* filreq =
-      dynamic_cast<castor::stager::FileRequest*>(fr);
-    if (0 != filreq) {
-      svcs()->fillRep(&ad, fr, OBJ_SubRequest, false);
-    }
-    // Store client for requests
-    castor::stager::Request* req =
-      dynamic_cast<castor::stager::Request*>(fr);
-    if (0 != req) {
-      svcs()->createRep(&ad, req->client(), false);
-      svcs()->fillRep(&ad, fr, OBJ_IClient, false);
-    }
-    // Store parameters for query requests
-    castor::stager::QryRequest* qryReq =
-      dynamic_cast<castor::stager::QryRequest*>(fr);
-    if (0 != qryReq) {
-      svcs()->fillRep(&ad, qryReq, OBJ_QueryParameter, false);
-    }
-    // Store deletedFiles for filesDeleted
-    castor::stager::FilesDeleted* fdReq =
-      dynamic_cast<castor::stager::FilesDeleted*>(fr);
-    if (0 != fdReq) {
-      svcs()->fillRep(&ad, fdReq, OBJ_GCRemovedFile, false);
-    }
-    svcs()->commit(&ad);
-    // "Request stored in DB" message
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("ID", fr->id())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 12, 1, params);
 
-  } catch (castor::exception::Exception e) {
-    svcs()->rollback(&ad);
-    throw e;
-  }
-
-  // Send an UDP message to the stager
-  stager_notifyServices();
-
-}
 
 //------------------------------------------------------------------------------
 // handleOldVdqmRequest
 //------------------------------------------------------------------------------
-void castor::vdqm::VdqmServer::handleOldVdqmRequest() {
+void castor::vdqm::VdqmServer::handleOldVdqmRequest(
+																					castor::vdqm::VdqmServerSocket* sock, 
+																					unsigned int magicNumber) {
 	try {
   	//Message of the old Protocol
 		vdqmVolReq_t volumeRequest;
@@ -313,12 +262,13 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest() {
 		int req_values[] = VDQM_REQ_VALUES;
 		
 		
-		// Put the magic number into the header struct
-		header->magic = magicNumber;
-		
 		//Allcocate memory for structs
 		memset(&volumeRequest,'\0',sizeof(volumeRequest));
     memset(&driveRequest,'\0',sizeof(driveRequest));
+    memset(&header,'\0',sizeof(header));
+		
+		// Put the magic number into the header struct
+		header.magic = magicNumber;
 		
 		// read the rest of the vdqm message
 		reqtype = sock->readOldProtocol(client_connection, 
@@ -330,17 +280,12 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest() {
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params);
-    
-    std::ostringstream stst;
-    stst << "Unable to read VDQM Protocol from socket."
-         << std::endl << e.getMessage().str();
-    ack.setErrorMessage(stst.str());
   }
   
 	
 	try {
 		// Handle old vdqm request type																			
-		castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 15);
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 15);
 		
 //		castor::vdqm::OldVdqmProtocol *test;
 //		
@@ -353,11 +298,5 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest() {
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params);
-    ack.setStatus(false);
-    ack.setErrorCode(EINVAL);
-    std::ostringstream stst;
-    stst << "Unable to handle old VDQM request type."
-         << std::endl << e.getMessage().str();
-    ack.setErrorMessage(stst.str());
   }
 }

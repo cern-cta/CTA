@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeRequestStatusCode.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/04/22 13:58:44 $ $Author: mbraeger $
+ * @(#)$RCSfile: TapeRequestStatusCode.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/29 14:26:33 $ $Author: mbraeger $
  *
  * 
  *

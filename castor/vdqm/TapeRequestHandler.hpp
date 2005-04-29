@@ -28,11 +28,10 @@
 #define _TAPEREQUESTHANDLER_HPP_
 
 #include "castor/exception/Exception.hpp"
-
-#include "h/vdqm.h"
-
-//Local includes
 #include "AbstractRequestHandler.hpp"
+
+typedef struct vdqmHdr vdqmHdr_t;
+typedef struct vdqmVolReq vdqmVolReq_t;
 
 namespace castor {
 

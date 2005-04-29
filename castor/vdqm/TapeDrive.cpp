@@ -48,7 +48,7 @@ castor::vdqm::TapeDrive::TapeDrive() throw() :
   m_usecount(0),
   m_errcount(0),
   m_transferredMB(0),
-  m_totalMB(AIE : long long),
+  m_totalMB(0),
   m_dedicate(""),
   m_newDedicate(""),
   m_is_uid(0),

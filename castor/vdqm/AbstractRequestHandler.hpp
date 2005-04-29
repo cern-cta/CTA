@@ -28,6 +28,8 @@
 #define _ABSTRACTREQUESTHANDLER_HPP_
 
 #include "castor/BaseObject.hpp"
+#include "castor/IObject.hpp"
+
 #include "castor/exception/Exception.hpp"
 
 #include "h/vdqm.h"
@@ -46,7 +48,8 @@ namespace castor {
 
     	public:
 			
-				virtual IObject getRequest() throw (castor::exception::Exception) = 0;
+				virtual castor::IObject *getRequest() 
+						throw (castor::exception::Exception) = 0;
      
 
     }; // class AbstractRequestHandler

@@ -39,6 +39,8 @@ namespace castor {
 	class IObject;
 
   namespace vdqm {
+		//Forward Declarations
+  	class VdqmServerSocket;
 
     /**
      * The Request Handler server. This is were client requests
@@ -72,19 +74,12 @@ namespace castor {
     private:
 
       /**
-       * handles an incoming request
-       * @param fr the request
-       * @param cuuid its uuid (for logging purposes only)
-       */
-      void handleRequest(castor::IObject* fr, Cuuid_t cuuid)
-        throw (castor::exception::Exception);
-        
-      /**
        * Internal function to handle the old Vdqm request. Puts the values into
        * the old structs and reads out the request typr number, to delegates
        * them to the right function.
        */
-      void handleOldVdqmRequest();
+      void handleOldVdqmRequest(castor::vdqm::VdqmServerSocket* sock, 
+      													unsigned int magicNumber);
 
     }; // class VdqmServer
 

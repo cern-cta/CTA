@@ -42,14 +42,38 @@
 #include "castor/io/biniostream.h"
 #include "castor/io/StreamAddress.hpp"
 
-#include "h/vdqm.h"
-#include "h/vdqm_constants.h"
-#incllude "h/osdep.h" //for LONGSIZE
+#include <vdqm.h>
+#include <vdqm_constants.h>
+#include "osdep.h" //for LONGSIZE
+#include "marshall.h"
+#include "h/Cnetdb.h"
+#include <common.h>
 
 // Local Includes
 #include "VdqmServerSocket.hpp"
 
 using namespace castor::io;
+
+// definition of some constants
+#define STG_CALLBACK_BACKLOG 2
+#define VDQMSERV 1
+
+#define ADMINREQ(X) ( X == VDQM_HOLD || X == VDQM_RELEASE || \
+    X == VDQM_SHUTDOWN )
+
+#define DO_MARSHALL(X,Y,Z,W) { \
+    if ( W == SendTo ) {marshall_##X(Y,Z);} \
+    else {unmarshall_##X(Y,Z);} }
+    
+#define DO_MARSHALL_STRING(Y,Z,W,N) { \
+    if ( W == SendTo ) {marshall_STRING(Y,Z);} \
+    else { if(unmarshall_STRINGN(Y,Z,N)) { serrno=EINVAL; return -1; } } }
+
+    
+#define REQTYPE(Y,X) ( X == VDQM_##Y##_REQ || \
+    X == VDQM_DEL_##Y##REQ || \
+    X == VDQM_GET_##Y##QUEUE || (!strcmp(#Y,"VOL") && X == VDQM_PING) || \
+    (!strcmp(#Y,"DRV") && X == VDQM_DEDICATE_DRV) )
  
 //------------------------------------------------------------------------------
 // constructor
@@ -190,6 +214,21 @@ unsigned int castor::vdqm::VdqmServerSocket::readMagicNumber()
   return magic;
 }
 
+//------------------------------------------------------------------------------
+// listen
+//------------------------------------------------------------------------------
+void castor::vdqm::VdqmServerSocket::listen()
+  throw(castor::exception::Exception) {
+  if (::listen(m_socket, STG_CALLBACK_BACKLOG) < 0) {
+    castor::exception::Exception ex(errno);
+    ex.getMessage() << "Unable to listen on socket";
+    (void) close(m_socket);
+    m_socket = 0;
+    throw ex;
+  }
+  m_listening = true;
+}
+
 
 //------------------------------------------------------------------------------
 // accept
@@ -265,9 +304,9 @@ void castor::vdqm::VdqmServerSocket::readRestOfBuffer(char** buf, int& n)
 // readOldProtocol
 //------------------------------------------------------------------------------
 int castor::vdqm::VdqmServerSocket::readOldProtocol(vdqmnw_t *client_connection, 
- 																										vdqmHdr_t *header, 
-													      										vdqmVolReq_t *volumeRequest, 
-      																							vdqmDrvReq_t *driveRequest) 
+													      										vdqmHdr_t *header, 
+      																							vdqmVolReq_t *volumeRequest, 
+													      										vdqmDrvReq_t *driveRequest) 
 	throw (castor::exception::Exception) {
 
   // header buffer is shorter, 
@@ -290,23 +329,23 @@ int castor::vdqm::VdqmServerSocket::readOldProtocol(vdqmnw_t *client_connection,
 
   
   //read rest of header. The magic number is already read out
-   rc = netread_timeout(m_socket, hdrbuf, headerBufSize, VDQM_TIMEOUT);
+  rc = netread_timeout(m_socket, hdrbuf, headerBufSize, VDQM_TIMEOUT);
 	
-	switch (rc) {
-  	case -1: 
-  				serrno = SECOMERR;
-  				castor::exception::Exception ex(serrno);
-      		ex.getMessage() << "VdqmServerSocket::readOldProtocol() "
-      										<< "netread(header): "
-                      		<< neterror() << std::endl;
-      		throw ex;
-    case 0:
-    			serrno = SECONNDROP;
-  				castor::exception::Exception ex(serrno);
-      		ex.getMessage() << "VdqmServerSocket::readOldProtocol() "
-      										<< "netread(header): "
-      										<< "connection dropped" << std::endl;
-      		throw ex;
+	if (rc == -1) {
+		serrno = SECOMERR;
+		castor::exception::Exception ex(serrno);
+		ex.getMessage() << "VdqmServerSocket::readOldProtocol() "
+										<< "netread(header): "
+                		<< neterror() << std::endl;
+		throw ex;
+	}
+  else if (rc == 0) {
+		serrno = SECONNDROP;
+		castor::exception::Exception ex(serrno);
+		ex.getMessage() << "VdqmServerSocket::readOldProtocol() "
+										<< "netread(header): "
+										<< "connection dropped" << std::endl;
+		throw ex;
 	}
     
   p = hdrbuf;
@@ -334,15 +373,17 @@ int castor::vdqm::VdqmServerSocket::readOldProtocol(vdqmnw_t *client_connection,
 
 	if ( VALID_VDQM_MSGLEN(len) ) {
 		rc = netread_timeout(m_socket,buf,len,VDQM_TIMEOUT);
-		switch (rc) {
-			case -1:
+		
+		if (rc == -1) {
+
 						serrno = SECOMERR;
 						castor::exception::Exception ex(serrno);
 						ex.getMessage() << "VdqmServerSocket::readOldProtocol() "
 														<< "netread(REQ): "
 														<< neterror() << std::endl;
 						throw ex;
-			case 0:
+		}
+		else if (rc == 0) {
 						serrno = SECONNDROP;
 						castor::exception::Exception ex(serrno);						
 						ex.getMessage() << "VdqmServerSocket::readOldProtocol() "
@@ -361,8 +402,8 @@ int castor::vdqm::VdqmServerSocket::readOldProtocol(vdqmnw_t *client_connection,
 	}
         
 	fromlen = sizeof(from);
-	if ( (rc = getpeername(
-							m_socket,(struct sockaddr *)&from, &fromlen)) == SOCKET_ERROR ) {
+	rc = getpeername(m_socket, (struct sockaddr *)&from, (socklen_t *)&fromlen);
+	if ( rc == SOCKET_ERROR ) {
 		castor::exception::Internal ex;
 		ex.getMessage() << "VdqmServerSocket::readOldProtocol() getpeername(): "
 										<< neterror() << std::endl;			
@@ -492,24 +533,17 @@ int castor::vdqm::VdqmServerSocket::sendToOldClient(vdqmnw_t *client_connection,
       																							vdqmDrvReq_t *driveRequest) 
 	throw (castor::exception::Exception) {
 
-  // header buffer is shorter, 
-  //because the magic number should already be read out
-  int headerBufSize = VDQM_HDRBUFSIZ - LONGSIZE;
-  char hdrbuf[headerBufSize];
-  
+  char hdrbuf[VDQM_HDRBUFSIZ];
   char buf[VDQM_MSGBUFSIZ];
-  char *p,*domain;
-  struct sockaddr_in from;
-  struct hostent *hp;
-  int fromlen;
-  int magic,reqtype,len,local_access; 
+  char servername[CA_MAXHOSTNAMELEN+1];
+  char *p;
+  int magic,reqtype,len; 
   int rc;
   SOCKET s;
   
       
   reqtype = -1;
   *servername = '\0';
-  local_access = 0;
   magic = len = 0;
  
 	rc = gethostname(servername, CA_MAXHOSTNAMELEN);
@@ -596,8 +630,7 @@ int castor::vdqm::VdqmServerSocket::sendToOldClient(vdqmnw_t *client_connection,
   DO_MARSHALL(LONG,p,len,SendTo);
   rc = netwrite_timeout(s,hdrbuf,VDQM_HDRBUFSIZ,VDQM_TIMEOUT);
 
-  switch (rc) {
-	  case -1:
+  if (rc == -1) {
 	  		serrno = SECOMERR;
 	      castor::exception::Exception ex(serrno);
 				ex.getMessage() << "VdqmServerSocket::sendToOldClient(): "
@@ -605,7 +638,8 @@ int castor::vdqm::VdqmServerSocket::sendToOldClient(vdqmnw_t *client_connection,
 												<< neterror() << std::endl;
 				throw ex;	
 				
-    case 0:
+  }
+  else if (rc == 0) {
     		serrno = SECONNDROP;
 	      castor::exception::Exception ex(serrno);
 				ex.getMessage() << "VdqmServerSocket::sendToOldClient(): "
@@ -615,20 +649,20 @@ int castor::vdqm::VdqmServerSocket::sendToOldClient(vdqmnw_t *client_connection,
    
   if ( len > 0 ) {
 		rc = netwrite_timeout(s,buf,len,VDQM_TIMEOUT);
-		switch (rc) {
-    	case -1:
-	    		serrno = SECOMERR;
-		      castor::exception::Exception ex(serrno);
-					ex.getMessage() << "VdqmServerSocket::sendToOldClient(): "
-													<< "netwrite(REQ): " 
-													<< neterror() << std::endl;
-					throw ex;	
-      case 0:
-	      	serrno = SECONNDROP;
-		      castor::exception::Exception ex(serrno);
-					ex.getMessage() << "VdqmServerSocket::sendToOldClient(): "
-													<< "netwrite(REQ): connection dropped" << std::endl;
-					throw ex;	
+		if (rc == -1) {
+  		serrno = SECOMERR;
+      castor::exception::Exception ex(serrno);
+			ex.getMessage() << "VdqmServerSocket::sendToOldClient(): "
+											<< "netwrite(REQ): " 
+											<< neterror() << std::endl;
+			throw ex;	
+		}
+		else if (rc == 0) {
+    	serrno = SECONNDROP;
+      castor::exception::Exception ex(serrno);
+			ex.getMessage() << "VdqmServerSocket::sendToOldClient(): "
+											<< "netwrite(REQ): connection dropped" << std::endl;
+			throw ex;	
 		}
   }
   

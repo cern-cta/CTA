@@ -222,7 +222,7 @@ namespace castor {
        * Total MBytes transfered
        * @return the value of m_totalMB
        */
-      unsigned long long totalMB() const {
+      u_signed64 totalMB() const {
         return m_totalMB;
       }
 
@@ -231,7 +231,7 @@ namespace castor {
        * Total MBytes transfered
        * @param new_var the new value of m_totalMB
        */
-      void setTotalMB(unsigned long long new_var) {
+      void setTotalMB(u_signed64 new_var) {
         m_totalMB = new_var;
       }
 
@@ -608,7 +608,7 @@ namespace castor {
       int m_transferredMB;
 
       /// Total MBytes transfered
-      unsigned long long m_totalMB;
+      u_signed64 m_totalMB;
 
       std::string m_dedicate;
 

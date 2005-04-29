@@ -27,6 +27,8 @@
 #include <string>
 #include <Cthread_api.h>
 
+#include "castor/Constants.hpp"
+
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NotSupported.hpp"

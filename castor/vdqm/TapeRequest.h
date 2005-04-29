@@ -42,8 +42,8 @@ struct Cvdqm_TapeServer_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class TapeRequest
-// A TapeRequest is instanciated, when a client wants to read or write a file frome
-// a tape. 
+// A TapeRequest object is instanciated, when a client wants to read or write a file
+// frome a tape. 
 //------------------------------------------------------------------------------
 
 /**

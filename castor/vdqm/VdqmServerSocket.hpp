@@ -31,9 +31,16 @@
 #include <net.h>
 #include <string>
 #include <netinet/in.h>
-#include "castor/BaseObject.hpp"
+
 #include "castor/exception/Exception.hpp"
 #include "castor/io/AbstractSocket.hpp"
+
+// Forward declaration
+typedef struct vdqmnw vdqmnw_t;
+typedef struct vdqmHdr vdqmHdr_t; 
+typedef struct vdqmVolReq vdqmVolReq_t; 
+typedef struct vdqmdDrvReq vdqmDrvReq_t;
+
 
 namespace castor {
 
@@ -87,7 +94,13 @@ namespace castor {
 	   * @return The magic number
 	   */
       unsigned int readMagicNumber() throw (castor::exception::Exception);
-                                        
+        
+
+      /**
+       * start listening on the socket
+       */
+      virtual void listen() throw(castor::exception::Exception);
+                               
       
       /**
        * accept a connection and return the correponding Socket.
@@ -156,7 +169,15 @@ namespace castor {
         	throw (castor::exception::Exception);
       
       
+      /**
+       * Tells whether listen was already called
+       */
+      bool m_listening;
       
+     	/**
+     	 * Definition of SenTo and RceiveFrom for the old DO_MARSHALL
+     	 */
+     	typedef enum direction {SendTo, ReceiveFrom} direction_t;
     };
 
   } // end of namespace io

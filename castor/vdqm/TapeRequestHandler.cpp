@@ -34,15 +34,21 @@
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 
-#include "h/vdqm.h"
-#include "h/vdqm_constants.h"
-#include "h/getconfent.h"
+#include "castor/Constants.hpp"
+
+#define VDQMSERV 1
+
+#include <net.h>
+#include <vdqm.h>
+#include <vdqm_constants.h>
+#include "h/Ctape_constants.h"
+#include <common.h> //for getconfent
+
 
 //Local includes
 #include "TapeRequestHandler.hpp"
 #include "ExtendedDeviceGroup.hpp"
 #include "TapeRequest.hpp"
-#include "ClientIdentification.hpp"
 #include "IVdqmSvc.hpp"
 #include "TapeServer.hpp"
 
@@ -68,11 +74,11 @@ castor::vdqm::TapeRequestHandler::TapeRequestHandler() {
 //------------------------------------------------------------------------------
 // newTapeRequest
 //------------------------------------------------------------------------------
-void castor::vdqm::RequestHandler::newTapeRequest(vdqmHdr_t *header, 
+void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header, 
 																									vdqmVolReq_t *volumeRequest) 
 	throw (castor::exception::Exception) {
   
-  //The db related inforamtions
+  //The db related informations
   castor::vdqm::TapeRequest *newTapeReq;
   castor::stager::ClientIdentification *clientData;
   castor::stager::Tape *tape;
@@ -84,11 +90,13 @@ void castor::vdqm::RequestHandler::newTapeRequest(vdqmHdr_t *header,
   
   bool exist = false;
   
-  dgn_element_t 										*dgn_context; //ExtendedDeviceGroup
-  vdqm_volrec_t 										*volrec, *newvolrec; //TapeRequest 
-  vdqm_drvrec_t 										*drvrec; //TapeDriveRequest
-  char 															*p;
-  int 															rc;
+  
+  
+ 	dgn_element_t *dgn_context; //ExtendedDeviceGroup
+  vdqm_volrec_t *volrec, *newvolrec; //TapeRequest 
+  vdqm_drvrec_t *drvrec; //TapeDriveRequest
+  char 					*p;
+  int 					rc;
   
   //TODO: ptr_IVdqmService instanziieren!!!
   
@@ -111,7 +119,7 @@ void castor::vdqm::RequestHandler::newTapeRequest(vdqmHdr_t *header,
      castor::dlf::Param("dgn", volumeRequest->dgn),
      castor::dlf::Param("drive", (*volumeRequest->drive == '\0' ? "***" : volumeRequest->drive)),
      castor::dlf::Param("server", (*volumeRequest->server == '\0' ? "***" : volumeRequest->server))};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 1, 10, params);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 10, params);
   
   //The Tape related informations
  	newTapeReq->setCreationTime(time(NULL));
@@ -129,14 +137,11 @@ void castor::vdqm::RequestHandler::newTapeRequest(vdqmHdr_t *header,
  	clientData->setMagic(header->magic);
  
   //The requested ExtendedDeviceGroup
-  reqExtDevGrp->setdgName(volumeRequest->dgn);
+  reqExtDevGrp->setDgName(volumeRequest->dgn);
   reqExtDevGrp->setMode(volumeRequest->mode);
   
   //The requested tape server
   reqTapeServer->setServerName(volumeRequest->server);
-  
-//  tape->set
-	//TODO: Tape aus volumeRequest
   
   /*
    * Check that the requested device exists.
@@ -173,11 +178,6 @@ void castor::vdqm::RequestHandler::newTapeRequest(vdqmHdr_t *header,
   
 
   /*
-   * Fill in the new information
-   */
-  volrec->magic = header->magic;
-
-  /*
    * Set priority for tpwrite
    */
   if ( (reqExtDevGrp->mode() == WRITE_ENABLE) &&
@@ -190,10 +190,10 @@ void castor::vdqm::RequestHandler::newTapeRequest(vdqmHdr_t *header,
   newTapeReq->setClient(clientData);
   newTapeReq->setReqExtDevGrp(reqExtDevGrp);
   
-  //The parameters of the old vdqm VolReq Request
-  castor::dlf::Param params[] =
+//  Request priority changed
+  castor::dlf::Param params2[] =
   	{castor::dlf::Param("priority", newTapeReq->priority())};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 2, 1, params);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 2, 1, params2);
   
   /*
    * Remember the new volume record to assure replica is updated about it.
@@ -201,76 +201,75 @@ void castor::vdqm::RequestHandler::newTapeRequest(vdqmHdr_t *header,
    newvolrec = volrec;
 
   
-  /*
-   * Add the record to the volume queue
-   */
-  rc = AddVolRecord(dgn_context,volrec);
-  volumeRequest->VolReqID = volrec->vol.VolReqID;
-  if ( rc < 0 ) {
-      log(LOG_ERR,"vdqm_NewVolReq(): AddVolRecord() returned error\n");
-      FreeDgnContext(&dgn_context);
-      return(-1);
-  }
-  log(LOG_INFO,"vdqm_NewVolReq() Assigned volume request ID=%d\n",
-      volumeRequest->VolReqID);
- 
-  rc = AnyDrvFreeForDgn(dgn_context);
-  if ( rc < 0 ) {
-      log(LOG_ERR,"vdqm_NewVolReq(): AnyFreeDrvForDgn() returned error\n");
-      FreeDgnContext(&dgn_context);
-      return(0);
-  }
-  /*
-   * If there was a free drive, start a new job
-   */
-  if ( rc == 1 ) {
-      /* 
-       * Loop until either the volume queue is empty or
-       * there are no more suitable drives
-       */
-      for (;;) {
-          rc = SelectVolAndDrv(dgn_context,&volrec,&drvrec);
-          if ( rc == -1 || volrec == NULL || drvrec == NULL ) {
-              log(LOG_ERR,"vdqm_NewVolReq(): SelectVolAndDrv() returned rc=%d\n",
-                  rc);
-              break;
-          }
-          /*
-           * Free memory allocated for previous request for this drive
-           */
-          if ( drvrec->vol != NULL ) free(drvrec->vol);
-          drvrec->vol = volrec;
-          volrec->drv = drvrec;
-          drvrec->drv.VolReqID = volrec->vol.VolReqID;
-          volrec->vol.DrvReqID = drvrec->drv.DrvReqID;
-          drvrec->drv.jobID = 0;
-          /*
-           * Reset the drive status
-           */
-          drvrec->drv.status = drvrec->drv.status & 
-              ~(VDQM_UNIT_RELEASE | VDQM_UNIT_BUSY | VDQM_VOL_MOUNT |
-              VDQM_VOL_UNMOUNT | VDQM_UNIT_ASSIGN);
-          drvrec->drv.recvtime = (int)time(NULL);
-      
-          /*
-           * Start the job
-           */
-          rc = vdqm_StartJob(volrec);
-          if ( rc < 0 ) {
-              log(LOG_ERR,"vdqm_NewVolReq(): vdqm_StartJob() returned error\n");
-              volrec->vol.DrvReqID = 0;
-              drvrec->drv.VolReqID = 0;
-              volrec->drv = NULL;
-              drvrec->vol = NULL;
-              break;
-          }
-     } /* end of for (;;) */
-  }
-  /*
-   * Always update replica for this volume record (update status may have
-   * been temporary reset by SelectVolAndDrv()).
-   */
-  newvolrec->update = 1;
-  FreeDgnContext(&dgn_context);
-  return(0);
+//  /*
+//   * Add the record to the volume queue
+//   */
+//  rc = AddVolRecord(dgn_context,volrec);
+//  volumeRequest->VolReqID = volrec->vol.VolReqID;
+//  if ( rc < 0 ) {
+//      log(LOG_ERR,"vdqm_NewVolReq(): AddVolRecord() returned error\n");
+//      FreeDgnContext(&dgn_context);
+//      return(-1);
+//  }
+//  log(LOG_INFO,"vdqm_NewVolReq() Assigned volume request ID=%d\n",
+//      volumeRequest->VolReqID);
+// 
+//  rc = AnyDrvFreeForDgn(dgn_context);
+//  if ( rc < 0 ) {
+//      log(LOG_ERR,"vdqm_NewVolReq(): AnyFreeDrvForDgn() returned error\n");
+//      FreeDgnContext(&dgn_context);
+//      return(0);
+//  }
+//  /*
+//   * If there was a free drive, start a new job
+//   */
+//  if ( rc == 1 ) {
+//      /* 
+//       * Loop until either the volume queue is empty or
+//       * there are no more suitable drives
+//       */
+//      for (;;) {
+//          rc = SelectVolAndDrv(dgn_context,&volrec,&drvrec);
+//          if ( rc == -1 || volrec == NULL || drvrec == NULL ) {
+//              log(LOG_ERR,"vdqm_NewVolReq(): SelectVolAndDrv() returned rc=%d\n",
+//                  rc);
+//              break;
+//          }
+//          /*
+//           * Free memory allocated for previous request for this drive
+//           */
+//          if ( drvrec->vol != NULL ) free(drvrec->vol);
+//          drvrec->vol = volrec;
+//          volrec->drv = drvrec;
+//          drvrec->drv.VolReqID = volrec->vol.VolReqID;
+//          volrec->vol.DrvReqID = drvrec->drv.DrvReqID;
+//          drvrec->drv.jobID = 0;
+//          /*
+//           * Reset the drive status
+//           */
+//          drvrec->drv.status = drvrec->drv.status & 
+//              ~(VDQM_UNIT_RELEASE | VDQM_UNIT_BUSY | VDQM_VOL_MOUNT |
+//              VDQM_VOL_UNMOUNT | VDQM_UNIT_ASSIGN);
+//          drvrec->drv.recvtime = (int)time(NULL);
+//      
+//          /*
+//           * Start the job
+//           */
+//          rc = vdqm_StartJob(volrec);
+//          if ( rc < 0 ) {
+//              log(LOG_ERR,"vdqm_NewVolReq(): vdqm_StartJob() returned error\n");
+//              volrec->vol.DrvReqID = 0;
+//              drvrec->drv.VolReqID = 0;
+//              volrec->drv = NULL;
+//              drvrec->vol = NULL;
+//              break;
+//          }
+//     } /* end of for (;;) */
+//  }
+//  /*
+//   * Always update replica for this volume record (update status may have
+//   * been temporary reset by SelectVolAndDrv()).
+//   */
+//  newvolrec->update = 1;
+//  FreeDgnContext(&dgn_context);
 }

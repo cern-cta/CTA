@@ -199,7 +199,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cvdqm_TapeDrive_totalMB
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_totalMB(castor::vdqm::TapeDrive* instance, unsigned long long* var) {
+  int Cvdqm_TapeDrive_totalMB(castor::vdqm::TapeDrive* instance, u_signed64* var) {
     *var = instance->totalMB();
     return 0;
   }
@@ -207,7 +207,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cvdqm_TapeDrive_setTotalMB
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_setTotalMB(castor::vdqm::TapeDrive* instance, unsigned long long new_var) {
+  int Cvdqm_TapeDrive_setTotalMB(castor::vdqm::TapeDrive* instance, u_signed64 new_var) {
     instance->setTotalMB(new_var);
     return 0;
   }

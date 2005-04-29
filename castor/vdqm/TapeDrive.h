@@ -167,13 +167,13 @@ int Cvdqm_TapeDrive_setTransferredMB(struct Cvdqm_TapeDrive_t* instance, struct 
  * Get the value of totalMB
  * Total MBytes transfered
  */
-int Cvdqm_TapeDrive_totalMB(struct Cvdqm_TapeDrive_t* instance, unsigned long long* var);
+int Cvdqm_TapeDrive_totalMB(struct Cvdqm_TapeDrive_t* instance, struct C_u_signed64_t* var);
 
 /**
  * Set the value of totalMB
  * Total MBytes transfered
  */
-int Cvdqm_TapeDrive_setTotalMB(struct Cvdqm_TapeDrive_t* instance, unsigned long long new_var);
+int Cvdqm_TapeDrive_setTotalMB(struct Cvdqm_TapeDrive_t* instance, struct C_u_signed64_t new_var);
 
 /**
  * Get the value of dedicate
