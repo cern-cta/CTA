@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/20 12:51:10 $ $Author: obarring $
+ * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.3 $ $Release$ $Date: 2005/05/02 10:24:17 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/20 12:51:10 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.3 $ $Release$ $Date: 2005/05/02 10:24:17 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -162,6 +162,7 @@ int main(int argc, char *argv[])
   char *tapePoolsStr = NULL, *diskPoolsStr = NULL;
   char **tapePoolsArray = NULL, **diskPoolsArray = NULL;
   int nbDiskPools = 0, nbTapePools = 0;
+  int defaultReplicaNb = 1, maxReplicaNb = -1;
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj = NULL;
@@ -207,7 +208,8 @@ int main(int argc, char *argv[])
       Cstager_SvcClass_setDefaultFileSize(svcClass,strtou64(Coptarg));
       break;
     case MaxReplicaNb:
-      Cstager_SvcClass_setMaxReplicaNb(svcClass,atoi(Coptarg));
+      maxReplicaNb = atoi(Coptarg);
+      Cstager_SvcClass_setMaxReplicaNb(svcClass,maxReplicaNb);
       break;
     case NbDrives:
       Cstager_SvcClass_setNbDrives(svcClass,atoi(Coptarg));
@@ -248,6 +250,12 @@ int main(int argc, char *argv[])
             "to change any attribute of an existing SvcClass\n",name);
     Cstager_SvcClass_print(svcClassOld);
     return(1);
+  }
+  if ( maxReplicaNb < 0 ) {
+    Cstager_SvcClass_setMaxReplicaNb(
+                                     svcClass,
+                                     defaultReplicaNb
+                                     );
   }
 
   fprintf(stdout,"Adding SvcClass: %s\n",name);
