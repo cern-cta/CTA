@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: printSvcClass.c,v $ $Revision: 1.1 $ $Release$ $Date: 2005/04/22 08:44:13 $ $Author: obarring $
+ * @(#)$RCSfile: printSvcClass.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/05/02 13:18:25 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: printSvcClass.c,v $ $Revision: 1.1 $ $Release$ $Date: 2005/04/22 08:44:13 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: printSvcClass.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/05/02 13:18:25 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -144,8 +144,6 @@ int main(int argc, char *argv[])
     return(1);
   }
 
-  Cstager_SvcClass_print(svcClass);
-
   rc = C_BaseAddress_create(&baseAddr);
   if ( rc == -1 ) return(-1);
 
@@ -180,27 +178,10 @@ int main(int argc, char *argv[])
   }
   
   Cstager_SvcClass_tapePools(svcClass,&tapePoolArray,&nbTapePools);
-  if ( (tapePoolArray != NULL) && (nbTapePools > 0) ) {
-    fprintf(stdout,"   ............... %d Tape Pools ............... \n",
-            nbTapePools);
-    for ( i=0; i<nbTapePools; i++ ) {
-      Cstager_TapePool_print(tapePoolArray[i]);
-    }
-  } else {
-    fprintf(stdout,"   ............... SvcClass has no tape pools ........ \n");
-  }
 
   Cstager_SvcClass_diskPools(svcClass,&diskPoolArray,&nbDiskPools);
-  if ( (diskPoolArray != NULL) && (nbDiskPools > 0) ) {
-    fprintf(stdout,"   ............... %d Disk Pools ............... \n",
-            nbDiskPools);
-    for ( i=0; i<nbDiskPools; i++ ) {
-      Cstager_DiskPool_print(diskPoolArray[i]);
-    }
-  } else {
-    fprintf(stdout,"   ............... SvcClass has no disk pools ........ \n");
-  }
   
+  Cstager_SvcClass_print(svcClass);
   C_Services_delete(svcs);
   
   return(0);
