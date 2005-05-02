@@ -40,7 +40,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #else
 #define AuthorizedHosts	/etc/castor/rtcopy.hosts
 #endif
-#define CDKDir	/usr/local/src/CDK
+#define CDKDir	/usr
 #if defined(_WIN32)
 #define CupvConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\CUPVCONFIG
 #else
