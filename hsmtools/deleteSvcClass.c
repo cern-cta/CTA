@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      deleteFileClass.c
+ *                      deleteSvcClass.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile $ $Revision: 1.1 $ $Release$ $Date: 2005/04/20 16:17:14 $ $Author: obarring $
+ * @(#)$RCSfile $ $Revision: 1.2 $ $Release$ $Date: 2005/05/02 13:19:46 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: deleteSvcClass.c,v $ $Revision: 1.1 $ $Release$ $Date: 2005/04/20 16:17:14 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: deleteSvcClass.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/05/02 13:19:46 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>

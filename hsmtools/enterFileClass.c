@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/01/20 13:31:36 $ $Author: obarring $
+ * @(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.3 $ $Release$ $Date: 2005/05/02 13:19:46 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/01/20 13:31:36 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.3 $ $Release$ $Date: 2005/05/02 13:19:46 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -65,12 +65,12 @@ enum FileClassAttributes {
 
 static struct Coptions longopts[] = {
   {"help",NO_ARGUMENT,&help_flag,'h'},
-  {"name",REQUIRED_ARGUMENT,0,Name},
-  {"nsHost",REQUIRED_ARGUMENT,0,NsHost},
-  {"getFromCns",NO_ARGUMENT,&cns_flag,GetFromCns},
-  {"nbCopies",REQUIRED_ARGUMENT,0,NbCopies},
-  {"minFileSize",REQUIRED_ARGUMENT,0,MinFileSize},
-  {"maxFileSize",REQUIRED_ARGUMENT,0,MaxFileSize},
+  {"Name",REQUIRED_ARGUMENT,0,Name},
+  {"NsHost",REQUIRED_ARGUMENT,0,NsHost},
+  {"GetFromCns",NO_ARGUMENT,&cns_flag,GetFromCns},
+  {"NbCopies",REQUIRED_ARGUMENT,0,NbCopies},
+  {"MinFileSize",REQUIRED_ARGUMENT,0,MinFileSize},
+  {"MaxFileSize",REQUIRED_ARGUMENT,0,MaxFileSize},
   {NULL, 0, NULL, 0}
 };
 
