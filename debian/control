@@ -1,5 +1,5 @@
 Source: castor
-Build-Depends: stk-ssi-devel
+Build-Depends: stk-ssi-devel, lsf-master
 Section: science
 Priority: optional
 Maintainer: Jean-Damien Durand <Jean-Damien.Durand@cern.ch>
@@ -73,17 +73,17 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  Static and shared libraries for end-users
 
-Package: castor-lib-tankperfmon
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: castor (Cern Advanced STORage system)
- Static and shared libraries for Tank ((c) IBM) filesystem monitoring
-
 Package: castor-lsf-plugin
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
- Scheduler plugin for LSF 6.1 at least
+ Scheduler plugin for LSF (6.1 minimum) framework
+
+Package: castor-lsf-tools
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: castor (Cern Advanced STORage system)
+ CASTOR specific replacement for LSF (6.1 minimum) tools
 
 Package: castor-lib-oracle
 Architecture: any
@@ -174,19 +174,25 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-rtcopy-client
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, castor-rtcopy-messages
 Description: castor (Cern Advanced STORage system)
  Remote Tape Copy clients
 
-Package: castor-rtcopy-server
+Package: castor-rtcopy-messages
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: castor (Cern Advanced STORage system)
+ Remote Tape Copy messages
+
+Package: castor-rtcopy-server
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, castor-rtcopy-messages
 Description: castor (Cern Advanced STORage system)
  Remote Tape Copy server running on a tape server
 
 Package: castor-rtcopy-clientserver
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, castor-rtcopy-messages
 Description: castor (Cern Advanced STORage system)
  Remote Tape Copy Client Server running on top of a database.
  This will generate raw RTCOPY commands understood by the rtcopy-server
