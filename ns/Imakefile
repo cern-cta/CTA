@@ -38,11 +38,6 @@ LIBS = ..\lib\shift.lib wsock32.lib advapi32.lib
 #endif
 #endif
 #endif
-#if _WIN32
-NSLIB = ns.lib
-#else
-NSLIB = -L. -lns
-#endif
 SPOOL = NsSpool
 LOGFILE = $(SPOOL)/log
 #if Accounting
@@ -353,30 +348,30 @@ Cns_oracle_ifce.c: Cns_oracle_ifce.pc
 Cns_db.c Cns_db.h: $(CDBANA) Cns_db.des
 	$(CDBANA) -c Cns_db.c -h Cns_db.h Cns_db.des
 
-NormalProgramTarget(nschclass,nschclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nschmod,nschmod.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nschown,nschown.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nschclass,nschclass.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nschmod,nschmod.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nschown,nschown.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
 #if UseOracle && !defined(_WIN32)
 nsdaemon: $(NSDAEMON_OBJS) $(DEPLIB)
 	$(MAKE) -f oralink.mk nsdaemon NSDAEMON_OBJS="$(NSDAEMON_OBJS)" CLDFLAGS=$(MTLDFLAGS) LIBS="$(LIBS) $(MTLDLIBS)"
 #else
 NormalProgramTarget(nsdaemon,$(NSDAEMON_OBJS), $(DEPLIB), $(MTLDFLAGS) $(LIBS) $(MTLDLIBS) $(LIBORA) $(LIBRDS) $(LIBMYS))
 #endif
-NormalProgramTarget(nsdelcomment,nsdelcomment.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsdeleteclass,nsdeleteclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsenterclass,nsenterclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsfind,nsfind.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nslistclass,nslistclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nslisttape,nslisttape.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsls,nsls.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsmkdir,nsmkdir.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsmodifyclass,nsmodifyclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsrename,nsrename.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsrm,nsrm.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nssetchecksum,nssetchecksum.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nssetcomment,nssetcomment.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsshutdown,nsshutdown.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nstouch,nstouch.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsdelcomment,nsdelcomment.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nsdeleteclass,nsdeleteclass.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nsenterclass,nsenterclass.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nsfind,nsfind.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nslistclass,nslistclass.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nslisttape,nslisttape.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nsls,nsls.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nsmkdir,nsmkdir.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nsmodifyclass,nsmodifyclass.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nsrename,nsrename.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nsrm,nsrm.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nssetchecksum,nssetchecksum.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nssetcomment,nssetcomment.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nsshutdown,nsshutdown.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nstouch,nstouch.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
 
 NormalLibraryTarget(ns,$(NSLIB_OBJS))
 
