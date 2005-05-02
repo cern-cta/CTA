@@ -103,6 +103,9 @@ exportshr:
 	 ) ; done ; \
 	) ;
 
+tar:
+	sh ./maketar.sh
+
 deb:
 	sh ./makedeb.sh
 
