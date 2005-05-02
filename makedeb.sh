@@ -1,13 +1,6 @@
 #!/bin/sh
 
-# $Id: makedeb.sh,v 1.13 2005/05/02 08:11:33 jdurand Exp $
-
-#
-## Ask for a changelog
-#
-cvs update -Ad debian/changelog
-fakeroot dch --newversion ${a}.${b}.${c}-${d}
-cvs commit  -m "Version ${a}.${b}.${c}-${d}" debian/changelog
+# $Id: makedeb.sh,v 1.14 2005/05/02 10:13:40 jdurand Exp $
 
 #
 ## Do tarball

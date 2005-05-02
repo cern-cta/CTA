@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.1 2005/05/02 08:08:27 jdurand Exp $
+# $Id: maketar.sh,v 1.2 2005/05/02 10:13:40 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -33,6 +33,22 @@ a=`echo ${MAJOR_CASTOR_VERSION} | sed 's/\..*//g'`
 b=`echo ${MAJOR_CASTOR_VERSION} | sed 's/.*\.//g'`
 c=`echo ${MINOR_CASTOR_VERSION} | sed 's/\..*//g'`
 d=`echo ${MINOR_CASTOR_VERSION} | sed 's/.*\.//g'`
+
+fakeroot=`which fakeroot 2>/dev/null`
+if [ -n "${fakeroot}" ]; then
+    #
+    ## I assume you are on debian - Ahem I use
+    ## the existence of fakeroot to determine
+    ## that - AFAIK fakeroot only exist in debian
+    #
+    echo "### INFO ### Updating debian/changelog"
+    #
+    ## Ask for a changelog
+    #
+    cvs update -Ad debian/changelog
+    dch --newversion ${a}.${b}.${c}-${d}
+    cvs commit  -m "Version ${a}.${b}.${c}-${d}" debian/changelog
+fi
 
 echo "### INFO ### Making build directory"
 
