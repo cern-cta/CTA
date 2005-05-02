@@ -1,3 +1,11 @@
+castor (2.0.0-27) unstable; urgency=low
+
+  * rtcopy fixes
+  * CASTOR.spec file
+  * etc.. (too many - sorry - see cvs log)
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Mon,  2 May 2005 13:00:30 +0200
+
 castor (2.0.0-26) unstable; urgency=low
 
   * Added all missing files in previous packaging
