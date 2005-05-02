@@ -48,7 +48,7 @@ clean:
 
 	# Add here commands to clean up after the build process.
 	-$(MAKE) -f Makefile.ini Makefiles
-	-$(MAKE) purge
+	-$(MAKE) clobber
 	rm -rf $(CURDIR)/debian/castor
 	dh_clean 
 
@@ -68,32 +68,16 @@ install: build
 	mkdir -p $(CURDIR)/debian/castor/etc/castor
 	mkdir -p $(CURDIR)/debian/castor/etc/sysconfig
 	mkdir -p $(CURDIR)/debian/castor/usr/local/lsf/lib
+	mkdir -p $(CURDIR)/debian/castor/usr/local/lsf/etc
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/castor
 	$(MAKE) exportman DESTDIR=$(CURDIR)/debian/castor EXPORTMAN=$(CURDIR)/debian/castor/usr/share/man
 	(cd clips; ../imake/imake -I../config DESTDIR=$(CURDIR)/debian/castor; make install DESTDIR=$(CURDIR)/debian/castor)
-	install -o root -g bin -m 600 $(CURDIR)/debian/DBCONFIG $(CURDIR)/debian/castor/etc/castor/DBCONFIG
-	install -o root -g bin -m 600 $(CURDIR)/debian/CUPVCONFIG $(CURDIR)/debian/castor/etc/castor/CUPVCONFIG
-	install -o root -g bin -m 600 $(CURDIR)/debian/DLFCONFIG $(CURDIR)/debian/castor/etc/castor/DLFCONFIG
-	install -o root -g bin -m 600 $(CURDIR)/debian/EXPCONFIG $(CURDIR)/debian/castor/etc/castor/EXPCONFIG
-	install -o root -g bin -m 600 $(CURDIR)/debian/NSCONFIG $(CURDIR)/debian/castor/etc/castor/NSCONFIG
-	install -o root -g bin -m 600 $(CURDIR)/debian/RMNODECONFIG $(CURDIR)/debian/castor/etc/castor/RMNODECONFIG
-	install -o root -g bin -m 600 $(CURDIR)/debian/TPCONFIG $(CURDIR)/debian/castor/etc/castor/TPCONFIG
-	install -o root -g bin -m 600 $(CURDIR)/debian/VMGRCONFIG $(CURDIR)/debian/castor/etc/castor/VMGRCONFIG
-	install -o root -g bin -m 600 $(CURDIR)/castor/rh/rhserver.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/rhserver
-	install -o root -g bin -m 600 $(CURDIR)/castor/gc/gcDaemon.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/gcDaemon
-	install -o root -g bin -m 600 $(CURDIR)/expert/expertd.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/expertd
-	install -o root -g bin -m 600 $(CURDIR)/ns/nsdaemon.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/nsdaemon
-	install -o root -g bin -m 600 $(CURDIR)/resourcemonitoring/rmmaster.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/rmmaster
-	install -o root -g bin -m 600 $(CURDIR)/resourcemonitoring/rmnode.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/rmnode
-	install -o root -g bin -m 600 $(CURDIR)/rfio/rfiod.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/rfiod
-	install -o root -g bin -m 600 $(CURDIR)/rmc/rmcdaemon.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/rmcdaemon
-	install -o root -g bin -m 600 $(CURDIR)/rtcopy/rtcpd.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/rtcpd
-	install -o root -g bin -m 600 $(CURDIR)/stager/stager.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/stager
-	install -o root -g bin -m 600 $(CURDIR)/tape/tpdaemon.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/tpdaemon
-	install -o root -g bin -m 600 $(CURDIR)/upv/Cupvdaemon.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/Cupvdaemon
-	install -o root -g bin -m 600 $(CURDIR)/vdqm/vdqmserv.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/vdqmserv
-	install -o root -g bin -m 600 $(CURDIR)/vmgr/vmgrdaemon.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/vmgrdaemon
-	install -o root -g bin -m 600 $(CURDIR)/job/stagerJob.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/stagerJob
+	for i in $(CURDIR)/debian/*CONFIG; do
+		install -o root -g bin -m 600 $i $(CURDIR)/debian/castor/etc/castor/`basename $i`
+	done
+	for i in `find $(CURDIR) -name "*.sysconfig"`; do
+		install -o root -g bin -m 600 ${i} $(CURDIR)/debian/castor/etc/sysconfig/`basename $i | sed 's/\.sysconfig//g'`
+	done
 
 # Build architecture-independent files here.
 binary-indep: build install
