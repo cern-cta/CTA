@@ -44,6 +44,13 @@ make -f Makefile.ini Makefiles
 PATH=${PATH}:/usr/X11R6/bin
 export PATH
 make depend
+if [ -z "${$ORACLE_HOME}" ]; then
+  [ -r /etc/sysconfig/castor ] && . /etc/sysconfig/castor
+fi
+if [ -z "${$ORACLE_HOME}" ]; then
+  echo "### ERROR ### ORACLE_HOME is not defined"
+  exit 1
+fi
 make
 %install
 rm -rf ${RPM_BUILD_ROOT}
