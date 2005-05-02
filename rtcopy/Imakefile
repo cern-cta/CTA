@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.23 $ $Date: 2005/04/01 15:56:25 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.24 $ $Date: 2005/05/02 08:23:56 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -202,7 +202,6 @@ EMANPAGES_C = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tpread.$(MANSUFFIX)
 #endif
 #if BuildRtcopyServer
 DEPLIB += DepLibraryTargetName(tape,tape)
-GLOBLIB += -L../tape -ltape
 PROGS_D = ProgramTargetName(rtcpd) \
 	   ProgramTargetName(killjid)
 IPROGS_D = FileName($(BIN),ProgramTargetName(rtcpd)) \
