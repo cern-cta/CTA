@@ -141,11 +141,6 @@ LDLIBS = -L../shlib -lshift $(MTLDLIBS)
 #if BuildSecurity
 LDLIBS += -ldl
 #endif
-#if _WIN32
-RFIOLIB = rfio.lib
-#else
-RFIOLIB = -L. -lrfio
-#endif
 LIBS = $(OPTLIBS)
 
 #if BuildRfioLibrary
@@ -378,34 +373,34 @@ NormalProgramTarget(dump_log,dump_log.Osuf,DepLibraryTargetName(common,common), 
  $(LDLIBS))
 
 NormalProgramTarget(rfcat,rfcat.Osuf, \
- LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift),$(RFIOLIB) $(LDLIBS))
+ LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
 
 NormalProgramTarget(rfchmod,rfchmod.Osuf, \
- LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift),$(RFIOLIB) $(LDLIBS))
+ LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
 
 #if BuildHpssClient
 NormalProgramTarget(rfcp,rfcp.Osuf, \
  LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift) DepLibraryTargetName(hpss,hpss_common), \
- $(RFIOLIB) $(HPSSCLIBS) $(LDLIBS))
+  $(HPSSCLIBS) $(LDLIBS))
 #else
 NormalProgramTarget(rfcp,rfcp.Osuf, \
- LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift),$(RFIOLIB) $(LDLIBS))
+ LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
 #endif
 
 NormalProgramTarget(rfstat,rfstat.Osuf, \
- LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift),$(RFIOLIB) $(LDLIBS))
+ LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
 
 NormalProgramTarget(rfrm,rfrm.Osuf, \
- LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift),$(RFIOLIB) $(LDLIBS))
+ LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
 
 NormalProgramTarget(rfdir,rfdir.Osuf, \
- LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift),$(RFIOLIB) $(LDLIBS))
+ LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
 
 NormalProgramTarget(rfmkdir,rfmkdir.Osuf, \
- LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift),$(RFIOLIB) $(LDLIBS))
+ LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
 
 NormalProgramTarget(rfrename,rfrename.Osuf, \
- LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift),$(RFIOLIB) $(LDLIBS))
+ LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
 
 InstallProgram(rfiod,$(BIN),root,bin,755)
 IEXPORT(rfiod,$(EXPORTBIN),755)
