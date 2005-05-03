@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.7 2005/05/03 05:50:04 jdurand Exp $
+# $Id: maketar.sh,v 1.8 2005/05/03 08:55:22 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -143,6 +143,21 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
 	for man in `cat  debian/$package.manpages | sed 's/debian\/castor\///g'`; do
 	    echo "%doc /$man" >> CASTOR.spec
 	done
+    fi
+    if [ -s "debian/$package.cron.d" ]; then
+	echo "%config(noreplace) /etc/cron.d/$package" >> CASTOR.spec
+    fi
+    if [ -s "debian/$package.cron.daily" ]; then
+	echo "%config(noreplace) /etc/cron.daily/$package" >> CASTOR.spec
+    fi
+    if [ -s "debian/$package.cron.hourly" ]; then
+	echo "%config(noreplace) /etc/cron.hourly/$package" >> CASTOR.spec
+    fi
+    if [ -s "debian/$package.cron.monthly" ]; then
+	echo "%config(noreplace) /etc/cron.monthly/$package" >> CASTOR.spec
+    fi
+    if [ -s "debian/$package.cron.weekly" ]; then
+	echo "%config(noreplace) /etc/cron.weekly/$package" >> CASTOR.spec
     fi
     echo >> CASTOR.spec
 done
