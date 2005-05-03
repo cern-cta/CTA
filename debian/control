@@ -8,7 +8,7 @@ Standards-Version: 3.6.1
 
 Package: castor-sacct
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Contains a logrotate for accounting files
 
@@ -32,7 +32,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-dlf-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Distributed Logging Facility server
 
@@ -51,13 +51,13 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-expert-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Expert server, used to trigger policies
 
 Package: castor-gc-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Garbage collector, running on every worker node
 
@@ -69,7 +69,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-job
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  The job giving user access to data on the worder nodes
 
@@ -100,7 +100,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-monitor-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Monitoring server
 
@@ -113,7 +113,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-msg-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Messaging server.
  Used to control when necessary tape access, usually needed by an operator
@@ -126,13 +126,14 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-ns-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Name server daemon
 
 Package: castor-policies
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Suggests: perl, clips
+Depends: ${shlibs:Depends}, ${misc:Depends}, perl, clips
 Description: castor (Cern Advanced STORage system)
  Policies used by the expert system
 
@@ -144,19 +145,19 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-rfio-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  RFIO server
 
 Package: castor-rh-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Request Handler server
 
 Package: castor-rmc-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Remote Media Controller server
 
@@ -168,13 +169,13 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-rmmaster-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Resource Monitoring Master server
 
 Package: castor-rmnode-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Resource Monitoring running on each worker node
 
@@ -192,13 +193,13 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-rtcopy-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, castor-rtcopy-messages
+Depends: ${shlibs:Depends}, ${misc:Depends}, castor-rtcopy-messages, logrotate
 Description: castor (Cern Advanced STORage system)
  Remote Tape Copy server running on a tape server
 
 Package: castor-rtcopy-clientserver
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, castor-rtcopy-messages
+Depends: ${shlibs:Depends}, ${misc:Depends}, castor-rtcopy-messages, logrotate
 Description: castor (Cern Advanced STORage system)
  Remote Tape Copy Client Server running on top of a database.
  This will generate raw RTCOPY commands understood by the rtcopy-server
@@ -212,7 +213,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-stager-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Stager server
 
@@ -230,7 +231,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-tape-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Tape server
 
@@ -242,7 +243,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-upv-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  User Privilege server
 
@@ -254,7 +255,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-vdqm-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Volume Drive and Queue Manager server
 
@@ -266,6 +267,6 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-vmgr-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Volume Manager server
