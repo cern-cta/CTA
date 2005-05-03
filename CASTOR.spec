@@ -43,7 +43,8 @@ make -f Makefile.ini Makefiles
 # In case makedepend is not in the PATH
 PATH=${PATH}:/usr/X11R6/bin
 export PATH
-make depend
+which makedepend >& /dev/null
+[ $? -eq 0 ] && make depend
 if [ -z "${ORACLE_HOME}" ]; then
   [ -r /etc/sysconfig/castor ] && . /etc/sysconfig/castor
 fi
