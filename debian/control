@@ -6,6 +6,12 @@ Maintainer: Jean-Damien Durand <Jean-Damien.Durand@cern.ch>
 Build-Depends: debhelper (>= 4.0.0)
 Standards-Version: 3.6.1
 
+Package: castor-sacct
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: castor (Cern Advanced STORage system)
+ Contains a logrotate for accounting files
+
 Package: castor-commands
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}

@@ -1,0 +1,17 @@
+#
+# $Id: castor-sacct.logrotate,v 1.1 2005/05/03 04:18:44 jdurand Exp $
+#
+# @(#)$RCSfile: castor-sacct.logrotate,v $ $Revision: 1.1 $ $Date: 2005/05/03 04:18:44 $ CERN/IT/ADC/CA Jean-Damien Durand
+#
+/var/log/sacct {
+    nocompress
+    weekly
+    missingok
+    rotate 15
+}
+/var/spool/vmgr/log {
+    nocompress
+    weekly
+    missingok
+    rotate 15
+}
