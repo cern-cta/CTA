@@ -1,5 +1,5 @@
 Source: castor
-Build-Depends: stk-ssi-devel, lsf-master
+Build-Depends: make, perl, stk-ssi-devel, lsf-master
 Section: science
 Priority: optional
 Maintainer: Jean-Damien Durand <Jean-Damien.Durand@cern.ch>
