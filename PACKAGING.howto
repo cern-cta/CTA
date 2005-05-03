@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.4 2005/05/02 11:06:53 jdurand Exp $
+## $Id: PACKAGING.howto,v 1.5 2005/05/03 04:48:00 jdurand Exp $
 #
 ## Example of packaging of version 10.9.8.7
 #
@@ -25,6 +25,9 @@ cd ../../WORKDIR/PROTO2
 lndir ../../CVS/PROTO2 .
 lndir ../../CVS/CASTOR .
 make -f Makefile.ini Makefiles
+
+make tar
+
 # Please check in advance your buildroot, should contain at least
 # (supposing your buildroot is /tmp is you ~/.rpmmacros)
 # (example: %_topdir /tmp)
@@ -32,4 +35,5 @@ rm -rf /tmp/BUILD /tmp/SPECS /tmp/SRPMS /tmp/RPMS; mkdir -p /tmp/BUILD /tmp/SPEC
 # It is recommended to be root to build the rpm just because it is
 # too painful to treat the chown errors in the Makefile
 make rpm
+
 make deb
