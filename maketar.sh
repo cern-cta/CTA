@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.8 2005/05/03 08:55:22 jdurand Exp $
+# $Id: maketar.sh,v 1.9 2005/05/03 09:00:33 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -42,12 +42,12 @@ echo "### INFO ### Making build directory"
 PATH=${PATH}:/usr/X11R6/bin
 export PATH
 
-# Go to castor-$a.$b.$c and do the changes in here
+# Go to castor_${a}.${b}.${c}-${d} and do the changes in here
 curdir=`pwd`
 cd ..
-[ -d "castor-${a}.${b}.${c}" ] && rm -rf castor-${a}.${b}.${c}
-cp -Lr $curdir castor-${a}.${b}.${c}
-cd castor-${a}.${b}.${c}
+[ -d "castor_${a}.${b}.${c}-${d}" ] && rm -rf castor_${a}.${b}.${c}-${d}
+cp -Lr $curdir castor_${a}.${b}.${c}-${d}
+cd castor_${a}.${b}.${c}-${d}
 
 echo "### INFO ### Customizing build directory"
 
@@ -166,6 +166,6 @@ cd ..
 
 echo "### INFO ### Creating tarball"
 
-tar -zcf castor-${a}.${b}.${c}.tar.gz castor-${a}.${b}.${c}
+tar -zcf castor_${a}.${b}.${c}-${d}.tar.gz castor_${a}.${b}.${c}-${d}
 
-cd castor-${a}.${b}.${c}
+cd castor_${a}.${b}.${c}-${d}
