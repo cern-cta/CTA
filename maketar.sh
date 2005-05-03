@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.5 2005/05/03 04:59:04 jdurand Exp $
+# $Id: maketar.sh,v 1.6 2005/05/03 05:09:22 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -94,7 +94,7 @@ if [ -n "${buildrequires}" ]; then
     #
     ## We know per construction that lsf-master is called LSF-master in CERN's rpms
     #
-    buildrequires=`echo ${buildrequire} | sed 's/lsf/LSF/g'`
+    buildrequires=`echo ${buildrequires} | sed 's/lsf/LSF/g'`
     perl -pi -e "s/#BuildRequires:.*/BuildRequires: ${buildrequires}/g" CASTOR.spec
 fi
 
