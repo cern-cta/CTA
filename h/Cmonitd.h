@@ -28,16 +28,6 @@
 #include "Cmonitd_lock.h"
 #include "Cmonit_api.h"
  
-#ifdef LOGFILE
-#undef LOGFILE
-#endif
-
-#if defined(_WIN32)
-#define LOGFILE "C:\log"
-#else
-#define LOGFILE "/usr/spool/monitor/log"
-#endif
-
 #define     SYERR     2     /* system error */
 
 
