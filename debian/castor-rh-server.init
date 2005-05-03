@@ -5,9 +5,9 @@
 # chkconfig: 345 63 52
 # description: Request Handler daemon
 #
-# $Id: castor-rh-server.init,v 1.3 2005/03/11 08:43:09 jdurand Exp $
+# $Id: castor-rh-server.init,v 1.4 2005/05/03 09:34:46 jdurand Exp $
 #
-# @(#)$RCSfile: castor-rh-server.init,v $ $Revision: 1.3 $ $Date: 2005/03/11 08:43:09 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-rh-server.init,v $ $Revision: 1.4 $ $Date: 2005/05/03 09:34:46 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 #
@@ -109,13 +109,12 @@ case "$1" in
         fi
         if [ $RETVAL -eq 0 ]; then
             cd /
-            mkdir -p /var/spool/rhserver
+            [ ! -d /var/spool/rhserver ] && mkdir -p /var/spool/rhserver
             #
             ## Because we might generate a core file (c.f. ULIMIT_C)
             ## We explicitely chdir in the yet created directory
             ## /var/spool/rhserver
             #
-	    mkdir -p /var/spool/rhserver
             cd /var/spool/rhserver
             $DAEMON $RHSERVER $OPTIONS
             if [ $? -eq 0 ]; then

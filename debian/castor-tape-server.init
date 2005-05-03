@@ -5,9 +5,9 @@
 # chkconfig: 345 72 33
 # description: TAPE server daemon
 #
-# $Id: castor-tape-server.init,v 1.3 2005/03/11 08:43:09 jdurand Exp $
+# $Id: castor-tape-server.init,v 1.4 2005/05/03 09:34:46 jdurand Exp $
 #
-# @(#)$RCSfile: castor-tape-server.init,v $ $Revision: 1.3 $ $Date: 2005/03/11 08:43:09 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-tape-server.init,v $ $Revision: 1.4 $ $Date: 2005/05/03 09:34:46 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -90,8 +90,8 @@ case "$1" in
         fi
         if [ $RETVAL -eq 0 ]; then
             cd /
-            mkdir -p /var/spool/sacct
-            mkdir -p /var/spool/tape
+            [ ! -d /var/spool/sacct ] && mkdir -p /var/spool/sacct
+            [ ! -d /var/spool/tape ] && mkdir -p /var/spool/tape
 	    cd /var/spool/tape
             $DAEMON $TPDAEMON $OPTIONS
             if [ $? -eq 0 ]; then
