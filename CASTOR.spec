@@ -67,11 +67,11 @@ mkdir -p ${RPM_BUILD_ROOT}/etc/init.d
 mkdir -p ${RPM_BUILD_ROOT}/etc/logrotate.d
 mkdir -p ${RPM_BUILD_ROOT}/usr/local/lsf/lib
 mkdir -p ${RPM_BUILD_ROOT}/usr/local/lsf/etc
-mkdir -p ${RPM_BUILD_ROOT}/etc/cron.d
+#mkdir -p ${RPM_BUILD_ROOT}/etc/cron.d
 mkdir -p ${RPM_BUILD_ROOT}/etc/cron.hourly
-mkdir -p ${RPM_BUILD_ROOT}/etc/cron.daily
-mkdir -p ${RPM_BUILD_ROOT}/etc/cron.weekly
-mkdir -p ${RPM_BUILD_ROOT}/etc/cron.monthly
+#mkdir -p ${RPM_BUILD_ROOT}/etc/cron.daily
+#mkdir -p ${RPM_BUILD_ROOT}/etc/cron.weekly
+#mkdir -p ${RPM_BUILD_ROOT}/etc/cron.monthly
 make install DESTDIR=${RPM_BUILD_ROOT}
 make exportman DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
 (cd clips; ../imake/imake -I../config DESTDIR=${RPM_BUILD_ROOT}; make install DESTDIR=${RPM_BUILD_ROOT})
@@ -84,21 +84,21 @@ done
 for i in debian/*.logrotate; do
     install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/logrotate.d/`basename $i | sed 's/\.logrotate//g'`
 done
-for i in debian/*.cron.d; do
-    install -o root -g bin -m 644 ${i} ${RPM_BUILD_ROOT}/etc/cron.d/`basename $i | sed 's/\.cron\.d//g'`
-done
+#for i in debian/*.cron.d; do
+#    install -o root -g bin -m 644 ${i} ${RPM_BUILD_ROOT}/etc/cron.d/`basename $i | sed 's/\.cron\.d//g'`
+#done
 for i in debian/*.cron.hourly; do
     install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.hourly/`basename $i | sed 's/\.cron\.hourly//g'`
 done
-for i in debian/*.cron.daily; do
-    install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.daily/`basename $i | sed 's/\.cron\.daily//g'`
-done
-for i in debian/*.cron.weekly; do
-    install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.weekly/`basename $i | sed 's/\.cron\.weekly//g'`
-done
-for i in debian/*.cron.monthly; do
-    install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.monthly/`basename $i | sed 's/\.cron\.monthly//g'`
-done
+#for i in debian/*.cron.daily; do
+#    install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.daily/`basename $i | sed 's/\.cron\.daily//g'`
+#done
+#for i in debian/*.cron.weekly; do
+#    install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.weekly/`basename $i | sed 's/\.cron\.weekly//g'`
+#done
+#for i in debian/*.cron.monthly; do
+#    install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.monthly/`basename $i | sed 's/\.cron\.monthly//g'`
+#done
 for i in `find . -name "*.sysconfig"`; do
     install -o root -g bin -m 600 ${i} ${RPM_BUILD_ROOT}/etc/sysconfig/`basename $i | sed 's/\.sysconfig//g'`
 done
