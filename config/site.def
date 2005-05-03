@@ -104,9 +104,9 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define LibManDir       /usr/share/man/man3
 #define LibManSuffix    3
 #if defined(_WIN32)
-#define LocalHostsList 	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\shift.localhosts
+#define LocalHostsList 	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\castor.localhosts
 #else
-#define LocalHostsList  /etc/castor/shift.localhosts
+#define LocalHostsList  /etc/castor/castor.localhosts
 #endif
 #define ManDir  /usr/share/man/man1
 #define ManSuffix       1
@@ -146,9 +146,9 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #endif
 #define RaimaDir	/usr/local/raima
 #if defined(_WIN32)
-#define RemoteHostsList	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\shift.remhosts
+#define RemoteHostsList	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\castor.remhosts
 #else
-#define RemoteHostsList /etc/castor/shift.remhosts
+#define RemoteHostsList /etc/castor/castor.remhosts
 #endif
 #define RfioAlarmFile	rfio_alrm
 #define RfioSpool	/var/spool/rfio
