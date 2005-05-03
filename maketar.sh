@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.4 2005/05/03 04:49:29 jdurand Exp $
+# $Id: maketar.sh,v 1.5 2005/05/03 04:59:04 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -109,7 +109,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     #
     ## Try to convert dependencies
     #
-    requires=`cat debian/control | perl -e '$package=shift; while (<>) {chomp($this .= " " . $_)}; $this =~ s/.*Package: $package//g; $this =~ s/Description:.*//g; $this =~ /Depends:.*},(.*)/;print "$1\n"' $package`
+    requires=`cat debian/control | perl -e '$package=shift; while (<>) {chomp($this .= " " . $_)}; $this =~ s/.*Package: $package//g; $this =~ s/Description:.*//g; $this =~ /Depends:.*},.*},(.*)/;print "$1\n"' $package | sed 's/ //g'`
     if [ -n "${requires}" ]; then
 	echo "Requires: ${requires}" >> CASTOR.spec
     fi
