@@ -39,7 +39,7 @@ fi
 
 RETVAL=0
 prog="rfiod"
-NOMORERFIO=/home/operator/nomorerfio
+NOMORERFIO=/var/run/nomorerfio
 PIDFILE=/var/run/rfiod.pid
 PIDDIR=/var/run
 SUBSYS=/var/lock/subsys/rfiod
