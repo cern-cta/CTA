@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.3 2005/05/02 11:06:53 jdurand Exp $
+# $Id: maketar.sh,v 1.4 2005/05/03 04:49:29 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -87,6 +87,18 @@ perl -pi -e s/__TIMESTAMP__/\"${timestamp}\"/g h/patchlevel.h
 echo "### INFO ### Customizing spec file"
 
 #
+## Attemps to get debian's Build-Requires
+#
+buildrequires=`grep Build-Depends: debian/control | grep -v debhelper | sed 's/Build-Depends: //g'`
+if [ -n "${buildrequires}" ]; then
+    #
+    ## We know per construction that lsf-master is called LSF-master in CERN's rpms
+    #
+    buildrequires=`echo ${buildrequire} | sed 's/lsf/LSF/g'`
+    perl -pi -e "s/#BuildRequires:.*/BuildRequires: ${buildrequires}/g" CASTOR.spec
+fi
+
+#
 ## Append all sub-packages to CASTOR.spec
 #
 for this in `grep Package: debian/control | awk '{print $NF}'`; do
@@ -94,8 +106,21 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     echo "%package -n $package" >> CASTOR.spec
     echo "Summary: Cern Advanced mass STORage" >> CASTOR.spec
     echo "Group: Application/Castor" >> CASTOR.spec
+    #
+    ## Try to convert dependencies
+    #
+    requires=`cat debian/control | perl -e '$package=shift; while (<>) {chomp($this .= " " . $_)}; $this =~ s/.*Package: $package//g; $this =~ s/Description:.*//g; $this =~ /Depends:.*},(.*)/;print "$1\n"' $package`
+    if [ -n "${requires}" ]; then
+	echo "Requires: ${requires}" >> CASTOR.spec
+    fi
+    #
+    ## Get description
+    #
     echo "%description -n $package" >> CASTOR.spec
     cat debian/control | perl -e '$package=shift; while (<>) {chomp($this .= " " . $_)}; $this =~ s/.*Package: $package//g; $this =~ s/Package:.*//g; $this =~ /Description: (.*)/; print "$1\n"' $package >> CASTOR.spec
+    #
+    ## Get file list
+    #
     echo "%files -n $package" >> CASTOR.spec
     echo "%defattr(-,root,root)" >> CASTOR.spec
     if [ -s "debian/$package.install" ]; then
