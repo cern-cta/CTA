@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.89 $ $Release$ $Date: 2005/04/27 14:56:18 $ $Author: mbraeger $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.90 $ $Release$ $Date: 2005/05/07 10:04:43 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -148,6 +148,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamQueryParameterCnv.cpp \
               io/StreamDisk2DiskCopyDoneRequestCnv.cpp \
               io/StreamBasicResponseCnv.cpp \
+              io/StreamPutDoneStartCnv.cpp \
               io/StreamSegmentCnv.cpp \
               io/StreamStringResponseCnv.cpp \
               io/StreamSubRequestCnv.cpp \
@@ -258,6 +259,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/PutStartRequestCInt.cpp \
               stager/QryRequest.cpp \
               stager/QryRequestCInt.cpp \
+	      stager/PutDoneStart.cpp \
+	      stager/PutDoneStartCInt.cpp \
               stager/PutFailed.cpp \
               stager/PutFailedCInt.cpp \
               stager/ReqIdRequest.cpp \

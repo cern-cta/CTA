@@ -395,6 +395,18 @@ namespace castor {
          castor::stager::FileSystem* fileSystem)
           throw (castor::exception::Exception);
 
+	/**
+	 * Handles the start of a PutDone job.
+	 * Actually only returns the DiskCopy associated to the SubRequest
+	 * Note that deallocation of the DiskCopy is the
+	 * responsability of the caller.
+	 * @param subreqId the if of the SubRequest to consider
+	 * @return the DiskCopy to use for the data access
+	 * @exception Exception in case of error
+	 */
+	virtual castor::stager::DiskCopy* putDoneStart(u_signed64 subreqId)
+	  throw (castor::exception::Exception);
+
         /**
          * Retrieves a SvcClass from the database based on its name.
          * Caller is in charge of the deletion of the allocated object
@@ -865,6 +877,12 @@ namespace castor {
 
         /// SQL statement object for function putStart
         oracle::occi::Statement *m_putStartStatement;
+
+        /// SQL statement for function putDoneStart
+        static const std::string s_putDoneStartStatementString;
+
+        /// SQL statement object for function putDoneStart
+        oracle::occi::Statement *m_putDoneStartStatement;
 
         /// SQL statement for function selectSvcClass
         static const std::string s_selectSvcClassStatementString;

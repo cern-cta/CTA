@@ -114,13 +114,15 @@ namespace castor {
     OBJ_GCFile = 81,
     OBJ_GCFileList = 82,
     OBJ_FilesDeletionFailed = 83,
-    
+
     //The vdqm objects
     OBJ_TapeRequest = 84,
     OBJ_CientIdentification = 85,
     OBJ_ExtendedDeviceGroup = 86,
     OBJ_TapeServer = 87,
-    OBJ_TapeDrive = 88
+    OBJ_TapeDrive = 88,
+
+    OBJ_PutDoneStart = 89
   };
     
   /**
@@ -168,7 +170,7 @@ namespace castor {
   /**
    * Nb of objectIds currently existing
    */
-  static const unsigned int ObjectsIdsNb = 89;
+  static const unsigned int ObjectsIdsNb = 90;
 
   /**
    * Nb of ServicesIds currently existing
@@ -184,7 +186,7 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[89];
+  extern const char* ObjectsIdStrings[90];
 
   /**
    * Names of the differents Services, used to display

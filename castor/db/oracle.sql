@@ -79,6 +79,10 @@ CREATE TABLE MoverCloseRequest (flags INTEGER, userName VARCHAR2(2048), euid NUM
 DROP TABLE PutStartRequest;
 CREATE TABLE PutStartRequest (subreqId INTEGER, diskServer VARCHAR2(2048), fileSystem VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
+/* SQL statements for type PutDoneStart */
+DROP TABLE PutDoneStart;
+CREATE TABLE PutDoneStart (subreqId INTEGER, diskServer VARCHAR2(2048), fileSystem VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+
 /* SQL statements for type GetUpdateStartRequest */
 DROP TABLE GetUpdateStartRequest;
 CREATE TABLE GetUpdateStartRequest (subreqId INTEGER, diskServer VARCHAR2(2048), fileSystem VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
@@ -993,6 +997,20 @@ BEGIN
   WHERE id = rdcId
   RETURNING status, path
   INTO rdcStatus, rdcPath;
+END;
+
+/* PL/SQL method implementing putStart */
+CREATE OR REPLACE PROCEDURE putDoneStart
+        (srId IN INTEGER, fileSystemId IN INTEGER,
+         rdcId OUT INTEGER, rdcStatus OUT INTEGER,
+         rdcPath OUT VARCHAR2) AS
+BEGIN
+ -- Get diskCopy Id
+ SELECT DiskCopy.id, DiskCopy.status, DiskCopy.path
+   INTO rdcId, rdcStatus, rdcPath
+   FROM SubRequest, DiskCopy
+  WHERE SubRequest.id = srId
+    AND DiskCopy.id = SubRequest.diskCopy;
 END;
 
 /* PL/SQL method implementing updateAndCheckSubRequest */

@@ -457,6 +457,24 @@ int Cstager_IStagerSvc_putStart
  struct Cstager_DiskCopy_t** diskCopy);
 
 /**
+ * Handles the start of a PutDone job.
+ * Actually only returns the DiskCopy associated to the SubRequest
+ * Note that deallocation of the DiskCopy is the
+ * responsability of the caller.
+ * @param stgSvc the IStagerSvc used
+ * @param subreqId the if of the SubRequest to consider
+ * @param diskCopy the DiskCopy to use for the data access
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_putDoneStart
+(struct Cstager_IStagerSvc_t* stgSvc,
+ u_signed64 subreqId,
+ struct Cstager_DiskCopy_t** diskCopy);
+
+/**
  * Returns the error message associated to the last error.
  * Note that the error message string should be deallocated
  * by the caller.

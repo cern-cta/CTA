@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2005/04/26 14:10:41 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2005/05/07 10:04:44 $ $Author: sponcec3 $
  *
  *
  *
@@ -50,6 +50,7 @@
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/GetUpdateStartRequest.hpp"
 #include "castor/stager/PutStartRequest.hpp"
+#include "castor/stager/PutDoneStart.hpp"
 #include "castor/stager/Disk2DiskCopyDoneRequest.hpp"
 #include "castor/stager/MoverCloseRequest.hpp"
 #include "castor/rh/GetUpdateStartResponse.hpp"
@@ -428,6 +429,26 @@ castor::stager::RemoteStagerSvc::putStart
   req.setSubreqId(subreq->id());
   req.setDiskServer(fileSystem->diskserver()->name());
   req.setFileSystem(fileSystem->mountPoint());
+  // Uses a BaseClient to handle the request
+  castor::client::BaseClient client(getRemoteStagerClientTimeout());
+  client.sendRequest(&req, &rh);
+  // return
+  return result;
+}
+
+// -----------------------------------------------------------------------
+// putDoneStart
+// -----------------------------------------------------------------------
+castor::stager::DiskCopy*
+castor::stager::RemoteStagerSvc::putDoneStart(u_signed64 subreqId)
+  throw (castor::exception::Exception) {
+  // placeholders for the result
+  castor::stager::DiskCopy* result;
+  // Build a response Handler
+  PutStartResponseHandler rh(&result);
+  // Build the PutStartDoneRequest
+  castor::stager::PutDoneStart req;
+  req.setSubreqId(subreqId);
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteStagerClientTimeout());
   client.sendRequest(&req, &rh);

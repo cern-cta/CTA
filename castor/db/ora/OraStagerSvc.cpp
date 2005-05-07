@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.159 $ $Release$ $Date: 2005/04/27 07:56:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.160 $ $Release$ $Date: 2005/05/07 10:04:43 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -146,6 +146,10 @@ const std::string castor::db::ora::OraStagerSvc::s_getUpdateStartStatementString
 const std::string castor::db::ora::OraStagerSvc::s_putStartStatementString =
   "BEGIN putStart(:1, :2, :3, :4, :5); END;";
 
+/// SQL statement for putDoneStart
+const std::string castor::db::ora::OraStagerSvc::s_putDoneStartStatementString =
+  "SELECT DiskCopy.id, DiskCopy.status, DiskCopy.path INTO rdcId, rdcStatus, rdcPath FROM SubRequest, DiskCopy WHERE SubRequest.id = :1 AND DiskCopy.id = SubRequest.diskCopy";
+
 /// SQL statement for selectSvcClass
 const std::string castor::db::ora::OraStagerSvc::s_selectSvcClassStatementString =
   "SELECT id, nbDrives, defaultFileSize, maxReplicaNb, replicationPolicy, gcPolicy, migratorPolicy, recallerPolicy FROM SvcClass WHERE name = :1";
@@ -266,6 +270,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_isSubRequestToScheduleStatement(0),
   m_getUpdateStartStatement(0),
   m_putStartStatement(0),
+  m_putDoneStartStatement(0),
   m_selectSvcClassStatement(0),
   m_selectFileClassStatement(0),
   m_selectCastorFileStatement(0),
@@ -336,6 +341,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_isSubRequestToScheduleStatement);
     deleteStatement(m_getUpdateStartStatement);
     deleteStatement(m_putStartStatement);
+    deleteStatement(m_putDoneStartStatement);
     deleteStatement(m_selectSvcClassStatement);
     deleteStatement(m_selectFileClassStatement);
     deleteStatement(m_selectFileSystemStatement);
@@ -378,6 +384,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_isSubRequestToScheduleStatement = 0;
   m_getUpdateStartStatement = 0;
   m_putStartStatement = 0;
+  m_putDoneStartStatement = 0;
   m_selectSvcClassStatement = 0;
   m_selectFileClassStatement = 0;
   m_selectFileSystemStatement = 0;
@@ -1486,6 +1493,58 @@ castor::db::ora::OraStagerSvc::putStart
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in putStart."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// putDoneStart
+// -----------------------------------------------------------------------
+castor::stager::DiskCopy*
+castor::db::ora::OraStagerSvc::putDoneStart(u_signed64 subreqId)
+  throw (castor::exception::Exception) {
+  castor::IObject *iobj = 0;
+  castor::stager::DiskCopy* result = 0;
+  try {
+    // Check whether the statements are ok
+    if (0 == m_putDoneStartStatement) {
+      m_putDoneStartStatement =
+        createStatement(s_putDoneStartStatementString);
+      m_putDoneStartStatement->registerOutParam
+        (3, oracle::occi::OCCIDOUBLE);
+      m_putDoneStartStatement->registerOutParam
+        (4, oracle::occi::OCCIINT);
+      m_putDoneStartStatement->registerOutParam
+        (5, oracle::occi::OCCISTRING, 2048);
+    }
+    // execute the statement and see whether we found something
+    m_putDoneStartStatement->setDouble(1, subreqId);
+    unsigned int nb = m_putDoneStartStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "putDoneStart : unable to schedule SubRequest.";
+      throw ex;
+    }
+    // Get the result
+    result = new castor::stager::DiskCopy();
+    result->setId((u_signed64)m_putDoneStartStatement->getDouble(3));
+    result->setStatus
+      ((enum castor::stager::DiskCopyStatusCodes)
+       m_putDoneStartStatement->getInt(4));
+    result->setPath(m_putDoneStartStatement->getString(5));
+    // return
+    cnvSvc()->commit();
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    if (0 != result) {
+      delete result;
+    }
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in putDoneStart."
       << std::endl << e.what();
     throw ex;
   }

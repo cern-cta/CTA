@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.38 $ $Release$ $Date: 2005/04/26 14:10:41 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.39 $ $Release$ $Date: 2005/05/07 10:04:44 $ $Author: sponcec3 $
  *
  *
  *
@@ -388,6 +388,18 @@ namespace castor {
       virtual castor::stager::DiskCopy* putStart
       (castor::stager::SubRequest* subreq,
        castor::stager::FileSystem* fileSystem)
+        throw (castor::exception::Exception);
+
+      /**
+       * Handles the start of a PutDone job.
+       * Actually only returns the DiskCopy associated to the SubRequest
+       * Note that deallocation of the DiskCopy is the
+       * responsability of the caller.
+       * @param subreqId the if of the SubRequest to consider
+       * @return the DiskCopy to use for the data access
+       * @exception Exception in case of error
+       */
+      virtual castor::stager::DiskCopy* putDoneStart(u_signed64 subreqId)
         throw (castor::exception::Exception);
 
       /**
