@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.18 2005/02/04 09:42:09 jdurand Exp $
+ * $Id: stager_macros.h,v 1.19 2005/05/09 15:38:30 jdurand Exp $
  */
 
 #ifndef __stager_macros_h
@@ -76,6 +76,47 @@
 	    2, \
 	    stagerMessages[STAGER_MSG_EXIT].what2Type,DLF_MSG_PARAM_STR,func, \
 	    "EXIT STATUS",DLF_MSG_PARAM_INT,value \
+	    ); \
+  serrno = _save_serrno; \
+  exit(value); \
+}
+/* Special version of STAGER_LOG_STARTUP but with fileid, used in the job */
+#define STAGER_LOG_STARTUP_FULL(fileid) { \
+  int _save_serrno = serrno; \
+  dlf_write( \
+	    stager_request_uuid, \
+	    stagerMessages[STAGER_MSG_STARTUP].defaultSeverity, \
+	    STAGER_MSG_STARTUP, \
+	    (struct Cns_fileid *)fileid, \
+	    9, \
+	    stagerMessages[STAGER_MSG_STARTUP].what2Type,DLF_MSG_PARAM_STR,func, \
+	    "GENERATED_DATE",DLF_MSG_PARAM_STR,__DATE__, \
+	    "GENERATED_TIME",DLF_MSG_PARAM_STR,__TIME__, \
+	    "ARGUMENTS",DLF_MSG_PARAM_STR,stagerConcatenatedArgv, \
+	     "SubRequestUuid",DLF_MSG_PARAM_UUID,stager_subrequest_uuid, \
+	     "File",DLF_MSG_PARAM_STR,file, \
+	     "Line",DLF_MSG_PARAM_INT,line, \
+	     "errno",DLF_MSG_PARAM_INT,errno, \
+	     "serrno",DLF_MSG_PARAM_INT,serrno \
+	    ); \
+  serrno = _save_serrno; \
+}
+/* Special version of STAGER_LOG_EXIT but with fileid, used in the job */
+#define STAGER_LOG_EXIT_FULL(fileid,value) { \
+  int _save_serrno = serrno; \
+  dlf_write( \
+	    stager_request_uuid, \
+	    stagerMessages[STAGER_MSG_EXIT].defaultSeverity, \
+	    STAGER_MSG_EXIT, \
+	    (struct Cns_fileid *)fileid, \
+	    7, \
+	    stagerMessages[STAGER_MSG_EXIT].what2Type,DLF_MSG_PARAM_STR,func, \
+	    "EXIT STATUS",DLF_MSG_PARAM_INT,value \
+	    "SubRequestUuid",DLF_MSG_PARAM_UUID,stager_subrequest_uuid, \
+	    "File",DLF_MSG_PARAM_STR,file, \
+	    "Line",DLF_MSG_PARAM_INT,line, \
+	    "errno",DLF_MSG_PARAM_INT,errno, \
+	    "serrno",DLF_MSG_PARAM_INT,serrno \
 	    ); \
   serrno = _save_serrno; \
   exit(value); \
