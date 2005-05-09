@@ -1,12 +1,11 @@
 -- This file contains SQL code that is not generated automatically
 -- and is inserted at the end of the generated code
 
-USE castor2;
-
 -- A small table used to cross check code and DB versions
 DROP TABLE CastorVersion;
 CREATE TABLE CastorVersion (version VARCHAR(10));
 INSERT INTO CastorVersion VALUES ('2_0_1_0');
+
 
 /* Indexes related to CastorFiles */
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
@@ -29,11 +28,28 @@ ALTER TABLE FileClass ADD UNIQUE (name);
 /* Add unique constraint on castorFiles */
 ALTER TABLE CastorFile ADD UNIQUE (fileId, nsHost); 
 
-/* get current time as a time_t. A bit easier in MySQL than in Oracle :) */
+
+DELIMITER //
+
+-- Sequence for indices: not available in MySQL => using an AUTO_INCREMENT field on a dedicated table
+DROP TABLE IF EXIST Sequence//
+CREATE TABLE Sequence (value BIGINT AUTO_INCREMENT, PRIMARY KEY(value))//
+
+CREATE PROCEDURE seqNextVal(OUT value BIGINT)
+BEGIN
+  START TRANSACTION;
+  INSERT INTO Sequence VALUES (NULL);
+  SELECT LAST_INSERT_ID() INTO value;
+  DELETE FROM Sequence;
+  COMMIT;
+END//
+
+
+/* get current time as a time_t. A bit easier in MySQL than in Oracle :-) */
 CREATE FUNCTION getTime() RETURNS BIGINT
 BEGIN
-  RETURN TIMESTAMPDIFF(SECOND, '1970-01-01 01:00:00', NOW());
-END;
+  RETURN TIMESTAMPDIFF(SECOND, '1970-01-01 01:00:00', NOW());   -- @todo is SECOND precision enough?
+END//
 
 
 /****************************************************************/
@@ -49,9 +65,9 @@ END;
  * As a work around, we keep track of the tapecopies for each
  * filesystem. The cost is an increase of complexity and especially
  * of the number of triggers ensuring consistency of the whole database */
-DROP TABLE NbTapeCopiesInFS;
-CREATE TABLE NbTapeCopiesInFS (FS BIGINT, Stream BIGINT, NbTapeCopies BIGINT);
-CREATE UNIQUE INDEX I_NbTapeCopiesInFS_FSStream on NbTapeCopiesInFS(FS, Stream);
+DROP TABLE NbTapeCopiesInFS//
+CREATE TABLE NbTapeCopiesInFS (FS BIGINT, Stream BIGINT, NbTapeCopies BIGINT)//
+CREATE UNIQUE INDEX I_NbTapeCopiesInFS_FSStream on NbTapeCopiesInFS(FS, Stream)//
 
 /* Used to create a row INTO NbTapeCopiesInFS whenever a new
    FileSystem is created 
@@ -126,6 +142,7 @@ END;
 /* XXX update count into NbTapeCopiesInFS when a Disk2Disk copy occurs
    FOR a file in CANBEMIGR */
 
+   
 /***************************************/
 /* Some triggers to prevent dead locks */
 /***************************************/
@@ -172,6 +189,7 @@ BEGIN
    WHERE id = :new.Parent FOR UPDATE;
 END;
 
+
 /*********************/
 /* FileSystem rating */
 /*********************/
@@ -183,7 +201,7 @@ CREATE FUNCTION FileSystemRate(weight BIGINT, deltaWeight BIGINT, fsDeviation DO
 RETURNS DOUBLE DETERMINISTIC
 BEGIN
   RETURN 1000*(weight + deltaWeight) - fsDeviation;
-END;
+END//
 
 /* FileSystem index based on the rate. */
 -- CREATE INDEX I_FileSystem_Rate ON FileSystem(FileSystemRate(weight, deltaWeight, fsDeviation));    not supported
@@ -201,7 +219,8 @@ BEGIN
   SET parent = (SELECT id FROM SubRequest WHERE diskCopy = dci AND parent = 0), -- all wait on the original one
       status = 5, lastModificationTime = getTime() -- WAITSUBREQ
   WHERE SubRequest.id = subreqId;
-END;
+END//
+
 
 /* MySQL method to archive a SubRequest and its request if needed */
 CREATE PROCEDURE archiveSubReq(srId INT)
@@ -262,7 +281,8 @@ DECLARE nb INT;
       (SELECT id FROM SubRequest WHERE request = rid);
     DELETE FROM SubRequest WHERE request = rid;
   END IF;
-END;
+END//
+
 
 /* MySQL method implementing anyTapeCopyForStream.
  * This implementation is not the original one. It uses NbTapeCopiesInFS
@@ -285,18 +305,15 @@ END;
  *   LIMIT 1;  */
 CREATE PROCEDURE anyTapeCopyForStream(streamId INT, OUT res INT)
 BEGIN
-  DECLARE unused INT;
-  DECLARE EXIT HANDLER FOR NOT FOUND
-  BEGIN
-    SET res = 0;
-  END;
-  SELECT NbTapeCopiesInFS.NbTapeCopies INTO unused
-    FROM NbTapeCopiesInFS
-   WHERE NbTapeCopiesInFS.stream = streamId
-     AND NbTapeCopiesInFS.NbTapeCopies > 0
-     LIMIT 1;
-  SET res = 1;
-END;
+  DECLARE EXIT HANDLER FOR NOT FOUND  SET res = 0;
+   SELECT NbTapeCopiesInFS.NbTapeCopies
+     FROM NbTapeCopiesInFS
+    WHERE NbTapeCopiesInFS.stream = streamId
+      AND NbTapeCopiesInFS.NbTapeCopies > 0
+    LIMIT 1;
+   SET res = 1;
+END//
+
 
 /* MySQL method to update FileSystem weight for new streams */
 CREATE PROCEDURE updateFsFileOpened(ds INT, fs INT, deviation INT, fileSize INT)
@@ -306,7 +323,8 @@ BEGIN
  UPDATE FileSystem SET fsDeviation = 2 * deviation,
                        reservedSpace = reservedSpace + fileSize
   WHERE id = fs;
-END;
+END//
+
 
 /* MySQL method to update FileSystem free space when file are closed */
 CREATE PROCEDURE updateFsFileClosed(fs INT, reservation INT, fileSize INT)
@@ -314,7 +332,8 @@ BEGIN
  UPDATE FileSystem SET deltaFree = deltaFree - fileSize,
                        reservedSpace = reservedSpace - reservation
   WHERE id = fs;
-END;
+END//
+
 
 /* This table is needed to insure that bestTapeCopyForStream works Ok.
  * It basically serializes the queries ending to the same diskserver.
@@ -331,9 +350,9 @@ END;
  * weight of all filesystems). Locking the diskserver only was fine but
  * was introducing a possible deadlock with a place where the FileSystem
  * is locked before the DiskServer. Thus this table..... */
-DROP TABLE LockTable;
-CREATE TABLE LockTable (DiskServerId BIGINT, TheLock BIGINT, PRIMARY KEY(DiskServerId));
-INSERT INTO LockTable SELECT id, id FROM DiskServer;
+DROP TABLE LockTable//
+CREATE TABLE LockTable (DiskServerId BIGINT, TheLock BIGINT, PRIMARY KEY(DiskServerId))//
+INSERT INTO LockTable SELECT id, id FROM DiskServer//
 
 /* Used to create a row INTO LockTable whenever a new
    DiskServer is created 
@@ -353,6 +372,7 @@ BEGIN
   DELETE FROM LockTable WHERE DiskServerId = :old.id;
 END;
 
+
 /* MySQL method implementing updateFileSystemForJob */
 CREATE PROCEDURE updateFileSystemForJob(fs VARCHAR(2048), ds VARCHAR(2048), fileSize BIGINT)
 BEGIN
@@ -370,13 +390,13 @@ DECLARE dev BIGINT;
   -- of the table for a complete explanation on why it exists
   SELECT TheLock FROM LockTable WHERE DiskServerId = dsId LOCK IN SHARE MODE;
   CALL updateFsFileOpened(dsId, fsId, dev, fileSize);
-END;
+END//
+
 
 /* MySQL method implementing bestTapeCopyForStream */
 CREATE PROCEDURE bestTapeCopyForStream(streamId INT, OUT diskServerName VARCHAR(2048), OUT mountPoint VARCHAR(2048),
                                        OUT path VARCHAR(2048), OUT dci INT, OUT castorFileId INT, OUT fileId INT,
                                        OUT nsHost VARCHAR(2048), OUT fileSize INT, OUT tapeCopyId INT)
--- @todo doesn't compile??
 BEGIN
 DECLARE fileSystemId INT;
 DECLARE dsid BIGINT;
@@ -388,7 +408,6 @@ DECLARE EXIT HANDLER FOR NOT FOUND
   BEGIN
     -- No data found means the selected filesystem has no
     -- tapecopies to be migrated. Thus we go to next one
-    
   END;
   UPDATE LockTable SET TheLock = 1
    WHERE DiskServerId =
@@ -470,13 +489,13 @@ DECLARE EXIT HANDLER FOR NOT FOUND
      AND Stream IN (SELECT parent FROM Stream2TapeCopy WHERE child = tapeCopyId);
   -- Update Filesystem state
   CALL updateFsFileOpened(fsDiskServer, fileSystemId, deviation, 0);
-  END;
-END; 
+END//
+
 
 /* MySQL method implementing bestFileSystemForSegment */
 CREATE PROCEDURE bestFileSystemForSegment(segmentId BIGINT, OUT diskServerName VARCHAR(2048),
                                           OUT rmountPoint VARCHAR(2048), OUT rpath VARCHAR(2048), OUT dci BIGINT)
--- @todo doesn't compile??
+-- @todo doesn't compile?? cannot make the union select?
 BEGIN
 DECLARE fileSystemId BIGINT;
 DECLARE castorFileId BIGINT;
@@ -498,26 +517,25 @@ DECLARE fileSize BIGINT;
  -- Check if the DiskCopy had a FileSystem associated
  IF fileSystemId > 0 THEN
    BEGIN
-     DECLARE EXIT HANDLER FOR NOT FOUND
+   DECLARE EXIT HANDLER FOR NOT FOUND
        BEGIN
        -- Error, the filesystem or the machine was probably disabled in between
 	   SET rpath = "DISABLED";
 	   SET dci = -1;
        -- raise_application_error(-20101, 'In a multi-segment file, FileSystem or Machine was disabled before all segments were recalled');
        END;
-     -- it had one, force filesystem selection, unless it was disabled.
-     SELECT DiskServer.name, DiskServer.id, FileSystem.mountPoint, FileSystem.fsDeviation
+   -- it had one, force filesystem selection, unless it was disabled.
+   SELECT DiskServer.name, DiskServer.id, FileSystem.mountPoint, FileSystem.fsDeviation
      INTO diskServerName, fsDiskServer, rmountPoint, deviation
      FROM DiskServer, FileSystem
-      WHERE FileSystem.id = fileSystemId
-       AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
-       AND DiskServer.id = FileSystem.diskServer
-       AND DiskServer.status = 0; -- DISKSERVER_PRODUCTION
-     CALL updateFsFileOpened(fsDiskServer, fileSystemId, deviation, 0);
+    WHERE FileSystem.id = fileSystemId
+      AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
+      AND DiskServer.id = FileSystem.diskServer
+      AND DiskServer.status = 0; -- DISKSERVER_PRODUCTION
+   CALL updateFsFileOpened(fsDiskServer, fileSystemId, deviation, 0);
    END;
  ELSE
-   BEGIN
-     DECLARE CURSOR c1 FOR SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id,
+   DECLARE CURSOR c1 FOR SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id,
                        FileSystem.fsDeviation, FileSystem.diskserver, SubRequest.xsize
                     FROM DiskServer, FileSystem, DiskPool2SvcClass,
                          (SELECT id, svcClass from StageGetRequest UNION
@@ -537,14 +555,14 @@ DECLARE fileSize BIGINT;
                      AND DiskServer.id = FileSystem.diskServer
                      AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
                    ORDER BY FileSystem.weight + FileSystem.deltaWeight DESC, FileSystem.fsDeviation ASC;
-      OPEN c1;
-      FETCH c1 INTO diskServerName, rmountPoint, fileSystemId, deviation, fsDiskServer, fileSize;
-      CLOSE c1;
-      UPDATE DiskCopy SET fileSystem = fileSystemId WHERE id = dci;
-      CALL updateFsFileOpened(fsDiskServer, fileSystemId, deviation, fileSize);
-    END;
-  END IF;
-END;
+   OPEN c1;
+   FETCH c1 INTO diskServerName, rmountPoint, fileSystemId, deviation, fsDiskServer, fileSize;
+   CLOSE c1;
+   UPDATE DiskCopy SET fileSystem = fileSystemId WHERE id = dci;
+   CALL updateFsFileOpened(fsDiskServer, fileSystemId, deviation, fileSize);
+ END IF;
+END//
+
 
 /* MySQL method implementing fileRecalled */
 CREATE PROCEDURE fileRecalled(tapecopyId BIGINT)
@@ -553,20 +571,20 @@ DECLARE SubRequestId BIGINT;
 DECLARE dci BIGINT;
 DECLARE fsId BIGINT;
 DECLARE fileSize BIGINT;
-SELECT SubRequest.id, DiskCopy.id, SubRequest.xsize
- INTO SubRequestId, dci, fileSize
- FROM TapeCopy, SubRequest, DiskCopy
- WHERE TapeCopy.id = tapecopyId
-  AND DiskCopy.castorFile = TapeCopy.castorFile
-  AND SubRequest.diskcopy = DiskCopy.id;
-UPDATE DiskCopy SET status = 0 WHERE id = dci;  -- DISKCOPY_STAGED
-SELECT fileSystem INTO fsid FROM DiskCopy WHERE id = dci;
-UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
- WHERE id = SubRequestId;     -- SUBREQUEST_RESTART
-UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
- WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
-CALL updateFsFileClosed(fsId, fileSize, fileSize);
-END;
+ SELECT SubRequest.id, DiskCopy.id, SubRequest.xsize INTO SubRequestId, dci, fileSize
+   FROM TapeCopy, SubRequest, DiskCopy
+  WHERE TapeCopy.id = tapecopyId
+    AND DiskCopy.castorFile = TapeCopy.castorFile
+    AND SubRequest.diskcopy = DiskCopy.id;
+ UPDATE DiskCopy SET status = 0 WHERE id = dci;  -- DISKCOPY_STAGED
+ SELECT fileSystem INTO fsid FROM DiskCopy WHERE id = dci;
+ UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
+  WHERE id = SubRequestId;     -- SUBREQUEST_RESTART
+ UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
+  WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
+ CALL updateFsFileClosed(fsId, fileSize, fileSize);
+END//
+
 
 /* MySQL method implementing fileRecallFailed */
 CREATE PROCEDURE fileRecallFailed(tapecopyId BIGINT)
@@ -575,23 +593,23 @@ DECLARE SubRequestId BIGINT;
 DECLARE dci BIGINT;
 DECLARE fsId BIGINT;
 DECLARE fileSize BIGINT;
-SELECT SubRequest.id, DiskCopy.id, SubRequest.xsize
- INTO SubRequestId, dci, fileSize
- FROM TapeCopy, SubRequest, DiskCopy
+SELECT SubRequest.id, DiskCopy.id, SubRequest.xsize INTO SubRequestId, dci, fileSize
+  FROM TapeCopy, SubRequest, DiskCopy
  WHERE TapeCopy.id = tapecopyId
-  AND DiskCopy.castorFile = TapeCopy.castorFile
-  AND SubRequest.diskcopy = DiskCopy.id;
-UPDATE DiskCopy SET status = 4 WHERE id = dci;  -- DISKCOPY_FAILED
-SELECT fileSystem INTO fsid FROM DiskCopy WHERE id = dci;
-UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
+   AND DiskCopy.castorFile = TapeCopy.castorFile
+   AND SubRequest.diskcopy = DiskCopy.id;
+ UPDATE DiskCopy SET status = 4 WHERE id = dci;  -- DISKCOPY_FAILED
+ SELECT fileSystem INTO fsid FROM DiskCopy WHERE id = dci;
+ UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
                       lastModificationTime = getTime()
- WHERE id = SubRequestId;
-UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
+  WHERE id = SubRequestId;
+ UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
                       lastModificationTime = getTime()
- WHERE parent = SubRequestId;
-END;
+  WHERE parent = SubRequestId;
+END//
 
-/* castor package not supported in MySQL 
+
+/* custom package not supported in MySQL 
 CREATE PACKAGE castor AS
   TYPE DiskCopyCore IS RECORD (id INT, path VARCHAR(2048), status BIGINT, fsWeight BIGINT, mountPoint VARCHAR(2048), diskServer VARCHAR(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
@@ -618,19 +636,16 @@ DECLARE dci BIGINT;
    AND DiskCopy.status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
  IF dcCount > 0 THEN
    SET result = 1;  -- schedule and diskcopies available
-     -- OPEN sources   @todo this is the old output field: this query has to be done in the C++ code
-     /*  FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-                  FileSystem.weight, FileSystem.mountPoint,
-                  DiskServer.name
-       FROM DiskCopy, SubRequest, FileSystem, DiskServer
-       WHERE SubRequest.id = rsubreqId
-         AND SubRequest.castorfile = DiskCopy.castorfile
-         AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
-         AND FileSystem.id = DiskCopy.fileSystem
-         AND FileSystem.status = 0 -- PRODUCTION
-         AND DiskServer.id = FileSystem.diskServer
-         AND DiskServer.status = 0; -- PRODUCTION
-     */
+   -- OPEN sources FOR
+   SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, FileSystem.weight, FileSystem.mountPoint, DiskServer.name
+     FROM DiskCopy, SubRequest, FileSystem, DiskServer
+    WHERE SubRequest.id = rsubreqId
+      AND SubRequest.castorfile = DiskCopy.castorfile
+      AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
+      AND FileSystem.id = DiskCopy.fileSystem
+      AND FileSystem.status = 0 -- PRODUCTION
+      AND DiskServer.id = FileSystem.diskServer
+      AND DiskServer.status = 0; -- PRODUCTION
   ELSE
      BEGIN
      DECLARE EXIT HANDLER FOR NOT FOUND
@@ -655,13 +670,15 @@ DECLARE dci BIGINT;
      SET result = 0;  -- no schedule
 	 END;
    END IF;
-END;
+END//
+
 
 /* Build diskCopy path from fileId */
 CREATE PROCEDURE buildPathFromFileId(fid BIGINT, nsHost VARCHAR(2048), dcid BIGINT, OUT path VARCHAR(2048))
 BEGIN
   SET path = CONCAT(CONCAT(CONCAT(CONCAT(CONCAT(MOD(fid,100),'FM09'), '/'), CONCAT(fid, '@')), nsHost), CONCAT('.', dcid));
-END;
+END//
+
 
 /* MySQL method implementing getUpdateStart */
 CREATE PROCEDURE getUpdateStart(srId INT, fileSystemId INT, OUT dci BIGINT, OUT rpath VARCHAR(2048),
@@ -707,20 +724,6 @@ DECLARE EXIT HANDLER FOR NOT FOUND
     SET dci = 0;
     SET rpath = '';
   ELSE
-    /* @todo this query has to be moved in the C++ code
-	OPEN sources
-    FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-               FileSystem.weight, FileSystem.mountPoint,
-               DiskServer.name
-    FROM DiskCopy, SubRequest, FileSystem, DiskServer
-    WHERE SubRequest.id = srId
-      AND SubRequest.castorfile = DiskCopy.castorfile
-      AND DiskCopy.status IN (0, 1, 2, 5, 6, 10, 11) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
-      AND FileSystem.id = DiskCopy.fileSystem
-      AND FileSystem.status = 0 -- PRODUCTION
-      AND DiskServer.id = FileSystem.diskServer
-      AND DiskServer.status = 0; -- PRODUCTION
-	*/
     -- create DiskCopy for Disk to Disk copy
     CALL seqNextVal(dci);
     UPDATE SubRequest SET diskCopy = dci,
@@ -730,7 +733,18 @@ DECLARE EXIT HANDLER FOR NOT FOUND
       VALUES (rpath, dci, fileSystemId, cfid, 1, getTime()); -- status WAITDISK2DISKCOPY
     INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
     SET rstatus = 1; -- status WAITDISK2DISKCOPY
-  END IF;
+
+	-- OPEN sources FOR
+    SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, FileSystem.weight, FileSystem.mountPoint, DiskServer.name
+	  FROM DiskCopy, SubRequest, FileSystem, DiskServer
+     WHERE SubRequest.id = srId
+       AND SubRequest.castorfile = DiskCopy.castorfile
+       AND DiskCopy.status IN (0, 1, 2, 5, 6, 10, 11) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
+       AND FileSystem.id = DiskCopy.fileSystem
+       AND FileSystem.status = 0 -- PRODUCTION
+       AND DiskServer.id = FileSystem.diskServer
+       AND DiskServer.status = 0; -- PRODUCTION
+   END IF;
  END;  -- 1st EXIT HANDLER
  
  -- Get and uid, gid
@@ -761,7 +775,8 @@ DECLARE EXIT HANDLER FOR NOT FOUND
    SET dci = 0;
    SET rpath = '';
  END IF;
-END;
+END//
+
 
 /* MySQL method implementing putStart */
 CREATE PROCEDURE putStart(srId BIGINT, fileSystemId BIGINT, OUT rdcId BIGINT, OUT rdcStatus INT, OUT rdcPath VARCHAR(2048))
@@ -779,7 +794,21 @@ BEGIN
  SELECT status, path INTO rdcStatus, rdcPath
   FROM DiskCopy
   WHERE id = rdcId;
-END;
+END//
+
+
+/* MySQL method implementing putDoneStart */
+CREATE PROCEDURE putDoneStart(srId BIGINT, fileSystemId BIGINT,
+                              OUT rdcId BIGINT, OUT rdcStatus INTEGER, OUT rdcPath VARCHAR(1000))
+BEGIN
+ -- Get diskCopy Id
+ SELECT DiskCopy.id, DiskCopy.status, DiskCopy.path
+   INTO rdcId, rdcStatus, rdcPath
+   FROM SubRequest, DiskCopy
+  WHERE SubRequest.id = srId
+    AND DiskCopy.id = SubRequest.diskCopy;
+END//
+
 
 /* MySQL method implementing updateAndCheckSubRequest */
 CREATE PROCEDURE updateAndCheckSubRequest(srId BIGINT, newStatus INT, OUT result INT)
@@ -804,7 +833,8 @@ BEGIN
   WHERE request = reqId
     AND status NOT IN (6, 7, 10, 9) -- READY, FAILED, FAILED_ANSWERING, FAILED_FINISHED
     LIMIT 1;
-END;
+END//
+
 
 /* MySQL method implementing disk2DiskCopyDone */
 CREATE PROCEDURE disk2DiskCopyDone(dcId BIGINT, dcStatus INT)
@@ -815,7 +845,8 @@ BEGIN
   UPDATE SubRequest set status = 6,
                         lastModificationTime = getTime()
    WHERE diskCopy = dcId; -- status SUBREQUEST_READY
-END;
+END//
+
 
 /* MySQL method implementing recreateCastorFile */
 CREATE PROCEDURE recreateCastorFile(cfId BIGINT, srId BIGINT, 
@@ -835,9 +866,10 @@ LABEL recreateCastorFileLbl;
  SELECT * FROM CastorFile WHERE id = cfId LOCK IN SHARE MODE;
  -- Determine the context (Put inside PrepareToPut ?)
  BEGIN
- DECLARE EXIT HANDLER FOR NOT FOUND SET contextPIPP = 0;
+ DECLARE EXIT HANDLER FOR NOT FOUND
+         SET contextPIPP = 0;
    -- check that we are a Put
-   SELECT StagePutRequest.id INTO unused
+   SELECT StagePutRequest.id
      FROM StagePutRequest, SubRequest
     WHERE SubRequest.id = srId
       AND StagePutRequest.id = SubRequest.request;
@@ -904,8 +936,8 @@ LABEL recreateCastorFileLbl;
  -- link SubRequest and DiskCopy
  UPDATE SubRequest SET diskCopy = dcId,
                        lastModificationTime = getTime() WHERE id = srId;
- -- COMMIT;
-END;
+ COMMIT;
+END//
 
 
 /* MySQL method putDoneFunc */
@@ -943,11 +975,11 @@ DECLARE i INT;
 	SET i = i + 1;
    END WHILE;
  END IF;
-END;
+END//
+
 
 /* MySQL method implementing prepareForMigration */
 CREATE PROCEDURE prepareForMigration(srId BIGINT, fs BIGINT, OUT fId BIGINT, OUT nh VARCHAR(2048), OUT userId BIGINT, OUT groupId BIGINT)
--- @todo doesn't compile, complaints about the UNION query!
 BEGIN
 DECLARE cfId BIGINT;
 DECLARE fsId BIGINT;
@@ -982,12 +1014,13 @@ DECLARE unused INT;
       AND SubRequest.castorFile = cfId;
  END;
  COMMIT;
-END;
+END//
+
 
 /* MySQL method implementing selectCastorFile */
 CREATE PROCEDURE selectCastorFile(fId BIGINT, nh VARCHAR(2048), sc BIGINT, fc BIGINT, fs BIGINT, OUT rid BIGINT, OUT rfs BIGINT)
 BEGIN
-  DECLARE CONSTRAINT_VIOLATED CONDITION FOR SQLSTATE '-1';
+  DECLARE CONSTRAINT_VIOLATED CONDITION FOR SQLSTATE '23000';
   DECLARE EXIT HANDLER FOR CONSTRAINT_VIOLATED
     BEGIN
     -- retry the select since a creation was done in between
@@ -1010,7 +1043,8 @@ BEGIN
   -- update lastAccess time
   UPDATE CastorFile SET LastAccessTime = getTime(), nbAccesses = nbAccesses + 1
     WHERE id = rid;
-END;
+END//
+
 
 /* MySQL method implementing resetStream */
 CREATE PROCEDURE resetStream(sid BIGINT)
@@ -1040,13 +1074,12 @@ BEGIN
   END;
   -- in any case, unlink tape and stream
   UPDATE Tape SET Stream = 0 WHERE Stream = sid;
-END;
+END//
+
 
 /* MySQL method implementing bestFileSystemForJob */
-CREATE PROCEDURE bestFileSystemForJob
-(fileSystems IN castor."strList", machines IN castor."strList",
- minFree IN castor."cnumList", rMountPoint OUT VARCHAR(2048),
- rDiskServer OUT VARCHAR(2048))
+CREATE PROCEDURE bestFileSystemForJob(fileSystems IN castor."strList", machines IN castor."strList",
+ 			minFree IN castor."cnumList", rMountPoint OUT VARCHAR(2048), rDiskServer OUT VARCHAR(2048))
 BEGIN
 DECLARE ds BIGINT;
 DECLARE fs BIGINT;
@@ -1135,7 +1168,8 @@ BEGIN
  END IF;
  FETCH c1 INTO rMountPoint, rDiskServer, ds, fs, dev;
  CLOSE c1;
-END;
+END//
+
 
 /* MySQL method implementing anySegmentsForTape */
 CREATE PROCEDURE anySegmentsForTape(tapeId BIGINT, OUT nb INT)
@@ -1147,7 +1181,8 @@ BEGIN
     UPDATE Tape SET status = 3 -- WAITMOUNT
     WHERE id = tapeId;
   END IF;
-END;
+END//
+
 
 /* MySQL method implementing segmentsForTape */
 CREATE PROCEDURE segmentsForTape(tapeId BIGINT /* segments OUT castor.Segment_Cur */)
@@ -1165,9 +1200,9 @@ DECLARE segCount INT;
     UPDATE Segment set status = 7 -- SELECTED
      WHERE tape = tapeId;
    END IF;
-  -- @todo move this query to C++
-  -- OPEN segments FOR SELECT * FROM Segment WHERE Segment.tape = tapeId)
-END;
+  -- OPEN segments FOR 
+  SELECT * FROM Segment WHERE Segment.tape = tapeId;
+END//
 
 /* MySQL method implementing selectFiles2Delete */
 CREATE PROCEDURE selectFiles2Delete(DiskServerName VARCHAR(2048) /* GCLocalFiles OUT castor.GCLocalFiles_Cur */)
@@ -1180,10 +1215,6 @@ BEGIN
      AND DiskServer.name = DiskServerName
      AND DiskCopy.status = 8 -- GC_CANDIDATE
      FOR UPDATE;
-  IF files.COUNT > 0 THEN
-    UPDATE DiskCopy set status = 9 -- BEING_DELETED
-     WHERE id MEMBER OF files;
-  END IF;
   */
   UPDATE DiskCopy, FileSystem, DiskServer 
    SET DiskCopy.status = 9 -- BEING_DELETED
@@ -1191,17 +1222,15 @@ BEGIN
      AND FileSystem.DiskServer = DiskServer.id
      AND DiskServer.name = DiskServerName
      AND DiskCopy.status = 8; -- GC_CANDIDATE
-  -- @todo move this query to C++
-  /*
-  OPEN GCLocalFiles FOR
-    SELECT FileSystem.mountPoint||DiskCopy.path, DiskCopy.id 
-      FROM DiskCopy, FileSystem, DiskServer
-    WHERE DiskCopy.fileSystem = FileSystem.id
-      AND FileSystem.DiskServer = DiskServer.id
-      AND DiskServer.name = DiskServerName
-      AND DiskCopy.status = 9; -- BEING_DELETED
-   */
-END;
+
+  SELECT FileSystem.mountPoint||DiskCopy.path, DiskCopy.id 
+    FROM DiskCopy, FileSystem, DiskServer
+   WHERE DiskCopy.fileSystem = FileSystem.id
+     AND FileSystem.DiskServer = DiskServer.id
+     AND DiskServer.name = DiskServerName
+     AND DiskCopy.status = 9; -- BEING_DELETED
+END//
+
 
 /* MySQL method implementing filesDeleted */
 CREATE PROCEDURE filesDeletedProc(/* fileIds castor."cnumList" */)
@@ -1244,11 +1273,11 @@ DECLARE EXIT HANDLER FOR NOT FOUND SET done = 1;
     END IF;
   END IF;
   UNTIL done END REPEAT;
-END;
+END//
+
 
 /* MySQL method implementing filesDeletionFailed */
-/* @todo to be entirely moved to C++
-just make the query:
+/* @todo to be entirely moved to C++: just make the query
 UPDATE DiskCopy SET status = 4 WHERE id in (<generated list of ids>)
 
 PROCEDURE filesDeletionFailedProc(fileIds IN castor."cnumList")
@@ -1266,42 +1295,42 @@ DECLARE nb INT;
 END;
 */
 
+
 /* MySQL method implementing getUpdateDone */
 CREATE PROCEDURE getUpdateDoneProc(subReqId BIGINT)
 BEGIN
   CALL archiveSubReq(subReqId);
-END;
+END//
 
 /* MySQL method implementing getUpdateFailed */
 CREATE PROCEDURE getUpdateFailedProc(subReqId BIGINT)
 BEGIN
   UPDATE SubRequest SET status = 7 -- FAILED
    WHERE id = subReqId;
-END;
+END//
 
 /* MySQL method implementing putFailedProc */
 CREATE PROCEDURE putFailedProc(subReqId BIGINT)
 BEGIN
   UPDATE SubRequest SET status = 7 -- FAILED
    WHERE id = subReqId;
-END;
+END//
 
 /* MySQL method implementing failedSegments */
-/* @todo to be moved as a query in the C++ code
-PROCEDURE failedSegments(segments OUT castor.Segment_Cur)
+PROCEDURE failedSegments(/* segments OUT castor.Segment_Cur */)
 BEGIN
-  OPEN segments FOR 
-    SELECT * FROM Segment
-    WHERE Segment.status = 6; -- SEGMENT_FAILED
-END;
-*/
+  -- OPEN segments FOR 
+  SELECT * FROM Segment
+  WHERE Segment.status = 6; -- SEGMENT_FAILED
+END//
+
 
 /* MySQL method implementing stageRm */
 CREATE PROCEDURE stageRm (fid INT, nh VARCHAR(2048), OUT ret INT)
 BEGIN
 DECLARE cfId BIGINT;
 DECLARE nbRes INT;
-LABEL stageRmLbl;
+LABEL exitLbl;   -- @todo doesn't compile??
  -- Lock the access to the CastorFile
  -- This, together with triggers will avoid new TapeCopies
  -- or DiskCopies to be added  --- @todo but triggers are not implemented here
@@ -1314,7 +1343,7 @@ LABEL stageRmLbl;
  IF nbRes > 0 THEN
    -- We found something, thus we cannot recreate
    SET ret = 1;
-   LEAVE stageRmLbl;
+   LEAVE exitLbl;
  END IF;
  -- check if recreation is possible for SubRequests
  SELECT count(*) INTO nbRes FROM SubRequest
@@ -1322,13 +1351,13 @@ LABEL stageRmLbl;
  IF nbRes > 0 THEN
    -- We found something, thus we cannot recreate
    SET ret = 2;
-   LEAVE stageRmLbl;
+   LEAVE exitLbl;
  END IF;
  -- set DiskCopies to GCCANDIDATE
  UPDATE DiskCopy SET status = 8 -- GCCANDIDATE
    WHERE castorFile = cfId AND status = 0; -- STAGED
  SET ret = 0;
-END;
+END//
 
 
 
@@ -1336,7 +1365,6 @@ END;
 -- This procedure is temporarily here to fill in some dummy data
 
 CREATE PROCEDURE dummyFill()
-    NOT DETERMINISTIC
 BEGIN
   DECLARE n INT DEFAULT 2;
   WHILE n < 20 DO
@@ -1376,15 +1404,11 @@ BEGIN
     SET n = n + 1;
   END WHILE;
 
---  INSERT INTO StageInRequest VALUES(0, 'sponcec3', 14493, 1028, 0, 999, 'pcitds13', 'VeryFirstSvcClass', 0, 10000, 7000, 11000);
---  INSERT INTO SubRequest VALUES(0, 'file1', 'rootd', 'OnlyDiskPool', 1245, 0, 10002, 5002, 4002, 0, 10000, 0);
---  INSERT INTO SubRequest VALUES(0, 'file2', 'rootd', 'OnlyDiskPool', 12456, 0, 10003, 5003, 4003, 0, 10000, 0);
+  INSERT INTO SubRequest VALUES(0, 'file1', 'rfio', 1111, 1, 'sb1', 0, 0, 0, 0, 1245, 2002, 10002, 5002, 0, 4002);
+  INSERT INTO SubRequest VALUES(0, 'file2', 'rfio', 1111, 1, 'sb2', 0, 0, 0, 0, 12456, 2003, 10003, 5003, 0, 4003);
+END//
 
-INSERT INTO SubRequest VALUES(0, 'file1', 'rfio', 1111, 1, 'sb1', 0, 0, 0, 0, 1245, 2002, 10002, 5002, 0, 4002);
-INSERT INTO SubRequest VALUES(0, 'file2', 'rfio', 1111, 1, 'sb2', 0, 0, 0, 0, 12456, 2003, 10003, 5003, 0, 4003);
-
-END;
-
+DELIMITER ;
 
 CALL dummyFill();
 
