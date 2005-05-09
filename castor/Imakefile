@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.90 $ $Release$ $Date: 2005/05/07 10:04:43 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.91 $ $Release$ $Date: 2005/05/09 15:53:48 $ $Author: mbraeger $
 #
 # Make Castor libraries and executables
 #
@@ -211,6 +211,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               rh/BasicResponseCInt.cpp \
               stager/CastorFile.cpp \
               stager/CastorFileCInt.cpp \
+							stager/ClientIdentification.cpp \
               stager/DiskCopy.cpp \
               stager/DiskCopyCInt.cpp \
               stager/DiskCopyInfo.cpp \
