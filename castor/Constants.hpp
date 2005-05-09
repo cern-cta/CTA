@@ -124,7 +124,6 @@ namespace castor {
     OBJ_ClientIdentification = 89,
 
     OBJ_PutDoneStart = 90
-
   };
     
   /**

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2005/05/09 15:51:41 $ $Author: mbraeger $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2005/05/09 16:09:05 $ $Author: mbraeger $
  *
  *
  *
@@ -122,7 +122,6 @@ const char* castor::ObjectsIdStrings[91] = {
   "TapeDrive",
   "ClientIdentification",
   "PutDoneStart"
->>>>>>> 1.17
 };
 
 //=============================================================================
