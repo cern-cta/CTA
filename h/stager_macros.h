@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.20 2005/05/10 14:40:30 jdurand Exp $
+ * $Id: stager_macros.h,v 1.21 2005/05/10 14:43:38 jdurand Exp $
  */
 
 #ifndef __stager_macros_h
@@ -111,7 +111,7 @@
 	    (struct Cns_fileid *)fileid, \
 	    7, \
 	    stagerMessages[STAGER_MSG_EXIT].what2Type,DLF_MSG_PARAM_STR,func, \
-	    "EXIT STATUS",DLF_MSG_PARAM_INT,value \
+	    "EXIT STATUS",DLF_MSG_PARAM_INT,value, \
 	    "SubRequestUuid",DLF_MSG_PARAM_UUID,stager_subrequest_uuid, \
 	    "File",DLF_MSG_PARAM_STR,__FILE__, \
 	    "Line",DLF_MSG_PARAM_INT,__LINE__, \
