@@ -6,7 +6,7 @@
 */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.21 $ $Date: 2005/03/23 11:16:36 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.22 $ $Date: 2005/05/10 16:34:51 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -329,6 +329,10 @@ int buf_size;
 	char *p1;
 	char *p2;
 	char *buf_end;
+
+
+
+
 	
 	*del = '\0';
 	buf_end = buf + buf_size;
@@ -1099,7 +1103,8 @@ dlf_log_message_t *msg;
 	int fd;
 	int write_to_stdout = 0;
 	int written;
-	char uuidhex[2 * sizeof(Cuuid_t) + 1];
+	char uuidhex[CUUID_STRING_LEN+1];
+	int resuuid;
 	
 	if (strcmp("stdout", dst->name) == 0) {
 	        write_to_stdout = 1;
@@ -1110,6 +1115,7 @@ dlf_log_message_t *msg;
 	        if ((fd = open (dst->name, O_WRONLY | O_CREAT | O_APPEND, 0664)) < 0)
 		     return (-1);
 	}
+	resuuid = Cuuid2string(uuidhex, sizeof(uuidhex), &msg->request_id );
 	n = Csnprintf
 		(prtbuf, restsize, fmt1, 
 		msg->time, msg->time_usec, msg->hostname,
@@ -1119,7 +1125,7 @@ dlf_log_message_t *msg;
 		g_dlf_fac_info.fac_name, msg->pid, msg->cid, 
 		msg->message_no,
 		((txt = dlf_get_msg_text(msg->message_no)) != NULL) ? txt : "No text",
-		dlf_uuid2hex(msg->request_id, uuidhex, sizeof(uuidhex)),
+		(resuuid >= 0) ? uuidhex : "Unknown", 
 		msg->ns_fileid.server,
 		msg->ns_fileid.fileid);
 	if (n >= restsize) { /* Buffer too small */
@@ -1140,10 +1146,9 @@ dlf_log_message_t *msg;
 			n = Csnprintf (bufpos, restsize, fmt3, p->name, p->numval);
 			break;
 		case DLF_MSG_PARAM_UUID:
+			resuuid = Cuuid2string(uuidhex, sizeof(uuidhex), ((Cuuid_t*)p->strval) );
 			n = Csnprintf (bufpos, restsize, fmt5, p->name, 
-				dlf_uuid2hex(*((Cuuid_t*)p->strval),
-				uuidhex,
-				sizeof(uuidhex)));
+			(resuuid >= 0) ? uuidhex : "Unknown"); 
 			break;
 		case DLF_MSG_PARAM_DOUBLE:
 			n = Csnprintf (bufpos, restsize, fmt4, p->name, p->dval);

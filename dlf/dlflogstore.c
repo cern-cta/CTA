@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlflogstore.c,v $ $Revision: 1.7 $ $Date: 2004/10/20 11:22:56 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlflogstore.c,v $ $Revision: 1.8 $ $Date: 2005/05/10 16:34:52 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -29,6 +29,7 @@ static char sccsid[] = "@(#)$RCSfile: dlflogstore.c,v $ $Revision: 1.7 $ $Date: 
 #include "dlf.h"
 #include "dlf_api.h"
 #include "Cnetdb.h"
+#include "Cuuid.h"
 #include <ctype.h>
 #if !defined(_WIN32)
 #include <unistd.h>
@@ -360,13 +361,13 @@ int main(argc, argv)
 	  case DLF_KEY_MSG:
 	    break;
 	  case DLF_KEY_RQID:
-	    rv = dlf_hex2uuid( par_str_val, log_message.request_id );
+	    rv = string2Cuuid(&log_message.request_id, par_str_val );
 	    break;
 	  case DLF_KEY_FID:
 	    rv = dlf_hex2u64 ( par_str_val, &log_message.ns_fileid.fileid );
 	    break;
 	  case DLF_KEY_SRQID:
-	    rv = dlf_hex2uuid( par_str_val, sub_request_id );
+	    rv = string2Cuuid(&sub_request_id, par_str_val );
 	    if (rv < 0)
 	      break;
 	    rv = dlf_add_subreq_id ( &log_message, sub_request_id );

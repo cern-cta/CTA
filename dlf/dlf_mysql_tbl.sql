@@ -3,7 +3,7 @@
 -- Copyright (C) 2003 by CERN/IT/ADC/CA
 -- All rights reserved
 --
--- @(#)$RCSfile: dlf_mysql_tbl.sql,v $ $Revision: 1.3 $ $Date: 2003/12/28 11:54:40 $ CERN IT-ADC Vitaly Motyakov
+-- @(#)$RCSfile: dlf_mysql_tbl.sql,v $ $Revision: 1.4 $ $Date: 2005/05/10 16:34:52 $ CERN IT-ADC Vitaly Motyakov
 --
 --     Create logging facility MySQL tables.
 
@@ -26,7 +26,7 @@ CREATE TABLE dlf_messages (
 	msg_seq_no BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 	time DATETIME,
 	time_usec INT UNSIGNED,
-	req_id CHAR (32) BINARY,
+	req_id CHAR(36) BINARY,
 	host_id INT UNSIGNED,
 	facility TINYINT UNSIGNED,
 	severity TINYINT UNSIGNED,
@@ -62,8 +62,8 @@ CREATE TABLE dlf_str_param_values (
 
 CREATE TABLE dlf_rq_ids_map (
 	msg_seq_no BIGINT UNSIGNED,
-	req_id CHAR(32) BINARY,
-	subreq_id CHAR(32) BINARY,
+	req_id CHAR(36) BINARY,
+	subreq_id CHAR(36) BINARY,
 	INDEX msg_no_idx(msg_seq_no),
 	KEY rq_id_idx(req_id),
 	KEY subreq_id_idx(subreq_id),

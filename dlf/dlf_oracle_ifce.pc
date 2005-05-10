@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.6 $ $Date: 2004/11/01 07:59:46 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.7 $ $Date: 2005/05/10 16:34:52 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -22,6 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.6 $ $D
 #include "dlf.h"
 #include "dlf_server.h"
 #include "dlf_api.h"
+#include "Cuuid.h"
 
 static sql_context ctx[DLF_NBTHREADS];
 
@@ -570,9 +571,9 @@ dlf_log_message_t *log_message;
 	int host_id;
 	int ns_host_id;
 	char func[32];
-	char rq_id_str[33];
-	char subrq_id_str[33];
-	char *suuid;
+	char rq_id_str[CUUID_STRING_LEN+1];
+	char subrq_id_str[CUUID_STRING_LEN+1];
+	int resuuid;
 	dlf_msg_param_t *param;
 	DBLISTPTR dblistptr;
 	int sev;
@@ -674,8 +675,8 @@ dlf_log_message_t *log_message;
 	    }
 	}
 	/* Convert uuid to hex string */
-	suuid = dlf_uuid2hex(log_message->request_id, rq_id_str, sizeof(rq_id_str));
-	if (suuid == NULL) {
+	resuuid = Cuuid2string(rq_id_str, sizeof(rq_id_str), log_message->request_id);
+	if (resuuid < 0) {
 	    serrno = SEINTERNAL;
 	    return (-1);
 	}
@@ -743,8 +744,8 @@ dlf_log_message_t *log_message;
 		(message_seq.currval, :param->name, TO_NUMBER(:param->strval));
 		break;
 	      case DLF_MSG_PARAM_UUID:
-		suuid = dlf_uuid2hex(*((Cuuid_t*)param->strval), subrq_id_str, sizeof(subrq_id_str));
-		if (suuid == NULL) {
+		resuuid = Cuuid2string( subrq_id_str, sizeof(subrq_id_str), *((Cuuid_t*)param->strval));
+		if (resuuid < 0) {
 		    serrno = SEINTERNAL;
 		    return (-1);
 		}
