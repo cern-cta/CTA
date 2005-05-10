@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.19 2005/05/09 15:38:30 jdurand Exp $
+ * $Id: stager_macros.h,v 1.20 2005/05/10 14:40:30 jdurand Exp $
  */
 
 #ifndef __stager_macros_h
@@ -94,8 +94,8 @@
 	    "GENERATED_TIME",DLF_MSG_PARAM_STR,__TIME__, \
 	    "ARGUMENTS",DLF_MSG_PARAM_STR,stagerConcatenatedArgv, \
 	     "SubRequestUuid",DLF_MSG_PARAM_UUID,stager_subrequest_uuid, \
-	     "File",DLF_MSG_PARAM_STR,file, \
-	     "Line",DLF_MSG_PARAM_INT,line, \
+	     "File",DLF_MSG_PARAM_STR,__FILE__, \
+	     "Line",DLF_MSG_PARAM_INT,__LINE__, \
 	     "errno",DLF_MSG_PARAM_INT,errno, \
 	     "serrno",DLF_MSG_PARAM_INT,serrno \
 	    ); \
@@ -113,8 +113,8 @@
 	    stagerMessages[STAGER_MSG_EXIT].what2Type,DLF_MSG_PARAM_STR,func, \
 	    "EXIT STATUS",DLF_MSG_PARAM_INT,value \
 	    "SubRequestUuid",DLF_MSG_PARAM_UUID,stager_subrequest_uuid, \
-	    "File",DLF_MSG_PARAM_STR,file, \
-	    "Line",DLF_MSG_PARAM_INT,line, \
+	    "File",DLF_MSG_PARAM_STR,__FILE__, \
+	    "Line",DLF_MSG_PARAM_INT,__LINE__, \
 	    "errno",DLF_MSG_PARAM_INT,errno, \
 	    "serrno",DLF_MSG_PARAM_INT,serrno \
 	    ); \
