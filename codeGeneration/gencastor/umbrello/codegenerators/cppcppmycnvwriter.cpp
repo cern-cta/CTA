@@ -1210,7 +1210,7 @@ void CppCppMyCnvWriter::writeBasicMult1FillRep(Assoc* as) {
               << endl << getIndent()
               << "mysqlpp::Result rset = m_select"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->execute();"
+              << "Statement->store();"
               << endl;
     *m_stream << getIndent()
               << "if (rset.size() != 1) {"
