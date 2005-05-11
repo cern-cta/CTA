@@ -31,6 +31,13 @@
 #include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
 
+
+//Forward declarations
+typedef struct vdqmVolReq vdqmVolReq_t;
+typedef struct vdqmdDrvReq vdqmDrvReq_t;
+typedef struct vdqmHdr vdqmHdr_t;
+typedef struct vdqmnw vdqmnw_t;
+
 namespace castor {
 
   namespace vdqm {
@@ -42,22 +49,40 @@ namespace castor {
     class OldVdqmProtocol : public BaseObject {
 
     	public:
-
+       
       /**
-       * Constructor
-       */
-       OldVdqmProtocol();
+			 * Constructor
+			 */
+       OldVdqmProtocol(vdqmVolReq_t *volumeRequest,
+												vdqmDrvReq_t *driveRequest,
+										  	vdqmHdr_t *header,
+												vdqmnw_t *client_connection,
+												int reqtype);
+			
        
        /**
         * Calls the right function for the request.
         */
-       void handleRequestType(int reqtype) throw (castor::exception::Exception);
+       void handleRequestType() throw (castor::exception::Exception);
        
        /**
         * Checks the reqtype and returns an error, if it is a 
         * wrong number. Throws an exception, if an error occures.
         */
-       bool checkRequestType(int reqtype) throw (castor::exception::Exception);
+       bool checkRequestType() throw (castor::exception::Exception);
+      
+      private:
+     	/**
+       * Default Constructor
+       */
+       OldVdqmProtocol();
+      
+      	vdqmVolReq_t *ptr_volumeRequest;
+		  	vdqmDrvReq_t *ptr_driveRequest;
+  			vdqmHdr_t *ptr_header;
+  			vdqmnw_t *ptr_client_connection;
+				int m_reqtype;
+				
 		}; // class VdqmServer
 
   } // end of namespace vdqm

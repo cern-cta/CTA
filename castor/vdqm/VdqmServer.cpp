@@ -60,6 +60,7 @@
 // Local Includes
 #include "VdqmServer.hpp"
 #include "VdqmServerSocket.hpp"
+#include "OldVdqmProtocol.hpp"
 
 //------------------------------------------------------------------------------
 // main method
@@ -218,6 +219,7 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
 
 
 	if (magicNumber == VDQM_MAGIC) {
+		//New request arrival
 		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1 );
 		handleOldVdqmRequest(sock, magicNumber);
 	}
@@ -250,14 +252,14 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
 void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 																					castor::vdqm::VdqmServerSocket* sock, 
 																					unsigned int magicNumber) {
+ 	//Message of the old Protocol
+	vdqmVolReq_t volumeRequest;
+	vdqmDrvReq_t driveRequest;
+	vdqmHdr_t header;
+	vdqmnw_t *client_connection;
+	int reqtype; // Request type of the message
+	
 	try {
-  	//Message of the old Protocol
-		vdqmVolReq_t volumeRequest;
-  	vdqmDrvReq_t driveRequest;
-  	vdqmHdr_t header;
-  	vdqmnw_t *client_connection;
-		int reqtype; // Request type of the message
-		
 		int i;
 		int req_values[] = VDQM_REQ_VALUES;
 		
@@ -287,9 +289,15 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 		// Handle old vdqm request type																			
 		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 15);
 		
-//		castor::vdqm::OldVdqmProtocol *test;
-//		
-//		test->han
+		OldVdqmProtocol *oldProtocol;
+		oldProtocol = new OldVdqmProtocol(&volumeRequest,
+												&driveRequest,
+										  	&header,
+												client_connection,
+												reqtype);
+		
+		oldProtocol->checkRequestType();
+		oldProtocol->handleRequestType();
 	
 			//TODO: reqtype behandeln!!!		
 			

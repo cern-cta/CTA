@@ -44,6 +44,7 @@ namespace castor {
     // Forward declaration
     class ExtendedDeviceGroup;
 		class TapeRequest;
+		class TapeDrive;
 
     /**
      * This class provides methods usefull to the stager to
@@ -59,7 +60,7 @@ namespace castor {
 	    	 * @return true, if the entry exists
 	    	 * @exception in case of error
 	    	 */
-	    	virtual bool checkDgn(const ExtendedDeviceGroup *extDevGrp)
+	    	virtual bool checkExtDevGroup(const ExtendedDeviceGroup *extDevGrp)
 	    		throw (castor::exception::Exception) = 0;
 	    		
 	    	/**
@@ -69,6 +70,21 @@ namespace castor {
 	    	 * @exception in case of error
 	    	 */
 	    	virtual bool checkTapeRequest(const TapeRequest *tapeRequest)
+	    		throw (castor::exception::Exception) = 0;
+	    	
+	    	
+	    	/**
+	    	 * Looks for the best fitting tape drive. If it is for example an
+	    	 * older tape, it will first look if an older drive is free, before
+	    	 * it chooses a newer one. This strategy should avoid, that the newer
+	    	 * drive, which are able to deal with several tape models, are blocked
+	    	 * if an request for a newer tape model arrives.
+	    	 * Please notice that caller is responsible for deleting the object.
+	    	 * @parameter the requested Extended Device Group for the tape
+	    	 * @return the free TapeDrive or NULL if there is none.
+	    	 * @exception in case of error
+	    	 */	
+	    	virtual TapeDrive* getFreeTapeDrive(const ExtendedDeviceGroup *extDevGrp) 
 	    		throw (castor::exception::Exception) = 0;
 
     }; // end of class IVdqmSvc

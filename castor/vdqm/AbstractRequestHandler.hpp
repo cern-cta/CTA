@@ -59,7 +59,7 @@ namespace castor {
 			protected:
 			
 				/**
-	       * handles an incoming request
+	       * Stores the IObject into the data base.
 	       * @param fr the request
 	       * @param cuuid its uuid (for logging purposes only)
 	       */

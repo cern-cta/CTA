@@ -45,27 +45,34 @@ namespace castor {
      */
     class TapeRequestHandler : public AbstractRequestHandler {
 
-    public:
+			public:
 
-      /**
-       * Constructor
-       */
-			TapeRequestHandler();
-			
-			/**
-			 * This function replaces the old vdqm_NewVolReq C-function. It stores
-			 * the request into the data Base
-			 */
-			void newTapeRequest(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) 
-				throw (castor::exception::Exception);
+	      /**
+	       * Constructor
+	       */
+				TapeRequestHandler();
 				
-			/**
-			 * Returns the next TapeRequest from the database
-			 */
-			virtual castor::IObject* getRequest() 
+				/**
+				 * This function replaces the old vdqm_NewVolReq C-function. It stores
+				 * the request into the data Base
+				 */
+				void newTapeRequest(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) 
 					throw (castor::exception::Exception);
-       
-       
+					
+				/**
+				 * Returns the next TapeRequest from the database
+				 */
+				virtual castor::IObject* getRequest() 
+						throw (castor::exception::Exception);
+	       
+			
+			private:
+     		/**
+     		 * This method is used to look, if they are free drives for the queued
+     		 * tape requests. 
+     		 */
+     		void handleTapeRequestQueue() 
+						throw (castor::exception::Exception);
     }; // class TapeRequestHandler
 
   } // end of namespace vdqm
