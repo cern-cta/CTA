@@ -763,20 +763,6 @@ BEGIN
   INTO rdcStatus, rdcPath;
 END;
 
-/* PL/SQL method implementing putStart */
-CREATE OR REPLACE PROCEDURE putDoneStart
-        (srId IN INTEGER, fileSystemId IN INTEGER,
-         rdcId OUT INTEGER, rdcStatus OUT INTEGER,
-         rdcPath OUT VARCHAR2) AS
-BEGIN
- -- Get diskCopy Id
- SELECT DiskCopy.id, DiskCopy.status, DiskCopy.path
-   INTO rdcId, rdcStatus, rdcPath
-   FROM SubRequest, DiskCopy
-  WHERE SubRequest.id = srId
-    AND DiskCopy.id = SubRequest.diskCopy;
-END;
-
 /* PL/SQL method implementing updateAndCheckSubRequest */
 CREATE OR REPLACE PROCEDURE updateAndCheckSubRequest(srId IN INTEGER, newStatus IN INTEGER, result OUT INTEGER) AS
   reqId INTEGER;
