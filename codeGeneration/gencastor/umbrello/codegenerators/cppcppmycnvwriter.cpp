@@ -225,13 +225,13 @@ void CppCppMyCnvWriter::writeConstants() {
     if (!first) *m_stream << ",";
     first = false;
     if (mem->name == "id") {
-      *m_stream << "ids_seq.nextval";
+      *m_stream << "%0:id";   // to be obtained from seqNextVal stored proc.
     } else if (mem->name == "nbAccesses") {
       *m_stream << "0";
     } else if (mem->name == "lastAccessTime") {
       *m_stream << "NULL";
     } else {
-      *m_stream << ":" << n;
+      *m_stream << "%" << n;
       n++;
     }
   }
@@ -242,12 +242,12 @@ void CppCppMyCnvWriter::writeConstants() {
         as->remotePart.name != "") {
       if (!first) *m_stream << ",";
       first = false;
-      *m_stream << ":" << n;
+      *m_stream << "%" << n;
       n++;
     }
   }
-  *m_stream << ") RETURNING id INTO :" << n
-            << "\";" << endl << endl << getIndent()
+  *m_stream //<< ") RETURNING id INTO :" << n   unfortunately this is not supported in MySql
+            << ")\";" << endl << endl << getIndent()
             << "/// SQL statement for request deletion"
             << endl << getIndent()
             << "const std::string "
@@ -256,7 +256,7 @@ void CppCppMyCnvWriter::writeConstants() {
             << "Cnv::s_deleteStatementString =" << endl
             << getIndent()
             << "\"DELETE FROM " << m_classInfo->className
-            << " WHERE id = :1\";" << endl << endl
+            << " WHERE id = %1\";" << endl << endl
             << getIndent()
             << "/// SQL statement for request selection"
             << endl << getIndent()
@@ -287,7 +287,7 @@ void CppCppMyCnvWriter::writeConstants() {
     }
   }
   *m_stream << " FROM " << m_classInfo->className
-            << " WHERE id = :1\";" << endl << endl
+            << " WHERE id = %1\";" << endl << endl
             << getIndent()
             << "/// SQL statement for request update"
             << endl << getIndent()
@@ -310,7 +310,7 @@ void CppCppMyCnvWriter::writeConstants() {
         mem->name == "nbAccesses") continue;
     if (!first) *m_stream << ", "; else first = false;
     n++;
-    *m_stream << mem->name << " = :" << n;
+    *m_stream << mem->name << " = %" << n;
   }
   // Go through dependant objects
   for (Assoc* as = assocs.first();
@@ -319,10 +319,10 @@ void CppCppMyCnvWriter::writeConstants() {
     if (isEnum(as->remotePart.typeName)) {
       if (n > 0) *m_stream << ", ";
       n++;
-      *m_stream << as->remotePart.name << " = :" << n;
+      *m_stream << as->remotePart.name << " = %" << n;
     }
   }
-  *m_stream << " WHERE id = :" << n+1
+  *m_stream << " WHERE id = %" << n+1
             << "\";" << endl << endl << getIndent()
             << "/// SQL statement for type storage"
             << endl << getIndent()
@@ -331,7 +331,7 @@ void CppCppMyCnvWriter::writeConstants() {
             << "My" << m_classInfo->className
             << "Cnv::s_storeTypeStatementString =" << endl
             << getIndent()
-            << "\"INSERT INTO Id2Type (id, type) VALUES (:1, :2)\";"
+            << "\"INSERT INTO Id2Type (id, type) VALUES (%1, %2)\";"
             << endl << endl << getIndent()
             << "/// SQL statement for type deletion"
             << endl << getIndent()
@@ -340,7 +340,7 @@ void CppCppMyCnvWriter::writeConstants() {
             << "My" << m_classInfo->className
             << "Cnv::s_deleteTypeStatementString =" << endl
             << getIndent()
-            << "\"DELETE FROM Id2Type WHERE id = :1\";"
+            << "\"DELETE FROM Id2Type WHERE id = %1\";"
             << endl << endl;
   // Status dedicated statements
   if (isNewRequest()) {
@@ -353,7 +353,7 @@ void CppCppMyCnvWriter::writeConstants() {
               << "Cnv::s_insertNewReqStatementString =" << endl
               << getIndent()
               << "\"INSERT INTO newRequests (id, type, creation)"
-              << " VALUES (:1, :2, SYSDATE)\";"
+              << " VALUES (%1, %2, SECOND)\";"
               << endl << endl;
   }
   if (isNewSubRequest()) {
@@ -366,7 +366,7 @@ void CppCppMyCnvWriter::writeConstants() {
               << "Cnv::s_insertNewSubReqStatementString =" << endl
               << getIndent()
               << "\"INSERT INTO newSubRequests (id, creation)"
-              << " VALUES (:1, SYSDATE)\";"
+              << " VALUES (%1, SECOND)\";"     // @todo is SECOND precision enough?
               << endl << endl;
   }
   // Associations dedicated statements
@@ -406,7 +406,7 @@ void CppCppMyCnvWriter::writeConstants() {
                 << "2"
                 << capitalizeFirstLetter(secondMember->typeName)
                 << " (" << firstRole << ", " << secondRole
-                << ") VALUES (:1, :2)\";"
+                << ") VALUES (%1, %2)\";"
                 << endl << endl << getIndent()
                 << "/// SQL delete statement for member "
                 << as->remotePart.name
@@ -421,8 +421,8 @@ void CppCppMyCnvWriter::writeConstants() {
                 << capitalizeFirstLetter(firstMember->typeName)
                 << "2"
                 << capitalizeFirstLetter(secondMember->typeName)
-                << " WHERE " << firstRole << " = :1 AND "
-                << secondRole << " = :2\";"
+                << " WHERE " << firstRole << " = %1 AND "
+                << secondRole << " = %2\";"
                 << endl << endl << getIndent()
                 << "/// SQL select statement for member "
                 << as->remotePart.name
@@ -441,7 +441,7 @@ void CppCppMyCnvWriter::writeConstants() {
                 << capitalizeFirstLetter(firstMember->typeName)
                 << "2"
                 << capitalizeFirstLetter(secondMember->typeName)
-                << " WHERE " << firstRole << " = :1 FOR UPDATE\";"
+                << " WHERE " << firstRole << " = %1 FOR UPDATE\";"
                 << endl << endl;
     } else {
       if (as->type.multiLocal == MULT_ONE &&
@@ -462,7 +462,7 @@ void CppCppMyCnvWriter::writeConstants() {
                   << "\"SELECT id from "
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << " WHERE " << as->localPart.name
-                  << " = :1 FOR UPDATE\";" << endl << endl
+                  << " = %1 FOR UPDATE\";" << endl << endl
                   << getIndent()
                   << "/// SQL delete statement for member "
                   << as->remotePart.name
@@ -476,7 +476,7 @@ void CppCppMyCnvWriter::writeConstants() {
                   << "\"UPDATE "
                   << as->remotePart.typeName
                   << " SET " << as->localPart.name
-                  << " = 0 WHERE id = :1\";" << endl << endl
+                  << " = 0 WHERE id = %1\";" << endl << endl
                   << getIndent()
                   << "/// SQL remote update statement for member "
                   << as->remotePart.name
@@ -490,7 +490,7 @@ void CppCppMyCnvWriter::writeConstants() {
                   << "\"UPDATE "
                   << as->remotePart.typeName
                   << " SET " << as->localPart.name
-                  << " = :1 WHERE id = :2\";" << endl << endl;
+                  << " = %1 WHERE id = %2\";" << endl << endl;
       }
       if (as->type.multiRemote == MULT_ONE) {
         // * to 1
@@ -508,7 +508,7 @@ void CppCppMyCnvWriter::writeConstants() {
                     << getIndent()
                     << "\"SELECT id from "
                     << capitalizeFirstLetter(as->remotePart.typeName)
-                    << " WHERE id = :1\";" << endl << endl;
+                    << " WHERE id = %1\";" << endl << endl;
         }
         *m_stream << getIndent()
                   << "/// SQL update statement for member "
@@ -524,7 +524,7 @@ void CppCppMyCnvWriter::writeConstants() {
                   << "\"UPDATE "
                   << m_classInfo->className
                   << " SET " << as->remotePart.name
-                  << " = :1 WHERE id = :2\";" << endl << endl;
+                  << " = %1 WHERE id = %2\";" << endl << endl;
       }
     }
   }
@@ -567,9 +567,11 @@ void CppCppMyCnvWriter::writeSqlStatements() {
     if (n > 0) stream << ", ";
     stream << mem->name << " "
            << getSQLType(mem->typeName);
-    if (mem->name == "id") stream << " PRIMARY KEY";
+    //if (mem->name == "id") stream << " AUTO_INCREMENT";  we can't use auto increment fields because we want a single sequence
     n++;
   }
+  stream << ", PRIMARY KEY (id)";
+  
   // create a list of associations
   AssocList assocs = createAssocsList();
   // Go through the associations
@@ -580,7 +582,7 @@ void CppCppMyCnvWriter::writeSqlStatements() {
         as->remotePart.name != "") {
       // One to One associations
       if (n > 0) stream << ", ";
-      stream << as->remotePart.name << " INTEGER";
+      stream << as->remotePart.name << " INT";
       n++;
     }
   }
@@ -621,7 +623,7 @@ void CppCppMyCnvWriter::writeSqlStatements() {
                << capitalizeFirstLetter(firstMember->typeName)
                << "2"
                << capitalizeFirstLetter(secondMember->typeName)
-               << " (Parent INTEGER, Child INTEGER);"
+               << " (Parent BIGINT, Child BIGINT);"
                << endl << getIndent()
                << "CREATE INDEX I_"
                << capitalizeFirstLetter(firstMember->typeName)
@@ -796,27 +798,27 @@ void CppCppMyCnvWriter::writeReset() {
             << endl << getIndent() << "try {" << endl;
   m_indent++;
   *m_stream << getIndent()
-            << "deleteStatement(m_insertStatement);"
+            << "m_insertStatement->reset();"
             << endl << getIndent()
-            << "deleteStatement(m_deleteStatement);"
+            << "m_deleteStatement->reset();"
             << endl << getIndent()
-            << "deleteStatement(m_selectStatement);"
+            << "m_selectStatement->reset();"
             << endl << getIndent()
-            << "deleteStatement(m_updateStatement);"
+            << "m_updateStatement->reset();"
             << endl;
   if (isNewRequest()) {
     *m_stream << getIndent()
-              << "deleteStatement(m_insertNewReqStatement);"
+              << "m_insertNewReqStatement->reset();"
               << endl;
   }
   if (isNewSubRequest()) {
     *m_stream << getIndent()
-              << "deleteStatement(m_insertNewSubReqStatement);"
+              << "m_insertNewSubReqStatement->reset();"
               << endl;
   }
-  *m_stream << getIndent() << "deleteStatement(m_storeTypeStatement);"
+  *m_stream << getIndent() << "m_storeTypeStatement->reset();"
             << endl << getIndent()
-            << "deleteStatement(m_deleteTypeStatement);"
+            << "m_deleteTypeStatement->reset();"
             << endl;
   // Associations dedicated statements
   AssocList assocs = createAssocsList();
@@ -831,50 +833,50 @@ void CppCppMyCnvWriter::writeReset() {
       // Here we will use a dedicated table for the association
       // Find out the parent and child in this table
       *m_stream << getIndent()
-                << "deleteStatement(m_insert"
+                << "m_insert"
                 << capitalizeFirstLetter(as->remotePart.typeName)
-                << "Statement);" << endl << getIndent()
-                << "deleteStatement(m_delete"
+                << "Statement->reset();" << endl << getIndent()
+                << "m_delete"
                 << capitalizeFirstLetter(as->remotePart.typeName)
-                << "Statement);" << endl << getIndent()
-                << "deleteStatement(m_select"
+                << "Statement->reset();" << endl << getIndent()
+                << "m_select"
                 << capitalizeFirstLetter(as->remotePart.typeName)
-                << "Statement);" << endl;
+                << "Statement->reset();" << endl;
     } else {
       if (as->type.multiLocal == MULT_ONE &&
           as->type.multiRemote != MULT_UNKNOWN &&
           !as->remotePart.abstract) {
         // 1 to * association
         *m_stream << getIndent()
-                  << "deleteStatement(m_delete"
+                  << "m_delete"
                   << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "Statement);" << endl << getIndent()
-                  << "deleteStatement(m_select"
+                  << "Statement->reset();" << endl << getIndent()
+                  << "m_select"
                   << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "Statement);" << endl
+                  << "Statement->reset();" << endl
                   << getIndent()
-                  << "deleteStatement(m_remoteUpdate"
+                  << "m_remoteUpdate"
                   << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "Statement);" << endl;
+                  << "Statement->reset();" << endl;
       }
       if (as->type.multiRemote == MULT_ONE) {
         // * to 1
         if (!as->remotePart.abstract) {
           *m_stream << getIndent()
-                    << "deleteStatement(m_check"
+                    << "m_check"
                     << capitalizeFirstLetter(as->remotePart.typeName)
-                    << "ExistStatement);" << endl;
+                    << "ExistStatement->reset();" << endl;
         }
         *m_stream << getIndent()
-                  << "deleteStatement(m_update"
+                  << "m_update"
                   << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "Statement);" << endl;
+                  << "Statement->reset();" << endl;
       }
     }
   }
   m_indent--;
   *m_stream << getIndent()
-            << "} catch (oracle::occi::SQLException e) {};"
+            << "} catch (mysqlpp::BadQuery ignored) {};"
             << endl << getIndent()
             << "// Now reset all pointers to 0"
             << endl << getIndent()
@@ -982,8 +984,7 @@ void CppCppMyCnvWriter::writeFillRep() {
   m_indent++;
   // Get the precise object
   *m_stream << getIndent() << m_originalPackage
-            << m_classInfo->className << "* obj = " << endl
-            << getIndent() << "  dynamic_cast<"
+            << m_classInfo->className << "* obj = dynamic_cast<"
             << m_originalPackage
             << m_classInfo->className << "*>(object);"
             << endl;
@@ -1028,24 +1029,24 @@ void CppCppMyCnvWriter::writeFillRep() {
   *m_stream << getIndent() << "}" << endl << getIndent()
             << "if (autocommit) {" << endl;
   m_indent++;
-  *m_stream << getIndent() << "cnvSvc()->getConnection()->commit();"
+  *m_stream << getIndent() << "cnvSvc()->commit();"
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
   m_indent--;
   *m_stream << getIndent()
-            << "} catch (oracle::occi::SQLException e) {"
+            << "} catch (mysqlpp::BadQuery e) {"
             << endl;
   m_indent++;
   *m_stream << getIndent()
             << fixTypeName("Internal",
                            "castor.exception",
                            m_classInfo->packageName)
-            << " ex; // XXX Fix it, depending on ORACLE error"
+            << " ex;"
             << endl << getIndent()
             << "ex.getMessage() << \"Error in fillRep for type \" << type"
             << endl << getIndent()
-            << "                << std::endl << e.what() << std::endl;"
+            << "                << std::endl << e.error << std::endl;"
             << endl << getIndent() << "throw ex;" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
@@ -1096,8 +1097,7 @@ void CppCppMyCnvWriter::writeFillObj() {
   m_indent++;
   // Get the precise object
   *m_stream << getIndent() << m_originalPackage
-            << m_classInfo->className << "* obj = " << endl
-            << getIndent() << "  dynamic_cast<"
+            << m_classInfo->className << "* obj = dynamic_cast<"
             << m_originalPackage
             << m_classInfo->className << "*>(object);"
             << endl;
@@ -1181,7 +1181,7 @@ void CppCppMyCnvWriter::writeBasicMult1FillRep(Assoc* as) {
             << fixTypeName("Exception",
                            "castor.exception",
                            "")
-            << ", oracle::occi::SQLException) {"
+            << ", mysqlpp::BadQuery) {"
             << endl;
   m_indent++;
   if (as->type.multiLocal == MULT_ONE &&
@@ -1206,14 +1206,14 @@ void CppCppMyCnvWriter::writeBasicMult1FillRep(Assoc* as) {
               << "// retrieve the object from the database"
               << endl << getIndent() << "m_select"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setDouble(1, obj->id());"
+              << "Statement->def[1] = obj->id();"
               << endl << getIndent()
-              << "oracle::occi::ResultSet *rset = m_select"
+              << "mysqlpp::Result rset = m_select"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->executeQuery();"
+              << "Statement->execute();"
               << endl;
     *m_stream << getIndent()
-              << "if (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {"
+              << "if (rset.size() != 1) {"
               << endl;
     m_indent++;
     writeSingleGetFromSelect(as->remotePart, 1, true);
@@ -1242,12 +1242,12 @@ void CppCppMyCnvWriter::writeBasicMult1FillRep(Assoc* as) {
     *m_stream << getIndent() << "}" << endl << getIndent()
               << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setDouble(1, "
+              << "Statement->def[1] = "
               << as->remotePart.name
-              << "Id);"
+              << "Id;"
               << endl << getIndent() << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->executeUpdate();"
+              << "Statement->execute();"
               << endl;
     m_indent--;
     *m_stream << getIndent() << "}" << endl;
@@ -1258,7 +1258,7 @@ void CppCppMyCnvWriter::writeBasicMult1FillRep(Assoc* as) {
               << getIndent()
               << "m_select"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->closeResultSet(rset);"
+              << "Statement->clear();"
               << endl;
   }
   if (!as->remotePart.abstract) {
@@ -1286,15 +1286,15 @@ void CppCppMyCnvWriter::writeBasicMult1FillRep(Assoc* as) {
               << "// retrieve the object from the database"
               << endl << getIndent() << "m_check"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "ExistStatement->setDouble(1, obj->"
-              << as->remotePart.name << "()->id());"
+              << "ExistStatement->def[1] = obj->"
+              << as->remotePart.name << "()->id();"
               << endl << getIndent()
-              << "oracle::occi::ResultSet *rset = m_check"
+              << "mysqlpp::Result rset = m_check"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "ExistStatement->executeQuery();"
+              << "ExistStatement->store();"
               << endl;
     *m_stream << getIndent()
-              << "if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {"
+              << "if (rset.size() != 1) {"
               << endl;
     m_indent++;
     addInclude("\"castor/Constants.hpp\"");
@@ -1305,7 +1305,7 @@ void CppCppMyCnvWriter::writeBasicMult1FillRep(Assoc* as) {
               << " ad;" << endl << getIndent()
               << "ad.setCnvSvcName(\"MyCnvSvc\");"
               << endl << getIndent()
-              << "ad.setCnvSvcType(castor::SVC_ORACNV);"
+              << "ad.setCnvSvcType(castor::SVC_MYCNV);"
               << endl << getIndent()
               << "cnvSvc()->createRep(&ad, obj->"
               << as->remotePart.name
@@ -1334,15 +1334,15 @@ void CppCppMyCnvWriter::writeBasicMult1FillRep(Assoc* as) {
                 << "// Update remote object"
                 << endl << getIndent()
                 << "m_remoteUpdate" << as->remotePart.typeName
-                << "Statement->setDouble(1, obj->id());"
+                << "Statement->def[1] = obj->id();"
                 << endl << getIndent()
                 << "m_remoteUpdate" << as->remotePart.typeName
-                << "Statement->setDouble(2, obj->"
+                << "Statement->def[2] = obj->"
                 << as->remotePart.name
-                << "()->id());"
+                << "()->id();"
                 << endl << getIndent()
                 << "m_remoteUpdate" << as->remotePart.typeName
-                << "Statement->executeUpdate();"
+                << "Statement->execute();"
                 << endl;
       m_indent--;
     }
@@ -1351,7 +1351,7 @@ void CppCppMyCnvWriter::writeBasicMult1FillRep(Assoc* as) {
               << getIndent()
               << "m_check"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "ExistStatement->closeResultSet(rset);"
+              << "ExistStatement->clear();"
               << endl;
     m_indent--;
     *m_stream << getIndent() << "}" << endl;
@@ -1374,17 +1374,17 @@ void CppCppMyCnvWriter::writeBasicMult1FillRep(Assoc* as) {
             << "// Update local object"
             << endl << getIndent()
             << "m_update" << as->remotePart.typeName
-            << "Statement->setDouble(1, 0 == obj->"
+            << "Statement->def[1] = (obj->"
             << as->remotePart.name
-            << "() ? 0 : obj->"
+            << "() == 0 ? 0 : obj->"
             << as->remotePart.name
             << "()->id());"
             << endl << getIndent()
             << "m_update" << as->remotePart.typeName
-            << "Statement->setDouble(2, obj->id());"
+            << "Statement->def[2] = obj->id();"
             << endl << getIndent()
             << "m_update" << as->remotePart.typeName
-            << "Statement->executeUpdate();"
+            << "Statement->execute();"
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl << endl;
@@ -1427,11 +1427,11 @@ void CppCppMyCnvWriter::writeBasicMult1FillObj(Assoc* as,
             << getIndent()
             << "// retrieve the object from the database"
             << endl << getIndent()
-            << "m_selectStatement->setDouble(1, obj->id());"
+            << "m_selectStatement->def[1] = obj->id();"
             << endl << getIndent()
-            << "oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();"
+            << "mysqlpp::Result rset = m_selectStatement->store();"
             << endl << getIndent()
-            << "if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {"
+            << "if (rset.size() != 1) {"
             << endl;
   m_indent++;
   *m_stream << getIndent()
@@ -1445,9 +1445,9 @@ void CppCppMyCnvWriter::writeBasicMult1FillObj(Assoc* as,
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
   writeSingleGetFromSelect(as->remotePart, n, true);
-  *m_stream << getIndent() << "// Close ResultSet"
+  *m_stream << getIndent() << "// close ResultSet"
             << endl << getIndent()
-            << "m_selectStatement->closeResultSet(rset);"
+            << "m_selectStatement->clear();"
             << endl;
   *m_stream << getIndent()
             << "// Check whether something should be deleted"
@@ -1494,8 +1494,7 @@ void CppCppMyCnvWriter::writeBasicMult1FillObj(Assoc* as,
   m_indent++;
   *m_stream << getIndent() << "obj->set"
             << capitalizeFirstLetter(as->remotePart.name)
-            << endl << getIndent()
-            << "  (dynamic_cast<"
+            << " (dynamic_cast<"
             << fixTypeName(as->remotePart.typeName,
                            getNamespace(as->remotePart.typeName),
                            m_classInfo->packageName)
@@ -1553,7 +1552,7 @@ void CppCppMyCnvWriter::writeBasicMultNFillRep(Assoc* as) {
             << fixTypeName("Exception",
                            "castor.exception",
                            "")
-            << ", oracle::occi::SQLException) {"
+            << ", mysqlpp::BadQuery) {"
             << endl;
   m_indent++;
   *m_stream << getIndent() << "// check select statement"
@@ -1578,26 +1577,28 @@ void CppCppMyCnvWriter::writeBasicMultNFillRep(Assoc* as) {
             << "List;" << endl << getIndent()
             << "m_select"
             << capitalizeFirstLetter(as->remotePart.typeName)
-            << "Statement->setDouble(1, obj->id());"
+            << "Statement->def[1] = obj->id();"
             << endl << getIndent()
-            << "oracle::occi::ResultSet *rset = "
+            << "mysqlpp::Result rset = "
             << "m_select"
             << capitalizeFirstLetter(as->remotePart.typeName)
-            << "Statement->executeQuery();"
+            << "Statement->store();"
             << endl << getIndent()
-            << "while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {"
+            << "mysqlpp::Result::iterator it;"
+            << endl << getIndent()
+            << "for(it = rset.begin(); it != rset.end(); it++) {"
             << endl;
   m_indent++;
   *m_stream << getIndent()
             << as->remotePart.name
-            << "List.insert(rset->getInt(1));"
+            << "List.insert((*it)[0]);"
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl
             << getIndent()
             << "m_select"
             << capitalizeFirstLetter(as->remotePart.typeName)
-            << "Statement->closeResultSet(rset);"
+            << "Statement->clear();"
             << endl << getIndent()
             << "// update " << as->remotePart.name
             << " and create new ones"
@@ -1646,13 +1647,13 @@ void CppCppMyCnvWriter::writeBasicMultNFillRep(Assoc* as) {
               << "// Update remote object"
               << endl << getIndent()
               << "m_remoteUpdate" << as->remotePart.typeName
-              << "Statement->setDouble(1, obj->id());"
+              << "Statement->def[1] = obj->id();"
               << endl << getIndent()
               << "m_remoteUpdate" << as->remotePart.typeName
-              << "Statement->setDouble(2, (*it)->id());"
+              << "Statement->def[2] = (*it)->id();"
               << endl << getIndent()
               << "m_remoteUpdate" << as->remotePart.typeName
-              << "Statement->executeUpdate();"
+              << "Statement->execute();"
               << endl;
   }
   if (as->type.multiLocal == MULT_N) {
@@ -1696,15 +1697,15 @@ void CppCppMyCnvWriter::writeBasicMultNFillRep(Assoc* as) {
               << getIndent()
               << "m_insert"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setDouble(1, obj->id());"
+              << "Statement->def[1] = obj->id();"
               << endl << getIndent()
               << "m_insert"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setDouble(2, (*it)->id());"
+              << "Statement->def[2] = (*it)->id();"
               << endl << getIndent()
               << "m_insert"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->executeUpdate();"
+              << "Statement->execute();"
               << endl;
   }
   m_indent--;
@@ -1747,13 +1748,13 @@ void CppCppMyCnvWriter::writeBasicMultNFillRep(Assoc* as) {
     *m_stream << getIndent() << "}" << endl << getIndent()
               << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setDouble(1, obj->id());"
+              << "Statement->def[1] = obj->id();"
               << endl << getIndent() << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setDouble(2, *it);"
+              << "Statement->def[2] = *it;"
               << endl << getIndent() << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->executeUpdate();"
+              << "Statement->execute();"
               << endl;
   } else {
     // 1 to N association
@@ -1774,10 +1775,10 @@ void CppCppMyCnvWriter::writeBasicMultNFillRep(Assoc* as) {
     *m_stream << getIndent() << "}" << endl << getIndent()
               << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setDouble(1, *it);"
+              << "Statement->def[1] = *it;"
               << endl << getIndent() << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->executeUpdate();"
+              << "Statement->execute();"
               << endl;
   }
   m_indent--;
@@ -1834,27 +1835,29 @@ void CppCppMyCnvWriter::writeBasicMultNFillObj(Assoc* as) {
             << "List;" << endl << getIndent()
             << "m_select"
             << capitalizeFirstLetter(as->remotePart.typeName)
-            << "Statement->setDouble(1, obj->id());"
+            << "Statement->def[1] = obj->id();"
             << endl << getIndent()
-            << "oracle::occi::ResultSet *rset = "
+            << "mysqlpp::Result rset = "
             << "m_select"
             << capitalizeFirstLetter(as->remotePart.typeName)
-            << "Statement->executeQuery();"
+            << "Statement->store();"
             << endl << getIndent()
-            << "while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {"
+            << "mysqlpp::Result::iterator it;"
+            << endl << getIndent()
+            << "for(it = rset.begin(); it != rset.end(); it++) {"
             << endl;
   m_indent++;
   *m_stream << getIndent()
             << as->remotePart.name
-            << "List.insert(rset->getInt(1));"
+            << "List.insert((*it)[0]);"
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl
-            << getIndent() << "// Close ResultSet"
+            << getIndent() << "// close ResultSet"
             << endl << getIndent()
             << "m_select"
             << capitalizeFirstLetter(as->remotePart.typeName)
-            << "Statement->closeResultSet(rset);"
+            << "Statement->clear();"
             << endl << getIndent()
             << "// Update objects and mark old ones for deletion"
             << endl << getIndent()
@@ -1953,8 +1956,7 @@ void CppCppMyCnvWriter::writeBasicMultNFillObj(Assoc* as) {
             << fixTypeName(as->remotePart.typeName,
                            getNamespace(as->remotePart.typeName),
                            m_classInfo->packageName)
-            << "* remoteObj = " << endl << getIndent()
-            << "  dynamic_cast<"
+            << "* remoteObj = dynamic_cast<"
             << fixTypeName(as->remotePart.typeName,
                            getNamespace(as->remotePart.typeName),
                            m_classInfo->packageName)
@@ -2024,10 +2026,10 @@ void CppCppMyCnvWriter::writeCreateRepContent() {
   }
   *m_stream << getIndent()
             << "m_insertStatement = createStatement(s_insertStatementString);"
-            << endl << getIndent()
-            << "m_insertStatement->registerOutParam("
-            << n
-            << ", oracle::occi::OCCIDOUBLE);" << endl;
+            << endl << getIndent() << endl;
+            //<< "m_insertStatement->registerOutParam("
+            //<< n
+            //<< ", oracle::occi::OCCIDOUBLE);" << endl;   not needed here
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
   if (isNewRequest()) {
@@ -2060,7 +2062,7 @@ void CppCppMyCnvWriter::writeCreateRepContent() {
   *m_stream << getIndent() << "}" << endl;
   // Insert the object into the database
   *m_stream << getIndent()
-            << "// Now Save the current object"
+            << "// Now save the current object"
             << endl;
   // create a list of members to be saved
   n = 1;
@@ -2078,8 +2080,8 @@ void CppCppMyCnvWriter::writeCreateRepContent() {
     } else if (mem->name == "creationTime" ||
                mem->name == "lastModificationTime") {
       *m_stream << getIndent()
-                << "m_insertStatement->setInt("
-                << n << ", time(0));" << endl;
+                << "m_insertStatement->def["
+                << n << "] = (int)time(0);" << endl;
       n++;
     }
   }
@@ -2093,8 +2095,8 @@ void CppCppMyCnvWriter::writeCreateRepContent() {
     } else if (as->type.multiRemote == MULT_ONE &&
                as->remotePart.name != "") {
       *m_stream << getIndent()
-                << "m_insertStatement->setDouble("
-                << n << ", ";
+                << "m_insertStatement->def["
+                << n << "] = ";
       if (!isEnum(as->remotePart.typeName)) {
         *m_stream << "(type == OBJ_"
                   << as->remotePart.typeName
@@ -2103,49 +2105,53 @@ void CppCppMyCnvWriter::writeCreateRepContent() {
                   << as->remotePart.name
                   << "()->id() : ";
       }
-      *m_stream << "0);" << endl;
+      *m_stream << "0;" << endl;
       n++;
     }
   }
   *m_stream << getIndent()
-            << "m_insertStatement->executeUpdate();"
+  			<< "u_signed64 newId = cnvSvc()->createNewId();"
+			<< endl << getIndent()
+            << "m_insertStatement->def[\"id\"] = newId;"
             << endl << getIndent()
-            << "obj->setId((u_signed64)m_insertStatement->getDouble("
-            << n << "));" << endl << getIndent()
-            << "m_storeTypeStatement->setDouble(1, obj->id());"
+            << "m_insertStatement->execute();"
             << endl << getIndent()
-            << "m_storeTypeStatement->setInt(2, obj->type());"
+            << "obj->setId(newId);"
+			<< endl << getIndent()
+            << "m_storeTypeStatement->def[1] = newId;  // obj->id()"
             << endl << getIndent()
-            << "m_storeTypeStatement->executeUpdate();"
+            << "m_storeTypeStatement->def[2] = obj->type();"
+            << endl << getIndent()
+            << "m_storeTypeStatement->execute();"
             << endl;
   if (isNewRequest()) {
     *m_stream << getIndent()
-              << "m_insertNewReqStatement->setDouble(1, obj->id());"
+              << "m_insertNewReqStatement->def[1] = newId;"
               << endl << getIndent()
-              << "m_insertNewReqStatement->setInt(2, obj->type());"
+              << "m_insertNewReqStatement->def[2] = obj->type();"
               << endl << getIndent()
-              << "m_insertNewReqStatement->executeUpdate();"
+              << "m_insertNewReqStatement->execute();"
               << endl;
   }
   if (isNewSubRequest()) {
     *m_stream << getIndent()
-              << "m_insertNewSubReqStatement->setDouble(1, obj->id());"
+              << "m_insertNewSubReqStatement->def[1] = newId;"
               << endl << getIndent()
-              << "m_insertNewSubReqStatement->executeUpdate();"
+              << "m_insertNewSubReqStatement->execute();"
               << endl;
   }
   // Commit if needed
   *m_stream << getIndent()
             << "if (autocommit) {" << endl;
   m_indent++;
-  *m_stream << getIndent() << "cnvSvc()->getConnection()->commit();"
+  *m_stream << getIndent() << "cnvSvc()->commit();"
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
   m_indent--;
   // Catch exceptions if any
   *m_stream << getIndent()
-            << "} catch (oracle::occi::SQLException e) {"
+            << "} catch (mysqlpp::BadQuery e) {"
             << endl;
   m_indent++;
   printSQLError("insert", members, assocs);
@@ -2159,8 +2165,7 @@ void CppCppMyCnvWriter::writeCreateRepContent() {
 void CppCppMyCnvWriter::writeUpdateRepContent() {
   // Get the precise object
   *m_stream << getIndent() << m_originalPackage
-            << m_classInfo->className << "* obj = " << endl
-            << getIndent() << "  dynamic_cast<"
+            << m_classInfo->className << "* obj = dynamic_cast<"
             << m_originalPackage
             << m_classInfo->className << "*>(object);"
             << endl;
@@ -2205,8 +2210,8 @@ void CppCppMyCnvWriter::writeUpdateRepContent() {
         mem->name == "nbAccesses") continue;
     if (mem->name == "lastModificationTime") {
       *m_stream << getIndent()
-                << "m_updateStatement->setInt("
-                << n << ", time(0));" << endl;      
+                << "m_updateStatement->def["
+                << n << "] = (int)time(0);" << endl;      
     } else {
       writeSingleSetIntoStatement("update", *mem, n);
     }
@@ -2231,20 +2236,20 @@ void CppCppMyCnvWriter::writeUpdateRepContent() {
   }
   // Now execute statement
   *m_stream << getIndent()
-            << "m_updateStatement->executeUpdate();"
+            << "m_updateStatement->execute();"
             << endl;
   // Commit if needed
   *m_stream << getIndent()
             << "if (autocommit) {" << endl;
   m_indent++;
-  *m_stream << getIndent() << "cnvSvc()->getConnection()->commit();"
+  *m_stream << getIndent() << "cnvSvc()->commit();"
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
   m_indent--;
   // Catch exceptions if any
   *m_stream << getIndent()
-            << "} catch (oracle::occi::SQLException e) {"
+            << "} catch (mysqlpp::BadQuery e) {"
             << endl;
   m_indent++;
   AssocList emptyList;
@@ -2259,8 +2264,7 @@ void CppCppMyCnvWriter::writeUpdateRepContent() {
 void CppCppMyCnvWriter::writeDeleteRepContent() {
   // Get the precise object
   *m_stream << getIndent() << m_originalPackage
-            << m_classInfo->className << "* obj = " << endl
-            << getIndent() << "  dynamic_cast<"
+            << m_classInfo->className << "* obj = dynamic_cast<"
             << m_originalPackage
             << m_classInfo->className << "*>(object);"
             << endl;
@@ -2295,13 +2299,13 @@ void CppCppMyCnvWriter::writeDeleteRepContent() {
   *m_stream << getIndent()
             << "// Now Delete the object"
             << endl << getIndent()
-            << "m_deleteTypeStatement->setDouble(1, obj->id());"
+            << "m_deleteTypeStatement->def[1] = obj->id();"
             << endl << getIndent()
-            << "m_deleteTypeStatement->executeUpdate();"
+            << "m_deleteTypeStatement->execute();"
             << endl << getIndent()
-            << "m_deleteStatement->setDouble(1, obj->id());"
+            << "m_deleteStatement->def[1] = obj->id();"
             << endl << getIndent()
-            << "m_deleteStatement->executeUpdate();"
+            << "m_deleteStatement->execute();"
             << endl;
   // create a list of associations
   AssocList assocs = createAssocsList();
@@ -2399,16 +2403,16 @@ void CppCppMyCnvWriter::writeDeleteRepContent() {
                   << endl << getIndent()
                   << "m_delete"
                   << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "Statement->setDouble(1, obj->"
-                  << as->remotePart.name << "()->id());"
+                  << "Statement->def[1] = obj->"
+                  << as->remotePart.name << "()->id();"
                   << endl << getIndent()
                   << "m_delete"
                   << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "Statement->setDouble(2, obj->id());"
+                  << "Statement->def[2] = obj->id();"
                   << endl << getIndent()
                   << "m_delete"
                   << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "Statement->executeUpdate();"
+                  << "Statement->execute();"
                   << endl;
         m_indent--;
         *m_stream << getIndent() << "}" << endl;
@@ -2419,14 +2423,14 @@ void CppCppMyCnvWriter::writeDeleteRepContent() {
   *m_stream << getIndent()
             << "if (autocommit) {" << endl;
   m_indent++;
-  *m_stream << getIndent() << "cnvSvc()->getConnection()->commit();"
+  *m_stream << getIndent() << "cnvSvc()->commit();"
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
   m_indent--;
   // Catch exceptions if any
   *m_stream << getIndent()
-            << "} catch (oracle::occi::SQLException e) {"
+            << "} catch (mysqlpp::BadQuery e) {"
             << endl;
   m_indent++;
   MemberList emptyList;
@@ -2442,8 +2446,7 @@ void CppCppMyCnvWriter::writeCreateObjContent() {
   *m_stream << getIndent() << fixTypeName("BaseAddress",
                                           "castor",
                                           m_classInfo->packageName)
-            << "* ad = " << endl
-            << getIndent() << "  dynamic_cast<"
+            << "* ad = dynamic_cast<"
             << fixTypeName("BaseAddress",
                            "castor",
                            m_classInfo->packageName)
@@ -2465,11 +2468,11 @@ void CppCppMyCnvWriter::writeCreateObjContent() {
   *m_stream << getIndent() << "}" << endl
             << getIndent() << "// retrieve the object from the database"
             << endl << getIndent()
-            << "m_selectStatement->setDouble(1, ad->target());"
+            << "m_selectStatement->def[1] = ad->target();"
             << endl << getIndent()
-            << "oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();"
+            << "mysqlpp::Result rset = m_selectStatement->store();"
             << endl << getIndent()
-            << "if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {"
+            << "if (rset.size() != 1) {"
             << endl;
   m_indent++;
   *m_stream << getIndent()
@@ -2514,14 +2517,14 @@ void CppCppMyCnvWriter::writeCreateObjContent() {
   }
   // Close request
   *m_stream << getIndent()
-            << "m_selectStatement->closeResultSet(rset);"
+            << "m_selectStatement->clear();"
             << endl;
   // Return result
   *m_stream << getIndent() << "return object;" << endl;
   // Catch exceptions if any
   m_indent--;
   *m_stream << getIndent()
-            << "} catch (oracle::occi::SQLException e) {"
+            << "} catch (mysqlpp::BadQuery e) {"
             << endl;
   m_indent++;
   printSQLError("select", members, assocs);
@@ -2551,11 +2554,11 @@ void CppCppMyCnvWriter::writeUpdateObjContent() {
             << getIndent()
             << "// retrieve the object from the database"
             << endl << getIndent()
-            << "m_selectStatement->setDouble(1, obj->id());"
+            << "m_selectStatement->def[1] = obj->id();"
             << endl << getIndent()
-            << "oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();"
+            << "mysqlpp::Result rset = m_selectStatement->store();"
             << endl << getIndent()
-            << "if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {"
+            << "if (rset.size() != 1) {"
             << endl;
   m_indent++;
   *m_stream << getIndent()
@@ -2563,7 +2566,7 @@ void CppCppMyCnvWriter::writeUpdateObjContent() {
                            "castor.exception",
                            m_classInfo->packageName)
             << " ex;" << endl << getIndent()
-            << "ex.getMessage() << \"No object found for id :\""
+            << "ex.getMessage() << \"No object found for id:\""
             << " << obj->id();" << endl
             << getIndent() << "throw ex;" << endl;
   m_indent--;
@@ -2571,8 +2574,7 @@ void CppCppMyCnvWriter::writeUpdateObjContent() {
             << "// Now retrieve and set members" << endl;
   // Get the precise object
   *m_stream << getIndent() << m_originalPackage
-            << m_classInfo->className << "* object = " << endl
-            << getIndent() << "  dynamic_cast<"
+            << m_classInfo->className << "* object = dynamic_cast<"
             << m_originalPackage
             << m_classInfo->className << "*>(obj);"
             << endl;
@@ -2601,12 +2603,12 @@ void CppCppMyCnvWriter::writeUpdateObjContent() {
   }
   // Close request
   *m_stream << getIndent()
-            << "m_selectStatement->closeResultSet(rset);"
+            << "m_selectStatement->clear();"
             << endl;
   // Catch exceptions if any
   m_indent--;
   *m_stream << getIndent()
-            << "} catch (oracle::occi::SQLException e) {"
+            << "} catch (mysqlpp::BadQuery e) {"
             << endl;
   m_indent++;
   printSQLError("update", members, assocs);
@@ -2629,30 +2631,24 @@ CppCppMyCnvWriter::writeSingleSetIntoStatement(QString statement,
     int i1 = mem.typeName.find('[');
     int i2 = mem.typeName.find(']');
     QString length = mem.typeName.mid(i1+1, i2-i1-1);
-    *m_stream << getIndent() << fixTypeName("string", "", "")
+    *m_stream << getIndent() << fixTypeName("std::string", "", "")
               << " " << mem.name << "S((const char*)" << "obj->"
               << mem.name << "(), " << length << ");"
               << endl;
   }
   *m_stream << getIndent()
-            << "m_" << statement << "Statement->set";
-  if (isEnum) {
-    *m_stream << "Int";
-  } else {
-    *m_stream << getMyType(mem.typeName);
-  }
-  *m_stream << "(" << n << ", ";
+            << "m_" << statement << "Statement->def[" << n << "] = ";
   if (isArray) {
-    *m_stream << mem.name << "S";
-  } else {
-    if (isEnum) {
-      *m_stream << "(int)";
-    }
-    *m_stream << "obj->"
-              << mem.name
-              << "()";
+    *m_stream << mem.name << "S";  ///@todo it's never used! what is it?
   }
-  *m_stream << ");" << endl;
+  else {
+    if (isEnum || mem.name == "ipAddress")    // need to force the cast
+      *m_stream << "(int)";
+	else
+      *m_stream << "(" << getMyType(mem.typeName) << ")";
+    *m_stream << "obj->" << mem.name << "()";
+  }
+  *m_stream << ";" << endl;
 }
 
 //=============================================================================
@@ -2685,19 +2681,18 @@ void CppCppMyCnvWriter::writeSingleGetFromSelect(Member mem,
                              m_classInfo->packageName)
               << ")";
   }
-  if (isAssoc || mem.typeName == "u_signed64") {
-    *m_stream << "(u_signed64)";
-  }
-  *m_stream << "rset->get";
+  //if (isAssoc || mem.typeName == "u_signed64") {
+  //  *m_stream << "(u_signed64)";
+  //}
   if (isEnum) {
-    *m_stream << "Int";
+    *m_stream << "(int)";
   } else if (isAssoc) {
-    *m_stream << "Double";
+    *m_stream << "(u_signed64)";
   } else {
-    *m_stream << getMyType(mem.typeName);
+    *m_stream << "(" << getMyType(mem.typeName) << ")";
   }
-  *m_stream << "(" << n << ")";
-  if (isArray) *m_stream << ".data()";
+  *m_stream << "rset[0][" << n << "]";
+  //if (isArray) *m_stream << ".data()";     // @todo what does it mean?
   if (!isAssoc) *m_stream << ")";
   *m_stream << ";" << endl;
 }
@@ -2713,16 +2708,18 @@ QString CppCppMyCnvWriter::getMyType(QString& type) {
       myType == "int") {
     myType = "int";
   } else if (myType == "u_signed64") {
-    myType = "long int";
+    //myType = "long int";
+  } else if (myType == "string") {
+	myType = "std::string";
   }
   if (myType.startsWith("char")) {
     if (type.startsWith("unsigned")) {
       myType = "int";
     } else {
-      myType = "string";
+      myType = "std::string";
     }
   }
-  myType = capitalizeFirstLetter(myType);
+  //myType = capitalizeFirstLetter(myType);
   return myType;
 }
 
@@ -2735,20 +2732,20 @@ QString CppCppMyCnvWriter::getSQLType(QString& type) {
       SQLType == "long" ||
       SQLType == "bool" ||
       SQLType == "int") {
-    SQLType = "INTEGER";
+    SQLType = "INT";
   } else if (type == "u_signed64") {
     SQLType = "BIGINT";
   } else if (SQLType == "string") {
-    SQLType = "VARCHAR(2048)";
+    SQLType = "VARCHAR(1000)";
   } else if (SQLType.left(5) == "char["){
     QString res = "CHAR(";
     res.append(SQLType.mid(5, SQLType.find("]")-5));
     res.append(")");
     SQLType = res;
   } else if (m_castorTypes.find(SQLType) != m_castorTypes.end()) {
-    SQLType = "NUMBER";
+    SQLType = "BIGINT";
   } else if (type == "unsigned char") {
-    SQLType = "INTEGER";    
+    SQLType = "INT";    
   }
   return SQLType;
 }
@@ -2765,7 +2762,8 @@ void CppCppMyCnvWriter::printSQLError(QString name,
   *m_stream << getIndent()
             << "// Always try to rollback" << endl
             << getIndent()
-            << "cnvSvc()->getConnection()->rollback();"
+            << "cnvSvc()->rollback();" << endl;
+/*
             << endl << getIndent()
             << "if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {"
             << endl;
@@ -2776,9 +2774,10 @@ void CppCppMyCnvWriter::printSQLError(QString name,
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
+*/
   m_indent--;
   *m_stream << getIndent()
-            << "} catch (oracle::occi::SQLException e) {"
+            << "} catch (castor::exception::Exception e) {"
             << endl;
   m_indent++;
   *m_stream << getIndent()
@@ -2790,12 +2789,12 @@ void CppCppMyCnvWriter::printSQLError(QString name,
             << fixTypeName("InvalidArgument",
                            "castor.exception",
                            m_classInfo->packageName)
-            << " ex; // XXX Fix it, depending on ORACLE error"
+            << " ex;"
             << endl << getIndent()
             << "ex.getMessage() << \"Error in " << name
             << " request :\""
             << endl << getIndent()
-            << "                << std::endl << e.what() << std::endl"
+            << "                << std::endl << e.error << std::endl"
             << endl << getIndent()
             << "                << \"Statement was :\" << std::endl"
             << endl << getIndent()

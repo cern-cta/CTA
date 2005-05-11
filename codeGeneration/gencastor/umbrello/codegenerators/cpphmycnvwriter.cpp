@@ -7,7 +7,7 @@
 //-----------------------------------------------------------------------------
 // Implementation file for class : CppHMyCnvWriter
 //
-// 2004-01-13 : Sebastien Ponce
+// 2004-05-09 : Giuseppe Lo Presti
 //-----------------------------------------------------------------------------
 
 //=============================================================================
@@ -153,7 +153,7 @@ void CppHMyCnvWriter::writeBasicFillRep(Assoc* as) {
             << fixTypeName("Exception",
                            "castor.exception",
                            m_classInfo->packageName)
-            << ", oracle::occi::SQLException);"
+            << ", mysqlpp::BadQuery);"
             << endl << endl;
 }
 
@@ -236,7 +236,7 @@ void CppHMyCnvWriter::writeMembers() {
             << endl << endl << getIndent()
             << "/// SQL statement object for request insertion"
             << endl << getIndent()
-            << "oracle::occi::Statement *m_insertStatement;"
+            << "mysqlpp::Query *m_insertStatement;"
             << endl << endl << getIndent()
             << "/// SQL statement for request deletion"
             << endl << getIndent()
@@ -244,7 +244,7 @@ void CppHMyCnvWriter::writeMembers() {
             << endl << endl << getIndent()
             << "/// SQL statement object for request deletion"
             << endl << getIndent()
-            << "oracle::occi::Statement *m_deleteStatement;"
+            << "mysqlpp::Query *m_deleteStatement;"
             << endl << endl << getIndent()
             << "/// SQL statement for request selection"
             << endl << getIndent()
@@ -252,7 +252,7 @@ void CppHMyCnvWriter::writeMembers() {
             << endl << endl << getIndent()
             << "/// SQL statement object for request selection"
             << endl << getIndent()
-            << "oracle::occi::Statement *m_selectStatement;"
+            << "mysqlpp::Query *m_selectStatement;"
             << endl << endl << getIndent()
             << "/// SQL statement for request update"
             << endl << getIndent()
@@ -260,7 +260,7 @@ void CppHMyCnvWriter::writeMembers() {
             << endl << endl << getIndent()
             << "/// SQL statement object for request update"
             << endl << getIndent()
-            << "oracle::occi::Statement *m_updateStatement;"
+            << "mysqlpp::Query *m_updateStatement;"
             << endl << endl;
   // Dealing with request needed to be stored in newRequests table
   UMLObject* obj = getClassifier(QString("Request"));
@@ -276,7 +276,7 @@ void CppHMyCnvWriter::writeMembers() {
               << endl << endl << getIndent()
               << "/// SQL statement object for request status insertion into newRequests table"
               << endl << getIndent()
-              << "oracle::occi::Statement *m_insertNewReqStatement;"
+              << "mysqlpp::Query *m_insertNewReqStatement;"
               << endl << endl;
   }
 //   // Dealing with SubRequest needed to be stored in newSubRequests table
@@ -288,7 +288,7 @@ void CppHMyCnvWriter::writeMembers() {
 //               << endl << endl << getIndent()
 //               << "/// SQL statement object for request status insertion into newSubRequests table"
 //               << endl << getIndent()
-//               << "oracle::occi::Statement *m_insertNewSubReqStatement;"
+//               << "mysqlpp::Query *m_insertNewSubReqStatement;"
 //               << endl << endl;
 //   }
   // Dealing with type identification (storage and deletion)
@@ -299,7 +299,7 @@ void CppHMyCnvWriter::writeMembers() {
             << endl << endl << getIndent()
             << "/// SQL statement object for type storage"
             << endl << getIndent()
-            << "oracle::occi::Statement *m_storeTypeStatement;"
+            << "mysqlpp::Query *m_storeTypeStatement;"
             << endl << endl << getIndent()
             << "/// SQL statement for type deletion "
             << endl << getIndent()
@@ -307,7 +307,7 @@ void CppHMyCnvWriter::writeMembers() {
             << endl << endl << getIndent()
             << "/// SQL statement object for type deletion"
             << endl << getIndent()
-            << "oracle::occi::Statement *m_deleteTypeStatement;"
+            << "mysqlpp::Query *m_deleteTypeStatement;"
             << endl << endl;
   // Associations dedicated statements
   AssocList assocs = createAssocsList();
@@ -331,7 +331,7 @@ void CppHMyCnvWriter::writeMembers() {
                 << "/// SQL insert statement object for member "
                 << as->remotePart.name
                 << endl << getIndent()
-                << "oracle::occi::Statement *m_insert"
+                << "mysqlpp::Query *m_insert"
                 << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement;"
                 << endl << endl << getIndent()
@@ -345,7 +345,7 @@ void CppHMyCnvWriter::writeMembers() {
                 << "/// SQL delete statement object for member "
                 << as->remotePart.name
                 << endl << getIndent()
-                << "oracle::occi::Statement *m_delete"
+                << "mysqlpp::Query *m_delete"
                 << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement;"
                 << endl << endl << getIndent()
@@ -359,7 +359,7 @@ void CppHMyCnvWriter::writeMembers() {
                 << "/// SQL select statement object for member "
                 << as->remotePart.name
                 << endl << getIndent()
-                << "oracle::occi::Statement *m_select"
+                << "mysqlpp::Query *m_select"
                 << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement;"
                 << endl << endl;
@@ -379,7 +379,7 @@ void CppHMyCnvWriter::writeMembers() {
                   << "/// SQL select statement object for member "
                   << as->remotePart.name
                   << endl << getIndent()
-                  << "oracle::occi::Statement *m_select"
+                  << "mysqlpp::Query *m_select"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement;"
                   << endl << endl << getIndent()
@@ -393,7 +393,7 @@ void CppHMyCnvWriter::writeMembers() {
                   << "/// SQL delete statement object for member "
                   << as->remotePart.name
                   << endl << getIndent()
-                  << "oracle::occi::Statement *m_delete"
+                  << "mysqlpp::Query *m_delete"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement;"
                   << endl << endl << getIndent()
@@ -407,7 +407,7 @@ void CppHMyCnvWriter::writeMembers() {
                   << "/// SQL remote update statement object for member "
                   << as->remotePart.name
                   << endl << getIndent()
-                  << "oracle::occi::Statement *m_remoteUpdate"
+                  << "mysqlpp::Query *m_remoteUpdate"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement;"
                   << endl << endl;
@@ -427,7 +427,7 @@ void CppHMyCnvWriter::writeMembers() {
                     << "/// SQL checkExist statement object for member "
                     << as->remotePart.name
                     << endl << getIndent()
-                    << "oracle::occi::Statement *m_check"
+                    << "mysqlpp::Query *m_check"
                     << capitalizeFirstLetter(as->remotePart.typeName)
                     << "ExistStatement;"
                     << endl << endl;
@@ -443,7 +443,7 @@ void CppHMyCnvWriter::writeMembers() {
                   << "/// SQL update statement object for member "
                   << as->remotePart.name
                   << endl << getIndent()
-                  << "oracle::occi::Statement *m_update"
+                  << "mysqlpp::Query *m_update"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement;"
                   << endl << endl;

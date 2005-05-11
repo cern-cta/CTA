@@ -144,12 +144,12 @@ class CppCppMyCnvWriter : public CppCppBaseCnvWriter {
   bool isNewSubRequest();
 
   /**
-   * creates file oracle.sql and write beginning of it
+   * creates file mysql.sql and write beginning of it
    */
   void startSQLFile();
 
   /**
-   * write end of file oracle.sql
+   * write end of file mysql.sql
    */
   void endSQLFile();
 
