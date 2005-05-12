@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.23 2005/05/09 13:32:14 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.24 2005/05/12 10:09:13 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.23 $ $Date: 2005/05/09 13:32:14 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.24 $ $Date: 2005/05/12 10:09:13 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -23,6 +23,7 @@ static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.23 $ $Dat
 /* ============== */
 #include <list>
 #include <vector>
+#include <sstream>
 
 /* ============= */
 /* Local headers */
@@ -774,16 +775,26 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
     break;
 
   default:
-    castor::exception::Internal e;
-    e.getMessage() << "Unknown Request type : "
-                   << castor::ObjectsIdStrings[req->type()];
-    if (req) delete req;
-    if (stgSvc) stgSvc->release();
-    throw e;
+    // Issue error message
+    serrno = EINVAL;
+    std::ostringstream oss;
+    oss << "Unknown Request type : "
+	<< castor::ObjectsIdStrings[req->type()];
+    STAGER_LOG_DB_ERROR(NULL,"stager_job_select",
+                        oss.str().c_str());
+    // Inform client
+    STAGER_LOG_DEBUG(NULL, "Building Response");
+    castor::rh::BasicResponse res;
+    res.setErrorCode(serrno);
+    res.setErrorMessage(oss.str().c_str());
+    castor::stager::replyToClient(client, &res);
+
   }
 
   // Delete Request From the database
-  svcs->deleteRep(&ad, req, true);
+  if (0 == serrno) {
+    svcs->deleteRep(&ad, req, true);
+  }
 
   // Cleanup
   if (req) delete req;
