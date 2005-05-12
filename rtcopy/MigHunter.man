@@ -1,0 +1,86 @@
+.\" @(#)$RCSfile: MigHunter.man,v $ $Revision: 1.1 $ $Date: 2005/05/12 08:49:16 $ CERN IT/ADC Olof Barring
+.\" Copyright (C) 2005 by CERN/IT
+.\" All rights reserved
+.\"
+.TH RTCPCLDCLEANUPDB 1 "$Date: 2005/05/12 08:49:16 $" CASTOR "RTCOPY Operator Commands"
+.SH NAME
+MigHunter \- default migration candidate hunter
+.SH SYNOPSIS
+.B MigHunter
+[
+.BI -C
+]
+[
+.BI -d
+]
+[
+.BI -L
+]
+[
+.BI -t
+] [
+.BI sleepTime
+]
+[
+.BI -v
+] [
+.BI dataThreshold
+]
+.BI svcClass1
+[
+.BI svcClass2 ...
+]
+.SH DESCRIPTION
+.B MigHunter
+is the default stream creator and migration candidate hunter provided with the CASTOR
+stager.
+.SH OPTIONS
+At least one service class has to be specified at the end of the command line.
+If no other option is given, the program will start in foreground and make
+.I one
+iteration (select candidates, create streams, start streams) and exit. Information and
+error messages are logged to stdout/stderr.
+.TP
+.BI \-C
+switch instructs the
+.B MigHunter
+when creating new streams to always clone an existing stream if it finds one associated
+with the service class. The stream cloning can give a load-balancing advantage when new
+streams are added to a service class. Be aware, however, that it is an heavy operation
+if the existing stream has many (1000s) of migration candidates.
+.TP
+.BI \-d
+start as daemon
+.TP
+.BI \-L
+Legacy mode: for each migration candidate the fileclass information in the name server
+is looked up. Tape pools are created on the fly and the streams are populated according
+to the fileclass definition. The
+.I nbDrives
+attribute in the
+.B SvcClass
+definition is respected. The legacy mode is provided for backward compatibility with the
+old stager (although this is not entirely true).
+.TP
+.BI \-t " sleepTime"
+specifies the time between two database lookups. Only relevant with the
+.B \-d
+switch.
+.TP
+.B \-v " dataThreshold"
+specifies the minimum amount of data required for starting a new migration. Note that
+this option has no effect if there are already running streams for the service class.
+.TP
+
+.SH EXAMPLE
+.fi
+# MigHunter default
+.fi
+# MigHunter -d -t 300 -v 100G alicemdc6
+
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
