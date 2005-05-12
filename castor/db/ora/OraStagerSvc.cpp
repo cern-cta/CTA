@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.160 $ $Release$ $Date: 2005/05/07 10:04:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.161 $ $Release$ $Date: 2005/05/12 14:07:25 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -148,7 +148,7 @@ const std::string castor::db::ora::OraStagerSvc::s_putStartStatementString =
 
 /// SQL statement for putDoneStart
 const std::string castor::db::ora::OraStagerSvc::s_putDoneStartStatementString =
-  "SELECT DiskCopy.id, DiskCopy.status, DiskCopy.path INTO rdcId, rdcStatus, rdcPath FROM SubRequest, DiskCopy WHERE SubRequest.id = :1 AND DiskCopy.id = SubRequest.diskCopy";
+  "SELECT DiskCopy.id, DiskCopy.status, DiskCopy.path FROM SubRequest, DiskCopy WHERE SubRequest.id = :1 AND DiskCopy.id = SubRequest.diskCopy";
 
 /// SQL statement for selectSvcClass
 const std::string castor::db::ora::OraStagerSvc::s_selectSvcClassStatementString =
@@ -1512,11 +1512,11 @@ castor::db::ora::OraStagerSvc::putDoneStart(u_signed64 subreqId)
       m_putDoneStartStatement =
         createStatement(s_putDoneStartStatementString);
       m_putDoneStartStatement->registerOutParam
-        (3, oracle::occi::OCCIDOUBLE);
+        (1, oracle::occi::OCCIDOUBLE);
       m_putDoneStartStatement->registerOutParam
-        (4, oracle::occi::OCCIINT);
+        (2, oracle::occi::OCCIINT);
       m_putDoneStartStatement->registerOutParam
-        (5, oracle::occi::OCCISTRING, 2048);
+        (3, oracle::occi::OCCISTRING, 2048);
     }
     // execute the statement and see whether we found something
     m_putDoneStartStatement->setDouble(1, subreqId);
@@ -1529,11 +1529,11 @@ castor::db::ora::OraStagerSvc::putDoneStart(u_signed64 subreqId)
     }
     // Get the result
     result = new castor::stager::DiskCopy();
-    result->setId((u_signed64)m_putDoneStartStatement->getDouble(3));
+    result->setId((u_signed64)m_putDoneStartStatement->getDouble(1));
     result->setStatus
       ((enum castor::stager::DiskCopyStatusCodes)
-       m_putDoneStartStatement->getInt(4));
-    result->setPath(m_putDoneStartStatement->getString(5));
+       m_putDoneStartStatement->getInt(2));
+    result->setPath(m_putDoneStartStatement->getString(3));
     // return
     cnvSvc()->commit();
     return result;
