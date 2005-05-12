@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.24 2005/05/12 10:09:13 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.25 2005/05/12 12:45:52 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.24 $ $Date: 2005/05/12 10:09:13 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.25 $ $Date: 2005/05/12 12:45:52 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -771,6 +771,11 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
 
   case castor::OBJ_PutFailed:
     castor::stager::handle_putFailedRequest
+      (req, client, svcs, stgSvc, ad);
+    break;
+
+  case castor::OBJ_PutDoneStart:
+    castor::stager::handle_putDoneStartRequest
       (req, client, svcs, stgSvc, ad);
     break;
 
