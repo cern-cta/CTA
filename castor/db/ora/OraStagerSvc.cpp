@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.162 $ $Release$ $Date: 2005/05/12 14:16:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.163 $ $Release$ $Date: 2005/05/12 14:32:46 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1520,7 +1520,8 @@ castor::db::ora::OraStagerSvc::putDoneStart(u_signed64 subreqId)
       m_putDoneStartStatement->closeResultSet(rset);
       castor::exception::Internal ex;
       ex.getMessage()
-        << "putDoneStart : unable to schedule SubRequest.";
+        << "putDoneStart : unable to execute putDoneStart in DB.\n"
+	<< "Subrequest Id was " << subreqId;
       throw ex;
     }
     // Get the result
