@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2005/05/07 10:04:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2005/05/12 10:33:48 $ $Author: sponcec3 $
  *
  *
  *
@@ -396,12 +396,19 @@ public:
 
   virtual void handleResponse(castor::rh::Response& r)
     throw (castor::exception::Exception) {
+    if (0 != r.errorCode()) {
+      castor::exception::Exception e(r.errorCode());
+      e.getMessage() << r.errorMessage();
+      throw e;
+    }
     castor::rh::StartResponse *resp =
       dynamic_cast<castor::rh::StartResponse*>(&r);
-    if (0 != resp->errorCode()) {
-      castor::exception::Exception e(resp->errorCode());
-      e.getMessage() << resp->errorMessage();
-      throw e;
+    if (0 == resp) {
+      castor::exception::Internal e;
+      e.getMessage() << "PutStartResponseHandler ; invalid repsonse type\n"
+		     << "Was expecting StartResponse, got "
+		     << castor::ObjectsIdStrings[r.type()];
+      throw e;      
     }
     *m_diskCopy = resp->diskCopy();
   };
