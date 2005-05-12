@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.163 $ $Release$ $Date: 2005/05/12 14:32:46 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.164 $ $Release$ $Date: 2005/05/12 14:46:58 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -148,7 +148,7 @@ const std::string castor::db::ora::OraStagerSvc::s_putStartStatementString =
 
 /// SQL statement for putDoneStart
 const std::string castor::db::ora::OraStagerSvc::s_putDoneStartStatementString =
-  "SELECT DiskCopy.id, DiskCopy.status, DiskCopy.path FROM SubRequest, DiskCopy WHERE SubRequest.id = :1 AND DiskCopy.id = SubRequest.diskCopy";
+  "SELECT DiskCopy.id, DiskCopy.status, DiskCopy.path FROM SubRequest, DiskCopy WHERE SubRequest.id = :1 AND DiskCopy.castorfile = SubRequest.castorfile AND DiskCopy.status = 6"; // STAGEOUT
 
 /// SQL statement for selectSvcClass
 const std::string castor::db::ora::OraStagerSvc::s_selectSvcClassStatementString =
