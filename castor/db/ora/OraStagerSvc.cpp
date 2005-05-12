@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.161 $ $Release$ $Date: 2005/05/12 14:07:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.162 $ $Release$ $Date: 2005/05/12 14:16:24 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1511,17 +1511,13 @@ castor::db::ora::OraStagerSvc::putDoneStart(u_signed64 subreqId)
     if (0 == m_putDoneStartStatement) {
       m_putDoneStartStatement =
         createStatement(s_putDoneStartStatementString);
-      m_putDoneStartStatement->registerOutParam
-        (1, oracle::occi::OCCIDOUBLE);
-      m_putDoneStartStatement->registerOutParam
-        (2, oracle::occi::OCCIINT);
-      m_putDoneStartStatement->registerOutParam
-        (3, oracle::occi::OCCISTRING, 2048);
     }
     // execute the statement and see whether we found something
     m_putDoneStartStatement->setDouble(1, subreqId);
-    unsigned int nb = m_putDoneStartStatement->executeUpdate();
-    if (0 == nb) {
+    oracle::occi::ResultSet *rset = m_putDoneStartStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      // Nothing found
+      m_putDoneStartStatement->closeResultSet(rset);
       castor::exception::Internal ex;
       ex.getMessage()
         << "putDoneStart : unable to schedule SubRequest.";
@@ -1529,13 +1525,14 @@ castor::db::ora::OraStagerSvc::putDoneStart(u_signed64 subreqId)
     }
     // Get the result
     result = new castor::stager::DiskCopy();
-    result->setId((u_signed64)m_putDoneStartStatement->getDouble(1));
+    result->setId((u_signed64)rset->getDouble(1));
     result->setStatus
       ((enum castor::stager::DiskCopyStatusCodes)
-       m_putDoneStartStatement->getInt(2));
-    result->setPath(m_putDoneStartStatement->getString(3));
+       rset->getInt(2));
+    result->setPath(rset->getString(3));
     // return
     cnvSvc()->commit();
+    m_putDoneStartStatement->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {
     if (0 != result) {
