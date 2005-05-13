@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.20 2005/02/15 09:58:57 bcouturi Exp $
+ * $Id: stager_client_api_put.cpp,v 1.21 2005/05/13 09:51:05 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.20 $ $Date: 2005/02/15 09:58:57 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.21 $ $Date: 2005/05/13 09:51:05 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -109,7 +109,13 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
       req.addSubRequests(subreq);
       std::string sfilename(requests[i].filename);
       subreq->setFileName(sfilename);
+      subreq->setXsize(requests[i].filesize);
+      subreq->setModeBits(requests[i].mode);
       subreq->setRequest(&req);
+
+      const char *dprotocol = (requests[i].protocol != 0)?(requests[i].protocol):"NULL";
+      stage_trace(3, "%s file=%s proto=%s size=%d mode=%x", 
+		  func, requests[i].filename, requests[i].protocol, requests[i].filesize, requests[i].mode);
 
     }
 
