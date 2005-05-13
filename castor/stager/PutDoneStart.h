@@ -41,7 +41,7 @@ struct Cstager_SvcClass_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class PutDoneStart
-// Internal request used when a putDone job has just started. 
+// Internal request used when a putDone job has just started.
 //------------------------------------------------------------------------------
 
 /**

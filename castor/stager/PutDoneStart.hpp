@@ -30,7 +30,6 @@
 #define CASTOR_STAGER_PUTDONESTART_HPP
 
 // Include Files
-#include "castor/stager/Request.hpp"
 #include "castor/stager/StartRequest.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -46,9 +45,9 @@ namespace castor {
 
     /**
      * class PutDoneStart
-     * Internal request used when a putDone job has just started. 
+     * Internal request used when a putDone job has just started.
      */
-    class PutDoneStart : public virtual StartRequest, public virtual Request {
+    class PutDoneStart : public virtual StartRequest {
 
     public:
 
