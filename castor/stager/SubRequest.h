@@ -217,6 +217,24 @@ int Cstager_SubRequest_lastModificationTime(struct Cstager_SubRequest_t* instanc
 int Cstager_SubRequest_setLastModificationTime(struct Cstager_SubRequest_t* instance, u_signed64 new_var);
 
 /**
+ * Get the value of answered
+ * Whether somebody answered to this subRequest already. 1 means that it is the
+ * case, 0 does not ensure it is not the case. This was introduced to deal with
+ * prepareToGet where the answer is sent before the status of the subrequest
+ * changes
+ */
+int Cstager_SubRequest_answered(struct Cstager_SubRequest_t* instance, int* var);
+
+/**
+ * Set the value of answered
+ * Whether somebody answered to this subRequest already. 1 means that it is the
+ * case, 0 does not ensure it is not the case. This was introduced to deal with
+ * prepareToGet where the answer is sent before the status of the subrequest
+ * changes
+ */
+int Cstager_SubRequest_setAnswered(struct Cstager_SubRequest_t* instance, int new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

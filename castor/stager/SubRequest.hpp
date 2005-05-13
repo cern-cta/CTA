@@ -291,6 +291,30 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_answered
+       * Whether somebody answered to this subRequest already. 1 means that it is the
+       * case, 0 does not ensure it is not the case. This was introduced to deal with
+       * prepareToGet where the answer is sent before the status of the subrequest
+       * changes
+       * @return the value of m_answered
+       */
+      int answered() const {
+        return m_answered;
+      }
+
+      /**
+       * Set the value of m_answered
+       * Whether somebody answered to this subRequest already. 1 means that it is the
+       * case, 0 does not ensure it is not the case. This was introduced to deal with
+       * prepareToGet where the answer is sent before the status of the subrequest
+       * changes
+       * @param new_var the new value of m_answered
+       */
+      void setAnswered(int new_var) {
+        m_answered = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -449,6 +473,12 @@ namespace castor {
 
       /// Time of the last modification on this SubRequest
       u_signed64 m_lastModificationTime;
+
+      /*
+       * Whether somebody answered to this subRequest already. 1 means that it is the case, 0 does not ensure it is not the case.
+       * This was introduced to deal with prepareToGet where the answer is sent before the status of the subrequest changes
+      */
+      int m_answered;
 
       /// The id of this object
       u_signed64 m_id;
