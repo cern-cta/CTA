@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.20 2005/04/20 10:24:17 sponcec3 Exp $
+ * $Id: stager_client_api_get.cpp,v 1.21 2005/05/13 09:28:04 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.20 $ $Date: 2005/04/20 10:24:17 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.21 $ $Date: 2005/05/13 09:28:04 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -122,7 +122,10 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
     // A vector. BEWARE, the responses must be de-allocated afterwards
     std::vector<castor::rh::Response *>respvec;    
     castor::client::VectorResponseHandler rh(&respvec);
-    client.sendRequest(&req, &rh);
+    std::string reqid = client.sendRequest(&req, &rh);
+    if (requestId != NULL) {
+      *requestId = strdup(reqid.c_str());
+    }
 
     // Parsing the responses which have been stored in the vector
     int nbResponses =  respvec.size();
