@@ -1131,7 +1131,8 @@ END;
 
 /* PL/SQL method putDoneFunc */
 CREATE OR REPLACE PROCEDURE putDoneFunc (cfId IN INTEGER,
-                                         fs IN INTEGER) AS
+                                         fs IN INTEGER,
+					 context IN INTEGER) AS
   nc INTEGER;
   tcId INTEGER;
   fsId INTEGER;
@@ -1157,6 +1158,19 @@ BEGIN
       RETURNING id INTO tcId;
     INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
    END LOOP;
+ END IF;
+ -- If we are a real PutDone (and not a put outside of a prepareToPut)
+ -- then we have to archive the original preapareToPut subRequest
+ IF context = 2 THEN
+   DECLARE
+     srId NUMBER;
+   BEGIN
+     SELECT SubRequest.id INTO srId
+       FROM SubRequest, StagePrepareToPutRequest
+      WHERE SubRequest.castorFile = cfId
+        AND SubRequest.request = StagePrepareToPutRequest.id;
+     archiveSubReq(srId);
+   END;
  END IF;
 END;
 
@@ -1187,15 +1201,21 @@ BEGIN
      FROM StagePutRequest, SubRequest
     WHERE SubRequest.id = srId
       AND StagePutRequest.id = SubRequest.request;
-   -- check that there is a PrepareToPut going on
-   SELECT SubRequest.diskCopy INTO unused
-     FROM StagePrepareToPutRequest, SubRequest
-    WHERE SubRequest.CastorFile = cfId
-      AND StagePrepareToPutRequest.id = SubRequest.request;
-   -- if we got here, we are a Put inside a PrepareToPut
-   contextPIPP := 1;
+   BEGIN
+     -- check that there is a PrepareToPut going on
+     SELECT SubRequest.diskCopy INTO unused
+       FROM StagePrepareToPutRequest, SubRequest
+      WHERE SubRequest.CastorFile = cfId
+        AND StagePrepareToPutRequest.id = SubRequest.request;
+     -- if we got here, we are a Put inside a PrepareToPut
+     contextPIPP := 0;
+   EXCEPTION WHEN NO_DATA_FOUND THEN
+     -- here we are a standalone Put
+     contextPIPP := 1;
+   END;
  EXCEPTION WHEN NO_DATA_FOUND THEN
-   contextPIPP := 0;
+   -- here we are a PutDone
+   contextPIPP := 2;
  END;
  -- get uid, gid and reserved space from Request
  SELECT euid, egid, xsize INTO userId, groupId, reservedSpace FROM SubRequest,
@@ -1211,8 +1231,8 @@ BEGIN
  -- archive Subrequest
  archiveSubReq(srId);
  --  If not a put inside a PrepareToPut, create TapeCopies and update DiskCopy status
- IF contextPIPP = 0 THEN
-   putDoneFunc(cfId, fs);
+ IF contextPIPP != 0 THEN
+   putDoneFunc(cfId, fs, contextPIPP);
  END IF;
  COMMIT;
 END;
