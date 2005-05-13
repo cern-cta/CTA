@@ -2,7 +2,7 @@
 -- Copyright (C) 2003 by CERN/IT/ADC/CA
 -- All rights reserved
 --
--- @(#)$RCSfile: dlf_oracle_tbl.sql,v $ $Revision: 1.8 $ $Date: 2005/05/10 16:34:52 $ CERN IT-ADC Vitaly Motyakov
+-- @(#)$RCSfile: dlf_oracle_tbl.sql,v $ $Revision: 1.9 $ $Date: 2005/05/13 13:03:35 $ CERN IT-ADC Vitaly Motyakov
 --
 --     Create logging facility ORACLE tables.
 
@@ -26,7 +26,7 @@ CREATE TABLE dlf_messages (
 	msg_seq_no NUMBER,
 	time DATE,
 	time_usec NUMBER,
-	req_id CHAR (36) BINARY,
+	req_id CHAR (36),
 	host_id NUMBER,
 	facility NUMBER(3),
 	severity NUMBER(3),
@@ -48,8 +48,8 @@ CREATE TABLE dlf_str_param_values (
 
 CREATE TABLE dlf_rq_ids_map (
 	msg_seq_no NUMBER,
-	req_id CHAR(36) BINARY,
-	subreq_id CHAR(36) BINARY);
+	req_id CHAR(36),
+	subreq_id CHAR(36));
 
 CREATE TABLE dlf_facilities (
 	fac_no NUMBER(3),
