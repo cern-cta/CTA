@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2005/05/09 16:09:05 $ $Author: mbraeger $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2005/05/13 15:45:28 $ $Author: sponcec3 $
  *
  *
  *
@@ -52,7 +52,6 @@ const char* castor::ObjectsIdStrings[91] = {
   "Segment",
   "DELETED TYPE",
   "DELETED TYPE",
-  "DELETED TYPE",
   "StageGetNextRequest",
   "DELETED TYPE",
   "DELETED TYPE",
@@ -79,6 +78,7 @@ const char* castor::ObjectsIdStrings[91] = {
   "StageUpdateRequest",
   "FileRequest",
   "QryRequest",
+  "DELETED TYPE",
   "StagePutNextRequest",
   "StageUpdateNextRequest",
   "StageAbortRequest",
