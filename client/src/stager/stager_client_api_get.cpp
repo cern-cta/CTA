@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.21 2005/05/13 09:28:04 bcouturi Exp $
+ * $Id: stager_client_api_get.cpp,v 1.22 2005/05/13 10:08:00 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.21 $ $Date: 2005/05/13 09:28:04 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.22 $ $Date: 2005/05/13 10:08:00 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -112,9 +112,13 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
       if (requests[i].protocol) {
 	subreq->setProtocol(std::string(requests[i].protocol));
       }
-      subreq->setPriority(requests[i].priority);
-      
+      subreq->setPriority(requests[i].priority);      
       subreq->setRequest(&req);
+      
+      const char *dprotocol = (requests[i].protocol != 0)?(requests[i].protocol):"NULL";
+      stage_trace(3, "%s file=%s proto=%s", 
+		  func, requests[i].filename, requests[i].protocol);
+
 
     }
 
