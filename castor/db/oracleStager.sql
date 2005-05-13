@@ -942,7 +942,7 @@ BEGIN
  -- with triggers that we are the only ones to deal with its copies
  UPDATE CastorFile set fileSize = fs WHERE id = cfId
   RETURNING fileId, nsHost INTO fId, nh;
- -- Determine the context (Put inside PrepareToPut ?)
+ -- Determine the context (Put inside PrepareToPut or not)
  BEGIN
    -- check that we are a Put
    SELECT StagePutRequest.id INTO unused
@@ -962,9 +962,9 @@ BEGIN
  -- get uid, gid and reserved space from Request
  SELECT euid, egid, xsize INTO userId, groupId, reservedSpace FROM SubRequest,
      (SELECT euid, egid, id from StagePutRequest UNION
-      SELECT euid, egid, id from StagePrepareToPutRequest) Request
+      SELECT euid, egid, id from StagePutDoneRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
- -- If no PrepareToPut, update the FileSystem free space
+ -- If not a put inside a PrepareToPut, update the FileSystem free space
  IF contextPIPP = 0 THEN
    SELECT fileSystem into fsId from DiskCopy
     WHERE castorFile = cfId AND status = 6;
@@ -972,7 +972,7 @@ BEGIN
  END IF;
  -- archive Subrequest
  archiveSubReq(srId);
- -- If no PrepareToPut, create TapeCopies and update DiskCopy status
+ --  If not a put inside a PrepareToPut, create TapeCopies and update DiskCopy status
  IF contextPIPP = 0 THEN
    putDoneFunc(cfId, fs);
  END IF;
