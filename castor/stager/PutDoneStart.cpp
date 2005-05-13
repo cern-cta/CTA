@@ -31,7 +31,6 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/PutDoneStart.hpp"
-#include "castor/stager/Request.hpp"
 #include "castor/stager/StartRequest.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -42,7 +41,6 @@
 //------------------------------------------------------------------------------
 castor::stager::PutDoneStart::PutDoneStart() throw() :
   StartRequest(),
-  Request(),
   m_id(0) {
 };
 
@@ -66,7 +64,6 @@ void castor::stager::PutDoneStart::print(std::ostream& stream,
   }
   // Call print on the parent class(es)
   this->StartRequest::print(stream, indent, alreadyPrinted);
-  this->Request::print(stream, indent, alreadyPrinted);
   // Output of all members
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
