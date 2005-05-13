@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.8 2005/02/01 10:48:30 bcouturi Exp $
+ * $Id: stager_client_api_query.cpp,v 1.9 2005/05/13 09:29:51 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.8 $ $Date: 2005/02/01 10:48:30 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.9 $ $Date: 2005/05/13 09:29:51 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -159,8 +159,6 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
 					 int nbreqs,
 					 struct stage_requestquery_resp **responses,
 					 int *nbresps,
-					 struct stage_subrequestquery_resp **subresponses,
-					 int *nbsubresps,
 					 struct stage_options* opts) {
 
 
@@ -214,7 +212,6 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
       return -1;
     }
     
-
     // Creating the array of file responses
     // Same size as requests as we only do files for the moment
     *responses = (struct stage_requestquery_resp *) 
