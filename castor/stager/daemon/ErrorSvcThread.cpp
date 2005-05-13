@@ -1,5 +1,5 @@
 /*
- * $Id: ErrorSvcThread.cpp,v 1.6 2005/04/20 10:26:27 sponcec3 Exp $
+ * $Id: ErrorSvcThread.cpp,v 1.7 2005/05/13 10:10:34 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.6 $ $Date: 2005/04/20 10:26:27 $ CERN IT-FIO/DS Sebastien Ponce";
+static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.7 $ $Date: 2005/05/13 10:10:34 $ CERN IT-FIO/DS Sebastien Ponce";
 #endif
 
 /* ================================================================= */
@@ -271,8 +271,8 @@ EXTERN_C int DLL_DECL stager_error_process(void *output) {
     }
   } else {
     // still update the DB to put the subrequest in FAILED_FINISHED
-    try {
-      stgSvc->updateAndCheckSubRequest(subReq);    
+    try {      
+      svcs->updateRep(&ad, subReq, true);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       STAGER_LOG_DB_ERROR(NULL, func,
