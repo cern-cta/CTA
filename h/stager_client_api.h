@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.21 $ $Release$ $Date: 2005/02/02 18:09:00 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.22 $ $Release$ $Date: 2005/05/13 09:54:36 $ $Author: bcouturi $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.21 $
- * @date $Date: 2005/02/02 18:09:00 $
+ * @version $Revision: 1.22 $
+ * @date $Date: 2005/05/13 09:54:36 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.21 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.22 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -142,6 +142,7 @@
 
 #include <osdep.h>
 #include <sys/types.h>
+
 
 /** \addtogroup Functions */
 /*\@{*/
@@ -514,9 +515,27 @@ EXTERN_C int stage_updateNext _PROTO((const char *reqId,
  * Request structure to put a file to CASTOR.
  */
 struct stage_prepareToPut_filereq {
+
+  /**  
+   * String representing the protocol that should be used to access he data (rfio, root ...)
+   */ 
   char          *protocol;
+
+  /**
+   * The CASTOR filename of the files to be retrieved from the store.
+   */
   char		*filename;
+
+  /**
+   * Mode for opening the file
+   */
   int		mode;
+
+  /**
+   * Size
+   */
+  u_signed64	filesize;
+
 };
 
 /**
@@ -925,6 +944,16 @@ struct stage_requestquery_resp {
    */
   TIME_T modificationTime;
 
+  /**
+   * Array of stage_subrequestquery_resp giving the status of all subrequests
+   */
+  struct stage_subrequestquery_resp *subrequests;
+
+  /**
+   *  Number of subrequests in the array
+   */                                                 
+  int nbsubrequests;
+
  /**
    * Error code
    */
@@ -977,8 +1006,6 @@ EXTERN_C int DLL_DECL stage_requestquery _PROTO((struct stage_query_req *request
                                                  int nbreqs,
                                                  struct stage_requestquery_resp **responses,
                                                  int *nbresps,
-                                                 struct stage_subrequestquery_resp **subresponses,
-                                                 int *nbsubresps,
                                                  struct stage_options* opts));
 
 
