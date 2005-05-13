@@ -137,7 +137,7 @@ CREATE TABLE StageFindRequestRequest (flags INTEGER, userName VARCHAR2(2048), eu
 
 /* SQL statements for type SubRequest */
 DROP TABLE SubRequest;
-CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER);
+CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER);
 
 /* SQL statements for type StageReleaseFilesRequest */
 DROP TABLE StageReleaseFilesRequest;
@@ -447,7 +447,7 @@ BEGIN
   UPDATE SubRequest SET status = 8 -- FINISHED
    WHERE id = srId RETURNING request INTO rid;
   -- Try to see whether another subrequest in the same
-  -- request is still procesing
+  -- request is still processing
   SELECT count(*) INTO nb FROM SubRequest
    WHERE request = rid AND status != 8; -- FINISHED
   -- Archive request, client and SubRequests if needed
@@ -1011,11 +1011,13 @@ BEGIN
   FOR UPDATE;
  -- Update Status
  UPDATE SubRequest SET status = newStatus,
+                       answered = 1,
                        lastModificationTime = getTime() WHERE id = srId;
  -- Check whether it was the last subrequest in the request
  SELECT id INTO result FROM SubRequest
   WHERE request = reqId
-    AND status NOT IN (6, 7, 10, 9) -- READY, FAILED, FAILED_ANSWERING, FAILED_FINISHED
+    AND status NOT IN (6, 7, 8, 9, 10) -- READY, FAILED, FINISHED, FAILED_FINISHED, FAILED_ANSWERING
+    AND answered = 0
     AND ROWNUM < 2;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
   result := 0;
