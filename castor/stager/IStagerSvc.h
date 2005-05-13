@@ -629,11 +629,18 @@ int Cstager_IStagerSvc_selectTapeCopiesForMigration
  int *nbItems);
 
 /**
- * Updates a SubRequest status in the DB and tells
+ * Updates a SubRequest status in the DB, including
+ * the answered flag that is set to 1 and tells
  * whether the request to which it belongs still
- * has some SubRequests in SUBREQUEST_START status.
+ * has some other SubRequests that were not processed.
+ * By not processed we mean that their "answered" flag
+ * is not set AND their status is neither READY neither
+ * FINISHED nor one of the FAILED* status.
  * The two operations are executed atomically.
  * The update is commited before returning.
+ * This method should only be called when the calling
+ * process is answering to the client. In other cases,
+ * the updateRep method should be used.
  * @param stgSvc the IStagerSvc used
  * @param subreq the SubRequest to update
  * @param result 1 is there are still SubRequests in

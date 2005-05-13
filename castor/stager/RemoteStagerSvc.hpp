@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.39 $ $Release$ $Date: 2005/05/07 10:04:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.40 $ $Release$ $Date: 2005/05/13 09:57:22 $ $Author: sponcec3 $
  *
  *
  *
@@ -509,11 +509,18 @@ namespace castor {
         throw (castor::exception::Exception);
 
       /**
-       * Updates a SubRequest status in the DB and tells
+       * Updates a SubRequest status in the DB, including
+       * the answered flag that is set to 1 and tells
        * whether the request to which it belongs still
-       * has some SubRequests in SUBREQUEST_START status.
+       * has some other SubRequests that were not processed.
+       * By not processed we mean that their "answered" flag
+       * is not set AND their status is neither READY neither
+       * FINISHED nor one of the FAILED* status.
        * The two operations are executed atomically.
        * The update is commited before returning.
+       * This method should only be called when the calling
+       * process is answering to the client. In other cases,
+       * the updateRep method should be used.
        * @param subreq the SubRequest to update
        * @return whether there are still SubRequests in
        * SUBREQUEST_START status within the same request
