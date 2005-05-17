@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.22 $ $Release$ $Date: 2005/05/13 09:54:36 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.23 $ $Release$ $Date: 2005/05/17 13:46:06 $ $Author: bcouturi $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.22 $
- * @date $Date: 2005/05/13 09:54:36 $
+ * @version $Revision: 1.23 $
+ * @date $Date: 2005/05/17 13:46:06 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.22 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.23 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -857,6 +857,11 @@ struct stage_filequery_resp {
    * The size of the file
    */
   u_signed64    size;
+
+  /**
+   * The server having a disk copy
+   */
+  char *diskserver;
 
   /**
    * The pool containing the file
