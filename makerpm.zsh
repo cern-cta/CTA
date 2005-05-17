@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-# $Id: makerpm.zsh,v 1.6 2005/01/24 10:02:28 jdurand Exp $
+# $Id: makerpm.zsh,v 1.7 2005/05/17 11:17:04 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -70,7 +70,7 @@ if [ \"\$1\" = \"1\" ]; then
 fi
 " >> $spec
   fi
-  fakeroot rpmbuild -bb $spec
+  fakeroot rpmbuild -ba $spec
   cd ..
 end
 
