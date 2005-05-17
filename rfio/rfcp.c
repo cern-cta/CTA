@@ -53,7 +53,7 @@ static char sccsid[] = "@(#)rfcp.c,v 1.61 2004/03/02 16:18:33 CERN/IT/DS/HSM Fel
 #define OK    1
 #endif  /* vms */
 
-#define OLD_STAGE_API "USE_OLD_STAGE_API"
+#define RFCP_USE_CASTOR_V2 "RFCP_USE_CASTOR_V2"
 
 extern int serrno ;
 extern int rfio_errno ;
@@ -95,6 +95,7 @@ static int local_mode;
 void usage();
 off64_t copyfile _PROTO((int, int, char *, u_signed64));
 off64_t copyfile_hpss _PROTO((int, int, char *, struct stat64 *, u_signed64));
+int use_castor2_api _PROTO(());
 #ifdef CNS_ROOT
 #ifdef hpux
 int copyfile_stage _PROTO(());
@@ -374,36 +375,32 @@ int main(argc, argv)
 	TRACE(1,"rfio","rfcp: Setting stager log callback");
 	stage_setlog((void (*) _PROTO((int,char *)))&copyfile_stglog);
 
-	if (rfio_HsmIf_IsHsmFile(filename) && (! input_is_local)) {
+	if (! use_castor2_api()) {
+	  if (rfio_HsmIf_IsHsmFile(filename) && (! input_is_local)) {
 		/* We switch to the explicit STAGE mode */
-	        if (getenv(OLD_STAGE_API)!= NULL) {
-		  int rc = copyfile_stage((char *) inpfile, (char *) filename, (mode_t) (sbuf.st_mode & 0777), (((have_maxsize > 0) && (inpfile_size > maxsize)) ? maxsize : inpfile_size), (int) (( sbuf.st_dev  == 0 && sbuf.st_ino  == 1 ) ? 1 : 0));
-		  if (rc >= 0) {
-			  exit(rc);
-		  }
-	        }
+		int rc = copyfile_stage((char *) inpfile, (char *) filename, (mode_t) (sbuf.st_mode & 0777), (((have_maxsize > 0) && (inpfile_size > maxsize)) ? maxsize : inpfile_size), (int) (( sbuf.st_dev  == 0 && sbuf.st_ino  == 1 ) ? 1 : 0));
+		if (rc >= 0) {
+		 exit(rc);
+		}
 		/* When rc < 0 this means we switch to the old buf inefficient method */
 		/* The user would not accept we always fail just because the input filename is too long */
 		/* Note that this switch requires anyway the output filename to be in the limits */
-	} else if (rfio_HsmIf_IsHsmFile(filename)) {
-	        if (getenv(OLD_STAGE_API)!= NULL) {
-		  /* The output is in CASTOR, and input is local or maxsize possibly not bound exactly to the MB unit */
-		  int rc = copyfile_stage_from_local((char *) inpfile, (char *) filename, (mode_t) (sbuf.st_mode & 0777), (((have_maxsize > 0) && (inpfile_size > maxsize)) ? maxsize : inpfile_size), (int) (( sbuf.st_dev  == 0 && sbuf.st_ino  == 1 ) ? 1 : 0));
-		  if (rc >= 0) {
-			  exit(rc);
-		  }
+	  } else if (rfio_HsmIf_IsHsmFile(filename)) {
+		/* The output is in CASTOR, and input is local or maxsize possibly not bound exactly to the MB unit */
+		int rc = copyfile_stage_from_local((char *) inpfile, (char *) filename, (mode_t) (sbuf.st_mode & 0777), (((have_maxsize > 0) && (inpfile_size > maxsize)) ? maxsize : inpfile_size), (int) (( sbuf.st_dev  == 0 && sbuf.st_ino  == 1 ) ? 1 : 0));
+		if (rc >= 0) {
+		 exit(rc);
 		}
 		/* In theory it cannot happen (!) copyfile_stage_from_local() returns >= 0 always */
 		/* When rc < 0 this means we switch to the old buf inefficient method */
 		/* The user would not accept we always fail just because the input filename is too long */
 		/* Note that this switch requires anyway the output filename to be in the limits */
-	} else if (rfio_HsmIf_IsHsmFile(inpfile)) {
+	  } else if (rfio_HsmIf_IsHsmFile(inpfile)) {
 		/* Output is not CASTOR but input is : we will follow the classic rfcp behaviour */
 		/* but we want neverthless to handle the termination signals v.s. stager */
-		if (getenv(OLD_STAGE_API)!= NULL) {
-		  TRACE(2,"rfio","Instructing signal handler to exit");
-		  copyfile_stgcleanup_instruction = CLEANER_EXIT;
-		}
+		TRACE(2,"rfio","Instructing signal handler to exit");
+		copyfile_stgcleanup_instruction = CLEANER_EXIT;
+	  }
 	}
 #endif
 
@@ -1364,12 +1361,13 @@ void copyfile_stgcleanup(sig)
 {
 	TRACE(2,"rfio","copyfile_stgcleanup: Received signal No %d", sig);
 	TRACE(2,"rfio","copyfile_stgcleanup: Sending stage_kill(%d)", sig);
-	if (getenv(OLD_STAGE_API)== NULL) {
+	if (use_castor2_api()) {
 	  /* BC 2005-03-14 */
 	  /* Disabling this function for the new stager as stage_rm is not implemented yet */
+	  exit(USERR);
 	  return;
 	}
-	
+
 	stage_kill(sig);
 	if (copyfile_stgcleanup_instruction != CLEANER_NOOP) {
 		if ((copyfile_stgcleanup_instruction & CLEANER_CLR) == CLEANER_CLR) {
@@ -1905,7 +1903,7 @@ int cleanpath(output,input)
 {
 	char *dup, *p;
 
-	if (getenv(OLD_STAGE_API)== NULL) {
+	if (use_castor2_api()) {
 	  /* BC 2005-01-05 */
 	  /* Disabling this function as it clashes with the TURL parsing: rfio://.... */
 	  return 0;
@@ -1993,3 +1991,20 @@ Sigfunc *_rfio_signal(signo, func)
 	return(oact.sa_handler);
 }
 #endif /* #ifndef _WIN32 */
+
+/* Function that is saying if we work in old CASTOR1 compat mode (default) or CASTOR2 mode */
+int use_castor2_api() {
+  char *p;
+
+  if (((p = getenv(RFCP_USE_CASTOR_V2)) == NULL) &&
+      ((p = getconfent("RFCP","USE_CASTOR_V2",0)) == NULL)) {
+    /* Variable not set: compat mode */
+    return(0);
+  }
+  if ((strcmp(p,"YES") == 0) || (strcmp(p,"yes") == 0) || (atoi(p) == 1)) {
+    /* Variable set to yes or 1 : new mode */
+    return(1);
+  }
+  /* Variable set but not to 1 : compat mode */
+  return(0);
+}
