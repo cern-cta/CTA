@@ -292,9 +292,9 @@
 #endif
 #endif
 
-/* ----- */
-/* STAGE */
-/* ----- */
+/* ------ */
+/* STAGER */
+/* ------ */
 #if BuildStageClient
 #if !BuildStageLibrary
 #undef BuildStageLibrary
@@ -338,6 +338,20 @@
 #if BuildRmLibrary != YES
 #undef BuildRmLibrary
 #define BuildRmLibrary YES
+#endif
+#if !BuildRfioLibrary
+#undef BuildRfioLibrary
+#define BuildRfioLibrary YES
+#endif
+#endif
+
+/* ----------------- */
+/* OLD STAGE CLIENTS */
+/* ----------------- */
+#if BuildStageClientOld
+#if !BuildStageLibrary
+#undef BuildStageLibrary
+#define BuildStageLibrary YES
 #endif
 #if !BuildRfioLibrary
 #undef BuildRfioLibrary
@@ -613,6 +627,9 @@ RTCOPYDIR = rtcopy
 #endif
 #if BuildStageClient || BuildStageDaemon || BuildStageLibrary
 STAGEDIR = stager
+#endif
+#if BuildStageClientOld
+STAGEDIROLD = stage
 #endif
 #if BuildRmClient || BuildRmMaster || BuildRmNode || BuildRmLibrary
 RESOURCEMONITORINGDIR = resourcemonitoring

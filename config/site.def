@@ -250,6 +250,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildRtstat		NO
 #define BuildRtcpclientd	NO
 #define BuildStageClient	NO
+#define BuildStageClientOld	NO
 #define BuildStageDaemon	NO
 #define BuildStageLibrary	NO
 #define BuildRmMaster		NO
