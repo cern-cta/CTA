@@ -1,6 +1,14 @@
 #!/bin/zsh
 
-# $Id: makerpm.zsh,v 1.7 2005/05/17 11:17:04 jdurand Exp $
+# $Id: makerpm.zsh,v 1.8 2005/05/17 11:34:24 jdurand Exp $
+
+#
+## THIS SCRIPT CONVERTS .deb TO .rpms! IT DOES /NOT/ BUILD
+## THE PACKAGES THE rpm WAY. IF YOU WANT TO DO SO THEN DO:
+## make tar
+## cd ..
+## rpmbuild -ta produced_tar_file
+#
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -70,7 +78,7 @@ if [ \"\$1\" = \"1\" ]; then
 fi
 " >> $spec
   fi
-  fakeroot rpmbuild -ba $spec
+  fakeroot rpmbuild -bb $spec
   cd ..
 end
 
