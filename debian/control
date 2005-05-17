@@ -211,6 +211,12 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  Stager clients
 
+Package: castor-stager-clientold
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: castor (Cern Advanced STORage system)
+ Old Stager clients to access SHIFT/CASTORv1 stager daemon
+
 Package: castor-stager-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate

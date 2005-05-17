@@ -1,0 +1,13 @@
+usr/bin/stagewrt
+usr/bin/stageout
+usr/bin/stagein
+usr/bin/stagecat
+usr/bin/stageput
+usr/bin/stageqry
+usr/bin/stageclr
+usr/bin/stagealloc
+usr/bin/stageget
+usr/bin/stageupdc
+usr/bin/stageping
+usr/bin/stagechng
+usr/bin/stagestat
