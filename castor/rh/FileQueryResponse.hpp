@@ -243,6 +243,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_diskServer
+       * @return the value of m_diskServer
+       */
+      std::string diskServer() const {
+        return m_diskServer;
+      }
+
+      /**
+       * Set the value of m_diskServer
+       * @param new_var the new value of m_diskServer
+       */
+      void setDiskServer(std::string new_var) {
+        m_diskServer = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -285,6 +301,8 @@ namespace castor {
 
       /// Number of accesses to the file
       unsigned int m_nbAccesses;
+
+      std::string m_diskServer;
 
       /// The id of this object
       u_signed64 m_id;

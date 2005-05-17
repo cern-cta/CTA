@@ -275,6 +275,23 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_diskServer
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_diskServer(castor::rh::FileQueryResponse* instance, const char** var) {
+    *var = instance->diskServer().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_setDiskServer
+  //----------------------------------------------------------------------------
+  int Crh_FileQueryResponse_setDiskServer(castor::rh::FileQueryResponse* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setDiskServer(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_FileQueryResponse_id
   //----------------------------------------------------------------------------
   int Crh_FileQueryResponse_id(castor::rh::FileQueryResponse* instance, u_signed64* var) {

@@ -222,6 +222,16 @@ int Crh_FileQueryResponse_nbAccesses(struct Crh_FileQueryResponse_t* instance, u
 int Crh_FileQueryResponse_setNbAccesses(struct Crh_FileQueryResponse_t* instance, unsigned int new_var);
 
 /**
+ * Get the value of diskServer
+ */
+int Crh_FileQueryResponse_diskServer(struct Crh_FileQueryResponse_t* instance, const char** var);
+
+/**
+ * Set the value of diskServer
+ */
+int Crh_FileQueryResponse_setDiskServer(struct Crh_FileQueryResponse_t* instance, const char* new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

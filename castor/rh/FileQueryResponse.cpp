@@ -49,6 +49,7 @@ castor::rh::FileQueryResponse::FileQueryResponse() throw() :
   m_creationTime(0),
   m_accessTime(0),
   m_nbAccesses(0),
+  m_diskServer(""),
   m_id(0) {
 };
 
@@ -81,6 +82,7 @@ void castor::rh::FileQueryResponse::print(std::ostream& stream,
   stream << indent << "creationTime : " << m_creationTime << std::endl;
   stream << indent << "accessTime : " << m_accessTime << std::endl;
   stream << indent << "nbAccesses : " << m_nbAccesses << std::endl;
+  stream << indent << "diskServer : " << m_diskServer << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
