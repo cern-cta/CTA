@@ -1,5 +1,5 @@
 /*
- * 
+ * $Id: stager_qry.c,v 1.2 2005/05/17 19:19:24 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "";
+static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.2 $ $Date: 2005/05/17 19:19:24 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
