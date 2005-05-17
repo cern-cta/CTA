@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.10 2005/05/17 13:31:24 bcouturi Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.11 2005/05/17 13:32:27 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.10 $ $Date: 2005/05/17 13:31:24 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.11 $ $Date: 2005/05/17 13:32:27 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -259,7 +259,7 @@ namespace castor {
           // staged, otherwise keep the original status.
           if (dc->diskCopyStatus() == DISKCOPY_STAGED) {
             fr->setStatus(FILE_STAGED);
-	    ft->setDiskServer(dc->diskServer());
+	    fr->setDiskServer(dc->diskServer());
           }
         }
       }
