@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.11 2005/05/17 11:19:50 jdurand Exp $
+# $Id: maketar.sh,v 1.12 2005/05/17 11:26:21 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -136,7 +136,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     fi
     if [ -s "debian/$package.dirs" ]; then
 	for dir in `cat debian/$package.dirs`; do
-	    echo "%dir $dir" >> CASTOR.spec
+	    echo "%dir /$dir" >> CASTOR.spec
 	done
     fi
     if [ -s "debian/$package.cron.d" ]; then

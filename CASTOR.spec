@@ -104,5 +104,5 @@ for i in `find . -name "*.sysconfig"`; do
 done
 
 #
-## The following will be filled dynamically with the rule: make rpm
+## The following will be filled dynamically with the rule: make rpm, or make tar
 #
