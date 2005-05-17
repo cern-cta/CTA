@@ -99,6 +99,7 @@ void castor::io::StreamFileQueryResponseCnv::createRep(castor::IAddress* address
   ad->stream() << obj->creationTime();
   ad->stream() << obj->accessTime();
   ad->stream() << obj->nbAccesses();
+  ad->stream() << obj->diskServer();
   ad->stream() << obj->id();
 }
 
@@ -142,6 +143,9 @@ castor::IObject* castor::io::StreamFileQueryResponseCnv::createObj(castor::IAddr
   unsigned int nbAccesses;
   ad->stream() >> nbAccesses;
   object->setNbAccesses(nbAccesses);
+  std::string diskServer;
+  ad->stream() >> diskServer;
+  object->setDiskServer(diskServer);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
