@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2005/02/11 16:51:56 $ $Author: bcouturi $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2005/05/17 12:28:37 $ $Author: sponcec3 $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -54,17 +54,17 @@ OraQuerySvcFactory = s_factoryOraQuerySvc;
 */
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4FileStatementString =
-"SELECT  DiskCopy.id,  DiskCopy.path,  CastorFile.filesize,  nvl(DiskCopy.status, -1), nvl(tpseg.tstatus, -1),  nvl(tpseg.sstatus, -1) FROM CastorFile, DiskCopy, (SELECT tapecopy.castorfile, tapecopy.id, tapecopy.status as tstatus, segment.status as sstatus  FROM tapecopy, segment WHERE tapecopy.id = segment.copy (+)) tpseg WHERE DiskCopy.castorFile = Castorfile.id AND CastorFile.fileId = :1 AND CastorFile.nsHost like :2 AND castorfile.id = tpseg.castorfile (+) ";
+"SELECT castorfile.fileid, castorfile.nshost, DiskCopy.id,  DiskCopy.path,  CastorFile.filesize,  nvl(DiskCopy.status, -1), nvl(tpseg.tstatus, -1),  nvl(tpseg.sstatus, -1), DiskServer.name, FileSystem.mountPoint FROM CastorFile, DiskCopy, (SELECT tapecopy.castorfile, tapecopy.id, tapecopy.status as tstatus, segment.status as sstatus  FROM tapecopy, segment WHERE tapecopy.id = segment.copy (+)) tpseg, FileSystem, DiskServer WHERE DiskCopy.castorFile = Castorfile.id AND CastorFile.fileId = :1 AND CastorFile.nsHost like :2 AND castorfile.id = tpseg.castorfile (+) AND FileSystem.id = DiskCopy.fileSystem and DiskServer.id = FileSystem.diskServer ";
 
 const std::string castor::db::ora::OraQuerySvc::s_listDiskCopiesStatementString =
-"SELECT  castorfile.fileid, castorfile.nshost, DiskCopy.id,  DiskCopy.path,  CastorFile.filesize,  nvl(DiskCopy.status, -1), nvl(tpseg.tstatus, -1),  nvl(tpseg.sstatus, -1) FROM CastorFile, DiskCopy, (SELECT tapecopy.castorfile, tapecopy.id, tapecopy.status as tstatus, segment.status as sstatus  FROM tapecopy, segment WHERE tapecopy.id = segment.copy (+)) tpseg WHERE DiskCopy.castorFile = Castorfile.id AND castorfile.id = tpseg.castorfile (+) ";
+"SELECT  castorfile.fileid, castorfile.nshost, DiskCopy.id,  DiskCopy.path,  CastorFile.filesize,  nvl(DiskCopy.status, -1), nvl(tpseg.tstatus, -1),  nvl(tpseg.sstatus, -1), DiskServer.name, FileSystem.mountPoint FROM CastorFile, DiskCopy, (SELECT tapecopy.castorfile, tapecopy.id, tapecopy.status as tstatus, segment.status as sstatus  FROM tapecopy, segment WHERE tapecopy.id = segment.copy (+)) tpseg WHERE DiskCopy.castorFile = Castorfile.id AND castorfile.id = tpseg.castorfile (+) AND FileSystem.id = DiskCopy.fileSystem and DiskServer.id = FileSystem.diskServer";
 
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4RequestStatementString = 
-"select  castorfile.fileid, castorfile.nshost, DiskCopy.id,   DiskCopy.path,   CastorFile.filesize,   nvl(DiskCopy.status, -1),  nvl(tpseg.tstatus, -1),   nvl(tpseg.sstatus, -1)   from subrequest sr, castorfile, DiskCopy, (SELECT tapecopy.castorfile, tapecopy.id, tapecopy.status as tstatus,  segment.status as sstatus  FROM tapecopy, segment  WHERE tapecopy.id = segment.copy (+)) tpseg,  (select id from stagepreparetogetrequest  where reqid like :1 union  select id from stagepreparetoputrequest where reqid like :1 UNION select id from stagepreparetoupdaterequest where reqid like :1) reqlist WHERE sr.request = reqlist.id AND castorfile.id = sr.castorfile AND  Castorfile.id = DiskCopy.castorFile (+)  AND castorfile.id = tpseg.castorfile (+) order by castorfile.fileid, castorfile.nshost ";
+"select  castorfile.fileid, castorfile.nshost, DiskCopy.id,   DiskCopy.path,   CastorFile.filesize,   nvl(DiskCopy.status, -1),  nvl(tpseg.tstatus, -1),   nvl(tpseg.sstatus, -1), DiskServer.name, FileSystem.mountPoint FROM subrequest sr, castorfile, DiskCopy, (SELECT tapecopy.castorfile, tapecopy.id, tapecopy.status as tstatus,  segment.status as sstatus  FROM tapecopy, segment  WHERE tapecopy.id = segment.copy (+)) tpseg,  (select id from stagepreparetogetrequest  where reqid like :1 union  select id from stagepreparetoputrequest where reqid like :1 UNION select id from stagepreparetoupdaterequest where reqid like :1) reqlist WHERE sr.request = reqlist.id AND castorfile.id = sr.castorfile AND  Castorfile.id = DiskCopy.castorFile (+)  AND castorfile.id = tpseg.castorfile (+) order by castorfile.fileid, castorfile.nshost AND FileSystem.id = DiskCopy.fileSystem and DiskServer.id = FileSystem.diskServer";
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4UsertagStatementString = 
-"select castorfile.fileid, castorfile.nshost, DiskCopy.id,   DiskCopy.path,   CastorFile.filesize,   nvl(DiskCopy.status, -1),  nvl(tpseg.tstatus, -1),   nvl(tpseg.sstatus, -1)   from subrequest sr, castorfile, DiskCopy, (SELECT tapecopy.castorfile, tapecopy.id, tapecopy.status as tstatus,  segment.status as sstatus  FROM tapecopy, segment  WHERE tapecopy.id = segment.copy (+)) tpseg,  (select id from stagepreparetogetrequest  where usertag like :1 union  select id from stagepreparetoputrequest where usertag like :1 UNION select id from stagepreparetoupdaterequest where usertag like :1) reqlist WHERE sr.request = reqlist.id AND castorfile.id = sr.castorfile AND Castorfile.id = DiskCopy.castorFile (+)  AND castorfile.id = tpseg.castorfile (+) order by castorfile.fileid, castorfile.nshost ";
+"select castorfile.fileid, castorfile.nshost, DiskCopy.id,   DiskCopy.path,   CastorFile.filesize,   nvl(DiskCopy.status, -1),  nvl(tpseg.tstatus, -1),   nvl(tpseg.sstatus, -1), DiskServer.name, FileSystem.mountPoint FROM subrequest sr, castorfile, DiskCopy, (SELECT tapecopy.castorfile, tapecopy.id, tapecopy.status as tstatus,  segment.status as sstatus  FROM tapecopy, segment  WHERE tapecopy.id = segment.copy (+)) tpseg,  (select id from stagepreparetogetrequest  where usertag like :1 union  select id from stagepreparetoputrequest where usertag like :1 UNION select id from stagepreparetoupdaterequest where usertag like :1) reqlist WHERE sr.request = reqlist.id AND castorfile.id = sr.castorfile AND Castorfile.id = DiskCopy.castorFile (+)  AND castorfile.id = tpseg.castorfile (+) order by castorfile.fileid, castorfile.nshost AND FileSystem.id = DiskCopy.fileSystem and DiskServer.id = FileSystem.diskServer";
 
 
 // -----------------------------------------------------------------------
@@ -140,15 +140,19 @@ castor::db::ora::OraQuerySvc::diskCopies4File
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
       castor::stager::DiskCopyInfo* item =
         new castor::stager::DiskCopyInfo();
-      item->setId(rset->getInt(1));
+      item->setFileId(rset->getInt(1));
+      item->setNsHost(rset->getString(2));
+      item->setId(rset->getInt(3));
       item->setDiskCopyPath(rset->getString(4));
-      item->setSize(rset->getInt(3));
+      item->setSize(rset->getInt(5));
       item->setDiskCopyStatus((castor::stager::DiskCopyStatusCodes)
-                              rset->getInt(4));
-      item->setTapeCopyStatus((castor::stager::TapeCopyStatusCodes)
-                              rset->getInt(5));
-      item->setSegmentStatus((castor::stager::SegmentStatusCodes)
                               rset->getInt(6));
+      item->setTapeCopyStatus((castor::stager::TapeCopyStatusCodes)
+                              rset->getInt(7));
+      item->setSegmentStatus((castor::stager::SegmentStatusCodes)
+                              rset->getInt(8));
+      item->setDiskServer(rset->getString(9));
+      item->setMountPoint(rset->getString(10));
       result.push_back(item);
     }
     return result;
@@ -194,6 +198,8 @@ castor::db::ora::OraQuerySvc::listDiskCopies
                               rset->getInt(7));
       item->setSegmentStatus((castor::stager::SegmentStatusCodes)
                               rset->getInt(8));
+      item->setDiskServer(rset->getString(9));
+      item->setMountPoint(rset->getString(10));
       result.push_back(item);
     }
     return result;
@@ -239,6 +245,8 @@ castor::db::ora::OraQuerySvc::diskCopies4Request
                               rset->getInt(7));
       item->setSegmentStatus((castor::stager::SegmentStatusCodes)
                               rset->getInt(8));
+      item->setDiskServer(rset->getString(9));
+      item->setMountPoint(rset->getString(10));
       result.push_back(item);
     }
     return result;
@@ -285,6 +293,8 @@ castor::db::ora::OraQuerySvc::diskCopies4Usertag
                               rset->getInt(7));
       item->setSegmentStatus((castor::stager::SegmentStatusCodes)
                               rset->getInt(8));
+      item->setDiskServer(rset->getString(9));
+      item->setMountPoint(rset->getString(10));
       result.push_back(item);
     }
     return result;

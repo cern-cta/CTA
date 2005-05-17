@@ -242,6 +242,42 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_diskServer
+       * Name of the DiskServer on which the Diskcopy resides
+       * @return the value of m_diskServer
+       */
+      std::string diskServer() const {
+        return m_diskServer;
+      }
+
+      /**
+       * Set the value of m_diskServer
+       * Name of the DiskServer on which the Diskcopy resides
+       * @param new_var the new value of m_diskServer
+       */
+      void setDiskServer(std::string new_var) {
+        m_diskServer = new_var;
+      }
+
+      /**
+       * Get the value of m_mountPoint
+       * mount point of the file system where the DiskCopy resides on the diskserver
+       * @return the value of m_mountPoint
+       */
+      std::string mountPoint() const {
+        return m_mountPoint;
+      }
+
+      /**
+       * Set the value of m_mountPoint
+       * mount point of the file system where the DiskCopy resides on the diskserver
+       * @param new_var the new value of m_mountPoint
+       */
+      void setMountPoint(std::string new_var) {
+        m_mountPoint = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -284,6 +320,12 @@ namespace castor {
 
       /// name server host of the underlying castorfile
       std::string m_nsHost;
+
+      /// Name of the DiskServer on which the Diskcopy resides
+      std::string m_diskServer;
+
+      /// mount point of the file system where the DiskCopy resides on the diskserver
+      std::string m_mountPoint;
 
       /// The id of this object
       u_signed64 m_id;

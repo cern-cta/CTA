@@ -183,6 +183,30 @@ int Cstager_DiskCopyInfo_nsHost(struct Cstager_DiskCopyInfo_t* instance, const c
 int Cstager_DiskCopyInfo_setNsHost(struct Cstager_DiskCopyInfo_t* instance, const char* new_var);
 
 /**
+ * Get the value of diskServer
+ * Name of the DiskServer on which the Diskcopy resides
+ */
+int Cstager_DiskCopyInfo_diskServer(struct Cstager_DiskCopyInfo_t* instance, const char** var);
+
+/**
+ * Set the value of diskServer
+ * Name of the DiskServer on which the Diskcopy resides
+ */
+int Cstager_DiskCopyInfo_setDiskServer(struct Cstager_DiskCopyInfo_t* instance, const char* new_var);
+
+/**
+ * Get the value of mountPoint
+ * mount point of the file system where the DiskCopy resides on the diskserver
+ */
+int Cstager_DiskCopyInfo_mountPoint(struct Cstager_DiskCopyInfo_t* instance, const char** var);
+
+/**
+ * Set the value of mountPoint
+ * mount point of the file system where the DiskCopy resides on the diskserver
+ */
+int Cstager_DiskCopyInfo_setMountPoint(struct Cstager_DiskCopyInfo_t* instance, const char* new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */
