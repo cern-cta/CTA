@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2005/05/13 15:45:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2005/05/17 13:39:56 $ $Author: itglp $
  *
  *
  *
@@ -127,7 +127,7 @@ const char* castor::ObjectsIdStrings[91] = {
 //=============================================================================
 // ServicesIdStrings
 //=============================================================================
-const char* castor::ServicesIdStrings[15] =  {
+const char* castor::ServicesIdStrings[19] = {
   "INVALID",
   "NOMSG",
   "DLFMSG",
@@ -138,11 +138,15 @@ const char* castor::ServicesIdStrings[15] =  {
   "ORASTAGERSVC",
   "REMOTESTAGERSVC",
   "ORAQUERYSVC",
+  "DBCNV",
   "MYCNV",
+  "DBSTAGERSVC",
   "MYSTAGERSVC",
+  "DBQUERYSVC",
   "MYQUERYSVC",
-  "MYVDQMSVC",
-  "ORAVDQMSVC"
+  "DBVDQMSVC",
+  "ORAVDQMSVC",
+  "MYVDQMSVC"
 };
 
 //=============================================================================

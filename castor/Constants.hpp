@@ -140,11 +140,15 @@ namespace castor {
     SVC_ORASTAGERSVC = 7,
     SVC_REMOTESTAGERSVC = 8,
     SVC_ORAQUERYSVC = 9,
-    SVC_MYCNV = 10,
-    SVC_MYSTAGERSVC = 11,
-    SVC_MYQUERYSVC = 12,
-    SVC_MYVDQMSVC = 13,
-    SVC_ORAVDQMSVC = 14
+    SVC_DBCNV = 10,
+    SVC_MYCNV = 11,
+    SVC_DBSTAGERSVC = 12,
+    SVC_MYSTAGERSVC = 13,
+    SVC_DBQUERYSVC = 14,
+    SVC_MYQUERYSVC = 15,
+    SVC_DBVDQMSVC = 16,
+    SVC_ORAVDQMSVC = 17,
+    SVC_MYVDQMSVC = 18
   };
 
   /**
@@ -193,7 +197,7 @@ namespace castor {
    * Names of the differents Services, used to display
    * correctly the ServicesIds enum
    */
-  extern const char* ServicesIdStrings[15];
+  extern const char* ServicesIdStrings[19];
 
   /**
    * Names of the differents representations, used to display
