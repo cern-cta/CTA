@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_mysql_ifce.c,v $ $Revision: 1.1 $ $Date: 2005/03/17 10:24:58 $ CERN IT-DS/HSM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_mysql_ifce.c,v $ $Revision: 1.2 $ $Date: 2005/05/17 15:03:24 $ CERN IT-DS/HSM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -775,8 +775,7 @@ vmgr_dbrec_addr *rec_addr;
                 "SELECT ROWID, \
                  VID, SIDE, POOLNAME, STATUS, ESTIMATED_FREE_SPACE, NBFILES \
                 FROM vmgr_tape_side \
-                WHERE poolname = '%s' AND status = 0 AND \
-                 estimated_free_space >= %d \
+                WHERE poolname = '%s' AND status = 0 \
                 ORDER BY estimated_free_space DESC \
                 LIMIT 1 \
                 FOR UPDATE";
@@ -792,7 +791,7 @@ vmgr_dbrec_addr *rec_addr;
                 return (-1);
         if ((row = mysql_fetch_row (res)) == NULL) {
                 mysql_free_result (res);
-                sprintf (sql_stmt, querymax4upd, poolname, reqsize);
+                sprintf (sql_stmt, querymax4upd, poolname);
                 if (vmgr_exec_query (func, dbfd, sql_stmt, &res))
                         return (-1);
                 if ((row = mysql_fetch_row (res)) == NULL) {
@@ -840,8 +839,7 @@ vmgr_dbrec_addr *rec_addr;
 		"SELECT ROWID, \
 		 VID, SIDE, POOLNAME, STATUS, ESTIMATED_FREE_SPACE, NBFILES \
 		FROM vmgr_tape_side \
-		WHERE poolname = '%s' AND status = 0 AND \
-		 estimated_free_space >= %d \
+		WHERE poolname = '%s' AND status = 0 \
 		ORDER BY estimated_free_space DESC \
 		LIMIT 1 \
 		FOR UPDATE";
@@ -856,7 +854,7 @@ vmgr_dbrec_addr *rec_addr;
 		return (-1);
 	if ((row = mysql_fetch_row (res)) == NULL) {
 		mysql_free_result (res);
-		sprintf (sql_stmt, querymax4upd, poolname, reqsize);
+		sprintf (sql_stmt, querymax4upd, poolname);
 		if (vmgr_exec_query (func, dbfd, sql_stmt, &res))
 			return (-1);
 		if ((row = mysql_fetch_row (res)) == NULL) {
