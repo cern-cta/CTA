@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.10 2005/05/03 09:06:20 jdurand Exp $
+# $Id: maketar.sh,v 1.11 2005/05/17 11:19:50 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -123,16 +123,6 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     #
     echo "%files -n $package" >> CASTOR.spec
     echo "%defattr(-,root,root)" >> CASTOR.spec
-    if [ -s "debian/$package.install" ]; then
-	for file in `cat debian/$package.install`; do
-	    echo $file | egrep -q "etc\/castor|sysconfig"
-	    if [ $? -eq 0 ]; then
-		echo "%config(noreplace) /$file" >> CASTOR.spec
-	    else
-		echo "/$file" >> CASTOR.spec
-	    fi
-	done
-    fi
     if [ -s "debian/$package.init" ]; then
 	echo "%config /etc/init.d/$package" >> CASTOR.spec
     fi
@@ -140,8 +130,13 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
 	echo "%config(noreplace) /etc/logrotate.d/$package" >> CASTOR.spec
     fi
     if [ -s "debian/$package.manpages" ]; then
-	for man in `cat  debian/$package.manpages | sed 's/debian\/castor\///g'`; do
+	for man in `cat debian/$package.manpages | sed 's/debian\/castor\///g'`; do
 	    echo "%doc /$man" >> CASTOR.spec
+	done
+    fi
+    if [ -s "debian/$package.dirs" ]; then
+	for dir in `cat debian/$package.dirs`; do
+	    echo "%dir $dir" >> CASTOR.spec
 	done
     fi
     if [ -s "debian/$package.cron.d" ]; then
@@ -158,6 +153,16 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     fi
     if [ -s "debian/$package.cron.weekly" ]; then
 	echo "%config(noreplace) /etc/cron.weekly/$package" >> CASTOR.spec
+    fi
+    if [ -s "debian/$package.install" ]; then
+	for file in `cat debian/$package.install`; do
+	    echo $file | egrep -q "etc\/castor|sysconfig"
+	    if [ $? -eq 0 ]; then
+		echo "%config(noreplace) /$file" >> CASTOR.spec
+	    else
+		echo "/$file" >> CASTOR.spec
+	    fi
+	done
     fi
     echo >> CASTOR.spec
 done
