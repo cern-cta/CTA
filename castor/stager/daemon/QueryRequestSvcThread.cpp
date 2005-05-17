@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.9 2005/02/23 13:08:24 bcouturi Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.10 2005/05/17 13:31:24 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.9 $ $Date: 2005/02/23 13:08:24 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.10 $ $Date: 2005/05/17 13:31:24 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -192,7 +192,9 @@ namespace castor {
 
         // 1. Mapping diskcopy/tapecopy/segment status to one file status
         stage_fileStatus st = FILE_INVALID_STATUS;
-        switch(dc->diskCopyStatus()) {
+        std::string diskServer = "";
+
+	switch(dc->diskCopyStatus()) {
           // Just IGNORE the discopies in those statuses !
         case DISKCOPY_WAITDISK2DISKCOPY:
         case DISKCOPY_DELETED:
@@ -208,6 +210,7 @@ namespace castor {
 
         case  DISKCOPY_STAGED:
           st = FILE_STAGED;
+	  diskServer = dc->diskServer();
           break;
 
         case DISKCOPY_WAITFS:
@@ -248,6 +251,7 @@ namespace castor {
         // 2. Aggregate status for the various diskcopies
         if (!foundDiskCopy) {
           fr->setStatus(st);
+	  fr->setDiskServer(diskServer);
           foundDiskCopy = true;
         } else {
           // If there are sevral diskcopies for the file
@@ -255,6 +259,7 @@ namespace castor {
           // staged, otherwise keep the original status.
           if (dc->diskCopyStatus() == DISKCOPY_STAGED) {
             fr->setStatus(FILE_STAGED);
+	    ft->setDiskServer(dc->diskServer());
           }
         }
       }
