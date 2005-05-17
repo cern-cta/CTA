@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.37 $ $Date: 2005/04/18 09:08:02 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.38 $ $Date: 2005/05/17 15:34:43 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -139,12 +139,12 @@ STAGELIBTARGET=LibraryTargetName(stager)
 #endif
 
 #if BuildStageClient
-PROGS_STAGERCLIENT=ProgramTargetName(stagein) ProgramTargetName(stageqry)  ProgramTargetName(stager_put) \
+PROGS_STAGERCLIENT=ProgramTargetName(stager_get) ProgramTargetName(stager_qry)  ProgramTargetName(stager_put) \
 	ProgramTargetName(stager_putdone) ProgramTargetName(stager_preparetoput)
-IPROGS_STAGERCLIENT = FileName($(BIN),ProgramTargetName(stagein)) FileName($(BIN),ProgramTargetName(stageqry)) \
+IPROGS_STAGERCLIENT = FileName($(BIN),ProgramTargetName(stager_get)) FileName($(BIN),ProgramTargetName(stager_qry)) \
 	FileName($(BIN),ProgramTargetName(stager_put)) FileName($(BIN),ProgramTargetName(stager_putdone)) \
 	FileName($(BIN),ProgramTargetName(stager_preparetoput)) 
-EPROGS_STAGERCLIENT = FileName($(EXPORTBIN),stagein) FileName($(EXPORTBIN),stageqry) \
+EPROGS_STAGERCLIENT = FileName($(EXPORTBIN),stager_get) FileName($(EXPORTBIN),stager_qry) \
 	FileName($(EXPORTBIN),stager_put) FileName($(EXPORTBIN),stager_putdone) \
 	FileName($(EXPORTBIN),stager_preparetoput)
 #endif
@@ -157,9 +157,9 @@ NormalProgramTarget(stagerNotifyService,stagerNotifyService.Osuf,$(DEPLIB),$(GLO
 NormalProgramTarget(stageradmin,$(STAGERADMIN_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 
 #if BuildStageClient
-STAGEIN_OBJS=stagein.Osuf
-NormalProgramTarget(stagein,$(STAGEIN_OBJS),$(DEPLIB),$(GLOBLIB) $(LDLIBS))
-NormalProgramTarget(stageqry,stageqry.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
+STAGER_GET_OBJS=stager_get.Osuf
+NormalProgramTarget(stager_get,$(STAGER_GET_OBJS),$(DEPLIB),$(GLOBLIB) $(LDLIBS))
+NormalProgramTarget(stager_qry,stager_qry.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(stager_put,stager_put.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(stager_preparetoput,stager_preparetoput.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(stager_putdone,stager_putdone.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
@@ -180,8 +180,8 @@ install: $(BIN) $(IPROGS_STAGER) $(IPROGS_STAGERCLIENT) $(SPOOL)
 InstallProgram(stager,$(BIN),root,bin,0750)
 InstallProgram(stageradmin,$(BIN),root,bin,0750)
 #if BuildStageClient
-InstallProgram(stagein,$(BIN),root,bin,0755)
-InstallProgram(stageqry,$(BIN),root,bin,0755)
+InstallProgram(stager_get,$(BIN),root,bin,0755)
+InstallProgram(stager_qry,$(BIN),root,bin,0755)
 InstallProgram(stager_put,$(BIN),root,bin,0755)
 InstallProgram(stager_preparetoput,$(BIN),root,bin,0755)
 InstallProgram(stager_putdone,$(BIN),root,bin,0755)
@@ -196,8 +196,8 @@ export: $(EPROGS_STAGER) $(EPROGS_STAGERCLIENT)
 IEXPORT(stager,$(EXPORTBIN),755)
 IEXPORT(stageradmin,$(EXPORTBIN),755)
 #if BuildStageClient
-IEXPORT(stagein,$(EXPORTBIN),755)
-IEXPORT(stageqry,$(EXPORTBIN),755)
+IEXPORT(stager_get,$(EXPORTBIN),755)
+IEXPORT(stager_qry,$(EXPORTBIN),755)
 IEXPORT(stager_put,$(EXPORTBIN),755)
 IEXPORT(stager_preparetoput,$(EXPORTBIN),755)
 IEXPORT(stager_putdone,$(EXPORTBIN),755)
