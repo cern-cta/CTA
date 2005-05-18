@@ -1,4 +1,4 @@
-$Id: castor-deb2rpm.txt,v 1.1 2005/01/20 11:58:24 jdurand Exp $
+$Id: castor-deb2rpm.txt,v 1.2 2005/05/18 07:39:07 jdurand Exp $
 
 General:
 
@@ -40,7 +40,7 @@ Either: make -f Makefile.ini Makefiles
 Or:
 	./makedeb.sh
 
-This will do a copy of your workdir in /tmp, modify site.def to compile
+This will do a copy of your workdir in the directory upper, modify site.def to compile
 everything, an generate the debian packages.
 
 To generate rpm packages for RedHat
