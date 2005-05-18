@@ -70,7 +70,7 @@ typedef struct rfio_HsmIf_DIRcontext {
 } rfio_HsmIf_DIRcontext_t;
 
 static rfio_HsmIf_DIRcontext_t *HsmDirs[MAXRFD];
-Castor_limits
+
 #if defined(CNS_ROOT)
 #define FINDCNSFILES_WITH_SCAN     1
 #define FINDCNSFILES_WITHOUT_SCAN  0
