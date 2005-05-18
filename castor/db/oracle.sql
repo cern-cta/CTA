@@ -1060,13 +1060,20 @@ BEGIN
      FROM StagePutRequest, SubRequest
     WHERE SubRequest.id = srId
       AND StagePutRequest.id = SubRequest.request;
-   -- check that there is a PrepareToPut going on
-   SELECT SubRequest.diskCopy INTO dcId
-     FROM StagePrepareToPutRequest, SubRequest
-    WHERE SubRequest.CastorFile = cfId
-      AND StagePrepareToPutRequest.id = SubRequest.request;
-   -- if we got here, we are a Put inside a PrepareToPut
-   contextPIPP := 1;
+   BEGIN
+     -- check that there is a PrepareToPut going on
+     SELECT SubRequest.diskCopy INTO dcId
+       FROM StagePrepareToPutRequest, SubRequest
+      WHERE SubRequest.CastorFile = cfId
+        AND StagePrepareToPutRequest.id = SubRequest.request;
+     -- if we got here, we are a Put inside a PrepareToPut
+    contextPIPP := 1;
+   EXCEPTION WHEN TOO_MANY_ROWS THEN
+     -- this means we are a PrepareToPut and another PrepareToPut
+     -- is already running. This is forbidden
+     archiveSubReq(srId);
+     RAISE;
+   END;   
  EXCEPTION WHEN NO_DATA_FOUND THEN
    contextPIPP := 0;
  END;
