@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.164 $ $Release$ $Date: 2005/05/12 14:46:58 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.165 $ $Release$ $Date: 2005/05/18 08:44:23 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -2223,6 +2223,16 @@ castor::db::ora::OraStagerSvc::recreateCastorFile
     return result;
   } catch (oracle::occi::SQLException e) {
     rollback();
+    if (1422 == e.getErrorCode()) {
+      // exact fetch returns more than requested number of rows
+      // this means we are a PrepareToPut and another PrepareToPut
+      // is already running. This is forbidden
+      castor::exception::Busy ex;
+      ex.getMessage()
+        << "RecreateCastorFile called with several prepareToPut going on."
+        << std::endl << e.what();
+      throw ex;
+    }
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in recreateCastorFile."
