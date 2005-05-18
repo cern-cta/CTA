@@ -9,7 +9,7 @@ static char sccsid[] = "@(#)rfio_HsmIf.c,v 1.58 2004/02/10 15:05:17 CERN/IT/PDP/
 
 /* rfio_HsmIf.c       Remote File I/O - generic HSM client interface         */
 
-#define OLD_STAGE_API "USE_OLD_STAGE_API"
+#define RFIO_USE_CASTOR_V2 "RFIO_USE_CASTOR_V2"
 
 #include "Cmutex.h"
 #include <stdlib.h>
@@ -70,13 +70,15 @@ typedef struct rfio_HsmIf_DIRcontext {
 } rfio_HsmIf_DIRcontext_t;
 
 static rfio_HsmIf_DIRcontext_t *HsmDirs[MAXRFD];
-
+Castor_limits
 #if defined(CNS_ROOT)
 #define FINDCNSFILES_WITH_SCAN     1
 #define FINDCNSFILES_WITHOUT_SCAN  0
 static int rfio_CnsFilesfdt_allocentry _PROTO((int));
 static int rfio_CnsFilesfdt_findentry _PROTO((int,int));
 static int rfio_CnsFilesfdt_freeentry _PROTO((int));
+
+int DLL_DECL use_castor2_api _PROTO(());
 
 /*
  * Internal file info. table. Note that those routines do not
@@ -475,7 +477,7 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
         hsmfile->next = NULL;
 	/** NOW CALL THE NEW STAGER API */
        
-	if (getenv(OLD_STAGE_API) == NULL) {
+	if (use_castor2_api()) {
           struct stage_io_fileresp *response;
           char *requestId, *url;
 
@@ -728,7 +730,7 @@ int DLL_DECL rfio_HsmIf_open_limbysz(const char *path, int flags, mode_t mode, u
 
 
 	/* New stager API call */
-	if (getenv(OLD_STAGE_API) == NULL) {
+	if (use_castor2_api()) {
           struct stage_io_fileresp *response;
           char *requestId, *url;
 
@@ -993,7 +995,7 @@ int DLL_DECL rfio_HsmIf_reqtoput(char *name) {
 #if defined(CNS_ROOT)
     
 
-    if (getenv(OLD_STAGE_API) == NULL) {
+    if (use_castor2_api()) {
       rc = 0;
     } else {
       stage_hsm_t hsmfile; 
@@ -1236,7 +1238,7 @@ int DLL_DECL rfio_HsmIf_FirstWrite(int fd, void *buffer, int size) {
     }
 #if defined(CNS_ROOT)
 
-    if (getenv(OLD_STAGE_API) == NULL) {
+    if (use_castor2_api()) {
       rc = 0;
     } else {
 
@@ -1394,3 +1396,20 @@ static int rfio_CnsFilesfdt_freeentry(s)
   return(0);
 }
 #endif /* CNS_ROOT */
+
+/* Function that is saying if we work in old CASTOR1 compat mode (default) or CASTOR2 mode */
+int DLL_DECL use_castor2_api() {
+  char *p;
+
+  if (((p = getenv(RFIO_USE_CASTOR_V2)) == NULL) &&
+      ((p = getconfent("RFIO","USE_CASTOR_V2",0)) == NULL)) {
+    /* Variable not set: compat mode */
+    return(0);
+  }
+  if ((strcmp(p,"YES") == 0) || (strcmp(p,"yes") == 0) || (atoi(p) == 1)) {
+    /* Variable set to yes or 1 : new mode */
+    return(1);
+  }
+  /* Variable set but not to 1 : compat mode */
+  return(0);
+}
