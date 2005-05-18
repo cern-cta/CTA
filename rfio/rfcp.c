@@ -14,7 +14,7 @@ static char sccsid[] = "@(#)rfcp.c,v 1.61 2004/03/02 16:18:33 CERN/IT/DS/HSM Fel
 #include <signal.h>
 #include <fcntl.h>
 #define RFIO_KERNEL 1
-#include <rfio.h>
+#include "rfio.h"
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -22,16 +22,16 @@ static char sccsid[] = "@(#)rfcp.c,v 1.61 2004/03/02 16:18:33 CERN/IT/DS/HSM Fel
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-#include <osdep.h>
+#include "osdep.h"
 #ifdef CNS_ROOT
-#include <stage_api.h> /* The CASTOR-aware rfcp needs the stage API */
-#include <stager_api.h> /* For the CASTOR new stager */  
+#include "stage_api.h" /* The CASTOR-aware rfcp needs the stage API */
+#include "stager_api.h" /* For the CASTOR new stager */  
 #endif
-#include <u64subr.h>
+#include "u64subr.h"
 #ifndef _WIN32
 #include <unistd.h>
 #endif
-#include <Castor_limits.h>
+#include "Castor_limits.h"
 
 #ifndef TRANSFER_UNIT
 #define TRANSFER_UNIT   131072 
@@ -53,14 +53,13 @@ static char sccsid[] = "@(#)rfcp.c,v 1.61 2004/03/02 16:18:33 CERN/IT/DS/HSM Fel
 #define OK    1
 #endif  /* vms */
 
-#define RFCP_USE_CASTOR_V2 "RFCP_USE_CASTOR_V2"
-
 extern int serrno ;
 extern int rfio_errno ;
 extern char *getconfent() ;
 #if sgi
 extern char *strdup _PROTO((CONST char *));
 #endif
+EXTERN_C int DLL_DECL use_castor2_api _PROTO(());
 
 #if defined(vms) && (vms == 1)
 #include <unixio.h>
@@ -95,7 +94,6 @@ static int local_mode;
 void usage();
 off64_t copyfile _PROTO((int, int, char *, u_signed64));
 off64_t copyfile_hpss _PROTO((int, int, char *, struct stat64 *, u_signed64));
-int use_castor2_api _PROTO(());
 #ifdef CNS_ROOT
 #ifdef hpux
 int copyfile_stage _PROTO(());
@@ -1991,20 +1989,3 @@ Sigfunc *_rfio_signal(signo, func)
 	return(oact.sa_handler);
 }
 #endif /* #ifndef _WIN32 */
-
-/* Function that is saying if we work in old CASTOR1 compat mode (default) or CASTOR2 mode */
-int use_castor2_api() {
-  char *p;
-
-  if (((p = getenv(RFCP_USE_CASTOR_V2)) == NULL) &&
-      ((p = getconfent("RFCP","USE_CASTOR_V2",0)) == NULL)) {
-    /* Variable not set: compat mode */
-    return(0);
-  }
-  if ((strcmp(p,"YES") == 0) || (strcmp(p,"yes") == 0) || (atoi(p) == 1)) {
-    /* Variable set to yes or 1 : new mode */
-    return(1);
-  }
-  /* Variable set but not to 1 : compat mode */
-  return(0);
-}
