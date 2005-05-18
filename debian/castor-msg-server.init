@@ -5,9 +5,9 @@
 # chkconfig: 345 62 54
 # description: CASTOR Message Daemon
 #
-# $Id: castor-msg-server.init,v 1.5 2005/05/03 09:34:45 jdurand Exp $
+# $Id: castor-msg-server.init,v 1.6 2005/05/18 07:45:01 jdurand Exp $
 #
-# @(#)$RCSfile: castor-msg-server.init,v $ $Revision: 1.5 $ $Date: 2005/05/03 09:34:45 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-msg-server.init,v $ $Revision: 1.6 $ $Date: 2005/05/18 07:45:01 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -95,11 +95,9 @@ case "$1" in
             fi
         fi
         if [ $RETVAL -eq 0 ]; then
-            [ ! -d /var/spool/msg ] && mkdir -p /var/spool/msg
             #
-            ## Because we might generate a core file (c.f. ULIMIT_C)
-            ## We explicitely chdir in the yet created directory
-            ## /var/spool/msg
+            ## Because we might generate a core file
+            ## We explicitely chdir in the workdir
             #
             cd /var/spool/msg
             $DAEMON $MSGDAEMON $OPTIONS

@@ -5,9 +5,9 @@
 # chkconfig: 345 70 35
 # description: GCDAEMON server daemon
 #
-# $Id: castor-gc-server.init,v 1.5 2005/05/03 09:34:45 jdurand Exp $
+# $Id: castor-gc-server.init,v 1.6 2005/05/18 07:45:01 jdurand Exp $
 #
-# @(#)$RCSfile: castor-gc-server.init,v $ $Revision: 1.5 $ $Date: 2005/05/03 09:34:45 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-gc-server.init,v $ $Revision: 1.6 $ $Date: 2005/05/18 07:45:01 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -88,10 +88,9 @@ case "$1" in
             fi
             if [ $RETVAL -eq 0 ]; then
                 #
-                ## Because we might generate a core file (c.f. ULIMIT_C)
-                ## We explicitely chdir in /tmp
+                ## Because we might generate a core file
+                ## We explicitely chdir in the workdir
                 #
-		[ ! -d /var/spool/gc ] && mkdir -p /var/spool/gc
                 cd /var/spool/gc
                 $DAEMON $GCDAEMON $OPTIONS
                 if [ $? -eq 0 ]; then

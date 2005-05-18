@@ -5,9 +5,9 @@
 # chkconfig: 345 73 32
 # description: RTCPD server daemon
 #
-# $Id: castor-rtcopy-server.init,v 1.4 2005/05/03 09:34:46 jdurand Exp $
+# $Id: castor-rtcopy-server.init,v 1.5 2005/05/18 07:45:01 jdurand Exp $
 #
-# @(#)$RCSfile: castor-rtcopy-server.init,v $ $Revision: 1.4 $ $Date: 2005/05/03 09:34:46 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-rtcopy-server.init,v $ $Revision: 1.5 $ $Date: 2005/05/18 07:45:01 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -94,8 +94,10 @@ case "$1" in
             fi
         fi
         if [ $RETVAL -eq 0 ]; then
-            [ ! -d /var/spool/sacct ] && mkdir -p /var/spool/sacct
-            [ ! -d /var/spool/rtcopy ] && mkdir -p /var/spool/rtcopy
+            #
+            ## Because we might generate a core file
+            ## We explicitely chdir in the workdir
+            #
 	    cd /var/spool/rtcopy
             $DAEMON $RTCPD $OPTIONS
             if [ $? -eq 0 ]; then

@@ -5,9 +5,9 @@
 # chkconfig: 345 67 38
 # description: VMGR server daemon
 #
-# $Id: castor-vmgr-server.init,v 1.4 2005/05/03 09:34:46 jdurand Exp $
+# $Id: castor-vmgr-server.init,v 1.5 2005/05/18 07:45:01 jdurand Exp $
 #
-# @(#)$RCSfile: castor-vmgr-server.init,v $ $Revision: 1.4 $ $Date: 2005/05/03 09:34:46 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-vmgr-server.init,v $ $Revision: 1.5 $ $Date: 2005/05/18 07:45:01 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 #
@@ -105,7 +105,10 @@ case "$1" in
             fi
         fi
         if [ $RETVAL -eq 0 ]; then
-            [ ! -d /var/spool/vmgr ] && mkdir -p /var/spool/vmgr
+            #
+            ## Because we might generate a core file
+            ## We explicitely chdir in the workdir
+            #
 	    cd /var/spool/vmgr
             $DAEMON $VMGRDAEMON $OPTIONS
             if [ $? -eq 0 ]; then
