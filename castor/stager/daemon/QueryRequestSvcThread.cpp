@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.11 2005/05/17 13:32:27 bcouturi Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.12 2005/05/18 15:32:28 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.11 $ $Date: 2005/05/17 13:32:27 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.12 $ $Date: 2005/05/18 15:32:28 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -189,6 +189,7 @@ namespace castor {
       void setFileResponseStatus(castor::rh::FileQueryResponse* fr,
                                  castor::stager::DiskCopyInfo*  dc,
                                  bool& foundDiskCopy) {
+	char *func = "setFileResponseStatus";
 
         // 1. Mapping diskcopy/tapecopy/segment status to one file status
         stage_fileStatus st = FILE_INVALID_STATUS;
@@ -224,19 +225,23 @@ namespace castor {
           switch (dc->tapeCopyStatus()) {
           case -1:
             st =  FILE_STAGEOUT;
+	    diskServer = dc->diskServer();
             break;
           case TAPECOPY_CREATED:
             st = FILE_CANBEMIGR;
+	    diskServer = dc->diskServer();
             break;
           case TAPECOPY_TOBEMIGRATED:
           case TAPECOPY_WAITINSTREAMS:
             st = FILE_WAITINGMIGR;
+	    diskServer = dc->diskServer();
             break;
           case TAPECOPY_SELECTED:
             if (dc->segmentStatus() == SEGMENT_FAILED) {
               st = FILE_PUTFAILED;
             } else {
               st = FILE_BEINGMIGR;
+	      diskServer = dc->diskServer();
             }
             break;
           }
@@ -244,12 +249,15 @@ namespace castor {
           
         case DISKCOPY_CANBEMIGR:
           st =  FILE_CANBEMIGR;
+	  diskServer = dc->diskServer();
           break;
             
         }
 
         // 2. Aggregate status for the various diskcopies
         if (!foundDiskCopy) {
+	  STAGER_LOG_DEBUG(NULL, "Setting diskServer");
+	  STAGER_LOG_DEBUG(NULL, diskServer.c_str());
           fr->setStatus(st);
 	  fr->setDiskServer(diskServer);
           foundDiskCopy = true;
@@ -260,6 +268,8 @@ namespace castor {
           if (dc->diskCopyStatus() == DISKCOPY_STAGED) {
             fr->setStatus(FILE_STAGED);
 	    fr->setDiskServer(dc->diskServer());
+	    STAGER_LOG_DEBUG(NULL, "Setting diskServer");
+	    STAGER_LOG_DEBUG(NULL, diskServer.c_str());
           }
         }
       }
