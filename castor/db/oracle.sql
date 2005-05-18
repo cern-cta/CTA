@@ -449,7 +449,7 @@ BEGIN
   -- Try to see whether another subrequest in the same
   -- request is still processing
   SELECT count(*) INTO nb FROM SubRequest
-   WHERE request = rid AND status != 8; -- FINISHED
+   WHERE request = rid AND status NOT IN (8, 9); -- FINISHED, FAILED_FINISHED
   -- Archive request, client and SubRequests if needed
   IF nb = 0 THEN
     -- DELETE request from Id2Type
