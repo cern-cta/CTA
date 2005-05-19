@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2005/03/30 16:31:46 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2005/05/19 09:47:35 $ $Author: bcouturi $
  *
  *
  *
@@ -257,7 +257,7 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
 	       <<  "Error in poll:"
                << strerror(errno)
                << std::endl;
-        return 0;
+        continue;
       }
     } // End if pollrc < 0
 
