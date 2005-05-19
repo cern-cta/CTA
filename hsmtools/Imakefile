@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Date: 2005/04/22 08:44:46 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Date: 2005/05/19 16:28:02 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM    Make HSM admin tools.
 
@@ -44,9 +44,9 @@ LIBS = ..\lib\shift.lib wsock32.lib ws2_32.lib /NODEFAULTLIB:libc.lib advapi32.l
 #endif
 #endif
 #if _WIN32
-LIBS += ..\lib\castorCommonOra.lib
+LIBS2 = $(LIBS) ..\lib\castorCommonOra.lib
 #else
-LIBS += -L../shlib -lcastorCommonOra
+LIBS2 = $(LIBS) -L../shlib -lcastorCommonOra
 #endif
 SPOOL = HsmToolsSpool
  
@@ -59,7 +59,7 @@ CFLAGS =        -I$(INCLUDES) -I$(INCLUDES_CPP) $(DFLAGS)
 COMM######################### DEPENDENCY LIBRARIES ###############
  
 DEPLIB = DepSharedLibraryTargetName(shlib,shift)
-DEPLIB += DepSharedLibraryTargetName(shlib,castorCommonOra)
+DEPLIB2 = $(DEPLIB) DepSharedLibraryTargetName(shlib,castorCommonOra)
 COMM######################### RULES ##############################
 
 MANPAGES = $(MANDIR)/reclaim.$(MANSUFFIX) \
@@ -114,14 +114,14 @@ all: $(PROGS)
 NormalProgramTarget(reclaim,reclaim.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(repack,repack.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(tapetohsm,tapetohsm.Osuf,$(DEPLIB),$(LIBS))
-NormalProgramTarget(enterFileClass,enterFileClass.Osuf,$(DEPLIB),$(LIBS))
-NormalProgramTarget(modifyFileClass,modifyFileClass.Osuf,$(DEPLIB),$(LIBS))
-NormalProgramTarget(deleteFileClass,deleteFileClass.Osuf,$(DEPLIB),$(LIBS))
-NormalProgramTarget(printFileClass,printFileClass.Osuf,$(DEPLIB),$(LIBS))
-NormalProgramTarget(enterSvcClass,enterSvcClass.Osuf,$(DEPLIB),$(LIBS))
-NormalProgramTarget(modifySvcClass,modifySvcClass.Osuf,$(DEPLIB),$(LIBS))
-NormalProgramTarget(deleteSvcClass,deleteSvcClass.Osuf,$(DEPLIB),$(LIBS))
-NormalProgramTarget(printSvcClass,printSvcClass.Osuf,$(DEPLIB),$(LIBS))
+NormalProgramTarget(enterFileClass,enterFileClass.Osuf,$(DEPLIB2),$(LIBS2))
+NormalProgramTarget(modifyFileClass,modifyFileClass.Osuf,$(DEPLIB2),$(LIBS2))
+NormalProgramTarget(deleteFileClass,deleteFileClass.Osuf,$(DEPLIB2),$(LIBS2))
+NormalProgramTarget(printFileClass,printFileClass.Osuf,$(DEPLIB2),$(LIBS2))
+NormalProgramTarget(enterSvcClass,enterSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
+NormalProgramTarget(modifySvcClass,modifySvcClass.Osuf,$(DEPLIB2),$(LIBS2))
+NormalProgramTarget(deleteSvcClass,deleteSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
+NormalProgramTarget(printSvcClass,printSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
 
 MakeDepSharedLibrary(shlib,shift)
 MakeDepSharedLibrary(shlib,castorCommonOra)
