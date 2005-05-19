@@ -1,3 +1,10 @@
+castor (2.0.0-31) unstable; urgency=low
+
+  * spec file fix
+  * support for the SvcClasses to the filequeries
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Thu, 19 May 2005 18:02:48 +0200
+
 castor (2.0.0-30) unstable; urgency=low
 
   * Fix in recreateCastorFile (put on a prepareToPut)
