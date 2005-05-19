@@ -884,10 +884,15 @@ BEGIN
    dsId INTEGER;
   BEGIN
    -- Retrieve the infos about the DiskCopy to be used
-   SELECT fileSystem, status INTO rstatus, fsId FROM DiskCopy WHERE id = dcId;
-   SELECT mountPoint, diskServer INTO rmountPoint, dsId
-     FROM FileSystem WHERE FileSystem.id = fsId;
-   SELECT name INTO rdiskServer FROM DiskServer WHERE id = dsId;
+   SELECT fileSystem, status INTO fsId, rstatus FROM DiskCopy WHERE id = dcId;
+   if fsId = 0 THEN
+     rmountPoint := '';
+     rdiskServer := '';
+   ELSE
+     SELECT mountPoint, diskServer INTO rmountPoint, dsId
+       FROM FileSystem WHERE FileSystem.id = fsId;
+     SELECT name INTO rdiskServer FROM DiskServer WHERE id = dsId;
+   END;
    -- See whether we should wait on the previous Put Request
    IF rstatus = 11 THEN -- WAITFS_SCHEDULING
     makeSubRequestWait(srId, dcId);
