@@ -219,26 +219,25 @@ BEGIN
     -- DELETE request from Id2Type
     DELETE FROM Id2Type WHERE id = rid RETURNING type INTO rtype;
     -- delete request and get client id
-    CASE rtype
-      WHEN 35 THEN -- StageGetRequest
-        DELETE FROM StageGetRequest WHERE id = rid RETURNING client into rclient;
-      WHEN 40 THEN -- StagePutRequest
-        DELETE FROM StagePutRequest WHERE id = rid RETURNING client INTO rclient;
-      WHEN 44 THEN -- StageUpdateRequest
-        DELETE FROM StageUpdateRequest WHERE id = rid RETURNING client INTO rclient;
-      WHEN 39 THEN -- StagePutDoneRequest
-        DELETE FROM StagePutDoneRequest WHERE id = rid RETURNING client INTO rclient;
-      WHEN 42 THEN -- StageRmRequest
-        DELETE FROM StageRmRequest WHERE id = rid RETURNING client INTO rclient;
-      WHEN 51 THEN -- StageReleaseFilesRequest
-        DELETE FROM StageReleaseFilesRequest WHERE id = rid RETURNING client INTO rclient;
-      WHEN 36 THEN -- StagePrepareToGetRequest
-        DELETE FROM StagePrepareToGetRequest WHERE id = rid RETURNING client INTO rclient;
-      WHEN 37 THEN -- StagePrepareToPutRequest
-        DELETE FROM StagePrepareToPutRequest WHERE id = rid RETURNING client INTO rclient;
-      WHEN 38 THEN -- StagePrepareToUpdateRequest
-        DELETE FROM StagePrepareToUpdateRequest WHERE id = rid RETURNING client INTO rclient;
-    END CASE;
+    IF rtype = 35 THEN -- StageGetRequest
+      DELETE FROM StageGetRequest WHERE id = rid RETURNING client into rclient;
+    ELSIF rtype = 40 THEN -- StagePutRequest
+      DELETE FROM StagePutRequest WHERE id = rid RETURNING client INTO rclient;
+    ELSIF rtype = 44 THEN -- StageUpdateRequest
+      DELETE FROM StageUpdateRequest WHERE id = rid RETURNING client INTO rclient;
+    ELSIF rtype = 39 THEN -- StagePutDoneRequest
+      DELETE FROM StagePutDoneRequest WHERE id = rid RETURNING client INTO rclient;
+    ELSIF rtype = 42 THEN -- StageRmRequest
+      DELETE FROM StageRmRequest WHERE id = rid RETURNING client INTO rclient;
+    ELSIF rtype = 51 THEN -- StageReleaseFilesRequest
+      DELETE FROM StageReleaseFilesRequest WHERE id = rid RETURNING client INTO rclient;
+    ELSIF rtype = 36 THEN -- StagePrepareToGetRequest
+      DELETE FROM StagePrepareToGetRequest WHERE id = rid RETURNING client INTO rclient;
+    ELSIF rtype = 37 THEN -- StagePrepareToPutRequest
+      DELETE FROM StagePrepareToPutRequest WHERE id = rid RETURNING client INTO rclient;
+    ELSIF rtype = 38 THEN -- StagePrepareToUpdateRequest
+      DELETE FROM StagePrepareToUpdateRequest WHERE id = rid RETURNING client INTO rclient;
+    END IF;
     -- DELETE Client
     DELETE FROM Id2Type WHERE id = rclient;
     DELETE FROM Client WHERE id = rclient;
