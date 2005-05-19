@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IQuerySvcCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/01/31 17:18:36 $ $Author: bcouturi $
+ * @(#)$RCSfile: IQuerySvcCInt.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/05/19 15:53:39 $ $Author: sponcec3 $
  *
  * 
  *
@@ -79,13 +79,13 @@ extern "C" {
   //-------------------------------------------------------------------------
   int Cquery_IQuerySvc_diskCopies4File
   (struct Cquery_IQuerySvc_t* qrySvc,
-   char* fileId, char* nsHost,
+   char* fileId, char* nsHost, u_signed64 svcClassId,
    castor::stager::DiskCopyInfo*** diskCopies,
    unsigned int* diskCopiesNb) {
     if (!checkIQuerySvc(qrySvc)) return -1;
     try {
       std::list<castor::stager::DiskCopyInfo*> result =
-        qrySvc->qrySvc->diskCopies4File(fileId, nsHost);
+        qrySvc->qrySvc->diskCopies4File(fileId, nsHost, svcClassId);
       *diskCopiesNb = result.size();
       *diskCopies = (castor::stager::DiskCopyInfo**)
         malloc((*diskCopiesNb) * sizeof(castor::stager::DiskCopyInfo*));

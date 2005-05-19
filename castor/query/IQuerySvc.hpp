@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/02/11 16:51:56 $ $Author: bcouturi $
+ * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/05/19 15:53:39 $ $Author: sponcec3 $
  *
  * 
  *
@@ -59,40 +59,47 @@ namespace castor {
        * the returned objects
        * @param fileId the fileId identifying the file
        * @param nsHost the name server host for this file
+       * @param svcClassId the Id of the service class we're using
        * @return the list of DiskCopies available
        * @exception in case of error
        */
       virtual std::list<castor::stager::DiskCopyInfo*>
       diskCopies4File (std::string fileId,
-                       std::string nsHost)
+                       std::string nsHost,
+                       u_signed64 svcClassId)
         throw (castor::exception::Exception) = 0;
 
 
       /**
        * List all disk copies in a stager
+       * @param svcClassId the Id of the service class we're using
        */
       virtual std::list<castor::stager::DiskCopyInfo*>
-      listDiskCopies ()
+      listDiskCopies (u_signed64 svcClassId)
         throw (castor::exception::Exception) = 0;
 
     /**
      * Gets all DiskCopies for a given request.
      * @param requestId the CASTOR ID of the request
+     * @param svcClassId the Id of the service class we're using
      * @return the list of DiskCopies available
      * @exception in case of error
      */
       virtual std::list<castor::stager::DiskCopyInfo*>
-      diskCopies4Request (std::string requestId)
+      diskCopies4Request (std::string requestId,
+                          u_signed64 svcClassId)
 	throw (castor::exception::Exception) = 0;
 
     /**
      * Gets all DiskCopies for a given usertag
      * @param usertag The usertag of the requests
+     * @param svcClassId the Id of the service class we're using
      * @return the list of DiskCopies available
      * @exception in case of error
      */
       virtual std::list<castor::stager::DiskCopyInfo*>
-      diskCopies4Usertag (std::string requestId)
+      diskCopies4Usertag (std::string requestId,
+                          u_signed64 svcClassId)
 	throw (castor::exception::Exception) = 0;
 
 

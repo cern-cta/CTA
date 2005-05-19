@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IQuerySvc.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/12/17 15:25:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IQuerySvc.h,v $ $Revision: 1.3 $ $Release$ $Date: 2005/05/19 15:53:39 $ $Author: sponcec3 $
  *
  * 
  *
@@ -50,6 +50,7 @@ int Cquery_IQuerySvc_delete(struct Cquery_IQuerySvc_t* svcs);
  * @param qrySvc the IQuerySvc used
  * @param fileId the fileId identifying the file
  * @param nsHost the name server host for this file
+ * @param svcClassId the Id of the service class we're using
  * @param diskCopies the list of DiskCopies available
  * @param diskCopiesNb the number of DiskCopies in the list
  * @return >0 : at least one tapeCopy found. 0 : no Tapecopy found
@@ -60,6 +61,7 @@ int Cquery_IQuerySvc_delete(struct Cquery_IQuerySvc_t* svcs);
 int Cquery_IQuerySvc_diskCopies4File
 (struct Cquery_IQuerySvc_t* qrySvc,
  char* fileId, char* nsHost,
+ u_signed64 svcClassId,
  struct Cstager_DiskCopyForRecall_t*** diskCopies,
  unsigned int* diskCopiesNb);
 
