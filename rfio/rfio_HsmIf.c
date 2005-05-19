@@ -78,6 +78,7 @@ static int rfio_CnsFilesfdt_allocentry _PROTO((int));
 static int rfio_CnsFilesfdt_findentry _PROTO((int,int));
 static int rfio_CnsFilesfdt_freeentry _PROTO((int));
 
+EXTERN_C char *getconfent _PROTO(());   /* CASTOR /etc/castor.conf util */
 int DLL_DECL use_castor2_api _PROTO(());
 
 /*
