@@ -1,3 +1,9 @@
+castor (2.0.0-32) unstable; urgency=low
+
+  * Fix in the link of dbtools (in hsmtools dir)
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Thu, 19 May 2005 18:28:50 +0200
+
 castor (2.0.0-31) unstable; urgency=low
 
   * spec file fix
