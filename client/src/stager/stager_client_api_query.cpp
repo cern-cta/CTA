@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.9 2005/05/13 09:29:51 bcouturi Exp $
+ * $Id: stager_client_api_query.cpp,v 1.10 2005/05/20 12:10:33 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.9 $ $Date: 2005/05/13 09:29:51 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.10 $ $Date: 2005/05/20 12:10:33 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -32,7 +32,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 
 #include "castor/stager/StageFileQueryRequest.hpp"
 #include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/SubRequest.hpp"
-
+#include "stager_client_api_common.h"
 
 /* ================= */
 /* External routines */
@@ -62,6 +62,8 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
     stage_errmsg(func, "Invalid input parameter");
     return -1;
   }
+
+  stage_trace(3, "%s", func);
   
   try {
     castor::BaseObject::initLog("", castor::SVC_NOMSG);
@@ -85,6 +87,12 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
       par->setValue((const char *)requests[i].param);
       par->setQuery(&req);
       req.addParameters(par);
+
+      
+      stage_trace(3, "%s type=%d param=%s", 
+		  func, requests[i].type, requests[i].param);
+
+
     }
 
     // Using the VectorResponseHandler which stores everything in
@@ -133,6 +141,7 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
       (*responses)[i].fileid = fr->fileId();
       (*responses)[i].status = fr->status();
       (*responses)[i].size = fr->size();
+      (*responses)[i].diskserver = strdup(fr->diskServer().c_str());
       (*responses)[i].poolname = strdup(fr->poolName().c_str());
       (*responses)[i].creationTime = (time_t)fr->creationTime();
       (*responses)[i].accessTime = (time_t)fr->accessTime();

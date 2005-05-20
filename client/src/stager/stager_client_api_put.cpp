@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.21 2005/05/13 09:51:05 bcouturi Exp $
+ * $Id: stager_client_api_put.cpp,v 1.22 2005/05/20 12:10:33 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.21 $ $Date: 2005/05/13 09:51:05 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.22 $ $Date: 2005/05/20 12:10:33 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -336,6 +336,9 @@ EXTERN_C int DLL_DECL stage_putDone(char *putRequestId,
     return -1;
   }
 
+  const char *dreqid = (putRequestId != 0)?putRequestId:"NULL";
+  stage_trace(3, "%s PutRequestId=%s", func, dreqid);
+
 
   try {
     castor::BaseObject::initLog("", castor::SVC_NOMSG);
@@ -373,7 +376,11 @@ EXTERN_C int DLL_DECL stage_putDone(char *putRequestId,
       subreq->setFileName(sfilename);
       subreq->setRequest(&req);
 
-    }
+      stage_trace(3, "%s file=%s", 
+		  func, requests[i].filename);
+
+
+    } // End For(i=0...
 
     // Using the VectorResponseHandler which stores everything in
     // A vector. BEWARE, the responses must be de-allocated afterwards
@@ -428,6 +435,14 @@ EXTERN_C int DLL_DECL stage_putDone(char *putRequestId,
       } else {
         (*responses)[i].errorMessage=0;
       }
+
+      stage_trace(3, "%s file=%s status=%d error=%d/%s",
+		  func,
+		  (*responses)[i].filename,
+		  (*responses)[i].status,
+		  (*responses)[i].errorCode,
+		  (*responses)[i].errorCode?fr->errorMessage().c_str():"");
+
       // The responses should be deallocated by the API !
       delete respvec[i];
     } // for
