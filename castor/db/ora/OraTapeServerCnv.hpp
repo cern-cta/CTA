@@ -253,6 +253,24 @@ namespace castor {
         /// SQL remote update statement object for member 
         oracle::occi::Statement *m_remoteUpdateTapeRequestStatement;
 
+        /// SQL select statement for member tapeDrives
+        static const std::string s_selectTapeDriveStatementString;
+
+        /// SQL select statement object for member tapeDrives
+        oracle::occi::Statement *m_selectTapeDriveStatement;
+
+        /// SQL delete statement for member tapeDrives
+        static const std::string s_deleteTapeDriveStatementString;
+
+        /// SQL delete statement object for member tapeDrives
+        oracle::occi::Statement *m_deleteTapeDriveStatement;
+
+        /// SQL remote update statement for member tapeDrives
+        static const std::string s_remoteUpdateTapeDriveStatementString;
+
+        /// SQL remote update statement object for member tapeDrives
+        oracle::occi::Statement *m_remoteUpdateTapeDriveStatement;
+
       }; // end of class OraTapeServerCnv
 
     }; // end of namespace ora

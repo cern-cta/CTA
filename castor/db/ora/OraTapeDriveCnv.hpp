@@ -188,6 +188,14 @@ namespace castor {
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
+         * Fill the database with objects of type TapeServer refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepTapeServer(castor::vdqm::TapeDrive* obj)
+          throw (castor::exception::Exception, oracle::occi::SQLException);
+
+        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -213,6 +221,14 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjExtendedDeviceGroup(castor::vdqm::TapeDrive* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type TapeServer refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjTapeServer(castor::vdqm::TapeDrive* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -300,6 +316,18 @@ namespace castor {
 
         /// SQL select statement object for member extDevGrp
         oracle::occi::Statement *m_selectExtendedDeviceGroupStatement;
+
+        /// SQL checkExist statement for member tapeServer
+        static const std::string s_checkTapeServerExistStatementString;
+
+        /// SQL checkExist statement object for member tapeServer
+        oracle::occi::Statement *m_checkTapeServerExistStatement;
+
+        /// SQL update statement for member tapeServer
+        static const std::string s_updateTapeServerStatementString;
+
+        /// SQL update statement object for member tapeServer
+        oracle::occi::Statement *m_updateTapeServerStatement;
 
       }; // end of class OraTapeDriveCnv
 

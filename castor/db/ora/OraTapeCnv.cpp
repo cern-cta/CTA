@@ -665,7 +665,7 @@ castor::IObject* castor::db::ora::OraTapeCnv::createObj(castor::IAddress* addres
     object->setSeverity(rset->getInt(6));
     object->setVwAddress(rset->getString(7));
     object->setId((u_signed64)rset->getDouble(8));
-    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(10));
+    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(11));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -719,7 +719,7 @@ void castor::db::ora::OraTapeCnv::updateObj(castor::IObject* obj)
     object->setSeverity(rset->getInt(6));
     object->setVwAddress(rset->getString(7));
     object->setId((u_signed64)rset->getDouble(8));
-    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(10));
+    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(11));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {
