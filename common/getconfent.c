@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.13 $ $Date: 2005/04/18 11:03:14 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.14 $ $Date: 2005/05/23 08:49:16 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -142,4 +142,66 @@ char DLL_DECL *getconfent_fromfile(filename,category, name, flags)
     }
 
     return(getconfent_r(filename,category,name,flags,value,BUFSIZ+1));
+}
+
+int DLL_DECL getconfent_parser(conf_val, result, count)
+     char **conf_val;
+     char ***result;
+     int **count;
+{
+  char *p,*q,*last;
+  int i=0;
+
+  /* Counting the number of strings for the array */
+  if ((p = strdup(*conf_val)) == NULL) { return -1; }
+  for (q = strtok(p," \t"); q != NULL; q = strtok(NULL," \t")) i++;
+  
+  /* Saving the index information to pass on later */
+  (*count) = (int *)calloc(1, sizeof(int));
+  **count = i;
+  
+  /* Allocating the necessary space and parsing the string */
+  if ((p = strdup(*conf_val)) == NULL) { return -1; }
+  (*result) = (char **)calloc((i+1), sizeof(char *));
+  if (result == NULL) { return -1; }
+ 
+  i = 0 ;
+  for (q = strtok(p," \t");q != NULL; q = strtok(NULL," \t")) { (*result)[i++] = strdup(q); }
+  
+  return 0;
+}
+
+int DLL_DECL getconfent_multi_fromfile(filename, category, name, flags, result, count)
+     char *filename;
+     char *category;
+     char *name;
+     int flags;
+     char ***result;
+     int **count;
+{
+  char *conf_val;
+
+  if((conf_val = getconfent_fromfile(filename,category,name,flags)) == NULL){ return -1; }
+ 
+  if ( getconfent_parser(&conf_val, result, count) == -1 ) {return -1;}
+
+  return 0;
+}
+
+
+
+int DLL_DECL getconfent_multi(category, name, flags, result, count)
+     char *category;
+     char *name;
+     int flags;
+     char ***result;
+     int **count;
+{
+  char *conf_val;
+  
+  if((conf_val = getconfent(category,name,flags)) == NULL) { return -1; }
+  
+  if( getconfent_parser(&conf_val, result, count) == -1 ) {return -1;}
+
+  return 0;
 }
