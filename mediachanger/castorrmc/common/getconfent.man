@@ -1,8 +1,8 @@
-.\" @(#)@(#)$RCSfile: getconfent.man,v $ $Revision: 1.5 $ $Date: 2003/10/13 16:00:19 $ CERN IT-PDP/DC Frederic Hemmer
+.\" @(#)@(#)$RCSfile: getconfent.man,v $ $Revision: 1.6 $ $Date: 2005/05/23 14:51:10 $ CERN IT-PDP/DC Frederic Hemmer
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DC
 .\" All rights reserved
 .\"
-.TH GETCONFENT 3 "$Date: 2003/10/13 16:00:19 $" CASTOR "Common Library Functions"
+.TH GETCONFENT 3 "$Date: 2005/05/23 14:51:10 $" CASTOR "Common Library Functions"
 .SH NAME
 getconfent, getconfent_r \- Get configuration entry
 .SH SYNOPSIS
@@ -27,6 +27,44 @@ getconfent, getconfent_r \- Get configuration entry
 .BI "               char *" buffer ,
 .br
 .BI "               int " bufsiz );
+.PP
+.BI "int getconfent_multi ("
+.br
+.BI "			const char *" category ,
+.br
+.BI "			const char *" name ,
+.br
+.BI "			int " flags , 
+.br
+.BI "			char ***" result ,
+.br
+.BI "			int **" count );
+.PP
+.BI "char * getconfent_fromfile ("
+.br
+.BI "			const char *" filename ,
+.br
+.BI "			const char *" category ,
+.br
+.BI "			const char *" name ,
+.br
+.BI "			int " flags );
+.PP
+.BI "int getconfent_multi_fromfile ("
+.br
+.BI "			const char *" filename ,
+.br
+.BI "			const char *" category ,
+.br
+.BI "			const char *" name ,
+.br
+.BI "			int " flags ,
+.br
+.BI "			char ***" result ,
+.br
+.BI "			int **" count );
+.PP
+
 .fi
 .IX  "getconfent function"  ""  "\fLget\fP \(em configuration entry"
 .SH DESCRIPTION
@@ -52,11 +90,31 @@ interface, it is not mandatory to call
 in order to assure thread-safe code. In that case
 .B getconfent(\|)
 calls the re-entrant version internally using a buffer allocated
-in thread local storage. 
-.SH "RETURN VALUE"
+in thread local storage.
+.PP
+.B getconfent_multi(\|)
+returns the
+.I result
+in the form of an array associated with a 
+.I count
+of the number of results.
+.PP
+.B getconfent_fromfile(\|)
+and
+.B getconfent_multi_fromfile(\|)
+preform the same operation as
 .B getconfent(\|)
 and
+.B getconfent_multi(\|)
+but reading the information from a file.
+.PP
+
+.SH "RETURN VALUE"
+.B getconfent(\|)
+,
 .B getconfent_r(\|)
+and
+.B getconfent_fromfile(|\)
 return NULL if the entry is not found. Otherwise,
 it returns the matched entry.
 If
@@ -64,6 +122,12 @@ If
 is not null, the return value is a pointer to the full string matched
 in the configuration file. Otherwise, only the pointer to the first
 blank separated token is returned.
+.PP
+.B getconfent_multi(\|)
+and
+.B getconfent_multi_fromfile(\|)
+return 0 if successful, -1 if failed.
+
 .SH "ERRORS"
 .PP
 If the
