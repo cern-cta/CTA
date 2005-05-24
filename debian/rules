@@ -72,7 +72,7 @@ install: build
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/castor
 	$(MAKE) exportman DESTDIR=$(CURDIR)/debian/castor EXPORTMAN=$(CURDIR)/debian/castor/usr/share/man
 	(cd clips; ../imake/imake -I../config DESTDIR=$(CURDIR)/debian/castor; make install DESTDIR=$(CURDIR)/debian/castor)
-	for i in $(CURDIR)/debian/*CONFIG; do install -o root -g bin -m 600 $$i $(CURDIR)/debian/castor/etc/castor/`basename $$i`; done
+	for i in $(CURDIR)/debian/*CONFIG; do install -o root -g bin -m 600 $$i $(CURDIR)/debian/castor/etc/castor/`basename $$i`.example; done
 	for i in `find $(CURDIR) -name "*.sysconfig"`; do install -o root -g bin -m 600 $${i} $(CURDIR)/debian/castor/etc/sysconfig/`basename $$i | sed 's/\.sysconfig//g'`; done
 
 # Build architecture-independent files here.

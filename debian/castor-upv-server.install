@@ -1,4 +1,4 @@
-etc/castor/CUPVCONFIG
+etc/castor/CUPVCONFIG.example
 etc/sysconfig/Cupvdaemon
 usr/bin/Cupvdaemon
 usr/bin/Cupvshutdown
