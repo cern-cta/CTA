@@ -370,6 +370,11 @@ int rtcpcld_getFileId _PROTO((
                               file_list_t *,
                               struct Cns_fileid **
                               ));
+int rtcpcld_getOwner _PROTO((
+                             struct Cns_fileid *,
+                             int *,
+                             int *
+                             ));
 int rtcpcld_gettape _PROTO((
                             char *,
                             u_signed64,
