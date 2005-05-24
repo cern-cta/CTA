@@ -41,16 +41,7 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::vdqm::AbstractRequestHandler::AbstractRequestHandler() {
-  initLog("AbstractRequestHandlerLog", SVC_DLFMSG);
-  // Initializes the DLF logging. This includes
-  // defining the predefined messages
-  castor::dlf::Message messages[] =
-    {{ 0, " - "},
-     { 1, "Request stored in DB"},
-     {-1, ""}};
-  castor::dlf::dlf_init("AbstractRequestHandlerLog", messages);
-}
+castor::vdqm::AbstractRequestHandler::AbstractRequestHandler() {}
 
 
 //------------------------------------------------------------------------------
@@ -85,7 +76,7 @@ void castor::vdqm::AbstractRequestHandler::handleRequest
     // "Request stored in DB" message
     castor::dlf::Param params[] =
       {castor::dlf::Param("ID", fr->id())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 1, 1, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 12, 1, params);
 
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);

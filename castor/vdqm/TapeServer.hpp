@@ -153,32 +153,32 @@ namespace castor {
       }
 
       /**
-       * Add a TapeDrive* object to the m_tapeDriveVector list
+       * Add a TapeDrive* object to the m_tapeDrivesVector list
        */
-      void addTapeDrive(TapeDrive* add_object) {
-        m_tapeDriveVector.push_back(add_object);
+      void addTapeDrives(TapeDrive* add_object) {
+        m_tapeDrivesVector.push_back(add_object);
       }
 
       /**
-       * Remove a TapeDrive* object from m_tapeDriveVector
+       * Remove a TapeDrive* object from m_tapeDrivesVector
        */
-      void removeTapeDrive(TapeDrive* remove_object) {
-        for (unsigned int i = 0; i < m_tapeDriveVector.size(); i++) {
-          TapeDrive* item = m_tapeDriveVector[i];
+      void removeTapeDrives(TapeDrive* remove_object) {
+        for (unsigned int i = 0; i < m_tapeDrivesVector.size(); i++) {
+          TapeDrive* item = m_tapeDrivesVector[i];
           if (item == remove_object) {
-            std::vector<TapeDrive*>::iterator it = m_tapeDriveVector.begin() + i;
-            m_tapeDriveVector.erase(it);
+            std::vector<TapeDrive*>::iterator it = m_tapeDrivesVector.begin() + i;
+            m_tapeDrivesVector.erase(it);
             return;
           }
         }
       }
 
       /**
-       * Get the list of TapeDrive* objects held by m_tapeDriveVector
-       * @return list of TapeDrive* objects held by m_tapeDriveVector
+       * Get the list of TapeDrive* objects held by m_tapeDrivesVector
+       * @return list of TapeDrive* objects held by m_tapeDrivesVector
        */
-      std::vector<TapeDrive*>& tapeDrive() {
-        return m_tapeDriveVector;
+      std::vector<TapeDrive*>& tapeDrives() {
+        return m_tapeDrivesVector;
       }
 
     private:
@@ -190,7 +190,7 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-      std::vector<TapeDrive*> m_tapeDriveVector;
+      std::vector<TapeDrive*> m_tapeDrivesVector;
 
     }; // end of class TapeServer
 

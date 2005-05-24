@@ -107,16 +107,25 @@ castor::vdqm::VdqmServer::VdqmServer() :
      { 3, "Could not get Conversion Service for Streaming"},
      { 4, "Exception caught : server is stopping"},
      { 5, "Exception caught : ignored"},
-     { 6, "Invalid Request"},
+     { 6, "Request has MagicNumber from old VDQM Protocol"},
      { 7, "Unable to read Request from socket"},
-     { 8, "Processing Request"},
+     { 8, "Processing Request"},//not used
      { 9, "Exception caught"},
      {10, "Sending reply to client"},
-     {11, "Unable to send Ack to client"},
+     {11, "Unable to send Ack to client"},//not used
      {12, "Request stored in DB"},
      {13, "Wrong Magic number"},
-     {14, "Enter old VDQM protocol"},
-     {15, "Handle old vdqm request type"},
+     {14, "Handle old vdqm request type"},
+     {15, "ADMIN request"},
+     {16, "New VDQM request"},
+     {17, "Handle Request type error"},
+     {18, "shutdown server requested"},//not used
+     {19, "Handle VDQM_VOL_REQ"},
+     {20, "Handle VDQM_DRV_REQ"},
+     {21, "Handle VDQM_DEL_VOLREQ"},
+     {22, "Handle VDQM_DEL_DRVREQ"},
+     {23, "The parameters of the old vdqm VolReq Request"},
+     {24, "Request priority changed"},
      {-1, ""}};
   castor::dlf::dlf_init("VdqmLog", messages);
 }
@@ -146,7 +155,10 @@ int castor::vdqm::VdqmServer::main () {
     }
     
     /* Create a socket for the server, bind, and listen */
-    castor::vdqm::VdqmServerSocket sock(VDQM_PORT, true);  
+    castor::vdqm::VdqmServerSocket sock(VDQM_PORT, true); 
+    
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 0);
+     
     for (;;) {
       /* Accept connexions */
       castor::vdqm::VdqmServerSocket* s = sock.accept();
@@ -175,8 +187,9 @@ int castor::vdqm::VdqmServer::main () {
 // processRequest: Method called once per request, where all the code resides
 //------------------------------------------------------------------------------
 void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
-  // Struct which is send from the client
-  //vdqmnw_t *client_connection;
+  
+  // placeholder for the request uuid if any
+  Cuuid_t cuuid = nullCuuid;
   
   // Retrieve info on the client
   unsigned short port;
@@ -217,15 +230,20 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params);
   }
 
+	// gives a Cuuid to the request
+  Cuuid_create(&cuuid); 
 
 	if (magicNumber == VDQM_MAGIC) {
-		//New request arrival
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1 );
-		handleOldVdqmRequest(sock, magicNumber);
+		//Request has MagicNumber from old VDQM Protocol
+		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 6 );
+		handleOldVdqmRequest(sock, magicNumber, cuuid);
 	}
   else {
-		//New VDQM client ... not implemented yet
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 13);
+		//Wrong Magic number
+		castor::dlf::Param params[] =
+      {castor::dlf::Param("Magic Number", magicNumber),
+       castor::dlf::Param("VDQM_MAGIC", VDQM_MAGIC)};
+		castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 13, 2, params);
 		
 		/*castor::IObject* obj = sock->readObject();
 		fr = dynamic_cast<castor::stager::Request*>(obj);
@@ -251,7 +269,8 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 																					castor::vdqm::VdqmServerSocket* sock, 
-																					unsigned int magicNumber) {
+																					unsigned int magicNumber,
+																					Cuuid_t cuuid) {
  	//Message of the old Protocol
 	vdqmVolReq_t volumeRequest;
 	vdqmDrvReq_t driveRequest;
@@ -273,38 +292,38 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 		header.magic = magicNumber;
 		
 		// read the rest of the vdqm message
-		reqtype = sock->readOldProtocol(client_connection, 
-																		&header, 
+		reqtype = sock->readOldProtocol(&header, 
 																		&volumeRequest, 
-																		&driveRequest);														
+																		&driveRequest,
+																		cuuid);														
   } catch (castor::exception::Exception e) {  
     // "Unable to read Request from socket" message
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 7, 1, params);
   }
   
 	
 	try {
 		// Handle old vdqm request type																			
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 15);
+		castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 14);
 		
-		OldVdqmProtocol *oldProtocol;
-		oldProtocol = new OldVdqmProtocol(&volumeRequest,
+		OldVdqmProtocol oldProtocol(&volumeRequest,
 												&driveRequest,
 										  	&header,
 												client_connection,
 												reqtype);
 		
-		oldProtocol->checkRequestType();
-		oldProtocol->handleRequestType();
-	
-			//TODO: reqtype behandeln!!!		
-			
+		oldProtocol.checkRequestType(cuuid);
+		oldProtocol.handleRequestType(cuuid);
+		
+		//Sending reply to client
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 10);
+		sock->acknCommitOldProtocol(client_connection);
 	} catch (castor::exception::Exception e) {  
-    // "Unable to read Request from socket" message
+    // "Exception caught" message
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 1, params);
   }
 }

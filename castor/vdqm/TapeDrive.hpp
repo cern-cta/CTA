@@ -53,6 +53,7 @@ namespace castor {
   namespace vdqm {
 
     // Forward declarations
+    class TapeServer;
     class ExtendedDeviceGroup;
 
     /**
@@ -528,6 +529,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_tape
+       * @return the value of m_tape
+       */
+      castor::stager::Tape* tape() const {
+        return m_tape;
+      }
+
+      /**
+       * Set the value of m_tape
+       * @param new_var the new value of m_tape
+       */
+      void setTape(castor::stager::Tape* new_var) {
+        m_tape = new_var;
+      }
+
+      /**
        * Add a ExtendedDeviceGroup* object to the m_extDevGrpVector list
        */
       void addExtDevGrp(ExtendedDeviceGroup* add_object) {
@@ -557,22 +574,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_tape
-       * @return the value of m_tape
-       */
-      castor::stager::Tape* tape() const {
-        return m_tape;
-      }
-
-      /**
-       * Set the value of m_tape
-       * @param new_var the new value of m_tape
-       */
-      void setTape(castor::stager::Tape* new_var) {
-        m_tape = new_var;
-      }
-
-      /**
        * Get the value of m_status
        * @return the value of m_status
        */
@@ -586,6 +587,22 @@ namespace castor {
        */
       void setStatus(TapeDriveStatusCodes new_var) {
         m_status = new_var;
+      }
+
+      /**
+       * Get the value of m_tapeServer
+       * @return the value of m_tapeServer
+       */
+      TapeServer* tapeServer() const {
+        return m_tapeServer;
+      }
+
+      /**
+       * Set the value of m_tapeServer
+       * @param new_var the new value of m_tapeServer
+       */
+      void setTapeServer(TapeServer* new_var) {
+        m_tapeServer = new_var;
       }
 
     private:
@@ -648,11 +665,13 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-      std::vector<ExtendedDeviceGroup*> m_extDevGrpVector;
-
       castor::stager::Tape* m_tape;
 
+      std::vector<ExtendedDeviceGroup*> m_extDevGrpVector;
+
       TapeDriveStatusCodes m_status;
+
+      TapeServer* m_tapeServer;
 
     }; // end of class TapeDrive
 

@@ -30,9 +30,8 @@
 #define CASTOR_VDQM_TAPEREQUEST_H
 
 // Include Files and Forward declarations for the C world
+#include "osdep.h"
 struct C_IObject_t;
-struct C_int_t;
-struct C_u_signed64_t;
 struct Cstager_ClientIdentification_t;
 struct Cstager_Tape_t;
 struct Cvdqm_ExtendedDeviceGroup_t;
@@ -74,7 +73,7 @@ int Cvdqm_TapeRequest_print(struct Cvdqm_TapeRequest_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cvdqm_TapeRequest_TYPE(struct C_int_t* ret);
+int Cvdqm_TapeRequest_TYPE(int* ret);
 
 /***************************************/
 /* Implementation of IObject interface */
@@ -84,7 +83,7 @@ int Cvdqm_TapeRequest_TYPE(struct C_int_t* ret);
  * Gets the type of the object
  */
 int Cvdqm_TapeRequest_type(struct Cvdqm_TapeRequest_t* instance,
-                           struct C_int_t* ret);
+                           int* ret);
 
 /**
  * virtual method to clone any object
@@ -95,56 +94,36 @@ int Cvdqm_TapeRequest_clone(struct Cvdqm_TapeRequest_t* instance,
 /**
  * Get the value of priority
  */
-int Cvdqm_TapeRequest_priority(struct Cvdqm_TapeRequest_t* instance, struct C_int_t* var);
+int Cvdqm_TapeRequest_priority(struct Cvdqm_TapeRequest_t* instance, int* var);
 
 /**
  * Set the value of priority
  */
-int Cvdqm_TapeRequest_setPriority(struct Cvdqm_TapeRequest_t* instance, struct C_int_t new_var);
+int Cvdqm_TapeRequest_setPriority(struct Cvdqm_TapeRequest_t* instance, int new_var);
 
 /**
  * Get the value of creationTime
  * The time, when the tape request is opend by the client
  */
-int Cvdqm_TapeRequest_creationTime(struct Cvdqm_TapeRequest_t* instance, struct C_int_t* var);
+int Cvdqm_TapeRequest_creationTime(struct Cvdqm_TapeRequest_t* instance, int* var);
 
 /**
  * Set the value of creationTime
  * The time, when the tape request is opend by the client
  */
-int Cvdqm_TapeRequest_setCreationTime(struct Cvdqm_TapeRequest_t* instance, struct C_int_t new_var);
+int Cvdqm_TapeRequest_setCreationTime(struct Cvdqm_TapeRequest_t* instance, int new_var);
 
 /**
  * Get the value of id
  * The id of this object
  */
-int Cvdqm_TapeRequest_id(struct Cvdqm_TapeRequest_t* instance, struct C_u_signed64_t* var);
+int Cvdqm_TapeRequest_id(struct Cvdqm_TapeRequest_t* instance, u_signed64* var);
 
 /**
  * Set the value of id
  * The id of this object
  */
-int Cvdqm_TapeRequest_setId(struct Cvdqm_TapeRequest_t* instance, struct C_u_signed64_t new_var);
-
-/**
- * Get the value of reqExtDevGrp
- */
-int Cvdqm_TapeRequest_reqExtDevGrp(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_ExtendedDeviceGroup_t** var);
-
-/**
- * Set the value of reqExtDevGrp
- */
-int Cvdqm_TapeRequest_setReqExtDevGrp(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_ExtendedDeviceGroup_t* new_var);
-
-/**
- * Get the value of requestedSrv
- */
-int Cvdqm_TapeRequest_requestedSrv(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_TapeServer_t** var);
-
-/**
- * Set the value of requestedSrv
- */
-int Cvdqm_TapeRequest_setRequestedSrv(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_TapeServer_t* new_var);
+int Cvdqm_TapeRequest_setId(struct Cvdqm_TapeRequest_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of tape
@@ -165,5 +144,25 @@ int Cvdqm_TapeRequest_client(struct Cvdqm_TapeRequest_t* instance, struct Cstage
  * Set the value of client
  */
 int Cvdqm_TapeRequest_setClient(struct Cvdqm_TapeRequest_t* instance, struct Cstager_ClientIdentification_t* new_var);
+
+/**
+ * Get the value of reqExtDevGrp
+ */
+int Cvdqm_TapeRequest_reqExtDevGrp(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_ExtendedDeviceGroup_t** var);
+
+/**
+ * Set the value of reqExtDevGrp
+ */
+int Cvdqm_TapeRequest_setReqExtDevGrp(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_ExtendedDeviceGroup_t* new_var);
+
+/**
+ * Get the value of requestedSrv
+ */
+int Cvdqm_TapeRequest_requestedSrv(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_TapeServer_t** var);
+
+/**
+ * Set the value of requestedSrv
+ */
+int Cvdqm_TapeRequest_setRequestedSrv(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_TapeServer_t* new_var);
 
 #endif // CASTOR_VDQM_TAPEREQUEST_H

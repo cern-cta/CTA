@@ -63,13 +63,15 @@ namespace castor {
        /**
         * Calls the right function for the request.
         */
-       void handleRequestType() throw (castor::exception::Exception);
+       void handleRequestType(Cuuid_t cuuid) 
+       	throw (castor::exception::Exception);
        
        /**
         * Checks the reqtype and returns an error, if it is a 
         * wrong number. Throws an exception, if an error occures.
         */
-       bool checkRequestType() throw (castor::exception::Exception);
+       bool checkRequestType(Cuuid_t cuuid) 
+       	throw (castor::exception::Exception);
       
       private:
      	/**

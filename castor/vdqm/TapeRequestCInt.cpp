@@ -149,38 +149,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_TapeRequest_reqExtDevGrp
-  //----------------------------------------------------------------------------
-  int Cvdqm_TapeRequest_reqExtDevGrp(castor::vdqm::TapeRequest* instance, castor::vdqm::ExtendedDeviceGroup** var) {
-    *var = instance->reqExtDevGrp();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cvdqm_TapeRequest_setReqExtDevGrp
-  //----------------------------------------------------------------------------
-  int Cvdqm_TapeRequest_setReqExtDevGrp(castor::vdqm::TapeRequest* instance, castor::vdqm::ExtendedDeviceGroup* new_var) {
-    instance->setReqExtDevGrp(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cvdqm_TapeRequest_requestedSrv
-  //----------------------------------------------------------------------------
-  int Cvdqm_TapeRequest_requestedSrv(castor::vdqm::TapeRequest* instance, castor::vdqm::TapeServer** var) {
-    *var = instance->requestedSrv();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cvdqm_TapeRequest_setRequestedSrv
-  //----------------------------------------------------------------------------
-  int Cvdqm_TapeRequest_setRequestedSrv(castor::vdqm::TapeRequest* instance, castor::vdqm::TapeServer* new_var) {
-    instance->setRequestedSrv(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cvdqm_TapeRequest_tape
   //----------------------------------------------------------------------------
   int Cvdqm_TapeRequest_tape(castor::vdqm::TapeRequest* instance, castor::stager::Tape** var) {
@@ -209,6 +177,38 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cvdqm_TapeRequest_setClient(castor::vdqm::TapeRequest* instance, castor::stager::ClientIdentification* new_var) {
     instance->setClient(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeRequest_reqExtDevGrp
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeRequest_reqExtDevGrp(castor::vdqm::TapeRequest* instance, castor::vdqm::ExtendedDeviceGroup** var) {
+    *var = instance->reqExtDevGrp();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeRequest_setReqExtDevGrp
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeRequest_setReqExtDevGrp(castor::vdqm::TapeRequest* instance, castor::vdqm::ExtendedDeviceGroup* new_var) {
+    instance->setReqExtDevGrp(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeRequest_requestedSrv
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeRequest_requestedSrv(castor::vdqm::TapeRequest* instance, castor::vdqm::TapeServer** var) {
+    *var = instance->requestedSrv();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeRequest_setRequestedSrv
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeRequest_setRequestedSrv(castor::vdqm::TapeRequest* instance, castor::vdqm::TapeServer* new_var) {
+    instance->setRequestedSrv(new_var);
     return 0;
   }
 

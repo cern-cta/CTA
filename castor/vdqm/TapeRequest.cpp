@@ -46,10 +46,10 @@ castor::vdqm::TapeRequest::TapeRequest() throw() :
   m_priority(0),
   m_creationTime(0),
   m_id(0),
-  m_reqExtDevGrp(0),
-  m_requestedSrv(0),
   m_tape(0),
-  m_client(0) {
+  m_client(0),
+  m_reqExtDevGrp(0),
+  m_requestedSrv(0) {
 };
 
 //------------------------------------------------------------------------------
@@ -75,18 +75,6 @@ void castor::vdqm::TapeRequest::print(std::ostream& stream,
   stream << indent << "creationTime : " << m_creationTime << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "ReqExtDevGrp : " << std::endl;
-  if (0 != m_reqExtDevGrp) {
-    m_reqExtDevGrp->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
-  stream << indent << "RequestedSrv : " << std::endl;
-  if (0 != m_requestedSrv) {
-    m_requestedSrv->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
   stream << indent << "Tape : " << std::endl;
   if (0 != m_tape) {
     m_tape->print(stream, indent + "  ", alreadyPrinted);
@@ -96,6 +84,18 @@ void castor::vdqm::TapeRequest::print(std::ostream& stream,
   stream << indent << "Client : " << std::endl;
   if (0 != m_client) {
     m_client->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
+  stream << indent << "ReqExtDevGrp : " << std::endl;
+  if (0 != m_reqExtDevGrp) {
+    m_reqExtDevGrp->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
+  stream << indent << "RequestedSrv : " << std::endl;
+  if (0 != m_requestedSrv) {
+    m_requestedSrv->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }

@@ -45,25 +45,13 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::vdqm::OldVdqmProtocol::OldVdqmProtocol() {
-	initLog("OldVdqmProtocolLog", SVC_DLFMSG);
-  // Initializes the DLF logging. This includes
-  // defining the predefined messages
-  castor::dlf::Message messages[] =
-    {{ 0, " - "},
-     { 1, "New VDQM request"},
-     { 2, "Request processing error"},
-     { 3, "shutdown server requested"},
-     {-1, ""}};
-  castor::dlf::dlf_init("OldVdqmProtocolLog", messages);
-}
+castor::vdqm::OldVdqmProtocol::OldVdqmProtocol() {}
 
 castor::vdqm::OldVdqmProtocol::OldVdqmProtocol(vdqmVolReq_t *volumeRequest,
 																								vdqmDrvReq_t *driveRequest,
 																						  	vdqmHdr_t *header,
 										  													vdqmnw_t *client_connection,
 																								int reqtype = -1) {
-	OldVdqmProtocol();
 	
 	ptr_volumeRequest = volumeRequest;
 	ptr_driveRequest = driveRequest;
@@ -76,7 +64,7 @@ castor::vdqm::OldVdqmProtocol::OldVdqmProtocol(vdqmVolReq_t *volumeRequest,
 //------------------------------------------------------------------------------
 // checkRequestType
 //------------------------------------------------------------------------------
-bool castor::vdqm::OldVdqmProtocol::checkRequestType() 
+bool castor::vdqm::OldVdqmProtocol::checkRequestType(Cuuid_t cuuid) 
 	throw (castor::exception::Exception) {
 	
 	int i;
@@ -98,7 +86,7 @@ bool castor::vdqm::OldVdqmProtocol::checkRequestType()
 
 		castor::dlf::Param params[] =
       {castor::dlf::Param("req_string", req_string)};
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, params);
+		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 16, 1, params);
 	}
   
   if ( !VDQM_VALID_REQTYPE(m_reqtype) ) {
@@ -150,26 +138,40 @@ bool castor::vdqm::OldVdqmProtocol::checkRequestType()
 //
 //	  vdqm_ReqStarted();
   } // end else
+  
+  return true;
 }
 
-void castor::vdqm::OldVdqmProtocol::handleRequestType() 
+void castor::vdqm::OldVdqmProtocol::handleRequestType(Cuuid_t cuuid) 
 	throw (castor::exception::Exception) {
 	
+	bool handleRequest = true;
+	
+
 	switch (m_reqtype) {
     case VDQM_VOL_REQ:
-    		TapeRequestHandler *requestHandler;
-    		requestHandler = new TapeRequestHandler();
-    		requestHandler->newTapeRequest(ptr_header, ptr_volumeRequest); 
-    		delete requestHandler;
-//        rc = vdqm_NewVolReq(&hdr,&volumeRequest);
+    		// Handle VDQM_VOL_REQ
+    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 19);
+    
+    		{
+    			TapeRequestHandler requestHandler;
+					requestHandler.newTapeRequest(ptr_header, ptr_volumeRequest, cuuid); 
+    		}
         break;
     case VDQM_DRV_REQ:
+    		// Handle VDQM_DRV_REQ
+    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 20);
 //        rc = vdqm_NewDrvReq(&hdr,&driveRequest);
         break;
     case VDQM_DEL_VOLREQ:
+    		// Handle VDQM_DEL_VOLREQ
+    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 21);
 //        rc = vdqm_DelVolReq(&volumeRequest);
         break;
     case VDQM_DEL_DRVREQ:
+    		// Handle VDQM_DEL_DRVREQ
+    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 22);
+    		
 //        rc = vdqm_DelDrvReq(&driveRequest);
 //        /* Dumping the list of drives to file */
 //        if (rc == 0) {
@@ -179,25 +181,16 @@ void castor::vdqm::OldVdqmProtocol::handleRequestType()
 //            }
 //        }
         break;
+  	default:
+  			castor::exception::NotSupported ex;
+		    ex.getMessage() << "Invalid Request 0x"
+                    << std::hex << m_reqtype << "\n";
+    		throw ex;
 	}
 	
-//  if ( rc == -1 ) {
-//    log(LOG_ERR,"vdqm_ProcReq(): request processing error\n");
-//    if ( reqtype == VDQM_PING ) 
-//        (void) vdqm_AcknPing(client_connection,rc);
-//    else (void)vdqm_AcknRollback(client_connection);
-//    rc = 0;
-//	} 
-//	else {
-//    rc = vdqm_AcknCommit(client_connection);
-//    if ( rc != -1 ) {
-//      rc = vdqm_SendReq(client_connection,
-//          &hdr,&volumeRequest,&driveRequest);
-//      if ( rc != -1 ) rc = vdqm_RecvAckn(client_connection);
-//    }
-//    if ( rc == -1 )
-//      log(LOG_ERR,"vdqm_ProcReq(): client error on commit\n");
-//	}
+	
+ 
+
 //
 //  /*
 //   * Commit failed somewhere. If it was a volume request we must

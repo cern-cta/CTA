@@ -50,7 +50,11 @@ castor::vdqm::TapeServer::TapeServer() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::vdqm::TapeServer::~TapeServer() throw() {
-  m_tapeDriveVector.clear();
+  for (unsigned int i = 0; i < m_tapeDrivesVector.size(); i++) {
+    m_tapeDrivesVector[i]->setTapeServer(0);
+    delete m_tapeDrivesVector[i];
+  }
+  m_tapeDrivesVector.clear();
 };
 
 //------------------------------------------------------------------------------
@@ -71,11 +75,11 @@ void castor::vdqm::TapeServer::print(std::ostream& stream,
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {
-    stream << indent << "TapeDrive : " << std::endl;
+    stream << indent << "TapeDrives : " << std::endl;
     int i;
     std::vector<TapeDrive*>::const_iterator it;
-    for (it = m_tapeDriveVector.begin(), i = 0;
-         it != m_tapeDriveVector.end();
+    for (it = m_tapeDrivesVector.begin(), i = 0;
+         it != m_tapeDrivesVector.end();
          it++, i++) {
       stream << indent << "  " << i << " :" << std::endl;
       (*it)->print(stream, indent + "    ", alreadyPrinted);

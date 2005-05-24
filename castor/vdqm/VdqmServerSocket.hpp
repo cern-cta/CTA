@@ -124,10 +124,10 @@ namespace castor {
        * this function only after having read out the magic number! 
        * @return The request Type number of the old vdqm Protocol
        */
-      int readOldProtocol(vdqmnw_t *client_connection, 
-      										vdqmHdr_t *header, 
+      int readOldProtocol(vdqmHdr_t *header, 
       										vdqmVolReq_t *volumeRequest, 
-      										vdqmDrvReq_t *driveRequest) 
+      										vdqmDrvReq_t *driveRequest,
+      										Cuuid_t cuuid) 
       									throw (castor::exception::Exception);
       					
       /**
@@ -139,6 +139,12 @@ namespace castor {
       										vdqmVolReq_t *volumeRequest, 
       										vdqmDrvReq_t *driveRequest) 
       									throw (castor::exception::Exception);
+      									
+      /**
+       * Sends a VDQM_COMMIT back to the client.
+       */									
+      void acknCommitOldProtocol(vdqmnw_t *client_connection) 
+      	throw (castor::exception::Exception);
 
 
     protected:

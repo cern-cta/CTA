@@ -56,7 +56,7 @@ namespace castor {
 				 * This function replaces the old vdqm_NewVolReq C-function. It stores
 				 * the request into the data Base
 				 */
-				void newTapeRequest(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) 
+				void newTapeRequest(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq, Cuuid_t cuuid) 
 					throw (castor::exception::Exception);
 					
 				/**

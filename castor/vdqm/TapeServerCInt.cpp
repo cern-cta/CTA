@@ -148,26 +148,26 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_TapeServer_addTapeDrive
+  // Cvdqm_TapeServer_addTapeDrives
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeServer_addTapeDrive(castor::vdqm::TapeServer* instance, castor::vdqm::TapeDrive* obj) {
-    instance->addTapeDrive(obj);
+  int Cvdqm_TapeServer_addTapeDrives(castor::vdqm::TapeServer* instance, castor::vdqm::TapeDrive* obj) {
+    instance->addTapeDrives(obj);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_TapeServer_removeTapeDrive
+  // Cvdqm_TapeServer_removeTapeDrives
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeServer_removeTapeDrive(castor::vdqm::TapeServer* instance, castor::vdqm::TapeDrive* obj) {
-    instance->removeTapeDrive(obj);
+  int Cvdqm_TapeServer_removeTapeDrives(castor::vdqm::TapeServer* instance, castor::vdqm::TapeDrive* obj) {
+    instance->removeTapeDrives(obj);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_TapeServer_tapeDrive
+  // Cvdqm_TapeServer_tapeDrives
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeServer_tapeDrive(castor::vdqm::TapeServer* instance, castor::vdqm::TapeDrive*** var, int* len) {
-    std::vector<castor::vdqm::TapeDrive*>& result = instance->tapeDrive();
+  int Cvdqm_TapeServer_tapeDrives(castor::vdqm::TapeServer* instance, castor::vdqm::TapeDrive*** var, int* len) {
+    std::vector<castor::vdqm::TapeDrive*>& result = instance->tapeDrives();
     *len = result.size();
     *var = (castor::vdqm::TapeDrive**) malloc((*len) * sizeof(castor::vdqm::TapeDrive*));
     for (int i = 0; i < *len; i++) {

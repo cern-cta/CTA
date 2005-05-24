@@ -59,29 +59,20 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::vdqm::TapeRequestHandler::TapeRequestHandler() {
-  initLog("vdqmRequestHandler", SVC_DLFMSG);
-  // Initializes the DLF logging. This includes
-  // defining the predefined messages
-  castor::dlf::Message messages[] =
-    {{ 0, " - "},
-     { 1, "The parameters of the old vdqm VolReq Request"},
-     { 2, "Request priority changed"},
-     {-1, ""}};
-  castor::dlf::dlf_init("vdqmRequestHandler", messages);
-}
+castor::vdqm::TapeRequestHandler::TapeRequestHandler() {}
 
 
 //------------------------------------------------------------------------------
 // newTapeRequest
 //------------------------------------------------------------------------------
 void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header, 
-																									vdqmVolReq_t *volumeRequest) 
+																									vdqmVolReq_t *volumeRequest,
+																									Cuuid_t cuuid) 
 	throw (castor::exception::Exception) {
   
   //The db related informations
   castor::vdqm::TapeRequest *newTapeReq;
-  castor::vdqm::TapeDrive *freeTapeDrive;
+//  castor::vdqm::TapeDrive *freeTapeDrive;
   castor::stager::ClientIdentification *clientData;
   castor::stager::Tape *tape;
   castor::vdqm::TapeServer *reqTapeServer;
@@ -90,23 +81,15 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
   //The IService for vdqm
   castor::vdqm::IVdqmSvc *ptr_IVdqmService;
   
-  bool exist = false;
-  
-  
- //****************** Muss weg *******************************
- 	dgn_element_t *dgn_context; //ExtendedDeviceGroup
-  vdqm_volrec_t *volrec, *newvolrec; //TapeRequest 
-  vdqm_drvrec_t *drvrec; //TapeDriveRequest
+  bool exist = false;  
   char 					*p;
-  int 					rc;
- //***********************************************************
+
   
   /**
    * The IVdqmService Objects has some important fuctions
    * to handle db queries.
    */
-  //TODO: ptr_IVdqmService instanziieren!!!
-  
+  //TODO: ptr_IVdqmService instanziieren!!! 
 
   if ( header == NULL || volumeRequest == NULL ) {
   	castor::exception::InvalidArgument ex;
@@ -126,7 +109,7 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
      castor::dlf::Param("dgn", volumeRequest->dgn),
      castor::dlf::Param("drive", (*volumeRequest->drive == '\0' ? "***" : volumeRequest->drive)),
      castor::dlf::Param("server", (*volumeRequest->server == '\0' ? "***" : volumeRequest->server))};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 10, params);
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 23, 10, params);
   
   //The Tape related informations
   newTapeReq = new TapeRequest();
@@ -157,16 +140,16 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
   /*
    * Check that the requested device exists.
    */
-  exist = ptr_IVdqmService->checkExtDevGroup(reqExtDevGrp);
+//  exist = ptr_IVdqmService->checkExtDevGroup(reqExtDevGrp);
   
   
 //TODO: Eventuell zu harter error!  
-  if ( !exist ) {
-  	castor::exception::Internal ex;
-    ex.getMessage() << "DGN " <<  volumeRequest->dgn
-    								<< " does not exist" << std::endl;
-    throw ex;
-  }
+//  if ( !exist ) {
+//  	castor::exception::Internal ex;
+//    ex.getMessage() << "DGN " <<  volumeRequest->dgn
+//    								<< " does not exist" << std::endl;
+//    throw ex;
+//  }
   
   //Connect the tapeRequest with the additional information
   newTapeReq->setClient(clientData);
@@ -177,12 +160,12 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
   /*
    * Verify that the request doesn't (yet) exist
    */
-  exist = ptr_IVdqmService->checkTapeRequest(newTapeReq);
-  if ( exist ) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Input request already queued" << std::endl;
-    throw ex;
-  }
+//  exist = ptr_IVdqmService->checkTapeRequest(newTapeReq);
+//  if ( exist ) {
+//    castor::exception::Internal ex;
+//    ex.getMessage() << "Input request already queued" << std::endl;
+//    throw ex;
+//  }
   
 
   /*
@@ -199,80 +182,39 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 	// Request priority changed
   castor::dlf::Param params2[] =
   	{castor::dlf::Param("priority", newTapeReq->priority())};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 2, 1, params2);
-  
-//  /*
-//   * Remember the new volume record to assure replica is updated about it.
-//   */
-//   newvolrec = volrec;
-
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 24, 1, params2);
   
   /*
    * Add the record to the volume queue
    */
-	handleRequest(newTapeReq, nullCuuid);
+	handleRequest(newTapeReq, cuuid);
    
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// TODO: This must be put in an own thread
 
-	/**
-	 * Look for a free tape drive, which can handle the request
-	 */
-	freeTapeDrive = ptr_IVdqmService->getFreeTapeDrive(reqExtDevGrp);
-	if ( freeTapeDrive == NULL ) {
-	  castor::exception::Internal ex;
-	  ex.getMessage() << "No free tape drive for TapeRequest "
-	  								<< "with ExtendedDeviceGroup " 
-	  								<< reqExtDevGrp->dgName()
-	  								<< " and mode = "
-	  								<< reqExtDevGrp->mode()
-	  								<< std::endl;
-	  throw ex;
-	}
-  else { //If there was a free drive, start a new job
-	  
-	  handleTapeRequestQueue();
+//	/**
+//	 * Look for a free tape drive, which can handle the request
+//	 */
+//	freeTapeDrive = ptr_IVdqmService->getFreeTapeDrive(reqExtDevGrp);
+//	if ( freeTapeDrive == NULL ) {
+//	  castor::exception::Internal ex;
+//	  ex.getMessage() << "No free tape drive for TapeRequest "
+//	  								<< "with ExtendedDeviceGroup " 
+//	  								<< reqExtDevGrp->dgName()
+//	  								<< " and mode = "
+//	  								<< reqExtDevGrp->mode()
+//	  								<< std::endl;
+//	  throw ex;
+//	}
+//  else { //If there was a free drive, start a new job
+//	  handleTapeRequestQueue();
+//  }
+  
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
-//    /* 
-//     * Loop until either the volume queue is empty or
-//     * there are no more suitable drives
-//     */
-//    for (;;) {
-//        rc = SelectVolAndDrv(dgn_context,&volrec,&drvrec);
-//        if ( rc == -1 || volrec == NULL || drvrec == NULL ) {
-//            log(LOG_ERR,"vdqm_NewVolReq(): SelectVolAndDrv() returned rc=%d\n",
-//                rc);
-//            break;
-//        }
-//        /*
-//         * Free memory allocated for previous request for this drive
-//         */
-//        if ( drvrec->vol != NULL ) free(drvrec->vol);
-//        drvrec->vol = volrec;
-//        volrec->drv = drvrec;
-//        drvrec->drv.VolReqID = volrec->vol.VolReqID;
-//        volrec->vol.DrvReqID = drvrec->drv.DrvReqID;
-//        drvrec->drv.jobID = 0;
-//        /*
-//         * Reset the drive status
-//         */
-//        drvrec->drv.status = drvrec->drv.status & 
-//            ~(VDQM_UNIT_RELEASE | VDQM_UNIT_BUSY | VDQM_VOL_MOUNT |
-//            VDQM_VOL_UNMOUNT | VDQM_UNIT_ASSIGN);
-//        drvrec->drv.recvtime = (int)time(NULL);
-//    
-//        /*
-//         * Start the job
-//         */
-//        rc = vdqm_StartJob(volrec);
-//        if ( rc < 0 ) {
-//            log(LOG_ERR,"vdqm_NewVolReq(): vdqm_StartJob() returned error\n");
-//            volrec->vol.DrvReqID = 0;
-//            drvrec->drv.VolReqID = 0;
-//            volrec->drv = NULL;
-//            drvrec->vol = NULL;
-//            break;
-//        }
-//     } /* end of for (;;) */
-  }
+
 //  /*
 //   * Always update replica for this volume record (update status may have
 //   * been temporary reset by SelectVolAndDrv()).
@@ -285,7 +227,7 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 	delete clientData;
 	delete reqExtDevGrp;
 	delete reqTapeServer;
-	delete freeTapeDrive;
+//	delete freeTapeDrive;
 }
 
 

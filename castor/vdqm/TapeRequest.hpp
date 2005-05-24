@@ -164,38 +164,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_reqExtDevGrp
-       * @return the value of m_reqExtDevGrp
-       */
-      ExtendedDeviceGroup* reqExtDevGrp() const {
-        return m_reqExtDevGrp;
-      }
-
-      /**
-       * Set the value of m_reqExtDevGrp
-       * @param new_var the new value of m_reqExtDevGrp
-       */
-      void setReqExtDevGrp(ExtendedDeviceGroup* new_var) {
-        m_reqExtDevGrp = new_var;
-      }
-
-      /**
-       * Get the value of m_requestedSrv
-       * @return the value of m_requestedSrv
-       */
-      TapeServer* requestedSrv() const {
-        return m_requestedSrv;
-      }
-
-      /**
-       * Set the value of m_requestedSrv
-       * @param new_var the new value of m_requestedSrv
-       */
-      void setRequestedSrv(TapeServer* new_var) {
-        m_requestedSrv = new_var;
-      }
-
-      /**
        * Get the value of m_tape
        * @return the value of m_tape
        */
@@ -227,6 +195,38 @@ namespace castor {
         m_client = new_var;
       }
 
+      /**
+       * Get the value of m_reqExtDevGrp
+       * @return the value of m_reqExtDevGrp
+       */
+      ExtendedDeviceGroup* reqExtDevGrp() const {
+        return m_reqExtDevGrp;
+      }
+
+      /**
+       * Set the value of m_reqExtDevGrp
+       * @param new_var the new value of m_reqExtDevGrp
+       */
+      void setReqExtDevGrp(ExtendedDeviceGroup* new_var) {
+        m_reqExtDevGrp = new_var;
+      }
+
+      /**
+       * Get the value of m_requestedSrv
+       * @return the value of m_requestedSrv
+       */
+      TapeServer* requestedSrv() const {
+        return m_requestedSrv;
+      }
+
+      /**
+       * Set the value of m_requestedSrv
+       * @param new_var the new value of m_requestedSrv
+       */
+      void setRequestedSrv(TapeServer* new_var) {
+        m_requestedSrv = new_var;
+      }
+
     private:
 
       int m_priority;
@@ -237,13 +237,13 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-      ExtendedDeviceGroup* m_reqExtDevGrp;
-
-      TapeServer* m_requestedSrv;
-
       castor::stager::Tape* m_tape;
 
       castor::stager::ClientIdentification* m_client;
+
+      ExtendedDeviceGroup* m_reqExtDevGrp;
+
+      TapeServer* m_requestedSrv;
 
     }; // end of class TapeRequest
 

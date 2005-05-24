@@ -32,13 +32,14 @@
 //------------------------------------------------------------------------------
 // TapeDriveStatusCodesStrings
 //------------------------------------------------------------------------------
-const char* castor::vdqm::TapeDriveStatusCodesStrings[7] = {
+const char* castor::vdqm::TapeDriveStatusCodesStrings[8] = {
   "UNIT_UP",
   "UNIT_STARTING",
   "UNIT_ASSIGNED",
   "UNIT_RELEASED",
   "VOL_MOUNTED",
   "FORCED_UNMOUNT",
-  "UNIT_DOWN"
+  "UNIT_DOWN",
+  "id"
 };
 

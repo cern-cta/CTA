@@ -80,14 +80,6 @@ using namespace castor::io;
 //------------------------------------------------------------------------------
 castor::vdqm::VdqmServerSocket::VdqmServerSocket(int socket) throw () :
   m_listening(false) {
-  initLog("VdqmServerSocketLog", SVC_DLFMSG);
-  // Initializes the DLF logging. This includes
-  // defining the predefined messages
-  castor::dlf::Message messages[] =
-    {{ 0, " - "},
-     { 1, "ADMIN request"},
-     {-1, ""}};
-  castor::dlf::dlf_init("VdqmServerSocketLog", messages);
   	
   m_socket = socket;
 }
@@ -100,16 +92,8 @@ castor::vdqm::VdqmServerSocket::VdqmServerSocket(const unsigned short port,
                                        const bool reusable)
   throw (castor::exception::Exception) :
   m_listening(false) {
-  initLog("VdqmServerSocketLog", SVC_DLFMSG);
-  // Initializes the DLF logging. This includes
-  // defining the predefined messages
-  castor::dlf::Message messages[] =
-    {{ 0, " - "},
-     { 1, "ADMIN request"},
-     {-1, ""}};
-  castor::dlf::dlf_init("VdqmServerSocketLog", messages);
   	
-  m_socket =0;
+  m_socket = 0;
   createSocket();
   if (reusable) this->reusable();
   m_saddr = buildAddress(port);
@@ -186,11 +170,12 @@ castor::IObject* castor::vdqm::VdqmServerSocket::readObject()
 unsigned int castor::vdqm::VdqmServerSocket::readMagicNumber()
 	throw (castor::exception::Exception) {
   
+  char* buffer;
   unsigned int magic;
   
   // Read the magic number from the socket
   int ret = netread(m_socket,
-                    (char*)&magic,
+                    buffer,
                     sizeof(unsigned int));
                     
   if (ret != sizeof(unsigned int)) {
@@ -210,6 +195,8 @@ unsigned int castor::vdqm::VdqmServerSocket::readMagicNumber()
       throw ex;
     }
   }
+  
+  DO_MARSHALL(LONG, buffer, magic, ReceiveFrom);
   
   return magic;
 }
@@ -303,10 +290,10 @@ void castor::vdqm::VdqmServerSocket::readRestOfBuffer(char** buf, int& n)
 //------------------------------------------------------------------------------
 // readOldProtocol
 //------------------------------------------------------------------------------
-int castor::vdqm::VdqmServerSocket::readOldProtocol(vdqmnw_t *client_connection, 
-													      										vdqmHdr_t *header, 
+int castor::vdqm::VdqmServerSocket::readOldProtocol(vdqmHdr_t *header, 
       																							vdqmVolReq_t *volumeRequest, 
-													      										vdqmDrvReq_t *driveRequest) 
+													      										vdqmDrvReq_t *driveRequest,
+													      										Cuuid_t cuuid) 
 	throw (castor::exception::Exception) {
 
   // header buffer is shorter, 
@@ -453,7 +440,7 @@ int castor::vdqm::VdqmServerSocket::readOldProtocol(vdqmnw_t *client_connection,
 		castor::dlf::Param params[] =
     	{castor::dlf::Param("reqtype", reqtype),
      	 castor::dlf::Param("h_name", hp->h_name)};
-  	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 2, params);
+  	castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 15, 2, params);
 
 		if ( (isadminhost(m_socket,hp->h_name) != 0) ) {
     	serrno = EPERM;
@@ -668,4 +655,70 @@ int castor::vdqm::VdqmServerSocket::sendToOldClient(vdqmnw_t *client_connection,
   
     
   return(reqtype); 
+}
+
+
+
+//------------------------------------------------------------------------------
+// acknCommitOldProtocol
+//------------------------------------------------------------------------------
+void castor::vdqm::VdqmServerSocket::acknCommitOldProtocol(
+																										vdqmnw_t *client_connection) 
+	throw (castor::exception::Exception) {
+		
+	char hdrbuf[VDQM_HDRBUFSIZ];
+	int magic, recvreqtype, len, rc;
+	char *p;
+	SOCKET s;
+	    
+  if ( client_connection == NULL                                   ||
+      (client_connection->accept_socket == INVALID_SOCKET          &&
+      client_connection->connect_socket == INVALID_SOCKET) ) {
+  	serrno = EINVAL;
+    castor::exception::Exception ex(serrno);
+		ex.getMessage() << "VdqmServerSocket::acknCommitOldProtocol(): "
+										<< "No client connection " 
+										<< neterror() << std::endl;
+		throw ex;	
+  }
+	    
+	s = client_connection->connect_socket;
+	    
+  magic = VDQM_MAGIC;
+  len = 0;
+  recvreqtype = VDQM_COMMIT;
+  
+	    
+
+  p = hdrbuf;
+  DO_MARSHALL(LONG,p,magic,SendTo);
+  DO_MARSHALL(LONG,p,recvreqtype,SendTo);
+  DO_MARSHALL(LONG,p,len,SendTo);
+	    
+	 
+  magic = VDQM_MAGIC;
+  len = 0;
+  p = hdrbuf;
+  rc = netwrite_timeout(s, hdrbuf, VDQM_HDRBUFSIZ, VDQM_TIMEOUT);
+  switch (rc) {
+		case -1: 
+				{
+					serrno = SECOMERR;
+	      	castor::exception::Exception ex(serrno);
+					ex.getMessage() << "VdqmServerSocket::acknCommitOldProtocol(): "
+												<< "netwrite(HDR): " 
+												<< neterror() << std::endl;
+					throw ex;	
+				}
+				break;
+	  case 0:
+	  		{
+	  			serrno = SECONNDROP;
+	      	castor::exception::Exception ex(serrno);
+					ex.getMessage() << "VdqmServerSocket::acknCommitOldProtocol(): "
+												<< "netwrite(HDR): connection dropped" 
+												<< std::endl;
+					throw ex;	
+	  		}
+	}
 }

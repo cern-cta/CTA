@@ -32,6 +32,7 @@
 #include "castor/vdqm/ExtendedDeviceGroup.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
+#include "castor/vdqm/TapeServer.hpp"
 #include "osdep.h"
 #include <vector>
 
@@ -504,6 +505,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cvdqm_TapeDrive_tape
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDrive_tape(castor::vdqm::TapeDrive* instance, castor::stager::Tape** var) {
+    *var = instance->tape();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeDrive_setTape
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDrive_setTape(castor::vdqm::TapeDrive* instance, castor::stager::Tape* new_var) {
+    instance->setTape(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cvdqm_TapeDrive_addExtDevGrp
   //----------------------------------------------------------------------------
   int Cvdqm_TapeDrive_addExtDevGrp(castor::vdqm::TapeDrive* instance, castor::vdqm::ExtendedDeviceGroup* obj) {
@@ -533,22 +550,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_TapeDrive_tape
-  //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_tape(castor::vdqm::TapeDrive* instance, castor::stager::Tape** var) {
-    *var = instance->tape();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cvdqm_TapeDrive_setTape
-  //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_setTape(castor::vdqm::TapeDrive* instance, castor::stager::Tape* new_var) {
-    instance->setTape(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cvdqm_TapeDrive_status
   //----------------------------------------------------------------------------
   int Cvdqm_TapeDrive_status(castor::vdqm::TapeDrive* instance, castor::vdqm::TapeDriveStatusCodes* var) {
@@ -561,6 +562,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cvdqm_TapeDrive_setStatus(castor::vdqm::TapeDrive* instance, castor::vdqm::TapeDriveStatusCodes new_var) {
     instance->setStatus(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeDrive_tapeServer
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDrive_tapeServer(castor::vdqm::TapeDrive* instance, castor::vdqm::TapeServer** var) {
+    *var = instance->tapeServer();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeDrive_setTapeServer
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDrive_setTapeServer(castor::vdqm::TapeDrive* instance, castor::vdqm::TapeServer* new_var) {
+    instance->setTapeServer(new_var);
     return 0;
   }
 

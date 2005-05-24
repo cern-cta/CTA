@@ -46,14 +46,15 @@ namespace castor {
       UNIT_RELEASED,
       VOL_MOUNTED,
       FORCED_UNMOUNT,
-      UNIT_DOWN
+      UNIT_DOWN,
+      id //The id of this object
     }; // end of enum TapeDriveStatusCodes
 
     /**
      * Names of the differents representations, used to display
      * correctly the TapeDriveStatusCodes enum
      */
-    extern const char* TapeDriveStatusCodesStrings[7];
+    extern const char* TapeDriveStatusCodesStrings[8];
 
 #ifdef __cplusplus
   }; // end of namespace vdqm

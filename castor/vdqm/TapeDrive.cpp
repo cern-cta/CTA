@@ -33,6 +33,7 @@
 #include "castor/stager/Tape.hpp"
 #include "castor/vdqm/ExtendedDeviceGroup.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
+#include "castor/vdqm/TapeServer.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -68,7 +69,8 @@ castor::vdqm::TapeDrive::TapeDrive() throw() :
   m_name(""),
   m_id(0),
   m_tape(0),
-  m_status(TapeDriveStatusCodes(0)) {
+  m_status(TapeDriveStatusCodes(0)),
+  m_tapeServer(0) {
 };
 
 //------------------------------------------------------------------------------
@@ -76,6 +78,9 @@ castor::vdqm::TapeDrive::TapeDrive() throw() :
 //------------------------------------------------------------------------------
 castor::vdqm::TapeDrive::~TapeDrive() throw() {
   m_extDevGrpVector.clear();
+  if (0 != m_tapeServer) {
+    m_tapeServer->removeTapeDrives(this);
+  }
 };
 
 //------------------------------------------------------------------------------
@@ -117,6 +122,12 @@ void castor::vdqm::TapeDrive::print(std::ostream& stream,
   stream << indent << "name : " << m_name << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "Tape : " << std::endl;
+  if (0 != m_tape) {
+    m_tape->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
   {
     stream << indent << "ExtDevGrp : " << std::endl;
     int i;
@@ -128,13 +139,13 @@ void castor::vdqm::TapeDrive::print(std::ostream& stream,
       (*it)->print(stream, indent + "    ", alreadyPrinted);
     }
   }
-  stream << indent << "Tape : " << std::endl;
-  if (0 != m_tape) {
-    m_tape->print(stream, indent + "  ", alreadyPrinted);
+  stream << indent << "status : " << TapeDriveStatusCodesStrings[m_status] << std::endl;
+  stream << indent << "TapeServer : " << std::endl;
+  if (0 != m_tapeServer) {
+    m_tapeServer->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }
-  stream << indent << "status : " << TapeDriveStatusCodesStrings[m_status] << std::endl;
 }
 
 //------------------------------------------------------------------------------

@@ -30,9 +30,8 @@
 #define CASTOR_VDQM_TAPESERVER_H
 
 // Include Files and Forward declarations for the C world
+#include "osdep.h"
 struct C_IObject_t;
-struct C_int_t;
-struct C_u_signed64_t;
 struct Cvdqm_TapeDrive_t;
 struct Cvdqm_TapeServer_t;
 
@@ -71,7 +70,7 @@ int Cvdqm_TapeServer_print(struct Cvdqm_TapeServer_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cvdqm_TapeServer_TYPE(struct C_int_t* ret);
+int Cvdqm_TapeServer_TYPE(int* ret);
 
 /***************************************/
 /* Implementation of IObject interface */
@@ -81,7 +80,7 @@ int Cvdqm_TapeServer_TYPE(struct C_int_t* ret);
  * Gets the type of the object
  */
 int Cvdqm_TapeServer_type(struct Cvdqm_TapeServer_t* instance,
-                          struct C_int_t* ret);
+                          int* ret);
 
 /**
  * virtual method to clone any object
@@ -102,39 +101,39 @@ int Cvdqm_TapeServer_setServerName(struct Cvdqm_TapeServer_t* instance, const ch
 /**
  * Get the value of status
  */
-int Cvdqm_TapeServer_status(struct Cvdqm_TapeServer_t* instance, struct C_int_t* var);
+int Cvdqm_TapeServer_status(struct Cvdqm_TapeServer_t* instance, int* var);
 
 /**
  * Set the value of status
  */
-int Cvdqm_TapeServer_setStatus(struct Cvdqm_TapeServer_t* instance, struct C_int_t new_var);
+int Cvdqm_TapeServer_setStatus(struct Cvdqm_TapeServer_t* instance, int new_var);
 
 /**
  * Get the value of id
  * The id of this object
  */
-int Cvdqm_TapeServer_id(struct Cvdqm_TapeServer_t* instance, struct C_u_signed64_t* var);
+int Cvdqm_TapeServer_id(struct Cvdqm_TapeServer_t* instance, u_signed64* var);
 
 /**
  * Set the value of id
  * The id of this object
  */
-int Cvdqm_TapeServer_setId(struct Cvdqm_TapeServer_t* instance, struct C_u_signed64_t new_var);
+int Cvdqm_TapeServer_setId(struct Cvdqm_TapeServer_t* instance, u_signed64 new_var);
 
 /**
- * Add a struct Cvdqm_TapeDrive_t* object to the tapeDrive list
+ * Add a struct Cvdqm_TapeDrive_t* object to the tapeDrives list
  */
-int Cvdqm_TapeServer_addTapeDrive(struct Cvdqm_TapeServer_t* instance, struct Cvdqm_TapeDrive_t* obj);
+int Cvdqm_TapeServer_addTapeDrives(struct Cvdqm_TapeServer_t* instance, struct Cvdqm_TapeDrive_t* obj);
 
 /**
- * Remove a struct Cvdqm_TapeDrive_t* object from tapeDrive
+ * Remove a struct Cvdqm_TapeDrive_t* object from tapeDrives
  */
-int Cvdqm_TapeServer_removeTapeDrive(struct Cvdqm_TapeServer_t* instance, struct Cvdqm_TapeDrive_t* obj);
+int Cvdqm_TapeServer_removeTapeDrives(struct Cvdqm_TapeServer_t* instance, struct Cvdqm_TapeDrive_t* obj);
 
 /**
- * Get the list of struct Cvdqm_TapeDrive_t* objects held by tapeDrive. Note that
+ * Get the list of struct Cvdqm_TapeDrive_t* objects held by tapeDrives. Note that
  * the caller is responsible for the deletion of the returned vector.
  */
-int Cvdqm_TapeServer_tapeDrive(struct Cvdqm_TapeServer_t* instance, struct Cvdqm_TapeDrive_t*** var, int* len);
+int Cvdqm_TapeServer_tapeDrives(struct Cvdqm_TapeServer_t* instance, struct Cvdqm_TapeDrive_t*** var, int* len);
 
 #endif // CASTOR_VDQM_TAPESERVER_H

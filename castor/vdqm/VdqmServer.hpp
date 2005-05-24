@@ -79,7 +79,8 @@ namespace castor {
        * them to the right function.
        */
       void handleOldVdqmRequest(castor::vdqm::VdqmServerSocket* sock, 
-      													unsigned int magicNumber);
+      													unsigned int magicNumber,
+      													Cuuid_t cuuid);
 
     }; // class VdqmServer
 

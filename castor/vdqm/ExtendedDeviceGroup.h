@@ -30,9 +30,8 @@
 #define CASTOR_VDQM_EXTENDEDDEVICEGROUP_H
 
 // Include Files and Forward declarations for the C world
+#include "osdep.h"
 struct C_IObject_t;
-struct C_int_t;
-struct C_u_signed64_t;
 struct Cvdqm_ExtendedDeviceGroup_t;
 
 //------------------------------------------------------------------------------
@@ -71,7 +70,7 @@ int Cvdqm_ExtendedDeviceGroup_print(struct Cvdqm_ExtendedDeviceGroup_t* instance
 /**
  * Gets the type of this kind of objects
  */
-int Cvdqm_ExtendedDeviceGroup_TYPE(struct C_int_t* ret);
+int Cvdqm_ExtendedDeviceGroup_TYPE(int* ret);
 
 /***************************************/
 /* Implementation of IObject interface */
@@ -81,7 +80,7 @@ int Cvdqm_ExtendedDeviceGroup_TYPE(struct C_int_t* ret);
  * Gets the type of the object
  */
 int Cvdqm_ExtendedDeviceGroup_type(struct Cvdqm_ExtendedDeviceGroup_t* instance,
-                                   struct C_int_t* ret);
+                                   int* ret);
 
 /**
  * virtual method to clone any object
@@ -103,24 +102,24 @@ int Cvdqm_ExtendedDeviceGroup_setDgName(struct Cvdqm_ExtendedDeviceGroup_t* inst
  * Get the value of mode
  * WRITE_ENABLE/WRITE_DISABLE from Ctape_constants.h
  */
-int Cvdqm_ExtendedDeviceGroup_mode(struct Cvdqm_ExtendedDeviceGroup_t* instance, struct C_int_t* var);
+int Cvdqm_ExtendedDeviceGroup_mode(struct Cvdqm_ExtendedDeviceGroup_t* instance, int* var);
 
 /**
  * Set the value of mode
  * WRITE_ENABLE/WRITE_DISABLE from Ctape_constants.h
  */
-int Cvdqm_ExtendedDeviceGroup_setMode(struct Cvdqm_ExtendedDeviceGroup_t* instance, struct C_int_t new_var);
+int Cvdqm_ExtendedDeviceGroup_setMode(struct Cvdqm_ExtendedDeviceGroup_t* instance, int new_var);
 
 /**
  * Get the value of id
  * The id of this object
  */
-int Cvdqm_ExtendedDeviceGroup_id(struct Cvdqm_ExtendedDeviceGroup_t* instance, struct C_u_signed64_t* var);
+int Cvdqm_ExtendedDeviceGroup_id(struct Cvdqm_ExtendedDeviceGroup_t* instance, u_signed64* var);
 
 /**
  * Set the value of id
  * The id of this object
  */
-int Cvdqm_ExtendedDeviceGroup_setId(struct Cvdqm_ExtendedDeviceGroup_t* instance, struct C_u_signed64_t new_var);
+int Cvdqm_ExtendedDeviceGroup_setId(struct Cvdqm_ExtendedDeviceGroup_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_VDQM_EXTENDEDDEVICEGROUP_H
