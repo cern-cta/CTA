@@ -1,4 +1,4 @@
-COMM       $Id: Imakefile,v 1.5 2005/01/23 10:21:41 jdurand Exp $
+COMM       $Id: Imakefile,v 1.6 2005/05/24 12:10:02 jdurand Exp $
 COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
@@ -8,8 +8,8 @@ COMM		Make config files
 
 #include <Project.tmpl>
 
-CONFIG_OBJS = castor castor_compiler castor_db castor_paths castor_env
-ICONFIG_OBJS = FileName($(CONFIGDIR),castor) FileName($(CONFIGDIR),castor_compiler) FileName($(CONFIGDIR),castor_db) FileName($(CONFIGDIR),castor_paths) FileName($(CONFIGDIR),castor_env)
+CONFIG_OBJS = castor.example castor_compiler.example castor_db.example castor_paths.example castor_env.example
+ICONFIG_OBJS = FileName($(CONFIGDIR),castor.example) FileName($(CONFIGDIR),castor_compiler.example) FileName($(CONFIGDIR),castor_db.example) FileName($(CONFIGDIR),castor_paths.example) FileName($(CONFIGDIR),castor_env.example)
 
 all:
 
@@ -31,8 +31,8 @@ clean:
 
 MakeDir($(DESTDIR)$(CONFIGDIR),root,bin,0755)
 
-InstallNonExecFile(castor,$(CONFIGDIR),root,bin,0644)
-InstallNonExecFile(castor_compiler,$(CONFIGDIR),root,bin,0644)
-InstallNonExecFile(castor_db,$(CONFIGDIR),root,bin,0644)
-InstallNonExecFile(castor_paths,$(CONFIGDIR),root,bin,0644)
-InstallNonExecFile(castor_env,$(CONFIGDIR),root,bin,0644)
+InstallNonExecFile(castor.example,$(CONFIGDIR),root,bin,0644)
+InstallNonExecFile(castor_compiler.example,$(CONFIGDIR),root,bin,0644)
+InstallNonExecFile(castor_db.example,$(CONFIGDIR),root,bin,0644)
+InstallNonExecFile(castor_paths.example,$(CONFIGDIR),root,bin,0644)
+InstallNonExecFile(castor_env.example,$(CONFIGDIR),root,bin,0644)
