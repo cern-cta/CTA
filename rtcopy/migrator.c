@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.42 $ $Release$ $Date: 2005/02/24 15:19:48 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.43 $ $Release$ $Date: 2005/05/24 12:32:30 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.42 $ $Release$ $Date: 2005/02/24 15:19:48 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.43 $ $Release$ $Date: 2005/05/24 12:32:30 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -103,7 +103,7 @@ int migratorCallbackFileCopied(
      rtcpFileRequest_t *filereq;
 {
   file_list_t *file = NULL;
-  int rc, save_serrno, tapeCopyNb = 0;
+  int rc, save_serrno, tapeCopyNb = 0, ownerUid = -1, ownerGid = -1;
   struct Cns_fileid *castorFileId = NULL;
   char *blkid;
 
@@ -146,6 +146,7 @@ int migratorCallbackFileCopied(
                             sizeof(filereq->blockid)
                             );
   if ( blkid == NULL ) blkid = strdup("unknown");
+  (void)rtcpcld_getOwner(castorFileId,&ownerUid,&ownerGid);
 
   if ( ((filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED)) ||
        ((filereq->cprc == -1) && ((filereq->err.errorcode == ENOSPC) ||
@@ -162,7 +163,7 @@ int migratorCallbackFileCopied(
                       (inChild == 0 ? mainUuid : childUuid),
                       RTCPCLD_LOG_MSG(RTCPCLD_MSG_FAILEDVMGRUPD),
                       (struct Cns_fileid *)castorFileId,
-                      RTCPCLD_NB_PARAMS+6,
+                      RTCPCLD_NB_PARAMS+8,
                       "",
                       DLF_MSG_PARAM_TPVID,
                       tapereq->vid,
@@ -178,6 +179,12 @@ int migratorCallbackFileCopied(
                       "BLOCKID",
                       DLF_MSG_PARAM_STR,
                       blkid,
+                      "OWNERUID",
+                      DLF_MSG_PARAM_INT,
+                      ownerUid,
+                      "OWNERGID",
+                      DLF_MSG_PARAM_INT,
+                      ownerGid,
                       "ERROR",
                       DLF_MSG_PARAM_STR,
                       sstrerror(serrno),
@@ -202,7 +209,7 @@ int migratorCallbackFileCopied(
                         (inChild == 0 ? mainUuid : childUuid),
                         RTCPCLD_LOG_MSG(RTCPCLD_MSG_FAILEDNSUPD),
                         (struct Cns_fileid *)castorFileId,
-                        RTCPCLD_NB_PARAMS+7,
+                        RTCPCLD_NB_PARAMS+9,
                         "",
                         DLF_MSG_PARAM_TPVID,
                         tapereq->vid,
@@ -221,6 +228,12 @@ int migratorCallbackFileCopied(
                         "COPYNB",
                         DLF_MSG_PARAM_INT,
                         tapeCopyNb,
+                        "OWNERUID",
+                        DLF_MSG_PARAM_INT,
+                        ownerUid,
+                        "OWNERGID",
+                        DLF_MSG_PARAM_INT,
+                        ownerGid,
                         "ERROR",
                         DLF_MSG_PARAM_STR,
                         sstrerror(serrno),
@@ -255,7 +268,7 @@ int migratorCallbackFileCopied(
                       childUuid,
                       RTCPCLD_LOG_MSG(RTCPCLD_MSG_STAGED),
                       castorFileId,
-                      9,
+                      11,
                       "",
                       DLF_MSG_PARAM_TPVID,
                       tapereq->vid,
@@ -277,6 +290,12 @@ int migratorCallbackFileCopied(
                       "FILESIZE",
                       DLF_MSG_PARAM_INT64,
                       filereq->bytes_in,
+                      "OWNERUID",
+                      DLF_MSG_PARAM_INT,
+                      ownerUid,
+                      "OWNERGID",
+                      DLF_MSG_PARAM_INT,
+                      ownerGid,
                       "TOTFILES",
                       DLF_MSG_PARAM_INT,
                       filesCopied,

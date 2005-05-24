@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.21 $ $Release$ $Date: 2005/03/14 12:15:49 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.22 $ $Release$ $Date: 2005/05/24 12:32:30 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.21 $ $Release$ $Date: 2005/03/14 12:15:49 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.22 $ $Release$ $Date: 2005/05/24 12:32:30 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -236,7 +236,7 @@ int recallerCallbackFileCopied(
      rtcpFileRequest_t *filereq;
 {
   file_list_t *file = NULL;
-  int rc, save_serrno, finished = 0, failed = 0;
+  int rc, save_serrno, finished = 0, failed = 0, ownerUid = -1, ownerGid = -1;
   struct Cns_fileid *castorFileId = NULL;
 
   if ( (tapereq == NULL) || (filereq == NULL) ) {
@@ -270,6 +270,8 @@ int recallerCallbackFileCopied(
   file->filereq = *filereq;
 
   (void)rtcpcld_getFileId(file,&castorFileId);
+
+  (void)rtcpcld_getOwner(castorFileId,&ownerUid,&ownerGid);
 
   if ( (filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED) ) {
     rc = rtcpcld_checkNsSegment(
@@ -311,7 +313,7 @@ int recallerCallbackFileCopied(
                     childUuid,
                     RTCPCLD_LOG_MSG(RTCPCLD_MSG_STAGED),
                     castorFileId,
-                    10,
+                    12,
                     "",
                     DLF_MSG_PARAM_TPVID,
                     tapereq->vid,
@@ -336,6 +338,12 @@ int recallerCallbackFileCopied(
                     "FILESIZE",
                     DLF_MSG_PARAM_INT64,
                     filereq->bytes_out,
+                    "OWNERUID",
+                    DLF_MSG_PARAM_INT,
+                    ownerUid,
+                    "OWNERGID",
+                    DLF_MSG_PARAM_INT,
+                    ownerGid,
                     "TOTFILES",
                     DLF_MSG_PARAM_INT,
                     filesCopied,

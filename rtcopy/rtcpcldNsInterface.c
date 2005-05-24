@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.28 $ $Release$ $Date: 2005/03/14 12:18:37 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/05/24 12:32:30 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.28 $ $Release$ $Date: 2005/03/14 12:18:37 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/05/24 12:32:30 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -758,6 +758,33 @@ int rtcpcld_checkDualCopies(
   } else {
     free(fileId);
   }
+  return(0);
+}
+
+int rtcpcld_getOwner(
+                     fileId,
+                     uid,
+                     gid
+                     )
+     struct Cns_fileid *fileId;
+     int *uid, *gid;
+{
+  int rc;
+  struct Cns_filestat statbuf;
+  char castorFileName[CA_MAXPATHLEN+1], *nsErrMsg = NULL;
+  
+  if ( fileId == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  (void)getNsErrBuf(&nsErrMsg);
+  *castorFileName = '\0';
+  rc = Cns_statx(castorFileName,fileId,&statbuf);
+  if ( rc == -1 ) {
+    return(-1);
+  }
+  if ( uid != NULL ) *uid = (int)statbuf.uid;
+  if ( gid != NULL ) *uid = (int)statbuf.gid;
   return(0);
 }
 
