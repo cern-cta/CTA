@@ -30,9 +30,8 @@
 #define CASTOR_STAGER_CLIENTIDENTIFICATION_H
 
 // Include Files and Forward declarations for the C world
+#include "osdep.h"
 struct C_IObject_t;
-struct C_int_t;
-struct C_u_signed64_t;
 struct Cstager_ClientIdentification_t;
 
 //------------------------------------------------------------------------------
@@ -71,7 +70,7 @@ int Cstager_ClientIdentification_print(struct Cstager_ClientIdentification_t* in
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_ClientIdentification_TYPE(struct C_int_t* ret);
+int Cstager_ClientIdentification_TYPE(int* ret);
 
 /***************************************/
 /* Implementation of IObject interface */
@@ -81,7 +80,7 @@ int Cstager_ClientIdentification_TYPE(struct C_int_t* ret);
  * Gets the type of the object
  */
 int Cstager_ClientIdentification_type(struct Cstager_ClientIdentification_t* instance,
-                                      struct C_int_t* ret);
+                                      int* ret);
 
 /**
  * virtual method to clone any object
@@ -112,55 +111,55 @@ int Cstager_ClientIdentification_setUserName(struct Cstager_ClientIdentification
 /**
  * Get the value of port
  */
-int Cstager_ClientIdentification_port(struct Cstager_ClientIdentification_t* instance, struct C_int_t* var);
+int Cstager_ClientIdentification_port(struct Cstager_ClientIdentification_t* instance, int* var);
 
 /**
  * Set the value of port
  */
-int Cstager_ClientIdentification_setPort(struct Cstager_ClientIdentification_t* instance, struct C_int_t new_var);
+int Cstager_ClientIdentification_setPort(struct Cstager_ClientIdentification_t* instance, int new_var);
 
 /**
  * Get the value of euid
  */
-int Cstager_ClientIdentification_euid(struct Cstager_ClientIdentification_t* instance, struct C_int_t* var);
+int Cstager_ClientIdentification_euid(struct Cstager_ClientIdentification_t* instance, int* var);
 
 /**
  * Set the value of euid
  */
-int Cstager_ClientIdentification_setEuid(struct Cstager_ClientIdentification_t* instance, struct C_int_t new_var);
+int Cstager_ClientIdentification_setEuid(struct Cstager_ClientIdentification_t* instance, int new_var);
 
 /**
  * Get the value of egid
  */
-int Cstager_ClientIdentification_egid(struct Cstager_ClientIdentification_t* instance, struct C_int_t* var);
+int Cstager_ClientIdentification_egid(struct Cstager_ClientIdentification_t* instance, int* var);
 
 /**
  * Set the value of egid
  */
-int Cstager_ClientIdentification_setEgid(struct Cstager_ClientIdentification_t* instance, struct C_int_t new_var);
+int Cstager_ClientIdentification_setEgid(struct Cstager_ClientIdentification_t* instance, int new_var);
 
 /**
  * Get the value of magic
  * Specifies the protocol, which is using the client
  */
-int Cstager_ClientIdentification_magic(struct Cstager_ClientIdentification_t* instance, struct C_int_t* var);
+int Cstager_ClientIdentification_magic(struct Cstager_ClientIdentification_t* instance, int* var);
 
 /**
  * Set the value of magic
  * Specifies the protocol, which is using the client
  */
-int Cstager_ClientIdentification_setMagic(struct Cstager_ClientIdentification_t* instance, struct C_int_t new_var);
+int Cstager_ClientIdentification_setMagic(struct Cstager_ClientIdentification_t* instance, int new_var);
 
 /**
  * Get the value of id
  * The id of this object
  */
-int Cstager_ClientIdentification_id(struct Cstager_ClientIdentification_t* instance, struct C_u_signed64_t* var);
+int Cstager_ClientIdentification_id(struct Cstager_ClientIdentification_t* instance, u_signed64* var);
 
 /**
  * Set the value of id
  * The id of this object
  */
-int Cstager_ClientIdentification_setId(struct Cstager_ClientIdentification_t* instance, struct C_u_signed64_t new_var);
+int Cstager_ClientIdentification_setId(struct Cstager_ClientIdentification_t* instance, u_signed64 new_var);
 
 #endif // CASTOR_STAGER_CLIENTIDENTIFICATION_H
