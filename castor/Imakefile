@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.91 $ $Release$ $Date: 2005/05/09 15:53:48 $ $Author: mbraeger $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.92 $ $Release$ $Date: 2005/05/24 12:21:40 $ $Author: mbraeger $
 #
 # Make Castor libraries and executables
 #
@@ -343,6 +343,24 @@ STGLIB_SRCS = IAddressCInt.cpp \
 STGLIB_SRCS += io/AuthServerSocket.cpp io/AuthClientSocket.cpp
 #endif
 
+
+#if BuildVDQMCpp
+STGLIB_SRCS += vdqm/AbstractRequestHandler.cpp \
+              vdqm/ExtendedDeviceGroup.cpp \
+              vdqm/ExtendedDeviceGroupCInt.cpp \
+              vdqm/OldVdqmProtocol.cpp \
+              vdqm/TapeDrive.cpp \
+              vdqm/TapeDriveCInt.cpp \
+              vdqm/TapeDriveStatusCodes.cpp \
+              vdqm/TapeRequest.cpp \
+              vdqm/TapeRequestCInt.cpp \
+              vdqm/TapeRequestHandler.cpp \
+              vdqm/TapeRequestStatusCode.cpp \
+              vdqm/TapeServer.cpp \
+              vdqm/TapeServerCInt.cpp \
+              vdqm/VdqmServer.cpp \
+              vdqm/VdqmServerSocket.cpp
+#endif
 
 #if BuildDlfLibrary
 STGLIB_SRCS += DlfMsgSvc.cpp \
