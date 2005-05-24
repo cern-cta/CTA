@@ -1,2 +1,2 @@
-etc/sysconfig/gcDaemon
+etc/sysconfig/gcDaemon.example
 usr/bin/gcDaemon

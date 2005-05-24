@@ -1,4 +1,4 @@
-etc/sysconfig/rmmaster
+etc/sysconfig/rmmaster.example
 usr/bin/rmadminnode
 usr/bin/rmmaster
 usr/bin/rmdeletejob

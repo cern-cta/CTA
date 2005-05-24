@@ -1,2 +1,2 @@
-etc/sysconfig/rmcdaemon
+etc/sysconfig/rmcdaemon.example
 usr/bin/rmcdaemon

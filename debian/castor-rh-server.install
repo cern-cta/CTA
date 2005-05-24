@@ -1,2 +1,2 @@
-etc/sysconfig/rhserver
+etc/sysconfig/rhserver.example
 usr/bin/rhserver
