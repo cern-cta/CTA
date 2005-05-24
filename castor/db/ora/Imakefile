@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.44 $ $Release$ $Date: 2005/05/23 12:51:28 $ $Author: itglp $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.45 $ $Release$ $Date: 2005/05/24 16:23:02 $ $Author: itglp $
 #
 # Make Castor DB libraries
 #
@@ -38,61 +38,64 @@ INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,demo) -I FileName($(ORACLE_HOME)/rdb
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
 ORALIB_SRCS = OraBaseAddressCnv.cpp \
-              OraBaseCnv.cpp \
-							OraBaseObj.cpp \
-							OraCastorFileCnv.cpp \
-							OraClientCnv.cpp \
-							OraClientIdentificationCnv.cpp \
-							OraCnvSvc.cpp \
-							OraDisk2DiskCopyDoneRequestCnv.cpp \
-							OraDiskCopyCnv.cpp \
-							OraDiskPoolCnv.cpp \
-							OraDiskServerCnv.cpp \
-							OraExtendedDeviceGroupCnv.cpp \
-							OraFileClassCnv.cpp \
-							OraFileSystemCnv.cpp \
-							OraFiles2DeleteCnv.cpp \
-							OraFilesDeletedCnv.cpp \
-							OraFilesDeletionFailedCnv.cpp \
-							OraGCFileCnv.cpp \
-							OraGCLocalFileCnv.cpp \
-							OraGetUpdateDoneCnv.cpp \
-							OraGetUpdateFailedCnv.cpp \
-							OraGetUpdateStartRequestCnv.cpp \
-							OraMoverCloseRequestCnv.cpp \
-							OraPutDoneStartCnv.cpp \
-							OraPutFailedCnv.cpp \
-							OraPutStartRequestCnv.cpp \
-							OraQueryParameterCnv.cpp \
-							OraQuerySvc.cpp \
-							OraSegmentCnv.cpp \
-							OraStageAbortRequestCnv.cpp \
-							OraStageFileQueryRequestCnv.cpp \
-							OraStageFindRequestRequestCnv.cpp \
-							OraStageGetNextRequestCnv.cpp \
-							OraStageGetRequestCnv.cpp \
-							OraStagePrepareToGetRequestCnv.cpp \
-							OraStagePrepareToPutRequestCnv.cpp \
-							OraStagePrepareToUpdateRequestCnv.cpp \
-							OraStagePutDoneRequestCnv.cpp \
-							OraStagePutNextRequestCnv.cpp \
-							OraStagePutRequestCnv.cpp \
-							OraStageReleaseFilesRequestCnv.cpp \
-							OraStageRequestQueryRequestCnv.cpp \
-							OraStageRmRequestCnv.cpp \
-							OraStageUpdateNextRequestCnv.cpp \
-							OraStageUpdateRequestCnv.cpp \
-							OraStagerSvc.cpp \
-							OraStreamCnv.cpp \
-							OraSubRequestCnv.cpp \
-							OraSvcClassCnv.cpp \
-							OraTapeCnv.cpp \
-							OraTapeCopyCnv.cpp \
-							OraTapeDriveCnv.cpp \
-							OraTapePoolCnv.cpp \
-							OraTapeRequestCnv.cpp \
-							OraTapeServerCnv.cpp
-	
+            OraBaseCnv.cpp \
+            OraBaseObj.cpp \
+            OraCastorFileCnv.cpp \
+            OraClientCnv.cpp \
+            OraCnvSvc.cpp \
+            OraDisk2DiskCopyDoneRequestCnv.cpp \
+            OraDiskCopyCnv.cpp \
+            OraDiskPoolCnv.cpp \
+            OraDiskServerCnv.cpp \
+            OraFileClassCnv.cpp \
+            OraFileSystemCnv.cpp \
+            OraFiles2DeleteCnv.cpp \
+            OraFilesDeletedCnv.cpp \
+            OraFilesDeletionFailedCnv.cpp \
+            OraGCFileCnv.cpp \
+            OraGCLocalFileCnv.cpp \
+            OraGetUpdateDoneCnv.cpp \
+            OraGetUpdateFailedCnv.cpp \
+            OraGetUpdateStartRequestCnv.cpp \
+            OraMoverCloseRequestCnv.cpp \
+            OraPutDoneStartCnv.cpp \
+            OraPutFailedCnv.cpp \
+            OraPutStartRequestCnv.cpp \
+            OraQueryParameterCnv.cpp \
+            OraQuerySvc.cpp \
+            OraSegmentCnv.cpp \
+            OraStageAbortRequestCnv.cpp \
+            OraStageFileQueryRequestCnv.cpp \
+            OraStageFindRequestRequestCnv.cpp \
+            OraStageGetNextRequestCnv.cpp \
+            OraStageGetRequestCnv.cpp \
+            OraStagePrepareToGetRequestCnv.cpp \
+            OraStagePrepareToPutRequestCnv.cpp \
+            OraStagePrepareToUpdateRequestCnv.cpp \
+            OraStagePutDoneRequestCnv.cpp \
+            OraStagePutNextRequestCnv.cpp \
+            OraStagePutRequestCnv.cpp \
+            OraStageReleaseFilesRequestCnv.cpp \
+            OraStageRequestQueryRequestCnv.cpp \
+            OraStageRmRequestCnv.cpp \
+            OraStageUpdateNextRequestCnv.cpp \
+            OraStageUpdateRequestCnv.cpp \
+            OraStagerSvc.cpp \
+            OraStreamCnv.cpp \
+            OraSubRequestCnv.cpp \
+            OraSvcClassCnv.cpp \
+            OraTapeCnv.cpp \
+            OraTapeCopyCnv.cpp \
+            OraTapePoolCnv.cpp
+
+#ifdef BuildVDQMCpp
+ORALIB_SRCS += OraClientIdentificationCnv.cpp \
+            OraExtendedDeviceGroupCnv.cpp \
+            OraTapeDriveCnv.cpp \
+            OraTapeRequestCnv.cpp \
+            OraTapeServerCnv.cpp
+#endif
+
 ORALIB_OBJS = $(ORALIB_SRCS:.cpp=.Osuf)
 
 COMMONLIB = LibraryTargetName(castorCommonOra)
