@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.39 $ $Date: 2005/05/17 16:41:27 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.40 $ $Date: 2005/05/24 15:59:51 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -82,11 +82,11 @@ EPROGS_STAGER = FileName($(EXPORTBIN),stager) FileName($(EXPORTBIN),stageradmin)
 MANPAGES_STAGER = FileName($(MANDIR),stager.$(MANSUFFIX)) FileName($(MANDIR),stageradmin.$(MANSUFFIX))
 EMANPAGES_STAGER = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stageradmin.$(MANSUFFIX)))
 #ifdef STAGE_LINK_STATIC
-DEPLIB += DepLibraryTargetName(lib,castorCommonOra)
-GLOBLIB += -L../lib -lcastorCommonOra
+DEPLIB2 = DepLibraryTargetName(lib,castorCommonOra)
+GLOBLIB2 = -L../lib -lcastorCommonOra
 #else
-DEPLIB += DepSharedLibraryTargetName(shlib,castorCommonOra)
-GLOBLIB += -L../shlib -lcastorCommonOra
+DEPLIB2 = DepSharedLibraryTargetName(shlib,castorCommonOra)
+GLOBLIB2 = -L../shlib -lcastorCommonOra
 #endif
 #endif
 
@@ -152,9 +152,9 @@ EPROGS_STAGERCLIENT = FileName($(EXPORTBIN),stager_get) FileName($(EXPORTBIN),st
 
 all: $(STAGELIBTARGET) $(PROGS_STAGER) $(PROGS_STAGERCLIENT)
 
-NormalProgramTarget(stager,$(STAGER_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
-NormalProgramTarget(stagerNotifyService,stagerNotifyService.Osuf,$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
-NormalProgramTarget(stageradmin,$(STAGERADMIN_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
+NormalProgramTarget(stager,$(STAGER_OBJS),$(DEPLIB) $(DEPLIB2),$(GLOBLIB) $(GLOBLIB2) $(LDLIBS))
+NormalProgramTarget(stagerNotifyService,stagerNotifyService.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
+NormalProgramTarget(stageradmin,$(STAGERADMIN_OBJS),$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 
 #if BuildStageClient
 STAGER_GET_OBJS=stager_get.Osuf
