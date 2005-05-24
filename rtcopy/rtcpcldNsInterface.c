@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/05/24 12:32:30 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.30 $ $Release$ $Date: 2005/05/24 12:46:07 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/05/24 12:32:30 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.30 $ $Release$ $Date: 2005/05/24 12:46:07 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -784,7 +784,7 @@ int rtcpcld_getOwner(
     return(-1);
   }
   if ( uid != NULL ) *uid = (int)statbuf.uid;
-  if ( gid != NULL ) *uid = (int)statbuf.gid;
+  if ( gid != NULL ) *gid = (int)statbuf.gid;
   return(0);
 }
 
