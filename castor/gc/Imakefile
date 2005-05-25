@@ -40,7 +40,7 @@ EXPORTMANPAGES = $(EXPORTMAN)/man1/gcdaemon.$(MANSUFFIX)
 INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
-LIBS = -lshift
+LIBS = -lshift -ldl
 
 GCBIN_SRCS = GcDaemon.cpp
 
@@ -53,7 +53,7 @@ LD = g++
 
 #if BuildSecurity 
 SECURITYFLAG=-DCSEC
-LIBS+= -ldl
+# LIBS+= -ldl
 #endif 
 
 all: ProgramTargetName(gcDaemon)
