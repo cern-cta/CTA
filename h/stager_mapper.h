@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_mapper.h,v $ $Revision: 1.1 $ $Release$ $Date: 2005/05/25 14:29:44 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_mapper.h,v $ $Revision: 1.2 $ $Release$ $Date: 2005/05/25 16:09:22 $ $Author: bcouturi $
  *
  * 
  *
@@ -25,17 +25,35 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_mapper.h,v $
- * @version $Revision: 1.1 $
- * @date $Date: 2005/05/25 14:29:44 $
+ * @version $Revision: 1.2 $
+ * @date $Date: 2005/05/25 16:09:22 $
  */
 /** @mainpage CASTOR Mapper
- * $RCSfile: stager_mapper.h,v $ $Revision: 1.1 $
+ * $RCSfile: stager_mapper.h,v $ $Revision: 1.2 $
  *
  * @section intro Introduction
+ * The stage mapper consists of utility functions to help applications
+ * switching between the stager v1 and stager v2 of CASTOR.
+ * Its main usage is for the CASTOR SRM and GridFTP servers.
  *
  * @section overview Overview
+ * Stage_mapper_setenv checks whether the user is mapped to a specific
+ * stager/serviceclass in /etc/castor/stgmap.conf by the line
+ * USTGMAP <username> <stager> [<pool>]
+ * If no mapping is found, the methood will look for a group mapping
+ * in the same file with the line:
+ * USTGMAP <username> <stager> [<pool>] 
+ * The environment variables STAGE_HOST, STAGE_POOL and STAGE_SVCCLASS
+ * are set accordingly.
  *
- * 
+ * If the user is mapped to a stager, then the method looks for the stager
+ * in the list of V2 castor stagers in /etc/castor/stgtype.conf
+ * If the is and entry:
+ * STGTYPE <hostname> v2
+ * or
+ * STGTYPE <hostname> V2
+ * then the method will define the RFIO_USE_CASTOR_V2 environment
+ * variable.
  */
 
 #ifndef stager_mapper_h
@@ -73,8 +91,11 @@
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int DLL_DECL stager_mapper_setenv _PROTO((const char *username,
-						   const char *groupname));
+EXTERN_C int DLL_DECL stage_mapper_setenv _PROTO((const char *username,
+						   const char *groupname,
+						   char **mstager,
+						   char **msvcclass,
+				                   int* isV2));
 
 /*\@}*/
 
