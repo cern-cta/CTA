@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-# $Id: makerpm.zsh,v 1.8 2005/05/17 11:34:24 jdurand Exp $
+# $Id: makerpm.zsh,v 1.9 2005/05/25 12:44:56 jdurand Exp $
 
 #
 ## THIS SCRIPT CONVERTS .deb TO .rpms! IT DOES /NOT/ BUILD
@@ -11,12 +11,22 @@
 #
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
-  echo "No MAJOR_CASTOR_VERSION environment variable"
-  exit 1
+  echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
+  MAJOR_CASTOR_VERSION=`egrep "^castor" debian/changelog | awk '{print $2}' | head -1 | perl -ne 'if (/\((\d+)\.(\d+)/) {print "$1.$2\n";}'`
+  if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
+    echo "No MAJOR_CASTOR_VERSION environment variable"
+    exit 1
+  fi
+  export MAJOR_CASTOR_VERSION
 fi
 if [ "x${MINOR_CASTOR_VERSION}" = "x" ]; then
-  echo "No MINOR_CASTOR_VERSION environment variable"
-  exit 1
+  echo "No MINOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
+  MINOR_CASTOR_VERSION=`egrep "^castor" debian/changelog | awk '{print $2}' | head -1 | perl -ne 'if (/(\d+)\-(\d+)\)/) {print "$1.$2\n";}'`
+  if [ "x${MINOR_CASTOR_VERSION}" = "x" ]; then
+    echo "No MINOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
+    exit 1
+  fi
+  export MINOR_CASTOR_VERSION
 fi
 
 #

@@ -1,14 +1,24 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.15 2005/05/19 17:01:02 jdurand Exp $
+# $Id: maketar.sh,v 1.16 2005/05/25 12:44:56 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
-  echo "No MAJOR_CASTOR_VERSION environment variable"
-  exit 1
+  echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
+  MAJOR_CASTOR_VERSION=`egrep "^castor" debian/changelog | awk '{print $2}' | head -1 | perl -ne 'if (/\((\d+)\.(\d+)/) {print "$1.$2\n";}'`
+  if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
+    echo "No MAJOR_CASTOR_VERSION environment variable"
+    exit 1
+  fi
+  export MAJOR_CASTOR_VERSION
 fi
 if [ "x${MINOR_CASTOR_VERSION}" = "x" ]; then
-  echo "No MINOR_CASTOR_VERSION environment variable"
-  exit 1
+  echo "No MINOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
+  MINOR_CASTOR_VERSION=`egrep "^castor" debian/changelog | awk '{print $2}' | head -1 | perl -ne 'if (/(\d+)\-(\d+)\)/) {print "$1.$2\n";}'`
+  if [ "x${MINOR_CASTOR_VERSION}" = "x" ]; then
+    echo "No MINOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
+    exit 1
+  fi
+  export MINOR_CASTOR_VERSION
 fi
 
 #
