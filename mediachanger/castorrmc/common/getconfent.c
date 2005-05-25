@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.15 $ $Date: 2005/05/25 09:55:29 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.16 $ $Date: 2005/05/25 12:03:41 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -181,7 +181,11 @@ int DLL_DECL getconfent_multi_fromfile(filename, category, name, flags, result, 
 {
   char *conf_val;
 
-  if((conf_val = getconfent_fromfile(filename,category,name,flags)) == NULL){ return -1; }
+  if((conf_val = getconfent_fromfile(filename,category,name,flags)) == NULL){ 
+    *result = NULL;
+    *count = 0;
+    return 0; 
+  }
  
   if ( getconfent_parser(&conf_val, result, count) == -1 ) {return -1;}
 
@@ -199,7 +203,11 @@ int DLL_DECL getconfent_multi(category, name, flags, result, count)
 {
   char *conf_val;
   
-  if((conf_val = getconfent(category,name,flags)) == NULL) { return -1; }
+  if((conf_val = getconfent(category,name,flags)) == NULL) { 
+    *result = NULL;
+    *count = 0;
+    return 0; 
+  }
   
   if( getconfent_parser(&conf_val, result, count) == -1 ) {return -1;}
 
