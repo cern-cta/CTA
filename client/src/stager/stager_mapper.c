@@ -1,5 +1,5 @@
 /*
- * $Id: stager_mapper.c,v 1.2 2005/05/25 15:16:34 bcouturi Exp $
+ * $Id: stager_mapper.c,v 1.3 2005/05/25 16:08:12 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_mapper.c,v $ $Revision: 1.2 $ $Date: 2005/05/25 15:16:34 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_mapper.c,v $ $Revision: 1.3 $ $Date: 2005/05/25 16:08:12 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -144,9 +144,12 @@ get_stager_type(const char *name) {
 /* External routines */
 /* ================= */
 
-#define TMPBUFSIZE 1024
 int 
-stage_mapper_setenv(const char *username, const char *groupname) {
+stage_mapper_setenv(const char *username, 
+		    const char *groupname,
+		    char **mstager,
+		    char **msvcclass,
+		    int *isV2) {
   char *func = "stage_mapper_setenv";
   char *stager = NULL, *svcclass = NULL;
   enum stager_type stgtype;
@@ -186,8 +189,13 @@ stage_mapper_setenv(const char *username, const char *groupname) {
 
   if (stager!= NULL) {
     Csnprintf(stghostenv,  CA_MAXLINELEN, "STAGE_HOST=%s", stager);
-    stage_trace(3, stghostenv);
     putenv(stghostenv);
+    stage_trace(3, stghostenv);
+    if (mstager != NULL) {
+      *mstager = stager;
+    } else {
+      free(stager);
+    }
   }
 
   if (svcclass!= NULL) {
@@ -197,16 +205,26 @@ stage_mapper_setenv(const char *username, const char *groupname) {
     Csnprintf(svcclassenv,  CA_MAXLINELEN, "STAGE_SVCCLASS=%s", svcclass);
     putenv(svcclassenv);
     stage_trace(3, svcclassenv);
+    if (msvcclass != NULL) {
+      *msvcclass = svcclass;
+    } else {
+      free(svcclass);
+    }
   }
-
   
   if (stgtype == V2) {
     putenv(stgversion2env);
     stage_trace(3, stgversion2env);
   }
 
-  if (stager != NULL) free(stager);
-  if (svcclass != NULL) free(svcclass);
+  if (isV2 != NULL) {
+    if (stgtype == V2) {
+      *isV2 = 1;
+    } else {
+      *isV2 = 0;
+    }
+
+  }
 
   return 0;
 }
