@@ -4,10 +4,11 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.14 $ $Date: 2005/05/23 08:49:16 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.15 $ $Date: 2005/05/25 09:55:29 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "Cglobals.h"
 #include "serrno.h"
@@ -147,7 +148,7 @@ char DLL_DECL *getconfent_fromfile(filename,category, name, flags)
 int DLL_DECL getconfent_parser(conf_val, result, count)
      char **conf_val;
      char ***result;
-     int **count;
+     int *count;
 {
   char *p,*q,*last;
   int i=0;
@@ -157,8 +158,7 @@ int DLL_DECL getconfent_parser(conf_val, result, count)
   for (q = strtok(p," \t"); q != NULL; q = strtok(NULL," \t")) i++;
   
   /* Saving the index information to pass on later */
-  (*count) = (int *)calloc(1, sizeof(int));
-  **count = i;
+  *count = i;
   
   /* Allocating the necessary space and parsing the string */
   if ((p = strdup(*conf_val)) == NULL) { return -1; }
@@ -177,7 +177,7 @@ int DLL_DECL getconfent_multi_fromfile(filename, category, name, flags, result, 
      char *name;
      int flags;
      char ***result;
-     int **count;
+     int *count;
 {
   char *conf_val;
 
@@ -195,7 +195,7 @@ int DLL_DECL getconfent_multi(category, name, flags, result, count)
      char *name;
      int flags;
      char ***result;
-     int **count;
+     int *count;
 {
   char *conf_val;
   
