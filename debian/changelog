@@ -1,3 +1,9 @@
+castor (2.0.0-34) unstable; urgency=low
+
+  * Guess major/minor versions from debian/changelog
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Wed, 25 May 2005 14:46:35 +0200
+
 castor (2.0.0-33) unstable; urgency=low
 
   * Fixed man pages
