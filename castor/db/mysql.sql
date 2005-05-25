@@ -4,26 +4,29 @@
 -- SQL statements for object types */
 DROP INDEX I_Id2Type_type ON Id2Type;
 DROP INDEX I_Id2Type_full ON Id2Type;
-DROP TABLE IF EXIST Id2Type;
+DROP TABLE Id2Type;
 CREATE TABLE Id2Type (id BIGINT, type INTEGER, PRIMARY KEY(id));
 CREATE INDEX I_Id2Type_full ON Id2Type (id, type);
 CREATE INDEX I_Id2Type_type ON Id2Type (type);
 
 -- SQL statements for requests status
 DROP INDEX I_newRequests_type ON newRequests;
-DROP TABLE IF EXIST newRequests;
+DROP TABLE newRequests;
 CREATE TABLE newRequests (id INTEGER AUTO_INCREMENT, type INTEGER, creation DATE, PRIMARY KEY(id));
 CREATE INDEX I_newRequests_type on newRequests (type);
 
 ALTER TABLE SvcClass2TapePool
-  DROP CONSTRAINT fk_SvcClass2TapePool_Parent
-  DROP CONSTRAINT fk_SvcClass2TapePool_Child;
+  DROP CONSTRAINT fk_SvcClass2TapePool_P
+  DROP CONSTRAINT fk_SvcClass2TapePool_C;
 ALTER TABLE DiskPool2SvcClass
-  DROP CONSTRAINT fk_DiskPool2SvcClass_Parent
-  DROP CONSTRAINT fk_DiskPool2SvcClass_Child;
+  DROP CONSTRAINT fk_DiskPool2SvcClass_P
+  DROP CONSTRAINT fk_DiskPool2SvcClass_C;
 ALTER TABLE Stream2TapeCopy
-  DROP CONSTRAINT fk_Stream2TapeCopy_Parent
-  DROP CONSTRAINT fk_Stream2TapeCopy_Child;
+  DROP CONSTRAINT fk_Stream2TapeCopy_P
+  DROP CONSTRAINT fk_Stream2TapeCopy_C;
+ALTER TABLE TapeDrive2ExtendedDevic
+  DROP CONSTRAINT fk_TapeDrive2ExtendedDevic_P
+  DROP CONSTRAINT fk_TapeDrive2ExtendedDevic_C;
 /* SQL statements for type BaseAddress */
 DROP TABLE BaseAddress;
 CREATE TABLE BaseAddress (objType INT, cnvSvcName VARCHAR(1000), cnvSvcType INT, target BIGINT, id BIGINT, PRIMARY KEY (id));
@@ -31,6 +34,10 @@ CREATE TABLE BaseAddress (objType INT, cnvSvcName VARCHAR(1000), cnvSvcType INT,
 /* SQL statements for type Client */
 DROP TABLE Client;
 CREATE TABLE Client (ipAddress INT, port INT, id BIGINT, PRIMARY KEY (id));
+
+/* SQL statements for type ClientIdentification */
+DROP TABLE ClientIdentification;
+CREATE TABLE ClientIdentification (machine VARCHAR(1000), userName VARCHAR(1000), port INT, euid INT, egid INT, magic INT, id BIGINT, PRIMARY KEY (id));
 
 /* SQL statements for type Disk2DiskCopyDoneRequest */
 DROP TABLE Disk2DiskCopyDoneRequest;
@@ -75,6 +82,10 @@ CREATE TABLE MoverCloseRequest (flags BIGINT, userName VARCHAR(1000), euid INT, 
 /* SQL statements for type PutStartRequest */
 DROP TABLE PutStartRequest;
 CREATE TABLE PutStartRequest (subreqId BIGINT, diskServer VARCHAR(1000), fileSystem VARCHAR(1000), flags BIGINT, userName VARCHAR(1000), euid INT, egid INT, mask INT, pid INT, machine VARCHAR(1000), svcClassName VARCHAR(1000), userTag VARCHAR(1000), reqId VARCHAR(1000), creationTime BIGINT, lastModificationTime BIGINT, id BIGINT, PRIMARY KEY (id), svcClass INT, client INT);
+
+/* SQL statements for type PutDoneStart */
+DROP TABLE PutDoneStart;
+CREATE TABLE PutDoneStart (subreqId BIGINT, diskServer VARCHAR(1000), fileSystem VARCHAR(1000), flags BIGINT, userName VARCHAR(1000), euid INT, egid INT, mask INT, pid INT, machine VARCHAR(1000), svcClassName VARCHAR(1000), userTag VARCHAR(1000), reqId VARCHAR(1000), creationTime BIGINT, lastModificationTime BIGINT, id BIGINT, PRIMARY KEY (id), svcClass INT, client INT);
 
 /* SQL statements for type GetUpdateStartRequest */
 DROP TABLE GetUpdateStartRequest;
@@ -130,7 +141,7 @@ CREATE TABLE StageFindRequestRequest (flags BIGINT, userName VARCHAR(1000), euid
 
 /* SQL statements for type SubRequest */
 DROP TABLE SubRequest;
-CREATE TABLE SubRequest (retryCounter INT, fileName VARCHAR(1000), protocol VARCHAR(1000), xsize BIGINT, priority INT, subreqId VARCHAR(1000), flags INT, modeBits INT, creationTime BIGINT, lastModificationTime BIGINT, id BIGINT, PRIMARY KEY (id), diskcopy INT, castorFile INT, parent INT, status INT, request INT);
+CREATE TABLE SubRequest (retryCounter INT, fileName VARCHAR(1000), protocol VARCHAR(1000), xsize BIGINT, priority INT, subreqId VARCHAR(1000), flags INT, modeBits INT, creationTime BIGINT, lastModificationTime BIGINT, answered INT, id BIGINT, PRIMARY KEY (id), diskcopy INT, castorFile INT, parent INT, status INT, request INT);
 
 /* SQL statements for type StageReleaseFilesRequest */
 DROP TABLE StageReleaseFilesRequest;
@@ -183,32 +194,32 @@ CREATE TABLE FileSystem (free BIGINT, weight float, fsDeviation float, mountPoin
 /* SQL statements for type SvcClass */
 DROP TABLE SvcClass;
 CREATE TABLE SvcClass (nbDrives INT, name VARCHAR(1000), defaultFileSize BIGINT, maxReplicaNb INT, replicationPolicy VARCHAR(1000), gcPolicy VARCHAR(1000), migratorPolicy VARCHAR(1000), recallerPolicy VARCHAR(1000), id BIGINT, PRIMARY KEY (id));
-DROP INDEX I_SvcClass2TapePool_Child;
-DROP INDEX I_SvcClass2TapePool_Parent;
+DROP INDEX I_SvcClass2TapePool_C;
+DROP INDEX I_SvcClass2TapePool_P;
 DROP TABLE SvcClass2TapePool;
 CREATE TABLE SvcClass2TapePool (Parent BIGINT, Child BIGINT);
-CREATE INDEX I_SvcClass2TapePool_Child on SvcClass2TapePool (child);
-CREATE INDEX I_SvcClass2TapePool_Parent on SvcClass2TapePool (parent);
+CREATE INDEX I_SvcClass2TapePool_C on SvcClass2TapePool (child);
+CREATE INDEX I_SvcClass2TapePool_P on SvcClass2TapePool (parent);
 
 /* SQL statements for type DiskPool */
 DROP TABLE DiskPool;
 CREATE TABLE DiskPool (name VARCHAR(1000), id BIGINT, PRIMARY KEY (id));
-DROP INDEX I_DiskPool2SvcClass_Child;
-DROP INDEX I_DiskPool2SvcClass_Parent;
+DROP INDEX I_DiskPool2SvcClass_C;
+DROP INDEX I_DiskPool2SvcClass_P;
 DROP TABLE DiskPool2SvcClass;
 CREATE TABLE DiskPool2SvcClass (Parent BIGINT, Child BIGINT);
-CREATE INDEX I_DiskPool2SvcClass_Child on DiskPool2SvcClass (child);
-CREATE INDEX I_DiskPool2SvcClass_Parent on DiskPool2SvcClass (parent);
+CREATE INDEX I_DiskPool2SvcClass_C on DiskPool2SvcClass (child);
+CREATE INDEX I_DiskPool2SvcClass_P on DiskPool2SvcClass (parent);
 
 /* SQL statements for type Stream */
 DROP TABLE Stream;
 CREATE TABLE Stream (initialSizeToTransfer BIGINT, id BIGINT, PRIMARY KEY (id), tape INT, tapePool INT, status INT);
-DROP INDEX I_Stream2TapeCopy_Child;
-DROP INDEX I_Stream2TapeCopy_Parent;
+DROP INDEX I_Stream2TapeCopy_C;
+DROP INDEX I_Stream2TapeCopy_P;
 DROP TABLE Stream2TapeCopy;
 CREATE TABLE Stream2TapeCopy (Parent BIGINT, Child BIGINT);
-CREATE INDEX I_Stream2TapeCopy_Child on Stream2TapeCopy (child);
-CREATE INDEX I_Stream2TapeCopy_Parent on Stream2TapeCopy (parent);
+CREATE INDEX I_Stream2TapeCopy_C on Stream2TapeCopy (child);
+CREATE INDEX I_Stream2TapeCopy_P on Stream2TapeCopy (parent);
 
 /* SQL statements for type FileClass */
 DROP TABLE FileClass;
@@ -218,15 +229,40 @@ CREATE TABLE FileClass (name VARCHAR(1000), minFileSize BIGINT, maxFileSize BIGI
 DROP TABLE DiskServer;
 CREATE TABLE DiskServer (name VARCHAR(1000), id BIGINT, PRIMARY KEY (id), status INT);
 
+/* SQL statements for type ExtendedDeviceGroup */
+DROP TABLE ExtendedDeviceGroup;
+CREATE TABLE ExtendedDeviceGroup (dgName VARCHAR(1000), mode INT, id BIGINT, PRIMARY KEY (id));
+
+/* SQL statements for type TapeServer */
+DROP TABLE TapeServer;
+CREATE TABLE TapeServer (serverName VARCHAR(1000), status INT, id BIGINT, PRIMARY KEY (id));
+
+/* SQL statements for type TapeRequest */
+DROP TABLE TapeRequest;
+CREATE TABLE TapeRequest (priority INT, creationTime INT, id BIGINT, PRIMARY KEY (id), tape INT, client INT, reqExtDevGrp INT, requestedSrv INT);
+
+/* SQL statements for type TapeDrive */
+DROP TABLE TapeDrive;
+CREATE TABLE TapeDrive (jobID INT, creationTime INT, resettime INT, usecount INT, errcount INT, transferredMB INT, totalMB BIGINT, dedicate VARCHAR(1000), newDedicate VARCHAR(1000), is_uid INT, is_gid INT, is_name INT, no_uid INT, no_gid INT, no_name INT, no_host INT, no_vid INT, no_mode INT, no_date INT, no_time INT, no_age INT, uid INT, gid INT, name VARCHAR(1000), id BIGINT, PRIMARY KEY (id), tape INT, status INT, tapeServer INT);
+DROP INDEX I_TapeDrive2ExtendedDevic_C;
+DROP INDEX I_TapeDrive2ExtendedDevic_P;
+DROP TABLE TapeDrive2ExtendedDevic;
+CREATE TABLE TapeDrive2ExtendedDevic (Parent BIGINT, Child BIGINT);
+CREATE INDEX I_TapeDrive2ExtendedDevic_C on TapeDrive2ExtendedDevic (child);
+CREATE INDEX I_TapeDrive2ExtendedDevic_P on TapeDrive2ExtendedDevic (parent);
+
 ALTER TABLE SvcClass2TapePool
-  ADD CONSTRAINT fk_SvcClass2TapePool_Parent FOREIGN KEY (Parent) REFERENCES SvcClass (id)
-  ADD CONSTRAINT fk_SvcClass2TapePool_Child FOREIGN KEY (Child) REFERENCES TapePool (id);
+  ADD CONSTRAINT fk_SvcClass2TapePool_P FOREIGN KEY (Parent) REFERENCES SvcClass (id)
+  ADD CONSTRAINT fk_SvcClass2TapePool_C FOREIGN KEY (Child) REFERENCES TapePool (id);
 ALTER TABLE DiskPool2SvcClass
-  ADD CONSTRAINT fk_DiskPool2SvcClass_Parent FOREIGN KEY (Parent) REFERENCES DiskPool (id)
-  ADD CONSTRAINT fk_DiskPool2SvcClass_Child FOREIGN KEY (Child) REFERENCES SvcClass (id);
+  ADD CONSTRAINT fk_DiskPool2SvcClass_P FOREIGN KEY (Parent) REFERENCES DiskPool (id)
+  ADD CONSTRAINT fk_DiskPool2SvcClass_C FOREIGN KEY (Child) REFERENCES SvcClass (id);
 ALTER TABLE Stream2TapeCopy
-  ADD CONSTRAINT fk_Stream2TapeCopy_Parent FOREIGN KEY (Parent) REFERENCES Stream (id)
-  ADD CONSTRAINT fk_Stream2TapeCopy_Child FOREIGN KEY (Child) REFERENCES TapeCopy (id);
+  ADD CONSTRAINT fk_Stream2TapeCopy_P FOREIGN KEY (Parent) REFERENCES Stream (id)
+  ADD CONSTRAINT fk_Stream2TapeCopy_C FOREIGN KEY (Child) REFERENCES TapeCopy (id);
+ALTER TABLE TapeDrive2ExtendedDevic
+  ADD CONSTRAINT fk_TapeDrive2ExtendedDevic_P FOREIGN KEY (Parent) REFERENCES TapeDrive (id)
+  ADD CONSTRAINT fk_TapeDrive2ExtendedDevic_C FOREIGN KEY (Child) REFERENCES ExtendedDeviceGroup (id);
 -- This file contains SQL code that is not generated automatically
 -- and is inserted at the end of the generated code
 
@@ -238,7 +274,7 @@ INSERT INTO CastorVersion VALUES ('2_0_1_0');
 
 /* Indexes related to CastorFiles */
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
-CREATE UNIQUE INDEX I_CastorFile_fileIdNsHost on CastorFile (fileId, nsHost);
+-- CREATE UNIQUE INDEX I_CastorFile_fileIdNsHost on CastorFile (fileId, nsHost);    doesn't work on field with length > 1000
 CREATE INDEX I_DiskCopy_Castorfile on DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem on DiskCopy (fileSystem);
 CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
@@ -261,7 +297,7 @@ ALTER TABLE CastorFile ADD UNIQUE (fileId, nsHost);
 DELIMITER //
 
 -- Sequence for indices: not available in MySQL => using an AUTO_INCREMENT field on a dedicated table
-DROP TABLE IF EXIST Sequence//
+DROP TABLE Sequence//
 CREATE TABLE Sequence (value BIGINT AUTO_INCREMENT, PRIMARY KEY(value))//
 
 CREATE PROCEDURE seqNextVal(OUT value BIGINT)
@@ -1307,8 +1343,9 @@ END//
 
 
 /* MySQL method implementing bestFileSystemForJob */
-CREATE PROCEDURE bestFileSystemForJob(fileSystems IN castor."strList", machines IN castor."strList",
- 			minFree IN castor."cnumList", rMountPoint OUT VARCHAR(2048), rDiskServer OUT VARCHAR(2048))
+CREATE PROCEDURE bestFileSystemForJob(/*fileSystems IN castor."strList", machines IN castor."strList", minFree IN castor."cnumList",*/
+									fileSystems INT, machines INT, minFree INT,            -- flag to say if the correspondent temporary table is filled or not
+									OUT rMountPoint VARCHAR(2048), OUT rDiskServer VARCHAR(2048))
 BEGIN
 DECLARE ds BIGINT;
 DECLARE fs BIGINT;
@@ -1320,7 +1357,7 @@ DECLARE dev BIGINT;
  TYPE AnyCursor IS REF CURSOR RETURN cursorContent;
  c1 AnyCursor;
 BEGIN
- IF fileSystems.COUNT > 0 THEN   -- @todo handle table types
+ IF fileSystems > 0 THEN
   -- here machines AND filesystems should be given
   DECLARE fsIds "numList" := "numList"();
   DECLARE nextIndex BIGINT DEFAULT 1;
@@ -1593,6 +1630,7 @@ END//
 ---------------------------------------------------------------------------------------------
 -- This procedure is temporarily here to fill in some dummy data
 
+DROP PROCEDURE IF EXIST dummyFill//
 CREATE PROCEDURE dummyFill()
 BEGIN
   DECLARE n INT DEFAULT 2;
@@ -1625,7 +1663,7 @@ BEGIN
     SET n = n + 1;
   END WHILE;
 
-  INSERT INTO SvcClass VALUES ('MyPolicy', 2, 'VeryFirstSvcClass', 7000);
+  INSERT INTO SvcClass VALUES (10, 'VeryFirstSvcClass', 1, 5, 'MyRepPolicy', 'MyGCPolicy', 'MyMigrPolicy', 'MyRecPolicy', 7000);
 
   SET n = 2;
   WHILE n < 2000 DO

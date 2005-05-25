@@ -9,7 +9,7 @@ INSERT INTO CastorVersion VALUES ('2_0_1_0');
 
 /* Indexes related to CastorFiles */
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
-CREATE UNIQUE INDEX I_CastorFile_fileIdNsHost on CastorFile (fileId, nsHost);
+-- CREATE UNIQUE INDEX I_CastorFile_fileIdNsHost on CastorFile (fileId, nsHost);    doesn't work on field with length > 1000
 CREATE INDEX I_DiskCopy_Castorfile on DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem on DiskCopy (fileSystem);
 CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
@@ -32,7 +32,7 @@ ALTER TABLE CastorFile ADD UNIQUE (fileId, nsHost);
 DELIMITER //
 
 -- Sequence for indices: not available in MySQL => using an AUTO_INCREMENT field on a dedicated table
-DROP TABLE IF EXIST Sequence//
+DROP TABLE Sequence//
 CREATE TABLE Sequence (value BIGINT AUTO_INCREMENT, PRIMARY KEY(value))//
 
 CREATE PROCEDURE seqNextVal(OUT value BIGINT)
@@ -1078,8 +1078,9 @@ END//
 
 
 /* MySQL method implementing bestFileSystemForJob */
-CREATE PROCEDURE bestFileSystemForJob(fileSystems IN castor."strList", machines IN castor."strList",
- 			minFree IN castor."cnumList", rMountPoint OUT VARCHAR(2048), rDiskServer OUT VARCHAR(2048))
+CREATE PROCEDURE bestFileSystemForJob(/*fileSystems IN castor."strList", machines IN castor."strList", minFree IN castor."cnumList",*/
+									fileSystems INT, machines INT, minFree INT,            -- flag to say if the correspondent temporary table is filled or not
+									OUT rMountPoint VARCHAR(2048), OUT rDiskServer VARCHAR(2048))
 BEGIN
 DECLARE ds BIGINT;
 DECLARE fs BIGINT;
@@ -1091,7 +1092,7 @@ DECLARE dev BIGINT;
  TYPE AnyCursor IS REF CURSOR RETURN cursorContent;
  c1 AnyCursor;
 BEGIN
- IF fileSystems.COUNT > 0 THEN   -- @todo handle table types
+ IF fileSystems > 0 THEN
   -- here machines AND filesystems should be given
   DECLARE fsIds "numList" := "numList"();
   DECLARE nextIndex BIGINT DEFAULT 1;
@@ -1364,6 +1365,7 @@ END//
 ---------------------------------------------------------------------------------------------
 -- This procedure is temporarily here to fill in some dummy data
 
+DROP PROCEDURE IF EXIST dummyFill//
 CREATE PROCEDURE dummyFill()
 BEGIN
   DECLARE n INT DEFAULT 2;
@@ -1396,7 +1398,7 @@ BEGIN
     SET n = n + 1;
   END WHILE;
 
-  INSERT INTO SvcClass VALUES ('MyPolicy', 2, 'VeryFirstSvcClass', 7000);
+  INSERT INTO SvcClass VALUES (10, 'VeryFirstSvcClass', 1, 5, 'MyRepPolicy', 'MyGCPolicy', 'MyMigrPolicy', 'MyRecPolicy', 7000);
 
   SET n = 2;
   WHILE n < 2000 DO
