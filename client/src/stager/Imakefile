@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.40 $ $Date: 2005/05/24 15:59:51 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.41 $ $Date: 2005/05/25 14:29:02 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -37,7 +37,9 @@ STAGEGROUP = StagerSuperGroup
 STAGEGROUP = st
 #endif
 
-STAGEFLAGS = -DSTAGEUSER=\"$(STAGEUSER)\" -DSTAGEGROUP=\"$(STAGEGROUP)\"
+STAGEFLAGS = -DSTAGEUSER=\"$(STAGEUSER)\" -DSTAGEGROUP=\"$(STAGEGROUP)\" \
+	    -DSTAGEMAP=\"StageMapFile\" -DSTAGETYPE=\"StageTypeFile\"
+
 THREADFLAGS = $(MTCCFLAGS)
 LDFLAGS = $(MTLDFLAGS)
 
@@ -132,6 +134,7 @@ STAGERLIB_OBJS = \
 		stager_service.Osuf \
 		stager_util.Osuf \
 		stager_uuid.Osuf \
+		stager_mapper.Osuf \
 		$(OBSOLETE_OBJS)
 
 #if BuildStageLibrary
