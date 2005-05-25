@@ -1,5 +1,5 @@
-DEV=/home/sponcec3/DEVEL/PROTO2/codeGeneration/gencastor
-UMBRELLOBASE=$(DEV)/../kdesdk-3.3.2
+DEV=$(CASTORDEV_HOME)/codeGeneration/gencastor
+UMBRELLOBASE=/usr/src/kdesdk-3.3.2
 
 UMBRELLO=$(UMBRELLOBASE)/umbrello/umbrello
 UMBRELLOOBJBASE=$(UMBRELLOBASE)/obj-i386-linux
@@ -14,7 +14,7 @@ UMBRELLOLIBS=$(patsubst %,$(UMBRELLOOBJ)/%,$(UMBRELLORAWLIBS))
 
 MOCOBJS=umbrello/codegenerators/simplecodegenerator.moc
 
-OWNGENSRCS=classifierinfo.cpp codegenfactory.cpp cppcastorwriter.cpp cppbasewriter.cpp cppcppclasswriter.cpp cppcppwriter.cpp cpphclasswriter.cpp cpphwriter.cpp cppwriter.cpp chclasswriter.cpp ccclasswriter.cpp cpphbasecnvwriter.cpp cppcppbasecnvwriter.cpp cpphoracnvwriter.cpp cppcpporacnvwriter.cpp cpphodbccnvwriter.cpp cppcppodbccnvwriter.cpp cpphstreamcnvwriter.cpp cppcppstreamcnvwriter.cpp simplecodegenerator.cpp
+OWNGENSRCS=classifierinfo.cpp codegenfactory.cpp cppcastorwriter.cpp cppbasewriter.cpp cppcppclasswriter.cpp cppcppwriter.cpp cpphclasswriter.cpp cpphwriter.cpp cppwriter.cpp chclasswriter.cpp ccclasswriter.cpp cpphbasecnvwriter.cpp cppcppbasecnvwriter.cpp cpphoracnvwriter.cpp cppcpporacnvwriter.cpp cpphodbccnvwriter.cpp cppcppodbccnvwriter.cpp cpphmycnvwriter.cpp cppcppmycnvwriter.cpp cpphstreamcnvwriter.cpp cppcppstreamcnvwriter.cpp simplecodegenerator.cpp
 OWNGENOBJS=$(patsubst %.cpp,umbrello/codegenerators/%.lo,$(OWNGENSRCS))
 OWNGENRAWOBJS=$(patsubst %.cpp,umbrello/codegenerators/%.o,$(OWNGENSRCS))
 

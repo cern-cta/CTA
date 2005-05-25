@@ -602,83 +602,58 @@ void CppCppMyCnvWriter::writeSqlStatements() {
       Member* secondMember = 0;
       ordonnateMembersInAssoc(as, &firstMember, &secondMember);
       if (firstMember == &as->localPart) {
+	QString compoundName =
+		capitalizeFirstLetter(firstMember->typeName).mid(0, 12) + QString("2")
+		+ capitalizeFirstLetter(secondMember->typeName).mid(0, 13);
         stream << getIndent()
                << "DROP INDEX I_"
-               << capitalizeFirstLetter(firstMember->typeName)
-               << "2"
-               << capitalizeFirstLetter(secondMember->typeName)
-               << "_Child;"
+               << compoundName
+               << "_C;"
                << endl << getIndent()
                << "DROP INDEX I_"
-               << capitalizeFirstLetter(firstMember->typeName)
-               << "2"
-               << capitalizeFirstLetter(secondMember->typeName)
-               << "_Parent;"
+               << compoundName
+               << "_P;"
                << endl << "DROP TABLE "
-               << capitalizeFirstLetter(firstMember->typeName)
-               << "2"
-               << capitalizeFirstLetter(secondMember->typeName)
+               << compoundName
                << ";" << endl
                << "CREATE TABLE "
-               << capitalizeFirstLetter(firstMember->typeName)
-               << "2"
-               << capitalizeFirstLetter(secondMember->typeName)
+               << compoundName
                << " (Parent BIGINT, Child BIGINT);"
                << endl << getIndent()
                << "CREATE INDEX I_"
-               << capitalizeFirstLetter(firstMember->typeName)
-               << "2"
-               << capitalizeFirstLetter(secondMember->typeName)
-               << "_Child on "
-               << capitalizeFirstLetter(firstMember->typeName)
-               << "2"
-               << capitalizeFirstLetter(secondMember->typeName)
+               << compoundName
+               << "_C on "
+               << compoundName
                << " (child);"
                << endl << getIndent()
                << "CREATE INDEX I_"
-               << capitalizeFirstLetter(firstMember->typeName)
-               << "2"
-               << capitalizeFirstLetter(secondMember->typeName)
-               << "_Parent on "
-               << capitalizeFirstLetter(firstMember->typeName)
-               << "2"
-               << capitalizeFirstLetter(secondMember->typeName)
+               << compoundName
+               << "_P on "
+               << compoundName
                << " (parent);"
                << endl;
         hStream << getIndent()
                 << "ALTER TABLE "
-                << capitalizeFirstLetter(firstMember->typeName)
-                << "2"
-                << capitalizeFirstLetter(secondMember->typeName)
+                << compoundName
                 << endl << getIndent()
                 << "  DROP CONSTRAINT fk_"
-                << capitalizeFirstLetter(firstMember->typeName)
-                << "2"
-                << capitalizeFirstLetter(secondMember->typeName)
-                << "_Parent" << endl << getIndent()
+                << compoundName
+                << "_P" << endl << getIndent()
                 << "  DROP CONSTRAINT fk_"
-                << capitalizeFirstLetter(firstMember->typeName)
-                << "2"
-                << capitalizeFirstLetter(secondMember->typeName)
-                << "_Child;" << endl;
+                << compoundName
+                << "_C;" << endl;
         tStream << getIndent()
                 << "ALTER TABLE "
-                << capitalizeFirstLetter(firstMember->typeName)
-                << "2"
-                << capitalizeFirstLetter(secondMember->typeName)
+                << compoundName
                 << endl << getIndent()
                 << "  ADD CONSTRAINT fk_"
-                << capitalizeFirstLetter(firstMember->typeName)
-                << "2"
-                << capitalizeFirstLetter(secondMember->typeName)
-                << "_Parent FOREIGN KEY (Parent) REFERENCES "
+                << compoundName
+                << "_P FOREIGN KEY (Parent) REFERENCES "
                 << capitalizeFirstLetter(firstMember->typeName)
                 << " (id)" << endl << getIndent()
                 << "  ADD CONSTRAINT fk_"
-                << capitalizeFirstLetter(firstMember->typeName)
-                << "2"
-                << capitalizeFirstLetter(secondMember->typeName)
-                << "_Child FOREIGN KEY (Child) REFERENCES "
+                << compoundName
+                << "_C FOREIGN KEY (Child) REFERENCES "
                 << capitalizeFirstLetter(secondMember->typeName)
                 << " (id);" << endl;
       }
@@ -2644,9 +2619,12 @@ CppCppMyCnvWriter::writeSingleSetIntoStatement(QString statement,
   else {
     if (isEnum || mem.name == "ipAddress")    // need to force the cast
       *m_stream << "(int)";
-	else
+	else {
+	  if(mem.typeName == "string") *m_stream << "\"'\"+ ";  // we must add the "'" by hand...
       *m_stream << "(" << getMyType(mem.typeName) << ")";
+	}
     *m_stream << "obj->" << mem.name << "()";
+    if(mem.typeName == "string") *m_stream << " +\"'\"";
   }
   *m_stream << ";" << endl;
 }

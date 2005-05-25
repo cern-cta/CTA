@@ -27,15 +27,14 @@ static KCmdLineOptions options[] = {
 
 int main(int argc, char *argv[]) {
 
-	KAboutData aboutData( "umbrello", I18N_NOOP("Umbrello UML Modeller"),
-	                      "2.0", "Umbrello UML Modeller",
-                        KAboutData::License_GPL,
-	                      I18N_NOOP("2004 Sebastien Ponce"), 0,
-	                      "http://cern.ch/castor");
-	KCmdLineArgs::init( argc, argv, &aboutData );
-	KCmdLineArgs::addCmdLineOptions( options ); // Add our own options.
+  KAboutData aboutData("umbrello", I18N_NOOP("Umbrello UML Modeller - Castor edition"),
+	                     "3.1.1", "Umbrello UML Modeller - Castor edition", KAboutData::License_GPL,
+	                     I18N_NOOP("2004-2005 Sebastien Ponce & Giuseppe Lo Presti"), 0,
+	                     "http://cern.ch/castor");
+  KCmdLineArgs::init( argc, argv, &aboutData );
+  KCmdLineArgs::addCmdLineOptions( options ); // Add our own options.
 
-	KApplication app;
+  KApplication app;
   UMLApp *uml = new UMLApp();
   app.config();
   uml->initGenerators();
