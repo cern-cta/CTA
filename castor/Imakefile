@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.92 $ $Release$ $Date: 2005/05/24 12:21:40 $ $Author: mbraeger $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.93 $ $Release$ $Date: 2005/05/25 12:52:06 $ $Author: itglp $
 #
 # Make Castor libraries and executables
 #
@@ -58,11 +58,11 @@ OSLIBS = DepLibraryTargetName(lib,shift) wsock32.lib advapi32.lib
 #endif
 #endif
 #endif
-LIBS = $(OSLIBS) $(MTLDLIBS)
+LIBS = $(OSLIBS) $(MTLDLIBS) -ldl
 
-#if BuildSecurity
-LIBS+= -ldl
-#endif
+# if BuildSecurity
+# LIBS+= -ldl
+# endif
 
 #if !defined(_WIN32)
 #if linux
@@ -211,7 +211,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               rh/BasicResponseCInt.cpp \
               stager/CastorFile.cpp \
               stager/CastorFileCInt.cpp \
-							stager/ClientIdentification.cpp \
+              stager/ClientIdentification.cpp \
               stager/DiskCopy.cpp \
               stager/DiskCopyCInt.cpp \
               stager/DiskCopyInfo.cpp \

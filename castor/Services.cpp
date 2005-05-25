@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/11/05 17:47:20 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2005/05/25 12:52:06 $ $Author: itglp $
  *
  *
  *
@@ -35,6 +35,8 @@
 #include "ICnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
+#include "common.h"   // for getconfent
+#include <dlfcn.h>
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -52,14 +54,39 @@ castor::Services::~Services() {}
 castor::IService* castor::Services::service(const std::string name,
                                             const unsigned int id)
   throw(castor::exception::Exception) {
-  std::map<const std::string, IService*>::const_iterator it =
-    m_services.find(name);
+  std::map<const std::string, IService*>::const_iterator it = m_services.find(name);
   if (it == m_services.end()) {
     if (id > 0) {
       // build the service using the associated factory
-      const ISvcFactory* fac =
-        castor::Factories::instance()->factory(id);
-      if (fac == 0) return 0;
+      const ISvcFactory* fac = castor::Factories::instance()->factory(id);
+      if (fac == 0) {
+        // no factory found: search for id remapping in the config file
+        char* targetId = getconfent("SvcMapping", (char*)castor::ServicesIdStrings[id], 0);
+        int id2 = strtol(targetId, NULL, 10);
+        if(id2 == 0) id2 = id;
+
+        // moreover check if a .so library has to be loaded
+        char* targetLib = getconfent("DynamicLib", (char*)castor::ServicesIdStrings[id], 0);
+        if(targetLib != 0) {
+#ifdef WIN32
+          void* handle = 0;
+#else
+          //@todo store handle?
+          void* handle = dlopen(targetLib, RTLD_LAZY | RTLD_GLOBAL);
+          if(handle == 0) {
+             // something wrong in the config file?
+             castor::exception::Internal ex;
+             ex.getMessage() << "Couldn't load dynamic library for service " 
+                             << name << ": " << dlerror();
+             throw ex;
+          }
+#endif
+        }
+        // build the service using the new associated factory
+        fac = castor::Factories::instance()->factory(id2);
+        // if no factory is available yet, we give up
+        if(fac == 0) return 0;
+      }
       IService* svc = fac->instantiate(name);
       if (0 == svc) {
         return 0;
