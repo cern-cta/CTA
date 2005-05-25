@@ -1,5 +1,5 @@
 /*
- * $Id: stager_mapper.c,v 1.1 2005/05/25 14:29:02 bcouturi Exp $
+ * $Id: stager_mapper.c,v 1.2 2005/05/25 15:16:34 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_mapper.c,v $ $Revision: 1.1 $ $Date: 2005/05/25 14:29:02 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_mapper.c,v $ $Revision: 1.2 $ $Date: 2005/05/25 15:16:34 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -21,10 +21,18 @@ static char *sccsid = "@(#)$RCSfile: stager_mapper.c,v $ $Revision: 1.1 $ $Date:
 /* ============= */
 /* Local headers */
 /* ============= */
+#include "Castor_limits.h"
 #include "stager_client_api.h"
 #include "stager_mapper.h"
 #include "getconfent.h"
 #include "serrno.h"
+
+
+char stghostenv[CA_MAXLINELEN+1];
+char stgpoolenv[CA_MAXLINELEN+1];
+char svcclassenv[CA_MAXLINELEN+1];
+char *stgversion2env = "RFIO_USE_CASTOR_V2=YES";
+
 
 
 /* ================= */
@@ -136,11 +144,13 @@ get_stager_type(const char *name) {
 /* External routines */
 /* ================= */
 
+#define TMPBUFSIZE 1024
 int 
 stage_mapper_setenv(const char *username, const char *groupname) {
   char *func = "stage_mapper_setenv";
   char *stager = NULL, *svcclass = NULL;
   enum stager_type stgtype;
+  char buf[TMPBUFSIZE+1];
 
   if (stager == NULL && groupname == NULL) {
     stage_errmsg(func, "Both parameters are NULL");
@@ -173,7 +183,27 @@ stage_mapper_setenv(const char *username, const char *groupname) {
     stgtype = get_stager_type(stager) ;
   }
 
-  printf("Stager: %s (type:%d) Svcclass:%s\n", stager, stgtype, svcclass);
+
+  if (stager!= NULL) {
+    Csnprintf(stghostenv,  CA_MAXLINELEN, "STAGE_HOST=%s", stager);
+    stage_trace(3, stghostenv);
+    putenv(stghostenv);
+  }
+
+  if (svcclass!= NULL) {
+    Csnprintf(stgpoolenv,  CA_MAXLINELEN, "STAGE_POOL=%s", svcclass);
+    putenv(stgpoolenv);
+    stage_trace(3, stgpoolenv);
+    Csnprintf(svcclassenv,  CA_MAXLINELEN, "STAGE_SVCCLASS=%s", svcclass);
+    putenv(svcclassenv);
+    stage_trace(3, svcclassenv);
+  }
+
+  
+  if (stgtype == V2) {
+    putenv(stgversion2env);
+    stage_trace(3, stgversion2env);
+  }
 
   if (stager != NULL) free(stager);
   if (svcclass != NULL) free(svcclass);
