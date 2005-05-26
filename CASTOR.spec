@@ -78,6 +78,7 @@ mkdir -p ${RPM_BUILD_ROOT}/var/spool/gc
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/msg
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rfio
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rhserver
+mkdir -p ${RPM_BUILD_ROOT}/var/spool/rmmaster
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rmnode
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rtcopy
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rtcpclientd
