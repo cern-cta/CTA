@@ -27,6 +27,9 @@ ALTER TABLE DiskPool2SvcClass
 ALTER TABLE Stream2TapeCopy
   DROP CONSTRAINT fk_Stream2TapeCopy_Parent
   DROP CONSTRAINT fk_Stream2TapeCopy_Child;
+ALTER TABLE TapeDrive2ExtendedDeviceGroup
+  DROP CONSTRAINT fk_TapeDrive2ExtendedDeviceGroup_Parent
+  DROP CONSTRAINT fk_TapeDrive2ExtendedDeviceGroup_Child;
 /* SQL statements for type BaseAddress */
 DROP TABLE BaseAddress;
 CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR2(2048), cnvSvcType NUMBER, target INTEGER, id INTEGER PRIMARY KEY);
@@ -34,6 +37,10 @@ CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR2(2048), cnvSvcType 
 /* SQL statements for type Client */
 DROP TABLE Client;
 CREATE TABLE Client (ipAddress NUMBER, port NUMBER, id INTEGER PRIMARY KEY);
+
+/* SQL statements for type ClientIdentification */
+DROP TABLE ClientIdentification;
+CREATE TABLE ClientIdentification (machine VARCHAR2(2048), userName VARCHAR2(2048), port NUMBER, euid NUMBER, egid NUMBER, magic NUMBER, id INTEGER PRIMARY KEY);
 
 /* SQL statements for type Disk2DiskCopyDoneRequest */
 DROP TABLE Disk2DiskCopyDoneRequest;
@@ -185,7 +192,7 @@ CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight float, creationTime INTEGER
 
 /* SQL statements for type FileSystem */
 DROP TABLE FileSystem;
-CREATE TABLE FileSystem (free INTEGER, weight float, fsDeviation float, mountPoint VARCHAR2(2048), deltaWeight float, deltaFree NUMBER, reservedSpace NUMBER, id INTEGER PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER);
+CREATE TABLE FileSystem (free INTEGER, weight float, fsDeviation float, mountPoint VARCHAR2(2048), deltaWeight float, deltaFree NUMBER, reservedSpace NUMBER, minFreeSpace INTEGER, maxFreeSpace INTEGER, spaceToBeFreed INTEGER, id INTEGER PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER);
 
 /* SQL statements for type SvcClass */
 DROP TABLE SvcClass;
@@ -225,6 +232,28 @@ CREATE TABLE FileClass (name VARCHAR2(2048), minFileSize INTEGER, maxFileSize IN
 DROP TABLE DiskServer;
 CREATE TABLE DiskServer (name VARCHAR2(2048), id INTEGER PRIMARY KEY, status INTEGER);
 
+/* SQL statements for type ExtendedDeviceGroup */
+DROP TABLE ExtendedDeviceGroup;
+CREATE TABLE ExtendedDeviceGroup (dgName VARCHAR2(2048), mode NUMBER, id INTEGER PRIMARY KEY);
+
+/* SQL statements for type TapeServer */
+DROP TABLE TapeServer;
+CREATE TABLE TapeServer (serverName VARCHAR2(2048), status NUMBER, id INTEGER PRIMARY KEY);
+
+/* SQL statements for type TapeRequest */
+DROP TABLE TapeRequest;
+CREATE TABLE TapeRequest (priority NUMBER, creationTime NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, client INTEGER, reqExtDevGrp INTEGER, requestedSrv INTEGER);
+
+/* SQL statements for type TapeDrive */
+DROP TABLE TapeDrive;
+CREATE TABLE TapeDrive (jobID NUMBER, creationTime NUMBER, resettime NUMBER, usecount NUMBER, errcount NUMBER, transferredMB NUMBER, totalMB INTEGER, dedicate VARCHAR2(2048), newDedicate VARCHAR2(2048), is_uid NUMBER, is_gid NUMBER, is_name NUMBER, no_uid NUMBER, no_gid NUMBER, no_name NUMBER, no_host NUMBER, no_vid NUMBER, no_mode NUMBER, no_date NUMBER, no_time NUMBER, no_age NUMBER, uid NUMBER, gid NUMBER, name VARCHAR2(2048), id INTEGER PRIMARY KEY, tape INTEGER, status INTEGER, tapeServer INTEGER);
+DROP INDEX I_TapeDrive2ExtendedDeviceGroup_Child;
+DROP INDEX I_TapeDrive2ExtendedDeviceGroup_Parent;
+DROP TABLE TapeDrive2ExtendedDeviceGroup;
+CREATE TABLE TapeDrive2ExtendedDeviceGroup (Parent INTEGER, Child INTEGER);
+CREATE INDEX I_TapeDrive2ExtendedDeviceGroup_Child on TapeDrive2ExtendedDeviceGroup (child);
+CREATE INDEX I_TapeDrive2ExtendedDeviceGroup_Parent on TapeDrive2ExtendedDeviceGroup (parent);
+
 ALTER TABLE SvcClass2TapePool
   ADD CONSTRAINT fk_SvcClass2TapePool_Parent FOREIGN KEY (Parent) REFERENCES SvcClass (id)
   ADD CONSTRAINT fk_SvcClass2TapePool_Child FOREIGN KEY (Child) REFERENCES TapePool (id);
@@ -234,6 +263,9 @@ ALTER TABLE DiskPool2SvcClass
 ALTER TABLE Stream2TapeCopy
   ADD CONSTRAINT fk_Stream2TapeCopy_Parent FOREIGN KEY (Parent) REFERENCES Stream (id)
   ADD CONSTRAINT fk_Stream2TapeCopy_Child FOREIGN KEY (Child) REFERENCES TapeCopy (id);
+ALTER TABLE TapeDrive2ExtendedDeviceGroup
+  ADD CONSTRAINT fk_TapeDrive2ExtendedDeviceGroup_Parent FOREIGN KEY (Parent) REFERENCES TapeDrive (id)
+  ADD CONSTRAINT fk_TapeDrive2ExtendedDeviceGroup_Child FOREIGN KEY (Child) REFERENCES ExtendedDeviceGroup (id);
 /* This file contains SQL code that is not generated automatically */
 /* and is inserted at the end of the generated code           */
 
@@ -1458,10 +1490,19 @@ BEGIN
        AND DiskCopy.id MEMBER OF files;
 END;
 
-/* PL/SQL method implementing filesDeleted */
+/*
+ * PL/SQL method implementing filesDeleted
+ * Note that we don't increase the freespace of the fileSystem.
+ * This is done by the monitoring daemon, that knows the
+ * exact amount of free space. However, we decrease the
+ * spaceToBeFreed counter so that a next GC knows the status
+ * of the FileSystem
+ */
 CREATE OR REPLACE PROCEDURE filesDeletedProc
 (fileIds IN castor."cnumList") AS
   cfId NUMBER;
+  fsId NUMBER;
+  fsize NUMBER;
   nb NUMBER;
 BEGIN
  IF fileIds.COUNT > 0 THEN
@@ -1469,9 +1510,13 @@ BEGIN
   FOR i in fileIds.FIRST .. fileIds.LAST LOOP
     -- delete the DiskCopy
     DELETE FROM DiskCopy WHERE id = fileIds(i)
-      RETURNING castorFile INTO cfId;
-    -- Lock the Castor File
-    SELECT id INTO cfID FROM CastorFile where id = cfID FOR UPDATE;
+      RETURNING castorFile, fileSystem INTO cfId, fsId;
+    -- Lock the Castor File and retrieve size
+    SELECT fileSize INTO fsize FROM CastorFile where id = cfID FOR UPDATE;
+    -- update the FileSystem
+    UPDATE FileSystem
+       SET spaceToBeFreed = spaceToBeFreed - fsize;
+     WHERE id = fsId;
     -- See whether the castorfile has no other DiskCopy
     SELECT count(*) INTO nb FROM DiskCopy
      WHERE castorFile = cfId;
@@ -1482,10 +1527,10 @@ BEGIN
        WHERE castorFile = cfId;
       -- If any TapeCopy, give up
       IF nb = 0 THEN
-      -- See whether the castorfile has any SubRequest
+        -- See whether the castorfile has any SubRequest
         SELECT count(*) INTO nb FROM SubRequest
          WHERE castorFile = cfId;
-      -- If any SubRequest, give up
+        -- If any SubRequest, give up
         IF nb = 0 THEN
           -- Delete the CastorFile
           DELETE FROM CastorFile WHERE id = cfId;
@@ -1500,6 +1545,7 @@ END;
 CREATE OR REPLACE PROCEDURE filesDeletionFailedProc
 (fileIds IN castor."cnumList") AS
   cfId NUMBER;
+  fsId NUMBER;
   nb NUMBER;
 BEGIN
  IF fileIds.COUNT > 0 THEN
@@ -1507,7 +1553,12 @@ BEGIN
   FOR i in fileIds.FIRST .. fileIds.LAST LOOP
     -- set status of DiskCopy to FAILED
     UPDATE DiskCopy SET status = 4 -- FAILED
-     WHERE id = fileIds(i);
+     WHERE id = fileIds(i)
+    RETURNING fileSystem INTO fsId;
+    -- update the FileSystem
+    UPDATE FileSystem
+       SET spaceToBeFreed = spaceToBeFreed - fsize;
+     WHERE id = fsId;
   END LOOP;
  END IF;
 END;

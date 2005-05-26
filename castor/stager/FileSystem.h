@@ -173,6 +173,50 @@ int Cstager_FileSystem_reservedSpace(struct Cstager_FileSystem_t* instance, int*
 int Cstager_FileSystem_setReservedSpace(struct Cstager_FileSystem_t* instance, int new_var);
 
 /**
+ * Get the value of minFreeSpace
+ * Minimum free space that should be kept on this FileSystem. This limit can be
+ * transgressed but the garbage collector will then be launched.
+ */
+int Cstager_FileSystem_minFreeSpace(struct Cstager_FileSystem_t* instance, u_signed64* var);
+
+/**
+ * Set the value of minFreeSpace
+ * Minimum free space that should be kept on this FileSystem. This limit can be
+ * transgressed but the garbage collector will then be launched.
+ */
+int Cstager_FileSystem_setMinFreeSpace(struct Cstager_FileSystem_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of maxFreeSpace
+ * Maximum free space this FileSystem should have. Of course this limit can be
+ * transgressed but a Garbage Collector should never go under this limit
+ */
+int Cstager_FileSystem_maxFreeSpace(struct Cstager_FileSystem_t* instance, u_signed64* var);
+
+/**
+ * Set the value of maxFreeSpace
+ * Maximum free space this FileSystem should have. Of course this limit can be
+ * transgressed but a Garbage Collector should never go under this limit
+ */
+int Cstager_FileSystem_setMaxFreeSpace(struct Cstager_FileSystem_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of spaceToBeFreed
+ * The space that will be deleted in the future by the GC workers. This are files
+ * that were selected by the GC but are not yet physically removed. This value can
+ * help another iteration of the GC to know what to delete.
+ */
+int Cstager_FileSystem_spaceToBeFreed(struct Cstager_FileSystem_t* instance, u_signed64* var);
+
+/**
+ * Set the value of spaceToBeFreed
+ * The space that will be deleted in the future by the GC workers. This are files
+ * that were selected by the GC but are not yet physically removed. This value can
+ * help another iteration of the GC to know what to delete.
+ */
+int Cstager_FileSystem_setSpaceToBeFreed(struct Cstager_FileSystem_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

@@ -50,6 +50,9 @@ castor::stager::FileSystem::FileSystem() throw() :
   m_deltaWeight(0.0),
   m_deltaFree(0),
   m_reservedSpace(0),
+  m_minFreeSpace(0),
+  m_maxFreeSpace(0),
+  m_spaceToBeFreed(0),
   m_id(0),
   m_diskPool(0),
   m_diskserver(0),
@@ -92,6 +95,9 @@ void castor::stager::FileSystem::print(std::ostream& stream,
   stream << indent << "deltaWeight : " << m_deltaWeight << std::endl;
   stream << indent << "deltaFree : " << m_deltaFree << std::endl;
   stream << indent << "reservedSpace : " << m_reservedSpace << std::endl;
+  stream << indent << "minFreeSpace : " << m_minFreeSpace << std::endl;
+  stream << indent << "maxFreeSpace : " << m_maxFreeSpace << std::endl;
+  stream << indent << "spaceToBeFreed : " << m_spaceToBeFreed << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "DiskPool : " << std::endl;

@@ -1222,10 +1222,19 @@ BEGIN
        AND DiskCopy.id MEMBER OF files;
 END;
 
-/* PL/SQL method implementing filesDeleted */
+/*
+ * PL/SQL method implementing filesDeleted
+ * Note that we don't increase the freespace of the fileSystem.
+ * This is done by the monitoring daemon, that knows the
+ * exact amount of free space. However, we decrease the
+ * spaceToBeFreed counter so that a next GC knows the status
+ * of the FileSystem
+ */
 CREATE OR REPLACE PROCEDURE filesDeletedProc
 (fileIds IN castor."cnumList") AS
   cfId NUMBER;
+  fsId NUMBER;
+  fsize NUMBER;
   nb NUMBER;
 BEGIN
  IF fileIds.COUNT > 0 THEN
@@ -1233,9 +1242,13 @@ BEGIN
   FOR i in fileIds.FIRST .. fileIds.LAST LOOP
     -- delete the DiskCopy
     DELETE FROM DiskCopy WHERE id = fileIds(i)
-      RETURNING castorFile INTO cfId;
-    -- Lock the Castor File
-    SELECT id INTO cfID FROM CastorFile where id = cfID FOR UPDATE;
+      RETURNING castorFile, fileSystem INTO cfId, fsId;
+    -- Lock the Castor File and retrieve size
+    SELECT fileSize INTO fsize FROM CastorFile where id = cfID FOR UPDATE;
+    -- update the FileSystem
+    UPDATE FileSystem
+       SET spaceToBeFreed = spaceToBeFreed - fsize;
+     WHERE id = fsId;
     -- See whether the castorfile has no other DiskCopy
     SELECT count(*) INTO nb FROM DiskCopy
      WHERE castorFile = cfId;
@@ -1246,10 +1259,10 @@ BEGIN
        WHERE castorFile = cfId;
       -- If any TapeCopy, give up
       IF nb = 0 THEN
-      -- See whether the castorfile has any SubRequest
+        -- See whether the castorfile has any SubRequest
         SELECT count(*) INTO nb FROM SubRequest
          WHERE castorFile = cfId;
-      -- If any SubRequest, give up
+        -- If any SubRequest, give up
         IF nb = 0 THEN
           -- Delete the CastorFile
           DELETE FROM CastorFile WHERE id = cfId;
@@ -1264,6 +1277,7 @@ END;
 CREATE OR REPLACE PROCEDURE filesDeletionFailedProc
 (fileIds IN castor."cnumList") AS
   cfId NUMBER;
+  fsId NUMBER;
   nb NUMBER;
 BEGIN
  IF fileIds.COUNT > 0 THEN
@@ -1271,7 +1285,12 @@ BEGIN
   FOR i in fileIds.FIRST .. fileIds.LAST LOOP
     -- set status of DiskCopy to FAILED
     UPDATE DiskCopy SET status = 4 -- FAILED
-     WHERE id = fileIds(i);
+     WHERE id = fileIds(i)
+    RETURNING fileSystem INTO fsId;
+    -- update the FileSystem
+    UPDATE FileSystem
+       SET spaceToBeFreed = spaceToBeFreed - fsize;
+     WHERE id = fsId;
   END LOOP;
  END IF;
 END;

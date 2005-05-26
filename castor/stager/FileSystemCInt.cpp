@@ -215,6 +215,54 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_FileSystem_minFreeSpace
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_minFreeSpace(castor::stager::FileSystem* instance, u_signed64* var) {
+    *var = instance->minFreeSpace();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_setMinFreeSpace
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_setMinFreeSpace(castor::stager::FileSystem* instance, u_signed64 new_var) {
+    instance->setMinFreeSpace(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_maxFreeSpace
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_maxFreeSpace(castor::stager::FileSystem* instance, u_signed64* var) {
+    *var = instance->maxFreeSpace();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_setMaxFreeSpace
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_setMaxFreeSpace(castor::stager::FileSystem* instance, u_signed64 new_var) {
+    instance->setMaxFreeSpace(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_spaceToBeFreed
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_spaceToBeFreed(castor::stager::FileSystem* instance, u_signed64* var) {
+    *var = instance->spaceToBeFreed();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_setSpaceToBeFreed
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_setSpaceToBeFreed(castor::stager::FileSystem* instance, u_signed64 new_var) {
+    instance->setSpaceToBeFreed(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_FileSystem_id
   //----------------------------------------------------------------------------
   int Cstager_FileSystem_id(castor::stager::FileSystem* instance, u_signed64* var) {

@@ -229,6 +229,68 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_minFreeSpace
+       * Minimum free space that should be kept on this FileSystem. This limit can be
+       * transgressed but the garbage collector will then be launched.
+       * @return the value of m_minFreeSpace
+       */
+      u_signed64 minFreeSpace() const {
+        return m_minFreeSpace;
+      }
+
+      /**
+       * Set the value of m_minFreeSpace
+       * Minimum free space that should be kept on this FileSystem. This limit can be
+       * transgressed but the garbage collector will then be launched.
+       * @param new_var the new value of m_minFreeSpace
+       */
+      void setMinFreeSpace(u_signed64 new_var) {
+        m_minFreeSpace = new_var;
+      }
+
+      /**
+       * Get the value of m_maxFreeSpace
+       * Maximum free space this FileSystem should have. Of course this limit can be
+       * transgressed but a Garbage Collector should never go under this limit
+       * @return the value of m_maxFreeSpace
+       */
+      u_signed64 maxFreeSpace() const {
+        return m_maxFreeSpace;
+      }
+
+      /**
+       * Set the value of m_maxFreeSpace
+       * Maximum free space this FileSystem should have. Of course this limit can be
+       * transgressed but a Garbage Collector should never go under this limit
+       * @param new_var the new value of m_maxFreeSpace
+       */
+      void setMaxFreeSpace(u_signed64 new_var) {
+        m_maxFreeSpace = new_var;
+      }
+
+      /**
+       * Get the value of m_spaceToBeFreed
+       * The space that will be deleted in the future by the GC workers. This are files
+       * that were selected by the GC but are not yet physically removed. This value can
+       * help another iteration of the GC to know what to delete.
+       * @return the value of m_spaceToBeFreed
+       */
+      u_signed64 spaceToBeFreed() const {
+        return m_spaceToBeFreed;
+      }
+
+      /**
+       * Set the value of m_spaceToBeFreed
+       * The space that will be deleted in the future by the GC workers. This are files
+       * that were selected by the GC but are not yet physically removed. This value can
+       * help another iteration of the GC to know what to delete.
+       * @param new_var the new value of m_spaceToBeFreed
+       */
+      void setSpaceToBeFreed(u_signed64 new_var) {
+        m_spaceToBeFreed = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -343,6 +405,15 @@ namespace castor {
 
       /// Space reserved on the filesystem but not yet used and thus not taken into account in free and deltaFree
       int m_reservedSpace;
+
+      /// Minimum free space that should be kept on this FileSystem. This limit can be transgressed but the garbage collector will then be launched.
+      u_signed64 m_minFreeSpace;
+
+      /// Maximum free space this FileSystem should have. Of course this limit can be transgressed but a Garbage Collector should never go under this limit
+      u_signed64 m_maxFreeSpace;
+
+      /// The space that will be deleted in the future by the GC workers. This are files that were selected by the GC but are not yet physically removed. This value can help another iteration of the GC to know what to delete.
+      u_signed64 m_spaceToBeFreed;
 
       /// The id of this object
       u_signed64 m_id;
