@@ -1628,3 +1628,149 @@ BEGIN
   WHERE castorFile = cfId AND status = 0; -- STAGED
  ret := 0;
 END;
+
+CREATE OR REPLACE PACKAGE castorGC AS
+  TYPE GCItem IS RECORD (dcId INTEGER, fileSize NUMBER, utility NUMBER);
+  TYPE GCItem_Table is TABLE OF GCItem;
+  TYPE GCItem_Cur IS REF CURSOR RETURN GCItem;
+  --TYPE GCItem_CurTable is VARRAY(10) OF GCItem_Cur;
+  TYPE policiesList IS TABLE OF VARCHAR2(2048);
+END castorGC;
+
+/*
+ * GC policy that mimic the old GC
+ */
+CREATE OR REPLACE FUNCTION defaultGCPolicy
+(fsId INTEGER, garbageSize INTEGER)
+  RETURN castorGC.GCItem_Cur AS
+  result castorGC.GCItem_Cur;
+BEGIN
+  OPEN result FOR
+    SELECT DiskCopy.id, CastorFile.fileSize, 0
+      FROM DiskCopy, CastorFile
+     WHERE CastorFile.id = DiskCopy.castorFile
+       AND DiskCopy.fileSystem = fsId
+       AND DiskCopy.status = 7 -- INVALID
+    UNION
+    SELECT DiskCopy.id, CastorFile.fileSize,
+           getTime() - CastorFile.LastAccessTime - GREATEST(0,86400*LN(CastorFile.fileSize/1024))
+      FROM DiskCopy, CastorFile, SubRequest
+     WHERE CastorFile.id = DiskCopy.castorFile
+       AND DiskCopy.fileSystem = fsId
+       AND DiskCopy.status = 0 -- STAGED
+       AND DiskCopy.id = SubRequest.DiskCopy (+)
+       AND Subrequest.id IS NULL
+     ORDER BY 3;
+  return result;
+END;
+
+/*
+ * Runs Garbage collection on the specified FileSystem
+ */
+CREATE OR REPLACE PROCEDURE garbageCollectFS(fsId INTEGER) AS
+  toBeFreed INTEGER;
+  freed INTEGER := 0;
+  dpID INTEGER;
+  policies castorGC.policiesList;
+  --cursors castor.castorGC.GCItem_CurTable;
+  cur castorGC.GCItem_Cur;
+  cur1 castorGC.GCItem_Cur;
+  cur2 castorGC.GCItem_Cur;
+  cur3 castorGC.GCItem_Cur;
+  nextItems castorGC.GCItem_Table := castorGC.GCItem_Table();
+  bestCandidate INTEGER;
+  bestValue NUMBER;
+BEGIN
+  -- Get the DiskPool and the minFree space we want to achieve
+  SELECT diskPool, maxFreeSpace - free - deltaFree + reservedSpace - spaceToBeFreed
+    INTO dpId, toBeFreed
+    FROM FileSystem
+   WHERE FileSystem.id = fsId
+     FOR UPDATE;
+  UPDATE FileSystem
+     SET spaceToBeFreed = spaceToBeFreed + toBeFreed
+   WHERE FileSystem.id = fsId;
+  -- release the filesystem lock so that other threads can go on
+  COMMIT;
+  -- List policies to be applied
+  SELECT CASE
+          WHEN svcClass.gcPolicy IS NULL THEN 'defaultGCPolicy'
+          ELSE svcClass.gcPolicy
+         END BULK COLLECT INTO policies
+    FROM SvcClass, DiskPool2SvcClass
+   WHERE DiskPool2SvcClass.Parent = dpId
+     AND SvcClass.Id = DiskPool2SvcClass.Child;
+  -- Get candidates for each policy
+  nextItems.EXTEND(policies.COUNT);
+  bestValue := 2**31;
+  IF policies.COUNT > 0 THEN
+    EXECUTE IMMEDIATE 'BEGIN :1 := '||policies(policies.FIRST)||'(:2, :3); END;'
+      USING OUT cur1, IN fsId, IN toBeFreed;
+    FETCH cur1 INTO nextItems(1);
+    IF policies.COUNT > 1 THEN
+      EXECUTE IMMEDIATE 'BEGIN :1 := '||policies(policies.FIRST+1)||'(:2, :3); END;'
+        USING OUT cur2, IN fsId, IN toBeFreed;
+      FETCH cur2 INTO nextItems(2);
+      IF policies.COUNT > 2 THEN
+        EXECUTE IMMEDIATE 'BEGIN :1 := '||policies(policies.FIRST+2)||'(:2, :3); END;'
+          USING OUT cur3, IN fsId, IN toBeFreed;
+        FETCH cur3 INTO nextItems(3);
+      END IF;    
+    END IF;    
+  END IF;    
+  FOR i IN policies.FIRST .. policies.LAST LOOP
+    -- maximum 3 policies allowed
+    IF i > policies.FIRST+2 THEN EXIT; END IF;
+    IF nextItems(i).utility < bestValue THEN
+      bestCandidate := i;
+      bestValue := nextItems(i).utility;
+    END IF;
+  END LOOP;
+  -- Now extract the diskcopies that will be garbaged and
+  -- mark them GCCandidate
+  LOOP
+    -- Mark the DiskCopy
+    UPDATE DISKCOPY SET status = 8 -- GCCANDIDATE
+     WHERE id = nextItems(bestCandidate).dcId;
+    IF 1 = bestCandidate THEN
+      cur := cur1;
+    ELSIF 2 = bestCandidate THEN
+      cur := cur2;
+    ELSE
+      cur := cur3;
+    END IF;
+    FETCH cur INTO nextItems(bestCandidate);
+    -- Update toBeFreed
+    freed := freed + nextItems(bestCandidate).fileSize;
+    -- Shall we continue ?
+    IF toBeFreed > freed THEN
+      -- find next candidate
+      bestValue := 2**31;
+      FOR i IN nextItems.FIRST .. nextItems.LAST LOOP
+        IF nextItems(i).utility < bestValue THEN
+          bestCandidate := i;
+          bestValue := nextItems(i).utility;
+        END IF;
+      END LOOP;
+    ELSE
+      -- enough space freed
+      EXIT;
+    END IF;
+  END LOOP;
+  -- Update Filesystem toBeFreed space to the exact value
+  UPDATE FileSystem
+     SET spaceToBeFreed = spaceToBeFreed + freed - toBeFreed
+   WHERE FileSystem.id = fsId;
+  -- Close cursors
+  IF policies.COUNT > 0 THEN
+    CLOSE cur1;
+    IF policies.COUNT > 1 THEN
+      CLOSE cur2;
+      IF policies.COUNT > 2 THEN
+        CLOSE cur3;
+      END IF;
+    END IF;
+  END IF;
+  -- commit everything
+  COMMIT;
+END;
