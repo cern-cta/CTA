@@ -15,7 +15,7 @@ MTCCFLAGS = -pthread -DCTHREAD_POSIX -D_THREAD_SAFE -D_REENTRANT
 MTLDLIBS =
 MTLDFLAGS = -pthread
 SHLIBLDFLAGS = -shared
-SHLIBREQLIBS = -lc -lpthread `g++ -print-file-name=libstdc++.so`
+SHLIBREQLIBS = -lc -lpthread `g++ -print-file-name=libstdc++.so` -ldl
 #if UseAdns
 ADNSLIB = -ladns
 #endif
