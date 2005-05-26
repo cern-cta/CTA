@@ -73,17 +73,26 @@ mkdir -p ${RPM_BUILD_ROOT}/etc/cron.hourly
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.daily
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.weekly
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.monthly
-mkdir -p ${RPM_BUILD_ROOT}/var/spool/sacct
+mkdir -p ${RPM_BUILD_ROOT}/var/spool/dlf
+mkdir -p ${RPM_BUILD_ROOT}/var/spool/expert
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/gc
+mkdir -p ${RPM_BUILD_ROOT}/var/spool/job
+mkdir -p ${RPM_BUILD_ROOT}/var/spool/monitor
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/msg
+mkdir -p ${RPM_BUILD_ROOT}/var/spool/ns
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rfio
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rhserver
+mkdir -p ${RPM_BUILD_ROOT}/var/spool/rmc
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rmmaster
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rmnode
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rtcopy
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rtcpclientd
+mkdir -p ${RPM_BUILD_ROOT}/var/spool/sacct
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/stager
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/tape
+mkdir -p ${RPM_BUILD_ROOT}/var/spool/upv
+mkdir -p ${RPM_BUILD_ROOT}/var/spool/vdqm
+mkdir -p ${RPM_BUILD_ROOT}/var/spool/vmgr
 make install DESTDIR=${RPM_BUILD_ROOT}
 make exportman DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
 (cd clips; ../imake/imake -I../config DESTDIR=${RPM_BUILD_ROOT}; make install DESTDIR=${RPM_BUILD_ROOT})
