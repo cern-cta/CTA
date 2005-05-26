@@ -276,9 +276,10 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildExpertLibrary	NO
 #define BuildSchedPlugin	NO
 #define BuildRHCpp              NO
-#define BuildVDQMCpp						NO
+#define BuildVDQMCpp            NO
 #define BuildGCCpp              NO
 #define BuildOraCpp             NO
+#define BuildMyCpp              NO
 #define BuildCastorClientCPPLibrary	NO
 #define BuildCppTest	        NO
 #define BuildTankPerfMonLibrary	NO
