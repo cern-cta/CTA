@@ -45,6 +45,7 @@ usr/include/shift/stage_struct.h
 usr/include/shift/stager_admin_api.h
 usr/include/shift/stager_api.h
 usr/include/shift/stager_client_api.h
+usr/include/shift/stager_mapper.h
 usr/include/shift/stager_service_api.h
 usr/include/shift/trace.h
 usr/include/shift/u64subr.h
