@@ -1,6 +1,7 @@
 castor (2.0.0-36) unstable; urgency=low
 
   * Fixed interface to db in stager: changing a string is a free()/malloc() operation in the c++ interface, thus any previous pointer on that string should be updated
+  * Added stager_mapper.h
 
  -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Fri, 27 May 2005 12:50:38 +0200
 
