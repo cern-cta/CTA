@@ -1370,7 +1370,8 @@ CREATE OR REPLACE PACKAGE castorGC AS
 END castorGC;
 
 /*
- * GC policy that mimic the old GC
+ * GC policy that mimic the old GC :
+ * a mix of oldest first and biggest first
  */
 CREATE OR REPLACE FUNCTION defaultGCPolicy
 (fsId INTEGER, garbageSize INTEGER)
@@ -1386,6 +1387,42 @@ BEGIN
     UNION
     SELECT DiskCopy.id, CastorFile.fileSize,
            getTime() - CastorFile.LastAccessTime - GREATEST(0,86400*LN(CastorFile.fileSize/1024))
+      FROM DiskCopy, CastorFile, SubRequest
+     WHERE CastorFile.id = DiskCopy.castorFile
+       AND DiskCopy.fileSystem = fsId
+       AND DiskCopy.status = 0 -- STAGED
+       AND DiskCopy.id = SubRequest.DiskCopy (+)
+       AND Subrequest.id IS NULL
+     ORDER BY 3;
+  return result;
+END;
+
+/*
+ * GC policy that mimic the old GC and takes into account
+ * the number of accesses to the file. Namely we garbage
+ * collect the oldest and biggest file that add the less
+ * accesses but not 0, as a file having 0 accesses will
+ * probably be read soon !
+ */
+CREATE OR REPLACE FUNCTION nopinGCPolicy
+(fsId INTEGER, garbageSize INTEGER)
+  RETURN castorGC.GCItem_Cur AS
+  result castorGC.GCItem_Cur;
+BEGIN
+  OPEN result FOR
+    SELECT DiskCopy.id, CastorFile.fileSize, 0
+      FROM DiskCopy, CastorFile
+     WHERE CastorFile.id = DiskCopy.castorFile
+       AND DiskCopy.fileSystem = fsId
+       AND DiskCopy.status = 7 -- INVALID
+    UNION
+    SELECT DiskCopy.id, CastorFile.fileSize,
+           getTime() - CastorFile.LastAccessTime -- older first
+           - GREATEST(0,86400*LN(CastorFile.fileSize/1024)) -- biggest first
+           + CASE CastorFile.nbAccesses
+               WHEN 0 THEN 86400 -- non accessed last
+               ELSE 20000 * CastorFile.nbAccesses -- most accessed last
+             END
       FROM DiskCopy, CastorFile, SubRequest
      WHERE CastorFile.id = DiskCopy.castorFile
        AND DiskCopy.fileSystem = fsId
