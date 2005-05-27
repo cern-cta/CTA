@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.10 2005/05/20 12:10:33 bcouturi Exp $
+ * $Id: stager_client_api_query.cpp,v 1.11 2005/05/27 12:11:12 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.10 $ $Date: 2005/05/20 12:10:33 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.11 $ $Date: 2005/05/27 12:11:12 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -33,6 +33,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 
 #include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "stager_client_api_common.h"
+#include "castor/stager/RequestHelper.hpp"
 
 /* ================= */
 /* External routines */
@@ -71,6 +72,9 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StageFileQueryRequest req;
+
+    castor::stager::RequestHelper reqh(&req);
+    reqh.setOptions(opts);
 
     
     // Preparing the requests
@@ -188,7 +192,9 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StageRequestQueryRequest req;
-
+    
+    castor::stager::RequestHelper reqh(&req);
+    reqh.setOptions(opts);
     
     // Preparing the requests
     for(int i=0; i<nbreqs; i++) {
