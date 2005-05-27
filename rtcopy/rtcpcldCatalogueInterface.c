@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.128 $ $Release$ $Date: 2005/04/01 14:44:58 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.129 $ $Release$ $Date: 2005/05/27 11:52:44 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.128 $ $Release$ $Date: 2005/04/01 14:44:58 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.129 $ $Release$ $Date: 2005/05/27 11:52:44 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1171,7 +1171,7 @@ static int procSegmentsForTape(
                       fseq
                       );
       newFileReqs = 1;
-      fl->filereq.concat = NOCONCAT;
+      fl->filereq.concat = OPEN_NOTRUNC;
       fl->filereq.convert = ASCCONV;
       strcpy(fl->filereq.recfm,"F");
       fl->filereq.tape_fseq = fseq;
