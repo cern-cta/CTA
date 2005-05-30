@@ -1,3 +1,12 @@
+castor (2.0.0-37) unstable; urgency=low
+
+  * Better GCpolicy taking into account the number of accesses to a file, and not deleting files that were never accessed (pinning problem)
+  * Use concat=OPEN_NOTRUNC for tape recalls
+  * Added stager_mapper.h for export
+  * Fixed fileQuery to specify svcClass
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Mon, 30 May 2005 10:27:21 +0200
+
 castor (2.0.0-36) unstable; urgency=low
 
   * Fixed interface to db in stager: changing a string is a free()/malloc() operation in the c++ interface, thus any previous pointer on that string should be updated
