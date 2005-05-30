@@ -172,6 +172,16 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #else
 #define StageConfigDbLogin	/etc/castor/STGDBCONFIG
 #endif
+#if defined(_WIN32)
+#define StageMapFile   %%SystemRoot%%\\system32\\drivers\\etc\\castor\\stagemap.conf
+#else
+#define StageMapFile   /etc/castor/stagemap.conf
+#endif
+#if defined(_WIN32)
+#define StageTypeFile  %%SystemRoot%%\\system32\\drivers\\etc\\castor\\stagetype.conf
+#else
+#define StageTypeFile  /etc/castor/stagetype.conf
+#endif
 #define StagerSuperGroup	st
 #define StagerSuperUser	stage
 #define StageHost	"stagepublic"
