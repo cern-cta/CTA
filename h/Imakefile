@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Date: 2005/05/27 14:22:20 $ CERN IT-PDP/DM   Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Date: 2005/05/30 09:40:05 $ CERN IT-PDP/DM   Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -55,11 +55,11 @@ ECOMMON_H = \
 	 $(EXPORTH)/socket_timeout.h $(EXPORTH)/trace.h \
 	 $(EXPORTH)/u64subr.h $(EXPORTH)/ypgetacctent.h \
 	 $(EXPORTINC)/shift.h \
-	 $(EXPORTINC)/stager_api.h \
-	 $(EXPORTINC)/stager_admin_api.h \
-	 $(EXPORTINC)/stager_client_api.h \
-	 $(EXPORTINC)/stager_mapper.h \
-	 $(EXPORTINC)/stager_service_api.h
+	 $(EXPORTH)/stager_api.h \
+	 $(EXPORTH)/stager_admin_api.h \
+	 $(EXPORTH)/stager_client_api.h \
+	 $(EXPORTH)/stager_mapper.h \
+	 $(EXPORTH)/stager_service_api.h
 #if BuildDbClient
 IDB_H = \
 	 FileName($(DESTDIRCASTOR),Cdb_api.h)
