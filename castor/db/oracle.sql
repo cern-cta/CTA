@@ -19,17 +19,17 @@ DROP TABLE newRequests;
 CREATE TABLE newRequests (id INTEGER PRIMARY KEY, type INTEGER, creation DATE);
 CREATE INDEX I_newRequests_type on newRequests (type);
 ALTER TABLE SvcClass2TapePool
-  DROP CONSTRAINT fk_SvcClass2TapePool_Parent
-  DROP CONSTRAINT fk_SvcClass2TapePool_Child;
+  DROP CONSTRAINT fk_SvcClass2TapePool_P
+  DROP CONSTRAINT fk_SvcClass2TapePool_C;
 ALTER TABLE DiskPool2SvcClass
-  DROP CONSTRAINT fk_DiskPool2SvcClass_Parent
-  DROP CONSTRAINT fk_DiskPool2SvcClass_Child;
+  DROP CONSTRAINT fk_DiskPool2SvcClass_P
+  DROP CONSTRAINT fk_DiskPool2SvcClass_C;
 ALTER TABLE Stream2TapeCopy
-  DROP CONSTRAINT fk_Stream2TapeCopy_Parent
-  DROP CONSTRAINT fk_Stream2TapeCopy_Child;
-ALTER TABLE TapeDrive2ExtendedDeviceGroup
-  DROP CONSTRAINT fk_TapeDrive2ExtendedDeviceGroup_Parent
-  DROP CONSTRAINT fk_TapeDrive2ExtendedDeviceGroup_Child;
+  DROP CONSTRAINT fk_Stream2TapeCopy_P
+  DROP CONSTRAINT fk_Stream2TapeCopy_C;
+ALTER TABLE TapeDrive2ExtendedDevic
+  DROP CONSTRAINT fk_TapeDrive2ExtendedDevic_P
+  DROP CONSTRAINT fk_TapeDrive2ExtendedDevic_C;
 /* SQL statements for type BaseAddress */
 DROP TABLE BaseAddress;
 CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR2(2048), cnvSvcType NUMBER, target INTEGER, id INTEGER PRIMARY KEY);
@@ -197,32 +197,32 @@ CREATE TABLE FileSystem (free INTEGER, weight float, fsDeviation float, mountPoi
 /* SQL statements for type SvcClass */
 DROP TABLE SvcClass;
 CREATE TABLE SvcClass (nbDrives NUMBER, name VARCHAR2(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, replicationPolicy VARCHAR2(2048), gcPolicy VARCHAR2(2048), migratorPolicy VARCHAR2(2048), recallerPolicy VARCHAR2(2048), id INTEGER PRIMARY KEY);
-DROP INDEX I_SvcClass2TapePool_Child;
-DROP INDEX I_SvcClass2TapePool_Parent;
+DROP INDEX I_SvcClass2TapePool_C;
+DROP INDEX I_SvcClass2TapePool_P;
 DROP TABLE SvcClass2TapePool;
 CREATE TABLE SvcClass2TapePool (Parent INTEGER, Child INTEGER);
-CREATE INDEX I_SvcClass2TapePool_Child on SvcClass2TapePool (child);
-CREATE INDEX I_SvcClass2TapePool_Parent on SvcClass2TapePool (parent);
+CREATE INDEX I_SvcClass2TapePool_C on SvcClass2TapePool (child);
+CREATE INDEX I_SvcClass2TapePool_P on SvcClass2TapePool (parent);
 
 /* SQL statements for type DiskPool */
 DROP TABLE DiskPool;
 CREATE TABLE DiskPool (name VARCHAR2(2048), id INTEGER PRIMARY KEY);
-DROP INDEX I_DiskPool2SvcClass_Child;
-DROP INDEX I_DiskPool2SvcClass_Parent;
+DROP INDEX I_DiskPool2SvcClass_C;
+DROP INDEX I_DiskPool2SvcClass_P;
 DROP TABLE DiskPool2SvcClass;
 CREATE TABLE DiskPool2SvcClass (Parent INTEGER, Child INTEGER);
-CREATE INDEX I_DiskPool2SvcClass_Child on DiskPool2SvcClass (child);
-CREATE INDEX I_DiskPool2SvcClass_Parent on DiskPool2SvcClass (parent);
+CREATE INDEX I_DiskPool2SvcClass_C on DiskPool2SvcClass (child);
+CREATE INDEX I_DiskPool2SvcClass_P on DiskPool2SvcClass (parent);
 
 /* SQL statements for type Stream */
 DROP TABLE Stream;
 CREATE TABLE Stream (initialSizeToTransfer INTEGER, id INTEGER PRIMARY KEY, tape INTEGER, tapePool INTEGER, status INTEGER);
-DROP INDEX I_Stream2TapeCopy_Child;
-DROP INDEX I_Stream2TapeCopy_Parent;
+DROP INDEX I_Stream2TapeCopy_C;
+DROP INDEX I_Stream2TapeCopy_P;
 DROP TABLE Stream2TapeCopy;
 CREATE TABLE Stream2TapeCopy (Parent INTEGER, Child INTEGER);
-CREATE INDEX I_Stream2TapeCopy_Child on Stream2TapeCopy (child);
-CREATE INDEX I_Stream2TapeCopy_Parent on Stream2TapeCopy (parent);
+CREATE INDEX I_Stream2TapeCopy_C on Stream2TapeCopy (child);
+CREATE INDEX I_Stream2TapeCopy_P on Stream2TapeCopy (parent);
 
 /* SQL statements for type FileClass */
 DROP TABLE FileClass;
@@ -247,25 +247,25 @@ CREATE TABLE TapeRequest (priority NUMBER, creationTime NUMBER, id INTEGER PRIMA
 /* SQL statements for type TapeDrive */
 DROP TABLE TapeDrive;
 CREATE TABLE TapeDrive (jobID NUMBER, creationTime NUMBER, resettime NUMBER, usecount NUMBER, errcount NUMBER, transferredMB NUMBER, totalMB INTEGER, dedicate VARCHAR2(2048), newDedicate VARCHAR2(2048), is_uid NUMBER, is_gid NUMBER, is_name NUMBER, no_uid NUMBER, no_gid NUMBER, no_name NUMBER, no_host NUMBER, no_vid NUMBER, no_mode NUMBER, no_date NUMBER, no_time NUMBER, no_age NUMBER, uid NUMBER, gid NUMBER, name VARCHAR2(2048), id INTEGER PRIMARY KEY, tape INTEGER, status INTEGER, tapeServer INTEGER);
-DROP INDEX I_TapeDrive2ExtendedDeviceGroup_Child;
-DROP INDEX I_TapeDrive2ExtendedDeviceGroup_Parent;
-DROP TABLE TapeDrive2ExtendedDeviceGroup;
-CREATE TABLE TapeDrive2ExtendedDeviceGroup (Parent INTEGER, Child INTEGER);
-CREATE INDEX I_TapeDrive2ExtendedDeviceGroup_Child on TapeDrive2ExtendedDeviceGroup (child);
-CREATE INDEX I_TapeDrive2ExtendedDeviceGroup_Parent on TapeDrive2ExtendedDeviceGroup (parent);
+DROP INDEX I_TapeDrive2ExtendedDevic_C;
+DROP INDEX I_TapeDrive2ExtendedDevic_P;
+DROP TABLE TapeDrive2ExtendedDevic;
+CREATE TABLE TapeDrive2ExtendedDevic (Parent INTEGER, Child INTEGER);
+CREATE INDEX I_TapeDrive2ExtendedDevic_C on TapeDrive2ExtendedDevic (child);
+CREATE INDEX I_TapeDrive2ExtendedDevic_P on TapeDrive2ExtendedDevic (parent);
 
 ALTER TABLE SvcClass2TapePool
-  ADD CONSTRAINT fk_SvcClass2TapePool_Parent FOREIGN KEY (Parent) REFERENCES SvcClass (id)
-  ADD CONSTRAINT fk_SvcClass2TapePool_Child FOREIGN KEY (Child) REFERENCES TapePool (id);
+  ADD CONSTRAINT fk_SvcClass2TapePool_P FOREIGN KEY (Parent) REFERENCES SvcClass (id)
+  ADD CONSTRAINT fk_SvcClass2TapePool_C FOREIGN KEY (Child) REFERENCES TapePool (id);
 ALTER TABLE DiskPool2SvcClass
-  ADD CONSTRAINT fk_DiskPool2SvcClass_Parent FOREIGN KEY (Parent) REFERENCES DiskPool (id)
-  ADD CONSTRAINT fk_DiskPool2SvcClass_Child FOREIGN KEY (Child) REFERENCES SvcClass (id);
+  ADD CONSTRAINT fk_DiskPool2SvcClass_P FOREIGN KEY (Parent) REFERENCES DiskPool (id)
+  ADD CONSTRAINT fk_DiskPool2SvcClass_C FOREIGN KEY (Child) REFERENCES SvcClass (id);
 ALTER TABLE Stream2TapeCopy
-  ADD CONSTRAINT fk_Stream2TapeCopy_Parent FOREIGN KEY (Parent) REFERENCES Stream (id)
-  ADD CONSTRAINT fk_Stream2TapeCopy_Child FOREIGN KEY (Child) REFERENCES TapeCopy (id);
-ALTER TABLE TapeDrive2ExtendedDeviceGroup
-  ADD CONSTRAINT fk_TapeDrive2ExtendedDeviceGroup_Parent FOREIGN KEY (Parent) REFERENCES TapeDrive (id)
-  ADD CONSTRAINT fk_TapeDrive2ExtendedDeviceGroup_Child FOREIGN KEY (Child) REFERENCES ExtendedDeviceGroup (id);
+  ADD CONSTRAINT fk_Stream2TapeCopy_P FOREIGN KEY (Parent) REFERENCES Stream (id)
+  ADD CONSTRAINT fk_Stream2TapeCopy_C FOREIGN KEY (Child) REFERENCES TapeCopy (id);
+ALTER TABLE TapeDrive2ExtendedDevic
+  ADD CONSTRAINT fk_TapeDrive2ExtendedDevic_P FOREIGN KEY (Parent) REFERENCES TapeDrive (id)
+  ADD CONSTRAINT fk_TapeDrive2ExtendedDevic_C FOREIGN KEY (Child) REFERENCES ExtendedDeviceGroup (id);
 /* This file contains SQL code that is not generated automatically */
 /* and is inserted at the end of the generated code           */
 
@@ -1515,7 +1515,7 @@ BEGIN
     SELECT fileSize INTO fsize FROM CastorFile where id = cfID FOR UPDATE;
     -- update the FileSystem
     UPDATE FileSystem
-       SET spaceToBeFreed = spaceToBeFreed - fsize;
+       SET spaceToBeFreed = spaceToBeFreed - fsize
      WHERE id = fsId;
     -- See whether the castorfile has no other DiskCopy
     SELECT count(*) INTO nb FROM DiskCopy
@@ -1546,7 +1546,7 @@ CREATE OR REPLACE PROCEDURE filesDeletionFailedProc
 (fileIds IN castor."cnumList") AS
   cfId NUMBER;
   fsId NUMBER;
-  nb NUMBER;
+  fsize NUMBER;
 BEGIN
  IF fileIds.COUNT > 0 THEN
   -- Loop over the deleted files
@@ -1554,10 +1554,12 @@ BEGIN
     -- set status of DiskCopy to FAILED
     UPDATE DiskCopy SET status = 4 -- FAILED
      WHERE id = fileIds(i)
-    RETURNING fileSystem INTO fsId;
+    RETURNING fileSystem, castorFile INTO fsId, cfId;
+    -- Retrieve the file size
+    SELECT fileSize INTO fsize FROM CastorFile where id = cfId;
     -- update the FileSystem
     UPDATE FileSystem
-       SET spaceToBeFreed = spaceToBeFreed - fsize;
+       SET spaceToBeFreed = spaceToBeFreed - fsize
      WHERE id = fsId;
   END LOOP;
  END IF;
