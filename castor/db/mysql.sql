@@ -189,7 +189,7 @@ CREATE TABLE DiskCopy (path VARCHAR(1000), gcWeight float, creationTime BIGINT, 
 
 /* SQL statements for type FileSystem */
 DROP TABLE FileSystem;
-CREATE TABLE FileSystem (free BIGINT, weight float, fsDeviation float, mountPoint VARCHAR(1000), deltaWeight float, deltaFree INT, reservedSpace INT, id BIGINT, PRIMARY KEY (id), diskPool INT, diskserver INT, status INT);
+CREATE TABLE FileSystem (free BIGINT, weight float, fsDeviation float, mountPoint VARCHAR(1000), deltaWeight float, deltaFree INT, reservedSpace INT, minFreeSpace BIGINT, maxFreeSpace BIGINT, spaceToBeFreed BIGINT, id BIGINT, PRIMARY KEY (id), diskPool INT, diskserver INT, status INT);
 
 /* SQL statements for type SvcClass */
 DROP TABLE SvcClass;
