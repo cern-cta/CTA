@@ -48,7 +48,7 @@ END//
 /* get current time as a time_t. A bit easier in MySQL than in Oracle :-) */
 CREATE FUNCTION getTime() RETURNS BIGINT
 BEGIN
-  RETURN TIMESTAMPDIFF(SECOND, '1970-01-01 01:00:00', NOW());   -- @todo is SECOND precision enough?
+  RETURN TIMESTAMPDIFF(SECOND, '1970-01-01 01:00:00', NOW());
 END//
 
 
@@ -235,9 +235,9 @@ DECLARE nb INT;
   SELECT request INTO rid FROM SubRequest
    WHERE id = srId;
   -- Try to see whether another subrequest in the same
-  -- request is still procesing
+  -- request is still processing
   SELECT count(*) INTO nb FROM SubRequest
-   WHERE request = rid AND status != 8; -- FINISHED
+   WHERE request = rid AND status != 8 AND status != 9; -- FINISHED, FAILED_FINISHED
   -- Archive request, client and SubRequests if needed
   IF nb = 0 THEN
     -- DELETE request from Id2Type
@@ -827,11 +827,13 @@ BEGIN
   FOR UPDATE;
  -- Update Status
  UPDATE SubRequest SET status = newStatus,
+                       answered = 1,
                        lastModificationTime = getTime() WHERE id = srId;
  -- Check whether it was the last subrequest in the request
  SELECT id INTO result FROM SubRequest
   WHERE request = reqId
-    AND status NOT IN (6, 7, 10, 9) -- READY, FAILED, FAILED_ANSWERING, FAILED_FINISHED
+    AND status NOT IN (6, 7, 8, 9, 10) -- READY, FAILED, FINISHED, FAILED_FINISHED, FAILED_ANSWERING
+    AND answered = 0
     LIMIT 1;
 END//
 
@@ -853,12 +855,12 @@ CREATE PROCEDURE recreateCastorFile(cfId BIGINT, srId BIGINT,
                                     OUT dcId BIGINT, OUT rstatus INTEGER, OUT rmountPoint VARCHAR(2048), OUT rdiskServer VARCHAR(2048))
 -- @todo doesn't compile??
 BEGIN
+LABEL recreateCastorFileLbl;
 DECLARE rpath VARCHAR(2048);
 DECLARE nbRes INT;
 DECLARE fid BIGINT;
 DECLARE nh VARCHAR(2048);
 DECLARE contextPIPP INT;
-LABEL recreateCastorFileLbl;
  START TRANSACTION;
  -- Lock the access to the CastorFile
  -- This, together with triggers will avoid new TapeCopies
@@ -1360,6 +1362,173 @@ LABEL exitLbl;   -- @todo doesn't compile??
  SET ret = 0;
 END//
 
+
+/*
+ * GC policy that mimic the old GC :
+ * a mix of oldest first and biggest first
+ */
+CREATE PROCEDURE defaultGCPolicy(fsId INT, garbageSize INT)
+BEGIN
+    SELECT DiskCopy.id, CastorFile.fileSize, 0
+      FROM DiskCopy, CastorFile
+     WHERE CastorFile.id = DiskCopy.castorFile
+       AND DiskCopy.fileSystem = fsId
+       AND DiskCopy.status = 7 -- INVALID
+    UNION
+    SELECT DiskCopy.id, CastorFile.fileSize,
+           getTime() - CastorFile.LastAccessTime - GREATEST(0,86400*LN(CastorFile.fileSize/1024))
+      FROM DiskCopy, CastorFile, SubRequest
+     WHERE CastorFile.id = DiskCopy.castorFile
+       AND DiskCopy.fileSystem = fsId
+       AND DiskCopy.status = 0 -- STAGED
+       AND DiskCopy.id = SubRequest.diskcopy
+       AND Subrequest.id IS NULL
+     ORDER BY 3;
+END//
+
+/*
+ * GC policy that mimic the old GC and takes into account
+ * the number of accesses to the file. Namely we garbage
+ * collect the oldest and biggest file that add the less
+ * accesses but not 0, as a file having 0 accesses will
+ * probably be read soon !
+ */
+CREATE PROCEDURE nopinGCPolicy(fsId INT, garbageSize INT)
+BEGIN
+    SELECT DiskCopy.id, CastorFile.fileSize, 0
+      FROM DiskCopy, CastorFile
+     WHERE CastorFile.id = DiskCopy.castorFile
+       AND DiskCopy.fileSystem = fsId
+       AND DiskCopy.status = 7 -- INVALID
+    UNION
+    SELECT DiskCopy.id, CastorFile.fileSize,
+           getTime() - CastorFile.LastAccessTime -- older first
+           - GREATEST(0,86400*LN(CastorFile.fileSize/1024)) -- biggest first
+           + CASE CastorFile.nbAccesses
+               WHEN 0 THEN 86400 -- non accessed last
+               ELSE 20000 * CastorFile.nbAccesses -- most accessed last
+             END
+      FROM DiskCopy, CastorFile, SubRequest
+     WHERE CastorFile.id = DiskCopy.castorFile
+       AND DiskCopy.fileSystem = fsId
+       AND DiskCopy.status = 0 -- STAGED
+       AND DiskCopy.id = SubRequest.diskcopy
+       AND Subrequest.id IS NULL
+     ORDER BY 3;
+END//
+
+
+/*
+ * MySQL procedure to run Garbage collection on the specified FileSystem
+ *
+CREATE PROCEDURE garbageCollectFS(fsId INT)
+DECLARE toBeFreed INT;
+  freed INTEGER := 0;
+  dpID INTEGER;
+  policies castorGC.policiesList;
+  --cursors castor.castorGC.GCItem_CurTable;
+  cur castorGC.GCItem_Cur;
+  cur1 castorGC.GCItem_Cur;
+  cur2 castorGC.GCItem_Cur;
+  cur3 castorGC.GCItem_Cur;
+  nextItems castorGC.GCItem_Table := castorGC.GCItem_Table();
+  bestCandidate INTEGER;
+  bestValue NUMBER;
+BEGIN
+  -- Get the DiskPool and the minFree space we want to achieve
+  SELECT diskPool, maxFreeSpace - free - deltaFree + reservedSpace - spaceToBeFreed
+    INTO dpId, toBeFreed
+    FROM FileSystem
+   WHERE FileSystem.id = fsId
+     FOR UPDATE;
+  UPDATE FileSystem
+     SET spaceToBeFreed = spaceToBeFreed + toBeFreed
+   WHERE FileSystem.id = fsId;
+  -- release the filesystem lock so that other threads can go on
+  COMMIT;
+  -- List policies to be applied
+  SELECT CASE
+          WHEN svcClass.gcPolicy IS NULL THEN 'defaultGCPolicy'
+          ELSE svcClass.gcPolicy
+         END BULK COLLECT INTO policies
+    FROM SvcClass, DiskPool2SvcClass
+   WHERE DiskPool2SvcClass.Parent = dpId
+     AND SvcClass.Id = DiskPool2SvcClass.Child;
+  -- Get candidates for each policy
+  nextItems.EXTEND(policies.COUNT);
+  bestValue := 2**31;
+  IF policies.COUNT > 0 THEN
+    EXECUTE IMMEDIATE 'BEGIN :1 := '||policies(policies.FIRST)||'(:2, :3); END;'
+      USING OUT cur1, IN fsId, IN toBeFreed;
+    FETCH cur1 INTO nextItems(1);
+    IF policies.COUNT > 1 THEN
+      EXECUTE IMMEDIATE 'BEGIN :1 := '||policies(policies.FIRST+1)||'(:2, :3); END;'
+        USING OUT cur2, IN fsId, IN toBeFreed;
+      FETCH cur2 INTO nextItems(2);
+      IF policies.COUNT > 2 THEN
+        EXECUTE IMMEDIATE 'BEGIN :1 := '||policies(policies.FIRST+2)||'(:2, :3); END;'
+          USING OUT cur3, IN fsId, IN toBeFreed;
+        FETCH cur3 INTO nextItems(3);
+      END IF;    
+    END IF;    
+  END IF;    
+  FOR i IN policies.FIRST .. policies.LAST LOOP
+    -- maximum 3 policies allowed
+    IF i > policies.FIRST+2 THEN EXIT; END IF;
+    IF nextItems(i).utility < bestValue THEN
+      bestCandidate := i;
+      bestValue := nextItems(i).utility;
+    END IF;
+  END LOOP;
+  -- Now extract the diskcopies that will be garbaged and
+  -- mark them GCCandidate
+  LOOP
+    -- Mark the DiskCopy
+    UPDATE DISKCOPY SET status = 8 -- GCCANDIDATE
+     WHERE id = nextItems(bestCandidate).dcId;
+    IF 1 = bestCandidate THEN
+      cur := cur1;
+    ELSIF 2 = bestCandidate THEN
+      cur := cur2;
+    ELSE
+      cur := cur3;
+    END IF;
+    FETCH cur INTO nextItems(bestCandidate);
+    -- Update toBeFreed
+    freed := freed + nextItems(bestCandidate).fileSize;
+    -- Shall we continue ?
+    IF toBeFreed > freed THEN
+      -- find next candidate
+      bestValue := 2**31;
+      FOR i IN nextItems.FIRST .. nextItems.LAST LOOP
+        IF nextItems(i).utility < bestValue THEN
+          bestCandidate := i;
+          bestValue := nextItems(i).utility;
+        END IF;
+      END LOOP;
+    ELSE
+      -- enough space freed
+      EXIT;
+    END IF;
+  END LOOP;
+  -- Update Filesystem toBeFreed space to the exact value
+  UPDATE FileSystem
+     SET spaceToBeFreed = spaceToBeFreed + freed - toBeFreed
+   WHERE FileSystem.id = fsId;
+  -- Close cursors
+  IF policies.COUNT > 0 THEN
+    CLOSE cur1;
+    IF policies.COUNT > 1 THEN
+      CLOSE cur2;
+      IF policies.COUNT > 2 THEN
+        CLOSE cur3;
+      END IF;
+    END IF;
+  END IF;
+  -- commit everything
+  COMMIT;
+END;
+*/
 
 
 ---------------------------------------------------------------------------------------------
