@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: modifySvcClass.man,v $ $Revision: 1.1 $ $Date: 2005/04/22 16:41:29 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: modifySvcClass.man,v $ $Revision: 1.2 $ $Date: 2005/05/31 15:05:44 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH MODIFYSCVCLASS 1 "$Date: 2005/04/22 16:41:29 $" CASTOR "stager catalogue administrative commands"
+.TH MODIFYSCVCLASS 1 "$Date: 2005/05/31 15:05:44 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 modifySvcClass \- modify an existing service class in the stager catalogue
 .SH SYNOPSIS
@@ -82,28 +82,32 @@ Specifies the name of the garbage collection policy to be used for this service
 class. The policy should either be a database procedure or an executable external
 script known to the CASTOR expert system (see the
 .BI expertd(1castor)
-man-page).
+man-page). If an empty string ("") is provided the existing policy setting (if any) will
+be revoked.
 .TP
 .BI \-\-MigratorPolicy " migratorPolicy"
 Specifies the name of the migrator policy to be used for this service
 class. The policy should either be an executable external script known to the CASTOR
 expert system (see the
 .BI expertd(1castor)
-man-page).
+man-page). If an empty string ("") is provided the existing policy setting (if any) will
+be revoked.
 .TP
 .BI \-\-RecallerPolicy " recallerPolicy"
 Specifies the name of the recaller policy to be used for this service
 class. The policy should either be an executable external script known to the CASTOR
 expert system (see the
 .BI expertd(1castor)
-man-page).
+man-page). If an empty string ("") is provided the existing policy setting (if any) will
+be revoked.
 .TP
 .BI \-\-ReplicationPolicy " replicationPolicy"
 Specifies the name of the replication policy to be used for this service
 class. The policy should either be an executable external script known to the CASTOR
 expert system (see the
 .BI expertd(1castor)
-man-page). If a replication policy is specified, the
+man-page). If an empty string ("") is provided the existing policy setting (if any) will
+be revoked. If a replication policy is specified, the
 .BI \-\-MaxReplicaNb
 option (see above) is ignored.
 .TP
