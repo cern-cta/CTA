@@ -1247,7 +1247,7 @@ BEGIN
     SELECT fileSize INTO fsize FROM CastorFile where id = cfID FOR UPDATE;
     -- update the FileSystem
     UPDATE FileSystem
-       SET spaceToBeFreed = spaceToBeFreed - fsize;
+       SET spaceToBeFreed = spaceToBeFreed - fsize
      WHERE id = fsId;
     -- See whether the castorfile has no other DiskCopy
     SELECT count(*) INTO nb FROM DiskCopy
@@ -1278,7 +1278,7 @@ CREATE OR REPLACE PROCEDURE filesDeletionFailedProc
 (fileIds IN castor."cnumList") AS
   cfId NUMBER;
   fsId NUMBER;
-  nb NUMBER;
+  fsize NUMBER;
 BEGIN
  IF fileIds.COUNT > 0 THEN
   -- Loop over the deleted files
@@ -1286,10 +1286,12 @@ BEGIN
     -- set status of DiskCopy to FAILED
     UPDATE DiskCopy SET status = 4 -- FAILED
      WHERE id = fileIds(i)
-    RETURNING fileSystem INTO fsId;
+    RETURNING fileSystem, castorFile INTO fsId, cfId;
+    -- Retrieve the file size
+    SELECT fileSize INTO fsize FROM CastorFile where id = cfId;
     -- update the FileSystem
     UPDATE FileSystem
-       SET spaceToBeFreed = spaceToBeFreed - fsize;
+       SET spaceToBeFreed = spaceToBeFreed - fsize
      WHERE id = fsId;
   END LOOP;
  END IF;
