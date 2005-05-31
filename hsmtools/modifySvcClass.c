@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/20 12:51:10 $ $Author: obarring $
+ * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.3 $ $Release$ $Date: 2005/05/31 13:39:40 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/20 12:51:10 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.3 $ $Release$ $Date: 2005/05/31 13:39:40 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -485,10 +485,22 @@ int main(int argc, char *argv[])
   if ( nbDrives >= 0 ) Cstager_SvcClass_setNbDrives(svcClass,nbDrives);
   if ( maxReplicaNb >= 0 ) Cstager_SvcClass_setMaxReplicaNb(svcClass,maxReplicaNb);
   if ( defaultFileSize > 0 ) Cstager_SvcClass_setDefaultFileSize(svcClass,defaultFileSize);
-  if ( replicationPolicy != NULL ) Cstager_SvcClass_setReplicationPolicy(svcClass,replicationPolicy);
-  if ( gcPolicy != NULL ) Cstager_SvcClass_setGcPolicy(svcClass,gcPolicy);
-  if ( migratorPolicy != NULL ) Cstager_SvcClass_setMigratorPolicy(svcClass,migratorPolicy);
-  if ( recallerPolicy != NULL ) Cstager_SvcClass_setRecallerPolicy(svcClass,recallerPolicy);
+  if ( replicationPolicy != NULL ) {
+    if ( *replicationPolicy == '\0' ) Cstager_SvcClass_setReplicationPolicy(svcClass,NULL);
+    else Cstager_SvcClass_setReplicationPolicy(svcClass,replicationPolicy);
+  }
+  if ( gcPolicy != NULL ) {
+    if ( *gcPolicy == '\0' ) Cstager_SvcClass_setGcPolicy(svcClass,NULL);
+    else Cstager_SvcClass_setGcPolicy(svcClass,gcPolicy);
+  }
+  if ( migratorPolicy != NULL ) {
+    if ( *migratorPolicy == '\0') Cstager_SvcClass_setMigratorPolicy(svcClass,NULL);
+    else Cstager_SvcClass_setMigratorPolicy(svcClass,migratorPolicy);
+  }
+  if ( recallerPolicy != NULL ) {
+    if ( *recallerPolicy == '\0') Cstager_SvcClass_setRecallerPolicy(svcClass,NULL);
+    else Cstager_SvcClass_setRecallerPolicy(svcClass,recallerPolicy);
+  }
 
   rc = C_BaseAddress_create(&baseAddr);
   if ( rc == -1 ) return(-1);
