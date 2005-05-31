@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2005/05/25 12:52:06 $ $Author: itglp $
+ * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2005/05/31 13:31:41 $ $Author: itglp $
  *
  *
  *
@@ -68,11 +68,9 @@ castor::IService* castor::Services::service(const std::string name,
         // moreover check if a .so library has to be loaded
         char* targetLib = getconfent("DynamicLib", (char*)castor::ServicesIdStrings[id], 0);
         if(targetLib != 0) {
-#ifdef WIN32
-          void* handle = 0;
-#else
+#if !defined(_WIN32)
           //@todo store handle?
-          void* handle = dlopen(targetLib, RTLD_LAZY | RTLD_GLOBAL);
+          void* handle = dlopen(targetLib, RTLD_NOW | RTLD_GLOBAL);
           if(handle == 0) {
              // something wrong in the config file?
              castor::exception::Internal ex;
