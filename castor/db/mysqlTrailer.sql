@@ -870,6 +870,11 @@ DECLARE contextPIPP INT;
  BEGIN
  DECLARE EXIT HANDLER FOR NOT FOUND
          SET contextPIPP = 0;
+ DECLARE EXIT HANDLER FOR TOO_MANY_ROWS
+         BEGIN
+ 		 CALL archiveSubReq(srId);
+		 RAISE;
+		 END;
    -- check that we are a Put
    SELECT StagePutRequest.id
      FROM StagePutRequest, SubRequest
@@ -925,11 +930,16 @@ DECLARE contextPIPP INT;
    DECLARE fsId BIGINT;
    DECLARE dsId BIGINT;
    -- Retrieve the infos about the DiskCopy to be used
-   SELECT fileSystem, status INTO rstatus, fsId FROM DiskCopy WHERE id = dcId;
-   SELECT mountPoint, diskServer INTO rmountPoint, dsId
-     FROM FileSystem WHERE FileSystem.id = fsId;
-   SELECT name INTO rdiskServer FROM DiskServer WHERE id = dsId;
-   -- See whether we should wait on the previous Put Request
+   SELECT fileSystem, status INTO fsId, rstatus FROM DiskCopy WHERE id = dcId;
+   -- retrieve mountpoint and filesystem if any
+   IF fsId = 0 THEN
+     SET rmountPoint = '';
+     SET rdiskServer = '';
+   ELSE
+     SELECT mountPoint, diskServer INTO rmountPoint, dsId
+       FROM FileSystem WHERE FileSystem.id = fsId;
+     SELECT name INTO rdiskServer FROM DiskServer WHERE id = dsId;
+   END IF;
    IF rstatus = 11 THEN -- WAITFS_SCHEDULING
     CALL makeSubRequestWait(srId, dcId);
    END IF;
@@ -943,7 +953,7 @@ END//
 
 
 /* MySQL method putDoneFunc */
-CREATE PROCEDURE putDoneFunc(cfId BIGINT, fs BIGINT)
+CREATE PROCEDURE putDoneFunc(cfId BIGINT, fs BIGINT, context INT)
 BEGIN
 DECLARE nc INT;
 DECLARE tcId INT;
@@ -977,6 +987,18 @@ DECLARE i INT;
 	SET i = i + 1;
    END WHILE;
  END IF;
+ -- If we are a real PutDone (and not a put outside of a prepareToPut)
+ -- then we have to archive the original preapareToPut subRequest
+ IF context = 2 THEN
+   BEGIN
+   DECLARE srId BIGINT;
+     SELECT SubRequest.id INTO srId
+       FROM SubRequest, StagePrepareToPutRequest
+      WHERE SubRequest.castorFile = cfId
+        AND SubRequest.request = StagePrepareToPutRequest.id;
+     CALL archiveSubReq(srId);
+   END;
+ END IF;
 END//
 
 
@@ -1008,7 +1030,7 @@ DECLARE unused INT;
  BEGIN
    DECLARE EXIT HANDLER FOR NOT FOUND
      BEGIN
-     CALL putDoneFunc(cfId, fs);
+     CALL putDoneFunc(cfId, fs, );
      END;
    SELECT StagePrepareToPutRequest.id INTO unused
      FROM StagePrepareToPutRequest, SubRequest

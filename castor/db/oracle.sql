@@ -234,7 +234,7 @@ CREATE TABLE DiskServer (name VARCHAR2(2048), id INTEGER PRIMARY KEY, status INT
 
 /* SQL statements for type ExtendedDeviceGroup */
 DROP TABLE ExtendedDeviceGroup;
-CREATE TABLE ExtendedDeviceGroup (dgName VARCHAR2(2048), mode NUMBER, id INTEGER PRIMARY KEY);
+CREATE TABLE ExtendedDeviceGroup (dgName VARCHAR2(2048), accessMode NUMBER, id INTEGER PRIMARY KEY);
 
 /* SQL statements for type TapeServer */
 DROP TABLE TapeServer;
@@ -246,7 +246,7 @@ CREATE TABLE TapeRequest (priority NUMBER, creationTime NUMBER, id INTEGER PRIMA
 
 /* SQL statements for type TapeDrive */
 DROP TABLE TapeDrive;
-CREATE TABLE TapeDrive (jobID NUMBER, creationTime NUMBER, resettime NUMBER, usecount NUMBER, errcount NUMBER, transferredMB NUMBER, totalMB INTEGER, dedicate VARCHAR2(2048), newDedicate VARCHAR2(2048), is_uid NUMBER, is_gid NUMBER, is_name NUMBER, no_uid NUMBER, no_gid NUMBER, no_name NUMBER, no_host NUMBER, no_vid NUMBER, no_mode NUMBER, no_date NUMBER, no_time NUMBER, no_age NUMBER, uid NUMBER, gid NUMBER, name VARCHAR2(2048), id INTEGER PRIMARY KEY, tape INTEGER, status INTEGER, tapeServer INTEGER);
+CREATE TABLE TapeDrive (jobID NUMBER, creationTime NUMBER, resettime NUMBER, usecount NUMBER, errcount NUMBER, transferredMB NUMBER, totalMB INTEGER, dedicate VARCHAR2(2048), newDedicate VARCHAR2(2048), is_uid NUMBER, is_gid NUMBER, is_name NUMBER, no_uid NUMBER, no_gid NUMBER, no_name NUMBER, no_host NUMBER, no_vid NUMBER, no_mode NUMBER, no_date NUMBER, no_time NUMBER, no_age NUMBER, euid NUMBER, egid NUMBER, name VARCHAR2(2048), id INTEGER PRIMARY KEY, tape INTEGER, status INTEGER, tapeServer INTEGER);
 DROP INDEX I_TapeDrive2ExtendedDevic_C;
 DROP INDEX I_TapeDrive2ExtendedDevic_P;
 DROP TABLE TapeDrive2ExtendedDevic;
