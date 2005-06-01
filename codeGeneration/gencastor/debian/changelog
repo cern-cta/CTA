@@ -1,3 +1,9 @@
+gencastor (3.1-2) unstable; urgency=low
+
+  * Fixed queries involving truncated long entity names.
+
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Wed, 1 June 2005 15:00:00 +0200
+
 gencastor (3.1-1) unstable; urgency=low
 
   * Fixed MySQL persistency code generators, now it works.
@@ -6,7 +12,6 @@ gencastor (3.1-1) unstable; urgency=low
  -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Wed, 25 May 2005 11:00:00 +0200
 
 gencastor (3.1-0) unstable; urgency=low
-    
   * First version which supports MySQL persistency code generators.
     Small fixes: handling '::' package separator, special header comment
     to identify generated files.

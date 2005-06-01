@@ -389,6 +389,9 @@ void CppCppOraCnvWriter::writeConstants() {
         firstRole = "Child";
         secondRole = "Parent";        
       }
+      QString compoundName =
+          capitalizeFirstLetter(firstMember->typeName).mid(0, 12) + QString("2")
+          + capitalizeFirstLetter(secondMember->typeName).mid(0, 13);
       *m_stream << getIndent()
                 << "/// SQL insert statement for member "
                 << as->remotePart.name
@@ -399,10 +402,7 @@ void CppCppOraCnvWriter::writeConstants() {
                 << "Cnv::s_insert"
                 << capitalizeFirstLetter(as->remotePart.typeName)
                 << "StatementString =" << endl << getIndent()
-                << "\"INSERT INTO "
-                << capitalizeFirstLetter(firstMember->typeName)
-                << "2"
-                << capitalizeFirstLetter(secondMember->typeName)
+                << "\"INSERT INTO " << compoundName
                 << " (" << firstRole << ", " << secondRole
                 << ") VALUES (:1, :2)\";"
                 << endl << endl << getIndent()
@@ -415,10 +415,7 @@ void CppCppOraCnvWriter::writeConstants() {
                 << "Cnv::s_delete"
                 << capitalizeFirstLetter(as->remotePart.typeName)
                 << "StatementString =" << endl << getIndent()
-                << "\"DELETE FROM "
-                << capitalizeFirstLetter(firstMember->typeName)
-                << "2"
-                << capitalizeFirstLetter(secondMember->typeName)
+                << "\"DELETE FROM " << compoundName
                 << " WHERE " << firstRole << " = :1 AND "
                 << secondRole << " = :2\";"
                 << endl << endl << getIndent()
@@ -435,10 +432,8 @@ void CppCppOraCnvWriter::writeConstants() {
                 << "Cnv::s_select"
                 << capitalizeFirstLetter(as->remotePart.typeName)
                 << "StatementString =" << endl << getIndent()
-                << "\"SELECT " << secondRole << " from "
-                << capitalizeFirstLetter(firstMember->typeName)
-                << "2"
-                << capitalizeFirstLetter(secondMember->typeName)
+                << "\"SELECT " << secondRole
+                << " FROM " << compoundName
                 << " WHERE " << firstRole << " = :1 FOR UPDATE\";"
                 << endl << endl;
     } else {
@@ -599,8 +594,8 @@ void CppCppOraCnvWriter::writeSqlStatements() {
       ordonnateMembersInAssoc(as, &firstMember, &secondMember);
       if (firstMember == &as->localPart) {
         QString compoundName =
-		capitalizeFirstLetter(firstMember->typeName).mid(0, 12) + QString("2")
-		+ capitalizeFirstLetter(secondMember->typeName).mid(0, 13);
+			capitalizeFirstLetter(firstMember->typeName).mid(0, 12) + QString("2")
+			+ capitalizeFirstLetter(secondMember->typeName).mid(0, 13);
         stream << getIndent()
                << "DROP INDEX I_"
                << compoundName
