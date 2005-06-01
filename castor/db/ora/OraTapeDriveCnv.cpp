@@ -60,7 +60,7 @@ const castor::ICnvFactory& OraTapeDriveCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraTapeDriveCnv::s_insertStatementString =
-"INSERT INTO TapeDrive (jobID, creationTime, resettime, usecount, errcount, transferredMB, totalMB, dedicate, newDedicate, is_uid, is_gid, is_name, no_uid, no_gid, no_name, no_host, no_vid, no_mode, no_date, no_time, no_age, uid, gid, name, id, tape, status, tapeServer) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,:16,:17,:18,:19,:20,:21,:22,:23,:24,ids_seq.nextval,:25,:26,:27) RETURNING id INTO :28";
+"INSERT INTO TapeDrive (jobID, creationTime, resettime, usecount, errcount, transferredMB, totalMB, dedicate, newDedicate, is_uid, is_gid, is_name, no_uid, no_gid, no_name, no_host, no_vid, no_mode, no_date, no_time, no_age, euid, egid, name, id, tape, status, tapeServer) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,:16,:17,:18,:19,:20,:21,:22,:23,:24,ids_seq.nextval,:25,:26,:27) RETURNING id INTO :28";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraTapeDriveCnv::s_deleteStatementString =
@@ -68,11 +68,11 @@ const std::string castor::db::ora::OraTapeDriveCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraTapeDriveCnv::s_selectStatementString =
-"SELECT jobID, creationTime, resettime, usecount, errcount, transferredMB, totalMB, dedicate, newDedicate, is_uid, is_gid, is_name, no_uid, no_gid, no_name, no_host, no_vid, no_mode, no_date, no_time, no_age, uid, gid, name, id, tape, status, tapeServer FROM TapeDrive WHERE id = :1";
+"SELECT jobID, creationTime, resettime, usecount, errcount, transferredMB, totalMB, dedicate, newDedicate, is_uid, is_gid, is_name, no_uid, no_gid, no_name, no_host, no_vid, no_mode, no_date, no_time, no_age, euid, egid, name, id, tape, status, tapeServer FROM TapeDrive WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraTapeDriveCnv::s_updateStatementString =
-"UPDATE TapeDrive SET jobID = :1, resettime = :2, usecount = :3, errcount = :4, transferredMB = :5, totalMB = :6, dedicate = :7, newDedicate = :8, is_uid = :9, is_gid = :10, is_name = :11, no_uid = :12, no_gid = :13, no_name = :14, no_host = :15, no_vid = :16, no_mode = :17, no_date = :18, no_time = :19, no_age = :20, uid = :21, gid = :22, name = :23, status = :24 WHERE id = :25";
+"UPDATE TapeDrive SET jobID = :1, resettime = :2, usecount = :3, errcount = :4, transferredMB = :5, totalMB = :6, dedicate = :7, newDedicate = :8, is_uid = :9, is_gid = :10, is_name = :11, no_uid = :12, no_gid = :13, no_name = :14, no_host = :15, no_vid = :16, no_mode = :17, no_date = :18, no_time = :19, no_age = :20, euid = :21, egid = :22, name = :23, status = :24 WHERE id = :25";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraTapeDriveCnv::s_storeTypeStatementString =
@@ -104,17 +104,17 @@ const std::string castor::db::ora::OraTapeDriveCnv::s_updateTapeStatementString 
 
 /// SQL insert statement for member extDevGrp
 const std::string castor::db::ora::OraTapeDriveCnv::s_insertExtendedDeviceGroupStatementString =
-"INSERT INTO TapeDrive2ExtendedDeviceGroup (Parent, Child) VALUES (:1, :2)";
+"INSERT INTO TapeDrive2ExtendedDevic (Parent, Child) VALUES (:1, :2)";
 
 /// SQL delete statement for member extDevGrp
 const std::string castor::db::ora::OraTapeDriveCnv::s_deleteExtendedDeviceGroupStatementString =
-"DELETE FROM TapeDrive2ExtendedDeviceGroup WHERE Parent = :1 AND Child = :2";
+"DELETE FROM TapeDrive2ExtendedDevic WHERE Parent = :1 AND Child = :2";
 
 /// SQL select statement for member extDevGrp
 // The FOR UPDATE is needed in order to avoid deletion
 // of a segment after listing and before update/remove
 const std::string castor::db::ora::OraTapeDriveCnv::s_selectExtendedDeviceGroupStatementString =
-"SELECT Child from TapeDrive2ExtendedDeviceGroup WHERE Parent = :1 FOR UPDATE";
+"SELECT Child FROM TapeDrive2ExtendedDevic WHERE Parent = :1 FOR UPDATE";
 
 /// SQL existence statement for member tapeServer
 const std::string castor::db::ora::OraTapeDriveCnv::s_checkTapeServerExistStatementString =
@@ -590,8 +590,8 @@ void castor::db::ora::OraTapeDriveCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(19, obj->no_date());
     m_insertStatement->setInt(20, obj->no_time());
     m_insertStatement->setInt(21, obj->no_age());
-    m_insertStatement->setInt(22, obj->uid());
-    m_insertStatement->setInt(23, obj->gid());
+    m_insertStatement->setInt(22, obj->euid());
+    m_insertStatement->setInt(23, obj->egid());
     m_insertStatement->setString(24, obj->name());
     m_insertStatement->setDouble(25, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
     m_insertStatement->setInt(26, (int)obj->status());
@@ -643,8 +643,8 @@ void castor::db::ora::OraTapeDriveCnv::createRep(castor::IAddress* address,
                     << "  no_date : " << obj->no_date() << std::endl
                     << "  no_time : " << obj->no_time() << std::endl
                     << "  no_age : " << obj->no_age() << std::endl
-                    << "  uid : " << obj->uid() << std::endl
-                    << "  gid : " << obj->gid() << std::endl
+                    << "  euid : " << obj->euid() << std::endl
+                    << "  egid : " << obj->egid() << std::endl
                     << "  name : " << obj->name() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  tape : " << obj->tape() << std::endl
@@ -691,8 +691,8 @@ void castor::db::ora::OraTapeDriveCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(18, obj->no_date());
     m_updateStatement->setInt(19, obj->no_time());
     m_updateStatement->setInt(20, obj->no_age());
-    m_updateStatement->setInt(21, obj->uid());
-    m_updateStatement->setInt(22, obj->gid());
+    m_updateStatement->setInt(21, obj->euid());
+    m_updateStatement->setInt(22, obj->egid());
     m_updateStatement->setString(23, obj->name());
     m_updateStatement->setInt(24, (int)obj->status());
     m_updateStatement->setDouble(25, obj->id());
@@ -815,8 +815,8 @@ castor::IObject* castor::db::ora::OraTapeDriveCnv::createObj(castor::IAddress* a
     object->setNo_date(rset->getInt(19));
     object->setNo_time(rset->getInt(20));
     object->setNo_age(rset->getInt(21));
-    object->setUid(rset->getInt(22));
-    object->setGid(rset->getInt(23));
+    object->setEuid(rset->getInt(22));
+    object->setEgid(rset->getInt(23));
     object->setName(rset->getString(24));
     object->setId((u_signed64)rset->getDouble(25));
     object->setStatus((enum castor::vdqm::TapeDriveStatusCodes)rset->getInt(27));
@@ -886,8 +886,8 @@ void castor::db::ora::OraTapeDriveCnv::updateObj(castor::IObject* obj)
     object->setNo_date(rset->getInt(19));
     object->setNo_time(rset->getInt(20));
     object->setNo_age(rset->getInt(21));
-    object->setUid(rset->getInt(22));
-    object->setGid(rset->getInt(23));
+    object->setEuid(rset->getInt(22));
+    object->setEgid(rset->getInt(23));
     object->setName(rset->getString(24));
     object->setId((u_signed64)rset->getDouble(25));
     object->setStatus((enum castor::vdqm::TapeDriveStatusCodes)rset->getInt(27));

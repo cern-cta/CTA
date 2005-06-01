@@ -53,7 +53,7 @@ const castor::ICnvFactory& OraExtendedDeviceGroupCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraExtendedDeviceGroupCnv::s_insertStatementString =
-"INSERT INTO ExtendedDeviceGroup (dgName, mode, id) VALUES (:1,:2,ids_seq.nextval) RETURNING id INTO :3";
+"INSERT INTO ExtendedDeviceGroup (dgName, accessMode, id) VALUES (:1,:2,ids_seq.nextval) RETURNING id INTO :3";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraExtendedDeviceGroupCnv::s_deleteStatementString =
@@ -61,11 +61,11 @@ const std::string castor::db::ora::OraExtendedDeviceGroupCnv::s_deleteStatementS
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraExtendedDeviceGroupCnv::s_selectStatementString =
-"SELECT dgName, mode, id FROM ExtendedDeviceGroup WHERE id = :1";
+"SELECT dgName, accessMode, id FROM ExtendedDeviceGroup WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraExtendedDeviceGroupCnv::s_updateStatementString =
-"UPDATE ExtendedDeviceGroup SET dgName = :1, mode = :2 WHERE id = :3";
+"UPDATE ExtendedDeviceGroup SET dgName = :1, accessMode = :2 WHERE id = :3";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraExtendedDeviceGroupCnv::s_storeTypeStatementString =
@@ -204,7 +204,7 @@ void castor::db::ora::OraExtendedDeviceGroupCnv::createRep(castor::IAddress* add
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->dgName());
-    m_insertStatement->setInt(2, obj->mode());
+    m_insertStatement->setInt(2, obj->accessMode());
     m_insertStatement->executeUpdate();
     obj->setId((u_signed64)m_insertStatement->getDouble(3));
     m_storeTypeStatement->setDouble(1, obj->id());
@@ -232,7 +232,7 @@ void castor::db::ora::OraExtendedDeviceGroupCnv::createRep(castor::IAddress* add
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
                     << "  dgName : " << obj->dgName() << std::endl
-                    << "  mode : " << obj->mode() << std::endl
+                    << "  accessMode : " << obj->accessMode() << std::endl
                     << "  id : " << obj->id() << std::endl;
     throw ex;
   }
@@ -256,7 +256,7 @@ void castor::db::ora::OraExtendedDeviceGroupCnv::updateRep(castor::IAddress* add
     }
     // Update the current object
     m_updateStatement->setString(1, obj->dgName());
-    m_updateStatement->setInt(2, obj->mode());
+    m_updateStatement->setInt(2, obj->accessMode());
     m_updateStatement->setDouble(3, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
@@ -357,7 +357,7 @@ castor::IObject* castor::db::ora::OraExtendedDeviceGroupCnv::createObj(castor::I
     castor::vdqm::ExtendedDeviceGroup* object = new castor::vdqm::ExtendedDeviceGroup();
     // Now retrieve and set members
     object->setDgName(rset->getString(1));
-    object->setMode(rset->getInt(2));
+    object->setAccessMode(rset->getInt(2));
     object->setId((u_signed64)rset->getDouble(3));
     m_selectStatement->closeResultSet(rset);
     return object;
@@ -405,7 +405,7 @@ void castor::db::ora::OraExtendedDeviceGroupCnv::updateObj(castor::IObject* obj)
     castor::vdqm::ExtendedDeviceGroup* object = 
       dynamic_cast<castor::vdqm::ExtendedDeviceGroup*>(obj);
     object->setDgName(rset->getString(1));
-    object->setMode(rset->getInt(2));
+    object->setAccessMode(rset->getInt(2));
     object->setId((u_signed64)rset->getDouble(3));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {

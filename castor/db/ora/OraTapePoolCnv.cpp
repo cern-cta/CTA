@@ -92,7 +92,7 @@ const std::string castor::db::ora::OraTapePoolCnv::s_deleteSvcClassStatementStri
 // The FOR UPDATE is needed in order to avoid deletion
 // of a segment after listing and before update/remove
 const std::string castor::db::ora::OraTapePoolCnv::s_selectSvcClassStatementString =
-"SELECT Parent from SvcClass2TapePool WHERE Child = :1 FOR UPDATE";
+"SELECT Parent FROM SvcClass2TapePool WHERE Child = :1 FOR UPDATE";
 
 /// SQL select statement for member streams
 const std::string castor::db::ora::OraTapePoolCnv::s_selectStreamStatementString =
