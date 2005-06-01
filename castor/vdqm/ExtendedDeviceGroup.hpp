@@ -116,21 +116,21 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_mode
+       * Get the value of m_accessMode
        * WRITE_ENABLE/WRITE_DISABLE from Ctape_constants.h
-       * @return the value of m_mode
+       * @return the value of m_accessMode
        */
-      int mode() const {
-        return m_mode;
+      int accessMode() const {
+        return m_accessMode;
       }
 
       /**
-       * Set the value of m_mode
+       * Set the value of m_accessMode
        * WRITE_ENABLE/WRITE_DISABLE from Ctape_constants.h
-       * @param new_var the new value of m_mode
+       * @param new_var the new value of m_accessMode
        */
-      void setMode(int new_var) {
-        m_mode = new_var;
+      void setAccessMode(int new_var) {
+        m_accessMode = new_var;
       }
 
       /**
@@ -156,7 +156,7 @@ namespace castor {
       std::string m_dgName;
 
       /// WRITE_ENABLE/WRITE_DISABLE from Ctape_constants.h
-      int m_mode;
+      int m_accessMode;
 
       /// The id of this object
       u_signed64 m_id;

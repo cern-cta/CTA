@@ -32,6 +32,7 @@
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
 struct C_IObject_t;
+struct C_int_t;
 struct Cvdqm_ExtendedDeviceGroup_t;
 
 //------------------------------------------------------------------------------
@@ -70,7 +71,7 @@ int Cvdqm_ExtendedDeviceGroup_print(struct Cvdqm_ExtendedDeviceGroup_t* instance
 /**
  * Gets the type of this kind of objects
  */
-int Cvdqm_ExtendedDeviceGroup_TYPE(int* ret);
+int Cvdqm_ExtendedDeviceGroup_TYPE(struct C_int_t* ret);
 
 /***************************************/
 /* Implementation of IObject interface */
@@ -80,7 +81,7 @@ int Cvdqm_ExtendedDeviceGroup_TYPE(int* ret);
  * Gets the type of the object
  */
 int Cvdqm_ExtendedDeviceGroup_type(struct Cvdqm_ExtendedDeviceGroup_t* instance,
-                                   int* ret);
+                                   struct C_int_t* ret);
 
 /**
  * virtual method to clone any object
@@ -99,16 +100,16 @@ int Cvdqm_ExtendedDeviceGroup_dgName(struct Cvdqm_ExtendedDeviceGroup_t* instanc
 int Cvdqm_ExtendedDeviceGroup_setDgName(struct Cvdqm_ExtendedDeviceGroup_t* instance, const char* new_var);
 
 /**
- * Get the value of mode
+ * Get the value of accessMode
  * WRITE_ENABLE/WRITE_DISABLE from Ctape_constants.h
  */
-int Cvdqm_ExtendedDeviceGroup_mode(struct Cvdqm_ExtendedDeviceGroup_t* instance, int* var);
+int Cvdqm_ExtendedDeviceGroup_accessMode(struct Cvdqm_ExtendedDeviceGroup_t* instance, struct C_int_t* var);
 
 /**
- * Set the value of mode
+ * Set the value of accessMode
  * WRITE_ENABLE/WRITE_DISABLE from Ctape_constants.h
  */
-int Cvdqm_ExtendedDeviceGroup_setMode(struct Cvdqm_ExtendedDeviceGroup_t* instance, int new_var);
+int Cvdqm_ExtendedDeviceGroup_setAccessMode(struct Cvdqm_ExtendedDeviceGroup_t* instance, struct C_int_t new_var);
 
 /**
  * Get the value of id

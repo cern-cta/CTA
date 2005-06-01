@@ -64,8 +64,8 @@ castor::vdqm::TapeDrive::TapeDrive() throw() :
   m_no_date(0),
   m_no_time(0),
   m_no_age(0),
-  m_uid(0),
-  m_gid(0),
+  m_euid(0),
+  m_egid(0),
   m_name(""),
   m_id(0),
   m_tape(0),
@@ -117,8 +117,8 @@ void castor::vdqm::TapeDrive::print(std::ostream& stream,
   stream << indent << "no_date : " << m_no_date << std::endl;
   stream << indent << "no_time : " << m_no_time << std::endl;
   stream << indent << "no_age : " << m_no_age << std::endl;
-  stream << indent << "uid : " << m_uid << std::endl;
-  stream << indent << "gid : " << m_gid << std::endl;
+  stream << indent << "euid : " << m_euid << std::endl;
+  stream << indent << "egid : " << m_egid << std::endl;
   stream << indent << "name : " << m_name << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
