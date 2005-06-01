@@ -33,8 +33,6 @@
 #include "castor/vdqm/TapeDriveStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
-struct C_int_t;
-struct C_long_t;
 struct Cstager_Tape_t;
 struct Cvdqm_ExtendedDeviceGroup_t;
 struct Cvdqm_TapeDrive_t;
@@ -75,7 +73,7 @@ int Cvdqm_TapeDrive_print(struct Cvdqm_TapeDrive_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cvdqm_TapeDrive_TYPE(struct C_int_t* ret);
+int Cvdqm_TapeDrive_TYPE(int* ret);
 
 /***************************************/
 /* Implementation of IObject interface */
@@ -85,7 +83,7 @@ int Cvdqm_TapeDrive_TYPE(struct C_int_t* ret);
  * Gets the type of the object
  */
 int Cvdqm_TapeDrive_type(struct Cvdqm_TapeDrive_t* instance,
-                         struct C_int_t* ret);
+                         int* ret);
 
 /**
  * virtual method to clone any object
@@ -96,72 +94,72 @@ int Cvdqm_TapeDrive_clone(struct Cvdqm_TapeDrive_t* instance,
 /**
  * Get the value of jobID
  */
-int Cvdqm_TapeDrive_jobID(struct Cvdqm_TapeDrive_t* instance, struct C_int_t* var);
+int Cvdqm_TapeDrive_jobID(struct Cvdqm_TapeDrive_t* instance, int* var);
 
 /**
  * Set the value of jobID
  */
-int Cvdqm_TapeDrive_setJobID(struct Cvdqm_TapeDrive_t* instance, struct C_int_t new_var);
+int Cvdqm_TapeDrive_setJobID(struct Cvdqm_TapeDrive_t* instance, int new_var);
 
 /**
  * Get the value of creationTime
  * The time, when the tape drive begins with its job.
  */
-int Cvdqm_TapeDrive_creationTime(struct Cvdqm_TapeDrive_t* instance, struct C_int_t* var);
+int Cvdqm_TapeDrive_creationTime(struct Cvdqm_TapeDrive_t* instance, int* var);
 
 /**
  * Set the value of creationTime
  * The time, when the tape drive begins with its job.
  */
-int Cvdqm_TapeDrive_setCreationTime(struct Cvdqm_TapeDrive_t* instance, struct C_int_t new_var);
+int Cvdqm_TapeDrive_setCreationTime(struct Cvdqm_TapeDrive_t* instance, int new_var);
 
 /**
  * Get the value of resettime
  * Last time counters were reset
  */
-int Cvdqm_TapeDrive_resettime(struct Cvdqm_TapeDrive_t* instance, struct C_int_t* var);
+int Cvdqm_TapeDrive_resettime(struct Cvdqm_TapeDrive_t* instance, int* var);
 
 /**
  * Set the value of resettime
  * Last time counters were reset
  */
-int Cvdqm_TapeDrive_setResettime(struct Cvdqm_TapeDrive_t* instance, struct C_int_t new_var);
+int Cvdqm_TapeDrive_setResettime(struct Cvdqm_TapeDrive_t* instance, int new_var);
 
 /**
  * Get the value of usecount
  * Usage counter (total number of VolReqs so far)
  */
-int Cvdqm_TapeDrive_usecount(struct Cvdqm_TapeDrive_t* instance, struct C_int_t* var);
+int Cvdqm_TapeDrive_usecount(struct Cvdqm_TapeDrive_t* instance, int* var);
 
 /**
  * Set the value of usecount
  * Usage counter (total number of VolReqs so far)
  */
-int Cvdqm_TapeDrive_setUsecount(struct Cvdqm_TapeDrive_t* instance, struct C_int_t new_var);
+int Cvdqm_TapeDrive_setUsecount(struct Cvdqm_TapeDrive_t* instance, int new_var);
 
 /**
  * Get the value of errcount
  * Drive error counter
  */
-int Cvdqm_TapeDrive_errcount(struct Cvdqm_TapeDrive_t* instance, struct C_int_t* var);
+int Cvdqm_TapeDrive_errcount(struct Cvdqm_TapeDrive_t* instance, int* var);
 
 /**
  * Set the value of errcount
  * Drive error counter
  */
-int Cvdqm_TapeDrive_setErrcount(struct Cvdqm_TapeDrive_t* instance, struct C_int_t new_var);
+int Cvdqm_TapeDrive_setErrcount(struct Cvdqm_TapeDrive_t* instance, int new_var);
 
 /**
  * Get the value of transferredMB
  * MBytes transfered in last request.
  */
-int Cvdqm_TapeDrive_transferredMB(struct Cvdqm_TapeDrive_t* instance, struct C_int_t* var);
+int Cvdqm_TapeDrive_transferredMB(struct Cvdqm_TapeDrive_t* instance, int* var);
 
 /**
  * Set the value of transferredMB
  * MBytes transfered in last request.
  */
-int Cvdqm_TapeDrive_setTransferredMB(struct Cvdqm_TapeDrive_t* instance, struct C_int_t new_var);
+int Cvdqm_TapeDrive_setTransferredMB(struct Cvdqm_TapeDrive_t* instance, int new_var);
 
 /**
  * Get the value of totalMB
@@ -320,22 +318,22 @@ int Cvdqm_TapeDrive_setNo_age(struct Cvdqm_TapeDrive_t* instance, short new_var)
 /**
  * Get the value of euid
  */
-int Cvdqm_TapeDrive_euid(struct Cvdqm_TapeDrive_t* instance, struct C_long_t* var);
+int Cvdqm_TapeDrive_euid(struct Cvdqm_TapeDrive_t* instance, long* var);
 
 /**
  * Set the value of euid
  */
-int Cvdqm_TapeDrive_setEuid(struct Cvdqm_TapeDrive_t* instance, struct C_long_t new_var);
+int Cvdqm_TapeDrive_setEuid(struct Cvdqm_TapeDrive_t* instance, long new_var);
 
 /**
  * Get the value of egid
  */
-int Cvdqm_TapeDrive_egid(struct Cvdqm_TapeDrive_t* instance, struct C_long_t* var);
+int Cvdqm_TapeDrive_egid(struct Cvdqm_TapeDrive_t* instance, long* var);
 
 /**
  * Set the value of egid
  */
-int Cvdqm_TapeDrive_setEgid(struct Cvdqm_TapeDrive_t* instance, struct C_long_t new_var);
+int Cvdqm_TapeDrive_setEgid(struct Cvdqm_TapeDrive_t* instance, long new_var);
 
 /**
  * Get the value of name

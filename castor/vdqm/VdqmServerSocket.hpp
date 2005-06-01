@@ -36,7 +36,6 @@
 #include "castor/io/AbstractSocket.hpp"
 
 // Forward declaration
-typedef struct vdqmnw vdqmnw_t;
 typedef struct vdqmHdr vdqmHdr_t; 
 typedef struct vdqmVolReq vdqmVolReq_t; 
 typedef struct vdqmdDrvReq vdqmDrvReq_t;
@@ -134,18 +133,24 @@ namespace castor {
        * Sends to old client
        * @return The request Type number of the old vdqm Protocol
        */				
-      int sendToOldClient(vdqmnw_t *client_connection, 
-      										vdqmHdr_t *header, 
+      int sendToOldClient(vdqmHdr_t *header, 
       										vdqmVolReq_t *volumeRequest, 
-      										vdqmDrvReq_t *driveRequest) 
+      										vdqmDrvReq_t *driveRequest,
+      										Cuuid_t cuuid) 
       									throw (castor::exception::Exception);
       									
       /**
        * Sends a VDQM_COMMIT back to the client.
        */									
-      void acknCommitOldProtocol(vdqmnw_t *client_connection) 
+      void acknCommitOldProtocol() 
       	throw (castor::exception::Exception);
-
+      	
+      /**
+       * Waits for an acknowledgement of the old tpdaemon, that the
+       * vdqm server has stored its request.
+       */	
+      void recvAcknFromOldProtocol()
+      	throw (castor::exception::Exception);
 
     protected:
 

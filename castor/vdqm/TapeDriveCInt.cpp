@@ -440,34 +440,34 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_TapeDrive_uid
+  // Cvdqm_TapeDrive_euid
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_uid(castor::vdqm::TapeDrive* instance, long* var) {
-    *var = instance->uid();
+  int Cvdqm_TapeDrive_euid(castor::vdqm::TapeDrive* instance, long* var) {
+    *var = instance->euid();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_TapeDrive_setUid
+  // Cvdqm_TapeDrive_setEuid
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_setUid(castor::vdqm::TapeDrive* instance, long new_var) {
-    instance->setUid(new_var);
+  int Cvdqm_TapeDrive_setEuid(castor::vdqm::TapeDrive* instance, long new_var) {
+    instance->setEuid(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_TapeDrive_gid
+  // Cvdqm_TapeDrive_egid
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_gid(castor::vdqm::TapeDrive* instance, long* var) {
-    *var = instance->gid();
+  int Cvdqm_TapeDrive_egid(castor::vdqm::TapeDrive* instance, long* var) {
+    *var = instance->egid();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_TapeDrive_setGid
+  // Cvdqm_TapeDrive_setEgid
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_setGid(castor::vdqm::TapeDrive* instance, long new_var) {
-    instance->setGid(new_var);
+  int Cvdqm_TapeDrive_setEgid(castor::vdqm::TapeDrive* instance, long new_var) {
+    instance->setEgid(new_var);
     return 0;
   }
 

@@ -36,7 +36,6 @@
 typedef struct vdqmVolReq vdqmVolReq_t;
 typedef struct vdqmdDrvReq vdqmDrvReq_t;
 typedef struct vdqmHdr vdqmHdr_t;
-typedef struct vdqmnw vdqmnw_t;
 
 namespace castor {
 
@@ -56,7 +55,6 @@ namespace castor {
        OldVdqmProtocol(vdqmVolReq_t *volumeRequest,
 												vdqmDrvReq_t *driveRequest,
 										  	vdqmHdr_t *header,
-												vdqmnw_t *client_connection,
 												int reqtype);
 			
        
@@ -73,16 +71,12 @@ namespace castor {
        bool checkRequestType(Cuuid_t cuuid) 
        	throw (castor::exception::Exception);
       
+      
       private:
-     	/**
-       * Default Constructor
-       */
-       OldVdqmProtocol();
       
       	vdqmVolReq_t *ptr_volumeRequest;
 		  	vdqmDrvReq_t *ptr_driveRequest;
   			vdqmHdr_t *ptr_header;
-  			vdqmnw_t *ptr_client_connection;
 				int m_reqtype;
 				
 		}; // class VdqmServer

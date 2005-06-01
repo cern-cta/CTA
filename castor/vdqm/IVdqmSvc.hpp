@@ -28,16 +28,17 @@
 #define _IVDQMSVC_HPP_
 
 // Include Files
+#include <string>
+
 #include "castor/IService.hpp"
 #include "castor/exception/Exception.hpp"
+
 
 
 namespace castor {
 
   // Forward declaration
-/*  class IObject;
-  class IClient;
-  class IAddress;*/
+	class stager::Tape;
 
   namespace vdqm {
 
@@ -45,6 +46,8 @@ namespace castor {
     class ExtendedDeviceGroup;
 		class TapeRequest;
 		class TapeDrive;
+		class TapeServer;
+
 
     /**
      * This class provides methods usefull to the stager to
@@ -62,6 +65,17 @@ namespace castor {
 	    	 */
 	    	virtual bool checkExtDevGroup(const ExtendedDeviceGroup *extDevGrp)
 	    		throw (castor::exception::Exception) = 0;
+	    		
+	    	/**
+	    	 * Looks in the data base for the TapeServer, which has exactly 
+	    	 * this name
+	    	 * @parameter serverName The name of the tape server, which is beeing requested
+	    	 * @return The object representation of the table entry
+	    	 * @exception in case of error
+	    	 */
+	    	virtual TapeServer* getTapeServer(const std::string serverName)
+	    		throw (castor::exception::Exception) = 0;
+	    		
 	    		
 	    	/**
 	    	 * Verifies, that the request doesn't (yet) exist.

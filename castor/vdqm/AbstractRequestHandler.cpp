@@ -55,6 +55,7 @@ void castor::vdqm::AbstractRequestHandler::handleRequest
   ad.setCnvSvcName("OraCnvSvc");
   ad.setCnvSvcType(castor::SVC_ORACNV);
   try {
+  	//Create a new entry in the table
     svcs()->createRep(&ad, fr, false);
     
     // Store files for taoe requests
@@ -62,7 +63,19 @@ void castor::vdqm::AbstractRequestHandler::handleRequest
       dynamic_cast<castor::vdqm::TapeRequest*>(fr);
     
     if (0 != tapeRequest) {
-      svcs()->fillRep(&ad, fr, OBJ_TapeRequest, false);
+//    	if (NULL != tapeRequest->reqExtDevGrp()) { 
+//    		svcs()->createRep(&ad, (IObject *)tapeRequest->reqExtDevGrp(), false);
+//    		svcs()->fillRep(&ad, fr, OBJ_ExtendedDeviceGroup, false);
+//    	}
+//    	
+//    	if (0 != tapeRequest->requestedSrv()) {
+//	    	svcs()->createRep(&ad, (IObject *)tapeRequest->requestedSrv(), false);
+//	    	svcs()->fillRep(&ad, fr, OBJ_TapeServer, false);
+//    	}
+    	
+    	svcs()->createRep(&ad, (IObject *)tapeRequest->client(), false);
+      svcs()->fillRep(&ad, fr, OBJ_ClientIdentification, false);
+      svcs()->fillRep(&ad, fr, OBJ_Tape, false);
     }
     
     castor::vdqm::TapeDrive *tapeDrive =

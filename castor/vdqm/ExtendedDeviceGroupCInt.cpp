@@ -114,18 +114,18 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_ExtendedDeviceGroup_mode
+  // Cvdqm_ExtendedDeviceGroup_accessMode
   //----------------------------------------------------------------------------
-  int Cvdqm_ExtendedDeviceGroup_mode(castor::vdqm::ExtendedDeviceGroup* instance, int* var) {
-    *var = instance->mode();
+  int Cvdqm_ExtendedDeviceGroup_accessMode(castor::vdqm::ExtendedDeviceGroup* instance, int* var) {
+    *var = instance->accessMode();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_ExtendedDeviceGroup_setMode
+  // Cvdqm_ExtendedDeviceGroup_setAccessMode
   //----------------------------------------------------------------------------
-  int Cvdqm_ExtendedDeviceGroup_setMode(castor::vdqm::ExtendedDeviceGroup* instance, int new_var) {
-    instance->setMode(new_var);
+  int Cvdqm_ExtendedDeviceGroup_setAccessMode(castor::vdqm::ExtendedDeviceGroup* instance, int new_var) {
+    instance->setAccessMode(new_var);
     return 0;
   }
 

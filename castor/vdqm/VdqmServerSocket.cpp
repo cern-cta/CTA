@@ -181,16 +181,19 @@ unsigned int castor::vdqm::VdqmServerSocket::readMagicNumber()
   if (ret != sizeof(unsigned int)) {
     if (0 == ret) {
       castor::exception::Internal ex;
-      ex.getMessage() << "Unable to receive Magic Number" << std::endl
+      ex.getMessage() << "VdqmServerSocket::readMagicNumber(): "
+      								<< "Unable to receive Magic Number" << std::endl
                       << "The connection was closed by remote end";
       throw ex;
     } else if (-1 == ret) {
       castor::exception::Exception ex(serrno);
-      ex.getMessage() << "Unable to receive Magic Number";
+      ex.getMessage() << "VdqmServerSocket::readMagicNumber(): "
+      								<< "Unable to receive Magic Number";
       throw ex;
     } else {
       castor::exception::Internal ex;
-      ex.getMessage() << "Received Magic Number is too short : only "
+      ex.getMessage() << "VdqmServerSocket::readMagicNumber(): "
+      								<< "Received Magic Number is too short : only "
                       << ret << " bytes";
       throw ex;
     }
@@ -514,10 +517,10 @@ int castor::vdqm::VdqmServerSocket::readOldProtocol(vdqmHdr_t *header,
 //------------------------------------------------------------------------------
 // sendToOldClient
 //------------------------------------------------------------------------------
-int castor::vdqm::VdqmServerSocket::sendToOldClient(vdqmnw_t *client_connection, 
- 																										vdqmHdr_t *header, 
+int castor::vdqm::VdqmServerSocket::sendToOldClient(vdqmHdr_t *header, 
 													      										vdqmVolReq_t *volumeRequest, 
-      																							vdqmDrvReq_t *driveRequest) 
+      																							vdqmDrvReq_t *driveRequest,
+      																							Cuuid_t cuuid) 
 	throw (castor::exception::Exception) {
 
   char hdrbuf[VDQM_HDRBUFSIZ];
@@ -526,7 +529,6 @@ int castor::vdqm::VdqmServerSocket::sendToOldClient(vdqmnw_t *client_connection,
   char *p;
   int magic,reqtype,len; 
   int rc;
-  SOCKET s;
   
       
   reqtype = -1;
@@ -534,7 +536,6 @@ int castor::vdqm::VdqmServerSocket::sendToOldClient(vdqmnw_t *client_connection,
   magic = len = 0;
  
 	rc = gethostname(servername, CA_MAXHOSTNAMELEN);
-  s = client_connection->connect_socket;
 
     
   if ( header != NULL && VDQM_VALID_REQTYPE(header->reqtype) ) 
@@ -615,7 +616,8 @@ int castor::vdqm::VdqmServerSocket::sendToOldClient(vdqmnw_t *client_connection,
   DO_MARSHALL(LONG,p,magic,SendTo);
   DO_MARSHALL(LONG,p,reqtype,SendTo);
   DO_MARSHALL(LONG,p,len,SendTo);
-  rc = netwrite_timeout(s,hdrbuf,VDQM_HDRBUFSIZ,VDQM_TIMEOUT);
+//  sendBuffer(magic, hdrbuf, VDQM_HDRBUFSIZ);
+  rc = netwrite(m_socket, hdrbuf, VDQM_HDRBUFSIZ);
 
   if (rc == -1) {
 	  		serrno = SECOMERR;
@@ -635,7 +637,7 @@ int castor::vdqm::VdqmServerSocket::sendToOldClient(vdqmnw_t *client_connection,
   }
    
   if ( len > 0 ) {
-		rc = netwrite_timeout(s,buf,len,VDQM_TIMEOUT);
+		rc = netwrite_timeout(m_socket, buf, len, VDQM_TIMEOUT);
 		if (rc == -1) {
   		serrno = SECOMERR;
       castor::exception::Exception ex(serrno);
@@ -662,44 +664,30 @@ int castor::vdqm::VdqmServerSocket::sendToOldClient(vdqmnw_t *client_connection,
 //------------------------------------------------------------------------------
 // acknCommitOldProtocol
 //------------------------------------------------------------------------------
-void castor::vdqm::VdqmServerSocket::acknCommitOldProtocol(
-																										vdqmnw_t *client_connection) 
+void castor::vdqm::VdqmServerSocket::acknCommitOldProtocol() 
 	throw (castor::exception::Exception) {
 		
 	char hdrbuf[VDQM_HDRBUFSIZ];
-	int magic, recvreqtype, len, rc;
+	int recvreqtype, len, rc;
+	unsigned int magic;
 	char *p;
-	SOCKET s;
-	    
-  if ( client_connection == NULL                                   ||
-      (client_connection->accept_socket == INVALID_SOCKET          &&
-      client_connection->connect_socket == INVALID_SOCKET) ) {
-  	serrno = EINVAL;
-    castor::exception::Exception ex(serrno);
-		ex.getMessage() << "VdqmServerSocket::acknCommitOldProtocol(): "
-										<< "No client connection " 
-										<< neterror() << std::endl;
-		throw ex;	
-  }
-	    
-	s = client_connection->connect_socket;
+
 	    
   magic = VDQM_MAGIC;
   len = 0;
   recvreqtype = VDQM_COMMIT;
-  
-	    
 
   p = hdrbuf;
   DO_MARSHALL(LONG,p,magic,SendTo);
   DO_MARSHALL(LONG,p,recvreqtype,SendTo);
   DO_MARSHALL(LONG,p,len,SendTo);
-	    
-	 
+	  	 
   magic = VDQM_MAGIC;
   len = 0;
   p = hdrbuf;
-  rc = netwrite_timeout(s, hdrbuf, VDQM_HDRBUFSIZ, VDQM_TIMEOUT);
+  
+  //send buffer to the client
+  rc = netwrite(m_socket, hdrbuf, VDQM_HDRBUFSIZ);
   switch (rc) {
 		case -1: 
 				{
@@ -721,4 +709,66 @@ void castor::vdqm::VdqmServerSocket::acknCommitOldProtocol(
 					throw ex;	
 	  		}
 	}
+}
+
+
+//------------------------------------------------------------------------------
+// recvAcknFromOldProtocol
+//------------------------------------------------------------------------------
+void castor::vdqm::VdqmServerSocket::recvAcknFromOldProtocol() 
+	throw (castor::exception::Exception) {
+	
+    char hdrbuf[VDQM_HDRBUFSIZ];
+    int magic, recvreqtype, len, rc;
+    char *p;
+    
+    magic = VDQM_MAGIC;
+    len = 0;
+    recvreqtype = 0;
+    
+    
+    rc = netread_timeout(m_socket, hdrbuf, VDQM_HDRBUFSIZ, VDQM_TIMEOUT);
+    switch (rc) {
+    	case -1: 
+		  		{
+		  			serrno = SECOMERR;
+		      	castor::exception::Exception ex(serrno);
+						ex.getMessage() << "VdqmServerSocket::recvAcknFromOldProtocol(): "
+														<< "netread(HDR): " 
+														<< neterror() << std::endl;
+						throw ex;	
+		  		}
+       case 0:
+       		{
+		  			serrno = SECONNDROP;
+		      	castor::exception::Exception ex(serrno);
+						ex.getMessage() << "VdqmServerSocket::recvAcknFromOldProtocol(): "
+														<< "netread(HDR): connection dropped" 
+														<< std::endl;
+						throw ex;	
+		  		}
+    }
+    
+    p = hdrbuf;
+    DO_MARSHALL(LONG, p, magic, ReceiveFrom);
+    DO_MARSHALL(LONG, p, recvreqtype, ReceiveFrom);
+    DO_MARSHALL(LONG, p, len, ReceiveFrom);
+    
+    
+    // There was an error at netread_timeout.
+    if ( rc == -1 ) {
+	  	castor::exception::Internal ex;
+			ex.getMessage() << "VdqmServerSocket::recvAcknFromOldProtocol(): "
+											<< "client error on commit" 
+											<< std::endl;
+			throw ex;	
+    }
+    
+    if (magic != VDQM_MAGIC) {
+	  	castor::exception::Internal ex;
+			ex.getMessage() << "VdqmServerSocket::recvAcknFromOldProtocol(): "
+											<< "Wrong magic number!" 
+											<< std::endl;
+			throw ex;	   	
+    }
 }

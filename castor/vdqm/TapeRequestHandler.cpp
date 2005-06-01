@@ -32,10 +32,12 @@
 #include "castor/exception/InvalidArgument.hpp"
 
 #include "castor/stager/ClientIdentification.hpp"
+#include "castor/stager/IStagerSvc.hpp"
 #include "castor/stager/Tape.hpp"
 
 #include "castor/IObject.hpp"
 #include "castor/Constants.hpp"
+#include "castor/Services.hpp"
 
 #define VDQMSERV 1
 
@@ -79,23 +81,70 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
   castor::vdqm::ExtendedDeviceGroup *reqExtDevGrp;
   
   //The IService for vdqm
+  castor::Services *svcs;
+  castor::IService* svc;
   castor::vdqm::IVdqmSvc *ptr_IVdqmService;
+  castor::stager::IStagerSvc *ptr_IStagerService;
   
   bool exist = false;  
   char 					*p;
 
+
+	if ( header == NULL || volumeRequest == NULL ) {
+  	castor::exception::InvalidArgument ex;
+    ex.getMessage() << "One of the arguments is NULL";
+    throw ex;
+  }
   
   /**
    * The IVdqmService Objects has some important fuctions
    * to handle db queries.
    */
-  //TODO: ptr_IVdqmService instanziieren!!! 
-
-  if ( header == NULL || volumeRequest == NULL ) {
-  	castor::exception::InvalidArgument ex;
-    ex.getMessage() << "One of the arguments is NULL";
+  //TODO: ptr_IVdqmService instanziieren!!!
+  
+  svcs = castor::BaseObject::services();
+	
+	/**
+	 * Getting OraVdqmService
+	 */
+//	svc = svcs->service("OraVdqmSvc", castor::SVC_ORAVDQMSVC);
+//  if (0 == svc) {
+//    castor::exception::Internal ex;
+//    ex.getMessage() << "Could not get OraVdqmSvc" << std::endl;
+//    throw ex;
+//  }
+  
+//  ptr_IVdqmService = dynamic_cast<castor::stager::IVdqmSvc*>(svc);
+//  if (0 == ptr_IVdqmService) {
+//    castor::exception::Internal ex;
+//    ex.getMessage() << "Got a bad OraVdqmSvc: "
+//    								<< "ID=" << svc->id()
+//    								<< ", Name=" << svc->name()
+//    								<< std::endl;
+//    throw ex;
+//  }
+	
+	
+	/**
+	 * Getting OraStagerService
+	 */
+	svc = svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
+  if (0 == svc) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Could not get OraStagerSvc" << std::endl;
+    throw ex;
+  }				
+  
+	ptr_IStagerService = dynamic_cast<castor::stager::IStagerSvc*>(svc);
+  if (0 == ptr_IStagerService) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Got a bad OraStagerSvc: "
+    								<< "ID=" << svc->id()
+    								<< ", Name=" << svc->name()
+    								<< std::endl;
     throw ex;
   }
+  
   
   //The parameters of the old vdqm VolReq Request
   castor::dlf::Param params[] =
@@ -111,6 +160,7 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
      castor::dlf::Param("server", (*volumeRequest->server == '\0' ? "***" : volumeRequest->server))};
   castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 23, 10, params);
   
+  //------------------------------------------------------------------------
   //The Tape related informations
   newTapeReq = new TapeRequest();
  	newTapeReq->setCreationTime(time(NULL));
@@ -127,15 +177,24 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
  	clientData->setEuid(volumeRequest->clientUID);
  	clientData->setEgid(volumeRequest->clientGID);
  	clientData->setMagic(header->magic);
+ 	
+ 	/**
+ 	 * Annotation: The side of the Tape is not necesserally needed
+ 	 * by the vdqmDaemon. Normaly the RTCopy daemon should already 
+ 	 * have created an entry to the Tape table. So, we just gove 0 as parameter 
+ 	 * at this place.
+ 	 */
+ 	tape = ptr_IStagerService->selectTape(volumeRequest->volid, 
+ 																				0, 
+ 																				volumeRequest->mode);
  
   //The requested ExtendedDeviceGroup
   reqExtDevGrp = new ExtendedDeviceGroup();
   reqExtDevGrp->setDgName(volumeRequest->dgn);
-  reqExtDevGrp->setMode(volumeRequest->mode);
+  reqExtDevGrp->setAccessMode(volumeRequest->mode);
   
   //The requested tape server
-  reqTapeServer = new TapeServer();
-  reqTapeServer->setServerName(volumeRequest->server);
+//  reqTapeServer = ptr_IVdqmService->getTapeServer(volumeRequest->server);
   
   /*
    * Check that the requested device exists.
@@ -143,7 +202,6 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 //  exist = ptr_IVdqmService->checkExtDevGroup(reqExtDevGrp);
   
   
-//TODO: Eventuell zu harter error!  
 //  if ( !exist ) {
 //  	castor::exception::Internal ex;
 //    ex.getMessage() << "DGN " <<  volumeRequest->dgn
@@ -151,10 +209,12 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 //    throw ex;
 //  }
   
+  
   //Connect the tapeRequest with the additional information
   newTapeReq->setClient(clientData);
   newTapeReq->setReqExtDevGrp(reqExtDevGrp);
   newTapeReq->setRequestedSrv(reqTapeServer);
+  newTapeReq->setTape(tape);
 
   
   /*
@@ -171,7 +231,7 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
   /*
    * Set priority for tpwrite
    */
-  if ( (reqExtDevGrp->mode() == WRITE_ENABLE) &&
+  if ( (reqExtDevGrp->accessMode() == WRITE_ENABLE) &&
        ((p = getconfent("VDQM","WRITE_PRIORITY",0)) != NULL) ) {
     if ( strcmp(p,"YES") == 0 ) {
       newTapeReq->setPriority(VDQM_PRIORITY_MAX);
@@ -188,6 +248,12 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
    * Add the record to the volume queue
    */
 	handleRequest(newTapeReq, cuuid);
+	
+	/**
+	 *  Now the newTapeReq has the id of its 
+	 * row representatioon in the db table.
+	 */
+	volumeRequest->VolReqID = newTapeReq->id();
    
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------

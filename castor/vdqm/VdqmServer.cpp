@@ -112,7 +112,7 @@ castor::vdqm::VdqmServer::VdqmServer() :
      { 8, "Processing Request"},//not used
      { 9, "Exception caught"},
      {10, "Sending reply to client"},
-     {11, "Unable to send Ack to client"},//not used
+     {11, "Unable to send Ack to client"},
      {12, "Request stored in DB"},
      {13, "Wrong Magic number"},
      {14, "Handle old vdqm request type"},
@@ -244,17 +244,6 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
       {castor::dlf::Param("Magic Number", magicNumber),
        castor::dlf::Param("VDQM_MAGIC", VDQM_MAGIC)};
 		castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 13, 2, params);
-		
-		/*castor::IObject* obj = sock->readObject();
-		fr = dynamic_cast<castor::stager::Request*>(obj);
-  	if (0 == fr) {
-    	delete obj;
-    	// "Invalid Request" message
-    	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6);
-    	ack.setStatus(false);
-    	ack.setErrorCode(EINVAL);
-    	ack.setErrorMessage("Invalid Request object sent to server.");
-    }*/
  	}
 
 	
@@ -275,7 +264,6 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 	vdqmVolReq_t volumeRequest;
 	vdqmDrvReq_t driveRequest;
 	vdqmHdr_t header;
-	vdqmnw_t *client_connection;
 	int reqtype; // Request type of the message
 	
 	try {
@@ -311,15 +299,16 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 		OldVdqmProtocol oldProtocol(&volumeRequest,
 												&driveRequest,
 										  	&header,
-												client_connection,
 												reqtype);
 		
 		oldProtocol.checkRequestType(cuuid);
 		oldProtocol.handleRequestType(cuuid);
 		
 		//Sending reply to client
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 10);
-		sock->acknCommitOldProtocol(client_connection);
+		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 10);
+		sock->acknCommitOldProtocol();
+		sock->sendToOldClient(&header, &volumeRequest, &driveRequest, cuuid);
+		sock->recvAcknFromOldProtocol();
 	} catch (castor::exception::Exception e) {  
     // "Exception caught" message
     castor::dlf::Param params[] =

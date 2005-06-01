@@ -45,18 +45,14 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::vdqm::OldVdqmProtocol::OldVdqmProtocol() {}
-
 castor::vdqm::OldVdqmProtocol::OldVdqmProtocol(vdqmVolReq_t *volumeRequest,
 																								vdqmDrvReq_t *driveRequest,
 																						  	vdqmHdr_t *header,
-										  													vdqmnw_t *client_connection,
 																								int reqtype = -1) {
 	
 	ptr_volumeRequest = volumeRequest;
 	ptr_driveRequest = driveRequest;
 	ptr_header = header;
-	ptr_client_connection =	client_connection;
 	m_reqtype = reqtype;
 }
 
