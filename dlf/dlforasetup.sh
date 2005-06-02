@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-## $Id: dlforasetup.sh,v 1.1 2005/05/19 12:06:44 jdurand Exp $
+## $Id: dlforasetup.sh,v 1.2 2005/06/02 16:29:41 jdurand Exp $
 #
 
 killall -9 dlfserver
@@ -32,5 +32,6 @@ dlfenterfacility -F MigHunter -n 6
 dlfenterfacility -F rmmaster -n 7
 dlfenterfacility -F GC -n 8
 dlfenterfacility -F scheduler -n 9
+dlfenterfacility -F TapeErrorHandler -n 10
 
 dlflistfacility
