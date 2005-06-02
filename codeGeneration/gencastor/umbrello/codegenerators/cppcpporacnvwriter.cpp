@@ -2471,7 +2471,8 @@ void CppCppOraCnvWriter::writeCreateObjContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->type.multiRemote == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE &&
+        as->remotePart.name != "") {
       bool isenum = isEnum(as->remotePart.typeName);
       if (isenum) {
         writeSingleGetFromSelect
@@ -2559,7 +2560,8 @@ void CppCppOraCnvWriter::writeUpdateObjContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->type.multiRemote == MULT_ONE) {
+    if (as->type.multiRemote == MULT_ONE &&
+        as->remotePart.name != "") {
       // Enums are a simple case
       if (isEnum(as->remotePart.typeName)) {
         writeSingleGetFromSelect(as->remotePart, n, false, true);
