@@ -104,7 +104,9 @@ castor::vdqm::VdqmServerSocket::VdqmServerSocket(const unsigned short port,
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::vdqm::VdqmServerSocket::~VdqmServerSocket() throw () {}
+castor::vdqm::VdqmServerSocket::~VdqmServerSocket() throw () {
+	close(m_socket);
+}
 
 
 
@@ -170,8 +172,8 @@ castor::IObject* castor::vdqm::VdqmServerSocket::readObject()
 unsigned int castor::vdqm::VdqmServerSocket::readMagicNumber()
 	throw (castor::exception::Exception) {
   
-  char* buffer;
-  unsigned int magic;
+	char* buffer;
+  int magic;
   
   // Read the magic number from the socket
   int ret = netread(m_socket,
@@ -188,7 +190,8 @@ unsigned int castor::vdqm::VdqmServerSocket::readMagicNumber()
     } else if (-1 == ret) {
       castor::exception::Exception ex(serrno);
       ex.getMessage() << "VdqmServerSocket::readMagicNumber(): "
-      								<< "Unable to receive Magic Number";
+      								<< "Unable to receive Magic Number: " 
+      								<< errno << " - " << strerror(errno) << std::endl;
       throw ex;
     } else {
       castor::exception::Internal ex;

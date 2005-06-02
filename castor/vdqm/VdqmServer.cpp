@@ -126,6 +126,7 @@ castor::vdqm::VdqmServer::VdqmServer() :
      {22, "Handle VDQM_DEL_DRVREQ"},
      {23, "The parameters of the old vdqm VolReq Request"},
      {24, "Request priority changed"},
+     {25, "test Check"},
      {-1, ""}};
   castor::dlf::dlf_init("VdqmLog", messages);
 }
@@ -157,7 +158,7 @@ int castor::vdqm::VdqmServer::main () {
     /* Create a socket for the server, bind, and listen */
     castor::vdqm::VdqmServerSocket sock(VDQM_PORT, true); 
     
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 0);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 0);
      
     for (;;) {
       /* Accept connexions */
@@ -203,6 +204,8 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
   castor::vdqm::VdqmServerSocket* sock =
     (castor::vdqm::VdqmServerSocket*) param;
 	
+	// gives a Cuuid to the request
+  Cuuid_create(&cuuid); 
 	
   try {
     sock->getPeerIp(port, ip);
@@ -211,13 +214,13 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
        castor::dlf::Param("Precise Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 5, 2, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 5, 2, params);
   }
   // "New Request Arrival" message
   castor::dlf::Param params[] =
     {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
      castor::dlf::Param("Port", port)};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 2, params);
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 1, 2, params);
 
   // get the incoming request
   try {
@@ -226,12 +229,10 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
   } catch (castor::exception::Exception e) {  
     // "Unable to read Request from socket" message
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params);
+      {castor::dlf::Param("Standard Message", sstrerror(e.code())),
+       castor::dlf::Param("Precise Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 7, 2, params);
   }
-
-	// gives a Cuuid to the request
-  Cuuid_create(&cuuid); 
 
 	if (magicNumber == VDQM_MAGIC) {
 		//Request has MagicNumber from old VDQM Protocol
@@ -246,7 +247,6 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
 		castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 13, 2, params);
  	}
 
-	
   delete sock;
   return 0;
 }

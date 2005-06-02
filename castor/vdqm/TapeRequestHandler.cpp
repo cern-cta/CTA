@@ -73,12 +73,12 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 	throw (castor::exception::Exception) {
   
   //The db related informations
-  castor::vdqm::TapeRequest *newTapeReq;
+  castor::vdqm::TapeRequest *newTapeReq = NULL;
 //  castor::vdqm::TapeDrive *freeTapeDrive;
-  castor::stager::ClientIdentification *clientData;
-  castor::stager::Tape *tape;
-  castor::vdqm::TapeServer *reqTapeServer;
-  castor::vdqm::ExtendedDeviceGroup *reqExtDevGrp;
+  castor::stager::ClientIdentification *clientData = NULL;
+  castor::stager::Tape *tape = NULL;
+  castor::vdqm::TapeServer *reqTapeServer = NULL;
+  castor::vdqm::ExtendedDeviceGroup *reqExtDevGrp = NULL;
   
   //The IService for vdqm
   castor::Services *svcs;
@@ -160,140 +160,170 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
      castor::dlf::Param("server", (*volumeRequest->server == '\0' ? "***" : volumeRequest->server))};
   castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 23, 10, params);
   
-  //------------------------------------------------------------------------
-  //The Tape related informations
-  newTapeReq = new TapeRequest();
- 	newTapeReq->setCreationTime(time(NULL));
- 	/*
-   * We don't allow client to set priority
-   */
- 	newTapeReq->setPriority(VDQM_PRIORITY_NORMAL);
- 	
- 	//The client related informations
- 	clientData = new castor::stager::ClientIdentification();
- 	clientData->setMachine(volumeRequest->client_host);
- 	clientData->setUserName(volumeRequest->client_name);
- 	clientData->setPort(volumeRequest->client_port);
- 	clientData->setEuid(volumeRequest->clientUID);
- 	clientData->setEgid(volumeRequest->clientGID);
- 	clientData->setMagic(header->magic);
- 	
- 	/**
- 	 * Annotation: The side of the Tape is not necesserally needed
- 	 * by the vdqmDaemon. Normaly the RTCopy daemon should already 
- 	 * have created an entry to the Tape table. So, we just gove 0 as parameter 
- 	 * at this place.
- 	 */
- 	tape = ptr_IStagerService->selectTape(volumeRequest->volid, 
- 																				0, 
- 																				volumeRequest->mode);
- 
-  //The requested ExtendedDeviceGroup
-  reqExtDevGrp = new ExtendedDeviceGroup();
-  reqExtDevGrp->setDgName(volumeRequest->dgn);
-  reqExtDevGrp->setAccessMode(volumeRequest->mode);
-  
-  //The requested tape server
-//  reqTapeServer = ptr_IVdqmService->getTapeServer(volumeRequest->server);
-  
-  /*
-   * Check that the requested device exists.
-   */
-//  exist = ptr_IVdqmService->checkExtDevGroup(reqExtDevGrp);
-  
-  
-//  if ( !exist ) {
-//  	castor::exception::Internal ex;
-//    ex.getMessage() << "DGN " <<  volumeRequest->dgn
-//    								<< " does not exist" << std::endl;
-//    throw ex;
-//  }
-  
-  
-  //Connect the tapeRequest with the additional information
-  newTapeReq->setClient(clientData);
-  newTapeReq->setReqExtDevGrp(reqExtDevGrp);
-  newTapeReq->setRequestedSrv(reqTapeServer);
-  newTapeReq->setTape(tape);
-
-  
-  /*
-   * Verify that the request doesn't (yet) exist
-   */
-//  exist = ptr_IVdqmService->checkTapeRequest(newTapeReq);
-//  if ( exist ) {
-//    castor::exception::Internal ex;
-//    ex.getMessage() << "Input request already queued" << std::endl;
-//    throw ex;
-//  }
-  
-
-  /*
-   * Set priority for tpwrite
-   */
-  if ( (reqExtDevGrp->accessMode() == WRITE_ENABLE) &&
-       ((p = getconfent("VDQM","WRITE_PRIORITY",0)) != NULL) ) {
-    if ( strcmp(p,"YES") == 0 ) {
-      newTapeReq->setPriority(VDQM_PRIORITY_MAX);
-    }
-  }
-  
-  
-	// Request priority changed
-  castor::dlf::Param params2[] =
-  	{castor::dlf::Param("priority", newTapeReq->priority())};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 24, 1, params2);
-  
-  /*
-   * Add the record to the volume queue
-   */
-	handleRequest(newTapeReq, cuuid);
+  try {
+	  //------------------------------------------------------------------------
+	  //The Tape related informations
+	  newTapeReq = new TapeRequest();
+	 	newTapeReq->setCreationTime(time(NULL));
+	 	/*
+	   * We don't allow client to set priority
+	   */
+	 	newTapeReq->setPriority(VDQM_PRIORITY_NORMAL);
+	 	
+//	 	  castor::dlf::Param test[] =
+//  	{castor::dlf::Param("Ckeck", 1)};
+//	 	castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 25, 1, test);
+	 	
+	 	//The client related informations
+	 	clientData = new castor::stager::ClientIdentification();
+	 	clientData->setMachine(volumeRequest->client_host);
+	 	clientData->setUserName(volumeRequest->client_name);
+	 	clientData->setPort(volumeRequest->client_port);
+	 	clientData->setEuid(volumeRequest->clientUID);
+	 	clientData->setEgid(volumeRequest->clientGID);
+	 	clientData->setMagic(header->magic);
+	 	
+	 	/**
+	 	 * Annotation: The side of the Tape is not necesserally needed
+	 	 * by the vdqmDaemon. Normaly the RTCopy daemon should already 
+	 	 * have created an entry to the Tape table. So, we just gove 0 as parameter 
+	 	 * at this place.
+	 	 */
+	 	tape = ptr_IStagerService->selectTape(volumeRequest->volid, 
+	 																				0, 
+	 																				volumeRequest->mode);
+	 																				
+// 	  castor::dlf::Param test2[] =
+//  	{castor::dlf::Param("Ckeck", 2)};
+//	 	castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 25, 1, test2);
+	 
+	  //The requested ExtendedDeviceGroup
+	  reqExtDevGrp = new ExtendedDeviceGroup();
+	  reqExtDevGrp->setDgName(volumeRequest->dgn);
+	  reqExtDevGrp->setAccessMode(volumeRequest->mode);
+	  
+	  //The requested tape server
+	//  reqTapeServer = ptr_IVdqmService->getTapeServer(volumeRequest->server);
+	  
+	  /*
+	   * Check that the requested device exists.
+	   */
+	//  exist = ptr_IVdqmService->checkExtDevGroup(reqExtDevGrp);
+	  
+	  
+	//  if ( !exist ) {
+	//  	castor::exception::Internal ex;
+	//    ex.getMessage() << "DGN " <<  volumeRequest->dgn
+	//    								<< " does not exist" << std::endl;
+	//    throw ex;
+	//  }
+	  
+	  
+	  //Connect the tapeRequest with the additional information
+	  newTapeReq->setClient(clientData);
+	  newTapeReq->setReqExtDevGrp(reqExtDevGrp);
+	  newTapeReq->setRequestedSrv(reqTapeServer);
+	  newTapeReq->setTape(tape);
 	
-	/**
-	 *  Now the newTapeReq has the id of its 
-	 * row representatioon in the db table.
-	 */
-	volumeRequest->VolReqID = newTapeReq->id();
-   
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-// TODO: This must be put in an own thread
-
-//	/**
-//	 * Look for a free tape drive, which can handle the request
-//	 */
-//	freeTapeDrive = ptr_IVdqmService->getFreeTapeDrive(reqExtDevGrp);
-//	if ( freeTapeDrive == NULL ) {
-//	  castor::exception::Internal ex;
-//	  ex.getMessage() << "No free tape drive for TapeRequest "
-//	  								<< "with ExtendedDeviceGroup " 
-//	  								<< reqExtDevGrp->dgName()
-//	  								<< " and mode = "
-//	  								<< reqExtDevGrp->mode()
-//	  								<< std::endl;
-//	  throw ex;
-//	}
-//  else { //If there was a free drive, start a new job
-//	  handleTapeRequestQueue();
-//  }
-  
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-
-
-//  /*
-//   * Always update replica for this volume record (update status may have
-//   * been temporary reset by SelectVolAndDrv()).
-//   */
-//  newvolrec->update = 1;
-//  FreeDgnContext(&dgn_context);
-
-
-	delete newTapeReq;
-	delete clientData;
-	delete reqExtDevGrp;
-	delete reqTapeServer;
+	  
+	  /*
+	   * Verify that the request doesn't (yet) exist
+	   */
+	//  exist = ptr_IVdqmService->checkTapeRequest(newTapeReq);
+	//  if ( exist ) {
+	//    castor::exception::Internal ex;
+	//    ex.getMessage() << "Input request already queued" << std::endl;
+	//    throw ex;
+	//  }
+	  
+	
+	  /*
+	   * Set priority for tpwrite
+	   */
+	  if ( (reqExtDevGrp->accessMode() == WRITE_ENABLE) &&
+	       ((p = getconfent("VDQM","WRITE_PRIORITY",0)) != NULL) ) {
+	    if ( strcmp(p,"YES") == 0 ) {
+	      newTapeReq->setPriority(VDQM_PRIORITY_MAX);
+	    }
+	  }
+	  
+	  
+		// Request priority changed
+	  castor::dlf::Param params2[] =
+	  	{castor::dlf::Param("priority", newTapeReq->priority())};
+	  castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 24, 1, params2);
+	  
+	  /*
+	   * Add the record to the volume queue
+	   */
+		handleRequest(newTapeReq, cuuid);
+		
+		/**
+		 *  Now the newTapeReq has the id of its 
+		 * row representatioon in the db table.
+		 */
+		volumeRequest->VolReqID = newTapeReq->id();
+	   
+	//------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------
+	// TODO: This must be put in an own thread
+	
+	//	/**
+	//	 * Look for a free tape drive, which can handle the request
+	//	 */
+	//	freeTapeDrive = ptr_IVdqmService->getFreeTapeDrive(reqExtDevGrp);
+	//	if ( freeTapeDrive == NULL ) {
+	//	  castor::exception::Internal ex;
+	//	  ex.getMessage() << "No free tape drive for TapeRequest "
+	//	  								<< "with ExtendedDeviceGroup " 
+	//	  								<< reqExtDevGrp->dgName()
+	//	  								<< " and mode = "
+	//	  								<< reqExtDevGrp->mode()
+	//	  								<< std::endl;
+	//	  throw ex;
+	//	}
+	//  else { //If there was a free drive, start a new job
+	//	  handleTapeRequestQueue();
+	//  }
+	  
+	//------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------
+	
+	
+	//  /*
+	//   * Always update replica for this volume record (update status may have
+	//   * been temporary reset by SelectVolAndDrv()).
+	//   */
+	//  newvolrec->update = 1;
+	//  FreeDgnContext(&dgn_context);
+	
+	
+		delete newTapeReq;
+		delete tape;
+		delete clientData;
+		delete reqExtDevGrp;
+		delete reqTapeServer;
 //	delete freeTapeDrive;
+  } catch(castor::exception::Exception e) {
+// 	  castor::dlf::Param params[] =
+//  	{castor::dlf::Param("Ckeck", 3)};
+//	 	castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 25, 1, params);
+  	
+ 		if (newTapeReq)
+	 		delete newTapeReq;
+ 		if (tape)
+	 		delete tape;
+ 		if (clientData)
+			delete clientData;
+		if (reqExtDevGrp)
+			delete reqExtDevGrp;
+		if (reqTapeServer)
+			delete reqTapeServer;
+//		if (0 != freeTapeDrive)
+//	delete freeTapeDrive;
+  
+    throw e;
+  }
 }
 
 
