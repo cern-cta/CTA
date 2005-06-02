@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestHelper.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/01/20 13:53:03 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestHelper.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/06/02 15:32:00 $ $Author: bcouturi $
  *
  * 
  *
@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/stager/RequestHelper.hpp"
+#include "stager_client_api_common.h"
 #include <iostream>
 #include <string>
 
@@ -50,6 +51,7 @@ castor::stager::RequestHelper::~RequestHelper() throw() {};
 void castor::stager::RequestHelper::setOptions(struct stage_options* opts) {
   // Setting the service class
   if (0 != opts && opts->service_class != 0) {
+    stage_trace(3, "Opt SVCCLASS=%s", opts->service_class);
     m_request->setSvcClassName(std::string(opts->service_class));
   } else {
     char *svc = 0;
@@ -58,6 +60,7 @@ void castor::stager::RequestHelper::setOptions(struct stage_options* opts) {
       svc = (char *)getenv(castor::stager::SVCCLASS_ENV_ALT);
     }
     if (0 != svc) {
+      stage_trace(3, "Env SVCCLASS=%s", svc);
       m_request->setSvcClassName(std::string(svc));
     }
   }
