@@ -768,33 +768,32 @@ void CppCppMyCnvWriter::writeReset() {
             << endl << getIndent() << "try {" << endl;
   m_indent++;
   *m_stream << getIndent()
-            << "m_insertStatement->reset();"
+            << "delete m_insertStatement;"    // m_xxxStatement->reset() not needed
             << endl << getIndent()
-            << "m_deleteStatement->reset();"
+            << "delete m_deleteStatement;"
             << endl << getIndent()
-            << "m_selectStatement->reset();"
+            << "delete m_selectStatement;"
             << endl << getIndent()
-            << "m_updateStatement->reset();"
+            << "delete m_updateStatement;"
             << endl;
   if (isNewRequest()) {
     *m_stream << getIndent()
-              << "m_insertNewReqStatement->reset();"
+              << "delete m_insertNewReqStatement;"
               << endl;
   }
   if (isNewSubRequest()) {
     *m_stream << getIndent()
-              << "m_insertNewSubReqStatement->reset();"
+              << "delete m_insertNewSubReqStatement;"
               << endl;
   }
-  *m_stream << getIndent() << "m_storeTypeStatement->reset();"
+  *m_stream << getIndent() << "delete m_storeTypeStatement;"
             << endl << getIndent()
-            << "m_deleteTypeStatement->reset();"
+            << "delete m_storeTypeStatement;"
             << endl;
   // Associations dedicated statements
   AssocList assocs = createAssocsList();
-  for (Assoc* as = assocs.first();
-       0 != as;
-       as = assocs.next()) {
+  for (Assoc* as = assocs.first(); 0 != as; as = assocs.next()) {
+	QString remPartSt = capitalizeFirstLetter(as->remotePart.typeName) + QString("Statement");
     if (as->remotePart.name == "" ||
         isEnum(as->remotePart.typeName)) continue;
     if (as->type.multiRemote == MULT_N &&
@@ -803,44 +802,31 @@ void CppCppMyCnvWriter::writeReset() {
       // Here we will use a dedicated table for the association
       // Find out the parent and child in this table
       *m_stream << getIndent()
-                << "m_insert"
-                << capitalizeFirstLetter(as->remotePart.typeName)
-                << "Statement->reset();" << endl << getIndent()
-                << "m_delete"
-                << capitalizeFirstLetter(as->remotePart.typeName)
-                << "Statement->reset();" << endl << getIndent()
-                << "m_select"
-                << capitalizeFirstLetter(as->remotePart.typeName)
-                << "Statement->reset();" << endl;
+                << "delete m_insert" << remPartSt << ";" << endl << getIndent()
+                << "delete m_delete" << remPartSt << ";" << endl << getIndent()
+                << "delete m_select" << remPartSt << ";" << endl;
     } else {
       if (as->type.multiLocal == MULT_ONE &&
           as->type.multiRemote != MULT_UNKNOWN &&
           !as->remotePart.abstract) {
         // 1 to * association
         *m_stream << getIndent()
-                  << "m_delete"
-                  << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "Statement->reset();" << endl << getIndent()
-                  << "m_select"
-                  << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "Statement->reset();" << endl
-                  << getIndent()
-                  << "m_remoteUpdate"
-                  << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "Statement->reset();" << endl;
+                  << "delete m_delete" << remPartSt << ";" << endl << getIndent()
+                  << "delete m_select" << remPartSt << ";" << endl << getIndent()
+                  << "delete m_remoteUpdate" << remPartSt << ";" << endl;
       }
       if (as->type.multiRemote == MULT_ONE) {
         // * to 1
         if (!as->remotePart.abstract) {
           *m_stream << getIndent()
-                    << "m_check"
+                    << "delete m_check"
                     << capitalizeFirstLetter(as->remotePart.typeName)
-                    << "ExistStatement->reset();" << endl;
+                    << "ExistStatement;" << endl;
         }
         *m_stream << getIndent()
-                  << "m_update"
+                  << "delete m_update"
                   << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "Statement->reset();" << endl;
+                  << "Statement;" << endl;
       }
     }
   }
