@@ -1,5 +1,5 @@
 DEV=$(CASTORDEV_HOME)/codeGeneration/gencastor
-UMBRELLOBASE=/usr/src/kdesdk-3.3.2
+UMBRELLOBASE=../kdesdk-3.3.2
 
 UMBRELLO=$(UMBRELLOBASE)/umbrello/umbrello
 UMBRELLOOBJBASE=$(UMBRELLOBASE)/obj-i386-linux
