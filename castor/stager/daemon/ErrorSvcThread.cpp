@@ -1,5 +1,5 @@
 /*
- * $Id: ErrorSvcThread.cpp,v 1.7 2005/05/13 10:10:34 sponcec3 Exp $
+ * $Id: ErrorSvcThread.cpp,v 1.8 2005/06/03 08:45:00 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.7 $ $Date: 2005/05/13 10:10:34 $ CERN IT-FIO/DS Sebastien Ponce";
+static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.8 $ $Date: 2005/06/03 08:45:00 $ CERN IT-FIO/DS Sebastien Ponce";
 #endif
 
 /* ================================================================= */
@@ -260,7 +260,7 @@ EXTERN_C int DLL_DECL stager_error_process(void *output) {
       // We both update the DB and check whether this was
       // the last subrequest of the request
       if (!stgSvc->updateAndCheckSubRequest(subReq)) {
-        if (0 != rr) {
+        if (0 == rr) {
           rr->sendEndResponse(client);
         }
       }
