@@ -1,3 +1,20 @@
+castor (2.0.0-39) unstable; urgency=low
+
+  * dlf/dlfquery/dlf_showmsg.mysql.php: added a choice box presentating all existing facilities
+  * test/rfio/dataSource.c: first version
+  * c++ interface: several fixes
+  * job: do not answer to client when putDone fails
+  * new tag: v2_0_0_39
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Fri,  3 Jun 2005 13:14:51 +0200
+
+castor (2.0.0-38) unstable; urgency=low
+
+  * Added StageMapFile and StageTypeFile constants
+  * Use SvcClass as a job feature instead of a job project name
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Mon, 30 May 2005 15:31:24 +0200
+
 castor (2.0.0-37) unstable; urgency=low
 
   * Better GCpolicy taking into account the number of accesses to a file, and not deleting files that were never accessed (pinning problem)
