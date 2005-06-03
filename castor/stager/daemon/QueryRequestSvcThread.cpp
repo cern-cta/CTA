@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.13 2005/05/19 15:53:38 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.14 2005/06/03 09:39:28 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.13 $ $Date: 2005/05/19 15:53:38 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.14 $ $Date: 2005/06/03 09:39:28 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -35,6 +35,7 @@ static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/InvalidArgument.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/replier/RequestReplier.hpp"
 #include "castor/stager/StageFileQueryRequest.hpp"
@@ -537,7 +538,6 @@ namespace castor {
               }
 
               // Get the SvcClass associated to the request
-              svcs->fillObj(&ad, uReq, castor::OBJ_SvcClass);
               castor::stager::SvcClass* svcClass = uReq->svcClass();
               if (0 == svcClass) {
                 castor::exception::Internal e;
@@ -704,6 +704,7 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
   castor::stager::Request* req = 0;
   castor::Services *svcs = 0;
   castor::query::IQuerySvc *qrySvc = 0;
+  castor::stager::IStagerSvc *stgSvc;
   castor::IClient *client = 0;
 
   /* Setting the address to access Oracle */
@@ -721,6 +722,8 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
     castor::IService* svc =
       svcs->service("OraQuerySvc", castor::SVC_ORAQUERYSVC);
     qrySvc = dynamic_cast<castor::query::IQuerySvc*>(svc);
+    svc = svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
+    stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
 
     /* Casting the request */
     /* ------------------- */
@@ -753,6 +756,26 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
     //     }
     svcs->fillObj(&ad, req, castor::OBJ_QueryParameter);
 
+    /* Getting the svcClass */
+    /* -------------------- */
+    STAGER_LOG_VERBOSE(NULL, "Getting query's className");
+    std::string className = req->svcClassName();
+    if ("" == className) {
+      STAGER_LOG_DEBUG(NULL,"No className - using \"default\"");
+      className = "default";
+    }
+    castor::stager::SvcClass* svcClass = stgSvc->selectSvcClass(className);
+    if (0 == svcClass) {
+      castor::exception::InvalidArgument e;
+      e.getMessage() << "Invalid className : " << className;
+      throw e;
+    }
+
+    /* Filling SvcClass in the DataBase */
+    /* -------------------------------- */
+    req->setSvcClass(svcClass);
+    svcs->fillRep(&ad, req, castor::OBJ_SvcClass, true);
+    
   } catch (castor::exception::Exception e) {
     // If we fail here, we do NOT have enough information to
     // reply to the client !
@@ -800,5 +823,6 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
   // Cleanup
   if (req) delete req;
   if (qrySvc) qrySvc->release();
+  if (stgSvc) stgSvc->release();
   STAGER_LOG_RETURN(serrno == 0 ? 0 : -1);
 }
