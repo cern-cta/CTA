@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.25 2005/05/12 12:45:52 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.26 2005/06/06 14:13:06 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.25 $ $Date: 2005/05/12 12:45:52 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.26 $ $Date: 2005/06/06 14:13:06 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -784,7 +784,7 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
     serrno = EINVAL;
     std::ostringstream oss;
     oss << "Unknown Request type : "
-	<< castor::ObjectsIdStrings[req->type()];
+        << castor::ObjectsIdStrings[req->type()];
     STAGER_LOG_DB_ERROR(NULL,"stager_job_select",
                         oss.str().c_str());
     // Inform client
@@ -797,9 +797,7 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
   }
 
   // Delete Request From the database
-  if (0 == serrno) {
-    svcs->deleteRep(&ad, req, true);
-  }
+  svcs->deleteRep(&ad, req, true);
 
   // Cleanup
   if (req) delete req;
