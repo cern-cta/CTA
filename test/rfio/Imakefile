@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Date: 2004/06/09 16:10:44 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.12 $ $Date: 2005/06/06 16:48:37 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand
 COMM
 COMM  Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -31,7 +31,7 @@ LIBS = -L../../lib -lshift
 PROGSUNIX = ProgramTargetName(mstat_test_fork)
 #endif
 
-PROGS = ProgramTargetName(tpreseek)  ProgramTargetName(tpreseek64) ProgramTargetName(mstat_test_thread) $(PROGSUNIX) ProgramTargetName(munlink_test) ProgramTargetName(mstat_test_sequential) ProgramTargetName(msymlink_test) ProgramTargetName(stat_test) ProgramTargetName(mstat_test) ProgramTargetName(unlink_test) ProgramTargetName(symlink_test) ProgramTargetName(fxxx_test) ProgramTargetName(xxx_test) ProgramTargetName(regression_tests) ProgramTargetName(test_longpaths)
+PROGS = ProgramTargetName(tpreseek)  ProgramTargetName(tpreseek64) ProgramTargetName(mstat_test_thread) $(PROGSUNIX) ProgramTargetName(munlink_test) ProgramTargetName(mstat_test_sequential) ProgramTargetName(msymlink_test) ProgramTargetName(stat_test) ProgramTargetName(mstat_test) ProgramTargetName(unlink_test) ProgramTargetName(symlink_test) ProgramTargetName(fxxx_test) ProgramTargetName(xxx_test) ProgramTargetName(regression_tests) ProgramTargetName(test_longpaths) ProgramTargetName(dataSource) ProgramTargetName(parallelFileAccess)
 
 CFLAGS = -I$(INCLUDES) $(MTCCFLAGS)
 LDFLAGS = $(MTLDFLAGS)
@@ -57,6 +57,8 @@ NormalProgramTarget(fxxx_test,fxxx_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
 NormalProgramTarget(xxx_test,xxx_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
 NormalProgramTarget(regression_tests,regression_tests.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
 NormalProgramTarget(test_longpaths,test_longpaths.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
+NormalProgramTarget(dataSource,dataSource.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
+NormalProgramTarget(parallelFileAccess,parallelFileAccess.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
 
 MakeDepLibrary(FileName(..,lib),shift)
 
