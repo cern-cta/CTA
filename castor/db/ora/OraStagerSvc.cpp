@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.166 $ $Release$ $Date: 2005/06/06 13:58:41 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.167 $ $Release$ $Date: 2005/06/06 14:02:11 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -2683,7 +2683,7 @@ void castor::db::ora::OraStagerSvc::getUpdateFailed
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Unable to clean Get/Update subRequest :"
+      << "Unable to mark subRequest as FAILED :"
       << std::endl << e.getMessage();
     throw ex;
   }
@@ -2709,7 +2709,7 @@ void castor::db::ora::OraStagerSvc::putFailed
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Unable to clean Get/Update subRequest :"
+      << "Unable to clean Put subRequest :"
       << std::endl << e.getMessage();
     throw ex;
   }
@@ -2735,7 +2735,7 @@ void castor::db::ora::OraStagerSvc::archiveSubReq
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Unable to clean Get/Update subRequest :"
+      << "Unable to archive subRequest :"
       << std::endl << e.getMessage();
     throw ex;
   }
