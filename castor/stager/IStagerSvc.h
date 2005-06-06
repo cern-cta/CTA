@@ -861,6 +861,21 @@ int Cstager_IStagerSvc_putFailed
 (struct Cstager_IStagerSvc_t* stgSvc,
  u_signed64 subReqId);
 
+/**
+ * Archives a SubRequest
+ * The SubRequest and potentially the corresponding
+ * Request will thus be removed from the DataBase
+ * @param stgSvc the IStagerSvc used
+ * @param subReqId the id of the SubRequest to archive
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_archiveSubReq
+(struct Cstager_IStagerSvc_t* stgSvc,
+ u_signed64 subReqId);
+
 /*
  * Get an array of segments that are in SEGMENT_FAILED
  * status. This method does not take any lock on the segments

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.50 $ $Release$ $Date: 2005/05/07 10:04:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.51 $ $Release$ $Date: 2005/06/06 13:58:42 $ $Author: sponcec3 $
  *
  *
  *
@@ -777,6 +777,23 @@ extern "C" {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       stgSvc->stgSvc->putFailed(subReqId);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_archiveSubReq
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_archiveSubReq
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   u_signed64 subReqId) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      stgSvc->stgSvc->archiveSubReq(subReqId);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

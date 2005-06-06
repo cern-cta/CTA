@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.165 $ $Release$ $Date: 2005/05/18 08:44:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.166 $ $Release$ $Date: 2005/06/06 13:58:41 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -242,6 +242,10 @@ const std::string castor::db::ora::OraStagerSvc::s_getUpdateFailedStatementStrin
 const std::string castor::db::ora::OraStagerSvc::s_putFailedStatementString =
   "BEGIN putFailedProc(:1); END;";
 
+/// SQL statement for archiveSubReq
+const std::string castor::db::ora::OraStagerSvc::s_archiveSubReqStatementString =
+  "BEGIN archiveSubReq(:1); END;";
+
 /// SQL statement for failedSegments
 const std::string castor::db::ora::OraStagerSvc::s_failedSegmentsStatementString =
   "BEGIN failedSegments(:1); END;";
@@ -294,6 +298,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_getUpdateDoneStatement(0),
   m_getUpdateFailedStatement(0),
   m_putFailedStatement(0),
+  m_archiveSubReqStatement(0),
   m_failedSegmentsStatement(0),
   m_stageRmStatement(0) {
 }
@@ -365,6 +370,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_getUpdateDoneStatement);
     deleteStatement(m_getUpdateFailedStatement);
     deleteStatement(m_putFailedStatement);
+    deleteStatement(m_archiveSubReqStatement);
     deleteStatement(m_failedSegmentsStatement);
     deleteStatement(m_stageRmStatement);
   } catch (oracle::occi::SQLException e) {};
@@ -408,6 +414,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_getUpdateDoneStatement = 0;
   m_getUpdateFailedStatement = 0;
   m_putFailedStatement = 0;
+  m_archiveSubReqStatement = 0;
   m_failedSegmentsStatement = 0;
   m_stageRmStatement = 0;
 }
@@ -2699,6 +2706,32 @@ void castor::db::ora::OraStagerSvc::putFailed
   try {
     m_putFailedStatement->setDouble(1, subReqId);
     m_putFailedStatement->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to clean Get/Update subRequest :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// archiveSubReq
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::archiveSubReq
+(u_signed64 subReqId)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_archiveSubReqStatement) {
+    m_archiveSubReqStatement =
+      createStatement(s_archiveSubReqStatementString);
+    m_archiveSubReqStatement->setAutoCommit(true);
+  }
+  // Execute statement and get result
+  unsigned long id;
+  try {
+    m_archiveSubReqStatement->setDouble(1, subReqId);
+    m_archiveSubReqStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()

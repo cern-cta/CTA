@@ -517,18 +517,18 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-	 * Updates a SubRequest status in the DB, including
-	 * the answered flag that is set to 1 and tells
-	 * whether the request to which it belongs still
-	 * has some other SubRequests that were not processed.
-	 * By not processed we mean that their "answered" flag
-	 * is not set AND their status is neither READY neither
-	 * FINISHED nor one of the FAILED* status.
-	 * The two operations are executed atomically.
-	 * The update is commited before returning.
-	 * This method should only be called when the calling
-	 * process is answering to the client. In other cases,
-	 * the updateRep method should be used.
+         * Updates a SubRequest status in the DB, including
+         * the answered flag that is set to 1 and tells
+         * whether the request to which it belongs still
+         * has some other SubRequests that were not processed.
+         * By not processed we mean that their "answered" flag
+         * is not set AND their status is neither READY neither
+         * FINISHED nor one of the FAILED* status.
+         * The two operations are executed atomically.
+         * The update is commited before returning.
+         * This method should only be called when the calling
+         * process is answering to the client. In other cases,
+         * the updateRep method should be used.
          * @param subreq the SubRequest to update
          * @return whether there are still SubRequests in
          * SUBREQUEST_START status within the same request
@@ -739,6 +739,15 @@ namespace castor {
          * @param subReqId the id of the failing SubRequest
          */
         virtual void putFailed(u_signed64 subReqId)
+          throw (castor::exception::Exception);
+
+        /**
+         * Archives a SubRequest
+         * The SubRequest and potentially the corresponding
+         * Request will thus be removed from the DataBase
+         * @param subReqId the id of the SubRequest to archive
+         */
+        virtual void archiveSubReq(u_signed64 subReqId)
           throw (castor::exception::Exception);
 
         /*
@@ -1028,6 +1037,12 @@ namespace castor {
 
         /// SQL statement object for function putFailed
         oracle::occi::Statement *m_putFailedStatement;
+
+        /// SQL statement for function archiveSubReq
+        static const std::string s_archiveSubReqStatementString;
+
+        /// SQL statement object for function archiveSubReq
+        oracle::occi::Statement *m_archiveSubReqStatement;
 
         /// SQL statement for function failedSegments
         static const std::string s_failedSegmentsStatementString;
