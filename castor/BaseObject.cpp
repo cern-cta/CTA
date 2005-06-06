@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/12/16 18:29:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2005/06/06 16:41:36 $ $Author: jdurand $
  *
  * 
  *
@@ -118,9 +118,10 @@ void castor::BaseObject::initLog(std::string name,
   throw() {
   Cmutex_lock(&s_msgSvcId, -1);
   // Nothing to do if already called
-  if (0 != s_msgSvcId) return;
-  s_msgSvcName = name;
-  s_msgSvcId = id;
+  if (0 == s_msgSvcId) {
+    s_msgSvcName = name;
+    s_msgSvcId = id;
+  }
   Cmutex_unlock(&s_msgSvcId);
 }
 
