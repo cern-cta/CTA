@@ -177,6 +177,15 @@ void castor::vdqm::OldVdqmProtocol::handleRequestType(Cuuid_t cuuid)
 //            }
 //        }
         break;
+    case VDQM_PING:
+    		// Handle VDQM_PING
+    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 25);
+    		
+    		{
+    			TapeRequestHandler requestHandler;
+					requestHandler.getQueuePosition(ptr_volumeRequest, cuuid); 
+    		}
+    		break;
   	default:
   			castor::exception::NotSupported ex;
 		    ex.getMessage() << "Invalid Request 0x"

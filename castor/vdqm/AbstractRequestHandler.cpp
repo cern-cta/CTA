@@ -29,6 +29,7 @@
 #include "castor/BaseAddress.hpp"
 #include "castor/Constants.hpp"
 #include "castor/Services.hpp"
+#include "castor/IService.hpp"
 
 #include "castor/exception/Exception.hpp"
  
@@ -41,7 +42,48 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::vdqm::AbstractRequestHandler::AbstractRequestHandler() {}
+castor::vdqm::AbstractRequestHandler::AbstractRequestHandler() 
+	throw() {
+
+  castor::IService* ptr_svc;
+
+  /**
+   * The IVdqmService Objects has some important fuctions
+   * to handle db queries.
+   */
+  //TODO: ptr_IVdqmService instanziieren!!!
+  
+  ptr_svcs = services();
+	
+	/**
+	 * Getting OraVdqmService
+	 */
+//	svc = ptr_svcs->service("OraVdqmSvc", castor::SVC_ORAVDQMSVC);
+//  if (0 == svc) {
+//    castor::exception::Internal ex;
+//    ex.getMessage() << "Could not get OraVdqmSvc" << std::endl;
+//    throw ex;
+//  }
+  
+//  ptr_IVdqmService = dynamic_cast<castor::stager::IVdqmSvc*>(svc);
+//  if (0 == ptr_IVdqmService) {
+//    castor::exception::Internal ex;
+//    ex.getMessage() << "Got a bad OraVdqmSvc: "
+//    								<< "ID=" << svc->id()
+//    								<< ", Name=" << svc->name()
+//    								<< std::endl;
+//    throw ex;
+//  }
+}
+
+
+//------------------------------------------------------------------------------
+// Destructor
+//------------------------------------------------------------------------------
+castor::vdqm::AbstractRequestHandler::~AbstractRequestHandler() 
+	throw() {
+//	ptr_IVdqmService->release();
+}
 
 
 //------------------------------------------------------------------------------

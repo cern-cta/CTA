@@ -126,7 +126,7 @@ castor::vdqm::VdqmServer::VdqmServer() :
      {22, "Handle VDQM_DEL_DRVREQ"},
      {23, "The parameters of the old vdqm VolReq Request"},
      {24, "Request priority changed"},
-     {25, "test Check"},
+     {25, "Handle VDQM_PING"},
      {-1, ""}};
   castor::dlf::dlf_init("VdqmLog", messages);
 }

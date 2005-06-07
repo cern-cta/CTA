@@ -172,7 +172,8 @@ castor::IObject* castor::vdqm::VdqmServerSocket::readObject()
 unsigned int castor::vdqm::VdqmServerSocket::readMagicNumber()
 	throw (castor::exception::Exception) {
   
-	char* buffer;
+	char buffer[sizeof(unsigned int)];
+	char* dummy;
   int magic;
   
   // Read the magic number from the socket
@@ -202,7 +203,8 @@ unsigned int castor::vdqm::VdqmServerSocket::readMagicNumber()
     }
   }
   
-  DO_MARSHALL(LONG, buffer, magic, ReceiveFrom);
+  dummy = buffer;
+  DO_MARSHALL(LONG, dummy, magic, ReceiveFrom);
   
   return magic;
 }

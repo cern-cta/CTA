@@ -33,22 +33,31 @@
 namespace castor {
 	//Forward declaration
 	class IObject;
+	class Services;
 	
   namespace vdqm {
+  	
+  	//Forward declaration
+  	class IVdqmSvc;
 
     /**
      * The AbstractRequestHandler provides a set of useful functions for
      * concrete request instances.
      */
-    class AbstractRequestHandler : public BaseObject {
+    class AbstractRequestHandler : public castor::BaseObject {
 
     	public:
 	      
 	      /**
 	       * Constructor
 	       */
-	      AbstractRequestHandler();
+	      AbstractRequestHandler() throw();
 	      
+	      /**
+	       * Destructor
+	       */
+				virtual ~AbstractRequestHandler() throw();
+				
     		
 				/**
 				 * Returns the next request from the database
@@ -56,7 +65,11 @@ namespace castor {
 				virtual castor::IObject *getRequest() 
 						throw (castor::exception::Exception) = 0;
 						
+						
 			protected:
+				//The IServices for vdqm
+				castor::Services* ptr_svcs;
+			  castor::vdqm::IVdqmSvc* ptr_IVdqmService;
 			
 				/**
 	       * Stores the IObject into the data base.

@@ -68,18 +68,20 @@ namespace castor {
 	    		
 	    	/**
 	    	 * Looks in the data base for the TapeServer, which has exactly 
-	    	 * this name
+	    	 * this name. If there is no entry in the db table with this parameters,
+	    	 * the return value is NULL
 	    	 * @parameter serverName The name of the tape server, which is beeing requested
-	    	 * @return The object representation of the table entry
+	    	 * @return The object representation of the table entry or NULL
 	    	 * @exception in case of error
 	    	 */
-	    	virtual TapeServer* getTapeServer(const std::string serverName)
+	    	virtual TapeServer* selectTapeServer(const std::string serverName)
 	    		throw (castor::exception::Exception) = 0;
 	    		
 	    		
 	    	/**
-	    	 * Verifies, that the request doesn't (yet) exist.
-	    	 * The requested Extended device group can be different.
+	    	 * Checks, if there is already an entry for that tapeRequest. The entry
+	    	 * must have exactly these parameters. Only the assoziation to the
+	    	 * tapeDrive is not checked.
 	    	 * @return true, if there is already an entry for the request 
 	    	 * @exception in case of error
 	    	 */
@@ -98,7 +100,7 @@ namespace castor {
 	    	 * @return the free TapeDrive or NULL if there is none.
 	    	 * @exception in case of error
 	    	 */	
-	    	virtual TapeDrive* getFreeTapeDrive(const ExtendedDeviceGroup *extDevGrp) 
+	    	virtual TapeDrive* selectFreeTapeDrive(const ExtendedDeviceGroup *extDevGrp) 
 	    		throw (castor::exception::Exception) = 0;
 
     }; // end of class IVdqmSvc

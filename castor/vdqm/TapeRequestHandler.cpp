@@ -27,12 +27,10 @@
 #include <string> 
 #include <time.h>
  
-#include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 
 #include "castor/stager/ClientIdentification.hpp"
-#include "castor/stager/IStagerSvc.hpp"
 #include "castor/stager/Tape.hpp"
 
 #include "castor/IObject.hpp"
@@ -54,6 +52,7 @@
 #include "TapeRequest.hpp"
 #include "IVdqmSvc.hpp"
 #include "TapeServer.hpp"
+#include "AbstractRequestHandler.hpp"
 
 
  
@@ -61,8 +60,39 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::vdqm::TapeRequestHandler::TapeRequestHandler() {}
+castor::vdqm::TapeRequestHandler::TapeRequestHandler() throw() :
+	AbstractRequestHandler() {
+		
+	castor::IService* svc;
+	
+	/**
+	 * Getting OraStagerService
+	 */
+	svc = ptr_svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
+  if (0 == svc) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Could not get OraStagerSvc" << std::endl;
+    throw ex;
+  }				
+  
+	ptr_IStagerService = dynamic_cast<castor::stager::IStagerSvc*>(svc);
+  if (0 == ptr_IStagerService) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Got a bad OraStagerSvc: "
+    								<< "ID=" << svc->id()
+    								<< ", Name=" << svc->name()
+    								<< std::endl;
+    throw ex;
+  }
+}
 
+
+//------------------------------------------------------------------------------
+// Destructor
+//------------------------------------------------------------------------------
+castor::vdqm::TapeRequestHandler::~TapeRequestHandler() throw() {
+	ptr_IStagerService->release();
+}
 
 //------------------------------------------------------------------------------
 // newTapeRequest
@@ -80,12 +110,6 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
   castor::vdqm::TapeServer *reqTapeServer = NULL;
   castor::vdqm::ExtendedDeviceGroup *reqExtDevGrp = NULL;
   
-  //The IService for vdqm
-  castor::Services *svcs;
-  castor::IService* svc;
-  castor::vdqm::IVdqmSvc *ptr_IVdqmService;
-  castor::stager::IStagerSvc *ptr_IStagerService;
-  
   bool exist = false;  
   char 					*p;
 
@@ -93,55 +117,6 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 	if ( header == NULL || volumeRequest == NULL ) {
   	castor::exception::InvalidArgument ex;
     ex.getMessage() << "One of the arguments is NULL";
-    throw ex;
-  }
-  
-  /**
-   * The IVdqmService Objects has some important fuctions
-   * to handle db queries.
-   */
-  //TODO: ptr_IVdqmService instanziieren!!!
-  
-  svcs = castor::BaseObject::services();
-	
-	/**
-	 * Getting OraVdqmService
-	 */
-//	svc = svcs->service("OraVdqmSvc", castor::SVC_ORAVDQMSVC);
-//  if (0 == svc) {
-//    castor::exception::Internal ex;
-//    ex.getMessage() << "Could not get OraVdqmSvc" << std::endl;
-//    throw ex;
-//  }
-  
-//  ptr_IVdqmService = dynamic_cast<castor::stager::IVdqmSvc*>(svc);
-//  if (0 == ptr_IVdqmService) {
-//    castor::exception::Internal ex;
-//    ex.getMessage() << "Got a bad OraVdqmSvc: "
-//    								<< "ID=" << svc->id()
-//    								<< ", Name=" << svc->name()
-//    								<< std::endl;
-//    throw ex;
-//  }
-	
-	
-	/**
-	 * Getting OraStagerService
-	 */
-	svc = svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
-  if (0 == svc) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Could not get OraStagerSvc" << std::endl;
-    throw ex;
-  }				
-  
-	ptr_IStagerService = dynamic_cast<castor::stager::IStagerSvc*>(svc);
-  if (0 == ptr_IStagerService) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Got a bad OraStagerSvc: "
-    								<< "ID=" << svc->id()
-    								<< ", Name=" << svc->name()
-    								<< std::endl;
     throw ex;
   }
   
@@ -170,10 +145,6 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 	   */
 	 	newTapeReq->setPriority(VDQM_PRIORITY_NORMAL);
 	 	
-//	 	  castor::dlf::Param test[] =
-//  	{castor::dlf::Param("Ckeck", 1)};
-//	 	castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 25, 1, test);
-	 	
 	 	//The client related informations
 	 	clientData = new castor::stager::ClientIdentification();
 	 	clientData->setMachine(volumeRequest->client_host);
@@ -193,10 +164,6 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 	 																				0, 
 	 																				volumeRequest->mode);
 	 																				
-// 	  castor::dlf::Param test2[] =
-//  	{castor::dlf::Param("Ckeck", 2)};
-//	 	castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 25, 1, test2);
-	 
 	  //The requested ExtendedDeviceGroup
 	  reqExtDevGrp = new ExtendedDeviceGroup();
 	  reqExtDevGrp->setDgName(volumeRequest->dgn);
@@ -324,6 +291,148 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
   
     throw e;
   }
+}
+
+
+//------------------------------------------------------------------------------
+// getQueuePosition
+//------------------------------------------------------------------------------
+void castor::vdqm::TapeRequestHandler::getQueuePosition(
+																									vdqmVolReq_t *volumeRequest,
+																									Cuuid_t cuuid) 
+	throw (castor::exception::Exception) {
+		
+//  dgn_element_t *dgn_context;
+//  vdqm_volrec_t *volrec;
+//  int rc;
+//  
+//  //The IServices for vdqm
+//  castor::Services *svcs;
+//  castor::IService* svc;
+//  castor::vdqm::IVdqmSvc *ptr_IVdqmService;
+//  castor::stager::IStagerSvc *ptr_IStagerService;
+//  
+//  
+//  if ( volumeRequest == NULL ) {
+//  	castor::exception::InvalidArgument ex;
+//    ex.getMessage() << "volumeRequest is NULL";
+//    throw ex;
+//  }
+//  
+//  
+//    /**
+//   * The IVdqmService Objects has some important fuctions
+//   * to handle db queries.
+//   */
+//  //TODO: ptr_IVdqmService instanziieren!!!
+//  
+//  svcs = castor::BaseObject::services();
+//	
+//	/**
+//	 * Getting OraVdqmService
+//	 */
+////	svc = svcs->service("OraVdqmSvc", castor::SVC_ORAVDQMSVC);
+////  if (0 == svc) {
+////    castor::exception::Internal ex;
+////    ex.getMessage() << "Could not get OraVdqmSvc" << std::endl;
+////    throw ex;
+////  }
+//  
+////  ptr_IVdqmService = dynamic_cast<castor::stager::IVdqmSvc*>(svc);
+////  if (0 == ptr_IVdqmService) {
+////    castor::exception::Internal ex;
+////    ex.getMessage() << "Got a bad OraVdqmSvc: "
+////    								<< "ID=" << svc->id()
+////    								<< ", Name=" << svc->name()
+////    								<< std::endl;
+////    throw ex;
+////  }
+//	
+//	
+//	/**
+//	 * Getting OraStagerService
+//	 */
+//	svc = svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
+//  if (0 == svc) {
+//    castor::exception::Internal ex;
+//    ex.getMessage() << "Could not get OraStagerSvc" << std::endl;
+//    throw ex;
+//  }				
+//  
+//	ptr_IStagerService = dynamic_cast<castor::stager::IStagerSvc*>(svc);
+//  if (0 == ptr_IStagerService) {
+//    castor::exception::Internal ex;
+//    ex.getMessage() << "Got a bad OraStagerSvc: "
+//    								<< "ID=" << svc->id()
+//    								<< ", Name=" << svc->name()
+//    								<< std::endl;
+//    throw ex;
+//  }
+//  
+//  
+//  //The parameters of the old vdqm VolReq Request
+//  castor::dlf::Param params[] =
+//  	{castor::dlf::Param("client_name", volumeRequest->client_name),
+//     castor::dlf::Param("clientUID", volumeRequest->clientUID),
+//     castor::dlf::Param("clientGID", volumeRequest->clientGID),
+//     castor::dlf::Param("client_host", volumeRequest->client_host),
+//     castor::dlf::Param("client_port", volumeRequest->client_port),
+//     castor::dlf::Param("volid", volumeRequest->volid),
+//     castor::dlf::Param("mode", volumeRequest->mode),
+//     castor::dlf::Param("dgn", volumeRequest->dgn),
+//     castor::dlf::Param("drive", (*volumeRequest->drive == '\0' ? "***" : volumeRequest->drive)),
+//     castor::dlf::Param("server", (*volumeRequest->server == '\0' ? "***" : volumeRequest->server))};
+//  castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 23, 10, params);
+//  
+//  
+//  try {
+//	  /*
+//	   * Check that the requested device exists.
+//	   */
+////  	exist = ptr_IVdqmService->checkExtDevGroup(reqExtDevGrp);
+//  	
+////    if ( !exist ) {
+////	  	castor::exception::Internal ex;
+////	    ex.getMessage() << "DGN " <<  volumeRequest->dgn
+////	    								<< " does not exist" << std::endl;
+////	    throw ex;
+////	  }
+//
+//		
+//  } catch (){}
+//  /*
+//   * Set Device Group Name context. First check that DGN exists.
+//   */
+//   
+//   
+//  rc = CheckDgn(volumeRequest->dgn);
+//  if ( rc == -1 ) return(-1);
+//  if ( rc == 0 ) {
+//      vdqm_SetError(EVQDGNINVL);
+//      return(-1);
+//  }
+//  rc = SetDgnContext(&dgn_context,volumeRequest->dgn);
+//  if ( rc == -1 ) return(-1);
+//  
+//  /*
+//   * Verify that the request exists
+//   */
+//  volrec = NULL;
+//  rc = GetVolRecord(dgn_context,volumeRequest,&volrec);
+//  if ( volrec == NULL ) {
+//      log(LOG_ERR,"vdqm_GetQueuePos() request VolReqID=%d, dgn=%s not found\n",
+//          volumeRequest->VolReqID,volumeRequest->dgn);
+//      FreeDgnContext(&dgn_context);
+//      vdqm_SetError(EVQNOSVOL);
+//      return(-1);
+//  }
+//  rc = VolRecQueuePos(dgn_context,volrec);
+//  /* 
+//   * No update
+//   */
+//  volrec->update = 0;
+//  FreeDgnContext(&dgn_context);
+//  return(rc);
 }
 
 

@@ -29,6 +29,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "AbstractRequestHandler.hpp"
+#include "castor/stager/IStagerSvc.hpp"
 
 typedef struct vdqmHdr vdqmHdr_t;
 typedef struct vdqmVolReq vdqmVolReq_t;
@@ -50,13 +51,24 @@ namespace castor {
 	      /**
 	       * Constructor
 	       */
-				TapeRequestHandler();
+				TapeRequestHandler() throw();
+				
+	      /**
+	       * Destructor
+	       */
+				virtual ~TapeRequestHandler() throw();
 				
 				/**
-				 * This function replaces the old vdqm_NewVolReq C-function. It stores
+				 * This function replaces the old vdqm_NewVolReq() C-function. It stores
 				 * the request into the data Base
 				 */
 				void newTapeRequest(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq, Cuuid_t cuuid) 
+					throw (castor::exception::Exception);
+					
+				/**
+				 * This function replaces the old vdqm_GetQueuePos() C-function.
+				 */
+				void getQueuePosition(vdqmVolReq_t *VolReq, Cuuid_t cuuid) 
 					throw (castor::exception::Exception);
 					
 				/**
@@ -67,6 +79,10 @@ namespace castor {
 	       
 			
 			private:
+				//The pointer to the IStagerService
+			  castor::stager::IStagerSvc* ptr_IStagerService;
+
+
      		/**
      		 * This method is used to look, if they are free drives for the queued
      		 * tape requests. 
