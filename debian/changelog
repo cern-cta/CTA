@@ -1,3 +1,15 @@
+castor (2.0.0-40) unstable; urgency=low
+
+  * Fixed putFailedProc where a variable name was the name of a table column
+  * Support debug mode for "rootd" in job
+  * Check if we are an end-point (no mover) in any case in job
+  * Do not answer to client when a putDone is not successful after the call to stored procedure (stager error service should take care of that) in job
+  * Check request type before using it (side effect: putDone on prepareToPut jobs had no source) in stager db service
+  * Reject putDone's if there was no put in stager db service
+  * Cleanup internal requests, even when thay fail in stager job service
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Tue,  7 Jun 2005 16:50:44 +0200
+
 castor (2.0.0-39) unstable; urgency=low
 
   * dlf/dlfquery/dlf_showmsg.mysql.php: added a choice box presentating all existing facilities
