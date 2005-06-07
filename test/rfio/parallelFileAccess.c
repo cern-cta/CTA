@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.1 $ $Release$ $Date: 2005/06/06 16:48:14 $ $Author: obarring $
+ * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/06/07 08:14:20 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.1 $ $Date: 2005/06/06 16:48:14 $ CERN IT/FIO Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.2 $ $Date: 2005/06/07 08:14:20 $ CERN IT/FIO Olof Barring";
 #endif /* lint */
 
 
@@ -397,7 +397,7 @@ int main(
       break;
     case DumpFile:
       dumpFileName = strdup(Coptarg);
-      dumpfp = fopen(dumpFileName,"w");      
+      dumpfp = fopen(dumpFileName,"a+");      
       break;
     case LogFile:
       logfile = strdup(Coptarg);
