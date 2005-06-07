@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.17 2005/05/25 12:47:02 jdurand Exp $
+# $Id: maketar.sh,v 1.18 2005/06/07 15:20:47 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -119,11 +119,18 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     echo "Summary: Cern Advanced mass STORage" >> CASTOR.spec
     echo "Group: Application/Castor" >> CASTOR.spec
     #
-    ## Try to convert dependencies
+    ## Get requires
     #
     requires=`cat debian/control | perl -e '$package=shift; while (<>) {chomp($this .= " " . $_)}; $this =~ s/.*Package: $package //g; $this =~ s/Description:.*//g; $this =~ /Depends:.*},.*},(.*)/;print "$1\n"' $package | sed 's/ //g'`
     if [ -n "${requires}" ]; then
 	echo "Requires: ${requires}" >> CASTOR.spec
+    fi
+    #
+    ## Get provides
+    #
+    provides=`cat debian/control | perl -e '$package=shift; while (<>) {chomp($this .= " " . $_)}; $this =~ s/.*Package: $package //g; $this =~ s/Description:.*//g; $this =~ /Provides: ([^ ]+) /;print "$1\n"' $package | sed 's/ //g'`
+    if [ -n "${provides}" ]; then
+	echo "Provides: ${provides}" >> CASTOR.spec
     fi
     #
     ## Get description
