@@ -13,6 +13,7 @@ Name: %{name}
 Version: %{version}
 Release: %{release}
 Source0: %{name}-%{version}.tar.gz
+Provides: libshift.so
 URL: http://cern.ch/castor
 License: http://cern.ch/castor/DIST/CONDITIONS
 Group: Application/Castor
