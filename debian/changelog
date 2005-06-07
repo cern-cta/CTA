@@ -1,3 +1,10 @@
+castor (2.0.0-41) unstable; urgency=low
+
+  * Get Provides section from debian/control and put it in CASTOR.spec
+  * Support defaultSize with unit in modifySvcClass
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Tue,  7 Jun 2005 17:21:43 +0200
+
 castor (2.0.0-40) unstable; urgency=low
 
   * Fixed putFailedProc where a variable name was the name of a table column
