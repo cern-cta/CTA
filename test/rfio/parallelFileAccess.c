@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.4 $ $Release$ $Date: 2005/06/07 12:43:46 $ $Author: obarring $
+ * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.5 $ $Release$ $Date: 2005/06/07 13:07:24 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.4 $ $Date: 2005/06/07 12:43:46 $ CERN IT/FIO Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.5 $ $Date: 2005/06/07 13:07:24 $ CERN IT/FIO Olof Barring";
 #endif /* lint */
 
 
@@ -125,14 +125,17 @@ void usage(
 }
 
 void dumpTiming(
+                mode,
                 nbThreads
                 )
+     char *mode;
      int nbThreads;
 {
   int i;
   
   for (i=0; i<nbThreads; i++) {
-    fprintf(dumpfp,"%d.%6.6d %d.%6.6d %d.%6.6d %d.%6.6d %d.%6.6d ",
+    fprintf(dumpfp,"%s %d.%6.6d %d.%6.6d %d.%6.6d %d.%6.6d %d.%6.6d ",
+            mode,
             timingInfo[i].threadLaunchedTime.tv_sec,
             timingInfo[i].threadLaunchedTime.tv_usec,
             timingInfo[i].openEnterTime.tv_sec,
@@ -507,7 +510,7 @@ int main(
     return(1);
   }
   log(LOG_INFO,"All writer threads to returned\n");
-  dumpTiming(nbParallelOpens);
+  dumpTiming("WRITE",nbParallelOpens);
   startFlag = 0;
 
   /*
@@ -554,7 +557,7 @@ int main(
     return(1);
   }
   log(LOG_INFO,"All reader threads to returned\n");
-  dumpTiming(nbParallelOpens);
+  dumpTiming("READ",nbParallelOpens);
   startFlag = 0;
 
   fclose(dumpfp);
