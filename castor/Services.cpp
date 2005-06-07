@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2005/05/31 13:31:41 $ $Author: itglp $
+ * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2005/06/07 17:23:42 $ $Author: itglp $
  *
  *
  *
@@ -66,7 +66,7 @@ castor::IService* castor::Services::service(const std::string name,
         if(id2 == 0) id2 = id;
 
         // moreover check if a .so library has to be loaded
-        char* targetLib = getconfent("DynamicLib", (char*)castor::ServicesIdStrings[id], 0);
+        char* targetLib = getconfent("DynamicLib", (char*)castor::ServicesIdStrings[id2], 0);
         if(targetLib != 0) {
 #if !defined(_WIN32)
           //@todo store handle?
