@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.5 $ $Release$ $Date: 2005/06/07 13:07:24 $ $Author: obarring $
+ * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.6 $ $Release$ $Date: 2005/06/07 16:31:55 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.5 $ $Date: 2005/06/07 13:07:24 $ CERN IT/FIO Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.6 $ $Date: 2005/06/07 16:31:55 $ CERN IT/FIO Olof Barring";
 #endif /* lint */
 
 
@@ -40,6 +40,7 @@ static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.5 $ 
 #include <rfio.h>
 #include <serrno.h>
 #include <log.h>
+#include <stage_api.h>
 #include <Cuuid.h>
 #include <Cgetopt.h>
 #include <Cthread_api.h>
@@ -109,6 +110,12 @@ void *startFlagLock = NULL;
 #define LOG_ERROR(TXT) { \
   log(LOG_ERR,"Error: %s, serrno=%d, rfio_errno=%d, errno=%d, %s\n", \
           TXT,serrno,rfio_errno,errno,rfio_serror());}
+
+void log_callback(int level, char *msg) {
+  int logLevel = LOG_INFO;
+  if ( level == MSG_ERR ) logLevel = LOG_ERR;
+  log(logLevel,"STAGE API LOG MESSAGE:",msg);
+}
 
 void usage(
            cmd
@@ -426,6 +433,7 @@ int main(
       break;
     }
   }
+  stage_setlog(&log_callback);
   initlog(cmd,LOG_INFO,logfile);
   if ( help_flag != 0 || directoryName == NULL ) {
     if ( directoryName == NULL ) fprintf(stderr,"Directory name is required\n");
