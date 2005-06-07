@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.3 $ $Release$ $Date: 2005/05/31 13:39:40 $ $Author: obarring $
+ * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.4 $ $Release$ $Date: 2005/06/07 15:13:42 $ $Author: jdurand $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.3 $ $Release$ $Date: 2005/05/31 13:39:40 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.4 $ $Release$ $Date: 2005/06/07 15:13:42 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -432,7 +432,7 @@ int main(int argc, char *argv[])
       name = strdup(Coptarg);
       break;
     case DefaultFileSize:
-      defaultFileSize = strtou64(Coptarg);
+      defaultFileSize = strutou64(Coptarg);
       break;
     case MaxReplicaNb:
       maxReplicaNb = atoi(Coptarg);
