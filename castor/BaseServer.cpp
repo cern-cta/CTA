@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2005/04/05 14:25:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2005/06/07 16:20:49 $ $Author: sponcec3 $
  *
  *
  *
@@ -179,6 +179,7 @@ void castor::BaseServer::parseCommandLine(int argc, char *argv[]) {
     {
       {"foreground",         NO_ARGUMENT,        NULL,      'f'},
       {"st",         NO_ARGUMENT,        NULL,      's'},
+      {"nbThreads",         REQUIRED_ARGUMENT,        NULL,      'n'},
       {NULL,                 0,                  NULL,        0}
     };
 
@@ -193,6 +194,9 @@ void castor::BaseServer::parseCommandLine(int argc, char *argv[]) {
       break;
     case 's':
       m_singleThreaded = true;
+      break;
+    case 'n':
+      m_threadNumber = atoi(Coptarg);
       break;
     }
   }
