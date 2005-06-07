@@ -1312,12 +1312,25 @@ BEGIN
    WHERE id = subReqId;
 END;
 
-/* PL/SQL method implementing segmentsForTape */
-CREATE OR REPLACE PROCEDURE putFailedProc
-(subReqId IN NUMBER) AS
+/* PL/SQL method implementing putFailedProc */
+CREATE OR REPLACE PROCEDURE putFailedProc(srId IN NUMBER) AS
+  dcId INTEGER;
+  fsId INTEGER;
+  cfId INTEGER;
+  reservedSpace INTEGER;
 BEGIN
-  UPDATE SubRequest SET status = 7 -- FAILED
-   WHERE id = subReqId;
+  -- Set SubRequest in FAILED status
+  UPDATE SubRequest
+     SET status = 7 -- FAILED
+   WHERE id = srId
+  RETURNING diskCopy, xsize, castorFile
+    INTO dcId, reservedSpace, cfId;
+  SELECT fileSystem INTO fsId FROM DiskCopy WHERE id = dcId;
+  -- free reserved space
+  updateFsFileClosed(fsId, reservedSpace, 0);
+  -- Cleanup DiskCopy and CastorFile
+  DELETE FROM DiskCopy WHERE id = dcId;
+  DELETE FROM CastorFile WHERE id = cfId;
 END;
 
 /* PL/SQL method implementing failedSegments */
