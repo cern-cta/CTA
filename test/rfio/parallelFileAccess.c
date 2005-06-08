@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.6 $ $Release$ $Date: 2005/06/07 16:31:55 $ $Author: obarring $
+ * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.7 $ $Release$ $Date: 2005/06/08 10:29:40 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.6 $ $Date: 2005/06/07 16:31:55 $ CERN IT/FIO Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.7 $ $Date: 2005/06/08 10:29:40 $ CERN IT/FIO Olof Barring";
 #endif /* lint */
 
 
@@ -59,6 +59,7 @@ enum RunOptions
   LogFile,
   NbParallelOpens,
   NbBuffersToWrite,
+  NbLoops,
   SizeOfBuffer,
   DropConnection
 } runOptions;
@@ -71,6 +72,7 @@ static struct Coptions longopts[] =
   {"DumpFile",REQUIRED_ARGUMENT,0,DumpFile},
   {"LogFile",REQUIRED_ARGUMENT,0,LogFile},
   {"NbBuffersToWrite",REQUIRED_ARGUMENT,0,NbBuffersToWrite},
+  {"NbLoops",REQUIRED_ARGUMENT,0,NbLoops},
   {"SizeOfBuffer",REQUIRED_ARGUMENT,0,SizeOfBuffer},
   {"DropConnection",NO_ARGUMENT,&dropConnection,DropConnection},
   {NULL, 0, NULL, 0}
@@ -397,11 +399,12 @@ int main(
      int argc;
      char **argv;
 {
-  int ch, rc, nbParallelOpens = 1;
+  int ch, rc, nbParallelOpens = 1, nbLoops = 1, i;
   char *cmd, *directoryName = NULL, *dumpFileName, *logfile = "";
   Cuuid_t myCuuid;
   char myCuuidStr[50];
 
+  fclose(stdin);
   Coptind = 1;
   Copterr = 1;
   cmd = argv[0];
@@ -422,6 +425,9 @@ int main(
       break;
     case NbBuffersToWrite:
       nbBuffersToWrite = atoi(Coptarg);
+      break;
+    case NbLoops:
+      nbLoops = atoi(Coptarg);
       break;
     case SizeOfBuffer:
       sizeOfBuffer = atoi(Coptarg);
@@ -473,100 +479,103 @@ int main(
       return(1);
     }
   }
-  
-  /*
-   * Start the writer threads
-   */
-  log(LOG_INFO,"Start %d write threads\n",nbParallelOpens);
-  rc = startThreads(
-                    nbParallelOpens,
-                    fileWriteThread
-                    );
-  if ( rc == -1 ) {
-    LOG_ERROR("startThreads()");
-    return(1);
-  }
-  log(LOG_INFO,"All %d write threads started\n",nbParallelOpens);
 
-  /*
-   * Launch the 'open'
-   */
-  rc = Cthread_mutex_lock_ext(startFlagLock);
-  if ( rc == -1 ) {
-    LOG_ERROR("Cthread_mutex_lock_ext()");
-    return(1);
-  }
-
-  startFlag = 1;
-  log(LOG_INFO,"Send 'open' signal\n");
-  rc = Cthread_cond_broadcast_ext(startFlagLock);
-  if ( rc == -1 ) {
-    LOG_ERROR("Cthread_cond_broadcast_ext()");
-    return(1);
-  }
-
-  rc = Cthread_mutex_unlock_ext(startFlagLock);
-  if ( rc == -1 ) {
-    LOG_ERROR("Cthread_mutex_unlock_ext()");
-    return(1);
-  }
-
-  log(LOG_INFO,"Wait for all writer threads to return\n");
-  rc = waitAllThreads(nbParallelOpens);
-  if ( rc == -1 ) {
-    LOG_ERROR("waitAllThreads()");
-    return(1);
-  }
-  log(LOG_INFO,"All writer threads to returned\n");
-  dumpTiming("WRITE",nbParallelOpens);
-  startFlag = 0;
-
-  /*
-   * Start the reader threads
-   */
-  log(LOG_INFO,"Start %d read threads\n",nbParallelOpens);
-  rc = startThreads(
-                    nbParallelOpens,
-                    fileReadThread
-                    );
-  if ( rc == -1 ) {
-    LOG_ERROR("startThreads()");
-    return(1);
-  }
-  log(LOG_INFO,"All %d read threads started\n",nbParallelOpens);
-
-  /*
-   * Launch the 'open'
-   */
-  rc = Cthread_mutex_lock_ext(startFlagLock);
-  if ( rc == -1 ) {
-    LOG_ERROR("Cthread_mutex_lock_ext()");
-    return(1);
-  }
-
-  startFlag = 1;
-  log(LOG_INFO,"Send 'open' signal\n");
-  rc = Cthread_cond_broadcast_ext(startFlagLock);
-  if ( rc == -1 ) {
-    LOG_ERROR("Cthread_cond_broadcast_ext()");
-    return(1);
-  }
-
-  rc = Cthread_mutex_unlock_ext(startFlagLock);
-  if ( rc == -1 ) {
-    LOG_ERROR("Cthread_mutex_unlock_ext()");
-    return(1);
-  }
-
-  log(LOG_INFO,"Wait for all reader threads to return\n");
-  rc = waitAllThreads(nbParallelOpens);
-  if ( rc == -1 ) {
-    LOG_ERROR("waitAllThreads()");
-    return(1);
-  }
-  log(LOG_INFO,"All reader threads to returned\n");
-  dumpTiming("READ",nbParallelOpens);
-  startFlag = 0;
+  for ( i=0; i<nbLoops; i++ ) {
+    sprintf(baseFileName,"%s/%s_%6.6d",directoryName,myCuuidStr,i);
+    startFlag = 0;
+    /*
+     * Start the writer threads
+     */
+    log(LOG_INFO,"Start %d write threads\n",nbParallelOpens);
+    rc = startThreads(
+                      nbParallelOpens,
+                      fileWriteThread
+                      );
+    if ( rc == -1 ) {
+      LOG_ERROR("startThreads()");
+      return(1);
+    }
+    log(LOG_INFO,"All %d write threads started\n",nbParallelOpens);
+    
+    /*
+     * Launch the 'open'
+     */
+    rc = Cthread_mutex_lock_ext(startFlagLock);
+    if ( rc == -1 ) {
+      LOG_ERROR("Cthread_mutex_lock_ext()");
+      return(1);
+    }
+    
+    startFlag = 1;
+    log(LOG_INFO,"Send 'open' signal\n");
+    rc = Cthread_cond_broadcast_ext(startFlagLock);
+    if ( rc == -1 ) {
+      LOG_ERROR("Cthread_cond_broadcast_ext()");
+      return(1);
+    }
+    
+    rc = Cthread_mutex_unlock_ext(startFlagLock);
+    if ( rc == -1 ) {
+      LOG_ERROR("Cthread_mutex_unlock_ext()");
+      return(1);
+    }
+    
+    log(LOG_INFO,"Wait for all writer threads to return\n");
+    rc = waitAllThreads(nbParallelOpens);
+    if ( rc == -1 ) {
+      LOG_ERROR("waitAllThreads()");
+      return(1);
+    }
+    log(LOG_INFO,"All writer threads to returned\n");
+    dumpTiming("WRITE",nbParallelOpens);
+    startFlag = 0;
+    
+    /*
+     * Start the reader threads
+     */
+    log(LOG_INFO,"Start %d read threads\n",nbParallelOpens);
+    rc = startThreads(
+                      nbParallelOpens,
+                      fileReadThread
+                      );
+    if ( rc == -1 ) {
+      LOG_ERROR("startThreads()");
+      return(1);
+    }
+    log(LOG_INFO,"All %d read threads started\n",nbParallelOpens);
+    
+    /*
+     * Launch the 'open'
+     */
+    rc = Cthread_mutex_lock_ext(startFlagLock);
+    if ( rc == -1 ) {
+      LOG_ERROR("Cthread_mutex_lock_ext()");
+      return(1);
+    }
+    
+    startFlag = 1;
+    log(LOG_INFO,"Send 'open' signal\n");
+    rc = Cthread_cond_broadcast_ext(startFlagLock);
+    if ( rc == -1 ) {
+      LOG_ERROR("Cthread_cond_broadcast_ext()");
+      return(1);
+    }
+    
+    rc = Cthread_mutex_unlock_ext(startFlagLock);
+    if ( rc == -1 ) {
+      LOG_ERROR("Cthread_mutex_unlock_ext()");
+      return(1);
+    }
+    
+    log(LOG_INFO,"Wait for all reader threads to return\n");
+    rc = waitAllThreads(nbParallelOpens);
+    if ( rc == -1 ) {
+      LOG_ERROR("waitAllThreads()");
+      return(1);
+    }
+    log(LOG_INFO,"All reader threads to returned\n");
+    dumpTiming("READ",nbParallelOpens);
+  } /* for ( i=0; i<nbLoops; i++ ) */
 
   fclose(dumpfp);
     
