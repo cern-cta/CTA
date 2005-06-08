@@ -1335,10 +1335,26 @@ BEGIN
 END//
 
 /* MySQL method implementing putFailedProc */
-CREATE PROCEDURE putFailedProc(subReqId BIGINT)
+DROP PROCEDURE IF EXISTS putFailedProc//
+CREATE PROCEDURE putFailedProc(srId BIGINT)
 BEGIN
-  UPDATE SubRequest SET status = 7 -- FAILED
-   WHERE id = subReqId;
+DECLARE dcId BIGINT;
+DECLARE fsId BIGINT;
+DECLARE cfId BIGINT;
+DECLARE reservedSpace INTEGER;
+  -- Set SubRequest in FAILED status
+  UPDATE SubRequest
+     SET status = 7 -- FAILED
+   WHERE id = srId;
+  SELECT diskCopy, xsize, castorFile
+    INTO dcId, reservedSpace, cfId
+   WHERE id = srId;
+  SELECT fileSystem INTO fsId FROM DiskCopy WHERE id = dcId;
+  -- free reserved space
+  CALL updateFsFileClosed(fsId, reservedSpace, 0);
+  -- Cleanup DiskCopy and CastorFile
+  DELETE FROM DiskCopy WHERE id = dcId;
+  DELETE FROM CastorFile WHERE id = cfId;
 END//
 
 /* MySQL method implementing failedSegments */
