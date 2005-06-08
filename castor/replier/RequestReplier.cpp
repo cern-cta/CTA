@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2005/05/19 09:47:35 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2005/06/08 13:47:42 $ $Author: bcouturi $
  *
  *
  *
@@ -791,8 +791,8 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
   cr.isLast = isLastResponse;
 
   
-  clog() << SYSTEM << SETW func;
-  clog() << "Adding Response for " 
+  clog() << USAGE << SETW func
+	 << "Adding Response for " 
 	 << castor::ip << cr.client.ipAddress() << ":"
 	 << cr.client.port()
 	 << " to m_ClientQueue"
@@ -814,8 +814,8 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
 
     std::ostringstream buff;
 
-    clog() << SYSTEM << SETW func;
-    clog() << "Adding EndResponse for " 
+    clog() << USAGE << SETW func
+	   << "Adding EndResponse for " 
 	   << castor::ip << cr.client.ipAddress() << ":"
 	   << cr.client.port()
 	   << " to m_ClientQueue"
@@ -877,8 +877,8 @@ castor::replier::RequestReplier::sendEndResponse(castor::IClient *client)
   cr.client = *cl;
   cr.response = buffer;
   
-  clog() << SYSTEM << SETW func;
-  clog() << "Adding EndResponse for " 
+  clog() << USAGE << SETW func
+	 << "Adding EndResponse for " 
 	 << castor::ip << cr.client.ipAddress() << ":"
 	 << cr.client.port()
 	 << " to m_ClientQueue" << std::endl;
