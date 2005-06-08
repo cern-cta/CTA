@@ -60,8 +60,8 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::vdqm::TapeRequestHandler::TapeRequestHandler() throw() :
-	AbstractRequestHandler() {
+castor::vdqm::TapeRequestHandler::TapeRequestHandler() throw()
+{
 		
 	castor::IService* svc;
 	
@@ -92,6 +92,9 @@ castor::vdqm::TapeRequestHandler::TapeRequestHandler() throw() :
 //------------------------------------------------------------------------------
 castor::vdqm::TapeRequestHandler::~TapeRequestHandler() throw() {
 	ptr_IStagerService->release();
+	
+	//reset pointer
+	ptr_IStagerService = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -110,7 +113,8 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
   castor::vdqm::TapeServer *reqTapeServer = NULL;
   castor::vdqm::ExtendedDeviceGroup *reqExtDevGrp = NULL;
   
-  bool exist = false;  
+  bool exist = false; 
+  int rowNumber = 0; 
   char 					*p;
 
 
@@ -170,20 +174,20 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 	  reqExtDevGrp->setAccessMode(volumeRequest->mode);
 	  
 	  //The requested tape server
-	//  reqTapeServer = ptr_IVdqmService->getTapeServer(volumeRequest->server);
+	//  reqTapeServer = ptr_IVdqmService->selectTapeServer(volumeRequest->server);
 	  
 	  /*
 	   * Check that the requested device exists.
 	   */
-	//  exist = ptr_IVdqmService->checkExtDevGroup(reqExtDevGrp);
+	  exist = ptr_IVdqmService->checkExtDevGroup(reqExtDevGrp);
 	  
 	  
-	//  if ( !exist ) {
-	//  	castor::exception::Internal ex;
-	//    ex.getMessage() << "DGN " <<  volumeRequest->dgn
-	//    								<< " does not exist" << std::endl;
-	//    throw ex;
-	//  }
+	  if ( !exist ) {
+	  	castor::exception::Internal ex;
+	    ex.getMessage() << "DGN " <<  volumeRequest->dgn
+	    								<< " does not exist" << std::endl;
+	    throw ex;
+	  }
 	  
 	  
 	  //Connect the tapeRequest with the additional information
@@ -191,17 +195,7 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 	  newTapeReq->setReqExtDevGrp(reqExtDevGrp);
 	  newTapeReq->setRequestedSrv(reqTapeServer);
 	  newTapeReq->setTape(tape);
-	
-	  
-	  /*
-	   * Verify that the request doesn't (yet) exist
-	   */
-	//  exist = ptr_IVdqmService->checkTapeRequest(newTapeReq);
-	//  if ( exist ) {
-	//    castor::exception::Internal ex;
-	//    ex.getMessage() << "Input request already queued" << std::endl;
-	//    throw ex;
-	//  }
+	  newTapeReq->setId(volumeRequest->VolReqID);
 	  
 	
 	  /*
@@ -219,6 +213,18 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 	  castor::dlf::Param params2[] =
 	  	{castor::dlf::Param("priority", newTapeReq->priority())};
 	  castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 24, 1, params2);
+	  
+	  
+	  /*
+	   * Verify that the request doesn't (yet) exist
+	   */
+	  rowNumber = ptr_IVdqmService->checkTapeRequest(newTapeReq);
+	  if ( rowNumber ) {
+	    castor::exception::Internal ex;
+	    ex.getMessage() << "Input request already queued" << std::endl;
+	    throw ex;
+	  }
+	  
 	  
 	  /*
 	   * Add the record to the volume queue

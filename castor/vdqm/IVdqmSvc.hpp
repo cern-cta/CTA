@@ -82,10 +82,11 @@ namespace castor {
 	    	 * Checks, if there is already an entry for that tapeRequest. The entry
 	    	 * must have exactly these parameters. Only the assoziation to the
 	    	 * tapeDrive is not checked.
-	    	 * @return true, if there is already an entry for the request 
+	    	 * 
+	    	 * @return The row number, or 0 if there is no entry for it.
 	    	 * @exception in case of error
 	    	 */
-	    	virtual bool checkTapeRequest(const TapeRequest *tapeRequest)
+	    	virtual int checkTapeRequest(const TapeRequest *tapeRequest)
 	    		throw (castor::exception::Exception) = 0;
 	    	
 	    	

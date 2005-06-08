@@ -141,7 +141,7 @@ int castor::vdqm::VdqmServer::main () {
     // create oracle and streaming conversion service
     // so that it is not deleted and recreated all the time
     castor::ICnvSvc *svc =
-      svcs()->cnvService("OraCnvSvc", castor::SVC_ORACNV);
+      svcs()->cnvService("DbCnvSvc", castor::SVC_DBCNV);
     if (0 == svc) {
       // "Could not get Conversion Service for Oracle" message
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2);
