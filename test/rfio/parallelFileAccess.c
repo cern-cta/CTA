@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.7 $ $Release$ $Date: 2005/06/08 10:29:40 $ $Author: obarring $
+ * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.8 $ $Release$ $Date: 2005/06/08 12:26:18 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.7 $ $Date: 2005/06/08 10:29:40 $ CERN IT/FIO Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.8 $ $Date: 2005/06/08 12:26:18 $ CERN IT/FIO Olof Barring";
 #endif /* lint */
 
 
@@ -207,7 +207,7 @@ void *fileWriteThread(
                      )
      void *arg;
 {
-  int myIndex, fd, i, rc;
+  int myIndex, fd, i, rc, save_serrno, save_rfio_errno, save_errno;
   char *myFile;
   char *myBuffer = NULL;
 
@@ -240,11 +240,12 @@ void *fileWriteThread(
   serrno = rfio_errno = errno = 0;
   fd = timingInfo[myIndex].fd = rfio_open(myFile,O_TRUNC|O_CREAT|O_WRONLY,0644);
   if ( fd == -1 ) {
-    timingInfo[myIndex].open_errno = errno;
-    timingInfo[myIndex].open_rfio_errno = rfio_errno;
-    timingInfo[myIndex].open_serrno = serrno;
+    timingInfo[myIndex].open_errno = save_errno = errno;
+    timingInfo[myIndex].open_rfio_errno = save_rfio_errno = rfio_errno;
+    timingInfo[myIndex].open_serrno = save_serrno = serrno;
     timingInfo[myIndex].openFailed = 1;
-    LOG_ERROR("rfio_open()");
+    log(LOG_ERR,"rfio_open(%s,O_WRONLY): serrno=%d, rfio_errno=%d, errno=%d %s\n",
+        myFile,save_serrno,save_rfio_errno,save_errno,rfio_serror());
     return((void *)&success);
   }
   gettimeofday(&timingInfo[myIndex].openExitTime,NULL);
@@ -278,7 +279,7 @@ void *fileReadThread(
                      )
      void *arg;
 {
-  int myIndex, fd, i, rc;
+  int myIndex, fd, i, rc, save_serrno, save_rfio_errno, save_errno;
   char *myFile;
   char *myBuffer = NULL;
 
@@ -311,11 +312,12 @@ void *fileReadThread(
   fd = rfio_open(myFile,O_RDONLY,0644);
   timingInfo[myIndex].fd = fd;
   if ( fd == -1 ) {
-    timingInfo[myIndex].open_errno = errno;
-    timingInfo[myIndex].open_rfio_errno = rfio_errno;
-    timingInfo[myIndex].open_serrno = serrno;
+    timingInfo[myIndex].open_errno = save_errno = errno;
+    timingInfo[myIndex].open_rfio_errno = save_rfio_errno = rfio_errno;
+    timingInfo[myIndex].open_serrno = save_serrno = serrno;
     timingInfo[myIndex].openFailed = 1;
-    LOG_ERROR("rfio_open()");
+    log(LOG_ERR,"rfio_open(%s,O_RDONLY): serrno=%d, rfio_errno=%d, errno=%d %s\n",
+        myFile,save_serrno,save_rfio_errno,save_errno,rfio_serror());
     return((void *)&success);
   }
   gettimeofday(&timingInfo[myIndex].openExitTime,NULL);
