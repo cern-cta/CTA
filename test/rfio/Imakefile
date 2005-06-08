@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.12 $ $Date: 2005/06/06 16:48:37 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.13 $ $Date: 2005/06/08 13:01:13 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand
 COMM
 COMM  Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -10,7 +10,7 @@ COMM		Make CASTOR tests for "rfio" directory
 
 INCLUDES = FileName(FileName(..,..),h)
 #if linux
-LIBS = -L../../lib -lshift $(ADNSLIB) -lnsl
+LIBS = -L../../shlib -lshift $(ADNSLIB) -lnsl
 #else
 #if SOLARIS
 LIBS = -L../../lib -lshift -lsocket -lnsl
