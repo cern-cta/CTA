@@ -80,7 +80,7 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeServerStatementString
 
 /// SQL statement for function checkTapeRequest
 const std::string castor::db::ora::OraVdqmSvc::s_checkTapeRequestStatementString =
-  "SELECT id FROM Tape WHERE status = :1";
+  "SELECT count(*) FROM TapeRequest WHERE id <= :1";
 
 /// SQL statement for function getFreeTapeDrive
 const std::string castor::db::ora::OraVdqmSvc::s_selectFreeTapeDriveStatementString =
@@ -126,6 +126,18 @@ const unsigned int castor::db::ora::OraVdqmSvc::ID() {
 void castor::db::ora::OraVdqmSvc::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
+  try {
+    deleteStatement(m_checkExtDevGroupStatement);
+    deleteStatement(m_selectTapeServerStatement);
+    deleteStatement(m_checkTapeRequestStatement);
+    deleteStatement(m_selectFreeTapeDriveStatement);
+  } catch (oracle::occi::SQLException e) {};
+  
+  // Now reset all pointers to 0
+  m_checkExtDevGroupStatement = 0;
+  m_selectTapeServerStatement = 0;
+  m_checkTapeRequestStatement = 0;
+  m_selectFreeTapeDriveStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -152,10 +164,37 @@ castor::vdqm::TapeServer*
 // -----------------------------------------------------------------------
 // checkTapeRequest
 // -----------------------------------------------------------------------
-bool castor::db::ora::OraVdqmSvc::checkTapeRequest(
+int castor::db::ora::OraVdqmSvc::checkTapeRequest(
 	const castor::vdqm::TapeRequest *tapeRequest) 
 	throw (castor::exception::Exception) {
-  	return true;
+  	
+  try {
+    // Check whether the statements are ok
+    if (0 == m_checkTapeRequestStatement) {
+      m_checkTapeRequestStatement =
+        createStatement(s_checkTapeRequestStatementString);
+    }
+    
+    // execute the statement and see whether we found something
+    m_checkTapeRequestStatement->setDouble(1, tapeRequest->id());
+    
+    oracle::occi::ResultSet *rset = m_checkTapeRequestStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      // Nothing found, return 0
+      m_checkTapeRequestStatement->closeResultSet(rset);
+      return 0;
+    }
+    // Found the DiskServer, so create it in memory
+    return (int)rset->getDouble(1);
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in checkTapeRequest."
+      << std::endl << e.what();
+    throw ex;
+  }
+  // We should never reach this point.
 }
 
 // -----------------------------------------------------------------------

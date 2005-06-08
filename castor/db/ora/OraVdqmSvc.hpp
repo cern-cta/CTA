@@ -107,10 +107,11 @@ namespace castor {
 		    	 * Checks, if there is already an entry for that tapeRequest. The entry
 		    	 * must have exactly these parameters. Only the assoziation to the
 		    	 * tapeDrive is not checked.
-		    	 * @return true, if there is already an entry for the request 
+		    	 * 
+		    	 * @return The row number, or 0 if there is no entry for it.
 		    	 * @exception in case of error
 		    	 */
-		    	virtual bool checkTapeRequest(
+		    	virtual int checkTapeRequest(
 		    		const castor::vdqm::TapeRequest *tapeRequest)
 		    		throw (castor::exception::Exception);
 		    	
@@ -132,6 +133,18 @@ namespace castor {
 		    		
 		    		
 	      private:
+	      
+		      /**
+	         * helper method to rollback
+	         */
+	        void rollback() {
+	          try {
+	            cnvSvc()->getConnection()->rollback();
+	          } catch (castor::exception::Exception) {
+	            // rollback failed, let's drop the connection for security
+	            cnvSvc()->dropConnection();
+	          }
+	        }
 	
 	        /// SQL statement for function checkExtDevGroup
 	        static const std::string s_checkExtDevGroupStatementString;
