@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.14 2005/02/14 17:27:04 bcouturi Exp $
+ * $Id: stager_client_api_common.cpp,v 1.15 2005/06/08 14:31:38 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.14 $ $Date: 2005/02/14 17:27:04 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.15 $ $Date: 2005/06/08 14:31:38 $ CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
@@ -270,7 +270,7 @@ EXTERN_C void DLL_DECL stage_trace(int level, char *format, ...) {
   va_list args;           /* arguments */
   struct stager_client_api_thread_info *thip;
   char *label = "stager";
-  char buffer[STBUFSIZE];
+  char buffer[STBUFSIZE+1];
 
   va_start(args, format);
   if(stage_apiInit(&thip)) {
@@ -278,7 +278,7 @@ EXTERN_C void DLL_DECL stage_trace(int level, char *format, ...) {
     return;
   }
   buffer[STBUFSIZE] = '\0';
-  vsnprintf(buffer, STBUFSIZE-1, format, args);
+  vsnprintf(buffer, STBUFSIZE, format, args);
   va_end(args);
   print_trace_r(thip->trace, level, label, "%s", buffer);
 
