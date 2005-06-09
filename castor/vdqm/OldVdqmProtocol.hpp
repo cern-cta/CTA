@@ -40,6 +40,9 @@ typedef struct vdqmHdr vdqmHdr_t;
 namespace castor {
 
   namespace vdqm {
+  	
+  	//Forward declaration
+  	class VdqmServerSocket;
 
     /**
      * This class provides functions to handle the old VDQM protocol.
@@ -61,7 +64,7 @@ namespace castor {
        /**
         * Calls the right function for the request.
         */
-       void handleRequestType(Cuuid_t cuuid) 
+       void handleRequestType(VdqmServerSocket* sock, Cuuid_t cuuid) 
        	throw (castor::exception::Exception);
        
        /**

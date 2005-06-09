@@ -41,6 +41,7 @@
 // Local Includes
 #include "OldVdqmProtocol.hpp"
 #include "TapeRequestHandler.hpp"
+#include "VdqmServerSocket.hpp"
  
 //------------------------------------------------------------------------------
 // Constructor
@@ -138,7 +139,8 @@ bool castor::vdqm::OldVdqmProtocol::checkRequestType(Cuuid_t cuuid)
   return true;
 }
 
-void castor::vdqm::OldVdqmProtocol::handleRequestType(Cuuid_t cuuid) 
+void castor::vdqm::OldVdqmProtocol::handleRequestType(VdqmServerSocket* sock,
+																											Cuuid_t cuuid) 
 	throw (castor::exception::Exception) {
 	
 	bool handleRequest = true;
@@ -182,8 +184,11 @@ void castor::vdqm::OldVdqmProtocol::handleRequestType(Cuuid_t cuuid)
     		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 25);
     		
     		{
+    			int rowNumber = -1;
     			TapeRequestHandler requestHandler;
-					requestHandler.getQueuePosition(ptr_volumeRequest, cuuid); 
+					rowNumber = requestHandler.getQueuePosition(ptr_volumeRequest, cuuid); 
+					
+					//TODO: AcknPing
     		}
     		break;
   	default:

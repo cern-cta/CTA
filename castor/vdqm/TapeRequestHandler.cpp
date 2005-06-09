@@ -270,19 +270,7 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 	//   */
 	//  newvolrec->update = 1;
 	//  FreeDgnContext(&dgn_context);
-	
-	
-		delete newTapeReq;
-		delete tape;
-		delete clientData;
-		delete reqExtDevGrp;
-		delete reqTapeServer;
-//	delete freeTapeDrive;
   } catch(castor::exception::Exception e) {
-// 	  castor::dlf::Param params[] =
-//  	{castor::dlf::Param("Ckeck", 3)};
-//	 	castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 25, 1, params);
-  	
  		if (newTapeReq)
 	 		delete newTapeReq;
  		if (tape)
@@ -298,148 +286,55 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
   
     throw e;
   }
+  
+	// Delete all Objects
+	delete newTapeReq;
+	delete tape;
+	delete clientData;
+	delete reqExtDevGrp;
+	delete reqTapeServer;
+//	delete freeTapeDrive;
 }
 
 
 //------------------------------------------------------------------------------
 // getQueuePosition
 //------------------------------------------------------------------------------
-void castor::vdqm::TapeRequestHandler::getQueuePosition(
+int castor::vdqm::TapeRequestHandler::getQueuePosition(
 																									vdqmVolReq_t *volumeRequest,
 																									Cuuid_t cuuid) 
 	throw (castor::exception::Exception) {
 		
-//  dgn_element_t *dgn_context;
-//  vdqm_volrec_t *volrec;
-//  int rc;
-//  
-//  //The IServices for vdqm
-//  castor::Services *svcs;
-//  castor::IService* svc;
-//  castor::vdqm::IVdqmSvc *ptr_IVdqmService;
-//  castor::stager::IStagerSvc *ptr_IStagerService;
-//  
-//  
-//  if ( volumeRequest == NULL ) {
-//  	castor::exception::InvalidArgument ex;
-//    ex.getMessage() << "volumeRequest is NULL";
-//    throw ex;
-//  }
-//  
-//  
-//    /**
-//   * The IVdqmService Objects has some important fuctions
-//   * to handle db queries.
-//   */
-//  //TODO: ptr_IVdqmService instanziieren!!!
-//  
-//  svcs = castor::BaseObject::services();
-//	
-//	/**
-//	 * Getting OraVdqmService
-//	 */
-////	svc = svcs->service("OraVdqmSvc", castor::SVC_ORAVDQMSVC);
-////  if (0 == svc) {
-////    castor::exception::Internal ex;
-////    ex.getMessage() << "Could not get OraVdqmSvc" << std::endl;
-////    throw ex;
-////  }
-//  
-////  ptr_IVdqmService = dynamic_cast<castor::stager::IVdqmSvc*>(svc);
-////  if (0 == ptr_IVdqmService) {
-////    castor::exception::Internal ex;
-////    ex.getMessage() << "Got a bad OraVdqmSvc: "
-////    								<< "ID=" << svc->id()
-////    								<< ", Name=" << svc->name()
-////    								<< std::endl;
-////    throw ex;
-////  }
-//	
-//	
-//	/**
-//	 * Getting OraStagerService
-//	 */
-//	svc = svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
-//  if (0 == svc) {
-//    castor::exception::Internal ex;
-//    ex.getMessage() << "Could not get OraStagerSvc" << std::endl;
-//    throw ex;
-//  }				
-//  
-//	ptr_IStagerService = dynamic_cast<castor::stager::IStagerSvc*>(svc);
-//  if (0 == ptr_IStagerService) {
-//    castor::exception::Internal ex;
-//    ex.getMessage() << "Got a bad OraStagerSvc: "
-//    								<< "ID=" << svc->id()
-//    								<< ", Name=" << svc->name()
-//    								<< std::endl;
-//    throw ex;
-//  }
-//  
-//  
-//  //The parameters of the old vdqm VolReq Request
-//  castor::dlf::Param params[] =
-//  	{castor::dlf::Param("client_name", volumeRequest->client_name),
-//     castor::dlf::Param("clientUID", volumeRequest->clientUID),
-//     castor::dlf::Param("clientGID", volumeRequest->clientGID),
-//     castor::dlf::Param("client_host", volumeRequest->client_host),
-//     castor::dlf::Param("client_port", volumeRequest->client_port),
-//     castor::dlf::Param("volid", volumeRequest->volid),
-//     castor::dlf::Param("mode", volumeRequest->mode),
-//     castor::dlf::Param("dgn", volumeRequest->dgn),
-//     castor::dlf::Param("drive", (*volumeRequest->drive == '\0' ? "***" : volumeRequest->drive)),
-//     castor::dlf::Param("server", (*volumeRequest->server == '\0' ? "***" : volumeRequest->server))};
-//  castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 23, 10, params);
-//  
-//  
-//  try {
-//	  /*
-//	   * Check that the requested device exists.
-//	   */
-////  	exist = ptr_IVdqmService->checkExtDevGroup(reqExtDevGrp);
-//  	
-////    if ( !exist ) {
-////	  	castor::exception::Internal ex;
-////	    ex.getMessage() << "DGN " <<  volumeRequest->dgn
-////	    								<< " does not exist" << std::endl;
-////	    throw ex;
-////	  }
-//
-//		
-//  } catch (){}
-//  /*
-//   * Set Device Group Name context. First check that DGN exists.
-//   */
-//   
-//   
-//  rc = CheckDgn(volumeRequest->dgn);
-//  if ( rc == -1 ) return(-1);
-//  if ( rc == 0 ) {
-//      vdqm_SetError(EVQDGNINVL);
-//      return(-1);
-//  }
-//  rc = SetDgnContext(&dgn_context,volumeRequest->dgn);
-//  if ( rc == -1 ) return(-1);
-//  
-//  /*
-//   * Verify that the request exists
-//   */
-//  volrec = NULL;
-//  rc = GetVolRecord(dgn_context,volumeRequest,&volrec);
-//  if ( volrec == NULL ) {
-//      log(LOG_ERR,"vdqm_GetQueuePos() request VolReqID=%d, dgn=%s not found\n",
-//          volumeRequest->VolReqID,volumeRequest->dgn);
-//      FreeDgnContext(&dgn_context);
-//      vdqm_SetError(EVQNOSVOL);
-//      return(-1);
-//  }
-//  rc = VolRecQueuePos(dgn_context,volrec);
-//  /* 
-//   * No update
-//   */
-//  volrec->update = 0;
-//  FreeDgnContext(&dgn_context);
-//  return(rc);
+	//To store the db related informations
+  castor::vdqm::TapeRequest *tapeReq = NULL;
+  
+  int rowNumber = -1;
+  
+  
+  try {
+	  tapeReq = new castor::vdqm::TapeRequest();
+	  tapeReq->setId(volumeRequest->VolReqID);
+	  
+	  /**
+	   * returns -1, if there is Request with this ID or the rowNumber
+	   */
+	  rowNumber = ptr_IVdqmService->checkTapeRequest(tapeReq);
+	  
+		// Queue position of TapeRequest
+	  castor::dlf::Param params[] =
+	  	{castor::dlf::Param("rowNumber", rowNumber)};
+	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 26, 1, params);
+	  
+  } catch(castor::exception::Exception e) {
+ 		if (tapeReq)
+	 		delete tapeReq;
+  
+    throw e;
+  }
+  // Delete the tapeRequest Object
+  delete tapeReq;
+  
+  return rowNumber;
 }
 
 

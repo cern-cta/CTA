@@ -66,9 +66,15 @@ namespace castor {
 					throw (castor::exception::Exception);
 					
 				/**
-				 * This function replaces the old vdqm_GetQueuePos() C-function.
+				 * This function replaces the old vdqm_GetQueuePos() C-function. It returns
+				 * in fact the queue position in the db.
+				 * 
+				 * @return 0<: The row number, 
+	    	 *         0 : The request is handled at the moment from a TapeDrive, 
+	    	 *         -1: if there is no entry for it.
+				 * @exception in case of error
 				 */
-				void getQueuePosition(vdqmVolReq_t *VolReq, Cuuid_t cuuid) 
+				int getQueuePosition(vdqmVolReq_t *VolReq, Cuuid_t cuuid) 
 					throw (castor::exception::Exception);
 					
 				/**

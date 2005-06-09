@@ -127,6 +127,7 @@ castor::vdqm::VdqmServer::VdqmServer() :
      {23, "The parameters of the old vdqm VolReq Request"},
      {24, "Request priority changed"},
      {25, "Handle VDQM_PING"},
+     {26, "Queue position of TapeRequest"},
      {-1, ""}};
   castor::dlf::dlf_init("VdqmLog", messages);
 }
@@ -257,7 +258,7 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
 // handleOldVdqmRequest
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmServer::handleOldVdqmRequest(
-																					castor::vdqm::VdqmServerSocket* sock, 
+																					VdqmServerSocket* sock, 
 																					unsigned int magicNumber,
 																					Cuuid_t cuuid) {
  	//Message of the old Protocol
@@ -302,7 +303,7 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 												reqtype);
 		
 		oldProtocol.checkRequestType(cuuid);
-		oldProtocol.handleRequestType(cuuid);
+		oldProtocol.handleRequestType(sock, cuuid);
 		
 		//Sending reply to client
 		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 10);
