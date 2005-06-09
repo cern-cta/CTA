@@ -1,0 +1,108 @@
+.\" @(#)$RCSfile: stager_get.man,v $ $Revision: 1.1 $ $Date: 2005/06/09 16:30:16 $ CERN IT/ADC Olof Barring
+.\" Copyright (C) 2005 by CERN/IT
+.\" All rights reserved
+.\"
+.TH STAGER_GET 1castor "$Date: 2005/06/09 16:30:16 $" CASTOR "STAGER Commands"
+.SH NAME
+stager_get \- pre-stage existing CASTOR files to disk
+.SH SYNOPSIS
+.B stager_get
+[
+.BI -M
+.BI hsmfile
+[
+.BI -M
+.BI ...
+]]
+[
+.BI -S
+.BI service_class
+]
+[
+.BI -U
+.BI usertag
+]
+[
+.BI -f
+.BI protocol
+]
+[
+.BI --nowait
+]
+[
+.BI --rdonly
+]
+[
+.BI -v
+]
+.SH DESCRIPTION
+.B stager_get
+pre-stages a list of CASTOR HSM files from tape to disk. The command currently
+only supports asychronous stage-in operation and it is supposed to be used in
+conjunction with the
+.B stager_qry(1castor)
+command to check the progress of the request.
+
+.SH OPTIONS
+
+.TP
+.BI \-M " hsmfile"
+specifies the CASTOR HSM file to be staged in. The
+.B \-M
+option can be repeated, which allows for staging in many files with a single command.
+.TP
+.BI \-S " service_class"
+specifies the service class to be used when staging in the file. If no service class
+is given a default will be assigned by the stager.
+.TP
+.BI \-U " usertag"
+allows for associating a usertag that can be used for identifying the request in a subsequent
+.B stager_qry(1castor)
+command.
+.TP
+.BI \-f " protocol"
+specifies the disk mover protocol the client intends to use when accessing the file. This
+option can be used to assure that the file is staged on to a disk server that supports that
+protocol. Examples of protocols are "rfio" and "root".
+.I nbDrives
+attribute in the
+.B SvcClass
+definition is respected. The legacy mode is provided for backward compatibility with the
+old stager (although this is not entirely true).
+.TP
+.BI \-\-nowait
+submit the request and return immediately. This is default and blocking mode is not yet
+supported.
+.TP
+.BI \-\-rdonly
+specifies that the file will be accessed in read-only mode (no update).
+.TP
+
+.SH EXAMPLE
+.fi
+# stager_get -M /castor/cern.ch/user/t/test/file1 -M /castor/cern.ch/user/t/test/file2 -U test1
+.fi
+Received 2 responses
+.fi
+/castor/cern.ch/user/t/test/file1 SUBREQUEST_READY
+.fi
+/castor/cern.ch/user/t/test/file2 SUBREQUEST_READY
+.fi
+# stager_qry -U test1
+.fi
+Received 2 responses
+.fi
+/castor/cern.ch/user/t/test/file1 STAGEIN
+.fi
+/castor/cern.ch/user/t/test/file2 STAGED
+.fi
+
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+
+.SH SEE ALSO
+.BR stager_qry(1castor)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
