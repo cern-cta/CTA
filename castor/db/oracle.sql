@@ -1574,10 +1574,10 @@ END;
 
 /* PL/SQL method implementing getUpdateFailed */
 CREATE OR REPLACE PROCEDURE getUpdateFailedProc
-(subReqId IN NUMBER) AS
+(srId IN NUMBER) AS
 BEGIN
   UPDATE SubRequest SET status = 7 -- FAILED
-   WHERE id = subReqId;
+   WHERE id = srId;
 END;
 
 /* PL/SQL method implementing putFailedProc */
