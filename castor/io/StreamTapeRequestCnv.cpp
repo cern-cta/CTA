@@ -42,6 +42,7 @@
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/vdqm/ExtendedDeviceGroup.hpp"
+#include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "osdep.h"
@@ -140,6 +141,7 @@ void castor::io::StreamTapeRequestCnv::marshalObject(castor::IObject* object,
     cnvSvc()->marshalObject(obj->client(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->reqExtDevGrp(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->requestedSrv(), address, alreadyDone);
+    cnvSvc()->marshalObject(obj->tapeDrive(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -171,6 +173,9 @@ castor::IObject* castor::io::StreamTapeRequestCnv::unmarshalObject(castor::io::b
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objRequestedSrv = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setRequestedSrv(dynamic_cast<castor::vdqm::TapeServer*>(objRequestedSrv));
+  ad.setObjType(castor::OBJ_INVALID);
+  IObject* objTapeDrive = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setTapeDrive(dynamic_cast<castor::vdqm::TapeDrive*>(objTapeDrive));
   return object;
 }
 

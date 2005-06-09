@@ -43,6 +43,7 @@
 #include "castor/vdqm/ExtendedDeviceGroup.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
+#include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "osdep.h"
 #include <string>
@@ -115,8 +116,8 @@ void castor::io::StreamTapeDriveCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->no_date();
   ad->stream() << obj->no_time();
   ad->stream() << obj->no_age();
-  ad->stream() << obj->uid();
-  ad->stream() << obj->gid();
+  ad->stream() << obj->euid();
+  ad->stream() << obj->egid();
   ad->stream() << obj->name();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
@@ -195,12 +196,12 @@ castor::IObject* castor::io::StreamTapeDriveCnv::createObj(castor::IAddress* add
   short no_age;
   ad->stream() >> no_age;
   object->setNo_age(no_age);
-  long uid;
-  ad->stream() >> uid;
-  object->setUid(uid);
-  long gid;
-  ad->stream() >> gid;
-  object->setGid(gid);
+  long euid;
+  ad->stream() >> euid;
+  object->setEuid(euid);
+  long egid;
+  ad->stream() >> egid;
+  object->setEgid(egid);
   std::string name;
   ad->stream() >> name;
   object->setName(name);
@@ -237,6 +238,7 @@ void castor::io::StreamTapeDriveCnv::marshalObject(castor::IObject* object,
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
+    cnvSvc()->marshalObject(obj->runningTapeReq(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->tapeServer(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
@@ -267,6 +269,9 @@ castor::IObject* castor::io::StreamTapeDriveCnv::unmarshalObject(castor::io::bin
     IObject* objExtDevGrp = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addExtDevGrp(dynamic_cast<castor::vdqm::ExtendedDeviceGroup*>(objExtDevGrp));
   }
+  ad.setObjType(castor::OBJ_INVALID);
+  IObject* objRunningTapeReq = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setRunningTapeReq(dynamic_cast<castor::vdqm::TapeRequest*>(objRunningTapeReq));
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objTapeServer = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setTapeServer(dynamic_cast<castor::vdqm::TapeServer*>(objTapeServer));

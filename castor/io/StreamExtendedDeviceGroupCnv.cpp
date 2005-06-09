@@ -93,7 +93,7 @@ void castor::io::StreamExtendedDeviceGroupCnv::createRep(castor::IAddress* addre
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->dgName();
-  ad->stream() << obj->mode();
+  ad->stream() << obj->accessMode();
   ad->stream() << obj->id();
 }
 
@@ -110,9 +110,9 @@ castor::IObject* castor::io::StreamExtendedDeviceGroupCnv::createObj(castor::IAd
   std::string dgName;
   ad->stream() >> dgName;
   object->setDgName(dgName);
-  int mode;
-  ad->stream() >> mode;
-  object->setMode(mode);
+  int accessMode;
+  ad->stream() >> accessMode;
+  object->setAccessMode(accessMode);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

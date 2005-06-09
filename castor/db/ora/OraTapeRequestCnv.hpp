@@ -205,6 +205,14 @@ namespace castor {
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
+         * Fill the database with objects of type TapeDrive refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepTapeDrive(castor::vdqm::TapeRequest* obj)
+          throw (castor::exception::Exception, oracle::occi::SQLException);
+
+        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -247,6 +255,14 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjTapeServer(castor::vdqm::TapeRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type TapeDrive refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjTapeDrive(castor::vdqm::TapeRequest* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -334,6 +350,36 @@ namespace castor {
 
         /// SQL update statement object for member requestedSrv
         oracle::occi::Statement *m_updateTapeServerStatement;
+
+        /// SQL select statement for member tapeDrive
+        static const std::string s_selectTapeDriveStatementString;
+
+        /// SQL select statement object for member tapeDrive
+        oracle::occi::Statement *m_selectTapeDriveStatement;
+
+        /// SQL delete statement for member tapeDrive
+        static const std::string s_deleteTapeDriveStatementString;
+
+        /// SQL delete statement object for member tapeDrive
+        oracle::occi::Statement *m_deleteTapeDriveStatement;
+
+        /// SQL remote update statement for member tapeDrive
+        static const std::string s_remoteUpdateTapeDriveStatementString;
+
+        /// SQL remote update statement object for member tapeDrive
+        oracle::occi::Statement *m_remoteUpdateTapeDriveStatement;
+
+        /// SQL checkExist statement for member tapeDrive
+        static const std::string s_checkTapeDriveExistStatementString;
+
+        /// SQL checkExist statement object for member tapeDrive
+        oracle::occi::Statement *m_checkTapeDriveExistStatement;
+
+        /// SQL update statement for member tapeDrive
+        static const std::string s_updateTapeDriveStatementString;
+
+        /// SQL update statement object for member tapeDrive
+        oracle::occi::Statement *m_updateTapeDriveStatement;
 
       }; // end of class OraTapeRequestCnv
 

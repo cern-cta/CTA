@@ -188,6 +188,14 @@ namespace castor {
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
+         * Fill the database with objects of type TapeRequest refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepTapeRequest(castor::vdqm::TapeDrive* obj)
+          throw (castor::exception::Exception, oracle::occi::SQLException);
+
+        /**
          * Fill the database with objects of type TapeServer refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -221,6 +229,15 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjExtendedDeviceGroup(castor::vdqm::TapeDrive* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type TapeRequest refered by a given
+         * object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjTapeRequest(castor::vdqm::TapeDrive* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -316,6 +333,36 @@ namespace castor {
 
         /// SQL select statement object for member extDevGrp
         oracle::occi::Statement *m_selectExtendedDeviceGroupStatement;
+
+        /// SQL select statement for member runningTapeReq
+        static const std::string s_selectTapeRequestStatementString;
+
+        /// SQL select statement object for member runningTapeReq
+        oracle::occi::Statement *m_selectTapeRequestStatement;
+
+        /// SQL delete statement for member runningTapeReq
+        static const std::string s_deleteTapeRequestStatementString;
+
+        /// SQL delete statement object for member runningTapeReq
+        oracle::occi::Statement *m_deleteTapeRequestStatement;
+
+        /// SQL remote update statement for member runningTapeReq
+        static const std::string s_remoteUpdateTapeRequestStatementString;
+
+        /// SQL remote update statement object for member runningTapeReq
+        oracle::occi::Statement *m_remoteUpdateTapeRequestStatement;
+
+        /// SQL checkExist statement for member runningTapeReq
+        static const std::string s_checkTapeRequestExistStatementString;
+
+        /// SQL checkExist statement object for member runningTapeReq
+        oracle::occi::Statement *m_checkTapeRequestExistStatement;
+
+        /// SQL update statement for member runningTapeReq
+        static const std::string s_updateTapeRequestStatementString;
+
+        /// SQL update statement object for member runningTapeReq
+        oracle::occi::Statement *m_updateTapeRequestStatement;
 
         /// SQL checkExist statement for member tapeServer
         static const std::string s_checkTapeServerExistStatementString;
