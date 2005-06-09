@@ -437,7 +437,7 @@ int DLL_DECL rfio_HsmIf_mkdir(const char *path, mode_t mode) {
 
 int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64) {
     int rc = -1;
-    int save_serrno;
+    int save_serrno, save_errno;
 #if defined(CNS_ROOT)
     stage_hsm_t *hsmfile = NULL;
     struct Cns_filestat st;
@@ -478,23 +478,40 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
         hsmfile->next = NULL;
 	/** NOW CALL THE NEW STAGER API */
        
-	if (use_castor2_api()) {
+        if ((stage_getlog((void (**) _PROTO((int,char *))) &this_stglog) == 0) && 
+            (this_stglog == NULL)) {
+          stage_setlog((void (*) _PROTO((int,char *)))&rfio_stglog); 
+        } 
+        if (use_castor2_api()) {
           struct stage_io_fileresp *response;
           char *requestId, *url;
 
-          TRACE(3,"rfio","Calling stage_open with: %s %x %x",
-                path, flags, mode);
-          rc = stage_open(NULL,
-                          mover_protocol_rfio,
-                          path,
-                          flags,
-                          mode,
-			  0,
-                          &response,
-                          &requestId,
-                          NULL);
-          if (rc < 0) {
-            return -1;
+          for (;;) {
+            TRACE(3,"rfio","Calling stage_open with: %s %x %x",
+                  path, flags, mode);
+            rc = stage_open(NULL,
+                            mover_protocol_rfio,
+                            path,
+                            flags,
+                            mode,
+                            0,
+                            &response,
+                            &requestId,
+                            NULL);
+            save_errno = errno;
+            save_serrno = serrno;
+            if (rc < 0) {
+              if ( (save_serrno == SECOMERR) ||
+                   (save_serrno == SETIMEDOUT) ||
+                   (save_serrno == ECONNREFUSED) ||
+                   (save_errno == ECONNREFUSED) ) {
+                int retrySleepTime;
+                retrySleepTime = 1 + (int)(10.0*rand()/(RAND_MAX+1.0));
+                sleep(retrySleepTime);
+                continue;
+              }
+              return -1;
+            } else break;
           }
 
           if (response == NULL) {
@@ -593,15 +610,10 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
 #if defined(CASTOR_ON_GLOBAL_FILESYSTEM)
 	  }
 #endif /* defined(CASTOR_ON_GLOBAL_FILESYSTEM) */
-          free(response);
-          free(url); 
-
-        } else {
-	  
+    free(response);
+    free(url);
+  } else {
 	  TRACE(3,"rfio","Using OLD stage API\n");
-	  if ((stage_getlog((void (**) _PROTO((int,char *))) &this_stglog) == 0) && (this_stglog == NULL)) {
-	    stage_setlog((void (*) _PROTO((int,char *)))&rfio_stglog); 
-	  } 
 	  {
 	    struct stgcat_entry stcp_input;
 	    int nstcp_output;
