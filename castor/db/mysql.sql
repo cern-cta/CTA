@@ -239,11 +239,11 @@ CREATE TABLE TapeServer (serverName VARCHAR(1000), status INT, id BIGINT, PRIMAR
 
 /* SQL statements for type TapeRequest */
 DROP TABLE TapeRequest;
-CREATE TABLE TapeRequest (priority INT, creationTime INT, id BIGINT, PRIMARY KEY (id), tape INT, client INT, reqExtDevGrp INT, requestedSrv INT);
+CREATE TABLE TapeRequest (priority INT, creationTime INT, id BIGINT, PRIMARY KEY (id), tape INT, client INT, reqExtDevGrp INT, requestedSrv INT, tapeDrive INT);
 
 /* SQL statements for type TapeDrive */
 DROP TABLE TapeDrive;
-CREATE TABLE TapeDrive (jobID INT, creationTime INT, resettime INT, usecount INT, errcount INT, transferredMB INT, totalMB BIGINT, dedicate VARCHAR(1000), newDedicate VARCHAR(1000), is_uid INT, is_gid INT, is_name INT, no_uid INT, no_gid INT, no_name INT, no_host INT, no_vid INT, no_mode INT, no_date INT, no_time INT, no_age INT, euid INT, egid INT, name VARCHAR(1000), id BIGINT, PRIMARY KEY (id), tape INT, status INT, tapeServer INT);
+CREATE TABLE TapeDrive (jobID INT, creationTime INT, resettime INT, usecount INT, errcount INT, transferredMB INT, totalMB BIGINT, dedicate VARCHAR(1000), newDedicate VARCHAR(1000), is_uid INT, is_gid INT, is_name INT, no_uid INT, no_gid INT, no_name INT, no_host INT, no_vid INT, no_mode INT, no_date INT, no_time INT, no_age INT, euid INT, egid INT, name VARCHAR(1000), id BIGINT, PRIMARY KEY (id), tape INT, runningTapeReq INT, status INT, tapeServer INT);
 DROP INDEX I_TapeDrive2ExtendedDevic_C;
 DROP INDEX I_TapeDrive2ExtendedDevic_P;
 DROP TABLE TapeDrive2ExtendedDevic;
