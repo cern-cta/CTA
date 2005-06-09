@@ -35,6 +35,7 @@ DELIMITER //
 DROP TABLE Sequence//
 CREATE TABLE Sequence (value BIGINT AUTO_INCREMENT, PRIMARY KEY(value))//
 
+DROP PROCEDURE IF EXISTS seqNextVal// 
 CREATE PROCEDURE seqNextVal(OUT value BIGINT)
 BEGIN
   START TRANSACTION;
@@ -46,6 +47,7 @@ END//
 
 
 /* get current time as a time_t. A bit easier in MySQL than in Oracle :-) */
+DROP FUNCTION IF EXISTS getTime// 
 CREATE FUNCTION getTime() RETURNS BIGINT
 BEGIN
   RETURN TIMESTAMPDIFF(SECOND, '1970-01-01 01:00:00', NOW());
@@ -197,6 +199,7 @@ END;
 /* Computes a 'rate' for the filesystem which is an agglomeration
    of weight and fsDeviation. The goal is to be able to classify
    the fileSystems using a single value and to put an index on it */
+DROP FUNCTION IF EXISTS FileSystemRate//
 CREATE FUNCTION FileSystemRate(weight BIGINT, deltaWeight BIGINT, fsDeviation DOUBLE)
 RETURNS DOUBLE DETERMINISTIC
 BEGIN
@@ -213,6 +216,7 @@ END//
 /*************************/
 
 /* MySQL method to make a SubRequest wait on another one, linked to the given DiskCopy */
+DROP PROCEDURE IF EXISTS makeSubRequestWait//
 CREATE PROCEDURE makeSubRequestWait(subreqId INT, dci INT)
 BEGIN
  UPDATE SubRequest
@@ -223,6 +227,7 @@ END//
 
 
 /* MySQL method to archive a SubRequest and its request if needed */
+DROP PROCEDURE IF EXISTS archiveSubReq//
 CREATE PROCEDURE archiveSubReq(srId INT)
 BEGIN
 DECLARE rid INT;
@@ -303,6 +308,7 @@ END//
  *   AND Stream2TapeCopy.parent = streamId
  *   AND TapeCopy.status = 2 -- WAITINSTREAMS
  *   LIMIT 1;  */
+DROP PROCEDURE IF EXISTS anyTapeCopyForStream//
 CREATE PROCEDURE anyTapeCopyForStream(streamId INT, OUT res INT)
 BEGIN
   DECLARE EXIT HANDLER FOR NOT FOUND  SET res = 0;
@@ -316,6 +322,7 @@ END//
 
 
 /* MySQL method to update FileSystem weight for new streams */
+DROP PROCEDURE IF EXISTS updateFsFileOpened//
 CREATE PROCEDURE updateFsFileOpened(ds INT, fs INT, deviation INT, fileSize INT)
 BEGIN
  UPDATE FileSystem SET deltaWeight = deltaWeight - deviation
@@ -327,6 +334,7 @@ END//
 
 
 /* MySQL method to update FileSystem free space when file are closed */
+DROP PROCEDURE IF EXISTS updateFsFileClosed// 
 CREATE PROCEDURE updateFsFileClosed(fs INT, reservation INT, fileSize INT)
 BEGIN
  UPDATE FileSystem SET deltaFree = deltaFree - fileSize,
@@ -374,6 +382,7 @@ END;
 
 
 /* MySQL method implementing updateFileSystemForJob */
+DROP PROCEDURE IF EXISTS updateFileSystemForJob//
 CREATE PROCEDURE updateFileSystemForJob(fs VARCHAR(2048), ds VARCHAR(2048), fileSize BIGINT)
 BEGIN
 DECLARE fsID BIGINT;
@@ -394,6 +403,7 @@ END//
 
 
 /* MySQL method implementing bestTapeCopyForStream */
+DROP PROCEDURE IF EXISTS bestTapeCopyForStream//
 CREATE PROCEDURE bestTapeCopyForStream(streamId INT, OUT diskServerName VARCHAR(2048), OUT mountPoint VARCHAR(2048),
                                        OUT path VARCHAR(2048), OUT dci INT, OUT castorFileId INT, OUT fileId INT,
                                        OUT nsHost VARCHAR(2048), OUT fileSize INT, OUT tapeCopyId INT)
@@ -493,6 +503,7 @@ END//
 
 
 /* MySQL method implementing bestFileSystemForSegment */
+DROP PROCEDURE IF EXISTS bestFileSystemForSegment//
 CREATE PROCEDURE bestFileSystemForSegment(segmentId BIGINT, OUT diskServerName VARCHAR(2048),
                                           OUT rmountPoint VARCHAR(2048), OUT rpath VARCHAR(2048), OUT dci BIGINT)
 -- @todo doesn't compile?? cannot make the union select?
@@ -565,6 +576,7 @@ END//
 
 
 /* MySQL method implementing fileRecalled */
+DROP PROCEDURE IF EXISTS fileRecalled//
 CREATE PROCEDURE fileRecalled(tapecopyId BIGINT)
 BEGIN
 DECLARE SubRequestId BIGINT;
@@ -587,6 +599,7 @@ END//
 
 
 /* MySQL method implementing fileRecallFailed */
+DROP PROCEDURE IF EXISTS fileRecallFailed//
 CREATE PROCEDURE fileRecallFailed(tapecopyId BIGINT)
 BEGIN
 DECLARE SubRequestId BIGINT;
@@ -622,6 +635,7 @@ END castor;
 CREATE TYPE "numList" IS TABLE OF INT;
 
 /* MySQL method implementing isSubRequestToSchedule */
+DROP PROCEDURE IF EXISTS isSubRequestToSchedule//
 CREATE PROCEDURE isSubRequestToSchedule(rsubreqId BIGINT, OUT result INT /*, sources OUT Cursor */)
 BEGIN
 DECLARE dcCount INT;
@@ -674,6 +688,7 @@ END//
 
 
 /* Build diskCopy path from fileId */
+DROP PROCEDURE IF EXISTS buildPathFromFileId//
 CREATE PROCEDURE buildPathFromFileId(fid BIGINT, nsHost VARCHAR(2048), dcid BIGINT, OUT path VARCHAR(2048))
 BEGIN
   SET path = CONCAT(CONCAT(CONCAT(CONCAT(CONCAT(MOD(fid,100),'FM09'), '/'), CONCAT(fid, '@')), nsHost), CONCAT('.', dcid));
@@ -681,6 +696,7 @@ END//
 
 
 /* MySQL method implementing getUpdateStart */
+DROP PROCEDURE IF EXISTS getUpdateStart//
 CREATE PROCEDURE getUpdateStart(srId INT, fileSystemId INT, OUT dci BIGINT, OUT rpath VARCHAR(2048),
                                 OUT rstatus INT, /*sources OUT castor.DiskCopy_Cur,*/ OUT reuid BIGINT, OUT regid BIGINT)
 BEGIN
@@ -779,6 +795,7 @@ END//
 
 
 /* MySQL method implementing putStart */
+DROP PROCEDURE IF EXISTS putStart//
 CREATE PROCEDURE putStart(srId BIGINT, fileSystemId BIGINT, OUT rdcId BIGINT, OUT rdcStatus INT, OUT rdcPath VARCHAR(2048))
 BEGIN
  -- Get diskCopy Id
@@ -798,6 +815,7 @@ END//
 
 
 /* MySQL method implementing putDoneStart */
+DROP PROCEDURE IF EXISTS putDoneStart//
 CREATE PROCEDURE putDoneStart(srId BIGINT, fileSystemId BIGINT,
                               OUT rdcId BIGINT, OUT rdcStatus INTEGER, OUT rdcPath VARCHAR(1000))
 BEGIN
@@ -811,6 +829,7 @@ END//
 
 
 /* MySQL method implementing updateAndCheckSubRequest */
+DROP PROCEDURE IF EXISTS updateAndCheckSubRequest//
 CREATE PROCEDURE updateAndCheckSubRequest(srId BIGINT, newStatus INT, OUT result INT)
 BEGIN
  DECLARE reqId INT;
@@ -839,6 +858,7 @@ END//
 
 
 /* MySQL method implementing disk2DiskCopyDone */
+DROP PROCEDURE IF EXISTS disk2DiskCopyDone//
 CREATE PROCEDURE disk2DiskCopyDone(dcId BIGINT, dcStatus INT)
 BEGIN
   -- update DiskCopy
@@ -851,6 +871,7 @@ END//
 
 
 /* MySQL method implementing recreateCastorFile */
+DROP PROCEDURE IF EXISTS recreateCastorFile//
 CREATE PROCEDURE recreateCastorFile(cfId BIGINT, srId BIGINT, 
                                     OUT dcId BIGINT, OUT rstatus INTEGER, OUT rmountPoint VARCHAR(2048), OUT rdiskServer VARCHAR(2048))
 -- @todo doesn't compile??
@@ -953,6 +974,7 @@ END//
 
 
 /* MySQL method putDoneFunc */
+DROP PROCEDURE IF EXISTS putDoneFunc//
 CREATE PROCEDURE putDoneFunc(cfId BIGINT, fs BIGINT, context INT)
 BEGIN
 DECLARE nc INT;
@@ -1003,6 +1025,7 @@ END//
 
 
 /* MySQL method implementing prepareForMigration */
+DROP PROCEDURE IF EXISTS prepareForMigration//
 CREATE PROCEDURE prepareForMigration(srId BIGINT, fs BIGINT, OUT fId BIGINT, OUT nh VARCHAR(2048), OUT userId BIGINT, OUT groupId BIGINT)
 BEGIN
 DECLARE cfId BIGINT;
@@ -1042,6 +1065,7 @@ END//
 
 
 /* MySQL method implementing selectCastorFile */
+DROP PROCEDURE IF EXISTS selectCastorFile//
 CREATE PROCEDURE selectCastorFile(fId BIGINT, nh VARCHAR(2048), sc BIGINT, fc BIGINT, fs BIGINT, OUT rid BIGINT, OUT rfs BIGINT)
 BEGIN
   DECLARE CONSTRAINT_VIOLATED CONDITION FOR SQLSTATE '23000';
@@ -1071,6 +1095,7 @@ END//
 
 
 /* MySQL method implementing resetStream */
+DROP PROCEDURE IF EXISTS resetStream//
 CREATE PROCEDURE resetStream(sid BIGINT)
 BEGIN
   DECLARE nbRes BIGINT;
@@ -1102,6 +1127,7 @@ END//
 
 
 /* MySQL method implementing bestFileSystemForJob */
+DROP PROCEDURE IF EXISTS bestFileSystemForJob//
 CREATE PROCEDURE bestFileSystemForJob(/*fileSystems IN castor."strList", machines IN castor."strList", minFree IN castor."cnumList",*/
 									fileSystems INT, machines INT, minFree INT,            -- flag to say if the correspondent temporary table is filled or not
 									OUT rMountPoint VARCHAR(2048), OUT rDiskServer VARCHAR(2048))
@@ -1197,6 +1223,7 @@ END//
 
 
 /* MySQL method implementing anySegmentsForTape */
+DROP PROCEDURE IF EXISTS anySegmentsForTape//
 CREATE PROCEDURE anySegmentsForTape(tapeId BIGINT, OUT nb INT)
 BEGIN
   SELECT count(*) INTO nb FROM Segment
@@ -1210,6 +1237,7 @@ END//
 
 
 /* MySQL method implementing segmentsForTape */
+DROP PROCEDURE IF EXISTS segmentsForTape//
 CREATE PROCEDURE segmentsForTape(tapeId BIGINT /* segments OUT castor.Segment_Cur */)
 BEGIN
 DECLARE segCount INT;
@@ -1230,6 +1258,7 @@ DECLARE segCount INT;
 END//
 
 /* MySQL method implementing selectFiles2Delete */
+DROP PROCEDURE IF EXISTS selectFiles2Delete//
 CREATE PROCEDURE selectFiles2Delete(DiskServerName VARCHAR(2048) /* GCLocalFiles OUT castor.GCLocalFiles_Cur */)
 BEGIN
   /*
@@ -1239,7 +1268,7 @@ BEGIN
      AND FileSystem.DiskServer = DiskServer.id
      AND DiskServer.name = DiskServerName
      AND DiskCopy.status = 8 -- GC_CANDIDATE
-     FOR UPDATE;
+     FOR UPDATE;       -- @todo here we are not locking these entries
   */
   UPDATE DiskCopy, FileSystem, DiskServer 
    SET DiskCopy.status = 9 -- BEING_DELETED
@@ -1258,6 +1287,7 @@ END//
 
 
 /* MySQL method implementing filesDeleted */
+DROP PROCEDURE IF EXISTS filesDeletedProc//
 CREATE PROCEDURE filesDeletedProc(/* fileIds castor."cnumList" */)
 BEGIN
 DECLARE cfId BIGINT;
@@ -1322,16 +1352,18 @@ END;
 
 
 /* MySQL method implementing getUpdateDone */
-CREATE PROCEDURE getUpdateDoneProc(subReqId BIGINT)
+DROP PROCEDURE IF EXISTS getUpdateDoneProc//
+CREATE PROCEDURE getUpdateDoneProc(srId BIGINT)
 BEGIN
-  CALL archiveSubReq(subReqId);
+  CALL archiveSubReq(srId);
 END//
 
 /* MySQL method implementing getUpdateFailed */
-CREATE PROCEDURE getUpdateFailedProc(subReqId BIGINT)
+DROP PROCEDURE IF EXISTS getUpdateFailedProc//
+CREATE PROCEDURE getUpdateFailedProc(srId BIGINT)
 BEGIN
   UPDATE SubRequest SET status = 7 -- FAILED
-   WHERE id = subReqId;
+   WHERE id = srId;
 END//
 
 /* MySQL method implementing putFailedProc */
@@ -1358,6 +1390,7 @@ DECLARE reservedSpace INTEGER;
 END//
 
 /* MySQL method implementing failedSegments */
+DROP PROCEDURE IF EXISTS failedSegments// 
 PROCEDURE failedSegments(/* segments OUT castor.Segment_Cur */)
 BEGIN
   -- OPEN segments FOR 
@@ -1367,7 +1400,8 @@ END//
 
 
 /* MySQL method implementing stageRm */
-CREATE PROCEDURE stageRm (fid INT, nh VARCHAR(2048), OUT ret INT)
+DROP PROCEDURE IF EXISTS stageRm//
+CREATE PROCEDURE stageRm(fid INT, nh VARCHAR(2048), OUT ret INT)
 BEGIN
 DECLARE cfId BIGINT;
 DECLARE nbRes INT;
@@ -1405,6 +1439,7 @@ END//
  * GC policy that mimic the old GC :
  * a mix of oldest first and biggest first
  */
+DROP PROCEDURE IF EXISTS defaultGCPolicy//
 CREATE PROCEDURE defaultGCPolicy(fsId INT, garbageSize INT)
 BEGIN
     SELECT DiskCopy.id, CastorFile.fileSize, 0
@@ -1431,6 +1466,7 @@ END//
  * accesses but not 0, as a file having 0 accesses will
  * probably be read soon !
  */
+DROP PROCEDURE IF EXISTS nopinGCPolicy//
 CREATE PROCEDURE nopinGCPolicy(fsId INT, garbageSize INT)
 BEGIN
     SELECT DiskCopy.id, CastorFile.fileSize, 0
@@ -1459,6 +1495,7 @@ END//
 /*
  * MySQL procedure to run Garbage collection on the specified FileSystem
  *
+DROP PROCEDURE IF EXISTS garbageCollectFS//
 CREATE PROCEDURE garbageCollectFS(fsId INT)
 DECLARE toBeFreed INT;
   freed INTEGER := 0;
