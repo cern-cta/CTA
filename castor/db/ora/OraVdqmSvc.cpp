@@ -78,9 +78,15 @@ const std::string castor::db::ora::OraVdqmSvc::s_checkExtDevGroupStatementString
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeServerStatementString =
   "SELECT id FROM Tape WHERE status = :1";
 
+
 /// SQL statement for function checkTapeRequest
-const std::string castor::db::ora::OraVdqmSvc::s_checkTapeRequestStatementString =
+const std::string castor::db::ora::OraVdqmSvc::s_checkTapeRequestStatement1String =
+  "SELECT tapeDrive FROM TapeRequest WHERE id = :1";
+
+/// SQL statement for function checkTapeRequest
+const std::string castor::db::ora::OraVdqmSvc::s_checkTapeRequestStatement2String =
   "SELECT count(*) FROM TapeRequest WHERE id <= :1";
+  
 
 /// SQL statement for function getFreeTapeDrive
 const std::string castor::db::ora::OraVdqmSvc::s_selectFreeTapeDriveStatementString =
@@ -94,7 +100,8 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   BaseSvc(name), OraBaseObj(0),
   m_checkExtDevGroupStatement(0),
   m_selectTapeServerStatement(0),
-  m_checkTapeRequestStatement(0),
+  m_checkTapeRequestStatement1(0),
+  m_checkTapeRequestStatement2(0),
   m_selectFreeTapeDriveStatement(0) {
 }
 
@@ -129,14 +136,16 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   try {
     deleteStatement(m_checkExtDevGroupStatement);
     deleteStatement(m_selectTapeServerStatement);
-    deleteStatement(m_checkTapeRequestStatement);
+    deleteStatement(m_checkTapeRequestStatement1);
+    deleteStatement(m_checkTapeRequestStatement2);
     deleteStatement(m_selectFreeTapeDriveStatement);
   } catch (oracle::occi::SQLException e) {};
   
   // Now reset all pointers to 0
   m_checkExtDevGroupStatement = 0;
   m_selectTapeServerStatement = 0;
-  m_checkTapeRequestStatement = 0;
+  m_checkTapeRequestStatement1 = 0;
+  m_checkTapeRequestStatement2 = 0;
   m_selectFreeTapeDriveStatement = 0;
 }
 
@@ -170,21 +179,42 @@ int castor::db::ora::OraVdqmSvc::checkTapeRequest(
   	
   try {
     // Check whether the statements are ok
-    if (0 == m_checkTapeRequestStatement) {
-      m_checkTapeRequestStatement =
-        createStatement(s_checkTapeRequestStatementString);
+    if (0 == m_checkTapeRequestStatement1) {
+      m_checkTapeRequestStatement1 =
+        createStatement(s_checkTapeRequestStatement1String);
     }
     
-    // execute the statement and see whether we found something
-    m_checkTapeRequestStatement->setDouble(1, tapeRequest->id());
+    if (0 == m_checkTapeRequestStatement2) {
+      m_checkTapeRequestStatement2 =
+        createStatement(s_checkTapeRequestStatement2String);
+    }
     
-    oracle::occi::ResultSet *rset = m_checkTapeRequestStatement->executeQuery();
+    // execute the statement1 and see whether we found something   
+    m_checkTapeRequestStatement1->setDouble(1, tapeRequest->id());
+    oracle::occi::ResultSet *rset = m_checkTapeRequestStatement1->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      // Nothing found, return 0
-      m_checkTapeRequestStatement->closeResultSet(rset);
-      return 0;
+      // Nothing found, return -1
+      m_checkTapeRequestStatement1->closeResultSet(rset);
+      return -1;
     }
-    // Found the DiskServer, so create it in memory
+    else if ((int)rset->getDouble(1)) {
+    	//The request is already beeing handled from  a tape Drive
+    	// In this case we return the queue position 0
+    	return 0;
+    }
+    
+    // If we come up to this line, the job is not handled till now, but it exists
+    // execute the statement2 and see whether we found something
+    m_checkTapeRequestStatement2->setDouble(1, tapeRequest->id());
+    rset = m_checkTapeRequestStatement2->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      // Nothing found, return -1
+      //Normally, the second statement should always find something!
+      m_checkTapeRequestStatement2->closeResultSet(rset);
+      return -1;
+    }
+    
+    // Return the TapeRequest queue position
     return (int)rset->getDouble(1);
   } catch (oracle::occi::SQLException e) {
     rollback();

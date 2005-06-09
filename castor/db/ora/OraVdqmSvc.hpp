@@ -108,7 +108,9 @@ namespace castor {
 		    	 * must have exactly these parameters. Only the assoziation to the
 		    	 * tapeDrive is not checked.
 		    	 * 
-		    	 * @return The row number, or 0 if there is no entry for it.
+		    	 * @return 0<: The row number, 
+		    	 *         0 : The request is handled at the moment from a TapeDrive, 
+		    	 *         -1: if there is no entry for it.
 		    	 * @exception in case of error
 		    	 */
 		    	virtual int checkTapeRequest(
@@ -159,10 +161,16 @@ namespace castor {
 	        oracle::occi::Statement *m_selectTapeServerStatement; 
 	        
  	        /// SQL statement for function checkTapeRequest
-	        static const std::string s_checkTapeRequestStatementString;
+	        static const std::string s_checkTapeRequestStatement1String;
 	
 	        /// SQL statement object for function checkTapeRequest
-	        oracle::occi::Statement *m_checkTapeRequestStatement; 
+	        oracle::occi::Statement *m_checkTapeRequestStatement1; 
+	        
+ 	        /// SQL statement for function checkTapeRequest
+	        static const std::string s_checkTapeRequestStatement2String;
+	
+	        /// SQL statement object for function checkTapeRequest
+	        oracle::occi::Statement *m_checkTapeRequestStatement2; 
 	        
  	        /// SQL statement for function getFreeTapeDrive
 	        static const std::string s_selectFreeTapeDriveStatementString;
