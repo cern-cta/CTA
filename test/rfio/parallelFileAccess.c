@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.8 $ $Release$ $Date: 2005/06/08 12:26:18 $ $Author: obarring $
+ * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.9 $ $Release$ $Date: 2005/06/09 14:11:26 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.8 $ $Date: 2005/06/08 12:26:18 $ CERN IT/FIO Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.9 $ $Date: 2005/06/09 14:11:26 $ CERN IT/FIO Olof Barring";
 #endif /* lint */
 
 
@@ -116,7 +116,7 @@ void *startFlagLock = NULL;
 void log_callback(int level, char *msg) {
   int logLevel = LOG_INFO;
   if ( level == MSG_ERR ) logLevel = LOG_ERR;
-  log(logLevel,"STAGE API LOG MESSAGE:",msg);
+  log(logLevel,"STAGE API LOG MESSAGE: %s\n",msg);
 }
 
 void usage(
@@ -213,6 +213,7 @@ void *fileWriteThread(
 
   myIndex = *(int *)arg;
   free(arg);
+  stage_setlog(&log_callback);
   gettimeofday(&timingInfo[myIndex].threadLaunchedTime,NULL);
   myFile = (char *) malloc(strlen(baseFileName)+10);
   if ( myFile == NULL ) {
@@ -285,6 +286,7 @@ void *fileReadThread(
 
   myIndex = *(int *)arg;
   free(arg);
+  stage_setlog(&log_callback);
   myFile = (char *) malloc(strlen(baseFileName)+10);
   if ( myFile == NULL ) {
     LOG_ERROR("malloc()");
@@ -441,7 +443,6 @@ int main(
       break;
     }
   }
-  stage_setlog(&log_callback);
   initlog(cmd,LOG_INFO,logfile);
   if ( help_flag != 0 || directoryName == NULL ) {
     if ( directoryName == NULL ) fprintf(stderr,"Directory name is required\n");
