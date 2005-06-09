@@ -32,6 +32,7 @@
 #include "castor/vdqm/ExtendedDeviceGroup.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
+#include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "osdep.h"
 #include <vector>
@@ -546,6 +547,22 @@ extern "C" {
     for (int i = 0; i < *len; i++) {
       (*var)[i] = result[i];
     }
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeDrive_runningTapeReq
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDrive_runningTapeReq(castor::vdqm::TapeDrive* instance, castor::vdqm::TapeRequest** var) {
+    *var = instance->runningTapeReq();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeDrive_setRunningTapeReq
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDrive_setRunningTapeReq(castor::vdqm::TapeDrive* instance, castor::vdqm::TapeRequest* new_var) {
+    instance->setRunningTapeReq(new_var);
     return 0;
   }
 

@@ -31,6 +31,7 @@
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/vdqm/ExtendedDeviceGroup.hpp"
+#include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "osdep.h"
@@ -209,6 +210,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cvdqm_TapeRequest_setRequestedSrv(castor::vdqm::TapeRequest* instance, castor::vdqm::TapeServer* new_var) {
     instance->setRequestedSrv(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeRequest_tapeDrive
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeRequest_tapeDrive(castor::vdqm::TapeRequest* instance, castor::vdqm::TapeDrive** var) {
+    *var = instance->tapeDrive();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeRequest_setTapeDrive
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeRequest_setTapeDrive(castor::vdqm::TapeRequest* instance, castor::vdqm::TapeDrive* new_var) {
+    instance->setTapeDrive(new_var);
     return 0;
   }
 

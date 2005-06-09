@@ -216,15 +216,16 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 	  
 	  
 	  /*
-	   * Verify that the request doesn't (yet) exist
+	   * Verify that the request doesn't (yet) exist. If it doesn't exist,
+	   * the return value should be -1.
 	   */
 	  rowNumber = ptr_IVdqmService->checkTapeRequest(newTapeReq);
-	  if ( rowNumber ) {
+	  if ( rowNumber != -1 ) {
 	    castor::exception::Internal ex;
-	    ex.getMessage() << "Input request already queued" << std::endl;
+	    ex.getMessage() << "Input request already queued: " 
+	    								<< "Position = " << rowNumber << std::endl;
 	    throw ex;
 	  }
-	  
 	  
 	  /*
 	   * Add the record to the volume queue

@@ -53,6 +53,7 @@ namespace castor {
 
     // Forward declarations
     class TapeServer;
+    class TapeDrive;
     class ExtendedDeviceGroup;
 
     /**
@@ -227,6 +228,22 @@ namespace castor {
         m_requestedSrv = new_var;
       }
 
+      /**
+       * Get the value of m_tapeDrive
+       * @return the value of m_tapeDrive
+       */
+      TapeDrive* tapeDrive() const {
+        return m_tapeDrive;
+      }
+
+      /**
+       * Set the value of m_tapeDrive
+       * @param new_var the new value of m_tapeDrive
+       */
+      void setTapeDrive(TapeDrive* new_var) {
+        m_tapeDrive = new_var;
+      }
+
     private:
 
       int m_priority;
@@ -244,6 +261,8 @@ namespace castor {
       ExtendedDeviceGroup* m_reqExtDevGrp;
 
       TapeServer* m_requestedSrv;
+
+      TapeDrive* m_tapeDrive;
 
     }; // end of class TapeRequest
 

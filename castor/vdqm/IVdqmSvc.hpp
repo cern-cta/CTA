@@ -83,7 +83,9 @@ namespace castor {
 	    	 * must have exactly these parameters. Only the assoziation to the
 	    	 * tapeDrive is not checked.
 	    	 * 
-	    	 * @return The row number, or 0 if there is no entry for it.
+	    	 * @return 0<: The row number, 
+	    	 *         0 : The request is handled at the moment from a TapeDrive, 
+	    	 *         -1: if there is no entry for it.
 	    	 * @exception in case of error
 	    	 */
 	    	virtual int checkTapeRequest(const TapeRequest *tapeRequest)

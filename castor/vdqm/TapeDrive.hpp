@@ -54,6 +54,7 @@ namespace castor {
 
     // Forward declarations
     class TapeServer;
+    class TapeRequest;
     class ExtendedDeviceGroup;
 
     /**
@@ -574,6 +575,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_runningTapeReq
+       * @return the value of m_runningTapeReq
+       */
+      TapeRequest* runningTapeReq() const {
+        return m_runningTapeReq;
+      }
+
+      /**
+       * Set the value of m_runningTapeReq
+       * @param new_var the new value of m_runningTapeReq
+       */
+      void setRunningTapeReq(TapeRequest* new_var) {
+        m_runningTapeReq = new_var;
+      }
+
+      /**
        * Get the value of m_status
        * @return the value of m_status
        */
@@ -668,6 +685,8 @@ namespace castor {
       castor::stager::Tape* m_tape;
 
       std::vector<ExtendedDeviceGroup*> m_extDevGrpVector;
+
+      TapeRequest* m_runningTapeReq;
 
       TapeDriveStatusCodes m_status;
 

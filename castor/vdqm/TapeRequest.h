@@ -35,6 +35,7 @@ struct C_IObject_t;
 struct Cstager_ClientIdentification_t;
 struct Cstager_Tape_t;
 struct Cvdqm_ExtendedDeviceGroup_t;
+struct Cvdqm_TapeDrive_t;
 struct Cvdqm_TapeRequest_t;
 struct Cvdqm_TapeServer_t;
 
@@ -164,5 +165,15 @@ int Cvdqm_TapeRequest_requestedSrv(struct Cvdqm_TapeRequest_t* instance, struct 
  * Set the value of requestedSrv
  */
 int Cvdqm_TapeRequest_setRequestedSrv(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_TapeServer_t* new_var);
+
+/**
+ * Get the value of tapeDrive
+ */
+int Cvdqm_TapeRequest_tapeDrive(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_TapeDrive_t** var);
+
+/**
+ * Set the value of tapeDrive
+ */
+int Cvdqm_TapeRequest_setTapeDrive(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_TapeDrive_t* new_var);
 
 #endif // CASTOR_VDQM_TAPEREQUEST_H

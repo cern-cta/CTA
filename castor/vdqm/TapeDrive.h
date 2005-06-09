@@ -36,6 +36,7 @@ struct C_IObject_t;
 struct Cstager_Tape_t;
 struct Cvdqm_ExtendedDeviceGroup_t;
 struct Cvdqm_TapeDrive_t;
+struct Cvdqm_TapeRequest_t;
 struct Cvdqm_TapeServer_t;
 
 //------------------------------------------------------------------------------
@@ -382,6 +383,16 @@ int Cvdqm_TapeDrive_removeExtDevGrp(struct Cvdqm_TapeDrive_t* instance, struct C
  * Note that the caller is responsible for the deletion of the returned vector.
  */
 int Cvdqm_TapeDrive_extDevGrp(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_ExtendedDeviceGroup_t*** var, int* len);
+
+/**
+ * Get the value of runningTapeReq
+ */
+int Cvdqm_TapeDrive_runningTapeReq(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeRequest_t** var);
+
+/**
+ * Set the value of runningTapeReq
+ */
+int Cvdqm_TapeDrive_setRunningTapeReq(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeRequest_t* new_var);
 
 /**
  * Get the value of status

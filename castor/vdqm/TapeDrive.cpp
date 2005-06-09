@@ -33,6 +33,7 @@
 #include "castor/stager/Tape.hpp"
 #include "castor/vdqm/ExtendedDeviceGroup.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
+#include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -69,6 +70,7 @@ castor::vdqm::TapeDrive::TapeDrive() throw() :
   m_name(""),
   m_id(0),
   m_tape(0),
+  m_runningTapeReq(0),
   m_status(TapeDriveStatusCodes(0)),
   m_tapeServer(0) {
 };
@@ -78,6 +80,9 @@ castor::vdqm::TapeDrive::TapeDrive() throw() :
 //------------------------------------------------------------------------------
 castor::vdqm::TapeDrive::~TapeDrive() throw() {
   m_extDevGrpVector.clear();
+  if (0 != m_runningTapeReq) {
+    m_runningTapeReq->setTapeDrive(0);
+  }
   if (0 != m_tapeServer) {
     m_tapeServer->removeTapeDrives(this);
   }
@@ -138,6 +143,12 @@ void castor::vdqm::TapeDrive::print(std::ostream& stream,
       stream << indent << "  " << i << " :" << std::endl;
       (*it)->print(stream, indent + "    ", alreadyPrinted);
     }
+  }
+  stream << indent << "RunningTapeReq : " << std::endl;
+  if (0 != m_runningTapeReq) {
+    m_runningTapeReq->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
   }
   stream << indent << "status : " << TapeDriveStatusCodesStrings[m_status] << std::endl;
   stream << indent << "TapeServer : " << std::endl;

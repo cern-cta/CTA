@@ -33,6 +33,7 @@
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/vdqm/ExtendedDeviceGroup.hpp"
+#include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "osdep.h"
@@ -49,13 +50,17 @@ castor::vdqm::TapeRequest::TapeRequest() throw() :
   m_tape(0),
   m_client(0),
   m_reqExtDevGrp(0),
-  m_requestedSrv(0) {
+  m_requestedSrv(0),
+  m_tapeDrive(0) {
 };
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::vdqm::TapeRequest::~TapeRequest() throw() {
+  if (0 != m_tapeDrive) {
+    m_tapeDrive->setRunningTapeReq(0);
+  }
 };
 
 //------------------------------------------------------------------------------
@@ -96,6 +101,12 @@ void castor::vdqm::TapeRequest::print(std::ostream& stream,
   stream << indent << "RequestedSrv : " << std::endl;
   if (0 != m_requestedSrv) {
     m_requestedSrv->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
+  stream << indent << "TapeDrive : " << std::endl;
+  if (0 != m_tapeDrive) {
+    m_tapeDrive->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }
