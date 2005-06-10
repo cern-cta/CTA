@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.9 $ $Release$ $Date: 2005/06/09 14:11:26 $ $Author: obarring $
+ * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.10 $ $Release$ $Date: 2005/06/10 14:48:31 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.9 $ $Date: 2005/06/09 14:11:26 $ CERN IT/FIO Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.10 $ $Date: 2005/06/10 14:48:31 $ CERN IT/FIO Olof Barring";
 #endif /* lint */
 
 
@@ -225,6 +225,7 @@ void *fileWriteThread(
   rc = Cthread_mutex_lock_ext(startFlagLock);
   if ( rc == -1 ) {
     LOG_ERROR("Cthread_mutex_lock_ext()");
+    free(myFile);
     return((void *)&success);
   }
 
@@ -232,6 +233,7 @@ void *fileWriteThread(
     rc = Cthread_cond_wait_ext(startFlagLock);
     if ( rc == -1 ) {
       LOG_ERROR("Cthread_cond_wait_ext()");
+      free(myFile);
       return((void *)&success);
     }
   }
@@ -247,10 +249,10 @@ void *fileWriteThread(
     timingInfo[myIndex].openFailed = 1;
     log(LOG_ERR,"rfio_open(%s,O_WRONLY): serrno=%d, rfio_errno=%d, errno=%d %s\n",
         myFile,save_serrno,save_rfio_errno,save_errno,rfio_serror());
+    free(myFile);
     return((void *)&success);
   }
   gettimeofday(&timingInfo[myIndex].openExitTime,NULL);
-  sleep(1);
 
   myBuffer = bufferToWrite;
   for ( i=0; i<nbBuffersToWrite; i++ ) {
@@ -272,6 +274,7 @@ void *fileWriteThread(
   } else {
     close(fd);
   }
+  free(myFile);
   return((void *)&success);
 }
 
@@ -297,6 +300,7 @@ void *fileReadThread(
   rc = Cthread_mutex_lock_ext(startFlagLock);
   if ( rc == -1 ) {
     LOG_ERROR("Cthread_mutex_lock_ext()");
+    free(myFile);
     return((void *)&success);
   }
 
@@ -304,6 +308,7 @@ void *fileReadThread(
     rc = Cthread_cond_wait_ext(startFlagLock);
     if ( rc == -1 ) {
       LOG_ERROR("Cthread_cond_wait_ext()");
+      free(myFile);
       return((void *)&success);
     }
   }
@@ -320,6 +325,7 @@ void *fileReadThread(
     timingInfo[myIndex].openFailed = 1;
     log(LOG_ERR,"rfio_open(%s,O_RDONLY): serrno=%d, rfio_errno=%d, errno=%d %s\n",
         myFile,save_serrno,save_rfio_errno,save_errno,rfio_serror());
+    free(myFile);
     return((void *)&success);
   }
   gettimeofday(&timingInfo[myIndex].openExitTime,NULL);
@@ -340,6 +346,7 @@ void *fileReadThread(
         break; 
       }
     }
+    free(myBuffer);
   }
   
   if ( dropConnection == 0 ) {
@@ -349,6 +356,7 @@ void *fileReadThread(
   } else {
     close(fd);
   }
+  free(myFile);
   return((void *)&success);
 }
 
