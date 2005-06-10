@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.14 2005/06/03 09:39:28 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.15 2005/06/10 16:47:51 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.14 $ $Date: 2005/06/03 09:39:28 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.15 $ $Date: 2005/06/10 16:47:51 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -316,6 +316,14 @@ namespace castor {
             /* ---------------------- */
             res.setSize(diskcopy->size());
             setFileResponseStatus(&res, diskcopy, foundDiskCopy);
+          }
+
+          // INVALID status is like nothing
+          if (res->status() == FILE_INVALID_STATUS) {
+            castor::exception::Exception e(ENOENT);
+            e.getMessage() << "File " << fid << "@"
+                           << nshost << " not in stager";
+            throw e;
           }
 
           /* Sending the response */
