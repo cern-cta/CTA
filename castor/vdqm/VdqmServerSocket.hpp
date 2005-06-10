@@ -60,7 +60,9 @@ namespace castor {
 
       /**
        * Constructor building a Socket objet around a regular socket
+       * 
        * @param socket the regular socket used
+       * @exception In case of error
        */
       VdqmServerSocket(int socket) throw ();
 
@@ -68,7 +70,10 @@ namespace castor {
        * Constructor building a socket on a given local port
        * @param port the local port for this socket. Use 0 if
        * you want the system to allocate a port
-       * @param doListen whether to start listening on the socket.
+       * 
+       * @param port The port number, to which the socket should listen
+       * @param reusable If the socket should be reusable or not
+       * @exception In case of error
        */
       VdqmServerSocket(const unsigned short port,
 		   const bool reusable)
@@ -91,12 +96,15 @@ namespace castor {
 	   * protocol is used.
 	   * 
 	   * @return The magic number
+	   * @exception In case of error
 	   */
       unsigned int readMagicNumber() throw (castor::exception::Exception);
         
 
       /**
        * start listening on the socket
+       * 
+       * @exception In case of error
        */
       virtual void listen() throw(castor::exception::Exception);
                                
@@ -105,6 +113,8 @@ namespace castor {
        * accept a connection and return the correponding Socket.
        * The deallocation of the new socket is the responsability
        * of the caller.
+       * 
+       * @exception In case of error
        */
       virtual VdqmServerSocket* accept() throw (castor::exception::Exception);
       
@@ -113,7 +123,9 @@ namespace castor {
        * Reads an object from the socket. Please use 
        * this function only after having read out the magic number!
        * Note that the deallocation of it is the responsability of the caller
+       * 
        * @return the IObject read
+       * @exception In case of error
        */
       virtual castor::IObject* readObject() throw(castor::exception::Exception);
       
@@ -121,7 +133,14 @@ namespace castor {
        * This function reads the old vdqm protocol out of the buffer. In fact
        * it is quite similar to the old vdqm_RecvReq() C function. Please use 
        * this function only after having read out the magic number! 
+       * 
        * @return The request Type number of the old vdqm Protocol
+       * @param header The old header
+       * @param volumeRequest The old volumeRequest, which corresponds now 
+       * to the TapeRequest
+       * @param driveRequest the old driveRequest which corresponds now 
+       * to the TapeDrive
+       * @exception In case of error
        */
       int readOldProtocol(vdqmHdr_t *header, 
       										vdqmVolReq_t *volumeRequest, 
@@ -130,8 +149,10 @@ namespace castor {
       									throw (castor::exception::Exception);
       					
       /**
-       * Sends to old client
+       * Sends the request back to the client with its corresponding ID. 
+       * 
        * @return The request Type number of the old vdqm Protocol
+       * @exception In case of error
        */				
       int sendToOldClient(vdqmHdr_t *header, 
       										vdqmVolReq_t *volumeRequest, 
@@ -141,6 +162,8 @@ namespace castor {
       									
       /**
        * Sends a VDQM_COMMIT back to the client.
+       * 
+       * @exception In case of error
        */									
       void acknCommitOldProtocol() 
       	throw (castor::exception::Exception);
@@ -148,14 +171,28 @@ namespace castor {
       /**
        * Waits for an acknowledgement of the old tpdaemon, that the
        * vdqm server has stored its request.
+       * 
+       * @exception In case of error
        */	
       void recvAcknFromOldProtocol()
+      	throw (castor::exception::Exception);
+      	
+      /**
+       * Sends a commit for a ping request back to the client and informes about
+       * the queue position of the pinged TapeRequest.
+       * 
+       * @param queuePosition The queue position of the pinged TapeRequest
+       * @exception In case of error
+       */
+      void sendAcknPing(int queuePosition) 
       	throw (castor::exception::Exception);
 
     protected:
 
       /**
        * binds the socket to the given address
+       * 
+       * @exception In case of error
        */
       void bind(sockaddr_in saddr)
         throw (castor::exception::Exception);
@@ -174,7 +211,10 @@ namespace castor {
        * @param buf allocated by the method, it contains the data read.
        * Note that the deallocation of this buffer is the responsability
        * of the caller
+       * 
+       * @param buf Allocated buffer for the rest of the message waiting in the socket
        * @param n the length of the allocated buffer
+       * @exception In case of error
        */
       void readRestOfBuffer(char** buf, int& n)
         	throw (castor::exception::Exception);
@@ -186,7 +226,7 @@ namespace castor {
       bool m_listening;
       
      	/**
-     	 * Definition of SenTo and RceiveFrom for the old DO_MARSHALL
+     	 * Definition of SendTo and RceiveFrom for the old DO_MARSHALL
      	 */
      	typedef enum direction {SendTo, ReceiveFrom} direction_t;
     };

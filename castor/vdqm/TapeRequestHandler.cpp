@@ -298,6 +298,66 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 
 
 //------------------------------------------------------------------------------
+// deleteTapeRequest
+//------------------------------------------------------------------------------
+void castor::vdqm::TapeRequestHandler::deleteTapeRequest(
+																									vdqmVolReq_t *volumeRequest,
+																									Cuuid_t cuuid) 
+	throw (castor::exception::Exception) {
+//    dgn_element_t *dgn_context;
+//    vdqm_volrec_t *volrec;
+//    vdqm_drvrec_t *drvrec;
+//    int rc;
+//
+//    if ( VolReq == NULL ) return(-1);
+//    log(LOG_INFO,"vdqm_DelVolReq() request for volreq id=%d\n",VolReq->VolReqID);
+//    log(LOG_INFO,"vdqm_DelVolReq() set context to dgn=%s\n",VolReq->dgn);
+//
+//    rc = SetDgnContext(&dgn_context,VolReq->dgn);
+//    if ( rc == -1 ) {
+//        log(LOG_ERR,"vdqm_DelVolReq() cannot set Dgn context for %s\n",
+//            VolReq->dgn);
+//        return(-1);
+//    }
+//
+//    /*
+//     * Verify that the volume record exists
+//     */
+//    volrec = NULL;
+//    rc = GetVolRecord(dgn_context,VolReq,&volrec);
+//    if ( rc == -1 || volrec == NULL ) {
+//        log(LOG_ERR,"vdqm_DelVolReq() volume record not in queue.\n");
+//        FreeDgnContext(&dgn_context);
+//        return(-1);
+//    }
+//    /*
+//     * Can only remove request if not assigned to a drive. Otherwise
+//     * it should be cleanup by resetting the drive status to RELEASE + FREE.
+//     * Mark it as UNKNOWN until an unit status clarifies what has happened.
+//     */
+//    if ( (drvrec = volrec->drv) != NULL ) {
+//        drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+//        volrec->vol.recvtime = time(NULL);
+//        drvrec->update = 1;
+//        volrec->update = 0;
+//        vdqm_SetError(EVQREQASS);
+//        rc = -1;
+//    } else {
+//        /*
+//         * Delete the volume record from the queue.
+//         */
+//        rc = DelVolRecord(dgn_context,volrec);
+//        /*
+//         * Free it
+//         */
+//        free(volrec);
+//    }
+//    FreeDgnContext(&dgn_context);
+//    return(rc);
+}
+
+
+//------------------------------------------------------------------------------
 // getQueuePosition
 //------------------------------------------------------------------------------
 int castor::vdqm::TapeRequestHandler::getQueuePosition(
@@ -308,7 +368,7 @@ int castor::vdqm::TapeRequestHandler::getQueuePosition(
 	//To store the db related informations
   castor::vdqm::TapeRequest *tapeReq = NULL;
   
-  int rowNumber = -1;
+  int queuePosition = -1;
   
   
   try {
@@ -316,13 +376,13 @@ int castor::vdqm::TapeRequestHandler::getQueuePosition(
 	  tapeReq->setId(volumeRequest->VolReqID);
 	  
 	  /**
-	   * returns -1, if there is Request with this ID or the rowNumber
+	   * returns -1, if there is Request with this ID or the queuePosition
 	   */
-	  rowNumber = ptr_IVdqmService->checkTapeRequest(tapeReq);
+	  queuePosition = ptr_IVdqmService->checkTapeRequest(tapeReq);
 	  
 		// Queue position of TapeRequest
 	  castor::dlf::Param params[] =
-	  	{castor::dlf::Param("rowNumber", rowNumber)};
+	  	{castor::dlf::Param("Queue position", queuePosition)};
 	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 26, 1, params);
 	  
   } catch(castor::exception::Exception e) {
@@ -334,7 +394,7 @@ int castor::vdqm::TapeRequestHandler::getQueuePosition(
   // Delete the tapeRequest Object
   delete tapeReq;
   
-  return rowNumber;
+  return queuePosition;
 }
 
 

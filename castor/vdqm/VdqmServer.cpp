@@ -128,6 +128,7 @@ castor::vdqm::VdqmServer::VdqmServer() :
      {24, "Request priority changed"},
      {25, "Handle VDQM_PING"},
      {26, "Queue position of TapeRequest"},
+     {27, "Send VDQM_PING back to client"},
      {-1, ""}};
   castor::dlf::dlf_init("VdqmLog", messages);
 }
@@ -305,11 +306,14 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 		oldProtocol.checkRequestType(cuuid);
 		oldProtocol.handleRequestType(sock, cuuid);
 		
-		//Sending reply to client
-		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 10);
-		sock->acknCommitOldProtocol();
-		sock->sendToOldClient(&header, &volumeRequest, &driveRequest, cuuid);
-		sock->recvAcknFromOldProtocol();
+		//Ping requests don't need a handshake!
+		if (reqtype != VDQM_PING) {
+			//Sending reply to client
+			castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 10);
+			sock->acknCommitOldProtocol();
+			sock->sendToOldClient(&header, &volumeRequest, &driveRequest, cuuid);
+			sock->recvAcknFromOldProtocol();
+		}
 	} catch (castor::exception::Exception e) {  
     // "Exception caught" message
     castor::dlf::Param params[] =

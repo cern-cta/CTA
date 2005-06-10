@@ -164,7 +164,11 @@ void castor::vdqm::OldVdqmProtocol::handleRequestType(VdqmServerSocket* sock,
     case VDQM_DEL_VOLREQ:
     		// Handle VDQM_DEL_VOLREQ
     		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 21);
-//        rc = vdqm_DelVolReq(&volumeRequest);
+
+				{
+    			TapeRequestHandler requestHandler;
+					requestHandler.deleteTapeRequest(ptr_volumeRequest, cuuid); 
+    		}
         break;
     case VDQM_DEL_DRVREQ:
     		// Handle VDQM_DEL_DRVREQ
@@ -184,11 +188,15 @@ void castor::vdqm::OldVdqmProtocol::handleRequestType(VdqmServerSocket* sock,
     		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 25);
     		
     		{
-    			int rowNumber = -1;
+    			int queuePosition = -1;
     			TapeRequestHandler requestHandler;
-					rowNumber = requestHandler.getQueuePosition(ptr_volumeRequest, cuuid); 
+					queuePosition = requestHandler.getQueuePosition(ptr_volumeRequest, cuuid); 
 					
-					//TODO: AcknPing
+					// Send VDQM_PING back to client
+				  castor::dlf::Param params[] =
+				  	{castor::dlf::Param("Queue position", queuePosition)};
+					castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 27, 1, params);
+					sock->sendAcknPing(queuePosition);
     		}
     		break;
   	default:

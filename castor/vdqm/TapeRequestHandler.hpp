@@ -42,7 +42,8 @@ namespace castor {
 
     /**
      * The TapeRequestHandler provides functions to handle all vdqm related
-     * tape request issues.
+     * tape request issues. It handles for example the VDQM_PING, VDQM_VOL_REQ
+     * and VDQM_DEL_VOLREQ
      */
     class TapeRequestHandler : public AbstractRequestHandler {
 
@@ -61,9 +62,23 @@ namespace castor {
 				/**
 				 * This function replaces the old vdqm_NewVolReq() C-function. It stores
 				 * the request into the data Base
+				 * 
+				 * @exception In case of error
 				 */
-				void newTapeRequest(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq, Cuuid_t cuuid) 
+				void newTapeRequest(vdqmHdr_t *header, 
+														vdqmVolReq_t *volumeRequest, Cuuid_t cuuid) 
 					throw (castor::exception::Exception);
+					
+				/**
+				 * Deletes a TapeRequest from the DB. The request must have the same
+				 * id like the VolReq  
+				 * 
+				 * @exception In case of error
+				 */
+				void deleteTapeRequest(vdqmVolReq_t *volumeRequest, Cuuid_t cuuid) 
+					throw (castor::exception::Exception);
+					
+				
 					
 				/**
 				 * This function replaces the old vdqm_GetQueuePos() C-function. It returns
@@ -72,13 +87,15 @@ namespace castor {
 				 * @return 0<: The row number, 
 	    	 *         0 : The request is handled at the moment from a TapeDrive, 
 	    	 *         -1: if there is no entry for it.
-				 * @exception in case of error
+				 * @exception In case of error
 				 */
 				int getQueuePosition(vdqmVolReq_t *VolReq, Cuuid_t cuuid) 
 					throw (castor::exception::Exception);
 					
 				/**
 				 * Returns the next TapeRequest from the database
+				 *
+				 * @exception In case of error
 				 */
 				virtual castor::IObject* getRequest() 
 						throw (castor::exception::Exception);

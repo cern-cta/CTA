@@ -777,3 +777,54 @@ void castor::vdqm::VdqmServerSocket::recvAcknFromOldProtocol()
 			throw ex;	   	
     }
 }
+
+
+//------------------------------------------------------------------------------
+// sendAcknPing
+//------------------------------------------------------------------------------
+void castor::vdqm::VdqmServerSocket::sendAcknPing(int queuePosition)
+	throw (castor::exception::Exception) {
+	
+	int reqtype;
+  char hdrbuf[VDQM_HDRBUFSIZ];
+  int magic, len, rc;
+  char *p;
+    
+//  if (queuePosition < 0 ) queuePosition = -vdqm_GetError();	
+    
+  magic = VDQM_MAGIC;
+  len = queuePosition;
+  reqtype = VDQM_PING;
+
+  p = hdrbuf;
+  DO_MARSHALL(LONG,p,magic,SendTo);
+  DO_MARSHALL(LONG,p,reqtype,SendTo);
+  DO_MARSHALL(LONG,p,len,SendTo);
+    
+  magic = VDQM_MAGIC;
+  len = 0;
+  p = hdrbuf;
+  
+  rc = netwrite_timeout(m_socket, hdrbuf, VDQM_HDRBUFSIZ, VDQM_TIMEOUT);
+  switch (rc) {
+		case -1: 
+				{
+					serrno = SECOMERR;
+	      	castor::exception::Exception ex(serrno);
+					ex.getMessage() << "VdqmServerSocket::sendAcknPing(): "
+												<< "netwrite(HDR): " 
+												<< neterror() << std::endl;
+					throw ex;	
+				}
+				break;
+	  case 0:
+	  		{
+	  			serrno = SECONNDROP;
+	      	castor::exception::Exception ex(serrno);
+					ex.getMessage() << "VdqmServerSocket::sendAcknPing(): "
+												<< "netwrite(HDR): connection dropped" 
+												<< std::endl;
+					throw ex;	
+	  		}
+	}
+}
