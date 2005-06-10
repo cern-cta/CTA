@@ -24,38 +24,22 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
-#include "castor/IAddress.hpp"
-#include "castor/IObject.hpp"
 #include "castor/IFactory.hpp"
 #include "castor/SvcFactory.hpp"
 #include "castor/Constants.hpp"
-#include "castor/IClient.hpp"
-#include "castor/db/ora/OraStagerSvc.hpp"
-#include "castor/db/ora/OraCnvSvc.hpp"
-#include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Busy.hpp"
 #include "castor/exception/Internal.hpp"
-#include "castor/exception/NoEntry.hpp"
-#include "castor/exception/NotSupported.hpp"
 
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/ExtendedDeviceGroup.hpp"
 
+// Local includes
 #include "OraVdqmSvc.hpp"
 
 #include "occi.h"
 #include <Cuuid.h>
 #include <string>
-#include <sstream>
-#include <vector>
-#include <Cns_api.h>
-#include <vmgr_api.h>
-#include <Ctape_api.h>
-#include <serrno.h>
-
-#define NS_SEGMENT_NOTOK (' ')
 
 
  
@@ -215,7 +199,8 @@ int castor::db::ora::OraVdqmSvc::checkTapeRequest(
     }
     
     // Return the TapeRequest queue position
-    return (int)rset->getDouble(1);
+    // TODO: Maybe in future the return value should be double!
+    return (int)rset->getInt(1);
   } catch (oracle::occi::SQLException e) {
     rollback();
     castor::exception::Internal ex;

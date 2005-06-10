@@ -29,9 +29,12 @@
 
 // Include Files
 #include "castor/BaseSvc.hpp"
-#include "castor/db/ora/OraBaseObj.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
 #include "occi.h"
+
+//Local Include Files
+#include "OraCnvSvc.hpp"
+#include "OraBaseObj.hpp"
 
 namespace castor {
 	
