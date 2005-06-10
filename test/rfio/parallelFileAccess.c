@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.10 $ $Release$ $Date: 2005/06/10 14:48:31 $ $Author: obarring $
+ * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.11 $ $Release$ $Date: 2005/06/10 14:52:13 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.10 $ $Date: 2005/06/10 14:48:31 $ CERN IT/FIO Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.11 $ $Date: 2005/06/10 14:52:13 $ CERN IT/FIO Olof Barring";
 #endif /* lint */
 
 
@@ -329,7 +329,6 @@ void *fileReadThread(
     return((void *)&success);
   }
   gettimeofday(&timingInfo[myIndex].openExitTime,NULL);
-  sleep(1);
 
   myBuffer = (char *) malloc(sizeOfBuffer);
   if ( myBuffer == NULL ) {
