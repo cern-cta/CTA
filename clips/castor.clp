@@ -4,7 +4,7 @@
 ;
 ; PROPOSAL FOR 64BITS QUANTITIES: Use the u64subr.h syntax, e.g. with a unit
 ;
-; $Id: castor.clp,v 1.9 2005/04/26 08:19:01 jdurand Exp $
+; $Id: castor.clp,v 1.10 2005/06/13 14:20:20 jdurand Exp $
 ; (c) CASTOR CERN/IT/ADC/CA 2004 - Jean-Damien.Durand@cern.ch
 ;
 ; ====================
@@ -64,6 +64,11 @@
 	?*minReadWeight* = 0.5          ; Minimum value for a fsDeviation in read-only mode
 	?*minWriteWeight* = 0.5         ; Minimum value for a fsDeviation in write-only mode
 	?*minReadWriteWeight* = 0.5     ; Minimum value for a fsDeviation in read/write-only mode
+
+	;; You might want to make sure than a given fsDeviation is at max equal to...:
+	?*maxReadWeight* = 1000.        ; Minimum value for a fsDeviation in read-only mode
+	?*maxWriteWeight* = 1000.       ; Minimum value for a fsDeviation in write-only mode
+	?*maxReadWriteWeight* = 1000.   ; Minimum value for a fsDeviation in read/write-only mode
 
 	?*minIo* = 0.                   ; Minimum i/o, forced if necessary
 )

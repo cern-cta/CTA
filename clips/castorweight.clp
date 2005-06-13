@@ -1,4 +1,4 @@
-; $Id: castorweight.clp,v 1.12 2005/04/26 09:42:31 jdurand Exp $
+; $Id: castorweight.clp,v 1.13 2005/06/13 14:20:21 jdurand Exp $
 
 (load* fs_capabilities.clp)		; Load Filesystem specifities (maxIo in particular)
 
@@ -737,6 +737,16 @@
 		)
 		(if (< ?thisReadWriteWeight ?*minReadWriteWeight*) then
 			(bind ?thisReadWriteWeight ?*minReadWriteWeight*)
+		)
+		; We limit to a maximum value if any
+		(if (> ?thisReadWeight ?*maxReadWeight*) then
+			(bind ?thisReadWeight ?*maxReadWeight*)
+		)
+		(if (> ?thisWriteWeight ?*maxWriteWeight*) then
+			(bind ?thisWriteWeight ?*maxWriteWeight*)
+		)
+		(if (> ?thisReadWriteWeight ?*maxReadWriteWeight*) then
+			(bind ?thisReadWriteWeight ?*maxReadWriteWeight*)
 		)
 
 		(if (!= 0 ?*Debug*) then
