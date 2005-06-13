@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Release$ $Date: 2005/05/24 08:17:39 $ $Author: mbraeger $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Release$ $Date: 2005/06/13 15:56:11 $ $Author: itglp $
 #
 # Make Castor vdqm library
 #
@@ -37,7 +37,7 @@ DEBUG  = -g
 INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
-LIBS = -lshift -lcastorCommonOra
+LIBS = -lshift
 
 VDQMBIN_SRCS =AbstractRequestHandler.cpp \
 							ExtendedDeviceGroup.cpp \
@@ -58,8 +58,7 @@ VDQMBIN_SRCS =AbstractRequestHandler.cpp \
 
 VDQMBIN_OBJS = $(VDQMBIN_SRCS:.cpp=.Osuf)
 
-DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift) \
-         DepSharedLibraryTargetName(FileName(..,shlib),castorCommonOra)
+DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift)
 
 LDFLAGS = -L FileName(..,FileName(..,shlib)) $(MTLDFLAGS)
 LD = g++
@@ -69,7 +68,6 @@ all: ProgramTargetName(vdqmserver)
 NormalProgramTarget(vdqmserver,$(VDQMBIN_OBJS),$(DEPLIB),$(LIBS))
 
 MakeDepSharedLibrary(FileName(..,shlib),shift)
-MakeDepSharedLibrary(FileName(..,shlib),castorCommonOra)
 
 Makefiles:
 

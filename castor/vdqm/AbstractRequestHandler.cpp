@@ -57,19 +57,19 @@ castor::vdqm::AbstractRequestHandler::AbstractRequestHandler()
   ptr_svcs = services();
 	
 	/**
-	 * Getting OraVdqmService
+	 * Getting DbVdqmService
 	 */
-	svc = ptr_svcs->service("OraVdqmSvc", castor::SVC_ORAVDQMSVC);
+	svc = ptr_svcs->service("DbVdqmSvc", castor::SVC_DBVDQMSVC);
   if (0 == svc) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Could not get OraVdqmSvc" << std::endl;
+    ex.getMessage() << "Could not get DbVdqmSvc" << std::endl;
     throw ex;
   }
   
   ptr_IVdqmService = dynamic_cast<IVdqmSvc*>(svc);
   if (0 == ptr_IVdqmService) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Got a bad OraVdqmSvc: "
+    ex.getMessage() << "Got a bad DbVdqmSvc: "
     								<< "ID=" << svc->id()
     								<< ", Name=" << svc->name()
     								<< std::endl;
@@ -97,10 +97,10 @@ castor::vdqm::AbstractRequestHandler::~AbstractRequestHandler()
 void castor::vdqm::AbstractRequestHandler::handleRequest
 (castor::IObject* fr, Cuuid_t cuuid)
   throw (castor::exception::Exception) {
-  // Stores it into Oracle
+  // Stores it into DB
   castor::BaseAddress ad;
-  ad.setCnvSvcName("OraCnvSvc");
-  ad.setCnvSvcType(castor::SVC_ORACNV);
+  ad.setCnvSvcName("DbCnvSvc");
+  ad.setCnvSvcType(castor::SVC_DBCNV);
   try {
   	//Create a new entry in the table
     svcs()->createRep(&ad, fr, false);
