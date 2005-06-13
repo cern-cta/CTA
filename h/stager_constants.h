@@ -1,5 +1,5 @@
 /*
- * $Id: stager_constants.h,v 1.14 2005/04/18 09:08:02 jdurand Exp $
+ * $Id: stager_constants.h,v 1.15 2005/06/13 14:00:16 jdurand Exp $
  */
 
 #ifndef __stager_constants_h
@@ -53,7 +53,7 @@
 #define STAGER_CLASS_FACILITY     "FACILITY"             /* Sub-label in config file for facility */
 #define STAGER_CLASS_LOG          "LOG"                  /* Sub-label in config file for log */
 #define STAGER_CLASS_IGNORECOMMANDLINE  "IGNORECOMMANDLINE" /* Sub-label in config file for ignore-command-line */
-#define STAGER_CLASS_HOST         "HOST"                 /* Sub-label in config file for host */
+#define STAGER_CLASS_HOST         "NOTIFYHOST"           /* Sub-label in config file for host */
 
 #define STAGER_ENV_TIMEOUT        "STAGER_TIMEOUT"       /* Environment variable for timeout */
 #define STAGER_ENV_NODLF          "STAGER_NODLF"         /* Environment variable for nodlf */
@@ -75,7 +75,7 @@
 #define STAGER_ENV_FACILITY       "STAGER_FACILITY"      /* Environment variable for facility */
 #define STAGER_ENV_LOG            "STAGER_LOG"           /* Environment variable for log */
 #define STAGER_ENV_IGNORECOMMANDLINE "STAGER_IGNORECOMMANDLINE" /* Environment variable for ignore-command-line */
-#define STAGER_ENV_HOST           "STAGER_HOST"          /* Environment variable for host */
+#define STAGER_ENV_HOST           "STAGER_NOTIFYHOST"          /* Environment variable for host */
 
 #define STAGER_MUTEX_TIMEOUT      10                     /* Timeout on getting a mutex */
 #define STAGER_COND_TIMEOUT       1                      /* Timeout on waiting on a condition variable */
