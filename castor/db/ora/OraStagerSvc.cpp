@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.167 $ $Release$ $Date: 2005/06/06 14:02:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.168 $ $Release$ $Date: 2005/06/13 15:48:01 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -164,7 +164,7 @@ const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementStri
 
 /// SQL statement for selectFileSystem
 const std::string castor::db::ora::OraStagerSvc::s_selectFileSystemStatementString =
-  "SELECT DiskServer.id, DiskServer.status, FileSystem.id, FileSystem.free, FileSystem.weight, FileSystem.fsDeviation, FileSystem.status FROM FileSystem, DiskServer WHERE DiskServer.name = :1 AND FileSystem.mountPoint = :2 AND FileSystem.diskserver = DiskServer.id FOR UPDATE";
+  "SELECT DiskServer.id, DiskServer.status, FileSystem.id, FileSystem.free, FileSystem.weight, FileSystem.fsDeviation, FileSystem.status, FileSystem.minFreeSpace, FileSystem.maxFreeSpace FROM FileSystem, DiskServer WHERE DiskServer.name = :1 AND FileSystem.mountPoint = :2 AND FileSystem.diskserver = DiskServer.id FOR UPDATE";
 
 /// SQL statement for selectDiskPool
 const std::string castor::db::ora::OraStagerSvc::s_selectDiskPoolStatementString =
@@ -1734,6 +1734,8 @@ castor::db::ora::OraStagerSvc::selectFileSystem
     result->setFsDeviation(rset->getDouble(6));
     result->setStatus
       ((enum castor::stager::FileSystemStatusCodes)rset->getInt(7));
+    result->setMinFreeSpace((u_signed64)rset->getDouble(8));
+    result->setMaxFreeSpace((u_signed64)rset->getDouble(9));
     result->setMountPoint(mountPoint);
     result->setDiskserver(ds);
     ds->addFileSystems(result);
