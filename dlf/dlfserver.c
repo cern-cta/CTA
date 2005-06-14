@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.6 $ $Date: 2004/01/28 15:05:04 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.7 $ $Date: 2005/06/14 11:30:54 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -34,6 +34,7 @@ static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.6 $ $Date: 20
 #include "dlf_server.h"
 
 #define MAXSTRLENGTH 33
+#define MAXDLF_NBTHREADS 64
 int being_shutdown;
 char db_pwd[MAXSTRLENGTH];
 char db_srvr[MAXSTRLENGTH];
@@ -42,7 +43,7 @@ char func[16];
 int jid;
 char localhost[CA_MAXHOSTNAMELEN+1];
 int maxfds;
-struct dlf_srv_thread_info dlf_srv_thread_info[DLF_NBTHREADS];
+struct dlf_srv_thread_info dlf_srv_thread_info[MAXDLF_NBTHREADS];
 
 dlf_main(main_args)
      struct main_args *main_args;
@@ -69,12 +70,45 @@ dlf_main(main_args)
   int thread_index;
   struct timeval timeval;
   char dlfconfigfile[CA_MAXPATHLEN+1];
+  int errflg;
+  char *endptr;
+  int msgs_set = 0;
+  int num_THR = 0;
 
   char prtbuf[256];
 
   jid = getpid();
   strcpy (func, "dlfserver");
   dlflogit (func, "started\n");
+  
+  errflg = 0;
+  
+  if (main_args->argc > 3) {
+        dlflogit (func, "Parametr error\n");
+  	exit (USERR);
+  }
+
+  while ((c = getopt (main_args->argc, main_args->argv, "t:?")) != EOF) {
+    switch (c) {
+    case 't':
+      num_THR = atoi(optarg);
+      break;
+    default:
+      errflg++;
+      break;
+    }
+  }
+  if (main_args->argc == 1) {
+    num_THR = DLF_NBTHREADS;
+  }
+  if (errflg) {
+    dlflogit (func, "Parametr error\n");
+    exit (USERR);
+  }
+  
+
+ dlflogit(func, "initialize with %d threads\n", num_THR); 
+
   gethostname (localhost, CA_MAXHOSTNAMELEN+1);
   if (strchr (localhost, '.') == NULL) {
     if (Cdomainname (domainname, sizeof(domainname)) < 0) {
@@ -132,11 +166,11 @@ dlf_main(main_args)
 
   /* create a pool of threads */
 
-  if ((ipool = Cpool_create (DLF_NBTHREADS, NULL)) < 0) {
+  if ((ipool = Cpool_create (num_THR, NULL)) < 0) {
     dlflogit (func, DLF02, "Cpool_create", sstrerror(serrno));
     return (SYERR);
   }
-  for (i = 0; i < DLF_NBTHREADS; i++) {
+  for (i = 0; i < num_THR+1; i++) {
     dlf_srv_thread_info[i].s = -1;
     dlf_srv_thread_info[i].dbfd.idx = i;
   }
@@ -224,12 +258,16 @@ dlf_main(main_args)
   }
 }
 
-main()
+dlf_main(main_args)
+     struct main_args *main_args;
 {
+	struct main_args main_args;
+	main_args.argc = argc;
+	main_args.argv = argv;
 #if ! defined(_WIN32)
   if ((maxfds = Cinitdaemon ("dlfserver", NULL)) < 0)
     exit (SYERR);
-  exit (dlf_main (NULL));
+  exit (dlf_main (&main_args));
 #else
   if (Cinitservice ("dlf", &dlf_main))
     exit (SYERR);
