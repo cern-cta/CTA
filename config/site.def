@@ -155,7 +155,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define RmcSpool	/var/spool/rmc
 #define RtcopySpool	/var/spool/rtcopy
 #define RtcopyWorkDir	/var/tmp/RTCOPY
-#define	RtcpclientdHost	"lxshare003d"
+#define	RtcpclientdHost	"castorrtcpcld"
 #define SacctDir	/var/spool/sacct
 #if defined(_WIN32)
 #define ShiftConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\castor.conf
