@@ -121,7 +121,7 @@ done
 #    install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.monthly/`basename $i | sed 's/\.cron\.monthly//g'`
 #done
 for i in `find . -name "*.sysconfig"`; do
-    install -o root -g bin -m 600 ${i} ${RPM_BUILD_ROOT}/etc/sysconfig/`basename $i | sed 's/\.sysconfig//g'`.example
+    install -o root -g bin -m 644 ${i} ${RPM_BUILD_ROOT}/etc/sysconfig/`basename $i | sed 's/\.sysconfig//g'`.example
 done
 
 #
