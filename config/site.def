@@ -182,6 +182,16 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #else
 #define StageTypeFile  /etc/castor/stagetype.conf
 #endif
+#if defined(_WIN32)
+#define OraStagerConfigFile  %%SystemRoot%%\\system32\\drivers\\etc\\castor\\ORASTAGERCONFIG
+#else
+#define OraStagerConfigFile  /etc/castor/ORASTAGERCONFIG
+#endif
+#if defined(_WIN32)
+#define MyStagerConfigFile  %%SystemRoot%%\\system32\\drivers\\etc\\castor\\MYSTAGERCONFIG
+#else
+#define MyStagerConfigFile  /etc/castor/MYSTAGERCONFIG
+#endif
 #define StagerSuperGroup	st
 #define StagerSuperUser	stage
 #define StageHost	"stagepublic"
