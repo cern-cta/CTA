@@ -375,6 +375,20 @@ BEGIN
 END;
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
+   whenever a TapeCopy is unlinked from a Stream */
+CREATE OR REPLACE TRIGGER tr_Stream2TapeCopy_Delete
+BEFORE DELETE ON Stream2TapeCopy
+FOR EACH ROW
+BEGIN
+  UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies - 1
+   WHERE FS IN (SELECT DiskCopy.FileSystem
+                  FROM DiskCopy, TapeCopy
+                 WHERE DiskCopy.CastorFile = TapeCopy.castorFile
+                   AND TapeCopy.id = :new.child)
+     AND Stream = :new.parent;
+END;
+
+/* Updates the count of tapecopies in NbTapeCopiesInFS
    whenever a TapeCopy has failed to be migrated and is
    put back in WAITINSTREAM from the SELECTED status */
 CREATE OR REPLACE TRIGGER tr_TapeCopy_Update
@@ -1130,10 +1144,12 @@ BEGIN
     RETURN;
   END IF;
   -- delete all tapeCopies
+  DELETE from Stream2TapeCopy WHERE child IN
+    (SELECT id FROM TapeCopy WHERE castorFile = cfId);
   DELETE from TapeCopy WHERE castorFile = cfId;
   -- set DiskCopies to INVALID
   UPDATE DiskCopy SET status = 7 -- INVALID
-   WHERE castorFile = cfId AND status = 1; -- STAGED
+   WHERE castorFile = cfId AND status IN (1, 10); -- STAGED, CANBEMIGR
   -- create new DiskCopy
   SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
   SELECT ids_seq.nextval INTO dcId FROM DUAL;
