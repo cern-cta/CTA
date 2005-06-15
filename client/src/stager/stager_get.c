@@ -1,5 +1,5 @@
 /*
- * $Id: stager_get.c,v 1.1 2005/05/17 19:19:24 jdurand Exp $
+ * $Id: stager_get.c,v 1.2 2005/06/15 17:04:52 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_get.c,v $ $Revision: 1.1 $ $Date: 2005/05/17 19:19:24 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_get.c,v $ $Revision: 1.2 $ $Date: 2005/06/15 17:04:52 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -24,11 +24,11 @@ void usage _PROTO((char *));
 
 
 /* Global flags */
-static int nowait_flag;
-static int rdonly_flag;
-static int verbose_flag;
-static char* service_class;
-static char* usertag;
+static int verbose_flag = 0;
+static int display_reqid = 0;
+static char* service_class = NULL;
+static char* usertag = NULL;
+static char* stage_host = NULL;
 
 /* Global vars used by _fillStruct and _countFiles */
 static int filenb; /* Number of files to be staged in */
@@ -43,15 +43,17 @@ static int _fillStruct(char *filename);
 
 int parseCmdLine(int argc, char *argv[], int (*cb)(char *) ) {
   int nargs, Coptind, Copterr, errflg;
-  char c;  
+  char c;
 	static struct Coptions longopts[] =
     {
       {"migration_filename", REQUIRED_ARGUMENT,  NULL,      'M'},
+      {"protocol",           REQUIRED_ARGUMENT,  NULL,      'P'},
       {"service_class",      REQUIRED_ARGUMENT,  NULL,      'S'},
       {"usertag",            REQUIRED_ARGUMENT,  NULL,      'U'},
-      {"nowait",             NO_ARGUMENT,  &nowait_flag,      1},
-      {"rdonly",             NO_ARGUMENT,  &rdonly_flag,       1},
-      {"verbose",            NO_ARGUMENT,  &verbose_flag,      'v'},
+      {"verbose",            NO_ARGUMENT,  &verbose_flag,   'v'},
+      {"display_reqid",      NO_ARGUMENT,        NULL,      'r'},
+      {"host",               NO_ARGUMENT,        NULL,      'H'},
+      {"help",               NO_ARGUMENT,        NULL,      'h'},
       {NULL,                 0,                  NULL,        0}
     };
   
@@ -60,7 +62,7 @@ int parseCmdLine(int argc, char *argv[], int (*cb)(char *) ) {
   Copterr = 1;
   errflg = 0;
   
-  while ((c = Cgetopt_long (argc, argv, "M:vS:f:U:", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "M:H:vhrS:P:U:", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
       cb(Coptarg);
@@ -71,11 +73,19 @@ int parseCmdLine(int argc, char *argv[], int (*cb)(char *) ) {
     case 'U':
       usertag = Coptarg;
       break;
-    case 'f':
+    case 'P':
       protocol = Coptarg;
+      break;
+    case 'r':
+      display_reqid = 1;
+      break;
+    case 'H':
+      stage_host = Coptarg;
       break;
     case 'v':
       verbose_flag = 1;
+      break;
+    case 'h':
     case '?':
       errflg++;
       break;
@@ -110,7 +120,7 @@ int main(argc, argv)
 		 int	argc;
 		 char	**argv;
 {
-  int errflg, total_nb_files, rc, nbresps, i;
+  int errflg, total_nb_files, rc, nbresps, i, ret;
   char *reqid;
   struct stage_prepareToGet_fileresp *responses;
   char errbuf[BUFSIZE];
@@ -132,6 +142,10 @@ int main(argc, argv)
 
   if (service_class) {
     opts.service_class = service_class;
+  }
+
+  if (stage_host) {
+    opts.stage_host = stage_host;
   }
 
 
@@ -160,6 +174,7 @@ int main(argc, argv)
 
   printf("Received %d responses\n", nbresps); 
 
+  ret = 0;
   for (i=0; i<nbresps; i++) {
     printf("%s %s", 
            responses[i].filename,
@@ -168,13 +183,18 @@ int main(argc, argv)
       printf(" %d %s", 
              responses[i].errorCode,
              responses[i].errorMessage);
-    }
+      ret = 1;
+    } 
     printf ("\n");
+  }
+  if (display_reqid) {
+    fprintf(stdout, "Stager request ID: %s\n", reqid);
   }
 
   free_prepareToGet_filereq(requests, total_nb_files);
   free_prepareToGet_fileresp(responses, nbresps);
 
+  return(ret);
 }
 
 
@@ -184,6 +204,6 @@ void usage(cmd)
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "%s",
-					 "[-M hsmfile [-M...]] [-S service_class] [--nowait] [--rdonly]\n");
+					 "[-H stagerhost] [-M hsmfile [-M...]] [-S service_class] [-P protocol] [-U usertag] [-r] [-v] [-h]\n");
   
 }

@@ -35,9 +35,9 @@ static struct Coptions longopts[] =
     {"size",               REQUIRED_ARGUMENT,  NULL,      's'},
     {"svc_class",          REQUIRED_ARGUMENT,  NULL,      'S'},
     {"usertag",            REQUIRED_ARGUMENT,  NULL,      'U'},
-    {"host",               REQUIRED_ARGUMENT,  NULL,      'h'},
     {"display_reqid",      NO_ARGUMENT,        NULL,      'r'},
-    {"help",               NO_ARGUMENT,        NULL,      'e'},
+    {"host",               NO_ARGUMENT,        NULL,      'H'},
+    {"help",               NO_ARGUMENT,        NULL,      'h'},
     {NULL,                 0,                  NULL,        0}
   };
 
@@ -73,7 +73,7 @@ main(int argc, char *argv[]) {
                  args.protocol,
                  args.filename,
                  args.mode,
-	         args.size,
+                 args.size,
                  &response,
                  &reqid,
                  &(args.opts));
@@ -120,38 +120,35 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
   Copterr = 1;
   errflg = 0;
   nbargs = 0;  
-  while ((c = Cgetopt_long (argc, argv, "P:M:U:h:rm:s:S:e", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "P:M:U:rm:s:S:h", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
       if (args->filename!= NULL) {
-	errflg++;
+        errflg++;
       } else {
       	args->filename = Coptarg;
       }
       break;
     case 'P':
       if (args->protocol!= NULL) {
-	errflg++;
+        errflg++;
       } else {
       	args->protocol = Coptarg;
       }
       break;
     case 'U':
       if (args->usertag!= NULL) {
-	errflg++;
+        errflg++;
       } else {
       	args->usertag = Coptarg;
       }
       break;
     case 'S':
       if (args->opts.service_class!= NULL) {
-	errflg++;
+        errflg++;
       } else {
       	args->opts.service_class = Coptarg;
       }
-      break;
-    case 'h':
-      args->opts.stage_host = Coptarg;
       break;
     case 's':
       args->size = strtou64(Coptarg);
@@ -162,7 +159,8 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
     case 'r':
       args->display_reqid = 1;
       break;
-    case 'e':
+    case 'h':
+    case '?':
       errflg++;
       break;
     default:
@@ -182,5 +180,5 @@ void
 usage(char *cmd) {
   fprintf (stderr, "usage: %s ", cmd);
   fprintf (stderr, "%s",
-	   "[-h stager] [-P protocol] [-U usertag] [-S svc_class] [-m filemode] [-s filesize] [-r]  -M hsmfile\n");
+	   "[-H stagerhost] [-P protocol] [-U usertag] [-S svc_class] [-m filemode] [-s filesize] [-r] [-h] -M hsmfile\n");
 }
