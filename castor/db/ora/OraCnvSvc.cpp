@@ -46,7 +46,7 @@
 // External C function used for getting configuration from shift.conf file
 // -----------------------------------------------------------------------
 extern "C" {
-  char* getconfent (const char *, char *, int);
+  char* getconfent_fromfile (const char *, const char *, const char *, int);
 }
 
 // -----------------------------------------------------------------------
@@ -73,11 +73,11 @@ castor::db::ora::OraCnvSvc::OraCnvSvc(const std::string name) :
   m_environment(0),
   m_connection(0),
   m_getTypeStatement(0) {
-  char* cuser = getconfent(name.c_str(), "user", 0);
+  char* cuser = getconfent_fromfile(ORASTAGERCONFIGFILE, name.c_str(), "user", 0);
   if (0 != cuser) m_user = std::string(cuser);
-  char* cpasswd = getconfent(name.c_str(), "passwd", 0);
+  char* cpasswd = getconfent_fromfile(ORASTAGERCONFIGFILE, name.c_str(), "passwd", 0);
   if (0 != cpasswd) m_passwd = std::string(cpasswd);
-  char* cdbName = getconfent(name.c_str(), "dbName", 0);
+  char* cdbName = getconfent_fromfile(ORASTAGERCONFIGFILE, name.c_str(), "dbName", 0);
   if (0 != cdbName) m_dbName = std::string(cdbName);
   // Add alias for DiskCopyForRecall on DiskCopy
   addAlias(58, 5);
