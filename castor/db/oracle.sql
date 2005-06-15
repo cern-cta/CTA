@@ -1601,6 +1601,7 @@ CREATE OR REPLACE PROCEDURE putFailedProc(srId IN NUMBER) AS
   dcId INTEGER;
   fsId INTEGER;
   cfId INTEGER;
+  unused INTEGER;
   reservedSpace INTEGER;
 BEGIN
   -- Set SubRequest in FAILED status
@@ -1612,9 +1613,21 @@ BEGIN
   SELECT fileSystem INTO fsId FROM DiskCopy WHERE id = dcId;
   -- free reserved space
   updateFsFileClosed(fsId, reservedSpace, 0);
-  -- Cleanup DiskCopy and CastorFile
-  DELETE FROM DiskCopy WHERE id = dcId;
-  DELETE FROM CastorFile WHERE id = cfId;
+  -- Determine the context (Put inside PrepareToPut ?)
+  BEGIN
+    -- check that there is a PrepareToPut going on
+    SELECT SubRequest.diskCopy INTO unused
+      FROM StagePrepareToPutRequest, SubRequest
+     WHERE SubRequest.CastorFile = cfId
+       AND StagePrepareToPutRequest.id = SubRequest.request;
+    -- the select worked out, so we have a prepareToPut
+    -- In such a case, we do not cleanup DiskCopy and CastorFile
+  EXCEPTION WHEN TOO_MANY_ROWS THEN
+    -- this means we are a standalone put
+    -- thus cleanup DiskCopy and CastorFile
+    DELETE FROM DiskCopy WHERE id = dcId;
+    DELETE FROM CastorFile WHERE id = cfId;
+  END;   
 END;
 
 /* PL/SQL method implementing failedSegments */
