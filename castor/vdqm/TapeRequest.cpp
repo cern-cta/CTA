@@ -48,10 +48,10 @@ castor::vdqm::TapeRequest::TapeRequest() throw() :
   m_creationTime(0),
   m_id(0),
   m_tape(0),
-  m_client(0),
   m_reqExtDevGrp(0),
   m_requestedSrv(0),
-  m_tapeDrive(0) {
+  m_tapeDrive(0),
+  m_client(0) {
 };
 
 //------------------------------------------------------------------------------
@@ -60,6 +60,10 @@ castor::vdqm::TapeRequest::TapeRequest() throw() :
 castor::vdqm::TapeRequest::~TapeRequest() throw() {
   if (0 != m_tapeDrive) {
     m_tapeDrive->setRunningTapeReq(0);
+  }
+  if (0 != m_client) {
+    delete m_client;
+    m_client = 0;
   }
 };
 
@@ -86,12 +90,6 @@ void castor::vdqm::TapeRequest::print(std::ostream& stream,
   } else {
     stream << indent << "  null" << std::endl;
   }
-  stream << indent << "Client : " << std::endl;
-  if (0 != m_client) {
-    m_client->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
   stream << indent << "ReqExtDevGrp : " << std::endl;
   if (0 != m_reqExtDevGrp) {
     m_reqExtDevGrp->print(stream, indent + "  ", alreadyPrinted);
@@ -107,6 +105,12 @@ void castor::vdqm::TapeRequest::print(std::ostream& stream,
   stream << indent << "TapeDrive : " << std::endl;
   if (0 != m_tapeDrive) {
     m_tapeDrive->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
+  stream << indent << "Client : " << std::endl;
+  if (0 != m_client) {
+    m_client->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }

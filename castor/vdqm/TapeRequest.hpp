@@ -181,22 +181,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_client
-       * @return the value of m_client
-       */
-      castor::stager::ClientIdentification* client() const {
-        return m_client;
-      }
-
-      /**
-       * Set the value of m_client
-       * @param new_var the new value of m_client
-       */
-      void setClient(castor::stager::ClientIdentification* new_var) {
-        m_client = new_var;
-      }
-
-      /**
        * Get the value of m_reqExtDevGrp
        * @return the value of m_reqExtDevGrp
        */
@@ -244,6 +228,22 @@ namespace castor {
         m_tapeDrive = new_var;
       }
 
+      /**
+       * Get the value of m_client
+       * @return the value of m_client
+       */
+      castor::stager::ClientIdentification* client() const {
+        return m_client;
+      }
+
+      /**
+       * Set the value of m_client
+       * @param new_var the new value of m_client
+       */
+      void setClient(castor::stager::ClientIdentification* new_var) {
+        m_client = new_var;
+      }
+
     private:
 
       int m_priority;
@@ -256,13 +256,13 @@ namespace castor {
 
       castor::stager::Tape* m_tape;
 
-      castor::stager::ClientIdentification* m_client;
-
       ExtendedDeviceGroup* m_reqExtDevGrp;
 
       TapeServer* m_requestedSrv;
 
       TapeDrive* m_tapeDrive;
+
+      castor::stager::ClientIdentification* m_client;
 
     }; // end of class TapeRequest
 
