@@ -1,0 +1,139 @@
+.\" @(#)$RCSfile: stager_put.man,v $ $Revision: 1.1 $ $Date: 2005/06/15 10:53:55 $ CERN IT/ADC Olof Barring
+.\" Copyright (C) 2005 by CERN/IT
+.\" All rights reserved
+.\"
+.TH STAGER_PUT 1castor "$Date: 2005/06/15 10:53:55 $" CASTOR "STAGER Commands"
+.SH NAME
+stager_put \- request for writing files into CASTOR
+.SH SYNOPSIS
+.B stager_put
+[
+.BI -h
+.BI host
+]
+[
+.BI -M
+.BI hsmfile
+[
+.BI -M
+.BI ...
+]]
+[
+.BI -m
+.BI filemode
+]
+[
+.BI -s
+.BI size
+]
+[
+.BI -S
+.BI service_class
+]
+[
+.BI -U
+.BI usertag
+]
+[
+.BI -P
+.BI protocol
+]
+[
+.BI -r
+]
+.SH DESCRIPTION
+The
+.B stager_put
+command starts a (multi-file) put/update session in CASTOR. It is primary inteded
+for applications that need to open the same set of files several times (e.g. for updates)
+before they are migrated to tape. The command should be used in cojunction with the
+.B stager_putdone(1castor)
+command, which marks the files ready for migration. For most purposes the
+.B stager_put
+command does not provide any advantage compared to using RFIO or other CASTOR
+aware protocols (e.g ROOT) directly. Since the command locks files in STAGEOUT
+status on the disk pools the client
+.I must
+take care of ending the 'transaction' using the
+.B stager_putdone(1castor)
+command. Site-policies may enforce timeout for non-terminated
+.B stager_put
+sessions allowing the CASTOR administrators to cleanup the files in STAGEOUT status.
+
+.SH OPTIONS
+
+.TP
+.BI \-M " hsmfile"
+specifies the CASTOR HSM file to be created. The
+.B \-M
+option can be repeated for multi-files requests.
+.TP
+.BI \-m " filemode"
+specifies the UNIX mode-bits for the file creation (see 
+.B creat(2), open(2)
+)
+.BI \-S " service_class"
+specifies the service class to be used when creating the files. If no service class
+is given a default will be assigned by the stager.
+.TP
+.BI \-s " size"
+specifies the file size reservation. If not specified, the stager will assign the
+default space reservation defined in the service class.
+.BI \-U " usertag"
+allows for associating a usertag that can be used for identifying the request in a subsequent
+.B stager_qry(1castor)
+command.
+.TP
+.BI \-P " protocol"
+specifies the disk mover protocol the client intends to use when accessing the file. This
+option can be used to assure that the file is staged on to a disk server that supports that
+protocol. Examples of protocols are "rfio" and "root".
+.TP
+.BI \-r
+if specified, the request identifier asssigned by the stager will be printed to standard
+output. The request identifier can be used instead of the castor filenames when closing
+the put-session with
+.BI stager_putdone(1castor)
+.TP
+
+.SH EXAMPLE
+.fi
+# stager_put -M /castor/cern.ch/user/t/test/file1 -U test1 -r
+.fi
+42b002d7-0000-1000-9db8-cf9fcba30800
+.fi
+rfio://lxfsrk5701.cern.ch:53184/42b002d7-0000-1000-b2d1-c8e6fd7ff00f
+.fi
+# rfcp /etc/group /castor/cern.ch/user/t/test/file1
+.fi
+2317 bytes in 0 seconds through local (in) and eth0 (out)
+.fi
+# stager_qry -U test1
+.fi
+Received 1 responses
+.fi
+59316604@cnsuser.cern.ch STAGEOUT
+.fi
+# rfcp /etc/passwd /castor/cern.ch/user/t/test/file1
+.fi
+1240856 bytes in 0 seconds through local (in) and eth0 (out)
+.fi
+# stage_putdone -M /castor/cern.ch/user/t/test/file1 -U test1
+.fi
+# stager_qry -U test1
+.fi
+Received 1 responses
+.fi
+59316604@cnsuser.cern.ch CANBEMIGR
+.fi
+
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+
+.SH SEE ALSO
+.BR stager_qry(1castor) ,
+.BR stager_putdone(1castor)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
