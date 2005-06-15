@@ -5,9 +5,9 @@
 # chkconfig: 345 67 38
 # description: DLF server
 #
-# $Id: castor-dlf-server.init,v 1.5 2005/05/18 07:45:01 jdurand Exp $
+# $Id: castor-dlf-server.init,v 1.6 2005/06/15 08:49:05 jdurand Exp $
 #
-# @(#)$RCSfile: castor-dlf-server.init,v $ $Revision: 1.5 $ $Date: 2005/05/18 07:45:01 $ CERN/IT/ADC/CA Vitaly Motyakov
+# @(#)$RCSfile: castor-dlf-server.init,v $ $Revision: 1.6 $ $Date: 2005/06/15 08:49:05 $ CERN/IT/ADC/CA Vitaly Motyakov
 #
 
 #
@@ -75,6 +75,11 @@ if [ $sysname = "SunOS" ]; then
 else
 	format4comm="comm"
 fi
+
+#
+## Unless sysconfig says no the default is to run the server
+#
+RUN_DLFSERVER=yes
 
 case "$1" in
   start)

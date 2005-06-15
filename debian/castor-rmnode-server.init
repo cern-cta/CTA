@@ -5,9 +5,9 @@
 # chkconfig: 345 74 31
 # description: RMNODE server daemon
 #
-# $Id: castor-rmnode-server.init,v 1.6 2005/05/18 07:45:01 jdurand Exp $
+# $Id: castor-rmnode-server.init,v 1.7 2005/06/15 08:49:06 jdurand Exp $
 #
-# @(#)$RCSfile: castor-rmnode-server.init,v $ $Revision: 1.6 $ $Date: 2005/05/18 07:45:01 $ CERN/IT/ADC/CA Vitaly Motyakov
+# @(#)$RCSfile: castor-rmnode-server.init,v $ $Revision: 1.7 $ $Date: 2005/06/15 08:49:06 $ CERN/IT/ADC/CA Vitaly Motyakov
 #
 
 sysname=`uname -s`
@@ -61,6 +61,11 @@ if [ $sysname = "SunOS" ]; then
 else
 	format4comm="comm"
 fi
+
+#
+## Unless sysconfig says no the default is to run the server
+#
+RUN_RMNODE=yes
 
 case "$1" in
   start)

@@ -5,9 +5,9 @@
 # chkconfig: 345 70 35
 # description: GCDAEMON server daemon
 #
-# $Id: castor-gc-server.init,v 1.6 2005/05/18 07:45:01 jdurand Exp $
+# $Id: castor-gc-server.init,v 1.7 2005/06/15 08:49:05 jdurand Exp $
 #
-# @(#)$RCSfile: castor-gc-server.init,v $ $Revision: 1.6 $ $Date: 2005/05/18 07:45:01 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-gc-server.init,v $ $Revision: 1.7 $ $Date: 2005/06/15 08:49:05 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -59,6 +59,11 @@ if [ $sysname = "SunOS" ]; then
 else
 	format4comm="comm"
 fi
+
+#
+## Unless sysconfig says no the default is to run the server
+#
+RUN_GCDAEMON=yes
 
 case "$1" in
   start)
