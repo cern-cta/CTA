@@ -30,10 +30,10 @@ struct cmd_args {
 static struct Coptions longopts[] =
   {
     {"protocol",           REQUIRED_ARGUMENT,  NULL,      'P'},
-    {"migration_filename", REQUIRED_ARGUMENT,  NULL,      'M'},
+    {"hsm_filename", REQUIRED_ARGUMENT,  NULL,      'M'},
     {"mode",               REQUIRED_ARGUMENT,  NULL,      'm'},
     {"size",               REQUIRED_ARGUMENT,  NULL,      's'},
-    {"svc_class",          REQUIRED_ARGUMENT,  NULL,      'S'},
+    {"service_class",          REQUIRED_ARGUMENT,  NULL,      'S'},
     {"usertag",            REQUIRED_ARGUMENT,  NULL,      'U'},
     {"display_reqid",      NO_ARGUMENT,        NULL,      'r'},
     {"host",               NO_ARGUMENT,        NULL,      'H'},

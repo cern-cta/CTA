@@ -1,5 +1,5 @@
 /*
- * $Id: stager_get.c,v 1.2 2005/06/15 17:04:52 obarring Exp $
+ * $Id: stager_get.c,v 1.3 2005/06/16 09:06:32 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_get.c,v $ $Revision: 1.2 $ $Date: 2005/06/15 17:04:52 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_get.c,v $ $Revision: 1.3 $ $Date: 2005/06/16 09:06:32 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -46,7 +46,7 @@ int parseCmdLine(int argc, char *argv[], int (*cb)(char *) ) {
   char c;
 	static struct Coptions longopts[] =
     {
-      {"migration_filename", REQUIRED_ARGUMENT,  NULL,      'M'},
+      {"hsm_filename", REQUIRED_ARGUMENT,  NULL,      'M'},
       {"protocol",           REQUIRED_ARGUMENT,  NULL,      'P'},
       {"service_class",      REQUIRED_ARGUMENT,  NULL,      'S'},
       {"usertag",            REQUIRED_ARGUMENT,  NULL,      'U'},
