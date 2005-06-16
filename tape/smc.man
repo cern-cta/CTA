@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: smc.man,v $ $Revision: 1.5 $ $Date: 2002/12/09 09:56:40 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: smc.man,v $ $Revision: 1.6 $ $Date: 2005/06/16 09:43:12 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1998-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH SMC 1 "$Date: 2002/12/09 09:56:40 $" CASTOR "Ctape User Commands"
+.TH SMC 1 "$Date: 2005/06/16 09:43:12 $" CASTOR "Ctape User Commands"
 .SH NAME
 smc \- command line interface to drive robotic devices through SCSI
 .SH SYNOPSIS
@@ -151,6 +151,10 @@ specifies the picker SCSI device. This parameter is mandatory.
 .BI \-m
 triggers a mount operation. The drive must be free.
 The drive and the vid must be specified.
+.TP
+.BI \-M
+triggers a move medium operation. The target and source slot must be specified.
+The slots must be free.
 .TP
 .BI \-N " nbelem"
 allows to specify the maximum number of entries to be reported.

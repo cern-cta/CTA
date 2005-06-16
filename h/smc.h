@@ -1,5 +1,5 @@
 /*
- * $Id: smc.h,v 1.7 2002/12/02 16:40:28 baud Exp $
+ * $Id: smc.h,v 1.8 2005/06/16 09:43:26 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: smc.h,v $ $Revision: 1.7 $ $Date: 2002/12/02 16:40:28 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: smc.h,v $ $Revision: 1.8 $ $Date: 2005/06/16 09:43:26 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #ifndef _SMC_H
@@ -36,6 +36,7 @@
 #define	SR018	"SR018 - %s of %s on drive %d failed : %s\n"
 #define	SR019	"SR019 - %s : %s error : %s\n"
 #define	SR020	"SR020 - %s failed : %s\n"
+#define	SR021	"SR021 - specify source slot and target slot\n"
 
 			/* smc structures */
 

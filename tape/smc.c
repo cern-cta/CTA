@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smc.c,v $ $Revision: 1.7 $ $Date: 2003/09/15 08:43:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smc.c,v $ $Revision: 1.8 $ $Date: 2005/06/16 09:43:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -40,6 +40,7 @@ char **argv;
 	struct robot_info robot_info;
 	char rmchost[CA_MAXHOSTNAMELEN+1];
 	int slotaddr = -1;
+	int targetslotaddr = -1;
 	struct smc_status smc_status;
 	int verbose = 0;
 	char vid[7];
@@ -49,7 +50,7 @@ char **argv;
 	loader[0] = '\0';
 	rmchost[0] = '\0';
 	memset (vid, '\0', sizeof(vid));
-	while ((c = getopt (argc, argv, "D:deh:Iil:mN:q:S:V:v")) != EOF) {
+	while ((c = getopt (argc, argv, "D:deh:Iil:mN:q:S:V:vMT:")) != EOF) {
 		switch (c) {
 		case 'D':	/* drive ordinal */
 			drvord = strtol (optarg, &dp, 10);
@@ -118,6 +119,20 @@ char **argv;
 				errflg++;
 			}
 			break;
+		case 'T':	/* Target slot */
+			targetslotaddr = strtol (optarg, &dp, 10);
+			if (*dp != '\0' || targetslotaddr < 0) {
+				fprintf (stderr, SR001);
+				errflg++;
+			}
+			break;
+		case 'M':	/* move */
+		  if (req_type) {
+				fprintf (stderr, SR002, req_type, c);
+				errflg++;
+			} else
+				req_type = c;
+			break;
 		case 'V':	/* vid */
 			n = strlen (optarg);
 			if (n > 6) {
@@ -150,6 +165,10 @@ char **argv;
 	}
 	if (req_type == 'm' && (*vid =='\0' || drvord < 0)) {
 		fprintf (stderr, SR007);
+		errflg++;
+	}
+	if (req_type == 'M' && slotaddr == -1 && targetslotaddr == -1) {
+		fprintf (stderr, SR021);
 		errflg++;
 	}
 	if (errflg || req_type == 0) {
@@ -187,7 +206,7 @@ char **argv;
 		fprintf (stderr, SR008, robot_info.device_count);
 		exit (USERR);
 	}
-	if (slotaddr >= robot_info.slot_count) {
+	if (req_type != 'M' && slotaddr >= robot_info.slot_count) {
 		fprintf (stderr, SR016, robot_info.slot_count);
 		exit (USERR);
 	}
@@ -244,6 +263,22 @@ char **argv;
 			    nbelem, verbose);
 			break;
 		}
+		break;
+	case 'M':
+	        if (*rmchost == '\0') {
+		  int ret;
+		  c = smc_move_medium(fd, loader, slotaddr, targetslotaddr,  invert);
+		  if (c != 0) {
+		    ret = smc_lasterror (&smc_status, &msgaddr);
+		    fprintf(stderr, SR020, "move medium", msgaddr);
+		  }
+		
+		} else {
+		  	fprintf (stderr, "Remote move medium not implemented\n");
+			exit (USERR);
+		}
+		break;	
+
 	}
 	exit (c);
 }
@@ -509,6 +544,7 @@ char *cmd;
 	    "\t-e [-h rmcserver] -l loader -V vid [-v]\n",
 	    "\t-i [-h rmcserver] -l loader [-V vid] [-v]\n",
 	    "\t-m -D drive_ordinal [-h rmcserver] [-I] -l loader -V vid [-v]\n",
+	    "\t-M -l loader  -S starting_slot -T end_slot [-v]\n",
 	    "\t-q D [-D drive_ordinal] [-h rmcserver] -l loader [-v]\n",
 	    "\t-q L [-h rmcserver] -l loader [-v]\n",
 	    "\t-q S [-h rmcserver] -l loader [-N nbelem] [-S starting_slot] [-v]\n",
