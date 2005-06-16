@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_get.man,v $ $Revision: 1.2 $ $Date: 2005/06/15 10:53:36 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_get.man,v $ $Revision: 1.3 $ $Date: 2005/06/16 09:06:53 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_GET 1castor "$Date: 2005/06/15 10:53:36 $" CASTOR "STAGER Commands"
+.TH STAGER_GET 1castor "$Date: 2005/06/16 09:06:53 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_get \- pre-stage existing CASTOR files to disk
 .SH SYNOPSIS
@@ -11,7 +11,9 @@ stager_get \- pre-stage existing CASTOR files to disk
 .BI -M
 .BI hsmfile
 [
+{
 .BI -M
+}
 .BI ...
 ]]
 [
@@ -23,14 +25,18 @@ stager_get \- pre-stage existing CASTOR files to disk
 .BI usertag
 ]
 [
-.BI -f
+.BI -P
 .BI protocol
 ]
 [
-.BI --nowait
+.BI -r
 ]
 [
-.BI --rdonly
+.BI -H
+.BI host
+]
+[
+.BI -h
 ]
 [
 .BI -v
@@ -38,39 +44,48 @@ stager_get \- pre-stage existing CASTOR files to disk
 .SH DESCRIPTION
 .B stager_get
 pre-stages a list of CASTOR HSM files from tape to disk. The command currently
-only supports asychronous stage-in operation and it is supposed to be used in
-conjunction with the
+only supports asychronous stage-in operation meaning that the command returns immediately
+after the stager has stored and acknowledged the request. The command does not wait for the
+files to be staged in and it is supposed to be used in conjunction with the
 .B stager_qry(1castor)
 command to check the progress of the request.
 
 .SH OPTIONS
 
 .TP
-.BI \-M " hsmfile"
+.BI \-M,\ \-\-hsm_filename " hsmfile"
 specifies the CASTOR HSM file to be staged in. The
 .B \-M
 option can be repeated, which allows for staging in many files with a single command.
 .TP
-.BI \-S " service_class"
+.BI \-S,\ \-\-service_class " service_class"
 specifies the service class to be used when staging in the file. If no service class
 is given a default will be assigned by the stager.
 .TP
-.BI \-U " usertag"
+.BI \-U,\ \-\-usertag " usertag"
 allows for associating a usertag that can be used for identifying the request in a subsequent
 .B stager_qry(1castor)
 command.
 .TP
-.BI \-f " protocol"
+.BI \-P,\ \-\-protocol " protocol"
 specifies the disk mover protocol the client intends to use when accessing the file. This
 option can be used to assure that the file is staged on to a disk server that supports that
 protocol. Examples of protocols are "rfio" and "root".
 .TP
-.BI \-\-nowait
-submit the request and return immediately. This is default and blocking mode is not yet
-supported.
+.BI \-r,\ \-\-display_reqid
+if specified, the request identifier asssigned by the stager will be printed to standard
+output. The request identifier can be used instead of the castor filenames when closing
+the put-session with
+.BI stager_putdone(1castor)
 .TP
-.BI \-\-rdonly
-specifies that the file will be accessed in read-only mode (no update).
+.BI \-H,\ \-\-host " host"
+specifies the request handler host name. If not specified, a default host will be used.
+.TP
+.BI \-h,\ \-\-help
+display command usage help
+.TP
+.BI \-v,\ \-\-verbose
+print verbose output
 .TP
 
 .SH EXAMPLE
