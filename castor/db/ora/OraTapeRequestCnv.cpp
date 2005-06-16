@@ -59,7 +59,7 @@ const castor::ICnvFactory& OraTapeRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraTapeRequestCnv::s_insertStatementString =
-"INSERT INTO TapeRequest (priority, creationTime, id, tape, client, reqExtDevGrp, requestedSrv, tapeDrive) VALUES (:1,:2,ids_seq.nextval,:3,:4,:5,:6,:7) RETURNING id INTO :8";
+"INSERT INTO TapeRequest (priority, creationTime, id, tape, reqExtDevGrp, requestedSrv, tapeDrive, client) VALUES (:1,:2,ids_seq.nextval,:3,:4,:5,:6,:7) RETURNING id INTO :8";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraTapeRequestCnv::s_deleteStatementString =
@@ -67,7 +67,7 @@ const std::string castor::db::ora::OraTapeRequestCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraTapeRequestCnv::s_selectStatementString =
-"SELECT priority, creationTime, id, tape, client, reqExtDevGrp, requestedSrv, tapeDrive FROM TapeRequest WHERE id = :1";
+"SELECT priority, creationTime, id, tape, reqExtDevGrp, requestedSrv, tapeDrive, client FROM TapeRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraTapeRequestCnv::s_updateStatementString =
@@ -88,14 +88,6 @@ const std::string castor::db::ora::OraTapeRequestCnv::s_checkTapeExistStatementS
 /// SQL update statement for member tape
 const std::string castor::db::ora::OraTapeRequestCnv::s_updateTapeStatementString =
 "UPDATE TapeRequest SET tape = :1 WHERE id = :2";
-
-/// SQL existence statement for member client
-const std::string castor::db::ora::OraTapeRequestCnv::s_checkClientIdentificationExistStatementString =
-"SELECT id from ClientIdentification WHERE id = :1";
-
-/// SQL update statement for member client
-const std::string castor::db::ora::OraTapeRequestCnv::s_updateClientIdentificationStatementString =
-"UPDATE TapeRequest SET client = :1 WHERE id = :2";
 
 /// SQL existence statement for member reqExtDevGrp
 const std::string castor::db::ora::OraTapeRequestCnv::s_checkExtendedDeviceGroupExistStatementString =
@@ -133,6 +125,14 @@ const std::string castor::db::ora::OraTapeRequestCnv::s_checkTapeDriveExistState
 const std::string castor::db::ora::OraTapeRequestCnv::s_updateTapeDriveStatementString =
 "UPDATE TapeRequest SET tapeDrive = :1 WHERE id = :2";
 
+/// SQL existence statement for member client
+const std::string castor::db::ora::OraTapeRequestCnv::s_checkClientIdentificationExistStatementString =
+"SELECT id from ClientIdentification WHERE id = :1";
+
+/// SQL update statement for member client
+const std::string castor::db::ora::OraTapeRequestCnv::s_updateClientIdentificationStatementString =
+"UPDATE TapeRequest SET client = :1 WHERE id = :2";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -146,8 +146,6 @@ castor::db::ora::OraTapeRequestCnv::OraTapeRequestCnv(castor::ICnvSvc* cnvSvc) :
   m_deleteTypeStatement(0),
   m_checkTapeExistStatement(0),
   m_updateTapeStatement(0),
-  m_checkClientIdentificationExistStatement(0),
-  m_updateClientIdentificationStatement(0),
   m_checkExtendedDeviceGroupExistStatement(0),
   m_updateExtendedDeviceGroupStatement(0),
   m_checkTapeServerExistStatement(0),
@@ -156,7 +154,9 @@ castor::db::ora::OraTapeRequestCnv::OraTapeRequestCnv(castor::ICnvSvc* cnvSvc) :
   m_deleteTapeDriveStatement(0),
   m_remoteUpdateTapeDriveStatement(0),
   m_checkTapeDriveExistStatement(0),
-  m_updateTapeDriveStatement(0) {}
+  m_updateTapeDriveStatement(0),
+  m_checkClientIdentificationExistStatement(0),
+  m_updateClientIdentificationStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -180,8 +180,6 @@ void castor::db::ora::OraTapeRequestCnv::reset() throw() {
     deleteStatement(m_deleteTypeStatement);
     deleteStatement(m_checkTapeExistStatement);
     deleteStatement(m_updateTapeStatement);
-    deleteStatement(m_checkClientIdentificationExistStatement);
-    deleteStatement(m_updateClientIdentificationStatement);
     deleteStatement(m_checkExtendedDeviceGroupExistStatement);
     deleteStatement(m_updateExtendedDeviceGroupStatement);
     deleteStatement(m_checkTapeServerExistStatement);
@@ -191,6 +189,8 @@ void castor::db::ora::OraTapeRequestCnv::reset() throw() {
     deleteStatement(m_remoteUpdateTapeDriveStatement);
     deleteStatement(m_checkTapeDriveExistStatement);
     deleteStatement(m_updateTapeDriveStatement);
+    deleteStatement(m_checkClientIdentificationExistStatement);
+    deleteStatement(m_updateClientIdentificationStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -201,8 +201,6 @@ void castor::db::ora::OraTapeRequestCnv::reset() throw() {
   m_deleteTypeStatement = 0;
   m_checkTapeExistStatement = 0;
   m_updateTapeStatement = 0;
-  m_checkClientIdentificationExistStatement = 0;
-  m_updateClientIdentificationStatement = 0;
   m_checkExtendedDeviceGroupExistStatement = 0;
   m_updateExtendedDeviceGroupStatement = 0;
   m_checkTapeServerExistStatement = 0;
@@ -212,6 +210,8 @@ void castor::db::ora::OraTapeRequestCnv::reset() throw() {
   m_remoteUpdateTapeDriveStatement = 0;
   m_checkTapeDriveExistStatement = 0;
   m_updateTapeDriveStatement = 0;
+  m_checkClientIdentificationExistStatement = 0;
+  m_updateClientIdentificationStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -243,9 +243,6 @@ void castor::db::ora::OraTapeRequestCnv::fillRep(castor::IAddress* address,
     case castor::OBJ_Tape :
       fillRepTape(obj);
       break;
-    case castor::OBJ_ClientIdentification :
-      fillRepClientIdentification(obj);
-      break;
     case castor::OBJ_ExtendedDeviceGroup :
       fillRepExtendedDeviceGroup(obj);
       break;
@@ -254,6 +251,9 @@ void castor::db::ora::OraTapeRequestCnv::fillRep(castor::IAddress* address,
       break;
     case castor::OBJ_TapeDrive :
       fillRepTapeDrive(obj);
+      break;
+    case castor::OBJ_ClientIdentification :
+      fillRepClientIdentification(obj);
       break;
     default :
       castor::exception::InvalidArgument ex;
@@ -303,38 +303,6 @@ void castor::db::ora::OraTapeRequestCnv::fillRepTape(castor::vdqm::TapeRequest* 
   m_updateTapeStatement->setDouble(1, 0 == obj->tape() ? 0 : obj->tape()->id());
   m_updateTapeStatement->setDouble(2, obj->id());
   m_updateTapeStatement->executeUpdate();
-}
-
-//------------------------------------------------------------------------------
-// fillRepClientIdentification
-//------------------------------------------------------------------------------
-void castor::db::ora::OraTapeRequestCnv::fillRepClientIdentification(castor::vdqm::TapeRequest* obj)
-  throw (castor::exception::Exception, oracle::occi::SQLException) {
-  if (0 != obj->client()) {
-    // Check checkClientIdentificationExist statement
-    if (0 == m_checkClientIdentificationExistStatement) {
-      m_checkClientIdentificationExistStatement = createStatement(s_checkClientIdentificationExistStatementString);
-    }
-    // retrieve the object from the database
-    m_checkClientIdentificationExistStatement->setDouble(1, obj->client()->id());
-    oracle::occi::ResultSet *rset = m_checkClientIdentificationExistStatement->executeQuery();
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      castor::BaseAddress ad;
-      ad.setCnvSvcName("OraCnvSvc");
-      ad.setCnvSvcType(castor::SVC_ORACNV);
-      cnvSvc()->createRep(&ad, obj->client(), false);
-    }
-    // Close resultset
-    m_checkClientIdentificationExistStatement->closeResultSet(rset);
-  }
-  // Check update statement
-  if (0 == m_updateClientIdentificationStatement) {
-    m_updateClientIdentificationStatement = createStatement(s_updateClientIdentificationStatementString);
-  }
-  // Update local object
-  m_updateClientIdentificationStatement->setDouble(1, 0 == obj->client() ? 0 : obj->client()->id());
-  m_updateClientIdentificationStatement->setDouble(2, obj->id());
-  m_updateClientIdentificationStatement->executeUpdate();
 }
 
 //------------------------------------------------------------------------------
@@ -464,6 +432,38 @@ void castor::db::ora::OraTapeRequestCnv::fillRepTapeDrive(castor::vdqm::TapeRequ
 }
 
 //------------------------------------------------------------------------------
+// fillRepClientIdentification
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapeRequestCnv::fillRepClientIdentification(castor::vdqm::TapeRequest* obj)
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
+  if (0 != obj->client()) {
+    // Check checkClientIdentificationExist statement
+    if (0 == m_checkClientIdentificationExistStatement) {
+      m_checkClientIdentificationExistStatement = createStatement(s_checkClientIdentificationExistStatementString);
+    }
+    // retrieve the object from the database
+    m_checkClientIdentificationExistStatement->setDouble(1, obj->client()->id());
+    oracle::occi::ResultSet *rset = m_checkClientIdentificationExistStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("OraCnvSvc");
+      ad.setCnvSvcType(castor::SVC_ORACNV);
+      cnvSvc()->createRep(&ad, obj->client(), false);
+    }
+    // Close resultset
+    m_checkClientIdentificationExistStatement->closeResultSet(rset);
+  }
+  // Check update statement
+  if (0 == m_updateClientIdentificationStatement) {
+    m_updateClientIdentificationStatement = createStatement(s_updateClientIdentificationStatementString);
+  }
+  // Update local object
+  m_updateClientIdentificationStatement->setDouble(1, 0 == obj->client() ? 0 : obj->client()->id());
+  m_updateClientIdentificationStatement->setDouble(2, obj->id());
+  m_updateClientIdentificationStatement->executeUpdate();
+}
+
+//------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
 void castor::db::ora::OraTapeRequestCnv::fillObj(castor::IAddress* address,
@@ -476,9 +476,6 @@ void castor::db::ora::OraTapeRequestCnv::fillObj(castor::IAddress* address,
   case castor::OBJ_Tape :
     fillObjTape(obj);
     break;
-  case castor::OBJ_ClientIdentification :
-    fillObjClientIdentification(obj);
-    break;
   case castor::OBJ_ExtendedDeviceGroup :
     fillObjExtendedDeviceGroup(obj);
     break;
@@ -487,6 +484,9 @@ void castor::db::ora::OraTapeRequestCnv::fillObj(castor::IAddress* address,
     break;
   case castor::OBJ_TapeDrive :
     fillObjTapeDrive(obj);
+    break;
+  case castor::OBJ_ClientIdentification :
+    fillObjClientIdentification(obj);
     break;
   default :
     castor::exception::InvalidArgument ex;
@@ -536,44 +536,6 @@ void castor::db::ora::OraTapeRequestCnv::fillObjTape(castor::vdqm::TapeRequest* 
 }
 
 //------------------------------------------------------------------------------
-// fillObjClientIdentification
-//------------------------------------------------------------------------------
-void castor::db::ora::OraTapeRequestCnv::fillObjClientIdentification(castor::vdqm::TapeRequest* obj)
-  throw (castor::exception::Exception) {
-  // Check whether the statement is ok
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 clientId = (u_signed64)rset->getDouble(5);
-  // Close ResultSet
-  m_selectStatement->closeResultSet(rset);
-  // Check whether something should be deleted
-  if (0 != obj->client() &&
-      (0 == clientId ||
-       obj->client()->id() != clientId)) {
-    obj->setClient(0);
-  }
-  // Update object or create new one
-  if (0 != clientId) {
-    if (0 == obj->client()) {
-      obj->setClient
-        (dynamic_cast<castor::stager::ClientIdentification*>
-         (cnvSvc()->getObjFromId(clientId)));
-    } else {
-      cnvSvc()->updateObj(obj->client());
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
 // fillObjExtendedDeviceGroup
 //------------------------------------------------------------------------------
 void castor::db::ora::OraTapeRequestCnv::fillObjExtendedDeviceGroup(castor::vdqm::TapeRequest* obj)
@@ -590,7 +552,7 @@ void castor::db::ora::OraTapeRequestCnv::fillObjExtendedDeviceGroup(castor::vdqm
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 reqExtDevGrpId = (u_signed64)rset->getDouble(6);
+  u_signed64 reqExtDevGrpId = (u_signed64)rset->getDouble(5);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -628,7 +590,7 @@ void castor::db::ora::OraTapeRequestCnv::fillObjTapeServer(castor::vdqm::TapeReq
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 requestedSrvId = (u_signed64)rset->getDouble(7);
+  u_signed64 requestedSrvId = (u_signed64)rset->getDouble(6);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -666,7 +628,7 @@ void castor::db::ora::OraTapeRequestCnv::fillObjTapeDrive(castor::vdqm::TapeRequ
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeDriveId = (u_signed64)rset->getDouble(8);
+  u_signed64 tapeDriveId = (u_signed64)rset->getDouble(7);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -686,6 +648,44 @@ void castor::db::ora::OraTapeRequestCnv::fillObjTapeDrive(castor::vdqm::TapeRequ
       cnvSvc()->updateObj(obj->tapeDrive());
     }
     obj->tapeDrive()->setRunningTapeReq(obj);
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObjClientIdentification
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapeRequestCnv::fillObjClientIdentification(castor::vdqm::TapeRequest* obj)
+  throw (castor::exception::Exception) {
+  // Check whether the statement is ok
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 clientId = (u_signed64)rset->getDouble(8);
+  // Close ResultSet
+  m_selectStatement->closeResultSet(rset);
+  // Check whether something should be deleted
+  if (0 != obj->client() &&
+      (0 == clientId ||
+       obj->client()->id() != clientId)) {
+    obj->setClient(0);
+  }
+  // Update object or create new one
+  if (0 != clientId) {
+    if (0 == obj->client()) {
+      obj->setClient
+        (dynamic_cast<castor::stager::ClientIdentification*>
+         (cnvSvc()->getObjFromId(clientId)));
+    } else {
+      cnvSvc()->updateObj(obj->client());
+    }
   }
 }
 
@@ -715,10 +715,10 @@ void castor::db::ora::OraTapeRequestCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(1, obj->priority());
     m_insertStatement->setInt(2, time(0));
     m_insertStatement->setDouble(3, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
-    m_insertStatement->setDouble(4, (type == OBJ_ClientIdentification && obj->client() != 0) ? obj->client()->id() : 0);
-    m_insertStatement->setDouble(5, (type == OBJ_ExtendedDeviceGroup && obj->reqExtDevGrp() != 0) ? obj->reqExtDevGrp()->id() : 0);
-    m_insertStatement->setDouble(6, (type == OBJ_TapeServer && obj->requestedSrv() != 0) ? obj->requestedSrv()->id() : 0);
-    m_insertStatement->setDouble(7, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
+    m_insertStatement->setDouble(4, (type == OBJ_ExtendedDeviceGroup && obj->reqExtDevGrp() != 0) ? obj->reqExtDevGrp()->id() : 0);
+    m_insertStatement->setDouble(5, (type == OBJ_TapeServer && obj->requestedSrv() != 0) ? obj->requestedSrv()->id() : 0);
+    m_insertStatement->setDouble(6, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
+    m_insertStatement->setDouble(7, (type == OBJ_ClientIdentification && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->executeUpdate();
     obj->setId((u_signed64)m_insertStatement->getDouble(8));
     m_storeTypeStatement->setDouble(1, obj->id());
@@ -749,10 +749,10 @@ void castor::db::ora::OraTapeRequestCnv::createRep(castor::IAddress* address,
                     << "  creationTime : " << obj->creationTime() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  tape : " << obj->tape() << std::endl
-                    << "  client : " << obj->client() << std::endl
                     << "  reqExtDevGrp : " << obj->reqExtDevGrp() << std::endl
                     << "  requestedSrv : " << obj->requestedSrv() << std::endl
-                    << "  tapeDrive : " << obj->tapeDrive() << std::endl;
+                    << "  tapeDrive : " << obj->tapeDrive() << std::endl
+                    << "  client : " << obj->client() << std::endl;
     throw ex;
   }
 }
@@ -826,6 +826,9 @@ void castor::db::ora::OraTapeRequestCnv::deleteRep(castor::IAddress* address,
     m_deleteTypeStatement->executeUpdate();
     m_deleteStatement->setDouble(1, obj->id());
     m_deleteStatement->executeUpdate();
+    if (obj->client() != 0) {
+      cnvSvc()->deleteRep(0, obj->client(), false);
+    }
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }

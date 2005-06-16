@@ -108,8 +108,7 @@ namespace castor {
 		    		
 		    	/**
 		    	 * Checks, if there is already an entry for that tapeRequest. The entry
-		    	 * must have exactly these parameters. Only the assoziation to the
-		    	 * tapeDrive is not checked.
+		    	 * must have exactly the same ID.	
 		    	 * 
 		    	 * @return 0<: The row number, 
 		    	 *         0 : The request is handled at the moment from a TapeDrive, 
@@ -134,9 +133,9 @@ namespace castor {
 		    	 */	
 		    	virtual castor::vdqm::TapeDrive* selectFreeTapeDrive(
 		    		const castor::vdqm::ExtendedDeviceGroup *extDevGrp) 
-		    		throw (castor::exception::Exception);    
-		    		
-		    		
+		    		throw (castor::exception::Exception);   
+
+	    				    		
 	      private:
 	      
 		      /**
@@ -179,7 +178,13 @@ namespace castor {
 	        static const std::string s_selectFreeTapeDriveStatementString;
 	
 	        /// SQL statement object for function getFreeTapeDrive
-	        oracle::occi::Statement *m_selectFreeTapeDriveStatement;	                          	
+	        oracle::occi::Statement *m_selectFreeTapeDriveStatement;	 
+	        
+ 	        /// SQL statement for function removeTapeRequest
+	        static const std::string s_removeTapeRequestStatementString;
+	
+	        /// SQL statement object for function removeTapeRequest
+	        oracle::occi::Statement *m_removeTapeRequestStatement;	                                 	
 			};
 		}
 	}

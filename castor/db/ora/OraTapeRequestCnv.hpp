@@ -179,15 +179,6 @@ namespace castor {
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
-         * Fill the database with objects of type ClientIdentification refered by a given
-         * object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepClientIdentification(castor::vdqm::TapeRequest* obj)
-          throw (castor::exception::Exception, oracle::occi::SQLException);
-
-        /**
          * Fill the database with objects of type ExtendedDeviceGroup refered by a given
          * object.
          * @param obj the original object
@@ -213,6 +204,15 @@ namespace castor {
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
+         * Fill the database with objects of type ClientIdentification refered by a given
+         * object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepClientIdentification(castor::vdqm::TapeRequest* obj)
+          throw (castor::exception::Exception, oracle::occi::SQLException);
+
+        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -229,15 +229,6 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjTape(castor::vdqm::TapeRequest* obj)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type ClientIdentification refered by a
-         * given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjClientIdentification(castor::vdqm::TapeRequest* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -263,6 +254,15 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjTapeDrive(castor::vdqm::TapeRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type ClientIdentification refered by a
+         * given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjClientIdentification(castor::vdqm::TapeRequest* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -314,18 +314,6 @@ namespace castor {
 
         /// SQL update statement object for member tape
         oracle::occi::Statement *m_updateTapeStatement;
-
-        /// SQL checkExist statement for member client
-        static const std::string s_checkClientIdentificationExistStatementString;
-
-        /// SQL checkExist statement object for member client
-        oracle::occi::Statement *m_checkClientIdentificationExistStatement;
-
-        /// SQL update statement for member client
-        static const std::string s_updateClientIdentificationStatementString;
-
-        /// SQL update statement object for member client
-        oracle::occi::Statement *m_updateClientIdentificationStatement;
 
         /// SQL checkExist statement for member reqExtDevGrp
         static const std::string s_checkExtendedDeviceGroupExistStatementString;
@@ -380,6 +368,18 @@ namespace castor {
 
         /// SQL update statement object for member tapeDrive
         oracle::occi::Statement *m_updateTapeDriveStatement;
+
+        /// SQL checkExist statement for member client
+        static const std::string s_checkClientIdentificationExistStatementString;
+
+        /// SQL checkExist statement object for member client
+        oracle::occi::Statement *m_checkClientIdentificationExistStatement;
+
+        /// SQL update statement for member client
+        static const std::string s_updateClientIdentificationStatementString;
+
+        /// SQL update statement object for member client
+        oracle::occi::Statement *m_updateClientIdentificationStatement;
 
       }; // end of class OraTapeRequestCnv
 
