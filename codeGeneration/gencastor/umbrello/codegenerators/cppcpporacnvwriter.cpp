@@ -577,7 +577,12 @@ void CppCppOraCnvWriter::writeSqlStatements() {
       n++;
     }
   }
-  stream << ");" << endl;
+  // These ORACLE parameters allow to have many
+  // transactions on the same block and lot of
+  // free space (meaning low number of rows) per block
+  // The global aim is to reduce the contention on a
+  // block because of too many transactions dealing with it
+  stream << ") INITRANS 50 PCTFREE 50;" << endl;
   // Associations dedicated statements
   for (Assoc* as = assocs.first();
        0 != as;
@@ -609,7 +614,7 @@ void CppCppOraCnvWriter::writeSqlStatements() {
                << ";" << endl
                << "CREATE TABLE "
                << compoundName
-               << " (Parent INTEGER, Child INTEGER);"
+               << " (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;"
                << endl << getIndent()
                << "CREATE INDEX I_"
                << compoundName

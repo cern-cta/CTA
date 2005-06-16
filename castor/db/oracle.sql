@@ -32,225 +32,225 @@ ALTER TABLE TapeDrive2ExtendedDevic
   DROP CONSTRAINT fk_TapeDrive2ExtendedDevic_C;
 /* SQL statements for type BaseAddress */
 DROP TABLE BaseAddress;
-CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR2(2048), cnvSvcType NUMBER, target INTEGER, id INTEGER PRIMARY KEY);
+CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR2(2048), cnvSvcType NUMBER, target INTEGER, id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type Client */
 DROP TABLE Client;
-CREATE TABLE Client (ipAddress NUMBER, port NUMBER, id INTEGER PRIMARY KEY);
+CREATE TABLE Client (ipAddress NUMBER, port NUMBER, id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type ClientIdentification */
 DROP TABLE ClientIdentification;
-CREATE TABLE ClientIdentification (machine VARCHAR2(2048), userName VARCHAR2(2048), port NUMBER, euid NUMBER, egid NUMBER, magic NUMBER, id INTEGER PRIMARY KEY);
+CREATE TABLE ClientIdentification (machine VARCHAR2(2048), userName VARCHAR2(2048), port NUMBER, euid NUMBER, egid NUMBER, magic NUMBER, id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type Disk2DiskCopyDoneRequest */
 DROP TABLE Disk2DiskCopyDoneRequest;
-CREATE TABLE Disk2DiskCopyDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskCopyId INTEGER, status NUMBER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE Disk2DiskCopyDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskCopyId INTEGER, status NUMBER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type GetUpdateDone */
 DROP TABLE GetUpdateDone;
-CREATE TABLE GetUpdateDone (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE GetUpdateDone (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type GetUpdateFailed */
 DROP TABLE GetUpdateFailed;
-CREATE TABLE GetUpdateFailed (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE GetUpdateFailed (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type PutFailed */
 DROP TABLE PutFailed;
-CREATE TABLE PutFailed (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE PutFailed (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type Files2Delete */
 DROP TABLE Files2Delete;
-CREATE TABLE Files2Delete (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskServer VARCHAR2(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE Files2Delete (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskServer VARCHAR2(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type FilesDeleted */
 DROP TABLE FilesDeleted;
-CREATE TABLE FilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE FilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type FilesDeletionFailed */
 DROP TABLE FilesDeletionFailed;
-CREATE TABLE FilesDeletionFailed (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE FilesDeletionFailed (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type GCFile */
 DROP TABLE GCFile;
-CREATE TABLE GCFile (diskCopyId INTEGER, id INTEGER PRIMARY KEY, request INTEGER);
+CREATE TABLE GCFile (diskCopyId INTEGER, id INTEGER PRIMARY KEY, request INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type GCLocalFile */
 DROP TABLE GCLocalFile;
-CREATE TABLE GCLocalFile (fileName VARCHAR2(2048), diskCopyId INTEGER, id INTEGER PRIMARY KEY);
+CREATE TABLE GCLocalFile (fileName VARCHAR2(2048), diskCopyId INTEGER, id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type MoverCloseRequest */
 DROP TABLE MoverCloseRequest;
-CREATE TABLE MoverCloseRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, fileSize INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE MoverCloseRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, fileSize INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type PutStartRequest */
 DROP TABLE PutStartRequest;
-CREATE TABLE PutStartRequest (subreqId INTEGER, diskServer VARCHAR2(2048), fileSystem VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE PutStartRequest (subreqId INTEGER, diskServer VARCHAR2(2048), fileSystem VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type PutDoneStart */
 DROP TABLE PutDoneStart;
-CREATE TABLE PutDoneStart (subreqId INTEGER, diskServer VARCHAR2(2048), fileSystem VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE PutDoneStart (subreqId INTEGER, diskServer VARCHAR2(2048), fileSystem VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type GetUpdateStartRequest */
 DROP TABLE GetUpdateStartRequest;
-CREATE TABLE GetUpdateStartRequest (subreqId INTEGER, diskServer VARCHAR2(2048), fileSystem VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE GetUpdateStartRequest (subreqId INTEGER, diskServer VARCHAR2(2048), fileSystem VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type QueryParameter */
 DROP TABLE QueryParameter;
-CREATE TABLE QueryParameter (value VARCHAR2(2048), id INTEGER PRIMARY KEY, query INTEGER, queryType INTEGER);
+CREATE TABLE QueryParameter (value VARCHAR2(2048), id INTEGER PRIMARY KEY, query INTEGER, queryType INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StagePrepareToGetRequest */
 DROP TABLE StagePrepareToGetRequest;
-CREATE TABLE StagePrepareToGetRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE StagePrepareToGetRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StagePrepareToPutRequest */
 DROP TABLE StagePrepareToPutRequest;
-CREATE TABLE StagePrepareToPutRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE StagePrepareToPutRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StagePrepareToUpdateRequest */
 DROP TABLE StagePrepareToUpdateRequest;
-CREATE TABLE StagePrepareToUpdateRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE StagePrepareToUpdateRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StageGetRequest */
 DROP TABLE StageGetRequest;
-CREATE TABLE StageGetRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE StageGetRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StagePutRequest */
 DROP TABLE StagePutRequest;
-CREATE TABLE StagePutRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE StagePutRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StageUpdateRequest */
 DROP TABLE StageUpdateRequest;
-CREATE TABLE StageUpdateRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE StageUpdateRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StageRmRequest */
 DROP TABLE StageRmRequest;
-CREATE TABLE StageRmRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE StageRmRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StagePutDoneRequest */
 DROP TABLE StagePutDoneRequest;
-CREATE TABLE StagePutDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, parentUuid VARCHAR2(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER, parent INTEGER);
+CREATE TABLE StagePutDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, parentUuid VARCHAR2(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER, parent INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StageFileQueryRequest */
 DROP TABLE StageFileQueryRequest;
-CREATE TABLE StageFileQueryRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, fileName VARCHAR2(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE StageFileQueryRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, fileName VARCHAR2(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StageRequestQueryRequest */
 DROP TABLE StageRequestQueryRequest;
-CREATE TABLE StageRequestQueryRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE StageRequestQueryRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StageFindRequestRequest */
 DROP TABLE StageFindRequestRequest;
-CREATE TABLE StageFindRequestRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE StageFindRequestRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type SubRequest */
 DROP TABLE SubRequest;
-CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER);
+CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StageReleaseFilesRequest */
 DROP TABLE StageReleaseFilesRequest;
-CREATE TABLE StageReleaseFilesRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE StageReleaseFilesRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StageAbortRequest */
 DROP TABLE StageAbortRequest;
-CREATE TABLE StageAbortRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER);
+CREATE TABLE StageAbortRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StageGetNextRequest */
 DROP TABLE StageGetNextRequest;
-CREATE TABLE StageGetNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER);
+CREATE TABLE StageGetNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StagePutNextRequest */
 DROP TABLE StagePutNextRequest;
-CREATE TABLE StagePutNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER);
+CREATE TABLE StagePutNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StageUpdateNextRequest */
 DROP TABLE StageUpdateNextRequest;
-CREATE TABLE StageUpdateNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER);
+CREATE TABLE StageUpdateNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type Tape */
 DROP TABLE Tape;
-CREATE TABLE Tape (vid VARCHAR2(2048), side NUMBER, tpmode NUMBER, errMsgTxt VARCHAR2(2048), errorCode NUMBER, severity NUMBER, vwAddress VARCHAR2(2048), id INTEGER PRIMARY KEY, stream INTEGER, status INTEGER);
+CREATE TABLE Tape (vid VARCHAR2(2048), side NUMBER, tpmode NUMBER, errMsgTxt VARCHAR2(2048), errorCode NUMBER, severity NUMBER, vwAddress VARCHAR2(2048), id INTEGER PRIMARY KEY, stream INTEGER, status INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type Segment */
 DROP TABLE Segment;
-CREATE TABLE Segment (fseq NUMBER, offset INTEGER, bytes_in INTEGER, bytes_out INTEGER, host_bytes INTEGER, segmCksumAlgorithm VARCHAR2(2048), segmCksum NUMBER, errMsgTxt VARCHAR2(2048), errorCode NUMBER, severity NUMBER, blockId0 INTEGER, blockId1 INTEGER, blockId2 INTEGER, blockId3 INTEGER, id INTEGER PRIMARY KEY, tape INTEGER, copy INTEGER, status INTEGER);
+CREATE TABLE Segment (fseq NUMBER, offset INTEGER, bytes_in INTEGER, bytes_out INTEGER, host_bytes INTEGER, segmCksumAlgorithm VARCHAR2(2048), segmCksum NUMBER, errMsgTxt VARCHAR2(2048), errorCode NUMBER, severity NUMBER, blockId0 INTEGER, blockId1 INTEGER, blockId2 INTEGER, blockId3 INTEGER, id INTEGER PRIMARY KEY, tape INTEGER, copy INTEGER, status INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type TapePool */
 DROP TABLE TapePool;
-CREATE TABLE TapePool (name VARCHAR2(2048), id INTEGER PRIMARY KEY);
+CREATE TABLE TapePool (name VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type TapeCopy */
 DROP TABLE TapeCopy;
-CREATE TABLE TapeCopy (copyNb NUMBER, id INTEGER PRIMARY KEY, castorFile INTEGER, status INTEGER);
+CREATE TABLE TapeCopy (copyNb NUMBER, id INTEGER PRIMARY KEY, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type CastorFile */
 DROP TABLE CastorFile;
-CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER, creationTime INTEGER, lastAccessTime INTEGER, nbAccesses NUMBER, id INTEGER PRIMARY KEY, svcClass INTEGER, fileClass INTEGER);
+CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER, creationTime INTEGER, lastAccessTime INTEGER, nbAccesses NUMBER, id INTEGER PRIMARY KEY, svcClass INTEGER, fileClass INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type DiskCopy */
 DROP TABLE DiskCopy;
-CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight float, creationTime INTEGER, id INTEGER PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER);
+CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight float, creationTime INTEGER, id INTEGER PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type FileSystem */
 DROP TABLE FileSystem;
-CREATE TABLE FileSystem (free INTEGER, weight float, fsDeviation float, mountPoint VARCHAR2(2048), deltaWeight float, deltaFree NUMBER, reservedSpace NUMBER, minFreeSpace INTEGER, maxFreeSpace INTEGER, spaceToBeFreed INTEGER, id INTEGER PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER);
+CREATE TABLE FileSystem (free INTEGER, weight float, fsDeviation float, mountPoint VARCHAR2(2048), deltaWeight float, deltaFree NUMBER, reservedSpace NUMBER, minFreeSpace INTEGER, maxFreeSpace INTEGER, spaceToBeFreed INTEGER, id INTEGER PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type SvcClass */
 DROP TABLE SvcClass;
-CREATE TABLE SvcClass (nbDrives NUMBER, name VARCHAR2(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, replicationPolicy VARCHAR2(2048), gcPolicy VARCHAR2(2048), migratorPolicy VARCHAR2(2048), recallerPolicy VARCHAR2(2048), id INTEGER PRIMARY KEY);
+CREATE TABLE SvcClass (nbDrives NUMBER, name VARCHAR2(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, replicationPolicy VARCHAR2(2048), gcPolicy VARCHAR2(2048), migratorPolicy VARCHAR2(2048), recallerPolicy VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 DROP INDEX I_SvcClass2TapePool_C;
 DROP INDEX I_SvcClass2TapePool_P;
 DROP TABLE SvcClass2TapePool;
-CREATE TABLE SvcClass2TapePool (Parent INTEGER, Child INTEGER);
+CREATE TABLE SvcClass2TapePool (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
 CREATE INDEX I_SvcClass2TapePool_C on SvcClass2TapePool (child);
 CREATE INDEX I_SvcClass2TapePool_P on SvcClass2TapePool (parent);
 
 /* SQL statements for type DiskPool */
 DROP TABLE DiskPool;
-CREATE TABLE DiskPool (name VARCHAR2(2048), id INTEGER PRIMARY KEY);
+CREATE TABLE DiskPool (name VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 DROP INDEX I_DiskPool2SvcClass_C;
 DROP INDEX I_DiskPool2SvcClass_P;
 DROP TABLE DiskPool2SvcClass;
-CREATE TABLE DiskPool2SvcClass (Parent INTEGER, Child INTEGER);
+CREATE TABLE DiskPool2SvcClass (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
 CREATE INDEX I_DiskPool2SvcClass_C on DiskPool2SvcClass (child);
 CREATE INDEX I_DiskPool2SvcClass_P on DiskPool2SvcClass (parent);
 
 /* SQL statements for type Stream */
 DROP TABLE Stream;
-CREATE TABLE Stream (initialSizeToTransfer INTEGER, id INTEGER PRIMARY KEY, tape INTEGER, tapePool INTEGER, status INTEGER);
+CREATE TABLE Stream (initialSizeToTransfer INTEGER, id INTEGER PRIMARY KEY, tape INTEGER, tapePool INTEGER, status INTEGER) INITRANS 50 PCTFREE 50;
 DROP INDEX I_Stream2TapeCopy_C;
 DROP INDEX I_Stream2TapeCopy_P;
 DROP TABLE Stream2TapeCopy;
-CREATE TABLE Stream2TapeCopy (Parent INTEGER, Child INTEGER);
+CREATE TABLE Stream2TapeCopy (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
 CREATE INDEX I_Stream2TapeCopy_C on Stream2TapeCopy (child);
 CREATE INDEX I_Stream2TapeCopy_P on Stream2TapeCopy (parent);
 
 /* SQL statements for type FileClass */
 DROP TABLE FileClass;
-CREATE TABLE FileClass (name VARCHAR2(2048), minFileSize INTEGER, maxFileSize INTEGER, nbCopies NUMBER, id INTEGER PRIMARY KEY);
+CREATE TABLE FileClass (name VARCHAR2(2048), minFileSize INTEGER, maxFileSize INTEGER, nbCopies NUMBER, id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type DiskServer */
 DROP TABLE DiskServer;
-CREATE TABLE DiskServer (name VARCHAR2(2048), id INTEGER PRIMARY KEY, status INTEGER);
+CREATE TABLE DiskServer (name VARCHAR2(2048), id INTEGER PRIMARY KEY, status INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type ExtendedDeviceGroup */
 DROP TABLE ExtendedDeviceGroup;
-CREATE TABLE ExtendedDeviceGroup (dgName VARCHAR2(2048), accessMode NUMBER, id INTEGER PRIMARY KEY);
+CREATE TABLE ExtendedDeviceGroup (dgName VARCHAR2(2048), accessMode NUMBER, id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type TapeServer */
 DROP TABLE TapeServer;
-CREATE TABLE TapeServer (serverName VARCHAR2(2048), status NUMBER, id INTEGER PRIMARY KEY);
+CREATE TABLE TapeServer (serverName VARCHAR2(2048), status NUMBER, id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type TapeRequest */
 DROP TABLE TapeRequest;
-CREATE TABLE TapeRequest (priority NUMBER, creationTime NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, client INTEGER, reqExtDevGrp INTEGER, requestedSrv INTEGER, tapeDrive INTEGER);
+CREATE TABLE TapeRequest (priority NUMBER, creationTime NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, reqExtDevGrp INTEGER, requestedSrv INTEGER, tapeDrive INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type TapeDrive */
 DROP TABLE TapeDrive;
-CREATE TABLE TapeDrive (jobID NUMBER, creationTime NUMBER, resettime NUMBER, usecount NUMBER, errcount NUMBER, transferredMB NUMBER, totalMB INTEGER, dedicate VARCHAR2(2048), newDedicate VARCHAR2(2048), is_uid NUMBER, is_gid NUMBER, is_name NUMBER, no_uid NUMBER, no_gid NUMBER, no_name NUMBER, no_host NUMBER, no_vid NUMBER, no_mode NUMBER, no_date NUMBER, no_time NUMBER, no_age NUMBER, euid NUMBER, egid NUMBER, name VARCHAR2(2048), id INTEGER PRIMARY KEY, tape INTEGER, runningTapeReq INTEGER, status INTEGER, tapeServer INTEGER);
+CREATE TABLE TapeDrive (jobID NUMBER, creationTime NUMBER, resettime NUMBER, usecount NUMBER, errcount NUMBER, transferredMB NUMBER, totalMB INTEGER, dedicate VARCHAR2(2048), newDedicate VARCHAR2(2048), is_uid NUMBER, is_gid NUMBER, is_name NUMBER, no_uid NUMBER, no_gid NUMBER, no_name NUMBER, no_host NUMBER, no_vid NUMBER, no_mode NUMBER, no_date NUMBER, no_time NUMBER, no_age NUMBER, euid NUMBER, egid NUMBER, name VARCHAR2(2048), id INTEGER PRIMARY KEY, tape INTEGER, runningTapeReq INTEGER, status INTEGER, tapeServer INTEGER) INITRANS 50 PCTFREE 50;
 DROP INDEX I_TapeDrive2ExtendedDevic_C;
 DROP INDEX I_TapeDrive2ExtendedDevic_P;
 DROP TABLE TapeDrive2ExtendedDevic;
-CREATE TABLE TapeDrive2ExtendedDevic (Parent INTEGER, Child INTEGER);
+CREATE TABLE TapeDrive2ExtendedDevic (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
 CREATE INDEX I_TapeDrive2ExtendedDevic_C on TapeDrive2ExtendedDevic (child);
 CREATE INDEX I_TapeDrive2ExtendedDevic_P on TapeDrive2ExtendedDevic (parent);
 
