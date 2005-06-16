@@ -57,7 +57,7 @@ castor::vdqm::AbstractRequestHandler::AbstractRequestHandler()
   ptr_svcs = services();
 	
 	/**
-	 * Getting DbVdqmService
+	 * Getting DbVdqmSvc: It can be the OraVdqmSvc or the MyVdqmSvc
 	 */
 	svc = ptr_svcs->service("DbVdqmSvc", castor::SVC_DBVDQMSVC);
   if (0 == svc) {
@@ -97,7 +97,7 @@ castor::vdqm::AbstractRequestHandler::~AbstractRequestHandler()
 void castor::vdqm::AbstractRequestHandler::handleRequest
 (castor::IObject* fr, Cuuid_t cuuid)
   throw (castor::exception::Exception) {
-  // Stores it into DB
+  // Stores it into Oracle
   castor::BaseAddress ad;
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
@@ -105,7 +105,7 @@ void castor::vdqm::AbstractRequestHandler::handleRequest
   	//Create a new entry in the table
     svcs()->createRep(&ad, fr, false);
     
-    // Store files for taoe requests
+    // Store files for TapeRequests
     castor::vdqm::TapeRequest *tapeRequest =
       dynamic_cast<castor::vdqm::TapeRequest*>(fr);
     
@@ -125,6 +125,7 @@ void castor::vdqm::AbstractRequestHandler::handleRequest
       svcs()->fillRep(&ad, fr, OBJ_Tape, false);
     }
     
+    // Store files for TapeDrive
     castor::vdqm::TapeDrive *tapeDrive =
       dynamic_cast<castor::vdqm::TapeDrive*>(fr);
     
@@ -142,6 +143,30 @@ void castor::vdqm::AbstractRequestHandler::handleRequest
     svcs()->rollback(&ad);
     throw e;
   }
-
-  // TODO: Send an UDP message to the vdqm client
 }
+
+
+//------------------------------------------------------------------------------
+// deleteRepresentation
+//------------------------------------------------------------------------------
+void castor::vdqm::AbstractRequestHandler::deleteRepresentation
+(castor::IObject* fr, Cuuid_t cuuid)
+  throw (castor::exception::Exception) {
+  // Stores it into Oracle
+  castor::BaseAddress ad;
+  ad.setCnvSvcName("DbCnvSvc");
+  ad.setCnvSvcType(castor::SVC_DBCNV);
+  try {
+  	// Deletes the table entry
+    svcs()->deleteRep(&ad, fr, true);
+
+    // "Request deleted from DB" message
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("ID", fr->id())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 29, 1, params);
+
+  } catch (castor::exception::Exception e) {
+    svcs()->rollback(&ad);
+    throw e;
+  }
+} // End of deleteRepresentation

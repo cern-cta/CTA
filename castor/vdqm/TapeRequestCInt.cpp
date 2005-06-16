@@ -166,22 +166,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_TapeRequest_client
-  //----------------------------------------------------------------------------
-  int Cvdqm_TapeRequest_client(castor::vdqm::TapeRequest* instance, castor::stager::ClientIdentification** var) {
-    *var = instance->client();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cvdqm_TapeRequest_setClient
-  //----------------------------------------------------------------------------
-  int Cvdqm_TapeRequest_setClient(castor::vdqm::TapeRequest* instance, castor::stager::ClientIdentification* new_var) {
-    instance->setClient(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cvdqm_TapeRequest_reqExtDevGrp
   //----------------------------------------------------------------------------
   int Cvdqm_TapeRequest_reqExtDevGrp(castor::vdqm::TapeRequest* instance, castor::vdqm::ExtendedDeviceGroup** var) {
@@ -226,6 +210,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cvdqm_TapeRequest_setTapeDrive(castor::vdqm::TapeRequest* instance, castor::vdqm::TapeDrive* new_var) {
     instance->setTapeDrive(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeRequest_client
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeRequest_client(castor::vdqm::TapeRequest* instance, castor::stager::ClientIdentification** var) {
+    *var = instance->client();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeRequest_setClient
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeRequest_setClient(castor::vdqm::TapeRequest* instance, castor::stager::ClientIdentification* new_var) {
+    instance->setClient(new_var);
     return 0;
   }
 

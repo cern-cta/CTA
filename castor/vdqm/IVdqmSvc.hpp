@@ -80,8 +80,7 @@ namespace castor {
 	    		
 	    	/**
 	    	 * Checks, if there is already an entry for that tapeRequest. The entry
-	    	 * must have exactly these parameters. Only the assoziation to the
-	    	 * tapeDrive is not checked.
+	    	 * must have exactly the same ID.
 	    	 * 
 	    	 * @return 0<: The row number, 
 	    	 *         0 : The request is handled at the moment from a TapeDrive, 

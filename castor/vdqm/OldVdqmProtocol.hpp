@@ -63,8 +63,11 @@ namespace castor {
        
        /**
         * Calls the right function for the request.
+        * @parameter socket The Socket instance to communicate with the client
+        * @return true, if there were no complications
+        * @exception In case of errors
         */
-       void handleRequestType(VdqmServerSocket* sock, Cuuid_t cuuid) 
+       bool handleRequestType(VdqmServerSocket* sock, Cuuid_t cuuid) 
        	throw (castor::exception::Exception);
        
        /**

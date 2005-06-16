@@ -66,19 +66,19 @@ castor::vdqm::TapeRequestHandler::TapeRequestHandler() throw()
 	castor::IService* svc;
 	
 	/**
-	 * Getting OraStagerService
+	 * Getting DbStagerSvc: It can be the OraVdqmSvc or the MyVdqmSvc
 	 */
-	svc = ptr_svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
+	svc = ptr_svcs->service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
   if (0 == svc) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Could not get OraStagerSvc" << std::endl;
+    ex.getMessage() << "Could not get DbStagerSvc" << std::endl;
     throw ex;
   }				
   
 	ptr_IStagerService = dynamic_cast<castor::stager::IStagerSvc*>(svc);
   if (0 == ptr_IStagerService) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Got a bad OraStagerSvc: "
+    ex.getMessage() << "Got a bad DbStagerSvc: "
     								<< "ID=" << svc->id()
     								<< ", Name=" << svc->name()
     								<< std::endl;
@@ -106,12 +106,14 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 	throw (castor::exception::Exception) {
   
   //The db related informations
-  castor::vdqm::TapeRequest *newTapeReq = NULL;
+	TapeRequest *newTapeReq = NULL;
 //  castor::vdqm::TapeDrive *freeTapeDrive;
   castor::stager::ClientIdentification *clientData = NULL;
   castor::stager::Tape *tape = NULL;
-  castor::vdqm::TapeServer *reqTapeServer = NULL;
-  castor::vdqm::ExtendedDeviceGroup *reqExtDevGrp = NULL;
+  
+  //TODO: The connection is not realised, yet.
+  TapeServer *reqTapeServer = NULL;
+  ExtendedDeviceGroup *reqExtDevGrp = NULL;
   
   bool exist = false; 
   int rowNumber = 0; 
@@ -215,6 +217,9 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 	  castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 24, 1, params2);
 	  
 	  
+	  // Verify that the request doesn't exist, 
+	  // by calling IVdqmSvc->checkTapeRequest
+	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 31);
 	  /*
 	   * Verify that the request doesn't (yet) exist. If it doesn't exist,
 	   * the return value should be -1.
@@ -227,6 +232,8 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 	    throw ex;
 	  }
 	  
+	  // Try to store Request into the data base
+ 	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 32);
 	  /*
 	   * Add the record to the volume queue
 	   */
@@ -304,56 +311,75 @@ void castor::vdqm::TapeRequestHandler::deleteTapeRequest(
 																									vdqmVolReq_t *volumeRequest,
 																									Cuuid_t cuuid) 
 	throw (castor::exception::Exception) {
-//    dgn_element_t *dgn_context;
-//    vdqm_volrec_t *volrec;
-//    vdqm_drvrec_t *drvrec;
-//    int rc;
-//
-//    if ( VolReq == NULL ) return(-1);
-//    log(LOG_INFO,"vdqm_DelVolReq() request for volreq id=%d\n",VolReq->VolReqID);
-//    log(LOG_INFO,"vdqm_DelVolReq() set context to dgn=%s\n",VolReq->dgn);
-//
-//    rc = SetDgnContext(&dgn_context,VolReq->dgn);
-//    if ( rc == -1 ) {
-//        log(LOG_ERR,"vdqm_DelVolReq() cannot set Dgn context for %s\n",
-//            VolReq->dgn);
-//        return(-1);
-//    }
-//
-//    /*
-//     * Verify that the volume record exists
-//     */
-//    volrec = NULL;
-//    rc = GetVolRecord(dgn_context,VolReq,&volrec);
-//    if ( rc == -1 || volrec == NULL ) {
-//        log(LOG_ERR,"vdqm_DelVolReq() volume record not in queue.\n");
-//        FreeDgnContext(&dgn_context);
-//        return(-1);
-//    }
-//    /*
-//     * Can only remove request if not assigned to a drive. Otherwise
-//     * it should be cleanup by resetting the drive status to RELEASE + FREE.
-//     * Mark it as UNKNOWN until an unit status clarifies what has happened.
-//     */
-//    if ( (drvrec = volrec->drv) != NULL ) {
+ 	//The db related informations
+  TapeRequest *tapeReq = NULL;
+  int rowNumber = -1;
+	
+  dgn_element_t *dgn_context;
+  vdqm_volrec_t *volrec;
+  vdqm_drvrec_t *drvrec;
+  int rc;
+  
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("volreq ID", volumeRequest->VolReqID)};
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 21);
+	
+	try {
+		tapeReq = new TapeRequest();
+		tapeReq->setId(volumeRequest->VolReqID);
+		
+		/*
+	   * Verify that the request exist. If it doesn't exist,
+	   * the return value is -1.
+	   */
+	  rowNumber = ptr_IVdqmService->checkTapeRequest(tapeReq);
+	  if ( rowNumber == -1 ) {
+	    castor::exception::Internal ex;
+	    ex.getMessage() << "Can't delete TapeRequest with ID = " 
+	    								<< volumeRequest->VolReqID
+	    								<< ".The entry does not exist in the DB!" 
+	    								<< std::endl;
+	    throw ex;
+	  }
+	  else if ( rowNumber == 0 ) {
+	  	// If we are here, the TapeRequest is already assigned to a TapeDrive
+	  	
+	  	/*
+		   * PROBLEM:
+	     * Can only remove request if not assigned to a drive. Otherwise
+	     * it should be cleanup by resetting the drive status to RELEASE + FREE.
+	     * Mark it as UNKNOWN until an unit status clarifies what has happened.
+	     */
+	     
 //        drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
 //        volrec->vol.recvtime = time(NULL);
 //        drvrec->update = 1;
 //        volrec->update = 0;
 //        vdqm_SetError(EVQREQASS);
 //        rc = -1;
-//    } else {
-//        /*
-//         * Delete the volume record from the queue.
-//         */
-//        rc = DelVolRecord(dgn_context,volrec);
-//        /*
-//         * Free it
-//         */
-//        free(volrec);
-//    }
-//    FreeDgnContext(&dgn_context);
-//    return(rc);
+			// "TapeRequest is assigned to a TapeDrive. Can't delete it at the moment" message
+		  castor::dlf::Param params[] =
+		  	{castor::dlf::Param("TapeRequest ID", tapeReq->id())};
+		  castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 30, 1, params);
+	  }
+	  else {
+	  	// Remove the TapeRequest from the db (queue)
+	  	deleteRepresentation(tapeReq, cuuid);
+	  
+			// "TapeRequest and its ClientIdentification removed" message
+		  castor::dlf::Param params[] =
+		  	{castor::dlf::Param("TapeRequest ID", tapeReq->id())};
+		  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 28, 1, params);
+	  }
+  } catch(castor::exception::Exception e) {
+ 		if (tapeReq)
+	 		delete tapeReq;
+  
+    throw e;
+  }
+  
+  // Delete all Objects
+  delete tapeReq;
 }
 
 

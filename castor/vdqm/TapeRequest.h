@@ -137,16 +137,6 @@ int Cvdqm_TapeRequest_tape(struct Cvdqm_TapeRequest_t* instance, struct Cstager_
 int Cvdqm_TapeRequest_setTape(struct Cvdqm_TapeRequest_t* instance, struct Cstager_Tape_t* new_var);
 
 /**
- * Get the value of client
- */
-int Cvdqm_TapeRequest_client(struct Cvdqm_TapeRequest_t* instance, struct Cstager_ClientIdentification_t** var);
-
-/**
- * Set the value of client
- */
-int Cvdqm_TapeRequest_setClient(struct Cvdqm_TapeRequest_t* instance, struct Cstager_ClientIdentification_t* new_var);
-
-/**
  * Get the value of reqExtDevGrp
  */
 int Cvdqm_TapeRequest_reqExtDevGrp(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_ExtendedDeviceGroup_t** var);
@@ -175,5 +165,15 @@ int Cvdqm_TapeRequest_tapeDrive(struct Cvdqm_TapeRequest_t* instance, struct Cvd
  * Set the value of tapeDrive
  */
 int Cvdqm_TapeRequest_setTapeDrive(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_TapeDrive_t* new_var);
+
+/**
+ * Get the value of client
+ */
+int Cvdqm_TapeRequest_client(struct Cvdqm_TapeRequest_t* instance, struct Cstager_ClientIdentification_t** var);
+
+/**
+ * Set the value of client
+ */
+int Cvdqm_TapeRequest_setClient(struct Cvdqm_TapeRequest_t* instance, struct Cstager_ClientIdentification_t* new_var);
 
 #endif // CASTOR_VDQM_TAPEREQUEST_H

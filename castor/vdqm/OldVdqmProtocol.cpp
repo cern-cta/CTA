@@ -139,7 +139,7 @@ bool castor::vdqm::OldVdqmProtocol::checkRequestType(Cuuid_t cuuid)
   return true;
 }
 
-void castor::vdqm::OldVdqmProtocol::handleRequestType(VdqmServerSocket* sock,
+bool castor::vdqm::OldVdqmProtocol::handleRequestType(VdqmServerSocket* sock,
 																											Cuuid_t cuuid) 
 	throw (castor::exception::Exception) {
 	
@@ -162,10 +162,13 @@ void castor::vdqm::OldVdqmProtocol::handleRequestType(VdqmServerSocket* sock,
 //        rc = vdqm_NewDrvReq(&hdr,&driveRequest);
         break;
     case VDQM_DEL_VOLREQ:
-    		// Handle VDQM_DEL_VOLREQ
-    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 21);
-
 				{
+					// Handle VDQM_DEL_VOLREQ
+			    castor::dlf::Param params[] =
+			      {castor::dlf::Param("volreq ID", ptr_volumeRequest->VolReqID)};
+	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 21);
+					
+					
     			TapeRequestHandler requestHandler;
 					requestHandler.deleteTapeRequest(ptr_volumeRequest, cuuid); 
     		}
@@ -207,7 +210,7 @@ void castor::vdqm::OldVdqmProtocol::handleRequestType(VdqmServerSocket* sock,
 	}
 	
 	
- 
+ return handleRequest;
 
 //
 //  /*

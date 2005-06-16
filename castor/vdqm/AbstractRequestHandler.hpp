@@ -72,11 +72,24 @@ namespace castor {
 			  castor::vdqm::IVdqmSvc* ptr_IVdqmService;
 			
 				/**
-	       * Stores the IObject into the data base.
+	       * Stores the IObject into the data base. Please edit this function and 
+	       * add here for your concrete Class instance your concrete Objects, 
+	       * which you want to have created.
 	       * @param fr the request
 	       * @param cuuid its uuid (for logging purposes only)
 	       */
 				void handleRequest(castor::IObject* fr, Cuuid_t cuuid)
+  				throw (castor::exception::Exception);
+  				
+  				
+				/**
+	       * Deletes the IObject in the data base. Please edit this function and 
+	       * add here for your concrete Class instance your concrete Objects, 
+	       * which you want to have deleted.
+	       * @param fr The Object, with the ID of the row, which should be deleted
+	       * @param cuuid its uuid (for logging purposes only)
+	       */
+				void deleteRepresentation(castor::IObject* fr, Cuuid_t cuuid)
   				throw (castor::exception::Exception);
      
 

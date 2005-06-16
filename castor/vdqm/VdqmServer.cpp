@@ -39,16 +39,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/BaseAddress.hpp"
 
-#include "castor/stager/Request.hpp"
-#include "castor/stager/FileRequest.hpp"
-#include "castor/stager/QryRequest.hpp"
-#include "castor/stager/FilesDeleted.hpp"
-#include "castor/rh/Client.hpp"
-
 #include "castor/io/biniostream.h"
-#include "castor/MessageAck.hpp"
-
-#include "h/stager_service_api.h"
 
 
 #define VDQMSERV
@@ -129,6 +120,11 @@ castor::vdqm::VdqmServer::VdqmServer() :
      {25, "Handle VDQM_PING"},
      {26, "Queue position of TapeRequest"},
      {27, "Send VDQM_PING back to client"},
+     {28, "TapeRequest and its ClientIdentification removed"},
+     {29, "Request deleted from DB"},
+     {30, "TapeRequest is assigned to a TapeDrive. Can't delete it at the moment"},
+     {31, "Verify that the request doesn't exist, by calling IVdqmSvc->checkTapeRequest"},
+     {32, "Try to store Request into the data base"},
      {-1, ""}};
   castor::dlf::dlf_init("VdqmLog", messages);
 }
