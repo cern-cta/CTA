@@ -1,0 +1,144 @@
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.1 $ $Date: 2005/06/16 17:27:51 $ CERN IT/ADC Olof Barring
+.\" Copyright (C) 2005 by CERN/IT
+.\" All rights reserved
+.\"
+.TH STAGER_QRY 1castor "$Date: 2005/06/16 17:27:51 $" CASTOR "STAGER Commands"
+.SH NAME
+stager_get \- pre-stage existing CASTOR files to disk
+.SH SYNOPSIS
+.B stager_qry
+[
+.BI -M
+.BI hsmfile
+[
+{
+.BI -M
+}
+.BI ...
+]]
+[
+.BI -S
+.BI service_class
+]
+[
+.BI -U
+.BI usertag
+]
+[
+.BI -F
+.BI bitfileid
+]
+[
+.BI -P
+.BI protocol
+]
+[
+.BI -r
+]
+[
+.BI -H
+.BI host
+]
+[
+.BI -h
+]
+[
+.BI -v
+]
+.SH DESCRIPTION
+The
+.B stager_qry
+command can be used for querying the status and pogress of CASTOR files and stager request
+submitted using the
+.BI stager_get(1castor)
+and
+.BI stager_put(1castor)
+commands.
+
+.SH OPTIONS
+
+.TP
+.BI \-M,\ \-\-hsm_filename " hsmfile"
+specifies the CASTOR HSM file to be queried for. The
+.B \-M
+option can be repeated, which allows for querying the status of many files with a single command.
+.TP
+.BI \-F,\ \-\-fileid " fileid"
+query by CASTOR bitfile identifier. The bitfile id is a unique 64bit number assigned by
+the CASTOR name server to each file in its namespace. The bitfile id can be retrieved using
+the
+.BI nsls(1castor)
+command with the
+.BI \-i
+switch.
+.TP
+.BI \-U,\ \-\-usertag " usertag"
+allows for querying the status of a request identified by usertag. An usertag is a user
+defined string specified with the
+.BI \-U
+option to the
+.B stager_get(1castor)
+and
+.B stager_put(1castor)
+commands. There is no constraint on the uniqueness of the usertag so it is up to the user
+to make sure that the string is unique enough to not clash with other users' usertags.
+.TP
+.BI \-r,\ \-\-display_reqid
+allows for querying the status of a request identified by the stager request identifier.
+The stager request identifier is a UUID (see
+.B uuidgen(1)
+) that uniquely identifies the stager request. The stager request identifier is printed when the
+.BI \-r
+option is specified with the
+.B stager_get(1castor)
+and
+.B stager_put(1castor)
+commands.
+.TP
+.BI \-H,\ \-\-host " host"
+specifies the request handler host name. If not specified, a default host will be used.
+.TP
+.BI \-h,\ \-\-help
+display command usage help
+.TP
+
+.SH EXAMPLE
+.fi
+# stager_get -M /castor/cern.ch/user/t/test/file1 -M /castor/cern.ch/user/t/test/file2 -U test1
+.fi
+Received 2 responses
+.fi
+/castor/cern.ch/user/t/test/file1 SUBREQUEST_READY
+.fi
+/castor/cern.ch/user/t/test/file2 SUBREQUEST_READY
+.fi
+# stager_qry -U test1
+.fi
+Received 2 responses
+.fi
+/castor/cern.ch/user/t/test/file1 STAGEIN
+.fi
+/castor/cern.ch/user/t/test/file2 STAGED
+.fi
+.fi
+# nsls -i /castor/cern.ch/user/t/test/file2
+.fi
+           59316770 /castor/cern.ch/user/t/test/file2
+.fi
+# stager_qry -F 59316770
+.fi
+Received 1 responses
+.fi
+59316770@castorns STAGEOUT
+.fi
+
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+
+.SH SEE ALSO
+.BR stager_get(1castor)
+.BR stager_put(1castor)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
