@@ -239,7 +239,7 @@ CREATE TABLE TapeServer (serverName VARCHAR(1000), status INT, id BIGINT, PRIMAR
 
 /* SQL statements for type TapeRequest */
 DROP TABLE TapeRequest;
-CREATE TABLE TapeRequest (priority INT, creationTime INT, id BIGINT, PRIMARY KEY (id), tape INT, client INT, reqExtDevGrp INT, requestedSrv INT, tapeDrive INT);
+CREATE TABLE TapeRequest (priority INT, creationTime INT, id BIGINT, PRIMARY KEY (id), tape INT, reqExtDevGrp INT, requestedSrv INT, tapeDrive INT, client INT);
 
 /* SQL statements for type TapeDrive */
 DROP TABLE TapeDrive;
