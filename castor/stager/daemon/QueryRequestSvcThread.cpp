@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.16 2005/06/10 16:50:33 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.17 2005/06/17 12:40:52 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.16 $ $Date: 2005/06/10 16:50:33 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.17 $ $Date: 2005/06/17 12:40:52 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -281,14 +281,12 @@ namespace castor {
                                             castor::IClient *client,
                                             std::string &fid,
                                             std::string &nshost,
-                                            u_signed64 svcClassId,
-                                            bool& listAllFiles) {
+                                            u_signed64 svcClassId) {
 
         char *func =  "castor::stager::queryService::handle_fileQueryRequest_byFileId";
 
         /* Invoking the method                */
         /* ---------------------------------- */
-        if (!listAllFiles) {
           STAGER_LOG_DEBUG(NULL, "Invoking diskCopies4File");
           std::list<castor::stager::DiskCopyInfo*> result =
             qrySvc->diskCopies4File(fid, nshost, svcClassId);
@@ -330,31 +328,6 @@ namespace castor {
           /* -------------------- */
           replyToClient(client, &res);
 
-        } else {
-          STAGER_LOG_DEBUG(NULL, "Invoking listDiskCopies");
-          std::list<castor::stager::DiskCopyInfo*> result =
-            qrySvc->listDiskCopies(svcClassId);
-
-
-          for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
-                = result.begin();
-              dcit != result.end();
-              ++dcit) {
-            castor::rh::FileQueryResponse res;
-            bool foundDiskCopy = false;
-            castor::stager::DiskCopyInfo* diskcopy = *dcit;
-
-            std::ostringstream sst;
-            sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
-            res.setFileName(sst.str());
-            /* Preparing the response */
-            /* ---------------------- */
-            setFileResponseStatus(&res, diskcopy, foundDiskCopy);
-            /* Sending the response */
-            /* -------------------- */
-            replyToClient(client, &res);
-          }
-        }
       }
 
 
@@ -492,7 +465,6 @@ namespace castor {
               std::string fid, nshost, reqidtag;
               int statcode;
               bool queryOk = false;
-              bool returnAllFiles = false;
 
               switch(ptype) {
               case REQUESTQUERYTYPE_FILENAME:
@@ -521,17 +493,13 @@ namespace castor {
                 break;
               case REQUESTQUERYTYPE_FILEID:
                 STAGER_LOG_DEBUG(NULL, "Received fileid parameter");
-                if (pval == "*") {
-                  returnAllFiles = true;
+                std::string::size_type idx = pval.find('@');
+                if (idx == std::string::npos) {
+                  fid = pval;
+                  nshost = '%';
                 } else {
-                  std::string::size_type idx = pval.find('@');
-                  if (idx == std::string::npos) {
-                    fid = pval;
-                    nshost = '%';
-                  } else {
-                    fid = pval.substr(0, idx);
-                    nshost = pval.substr(idx + 1);
-                  }
+                  fid = pval.substr(0, idx);
+                  nshost = pval.substr(idx + 1);
                 }
                 queryOk = true;
                 break;
@@ -563,8 +531,7 @@ namespace castor {
                                                  client,
                                                  fid,
                                                  nshost,
-                                                 svcClass->id(),
-                                                 returnAllFiles);
+                                                 svcClass->id());
 
                 break;
               case REQUESTQUERYTYPE_REQID:
