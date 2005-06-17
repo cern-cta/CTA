@@ -1,0 +1,3 @@
+OraCnvSvc       user    username
+OraCnvSvc       passwd  password
+OraCnvSvc       dbName  instance
