@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.3 2005/06/16 17:27:33 obarring Exp $
+ * $Id: stager_qry.c,v 1.4 2005/06/17 07:37:45 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.3 $ $Date: 2005/06/16 17:27:33 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.4 $ $Date: 2005/06/17 07:37:45 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -30,7 +30,7 @@ static struct Coptions longopts[] =
     {"hsm_filename",       REQUIRED_ARGUMENT,  NULL,      'M'},
     {"fileid",             REQUIRED_ARGUMENT,  NULL,      'F'},
     {"usertag",            REQUIRED_ARGUMENT,  NULL,      'U'},
-    {"display_reqid",      REQUIRED_ARGUMENT,  NULL,      'r'},
+    {"requestid",          REQUIRED_ARGUMENT,  NULL,      'r'},
     {"host",               REQUIRED_ARGUMENT,  NULL,      'H'},
     {"help",               REQUIRED_ARGUMENT,  NULL,      'h'},
     {NULL,                 0,                  NULL,        0}

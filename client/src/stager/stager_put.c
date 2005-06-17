@@ -35,7 +35,7 @@ static struct Coptions longopts[] =
     {"size",               REQUIRED_ARGUMENT,  NULL,      's'},
     {"service_class",          REQUIRED_ARGUMENT,  NULL,      'S'},
     {"usertag",            REQUIRED_ARGUMENT,  NULL,      'U'},
-    {"display_reqid",      NO_ARGUMENT,        NULL,      'r'},
+    {"display_reqid",      REQUIRED_ARGUMENT,        NULL,      'r'},
     {"host",               NO_ARGUMENT,        NULL,      'H'},
     {"help",               NO_ARGUMENT,        NULL,      'h'},
     {NULL,                 0,                  NULL,        0}
@@ -89,17 +89,22 @@ main(int argc, char *argv[]) {
      exit(1);
    }
 
+   printf("%s %s", 
+          response->filename,
+          stage_statusName(response->status));
    if (response->errorCode != 0) {
+     printf("\n");
      fprintf(stderr, "Error: %d (%s) Status: %s\n", 
 	     response->errorCode,
 	     response->errorMessage,
 	     stage_statusName(response->status));
      ret = 1;
    } else {
-     if (args.display_reqid) {
+     printf("\n");
+     if (args.display_reqid == 1) {
        fprintf(stdout, "%s\n", reqid);
      }  
-     fprintf(stdout, "%s\n", stage_geturl(response));
+     /*     fprintf(stdout, "%s\n", stage_geturl(response)); */
      ret = 0;
    }
    return ret;
@@ -120,8 +125,12 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
   Copterr = 1;
   errflg = 0;
   nbargs = 0;  
-  while ((c = Cgetopt_long (argc, argv, "P:M:U:rm:s:S:h", longopts, NULL)) != -1) {
+  args->display_reqid = 0;
+  while ((c = Cgetopt_long (argc, argv, "P:M:U:r:m:s:S:H:h", longopts, NULL)) != -1) {
     switch (c) {
+    case 'H':
+      args->opts.stage_host = Coptarg;
+      break;
     case 'M':
       if (args->filename!= NULL) {
         errflg++;

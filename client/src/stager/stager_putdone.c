@@ -26,9 +26,10 @@ struct cmd_args {
 
 static struct Coptions longopts[] =
   {
-    {"requestid",          REQUIRED_ARGUMENT,  NULL,      'R'},
-    {"migration_filename", REQUIRED_ARGUMENT,  NULL,      'M'},
-    {"host",               REQUIRED_ARGUMENT,  NULL,      'h'},
+    {"requestid",          REQUIRED_ARGUMENT,  NULL,      'r'},
+    {"hsm_filename",       REQUIRED_ARGUMENT,  NULL,      'M'},
+    {"host",               REQUIRED_ARGUMENT,  NULL,      'H'},
+    {"help",               NO_ARGUMENT,        NULL,      'h'},
     {NULL,                 0,                  NULL,        0}
   };
 
@@ -120,19 +121,23 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
   Copterr = 1;
   errflg = 0;
   nbfiles = 0;  
-  while ((c = Cgetopt_long (argc, argv, "R:M:h:", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "r:M:H:h", longopts, NULL)) != -1) {
     switch (c) {
+    case 'H':
+      args->opts.stage_host = Coptarg;
+      break;
     case 'M':
       	args->reqs[nbfiles].filename = Coptarg;
 	nbfiles++;
       break;
-    case 'R':
+    case 'r':
       if (args->requestid!= NULL) {
 	errflg++;
       } else {
       	args->requestid = Coptarg;
       }
       break;
+    case 'h':
     default:
       errflg++;
       break;
