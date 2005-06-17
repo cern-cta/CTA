@@ -1,3 +1,4 @@
 etc/castor/RMNODECONFIG.example
+etc/init.d/rmnode
 etc/sysconfig/rmnode.example
 usr/bin/rmnode

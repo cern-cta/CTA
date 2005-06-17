@@ -1,2 +1,3 @@
+etc/init.d/rfiod
 etc/sysconfig/rfiod.example
 usr/bin/rfiod

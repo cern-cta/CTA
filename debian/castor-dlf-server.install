@@ -1,3 +1,4 @@
 etc/castor/DLFCONFIG.example
+etc/init.d/dlfserver
 usr/bin/dlfserver
 usr/bin/dlfshutdown

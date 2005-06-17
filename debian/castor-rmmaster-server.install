@@ -1,3 +1,4 @@
+etc/init.d/rmmaster
 etc/sysconfig/rmmaster.example
 usr/bin/rmadminnode
 usr/bin/rmmaster

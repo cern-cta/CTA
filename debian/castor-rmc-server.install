@@ -1,2 +1,3 @@
+etc/init.d/rmcdaemon
 etc/sysconfig/rmcdaemon.example
 usr/bin/rmcdaemon

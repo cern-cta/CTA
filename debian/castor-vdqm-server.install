@@ -1,3 +1,4 @@
+etc/init.d/vdqmserver
 etc/sysconfig/vdqmserv.example
 usr/bin/vdqm_admin
 usr/bin/vdqmbc_serv

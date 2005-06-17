@@ -1,4 +1,5 @@
 etc/castor/TPCONFIG.example
+etc/init.d/tpdaemon
 etc/sysconfig/tpdaemon.example
 usr/bin/confdrive
 usr/bin/mounttape

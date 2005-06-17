@@ -1,3 +1,4 @@
+etc/init.d/rtcpd
 etc/sysconfig/rtcpd.example
 usr/bin/killjid
 usr/bin/rtcpd

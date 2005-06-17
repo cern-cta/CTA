@@ -1,4 +1,5 @@
 etc/castor/VMGRCONFIG.example
+etc/init.d/vmgrdaemon
 etc/sysconfig/vmgrdaemon.example
 usr/bin/vmgrdaemon
 usr/bin/vmgrshutdown

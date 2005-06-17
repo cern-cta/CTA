@@ -1,3 +1,4 @@
+etc/init.d/rtcpclientd
 usr/bin/MigHunter
 usr/bin/TapeErrorHandler
 usr/bin/migrator

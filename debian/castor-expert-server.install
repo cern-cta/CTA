@@ -1,3 +1,4 @@
 etc/castor/EXPCONFIG.example
+etc/init.d/expertd
 etc/sysconfig/expertd.example
 usr/bin/expertd

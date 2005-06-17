@@ -1,3 +1,4 @@
+etc/init.d/stager
 etc/sysconfig/stager.example
 usr/bin/stager
 usr/bin/stageradmin
