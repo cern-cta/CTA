@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2005/01/07 13:52:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2005/06/17 11:59:31 $ $Author: sponcec3 $
  *
  * 
  *
@@ -78,7 +78,7 @@ int main (int argc, char** argv) {
 
   // Retrieves everything in a separate objects
   castor::BaseAddress ad2;
-  ad2.setId(cf->id());
+  ad2.setTarget(cf->id());
   ad2.setCnvSvcName("OraCnvSvc");
   ad2.setCnvSvcType(castor::SVC_ORACNV);
   castor::stager::CastorFile* cf2;
