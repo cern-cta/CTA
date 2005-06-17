@@ -6,13 +6,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.8 $ $Date: 2005/05/12 06:33:14 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.9 $ $Date: 2005/06/17 16:14:20 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
+#include <stdlib.h>
 #include <sqlca.h>
 #ifndef USE_ORACLE
 #define USE_ORACLE
@@ -24,14 +25,22 @@ static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.8 $ $D
 #include "dlf_api.h"
 #include "Cuuid.h"
 
-static sql_context ctx[DLF_NBTHREADS];
+extern int num_THR;
+
+sql_context *ctx;
 
 dlf_init_dbpkg()
 {
 	int i;
+	char *func = "dlf_init_dbpkg";
+
+	if ((ctx = calloc(num_THR,sizeof(sql_context))) == NULL) {
+		dlflogit (func, "calloc error (%s)\n", strerror(errno));
+		return(-1);
+	}
 
 	EXEC SQL ENABLE THREADS;
-	for (i = 0; i < DLF_NBTHREADS; i++) {
+	for (i = 0; i < num_THR; i++) {
 		EXEC SQL CONTEXT ALLOCATE :ctx[i];
 	}
 	return (0);
