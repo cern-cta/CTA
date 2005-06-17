@@ -80,7 +80,7 @@ Description: castor (Cern Advanced STORage system)
  The job giving user access to data on the worder nodes
 
 Package: castor-lib
-Provides: libshift.so, CASTOR-client
+Provides: libshift.so,CASTOR-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
