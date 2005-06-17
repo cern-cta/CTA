@@ -66,14 +66,16 @@ install: build
 	mkdir -p $(CURDIR)/debian/castor/usr/share/man/man3
 	mkdir -p $(CURDIR)/debian/castor/usr/share/man/man4
 	mkdir -p $(CURDIR)/debian/castor/etc/castor
+	mkdir -p $(CURDIR)/debian/castor/etc/init.d
 	mkdir -p $(CURDIR)/debian/castor/etc/sysconfig
 	mkdir -p $(CURDIR)/debian/castor/usr/local/lsf/lib
 	mkdir -p $(CURDIR)/debian/castor/usr/local/lsf/etc
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/castor
 	$(MAKE) exportman DESTDIR=$(CURDIR)/debian/castor EXPORTMAN=$(CURDIR)/debian/castor/usr/share/man
 	(cd clips; ../imake/imake -I../config DESTDIR=$(CURDIR)/debian/castor; make install DESTDIR=$(CURDIR)/debian/castor)
-	for i in $(CURDIR)/debian/*CONFIG; do install -o root -g bin -m 600 $$i $(CURDIR)/debian/castor/etc/castor/`basename $$i`.example; done
+	for i in $(CURDIR)/debian/*CONFIG; do install -o root -g st -m 640 $$i $(CURDIR)/debian/castor/etc/castor/`basename $$i`.example; done
 	for i in `find $(CURDIR) -name "*.sysconfig"`; do install -o root -g bin -m 644 $${i} $(CURDIR)/debian/castor/etc/sysconfig/`basename $$i | sed 's/\.sysconfig//g'`.example; done
+	for i in $(CURDIR)/debian/*.init; do install -o root -g bin -m 755 $$i $(CURDIR)/debian/castor/etc/init.d/`basename $$i | sed 's/\.init//g'`; done
 
 # Build architecture-independent files here.
 binary-indep: build install
