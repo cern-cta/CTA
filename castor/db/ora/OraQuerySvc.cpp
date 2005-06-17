@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2005/06/17 12:40:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2005/06/17 13:01:38 $ $Author: sponcec3 $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -56,7 +56,7 @@ const std::string castor::db::ora::OraQuerySvc::s_diskCopies4RequestStatementStr
 "select  castorfile.fileid, castorfile.nshost, DiskCopy.id,   DiskCopy.path,   CastorFile.filesize,   nvl(DiskCopy.status, -1),  nvl(tpseg.tstatus, -1),   nvl(tpseg.sstatus, -1), DiskServer.name, FileSystem.mountPoint FROM subrequest sr, castorfile, DiskCopy, (SELECT tapecopy.castorfile, tapecopy.id, tapecopy.status as tstatus,  segment.status as sstatus  FROM tapecopy, segment  WHERE tapecopy.id = segment.copy (+)) tpseg,  (select id from stagepreparetogetrequest  where reqid like :1 union  select id from stagepreparetoputrequest where reqid like :1 UNION select id from stagepreparetoupdaterequest where reqid like :1) reqlist, FileSystem, DiskServer, DiskPool2SvcClass WHERE sr.request = reqlist.id AND castorfile.id = sr.castorfile AND  Castorfile.id = DiskCopy.castorFile (+)  AND castorfile.id = tpseg.castorfile (+) AND FileSystem.id = DiskCopy.fileSystem and DiskServer.id = FileSystem.diskServer AND DiskPool2SvcClass.parent = FileSystem.diskPool AND DiskPool2SvcClass.child = :2 order by castorfile.fileid, castorfile.nshost";
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4UsertagStatementString = 
-"select castorfile.fileid, castorfile.nshost, DiskCopy.id,   DiskCopy.path,   CastorFile.filesize,   nvl(DiskCopy.status, -1),  nvl(tpseg.tstatus, -1),   nvl(tpseg.sstatus, -1), DiskServer.name, FileSystem.mountPoint FROM subrequest sr, castorfile, DiskCopy, (SELECT tapecopy.castorfile, tapecopy.id, tapecopy.status as tstatus,  segment.status as sstatus  FROM tapecopy, segment  WHERE tapecopy.id = segment.copy (+)) tpseg,  (select id from stagepreparetogetrequest  where usertag like :1 union  select id from stagepreparetoputrequest where usertag like :1 UNION select id from stagepreparetoupdaterequest where usertag like :1) reqlist, FileSystem, DiskServer, DiskPool2SvcClass WHERE sr.request = reqlist.id AND castorfile.id = sr.castorfile AND Castorfile.id = DiskCopy.castorFile (+)  AND castorfile.id = tpseg.castorfile (+) AND FileSystem.id = DiskCopy.fileSystem and DiskServer.id = FileSystem.diskServer AND DiskPool2SvcClass.parent = FileSystem.diskPool AND DiskPool2SvcClass.child = :2 order by castorfile.fileid, castorfile.nshost";
+"select castorfile.fileid, castorfile.nshost, DiskCopy.id,   DiskCopy.path,   CastorFile.filesize,   nvl(DiskCopy.status, -1),  nvl(tpseg.tstatus, -1),   nvl(tpseg.sstatus, -1), DiskServer.name, FileSystem.mountPoint FROM subrequest sr, castorfile, DiskCopy, (SELECT tapecopy.castorfile, tapecopy.id, tapecopy.status as tstatus,  segment.status as sstatus  FROM tapecopy, segment  WHERE tapecopy.id = segment.copy (+)) tpseg,  (select id from stagepreparetogetrequest  where usertag like :1 union  select id from stagepreparetoputrequest where usertag like :2 UNION select id from stagepreparetoupdaterequest where usertag like :3) reqlist, FileSystem, DiskServer, DiskPool2SvcClass WHERE sr.request = reqlist.id AND castorfile.id = sr.castorfile AND Castorfile.id = DiskCopy.castorFile (+)  AND castorfile.id = tpseg.castorfile (+) AND FileSystem.id = DiskCopy.fileSystem and DiskServer.id = FileSystem.diskServer AND DiskPool2SvcClass.parent = FileSystem.diskPool AND DiskPool2SvcClass.child = :4 order by castorfile.fileid, castorfile.nshost";
 
 
 // -----------------------------------------------------------------------
@@ -220,7 +220,9 @@ castor::db::ora::OraQuerySvc::diskCopies4Usertag
     }
     // execute the statement and see whether we found something
     m_diskCopies4UsertagStatement->setString(1, usertag);
-    m_diskCopies4UsertagStatement->setDouble(2, svcClassId);
+    m_diskCopies4UsertagStatement->setString(2, usertag);
+    m_diskCopies4UsertagStatement->setString(3, usertag);
+    m_diskCopies4UsertagStatement->setDouble(4, svcClassId);
     oracle::occi::ResultSet *rset =
       m_diskCopies4UsertagStatement->executeQuery();
     // Gather the results
