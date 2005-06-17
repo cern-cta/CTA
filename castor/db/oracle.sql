@@ -859,13 +859,33 @@ END;
 
 /* PL/SQL method implementing castor package */
 CREATE OR REPLACE PACKAGE castor AS
-  TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR2(2048), status NUMBER, fsWeight NUMBER, mountPoint VARCHAR2(2048), diskServer VARCHAR2(2048));
+  TYPE DiskCopyCore IS RECORD (
+        id INTEGER,
+        path VARCHAR2(2048),
+        status NUMBER,
+        fsWeight NUMBER,
+        mountPoint VARCHAR2(2048),
+        diskServer VARCHAR2(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
   TYPE Segment_Cur IS REF CURSOR RETURN Segment%ROWTYPE;
-  TYPE GCLocalFileCore IS RECORD (fileName VARCHAR2(2048), diskCopyId INTEGER);
+  TYPE GCLocalFileCore IS RECORD (
+        fileName VARCHAR2(2048),
+        diskCopyId INTEGER);
   TYPE GCLocalFiles_Cur IS REF CURSOR RETURN GCLocalFileCore;
   TYPE "strList" IS TABLE OF VARCHAR2(2048) index by binary_integer;
   TYPE "cnumList" IS TABLE OF NUMBER index by binary_integer;
+  TYPE QueryLine IS RECORD (
+        fileid INTEGER,
+        nshost VARCHAR2(2048),
+        diskCopyId INTEGER,
+        diskCopyPath INTEGER,
+        filesize INTEGER,
+        diskCopyStatus INTEGER,
+        tapeStatus INTEGER,
+        segmentStatus INTEGER,
+        diskServerName VARCHAR2(2048),
+        fileSystemMountPoint VARCHAR2(2048));
+  TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
 END castor;
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
@@ -1855,3 +1875,131 @@ BEGIN
   -- commit everything
   COMMIT;
 END;
+
+/*
+ * PL/SQL method implementing the core part of stage queries
+ * It takes a list of castorfile ids as input
+ */
+CREATE OR REPLACE PROCEDURE internalStageQuery
+ (cfs IN "numList",
+  svcClassId IN NUMBER,
+  result OUT castor.QueryLine_Cur) AS
+BEGIN
+  -- external select is for the order by
+  OPEN result FOR SELECT * FROM (
+    -- First internal select for files having a filesystem
+    SELECT UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
+           DiskCopy.path, CastorFile.filesize,
+           nvl(DiskCopy.status, -1), nvl(tpseg.tstatus, -1),
+           nvl(tpseg.sstatus, -1), DiskServer.name,
+           FileSystem.mountPoint
+      FROM CastorFile, DiskCopy,
+           -- Tape and Segment part
+           (SELECT tapecopy.castorfile, tapecopy.id,
+                   tapecopy.status AS tstatus, segment.status AS sstatus
+              FROM tapecopy, segment
+             WHERE tapecopy.id = segment.copy (+)) tpseg,
+           FileSystem, DiskServer, DiskPool2SvcClass
+     WHERE castorfile.id IN (SELECT * FROM TABLE(cfs)) AND Castorfile.id = DiskCopy.castorFile (+)
+       AND castorfile.id = tpseg.castorfile (+) AND FileSystem.id = DiskCopy.fileSystem
+       AND DiskServer.id = FileSystem.diskServer AND DiskPool2SvcClass.parent = FileSystem.diskPool
+       AND DiskPool2SvcClass.child = svcClassId
+    UNION
+    -- Second internal select for files with no fileSystem
+    SELECT UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
+           DiskCopy.path, CastorFile.filesize,
+           nvl(DiskCopy.status, -1), nvl(tpseg.tstatus, -1),
+           nvl(tpseg.sstatus, -1), '', ''
+      FROM castorfile, DiskCopy,
+           -- Tape and Segment part
+          (SELECT tapecopy.castorfile, tapecopy.id,
+                  tapecopy.status AS tstatus, segment.status AS sstatus
+             FROM tapecopy, segment
+            WHERE tapecopy.id = segment.copy (+)) tpseg
+     WHERE castorfile.id IN (SELECT * FROM TABLE(cfs)) AND Castorfile.id = DiskCopy.castorFile (+)
+       AND castorfile.id = tpseg.castorfile (+) AND DiskCopy.fileSystem IS NULL)
+  ORDER BY fileid, nshost;
+END;
+
+/*
+ * PL/SQL method implementing the stage_query based on fileId
+ */
+CREATE OR REPLACE PROCEDURE fileIdStageQuery
+ (fid IN NUMBER,
+  nh IN VARCHAR2,
+  svcClassId IN NUMBER,
+  result OUT castor.QueryLine_Cur) AS
+  cfs "numList";
+BEGIN
+  SELECT id BULK COLLECT INTO cfs FROM CastorFile WHERE fileId = fid AND nshost = nh;
+  internalStageQuery(cfs, svcClassId, result);
+END;
+
+/*
+ * PL/SQL method implementing the stage_query based on request id
+ */
+CREATE OR REPLACE PROCEDURE reqIdStageQuery
+ (rid IN VARCHAR2,
+  svcClassId IN NUMBER,
+  result OUT castor.QueryLine_Cur) AS
+  cfs "numList";
+BEGIN
+  SELECT sr.castorfile BULK COLLECT INTO cfs
+    FROM SubRequest sr,
+         (SELECT id
+            FROM StagePreparetogetRequest
+           WHERE reqid LIKE rid
+          UNION
+          SELECT id
+            FROM StagePreparetoputRequest
+           WHERE reqid LIKE rid
+          UNION
+          SELECT id
+            FROM StagePreparetoupdateRequest
+           WHERE reqid LIKE rid
+          UNION
+          SELECT id
+            FROM stageGetRequest
+           WHERE reqid LIKE rid
+          UNION
+          SELECT id
+            FROM stagePutRequest
+           WHERE reqid LIKE rid) reqlist
+   WHERE sr.request = reqlist.id;
+  internalStageQuery(cfs, svcClassId, result);
+END;
+
+/*
+ * PL/SQL method implementing the stage_query based on user tag
+ */
+CREATE OR REPLACE PROCEDURE userTagStageQuery
+ (tag IN VARCHAR2,
+  svcClassId IN NUMBER,
+  result OUT castor.QueryLine_Cur) AS
+  cfs "numList";
+BEGIN
+  SELECT sr.castorfile BULK COLLECT INTO cfs
+    FROM SubRequest sr,
+         (SELECT id
+            FROM StagePreparetogetRequest
+           WHERE userTag LIKE tag
+          UNION
+          SELECT id
+            FROM StagePreparetoputRequest
+           WHERE userTag LIKE tag
+          UNION
+          SELECT id
+            FROM StagePreparetoupdateRequest
+           WHERE userTag LIKE tag
+          UNION
+          SELECT id
+            FROM stageGetRequest
+           WHERE userTag LIKE tag
+          UNION
+          SELECT id
+            FROM stagePutRequest
+           WHERE userTag LIKE tag) reqlist
+   WHERE sr.request = reqlist.id;
+  internalStageQuery(cfs, svcClassId, result);
+END;
+
