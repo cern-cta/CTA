@@ -1,10 +1,10 @@
-.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.1 $ $Date: 2005/06/16 17:27:51 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.2 $ $Date: 2005/06/17 06:15:57 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_QRY 1castor "$Date: 2005/06/16 17:27:51 $" CASTOR "STAGER Commands"
+.TH STAGER_QRY 1castor "$Date: 2005/06/17 06:15:57 $" CASTOR "STAGER Commands"
 .SH NAME
-stager_get \- pre-stage existing CASTOR files to disk
+stager_qry \- query the CASTOR stager for files and requests
 .SH SYNOPSIS
 .B stager_qry
 [
