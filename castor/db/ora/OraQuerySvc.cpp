@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2005/06/17 13:01:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2005/06/17 15:49:07 $ $Author: sponcec3 $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -50,13 +50,13 @@ OraQuerySvcFactory = s_factoryOraQuerySvc;
 //------------------------------------------------------------------------------
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4FileStatementString =
-"SELECT castorfile.fileid, castorfile.nshost, DiskCopy.id,  DiskCopy.path,  CastorFile.filesize,  nvl(DiskCopy.status, -1), nvl(tpseg.tstatus, -1),  nvl(tpseg.sstatus, -1), DiskServer.name, FileSystem.mountPoint FROM CastorFile, DiskCopy, (SELECT tapecopy.castorfile, tapecopy.id, tapecopy.status as tstatus, segment.status as sstatus  FROM tapecopy, segment WHERE tapecopy.id = segment.copy (+)) tpseg, FileSystem, DiskServer, DiskPool2SvcClass WHERE DiskCopy.castorFile = Castorfile.id AND CastorFile.fileId = :1 AND CastorFile.nsHost like :2 AND castorfile.id = tpseg.castorfile (+) AND FileSystem.id = DiskCopy.fileSystem and DiskServer.id = FileSystem.diskServer AND DiskPool2SvcClass.parent = FileSystem.diskPool AND DiskPool2SvcClass.child = :3";
+"BEGIN fileIdStageQuery(:1, :2, :3, :4); END;";
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4RequestStatementString = 
-"select  castorfile.fileid, castorfile.nshost, DiskCopy.id,   DiskCopy.path,   CastorFile.filesize,   nvl(DiskCopy.status, -1),  nvl(tpseg.tstatus, -1),   nvl(tpseg.sstatus, -1), DiskServer.name, FileSystem.mountPoint FROM subrequest sr, castorfile, DiskCopy, (SELECT tapecopy.castorfile, tapecopy.id, tapecopy.status as tstatus,  segment.status as sstatus  FROM tapecopy, segment  WHERE tapecopy.id = segment.copy (+)) tpseg,  (select id from stagepreparetogetrequest  where reqid like :1 union  select id from stagepreparetoputrequest where reqid like :1 UNION select id from stagepreparetoupdaterequest where reqid like :1) reqlist, FileSystem, DiskServer, DiskPool2SvcClass WHERE sr.request = reqlist.id AND castorfile.id = sr.castorfile AND  Castorfile.id = DiskCopy.castorFile (+)  AND castorfile.id = tpseg.castorfile (+) AND FileSystem.id = DiskCopy.fileSystem and DiskServer.id = FileSystem.diskServer AND DiskPool2SvcClass.parent = FileSystem.diskPool AND DiskPool2SvcClass.child = :2 order by castorfile.fileid, castorfile.nshost";
+"BEGIN reqIdStageQuery(:1, :2, :3); END;";
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4UsertagStatementString = 
-"select castorfile.fileid, castorfile.nshost, DiskCopy.id,   DiskCopy.path,   CastorFile.filesize,   nvl(DiskCopy.status, -1),  nvl(tpseg.tstatus, -1),   nvl(tpseg.sstatus, -1), DiskServer.name, FileSystem.mountPoint FROM subrequest sr, castorfile, DiskCopy, (SELECT tapecopy.castorfile, tapecopy.id, tapecopy.status as tstatus,  segment.status as sstatus  FROM tapecopy, segment  WHERE tapecopy.id = segment.copy (+)) tpseg,  (select id from stagepreparetogetrequest  where usertag like :1 union  select id from stagepreparetoputrequest where usertag like :2 UNION select id from stagepreparetoupdaterequest where usertag like :3) reqlist, FileSystem, DiskServer, DiskPool2SvcClass WHERE sr.request = reqlist.id AND castorfile.id = sr.castorfile AND Castorfile.id = DiskCopy.castorFile (+)  AND castorfile.id = tpseg.castorfile (+) AND FileSystem.id = DiskCopy.fileSystem and DiskServer.id = FileSystem.diskServer AND DiskPool2SvcClass.parent = FileSystem.diskPool AND DiskPool2SvcClass.child = :4 order by castorfile.fileid, castorfile.nshost";
+"BEGIN userTagStageQuery(:1, :2, :3); END;";
 
 
 // -----------------------------------------------------------------------
@@ -119,13 +119,22 @@ castor::db::ora::OraQuerySvc::diskCopies4File
     if (0 == m_diskCopies4FileStatement) {
       m_diskCopies4FileStatement =
         createStatement(s_diskCopies4FileStatementString);
+      m_diskCopies4FileStatement->registerOutParam
+        (4, oracle::occi::OCCICURSOR);      
     }
     // execute the statement and see whether we found something
     m_diskCopies4FileStatement->setString(1, fileId);
     m_diskCopies4FileStatement->setString(2, nsHost);
     m_diskCopies4FileStatement->setDouble(3, svcClassId);
+    unsigned int nb = m_diskCopies4FileStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "diskCopies4File : Unable to execute query.";
+      throw ex;
+    }
     oracle::occi::ResultSet *rset =
-      m_diskCopies4FileStatement->executeQuery();
+      m_diskCopies4FileStatement->getCursor(4);
     // Gather the results
     std::list<castor::stager::DiskCopyInfo*> result;
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
@@ -169,12 +178,21 @@ castor::db::ora::OraQuerySvc::diskCopies4Request
     if (0 == m_diskCopies4RequestStatement) {
       m_diskCopies4RequestStatement =
         createStatement(s_diskCopies4RequestStatementString);
+      m_diskCopies4FileStatement->registerOutParam
+        (3, oracle::occi::OCCICURSOR);      
     }
     // execute the statement and see whether we found something
     m_diskCopies4RequestStatement->setString(1, requestId);
     m_diskCopies4RequestStatement->setDouble(2, svcClassId);
+    unsigned int nb = m_diskCopies4RequestStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "diskCopies4File : Unable to execute query.";
+      throw ex;
+    }
     oracle::occi::ResultSet *rset =
-      m_diskCopies4RequestStatement->executeQuery();
+      m_diskCopies4RequestStatement->getCursor(3);
     // Gather the results
     std::list<castor::stager::DiskCopyInfo*> result;
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
@@ -217,14 +235,21 @@ castor::db::ora::OraQuerySvc::diskCopies4Usertag
     if (0 == m_diskCopies4UsertagStatement) {
       m_diskCopies4UsertagStatement =
         createStatement(s_diskCopies4UsertagStatementString);
+      m_diskCopies4FileStatement->registerOutParam
+        (3, oracle::occi::OCCICURSOR);      
     }
     // execute the statement and see whether we found something
     m_diskCopies4UsertagStatement->setString(1, usertag);
-    m_diskCopies4UsertagStatement->setString(2, usertag);
-    m_diskCopies4UsertagStatement->setString(3, usertag);
-    m_diskCopies4UsertagStatement->setDouble(4, svcClassId);
+    m_diskCopies4UsertagStatement->setDouble(3, svcClassId);
+    unsigned int nb = m_diskCopies4UsertagStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "diskCopies4File : Unable to execute query.";
+      throw ex;
+    }
     oracle::occi::ResultSet *rset =
-      m_diskCopies4UsertagStatement->executeQuery();
+      m_diskCopies4UsertagStatement->getCursor(3);
     // Gather the results
     std::list<castor::stager::DiskCopyInfo*> result;
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
