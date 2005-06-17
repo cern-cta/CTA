@@ -104,7 +104,7 @@ namespace castor {
 	    	 */	
 	    	virtual TapeDrive* selectFreeTapeDrive(const ExtendedDeviceGroup *extDevGrp) 
 	    		throw (castor::exception::Exception) = 0;
-
+	    		
     }; // end of class IVdqmSvc
 
   } // end of namespace vdqm

@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 //------------------------------------------------------------------------------
 castor::vdqm::VdqmServer::VdqmServer() :
   castor::BaseServer("VdqmServer", 20) {
-  initLog("VdqmLog", SVC_DLFMSG);
+  initLog("Vdqm", SVC_DLFMSG);
   // Initializes the DLF logging. This includes
   // defining the predefined messages
   castor::dlf::Message messages[] =
@@ -126,7 +126,7 @@ castor::vdqm::VdqmServer::VdqmServer() :
      {31, "Verify that the request doesn't exist, by calling IVdqmSvc->checkTapeRequest"},
      {32, "Try to store Request into the data base"},
      {-1, ""}};
-  castor::dlf::dlf_init("VdqmLog", messages);
+  castor::dlf::dlf_init("Vdqm", messages);
 }
 
 //------------------------------------------------------------------------------

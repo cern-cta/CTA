@@ -36,6 +36,7 @@
 #include "castor/IObject.hpp"
 #include "castor/Constants.hpp"
 #include "castor/Services.hpp"
+#include "castor/BaseAddress.hpp"
 
 #define VDQMSERV 1
 
@@ -50,9 +51,13 @@
 #include "TapeRequestHandler.hpp"
 #include "ExtendedDeviceGroup.hpp"
 #include "TapeRequest.hpp"
+#include "TapeDrive.hpp"
+#include "TapeDriveStatusCodes.hpp"
 #include "IVdqmSvc.hpp"
 #include "TapeServer.hpp"
 #include "AbstractRequestHandler.hpp"
+
+#include "castor/exception/Internal.hpp"
 
 
  
@@ -66,19 +71,19 @@ castor::vdqm::TapeRequestHandler::TapeRequestHandler() throw()
 	castor::IService* svc;
 	
 	/**
-	 * Getting DbStagerSvc: It can be the OraVdqmSvc or the MyVdqmSvc
+	 * Getting OraStagerSvc
 	 */
-	svc = ptr_svcs->service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
+	svc = ptr_svcs->service("OraStagerSvc", castor::SVC_DBSTAGERSVC);
   if (0 == svc) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Could not get DbStagerSvc" << std::endl;
+    ex.getMessage() << "Could not get OraStagerSvc" << std::endl;
     throw ex;
   }				
   
 	ptr_IStagerService = dynamic_cast<castor::stager::IStagerSvc*>(svc);
   if (0 == ptr_IStagerService) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Got a bad DbStagerSvc: "
+    ex.getMessage() << "Got a bad OraStagerSvc: "
     								<< "ID=" << svc->id()
     								<< ", Name=" << svc->name()
     								<< std::endl;
@@ -279,11 +284,9 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 	//  FreeDgnContext(&dgn_context);
   } catch(castor::exception::Exception e) {
  		if (newTapeReq)
-	 		delete newTapeReq;
+	 		delete newTapeReq; //also deletes clientData, because of composition
  		if (tape)
 	 		delete tape;
- 		if (clientData)
-			delete clientData;
 		if (reqExtDevGrp)
 			delete reqExtDevGrp;
 		if (reqTapeServer)
@@ -295,9 +298,8 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
   }
   
 	// Delete all Objects
-	delete newTapeReq;
+	delete newTapeReq; //also deletes clientData, because of composition 
 	delete tape;
-	delete clientData;
 	delete reqExtDevGrp;
 	delete reqTapeServer;
 //	delete freeTapeDrive;
@@ -313,24 +315,49 @@ void castor::vdqm::TapeRequestHandler::deleteTapeRequest(
 	throw (castor::exception::Exception) {
  	//The db related informations
   TapeRequest *tapeReq = NULL;
+  castor::BaseAddress ad;
   int rowNumber = -1;
 	
   dgn_element_t *dgn_context;
   vdqm_volrec_t *volrec;
   vdqm_drvrec_t *drvrec;
   int rc;
-  
-  castor::dlf::Param params[] =
-    {castor::dlf::Param("volreq ID", volumeRequest->VolReqID)};
-	castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 21);
 	
+	// Get the tapeReq from its id
 	try {
-		tapeReq = new TapeRequest();
-		tapeReq->setId(volumeRequest->VolReqID);
+    ad.setTarget(volumeRequest->VolReqID);
+    ad.setCnvSvcName("DbCnvSvc");
+    ad.setCnvSvcType(castor::SVC_DBCNV);
+    
+    castor::IObject* obj = svcs()->createObj(&ad);
+    
+    tapeReq = dynamic_cast<TapeRequest*> (obj);
+    if (0 == tapeReq) {
+      castor::exception::Internal e;
+      e.getMessage() << "createObj return unexpected type "
+                     << obj->type() << " for id " << volumeRequest->VolReqID;
+      delete obj;
+      throw e;
+    }
+    
+    //Now we get the foreign ClientIdentification object
+    svcs()->fillObj(&ad, obj, castor::OBJ_ClientIdentification);
+    
+    obj = 0;
+  } catch (castor::exception::Exception e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select tape for id " << volumeRequest->VolReqID  << " :"
+      << std::endl << e.getMessage();
+    
+    throw ex;
+  }
 		
+	//OK, now we have the tapeReq and its client :-)
+	
+	try {	
 		/*
-	   * Verify that the request exist. If it doesn't exist,
-	   * the return value is -1.
+	   * Verify that the request is not already assigned to a TapeDrive
 	   */
 	  rowNumber = ptr_IVdqmService->checkTapeRequest(tapeReq);
 	  if ( rowNumber == -1 ) {
@@ -343,14 +370,26 @@ void castor::vdqm::TapeRequestHandler::deleteTapeRequest(
 	  }
 	  else if ( rowNumber == 0 ) {
 	  	// If we are here, the TapeRequest is already assigned to a TapeDrive
-	  	
+	  	//TODO:
 	  	/*
 		   * PROBLEM:
 	     * Can only remove request if not assigned to a drive. Otherwise
 	     * it should be cleanup by resetting the drive status to RELEASE + FREE.
 	     * Mark it as UNKNOWN until an unit status clarifies what has happened.
 	     */
+	     		TapeDrive* tapeDrive;
 	     
+	     		//Ok, now we need the foreign TapeDrive, too
+			    svcs()->fillObj(&ad, tapeReq, castor::OBJ_TapeDrive);
+			    tapeDrive = tapeReq->tapeDrive();
+			    
+		      // Set new TapeDriveStatusCode
+			    tapeDrive->setStatus(UNIT_RELEASED);
+			    
+			    tapeReq->setCreationTime(time(NULL));
+			    
+//			    svcs()->updateRep(&ad, true);
+			    
 //        drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
 //        volrec->vol.recvtime = time(NULL);
 //        drvrec->update = 1;
