@@ -97,7 +97,7 @@ make install DESTDIR=${RPM_BUILD_ROOT}
 make exportman DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
 (cd clips; ../imake/imake -I../config DESTDIR=${RPM_BUILD_ROOT}; make install DESTDIR=${RPM_BUILD_ROOT})
 for i in debian/*CONFIG; do
-    install -o root -g bin -m 600 $i ${RPM_BUILD_ROOT}/etc/castor/`basename $i`.example
+    install -o root -g st -m 640 $i ${RPM_BUILD_ROOT}/etc/castor/`basename $i`.example
 done
 for i in debian/*.init; do
     install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/init.d/`basename $i | sed 's/\.init//g'`
