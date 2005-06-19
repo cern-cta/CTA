@@ -1,3 +1,14 @@
+castor (2.0.0-42) unstable; urgency=low
+
+  * Added move medium in smc
+  * Added -t <number of threads> in dlfserer
+  * Renamed initscripts to the name of the daemon they are dealing with
+  * Revisited vdqm schema
+  * Support of dynamic load of DB interface
+  * Other fixes...
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Sun, 19 Jun 2005 09:00:03 +0200
+
 castor (2.0.0-41) unstable; urgency=low
 
   * Get Provides section from debian/control and put it in CASTOR.spec
