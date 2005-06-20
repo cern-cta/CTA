@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2dlf.c,v $ $Revision: 1.2 $ $Date: 2004/07/08 08:39:53 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: send2dlf.c,v $ $Revision: 1.3 $ $Date: 2005/06/20 14:21:19 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -49,6 +49,7 @@ int reql;
 	int s;
 	struct sockaddr_in sin; /* internet socket */
 	struct servent *sp;
+	int on = 1;
 
 	strcpy (func, "send2dlf");
 	if (socketp == NULL || *socketp < 0) {	/* connection not opened yet */
@@ -68,6 +69,12 @@ int reql;
 			serrno = SECOMERR;
 			return (-1);
 		}
+
+#if (defined(SOL_SOCKET) && defined(SO_KEEPALIVE))
+		if (setsockopt (s, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0) {
+		  dlf_errmsg (func, DLF02, "setsockopt", strerror(errno));
+		}
+#endif
 
 		if (connect (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 #if defined(_WIN32)
