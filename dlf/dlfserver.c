@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.8 $ $Date: 2005/06/17 16:13:05 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.9 $ $Date: 2005/06/20 14:23:20 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -84,7 +84,7 @@ dlf_main(main_args)
   errflg = 0;
 
   if (main_args->argc > 3) {
-        dlflogit (func, "Parametr error\n");
+        dlflogit (func, "Parameter error\n");
   	exit (USERR);
   }
 
@@ -214,13 +214,15 @@ dlf_main(main_args)
 
   sin.sin_addr.s_addr = htonl(INADDR_ANY);
   if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
-    dlflogit (func,  "setsockopt error\n");
+    dlflogit (func,  "setsockopt error (%s)\n", strerror(errno));
+  if (setsockopt (s, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0)
+    dlflogit (func,  "setsockopt error (%s)\n", strerror(errno));
   if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
     dlflogit (func, DLF02, "bind", neterror());
     return (CONFERR);
   }
   if (listen (s, 5) != 0) {
-    dlflogit (func, "listen error\n");
+    dlflogit (func, "listen error (%s)\n", strerror(errno));
     return (CONFERR);
   }
 
@@ -339,7 +341,7 @@ getreq(s, magic, req_type, req_data, data_len, clienthost)
     *data_len = l;
     *req_data = (char*)malloc(l);
     if (*req_data == NULL) {
-      dlflogit (func, "memory allocation failure\n");
+      dlflogit (func, "memory allocation failure (%s)\n", strerror(errno));
       return (ENOMEM);
     }
     n = netread_timeout (s, *req_data, l, DLF_TIMEOUT);
