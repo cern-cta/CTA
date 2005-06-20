@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2005/06/17 15:52:50 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2005/06/20 16:32:33 $ $Author: sponcec3 $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -50,13 +50,13 @@ OraQuerySvcFactory = s_factoryOraQuerySvc;
 //------------------------------------------------------------------------------
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4FileStatementString =
-"BEGIN fileIdStageQuery(:1, :2, :3, :4); END;";
+  "BEGIN fileIdStageQuery(:1, :2, :3, :4); END;";
 
-const std::string castor::db::ora::OraQuerySvc::s_diskCopies4RequestStatementString = 
-"BEGIN reqIdStageQuery(:1, :2, :3); END;";
+const std::string castor::db::ora::OraQuerySvc::s_diskCopies4RequestStatementString =
+  "BEGIN reqIdStageQuery(:1, :2, :3); END;";
 
-const std::string castor::db::ora::OraQuerySvc::s_diskCopies4UsertagStatementString = 
-"BEGIN userTagStageQuery(:1, :2, :3); END;";
+const std::string castor::db::ora::OraQuerySvc::s_diskCopies4UsertagStatementString =
+  "BEGIN userTagStageQuery(:1, :2, :3); END;";
 
 
 // -----------------------------------------------------------------------
@@ -120,7 +120,7 @@ castor::db::ora::OraQuerySvc::diskCopies4File
       m_diskCopies4FileStatement =
         createStatement(s_diskCopies4FileStatementString);
       m_diskCopies4FileStatement->registerOutParam
-        (4, oracle::occi::OCCICURSOR);      
+        (4, oracle::occi::OCCICURSOR);
     }
     // execute the statement and see whether we found something
     m_diskCopies4FileStatement->setString(1, fileId);
@@ -150,7 +150,7 @@ castor::db::ora::OraQuerySvc::diskCopies4File
       item->setTapeCopyStatus((castor::stager::TapeCopyStatusCodes)
                               rset->getInt(7));
       item->setSegmentStatus((castor::stager::SegmentStatusCodes)
-                              rset->getInt(8));
+                             rset->getInt(8));
       item->setDiskServer(rset->getString(9));
       item->setMountPoint(rset->getString(10));
       result.push_back(item);
@@ -179,7 +179,7 @@ castor::db::ora::OraQuerySvc::diskCopies4Request
       m_diskCopies4RequestStatement =
         createStatement(s_diskCopies4RequestStatementString);
       m_diskCopies4RequestStatement->registerOutParam
-        (3, oracle::occi::OCCICURSOR);      
+        (3, oracle::occi::OCCICURSOR);
     }
     // execute the statement and see whether we found something
     m_diskCopies4RequestStatement->setString(1, requestId);
@@ -208,7 +208,7 @@ castor::db::ora::OraQuerySvc::diskCopies4Request
       item->setTapeCopyStatus((castor::stager::TapeCopyStatusCodes)
                               rset->getInt(7));
       item->setSegmentStatus((castor::stager::SegmentStatusCodes)
-                              rset->getInt(8));
+                             rset->getInt(8));
       item->setDiskServer(rset->getString(9));
       item->setMountPoint(rset->getString(10));
       result.push_back(item);
@@ -236,11 +236,11 @@ castor::db::ora::OraQuerySvc::diskCopies4Usertag
       m_diskCopies4UsertagStatement =
         createStatement(s_diskCopies4UsertagStatementString);
       m_diskCopies4UsertagStatement->registerOutParam
-        (3, oracle::occi::OCCICURSOR);      
+        (3, oracle::occi::OCCICURSOR);
     }
     // execute the statement and see whether we found something
     m_diskCopies4UsertagStatement->setString(1, usertag);
-    m_diskCopies4UsertagStatement->setDouble(3, svcClassId);
+    m_diskCopies4UsertagStatement->setDouble(2, svcClassId);
     unsigned int nb = m_diskCopies4UsertagStatement->executeUpdate();
     if (0 == nb) {
       castor::exception::Internal ex;
@@ -252,7 +252,8 @@ castor::db::ora::OraQuerySvc::diskCopies4Usertag
       m_diskCopies4UsertagStatement->getCursor(3);
     // Gather the results
     std::list<castor::stager::DiskCopyInfo*> result;
-    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    oracle::occi::ResultSet::Status status = rset->next();
+    while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::stager::DiskCopyInfo* item =
         new castor::stager::DiskCopyInfo();
 
@@ -266,10 +267,11 @@ castor::db::ora::OraQuerySvc::diskCopies4Usertag
       item->setTapeCopyStatus((castor::stager::TapeCopyStatusCodes)
                               rset->getInt(7));
       item->setSegmentStatus((castor::stager::SegmentStatusCodes)
-                              rset->getInt(8));
+                             rset->getInt(8));
       item->setDiskServer(rset->getString(9));
       item->setMountPoint(rset->getString(10));
       result.push_back(item);
+      status = rset->next();
     }
     return result;
   } catch (oracle::occi::SQLException e) {

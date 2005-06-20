@@ -610,7 +610,7 @@ CREATE OR REPLACE PACKAGE castor AS
         fileid INTEGER,
         nshost VARCHAR2(2048),
         diskCopyId INTEGER,
-        diskCopyPath INTEGER,
+        diskCopyPath VARCHAR2(2048),
         filesize INTEGER,
         diskCopyStatus INTEGER,
         tapeStatus INTEGER,
@@ -1618,7 +1618,7 @@ CREATE OR REPLACE PROCEDURE internalStageQuery
   result OUT castor.QueryLine_Cur) AS
 BEGIN
   -- external select is for the order by
-  OPEN result FOR SELECT * FROM (
+ OPEN result FOR
     -- First internal select for files having a filesystem
     SELECT UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
            DiskCopy.path, CastorFile.filesize,
@@ -1633,23 +1633,9 @@ BEGIN
              WHERE tapecopy.id = segment.copy (+)) tpseg,
            FileSystem, DiskServer, DiskPool2SvcClass
      WHERE castorfile.id IN (SELECT * FROM TABLE(cfs)) AND Castorfile.id = DiskCopy.castorFile (+)
-       AND castorfile.id = tpseg.castorfile (+) AND FileSystem.id = DiskCopy.fileSystem
-       AND DiskServer.id = FileSystem.diskServer AND DiskPool2SvcClass.parent = FileSystem.diskPool
-       AND DiskPool2SvcClass.child = svcClassId
-    UNION
-    -- Second internal select for files with no fileSystem
-    SELECT UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
-           DiskCopy.path, CastorFile.filesize,
-           nvl(DiskCopy.status, -1), nvl(tpseg.tstatus, -1),
-           nvl(tpseg.sstatus, -1), '', ''
-      FROM castorfile, DiskCopy,
-           -- Tape and Segment part
-          (SELECT tapecopy.castorfile, tapecopy.id,
-                  tapecopy.status AS tstatus, segment.status AS sstatus
-             FROM tapecopy, segment
-            WHERE tapecopy.id = segment.copy (+)) tpseg
-     WHERE castorfile.id IN (SELECT * FROM TABLE(cfs)) AND Castorfile.id = DiskCopy.castorFile (+)
-       AND castorfile.id = tpseg.castorfile (+) AND DiskCopy.fileSystem IS NULL)
+       AND castorfile.id = tpseg.castorfile(+) AND FileSystem.id(+) = DiskCopy.fileSystem
+       AND DiskServer.id(+) = FileSystem.diskServer AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool
+       AND (DiskPool2SvcClass.child = svcClassId OR DiskPool2SvcClass.child IS NULL)
   ORDER BY fileid, nshost;
 END;
 
