@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.9 $ $Date: 2005/06/20 14:23:20 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.10 $ $Date: 2005/06/20 14:47:53 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -215,8 +215,6 @@ dlf_main(main_args)
   sin.sin_addr.s_addr = htonl(INADDR_ANY);
   if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
     dlflogit (func,  "setsockopt error (%s)\n", strerror(errno));
-  if (setsockopt (s, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0)
-    dlflogit (func,  "setsockopt error (%s)\n", strerror(errno));
   if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
     dlflogit (func, DLF02, "bind", neterror());
     return (CONFERR);
@@ -246,6 +244,13 @@ dlf_main(main_args)
     if (FD_ISSET (s, &readfd)) {
       FD_CLR (s, &readfd);
       rqfd = accept (s, (struct sockaddr *) &from, &fromlen);
+#if (defined(SOL_SOCKET) && defined(SO_KEEPALIVE))
+      {
+	int on = 1;
+	/* Set socket option */
+	setsockopt(rqfd,SOL_SOCKET,SO_KEEPALIVE,(char *) &on,sizeof(on));
+      }
+#endif
       if ((thread_index = Cpool_next_index (ipool)) < 0) {
         dlflogit (func, DLF02, "Cpool_next_index", sstrerror(serrno));
         if (serrno == SEWOULDBLOCK) {
