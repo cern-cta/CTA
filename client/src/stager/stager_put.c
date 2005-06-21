@@ -200,5 +200,5 @@ void
 usage(char *cmd) {
   fprintf (stderr, "usage: %s ", cmd);
   fprintf (stderr, "%s",
-           " -M hsmfile [-M hsmfile ...] [-S svcClass] [-U usertag] [-r] [-h]\n");
+           "-M hsmfile [-M hsmfile ...] [-S svcClass] [-U usertag] [-r] [-h]\n");
 }
