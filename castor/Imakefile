@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.93 $ $Release$ $Date: 2005/05/25 12:52:06 $ $Author: itglp $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.94 $ $Release$ $Date: 2005/06/21 12:04:33 $ $Author: mbraeger $
 #
 # Make Castor libraries and executables
 #
@@ -355,7 +355,6 @@ STGLIB_SRCS += vdqm/AbstractRequestHandler.cpp \
               vdqm/TapeRequest.cpp \
               vdqm/TapeRequestCInt.cpp \
               vdqm/TapeRequestHandler.cpp \
-              vdqm/TapeRequestStatusCode.cpp \
               vdqm/TapeServer.cpp \
               vdqm/TapeServerCInt.cpp \
               vdqm/VdqmServer.cpp \
