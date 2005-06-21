@@ -1,5 +1,5 @@
 /*
- * $Id: stager_get.c,v 1.3 2005/06/16 09:06:32 obarring Exp $
+ * $Id: stager_get.c,v 1.4 2005/06/21 15:08:10 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_get.c,v $ $Revision: 1.3 $ $Date: 2005/06/16 09:06:32 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_get.c,v $ $Revision: 1.4 $ $Date: 2005/06/21 15:08:10 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -24,7 +24,6 @@ void usage _PROTO((char *));
 
 
 /* Global flags */
-static int verbose_flag = 0;
 static int display_reqid = 0;
 static char* service_class = NULL;
 static char* usertag = NULL;
@@ -32,7 +31,7 @@ static char* stage_host = NULL;
 
 /* Global vars used by _fillStruct and _countFiles */
 static int filenb; /* Number of files to be staged in */
-static struct stage_prepareToGet_filereq *requests; 
+static struct stage_prepareToGet_filereq *requests;
 static char *protocol = DEFAULT_PROTOCOL;
 
 /* Local functions */
@@ -44,25 +43,22 @@ static int _fillStruct(char *filename);
 int parseCmdLine(int argc, char *argv[], int (*cb)(char *) ) {
   int nargs, Coptind, Copterr, errflg;
   char c;
-	static struct Coptions longopts[] =
+  static struct Coptions longopts[] =
     {
-      {"hsm_filename", REQUIRED_ARGUMENT,  NULL,      'M'},
-      {"protocol",           REQUIRED_ARGUMENT,  NULL,      'P'},
-      {"service_class",      REQUIRED_ARGUMENT,  NULL,      'S'},
-      {"usertag",            REQUIRED_ARGUMENT,  NULL,      'U'},
-      {"verbose",            NO_ARGUMENT,  &verbose_flag,   'v'},
-      {"display_reqid",      NO_ARGUMENT,        NULL,      'r'},
-      {"host",               NO_ARGUMENT,        NULL,      'H'},
-      {"help",               NO_ARGUMENT,        NULL,      'h'},
-      {NULL,                 0,                  NULL,        0}
+      {"filename",      REQUIRED_ARGUMENT,  NULL,      'M'},
+      {"service_class", REQUIRED_ARGUMENT,  NULL,      'S'},
+      {"usertag",       REQUIRED_ARGUMENT,  NULL,      'U'},
+      {"display_reqid", NO_ARGUMENT,        NULL,      'r'},
+      {"help",          NO_ARGUMENT,        NULL,      'h'},
+      {NULL,            0,                  NULL,        0}
     };
-  
+
   nargs = argc;
   Coptind = 1;
   Copterr = 1;
   errflg = 0;
-  
-  while ((c = Cgetopt_long (argc, argv, "M:H:vhrS:P:U:", longopts, NULL)) != -1) {
+
+  while ((c = Cgetopt_long (argc, argv, "M:S:U:rh", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
       cb(Coptarg);
@@ -73,17 +69,8 @@ int parseCmdLine(int argc, char *argv[], int (*cb)(char *) ) {
     case 'U':
       usertag = Coptarg;
       break;
-    case 'P':
-      protocol = Coptarg;
-      break;
     case 'r':
       display_reqid = 1;
-      break;
-    case 'H':
-      stage_host = Coptarg;
-      break;
-    case 'v':
-      verbose_flag = 1;
       break;
     case 'h':
     case '?':
@@ -99,7 +86,7 @@ int parseCmdLine(int argc, char *argv[], int (*cb)(char *) ) {
   return errflg;
 }
 
-/* Uses the filenb global variable 
+/* Uses the filenb global variable
    that should be set to 0 before 1st call */
 static int _countFiles(char *filename) {
   filenb++;
@@ -107,7 +94,7 @@ static int _countFiles(char *filename) {
 
 /* Uses the filenb global variable,
    that should be set to 0 before 1st call */
-/* Uses the requests global variable, 
+/* Uses the requests global variable,
    which should already be initialized */
 static int _fillStruct(char *filename) {
   requests[filenb].filename = (char *)strdup(filename);
@@ -117,8 +104,8 @@ static int _fillStruct(char *filename) {
 }
 
 int main(argc, argv)
-		 int	argc;
-		 char	**argv;
+     int argc;
+     char **argv;
 {
   int errflg, total_nb_files, rc, nbresps, i, ret;
   char *reqid;
@@ -128,12 +115,12 @@ int main(argc, argv)
 
   opts.stage_host = NULL;
   opts.service_class = NULL;
-  
+
 
   usertag = NULL;
 
   filenb = 0;
-  errflg =  parseCmdLine(argc, argv, _countFiles);  
+  errflg =  parseCmdLine(argc, argv, _countFiles);
   if (errflg != 0 || filenb <= 0) {
     usage (argv[0]);
     exit (1);
@@ -155,8 +142,8 @@ int main(argc, argv)
 
   /* Iterating over the command line again to fill in the array of requests */
   filenb = 0;
-  errflg =  parseCmdLine(argc, argv, _fillStruct);  
-  
+  errflg =  parseCmdLine(argc, argv, _fillStruct);
+
   /* Actual call to prepareToGet */
   rc = stage_prepareToGet(usertag,
                           requests,
@@ -166,25 +153,25 @@ int main(argc, argv)
                           &reqid,
                           &opts);
 
-  if (rc < 0) { 
+  if (rc < 0) {
     fprintf(stderr, "Error %s\n", sstrerror(serrno));
     fprintf(stderr, "<%s>\n", errbuf);
     exit(1);
   }
 
-  printf("Received %d responses\n", nbresps); 
+  printf("Received %d responses\n", nbresps);
 
   ret = 0;
   for (i=0; i<nbresps; i++) {
-    printf("%s %s", 
+    printf("%s %s",
            responses[i].filename,
            stage_statusName(responses[i].status));
     if (responses[i].errorCode != 0) {
-      printf(" %d %s", 
+      printf(" %d %s",
              responses[i].errorCode,
              responses[i].errorMessage);
       ret = 1;
-    } 
+    }
     printf ("\n");
   }
   if (display_reqid) {
@@ -200,10 +187,10 @@ int main(argc, argv)
 
 
 void usage(cmd)
-		 char *cmd;
+     char *cmd;
 {
-	fprintf (stderr, "usage: %s ", cmd);
-	fprintf (stderr, "%s",
-					 "[-H stagerhost] [-M hsmfile [-M...]] [-S service_class] [-P protocol] [-U usertag] [-r] [-v] [-h]\n");
-  
+  fprintf (stderr, "usage: %s ", cmd);
+  fprintf (stderr, "%s",
+           "-M hsmfile [-M...] [-S service_class] [-U usertag] [-r] [-h]\n");
+
 }
