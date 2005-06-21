@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2dlf.c,v $ $Revision: 1.5 $ $Date: 2005/06/21 11:01:19 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: send2dlf.c,v $ $Revision: 1.6 $ $Date: 2005/06/21 11:21:41 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -26,9 +26,13 @@ static char sccsid[] = "@(#)$RCSfile: send2dlf.c,v $ $Revision: 1.5 $ $Date: 200
 #include "serrno.h"
 #include "dlf.h"
 #include "dlf_api.h"
+#include "socket_timeout.h"
+
 #if defined(_WIN32)
 extern char *ws_strerr;
 #endif
+
+EXTERN_C int DLL_DECL netconnect_timeout _PROTO((SOCKET, struct sockaddr *, size_t, int));
 
 /* send2dlf - send a request to the distributed logging facility server */
 
@@ -84,22 +88,24 @@ int reql;
 		}
 #endif
 #endif
-		if (connect (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
+		if (netconnect_timeout (s, (struct sockaddr *) &sin, sizeof(sin), DLF_TIMEOUT) < 0) {
+		  if (
 #if defined(_WIN32)
-			if (WSAGetLastError() == WSAECONNREFUSED) {
+		  WSAGetLastError() == WSAECONNREFUSED
 #else
-			if (errno == ECONNREFUSED) {
+		  errno == ECONNREFUSED
 #endif
-			  	dlf_errmsg (func, DLF00, dst->name);
-				(void) netclose (s);
-				serrno = EDLFNACT;
-				return (-1);
-			} else {
-			  	dlf_errmsg (func, DLF02, "connect", neterror());
-				(void) netclose (s);
-				serrno = SECOMERR;
-				return (-1);
-			}
+		  ) {
+			dlf_errmsg (func, DLF00, dst->name);
+			(void) netclose (s);
+			serrno = EDLFNACT;
+			return (-1);
+		      } else {
+			dlf_errmsg (func, DLF02, "connect", neterror());
+			(void) netclose (s);
+			serrno = SECOMERR;
+			return (-1);
+		      }
 		}
 		if (socketp)
 			*socketp = s;
@@ -107,11 +113,11 @@ int reql;
 		s = *socketp;
 
 	/* send request to the dlf server */
-	if ((n = netwrite (s, reqp, reql)) <= 0) {
+	if ((n = netwrite_timeout (s, reqp, reql, DLF_TIMEOUT)) <= 0) {
 		if (n == 0)
-		  dlf_errmsg (func, DLF02, "send", sys_serrlist[SERRNO]);
+		  dlf_errmsg (func, DLF02, "netwrite_timeout", sys_serrlist[SERRNO]);
 		else
-		  dlf_errmsg (func, DLF02, "send", neterror());
+		  dlf_errmsg (func, DLF02, "netwrite_timeout", neterror());
 		(void) netclose (s);
 		serrno = SECOMERR;
 		return (-1);
@@ -143,11 +149,11 @@ int* reply_type;
         s = socket;
 		
 	/* read header */
-	if ((n = netread (s, repheader, 3 * LONGSIZE)) <= 0) {
+	if ((n = netread_timeout (s, repheader, 3 * LONGSIZE, DLF_TIMEOUT)) <= 0) {
 	  if (n == 0)
-	    dlf_errmsg (func, DLF02, "recv", sys_serrlist[SERRNO]);
+	    dlf_errmsg (func, DLF02, "netread_timeout", sys_serrlist[SERRNO]);
 	  else
-	    dlf_errmsg (func, DLF02, "recv", neterror());
+	    dlf_errmsg (func, DLF02, "netread_timeout", neterror());
 	  (void) netclose (s);
 	  serrno = SECOMERR;
 	  return (-1);
@@ -181,11 +187,11 @@ int* reply_type;
 	}
 	*user_repbuf_len = c;
 
-	if ((n = netread (s, *user_repbuf, c)) <= 0) {
+	if ((n = netread_timeout (s, *user_repbuf, c, DLF_TIMEOUT)) <= 0) {
 	  if (n == 0)
-	    dlf_errmsg (func, DLF02, "recv", sys_serrlist[SERRNO]);
+	    dlf_errmsg (func, DLF02, "netread_timeout", sys_serrlist[SERRNO]);
 	  else
-	    dlf_errmsg (func, DLF02, "recv", neterror());
+	    dlf_errmsg (func, DLF02, "netread_timeout", neterror());
 	  (void) netclose (s);
 	  free (*user_repbuf); /* Free memory */
 	  serrno = SECOMERR;

@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.2 $ $Date: 2004/07/08 08:39:53 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.3 $ $Date: 2005/06/21 11:21:54 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -21,6 +21,7 @@ static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.2 $ $Date: 2004
 #include "marshall.h"
 #include "net.h"
 #include "dlf.h"
+#include "socket_timeout.h"
 
 int sendrep(int rpfd, int rep_type, ...)
 {
@@ -67,8 +68,8 @@ int sendrep(int rpfd, int rep_type, ...)
 	}
 	va_end (ap);
 	repsize = rbp - repbuf;
-	if (netwrite (rpfd, repbuf, repsize) != repsize) {
-	  	dlflogit (func, DLF02, "send", neterror());
+	if (netwrite_timeout (rpfd, repbuf, repsize, DLF_TIMEOUT) != repsize) {
+	  	dlflogit (func, DLF02, "netwrite_timeout", neterror());
 		if (rep_type == DLF_RC)
 			netclose (rpfd);
 		return (-1);
