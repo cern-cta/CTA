@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.4 2005/06/17 07:37:45 obarring Exp $
+ * $Id: stager_qry.c,v 1.5 2005/06/21 13:03:26 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.4 $ $Date: 2005/06/17 07:37:45 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.5 $ $Date: 2005/06/21 13:03:26 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -31,7 +31,6 @@ static struct Coptions longopts[] =
     {"fileid",             REQUIRED_ARGUMENT,  NULL,      'F'},
     {"usertag",            REQUIRED_ARGUMENT,  NULL,      'U'},
     {"requestid",          REQUIRED_ARGUMENT,  NULL,      'r'},
-    {"host",               REQUIRED_ARGUMENT,  NULL,      'H'},
     {"help",               REQUIRED_ARGUMENT,  NULL,      'h'},
     {NULL,                 0,                  NULL,        0}
   };
@@ -47,7 +46,7 @@ int cmd_parse(int argc, char *argv[], struct cmd_args *args);
 
 
 
-int 
+int
 main(int argc, char *argv[]) {
   struct cmd_args args;
   struct  stage_filequery_resp *responses;
@@ -61,10 +60,10 @@ main(int argc, char *argv[]) {
     usage(argv[0]);
     exit(EXIT_FAILURE);
   }
- 
+
   create_query_req(&(args.requests), args.nbreqs);
 
-  errflg =  cmd_parse(argc, argv, &args);  
+  errflg =  cmd_parse(argc, argv, &args);
   if (errflg != 0) {
     usage (argv[0]);
     exit (EXIT_FAILURE);
@@ -76,28 +75,28 @@ main(int argc, char *argv[]) {
 
   /* Actual call to prepareToGet */
   rc = stage_filequery(args.requests,
-		       args.nbreqs,
-		       &responses,
-		       &nbresps,
-		       &(args.opts));
+                       args.nbreqs,
+                       &responses,
+                       &nbresps,
+                       &(args.opts));
 
-  if (rc < 0) { 
+  if (rc < 0) {
     fprintf(stderr, "Error: %s\n", sstrerror(serrno));
     fprintf(stderr, "%s\n", errbuf);
     exit(EXIT_FAILURE);
   }
 
-  printf("Received %d responses\n", nbresps); 
+  printf("Received %d responses\n", nbresps);
 
   for (i=0; i<nbresps; i++) {
-    printf("%s %s", 
-	   responses[i].filename,
-	   stage_fileStatusName(responses[i].status));
+    printf("%s %s",
+           responses[i].filename,
+           stage_fileStatusName(responses[i].status));
     if (responses[i].errorCode != 0) {
       printf(" Error %d/%s (%s)",
-	     responses[i].errorCode,
-	     sstrerror(responses[i].errorCode),
-	     responses[i].errorMessage);
+             responses[i].errorCode,
+             sstrerror(responses[i].errorCode),
+             responses[i].errorMessage);
     }
     printf ("\n");
   }
@@ -109,16 +108,16 @@ main(int argc, char *argv[]) {
 
 
 
-int 
+int
 cmd_parse(int argc, char *argv[], struct cmd_args *args) {
   int nbargs, Coptind, Copterr, errflg;
-  char c;  
-  
+  char c;
+
   Coptind = 1;
   Copterr = 1;
   errflg = 0;
-  nbargs = 0;  
-  while ((c = Cgetopt_long (argc, argv, "M:F:U:r:h:", longopts, NULL)) != -1) {
+  nbargs = 0;
+  while ((c = Cgetopt_long (argc, argv, "M:F:U:r:h", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
       args->requests[nbargs].type = BY_FILENAME;
@@ -140,9 +139,6 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
       args->requests[nbargs].param = (char *)strdup(Coptarg);
       nbargs++;
       break;
-    case 'H':
-      args->opts.stage_host = Coptarg;
-      break;
     case 'h':
     default:
       errflg++;
@@ -157,31 +153,24 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
 /**
  * Just count the number of args so as to prepare stage_fileQuery argument list
  */
-int 
+int
 cmd_countArguments(int argc, char *argv[]) {
   int Coptind, Copterr, errflg, nbargs;
-  char c;  
-  
+  char c;
+
   Coptind = 1;
   Copterr = 1;
   errflg = 0;
   nbargs = 0;
-  while ((c = Cgetopt_long (argc, argv, "M:F:U:R:", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "M:F:U:r:h", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
-      nbargs++;;
-      break;
     case 'F':
-      nbargs++;;
-      break;
     case 'U':
-      nbargs++;
-      break;
     case 'r':
       nbargs++;
       break;
     case 'h':
-      break;
     default:
       errflg++;
       break;
@@ -189,17 +178,17 @@ cmd_countArguments(int argc, char *argv[]) {
     if (errflg != 0) break;
   }
 
-  if (errflg) 
+  if (errflg)
     return -1;
-  else 
+  else
     return nbargs;
 }
 
 
 
-void 
+void
 usage(char *cmd) {
   fprintf (stderr, "usage: %s ", cmd);
   fprintf (stderr, "%s",
-	   "[-H host] [-M hsmfile [-M ...]] [-F fileid] [-U usertag] [-r requestid] [-h]\n");
+           "[-M hsmfile [-M ...]] [-F fileid@nshost] [-U usertag] [-r requestid] [-h]\n");
 }
