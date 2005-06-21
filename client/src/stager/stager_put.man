@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_put.man,v $ $Revision: 1.5 $ $Date: 2005/06/21 14:41:34 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_put.man,v $ $Revision: 1.6 $ $Date: 2005/06/21 14:48:38 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_PUT 1castor "$Date: 2005/06/21 14:41:34 $" CASTOR "STAGER Commands"
+.TH STAGER_PUT 1castor "$Date: 2005/06/21 14:48:38 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_put \- request for writing a file into CASTOR
 .SH SYNOPSIS
@@ -79,6 +79,7 @@ display command usage help
 # stager_put -M /castor/cern.ch/user/t/test/file1 -U test1 -r
 .fi
 42b002d7-0000-1000-9db8-cf9fcba30800
+.fi
 /castor/cern.ch/user/t/test/file1 SUBRQUEST_READY
 .fi
 # rfcp /etc/group /castor/cern.ch/user/t/test/file1
