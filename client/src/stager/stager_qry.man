@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.4 $ $Date: 2005/06/20 16:33:51 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.5 $ $Date: 2005/06/21 13:03:52 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_QRY 1castor "$Date: 2005/06/20 16:33:51 $" CASTOR "STAGER Commands"
+.TH STAGER_QRY 1castor "$Date: 2005/06/21 13:03:52 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_qry \- query the CASTOR stager for files and requests
 .SH SYNOPSIS
@@ -22,15 +22,11 @@ stager_qry \- query the CASTOR stager for files and requests
 ]
 [
 .BI -F
-.BI bitfileid
+.BI fileid@nshost
 ]
 [
 .BI -r
 .BI requestid
-]
-[
-.BI -H
-.BI host
 ]
 [
 .BI -h
@@ -55,9 +51,9 @@ specifies the CASTOR HSM file to be queried for. The
 .B \-M
 option can be repeated, which allows for querying the status of many files with a single command.
 .TP
-.BI \-F,\ \-\-fileid " fileid"
-query by CASTOR bitfile identifier. The bitfile id is a unique 64bit number assigned by
-the CASTOR name server to each file in its namespace. The bitfile id can be retrieved using
+.BI \-F,\ \-\-fileid " fileid@nshost"
+query by CASTOR fileid and nshost. The fileid is a unique 64bit number assigned by
+the CASTOR name server to each file in its namespace. The fileid can be retrieved using
 the
 .BI nsls(1castor)
 command with the
@@ -87,9 +83,6 @@ and
 .B stager_put(1castor)
 commands.
 .TP
-.BI \-H,\ \-\-host " host"
-specifies the request handler host name. If not specified, a default host will be used.
-.TP
 .BI \-h,\ \-\-help
 display command usage help
 .TP
@@ -117,7 +110,7 @@ Received 2 responses
 .fi
            59316770 /castor/cern.ch/user/t/test/file2
 .fi
-# stager_qry -F 59316770
+# stager_qry -F 59316770@castorns
 .fi
 Received 1 responses
 .fi
