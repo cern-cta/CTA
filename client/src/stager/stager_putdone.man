@@ -1,13 +1,12 @@
-.\" @(#)$RCSfile: stager_putdone.man,v $ $Revision: 1.1 $ $Date: 2005/06/17 07:38:06 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_putdone.man,v $ $Revision: 1.2 $ $Date: 2005/06/21 14:53:34 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_PUTDONE 1castor "$Date: 2005/06/17 07:38:06 $" CASTOR "STAGER Commands"
+.TH STAGER_PUTDONE 1castor "$Date: 2005/06/21 14:53:34 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_putdone \- terminate a CASTOR stager 'put' session and flag files for tape migration
 .SH SYNOPSIS
 .B stager_putdone
-[
 .BI -M
 .BI hsmfile
 [
@@ -15,24 +14,13 @@ stager_putdone \- terminate a CASTOR stager 'put' session and flag files for tap
 .BI -M
 }
 .BI ...
-]]
-[
-.BI -U
-.BI usertag
 ]
 [
 .BI -r
 .BI requestid
 ]
 [
-.BI -H
-.BI host
-]
-[
 .BI -h
-]
-[
-.BI -v
 ]
 .SH DESCRIPTION
 The
@@ -49,17 +37,7 @@ for tape migration.
 .BI \-M,\ \-\-hsm_filename " hsmfile"
 specifies the CASTOR HSM file to be flagged for migration. The
 .B \-M
-option can be repeated, allow for handling many CASTOR files in the same request.
-.TP
-.BI \-U,\ \-\-usertag " usertag"
-specifies the usertag of the request. The usertag must correspond to the one specified
-with the
-.B \-U option
-to the original
-.B stager_put(1castor)
-reuqest.
-There is no constraint on the uniqueness of the usertag so it is up to the user
-to make sure that the string is unique enough to not clash with other users' usertags.
+option can be repeated, allowing to handle many CASTOR files in the same request.
 .TP
 .BI \-r,\ \-\-requestid " requestid"
 specifies the CASTOR stager request identifier of the request.
@@ -71,9 +49,6 @@ option is specified with the
 .B stager_put(1castor)
 commands.
 .TP
-.BI \-H,\ \-\-host " host"
-specifies the request handler host name. If not specified, a default host will be used.
-.TP
 .BI \-h,\ \-\-help
 display command usage help
 .TP
@@ -82,9 +57,9 @@ display command usage help
 .fi
 # stager_put -M /castor/cern.ch/user/t/test/file1 -U test1 -r
 .fi
-42b002d7-0000-1000-9db8-cf9fcba30800 SUBREQUEST_READY
+42b002d7-0000-1000-9db8-cf9fcba30800
 .fi
-rfio://lxfsrk5701.cern.ch:53184/42b002d7-0000-1000-b2d1-c8e6fd7ff00f
+/castor/cern.ch/user/t/test/file1 SUBRQUEST_READY
 .fi
 # rfcp /etc/group /castor/cern.ch/user/t/test/file1
 .fi
@@ -100,9 +75,9 @@ Received 1 responses
 .fi
 1240856 bytes in 0 seconds through local (in) and eth0 (out)
 .fi
-# stage_putdone -M /castor/cern.ch/user/t/test/file1 -U test1
+# stager_putdone -M /castor/cern.ch/user/t/test/file1
 .fi
-# stager_qry -U test1
+# stager_qry -M /castor/cern.ch/user/t/test/file1
 .fi
 Received 1 responses
 .fi
@@ -115,7 +90,9 @@ failed.
 
 .SH SEE ALSO
 .BR stager_qry(1castor) ,
+.BR stager_get(1castor) ,
 .BR stager_put(1castor)
+.BR rfcp(1castor)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

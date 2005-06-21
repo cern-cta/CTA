@@ -1,5 +1,5 @@
 /*
- * 
+ *
  */
 
 /*
@@ -26,9 +26,8 @@ struct cmd_args {
 
 static struct Coptions longopts[] =
   {
-    {"requestid",          REQUIRED_ARGUMENT,  NULL,      'r'},
     {"hsm_filename",       REQUIRED_ARGUMENT,  NULL,      'M'},
-    {"host",               REQUIRED_ARGUMENT,  NULL,      'H'},
+    {"requestid",          REQUIRED_ARGUMENT,  NULL,      'r'},
     {"help",               NO_ARGUMENT,        NULL,      'h'},
     {NULL,                 0,                  NULL,        0}
   };
@@ -41,7 +40,7 @@ int cmd_countHsmFiles(int argc, char *argv[]);
 
 #define ERRBUFSIZE 255
 
-int 
+int
 main(int argc, char *argv[]) {
   struct cmd_args args;
   struct stage_fileresp *response;
@@ -54,7 +53,7 @@ main(int argc, char *argv[]) {
   /* Parsing the command line */
   memset(&errbuf,  '\0', sizeof(errbuf));
 
-  errflg =  cmd_parse(argc, argv, &args);  
+  errflg =  cmd_parse(argc, argv, &args);
   if (errflg != 0) {
     usage (argv[0]);
     exit (EXIT_FAILURE);
@@ -66,43 +65,43 @@ main(int argc, char *argv[]) {
 
   /* Performing the actual call */
   rc = stage_putDone(args.requestid,
-		     args.reqs,
-		     args.nbreqs,
-		     &response,
-		     &nbresps,
-		     &reqid,
-		     &(args.opts));
-  
-   if (rc < 0) { 
-     fprintf(stderr, "Error: %s\n", sstrerror(serrno));
-     fprintf(stderr, "<%s>\n", errbuf);
-     exit(1);
-   }
-   
-   if (response == NULL) {
-     fprintf(stderr, "Error: Response object is NULL\n");
-     exit(1);
-   }
+                     args.reqs,
+                     args.nbreqs,
+                     &response,
+                     &nbresps,
+                     &reqid,
+                     &(args.opts));
 
-   if (response->errorCode != 0) {
-     fprintf(stderr, "Error: %d (%s) Status: %s\n", 
-	     response->errorCode,
-	     response->errorMessage,
-	     stage_statusName(response->status));
-     ret = 1;
-   } else {
-     ret = 0;
-   }
-   return ret;
+  if (rc < 0) {
+    fprintf(stderr, "Error: %s\n", sstrerror(serrno));
+    fprintf(stderr, "<%s>\n", errbuf);
+    exit(1);
+  }
+
+  if (response == NULL) {
+    fprintf(stderr, "Error: Response object is NULL\n");
+    exit(1);
+  }
+
+  if (response->errorCode != 0) {
+    fprintf(stderr, "Error: %d (%s) Status: %s\n",
+            response->errorCode,
+            response->errorMessage,
+            stage_statusName(response->status));
+    ret = 1;
+  } else {
+    ret = 0;
+  }
+  return ret;
 }
 
 
 
-int 
+int
 cmd_parse(int argc, char *argv[], struct cmd_args *args) {
   int nbfiles, Coptind, Copterr, errflg;
-  char c;  
-  
+  char c;
+
   /* Reinitializing the structure with null pointers */
   memset(args, '\0', sizeof(struct cmd_args));
 
@@ -115,26 +114,23 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
     /* Creating the structure for files */
     create_filereq(&(args->reqs), args->nbreqs);
   }
-  
+
   /* Now parsing the command line */
   Coptind = 1;
   Copterr = 1;
   errflg = 0;
-  nbfiles = 0;  
-  while ((c = Cgetopt_long (argc, argv, "r:M:H:h", longopts, NULL)) != -1) {
+  nbfiles = 0;
+  while ((c = Cgetopt_long (argc, argv, "M:r:h", longopts, NULL)) != -1) {
     switch (c) {
-    case 'H':
-      args->opts.stage_host = Coptarg;
-      break;
     case 'M':
-      	args->reqs[nbfiles].filename = Coptarg;
-	nbfiles++;
+      args->reqs[nbfiles].filename = Coptarg;
+      nbfiles++;
       break;
     case 'r':
       if (args->requestid!= NULL) {
-	errflg++;
+        errflg++;
       } else {
-      	args->requestid = Coptarg;
+        args->requestid = Coptarg;
       }
       break;
     case 'h':
@@ -152,16 +148,16 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
 /**
  * Just count the number of args so as to prepare stage_fileQuery argument list
  */
-int 
+int
 cmd_countHsmFiles(int argc, char *argv[]) {
   int Coptind, Copterr, errflg, nbargs;
-  char c;  
-  
+  char c;
+
   Coptind = 1;
   Copterr = 1;
   errflg = 0;
   nbargs = 0;
-  while ((c = Cgetopt_long (argc, argv, "R:M:h:", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "M:r:h:", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
       nbargs++;;
@@ -172,16 +168,16 @@ cmd_countHsmFiles(int argc, char *argv[]) {
     if (errflg != 0) break;
   }
 
-  if (errflg) 
+  if (errflg)
     return -1;
-  else 
+  else
     return nbargs;
 }
 
 
-void 
+void
 usage(char *cmd) {
   fprintf (stderr, "usage: %s ", cmd);
   fprintf (stderr, "%s",
-	   "[-R requestid] -M hsmfile [-M hsmfile ...] [-h stage_host]\n");
+           "-M hsmfile [-M hsmfile ...] [-r requestid] [-h]\n");
 }
