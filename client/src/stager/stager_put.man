@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_put.man,v $ $Revision: 1.4 $ $Date: 2005/06/21 14:02:16 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_put.man,v $ $Revision: 1.5 $ $Date: 2005/06/21 14:41:34 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_PUT 1castor "$Date: 2005/06/21 14:02:16 $" CASTOR "STAGER Commands"
+.TH STAGER_PUT 1castor "$Date: 2005/06/21 14:41:34 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_put \- request for writing a file into CASTOR
 .SH SYNOPSIS
@@ -25,10 +25,6 @@ stager_put \- request for writing a file into CASTOR
 .BI usertag
 ]
 [
-.BI -P
-.BI protocol
-]
-[
 .BI -r
 ]
 [
@@ -37,7 +33,7 @@ stager_put \- request for writing a file into CASTOR
 .SH DESCRIPTION
 The
 .B stager_put
-command starts a put/update session in CASTOR. It is primary inteded
+command starts a put/update session in CASTOR. It is primarily intended
 for applications that need to open the same set of files several times (e.g. for updates)
 before they are migrated to tape. The command should be used in conjunction with the
 .B stager_putdone(1castor)
@@ -56,45 +52,34 @@ sessions allowing the CASTOR administrators to cleanup the files in STAGEOUT sta
 .SH OPTIONS
 
 .TP
-.BI \-M,\ \-\-migration_filename " hsmfile"
+.BI \-M,\ \-\-filename " hsmfile"
 specifies the CASTOR HSM file(s) to be created.
 .TP
-.BI \-m,\ \-\-mode " filemode"
-specifies the UNIX mode-bits for the file creation (see 
-.B creat(2), open(2)
-)
 .BI \-S,\ \-\-service_class " service_class"
 specifies the service class to be used when creating the files. If no service class
 is given a default will be assigned by the stager.
 .TP
-.BI \-s,\ \-\-size " size"
-specifies the file size reservation. If not specified, the stager will assign the
-default space reservation defined in the service class.
 .BI \-U,\ \-\-usertag " usertag"
 allows for associating a usertag that can be used for identifying the request in a subsequent
 .B stager_qry(1castor)
 command.
 .TP
-.BI \-P,\ \-\-protocol " protocol"
-specifies the disk mover protocol the client intends to use when accessing the file. This
-option can be used to assure that the file is staged on to a disk server that supports that
-protocol. Examples of protocols are "rfio" and "root".
-.TP
 .BI \-r,\ \-\-display_reqid
 if specified, the request identifier asssigned by the stager will be printed to standard
 output. The request identifier can be used instead of the castor filenames when closing
-the put-session with
+the put session with
 .BI stager_putdone(1castor)
 .TP
-.BI \-H,\ \-\-host " host"
-specifies the request handler host name. If not specified, a default host will be used.
+.BI \-h,\ \-\-help
+display command usage help
 .TP
 
 .SH EXAMPLE
 .fi
 # stager_put -M /castor/cern.ch/user/t/test/file1 -U test1 -r
 .fi
-42b002d7-0000-1000-9db8-cf9fcba30800 SUBRQUEST_READY
+42b002d7-0000-1000-9db8-cf9fcba30800
+/castor/cern.ch/user/t/test/file1 SUBRQUEST_READY
 .fi
 # rfcp /etc/group /castor/cern.ch/user/t/test/file1
 .fi
@@ -110,9 +95,9 @@ Received 1 responses
 .fi
 1240856 bytes in 0 seconds through local (in) and eth0 (out)
 .fi
-# stage_putdone -M /castor/cern.ch/user/t/test/file1 -U test1
+# stager_putdone -M /castor/cern.ch/user/t/test/file1
 .fi
-# stager_qry -U test1
+# stager_qry -M /castor/cern.ch/user/t/test/file1
 .fi
 Received 1 responses
 .fi
@@ -126,7 +111,8 @@ failed.
 .SH SEE ALSO
 .BR stager_qry(1castor) ,
 .BR stager_get(1castor) ,
-.BR stager_putdone(1castor)
+.BR stager_putdone(1castor),
+.BR rfcp(1castor)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

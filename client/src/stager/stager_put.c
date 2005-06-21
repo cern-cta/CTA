@@ -28,14 +28,12 @@ struct cmd_args {
 
 static struct Coptions longopts[] =
   {
-    {"protocol",           REQUIRED_ARGUMENT,  NULL,      'P'},
-    {"migration_filename", REQUIRED_ARGUMENT,  NULL,      'M'},
-    {"svc_class",          REQUIRED_ARGUMENT,  NULL,      'S'},
-    {"usertag",            REQUIRED_ARGUMENT,  NULL,      'U'},
-    {"display_reqid",      NO_ARGUMENT,        NULL,      'r'},
-    {"host",               REQUIRED_ARGUMENT,  NULL,      'h'},
-    {"size",               REQUIRED_ARGUMENT,  NULL,      's'},
-    {NULL,                 0,                  NULL,        0}
+    {"filename",      REQUIRED_ARGUMENT,  NULL,      'M'},
+    {"svc_class",     REQUIRED_ARGUMENT,  NULL,      'S'},
+    {"usertag",       REQUIRED_ARGUMENT,  NULL,      'U'},
+    {"display_reqid", NO_ARGUMENT,        NULL,      'r'},
+    {"help",          NO_ARGUMENT,        NULL,      'h'},
+    {NULL,            0,                  NULL,        0}
   };
 
 
@@ -111,9 +109,8 @@ main(int argc, char *argv[]) {
 
 int
 cmd_parse(int argc, char *argv[], struct cmd_args *args) {
-  int nbfiles, Coptind, Copterr, errflg, i;
+  int nbfiles, Coptind, Copterr, errflg;
   char c;
-  u_signed64 fileSize = 0;
 
   /* Reinitializing the structure with null pointers */
   memset(args, '\0', sizeof(struct cmd_args));
@@ -133,18 +130,12 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
   Copterr = 1;
   errflg = 0;
   nbfiles = 0;
-  while ((c = Cgetopt_long (argc, argv, "M:P:S:U:rh:", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long
+          (argc, argv, "M:S:U:rh", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
       args->reqs[nbfiles].filename = Coptarg;
       nbfiles++;
-      break;
-    case 'P':
-      if (args->protocol!= NULL) {
-        errflg++;
-      } else {
-        args->protocol = Coptarg;
-      }
       break;
     case 'U':
       if (args->usertag!= NULL) {
@@ -160,15 +151,10 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
         args->opts.service_class = Coptarg;
       }
       break;
-    case 'h':
-      args->opts.stage_host = Coptarg;
-      break;
-    case 's':
-      fileSize = atoi(Coptarg);
-      break;
     case 'r':
       args->display_reqid = 1;
       break;
+    case 'h':
     default:
       errflg++;
       break;
@@ -176,12 +162,6 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
     if (errflg != 0) break;
   }
   if (args->nbreqs == 0) errflg++;
-  // Set file sizes
-  if (fileSize > 0) {
-    for (i = 0; 1 < nbfiles; i++) {
-      args->reqs[nbfiles].filesize = fileSize;
-    }
-  }
   return errflg;
 }
 
@@ -198,7 +178,7 @@ cmd_countHsmFiles(int argc, char *argv[]) {
   Copterr = 1;
   errflg = 0;
   nbargs = 0;
-  while ((c = Cgetopt_long (argc, argv, "M:P:S:U:rh:", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "M:S:U:rh", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
       nbargs++;;
@@ -220,5 +200,5 @@ void
 usage(char *cmd) {
   fprintf (stderr, "usage: %s ", cmd);
   fprintf (stderr, "%s",
-           "[-U usertag] [-P protocol] [-S svc_class]  -M hsmfile [-M hsmfile ...] [-h stage_host] [-r]\n");
+           " -M hsmfile [-M hsmfile ...] [-S svcClass] [-U usertag] [-r] [-h]\n");
 }
