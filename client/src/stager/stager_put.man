@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_put.man,v $ $Revision: 1.3 $ $Date: 2005/06/17 07:37:44 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_put.man,v $ $Revision: 1.4 $ $Date: 2005/06/21 14:02:16 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_PUT 1castor "$Date: 2005/06/17 07:37:44 $" CASTOR "STAGER Commands"
+.TH STAGER_PUT 1castor "$Date: 2005/06/21 14:02:16 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_put \- request for writing a file into CASTOR
 .SH SYNOPSIS
@@ -10,15 +10,12 @@ stager_put \- request for writing a file into CASTOR
 [
 .BI -M
 .BI hsmfile
-]
 [
-.BI -m
-.BI filemode
-]
-[
-.BI -s
-.BI size
-]
+{
+.BI -M
+}
+.BI ...
+]]
 [
 .BI -S
 .BI service_class
@@ -35,10 +32,6 @@ stager_put \- request for writing a file into CASTOR
 .BI -r
 ]
 [
-.BI -H
-.BI host
-]
-[
 .BI -h
 ]
 .SH DESCRIPTION
@@ -46,7 +39,7 @@ The
 .B stager_put
 command starts a put/update session in CASTOR. It is primary inteded
 for applications that need to open the same set of files several times (e.g. for updates)
-before they are migrated to tape. The command should be used in cojunction with the
+before they are migrated to tape. The command should be used in conjunction with the
 .B stager_putdone(1castor)
 command, which marks the files ready for migration. For most purposes the
 .B stager_put
@@ -63,12 +56,8 @@ sessions allowing the CASTOR administrators to cleanup the files in STAGEOUT sta
 .SH OPTIONS
 
 .TP
-.BI \-M,\ \-\-hsm_filename " hsmfile"
-specifies the CASTOR HSM file to be created. Note that contrary to the
-.B stager_get(1castor)
-command the
-.B \-M
-option cannot be repeated.
+.BI \-M,\ \-\-migration_filename " hsmfile"
+specifies the CASTOR HSM file(s) to be created.
 .TP
 .BI \-m,\ \-\-mode " filemode"
 specifies the UNIX mode-bits for the file creation (see 

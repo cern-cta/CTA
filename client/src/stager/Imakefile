@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.41 $ $Date: 2005/05/25 14:29:02 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.42 $ $Date: 2005/06/21 14:02:15 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -143,13 +143,11 @@ STAGELIBTARGET=LibraryTargetName(stager)
 
 #if BuildStageClient
 PROGS_STAGERCLIENT=ProgramTargetName(stager_get) ProgramTargetName(stager_qry)  ProgramTargetName(stager_put) \
-	ProgramTargetName(stager_putdone) ProgramTargetName(stager_preparetoput)
+	ProgramTargetName(stager_putdone)
 IPROGS_STAGERCLIENT = FileName($(BIN),ProgramTargetName(stager_get)) FileName($(BIN),ProgramTargetName(stager_qry)) \
-	FileName($(BIN),ProgramTargetName(stager_put)) FileName($(BIN),ProgramTargetName(stager_putdone)) \
-	FileName($(BIN),ProgramTargetName(stager_preparetoput)) 
+	FileName($(BIN),ProgramTargetName(stager_put)) FileName($(BIN),ProgramTargetName(stager_putdone))
 EPROGS_STAGERCLIENT = FileName($(EXPORTBIN),stager_get) FileName($(EXPORTBIN),stager_qry) \
-	FileName($(EXPORTBIN),stager_put) FileName($(EXPORTBIN),stager_putdone) \
-	FileName($(EXPORTBIN),stager_preparetoput)
+	FileName($(EXPORTBIN),stager_put) FileName($(EXPORTBIN),stager_putdone)
 #endif
 
 
@@ -164,7 +162,6 @@ STAGER_GET_OBJS=stager_get.Osuf
 NormalProgramTarget(stager_get,$(STAGER_GET_OBJS),$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(stager_qry,stager_qry.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(stager_put,stager_put.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
-NormalProgramTarget(stager_preparetoput,stager_preparetoput.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(stager_putdone,stager_putdone.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 #endif
 
@@ -186,7 +183,6 @@ InstallProgram(stageradmin,$(BIN),root,bin,0750)
 InstallProgram(stager_get,$(BIN),root,bin,0755)
 InstallProgram(stager_qry,$(BIN),root,bin,0755)
 InstallProgram(stager_put,$(BIN),root,bin,0755)
-InstallProgram(stager_preparetoput,$(BIN),root,bin,0755)
 InstallProgram(stager_putdone,$(BIN),root,bin,0755)
 #endif
 install.man: $(MANDIR) $(MANPAGES_STAGER)
@@ -202,7 +198,6 @@ IEXPORT(stageradmin,$(EXPORTBIN),755)
 IEXPORT(stager_get,$(EXPORTBIN),755)
 IEXPORT(stager_qry,$(EXPORTBIN),755)
 IEXPORT(stager_put,$(EXPORTBIN),755)
-IEXPORT(stager_preparetoput,$(EXPORTBIN),755)
 IEXPORT(stager_putdone,$(EXPORTBIN),755)
 #endif
 exportman: $(EMANPAGES_STAGER)
