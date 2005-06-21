@@ -141,7 +141,14 @@ void castor::vdqm::AbstractRequestHandler::handleRequest
 
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);
-    throw e;
+    
+//    if (0 != tapeRequest) {
+    	castor::exception::Exception ex(EVQNOVOL);
+    
+    	ex.getMessage() << e.getMessage();	
+    	throw ex;
+//    }
+//    else throw e;
   }
 }
 
@@ -167,6 +174,10 @@ void castor::vdqm::AbstractRequestHandler::deleteRepresentation
 
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);
-    throw e;
+    
+    castor::exception::Exception ex(EVQREPLICA);
+  
+  	ex.getMessage() << e.getMessage();	
+  	throw ex;
   }
 } // End of deleteRepresentation

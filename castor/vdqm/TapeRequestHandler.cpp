@@ -26,7 +26,8 @@
  
 #include <string> 
 #include <time.h>
- 
+
+#include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 
@@ -190,7 +191,7 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 	  
 	  
 	  if ( !exist ) {
-	  	castor::exception::Internal ex;
+	  	castor::exception::Exception ex(EVQDGNINVL);
 	    ex.getMessage() << "DGN " <<  volumeRequest->dgn
 	    								<< " does not exist" << std::endl;
 	    throw ex;
@@ -231,7 +232,7 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 	   */
 	  rowNumber = ptr_IVdqmService->checkTapeRequest(newTapeReq);
 	  if ( rowNumber != -1 ) {
-	    castor::exception::Internal ex;
+	    castor::exception::Exception ex(EVQALREADY);
 	    ex.getMessage() << "Input request already queued: " 
 	    								<< "Position = " << rowNumber << std::endl;
 	    throw ex;
@@ -396,10 +397,11 @@ void castor::vdqm::TapeRequestHandler::deleteTapeRequest(
 //        volrec->update = 0;
 //        vdqm_SetError(EVQREQASS);
 //        rc = -1;
-			// "TapeRequest is assigned to a TapeDrive. Can't delete it at the moment" message
-		  castor::dlf::Param params[] =
-		  	{castor::dlf::Param("TapeRequest ID", tapeReq->id())};
-		  castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 30, 1, params);
+		
+		  castor::exception::Exception ex(EVQREQASS);
+		  ex.getMessage() << "TapeRequest is assigned to a TapeDrive. "
+		  								<< "Can't delete it at the moment" << std::endl;
+		  throw ex;
 	  }
 	  else {
 	  	// Remove the TapeRequest from the db (queue)

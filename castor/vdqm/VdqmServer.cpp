@@ -122,7 +122,7 @@ castor::vdqm::VdqmServer::VdqmServer() :
      {27, "Send VDQM_PING back to client"},
      {28, "TapeRequest and its ClientIdentification removed"},
      {29, "Request deleted from DB"},
-     {30, "TapeRequest is assigned to a TapeDrive. Can't delete it at the moment"},
+     {30, "TapeRequest is assigned to a TapeDrive. Can't delete it at the moment"},//not used
      {31, "Verify that the request doesn't exist, by calling IVdqmSvc->checkTapeRequest"},
      {32, "Try to store Request into the data base"},
      {-1, ""}};
@@ -315,5 +315,24 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 1, params);
+    
+    /**
+     * Tell the client about the error
+     */
+    try {
+	    if (reqtype != VDQM_PING) {
+	    	//This is Protocol specific, because normally it recaives the positive
+	    	// queue position number back.
+	    	sock->sendAcknPing(-e.code());
+	    }
+	    else {
+	    	sock->sendAcknRollbackOldProtocol(e.code());
+	    }
+    } catch (castor::exception::Exception e) {  
+	    // "Exception caught" message
+	    castor::dlf::Param params[] =
+	      {castor::dlf::Param("Message", e.getMessage().str())};
+	    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 1, params);
+	  }
   }
 }

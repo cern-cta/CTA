@@ -186,6 +186,18 @@ namespace castor {
        */
       void sendAcknPing(int queuePosition) 
       	throw (castor::exception::Exception);
+      	
+     	/**
+     	 * This funtion is used in case of errors to send back the error code
+     	 * to the client. The similar function in the old vdqm part is 
+     	 * vdqm_AcknRollback().
+     	 * 
+     	 * @param errorCode The errorCode which has been thrown
+       * @exception In case of error
+     	 */
+      void sendAcknRollbackOldProtocol(int errorCode) 
+      	throw (castor::exception::Exception);
+
 
     protected:
 
@@ -218,7 +230,27 @@ namespace castor {
        */
       void readRestOfBuffer(char** buf, int& n)
         	throw (castor::exception::Exception);
-      
+        	
+       
+      /**
+       * This function is used internally to write the header buffer 
+       * on the socket.
+       * 
+       * @param hdrbuf The header buffer, which contains the data for the client
+       * @exception In case of error
+       */
+      void vdqmNetwrite(void* hdrbuf) 
+        	throw (castor::exception::Exception);
+        	
+      /**
+       * This function is used internally to read the header 
+       * from the socket to the overgiven buffer.
+       * 
+       * @param hdrbuf The header buffer, where the data will be written to
+       * @exception In case of error
+       */
+      void vdqmNetread(void* hdrbuf) 
+        	throw (castor::exception::Exception);       
       
       /**
        * Tells whether listen was already called

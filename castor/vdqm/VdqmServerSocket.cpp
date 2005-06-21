@@ -621,25 +621,9 @@ int castor::vdqm::VdqmServerSocket::sendToOldClient(vdqmHdr_t *header,
   DO_MARSHALL(LONG,p,magic,SendTo);
   DO_MARSHALL(LONG,p,reqtype,SendTo);
   DO_MARSHALL(LONG,p,len,SendTo);
-//  sendBuffer(magic, hdrbuf, VDQM_HDRBUFSIZ);
-  rc = netwrite(m_socket, hdrbuf, VDQM_HDRBUFSIZ);
 
-  if (rc == -1) {
-	  		serrno = SECOMERR;
-	      castor::exception::Exception ex(serrno);
-				ex.getMessage() << "VdqmServerSocket::sendToOldClient(): "
-												<< "netwrite(HDR): " 
-												<< neterror() << std::endl;
-				throw ex;	
-				
-  }
-  else if (rc == 0) {
-    		serrno = SECONNDROP;
-	      castor::exception::Exception ex(serrno);
-				ex.getMessage() << "VdqmServerSocket::sendToOldClient(): "
-												<< "netwrite(HDR): connection dropped" << std::endl;
-				throw ex;	
-  }
+  //send buffer to the client
+  vdqmNetwrite(hdrbuf);
    
   if ( len > 0 ) {
 		rc = netwrite_timeout(m_socket, buf, len, VDQM_TIMEOUT);
@@ -692,28 +676,7 @@ void castor::vdqm::VdqmServerSocket::acknCommitOldProtocol()
   p = hdrbuf;
   
   //send buffer to the client
-  rc = netwrite(m_socket, hdrbuf, VDQM_HDRBUFSIZ);
-  switch (rc) {
-		case -1: 
-				{
-					serrno = SECOMERR;
-	      	castor::exception::Exception ex(serrno);
-					ex.getMessage() << "VdqmServerSocket::acknCommitOldProtocol(): "
-												<< "netwrite(HDR): " 
-												<< neterror() << std::endl;
-					throw ex;	
-				}
-				break;
-	  case 0:
-	  		{
-	  			serrno = SECONNDROP;
-	      	castor::exception::Exception ex(serrno);
-					ex.getMessage() << "VdqmServerSocket::acknCommitOldProtocol(): "
-												<< "netwrite(HDR): connection dropped" 
-												<< std::endl;
-					throw ex;	
-	  		}
-	}
+  vdqmNetwrite(hdrbuf);
 }
 
 
@@ -731,51 +694,13 @@ void castor::vdqm::VdqmServerSocket::recvAcknFromOldProtocol()
     len = 0;
     recvreqtype = 0;
     
-    
-    rc = netread_timeout(m_socket, hdrbuf, VDQM_HDRBUFSIZ, VDQM_TIMEOUT);
-    switch (rc) {
-    	case -1: 
-		  		{
-		  			serrno = SECOMERR;
-		      	castor::exception::Exception ex(serrno);
-						ex.getMessage() << "VdqmServerSocket::recvAcknFromOldProtocol(): "
-														<< "netread(HDR): " 
-														<< neterror() << std::endl;
-						throw ex;	
-		  		}
-       case 0:
-       		{
-		  			serrno = SECONNDROP;
-		      	castor::exception::Exception ex(serrno);
-						ex.getMessage() << "VdqmServerSocket::recvAcknFromOldProtocol(): "
-														<< "netread(HDR): connection dropped" 
-														<< std::endl;
-						throw ex;	
-		  		}
-    }
+    //Reads the header from the socket
+    vdqmNetread(hdrbuf);
     
     p = hdrbuf;
     DO_MARSHALL(LONG, p, magic, ReceiveFrom);
     DO_MARSHALL(LONG, p, recvreqtype, ReceiveFrom);
     DO_MARSHALL(LONG, p, len, ReceiveFrom);
-    
-    
-    // There was an error at netread_timeout.
-    if ( rc == -1 ) {
-	  	castor::exception::Internal ex;
-			ex.getMessage() << "VdqmServerSocket::recvAcknFromOldProtocol(): "
-											<< "client error on commit" 
-											<< std::endl;
-			throw ex;	
-    }
-    
-    if (magic != VDQM_MAGIC) {
-	  	castor::exception::Internal ex;
-			ex.getMessage() << "VdqmServerSocket::recvAcknFromOldProtocol(): "
-											<< "Wrong magic number!" 
-											<< std::endl;
-			throw ex;	   	
-    }
 }
 
 
@@ -790,8 +715,6 @@ void castor::vdqm::VdqmServerSocket::sendAcknPing(int queuePosition)
   int magic, len, rc;
   char *p;
     
-//  if (queuePosition < 0 ) queuePosition = -vdqm_GetError();	
-    
   magic = VDQM_MAGIC;
   len = queuePosition;
   reqtype = VDQM_PING;
@@ -805,13 +728,56 @@ void castor::vdqm::VdqmServerSocket::sendAcknPing(int queuePosition)
   len = 0;
   p = hdrbuf;
   
+  //Send buffer to client
+  vdqmNetwrite(hdrbuf);
+}
+
+
+//------------------------------------------------------------------------------
+// sendAcknRollbackOldProtocol
+//------------------------------------------------------------------------------
+void castor::vdqm::VdqmServerSocket::sendAcknRollbackOldProtocol(int errorCode) 
+	throw (castor::exception::Exception) {
+    
+    char hdrbuf[VDQM_HDRBUFSIZ];
+    int magic, recvreqtype, len;
+    char *p;
+   
+    
+    magic = VDQM_MAGIC;
+    len = 0;
+    recvreqtype = errorCode;
+    
+    
+    p = hdrbuf;
+    DO_MARSHALL(LONG,p,magic, SendTo);
+    DO_MARSHALL(LONG,p,recvreqtype, SendTo);
+    DO_MARSHALL(LONG,p,len, SendTo);
+    
+
+    magic = VDQM_MAGIC;
+    len = 0;
+    p = hdrbuf;
+    
+    //Send buffer to client
+    vdqmNetwrite(hdrbuf);
+}
+
+
+//------------------------------------------------------------------------------
+// vdqmNetwrite
+//------------------------------------------------------------------------------
+void castor::vdqm::VdqmServerSocket::vdqmNetwrite(void* hdrbuf) 
+	throw (castor::exception::Exception) {
+  int rc;
+  
   rc = netwrite_timeout(m_socket, hdrbuf, VDQM_HDRBUFSIZ, VDQM_TIMEOUT);
   switch (rc) {
 		case -1: 
 				{
 					serrno = SECOMERR;
 	      	castor::exception::Exception ex(serrno);
-					ex.getMessage() << "VdqmServerSocket::sendAcknPing(): "
+					ex.getMessage() << "VdqmServerSocket: "
 												<< "netwrite(HDR): " 
 												<< neterror() << std::endl;
 					throw ex;	
@@ -821,10 +787,41 @@ void castor::vdqm::VdqmServerSocket::sendAcknPing(int queuePosition)
 	  		{
 	  			serrno = SECONNDROP;
 	      	castor::exception::Exception ex(serrno);
-					ex.getMessage() << "VdqmServerSocket::sendAcknPing(): "
+					ex.getMessage() << "VdqmServerSocket: "
 												<< "netwrite(HDR): connection dropped" 
 												<< std::endl;
 					throw ex;	
 	  		}
-	}
+	}	
+}
+
+
+//------------------------------------------------------------------------------
+// vdqmNetread
+//------------------------------------------------------------------------------
+void castor::vdqm::VdqmServerSocket::vdqmNetread(void* hdrbuf) 
+	throw (castor::exception::Exception) {
+  int rc;
+  
+  rc = netread_timeout(m_socket, hdrbuf, VDQM_HDRBUFSIZ, VDQM_TIMEOUT);
+  switch (rc) {
+  	case -1: 
+	  		{
+	  			serrno = SECOMERR;
+	      	castor::exception::Exception ex(serrno);
+					ex.getMessage() << "VdqmServerSocket: "
+													<< "netread(HDR): " 
+													<< neterror() << std::endl;
+					throw ex;	
+	  		}
+     case 0:
+     		{
+	  			serrno = SECONNDROP;
+	      	castor::exception::Exception ex(serrno);
+					ex.getMessage() << "VdqmServerSocket: "
+													<< "netread(HDR): connection dropped" 
+													<< std::endl;
+					throw ex;	
+	  		}
+  }		
 }
