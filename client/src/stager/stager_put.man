@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_put.man,v $ $Revision: 1.6 $ $Date: 2005/06/21 14:48:38 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_put.man,v $ $Revision: 1.7 $ $Date: 2005/06/21 15:05:52 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_PUT 1castor "$Date: 2005/06/21 14:48:38 $" CASTOR "STAGER Commands"
+.TH STAGER_PUT 1castor "$Date: 2005/06/21 15:05:52 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_put \- request for writing a file into CASTOR
 .SH SYNOPSIS
@@ -90,7 +90,7 @@ display command usage help
 .fi
 Received 1 responses
 .fi
-59316604@cnsuser.cern.ch STAGEOUT
+59316604@cnsuser STAGEOUT
 .fi
 # rfcp /etc/passwd /castor/cern.ch/user/t/test/file1
 .fi
@@ -102,7 +102,7 @@ Received 1 responses
 .fi
 Received 1 responses
 .fi
-59316604@cnsuser.cern.ch CANBEMIGR
+59316604@cnsuser CANBEMIGR
 .fi
 
 .SH EXIT STATUS

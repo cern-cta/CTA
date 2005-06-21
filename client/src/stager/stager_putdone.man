@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_putdone.man,v $ $Revision: 1.2 $ $Date: 2005/06/21 14:53:34 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_putdone.man,v $ $Revision: 1.3 $ $Date: 2005/06/21 15:05:52 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_PUTDONE 1castor "$Date: 2005/06/21 14:53:34 $" CASTOR "STAGER Commands"
+.TH STAGER_PUTDONE 1castor "$Date: 2005/06/21 15:05:52 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_putdone \- terminate a CASTOR stager 'put' session and flag files for tape migration
 .SH SYNOPSIS
@@ -37,7 +37,7 @@ for tape migration.
 .BI \-M,\ \-\-hsm_filename " hsmfile"
 specifies the CASTOR HSM file to be flagged for migration. The
 .B \-M
-option can be repeated, allowing to handle many CASTOR files in the same request.
+option can be repeated, allowing to handle several CASTOR files in the same request.
 .TP
 .BI \-r,\ \-\-requestid " requestid"
 specifies the CASTOR stager request identifier of the request.
@@ -69,7 +69,7 @@ display command usage help
 .fi
 Received 1 responses
 .fi
-59316604@cnsuser.cern.ch STAGEOUT
+59316604@cnsuser STAGEOUT
 .fi
 # rfcp /etc/passwd /castor/cern.ch/user/t/test/file1
 .fi
@@ -81,7 +81,7 @@ Received 1 responses
 .fi
 Received 1 responses
 .fi
-59316604@cnsuser.cern.ch CANBEMIGR
+59316604@cnsuser CANBEMIGR
 .fi
 
 .SH EXIT STATUS
