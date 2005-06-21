@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2dlf.c,v $ $Revision: 1.3 $ $Date: 2005/06/20 14:21:19 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: send2dlf.c,v $ $Revision: 1.4 $ $Date: 2005/06/21 10:55:47 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -75,7 +75,14 @@ int reql;
 		  dlf_errmsg (func, DLF02, "setsockopt", strerror(errno));
 		}
 #endif
-
+#ifndef __osf__
+		/* It appears that on osf TCP_NODELAY was not working well - to check */
+#if (defined(IPPROTO_TCP) && defined(TCP_NODELAY))
+		if (setsockopt (s, IPPROTO_TCP,TCP_NODELAY, (char *)&on, sizeof(on)) < 0) {
+		  dlf_errmsg (func, DLF02, "setsockopt", strerror(errno));
+		}
+#endif
+#endif
 		if (connect (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 #if defined(_WIN32)
 			if (WSAGetLastError() == WSAECONNREFUSED) {
