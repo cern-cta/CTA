@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.42 $ $Date: 2005/06/21 14:02:15 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.43 $ $Date: 2005/06/21 14:05:02 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -215,7 +215,7 @@ clean:
 	@echo cleaning in CurDir
 	-@RemoveFiles(FilesToClean)
 
-clobber:	clean
+clobber: clean
 	@echo clobbering in CurDir
 	-@RemoveFiles($(PROGS_STAGER) LibraryTargetName(stager) $(PROGS_STAGERCLIENT))
 
