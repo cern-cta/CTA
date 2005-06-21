@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2dlf.c,v $ $Revision: 1.4 $ $Date: 2005/06/21 10:55:47 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: send2dlf.c,v $ $Revision: 1.5 $ $Date: 2005/06/21 11:01:19 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -17,6 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: send2dlf.c,v $ $Revision: 1.4 $ $Date: 200
 #else
 #include <netdb.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/socket.h>
 #endif
 #include "Cnetdb.h"
