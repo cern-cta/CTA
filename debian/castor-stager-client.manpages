@@ -1,0 +1,4 @@
+debian/castor/usr/share/man/man1/stager_get.1castor
+debian/castor/usr/share/man/man1/stager_put.1castor
+debian/castor/usr/share/man/man1/stager_putdone.1castor
+debian/castor/usr/share/man/man1/stager_qry.1castor
