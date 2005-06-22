@@ -1,3 +1,13 @@
+castor (2.0.0-43) unstable; urgency=low
+
+  * Revisited stager command-liens and man pages
+  * Fixed plugin for dlf error buffer
+  * timeouted all dlf protocol
+  * Fixed logging typo in tape s/w
+  * Fixed garbage collection stored procedure for zero-length files
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Wed, 22 Jun 2005 15:56:35 +0200
+
 castor (2.0.0-42) unstable; urgency=low
 
   * Added move medium in smc
