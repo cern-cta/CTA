@@ -1,5 +1,5 @@
 /*
- * $Id: send2nsd.c,v 1.6 2005/03/15 23:07:37 bcouturi Exp $
+ * $Id: send2nsd.c,v 1.7 2005/06/22 14:37:17 jdurand Exp $
  *
  * Copyright (C) 1993-2003 by CERN/IT/PDP/DM
  * All rights reserved
@@ -114,6 +114,23 @@ int user_repbuf_len;
 			return (-1);
 		}
 
+#if (defined(SOL_SOCKET) && defined(SO_KEEPALIVE))
+		{
+		  int on = 1;
+		  /* Set socket option */
+		  setsockopt(s,SOL_SOCKET,SO_KEEPALIVE,(char *) &on,sizeof(on));
+		}
+#endif
+#ifndef __osf__
+		/* It appears that on osf TCP_NODELAY was not working well - to check */
+#if (defined(IPPROTO_TCP) && defined(TCP_NODELAY))
+		{
+		  int on = 1;
+		  /* Set socket option */
+		  setsockopt (s, IPPROTO_TCP,TCP_NODELAY, (char *)&on, sizeof(on));
+		}
+#endif
+#endif
 		if (connect (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 #if defined(_WIN32)
 			if (WSAGetLastError() == WSAECONNREFUSED) {
