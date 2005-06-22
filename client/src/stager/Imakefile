@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.43 $ $Date: 2005/06/21 14:05:02 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.44 $ $Date: 2005/06/22 14:50:36 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -81,8 +81,8 @@ GLOBLIB = -L../shlib -lshift
 PROGS_STAGER = ProgramTargetName(stager) ProgramTargetName(stageradmin) ProgramTargetName(stagerNotifyService)
 IPROGS_STAGER = FileName($(BIN),ProgramTargetName(stager)) FileName($(BIN),ProgramTargetName(stageradmin))
 EPROGS_STAGER = FileName($(EXPORTBIN),stager) FileName($(EXPORTBIN),stageradmin)
-MANPAGES_STAGER = FileName($(MANDIR),stager.$(MANSUFFIX)) FileName($(MANDIR),stageradmin.$(MANSUFFIX))
-EMANPAGES_STAGER = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stageradmin.$(MANSUFFIX)))
+MANPAGES_STAGER = FileName($(MANDIR),stager_get.$(MANSUFFIX)) FileName($(MANDIR),stager_put.$(MANSUFFIX)) FileName($(MANDIR),stager_putDone.$(MANSUFFIX)) FileName($(MANDIR),stager_qry.$(MANSUFFIX))
+EMANPAGES_STAGER = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_get.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_put.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_putDone.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_qry.$(MANSUFFIX)))
 #ifdef STAGE_LINK_STATIC
 DEPLIB2 = DepLibraryTargetName(lib,castorCommonOra)
 GLOBLIB2 = -L../lib -lcastorCommonOra
@@ -187,8 +187,10 @@ InstallProgram(stager_putdone,$(BIN),root,bin,0755)
 #endif
 install.man: $(MANDIR) $(MANPAGES_STAGER)
 
-IMANPAGE(stager,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(stageradmin,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(stager_get,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(stager_put,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(stager_putDone,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(stager_qry,$(MANDIR),$(MANSUFFIX))
 
 export: $(EPROGS_STAGER) $(EPROGS_STAGERCLIENT)
 
@@ -202,8 +204,10 @@ IEXPORT(stager_putdone,$(EXPORTBIN),755)
 #endif
 exportman: $(EMANPAGES_STAGER)
 
-EMANPAGE(stager,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(stageradmin,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(stager_get,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(stager_put,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(stager_putDone,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(stager_qry,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
