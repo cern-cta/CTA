@@ -57,8 +57,7 @@ namespace castor {
 			 */
        OldVdqmProtocol(vdqmVolReq_t *volumeRequest,
 												vdqmDrvReq_t *driveRequest,
-										  	vdqmHdr_t *header,
-												int reqtype);
+										  	vdqmHdr_t *header);
 			
        
        /**

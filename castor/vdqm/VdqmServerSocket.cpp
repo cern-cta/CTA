@@ -683,7 +683,7 @@ void castor::vdqm::VdqmServerSocket::acknCommitOldProtocol()
 //------------------------------------------------------------------------------
 // recvAcknFromOldProtocol
 //------------------------------------------------------------------------------
-void castor::vdqm::VdqmServerSocket::recvAcknFromOldProtocol() 
+int castor::vdqm::VdqmServerSocket::recvAcknFromOldProtocol() 
 	throw (castor::exception::Exception) {
 	
     char hdrbuf[VDQM_HDRBUFSIZ];
@@ -701,6 +701,8 @@ void castor::vdqm::VdqmServerSocket::recvAcknFromOldProtocol()
     DO_MARSHALL(LONG, p, magic, ReceiveFrom);
     DO_MARSHALL(LONG, p, recvreqtype, ReceiveFrom);
     DO_MARSHALL(LONG, p, len, ReceiveFrom);
+    
+    return recvreqtype;
 }
 
 

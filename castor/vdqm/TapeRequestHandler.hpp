@@ -28,8 +28,10 @@
 #define _TAPEREQUESTHANDLER_HPP_
 
 #include "castor/exception/Exception.hpp"
-#include "AbstractRequestHandler.hpp"
 #include "castor/stager/IStagerSvc.hpp"
+
+// Local include
+#include "BaseRequestHandler.hpp"
 
 typedef struct vdqmHdr vdqmHdr_t;
 typedef struct vdqmVolReq vdqmVolReq_t;
@@ -45,7 +47,7 @@ namespace castor {
      * tape request issues. It handles for example the VDQM_PING, VDQM_VOL_REQ
      * and VDQM_DEL_VOLREQ
      */
-    class TapeRequestHandler : public AbstractRequestHandler {
+    class TapeRequestHandler : public BaseRequestHandler {
 
 			public:
 
@@ -91,14 +93,6 @@ namespace castor {
 				 */
 				int getQueuePosition(vdqmVolReq_t *VolReq, Cuuid_t cuuid) 
 					throw (castor::exception::Exception);
-					
-				/**
-				 * Returns the next TapeRequest from the database
-				 *
-				 * @exception In case of error
-				 */
-				virtual castor::IObject* getRequest() 
-						throw (castor::exception::Exception);
 	       
 			
 			private:

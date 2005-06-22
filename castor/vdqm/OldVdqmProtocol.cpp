@@ -48,13 +48,14 @@
 //------------------------------------------------------------------------------
 castor::vdqm::OldVdqmProtocol::OldVdqmProtocol(vdqmVolReq_t *volumeRequest,
 																								vdqmDrvReq_t *driveRequest,
-																						  	vdqmHdr_t *header,
-																								int reqtype = -1) {
+																						  	vdqmHdr_t *header) {
 	
 	ptr_volumeRequest = volumeRequest;
 	ptr_driveRequest = driveRequest;
 	ptr_header = header;
-	m_reqtype = reqtype;
+	
+	// The Request Type
+	m_reqtype = header->reqtype;
 }
 
 

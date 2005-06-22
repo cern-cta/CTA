@@ -122,7 +122,7 @@ castor::vdqm::VdqmServer::VdqmServer() :
      {27, "Send VDQM_PING back to client"},
      {28, "TapeRequest and its ClientIdentification removed"},
      {29, "Request deleted from DB"},
-     {30, "TapeRequest is assigned to a TapeDrive. Can't delete it at the moment"},//not used
+     {30, "Client error on commit"},
      {31, "Verify that the request doesn't exist, by calling IVdqmSvc->checkTapeRequest"},
      {32, "Try to store Request into the data base"},
      {-1, ""}};
@@ -263,12 +263,10 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 	vdqmDrvReq_t driveRequest;
 	vdqmHdr_t header;
 	int reqtype; // Request type of the message
+	int rc = 0; // For checking purpose
 	
+	// The socket read out phase
 	try {
-		int i;
-		int req_values[] = VDQM_REQ_VALUES;
-		
-		
 		//Allcocate memory for structs
 		memset(&volumeRequest,'\0',sizeof(volumeRequest));
     memset(&driveRequest,'\0',sizeof(driveRequest));
@@ -289,27 +287,22 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 7, 1, params);
   }
   
+  /**
+   * Initialization of the OldVdqmProtocol, which 
+   * provides the essential functions
+   */
+	OldVdqmProtocol oldProtocol(&volumeRequest,
+															&driveRequest,
+													  	&header);
 	
+	// The request handling phase
 	try {
 		// Handle old vdqm request type																			
 		castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 14);
 		
-		OldVdqmProtocol oldProtocol(&volumeRequest,
-												&driveRequest,
-										  	&header,
-												reqtype);
-		
 		oldProtocol.checkRequestType(cuuid);
 		oldProtocol.handleRequestType(sock, cuuid);
-		
-		//Ping requests don't need a handshake!
-		if (reqtype != VDQM_PING) {
-			//Sending reply to client
-			castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 10);
-			sock->acknCommitOldProtocol();
-			sock->sendToOldClient(&header, &volumeRequest, &driveRequest, cuuid);
-			sock->recvAcknFromOldProtocol();
-		}
+
 	} catch (castor::exception::Exception e) {  
     // "Exception caught" message
     castor::dlf::Param params[] =
@@ -321,7 +314,7 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
      */
     try {
 	    if (reqtype != VDQM_PING) {
-	    	//This is Protocol specific, because normally it recaives the positive
+	    	//This is Protocol specific, because normally it receives the positive
 	    	// queue position number back.
 	    	sock->sendAcknPing(-e.code());
 	    }
@@ -334,5 +327,62 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 	      {castor::dlf::Param("Message", e.getMessage().str())};
 	    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 1, params);
 	  }
-  }
+	  
+	  // Now, we don't need to make a handshake
+	  return;
+	}
+	
+	// The Handshake phase
+	try {
+		/**
+		 * Ping requests don't need a handshake! It is already handled in 
+		 * OldVdqmProtocol.
+		 */
+		if (reqtype != VDQM_PING) {
+			//Sending reply to client
+			castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 10);
+			
+			sock->acknCommitOldProtocol();
+			sock->sendToOldClient(&header, &volumeRequest, &driveRequest, cuuid);
+			rc = sock->recvAcknFromOldProtocol();
+		}
+	} catch (castor::exception::Exception e) {  
+    // "Exception caught" message
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 1, params);
+    
+    rc = -1;
+	}
+	
+	
+  if (rc == -1) {
+  	// "Client error on commit" message
+  	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 30);
+		
+		/**
+  	 * Well, something went wrong on server side and we must 
+  	 * delete the previously stored request.
+  	 */
+	  try {
+			switch ( reqtype ) {
+				case VDQM_VOL_REQ:
+							  	header.reqtype = VDQM_DEL_VOLREQ;
+									oldProtocol.handleRequestType(sock, cuuid);
+									break;
+
+				case VDQM_DRV_REQ:
+									break;
+
+				default:
+                	break;
+			}
+		} catch (castor::exception::Exception e) {  
+	    // "Exception caught" message
+	    castor::dlf::Param params[] =
+	      {castor::dlf::Param("Message", e.getMessage().str())};
+	    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 1, params);
+	  }
+  } // end if
+  
 }

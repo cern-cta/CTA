@@ -56,7 +56,7 @@
 #include "TapeDriveStatusCodes.hpp"
 #include "IVdqmSvc.hpp"
 #include "TapeServer.hpp"
-#include "AbstractRequestHandler.hpp"
+#include "BaseRequestHandler.hpp"
 
 #include "castor/exception/Internal.hpp"
 
@@ -462,15 +462,6 @@ int castor::vdqm::TapeRequestHandler::getQueuePosition(
   delete tapeReq;
   
   return queuePosition;
-}
-
-
-//------------------------------------------------------------------------------
-// getRequest
-//------------------------------------------------------------------------------
-castor::IObject* castor::vdqm::TapeRequestHandler::getRequest() 
-	throw (castor::exception::Exception) {
-//TODO: Implementation
 }
 
 

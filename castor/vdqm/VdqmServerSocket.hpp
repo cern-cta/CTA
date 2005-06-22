@@ -172,9 +172,10 @@ namespace castor {
        * Waits for an acknowledgement of the old tpdaemon, that the
        * vdqm server has stored its request.
        * 
+       * @return The message type, which has been send from the client
        * @exception In case of error
        */	
-      void recvAcknFromOldProtocol()
+      int recvAcknFromOldProtocol()
       	throw (castor::exception::Exception);
       	
       /**
