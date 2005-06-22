@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.94 $ $Release$ $Date: 2005/06/21 12:04:33 $ $Author: mbraeger $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.95 $ $Release$ $Date: 2005/06/22 16:37:41 $ $Author: mbraeger $
 #
 # Make Castor libraries and executables
 #
@@ -345,12 +345,13 @@ STGLIB_SRCS += io/AuthServerSocket.cpp io/AuthClientSocket.cpp
 
 
 #if BuildVDQMCpp
-STGLIB_SRCS += vdqm/AbstractRequestHandler.cpp \
+STGLIB_SRCS += vdqm/BaseRequestHandler.cpp \
               vdqm/ExtendedDeviceGroup.cpp \
               vdqm/ExtendedDeviceGroupCInt.cpp \
               vdqm/OldVdqmProtocol.cpp \
               vdqm/TapeDrive.cpp \
               vdqm/TapeDriveCInt.cpp \
+							vdqm/TapeDriveHandler.cpp \
               vdqm/TapeDriveStatusCodes.cpp \
               vdqm/TapeRequest.cpp \
               vdqm/TapeRequestCInt.cpp \
