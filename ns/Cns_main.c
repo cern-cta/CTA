@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_main.c,v 1.9 2005/03/15 23:07:37 bcouturi Exp $
+ * $Id: Cns_main.c,v 1.10 2005/06/22 14:32:40 jdurand Exp $
  *
  * Copyright (C) 1999-2004 by CERN/IT/PDP/DM
  * All rights reserved
@@ -37,6 +37,7 @@ static char sccsid[] = "@(#)Cns_main.c,v 1.35 2004/03/03 08:51:30 CERN IT-PDP/DM
 #include "Csec_api.h"
 #endif
 
+int num_THR = CNS_NBTHREADS;
 int being_shutdown;
 char db_pwd[33];
 char db_srvr[33];
@@ -45,7 +46,7 @@ char func[16];
 int jid;
 char localhost[CA_MAXHOSTNAMELEN+1];
 int maxfds;
-struct Cns_srv_thread_info Cns_srv_thread_info[CNS_NBTHREADS];
+struct Cns_srv_thread_info *Cns_srv_thread_info;
 
 Cns_main(main_args)
 struct main_args *main_args;
@@ -73,11 +74,39 @@ struct main_args *main_args;
 	struct servent *sp;
 	int thread_index;
 	struct timeval timeval;
+	int errflg;
 
 	jid = getpid();
 	strcpy (func, "Cns_serv");
 	nslogit (func, "started\n");
 	gethostname (localhost, CA_MAXHOSTNAMELEN+1);
+
+	errflg = 0;
+
+	optind = 1;
+	opterr = 0;
+
+	while ((c = getopt (main_args->argc, main_args->argv, "t:")) != EOF) {
+	  switch (c) {
+	  case 't':
+	    if ((num_THR = atoi(optarg)) <= 0) {
+	      nslogit(func, "-t option value is <= 0\n");
+	      errflg++;
+	    }
+	    break;
+	  default:
+	    errflg++;
+	    break;
+	  }
+	}
+
+	if (errflg) {
+	  nslogit (func, "Parameter error\n");
+	  exit (USERR);
+	}
+
+	nslogit(func, "initialize with %d threads\n", num_THR); 
+
 	if (strchr (localhost, '.') == NULL) {
 		if (Cdomainname (domainname, sizeof(domainname)) < 0) {
 			nslogit (func, "Unable to get domainname\n");
@@ -112,9 +141,11 @@ struct main_args *main_args;
 	(void) Cns_init_dbpkg ();
 
 	/* create entry in the catalog for "/" if not already done */
+	/* we use an extra SQL context in addition to num_THR */
+	/* that's why dbfd.idx is num_THR and not num_THR-1 */
 
 	memset (&dbfd, 0, sizeof(dbfd));
-	dbfd.idx = CNS_NBTHREADS;
+	dbfd.idx = num_THR;
 	if (Cns_opendb (db_srvr, db_user, db_pwd, &dbfd) < 0)
 		return (SYERR);
 	if (Cns_get_fmd_by_fullid (&dbfd, (u_signed64) 0, "/", &direntry, 0, NULL) < 0) {
@@ -141,11 +172,11 @@ struct main_args *main_args;
 
 	/* create a pool of threads */
 
-	if ((ipool = Cpool_create (CNS_NBTHREADS, NULL)) < 0) {
+	if ((ipool = Cpool_create (num_THR, NULL)) < 0) {
 		nslogit (func, NS002, "Cpool_create", sstrerror(serrno));
 		return (SYERR);
 	}
-	for (i = 0; i < CNS_NBTHREADS; i++) {
+	for (i = 0; i < num_THR; i++) {
 		Cns_srv_thread_info[i].s = -1;
 		Cns_srv_thread_info[i].dbfd.idx = i;
 	}
@@ -198,7 +229,7 @@ struct main_args *main_args;
 	while (1) {
 		if (being_shutdown) {
 			int nb_active_threads = 0;
-			for (i = 0; i < CNS_NBTHREADS; i++) {
+			for (i = 0; i < num_THR; i++) {
 				if (Cns_srv_thread_info[i].s >= 0) {
 					nb_active_threads++;
 					continue;
@@ -212,6 +243,13 @@ struct main_args *main_args;
 		if (FD_ISSET (s, &readfd)) {
 			FD_CLR (s, &readfd);
 			rqfd = accept (s, (struct sockaddr *) &from, &fromlen);
+#if (defined(SOL_SOCKET) && defined(SO_KEEPALIVE))
+			{
+			  int on = 1;
+			  /* Set socket option */
+			  setsockopt(rqfd,SOL_SOCKET,SO_KEEPALIVE,(char *) &on,sizeof(on));
+			}
+#endif
 			if ((thread_index = Cpool_next_index (ipool)) < 0) {
 				nslogit (func, NS002, "Cpool_next_index",
 					sstrerror(serrno));
