@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.15 $ $Date: 2005/04/29 15:10:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.16 $ $Date: 2005/06/22 12:19:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -1269,7 +1269,7 @@ int force;
 		c = rmc_dismount (rmc_host, smc_ldr, vid, drvord, force);
 		if (c) {
 			p = strrchr (rmc_errbuf, ':');
-			sprintf (msg, TP041, "mount", vid, cur_unm,
+			sprintf (msg, TP041, "demount", vid, cur_unm,
 				p ? p + 2 : rmc_errbuf);
 			usrmsg (func, "%s\n", msg);
 			c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
