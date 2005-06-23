@@ -37,6 +37,6 @@
 {
    Oracle's call to free
    Memcheck:Free
-   fun:_ZdlPv
+   obj:*/libclntsh.so*
 }
 
