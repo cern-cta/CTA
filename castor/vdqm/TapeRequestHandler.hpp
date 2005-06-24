@@ -65,16 +65,22 @@ namespace castor {
 				 * This function replaces the old vdqm_NewVolReq() C-function. It stores
 				 * the request into the data Base
 				 * 
+				 * @param header The header of the old Protocol
+				 * @param volumeRequest The TapeRequest in the old protocol
+				 * @param cuuid The unique id of the request. Needed for dlf
 				 * @exception In case of error
 				 */
 				void newTapeRequest(vdqmHdr_t *header, 
-														vdqmVolReq_t *volumeRequest, Cuuid_t cuuid) 
+														vdqmVolReq_t *volumeRequest,
+														Cuuid_t cuuid) 
 					throw (castor::exception::Exception);
 					
 				/**
 				 * Deletes a TapeRequest from the DB. The request must have the same
 				 * id like the VolReq  
 				 * 
+				 * @param volumeRequest The TapeRequest in the old protocol
+				 * @param cuuid The unique id of the request. Needed for dlf
 				 * @exception In case of error
 				 */
 				void deleteTapeRequest(vdqmVolReq_t *volumeRequest, Cuuid_t cuuid) 
@@ -85,7 +91,9 @@ namespace castor {
 				/**
 				 * This function replaces the old vdqm_GetQueuePos() C-function. It returns
 				 * in fact the queue position in the db.
-				 * 
+				 *
+				 * @param volumeRequest The TapeRequest in the old protocol
+				 * @param cuuid The unique id of the request. Needed for dlf 
 				 * @return 0<: The row number, 
 	    	 *         0 : The request is handled at the moment from a TapeDrive, 
 	    	 *         -1: if there is no entry for it.

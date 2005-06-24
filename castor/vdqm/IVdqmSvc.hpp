@@ -33,12 +33,7 @@
 #include "castor/IService.hpp"
 #include "castor/exception/Exception.hpp"
 
-
-
 namespace castor {
-
-  // Forward declaration
-	class stager::Tape;
 
   namespace vdqm {
 
@@ -66,16 +61,21 @@ namespace castor {
 	    	virtual bool checkExtDevGroup(const ExtendedDeviceGroup *extDevGrp)
 	    		throw (castor::exception::Exception) = 0;
 	    		
-	    	/**
-	    	 * Looks in the data base for the TapeServer, which has exactly 
-	    	 * this name. If there is no entry in the db table with this parameters,
-	    	 * the return value is NULL
-	    	 * @parameter serverName The name of the tape server, which is beeing requested
-	    	 * @return The object representation of the table entry or NULL
-	    	 * @exception in case of error
-	    	 */
-	    	virtual TapeServer* selectTapeServer(const std::string serverName)
-	    		throw (castor::exception::Exception) = 0;
+		    /**
+	       * Retrieves a TapeServer from the database based on its serverName. 
+	       * If no tapeServer is found, creates one.
+	       * Note that this method creates a lock on the row of the
+	       * given tapeServer and does not release it. It is the
+	       * responsability of the caller to commit the transaction.
+	       * The caller is also responsible for the deletion of the
+	       * allocated object
+	       * @param serverName The name of the server
+	       * @return the tapeServer. the return value can never be 0
+	       * @exception Exception in case of error (no tape server found,
+	       * several tape servers found, DB problem, etc...)
+	       */
+	      virtual TapeServer* selectTapeServer(const std::string serverName)
+	        throw (castor::exception::Exception) = 0;
 	    		
 	    		
 	    	/**
@@ -103,6 +103,19 @@ namespace castor {
 	    	 * @exception in case of error
 	    	 */	
 	    	virtual TapeDrive* selectFreeTapeDrive(const ExtendedDeviceGroup *extDevGrp) 
+	    		throw (castor::exception::Exception) = 0;
+	 
+	    		
+//------------------ functions for TapeDriveRequestHandler ------------------
+				
+				/**
+				 * Deletes all TapeDrives in the db from the given 
+				 * TapeServer and their old TapeRequests (if any).
+				 * 
+				 * @param tapeServer the tape server of the drives
+				 * @exception Exception in case of error
+				 */
+				virtual void deleteAllTapeDrvsFromSrv(const TapeServer* tapeServer)
 	    		throw (castor::exception::Exception) = 0;
 	    		
     }; // end of class IVdqmSvc

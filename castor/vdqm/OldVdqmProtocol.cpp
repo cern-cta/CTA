@@ -149,21 +149,29 @@ bool castor::vdqm::OldVdqmProtocol::handleRequestType(VdqmServerSocket* sock,
 
 	switch (m_reqtype) {
     case VDQM_VOL_REQ:
-    		// Handle VDQM_VOL_REQ
-    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 19);
-    
-    		{
+    		if ( ptr_header == NULL || ptr_volumeRequest == NULL )
+    			handleRequest = false;
+    		else {
+	    		// Handle VDQM_VOL_REQ
+	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 19);
+    		
     			TapeRequestHandler requestHandler;
 					requestHandler.newTapeRequest(ptr_header, ptr_volumeRequest, cuuid); 
     		}
         break;
     case VDQM_DRV_REQ:
-    		// Handle VDQM_DRV_REQ
-    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 20);
-//        rc = vdqm_NewDrvReq(&hdr,&driveRequest);
+    		if ( ptr_header == NULL || ptr_driveRequest == NULL )
+    			handleRequest = false;
+    		else {
+	    		// Handle VDQM_DRV_REQ
+	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 20);
+					// rc = vdqm_NewDrvReq(&hdr,&driveRequest);
+    		}
         break;
     case VDQM_DEL_VOLREQ:
-				{
+				if ( ptr_volumeRequest == NULL )
+    			handleRequest = false;
+    		else {				
 					// Handle VDQM_DEL_VOLREQ
 			    castor::dlf::Param params[] =
 			      {castor::dlf::Param("volreq ID", ptr_volumeRequest->VolReqID)};
@@ -175,9 +183,12 @@ bool castor::vdqm::OldVdqmProtocol::handleRequestType(VdqmServerSocket* sock,
     		}
         break;
     case VDQM_DEL_DRVREQ:
-    		// Handle VDQM_DEL_DRVREQ
-    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 22);
-    		
+    		if ( ptr_driveRequest == NULL )
+    			handleRequest = false;
+    		else {
+	    		// Handle VDQM_DEL_DRVREQ
+	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 22);
+
 //        rc = vdqm_DelDrvReq(&driveRequest);
 //        /* Dumping the list of drives to file */
 //        if (rc == 0) {
@@ -185,7 +196,8 @@ bool castor::vdqm::OldVdqmProtocol::handleRequestType(VdqmServerSocket* sock,
 //            if (vdqm_save_queue() < 0) {
 //                log(LOG_ERR, "Could not save drive list\n");
 //            }
-//        }
+//        }  
+    		}
         break;
     case VDQM_PING:
     		// Handle VDQM_PING
@@ -204,10 +216,14 @@ bool castor::vdqm::OldVdqmProtocol::handleRequestType(VdqmServerSocket* sock,
     		}
     		break;
   	default:
-  			castor::exception::NotSupported ex;
-		    ex.getMessage() << "Invalid Request 0x"
-                    << std::hex << m_reqtype << "\n";
-    		throw ex;
+  			if ( VDQM_VALID_REQTYPE(m_reqtype) ) 
+  				handleRequest = false;
+  			else {
+	  			castor::exception::NotSupported ex;
+			    ex.getMessage() << "Invalid Request 0x"
+	                    << std::hex << m_reqtype << "\n";
+	    		throw ex;
+  			}
 	}
 	
 	

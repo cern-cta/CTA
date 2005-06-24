@@ -30,6 +30,9 @@
 #include "castor/exception/Exception.hpp"
 #include "BaseRequestHandler.hpp"
 
+typedef struct vdqmHdr vdqmHdr_t;
+typedef struct vdqmdDrvReq vdqmDrvReq_t;
+
 namespace castor {
 	//Forward declaration
 	class IObject;
@@ -46,13 +49,45 @@ namespace castor {
 
 	      /**
 	       * Constructor
+	       * 
+	       * @param header The header of the old Protocol
+				 * @param driveRequest The TapeDriveRequest from the old protocol
+				 * @param cuuid The unique id of the request. Needed for dlf
+				 * @exception In case of error
 	       */
-				TapeDriveHandler() throw();
+				TapeDriveHandler(vdqmHdr_t* header, 
+												 vdqmDrvReq_t* driveRequest, Cuuid_t cuuid) throw();
 				
 	      /**
 	       * Destructor
 	       */
 				virtual ~TapeDriveHandler() throw();
+				
+				/**
+				 * This function replaces the old vdqm_NewDrvReq() C-function and is
+				 * called, when a VDQM_DRV_REQ comes from a client. It stores
+				 * the request into the data Base or updates the status of existing
+				 * TapeDrives in the db.
+				 * 
+				 * @exception In case of error
+				 */
+				void newTapeDriveRequest() throw (castor::exception::Exception);
+					
+					
+			private:
+				// Private variables
+				vdqmHdr_t* ptr_header;
+				vdqmDrvReq_t* ptr_driveRequest;
+				Cuuid_t m_cuuid;
+				
+				/**
+				 * Deletes all TapeDrives in the db from the given 
+				 * TapeServer (ptr_driveRequest->reqhost) and their
+				 * old TapeRequests (if any).
+				 * 
+				 * @exception In case of error
+				 */
+				void deleteAllTapeDrvsFromSrv() throw (castor::exception::Exception);
 
     }; // class TapeDriveHandler
 

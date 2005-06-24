@@ -23,13 +23,35 @@
  *
  * @author Matthias Braeger
  *****************************************************************************/
+#include <net.h>
+#include <vdqm.h>
+#include <vdqm_constants.h>
 
+#include "castor/exception/InvalidArgument.hpp"
+#include "castor/exception/Exception.hpp"
+
+// Local Includes
+#include "IVdqmSvc.hpp"
 #include "TapeDriveHandler.hpp"
- 
+#include "TapeDrive.hpp"
+#include "TapeServer.hpp"
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::vdqm::TapeDriveHandler::TapeDriveHandler() throw() {
+castor::vdqm::TapeDriveHandler::TapeDriveHandler(vdqmHdr_t* header, 
+												 vdqmDrvReq_t* driveRequest, Cuuid_t cuuid) throw() {
+	m_cuuid = cuuid;
+	
+	if ( header == NULL || driveRequest == NULL ) {
+		castor::exception::InvalidArgument ex;
+  	ex.getMessage() << "One of the arguments is NULL";
+  	throw ex;
+	}
+	else {
+		ptr_header = header;
+		ptr_driveRequest = driveRequest;
+	}
 }
 
 
@@ -38,4 +60,792 @@ castor::vdqm::TapeDriveHandler::TapeDriveHandler() throw() {
 //------------------------------------------------------------------------------
 castor::vdqm::TapeDriveHandler::~TapeDriveHandler() throw() {
 
+}
+
+//------------------------------------------------------------------------------
+// newTapeDriveRequest
+//------------------------------------------------------------------------------
+void castor::vdqm::TapeDriveHandler::newTapeDriveRequest() 
+	throw (castor::exception::Exception) {
+//    dgn_element_t *dgn_context = NULL;
+//    vdqm_volrec_t *volrec;
+//    vdqm_drvrec_t *drvrec;
+//    int rc,unknown;
+//    char status_string[256];
+//    int new_drive_added = 0;
+    
+  
+    int rc = 0;
+  
+
+	//"The parameters of the old vdqm DrvReq Request" message
+  castor::dlf::Param params[] =
+  	{castor::dlf::Param("dedicate", ptr_driveRequest->dedicate),
+     castor::dlf::Param("dgn", ptr_driveRequest->dgn),
+     castor::dlf::Param("drive", ptr_driveRequest->drive),
+     castor::dlf::Param("errcount", ptr_driveRequest->errcount),
+     castor::dlf::Param("gid", ptr_driveRequest->gid),
+     castor::dlf::Param("is_gid", ptr_driveRequest->is_gid),
+     castor::dlf::Param("is_name", ptr_driveRequest->is_name),
+     castor::dlf::Param("is_uid", ptr_driveRequest->is_uid),
+     castor::dlf::Param("jobID", ptr_driveRequest->jobID),
+     castor::dlf::Param("MBtransf", ptr_driveRequest->MBtransf),
+     castor::dlf::Param("mode", ptr_driveRequest->mode),
+     castor::dlf::Param("name", ptr_driveRequest->name),
+     castor::dlf::Param("newdedicate", ptr_driveRequest->newdedicate),
+     castor::dlf::Param("no_age", ptr_driveRequest->no_age),
+     castor::dlf::Param("no_date", ptr_driveRequest->no_date),
+     castor::dlf::Param("no_gid", ptr_driveRequest->no_gid),
+     castor::dlf::Param("no_host", ptr_driveRequest->no_host),
+     castor::dlf::Param("no_mode", ptr_driveRequest->no_mode),
+     castor::dlf::Param("no_name", ptr_driveRequest->no_name),
+     castor::dlf::Param("no_time", ptr_driveRequest->no_time),
+     castor::dlf::Param("no_uid", ptr_driveRequest->no_uid),
+		 castor::dlf::Param("no_vid", ptr_driveRequest->no_vid),
+ 		 castor::dlf::Param("recvtime", ptr_driveRequest->recvtime),
+		 castor::dlf::Param("reqhost", ptr_driveRequest->reqhost),
+		 castor::dlf::Param("resettime", ptr_driveRequest->resettime),
+		 castor::dlf::Param("server", ptr_driveRequest->server),
+		 castor::dlf::Param("status", ptr_driveRequest->status),
+		 castor::dlf::Param("TotalMB", ptr_driveRequest->TotalMB),
+		 castor::dlf::Param("uid", ptr_driveRequest->uid),
+		 castor::dlf::Param("usecount", ptr_driveRequest->usecount),
+		 castor::dlf::Param("volid", ptr_driveRequest->volid),
+		 castor::dlf::Param("VolReqID", ptr_driveRequest->VolReqID)};
+  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 33, 32, params);
+
+  /*
+   * If it is an tape daemon startup status we delete all TapeDrives 
+   * on that tape server.
+   */
+	if ( ptr_driveRequest->status == VDQM_TPD_STARTED ) {
+		deleteAllTapeDrvsFromSrv();
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+//    rc = SetDgnContext(&dgn_context,ptr_driveRequest->dgn);
+//    if ( rc == -1 ) {
+//        log(LOG_ERR,"vdqm_NewDrvReq() cannot set Dgn context for %s\n",
+//            ptr_driveRequest->dgn);
+//        return(-1);
+//    }
+//        
+//    /* 
+//     * Check whether the drive record already exists
+//     */
+//    drvrec = NULL;
+//    rc = GetDrvRecord(dgn_context,ptr_driveRequest,&drvrec);
+//
+//    if ( ptr_driveRequest->status == VDQM_UNIT_QUERY ) {
+//        if ( rc < 0 || drvrec == NULL ) {
+//            log(LOG_ERR,"vdqm_NewDrvReq(): Query request for unknown drive %s@%s\n",ptr_driveRequest->drive,ptr_driveRequest->server);
+//            FreeDgnContext(&dgn_context);
+//            vdqm_SetError(EVQNOSDRV);
+//            return(-1);
+//        }
+//        *ptr_driveRequest = drvrec->drv;
+//        FreeDgnContext(&dgn_context);
+//        return(0);
+//    }
+////------------------------------------------------------------------------------
+//
+//    if ( rc < 0 || drvrec == NULL ) {
+//        /*
+//         * Drive record did not exist, create it!
+//         */
+//        log(LOG_INFO,"vdqm_NewDrvReq() add new drive %s@%s\n",
+//            ptr_driveRequest->drive,ptr_driveRequest->server);
+//        rc = NewDrvRecord(&drvrec);
+//        if ( rc < 0 || drvrec == NULL ) {
+//            log(LOG_ERR,"vdqm_NewDrvReq(): NewDrvRecord() returned error\n");
+//            FreeDgnContext(&dgn_context);
+//            return(-1);
+//        }
+//        drvrec->drv = *ptr_driveRequest;
+//        /*
+//         * Make sure it is either up or down. If neither, we put it in
+//         * UNKNOWN status until further status information is received.
+//         */
+//        if ( (drvrec->drv.status & ( VDQM_UNIT_UP|VDQM_UNIT_DOWN)) == 0 )
+//            drvrec->drv.status |= VDQM_UNIT_UP|VDQM_UNIT_UNKNOWN;
+//        /*
+//         * Make sure it doesn't come up with some non-persistent status
+//         * becasue of a previous VDQM server crash.
+//         */
+//        drvrec->drv.status = drvrec->drv.status & ( ~VDQM_VOL_MOUNT &
+//            ~VDQM_VOL_UNMOUNT & ~VDQM_UNIT_MBCOUNT );
+//        /*
+//         * Add drive record to drive queue
+//         */
+//        rc = AddDrvRecord(dgn_context,drvrec);
+//        if ( rc < 0 ) {
+//            log(LOG_ERR,"vdqm_NewDrvReq(): AddDrvRecord() returned error\n");
+//            FreeDgnContext(&dgn_context);
+//            return(-1);
+//        }
+//
+//        new_drive_added  = 1;
+//        
+//    }
+//    
+////------------------------------------------------------------------------------
+//    /*
+//     * Update dynamic drive info.
+//     */
+//    drvrec->magic = ptr_header->magic;
+//    drvrec->drv.recvtime = time(NULL);
+//
+//    GetStatusString(drvrec->drv.status,status_string);
+//    log(LOG_INFO,"%s %s@%s (ID: %d, job %d): current status: %s\n",drvrec->drv.dgn,
+//        drvrec->drv.drive,drvrec->drv.server,drvrec->drv.VolReqID,
+//        drvrec->drv.jobID,status_string);
+//    GetStatusString(ptr_driveRequest->status,status_string);
+//    log(LOG_INFO,"%s %s@%s (ID: %d, job %d): requested status: %s\n",ptr_driveRequest->dgn,
+//        ptr_driveRequest->drive,ptr_driveRequest->server,ptr_driveRequest->VolReqID,ptr_driveRequest->jobID,
+//        status_string);
+//    /*
+//     * Reset UNKNOWN status if necessary. However we remember that status
+//     * in case there is a RELEASE since we then cannot allow the unit
+//     * to be assigned to another job until it is FREE (i.e. we must
+//     * wait until volume has been unmounted). 
+//     */
+//    unknown = drvrec->drv.status & VDQM_UNIT_UNKNOWN;
+//    drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_UNKNOWN;
+//    /*
+//     * Verify that new unit status is consistent with the
+//     * current status of the drive.
+//     */
+//    if ( ptr_driveRequest->status & VDQM_UNIT_DOWN ) {
+//        /*
+//         * Unit configured down. No other status possible.
+//         * For security this status can only be set from
+//         * tape server.
+//         */
+//        if ( strcmp(ptr_driveRequest->reqhost,drvrec->drv.server) != 0 ) {
+//            log(LOG_ERR,"vdqm_NewDrvRequest(): unauthorized %s@%s DOWN from %s\n",
+//                ptr_driveRequest->drive,ptr_driveRequest->server,ptr_driveRequest->reqhost);
+//            if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+//            FreeDgnContext(&dgn_context);
+//            vdqm_SetError(EPERM);
+//            return(-1);
+//        }
+//        /*
+//         * Remove running request (if any). Client will normally retry
+//         */
+//        if ( drvrec->drv.status & VDQM_UNIT_BUSY ) {
+//            volrec = drvrec->vol;
+//            if ( volrec != NULL ) {
+//                log(LOG_INFO,"vdqm_NewDrvRequest(): Remove old volume record, id=%d\n",
+//                    volrec->vol.VolReqID);
+//                volrec->drv = NULL;
+//                DelVolRecord(dgn_context,volrec);
+//            }
+//            drvrec->vol = NULL;
+//            *drvrec->drv.volid = '\0';
+//            drvrec->drv.VolReqID = 0;
+//            drvrec->drv.jobID = 0;
+//        }
+//        drvrec->drv.status = VDQM_UNIT_DOWN;
+//		drvrec->update = 1;
+//    } else if ( ptr_driveRequest->status & VDQM_UNIT_WAITDOWN ) {
+//        /*
+//         * Intermediate state until tape daemon confirms that
+//         * the drive is down. If a volume request is assigned 
+//         * we cannot put it back in queue until drive is confirmed
+//         * down since the volume may still be stuck in the unit.
+//         * First check the drive isn't already down...
+//         */ 
+//        if ( !(drvrec->drv.status & VDQM_UNIT_DOWN) ) {
+//            log(LOG_INFO,"vdqm_NewDrvRequest(): WAIT DOWN request from %s\n",
+//                ptr_driveRequest->reqhost); 
+//            drvrec->drv.status = VDQM_UNIT_WAITDOWN;
+//			drvrec->update = 1;
+//        }
+//    } else if ( ptr_driveRequest->status & VDQM_UNIT_UP ) {
+//        /*
+//         * Unit configured up. Make sure that "down" status is reset.
+//         * We also mark drive free if input request doesn't specify
+//         * otherwise.
+//         * If the input request is a plain config up and the unit was not 
+//         * down there is a job assigned it probably  means that the tape 
+//         * server has been rebooted. It does then not make sense
+//         * to keep the job because client has lost connection long ago and
+//         * has normally issued a retry. We can therefore remove the 
+//         * job from queue.
+//         */
+//        if ( (ptr_driveRequest->status == VDQM_UNIT_UP ||
+//              ptr_driveRequest->status == (VDQM_UNIT_UP | VDQM_UNIT_FREE)) &&
+//            !(drvrec->drv.status & VDQM_UNIT_DOWN) ) {
+//            if ( drvrec->vol != NULL || *drvrec->drv.volid != '\0' ) {
+//                volrec = drvrec->vol;
+//                if ( volrec != NULL ) {
+//                    log(LOG_INFO,"vdqm_NewDrvRequest(): Remove old volume record, id=%d\n",
+//                        volrec->vol.VolReqID);
+//                    DelVolRecord(dgn_context,volrec);
+//                    drvrec->vol = NULL;
+//                }
+//                *drvrec->drv.volid = '\0';
+//                drvrec->drv.VolReqID = 0;
+//                drvrec->drv.jobID = 0;
+//            } 
+//            drvrec->drv.status = VDQM_UNIT_UP | VDQM_UNIT_FREE;
+//        }
+//        drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_DOWN;
+//        drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_WAITDOWN;
+//
+//        if ( ptr_driveRequest->status == VDQM_UNIT_UP )
+//            drvrec->drv.status |= VDQM_UNIT_FREE;
+//        drvrec->drv.status |= ptr_driveRequest->status;
+//		drvrec->update = 1;
+//    } else {
+//        if ( drvrec->drv.status & VDQM_UNIT_DOWN ) {
+//            /*
+//             * Unit must be up before anything else is allowed
+//             */
+//            log(LOG_ERR,"vdqm_NewDrvReq(): unit is not UP\n");
+//            if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+//            FreeDgnContext(&dgn_context);
+//            vdqm_SetError(EVQUNNOTUP);
+//            return(-1);
+//        } 
+//        /*
+//         * If the unit is not DOWN, it must be UP! Make sure it's the case.
+//         * This is to facilitate the repair after a VDQM server crash.
+//         */
+//        if ( (drvrec->drv.status & VDQM_UNIT_UP) == 0 ) {
+//			drvrec->drv.status |= VDQM_UNIT_UP;
+//			drvrec->update = 1;
+//		}
+//
+//        if ( ptr_driveRequest->status & VDQM_UNIT_BUSY ) {
+//            /*
+//             * Consistency check
+//             */
+//            if ( ptr_driveRequest->status & VDQM_UNIT_FREE ) {
+//                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+//                FreeDgnContext(&dgn_context);
+//                vdqm_SetError(EVQBADSTAT);
+//                return(-1);
+//            }
+//            drvrec->drv.status = ptr_driveRequest->status;
+//            /*
+//             * Unit marked "busy". Reset free status.
+//             */
+//            drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_FREE;
+//        } else if ( ptr_driveRequest->status & VDQM_UNIT_FREE ) {
+//            /*
+//             * Cannot free an assigned unit, it must be released first
+//             */
+//            if ( !(ptr_driveRequest->status & VDQM_UNIT_RELEASE) &&
+//                (drvrec->drv.status & VDQM_UNIT_ASSIGN) ) {
+//                log(LOG_ERR,"vdqm_NewDrvReq(): cannot free assigned unit %s@%s, jobID=%d\n",
+//                    drvrec->drv.drive,drvrec->drv.server,drvrec->drv.jobID);
+//                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+//                FreeDgnContext(&dgn_context);
+//                vdqm_SetError(EVQBADSTAT);
+//                return(-1);
+//            }
+//            /*
+//             * Cannot free an unit with tape mounted
+//             */
+//            if ( !(ptr_driveRequest->status & VDQM_VOL_UNMOUNT) &&
+//                (*drvrec->drv.volid != '\0') ) {
+//                log(LOG_ERR,"vdqm_NewDrvReq(): cannot free unit with tape mounted, volid=%s\n",
+//                    drvrec->drv.volid);
+//                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+//                FreeDgnContext(&dgn_context);
+//                vdqm_SetError(EVQBADSTAT);
+//                return(-1);
+//            }
+//        } else {
+//            /*
+//             * If unit is busy and being assigned the VolReqIDs must
+//             * be the same. If so, assign the jobID (normally the
+//             * process ID of the RTCOPY process on the tape server).
+//             */
+//            if ( (drvrec->drv.status & VDQM_UNIT_BUSY) &&
+//                 (ptr_driveRequest->status & VDQM_UNIT_ASSIGN) ) {                
+//                if (drvrec->drv.VolReqID != ptr_driveRequest->VolReqID){
+//                    log(LOG_ERR,"vdqm_NewDrvReq(): inconsistent VolReqIDs (%d,%d) on ASSIGN\n",
+//                        ptr_driveRequest->VolReqID,drvrec->drv.VolReqID);
+//                    if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+//                    FreeDgnContext(&dgn_context);
+//                    vdqm_SetError(EVQBADID);
+//                    return(-1);
+//                } else {
+//                    drvrec->drv.jobID = ptr_driveRequest->jobID;
+//                    log(LOG_INFO,"vdqm_NewDrvReq() assign VolReqID %d to jobID %d\n",
+//                        ptr_driveRequest->VolReqID,ptr_driveRequest->jobID);
+//                }
+//            }
+//            /*
+//             * If unit is busy with a running job the job IDs must be same
+//             */
+//            if ( (drvrec->drv.status & VDQM_UNIT_BUSY) &&
+//                 !(drvrec->drv.status & VDQM_UNIT_RELEASE) &&
+//                (ptr_driveRequest->status & (VDQM_UNIT_ASSIGN | VDQM_UNIT_RELEASE |
+//                                   VDQM_VOL_MOUNT | VDQM_VOL_UNMOUNT)) &&
+//                (drvrec->drv.jobID != ptr_driveRequest->jobID) ) {
+//                log(LOG_ERR,"vdqm_NewDrvReq(): inconsistent jobIDs (%d,%d)\n",
+//                    ptr_driveRequest->jobID,drvrec->drv.jobID);
+//                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+//                FreeDgnContext(&dgn_context);
+//                vdqm_SetError(EVQBADID);
+//                return(-1);
+//            }
+//            
+//            /*
+//             * Prevent operations on a free unit. A job must have been
+//             * started and unit marked busy before it can be used.
+//             * 22/11/1999: we change this so that a free unit can be
+//             *             assigned. The reason is that a local job may
+//             *             running on the tape server (e.g. tplabel) may
+//             *             want to run without starting a rtcopy job.
+//             */
+//            if ( !(ptr_driveRequest->status & VDQM_UNIT_BUSY) &&
+//                (drvrec->drv.status & VDQM_UNIT_FREE) &&
+//                (ptr_driveRequest->status & (VDQM_UNIT_RELEASE |
+//                VDQM_VOL_MOUNT | VDQM_VOL_UNMOUNT)) ) {
+//                log(LOG_ERR,"vdqm_NewDrvReq(): status 0x%x requested on FREE drive\n",
+//                    ptr_driveRequest->status);
+//                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+//                FreeDgnContext(&dgn_context);
+//                vdqm_SetError(EVQBADSTAT);
+//                return(-1);
+//            }
+//            if ( ptr_driveRequest->status & VDQM_UNIT_ASSIGN ) {
+//                /*
+//                 * Check whether unit was already assigned. If so, the
+//                 * volume request must be identical
+//                 */
+//                if ( (drvrec->drv.status & VDQM_UNIT_ASSIGN) &&
+//                    (drvrec->drv.jobID != ptr_driveRequest->jobID) ) {
+//                    log(LOG_ERR,"vdqm_NewDrvReq(): attempt to re-assign ID=%d to an unit assigned to ID=%d\n",
+//                        drvrec->drv.jobID,ptr_driveRequest->jobID);
+//                    if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+//                    FreeDgnContext(&dgn_context);
+//                    vdqm_SetError(EVQBADID);
+//                    return(-1);
+//                }
+//                /*
+//                 * If the unit was free, we set the new jobID. This is
+//                 * local assign bypassing the normal VDQM logic (see comment
+//                 * above). There is no VolReqID since VDQM is bypassed.
+//                 */
+//                if ( (drvrec->drv.status & VDQM_UNIT_FREE) ) {
+//                    /*
+//                     * We only allow this for local requests!
+//                     */
+//                    if ( strcmp(ptr_driveRequest->reqhost,drvrec->drv.server) != 0 ) {
+//                        log(LOG_ERR,"vdqm_NewDrvRequest(): unauthorized %s@%s local assign from %s\n",
+//                        ptr_driveRequest->drive,ptr_driveRequest->server,ptr_driveRequest->reqhost);
+//                        if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+//                        FreeDgnContext(&dgn_context);
+//                        vdqm_SetError(EPERM);
+//                        return(-1);
+//                    }
+//                    log(LOG_INFO,"vdqm_NewDrvRequest() local assign %s@%s to jobID %d\n",
+//                        ptr_driveRequest->drive,ptr_driveRequest->server,ptr_driveRequest->jobID);
+//                    drvrec->drv.jobID = ptr_driveRequest->jobID;
+//                }
+//            }
+//            /*
+//             * VDQM_VOL_MOUNT and VDQM_VOL_UNMOUNT are not persistent unit 
+//             * status values. Their purpose is twofold: 1) input - update 
+//             * the volid field in the drive record (both MOUNT and UNMOUNT)
+//             * and 2) output - tell client to unmount or keep volume mounted
+//             * in case of deferred unmount (UNMOUNT only). 
+//             *
+//             * VDQM_UNIT_MBCOUNT is not a persistent unit status value.
+//             * It request update of drive statistics.
+//             */
+//            if ( drvrec->drv.status & VDQM_UNIT_UP )
+//                drvrec->drv.status |= ptr_driveRequest->status & 
+//                                      (~VDQM_VOL_MOUNT & ~VDQM_VOL_UNMOUNT &
+//                                       ~VDQM_UNIT_MBCOUNT );
+//        }
+//		drvrec->update = 1;
+//    }
+//    
+//    volrec = NULL;
+//    if ( drvrec->drv.status & VDQM_UNIT_UP ) {
+//        if ( ptr_driveRequest->status & VDQM_UNIT_ASSIGN ) {
+//            /*
+//             * Unit assigned (reserved).
+//             */
+//            drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_RELEASE;
+//            drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_FREE;
+//            drvrec->drv.status |= VDQM_UNIT_BUSY;
+//        }
+//        if ( (ptr_driveRequest->status & VDQM_UNIT_MBCOUNT) ) {
+//            /*
+//             * Update TotalMB counter. Since this request is sent by
+//             * RTCOPY rather than the tape daemon we cannot yet reset
+//             * unknown status if it was previously set.
+//             */
+//            drvrec->drv.MBtransf = ptr_driveRequest->MBtransf;
+//            drvrec->drv.TotalMB += ptr_driveRequest->MBtransf;
+//            if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+//        }
+//        if ( (ptr_driveRequest->status & VDQM_UNIT_ERROR) ) {
+//            /*
+//             * Update error counter.
+//             */
+//            drvrec->drv.errcount++;
+//        }
+//        if ( (ptr_driveRequest->status & VDQM_VOL_MOUNT) ) {
+//            /*
+//             * A mount volume request. The unit must first have been assigned.
+//             */
+//            if ( !(drvrec->drv.status & VDQM_UNIT_ASSIGN) ) {
+//                log(LOG_ERR,"vdqm_NewDrvReq(): mount request of %s for jobID %d on non-ASSIGNED unit\n",
+//                    ptr_driveRequest->volid,ptr_driveRequest->jobID);
+//                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+//                FreeDgnContext(&dgn_context);
+//                vdqm_SetError(EVQNOTASS);
+//                return(-1);
+//            }
+//            if ( *ptr_driveRequest->volid == '\0' ) {
+//                log(LOG_ERR,"vdqm_NewDrvReq(): mount request with empty VOLID for jobID %d\n",
+//                    drvrec->drv.jobID);
+//                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+//                FreeDgnContext(&dgn_context);
+//                vdqm_SetError(EVQBADVOLID);
+//                return(-1);
+//            }
+//            /*
+//             * Make sure that requested volume and assign volume record are the same
+//             */
+//            if ( drvrec->vol != NULL && strcmp(drvrec->vol->vol.volid,ptr_driveRequest->volid) ) {
+//                log(LOG_ERR,"vdqm_NewDrvReq(): inconsistent mount %s (should be %s) for jobID %d\n",
+//                    ptr_driveRequest->volid,drvrec->vol->vol.volid,ptr_driveRequest->jobID);
+//                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+//                FreeDgnContext(&dgn_context);
+//                vdqm_SetError(EVQBADVOLID);
+//                return(-1);
+//            }
+//            /*
+//             * If there are no assigned volume request it means that this
+//             * is a local request. Make sure that server and reqhost are
+//             * the same and that the volume is free.
+//             */
+//            if ( drvrec->vol == NULL ) {
+//                if ( strcmp(drvrec->drv.server,ptr_driveRequest->reqhost) != 0 ) {
+//                    if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+//                    FreeDgnContext(&dgn_context);
+//                    vdqm_SetError(EPERM);
+//                    return(-1);
+//                 }
+//                 if ( VolInUse(dgn_context,ptr_driveRequest->volid) ||
+//                      VolMounted(dgn_context,ptr_driveRequest->volid) ) {
+//                     if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+//                     FreeDgnContext(&dgn_context);
+//                     vdqm_SetError(EBUSY);
+//                     return(-1);
+//                 }
+//                 drvrec->drv.mode = -1; /* Mode is unknown */
+//            } else drvrec->drv.mode = drvrec->vol->vol.mode;
+//            strcpy(drvrec->drv.volid,ptr_driveRequest->volid);
+//            drvrec->drv.status |= VDQM_UNIT_BUSY;
+//            /*
+//             * Update usage counter
+//             */
+//            drvrec->drv.usecount++;
+//        }
+//        if ( (ptr_driveRequest->status & VDQM_VOL_UNMOUNT) ) {
+//            *drvrec->drv.volid = '\0';
+//            drvrec->drv.mode = -1;
+//            /*
+//             * Volume has been unmounted. Reset release status (if set).
+//             */
+//            drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_RELEASE;
+//            /*
+//             * If it was an forced unmount due to an error we can reset
+//             * the ERROR status at this point.
+//             */
+//            drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_ERROR;
+//            /*
+//             * If the client forced an unmount with the release we can
+//             * reset the FORCE_UNMOUNT here.
+//             */
+//            drvrec->drv.status = drvrec->drv.status & ~VDQM_FORCE_UNMOUNT;
+//            /*
+//             * We should also reset UNMOUNT status in the request so that
+//             * we tell the drive to unmount twice
+//             */
+//            ptr_driveRequest->status = ptr_driveRequest->status & ~VDQM_VOL_UNMOUNT;
+//            /*
+//             * Set status to FREE if there is no job assigned to the unit
+//             */
+//            if ( drvrec->vol == NULL ) {
+//                drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_BUSY;
+//                drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_ASSIGN;
+//                drvrec->drv.status = drvrec->drv.status | VDQM_UNIT_FREE;
+//            }
+//        }
+//        if ((ptr_driveRequest->status & VDQM_UNIT_RELEASE) &&
+//            !(ptr_driveRequest->status & VDQM_UNIT_FREE) ) { 
+//            /*
+//             * Reset assign status (drive is being released!).
+//             */
+//            drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_ASSIGN;
+//            /*
+//             * Reset request and job IDs
+//             */
+//            drvrec->drv.VolReqID = 0;
+//            drvrec->drv.jobID = 0;
+//            /*
+//             * Delete from queue and free memory allocated for 
+//             * previous volume request on this drive. 
+//             */
+//            if ( drvrec->vol != NULL ) {
+//                rc = DelVolRecord(dgn_context,drvrec->vol);
+//                free(drvrec->vol);
+//            }
+//            drvrec->vol = NULL;
+//
+//            if ( *drvrec->drv.volid != '\0' ) {
+//                /*
+//                 * Consistency check: if input request contains a volid it
+//                 * should correspond to the one in the drive record. This
+//                 * is not fatal but should be logged.
+//                 */
+//                if ( *ptr_driveRequest->volid != '\0' && 
+//                     strcmp(ptr_driveRequest->volid,drvrec->drv.volid) ) {
+//                   log(LOG_ERR,"vdqm_NewDrvReq(): drive %s@%s inconsistent release on %s (should be %s), jobID=%d\n",
+//                       drvrec->drv.drive,drvrec->drv.server,
+//                       ptr_driveRequest->volid,drvrec->drv.volid,drvrec->drv.jobID);
+//                }
+//                /*
+//                 * Fill in current volid in case we need to request an unmount.
+//                 */
+//                if ( *ptr_driveRequest->volid == '\0' ) strcpy(ptr_driveRequest->volid,drvrec->drv.volid);
+//                /*
+//                 * If a volume is mounted but current job ended: check if there
+//                 * are any other valid request for the same volume. The volume
+//                 * can only be re-used on this unit if the modes (R/W) are the 
+//                 * same. If client indicated an error or forced unmount the
+//                 * will remain with that state until a VOL_UNMOUNT is received
+//                 * and both drive and volume cannot be reused until then.
+//                 * If the drive status was UNKNOWN at entry we must force an
+//                 * unmount in all cases. This normally happens when a RTCOPY
+//                 * client has aborted and sent VDQM_DEL_VOLREQ to delete his
+//                 * volume request before the RTCOPY server has released the
+//                 * job. 
+//                 */
+//                rc = 0;
+//                if (!unknown && !(drvrec->drv.status & (VDQM_UNIT_ERROR |
+//                                                        VDQM_FORCE_UNMOUNT)))
+//                    rc = AnyVolRecForMountedVol(dgn_context,drvrec,&volrec);
+//                if ( (drvrec->drv.status & VDQM_UNIT_ERROR) ||
+//                     unknown || rc == -1 || volrec == NULL || 
+//                     volrec->vol.mode != drvrec->drv.mode ) {
+//                    if ( drvrec->drv.status & VDQM_UNIT_ERROR ) 
+//                        log(LOG_ERR,"vdqm_NewDrvReq(): unit in error status. Force unmount!\n");
+//                    if ( drvrec->drv.status & VDQM_FORCE_UNMOUNT )
+//                        log(LOG_ERR,"vdqm_NewDrvReq(): client requests forced unmount\n");
+//                    if ( rc == -1 ) 
+//                        log(LOG_ERR,"vdqm_NewDrvReq(): AnyVolRecForVolid() returned error\n");
+//                    if ( unknown )
+//                        log(LOG_ERR,"vdqm_NewDrvReq(): drive in UNKNOWN status. Force unmount!\n");
+//                    /*
+//                     * No, there wasn't any other job for that volume. Tell the
+//                     * drive to unmount the volume. Put unit in unknown status
+//                     * until volume has been unmounted to prevent other
+//                     * request from being assigned.
+//                     */
+//                    ptr_driveRequest->status  = VDQM_VOL_UNMOUNT;
+//                    drvrec->drv.status |= VDQM_UNIT_UNKNOWN; 
+//                    volrec = NULL;
+//                } else {
+//                    volrec->drv = drvrec;
+//                    drvrec->vol = volrec;
+//                    volrec->vol.DrvReqID = drvrec->drv.DrvReqID;
+//                    drvrec->drv.VolReqID = volrec->vol.VolReqID;
+//                    drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_RELEASE;
+//                }
+//            } else {
+//                /*
+//                 * There is no volume on unit. Since a RELEASE has
+//                 * been requested the unit is FREE (no job and no volume
+//                 * assigned to it. Update status accordingly.
+//                 * If client specified FORCE_UNMOUNT it means that there is
+//                 * "something" (unknown to VDQM) mounted. We have to wait
+//                 * for the unmount before resetting the status.
+//                 */
+//                if ( !(ptr_driveRequest->status & VDQM_FORCE_UNMOUNT) &&
+//                     !(drvrec->drv.status & VDQM_FORCE_UNMOUNT) ) {
+//                    drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_BUSY;
+//                    drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_RELEASE;
+//                    drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_ASSIGN;
+//                    drvrec->drv.status = drvrec->drv.status | VDQM_UNIT_FREE;
+//                }
+//                /*
+//                 * Always tell the client to unmount just in case there was an
+//                 * error and VDQM wasn't notified.
+//                 */
+//                ptr_driveRequest->status  = VDQM_VOL_UNMOUNT;
+//            }
+//        } 
+//        /*
+//         * If unit is free, reset dynamic data in drive record
+//         */
+//        if ( (ptr_driveRequest->status & VDQM_UNIT_FREE) ) {
+//            /*
+//             * Reset status to reflect that drive is not assigned and nothing is mounted.
+//             */
+//            drvrec->drv.status = (drvrec->drv.status | VDQM_UNIT_FREE) &
+//                (~VDQM_UNIT_ASSIGN & ~VDQM_UNIT_RELEASE & ~VDQM_UNIT_BUSY);
+//            
+//            /*
+//             * Dequeue request and free memory allocated for previous 
+//             * volume request for this drive
+//             */
+//            if ( drvrec->vol != NULL ) {
+//                rc = DelVolRecord(dgn_context,drvrec->vol);
+//                if ( rc == -1 ) {
+//                    log(LOG_ERR,"vdqm_NewDrvReq(): DelVolRecord() returned error\n");
+//                } else {
+//                    free(drvrec->vol);
+//                }
+//                drvrec->vol = NULL;
+//            }
+//            /*
+//             * Reset request and job IDs
+//             */
+//            drvrec->drv.VolReqID = 0;
+//            drvrec->drv.jobID = 0;
+//        }
+//        /*
+//         * Loop until there is no more volume requests in queue or
+//         * no suitable free drive
+//         */
+//        for (;;) {
+//            /*
+//             * If volrec already assigned by AnyVolRecForMountedVol()
+//             * we skip to start request
+//             */
+//            if ( volrec == NULL ) {
+//                rc = AnyVolRecForDgn(dgn_context);
+//                if ( rc < 0 ) {
+//
+//                    log(LOG_ERR,"vdqm_NewDrvReq(): AnyVolRecForDgn() returned error\n");
+//                    break;
+//                }
+//                if ( rc == 0 ) break;
+//                if ( rc == 1 ) {
+//                    rc = SelectVolAndDrv(dgn_context,&volrec,&drvrec);
+//                    if ( rc == -1 || volrec == NULL || drvrec == NULL ) {
+//                        log(LOG_ERR,"vdqm_NewDrvReq(): SelectVolAndDrv() returned rc=%d\n",
+//                            rc);
+//                        break;
+//                    } else {
+//                        drvrec->vol = volrec;
+//                        volrec->drv = drvrec;
+//                    }
+//                }
+//            }
+//            if ( volrec != NULL ) {
+//                drvrec->drv.VolReqID = volrec->vol.VolReqID;
+//                volrec->vol.DrvReqID = drvrec->drv.DrvReqID;
+//                /*
+//                 * Start the job
+//                 */
+//                rc = vdqm_StartJob(volrec);
+//                if ( rc < 0 ) {
+//                    /*
+//                     * Job could not be started. Mark the drive
+//                     * status as unknown so that it will not be
+//                     * assigned to a new request immediately. The
+//                     * volume record is kept in queue. Note that
+//                     * if a volume is already mounted on unit it
+//                     * is inaccessible for other requests until 
+//                     * drive status is updated.
+//                     */
+//                    log(LOG_ERR,"vdqm_NewDrvReq(): vdqm_StartJob() returned error\n");
+//                    drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+//                    drvrec->drv.recvtime = (int)time(NULL);
+//                    drvrec->vol = NULL;
+//                    drvrec->drv.VolReqID = 0;
+//                    volrec->vol.DrvReqID = 0;
+//                    drvrec->drv.jobID = 0;
+//                    volrec->drv = NULL;
+//                    break;
+//                } 
+//            } else break;
+//            volrec = NULL;
+//        } /* End of for (;;) */
+//    } else {
+//        /*
+//         * If drive is down, report error for any requested update.
+//         */
+//        if ( ptr_driveRequest->status & (VDQM_UNIT_FREE | VDQM_UNIT_ASSIGN |
+//            VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE | VDQM_VOL_MOUNT |
+//            VDQM_VOL_UNMOUNT ) ) {
+//            log(LOG_ERR,"vdqm_NewDrvReq(): drive is DOWN\n");
+//            FreeDgnContext(&dgn_context);
+//            vdqm_SetError(EVQUNNOTUP);
+//            return(-1);
+//        }
+//    }
+//    FreeDgnContext(&dgn_context);    
+//    
+//    /* At this point, backup the comple queue to a file */
+//    if (new_drive_added) {
+//         log(LOG_DEBUG,"vdqm_NewDrvReq(): Update drive config file\n");
+//         if (vdqm_save_queue() < 0) {
+//             log(LOG_ERR, "Could not save drive list\n");
+//         }         
+//    }
+//
+//    return(0);
+}
+
+
+//------------------------------------------------------------------------------
+// deleteAllTapeDrvsFromSrv
+//------------------------------------------------------------------------------
+void castor::vdqm::TapeDriveHandler::deleteAllTapeDrvsFromSrv() 
+	throw (castor::exception::Exception) {
+	
+	TapeServer* server = NULL;
+	
+	if ( strcmp(ptr_driveRequest->reqhost, ptr_driveRequest->server) != 0 ) {
+	  castor::exception::Exception ex(EPERM);
+    ex.getMessage()
+      << "TapeDriveHandler::deleteAllTapeDrvsFromSrv(): "
+      << "unauthorized VDQM_TPD_STARTED for " 
+      << ptr_driveRequest->server << " sent by "
+      << ptr_driveRequest->reqhost
+      << std::endl;
+    
+    throw ex;
+  }
+	
+	/*
+	 * Select the server and deletes all db entries of tapeDrives 
+	 * (+ old TapeRequests), which are dedicated to this server.
+	 */
+	try {
+		server = ptr_IVdqmService->selectTapeServer(ptr_driveRequest->reqhost);
+		ptr_IVdqmService->deleteAllTapeDrvsFromSrv(server);
+	} catch ( castor::exception::Exception ex ) {
+		if ( server ) 
+			delete server;
+
+		throw ex;
+	}
+	
+	delete server;
 }

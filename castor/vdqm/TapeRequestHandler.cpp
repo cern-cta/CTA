@@ -145,7 +145,7 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
      castor::dlf::Param("dgn", volumeRequest->dgn),
      castor::dlf::Param("drive", (*volumeRequest->drive == '\0' ? "***" : volumeRequest->drive)),
      castor::dlf::Param("server", (*volumeRequest->server == '\0' ? "***" : volumeRequest->server))};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 23, 10, params);
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 23, 10, params);
   
   try {
 	  //------------------------------------------------------------------------
