@@ -72,8 +72,12 @@ const std::string castor::db::ora::OraVdqmSvc::s_checkTapeRequestStatement2Strin
   "SELECT count(*) FROM TapeRequest WHERE id <= :1";
   
 
-/// SQL statement for function getFreeTapeDrive
+/// SQL statement for function selectFreeTapeDrive
 const std::string castor::db::ora::OraVdqmSvc::s_selectFreeTapeDriveStatementString =
+  "SELECT id FROM Tape WHERE status = :1";
+  
+/// SQL statement for function deleteAllTapeDrvsFromSrv
+const std::string castor::db::ora::OraVdqmSvc::s_deleteAllTapeDrvsFromSrvStatementString =
   "SELECT id FROM Tape WHERE status = :1";
 
 
@@ -220,4 +224,12 @@ castor::vdqm::TapeDrive*
 	(const castor::vdqm::ExtendedDeviceGroup *extDevGrp)
   throw (castor::exception::Exception) {
  return NULL; 	
+}
+
+// -----------------------------------------------------------------------
+// selectFreeTapeDrive
+// -----------------------------------------------------------------------
+void castor::db::ora::OraVdqmSvc::deleteAllTapeDrvsFromSrv(
+	const castor::vdqm::TapeServer* tapeServer)
+  throw (castor::exception::Exception) {
 }

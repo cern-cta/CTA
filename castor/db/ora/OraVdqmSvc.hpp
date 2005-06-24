@@ -94,13 +94,18 @@ namespace castor {
 		    		throw (castor::exception::Exception);
 		    		
 			    /**
-		    	 * Looks in the data base for the TapeServer, which has exactly 
-		    	 * this name. If there is no entry in the db table with this parameters,
-		    	 * the return value is NULL
-		    	 * @parameter serverName The name of the tape server, which is beeing requested
-		    	 * @return The object representation of the table entry or NULL
-		    	 * @exception in case of error
-		    	 */
+		       * Retrieves a TapeServer from the database based on its serverName. 
+		       * If no tapeServer is found, creates one.
+		       * Note that this method creates a lock on the row of the
+		       * given tapeServer and does not release it. It is the
+		       * responsability of the caller to commit the transaction.
+		       * The caller is also responsible for the deletion of the
+		       * allocated object
+		       * @param serverName The name of the server
+		       * @return the tapeServer. the return value can never be 0
+		       * @exception Exception in case of error (no tape server found,
+		       * several tape servers found, DB problem, etc...)
+		       */
 		    	virtual castor::vdqm::TapeServer* selectTapeServer(
 		    		const std::string serverName)
 		    		throw (castor::exception::Exception);
@@ -133,7 +138,21 @@ namespace castor {
 		    	 */	
 		    	virtual castor::vdqm::TapeDrive* selectFreeTapeDrive(
 		    		const castor::vdqm::ExtendedDeviceGroup *extDevGrp) 
-		    		throw (castor::exception::Exception);   
+		    		throw (castor::exception::Exception); 
+		    		
+		    		
+//------------ functions for castor::vdqm::TapeDriveRequestHandler -------------
+				
+				/**
+				 * Deletes all TapeDrives in the db from the given 
+				 * TapeServer and their old TapeRequests (if any).
+				 * 
+				 * @param tapeServer the tape server of the drives
+				 * @exception Exception in case of error
+				 */
+				virtual void deleteAllTapeDrvsFromSrv(
+				  const castor::vdqm::TapeServer* tapeServer)
+	    		throw (castor::exception::Exception);  
 
 	    				    		
 	      private:
@@ -180,11 +199,11 @@ namespace castor {
 	        /// SQL statement object for function getFreeTapeDrive
 	        oracle::occi::Statement *m_selectFreeTapeDriveStatement;	 
 	        
- 	        /// SQL statement for function removeTapeRequest
-	        static const std::string s_removeTapeRequestStatementString;
+ 	        /// SQL statement for function deleteAllTapeDrvsFromSrv
+	        static const std::string s_deleteAllTapeDrvsFromSrvStatementString;
 	
-	        /// SQL statement object for function removeTapeRequest
-	        oracle::occi::Statement *m_removeTapeRequestStatement;	                                 	
+	        /// SQL statement object for function deleteAllTapeDrvsFromSrv
+	        oracle::occi::Statement *m_deleteAllTapeDrvsFromSrvStatement;	                                 	
 			};
 		}
 	}
