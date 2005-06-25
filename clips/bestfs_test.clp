@@ -99,6 +99,8 @@
                " on "         (send ?fs get-diskserverName)
                " Weight "     (send ?fs get-diskserverWeight)
                " fsDeviation " (send ?fs get-filesystemWeight)
+               " minFreeSpace " (minFreeSpace ?fs)
+               " maxFreeSpace " (maxFreeSpace ?fs)
                " (freeRam,freeMem,freeSwap,availProc,Load[*100],Io[MB/s])=("
                                 (send ?fs get-diskserverFreeRam) ","
                                 (send ?fs get-diskserverFreeMem) ","
