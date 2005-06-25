@@ -1,6 +1,7 @@
-; $Id: castorweight.clp,v 1.13 2005/06/13 14:20:21 jdurand Exp $
+; $Id: castorweight.clp,v 1.14 2005/06/25 16:16:44 jdurand Exp $
 
 (load* fs_capabilities.clp)		; Load Filesystem specifities (maxIo in particular)
+(load* fs_garbage.clp)			; Load Filesystem garbage collection functions
 
 ; (c) CASTOR CERN/IT/ADC/CA 2004 - Jean-Damien.Durand@cern.ch
 ;
