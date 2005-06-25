@@ -4,7 +4,7 @@
 ;
 ; PROPOSAL FOR 64BITS QUANTITIES: Use the u64subr.h syntax, e.g. with a unit
 ;
-; $Id: castor.clp,v 1.10 2005/06/13 14:20:20 jdurand Exp $
+; $Id: castor.clp,v 1.11 2005/06/25 16:15:44 jdurand Exp $
 ; (c) CASTOR CERN/IT/ADC/CA 2004 - Jean-Damien.Durand@cern.ch
 ;
 ; ====================
@@ -862,6 +862,9 @@
 )
 (defmessage-handler FILESYSTEM get-filesystemFreeSpace primary ()
   (nth$ ?self:filesystemIndex (send ?self:diskserverInstance get-filesystemFreeSpace))
+)
+(defmessage-handler FILESYSTEM get-filesystemTotalSpace primary ()
+  (nth$ ?self:filesystemIndex (send ?self:diskserverInstance get-filesystemTotalSpace))
 )
 (defmessage-handler FILESYSTEM get-filesystemNbRdonly primary ()
   (nth$ ?self:filesystemIndex (send ?self:diskserverInstance get-filesystemNbRdonly))
