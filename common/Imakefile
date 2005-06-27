@@ -102,7 +102,7 @@ COMMONLIB_OBJS = $(SYSDEP_OBJS) \
 		 Cthread.Osuf Csched.Osuf Cglobals.Osuf Cgrp.Osuf Cmutex.Osuf Cuuid.Osuf \
 		 Cdomainname.Osuf Cnetdb.Osuf Cpool.Osuf Cpwd.Osuf \
 		 socket_timeout.Osuf u64subr.Osuf Cinitdaemon.Osuf Cgetopt.Osuf \
-		 Cregexp.Osuf Csetprocname.Osuf Cexportconf.Osuf Csnprintf.Osuf util.Osuf Cstrerror.Osuf
+		 Cregexp.Osuf Csetprocname.Osuf Cexportconf.Osuf Csnprintf.Osuf util.Osuf
 
 MANPAGES = $(FILMANDIR)/account.$(FILMANSUFFIX) \
 	   $(LIBMANDIR)/getacct.$(LIBMANSUFFIX) \
