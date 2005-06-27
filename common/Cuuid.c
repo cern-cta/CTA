@@ -1,5 +1,5 @@
 /*
- * $Id: Cuuid.c,v 1.9 2005/04/05 14:25:08 sponcec3 Exp $
+ * $Id: Cuuid.c,v 1.10 2005/06/27 09:01:00 sponcec3 Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.9 $ $Date: 2005/04/05 14:25:08 $ CERN IT-ADC/CA Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.10 $ $Date: 2005/06/27 09:01:00 $ CERN IT-ADC/CA Jean-Damien Durand";
 #endif /* not lint */
 
 /*
@@ -709,9 +709,10 @@ static void _Cuuid_Transform(buf,in)
 static void _Cuuid_get_ieee_node_identifier(node)
 	Cuuid_node_t *node;
 {
-    char seed[16];
+  char seed[16];
 	Cuuid_node_t saved_node;
 
+  memset(seed, 0, sizeof(seed));
 	_Cuuid_get_random_info(seed);
 	seed[0] |= 0x80;
 	memcpy(&saved_node, seed, sizeof(Cuuid_node_t));
