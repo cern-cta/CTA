@@ -54,4 +54,11 @@
    fun:__libc_freeres
    fun:_vgw__freeres
 }
+{
+   Oracle leak when creating conneciton
+   Memcheck:Leak
+   fun:malloc
+   obj:/lib/tls/libc-2.3.2.so
+   fun:__nss_database_lookup
+}
 
