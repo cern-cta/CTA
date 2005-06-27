@@ -39,4 +39,19 @@
    Memcheck:Free
    obj:*/libclntsh.so*
 }
+{
+   Oracle's mismatch free() / delete / delete
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN6oracle4occi14ConnectionImplD0Ev
+   fun:_ZN6oracle4occi15EnvironmentImpl19terminateConnectionEPNS0_10ConnectionE
+}
+{
+   libc Invalid free() / delete / delete[]
+   Memcheck:Free
+   fun:free
+   obj:/lib/tls/libc-2.3.2.so
+   fun:__libc_freeres
+   fun:_vgw__freeres
+}
 
