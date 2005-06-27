@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/01/24 16:26:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logstream.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2005/06/27 13:33:45 $ $Author: sponcec3 $
  *
  * A generic logstream for castor, handling IP addresses
  * and timestamps
@@ -62,8 +62,10 @@ castor::logstream& castor::trace(castor::logstream& s) {
   int trace_size = backtrace(trace,20);
   char **symbols = backtrace_symbols(trace, trace_size);
   for (int i = 0; i < trace_size; i++) {
-    s << symbols[i] << std::endl;
+    s << symbols[i] << "\n";
   }
+  s << std::flush;
+  free(symbols);
   return s;
 }
 
