@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2005/06/07 17:23:42 $ $Author: itglp $
+ * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2005/06/27 11:55:30 $ $Author: sponcec3 $
  *
  *
  *
@@ -46,7 +46,16 @@ castor::Services::Services() {}
 //-----------------------------------------------------------------------------
 // Destructor
 //-----------------------------------------------------------------------------
-castor::Services::~Services() {}
+castor::Services::~Services() {
+  // cleanup all remaining services
+  for (std::map<const std::string, IService*>::const_iterator it =
+         m_services.begin();
+       it != m_services.end();
+       it++) {
+    delete it->second;
+  }
+  m_services.clear();
+}
 
 //-----------------------------------------------------------------------------
 // service
