@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Date: 2005/05/19 16:28:02 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Date: 2005/06/28 13:11:58 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM    Make HSM admin tools.
 
@@ -49,6 +49,7 @@ LIBS2 = $(LIBS) ..\lib\castorCommonOra.lib
 LIBS2 = $(LIBS) -L../shlib -lcastorCommonOra
 #endif
 SPOOL = HsmToolsSpool
+PERLLIBDIR = "/usr/lib/perl/CASTOR"
  
 COMM######################### FLAGS ##############################
  
@@ -85,7 +86,8 @@ PROGS =  ProgramTargetName(reclaim) \
 	 ProgramTargetName(enterSvcClass) \
 	 ProgramTargetName(modifySvcClass) \
 	 ProgramTargetName(deleteSvcClass) \
-	 ProgramTargetName(printSvcClass)
+	 ProgramTargetName(printSvcClass) \
+	 ProgramTargetName(listSvcClass)
 IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(repack)) \
 	 FileName($(BIN),ProgramTargetName(tapetohsm)) \
@@ -96,7 +98,8 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(enterSvcClass)) \
 	 FileName($(BIN),ProgramTargetName(modifySvcClass)) \
 	 FileName($(BIN),ProgramTargetName(deleteSvcClass)) \
-	 FileName($(BIN),ProgramTargetName(printSvcClass))
+	 FileName($(BIN),ProgramTargetName(printSvcClass)) \
+	 FileName($(BIN),ProgramTargetName(listSvcClass))
 EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/repack \
 	 $(EXPORTBIN)/tapetohsm \
@@ -107,7 +110,11 @@ EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/enterSvcClass \
 	 $(EXPORTBIN)/modifySvcClass \
 	 $(EXPORTBIN)/deleteSvcClass \
-	 $(EXPORTBIN)/printSvcClass
+	 $(EXPORTBIN)/printSvcClass \
+	 $(EXPORTBIN)/listSvcClass
+
+IPERL = FileName($(PERLLIBDIR),castor_tools.pm)
+EPERL = $(EXPORTPERL)/castor_tools.pm
 
 all: $(PROGS)
 
@@ -126,7 +133,7 @@ NormalProgramTarget(printSvcClass,printSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
 MakeDepSharedLibrary(shlib,shift)
 MakeDepSharedLibrary(shlib,castorCommonOra)
 
-install: $(BIN) $(IPROGS) $(SPOOL)
+install: $(BIN) $(IPROGS) $(SPOOL) $(PERLLIBDIR) $(IPERL)
 
 InstallProgram(reclaim,$(BIN),root,bin,755)
 IEXPORT(reclaim,$(EXPORTBIN),755);
@@ -161,8 +168,15 @@ IEXPORT(deleteSvcClass,$(EXPORTBIN),755);
 InstallProgram(printSvcClass,$(BIN),root,bin,755)
 IEXPORT(printSvcClass,$(EXPORTBIN),755);
 
+InstallNonExecFile(castor_tools.pm,$(PERLLIBDIR),root,bin,755)
+IEXPORT(castor_tools.pm,$(EXPORTPERL),755);
+
+InstallProgram(listSvcClass,$(BIN),root,bin,755)
+IEXPORT(listSvcClass,$(EXPORTBIN),755);
+
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
+MakeDir($(PERLLIBDIR),root,bin,0755)
  
 install.man: $(MANDIR) $(MANPAGES)
 
@@ -181,7 +195,7 @@ EMANPAGE(enterFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(modifyFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(deleteFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 
-export: $(EPROGS)
+export: $(EPROGS) $(EXPORTPERL) $(EPERL)
 
 exportman: $(EXPORTMANPAGES)
 
