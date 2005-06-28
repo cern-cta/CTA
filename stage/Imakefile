@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 1993-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 2005/05/17 16:40:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Date: 2005/06/28 13:53:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
 
 COMM 	Make stage daemon programs. 
 
@@ -643,11 +643,11 @@ InstallProgram(cleaner,$(BIN),root,bin,750)
 IEXPORT(cleaner,$(EXPORTBIN),750);
 
 $(BIN)/cpdskdsk:	cpdskdsk
-	-mv $(BIN)/cpdskdsk $(BIN)/OLDcpdskdsk
-	cp cpdskdsk $(BIN)
-	chown root $(BIN)/cpdskdsk
-	chgrp bin $(BIN)/cpdskdsk
-	chmod 755 $(BIN)/cpdskdsk
+	-mv $(DESTDIR)$(BIN)/cpdskdsk $(DESTDIR)$(BIN)/OLDcpdskdsk
+	cp cpdskdsk $(DESTDIR)$(BIN)
+	chown root $(DESTDIR)$(BIN)/cpdskdsk
+	chgrp bin $(DESTDIR)$(BIN)/cpdskdsk
+	chmod 755 $(DESTDIR)$(BIN)/cpdskdsk
 IEXPORT(cpdskdsk,$(EXPORTBIN),755);
 
 InstallProgram(stager_castor,$(BIN),root,bin,750)
