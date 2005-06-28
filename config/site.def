@@ -227,7 +227,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #endif
 #define ExpertHost     "localhost"
 #define ExpertSpool    /var/spool/expert
-#define RhHost        "lxfsrm464"
+#define RhHost        "castorrh"
 #define GcSpool        /var/spool/gc
 
 #define W2000MapDir	\\\\cern.ch\\dfs\\Applications\\CERN\\CASTOR\\Config
