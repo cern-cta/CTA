@@ -2,7 +2,9 @@ usr/bin/deleteFileClass
 usr/bin/deleteSvcClass
 usr/bin/enterFileClass
 usr/bin/enterSvcClass
+usr/bin/listSvcClass
 usr/bin/modifyFileClass
 usr/bin/modifySvcClass
 usr/bin/printFileClass
 usr/bin/printSvcClass
+usr/lib/perl/CASTOR/castor_tools.pm
