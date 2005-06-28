@@ -1,0 +1,44 @@
+#!/usr/bin/perl -w
+#/******************************************************************************
+# *                      diskcopiestodelete.pl
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @(#)$RCSfile: listSvcClass,v $ $Revision: 1.1 $ $Release$ $Date: 2005/06/28 12:48:33 $ $Author: sponcec3 $
+# *
+# * Lists existing service classes
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+use strict;
+use diagnostics;
+use lib "/usr/lib/perl/CASTOR";
+use castor_tools;
+
+my @castor_conf = castor_conf_getOraStagerSvc();
+my $dbh = DBI->connect('dbi:Oracle:',$castor_conf[0] ,$castor_conf[1]);
+my $dbquery = "SELECT name FROM SvcClass";
+my $sth = $dbh->prepare("$dbquery");
+$sth->execute;
+
+my @row;
+while (@row = $sth->fetchrow_array) {
+  printf("%s\n", $row[0]);
+}
+
+$sth->finish;
+$dbh->disconnect;
