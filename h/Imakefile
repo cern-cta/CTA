@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Date: 2005/06/28 12:49:05 $ CERN IT-PDP/DM   Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Date: 2005/06/28 13:50:19 $ CERN IT-PDP/DM   Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -60,6 +60,7 @@ ICOMMON_H = \
 	 FileName($(DESTDIRCASTOR),stager_uuid.h) \
 	 FileName($(DESTDIRCASTOR),Cgrp.h) \
 	 FileName($(DESTDIRCASTOR),Cinit.h) \
+	 FileName($(DESTDIRCASTOR),Cmonit_api.h) \
 	 FileName($(DESTDIRCASTOR),Cmonit_constants.h) \
 	 FileName($(DESTDIRCASTOR),Cmonit_structs.h) \
 	 FileName($(DESTDIRCASTOR),Cmonitd.h) \
