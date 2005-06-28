@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Date: 2005/05/30 09:40:05 $ CERN IT-PDP/DM   Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Date: 2005/06/28 12:49:05 $ CERN IT-PDP/DM   Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -24,7 +24,7 @@ ICOMMON_H = \
 	 FileName($(DESTDIRCASTOR),Cregexp.h) FileName($(DESTDIRCASTOR),Cregexp_magic.h) \
 	 FileName($(DESTDIRCASTOR),Csched_api.h) FileName($(DESTDIRCASTOR),Csched_flags.h) \
 	 FileName($(DESTDIRCASTOR),Csetprocname.h) \
-	 FileName($(DESTDIRCASTOR),Cthread_api.h) FileName($(DESTDIRCASTOR),Cthread_flags.h) \
+	 FileName($(DESTDIRCASTOR),Cthread_api.h) FileName($(DESTDIRCASTOR),Cthread_flags.h) FileName($(DESTDIRCASTOR),Cthread_typedef.h) \
 	 FileName($(DESTDIRCASTOR),common.h) \
 	 FileName($(DESTDIRCASTOR),getacct.h) FileName($(DESTDIRCASTOR),getacctent.h) \
 	 FileName($(DESTDIRCASTOR),log.h) FileName($(DESTDIRCASTOR),marshall.h) \
@@ -33,11 +33,92 @@ ICOMMON_H = \
 	 FileName($(DESTDIRCASTOR),socket_timeout.h) FileName($(DESTDIRCASTOR),trace.h) \
 	 FileName($(DESTDIRCASTOR),u64subr.h) FileName($(DESTDIRCASTOR),ypgetacctent.h) \
 	 FileName($(TOPINCLUDE),shift.h) \
+	 FileName($(DESTDIRCASTOR),stager.h) \
 	 FileName($(DESTDIRCASTOR),stager_api.h) \
 	 FileName($(DESTDIRCASTOR),stager_admin_api.h) \
+	 FileName($(DESTDIRCASTOR),stager_catalogInterface.h) \
 	 FileName($(DESTDIRCASTOR),stager_client_api.h) \
+	 FileName($(DESTDIRCASTOR),stager_client_api_common.h) \
+	 FileName($(DESTDIRCASTOR),stager_constants.h) \
+	 FileName($(DESTDIRCASTOR),stager_db_service.h) \
+	 FileName($(DESTDIRCASTOR),stager_errmsg.h) \
+	 FileName($(DESTDIRCASTOR),stager_error_service.h) \
+	 FileName($(DESTDIRCASTOR),stager_extern_globals.h) \
+	 FileName($(DESTDIRCASTOR),stager_fs_service.h) \
+	 FileName($(DESTDIRCASTOR),stager_gc_service.h) \
+	 FileName($(DESTDIRCASTOR),stager_getnext_service.h) \
+	 FileName($(DESTDIRCASTOR),stager_job_service.h) \
+	 FileName($(DESTDIRCASTOR),stager_macros.h) \
 	 FileName($(DESTDIRCASTOR),stager_mapper.h) \
-	 FileName($(DESTDIRCASTOR),stager_service_api.h)
+	 FileName($(DESTDIRCASTOR),stager_messages.h) \
+	 FileName($(DESTDIRCASTOR),stager_mover_api.h) \
+	 FileName($(DESTDIRCASTOR),stager_query_service.h) \
+	 FileName($(DESTDIRCASTOR),stager_service_api.h) \
+	 FileName($(DESTDIRCASTOR),stager_service2name.h) \
+	 FileName($(DESTDIRCASTOR),stager_services.h) \
+	 FileName($(DESTDIRCASTOR),stager_util.h) \
+	 FileName($(DESTDIRCASTOR),stager_uuid.h) \
+	 FileName($(DESTDIRCASTOR),Cgrp.h) \
+	 FileName($(DESTDIRCASTOR),Cinit.h) \
+	 FileName($(DESTDIRCASTOR),Cmonit_constants.h) \
+	 FileName($(DESTDIRCASTOR),Cmonit_structs.h) \
+	 FileName($(DESTDIRCASTOR),Cmonitd.h) \
+	 FileName($(DESTDIRCASTOR),Cmonitd_lock.h) \
+	 FileName($(DESTDIRCASTOR),Cmutex.h) \
+	 FileName($(DESTDIRCASTOR),Crmd_checkpoint.h) \
+	 FileName($(DESTDIRCASTOR),Crmd_recv_from_maui.h) \
+	 FileName($(DESTDIRCASTOR),Crmd_recv_from_rmnode.h) \
+	 FileName($(DESTDIRCASTOR),Crmd_recv_from_users.h) \
+	 FileName($(DESTDIRCASTOR),Crmd_survey.h) \
+	 FileName($(DESTDIRCASTOR),Crmd_tape_feature.h) \
+	 FileName($(DESTDIRCASTOR),Csec.h) \
+	 FileName($(DESTDIRCASTOR),Csec_api.h) \
+	 FileName($(DESTDIRCASTOR),Csec_common.h) \
+	 FileName($(DESTDIRCASTOR),Csec_constants.h) \
+	 FileName($(DESTDIRCASTOR),Csec_plugin.h) \
+	 FileName($(DESTDIRCASTOR),Csec_plugin_loader.h) \
+	 FileName($(DESTDIRCASTOR),Csec_protocol.h) \
+	 FileName($(DESTDIRCASTOR),Csec_struct.h) \
+	 FileName($(DESTDIRCASTOR),Csemaphore.h) \
+	 FileName($(DESTDIRCASTOR),Csnprintf.h) \
+	 FileName($(DESTDIRCASTOR),Cupv.h) \
+	 FileName($(DESTDIRCASTOR),Cupv_api.h) \
+	 FileName($(DESTDIRCASTOR),Cupv_constants.h) \
+	 FileName($(DESTDIRCASTOR),Cupv_server.h) \
+	 FileName($(DESTDIRCASTOR),Cupv_struct.h) \
+	 FileName($(DESTDIRCASTOR),Cupv_util.h) \
+	 FileName($(DESTDIRCASTOR),Cuuid.h) \
+	 FileName($(DESTDIRCASTOR),RfioTURL.h) \
+	 FileName($(DESTDIRCASTOR),dlf.h) \
+	 FileName($(DESTDIRCASTOR),dlf_api.h) \
+	 FileName($(DESTDIRCASTOR),dlf_constants.h) \
+	 FileName($(DESTDIRCASTOR),dlf_server.h) \
+	 FileName($(DESTDIRCASTOR),dlf_struct.h) \
+	 FileName($(DESTDIRCASTOR),dmc.h) \
+	 FileName($(DESTDIRCASTOR),expert.h) \
+	 FileName($(DESTDIRCASTOR),expert_api.h) \
+	 FileName($(DESTDIRCASTOR),expert_constants.h) \
+	 FileName($(DESTDIRCASTOR),expert_daemon.h) \
+	 FileName($(DESTDIRCASTOR),getconfent.h) \
+	 FileName($(DESTDIRCASTOR),md5.h) \
+	 FileName($(DESTDIRCASTOR),msg.h) \
+	 FileName($(DESTDIRCASTOR),rm_api.h) \
+	 FileName($(DESTDIRCASTOR),rm_constants.h) \
+	 FileName($(DESTDIRCASTOR),rm_limits.h) \
+	 FileName($(DESTDIRCASTOR),rm_macros.h) \
+	 FileName($(DESTDIRCASTOR),rm_messages.h) \
+	 FileName($(DESTDIRCASTOR),rm_struct.h) \
+	 FileName($(DESTDIRCASTOR),rmc.h) \
+	 FileName($(DESTDIRCASTOR),rmc_api.h) \
+	 FileName($(DESTDIRCASTOR),rmc_constants.h) \
+	 FileName($(DESTDIRCASTOR),rmnode_util.h) \
+	 FileName($(DESTDIRCASTOR),rtcpcld.h) \
+	 FileName($(DESTDIRCASTOR),rtcpcld_constants.h) \
+	 FileName($(DESTDIRCASTOR),rtcpcld_messages.h) \
+	 FileName($(DESTDIRCASTOR),rtcpcldapi.h) \
+	 FileName($(DESTDIRCASTOR),scsictl.h) \
+	 FileName($(DESTDIRCASTOR),smc.h) \
+	 FileName($(DESTDIRCASTOR),util.h)
 ECOMMON_H = \
 	 $(EXPORTH)/Castor_limits.h $(EXPORTH)/Cgetopt.h \
 	 $(EXPORTH)/sacct.h \
@@ -46,7 +127,7 @@ ECOMMON_H = \
 	 $(EXPORTH)/Cregexp.h $(EXPORTH)/Cregexp_magic.h \
 	 $(EXPORTH)/Csched_api.h $(EXPORTH)/Csched_flags.h \
 	 $(EXPORTH)/Csetprocname.h \
-	 $(EXPORTH)/Cthread_api.h $(EXPORTH)/Cthread_flags.h \
+	 $(EXPORTH)/Cthread_api.h $(EXPORTH)/Cthread_flags.h $(EXPORTH)/Cthread_typedef.h \
 	 $(EXPORTH)/common.h \
 	 $(EXPORTH)/getacct.h $(EXPORTH)/getacctent.h \
 	 $(EXPORTH)/log.h $(EXPORTH)/marshall.h \
@@ -55,11 +136,93 @@ ECOMMON_H = \
 	 $(EXPORTH)/socket_timeout.h $(EXPORTH)/trace.h \
 	 $(EXPORTH)/u64subr.h $(EXPORTH)/ypgetacctent.h \
 	 $(EXPORTINC)/shift.h \
+	 $(EXPORTH)/stager.h \
 	 $(EXPORTH)/stager_api.h \
 	 $(EXPORTH)/stager_admin_api.h \
+	 $(EXPORTH)/stager_catalogInterface.h \
 	 $(EXPORTH)/stager_client_api.h \
+	 $(EXPORTH)/stager_client_api_common.h \
+	 $(EXPORTH)/stager_constants.h \
+	 $(EXPORTH)/stager_db_service.h \
+	 $(EXPORTH)/stager_errmsg.h \
+	 $(EXPORTH)/stager_error_service.h \
+	 $(EXPORTH)/stager_extern_globals.h \
+	 $(EXPORTH)/stager_fs_service.h \
+	 $(EXPORTH)/stager_gc_service.h \
+	 $(EXPORTH)/stager_getnext_service.h \
+	 $(EXPORTH)/stager_job_service.h \
+	 $(EXPORTH)/stager_macros.h \
 	 $(EXPORTH)/stager_mapper.h \
-	 $(EXPORTH)/stager_service_api.h
+	 $(EXPORTH)/stager_messages.h \
+	 $(EXPORTH)/stager_mover_api.h \
+	 $(EXPORTH)/stager_query_service.h \
+	 $(EXPORTH)/stager_service_api.h \
+	 $(EXPORTH)/stager_service2name.h \
+	 $(EXPORTH)/stager_services.h \
+	 $(EXPORTH)/stager_util.h \
+	 $(EXPORTH)/stager_uuid.h \
+	 $(EXPORTH)/Cgrp.h \
+	 $(EXPORTH)/Cinit.h \
+	 $(EXPORTH)/Cmonit_api.h \
+	 $(EXPORTH)/Cmonit_constants.h \
+	 $(EXPORTH)/Cmonit_structs.h \
+	 $(EXPORTH)/Cmonitd.h \
+	 $(EXPORTH)/Cmonitd_lock.h \
+	 $(EXPORTH)/Cmutex.h \
+	 $(EXPORTH)/Crmd_checkpoint.h \
+	 $(EXPORTH)/Crmd_recv_from_maui.h \
+	 $(EXPORTH)/Crmd_recv_from_rmnode.h \
+	 $(EXPORTH)/Crmd_recv_from_users.h \
+	 $(EXPORTH)/Crmd_survey.h \
+	 $(EXPORTH)/Crmd_tape_feature.h \
+	 $(EXPORTH)/Csec.h \
+	 $(EXPORTH)/Csec_api.h \
+	 $(EXPORTH)/Csec_common.h \
+	 $(EXPORTH)/Csec_constants.h \
+	 $(EXPORTH)/Csec_plugin.h \
+	 $(EXPORTH)/Csec_plugin_loader.h \
+	 $(EXPORTH)/Csec_procotol.h \
+	 $(EXPORTH)/Csec_struct.h \
+	 $(EXPORTH)/Csemaphore.h \
+	 $(EXPORTH)/Csnprintf.h \
+	 $(EXPORTH)/Cupv.h \
+	 $(EXPORTH)/Cupv_api.h \
+	 $(EXPORTH)/Cupv_constants.h \
+	 $(EXPORTH)/Cupv_server.h \
+	 $(EXPORTH)/Cupv_struct.h \
+	 $(EXPORTH)/Cupv_util.h \
+	 $(EXPORTH)/Cuuid.h \
+	 $(EXPORTH)/RfioTURL.h \
+	 $(EXPORTH)/dlf.h \
+	 $(EXPORTH)/dlf_api.h \
+	 $(EXPORTH)/dlf_constants.h \
+	 $(EXPORTH)/dlf_server.h \
+	 $(EXPORTH)/dlf_struct.h \
+	 $(EXPORTH)/dmc.h \
+	 $(EXPORTH)/expert.h \
+	 $(EXPORTH)/expert_api.h \
+	 $(EXPORTH)/expert_constants.h \
+	 $(EXPORTH)/expert_daemon.h \
+	 $(EXPORTH)/getconfent.h \
+	 $(EXPORTH)/md5.h \
+	 $(EXPORTH)/msg.h \
+	 $(EXPORTH)/rm_api.h \
+	 $(EXPORTH)/rm_constants.h \
+	 $(EXPORTH)/rm_limits.h \
+	 $(EXPORTH)/rm_macros.h \
+	 $(EXPORTH)/rm_messages.h \
+	 $(EXPORTH)/rm_struct.h \
+	 $(EXPORTH)/rmc.h \
+	 $(EXPORTH)/rmc_api.h \
+	 $(EXPORTH)/rmc_constants.h \
+	 $(EXPORTH)/rmnode_util.h \
+	 $(EXPORTH)/rtcpcld.h \
+	 $(EXPORTH)/rtcpcld_constants.h \
+	 $(EXPORTH)/rtcpcld_messages.h \
+	 $(EXPORTH)/rtcpcldapi.h \
+	 $(EXPORTH)/scsictl.h \
+	 $(EXPORTH)/smc.h \
+	 $(EXPORTH)/util.h
 #if BuildDbClient
 IDB_H = \
 	 FileName($(DESTDIRCASTOR),Cdb_api.h)
@@ -68,45 +231,45 @@ EDB_H = \
 #endif
 #if BuildNameServerClient || BuildNameServerLibrary
 INS_H = \
-	 FileName($(DESTDIRCASTOR),Cns_api.h) FileName($(DESTDIRCASTOR),Cns_constants.h)
+	 FileName($(DESTDIRCASTOR),Cns_api.h) FileName($(DESTDIRCASTOR),Cns_constants.h) FileName($(DESTDIRCASTOR),Cns.h) FileName($(DESTDIRCASTOR),Cns_server.h)
 ENS_H = \
-	 $(EXPORTH)/Cns_api.h $(EXPORTH)/Cns_constants.h
+	 $(EXPORTH)/Cns_api.h $(EXPORTH)/Cns_constants.h $(EXPORTH)/Cns.h $(EXPORTH)/Cns_server.h
 #endif
 #if BuildRfioClient
 IRFIO_H = \
 	 FileName($(DESTDIRCASTOR),rfcntl.h) FileName($(DESTDIRCASTOR),rfio.h) \
 	 FileName($(DESTDIRCASTOR),rfio_api.h) FileName($(DESTDIRCASTOR),rfio_constants.h) \
-	 FileName($(DESTDIRCASTOR),rfio_errno.h)
+	 FileName($(DESTDIRCASTOR),rfio_errno.h) FileName($(DESTDIRCASTOR),rfio_lcastorfdt.h)
 ERFIO_H = \
 	 $(EXPORTH)/rfcntl.h $(EXPORTH)/rfio.h \
 	 $(EXPORTH)/rfio_api.h $(EXPORTH)/rfio_constants.h \
-	 $(EXPORTH)/rfio_errno.h
+	 $(EXPORTH)/rfio_errno.h $(EXPORTH)/rfio_lcastorfdt.h
 #endif
 #if BuildRtcopyClient
 IRTCP_H = \
 	 FileName($(DESTDIRCASTOR),rtcp.h) FileName($(DESTDIRCASTOR),rtcp_api.h) \
-	 FileName($(DESTDIRCASTOR),rtcp_constants.h)
+	 FileName($(DESTDIRCASTOR),rtcp_constants.h) FileName($(DESTDIRCASTOR),rtcp_server.h)
 ERTCP_H = \
 	 $(EXPORTH)/rtcp.h $(EXPORTH)/rtcp_api.h \
-	 $(EXPORTH)/rtcp_constants.h
+	 $(EXPORTH)/rtcp_constants.h $(EXPORTH)/rtcp_server.h
 #endif
 #if BuildStageClient
 ISTAGE_H = \
-	 FileName($(DESTDIRCASTOR),stage_api.h) FileName($(DESTDIRCASTOR),stage_constants.h) \
+	 FileName($(DESTDIRCASTOR),stage.h) FileName($(DESTDIRCASTOR),stage_api.h) FileName($(DESTDIRCASTOR),stage_constants.h) \
 	 FileName($(DESTDIRCASTOR),stage_limits.h) \
 	 FileName($(DESTDIRCASTOR),stage_macros.h) FileName($(DESTDIRCASTOR),stage_messages.h) \
-	 FileName($(DESTDIRCASTOR),stage_protocol.h) FileName($(DESTDIRCASTOR),stage_struct.h)
+	 FileName($(DESTDIRCASTOR),stage_protocol.h) FileName($(DESTDIRCASTOR),stage_struct.h) FileName($(DESTDIRCASTOR),stage_server_struct.h) FileName($(DESTDIRCASTOR),stage_shift.h)
 ESTAGE_H = \
-	 $(EXPORTH)/stage_api.h $(EXPORTH)/stage_constants.h \
+	 $(EXPORTH)/stage_api.h $(EXPORTH)/stage.h $(EXPORTH)/stage_constants.h \
 	 $(EXPORTH)/stage_limits.h \
 	 $(EXPORTH)/stage_macros.h $(EXPORTH)/stage_messages.h \
-	 $(EXPORTH)/stage_protocol.h $(EXPORTH)/stage_struct.h
+	 $(EXPORTH)/stage_protocol.h $(EXPORTH)/stage_struct.h $(EXPORTH)/stage_server_struct.h $(EXPORTH)/stage_shift.h
 #endif
 #if BuildTapeClient
 ITAPE_H = \
-	 FileName($(DESTDIRCASTOR),Ctape_api.h) FileName($(DESTDIRCASTOR),Ctape_constants.h)
+	 FileName($(DESTDIRCASTOR),Ctape_api.h) FileName($(DESTDIRCASTOR),Ctape_constants.h) FileName($(DESTDIRCASTOR),Ctape.h)
 ETAPE_H = \
-	 $(EXPORTH)/Ctape_api.h $(EXPORTH)/Ctape_constants.h
+	 $(EXPORTH)/Ctape_api.h $(EXPORTH)/Ctape_constants.h $(EXPORTH)/Ctape.h
 #endif
 #if BuildVdqmClient
 IVDQM_H = \
@@ -119,10 +282,10 @@ EVDQM_H = \
 #if BuildVolumeMgrClient
 IVMGR_H = \
 	 FileName($(DESTDIRCASTOR),vmgr_api.h) FileName($(DESTDIRCASTOR),vmgr_constants.h) \
-	 FileName($(DESTDIRCASTOR),vmgr_struct.h)
+	 FileName($(DESTDIRCASTOR),vmgr_struct.h) FileName($(DESTDIRCASTOR),vmgr.h) FileName($(DESTDIRCASTOR),vmgr_server.h)
 EVMGR_H = \
 	 $(EXPORTH)/vmgr_api.h $(EXPORTH)/vmgr_constants.h \
-	 $(EXPORTH)/vmgr_struct.h
+	 $(EXPORTH)/vmgr_struct.h $(EXPORTH)/vmgr.h $(EXPORTH)/vmgr_server.h
 #endif
 #if _WIN32
 IWIN_H = \
@@ -174,17 +337,110 @@ IEXPORT(Cgetopt.h,$(EXPORTH),644)
 InstallNonExecFile(Cglobals.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cglobals.h,$(EXPORTH),644)
 
+InstallNonExecFile(stager.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_catalogInterface.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_catalogInterface.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_client_api_common.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_client_api_common.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_constants.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_constants.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_db_service.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_db_service.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_errmsg.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_errmsg.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_error_service.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_error_service.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_extern_globals.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_extern_globals.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_fs_service.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_fs_service.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_gc_service.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_gc_service.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_getnext_service.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_getnext_service.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_job_service.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_job_service.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_macros.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_macros.h,$(EXPORTH),644)
+
 InstallNonExecFile(stager_mapper.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(stager_mapper.h,$(EXPORTH),644)
 
+InstallNonExecFile(stager_messages.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_messages.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_mover_api.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_mover_api.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_query_service.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_query_service.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_service_api.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_service_api.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_service2name.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_service2name.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_services.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_services.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_util.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_util.h,$(EXPORTH),644)
+
+InstallNonExecFile(stager_uuid.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stager_uuid.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cgrp.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cgrp.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cinit.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cinit.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cmonit_api.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cmonit_api.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cmonit_constants.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cmonit_constants.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cmonit_structs.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cmonit_structs.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cmonitd.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cmonitd.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cmonitd_lock.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cmonitd_lock.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cmutex.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cmutex.h,$(EXPORTH),644)
+
 InstallNonExecFile(Cnetdb.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cnetdb.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cns.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cns.h,$(EXPORTH),644)
 
 InstallNonExecFile(Cns_api.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cns_api.h,$(EXPORTH),644)
 
 InstallNonExecFile(Cns_constants.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cns_constants.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cns_server.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cns_server.h,$(EXPORTH),644)
 
 InstallNonExecFile(Cpool_api.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cpool_api.h,$(EXPORTH),644)
@@ -198,6 +454,54 @@ IEXPORT(Cregexp.h,$(EXPORTH),644)
 InstallNonExecFile(Cregexp_magic.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cregexp_magic.h,$(EXPORTH),644)
 
+InstallNonExecFile(Crmd_checkpoint.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Crmd_checkpoint.h,$(EXPORTH),644)
+
+InstallNonExecFile(Crmd_recv_from_maui.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Crmd_recv_from_maui.h,$(EXPORTH),644)
+
+InstallNonExecFile(Crmd_recv_from_rmnode.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Crmd_recv_from_rmnode.h,$(EXPORTH),644)
+
+InstallNonExecFile(Crmd_recv_from_users.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Crmd_recv_from_users.h,$(EXPORTH),644)
+
+InstallNonExecFile(Crmd_survey.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Crmd_survey.h,$(EXPORTH),644)
+
+InstallNonExecFile(Crmd_tape_feature.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Crmd_tape_feature.h,$(EXPORTH),644)
+
+InstallNonExecFile(Csec.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Csec.h,$(EXPORTH),644)
+
+InstallNonExecFile(Csec_api.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Csec_api.h,$(EXPORTH),644)
+
+InstallNonExecFile(Csec_common.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Csec_common.h,$(EXPORTH),644)
+
+InstallNonExecFile(Csec_constants.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Csec_constants.h,$(EXPORTH),644)
+
+InstallNonExecFile(Csec_plugin.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Csec_plugin.h,$(EXPORTH),644)
+
+InstallNonExecFile(Csec_plugin_loader.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Csec_plugin_loader.h,$(EXPORTH),644)
+
+InstallNonExecFile(Csec_protocol.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Csec_protocol.h,$(EXPORTH),644)
+
+InstallNonExecFile(Csec_struct.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Csec_struct.h,$(EXPORTH),644)
+
+InstallNonExecFile(Csemaphore.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Csemaphore.h,$(EXPORTH),644)
+
+InstallNonExecFile(Csnprintf.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Csnprintf.h,$(EXPORTH),644)
+
 InstallNonExecFile(Csched_api.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Csched_api.h,$(EXPORTH),644)
 
@@ -206,6 +510,9 @@ IEXPORT(Csched_flags.h,$(EXPORTH),644)
 
 InstallNonExecFile(Csetprocname.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Csetprocname.h,$(EXPORTH),644)
+
+InstallNonExecFile(Ctape.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Ctape.h,$(EXPORTH),644)
 
 InstallNonExecFile(Ctape_api.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Ctape_api.h,$(EXPORTH),644)
@@ -216,11 +523,71 @@ IEXPORT(Ctape_constants.h,$(EXPORTH),644)
 InstallNonExecFile(Cthread_api.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cthread_api.h,$(EXPORTH),644)
 
+InstallNonExecFile(Cthread_typedef.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cthread_typedef.h,$(EXPORTH),644)
+
 InstallNonExecFile(Cthread_flags.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cthread_flags.h,$(EXPORTH),644)
 
+InstallNonExecFile(Cupv.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cupv.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cupv_api.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cupv_api.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cupv_constants.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cupv_constants.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cupv_server.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cupv_server.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cupv_struct.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cupv_struct.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cupv_util.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cupv_util.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cuuid.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cuuid.h,$(EXPORTH),644)
+
+InstallNonExecFile(RfioTURL.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(RfioTURL.h,$(EXPORTH),644)
+
+InstallNonExecFile(rfio_lcastorfdt.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(rfio_lcastorfdt.h,$(EXPORTH),644)
+
 InstallNonExecFile(common.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(common.h,$(EXPORTH),644)
+
+InstallNonExecFile(dlf.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(dlf.h,$(EXPORTH),644)
+
+InstallNonExecFile(dlf_api.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(dlf_api.h,$(EXPORTH),644)
+
+InstallNonExecFile(dlf_constants.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(dlf_constants.h,$(EXPORTH),644)
+
+InstallNonExecFile(dlf_server.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(dlf_server.h,$(EXPORTH),644)
+
+InstallNonExecFile(dlf_struct.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(dlf_struct.h,$(EXPORTH),644)
+
+InstallNonExecFile(dmc.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(dmc.h,$(EXPORTH),644)
+
+InstallNonExecFile(expert.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(expert.h,$(EXPORTH),644)
+
+InstallNonExecFile(expert_api.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(expert_api.h,$(EXPORTH),644)
+
+InstallNonExecFile(expert_constants.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(expert_constants.h,$(EXPORTH),644)
+
+InstallNonExecFile(expert_daemon.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(expert_daemon.h,$(EXPORTH),644)
 
 InstallNonExecFile(getacct.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(getacct.h,$(EXPORTH),644)
@@ -228,11 +595,20 @@ IEXPORT(getacct.h,$(EXPORTH),644)
 InstallNonExecFile(getacctent.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(getacctent.h,$(EXPORTH),644)
 
+InstallNonExecFile(getconfent.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(getconfent.h,$(EXPORTH),644)
+
 InstallNonExecFile(log.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(log.h,$(EXPORTH),644)
 
 InstallNonExecFile(marshall.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(marshall.h,$(EXPORTH),644)
+
+InstallNonExecFile(md5.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(md5.h,$(EXPORTH),644)
+
+InstallNonExecFile(msg.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(msg.h,$(EXPORTH),644)
 
 InstallNonExecFile(net.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(net.h,$(EXPORTH),644)
@@ -258,6 +634,36 @@ IEXPORT(rfio_constants.h,$(EXPORTH),644)
 InstallNonExecFile(rfio_errno.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(rfio_errno.h,$(EXPORTH),644)
 
+InstallNonExecFile(rm_api.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(rm_api.h,$(EXPORTH),644)
+
+InstallNonExecFile(rm_constants.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(rm_constants.h,$(EXPORTH),644)
+
+InstallNonExecFile(rm_limits.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(rm_limits.h,$(EXPORTH),644)
+
+InstallNonExecFile(rm_macros.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(rm_macros.h,$(EXPORTH),644)
+
+InstallNonExecFile(rm_messages.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(rm_messages.h,$(EXPORTH),644)
+
+InstallNonExecFile(rm_struct.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(rm_struct.h,$(EXPORTH),644)
+
+InstallNonExecFile(rmc.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(rmc.h,$(EXPORTH),644)
+
+InstallNonExecFile(rmc_api.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(rmc_api.h,$(EXPORTH),644)
+
+InstallNonExecFile(rmc_constants.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(rmc_constants.h,$(EXPORTH),644)
+
+InstallNonExecFile(rmnode_util.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(rmnode_util.h,$(EXPORTH),644)
+
 InstallNonExecFile(rtcp.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(rtcp.h,$(EXPORTH),644)
 
@@ -267,11 +673,35 @@ IEXPORT(rtcp_api.h,$(EXPORTH),644)
 InstallNonExecFile(rtcp_constants.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(rtcp_constants.h,$(EXPORTH),644)
 
+InstallNonExecFile(rtcp_server.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(rtcp_server.h,$(EXPORTH),644)
+
+InstallNonExecFile(rtcpcld.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(rtcpcld.h,$(EXPORTH),644)
+
+InstallNonExecFile(rtcpcld_constants.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(rtcpcld_constants.h,$(EXPORTH),644)
+
+InstallNonExecFile(rtcpcld_messages.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(rtcpcld_messages.h,$(EXPORTH),644)
+
+InstallNonExecFile(rtcpcldapi.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(rtcpcldapi.h,$(EXPORTH),644)
+
+InstallNonExecFile(scsictl.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(scsictl.h,$(EXPORTH),644)
+
 InstallNonExecFile(serrno.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(serrno.h,$(EXPORTH),644)
 
+InstallNonExecFile(smc.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(smc.h,$(EXPORTH),644)
+
 InstallNonExecFile(socket_timeout.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(socket_timeout.h,$(EXPORTH),644)
+
+InstallNonExecFile(stage.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stage.h,$(EXPORTH),644)
 
 InstallNonExecFile(stage_api.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(stage_api.h,$(EXPORTH),644)
@@ -291,11 +721,20 @@ IEXPORT(stage_messages.h,$(EXPORTH),644)
 InstallNonExecFile(stage_protocol.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(stage_protocol.h,$(EXPORTH),644)
 
+InstallNonExecFile(stage_server_struct.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stage_server_struct.h,$(EXPORTH),644)
+
+InstallNonExecFile(stage_shift.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(stage_shift.h,$(EXPORTH),644)
+
 InstallNonExecFile(stage_struct.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(stage_struct.h,$(EXPORTH),644)
 
 InstallNonExecFile(trace.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(trace.h,$(EXPORTH),644)
+
+InstallNonExecFile(util.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(util.h,$(EXPORTH),644)
 
 InstallNonExecFile(u64subr.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(u64subr.h,$(EXPORTH),644)
@@ -309,11 +748,17 @@ IEXPORT(vdqm_api.h,$(EXPORTH),644)
 InstallNonExecFile(vdqm_constants.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(vdqm_constants.h,$(EXPORTH),644)
 
+InstallNonExecFile(vmgr.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(vmgr.h,$(EXPORTH),644)
+
 InstallNonExecFile(vmgr_api.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(vmgr_api.h,$(EXPORTH),644)
 
 InstallNonExecFile(vmgr_constants.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(vmgr_constants.h,$(EXPORTH),644)
+
+InstallNonExecFile(vmgr_server.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(vmgr_server.h,$(EXPORTH),644)
 
 InstallNonExecFile(vmgr_struct.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(vmgr_struct.h,$(EXPORTH),644)
@@ -329,9 +774,6 @@ IEXPORT(stager_admin_api.h,$(EXPORTH),644)
 
 InstallNonExecFile(stager_client_api.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(stager_client_api.h,$(EXPORTH),644)
-
-InstallNonExecFile(stager_service_api.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(stager_service_api.h,$(EXPORTH),644)
 
 #if _WIN32
 InstallNonExecFile(dirent.h,$(DESTDIRCASTOR),root,bin,644)
