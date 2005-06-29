@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.17 2005/06/17 12:40:52 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.18 2005/06/29 10:07:02 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.17 $ $Date: 2005/06/17 12:40:52 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.18 $ $Date: 2005/06/29 10:07:02 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -757,7 +757,13 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
     serrno = e.code();
     STAGER_LOG_DB_ERROR(NULL,"stager_query_select",
                         e.getMessage().str().c_str());
-    if (req) delete req;
+    if (0 != req) {
+      castor::stager::SvcClass *svcClass = req->svcClass();
+      if (0 != svcClass) {
+        delete svcClass;
+      }
+      delete req;
+    }
     if (qrySvc) qrySvc->release();
     return -1;
   }
@@ -790,13 +796,25 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
     castor::exception::Internal e;
     e.getMessage() << "Unknown Request type : "
                    << castor::ObjectsIdStrings[req->type()];
-    if (req) delete req;
+    if (0 != req) {
+      castor::stager::SvcClass *svcClass = req->svcClass();
+      if (0 != svcClass) {
+        delete svcClass;
+      }
+      delete req;
+    }
     if (qrySvc) qrySvc->release();
     throw e;
   }
 
   // Cleanup
-  if (req) delete req;
+  if (0 != req) {
+    castor::stager::SvcClass *svcClass = req->svcClass();
+    if (0 != svcClass) {
+      delete svcClass;
+    }
+    delete req;
+  }
   if (qrySvc) qrySvc->release();
   if (stgSvc) stgSvc->release();
   STAGER_LOG_RETURN(serrno == 0 ? 0 : -1);
