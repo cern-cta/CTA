@@ -251,7 +251,7 @@ static int first_read;
 static off64_t          byte_read_from_network;
 static struct rfiostat  myinfo;
 /* Context for the open/firstwrite/close handlers */
-static void *handler_context;
+extern void *handler_context;
 #endif   /* WIN32 */
 #endif   /* HPSS */
 
