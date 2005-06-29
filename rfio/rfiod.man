@@ -1,0 +1,85 @@
+.\"
+.\" $Id: rfiod.man,v 1.1 2005/06/29 10:09:06 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: rfiod.man,v $ $Revision: 1.1 $ $Date: 2005/06/29 10:09:06 $ CERN/IT/PDP/DM
+.\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RFIOD 1 "$Date: 2005/06/29 10:09:06 $" CASTOR "Rfio Administrator Commands"
+.SH NAME
+rfiod\- Remote file access daemon
+.SH SYNOPSIS
+.B rfiod [options]
+.SH DESCRIPTION
+.IX "\fLrfiod\fR"
+.IX  tcp
+rfiod start the daemon handling remote file access requests.
+This command is usually executed at system startup time
+.RB ( /etc/rc.local ).
+.SH OPTIONS
+Recommended options are:
+.B \-sl.
+.TP
+.B \-d
+Turn on printing of debug messages. Default output device is stderr.
+.TP
+.BI \-f " filename"
+Output filename for error, logging and debugging messages.
+Normal error messages are sent to syslog unless otherwise specified.
+Two filenames are special : "stderr", which will send messages to standard
+error and "syslog" which will send to syslog.
+.TP
+.B \-l
+Turn on printing of log messages. Default output device is in
+.BR /usr/spool/rfio/rfiod.log .
+.TP
+.BI \-p " port"
+Use port as a replacement of the services entry. Useful for
+debugging only. If port is not specified in services, default
+value RFIO_PORT, defined in rfio_constants.h is used.
+.TP
+.B \-s
+Turn on Standalone mode.
+This option should always be set when rfiod is not started by inetd.
+.TP
+.B \-t
+Turn on single threaded mode. Useful for debugging as no processes
+are created.
+.TP
+.B \-T " timeout"
+Timeout on the select() system call - default is 1 second. This option should not be used interactively.
+.TP
+.B \-M " umask"
+Forced server umask. This option should not be used interactively.
+.TP
+.B \-D " directory"
+Set current working directory.
+.TP
+.B \-n
+Do not detach from controlling terminal. Used only if \-d option is not set.
+.TP
+.B \-S " socket_parent"
+Assuming a listening socket was creating beforehand, do not close this socket when daemonizing. This option should not be used interactively.
+.TP
+.B \-P " socket_parent_port"
+Assuming a listening socket was creating beforehand, do not try to bind to standard port, but takes over listening on this given port. This option should not be used interactively.
+.TP
+.B \-1
+Accept a single connection and exit. This option should not be used interactively.
+.TP
+.B \-U
+Ignore uid/gid from the protocol. This option should not be used interactively.
+.TP
+.B \-Z " subrequest_id"
+Use hooks at open/close/first_byte_writen to commit in the CASTOR2 databases changes to the file. This option should not be used interactively.
+.SH EXAMPLE
+.RS
+.HP
+/usr/local/bin/rfiod -sl
+.RE
+.SH "SEE ALSO"
+.BR syslog(8) ,
+.BR services(5) ,
+.B tcp(4)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
