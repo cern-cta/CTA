@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.27 2005/06/29 09:44:04 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.28 2005/06/29 10:01:37 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.27 $ $Date: 2005/06/29 09:44:04 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.28 $ $Date: 2005/06/29 10:01:37 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -332,8 +332,8 @@ namespace castor {
 
         /* Invoking the method                */
         /* ---------------------------------- */
-	STAGER_LOG_DEBUG(NULL, "Invoking putDoneStart");
-	dc = stgSvc->putDoneStart(sReq->subreqId());
+        STAGER_LOG_DEBUG(NULL, "Invoking putDoneStart");
+        dc = stgSvc->putDoneStart(sReq->subreqId());
 
         /* Fill DiskCopy with SubRequest           */
         /* --------------------------------------- */
@@ -366,7 +366,16 @@ namespace castor {
 
       /* Cleanup                        */
       /* ------------------------------ */
-      if (dc) delete dc;
+      if (dc) {
+        std::vector<castor::stager::SubRequest*> srs = dc->subRequests();
+        for (std::vector<castor::stager::SubRequest*>::iterator it =
+               srs.begin();
+             it != srs.end();
+             it++) {
+          delete *it;
+        }
+        delete dc;
+      }
     }
 
     /**
