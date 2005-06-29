@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.18 2005/03/15 22:56:10 bcouturi Exp $
+ * $Id: rfio_serv.c,v 1.19 2005/06/29 17:22:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.18 $ $Date: 2005/03/15 22:56:10 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.19 $ $Date: 2005/06/29 17:22:33 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */
@@ -222,6 +222,13 @@ int max_sndbuf;
 char *forced_filename = NULL;
 int forced_umask = -1;
 int ignore_uid_gid = 0;
+u_signed64 subrequest_id = 0;
+void *handler_context = NULL;
+
+/* Use when option -Z is set : then this is putted to zero */
+/* only if the close hook was executed successfully */
+int forced_mover_exit_error = 1;
+
 
 #if defined(_WIN32)         /* WIN32 version with multithread support */
 #define MAX_THREADS 64      /*  */
@@ -339,7 +346,7 @@ char    **argv;
    }
 #endif /* if WIN32 */
 #if !defined(_WIN32)
-   while ((option = getopt(argc,argv,"sdltf:p:P:D:M:nS:1T:U")) != EOF) {
+   while ((option = getopt(argc,argv,"sdltf:p:P:D:M:nS:1R:T:UZ:")) != EOF) {
       switch (option) {
          case 'd':
 			debug++;
@@ -383,6 +390,9 @@ char    **argv;
             break;
          case 'U':
 			ignore_uid_gid++;
+            break;
+         case 'Z':
+			subrequest_id = strtou64(optarg);
             break;
 	  default:
 		  fprintf(stderr,"Unknown option '%c'\n", option);
@@ -821,7 +831,7 @@ char    **argv;
 		    } else if (! have_a_child) {
 		      /* error and no child : we assume very old client */
 		      log(LOG_DEBUG,"Exiting with status %d\n", 0);
-		      exit(0);
+		      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
 		    }
 		  }
 		  FD_ZERO (&readfd);
@@ -833,7 +843,7 @@ char    **argv;
 	    } else if (! have_a_child) {
 	      /* timeout and no child : we assume very old client */
 	      log(LOG_DEBUG,"Exiting with status %d\n", 0);
-	      exit(0);
+	      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
 	    }
 	  }
      }
@@ -1220,7 +1230,7 @@ char tmpbuf[21], tmpbuf2[21];
             return(mt_cleanup(td, &fd, 0));
 #endif
             shutdown(s, 2); close(s);
-            if (mode) return(0); else  exit(0);
+            if (mode) return(0); else  exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
             break;
          case RQST_OPEN  :
             log(LOG_DEBUG, "request type <open()>\n");
@@ -1251,7 +1261,7 @@ char tmpbuf[21], tmpbuf2[21];
             return(mt_cleanup(td, &fd, 0));     
 #endif
             shutdown(s, 2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
 #if !defined(_WIN32)
          case RQST_CLOSEDIR  :
             log(LOG_DEBUG, "request type <closedir()>\n");
@@ -1262,7 +1272,7 @@ char tmpbuf[21], tmpbuf2[21];
             return(rhpss_cleanup(s,&fd,dirp,0));
 #endif /* HPSS */
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
             break;
 #endif /* WIN32 */
          case RQST_READ  :
@@ -1347,7 +1357,7 @@ char tmpbuf[21], tmpbuf2[21];
                return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
                shutdown(s, 2); close(s);
-               if(mode) return(0); else exit(0);
+               if(mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
             }  /* if request == RQST_STAT  */
             break ;
 #if !defined(_WIN32) 
@@ -1360,7 +1370,7 @@ char tmpbuf[21], tmpbuf2[21];
             return(rhpss_cleanup(s,&fd,dirp,0));
 #endif /* HPSS */
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
 #endif /* WIN32 */
          case RQST_LSEEK :
             info.seekop ++ ;
@@ -1397,7 +1407,7 @@ char tmpbuf[21], tmpbuf2[21];
             return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
 #if !defined(_WIN32)
          case RQST_MSYMLINK :
          case RQST_SYMLINK :
@@ -1409,7 +1419,7 @@ char tmpbuf[21], tmpbuf2[21];
             return(rhpss_cleanup(s,&fd,dirp,0));
 #endif /* HPSS */
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
             }
             break;
          case RQST_READLINK:
@@ -1421,7 +1431,7 @@ char tmpbuf[21], tmpbuf2[21];
 #endif /* HPSS */
             shutdown(s,2); close(s);
             log(LOG_DEBUG, "srreadlink() returned %d\n", status) ;
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
          case RQST_REWINDDIR:
             info.seekop ++;
             log(LOG_DEBUG, "request type <rewinddir()>\n");
@@ -1440,7 +1450,7 @@ char tmpbuf[21], tmpbuf2[21];
             return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
          case RQST_POPEN :
             log(LOG_DEBUG, "request type <popen()>\n");
             streamf = srpopen(s, from_host, (bet?is_remote:0) ) ;
@@ -1467,7 +1477,7 @@ char tmpbuf[21], tmpbuf2[21];
             return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
 #if !defined(_WIN32)
          case RQST_ACCESS :
             log(LOG_DEBUG,"request type <access()>\n");
@@ -1477,7 +1487,7 @@ char tmpbuf[21], tmpbuf2[21];
             return(rhpss_cleanup(s,&fd,dirp,0));
 #endif /* HPSS */
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
 #endif /* WIN32 */  
          case RQST_MKDIR :
             log(LOG_DEBUG,"request type <mkdir()>\n");
@@ -1490,7 +1500,7 @@ char tmpbuf[21], tmpbuf2[21];
              return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
          case RQST_RMDIR :
             log(LOG_DEBUG,"request type <rmdir()>\n");
             status = srrmdir(s,from_host,is_remote) ;
@@ -1502,7 +1512,7 @@ char tmpbuf[21], tmpbuf2[21];
              return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */  
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
          case RQST_CHMOD:
             log(LOG_DEBUG,"request type <chmod()>\n");
             status = srchmod(s,from_host,is_remote) ;
@@ -1514,7 +1524,7 @@ char tmpbuf[21], tmpbuf2[21];
              return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */  
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
 #if !defined(_WIN32)
          case RQST_CHOWN:
             log(LOG_DEBUG,"request type <chown()>\n");
@@ -1524,7 +1534,7 @@ char tmpbuf[21], tmpbuf2[21];
             return(rhpss_cleanup(s,&fd,dirp,0));
 #endif /* HPSS */
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
 #endif /* WIN32 */  
          case RQST_RENAME:
             log(LOG_DEBUG,"request type <rename()>\n");
@@ -1537,7 +1547,7 @@ char tmpbuf[21], tmpbuf2[21];
              return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */  
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
 #if !defined(_WIN32)
          case RQST_LOCKF:
             log(LOG_DEBUG,"request type <lockf()>\n");
@@ -1562,7 +1572,7 @@ char tmpbuf[21], tmpbuf2[21];
              return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */  
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
             break ;
          case RQST_OPEN_V3:
             log(LOG_DEBUG,"request type : open_v3\n");
@@ -1581,7 +1591,7 @@ char tmpbuf[21], tmpbuf2[21];
             return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
             break;
          case RQST_READ_V3:
             log(LOG_DEBUG,"request type : read_v3\n");
@@ -1595,7 +1605,7 @@ char tmpbuf[21], tmpbuf2[21];
 #endif /* WIN32 */
             fd = -1;
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
             break;
          case RQST_WRITE_V3:
             log(LOG_DEBUG,"request type : write_v3\n");
@@ -1609,7 +1619,7 @@ char tmpbuf[21], tmpbuf2[21];
 #endif /* WIN32 */
             fd = -1;
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
             break;
          case RQST_LSEEK_V3:
             info.seekop++;
@@ -1634,7 +1644,7 @@ char tmpbuf[21], tmpbuf2[21];
             return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
             break;
          case RQST_READ64_V3:
             log(LOG_DEBUG,"request type : read64_v3\n");
@@ -1648,7 +1658,7 @@ char tmpbuf[21], tmpbuf2[21];
 #endif /* WIN32 */
             fd = -1;
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
             break;
          case RQST_WRITE64_V3:
             log(LOG_DEBUG,"request type : write64_v3\n");
@@ -1662,7 +1672,7 @@ char tmpbuf[21], tmpbuf2[21];
 #endif /* WIN32 */
             fd = -1;
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
             break;
 #if defined(FORTRAN)
          case RQST_XYOPEN  :
@@ -1678,7 +1688,7 @@ char tmpbuf[21], tmpbuf2[21];
             return(rhpss_cleanup(s,&fd,dirp,0));
 #endif /* HPSS */
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
          case RQST_XYREAD  :
             info.readop ++ ;
             log(LOG_DEBUG, "request type <xyread()>\n");
@@ -1741,7 +1751,7 @@ char tmpbuf[21], tmpbuf2[21];
                return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
                shutdown(s, 2); close(s);
-               if(mode) return(0); else exit(0);
+               if(mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
             }  /* if request == RQST_STAT64  */
             break ;
 #if !defined(_WIN32)
@@ -1753,7 +1763,7 @@ char tmpbuf[21], tmpbuf2[21];
             return(rhpss_cleanup(s,&fd,dirp,0));
 #endif /* HPSS */
             shutdown(s,2); close(s);
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
             break;
 #endif /* ! _WIN32  */
          default :
@@ -1764,7 +1774,7 @@ char tmpbuf[21], tmpbuf2[21];
 #if defined(_WIN32)
              return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
-            if (mode) return(0); else exit(0);
+            if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
             break;
       }  /* End of switch (request) */
    }  /* End of for (;;) */
