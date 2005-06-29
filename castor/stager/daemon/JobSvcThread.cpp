@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.28 2005/06/29 10:01:37 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.29 2005/06/29 10:26:18 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.28 $ $Date: 2005/06/29 10:01:37 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.29 $ $Date: 2005/06/29 10:26:18 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -293,7 +293,16 @@ namespace castor {
       /* ------------------------------ */
       if (fs) delete fs;
       if (subreq) delete subreq;
-      if (dc) delete dc;
+      if (dc) {
+        std::vector<castor::stager::SubRequest*> srs = dc->subRequests();
+        for (std::vector<castor::stager::SubRequest*>::iterator it =
+               srs.begin();
+             it != srs.end();
+             it++) {
+          delete *it;
+        }
+        delete dc;
+      }
       if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
         for (std::list<castor::stager::DiskCopyForRecall*>::iterator it =
                sources.begin();
