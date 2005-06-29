@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.26 2005/06/06 14:13:06 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.27 2005/06/29 09:44:04 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.26 $ $Date: 2005/06/06 14:13:06 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.27 $ $Date: 2005/06/29 09:44:04 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -41,6 +41,7 @@ static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.26 $ $Dat
 #include "castor/stager/Request.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/DiskServer.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/FileSystem.hpp"
 #include "castor/stager/GetUpdateStartRequest.hpp"
@@ -245,7 +246,19 @@ namespace castor {
           svcs->fillObj(&ad, dc, castor::OBJ_SubRequest);
         }
 
+        /* Cleanup */
+        /* ------- */
+        delete fs->diskserver();
+        delete fs;
+
       } catch (castor::exception::Exception e) {
+        if (0 != fs) {
+          castor::stager::DiskServer *ds = fs->diskserver();
+          if (0 != ds) {
+            delete ds;
+          }
+          delete fs;
+        }
         serrno = e.code();
         error = e.getMessage().str();
         STAGER_LOG_DB_ERROR(NULL, func,
