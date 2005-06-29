@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.18 2005/06/29 10:07:02 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.19 2005/06/29 14:32:55 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.18 $ $Date: 2005/06/29 10:07:02 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.19 $ $Date: 2005/06/29 14:32:55 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -287,46 +287,55 @@ namespace castor {
 
         /* Invoking the method                */
         /* ---------------------------------- */
-          STAGER_LOG_DEBUG(NULL, "Invoking diskCopies4File");
-          std::list<castor::stager::DiskCopyInfo*> result =
-            qrySvc->diskCopies4File(fid, nshost, svcClassId);
+        STAGER_LOG_DEBUG(NULL, "Invoking diskCopies4File");
+        std::list<castor::stager::DiskCopyInfo*> result =
+          qrySvc->diskCopies4File(fid, nshost, svcClassId);
 
-          if (result.size() == 0) {
-            castor::exception::Exception e(ENOENT);
-            e.getMessage() << "File " << fid << "@"
-                           << nshost << " not in stager";
-            throw e;
-          }
+        if (result.size() == 0) {
+          castor::exception::Exception e(ENOENT);
+          e.getMessage() << "File " << fid << "@"
+                         << nshost << " not in stager";
+          throw e;
+        }
 
-          castor::rh::FileQueryResponse res;
-          std::ostringstream sst;
-          sst << fid << "@" <<  nshost;
-          res.setFileName(sst.str());
-          bool foundDiskCopy = false;
+        castor::rh::FileQueryResponse res;
+        std::ostringstream sst;
+        sst << fid << "@" <<  nshost;
+        res.setFileName(sst.str());
+        bool foundDiskCopy = false;
 
-          for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
-                = result.begin();
-              dcit != result.end();
-              ++dcit) {
+        for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+              = result.begin();
+            dcit != result.end();
+            ++dcit) {
 
-            castor::stager::DiskCopyInfo* diskcopy = *dcit;
-            /* Preparing the response */
-            /* ---------------------- */
-            res.setSize(diskcopy->size());
-            setFileResponseStatus(&res, diskcopy, foundDiskCopy);
-          }
+          castor::stager::DiskCopyInfo* diskcopy = *dcit;
+          /* Preparing the response */
+          /* ---------------------- */
+          res.setSize(diskcopy->size());
+          setFileResponseStatus(&res, diskcopy, foundDiskCopy);
+        }
 
-          // INVALID status is like nothing
-          if (res.status() == FILE_INVALID_STATUS) {
-            castor::exception::Exception e(ENOENT);
-            e.getMessage() << "File " << fid << "@"
-                           << nshost << " not in stager";
-            throw e;
-          }
+        // INVALID status is like nothing
+        if (res.status() == FILE_INVALID_STATUS) {
+          castor::exception::Exception e(ENOENT);
+          e.getMessage() << "File " << fid << "@"
+                         << nshost << " not in stager";
+          throw e;
+        }
 
-          /* Sending the response */
-          /* -------------------- */
-          replyToClient(client, &res);
+        /* Sending the response */
+        /* -------------------- */
+        replyToClient(client, &res);
+
+        /* Cleanup */
+        /* ------- */
+        for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+              = result.begin();
+            dcit != result.end();
+            ++dcit) {
+          delete *dcit;
+        }
 
       }
 
@@ -521,7 +530,7 @@ namespace castor {
                                << uReq;
                 throw e;
               }
-              
+
               // This time call the proper handling request
               switch(ptype) {
               case REQUESTQUERYTYPE_FILENAME:
@@ -750,7 +759,7 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
     /* -------------------------------- */
     req->setSvcClass(svcClass);
     svcs->fillRep(&ad, req, castor::OBJ_SvcClass, true);
-    
+
   } catch (castor::exception::Exception e) {
     // If we fail here, we do NOT have enough information to
     // reply to the client !
