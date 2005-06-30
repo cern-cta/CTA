@@ -242,7 +242,7 @@ int castor::gc::GcDaemon::start()
         try {
           gcfilestotal++;
           u_signed64 gcfilesize = gcRemoveFilePath((*it)->fileName());
-          gcremovedsize =+ gcfilesize;
+          gcremovedsize += gcfilesize;
           gcfilesremoved++;
           // "Removed file successfully" message
           castor::dlf::Param params[] =
