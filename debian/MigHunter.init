@@ -1,0 +1,183 @@
+#!/bin/sh
+#
+# MigHunter         Start/Stop MigHunters
+#
+# chkconfig: 345 73 32
+# description: MigHunter daemons
+#
+# $Id: MigHunter.init,v 1.1 2005/06/30 10:59:54 jdurand Exp $
+#
+# @(#)$RCSfile: MigHunter.init,v $ $Revision: 1.1 $ $Date: 2005/06/30 10:59:54 $ CERN/IT/ADC Jean-Damien Durand
+#
+
+#
+## Try to guess about oracle environment - cross your fingers or use sysconfig
+#
+DBHOME=`which dbhome 2>/dev/null`
+if [ -n "$DBHOME" ]; then
+  export ORACLE_HOME=`dbhome CASTOR`
+else
+  # Cross your fingers
+  export ORACLE_HOME=/oracle/product/castor
+fi
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$ORACLE_HOME/lib
+export PATH=${PATH}:${ORACLE_HOME}/bin
+
+sysname=`uname -s`
+
+# source function library
+if [ -r /etc/rc.d/init.d/functions ]; then
+	. /etc/rc.d/init.d/functions
+	DAEMON=daemon
+	FAILURE=failure
+	ECHO_FAILURE=failure
+	SUCCESS=success
+	ECHO_SUCCESS=echo_success
+	ECHO_END=echo
+	if [ $sysname = "Linux" ]; then
+		ECHOOPT=-n
+	fi
+else
+	DAEMON=
+	FAILURE=
+	ECHO_FAILURE=
+	SUCCESS=
+	ECHO_SUCCESS=
+	ECHOOPT=
+	ECHO_END=
+fi
+
+RETVAL=0
+prog="MigHunter"
+[ -z "$SILENTSTOP" ] && SILENTSTOP=0
+MIGHUNTER=/usr/bin/MigHunter
+OPTIONS=""
+SYSCONFIGMIGHUNTER=/etc/sysconfig/MigHunter
+
+if [ $sysname = "HP-UX" ]; then
+	export UNIX95=1
+fi
+if [ $sysname = "SunOS" ]; then
+	format4comm="fname"
+else
+	format4comm="comm"
+fi
+
+#
+## Unless sysconfig says no the default is to run the MigHunter
+#
+RUN_MIGHUNTER=yes
+
+case "$1" in
+  start)
+        if [ -r $SYSCONFIMIGHUNTER ]; then
+            #
+            ## Source the configuration
+            #
+            [ -r $SYSCONFIGMIGHUNTER ] && . $SYSCONFIGMIGHUNTER
+            if [ "${RUN_MIGHUNTER}" != "yes" ]; then
+                echo $ECHOOPT "$SYSCONFIGMIGHUNTER says NO: "
+                [ -n "$FAILURE" ] && $FAILURE "$SYSCONFIGMIGHUNTER says NO: "
+                RETVAL=1
+            fi
+            if [ -n "${ULIMIT_N}" ]; then
+                ulimit -n ${ULIMIT_N}
+            fi
+        fi
+        if [ $RETVAL -eq 0 ]; then
+            #
+            ## Because we might generate a core file
+            ## We explicitely chdir in the workdir
+            #
+	    cd /var/spool/rtcpclientd
+            if [ -z "${SVCCLASSES}" ]; then
+                echo $ECHOOPT "No Service Class to MigHunter'ise: "
+                [ -n "$FAILURE" ] && $FAILURE "No Service Class to MigHunter'ise: "
+                RETVAL=1
+	    else
+	        for i in ${SVCCLASSES}; do
+                  [ -r /etc/sysconfig/MigHunter.$i ] && . /etc/sysconfig/MigHunter.$i
+		  echo $ECHOOPT "Starting ${prog} for $i Service Class: "
+                  $DAEMON $MIGHUNTER $OPTIONS $i
+		  $ECHO_END
+	        done
+                RETVAL=0
+	    fi
+        fi
+	;;
+  stop)
+	pid=`ps -eo pid,ppid,$format4comm | grep " 1 MigHunter" | awk '{print $1}'`
+	if [ -n "$pid" ]; then
+		[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Stopping ${prog}(s): "
+            if [ $SILENTSTOP -eq 0 ]; then
+                kill -9 $pid
+            else
+                kill -9 $pid >& /dev/null
+            fi
+	    RETVAL=$?
+	else
+		[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "MigHunter already stopped: "
+		[ $SILENTSTOP -eq 0 -a -n "$FAILURE" ] && $FAILURE "MigHunter already stopped: "
+ 		RETVAL=1
+	fi
+	if [ $SILENTSTOP -eq 0 -a $sysname = "Linux" ]; then
+		if [ $RETVAL -eq 0 ]; then
+ 			$ECHO_SUCCESS
+		else
+ 			$ECHO_FAILURE
+		fi
+	fi
+	[ $SILENTSTOP -eq 0 -a -n "$ECHO_END" ] && $ECHO_END
+    #
+    ## Basically: if SILENTSTOP is not 0 when we never print something
+    ## But if the stop is successful... One might want to see stop: OK
+    ## anyway ?
+    #
+	if [ $SILENTSTOP -ne 0 -a $RETVAL -eq 0 ]; then
+        echo $ECHOOPT "Stopping $prog: "
+        [ $sysname = "Linux" ] && $ECHO_SUCCESS
+        [ -n "$ECHO_END" ] && $ECHO_END
+    fi
+	;;
+  restart)
+	$0 stop
+	if [ $? -eq 0 -o $SILENTSTOP -eq 0 ]; then
+		$0 start
+		RETVAL=$?
+	else
+        #
+        ## It is legal to return zero it if was
+        ## a conditional restart
+        #
+        if [ $SILENTSTOP -eq 0 ]; then
+            RETVAL=1
+        else
+            RETVAL=0
+        fi
+	fi
+	;;
+  condrestart)
+	SILENTSTOP=1
+    export SILENTSTOP
+	$0 restart
+    RETVAL=$?
+	;;
+  status)
+	pid=`ps -eo pid,ppid,$format4comm | grep " 1 MigHunter" | awk '{print $1}' | xargs`
+	if [ -n "$pid" ]; then
+		echo $ECHOOPT "MigHunter (pid $pid) is running..."
+		$ECHO_SUCCESS
+		$ECHO_END
+	else
+		echo $ECHOOPT "MigHunter is stopped"
+		$ECHO_FAILURE
+		$ECHO_END
+	fi
+	;;
+  *)
+	echo "Usage: $0 {start|stop|status|restart|condrestart}"
+	RETVAL=1
+	;;
+esac
+
+exit $RETVAL
