@@ -1900,6 +1900,19 @@ BEGIN
 END;
 
 /*
+ * Trigger launching garbage collection whenever needed
+ * Note that we only launch it when at least 10 gigs are to be deleted
+ */
+CREATE OR REPLACE TRIGGER tr_FileSystem_Update
+BEFORE Update ON FileSystem
+FOR EACH ROW
+BEGIN
+  IF :new.maxFreeSpace - :new.free - :new.deltaFree + :new.reservedSpace - :new.spaceToBeFreed > 10000000000 THEN
+    garbageCollectFS(:new.id);
+  END IF;
+END;
+
+/*
  * PL/SQL method implementing the core part of stage queries
  * It takes a list of castorfile ids as input
  */
