@@ -206,7 +206,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-rtcopy-clientserver
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-dbtools
 Description: castor (Cern Advanced STORage system)
  Remote Tape Copy Client Server running on top of a database.
  This will generate raw RTCOPY commands understood by the rtcopy-server
