@@ -1,3 +1,12 @@
+castor (2.0.0-44) unstable; urgency=low
+
+  * Fixed memory leaks
+  * Added rfiod open/close handlers
+  * Added trigger to garbage collection
+  * Fixed problem with nbtapecopiesinfs table with negative values
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Thu, 30 Jun 2005 13:04:52 +0200
+
 castor (2.0.0-43) unstable; urgency=low
 
   * Revisited stager command-liens and man pages
