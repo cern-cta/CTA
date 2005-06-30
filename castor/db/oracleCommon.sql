@@ -133,6 +133,24 @@ BEGIN
      AND Stream IN (SELECT parent FROM Stream2TapeCopy WHERE child = :new.id);
 END;
 
+/* Updates the count of tapecopies in NbTapeCopiesInFS
+   whenever a DiskCopy has been replicated and the new one
+   is put into STAGEOUT status from the
+   WAITDISK2DISKCOPY status */
+CREATE OR REPLACE TRIGGER tr_DiskCopy_Update
+AFTER UPDATE of status ON DiskCopy
+FOR EACH ROW
+WHEN (old.status = 1 AND -- WAITDISK2DISKCOPY
+      new.status = 6) -- STAGEOUT
+BEGIN
+  UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
+   WHERE FS = :new.fileSystem
+     AND Stream IN (SELECT Stream2TapeCopy.parent
+                      FROM Stream2TapeCopy, TapeCopy
+                     WHERE TapeCopy.castorFile = :new.castorFile
+                       AND Stream2TapeCopy.child = TapeCopy.id);
+END;
+
 /* XXX update count into NbTapeCopiesInFS when a Disk2Disk copy occurs
    FOR a file in CANBEMIGR */
 
