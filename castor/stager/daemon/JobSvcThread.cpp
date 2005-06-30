@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.29 2005/06/29 10:26:18 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.30 2005/06/30 14:52:15 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.29 $ $Date: 2005/06/29 10:26:18 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.30 $ $Date: 2005/06/30 14:52:15 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -246,11 +246,6 @@ namespace castor {
           svcs->fillObj(&ad, dc, castor::OBJ_SubRequest);
         }
 
-        /* Cleanup */
-        /* ------- */
-        delete fs->diskserver();
-        delete fs;
-
       } catch (castor::exception::Exception e) {
         if (0 != fs) {
           castor::stager::DiskServer *ds = fs->diskserver();
@@ -291,7 +286,13 @@ namespace castor {
 
       /* Cleanup                        */
       /* ------------------------------ */
-      if (fs) delete fs;
+      if (0 != fs) {
+        castor::stager::DiskServer *ds = fs->diskserver();
+        if (0 != ds) {
+          delete ds;
+        }
+        delete fs;
+      }
       if (subreq) delete subreq;
       if (dc) {
         std::vector<castor::stager::SubRequest*> srs = dc->subRequests();
