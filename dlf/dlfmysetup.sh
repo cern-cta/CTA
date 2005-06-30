@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-## $Id: dlfmysetup.sh,v 1.3 2005/06/17 10:23:00 mbraeger Exp $
+## $Id: dlfmysetup.sh,v 1.4 2005/06/30 11:33:06 jdurand Exp $
 #
 
 killall -9 dlfserver
@@ -34,5 +34,6 @@ dlfenterfacility -F GC -n 8
 dlfenterfacility -F scheduler -n 9
 dlfenterfacility -F TapeErrorHandler -n 10
 dlfenterfacility -F Vdqm -n 11
+dlfenterfacility -F rfio -n 12
 
 dlflistfacility
