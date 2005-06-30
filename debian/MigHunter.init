@@ -5,9 +5,9 @@
 # chkconfig: 345 73 32
 # description: MigHunter daemons
 #
-# $Id: MigHunter.init,v 1.1 2005/06/30 10:59:54 jdurand Exp $
+# $Id: MigHunter.init,v 1.2 2005/06/30 11:03:55 jdurand Exp $
 #
-# @(#)$RCSfile: MigHunter.init,v $ $Revision: 1.1 $ $Date: 2005/06/30 10:59:54 $ CERN/IT/ADC Jean-Damien Durand
+# @(#)$RCSfile: MigHunter.init,v $ $Revision: 1.2 $ $Date: 2005/06/30 11:03:55 $ CERN/IT/ADC Jean-Damien Durand
 #
 
 #
@@ -96,7 +96,14 @@ case "$1" in
                 RETVAL=1
 	    else
 	        for i in ${SVCCLASSES}; do
-                  [ -r /etc/sysconfig/MigHunter.$i ] && . /etc/sysconfig/MigHunter.$i
+                  if [ -r $SYSCONFIGMIGHUNTER.$i ]; then
+		      . $SYSCONFIGMIGHUNTER.$i
+		  else
+		      #
+		      ## Reload the default
+		      #
+		      [ -r $SYSCONFIGMIGHUNTER ] && . $SYSCONFIGMIGHUNTER
+		  fi
 		  echo $ECHOOPT "Starting ${prog} for $i Service Class: "
                   $DAEMON $MIGHUNTER $OPTIONS $i
 		  $ECHO_END
