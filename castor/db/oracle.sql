@@ -1187,7 +1187,7 @@ BEGIN
   DELETE from TapeCopy WHERE castorFile = cfId;
   -- set DiskCopies to INVALID
   UPDATE DiskCopy SET status = 7 -- INVALID
-   WHERE castorFile = cfId AND status IN (1, 10); -- STAGED, CANBEMIGR
+   WHERE castorFile = cfId AND status IN (0, 10); -- STAGED, CANBEMIGR
   -- create new DiskCopy
   SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
   SELECT ids_seq.nextval INTO dcId FROM DUAL;
