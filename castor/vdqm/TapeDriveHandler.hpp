@@ -115,8 +115,25 @@ namespace castor {
 				 * @exception In case of error
 				 */
 				void copyTapeDriveInformations(const TapeDrive* tapeDrive)
-					throw (castor::exception::Exception);				
-
+					throw (castor::exception::Exception);	
+				
+				
+				/**
+				 * Tries to find an equivalent status code from the new 
+				 * TapeDriveStatusCodes out of the old protocol status. 
+				 * 
+				 * @param oldProtocolStatus The status value of the old Protocol
+				 * @param newActStatus The current status of the tape drive in the db
+				 * @param newStatusString A variable to store the string representation
+				 *  of the new status code
+				 * @return the new status code
+				 * @exception In case of error
+				 */	
+				int translateOldProtocolStatus(const int oldProtocolStatus, 
+																			 const int newActStatus, 
+																			 std::string newStatusString)
+					throw (castor::exception::Exception);
+					
     }; // class TapeDriveHandler
 
   } // end of namespace vdqm

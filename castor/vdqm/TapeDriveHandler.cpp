@@ -81,6 +81,8 @@ void castor::vdqm::TapeDriveHandler::newTapeDriveRequest()
     
 	TapeServer* tapeServer = NULL;
 	TapeDrive* tapeDrive = NULL;
+	std::string newStatusString;
+	int newDesiredStatus;
   
 
 	//"The parameters of the old vdqm DrvReq Request" message
@@ -149,7 +151,19 @@ void castor::vdqm::TapeDriveHandler::newTapeDriveRequest()
       return;
 	}
 
-
+	/**
+	 * reinterpret the old status
+	 */
+	newDesiredStatus = translateOldProtocolStatus(ptr_driveRequest->status,
+																								tapeDrive->status(), 
+																								newStatusString);
+																								
+	//"The desired new Protocol status of the client" message
+  castor::dlf::Param param[] =
+  	{castor::dlf::Param("status", newDesiredStatus)};
+  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 36, 1, param);
+																								
+	
 
 	//TODO implementing everything, which is commented out.
 
@@ -953,4 +967,64 @@ void castor::vdqm::TapeDriveHandler::copyTapeDriveInformations(
   ptr_driveRequest->uid = client->euid();
   strcpy(ptr_driveRequest->reqhost, client->machine().c_str());
   strcpy(ptr_driveRequest->name, client->userName().c_str());
+}
+
+
+//------------------------------------------------------------------------------
+// translateOldProtocolStatus
+//------------------------------------------------------------------------------
+int castor::vdqm::TapeDriveHandler::translateOldProtocolStatus(
+	const int oldProtocolStatus, 
+	const int newActStatus, 
+	std::string newStatusString) 
+	throw (castor::exception::Exception) {	
+	
+	int newDesiredStatus = -1;
+	std::string oldStatusString;
+	
+  int vdqm_status_values[] = VDQM_STATUS_VALUES;
+  char vdqm_status_strings[][32] = VDQM_STATUS_STRINGS;
+  int i;
+  
+  /**
+   * We want first produce a string representation of the old status.
+   * This is just for info reasons.
+   */  
+  oldStatusString = '\0';
+  i=0;
+  while ( *vdqm_status_strings[i] != '\0' ) {
+      if ( oldProtocolStatus & vdqm_status_values[i] ) {
+          oldStatusString = oldStatusString.append(vdqm_status_strings[i]);
+          oldStatusString = oldStatusString.append("|");
+      } 
+      i++;
+  }
+	
+  //"The desired old Protocol status of the client" message
+  castor::dlf::Param param[] =
+  	{castor::dlf::Param("status", oldStatusString)};
+  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 35, 1, param);
+	
+	
+	switch ( newActStatus ) {
+		case UNIT_UP:
+					//TODO: Baustelle!!!
+					break;
+		case UNIT_STARTING:
+					break;
+		case UNIT_ASSIGNED:
+					break;
+		case UNIT_RELEASED:
+					break;
+		case VOL_MOUNTED:
+					break;
+		case FORCED_UNMOUNT:
+					break;
+		case UNIT_DOWN:
+					break;
+		default:
+					castor::exception::InvalidArgument ex;
+			  	ex.getMessage() << "The tapeDrive is in a wrong status" << std::endl;
+  				throw ex;
+	}
 }
