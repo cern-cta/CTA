@@ -36,6 +36,8 @@
 #include "OraCnvSvc.hpp"
 #include "OraBaseObj.hpp"
 
+typedef struct vdqmdDrvReq vdqmDrvReq_t;
+
 namespace castor {
 	
   // Forward declaration
@@ -140,21 +142,26 @@ namespace castor {
 		    		const castor::vdqm::ExtendedDeviceGroup *extDevGrp) 
 		    		throw (castor::exception::Exception); 
 		    		
-		    		
-//------------ functions for castor::vdqm::TapeDriveRequestHandler -------------
-				
-				/**
-				 * Deletes all TapeDrives in the db from the given 
-				 * TapeServer and their old TapeRequests (if any).
-				 * 
-				 * @param tapeServer the tape server of the drives
-				 * @exception Exception in case of error
-				 */
-				virtual void deleteAllTapeDrvsFromSrv(
-				  const castor::vdqm::TapeServer* tapeServer)
-	    		throw (castor::exception::Exception);  
+//------------------ functions for TapeDriveRequestHandler ------------------
 
-	    				    		
+		      /**
+		       * Retrieves a tapeDrive from the database based on its struct 
+		       * representation. If no tapedrive is found, a Null pointer will 
+		       * be returned.
+		       * Note that this method creates a lock on the row of the
+		       * given tapedrive and does not release it. It is the
+		       * responsability of the caller to commit the transaction.
+		       * The caller is also responsible for the deletion of the
+		       * allocated object
+		       * @param driveRequest The old struct, which represents the tapeDrive
+		       * @exception Exception in case of error (several tapes drive found, 
+		       * DB problem, etc...)
+		       */
+					virtual castor::vdqm::TapeDrive* selectTapeDrive(
+						const vdqmDrvReq_t* driveRequest,
+						const castor::vdqm::TapeServer* tapeServer)
+		    		throw (castor::exception::Exception);			
+
 	      private:
 	      
 		      /**
@@ -199,11 +206,11 @@ namespace castor {
 	        /// SQL statement object for function getFreeTapeDrive
 	        oracle::occi::Statement *m_selectFreeTapeDriveStatement;	 
 	        
- 	        /// SQL statement for function deleteAllTapeDrvsFromSrv
-	        static const std::string s_deleteAllTapeDrvsFromSrvStatementString;
+ 	        /// SQL statement for function selectTapeDrive
+	        static const std::string s_selectTapeDriveStatementString;
 	
-	        /// SQL statement object for function deleteAllTapeDrvsFromSrv
-	        oracle::occi::Statement *m_deleteAllTapeDrvsFromSrvStatement;	                                 	
+	        /// SQL statement object for function selectTapeDrive
+	        oracle::occi::Statement *m_selectTapeDriveStatement;	                                 	
 			};
 		}
 	}
