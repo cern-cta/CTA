@@ -1,3 +1,15 @@
+castor (2.0.0-45) unstable; urgency=low
+
+  * Fixed previous fixes on the memory leaks
+  * Updated PACKAGING.howto
+  * Changed behavior of stageRm and created a stageRelease that replaces the old stageRm
+  * Bug fix in recreateCastorFile PL/SQL
+  * New VDQM improvements
+  * Fixed stager_job_service for sending NOTOK IOResponse to client
+  * Fixed stager_fs_service 
+
+ -- Sebastien Ponce <sponcec3@pcitds13>  Fri,  1 Jul 2005 16:46:49 +0200
+
 castor (2.0.0-44) unstable; urgency=low
 
   * Fixed memory leaks
