@@ -33,6 +33,8 @@
 #include "castor/IService.hpp"
 #include "castor/exception/Exception.hpp"
 
+typedef struct vdqmdDrvReq vdqmDrvReq_t;
+
 namespace castor {
 
   namespace vdqm {
@@ -107,16 +109,24 @@ namespace castor {
 	 
 	    		
 //------------------ functions for TapeDriveRequestHandler ------------------
-				
-				/**
-				 * Deletes all TapeDrives in the db from the given 
-				 * TapeServer and their old TapeRequests (if any).
-				 * 
-				 * @param tapeServer the tape server of the drives
-				 * @exception Exception in case of error
-				 */
-				virtual void deleteAllTapeDrvsFromSrv(const TapeServer* tapeServer)
-	    		throw (castor::exception::Exception) = 0;
+
+	      /**
+	       * Retrieves a tapeDrive from the database based on its struct 
+	       * representation. If no tapedrive is found, a Null pointer will 
+	       * be returned.
+	       * Note that this method creates a lock on the row of the
+	       * given tapedrive and does not release it. It is the
+	       * responsability of the caller to commit the transaction.
+	       * The caller is also responsible for the deletion of the
+	       * allocated object
+	       * @param driveRequest The old struct, which represents the tapeDrive
+	       * @exception Exception in case of error (several tapes drive found, 
+	       * DB problem, etc...)
+	       */
+				virtual TapeDrive* selectTapeDrive(
+					const vdqmDrvReq_t* driveRequest,
+					const TapeServer* tapeServer)
+	    		throw (castor::exception::Exception) = 0;				
 	    		
     }; // end of class IVdqmSvc
 

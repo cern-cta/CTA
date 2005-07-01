@@ -26,15 +26,20 @@
 #include <net.h>
 #include <vdqm.h>
 #include <vdqm_constants.h>
+#include <vector>
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/stager/ClientIdentification.hpp"
 
 // Local Includes
+#include "BaseRequestHandler.hpp"
 #include "IVdqmSvc.hpp"
 #include "TapeDriveHandler.hpp"
 #include "TapeDrive.hpp"
+#include "TapeDriveStatusCodes.hpp"
 #include "TapeServer.hpp"
+#include "TapeRequest.hpp"
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -69,13 +74,13 @@ void castor::vdqm::TapeDriveHandler::newTapeDriveRequest()
 	throw (castor::exception::Exception) {
 //    dgn_element_t *dgn_context = NULL;
 //    vdqm_volrec_t *volrec;
-//    vdqm_drvrec_t *drvrec;
+//    vdqm_drvrec_t *drvrec; //The equivalent to the TapeDrive object
 //    int rc,unknown;
 //    char status_string[256];
 //    int new_drive_added = 0;
     
-  
-    int rc = 0;
+	TapeServer* tapeServer = NULL;
+	TapeDrive* tapeDrive = NULL;
   
 
 	//"The parameters of the old vdqm DrvReq Request" message
@@ -114,97 +119,42 @@ void castor::vdqm::TapeDriveHandler::newTapeDriveRequest()
 		 castor::dlf::Param("VolReqID", ptr_driveRequest->VolReqID)};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 33, 32, params);
 
-  /*
-   * If it is an tape daemon startup status we delete all TapeDrives 
-   * on that tape server.
+
+	try {
+		tapeServer = ptr_IVdqmService->selectTapeServer(ptr_driveRequest->reqhost);
+
+	  /**
+	   * If it is an tape daemon startup status we delete all TapeDrives 
+	   * on that tape server.
+	   */
+		if ( ptr_driveRequest->status == VDQM_TPD_STARTED ) {
+			deleteAllTapeDrvsFromSrv(tapeServer);
+		}
+	} catch ( castor::exception::Exception ex ) {
+		if ( tapeServer ) 
+			delete tapeServer;
+		
+		throw ex;
+	}
+
+  /**
+   * Gets the TapeDrive from the db or creates a new one.
    */
-	if ( ptr_driveRequest->status == VDQM_TPD_STARTED ) {
-		deleteAllTapeDrvsFromSrv();
+  tapeDrive = getTapeDrive(tapeServer);
+  
+  //TODO: Save tapeDrive into db!
+
+	if ( ptr_driveRequest->status == VDQM_UNIT_QUERY ) {
+		  copyTapeDriveInformations(tapeDrive);
+      return;
 	}
 
 
 
+	//TODO implementing everything, which is commented out.
 
 
 
-
-
-
-
-
-
-
-//    rc = SetDgnContext(&dgn_context,ptr_driveRequest->dgn);
-//    if ( rc == -1 ) {
-//        log(LOG_ERR,"vdqm_NewDrvReq() cannot set Dgn context for %s\n",
-//            ptr_driveRequest->dgn);
-//        return(-1);
-//    }
-//        
-//    /* 
-//     * Check whether the drive record already exists
-//     */
-//    drvrec = NULL;
-//    rc = GetDrvRecord(dgn_context,ptr_driveRequest,&drvrec);
-//
-//    if ( ptr_driveRequest->status == VDQM_UNIT_QUERY ) {
-//        if ( rc < 0 || drvrec == NULL ) {
-//            log(LOG_ERR,"vdqm_NewDrvReq(): Query request for unknown drive %s@%s\n",ptr_driveRequest->drive,ptr_driveRequest->server);
-//            FreeDgnContext(&dgn_context);
-//            vdqm_SetError(EVQNOSDRV);
-//            return(-1);
-//        }
-//        *ptr_driveRequest = drvrec->drv;
-//        FreeDgnContext(&dgn_context);
-//        return(0);
-//    }
-////------------------------------------------------------------------------------
-//
-//    if ( rc < 0 || drvrec == NULL ) {
-//        /*
-//         * Drive record did not exist, create it!
-//         */
-//        log(LOG_INFO,"vdqm_NewDrvReq() add new drive %s@%s\n",
-//            ptr_driveRequest->drive,ptr_driveRequest->server);
-//        rc = NewDrvRecord(&drvrec);
-//        if ( rc < 0 || drvrec == NULL ) {
-//            log(LOG_ERR,"vdqm_NewDrvReq(): NewDrvRecord() returned error\n");
-//            FreeDgnContext(&dgn_context);
-//            return(-1);
-//        }
-//        drvrec->drv = *ptr_driveRequest;
-//        /*
-//         * Make sure it is either up or down. If neither, we put it in
-//         * UNKNOWN status until further status information is received.
-//         */
-//        if ( (drvrec->drv.status & ( VDQM_UNIT_UP|VDQM_UNIT_DOWN)) == 0 )
-//            drvrec->drv.status |= VDQM_UNIT_UP|VDQM_UNIT_UNKNOWN;
-//        /*
-//         * Make sure it doesn't come up with some non-persistent status
-//         * becasue of a previous VDQM server crash.
-//         */
-//        drvrec->drv.status = drvrec->drv.status & ( ~VDQM_VOL_MOUNT &
-//            ~VDQM_VOL_UNMOUNT & ~VDQM_UNIT_MBCOUNT );
-//        /*
-//         * Add drive record to drive queue
-//         */
-//        rc = AddDrvRecord(dgn_context,drvrec);
-//        if ( rc < 0 ) {
-//            log(LOG_ERR,"vdqm_NewDrvReq(): AddDrvRecord() returned error\n");
-//            FreeDgnContext(&dgn_context);
-//            return(-1);
-//        }
-//
-//        new_drive_added  = 1;
-//        
-//    }
-//    
-////------------------------------------------------------------------------------
-//    /*
-//     * Update dynamic drive info.
-//     */
-//    drvrec->magic = ptr_header->magic;
-//    drvrec->drv.recvtime = time(NULL);
 //
 //    GetStatusString(drvrec->drv.status,status_string);
 //    log(LOG_INFO,"%s %s@%s (ID: %d, job %d): current status: %s\n",drvrec->drv.dgn,
@@ -816,10 +766,9 @@ void castor::vdqm::TapeDriveHandler::newTapeDriveRequest()
 //------------------------------------------------------------------------------
 // deleteAllTapeDrvsFromSrv
 //------------------------------------------------------------------------------
-void castor::vdqm::TapeDriveHandler::deleteAllTapeDrvsFromSrv() 
+void castor::vdqm::TapeDriveHandler::deleteAllTapeDrvsFromSrv(
+	TapeServer* tapeServer) 
 	throw (castor::exception::Exception) {
-	
-	TapeServer* server = NULL;
 	
 	if ( strcmp(ptr_driveRequest->reqhost, ptr_driveRequest->server) != 0 ) {
 	  castor::exception::Exception ex(EPERM);
@@ -838,14 +787,170 @@ void castor::vdqm::TapeDriveHandler::deleteAllTapeDrvsFromSrv()
 	 * (+ old TapeRequests), which are dedicated to this server.
 	 */
 	try {
-		server = ptr_IVdqmService->selectTapeServer(ptr_driveRequest->reqhost);
-		ptr_IVdqmService->deleteAllTapeDrvsFromSrv(server);
+		for (std::vector<castor::vdqm::TapeDrive*>::iterator it = tapeServer->tapeDrives().begin();
+         it != tapeServer->tapeDrives().end();
+         it++) 
+    {
+    	// The old TapeRequest. Normally it should not exist.
+      TapeRequest* runningTapeReq = (*it)->runningTapeReq();   	
+      
+      if (runningTapeReq != 0) {
+	      deleteRepresentation(runningTapeReq, m_cuuid);
+      	delete runningTapeReq;
+      }
+      
+      deleteRepresentation(*it, m_cuuid);
+    }
 	} catch ( castor::exception::Exception ex ) {
-		if ( server ) 
-			delete server;
+		if ( tapeServer ) 
+			delete tapeServer;
 
 		throw ex;
 	}
 	
-	delete server;
+	delete tapeServer;
+}
+
+
+//------------------------------------------------------------------------------
+// getTapeDrive
+//------------------------------------------------------------------------------
+castor::vdqm::TapeDrive* 
+	castor::vdqm::TapeDriveHandler::getTapeDrive(TapeServer* tapeServer) 
+	throw (castor::exception::Exception) {
+		TapeDrive* tapeDrive = NULL;
+		
+		/**
+		 * Check, if the tape drive already exists
+		 */
+		tapeDrive = ptr_IVdqmService->selectTapeDrive(ptr_driveRequest, tapeServer);
+		
+		
+		if ( ptr_driveRequest->status == VDQM_UNIT_QUERY ) {
+      if ( tapeDrive == NULL ) {
+				castor::exception::Exception ex(EVQNOSDRV);
+				
+				ex.getMessage() << "castor::vdqm::TapeDriveHandler::getTapeDrive(): "
+												<< "Query request for unknown drive "
+												<< ptr_driveRequest->drive << "@" 
+												<< ptr_driveRequest->server << std::endl;
+
+				throw ex;
+      }
+    }
+		
+		if (tapeDrive == NULL) {
+			// "Create new TapeDrive in DB" message
+		  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 34);
+			
+			/**
+			 * The tape drive does not exist, so we just create it!
+			 */
+      TapeDrive* tapeDrive = new castor::vdqm::TapeDrive();
+      /**
+       * We need then also an object to store the client related informations
+       */
+      castor::stager::ClientIdentification* client;
+
+      tapeDrive->setDriveName(ptr_driveRequest->drive);
+      tapeDrive->setTapeServer(tapeServer);
+      tapeDrive->setDedicate(ptr_driveRequest->dedicate);
+      tapeDrive->setErrcount(ptr_driveRequest->errcount);
+      tapeDrive->setIs_gid(ptr_driveRequest->is_gid);
+      tapeDrive->setIs_name(ptr_driveRequest->is_name);
+      tapeDrive->setIs_uid(ptr_driveRequest->is_uid);
+      tapeDrive->setJobID(ptr_driveRequest->jobID);
+      tapeDrive->setModificationTime(time(NULL));
+      tapeDrive->setNewDedicate(ptr_driveRequest->newdedicate);
+      tapeDrive->setNo_age(ptr_driveRequest->no_age);
+      tapeDrive->setNo_date(ptr_driveRequest->no_date);
+      tapeDrive->setNo_gid(ptr_driveRequest->no_gid);
+      tapeDrive->setNo_host(ptr_driveRequest->no_host);
+      tapeDrive->setNo_mode(ptr_driveRequest->no_mode);
+      tapeDrive->setNo_name(ptr_driveRequest->no_name);
+      tapeDrive->setNo_time(ptr_driveRequest->no_time);      
+      tapeDrive->setNo_uid(ptr_driveRequest->no_uid);      
+      tapeDrive->setNo_vid(ptr_driveRequest->no_vid);
+      tapeDrive->setResettime(ptr_driveRequest->resettime);
+      tapeDrive->setTotalMB(ptr_driveRequest->TotalMB);
+      tapeDrive->setTransferredMB(ptr_driveRequest->MBtransf);
+      tapeDrive->setUsecount(ptr_driveRequest->usecount);			
+      
+      client = new castor::stager::ClientIdentification();
+      client->setEgid(ptr_driveRequest->gid);
+      client->setEuid(ptr_driveRequest->uid);
+      client->setMachine(ptr_driveRequest->reqhost);
+      client->setMagic(ptr_header->magic);
+      client->setUserName(ptr_driveRequest->name);
+      
+      //Add the client informations to the tapeDrive
+      tapeDrive->setClient(client);
+      
+	    /*
+	     * Make sure it is either up or down. If neither, we put it in
+	     * UNKNOWN status until further status information is received.
+	     * This is just for the old protocol.
+	     */
+	    if ( (ptr_driveRequest->status & ( VDQM_UNIT_UP|VDQM_UNIT_DOWN)) == 0 ) {
+	    	ptr_driveRequest->status |= VDQM_UNIT_UP|VDQM_UNIT_UNKNOWN;
+	      
+	      /**
+	       *  Our new tapeDrive Object is just in status UNIT_UP
+	       */
+	      tapeDrive->setStatus(UNIT_UP); 
+	    }
+	    
+      /*
+       * Make sure it doesn't come up with some non-persistent status
+       * becasue of a previous VDQM server crash.
+       */
+      ptr_driveRequest->status = ptr_driveRequest->status & ( ~VDQM_VOL_MOUNT &
+          ~VDQM_VOL_UNMOUNT & ~VDQM_UNIT_MBCOUNT );
+		}		
+				
+		return tapeDrive;
+}
+
+
+//------------------------------------------------------------------------------
+// copyTapeDriveInformations
+//------------------------------------------------------------------------------
+void castor::vdqm::TapeDriveHandler::copyTapeDriveInformations(
+	const TapeDrive* tapeDrive) 
+	throw (castor::exception::Exception) {
+	if (tapeDrive == NULL) {
+		castor::exception::InvalidArgument ex;
+  	ex.getMessage() << "The tapeDrive argument is NULL" << std::endl;
+  	throw ex;
+	}
+
+  castor::stager::ClientIdentification* client;
+
+//  ptr_driveRequest->dedicate = (char*)tapeDrive->dedicate();
+  strcpy(ptr_driveRequest->dedicate, tapeDrive->dedicate().c_str());
+  ptr_driveRequest->errcount = tapeDrive->errcount();
+  ptr_driveRequest->is_gid = tapeDrive->is_gid();
+  ptr_driveRequest->is_name = tapeDrive->is_name();
+  ptr_driveRequest->is_uid = tapeDrive->is_uid();
+  ptr_driveRequest->jobID = tapeDrive->jobID();
+  strcpy(ptr_driveRequest->newdedicate, tapeDrive->newDedicate().c_str());
+  ptr_driveRequest->no_age = tapeDrive->no_age();
+  ptr_driveRequest->no_date = tapeDrive->no_date();
+  ptr_driveRequest->no_gid = tapeDrive->no_gid();
+  ptr_driveRequest->no_host = tapeDrive->no_host();
+  ptr_driveRequest->no_mode = tapeDrive->no_mode();
+  ptr_driveRequest->no_name = tapeDrive->no_name();
+  ptr_driveRequest->no_time = tapeDrive->no_time();      
+  ptr_driveRequest->no_uid = tapeDrive->no_uid();      
+  ptr_driveRequest->no_vid = tapeDrive->no_vid();
+  ptr_driveRequest->resettime = tapeDrive->resettime();
+  ptr_driveRequest->TotalMB = tapeDrive->totalMB();
+  ptr_driveRequest->MBtransf = tapeDrive->transferredMB();
+  ptr_driveRequest->usecount = tapeDrive->usecount();			
+  
+	client = tapeDrive->client();
+  ptr_driveRequest->gid = client->egid();
+  ptr_driveRequest->uid = client->euid();
+  strcpy(ptr_driveRequest->reqhost, client->machine().c_str());
+  strcpy(ptr_driveRequest->name, client->userName().c_str());
 }

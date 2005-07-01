@@ -30,6 +30,7 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/vdqm/ExtendedDeviceGroup.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
@@ -45,7 +46,7 @@
 //------------------------------------------------------------------------------
 castor::vdqm::TapeDrive::TapeDrive() throw() :
   m_jobID(0),
-  m_creationTime(0),
+  m_modificationTime(0),
   m_resettime(0),
   m_usecount(0),
   m_errcount(0),
@@ -65,14 +66,13 @@ castor::vdqm::TapeDrive::TapeDrive() throw() :
   m_no_date(0),
   m_no_time(0),
   m_no_age(0),
-  m_euid(0),
-  m_egid(0),
-  m_name(""),
+  m_driveName(""),
   m_id(0),
   m_tape(0),
   m_runningTapeReq(0),
   m_status(TapeDriveStatusCodes(0)),
-  m_tapeServer(0) {
+  m_tapeServer(0),
+  m_client(0) {
 };
 
 //------------------------------------------------------------------------------
@@ -85,6 +85,10 @@ castor::vdqm::TapeDrive::~TapeDrive() throw() {
   }
   if (0 != m_tapeServer) {
     m_tapeServer->removeTapeDrives(this);
+  }
+  if (0 != m_client) {
+    delete m_client;
+    m_client = 0;
   }
 };
 
@@ -102,7 +106,7 @@ void castor::vdqm::TapeDrive::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "jobID : " << m_jobID << std::endl;
-  stream << indent << "creationTime : " << m_creationTime << std::endl;
+  stream << indent << "modificationTime : " << m_modificationTime << std::endl;
   stream << indent << "resettime : " << m_resettime << std::endl;
   stream << indent << "usecount : " << m_usecount << std::endl;
   stream << indent << "errcount : " << m_errcount << std::endl;
@@ -122,9 +126,7 @@ void castor::vdqm::TapeDrive::print(std::ostream& stream,
   stream << indent << "no_date : " << m_no_date << std::endl;
   stream << indent << "no_time : " << m_no_time << std::endl;
   stream << indent << "no_age : " << m_no_age << std::endl;
-  stream << indent << "euid : " << m_euid << std::endl;
-  stream << indent << "egid : " << m_egid << std::endl;
-  stream << indent << "name : " << m_name << std::endl;
+  stream << indent << "driveName : " << m_driveName << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Tape : " << std::endl;
@@ -154,6 +156,12 @@ void castor::vdqm::TapeDrive::print(std::ostream& stream,
   stream << indent << "TapeServer : " << std::endl;
   if (0 != m_tapeServer) {
     m_tapeServer->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
+  stream << indent << "Client : " << std::endl;
+  if (0 != m_client) {
+    m_client->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }

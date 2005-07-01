@@ -33,6 +33,7 @@
 #include "castor/vdqm/TapeDriveStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
+struct Cstager_ClientIdentification_t;
 struct Cstager_Tape_t;
 struct Cvdqm_ExtendedDeviceGroup_t;
 struct Cvdqm_TapeDrive_t;
@@ -103,16 +104,16 @@ int Cvdqm_TapeDrive_jobID(struct Cvdqm_TapeDrive_t* instance, int* var);
 int Cvdqm_TapeDrive_setJobID(struct Cvdqm_TapeDrive_t* instance, int new_var);
 
 /**
- * Get the value of creationTime
- * The time, when the tape drive begins with its job.
+ * Get the value of modificationTime
+ * The time, when the tape drive begins with its job or modified it
  */
-int Cvdqm_TapeDrive_creationTime(struct Cvdqm_TapeDrive_t* instance, int* var);
+int Cvdqm_TapeDrive_modificationTime(struct Cvdqm_TapeDrive_t* instance, int* var);
 
 /**
- * Set the value of creationTime
- * The time, when the tape drive begins with its job.
+ * Set the value of modificationTime
+ * The time, when the tape drive begins with its job or modified it
  */
-int Cvdqm_TapeDrive_setCreationTime(struct Cvdqm_TapeDrive_t* instance, int new_var);
+int Cvdqm_TapeDrive_setModificationTime(struct Cvdqm_TapeDrive_t* instance, int new_var);
 
 /**
  * Get the value of resettime
@@ -317,34 +318,16 @@ int Cvdqm_TapeDrive_no_age(struct Cvdqm_TapeDrive_t* instance, short* var);
 int Cvdqm_TapeDrive_setNo_age(struct Cvdqm_TapeDrive_t* instance, short new_var);
 
 /**
- * Get the value of euid
+ * Get the value of driveName
+ * The name of the drive
  */
-int Cvdqm_TapeDrive_euid(struct Cvdqm_TapeDrive_t* instance, long* var);
+int Cvdqm_TapeDrive_driveName(struct Cvdqm_TapeDrive_t* instance, const char** var);
 
 /**
- * Set the value of euid
+ * Set the value of driveName
+ * The name of the drive
  */
-int Cvdqm_TapeDrive_setEuid(struct Cvdqm_TapeDrive_t* instance, long new_var);
-
-/**
- * Get the value of egid
- */
-int Cvdqm_TapeDrive_egid(struct Cvdqm_TapeDrive_t* instance, long* var);
-
-/**
- * Set the value of egid
- */
-int Cvdqm_TapeDrive_setEgid(struct Cvdqm_TapeDrive_t* instance, long new_var);
-
-/**
- * Get the value of name
- */
-int Cvdqm_TapeDrive_name(struct Cvdqm_TapeDrive_t* instance, const char** var);
-
-/**
- * Set the value of name
- */
-int Cvdqm_TapeDrive_setName(struct Cvdqm_TapeDrive_t* instance, const char* new_var);
+int Cvdqm_TapeDrive_setDriveName(struct Cvdqm_TapeDrive_t* instance, const char* new_var);
 
 /**
  * Get the value of id
@@ -413,5 +396,15 @@ int Cvdqm_TapeDrive_tapeServer(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_
  * Set the value of tapeServer
  */
 int Cvdqm_TapeDrive_setTapeServer(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeServer_t* new_var);
+
+/**
+ * Get the value of client
+ */
+int Cvdqm_TapeDrive_client(struct Cvdqm_TapeDrive_t* instance, struct Cstager_ClientIdentification_t** var);
+
+/**
+ * Set the value of client
+ */
+int Cvdqm_TapeDrive_setClient(struct Cvdqm_TapeDrive_t* instance, struct Cstager_ClientIdentification_t* new_var);
 
 #endif // CASTOR_VDQM_TAPEDRIVE_H

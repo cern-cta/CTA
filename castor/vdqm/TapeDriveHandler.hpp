@@ -39,6 +39,10 @@ namespace castor {
 
   namespace vdqm {
 
+		//Forward declaration
+		class TapeServer;
+		class TapeDrive;
+
     /**
      * The TapeDriveHandler provides functions to handle all vdqm related
      * tape drive issues. It handles for example the VDQM_DRV_REQ
@@ -81,13 +85,37 @@ namespace castor {
 				Cuuid_t m_cuuid;
 				
 				/**
-				 * Deletes all TapeDrives in the db from the given 
-				 * TapeServer (ptr_driveRequest->reqhost) and their
-				 * old TapeRequests (if any).
+				 * Deletes all TapeDrives and their old TapeRequests (if any)
+				 * in the db from the given TapeServer 
 				 * 
+				 * @param tapeServer The tape server, which drive should be deleted
 				 * @exception In case of error
 				 */
-				void deleteAllTapeDrvsFromSrv() throw (castor::exception::Exception);
+				void deleteAllTapeDrvsFromSrv(TapeServer* tapeServer) 
+					throw (castor::exception::Exception);
+
+				/**
+				 * Handles the communication with the data base to get the TapeDrive.
+				 * If there is no entry in the db, a new TapeDrive Object will be created.
+				 * Please notice, that this object is not stored in the db. This happens
+				 * at the very end of newTapeDriveRequest()
+				 * 
+				 * @param tapeServer The tape server, to which the drive belong to.
+				 * @exception In case of error
+				 */
+				TapeDrive* getTapeDrive(TapeServer* tapeServer) 
+					throw (castor::exception::Exception);
+					
+				/**
+				 * Copies the informations of the tape drive, which it has received 
+				 * from the db back to the old vdqmDrvReq_t struct, to inform the
+				 * old RTCPD client.
+				 * 
+				 * @param tapeDrive The received TapeDrive frome the db
+				 * @exception In case of error
+				 */
+				void copyTapeDriveInformations(const TapeDrive* tapeDrive)
+					throw (castor::exception::Exception);				
 
     }; // class TapeDriveHandler
 

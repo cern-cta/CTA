@@ -126,6 +126,7 @@ castor::vdqm::VdqmServer::VdqmServer() :
      {31, "Verify that the request doesn't exist, by calling IVdqmSvc->checkTapeRequest"},
      {32, "Try to store Request into the data base"},
      {33, "The parameters of the old vdqm DrvReq Request"},
+     {34, "Create new TapeDrive in DB"},
      {-1, ""}};
   castor::dlf::dlf_init("Vdqm", messages);
 }

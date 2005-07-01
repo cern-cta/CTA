@@ -45,7 +45,7 @@
 //------------------------------------------------------------------------------
 castor::vdqm::TapeRequest::TapeRequest() throw() :
   m_priority(0),
-  m_creationTime(0),
+  m_modificationTime(0),
   m_id(0),
   m_tape(0),
   m_reqExtDevGrp(0),
@@ -81,7 +81,7 @@ void castor::vdqm::TapeRequest::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "priority : " << m_priority << std::endl;
-  stream << indent << "creationTime : " << m_creationTime << std::endl;
+  stream << indent << "modificationTime : " << m_modificationTime << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Tape : " << std::endl;

@@ -47,6 +47,7 @@ namespace castor {
 
     // Forward declarations
     class Tape;
+    class ClientIdentification;
 
   }; // end of namespace stager
 
@@ -130,21 +131,21 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_creationTime
-       * The time, when the tape drive begins with its job.
-       * @return the value of m_creationTime
+       * Get the value of m_modificationTime
+       * The time, when the tape drive begins with its job or modified it
+       * @return the value of m_modificationTime
        */
-      int creationTime() const {
-        return m_creationTime;
+      int modificationTime() const {
+        return m_modificationTime;
       }
 
       /**
-       * Set the value of m_creationTime
-       * The time, when the tape drive begins with its job.
-       * @param new_var the new value of m_creationTime
+       * Set the value of m_modificationTime
+       * The time, when the tape drive begins with its job or modified it
+       * @param new_var the new value of m_modificationTime
        */
-      void setCreationTime(int new_var) {
-        m_creationTime = new_var;
+      void setModificationTime(int new_var) {
+        m_modificationTime = new_var;
       }
 
       /**
@@ -464,51 +465,21 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_euid
-       * @return the value of m_euid
+       * Get the value of m_driveName
+       * The name of the drive
+       * @return the value of m_driveName
        */
-      long euid() const {
-        return m_euid;
+      std::string driveName() const {
+        return m_driveName;
       }
 
       /**
-       * Set the value of m_euid
-       * @param new_var the new value of m_euid
+       * Set the value of m_driveName
+       * The name of the drive
+       * @param new_var the new value of m_driveName
        */
-      void setEuid(long new_var) {
-        m_euid = new_var;
-      }
-
-      /**
-       * Get the value of m_egid
-       * @return the value of m_egid
-       */
-      long egid() const {
-        return m_egid;
-      }
-
-      /**
-       * Set the value of m_egid
-       * @param new_var the new value of m_egid
-       */
-      void setEgid(long new_var) {
-        m_egid = new_var;
-      }
-
-      /**
-       * Get the value of m_name
-       * @return the value of m_name
-       */
-      std::string name() const {
-        return m_name;
-      }
-
-      /**
-       * Set the value of m_name
-       * @param new_var the new value of m_name
-       */
-      void setName(std::string new_var) {
-        m_name = new_var;
+      void setDriveName(std::string new_var) {
+        m_driveName = new_var;
       }
 
       /**
@@ -622,12 +593,28 @@ namespace castor {
         m_tapeServer = new_var;
       }
 
+      /**
+       * Get the value of m_client
+       * @return the value of m_client
+       */
+      castor::stager::ClientIdentification* client() const {
+        return m_client;
+      }
+
+      /**
+       * Set the value of m_client
+       * @param new_var the new value of m_client
+       */
+      void setClient(castor::stager::ClientIdentification* new_var) {
+        m_client = new_var;
+      }
+
     private:
 
       int m_jobID;
 
-      /// The time, when the tape drive begins with its job.
-      int m_creationTime;
+      /// The time, when the tape drive begins with its job or modified it
+      int m_modificationTime;
 
       /// Last time counters were reset
       int m_resettime;
@@ -673,11 +660,8 @@ namespace castor {
 
       short m_no_age;
 
-      long m_euid;
-
-      long m_egid;
-
-      std::string m_name;
+      /// The name of the drive
+      std::string m_driveName;
 
       /// The id of this object
       u_signed64 m_id;
@@ -691,6 +675,8 @@ namespace castor {
       TapeDriveStatusCodes m_status;
 
       TapeServer* m_tapeServer;
+
+      castor::stager::ClientIdentification* m_client;
 
     }; // end of class TapeDrive
 

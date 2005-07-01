@@ -151,7 +151,7 @@ void castor::vdqm::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header,
 	  //------------------------------------------------------------------------
 	  //The Tape related informations
 	  newTapeReq = new TapeRequest();
-	 	newTapeReq->setCreationTime(time(NULL));
+	 	newTapeReq->setModificationTime(time(NULL));
 	 	/*
 	   * We don't allow client to set priority
 	   */
@@ -387,7 +387,7 @@ void castor::vdqm::TapeRequestHandler::deleteTapeRequest(
 		      // Set new TapeDriveStatusCode
 			    tapeDrive->setStatus(UNIT_RELEASED);
 			    
-			    tapeReq->setCreationTime(time(NULL));
+			    tapeReq->setModificationTime(time(NULL));
 			    
 //			    svcs()->updateRep(&ad, true);
 			    
