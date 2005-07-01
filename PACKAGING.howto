@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.6 2005/07/01 14:37:54 jdurand Exp $
+## $Id: PACKAGING.howto,v 1.7 2005/07/01 14:53:43 jdurand Exp $
 #
 ## Example of packaging of version
 #
@@ -15,11 +15,23 @@ cvs -d:kserver:isscvs.cern.ch:2000/local/reps/castor co PROTO2
 cd PROTO2
 dch -i
 cvs commit debian/changelog
+#
+## The CVS TAG will be: vx_y_z_r (example: v2_0_0_44)
+#
+cd ../../CVS/CASTOR
+cvs tag vx_y_z_r .
+cd ../../CVS/PROTO2
+cvs tag vx_y_z_r .
+#
+## Do the Workdir
+#
 cd ../../WORKDIR/PROTO2
 lndir ../../CVS/PROTO2 .
 lndir ../../CVS/CASTOR .
+#
+## Make the tarball
+#
 make -f Makefile.ini Makefiles
-
 make tar
 
 #
