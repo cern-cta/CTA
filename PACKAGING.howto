@@ -1,15 +1,9 @@
 #
-## $Id: PACKAGING.howto,v 1.5 2005/05/03 04:48:00 jdurand Exp $
+## $Id: PACKAGING.howto,v 1.6 2005/07/01 14:37:54 jdurand Exp $
 #
-## Example of packaging of version 10.9.8.7
+## Example of packaging of version
 #
 
-export MAJOR_CASTOR_VERSION=10.9
-export MINOR_CASTOR_VERSION=8.7
-a=`echo ${MAJOR_CASTOR_VERSION} | sed 's/\..*//g'`
-b=`echo ${MAJOR_CASTOR_VERSION} | sed 's/.*\.//g'`
-c=`echo ${MINOR_CASTOR_VERSION} | sed 's/\..*//g'`
-d=`echo ${MINOR_CASTOR_VERSION} | sed 's/.*\.//g'`
 
 cd somewhere
 rm -rf WORKDIR/PROTO2 CVS
@@ -19,8 +13,8 @@ cd CVS
 cvs -d/afs/cern.ch/project/castor/CASTOR_MASTER/cvsroot co CASTOR
 cvs -d:kserver:isscvs.cern.ch:2000/local/reps/castor co PROTO2
 cd PROTO2
-dch --newversion "${a}.${b}.${c}-${d}"
-cvs commit  -m "Version ${a}.${b}.${c}-${d}" debian/changelog
+dch -i
+cvs commit debian/changelog
 cd ../../WORKDIR/PROTO2
 lndir ../../CVS/PROTO2 .
 lndir ../../CVS/CASTOR .
@@ -28,12 +22,53 @@ make -f Makefile.ini Makefiles
 
 make tar
 
-# Please check in advance your buildroot, should contain at least
-# (supposing your buildroot is /tmp is you ~/.rpmmacros)
-# (example: %_topdir /tmp)
-rm -rf /tmp/BUILD /tmp/SPECS /tmp/SRPMS /tmp/RPMS; mkdir -p /tmp/BUILD /tmp/SPECS /tmp/SRPMS /tmp/RPMS/i386
-# It is recommended to be root to build the rpm just because it is
-# too painful to treat the chown errors in the Makefile
-make rpm
+#
+## BUILD DEPENDENCIES
+#  ------------------
+# Anywhere you will be you will need:
+# stk-ssi
+# stk-ssi-devel
+# LSF
+# Oracle
 
-make deb
+#
+## To do an RPM:
+#  -------------
+## Export the tarball to a machine where you can build the rpms
+#
+scp ../castor-x.y.z-r.tar.gz machine:/tmp
+#
+## Go to machine (example: castorscheduler):
+#
+ssh root@machine
+cd /tmp
+#
+## WARNING: FOR RPM BUILD you might need /etc/sysconfig/castor CORRECT
+## IN ADVANCE.
+## Please REMOVE eventually instantclient from /etc/ld.so.conf and then
+## RESTORE IT AFTER THE BUILD:
+#
+cat /etc/ld.so.conf
+
+/usr/kerberos/lib
+/usr/X11R6/lib
+/usr/lib/qt-3.1/lib
+/usr/local/lsf/lib
+/usr/lib/CDK
+/usr/lib/oracle/10.1.0.4/client/lib
+
+---> Remove /usr/lib/oracle/10.1.0.4/client/lib
+
+ldconfig
+
+rpmbuild -ta castor-x.y.z-r.tar.gz
+
+---> Restore /usr/lib/oracle/10.1.0.4/client/lib
+
+ldconfig
+
+#
+## To do a DEB:
+#  -----------
+cd ../castor-x.y.z-r
+fakeroot make deb
