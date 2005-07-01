@@ -138,10 +138,10 @@ void castor::io::StreamTapeRequestCnv::marshalObject(castor::IObject* object,
     // Mark object as done
     alreadyDone.insert(obj);
     cnvSvc()->marshalObject(obj->tape(), address, alreadyDone);
-    cnvSvc()->marshalObject(obj->client(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->reqExtDevGrp(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->requestedSrv(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->tapeDrive(), address, alreadyDone);
+    cnvSvc()->marshalObject(obj->client(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -165,9 +165,6 @@ castor::IObject* castor::io::StreamTapeRequestCnv::unmarshalObject(castor::io::b
   IObject* objTape = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setTape(dynamic_cast<castor::stager::Tape*>(objTape));
   ad.setObjType(castor::OBJ_INVALID);
-  IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setClient(dynamic_cast<castor::stager::ClientIdentification*>(objClient));
-  ad.setObjType(castor::OBJ_INVALID);
   IObject* objReqExtDevGrp = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setReqExtDevGrp(dynamic_cast<castor::vdqm::ExtendedDeviceGroup*>(objReqExtDevGrp));
   ad.setObjType(castor::OBJ_INVALID);
@@ -176,6 +173,9 @@ castor::IObject* castor::io::StreamTapeRequestCnv::unmarshalObject(castor::io::b
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objTapeDrive = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setTapeDrive(dynamic_cast<castor::vdqm::TapeDrive*>(objTapeDrive));
+  ad.setObjType(castor::OBJ_INVALID);
+  IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setClient(dynamic_cast<castor::stager::ClientIdentification*>(objClient));
   return object;
 }
 

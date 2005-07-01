@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.61 $ $Release$ $Date: 2005/06/06 13:58:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.62 $ $Release$ $Date: 2005/07/01 13:10:11 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -758,11 +758,26 @@ namespace castor {
         throw (castor::exception::Exception) = 0;
 
       /**
-       * Implements a single file stageRm.
+       * Implements a single file stageRelease.
        * It throws a Busy exception in case the file is
        * used by any request or is waiting for migration.
        * Otherwise, it marks all the copies of the file
        * as candidate for the garbage collection.
+       * @param fileId the fileId of the CastorFile
+       * @param nsHost the name server to use
+       * @exception in case of error or if the file is busy
+       */
+      virtual void stageRelease
+      (const u_signed64 fileId, const std::string nsHost)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Implements a single file stageRm.
+       * It throws a Busy exception in case the file is
+       * beging migrated. Otherwise, it deletes all
+       * running requests for the file and marks all
+       * the copies of the file as candidate for the
+       * garbage collection.
        * @param fileId the fileId of the CastorFile
        * @param nsHost the name server to use
        * @exception in case of error or if the file is busy

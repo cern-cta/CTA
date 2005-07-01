@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2005/06/06 13:58:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2005/07/01 13:10:11 $ $Author: sponcec3 $
  *
  *
  *
@@ -902,6 +902,19 @@ void castor::stager::RemoteStagerSvc::archiveSubReq
 // -----------------------------------------------------------------------
 std::vector<castor::stager::Segment*>
 castor::stager::RemoteStagerSvc::failedSegments()
+  throw (castor::exception::Exception) {
+  castor::exception::NotSupported ex;
+  ex.getMessage()
+    << "RemoteStagerSvc implementation is not complete"
+    << std::endl << "This method is not supported.";
+  throw ex;
+}
+
+// -----------------------------------------------------------------------
+// stageRelease
+// -----------------------------------------------------------------------
+void castor::stager::RemoteStagerSvc::stageRelease
+(const u_signed64 fileId, const std::string nsHost)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()

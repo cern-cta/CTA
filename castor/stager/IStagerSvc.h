@@ -895,6 +895,25 @@ int Cstager_IStagerSvc_failedSegments
  int* nbItems);
 
 /*
+ * Implements a single file stageRelease.
+ * It throws a Busy exception in case the file is
+ * used by any request or is waiting for migration.
+ * Otherwise, it marks all the copies of the file
+ * as candidate for the garbage collection.
+ * @param stgSvc the IStagerSvc used
+ * @param fileId the fileId of the CastorFile
+ * @param nsHost the name server to use
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_stageRelease
+(struct Cstager_IStagerSvc_t* stgSvc,
+ const u_signed64 fileId,
+ const char* nsHost);
+
+/*
  * Implements a single file stageRm.
  * It throws a Busy exception in case the file is
  * used by any request or is waiting for migration.

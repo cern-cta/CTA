@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.51 $ $Release$ $Date: 2005/06/06 13:58:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.52 $ $Release$ $Date: 2005/07/01 13:10:11 $ $Author: sponcec3 $
  *
  *
  *
@@ -819,6 +819,24 @@ extern "C" {
       for (int i = 0; i < *nbItems; i++) {
         (*segmentArray)[i] = result[i];
       }
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_stageRelease
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_stageRelease
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   const u_signed64 fileId,
+   const char* nsHost) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      stgSvc->stgSvc->stageRelease(fileId, nsHost);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

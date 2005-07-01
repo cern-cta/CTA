@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.168 $ $Release$ $Date: 2005/06/13 15:48:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.169 $ $Release$ $Date: 2005/07/01 13:10:11 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -250,6 +250,10 @@ const std::string castor::db::ora::OraStagerSvc::s_archiveSubReqStatementString 
 const std::string castor::db::ora::OraStagerSvc::s_failedSegmentsStatementString =
   "BEGIN failedSegments(:1); END;";
 
+/// SQL statement for stageRelease
+const std::string castor::db::ora::OraStagerSvc::s_stageReleaseStatementString =
+  "BEGIN stageRelease(:1, :2, :3); END;";
+
 /// SQL statement for stageRm
 const std::string castor::db::ora::OraStagerSvc::s_stageRmStatementString =
   "BEGIN stageRm(:1, :2, :3); END;";
@@ -300,6 +304,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_putFailedStatement(0),
   m_archiveSubReqStatement(0),
   m_failedSegmentsStatement(0),
+  m_stageReleaseStatement(0),
   m_stageRmStatement(0) {
 }
 
@@ -372,6 +377,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_putFailedStatement);
     deleteStatement(m_archiveSubReqStatement);
     deleteStatement(m_failedSegmentsStatement);
+    deleteStatement(m_stageReleaseStatement);
     deleteStatement(m_stageRmStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -416,6 +422,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_putFailedStatement = 0;
   m_archiveSubReqStatement = 0;
   m_failedSegmentsStatement = 0;
+  m_stageReleaseStatement = 0;
   m_stageRmStatement = 0;
 }
 
@@ -2801,6 +2808,51 @@ castor::db::ora::OraStagerSvc::failedSegments ()
 }
 
 // -----------------------------------------------------------------------
+// stageRelease
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::stageRelease
+(const u_signed64 fileId, const std::string nsHost)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_stageReleaseStatement) {
+      m_stageReleaseStatement =
+        createStatement(s_stageReleaseStatementString);
+      m_stageReleaseStatement->registerOutParam
+        (3, oracle::occi::OCCIINT);
+      m_stageReleaseStatement->setAutoCommit(true);
+    }
+    // execute the statement and see whether we found something
+    m_stageReleaseStatement->setDouble(1, fileId);
+    m_stageReleaseStatement->setString(2, nsHost);
+    unsigned int nb = m_stageReleaseStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "stageRelease : No return code after PL/SQL call.";
+      throw ex;
+    }
+    // In case of EBUSY, throw exception
+    int returnCode = m_stageReleaseStatement->getInt(3);
+    if (returnCode != 0) {
+      castor::exception::Busy e;
+      if (returnCode == 1) {
+        e.getMessage() << "The file is being migrated.";
+      } else {
+        e.getMessage() << "There is/are ongoing request(s) on this file.";
+      }
+      throw e;
+    }
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in stageRelease."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
 // stageRm
 // -----------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::stageRm
@@ -2830,9 +2882,11 @@ void castor::db::ora::OraStagerSvc::stageRm
     if (returnCode != 0) {
       castor::exception::Busy e;
       if (returnCode == 1) {
-        e.getMessage() << "The file is waiting for migration.";
+        e.getMessage() << "The file is being migrated.";
+      } else if (returnCode == 2) {
+        e.getMessage() << "The file is being replicated.";
       } else {
-        e.getMessage() << "There is/are ongoing request(s) on this file.";
+        e.getMessage() << "The file is being recalled from Tape.";
       }
       throw e;
     }

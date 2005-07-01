@@ -763,11 +763,26 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Implements a single file stageRm.
+         * Implements a single file stageRelease.
          * It throws a Busy exception in case the file is
          * used by any request or is waiting for migration.
          * Otherwise, it marks all the copies of the file
          * as candidate for the garbage collection.
+         * @param fileId the fileId of the CastorFile
+         * @param nsHost the name server to use
+         * @exception in case of error or if the file is busy
+         */
+        virtual void stageRelease
+        (const u_signed64 fileId, const std::string nsHost)
+          throw (castor::exception::Exception);
+
+        /**
+         * Implements a single file stageRm.
+         * It throws a Busy exception in case the file is
+         * beging migrated. Otherwise, it deletes all
+         * running requests for the file and marks all
+         * the copies of the file as candidate for the
+         * garbage collection.
          * @param fileId the fileId of the CastorFile
          * @param nsHost the name server to use
          * @exception in case of error or if the file is busy
@@ -1049,6 +1064,12 @@ namespace castor {
 
         /// SQL statement object for function failedSegments
         oracle::occi::Statement *m_failedSegmentsStatement;
+
+        /// SQL statement for function stageRelease
+        static const std::string s_stageReleaseStatementString;
+
+        /// SQL statement object for function stageRelease
+        oracle::occi::Statement *m_stageReleaseStatement;
 
         /// SQL statement for function stageRm
         static const std::string s_stageRmStatementString;

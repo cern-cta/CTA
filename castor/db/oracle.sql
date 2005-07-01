@@ -1676,6 +1676,41 @@ BEGIN
                      WHERE Segment.status = 6; -- SEGMENT_FAILED
 END;
 
+/* PL/SQL method implementing stageRelease */
+CREATE OR REPLACE PROCEDURE stageRelease (fid IN INTEGER,
+                                          nh IN VARCHAR2,
+                                          ret OUT INTEGER) AS
+  cfId INTEGER;
+  nbRes INTEGER;
+BEGIN
+ -- Lock the access to the CastorFile
+ -- This, together with triggers will avoid new TapeCopies
+ -- or DiskCopies to be added
+ SELECT id INTO cfId FROM CastorFile
+  WHERE fileId = fid AND nsHost = nh FOR UPDATE;
+ -- check if removal is possible for TapeCopies
+ SELECT count(*) INTO nbRes FROM TapeCopy
+  WHERE status = 3 -- TAPECOPY_SELECTED
+    AND castorFile = cfId;
+ IF nbRes > 0 THEN
+   -- We found something, thus we cannot recreate
+   ret := 1;
+   RETURN;
+ END IF;
+ -- check if recreation is possible for SubRequests
+ SELECT count(*) INTO nbRes FROM SubRequest
+  WHERE castorFile = cfId;
+ IF nbRes > 0 THEN
+   -- We found something, thus we cannot recreate
+   ret := 2;
+   RETURN;
+ END IF;
+ -- set DiskCopies to GCCANDIDATE
+ UPDATE DiskCopy SET status = 8 -- GCCANDIDATE
+  WHERE castorFile = cfId AND status = 0; -- STAGED
+ ret := 0;
+END;
+
 /* PL/SQL method implementing stageRm */
 CREATE OR REPLACE PROCEDURE stageRm (fid IN INTEGER,
                                      nh IN VARCHAR2,
@@ -1688,26 +1723,45 @@ BEGIN
  -- or DiskCopies to be added
  SELECT id INTO cfId FROM CastorFile
   WHERE fileId = fid AND nsHost = nh FOR UPDATE;
- -- check if removal is possible for TapeCopies
+ -- check if removal is possible for Migration
  SELECT count(*) INTO nbRes FROM TapeCopy
-   WHERE status = 3 -- TAPECOPY_SELECTED
-   AND castorFile = cfId;
+  WHERE status = 3 -- TAPECOPY_SELECTED
+    AND castorFile = cfId;
  IF nbRes > 0 THEN
    -- We found something, thus we cannot recreate
    ret := 1;
    RETURN;
  END IF;
- -- check if recreation is possible for SubRequests
- SELECT count(*) INTO nbRes FROM SubRequest
-   WHERE castorFile = cfId;
+ -- check if removal is possible for Disk2DiskCopy
+ SELECT count(*) INTO nbRes FROM DiskCopy
+  WHERE status = 1 -- DISKCOPY_WAITDISK2DISKCOPY
+    AND castorFile = cfId;
  IF nbRes > 0 THEN
    -- We found something, thus we cannot recreate
    ret := 2;
    RETURN;
  END IF;
+ -- check if removal is possible for Recall
+ SELECT count(*) INTO nbRes FROM TapeCopy, Segment
+  WHERE Segment.status = 7 -- SEGMENT_SELECTED
+    AND TapeCopy.status = 4 -- TAPECOPY_TOBERECALLED
+    AND Segment.copy = TapeCopy.id
+    AND TapeCopy.castorFile = cfId;
+ IF nbRes > 0 THEN
+   -- We found something, thus we cannot recreate
+   ret := 3;
+   RETURN;
+ END IF;
+ -- drop all requests for the file
+ FOR sr IN (SELECT id
+              FROM SubRequest
+             WHERE castorFile = cfId) LOOP
+   archiveSubReq(sr.id);
+ END LOOP;
  -- set DiskCopies to GCCANDIDATE
  UPDATE DiskCopy SET status = 8 -- GCCANDIDATE
-  WHERE castorFile = cfId AND status = 0; -- STAGED
+  WHERE castorFile = cfId
+    AND status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
  ret := 0;
 END;
 
