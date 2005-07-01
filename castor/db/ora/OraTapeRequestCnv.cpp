@@ -59,7 +59,7 @@ const castor::ICnvFactory& OraTapeRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraTapeRequestCnv::s_insertStatementString =
-"INSERT INTO TapeRequest (priority, creationTime, id, tape, reqExtDevGrp, requestedSrv, tapeDrive, client) VALUES (:1,:2,ids_seq.nextval,:3,:4,:5,:6,:7) RETURNING id INTO :8";
+"INSERT INTO TapeRequest (priority, modificationTime, id, tape, reqExtDevGrp, requestedSrv, tapeDrive, client) VALUES (:1,:2,ids_seq.nextval,:3,:4,:5,:6,:7) RETURNING id INTO :8";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraTapeRequestCnv::s_deleteStatementString =
@@ -67,11 +67,11 @@ const std::string castor::db::ora::OraTapeRequestCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraTapeRequestCnv::s_selectStatementString =
-"SELECT priority, creationTime, id, tape, reqExtDevGrp, requestedSrv, tapeDrive, client FROM TapeRequest WHERE id = :1";
+"SELECT priority, modificationTime, id, tape, reqExtDevGrp, requestedSrv, tapeDrive, client FROM TapeRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraTapeRequestCnv::s_updateStatementString =
-"UPDATE TapeRequest SET priority = :1 WHERE id = :2";
+"UPDATE TapeRequest SET priority = :1, modificationTime = :2 WHERE id = :3";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraTapeRequestCnv::s_storeTypeStatementString =
@@ -713,7 +713,7 @@ void castor::db::ora::OraTapeRequestCnv::createRep(castor::IAddress* address,
     }
     // Now Save the current object
     m_insertStatement->setInt(1, obj->priority());
-    m_insertStatement->setInt(2, time(0));
+    m_insertStatement->setInt(2, obj->modificationTime());
     m_insertStatement->setDouble(3, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
     m_insertStatement->setDouble(4, (type == OBJ_ExtendedDeviceGroup && obj->reqExtDevGrp() != 0) ? obj->reqExtDevGrp()->id() : 0);
     m_insertStatement->setDouble(5, (type == OBJ_TapeServer && obj->requestedSrv() != 0) ? obj->requestedSrv()->id() : 0);
@@ -746,7 +746,7 @@ void castor::db::ora::OraTapeRequestCnv::createRep(castor::IAddress* address,
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
                     << "  priority : " << obj->priority() << std::endl
-                    << "  creationTime : " << obj->creationTime() << std::endl
+                    << "  modificationTime : " << obj->modificationTime() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  tape : " << obj->tape() << std::endl
                     << "  reqExtDevGrp : " << obj->reqExtDevGrp() << std::endl
@@ -775,7 +775,8 @@ void castor::db::ora::OraTapeRequestCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setInt(1, obj->priority());
-    m_updateStatement->setDouble(2, obj->id());
+    m_updateStatement->setInt(2, obj->modificationTime());
+    m_updateStatement->setDouble(3, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -878,7 +879,7 @@ castor::IObject* castor::db::ora::OraTapeRequestCnv::createObj(castor::IAddress*
     castor::vdqm::TapeRequest* object = new castor::vdqm::TapeRequest();
     // Now retrieve and set members
     object->setPriority(rset->getInt(1));
-    object->setCreationTime(rset->getInt(2));
+    object->setModificationTime(rset->getInt(2));
     object->setId((u_signed64)rset->getDouble(3));
     m_selectStatement->closeResultSet(rset);
     return object;
@@ -926,7 +927,7 @@ void castor::db::ora::OraTapeRequestCnv::updateObj(castor::IObject* obj)
     castor::vdqm::TapeRequest* object = 
       dynamic_cast<castor::vdqm::TapeRequest*>(obj);
     object->setPriority(rset->getInt(1));
-    object->setCreationTime(rset->getInt(2));
+    object->setModificationTime(rset->getInt(2));
     object->setId((u_signed64)rset->getDouble(3));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {

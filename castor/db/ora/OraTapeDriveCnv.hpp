@@ -204,6 +204,15 @@ namespace castor {
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
+         * Fill the database with objects of type ClientIdentification refered by a given
+         * object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepClientIdentification(castor::vdqm::TapeDrive* obj)
+          throw (castor::exception::Exception, oracle::occi::SQLException);
+
+        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -246,6 +255,15 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjTapeServer(castor::vdqm::TapeDrive* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type ClientIdentification refered by a
+         * given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjClientIdentification(castor::vdqm::TapeDrive* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -375,6 +393,18 @@ namespace castor {
 
         /// SQL update statement object for member tapeServer
         oracle::occi::Statement *m_updateTapeServerStatement;
+
+        /// SQL checkExist statement for member client
+        static const std::string s_checkClientIdentificationExistStatementString;
+
+        /// SQL checkExist statement object for member client
+        oracle::occi::Statement *m_checkClientIdentificationExistStatement;
+
+        /// SQL update statement for member client
+        static const std::string s_updateClientIdentificationStatementString;
+
+        /// SQL update statement object for member client
+        oracle::occi::Statement *m_updateClientIdentificationStatement;
 
       }; // end of class OraTapeDriveCnv
 
