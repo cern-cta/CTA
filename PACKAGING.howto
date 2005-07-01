@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.7 2005/07/01 14:53:43 jdurand Exp $
+## $Id: PACKAGING.howto,v 1.8 2005/07/01 15:30:18 sponcec3 Exp $
 #
 ## Example of packaging of version
 #
@@ -84,3 +84,12 @@ ldconfig
 #  -----------
 cd ../castor-x.y.z-r
 fakeroot make deb
+
+
+#
+## To export on the download web page
+#  ----------------------------------
+cd /afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/DIST/CERN/savannah/CASTOR.pkg
+mkdir -p x.y.z-r/Linux
+cp /usr/src/redhat/RPMS/i386/*x.y.z-r*.rpm .
+cp /usr/src/redhat/SRPMS/castor-x.y.z-r.src.rpm .
