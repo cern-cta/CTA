@@ -661,6 +661,38 @@ BEGIN
       6 MEMBER OF stat OR -- STAGEOUT
       10 MEMBER OF stat   -- CANBEMIGR
    THEN
+     -- In case of PutDone, Check there is no put going on
+     -- If any, we'll wait on one of them
+     DECLARE
+       reqId NUMBER;
+       cfId NUMBER;
+       nb NUMBER;
+     BEGIN
+       SELECT request, castorFile INTO reqId, cfId
+         FROM SubRequest WHERE id = rsubreqId;
+       IF (SELECT type FROM Id2Type
+            WHERE id = reqId) = 39 THEN -- PutDone
+         -- count nb of running puts
+         SELECT COUNT(*) INTO nb
+           FROM SubRequest, Id2Type
+          WHERE SubRequest.castorfile = cfId
+            AND SubRequest.request = Id2Type.id
+            AND Id2Type.type = 40 -- Put
+            AND SubRequest.status IN (0, 1, 2, 3); -- START, RESTART, RETRY, WAITSCHED
+         -- make putDone wait if any put is running
+         IF nb > 0 THEN
+           UPDATE SubRequest
+              SET parent = (SELECT id FROM SubRequest WHERE diskCopy = dci(1)),
+                  status = 5, -- WAITSUBREQ
+                  lastModificationTime = getTime()
+            WHERE id = rsubreqId;
+           result := 0;  -- no schedule
+           RETURN;
+         END IF;
+       END IF;
+     END;
+     -- We are not in the case of a putDone with a running put
+     -- so we should schedule and give a list of sources
      result := 1;  -- schedule and diskcopies available
      OPEN sources
        FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
@@ -812,6 +844,44 @@ BEGIN
   WHERE id = rdcId
   RETURNING status, path
   INTO rdcStatus, rdcPath;
+END;
+
+CREATE OR REPLACE PROCEDURE putDoneStart
+        (srId IN INTEGER, dcId OUT INTEGER,
+         dcStatus OUT INTEGER, dcPath OUT INTEGER) AS
+  reqId NUMBER;
+  cfId NUMBER;
+  nb NUMBER;
+BEGIN
+  -- Check there is no put going on
+  -- If any, we'll wait on one of them
+  SELECT request, castorFile INTO reqId, cfId
+    FROM SubRequest WHERE id = srId;
+  IF (SELECT type FROM Id2Type
+       WHERE id = reqId) = 39 THEN -- PutDone
+    -- count nb of running puts
+    SELECT COUNT(*) INTO nb
+      FROM SubRequest, Id2Type
+     WHERE SubRequest.castorfile = cfId
+       AND SubRequest.request = Id2Type.id
+       AND Id2Type.type = 40 -- Put
+       AND SubRequest.status IN (0, 1, 2, 3); -- START, RESTART, RETRY, WAITSCHED
+    -- make putDone wait if any put is running
+    IF nb > 0 THEN
+      UPDATE SubRequest
+         SET parent = (SELECT id FROM SubRequest WHERE diskCopy = dci(1)),
+             status = 5, -- WAITSUBREQ
+             lastModificationTime = getTime()
+       WHERE id = rsubreqId;
+      result := 0;  -- no schedule
+      RETURN;
+    END IF;
+  END IF;
+  -- No put, we can safely go
+  SELECT DiskCopy.id, DiskCopy.status, DiskCopy.path
+    INTO dcId, dcStatus, dcPath
+    FROM SubRequest, DiskCopy
+   WHERE SubRequest.id = :1 AND DiskCopy.castorfile = SubRequest.castorfile AND DiskCopy.status = 6; -- STAGEOUT
 END;
 
 /* PL/SQL method implementing updateAndCheckSubRequest */
@@ -1053,7 +1123,7 @@ BEGIN
       SELECT euid, egid, id from StagePutDoneRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
  -- If not a put inside a PrepareToPut, update the FileSystem free space
- IF contextPIPP = 0 THEN
+ IF contextPIPP != 0 THEN
    SELECT fileSystem into fsId from DiskCopy
     WHERE castorFile = cfId AND status = 6;
    updateFsFileClosed(fsId, reservedSpace, fs);
@@ -1063,6 +1133,16 @@ BEGIN
  --  If not a put inside a PrepareToPut, create TapeCopies and update DiskCopy status
  IF contextPIPP != 0 THEN
    putDoneFunc(cfId, fs, contextPIPP);
+ END IF;
+ -- If put inside PrepareToPut, restart any PutDone currently
+ -- waiting on this put
+ IF contextPIPP = 0 THEN
+   UPDATE SubRequest SET status = restart WHERE id IN
+     (SELECT SubRequest.id FROM SubRequest, Id2Type
+       WHERE SubRequest.request = Id2Type.id
+         AND Id2Type.type = 39       -- PutDone
+         AND SubRequest.castorFile = cfId
+         AND SubRequest,status = 5); -- WAITSUBREQ
  END IF;
  COMMIT;
 END;

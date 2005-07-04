@@ -461,9 +461,13 @@ int Cstager_IStagerSvc_putStart
  * Actually only returns the DiskCopy associated to the SubRequest
  * Note that deallocation of the DiskCopy is the
  * responsability of the caller.
+ * If a null  DiskCopy is returned then the PutDone
+ * was put in waiting mode and the caller should stop
+ * processing it
  * @param stgSvc the IStagerSvc used
  * @param subreqId the if of the SubRequest to consider
- * @param diskCopy the DiskCopy to use for the data access
+ * @param diskCopy the DiskCopy to use for the data access or
+ * 0 if the PutDone should wait
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling

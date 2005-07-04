@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.169 $ $Release$ $Date: 2005/07/01 13:10:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.170 $ $Release$ $Date: 2005/07/04 14:39:11 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -148,7 +148,7 @@ const std::string castor::db::ora::OraStagerSvc::s_putStartStatementString =
 
 /// SQL statement for putDoneStart
 const std::string castor::db::ora::OraStagerSvc::s_putDoneStartStatementString =
-  "SELECT DiskCopy.id, DiskCopy.status, DiskCopy.path FROM SubRequest, DiskCopy WHERE SubRequest.id = :1 AND DiskCopy.castorfile = SubRequest.castorfile AND DiskCopy.status = 6"; // STAGEOUT
+  "BEGIN putDoneStart(:1, :2, :3, :4); END;";
 
 /// SQL statement for selectSvcClass
 const std::string castor::db::ora::OraStagerSvc::s_selectSvcClassStatementString =
@@ -1525,29 +1525,32 @@ castor::db::ora::OraStagerSvc::putDoneStart(u_signed64 subreqId)
     if (0 == m_putDoneStartStatement) {
       m_putDoneStartStatement =
         createStatement(s_putDoneStartStatementString);
+      m_putDoneStartStatement->registerOutParam
+        (2, oracle::occi::OCCIDOUBLE);
+      m_putDoneStartStatement->registerOutParam
+        (3, oracle::occi::OCCIINT);
+      m_putDoneStartStatement->registerOutParam
+        (4, oracle::occi::OCCISTRING, 2048);
     }
     // execute the statement and see whether we found something
     m_putDoneStartStatement->setDouble(1, subreqId);
-    oracle::occi::ResultSet *rset = m_putDoneStartStatement->executeQuery();
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      // Nothing found
-      m_putDoneStartStatement->closeResultSet(rset);
+    unsigned int nb = m_putDoneStartStatement->executeUpdate();
+    if (0 == nb) {
       castor::exception::Internal ex;
       ex.getMessage()
         << "putDoneStart : unable to execute putDoneStart in DB.\n"
-	<< "Subrequest Id was " << subreqId;
+        << "Subrequest Id was " << subreqId;
       throw ex;
     }
     // Get the result
     result = new castor::stager::DiskCopy();
-    result->setId((u_signed64)rset->getDouble(1));
+    result->setId((u_signed64)m_putDoneStartStatement->getDouble(2));
     result->setStatus
       ((enum castor::stager::DiskCopyStatusCodes)
-       rset->getInt(2));
-    result->setPath(rset->getString(3));
+       m_putDoneStartStatement->getInt(3));
+    result->setPath(m_putDoneStartStatement->getString(4));
     // return
     cnvSvc()->commit();
-    m_putDoneStartStatement->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {
     if (0 != result) {

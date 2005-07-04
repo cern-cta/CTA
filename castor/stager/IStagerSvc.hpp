@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.62 $ $Release$ $Date: 2005/07/01 13:10:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.63 $ $Release$ $Date: 2005/07/04 14:39:10 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -397,8 +397,12 @@ namespace castor {
        * Actually only returns the DiskCopy associated to the SubRequest
        * Note that deallocation of the DiskCopy is the
        * responsability of the caller.
+       * If a null  DiskCopy is returned then the PutDone
+       * was put in waiting mode and the caller should stop
+       * processing it
        * @param subreqId the if of the SubRequest to consider
-       * @return the DiskCopy to use for the data access
+       * @return the DiskCopy to use for the data access or
+       * 0 if the PutDone should wait
        * @exception Exception in case of error
        */
       virtual castor::stager::DiskCopy* putDoneStart(u_signed64 subreqId)

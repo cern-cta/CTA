@@ -395,17 +395,21 @@ namespace castor {
          castor::stager::FileSystem* fileSystem)
           throw (castor::exception::Exception);
 
-	/**
-	 * Handles the start of a PutDone job.
-	 * Actually only returns the DiskCopy associated to the SubRequest
-	 * Note that deallocation of the DiskCopy is the
-	 * responsability of the caller.
-	 * @param subreqId the if of the SubRequest to consider
-	 * @return the DiskCopy to use for the data access
-	 * @exception Exception in case of error
-	 */
-	virtual castor::stager::DiskCopy* putDoneStart(u_signed64 subreqId)
-	  throw (castor::exception::Exception);
+        /**
+         * Handles the start of a PutDone job.
+         * Actually only returns the DiskCopy associated to the SubRequest
+         * Note that deallocation of the DiskCopy is the
+         * responsability of the caller.
+         * If a null  DiskCopy is returned then the PutDone
+         * was put in waiting mode and the caller should stop
+         * processing it
+         * @param subreqId the if of the SubRequest to consider
+         * @return the DiskCopy to use for the data access or
+         * 0 if the PutDone should wait
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::DiskCopy* putDoneStart(u_signed64 subreqId)
+          throw (castor::exception::Exception);
 
         /**
          * Retrieves a SvcClass from the database based on its name.
