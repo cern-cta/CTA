@@ -33,6 +33,8 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NotSupported.hpp"
 
+#include "castor/vdqm/handler/TapeRequestHandler.hpp"
+#include "castor/vdqm/handler/TapeDriveHandler.hpp"
 
 #include <net.h>
 #include <vdqm_constants.h>
@@ -40,8 +42,10 @@
  
 // Local Includes
 #include "OldVdqmProtocol.hpp"
-#include "TapeRequestHandler.hpp"
 #include "VdqmServerSocket.hpp"
+
+// To make the code more readable
+using namespace castor::vdqm::handler;
  
 //------------------------------------------------------------------------------
 // Constructor
@@ -165,7 +169,8 @@ bool castor::vdqm::OldVdqmProtocol::handleRequestType(VdqmServerSocket* sock,
     		else {
 	    		// Handle VDQM_DRV_REQ
 	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 20);
-					// rc = vdqm_NewDrvReq(&hdr,&driveRequest);
+					TapeDriveHandler tapeDriveHandler(ptr_header, ptr_driveRequest, cuuid);
+					tapeDriveHandler.newTapeDriveRequest();
     		}
         break;
     case VDQM_DEL_VOLREQ:
