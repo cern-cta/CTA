@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.19 2005/06/29 14:32:55 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.20 2005/07/04 14:58:06 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.19 $ $Date: 2005/06/29 14:32:55 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.20 $ $Date: 2005/07/04 14:58:06 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -815,6 +815,9 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
     if (qrySvc) qrySvc->release();
     throw e;
   }
+
+  // Delete Request From the database
+  svcs->deleteRep(&ad, req, true);
 
   // Cleanup
   if (0 != req) {
