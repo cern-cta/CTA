@@ -1,4 +1,7 @@
 #!/usr/bin/perl -w
+#
+# Parent script for all recall policies
+#
 
 use strict;
 use diagnostics;
