@@ -1,3 +1,9 @@
+gencastor (3.1-3) unstable; urgency=low
+
+  * Added INITRANS and PCTFREE to all tables in Oracle SQL generation.
+
+ -- Giuseppe LO PRESTI <giuseppe.lopresti@cern.ch>  Fri,  1 Jul 2005 17:45:53 +0200
+
 gencastor (3.1-2) unstable; urgency=low
 
   * Fixed queries involving truncated long entity names.
