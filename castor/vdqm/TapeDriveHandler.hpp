@@ -119,19 +119,14 @@ namespace castor {
 				
 				
 				/**
-				 * Tries to find an equivalent status code from the new 
-				 * TapeDriveStatusCodes out of the old protocol status. 
+				 * Does a logging for the old and new status code
 				 * 
 				 * @param oldProtocolStatus The status value of the old Protocol
 				 * @param newActStatus The current status of the tape drive in the db
-				 * @param newStatusString A variable to store the string representation
-				 *  of the new status code
-				 * @return the new status code
 				 * @exception In case of error
 				 */	
-				int translateOldProtocolStatus(const int oldProtocolStatus, 
-																			 const int newActStatus, 
-																			 std::string newStatusString)
+				void printStatus(const int oldProtocolStatus, 
+												const int newActStatus)
 					throw (castor::exception::Exception);
 					
     }; // class TapeDriveHandler

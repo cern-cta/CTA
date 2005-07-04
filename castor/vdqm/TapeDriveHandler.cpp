@@ -81,8 +81,6 @@ void castor::vdqm::TapeDriveHandler::newTapeDriveRequest()
     
 	TapeServer* tapeServer = NULL;
 	TapeDrive* tapeDrive = NULL;
-	std::string newStatusString;
-	int newDesiredStatus;
   
 
 	//"The parameters of the old vdqm DrvReq Request" message
@@ -154,14 +152,8 @@ void castor::vdqm::TapeDriveHandler::newTapeDriveRequest()
 	/**
 	 * reinterpret the old status
 	 */
-	newDesiredStatus = translateOldProtocolStatus(ptr_driveRequest->status,
-																								tapeDrive->status(), 
-																								newStatusString);
-																								
-	//"The desired new Protocol status of the client" message
-  castor::dlf::Param param[] =
-  	{castor::dlf::Param("status", newDesiredStatus)};
-  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 36, 1, param);
+	printStatus(ptr_driveRequest->status,
+																 tapeDrive->status());
 																								
 	
 
@@ -971,15 +963,13 @@ void castor::vdqm::TapeDriveHandler::copyTapeDriveInformations(
 
 
 //------------------------------------------------------------------------------
-// translateOldProtocolStatus
+// printStatus
 //------------------------------------------------------------------------------
-int castor::vdqm::TapeDriveHandler::translateOldProtocolStatus(
+void castor::vdqm::TapeDriveHandler::printStatus(
 	const int oldProtocolStatus, 
-	const int newActStatus, 
-	std::string newStatusString) 
+	const int newActStatus) 
 	throw (castor::exception::Exception) {	
 	
-	int newDesiredStatus = -1;
 	std::string oldStatusString;
 	
   int vdqm_status_values[] = VDQM_STATUS_VALUES;
@@ -1006,21 +996,69 @@ int castor::vdqm::TapeDriveHandler::translateOldProtocolStatus(
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 35, 1, param);
 	
 	
+	// "The actual \"new Protocol\" status of the client" message
 	switch ( newActStatus ) {
-		case UNIT_UP:
-					//TODO: Baustelle!!!
+		case UNIT_UP: 
+					{
+						castor::dlf::Param param1[] =
+	  					{castor::dlf::Param("status", "UNIT_UP")};
+  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param);
+					}
 					break;
 		case UNIT_STARTING:
+					{
+						castor::dlf::Param param1[] =
+	  					{castor::dlf::Param("status", "UNIT_STARTING")};
+  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param);
+					}		
 					break;
 		case UNIT_ASSIGNED:
+					{
+						castor::dlf::Param param1[] =
+	  					{castor::dlf::Param("status", "UNIT_ASSIGNED")};
+  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param);
+					}		
 					break;
 		case UNIT_RELEASED:
+					{
+						castor::dlf::Param param1[] =
+	  					{castor::dlf::Param("status", "UNIT_RELEASED")};
+  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param);
+					}		
 					break;
 		case VOL_MOUNTED:
+					{
+						castor::dlf::Param param1[] =
+	  					{castor::dlf::Param("status", "VOL_MOUNTED")};
+  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param);
+					}		
 					break;
 		case FORCED_UNMOUNT:
+					{
+						castor::dlf::Param param1[] =
+	  					{castor::dlf::Param("status", "UNIT_RELEASED")};
+  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param);
+					}		
 					break;
 		case UNIT_DOWN:
+					{
+						castor::dlf::Param param1[] =
+	  					{castor::dlf::Param("status", "UNIT_DOWN")};
+  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param);
+					}		
+					break;
+		case WAIT_FOR_UNMOUNT:
+					{
+						castor::dlf::Param param1[] =
+	  					{castor::dlf::Param("status", "WAIT_FOR_UNMOUNT")};
+  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param);
+					}	
+		case STATUS_UNKNOWN:
+					{
+						castor::dlf::Param param1[] =
+	  					{castor::dlf::Param("status", "STATUS_UNKNOWN")};
+  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param);
+					}						
 					break;
 		default:
 					castor::exception::InvalidArgument ex;
