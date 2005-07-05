@@ -803,7 +803,7 @@ BEGIN
  ELSE
    DECLARE
      CURSOR c1 IS SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id,
-                       FileSystem.fsDeviation, FileSystem.diskserver, SubRequest.xsize
+                       FileSystem.fsDeviation, FileSystem.diskserver, CastorFile.fileSize
                     FROM DiskServer, FileSystem, DiskPool2SvcClass,
                          (SELECT id, svcClass from StageGetRequest UNION
                           SELECT id, svcClass from StagePrepareToGetRequest UNION
