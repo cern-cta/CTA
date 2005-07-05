@@ -129,6 +129,8 @@ castor::vdqm::VdqmServer::VdqmServer() :
      {34, "Create new TapeDrive in DB"},
      {35, "The desired \"old Protocol\" status of the client"},     
      {36, "The actual \"new Protocol\" status of the client"},     
+     {37, "Remove old TapeRequest from db"},     
+     {38, "WAIT DOWN request from tpdaemon client"},     
      {-1, ""}};
   castor::dlf::dlf_init("Vdqm", messages);
 }

@@ -49,6 +49,7 @@ namespace castor {
       UNIT_DOWN, //When the tape drive is down, it means that it is not ready to receive any requests. It must first be set back to UNIT_UP status.
       WAIT_FOR_UNMOUNT, //The tape is still in the tape drive, but there are no more requests for it in the queue. So it just waits for the unmount command from the tpdaemon to come back to UNIT_UP status or to go immediatly to UNIT_STARTING status.
       STATUS_UNKNOWN, //If an unexpected command comes from the client, which stays in conflict with the current status of the tape drive, the status will be set to STATUS_UNKNOWN.
+      UNIT_WAITDOWN, //Intermediate state until tape daemon confirms that the drive is DOWN.
       id //The id of this object
     }; // end of enum TapeDriveStatusCodes
 
@@ -56,7 +57,7 @@ namespace castor {
      * Names of the differents representations, used to display
      * correctly the TapeDriveStatusCodes enum
      */
-    extern const char* TapeDriveStatusCodesStrings[10];
+    extern const char* TapeDriveStatusCodesStrings[11];
 
 #ifdef __cplusplus
   }; // end of namespace vdqm
