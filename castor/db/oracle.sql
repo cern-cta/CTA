@@ -844,8 +844,9 @@ SELECT SubRequest.id, DiskCopy.id, SubRequest.xsize
  FROM TapeCopy, SubRequest, DiskCopy
  WHERE TapeCopy.id = tapecopyId
   AND DiskCopy.castorFile = TapeCopy.castorFile
-  AND SubRequest.diskcopy = DiskCopy.id;
-UPDATE DiskCopy SET status = 0 WHERE id = dci RETURNING fileSystem into fsid; -- DISKCOPY_STAGED
+  AND SubRequest.diskcopy = DiskCopy.id
+  AND DiskCopy.status = 2;
+UPDATE DiskCopy SET status = 0 WHERE id = dci RETURNING fileSystem INTO fsid; -- DISKCOPY_STAGED
 UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
  WHERE id = SubRequestId; -- SUBREQUEST_RESTART
 UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
