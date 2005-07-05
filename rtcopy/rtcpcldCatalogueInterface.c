@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.129 $ $Release$ $Date: 2005/05/27 11:52:44 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.130 $ $Release$ $Date: 2005/07/05 17:22:52 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.129 $ $Release$ $Date: 2005/05/27 11:52:44 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.130 $ $Release$ $Date: 2005/07/05 17:22:52 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -3616,6 +3616,7 @@ int rtcpcld_restoreSelectedSegments(
                      "C_Services_commit()",
                      C_Services_errorMsg(*svcs)
                      );
+      if ( segmentArray != NULL ) free(segmentArray);
       C_IAddress_delete(iAddr);
       return(-1);
     }
@@ -3640,6 +3641,7 @@ int rtcpcld_restoreSelectedSegments(
                     );
   }
 
+  if ( segmentArray != NULL ) free(segmentArray);
   C_IAddress_delete(iAddr);
   return(nbSegmentsRestored);
 }
