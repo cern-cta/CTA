@@ -91,7 +91,28 @@ namespace castor {
 					TapeDrive* ptr_tapeDrive;
 					vdqmDrvReq_t* ptr_driveRequest;
 					Cuuid_t m_cuuid;
+					
+					
+					/**
+					 * Deletes the tapeRequest in the db, wich has been assigned
+					 * to the TapeDrive. Obviously it is no longer needed. It also
+					 * deletes the jobID and the asspziation to the Tape.
+					 * 
+					 * @exception In case of error
+					 */
+					void deleteOldRequest() 
+						throw (castor::exception::Exception);
 						
+					/**
+					 * This function is written, to check the consistency, if the
+					 * tpdaemon has sent a busy status. It is used internally from
+					 * checkConsistency.
+					 * 
+					 * @exception In case of error
+					 */
+					void checkBusyConsistency() 
+						throw (castor::exception::Exception);
+												
 	    }; // class TapeDriveConsistencyChecker
     
   	} // end of namespace handler

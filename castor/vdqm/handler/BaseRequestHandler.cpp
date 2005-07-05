@@ -100,7 +100,7 @@ castor::vdqm::handler::BaseRequestHandler::~BaseRequestHandler()
 void castor::vdqm::handler::BaseRequestHandler::handleRequest
 (castor::IObject* fr, Cuuid_t cuuid)
   throw (castor::exception::Exception) {
-  // Stores it into Oracle
+  // Stores it into the data base
   castor::BaseAddress ad;
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
@@ -165,7 +165,7 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
 void castor::vdqm::handler::BaseRequestHandler::deleteRepresentation
 (castor::IObject* fr, Cuuid_t cuuid)
   throw (castor::exception::Exception) {
-  // Stores it into Oracle
+  // Deletes it from the data base
   castor::BaseAddress ad;
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
