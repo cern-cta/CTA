@@ -1,5 +1,5 @@
 /*
- * $Id: stager_mapper.c,v 1.6 2005/07/06 05:24:49 jdurand Exp $
+ * $Id: stager_mapper.c,v 1.7 2005/07/06 08:47:59 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_mapper.c,v $ $Revision: 1.6 $ $Date: 2005/07/06 05:24:49 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_mapper.c,v $ $Revision: 1.7 $ $Date: 2005/07/06 08:47:59 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -27,6 +27,8 @@ static char *sccsid = "@(#)$RCSfile: stager_mapper.c,v $ $Revision: 1.6 $ $Date:
 #include "stager_mapper.h"
 #include "getconfent.h"
 #include "serrno.h"
+#include "osdep.h"
+#include "Csnprintf.h"
 
 
 char stghostenv[CA_MAXLINELEN+1];
@@ -34,6 +36,8 @@ char stgpoolenv[CA_MAXLINELEN+1];
 char svcclassenv[CA_MAXLINELEN+1];
 char *stgversion2env = "RFIO_USE_CASTOR_V2=YES";
 
+EXTERN_C int  DLL_DECL stage_errmsg  _PROTO((char *, char *, ...));
+EXTERN_C void DLL_DECL stage_trace   _PROTO((int, char *, ...));
 
 
 /* ================= */
