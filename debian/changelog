@@ -1,3 +1,13 @@
+castor (2.0.0-47) unstable; urgency=low
+
+  * New files for the new VDQM schema in DB
+  * Accept recalls when no subRequest is around. Also don't send EBUSY on a stageRm when recalling is going on, let it continue.
+  * Fixed bestFileSystemForSegment for the space reservation. It was basically always 0
+  * Fixed time window  by which a putDone could be processed before the last put on the same file was over
+  * Fixed some gcc -Wall warnings and missing include files (some of them causing sigsegv on 64bits platform)
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Wed,  6 Jul 2005 11:22:08 +0200
+
 castor (2.0.0-46) unstable; urgency=low
 
   * PACKAGING.howto contains info about physical location for the www
