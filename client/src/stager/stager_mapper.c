@@ -1,5 +1,5 @@
 /*
- * $Id: stager_mapper.c,v 1.5 2005/05/25 17:37:52 bcouturi Exp $
+ * $Id: stager_mapper.c,v 1.6 2005/07/06 05:24:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_mapper.c,v $ $Revision: 1.5 $ $Date: 2005/05/25 17:37:52 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_mapper.c,v $ $Revision: 1.6 $ $Date: 2005/07/06 05:24:49 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -17,6 +17,7 @@ static char *sccsid = "@(#)$RCSfile: stager_mapper.c,v $ $Revision: 1.5 $ $Date:
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <string.h>
 
 /* ============= */
 /* Local headers */
