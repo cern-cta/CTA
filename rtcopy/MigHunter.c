@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.23 $ $Release$ $Date: 2005/05/03 16:05:51 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.24 $ $Release$ $Date: 2005/07/06 07:08:20 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.23 $ $Release$ $Date: 2005/05/03 16:05:51 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.24 $ $Release$ $Date: 2005/07/06 07:08:20 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1702,7 +1702,7 @@ int main(int argc, char *argv[])
       }
       if ( runAsDaemon == 0 ) {
         fprintf(stdout,"Initial size to transfer: %s\n",
-                u64tostr(initialSizeToTransfer,buf,-sizeof(buf)));
+                u64tostr(initialSizeToTransfer,buf,(int)(-sizeof(buf))));
         fprintf(stdout,"Get existing streams for %s\n",argv[i]);
       }
       
