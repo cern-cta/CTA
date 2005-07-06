@@ -571,10 +571,11 @@ CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   fsId NUMBER;
   fileSize NUMBER;
 BEGIN
-  SELECT SubRequest.id, DiskCopy.id, SubRequest.xsize
+  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize
     INTO SubRequestId, dci, fileSize
-    FROM TapeCopy, SubRequest, DiskCopy
+    FROM TapeCopy, SubRequest, DiskCopy, CastorFile
    WHERE TapeCopy.id = tapecopyId
+     AND CastorFile.id = TapeCopy.castorFile
      AND DiskCopy.castorFile = TapeCopy.castorFile
      AND SubRequest.diskcopy(+) = DiskCopy.id
      AND DiskCopy.status = 2;
@@ -595,10 +596,11 @@ CREATE OR REPLACE PROCEDURE fileRecallFailed(tapecopyId IN INTEGER) AS
  fsId NUMBER;
  fileSize NUMBER;
 BEGIN
-  SELECT SubRequest.id, DiskCopy.id, SubRequest.xsize
+  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize
     INTO SubRequestId, dci, fileSize
-    FROM TapeCopy, SubRequest, DiskCopy
+    FROM TapeCopy, SubRequest, DiskCopy, CastorFile
    WHERE TapeCopy.id = tapecopyId
+     AND CastorFile.id = TapeCopy.castorFile
      AND DiskCopy.castorFile = TapeCopy.castorFile
      AND SubRequest.diskcopy(+) = DiskCopy.id;
   UPDATE DiskCopy SET status = 4 WHERE id = dci RETURNING fileSystem into fsid; -- DISKCOPY_FAILED
