@@ -1,5 +1,5 @@
 /*
- * $Id: stager_get.c,v 1.4 2005/06/21 15:08:10 sponcec3 Exp $
+ * $Id: stager_get.c,v 1.5 2005/07/06 05:55:24 jdurand Exp $
  */
 
 /*
@@ -8,10 +8,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_get.c,v $ $Revision: 1.4 $ $Date: 2005/06/21 15:08:10 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_get.c,v $ $Revision: 1.5 $ $Date: 2005/07/06 05:55:24 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <string.h>
 #include "stager_api.h"
 #include "serrno.h"
 #include "Cgetopt.h"
