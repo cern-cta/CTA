@@ -42,7 +42,6 @@
 // Local Includes
 #include "BaseRequestHandler.hpp"
 #include "TapeDriveConsistencyChecker.hpp"
-#include "TapeRequestHandler.hpp"
 
 
 //To make the code more readable
@@ -82,12 +81,10 @@ castor::vdqm::handler::TapeDriveConsistencyChecker::~TapeDriveConsistencyChecker
 //------------------------------------------------------------------------------
 // checkConsistency
 //------------------------------------------------------------------------------
-bool castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency() 
+void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency() 
 	throw (castor::exception::Exception) {
 	
-//	castor::stager::Tape* tape = NULL;
 	TapeServer* tapeServer = ptr_tapeDrive->tapeServer();
-//	TapeRequest* tapeRequest = NULL;
 	
 	if (tapeServer == NULL) {
 		castor::exception::InvalidArgument ex;
@@ -175,12 +172,38 @@ bool castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
 			ptr_tapeDrive->setStatus(UNIT_UP);
   } 
   else {
-  	checkBusyConsistency();
+  	
+	  if ( ptr_tapeDrive->status() == UNIT_DOWN ) {
+	    /*
+	     * Unit must be up before anything else is allowed
+	     */
+	   	castor::exception::Exception ex(EVQUNNOTUP);
+			ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+											<< "unit is not UP" << std::endl;			
+			throw ex;
+	  }  	
+  	
+  	
+  	if ( ptr_driveRequest->status & VDQM_UNIT_BUSY ) {
+	  	/**
+	  	 * If we are here, the tpdaemon has sent a busy status 
+	  	 * which must be checked. If this method succeed, we switched to
+	  	 * UNIT_STARTING mode.
+	  	 */
+	  	checkBusyConsistency();
+  	}
+  	else if ( ptr_driveRequest->status & VDQM_UNIT_FREE ) {
+			checkFreeConsistency();
+		} 
+  	else {
+  		checkAssignConsistency();
+  	}
+  	
+  	
 	}
-    	
 	
-	
-	return true;		
+	//Clean pointer;
+	tapeServer = 0;
 }
 
 
@@ -218,165 +241,259 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::deleteOldRequest()
 void castor::vdqm::handler::TapeDriveConsistencyChecker::checkBusyConsistency() 
 	throw (castor::exception::Exception) {
 
-  if ( ptr_tapeDrive->status() == UNIT_DOWN ) {
-      /*
-       * Unit must be up before anything else is allowed
-       */
-     	castor::exception::Exception ex(EVQUNNOTUP);
-			ex.getMessage() << "TapeDriveConsistencyChecker::checkConsistency(): "
-											<< "unit is not UP" << std::endl;			
-			throw ex;
-  } 
+  /*
+   * Consistency check
+   */
+  if ( ptr_driveRequest->status & VDQM_UNIT_FREE ) {
+   	castor::exception::Exception ex(EVQBADSTAT);
+		ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+										<< "bad status from tpdaemon! FREE + BUSY doesn't fit together" 
+										<< std::endl;			
+		throw ex;
+  }
 
-  if ( ptr_driveRequest->status & VDQM_UNIT_BUSY ) {
-      /*
-       * Consistency check
-       */
-      if ( ptr_driveRequest->status & VDQM_UNIT_FREE ) {
-       	castor::exception::Exception ex(EVQBADSTAT);
-				ex.getMessage() << "TapeDriveConsistencyChecker::checkConsistency(): "
-												<< "bad status from tpdaemon! FREE + BUSY doesn't fit together" 
-												<< std::endl;			
+	if ( (ptr_tapeDrive->status() == UNIT_UP) ||
+			 (ptr_tapeDrive->status() == WAIT_FOR_UNMOUNT) ||
+			 (ptr_tapeDrive->status() == UNIT_RELEASED)) {
+		//The tapeDrive is now in starting mode
+		ptr_tapeDrive->setStatus(UNIT_STARTING);
+	}
+	else {
+		ptr_tapeDrive->setStatus(STATUS_UNKNOWN);
+		
+		castor::exception::Exception ex(EVQBADSTAT);
+		ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+										<< "Cannot put tape drive into UNIT_STARTING mode" 
+										<< std::endl;			
+		throw ex;			
+	}
+}
+
+
+//------------------------------------------------------------------------------
+// checkFreeConsistency
+//------------------------------------------------------------------------------
+void castor::vdqm::handler::TapeDriveConsistencyChecker::checkFreeConsistency() 
+	throw (castor::exception::Exception) {
+  
+  castor::stager::Tape* tape = ptr_tapeDrive->tape();
+ 	TapeServer* tapeServer = ptr_tapeDrive->tapeServer(); 
+  
+  /*
+   * Cannot free an assigned unit, it must be released first
+   */
+  if ( !(ptr_driveRequest->status & VDQM_UNIT_RELEASE) &&
+       ( ptr_tapeDrive->status() == UNIT_ASSIGNED ||
+       	 ptr_tapeDrive->status() == VOL_MOUNTED )) {
+		
+		castor::exception::Exception ex(EVQBADSTAT);
+		ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+										<< "cannot free assigned unit" 
+										<< ptr_tapeDrive->driveName() << "@"
+										<< tapeServer->serverName() << std::endl;			
+		throw ex;
+  }
+  
+	/**
+	 * The mounted tape, if any
+	 */
+  tape = ptr_tapeDrive->tape();
+  
+  /*
+   * Cannot free an unit with tape mounted
+   */
+  if ( !(ptr_driveRequest->status & VDQM_VOL_UNMOUNT) &&
+      (tape != NULL) ) {
+      
+		castor::exception::Exception ex(EVQBADSTAT);
+  	ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+										<< "cannot free unit with tape mounted, volid=" 
+										<< tape->vid() << std::endl;			
+		throw ex;
+  }		
+  
+  // Reset pointer
+  tape = 0;
+  tapeServer = 0;
+}
+
+
+//------------------------------------------------------------------------------
+// checkAssignConsistency
+//------------------------------------------------------------------------------
+void castor::vdqm::handler::TapeDriveConsistencyChecker::checkAssignConsistency() 
+	throw (castor::exception::Exception) {
+  
+  TapeRequest* tapeRequest = ptr_tapeDrive->runningTapeReq();
+ 	TapeServer* tapeServer = ptr_tapeDrive->tapeServer(); 
+  
+  /*
+   * If unit is busy and being assigned the VolReqIDs must
+   * be the same. If so, assign the jobID (normally the
+   * process ID of the RTCOPY process on the tape server).
+   */
+  if ( (ptr_tapeDrive->status() != UNIT_UP)   &&
+       (ptr_tapeDrive->status() != UNIT_DOWN) &&
+       (ptr_driveRequest->status & VDQM_UNIT_ASSIGN) ) { 
+      
+      tapeRequest = ptr_tapeDrive->runningTapeReq();
+      
+      if (tapeRequest == NULL) {
+ 				castor::exception::Exception ex(EVQBADID);
+				ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+												<< "Inconsistent VolReqIDs ("
+												<< ptr_driveRequest->VolReqID
+												<< ", NULL) on ASSIGN" << std::endl;
 				throw ex;
       }
-
-			//TODO: Umwandler schreiben!!!
-//        drvrec->drv.status = ptr_driveRequest->status;
+      else {
+      	if ( (tapeRequest->id() != ptr_driveRequest->VolReqID)) {
+      			
+	 				castor::exception::Exception ex(EVQBADID);
+    			ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+													<< "Inconsistent VolReqIDs ("
+													<< ptr_driveRequest->VolReqID << ", "
+													<< tapeRequest->id()
+													<< ") on ASSIGN" << std::endl;
+													
+					throw ex;
+        } else {
+        	ptr_tapeDrive->setJobID(ptr_driveRequest->jobID);
+            
+          // "Assign of tapeRequest to jobID" message
+          castor::dlf::Param params[] =
+						{castor::dlf::Param("tapeRequest ID", tapeRequest->id()),
+						 castor::dlf::Param("jobID", ptr_driveRequest->jobID)};
+					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 39, 2, params);
+        }
+      }
   }
-    
-//    else if ( ptr_driveRequest->status & VDQM_UNIT_FREE ) {
-//        /*
-//         * Cannot free an assigned unit, it must be released first
-//         */
-//        if ( !(ptr_driveRequest->status & VDQM_UNIT_RELEASE) &&
-//            (drvrec->drv.status & VDQM_UNIT_ASSIGN) ) {
-//            log(LOG_ERR,"vdqm_NewDrvReq(): cannot free assigned unit %s@%s, jobID=%d\n",
-//                drvrec->drv.drive,drvrec->drv.server,drvrec->drv.jobID);
-//            if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
-//            FreeDgnContext(&dgn_context);
-//            vdqm_SetError(EVQBADSTAT);
-//            return(-1);
-//        }
-//        /*
-//         * Cannot free an unit with tape mounted
-//         */
-//        if ( !(ptr_driveRequest->status & VDQM_VOL_UNMOUNT) &&
-//            (*drvrec->drv.volid != '\0') ) {
-//            log(LOG_ERR,"vdqm_NewDrvReq(): cannot free unit with tape mounted, volid=%s\n",
-//                drvrec->drv.volid);
-//            if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
-//            FreeDgnContext(&dgn_context);
-//            vdqm_SetError(EVQBADSTAT);
-//            return(-1);
-//        }
-//    	} 
-//    
-//    	else {
-//        /*
-//         * If unit is busy and being assigned the VolReqIDs must
-//         * be the same. If so, assign the jobID (normally the
-//         * process ID of the RTCOPY process on the tape server).
-//         */
-//        if ( (drvrec->drv.status & VDQM_UNIT_BUSY) &&
-//             (ptr_driveRequest->status & VDQM_UNIT_ASSIGN) ) {                
-//            if (drvrec->drv.VolReqID != ptr_driveRequest->VolReqID){
-//                log(LOG_ERR,"vdqm_NewDrvReq(): inconsistent VolReqIDs (%d,%d) on ASSIGN\n",
-//                    ptr_driveRequest->VolReqID,drvrec->drv.VolReqID);
-//                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
-//                FreeDgnContext(&dgn_context);
-//                vdqm_SetError(EVQBADID);
-//                return(-1);
-//            } else {
-//                drvrec->drv.jobID = ptr_driveRequest->jobID;
-//                log(LOG_INFO,"vdqm_NewDrvReq() assign VolReqID %d to jobID %d\n",
-//                    ptr_driveRequest->VolReqID,ptr_driveRequest->jobID);
-//            }
-//        }
-//        /*
-//         * If unit is busy with a running job the job IDs must be same
-//         */
-//        if ( (drvrec->drv.status & VDQM_UNIT_BUSY) &&
-//             !(drvrec->drv.status & VDQM_UNIT_RELEASE) &&
-//            (ptr_driveRequest->status & (VDQM_UNIT_ASSIGN | VDQM_UNIT_RELEASE |
-//                               VDQM_VOL_MOUNT | VDQM_VOL_UNMOUNT)) &&
-//            (drvrec->drv.jobID != ptr_driveRequest->jobID) ) {
-//            log(LOG_ERR,"vdqm_NewDrvReq(): inconsistent jobIDs (%d,%d)\n",
-//                ptr_driveRequest->jobID,drvrec->drv.jobID);
-//            if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
-//            FreeDgnContext(&dgn_context);
-//            vdqm_SetError(EVQBADID);
-//            return(-1);
-//        }
-//        
-//        /*
-//         * Prevent operations on a free unit. A job must have been
-//         * started and unit marked busy before it can be used.
-//         * 22/11/1999: we change this so that a free unit can be
-//         *             assigned. The reason is that a local job may
-//         *             running on the tape server (e.g. tplabel) may
-//         *             want to run without starting a rtcopy job.
-//         */
-//        if ( !(ptr_driveRequest->status & VDQM_UNIT_BUSY) &&
-//            (drvrec->drv.status & VDQM_UNIT_FREE) &&
-//            (ptr_driveRequest->status & (VDQM_UNIT_RELEASE |
-//            VDQM_VOL_MOUNT | VDQM_VOL_UNMOUNT)) ) {
-//            log(LOG_ERR,"vdqm_NewDrvReq(): status 0x%x requested on FREE drive\n",
-//                ptr_driveRequest->status);
-//            if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
-//            FreeDgnContext(&dgn_context);
-//            vdqm_SetError(EVQBADSTAT);
-//            return(-1);
-//        }
-//        if ( ptr_driveRequest->status & VDQM_UNIT_ASSIGN ) {
-//            /*
-//             * Check whether unit was already assigned. If so, the
-//             * volume request must be identical
-//             */
-//            if ( (drvrec->drv.status & VDQM_UNIT_ASSIGN) &&
-//                (drvrec->drv.jobID != ptr_driveRequest->jobID) ) {
-//                log(LOG_ERR,"vdqm_NewDrvReq(): attempt to re-assign ID=%d to an unit assigned to ID=%d\n",
-//                    drvrec->drv.jobID,ptr_driveRequest->jobID);
-//                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
-//                FreeDgnContext(&dgn_context);
-//                vdqm_SetError(EVQBADID);
-//                return(-1);
-//            }
-//            /*
-//             * If the unit was free, we set the new jobID. This is
-//             * local assign bypassing the normal VDQM logic (see comment
-//             * above). There is no VolReqID since VDQM is bypassed.
-//             */
-//            if ( (drvrec->drv.status & VDQM_UNIT_FREE) ) {
-//                /*
-//                 * We only allow this for local requests!
-//                 */
-//                if ( strcmp(ptr_driveRequest->reqhost,drvrec->drv.server) != 0 ) {
-//                    log(LOG_ERR,"vdqm_NewDrvRequest(): unauthorized %s@%s local assign from %s\n",
-//                    ptr_driveRequest->drive,ptr_driveRequest->server,ptr_driveRequest->reqhost);
-//                    if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
-//                    FreeDgnContext(&dgn_context);
-//                    vdqm_SetError(EPERM);
-//                    return(-1);
-//                }
-//                log(LOG_INFO,"vdqm_NewDrvRequest() local assign %s@%s to jobID %d\n",
-//                    ptr_driveRequest->drive,ptr_driveRequest->server,ptr_driveRequest->jobID);
-//                drvrec->drv.jobID = ptr_driveRequest->jobID;
-//            }
-//        }
-//        /*
-//         * VDQM_VOL_MOUNT and VDQM_VOL_UNMOUNT are not persistent unit 
-//         * status values. Their purpose is twofold: 1) input - update 
-//         * the volid field in the drive record (both MOUNT and UNMOUNT)
-//         * and 2) output - tell client to unmount or keep volume mounted
-//         * in case of deferred unmount (UNMOUNT only). 
-//         *
-//         * VDQM_UNIT_MBCOUNT is not a persistent unit status value.
-//         * It request update of drive statistics.
-//         */
-//        if ( drvrec->drv.status & VDQM_UNIT_UP )
-//            drvrec->drv.status |= ptr_driveRequest->status & 
-//                                  (~VDQM_VOL_MOUNT & ~VDQM_VOL_UNMOUNT &
-//                                   ~VDQM_UNIT_MBCOUNT );
-//    }
-//		drvrec->update = 1;	
+  
+  
+  /*
+   * If unit is busy with a running job the job IDs must be same
+   */
+  if ( ((ptr_tapeDrive->status() == UNIT_STARTING) ||
+        (ptr_tapeDrive->status() == UNIT_ASSIGNED) ||
+        (ptr_tapeDrive->status() == VOL_MOUNTED)) &&
+       (ptr_driveRequest->status & (VDQM_UNIT_ASSIGN | VDQM_UNIT_RELEASE |
+                         						VDQM_VOL_MOUNT | VDQM_VOL_UNMOUNT)) &&
+       (ptr_tapeDrive->jobID() != ptr_driveRequest->jobID) ) {
+      
+    castor::exception::Exception ex(EVQBADID);
+		ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+										<< "Inconsistent jobIDs ("
+										<< ptr_driveRequest->jobID << ", "
+										<< ptr_tapeDrive->jobID()
+										<< ", NULL) on ASSIGN" << std::endl;
+		throw ex;        
+  }
+  
+  
+  /*
+   * Prevent operations on a free unit. A job must have been
+   * started and unit marked busy before it can be used.
+   * 22/11/1999: we change this so that a free unit can be
+   *             assigned. The reason is that a local job may
+   *             running on the tape server (e.g. tplabel) may
+   *             want to run without starting a rtcopy job.
+   */
+  if ( !(ptr_driveRequest->status & VDQM_UNIT_BUSY) &&
+      (ptr_tapeDrive->status() == UNIT_UP) &&
+      (ptr_driveRequest->status & (VDQM_UNIT_RELEASE |
+      														 VDQM_VOL_MOUNT | VDQM_VOL_UNMOUNT)) ) {
+      	
+    castor::exception::Exception ex(EVQBADSTAT);
+		ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+										<< "Status 0x"
+										<< std::hex << ptr_driveRequest->status 
+										<< "requested on FREE drive" << std::endl;
+		throw ex;
+  }
+  
+  
+  if ( ptr_driveRequest->status & VDQM_UNIT_ASSIGN ) {
+      /*
+       * Check whether unit was already assigned. If so, the
+       * volume request must be identical
+       */
+      if ( ((ptr_tapeDrive->status() == UNIT_ASSIGNED) ||
+      			(ptr_tapeDrive->status() == VOL_MOUNTED)) &&
+           (ptr_tapeDrive->jobID() != ptr_driveRequest->jobID) ) {
+          
+	      castor::exception::Exception ex(EVQBADID);
+				ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+												<< "attempt to re-assign jobID="
+												<< ptr_tapeDrive->jobID() 
+												<< " to an unit assigned to jobID="
+												<< ptr_driveRequest->jobID
+												<< std::endl;
+				throw ex;            
+      }
+      
+      
+      /*
+       * If the unit was free, we set the new jobID. This is
+       * local assign bypassing the normal VDQM logic (see comment
+       * above). There is no VolReqID since VDQM is bypassed.
+       */
+      if ( ptr_tapeDrive->status() == UNIT_UP ) {
+        /*
+         * We only allow this for local requests!
+         */
+        if ( strcmp(ptr_driveRequest->reqhost, 
+        		 tapeServer->serverName().c_str()) != 0 ) {
+            
+		      castor::exception::Exception ex(EPERM);
+					ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+													<< "unauthorized "
+													<< ptr_driveRequest->drive << "@" 
+													<< ptr_driveRequest->server
+													<< " local assign from "
+													<< ptr_driveRequest->reqhost 
+													<< std::endl;
+					throw ex;	            
+        }
+        
+        // "Local assign to jobID" message
+        castor::dlf::Param params[] =
+					{castor::dlf::Param("driveName", ptr_driveRequest->drive),
+					 castor::dlf::Param("serverName", ptr_driveRequest->server),
+					 castor::dlf::Param("jobID", ptr_driveRequest->jobID)};
+				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 40, 2, params);	        
+        
+        ptr_tapeDrive->setJobID(ptr_driveRequest->jobID);
+        
+        
+        
+      	// Switched to unit ASSIGNED status
+      	ptr_tapeDrive->setStatus(UNIT_ASSIGNED);
+        
+      }
+      else if (ptr_tapeDrive->status() == UNIT_STARTING) {
+      	/**
+      	 * If we are not in UNIT_STARTING mode, we can't put the the tapeDrive
+      	 * to UNIT_ASSIGNED mode!
+      	 */
+      	
+    	 	// Switched to unit ASSIGNED status
+      	ptr_tapeDrive->setStatus(UNIT_ASSIGNED);
+      }
+      else {
+				ptr_tapeDrive->setStatus(STATUS_UNKNOWN);
+				
+				castor::exception::Exception ex(EVQBADSTAT);
+				ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+												<< "Cannot put tape drive into UNIT_STARTING mode" 
+												<< std::endl;			
+				throw ex;		        	
+      }
+      
+      
+  } // end of "if ( ptr_driveRequest->status & VDQM_UNIT_ASSIGN )"
+  
+  
+  // Reset pointer
+  tapeRequest = 0;
+  tapeServer = 0;  		
 }

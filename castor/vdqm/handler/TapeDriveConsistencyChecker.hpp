@@ -29,7 +29,6 @@
 
 #include "castor/exception/Exception.hpp"
 #include "BaseRequestHandler.hpp"
-//#include "castor/vdqm/TapeDrive.hpp"
 
 typedef struct vdqmdDrvReq vdqmDrvReq_t;
 
@@ -64,8 +63,10 @@ namespace castor {
 				   * 
 				   * return false, if the consistency of the tape drive in the db
 				   * and its unit is not given.
+				   * 
+				   * @exception If the consistency is not given
 				   */
-					bool checkConsistency() throw (castor::exception::Exception);
+					void checkConsistency() throw (castor::exception::Exception);
 	
 	
 				protected:
@@ -97,6 +98,7 @@ namespace castor {
 					 * Deletes the tapeRequest in the db, wich has been assigned
 					 * to the TapeDrive. Obviously it is no longer needed. It also
 					 * deletes the jobID and the asspziation to the Tape.
+					 * It is only used internally from checkConsistency.
 					 * 
 					 * @exception In case of error
 					 */
@@ -105,13 +107,34 @@ namespace castor {
 						
 					/**
 					 * This function is written, to check the consistency, if the
-					 * tpdaemon has sent a busy status. It is used internally from
-					 * checkConsistency.
+					 * tpdaemon has sent a BUSY status. 
+					 * It is only used internally from checkConsistency.
 					 * 
 					 * @exception In case of error
 					 */
 					void checkBusyConsistency() 
 						throw (castor::exception::Exception);
+						
+					/**
+					 * This function is written, to check the consistency, if the
+					 * tpdaemon has sent a FREE status. 
+					 * It is only used internally from checkConsistency.
+					 * 
+					 * @exception In case of error
+					 */
+					void checkFreeConsistency() 
+						throw (castor::exception::Exception);
+						
+					/**
+					 * This function is written, to check the consistency, if the
+					 * tpdaemon wants to handle a tapeDrive which has in the db the
+					 * status UNIT_ASSIGNED or VOL_MOUNTED. 
+					 * It is only used internally from checkConsistency.
+					 * 
+					 * @exception In case of error
+					 */
+					void checkAssignConsistency() 
+						throw (castor::exception::Exception);											
 												
 	    }; // class TapeDriveConsistencyChecker
     
