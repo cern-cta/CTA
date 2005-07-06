@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.22 $ $Release$ $Date: 2005/05/24 12:32:30 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.23 $ $Release$ $Date: 2005/07/06 09:56:14 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.22 $ $Release$ $Date: 2005/05/24 12:32:30 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.23 $ $Release$ $Date: 2005/07/06 09:56:14 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -96,8 +96,7 @@ static int requestAborted = 0;
 static int segmentFailed = 0;
 
 int inChild = 1;
-
-static int diskFseq = 0;
+extern int checkFile;
 static int filesCopied = 0;
 static u_signed64 bytesCopied = 0;
 
@@ -719,7 +718,6 @@ int main(
   int rc, c, i, save_serrno = 0, failed = 0, runTime;
   time_t startTime, endTime;
 
-  startTime = time(NULL);
   /*
    * If we are started by the rtcpclientd, the main accept socket has been
    * duplicated to file descriptor 0
@@ -735,6 +733,7 @@ int main(
    */
   umask(077);
 
+  startTime = time(NULL);
   Cuuid_create(
                &childUuid
                );
@@ -745,6 +744,7 @@ int main(
   (void)rtcpcld_initLogging(
                             recallerFacility
                             );
+  if ( getconfent("recaller","CHECKFILE",0) != NULL ) checkFile = 1;
   cmdline[0] = '\0';
   c=0;
   for (i=0; (i<CA_MAXLINELEN) && (c<argc);) {
