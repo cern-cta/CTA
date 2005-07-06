@@ -13,6 +13,7 @@ static char sccsid[] = "";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "stager_api.h"
 #include "serrno.h"
 #include "Cgetopt.h"
