@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.7 2005/07/06 05:58:12 jdurand Exp $
+ * $Id: stager_qry.c,v 1.8 2005/07/06 09:16:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.7 $ $Date: 2005/07/06 05:58:12 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.8 $ $Date: 2005/07/06 09:16:25 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -105,6 +105,7 @@ main(int argc, char *argv[]) {
   free_query_req(args.requests, args.nbreqs);
   free_filequery_resp(responses, nbresps);
 
+  exit(EXIT_SUCCESS);
 }
 
 
