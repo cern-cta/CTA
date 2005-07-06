@@ -1,5 +1,5 @@
 /*
- * $Id: stager_get.c,v 1.5 2005/07/06 05:55:24 jdurand Exp $
+ * $Id: stager_get.c,v 1.6 2005/07/06 09:16:04 jdurand Exp $
  */
 
 /*
@@ -8,9 +8,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_get.c,v $ $Revision: 1.5 $ $Date: 2005/07/06 05:55:24 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_get.c,v $ $Revision: 1.6 $ $Date: 2005/07/06 09:16:04 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "stager_api.h"
@@ -124,7 +125,7 @@ int main(argc, argv)
   errflg =  parseCmdLine(argc, argv, _countFiles);
   if (errflg != 0 || filenb <= 0) {
     usage (argv[0]);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   total_nb_files = filenb;
 
@@ -157,12 +158,12 @@ int main(argc, argv)
   if (rc < 0) {
     fprintf(stderr, "Error %s\n", sstrerror(serrno));
     fprintf(stderr, "<%s>\n", errbuf);
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   printf("Received %d responses\n", nbresps);
 
-  ret = 0;
+  ret = EXIT_SUCCESS;
   for (i=0; i<nbresps; i++) {
     printf("%s %s",
            responses[i].filename,
@@ -171,7 +172,7 @@ int main(argc, argv)
       printf(" %d %s",
              responses[i].errorCode,
              responses[i].errorMessage);
-      ret = 1;
+      ret = EXIT_FAILURE;
     }
     printf ("\n");
   }
@@ -182,7 +183,7 @@ int main(argc, argv)
   free_prepareToGet_filereq(requests, total_nb_files);
   free_prepareToGet_fileresp(responses, nbresps);
 
-  return(ret);
+  exit(ret);
 }
 
 
