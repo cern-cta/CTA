@@ -853,7 +853,7 @@ BEGIN
   INTO rdcStatus, rdcPath;
 END;
 
-CREATE OR REPLACE PROCEDURE putDoneStart
+CREATE OR REPLACE PROCEDURE putDoneStartProc
         (srId IN INTEGER, dcId OUT INTEGER,
          dcStatus OUT INTEGER, dcPath OUT INTEGER) AS
   reqId NUMBER;
@@ -888,7 +888,7 @@ BEGIN
   SELECT DiskCopy.id, DiskCopy.status, DiskCopy.path
     INTO dcId, dcStatus, dcPath
     FROM SubRequest, DiskCopy
-   WHERE SubRequest.id = :1 AND DiskCopy.castorfile = SubRequest.castorfile AND DiskCopy.status = 6; -- STAGEOUT
+   WHERE SubRequest.id = srId AND DiskCopy.castorfile = SubRequest.castorfile AND DiskCopy.status = 6; -- STAGEOUT
 END;
 
 /* PL/SQL method implementing updateAndCheckSubRequest */
@@ -1767,10 +1767,18 @@ END;
  * Note that we only launch it when at least 10 gigs are to be deleted
  */
 CREATE OR REPLACE TRIGGER tr_FileSystem_Update
-BEFORE Update ON FileSystem
+AFTER UPDATE ON FileSystem
 FOR EACH ROW
 BEGIN
-  IF :new.maxFreeSpace - :new.free - :new.deltaFree + :new.reservedSpace - :new.spaceToBeFreed > 10000000000 THEN
+  freeSpace NUMBER;
+  -- compute the actual free space taking into account reservations (reservedSpace)
+  -- and already running GC processes (spaceToBeFreed)
+  freeSpace := new.free + :new.deltaFree - :new.reservedSpace + :new.spaceToBeFreed;
+     -- shall we launch a new GC?
+  IF :new.minFreeSpace > freeSpace AND 
+     -- is it really worth launching it? (some other GCs maybe are already running
+     -- so we accept it only if it will free more than 10 Gb)
+     :new.maxFreeSpace > freeSpace + 10000000000 THEN
     garbageCollectFS(:new.id);
   END IF;
 END;
