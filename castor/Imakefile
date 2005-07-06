@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.96 $ $Release$ $Date: 2005/07/04 17:29:16 $ $Author: mbraeger $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.97 $ $Release$ $Date: 2005/07/06 17:45:50 $ $Author: mbraeger $
 #
 # Make Castor libraries and executables
 #
@@ -360,6 +360,7 @@ STGLIB_SRCS +=stager/ClientIdentification.cpp \
 							vdqm/handler/BaseRequestHandler.cpp \
 							vdqm/handler/TapeDriveConsistencyChecker.cpp \
 							vdqm/handler/TapeDriveHandler.cpp \
+							vdqm/handler/TapeDriveStatusHandler.cpp \
 							vdqm/handler/TapeRequestHandler.cpp 
 #endif
 
