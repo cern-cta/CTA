@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.131 $ $Release$ $Date: 2005/07/06 07:01:01 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.132 $ $Release$ $Date: 2005/07/06 09:50:39 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.131 $ $Release$ $Date: 2005/07/06 07:01:01 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.132 $ $Release$ $Date: 2005/07/06 09:50:39 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -92,6 +92,7 @@ WSADATA wsadata;
 #include <castor/Constants.h>
 #include <rtcp_constants.h>
 #include <Cthread_api.h>
+#include <rfio_api.h>
 #include <vdqm_api.h>
 #include <rtcp.h>
 #include <rtcp_api.h>
@@ -110,6 +111,11 @@ int checkFile = 0;
 Cuuid_t childUuid, mainUuid;
 
 static unsigned char nullblkid[4] = {'\0', '\0', '\0', '\0'};
+
+int detachTapeCopyFromStream _PROTO((
+                                     struct Cstager_TapeCopy_t *,
+                                     struct Cstager_Stream_t *
+                                     ));
 
 /**
  * Create/get the DB services. The call is wrapped in this routine to
@@ -254,7 +260,6 @@ static int updateTapeFromDB(
                             )
      tape_list_t *tape;
 {
-  struct C_BaseAddress_t *dbAddr;
   struct C_Services_t **svcs = NULL;
   struct Cstager_IStagerSvc_t **stgSvc = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -398,7 +403,6 @@ static int updateSegmentFromDB(
                                )
      file_list_t *file;
 {
-  struct C_BaseAddress_t *dbAddr;
   struct C_Services_t **svcs = NULL;
   struct Cstager_IStagerSvc_t **stgSvc = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -1923,7 +1927,7 @@ int rtcpcld_getTapeCopyNumber(
 {
   struct Cstager_Segment_t *segment = NULL;
   struct Cstager_TapeCopy_t *tapeCopy = NULL;
-  int copyNb = 0;
+  unsigned int copyNb = 0;
   
   if ( (file == NULL) || (file->dbRef == NULL) || (file->dbRef->row == NULL) ) {
     serrno = EINVAL;
@@ -2157,7 +2161,7 @@ int detachTapeCopyFromStream(
   struct C_IObject_t *iObj;
   struct C_Services_t **svcs = NULL;
   enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
-  int rc = 0, nbStreams, save_serrno, i;
+  int rc = 0, nbStreams, save_serrno;
   ID_TYPE key;
 
   if ( (tapeCopy == NULL) || (stream == NULL) ) {
@@ -2692,8 +2696,10 @@ int rtcpcld_updcFileRecalled(
   struct Cstager_IStagerSvc_t **stgSvc = NULL;
   rtcpFileRequest_t *filereq;
   struct Cns_fileid *fileid;
+  struct stat64 st;
   int rc = 0, nbSegments = 0, doUpdate = 1;
   int save_serrno, i;
+  u_signed64 sz = 0;
   ID_TYPE key = 0;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_DISABLE) ||
@@ -2877,6 +2883,48 @@ int rtcpcld_updcFileRecalled(
   } else {
     C_IAddress_delete(iAddr);
 
+    if ( checkFile == 1 ) {
+      Cstager_CastorFile_fileSize(castorFile,&sz);
+      rc = rfio_stat64(filereq->file_path,&st);
+      if ( rc == -1 ) {
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
+                        (struct Cns_fileid *)fileid,
+                        RTCPCLD_NB_PARAMS+4,
+                        "SYSCALL",
+                        DLF_MSG_PARAM_STR,
+                        "rfio_stat64()",
+                        "ERROR_STR",
+                        DLF_MSG_PARAM_STR,
+                        rfio_serror(),
+                        "PATH",
+                        DLF_MSG_PARAM_STR,
+                        filereq->file_path,
+                        RTCPCLD_LOG_WHERE
+                        );
+        if ( segmentArray != NULL ) free(segmentArray);
+        return(-1);
+      } else if ( st.st_size != sz ) {
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_WRONGSIZE),
+                        (struct Cns_fileid *)fileid,
+                        3,
+                        "PATH",
+                        DLF_MSG_PARAM_STR,
+                        filereq->file_path,
+                        "CAT_SZ",
+                        DLF_MSG_PARAM_INT64,
+                        sz,
+                        "DISK_SZ",
+                        DLF_MSG_PARAM_INT64,
+                        st.st_size
+                        );
+        if ( segmentArray != NULL ) free(segmentArray);
+        return(-1);
+      }
+    }
     /*
      * Yes, the whole file is really staged. Update the
      * disk copy status and Get rid of *all* segments and
@@ -3528,7 +3576,6 @@ int rtcpcld_restoreSelectedSegments(
   struct Cstager_Tape_t *tp = NULL;
   struct Cstager_Segment_t **segmentArray = NULL;
   enum Cstager_SegmentStatusCodes_t segmentStatus;
-  enum Cstager_TapeStatusCodes_t tapeStatus;
   int msgNb = RTCPCLD_MSG_RESTORESEGS;
   int rc, i, nbSegments = 0, nbSegmentsRestored = 0, nbSegmentsFailed = 0;
   ID_TYPE key = 0;
