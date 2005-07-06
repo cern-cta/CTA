@@ -130,7 +130,9 @@ castor::vdqm::VdqmServer::VdqmServer() :
      {35, "The desired \"old Protocol\" status of the client"},     
      {36, "The actual \"new Protocol\" status of the client"},     
      {37, "Remove old TapeRequest from db"},     
-     {38, "WAIT DOWN request from tpdaemon client"},     
+     {38, "WAIT DOWN request from tpdaemon client"}, 
+     {39, "Assign of tapeRequest to jobID"},     
+     {40, "Local assign to jobID"},     
      {-1, ""}};
   castor::dlf::dlf_init("Vdqm", messages);
 }
