@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_compat.c,v 1.2 2004/11/02 18:01:58 jdurand Exp $
+ * $Id: send2stgd_compat.c,v 1.3 2005/07/06 08:55:48 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.2 $ $Date: 2004/11/02 18:01:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.3 $ $Date: 2005/07/06 08:55:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -41,6 +41,7 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.2 $ $D
 extern int dosymlink _PROTO((char *, char *));
 extern void dounlink _PROTO((char *));
 extern int rc_shift2castor _PROTO((int,int));
+EXTERN_C int DLL_DECL netconnect_timeout _PROTO((int, struct sockaddr *, size_t, int));
 
 int DLL_DECL send2stgd_compat(host, reqp, reql, want_reply, user_repbuf, user_repbuf_len)
 		 char *host;

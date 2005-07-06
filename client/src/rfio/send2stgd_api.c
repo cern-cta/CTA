@@ -50,6 +50,7 @@ int send2stgd_sort_stcp _PROTO((int, u_signed64, int, struct stgcat_entry *, int
 int send2stgd_sort_by_fseq _PROTO((CONST void *, CONST void *));
 int send2stgd_api_cmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
 EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
+EXTERN_C int DLL_DECL netconnect_timeout _PROTO((int, struct sockaddr *, size_t, int));
 
 /* This macro cleans everything that have to be cleaned, in particular internally memory allocated on the heap */
 #define SEND2STGD_API_CLEAN() { \
