@@ -566,24 +566,26 @@ END;
 
 /* PL/SQL method implementing fileRecalled */
 CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
- SubRequestId NUMBER;
- dci NUMBER;
- fsId NUMBER;
- fileSize NUMBER;
+  SubRequestId NUMBER;
+  dci NUMBER;
+  fsId NUMBER;
+  fileSize NUMBER;
 BEGIN
-SELECT SubRequest.id, DiskCopy.id, SubRequest.xsize
- INTO SubRequestId, dci, fileSize
- FROM TapeCopy, SubRequest, DiskCopy
- WHERE TapeCopy.id = tapecopyId
-  AND DiskCopy.castorFile = TapeCopy.castorFile
-  AND SubRequest.diskcopy = DiskCopy.id
-  AND DiskCopy.status = 2;
-UPDATE DiskCopy SET status = 0 WHERE id = dci RETURNING fileSystem INTO fsid; -- DISKCOPY_STAGED
-UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
- WHERE id = SubRequestId; -- SUBREQUEST_RESTART
-UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
- WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
-updateFsFileClosed(fsId, fileSize, fileSize);
+  SELECT SubRequest.id, DiskCopy.id, SubRequest.xsize
+    INTO SubRequestId, dci, fileSize
+    FROM TapeCopy, SubRequest, DiskCopy
+   WHERE TapeCopy.id = tapecopyId
+     AND DiskCopy.castorFile = TapeCopy.castorFile
+     AND SubRequest.diskcopy(+) = DiskCopy.id
+     AND DiskCopy.status = 2;
+  UPDATE DiskCopy SET status = 0 WHERE id = dci RETURNING fileSystem INTO fsid; -- DISKCOPY_STAGED
+  IF SubRequestId IS NOT NULL THEN
+    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
+     WHERE id = SubRequestId; -- SUBREQUEST_RESTART
+    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
+     WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
+  END IF;
+  updateFsFileClosed(fsId, fileSize, fileSize);
 END;
 
 /* PL/SQL method implementing fileRecallFailed */
@@ -593,19 +595,21 @@ CREATE OR REPLACE PROCEDURE fileRecallFailed(tapecopyId IN INTEGER) AS
  fsId NUMBER;
  fileSize NUMBER;
 BEGIN
-SELECT SubRequest.id, DiskCopy.id, SubRequest.xsize
- INTO SubRequestId, dci, fileSize
- FROM TapeCopy, SubRequest, DiskCopy
- WHERE TapeCopy.id = tapecopyId
-  AND DiskCopy.castorFile = TapeCopy.castorFile
-  AND SubRequest.diskcopy = DiskCopy.id;
-UPDATE DiskCopy SET status = 4 WHERE id = dci RETURNING fileSystem into fsid; -- DISKCOPY_FAILED
-UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
-                      lastModificationTime = getTime()
- WHERE id = SubRequestId;
-UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
-                      lastModificationTime = getTime()
- WHERE parent = SubRequestId;
+  SELECT SubRequest.id, DiskCopy.id, SubRequest.xsize
+    INTO SubRequestId, dci, fileSize
+    FROM TapeCopy, SubRequest, DiskCopy
+   WHERE TapeCopy.id = tapecopyId
+     AND DiskCopy.castorFile = TapeCopy.castorFile
+     AND SubRequest.diskcopy(+) = DiskCopy.id;
+  UPDATE DiskCopy SET status = 4 WHERE id = dci RETURNING fileSystem into fsid; -- DISKCOPY_FAILED
+  IF SubRequestId IS NOT NULL THEN
+    UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
+                          lastModificationTime = getTime()
+     WHERE id = SubRequestId;
+    UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
+                          lastModificationTime = getTime()
+     WHERE parent = SubRequestId;
+  END IF;
 END;
 
 /* PL/SQL method implementing castor package */
@@ -1554,24 +1558,14 @@ BEGIN
    ret := 2;
    RETURN;
  END IF;
- -- check if removal is possible for Recall
- SELECT count(*) INTO nbRes FROM TapeCopy, Segment
-  WHERE Segment.status = 7 -- SEGMENT_SELECTED
-    AND TapeCopy.status = 4 -- TAPECOPY_TOBERECALLED
-    AND Segment.copy = TapeCopy.id
-    AND TapeCopy.castorFile = cfId;
- IF nbRes > 0 THEN
-   -- We found something, thus we cannot recreate
-   ret := 3;
-   RETURN;
- END IF;
  -- drop all requests for the file
  FOR sr IN (SELECT id
               FROM SubRequest
              WHERE castorFile = cfId) LOOP
    archiveSubReq(sr.id);
  END LOOP;
- -- set DiskCopies to GCCANDIDATE
+ -- set DiskCopies to GCCANDIDATE. Note that we keep
+ -- WAITTAPERECALL diskcopies so that recalls can continue
  UPDATE DiskCopy SET status = 8 -- GCCANDIDATE
   WHERE castorFile = cfId
     AND status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
