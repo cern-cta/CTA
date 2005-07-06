@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.24 $ $Release$ $Date: 2005/07/06 07:08:20 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.25 $ $Release$ $Date: 2005/07/06 08:35:00 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.24 $ $Release$ $Date: 2005/07/06 07:08:20 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.25 $ $Release$ $Date: 2005/07/06 08:35:00 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -53,6 +53,7 @@ WSADATA wsadata;
 #include <sys/stat.h>
 #include <patchlevel.h>
 #include <Castor_limits.h>
+#include <Cinit.h>
 #include <log.h>
 #include <net.h>
 #include <osdep.h>
@@ -269,7 +270,6 @@ static int getSvcClass(
   struct C_IObject_t *iObj = NULL;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
   struct C_Services_t *dbSvc = NULL;
-  struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   int rc;
   
@@ -350,7 +350,6 @@ static int getStreamsFromDB(
 {
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
-  struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
   struct Cstager_Stream_t **streamArray = NULL;
@@ -399,7 +398,7 @@ static int findTapePoolInSvcClass(
      char *tapePoolName;
 {
   struct Cstager_TapePool_t **tapePoolArray = NULL;
-  int rc, i, nbTapePools = 0;
+  int i, nbTapePools = 0;
   char *name = NULL;
   
   if ( svcClass == NULL || tapePoolName == NULL ) return(0);
@@ -452,11 +451,9 @@ static int tapePoolCreator(
   struct Cstager_TapePool_t *newTapePool;
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
-  struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
   char  *tapePoolName;
-  u_signed64 sz;
   int rc, i, j;
 
   if ( (tapeCopyArray == NULL) || (fileClass == NULL) ) {
@@ -577,7 +574,6 @@ static void restoreMigrCandidates(
   struct Cstager_Stream_t **streamArray;
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
-  struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
   int rc, i, nbStreams;
@@ -654,7 +650,6 @@ static int cloneStream(
 {
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
-  struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
   struct Cstager_TapeCopy_t **tapeCopyArray = NULL;
@@ -743,11 +738,11 @@ static int streamCreator(
   struct Cstager_Stream_t *newStream, **streamArray = NULL, **streamsToClone = NULL;
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
-  struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
   char *svcClassName = NULL;
-  int rc, nbTapePools, nbStreams, nbStreamsTotal, nbDrives, i, j;
+  int rc, nbTapePools, nbStreams, i, j;
+  unsigned int nbDrives, nbStreamsTotal;
   int *streamsPerTapePool = NULL, _nbNewStreams = 0;
 
   if ( nbNewStreams != NULL ) *nbNewStreams = 0;
@@ -902,11 +897,10 @@ static int startStreams(
      struct Cstager_SvcClass_t *svcClass;
      u_signed64 initialSizeToTransfer;
 {
-  struct Cstager_TapePool_t **tapePoolArray = NULL, *newTapePool;
+  struct Cstager_TapePool_t **tapePoolArray = NULL;
   struct Cstager_Stream_t **streamArray = NULL;
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
-  struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
   u_signed64 sz;
@@ -916,8 +910,7 @@ static int startStreams(
   
   if ( svcClass == NULL ) {
     if ( runAsDaemon == 0 ) {
-      fprintf(stderr,"startStreams(%p) called with NULL argument\n",
-              svcClass);
+      fprintf(stderr,"startStreams() called with NULL argument\n");
     }
     serrno = EINVAL;
     return(-1);
@@ -1006,12 +999,12 @@ static int addTapeCopyToStreams(
   char castorFileName[CA_MAXPATHLEN+1];
   struct Cns_filestat statbuf;
   struct Cns_fileid fileId;
-  int rc, i, j, nbTapePools = 0, nbStreams = 0, addedToStream = 0, cpNb = -1;
+  int rc, i, j, nbTapePools = 0, nbStreams = 0, addedToStream = 0;
+  unsigned int cpNb = 0;
 
   if ( (svcClass == NULL) || (tapeCopy == NULL) ) {
     if ( runAsDaemon == 0 ) {
-      fprintf(stderr,"addTapeCopyToStream(%p,%p) called with NULL argument\n",
-              svcClass,tapeCopy);
+      fprintf(stderr,"addTapeCopyToStream() called with NULL argument\n");
     }
     serrno = EINVAL;
     return(-1);
@@ -1124,9 +1117,9 @@ static int callExpert(
           statbuf->filemode,
           statbuf->uid,
           statbuf->gid,
-          statbuf->atime,
-          statbuf->mtime,
-          statbuf->ctime,
+          (int)statbuf->atime,
+          (int)statbuf->mtime,
+          (int)statbuf->ctime,
           statbuf->fileclass
           );
 
@@ -1180,11 +1173,9 @@ static int getMigrCandidates(
   struct Cstager_CastorFile_t *castorFile;
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
-  struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
-  char *nsHost, *tapePoolName, castorFileName[CA_MAXPATHLEN+1];
-  char *migratorPolicy = NULL;
+  char *nsHost, castorFileName[CA_MAXPATHLEN+1];
   struct Cns_fileid fileId;
   struct Cns_fileclass fileClass, **fileClassArray = NULL;
   struct Cns_filestat statbuf;
@@ -1358,7 +1349,6 @@ static int addMigrationCandidatesToStreams(
   struct Cstager_CastorFile_t *castorFile;
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
-  struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
   ID_TYPE key;
@@ -1532,9 +1522,7 @@ int main(int argc, char *argv[])
   struct Cstager_SvcClass_t *svcClass = NULL;
   struct Cstager_TapeCopy_t **migrCandidates = NULL;
   struct Cns_fileclass **nsFileClassArray = NULL;
-  struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
-  struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
   char *migHunterFacilityName = "MigHunter";
@@ -1724,8 +1712,8 @@ int main(int argc, char *argv[])
       if ( (nbOldStreams <= 0) && (initialSizeToTransfer<volumeThreshold) ) {
         if ( runAsDaemon == 0 ) {
           fprintf(stdout,"Not enough data to migrate: %s < %s\n",
-                  u64tostr(initialSizeToTransfer,buf,-sizeof(buf)),
-                  u64tostr(volumeThreshold,buf,-sizeof(buf)));
+                  u64tostr(initialSizeToTransfer,buf,(int)(-sizeof(buf))),
+                  u64tostr(volumeThreshold,buf,(int)(-sizeof(buf))));
         }
         (void)dlf_write(
                         mainUuid,
