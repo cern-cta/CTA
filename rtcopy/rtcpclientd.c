@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/04/27 16:32:45 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.30 $ $Release$ $Date: 2005/07/06 07:11:34 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/04/27 16:32:45 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.30 $ $Release$ $Date: 2005/07/06 07:11:34 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -927,7 +927,7 @@ static int startWorker(
   argv[5] = "-U";
   argv[6] = rtcp_voidToString((void *)&mainUuid,sizeof(mainUuid));
   argv[7] = "-k";
-  u64tostr(key,keyStr,-sizeof(keyStr));
+  u64tostr(key,keyStr,(int)(-sizeof(keyStr)));
   argv[8] = keyStr;
   c = 9;
   if ( *tape->tapereq.dgn != '\0' ) {
