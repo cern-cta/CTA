@@ -355,6 +355,10 @@ int rtcpcld_updateNsSegmentAttributes _PROTO((
                                               file_list_t *,
                                               int
                                               ));
+int rtcpcld_checkNsSegment _PROTO((
+                                   tape_list_t *,
+                                   file_list_t *
+                                   ));
 int rtcpcld_checkSegment _PROTO((
                                  tape_list_t *,
                                  file_list_t *
