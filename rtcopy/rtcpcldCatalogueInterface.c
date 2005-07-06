@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.130 $ $Release$ $Date: 2005/07/05 17:22:52 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.131 $ $Release$ $Date: 2005/07/06 07:01:01 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.130 $ $Release$ $Date: 2005/07/05 17:22:52 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.131 $ $Release$ $Date: 2005/07/06 07:01:01 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1744,7 +1744,7 @@ int nextSegmentToMigrate(
   (void)u64tohexstr(
                     filereq->castorSegAttr.castorFileId,
                     filereq->fid,
-                    -sizeof(filereq->fid)
+                    (int)(-sizeof(filereq->fid))
                     );
 
   Cstager_CastorFile_fileSize(
@@ -2818,6 +2818,10 @@ int rtcpcld_updcFileRecalled(
                             &segmentArray,
                             &nbSegments
                             );
+  if ( (nbSegments <= 0) || (segmentArray == NULL) ) {
+    LOG_SYSCALL_ERR("Cstager_TapeCopy_segments()");
+    return(-1);
+  }
   /*
    * Update the status of this segment (otherwise the check
    * below would always fail since in the DB the status of
@@ -2841,7 +2845,6 @@ int rtcpcld_updcFileRecalled(
       break;
     }
   }
-  free(segmentArray);
 
   if ( doUpdate == 0 ) {
     /*
@@ -2865,6 +2868,7 @@ int rtcpcld_updcFileRecalled(
       LOG_DBCALLANDKEY_ERR("C_Services_updateRep()",
                            C_Services_errorMsg(*svcs),
                            key);
+      if ( segmentArray != NULL ) free(segmentArray);
       C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
@@ -2872,13 +2876,17 @@ int rtcpcld_updcFileRecalled(
     C_IAddress_delete(iAddr);
   } else {
     C_IAddress_delete(iAddr);
+
     /*
      * Yes, the whole file is really staged. Update the
-     * disk copy status and Get rid of the segments and
-     * tape copy.
+     * disk copy status and Get rid of *all* segments and
+     * the tape copy.
      */
     rc = getStgSvc(&stgSvc);
-    if ( rc == -1 || stgSvc == NULL || *stgSvc == NULL ) return(-1);
+    if ( rc == -1 || stgSvc == NULL || *stgSvc == NULL ) {
+      if ( segmentArray != NULL ) free(segmentArray);
+      return(-1);
+    }
     Cstager_TapeCopy_id(tapeCopy,&key);
     LOG_CALL_TRACE((rc = Cstager_IStagerSvc_fileRecalled(
                                                          *stgSvc,
@@ -2889,28 +2897,38 @@ int rtcpcld_updcFileRecalled(
       LOG_DBCALLANDKEY_ERR("Cstager_IStagerSvc_fileRecalled()",
                            Cstager_IStagerSvc_errorMsg(*stgSvc),
                            key);
+      if ( segmentArray != NULL ) free(segmentArray);
       serrno = save_serrno;
       return(-1);
     }
-    rc = deleteSegmentFromDB(
-                             segment,
-                             tp,
-                             tapeCopy
-                             );
-    if ( rc == -1 ) {
-      LOG_SYSCALL_ERR("deleteSegmentFromDB()");
-      return(-1);
+    for ( i=0; i<nbSegments; i++ ) {
+      rc = deleteSegmentFromDB(
+                               segmentArray[i],
+                               tp,
+                               tapeCopy
+                               );
+      if ( rc == -1 ) {
+        save_serrno = serrno;
+        LOG_SYSCALL_ERR("deleteSegmentFromDB()");
+        if ( segmentArray != NULL ) free(segmentArray);
+        serrno = save_serrno;
+        return(-1);
+      }
     }
     
     rc = deleteTapeCopyFromDB(
                               tapeCopy
                               );
     if ( rc == -1 ) {
+      save_serrno = serrno;
       LOG_SYSCALL_ERR("deleteTapeCopyFromDB()");
+      if ( segmentArray != NULL ) free(segmentArray);
+      serrno = save_serrno;
       return(-1);
     }
   }
-  
+
+  if ( segmentArray != NULL ) free(segmentArray);
   return(0);
 }
 
