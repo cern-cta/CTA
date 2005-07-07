@@ -90,6 +90,16 @@ namespace castor {
 					TapeDrive* ptr_tapeDrive;
 					vdqmDrvReq_t* ptr_driveRequest;
 					Cuuid_t m_cuuid;
+					
+					
+				  /**
+				   * This function is onnly used internally from handleOldStatus() to 
+				   * handle the case that a VDQM_VOL_MOUNT request is beeing sent from
+				   * the client.
+				   * 
+				   * @exception In case of error
+				   */
+					void handleVolMountStatus() throw (castor::exception::Exception);
 												
 	    }; // class TapeDriveStatusHandler
     

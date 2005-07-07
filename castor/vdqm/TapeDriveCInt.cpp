@@ -459,6 +459,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cvdqm_TapeDrive_tapeAccessMode
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDrive_tapeAccessMode(castor::vdqm::TapeDrive* instance, int* var) {
+    *var = instance->tapeAccessMode();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeDrive_setTapeAccessMode
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDrive_setTapeAccessMode(castor::vdqm::TapeDrive* instance, int new_var) {
+    instance->setTapeAccessMode(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cvdqm_TapeDrive_id
   //----------------------------------------------------------------------------
   int Cvdqm_TapeDrive_id(castor::vdqm::TapeDrive* instance, u_signed64* var) {

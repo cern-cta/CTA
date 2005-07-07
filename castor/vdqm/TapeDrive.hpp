@@ -116,6 +116,8 @@ namespace castor {
       /*********************************/
       /**
        * Get the value of m_jobID
+       * The jobID is given by the tpdaemon to the tape drive, when a job has been
+       * assigned.
        * @return the value of m_jobID
        */
       int jobID() const {
@@ -124,6 +126,8 @@ namespace castor {
 
       /**
        * Set the value of m_jobID
+       * The jobID is given by the tpdaemon to the tape drive, when a job has been
+       * assigned.
        * @param new_var the new value of m_jobID
        */
       void setJobID(int new_var) {
@@ -483,6 +487,26 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_tapeAccessMode
+       * The tape access mode is the information, how the tape drive is accessing the
+       * mounted tape. The value could  be WRITE_ENABLE, WRITE_DISABLE or -1 for UNKNOWN.
+       * @return the value of m_tapeAccessMode
+       */
+      int tapeAccessMode() const {
+        return m_tapeAccessMode;
+      }
+
+      /**
+       * Set the value of m_tapeAccessMode
+       * The tape access mode is the information, how the tape drive is accessing the
+       * mounted tape. The value could  be WRITE_ENABLE, WRITE_DISABLE or -1 for UNKNOWN.
+       * @param new_var the new value of m_tapeAccessMode
+       */
+      void setTapeAccessMode(int new_var) {
+        m_tapeAccessMode = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -611,6 +635,7 @@ namespace castor {
 
     private:
 
+      /// The jobID is given by the tpdaemon to the tape drive, when a job has been assigned.
       int m_jobID;
 
       /// The time, when the tape drive begins with its job or modified it
@@ -662,6 +687,9 @@ namespace castor {
 
       /// The name of the drive
       std::string m_driveName;
+
+      /// The tape access mode is the information, how the tape drive is accessing the mounted tape. The value could  be WRITE_ENABLE, WRITE_DISABLE or -1 for UNKNOWN.
+      int m_tapeAccessMode;
 
       /// The id of this object
       u_signed64 m_id;

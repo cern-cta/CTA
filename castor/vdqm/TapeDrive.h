@@ -95,11 +95,15 @@ int Cvdqm_TapeDrive_clone(struct Cvdqm_TapeDrive_t* instance,
 
 /**
  * Get the value of jobID
+ * The jobID is given by the tpdaemon to the tape drive, when a job has been
+ * assigned.
  */
 int Cvdqm_TapeDrive_jobID(struct Cvdqm_TapeDrive_t* instance, int* var);
 
 /**
  * Set the value of jobID
+ * The jobID is given by the tpdaemon to the tape drive, when a job has been
+ * assigned.
  */
 int Cvdqm_TapeDrive_setJobID(struct Cvdqm_TapeDrive_t* instance, int new_var);
 
@@ -328,6 +332,20 @@ int Cvdqm_TapeDrive_driveName(struct Cvdqm_TapeDrive_t* instance, const char** v
  * The name of the drive
  */
 int Cvdqm_TapeDrive_setDriveName(struct Cvdqm_TapeDrive_t* instance, const char* new_var);
+
+/**
+ * Get the value of tapeAccessMode
+ * The tape access mode is the information, how the tape drive is accessing the
+ * mounted tape. The value could  be WRITE_ENABLE, WRITE_DISABLE or -1 for UNKNOWN.
+ */
+int Cvdqm_TapeDrive_tapeAccessMode(struct Cvdqm_TapeDrive_t* instance, int* var);
+
+/**
+ * Set the value of tapeAccessMode
+ * The tape access mode is the information, how the tape drive is accessing the
+ * mounted tape. The value could  be WRITE_ENABLE, WRITE_DISABLE or -1 for UNKNOWN.
+ */
+int Cvdqm_TapeDrive_setTapeAccessMode(struct Cvdqm_TapeDrive_t* instance, int new_var);
 
 /**
  * Get the value of id

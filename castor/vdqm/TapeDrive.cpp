@@ -67,6 +67,7 @@ castor::vdqm::TapeDrive::TapeDrive() throw() :
   m_no_time(0),
   m_no_age(0),
   m_driveName(""),
+  m_tapeAccessMode(0),
   m_id(0),
   m_tape(0),
   m_runningTapeReq(0),
@@ -127,6 +128,7 @@ void castor::vdqm::TapeDrive::print(std::ostream& stream,
   stream << indent << "no_time : " << m_no_time << std::endl;
   stream << indent << "no_age : " << m_no_age << std::endl;
   stream << indent << "driveName : " << m_driveName << std::endl;
+  stream << indent << "tapeAccessMode : " << m_tapeAccessMode << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Tape : " << std::endl;

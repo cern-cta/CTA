@@ -125,7 +125,51 @@ namespace castor {
 				virtual TapeDrive* selectTapeDrive(
 					const vdqmDrvReq_t* driveRequest,
 					const TapeServer* tapeServer)
-	    		throw (castor::exception::Exception) = 0;				
+	    		throw (castor::exception::Exception) = 0;
+	    		
+//---------------- functions for TapeDriveStatusHandler ------------------------
+
+				/**
+				 * Check whether another request is currently
+				 * using the specified tape vid. Note that the tape can still
+				 * be mounted on a drive if not in use by another request.
+				 * The volume is also considered to be in use if it is mounted
+				 * on a tape drive which has UNKNOWN or ERROR status.
+				 * 
+				 * @param vid the vid of the Tape
+				 * @exception Exception in case of error (several tapes drive found, 
+	       * DB problem, etc...)
+	       * @return true if there is one       
+				 */
+				virtual bool existTapeDriveWithTapeInUse(
+					const char* vid)
+	    		throw (castor::exception::Exception) = 0;
+	    		
+				/**
+				 * Check whether the tape, specified by the vid is mounted
+				 * on a tape drive or not.
+				 * 
+				 * @param volid the vid of the Tape
+				 * @exception Exception in case of error (several tapes drive found, 
+	       * DB problem, etc...)
+	       * @return true if there is one        
+				 */	    		
+				virtual bool existTapeDriveWithTapeMounted(
+					const char* volid)
+	    		throw (castor::exception::Exception) = 0;
+	    	
+	    	/**
+	    	 * Returns the tape with this vid
+	    	 * 
+				 * @param vid the vid of the Tape
+				 * @exception Exception in case of error (several tapes or no tape found, 
+	       * DB problem, etc...)	
+	       * @return The found TapeDrive	           
+	    	 */	
+	    	virtual castor::stager::Tape* selectTape(
+					const char* vid)
+	    		throw (castor::exception::Exception) = 0;
+				
 	    		
     }; // end of class IVdqmSvc
 

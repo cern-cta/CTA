@@ -29,6 +29,7 @@
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 
+#include "castor/vdqm/ExtendedDeviceGroup.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
@@ -88,90 +89,28 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleOldStatus()
 
 
 	if ( ptr_tapeDrive->status() == UNIT_UP ) {
-		
-//    if ( ptr_driveRequest->status & VDQM_UNIT_ASSIGN ) {
-//      /*
-//       * Unit assigned (reserved).
-//       */
-//      drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_RELEASE;
-//      drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_FREE;
-//      drvrec->drv.status |= VDQM_UNIT_BUSY;
-//    }
-//    if ( (ptr_driveRequest->status & VDQM_UNIT_MBCOUNT) ) {
-//        /*
-//         * Update TotalMB counter. Since this request is sent by
-//         * RTCOPY rather than the tape daemon we cannot yet reset
-//         * unknown status if it was previously set.
-//         */
-//        drvrec->drv.MBtransf = ptr_driveRequest->MBtransf;
-//        drvrec->drv.TotalMB += ptr_driveRequest->MBtransf;
-//        if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
-//    }
-//        if ( (ptr_driveRequest->status & VDQM_UNIT_ERROR) ) {
-//            /*
-//             * Update error counter.
-//             */
-//            drvrec->drv.errcount++;
-//        }
-//        if ( (ptr_driveRequest->status & VDQM_VOL_MOUNT) ) {
-//            /*
-//             * A mount volume request. The unit must first have been assigned.
-//             */
-//            if ( !(drvrec->drv.status & VDQM_UNIT_ASSIGN) ) {
-//                log(LOG_ERR,"vdqm_NewDrvReq(): mount request of %s for jobID %d on non-ASSIGNED unit\n",
-//                    ptr_driveRequest->volid,ptr_driveRequest->jobID);
-//                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
-//                FreeDgnContext(&dgn_context);
-//                vdqm_SetError(EVQNOTASS);
-//                return(-1);
-//            }
-//            if ( *ptr_driveRequest->volid == '\0' ) {
-//                log(LOG_ERR,"vdqm_NewDrvReq(): mount request with empty VOLID for jobID %d\n",
-//                    drvrec->drv.jobID);
-//                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
-//                FreeDgnContext(&dgn_context);
-//                vdqm_SetError(EVQBADVOLID);
-//                return(-1);
-//            }
-//            /*
-//             * Make sure that requested volume and assign volume record are the same
-//             */
-//            if ( drvrec->vol != NULL && strcmp(drvrec->vol->vol.volid,ptr_driveRequest->volid) ) {
-//                log(LOG_ERR,"vdqm_NewDrvReq(): inconsistent mount %s (should be %s) for jobID %d\n",
-//                    ptr_driveRequest->volid,drvrec->vol->vol.volid,ptr_driveRequest->jobID);
-//                if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
-//                FreeDgnContext(&dgn_context);
-//                vdqm_SetError(EVQBADVOLID);
-//                return(-1);
-//            }
-//            /*
-//             * If there are no assigned volume request it means that this
-//             * is a local request. Make sure that server and reqhost are
-//             * the same and that the volume is free.
-//             */
-//            if ( drvrec->vol == NULL ) {
-//                if ( strcmp(drvrec->drv.server,ptr_driveRequest->reqhost) != 0 ) {
-//                    if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
-//                    FreeDgnContext(&dgn_context);
-//                    vdqm_SetError(EPERM);
-//                    return(-1);
-//                 }
-//                 if ( VolInUse(dgn_context,ptr_driveRequest->volid) ||
-//                      VolMounted(dgn_context,ptr_driveRequest->volid) ) {
-//                     if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
-//                     FreeDgnContext(&dgn_context);
-//                     vdqm_SetError(EBUSY);
-//                     return(-1);
-//                 }
-//                 drvrec->drv.mode = -1; /* Mode is unknown */
-//            } else drvrec->drv.mode = drvrec->vol->vol.mode;
-//            strcpy(drvrec->drv.volid,ptr_driveRequest->volid);
-//            drvrec->drv.status |= VDQM_UNIT_BUSY;
-//            /*
-//             * Update usage counter
-//             */
-//            drvrec->drv.usecount++;
-//        }
+
+    if ( (ptr_driveRequest->status & VDQM_UNIT_MBCOUNT) ) {
+        /*
+         * Update TotalMB counter. Since this request is sent by
+         * RTCOPY rather than the tape daemon we cannot yet reset
+         * unknown status if it was previously set.
+         */
+        ptr_tapeDrive->setTransferredMB(ptr_driveRequest->MBtransf);
+        ptr_tapeDrive->setTotalMB(ptr_tapeDrive->totalMB() + ptr_driveRequest->MBtransf);
+    }
+    
+    if ( (ptr_driveRequest->status & VDQM_UNIT_ERROR) ) {
+        /*
+         * Update error counter.
+         */
+        ptr_tapeDrive->setErrcount(ptr_tapeDrive->errcount() + 1);
+    }
+    
+    
+		if ( (ptr_driveRequest->status & VDQM_VOL_MOUNT) ) {
+			handleVolMountStatus();
+		}
 //        if ( (ptr_driveRequest->status & VDQM_VOL_UNMOUNT) ) {
 //            *drvrec->drv.volid = '\0';
 //            drvrec->drv.mode = -1;
@@ -419,4 +358,97 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleOldStatus()
 //         }         
 //    }
 
+}
+
+
+//------------------------------------------------------------------------------
+// handleVolMountStatus
+//------------------------------------------------------------------------------
+void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus() 
+	throw (castor::exception::Exception) {
+		
+	TapeRequest* tapeRequest = ptr_tapeDrive->runningTapeReq();
+	TapeServer* tapeServer = ptr_tapeDrive->tapeServer();
+	castor::stager::Tape* mountedTape = NULL;	
+	/*
+	 * A mount volume request. The unit must first have been assigned.
+	 */
+	if ( ptr_tapeDrive->status() != UNIT_ASSIGNED) {
+		castor::exception::Exception ex(EVQNOTASS);
+		ex.getMessage() << "TapeDriveStatusHandler::handleVolMountStatus(): "
+										<< "Mount request of "
+										<< ptr_driveRequest->volid << " for jobID "
+										<< ptr_driveRequest->jobID
+										<< " on non-ASSIGNED unit." << std::endl;
+										
+		throw ex;											
+	}
+	
+	if ( *ptr_driveRequest->volid == '\0' ) {
+		castor::exception::Exception ex(EVQBADVOLID);
+		ex.getMessage() << "TapeDriveStatusHandler::handleVolMountStatus(): "
+										<< "Mount request with empty VOLID for jobID "
+										<< ptr_tapeDrive->jobID() << std::endl;
+										
+		throw ex;		
+	}
+	
+	/*
+	 * Make sure that requested volume and assign volume record are the same
+	 */
+	if ( tapeRequest != NULL && 
+			 strcmp(tapeRequest->tape()->vid().c_str(), ptr_driveRequest->volid) ) {
+		castor::exception::Exception ex(EVQBADVOLID);
+		ex.getMessage() << "TapeDriveStatusHandler::handleVolMountStatus(): "
+										<< "Inconsistent mount "
+										<< ptr_driveRequest->volid << " (should be "
+										<< tapeRequest->tape()->vid() << ") for jobID "
+										<< ptr_driveRequest->jobID << std::endl;										
+		throw ex;					 				 	
+	}
+	
+	/*
+	 * If there are no assigned volume request it means that this
+	 * is a local request. Make sure that server and reqhost are
+	 * the same and that the volume is free.
+	 */
+	if ( tapeRequest == NULL ) {
+	  if ( strcmp(tapeServer->serverName().c_str(), ptr_driveRequest->reqhost) != 0 ) {
+			castor::exception::Exception ex(EPERM);
+			ex.getMessage() << "TapeDriveStatusHandler::handleVolMountStatus(): "
+											<< "Can only mount a volume without an assigned volume "
+											<< "request, if it is a local request." << std::endl;
+			throw ex;										
+	  }
+	  
+		//TODO: Write a method for IVdqmService!!!
+ 	  if ( ptr_IVdqmService->existTapeDriveWithTapeInUse(ptr_driveRequest->volid) ||
+			ptr_IVdqmService->existTapeDriveWithTapeMounted(ptr_driveRequest->volid) ) {
+			castor::exception::Exception ex(EBUSY);
+			ex.getMessage() << "TapeDriveStatusHandler::handleVolMountStatus(): "
+											<< "TapeDrive is busy with another request" << std::endl;
+			throw ex;				
+		}
+	  
+	  ptr_tapeDrive->setTapeAccessMode(-1); /* Mode is unknown */
+	} 
+	else {
+		/**
+		 * Not needed any more!
+		 */
+		ptr_tapeDrive->setTapeAccessMode(tapeRequest->reqExtDevGrp()->accessMode());
+	}
+	
+	//TODO: Write a method for IVdqmService!!!
+	//The tape, which is now in the tape drive
+	mountedTape = ptr_IVdqmService->selectTape(ptr_driveRequest->volid);
+	ptr_tapeDrive->setTape(mountedTape);
+	
+	// Now we can switch from UNIT_ASSIGNED to the next status 
+	ptr_tapeDrive->setStatus(VOL_MOUNTED);
+	
+	/*
+	 * Update usage counter
+	 */
+	ptr_tapeDrive->setUsecount(ptr_tapeDrive->usecount() + 1);
 }
