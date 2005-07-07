@@ -1,0 +1,73 @@
+#!/usr/bin/perl -w
+#/******************************************************************************
+# *                      cleanLostFiles
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @(#)$RCSfile: cleanLostFiles,v $ $Revision: 1.1 $ $Release$ $Date: 2005/07/07 14:10:56 $ $Author: sponcec3 $
+# *
+# * cleanup files in the DB when they were lost on the disk.
+# * this basically does the second part of the garbage collection
+# * that is the update of the DB after deletion
+# * The input parametersmust be a list of DiskCopy ids
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+use strict;
+use diagnostics;
+use lib "/usr/lib/perl/CASTOR";
+use castor_tools;
+
+my @castor_conf = castor_conf_getOraStagerSvc();
+my $dbh = DBI->connect('dbi:Oracle:',$castor_conf[0] ,$castor_conf[1]);
+
+# The following query (were data are copied) may look strange
+# but I fear there is currently no way to do otherwise...
+my $dbquery = <<EOF;
+DECLARE
+  files castor."cnumList"; := "numList"(
+EOF
+
+# Parse command line and cheak we have only numbers
+# so that SQL injection cannot be performed
+my $arg;
+my $first = 1;
+for $arg (@ARGV) {
+  if ($first == 1) {
+    $first = 0;
+  } else {
+    $dbquery .= ", ";
+  }
+  $dbquery .= $arg;
+}
+
+$dbquery .= <<EOF;
+);
+  files castor."cnumList";
+BEGIN
+  FOR i in rawfiles.FIRST .. rawfiles.LAST LOOP
+    files(i):=rawfiles(i);
+  end LOOP;
+  filesDeletedProc(files);
+END;
+EOF
+
+my $sth = $dbh->prepare("$dbquery");
+$sth->execute;
+
+$sth->finish;
+$dbh->disconnect;
