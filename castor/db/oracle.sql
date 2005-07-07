@@ -920,80 +920,110 @@ CREATE OR REPLACE PROCEDURE isSubRequestToSchedule
          sources OUT castor.DiskCopy_Cur) AS
   stat "numList";
   dci "numList";
+  svcClassId NUMBER;
+  reqId NUMBER;
+  cfId NUMBER;
 BEGIN
- SELECT DiskCopy.status, DiskCopy.id
-  BULK COLLECT INTO stat, dci
-  FROM DiskCopy, SubRequest, FileSystem, DiskServer
-  WHERE SubRequest.id = rsubreqId
-   AND SubRequest.castorfile = DiskCopy.castorfile
-   AND DiskCopy.fileSystem = FileSystem.id
-   AND FileSystem.status = 0 -- PRODUCTION
-   AND FileSystem.diskserver = DiskServer.id
-   AND DiskServer.status = 0 -- PRODUCTION
-   AND DiskCopy.status IN (0, 1, 2, 5, 6, 10, 11); -- STAGED, WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
- IF stat.COUNT > 0 THEN
-   IF 0 MEMBER OF stat OR -- STAGED
-      6 MEMBER OF stat OR -- STAGEOUT
-      10 MEMBER OF stat   -- CANBEMIGR
-   THEN
-     -- In case of PutDone, Check there is no put going on
-     -- If any, we'll wait on one of them
-     DECLARE
-       reqId NUMBER;
-       cfId NUMBER;
-       nb NUMBER;
-     BEGIN
-       SELECT request, castorFile INTO reqId, cfId
-         FROM SubRequest WHERE id = rsubreqId;
-       IF (SELECT type FROM Id2Type
-            WHERE id = reqId) = 39 THEN -- PutDone
-         -- count nb of running puts
-         SELECT COUNT(*) INTO nb
-           FROM SubRequest, Id2Type
-          WHERE SubRequest.castorfile = cfId
-            AND SubRequest.request = Id2Type.id
-            AND Id2Type.type = 40 -- Put
-            AND SubRequest.status IN (0, 1, 2, 3); -- START, RESTART, RETRY, WAITSCHED
-         -- make putDone wait if any put is running
-         IF nb > 0 THEN
-           UPDATE SubRequest
-              SET parent = (SELECT id FROM SubRequest WHERE diskCopy = dci(1)),
-                  status = 5, -- WAITSUBREQ
-                  lastModificationTime = getTime()
-            WHERE id = rsubreqId;
-           result := 0;  -- no schedule
-           RETURN;
-         END IF;
-       END IF;
-     END;
-     -- We are not in the case of a putDone with a running put
-     -- so we should schedule and give a list of sources
-     result := 1;  -- schedule and diskcopies available
-     OPEN sources
-       FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
+  -- First see whether we should wait on an ongoing request
+  SELECT DiskCopy.status, DiskCopy.id
+    BULK COLLECT INTO stat, dci
+    FROM DiskCopy, SubRequest, FileSystem, DiskServer
+   WHERE SubRequest.id = rsubreqId
+     AND SubRequest.castorfile = DiskCopy.castorfile
+     AND DiskCopy.fileSystem = FileSystem.id
+     AND FileSystem.status = 0 -- PRODUCTION
+     AND FileSystem.diskserver = DiskServer.id
+     AND DiskServer.status = 0 -- PRODUCTION
+     AND DiskCopy.status IN (1, 2, 5, 11); -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING
+  IF stat.COUNT > 0 THEN
+    -- Only DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
+    UPDATE SubRequest
+       SET parent = (SELECT id FROM SubRequest WHERE diskCopy = dci(1)),
+           status = 5, -- WAITSUBREQ
+           lastModificationTime = getTime()
+     WHERE id = rsubreqId;
+    result := 0;  -- no schedule
+    RETURN;
+  END IF;
+  -- Get the svcclass for this subrequest
+  SELECT Request.id, Request.svcclass, SubRequest.castorfile
+    INTO reqId, svcClassId, cfId
+    FROM (SELECT id, svcClass from StageGetRequest UNION
+          SELECT id, svcClass from StagePrepareToGetRequest UNION
+          SELECT id, svcClass from StageUpdateRequest UNION
+          SELECT id, svcClass from StagePrepareToUpdateRequest UNION
+          SELECT id, svcClass from StagePutDoneRequest) Request,
+         SubRequest
+   WHERE Subrequest.request = Request.id
+     AND Subrequest.id = rsubreqId;
+  -- Try to see whether we have available DiskCopies
+  SELECT DiskCopy.status, DiskCopy.id
+    BULK COLLECT INTO stat, dci
+    FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
+   WHERE DiskCopy.castorfile = cfId
+     AND DiskCopy.fileSystem = FileSystem.id
+     AND FileSystem.diskpool = DiskPool2SvcClass.parent
+     AND DiskPool2SvcClass.child = svcClassId
+     AND FileSystem.status = 0 -- PRODUCTION
+     AND FileSystem.diskserver = DiskServer.id
+     AND DiskServer.status = 0 -- PRODUCTION
+     AND DiskCopy.status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
+  IF stat.COUNT > 0 THEN
+    -- In case of PutDone, Check there is no put going on
+    -- If any, we'll wait on one of them
+    DECLARE
+      ty NUMBER;
+    BEGIN
+      SELECT type INTO ty FROM Id2Type WHERE id = reqId;
+      IF ty = 39 THEN -- PutDone
+        DECLARE
+          putSubReq NUMBER;
+        BEGIN
+          -- Try to find a running put
+          SELECT subrequest.id INTO putSubReq
+            FROM SubRequest, Id2Type
+           WHERE SubRequest.castorfile = cfId
+             AND SubRequest.request = Id2Type.id
+             AND Id2Type.type = 40 -- Put
+             AND SubRequest.status IN (0, 1, 2, 3) -- START, RESTART, RETRY, WAITSCHED
+             AND ROWNUM < 2;
+          -- we've found one, putDone will have to wait
+          UPDATE SubRequest
+             SET parent = putSubReq,
+                 status = 5, -- WAITSUBREQ
+                 lastModificationTime = getTime()
+           WHERE id = rsubreqId;
+          result := 0;  -- no schedule
+          RETURN;
+        EXCEPTION WHEN NO_DATA_FOUND THEN
+          -- no put waiting, let continue
+          NULL;
+        END;
+      END IF;
+    END;
+    -- We are not in the case of a putDone with a running put
+    -- so we should schedule and give a list of sources
+    result := 1;  -- schedule and try to use available diskcopies
+    OPEN sources
+      FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
                   FileSystem.weight, FileSystem.mountPoint,
                   DiskServer.name
-       FROM DiskCopy, SubRequest, FileSystem, DiskServer
-       WHERE SubRequest.id = rsubreqId
-         AND SubRequest.castorfile = DiskCopy.castorfile
-         AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
-         AND FileSystem.id = DiskCopy.fileSystem
-         AND FileSystem.status = 0 -- PRODUCTION
-         AND DiskServer.id = FileSystem.diskServer
-         AND DiskServer.status = 0; -- PRODUCTION
-   ELSE
-     -- Only DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
-     UPDATE SubRequest
-        SET parent = (SELECT id FROM SubRequest WHERE diskCopy = dci(1)),
-            status = 5, -- WAITSUBREQ
-            lastModificationTime = getTime()
-      WHERE id = rsubreqId;
-     result := 0;  -- no schedule
-   END IF;
- ELSE
-   -- In this case, schedule for recall
-   result := 2;
- END IF;
+            FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
+           WHERE SubRequest.id = rsubreqId
+             AND SubRequest.castorfile = DiskCopy.castorfile
+             AND FileSystem.diskpool = DiskPool2SvcClass.parent
+             AND DiskPool2SvcClass.child = svcClassId
+             AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
+             AND FileSystem.id = DiskCopy.fileSystem
+             AND FileSystem.status = 0 -- PRODUCTION
+             AND DiskServer.id = FileSystem.diskServer
+             AND DiskServer.status = 0; -- PRODUCTION
+  ELSE
+    -- We found no diskcopies for our svcclass, schedule anywhere
+    -- Note that this could mean a tape recall or a disk2disk copy
+    -- from an existing diskcopy not available to this svcclass
+    result := 2;
+  END IF;
 END;
 
 /* Build diskCopy path from fileId */
@@ -1123,34 +1153,39 @@ END;
 
 CREATE OR REPLACE PROCEDURE putDoneStartProc
         (srId IN INTEGER, dcId OUT INTEGER,
-         dcStatus OUT INTEGER, dcPath OUT INTEGER) AS
+         dcStatus OUT INTEGER, dcPath OUT VARCHAR2) AS
   reqId NUMBER;
   cfId NUMBER;
-  nb NUMBER;
+  ty NUMBER;
 BEGIN
   -- Check there is no put going on
   -- If any, we'll wait on one of them
   SELECT request, castorFile INTO reqId, cfId
     FROM SubRequest WHERE id = srId;
-  IF (SELECT type FROM Id2Type
-       WHERE id = reqId) = 39 THEN -- PutDone
-    -- count nb of running puts
-    SELECT COUNT(*) INTO nb
-      FROM SubRequest, Id2Type
-     WHERE SubRequest.castorfile = cfId
-       AND SubRequest.request = Id2Type.id
-       AND Id2Type.type = 40 -- Put
-       AND SubRequest.status IN (0, 1, 2, 3); -- START, RESTART, RETRY, WAITSCHED
-    -- make putDone wait if any put is running
-    IF nb > 0 THEN
+  SELECT type INTO ty FROM Id2Type WHERE id = reqId;
+  IF ty = 39 THEN -- PutDone
+    DECLARE
+      putSubReq NUMBER;
+    BEGIN
+      -- Try to find a running put
+      SELECT subrequest.id INTO putSubReq
+        FROM SubRequest, Id2Type
+       WHERE SubRequest.castorfile = cfId
+         AND SubRequest.request = Id2Type.id
+         AND Id2Type.type = 40 -- Put
+         AND SubRequest.status IN (0, 1, 2, 3) -- START, RESTART, RETRY, WAITSCHED
+         AND ROWNUM < 2;
+      -- we've found one, putDone will have to wait
       UPDATE SubRequest
-         SET parent = (SELECT id FROM SubRequest WHERE diskCopy = dci(1)),
+         SET parent = putSubReq,
              status = 5, -- WAITSUBREQ
              lastModificationTime = getTime()
-       WHERE id = rsubreqId;
-      result := 0;  -- no schedule
+       WHERE id = srId;
       RETURN;
-    END IF;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- no put waiting, let continue
+      NULL;
+    END;
   END IF;
   -- No put, we can safely go
   SELECT DiskCopy.id, DiskCopy.status, DiskCopy.path
