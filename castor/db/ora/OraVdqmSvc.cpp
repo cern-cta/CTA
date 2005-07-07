@@ -90,7 +90,7 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveStatementString 
 // OraVdqmSvc
 // -----------------------------------------------------------------------
 castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
-  BaseSvc(name), OraBaseObj(0),
+  OraCommonSvc(name),
   m_checkExtDevGroupStatement(0),
   m_selectTapeServerStatement(0),
   m_checkTapeRequestStatement1(0),
@@ -126,6 +126,7 @@ const unsigned int castor::db::ora::OraVdqmSvc::ID() {
 void castor::db::ora::OraVdqmSvc::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
+  OraCommonSvc::reset();
   try {
     deleteStatement(m_checkExtDevGroupStatement);
     deleteStatement(m_selectTapeServerStatement);
@@ -383,18 +384,17 @@ castor::vdqm::TapeDrive*
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeRequest);
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_Tape);
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_ExtendedDeviceGroup);
-    
-    
+
     /**
      * If there is already an assigned tapeRequest, we want also its objects
      */
-		castor::vdqm::TapeRequest* tapeRequest = tapeDrive->runningTapeReq();
-		if (tapeRequest != NULL) {
-			cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);
-			cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_Tape);
-			cnvSvc()->fillObj(&ad, obj, castor::OBJ_ExtendedDeviceGroup);
-			cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeServer);
-		}
+    castor::vdqm::TapeRequest* tapeRequest = tapeDrive->runningTapeReq();
+    if (tapeRequest != NULL) {
+        cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);
+        cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_Tape);
+        cnvSvc()->fillObj(&ad, obj, castor::OBJ_ExtendedDeviceGroup);
+        cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeServer);
+    }
      
     //Reset pointer
     obj = 0;

@@ -34,15 +34,15 @@
 
 //Local Include Files
 #include "OraCnvSvc.hpp"
-#include "OraBaseObj.hpp"
+#include "OraCommonSvc.hpp"
 
 typedef struct vdqmdDrvReq vdqmDrvReq_t;
 
 namespace castor {
 	
   // Forward declaration
-	class stager::Tape;
-  class vdqm::ExtendedDeviceGroup;
+    class stager::Tape;
+    class vdqm::ExtendedDeviceGroup;
 	class vdqm::TapeRequest;
 	class vdqm::TapeDrive;
 	class vdqm::TapeServer;
@@ -54,9 +54,8 @@ namespace castor {
       /**
        * Implementation of the IVdqmSvc for Oracle
        */
-      class OraVdqmSvc : public BaseSvc,
-                           public OraBaseObj,
-                           public virtual castor::vdqm::IVdqmSvc {
+      class OraVdqmSvc : public OraCommonSvc,
+                         public virtual castor::vdqm::IVdqmSvc {
 
 	    	public:
 	    	
