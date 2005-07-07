@@ -19,18 +19,18 @@
  *
  * @(#)RCSfile: IVdqmSvc.hpp  Revision: 1.0  Release Date: Apr 20, 2005  Author: mbraeger 
  *
- *
+ * This class provides methods to deal with the VDQM service
  *
  * @author Matthias Braeger
  *****************************************************************************/
 
-#ifndef _IVDQMSVC_HPP_
-#define _IVDQMSVC_HPP_
+#ifndef VDQM_IVDQMSVC_HPP
+#define VDQM_IVDQMSVC_HPP 1
 
 // Include Files
 #include <string>
 
-#include "castor/IService.hpp"
+#include "castor/stager/ICommonSvc.hpp"
 #include "castor/exception/Exception.hpp"
 
 typedef struct vdqmdDrvReq vdqmDrvReq_t;
@@ -47,10 +47,9 @@ namespace castor {
 
 
     /**
-     * This class provides methods usefull to the stager to
-     * deal with database queries
+     * This class provides methods to deal with the VDQM service
      */
-    class IVdqmSvc : public virtual IService {
+    class IVdqmSvc : public virtual castor::stager::ICommonSvc {
 
     	public:
     	
@@ -84,7 +83,7 @@ namespace castor {
 	    	 * Checks, if there is already an entry for that tapeRequest. The entry
 	    	 * must have exactly the same ID.
 	    	 * 
-	    	 * @return 0<: The row number, 
+	    	 * @return 0 : The row number, 
 	    	 *         0 : The request is handled at the moment from a TapeDrive, 
 	    	 *         -1: if there is no entry for it.
 	    	 * @exception in case of error
@@ -134,4 +133,4 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif //_IVDQMSVC_HPP_
+#endif // VDQM_IVDQMSVC_HPP
