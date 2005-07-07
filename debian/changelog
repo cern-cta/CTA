@@ -1,3 +1,16 @@
+castor (2.0.0-49) unstable; urgency=low
+
+  * Renamed putDoneStart to putDoneStartProc to avoid oracle clashing with table having the same name.
+  * fixed filerecalled and filerecallfailed for file sizes. Take the one of castorfile and not the one of the subrequest
+  * VdqmServer: new log messages added
+  * TapeDriveConsistencyChecker fully implemented.
+  * Document 'recaller CHECKFILE' configuration
+  * Scheduler plugin: work on temporary string rfs instead of the one that is in the job data specific handler
+  * Scheduler plugin: Before calling Cstager_IStagerSvc_bestFileSystemForJob(), makes sure that when the job specifies a list of hosts and filesystems, we do not call the stored procedure with any host:filesystem that would NOT be in the candidate hosts as per LSF! Then the risk is to have the stored procedure returning a host:filesystem that does NOT match the candidates
+  * Start to work with gcc-4.0
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Thu,  7 Jul 2005 11:10:59 +0200
+
 castor (2.0.0-48) unstable; urgency=low
 
   * Added policies: fs_garbage.clp, migrator.pl, recaller.pl, migratorRetryPolicy.pl and recallerRetryPolicy.pl
