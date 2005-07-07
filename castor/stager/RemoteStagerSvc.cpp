@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2005/07/01 13:10:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2005/07/07 12:58:44 $ $Author: sponcec3 $
  *
  *
  *
@@ -58,6 +58,7 @@
 #include "castor/rh/StartResponse.hpp"
 #include "castor/exception/NotSupported.hpp"
 #include "castor/exception/Internal.hpp"
+#include <errno.h>
 #include <list>
 
 EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
