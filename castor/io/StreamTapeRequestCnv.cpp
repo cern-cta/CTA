@@ -94,7 +94,7 @@ void castor::io::StreamTapeRequestCnv::createRep(castor::IAddress* address,
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->priority();
-  ad->stream() << obj->creationTime();
+  ad->stream() << obj->modificationTime();
   ad->stream() << obj->id();
 }
 
@@ -111,9 +111,9 @@ castor::IObject* castor::io::StreamTapeRequestCnv::createObj(castor::IAddress* a
   int priority;
   ad->stream() >> priority;
   object->setPriority(priority);
-  int creationTime;
-  ad->stream() >> creationTime;
-  object->setCreationTime(creationTime);
+  int modificationTime;
+  ad->stream() >> modificationTime;
+  object->setModificationTime(modificationTime);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

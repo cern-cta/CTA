@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AbstractSocket.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/07/19 10:22:25 $ $Author: bcouturi $
+ * @(#)$RCSfile: AbstractSocket.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/07/07 16:30:54 $ $Author: mbraeger $
  *
  * defines a dedicated socket that handles most of the network
  * calls
@@ -62,7 +62,7 @@ namespace castor {
        * Note that the deallocation of it is the responsability of the caller
        * @return the IObject read
        */
-      castor::IObject* readObject()
+      virtual castor::IObject* readObject()
         throw(castor::exception::Exception);
 
       /**

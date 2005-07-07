@@ -39,6 +39,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
+#include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/vdqm/ExtendedDeviceGroup.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
@@ -96,7 +97,7 @@ void castor::io::StreamTapeDriveCnv::createRep(castor::IAddress* address,
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->jobID();
-  ad->stream() << obj->creationTime();
+  ad->stream() << obj->modificationTime();
   ad->stream() << obj->resettime();
   ad->stream() << obj->usecount();
   ad->stream() << obj->errcount();
@@ -116,9 +117,8 @@ void castor::io::StreamTapeDriveCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->no_date();
   ad->stream() << obj->no_time();
   ad->stream() << obj->no_age();
-  ad->stream() << obj->euid();
-  ad->stream() << obj->egid();
-  ad->stream() << obj->name();
+  ad->stream() << obj->driveName();
+  ad->stream() << obj->tapeAccessMode();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -136,9 +136,9 @@ castor::IObject* castor::io::StreamTapeDriveCnv::createObj(castor::IAddress* add
   int jobID;
   ad->stream() >> jobID;
   object->setJobID(jobID);
-  int creationTime;
-  ad->stream() >> creationTime;
-  object->setCreationTime(creationTime);
+  int modificationTime;
+  ad->stream() >> modificationTime;
+  object->setModificationTime(modificationTime);
   int resettime;
   ad->stream() >> resettime;
   object->setResettime(resettime);
@@ -196,15 +196,12 @@ castor::IObject* castor::io::StreamTapeDriveCnv::createObj(castor::IAddress* add
   short no_age;
   ad->stream() >> no_age;
   object->setNo_age(no_age);
-  long euid;
-  ad->stream() >> euid;
-  object->setEuid(euid);
-  long egid;
-  ad->stream() >> egid;
-  object->setEgid(egid);
-  std::string name;
-  ad->stream() >> name;
-  object->setName(name);
+  std::string driveName;
+  ad->stream() >> driveName;
+  object->setDriveName(driveName);
+  int tapeAccessMode;
+  ad->stream() >> tapeAccessMode;
+  object->setTapeAccessMode(tapeAccessMode);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
@@ -240,6 +237,7 @@ void castor::io::StreamTapeDriveCnv::marshalObject(castor::IObject* object,
     }
     cnvSvc()->marshalObject(obj->runningTapeReq(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->tapeServer(), address, alreadyDone);
+    cnvSvc()->marshalObject(obj->client(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -275,6 +273,9 @@ castor::IObject* castor::io::StreamTapeDriveCnv::unmarshalObject(castor::io::bin
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objTapeServer = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setTapeServer(dynamic_cast<castor::vdqm::TapeServer*>(objTapeServer));
+  ad.setObjType(castor::OBJ_INVALID);
+  IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setClient(dynamic_cast<castor::stager::ClientIdentification*>(objClient));
   return object;
 }
 
