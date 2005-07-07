@@ -361,7 +361,7 @@ castor::vdqm::TapeDrive*
   
   // Now get the tapeDrive from its id
   try {
-    castor::BaseAddress ad;
+		castor::BaseAddress ad;
     ad.setTarget(id);
     ad.setCnvSvcName("OraCnvSvc");
     ad.setCnvSvcType(castor::SVC_ORACNV);
@@ -377,14 +377,28 @@ castor::vdqm::TapeDrive*
       throw e;
     }
     
-    //Now we get the foreign ClientIdentification object
+    //Now we get the foreign related objects
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_ClientIdentification);
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeServer);
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeRequest);
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_Tape);
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_ExtendedDeviceGroup);
     
+    
+    /**
+     * If there is already an assigned tapeRequest, we want also its objects
+     */
+		castor::vdqm::TapeRequest* tapeRequest = tapeDrive->runningTapeReq();
+		if (tapeRequest != NULL) {
+			cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);
+			cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_Tape);
+			cnvSvc()->fillObj(&ad, obj, castor::OBJ_ExtendedDeviceGroup);
+			cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeServer);
+		}
+     
+    //Reset pointer
     obj = 0;
+    tapeRequest = 0;
     
     return tapeDrive;
   } catch (oracle::occi::SQLException e) {
