@@ -110,11 +110,15 @@ int Cstager_ClientIdentification_setUserName(struct Cstager_ClientIdentification
 
 /**
  * Get the value of port
+ * The port, to where the client want to have send its messages. It is not used for
+ * TapeDrive at the moment.
  */
 int Cstager_ClientIdentification_port(struct Cstager_ClientIdentification_t* instance, int* var);
 
 /**
  * Set the value of port
+ * The port, to where the client want to have send its messages. It is not used for
+ * TapeDrive at the moment.
  */
 int Cstager_ClientIdentification_setPort(struct Cstager_ClientIdentification_t* instance, int new_var);
 
