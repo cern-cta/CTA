@@ -1874,6 +1874,35 @@ BEGIN
  UPDATE DiskCopy SET status = 8 -- GCCANDIDATE
   WHERE castorFile = cfId
     AND status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
+ DECLARE
+  segId INTEGER;
+ BEGIN
+   -- First lock all segments for the file
+   SELECT segment.id INTO segId
+     FROM Segment, TapeCopy
+    WHERE TapeCopy.castorfile = cfId
+      AND TapeCopy.id = Segment.copy
+      FOR UPDATE;
+   -- Check whether we have any segment in SELECTED
+   SELECT segment.id INTO segId
+     FROM Segment, TapeCopy
+    WHERE TapeCopy.castorfile = cfId
+      AND TapeCopy.id = Segment.copy
+      AND Segment.status = 7 -- SELECTED
+      AND ROWNUM < 2;
+   -- Something is running, so give uu
+ EXCEPTION WHEN NO_DATA_FOUND THEN
+   -- Nothing running
+   -- Delete the segment(s)
+   DELETE FROM Segment WHERE copy IN (SELECT id FROM TapeCopy WHERE castorfile = cfId); 
+   -- Delete the TapeCopy
+   DELETE FROM TapeCopy WHERE castorfile = cfId;
+   -- Delete the DiskCopies
+   UPDATE DiskCopy
+      SET status = 8
+    WHERE status = 2
+      AND castorFile = cfId;
+ END;
  ret := 0;
 END;
 
