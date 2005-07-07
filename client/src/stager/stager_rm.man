@@ -1,0 +1,58 @@
+.\" @(#)$RCSfile: stager_rm.man,v $ $Revision: 1.1 $ $Date: 2005/07/07 15:20:03 $ CERN IT/ADC Olof Barring
+.\" Copyright (C) 2005 by CERN/IT
+.\" All rights reserved
+.\"
+.TH STAGER_PUT 1castor "$Date: 2005/07/07 15:20:03 $" CASTOR "STAGER Commands"
+.SH NAME
+stager_rm \- request for removing a file from the CASTOR stager
+.SH SYNOPSIS
+.B stager_rm
+.BI -M
+.BI hsmfile
+[
+.BI -M
+.BI ...
+]
+[
+.BI -h
+]
+.SH DESCRIPTION
+The
+.B stager_rm
+command removes one or several files from the CASTOR stager catalog. 
+This includes stopping all running requests and marking all replicas 
+of the file for garbage collection. Note that this does not mean 
+that the file is no more on disk, since a running recall of the file 
+will be untouched and could lead to a new copy of the file on disk 
+just after the stager_rm has been performed.
+
+.B stager_rm
+can return EBUSY if the file is being migrated or 
+replicated at the moment the command is issued. Otherwise, it is 
+always successful.
+
+.SH OPTIONS
+
+.TP
+.BI \-M,\ \-\-filename " hsmfile"
+specifies the CASTOR HSM file(s) to be removed.
+.TP
+.BI \-h,\ \-\-help
+display command usage help
+.TP
+
+.SH EXAMPLE
+.fi
+# stager_rm -M /castor/cern.ch/user/t/test/file1
+.fi
+42cd469e-0000-1000-81ea-8514e17e0800 Received 1 responses
+.fi
+/castor/cern.ch/user/t/test/file1:SUBRQUEST_READY
+.fi
+
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
