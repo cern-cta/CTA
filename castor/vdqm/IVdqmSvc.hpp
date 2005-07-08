@@ -136,13 +136,13 @@ namespace castor {
 				 * The volume is also considered to be in use if it is mounted
 				 * on a tape drive which has UNKNOWN or ERROR status.
 				 * 
-				 * @param vid the vid of the Tape
+				 * @param volid the vid of the Tape
 				 * @exception Exception in case of error (several tapes drive found, 
 	       * DB problem, etc...)
 	       * @return true if there is one       
 				 */
 				virtual bool existTapeDriveWithTapeInUse(
-					const char* vid)
+					const char* volid)
 	    		throw (castor::exception::Exception) = 0;
 	    		
 				/**
