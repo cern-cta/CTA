@@ -439,10 +439,17 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
 		ptr_tapeDrive->setTapeAccessMode(tapeRequest->reqExtDevGrp()->accessMode());
 	}
 	
-	//TODO: Write a method for IVdqmService!!!
 	//The tape, which is now in the tape drive
 	mountedTape = ptr_IVdqmService->selectTape(ptr_driveRequest->volid);
-	ptr_tapeDrive->setTape(mountedTape);
+	if (mountedTape != NULL)
+		ptr_tapeDrive->setTape(mountedTape);
+	else {
+		castor::exception::Exception ex(EVQBADVOLID);
+		ex.getMessage() << "TapeDriveStatusHandler::handleVolMountStatus(): "
+										<< "No Tape with specified volid in db" << std::endl;
+										
+		throw ex;		
+	}
 	
 	// Now we can switch from UNIT_ASSIGNED to the next status 
 	ptr_tapeDrive->setStatus(VOL_MOUNTED);
