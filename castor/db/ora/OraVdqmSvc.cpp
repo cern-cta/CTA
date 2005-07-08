@@ -30,6 +30,7 @@
 #include "castor/Constants.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/stager/Tape.hpp"
 
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
@@ -84,6 +85,18 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectFreeTapeDriveStatementStr
 /// SQL statement for function deleteAllTapeDrvsFromSrv
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveStatementString =
   "SELECT id FROM TapeDrive WHERE name = :1 AND tapeServer = :2 FOR UPDATE";
+  
+/// SQL statement for function existTapeDriveWithTapeInUse
+const std::string castor::db::ora::OraVdqmSvc::s_existTapeDriveWithTapeInUseStatementString =
+  "SELECT id FROM TapeDrive WHERE runningTapeReq = (SELECT id FROM TapeRequest WHERE tape = (SELECT id FROM Tape WHERE vid = :1)) FOR UPDATE";
+  
+/// SQL statement for function existTapeDriveWithTapeMounted
+const std::string castor::db::ora::OraVdqmSvc::s_existTapeDriveWithTapeMountedStatementString =
+  "SELECT id FROM TapeDrive WHERE tape = (SELECT id FROM Tape WHERE vid = :1) FOR UPDATE";
+  
+/// SQL statement for function selectTape
+const std::string castor::db::ora::OraVdqmSvc::s_selectTape2StatementString =
+  "SELECT id FROM Tape WHERE vid = :1 FOR UPDATE";      
 
 
 // -----------------------------------------------------------------------
@@ -410,3 +423,78 @@ castor::vdqm::TapeDrive*
   }
   // We should never reach this point
 }
+
+
+// -----------------------------------------------------------------------
+// existTapeDriveWithTapeInUse
+// -----------------------------------------------------------------------
+bool
+	castor::db::ora::OraVdqmSvc::existTapeDriveWithTapeInUse(
+	const char* volid)
+  throw (castor::exception::Exception) {
+  	
+}
+
+
+// -----------------------------------------------------------------------
+// selectTape
+// -----------------------------------------------------------------------
+castor::stager::Tape* 
+	castor::db::ora::OraVdqmSvc::selectTape(
+	const char* volid)
+  throw (castor::exception::Exception) {
+  	
+  // Check whether the statements are ok
+  if (0 == m_selectTape2Statement) {
+    m_selectTape2Statement = createStatement(s_selectTape2StatementString);
+  }
+  // Execute statement and get result
+  unsigned long id;
+  try {
+    m_selectTape2Statement->setString(1, volid);
+    oracle::occi::ResultSet *rset = m_selectTape2Statement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      m_selectTape2Statement->closeResultSet(rset);
+      // we found nothing, so let's return NULL
+			return NULL;
+    }
+    // If we reach this point, then we selected successfully
+    // a tape and it's id is in rset
+    id = rset->getInt(1);
+    m_selectTape2Statement->closeResultSet(rset);
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select tape by vid, side and tpmode :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+  // Now get the tape from its id
+  try {
+    castor::BaseAddress ad;
+    ad.setTarget(id);
+    ad.setCnvSvcName("OraCnvSvc");
+    ad.setCnvSvcType(castor::SVC_ORACNV);
+    castor::IObject* obj = cnvSvc()->createObj(&ad);
+    castor::stager::Tape* tape =
+      dynamic_cast<castor::stager::Tape*> (obj);
+    if (0 == tape) {
+      castor::exception::Internal e;
+      e.getMessage() << "createObj return unexpected type "
+                     << obj->type() << " for id " << id;
+      delete obj;
+      throw e;
+    }
+    return tape;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select tape for id " << id  << " :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+  // We should never reach this point	
+}
+
+
+

@@ -161,6 +161,49 @@ namespace castor {
 						const castor::vdqm::TapeServer* tapeServer)
 		    		throw (castor::exception::Exception);			
 
+//---------------- functions for TapeDriveStatusHandler ------------------------
+
+				/**
+				 * Check whether another request is currently
+				 * using the specified tape vid. Note that the tape can still
+				 * be mounted on a drive if not in use by another request.
+				 * The volume is also considered to be in use if it is mounted
+				 * on a tape drive which has UNKNOWN or ERROR status.
+				 * 
+				 * @param vid the volid of the Tape
+				 * @exception Exception in case of error (several tapes drive found, 
+	       * DB problem, etc...)
+	       * @return true if there is one       
+				 */
+				virtual bool existTapeDriveWithTapeInUse(
+					const char* volid)
+	    		throw (castor::exception::Exception);
+	    		
+				/**
+				 * Check whether the tape, specified by the vid is mounted
+				 * on a tape drive or not.
+				 * 
+				 * @param volid the vid of the Tape
+				 * @exception Exception in case of error (several tapes drive found, 
+	       * DB problem, etc...)
+	       * @return true if there is one        
+				 */	    		
+				virtual bool existTapeDriveWithTapeMounted(
+					const char* volid)
+	    		throw (castor::exception::Exception);
+	    	
+	    	/**
+	    	 * Returns the tape with this vid
+	    	 * 
+				 * @param vid the vid of the Tape
+				 * @exception Exception in case of error (several tapes or no tape found, 
+	       * DB problem, etc...)	
+	       * @return The found TapeDrive	           
+	    	 */	
+	    	virtual castor::stager::Tape* selectTape(
+					const char* vid)
+	    		throw (castor::exception::Exception);
+
 	      private:
 	      
 		      /**
@@ -210,6 +253,24 @@ namespace castor {
 	
 	        /// SQL statement object for function selectTapeDrive
 	        oracle::occi::Statement *m_selectTapeDriveStatement;	                                 	
+	        
+ 	        /// SQL statement for function existTapeDriveWithTapeInUse
+	        static const std::string s_existTapeDriveWithTapeInUseStatementString;
+	
+	        /// SQL statement object for function existTapeDriveWithTapeInUse
+	        oracle::occi::Statement *m_existTapeDriveWithTapeInUseStatement;
+	        
+ 	        /// SQL statement for function existTapeDriveWithTapeMounted
+	        static const std::string s_existTapeDriveWithTapeMountedStatementString;
+	
+	        /// SQL statement object for function existTapeDriveWithTapeMounted
+	        oracle::occi::Statement *m_existTapeDriveWithTapeMountedStatement;
+	        
+ 	        /// SQL statement for function selectTape
+	        static const std::string s_selectTape2StatementString;
+	
+	        /// SQL statement object for function selectTape
+	        oracle::occi::Statement *m_selectTape2Statement;	        	        	        
 			};
 		}
 	}
