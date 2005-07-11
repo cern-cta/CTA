@@ -1,5 +1,5 @@
 /*
- * $Id: rtcp_Listen.c,v 1.6 2005/03/15 23:01:00 bcouturi Exp $
+ * $Id: rtcp_Listen.c,v 1.7 2005/07/11 11:12:11 jdurand Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -10,7 +10,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_Listen.c,v $ $Revision: 1.6 $ $Date: 2005/03/15 23:01:00 $ CERN IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_Listen.c,v $ $Revision: 1.7 $ $Date: 2005/07/11 11:12:11 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 
@@ -46,7 +46,8 @@ static char sccsid[] = "@(#)$RCSfile: rtcp_Listen.c,v $ $Revision: 1.6 $ $Date: 
 int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout, int wherefrom) {
   fd_set rfds, rfds_copy;
   struct sockaddr_in from;
-  int fromlen, maxfd, rc;
+  int maxfd, rc;
+  socklen_t fromlen;
   int save_errno, keepalive=1;
   struct timeval t_out, *t_out_p;
 #ifdef CSEC

@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_InitNW.c,v $ $Revision: 1.8 $ $Date: 2004/02/12 15:59:07 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_InitNW.c,v $ $Revision: 1.9 $ $Date: 2005/07/11 11:09:50 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -47,7 +47,8 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type, char *servic
     extern char * getenv() ;
     char *p ;
     int rtcp_port = -1;
-    int rcode,rc,len;
+    int rcode,rc;
+    socklen_t len;
     char *localServiceName = "rtcopy";
     char *localCfgName = "RTCOPY";
     char portEnv[CA_MAXLINELEN+1];
