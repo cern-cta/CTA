@@ -1,5 +1,5 @@
 /*
- * $Id: opendir.c,v 1.18 2004/01/23 10:27:45 jdurand Exp $
+ * $Id: opendir.c,v 1.19 2005/07/11 10:43:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.18 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.19 $ $Date: 2005/07/11 10:43:19 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* opendir.c       Remote File I/O - open a directory                   */
@@ -118,7 +118,7 @@ char  	*vmstr ;
    struct passwd *pw;
    int 	    rt, parserc ; 	/* daemon in site(0) or not (1) */	
    struct sockaddr_in      to;
-   int                     tolen;
+   socklen_t               tolen;
    struct  hostent *hp;
    extern void rfio_dirsetup_ext();
    char     rfio_buf[BUFSIZ] ;

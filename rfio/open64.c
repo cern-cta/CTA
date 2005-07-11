@@ -1,5 +1,5 @@
 /*
- * $Id: open64.c,v 1.7 2004/10/27 09:52:51 sponcec3 Exp $
+ * $Id: open64.c,v 1.8 2005/07/11 10:48:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open64.c,v $ $Revision: 1.7 $ $Date: 2004/10/27 09:52:51 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
+static char sccsid[] = "@(#)$RCSfile: open64.c,v $ $Revision: 1.8 $ $Date: 2005/07/11 10:48:39 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
 #endif /* not lint */
 
 /* open64.c       Remote File I/O - open file a file                      */
@@ -160,7 +160,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    int     rt ; 	/* daemon in site(0) or not (1) */	
    int     bufsize ; 	/* socket buffer size 		*/	
    struct  sockaddr_in to;
-#if defined(_AIX)
+#if (defined(_AIX) || defined(linux))
    socklen_t tolen;
 #else
    int     tolen;

@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.27 2005/02/22 13:28:47 jdurand Exp $
+ * $Id: open.c,v 1.28 2005/07/11 10:41:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.27 $ $Date: 2005/02/22 13:28:47 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.28 $ $Date: 2005/07/11 10:41:58 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */
@@ -245,7 +245,7 @@ char  	*vmstr ;
    int 	    rt ; 	/* daemon in site(0) or not (1) */	
    int    bufsize ; 	/* socket buffer size 		*/	
    struct sockaddr_in      to;
-#if defined(_AIX)
+#if (defined(_AIX) || defined(linux))
    socklen_t tolen;
 #else
    int     tolen;

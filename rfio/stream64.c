@@ -1,5 +1,5 @@
 /*
- * $Id: stream64.c,v 1.5 2004/10/27 09:52:51 sponcec3 Exp $
+ * $Id: stream64.c,v 1.6 2005/07/11 10:49:56 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stream64.c,v $ $Revision: 1.5 $ $Date: 2004/10/27 09:52:51 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
+static char sccsid[] = "@(#)$RCSfile: stream64.c,v $ $Revision: 1.6 $ $Date: 2005/07/11 10:49:56 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
 #endif /* not lint */
 
 /* stream64.c       Remote File I/O - Version 3 streaming routines        */
@@ -160,7 +160,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    int         rt ;     /* daemon in site(0) or not (1) */	
    int    bufsize ; 	/* socket buffer size 		*/	
    struct sockaddr_in      to;
-   int       tolen;
+   socklen_t  tolen;
    struct  hostent *hp; /* Get the system name          */
    extern void rfio_setup64_ext_v3();
    extern char * getacct() ;

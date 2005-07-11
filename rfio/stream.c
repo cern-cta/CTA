@@ -207,7 +207,7 @@ char  	*vmstr ;
    int 	    rt ; 	/* daemon in site(0) or not (1) */	
    int    bufsize ; 	/* socket buffer size 		*/	
    struct sockaddr_in      to;
-   int                     tolen;
+   socklen_t               tolen;
    struct  hostent *hp;
    extern void rfio_setup_ext_v3();
    extern char * getacct() ;
