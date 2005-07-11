@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmc_serv.c,v $ $Revision: 1.5 $ $Date: 2005/01/20 16:28:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rmc_serv.c,v $ $Revision: 1.6 $ $Date: 2005/07/11 11:34:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -47,7 +47,7 @@ struct main_args *main_args;
 	char domainname[CA_MAXHOSTNAMELEN+1];
 	struct smc_element_info element_info;
 	struct sockaddr_in from;
-	int fromlen = sizeof(from);
+	socklen_t fromlen = sizeof(from);
 	char *getconfent();
 	char *msgaddr;
 	int nb_sense_ret;
@@ -230,7 +230,7 @@ char *req_data;
 char **clienthost;
 {
 	struct sockaddr_in from;
-	int fromlen = sizeof(from);
+	socklen_t fromlen = sizeof(from);
 	struct hostent *hp;
 	int l;
 	int magic;
