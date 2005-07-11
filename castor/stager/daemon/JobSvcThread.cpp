@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.30 2005/06/30 14:52:15 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.31 2005/07/11 09:26:12 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.30 $ $Date: 2005/06/30 14:52:15 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.31 $ $Date: 2005/07/11 09:26:12 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -247,13 +247,6 @@ namespace castor {
         }
 
       } catch (castor::exception::Exception e) {
-        if (0 != fs) {
-          castor::stager::DiskServer *ds = fs->diskserver();
-          if (0 != ds) {
-            delete ds;
-          }
-          delete fs;
-        }
         serrno = e.code();
         error = e.getMessage().str();
         STAGER_LOG_DB_ERROR(NULL, func,
