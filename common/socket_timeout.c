@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.22 $ $Date: 2003/10/29 13:06:34 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.23 $ $Date: 2005/07/11 10:34:24 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #if defined(linux)
@@ -453,7 +453,8 @@ int _net_connectable(fd, timeout)
 	fd_set wset, eset;
 	struct timeval tv;
 #endif
-	int rc, errval, errval_len;
+	int rc, errval;
+	socklen_t errval_len;
 
 #ifdef USE_POLL_INSTEAD_OF_SELECT
 	pollit.fd = fd;
@@ -506,8 +507,8 @@ int _net_connectable(fd, timeout)
 	 * error for the connect() completion. Some systems (Windows) sets 
 	 * the exception set to indicate that there was an error.
 	 */
-	errval_len = sizeof(errval);
-	if ( getsockopt(fd, SOL_SOCKET, SO_ERROR, (char *)&errval, (int *)&errval_len) == -1 ) {
+	errval_len = (socklen_t) sizeof(errval);
+	if ( getsockopt(fd, SOL_SOCKET, SO_ERROR, (char *)&errval, &errval_len) == -1 ) {
 		serrno = 0;
 		return(-1);
 	}
