@@ -8,6 +8,7 @@ static char sccsid[] = "@(#)Cupvshutdown.c,v 1.2 2002/06/12 08:17:11 CERN IT-DS/
 #endif /* not lint */
 
 /*	Cupvshutdown - shutdown the UPV */
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
 #if defined(_WIN32)
