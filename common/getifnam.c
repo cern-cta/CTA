@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getifnam.c,v $ $Revision: 1.9 $ $Date: 2003/09/09 15:16:45 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: getifnam.c,v $ $Revision: 1.10 $ $Date: 2005/07/11 10:09:32 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* getifnam.c   Get connected socket interface name                     */
@@ -58,7 +58,7 @@ size_t  ifnamelen;
     struct  ifreq   *ifr;           /* Interface request            */
     char    buf[BUFSIZ];            /* A buffer                     */
     struct  sockaddr_in addr;       /* Internet address             */
-    int     addrlen;                /* Internet address length      */
+    socklen_t addrlen;              /* Internet address length      */
     long    binaddr;                /* Store address                */
     int     n;                      /* # of interfaces              */
     int     found=0;                /* Found the interface ?        */
@@ -71,7 +71,7 @@ size_t  ifnamelen;
     if ( ifname == NULL || ifnamelen <= 0) return(NULL);
     INIT_TRACE("COMMON_TRACE");
     TRACE(1,"getifnam_r", "getifnam_r(%d) entered",s);
-    addrlen = sizeof(struct sockaddr_in);
+    addrlen = (socklen_t) sizeof(struct sockaddr_in);
     if (getsockname(s, (struct  sockaddr *)&addr, &addrlen) == SOCKET_ERROR ) {
         TRACE(2,"getifnam_r", "getsockname returned %d", errno);
         log(LOG_ERR, "getsockname: %s\n",strerror(errno));
