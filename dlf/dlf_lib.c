@@ -6,9 +6,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_lib.c,v $ $Revision: 1.1 $ $Date: 2003/08/20 12:58:01 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_lib.c,v $ $Revision: 1.2 $ $Date: 2005/07/11 11:19:45 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
+#include <stdlib.h>
 #include <errno.h>
 #include <grp.h>
 #include <pwd.h>
