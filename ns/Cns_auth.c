@@ -9,6 +9,7 @@ static char sccsid[] = "$id$";
 
 /*	Cns_auth.c - Sets the authorization in the CASTOR name server API */
 
+#include <string.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/types.h>
