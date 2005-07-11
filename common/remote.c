@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.15 $ $Date: 2003/10/31 12:39:56 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.16 $ $Date: 2005/07/11 10:21:45 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -302,7 +302,7 @@ int DLL_DECL CDoubleDnsLookup(SOCKET s, char *host) {
     struct sockaddr_in from;
     struct hostent *hp;
     int i, save_errno;
-    int fromlen = sizeof(from);
+    socklen_t fromlen = (socklen_t) sizeof(from);
 
     if ( s == INVALID_SOCKET ) {
         serrno = EBADF;
