@@ -4,12 +4,13 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: reclaim.c,v $ $Revision: 1.5 $ $Date: 2002/02/07 10:18:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: reclaim.c,v $ $Revision: 1.6 $ $Date: 2005/07/11 11:46:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      reclaim - reset information concerning a volume */
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include "Cns_api.h"

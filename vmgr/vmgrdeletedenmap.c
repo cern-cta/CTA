@@ -4,10 +4,11 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrdeletedenmap.c,v $ $Revision: 1.2 $ $Date: 2002/08/26 14:50:46 $ CERN IT-DS/HSM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrdeletedenmap.c,v $ $Revision: 1.3 $ $Date: 2005/07/11 11:43:27 $ CERN IT-DS/HSM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrdeletedenmap - delete a triplet model/media_letter/density */
+#include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>

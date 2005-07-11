@@ -1,5 +1,5 @@
 /*
- * $Id: castor.c,v 1.5 2003/05/08 13:27:52 jdurand Exp $
+ * $Id: castor.c,v 1.6 2005/07/11 11:44:11 jdurand Exp $
  */
 
 /*
@@ -8,10 +8,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: castor.c,v $ $Revision: 1.5 $ $Date: 2003/05/08 13:27:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: castor.c,v $ $Revision: 1.6 $ $Date: 2005/07/11 11:44:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	castor - display current CASTOR version */
+#include <stdlib.h>
 #include <stdio.h>
 #include "patchlevel.h"
 #define __BASEVERSION__ "?"

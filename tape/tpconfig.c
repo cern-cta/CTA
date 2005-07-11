@@ -4,10 +4,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpconfig.c,v $ $Revision: 1.6 $ $Date: 2002/12/16 16:01:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpconfig.c,v $ $Revision: 1.7 $ $Date: 2005/07/11 11:42:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpconfig - configure tape drive up/down */
+#include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
