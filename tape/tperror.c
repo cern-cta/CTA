@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.8 $ $Date: 2005/01/20 16:31:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.9 $ $Date: 2005/07/11 10:55:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      gettperror - get drive status after I/O error and
@@ -19,6 +19,7 @@ static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.8 $ $Date: 2005
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/types.h>
 #if defined(_WIN32)
 #include <windows.h>
