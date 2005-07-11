@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.20 2005/07/04 14:58:06 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.21 2005/07/11 09:25:10 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.20 $ $Date: 2005/07/04 14:58:06 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.21 $ $Date: 2005/07/11 09:25:10 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -386,8 +386,6 @@ namespace castor {
             ++dcit) {
 
           castor::stager::DiskCopyInfo* diskcopy = *dcit;
-
-          diskcopy->print();
 
           if (diskcopy->fileId() != fileid
               || diskcopy->nsHost() != nshost) {
