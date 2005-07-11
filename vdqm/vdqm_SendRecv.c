@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_SendRecv.c,v $ $Revision: 1.2 $ $Date: 2005/03/15 22:57:11 $ CERN IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_SendRecv.c,v $ $Revision: 1.3 $ $Date: 2005/07/11 11:01:13 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -70,7 +70,7 @@ static int vdqm_Transfer(vdqmnw_t *nw,
     char *p,*domain;
     struct sockaddr_in from;
     struct hostent *hp;
-    int fromlen;
+    socklen_t fromlen;
     int magic,reqtype,len,local_access; 
     int rc;
     SOCKET s;
@@ -365,7 +365,7 @@ int vdqm_Hangup(vdqmnw_t *nw) {
 }
 
 int vdqm_GetReplica(vdqmnw_t *nw, vdqmReplica_t *Replica) {
-    int fromlen;
+    socklen_t fromlen;
     struct hostent *hp = NULL;
     struct sockaddr_in from;
     char *p;
