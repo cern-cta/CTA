@@ -6,7 +6,7 @@
 */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.22 $ $Date: 2005/05/10 16:34:51 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.23 $ $Date: 2005/07/11 11:17:16 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -1200,7 +1200,7 @@ dlf_log_message_t *msg;
 		case DLF_MSG_PARAM_STR:
 			size += sizeof(U_BYTE)
 				+ strlen(p->name) + 1
-				+ strlen(p->strval) + 1;
+				+ strlen((char *) p->strval) + 1;
 			break;
 		case DLF_MSG_PARAM_INT64:
 			size += sizeof(U_BYTE)
@@ -1316,7 +1316,7 @@ int last_message;
 		case DLF_MSG_PARAM_DOUBLE:
 			marshall_BYTE(sbp, p->type);
 			marshall_STRING(sbp, p->name);
-			marshall_STRING(sbp, p->strval);
+			marshall_STRING(sbp, (char *) p->strval);
 			break;
 		case DLF_MSG_PARAM_INT64:
 			marshall_BYTE(sbp, p->type);
@@ -1459,9 +1459,9 @@ const char *par_string;
 		return (-1);
 	}
 	strcpy (param_p->name, par_name);
-	strcpy (param_p->strval, par_string);
+	strcpy ((char *) param_p->strval, par_string);
 	/* Replace all occurrencies of new lines with spaces */
-	for (p = param_p->strval; *p != 0; p++) {
+	for (p = (char *) param_p->strval; *p != 0; p++) {
 	  if (*p == '\n') *p = ' ';
 	}
 	param_p->type = DLF_MSG_PARAM_STR;
@@ -1578,7 +1578,7 @@ const char *tape_vid;
 	}
 	i = log_message->next_tapevid_idx++;
 	n = Csnprintf (param_p->name, DLF_MAXPARNAMELEN, fmt, i);
-	strcpy (param_p->strval, tape_vid);
+	strcpy ((char *) param_p->strval, tape_vid);
 	param_p->type = DLF_MSG_PARAM_TPVID;
 	dlf_add_to_param_list (&log_message->param_list, param_p);
 	return(0);
