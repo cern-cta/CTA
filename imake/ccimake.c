@@ -6,6 +6,7 @@
  * you *really* know what you're doing.  Make changes in imakemdep.h, not here.
  */
 
+#include <stdlib.h>
 #define CCIMAKE			/* only get imake_ccflags definitions */
 #include "imakemdep.h"		/* things to set when porting imake */
 

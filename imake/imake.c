@@ -96,6 +96,7 @@
  *	#include INCLUDE_IMAKEFILE
  *	<add any global targets like 'clean' and long dependencies>
  */
+#include	<stdlib.h>
 #include	<stdio.h>
 #include	<ctype.h>
 #include	<sys/types.h>
@@ -208,7 +209,6 @@ imake_catch _PROTO((int));
 
 boolean	verbose = FALSE;
 boolean	show = TRUE;
-extern char	*realloc _PROTO((void *, size_t));
 extern char	*getenv _PROTO((const char *));
 extern char	*mktemp _PROTO((char *));
 
@@ -852,7 +852,7 @@ writetmpfile(fd, buf, cnt)
 char *Emalloc(size)
 	int	size;
 {
-	char	*p, *malloc();
+	char	*p;
 
 	if ((p = malloc(size)) == NULL)
 		LogFatalI("Cannot allocate %d bytes\n", size);
