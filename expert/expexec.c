@@ -6,11 +6,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: expexec.c,v $ $Revision: 1.3 $ $Date: 2004/07/06 14:52:11 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: expexec.c,v $ $Revision: 1.4 $ $Date: 2005/07/11 11:32:22 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
 /*	expexec - execute external program */
+#include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>

@@ -6,11 +6,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlfshutdown.c,v $ $Revision: 1.2 $ $Date: 2003/11/10 14:42:44 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlfshutdown.c,v $ $Revision: 1.3 $ $Date: 2005/07/11 11:31:24 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
 /*	dlfshutdown - shutdown the dlf server */
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
 #if defined(_WIN32)

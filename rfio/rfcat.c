@@ -1,5 +1,5 @@
 /*
- * $Id: rfcat.c,v 1.3 2004/03/02 09:16:12 jdurand Exp $
+ * $Id: rfcat.c,v 1.4 2005/07/11 11:30:18 jdurand Exp $
  */
 
 /*
@@ -8,9 +8,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfcat.c,v $ $Revision: 1.3 $ $Date: 2004/03/02 09:16:12 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rfcat.c,v $ $Revision: 1.4 $ $Date: 2005/07/11 11:30:18 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
+#include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
