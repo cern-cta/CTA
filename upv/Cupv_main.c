@@ -1,12 +1,12 @@
 /*
- * $Id: Cupv_main.c,v 1.4 2005/03/15 23:16:27 bcouturi Exp $
+ * $Id: Cupv_main.c,v 1.5 2005/07/11 12:43:12 jdurand Exp $
  *
  * Copyright (C) 1999-2002 by CERN IT-DS/HSM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: Cupv_main.c,v $ $Revision: 1.4 $ $Date: 2005/03/15 23:16:27 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "$RCSfile: Cupv_main.c,v $ $Revision: 1.5 $ $Date: 2005/07/11 12:43:12 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -58,7 +58,7 @@ struct main_args *main_args;
 	struct Cupv_dbfd dbfd;
 	void *doit(void *);
 	struct sockaddr_in from;
-	int fromlen = sizeof(from);
+	socklen_t fromlen = sizeof(from);
 	char *getconfent();
 	int i;
 	int ipool;
@@ -305,7 +305,7 @@ char *req_data;
 char **clienthost;
 {
 	struct sockaddr_in from;
-	int fromlen = sizeof(from);
+	socklen_t fromlen = sizeof(from);
 	struct hostent *hp;
 	int l;
 	int msglen;
