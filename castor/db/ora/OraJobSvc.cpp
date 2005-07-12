@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/07/07 15:08:21 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/07/12 16:02:57 $ $Author: itglp $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -317,13 +317,23 @@ castor::db::ora::OraJobSvc::getUpdateStart
       // Then get the associated CastorFile
       cnvSvc()->fillObj(&ad, iobj, castor::OBJ_CastorFile);
       // create needed TapeCopy(ies) and Segment(s)
-      createTapeCopySegmentsForRecall(dc->castorFile(), euid, egid);
-      // Cleanup
+      int crSegFailed = createTapeCopySegmentsForRecall(dc->castorFile(), euid, egid);
+      if(crSegFailed == -1) {      
+		  // no valid copy found, set the diskcopy status to failed
+		  dc->setStatus(castor::stager::DISKCOPY_FAILED);
+		  subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
+      }          
+      // cleanup
       delete dc->castorFile();
       delete dc;
       // commit and return
       cnvSvc()->commit();
-      return 0;
+
+      if(crSegFailed == 0) return 0;
+      // else throw the exception to the stager_job_service
+      castor::exception::Internal e;
+      e.getMessage() << "getUpdateStart : no valid copy found";
+      throw e;
     }
     // Else create a resulting DiskCopy
     castor::stager::DiskCopy* result =
@@ -671,7 +681,7 @@ void castor::db::ora::OraJobSvc::putFailed
 // -----------------------------------------------------------------------
 // createTapeCopySegmentsForRecall (private)
 // -----------------------------------------------------------------------
-void castor::db::ora::OraJobSvc::createTapeCopySegmentsForRecall
+int castor::db::ora::OraJobSvc::createTapeCopySegmentsForRecall
 (castor::stager::CastorFile *castorFile,
  unsigned long euid,
  unsigned long egid)
@@ -755,10 +765,11 @@ void castor::db::ora::OraJobSvc::createTapeCopySegmentsForRecall
   }
   if (useCopyNb == -1) {
     // No valid copy found
-    castor::exception::Internal e;
-    e.getMessage() << "createTapeCopySegmentsForRecall : "
-                   << "No valid copy found";
-    throw e;
+	return -1;
+    //castor::exception::Internal e;
+    //e.getMessage() << "createTapeCopySegmentsForRecall : "
+    //               << "No valid copy found";
+    //throw e;
   }
   // DB address
   castor::BaseAddress ad;
@@ -819,5 +830,6 @@ void castor::db::ora::OraJobSvc::createTapeCopySegmentsForRecall
     delete tapeCopy.segments()[0]->tape();
   }
   cnvSvc()->commit();
+  return 0;
 }
 

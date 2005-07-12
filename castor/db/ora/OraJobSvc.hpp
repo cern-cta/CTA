@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/07/07 15:08:21 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/07/12 16:02:57 $ $Author: itglp $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -242,7 +242,7 @@ namespace castor {
          * @param egid the egid of the user recalling the file
          * @exception Exception throws an Exception in case of error
          */
-        void createTapeCopySegmentsForRecall
+        int createTapeCopySegmentsForRecall
         (castor::stager::CastorFile *castorFile,
          unsigned long euid,
          unsigned long egid)
