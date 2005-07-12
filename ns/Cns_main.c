@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_main.c,v 1.10 2005/06/22 14:32:40 jdurand Exp $
+ * $Id: Cns_main.c,v 1.11 2005/07/12 15:31:07 jdurand Exp $
  *
  * Copyright (C) 1999-2004 by CERN/IT/PDP/DM
  * All rights reserved
@@ -105,7 +105,12 @@ struct main_args *main_args;
 	  exit (USERR);
 	}
 
-	nslogit(func, "initialize with %d threads\n", num_THR); 
+	nslogit(func, "initialize with %d threads (+1 for the startup)\n", num_THR); 
+
+	if ((Cns_srv_thread_info = calloc(num_THR+1,sizeof(struct Cns_srv_thread_info))) == NULL) {
+	  nslogit (func, NS002, "calloc", strerror(errno));
+	  exit (USERR);
+	}
 
 	if (strchr (localhost, '.') == NULL) {
 		if (Cdomainname (domainname, sizeof(domainname)) < 0) {
@@ -276,12 +281,17 @@ struct main_args *main_args;
 	}
 }
 
-main()
+main(argc,argv)
+     int argc;
+     char **argv;
 {
+  struct main_args main_args;
+  main_args.argc = argc;
+  main_args.argv = argv;
 #if ! defined(_WIN32)
-  	if ((maxfds = Cinitdaemon ("nsdaemon", NULL)) < 0)  
-  		exit (SYERR);   
-	exit (Cns_main (NULL));
+ 	if ((maxfds = Cinitdaemon ("nsdaemon", NULL)) < 0) 
+ 		exit (SYERR);  
+	exit (Cns_main (&main_args));
 #else
 	if (Cinitservice ("cns", &Cns_main))
 		exit (SYERR);
