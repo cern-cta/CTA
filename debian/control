@@ -7,9 +7,8 @@ Build-Depends: debhelper (>= 4.0.0)
 Standards-Version: 3.6.1
 
 Package: CASTOR-client
-Requires: castor-commands, castor-stager-clientold, castor-rfio-server, castor-lib, castor-doc, castor-rtcopy-client, castor-upv-client, castor-rtcopy-messages, castor-ns-client, castor-stager-client, castor-vdqm-client, castor-rfio-client, castor-vmgr-client, castor-devel, castor-tape-client
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, castor-commands, castor-stager-clientold, castor-rfio-server, castor-lib, castor-doc, castor-rtcopy-client, castor-upv-client, castor-rtcopy-messages, castor-ns-client, castor-stager-client, castor-vdqm-client, castor-rfio-client, castor-vmgr-client, castor-devel, castor-tape-client
 Description: castor (Cern Advanced STORage system)
  Meta package for CASTOR-client from castor1 transition to castor2
 
