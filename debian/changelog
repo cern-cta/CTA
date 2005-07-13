@@ -1,3 +1,9 @@
+castor (2.0.0-52) unstable; urgency=low
+
+  * Fix in the definition of CASTOR-client meta package
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Wed, 13 Jul 2005 17:22:18 +0200
+
 castor (2.0.0-51) unstable; urgency=low
 
   * Fixes in putDoneStart and isSubRequestToSchedule. First ones were checked and are in prod, 2nd ones were not tested
