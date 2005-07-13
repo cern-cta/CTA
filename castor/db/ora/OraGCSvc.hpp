@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/07/07 15:08:21 $ $Author: itglp $
+ * @(#)$RCSfile: OraGCSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/07/13 16:00:54 $ $Author: itglp $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -113,16 +113,6 @@ namespace castor {
          */
         virtual void filesDeletionFailed
         (std::vector<u_signed64*>& diskCopyIds)
-          throw (castor::exception::Exception);
-
-        /**
-         * Informs the stager the a Get or Update SubRequest
-         * (without write) was finished successfully.
-         * The SubRequest and potentially the corresponding
-         * Request will thus be removed from the DataBase
-         * @param subReqId the id of the finished SubRequest
-         */
-        virtual void getUpdateDone(u_signed64 subReqId)
           throw (castor::exception::Exception);
 
       private:
