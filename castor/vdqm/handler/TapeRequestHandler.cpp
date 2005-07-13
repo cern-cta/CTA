@@ -27,7 +27,6 @@
 #include <string> 
 #include <time.h>
 
-#include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 
@@ -43,7 +42,6 @@
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
-#include "castor/vdqm/IVdqmSvc.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 
 #define VDQMSERV 1
@@ -57,7 +55,6 @@
 
 //Local includes
 #include "TapeRequestHandler.hpp"
-#include "BaseRequestHandler.hpp"
 
 //To make the code more readable
 using namespace castor::vdqm;
@@ -66,30 +63,7 @@ using namespace castor::vdqm;
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::vdqm::handler::TapeRequestHandler::TapeRequestHandler() throw()
-{
-		
-	castor::IService* svc;
-	
-	/**
-	 * Getting OraStagerSvc
-	 */
-	svc = ptr_svcs->service("OraStagerSvc", castor::SVC_DBSTAGERSVC);
-  if (0 == svc) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Could not get OraStagerSvc" << std::endl;
-    throw ex;
-  }				
-  
-	ptr_IStagerService = dynamic_cast<castor::stager::IStagerSvc*>(svc);
-  if (0 == ptr_IStagerService) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Got a bad OraStagerSvc: "
-    								<< "ID=" << svc->id()
-    								<< ", Name=" << svc->name()
-    								<< std::endl;
-    throw ex;
-  }
+castor::vdqm::handler::TapeRequestHandler::TapeRequestHandler() throw() {
 }
 
 
@@ -97,10 +71,6 @@ castor::vdqm::handler::TapeRequestHandler::TapeRequestHandler() throw()
 // Destructor
 //------------------------------------------------------------------------------
 castor::vdqm::handler::TapeRequestHandler::~TapeRequestHandler() throw() {
-	ptr_IStagerService->release();
-	
-	//reset pointer
-	ptr_IStagerService = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -172,9 +142,9 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header
 	 	 * have created an entry to the Tape table. So, we just gove 0 as parameter 
 	 	 * at this place.
 	 	 */
-	 	tape = ptr_IStagerService->selectTape(volumeRequest->volid, 
-	 																				0, 
-	 																				volumeRequest->mode);
+	 	tape = ptr_IVdqmService->selectTape(volumeRequest->volid, 
+	 																			0, 
+	 																			volumeRequest->mode);
 	 																				
 	  //The requested ExtendedDeviceGroup
 	  reqExtDevGrp = new ExtendedDeviceGroup();

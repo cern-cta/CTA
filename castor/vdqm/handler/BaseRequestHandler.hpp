@@ -28,7 +28,7 @@
 #define _BASEREQUESTHANDLER_HPP_
 
 #include "castor/BaseObject.hpp"
-#include "castor/exception/Exception.hpp"
+#include "castor/vdqm/IVdqmSvc.hpp"
 
 namespace castor {
 	//Forward declaration
@@ -37,9 +37,6 @@ namespace castor {
 	
   namespace vdqm {
   	
-  	//Forward declaration
-  	class IVdqmSvc;
-
 		namespace handler {
 	    /**
 	     * The BaseRequestHandler provides a set of useful functions for

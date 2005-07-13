@@ -27,9 +27,6 @@
 #ifndef _TAPEREQUESTHANDLER_HPP_
 #define _TAPEREQUESTHANDLER_HPP_
 
-#include "castor/exception/Exception.hpp"
-#include "castor/stager/IStagerSvc.hpp"
-
 // Local include
 #include "BaseRequestHandler.hpp"
 
@@ -37,8 +34,6 @@ typedef struct vdqmHdr vdqmHdr_t;
 typedef struct vdqmVolReq vdqmVolReq_t;
 
 namespace castor {
-	//Forward declaration
-	class IObject;
 
   namespace vdqm {
   	
@@ -106,9 +101,6 @@ namespace castor {
 		       
 				
 				private:
-					//The pointer to the IStagerService
-				  castor::stager::IStagerSvc* ptr_IStagerService;
-	
 	
 	     		/**
 	     		 * This method is used to look, if they are free drives for the queued

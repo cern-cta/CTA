@@ -27,7 +27,6 @@
 #ifndef _TAPEDRIVESTATUSHANDLER_HPP_
 #define _TAPEDRIVESTATUSHANDLER_HPP_
 
-#include "castor/exception/Exception.hpp"
 #include "BaseRequestHandler.hpp"
 
 typedef struct vdqmdDrvReq vdqmDrvReq_t;
@@ -93,13 +92,31 @@ namespace castor {
 					
 					
 				  /**
-				   * This function is onnly used internally from handleOldStatus() to 
+				   * This function is only used internally from handleOldStatus() to 
 				   * handle the case that a VDQM_VOL_MOUNT request is beeing sent from
 				   * the client.
 				   * 
 				   * @exception In case of error
 				   */
 					void handleVolMountStatus() throw (castor::exception::Exception);
+					
+				  /**
+				   * This function is only used internally from handleOldStatus() to 
+				   * handle the case that a VDQM_VOL_UNMOUNT request is beeing sent from
+				   * the client.
+				   * 
+				   * @exception In case of error
+				   */
+					void handleVolUnmountStatus() throw (castor::exception::Exception);
+					
+				  /**
+				   * This function is only used internally from handleOldStatus() to 
+				   * handle the case that a VDQM_UNIT_RELEASE request is beeing sent 
+				   * from the client.
+				   * 
+				   * @exception In case of error
+				   */
+					void handleUnitReleaseStatus() throw (castor::exception::Exception);										
 												
 	    }; // class TapeDriveStatusHandler
     

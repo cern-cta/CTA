@@ -29,17 +29,14 @@
 #include <vector>
 
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/stager/ClientIdentification.hpp"
 
-#include "castor/vdqm/IVdqmSvc.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 
 // Local Includes
-#include "BaseRequestHandler.hpp"
 #include "TapeDriveHandler.hpp"
 #include "TapeDriveConsistencyChecker.hpp" // We are a friend of him!
 #include "TapeDriveStatusHandler.hpp" // We are a friend of him!
@@ -427,62 +424,62 @@ void castor::vdqm::handler::TapeDriveHandler::printStatus(
 					{
 						castor::dlf::Param param1[] =
 	  					{castor::dlf::Param("status", "UNIT_UP")};
-  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param);
+  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param1);
 					}
 					break;
 		case UNIT_STARTING:
 					{
 						castor::dlf::Param param1[] =
 	  					{castor::dlf::Param("status", "UNIT_STARTING")};
-  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param);
+  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param1);
 					}		
 					break;
 		case UNIT_ASSIGNED:
 					{
 						castor::dlf::Param param1[] =
 	  					{castor::dlf::Param("status", "UNIT_ASSIGNED")};
-  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param);
+  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param1);
 					}		
 					break;
 		case UNIT_RELEASED:
 					{
 						castor::dlf::Param param1[] =
 	  					{castor::dlf::Param("status", "UNIT_RELEASED")};
-  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param);
+  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param1);
 					}		
 					break;
 		case VOL_MOUNTED:
 					{
 						castor::dlf::Param param1[] =
 	  					{castor::dlf::Param("status", "VOL_MOUNTED")};
-  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param);
+  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param1);
 					}		
 					break;
 		case FORCED_UNMOUNT:
 					{
 						castor::dlf::Param param1[] =
 	  					{castor::dlf::Param("status", "FORCED_UNMOUNT")};
-  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param);
+  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param1);
 					}		
 					break;
 		case UNIT_DOWN:
 					{
 						castor::dlf::Param param1[] =
 	  					{castor::dlf::Param("status", "UNIT_DOWN")};
-  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param);
+  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param1);
 					}		
 					break;
 		case WAIT_FOR_UNMOUNT:
 					{
 						castor::dlf::Param param1[] =
 	  					{castor::dlf::Param("status", "WAIT_FOR_UNMOUNT")};
-  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param);
+  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param1);
 					}	
 		case STATUS_UNKNOWN:
 					{
 						castor::dlf::Param param1[] =
 	  					{castor::dlf::Param("status", "STATUS_UNKNOWN")};
-  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param);
+  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param1);
 					}						
 					break;
 		default:

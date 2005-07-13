@@ -27,7 +27,6 @@
 #ifndef _TAPEDRIVECONSISTENCYCHECKER_HPP_
 #define _TAPEDRIVECONSISTENCYCHECKER_HPP_
 
-#include "castor/exception/Exception.hpp"
 #include "BaseRequestHandler.hpp"
 
 typedef struct vdqmdDrvReq vdqmDrvReq_t;

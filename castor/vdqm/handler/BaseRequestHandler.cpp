@@ -31,12 +31,10 @@
 #include "castor/Services.hpp"
 #include "castor/IService.hpp"
 
-#include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
-#include "castor/vdqm/IVdqmSvc.hpp"
  
 //Local Includes
 #include "BaseRequestHandler.hpp"

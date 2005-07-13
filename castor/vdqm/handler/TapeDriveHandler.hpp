@@ -27,7 +27,6 @@
 #ifndef _TAPEDRIVEHANDLER_HPP_
 #define _TAPEDRIVEHANDLER_HPP_
 
-#include "castor/exception/Exception.hpp"
 #include "BaseRequestHandler.hpp"
 
 typedef struct vdqmHdr vdqmHdr_t;

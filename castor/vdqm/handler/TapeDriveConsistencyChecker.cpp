@@ -25,11 +25,9 @@
  *****************************************************************************/
 
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 
-#include "castor/vdqm/IVdqmSvc.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
@@ -40,7 +38,6 @@
 #include <vdqm_constants.h>
  
 // Local Includes
-#include "BaseRequestHandler.hpp"
 #include "TapeDriveConsistencyChecker.hpp"
 
 

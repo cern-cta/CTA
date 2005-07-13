@@ -25,12 +25,10 @@
  *****************************************************************************/
  
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 
 #include "castor/vdqm/ExtendedDeviceGroup.hpp"
-#include "castor/vdqm/IVdqmSvc.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
@@ -41,7 +39,6 @@
 #include <vdqm_constants.h>
  
 // Local Includes
-#include "BaseRequestHandler.hpp"
 #include "TapeDriveStatusHandler.hpp"
 
 
@@ -111,141 +108,13 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleOldStatus()
 		if ( (ptr_driveRequest->status & VDQM_VOL_MOUNT) ) {
 			handleVolMountStatus();
 		}
-//        if ( (ptr_driveRequest->status & VDQM_VOL_UNMOUNT) ) {
-//            *drvrec->drv.volid = '\0';
-//            drvrec->drv.mode = -1;
-//            /*
-//             * Volume has been unmounted. Reset release status (if set).
-//             */
-//            drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_RELEASE;
-//            /*
-//             * If it was an forced unmount due to an error we can reset
-//             * the ERROR status at this point.
-//             */
-//            drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_ERROR;
-//            /*
-//             * If the client forced an unmount with the release we can
-//             * reset the FORCE_UNMOUNT here.
-//             */
-//            drvrec->drv.status = drvrec->drv.status & ~VDQM_FORCE_UNMOUNT;
-//            /*
-//             * We should also reset UNMOUNT status in the request so that
-//             * we tell the drive to unmount twice
-//             */
-//            ptr_driveRequest->status = ptr_driveRequest->status & ~VDQM_VOL_UNMOUNT;
-//            /*
-//             * Set status to FREE if there is no job assigned to the unit
-//             */
-//            if ( drvrec->vol == NULL ) {
-//                drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_BUSY;
-//                drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_ASSIGN;
-//                drvrec->drv.status = drvrec->drv.status | VDQM_UNIT_FREE;
-//            }
-//        }
-//        if ((ptr_driveRequest->status & VDQM_UNIT_RELEASE) &&
-//            !(ptr_driveRequest->status & VDQM_UNIT_FREE) ) { 
-//            /*
-//             * Reset assign status (drive is being released!).
-//             */
-//            drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_ASSIGN;
-//            /*
-//             * Reset request and job IDs
-//             */
-//            drvrec->drv.VolReqID = 0;
-//            drvrec->drv.jobID = 0;
-//            /*
-//             * Delete from queue and free memory allocated for 
-//             * previous volume request on this drive. 
-//             */
-//            if ( drvrec->vol != NULL ) {
-//                rc = DelVolRecord(dgn_context,drvrec->vol);
-//                free(drvrec->vol);
-//            }
-//            drvrec->vol = NULL;
-//
-//            if ( *drvrec->drv.volid != '\0' ) {
-//                /*
-//                 * Consistency check: if input request contains a volid it
-//                 * should correspond to the one in the drive record. This
-//                 * is not fatal but should be logged.
-//                 */
-//                if ( *ptr_driveRequest->volid != '\0' && 
-//                     strcmp(ptr_driveRequest->volid,drvrec->drv.volid) ) {
-//                   log(LOG_ERR,"vdqm_NewDrvReq(): drive %s@%s inconsistent release on %s (should be %s), jobID=%d\n",
-//                       drvrec->drv.drive,drvrec->drv.server,
-//                       ptr_driveRequest->volid,drvrec->drv.volid,drvrec->drv.jobID);
-//                }
-//                /*
-//                 * Fill in current volid in case we need to request an unmount.
-//                 */
-//                if ( *ptr_driveRequest->volid == '\0' ) strcpy(ptr_driveRequest->volid,drvrec->drv.volid);
-//                /*
-//                 * If a volume is mounted but current job ended: check if there
-//                 * are any other valid request for the same volume. The volume
-//                 * can only be re-used on this unit if the modes (R/W) are the 
-//                 * same. If client indicated an error or forced unmount the
-//                 * will remain with that state until a VOL_UNMOUNT is received
-//                 * and both drive and volume cannot be reused until then.
-//                 * If the drive status was UNKNOWN at entry we must force an
-//                 * unmount in all cases. This normally happens when a RTCOPY
-//                 * client has aborted and sent VDQM_DEL_VOLREQ to delete his
-//                 * volume request before the RTCOPY server has released the
-//                 * job. 
-//                 */
-//                rc = 0;
-//                if (!unknown && !(drvrec->drv.status & (VDQM_UNIT_ERROR |
-//                                                        VDQM_FORCE_UNMOUNT)))
-//                    rc = AnyVolRecForMountedVol(dgn_context,drvrec,&volrec);
-//                if ( (drvrec->drv.status & VDQM_UNIT_ERROR) ||
-//                     unknown || rc == -1 || volrec == NULL || 
-//                     volrec->vol.mode != drvrec->drv.mode ) {
-//                    if ( drvrec->drv.status & VDQM_UNIT_ERROR ) 
-//                        log(LOG_ERR,"vdqm_NewDrvReq(): unit in error status. Force unmount!\n");
-//                    if ( drvrec->drv.status & VDQM_FORCE_UNMOUNT )
-//                        log(LOG_ERR,"vdqm_NewDrvReq(): client requests forced unmount\n");
-//                    if ( rc == -1 ) 
-//                        log(LOG_ERR,"vdqm_NewDrvReq(): AnyVolRecForVolid() returned error\n");
-//                    if ( unknown )
-//                        log(LOG_ERR,"vdqm_NewDrvReq(): drive in UNKNOWN status. Force unmount!\n");
-//                    /*
-//                     * No, there wasn't any other job for that volume. Tell the
-//                     * drive to unmount the volume. Put unit in unknown status
-//                     * until volume has been unmounted to prevent other
-//                     * request from being assigned.
-//                     */
-//                    ptr_driveRequest->status  = VDQM_VOL_UNMOUNT;
-//                    drvrec->drv.status |= VDQM_UNIT_UNKNOWN; 
-//                    volrec = NULL;
-//                } else {
-//                    volrec->drv = drvrec;
-//                    drvrec->vol = volrec;
-//                    volrec->vol.DrvReqID = drvrec->drv.DrvReqID;
-//                    drvrec->drv.VolReqID = volrec->vol.VolReqID;
-//                    drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_RELEASE;
-//                }
-//            } else {
-//                /*
-//                 * There is no volume on unit. Since a RELEASE has
-//                 * been requested the unit is FREE (no job and no volume
-//                 * assigned to it. Update status accordingly.
-//                 * If client specified FORCE_UNMOUNT it means that there is
-//                 * "something" (unknown to VDQM) mounted. We have to wait
-//                 * for the unmount before resetting the status.
-//                 */
-//                if ( !(ptr_driveRequest->status & VDQM_FORCE_UNMOUNT) &&
-//                     !(drvrec->drv.status & VDQM_FORCE_UNMOUNT) ) {
-//                    drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_BUSY;
-//                    drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_RELEASE;
-//                    drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_ASSIGN;
-//                    drvrec->drv.status = drvrec->drv.status | VDQM_UNIT_FREE;
-//                }
-//                /*
-//                 * Always tell the client to unmount just in case there was an
-//                 * error and VDQM wasn't notified.
-//                 */
-//                ptr_driveRequest->status  = VDQM_VOL_UNMOUNT;
-//            }
-//        } 
+	  if ( (ptr_driveRequest->status & VDQM_VOL_UNMOUNT) ) {
+			handleVolUnmountStatus();
+	  }
+		if ((ptr_driveRequest->status & VDQM_UNIT_RELEASE) &&
+		    !(ptr_driveRequest->status & VDQM_UNIT_FREE) ) { 
+			handleUnitReleaseStatus();
+		} 
 //        /*
 //         * If unit is free, reset dynamic data in drive record
 //         */
@@ -440,7 +309,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
 	}
 	
 	//The tape, which is now in the tape drive
-	mountedTape = ptr_IVdqmService->selectTape(ptr_driveRequest->volid);
+	mountedTape = ptr_IVdqmService->selectTapeByVid(ptr_driveRequest->volid);
 	if (mountedTape != NULL)
 		ptr_tapeDrive->setTape(mountedTape);
 	else {
@@ -458,4 +327,194 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
 	 * Update usage counter
 	 */
 	ptr_tapeDrive->setUsecount(ptr_tapeDrive->usecount() + 1);
+}
+
+
+//------------------------------------------------------------------------------
+// handleVolUnmountStatus
+//------------------------------------------------------------------------------
+void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus() 
+	throw (castor::exception::Exception) {
+	
+	castor::stager::Tape* tape = ptr_tapeDrive->tape();
+	delete tape;
+	
+	ptr_tapeDrive->setTape(NULL);
+	ptr_tapeDrive->setTapeAccessMode(-1); // UNKNOWN
+	
+	
+	if ( ptr_tapeDrive->status() == WAIT_FOR_UNMOUNT ) {
+		/*
+		 * Set status to FREE if there is no job assigned to the unit
+		 */
+		if ( ptr_tapeDrive->runningTapeReq() == NULL )
+		  ptr_tapeDrive->setStatus(UNIT_UP);
+		else if ( ptr_tapeDrive->jobID() == 0 )
+			ptr_tapeDrive->setStatus(UNIT_STARTING);
+		else
+		  ptr_tapeDrive->setStatus(UNIT_ASSIGNED);
+		  
+	}
+	else if ( ptr_tapeDrive->status() == FORCED_UNMOUNT ) {
+		ptr_tapeDrive->setStatus(UNIT_UP);
+	}
+	else {
+		/**
+		 * The status of the tape drive must be WAIT_FOR_UNMOUNT or
+		 * FORCED_UNMOUNT. If it is not the case, we throw an error!
+		 */
+		ptr_tapeDrive->setStatus(STATUS_UNKNOWN);
+		
+   	castor::exception::Exception ex(EVQBADSTAT);
+		ex.getMessage() << "TapeDriveStatusHandler::handleVolUnmountStatus(): "
+										<< "bad status from tpdaemon! Can't unmount tape in this status! "
+										<< "TapeDrive is set to STATUS_UNKNOWN." 
+										<< std::endl;			
+		throw ex;		
+	}
+}
+
+
+//------------------------------------------------------------------------------
+// handleUnitReleaseStatus
+//------------------------------------------------------------------------------
+void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus() 
+	throw (castor::exception::Exception) {
+	
+	TapeRequest* tapeRequest = NULL;
+	TapeRequest* newTapeRequest = NULL; // is needed, if there is another request for the same tape
+	castor::stager::Tape* tape = NULL;
+					
+	
+	/*
+	 * Reset request
+	 */
+	tapeRequest = ptr_tapeDrive->runningTapeReq();
+	if ( tapeRequest != NULL) {
+		deleteRepresentation(tapeRequest, m_cuuid);
+		delete tapeRequest;
+		ptr_tapeDrive->setRunningTapeReq(NULL);
+	}
+	
+	/**
+	 * Reset job ID
+	 */
+	ptr_tapeDrive->setJobID(0);
+	
+	
+	tape = ptr_tapeDrive->tape();
+	if ( tape != NULL ) {
+	    /*
+	     * Consistency check: if input request contains a volid it
+	     * should correspond to the one in the drive record. This
+	     * is not fatal but should be logged.
+	     */
+	    if ( *ptr_driveRequest->volid != '\0' && 
+	         strcmp(ptr_driveRequest->volid, tape->vid().c_str()) ) {
+	       
+	      // "Inconsistent release on tape drive" message 
+	      castor::dlf::Param params[] =
+	  			{castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+	  			 castor::dlf::Param("serverName", ptr_tapeDrive->tapeServer()->serverName()),
+	  			 castor::dlf::Param("volid from client", ptr_driveRequest->volid),
+	  			 castor::dlf::Param("volid from tape drive", tape->vid()),
+	  			 castor::dlf::Param("jobID", ptr_tapeDrive->jobID())};
+				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR, 41, 5, params);
+	    }
+	    
+	    /*
+	     * Fill in current volid in case we need to request an unmount.
+	     */
+	    if ( *ptr_driveRequest->volid == '\0' ) 
+	    	strcpy(ptr_driveRequest->volid, tape->vid().c_str());
+	    
+	    /*
+	     * If a tape is mounted but the current job ended: check if there
+	     * are any other valid requests for the same volume. The volume
+	     * can only be re-used on this unit if the modes (R/W) are the 
+	     * same. If client indicated an error or forced unmount the
+	     * will remain with that state until a VOL_UNMOUNT is received
+	     * and both drive and volume cannot be reused until then.
+	     * If the drive status was UNKNOWN at entry we must force an
+	     * unmount in all cases. This normally happens when a RTCOPY
+	     * client has aborted and sent VDQM_DEL_VOLREQ to delete his
+	     * volume request before the RTCOPY server has released the
+	     * job. 
+	     */
+	    
+
+	    if ( ptr_tapeDrive->status() != STATUS_UNKNOWN && 
+		   		 ptr_tapeDrive->status() != FORCED_UNMOUNT) 
+		   	newTapeRequest = ptr_IVdqmService->selectTapeReqForMountedTape(ptr_tapeDrive);
+	    	        
+	    if ( ptr_tapeDrive->status() == STATUS_UNKNOWN ||
+	    		 ptr_tapeDrive->status() == FORCED_UNMOUNT ||
+	         newTapeRequest == NULL) {
+
+	        if ( ptr_tapeDrive->status() == FORCED_UNMOUNT ) {
+						// "client has requested a forced unmount." message
+						castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR, 42);	            	          
+	        }
+	        else if ( ptr_tapeDrive->status() == STATUS_UNKNOWN ) {
+						// "tape drive in STATUS_UNKNOWN status. Force unmount!" message
+						castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR, 43);	            
+	        }
+	        
+ 	        if ( newTapeRequest == NULL ) {
+          	// "No tape request left for mounted tape" message
+			      castor::dlf::Param params[] =
+			  			{castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+			  			 castor::dlf::Param("serverName", ptr_tapeDrive->tapeServer()->serverName()),
+			  			 castor::dlf::Param("tape vid", tape->vid())};          	
+						castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 44, 3, params);	            
+ 	        }
+	        	        
+	        /*
+	         * No, there wasn't any other job for that volume. Tell the
+	         * drive to unmount the volume. Put unit in WAIT_FOR_UNMOUNT status
+	         * until volume has been unmounted to prevent other
+	         * request from being assigned.
+	         */
+	        ptr_driveRequest->status = VDQM_VOL_UNMOUNT;
+	        
+	        /**
+	         * Switch tape Drive to status WAIT_FOR_UNMOUNT
+	         */
+	        ptr_tapeDrive->setStatus(WAIT_FOR_UNMOUNT); 
+	        
+	        if ( newTapeRequest )
+	        	delete newTapeRequest;
+	    } 
+	    else {
+	        newTapeRequest->setTapeDrive(ptr_tapeDrive);
+	        ptr_tapeDrive->setRunningTapeReq(newTapeRequest);
+	        
+	        /**
+	         * Switch tape Drive to status UNIT_STARTING
+	         */
+	        ptr_tapeDrive->setStatus(UNIT_STARTING); 
+	    }
+	} else {
+	    /*
+	     * There is no volume on unit. Since a RELEASE has
+	     * been requested the unit is FREE (no job and no volume
+	     * assigned to it. Update status accordingly.
+	     * If client specified FORCE_UNMOUNT it means that there is
+	     * "something" (unknown to VDQM) mounted. We have to wait
+	     * for the unmount before resetting the status.
+	   */
+	  if ( !(ptr_driveRequest->status & VDQM_FORCE_UNMOUNT) &&
+	       ptr_tapeDrive->status() != FORCED_UNMOUNT ) {
+      /**
+       * Switch tape Drive to status UNIT_UP
+       */
+      ptr_tapeDrive->setStatus(UNIT_UP);
+		}
+		
+    /*
+     * Always tell the client to unmount just in case there was an
+     * error and VDQM wasn't notified.
+     */
+    ptr_driveRequest->status = VDQM_VOL_UNMOUNT;
+	}
 }
