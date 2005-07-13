@@ -41,8 +41,8 @@ typedef struct vdqmdDrvReq vdqmDrvReq_t;
 namespace castor {
 	
   // Forward declaration
-    class stager::Tape;
-    class vdqm::ExtendedDeviceGroup;
+  class stager::Tape;
+  class vdqm::ExtendedDeviceGroup;
 	class vdqm::TapeRequest;
 	class vdqm::TapeDrive;
 	class vdqm::TapeServer;
@@ -176,7 +176,7 @@ namespace castor {
 	       * @return true if there is one       
 				 */
 				virtual bool existTapeDriveWithTapeInUse(
-					const char* volid)
+					const std::string volid)
 	    		throw (castor::exception::Exception);
 	    		
 				/**
@@ -189,7 +189,7 @@ namespace castor {
 	       * @return true if there is one        
 				 */	    		
 				virtual bool existTapeDriveWithTapeMounted(
-					const char* volid)
+					const std::string volid)
 	    		throw (castor::exception::Exception);
 	    	
 	    	/**
@@ -200,9 +200,22 @@ namespace castor {
 	       * DB problem, etc...)	
 	       * @return The found TapeDrive	           
 	    	 */	
-	    	virtual castor::stager::Tape* selectTape(
-					const char* vid)
+	    	virtual castor::stager::Tape* selectTapeByVid(
+					const std::string vid)
 	    		throw (castor::exception::Exception);
+	    		
+	    	/**
+	    	 * Looks through the tape requests, whether there is one for the
+	    	 * mounted tape on the tapeDrive.
+	    	 * 
+				 * @param tapeDrive the tape drive, with the mounted tape
+				 * @exception Exception in case of error (DB problem, no mounted Tape, 
+				 * etc...)	
+	       * @return The found tape request	           
+	    	 */	
+	    	virtual castor::vdqm::TapeRequest* selectTapeReqForMountedTape(
+					const castor::vdqm::TapeDrive* tapeDrive)
+	    		throw (castor::exception::Exception);		    		
 
 	      private:
 	      
@@ -266,11 +279,17 @@ namespace castor {
 	        /// SQL statement object for function existTapeDriveWithTapeMounted
 	        oracle::occi::Statement *m_existTapeDriveWithTapeMountedStatement;
 	        
- 	        /// SQL statement for function selectTape
-	        static const std::string s_selectTape2StatementString;
+ 	        /// SQL statement for function selectTapeByVid
+	        static const std::string s_selectTapeByVidStatementString;
 	
-	        /// SQL statement object for function selectTape
-	        oracle::occi::Statement *m_selectTape2Statement;	        	        	        
+	        /// SQL statement object for function selectTapeByVid
+	        oracle::occi::Statement *m_selectTapeByVidStatement;
+	        
+ 	        /// SQL statement for function selectTapeReqForMountedTape
+	        static const std::string s_selectTapeReqForMountedTapeStatementString;
+	
+	        /// SQL statement object for function selectTapeReqForMountedTape
+	        oracle::occi::Statement *m_selectTapeReqForMountedTapeStatement;	        	        	        	        
 			};
 		}
 	}

@@ -88,15 +88,19 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveStatementString 
   
 /// SQL statement for function existTapeDriveWithTapeInUse
 const std::string castor::db::ora::OraVdqmSvc::s_existTapeDriveWithTapeInUseStatementString =
-  "SELECT id FROM TapeDrive WHERE runningTapeReq = (SELECT id FROM TapeRequest WHERE tape = (SELECT id FROM Tape WHERE vid = :1)) FOR UPDATE";
+  "SELECT id FROM TapeDrive WHERE runningTapeReq = (SELECT id FROM TapeRequest WHERE tape = (SELECT id FROM Tape WHERE vid = :1))";
   
 /// SQL statement for function existTapeDriveWithTapeMounted
 const std::string castor::db::ora::OraVdqmSvc::s_existTapeDriveWithTapeMountedStatementString =
-  "SELECT id FROM TapeDrive WHERE tape = (SELECT id FROM Tape WHERE vid = :1) FOR UPDATE";
+  "SELECT id FROM TapeDrive WHERE tape = (SELECT id FROM Tape WHERE vid = :1)";
   
-/// SQL statement for function selectTape
-const std::string castor::db::ora::OraVdqmSvc::s_selectTape2StatementString =
-  "SELECT id FROM Tape WHERE vid = :1 FOR UPDATE";      
+/// SQL statement for function selectTapeByVid
+const std::string castor::db::ora::OraVdqmSvc::s_selectTapeByVidStatementString =
+  "SELECT id FROM Tape WHERE vid = :1";      
+  
+/// SQL statement for function selectTapeReqForMountedTape
+const std::string castor::db::ora::OraVdqmSvc::s_selectTapeReqForMountedTapeStatementString =
+  "SELECT id FROM TapeRequest WHERE tapeDrive = :1 AND tape = :2 FOR UPDATE";      
 
 
 // -----------------------------------------------------------------------
@@ -108,7 +112,12 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   m_selectTapeServerStatement(0),
   m_checkTapeRequestStatement1(0),
   m_checkTapeRequestStatement2(0),
-  m_selectFreeTapeDriveStatement(0) {
+  m_selectFreeTapeDriveStatement(0),
+  m_selectTapeDriveStatement(0),
+  m_existTapeDriveWithTapeInUseStatement(0),
+  m_existTapeDriveWithTapeMountedStatement(0),
+  m_selectTapeByVidStatement(0),
+  m_selectTapeReqForMountedTapeStatement(0) {
 }
 
 
@@ -146,6 +155,11 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
     deleteStatement(m_checkTapeRequestStatement1);
     deleteStatement(m_checkTapeRequestStatement2);
     deleteStatement(m_selectFreeTapeDriveStatement);
+    deleteStatement(m_selectTapeDriveStatement);
+    deleteStatement(m_existTapeDriveWithTapeInUseStatement);
+    deleteStatement(m_existTapeDriveWithTapeMountedStatement);
+    deleteStatement(m_selectTapeByVidStatement);
+    deleteStatement(m_selectTapeReqForMountedTapeStatement);
   } catch (oracle::occi::SQLException e) {};
   
   // Now reset all pointers to 0
@@ -154,6 +168,11 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   m_checkTapeRequestStatement1 = 0;
   m_checkTapeRequestStatement2 = 0;
   m_selectFreeTapeDriveStatement = 0;
+  m_selectTapeDriveStatement = 0;
+  m_existTapeDriveWithTapeInUseStatement = 0;
+  m_existTapeDriveWithTapeMountedStatement = 0;
+  m_selectTapeByVidStatement = 0;
+  m_selectTapeReqForMountedTapeStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -430,42 +449,113 @@ castor::vdqm::TapeDrive*
 // -----------------------------------------------------------------------
 bool
 	castor::db::ora::OraVdqmSvc::existTapeDriveWithTapeInUse(
-	const char* volid)
+	const std::string volid)
   throw (castor::exception::Exception) {
+  
+  // Execute statement and get result
+  unsigned long id;
   	
+  // Check whether the statements are ok
+  if (0 == m_existTapeDriveWithTapeInUseStatement) {
+    m_existTapeDriveWithTapeInUseStatement = 
+    	createStatement(s_existTapeDriveWithTapeInUseStatementString);
+  }
+
+  try {
+    m_existTapeDriveWithTapeInUseStatement->setString(1, volid);
+    oracle::occi::ResultSet *rset = m_existTapeDriveWithTapeInUseStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      m_existTapeDriveWithTapeInUseStatement->closeResultSet(rset);
+      // we found nothing, so let's return false
+			return false;
+    }
+    // If we reach this point, then we selected successfully
+    // a tape drive and it's id is in rset
+    id = rset->getInt(1);
+    m_existTapeDriveWithTapeInUseStatement->closeResultSet(rset);
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select tape by vid: "
+      << std::endl << e.getMessage();
+    throw ex;
+  }  
+  
+  return true;
 }
 
 
 // -----------------------------------------------------------------------
-// selectTape
+// existTapeDriveWithTapeMounted
+// -----------------------------------------------------------------------
+bool
+	castor::db::ora::OraVdqmSvc::existTapeDriveWithTapeMounted(
+	const std::string volid)
+  throw (castor::exception::Exception) {
+
+  // Execute statement and get result
+  unsigned long id;
+  	
+  // Check whether the statements are ok
+  if (0 == m_existTapeDriveWithTapeMountedStatement) {
+    m_existTapeDriveWithTapeMountedStatement = 
+    	createStatement(s_existTapeDriveWithTapeMountedStatementString);
+  }
+
+  try {
+    m_existTapeDriveWithTapeMountedStatement->setString(1, volid);
+    oracle::occi::ResultSet *rset = m_existTapeDriveWithTapeMountedStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      m_existTapeDriveWithTapeMountedStatement->closeResultSet(rset);
+      // we found nothing, so let's return false
+			return false;
+    }
+    // If we reach this point, then we selected successfully
+    // a tape drive and it's id is in rset
+    id = rset->getInt(1);
+    m_existTapeDriveWithTapeMountedStatement->closeResultSet(rset);
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select tape by vid: "
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+ 	
+ 	return true;  	
+}
+
+
+// -----------------------------------------------------------------------
+// selectTapeByVid
 // -----------------------------------------------------------------------
 castor::stager::Tape* 
-	castor::db::ora::OraVdqmSvc::selectTape(
-	const char* volid)
+	castor::db::ora::OraVdqmSvc::selectTapeByVid(
+	const std::string volid)
   throw (castor::exception::Exception) {
   	
   // Check whether the statements are ok
-  if (0 == m_selectTape2Statement) {
-    m_selectTape2Statement = createStatement(s_selectTape2StatementString);
+  if (0 == m_selectTapeByVidStatement) {
+    m_selectTapeByVidStatement = createStatement(s_selectTapeByVidStatementString);
   }
   // Execute statement and get result
   unsigned long id;
   try {
-    m_selectTape2Statement->setString(1, volid);
-    oracle::occi::ResultSet *rset = m_selectTape2Statement->executeQuery();
+    m_selectTapeByVidStatement->setString(1, volid);
+    oracle::occi::ResultSet *rset = m_selectTapeByVidStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      m_selectTape2Statement->closeResultSet(rset);
+      m_selectTapeByVidStatement->closeResultSet(rset);
       // we found nothing, so let's return NULL
 			return NULL;
     }
     // If we reach this point, then we selected successfully
     // a tape and it's id is in rset
     id = rset->getInt(1);
-    m_selectTape2Statement->closeResultSet(rset);
+    m_selectTapeByVidStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Unable to select tape by vid, side and tpmode :"
+      << "Unable to select tape by vid: "
       << std::endl << e.getMessage();
     throw ex;
   }
@@ -497,4 +587,12 @@ castor::stager::Tape*
 }
 
 
-
+// -----------------------------------------------------------------------
+// selectTapeReqForMountedTape
+// -----------------------------------------------------------------------
+castor::vdqm::TapeRequest* 
+	castor::db::ora::OraVdqmSvc::selectTapeReqForMountedTape(
+	const castor::vdqm::TapeDrive* tapeDrive)
+  throw (castor::exception::Exception) {
+	return NULL;
+}
