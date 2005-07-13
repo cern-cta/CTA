@@ -1,4 +1,3 @@
-usr/lib/libcastorCommonOra.so
 usr/lib/libcastorCommonOra.so.__MAJOR_CASTOR_VERSION__
 usr/lib/libcastorCommonOra.so.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__
 etc/castor/ORASTAGERCONFIG.example
