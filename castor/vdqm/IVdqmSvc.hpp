@@ -142,7 +142,7 @@ namespace castor {
 	       * @return true if there is one       
 				 */
 				virtual bool existTapeDriveWithTapeInUse(
-					const char* volid)
+					const std::string volid)
 	    		throw (castor::exception::Exception) = 0;
 	    		
 				/**
@@ -155,7 +155,7 @@ namespace castor {
 	       * @return true if there is one        
 				 */	    		
 				virtual bool existTapeDriveWithTapeMounted(
-					const char* volid)
+					const std::string volid)
 	    		throw (castor::exception::Exception) = 0;
 	    	
 	    	/**
@@ -166,9 +166,23 @@ namespace castor {
 	       * DB problem, etc...)	
 	       * @return The found TapeDrive	           
 	    	 */	
-	    	virtual castor::stager::Tape* selectTape(
-					const char* vid)
+	    	virtual castor::stager::Tape* selectTapeByVid(
+					const std::string vid)
 	    		throw (castor::exception::Exception) = 0;
+	    		
+	    		
+	    	/**
+	    	 * Looks through the tape requests, whether there is one for the
+	    	 * mounted tape on the tapeDrive.
+	    	 * 
+				 * @param tapeDrive the tape drive, with the mounted tape
+				 * @exception Exception in case of error (DB problem, no mounted Tape, 
+				 * etc...)	
+	       * @return The found tape request	           
+	    	 */	
+	    	virtual TapeRequest* selectTapeReqForMountedTape(
+					const TapeDrive* tapeDrive)
+	    		throw (castor::exception::Exception) = 0;	
 				
 	    		
     }; // end of class IVdqmSvc

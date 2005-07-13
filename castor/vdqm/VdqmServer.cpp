@@ -133,6 +133,10 @@ castor::vdqm::VdqmServer::VdqmServer() :
      {38, "WAIT DOWN request from tpdaemon client"}, 
      {39, "Assign of tapeRequest to jobID"},     
      {40, "Local assign to jobID"},     
+     {41, "Inconsistent release on tape drive"},     
+     {42, "client has requested a forced unmount."},
+     {43, "tape drive in STATUS_UNKNOWN status. Force unmount!"},
+     {44, "No tape request left for mounted tape"},
      {-1, ""}};
   castor::dlf::dlf_init("Vdqm", messages);
 }
