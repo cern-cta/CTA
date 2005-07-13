@@ -1,3 +1,24 @@
+castor (2.0.0-51) unstable; urgency=low
+
+  * Fixes in putDoneStart and isSubRequestToSchedule. First ones were checked and are in prod, 2nd ones were not tested
+  * Removal of segments in stageRm
+  * Propagating the fix in getUpdateStart (see OraJobSvc.cpp)
+  * Vdqm new schema: added one new variable to TapeDrive
+  * Vdqm new schema: Changed to use the new stager services hierarchy
+  * Vdqm new schema: new functions added
+  * New remote services implementations, taken from RemoteStagerSvc. Not yet included into the Makefile, commited for backup
+  * Port to gcc-4.0
+  * Moved libshift.so and libcastorCommonOra.so from the libs to the devel package
+  * Removed eexec
+  * Fix for processing of -t option in nsdaemon
+  * Make a filesystem disabled automatically when rmnode starts and have a problem with rmcreatdirs.sh
+  * Use of NOTIFY_ALLOC flag in the LSF plugin scheduler
+  * Removed double free in stager job service
+  * Removed a print to stdout in stager query service
+  * Added socklen_t typedef for _WIN32
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Wed, 13 Jul 2005 16:35:10 +0200
+
 castor (2.0.0-50) unstable; urgency=low
 
   * Added a new functionality to selectTapeDrive()
