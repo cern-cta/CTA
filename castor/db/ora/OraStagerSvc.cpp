@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.171 $ $Release$ $Date: 2005/07/06 17:19:09 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.172 $ $Release$ $Date: 2005/07/13 08:32:51 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1397,13 +1397,25 @@ castor::db::ora::OraStagerSvc::getUpdateStart
       // Then get the associated CastorFile
       cnvSvc()->fillObj(&ad, iobj, castor::OBJ_CastorFile);
       // create needed TapeCopy(ies) and Segment(s)
-      createTapeCopySegmentsForRecall(dc->castorFile(), euid, egid);
-      // Cleanup
+      int crSegFailed = createTapeCopySegmentsForRecall(dc->castorFile(), euid, egid);
+      if(crSegFailed == -1) {      
+		  // no valid copy found, set the diskcopy status to failed
+		  dc->setStatus(castor::stager::DISKCOPY_FAILED);
+		  subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
+          cnvSvc()->updateRep(&ad, dc, false);
+          cnvSvc()->updateRep(&ad, subreq, false);
+      }          
+      // cleanup
       delete dc->castorFile();
       delete dc;
       // commit and return
       cnvSvc()->commit();
-      return 0;
+
+      if(crSegFailed == 0) return 0;
+      // else throw the exception to the stager_job_service
+      castor::exception::Internal e;
+      e.getMessage() << "getUpdateStart : no valid copy found";
+      throw e;
     }
     // Else create a resulting DiskCopy
     castor::stager::DiskCopy* result =
@@ -2043,7 +2055,7 @@ void invalidateAllSegmentsForCopy(int copyNb,
 // -----------------------------------------------------------------------
 // createTapeCopySegmentsForRecall
 // -----------------------------------------------------------------------
-void castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
+int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
 (castor::stager::CastorFile *castorFile,
  unsigned long euid,
  unsigned long egid)
@@ -2127,10 +2139,11 @@ void castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   }
   if (useCopyNb == -1) {
     // No valid copy found
-    castor::exception::Internal e;
-    e.getMessage() << "createTapeCopySegmentsForRecall : "
-                   << "No valid copy found";
-    throw e;
+	return -1;
+    //castor::exception::Internal e;
+    //e.getMessage() << "createTapeCopySegmentsForRecall : "
+    //               << "No valid copy found";
+    //throw e;
   }
   // DB address
   castor::BaseAddress ad;
@@ -2191,6 +2204,7 @@ void castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     delete tapeCopy.segments()[0]->tape();
   }
   cnvSvc()->commit();
+  return 0;
 }
 
 // -----------------------------------------------------------------------

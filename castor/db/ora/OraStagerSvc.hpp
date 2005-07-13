@@ -821,7 +821,7 @@ namespace castor {
          * @param egid the egid of the user recalling the file
          * @exception Exception throws an Exception in case of error
          */
-        void createTapeCopySegmentsForRecall
+        int createTapeCopySegmentsForRecall
         (castor::stager::CastorFile *castorFile,
          unsigned long euid,
          unsigned long egid)
