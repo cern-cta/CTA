@@ -238,7 +238,7 @@ CREATE TABLE ExtendedDeviceGroup (dgName VARCHAR2(2048), accessMode NUMBER, id I
 
 /* SQL statements for type TapeServer */
 DROP TABLE TapeServer;
-CREATE TABLE TapeServer (serverName VARCHAR2(2048), status NUMBER, id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
+CREATE TABLE TapeServer (serverName VARCHAR2(2048), status NUMBER, id INTEGER PRIMARY KEY, actingMode INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type TapeRequest */
 DROP TABLE TapeRequest;
@@ -246,13 +246,21 @@ CREATE TABLE TapeRequest (priority NUMBER, modificationTime NUMBER, id INTEGER P
 
 /* SQL statements for type TapeDrive */
 DROP TABLE TapeDrive;
-CREATE TABLE TapeDrive (jobID NUMBER, modificationTime NUMBER, resettime NUMBER, usecount NUMBER, errcount NUMBER, transferredMB NUMBER, totalMB INTEGER, dedicate VARCHAR2(2048), newDedicate VARCHAR2(2048), is_uid NUMBER, is_gid NUMBER, is_name NUMBER, no_uid NUMBER, no_gid NUMBER, no_name NUMBER, no_host NUMBER, no_vid NUMBER, no_mode NUMBER, no_date NUMBER, no_time NUMBER, no_age NUMBER, driveName VARCHAR2(2048), tapeAccessMode NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, runningTapeReq INTEGER, status INTEGER, tapeServer INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE TapeDrive (jobID NUMBER, modificationTime NUMBER, resettime NUMBER, usecount NUMBER, errcount NUMBER, transferredMB NUMBER, totalMB INTEGER, driveName VARCHAR2(2048), tapeAccessMode NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, runningTapeReq INTEGER, status INTEGER, tapeServer INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 DROP INDEX I_TapeDrive2ExtendedDevic_C;
 DROP INDEX I_TapeDrive2ExtendedDevic_P;
 DROP TABLE TapeDrive2ExtendedDevic;
 CREATE TABLE TapeDrive2ExtendedDevic (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
 CREATE INDEX I_TapeDrive2ExtendedDevic_C on TapeDrive2ExtendedDevic (child);
 CREATE INDEX I_TapeDrive2ExtendedDevic_P on TapeDrive2ExtendedDevic (parent);
+
+/* SQL statements for type ErrorHistory */
+DROP TABLE ErrorHistory;
+CREATE TABLE ErrorHistory (errorMessage VARCHAR2(2048), timeStamp NUMBER, id INTEGER PRIMARY KEY, tapeDrive INTEGER, tape INTEGER) INITRANS 50 PCTFREE 50;
+
+/* SQL statements for type TapeDriveDedication */
+DROP TABLE TapeDriveDedication;
+CREATE TABLE TapeDriveDedication (clientHost NUMBER, euid NUMBER, egid NUMBER, vid VARCHAR2(2048), accessMode NUMBER, timePeriods VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
 ALTER TABLE SvcClass2TapePool
   ADD CONSTRAINT fk_SvcClass2TapePool_P FOREIGN KEY (Parent) REFERENCES SvcClass (id)
