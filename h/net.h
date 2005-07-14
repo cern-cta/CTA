@@ -1,5 +1,5 @@
 /*
- * $Id: net.h,v 1.4 2000/06/14 13:42:37 jdurand Exp $ 
+ * $Id: net.h,v 1.5 2005/07/14 14:02:52 jdurand Exp $ 
  */
 
 #ifndef _NET_H
@@ -43,12 +43,19 @@ typedef int SOCKET;
  * SOCKET_ERROR should be used for all other network routines
  * returning an int, e.g. connect(), bind()
  */
+#ifndef INVALID_SOCKET
 #define INVALID_SOCKET -1
+#endif
+#ifndef SOCKET_ERROR
 #define SOCKET_ERROR -1
+#endif
 
+#ifndef closesocket
 #define closesocket close
+#endif
+#ifndef ioctlsocket
 #define ioctlsocket ioctl
-
+#endif
 
 #else /* _WIN32 */
 #include <winsock2.h>
