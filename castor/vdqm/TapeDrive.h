@@ -35,7 +35,9 @@
 struct C_IObject_t;
 struct Cstager_ClientIdentification_t;
 struct Cstager_Tape_t;
+struct Cvdqm_ErrorHistory_t;
 struct Cvdqm_ExtendedDeviceGroup_t;
+struct Cvdqm_TapeDriveDedication_t;
 struct Cvdqm_TapeDrive_t;
 struct Cvdqm_TapeRequest_t;
 struct Cvdqm_TapeServer_t;
@@ -180,148 +182,6 @@ int Cvdqm_TapeDrive_totalMB(struct Cvdqm_TapeDrive_t* instance, u_signed64* var)
 int Cvdqm_TapeDrive_setTotalMB(struct Cvdqm_TapeDrive_t* instance, u_signed64 new_var);
 
 /**
- * Get the value of dedicate
- */
-int Cvdqm_TapeDrive_dedicate(struct Cvdqm_TapeDrive_t* instance, const char** var);
-
-/**
- * Set the value of dedicate
- */
-int Cvdqm_TapeDrive_setDedicate(struct Cvdqm_TapeDrive_t* instance, const char* new_var);
-
-/**
- * Get the value of newDedicate
- * Regexp optimization
- */
-int Cvdqm_TapeDrive_newDedicate(struct Cvdqm_TapeDrive_t* instance, const char** var);
-
-/**
- * Set the value of newDedicate
- * Regexp optimization
- */
-int Cvdqm_TapeDrive_setNewDedicate(struct Cvdqm_TapeDrive_t* instance, const char* new_var);
-
-/**
- * Get the value of is_uid
- */
-int Cvdqm_TapeDrive_is_uid(struct Cvdqm_TapeDrive_t* instance, short* var);
-
-/**
- * Set the value of is_uid
- */
-int Cvdqm_TapeDrive_setIs_uid(struct Cvdqm_TapeDrive_t* instance, short new_var);
-
-/**
- * Get the value of is_gid
- */
-int Cvdqm_TapeDrive_is_gid(struct Cvdqm_TapeDrive_t* instance, short* var);
-
-/**
- * Set the value of is_gid
- */
-int Cvdqm_TapeDrive_setIs_gid(struct Cvdqm_TapeDrive_t* instance, short new_var);
-
-/**
- * Get the value of is_name
- */
-int Cvdqm_TapeDrive_is_name(struct Cvdqm_TapeDrive_t* instance, short* var);
-
-/**
- * Set the value of is_name
- */
-int Cvdqm_TapeDrive_setIs_name(struct Cvdqm_TapeDrive_t* instance, short new_var);
-
-/**
- * Get the value of no_uid
- */
-int Cvdqm_TapeDrive_no_uid(struct Cvdqm_TapeDrive_t* instance, short* var);
-
-/**
- * Set the value of no_uid
- */
-int Cvdqm_TapeDrive_setNo_uid(struct Cvdqm_TapeDrive_t* instance, short new_var);
-
-/**
- * Get the value of no_gid
- */
-int Cvdqm_TapeDrive_no_gid(struct Cvdqm_TapeDrive_t* instance, short* var);
-
-/**
- * Set the value of no_gid
- */
-int Cvdqm_TapeDrive_setNo_gid(struct Cvdqm_TapeDrive_t* instance, short new_var);
-
-/**
- * Get the value of no_name
- */
-int Cvdqm_TapeDrive_no_name(struct Cvdqm_TapeDrive_t* instance, short* var);
-
-/**
- * Set the value of no_name
- */
-int Cvdqm_TapeDrive_setNo_name(struct Cvdqm_TapeDrive_t* instance, short new_var);
-
-/**
- * Get the value of no_host
- */
-int Cvdqm_TapeDrive_no_host(struct Cvdqm_TapeDrive_t* instance, short* var);
-
-/**
- * Set the value of no_host
- */
-int Cvdqm_TapeDrive_setNo_host(struct Cvdqm_TapeDrive_t* instance, short new_var);
-
-/**
- * Get the value of no_vid
- */
-int Cvdqm_TapeDrive_no_vid(struct Cvdqm_TapeDrive_t* instance, short* var);
-
-/**
- * Set the value of no_vid
- */
-int Cvdqm_TapeDrive_setNo_vid(struct Cvdqm_TapeDrive_t* instance, short new_var);
-
-/**
- * Get the value of no_mode
- */
-int Cvdqm_TapeDrive_no_mode(struct Cvdqm_TapeDrive_t* instance, short* var);
-
-/**
- * Set the value of no_mode
- */
-int Cvdqm_TapeDrive_setNo_mode(struct Cvdqm_TapeDrive_t* instance, short new_var);
-
-/**
- * Get the value of no_date
- */
-int Cvdqm_TapeDrive_no_date(struct Cvdqm_TapeDrive_t* instance, short* var);
-
-/**
- * Set the value of no_date
- */
-int Cvdqm_TapeDrive_setNo_date(struct Cvdqm_TapeDrive_t* instance, short new_var);
-
-/**
- * Get the value of no_time
- */
-int Cvdqm_TapeDrive_no_time(struct Cvdqm_TapeDrive_t* instance, short* var);
-
-/**
- * Set the value of no_time
- */
-int Cvdqm_TapeDrive_setNo_time(struct Cvdqm_TapeDrive_t* instance, short new_var);
-
-/**
- * Get the value of no_age
- */
-int Cvdqm_TapeDrive_no_age(struct Cvdqm_TapeDrive_t* instance, short* var);
-
-/**
- * Set the value of no_age
- */
-int Cvdqm_TapeDrive_setNo_age(struct Cvdqm_TapeDrive_t* instance, short new_var);
-
-/**
  * Get the value of driveName
  * The name of the drive
  */
@@ -394,6 +254,39 @@ int Cvdqm_TapeDrive_runningTapeReq(struct Cvdqm_TapeDrive_t* instance, struct Cv
  * Set the value of runningTapeReq
  */
 int Cvdqm_TapeDrive_setRunningTapeReq(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeRequest_t* new_var);
+
+/**
+ * Add a struct Cvdqm_ErrorHistory_t* object to the errorHistory list
+ */
+int Cvdqm_TapeDrive_addErrorHistory(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_ErrorHistory_t* obj);
+
+/**
+ * Remove a struct Cvdqm_ErrorHistory_t* object from errorHistory
+ */
+int Cvdqm_TapeDrive_removeErrorHistory(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_ErrorHistory_t* obj);
+
+/**
+ * Get the list of struct Cvdqm_ErrorHistory_t* objects held by errorHistory. Note
+ * that the caller is responsible for the deletion of the returned vector.
+ */
+int Cvdqm_TapeDrive_errorHistory(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_ErrorHistory_t*** var, int* len);
+
+/**
+ * Add a struct Cvdqm_TapeDriveDedication_t* object to the tapeDriveDedication list
+ */
+int Cvdqm_TapeDrive_addTapeDriveDedication(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeDriveDedication_t* obj);
+
+/**
+ * Remove a struct Cvdqm_TapeDriveDedication_t* object from tapeDriveDedication
+ */
+int Cvdqm_TapeDrive_removeTapeDriveDedication(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeDriveDedication_t* obj);
+
+/**
+ * Get the list of struct Cvdqm_TapeDriveDedication_t* objects held by
+ * tapeDriveDedication. Note that the caller is responsible for the deletion of the
+ * returned vector.
+ */
+int Cvdqm_TapeDrive_tapeDriveDedication(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeDriveDedication_t*** var, int* len);
 
 /**
  * Get the value of status

@@ -30,6 +30,7 @@
 #define CASTOR_VDQM_TAPESERVER_H
 
 // Include Files and Forward declarations for the C world
+#include "castor/vdqm/TapeServerStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
 struct Cvdqm_TapeDrive_t;
@@ -39,7 +40,8 @@ struct Cvdqm_TapeServer_t;
 // This defines a C interface to the following class
 // class TapeServer
 // Holds the information about the tape server. Every tape server has several tape
-// drives.
+// drives. If its actingMode says that it is in SERVER_IN_MAINTENANCE, then its tape
+// drives are not involved in the CASTOR production.
 //------------------------------------------------------------------------------
 
 /**
@@ -90,21 +92,27 @@ int Cvdqm_TapeServer_clone(struct Cvdqm_TapeServer_t* instance,
 
 /**
  * Get the value of serverName
+ * The name of the tape server
  */
 int Cvdqm_TapeServer_serverName(struct Cvdqm_TapeServer_t* instance, const char** var);
 
 /**
  * Set the value of serverName
+ * The name of the tape server
  */
 int Cvdqm_TapeServer_setServerName(struct Cvdqm_TapeServer_t* instance, const char* new_var);
 
 /**
  * Get the value of status
+ * the old vdqm status, which is used for the old protocol. At the begining the mode
+ * is VDQM_TPD_STARTED.
  */
 int Cvdqm_TapeServer_status(struct Cvdqm_TapeServer_t* instance, int* var);
 
 /**
  * Set the value of status
+ * the old vdqm status, which is used for the old protocol. At the begining the mode
+ * is VDQM_TPD_STARTED.
  */
 int Cvdqm_TapeServer_setStatus(struct Cvdqm_TapeServer_t* instance, int new_var);
 
@@ -135,5 +143,15 @@ int Cvdqm_TapeServer_removeTapeDrives(struct Cvdqm_TapeServer_t* instance, struc
  * the caller is responsible for the deletion of the returned vector.
  */
 int Cvdqm_TapeServer_tapeDrives(struct Cvdqm_TapeServer_t* instance, struct Cvdqm_TapeDrive_t*** var, int* len);
+
+/**
+ * Get the value of actingMode
+ */
+int Cvdqm_TapeServer_actingMode(struct Cvdqm_TapeServer_t* instance, enum Cvdqm_TapeServerStatusCodes_t* var);
+
+/**
+ * Set the value of actingMode
+ */
+int Cvdqm_TapeServer_setActingMode(struct Cvdqm_TapeServer_t* instance, enum Cvdqm_TapeServerStatusCodes_t new_var);
 
 #endif // CASTOR_VDQM_TAPESERVER_H

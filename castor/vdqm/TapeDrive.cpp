@@ -32,8 +32,10 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
+#include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/ExtendedDeviceGroup.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
+#include "castor/vdqm/TapeDriveDedication.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "osdep.h"
@@ -52,20 +54,6 @@ castor::vdqm::TapeDrive::TapeDrive() throw() :
   m_errcount(0),
   m_transferredMB(0),
   m_totalMB(0),
-  m_dedicate(""),
-  m_newDedicate(""),
-  m_is_uid(0),
-  m_is_gid(0),
-  m_is_name(0),
-  m_no_uid(0),
-  m_no_gid(0),
-  m_no_name(0),
-  m_no_host(0),
-  m_no_vid(0),
-  m_no_mode(0),
-  m_no_date(0),
-  m_no_time(0),
-  m_no_age(0),
   m_driveName(""),
   m_tapeAccessMode(0),
   m_id(0),
@@ -84,6 +72,11 @@ castor::vdqm::TapeDrive::~TapeDrive() throw() {
   if (0 != m_runningTapeReq) {
     m_runningTapeReq->setTapeDrive(0);
   }
+  for (unsigned int i = 0; i < m_errorHistoryVector.size(); i++) {
+    m_errorHistoryVector[i]->setTapeDrive(0);
+  }
+  m_errorHistoryVector.clear();
+  m_tapeDriveDedicationVector.clear();
   if (0 != m_tapeServer) {
     m_tapeServer->removeTapeDrives(this);
   }
@@ -113,20 +106,6 @@ void castor::vdqm::TapeDrive::print(std::ostream& stream,
   stream << indent << "errcount : " << m_errcount << std::endl;
   stream << indent << "transferredMB : " << m_transferredMB << std::endl;
   stream << indent << "totalMB : " << m_totalMB << std::endl;
-  stream << indent << "dedicate : " << m_dedicate << std::endl;
-  stream << indent << "newDedicate : " << m_newDedicate << std::endl;
-  stream << indent << "is_uid : " << m_is_uid << std::endl;
-  stream << indent << "is_gid : " << m_is_gid << std::endl;
-  stream << indent << "is_name : " << m_is_name << std::endl;
-  stream << indent << "no_uid : " << m_no_uid << std::endl;
-  stream << indent << "no_gid : " << m_no_gid << std::endl;
-  stream << indent << "no_name : " << m_no_name << std::endl;
-  stream << indent << "no_host : " << m_no_host << std::endl;
-  stream << indent << "no_vid : " << m_no_vid << std::endl;
-  stream << indent << "no_mode : " << m_no_mode << std::endl;
-  stream << indent << "no_date : " << m_no_date << std::endl;
-  stream << indent << "no_time : " << m_no_time << std::endl;
-  stream << indent << "no_age : " << m_no_age << std::endl;
   stream << indent << "driveName : " << m_driveName << std::endl;
   stream << indent << "tapeAccessMode : " << m_tapeAccessMode << std::endl;
   stream << indent << "id : " << m_id << std::endl;
@@ -153,6 +132,28 @@ void castor::vdqm::TapeDrive::print(std::ostream& stream,
     m_runningTapeReq->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
+  }
+  {
+    stream << indent << "ErrorHistory : " << std::endl;
+    int i;
+    std::vector<ErrorHistory*>::const_iterator it;
+    for (it = m_errorHistoryVector.begin(), i = 0;
+         it != m_errorHistoryVector.end();
+         it++, i++) {
+      stream << indent << "  " << i << " :" << std::endl;
+      (*it)->print(stream, indent + "    ", alreadyPrinted);
+    }
+  }
+  {
+    stream << indent << "TapeDriveDedication : " << std::endl;
+    int i;
+    std::vector<TapeDriveDedication*>::const_iterator it;
+    for (it = m_tapeDriveDedicationVector.begin(), i = 0;
+         it != m_tapeDriveDedicationVector.end();
+         it++, i++) {
+      stream << indent << "  " << i << " :" << std::endl;
+      (*it)->print(stream, indent + "    ", alreadyPrinted);
+    }
   }
   stream << indent << "status : " << TapeDriveStatusCodesStrings[m_status] << std::endl;
   stream << indent << "TapeServer : " << std::endl;

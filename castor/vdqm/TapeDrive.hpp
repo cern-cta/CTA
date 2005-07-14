@@ -56,7 +56,9 @@ namespace castor {
     // Forward declarations
     class TapeServer;
     class TapeRequest;
+    class TapeDriveDedication;
     class ExtendedDeviceGroup;
+    class ErrorHistory;
 
     /**
      * class TapeDrive
@@ -243,232 +245,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_dedicate
-       * @return the value of m_dedicate
-       */
-      std::string dedicate() const {
-        return m_dedicate;
-      }
-
-      /**
-       * Set the value of m_dedicate
-       * @param new_var the new value of m_dedicate
-       */
-      void setDedicate(std::string new_var) {
-        m_dedicate = new_var;
-      }
-
-      /**
-       * Get the value of m_newDedicate
-       * Regexp optimization
-       * @return the value of m_newDedicate
-       */
-      std::string newDedicate() const {
-        return m_newDedicate;
-      }
-
-      /**
-       * Set the value of m_newDedicate
-       * Regexp optimization
-       * @param new_var the new value of m_newDedicate
-       */
-      void setNewDedicate(std::string new_var) {
-        m_newDedicate = new_var;
-      }
-
-      /**
-       * Get the value of m_is_uid
-       * @return the value of m_is_uid
-       */
-      short is_uid() const {
-        return m_is_uid;
-      }
-
-      /**
-       * Set the value of m_is_uid
-       * @param new_var the new value of m_is_uid
-       */
-      void setIs_uid(short new_var) {
-        m_is_uid = new_var;
-      }
-
-      /**
-       * Get the value of m_is_gid
-       * @return the value of m_is_gid
-       */
-      short is_gid() const {
-        return m_is_gid;
-      }
-
-      /**
-       * Set the value of m_is_gid
-       * @param new_var the new value of m_is_gid
-       */
-      void setIs_gid(short new_var) {
-        m_is_gid = new_var;
-      }
-
-      /**
-       * Get the value of m_is_name
-       * @return the value of m_is_name
-       */
-      short is_name() const {
-        return m_is_name;
-      }
-
-      /**
-       * Set the value of m_is_name
-       * @param new_var the new value of m_is_name
-       */
-      void setIs_name(short new_var) {
-        m_is_name = new_var;
-      }
-
-      /**
-       * Get the value of m_no_uid
-       * @return the value of m_no_uid
-       */
-      short no_uid() const {
-        return m_no_uid;
-      }
-
-      /**
-       * Set the value of m_no_uid
-       * @param new_var the new value of m_no_uid
-       */
-      void setNo_uid(short new_var) {
-        m_no_uid = new_var;
-      }
-
-      /**
-       * Get the value of m_no_gid
-       * @return the value of m_no_gid
-       */
-      short no_gid() const {
-        return m_no_gid;
-      }
-
-      /**
-       * Set the value of m_no_gid
-       * @param new_var the new value of m_no_gid
-       */
-      void setNo_gid(short new_var) {
-        m_no_gid = new_var;
-      }
-
-      /**
-       * Get the value of m_no_name
-       * @return the value of m_no_name
-       */
-      short no_name() const {
-        return m_no_name;
-      }
-
-      /**
-       * Set the value of m_no_name
-       * @param new_var the new value of m_no_name
-       */
-      void setNo_name(short new_var) {
-        m_no_name = new_var;
-      }
-
-      /**
-       * Get the value of m_no_host
-       * @return the value of m_no_host
-       */
-      short no_host() const {
-        return m_no_host;
-      }
-
-      /**
-       * Set the value of m_no_host
-       * @param new_var the new value of m_no_host
-       */
-      void setNo_host(short new_var) {
-        m_no_host = new_var;
-      }
-
-      /**
-       * Get the value of m_no_vid
-       * @return the value of m_no_vid
-       */
-      short no_vid() const {
-        return m_no_vid;
-      }
-
-      /**
-       * Set the value of m_no_vid
-       * @param new_var the new value of m_no_vid
-       */
-      void setNo_vid(short new_var) {
-        m_no_vid = new_var;
-      }
-
-      /**
-       * Get the value of m_no_mode
-       * @return the value of m_no_mode
-       */
-      short no_mode() const {
-        return m_no_mode;
-      }
-
-      /**
-       * Set the value of m_no_mode
-       * @param new_var the new value of m_no_mode
-       */
-      void setNo_mode(short new_var) {
-        m_no_mode = new_var;
-      }
-
-      /**
-       * Get the value of m_no_date
-       * @return the value of m_no_date
-       */
-      short no_date() const {
-        return m_no_date;
-      }
-
-      /**
-       * Set the value of m_no_date
-       * @param new_var the new value of m_no_date
-       */
-      void setNo_date(short new_var) {
-        m_no_date = new_var;
-      }
-
-      /**
-       * Get the value of m_no_time
-       * @return the value of m_no_time
-       */
-      short no_time() const {
-        return m_no_time;
-      }
-
-      /**
-       * Set the value of m_no_time
-       * @param new_var the new value of m_no_time
-       */
-      void setNo_time(short new_var) {
-        m_no_time = new_var;
-      }
-
-      /**
-       * Get the value of m_no_age
-       * @return the value of m_no_age
-       */
-      short no_age() const {
-        return m_no_age;
-      }
-
-      /**
-       * Set the value of m_no_age
-       * @param new_var the new value of m_no_age
-       */
-      void setNo_age(short new_var) {
-        m_no_age = new_var;
-      }
-
-      /**
        * Get the value of m_driveName
        * The name of the drive
        * @return the value of m_driveName
@@ -586,6 +362,64 @@ namespace castor {
       }
 
       /**
+       * Add a ErrorHistory* object to the m_errorHistoryVector list
+       */
+      void addErrorHistory(ErrorHistory* add_object) {
+        m_errorHistoryVector.push_back(add_object);
+      }
+
+      /**
+       * Remove a ErrorHistory* object from m_errorHistoryVector
+       */
+      void removeErrorHistory(ErrorHistory* remove_object) {
+        for (unsigned int i = 0; i < m_errorHistoryVector.size(); i++) {
+          ErrorHistory* item = m_errorHistoryVector[i];
+          if (item == remove_object) {
+            std::vector<ErrorHistory*>::iterator it = m_errorHistoryVector.begin() + i;
+            m_errorHistoryVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of ErrorHistory* objects held by m_errorHistoryVector
+       * @return list of ErrorHistory* objects held by m_errorHistoryVector
+       */
+      std::vector<ErrorHistory*>& errorHistory() {
+        return m_errorHistoryVector;
+      }
+
+      /**
+       * Add a TapeDriveDedication* object to the m_tapeDriveDedicationVector list
+       */
+      void addTapeDriveDedication(TapeDriveDedication* add_object) {
+        m_tapeDriveDedicationVector.push_back(add_object);
+      }
+
+      /**
+       * Remove a TapeDriveDedication* object from m_tapeDriveDedicationVector
+       */
+      void removeTapeDriveDedication(TapeDriveDedication* remove_object) {
+        for (unsigned int i = 0; i < m_tapeDriveDedicationVector.size(); i++) {
+          TapeDriveDedication* item = m_tapeDriveDedicationVector[i];
+          if (item == remove_object) {
+            std::vector<TapeDriveDedication*>::iterator it = m_tapeDriveDedicationVector.begin() + i;
+            m_tapeDriveDedicationVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of TapeDriveDedication* objects held by m_tapeDriveDedicationVector
+       * @return list of TapeDriveDedication* objects held by m_tapeDriveDedicationVector
+       */
+      std::vector<TapeDriveDedication*>& tapeDriveDedication() {
+        return m_tapeDriveDedicationVector;
+      }
+
+      /**
        * Get the value of m_status
        * @return the value of m_status
        */
@@ -656,35 +490,6 @@ namespace castor {
       /// Total MBytes transfered
       u_signed64 m_totalMB;
 
-      std::string m_dedicate;
-
-      /// Regexp optimization
-      std::string m_newDedicate;
-
-      short m_is_uid;
-
-      short m_is_gid;
-
-      short m_is_name;
-
-      short m_no_uid;
-
-      short m_no_gid;
-
-      short m_no_name;
-
-      short m_no_host;
-
-      short m_no_vid;
-
-      short m_no_mode;
-
-      short m_no_date;
-
-      short m_no_time;
-
-      short m_no_age;
-
       /// The name of the drive
       std::string m_driveName;
 
@@ -699,6 +504,10 @@ namespace castor {
       std::vector<ExtendedDeviceGroup*> m_extDevGrpVector;
 
       TapeRequest* m_runningTapeReq;
+
+      std::vector<ErrorHistory*> m_errorHistoryVector;
+
+      std::vector<TapeDriveDedication*> m_tapeDriveDedicationVector;
 
       TapeDriveStatusCodes m_status;
 

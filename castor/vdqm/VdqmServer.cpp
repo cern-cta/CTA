@@ -137,6 +137,7 @@ castor::vdqm::VdqmServer::VdqmServer() :
      {42, "client has requested a forced unmount."},
      {43, "tape drive in STATUS_UNKNOWN status. Force unmount!"},
      {44, "No tape request left for mounted tape"},
+     {45, "Update of representation in DB"}, 
      {-1, ""}};
   castor::dlf::dlf_init("Vdqm", messages);
 }
