@@ -96,12 +96,17 @@ castor::vdqm::handler::BaseRequestHandler::~BaseRequestHandler()
 // handleRequest
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::BaseRequestHandler::handleRequest
-(castor::IObject* fr, Cuuid_t cuuid)
+(castor::IObject* fr, bool commit, Cuuid_t cuuid)
   throw (castor::exception::Exception) {
+  
   // Stores it into the data base
   castor::BaseAddress ad;
+  bool isTapeRequest = false;
+  
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
+  
+  
   try {
   	//Create a new entry in the table
     svcs()->createRep(&ad, fr, false);
@@ -111,6 +116,7 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
       dynamic_cast<castor::vdqm::TapeRequest*>(fr);
     
     if (0 != tapeRequest) {
+    		isTapeRequest = true;
 //    	if (NULL != tapeRequest->reqExtDevGrp()) { 
 //    		svcs()->createRep(&ad, (IObject *)tapeRequest->reqExtDevGrp(), false);
 //    		svcs()->fillRep(&ad, fr, OBJ_ExtendedDeviceGroup, false);
@@ -136,23 +142,27 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
       svcs()->updateRep(&ad, (IObject *)tapeDrive->tapeServer(), false);    	
       svcs()->fillRep(&ad, fr, OBJ_TapeDrive, false);
     }
-
-    svcs()->commit(&ad);
-    // "Request stored in DB" message
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("ID", fr->id())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 12, 1, params);
-
+		
+		if ( commit ) {
+	    svcs()->commit(&ad);
+	    // "Request stored in DB" message
+	    castor::dlf::Param params[] =
+	      {castor::dlf::Param("ID", fr->id())};
+	    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 12, 1, params);
+		}
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);
     
-//    if (0 != tapeRequest) {
-    	castor::exception::Exception ex(EVQNOVOL);
-    
-    	ex.getMessage() << e.getMessage();	
-    	throw ex;
-//    }
-//    else throw e;
+    if ( isTapeRequest ) {
+	  	castor::exception::Exception ex(EVQNOVOL);
+	  	ex.getMessage() << e.getMessage();	
+	  	throw ex;
+    }
+    else {
+	  	castor::exception::Exception ex(EVQNODRV);
+	  	ex.getMessage() << e.getMessage();	
+	  	throw ex;    	
+  	}
   }
 }
 
@@ -180,8 +190,50 @@ void castor::vdqm::handler::BaseRequestHandler::deleteRepresentation
     svcs()->rollback(&ad);
     
     castor::exception::Exception ex(EVQREPLICA);
-  
   	ex.getMessage() << e.getMessage();	
   	throw ex;
   }
 } // End of deleteRepresentation
+
+
+//------------------------------------------------------------------------------
+// updateRepresentation
+//------------------------------------------------------------------------------
+void castor::vdqm::handler::BaseRequestHandler::updateRepresentation
+(castor::IObject* fr, Cuuid_t cuuid)
+  throw (castor::exception::Exception) {
+
+  // Stores it into the data base
+  castor::BaseAddress ad;
+  ad.setCnvSvcName("DbCnvSvc");
+  ad.setCnvSvcType(castor::SVC_DBCNV);
+  try {
+  	//Update entry in the table
+    svcs()->updateRep(&ad, fr, false);
+    
+    // Update files for TapeDrive
+    castor::vdqm::TapeDrive *tapeDrive =
+      dynamic_cast<castor::vdqm::TapeDrive*>(fr);
+    
+    if (0 != tapeDrive) {
+	    svcs()->updateRep(&ad, (IObject *)tapeDrive->client(), false);    	
+      svcs()->updateRep(&ad, (IObject *)tapeDrive->tapeServer(), false);    	
+      svcs()->updateRep(&ad, (IObject *)tapeDrive->runningTapeReq(), false);
+      svcs()->updateRep(&ad, (IObject *)tapeDrive->tape(), false);
+    }
+
+    svcs()->commit(&ad);
+    
+    // "Update of representation in DB" message
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("ID", fr->id())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 45, 1, params);
+
+  } catch (castor::exception::Exception e) {
+    svcs()->rollback(&ad);
+    
+  	castor::exception::Exception ex(EVQNODRV);
+  	ex.getMessage() << e.getMessage();	
+  	throw ex;
+  }  	
+}

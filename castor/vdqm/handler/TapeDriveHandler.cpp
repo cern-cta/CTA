@@ -144,8 +144,6 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
    * Gets the TapeDrive from the db or creates a new one.
    */
   tapeDrive = getTapeDrive(tapeServer);
-  
-  //TODO: Save tapeDrive into db!
 
 	if ( ptr_driveRequest->status == VDQM_UNIT_QUERY ) {
 		  copyTapeDriveInformations(tapeDrive);
@@ -188,6 +186,11 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
 	TapeDriveStatusHandler statusHandler(tapeDrive, ptr_driveRequest, m_cuuid);
 	statusHandler.handleOldStatus();
 
+
+	/**
+	 * Now the last thing is to update the data base
+	 */
+	 updateRepresentation(tapeDrive, m_cuuid);
 }
 
 
@@ -268,9 +271,6 @@ castor::vdqm::TapeDrive*
     }
 		
 		if (tapeDrive == NULL) {
-			// "Create new TapeDrive in DB" message
-		  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 34);
-			
 			/**
 			 * The tape drive does not exist, so we just create it!
 			 */
@@ -282,23 +282,17 @@ castor::vdqm::TapeDrive*
 
       tapeDrive->setDriveName(ptr_driveRequest->drive);
       tapeDrive->setTapeServer(tapeServer);
-      tapeDrive->setDedicate(ptr_driveRequest->dedicate);
+      
+      /**
+       * The dedication string is not longer in use in the new VDQM.
+       * We use the old field in the struct, to send error informations
+       * back to the client.
+       */
+
+      
       tapeDrive->setErrcount(ptr_driveRequest->errcount);
-      tapeDrive->setIs_gid(ptr_driveRequest->is_gid);
-      tapeDrive->setIs_name(ptr_driveRequest->is_name);
-      tapeDrive->setIs_uid(ptr_driveRequest->is_uid);
       tapeDrive->setJobID(ptr_driveRequest->jobID);
       tapeDrive->setModificationTime(time(NULL));
-      tapeDrive->setNewDedicate(ptr_driveRequest->newdedicate);
-      tapeDrive->setNo_age(ptr_driveRequest->no_age);
-      tapeDrive->setNo_date(ptr_driveRequest->no_date);
-      tapeDrive->setNo_gid(ptr_driveRequest->no_gid);
-      tapeDrive->setNo_host(ptr_driveRequest->no_host);
-      tapeDrive->setNo_mode(ptr_driveRequest->no_mode);
-      tapeDrive->setNo_name(ptr_driveRequest->no_name);
-      tapeDrive->setNo_time(ptr_driveRequest->no_time);      
-      tapeDrive->setNo_uid(ptr_driveRequest->no_uid);      
-      tapeDrive->setNo_vid(ptr_driveRequest->no_vid);
       tapeDrive->setResettime(ptr_driveRequest->resettime);
       tapeDrive->setTotalMB(ptr_driveRequest->TotalMB);
       tapeDrive->setTransferredMB(ptr_driveRequest->MBtransf);
@@ -334,6 +328,16 @@ castor::vdqm::TapeDrive*
        */
       ptr_driveRequest->status = ptr_driveRequest->status & ( ~VDQM_VOL_MOUNT &
           ~VDQM_VOL_UNMOUNT & ~VDQM_UNIT_MBCOUNT );
+          
+      
+			// "Create new TapeDrive in DB" message
+			castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 34);
+      
+      
+      /**
+       * We don't want to commit now, because some changes can can still happen
+       */
+      handleRequest(tapeDrive, false, m_cuuid);
 		}		
 				
 		return tapeDrive;
@@ -354,23 +358,8 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
 
   castor::stager::ClientIdentification* client;
 
-//  ptr_driveRequest->dedicate = (char*)tapeDrive->dedicate();
-  strcpy(ptr_driveRequest->dedicate, tapeDrive->dedicate().c_str());
   ptr_driveRequest->errcount = tapeDrive->errcount();
-  ptr_driveRequest->is_gid = tapeDrive->is_gid();
-  ptr_driveRequest->is_name = tapeDrive->is_name();
-  ptr_driveRequest->is_uid = tapeDrive->is_uid();
   ptr_driveRequest->jobID = tapeDrive->jobID();
-  strcpy(ptr_driveRequest->newdedicate, tapeDrive->newDedicate().c_str());
-  ptr_driveRequest->no_age = tapeDrive->no_age();
-  ptr_driveRequest->no_date = tapeDrive->no_date();
-  ptr_driveRequest->no_gid = tapeDrive->no_gid();
-  ptr_driveRequest->no_host = tapeDrive->no_host();
-  ptr_driveRequest->no_mode = tapeDrive->no_mode();
-  ptr_driveRequest->no_name = tapeDrive->no_name();
-  ptr_driveRequest->no_time = tapeDrive->no_time();      
-  ptr_driveRequest->no_uid = tapeDrive->no_uid();      
-  ptr_driveRequest->no_vid = tapeDrive->no_vid();
   ptr_driveRequest->resettime = tapeDrive->resettime();
   ptr_driveRequest->TotalMB = tapeDrive->totalMB();
   ptr_driveRequest->MBtransf = tapeDrive->transferredMB();

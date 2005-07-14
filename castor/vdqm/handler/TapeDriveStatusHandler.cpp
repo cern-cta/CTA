@@ -115,35 +115,13 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleOldStatus()
 		    !(ptr_driveRequest->status & VDQM_UNIT_FREE) ) { 
 			handleUnitReleaseStatus();
 		} 
-//        /*
-//         * If unit is free, reset dynamic data in drive record
-//         */
-//        if ( (ptr_driveRequest->status & VDQM_UNIT_FREE) ) {
-//            /*
-//             * Reset status to reflect that drive is not assigned and nothing is mounted.
-//             */
-//            drvrec->drv.status = (drvrec->drv.status | VDQM_UNIT_FREE) &
-//                (~VDQM_UNIT_ASSIGN & ~VDQM_UNIT_RELEASE & ~VDQM_UNIT_BUSY);
-//            
-//            /*
-//             * Dequeue request and free memory allocated for previous 
-//             * volume request for this drive
-//             */
-//            if ( drvrec->vol != NULL ) {
-//                rc = DelVolRecord(dgn_context,drvrec->vol);
-//                if ( rc == -1 ) {
-//                    log(LOG_ERR,"vdqm_NewDrvReq(): DelVolRecord() returned error\n");
-//                } else {
-//                    free(drvrec->vol);
-//                }
-//                drvrec->vol = NULL;
-//            }
-//            /*
-//             * Reset request and job IDs
-//             */
-//            drvrec->drv.VolReqID = 0;
-//            drvrec->drv.jobID = 0;
-//        }
+		
+	  /*
+	   * If unit is free, reset dynamic data in drive record
+	   */
+	  if ( (ptr_driveRequest->status & VDQM_UNIT_FREE) ) {
+			handleUnitFreeStatus();
+		}
 //        /*
 //         * Loop until there is no more volume requests in queue or
 //         * no suitable free drive
@@ -517,4 +495,36 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
      */
     ptr_driveRequest->status = VDQM_VOL_UNMOUNT;
 	}
+}
+
+
+//------------------------------------------------------------------------------
+// handleUnitFreeStatus
+//------------------------------------------------------------------------------
+void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitFreeStatus() 
+	throw (castor::exception::Exception) {
+
+	TapeRequest* tapeRequest = NULL;
+	
+	ptr_tapeDrive->setStatus(UNIT_UP);
+	
+	
+	tapeRequest = ptr_tapeDrive->runningTapeReq();
+	/*
+	 * Dequeue request and free memory allocated for previous 
+	 * volume request for this drive
+	 */
+	if ( tapeRequest != NULL ) {
+		
+			deleteRepresentation(tapeRequest, m_cuuid);
+			delete tapeRequest;
+			
+			tapeRequest = 0;
+			ptr_tapeDrive->setRunningTapeReq(NULL);
+	}
+  
+	/*
+	 * Reset job IDs
+	 */
+	ptr_tapeDrive->setJobID(0);		
 }

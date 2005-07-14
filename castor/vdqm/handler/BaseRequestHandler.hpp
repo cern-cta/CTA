@@ -69,7 +69,7 @@ namespace castor {
 		       * @param fr the request
 		       * @param cuuid its uuid (for logging purposes only)
 		       */
-					void handleRequest(castor::IObject* fr, Cuuid_t cuuid)
+					virtual void handleRequest(castor::IObject* fr, bool commit, Cuuid_t cuuid)
 	  				throw (castor::exception::Exception);
 	  				
 	  				
@@ -80,8 +80,18 @@ namespace castor {
 		       * @param fr The Object, with the ID of the row, which should be deleted
 		       * @param cuuid its uuid (for logging purposes only)
 		       */
-					void deleteRepresentation(castor::IObject* fr, Cuuid_t cuuid)
+					virtual void deleteRepresentation(castor::IObject* fr, Cuuid_t cuuid)
 	  				throw (castor::exception::Exception);
+	  				
+					/**
+		       * Updates the IObject representation in the data base. Please edit this function and 
+		       * add here for your concrete Class instance your concrete Objects, 
+		       * which you want to have deleted.
+		       * @param fr The Object, with the ID of the row, which should be deleted
+		       * @param cuuid its uuid (for logging purposes only)
+		       */
+					virtual void updateRepresentation(castor::IObject* fr, Cuuid_t cuuid)
+	  				throw (castor::exception::Exception);	  			
 	
 	    }; // class BaseRequestHandler
 		

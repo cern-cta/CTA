@@ -213,7 +213,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header
 	  /*
 	   * Add the record to the volume queue
 	   */
-		handleRequest(newTapeReq, cuuid);
+		handleRequest(newTapeReq, true, cuuid);
 		
 		/**
 		 *  Now the newTapeReq has the id of its 

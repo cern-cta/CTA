@@ -117,6 +117,15 @@ namespace castor {
 				   * @exception In case of error
 				   */
 					void handleUnitReleaseStatus() throw (castor::exception::Exception);										
+					
+				  /**
+				   * This function is only used internally from handleOldStatus() to 
+				   * handle the case that a VDQM_UNIT_FREE request is beeing sent 
+				   * from the client. It switches the TapeDrive to UNIT_UP status.
+				   * 
+				   * @exception In case of error
+				   */
+					void handleUnitFreeStatus() throw (castor::exception::Exception);					
 												
 	    }; // class TapeDriveStatusHandler
     
