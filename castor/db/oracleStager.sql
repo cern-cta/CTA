@@ -21,6 +21,9 @@ CREATE INDEX I_SubRequest_Request on SubRequest (request);
 CREATE INDEX I_SubRequest_Status on SubRequest
   (CASE status WHEN 0 THEN status WHEN 1 THEN status WHEN 2 THEN status ELSE NULL end);
 
+/* an index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
+CREATE INDEX I_QueryParameter_Query on QueryParameter (query);
+
 /* Constraint on FileClass name */
 ALTER TABLE FileClass ADD UNIQUE (name); 
 

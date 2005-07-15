@@ -260,7 +260,7 @@ CREATE TABLE ErrorHistory (errorMessage VARCHAR2(2048), timeStamp NUMBER, id INT
 
 /* SQL statements for type TapeDriveDedication */
 DROP TABLE TapeDriveDedication;
-CREATE TABLE TapeDriveDedication (clientHost NUMBER, euid NUMBER, egid NUMBER, vid VARCHAR2(2048), accessMode NUMBER, timePeriods VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
+CREATE TABLE TapeDriveDedication (clientHost NUMBER, euid NUMBER, egid NUMBER, vid VARCHAR2(2048), accessMode NUMBER, timePeriods VARCHAR2(2048), id INTEGER PRIMARY KEY, tapeDrive INTEGER) INITRANS 50 PCTFREE 50;
 
 ALTER TABLE SvcClass2TapePool
   ADD CONSTRAINT fk_SvcClass2TapePool_P FOREIGN KEY (Parent) REFERENCES SvcClass (id)
@@ -296,6 +296,9 @@ CREATE INDEX I_SubRequest_Request on SubRequest (request);
 /* A little function base index to speed up subrequestToDo */
 CREATE INDEX I_SubRequest_Status on SubRequest
   (CASE status WHEN 0 THEN status WHEN 1 THEN status WHEN 2 THEN status ELSE NULL end);
+
+/* an index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
+CREATE INDEX I_QueryParameter_Query on QueryParameter (query);
 
 /* Constraint on FileClass name */
 ALTER TABLE FileClass ADD UNIQUE (name); 
