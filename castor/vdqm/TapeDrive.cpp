@@ -76,6 +76,9 @@ castor::vdqm::TapeDrive::~TapeDrive() throw() {
     m_errorHistoryVector[i]->setTapeDrive(0);
   }
   m_errorHistoryVector.clear();
+  for (unsigned int i = 0; i < m_tapeDriveDedicationVector.size(); i++) {
+    m_tapeDriveDedicationVector[i]->setTapeDrive(0);
+  }
   m_tapeDriveDedicationVector.clear();
   if (0 != m_tapeServer) {
     m_tapeServer->removeTapeDrives(this);

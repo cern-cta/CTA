@@ -33,6 +33,7 @@
 #include "osdep.h"
 struct C_IObject_t;
 struct Cvdqm_TapeDriveDedication_t;
+struct Cvdqm_TapeDrive_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -174,5 +175,15 @@ int Cvdqm_TapeDriveDedication_id(struct Cvdqm_TapeDriveDedication_t* instance, u
  * The id of this object
  */
 int Cvdqm_TapeDriveDedication_setId(struct Cvdqm_TapeDriveDedication_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of tapeDrive
+ */
+int Cvdqm_TapeDriveDedication_tapeDrive(struct Cvdqm_TapeDriveDedication_t* instance, struct Cvdqm_TapeDrive_t** var);
+
+/**
+ * Set the value of tapeDrive
+ */
+int Cvdqm_TapeDriveDedication_setTapeDrive(struct Cvdqm_TapeDriveDedication_t* instance, struct Cvdqm_TapeDrive_t* new_var);
 
 #endif // CASTOR_VDQM_TAPEDRIVEDEDICATION_H

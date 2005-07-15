@@ -28,6 +28,7 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
 #include "osdep.h"
 
@@ -207,6 +208,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cvdqm_TapeDriveDedication_setId(castor::vdqm::TapeDriveDedication* instance, u_signed64 new_var) {
     instance->setId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeDriveDedication_tapeDrive
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDriveDedication_tapeDrive(castor::vdqm::TapeDriveDedication* instance, castor::vdqm::TapeDrive** var) {
+    *var = instance->tapeDrive();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeDriveDedication_setTapeDrive
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDriveDedication_setTapeDrive(castor::vdqm::TapeDriveDedication* instance, castor::vdqm::TapeDrive* new_var) {
+    instance->setTapeDrive(new_var);
     return 0;
   }
 

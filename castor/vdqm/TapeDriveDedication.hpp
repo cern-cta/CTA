@@ -42,6 +42,9 @@ namespace castor {
 
   namespace vdqm {
 
+    // Forward declarations
+    class TapeDrive;
+
     /**
      * class TapeDriveDedication
      * This class is used to specify time slots, where a tape drive should be dedicated
@@ -228,6 +231,22 @@ namespace castor {
         m_id = new_var;
       }
 
+      /**
+       * Get the value of m_tapeDrive
+       * @return the value of m_tapeDrive
+       */
+      TapeDrive* tapeDrive() const {
+        return m_tapeDrive;
+      }
+
+      /**
+       * Set the value of m_tapeDrive
+       * @param new_var the new value of m_tapeDrive
+       */
+      void setTapeDrive(TapeDrive* new_var) {
+        m_tapeDrive = new_var;
+      }
+
     private:
 
       /// the client host
@@ -250,6 +269,8 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
+
+      TapeDrive* m_tapeDrive;
 
     }; // end of class TapeDriveDedication
 

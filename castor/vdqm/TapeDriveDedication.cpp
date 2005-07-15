@@ -30,6 +30,7 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -45,13 +46,17 @@ castor::vdqm::TapeDriveDedication::TapeDriveDedication() throw() :
   m_vid(""),
   m_accessMode(0),
   m_timePeriods(""),
-  m_id(0) {
+  m_id(0),
+  m_tapeDrive(0) {
 };
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::vdqm::TapeDriveDedication::~TapeDriveDedication() throw() {
+  if (0 != m_tapeDrive) {
+    m_tapeDrive->removeTapeDriveDedication(this);
+  }
 };
 
 //------------------------------------------------------------------------------
@@ -75,6 +80,12 @@ void castor::vdqm::TapeDriveDedication::print(std::ostream& stream,
   stream << indent << "timePeriods : " << m_timePeriods << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "TapeDrive : " << std::endl;
+  if (0 != m_tapeDrive) {
+    m_tapeDrive->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
 }
 
 //------------------------------------------------------------------------------
