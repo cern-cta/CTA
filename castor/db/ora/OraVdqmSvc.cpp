@@ -100,7 +100,7 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeByVidStatementString 
   
 /// SQL statement for function selectTapeReqForMountedTape
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeReqForMountedTapeStatementString =
-  "SELECT id FROM TapeRequest WHERE tapeDrive = :1 AND tape = :2 FOR UPDATE";      
+  "SELECT id FROM TapeRequest WHERE tapeDrive = 0 AND tape = :1 AND (requestedSrv = :2 OR requestedSrv = 0) FOR UPDATE";
 
 
 // -----------------------------------------------------------------------
@@ -412,10 +412,11 @@ castor::vdqm::TapeDrive*
     
     //Now we get the foreign related objects
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_ClientIdentification);
-    cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeServer);
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeRequest);
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_Tape);
-    cnvSvc()->fillObj(&ad, obj, castor::OBJ_ExtendedDeviceGroup);
+//    cnvSvc()->fillObj(&ad, obj, castor::OBJ_ExtendedDeviceGroup);
+    
+    tapeDrive->setTapeServer(tapeServer);
 
     /**
      * If there is already an assigned tapeRequest, we want also its objects
@@ -594,5 +595,72 @@ castor::vdqm::TapeRequest*
 	castor::db::ora::OraVdqmSvc::selectTapeReqForMountedTape(
 	const castor::vdqm::TapeDrive* tapeDrive)
   throw (castor::exception::Exception) {
-	return NULL;
+	
+  // Check whether the statements are ok
+  if (0 == m_selectTapeReqForMountedTapeStatement) {
+    m_selectTapeReqForMountedTapeStatement = 
+    	createStatement(s_selectTapeReqForMountedTapeStatementString);
+  }
+  // Execute statement and get result
+  unsigned long id;
+  try {
+    m_selectTapeReqForMountedTapeStatement->setDouble(1, tapeDrive->tape()->id());
+    m_selectTapeReqForMountedTapeStatement->setDouble(2, tapeDrive->tapeServer()->id());
+    oracle::occi::ResultSet *rset = m_selectTapeReqForMountedTapeStatement->executeQuery();
+    
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      m_selectTapeReqForMountedTapeStatement->closeResultSet(rset);
+      
+      // we found nothing, so return NULL
+			return NULL;
+    }
+    
+    // If we reach this point, then we selected successfully
+    // a tapeDrive and it's id is in rset
+    id = rset->getInt(1);
+    m_selectTapeReqForMountedTapeStatement->closeResultSet(rset);
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select tapeDrive by vid, side and tpmode :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+  
+  // Now get the tapeRequest from its id
+  try {
+		castor::BaseAddress ad;
+    ad.setTarget(id);
+    ad.setCnvSvcName("OraCnvSvc");
+    ad.setCnvSvcType(castor::SVC_ORACNV);
+    castor::IObject* obj = cnvSvc()->createObj(&ad);
+    
+    castor::vdqm::TapeRequest* tapeRequest =
+      dynamic_cast<castor::vdqm::TapeRequest*> (obj);
+    if (0 == tapeRequest) {
+      castor::exception::Internal e;
+      e.getMessage() << "createObj return unexpected type "
+                     << obj->type() << " for id " << id;
+      delete obj;
+      throw e;
+    }
+    
+    //Now we get the foreign related objects
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_ClientIdentification);
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeServer);
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_Tape);
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_ExtendedDeviceGroup);
+
+    //Reset pointer
+    obj = 0;
+    
+    return tapeRequest;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select tapeRequest for id " << id  << " :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+  // We should never reach this point	
 }
