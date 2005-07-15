@@ -5,6 +5,7 @@ castor (2.0.0-53) unstable; urgency=low
   * Resurected the "filesystem state" in rmnode so that rmnode will always send the filesystem's state. Important when, at startup, rmnode fails to initialize a filesystem
   * Added notion of fixed state per filesystem in rmmaster, because change in rmnode is then always overwriting a possible new state of a filesystem that an admin would decide by doing rmadminnode --node <nodename> --fs <filesystemname> --fsstate <newstate>
   * Support of the new fsstate "Auto", to be used in rmadminnode when the admin have finished with forcing a filesystem's state
+  * Add flexibility in the scheduler plugin when LSF will not work - then plugin will log to syslog
 
  -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Fri, 15 Jul 2005 15:48:12 +0200
 
