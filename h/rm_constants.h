@@ -1,4 +1,4 @@
-/* $Id: rm_constants.h,v 1.17 2005/04/22 22:18:14 jdurand Exp $ */
+/* $Id: rm_constants.h,v 1.18 2005/07/15 10:48:32 jdurand Exp $ */
 
 #ifndef __rm_constants_h
 
@@ -21,10 +21,15 @@
 #endif
 #define RMMAGIC02 0x14140702
 
+#ifdef RMMAGIC03
+#undef RMMAGIC03
+#endif
+#define RMMAGIC03 0x14140703
+
 #ifdef RMMAGIC
 #undef RMMAGIC
 #endif
-#define RMMAGIC RMMAGIC02       /* Default magic number */
+#define RMMAGIC RMMAGIC03       /* Default magic number */
 
 #ifdef RM_REPBUFSZ
 #undef RM_REPBUFSZ
