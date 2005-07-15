@@ -122,6 +122,9 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleOldStatus()
 	  if ( (ptr_driveRequest->status & VDQM_UNIT_FREE) ) {
 			handleUnitFreeStatus();
 		}
+		
+// TODO: This code must be implemented in an own thread		
+//------------------------------------------------------------------------------
 //        /*
 //         * Loop until there is no more volume requests in queue or
 //         * no suitable free drive
@@ -181,30 +184,24 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleOldStatus()
 //            } else break;
 //            volrec = NULL;
 //        } /* End of for (;;) */
-		} 
-//	else {
-//        /*
-//         * If drive is down, report error for any requested update.
-//         */
-//        if ( ptr_driveRequest->status & (VDQM_UNIT_FREE | VDQM_UNIT_ASSIGN |
-//            VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE | VDQM_VOL_MOUNT |
-//            VDQM_VOL_UNMOUNT ) ) {
-//            log(LOG_ERR,"vdqm_NewDrvReq(): drive is DOWN\n");
-//            FreeDgnContext(&dgn_context);
-//            vdqm_SetError(EVQUNNOTUP);
-//            return(-1);
-//        }
-//    }
-//    FreeDgnContext(&dgn_context);    
-//    
-//    /* At this point, backup the comple queue to a file */
-//    if (new_drive_added) {
-//         log(LOG_DEBUG,"vdqm_NewDrvReq(): Update drive config file\n");
-//         if (vdqm_save_queue() < 0) {
-//             log(LOG_ERR, "Could not save drive list\n");
-//         }         
-//    }
-
+//------------------------------------------------------------------------------
+	} 
+	else { // TapeDrive is DOWN
+	  /*
+	   * If drive is down, report error for any requested update.
+	   */
+	  if ( ptr_driveRequest->status & (VDQM_UNIT_FREE | VDQM_UNIT_ASSIGN |
+	      VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE | VDQM_VOL_MOUNT |
+	      VDQM_VOL_UNMOUNT ) ) {
+	      
+			castor::exception::Exception ex(EVQUNNOTUP);
+			ex.getMessage() << "TapeDriveStatusHandler::handleOldStatus(): "
+											<< "TapeDrive is DOWN"
+											<< std::endl;
+											
+			throw ex;												      
+	  }
+	}
 }
 
 

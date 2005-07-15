@@ -205,11 +205,21 @@ void castor::vdqm::handler::BaseRequestHandler::updateRepresentation
 
   // Stores it into the data base
   castor::BaseAddress ad;
+	bool isTapeRequest = false;  
+  
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
   try {
   	//Update entry in the table
     svcs()->updateRep(&ad, fr, false);
+    
+    // Update files for TapeRequest
+    castor::vdqm::TapeRequest *tapeRequest =
+      dynamic_cast<castor::vdqm::TapeRequest*>(fr);    
+    if (0 != tapeRequest) {
+      svcs()->updateRep(&ad, (IObject *)tapeRequest->tapeDrive(), false);
+      isTapeRequest = true;
+    }
     
     // Update files for TapeDrive
     castor::vdqm::TapeDrive *tapeDrive =
@@ -232,8 +242,15 @@ void castor::vdqm::handler::BaseRequestHandler::updateRepresentation
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);
     
-  	castor::exception::Exception ex(EVQNODRV);
-  	ex.getMessage() << e.getMessage();	
-  	throw ex;
+    if ( isTapeRequest ) {
+    	castor::exception::Exception ex(EVQNOVOL);
+	  	ex.getMessage() << e.getMessage();	
+	  	throw ex;
+    }
+    else {
+	  	castor::exception::Exception ex(EVQNODRV);
+	  	ex.getMessage() << e.getMessage();	
+	  	throw ex;
+    }
   }  	
 }

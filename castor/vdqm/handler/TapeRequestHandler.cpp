@@ -344,30 +344,27 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 	  	//TODO:
 	  	/*
 		   * PROBLEM:
-	     * Can only remove request if not assigned to a drive. Otherwise
+	     * Can only remove request, if it is not assigned to a drive. Otherwise
 	     * it should be cleanup by resetting the drive status to RELEASE + FREE.
 	     * Mark it as UNKNOWN until an unit status clarifies what has happened.
 	     */
-	     		TapeDrive* tapeDrive;
-	     
-	     		//Ok, now we need the foreign TapeDrive, too
-			    svcs()->fillObj(&ad, tapeReq, castor::OBJ_TapeDrive);
-			    tapeDrive = tapeReq->tapeDrive();
+   		TapeDrive* tapeDrive;
+   
+   		//Ok, now we need the foreign TapeDrive, too
+	    svcs()->fillObj(&ad, tapeReq, castor::OBJ_TapeDrive);
+	    tapeDrive = tapeReq->tapeDrive();
+	    
+      // Set new TapeDriveStatusCode
+	    tapeDrive->setStatus(STATUS_UNKNOWN);
+	    
+	    tapeReq->setModificationTime(time(NULL));
+			  
+			/**
+			 * Update the data base
+			 */
+			updateRepresentation(tapeReq, cuuid);
+
 			    
-		      // Set new TapeDriveStatusCode
-			    tapeDrive->setStatus(UNIT_RELEASED);
-			    
-			    tapeReq->setModificationTime(time(NULL));
-			    
-//			    svcs()->updateRep(&ad, true);
-			    
-//        drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
-//        volrec->vol.recvtime = time(NULL);
-//        drvrec->update = 1;
-//        volrec->update = 0;
-//        vdqm_SetError(EVQREQASS);
-//        rc = -1;
-		
 		  castor::exception::Exception ex(EVQREQASS);
 		  ex.getMessage() << "TapeRequest is assigned to a TapeDrive. "
 		  								<< "Can't delete it at the moment" << std::endl;

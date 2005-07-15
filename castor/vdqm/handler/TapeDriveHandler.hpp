@@ -69,13 +69,22 @@ namespace castor {
 					
 					/**
 					 * This function replaces the old vdqm_NewDrvReq() C-function and is
-					 * called, when a VDQM_DRV_REQ comes from a client. It stores
+					 * called, when a VDQM_DRV_REQ message comes from a client. It stores
 					 * the request into the data Base or updates the status of existing
 					 * TapeDrives in the db.
 					 * 
 					 * @exception In case of error
 					 */
 					void newTapeDriveRequest() throw (castor::exception::Exception);
+					
+					/**
+					 * This function replaces the old vdqm_DelDrvReq() C-function and is
+					 * called, when a VDQM_DEL_DRVREQ message comes from a client. It 
+					 * deletes the TapeDrive with the specified ID in the db.
+					 * 
+					 * @exception In case of error
+					 */
+					void deleteTapeDrive() throw (castor::exception::Exception);
 						
 						
 				private:
@@ -128,6 +137,13 @@ namespace castor {
 					void printStatus(const int oldProtocolStatus, 
 													const int newActStatus)
 						throw (castor::exception::Exception);
+						
+					/**
+					 * Deletes the the tape Server and all inner objects of the 
+					 * tapeDrive. Please notice, that the tapeDrive itself is not
+					 * deleted.
+					 */
+					void freeMemory(TapeDrive* tapeDrive, TapeServer* tapeServer);						
 						
 	    }; // class TapeDriveHandler
     

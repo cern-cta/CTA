@@ -30,11 +30,16 @@
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/stager/ClientIdentification.hpp"
+#include "castor/stager/Tape.hpp"
 
+#include "castor/vdqm/ErrorHistory.hpp"
+#include "castor/vdqm/ExtendedDeviceGroup.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
+#include "castor/vdqm/TapeDriveDedication.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
+
 
 // Local Includes
 #include "TapeDriveHandler.hpp"
@@ -57,7 +62,7 @@ castor::vdqm::handler::TapeDriveHandler::TapeDriveHandler(vdqmHdr_t* header,
   	throw ex;
 	}
 	else {
-		ptr_header = header;
+		ptr_header = header; //The header is needed for the magic number
 		ptr_driveRequest = driveRequest;
 	}
 }
@@ -75,12 +80,6 @@ castor::vdqm::handler::TapeDriveHandler::~TapeDriveHandler() throw() {
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest() 
 	throw (castor::exception::Exception) {
-//    dgn_element_t *dgn_context = NULL;
-//    vdqm_volrec_t *volrec;
-//    vdqm_drvrec_t *drvrec; //The equivalent to the TapeDrive object
-//    int rc,unknown;
-//    char status_string[256];
-//    int new_drive_added = 0;
     
 	TapeServer* tapeServer = NULL;
 	TapeDrive* tapeDrive = NULL;
@@ -191,6 +190,86 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
 	 * Now the last thing is to update the data base
 	 */
 	 updateRepresentation(tapeDrive, m_cuuid);
+	 
+  /**
+   * Free memory for all Objects, which are not needed any more
+   */
+	freeMemory(tapeDrive, tapeServer);
+		
+	delete tapeDrive;
+	
+	tapeServer = 0;
+	tapeDrive = 0;
+}
+
+
+//------------------------------------------------------------------------------
+// deleteTapeDrive
+//------------------------------------------------------------------------------
+void castor::vdqm::handler::TapeDriveHandler::deleteTapeDrive() 
+	throw (castor::exception::Exception) {
+
+		TapeDrive* tapeDrive = NULL; // the tape Drive which hast to be deleted
+		TapeServer* tapeServer = NULL; // the tape server, where the tape drive is installed
+  
+  	// Get the tape server
+		tapeServer = ptr_IVdqmService->selectTapeServer(ptr_driveRequest->reqhost);
+			
+		try {
+			/**
+			 * Check, if the tape drive already exists
+			 */
+			tapeDrive = ptr_IVdqmService->selectTapeDrive(ptr_driveRequest, tapeServer);    
+		} catch (castor::exception::Exception ex) {
+			delete tapeServer;
+			
+			throw ex;
+		}
+        
+    if ( tapeDrive == NULL ) {
+    	delete tapeServer;
+  	
+      castor::exception::Exception ex(EVQNOSDRV);
+      ex.getMessage() << "TapeDriveHandler::deleteTapeDrive(): "
+      								<< "drive record not found for drive "
+      								<< ptr_driveRequest->drive << "@"
+      								<< ptr_driveRequest->server << std::endl;
+      throw ex;
+    }
+  
+    /**
+     * Free memory for all Objects, which are not needed any more
+     */
+		freeMemory(tapeDrive, tapeServer);
+  
+    /*
+     * Don't allow to delete drives with running jobs.
+     */
+    if ( (tapeDrive->status() != UNIT_UP) &&
+         (tapeDrive->status() != UNIT_DOWN) ) {
+ 			delete tapeDrive;
+			tapeDrive = 0;   	
+         	
+			castor::exception::Exception ex(EVQREQASS);
+			ex.getMessage() << "TapeDriveHandler::deleteTapeDrive(): "
+											<< "Cannot remove drive record with assigned job."
+											<< std::endl;
+			throw ex;
+    }
+		
+		try {
+			deleteRepresentation(tapeDrive, m_cuuid);
+		} 
+		catch (castor::exception::Exception ex) {
+			delete tapeDrive;
+			tapeDrive = 0;
+			
+			throw ex;
+		}
+		
+		delete tapeDrive;
+		tapeServer = 0;
+		tapeDrive = 0;
 }
 
 
@@ -475,5 +554,33 @@ void castor::vdqm::handler::TapeDriveHandler::printStatus(
 					castor::exception::InvalidArgument ex;
 			  	ex.getMessage() << "The tapeDrive is in a wrong status" << std::endl;
   				throw ex;
+	}
+}
+
+
+//------------------------------------------------------------------------------
+// freeMemory
+//------------------------------------------------------------------------------
+void castor::vdqm::handler::TapeDriveHandler::freeMemory(
+	TapeDrive* tapeDrive, 
+	TapeServer* tapeServer) {
+
+  /**
+   * Free memory for all Objects, which are not needed any more
+   */
+  delete tapeServer;
+  
+  if ( tapeDrive->tape() )
+  	delete tapeDrive->tape();
+	
+	TapeRequest* runningTapeReq = tapeDrive->runningTapeReq();
+	if ( runningTapeReq ) {
+		delete runningTapeReq->tape();
+		delete runningTapeReq->reqExtDevGrp();
+		if ( runningTapeReq->requestedSrv() ) 
+			delete runningTapeReq->requestedSrv();
+			
+		delete runningTapeReq;	 
+		runningTapeReq = 0;
 	}
 }
