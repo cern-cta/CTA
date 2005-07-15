@@ -110,7 +110,10 @@
 		    marshall_HYPER(p,  (rmnode)->fs[i].ioratefrequency)          \
 		    marshall_LONG (p,  (rmnode)->fs[i].localaccess);             \
 		    marshall_STRING(p, (rmnode)->fs[i].state);                   \
-	  }                                                                  \
+		    if (magic >= RMMAGIC03) {                                    \
+	  		marshall_LONG(p, (rmnode)->fs[i].forced_state);          \
+	  	    }                                                            \
+	  	}                                                            \
 	}                                                                    \
 	marshall_HYPER(p, (rmnode)->n_rdonly);                               \
 	marshall_HYPER(p, (rmnode)->n_wronly);                               \
@@ -171,13 +174,16 @@
 			  unmarshall_HYPER(p,  (rmnode)->fs[i].r_rate);                \
 			  unmarshall_HYPER(p,  (rmnode)->fs[i].w_rate);                \
 			  unmarshall_HYPER(p,  (rmnode)->fs[i].tot_rate);              \
-		      unmarshall_HYPER(p,  (rmnode)->fs[i].n_rdonly);              \
-		      unmarshall_HYPER(p,  (rmnode)->fs[i].n_wronly);              \
-		      unmarshall_HYPER(p,  (rmnode)->fs[i].n_rdwr);                \
+			  unmarshall_HYPER(p,  (rmnode)->fs[i].n_rdonly);              \
+			  unmarshall_HYPER(p,  (rmnode)->fs[i].n_wronly);              \
+			  unmarshall_HYPER(p,  (rmnode)->fs[i].n_rdwr);                \
 			  unmarshall_HYPER(p,  (rmnode)->fs[i].spacefrequency);        \
 			  unmarshall_HYPER(p,  (rmnode)->fs[i].ioratefrequency);       \
-			  unmarshall_LONG(p,  (rmnode)->fs[i].localaccess);           \
-			  unmarshall_STRING(p,(rmnode)->fs[i].state);           \
+			  unmarshall_LONG(p,  (rmnode)->fs[i].localaccess);            \
+			  unmarshall_STRING(p,(rmnode)->fs[i].state);                  \
+		    	  if (magic >= RMMAGIC03) {                                    \
+	  		  	 unmarshall_LONG(p, (rmnode)->fs[i].forced_state);     \
+	  	    	  }                                                            \
 		}                                                                  \
 	  }                                                                    \
 	}                                                                      \
