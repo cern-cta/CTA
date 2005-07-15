@@ -192,16 +192,13 @@ bool castor::vdqm::OldVdqmProtocol::handleRequestType(VdqmServerSocket* sock,
     			handleRequest = false;
     		else {
 	    		// Handle VDQM_DEL_DRVREQ
-	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 22);
-
-//        rc = vdqm_DelDrvReq(&driveRequest);
-//        /* Dumping the list of drives to file */
-//        if (rc == 0) {
-//            log(LOG_DEBUG, "vdqm_ProcReq - NOW SAVING THE REDUCED LIST OF DRIVES TO FILE\n");
-//            if (vdqm_save_queue() < 0) {
-//                log(LOG_ERR, "Could not save drive list\n");
-//            }
-//        }  
+	    		castor::dlf::Param params[] =
+			      {castor::dlf::Param("tape drive", ptr_driveRequest->drive),
+			       castor::dlf::Param("tape server", ptr_driveRequest->server)};
+	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 22, 2, params);
+	    		
+					TapeDriveHandler tapeDriveHandler(ptr_header, ptr_driveRequest, cuuid);
+					tapeDriveHandler.deleteTapeDrive();
     		}
         break;
     case VDQM_PING:
