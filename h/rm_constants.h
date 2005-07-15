@@ -1,4 +1,4 @@
-/* $Id: rm_constants.h,v 1.18 2005/07/15 10:48:32 jdurand Exp $ */
+/* $Id: rm_constants.h,v 1.19 2005/07/15 12:08:17 jdurand Exp $ */
 
 #ifndef __rm_constants_h
 
@@ -30,6 +30,11 @@
 #undef RMMAGIC
 #endif
 #define RMMAGIC RMMAGIC03       /* Default magic number */
+
+#ifdef RMMAGIC_RMNODE
+#undef RMMAGIC_RMNODE
+#endif
+#define RMMAGIC_RMNODE RMMAGIC02       /* Default magic number from rmnode -> rmmaster - no need to increase if not needed */
 
 #ifdef RM_REPBUFSZ
 #undef RM_REPBUFSZ
