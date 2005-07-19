@@ -158,7 +158,7 @@ namespace castor {
 		       */
 					virtual castor::vdqm::TapeDrive* selectTapeDrive(
 						const vdqmDrvReq_t* driveRequest,
-						const castor::vdqm::TapeServer* tapeServer)
+						castor::vdqm::TapeServer* tapeServer)
 		    		throw (castor::exception::Exception);			
 
 //---------------- functions for TapeDriveStatusHandler ------------------------

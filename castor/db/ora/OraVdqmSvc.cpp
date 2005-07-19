@@ -359,7 +359,7 @@ castor::vdqm::TapeDrive*
 castor::vdqm::TapeDrive* 
 	castor::db::ora::OraVdqmSvc::selectTapeDrive(
 	const vdqmDrvReq_t* driveRequest,
-	const castor::vdqm::TapeServer* tapeServer)
+	castor::vdqm::TapeServer* tapeServer)
   throw (castor::exception::Exception) {
   	
   // Check whether the statements are ok
