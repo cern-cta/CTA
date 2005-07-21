@@ -503,12 +503,18 @@ CREATE INDEX I_FileSystem_Rate ON FileSystem(FileSystemRate(weight, deltaWeight,
 /*************************/
 
 /* PL/SQL method to make a SubRequest wait on another one, linked to the given DiskCopy */
-CREATE OR REPLACE PROCEDURE makeSubRequestWait(subreqId IN INTEGER, dci IN INTEGER) AS
+CREATE OR REPLACE PROCEDURE makeSubRequestWait(srId IN INTEGER, dci IN INTEGER) AS
 BEGIN
+ -- all wait on the original one
  UPDATE SubRequest
-  SET parent = (SELECT id FROM SubRequest WHERE diskCopy = dci AND parent = 0), -- all wait on the original one
-      status = 5, lastModificationTime = getTime() -- WAITSUBREQ
-  WHERE SubRequest.id = subreqId;
+  SET parent = (SELECT id
+                  FROM SubRequest
+                 WHERE diskCopy = dci
+                   AND parent = 0
+                   AND status IN (1, 2, 5, 11)), -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING
+      status = 5,
+      lastModificationTime = getTime() -- WAITSUBREQ
+  WHERE SubRequest.id = srId;
 END;
 
 /* PL/SQL method to archive a SubRequest and its request if needed */
@@ -948,11 +954,7 @@ BEGIN
      AND DiskCopy.status IN (1, 2, 5, 11); -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING
   IF stat.COUNT > 0 THEN
     -- Only DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
-    UPDATE SubRequest
-       SET parent = (SELECT id FROM SubRequest WHERE diskCopy = dci(1)),
-           status = 5, -- WAITSUBREQ
-           lastModificationTime = getTime()
-     WHERE id = rsubreqId;
+    makeSubRequestWait(rsubreqId, dci(1));
     result := 0;  -- no schedule
     RETURN;
   END IF;
