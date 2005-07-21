@@ -49,7 +49,7 @@ namespace castor {
 		      /**
 		       * Constructor
 		       */
-		      BaseRequestHandler() throw();
+		      BaseRequestHandler() throw(castor::exception::Exception);
 		      
 		      /**
 		       * Destructor

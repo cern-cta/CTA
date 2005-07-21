@@ -50,7 +50,7 @@ using namespace castor::vdqm;
 castor::vdqm::handler::TapeDriveConsistencyChecker::TapeDriveConsistencyChecker(
 	TapeDrive* tapeDrive, 
 	vdqmDrvReq_t* driveRequest, 
-	Cuuid_t cuuid) throw() {
+	Cuuid_t cuuid) throw(castor::exception::Exception) {
 		
 	m_cuuid = cuuid;
 	
@@ -154,7 +154,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
      */
     if ( (ptr_driveRequest->status == VDQM_UNIT_UP ||
           ptr_driveRequest->status == (VDQM_UNIT_UP | VDQM_UNIT_FREE)) &&
-        	ptr_tapeDrive->status() != VDQM_UNIT_DOWN ) {
+        	ptr_tapeDrive->status() != UNIT_DOWN ) {
         		
 	    // We delete the old Tape request, if any
       deleteOldRequest();

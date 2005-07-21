@@ -52,8 +52,11 @@ using namespace castor::vdqm;
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::vdqm::handler::TapeDriveHandler::TapeDriveHandler(vdqmHdr_t* header, 
-												 vdqmDrvReq_t* driveRequest, Cuuid_t cuuid) throw() {
+castor::vdqm::handler::TapeDriveHandler::TapeDriveHandler(
+	vdqmHdr_t* header, 
+	vdqmDrvReq_t* driveRequest, 
+	Cuuid_t cuuid) throw(castor::exception::Exception) {
+		
 	m_cuuid = cuuid;
 	
 	if ( header == NULL || driveRequest == NULL ) {

@@ -23,7 +23,8 @@
  *
  * @author Matthias Braeger
  *****************************************************************************/
- 
+
+#include <string>
 
 #include "castor/IObject.hpp"
 #include "castor/BaseAddress.hpp"
@@ -46,9 +47,9 @@ using namespace castor::vdqm;
 // Constructor
 //------------------------------------------------------------------------------
 castor::vdqm::handler::BaseRequestHandler::BaseRequestHandler() 
-	throw() {
+	throw(castor::exception::Exception) {
 
-  castor::IService* svc;
+  castor::IService* svc = NULL;
 
   /**
    * The IVdqmService Objects has some important fuctions
@@ -64,6 +65,7 @@ castor::vdqm::handler::BaseRequestHandler::BaseRequestHandler()
   if (0 == svc) {
     castor::exception::Internal ex;
     ex.getMessage() << "Could not get DbVdqmSvc" << std::endl;
+    
     throw ex;
   }
   
@@ -74,6 +76,7 @@ castor::vdqm::handler::BaseRequestHandler::BaseRequestHandler()
     								<< "ID=" << svc->id()
     								<< ", Name=" << svc->name()
     								<< std::endl;
+
     throw ex;
   }
 }
@@ -101,7 +104,6 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
   
   // Stores it into the data base
   castor::BaseAddress ad;
-  bool isTapeRequest = false;
   
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
@@ -116,7 +118,6 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
       dynamic_cast<castor::vdqm::TapeRequest*>(fr);
     
     if (0 != tapeRequest) {
-    		isTapeRequest = true;
 //    	if (NULL != tapeRequest->reqExtDevGrp()) { 
 //    		svcs()->createRep(&ad, (IObject *)tapeRequest->reqExtDevGrp(), false);
 //    		svcs()->fillRep(&ad, fr, OBJ_ExtendedDeviceGroup, false);
@@ -153,14 +154,23 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);
     
-    if ( isTapeRequest ) {
+    castor::vdqm::TapeRequest *tapeRequest =
+      dynamic_cast<castor::vdqm::TapeRequest*>(fr);
+    
+    if ( 0 != tapeRequest ) {
 	  	castor::exception::Exception ex(EVQNOVOL);
-	  	ex.getMessage() << e.getMessage();	
+	  	ex.getMessage() << e.getMessage();
+	  									
+	  	tapeRequest = 0;
+
 	  	throw ex;
     }
     else {
 	  	castor::exception::Exception ex(EVQNODRV);
-	  	ex.getMessage() << e.getMessage();	
+	  	ex.getMessage() << e.getMessage();					
+	  	
+	  	tapeRequest = 0;
+	  		
 	  	throw ex;    	
   	}
   }

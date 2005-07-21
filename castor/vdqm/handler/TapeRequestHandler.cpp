@@ -27,9 +27,8 @@
 #include <string> 
 #include <time.h>
 
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-
+#include "castor/exception/Internal.hpp"
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 
@@ -63,7 +62,8 @@ using namespace castor::vdqm;
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::vdqm::handler::TapeRequestHandler::TapeRequestHandler() throw() {
+castor::vdqm::handler::TapeRequestHandler::TapeRequestHandler() 
+	throw(castor::exception::Exception) {
 }
 
 
@@ -98,7 +98,8 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header
 
 	if ( header == NULL || volumeRequest == NULL ) {
   	castor::exception::InvalidArgument ex;
-    ex.getMessage() << "One of the arguments is NULL";
+    ex.getMessage() << "One of the arguments is NULL"
+    								<< std::endl;
     throw ex;
   }
   
@@ -216,7 +217,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header
 		handleRequest(newTapeReq, true, cuuid);
 		
 		/**
-		 *  Now the newTapeReq has the id of its 
+		 * Now the newTapeReq has the id of its 
 		 * row representatioon in the db table.
 		 */
 		volumeRequest->VolReqID = newTapeReq->id();
@@ -246,13 +247,6 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header
 	//------------------------------------------------------------------------------
 	//------------------------------------------------------------------------------
 	
-	
-	//  /*
-	//   * Always update replica for this volume record (update status may have
-	//   * been temporary reset by SelectVolAndDrv()).
-	//   */
-	//  newvolrec->update = 1;
-	//  FreeDgnContext(&dgn_context);
   } catch(castor::exception::Exception e) {
  		if (newTapeReq)
 	 		delete newTapeReq; //also deletes clientData, because of composition

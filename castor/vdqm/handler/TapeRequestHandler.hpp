@@ -51,7 +51,7 @@ namespace castor {
 		      /**
 		       * Constructor
 		       */
-					TapeRequestHandler() throw();
+					TapeRequestHandler() throw(castor::exception::Exception);
 					
 		      /**
 		       * Destructor

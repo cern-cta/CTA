@@ -51,7 +51,7 @@ using namespace castor::vdqm;
 castor::vdqm::handler::TapeDriveStatusHandler::TapeDriveStatusHandler(
 	TapeDrive* tapeDrive, 
 	vdqmDrvReq_t* driveRequest, 
-	Cuuid_t cuuid) throw() {
+	Cuuid_t cuuid) throw(castor::exception::Exception) {
 		
 	m_cuuid = cuuid;
 	

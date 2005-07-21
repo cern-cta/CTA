@@ -60,7 +60,8 @@ namespace castor {
 					 * @exception In case of error
 		       */
 					TapeDriveHandler(vdqmHdr_t* header, 
-													 vdqmDrvReq_t* driveRequest, Cuuid_t cuuid) throw();
+													 vdqmDrvReq_t* driveRequest, Cuuid_t cuuid) 
+													 throw(castor::exception::Exception);
 					
 		      /**
 		       * Destructor

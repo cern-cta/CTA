@@ -79,7 +79,7 @@ namespace castor {
 					 * @exception In case of error
 		       */
 					TapeDriveConsistencyChecker(TapeDrive* tapeDrive, 
-													 vdqmDrvReq_t* driveRequest, Cuuid_t cuuid) throw();
+													 vdqmDrvReq_t* driveRequest, Cuuid_t cuuid) throw(castor::exception::Exception);
 					
 		      /**
 		       * Destructor
