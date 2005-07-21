@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.24 $ $Date: 2005/05/02 08:23:56 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.25 $ $Date: 2005/07/21 09:13:07 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -214,7 +214,6 @@ EMANPAGES_S =FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpd.$(MANSUFFIX)))
 #endif
 
 #if BuildRtcpclientd
-DBLIBS += DepSharedLibraryTargetName(shlib,castorCommonOra)
 PROGS_C += ProgramTargetName(rtcpcldCleanupDB) \
 	  ProgramTargetName(MigHunter)
 IPROGS_C += FileName($(BIN),ProgramTargetName(rtcpcldCleanupDB)) \
@@ -339,8 +338,6 @@ NormalProgramTarget(killjid,killjid.Osuf $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) 
 NormalLibraryTarget(rtcpapi,$(RTCPLIB_OBJS))
 
 MakeDepSharedLibrary(shlib,shift)
-
-MakeDepSharedLibrary(shlib,castorCommonOra)
 
 #if BuildRtcopyServer
 install: $(BIN) $(ERRLISTDIR) $(IPROGS_C) $(IPROGS_D) $(RTCOPYWORKDIR) $(SPOOL) $(SACCTDIR)

@@ -20,8 +20,8 @@
  * @(#)GcDaemon.hpp,v 1.2 $Release$ 2005/03/16 10:37:01 jiltsov
  *
  * Garbage collector daemon handling the deletion of local
- * files on a filesystem. Makes remote calls to the stager
- * to know what to delete and to update the catalog
+ * files on a filesystem. Makes remote calls to the stager's
+ * GC service to know what to delete and to update the catalog
  *
  * @author Sebastien Ponce
  *****************************************************************************/

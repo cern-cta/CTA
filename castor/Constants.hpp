@@ -123,7 +123,11 @@ namespace castor {
     OBJ_TapeDrive = 88,
     OBJ_ClientIdentification = 89,
 
-    OBJ_PutDoneStart = 90
+    OBJ_PutDoneStart = 90,
+    
+    //Additional vdqm objects
+    OBJ_ErrorHistory = 91,
+    OBJ_TapeDriveDedication = 92
   };
     
   /**
@@ -134,21 +138,40 @@ namespace castor {
     SVC_NOMSG = 1,
     SVC_DLFMSG = 2,
     SVC_STDMSG = 3,
-    SVC_ORACNV = 4,
-    SVC_ODBCCNV = 5,
-    SVC_STREAMCNV = 6,
-    SVC_ORASTAGERSVC = 7,
-    SVC_REMOTESTAGERSVC = 8,
-    SVC_ORAQUERYSVC = 9,
-    SVC_DBCNV = 10,
-    SVC_MYCNV = 11,
-    SVC_DBSTAGERSVC = 12,
-    SVC_MYSTAGERSVC = 13,
+    SVC_STREAMCNV = 4,
+
+    SVC_REMOTEJOBSVC = 5,
+    SVC_REMOTEGCSVC = 6,
+
+    SVC_DBCNV = 7,
+    SVC_DBCOMMONSVC = 8,
+    SVC_DBSTAGERSVC = 9,
+    SVC_DBTAPESVC = 10,
+    SVC_DBFSSVC = 11,
+    SVC_DBJOBSVC = 12,
+    SVC_DBGCSVC = 13,
     SVC_DBQUERYSVC = 14,
-    SVC_MYQUERYSVC = 15,
-    SVC_DBVDQMSVC = 16,
-    SVC_ORAVDQMSVC = 17,
-    SVC_MYVDQMSVC = 18
+    SVC_DBVDQMSVC = 15,
+
+    SVC_ORACNV = 16,
+    SVC_ORACOMMONSVC = 17,
+    SVC_ORASTAGERSVC = 18,
+    SVC_ORATAPESVC = 19,
+    SVC_ORAFSSVC = 20,
+    SVC_ORAJOBSVC = 21,
+    SVC_ORAGCSVC = 22,
+    SVC_ORAQUERYSVC = 23,
+    SVC_ORAVDQMSVC = 24,
+
+    SVC_MYCNV = 25,
+    SVC_MYCOMMONSVC = 26,
+    SVC_MYSTAGERSVC = 27,
+    SVC_MYTAPESVC = 28,
+    SVC_MYFSSVC = 29,
+    SVC_MYJOBSVC = 30,
+    SVC_MYGCSVC = 31,
+    SVC_MYQUERYSVC = 32,
+    SVC_MYVDQMSVC = 33
   };
 
   /**
@@ -157,9 +180,8 @@ namespace castor {
   enum RepresentationsIds {
     REP_INVALID = 0,
     REP_ORACLE = 1,
-    REP_ODBC = 2,
-    REP_STREAM = 3,
-    REP_MYSQL = 4
+    REP_MYSQL = 2,
+    REP_STREAM = 3
   };
 
   /**
@@ -175,35 +197,35 @@ namespace castor {
   /**
    * Nb of objectIds currently existing
    */
-  static const unsigned int ObjectsIdsNb = 91;
+  static const unsigned int ObjectsIdsNb = 93;
 
   /**
    * Nb of ServicesIds currently existing
    */
-  static const unsigned int ServicesIdsNb = 15;
+  static const unsigned int ServicesIdsNb = 34;
 
   /**
    * Nb of RepresentationsIds currently existing
    */
-  static const unsigned int RepresentationsIdsNb = 5;
+  static const unsigned int RepresentationsIdsNb = 4;
 
   /**
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[91];
+  extern const char* ObjectsIdStrings[93];
 
   /**
    * Names of the differents Services, used to display
    * correctly the ServicesIds enum
    */
-  extern const char* ServicesIdStrings[19];
+  extern const char* ServicesIdStrings[34];
 
   /**
    * Names of the differents representations, used to display
    * correctly the RepresentationsIds enum
    */
-  extern const char* RepresentationsIdStrings[5];
+  extern const char* RepresentationsIdStrings[4];
     
 #ifdef __cplusplus
 } // end of namespace castor

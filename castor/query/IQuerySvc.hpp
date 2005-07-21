@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2005/06/17 12:40:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2005/07/21 09:13:05 $ $Author: itglp $
  *
  *
  *
@@ -28,7 +28,7 @@
 #define QUERY_IQUERYSVC_HPP 1
 
 // Include Files
-#include "castor/IService.hpp"
+#include "castor/stager/ICommonSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include <string>
 #include <list>
@@ -49,7 +49,7 @@ namespace castor {
      * This class provides methods usefull to the query
      * handler to with database queries
      */
-    class IQuerySvc : public virtual IService {
+    class IQuerySvc : public virtual castor::stager::ICommonSvc {
 
     public:
 

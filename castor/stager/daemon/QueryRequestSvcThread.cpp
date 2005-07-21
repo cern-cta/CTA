@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.21 2005/07/11 09:25:10 jdurand Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.22 2005/07/21 09:13:11 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.21 $ $Date: 2005/07/11 09:25:10 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.22 $ $Date: 2005/07/21 09:13:11 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -32,7 +32,6 @@ static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.
 #include "castor/IObject.hpp"
 #include "castor/IClient.hpp"
 #include "castor/IService.hpp"
-#include "castor/stager/IStagerSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
@@ -89,8 +88,8 @@ EXTERN_C int DLL_DECL stager_query_select(void **output) {
   }
 
   castor::stager::Request* req = 0;
-  castor::Services *svcs;
-  castor::stager::IStagerSvc *stgSvc;
+  castor::Services *svcs = 0;
+  castor::query::IQuerySvc *qrySvc = 0;
 
   try {
 
@@ -98,9 +97,8 @@ EXTERN_C int DLL_DECL stager_query_select(void **output) {
     /* ---------------- */
     STAGER_LOG_VERBOSE(NULL,"Loading services");
     svcs = castor::BaseObject::services();
-    castor::IService* svc =
-      svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
-    stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
+    castor::IService* svc = svcs->service("DbQuerySvc", castor::SVC_DBQUERYSVC);
+    qrySvc = dynamic_cast<castor::query::IQuerySvc*>(svc);
 
 
     /* Get any new request to do    */
@@ -110,7 +108,7 @@ EXTERN_C int DLL_DECL stager_query_select(void **output) {
     types.push_back(castor::OBJ_StageFileQueryRequest);
     types.push_back(castor::OBJ_StageFindRequestRequest);
     types.push_back(castor::OBJ_StageRequestQueryRequest);
-    castor::stager::Request* req = stgSvc->requestToDo(types);
+    castor::stager::Request* req = qrySvc->requestToDo(types);
 
     if (0 == req) {
       /* Nothing to do */
@@ -132,7 +130,7 @@ EXTERN_C int DLL_DECL stager_query_select(void **output) {
   }
 
   // Cleanup
-  stgSvc->release();
+  qrySvc->release();
 
   // Return
   STAGER_LOG_RETURN(rc);
@@ -686,14 +684,13 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
   castor::stager::Request* req = 0;
   castor::Services *svcs = 0;
   castor::query::IQuerySvc *qrySvc = 0;
-  castor::stager::IStagerSvc *stgSvc;
   castor::IClient *client = 0;
 
-  /* Setting the address to access Oracle */
+  /* Setting the address to access the db */
   /* ------------------------------------ */
   castor::BaseAddress ad;
-  ad.setCnvSvcName("OraCnvSvc");
-  ad.setCnvSvcType(castor::SVC_ORACNV);
+  ad.setCnvSvcName("DbCnvSvc");
+  ad.setCnvSvcType(castor::SVC_DBCNV);
 
   try {
 
@@ -701,11 +698,8 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
     /* ---------------- */
     STAGER_LOG_VERBOSE(NULL,"Loading services");
     svcs = castor::BaseObject::services();
-    castor::IService* svc =
-      svcs->service("OraQuerySvc", castor::SVC_ORAQUERYSVC);
+    castor::IService* svc = svcs->service("DbQuerySvc", castor::SVC_DBQUERYSVC);
     qrySvc = dynamic_cast<castor::query::IQuerySvc*>(svc);
-    svc = svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
-    stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
 
     /* Casting the request */
     /* ------------------- */
@@ -746,7 +740,7 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
       STAGER_LOG_DEBUG(NULL,"No className - using \"default\"");
       className = "default";
     }
-    castor::stager::SvcClass* svcClass = stgSvc->selectSvcClass(className);
+    castor::stager::SvcClass* svcClass = qrySvc->selectSvcClass(className);
     if (0 == svcClass) {
       castor::exception::InvalidArgument e;
       e.getMessage() << "Invalid className : " << className;
@@ -826,6 +820,5 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
     delete req;
   }
   if (qrySvc) qrySvc->release();
-  if (stgSvc) stgSvc->release();
   STAGER_LOG_RETURN(serrno == 0 ? 0 : -1);
 }

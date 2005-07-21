@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.98 $ $Release$ $Date: 2005/07/15 09:04:12 $ $Author: mbraeger $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.99 $ $Release$ $Date: 2005/07/21 09:13:03 $ $Author: itglp $
 #
 # Make Castor libraries and executables
 #
@@ -177,7 +177,6 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamFindReqResponseCnv.cpp \
               io/StreamIOResponseCnv.cpp \
               io/StreamRequestQueryResponseCnv.cpp \
-              query/IQuerySvcCInt.cpp \
 	      replier/ClientConnection.cpp \
 	      replier/RequestReplier.cpp \
               replier/RequestReplierCInt.cpp \
@@ -253,6 +252,9 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/GCFileList.cpp \
               stager/GCFileListCInt.cpp \
               stager/IStagerSvcCInt.cpp \
+              stager/IFSSvcCInt.cpp \
+              stager/IJobSvcCInt.cpp \
+              stager/ITapeSvcCInt.cpp \
               stager/MoverCloseRequest.cpp \
               stager/MoverCloseRequestCInt.cpp \
               stager/PutStartRequest.cpp \
@@ -269,7 +271,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/RequestHelper.cpp \
               stager/RequestCInt.cpp \
 	      stager/RequestQueryType.cpp \
-	      stager/RemoteStagerSvc.cpp \
+	      stager/RemoteGCSvc.cpp \
+	      stager/RemoteJobSvc.cpp \
               stager/StartRequest.cpp \
               stager/StartRequestCInt.cpp \
               stager/SvcClass.cpp \

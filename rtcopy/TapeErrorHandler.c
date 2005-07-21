@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.5 $ $Release$ $Date: 2005/04/25 14:09:06 $ $Author: obarring $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.6 $ $Release$ $Date: 2005/07/21 09:13:07 $ $Author: itglp $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.5 $ $Release$ $Date: 2005/04/25 14:09:06 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.6 $ $Release$ $Date: 2005/07/21 09:13:07 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -86,7 +86,7 @@ WSADATA wsadata;
 #include <castor/stager/FileSystemStatusCodes.h>
 #include <castor/stager/DiskServer.h>
 #include <castor/stager/DiskServerStatusCode.h>
-#include <castor/stager/IStagerSvc.h>
+#include <castor/stager/ITapeSvc.h>
 #include <castor/Services.h>
 #include <castor/BaseObject.h>
 #include <castor/BaseAddress.h>
@@ -117,14 +117,14 @@ Cuuid_t childUuid, mainUuid;
 
 static int prepareForDBAccess(
                               _dbSvc,
-                              _stgSvc,
+                              _tpSvc,
                               _iAddr
                               )
-  struct Cstager_IStagerSvc_t **_stgSvc;
+  struct Cstager_ITapeSvc_t **_tpSvc;
   struct C_Services_t **_dbSvc;
   struct C_IAddress_t **_iAddr;
 {
-  struct Cstager_IStagerSvc_t **stgSvc;
+  struct Cstager_ITapeSvc_t **tpSvc;
   struct C_Services_t **dbSvc;
   struct C_IAddress_t *iAddr;
   struct C_BaseAddress_t *baseAddr;
@@ -138,8 +138,8 @@ static int prepareForDBAccess(
     return(-1);
   }
 
-  stgSvc = NULL;
-  rc = rtcpcld_getStgSvc(&stgSvc);
+  tpSvc = NULL;
+  rc = rtcpcld_getStgSvc(&tpSvc);
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("getStgSvc()");
     return(-1);
@@ -151,12 +151,12 @@ static int prepareForDBAccess(
     return(-11);
   }
   
-  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
-  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
+  C_BaseAddress_setCnvSvcName(baseAddr,"DbCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_DBCNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
   if ( _dbSvc != NULL ) *_dbSvc = *dbSvc;
-  if ( _stgSvc != NULL ) *_stgSvc = *stgSvc;
+  if ( _tpSvc != NULL ) *_tpSvc = *tpSvc;
   if ( _iAddr != NULL ) *_iAddr = iAddr;
   
   return(0);
@@ -173,7 +173,7 @@ static int cleanupSegment(
   struct C_Services_t *dbSvc;
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_ITapeSvc_t *tpSvc = NULL;
   int rc;
 
   if ( segment == NULL ) {
@@ -181,7 +181,7 @@ static int cleanupSegment(
     return(-1);
   }
   
-  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) return(-1);
 
   iObj = Cstager_Segment_getIObject(segment);
@@ -267,7 +267,7 @@ static int doRecallRetry(
   struct C_Services_t *dbSvc;
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_ITapeSvc_t *tpSvc = NULL;
   struct Cstager_Tape_t *tape = NULL;
   enum Cstager_TapeStatusCodes_t tapeStatus;
   struct Cstager_Segment_t *newSegment = NULL;
@@ -281,7 +281,7 @@ static int doRecallRetry(
     return(-1);
   }
 
-  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) return(-1);
 
   iObj = Cstager_Segment_getIObject(segment);
@@ -468,7 +468,7 @@ static int checkRecallRetry(
   struct C_Services_t *dbSvc;
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_ITapeSvc_t *tpSvc = NULL;
   struct Cns_fileid fileid;
   struct Cns_filestat statbuf;
   struct Cns_segattrs *nsSegmentAttrs = NULL;
@@ -499,7 +499,7 @@ static int checkRecallRetry(
   }
   Cstager_TapeCopy_id(tapeCopy,&key);
 
-  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) return(-1);
 
   /*
@@ -748,7 +748,7 @@ static int doMigrationRetry(
   struct C_Services_t *dbSvc;
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_ITapeSvc_t *tpSvc = NULL;
   int rc;
   ID_TYPE key;
 
@@ -757,7 +757,7 @@ static int doMigrationRetry(
     return(-1);
   }
 
-  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) return(-1);
 
   iObj = Cstager_Segment_getIObject(segment);
@@ -806,7 +806,7 @@ static int putFailed(
   struct C_Services_t *dbSvc;
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_ITapeSvc_t *tpSvc = NULL;
   int rc;
   ID_TYPE key;
 
@@ -815,7 +815,7 @@ static int putFailed(
     return(-1);
   }
 
-  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) return(-1);
 
   iObj = Cstager_TapeCopy_getIObject(tapeCopy);
@@ -877,7 +877,7 @@ static int checkMigrationRetry(
   struct C_Services_t *dbSvc;
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_ITapeSvc_t *tpSvc = NULL;
   struct Cns_fileid fileid;
   struct Cns_filestat statbuf;
   int nbSegments = 0, nbDiskCopies = 0, i, rc, errorCode, severity;
@@ -894,7 +894,7 @@ static int checkMigrationRetry(
 
   Cstager_TapeCopy_id(tapeCopy,&key);
 
-  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) return(-1);
 
   /*
@@ -1286,7 +1286,7 @@ int main(
   struct C_Services_t *dbSvc;
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_ITapeSvc_t *tpSvc = NULL;
   char *tapeErrorHunterFacilityName = TAPEERRORHANDLER_FACILITY;
   int nbFailedSegments = 0, nbSegms, i, j, fseq, rc;
   int tpErrorCode, tpSeverity, segErrorCode, segSeverity, mode;
@@ -1303,14 +1303,14 @@ int main(
 
   checkConfiguredPolicy();
   
-  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("prepareForDBAccess()");
     return(1);
   }
 
-  rc = Cstager_IStagerSvc_failedSegments(
-                                         stgSvc,
+  rc = Cstager_ITapeSvc_failedSegments(
+                                         tpSvc,
                                          &failedSegments,
                                          &nbFailedSegments
                                          );
@@ -1318,7 +1318,7 @@ int main(
   if ( rc == -1 ) {
     if ( rc == -1 ) {
       LOG_DBCALL_ERR("C_Services_failedSegments()",
-                     Cstager_IStagerSvc_errorMsg(stgSvc));
+                     Cstager_ITapeSvc_errorMsg(tpSvc));
       C_IAddress_delete(iAddr);
       return(1);
     }
@@ -1418,13 +1418,13 @@ int main(
           (void)cleanupSegment(segm);
         } else if ( serrno == SERTYEXHAUST ) {
           Cstager_TapeCopy_id(tapeCopy,&key);
-          rc = Cstager_IStagerSvc_fileRecallFailed(
-                                                   stgSvc,
+          rc = Cstager_ITapeSvc_fileRecallFailed(
+                                                   tpSvc,
                                                    tapeCopy
                                                    );
           if ( rc == -1 ) {
-            LOG_DBCALLANDKEY_ERR("Cstager_IStagerSvc_fileRecallFailed()",
-                                 Cstager_IStagerSvc_errorMsg(stgSvc),
+            LOG_DBCALLANDKEY_ERR("Cstager_ITapeSvc_fileRecallFailed()",
+                                 Cstager_ITapeSvc_errorMsg(tpSvc),
                                  key);
           }
         }

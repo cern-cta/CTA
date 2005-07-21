@@ -1,5 +1,5 @@
 /*
- * $Id: GcSvcThread.cpp,v 1.7 2005/04/19 11:21:33 sponcec3 Exp $
+ * $Id: GcSvcThread.cpp,v 1.8 2005/07/21 09:13:11 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.7 $ $Date: 2005/04/19 11:21:33 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.8 $ $Date: 2005/07/21 09:13:11 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -31,7 +31,7 @@ static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.7 $ $Date:
 #include "castor/BaseAddress.hpp"
 #include "castor/IClient.hpp"
 #include "castor/IService.hpp"
-#include "castor/stager/IStagerSvc.hpp"
+#include "castor/stager/IGCSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/BaseObject.hpp"
@@ -79,7 +79,7 @@ EXTERN_C int DLL_DECL stager_gc_select(void **output) {
 
   castor::stager::Request* req = 0;
   castor::Services *svcs;
-  castor::stager::IStagerSvc *stgSvc;
+  castor::stager::IGCSvc *gcSvc;
 
   try {
 
@@ -88,8 +88,8 @@ EXTERN_C int DLL_DECL stager_gc_select(void **output) {
     STAGER_LOG_VERBOSE(NULL,"Loading services");
     svcs = castor::BaseObject::services();
     castor::IService* svc =
-      svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
-    stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
+      svcs->service("DbGCSvc", castor::SVC_DBGCSVC);
+    gcSvc = dynamic_cast<castor::stager::IGCSvc*>(svc);
 
 
     /* Get any new request to do    */
@@ -99,7 +99,7 @@ EXTERN_C int DLL_DECL stager_gc_select(void **output) {
     types.push_back(castor::OBJ_FilesDeleted);
     types.push_back(castor::OBJ_FilesDeletionFailed);
     types.push_back(castor::OBJ_Files2Delete);
-    castor::stager::Request* req = stgSvc->requestToDo(types);
+    castor::stager::Request* req = gcSvc->requestToDo(types);
 
     if (0 == req) {
       /* Nothing to do */
@@ -130,7 +130,7 @@ EXTERN_C int DLL_DECL stager_gc_select(void **output) {
   }
 
   // Cleanup
-  stgSvc->release();
+  gcSvc->release();
 
   // Return
   STAGER_LOG_RETURN(rc);
@@ -147,14 +147,14 @@ namespace castor {
      * @param req the request to handle
      * @param client the client where to send the response
      * @param svcs the Services object to use
-     * @param stgSvc the stager service to use
+     * @param gcSvc the stager service to use
      * @param ad the address where to load/store objects in the DB
      */
     void handle_filesDeletedOrFailed
     (castor::stager::Request* req,
      castor::IClient *client,
      castor::Services* svcs,
-     castor::stager::IStagerSvc* stgSvc,
+     castor::stager::IGCSvc* gcSvc,
      castor::BaseAddress &ad) {
       // Usefull Variables
       char *func =  "castor::stager::filesDeletedOrFailed";
@@ -186,10 +186,10 @@ namespace castor {
         }
         if (castor::OBJ_FilesDeleted == req->type()) {
           STAGER_LOG_USAGE(NULL, "Invoking filesDeleted");
-          stgSvc->filesDeleted(arg);
+          gcSvc->filesDeleted(arg);
         } else {
           STAGER_LOG_USAGE(NULL, "Invoking filesDeletionFailed");
-          stgSvc->filesDeletionFailed(arg);
+          gcSvc->filesDeletionFailed(arg);
         }
         delete[] argArray;
 
@@ -220,13 +220,13 @@ namespace castor {
      * @param req the request to handle
      * @param client the client where to send the response
      * @param svcs the Services object to use
-     * @param stgSvc the stager service to use
+     * @param gcSvc the stager service to use
      * @param ad the address where to load/store objects in the DB
      */
     void handle_files2Delete(castor::stager::Request* req,
                              castor::IClient *client,
                              castor::Services* svcs,
-                             castor::stager::IStagerSvc* stgSvc,
+                             castor::stager::IGCSvc* gcSvc,
                              castor::BaseAddress &ad) {
       // Usefull Variables
       char *func =  "castor::stager::Files2Delete";
@@ -244,7 +244,7 @@ namespace castor {
         /* Invoking the method                */
         /* ---------------------------------- */
         STAGER_LOG_DEBUG(NULL, "Invoking selectFiles2Delete");
-        result = stgSvc->selectFiles2Delete(uReq->diskServer());
+        result = gcSvc->selectFiles2Delete(uReq->diskServer());
 
       } catch (castor::exception::Exception e) {
         serrno = e.code();
@@ -316,14 +316,14 @@ EXTERN_C int DLL_DECL stager_gc_process(void *output) {
 
   castor::stager::Request* req = 0;
   castor::Services *svcs = 0;
-  castor::stager::IStagerSvc *stgSvc = 0;
+  castor::stager::IGCSvc *gcSvc = 0;
   castor::IClient *client = 0;
 
-  /* Setting the address to access Oracle */
-  /* ------------------------------------ */
+  /* Setting the address to access db */
+  /* -------------------------------- */
   castor::BaseAddress ad;
-  ad.setCnvSvcName("OraCnvSvc");
-  ad.setCnvSvcType(castor::SVC_ORACNV);
+  ad.setCnvSvcName("DbCnvSvc");
+  ad.setCnvSvcType(castor::SVC_DBCNV);
 
   try {
 
@@ -332,8 +332,8 @@ EXTERN_C int DLL_DECL stager_gc_process(void *output) {
     STAGER_LOG_VERBOSE(NULL,"Loading services");
     svcs = castor::BaseObject::services();
     castor::IService* svc =
-      svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
-    stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
+      svcs->service("DbGCSvc", castor::SVC_DBGCSVC);
+    gcSvc = dynamic_cast<castor::stager::IGCSvc*>(svc);
 
     /* Casting the request */
     /* ------------------- */
@@ -362,7 +362,7 @@ EXTERN_C int DLL_DECL stager_gc_process(void *output) {
     STAGER_LOG_DB_ERROR(NULL,"stager_gc_process",
                         e.getMessage().str().c_str());
     if (req) delete req;
-    if (stgSvc) stgSvc->release();
+    if (gcSvc) gcSvc->release();
     return -1;
   }
 
@@ -378,12 +378,12 @@ EXTERN_C int DLL_DECL stager_gc_process(void *output) {
   case castor::OBJ_FilesDeleted:
   case castor::OBJ_FilesDeletionFailed:
     castor::stager::handle_filesDeletedOrFailed
-      (req, client, svcs, stgSvc, ad);
+      (req, client, svcs, gcSvc, ad);
     break;
 
   case castor::OBJ_Files2Delete:
     castor::stager::handle_files2Delete
-      (req, client, svcs, stgSvc, ad);
+      (req, client, svcs, gcSvc, ad);
     break;
 
   default:
@@ -391,7 +391,7 @@ EXTERN_C int DLL_DECL stager_gc_process(void *output) {
     e.getMessage() << "Unknown Request type : "
                    << castor::ObjectsIdStrings[req->type()];
     if (req) delete req;
-    if (stgSvc) stgSvc->release();
+    if (gcSvc) gcSvc->release();
     throw e;
   }
 
@@ -400,6 +400,6 @@ EXTERN_C int DLL_DECL stager_gc_process(void *output) {
 
   // Cleanup
   if (req) delete req;
-  if (stgSvc) stgSvc->release();
+  if (gcSvc) gcSvc->release();
   STAGER_LOG_RETURN(serrno == 0 ? 0 : -1);
 }

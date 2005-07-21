@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/11/30 15:49:52 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.9 $ $Release$ $Date: 2005/07/21 09:13:08 $ $Author: itglp $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.8 $ $Date: 2004/11/30 15:49:52 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.9 $ $Date: 2005/07/21 09:13:08 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.8 $ $D
 #include <castor/stager/TapeStatusCodes.h>
 #include <castor/stager/SegmentStatusCodes.h>
 #include <castor/stager/FileClass.h>
-#include <castor/stager/IStagerSvc.h>
+#include <castor/stager/ITapeSvc.h>
 #include <castor/Services.h>
 #include <castor/BaseObject.h>
 #include <castor/BaseAddress.h>
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
   struct Cdb_DbAddress_t *dbAddr;
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr;
-  struct Cstager_IStagerSvc_t **stgSvc = NULL;
+  struct Cstager_ITapeSvc_t **tpSvc = NULL;
   unsigned long key = 0;
 
   /* Initializing the C++ log */
@@ -129,23 +129,23 @@ int main(int argc, char *argv[])
   }
 
   if ( key == 0 ) {
-    rc = rtcpcld_getStgSvc(&stgSvc);
-    if ( rc == -1 || stgSvc == NULL || *stgSvc == NULL ) {
+    rc = rtcpcld_getStgSvc(&tpSvc);
+    if ( rc == -1 || tpSvc == NULL || *tpSvc == NULL ) {
       fprintf(stderr,"rtcpcld_getDbSvc(): %s\n",sstrerror(serrno));
       return(1);
     }
     
-    rc = Cstager_IStagerSvc_selectTape(
-                                       *stgSvc,
+    rc = Cstager_ITapeSvc_selectTape(
+                                       *tpSvc,
                                        &tp,
                                        vid,
                                        side,
                                        mode
                                        );
     if ( rc == -1 ) {
-      fprintf(stderr,"Cstager_IStagerSvc_selectTape(): %s, DB ERROR=%s\n",
+      fprintf(stderr,"Cstager_ITapeSvc_selectTape(): %s, DB ERROR=%s\n",
               sstrerror(serrno),
-              Cstager_IStagerSvc_errorMsg(*stgSvc));
+              Cstager_ITapeSvc_errorMsg(*tpSvc));
       return(1);
     }
   } else {
@@ -159,8 +159,8 @@ int main(int argc, char *argv[])
     return(1);
   }
 
-  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
-  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
+  C_BaseAddress_setCnvSvcName(baseAddr,"DbCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_DBCNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
   iObj = Cstager_Tape_getIObject(tp);
 

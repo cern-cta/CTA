@@ -235,21 +235,29 @@ CREATE TABLE ExtendedDeviceGroup (dgName VARCHAR(1000), accessMode INT, id BIGIN
 
 /* SQL statements for type TapeServer */
 DROP TABLE TapeServer;
-CREATE TABLE TapeServer (serverName VARCHAR(1000), status INT, id BIGINT, PRIMARY KEY (id));
+CREATE TABLE TapeServer (serverName VARCHAR(1000), status INT, id BIGINT, PRIMARY KEY (id), actingMode INT);
 
 /* SQL statements for type TapeRequest */
 DROP TABLE TapeRequest;
-CREATE TABLE TapeRequest (priority INT, creationTime INT, id BIGINT, PRIMARY KEY (id), tape INT, reqExtDevGrp INT, requestedSrv INT, tapeDrive INT, client INT);
+CREATE TABLE TapeRequest (priority INT, modificationTime INT, id BIGINT, PRIMARY KEY (id), tape INT, reqExtDevGrp INT, requestedSrv INT, tapeDrive INT, client INT);
 
 /* SQL statements for type TapeDrive */
 DROP TABLE TapeDrive;
-CREATE TABLE TapeDrive (jobID INT, creationTime INT, resettime INT, usecount INT, errcount INT, transferredMB INT, totalMB BIGINT, dedicate VARCHAR(1000), newDedicate VARCHAR(1000), is_uid INT, is_gid INT, is_name INT, no_uid INT, no_gid INT, no_name INT, no_host INT, no_vid INT, no_mode INT, no_date INT, no_time INT, no_age INT, euid INT, egid INT, name VARCHAR(1000), id BIGINT, PRIMARY KEY (id), tape INT, runningTapeReq INT, status INT, tapeServer INT);
+CREATE TABLE TapeDrive (jobID INT, modificationTime INT, resettime INT, usecount INT, errcount INT, transferredMB INT, totalMB BIGINT, driveName VARCHAR(1000), tapeAccessMode INT, id BIGINT, PRIMARY KEY (id), tape INT, runningTapeReq INT, status INT, tapeServer INT, client INT);
 DROP INDEX I_TapeDrive2ExtendedDevic_C;
 DROP INDEX I_TapeDrive2ExtendedDevic_P;
 DROP TABLE TapeDrive2ExtendedDevic;
 CREATE TABLE TapeDrive2ExtendedDevic (Parent BIGINT, Child BIGINT);
 CREATE INDEX I_TapeDrive2ExtendedDevic_C on TapeDrive2ExtendedDevic (child);
 CREATE INDEX I_TapeDrive2ExtendedDevic_P on TapeDrive2ExtendedDevic (parent);
+
+/* SQL statements for type ErrorHistory */
+DROP TABLE ErrorHistory;
+CREATE TABLE ErrorHistory (errorMessage VARCHAR(1000), timeStamp INT, id BIGINT, PRIMARY KEY (id), tapeDrive INT, tape INT);
+
+/* SQL statements for type TapeDriveDedication */
+DROP TABLE TapeDriveDedication;
+CREATE TABLE TapeDriveDedication (clientHost INT, euid INT, egid INT, vid VARCHAR(1000), accessMode INT, timePeriods VARCHAR(1000), id BIGINT, PRIMARY KEY (id), tapeDrive INT);
 
 ALTER TABLE SvcClass2TapePool
   ADD CONSTRAINT fk_SvcClass2TapePool_P FOREIGN KEY (Parent) REFERENCES SvcClass (id)
@@ -1199,7 +1207,7 @@ DECLARE contextPIPP INT;
   DELETE from TapeCopy WHERE castorFile = cfId;
   -- set DiskCopies to INVALID
   UPDATE DiskCopy SET status = 7 -- INVALID
-   WHERE castorFile = cfId AND status = 1; -- STAGED
+   WHERE castorFile = cfId AND status IN (1, 10); -- STAGED, CANBEMIGR
   -- create new DiskCopy
   SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
   CALL seqNextVal(dcId);
@@ -1762,111 +1770,6 @@ END//
  *
 DROP PROCEDURE IF EXISTS garbageCollectFS//
 CREATE PROCEDURE garbageCollectFS(fsId INT)
-DECLARE toBeFreed INT;
-  freed INTEGER := 0;
-  dpID INTEGER;
-  policies castorGC.policiesList;
-  --cursors castor.castorGC.GCItem_CurTable;
-  cur castorGC.GCItem_Cur;
-  cur1 castorGC.GCItem_Cur;
-  cur2 castorGC.GCItem_Cur;
-  cur3 castorGC.GCItem_Cur;
-  nextItems castorGC.GCItem_Table := castorGC.GCItem_Table();
-  bestCandidate INTEGER;
-  bestValue NUMBER;
-BEGIN
-  -- Get the DiskPool and the minFree space we want to achieve
-  SELECT diskPool, maxFreeSpace - free - deltaFree + reservedSpace - spaceToBeFreed
-    INTO dpId, toBeFreed
-    FROM FileSystem
-   WHERE FileSystem.id = fsId
-     FOR UPDATE;
-  UPDATE FileSystem
-     SET spaceToBeFreed = spaceToBeFreed + toBeFreed
-   WHERE FileSystem.id = fsId;
-  -- release the filesystem lock so that other threads can go on
-  COMMIT;
-  -- List policies to be applied
-  SELECT CASE
-          WHEN svcClass.gcPolicy IS NULL THEN 'defaultGCPolicy'
-          ELSE svcClass.gcPolicy
-         END BULK COLLECT INTO policies
-    FROM SvcClass, DiskPool2SvcClass
-   WHERE DiskPool2SvcClass.Parent = dpId
-     AND SvcClass.Id = DiskPool2SvcClass.Child;
-  -- Get candidates for each policy
-  nextItems.EXTEND(policies.COUNT);
-  bestValue := 2**31;
-  IF policies.COUNT > 0 THEN
-    EXECUTE IMMEDIATE 'BEGIN :1 := '||policies(policies.FIRST)||'(:2, :3); END;'
-      USING OUT cur1, IN fsId, IN toBeFreed;
-    FETCH cur1 INTO nextItems(1);
-    IF policies.COUNT > 1 THEN
-      EXECUTE IMMEDIATE 'BEGIN :1 := '||policies(policies.FIRST+1)||'(:2, :3); END;'
-        USING OUT cur2, IN fsId, IN toBeFreed;
-      FETCH cur2 INTO nextItems(2);
-      IF policies.COUNT > 2 THEN
-        EXECUTE IMMEDIATE 'BEGIN :1 := '||policies(policies.FIRST+2)||'(:2, :3); END;'
-          USING OUT cur3, IN fsId, IN toBeFreed;
-        FETCH cur3 INTO nextItems(3);
-      END IF;    
-    END IF;    
-  END IF;    
-  FOR i IN policies.FIRST .. policies.LAST LOOP
-    -- maximum 3 policies allowed
-    IF i > policies.FIRST+2 THEN EXIT; END IF;
-    IF nextItems(i).utility < bestValue THEN
-      bestCandidate := i;
-      bestValue := nextItems(i).utility;
-    END IF;
-  END LOOP;
-  -- Now extract the diskcopies that will be garbaged and
-  -- mark them GCCandidate
-  LOOP
-    -- Mark the DiskCopy
-    UPDATE DISKCOPY SET status = 8 -- GCCANDIDATE
-     WHERE id = nextItems(bestCandidate).dcId;
-    IF 1 = bestCandidate THEN
-      cur := cur1;
-    ELSIF 2 = bestCandidate THEN
-      cur := cur2;
-    ELSE
-      cur := cur3;
-    END IF;
-    FETCH cur INTO nextItems(bestCandidate);
-    -- Update toBeFreed
-    freed := freed + nextItems(bestCandidate).fileSize;
-    -- Shall we continue ?
-    IF toBeFreed > freed THEN
-      -- find next candidate
-      bestValue := 2**31;
-      FOR i IN nextItems.FIRST .. nextItems.LAST LOOP
-        IF nextItems(i).utility < bestValue THEN
-          bestCandidate := i;
-          bestValue := nextItems(i).utility;
-        END IF;
-      END LOOP;
-    ELSE
-      -- enough space freed
-      EXIT;
-    END IF;
-  END LOOP;
-  -- Update Filesystem toBeFreed space to the exact value
-  UPDATE FileSystem
-     SET spaceToBeFreed = spaceToBeFreed + freed - toBeFreed
-   WHERE FileSystem.id = fsId;
-  -- Close cursors
-  IF policies.COUNT > 0 THEN
-    CLOSE cur1;
-    IF policies.COUNT > 1 THEN
-      CLOSE cur2;
-      IF policies.COUNT > 2 THEN
-        CLOSE cur3;
-      END IF;
-    END IF;
-  END IF;
-  -- commit everything
-  COMMIT;
 END;
 */
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/06/17 12:40:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2005/07/21 09:13:04 $ $Author: itglp $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -29,7 +29,7 @@
 
 // Include Files
 #include "castor/BaseSvc.hpp"
-#include "castor/db/ora/OraBaseObj.hpp"
+#include "castor/db/ora/OraCommonSvc.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/query/IQuerySvc.hpp"
 #include "occi.h"
@@ -45,8 +45,7 @@ namespace castor {
       /**
        * Implementation of the IQuerySvc for Oracle
        */
-      class OraQuerySvc : public BaseSvc,
-                          public OraBaseObj,
+      class OraQuerySvc : public OraCommonSvc,
                           public virtual castor::query::IQuerySvc {
 
       public:

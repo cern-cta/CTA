@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_callhandlers.c,v 1.5 2005/06/30 11:31:52 jdurand Exp $
+ * $Id: rfio_callhandlers.c,v 1.6 2005/07/21 09:13:07 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_callhandlers.c,v $ $Revision: 1.5 $ $Date: 2005/06/30 11:31:52 $ CERN IT-ADC/CA Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: rfio_callhandlers.c,v $ $Revision: 1.6 $ $Date: 2005/07/21 09:13:07 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -77,11 +77,11 @@ int rfio_handle_close(void *ctx,
   struct internal_context *internal_context = (struct internal_context *) ctx;
 
   if (internal_context != NULL) {
-    struct Cstager_IStagerSvc_t **stagerService;
+    struct Cstager_IJobSvc_t **jobSvc;
     struct C_Services_t **dbService;
 
     C_BaseObject_initLog("rfio", SVC_STDMSG);
-    if (stager_getRemStgAndDbSvc(&stagerService,&dbService) == 0) {
+    if (stager_getRemJobAndDbSvc(&jobSvc,&dbService) == 0) {
       char tmpbuf[21];
 
       if (((internal_context->flags & O_WRONLY) == O_WRONLY) ||
@@ -95,9 +95,9 @@ int rfio_handle_close(void *ctx,
 	  /* File still exist - this is a candidate for migration regardless of its size (zero-length are ignored in the stager) */
 	  if (Cstager_SubRequest_create(&subrequest) == 0) {
 	    if (Cstager_SubRequest_setId(subrequest,internal_context->subrequest_id) == 0) {
-	      log(LOG_INFO, "rfio_handle_close : Calling Cstager_IStagerSvc_prepareForMigration on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
-	      if (Cstager_IStagerSvc_prepareForMigration(*stagerService,subrequest,(u_signed64) statbuf.st_size) != 0) {
-		log(LOG_ERR, "rfio_handle_close : Cstager_IStagerSvc_prepareForMigration error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), Cstager_IStagerSvc_errorMsg(*stagerService));
+	      log(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_prepareForMigration on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
+	      if (Cstager_IJobSvc_prepareForMigration(*jobSvc,subrequest,(u_signed64) statbuf.st_size) != 0) {
+		log(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_prepareForMigration error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), Cstager_IJobSvc_errorMsg(*jobSvc));
 	      } else {
 		forced_mover_exit_error = 0;
 	      }
@@ -106,9 +106,9 @@ int rfio_handle_close(void *ctx,
 	} else {
 	  /* File does not exit !? */
 	  log(LOG_ERR, "rfio_handle_close : stat64() error (%s)\n", strerror(errno));
-	  log(LOG_INFO, "rfio_handle_close : Calling Cstager_IStagerSvc_putFailed on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
-	  if (Cstager_IStagerSvc_putFailed(*stagerService,subrequest_id) != 0) {
-	    log(LOG_ERR, "rfio_handle_close : Cstager_IStagerSvc_putFailed error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), Cstager_IStagerSvc_errorMsg(*stagerService));
+	  log(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_putFailed on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
+	  if (Cstager_IJobSvc_putFailed(*jobSvc,subrequest_id) != 0) {
+	    log(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_putFailed error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), Cstager_IJobSvc_errorMsg(*jobSvc));
 	  } else {
 	    forced_mover_exit_error = 0;
 	  }
@@ -116,16 +116,16 @@ int rfio_handle_close(void *ctx,
       } else {
 	/* This is a read: the close() status is enough to decide on a getUpdateDone/Failed */
 	if (close_status == 0) {
-	  log(LOG_INFO, "rfio_handle_close : Calling Cstager_IStagerSvc_getUpdateDone on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
-	  if (Cstager_IStagerSvc_getUpdateDone(*stagerService,internal_context->subrequest_id) != 0) {
-	    log(LOG_ERR, "rfio_handle_close : Cstager_IStagerSvc_getUpdateDone error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), Cstager_IStagerSvc_errorMsg(*stagerService));
+	  log(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_getUpdateDone on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
+	  if (Cstager_IJobSvc_getUpdateDone(*jobSvc,internal_context->subrequest_id) != 0) {
+	    log(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_getUpdateDone error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), Cstager_IJobSvc_errorMsg(*jobSvc));
 	  } else {
 	    forced_mover_exit_error = 0;
 	  }
 	} else {
-	  log(LOG_INFO, "rfio_handle_close : Calling Cstager_IStagerSvc_getUpdateFailed on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
-	  if (Cstager_IStagerSvc_getUpdateFailed(*stagerService,subrequest_id) != 0) {
-	    log(LOG_ERR, "rfio_handle_close : Cstager_IStagerSvc_getUpdateFailed error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), Cstager_IStagerSvc_errorMsg(*stagerService));
+	  log(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_getUpdateFailed on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
+	  if (Cstager_IJobSvc_getUpdateFailed(*jobSvc,subrequest_id) != 0) {
+	    log(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_getUpdateFailed error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), Cstager_IJobSvc_errorMsg(*jobSvc));
 	  } else {
 	    forced_mover_exit_error = 0;
 	  }

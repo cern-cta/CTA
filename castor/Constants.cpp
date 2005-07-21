@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2005/07/15 09:22:36 $ $Author: itglp $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2005/07/21 09:13:03 $ $Author: itglp $
  *
  *
  *
@@ -30,7 +30,7 @@
 //=============================================================================
 // ObjectsIdStrings
 //=============================================================================
-const char* castor::ObjectsIdStrings[91] = {
+const char* castor::ObjectsIdStrings[93] = {
   "INVALID",
   "Ptr", // Only used for streaming for circular dependencies
   "CastorFile",
@@ -121,41 +121,61 @@ const char* castor::ObjectsIdStrings[91] = {
   "TapeServer",
   "TapeDrive",
   "ClientIdentification",
-  "PutDoneStart"
+  "PutDoneStart",
+  "ErrorHistory",
+  "TapeDriveHistory"
 };
 
 //=============================================================================
 // ServicesIdStrings
 //=============================================================================
-const char* castor::ServicesIdStrings[19] = {
+const char* castor::ServicesIdStrings[34] = {
   "INVALID",
   "NOMSG",
   "DLFMSG",
   "STDMSG",
-  "ORACNV",
-  "ODBCCNV",
   "STREAMCNV",
-  "ORASTAGERSVC",
-  "REMOTESTAGERSVC",
-  "ORAQUERYSVC",
+
+  "REMOTEJOBSVC",
+  "REMOTEGCSVC",
+
   "DBCNV",
-  "MYCNV",
+  "DBCOMMONSVC",
   "DBSTAGERSVC",
-  "MYSTAGERSVC",
+  "DBTAPESVC",
+  "DBFSSVC",
+  "DBJOBSVC",
+  "DBGCSVC",
   "DBQUERYSVC",
-  "MYQUERYSVC",
   "DBVDQMSVC",
+
+  "ORACNV",
+  "ORACOMMONSVC",
+  "ORASTAGERSVC",
+  "ORATAPESVC",
+  "ORAFSSVC",
+  "ORAJOBSVC",
+  "ORAGCSVC",
+  "ORAQUERYSVC",
   "ORAVDQMSVC",
+
+  "MYCNV",
+  "ORACOMMONSVC",
+  "MYSTAGERSVC",
+  "MYTAPESVC",
+  "MYFSSVC",
+  "MYJOBSVC",
+  "MYGCSVC",
+  "MYQUERYSVC",
   "MYVDQMSVC"
 };
 
 //=============================================================================
 // RepresentationsIdStrings
 //=============================================================================
-const char* castor::RepresentationsIdStrings[5] = {
+const char* castor::RepresentationsIdStrings[4] = {
   "INVALID",
   "ORACLE",
-  "ODBC",
-  "STREAM",
-  "MYSQL"
+  "MYSQL",
+  "STREAM"
 };

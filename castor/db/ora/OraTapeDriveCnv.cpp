@@ -42,8 +42,10 @@
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
+#include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/ExtendedDeviceGroup.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
+#include "castor/vdqm/TapeDriveDedication.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
@@ -62,7 +64,7 @@ const castor::ICnvFactory& OraTapeDriveCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraTapeDriveCnv::s_insertStatementString =
-"INSERT INTO TapeDrive (jobID, modificationTime, resettime, usecount, errcount, transferredMB, totalMB, dedicate, newDedicate, is_uid, is_gid, is_name, no_uid, no_gid, no_name, no_host, no_vid, no_mode, no_date, no_time, no_age, driveName, tapeAccessMode, id, tape, runningTapeReq, status, tapeServer, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,:16,:17,:18,:19,:20,:21,:22,:23,ids_seq.nextval,:24,:25,:26,:27,:28) RETURNING id INTO :29";
+"INSERT INTO TapeDrive (jobID, modificationTime, resettime, usecount, errcount, transferredMB, totalMB, driveName, tapeAccessMode, id, tape, runningTapeReq, status, tapeServer, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,ids_seq.nextval,:10,:11,:12,:13,:14) RETURNING id INTO :15";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraTapeDriveCnv::s_deleteStatementString =
@@ -70,11 +72,11 @@ const std::string castor::db::ora::OraTapeDriveCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraTapeDriveCnv::s_selectStatementString =
-"SELECT jobID, modificationTime, resettime, usecount, errcount, transferredMB, totalMB, dedicate, newDedicate, is_uid, is_gid, is_name, no_uid, no_gid, no_name, no_host, no_vid, no_mode, no_date, no_time, no_age, driveName, tapeAccessMode, id, tape, runningTapeReq, status, tapeServer, client FROM TapeDrive WHERE id = :1";
+"SELECT jobID, modificationTime, resettime, usecount, errcount, transferredMB, totalMB, driveName, tapeAccessMode, id, tape, runningTapeReq, status, tapeServer, client FROM TapeDrive WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraTapeDriveCnv::s_updateStatementString =
-"UPDATE TapeDrive SET jobID = :1, modificationTime = :2, resettime = :3, usecount = :4, errcount = :5, transferredMB = :6, totalMB = :7, dedicate = :8, newDedicate = :9, is_uid = :10, is_gid = :11, is_name = :12, no_uid = :13, no_gid = :14, no_name = :15, no_host = :16, no_vid = :17, no_mode = :18, no_date = :19, no_time = :20, no_age = :21, driveName = :22, tapeAccessMode = :23, status = :24 WHERE id = :25";
+"UPDATE TapeDrive SET jobID = :1, modificationTime = :2, resettime = :3, usecount = :4, errcount = :5, transferredMB = :6, totalMB = :7, driveName = :8, tapeAccessMode = :9, status = :10 WHERE id = :11";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraTapeDriveCnv::s_storeTypeStatementString =
@@ -138,6 +140,30 @@ const std::string castor::db::ora::OraTapeDriveCnv::s_checkTapeRequestExistState
 const std::string castor::db::ora::OraTapeDriveCnv::s_updateTapeRequestStatementString =
 "UPDATE TapeDrive SET runningTapeReq = :1 WHERE id = :2";
 
+/// SQL select statement for member errorHistory
+const std::string castor::db::ora::OraTapeDriveCnv::s_selectErrorHistoryStatementString =
+"SELECT id from ErrorHistory WHERE tapeDrive = :1 FOR UPDATE";
+
+/// SQL delete statement for member errorHistory
+const std::string castor::db::ora::OraTapeDriveCnv::s_deleteErrorHistoryStatementString =
+"UPDATE ErrorHistory SET tapeDrive = 0 WHERE id = :1";
+
+/// SQL remote update statement for member errorHistory
+const std::string castor::db::ora::OraTapeDriveCnv::s_remoteUpdateErrorHistoryStatementString =
+"UPDATE ErrorHistory SET tapeDrive = :1 WHERE id = :2";
+
+/// SQL select statement for member tapeDriveDedication
+const std::string castor::db::ora::OraTapeDriveCnv::s_selectTapeDriveDedicationStatementString =
+"SELECT id from TapeDriveDedication WHERE tapeDrive = :1 FOR UPDATE";
+
+/// SQL delete statement for member tapeDriveDedication
+const std::string castor::db::ora::OraTapeDriveCnv::s_deleteTapeDriveDedicationStatementString =
+"UPDATE TapeDriveDedication SET tapeDrive = 0 WHERE id = :1";
+
+/// SQL remote update statement for member tapeDriveDedication
+const std::string castor::db::ora::OraTapeDriveCnv::s_remoteUpdateTapeDriveDedicationStatementString =
+"UPDATE TapeDriveDedication SET tapeDrive = :1 WHERE id = :2";
+
 /// SQL existence statement for member tapeServer
 const std::string castor::db::ora::OraTapeDriveCnv::s_checkTapeServerExistStatementString =
 "SELECT id from TapeServer WHERE id = :1";
@@ -178,6 +204,12 @@ castor::db::ora::OraTapeDriveCnv::OraTapeDriveCnv(castor::ICnvSvc* cnvSvc) :
   m_remoteUpdateTapeRequestStatement(0),
   m_checkTapeRequestExistStatement(0),
   m_updateTapeRequestStatement(0),
+  m_selectErrorHistoryStatement(0),
+  m_deleteErrorHistoryStatement(0),
+  m_remoteUpdateErrorHistoryStatement(0),
+  m_selectTapeDriveDedicationStatement(0),
+  m_deleteTapeDriveDedicationStatement(0),
+  m_remoteUpdateTapeDriveDedicationStatement(0),
   m_checkTapeServerExistStatement(0),
   m_updateTapeServerStatement(0),
   m_checkClientIdentificationExistStatement(0),
@@ -216,6 +248,12 @@ void castor::db::ora::OraTapeDriveCnv::reset() throw() {
     deleteStatement(m_remoteUpdateTapeRequestStatement);
     deleteStatement(m_checkTapeRequestExistStatement);
     deleteStatement(m_updateTapeRequestStatement);
+    deleteStatement(m_deleteErrorHistoryStatement);
+    deleteStatement(m_selectErrorHistoryStatement);
+    deleteStatement(m_remoteUpdateErrorHistoryStatement);
+    deleteStatement(m_deleteTapeDriveDedicationStatement);
+    deleteStatement(m_selectTapeDriveDedicationStatement);
+    deleteStatement(m_remoteUpdateTapeDriveDedicationStatement);
     deleteStatement(m_checkTapeServerExistStatement);
     deleteStatement(m_updateTapeServerStatement);
     deleteStatement(m_checkClientIdentificationExistStatement);
@@ -241,6 +279,12 @@ void castor::db::ora::OraTapeDriveCnv::reset() throw() {
   m_remoteUpdateTapeRequestStatement = 0;
   m_checkTapeRequestExistStatement = 0;
   m_updateTapeRequestStatement = 0;
+  m_selectErrorHistoryStatement = 0;
+  m_deleteErrorHistoryStatement = 0;
+  m_remoteUpdateErrorHistoryStatement = 0;
+  m_selectTapeDriveDedicationStatement = 0;
+  m_deleteTapeDriveDedicationStatement = 0;
+  m_remoteUpdateTapeDriveDedicationStatement = 0;
   m_checkTapeServerExistStatement = 0;
   m_updateTapeServerStatement = 0;
   m_checkClientIdentificationExistStatement = 0;
@@ -281,6 +325,12 @@ void castor::db::ora::OraTapeDriveCnv::fillRep(castor::IAddress* address,
       break;
     case castor::OBJ_TapeRequest :
       fillRepTapeRequest(obj);
+      break;
+    case castor::OBJ_ErrorHistory :
+      fillRepErrorHistory(obj);
+      break;
+    case castor::OBJ_TapeDriveDedication :
+      fillRepTapeDriveDedication(obj);
       break;
     case castor::OBJ_TapeServer :
       fillRepTapeServer(obj);
@@ -480,6 +530,106 @@ void castor::db::ora::OraTapeDriveCnv::fillRepTapeRequest(castor::vdqm::TapeDriv
 }
 
 //------------------------------------------------------------------------------
+// fillRepErrorHistory
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapeDriveCnv::fillRepErrorHistory(castor::vdqm::TapeDrive* obj)
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
+  // check select statement
+  if (0 == m_selectErrorHistoryStatement) {
+    m_selectErrorHistoryStatement = createStatement(s_selectErrorHistoryStatementString);
+  }
+  // Get current database data
+  std::set<int> errorHistoryList;
+  m_selectErrorHistoryStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectErrorHistoryStatement->executeQuery();
+  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    errorHistoryList.insert(rset->getInt(1));
+  }
+  m_selectErrorHistoryStatement->closeResultSet(rset);
+  // update errorHistory and create new ones
+  for (std::vector<castor::vdqm::ErrorHistory*>::iterator it = obj->errorHistory().begin();
+       it != obj->errorHistory().end();
+       it++) {
+    if (0 == (*it)->id()) {
+      cnvSvc()->createRep(0, *it, false, OBJ_TapeDrive);
+    } else {
+      // Check remote update statement
+      if (0 == m_remoteUpdateErrorHistoryStatement) {
+        m_remoteUpdateErrorHistoryStatement = createStatement(s_remoteUpdateErrorHistoryStatementString);
+      }
+      // Update remote object
+      m_remoteUpdateErrorHistoryStatement->setDouble(1, obj->id());
+      m_remoteUpdateErrorHistoryStatement->setDouble(2, (*it)->id());
+      m_remoteUpdateErrorHistoryStatement->executeUpdate();
+      std::set<int>::iterator item;
+      if ((item = errorHistoryList.find((*it)->id())) != errorHistoryList.end()) {
+        errorHistoryList.erase(item);
+      }
+    }
+  }
+  // Delete old links
+  for (std::set<int>::iterator it = errorHistoryList.begin();
+       it != errorHistoryList.end();
+       it++) {
+    if (0 == m_deleteErrorHistoryStatement) {
+      m_deleteErrorHistoryStatement = createStatement(s_deleteErrorHistoryStatementString);
+    }
+    m_deleteErrorHistoryStatement->setDouble(1, *it);
+    m_deleteErrorHistoryStatement->executeUpdate();
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillRepTapeDriveDedication
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapeDriveCnv::fillRepTapeDriveDedication(castor::vdqm::TapeDrive* obj)
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
+  // check select statement
+  if (0 == m_selectTapeDriveDedicationStatement) {
+    m_selectTapeDriveDedicationStatement = createStatement(s_selectTapeDriveDedicationStatementString);
+  }
+  // Get current database data
+  std::set<int> tapeDriveDedicationList;
+  m_selectTapeDriveDedicationStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectTapeDriveDedicationStatement->executeQuery();
+  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    tapeDriveDedicationList.insert(rset->getInt(1));
+  }
+  m_selectTapeDriveDedicationStatement->closeResultSet(rset);
+  // update tapeDriveDedication and create new ones
+  for (std::vector<castor::vdqm::TapeDriveDedication*>::iterator it = obj->tapeDriveDedication().begin();
+       it != obj->tapeDriveDedication().end();
+       it++) {
+    if (0 == (*it)->id()) {
+      cnvSvc()->createRep(0, *it, false, OBJ_TapeDrive);
+    } else {
+      // Check remote update statement
+      if (0 == m_remoteUpdateTapeDriveDedicationStatement) {
+        m_remoteUpdateTapeDriveDedicationStatement = createStatement(s_remoteUpdateTapeDriveDedicationStatementString);
+      }
+      // Update remote object
+      m_remoteUpdateTapeDriveDedicationStatement->setDouble(1, obj->id());
+      m_remoteUpdateTapeDriveDedicationStatement->setDouble(2, (*it)->id());
+      m_remoteUpdateTapeDriveDedicationStatement->executeUpdate();
+      std::set<int>::iterator item;
+      if ((item = tapeDriveDedicationList.find((*it)->id())) != tapeDriveDedicationList.end()) {
+        tapeDriveDedicationList.erase(item);
+      }
+    }
+  }
+  // Delete old links
+  for (std::set<int>::iterator it = tapeDriveDedicationList.begin();
+       it != tapeDriveDedicationList.end();
+       it++) {
+    if (0 == m_deleteTapeDriveDedicationStatement) {
+      m_deleteTapeDriveDedicationStatement = createStatement(s_deleteTapeDriveDedicationStatementString);
+    }
+    m_deleteTapeDriveDedicationStatement->setDouble(1, *it);
+    m_deleteTapeDriveDedicationStatement->executeUpdate();
+  }
+}
+
+//------------------------------------------------------------------------------
 // fillRepTapeServer
 //------------------------------------------------------------------------------
 void castor::db::ora::OraTapeDriveCnv::fillRepTapeServer(castor::vdqm::TapeDrive* obj)
@@ -562,6 +712,12 @@ void castor::db::ora::OraTapeDriveCnv::fillObj(castor::IAddress* address,
   case castor::OBJ_TapeRequest :
     fillObjTapeRequest(obj);
     break;
+  case castor::OBJ_ErrorHistory :
+    fillObjErrorHistory(obj);
+    break;
+  case castor::OBJ_TapeDriveDedication :
+    fillObjTapeDriveDedication(obj);
+    break;
   case castor::OBJ_TapeServer :
     fillObjTapeServer(obj);
     break;
@@ -594,7 +750,7 @@ void castor::db::ora::OraTapeDriveCnv::fillObjTape(castor::vdqm::TapeDrive* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeId = (u_signed64)rset->getDouble(25);
+  u_signed64 tapeId = (u_signed64)rset->getDouble(11);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -680,7 +836,7 @@ void castor::db::ora::OraTapeDriveCnv::fillObjTapeRequest(castor::vdqm::TapeDriv
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 runningTapeReqId = (u_signed64)rset->getDouble(26);
+  u_signed64 runningTapeReqId = (u_signed64)rset->getDouble(12);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -704,6 +860,106 @@ void castor::db::ora::OraTapeDriveCnv::fillObjTapeRequest(castor::vdqm::TapeDriv
 }
 
 //------------------------------------------------------------------------------
+// fillObjErrorHistory
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapeDriveCnv::fillObjErrorHistory(castor::vdqm::TapeDrive* obj)
+  throw (castor::exception::Exception) {
+  // Check select statement
+  if (0 == m_selectErrorHistoryStatement) {
+    m_selectErrorHistoryStatement = createStatement(s_selectErrorHistoryStatementString);
+  }
+  // retrieve the object from the database
+  std::set<int> errorHistoryList;
+  m_selectErrorHistoryStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectErrorHistoryStatement->executeQuery();
+  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    errorHistoryList.insert(rset->getInt(1));
+  }
+  // Close ResultSet
+  m_selectErrorHistoryStatement->closeResultSet(rset);
+  // Update objects and mark old ones for deletion
+  std::vector<castor::vdqm::ErrorHistory*> toBeDeleted;
+  for (std::vector<castor::vdqm::ErrorHistory*>::iterator it = obj->errorHistory().begin();
+       it != obj->errorHistory().end();
+       it++) {
+    std::set<int>::iterator item;
+    if ((item = errorHistoryList.find((*it)->id())) == errorHistoryList.end()) {
+      toBeDeleted.push_back(*it);
+    } else {
+      errorHistoryList.erase(item);
+      cnvSvc()->updateObj((*it));
+    }
+  }
+  // Delete old objects
+  for (std::vector<castor::vdqm::ErrorHistory*>::iterator it = toBeDeleted.begin();
+       it != toBeDeleted.end();
+       it++) {
+    obj->removeErrorHistory(*it);
+    (*it)->setTapeDrive(0);
+  }
+  // Create new objects
+  for (std::set<int>::iterator it = errorHistoryList.begin();
+       it != errorHistoryList.end();
+       it++) {
+    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::vdqm::ErrorHistory* remoteObj = 
+      dynamic_cast<castor::vdqm::ErrorHistory*>(item);
+    obj->addErrorHistory(remoteObj);
+    remoteObj->setTapeDrive(obj);
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObjTapeDriveDedication
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapeDriveCnv::fillObjTapeDriveDedication(castor::vdqm::TapeDrive* obj)
+  throw (castor::exception::Exception) {
+  // Check select statement
+  if (0 == m_selectTapeDriveDedicationStatement) {
+    m_selectTapeDriveDedicationStatement = createStatement(s_selectTapeDriveDedicationStatementString);
+  }
+  // retrieve the object from the database
+  std::set<int> tapeDriveDedicationList;
+  m_selectTapeDriveDedicationStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectTapeDriveDedicationStatement->executeQuery();
+  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    tapeDriveDedicationList.insert(rset->getInt(1));
+  }
+  // Close ResultSet
+  m_selectTapeDriveDedicationStatement->closeResultSet(rset);
+  // Update objects and mark old ones for deletion
+  std::vector<castor::vdqm::TapeDriveDedication*> toBeDeleted;
+  for (std::vector<castor::vdqm::TapeDriveDedication*>::iterator it = obj->tapeDriveDedication().begin();
+       it != obj->tapeDriveDedication().end();
+       it++) {
+    std::set<int>::iterator item;
+    if ((item = tapeDriveDedicationList.find((*it)->id())) == tapeDriveDedicationList.end()) {
+      toBeDeleted.push_back(*it);
+    } else {
+      tapeDriveDedicationList.erase(item);
+      cnvSvc()->updateObj((*it));
+    }
+  }
+  // Delete old objects
+  for (std::vector<castor::vdqm::TapeDriveDedication*>::iterator it = toBeDeleted.begin();
+       it != toBeDeleted.end();
+       it++) {
+    obj->removeTapeDriveDedication(*it);
+    (*it)->setTapeDrive(0);
+  }
+  // Create new objects
+  for (std::set<int>::iterator it = tapeDriveDedicationList.begin();
+       it != tapeDriveDedicationList.end();
+       it++) {
+    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::vdqm::TapeDriveDedication* remoteObj = 
+      dynamic_cast<castor::vdqm::TapeDriveDedication*>(item);
+    obj->addTapeDriveDedication(remoteObj);
+    remoteObj->setTapeDrive(obj);
+  }
+}
+
+//------------------------------------------------------------------------------
 // fillObjTapeServer
 //------------------------------------------------------------------------------
 void castor::db::ora::OraTapeDriveCnv::fillObjTapeServer(castor::vdqm::TapeDrive* obj)
@@ -720,7 +976,7 @@ void castor::db::ora::OraTapeDriveCnv::fillObjTapeServer(castor::vdqm::TapeDrive
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeServerId = (u_signed64)rset->getDouble(28);
+  u_signed64 tapeServerId = (u_signed64)rset->getDouble(14);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -760,7 +1016,7 @@ void castor::db::ora::OraTapeDriveCnv::fillObjClientIdentification(castor::vdqm:
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = (u_signed64)rset->getDouble(29);
+  u_signed64 clientId = (u_signed64)rset->getDouble(15);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -798,7 +1054,7 @@ void castor::db::ora::OraTapeDriveCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(29, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(15, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -811,29 +1067,15 @@ void castor::db::ora::OraTapeDriveCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(5, obj->errcount());
     m_insertStatement->setInt(6, obj->transferredMB());
     m_insertStatement->setDouble(7, obj->totalMB());
-    m_insertStatement->setString(8, obj->dedicate());
-    m_insertStatement->setString(9, obj->newDedicate());
-    m_insertStatement->setInt(10, obj->is_uid());
-    m_insertStatement->setInt(11, obj->is_gid());
-    m_insertStatement->setInt(12, obj->is_name());
-    m_insertStatement->setInt(13, obj->no_uid());
-    m_insertStatement->setInt(14, obj->no_gid());
-    m_insertStatement->setInt(15, obj->no_name());
-    m_insertStatement->setInt(16, obj->no_host());
-    m_insertStatement->setInt(17, obj->no_vid());
-    m_insertStatement->setInt(18, obj->no_mode());
-    m_insertStatement->setInt(19, obj->no_date());
-    m_insertStatement->setInt(20, obj->no_time());
-    m_insertStatement->setInt(21, obj->no_age());
-    m_insertStatement->setString(22, obj->driveName());
-    m_insertStatement->setInt(23, obj->tapeAccessMode());
-    m_insertStatement->setDouble(24, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
-    m_insertStatement->setDouble(25, (type == OBJ_TapeRequest && obj->runningTapeReq() != 0) ? obj->runningTapeReq()->id() : 0);
-    m_insertStatement->setInt(26, (int)obj->status());
-    m_insertStatement->setDouble(27, (type == OBJ_TapeServer && obj->tapeServer() != 0) ? obj->tapeServer()->id() : 0);
-    m_insertStatement->setDouble(28, (type == OBJ_ClientIdentification && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setString(8, obj->driveName());
+    m_insertStatement->setInt(9, obj->tapeAccessMode());
+    m_insertStatement->setDouble(10, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
+    m_insertStatement->setDouble(11, (type == OBJ_TapeRequest && obj->runningTapeReq() != 0) ? obj->runningTapeReq()->id() : 0);
+    m_insertStatement->setInt(12, (int)obj->status());
+    m_insertStatement->setDouble(13, (type == OBJ_TapeServer && obj->tapeServer() != 0) ? obj->tapeServer()->id() : 0);
+    m_insertStatement->setDouble(14, (type == OBJ_ClientIdentification && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(29));
+    obj->setId((u_signed64)m_insertStatement->getDouble(15));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -865,20 +1107,6 @@ void castor::db::ora::OraTapeDriveCnv::createRep(castor::IAddress* address,
                     << "  errcount : " << obj->errcount() << std::endl
                     << "  transferredMB : " << obj->transferredMB() << std::endl
                     << "  totalMB : " << obj->totalMB() << std::endl
-                    << "  dedicate : " << obj->dedicate() << std::endl
-                    << "  newDedicate : " << obj->newDedicate() << std::endl
-                    << "  is_uid : " << obj->is_uid() << std::endl
-                    << "  is_gid : " << obj->is_gid() << std::endl
-                    << "  is_name : " << obj->is_name() << std::endl
-                    << "  no_uid : " << obj->no_uid() << std::endl
-                    << "  no_gid : " << obj->no_gid() << std::endl
-                    << "  no_name : " << obj->no_name() << std::endl
-                    << "  no_host : " << obj->no_host() << std::endl
-                    << "  no_vid : " << obj->no_vid() << std::endl
-                    << "  no_mode : " << obj->no_mode() << std::endl
-                    << "  no_date : " << obj->no_date() << std::endl
-                    << "  no_time : " << obj->no_time() << std::endl
-                    << "  no_age : " << obj->no_age() << std::endl
                     << "  driveName : " << obj->driveName() << std::endl
                     << "  tapeAccessMode : " << obj->tapeAccessMode() << std::endl
                     << "  id : " << obj->id() << std::endl
@@ -915,24 +1143,10 @@ void castor::db::ora::OraTapeDriveCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(5, obj->errcount());
     m_updateStatement->setInt(6, obj->transferredMB());
     m_updateStatement->setDouble(7, obj->totalMB());
-    m_updateStatement->setString(8, obj->dedicate());
-    m_updateStatement->setString(9, obj->newDedicate());
-    m_updateStatement->setInt(10, obj->is_uid());
-    m_updateStatement->setInt(11, obj->is_gid());
-    m_updateStatement->setInt(12, obj->is_name());
-    m_updateStatement->setInt(13, obj->no_uid());
-    m_updateStatement->setInt(14, obj->no_gid());
-    m_updateStatement->setInt(15, obj->no_name());
-    m_updateStatement->setInt(16, obj->no_host());
-    m_updateStatement->setInt(17, obj->no_vid());
-    m_updateStatement->setInt(18, obj->no_mode());
-    m_updateStatement->setInt(19, obj->no_date());
-    m_updateStatement->setInt(20, obj->no_time());
-    m_updateStatement->setInt(21, obj->no_age());
-    m_updateStatement->setString(22, obj->driveName());
-    m_updateStatement->setInt(23, obj->tapeAccessMode());
-    m_updateStatement->setInt(24, (int)obj->status());
-    m_updateStatement->setDouble(25, obj->id());
+    m_updateStatement->setString(8, obj->driveName());
+    m_updateStatement->setInt(9, obj->tapeAccessMode());
+    m_updateStatement->setInt(10, (int)obj->status());
+    m_updateStatement->setDouble(11, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -1041,24 +1255,10 @@ castor::IObject* castor::db::ora::OraTapeDriveCnv::createObj(castor::IAddress* a
     object->setErrcount(rset->getInt(5));
     object->setTransferredMB(rset->getInt(6));
     object->setTotalMB((u_signed64)rset->getDouble(7));
-    object->setDedicate(rset->getString(8));
-    object->setNewDedicate(rset->getString(9));
-    object->setIs_uid(rset->getInt(10));
-    object->setIs_gid(rset->getInt(11));
-    object->setIs_name(rset->getInt(12));
-    object->setNo_uid(rset->getInt(13));
-    object->setNo_gid(rset->getInt(14));
-    object->setNo_name(rset->getInt(15));
-    object->setNo_host(rset->getInt(16));
-    object->setNo_vid(rset->getInt(17));
-    object->setNo_mode(rset->getInt(18));
-    object->setNo_date(rset->getInt(19));
-    object->setNo_time(rset->getInt(20));
-    object->setNo_age(rset->getInt(21));
-    object->setDriveName(rset->getString(22));
-    object->setTapeAccessMode(rset->getInt(23));
-    object->setId((u_signed64)rset->getDouble(24));
-    object->setStatus((enum castor::vdqm::TapeDriveStatusCodes)rset->getInt(27));
+    object->setDriveName(rset->getString(8));
+    object->setTapeAccessMode(rset->getInt(9));
+    object->setId((u_signed64)rset->getDouble(10));
+    object->setStatus((enum castor::vdqm::TapeDriveStatusCodes)rset->getInt(13));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -1111,24 +1311,10 @@ void castor::db::ora::OraTapeDriveCnv::updateObj(castor::IObject* obj)
     object->setErrcount(rset->getInt(5));
     object->setTransferredMB(rset->getInt(6));
     object->setTotalMB((u_signed64)rset->getDouble(7));
-    object->setDedicate(rset->getString(8));
-    object->setNewDedicate(rset->getString(9));
-    object->setIs_uid(rset->getInt(10));
-    object->setIs_gid(rset->getInt(11));
-    object->setIs_name(rset->getInt(12));
-    object->setNo_uid(rset->getInt(13));
-    object->setNo_gid(rset->getInt(14));
-    object->setNo_name(rset->getInt(15));
-    object->setNo_host(rset->getInt(16));
-    object->setNo_vid(rset->getInt(17));
-    object->setNo_mode(rset->getInt(18));
-    object->setNo_date(rset->getInt(19));
-    object->setNo_time(rset->getInt(20));
-    object->setNo_age(rset->getInt(21));
-    object->setDriveName(rset->getString(22));
-    object->setTapeAccessMode(rset->getInt(23));
-    object->setId((u_signed64)rset->getDouble(24));
-    object->setStatus((enum castor::vdqm::TapeDriveStatusCodes)rset->getInt(27));
+    object->setDriveName(rset->getString(8));
+    object->setTapeAccessMode(rset->getInt(9));
+    object->setId((u_signed64)rset->getDouble(10));
+    object->setStatus((enum castor::vdqm::TapeDriveStatusCodes)rset->getInt(13));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

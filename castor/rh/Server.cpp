@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2005/04/18 14:56:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2005/07/21 09:13:05 $ $Author: itglp $
  *
  *
  *
@@ -94,7 +94,7 @@ castor::rh::Server::Server() :
   castor::dlf::Message messages[] =
     {{ 0, " - "},
      { 1, "New Request Arrival"},
-     { 2, "Could not get Conversion Service for Oracle"},
+     { 2, "Could not get Conversion Service for a database"},
      { 3, "Could not get Conversion Service for Streaming"},
      { 4, "Exception caught : server is stopping"},
      { 5, "Exception caught : ignored"},
@@ -117,7 +117,7 @@ int castor::rh::Server::main () {
     // create oracle and streaming conversion service
     // so that it is not deleted and recreated all the time
     castor::ICnvSvc *svc =
-      svcs()->cnvService("OraCnvSvc", castor::SVC_ORACNV);
+      svcs()->cnvService("DbCnvSvc", castor::SVC_DBCNV);
     if (0 == svc) {
       // "Could not get Conversion Service for Oracle" message
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2);
@@ -280,8 +280,8 @@ void castor::rh::Server::handleRequest
   throw (castor::exception::Exception) {
   // Stores it into Oracle
   castor::BaseAddress ad;
-  ad.setCnvSvcName("OraCnvSvc");
-  ad.setCnvSvcType(castor::SVC_ORACNV);
+  ad.setCnvSvcName("DbCnvSvc");
+  ad.setCnvSvcType(castor::SVC_DBCNV);
   try {
     svcs()->createRep(&ad, fr, false);
     // Store files for file requests

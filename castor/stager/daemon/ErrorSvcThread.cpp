@@ -1,5 +1,5 @@
 /*
- * $Id: ErrorSvcThread.cpp,v 1.8 2005/06/03 08:45:00 sponcec3 Exp $
+ * $Id: ErrorSvcThread.cpp,v 1.9 2005/07/21 09:13:11 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.8 $ $Date: 2005/06/03 08:45:00 $ CERN IT-FIO/DS Sebastien Ponce";
+static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.9 $ $Date: 2005/07/21 09:13:11 $ CERN IT-FIO/DS Sebastien Ponce";
 #endif
 
 /* ================================================================= */
@@ -86,7 +86,7 @@ EXTERN_C int DLL_DECL stager_error_select(void **output) {
     STAGER_LOG_VERBOSE(NULL,"Loading services");
     svcs = castor::BaseObject::services();
     castor::IService* svc =
-      svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
+      svcs->service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
     stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
 
 
@@ -165,11 +165,11 @@ EXTERN_C int DLL_DECL stager_error_process(void *output) {
   castor::stager::IStagerSvc *stgSvc = 0;
   castor::IClient *client = 0;
 
-  /* Setting the address to access Oracle */
-  /* ------------------------------------ */
+  /* Setting the address to access db */
+  /* -------------------------------- */
   castor::BaseAddress ad;
-  ad.setCnvSvcName("OraCnvSvc");
-  ad.setCnvSvcType(castor::SVC_ORACNV);
+  ad.setCnvSvcName("DbCnvSvc");
+  ad.setCnvSvcType(castor::SVC_DBCNV);
 
   try {
 
@@ -178,7 +178,7 @@ EXTERN_C int DLL_DECL stager_error_process(void *output) {
     STAGER_LOG_VERBOSE(NULL,"Loading services");
     svcs = castor::BaseObject::services();
     castor::IService* svc =
-      svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
+      svcs->service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
     stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
 
     /* Casting the subRequest */

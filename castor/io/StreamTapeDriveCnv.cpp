@@ -41,8 +41,10 @@
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
+#include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/ExtendedDeviceGroup.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
+#include "castor/vdqm/TapeDriveDedication.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
@@ -103,20 +105,6 @@ void castor::io::StreamTapeDriveCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->errcount();
   ad->stream() << obj->transferredMB();
   ad->stream() << obj->totalMB();
-  ad->stream() << obj->dedicate();
-  ad->stream() << obj->newDedicate();
-  ad->stream() << obj->is_uid();
-  ad->stream() << obj->is_gid();
-  ad->stream() << obj->is_name();
-  ad->stream() << obj->no_uid();
-  ad->stream() << obj->no_gid();
-  ad->stream() << obj->no_name();
-  ad->stream() << obj->no_host();
-  ad->stream() << obj->no_vid();
-  ad->stream() << obj->no_mode();
-  ad->stream() << obj->no_date();
-  ad->stream() << obj->no_time();
-  ad->stream() << obj->no_age();
   ad->stream() << obj->driveName();
   ad->stream() << obj->tapeAccessMode();
   ad->stream() << obj->id();
@@ -154,48 +142,6 @@ castor::IObject* castor::io::StreamTapeDriveCnv::createObj(castor::IAddress* add
   u_signed64 totalMB;
   ad->stream() >> totalMB;
   object->setTotalMB(totalMB);
-  std::string dedicate;
-  ad->stream() >> dedicate;
-  object->setDedicate(dedicate);
-  std::string newDedicate;
-  ad->stream() >> newDedicate;
-  object->setNewDedicate(newDedicate);
-  short is_uid;
-  ad->stream() >> is_uid;
-  object->setIs_uid(is_uid);
-  short is_gid;
-  ad->stream() >> is_gid;
-  object->setIs_gid(is_gid);
-  short is_name;
-  ad->stream() >> is_name;
-  object->setIs_name(is_name);
-  short no_uid;
-  ad->stream() >> no_uid;
-  object->setNo_uid(no_uid);
-  short no_gid;
-  ad->stream() >> no_gid;
-  object->setNo_gid(no_gid);
-  short no_name;
-  ad->stream() >> no_name;
-  object->setNo_name(no_name);
-  short no_host;
-  ad->stream() >> no_host;
-  object->setNo_host(no_host);
-  short no_vid;
-  ad->stream() >> no_vid;
-  object->setNo_vid(no_vid);
-  short no_mode;
-  ad->stream() >> no_mode;
-  object->setNo_mode(no_mode);
-  short no_date;
-  ad->stream() >> no_date;
-  object->setNo_date(no_date);
-  short no_time;
-  ad->stream() >> no_time;
-  object->setNo_time(no_time);
-  short no_age;
-  ad->stream() >> no_age;
-  object->setNo_age(no_age);
   std::string driveName;
   ad->stream() >> driveName;
   object->setDriveName(driveName);
@@ -236,6 +182,18 @@ void castor::io::StreamTapeDriveCnv::marshalObject(castor::IObject* object,
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
     cnvSvc()->marshalObject(obj->runningTapeReq(), address, alreadyDone);
+    address->stream() << obj->errorHistory().size();
+    for (std::vector<castor::vdqm::ErrorHistory*>::iterator it = obj->errorHistory().begin();
+         it != obj->errorHistory().end();
+         it++) {
+      cnvSvc()->marshalObject(*it, address, alreadyDone);
+    }
+    address->stream() << obj->tapeDriveDedication().size();
+    for (std::vector<castor::vdqm::TapeDriveDedication*>::iterator it = obj->tapeDriveDedication().begin();
+         it != obj->tapeDriveDedication().end();
+         it++) {
+      cnvSvc()->marshalObject(*it, address, alreadyDone);
+    }
     cnvSvc()->marshalObject(obj->tapeServer(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->client(), address, alreadyDone);
   } else {
@@ -270,6 +228,20 @@ castor::IObject* castor::io::StreamTapeDriveCnv::unmarshalObject(castor::io::bin
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objRunningTapeReq = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setRunningTapeReq(dynamic_cast<castor::vdqm::TapeRequest*>(objRunningTapeReq));
+  unsigned int errorHistoryNb;
+  ad.stream() >> errorHistoryNb;
+  for (unsigned int i = 0; i < errorHistoryNb; i++) {
+    ad.setObjType(castor::OBJ_INVALID);
+    IObject* objErrorHistory = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addErrorHistory(dynamic_cast<castor::vdqm::ErrorHistory*>(objErrorHistory));
+  }
+  unsigned int tapeDriveDedicationNb;
+  ad.stream() >> tapeDriveDedicationNb;
+  for (unsigned int i = 0; i < tapeDriveDedicationNb; i++) {
+    ad.setObjType(castor::OBJ_INVALID);
+    IObject* objTapeDriveDedication = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addTapeDriveDedication(dynamic_cast<castor::vdqm::TapeDriveDedication*>(objTapeDriveDedication));
+  }
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objTapeServer = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setTapeServer(dynamic_cast<castor::vdqm::TapeServer*>(objTapeServer));

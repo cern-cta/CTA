@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.3 $ $Release$ $Date: 2005/05/02 13:19:46 $ $Author: obarring $
+ * @(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.4 $ $Release$ $Date: 2005/07/21 09:13:06 $ $Author: itglp $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.3 $ $Release$ $Date: 2005/05/02 13:19:46 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.4 $ $Release$ $Date: 2005/07/21 09:13:06 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -41,7 +41,7 @@ static char sccsid[] = "@(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.3 $ $Rel
 #include <castor/BaseObject.h>
 #include <castor/stager/FileClass.h>
 #include <castor/stager/TapeCopy.h>
-#include <castor/stager/IStagerSvc.h>
+#include <castor/stager/IFSSvc.h>
 #include <castor/Services.h>
 #include <castor/BaseAddress.h>
 #include <castor/IAddress.h>
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj = NULL;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_IFSSvc_t *fsSvc = NULL;
   struct C_Services_t *svcs = NULL;
   struct C_IService_t *iSvc = NULL;
   struct Cstager_FileClass_t *fileClass = NULL, *fileClassOld = NULL;
@@ -114,14 +114,14 @@ int main(int argc, char *argv[])
             sstrerror(serrno));
     return(1);
   }
-  rc = C_Services_service(svcs,"OraStagerSvc",SVC_ORASTAGERSVC,&iSvc);
+  rc = C_Services_service(svcs,"DBStagerSvc",SVC_ORAFSSVC,&iSvc);
   if ( rc == -1 ) {
-    fprintf(stderr,"Cannot create stager svc: %s, %s\n",
+    fprintf(stderr,"Cannot create fs svc: %s, %s\n",
             sstrerror(serrno),
             C_Services_errorMsg(svcs));
     return(1);
   }
-  stgSvc = Cstager_IStagerSvc_fromIService(iSvc);
+  fsSvc = Cstager_IFSSvc_fromIService(iSvc);
     
   Cstager_FileClass_create(&fileClass);
   while ((ch = Cgetopt_long(argc,argv,"h",longopts,NULL)) != EOF) {
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  rc = Cstager_IStagerSvc_selectFileClass(stgSvc,&fileClassOld,name);
+  rc = Cstager_IFSSvc_selectFileClass(fsSvc,&fileClassOld,name);
   if ( fileClassOld != NULL ) {
     fprintf(stdout,
             "FileClass %s already exists, please use 'modifyFileClass' command\n"
@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
   rc = C_BaseAddress_create(&baseAddr);
   if ( rc == -1 ) return(-1);
 
-  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+  C_BaseAddress_setCnvSvcName(baseAddr,"DBCnvSvc");
   C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
   iObj = Cstager_FileClass_getIObject(fileClass);

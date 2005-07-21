@@ -43,6 +43,7 @@
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
+#include "castor/vdqm/ErrorHistory.hpp"
 #include "osdep.h"
 #include <string>
 #include <vector>
@@ -162,6 +163,12 @@ void castor::io::StreamTapeCnv::marshalObject(castor::IObject* object,
     // Mark object as done
     alreadyDone.insert(obj);
     cnvSvc()->marshalObject(obj->stream(), address, alreadyDone);
+    address->stream() << obj->errorHistory().size();
+    for (std::vector<castor::vdqm::ErrorHistory*>::iterator it = obj->errorHistory().begin();
+         it != obj->errorHistory().end();
+         it++) {
+      cnvSvc()->marshalObject(*it, address, alreadyDone);
+    }
     address->stream() << obj->segments().size();
     for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
          it != obj->segments().end();
@@ -190,6 +197,13 @@ castor::IObject* castor::io::StreamTapeCnv::unmarshalObject(castor::io::biniostr
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objStream = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setStream(dynamic_cast<castor::stager::Stream*>(objStream));
+  unsigned int errorHistoryNb;
+  ad.stream() >> errorHistoryNb;
+  for (unsigned int i = 0; i < errorHistoryNb; i++) {
+    ad.setObjType(castor::OBJ_INVALID);
+    IObject* objErrorHistory = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addErrorHistory(dynamic_cast<castor::vdqm::ErrorHistory*>(objErrorHistory));
+  }
   unsigned int segmentsNb;
   ad.stream() >> segmentsNb;
   for (unsigned int i = 0; i < segmentsNb; i++) {

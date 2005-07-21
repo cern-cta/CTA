@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.31 2005/07/11 09:26:12 jdurand Exp $
+ * $Id: JobSvcThread.cpp,v 1.32 2005/07/21 09:13:11 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.31 $ $Date: 2005/07/11 09:26:12 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.32 $ $Date: 2005/07/21 09:13:11 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -34,7 +34,7 @@ static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.31 $ $Dat
 #include "castor/IObject.hpp"
 #include "castor/IClient.hpp"
 #include "castor/IService.hpp"
-#include "castor/stager/IStagerSvc.hpp"
+#include "castor/stager/IJobSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/BaseObject.hpp"
@@ -91,7 +91,7 @@ EXTERN_C int DLL_DECL stager_job_select(void **output) {
 
   castor::stager::Request* req = 0;
   castor::Services *svcs;
-  castor::stager::IStagerSvc *stgSvc;
+  castor::stager::IJobSvc *jobSvc;
 
   try {
 
@@ -100,8 +100,8 @@ EXTERN_C int DLL_DECL stager_job_select(void **output) {
     STAGER_LOG_VERBOSE(NULL,"Loading services");
     svcs = castor::BaseObject::services();
     castor::IService* svc =
-      svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
-    stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
+      svcs->service("DbJobSvc", castor::SVC_DBJOBSVC);
+    jobSvc = dynamic_cast<castor::stager::IJobSvc*>(svc);
 
 
     /* Get any new request to do    */
@@ -116,7 +116,7 @@ EXTERN_C int DLL_DECL stager_job_select(void **output) {
     types.push_back(castor::OBJ_GetUpdateDone);
     types.push_back(castor::OBJ_GetUpdateFailed);
     types.push_back(castor::OBJ_PutFailed);
-    castor::stager::Request* req = stgSvc->requestToDo(types);
+    castor::stager::Request* req = jobSvc->requestToDo(types);
 
     if (0 == req) {
       /* Nothing to do */
@@ -147,7 +147,7 @@ EXTERN_C int DLL_DECL stager_job_select(void **output) {
   }
 
   // Cleanup
-  stgSvc->release();
+  jobSvc->release();
 
   // Return
   STAGER_LOG_RETURN(rc);
@@ -163,13 +163,13 @@ namespace castor {
      * @param req the request to handle
      * @param client the client where to send the response
      * @param svcs the Services object to use
-     * @param stgSvc the stager service to use
+     * @param jobSvc the stager service to use
      * @param ad the address where to load/store objects in the DB
      */
     void handle_startRequest(castor::stager::Request* req,
                              castor::IClient *client,
                              castor::Services* svcs,
-                             castor::stager::IStagerSvc* stgSvc,
+                             castor::stager::IJobSvc* jobSvc,
                              castor::BaseAddress &ad) {
       // Usefull Variables
       char *func =  "castor::stager::startRequest";
@@ -188,9 +188,9 @@ namespace castor {
         // cannot return 0 since we check the type before calling this method
         sReq = dynamic_cast<castor::stager::StartRequest*> (req);
 
-        /* Loading the subrequest from Oracle */
-        /* ---------------------------------- */
-        STAGER_LOG_VERBOSE(NULL, "Loading the subrequest from Oracle");
+        /* Loading the subrequest from db */
+        /* ------------------------------ */
+        STAGER_LOG_VERBOSE(NULL, "Loading the subrequest from db");
         ad.setTarget(sReq->subreqId());
         castor::IObject *obj = svcs->createObj(&ad);
         if (0 == obj) {
@@ -219,7 +219,7 @@ namespace castor {
         /* Getting the FileSystem Object      */
         /* ---------------------------------- */
         STAGER_LOG_VERBOSE(NULL, "Getting the FileSystem Object");
-        fs = stgSvc->selectFileSystem(sReq->fileSystem(),
+        fs = jobSvc->selectFileSystem(sReq->fileSystem(),
                                       sReq->diskServer());
         if (0==fs) {
           castor::exception::Internal e;
@@ -233,10 +233,10 @@ namespace castor {
         /* ---------------------------------- */
         if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
           STAGER_LOG_DEBUG(NULL, "Invoking getUpdateStart");
-          dc = stgSvc->getUpdateStart(subreq, fs, sources, &emptyFile);
+          dc = jobSvc->getUpdateStart(subreq, fs, sources, &emptyFile);
         } else {
           STAGER_LOG_DEBUG(NULL, "Invoking PutStart");
-          dc = stgSvc->putStart(subreq, fs);
+          dc = jobSvc->putStart(subreq, fs);
         }
 
         /* Fill DiskCopy with SubRequest           */
@@ -312,13 +312,13 @@ namespace castor {
      * @param req the request to handle
      * @param client the client where to send the response
      * @param svcs the Services object to use
-     * @param stgSvc the stager service to use
+     * @param jobSvc the stager service to use
      * @param ad the address where to load/store objects in the DB
      */
     void handle_putDoneStartRequest(castor::stager::Request* req,
 				    castor::IClient *client,
 				    castor::Services* svcs,
-				    castor::stager::IStagerSvc* stgSvc,
+				    castor::stager::IJobSvc* jobSvc,
 				    castor::BaseAddress &ad) {
       // Usefull Variables
       char *func =  "castor::stager::startRequest";
@@ -336,7 +336,7 @@ namespace castor {
         /* Invoking the method                */
         /* ---------------------------------- */
         STAGER_LOG_DEBUG(NULL, "Invoking putDoneStart");
-        dc = stgSvc->putDoneStart(sReq->subreqId());
+        dc = jobSvc->putDoneStart(sReq->subreqId());
 
         /* Fill DiskCopy with SubRequest           */
         /* --------------------------------------- */
@@ -386,13 +386,13 @@ namespace castor {
      * @param req the request to handle
      * @param client the client where to send the response
      * @param svcs the Services object to use
-     * @param stgSvc the stager service to use
+     * @param jobSvc the stager service to use
      * @param ad the address where to load/store objects in the DB
      */
     void handle_disk2DiskCopyDoneRequest(castor::stager::Request* req,
                                          castor::IClient *client,
                                          castor::Services* svcs,
-                                         castor::stager::IStagerSvc* stgSvc,
+                                         castor::stager::IJobSvc* jobSvc,
                                          castor::BaseAddress &ad) {
       // Usefull Variables
       char *func =  "castor::stager::disk2DiskCopyDoneRequest";
@@ -409,7 +409,7 @@ namespace castor {
         /* Invoking the method                */
         /* ---------------------------------- */
         STAGER_LOG_DEBUG(NULL, "Invoking disk2DiskCopyDone");
-        stgSvc->disk2DiskCopyDone(uReq->diskCopyId(), 
+        jobSvc->disk2DiskCopyDone(uReq->diskCopyId(), 
                                   (castor::stager::DiskCopyStatusCodes)uReq->status());
 
       } catch (castor::exception::Exception e) {
@@ -439,13 +439,13 @@ namespace castor {
      * @param req the request to handle
      * @param client the client where to send the response
      * @param svcs the Services object to use
-     * @param stgSvc the stager service to use
+     * @param jobSvc the stager service to use
      * @param ad the address where to load/store objects in the DB
      */
     void handle_moverCloseRequest(castor::stager::Request* req,
                                   castor::IClient *client,
                                   castor::Services* svcs,
-                                  castor::stager::IStagerSvc* stgSvc,
+                                  castor::stager::IJobSvc* jobSvc,
                                   castor::BaseAddress &ad) {
       // Usefull Variables
       char *func =  "castor::stager::moverCloseRequest";
@@ -460,9 +460,9 @@ namespace castor {
         // cannot return 0 since we check the type before calling this method
         mcReq = dynamic_cast<castor::stager::MoverCloseRequest*> (req);
 
-        /* Loading the subrequest from Oracle */
-        /* ---------------------------------- */
-        STAGER_LOG_VERBOSE(NULL, "Loading the subrequest from Oracle");
+        /* Loading the subrequest from db */
+        /* -------------------------------*/
+        STAGER_LOG_VERBOSE(NULL, "Loading the subrequest from db");
         ad.setTarget(mcReq->subReqId());
         castor::IObject *obj = svcs->createObj(&ad);
         if (0 == obj) {
@@ -491,7 +491,7 @@ namespace castor {
         /* Invoking the method                */
         /* ---------------------------------- */
         STAGER_LOG_DEBUG(NULL, "Invoking prepareForMigration");
-        stgSvc->prepareForMigration(subreq, mcReq->fileSize());
+        jobSvc->prepareForMigration(subreq, mcReq->fileSize());
 
         // Cleaning
         delete obj;
@@ -523,13 +523,13 @@ namespace castor {
      * @param req the request to handle
      * @param client the client where to send the response
      * @param svcs the Services object to use
-     * @param stgSvc the stager service to use
+     * @param jobSvc the stager service to use
      * @param ad the address where to load/store objects in the DB
      */
     void handle_getUpdateDoneRequest(castor::stager::Request* req,
                                      castor::IClient *client,
                                      castor::Services* svcs,
-                                     castor::stager::IStagerSvc* stgSvc,
+                                     castor::stager::IJobSvc* jobSvc,
                                      castor::BaseAddress &ad) {
       // Usefull Variables
       char *func =  "castor::stager::getUpdateDone";
@@ -546,7 +546,7 @@ namespace castor {
         /* Invoking the method                */
         /* ---------------------------------- */
         STAGER_LOG_DEBUG(NULL, "Invoking getUpdateDone");
-        stgSvc->getUpdateDone(uReq->subReqId());
+        jobSvc->getUpdateDone(uReq->subReqId());
 
       } catch (castor::exception::Exception e) {
         serrno = e.code();
@@ -575,13 +575,13 @@ namespace castor {
      * @param req the request to handle
      * @param client the client where to send the response
      * @param svcs the Services object to use
-     * @param stgSvc the stager service to use
+     * @param jobSvc the stager service to use
      * @param ad the address where to load/store objects in the DB
      */
     void handle_getUpdateFailedRequest(castor::stager::Request* req,
                                        castor::IClient *client,
                                        castor::Services* svcs,
-                                       castor::stager::IStagerSvc* stgSvc,
+                                       castor::stager::IJobSvc* jobSvc,
                                        castor::BaseAddress &ad) {
       // Usefull Variables
       char *func =  "castor::stager::getUpdateFailed";
@@ -598,7 +598,7 @@ namespace castor {
         /* Invoking the method                */
         /* ---------------------------------- */
         STAGER_LOG_DEBUG(NULL, "Invoking getUpdateFailed");
-        stgSvc->getUpdateFailed(uReq->subReqId());
+        jobSvc->getUpdateFailed(uReq->subReqId());
 
       } catch (castor::exception::Exception e) {
         serrno = e.code();
@@ -627,13 +627,13 @@ namespace castor {
      * @param req the request to handle
      * @param client the client where to send the response
      * @param svcs the Services object to use
-     * @param stgSvc the stager service to use
+     * @param jobSvc the stager service to use
      * @param ad the address where to load/store objects in the DB
      */
     void handle_putFailedRequest(castor::stager::Request* req,
                                  castor::IClient *client,
                                  castor::Services* svcs,
-                                 castor::stager::IStagerSvc* stgSvc,
+                                 castor::stager::IJobSvc* jobSvc,
                                  castor::BaseAddress &ad) {
       // Usefull Variables
       char *func =  "castor::stager::PutFailed";
@@ -650,7 +650,7 @@ namespace castor {
         /* Invoking the method                */
         /* ---------------------------------- */
         STAGER_LOG_DEBUG(NULL, "Invoking putFailed");
-        stgSvc->putFailed(uReq->subReqId());
+        jobSvc->putFailed(uReq->subReqId());
 
       } catch (castor::exception::Exception e) {
         serrno = e.code();
@@ -709,14 +709,14 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
 
   castor::stager::Request* req = 0;
   castor::Services *svcs = 0;
-  castor::stager::IStagerSvc *stgSvc = 0;
+  castor::stager::IJobSvc *jobSvc = 0;
   castor::IClient *client = 0;
 
-  /* Setting the address to access Oracle */
-  /* ------------------------------------ */
+  /* Setting the address to access db */
+  /* -------------------------------- */
   castor::BaseAddress ad;
-  ad.setCnvSvcName("OraCnvSvc");
-  ad.setCnvSvcType(castor::SVC_ORACNV);
+  ad.setCnvSvcName("DbCnvSvc");
+  ad.setCnvSvcType(castor::SVC_DBCNV);
 
   try {
 
@@ -725,8 +725,8 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
     STAGER_LOG_VERBOSE(NULL,"Loading services");
     svcs = castor::BaseObject::services();
     castor::IService* svc =
-      svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
-    stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
+      svcs->service("DbJobSvc", castor::SVC_DBJOBSVC);
+    jobSvc = dynamic_cast<castor::stager::IJobSvc*>(svc);
 
     /* Casting the request */
     /* ------------------- */
@@ -755,7 +755,7 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
     STAGER_LOG_DB_ERROR(NULL,"stager_job_select",
                         e.getMessage().str().c_str());
     if (req) delete req;
-    if (stgSvc) stgSvc->release();
+    if (jobSvc) jobSvc->release();
     return -1;
   }
 
@@ -771,37 +771,37 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
   case castor::OBJ_GetUpdateStartRequest:
   case castor::OBJ_PutStartRequest:
     castor::stager::handle_startRequest
-      (req, client, svcs, stgSvc, ad);
+      (req, client, svcs, jobSvc, ad);
     break;
 
   case castor::OBJ_Disk2DiskCopyDoneRequest:
     castor::stager::handle_disk2DiskCopyDoneRequest
-      (req, client, svcs, stgSvc, ad);
+      (req, client, svcs, jobSvc, ad);
     break;
 
   case castor::OBJ_MoverCloseRequest:
     castor::stager::handle_moverCloseRequest
-      (req, client, svcs, stgSvc, ad);
+      (req, client, svcs, jobSvc, ad);
     break;
 
   case castor::OBJ_GetUpdateDone:
     castor::stager::handle_getUpdateDoneRequest
-      (req, client, svcs, stgSvc, ad);
+      (req, client, svcs, jobSvc, ad);
     break;
 
   case castor::OBJ_GetUpdateFailed:
     castor::stager::handle_getUpdateFailedRequest
-      (req, client, svcs, stgSvc, ad);
+      (req, client, svcs, jobSvc, ad);
     break;
 
   case castor::OBJ_PutFailed:
     castor::stager::handle_putFailedRequest
-      (req, client, svcs, stgSvc, ad);
+      (req, client, svcs, jobSvc, ad);
     break;
 
   case castor::OBJ_PutDoneStart:
     castor::stager::handle_putDoneStartRequest
-      (req, client, svcs, stgSvc, ad);
+      (req, client, svcs, jobSvc, ad);
     break;
 
   default:
@@ -826,6 +826,6 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
 
   // Cleanup
   if (req) delete req;
-  if (stgSvc) stgSvc->release();
+  if (jobSvc) jobSvc->release();
   STAGER_LOG_RETURN(serrno == 0 ? 0 : -1);
 }

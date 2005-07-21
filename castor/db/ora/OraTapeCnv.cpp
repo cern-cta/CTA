@@ -44,6 +44,7 @@
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
+#include "castor/vdqm/ErrorHistory.hpp"
 #include <set>
 #include <vector>
 
@@ -101,6 +102,18 @@ const std::string castor::db::ora::OraTapeCnv::s_checkStreamExistStatementString
 const std::string castor::db::ora::OraTapeCnv::s_updateStreamStatementString =
 "UPDATE Tape SET stream = :1 WHERE id = :2";
 
+/// SQL select statement for member errorHistory
+const std::string castor::db::ora::OraTapeCnv::s_selectErrorHistoryStatementString =
+"SELECT id from ErrorHistory WHERE tape = :1 FOR UPDATE";
+
+/// SQL delete statement for member errorHistory
+const std::string castor::db::ora::OraTapeCnv::s_deleteErrorHistoryStatementString =
+"UPDATE ErrorHistory SET tape = 0 WHERE id = :1";
+
+/// SQL remote update statement for member errorHistory
+const std::string castor::db::ora::OraTapeCnv::s_remoteUpdateErrorHistoryStatementString =
+"UPDATE ErrorHistory SET tape = :1 WHERE id = :2";
+
 /// SQL select statement for member segments
 const std::string castor::db::ora::OraTapeCnv::s_selectSegmentStatementString =
 "SELECT id from Segment WHERE tape = :1 FOR UPDATE";
@@ -129,6 +142,9 @@ castor::db::ora::OraTapeCnv::OraTapeCnv(castor::ICnvSvc* cnvSvc) :
   m_remoteUpdateStreamStatement(0),
   m_checkStreamExistStatement(0),
   m_updateStreamStatement(0),
+  m_selectErrorHistoryStatement(0),
+  m_deleteErrorHistoryStatement(0),
+  m_remoteUpdateErrorHistoryStatement(0),
   m_selectSegmentStatement(0),
   m_deleteSegmentStatement(0),
   m_remoteUpdateSegmentStatement(0) {}
@@ -158,6 +174,9 @@ void castor::db::ora::OraTapeCnv::reset() throw() {
     deleteStatement(m_remoteUpdateStreamStatement);
     deleteStatement(m_checkStreamExistStatement);
     deleteStatement(m_updateStreamStatement);
+    deleteStatement(m_deleteErrorHistoryStatement);
+    deleteStatement(m_selectErrorHistoryStatement);
+    deleteStatement(m_remoteUpdateErrorHistoryStatement);
     deleteStatement(m_deleteSegmentStatement);
     deleteStatement(m_selectSegmentStatement);
     deleteStatement(m_remoteUpdateSegmentStatement);
@@ -174,6 +193,9 @@ void castor::db::ora::OraTapeCnv::reset() throw() {
   m_remoteUpdateStreamStatement = 0;
   m_checkStreamExistStatement = 0;
   m_updateStreamStatement = 0;
+  m_selectErrorHistoryStatement = 0;
+  m_deleteErrorHistoryStatement = 0;
+  m_remoteUpdateErrorHistoryStatement = 0;
   m_selectSegmentStatement = 0;
   m_deleteSegmentStatement = 0;
   m_remoteUpdateSegmentStatement = 0;
@@ -207,6 +229,9 @@ void castor::db::ora::OraTapeCnv::fillRep(castor::IAddress* address,
     switch (type) {
     case castor::OBJ_Stream :
       fillRepStream(obj);
+      break;
+    case castor::OBJ_ErrorHistory :
+      fillRepErrorHistory(obj);
       break;
     case castor::OBJ_Segment :
       fillRepSegment(obj);
@@ -292,6 +317,56 @@ void castor::db::ora::OraTapeCnv::fillRepStream(castor::stager::Tape* obj)
 }
 
 //------------------------------------------------------------------------------
+// fillRepErrorHistory
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapeCnv::fillRepErrorHistory(castor::stager::Tape* obj)
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
+  // check select statement
+  if (0 == m_selectErrorHistoryStatement) {
+    m_selectErrorHistoryStatement = createStatement(s_selectErrorHistoryStatementString);
+  }
+  // Get current database data
+  std::set<int> errorHistoryList;
+  m_selectErrorHistoryStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectErrorHistoryStatement->executeQuery();
+  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    errorHistoryList.insert(rset->getInt(1));
+  }
+  m_selectErrorHistoryStatement->closeResultSet(rset);
+  // update errorHistory and create new ones
+  for (std::vector<castor::vdqm::ErrorHistory*>::iterator it = obj->errorHistory().begin();
+       it != obj->errorHistory().end();
+       it++) {
+    if (0 == (*it)->id()) {
+      cnvSvc()->createRep(0, *it, false, OBJ_Tape);
+    } else {
+      // Check remote update statement
+      if (0 == m_remoteUpdateErrorHistoryStatement) {
+        m_remoteUpdateErrorHistoryStatement = createStatement(s_remoteUpdateErrorHistoryStatementString);
+      }
+      // Update remote object
+      m_remoteUpdateErrorHistoryStatement->setDouble(1, obj->id());
+      m_remoteUpdateErrorHistoryStatement->setDouble(2, (*it)->id());
+      m_remoteUpdateErrorHistoryStatement->executeUpdate();
+      std::set<int>::iterator item;
+      if ((item = errorHistoryList.find((*it)->id())) != errorHistoryList.end()) {
+        errorHistoryList.erase(item);
+      }
+    }
+  }
+  // Delete old links
+  for (std::set<int>::iterator it = errorHistoryList.begin();
+       it != errorHistoryList.end();
+       it++) {
+    if (0 == m_deleteErrorHistoryStatement) {
+      m_deleteErrorHistoryStatement = createStatement(s_deleteErrorHistoryStatementString);
+    }
+    m_deleteErrorHistoryStatement->setDouble(1, *it);
+    m_deleteErrorHistoryStatement->executeUpdate();
+  }
+}
+
+//------------------------------------------------------------------------------
 // fillRepSegment
 //------------------------------------------------------------------------------
 void castor::db::ora::OraTapeCnv::fillRepSegment(castor::stager::Tape* obj)
@@ -354,6 +429,9 @@ void castor::db::ora::OraTapeCnv::fillObj(castor::IAddress* address,
   case castor::OBJ_Stream :
     fillObjStream(obj);
     break;
+  case castor::OBJ_ErrorHistory :
+    fillObjErrorHistory(obj);
+    break;
   case castor::OBJ_Segment :
     fillObjSegment(obj);
     break;
@@ -403,6 +481,56 @@ void castor::db::ora::OraTapeCnv::fillObjStream(castor::stager::Tape* obj)
       cnvSvc()->updateObj(obj->stream());
     }
     obj->stream()->setTape(obj);
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObjErrorHistory
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapeCnv::fillObjErrorHistory(castor::stager::Tape* obj)
+  throw (castor::exception::Exception) {
+  // Check select statement
+  if (0 == m_selectErrorHistoryStatement) {
+    m_selectErrorHistoryStatement = createStatement(s_selectErrorHistoryStatementString);
+  }
+  // retrieve the object from the database
+  std::set<int> errorHistoryList;
+  m_selectErrorHistoryStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectErrorHistoryStatement->executeQuery();
+  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    errorHistoryList.insert(rset->getInt(1));
+  }
+  // Close ResultSet
+  m_selectErrorHistoryStatement->closeResultSet(rset);
+  // Update objects and mark old ones for deletion
+  std::vector<castor::vdqm::ErrorHistory*> toBeDeleted;
+  for (std::vector<castor::vdqm::ErrorHistory*>::iterator it = obj->errorHistory().begin();
+       it != obj->errorHistory().end();
+       it++) {
+    std::set<int>::iterator item;
+    if ((item = errorHistoryList.find((*it)->id())) == errorHistoryList.end()) {
+      toBeDeleted.push_back(*it);
+    } else {
+      errorHistoryList.erase(item);
+      cnvSvc()->updateObj((*it));
+    }
+  }
+  // Delete old objects
+  for (std::vector<castor::vdqm::ErrorHistory*>::iterator it = toBeDeleted.begin();
+       it != toBeDeleted.end();
+       it++) {
+    obj->removeErrorHistory(*it);
+    (*it)->setTape(0);
+  }
+  // Create new objects
+  for (std::set<int>::iterator it = errorHistoryList.begin();
+       it != errorHistoryList.end();
+       it++) {
+    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::vdqm::ErrorHistory* remoteObj = 
+      dynamic_cast<castor::vdqm::ErrorHistory*>(item);
+    obj->addErrorHistory(remoteObj);
+    remoteObj->setTape(obj);
   }
 }
 

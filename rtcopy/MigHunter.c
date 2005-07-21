@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.25 $ $Release$ $Date: 2005/07/06 08:35:00 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.26 $ $Release$ $Date: 2005/07/21 09:13:07 $ $Author: itglp $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.25 $ $Release$ $Date: 2005/07/06 08:35:00 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.26 $ $Release$ $Date: 2005/07/21 09:13:07 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -82,7 +82,7 @@ WSADATA wsadata;
 #include <castor/stager/StreamStatusCodes.h>
 #include <castor/stager/TapeCopyStatusCodes.h>
 #include <castor/stager/SvcClass.h>
-#include <castor/stager/IStagerSvc.h>
+#include <castor/stager/ITapeSvc.h>
 #include <castor/Services.h>
 #include <castor/BaseObject.h>
 #include <castor/BaseAddress.h>
@@ -115,7 +115,7 @@ Cuuid_t childUuid, mainUuid;
 
 static int prepareForDBAccess _PROTO((
                                       struct C_Services_t **,
-                                      struct Cstager_IStagerSvc_t **,
+                                      struct Cstager_ITapeSvc_t **,
                                       struct C_IAddress_t **
                                       ));
 static int getSvcClass _PROTO((
@@ -204,14 +204,14 @@ static void usage _PROTO((
 
 static int prepareForDBAccess(
                               _dbSvc,
-                              _stgSvc,
+                              _tpSvc,
                               _iAddr
                               )
-  struct Cstager_IStagerSvc_t **_stgSvc;
+  struct Cstager_ITapeSvc_t **_tpSvc;
   struct C_Services_t **_dbSvc;
   struct C_IAddress_t **_iAddr;
 {
-  struct Cstager_IStagerSvc_t **stgSvc;
+  struct Cstager_ITapeSvc_t **tpSvc;
   struct C_Services_t **dbSvc;
   struct C_IAddress_t *iAddr;
   struct C_BaseAddress_t *baseAddr;
@@ -228,8 +228,8 @@ static int prepareForDBAccess(
     return(-1);
   }
 
-  stgSvc = NULL;
-  rc = rtcpcld_getStgSvc(&stgSvc);
+  tpSvc = NULL;
+  rc = rtcpcld_getStgSvc(&tpSvc);
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"getStgSvc(): %s\n",sstrerror(serrno));
@@ -247,12 +247,12 @@ static int prepareForDBAccess(
     return(-1);
   }
   
-  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
-  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
+  C_BaseAddress_setCnvSvcName(baseAddr,"DbCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_DBCNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
   if ( _dbSvc != NULL ) *_dbSvc = *dbSvc;
-  if ( _stgSvc != NULL ) *_stgSvc = *stgSvc;
+  if ( _tpSvc != NULL ) *_tpSvc = *tpSvc;
   if ( _iAddr != NULL ) *_iAddr = iAddr;
   
   return(0);
@@ -268,7 +268,7 @@ static int getSvcClass(
 {
   struct Cstager_SvcClass_t *svcClassTmp = NULL;
   struct C_IObject_t *iObj = NULL;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_ITapeSvc_t *tpSvc = NULL;
   struct C_Services_t *dbSvc = NULL;
   struct C_IAddress_t *iAddr = NULL;
   int rc;
@@ -281,7 +281,7 @@ static int getSvcClass(
     return(-1);
   }
 
-  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"getSvcClass(): prepareForDBAccess(): %s\n",
@@ -291,20 +291,20 @@ static int getSvcClass(
     return(-1);
   }
 
-  LOG_CALL_TRACE((rc = Cstager_IStagerSvc_selectSvcClass(
-                                                         stgSvc,
+  LOG_CALL_TRACE((rc = Cstager_ITapeSvc_selectSvcClass(
+                                                         tpSvc,
                                                          &svcClassTmp,
                                                          svcClassName
                                                          )));
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
-      fprintf(stderr,"Cstager_IStagerSvc_selectSvcClass(%s): %s, %s\n",
+      fprintf(stderr,"Cstager_ITapeSvc_selectSvcClass(%s): %s, %s\n",
               svcClassName,
               sstrerror(serrno),
-              Cstager_IStagerSvc_errorMsg(stgSvc));
+              Cstager_ITapeSvc_errorMsg(tpSvc));
     }
-    LOG_DBCALL_ERR("Cstager_IStagerSvc_selectSvcClass()",
-                   Cstager_IStagerSvc_errorMsg(stgSvc));
+    LOG_DBCALL_ERR("Cstager_ITapeSvc_selectSvcClass()",
+                   Cstager_ITapeSvc_errorMsg(tpSvc));
     C_IAddress_delete(iAddr);
     return(-1);
   }
@@ -351,7 +351,7 @@ static int getStreamsFromDB(
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
   struct C_IAddress_t *iAddr;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_ITapeSvc_t *tpSvc = NULL;
   struct Cstager_Stream_t **streamArray = NULL;
   int rc, _nbStreams = 0;
 
@@ -362,7 +362,7 @@ static int getStreamsFromDB(
     serrno = EINVAL;
     return(-1);
   }
-  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"getSvcClass(): prepareForDBAccess(): %s\n",
@@ -372,15 +372,15 @@ static int getStreamsFromDB(
     return(-1);
   }
   iObj = Cstager_TapePool_getIObject(tapePool);
-  LOG_CALL_TRACE((rc = Cstager_IStagerSvc_streamsForTapePool(stgSvc,tapePool)));
+  LOG_CALL_TRACE((rc = Cstager_ITapeSvc_streamsForTapePool(tpSvc,tapePool)));
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
-      fprintf(stderr,"Cstager_IStagerSvc_streamsForTapePool %s, %s\n",
+      fprintf(stderr,"Cstager_ITapeSvc_streamsForTapePool %s, %s\n",
               sstrerror(serrno),
-              Cstager_IStagerSvc_errorMsg(stgSvc));
+              Cstager_ITapeSvc_errorMsg(tpSvc));
     }
-    LOG_DBCALL_ERR("Cstager_IStagerSvc_streamsForTapePool()",
-                   Cstager_IStagerSvc_errorMsg(stgSvc));
+    LOG_DBCALL_ERR("Cstager_ITapeSvc_streamsForTapePool()",
+                   Cstager_ITapeSvc_errorMsg(tpSvc));
   }
   Cstager_TapePool_streams(tapePool,&streamArray,&_nbStreams);
   if ( nbStreams != NULL ) *nbStreams = _nbStreams;
@@ -452,7 +452,7 @@ static int tapePoolCreator(
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
   struct C_IAddress_t *iAddr = NULL;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_ITapeSvc_t *tpSvc = NULL;
   char  *tapePoolName;
   int rc, i, j;
 
@@ -461,7 +461,7 @@ static int tapePoolCreator(
     return(-1);
   }
   
-  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"tapePoolCreator(): prepareForDBAccess(): %s\n",
@@ -575,7 +575,7 @@ static void restoreMigrCandidates(
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
   struct C_IAddress_t *iAddr = NULL;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_ITapeSvc_t *tpSvc = NULL;
   int rc, i, nbStreams;
   char buf[21];
   ID_TYPE key;
@@ -586,7 +586,7 @@ static void restoreMigrCandidates(
             nbMigrCandidates);
   }
 
-  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"restoreMigrCandidates(): prepareForDBAccess(): %s\n",
@@ -651,7 +651,7 @@ static int cloneStream(
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
   struct C_IAddress_t *iAddr = NULL;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_ITapeSvc_t *tpSvc = NULL;
   struct Cstager_TapeCopy_t **tapeCopyArray = NULL;
   int rc, i, nbTapeCopies = 0;
 
@@ -660,7 +660,7 @@ static int cloneStream(
     return(-1);
   }
   
-  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"closeStream(): prepareForDBAccess(): %s\n",
@@ -739,7 +739,7 @@ static int streamCreator(
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
   struct C_IAddress_t *iAddr = NULL;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_ITapeSvc_t *tpSvc = NULL;
   char *svcClassName = NULL;
   int rc, nbTapePools, nbStreams, i, j;
   unsigned int nbDrives, nbStreamsTotal;
@@ -805,7 +805,7 @@ static int streamCreator(
       fprintf(stdout,"SvcClass allows for %d streams, found %d\n",
               nbDrives,nbStreamsTotal);
     }
-    rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+    rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
     if ( rc == -1 ) {
       if ( runAsDaemon == 0 ) {
         fprintf(stderr,"getSvcClass(): prepareForDBAccess(): %s\n",
@@ -902,7 +902,7 @@ static int startStreams(
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
   struct C_IAddress_t *iAddr = NULL;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_ITapeSvc_t *tpSvc = NULL;
   u_signed64 sz;
   enum Cstager_StreamStatusCodes_t streamStatus;
   char *tapePoolName;
@@ -916,7 +916,7 @@ static int startStreams(
     return(-1);
   }
 
-  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"startStreams(): prepareForDBAccess(): %s\n",
@@ -1174,7 +1174,7 @@ static int getMigrCandidates(
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
   struct C_IAddress_t *iAddr = NULL;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_ITapeSvc_t *tpSvc = NULL;
   char *nsHost, castorFileName[CA_MAXPATHLEN+1];
   struct Cns_fileid fileId;
   struct Cns_fileclass fileClass, **fileClassArray = NULL;
@@ -1190,7 +1190,7 @@ static int getMigrCandidates(
     return(-1);
   }
 
-  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"getMigrCandidates(): prepareForDBAccess(): %s\n",
@@ -1200,20 +1200,20 @@ static int getMigrCandidates(
     return(-1);
   }
 
-  LOG_CALL_TRACE((rc = Cstager_IStagerSvc_selectTapeCopiesForMigration(
-                                                                       stgSvc,
+  LOG_CALL_TRACE((rc = Cstager_ITapeSvc_selectTapeCopiesForMigration(
+                                                                       tpSvc,
                                                                        svcClass,
                                                                        &tapeCopyArray,
                                                                        &nbTapeCopies
                                                                        )));
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
-      fprintf(stderr,"Cstager_IStagerSvc_selectTapeCopiesForMigration(): %s, %s\n",
+      fprintf(stderr,"Cstager_ITapeSvc_selectTapeCopiesForMigration(): %s, %s\n",
               sstrerror(serrno),
-              Cstager_IStagerSvc_errorMsg(stgSvc));
+              Cstager_ITapeSvc_errorMsg(tpSvc));
     }
-    LOG_DBCALL_ERR("Cstager_IStagerSvc_selectTapeCopiesForMigration()",
-                   Cstager_IStagerSvc_errorMsg(stgSvc));
+    LOG_DBCALL_ERR("Cstager_ITapeSvc_selectTapeCopiesForMigration()",
+                   Cstager_ITapeSvc_errorMsg(tpSvc));
     C_IAddress_delete(iAddr);
     return(-1);
   }
@@ -1350,7 +1350,7 @@ static int addMigrationCandidatesToStreams(
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
   struct C_IAddress_t *iAddr = NULL;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_ITapeSvc_t *tpSvc = NULL;
   ID_TYPE key;
   int rc, i;
   char *nsHost, buf[22];
@@ -1364,7 +1364,7 @@ static int addMigrationCandidatesToStreams(
     return(-1);
   }
 
-  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"addMigrationCandidatesToStreams(): prepareForDBAccess(): %s\n",
@@ -1524,7 +1524,7 @@ int main(int argc, char *argv[])
   struct Cns_fileclass **nsFileClassArray = NULL;
   struct C_Services_t *dbSvc;
   struct C_IAddress_t *iAddr = NULL;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_ITapeSvc_t *tpSvc = NULL;
   char *migHunterFacilityName = "MigHunter";
   u_signed64 initialSizeToTransfer, volumeThreshold = 0;
   char buf[32];
@@ -1603,7 +1603,7 @@ int main(int argc, char *argv[])
     if ( sleepTime == 0 ) sleepTime = 300;
   }
   
-  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"getSvcClass(): prepareForDBAccess(): %s\n",

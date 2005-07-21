@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2005/06/20 16:32:33 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2005/07/21 09:13:04 $ $Author: itglp $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -63,7 +63,7 @@ const std::string castor::db::ora::OraQuerySvc::s_diskCopies4UsertagStatementStr
 // OraQuerySvc
 // -----------------------------------------------------------------------
 castor::db::ora::OraQuerySvc::OraQuerySvc(const std::string name) :
-  BaseSvc(name), OraBaseObj(0),
+  OraCommonSvc(name),
   m_diskCopies4FileStatement(0),
   m_diskCopies4RequestStatement(0),
   m_diskCopies4UsertagStatement(0) {}

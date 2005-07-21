@@ -1,5 +1,5 @@
 /*
- * $Id: stager_catalogInterface.h,v 1.19 2005/07/06 09:06:03 jdurand Exp $
+ * $Id: stager_catalogInterface.h,v 1.20 2005/07/21 09:13:06 itglp Exp $
  */
 
 #ifndef __stager_catalogInterface_h
@@ -8,6 +8,8 @@
 #include "osdep.h"
 #include "castor/stager/CastorFile.h"
 #include "castor/stager/IStagerSvc.h"
+#include "castor/stager/IJobSvc.h"
+#include "castor/stager/IFSSvc.h"
 #include "castor/stager/Request.h"
 #include "castor/stager/SubRequest.h"
 #include "castor/stager/SubRequestStatusCodes.h"
@@ -35,6 +37,6 @@
 
 EXTERN_C int DLL_DECL stager_getDbSvc _PROTO((struct C_Services_t ***));
 EXTERN_C int DLL_DECL stager_getStgAndDbSvc _PROTO((struct Cstager_IStagerSvc_t ***, struct C_Services_t ***));
-EXTERN_C int DLL_DECL stager_getRemStgAndDbSvc _PROTO((struct Cstager_IStagerSvc_t ***, struct C_Services_t ***));
+EXTERN_C int DLL_DECL stager_getRemStgAndDbSvc _PROTO((struct Cstager_IJobSvc_t ***, struct C_Services_t ***));
 
 #endif /* __stager_catalogInterface_h */

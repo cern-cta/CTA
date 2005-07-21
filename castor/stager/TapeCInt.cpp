@@ -32,6 +32,7 @@
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
+#include "castor/vdqm/ErrorHistory.hpp"
 #include "osdep.h"
 #include <vector>
 
@@ -244,6 +245,35 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_Tape_setStream(castor::stager::Tape* instance, castor::stager::Stream* new_var) {
     instance->setStream(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Tape_addErrorHistory
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_addErrorHistory(castor::stager::Tape* instance, castor::vdqm::ErrorHistory* obj) {
+    instance->addErrorHistory(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Tape_removeErrorHistory
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_removeErrorHistory(castor::stager::Tape* instance, castor::vdqm::ErrorHistory* obj) {
+    instance->removeErrorHistory(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Tape_errorHistory
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_errorHistory(castor::stager::Tape* instance, castor::vdqm::ErrorHistory*** var, int* len) {
+    std::vector<castor::vdqm::ErrorHistory*>& result = instance->errorHistory();
+    *len = result.size();
+    *var = (castor::vdqm::ErrorHistory**) malloc((*len) * sizeof(castor::vdqm::ErrorHistory*));
+    for (int i = 0; i < *len; i++) {
+      (*var)[i] = result[i];
+    }
     return 0;
   }
 

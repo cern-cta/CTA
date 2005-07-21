@@ -31,7 +31,7 @@
 #include "castor/gc/GcDaemon.hpp"
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
-#include "castor/stager/IStagerSvc.hpp"
+#include "castor/stager/IGCSvc.hpp"
 #include "castor/stager/GCLocalFile.hpp"
 #include "common.h"
 #include "Cgetopt.h"
@@ -119,17 +119,17 @@ int castor::gc::GcDaemon::start()
     }
   }
 
-  // get RemoteStagerSvc
+  // get RemoteGCSvc
   castor::IService* svc =
     castor::BaseObject::services()->
-    service("RemoteStagerSvc", castor::SVC_REMOTESTAGERSVC);
+    service("RemoteGCSvc", castor::SVC_REMOTEGCSVC);
   if (0 == svc) {
     // "Could not get RemoteStagerSvc" message
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2);
     return -1;
   }
-  castor::stager::IStagerSvc *stgSvc =
-    dynamic_cast<castor::stager::IStagerSvc*>(svc);
+  castor::stager::IGCSvc *stgSvc =
+    dynamic_cast<castor::stager::IGCSvc*>(svc);
   if (0 == stgSvc) {
     // "Got a bad RemoteStagerSvc" message
     castor::dlf::Param params[] =

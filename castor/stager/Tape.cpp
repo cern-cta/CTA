@@ -33,6 +33,7 @@
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
+#include "castor/vdqm/ErrorHistory.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -61,6 +62,10 @@ castor::stager::Tape::~Tape() throw() {
   if (0 != m_stream) {
     m_stream->setTape(0);
   }
+  for (unsigned int i = 0; i < m_errorHistoryVector.size(); i++) {
+    m_errorHistoryVector[i]->setTape(0);
+  }
+  m_errorHistoryVector.clear();
   for (unsigned int i = 0; i < m_segmentsVector.size(); i++) {
     m_segmentsVector[i]->setTape(0);
     delete m_segmentsVector[i];
@@ -95,6 +100,17 @@ void castor::stager::Tape::print(std::ostream& stream,
     m_stream->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
+  }
+  {
+    stream << indent << "ErrorHistory : " << std::endl;
+    int i;
+    std::vector<castor::vdqm::ErrorHistory*>::const_iterator it;
+    for (it = m_errorHistoryVector.begin(), i = 0;
+         it != m_errorHistoryVector.end();
+         it++, i++) {
+      stream << indent << "  " << i << " :" << std::endl;
+      (*it)->print(stream, indent + "    ", alreadyPrinted);
+    }
   }
   {
     stream << indent << "Segments : " << std::endl;

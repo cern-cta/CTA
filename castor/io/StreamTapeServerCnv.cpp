@@ -42,6 +42,7 @@
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
+#include "castor/vdqm/TapeServerStatusCodes.hpp"
 #include "osdep.h"
 #include <string>
 #include <vector>
@@ -95,6 +96,7 @@ void castor::io::StreamTapeServerCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->serverName();
   ad->stream() << obj->status();
   ad->stream() << obj->id();
+  ad->stream() << obj->actingMode();
 }
 
 //------------------------------------------------------------------------------
@@ -116,6 +118,9 @@ castor::IObject* castor::io::StreamTapeServerCnv::createObj(castor::IAddress* ad
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
+  int actingMode;
+  ad->stream() >> actingMode;
+  object->setActingMode((castor::vdqm::TapeServerStatusCodes)actingMode);
   return object;
 }
 

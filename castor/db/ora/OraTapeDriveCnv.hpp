@@ -196,6 +196,23 @@ namespace castor {
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
+         * Fill the database with objects of type ErrorHistory refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepErrorHistory(castor::vdqm::TapeDrive* obj)
+          throw (castor::exception::Exception, oracle::occi::SQLException);
+
+        /**
+         * Fill the database with objects of type TapeDriveDedication refered by a given
+         * object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepTapeDriveDedication(castor::vdqm::TapeDrive* obj)
+          throw (castor::exception::Exception, oracle::occi::SQLException);
+
+        /**
          * Fill the database with objects of type TapeServer refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -247,6 +264,24 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjTapeRequest(castor::vdqm::TapeDrive* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type ErrorHistory refered by a given
+         * object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjErrorHistory(castor::vdqm::TapeDrive* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type TapeDriveDedication refered by a given
+         * object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjTapeDriveDedication(castor::vdqm::TapeDrive* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -381,6 +416,42 @@ namespace castor {
 
         /// SQL update statement object for member runningTapeReq
         oracle::occi::Statement *m_updateTapeRequestStatement;
+
+        /// SQL select statement for member errorHistory
+        static const std::string s_selectErrorHistoryStatementString;
+
+        /// SQL select statement object for member errorHistory
+        oracle::occi::Statement *m_selectErrorHistoryStatement;
+
+        /// SQL delete statement for member errorHistory
+        static const std::string s_deleteErrorHistoryStatementString;
+
+        /// SQL delete statement object for member errorHistory
+        oracle::occi::Statement *m_deleteErrorHistoryStatement;
+
+        /// SQL remote update statement for member errorHistory
+        static const std::string s_remoteUpdateErrorHistoryStatementString;
+
+        /// SQL remote update statement object for member errorHistory
+        oracle::occi::Statement *m_remoteUpdateErrorHistoryStatement;
+
+        /// SQL select statement for member tapeDriveDedication
+        static const std::string s_selectTapeDriveDedicationStatementString;
+
+        /// SQL select statement object for member tapeDriveDedication
+        oracle::occi::Statement *m_selectTapeDriveDedicationStatement;
+
+        /// SQL delete statement for member tapeDriveDedication
+        static const std::string s_deleteTapeDriveDedicationStatementString;
+
+        /// SQL delete statement object for member tapeDriveDedication
+        oracle::occi::Statement *m_deleteTapeDriveDedicationStatement;
+
+        /// SQL remote update statement for member tapeDriveDedication
+        static const std::string s_remoteUpdateTapeDriveDedicationStatementString;
+
+        /// SQL remote update statement object for member tapeDriveDedication
+        oracle::occi::Statement *m_remoteUpdateTapeDriveDedicationStatement;
 
         /// SQL checkExist statement for member tapeServer
         static const std::string s_checkTapeServerExistStatementString;

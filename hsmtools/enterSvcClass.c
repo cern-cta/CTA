@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.3 $ $Release$ $Date: 2005/05/02 10:24:17 $ $Author: obarring $
+ * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.4 $ $Release$ $Date: 2005/07/21 09:13:06 $ $Author: itglp $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.3 $ $Release$ $Date: 2005/05/02 10:24:17 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.4 $ $Release$ $Date: 2005/07/21 09:13:06 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -41,7 +41,7 @@ static char sccsid[] = "@(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.3 $ $Rele
 #include <castor/stager/SvcClass.h>
 #include <castor/stager/FileClass.h>
 #include <castor/stager/TapeCopy.h>
-#include <castor/stager/IStagerSvc.h>
+#include <castor/stager/IFSSvc.h>
 #include <castor/Services.h>
 #include <castor/BaseAddress.h>
 #include <castor/IAddress.h>
@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj = NULL;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_IFSSvc_t *fsSvc = NULL;
   struct C_Services_t *svcs = NULL;
   struct C_IService_t *iSvc = NULL;
   struct Cstager_SvcClass_t *svcClass = NULL, *svcClassOld = NULL;
@@ -188,14 +188,14 @@ int main(int argc, char *argv[])
             sstrerror(serrno));
     return(1);
   }
-  rc = C_Services_service(svcs,"OraStagerSvc",SVC_ORASTAGERSVC,&iSvc);
+  rc = C_Services_service(svcs,"DbFSSvc",SVC_DBFSSVC,&iSvc);
   if ( rc == -1 ) {
-    fprintf(stderr,"Cannot create stager svc: %s, %s\n",
+    fprintf(stderr,"Cannot create fs svc: %s, %s\n",
             sstrerror(serrno),
             C_Services_errorMsg(svcs));
     return(1);
   }
-  stgSvc = Cstager_IStagerSvc_fromIService(iSvc);
+  fsSvc = Cstager_IFSSvc_fromIService(iSvc);
     
   Cstager_SvcClass_create(&svcClass);
   while ((ch = Cgetopt_long(argc,argv,"h",longopts,NULL)) != EOF) {
@@ -243,7 +243,7 @@ int main(int argc, char *argv[])
   }
 
   svcClassOld = NULL;
-  rc = Cstager_IStagerSvc_selectSvcClass(stgSvc,&svcClassOld,name);
+  rc = Cstager_IFSSvc_selectSvcClass(fsSvc,&svcClassOld,name);
   if ( (rc == 0) && (svcClassOld != NULL) ) {
     fprintf(stdout,
             "SvcClass %s already exists, please use 'modifySvcClass' command\n"
@@ -264,8 +264,8 @@ int main(int argc, char *argv[])
   rc = C_BaseAddress_create(&baseAddr);
   if ( rc == -1 ) return(-1);
 
-  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
-  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
+  C_BaseAddress_setCnvSvcName(baseAddr,"DbCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_DBCNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
   iObj = Cstager_SvcClass_getIObject(svcClass);
   rc = C_Services_createRep(svcs,iAddr,iObj,1);
@@ -284,16 +284,16 @@ int main(int argc, char *argv[])
     for ( i=0; i<nbTapePools; i++ ) {
       fprintf(stdout,"Add tape pool %s to SvcClass %s\n",tapePoolsArray[i],name);
       tapePool = NULL;
-      rc = Cstager_IStagerSvc_selectTapePool(
-                                             stgSvc,
+      rc = Cstager_IFSSvc_selectTapePool(
+                                             fsSvc,
                                              &tapePool,
                                              tapePoolsArray[i]
                                              );
       if ( rc == -1 ) {
-        fprintf(stderr,"Cstager_IStagerSvc_selectTapePool(%s): %s, %s\n",
+        fprintf(stderr,"Cstager_IFSSvc_selectTapePool(%s): %s, %s\n",
                 tapePoolsArray[i],
                 sstrerror(serrno),
-                Cstager_IStagerSvc_errorMsg(stgSvc));
+                Cstager_IFSSvc_errorMsg(fsSvc));
         return(1);
       }
       if ( tapePool == NULL ) {
@@ -331,16 +331,16 @@ int main(int argc, char *argv[])
     for ( i=0; i<nbDiskPools; i++ ) {
       fprintf(stdout,"Add disk pool %s to SvcClass %s\n",diskPoolsArray[i],name);
       diskPool = NULL;
-      rc = Cstager_IStagerSvc_selectDiskPool(
-                                             stgSvc,
+      rc = Cstager_IFSSvc_selectDiskPool(
+                                             fsSvc,
                                              &diskPool,
                                              diskPoolsArray[i]
                                              );
       if ( rc == -1 ) {
-        fprintf(stderr,"Cstager_IStagerSvc_selectDiskPool(%s): %s, %s\n",
+        fprintf(stderr,"Cstager_IFSSvc_selectDiskPool(%s): %s, %s\n",
                 diskPoolsArray[i],
                 sstrerror(serrno),
-                Cstager_IStagerSvc_errorMsg(stgSvc));
+                Cstager_IFSSvc_errorMsg(fsSvc));
         return(1);
       }
       if ( diskPool == NULL ) {

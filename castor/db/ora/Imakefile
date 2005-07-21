@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.49 $ $Release$ $Date: 2005/07/01 15:21:00 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.50 $ $Release$ $Date: 2005/07/21 09:13:04 $ $Author: itglp $
 #
 # Make Castor DB libraries
 #
@@ -62,7 +62,6 @@ ORALIB_SRCS = OraBaseAddressCnv.cpp \
             OraPutFailedCnv.cpp \
             OraPutStartRequestCnv.cpp \
             OraQueryParameterCnv.cpp \
-            OraQuerySvc.cpp \
             OraSegmentCnv.cpp \
             OraStageAbortRequestCnv.cpp \
             OraStageFileQueryRequestCnv.cpp \
@@ -80,20 +79,28 @@ ORALIB_SRCS = OraBaseAddressCnv.cpp \
             OraStageRmRequestCnv.cpp \
             OraStageUpdateNextRequestCnv.cpp \
             OraStageUpdateRequestCnv.cpp \
-            OraStagerSvc.cpp \
             OraStreamCnv.cpp \
             OraSubRequestCnv.cpp \
             OraSvcClassCnv.cpp \
             OraTapeCnv.cpp \
             OraTapeCopyCnv.cpp \
-            OraTapePoolCnv.cpp
-
+            OraTapePoolCnv.cpp \
+            OraErrorHistoryCnv.cpp \
+            OraCommonSvc.cpp \
+            OraStagerSvc.cpp \
+            OraTapeSvc.cpp \
+            OraJobSvc.cpp \
+            OraGCSvc.cpp \
+            OraFSSvc.cpp \
+            OraQuerySvc.cpp  
+	    
 #if BuildVDQMCpp
 ORALIB_SRCS += OraClientIdentificationCnv.cpp \
             OraExtendedDeviceGroupCnv.cpp \
             OraTapeDriveCnv.cpp \
             OraTapeRequestCnv.cpp \
             OraTapeServerCnv.cpp \
+            OraTapeDriveDedicationCnv.cpp \
             OraVdqmSvc.cpp
 #endif
 

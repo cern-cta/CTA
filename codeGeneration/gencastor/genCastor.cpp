@@ -28,7 +28,7 @@ static KCmdLineOptions options[] = {
 int main(int argc, char *argv[]) {
 
   KAboutData aboutData("umbrello", I18N_NOOP("Umbrello UML Modeller - Castor edition"),
-	                     "3.1.2", "Umbrello UML Modeller - Castor edition", KAboutData::License_GPL,
+	                     "3.1.3", "Umbrello UML Modeller - Castor edition", KAboutData::License_GPL,
 	                     I18N_NOOP("2004-2005 Sebastien Ponce & Giuseppe Lo Presti"), 0,
 	                     "http://cern.ch/castor");
   KCmdLineArgs::init( argc, argv, &aboutData );

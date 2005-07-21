@@ -42,6 +42,14 @@ namespace castor {
   // Forward declarations
   class ObjectSet;
 
+  // Forward declarations
+  namespace vdqm {
+
+    // Forward declarations
+    class ErrorHistory;
+
+  }; // end of namespace vdqm
+
   namespace stager {
 
     // Forward declarations
@@ -262,6 +270,35 @@ namespace castor {
       }
 
       /**
+       * Add a castor::vdqm::ErrorHistory* object to the m_errorHistoryVector list
+       */
+      void addErrorHistory(castor::vdqm::ErrorHistory* add_object) {
+        m_errorHistoryVector.push_back(add_object);
+      }
+
+      /**
+       * Remove a castor::vdqm::ErrorHistory* object from m_errorHistoryVector
+       */
+      void removeErrorHistory(castor::vdqm::ErrorHistory* remove_object) {
+        for (unsigned int i = 0; i < m_errorHistoryVector.size(); i++) {
+          castor::vdqm::ErrorHistory* item = m_errorHistoryVector[i];
+          if (item == remove_object) {
+            std::vector<castor::vdqm::ErrorHistory*>::iterator it = m_errorHistoryVector.begin() + i;
+            m_errorHistoryVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of castor::vdqm::ErrorHistory* objects held by m_errorHistoryVector
+       * @return list of castor::vdqm::ErrorHistory* objects held by m_errorHistoryVector
+       */
+      std::vector<castor::vdqm::ErrorHistory*>& errorHistory() {
+        return m_errorHistoryVector;
+      }
+
+      /**
        * Add a Segment* object to the m_segmentsVector list
        */
       void addSegments(Segment* add_object) {
@@ -331,6 +368,8 @@ namespace castor {
       u_signed64 m_id;
 
       Stream* m_stream;
+
+      std::vector<castor::vdqm::ErrorHistory*> m_errorHistoryVector;
 
       std::vector<Segment*> m_segmentsVector;
 

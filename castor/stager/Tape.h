@@ -36,6 +36,7 @@ struct C_IObject_t;
 struct Cstager_Segment_t;
 struct Cstager_Stream_t;
 struct Cstager_Tape_t;
+struct Cvdqm_ErrorHistory_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -192,6 +193,22 @@ int Cstager_Tape_stream(struct Cstager_Tape_t* instance, struct Cstager_Stream_t
  * Set the value of stream
  */
 int Cstager_Tape_setStream(struct Cstager_Tape_t* instance, struct Cstager_Stream_t* new_var);
+
+/**
+ * Add a struct Cvdqm_ErrorHistory_t* object to the errorHistory list
+ */
+int Cstager_Tape_addErrorHistory(struct Cstager_Tape_t* instance, struct Cvdqm_ErrorHistory_t* obj);
+
+/**
+ * Remove a struct Cvdqm_ErrorHistory_t* object from errorHistory
+ */
+int Cstager_Tape_removeErrorHistory(struct Cstager_Tape_t* instance, struct Cvdqm_ErrorHistory_t* obj);
+
+/**
+ * Get the list of struct Cvdqm_ErrorHistory_t* objects held by errorHistory. Note
+ * that the caller is responsible for the deletion of the returned vector.
+ */
+int Cstager_Tape_errorHistory(struct Cstager_Tape_t* instance, struct Cvdqm_ErrorHistory_t*** var, int* len);
 
 /**
  * Add a struct Cstager_Segment_t* object to the segments list

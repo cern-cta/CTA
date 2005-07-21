@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Release$ $Date: 2004/07/29 09:33:44 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Release$ $Date: 2005/07/21 09:13:05 $ $Author: itglp $
 #
 # Make Castor RH library
 #
@@ -37,14 +37,13 @@ DEBUG  = -g
 INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
-LIBS = -lshift -lcastorCommonOra
+LIBS = -lshift
 
 RHBIN_SRCS = Server.cpp
 
 RHBIN_OBJS = $(RHBIN_SRCS:.cpp=.Osuf)
 
-DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift) \
-         DepSharedLibraryTargetName(FileName(..,shlib),castorCommonOra)
+DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift)
 
 LDFLAGS = -L FileName(..,FileName(..,shlib)) $(MTLDFLAGS)
 LD = g++
@@ -54,7 +53,6 @@ all: ProgramTargetName(rhserver)
 NormalProgramTarget(rhserver,$(RHBIN_OBJS),$(DEPLIB),$(LIBS))
 
 MakeDepSharedLibrary(FileName(..,shlib),shift)
-MakeDepSharedLibrary(FileName(..,shlib),castorCommonOra)
 
 Makefiles:
 
