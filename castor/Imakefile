@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.99 $ $Release$ $Date: 2005/07/21 09:13:03 $ $Author: itglp $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.100 $ $Release$ $Date: 2005/07/21 17:33:31 $ $Author: mbraeger $
 #
 # Make Castor libraries and executables
 #
@@ -352,6 +352,7 @@ STGLIB_SRCS +=stager/ClientIdentification.cpp \
               vdqm/ExtendedDeviceGroup.cpp \
               vdqm/OldVdqmProtocol.cpp \
               vdqm/TapeDrive.cpp \
+							vdqm/TapeDrive2ExtDevGroup.cpp \
 							vdqm/TapeDriveDedication.cpp \
               vdqm/TapeDriveStatusCodes.cpp \
               vdqm/TapeRequest.cpp \
@@ -363,7 +364,8 @@ STGLIB_SRCS +=stager/ClientIdentification.cpp \
 							vdqm/handler/TapeDriveConsistencyChecker.cpp \
 							vdqm/handler/TapeDriveHandler.cpp \
 							vdqm/handler/TapeDriveStatusHandler.cpp \
-							vdqm/handler/TapeRequestHandler.cpp 
+							vdqm/handler/TapeRequestHandler.cpp \
+							vdqm/handler/TapeRequestDedicationHandler.cpp
 #endif
 
 #if BuildDlfLibrary
