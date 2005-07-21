@@ -294,8 +294,10 @@ CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_Request on SubRequest (request);
 
 /* A little function base index to speed up subrequestToDo */
-CREATE INDEX I_SubRequest_Status on SubRequest
-  (CASE status WHEN 0 THEN status WHEN 1 THEN status WHEN 2 THEN status ELSE NULL end);
+CREATE INDEX I_SubRequest_Status on SubRequest (decode(status,0,status,1,status,2,status,NULL));
+
+/* Same kind of index to speed up subRequestFailedToDo */
+CREATE INDEX I_SubRequest_Status7 on SubRequest (decode(status,7,status,null));
 
 /* an index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
 CREATE INDEX I_QueryParameter_Query on QueryParameter (query);
@@ -605,7 +607,7 @@ CREATE OR REPLACE PROCEDURE updateFsFileOpened
 BEGIN
  UPDATE FileSystem SET deltaWeight = deltaWeight - deviation
   WHERE diskServer = ds;
- UPDATE FileSystem SET fsDeviation = 2 * deviation,
+ UPDATE FileSystem SET fsDeviation = LEAST(2 * deviation, 1000),
                        reservedSpace = reservedSpace + fileSize
   WHERE id = fs;
 END;
