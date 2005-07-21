@@ -179,15 +179,6 @@ namespace castor {
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
-         * Fill the database with objects of type ExtendedDeviceGroup refered by a given
-         * object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepExtendedDeviceGroup(castor::vdqm::TapeDrive* obj)
-          throw (castor::exception::Exception, oracle::occi::SQLException);
-
-        /**
          * Fill the database with objects of type TapeRequest refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -246,15 +237,6 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjTape(castor::vdqm::TapeDrive* obj)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type ExtendedDeviceGroup refered by a given
-         * object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjExtendedDeviceGroup(castor::vdqm::TapeDrive* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -369,24 +351,6 @@ namespace castor {
         /// SQL update statement object for member tape
         oracle::occi::Statement *m_updateTapeStatement;
 
-        /// SQL insert statement for member extDevGrp
-        static const std::string s_insertExtendedDeviceGroupStatementString;
-
-        /// SQL insert statement object for member extDevGrp
-        oracle::occi::Statement *m_insertExtendedDeviceGroupStatement;
-
-        /// SQL delete statement for member extDevGrp
-        static const std::string s_deleteExtendedDeviceGroupStatementString;
-
-        /// SQL delete statement object for member extDevGrp
-        oracle::occi::Statement *m_deleteExtendedDeviceGroupStatement;
-
-        /// SQL select statement for member extDevGrp
-        static const std::string s_selectExtendedDeviceGroupStatementString;
-
-        /// SQL select statement object for member extDevGrp
-        oracle::occi::Statement *m_selectExtendedDeviceGroupStatement;
-
         /// SQL select statement for member runningTapeReq
         static const std::string s_selectTapeRequestStatementString;
 
@@ -452,6 +416,24 @@ namespace castor {
 
         /// SQL remote update statement object for member tapeDriveDedication
         oracle::occi::Statement *m_remoteUpdateTapeDriveDedicationStatement;
+
+        /// SQL select statement for member 
+        static const std::string s_selectTapeDrive2ExtDevGroupStatementString;
+
+        /// SQL select statement object for member 
+        oracle::occi::Statement *m_selectTapeDrive2ExtDevGroupStatement;
+
+        /// SQL delete statement for member 
+        static const std::string s_deleteTapeDrive2ExtDevGroupStatementString;
+
+        /// SQL delete statement object for member 
+        oracle::occi::Statement *m_deleteTapeDrive2ExtDevGroupStatement;
+
+        /// SQL remote update statement for member 
+        static const std::string s_remoteUpdateTapeDrive2ExtDevGroupStatementString;
+
+        /// SQL remote update statement object for member 
+        oracle::occi::Statement *m_remoteUpdateTapeDrive2ExtDevGroupStatement;
 
         /// SQL checkExist statement for member tapeServer
         static const std::string s_checkTapeServerExistStatementString;

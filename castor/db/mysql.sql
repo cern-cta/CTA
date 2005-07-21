@@ -24,9 +24,6 @@ ALTER TABLE DiskPool2SvcClass
 ALTER TABLE Stream2TapeCopy
   DROP CONSTRAINT fk_Stream2TapeCopy_P
   DROP CONSTRAINT fk_Stream2TapeCopy_C;
-ALTER TABLE TapeDrive2ExtendedDevic
-  DROP CONSTRAINT fk_TapeDrive2ExtendedDevic_P
-  DROP CONSTRAINT fk_TapeDrive2ExtendedDevic_C;
 /* SQL statements for type BaseAddress */
 DROP TABLE BaseAddress;
 CREATE TABLE BaseAddress (objType INT, cnvSvcName VARCHAR(1000), cnvSvcType INT, target BIGINT, id BIGINT, PRIMARY KEY (id));
@@ -231,7 +228,7 @@ CREATE TABLE DiskServer (name VARCHAR(1000), id BIGINT, PRIMARY KEY (id), status
 
 /* SQL statements for type ExtendedDeviceGroup */
 DROP TABLE ExtendedDeviceGroup;
-CREATE TABLE ExtendedDeviceGroup (dgName VARCHAR(1000), accessMode INT, id BIGINT, PRIMARY KEY (id));
+CREATE TABLE ExtendedDeviceGroup (dgName VARCHAR(1000), accessMode INT, density VARCHAR(1000), tapeModel VARCHAR(1000), id BIGINT, PRIMARY KEY (id));
 
 /* SQL statements for type TapeServer */
 DROP TABLE TapeServer;
@@ -244,12 +241,6 @@ CREATE TABLE TapeRequest (priority INT, modificationTime INT, id BIGINT, PRIMARY
 /* SQL statements for type TapeDrive */
 DROP TABLE TapeDrive;
 CREATE TABLE TapeDrive (jobID INT, modificationTime INT, resettime INT, usecount INT, errcount INT, transferredMB INT, totalMB BIGINT, driveName VARCHAR(1000), tapeAccessMode INT, id BIGINT, PRIMARY KEY (id), tape INT, runningTapeReq INT, status INT, tapeServer INT, client INT);
-DROP INDEX I_TapeDrive2ExtendedDevic_C;
-DROP INDEX I_TapeDrive2ExtendedDevic_P;
-DROP TABLE TapeDrive2ExtendedDevic;
-CREATE TABLE TapeDrive2ExtendedDevic (Parent BIGINT, Child BIGINT);
-CREATE INDEX I_TapeDrive2ExtendedDevic_C on TapeDrive2ExtendedDevic (child);
-CREATE INDEX I_TapeDrive2ExtendedDevic_P on TapeDrive2ExtendedDevic (parent);
 
 /* SQL statements for type ErrorHistory */
 DROP TABLE ErrorHistory;
@@ -268,9 +259,6 @@ ALTER TABLE DiskPool2SvcClass
 ALTER TABLE Stream2TapeCopy
   ADD CONSTRAINT fk_Stream2TapeCopy_P FOREIGN KEY (Parent) REFERENCES Stream (id)
   ADD CONSTRAINT fk_Stream2TapeCopy_C FOREIGN KEY (Child) REFERENCES TapeCopy (id);
-ALTER TABLE TapeDrive2ExtendedDevic
-  ADD CONSTRAINT fk_TapeDrive2ExtendedDevic_P FOREIGN KEY (Parent) REFERENCES TapeDrive (id)
-  ADD CONSTRAINT fk_TapeDrive2ExtendedDevic_C FOREIGN KEY (Child) REFERENCES ExtendedDeviceGroup (id);
 -- This file contains SQL code that is not generated automatically
 -- and is inserted at the end of the generated code
 

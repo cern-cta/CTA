@@ -43,7 +43,6 @@
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
-#include "castor/vdqm/ExtendedDeviceGroup.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
@@ -105,20 +104,6 @@ const std::string castor::db::ora::OraTapeDriveCnv::s_checkTapeExistStatementStr
 /// SQL update statement for member tape
 const std::string castor::db::ora::OraTapeDriveCnv::s_updateTapeStatementString =
 "UPDATE TapeDrive SET tape = :1 WHERE id = :2";
-
-/// SQL insert statement for member extDevGrp
-const std::string castor::db::ora::OraTapeDriveCnv::s_insertExtendedDeviceGroupStatementString =
-"INSERT INTO TapeDrive2ExtendedDevic (Parent, Child) VALUES (:1, :2)";
-
-/// SQL delete statement for member extDevGrp
-const std::string castor::db::ora::OraTapeDriveCnv::s_deleteExtendedDeviceGroupStatementString =
-"DELETE FROM TapeDrive2ExtendedDevic WHERE Parent = :1 AND Child = :2";
-
-/// SQL select statement for member extDevGrp
-// The FOR UPDATE is needed in order to avoid deletion
-// of a segment after listing and before update/remove
-const std::string castor::db::ora::OraTapeDriveCnv::s_selectExtendedDeviceGroupStatementString =
-"SELECT Child FROM TapeDrive2ExtendedDevic WHERE Parent = :1 FOR UPDATE";
 
 /// SQL select statement for member runningTapeReq
 const std::string castor::db::ora::OraTapeDriveCnv::s_selectTapeRequestStatementString =
@@ -196,9 +181,6 @@ castor::db::ora::OraTapeDriveCnv::OraTapeDriveCnv(castor::ICnvSvc* cnvSvc) :
   m_remoteUpdateTapeStatement(0),
   m_checkTapeExistStatement(0),
   m_updateTapeStatement(0),
-  m_insertExtendedDeviceGroupStatement(0),
-  m_deleteExtendedDeviceGroupStatement(0),
-  m_selectExtendedDeviceGroupStatement(0),
   m_selectTapeRequestStatement(0),
   m_deleteTapeRequestStatement(0),
   m_remoteUpdateTapeRequestStatement(0),
@@ -240,9 +222,6 @@ void castor::db::ora::OraTapeDriveCnv::reset() throw() {
     deleteStatement(m_remoteUpdateTapeStatement);
     deleteStatement(m_checkTapeExistStatement);
     deleteStatement(m_updateTapeStatement);
-    deleteStatement(m_insertExtendedDeviceGroupStatement);
-    deleteStatement(m_deleteExtendedDeviceGroupStatement);
-    deleteStatement(m_selectExtendedDeviceGroupStatement);
     deleteStatement(m_deleteTapeRequestStatement);
     deleteStatement(m_selectTapeRequestStatement);
     deleteStatement(m_remoteUpdateTapeRequestStatement);
@@ -271,9 +250,6 @@ void castor::db::ora::OraTapeDriveCnv::reset() throw() {
   m_remoteUpdateTapeStatement = 0;
   m_checkTapeExistStatement = 0;
   m_updateTapeStatement = 0;
-  m_insertExtendedDeviceGroupStatement = 0;
-  m_deleteExtendedDeviceGroupStatement = 0;
-  m_selectExtendedDeviceGroupStatement = 0;
   m_selectTapeRequestStatement = 0;
   m_deleteTapeRequestStatement = 0;
   m_remoteUpdateTapeRequestStatement = 0;
@@ -319,9 +295,6 @@ void castor::db::ora::OraTapeDriveCnv::fillRep(castor::IAddress* address,
     switch (type) {
     case castor::OBJ_Tape :
       fillRepTape(obj);
-      break;
-    case castor::OBJ_ExtendedDeviceGroup :
-      fillRepExtendedDeviceGroup(obj);
       break;
     case castor::OBJ_TapeRequest :
       fillRepTapeRequest(obj);
@@ -416,55 +389,6 @@ void castor::db::ora::OraTapeDriveCnv::fillRepTape(castor::vdqm::TapeDrive* obj)
   m_updateTapeStatement->setDouble(1, 0 == obj->tape() ? 0 : obj->tape()->id());
   m_updateTapeStatement->setDouble(2, obj->id());
   m_updateTapeStatement->executeUpdate();
-}
-
-//------------------------------------------------------------------------------
-// fillRepExtendedDeviceGroup
-//------------------------------------------------------------------------------
-void castor::db::ora::OraTapeDriveCnv::fillRepExtendedDeviceGroup(castor::vdqm::TapeDrive* obj)
-  throw (castor::exception::Exception, oracle::occi::SQLException) {
-  // check select statement
-  if (0 == m_selectExtendedDeviceGroupStatement) {
-    m_selectExtendedDeviceGroupStatement = createStatement(s_selectExtendedDeviceGroupStatementString);
-  }
-  // Get current database data
-  std::set<int> extDevGrpList;
-  m_selectExtendedDeviceGroupStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectExtendedDeviceGroupStatement->executeQuery();
-  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-    extDevGrpList.insert(rset->getInt(1));
-  }
-  m_selectExtendedDeviceGroupStatement->closeResultSet(rset);
-  // update extDevGrp and create new ones
-  for (std::vector<castor::vdqm::ExtendedDeviceGroup*>::iterator it = obj->extDevGrp().begin();
-       it != obj->extDevGrp().end();
-       it++) {
-    if (0 == (*it)->id()) {
-      cnvSvc()->createRep(0, *it, false);
-    }
-    std::set<int>::iterator item;
-    if ((item = extDevGrpList.find((*it)->id())) != extDevGrpList.end()) {
-      extDevGrpList.erase(item);
-    } else {
-      if (0 == m_insertExtendedDeviceGroupStatement) {
-        m_insertExtendedDeviceGroupStatement = createStatement(s_insertExtendedDeviceGroupStatementString);
-      }
-      m_insertExtendedDeviceGroupStatement->setDouble(1, obj->id());
-      m_insertExtendedDeviceGroupStatement->setDouble(2, (*it)->id());
-      m_insertExtendedDeviceGroupStatement->executeUpdate();
-    }
-  }
-  // Delete old links
-  for (std::set<int>::iterator it = extDevGrpList.begin();
-       it != extDevGrpList.end();
-       it++) {
-    if (0 == m_deleteExtendedDeviceGroupStatement) {
-      m_deleteExtendedDeviceGroupStatement = createStatement(s_deleteExtendedDeviceGroupStatementString);
-    }
-    m_deleteExtendedDeviceGroupStatement->setDouble(1, obj->id());
-    m_deleteExtendedDeviceGroupStatement->setDouble(2, *it);
-    m_deleteExtendedDeviceGroupStatement->executeUpdate();
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -706,9 +630,6 @@ void castor::db::ora::OraTapeDriveCnv::fillObj(castor::IAddress* address,
   case castor::OBJ_Tape :
     fillObjTape(obj);
     break;
-  case castor::OBJ_ExtendedDeviceGroup :
-    fillObjExtendedDeviceGroup(obj);
-    break;
   case castor::OBJ_TapeRequest :
     fillObjTapeRequest(obj);
     break;
@@ -768,54 +689,6 @@ void castor::db::ora::OraTapeDriveCnv::fillObjTape(castor::vdqm::TapeDrive* obj)
     } else {
       cnvSvc()->updateObj(obj->tape());
     }
-  }
-}
-
-//------------------------------------------------------------------------------
-// fillObjExtendedDeviceGroup
-//------------------------------------------------------------------------------
-void castor::db::ora::OraTapeDriveCnv::fillObjExtendedDeviceGroup(castor::vdqm::TapeDrive* obj)
-  throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectExtendedDeviceGroupStatement) {
-    m_selectExtendedDeviceGroupStatement = createStatement(s_selectExtendedDeviceGroupStatementString);
-  }
-  // retrieve the object from the database
-  std::set<int> extDevGrpList;
-  m_selectExtendedDeviceGroupStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectExtendedDeviceGroupStatement->executeQuery();
-  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-    extDevGrpList.insert(rset->getInt(1));
-  }
-  // Close ResultSet
-  m_selectExtendedDeviceGroupStatement->closeResultSet(rset);
-  // Update objects and mark old ones for deletion
-  std::vector<castor::vdqm::ExtendedDeviceGroup*> toBeDeleted;
-  for (std::vector<castor::vdqm::ExtendedDeviceGroup*>::iterator it = obj->extDevGrp().begin();
-       it != obj->extDevGrp().end();
-       it++) {
-    std::set<int>::iterator item;
-    if ((item = extDevGrpList.find((*it)->id())) == extDevGrpList.end()) {
-      toBeDeleted.push_back(*it);
-    } else {
-      extDevGrpList.erase(item);
-      cnvSvc()->updateObj((*it));
-    }
-  }
-  // Delete old objects
-  for (std::vector<castor::vdqm::ExtendedDeviceGroup*>::iterator it = toBeDeleted.begin();
-       it != toBeDeleted.end();
-       it++) {
-    obj->removeExtDevGrp(*it);
-  }
-  // Create new objects
-  for (std::set<int>::iterator it = extDevGrpList.begin();
-       it != extDevGrpList.end();
-       it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
-    castor::vdqm::ExtendedDeviceGroup* remoteObj = 
-      dynamic_cast<castor::vdqm::ExtendedDeviceGroup*>(item);
-    obj->addExtDevGrp(remoteObj);
   }
 }
 
