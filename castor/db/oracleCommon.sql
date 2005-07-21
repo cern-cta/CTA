@@ -331,7 +331,7 @@ CREATE OR REPLACE PROCEDURE updateFsFileOpened
 BEGIN
  UPDATE FileSystem SET deltaWeight = deltaWeight - deviation
   WHERE diskServer = ds;
- UPDATE FileSystem SET fsDeviation = 2 * deviation,
+ UPDATE FileSystem SET fsDeviation = LEAST(2 * deviation, 1000),
                        reservedSpace = reservedSpace + fileSize
   WHERE id = fs;
 END;
