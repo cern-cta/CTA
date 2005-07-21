@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.173 $ $Release$ $Date: 2005/07/21 09:13:04 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.174 $ $Release$ $Date: 2005/07/21 13:39:17 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -96,7 +96,7 @@ OraStagerSvcFactory = s_factoryOraStagerSvc;
 /// SQL statement for subRequestFailedToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestFailedToDoStatementString =
   // 10 = SUBREQUEST_FAILED_ANSWERING, 7 = SUBREQUEST_FAILED
-  "UPDATE SubRequest SET status = 10 WHERE status = 7 AND ROWNUM < 2 RETURNING id, retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags INTO :1, :2, :3, :4, :5 ,:6 , :7, :8, :9";
+  "UPDATE SubRequest SET status = 10 WHERE decode(status,7,status,null) = 7 AND ROWNUM < 2 RETURNING id, retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags INTO :1, :2, :3, :4, :5 ,:6 , :7, :8, :9";
 
 /// SQL statement for isSubRequestToSchedule
 const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStatementString =
@@ -223,8 +223,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo
         << "UPDATE SubRequest SET status = 3 " // SUBREQUEST_WAITSCHED
         // Here use I_SubRequest_status index to retrieve SubRequests
         // in START, RESTART and RETRY status
-        << " WHERE (CASE status WHEN 0 THEN status"
-        << " WHEN 1 THEN status WHEN 2 THEN status ELSE NULL end) < 3"
+        << " WHERE (decode(status,0,status,1,status,2,status,NULL)) < 3"
         << " AND ROWNUM < 2 AND "
         << "(SELECT type FROM Id2Type WHERE id = SubRequest.request)"
         << " IN (";
