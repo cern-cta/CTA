@@ -36,7 +36,6 @@ struct C_IObject_t;
 struct Cstager_ClientIdentification_t;
 struct Cstager_Tape_t;
 struct Cvdqm_ErrorHistory_t;
-struct Cvdqm_ExtendedDeviceGroup_t;
 struct Cvdqm_TapeDriveDedication_t;
 struct Cvdqm_TapeDrive_t;
 struct Cvdqm_TapeRequest_t;
@@ -228,22 +227,6 @@ int Cvdqm_TapeDrive_tape(struct Cvdqm_TapeDrive_t* instance, struct Cstager_Tape
  * Set the value of tape
  */
 int Cvdqm_TapeDrive_setTape(struct Cvdqm_TapeDrive_t* instance, struct Cstager_Tape_t* new_var);
-
-/**
- * Add a struct Cvdqm_ExtendedDeviceGroup_t* object to the extDevGrp list
- */
-int Cvdqm_TapeDrive_addExtDevGrp(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_ExtendedDeviceGroup_t* obj);
-
-/**
- * Remove a struct Cvdqm_ExtendedDeviceGroup_t* object from extDevGrp
- */
-int Cvdqm_TapeDrive_removeExtDevGrp(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_ExtendedDeviceGroup_t* obj);
-
-/**
- * Get the list of struct Cvdqm_ExtendedDeviceGroup_t* objects held by extDevGrp.
- * Note that the caller is responsible for the deletion of the returned vector.
- */
-int Cvdqm_TapeDrive_extDevGrp(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_ExtendedDeviceGroup_t*** var, int* len);
 
 /**
  * Get the value of runningTapeReq

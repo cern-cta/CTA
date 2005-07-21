@@ -31,7 +31,6 @@
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
-#include "castor/vdqm/ExtendedDeviceGroup.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
@@ -279,35 +278,6 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cvdqm_TapeDrive_setTape(castor::vdqm::TapeDrive* instance, castor::stager::Tape* new_var) {
     instance->setTape(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cvdqm_TapeDrive_addExtDevGrp
-  //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_addExtDevGrp(castor::vdqm::TapeDrive* instance, castor::vdqm::ExtendedDeviceGroup* obj) {
-    instance->addExtDevGrp(obj);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cvdqm_TapeDrive_removeExtDevGrp
-  //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_removeExtDevGrp(castor::vdqm::TapeDrive* instance, castor::vdqm::ExtendedDeviceGroup* obj) {
-    instance->removeExtDevGrp(obj);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cvdqm_TapeDrive_extDevGrp
-  //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_extDevGrp(castor::vdqm::TapeDrive* instance, castor::vdqm::ExtendedDeviceGroup*** var, int* len) {
-    std::vector<castor::vdqm::ExtendedDeviceGroup*>& result = instance->extDevGrp();
-    *len = result.size();
-    *var = (castor::vdqm::ExtendedDeviceGroup**) malloc((*len) * sizeof(castor::vdqm::ExtendedDeviceGroup*));
-    for (int i = 0; i < *len; i++) {
-      (*var)[i] = result[i];
-    }
     return 0;
   }
 

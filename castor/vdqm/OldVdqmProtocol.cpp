@@ -29,7 +29,6 @@
 
 #include "castor/Constants.hpp"
 
-#include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NotSupported.hpp"
 
@@ -158,8 +157,8 @@ bool castor::vdqm::OldVdqmProtocol::handleRequestType(VdqmServerSocket* sock,
     		else {
 	    		// Handle VDQM_VOL_REQ
 	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 19);
-    		
-    			TapeRequestHandler requestHandler;
+					
+  				TapeRequestHandler requestHandler;
 					requestHandler.newTapeRequest(ptr_header, ptr_volumeRequest, cuuid); 
     		}
         break;

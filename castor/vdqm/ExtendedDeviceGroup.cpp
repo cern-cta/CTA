@@ -41,6 +41,8 @@
 castor::vdqm::ExtendedDeviceGroup::ExtendedDeviceGroup() throw() :
   m_dgName(""),
   m_accessMode(0),
+  m_density(""),
+  m_tapeModel(""),
   m_id(0) {
 };
 
@@ -65,6 +67,8 @@ void castor::vdqm::ExtendedDeviceGroup::print(std::ostream& stream,
   // Output of all members
   stream << indent << "dgName : " << m_dgName << std::endl;
   stream << indent << "accessMode : " << m_accessMode << std::endl;
+  stream << indent << "density : " << m_density << std::endl;
+  stream << indent << "tapeModel : " << m_tapeModel << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

@@ -26,21 +26,18 @@
  
  // Include Files
 #include <signal.h>
-#include <iostream>
- 
-#include "errno.h"
+#include <string>
+
+#include "castor/Services.hpp"
+#include "Cgetopt.h"
+#include "Cinit.h"
 #include "Cuuid.h"
+#include "Cpool_api.h"
+#include "errno.h"
 
 #include "castor/IObject.hpp"
 #include "castor/Constants.hpp"
 #include "castor/ICnvSvc.hpp"
-#include "castor/Services.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
-#include "castor/BaseAddress.hpp"
-
-#include "castor/io/biniostream.h"
-
 
 #define VDQMSERV
 
@@ -48,10 +45,15 @@
 #include <vdqm.h>	//Needed for the client_connection
 #include <vdqm_constants.h>	//e.g. Magic Number of old vdqm protocol
 
+#include "castor/vdqm/handler/TapeRequestDedicationHandler.hpp"
+
 // Local Includes
 #include "VdqmServer.hpp"
 #include "VdqmServerSocket.hpp"
 #include "OldVdqmProtocol.hpp"
+
+//To make the code more readable
+using namespace castor::vdqm::handler;
 
 //------------------------------------------------------------------------------
 // main method
@@ -86,8 +88,12 @@ int main(int argc, char *argv[]) {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::vdqm::VdqmServer::VdqmServer() :
-  castor::BaseServer("VdqmServer", 20) {
+castor::vdqm::VdqmServer::VdqmServer(): 
+	m_foreground(false), 
+	m_threadPoolId(-1),
+  m_threadNumber(DEFAULT_THREAD_NUMBER), 
+  m_serverName("VdqmServer") {
+  	
   initLog("Vdqm", SVC_DLFMSG);
   // Initializes the DLF logging. This includes
   // defining the predefined messages
@@ -100,7 +106,7 @@ castor::vdqm::VdqmServer::VdqmServer() :
      { 5, "Exception caught : ignored"},
      { 6, "Request has MagicNumber from old VDQM Protocol"},
      { 7, "Unable to read Request from socket"},
-     { 8, "Processing Request"},//not used
+     { 8, "Unable to initialize TapeRequestDedicationHandler thread"},
      { 9, "Exception caught"},
      {10, "Sending reply to client"},
      {11, "Unable to send Ack to client"},
@@ -142,11 +148,39 @@ castor::vdqm::VdqmServer::VdqmServer() :
   castor::dlf::dlf_init("Vdqm", messages);
 }
 
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+castor::vdqm::VdqmServer::~VdqmServer() throw() {
+  // hack to release thread specific allocated memory
+  castor::Services* svcs = services();
+  if (0 != svcs) {
+    delete svcs;
+  }
+  
+  TapeRequestDedicationHandler* tapeRequestDedicationHandler =
+  	TapeRequestDedicationHandler::Instance();
+  	
+  /**
+   * Stopping the thread, which is handling the dedication of the tape
+   * to a tape drive
+   */
+  tapeRequestDedicationHandler->stop();	
+  	
+  sleep(1);
+}
+
+
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
 int castor::vdqm::VdqmServer::main () {
-  int rc;
+  /**
+   * The Singleton with the main loop to dedicate a
+   * tape to a tape drive.
+   */
+  TapeRequestDedicationHandler* tapeRequestDedicationHandler;
   
   try {
     // create oracle and streaming conversion service
@@ -166,14 +200,29 @@ int castor::vdqm::VdqmServer::main () {
       return -1;
     }
     
-    /* Create a socket for the server, bind, and listen */
-    castor::vdqm::VdqmServerSocket sock(VDQM_PORT, true); 
     
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 0);
+    try {
+	    /**
+	     * Create thread, which dedicates the tapes to the tape drives
+	     */
+	     tapeRequestDedicationHandler = TapeRequestDedicationHandler::Instance();
+    }
+    catch (castor::exception::Exception ex) {
+			// "Unable to initialize TapeRequestDedicationHandler thread" message
+			castor::dlf::Param params[] =
+			  {castor::dlf::Param("Message", ex.getMessage().str())};
+			castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 8, 1, params);    	
+    }
+
+		/** Start the loop in a thread **/
+		threadAssign(tapeRequestDedicationHandler);    
+    
+    /* Create a socket for the server, bind, and listen */
+    VdqmServerSocket sock(VDQM_PORT, true); 
      
     for (;;) {
-      /* Accept connexions */
-      castor::vdqm::VdqmServerSocket* s = sock.accept();
+      /* Accept connections */
+      VdqmServerSocket* s = sock.accept();
       /* handle the command. */
       threadAssign(s);
     }
@@ -195,70 +244,224 @@ int castor::vdqm::VdqmServer::main () {
   }
 }
 
+
+//------------------------------------------------------------------------------
+// start
+//------------------------------------------------------------------------------
+int castor::vdqm::VdqmServer::start() {
+  int rc;
+  if (!m_foreground) {
+    if ((rc = Cinitdaemon ((char *)m_serverName.c_str(), 0)) < 0) {
+      return -1;
+    }
+  }
+  return serverMain();
+}
+
+//------------------------------------------------------------------------------
+// serverMain
+//------------------------------------------------------------------------------
+int  castor::vdqm::VdqmServer::serverMain () {
+  // create threads if in multithreaded mode
+  int nbThreads, actualNbThreads;
+  nbThreads = m_threadNumber;
+  
+  m_threadPoolId = Cpool_create(nbThreads, &actualNbThreads);
+  if (m_threadPoolId < 0) {
+    clog() << ALERT << "Thread pool creation error : "
+           << m_threadPoolId
+           << std::endl;
+    return -1;
+  } else {
+    clog() << DEBUG << "Thread pool created : "
+           << m_threadPoolId << ", "
+           << actualNbThreads << std::endl;
+    m_threadNumber = actualNbThreads;
+  }
+  
+  // Ignore SIGPIPE AND SIGXFSZ
+#if ! defined(_WIN32)
+	signal (SIGPIPE,SIG_IGN);
+	signal (SIGXFSZ,SIG_IGN);
+#endif
+
+  return main();
+}
+
+//------------------------------------------------------------------------------
+// threadAssign
+//------------------------------------------------------------------------------
+int castor::vdqm::VdqmServer::threadAssign(void *param) {
+
+  // Initializing the arguments to pass to the static request processor
+  struct processRequestArgs *args = new processRequestArgs();
+  args->handler = this;
+  args->param = param;
+
+  
+  int assign_rc = Cpool_assign(m_threadPoolId,
+                               &castor::vdqm::staticProcessRequest,
+                               args,
+                               -1);
+  if (assign_rc < 0) {
+    clog() << "Error while assigning request to pool" << std::endl;
+    return -1;
+  }
+  
+  return 0;
+}
+
+
+//------------------------------------------------------------------------------
+// staticProcessRequest
+//------------------------------------------------------------------------------
+void *castor::vdqm::staticProcessRequest(void *param) {
+  castor::vdqm::VdqmServer *server = 0;
+  struct processRequestArgs *args;
+
+  if (param == NULL) {
+    return 0;
+  }
+
+  // Recovering the processRequestArgs
+  args = (struct processRequestArgs *)param;
+
+  if (args->handler == NULL) {
+    delete args;
+    return 0;
+  }
+
+  server = dynamic_cast<castor::vdqm::VdqmServer *>(args->handler);
+  if (server == 0) {
+    delete args;
+    return 0;
+  }
+
+  // Executing the method
+  void *res = server->processRequest(args->param);
+  delete args;
+  return res;
+}
+
+//------------------------------------------------------------------------------
+// setForeground
+//------------------------------------------------------------------------------
+void castor::vdqm::VdqmServer::setForeground(bool value) {
+  m_foreground = value;
+}
+
+//------------------------------------------------------------------------------
+// parseCommandLine
+//------------------------------------------------------------------------------
+void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[]) {
+
+  static struct Coptions longopts[] =
+    {
+      {"foreground",         NO_ARGUMENT,        NULL,      'f'},
+      {"nbThreads",         REQUIRED_ARGUMENT,        NULL,      'n'},
+      {NULL,                 0,                  NULL,        0}
+    };
+
+  Coptind = 1;
+  Copterr = 0;
+
+  char c;
+  while ((c = Cgetopt_long (argc, argv, "fs", longopts, NULL)) != -1) {
+    switch (c) {
+    case 'f':
+      m_foreground = true;
+      break;
+    case 'n':
+      m_threadNumber = atoi(Coptarg);
+      break;
+    }
+	}
+}
+
+
 //------------------------------------------------------------------------------
 // processRequest: Method called once per request, where all the code resides
 //------------------------------------------------------------------------------
 void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
   
-  // placeholder for the request uuid if any
-  Cuuid_t cuuid = nullCuuid;
+  castor::BaseObject* baseObject = 
+  	(castor::BaseObject*) param;
   
-  // Retrieve info on the client
-  unsigned short port;
-  unsigned long ip;
-  
-  //The magic Number of the message on the socket
-  unsigned int magicNumber;
-  
-
-  // We know it's a VdqmServerSocket
-  castor::vdqm::VdqmServerSocket* sock =
-    (castor::vdqm::VdqmServerSocket*) param;
+  castor::vdqm::VdqmServerSocket* sock = 
+  	dynamic_cast<castor::vdqm::VdqmServerSocket*>(baseObject);
+  	
+  baseObject = 0;
+  	
+  if (0 != sock) {
+	  // placeholder for the request uuid if any
+	  Cuuid_t cuuid = nullCuuid;
+	  
+	  // Retrieve info on the client
+	  unsigned short port;
+	  unsigned long ip;
+	  
+	  //The magic Number of the message on the socket
+	  unsigned int magicNumber;
+		
+		// gives a Cuuid to the request
+	  Cuuid_create(&cuuid); 
+		
+	  try {
+	    sock->getPeerIp(port, ip);
+	  } catch(castor::exception::Exception e) {
+	    // "Exception caught : ignored" message
+	    castor::dlf::Param params[] =
+	      {castor::dlf::Param("Standard Message", sstrerror(e.code())),
+	       castor::dlf::Param("Precise Message", e.getMessage().str())};
+	    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 5, 2, params);
+	  }
+	  // "New Request Arrival" message
+	  castor::dlf::Param params[] =
+	    {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+	     castor::dlf::Param("Port", port)};
+	  castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 1, 2, params);
 	
-	// gives a Cuuid to the request
-  Cuuid_create(&cuuid); 
+	  // get the incoming request
+	  try {
+	  	//First check of the Protocol
+	  	magicNumber = sock->readMagicNumber();
+	  } catch (castor::exception::Exception e) {  
+	    // "Unable to read Request from socket" message
+	    castor::dlf::Param params[] =
+	      {castor::dlf::Param("Standard Message", sstrerror(e.code())),
+	       castor::dlf::Param("Precise Message", e.getMessage().str())};
+	    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 7, 2, params);
+	  }
 	
-  try {
-    sock->getPeerIp(port, ip);
-  } catch(castor::exception::Exception e) {
-    // "Exception caught : ignored" message
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Standard Message", sstrerror(e.code())),
-       castor::dlf::Param("Precise Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 5, 2, params);
+		if (magicNumber == VDQM_MAGIC) {
+			//Request has MagicNumber from old VDQM Protocol
+			castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 6 );
+			handleOldVdqmRequest(sock, magicNumber, cuuid);
+		}
+	  else {
+			//Wrong Magic number
+			castor::dlf::Param params[] =
+	      {castor::dlf::Param("Magic Number", magicNumber),
+	       castor::dlf::Param("VDQM_MAGIC", VDQM_MAGIC)};
+			castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 13, 2, params);
+	 	}
+	
+	  delete sock;
   }
-  // "New Request Arrival" message
-  castor::dlf::Param params[] =
-    {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-     castor::dlf::Param("Port", port)};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 1, 2, params);
-
-  // get the incoming request
-  try {
-  	//First check of the Protocol
-  	magicNumber = sock->readMagicNumber();
-  } catch (castor::exception::Exception e) {  
-    // "Unable to read Request from socket" message
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Standard Message", sstrerror(e.code())),
-       castor::dlf::Param("Precise Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 7, 2, params);
+  else { // If it's not a socket, then it's our dedication loop!
+  	TapeRequestDedicationHandler* tapeRequestDedicationHandler =
+  		(TapeRequestDedicationHandler*) param;
+  		
+  	/**
+  	 * This function ends only, if the stop() function is beeing called.
+  	 */
+  	tapeRequestDedicationHandler->run();
+  	
+  	delete tapeRequestDedicationHandler;
+  	
+  	std::cout << "loop finished" << std::endl;
   }
-
-	if (magicNumber == VDQM_MAGIC) {
-		//Request has MagicNumber from old VDQM Protocol
-		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 6 );
-		handleOldVdqmRequest(sock, magicNumber, cuuid);
-	}
-  else {
-		//Wrong Magic number
-		castor::dlf::Param params[] =
-      {castor::dlf::Param("Magic Number", magicNumber),
-       castor::dlf::Param("VDQM_MAGIC", VDQM_MAGIC)};
-		castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 13, 2, params);
- 	}
-
-  delete sock;
+  
   return 0;
 }
 
@@ -318,10 +521,13 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 
 	} catch (castor::exception::Exception e) {  
     // "Exception caught" message
+//    std::ostringstream hexNumber(std::ostringstream::out);
+//    hexNumber << "0x" << std::hex << e.code();
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 1, params);
-    
+      {castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("errorCode", e.code())};      
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 2, params);
+
     /**
      * Tell the client about the error
      */

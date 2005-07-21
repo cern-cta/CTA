@@ -37,9 +37,9 @@ struct Cvdqm_ExtendedDeviceGroup_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class ExtendedDeviceGroup
-// The exetended device group table contains all supported tape drive types and
-// modes. A tape drive can be associated with several entries, if it is capable to
-// support them. 
+// The exetended device group table contains all existing tape models and their
+// access modes.  A tape drive can be associated with several entries, if it is
+// capable to support them. 
 //------------------------------------------------------------------------------
 
 /**
@@ -90,11 +90,15 @@ int Cvdqm_ExtendedDeviceGroup_clone(struct Cvdqm_ExtendedDeviceGroup_t* instance
 
 /**
  * Get the value of dgName
+ * Th old dgn string, which contains the density the tapeModel and the capacitiy of
+ * a tape. Maybe it is not needed any more.
  */
 int Cvdqm_ExtendedDeviceGroup_dgName(struct Cvdqm_ExtendedDeviceGroup_t* instance, const char** var);
 
 /**
  * Set the value of dgName
+ * Th old dgn string, which contains the density the tapeModel and the capacitiy of
+ * a tape. Maybe it is not needed any more.
  */
 int Cvdqm_ExtendedDeviceGroup_setDgName(struct Cvdqm_ExtendedDeviceGroup_t* instance, const char* new_var);
 
@@ -109,6 +113,30 @@ int Cvdqm_ExtendedDeviceGroup_accessMode(struct Cvdqm_ExtendedDeviceGroup_t* ins
  * WRITE_ENABLE/WRITE_DISABLE from Ctape_constants.h
  */
 int Cvdqm_ExtendedDeviceGroup_setAccessMode(struct Cvdqm_ExtendedDeviceGroup_t* instance, int new_var);
+
+/**
+ * Get the value of density
+ * The density of a tape
+ */
+int Cvdqm_ExtendedDeviceGroup_density(struct Cvdqm_ExtendedDeviceGroup_t* instance, const char** var);
+
+/**
+ * Set the value of density
+ * The density of a tape
+ */
+int Cvdqm_ExtendedDeviceGroup_setDensity(struct Cvdqm_ExtendedDeviceGroup_t* instance, const char* new_var);
+
+/**
+ * Get the value of tapeModel
+ * the model of a tape
+ */
+int Cvdqm_ExtendedDeviceGroup_tapeModel(struct Cvdqm_ExtendedDeviceGroup_t* instance, const char** var);
+
+/**
+ * Set the value of tapeModel
+ * the model of a tape
+ */
+int Cvdqm_ExtendedDeviceGroup_setTapeModel(struct Cvdqm_ExtendedDeviceGroup_t* instance, const char* new_var);
 
 /**
  * Get the value of id

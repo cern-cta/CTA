@@ -44,9 +44,9 @@ namespace castor {
 
     /**
      * class ExtendedDeviceGroup
-     * The exetended device group table contains all supported tape drive types and
-     * modes. A tape drive can be associated with several entries, if it is capable to
-     * support them. 
+     * The exetended device group table contains all existing tape models and their
+     * access modes.  A tape drive can be associated with several entries, if it is
+     * capable to support them. 
      */
     class ExtendedDeviceGroup : public virtual castor::IObject {
 
@@ -101,6 +101,8 @@ namespace castor {
       /*********************************/
       /**
        * Get the value of m_dgName
+       * Th old dgn string, which contains the density the tapeModel and the capacitiy of
+       * a tape. Maybe it is not needed any more.
        * @return the value of m_dgName
        */
       std::string dgName() const {
@@ -109,6 +111,8 @@ namespace castor {
 
       /**
        * Set the value of m_dgName
+       * Th old dgn string, which contains the density the tapeModel and the capacitiy of
+       * a tape. Maybe it is not needed any more.
        * @param new_var the new value of m_dgName
        */
       void setDgName(std::string new_var) {
@@ -134,6 +138,42 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_density
+       * The density of a tape
+       * @return the value of m_density
+       */
+      std::string density() const {
+        return m_density;
+      }
+
+      /**
+       * Set the value of m_density
+       * The density of a tape
+       * @param new_var the new value of m_density
+       */
+      void setDensity(std::string new_var) {
+        m_density = new_var;
+      }
+
+      /**
+       * Get the value of m_tapeModel
+       * the model of a tape
+       * @return the value of m_tapeModel
+       */
+      std::string tapeModel() const {
+        return m_tapeModel;
+      }
+
+      /**
+       * Set the value of m_tapeModel
+       * the model of a tape
+       * @param new_var the new value of m_tapeModel
+       */
+      void setTapeModel(std::string new_var) {
+        m_tapeModel = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -153,10 +193,17 @@ namespace castor {
 
     private:
 
+      /// Th old dgn string, which contains the density the tapeModel and the capacitiy of a tape. Maybe it is not needed any more.
       std::string m_dgName;
 
       /// WRITE_ENABLE/WRITE_DISABLE from Ctape_constants.h
       int m_accessMode;
+
+      /// The density of a tape
+      std::string m_density;
+
+      /// the model of a tape
+      std::string m_tapeModel;
 
       /// The id of this object
       u_signed64 m_id;

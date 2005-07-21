@@ -130,6 +130,40 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cvdqm_ExtendedDeviceGroup_density
+  //----------------------------------------------------------------------------
+  int Cvdqm_ExtendedDeviceGroup_density(castor::vdqm::ExtendedDeviceGroup* instance, const char** var) {
+    *var = instance->density().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_ExtendedDeviceGroup_setDensity
+  //----------------------------------------------------------------------------
+  int Cvdqm_ExtendedDeviceGroup_setDensity(castor::vdqm::ExtendedDeviceGroup* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setDensity(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_ExtendedDeviceGroup_tapeModel
+  //----------------------------------------------------------------------------
+  int Cvdqm_ExtendedDeviceGroup_tapeModel(castor::vdqm::ExtendedDeviceGroup* instance, const char** var) {
+    *var = instance->tapeModel().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_ExtendedDeviceGroup_setTapeModel
+  //----------------------------------------------------------------------------
+  int Cvdqm_ExtendedDeviceGroup_setTapeModel(castor::vdqm::ExtendedDeviceGroup* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setTapeModel(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cvdqm_ExtendedDeviceGroup_id
   //----------------------------------------------------------------------------
   int Cvdqm_ExtendedDeviceGroup_id(castor::vdqm::ExtendedDeviceGroup* instance, u_signed64* var) {

@@ -57,7 +57,6 @@ namespace castor {
     class TapeServer;
     class TapeRequest;
     class TapeDriveDedication;
-    class ExtendedDeviceGroup;
     class ErrorHistory;
 
     /**
@@ -317,35 +316,6 @@ namespace castor {
       }
 
       /**
-       * Add a ExtendedDeviceGroup* object to the m_extDevGrpVector list
-       */
-      void addExtDevGrp(ExtendedDeviceGroup* add_object) {
-        m_extDevGrpVector.push_back(add_object);
-      }
-
-      /**
-       * Remove a ExtendedDeviceGroup* object from m_extDevGrpVector
-       */
-      void removeExtDevGrp(ExtendedDeviceGroup* remove_object) {
-        for (unsigned int i = 0; i < m_extDevGrpVector.size(); i++) {
-          ExtendedDeviceGroup* item = m_extDevGrpVector[i];
-          if (item == remove_object) {
-            std::vector<ExtendedDeviceGroup*>::iterator it = m_extDevGrpVector.begin() + i;
-            m_extDevGrpVector.erase(it);
-            return;
-          }
-        }
-      }
-
-      /**
-       * Get the list of ExtendedDeviceGroup* objects held by m_extDevGrpVector
-       * @return list of ExtendedDeviceGroup* objects held by m_extDevGrpVector
-       */
-      std::vector<ExtendedDeviceGroup*>& extDevGrp() {
-        return m_extDevGrpVector;
-      }
-
-      /**
        * Get the value of m_runningTapeReq
        * @return the value of m_runningTapeReq
        */
@@ -500,8 +470,6 @@ namespace castor {
       u_signed64 m_id;
 
       castor::stager::Tape* m_tape;
-
-      std::vector<ExtendedDeviceGroup*> m_extDevGrpVector;
 
       TapeRequest* m_runningTapeReq;
 

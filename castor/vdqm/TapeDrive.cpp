@@ -33,7 +33,6 @@
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
-#include "castor/vdqm/ExtendedDeviceGroup.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
@@ -68,7 +67,6 @@ castor::vdqm::TapeDrive::TapeDrive() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::vdqm::TapeDrive::~TapeDrive() throw() {
-  m_extDevGrpVector.clear();
   if (0 != m_runningTapeReq) {
     m_runningTapeReq->setTapeDrive(0);
   }
@@ -118,17 +116,6 @@ void castor::vdqm::TapeDrive::print(std::ostream& stream,
     m_tape->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
-  }
-  {
-    stream << indent << "ExtDevGrp : " << std::endl;
-    int i;
-    std::vector<ExtendedDeviceGroup*>::const_iterator it;
-    for (it = m_extDevGrpVector.begin(), i = 0;
-         it != m_extDevGrpVector.end();
-         it++, i++) {
-      stream << indent << "  " << i << " :" << std::endl;
-      (*it)->print(stream, indent + "    ", alreadyPrinted);
-    }
   }
   stream << indent << "RunningTapeReq : " << std::endl;
   if (0 != m_runningTapeReq) {

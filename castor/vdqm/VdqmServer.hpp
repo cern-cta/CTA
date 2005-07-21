@@ -27,7 +27,7 @@
 #ifndef RH_VDQMSERVER_HPP
 #define RH_VDQMSERVER_HPP 1
 
-#include "castor/BaseServer.hpp"
+#include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
 
 #define CSP_MSG_MAGIC 0xCA001
@@ -39,6 +39,12 @@ namespace castor {
 	class IObject;
 
   namespace vdqm {
+  	
+	  /**
+	   * Static method used to pass to Cpool_assign
+	   */
+	  void *staticProcessRequest(void *param);
+  	
 		//Forward Declarations
   	class VdqmServerSocket;
 
@@ -47,7 +53,7 @@ namespace castor {
      * arrive. The main task of this component is to store them
      * for future use
      */
-    class VdqmServer : public castor::BaseServer {
+    class VdqmServer : public castor::BaseObject {
 
     public:
 
@@ -55,24 +61,75 @@ namespace castor {
        * Constructor
        */
       VdqmServer();
+      
+      /**
+       * Destructor
+       */
+      ~VdqmServer() throw();
 
       /**
        * Method called once per request, where all the code resides
        */
-      void *processRequest(void *param) throw();
+      virtual void *processRequest(void *param) throw();
 
       /**
        * Main Server loop, listening for the clients
        */
-      int main();
+      virtual int main();
 
-      /**
-       * Overriding start method for logging purposes
-       */
-      //virtual int start();
+	    /**
+	     * Starts the server, as a daemon and execs the 
+	     * server main function.
+	     */
+	    virtual int start();
+	
+	    /**
+	     * default number of threads in the server thread pool
+	     */    
+	    static const int DEFAULT_THREAD_NUMBER = 20;
+	
+	    /**
+	     * Assigns work to a thread from the pool
+	     */    
+	    int threadAssign(void *param);
+	
+	    /**
+	     * Sets the foreground flag
+	     */    
+	    void setForeground(bool value);
+	
+	    /**
+	     * Sets the foreground flag
+	     */    
+	    void setSingleThreaded(bool value);
+	
+	    /**
+	     * parses a command line to set the server oprions
+	     */    
+	    void parseCommandLine(int argc, char *argv[]);
+	
+	    /**
+	     * Gets a pointer in thread local storage
+	     * Returns 0 if the void * could be allocated
+	     * -1 otherwise.
+	     */    
+	    static int gettls(void **thip);
+	
+	    /**
+	     * gets the message service log stream
+	     * Note that the service has to be released after usage
+	     * @return a pointer to the message service or 0 if none
+	     * is available.
+	     */
+	    std::ostream& log() throw (castor::exception::Exception);      
 
     private:
-
+    
+	    /**
+	     * BaseServer main method called by start
+	     */
+	    int serverMain();
+	    
       /**
        * Internal function to handle the old Vdqm request. Puts the values into
        * the old structs and reads out the request typr number, to delegates
@@ -80,12 +137,42 @@ namespace castor {
        */
       void handleOldVdqmRequest(castor::vdqm::VdqmServerSocket* sock, 
       													unsigned int magicNumber,
-      													Cuuid_t cuuid);
+      													Cuuid_t cuuid);	    
+	
+	    /**
+	     * Flag indicating whether the server should 
+	     * run in foreground or background mode.
+	     */
+	    bool m_foreground;
+	
+	    /**
+	     * The id of the pool created
+	     */
+	    int m_threadPoolId;
+	
+	    /**
+	     * Number of threads in the pool
+	     */
+	    int m_threadNumber;
+	
+	    /**
+	     * Name of the server
+	     */
+	    std::string m_serverName;    
 
     }; // class VdqmServer
 
   } // end of namespace vdqm
 
 } // end of namespace castor
+
+
+/**
+ * Structure used to pass arguments to the method through Cpool_assign
+ */
+struct processRequestArgs {
+  castor::vdqm::VdqmServer *handler;
+  void *param;
+};
 
 #endif // RH_VDQMSERVER_HPP
