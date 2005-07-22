@@ -28,7 +28,7 @@
  
 // Local include
 #include "TapeRequestDedicationHandler.hpp"
-
+#include <unistd.h>
 
 castor::vdqm::handler::TapeRequestDedicationHandler* 
  	castor::vdqm::handler::TapeRequestDedicationHandler::_instance = 0;
