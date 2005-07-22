@@ -2104,11 +2104,12 @@ END;
 CREATE OR REPLACE TRIGGER tr_FileSystem_Update
 AFTER UPDATE ON FileSystem
 FOR EACH ROW
-BEGIN
+DECLARE
   freeSpace NUMBER;
+BEGIN
   -- compute the actual free space taking into account reservations (reservedSpace)
   -- and already running GC processes (spaceToBeFreed)
-  freeSpace := new.free + :new.deltaFree - :new.reservedSpace + :new.spaceToBeFreed;
+  freeSpace := :new.free + :new.deltaFree - :new.reservedSpace + :new.spaceToBeFreed;
      -- shall we launch a new GC?
   IF :new.minFreeSpace > freeSpace AND 
      -- is it really worth launching it? (some other GCs maybe are already running
