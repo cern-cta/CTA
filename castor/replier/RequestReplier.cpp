@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2005/06/29 14:13:09 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2005/07/22 10:27:12 $ $Author: sponcec3 $
  *
  *
  *
@@ -815,7 +815,7 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
 
     std::ostringstream buff;
 
-    clog() << USAGE << SETW func
+    clog() << DEBUG << SETW func
            << "Adding EndResponse for ";
     clog() << castor::ip << cr.client.ipAddress() << ":"
            << cr.client.port()
@@ -878,7 +878,7 @@ castor::replier::RequestReplier::sendEndResponse(castor::IClient *client)
   cr.client = *cl;
   cr.response = buffer;
 
-  clog() << USAGE << SETW func
+  clog() << DEBUG << SETW func
          << "Adding EndResponse for ";
   clog() << castor::ip << cr.client.ipAddress() << ":"
          << cr.client.port()

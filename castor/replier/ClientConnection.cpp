@@ -64,7 +64,7 @@ castor::replier::ClientConnection::ClientConnection() throw() :
   m_nextMessageId(1) {
     char *func = "cc::ClientConnection ";
     m_clientStr = buildClientStr(m_client);
-    clog() << USAGE << SETW func  << this->toString() << " created" << std::endl;
+    clog() << VERBOSE << SETW func  << this->toString() << " created" << std::endl;
 };
 
 castor::replier::ClientConnection::ClientConnection(ClientResponse cr) throw() :
@@ -76,7 +76,7 @@ castor::replier::ClientConnection::ClientConnection(ClientResponse cr) throw() :
     cr.messageId = m_nextMessageId;
     m_nextMessageId++;
     m_messages.push(cr);
-    clog() << USAGE << SETW func  << this->toString() << " created and added msg:" 
+    clog() << VERBOSE << SETW func  << this->toString() << " created and added msg:" 
 	   << cr.messageId
 	   << std::endl;
 };
@@ -86,7 +86,7 @@ void castor::replier::ClientConnection::addMessage(ClientResponse cr) throw() {
   cr.messageId = m_nextMessageId;
   m_nextMessageId++;
   m_messages.push(cr);
-  clog() << USAGE << SETW func  << this->toString() << " added msg:" 
+  clog() << VERBOSE << SETW func  << this->toString() << " added msg:" 
 	 << cr.messageId << " (terminate:" 
 	 << (cr.isLast?1:0) << ")"
 	 << std::endl;
@@ -138,7 +138,7 @@ void castor::replier::ClientConnection::close() throw() {
 
   char *func = "cc::close ";
   ::close(m_fd);
-  clog() << USAGE << SETW func  << this->toString() << " Deleting while "
+  clog() << VERBOSE << SETW func  << this->toString() << " Deleting while "
 	 << m_messages.size() << " messages are left"
 	 << std::endl;
   while (!m_messages.empty()) {
@@ -190,7 +190,7 @@ void castor::replier::ClientConnection::setStatus(enum RCStatus stat)
   char *func = "cc::setStatus ";
   m_status = stat;
   m_lastEventDate = time(0);
-  clog() << USAGE << SETW func  << this->toString() << " Setting status to "
+  clog() << VERBOSE << SETW func  << this->toString() << " Setting status to "
          << getStatusStr() << std::endl;
 }
 
@@ -252,7 +252,7 @@ void castor::replier::ClientConnection::connect()
     ::close(m_fd);
     throw ex;
   }
-  clog() << USAGE << SETW func  << this->toString() 
+  clog() << VERBOSE << SETW func  << this->toString() 
 	 <<" connect syscall ok"
          << std::endl;   
   setStatus(CONNECTING);  
@@ -348,7 +348,7 @@ void castor::replier::ClientConnection::send()
   } else {
     m_lastEventDate = time(0);
  
-    clog() << USAGE << SETW func  << this->toString() 
+    clog() << VERBOSE << SETW func  << this->toString() 
 	   << " msg:" << message.messageId 
 	   << " Send successful (isLast:"
 	   << ((message.isLast)?1:0)
