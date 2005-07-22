@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Date: 2005/07/21 09:13:06 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Date: 2005/07/22 15:20:31 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM    Make HSM admin tools.
 
@@ -87,7 +87,8 @@ PROGS =  ProgramTargetName(reclaim) \
 	 ProgramTargetName(modifySvcClass) \
 	 ProgramTargetName(deleteSvcClass) \
 	 ProgramTargetName(printSvcClass) \
-	 ProgramTargetName(listSvcClass)
+	 ProgramTargetName(listSvcClass) \
+	 ProgramTargetName(diskUsage)
 IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(repack)) \
 	 FileName($(BIN),ProgramTargetName(tapetohsm)) \
@@ -99,7 +100,8 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(modifySvcClass)) \
 	 FileName($(BIN),ProgramTargetName(deleteSvcClass)) \
 	 FileName($(BIN),ProgramTargetName(printSvcClass)) \
-	 FileName($(BIN),ProgramTargetName(listSvcClass))
+	 FileName($(BIN),ProgramTargetName(listSvcClass)) \
+	 FileName($(BIN),ProgramTargetName(diskUsage))
 EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/repack \
 	 $(EXPORTBIN)/tapetohsm \
@@ -111,7 +113,8 @@ EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/modifySvcClass \
 	 $(EXPORTBIN)/deleteSvcClass \
 	 $(EXPORTBIN)/printSvcClass \
-	 $(EXPORTBIN)/listSvcClass
+	 $(EXPORTBIN)/listSvcClass \
+	 $(EXPORTBIN)/diskUsage
 
 IPERL = FileName($(PERLLIBDIR),castor_tools.pm)
 EPERL = $(EXPORTPERL)/castor_tools.pm
@@ -129,6 +132,7 @@ NormalProgramTarget(enterSvcClass,enterSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(modifySvcClass,modifySvcClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(deleteSvcClass,deleteSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(printSvcClass,printSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
+NormalProgramTarget(diskUsage,diskUsage.Osuf,$(DEPLIB2),$(LIBS2))
 
 MakeDepSharedLibrary(shlib,shift)
 
@@ -172,6 +176,9 @@ IEXPORT(castor_tools.pm,$(EXPORTPERL),755);
 
 InstallProgram(listSvcClass,$(BIN),root,bin,755)
 IEXPORT(listSvcClass,$(EXPORTBIN),755);
+
+InstallProgram(diskUsage,$(BIN),root,bin,755)
+IEXPORT(diskUsage,$(EXPORTBIN),755);
 
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
