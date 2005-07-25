@@ -204,20 +204,29 @@ namespace castor {
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
+         * Fill the database with objects of type TapeDriveCompability refered by a given
+         * object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepTapeDriveCompability(castor::vdqm::TapeDrive* obj)
+          throw (castor::exception::Exception, oracle::occi::SQLException);
+
+        /**
+         * Fill the database with objects of type DeviceGroupName refered by a given
+         * object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepDeviceGroupName(castor::vdqm::TapeDrive* obj)
+          throw (castor::exception::Exception, oracle::occi::SQLException);
+
+        /**
          * Fill the database with objects of type TapeServer refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepTapeServer(castor::vdqm::TapeDrive* obj)
-          throw (castor::exception::Exception, oracle::occi::SQLException);
-
-        /**
-         * Fill the database with objects of type ClientIdentification refered by a given
-         * object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepClientIdentification(castor::vdqm::TapeDrive* obj)
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
@@ -267,20 +276,29 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Retrieve from the database objects of type TapeDriveCompability refered by a
+         * given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjTapeDriveCompability(castor::vdqm::TapeDrive* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type DeviceGroupName refered by a given
+         * object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjDeviceGroupName(castor::vdqm::TapeDrive* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Retrieve from the database objects of type TapeServer refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjTapeServer(castor::vdqm::TapeDrive* obj)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type ClientIdentification refered by a
-         * given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjClientIdentification(castor::vdqm::TapeDrive* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -417,23 +435,29 @@ namespace castor {
         /// SQL remote update statement object for member tapeDriveDedication
         oracle::occi::Statement *m_remoteUpdateTapeDriveDedicationStatement;
 
-        /// SQL select statement for member 
-        static const std::string s_selectTapeDrive2ExtDevGroupStatementString;
+        /// SQL checkExist statement for member tapeDriveCompability
+        static const std::string s_checkTapeDriveCompabilityExistStatementString;
 
-        /// SQL select statement object for member 
-        oracle::occi::Statement *m_selectTapeDrive2ExtDevGroupStatement;
+        /// SQL checkExist statement object for member tapeDriveCompability
+        oracle::occi::Statement *m_checkTapeDriveCompabilityExistStatement;
 
-        /// SQL delete statement for member 
-        static const std::string s_deleteTapeDrive2ExtDevGroupStatementString;
+        /// SQL update statement for member tapeDriveCompability
+        static const std::string s_updateTapeDriveCompabilityStatementString;
 
-        /// SQL delete statement object for member 
-        oracle::occi::Statement *m_deleteTapeDrive2ExtDevGroupStatement;
+        /// SQL update statement object for member tapeDriveCompability
+        oracle::occi::Statement *m_updateTapeDriveCompabilityStatement;
 
-        /// SQL remote update statement for member 
-        static const std::string s_remoteUpdateTapeDrive2ExtDevGroupStatementString;
+        /// SQL checkExist statement for member deviceGroupName
+        static const std::string s_checkDeviceGroupNameExistStatementString;
 
-        /// SQL remote update statement object for member 
-        oracle::occi::Statement *m_remoteUpdateTapeDrive2ExtDevGroupStatement;
+        /// SQL checkExist statement object for member deviceGroupName
+        oracle::occi::Statement *m_checkDeviceGroupNameExistStatement;
+
+        /// SQL update statement for member deviceGroupName
+        static const std::string s_updateDeviceGroupNameStatementString;
+
+        /// SQL update statement object for member deviceGroupName
+        oracle::occi::Statement *m_updateDeviceGroupNameStatement;
 
         /// SQL checkExist statement for member tapeServer
         static const std::string s_checkTapeServerExistStatementString;
@@ -446,18 +470,6 @@ namespace castor {
 
         /// SQL update statement object for member tapeServer
         oracle::occi::Statement *m_updateTapeServerStatement;
-
-        /// SQL checkExist statement for member client
-        static const std::string s_checkClientIdentificationExistStatementString;
-
-        /// SQL checkExist statement object for member client
-        oracle::occi::Statement *m_checkClientIdentificationExistStatement;
-
-        /// SQL update statement for member client
-        static const std::string s_updateClientIdentificationStatementString;
-
-        /// SQL update statement object for member client
-        oracle::occi::Statement *m_updateClientIdentificationStatement;
 
       }; // end of class OraTapeDriveCnv
 

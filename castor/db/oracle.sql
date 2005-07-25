@@ -241,7 +241,7 @@ CREATE TABLE TapeRequest (priority NUMBER, modificationTime NUMBER, id INTEGER P
 
 /* SQL statements for type TapeDrive */
 DROP TABLE TapeDrive;
-CREATE TABLE TapeDrive (jobID NUMBER, modificationTime NUMBER, resettime NUMBER, usecount NUMBER, errcount NUMBER, transferredMB NUMBER, totalMB INTEGER, driveName VARCHAR2(2048), tapeAccessMode NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, runningTapeReq INTEGER, tapeDriveCompability INTEGER, deviceGroupName INTEGER, status INTEGER, tapeServer INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE TapeDrive (jobID NUMBER, modificationTime NUMBER, resettime NUMBER, usecount NUMBER, errcount NUMBER, transferredMB NUMBER, totalMB INTEGER, driveName VARCHAR2(2048), tapeAccessMode NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, runningTapeReq INTEGER, tapeDriveCompability INTEGER, deviceGroupName INTEGER, status INTEGER, tapeServer INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type ErrorHistory */
 DROP TABLE ErrorHistory;

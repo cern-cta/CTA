@@ -226,9 +226,9 @@ CREATE TABLE FileClass (name VARCHAR(1000), minFileSize BIGINT, maxFileSize BIGI
 DROP TABLE DiskServer;
 CREATE TABLE DiskServer (name VARCHAR(1000), id BIGINT, PRIMARY KEY (id), status INT);
 
-/* SQL statements for type ExtendedDeviceGroup */
-DROP TABLE ExtendedDeviceGroup;
-CREATE TABLE ExtendedDeviceGroup (dgName VARCHAR(1000), accessMode INT, density VARCHAR(1000), tapeModel VARCHAR(1000), id BIGINT, PRIMARY KEY (id));
+/* SQL statements for type TapeAccessSpecification */
+DROP TABLE TapeAccessSpecification;
+CREATE TABLE TapeAccessSpecification (accessMode INT, density VARCHAR(1000), tapeModel VARCHAR(1000), id BIGINT, PRIMARY KEY (id));
 
 /* SQL statements for type TapeServer */
 DROP TABLE TapeServer;
@@ -236,11 +236,11 @@ CREATE TABLE TapeServer (serverName VARCHAR(1000), status INT, id BIGINT, PRIMAR
 
 /* SQL statements for type TapeRequest */
 DROP TABLE TapeRequest;
-CREATE TABLE TapeRequest (priority INT, modificationTime INT, id BIGINT, PRIMARY KEY (id), tape INT, reqExtDevGrp INT, requestedSrv INT, tapeDrive INT, client INT);
+CREATE TABLE TapeRequest (priority INT, modificationTime INT, id BIGINT, PRIMARY KEY (id), tape INT, tapeAccessSpecificatioon INT, requestedSrv INT, tapeDrive INT, deviceGroupName INT, client INT);
 
 /* SQL statements for type TapeDrive */
 DROP TABLE TapeDrive;
-CREATE TABLE TapeDrive (jobID INT, modificationTime INT, resettime INT, usecount INT, errcount INT, transferredMB INT, totalMB BIGINT, driveName VARCHAR(1000), tapeAccessMode INT, id BIGINT, PRIMARY KEY (id), tape INT, runningTapeReq INT, status INT, tapeServer INT, client INT);
+CREATE TABLE TapeDrive (jobID INT, modificationTime INT, resettime INT, usecount INT, errcount INT, transferredMB INT, totalMB BIGINT, driveName VARCHAR(1000), tapeAccessMode INT, id BIGINT, PRIMARY KEY (id), tape INT, runningTapeReq INT, tapeDriveCompability INT, deviceGroupName INT, status INT, tapeServer INT);
 
 /* SQL statements for type ErrorHistory */
 DROP TABLE ErrorHistory;
@@ -249,6 +249,14 @@ CREATE TABLE ErrorHistory (errorMessage VARCHAR(1000), timeStamp INT, id BIGINT,
 /* SQL statements for type TapeDriveDedication */
 DROP TABLE TapeDriveDedication;
 CREATE TABLE TapeDriveDedication (clientHost INT, euid INT, egid INT, vid VARCHAR(1000), accessMode INT, timePeriods VARCHAR(1000), id BIGINT, PRIMARY KEY (id), tapeDrive INT);
+
+/* SQL statements for type TapeDriveCompability */
+DROP TABLE TapeDriveCompability;
+CREATE TABLE TapeDriveCompability (tapeDriveModel VARCHAR(1000), priorityLevel INT, id BIGINT, PRIMARY KEY (id), tapeAccessSpecifications INT);
+
+/* SQL statements for type DeviceGroupName */
+DROP TABLE DeviceGroupName;
+CREATE TABLE DeviceGroupName (dgName VARCHAR(1000), id BIGINT, PRIMARY KEY (id));
 
 ALTER TABLE SvcClass2TapePool
   ADD CONSTRAINT fk_SvcClass2TapePool_P FOREIGN KEY (Parent) REFERENCES SvcClass (id)
