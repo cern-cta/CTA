@@ -30,10 +30,11 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
+#include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
+#include "castor/vdqm/TapeDriveCompability.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
@@ -58,9 +59,10 @@ castor::vdqm::TapeDrive::TapeDrive() throw() :
   m_id(0),
   m_tape(0),
   m_runningTapeReq(0),
+  m_tapeDriveCompability(0),
+  m_deviceGroupName(0),
   m_status(TapeDriveStatusCodes(0)),
-  m_tapeServer(0),
-  m_client(0) {
+  m_tapeServer(0) {
 };
 
 //------------------------------------------------------------------------------
@@ -80,10 +82,6 @@ castor::vdqm::TapeDrive::~TapeDrive() throw() {
   m_tapeDriveDedicationVector.clear();
   if (0 != m_tapeServer) {
     m_tapeServer->removeTapeDrives(this);
-  }
-  if (0 != m_client) {
-    delete m_client;
-    m_client = 0;
   }
 };
 
@@ -145,16 +143,22 @@ void castor::vdqm::TapeDrive::print(std::ostream& stream,
       (*it)->print(stream, indent + "    ", alreadyPrinted);
     }
   }
+  stream << indent << "TapeDriveCompability : " << std::endl;
+  if (0 != m_tapeDriveCompability) {
+    m_tapeDriveCompability->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
+  stream << indent << "DeviceGroupName : " << std::endl;
+  if (0 != m_deviceGroupName) {
+    m_deviceGroupName->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
   stream << indent << "status : " << TapeDriveStatusCodesStrings[m_status] << std::endl;
   stream << indent << "TapeServer : " << std::endl;
   if (0 != m_tapeServer) {
     m_tapeServer->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
-  stream << indent << "Client : " << std::endl;
-  if (0 != m_client) {
-    m_client->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }

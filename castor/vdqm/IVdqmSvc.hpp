@@ -31,7 +31,6 @@
 #include <string>
 
 #include "castor/stager/ICommonSvc.hpp"
-#include "castor/exception/Exception.hpp"
 
 typedef struct vdqmdDrvReq vdqmDrvReq_t;
 
@@ -40,7 +39,8 @@ namespace castor {
   namespace vdqm {
 
     // Forward declaration
-    class ExtendedDeviceGroup;
+    class DeviceGroupName;
+    class TapeAccessSpecification;
 		class TapeRequest;
 		class TapeDrive;
 		class TapeServer;
@@ -52,16 +52,7 @@ namespace castor {
     class IVdqmSvc : public virtual castor::stager::ICommonSvc {
 
     	public:
-    	
-	    	/**
-	    	 * Checks, if there is an entry in the ExtendedDeviceGroup table,
-	    	 * which has exactly these parameters
-	    	 * @return true, if the entry exists
-	    	 * @exception in case of error
-	    	 */
-	    	virtual bool checkExtDevGroup(const ExtendedDeviceGroup *extDevGrp)
-	    		throw (castor::exception::Exception) = 0;
-	    		
+    		    		
 		    /**
 	       * Retrieves a TapeServer from the database based on its serverName. 
 	       * If no tapeServer is found, creates one.
@@ -103,8 +94,38 @@ namespace castor {
 	    	 * @return the free TapeDrive or NULL if there is none.
 	    	 * @exception in case of error
 	    	 */	
-	    	virtual TapeDrive* selectFreeTapeDrive(const ExtendedDeviceGroup *extDevGrp) 
+//	    	virtual TapeDrive* selectFreeTapeDrive(const ExtendedDeviceGroup *extDevGrp) 
+//	    		throw (castor::exception::Exception) = 0;
+
+	    		
+	    	/**
+	    	 * Looks, wether the specific tape access exist in the db. If not the
+	    	 * return value is NULL.
+	    	 * Please notice that caller is responsible for deleting the object.
+	    	 * @parameter accessMode the access mode for the tape
+	    	 * @parameter density its tape density
+	    	 * @parameter tapeModel the model of the requested tape
+	    	 * @return the reference in the db or NULL if it is not a right specification
+	    	 * @exception in case of error
+	    	 */	
+	    	virtual TapeAccessSpecification* selectTapeAccessSpecification(
+	    		const int accessMode,
+	    		const std::string density,
+	    		const std::string tapeModel) 
 	    		throw (castor::exception::Exception) = 0;
+	    		
+	    		
+	    	/**
+	    	 * Looks, if the specified dgName exists in the database. 
+	    	 * If it is the case, it wil return the object. 
+	    	 * Please notice that caller is responsible for deleting the object.
+	    	 * @parameter dgName The dgn which the client has sent to vdqm
+	    	 * @return the requested DeviceGroupName, or NULL if it does not exists
+	    	 * @exception in case of error
+	    	 */	
+	    	virtual DeviceGroupName* selectDeviceGroupName(
+	    		const std::string dgName) 
+	    		throw (castor::exception::Exception) = 0;	    			    	
 	 
 	    		
 //------------------ functions for TapeDriveRequestHandler ------------------

@@ -47,7 +47,6 @@ namespace castor {
 
     // Forward declarations
     class Tape;
-    class ClientIdentification;
 
   }; // end of namespace stager
 
@@ -57,7 +56,9 @@ namespace castor {
     class TapeServer;
     class TapeRequest;
     class TapeDriveDedication;
+    class TapeDriveCompability;
     class ErrorHistory;
+    class DeviceGroupName;
 
     /**
      * class TapeDrive
@@ -390,6 +391,38 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_tapeDriveCompability
+       * @return the value of m_tapeDriveCompability
+       */
+      TapeDriveCompability* tapeDriveCompability() const {
+        return m_tapeDriveCompability;
+      }
+
+      /**
+       * Set the value of m_tapeDriveCompability
+       * @param new_var the new value of m_tapeDriveCompability
+       */
+      void setTapeDriveCompability(TapeDriveCompability* new_var) {
+        m_tapeDriveCompability = new_var;
+      }
+
+      /**
+       * Get the value of m_deviceGroupName
+       * @return the value of m_deviceGroupName
+       */
+      DeviceGroupName* deviceGroupName() const {
+        return m_deviceGroupName;
+      }
+
+      /**
+       * Set the value of m_deviceGroupName
+       * @param new_var the new value of m_deviceGroupName
+       */
+      void setDeviceGroupName(DeviceGroupName* new_var) {
+        m_deviceGroupName = new_var;
+      }
+
+      /**
        * Get the value of m_status
        * @return the value of m_status
        */
@@ -419,22 +452,6 @@ namespace castor {
        */
       void setTapeServer(TapeServer* new_var) {
         m_tapeServer = new_var;
-      }
-
-      /**
-       * Get the value of m_client
-       * @return the value of m_client
-       */
-      castor::stager::ClientIdentification* client() const {
-        return m_client;
-      }
-
-      /**
-       * Set the value of m_client
-       * @param new_var the new value of m_client
-       */
-      void setClient(castor::stager::ClientIdentification* new_var) {
-        m_client = new_var;
       }
 
     private:
@@ -477,11 +494,13 @@ namespace castor {
 
       std::vector<TapeDriveDedication*> m_tapeDriveDedicationVector;
 
+      TapeDriveCompability* m_tapeDriveCompability;
+
+      DeviceGroupName* m_deviceGroupName;
+
       TapeDriveStatusCodes m_status;
 
       TapeServer* m_tapeServer;
-
-      castor::stager::ClientIdentification* m_client;
 
     }; // end of class TapeDrive
 

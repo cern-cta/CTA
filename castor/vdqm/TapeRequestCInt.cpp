@@ -30,7 +30,8 @@
 #include "castor/IObject.hpp"
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
-#include "castor/vdqm/ExtendedDeviceGroup.hpp"
+#include "castor/vdqm/DeviceGroupName.hpp"
+#include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
@@ -166,18 +167,18 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_TapeRequest_reqExtDevGrp
+  // Cvdqm_TapeRequest_tapeAccessSpecification
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeRequest_reqExtDevGrp(castor::vdqm::TapeRequest* instance, castor::vdqm::ExtendedDeviceGroup** var) {
-    *var = instance->reqExtDevGrp();
+  int Cvdqm_TapeRequest_tapeAccessSpecification(castor::vdqm::TapeRequest* instance, castor::vdqm::TapeAccessSpecification** var) {
+    *var = instance->tapeAccessSpecification();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_TapeRequest_setReqExtDevGrp
+  // Cvdqm_TapeRequest_setTapeAccessSpecification
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeRequest_setReqExtDevGrp(castor::vdqm::TapeRequest* instance, castor::vdqm::ExtendedDeviceGroup* new_var) {
-    instance->setReqExtDevGrp(new_var);
+  int Cvdqm_TapeRequest_setTapeAccessSpecification(castor::vdqm::TapeRequest* instance, castor::vdqm::TapeAccessSpecification* new_var) {
+    instance->setTapeAccessSpecification(new_var);
     return 0;
   }
 
@@ -210,6 +211,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cvdqm_TapeRequest_setTapeDrive(castor::vdqm::TapeRequest* instance, castor::vdqm::TapeDrive* new_var) {
     instance->setTapeDrive(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeRequest_deviceGroupName
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeRequest_deviceGroupName(castor::vdqm::TapeRequest* instance, castor::vdqm::DeviceGroupName** var) {
+    *var = instance->deviceGroupName();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeRequest_setDeviceGroupName
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeRequest_setDeviceGroupName(castor::vdqm::TapeRequest* instance, castor::vdqm::DeviceGroupName* new_var) {
+    instance->setDeviceGroupName(new_var);
     return 0;
   }
 

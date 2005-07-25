@@ -33,9 +33,10 @@
 #include "castor/vdqm/TapeDriveStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
-struct Cstager_ClientIdentification_t;
 struct Cstager_Tape_t;
+struct Cvdqm_DeviceGroupName_t;
 struct Cvdqm_ErrorHistory_t;
+struct Cvdqm_TapeDriveCompability_t;
 struct Cvdqm_TapeDriveDedication_t;
 struct Cvdqm_TapeDrive_t;
 struct Cvdqm_TapeRequest_t;
@@ -272,6 +273,26 @@ int Cvdqm_TapeDrive_removeTapeDriveDedication(struct Cvdqm_TapeDrive_t* instance
 int Cvdqm_TapeDrive_tapeDriveDedication(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeDriveDedication_t*** var, int* len);
 
 /**
+ * Get the value of tapeDriveCompability
+ */
+int Cvdqm_TapeDrive_tapeDriveCompability(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeDriveCompability_t** var);
+
+/**
+ * Set the value of tapeDriveCompability
+ */
+int Cvdqm_TapeDrive_setTapeDriveCompability(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeDriveCompability_t* new_var);
+
+/**
+ * Get the value of deviceGroupName
+ */
+int Cvdqm_TapeDrive_deviceGroupName(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_DeviceGroupName_t** var);
+
+/**
+ * Set the value of deviceGroupName
+ */
+int Cvdqm_TapeDrive_setDeviceGroupName(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_DeviceGroupName_t* new_var);
+
+/**
  * Get the value of status
  */
 int Cvdqm_TapeDrive_status(struct Cvdqm_TapeDrive_t* instance, enum Cvdqm_TapeDriveStatusCodes_t* var);
@@ -290,15 +311,5 @@ int Cvdqm_TapeDrive_tapeServer(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_
  * Set the value of tapeServer
  */
 int Cvdqm_TapeDrive_setTapeServer(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeServer_t* new_var);
-
-/**
- * Get the value of client
- */
-int Cvdqm_TapeDrive_client(struct Cvdqm_TapeDrive_t* instance, struct Cstager_ClientIdentification_t** var);
-
-/**
- * Set the value of client
- */
-int Cvdqm_TapeDrive_setClient(struct Cvdqm_TapeDrive_t* instance, struct Cstager_ClientIdentification_t* new_var);
 
 #endif // CASTOR_VDQM_TAPEDRIVE_H

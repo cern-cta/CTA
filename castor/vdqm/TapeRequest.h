@@ -34,7 +34,8 @@
 struct C_IObject_t;
 struct Cstager_ClientIdentification_t;
 struct Cstager_Tape_t;
-struct Cvdqm_ExtendedDeviceGroup_t;
+struct Cvdqm_DeviceGroupName_t;
+struct Cvdqm_TapeAccessSpecification_t;
 struct Cvdqm_TapeDrive_t;
 struct Cvdqm_TapeRequest_t;
 struct Cvdqm_TapeServer_t;
@@ -137,14 +138,14 @@ int Cvdqm_TapeRequest_tape(struct Cvdqm_TapeRequest_t* instance, struct Cstager_
 int Cvdqm_TapeRequest_setTape(struct Cvdqm_TapeRequest_t* instance, struct Cstager_Tape_t* new_var);
 
 /**
- * Get the value of reqExtDevGrp
+ * Get the value of tapeAccessSpecification
  */
-int Cvdqm_TapeRequest_reqExtDevGrp(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_ExtendedDeviceGroup_t** var);
+int Cvdqm_TapeRequest_tapeAccessSpecification(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_TapeAccessSpecification_t** var);
 
 /**
- * Set the value of reqExtDevGrp
+ * Set the value of tapeAccessSpecification
  */
-int Cvdqm_TapeRequest_setReqExtDevGrp(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_ExtendedDeviceGroup_t* new_var);
+int Cvdqm_TapeRequest_setTapeAccessSpecification(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_TapeAccessSpecification_t* new_var);
 
 /**
  * Get the value of requestedSrv
@@ -165,6 +166,16 @@ int Cvdqm_TapeRequest_tapeDrive(struct Cvdqm_TapeRequest_t* instance, struct Cvd
  * Set the value of tapeDrive
  */
 int Cvdqm_TapeRequest_setTapeDrive(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_TapeDrive_t* new_var);
+
+/**
+ * Get the value of deviceGroupName
+ */
+int Cvdqm_TapeRequest_deviceGroupName(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_DeviceGroupName_t** var);
+
+/**
+ * Set the value of deviceGroupName
+ */
+int Cvdqm_TapeRequest_setDeviceGroupName(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_DeviceGroupName_t* new_var);
 
 /**
  * Get the value of client

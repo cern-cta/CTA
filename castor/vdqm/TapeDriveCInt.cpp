@@ -28,10 +28,11 @@
 
 // Include Files
 #include "castor/IObject.hpp"
-#include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
+#include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
+#include "castor/vdqm/TapeDriveCompability.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
@@ -356,6 +357,38 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cvdqm_TapeDrive_tapeDriveCompability
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDrive_tapeDriveCompability(castor::vdqm::TapeDrive* instance, castor::vdqm::TapeDriveCompability** var) {
+    *var = instance->tapeDriveCompability();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeDrive_setTapeDriveCompability
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDrive_setTapeDriveCompability(castor::vdqm::TapeDrive* instance, castor::vdqm::TapeDriveCompability* new_var) {
+    instance->setTapeDriveCompability(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeDrive_deviceGroupName
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDrive_deviceGroupName(castor::vdqm::TapeDrive* instance, castor::vdqm::DeviceGroupName** var) {
+    *var = instance->deviceGroupName();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeDrive_setDeviceGroupName
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDrive_setDeviceGroupName(castor::vdqm::TapeDrive* instance, castor::vdqm::DeviceGroupName* new_var) {
+    instance->setDeviceGroupName(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cvdqm_TapeDrive_status
   //----------------------------------------------------------------------------
   int Cvdqm_TapeDrive_status(castor::vdqm::TapeDrive* instance, castor::vdqm::TapeDriveStatusCodes* var) {
@@ -384,22 +417,6 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cvdqm_TapeDrive_setTapeServer(castor::vdqm::TapeDrive* instance, castor::vdqm::TapeServer* new_var) {
     instance->setTapeServer(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cvdqm_TapeDrive_client
-  //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_client(castor::vdqm::TapeDrive* instance, castor::stager::ClientIdentification** var) {
-    *var = instance->client();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cvdqm_TapeDrive_setClient
-  //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_setClient(castor::vdqm::TapeDrive* instance, castor::stager::ClientIdentification* new_var) {
-    instance->setClient(new_var);
     return 0;
   }
 

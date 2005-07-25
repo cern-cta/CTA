@@ -54,7 +54,8 @@ namespace castor {
     // Forward declarations
     class TapeServer;
     class TapeDrive;
-    class ExtendedDeviceGroup;
+    class TapeAccessSpecification;
+    class DeviceGroupName;
 
     /**
      * class TapeRequest
@@ -181,19 +182,19 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_reqExtDevGrp
-       * @return the value of m_reqExtDevGrp
+       * Get the value of m_tapeAccessSpecification
+       * @return the value of m_tapeAccessSpecification
        */
-      ExtendedDeviceGroup* reqExtDevGrp() const {
-        return m_reqExtDevGrp;
+      TapeAccessSpecification* tapeAccessSpecification() const {
+        return m_tapeAccessSpecification;
       }
 
       /**
-       * Set the value of m_reqExtDevGrp
-       * @param new_var the new value of m_reqExtDevGrp
+       * Set the value of m_tapeAccessSpecification
+       * @param new_var the new value of m_tapeAccessSpecification
        */
-      void setReqExtDevGrp(ExtendedDeviceGroup* new_var) {
-        m_reqExtDevGrp = new_var;
+      void setTapeAccessSpecification(TapeAccessSpecification* new_var) {
+        m_tapeAccessSpecification = new_var;
       }
 
       /**
@@ -229,6 +230,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_deviceGroupName
+       * @return the value of m_deviceGroupName
+       */
+      DeviceGroupName* deviceGroupName() const {
+        return m_deviceGroupName;
+      }
+
+      /**
+       * Set the value of m_deviceGroupName
+       * @param new_var the new value of m_deviceGroupName
+       */
+      void setDeviceGroupName(DeviceGroupName* new_var) {
+        m_deviceGroupName = new_var;
+      }
+
+      /**
        * Get the value of m_client
        * @return the value of m_client
        */
@@ -256,11 +273,13 @@ namespace castor {
 
       castor::stager::Tape* m_tape;
 
-      ExtendedDeviceGroup* m_reqExtDevGrp;
+      TapeAccessSpecification* m_tapeAccessSpecification;
 
       TapeServer* m_requestedSrv;
 
       TapeDrive* m_tapeDrive;
+
+      DeviceGroupName* m_deviceGroupName;
 
       castor::stager::ClientIdentification* m_client;
 

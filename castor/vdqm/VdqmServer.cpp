@@ -144,6 +144,7 @@ castor::vdqm::VdqmServer::VdqmServer():
      {43, "tape drive in STATUS_UNKNOWN status. Force unmount!"},
      {44, "No tape request left for mounted tape"},
      {45, "Update of representation in DB"}, 
+     {46, "No free TapeDrive, or no TapeRequest in the db"}, 
      {-1, ""}};
   castor::dlf::dlf_init("Vdqm", messages);
 }
