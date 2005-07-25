@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.11 2005/05/27 12:11:12 bcouturi Exp $
+ * $Id: stager_client_api_query.cpp,v 1.12 2005/07/25 08:52:26 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.11 $ $Date: 2005/05/27 12:11:12 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.12 $ $Date: 2005/07/25 08:52:26 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -276,6 +276,7 @@ EXTERN_C int DLL_DECL stage_findrequest(struct stage_query_req *requests,
 					struct stage_findrequest_resp **responses,
 					int *nbresps,
 					struct stage_options* opts){
-
+  serrno = SEOPNOTSUP;
+  return -1;
 }
 
