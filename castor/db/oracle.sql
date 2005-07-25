@@ -2,22 +2,20 @@
 /* and is inserted at the beginning of the generated code           */
 
 /* SQL statements for object types */
-DROP INDEX I_Id2Type_type;
-DROP INDEX I_Id2Type_full;
+DROP INDEX I_Id2Type_typeId;
 DROP TABLE Id2Type;
 CREATE TABLE Id2Type (id INTEGER PRIMARY KEY, type NUMBER);
-CREATE INDEX I_Id2Type_full on Id2Type (id, type);
-CREATE INDEX I_Id2Type_type ON Id2Type(type);
+CREATE INDEX I_Id2Type_typeId on Id2Type (type, id);
 
 /* Sequence for indices */
 DROP SEQUENCE ids_seq;
 CREATE SEQUENCE ids_seq;
 
 /* SQL statements for requests status */
-DROP INDEX I_newRequests_type;
+DROP INDEX I_newRequests_typeId;
 DROP TABLE newRequests;
 CREATE TABLE newRequests (id INTEGER PRIMARY KEY, type INTEGER, creation DATE);
-CREATE INDEX I_newRequests_type on newRequests (type);
+CREATE INDEX I_newRequests_typeId on newRequests (type, id);
 ALTER TABLE SvcClass2TapePool
   DROP CONSTRAINT fk_SvcClass2TapePool_P
   DROP CONSTRAINT fk_SvcClass2TapePool_C;
@@ -229,9 +227,9 @@ CREATE TABLE FileClass (name VARCHAR2(2048), minFileSize INTEGER, maxFileSize IN
 DROP TABLE DiskServer;
 CREATE TABLE DiskServer (name VARCHAR2(2048), id INTEGER PRIMARY KEY, status INTEGER) INITRANS 50 PCTFREE 50;
 
-/* SQL statements for type ExtendedDeviceGroup */
-DROP TABLE ExtendedDeviceGroup;
-CREATE TABLE ExtendedDeviceGroup (dgName VARCHAR2(2048), accessMode NUMBER, density VARCHAR2(2048), tapeModel VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
+/* SQL statements for type TapeAccessSpecification */
+DROP TABLE TapeAccessSpecification;
+CREATE TABLE TapeAccessSpecification (accessMode NUMBER, density VARCHAR2(2048), tapeModel VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type TapeServer */
 DROP TABLE TapeServer;
@@ -239,11 +237,11 @@ CREATE TABLE TapeServer (serverName VARCHAR2(2048), status NUMBER, id INTEGER PR
 
 /* SQL statements for type TapeRequest */
 DROP TABLE TapeRequest;
-CREATE TABLE TapeRequest (priority NUMBER, modificationTime NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, reqExtDevGrp INTEGER, requestedSrv INTEGER, tapeDrive INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE TapeRequest (priority NUMBER, modificationTime NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, tapeAccessSpecificatioon INTEGER, requestedSrv INTEGER, tapeDrive INTEGER, deviceGroupName INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type TapeDrive */
 DROP TABLE TapeDrive;
-CREATE TABLE TapeDrive (jobID NUMBER, modificationTime NUMBER, resettime NUMBER, usecount NUMBER, errcount NUMBER, transferredMB NUMBER, totalMB INTEGER, driveName VARCHAR2(2048), tapeAccessMode NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, runningTapeReq INTEGER, status INTEGER, tapeServer INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE TapeDrive (jobID NUMBER, modificationTime NUMBER, resettime NUMBER, usecount NUMBER, errcount NUMBER, transferredMB NUMBER, totalMB INTEGER, driveName VARCHAR2(2048), tapeAccessMode NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, runningTapeReq INTEGER, tapeDriveCompability INTEGER, deviceGroupName INTEGER, status INTEGER, tapeServer INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type ErrorHistory */
 DROP TABLE ErrorHistory;
@@ -252,6 +250,14 @@ CREATE TABLE ErrorHistory (errorMessage VARCHAR2(2048), timeStamp NUMBER, id INT
 /* SQL statements for type TapeDriveDedication */
 DROP TABLE TapeDriveDedication;
 CREATE TABLE TapeDriveDedication (clientHost NUMBER, euid NUMBER, egid NUMBER, vid VARCHAR2(2048), accessMode NUMBER, timePeriods VARCHAR2(2048), id INTEGER PRIMARY KEY, tapeDrive INTEGER) INITRANS 50 PCTFREE 50;
+
+/* SQL statements for type TapeDriveCompability */
+DROP TABLE TapeDriveCompability;
+CREATE TABLE TapeDriveCompability (tapeDriveModel VARCHAR2(2048), priorityLevel NUMBER, id INTEGER PRIMARY KEY, tapeAccessSpecifications INTEGER) INITRANS 50 PCTFREE 50;
+
+/* SQL statements for type DeviceGroupName */
+DROP TABLE DeviceGroupName;
+CREATE TABLE DeviceGroupName (dgName VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
 ALTER TABLE SvcClass2TapePool
   ADD CONSTRAINT fk_SvcClass2TapePool_P FOREIGN KEY (Parent) REFERENCES SvcClass (id)
