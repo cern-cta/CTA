@@ -32,10 +32,11 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/stager/Tape.hpp"
 
+#include "castor/vdqm/TapeAccessSpecification.hpp"
+#include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
-#include "castor/vdqm/ExtendedDeviceGroup.hpp"
 
 // Local includes
 #include "OraVdqmSvc.hpp"
@@ -173,15 +174,6 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   m_existTapeDriveWithTapeMountedStatement = 0;
   m_selectTapeByVidStatement = 0;
   m_selectTapeReqForMountedTapeStatement = 0;
-}
-
-// -----------------------------------------------------------------------
-// checkExtDevGroup
-// -----------------------------------------------------------------------
-bool castor::db::ora::OraVdqmSvc::checkExtDevGroup(
-	const castor::vdqm::ExtendedDeviceGroup *extDevGrp)
-  throw (castor::exception::Exception) {
-  	return true;
 }
 
 
@@ -342,15 +334,15 @@ int castor::db::ora::OraVdqmSvc::checkTapeRequest(
   // We should never reach this point.
 }
 
-// -----------------------------------------------------------------------
-// selectFreeTapeDrive
-// -----------------------------------------------------------------------
-castor::vdqm::TapeDrive* 
-	castor::db::ora::OraVdqmSvc::selectFreeTapeDrive
-	(const castor::vdqm::ExtendedDeviceGroup *extDevGrp)
-  throw (castor::exception::Exception) {
- return NULL; 	
-}
+//// -----------------------------------------------------------------------
+//// selectFreeTapeDrive
+//// -----------------------------------------------------------------------
+//castor::vdqm::TapeDrive* 
+//	castor::db::ora::OraVdqmSvc::selectFreeTapeDrive
+//	(const castor::vdqm::ExtendedDeviceGroup *extDevGrp)
+//  throw (castor::exception::Exception) {
+// return NULL; 	
+//}
 
 
 // -----------------------------------------------------------------------
@@ -663,4 +655,28 @@ castor::vdqm::TapeRequest*
     throw ex;
   }
   // We should never reach this point	
+}
+
+
+// -----------------------------------------------------------------------
+// selectTapeAccessSpecification
+// -----------------------------------------------------------------------
+castor::vdqm::TapeAccessSpecification* 
+	castor::db::ora::OraVdqmSvc::selectTapeAccessSpecification
+	(const int accessMode,
+	 const std::string density,
+	 const std::string tapeModel)
+  throw (castor::exception::Exception) {
+ return NULL; 	
+}
+
+
+// -----------------------------------------------------------------------
+// selectDeviceGroupName
+// -----------------------------------------------------------------------
+castor::vdqm::DeviceGroupName* 
+	castor::db::ora::OraVdqmSvc::selectDeviceGroupName
+	(const std::string dgName)
+  throw (castor::exception::Exception) {
+ return NULL; 	
 }

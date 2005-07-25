@@ -139,7 +139,7 @@ void castor::io::StreamTapeRequestCnv::marshalObject(castor::IObject* object,
     // Mark object as done
     alreadyDone.insert(obj);
     cnvSvc()->marshalObject(obj->tape(), address, alreadyDone);
-    cnvSvc()->marshalObject(obj->tapeAccessSpecificatioon(), address, alreadyDone);
+    cnvSvc()->marshalObject(obj->tapeAccessSpecification(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->requestedSrv(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->tapeDrive(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->deviceGroupName(), address, alreadyDone);
@@ -167,8 +167,8 @@ castor::IObject* castor::io::StreamTapeRequestCnv::unmarshalObject(castor::io::b
   IObject* objTape = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setTape(dynamic_cast<castor::stager::Tape*>(objTape));
   ad.setObjType(castor::OBJ_INVALID);
-  IObject* objTapeAccessSpecificatioon = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setTapeAccessSpecificatioon(dynamic_cast<castor::vdqm::TapeAccessSpecification*>(objTapeAccessSpecificatioon));
+  IObject* objTapeAccessSpecification = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setTapeAccessSpecification(dynamic_cast<castor::vdqm::TapeAccessSpecification*>(objTapeAccessSpecification));
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objRequestedSrv = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setRequestedSrv(dynamic_cast<castor::vdqm::TapeServer*>(objRequestedSrv));

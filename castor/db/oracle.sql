@@ -237,7 +237,7 @@ CREATE TABLE TapeServer (serverName VARCHAR2(2048), status NUMBER, id INTEGER PR
 
 /* SQL statements for type TapeRequest */
 DROP TABLE TapeRequest;
-CREATE TABLE TapeRequest (priority NUMBER, modificationTime NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, tapeAccessSpecificatioon INTEGER, requestedSrv INTEGER, tapeDrive INTEGER, deviceGroupName INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE TapeRequest (priority NUMBER, modificationTime NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, tapeAccessSpecification INTEGER, requestedSrv INTEGER, tapeDrive INTEGER, deviceGroupName INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type TapeDrive */
 DROP TABLE TapeDrive;

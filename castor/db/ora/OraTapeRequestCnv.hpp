@@ -333,16 +333,16 @@ namespace castor {
         /// SQL update statement object for member tape
         oracle::occi::Statement *m_updateTapeStatement;
 
-        /// SQL checkExist statement for member tapeAccessSpecificatioon
+        /// SQL checkExist statement for member tapeAccessSpecification
         static const std::string s_checkTapeAccessSpecificationExistStatementString;
 
-        /// SQL checkExist statement object for member tapeAccessSpecificatioon
+        /// SQL checkExist statement object for member tapeAccessSpecification
         oracle::occi::Statement *m_checkTapeAccessSpecificationExistStatement;
 
-        /// SQL update statement for member tapeAccessSpecificatioon
+        /// SQL update statement for member tapeAccessSpecification
         static const std::string s_updateTapeAccessSpecificationStatementString;
 
-        /// SQL update statement object for member tapeAccessSpecificatioon
+        /// SQL update statement object for member tapeAccessSpecification
         oracle::occi::Statement *m_updateTapeAccessSpecificationStatement;
 
         /// SQL checkExist statement for member requestedSrv

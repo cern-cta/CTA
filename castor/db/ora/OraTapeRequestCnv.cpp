@@ -60,7 +60,7 @@ const castor::ICnvFactory& OraTapeRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraTapeRequestCnv::s_insertStatementString =
-"INSERT INTO TapeRequest (priority, modificationTime, id, tape, tapeAccessSpecificatioon, requestedSrv, tapeDrive, deviceGroupName, client) VALUES (:1,:2,ids_seq.nextval,:3,:4,:5,:6,:7,:8) RETURNING id INTO :9";
+"INSERT INTO TapeRequest (priority, modificationTime, id, tape, tapeAccessSpecification, requestedSrv, tapeDrive, deviceGroupName, client) VALUES (:1,:2,ids_seq.nextval,:3,:4,:5,:6,:7,:8) RETURNING id INTO :9";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraTapeRequestCnv::s_deleteStatementString =
@@ -68,7 +68,7 @@ const std::string castor::db::ora::OraTapeRequestCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraTapeRequestCnv::s_selectStatementString =
-"SELECT priority, modificationTime, id, tape, tapeAccessSpecificatioon, requestedSrv, tapeDrive, deviceGroupName, client FROM TapeRequest WHERE id = :1";
+"SELECT priority, modificationTime, id, tape, tapeAccessSpecification, requestedSrv, tapeDrive, deviceGroupName, client FROM TapeRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraTapeRequestCnv::s_updateStatementString =
@@ -90,13 +90,13 @@ const std::string castor::db::ora::OraTapeRequestCnv::s_checkTapeExistStatementS
 const std::string castor::db::ora::OraTapeRequestCnv::s_updateTapeStatementString =
 "UPDATE TapeRequest SET tape = :1 WHERE id = :2";
 
-/// SQL existence statement for member tapeAccessSpecificatioon
+/// SQL existence statement for member tapeAccessSpecification
 const std::string castor::db::ora::OraTapeRequestCnv::s_checkTapeAccessSpecificationExistStatementString =
 "SELECT id from TapeAccessSpecification WHERE id = :1";
 
-/// SQL update statement for member tapeAccessSpecificatioon
+/// SQL update statement for member tapeAccessSpecification
 const std::string castor::db::ora::OraTapeRequestCnv::s_updateTapeAccessSpecificationStatementString =
-"UPDATE TapeRequest SET tapeAccessSpecificatioon = :1 WHERE id = :2";
+"UPDATE TapeRequest SET tapeAccessSpecification = :1 WHERE id = :2";
 
 /// SQL existence statement for member requestedSrv
 const std::string castor::db::ora::OraTapeRequestCnv::s_checkTapeServerExistStatementString =
@@ -328,19 +328,19 @@ void castor::db::ora::OraTapeRequestCnv::fillRepTape(castor::vdqm::TapeRequest* 
 //------------------------------------------------------------------------------
 void castor::db::ora::OraTapeRequestCnv::fillRepTapeAccessSpecification(castor::vdqm::TapeRequest* obj)
   throw (castor::exception::Exception, oracle::occi::SQLException) {
-  if (0 != obj->tapeAccessSpecificatioon()) {
+  if (0 != obj->tapeAccessSpecification()) {
     // Check checkTapeAccessSpecificationExist statement
     if (0 == m_checkTapeAccessSpecificationExistStatement) {
       m_checkTapeAccessSpecificationExistStatement = createStatement(s_checkTapeAccessSpecificationExistStatementString);
     }
     // retrieve the object from the database
-    m_checkTapeAccessSpecificationExistStatement->setDouble(1, obj->tapeAccessSpecificatioon()->id());
+    m_checkTapeAccessSpecificationExistStatement->setDouble(1, obj->tapeAccessSpecification()->id());
     oracle::occi::ResultSet *rset = m_checkTapeAccessSpecificationExistStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::BaseAddress ad;
       ad.setCnvSvcName("OraCnvSvc");
       ad.setCnvSvcType(castor::SVC_ORACNV);
-      cnvSvc()->createRep(&ad, obj->tapeAccessSpecificatioon(), false);
+      cnvSvc()->createRep(&ad, obj->tapeAccessSpecification(), false);
     }
     // Close resultset
     m_checkTapeAccessSpecificationExistStatement->closeResultSet(rset);
@@ -350,7 +350,7 @@ void castor::db::ora::OraTapeRequestCnv::fillRepTapeAccessSpecification(castor::
     m_updateTapeAccessSpecificationStatement = createStatement(s_updateTapeAccessSpecificationStatementString);
   }
   // Update local object
-  m_updateTapeAccessSpecificationStatement->setDouble(1, 0 == obj->tapeAccessSpecificatioon() ? 0 : obj->tapeAccessSpecificatioon()->id());
+  m_updateTapeAccessSpecificationStatement->setDouble(1, 0 == obj->tapeAccessSpecification() ? 0 : obj->tapeAccessSpecification()->id());
   m_updateTapeAccessSpecificationStatement->setDouble(2, obj->id());
   m_updateTapeAccessSpecificationStatement->executeUpdate();
 }
@@ -605,23 +605,23 @@ void castor::db::ora::OraTapeRequestCnv::fillObjTapeAccessSpecification(castor::
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeAccessSpecificatioonId = (u_signed64)rset->getDouble(5);
+  u_signed64 tapeAccessSpecificationId = (u_signed64)rset->getDouble(5);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
-  if (0 != obj->tapeAccessSpecificatioon() &&
-      (0 == tapeAccessSpecificatioonId ||
-       obj->tapeAccessSpecificatioon()->id() != tapeAccessSpecificatioonId)) {
-    obj->setTapeAccessSpecificatioon(0);
+  if (0 != obj->tapeAccessSpecification() &&
+      (0 == tapeAccessSpecificationId ||
+       obj->tapeAccessSpecification()->id() != tapeAccessSpecificationId)) {
+    obj->setTapeAccessSpecification(0);
   }
   // Update object or create new one
-  if (0 != tapeAccessSpecificatioonId) {
-    if (0 == obj->tapeAccessSpecificatioon()) {
-      obj->setTapeAccessSpecificatioon
+  if (0 != tapeAccessSpecificationId) {
+    if (0 == obj->tapeAccessSpecification()) {
+      obj->setTapeAccessSpecification
         (dynamic_cast<castor::vdqm::TapeAccessSpecification*>
-         (cnvSvc()->getObjFromId(tapeAccessSpecificatioonId)));
+         (cnvSvc()->getObjFromId(tapeAccessSpecificationId)));
     } else {
-      cnvSvc()->updateObj(obj->tapeAccessSpecificatioon());
+      cnvSvc()->updateObj(obj->tapeAccessSpecification());
     }
   }
 }
@@ -806,7 +806,7 @@ void castor::db::ora::OraTapeRequestCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(1, obj->priority());
     m_insertStatement->setInt(2, obj->modificationTime());
     m_insertStatement->setDouble(3, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
-    m_insertStatement->setDouble(4, (type == OBJ_TapeAccessSpecification && obj->tapeAccessSpecificatioon() != 0) ? obj->tapeAccessSpecificatioon()->id() : 0);
+    m_insertStatement->setDouble(4, (type == OBJ_TapeAccessSpecification && obj->tapeAccessSpecification() != 0) ? obj->tapeAccessSpecification()->id() : 0);
     m_insertStatement->setDouble(5, (type == OBJ_TapeServer && obj->requestedSrv() != 0) ? obj->requestedSrv()->id() : 0);
     m_insertStatement->setDouble(6, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
     m_insertStatement->setDouble(7, (type == OBJ_DeviceGroupName && obj->deviceGroupName() != 0) ? obj->deviceGroupName()->id() : 0);
@@ -841,7 +841,7 @@ void castor::db::ora::OraTapeRequestCnv::createRep(castor::IAddress* address,
                     << "  modificationTime : " << obj->modificationTime() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  tape : " << obj->tape() << std::endl
-                    << "  tapeAccessSpecificatioon : " << obj->tapeAccessSpecificatioon() << std::endl
+                    << "  tapeAccessSpecification : " << obj->tapeAccessSpecification() << std::endl
                     << "  requestedSrv : " << obj->requestedSrv() << std::endl
                     << "  tapeDrive : " << obj->tapeDrive() << std::endl
                     << "  deviceGroupName : " << obj->deviceGroupName() << std::endl

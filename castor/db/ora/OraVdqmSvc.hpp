@@ -42,7 +42,8 @@ namespace castor {
 	
   // Forward declaration
   class stager::Tape;
-  class vdqm::ExtendedDeviceGroup;
+  class vdqm::DeviceGroupName;
+  class vdqm::TapeAccessSpecification;
 	class vdqm::TapeRequest;
 	class vdqm::TapeDrive;
 	class vdqm::TapeServer;
@@ -83,16 +84,6 @@ namespace castor {
 	         * Reset the converter statements.
 	         */
 	        void reset() throw ();
-	    	
-		    	/**
-		    	 * Checks, if there is an entry in the ExtendedDeviceGroup table,
-		    	 * which has exactly these parameters
-		    	 * @return true, if the entry exists
-		    	 * @exception in case of error
-		    	 */
-		    	virtual bool checkExtDevGroup(
-		    		const castor::vdqm::ExtendedDeviceGroup *extDevGrp) 
-		    		throw (castor::exception::Exception);
 		    		
 			    /**
 		       * Retrieves a TapeServer from the database based on its serverName. 
@@ -126,20 +117,50 @@ namespace castor {
 		    		throw (castor::exception::Exception);
 		    	
 		    	
+//		    	/**
+//		    	 * Looks for the best fitting tape drive. If it is for example an
+//		    	 * older tape, it will first look if an older drive is free, before
+//		    	 * it chooses a newer one. This strategy should avoid, that the newer
+//		    	 * drive, which are able to deal with several tape models, are blocked
+//		    	 * if an request for a newer tape model arrives.
+//		    	 * Please notice that caller is responsible for deleting the object.
+//		    	 * @parameter the requested Extended Device Group for the tape
+//		    	 * @return the free TapeDrive or NULL if there is none.
+//		    	 * @exception in case of error
+//		    	 */	
+//		    	virtual castor::vdqm::TapeDrive* selectFreeTapeDrive(
+//		    		const castor::vdqm::ExtendedDeviceGroup *extDevGrp) 
+//		    		throw (castor::exception::Exception); 
+
+
 		    	/**
-		    	 * Looks for the best fitting tape drive. If it is for example an
-		    	 * older tape, it will first look if an older drive is free, before
-		    	 * it chooses a newer one. This strategy should avoid, that the newer
-		    	 * drive, which are able to deal with several tape models, are blocked
-		    	 * if an request for a newer tape model arrives.
+		    	 * Looks, wether the specific tape access exist in the db. If not the
+		    	 * return value is NULL.
 		    	 * Please notice that caller is responsible for deleting the object.
-		    	 * @parameter the requested Extended Device Group for the tape
-		    	 * @return the free TapeDrive or NULL if there is none.
+		    	 * @parameter accessMode the access mode for the tape
+		    	 * @parameter density its tape density
+		    	 * @parameter tapeModel the model of the requested tape
+		    	 * @return the reference in the db or NULL if it is not a right specification
 		    	 * @exception in case of error
 		    	 */	
-		    	virtual castor::vdqm::TapeDrive* selectFreeTapeDrive(
-		    		const castor::vdqm::ExtendedDeviceGroup *extDevGrp) 
-		    		throw (castor::exception::Exception); 
+		    	virtual TapeAccessSpecification* selectTapeAccessSpecification(
+		    		const int accessMode,
+		    		const std::string density,
+		    		const std::string tapeModel) 
+		    		throw (castor::exception::Exception);
+		    		
+		    		
+		    	/**
+		    	 * Looks, if the specified dgName exists in the database. 
+		    	 * If it is the case, it wil return the object. 
+		    	 * Please notice that caller is responsible for deleting the object.
+		    	 * @parameter dgName The dgn which the client has sent to vdqm
+		    	 * @return the requested DeviceGroupName, or NULL if it does not exists
+		    	 * @exception in case of error
+		    	 */	
+		    	virtual DeviceGroupName* selectDeviceGroupName(
+		    		const std::string dgName) 
+		    		throw (castor::exception::Exception);
 		    		
 //------------------ functions for TapeDriveRequestHandler ------------------
 
@@ -230,12 +251,7 @@ namespace castor {
 	            cnvSvc()->dropConnection();
 	          }
 	        }
-	
-	        /// SQL statement for function checkExtDevGroup
-	        static const std::string s_checkExtDevGroupStatementString;
-	
-	        /// SQL statement object for function checkExtDevGroup
-	        oracle::occi::Statement *m_checkExtDevGroupStatement;  
+	        
 	        
 	        /// SQL statement for function getTapeServer
 	        static const std::string s_selectTapeServerStatementString;
@@ -289,7 +305,19 @@ namespace castor {
 	        static const std::string s_selectTapeReqForMountedTapeStatementString;
 	
 	        /// SQL statement object for function selectTapeReqForMountedTape
-	        oracle::occi::Statement *m_selectTapeReqForMountedTapeStatement;	        	        	        	        
+	        oracle::occi::Statement *m_selectTapeReqForMountedTapeStatement;
+	        
+ 	        /// SQL statement for function selectTapeAccessSpecification
+	        static const std::string s_selectTapeAccessSpecificationString;
+	
+	        /// SQL statement object for function selectTapeAccessSpecification
+	        oracle::occi::Statement *m_selectTapeAccessSpecificationStatement;
+	        
+ 	        /// SQL statement for function selectDeviceGroupName
+	        static const std::string s_selectDeviceGroupNameStatementString;
+	
+	        /// SQL statement object for function selectDeviceGroupName
+	        oracle::occi::Statement *m_selectDeviceGroupNameStatement;	        	        	        	        	        	        
 			};
 		}
 	}
