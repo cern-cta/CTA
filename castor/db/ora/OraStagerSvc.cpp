@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.174 $ $Release$ $Date: 2005/07/21 13:39:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.175 $ $Release$ $Date: 2005/07/25 09:06:12 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -595,7 +595,7 @@ void castor::db::ora::OraStagerSvc::bestFileSystemForJob
  std::string* diskServer)
   throw (castor::exception::Exception) {
   // check that filesystem is null if machines is null
-  if (machines == 0 and fileSystems != 0) {
+  if (machines == 0 && fileSystems != 0) {
     castor::exception::InvalidArgument ex;
     ex.getMessage()
       << "bestFileSystemForJob caught with no machines but filesystems."
