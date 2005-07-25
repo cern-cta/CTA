@@ -39,11 +39,11 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
-#include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
+#include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
-#include "castor/vdqm/TapeDrive2ExtDevGroup.hpp"
+#include "castor/vdqm/TapeDriveCompability.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
@@ -188,14 +188,9 @@ void castor::io::StreamTapeDriveCnv::marshalObject(castor::IObject* object,
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
-    address->stream() << obj->().size();
-    for (std::vector<castor::vdqm::TapeDrive2ExtDevGroup*>::iterator it = obj->().begin();
-         it != obj->().end();
-         it++) {
-      cnvSvc()->marshalObject(*it, address, alreadyDone);
-    }
+    cnvSvc()->marshalObject(obj->tapeDriveCompability(), address, alreadyDone);
+    cnvSvc()->marshalObject(obj->deviceGroupName(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->tapeServer(), address, alreadyDone);
-    cnvSvc()->marshalObject(obj->client(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -235,8 +230,15 @@ castor::IObject* castor::io::StreamTapeDriveCnv::unmarshalObject(castor::io::bin
     IObject* objTapeDriveDedication = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addTapeDriveDedication(dynamic_cast<castor::vdqm::TapeDriveDedication*>(objTapeDriveDedication));
   }
-  unsigned int Nb;
-  ad.stream() >> Nb;
-  for (unsigned int i = 0; i < Nb; i++) {
-    ad.setObjType(castor::OBJ_INVALID);
-    IObject* obj
+  ad.setObjType(castor::OBJ_INVALID);
+  IObject* objTapeDriveCompability = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setTapeDriveCompability(dynamic_cast<castor::vdqm::TapeDriveCompability*>(objTapeDriveCompability));
+  ad.setObjType(castor::OBJ_INVALID);
+  IObject* objDeviceGroupName = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setDeviceGroupName(dynamic_cast<castor::vdqm::DeviceGroupName*>(objDeviceGroupName));
+  ad.setObjType(castor::OBJ_INVALID);
+  IObject* objTapeServer = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setTapeServer(dynamic_cast<castor::vdqm::TapeServer*>(objTapeServer));
+  return object;
+}
+

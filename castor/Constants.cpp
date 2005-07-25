@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2005/07/21 09:13:03 $ $Author: itglp $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2005/07/25 15:16:08 $ $Author: mbraeger $
  *
  *
  *
@@ -30,7 +30,7 @@
 //=============================================================================
 // ObjectsIdStrings
 //=============================================================================
-const char* castor::ObjectsIdStrings[93] = {
+const char* castor::ObjectsIdStrings[94] = {
   "INVALID",
   "Ptr", // Only used for streaming for circular dependencies
   "CastorFile",
@@ -115,15 +115,18 @@ const char* castor::ObjectsIdStrings[93] = {
   "GCFile",
   "GCFileList",
   "FilesDeletionFailed",
+
   "TapeRequest",
-  "CientIdentification",
-  "ExtendedDeviceGroup",
+  "ClientIdentification",
   "TapeServer",
   "TapeDrive",
-  "ClientIdentification",
-  "PutDoneStart",
+	"DeviceGroupName",
   "ErrorHistory",
-  "TapeDriveHistory"
+  "TapeDriveDedication",	
+	"TapeAccessSpecification",
+	"TapeDriveCompability",
+  
+  "PutDoneStart"
 };
 
 //=============================================================================

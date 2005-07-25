@@ -117,17 +117,16 @@ namespace castor {
 
     //The vdqm objects
     OBJ_TapeRequest = 84,
-    OBJ_CientIdentification = 85,
-    OBJ_ExtendedDeviceGroup = 86,
-    OBJ_TapeServer = 87,
-    OBJ_TapeDrive = 88,
-    OBJ_ClientIdentification = 89,
+    OBJ_ClientIdentification = 85,
+    OBJ_TapeServer = 86,
+    OBJ_TapeDrive = 87,
+    OBJ_DeviceGroupName = 88,
+    OBJ_ErrorHistory = 89,
+    OBJ_TapeDriveDedication = 90,
+    OBJ_TapeAccessSpecification = 91,
+    OBJ_TapeDriveCompability = 92,   
 
-    OBJ_PutDoneStart = 90,
-    
-    //Additional vdqm objects
-    OBJ_ErrorHistory = 91,
-    OBJ_TapeDriveDedication = 92
+    OBJ_PutDoneStart = 93,
   };
     
   /**
@@ -197,7 +196,7 @@ namespace castor {
   /**
    * Nb of objectIds currently existing
    */
-  static const unsigned int ObjectsIdsNb = 93;
+  static const unsigned int ObjectsIdsNb = 94;
 
   /**
    * Nb of ServicesIds currently existing
@@ -213,7 +212,7 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[93];
+  extern const char* ObjectsIdStrings[94];
 
   /**
    * Names of the differents Services, used to display
