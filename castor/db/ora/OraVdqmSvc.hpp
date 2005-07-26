@@ -27,13 +27,11 @@
 #ifndef _ORAVDQMSVC_HPP_
 #define _ORAVDQMSVC_HPP_
 
-// Include Files
-#include "castor/BaseSvc.hpp"
+// Include File
 #include "castor/vdqm/IVdqmSvc.hpp"
-#include "occi.h"
 
 //Local Include Files
-#include "OraCnvSvc.hpp"
+#include <string>
 #include "OraCommonSvc.hpp"
 
 typedef struct vdqmdDrvReq vdqmDrvReq_t;
@@ -143,7 +141,7 @@ namespace castor {
 		    	 * @return the reference in the db or NULL if it is not a right specification
 		    	 * @exception in case of error
 		    	 */	
-		    	virtual TapeAccessSpecification* selectTapeAccessSpecification(
+		    	virtual castor::vdqm::TapeAccessSpecification* selectTapeAccessSpecification(
 		    		const int accessMode,
 		    		const std::string density,
 		    		const std::string tapeModel) 
@@ -158,7 +156,7 @@ namespace castor {
 		    	 * @return the requested DeviceGroupName, or NULL if it does not exists
 		    	 * @exception in case of error
 		    	 */	
-		    	virtual DeviceGroupName* selectDeviceGroupName(
+		    	virtual castor::vdqm::DeviceGroupName* selectDeviceGroupName(
 		    		const std::string dgName) 
 		    		throw (castor::exception::Exception);
 		    		
@@ -308,7 +306,7 @@ namespace castor {
 	        oracle::occi::Statement *m_selectTapeReqForMountedTapeStatement;
 	        
  	        /// SQL statement for function selectTapeAccessSpecification
-	        static const std::string s_selectTapeAccessSpecificationString;
+	        static const std::string s_selectTapeAccessSpecificationStatementString;
 	
 	        /// SQL statement object for function selectTapeAccessSpecification
 	        oracle::occi::Statement *m_selectTapeAccessSpecificationStatement;

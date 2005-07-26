@@ -40,7 +40,6 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
-#include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
@@ -1164,9 +1163,6 @@ void castor::db::ora::OraTapeDriveCnv::deleteRep(castor::IAddress* address,
     m_deleteTypeStatement->executeUpdate();
     m_deleteStatement->setDouble(1, obj->id());
     m_deleteStatement->executeUpdate();
-    if (obj->() != 0) {
-      cnvSvc()->deleteRep(0, obj->(), false);
-    }
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }

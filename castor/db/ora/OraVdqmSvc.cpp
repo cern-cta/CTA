@@ -28,7 +28,6 @@
 #include "castor/SvcFactory.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/Constants.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/stager/Tape.hpp"
 
@@ -61,10 +60,6 @@ OraVdqmSvcFactory = s_factoryOraVdqmSvc;
 //------------------------------------------------------------------------------
 // Static constants initialization
 //------------------------------------------------------------------------------
-/// SQL statement for function checkExtDevGroup
-const std::string castor::db::ora::OraVdqmSvc::s_checkExtDevGroupStatementString =
-  "SELECT id FROM Tape WHERE status = :1";
-
 /// SQL statement for function getTapeServer
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeServerStatementString =
   "SELECT id FROM TapeServer WHERE serverName = :1 FOR UPDATE";
@@ -102,14 +97,21 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeByVidStatementString 
 /// SQL statement for function selectTapeReqForMountedTape
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeReqForMountedTapeStatementString =
   "SELECT id FROM TapeRequest WHERE tapeDrive = 0 AND tape = :1 AND (requestedSrv = :2 OR requestedSrv = 0) FOR UPDATE";
-
+  
+/// SQL statement for function selectTapeAccessSpecification
+const std::string castor::db::ora::OraVdqmSvc::s_selectTapeAccessSpecificationStatementString =
+  "SELECT id FROM TapeRequest WHERE tapeDrive = 0 AND tape = :1 AND (requestedSrv = :2 OR requestedSrv = 0) FOR UPDATE";
+  
+/// SQL statement for function s_selectDeviceGroupName
+const std::string castor::db::ora::OraVdqmSvc::s_selectDeviceGroupNameStatementString =
+  "SELECT id FROM TapeRequest WHERE tapeDrive = 0 AND tape = :1 AND (requestedSrv = :2 OR requestedSrv = 0) FOR UPDATE";      
+  
 
 // -----------------------------------------------------------------------
 // OraVdqmSvc
 // -----------------------------------------------------------------------
 castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   OraCommonSvc(name),
-  m_checkExtDevGroupStatement(0),
   m_selectTapeServerStatement(0),
   m_checkTapeRequestStatement1(0),
   m_checkTapeRequestStatement2(0),
@@ -118,7 +120,9 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   m_existTapeDriveWithTapeInUseStatement(0),
   m_existTapeDriveWithTapeMountedStatement(0),
   m_selectTapeByVidStatement(0),
-  m_selectTapeReqForMountedTapeStatement(0) {
+  m_selectTapeReqForMountedTapeStatement(0),
+  m_selectTapeAccessSpecificationStatement(0),
+  m_selectDeviceGroupNameStatement(0) {
 }
 
 
@@ -151,7 +155,6 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
-    deleteStatement(m_checkExtDevGroupStatement);
     deleteStatement(m_selectTapeServerStatement);
     deleteStatement(m_checkTapeRequestStatement1);
     deleteStatement(m_checkTapeRequestStatement2);
@@ -161,10 +164,11 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
     deleteStatement(m_existTapeDriveWithTapeMountedStatement);
     deleteStatement(m_selectTapeByVidStatement);
     deleteStatement(m_selectTapeReqForMountedTapeStatement);
+    deleteStatement(m_selectTapeAccessSpecificationStatement);
+    deleteStatement(m_selectDeviceGroupNameStatement);
   } catch (oracle::occi::SQLException e) {};
   
   // Now reset all pointers to 0
-  m_checkExtDevGroupStatement = 0;
   m_selectTapeServerStatement = 0;
   m_checkTapeRequestStatement1 = 0;
   m_checkTapeRequestStatement2 = 0;
@@ -174,6 +178,8 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   m_existTapeDriveWithTapeMountedStatement = 0;
   m_selectTapeByVidStatement = 0;
   m_selectTapeReqForMountedTapeStatement = 0;
+  m_selectTapeAccessSpecificationStatement = 0;
+  m_selectDeviceGroupNameStatement = 0;
 }
 
 
@@ -417,7 +423,8 @@ castor::vdqm::TapeDrive*
     if (tapeRequest != NULL) {
         cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);
         cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_Tape);
-        cnvSvc()->fillObj(&ad, obj, castor::OBJ_ExtendedDeviceGroup);
+        cnvSvc()->fillObj(&ad, obj, castor::OBJ_DeviceGroupName);
+        cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeAccessSpecification);        
         cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeServer);
     }
      
@@ -641,7 +648,8 @@ castor::vdqm::TapeRequest*
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_ClientIdentification);
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeServer);
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_Tape);
-    cnvSvc()->fillObj(&ad, obj, castor::OBJ_ExtendedDeviceGroup);
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_DeviceGroupName);
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeAccessSpecification);    
 
     //Reset pointer
     obj = 0;
