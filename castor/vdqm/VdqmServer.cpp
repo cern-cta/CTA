@@ -145,6 +145,7 @@ castor::vdqm::VdqmServer::VdqmServer():
      {44, "No tape request left for mounted tape"},
      {45, "Update of representation in DB"}, 
      {46, "No free TapeDrive, or no TapeRequest in the db"}, 
+     {47, "Try to get information about the tape from the VMGR daemon"},
      {-1, ""}};
   castor::dlf::dlf_init("Vdqm", messages);
 }

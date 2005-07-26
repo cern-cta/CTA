@@ -117,7 +117,8 @@ namespace castor {
 	    		
 	    	/**
 	    	 * Looks, if the specified dgName exists in the database. 
-	    	 * If it is the case, it wil return the object. 
+	    	 * If it is the case, it will return the object. If not, a new entry
+	    	 * will be created!
 	    	 * Please notice that caller is responsible for deleting the object.
 	    	 * @parameter dgName The dgn which the client has sent to vdqm
 	    	 * @return the requested DeviceGroupName, or NULL if it does not exists
