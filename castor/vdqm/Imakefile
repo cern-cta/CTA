@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Release$ $Date: 2005/07/06 17:47:01 $ $Author: mbraeger $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Release$ $Date: 2005/07/26 10:12:06 $ $Author: mbraeger $
 #
 # Make Castor vdqm library
 #
@@ -39,23 +39,25 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
 LIBS = -lshift
 
-VDQMBIN_SRCS =ExtendedDeviceGroup.cpp \
-              ExtendedDeviceGroupCInt.cpp \
+VDQMBIN_SRCS =DeviceGroupName.cpp \
+							ErrorHistory.cpp \
 							OldVdqmProtocol.cpp \
+							TapeAccessSpecification.cpp \
               TapeDrive.cpp \
-              TapeDriveCInt.cpp \
+							TapeDriveCompability.cpp \
+							TapeDriveDedication.cpp \
               TapeDriveStatusCodes.cpp \
               TapeRequest.cpp \
-              TapeRequestCInt.cpp \
               TapeServer.cpp \
-              TapeServerCInt.cpp \
+							TapeServerStatusCodes.cpp \
               VdqmServer.cpp \
               VdqmServerSocket.cpp \
 							handler/BaseRequestHandler.cpp \
 							handler/TapeDriveConsistencyChecker.cpp \
 							handler/TapeDriveHandler.cpp \
 							handler/TapeDriveStatusHandler.cpp \
-							handler/TapeRequestHandler.cpp
+							handler/TapeRequestHandler.cpp \
+							handler/TapeRequestDedicationHandler.cpp
 							
 
 
