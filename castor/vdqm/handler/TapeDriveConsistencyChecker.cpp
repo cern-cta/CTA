@@ -25,7 +25,6 @@
  *****************************************************************************/
 
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 
 #include "castor/vdqm/TapeDrive.hpp"

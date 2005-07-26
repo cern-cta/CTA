@@ -37,7 +37,8 @@
 #include "castor/Services.hpp"
 #include "castor/BaseAddress.hpp"
 
-#include "castor/vdqm/ExtendedDeviceGroup.hpp"
+#include "castor/vdqm/DeviceGroupName.hpp"
+#include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
@@ -83,13 +84,13 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header
   
   //The db related informations
 	TapeRequest *newTapeReq = NULL;
-//  castor::vdqm::TapeDrive *freeTapeDrive;
   castor::stager::ClientIdentification *clientData = NULL;
   castor::stager::Tape *tape = NULL;
   
   //TODO: The connection is not realised, yet.
   TapeServer *reqTapeServer = NULL;
-  ExtendedDeviceGroup *reqExtDevGrp = NULL;
+  DeviceGroupName *dgName = NULL;
+  TapeAccessSpecification *tapeAccessSpec = NULL;
   
   bool exist = false; 
   int rowNumber = 0; 
@@ -145,23 +146,32 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header
 	 	 */
 	 	tape = ptr_IVdqmService->selectTape(volumeRequest->volid, 
 	 																			0, 
-	 																			volumeRequest->mode);
-	 																				
-	  //The requested ExtendedDeviceGroup
-	  reqExtDevGrp = new ExtendedDeviceGroup();
-	  reqExtDevGrp->setDgName(volumeRequest->dgn);
-	  reqExtDevGrp->setAccessMode(volumeRequest->mode);
+	 																			volumeRequest->mode);	 																	
 	  
 	  //The requested tape server
 	//  reqTapeServer = ptr_IVdqmService->selectTapeServer(volumeRequest->server);
 	  
-	  /*
-	   * Check that the requested device exists.
+	  /**
+		 * Valids the requested tape Access for the specific tape model.
+		 * In case of errors, the return value is NULL
+		 */
+		 //TODO: connection to vmgr is missing!
+//		tapeAccessSpec = ptr_IVdqmService->selectTapeAccessSpecification(...);
+	  
+	  if (0 == tapeAccessSpec) {
+	  	castor::exception::Exception ex(EVQDGNINVL);
+	    ex.getMessage() << "The specified tape access mode doesn't exist in the db"
+	    								<< std::endl;
+	    throw ex;
+	  }
+	  
+ 	  /**
+	   * The requested device group name. If the entry doesn't yet exist, 
+	   * it will be created.
 	   */
-	  exist = ptr_IVdqmService->checkExtDevGroup(reqExtDevGrp);
+	 	dgName = ptr_IVdqmService->selectDeviceGroupName(volumeRequest->dgn);
 	  
-	  
-	  if ( !exist ) {
+	  if ( 0 == dgName) {
 	  	castor::exception::Exception ex(EVQDGNINVL);
 	    ex.getMessage() << "DGN " <<  volumeRequest->dgn
 	    								<< " does not exist" << std::endl;
@@ -171,16 +181,17 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header
 	  
 	  //Connect the tapeRequest with the additional information
 	  newTapeReq->setClient(clientData);
-	  newTapeReq->setReqExtDevGrp(reqExtDevGrp);
+	  newTapeReq->setTapeAccessSpecification(tapeAccessSpec);
 	  newTapeReq->setRequestedSrv(reqTapeServer);
 	  newTapeReq->setTape(tape);
+	  newTapeReq->setDeviceGroupName(dgName);
 	  newTapeReq->setId(volumeRequest->VolReqID);
 	  
 	
 	  /*
 	   * Set priority for tpwrite
 	   */
-	  if ( (reqExtDevGrp->accessMode() == WRITE_ENABLE) &&
+	  if ( (tapeAccessSpec->accessMode() == WRITE_ENABLE) &&
 	       ((p = getconfent("VDQM","WRITE_PRIORITY",0)) != NULL) ) {
 	    if ( strcmp(p,"YES") == 0 ) {
 	      newTapeReq->setPriority(VDQM_PRIORITY_MAX);
@@ -252,10 +263,12 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header
 	 		delete newTapeReq; //also deletes clientData, because of composition
  		if (tape)
 	 		delete tape;
-		if (reqExtDevGrp)
-			delete reqExtDevGrp;
+		if (tapeAccessSpec)
+			delete tapeAccessSpec;
 		if (reqTapeServer)
 			delete reqTapeServer;
+		if (dgName)
+			delete dgName;
 //		if (0 != freeTapeDrive)
 //	delete freeTapeDrive;
   
@@ -265,8 +278,9 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header
 	// Delete all Objects
 	delete newTapeReq; //also deletes clientData, because of composition 
 	delete tape;
-	delete reqExtDevGrp;
+	delete tapeAccessSpec;
 	delete reqTapeServer;
+	delete dgName;
 //	delete freeTapeDrive;
 }
 
@@ -423,54 +437,4 @@ int castor::vdqm::handler::TapeRequestHandler::getQueuePosition(
   delete tapeReq;
   
   return queuePosition;
-}
-
-
-//------------------------------------------------------------------------------
-// handleTapeRequestQueue
-//------------------------------------------------------------------------------
-void castor::vdqm::handler::TapeRequestHandler::handleTapeRequestQueue() 
-	throw (castor::exception::Exception) {
-	//TODO: Implementation
-//  /* 
-//   * Loop until either the volume queue is empty or
-//   * there are no more suitable drives
-//   */
-//  for (;;) {
-//      rc = SelectVolAndDrv(dgn_context,&volrec,&drvrec);
-//      if ( rc == -1 || volrec == NULL || drvrec == NULL ) {
-//          log(LOG_ERR,"vdqm_NewVolReq(): SelectVolAndDrv() returned rc=%d\n",
-//              rc);
-//          break;
-//      }
-//      /*
-//       * Free memory allocated for previous request for this drive
-//       */
-//      if ( drvrec->vol != NULL ) free(drvrec->vol);
-//      drvrec->vol = volrec;
-//      volrec->drv = drvrec;
-//      drvrec->drv.VolReqID = volrec->vol.VolReqID;
-//      volrec->vol.DrvReqID = drvrec->drv.DrvReqID;
-//      drvrec->drv.jobID = 0;
-//      /*
-//       * Reset the drive status
-//       */
-//      drvrec->drv.status = drvrec->drv.status & 
-//          ~(VDQM_UNIT_RELEASE | VDQM_UNIT_BUSY | VDQM_VOL_MOUNT |
-//          VDQM_VOL_UNMOUNT | VDQM_UNIT_ASSIGN);
-//      drvrec->drv.recvtime = (int)time(NULL);
-//  
-//      /*
-//       * Start the job
-//       */
-//      rc = vdqm_StartJob(volrec);
-//      if ( rc < 0 ) {
-//          log(LOG_ERR,"vdqm_NewVolReq(): vdqm_StartJob() returned error\n");
-//          volrec->vol.DrvReqID = 0;
-//          drvrec->drv.VolReqID = 0;
-//          volrec->drv = NULL;
-//          drvrec->vol = NULL;
-//          break;
-//      }
-//   } /* end of for (;;) */
 }

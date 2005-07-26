@@ -62,16 +62,12 @@ namespace castor {
 					/**
 					 * function to start the loop, which handles the dedication of a
 					 * tape to a tape Drive
-					 * 
-					 * @exception In case of error
 					 */
-					void run() throw(castor::exception::Exception);
+					void run();
 					
 
 					/**
-					 * function to stop the loop
-					 * 
-					 * @exception In case of error
+					 * function to stop the run() loop
 					 */
 					void stop();					
 					
@@ -79,7 +75,8 @@ namespace castor {
 				protected:
 				
 		      /**
-		       * Constructor
+		       * Constructor. 
+		       * Please use Instance() to get an instance of this class.
 		       * 
 					 * @exception In case of error
 		       */
@@ -87,9 +84,23 @@ namespace castor {
 					
 				
 				private:
+				
+					/**
+					 * The Singleton instance
+					 */
 					static TapeRequestDedicationHandler* _instance;
-					
+	
+					/**
+					 * The run function stops, if this variable is set to false
+					 */
 					bool _stopLoop;
+					
+	     		/**
+	     		 * This method is used to look, if they are free drives for the queued
+	     		 * tape requests. 
+	     		 */
+	     		void handleTapeRequestQueue() 
+						throw (castor::exception::Exception);					
 												
 	    }; // class TapeRequestDedicationHandler
     

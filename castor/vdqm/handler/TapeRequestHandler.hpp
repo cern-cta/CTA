@@ -98,16 +98,7 @@ namespace castor {
 					 */
 					int getQueuePosition(vdqmVolReq_t *VolReq, Cuuid_t cuuid) 
 						throw (castor::exception::Exception);
-		       
-				
-				private:
 	
-	     		/**
-	     		 * This method is used to look, if they are free drives for the queued
-	     		 * tape requests. 
-	     		 */
-	     		void handleTapeRequestQueue() 
-							throw (castor::exception::Exception);
 	    }; // class TapeRequestHandler
     
   	} // end of namespace handler

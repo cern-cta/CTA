@@ -138,8 +138,6 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
       dynamic_cast<castor::vdqm::TapeDrive*>(fr);
     
     if (0 != tapeDrive) {
-    	svcs()->createRep(&ad, (IObject *)tapeDrive->client(), false);
-      svcs()->fillRep(&ad, fr, OBJ_ClientIdentification, false);
       svcs()->updateRep(&ad, (IObject *)tapeDrive->tapeServer(), false);    	
       svcs()->fillRep(&ad, fr, OBJ_TapeDrive, false);
     }
@@ -236,7 +234,6 @@ void castor::vdqm::handler::BaseRequestHandler::updateRepresentation
       dynamic_cast<castor::vdqm::TapeDrive*>(fr);
     
     if (0 != tapeDrive) {
-	    svcs()->updateRep(&ad, (IObject *)tapeDrive->client(), false);    	
       svcs()->updateRep(&ad, (IObject *)tapeDrive->tapeServer(), false);    	
       svcs()->updateRep(&ad, (IObject *)tapeDrive->runningTapeReq(), false);
       svcs()->updateRep(&ad, (IObject *)tapeDrive->tape(), false);

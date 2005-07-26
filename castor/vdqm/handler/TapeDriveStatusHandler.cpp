@@ -25,10 +25,9 @@
  *****************************************************************************/
  
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 
-#include "castor/vdqm/ExtendedDeviceGroup.hpp"
+#include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
@@ -280,7 +279,8 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
 		/**
 		 * Not needed any more!
 		 */
-		ptr_tapeDrive->setTapeAccessMode(tapeRequest->reqExtDevGrp()->accessMode());
+		ptr_tapeDrive->setTapeAccessMode(
+			tapeRequest->tapeAccessSpecification()->accessMode());
 	}
 	
 	//The tape, which is now in the tape drive

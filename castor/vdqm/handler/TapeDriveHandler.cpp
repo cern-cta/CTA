@@ -29,11 +29,9 @@
 #include <vector>
 
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 
 #include "castor/vdqm/ErrorHistory.hpp"
-#include "castor/vdqm/ExtendedDeviceGroup.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
@@ -357,10 +355,6 @@ castor::vdqm::TapeDrive*
 			 * The tape drive does not exist, so we just create it!
 			 */
       TapeDrive* tapeDrive = new castor::vdqm::TapeDrive();
-      /**
-       * We need then also an object to store the client related informations
-       */
-      castor::stager::ClientIdentification* client;
 
       tapeDrive->setDriveName(ptr_driveRequest->drive);
       tapeDrive->setTapeServer(tapeServer);
@@ -380,15 +374,15 @@ castor::vdqm::TapeDrive*
       tapeDrive->setTransferredMB(ptr_driveRequest->MBtransf);
       tapeDrive->setUsecount(ptr_driveRequest->usecount);			
       
-      client = new castor::stager::ClientIdentification();
-      client->setEgid(ptr_driveRequest->gid);
-      client->setEuid(ptr_driveRequest->uid);
-      client->setMachine(ptr_driveRequest->reqhost);
-      client->setMagic(ptr_header->magic);
-      client->setUserName(ptr_driveRequest->name);
+//      client = new castor::stager::ClientIdentification();
+//      client->setEgid(ptr_driveRequest->gid);
+//      client->setEuid(ptr_driveRequest->uid);
+//      client->setMachine(ptr_driveRequest->reqhost);
+//      client->setMagic(ptr_header->magic);
+//      client->setUserName(ptr_driveRequest->name);
       
-      //Add the client informations to the tapeDrive
-      tapeDrive->setClient(client);
+//      //Add the client informations to the tapeDrive
+//      tapeDrive->setClient(client);
       
 	    /*
 	     * Make sure it is either up or down. If neither, we put it in
@@ -438,7 +432,7 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
   	throw ex;
 	}
 
-  castor::stager::ClientIdentification* client;
+//  castor::stager::ClientIdentification* client;
 
   ptr_driveRequest->errcount = tapeDrive->errcount();
   ptr_driveRequest->jobID = tapeDrive->jobID();
@@ -447,11 +441,11 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
   ptr_driveRequest->MBtransf = tapeDrive->transferredMB();
   ptr_driveRequest->usecount = tapeDrive->usecount();			
   
-	client = tapeDrive->client();
-  ptr_driveRequest->gid = client->egid();
-  ptr_driveRequest->uid = client->euid();
-  strcpy(ptr_driveRequest->reqhost, client->machine().c_str());
-  strcpy(ptr_driveRequest->name, client->userName().c_str());
+//	client = tapeDrive->client();
+//  ptr_driveRequest->gid = client->egid();
+//  ptr_driveRequest->uid = client->euid();
+//  strcpy(ptr_driveRequest->reqhost, client->machine().c_str());
+//  strcpy(ptr_driveRequest->name, client->userName().c_str());
 }
 
 
@@ -579,7 +573,7 @@ void castor::vdqm::handler::TapeDriveHandler::freeMemory(
 	TapeRequest* runningTapeReq = tapeDrive->runningTapeReq();
 	if ( runningTapeReq ) {
 		delete runningTapeReq->tape();
-		delete runningTapeReq->reqExtDevGrp();
+
 		if ( runningTapeReq->requestedSrv() ) 
 			delete runningTapeReq->requestedSrv();
 			
