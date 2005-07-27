@@ -1,0 +1,76 @@
+.\" @(#)$RCSfile: diskUsage.man,v $ $Revision: 1.1 $ $Date: 2005/07/27 14:02:28 $ CERN IT/ADC Olof Barring
+.\" Copyright (C) 2005 by CERN IT/ADC
+.\" All rights reserved
+.\"
+.TH DISKUSAGE 1 "$Date: 2005/07/27 14:02:28 $" CASTOR "disk server usage and free space"
+.SH NAME
+diskUsage \- prints out the status of the disk servers in terms of used and free space
+.SH SYNOPSIS
+.B diskUsage
+[
+.BI -h, 
+.BI --help
+]
+[
+.BI -s
+]
+[
+.BI --host rmmasterHostName
+]
+[
+.BI --port rmmasterPortNumber
+]
+.SH DESCRIPTION
+.B diskUsage
+prints out the status of the disk servers managed by a given
+resource monitoring master in terms of used and free space
+.TP
+.BI \-h,
+.BI \-\-help
+Get usage information
+.TP
+.BI \-s,
+Prints a summary of the diskserver status at the end of the
+ouput
+.TP
+.BI \-\-host " rmmasterHostName"
+Name of the rmmaster host. If not provided, castor.conf is 
+used.
+.TP
+.BI \-\-port " rmmasterPortNumber"
+Port on which to contact the rmmaster. If not provided, the
+default port is used.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH EXAMPLES
+.fi
+# ./diskUsage --host lxs5010 -s
+.fi
+lxfsrk605       0             /shift/lxfsrk605/data01/        Available          372.47G         372.51G         99.99% free
+.fi
+lxfsrk605       0             /shift/lxfsrk605/data02/        Available          186.22G         186.22G        100.00% free
+.fi
+lxfsrk609       0             /shift/lxfsrk609/data01/        Available          372.50G         372.51G        100.00% free
+.fi
+lxfsrk609       0             /shift/lxfsrk609/data02/        Available          186.22G         186.22G        100.00% free
+.fi
+localhost       0                    /tmp/rmnode_test/        Available           13.56G          14.76G         91.86% free
+.fi
+localhost       0                   /tmp/rmnode_test2/         Disabled                0               0           nan% free
+.fi
+
+.fi
+Summary of Disabled filesystems  - Free:        0       Total:        0    nan% free
+.fi
+Summary of Available filesystems - Free:    1.10T       Total:    1.11T  99.89% free
+.fi
+  0.00% of the total space is disabled
+.fi
+
+.ft
+.fi
+.SH SEE ALSO
+.BR rmmaster(1castor)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
