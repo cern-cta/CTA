@@ -20,7 +20,6 @@ extern	char	*getconfent();
 void usage _PROTO((char *));
 
 static int help_flag = 0;
-static int all_flag = 0;
 static int host_flag = 0;
 static int port_flag = 0;
 
@@ -32,7 +31,6 @@ int summary_mode=0;
 
 static struct Coptions longopts[] = {
   {"help", NO_ARGUMENT,       &help_flag, 'h'},
-  {"all",  NO_ARGUMENT,       &all_flag,  1},
   {"host", REQUIRED_ARGUMENT, &host_flag, 1},
   {"port", REQUIRED_ARGUMENT, &port_flag, 1},
   {NULL,   0,                 NULL,       0}
@@ -145,10 +143,6 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (all_flag) {
-    flags |= RM_ALL;
-  }
-
   c = rm_getnodes(host,port,flags, &rmnode, &nrmnode_out, &rmnode_out);
 
   if (c != 0) {
@@ -176,13 +170,8 @@ int main(int argc, char *argv[]) {
 void usage(cmd)
      char *cmd;
 {
-  fprintf(stderr,"\nusage: %s [options] where options are:\n\n%s",
-          cmd,
-          "--host              rmmaster host\n"
-          "--port              rmmaster port\n"
-          "-s                  Displays Available FS summary\n"
-          "-h                  Displays this help\n"
-          "\n"
-          );
+  fprintf(stderr,
+          "usage: %s [-h] [-s] [--host rmmasterHost] [--port rmmasterPort]\n",
+          cmd);
 }
 
