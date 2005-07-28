@@ -17,7 +17,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: castor_tools.pm,v $ $Revision: 1.2 $ $Release$ $Date: 2005/07/28 09:40:26 $ $Author: sponcec3 $
+# * @(#)$RCSfile: castor_tools.pm,v $ $Revision: 1.3 $ $Release$ $Date: 2005/07/28 12:13:45 $ $Author: sponcec3 $
 # *
 # *
 # *
@@ -29,7 +29,7 @@ package castor_tools;
 require Exporter;
 
 our @ISA = qw(Exporter);
-our @EXPORT =qw( castor_conf_getOraStagerSvc @SubreqStatus);
+our @EXPORT =qw( castor_conf_getOraStagerSvc @DiskCopyStatus);
 
 use strict;
 use DBI;
@@ -61,6 +61,20 @@ sub castor_conf_getOraStagerSvc {
 # option parsing configuration
 use Getopt::Long;
 Getopt::Long::Configure ('bundling');
+
+# DiskCopy status
+our @DiskCopyStatus = ("DISKCOPY_STAGED",
+                       "DISKCOPY_WAITDISK2DISKCOPY",
+                       "DISKCOPY_WAITTAPERECALL",
+                       "DISKCOPY_DELETED",
+                       "DISKCOPY_FAILED",
+                       "DISKCOPY_WAITFS",
+                       "DISKCOPY_STAGEOUT",
+                       "DISKCOPY_INVALID",
+                       "DISKCOPY_GCCANDIDATE",
+                       "DISKCOPY_BEINGDELETED",
+                       "DISKCOPY_CANBEMIGR",
+                       "DISKCOPY_WAITFS_SCHEDULING");
 
 1;
 
