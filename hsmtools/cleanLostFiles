@@ -18,7 +18,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: cleanLostFiles,v $ $Revision: 1.2 $ $Release$ $Date: 2005/07/07 14:26:50 $ $Author: sponcec3 $
+# * @(#)$RCSfile: cleanLostFiles,v $ $Revision: 1.3 $ $Release$ $Date: 2005/07/28 10:07:53 $ $Author: sponcec3 $
 # *
 # * cleanup files in the DB when they were lost on the disk.
 # * this basically does the second part of the garbage collection
@@ -31,6 +31,23 @@ use strict;
 use diagnostics;
 use lib "/usr/lib/perl/CASTOR";
 use castor_tools;
+
+# usage function
+sub usage {
+  printf("Usage : %s [-h] DiskCopyId [...]\n", $0);
+}
+
+# first parse the options
+my $help;
+if (0 == Getopt::Long::GetOptions ('h|help' => \$help)) {
+  usage();
+  exit(1);
+}
+
+if ($help) {
+  usage();
+  exit(0);
+}
 
 # The following query (were data are copied) may look strange
 # but I fear there is currently no way to do otherwise...
@@ -50,7 +67,7 @@ for $arg (@ARGV) {
     # avoid SQL injection by keeping only numbers
     if ($arg =~ /[^0-9]/) {
       print "Error : \"$arg\" is not a number\n";
-      print "Usage : $0 DiskCopyId [...]\n";
+      usage();
       exit;
     }
     if ($first == 1) {
@@ -64,7 +81,7 @@ for $arg (@ARGV) {
 
 # If no arg, display usage
 if ($nbargs == 0) {
-  print "Usage : $0 DiskCopyId [...]\n";
+  usage();
   exit;
 }
 
