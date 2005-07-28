@@ -124,7 +124,7 @@ namespace castor {
     OBJ_ErrorHistory = 89,
     OBJ_TapeDriveDedication = 90,
     OBJ_TapeAccessSpecification = 91,
-    OBJ_TapeDriveCompability = 92,   
+    OBJ_TapeDriveCompatibility = 92,   
 
     OBJ_PutDoneStart = 93,
   };
