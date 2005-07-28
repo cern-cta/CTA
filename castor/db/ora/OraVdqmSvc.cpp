@@ -36,6 +36,7 @@
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
+#include "castor/vdqm/newVdqm.h"
 
 // Local includes
 #include "OraVdqmSvc.hpp"
@@ -45,7 +46,6 @@
 #include <string>
 #include <vdqm_constants.h>
 #include <net.h>
-#include <vdqm.h>
 
 
  
@@ -100,11 +100,11 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeReqForMountedTapeStat
   
 /// SQL statement for function selectTapeAccessSpecification
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeAccessSpecificationStatementString =
-  "SELECT id FROM TapeRequest WHERE tapeDrive = 0 AND tape = :1 AND (requestedSrv = :2 OR requestedSrv = 0) FOR UPDATE";
+  "SELECT id FROM TapeAccessSpecification WHERE accessMode = :1 AND density = :2 AND tapeModel = :3";
   
 /// SQL statement for function s_selectDeviceGroupName
 const std::string castor::db::ora::OraVdqmSvc::s_selectDeviceGroupNameStatementString =
-  "SELECT id FROM TapeRequest WHERE tapeDrive = 0 AND tape = :1 AND (requestedSrv = :2 OR requestedSrv = 0) FOR UPDATE";      
+  "SELECT id FROM DeviceGroupName WHERE dgName = :1";      
   
 
 // -----------------------------------------------------------------------
@@ -356,7 +356,7 @@ int castor::db::ora::OraVdqmSvc::checkTapeRequest(
 // -----------------------------------------------------------------------
 castor::vdqm::TapeDrive* 
 	castor::db::ora::OraVdqmSvc::selectTapeDrive(
-	const vdqmDrvReq_t* driveRequest,
+	const newVdqmDrvReq_t* driveRequest,
 	castor::vdqm::TapeServer* tapeServer)
   throw (castor::exception::Exception) {
   	
@@ -675,7 +675,63 @@ castor::vdqm::TapeAccessSpecification*
 	 const std::string density,
 	 const std::string tapeModel)
   throw (castor::exception::Exception) {
- return NULL; 	
+
+  // Check whether the statements are ok
+  if (0 == m_selectTapeAccessSpecificationStatement) {
+    m_selectTapeAccessSpecificationStatement = 
+    	createStatement(s_selectTapeAccessSpecificationStatementString);
+  }
+  // Execute statement and get result
+  unsigned long id;
+  try {
+    m_selectTapeAccessSpecificationStatement->setInt(1, accessMode);
+    m_selectTapeAccessSpecificationStatement->setString(2, density);
+    m_selectTapeAccessSpecificationStatement->setString(3, tapeModel);    
+    oracle::occi::ResultSet *rset = m_selectTapeAccessSpecificationStatement->executeQuery();
+    
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      m_selectTapeAccessSpecificationStatement->closeResultSet(rset);
+      // we found nothing, so let's return the NULL pointer  
+			return NULL;
+    }
+    
+    // If we reach this point, then we selected successfully
+    // a dgName and it's id is in rset
+    id = rset->getInt(1);
+    m_selectTapeAccessSpecificationStatement->closeResultSet(rset);
+  
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select TapeAccessSpecification by accessMode, density, tapeModel:"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+  // Now get the DeviceGroupName from its id
+  try {
+    castor::BaseAddress ad;
+    ad.setTarget(id);
+    ad.setCnvSvcName("OraCnvSvc");
+    ad.setCnvSvcType(castor::SVC_ORACNV);
+    castor::IObject* obj = cnvSvc()->createObj(&ad);
+    castor::vdqm::TapeAccessSpecification* tapeAccessSpec =
+      dynamic_cast<castor::vdqm::TapeAccessSpecification*> (obj);
+    if (0 == tapeAccessSpec) {
+      castor::exception::Internal e;
+      e.getMessage() << "createObj return unexpected type "
+                     << obj->type() << " for id " << id;
+      delete obj;
+      throw e;
+    }
+    return tapeAccessSpec;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select TapeAccessSpecification for id " << id  << " :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+  // We should never reach this point 	
 }
 
 
@@ -686,5 +742,90 @@ castor::vdqm::DeviceGroupName*
 	castor::db::ora::OraVdqmSvc::selectDeviceGroupName
 	(const std::string dgName)
   throw (castor::exception::Exception) {
- return NULL; 	
+
+  // Check whether the statements are ok
+  if (0 == m_selectDeviceGroupNameStatement) {
+    m_selectDeviceGroupNameStatement = createStatement(s_selectDeviceGroupNameStatementString);
+  }
+  // Execute statement and get result
+  unsigned long id;
+  try {
+    m_selectDeviceGroupNameStatement->setString(1, dgName);
+    oracle::occi::ResultSet *rset = m_selectDeviceGroupNameStatement->executeQuery();
+    
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      m_selectDeviceGroupNameStatement->closeResultSet(rset);
+      // we found nothing, so let's create the DeviceGroupName entry
+      castor::vdqm::DeviceGroupName* deviceGroupName = new castor::vdqm::DeviceGroupName();
+      deviceGroupName->setDgName(dgName);
+
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("OraCnvSvc");
+      ad.setCnvSvcType(castor::SVC_ORACNV);
+      try {
+        cnvSvc()->createRep(&ad, deviceGroupName, false);
+        return deviceGroupName;
+      } catch (oracle::occi::SQLException e) {
+        delete deviceGroupName;
+        if (1 == e.getErrorCode()) {
+          // if violation of unique constraint, ie means that
+          // some other thread was quicker than us on the insertion
+          // So let's select what was inserted
+          rset = m_selectDeviceGroupNameStatement->executeQuery();
+          if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+            // Still nothing ! Here it's a real error
+            m_selectDeviceGroupNameStatement->closeResultSet(rset);
+            castor::exception::Internal ex;
+            ex.getMessage()
+              << "Unable to select DeviceGroupName while inserting "
+              << "violated unique constraint :"
+              << std::endl << e.getMessage();
+            throw ex;
+          }
+        }
+        m_selectDeviceGroupNameStatement->closeResultSet(rset);
+        // Else, "standard" error, throw exception
+        castor::exception::Internal ex;
+        ex.getMessage()
+          << "Exception while inserting new DevicGroupName in the DB :"
+          << std::endl << e.getMessage();
+        throw ex;
+      }
+    }
+    // If we reach this point, then we selected successfully
+    // a DeviceGroupName and it's id is in rset
+    id = rset->getInt(1);
+    m_selectDeviceGroupNameStatement->closeResultSet(rset);
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select DeviceGroupName by dgName :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+  // Now get the DeviceGroupName from its id
+  try {
+    castor::BaseAddress ad;
+    ad.setTarget(id);
+    ad.setCnvSvcName("OraCnvSvc");
+    ad.setCnvSvcType(castor::SVC_ORACNV);
+    castor::IObject* obj = cnvSvc()->createObj(&ad);
+    castor::vdqm::DeviceGroupName* deviceGroupName =
+      dynamic_cast<castor::vdqm::DeviceGroupName*> (obj);
+    if (0 == deviceGroupName) {
+      castor::exception::Internal e;
+      e.getMessage() << "createObj return unexpected type "
+                     << obj->type() << " for id " << id;
+      delete obj;
+      throw e;
+    }
+    return deviceGroupName;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select DeviceGroupName for id " << id  << " :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+  // We should never reach this point 	
 }

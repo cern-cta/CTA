@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.52 $ $Release$ $Date: 2005/07/26 11:55:47 $ $Author: mbraeger $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.53 $ $Release$ $Date: 2005/07/28 16:36:12 $ $Author: mbraeger $
 #
 # Make Castor DB libraries
 #
@@ -100,7 +100,7 @@ ORALIB_SRCS += OraClientIdentificationCnv.cpp \
             OraDeviceGroupNameCnv.cpp \
 						OraTapeAccessSpecificationCnv.cpp \
             OraTapeDriveCnv.cpp \
-						OraTapeDriveCompabilityCnv.cpp \
+						OraTapeDriveCompatibilityCnv.cpp \
 						OraTapeDriveDedicationCnv.cpp \
             OraTapeRequestCnv.cpp \
             OraTapeServerCnv.cpp \

@@ -231,22 +231,22 @@ namespace castor {
         oracle::occi::Statement *m_remoteUpdateTapeRequestStatement;
 
         /// SQL select statement for member 
-        static const std::string s_selectTapeDriveCompabilityStatementString;
+        static const std::string s_selectTapeDriveCompatibilityStatementString;
 
         /// SQL select statement object for member 
-        oracle::occi::Statement *m_selectTapeDriveCompabilityStatement;
+        oracle::occi::Statement *m_selectTapeDriveCompatibilityStatement;
 
         /// SQL delete statement for member 
-        static const std::string s_deleteTapeDriveCompabilityStatementString;
+        static const std::string s_deleteTapeDriveCompatibilityStatementString;
 
         /// SQL delete statement object for member 
-        oracle::occi::Statement *m_deleteTapeDriveCompabilityStatement;
+        oracle::occi::Statement *m_deleteTapeDriveCompatibilityStatement;
 
         /// SQL remote update statement for member 
-        static const std::string s_remoteUpdateTapeDriveCompabilityStatementString;
+        static const std::string s_remoteUpdateTapeDriveCompatibilityStatementString;
 
         /// SQL remote update statement object for member 
-        oracle::occi::Statement *m_remoteUpdateTapeDriveCompabilityStatement;
+        oracle::occi::Statement *m_remoteUpdateTapeDriveCompatibilityStatement;
 
       }; // end of class OraTapeAccessSpecificationCnv
 

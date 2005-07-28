@@ -34,7 +34,7 @@
 #include <string>
 #include "OraCommonSvc.hpp"
 
-typedef struct vdqmdDrvReq vdqmDrvReq_t;
+typedef struct newVdqmDrvReq newVdqmDrvReq_t;
 
 namespace castor {
 	
@@ -150,10 +150,11 @@ namespace castor {
 		    		
 		    	/**
 		    	 * Looks, if the specified dgName exists in the database. 
-		    	 * If it is the case, it wil return the object. 
+		    	 * If it is the case, it will return the object. If not, a new entry
+		    	 * will be created!
 		    	 * Please notice that caller is responsible for deleting the object.
 		    	 * @parameter dgName The dgn which the client has sent to vdqm
-		    	 * @return the requested DeviceGroupName, or NULL if it does not exists
+		    	 * @return the requested DeviceGroupName
 		    	 * @exception in case of error
 		    	 */	
 		    	virtual castor::vdqm::DeviceGroupName* selectDeviceGroupName(
@@ -176,7 +177,7 @@ namespace castor {
 		       * DB problem, etc...)
 		       */
 					virtual castor::vdqm::TapeDrive* selectTapeDrive(
-						const vdqmDrvReq_t* driveRequest,
+						const newVdqmDrvReq_t* driveRequest,
 						castor::vdqm::TapeServer* tapeServer)
 		    		throw (castor::exception::Exception);			
 

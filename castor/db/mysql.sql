@@ -24,6 +24,9 @@ ALTER TABLE DiskPool2SvcClass
 ALTER TABLE Stream2TapeCopy
   DROP CONSTRAINT fk_Stream2TapeCopy_P
   DROP CONSTRAINT fk_Stream2TapeCopy_C;
+ALTER TABLE TapeDrive2TapeDriveComp
+  DROP CONSTRAINT fk_TapeDrive2TapeDriveComp_P
+  DROP CONSTRAINT fk_TapeDrive2TapeDriveComp_C;
 /* SQL statements for type BaseAddress */
 DROP TABLE BaseAddress;
 CREATE TABLE BaseAddress (objType INT, cnvSvcName VARCHAR(1000), cnvSvcType INT, target BIGINT, id BIGINT, PRIMARY KEY (id));
@@ -240,7 +243,13 @@ CREATE TABLE TapeRequest (priority INT, modificationTime INT, id BIGINT, PRIMARY
 
 /* SQL statements for type TapeDrive */
 DROP TABLE TapeDrive;
-CREATE TABLE TapeDrive (jobID INT, modificationTime INT, resettime INT, usecount INT, errcount INT, transferredMB INT, totalMB BIGINT, driveName VARCHAR(1000), tapeAccessMode INT, id BIGINT, PRIMARY KEY (id), tape INT, runningTapeReq INT, tapeDriveCompability INT, deviceGroupName INT, status INT, tapeServer INT);
+CREATE TABLE TapeDrive (jobID INT, modificationTime INT, resettime INT, usecount INT, errcount INT, transferredMB INT, totalMB BIGINT, driveName VARCHAR(1000), tapeAccessMode INT, id BIGINT, PRIMARY KEY (id), tape INT, runningTapeReq INT, deviceGroupName INT, status INT, tapeServer INT);
+DROP INDEX I_TapeDrive2TapeDriveComp_C;
+DROP INDEX I_TapeDrive2TapeDriveComp_P;
+DROP TABLE TapeDrive2TapeDriveComp;
+CREATE TABLE TapeDrive2TapeDriveComp (Parent BIGINT, Child BIGINT);
+CREATE INDEX I_TapeDrive2TapeDriveComp_C on TapeDrive2TapeDriveComp (child);
+CREATE INDEX I_TapeDrive2TapeDriveComp_P on TapeDrive2TapeDriveComp (parent);
 
 /* SQL statements for type ErrorHistory */
 DROP TABLE ErrorHistory;
@@ -250,9 +259,9 @@ CREATE TABLE ErrorHistory (errorMessage VARCHAR(1000), timeStamp INT, id BIGINT,
 DROP TABLE TapeDriveDedication;
 CREATE TABLE TapeDriveDedication (clientHost INT, euid INT, egid INT, vid VARCHAR(1000), accessMode INT, timePeriods VARCHAR(1000), id BIGINT, PRIMARY KEY (id), tapeDrive INT);
 
-/* SQL statements for type TapeDriveCompability */
-DROP TABLE TapeDriveCompability;
-CREATE TABLE TapeDriveCompability (tapeDriveModel VARCHAR(1000), priorityLevel INT, id BIGINT, PRIMARY KEY (id), tapeAccessSpecifications INT);
+/* SQL statements for type TapeDriveCompatibility */
+DROP TABLE TapeDriveCompatibility;
+CREATE TABLE TapeDriveCompatibility (tapeDriveModel VARCHAR(1000), priorityLevel INT, id BIGINT, PRIMARY KEY (id), tapeAccessSpecification INT);
 
 /* SQL statements for type DeviceGroupName */
 DROP TABLE DeviceGroupName;
@@ -267,6 +276,9 @@ ALTER TABLE DiskPool2SvcClass
 ALTER TABLE Stream2TapeCopy
   ADD CONSTRAINT fk_Stream2TapeCopy_P FOREIGN KEY (Parent) REFERENCES Stream (id)
   ADD CONSTRAINT fk_Stream2TapeCopy_C FOREIGN KEY (Child) REFERENCES TapeCopy (id);
+ALTER TABLE TapeDrive2TapeDriveComp
+  ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_P FOREIGN KEY (Parent) REFERENCES TapeDrive (id)
+  ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 -- This file contains SQL code that is not generated automatically
 -- and is inserted at the end of the generated code
 

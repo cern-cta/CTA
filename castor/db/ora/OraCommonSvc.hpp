@@ -146,13 +146,23 @@ namespace castor {
         (const std::string mountPoint,
          const std::string diskServer)
           throw (castor::exception::Exception);
-
-      protected:
+          
+        /**
+         * helper method to commit
+         */
+        virtual void commit() {
+          try {
+            cnvSvc()->getConnection()->commit();
+          } catch (castor::exception::Exception) {
+            // rollback failed, let's drop the connection for security
+            rollback();
+          }
+        }          
 
         /**
          * helper method to rollback
          */
-        void rollback() {
+        virtual void rollback() {
           try {
             cnvSvc()->getConnection()->rollback();
           } catch (castor::exception::Exception) {
