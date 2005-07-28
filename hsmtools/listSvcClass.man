@@ -1,15 +1,23 @@
-.\" @(#)$RCSfile: listSvcClass.man,v $ $Revision: 1.1 $ $Date: 2005/07/27 14:47:06 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: listSvcClass.man,v $ $Revision: 1.2 $ $Date: 2005/07/28 09:45:21 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH LISTSVCCLASS 1 "$Date: 2005/07/27 14:47:06 $" CASTOR "list existing service classes in the stager"
+.TH LISTSVCCLASS 1 "$Date: 2005/07/28 09:45:21 $" CASTOR "list existing service classes in the stager"
 .SH NAME
 listSvcClass
 .SH SYNOPSIS
 .B listSvcClass
+[
+.BI -h, 
+.BI --help
+]
 .SH DESCRIPTION
 .B listSvcClass
 list the services classes existing in the stager
+.TP
+.BI \-h,
+.BI \-\-help
+Get usage information
 .SH EXAMPLES
 .fi
 # listSvcClass
