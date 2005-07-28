@@ -1,0 +1,39 @@
+.\" @(#)$RCSfile: cleanLostFiles.man,v $ $Revision: 1.1 $ $Date: 2005/07/28 10:09:25 $ CERN IT/ADC Olof Barring
+.\" Copyright (C) 2005 by CERN IT/ADC
+.\" All rights reserved
+.\"
+.TH CLEANLOSTFILES 1 "$Date: 2005/07/28 10:09:25 $" CASTOR "Clean the stager for lost files"
+.SH NAME
+cleanLostFiles \- cleans the stager for files that were lost on diskservers
+.SH SYNOPSIS
+.B cleanLostFiles
+[
+.BI -h, 
+.BI --help
+]
+.BI diskCopyId [...]
+.SH DESCRIPTION
+.B cleanLostFiles
+cleans up files in the stager when they were (accidentally)
+deleted on the diskservers. Such files could actually not be
+cleaned up through the regular garbage collection mechanism
+since the deletion would fail, setting the file in FAILED status.
+
+This command should be used with care and only for disaster recovery.
+.TP
+.BI \-h,
+.BI \-\-help
+Get usage information
+.TP
+.BI diskCopyId[...]
+The ids of the diskCopies that were lost. Note that these
+can be easily deduced from the file names by taking the number
+after the last '.'.
+.SH NOTES
+This command connects directly to the stager database through
+the perl DBI interface to ORACLE. Thus it can only run on
+a machine providing it.
+Configuration for the database access are taken from
+castor.conf.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
