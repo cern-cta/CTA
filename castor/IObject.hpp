@@ -89,8 +89,6 @@ namespace castor {
      */
     virtual void print() const = 0;
 
-  private:
-
   }; // end of class IObject
 
 }; // end of namespace castor

@@ -64,10 +64,6 @@ struct Crh_Response_t* Crh_Response_fromIObject(struct C_IObject_t* obj);
  */
 int Crh_Response_print(struct Crh_Response_t* instance);
 
-/***************************************/
-/* Implementation of IObject interface */
-/***************************************/
-
 /**
  * Get the value of errorCode
  * The error code in case of error

@@ -244,10 +244,6 @@ int Cstager_StartRequest_client(struct Cstager_StartRequest_t* instance, struct 
  */
 int Cstager_StartRequest_setClient(struct Cstager_StartRequest_t* instance, struct C_IClient_t* new_var);
 
-/***************************************/
-/* Implementation of IObject interface */
-/***************************************/
-
 /**
  * Get the value of subreqId
  * The id of the subRequest that should be scheduled

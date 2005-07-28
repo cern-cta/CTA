@@ -86,8 +86,4 @@ int C_IAddress_cnvSvcType(struct C_IAddress_t* instance,
  */
 int C_IAddress_print(struct C_IAddress_t* instance);
 
-/***************************************/
-/* Implementation of IObject interface */
-/***************************************/
-
 #endif // CASTOR_IADDRESS_H

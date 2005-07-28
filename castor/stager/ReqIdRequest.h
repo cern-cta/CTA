@@ -245,10 +245,6 @@ int Cstager_ReqIdRequest_client(struct Cstager_ReqIdRequest_t* instance, struct 
  */
 int Cstager_ReqIdRequest_setClient(struct Cstager_ReqIdRequest_t* instance, struct C_IClient_t* new_var);
 
-/***************************************/
-/* Implementation of IObject interface */
-/***************************************/
-
 /**
  * Get the value of parentUuid
  * The UUID of the parent request. This is used by clients to build the request and

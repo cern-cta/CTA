@@ -245,10 +245,6 @@ int Cstager_QryRequest_client(struct Cstager_QryRequest_t* instance, struct C_IC
  */
 int Cstager_QryRequest_setClient(struct Cstager_QryRequest_t* instance, struct C_IClient_t* new_var);
 
-/***************************************/
-/* Implementation of IObject interface */
-/***************************************/
-
 /**
  * Add a struct Cstager_QueryParameter_t* object to the parameters list
  */

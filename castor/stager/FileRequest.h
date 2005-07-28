@@ -245,10 +245,6 @@ int Cstager_FileRequest_client(struct Cstager_FileRequest_t* instance, struct C_
  */
 int Cstager_FileRequest_setClient(struct Cstager_FileRequest_t* instance, struct C_IClient_t* new_var);
 
-/***************************************/
-/* Implementation of IObject interface */
-/***************************************/
-
 /**
  * Add a struct Cstager_SubRequest_t* object to the subRequests list
  */

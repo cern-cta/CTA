@@ -64,8 +64,4 @@ struct C_IClient_t* C_IClient_fromIObject(struct C_IObject_t* obj);
  */
 int C_IClient_print(struct C_IClient_t* instance);
 
-/***************************************/
-/* Implementation of IObject interface */
-/***************************************/
-
 #endif // CASTOR_ICLIENT_H

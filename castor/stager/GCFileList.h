@@ -245,10 +245,6 @@ int Cstager_GCFileList_client(struct Cstager_GCFileList_t* instance, struct C_IC
  */
 int Cstager_GCFileList_setClient(struct Cstager_GCFileList_t* instance, struct C_IClient_t* new_var);
 
-/***************************************/
-/* Implementation of IObject interface */
-/***************************************/
-
 /**
  * Add a struct Cstager_GCFile_t* object to the files list
  */
