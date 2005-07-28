@@ -43,7 +43,7 @@
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
-#include "castor/vdqm/TapeDriveCompability.hpp"
+#include "castor/vdqm/TapeDriveCompatibility.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
@@ -188,7 +188,12 @@ void castor::io::StreamTapeDriveCnv::marshalObject(castor::IObject* object,
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
-    cnvSvc()->marshalObject(obj->tapeDriveCompability(), address, alreadyDone);
+    address->stream() << obj->tapeDriveCompatibilities().size();
+    for (std::vector<castor::vdqm::TapeDriveCompatibility*>::iterator it = obj->tapeDriveCompatibilities().begin();
+         it != obj->tapeDriveCompatibilities().end();
+         it++) {
+      cnvSvc()->marshalObject(*it, address, alreadyDone);
+    }
     cnvSvc()->marshalObject(obj->deviceGroupName(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->tapeServer(), address, alreadyDone);
   } else {
@@ -230,9 +235,13 @@ castor::IObject* castor::io::StreamTapeDriveCnv::unmarshalObject(castor::io::bin
     IObject* objTapeDriveDedication = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addTapeDriveDedication(dynamic_cast<castor::vdqm::TapeDriveDedication*>(objTapeDriveDedication));
   }
-  ad.setObjType(castor::OBJ_INVALID);
-  IObject* objTapeDriveCompability = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setTapeDriveCompability(dynamic_cast<castor::vdqm::TapeDriveCompability*>(objTapeDriveCompability));
+  unsigned int tapeDriveCompatibilitiesNb;
+  ad.stream() >> tapeDriveCompatibilitiesNb;
+  for (unsigned int i = 0; i < tapeDriveCompatibilitiesNb; i++) {
+    ad.setObjType(castor::OBJ_INVALID);
+    IObject* objTapeDriveCompatibilities = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addTapeDriveCompatibilities(dynamic_cast<castor::vdqm::TapeDriveCompatibility*>(objTapeDriveCompatibilities));
+  }
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objDeviceGroupName = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setDeviceGroupName(dynamic_cast<castor::vdqm::DeviceGroupName*>(objDeviceGroupName));

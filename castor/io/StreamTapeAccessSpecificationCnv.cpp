@@ -40,7 +40,7 @@
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
-#include "castor/vdqm/TapeDriveCompability.hpp"
+#include "castor/vdqm/TapeDriveCompatibility.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "osdep.h"
 #include <string>
@@ -147,7 +147,7 @@ void castor::io::StreamTapeAccessSpecificationCnv::marshalObject(castor::IObject
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
     address->stream() << obj->().size();
-    for (std::vector<castor::vdqm::TapeDriveCompability*>::iterator it = obj->().begin();
+    for (std::vector<castor::vdqm::TapeDriveCompatibility*>::iterator it = obj->().begin();
          it != obj->().end();
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
