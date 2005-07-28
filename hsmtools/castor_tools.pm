@@ -17,7 +17,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: castor_tools.pm,v $ $Revision: 1.1 $ $Release$ $Date: 2005/06/28 12:48:04 $ $Author: sponcec3 $
+# * @(#)$RCSfile: castor_tools.pm,v $ $Revision: 1.2 $ $Release$ $Date: 2005/07/28 09:40:26 $ $Author: sponcec3 $
 # *
 # *
 # *
@@ -57,6 +57,10 @@ sub castor_conf_getOraStagerSvc {
   return ("$user\@$dbname", $passwd);
 
 }
+
+# option parsing configuration
+use Getopt::Long;
+Getopt::Long::Configure ('bundling');
 
 1;
 
