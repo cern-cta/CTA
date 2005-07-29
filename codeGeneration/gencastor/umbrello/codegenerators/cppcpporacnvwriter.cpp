@@ -38,25 +38,29 @@ CppCppOraCnvWriter::~CppCppOraCnvWriter() {
 void CppCppOraCnvWriter::startSQLFile() {
   // Preparing SQL file for creation/deletion of the database
   QFile file;
-  openFile(file,
-           "castor/db/oracle.sql",
-           IO_WriteOnly | IO_Truncate);
-  QTextStream stream(&file);
-  insertFileintoStream(stream, "castor/db/oracleHeader.sql");
-  file.close();
-  openFile(file, "castor/db/oracleGeneratedHeader.sql",
+  openFile(file, "castor/db/castor_oracle_create.sql",
            IO_WriteOnly | IO_Truncate);
   file.close();
-  openFile(file, "castor/db/oracleGeneratedCore.sql",
+  openFile(file, "castor/db/oracleGeneratedCore_create.sql",
            IO_WriteOnly | IO_Truncate);
   file.close();
-  openFile(file, "castor/db/oracleGeneratedTrailer.sql",
+  openFile(file, "castor/db/oracleGeneratedTrailer_create.sql",
            IO_WriteOnly | IO_Truncate);
   file.close();  
+
+  openFile(file, "castor/db/castor_oracle_drop.sql",
+           IO_WriteOnly | IO_Truncate);
+  file.close();
+  openFile(file, "castor/db/oracleGeneratedHeader_drop.sql",
+           IO_WriteOnly | IO_Truncate);
+  file.close();
+  openFile(file, "castor/db/oracleGeneratedCore_drop.sql",
+           IO_WriteOnly | IO_Truncate);
+  file.close();
 }
 
 //=============================================================================
-// insertIntoSQLFile
+// insertFileIntoStream
 //=============================================================================
 void CppCppOraCnvWriter::insertFileintoStream(QTextStream &stream,
                                               QString fileName) {
@@ -77,14 +81,21 @@ void CppCppOraCnvWriter::insertFileintoStream(QTextStream &stream,
 void CppCppOraCnvWriter::endSQLFile() {
   // Preparing SQL file for creation/deletion of the database
   QFile file;
-  openFile(file,
-           "castor/db/oracle.sql",
+  openFile(file, "castor/db/castor_oracle_create.sql",
            IO_WriteOnly | IO_Append);
   QTextStream stream(&file);
-  insertFileintoStream(stream, "castor/db/oracleGeneratedHeader.sql");
-  insertFileintoStream(stream, "castor/db/oracleGeneratedCore.sql");
-  insertFileintoStream(stream, "castor/db/oracleGeneratedTrailer.sql");
+  insertFileintoStream(stream, "castor/db/oracleGeneratedCore_create.sql");
+  insertFileintoStream(stream, "castor/db/oracleGeneratedTrailer_create.sql");
   insertFileintoStream(stream, "castor/db/oracleTrailer.sql");
+  file.close();
+
+  openFile(file, "castor/db/castor_oracle_drop.sql",
+           IO_WriteOnly | IO_Append);
+  QTextStream streamD(&file);
+  insertFileintoStream(streamD, "castor/db/oracleHeader_drop.sql");
+  insertFileintoStream(streamD, "castor/db/oracleGeneratedHeader_drop.sql");
+  insertFileintoStream(streamD, "castor/db/oracleGeneratedCore_drop.sql");
+  insertFileintoStream(streamD, "castor/db/oracleTrailer_drop.sql");
   file.close();
 }
 
@@ -527,26 +538,36 @@ void CppCppOraCnvWriter::writeConstants() {
 // writeSqlStatements
 //=============================================================================
 void CppCppOraCnvWriter::writeSqlStatements() {
-  QFile file, hFile, tFile;
-  openFile(hFile,
-           "castor/db/oracleGeneratedHeader.sql",
-           IO_WriteOnly | IO_Append);
-  QTextStream hStream(&hFile);
+  QFile file, tFile, fileD, hFileD;
   openFile(file,
-           "castor/db/oracleGeneratedCore.sql",
+           "castor/db/oracleGeneratedCore_create.sql",
            IO_WriteOnly | IO_Append);
   QTextStream stream(&file);
   openFile(tFile,
-           "castor/db/oracleGeneratedTrailer.sql",
+           "castor/db/oracleGeneratedTrailer_create.sql",
            IO_WriteOnly | IO_Append);
   QTextStream tStream(&tFile);
-  stream << "/* SQL statements for type "
+  openFile(hFileD,
+           "castor/db/oracleGeneratedHeader_drop.sql",
+           IO_WriteOnly | IO_Append);
+  QTextStream hStreamD(&hFileD);
+  openFile(fileD,
+           "castor/db/oracleGeneratedCore_drop.sql",
+           IO_WriteOnly | IO_Append);
+  QTextStream streamD(&fileD);
+
+  streamD << "/* SQL statements for type "
          << m_classInfo->className
          << " */"
          << endl
          << "DROP TABLE "
          << m_classInfo->className
-         << ";" << endl
+         << ";" << endl;
+
+  stream << "/* SQL statements for type "
+         << m_classInfo->className
+         << " */"
+         << endl
          << "CREATE TABLE "
          << m_classInfo->className
          << " (";
@@ -601,7 +622,7 @@ void CppCppOraCnvWriter::writeSqlStatements() {
         QString compoundName =
 			capitalizeFirstLetter(firstMember->typeName).mid(0, 12) + QString("2")
 			+ capitalizeFirstLetter(secondMember->typeName).mid(0, 13);
-        stream << getIndent()
+        streamD << getIndent()
                << "DROP INDEX I_"
                << compoundName
                << "_C;"
@@ -611,8 +632,8 @@ void CppCppOraCnvWriter::writeSqlStatements() {
                << "_P;"
                << endl << "DROP TABLE "
                << compoundName
-               << ";" << endl
-               << "CREATE TABLE "
+               << ";" << endl;
+	    stream << "CREATE TABLE "
                << compoundName
                << " (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;"
                << endl << getIndent()
@@ -628,7 +649,7 @@ void CppCppOraCnvWriter::writeSqlStatements() {
                << compoundName
                << " (parent);"
                << endl;
-        hStream << getIndent()
+        hStreamD << getIndent()
                 << "ALTER TABLE "
                 << compoundName
                 << endl << getIndent()
@@ -656,9 +677,11 @@ void CppCppOraCnvWriter::writeSqlStatements() {
     }
   }
   stream << endl;
-  hFile.close();
+  streamD << endl;
   file.close();
   tFile.close();
+  hFileD.close();
+  fileD.close();
 }
 
 //=============================================================================

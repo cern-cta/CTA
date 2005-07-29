@@ -2,7 +2,10 @@
 
 if ("$1" == "-h") then
   echo "Usage :"
-  echo "  gencastor [-w castor_workdir] [-h] XMIFile"
+  echo "  gencastor [-w castor_workdir] [-h] [-v|--version] XMIFile"
+  exit
+else if ("$1" == "-v" || "$1" == "--version") then
+  /usr/bin/gencastor.bin --version
   exit
 else if ("$1" == "-w") then
   set WORKDIR=$2
@@ -15,17 +18,9 @@ set TMPDIR=`mktemp /tmp/gencastor-XXXXXX`
 
 rm -rf ${TMPDIR}
 mkdir -p ${TMPDIR}/castor/db
-cp ${WORKDIR}/castor/db/oracleTrailer.sql ${TMPDIR}/castor/db/
-cp ${WORKDIR}/castor/db/oracleHeader.sql ${TMPDIR}/castor/db/
-
-cp ${WORKDIR}/castor/db/mysqlHeader.sql ${TMPDIR}/castor/db/
-cp ${WORKDIR}/castor/db/mysqlTrailer.sql ${TMPDIR}/castor/db/
+cp ${WORKDIR}/castor/db/*.sql ${TMPDIR}/castor/db/
 
 /usr/bin/gencastor.bin -o ${TMPDIR} --nocrashhandler ${XMIFILE}
-if !($?) then
-  #echo Abnormal termination
-  #exit
-endif
 set pushdsilent
 pushd ${TMPDIR}
 foreach f (`find . -type f`)
@@ -47,4 +42,4 @@ foreach f (`find . -type f`)
 end
 popd
 rm -rf ${TMPDIR}
-
+rm -f ${WORKDIR}/castor/db/*Generated*

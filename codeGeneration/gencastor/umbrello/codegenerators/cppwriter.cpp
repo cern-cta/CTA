@@ -262,10 +262,10 @@ void CppWriter::writeClass(UMLClassifier *c) {
             QString file = fileName.right(fileName.length()-i);
             runGenerator(orahw, "castor/db/ora/Ora" + file + "Cnv.hpp", c);
             runGenerator(oracppw, "castor/db/ora/Ora" + file + "Cnv.cpp", c);
-            runGenerator(myhw, "castor/db/mysql/My" + file + "Cnv.hpp", c);
-            runGenerator(mycppw, "castor/db/mysql/My" + file + "Cnv.cpp", c);
-            //           runGenerator(odbchw, "castor/db/odbc/Odbc" + file + "Cnv.hpp", c);
-            //           runGenerator(odbccppw, "castor/db/odbc/Odbc" + file + "Cnv.cpp", c);
+            //runGenerator(pghw, "castor/db/pgsql/Pg" + file + "Cnv.hpp", c);
+            //runGenerator(pgcppw, "castor/db/pgsql/Pg" + file + "Cnv.cpp", c);
+            //runGenerator(myhw, "castor/db/mysql/My" + file + "Cnv.hpp", c);
+            //runGenerator(mycppw, "castor/db/mysql/My" + file + "Cnv.cpp", c);
           }
         }
         UMLObject* obj = m_doc->findUMLObject(QString("castor::IStreamable"),
