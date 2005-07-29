@@ -155,7 +155,10 @@ CREATE TABLE TapeServer (serverName VARCHAR2(2048), status NUMBER, id INTEGER PR
 CREATE TABLE TapeRequest (priority NUMBER, modificationTime NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, tapeAccessSpecification INTEGER, requestedSrv INTEGER, tapeDrive INTEGER, deviceGroupName INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type TapeDrive */
-CREATE TABLE TapeDrive (jobID NUMBER, modificationTime NUMBER, resettime NUMBER, usecount NUMBER, errcount NUMBER, transferredMB NUMBER, totalMB INTEGER, driveName VARCHAR2(2048), tapeAccessMode NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, runningTapeReq INTEGER, tapeDriveCompability INTEGER, deviceGroupName INTEGER, status INTEGER, tapeServer INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE TapeDrive (jobID NUMBER, modificationTime NUMBER, resettime NUMBER, usecount NUMBER, errcount NUMBER, transferredMB NUMBER, totalMB INTEGER, driveName VARCHAR2(2048), tapeAccessMode NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, runningTapeReq INTEGER, deviceGroupName INTEGER, status INTEGER, tapeServer INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE TapeDrive2TapeDriveComp (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
+CREATE INDEX I_TapeDrive2TapeDriveComp_C on TapeDrive2TapeDriveComp (child);
+CREATE INDEX I_TapeDrive2TapeDriveComp_P on TapeDrive2TapeDriveComp (parent);
 
 /* SQL statements for type ErrorHistory */
 CREATE TABLE ErrorHistory (errorMessage VARCHAR2(2048), timeStamp NUMBER, id INTEGER PRIMARY KEY, tapeDrive INTEGER, tape INTEGER) INITRANS 50 PCTFREE 50;
@@ -163,8 +166,8 @@ CREATE TABLE ErrorHistory (errorMessage VARCHAR2(2048), timeStamp NUMBER, id INT
 /* SQL statements for type TapeDriveDedication */
 CREATE TABLE TapeDriveDedication (clientHost NUMBER, euid NUMBER, egid NUMBER, vid VARCHAR2(2048), accessMode NUMBER, timePeriods VARCHAR2(2048), id INTEGER PRIMARY KEY, tapeDrive INTEGER) INITRANS 50 PCTFREE 50;
 
-/* SQL statements for type TapeDriveCompability */
-CREATE TABLE TapeDriveCompability (tapeDriveModel VARCHAR2(2048), priorityLevel NUMBER, id INTEGER PRIMARY KEY, tapeAccessSpecifications INTEGER) INITRANS 50 PCTFREE 50;
+/* SQL statements for type TapeDriveCompatibility */
+CREATE TABLE TapeDriveCompatibility (tapeDriveModel VARCHAR2(2048), priorityLevel NUMBER, id INTEGER PRIMARY KEY, tapeAccessSpecification INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type DeviceGroupName */
 CREATE TABLE DeviceGroupName (dgName VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
@@ -178,6 +181,9 @@ ALTER TABLE DiskPool2SvcClass
 ALTER TABLE Stream2TapeCopy
   ADD CONSTRAINT fk_Stream2TapeCopy_P FOREIGN KEY (Parent) REFERENCES Stream (id)
   ADD CONSTRAINT fk_Stream2TapeCopy_C FOREIGN KEY (Child) REFERENCES TapeCopy (id);
+ALTER TABLE TapeDrive2TapeDriveComp
+  ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_P FOREIGN KEY (Parent) REFERENCES TapeDrive (id)
+  ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /* This file contains SQL code that is not generated automatically */
 /* and is inserted at the end of the generated code                */
 

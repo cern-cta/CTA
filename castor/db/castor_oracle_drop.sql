@@ -28,6 +28,9 @@ ALTER TABLE DiskPool2SvcClass
 ALTER TABLE Stream2TapeCopy
   DROP CONSTRAINT fk_Stream2TapeCopy_P
   DROP CONSTRAINT fk_Stream2TapeCopy_C;
+ALTER TABLE TapeDrive2TapeDriveComp
+  DROP CONSTRAINT fk_TapeDrive2TapeDriveComp_P
+  DROP CONSTRAINT fk_TapeDrive2TapeDriveComp_C;
 /* SQL statements for type BaseAddress */
 DROP TABLE BaseAddress;
 
@@ -186,6 +189,9 @@ DROP TABLE TapeRequest;
 
 /* SQL statements for type TapeDrive */
 DROP TABLE TapeDrive;
+DROP INDEX I_TapeDrive2TapeDriveComp_C;
+DROP INDEX I_TapeDrive2TapeDriveComp_P;
+DROP TABLE TapeDrive2TapeDriveComp;
 
 /* SQL statements for type ErrorHistory */
 DROP TABLE ErrorHistory;
@@ -193,8 +199,8 @@ DROP TABLE ErrorHistory;
 /* SQL statements for type TapeDriveDedication */
 DROP TABLE TapeDriveDedication;
 
-/* SQL statements for type TapeDriveCompability */
-DROP TABLE TapeDriveCompability;
+/* SQL statements for type TapeDriveCompatibility */
+DROP TABLE TapeDriveCompatibility;
 
 /* SQL statements for type DeviceGroupName */
 DROP TABLE DeviceGroupName;
