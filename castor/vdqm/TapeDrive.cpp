@@ -34,7 +34,7 @@
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
-#include "castor/vdqm/TapeDriveCompability.hpp"
+#include "castor/vdqm/TapeDriveCompatibility.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
@@ -59,7 +59,6 @@ castor::vdqm::TapeDrive::TapeDrive() throw() :
   m_id(0),
   m_tape(0),
   m_runningTapeReq(0),
-  m_tapeDriveCompability(0),
   m_deviceGroupName(0),
   m_status(TapeDriveStatusCodes(0)),
   m_tapeServer(0) {
@@ -80,6 +79,7 @@ castor::vdqm::TapeDrive::~TapeDrive() throw() {
     m_tapeDriveDedicationVector[i]->setTapeDrive(0);
   }
   m_tapeDriveDedicationVector.clear();
+  m_tapeDriveCompatibilitesVector.clear();
   if (0 != m_tapeServer) {
     m_tapeServer->removeTapeDrives(this);
   }
@@ -143,11 +143,16 @@ void castor::vdqm::TapeDrive::print(std::ostream& stream,
       (*it)->print(stream, indent + "    ", alreadyPrinted);
     }
   }
-  stream << indent << "TapeDriveCompability : " << std::endl;
-  if (0 != m_tapeDriveCompability) {
-    m_tapeDriveCompability->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
+  {
+    stream << indent << "TapeDriveCompatibilites : " << std::endl;
+    int i;
+    std::vector<TapeDriveCompatibility*>::const_iterator it;
+    for (it = m_tapeDriveCompatibilitesVector.begin(), i = 0;
+         it != m_tapeDriveCompatibilitesVector.end();
+         it++, i++) {
+      stream << indent << "  " << i << " :" << std::endl;
+      (*it)->print(stream, indent + "    ", alreadyPrinted);
+    }
   }
   stream << indent << "DeviceGroupName : " << std::endl;
   if (0 != m_deviceGroupName) {

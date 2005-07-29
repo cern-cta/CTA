@@ -32,7 +32,8 @@
 
 #include "castor/stager/ICommonSvc.hpp"
 
-typedef struct vdqmdDrvReq vdqmDrvReq_t;
+// Forward declaration
+typedef struct newVdqmDrvReq newVdqmDrvReq_t;
 
 namespace castor {
 
@@ -44,7 +45,6 @@ namespace castor {
 		class TapeRequest;
 		class TapeDrive;
 		class TapeServer;
-
 
     /**
      * This class provides methods to deal with the VDQM service
@@ -145,7 +145,7 @@ namespace castor {
 	       * DB problem, etc...)
 	       */
 				virtual TapeDrive* selectTapeDrive(
-					const vdqmDrvReq_t* driveRequest,
+					const newVdqmDrvReq_t* driveRequest,
 					TapeServer* tapeServer)
 	    		throw (castor::exception::Exception) = 0;
 	    		

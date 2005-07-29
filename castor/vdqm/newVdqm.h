@@ -27,15 +27,33 @@
 #ifndef _NEWVDQM_H_
 #define _NEWVDQM_H_
 
+#include "Castor_limits.h"
 
-typedef struct vdqmHdr {
+/*
+ * Length of marshalled structure. Don't forget to update
+ * if entries are added
+ */
+#define NEWVDQM_DRVREQLEN(X) ( 10 * LONGSIZE + QUADSIZE + strlen(X->volid) + \
+    strlen(X->server) + strlen(X->drive) + strlen(X->dgn) + \
+    strlen(X->errorHistory) + 5 )
+    
+/*
+ * Length of marshalled structure. Don't forget to update
+ * if entries are added
+ */
+#define NEWVDQM_VOLREQLEN(X) ( 8*LONGSIZE + \
+    strlen(X->volid) + strlen(X->client_host) + strlen(X->server) + \
+    strlen(X->drive) + strlen(X->dgn) + strlen(X->client_name) + 6 )    
+    
+
+typedef struct newVdqmHdr {
     int magic;
     int reqtype;
     int len;
-} vdqmHdr_t;
+} newVdqmHdr_t;
 
 
-typedef struct vdqmVolReq {
+typedef struct newVdqmVolReq {
     int VolReqID;
     int DrvReqID;    /* Drive request ID for running requests */
     int priority;
@@ -50,10 +68,10 @@ typedef struct vdqmVolReq {
     char drive[CA_MAXUNMLEN+1];
     char dgn[CA_MAXDGNLEN+1];
     char client_name[CA_MAXUSRNAMELEN+1];
-} vdqmVolReq_t;
+} newVdqmVolReq_t;
 
 
-typedef struct vdqmDrvReq {
+typedef struct newVdqmDrvReq {
 	int status;
 	int DrvReqID;
 	int VolReqID;          /* Volume request ID for running requests */
@@ -65,12 +83,16 @@ typedef struct vdqmDrvReq {
 	int MBtransf;          /* MBytes transfered in last request. */
 	int mode;       /* WRITE_ENABLE/WRITE_DISABLE from Ctape_constants.h */
 	u_signed64 TotalMB;    /* Total MBytes transfered.           */
+  char reqhost[CA_MAXHOSTNAMELEN+1];
 	char volid[CA_MAXVIDLEN+1];
 	char server[CA_MAXHOSTNAMELEN+1];
 	char drive[CA_MAXUNMLEN+1];
 	char dgn[CA_MAXDGNLEN+1];
+	
+	// Please note, that the value of errorHistory will be send through 
+	// the dedicate string of the old protocol
 	char errorHistory[CA_MAXLINELEN+1]; /* To send informations of the last errors to the client */
 	char tapeDriveModel[CA_MAXLINELEN+1]; /* the model of the tape drive */ 
-} vdqmDrvReq_t;
+} newVdqmDrvReq_t;
 
 #endif //_NEWVDQM_H_

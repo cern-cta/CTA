@@ -42,18 +42,16 @@
 #define VDQMSERV
 
 #include <net.h>
-#include <vdqm.h>	//Needed for the client_connection
 #include <vdqm_constants.h>	//e.g. Magic Number of old vdqm protocol
 
 #include "castor/vdqm/handler/TapeRequestDedicationHandler.hpp"
 
 // Local Includes
+#include "newVdqm.h" //Needed for the client_connection
 #include "VdqmServer.hpp"
 #include "VdqmServerSocket.hpp"
 #include "OldVdqmProtocol.hpp"
 
-//To make the code more readable
-using namespace castor::vdqm::handler;
 
 //------------------------------------------------------------------------------
 // main method
@@ -161,8 +159,9 @@ castor::vdqm::VdqmServer::~VdqmServer() throw() {
     delete svcs;
   }
   
-  TapeRequestDedicationHandler* tapeRequestDedicationHandler =
-  	TapeRequestDedicationHandler::Instance();
+  castor::vdqm::handler::TapeRequestDedicationHandler* 
+  	tapeRequestDedicationHandler = 
+  		castor::vdqm::handler::TapeRequestDedicationHandler::Instance();
   	
   /**
    * Stopping the thread, which is handling the dedication of the tape
@@ -182,7 +181,7 @@ int castor::vdqm::VdqmServer::main () {
    * The Singleton with the main loop to dedicate a
    * tape to a tape drive.
    */
-  TapeRequestDedicationHandler* tapeRequestDedicationHandler;
+  castor::vdqm::handler::TapeRequestDedicationHandler* tapeRequestDedicationHandler;
   
   try {
     // create oracle and streaming conversion service
@@ -207,7 +206,8 @@ int castor::vdqm::VdqmServer::main () {
 	    /**
 	     * Create thread, which dedicates the tapes to the tape drives
 	     */
-	     tapeRequestDedicationHandler = TapeRequestDedicationHandler::Instance();
+	    tapeRequestDedicationHandler = 
+	  		castor::vdqm::handler::TapeRequestDedicationHandler::Instance();
     }
     catch (castor::exception::Exception ex) {
 			// "Unable to initialize TapeRequestDedicationHandler thread" message
@@ -451,8 +451,9 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
 	  delete sock;
   }
   else { // If it's not a socket, then it's our dedication loop!
-  	TapeRequestDedicationHandler* tapeRequestDedicationHandler =
-  		(TapeRequestDedicationHandler*) param;
+  	castor::vdqm::handler::TapeRequestDedicationHandler* 
+  		tapeRequestDedicationHandler =
+  			(castor::vdqm::handler::TapeRequestDedicationHandler*) param;
   		
   	/**
   	 * This function ends only, if the stop() function is beeing called.
@@ -477,9 +478,9 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 																					unsigned int magicNumber,
 																					Cuuid_t cuuid) {
  	//Message of the old Protocol
-	vdqmVolReq_t volumeRequest;
-	vdqmDrvReq_t driveRequest;
-	vdqmHdr_t header;
+	newVdqmVolReq_t volumeRequest;
+	newVdqmDrvReq_t driveRequest;
+	newVdqmHdr_t header;
 	int reqtype; // Request type of the message
 	int rc = 0; // For checking purpose
 	

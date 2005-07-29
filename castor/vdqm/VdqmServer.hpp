@@ -35,8 +35,6 @@
 #define CSP_NOTIFICATION_PORT 9001
 
 namespace castor {
-	//Forward Declarations
-	class IObject;
 
   namespace vdqm {
   	

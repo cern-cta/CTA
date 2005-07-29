@@ -37,9 +37,9 @@
 
 #include <net.h>
 #include <vdqm_constants.h>
-#include <vdqm.h>
  
 // Local Includes
+#include "newVdqm.h"
 #include "OldVdqmProtocol.hpp"
 #include "VdqmServerSocket.hpp"
 
@@ -49,9 +49,9 @@ using namespace castor::vdqm::handler;
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::vdqm::OldVdqmProtocol::OldVdqmProtocol(vdqmVolReq_t *volumeRequest,
-																								vdqmDrvReq_t *driveRequest,
-																						  	vdqmHdr_t *header) {
+castor::vdqm::OldVdqmProtocol::OldVdqmProtocol(newVdqmVolReq_t *volumeRequest,
+																								newVdqmDrvReq_t *driveRequest,
+																						  	newVdqmHdr_t *header) {
 	
 	ptr_volumeRequest = volumeRequest;
 	ptr_driveRequest = driveRequest;

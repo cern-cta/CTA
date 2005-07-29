@@ -36,7 +36,7 @@ struct C_IObject_t;
 struct Cstager_Tape_t;
 struct Cvdqm_DeviceGroupName_t;
 struct Cvdqm_ErrorHistory_t;
-struct Cvdqm_TapeDriveCompability_t;
+struct Cvdqm_TapeDriveCompatibility_t;
 struct Cvdqm_TapeDriveDedication_t;
 struct Cvdqm_TapeDrive_t;
 struct Cvdqm_TapeRequest_t;
@@ -273,14 +273,23 @@ int Cvdqm_TapeDrive_removeTapeDriveDedication(struct Cvdqm_TapeDrive_t* instance
 int Cvdqm_TapeDrive_tapeDriveDedication(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeDriveDedication_t*** var, int* len);
 
 /**
- * Get the value of tapeDriveCompability
+ * Add a struct Cvdqm_TapeDriveCompatibility_t* object to the
+ * tapeDriveCompatibilites list
  */
-int Cvdqm_TapeDrive_tapeDriveCompability(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeDriveCompability_t** var);
+int Cvdqm_TapeDrive_addTapeDriveCompatibilites(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeDriveCompatibility_t* obj);
 
 /**
- * Set the value of tapeDriveCompability
+ * Remove a struct Cvdqm_TapeDriveCompatibility_t* object from
+ * tapeDriveCompatibilites
  */
-int Cvdqm_TapeDrive_setTapeDriveCompability(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeDriveCompability_t* new_var);
+int Cvdqm_TapeDrive_removeTapeDriveCompatibilites(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeDriveCompatibility_t* obj);
+
+/**
+ * Get the list of struct Cvdqm_TapeDriveCompatibility_t* objects held by
+ * tapeDriveCompatibilites. Note that the caller is responsible for the deletion of
+ * the returned vector.
+ */
+int Cvdqm_TapeDrive_tapeDriveCompatibilites(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeDriveCompatibility_t*** var, int* len);
 
 /**
  * Get the value of deviceGroupName

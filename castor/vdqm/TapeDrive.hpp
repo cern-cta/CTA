@@ -56,7 +56,7 @@ namespace castor {
     class TapeServer;
     class TapeRequest;
     class TapeDriveDedication;
-    class TapeDriveCompability;
+    class TapeDriveCompatibility;
     class ErrorHistory;
     class DeviceGroupName;
 
@@ -391,19 +391,34 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_tapeDriveCompability
-       * @return the value of m_tapeDriveCompability
+       * Add a TapeDriveCompatibility* object to the m_tapeDriveCompatibilitesVector list
        */
-      TapeDriveCompability* tapeDriveCompability() const {
-        return m_tapeDriveCompability;
+      void addTapeDriveCompatibilites(TapeDriveCompatibility* add_object) {
+        m_tapeDriveCompatibilitesVector.push_back(add_object);
       }
 
       /**
-       * Set the value of m_tapeDriveCompability
-       * @param new_var the new value of m_tapeDriveCompability
+       * Remove a TapeDriveCompatibility* object from m_tapeDriveCompatibilitesVector
        */
-      void setTapeDriveCompability(TapeDriveCompability* new_var) {
-        m_tapeDriveCompability = new_var;
+      void removeTapeDriveCompatibilites(TapeDriveCompatibility* remove_object) {
+        for (unsigned int i = 0; i < m_tapeDriveCompatibilitesVector.size(); i++) {
+          TapeDriveCompatibility* item = m_tapeDriveCompatibilitesVector[i];
+          if (item == remove_object) {
+            std::vector<TapeDriveCompatibility*>::iterator it = m_tapeDriveCompatibilitesVector.begin() + i;
+            m_tapeDriveCompatibilitesVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of TapeDriveCompatibility* objects held by
+       * m_tapeDriveCompatibilitesVector
+       * @return list of TapeDriveCompatibility* objects held by
+       * m_tapeDriveCompatibilitesVector
+       */
+      std::vector<TapeDriveCompatibility*>& tapeDriveCompatibilites() {
+        return m_tapeDriveCompatibilitesVector;
       }
 
       /**
@@ -494,7 +509,7 @@ namespace castor {
 
       std::vector<TapeDriveDedication*> m_tapeDriveDedicationVector;
 
-      TapeDriveCompability* m_tapeDriveCompability;
+      std::vector<TapeDriveCompatibility*> m_tapeDriveCompatibilitesVector;
 
       DeviceGroupName* m_deviceGroupName;
 

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Release$ $Date: 2005/07/26 10:12:06 $ $Author: mbraeger $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Release$ $Date: 2005/07/29 12:29:26 $ $Author: mbraeger $
 #
 # Make Castor vdqm library
 #
@@ -44,7 +44,7 @@ VDQMBIN_SRCS =DeviceGroupName.cpp \
 							OldVdqmProtocol.cpp \
 							TapeAccessSpecification.cpp \
               TapeDrive.cpp \
-							TapeDriveCompability.cpp \
+							TapeDriveCompatibility.cpp \
 							TapeDriveDedication.cpp \
               TapeDriveStatusCodes.cpp \
               TapeRequest.cpp \

@@ -32,7 +32,7 @@
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
-#include "castor/vdqm/TapeDriveCompability.hpp"
+#include "castor/vdqm/TapeDriveCompatibility.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
@@ -357,18 +357,31 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_TapeDrive_tapeDriveCompability
+  // Cvdqm_TapeDrive_addTapeDriveCompatibilites
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_tapeDriveCompability(castor::vdqm::TapeDrive* instance, castor::vdqm::TapeDriveCompability** var) {
-    *var = instance->tapeDriveCompability();
+  int Cvdqm_TapeDrive_addTapeDriveCompatibilites(castor::vdqm::TapeDrive* instance, castor::vdqm::TapeDriveCompatibility* obj) {
+    instance->addTapeDriveCompatibilites(obj);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_TapeDrive_setTapeDriveCompability
+  // Cvdqm_TapeDrive_removeTapeDriveCompatibilites
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_setTapeDriveCompability(castor::vdqm::TapeDrive* instance, castor::vdqm::TapeDriveCompability* new_var) {
-    instance->setTapeDriveCompability(new_var);
+  int Cvdqm_TapeDrive_removeTapeDriveCompatibilites(castor::vdqm::TapeDrive* instance, castor::vdqm::TapeDriveCompatibility* obj) {
+    instance->removeTapeDriveCompatibilites(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeDrive_tapeDriveCompatibilites
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDrive_tapeDriveCompatibilites(castor::vdqm::TapeDrive* instance, castor::vdqm::TapeDriveCompatibility*** var, int* len) {
+    std::vector<castor::vdqm::TapeDriveCompatibility*>& result = instance->tapeDriveCompatibilites();
+    *len = result.size();
+    *var = (castor::vdqm::TapeDriveCompatibility**) malloc((*len) * sizeof(castor::vdqm::TapeDriveCompatibility*));
+    for (int i = 0; i < *len; i++) {
+      (*var)[i] = result[i];
+    }
     return 0;
   }
 

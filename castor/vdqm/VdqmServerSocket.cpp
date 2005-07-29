@@ -42,7 +42,6 @@
 #include "castor/io/biniostream.h"
 #include "castor/io/StreamAddress.hpp"
 
-#include <vdqm.h>
 #include <vdqm_constants.h>
 #include "osdep.h" //for LONGSIZE
 #include "marshall.h"
@@ -51,8 +50,7 @@
 
 // Local Includes
 #include "VdqmServerSocket.hpp"
-
-using namespace castor::io;
+#include "newVdqm.h"
 
 // definition of some constants
 #define STG_CALLBACK_BACKLOG 2
@@ -298,9 +296,9 @@ void castor::vdqm::VdqmServerSocket::readRestOfBuffer(char** buf, int& n)
 //------------------------------------------------------------------------------
 // readOldProtocol
 //------------------------------------------------------------------------------
-int castor::vdqm::VdqmServerSocket::readOldProtocol(vdqmHdr_t *header, 
-      																							vdqmVolReq_t *volumeRequest, 
-													      										vdqmDrvReq_t *driveRequest,
+int castor::vdqm::VdqmServerSocket::readOldProtocol(newVdqmHdr_t *header, 
+      																							newVdqmVolReq_t *volumeRequest, 
+													      										newVdqmDrvReq_t *driveRequest,
 													      										Cuuid_t cuuid) 
 	throw (castor::exception::Exception) {
 
@@ -495,7 +493,12 @@ int castor::vdqm::VdqmServerSocket::readOldProtocol(vdqmHdr_t *header,
     DO_MARSHALL_STRING(p,driveRequest->server,ReceiveFrom, sizeof(driveRequest->server));
     DO_MARSHALL_STRING(p,driveRequest->drive,ReceiveFrom, sizeof(driveRequest->drive));
     DO_MARSHALL_STRING(p,driveRequest->dgn,ReceiveFrom, sizeof(driveRequest->dgn));
-    DO_MARSHALL_STRING(p,driveRequest->dedicate,ReceiveFrom, sizeof(driveRequest->dedicate));
+
+    /**
+     * Normally we received the dedicate String, but we ignore it and use 
+     * it for the errorHistory
+     */
+    DO_MARSHALL_STRING(p,driveRequest->errorHistory,ReceiveFrom, sizeof(driveRequest->errorHistory));
     if ( (local_access == 1) &&
          (domain = strstr(driveRequest->server,".")) != NULL ) *domain = '\0';
   }
@@ -522,9 +525,9 @@ int castor::vdqm::VdqmServerSocket::readOldProtocol(vdqmHdr_t *header,
 //------------------------------------------------------------------------------
 // sendToOldClient
 //------------------------------------------------------------------------------
-int castor::vdqm::VdqmServerSocket::sendToOldClient(vdqmHdr_t *header, 
-													      										vdqmVolReq_t *volumeRequest, 
-      																							vdqmDrvReq_t *driveRequest,
+int castor::vdqm::VdqmServerSocket::sendToOldClient(newVdqmHdr_t *header, 
+													      										newVdqmVolReq_t *volumeRequest, 
+      																							newVdqmDrvReq_t *driveRequest,
       																							Cuuid_t cuuid) 
 	throw (castor::exception::Exception) {
 
@@ -593,7 +596,12 @@ int castor::vdqm::VdqmServerSocket::sendToOldClient(vdqmHdr_t *header,
       DO_MARSHALL_STRING(p,driveRequest->server,SendTo, sizeof(driveRequest->server));
       DO_MARSHALL_STRING(p,driveRequest->drive,SendTo, sizeof(driveRequest->drive));
       DO_MARSHALL_STRING(p,driveRequest->dgn,SendTo, sizeof(driveRequest->dgn));
-      DO_MARSHALL_STRING(p,driveRequest->dedicate,SendTo, sizeof(driveRequest->dedicate));
+      
+      /**
+	     * Normally we sent the dedicate String now, but we ignore it and use 
+	     * it for the errorHistory. This will be interpreted by newer tapeDaemon
+	     */
+      DO_MARSHALL_STRING(p,driveRequest->errorHistory,SendTo, sizeof(driveRequest->errorHistory));
   }
  
   
@@ -605,10 +613,10 @@ int castor::vdqm::VdqmServerSocket::sendToOldClient(vdqmHdr_t *header,
   
   len = 0;
   if ( REQTYPE(VOL,reqtype)) {
-  	len = VDQM_VOLREQLEN(volumeRequest);
+  	len = NEWVDQM_VOLREQLEN(volumeRequest);
   }
   else if ( REQTYPE(DRV,reqtype) ) {
-    len = VDQM_DRVREQLEN(driveRequest);
+    len = NEWVDQM_DRVREQLEN(driveRequest);
   }
   else if ( ADMINREQ(reqtype) ) {
   	len = 0;

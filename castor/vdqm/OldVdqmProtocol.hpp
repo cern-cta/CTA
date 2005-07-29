@@ -33,9 +33,9 @@
 
 
 //Forward declarations
-typedef struct vdqmVolReq vdqmVolReq_t;
-typedef struct vdqmdDrvReq vdqmDrvReq_t;
-typedef struct vdqmHdr vdqmHdr_t;
+//typedef struct vdqmdVolReq vdqmVolReq_t;
+//typedef struct vdqmDrvReq vdqmDrvReq_t;
+//typedef struct vdqmHdr vdqmHdr_t;
 
 namespace castor {
 
@@ -43,6 +43,9 @@ namespace castor {
   	
   	//Forward declaration
   	class VdqmServerSocket;
+		typedef struct newVdqmVolReq newVdqmVolReq_t;
+		typedef struct newVdqmDrvReq newVdqmDrvReq_t;
+		typedef struct newVdqmHdr newVdqmHdr_t;  	
 
     /**
      * This class provides functions to handle the old VDQM protocol.
@@ -55,9 +58,9 @@ namespace castor {
       /**
 			 * Constructor
 			 */
-       OldVdqmProtocol(vdqmVolReq_t *volumeRequest,
-												vdqmDrvReq_t *driveRequest,
-										  	vdqmHdr_t *header);
+       OldVdqmProtocol(newVdqmVolReq_t *volumeRequest,
+												newVdqmDrvReq_t *driveRequest,
+										  	newVdqmHdr_t *header);
 			
        
        /**
@@ -79,9 +82,9 @@ namespace castor {
       
       private:
       
-      	vdqmVolReq_t *ptr_volumeRequest;
-		  	vdqmDrvReq_t *ptr_driveRequest;
-  			vdqmHdr_t *ptr_header;
+      	newVdqmVolReq_t *ptr_volumeRequest;
+		  	newVdqmDrvReq_t *ptr_driveRequest;
+  			newVdqmHdr_t *ptr_header;
 				int m_reqtype;
 				
 		}; // class VdqmServer
