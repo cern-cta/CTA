@@ -1,0 +1,76 @@
+.\" @(#)$RCSfile: diskServer_qry.man,v $ $Revision: 1.1 $ $Date: 2005/07/29 10:17:14 $ CERN IT/ADC Olof Barring
+.\" Copyright (C) 2005 by CERN IT/ADC
+.\" All rights reserved
+.\"
+.TH DISKSERVER_QRY 1 "$Date: 2005/07/29 10:17:14 $" CASTOR "List files on a DiskServer"
+.SH NAME
+diskServer_qry
+.SH SYNOPSIS
+.B diskServer_qry
+[
+.B -h, 
+.B --help
+]
+[
+.B -i, 
+.B --fileId
+]
+[
+.B -d, 
+.B --diskCopyId
+]
+diskServerName
+.SH DESCRIPTION
+.B diskServer_qry 
+Lists the files on a given DiskServer and give their internal
+status.
+
+.TP 20
+.B \-h,\ \-\-help
+Get usage information
+.TP
+.B \-i,\ \-\-fileId
+Prints the castorFileId of each file
+.TP
+.B \-d,\ \-\-diskCopyId
+Prints the diskCopyId of each file
+.LP
+.B diskServerName
+is the name of the disk server to be queried
+
+
+.SH EXAMPLES
+.BI #\ diskServer_qry\ lxfsrk605
+.fi
+Status                         FileName
+.fi
+DISKCOPY_CANBEMIGR             /shift/lxfsrk605/data01/05/61263405@lxs5010.450
+.fi
+DISKCOPY_CANBEMIGR             /shift/lxfsrk605/data01/21/61270821@lxs5010.529
+.fi
+DISKCOPY_CANBEMIGR             /shift/lxfsrk605/data01/46/61312846@lxs5010.718
+.fi
+DISKCOPY_CANBEMIGR             /shift/lxfsrk605/data01/25/61315225@lxs5010.824
+.ft
+
+.BI #\ diskServer_qry\ -id\ lxfsrk605
+.fi
+FileId          DiskCopyId      Status                         FileName
+.fi
+61263405        450             DISKCOPY_CANBEMIGR             /shift/lxfsrk605/data01/05/61263405@lxs5010.450
+.fi
+61270821        529             DISKCOPY_CANBEMIGR             /shift/lxfsrk605/data01/21/61270821@lxs5010.529
+.fi
+61312846        718             DISKCOPY_CANBEMIGR             /shift/lxfsrk605/data01/46/61312846@lxs5010.718
+.fi
+61315225        824             DISKCOPY_CANBEMIGR             /shift/lxfsrk605/data01/25/61315225@lxs5010.824
+.ft
+.fi
+.SH NOTES
+This command connects directly to the stager database through
+the perl DBI interface to ORACLE. Thus it can only run on
+a machine providing it.
+Configuration for the database access are taken from
+castor.conf.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
