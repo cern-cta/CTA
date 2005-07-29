@@ -1,0 +1,101 @@
+#!/usr/bin/perl -w
+#/******************************************************************************
+# *                     diskServer_qry
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @(#)$RCSfile: diskServer_qry,v $ $Revision: 1.1 $ $Release$ $Date: 2005/07/29 10:16:53 $ $Author: sponcec3 $
+# *
+# * queries the stager for the files residing on a given diskServer
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+use strict;
+use diagnostics;
+use lib "/usr/lib/perl/CASTOR";
+use castor_tools;
+
+# usage function
+sub usage {
+  printf("Usage : %s [-h|--help] [-i|--fileId] [-d|--diskCopyId] diskServerName\n", $0);
+}
+
+# first parse the options
+my $help;
+my $giveFileId;
+my $giveDCId;
+if (0 == Getopt::Long::GetOptions ('h|help' => \$help,
+                                   'i|fileId' => \$giveFileId,
+                                   'd|diskCopyId' => \$giveDCId)) {
+  usage();
+  exit(1);
+}
+
+if ($help) {
+  usage();
+  exit(0);
+}
+
+# Check the arguments
+if ($#ARGV != 0) {
+  print("Error : wrong number of arguments\n");
+  usage();
+  exit;
+}
+
+#connect to the database and execute the query
+my @castor_conf = castor_conf_getOraStagerSvc();
+my $dbh = DBI->connect('dbi:Oracle:',$castor_conf[0] ,$castor_conf[1]);
+my $dbquery;
+if ($giveFileId) {
+  $dbquery .= <<EOF;
+SELECT FileSystem.mountPoint||DiskCopy.path, DiskCopy.status, DiskCopy.id, CastorFile.fileId
+  FROM FileSystem, DiskServer, DiskCopy, CastorFile
+ WHERE FileSystem.diskServer = DiskServer.id
+   AND DiskCopy.fileSystem = FileSystem.id
+   AND DiskCopy.castorFile = Castorfile.id
+   AND DiskServer.name = '$ARGV[0]'
+EOF
+} else {
+  $dbquery .= <<EOF;
+SELECT FileSystem.mountPoint||DiskCopy.path, DiskCopy.status, DiskCopy.id
+  FROM FileSystem, DiskServer, DiskCopy
+ WHERE FileSystem.diskServer = DiskServer.id
+   AND DiskCopy.fileSystem = FileSystem.id
+   AND DiskServer.name = '$ARGV[0]'
+EOF
+}
+
+my $sth = $dbh->prepare("$dbquery");
+$sth->execute;
+
+# display Header
+if ($giveFileId) { printf("%-15s ", "FileId"); }
+if ($giveDCId) { printf("%-15s ", "DiskCopyId"); }
+printf("%-30s %s\n", "Status", "FileName");
+
+# display results
+my @row;
+while (@row = $sth->fetchrow_array) {
+  if ($giveFileId) { printf("%-15lld ", $row[3]); }
+  if ($giveDCId) { printf("%-15lld ", $row[2]); }
+  printf("%-30s %s\n", $DiskCopyStatus[$row[1]], $row[0]);
+}
+
+# Close DB connection
+$sth->finish;
+$dbh->disconnect;
