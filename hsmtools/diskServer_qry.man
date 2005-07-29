@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: diskServer_qry.man,v $ $Revision: 1.1 $ $Date: 2005/07/29 10:17:14 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: diskServer_qry.man,v $ $Revision: 1.2 $ $Date: 2005/07/29 15:24:44 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH DISKSERVER_QRY 1 "$Date: 2005/07/29 10:17:14 $" CASTOR "List files on a DiskServer"
+.TH DISKSERVER_QRY 1 "$Date: 2005/07/29 15:24:44 $" CASTOR "List files on a DiskServer"
 .SH NAME
 diskServer_qry
 .SH SYNOPSIS
@@ -70,7 +70,6 @@ FileId          DiskCopyId      Status                         FileName
 This command connects directly to the stager database through
 the perl DBI interface to ORACLE. Thus it can only run on
 a machine providing it.
-Configuration for the database access are taken from
-castor.conf.
+Configuration for the database access is taken from castor.conf.
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
