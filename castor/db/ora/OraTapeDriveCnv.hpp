@@ -204,12 +204,12 @@ namespace castor {
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
-         * Fill the database with objects of type TapeDriveCompatibility refered by a given
+         * Fill the database with objects of type TapeDriveCompability refered by a given
          * object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
-        virtual void fillRepTapeDriveCompatibility(castor::vdqm::TapeDrive* obj)
+        virtual void fillRepTapeDriveCompability(castor::vdqm::TapeDrive* obj)
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
@@ -276,12 +276,12 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Retrieve from the database objects of type TapeDriveCompatibility refered by a
+         * Retrieve from the database objects of type TapeDriveCompability refered by a
          * given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
-        virtual void fillObjTapeDriveCompatibility(castor::vdqm::TapeDrive* obj)
+        virtual void fillObjTapeDriveCompability(castor::vdqm::TapeDrive* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -435,23 +435,17 @@ namespace castor {
         /// SQL remote update statement object for member tapeDriveDedication
         oracle::occi::Statement *m_remoteUpdateTapeDriveDedicationStatement;
 
-        /// SQL insert statement for member tapeDriveCompatibilities
-        static const std::string s_insertTapeDriveCompatibilityStatementString;
+        /// SQL checkExist statement for member tapeDriveCompability
+        static const std::string s_checkTapeDriveCompabilityExistStatementString;
 
-        /// SQL insert statement object for member tapeDriveCompatibilities
-        oracle::occi::Statement *m_insertTapeDriveCompatibilityStatement;
+        /// SQL checkExist statement object for member tapeDriveCompability
+        oracle::occi::Statement *m_checkTapeDriveCompabilityExistStatement;
 
-        /// SQL delete statement for member tapeDriveCompatibilities
-        static const std::string s_deleteTapeDriveCompatibilityStatementString;
+        /// SQL update statement for member tapeDriveCompability
+        static const std::string s_updateTapeDriveCompabilityStatementString;
 
-        /// SQL delete statement object for member tapeDriveCompatibilities
-        oracle::occi::Statement *m_deleteTapeDriveCompatibilityStatement;
-
-        /// SQL select statement for member tapeDriveCompatibilities
-        static const std::string s_selectTapeDriveCompatibilityStatementString;
-
-        /// SQL select statement object for member tapeDriveCompatibilities
-        oracle::occi::Statement *m_selectTapeDriveCompatibilityStatement;
+        /// SQL update statement object for member tapeDriveCompability
+        oracle::occi::Statement *m_updateTapeDriveCompabilityStatement;
 
         /// SQL checkExist statement for member deviceGroupName
         static const std::string s_checkDeviceGroupNameExistStatementString;

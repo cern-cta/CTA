@@ -44,7 +44,7 @@
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
-#include "castor/vdqm/TapeDriveCompatibility.hpp"
+#include "castor/vdqm/TapeDriveCompability.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
@@ -64,7 +64,7 @@ const castor::ICnvFactory& OraTapeDriveCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraTapeDriveCnv::s_insertStatementString =
-"INSERT INTO TapeDrive (jobID, modificationTime, resettime, usecount, errcount, transferredMB, totalMB, driveName, tapeAccessMode, id, tape, runningTapeReq, deviceGroupName, status, tapeServer) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,ids_seq.nextval,:10,:11,:12,:13,:14) RETURNING id INTO :15";
+"INSERT INTO TapeDrive (jobID, modificationTime, resettime, usecount, errcount, transferredMB, totalMB, driveName, tapeAccessMode, id, tape, runningTapeReq, tapeDriveCompability, deviceGroupName, status, tapeServer) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,ids_seq.nextval,:10,:11,:12,:13,:14,:15) RETURNING id INTO :16";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraTapeDriveCnv::s_deleteStatementString =
@@ -72,7 +72,7 @@ const std::string castor::db::ora::OraTapeDriveCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraTapeDriveCnv::s_selectStatementString =
-"SELECT jobID, modificationTime, resettime, usecount, errcount, transferredMB, totalMB, driveName, tapeAccessMode, id, tape, runningTapeReq, deviceGroupName, status, tapeServer FROM TapeDrive WHERE id = :1";
+"SELECT jobID, modificationTime, resettime, usecount, errcount, transferredMB, totalMB, driveName, tapeAccessMode, id, tape, runningTapeReq, tapeDriveCompability, deviceGroupName, status, tapeServer FROM TapeDrive WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraTapeDriveCnv::s_updateStatementString =
@@ -150,19 +150,13 @@ const std::string castor::db::ora::OraTapeDriveCnv::s_deleteTapeDriveDedicationS
 const std::string castor::db::ora::OraTapeDriveCnv::s_remoteUpdateTapeDriveDedicationStatementString =
 "UPDATE TapeDriveDedication SET tapeDrive = :1 WHERE id = :2";
 
-/// SQL insert statement for member tapeDriveCompatibilities
-const std::string castor::db::ora::OraTapeDriveCnv::s_insertTapeDriveCompatibilityStatementString =
-"INSERT INTO TapeDrive2TapeDriveComp (Parent, Child) VALUES (:1, :2)";
+/// SQL existence statement for member tapeDriveCompability
+const std::string castor::db::ora::OraTapeDriveCnv::s_checkTapeDriveCompabilityExistStatementString =
+"SELECT id from TapeDriveCompability WHERE id = :1";
 
-/// SQL delete statement for member tapeDriveCompatibilities
-const std::string castor::db::ora::OraTapeDriveCnv::s_deleteTapeDriveCompatibilityStatementString =
-"DELETE FROM TapeDrive2TapeDriveComp WHERE Parent = :1 AND Child = :2";
-
-/// SQL select statement for member tapeDriveCompatibilities
-// The FOR UPDATE is needed in order to avoid deletion
-// of a segment after listing and before update/remove
-const std::string castor::db::ora::OraTapeDriveCnv::s_selectTapeDriveCompatibilityStatementString =
-"SELECT Child FROM TapeDrive2TapeDriveComp WHERE Parent = :1 FOR UPDATE";
+/// SQL update statement for member tapeDriveCompability
+const std::string castor::db::ora::OraTapeDriveCnv::s_updateTapeDriveCompabilityStatementString =
+"UPDATE TapeDrive SET tapeDriveCompability = :1 WHERE id = :2";
 
 /// SQL existence statement for member deviceGroupName
 const std::string castor::db::ora::OraTapeDriveCnv::s_checkDeviceGroupNameExistStatementString =
@@ -207,9 +201,8 @@ castor::db::ora::OraTapeDriveCnv::OraTapeDriveCnv(castor::ICnvSvc* cnvSvc) :
   m_selectTapeDriveDedicationStatement(0),
   m_deleteTapeDriveDedicationStatement(0),
   m_remoteUpdateTapeDriveDedicationStatement(0),
-  m_insertTapeDriveCompatibilityStatement(0),
-  m_deleteTapeDriveCompatibilityStatement(0),
-  m_selectTapeDriveCompatibilityStatement(0),
+  m_checkTapeDriveCompabilityExistStatement(0),
+  m_updateTapeDriveCompabilityStatement(0),
   m_checkDeviceGroupNameExistStatement(0),
   m_updateDeviceGroupNameStatement(0),
   m_checkTapeServerExistStatement(0),
@@ -251,9 +244,8 @@ void castor::db::ora::OraTapeDriveCnv::reset() throw() {
     deleteStatement(m_deleteTapeDriveDedicationStatement);
     deleteStatement(m_selectTapeDriveDedicationStatement);
     deleteStatement(m_remoteUpdateTapeDriveDedicationStatement);
-    deleteStatement(m_insertTapeDriveCompatibilityStatement);
-    deleteStatement(m_deleteTapeDriveCompatibilityStatement);
-    deleteStatement(m_selectTapeDriveCompatibilityStatement);
+    deleteStatement(m_checkTapeDriveCompabilityExistStatement);
+    deleteStatement(m_updateTapeDriveCompabilityStatement);
     deleteStatement(m_checkDeviceGroupNameExistStatement);
     deleteStatement(m_updateDeviceGroupNameStatement);
     deleteStatement(m_checkTapeServerExistStatement);
@@ -282,9 +274,8 @@ void castor::db::ora::OraTapeDriveCnv::reset() throw() {
   m_selectTapeDriveDedicationStatement = 0;
   m_deleteTapeDriveDedicationStatement = 0;
   m_remoteUpdateTapeDriveDedicationStatement = 0;
-  m_insertTapeDriveCompatibilityStatement = 0;
-  m_deleteTapeDriveCompatibilityStatement = 0;
-  m_selectTapeDriveCompatibilityStatement = 0;
+  m_checkTapeDriveCompabilityExistStatement = 0;
+  m_updateTapeDriveCompabilityStatement = 0;
   m_checkDeviceGroupNameExistStatement = 0;
   m_updateDeviceGroupNameStatement = 0;
   m_checkTapeServerExistStatement = 0;
@@ -329,8 +320,8 @@ void castor::db::ora::OraTapeDriveCnv::fillRep(castor::IAddress* address,
     case castor::OBJ_TapeDriveDedication :
       fillRepTapeDriveDedication(obj);
       break;
-    case castor::OBJ_TapeDriveCompatibility :
-      fillRepTapeDriveCompatibility(obj);
+    case castor::OBJ_TapeDriveCompability :
+      fillRepTapeDriveCompability(obj);
       break;
     case castor::OBJ_DeviceGroupName :
       fillRepDeviceGroupName(obj);
@@ -581,52 +572,35 @@ void castor::db::ora::OraTapeDriveCnv::fillRepTapeDriveDedication(castor::vdqm::
 }
 
 //------------------------------------------------------------------------------
-// fillRepTapeDriveCompatibility
+// fillRepTapeDriveCompability
 //------------------------------------------------------------------------------
-void castor::db::ora::OraTapeDriveCnv::fillRepTapeDriveCompatibility(castor::vdqm::TapeDrive* obj)
+void castor::db::ora::OraTapeDriveCnv::fillRepTapeDriveCompability(castor::vdqm::TapeDrive* obj)
   throw (castor::exception::Exception, oracle::occi::SQLException) {
-  // check select statement
-  if (0 == m_selectTapeDriveCompatibilityStatement) {
-    m_selectTapeDriveCompatibilityStatement = createStatement(s_selectTapeDriveCompatibilityStatementString);
-  }
-  // Get current database data
-  std::set<int> tapeDriveCompatibilitiesList;
-  m_selectTapeDriveCompatibilityStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectTapeDriveCompatibilityStatement->executeQuery();
-  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-    tapeDriveCompatibilitiesList.insert(rset->getInt(1));
-  }
-  m_selectTapeDriveCompatibilityStatement->closeResultSet(rset);
-  // update tapeDriveCompatibilities and create new ones
-  for (std::vector<castor::vdqm::TapeDriveCompatibility*>::iterator it = obj->tapeDriveCompatibilities().begin();
-       it != obj->tapeDriveCompatibilities().end();
-       it++) {
-    if (0 == (*it)->id()) {
-      cnvSvc()->createRep(0, *it, false);
+  if (0 != obj->tapeDriveCompability()) {
+    // Check checkTapeDriveCompabilityExist statement
+    if (0 == m_checkTapeDriveCompabilityExistStatement) {
+      m_checkTapeDriveCompabilityExistStatement = createStatement(s_checkTapeDriveCompabilityExistStatementString);
     }
-    std::set<int>::iterator item;
-    if ((item = tapeDriveCompatibilitiesList.find((*it)->id())) != tapeDriveCompatibilitiesList.end()) {
-      tapeDriveCompatibilitiesList.erase(item);
-    } else {
-      if (0 == m_insertTapeDriveCompatibilityStatement) {
-        m_insertTapeDriveCompatibilityStatement = createStatement(s_insertTapeDriveCompatibilityStatementString);
-      }
-      m_insertTapeDriveCompatibilityStatement->setDouble(1, obj->id());
-      m_insertTapeDriveCompatibilityStatement->setDouble(2, (*it)->id());
-      m_insertTapeDriveCompatibilityStatement->executeUpdate();
+    // retrieve the object from the database
+    m_checkTapeDriveCompabilityExistStatement->setDouble(1, obj->tapeDriveCompability()->id());
+    oracle::occi::ResultSet *rset = m_checkTapeDriveCompabilityExistStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("OraCnvSvc");
+      ad.setCnvSvcType(castor::SVC_ORACNV);
+      cnvSvc()->createRep(&ad, obj->tapeDriveCompability(), false);
     }
+    // Close resultset
+    m_checkTapeDriveCompabilityExistStatement->closeResultSet(rset);
   }
-  // Delete old links
-  for (std::set<int>::iterator it = tapeDriveCompatibilitiesList.begin();
-       it != tapeDriveCompatibilitiesList.end();
-       it++) {
-    if (0 == m_deleteTapeDriveCompatibilityStatement) {
-      m_deleteTapeDriveCompatibilityStatement = createStatement(s_deleteTapeDriveCompatibilityStatementString);
-    }
-    m_deleteTapeDriveCompatibilityStatement->setDouble(1, obj->id());
-    m_deleteTapeDriveCompatibilityStatement->setDouble(2, *it);
-    m_deleteTapeDriveCompatibilityStatement->executeUpdate();
+  // Check update statement
+  if (0 == m_updateTapeDriveCompabilityStatement) {
+    m_updateTapeDriveCompabilityStatement = createStatement(s_updateTapeDriveCompabilityStatementString);
   }
+  // Update local object
+  m_updateTapeDriveCompabilityStatement->setDouble(1, 0 == obj->tapeDriveCompability() ? 0 : obj->tapeDriveCompability()->id());
+  m_updateTapeDriveCompabilityStatement->setDouble(2, obj->id());
+  m_updateTapeDriveCompabilityStatement->executeUpdate();
 }
 
 //------------------------------------------------------------------------------
@@ -715,8 +689,8 @@ void castor::db::ora::OraTapeDriveCnv::fillObj(castor::IAddress* address,
   case castor::OBJ_TapeDriveDedication :
     fillObjTapeDriveDedication(obj);
     break;
-  case castor::OBJ_TapeDriveCompatibility :
-    fillObjTapeDriveCompatibility(obj);
+  case castor::OBJ_TapeDriveCompability :
+    fillObjTapeDriveCompability(obj);
     break;
   case castor::OBJ_DeviceGroupName :
     fillObjDeviceGroupName(obj);
@@ -912,50 +886,40 @@ void castor::db::ora::OraTapeDriveCnv::fillObjTapeDriveDedication(castor::vdqm::
 }
 
 //------------------------------------------------------------------------------
-// fillObjTapeDriveCompatibility
+// fillObjTapeDriveCompability
 //------------------------------------------------------------------------------
-void castor::db::ora::OraTapeDriveCnv::fillObjTapeDriveCompatibility(castor::vdqm::TapeDrive* obj)
+void castor::db::ora::OraTapeDriveCnv::fillObjTapeDriveCompability(castor::vdqm::TapeDrive* obj)
   throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectTapeDriveCompatibilityStatement) {
-    m_selectTapeDriveCompatibilityStatement = createStatement(s_selectTapeDriveCompatibilityStatementString);
+  // Check whether the statement is ok
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  std::set<int> tapeDriveCompatibilitiesList;
-  m_selectTapeDriveCompatibilityStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectTapeDriveCompatibilityStatement->executeQuery();
-  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-    tapeDriveCompatibilitiesList.insert(rset->getInt(1));
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
   }
+  u_signed64 tapeDriveCompabilityId = (u_signed64)rset->getDouble(13);
   // Close ResultSet
-  m_selectTapeDriveCompatibilityStatement->closeResultSet(rset);
-  // Update objects and mark old ones for deletion
-  std::vector<castor::vdqm::TapeDriveCompatibility*> toBeDeleted;
-  for (std::vector<castor::vdqm::TapeDriveCompatibility*>::iterator it = obj->tapeDriveCompatibilities().begin();
-       it != obj->tapeDriveCompatibilities().end();
-       it++) {
-    std::set<int>::iterator item;
-    if ((item = tapeDriveCompatibilitiesList.find((*it)->id())) == tapeDriveCompatibilitiesList.end()) {
-      toBeDeleted.push_back(*it);
+  m_selectStatement->closeResultSet(rset);
+  // Check whether something should be deleted
+  if (0 != obj->tapeDriveCompability() &&
+      (0 == tapeDriveCompabilityId ||
+       obj->tapeDriveCompability()->id() != tapeDriveCompabilityId)) {
+    obj->setTapeDriveCompability(0);
+  }
+  // Update object or create new one
+  if (0 != tapeDriveCompabilityId) {
+    if (0 == obj->tapeDriveCompability()) {
+      obj->setTapeDriveCompability
+        (dynamic_cast<castor::vdqm::TapeDriveCompability*>
+         (cnvSvc()->getObjFromId(tapeDriveCompabilityId)));
     } else {
-      tapeDriveCompatibilitiesList.erase(item);
-      cnvSvc()->updateObj((*it));
+      cnvSvc()->updateObj(obj->tapeDriveCompability());
     }
-  }
-  // Delete old objects
-  for (std::vector<castor::vdqm::TapeDriveCompatibility*>::iterator it = toBeDeleted.begin();
-       it != toBeDeleted.end();
-       it++) {
-    obj->removeTapeDriveCompatibilities(*it);
-  }
-  // Create new objects
-  for (std::set<int>::iterator it = tapeDriveCompatibilitiesList.begin();
-       it != tapeDriveCompatibilitiesList.end();
-       it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
-    castor::vdqm::TapeDriveCompatibility* remoteObj = 
-      dynamic_cast<castor::vdqm::TapeDriveCompatibility*>(item);
-    obj->addTapeDriveCompatibilities(remoteObj);
   }
 }
 
@@ -976,7 +940,7 @@ void castor::db::ora::OraTapeDriveCnv::fillObjDeviceGroupName(castor::vdqm::Tape
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 deviceGroupNameId = (u_signed64)rset->getDouble(13);
+  u_signed64 deviceGroupNameId = (u_signed64)rset->getDouble(14);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -1014,7 +978,7 @@ void castor::db::ora::OraTapeDriveCnv::fillObjTapeServer(castor::vdqm::TapeDrive
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeServerId = (u_signed64)rset->getDouble(15);
+  u_signed64 tapeServerId = (u_signed64)rset->getDouble(16);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -1054,7 +1018,7 @@ void castor::db::ora::OraTapeDriveCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(15, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(16, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -1071,11 +1035,12 @@ void castor::db::ora::OraTapeDriveCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(9, obj->tapeAccessMode());
     m_insertStatement->setDouble(10, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
     m_insertStatement->setDouble(11, (type == OBJ_TapeRequest && obj->runningTapeReq() != 0) ? obj->runningTapeReq()->id() : 0);
-    m_insertStatement->setDouble(12, (type == OBJ_DeviceGroupName && obj->deviceGroupName() != 0) ? obj->deviceGroupName()->id() : 0);
-    m_insertStatement->setInt(13, (int)obj->status());
-    m_insertStatement->setDouble(14, (type == OBJ_TapeServer && obj->tapeServer() != 0) ? obj->tapeServer()->id() : 0);
+    m_insertStatement->setDouble(12, (type == OBJ_TapeDriveCompability && obj->tapeDriveCompability() != 0) ? obj->tapeDriveCompability()->id() : 0);
+    m_insertStatement->setDouble(13, (type == OBJ_DeviceGroupName && obj->deviceGroupName() != 0) ? obj->deviceGroupName()->id() : 0);
+    m_insertStatement->setInt(14, (int)obj->status());
+    m_insertStatement->setDouble(15, (type == OBJ_TapeServer && obj->tapeServer() != 0) ? obj->tapeServer()->id() : 0);
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(15));
+    obj->setId((u_signed64)m_insertStatement->getDouble(16));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -1112,6 +1077,7 @@ void castor::db::ora::OraTapeDriveCnv::createRep(castor::IAddress* address,
                     << "  id : " << obj->id() << std::endl
                     << "  tape : " << obj->tape() << std::endl
                     << "  runningTapeReq : " << obj->runningTapeReq() << std::endl
+                    << "  tapeDriveCompability : " << obj->tapeDriveCompability() << std::endl
                     << "  deviceGroupName : " << obj->deviceGroupName() << std::endl
                     << "  status : " << obj->status() << std::endl
                     << "  tapeServer : " << obj->tapeServer() << std::endl;
@@ -1255,7 +1221,7 @@ castor::IObject* castor::db::ora::OraTapeDriveCnv::createObj(castor::IAddress* a
     object->setDriveName(rset->getString(8));
     object->setTapeAccessMode(rset->getInt(9));
     object->setId((u_signed64)rset->getDouble(10));
-    object->setStatus((enum castor::vdqm::TapeDriveStatusCodes)rset->getInt(14));
+    object->setStatus((enum castor::vdqm::TapeDriveStatusCodes)rset->getInt(15));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -1311,7 +1277,7 @@ void castor::db::ora::OraTapeDriveCnv::updateObj(castor::IObject* obj)
     object->setDriveName(rset->getString(8));
     object->setTapeAccessMode(rset->getInt(9));
     object->setId((u_signed64)rset->getDouble(10));
-    object->setStatus((enum castor::vdqm::TapeDriveStatusCodes)rset->getInt(14));
+    object->setStatus((enum castor::vdqm::TapeDriveStatusCodes)rset->getInt(15));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

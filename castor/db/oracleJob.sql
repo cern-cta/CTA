@@ -1,10 +1,20 @@
 /* This file contains SQL code that is not generated automatically */
-/* and is inserted at the end of the generated code           */
+/* and is inserted at the end of the generated code                */
 
 /* A small table used to cross check code and DB versions */
-DROP TABLE CastorVersion;
 CREATE TABLE CastorVersion (version VARCHAR2(2048));
 INSERT INTO CastorVersion VALUES ('2_0_0_17');
+
+/* Sequence for indices */
+CREATE SEQUENCE ids_seq;
+
+/* SQL statements for object types */
+CREATE TABLE Id2Type (id INTEGER PRIMARY KEY, type NUMBER);
+CREATE INDEX I_Id2Type_typeId on Id2Type (type, id);
+
+/* SQL statements for requests status */
+CREATE TABLE newRequests (id INTEGER PRIMARY KEY, type INTEGER, creation DATE);
+CREATE INDEX I_newRequests_typeId on newRequests (type, id);
 
 /* Indexes related to CastorFiles */
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
@@ -53,7 +63,6 @@ END;
  * As a work around, we keep track of the tapecopies for each
  * filesystem. The cost is an increase of complexity and especially
  * of the number of triggers ensuring consistency of the whole database */
-DROP TABLE NbTapeCopiesInFS;
 CREATE TABLE NbTapeCopiesInFS (FS NUMBER, Stream NUMBER, NbTapeCopies NUMBER);
 CREATE UNIQUE INDEX I_NbTapeCopiesInFS_FSStream on NbTapeCopiesInFS(FS, Stream);
 
@@ -360,7 +369,6 @@ END;
  * weight of all filesystems). Locking the diskserver only was fine but
  * was introducing a possible deadlock with a place where the FileSystem
  * is locked before the DiskServer. Thus this table..... */
-DROP TABLE LockTable;
 CREATE TABLE LockTable (DiskServerId NUMBER PRIMARY KEY, TheLock NUMBER);
 INSERT INTO LockTable SELECT id, id FROM DiskServer;
 
