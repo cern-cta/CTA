@@ -470,3 +470,30 @@ castor::db::ora::OraCommonSvc::selectFileSystem
   }
 }
 
+
+// -----------------------------------------------------------------------
+// commit
+// -----------------------------------------------------------------------
+void
+castor::db::ora::OraCommonSvc::commit() {
+	try {
+	  cnvSvc()->getConnection()->commit();
+	} catch (castor::exception::Exception) {
+	  // commit failed, let's drop the connection for security
+	  rollback();
+	}
+}
+
+
+// -----------------------------------------------------------------------
+// rollback
+// -----------------------------------------------------------------------
+void
+castor::db::ora::OraCommonSvc::rollback() {
+  try {
+    cnvSvc()->getConnection()->rollback();
+  } catch (castor::exception::Exception) {
+    // rollback failed, let's drop the connection for security
+    cnvSvc()->dropConnection();
+  }
+}

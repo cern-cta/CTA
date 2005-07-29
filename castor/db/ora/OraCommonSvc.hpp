@@ -150,27 +150,12 @@ namespace castor {
         /**
          * helper method to commit
          */
-        virtual void commit() {
-          try {
-            cnvSvc()->getConnection()->commit();
-          } catch (castor::exception::Exception) {
-            // rollback failed, let's drop the connection for security
-            rollback();
-          }
-        }          
+        virtual void commit();          
 
         /**
          * helper method to rollback
          */
-        virtual void rollback() {
-          try {
-            cnvSvc()->getConnection()->rollback();
-          } catch (castor::exception::Exception) {
-            // rollback failed, let's drop the connection for security
-            cnvSvc()->dropConnection();
-          }
-        }
-
+        virtual void rollback();
       private:
 
         /// SQL statement for function selectTape
