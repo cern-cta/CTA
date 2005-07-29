@@ -139,6 +139,13 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
       (oracle::occi::Environment::THREADED_MUTEXED);
   }
   if (0 == m_connection) {
+    if ("" == m_user || "" == m_dbName) {
+      // Try to avoid connecting with empty string, since
+      // ORACLE would core dump !
+      castor::exception::InvalidArgument e;
+      e.getMessage() << "Empty user name or db name, cannot connect to database.";
+      throw e;
+    }
     m_connection =
       m_environment->createConnection(m_user, m_passwd, m_dbName);
     clog() << DEBUG << "Created new Oracle connection : "
