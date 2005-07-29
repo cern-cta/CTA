@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/07/07 15:06:25 $ $Author: itglp $
+ * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/07/29 12:32:21 $ $Author: mbraeger $
  *
  *
  *
@@ -439,3 +439,16 @@ void castor::stager::RemoteJobSvc::putFailed
   client.sendRequest(&req, &rh);
 }
 
+
+// -----------------------------------------------------------------------
+// commit
+// -----------------------------------------------------------------------
+void
+castor::stager::RemoteJobSvc::commit() {}
+
+
+// -----------------------------------------------------------------------
+// rollback
+// -----------------------------------------------------------------------
+void
+castor::stager::RemoteJobSvc::rollback() {}

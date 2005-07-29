@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ICommonSvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/07/07 14:58:41 $ $Author: itglp $
+ * @(#)$RCSfile: ICommonSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/07/29 12:32:21 $ $Author: mbraeger $
  *
  * This class provides common methods useful to the stager to
  * deal with database queries
@@ -128,6 +128,16 @@ namespace castor {
       virtual castor::stager::Request* requestToDo
       (std::vector<ObjectsIds> &types)
         throw (castor::exception::Exception) = 0;
+        
+	    /**
+	     * helper method to commit
+	     */
+      virtual void commit() = 0;
+      
+      /**
+	     * helper method to rollback
+	     */
+      virtual void rollback() = 0;
 
     }; // end of class ICommonSvc
 
