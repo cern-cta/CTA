@@ -1,0 +1,41 @@
+.\" @(#)$RCSfile: listFileClass.man,v $ $Revision: 1.1 $ $Date: 2005/07/29 15:36:11 $ CERN IT/ADC Olof Barring
+.\" Copyright (C) 2005 by CERN IT/ADC
+.\" All rights reserved
+.\"
+.TH LISTFILECLASS 1 "$Date: 2005/07/29 15:36:11 $" CASTOR "list existing service classes in the stager"
+.SH NAME
+listFileClass
+.SH SYNOPSIS
+.B listFileClass
+[
+.BI -h, 
+.BI --help
+]
+.SH DESCRIPTION
+.B listFileClass
+list the file classes existing in the stager
+.LP
+.BI \-h,\ \-\-help
+Get usage information
+.SH EXAMPLES
+.fi
+# listFileClass
+.fi
+test
+.fi
+user
+.fi
+aleph
+.fi
+delphi
+.fi
+chorus
+.ft
+.fi
+.SH NOTES
+This command connects directly to the stager database through
+the perl DBI interface to ORACLE. Thus it can only run on
+a machine providing it.
+Configuration for the database access is taken from castor.conf.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
