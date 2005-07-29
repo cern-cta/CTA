@@ -29,12 +29,10 @@
 
 #include "BaseRequestHandler.hpp"
 
-typedef struct vdqmHdr vdqmHdr_t;
-typedef struct vdqmdDrvReq vdqmDrvReq_t;
+typedef struct newVdqmHdr newVdqmHdr_t;
+typedef struct newVdqmDrvReq newVdqmDrvReq_t;
 
 namespace castor {
-	//Forward declaration
-	class IObject;
 
   namespace vdqm {
 
@@ -59,8 +57,8 @@ namespace castor {
 					 * @param cuuid The unique id of the request. Needed for dlf
 					 * @exception In case of error
 		       */
-					TapeDriveHandler(vdqmHdr_t* header, 
-													 vdqmDrvReq_t* driveRequest, Cuuid_t cuuid) 
+					TapeDriveHandler(newVdqmHdr_t* header, 
+													 newVdqmDrvReq_t* driveRequest, Cuuid_t cuuid) 
 													 throw(castor::exception::Exception);
 					
 		      /**
@@ -90,8 +88,8 @@ namespace castor {
 						
 				private:
 					// Private variables
-					vdqmHdr_t* ptr_header;
-					vdqmDrvReq_t* ptr_driveRequest;
+					newVdqmHdr_t* ptr_header;
+					newVdqmDrvReq_t* ptr_driveRequest;
 					Cuuid_t m_cuuid;
 					
 					/**

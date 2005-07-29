@@ -32,9 +32,6 @@
 // Local include
 #include "TapeRequestDedicationHandler.hpp"
 
-//To make the code more readable
-using namespace castor::vdqm;
-
 
 /**
  * The initial state of the Singleton instance
@@ -99,7 +96,7 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::run() {
 //			freeTapeDrive = ptr_IVdqmService->getFreeTapeDrive(reqExtDevGrp);
 			if ( freeTapeDrive == NULL ) {
 		    // "No free TapeDrive, or no TapeRequest in the db" message
-		    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 46);
+		   // castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 46);
 			}
 		  else { //If there was a free drive, start a new job
 			  handleTapeRequestQueue();

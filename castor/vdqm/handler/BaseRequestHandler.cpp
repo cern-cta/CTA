@@ -34,14 +34,12 @@
 
 #include "castor/exception/Internal.hpp"
 
+#include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
  
 //Local Includes
 #include "BaseRequestHandler.hpp"
-
-//To make the code more readable
-using namespace castor::vdqm;
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -118,19 +116,14 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
       dynamic_cast<castor::vdqm::TapeRequest*>(fr);
     
     if (0 != tapeRequest) {
-//    	if (NULL != tapeRequest->reqExtDevGrp()) { 
-//    		svcs()->createRep(&ad, (IObject *)tapeRequest->reqExtDevGrp(), false);
-//    		svcs()->fillRep(&ad, fr, OBJ_ExtendedDeviceGroup, false);
-//    	}
-//    	
-//    	if (0 != tapeRequest->requestedSrv()) {
-//	    	svcs()->createRep(&ad, (IObject *)tapeRequest->requestedSrv(), false);
-//	    	svcs()->fillRep(&ad, fr, OBJ_TapeServer, false);
-//    	}
-    	
     	svcs()->createRep(&ad, (IObject *)tapeRequest->client(), false);
       svcs()->fillRep(&ad, fr, OBJ_ClientIdentification, false);
+      
       svcs()->fillRep(&ad, fr, OBJ_Tape, false);
+      svcs()->fillRep(&ad, fr, OBJ_DeviceGroupName, false);
+      svcs()->fillRep(&ad, fr, OBJ_TapeAccessSpecification, false);
+      svcs()->fillRep(&ad, fr, OBJ_TapeDrive, false);
+    	svcs()->fillRep(&ad, fr, OBJ_TapeServer, false);      
     }
     
     // Store files for TapeDrive
@@ -139,10 +132,24 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
     
     if (0 != tapeDrive) {
       svcs()->updateRep(&ad, (IObject *)tapeDrive->tapeServer(), false);    	
-      svcs()->fillRep(&ad, fr, OBJ_TapeDrive, false);
+      
+      svcs()->fillRep(&ad, fr, OBJ_DeviceGroupName, false);
+      svcs()->fillRep(&ad, fr, OBJ_Tape, false);
+    	svcs()->fillRep(&ad, fr, OBJ_TapeServer, false);      
+    	svcs()->fillRep(&ad, fr, OBJ_TapeDriveCompatibility, false);          	
     }
+    
+    // Store files for ErrorHistory
+    castor::vdqm::ErrorHistory* errorHistory =
+      dynamic_cast<castor::vdqm::ErrorHistory*>(fr);
+    
+    if (0 != errorHistory) {
+      svcs()->fillRep(&ad, fr, OBJ_Tape, false);
+      svcs()->fillRep(&ad, fr, OBJ_TapeDrive, false);
+    }    
 		
 		if ( commit ) {
+      ptr_IVdqmService->commit();
 	    svcs()->commit(&ad);
 	    // "Request stored in DB" message
 	    castor::dlf::Param params[] =
@@ -150,6 +157,7 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
 	    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 12, 1, params);
 		}
   } catch (castor::exception::Exception e) {
+    ptr_IVdqmService->rollback();
     svcs()->rollback(&ad);
     
     castor::vdqm::TapeRequest *tapeRequest =
@@ -163,13 +171,25 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
 
 	  	throw ex;
     }
-    else {
+    
+    castor::vdqm::TapeDrive* tapeDrive =
+      dynamic_cast<castor::vdqm::TapeDrive*>(fr);
+      
+    if ( 0 != tapeDrive ) {
 	  	castor::exception::Exception ex(EVQNODRV);
 	  	ex.getMessage() << e.getMessage();					
 	  	
+	  	tapeDrive = 0;
 	  	tapeRequest = 0;
 	  		
 	  	throw ex;    	
+  	}
+  	else {
+  		// If we are here, we have an exception during a handling of ErrorHistory
+  		tapeDrive = 0;
+  		tapeRequest = 0;
+  		
+  		throw e;
   	}
   }
 }
@@ -195,6 +215,7 @@ void castor::vdqm::handler::BaseRequestHandler::deleteRepresentation
     castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 29, 1, params);
 
   } catch (castor::exception::Exception e) {
+  	ptr_IVdqmService->commit();
     svcs()->rollback(&ad);
     
     castor::exception::Exception ex(EVQREPLICA);
@@ -213,7 +234,6 @@ void castor::vdqm::handler::BaseRequestHandler::updateRepresentation
 
   // Stores it into the data base
   castor::BaseAddress ad;
-	bool isTapeRequest = false;  
   
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
@@ -226,7 +246,6 @@ void castor::vdqm::handler::BaseRequestHandler::updateRepresentation
       dynamic_cast<castor::vdqm::TapeRequest*>(fr);    
     if (0 != tapeRequest) {
       svcs()->updateRep(&ad, (IObject *)tapeRequest->tapeDrive(), false);
-      isTapeRequest = true;
     }
     
     // Update files for TapeDrive
@@ -236,7 +255,11 @@ void castor::vdqm::handler::BaseRequestHandler::updateRepresentation
     if (0 != tapeDrive) {
       svcs()->updateRep(&ad, (IObject *)tapeDrive->tapeServer(), false);    	
       svcs()->updateRep(&ad, (IObject *)tapeDrive->runningTapeReq(), false);
-      svcs()->updateRep(&ad, (IObject *)tapeDrive->tape(), false);
+      
+      svcs()->fillRep(&ad, fr, OBJ_DeviceGroupName, false);
+      svcs()->fillRep(&ad, fr, OBJ_Tape, false);
+    	svcs()->fillRep(&ad, fr, OBJ_TapeServer, false);      
+    	svcs()->fillRep(&ad, fr, OBJ_TapeDriveCompatibility, false);          	            
     }
 
     svcs()->commit(&ad);
@@ -247,17 +270,39 @@ void castor::vdqm::handler::BaseRequestHandler::updateRepresentation
     castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 45, 1, params);
 
   } catch (castor::exception::Exception e) {
+  	ptr_IVdqmService->rollback();
     svcs()->rollback(&ad);
     
-    if ( isTapeRequest ) {
-    	castor::exception::Exception ex(EVQNOVOL);
-	  	ex.getMessage() << e.getMessage();	
+    castor::vdqm::TapeRequest *tapeRequest =
+      dynamic_cast<castor::vdqm::TapeRequest*>(fr);
+    
+    if ( 0 != tapeRequest ) {
+	  	castor::exception::Exception ex(EVQNOVOL);
+	  	ex.getMessage() << e.getMessage();
+	  									
+	  	tapeRequest = 0;
+
 	  	throw ex;
     }
-    else {
+    
+    castor::vdqm::TapeDrive* tapeDrive =
+      dynamic_cast<castor::vdqm::TapeDrive*>(fr);
+      
+    if ( 0 != tapeDrive ) {
 	  	castor::exception::Exception ex(EVQNODRV);
-	  	ex.getMessage() << e.getMessage();	
-	  	throw ex;
-    }
+	  	ex.getMessage() << e.getMessage();					
+	  	
+	  	tapeDrive = 0;
+	  	tapeRequest = 0;
+	  		
+	  	throw ex;    	
+  	}
+  	else {
+  		// If we are here, we have an exception during a handling of ErrorHistory
+  		tapeDrive = 0;
+  		tapeRequest = 0;
+  		
+  		throw e;
+  	}
   }  	
 }

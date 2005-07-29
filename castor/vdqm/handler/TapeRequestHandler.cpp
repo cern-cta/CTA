@@ -43,21 +43,25 @@
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeServer.hpp"
+#include "castor/vdqm/newVdqm.h"
 
 #define VDQMSERV 1
 
 #include <net.h>
-#include <vdqm.h>
 #include <vdqm_constants.h>
 #include "h/Ctape_constants.h"
 #include <common.h> //for getconfent
 
+/**
+ * includes to talk to VMGR
+ */
+#include <vmgr_struct.h>
+#include <sys/types.h>
+#include "vmgr_api.h"
+
 
 //Local includes
 #include "TapeRequestHandler.hpp"
-
-//To make the code more readable
-using namespace castor::vdqm;
  
 
 //------------------------------------------------------------------------------
@@ -77,8 +81,8 @@ castor::vdqm::handler::TapeRequestHandler::~TapeRequestHandler() throw() {
 //------------------------------------------------------------------------------
 // newTapeRequest
 //------------------------------------------------------------------------------
-void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header, 
-																									vdqmVolReq_t *volumeRequest,
+void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *header, 
+																									newVdqmVolReq_t *volumeRequest,
 																									Cuuid_t cuuid) 
 	throw (castor::exception::Exception) {
   
@@ -87,6 +91,8 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header
   castor::stager::ClientIdentification *clientData = NULL;
   castor::stager::Tape *tape = NULL;
   
+  struct vmgr_tape_info tape_info; // used to get information about the tape
+  
   //TODO: The connection is not realised, yet.
   TapeServer *reqTapeServer = NULL;
   DeviceGroupName *dgName = NULL;
@@ -94,7 +100,8 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header
   
   bool exist = false; 
   int rowNumber = 0; 
-  char 					*p;
+  int rc = 0; // return value from vmgr_querytape
+  char *p;
 
 
 	if ( header == NULL || volumeRequest == NULL ) {
@@ -151,12 +158,35 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header
 	  //The requested tape server
 	//  reqTapeServer = ptr_IVdqmService->selectTapeServer(volumeRequest->server);
 	  
+	  memset(&tape_info,'\0',sizeof(vmgr_tape_info));
+	  
+		// "Try to get information about the tape from the VMGR daemon" message
+	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 47);	  
+	  
+//TODO: Open the connection to VMGR Server	  
+	  
+	  /**
+	   * Create a connection to vmgr daemon, to obtain more information about the
+	   * tape, like its density and its tapeModel.
+	   */
+	  rc = vmgr_querytape (tape->vid().c_str(), 0, &tape_info, volumeRequest->dgn);
+	  
+	  if ( rc == -1) {
+	  	castor::exception::Exception ex(EVQDGNINVL);
+	    ex.getMessage() << "Errors, while using to vmgr_querytape: "
+	    								<< "serrno = " << serrno
+	    								<< std::endl;
+	    throw ex;	  	
+	  }
+	  
 	  /**
 		 * Valids the requested tape Access for the specific tape model.
 		 * In case of errors, the return value is NULL
 		 */
-		 //TODO: connection to vmgr is missing!
-//		tapeAccessSpec = ptr_IVdqmService->selectTapeAccessSpecification(...);
+		tapeAccessSpec = 
+			ptr_IVdqmService->selectTapeAccessSpecification(volumeRequest->mode, 
+																											tape_info.density, 
+																											tape_info.model);
 	  
 	  if (0 == tapeAccessSpec) {
 	  	castor::exception::Exception ex(EVQDGNINVL);
@@ -174,14 +204,14 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header
 	  if ( 0 == dgName) {
 	  	castor::exception::Exception ex(EVQDGNINVL);
 	    ex.getMessage() << "DGN " <<  volumeRequest->dgn
-	    								<< " does not exist" << std::endl;
+	    								<< " does not exist in the db" << std::endl;
 	    throw ex;
 	  }
 	  
 	  
 	  //Connect the tapeRequest with the additional information
 	  newTapeReq->setClient(clientData);
-	  newTapeReq->setTapeAccessSpecification(tapeAccessSpec);
+//	  newTapeReq->setTapeAccessSpecification(tapeAccessSpec);
 	  newTapeReq->setRequestedSrv(reqTapeServer);
 	  newTapeReq->setTape(tape);
 	  newTapeReq->setDeviceGroupName(dgName);
@@ -197,7 +227,6 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header
 	      newTapeReq->setPriority(VDQM_PRIORITY_MAX);
 	    }
 	  }
-	  
 	  
 		// Request priority changed
 	  castor::dlf::Param params2[] =
@@ -289,18 +318,13 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(vdqmHdr_t *header
 // deleteTapeRequest
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
-																									vdqmVolReq_t *volumeRequest,
+																									newVdqmVolReq_t *volumeRequest,
 																									Cuuid_t cuuid) 
 	throw (castor::exception::Exception) {
  	//The db related informations
   TapeRequest *tapeReq = NULL;
   castor::BaseAddress ad;
   int rowNumber = -1;
-	
-  dgn_element_t *dgn_context;
-  vdqm_volrec_t *volrec;
-  vdqm_drvrec_t *drvrec;
-  int rc;
 	
 	// Get the tapeReq from its id
 	try {
@@ -403,7 +427,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 // getQueuePosition
 //------------------------------------------------------------------------------
 int castor::vdqm::handler::TapeRequestHandler::getQueuePosition(
-																									vdqmVolReq_t *volumeRequest,
+																									newVdqmVolReq_t *volumeRequest,
 																									Cuuid_t cuuid) 
 	throw (castor::exception::Exception) {
 		

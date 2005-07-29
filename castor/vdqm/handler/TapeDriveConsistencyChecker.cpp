@@ -31,24 +31,21 @@
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeServer.hpp"
+#include "castor/vdqm/newVdqm.h"
 
 #include <net.h>
-#include <vdqm.h>
 #include <vdqm_constants.h>
  
 // Local Includes
 #include "TapeDriveConsistencyChecker.hpp"
 
 
-//To make the code more readable
-using namespace castor::vdqm;
-
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
 castor::vdqm::handler::TapeDriveConsistencyChecker::TapeDriveConsistencyChecker(
 	TapeDrive* tapeDrive, 
-	vdqmDrvReq_t* driveRequest, 
+	newVdqmDrvReq_t* driveRequest, 
 	Cuuid_t cuuid) throw(castor::exception::Exception) {
 		
 	m_cuuid = cuuid;

@@ -24,19 +24,17 @@
  * @author Matthias Braeger
  *****************************************************************************/
 #include <net.h>
-#include <vdqm.h>
 #include <vdqm_constants.h>
 #include <vector>
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/stager/Tape.hpp"
 
-#include "castor/vdqm/ErrorHistory.hpp"
+#include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
-#include "castor/vdqm/TapeDriveDedication.hpp"
-#include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
+#include "castor/vdqm/newVdqm.h"
 
 
 // Local Includes
@@ -44,15 +42,12 @@
 #include "TapeDriveConsistencyChecker.hpp" // We are a friend of him!
 #include "TapeDriveStatusHandler.hpp" // We are a friend of him!
 
-//To make the code more readable
-using namespace castor::vdqm;
-
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
 castor::vdqm::handler::TapeDriveHandler::TapeDriveHandler(
-	vdqmHdr_t* header, 
-	vdqmDrvReq_t* driveRequest, 
+	newVdqmHdr_t* header, 
+	newVdqmDrvReq_t* driveRequest, 
 	Cuuid_t cuuid) throw(castor::exception::Exception) {
 		
 	m_cuuid = cuuid;
@@ -82,41 +77,25 @@ castor::vdqm::handler::TapeDriveHandler::~TapeDriveHandler() throw() {
 void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest() 
 	throw (castor::exception::Exception) {
     
-	TapeServer* tapeServer = NULL;
-	TapeDrive* tapeDrive = NULL;
+	castor::vdqm::TapeServer* tapeServer = NULL;
+	castor::vdqm::TapeDrive* tapeDrive = NULL;
   
 
 	//"The parameters of the old vdqm DrvReq Request" message
   castor::dlf::Param params[] =
-  	{castor::dlf::Param("dedicate", ptr_driveRequest->dedicate),
+  	{castor::dlf::Param("errorHistory (dedidcate)", ptr_driveRequest->errorHistory),
      castor::dlf::Param("dgn", ptr_driveRequest->dgn),
      castor::dlf::Param("drive", ptr_driveRequest->drive),
      castor::dlf::Param("errcount", ptr_driveRequest->errcount),
-     castor::dlf::Param("gid", ptr_driveRequest->gid),
-     castor::dlf::Param("is_gid", ptr_driveRequest->is_gid),
-     castor::dlf::Param("is_name", ptr_driveRequest->is_name),
-     castor::dlf::Param("is_uid", ptr_driveRequest->is_uid),
      castor::dlf::Param("jobID", ptr_driveRequest->jobID),
      castor::dlf::Param("MBtransf", ptr_driveRequest->MBtransf),
      castor::dlf::Param("mode", ptr_driveRequest->mode),
-     castor::dlf::Param("name", ptr_driveRequest->name),
-     castor::dlf::Param("newdedicate", ptr_driveRequest->newdedicate),
-     castor::dlf::Param("no_age", ptr_driveRequest->no_age),
-     castor::dlf::Param("no_date", ptr_driveRequest->no_date),
-     castor::dlf::Param("no_gid", ptr_driveRequest->no_gid),
-     castor::dlf::Param("no_host", ptr_driveRequest->no_host),
-     castor::dlf::Param("no_mode", ptr_driveRequest->no_mode),
-     castor::dlf::Param("no_name", ptr_driveRequest->no_name),
-     castor::dlf::Param("no_time", ptr_driveRequest->no_time),
-     castor::dlf::Param("no_uid", ptr_driveRequest->no_uid),
-		 castor::dlf::Param("no_vid", ptr_driveRequest->no_vid),
  		 castor::dlf::Param("recvtime", ptr_driveRequest->recvtime),
 		 castor::dlf::Param("reqhost", ptr_driveRequest->reqhost),
 		 castor::dlf::Param("resettime", ptr_driveRequest->resettime),
 		 castor::dlf::Param("server", ptr_driveRequest->server),
 		 castor::dlf::Param("status", ptr_driveRequest->status),
 		 castor::dlf::Param("TotalMB", ptr_driveRequest->TotalMB),
-		 castor::dlf::Param("uid", ptr_driveRequest->uid),
 		 castor::dlf::Param("usecount", ptr_driveRequest->usecount),
 		 castor::dlf::Param("volid", ptr_driveRequest->volid),
 		 castor::dlf::Param("VolReqID", ptr_driveRequest->VolReqID)};
@@ -329,7 +308,9 @@ void castor::vdqm::handler::TapeDriveHandler::deleteAllTapeDrvsFromSrv(
 castor::vdqm::TapeDrive* 
 	castor::vdqm::handler::TapeDriveHandler::getTapeDrive(TapeServer* tapeServer) 
 	throw (castor::exception::Exception) {
-		TapeDrive* tapeDrive = NULL;
+		
+		castor::vdqm::TapeDrive* tapeDrive = NULL;
+		castor::vdqm::DeviceGroupName* dgName = NULL;
 		
 		/**
 		 * Check, if the tape drive already exists
@@ -353,9 +334,15 @@ castor::vdqm::TapeDrive*
 		if (tapeDrive == NULL) {
 			/**
 			 * The tape drive does not exist, so we just create it!
+			 * But first we need its device group name out of the db.
+			 * If the dgn doesn't exists, we just create it.
 			 */
-      TapeDrive* tapeDrive = new castor::vdqm::TapeDrive();
+			
+			dgName = ptr_IVdqmService->selectDeviceGroupName(ptr_driveRequest->dgn);
+			
+      tapeDrive = new castor::vdqm::TapeDrive();
 
+			tapeDrive->setDeviceGroupName(dgName);
       tapeDrive->setDriveName(ptr_driveRequest->drive);
       tapeDrive->setTapeServer(tapeServer);
       

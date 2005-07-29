@@ -30,8 +30,8 @@
 // Local include
 #include "BaseRequestHandler.hpp"
 
-typedef struct vdqmHdr vdqmHdr_t;
-typedef struct vdqmVolReq vdqmVolReq_t;
+typedef struct newVdqmHdr newVdqmHdr_t;
+typedef struct newVdqmVolReq newVdqmVolReq_t;
 
 namespace castor {
 
@@ -67,8 +67,8 @@ namespace castor {
 					 * @param cuuid The unique id of the request. Needed for dlf
 					 * @exception In case of error
 					 */
-					void newTapeRequest(vdqmHdr_t *header, 
-															vdqmVolReq_t *volumeRequest,
+					void newTapeRequest(newVdqmHdr_t *header, 
+															newVdqmVolReq_t *volumeRequest,
 															Cuuid_t cuuid) 
 						throw (castor::exception::Exception);
 						
@@ -80,7 +80,7 @@ namespace castor {
 					 * @param cuuid The unique id of the request. Needed for dlf
 					 * @exception In case of error
 					 */
-					void deleteTapeRequest(vdqmVolReq_t *volumeRequest, Cuuid_t cuuid) 
+					void deleteTapeRequest(newVdqmVolReq_t *volumeRequest, Cuuid_t cuuid) 
 						throw (castor::exception::Exception);
 						
 					
@@ -96,7 +96,7 @@ namespace castor {
 		    	 *         -1: if there is no entry for it.
 					 * @exception In case of error
 					 */
-					int getQueuePosition(vdqmVolReq_t *VolReq, Cuuid_t cuuid) 
+					int getQueuePosition(newVdqmVolReq_t *VolReq, Cuuid_t cuuid) 
 						throw (castor::exception::Exception);
 	
 	    }; // class TapeRequestHandler

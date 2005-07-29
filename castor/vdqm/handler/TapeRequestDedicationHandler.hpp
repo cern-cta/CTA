@@ -29,8 +29,6 @@
 
 #include "BaseRequestHandler.hpp"
 
-typedef struct vdqmdDrvReq vdqmDrvReq_t;
-
 namespace castor {
 
   namespace vdqm {
