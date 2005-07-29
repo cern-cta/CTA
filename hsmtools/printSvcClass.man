@@ -1,0 +1,129 @@
+.\" @(#)$RCSfile: printSvcClass.man,v $ $Revision: 1.1 $ $Date: 2005/07/29 15:31:43 $ CERN IT/ADC Olof Barring
+.\" Copyright (C) 2005 by CERN IT/ADC
+.\" All rights reserved
+.\"
+.TH PRINTSVCCLASS 1 "$Date: 2005/07/29 15:31:43 $" CASTOR "Print out a given service class"
+.SH NAME
+printSvcClass
+.SH SYNOPSIS
+.B printSvcClass
+[
+.BI -h, 
+.BI --help
+]
+svcClassName
+.SH DESCRIPTION
+.B printSvcClass
+prints out the services class and its tapepools and diskpools
+.LP
+.BI \-h,\ \-\-help
+Get usage information
+.LP
+.BI svcClassName
+the name of the service class to print out
+.SH EXAMPLES
+.fi
+# printSvcClass default
+.fi
+[# SvcClass #]
+.fi
+nbDrives : 1
+.fi
+name : default
+.fi
+defaultFileSize : 0
+.fi
+maxReplicaNb : 0
+.fi
+replicationPolicy : 
+.fi
+gcPolicy : 
+.fi
+migratorPolicy : 
+.fi
+recallerPolicy : 
+.fi
+id : 144
+.fi
+TapePools : 
+.fi
+  0 :
+.fi
+    [# TapePool #]
+.fi
+    name : test1
+.fi
+    id : 239
+.fi
+    SvcClasses : 
+.fi
+      0 :
+.fi
+        [# SvcClass #]
+.fi
+        Back pointer, see above
+.fi
+    Streams : 
+.fi
+  1 :
+.fi
+    [# TapePool #]
+.fi
+    name : test1
+.fi
+    id : 240
+.fi
+    SvcClasses : 
+.fi
+      0 :
+.fi
+        [# SvcClass #]
+.fi
+        Back pointer, see above
+.fi
+    Streams : 
+.fi
+  2 :
+.fi
+    [# TapePool #]
+.fi
+    name : test2
+.fi
+    id : 241
+.fi
+    SvcClasses : 
+.fi
+      0 :
+.fi
+        [# SvcClass #]
+.fi
+        Back pointer, see above
+.fi
+    Streams : 
+.fi
+DiskPools : 
+.fi
+  0 :
+.fi
+    [# DiskPool #]
+.fi
+    name : default
+.fi
+    id : 145
+.fi
+    FileSystems : 
+.fi
+    SvcClasses : 
+.fi
+      0 :
+.fi
+        [# SvcClass #]
+.fi
+        Back pointer, see above
+.ft
+.fi
+.SH NOTES
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from castor.conf.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
