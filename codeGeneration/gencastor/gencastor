@@ -23,6 +23,7 @@ cp ${WORKDIR}/castor/db/*.sql ${TMPDIR}/castor/db/
 /usr/bin/gencastor.bin -o ${TMPDIR} --nocrashhandler ${XMIFILE}
 set pushdsilent
 pushd ${TMPDIR}
+rm -f castor/db/*Generated*
 foreach f (`find . -type f`)
   #echo $f
   if !(-f ${WORKDIR}/${f}) then
@@ -42,4 +43,3 @@ foreach f (`find . -type f`)
 end
 popd
 rm -rf ${TMPDIR}
-rm -f ${WORKDIR}/castor/db/*Generated*
