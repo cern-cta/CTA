@@ -50,7 +50,7 @@
 #include "newVdqm.h" //Needed for the client_connection
 #include "VdqmServer.hpp"
 #include "VdqmServerSocket.hpp"
-#include "OldVdqmProtocol.hpp"
+#include "OldRequestFacade.hpp"
 
 
 //------------------------------------------------------------------------------
@@ -144,6 +144,8 @@ castor::vdqm::VdqmServer::VdqmServer():
      {45, "Update of representation in DB"}, 
      {46, "No free TapeDrive, or no TapeRequest in the db"}, 
      {47, "Try to get information about the tape from the VMGR daemon"},
+     {48, "RTCopyDConnection: Too large errmsg buffer requested"},
+     {49, "RTCopyDConnection: rtcopy daemon returned an error"},     
      {-1, ""}};
   castor::dlf::dlf_init("Vdqm", messages);
 }
@@ -507,10 +509,10 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
   }
   
   /**
-   * Initialization of the OldVdqmProtocol, which 
+   * Initialization of the OldRequestFacade, which 
    * provides the essential functions
    */
-	OldVdqmProtocol oldProtocol(&volumeRequest,
+	OldRequestFacade oldRequestFacade(&volumeRequest,
 															&driveRequest,
 													  	&header);
 	
@@ -519,8 +521,8 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 		// Handle old vdqm request type																			
 		castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 14);
 		
-		oldProtocol.checkRequestType(cuuid);
-		oldProtocol.handleRequestType(sock, cuuid);
+		oldRequestFacade.checkRequestType(cuuid);
+		oldRequestFacade.handleRequestType(sock, cuuid);
 
 	} catch (castor::exception::Exception e) {  
     // "Exception caught" message
@@ -558,7 +560,7 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 	try {
 		/**
 		 * Ping requests don't need a handshake! It is already handled in 
-		 * OldVdqmProtocol.
+		 * OldRequestFacade.
 		 */
 		if (reqtype != VDQM_PING) {
 			//Sending reply to client
@@ -590,7 +592,7 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 			switch ( reqtype ) {
 				case VDQM_VOL_REQ:
 							  	header.reqtype = VDQM_DEL_VOLREQ;
-									oldProtocol.handleRequestType(sock, cuuid);
+									oldRequestFacade.handleRequestType(sock, cuuid);
 									break;
 
 				case VDQM_DRV_REQ:

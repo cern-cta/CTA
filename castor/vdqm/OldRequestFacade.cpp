@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      OldVdqmProtocol.cpp
+ *                      OldRequestFacade.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: OldVdqmProtocol.cpp  Revision: 1.0  Release Date: Apr 18, 2005  Author: mbraeger 
+ * @(#)RCSfile: OldRequestFacade.cpp  Revision: 1.0  Release Date: Apr 18, 2005  Author: mbraeger 
  *
  *
  *
@@ -40,7 +40,7 @@
  
 // Local Includes
 #include "newVdqm.h"
-#include "OldVdqmProtocol.hpp"
+#include "OldRequestFacade.hpp"
 #include "VdqmServerSocket.hpp"
 
 // To make the code more readable
@@ -49,7 +49,7 @@ using namespace castor::vdqm::handler;
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::vdqm::OldVdqmProtocol::OldVdqmProtocol(newVdqmVolReq_t *volumeRequest,
+castor::vdqm::OldRequestFacade::OldRequestFacade(newVdqmVolReq_t *volumeRequest,
 																								newVdqmDrvReq_t *driveRequest,
 																						  	newVdqmHdr_t *header) {
 	
@@ -65,7 +65,7 @@ castor::vdqm::OldVdqmProtocol::OldVdqmProtocol(newVdqmVolReq_t *volumeRequest,
 //------------------------------------------------------------------------------
 // checkRequestType
 //------------------------------------------------------------------------------
-bool castor::vdqm::OldVdqmProtocol::checkRequestType(Cuuid_t cuuid) 
+bool castor::vdqm::OldRequestFacade::checkRequestType(Cuuid_t cuuid) 
 	throw (castor::exception::Exception) {
 	
 	int i;
@@ -143,7 +143,7 @@ bool castor::vdqm::OldVdqmProtocol::checkRequestType(Cuuid_t cuuid)
   return true;
 }
 
-bool castor::vdqm::OldVdqmProtocol::handleRequestType(VdqmServerSocket* sock,
+bool castor::vdqm::OldRequestFacade::handleRequestType(VdqmServerSocket* sock,
 																											Cuuid_t cuuid) 
 	throw (castor::exception::Exception) {
 	

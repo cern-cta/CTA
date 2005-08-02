@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      OldVdqmProtocol.hpp
+ *                      OldRequestFacade.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: OldVdqmProtocol.hpp  Revision: 1.0  Release Date: Apr 18, 2005  Author: mbraeger 
+ * @(#)RCSfile: OldRequestFacade.hpp  Revision: 1.0  Release Date: Apr 18, 2005  Author: mbraeger 
  *
  * 
  *
  * @author Matthias Braeger
  *****************************************************************************/
 
-#ifndef _OLDVDQMPROTOCOL_HPP_
-#define _OLDVDQMPROTOCOL_HPP_
+#ifndef _OLDREQUESTFACADE_HPP_
+#define _OLDREQUESTFACADE_HPP_
 
 //Include files
 #include "castor/BaseObject.hpp"
@@ -51,14 +51,14 @@ namespace castor {
      * This class provides functions to handle the old VDQM protocol.
      * It is used from the VdqmServer class.
      */
-    class OldVdqmProtocol : public BaseObject {
+    class OldRequestFacade : public BaseObject {
 
     	public:
        
       /**
 			 * Constructor
 			 */
-       OldVdqmProtocol(newVdqmVolReq_t *volumeRequest,
+       OldRequestFacade(newVdqmVolReq_t *volumeRequest,
 												newVdqmDrvReq_t *driveRequest,
 										  	newVdqmHdr_t *header);
 			
@@ -93,4 +93,4 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif //_OLDVDQMPROTOCOL_HPP_
+#endif //_OLDREQUESTFACADE_HPP_

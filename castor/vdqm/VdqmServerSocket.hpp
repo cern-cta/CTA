@@ -28,11 +28,11 @@
 #define _VDQMSERVERSOCKET_HPP_
 
 // Include Files
-#include <net.h>
-#include <string>
-#include <netinet/in.h>
+//#include <net.h>
+//#include <string>
+//#include <netinet/in.h>
 
-#include "castor/exception/Exception.hpp"
+//#include "castor/exception/Exception.hpp"
 #include "castor/io/AbstractSocket.hpp"
 
 // Forward declaration
@@ -264,7 +264,7 @@ namespace castor {
      	typedef enum direction {SendTo, ReceiveFrom} direction_t;
     };
 
-  } // end of namespace io
+  } // end of namespace vdqm
 
 } // end of namespace castor
 

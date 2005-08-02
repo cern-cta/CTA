@@ -37,7 +37,6 @@
 #include "castor/IObject.hpp"
 #include "castor/Constants.hpp"
 #include "castor/Services.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/io/biniostream.h"
 #include "castor/io/StreamAddress.hpp"

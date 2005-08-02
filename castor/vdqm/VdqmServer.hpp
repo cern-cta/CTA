@@ -30,9 +30,9 @@
 #include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
 
-#define CSP_MSG_MAGIC 0xCA001
-#define CSP_RHSERVER_PORT 9002
-#define CSP_NOTIFICATION_PORT 9001
+//#define CSP_MSG_MAGIC 0xCA001
+//#define CSP_RHSERVER_PORT 9002
+//#define CSP_NOTIFICATION_PORT 9001
 
 namespace castor {
 
