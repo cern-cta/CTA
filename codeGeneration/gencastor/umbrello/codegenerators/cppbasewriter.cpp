@@ -675,7 +675,7 @@ QString CppBaseWriter::getSimpleType(QString type) {
 //=============================================================================
 UMLClassifier* CppBaseWriter::getClassifier(QString type) {
   QString name = getSimpleType(type);
-  UMLClassifierList inList = m_doc->getConcepts();
+  UMLClassifierList inList = m_doc->getClassesAndInterfaces();
   for (UMLClassifier * obj = inList.first(); obj != 0; obj = inList.next()) {
 		if (obj->getName() == name) {
       return obj;

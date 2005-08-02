@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2005/04/08 08:52:10 $ $Author: sponcec3 $
+ * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2005/08/02 14:09:49 $ $Author: itglp $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -48,7 +48,7 @@ void CHClassWriter::writeClass(UMLClassifier *c) {
   if (m_classInfo->isEnum) {
     m_prefix = m_prefix.right(m_prefix.length() - 5);
   } else {
-    m_prefix = m_prefix.right(m_prefix.length() - 7);                                                \
+    m_prefix = m_prefix.right(m_prefix.length() - 7);
   }
   m_prefix = m_prefix.left(m_prefix.length() - 2) + "_";
   // Generates file header
@@ -600,6 +600,9 @@ QString CHClassWriter::convertType(QString type,
     m_isLastTypeVector = false;    
   }
   if (m_typeConvertions.find(type) != m_typeConvertions.end()) {
+    if (m_castorTypes.find(getSimpleType(type)) != m_castorTypes.end()) {
+      addInclude(QString("#include ") + m_castorTypes[getSimpleType(type)]);
+	}
     return m_typeConvertions[type];
   }
   if (0 == getClassifier(type)) {
