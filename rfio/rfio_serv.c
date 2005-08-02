@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.19 2005/06/29 17:22:33 jdurand Exp $
+ * $Id: rfio_serv.c,v 1.20 2005/08/02 14:50:14 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.19 $ $Date: 2005/06/29 17:22:33 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.20 $ $Date: 2005/08/02 14:50:14 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */
@@ -112,9 +112,6 @@ int Csec_service_type;
 #endif
 
 extern char     *getconfent();
-#if !defined(_WIN32)
-extern char     *malloc();		/* Some systems forget this	*/
-#endif
 
 #define SO_BUFSIZE      20*1024         /* Default socket buffer size   */
 
