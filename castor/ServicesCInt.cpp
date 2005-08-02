@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2004/10/12 14:44:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2005/08/02 16:23:13 $ $Author: sponcec3 $
  *
  *
  *
@@ -72,10 +72,16 @@ extern "C" {
       svcs->errorMsg = "Empty context";
       return -1;
     }
-    *svc = svcs->svcs->service(name, id);
-    if (0 == *svc) {
-      serrno = SEINTERNAL;
-      svcs->errorMsg = "Unable to locate/create service";
+    try {
+      *svc = svcs->svcs->service(name, id);
+      if (0 == *svc) {
+        serrno = SEINTERNAL;
+        svcs->errorMsg = "Unable to locate/create service";
+        return -1;
+      }
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      svcs->errorMsg = e.getMessage().str();
       return -1;
     }
     return 0;
