@@ -99,6 +99,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-lib-oracle
 Architecture: any
+Provides: castor-db-interface
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Suggests: castor-db-config
 Description: castor (Cern Advanced STORage system)
@@ -157,7 +158,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-rh-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-db-interface
 Description: castor (Cern Advanced STORage system)
  Request Handler server
 
@@ -205,7 +206,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-rtcopy-clientserver
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-dbtools
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-dbtools, castor-db-interface
 Description: castor (Cern Advanced STORage system)
  Remote Tape Copy Client Server running on top of a database.
  This will generate raw RTCOPY commands understood by the rtcopy-server
@@ -225,7 +226,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-stager-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-db-interface
 Description: castor (Cern Advanced STORage system)
  Stager server
 
