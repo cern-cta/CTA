@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.104 $ $Release$ $Date: 2005/08/02 14:42:56 $ $Author: mbraeger $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.105 $ $Release$ $Date: 2005/08/03 08:07:02 $ $Author: itglp $
 #
 # Make Castor libraries and executables
 #
@@ -210,6 +210,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               rh/BasicResponseCInt.cpp \
               stager/CastorFile.cpp \
               stager/CastorFileCInt.cpp \
+              stager/ClientIdentification.cpp \
               stager/DiskCopy.cpp \
               stager/DiskCopyCInt.cpp \
               stager/DiskCopyInfo.cpp \
@@ -331,7 +332,16 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/TapeStatusCodes.cpp \
               stager/TapeCopyStatusCodes.cpp \
               stager/TapeVid.cpp \
-							vdqm/ErrorHistory.cpp \
+              vdqm/ErrorHistory.cpp \
+              vdqm/TapeDrive.cpp \
+              vdqm/DeviceGroupName.cpp \
+              vdqm/TapeAccessSpecification.cpp \
+              vdqm/TapeDriveCompatibility.cpp \
+              vdqm/TapeDriveDedication.cpp \
+              vdqm/TapeDriveStatusCodes.cpp \
+              vdqm/TapeRequest.cpp \
+              vdqm/TapeServer.cpp \
+              vdqm/TapeServerStatusCodes.cpp \
               exception/BadVersion.cpp \
               exception/Busy.cpp \
               exception/Exception.cpp \
@@ -348,27 +358,16 @@ STGLIB_SRCS += io/AuthServerSocket.cpp io/AuthClientSocket.cpp
 
 
 #if BuildVDQMCpp
-STGLIB_SRCS +=stager/ClientIdentification.cpp \
-              vdqm/DeviceGroupName.cpp \
-							vdqm/ErrorHistory.cpp \
-              vdqm/OldRequestFacade.cpp \
-							vdqm/RTCopyDConnection.cpp \
-							vdqm/TapeAccessSpecification.cpp \
-              vdqm/TapeDrive.cpp \
-							vdqm/TapeDriveCompatibility.cpp \
-							vdqm/TapeDriveDedication.cpp \
-              vdqm/TapeDriveStatusCodes.cpp \
-              vdqm/TapeRequest.cpp \
-              vdqm/TapeServer.cpp \
-							vdqm/TapeServerStatusCodes.cpp \
-              vdqm/VdqmServer.cpp \
-              vdqm/VdqmServerSocket.cpp \
-							vdqm/handler/BaseRequestHandler.cpp \
-							vdqm/handler/TapeDriveConsistencyChecker.cpp \
-							vdqm/handler/TapeDriveHandler.cpp \
-							vdqm/handler/TapeDriveStatusHandler.cpp \
-							vdqm/handler/TapeRequestHandler.cpp \
-							vdqm/handler/TapeRequestDedicationHandler.cpp
+STGLIB_SRCS += vdqm/RTCopyDConnection.cpp \
+               vdqm/VdqmServer.cpp \
+               vdqm/OldRequestFacade.cpp \
+               vdqm/VdqmServerSocket.cpp \
+               vdqm/handler/BaseRequestHandler.cpp \
+               vdqm/handler/TapeDriveConsistencyChecker.cpp \
+               vdqm/handler/TapeDriveHandler.cpp \
+               vdqm/handler/TapeDriveStatusHandler.cpp \
+               vdqm/handler/TapeRequestHandler.cpp \
+               vdqm/handler/TapeRequestDedicationHandler.cpp
 #endif
 
 #if BuildDlfLibrary
