@@ -1,3 +1,12 @@
+gencastor (3.2-1) unstable; urgency=low
+
+  * Fixed C interfaces generation, only classes and interfaces are
+    considered structs for the C world.
+  * Fixed name of conversion svc, now is DbCnvSvc everywhere.
+  * Fixed calls to commit() and rollback().
+
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Tue,  3 Ago 2005 18:00:00 +0200
+
 gencastor (3.2-0) unstable; urgency=low
 
   * Improved SQL code generation, separated scripts for creating and

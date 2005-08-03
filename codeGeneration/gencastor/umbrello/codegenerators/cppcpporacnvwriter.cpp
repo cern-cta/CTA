@@ -1024,7 +1024,7 @@ void CppCppOraCnvWriter::writeFillRep() {
   *m_stream << getIndent() << "}" << endl << getIndent()
             << "if (autocommit) {" << endl;
   m_indent++;
-  *m_stream << getIndent() << "cnvSvc()->getConnection()->commit();"
+  *m_stream << getIndent() << "cnvSvc()->commit();"
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
@@ -1299,9 +1299,9 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as) {
                              "castor",
                              "")
               << " ad;" << endl << getIndent()
-              << "ad.setCnvSvcName(\"OraCnvSvc\");"
+              << "ad.setCnvSvcName(\"DbCnvSvc\");"
               << endl << getIndent()
-              << "ad.setCnvSvcType(castor::SVC_ORACNV);"
+              << "ad.setCnvSvcType(castor::SVC_DBCNV);"
               << endl << getIndent()
               << "cnvSvc()->createRep(&ad, obj->"
               << as->remotePart.name
@@ -2134,7 +2134,7 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
   *m_stream << getIndent()
             << "if (autocommit) {" << endl;
   m_indent++;
-  *m_stream << getIndent() << "cnvSvc()->getConnection()->commit();"
+  *m_stream << getIndent() << "cnvSvc()->commit();"
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
@@ -2233,7 +2233,7 @@ void CppCppOraCnvWriter::writeUpdateRepContent() {
   *m_stream << getIndent()
             << "if (autocommit) {" << endl;
   m_indent++;
-  *m_stream << getIndent() << "cnvSvc()->getConnection()->commit();"
+  *m_stream << getIndent() << "cnvSvc()->commit();"
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
@@ -2415,7 +2415,7 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
   *m_stream << getIndent()
             << "if (autocommit) {" << endl;
   m_indent++;
-  *m_stream << getIndent() << "cnvSvc()->getConnection()->commit();"
+  *m_stream << getIndent() << "cnvSvc()->commit();"
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
@@ -2763,7 +2763,7 @@ void CppCppOraCnvWriter::printSQLError(QString name,
   *m_stream << getIndent()
             << "// Always try to rollback" << endl
             << getIndent()
-            << "cnvSvc()->getConnection()->rollback();"
+            << "cnvSvc()->rollback();"
             << endl << getIndent()
             << "if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {"
             << endl;
@@ -2776,7 +2776,7 @@ void CppCppOraCnvWriter::printSQLError(QString name,
   *m_stream << getIndent() << "}" << endl;
   m_indent--;
   *m_stream << getIndent()
-            << "} catch (oracle::occi::SQLException e) {"
+            << "} catch (castor::exception::Exception e) {"
             << endl;
   m_indent++;
   *m_stream << getIndent()
