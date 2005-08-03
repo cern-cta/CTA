@@ -2,3 +2,4 @@ usr/bin/rmgetjobs
 usr/bin/rmgetnodes
 usr/bin/rmgettime
 usr/bin/rmmodifyjob
+usr/bin/diskUsage
