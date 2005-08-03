@@ -102,6 +102,7 @@ done
 for i in debian/*.init; do
     install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/init.d/`basename $i | sed 's/\.init//g'`
 done
+install -o root -g bin -m 644 debian/castor.conf ${RPM_BUILD_ROOT}/etc/castor/castor.conf.example
 for i in debian/*.logrotate; do
     install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/logrotate.d/`basename $i | sed 's/\.logrotate//g'`
 done
