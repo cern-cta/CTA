@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.6 $ $Release$ $Date: 2005/07/21 09:13:07 $ $Author: itglp $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.7 $ $Release$ $Date: 2005/08/03 12:21:28 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.6 $ $Release$ $Date: 2005/07/21 09:13:07 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.7 $ $Release$ $Date: 2005/08/03 12:21:28 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -461,8 +461,10 @@ static int checkRecallRetry(
      struct Cstager_TapeCopy_t *tapeCopy;
 {
   enum Cstager_SegmentStatusCodes_t segmentStatus;
+  enum Cstager_DiskCopyStatusCodes_t diskCopyStatus;
   struct Cstager_CastorFile_t *castorFile = NULL;
   struct Cstager_Tape_t *tape = NULL;
+  struct Cstager_DiskCopy_t **diskCopies = NULL;
   struct Cstager_Segment_t **segments = NULL;
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
@@ -476,7 +478,7 @@ static int checkRecallRetry(
   char *expertBuffer = NULL, *errMsgTxt, *tmpBuf, *p, *nsHost = NULL;
   char castorFileName[CA_MAXPATHLEN+1], *vid = NULL;
   unsigned char blockid[4], nullblockid[4] = {'\0','\0','\0','\0'};
-  int expertBufferLen = 0, nsSegmentOK = 0;
+  int expertBufferLen = 0, nsSegmentOK = 0, nbDiskCopies = 0, anyStagedSegment;
   ID_TYPE key;
 
   if ( (tapeCopy == NULL) || (segment == NULL) ) {
@@ -598,6 +600,24 @@ static int checkRecallRetry(
     serrno = SEINTERNAL;
     return(-1);
   }
+  /*
+   * Get disk copies
+   */
+  iObj = Cstager_CastorFile_getIObject(castorFile);
+  rc = C_Services_fillObj(
+                          dbSvc,
+                          iAddr,
+                          iObj,
+                          OBJ_DiskCopy
+                          );
+  if ( rc == -1 ) {
+    LOG_DBCALLANDKEY_ERR("C_Services_fillObj(castorFile,OBJ_DiskCopy)",
+                         C_Services_errorMsg(dbSvc),
+                         key);
+    C_IAddress_delete(iAddr);
+    return(-1);
+  }
+  Cstager_CastorFile_diskCopies(castorFile,&diskCopies,&nbDiskCopies);
 
   /*
    * Get all segments
@@ -641,7 +661,42 @@ static int checkRecallRetry(
     serrno = SEINTERNAL;
     return(-1);
   }
-
+  /*
+   * Disconnect DiskCopies from FileSystem in case there are no other STAGED segments.
+   * If we don't do this, the retry will retain the selected filesystem, which is an
+   * unnecessary constraint
+   */
+  anyStagedSegment = 0;
+  for ( i=0; i<nbSegments; i++ ) {
+    Cstager_Segment_status(segments[i],&segmentStatus);
+    if ( segmentStatus == SEGMENT_FILECOPIED ) {
+      anyStagedSegment = 1;
+      break;
+    }
+  }
+  if ( anyStagedSegment == 0 ) {
+    for ( i=0; i<nbDiskCopies; i++ ) {
+      Cstager_DiskCopy_status(diskCopies[i],&diskCopyStatus);
+      if ( diskCopyStatus == DISKCOPY_WAITTAPERECALL ) {
+        Cstager_DiskCopy_setFileSystem(diskCopies[i],NULL);
+        iObj = Cstager_DiskCopy_getIObject(diskCopies[i]);
+        rc = C_Services_fillRep(
+                                dbSvc,
+                                iAddr,
+                                iObj,
+                                OBJ_FileSystem,
+                                1
+                                );
+        if ( rc == -1 ) {
+          LOG_DBCALLANDKEY_ERR("C_Services_fillRep(tapeCopy,OBJ_FileSystem)",
+                               C_Services_errorMsg(dbSvc),
+                               key);
+        }
+      }
+    }
+  }
+  if ( diskCopies != NULL ) free(diskCopies);
+    
   /*
    * Arguments for retry policy are:
    *  - policy name: e.g. "recallerRetryPolicy.pl"
