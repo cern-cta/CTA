@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.27 $ $Release$ $Date: 2005/08/03 10:48:06 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.28 $ $Release$ $Date: 2005/08/03 13:03:00 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.27 $ $Release$ $Date: 2005/08/03 10:48:06 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.28 $ $Release$ $Date: 2005/08/03 13:03:00 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1709,7 +1709,7 @@ int main(int argc, char *argv[])
           fprintf(stderr,"getStreamsForSvcClass(%s): %s\n",
                   argv[i],sstrerror(serrno));
         }
-        if ( (serrno != ENOENT) && (nbMigrCandidates>0) ) {
+        if ( (serrno != ENOENT) || (nbMigrCandidates>0) ) {
           (void)dlf_write(
                           mainUuid,
                           RTCPCLD_LOG_MSG(RTCPCLD_MSG_NOTPPOOLS),
