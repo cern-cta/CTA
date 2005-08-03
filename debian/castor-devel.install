@@ -149,5 +149,7 @@ usr/include/shift/vmgr_api.h
 usr/include/shift/vmgr_constants.h
 usr/include/shift/vmgr_struct.h
 usr/include/shift/ypgetacctent.h
+usr/lib/libcastorCommonOra.a
 usr/lib/libcastorCommonOra.so
+usr/lib/libshift.a
 usr/lib/libshift.so
