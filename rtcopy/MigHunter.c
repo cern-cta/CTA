@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.26 $ $Release$ $Date: 2005/07/21 09:13:07 $ $Author: itglp $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.27 $ $Release$ $Date: 2005/08/03 10:48:06 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.26 $ $Release$ $Date: 2005/07/21 09:13:07 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.27 $ $Release$ $Date: 2005/08/03 10:48:06 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -529,12 +529,16 @@ static int getStreamsForSvcClass(
      int *nbStreams;
 {
   struct Cstager_TapePool_t **tapePoolArray = NULL;
+  char *svcClassName = NULL;
   int rc, i, nbTapePools, _nbStreams, totNbStreams = 0;
 
   Cstager_SvcClass_tapePools(svcClass,&tapePoolArray,&nbTapePools);
   if ( (nbTapePools <= 0) || (tapePoolArray == NULL) ){
+    Cstager_SvcClass_name(svcClass,(CONST char **)&svcClassName);
     if ( runAsDaemon == 0 ) {
-      fprintf(stderr,"getStreamsForSvcClass(): no tape pools associated with SvcClass\n");
+      fprintf(stdout,
+              "getStreamsForSvcClass(): no tape pools associated with SvcClass %s\n",
+              (svcClassName != NULL ? svcClassName : "(null)"));
     }
     serrno = ENOENT;
     return(-1);
@@ -1705,7 +1709,20 @@ int main(int argc, char *argv[])
           fprintf(stderr,"getStreamsForSvcClass(%s): %s\n",
                   argv[i],sstrerror(serrno));
         }
-        LOG_SYSCALL_ERR("getStreamsForSvcClass()");
+        if ( (serrno != ENOENT) && (nbMigrCandidates>0) ) {
+          (void)dlf_write(
+                          mainUuid,
+                          RTCPCLD_LOG_MSG(RTCPCLD_MSG_NOTPPOOLS),
+                          (struct Cns_fileid *)NULL,
+                          2,
+                          "SVCCLASS",
+                          DLF_MSG_PARAM_STR,
+                          argv[i],
+                          "NBCANDS",
+                          DLF_MSG_PARAM_INT,
+                          nbMigrCandidates
+                          );
+        }
         restoreMigrCandidates(migrCandidates,nbMigrCandidates);
         continue;
       }
