@@ -125,5 +125,17 @@ for i in `find . -name "*.sysconfig"`; do
 done
 
 #
+## Hardcoded package name CASTOR-client for RPM transation from castor1 to castor2
+%package -n CASTOR-client
+Summary: Cern Advanced mass STORage
+Group: Application/Castor
+Requires: castor-commands,castor-stager-clientold,castor-rfio-server,castor-lib,castor-doc,castor-rtcopy-client,castor-upv-
+client,castor-rtcopy-messages,castor-ns-client,castor-stager-client,castor-vdqm-client,castor-rfio-client,castor-vmgr-clien
+t,castor-devel,castor-tape-client
+%description -n CASTOR-client
+castor (Cern Advanced STORage system)  Meta package for CASTOR-client from castor1 transition to castor2
+%files -n CASTOR-client
+
+#
 ## The following will be filled dynamically with the rule: make rpm, or make tar
 #
