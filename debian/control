@@ -18,6 +18,12 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  general commands
 
+Package: castor-config
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: castor (Cern Advanced STORage system)
+ castor.conf example
+
 Package: castor-devel
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
