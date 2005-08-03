@@ -516,7 +516,7 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 		header.magic = magicNumber;
 		
 		// read the rest of the vdqm message		
-		reqtype = oldProtInterpreter->readOldProtocol(&header, 
+		reqtype = oldProtInterpreter->readProtocol(&header, 
 																		&volumeRequest, 
 																		&driveRequest);														
   } catch (castor::exception::Exception e) {  
@@ -563,7 +563,7 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 	    	oldProtInterpreter->sendAcknPing(-e.code());
 	    }
 	    else {
-	    	oldProtInterpreter->sendAcknRollbackOldProtocol(e.code());
+	    	oldProtInterpreter->sendAcknRollback(e.code());
 	    }
     } catch (castor::exception::Exception e) {  
 	    // "Exception caught" message
@@ -586,9 +586,9 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 			//Sending reply to client
 			castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 10);
 			
-			oldProtInterpreter->acknCommitOldProtocol();
+			oldProtInterpreter->sendAcknCommit();
 			oldProtInterpreter->sendToOldClient(&header, &volumeRequest, &driveRequest);
-			rc = oldProtInterpreter->recvAcknFromOldProtocol();
+			rc = oldProtInterpreter->recvAcknFromOldClient();
 		}
 	} catch (castor::exception::Exception e) {  
     // "Exception caught" message

@@ -101,9 +101,9 @@ castor::vdqm::OldProtocolInterpreter::~OldProtocolInterpreter()
 
 
 //------------------------------------------------------------------------------
-// readOldProtocol
+// readProtocol
 //------------------------------------------------------------------------------
-int castor::vdqm::OldProtocolInterpreter::readOldProtocol(newVdqmHdr_t *header, 
+int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header, 
       																					newVdqmVolReq_t *volumeRequest, 
 													      								newVdqmDrvReq_t *driveRequest) 
 	throw (castor::exception::Exception) {
@@ -461,9 +461,9 @@ int castor::vdqm::OldProtocolInterpreter::sendToOldClient(newVdqmHdr_t *header,
 
 
 //------------------------------------------------------------------------------
-// acknCommitOldProtocol
+// sendAcknCommit
 //------------------------------------------------------------------------------
-void castor::vdqm::OldProtocolInterpreter::acknCommitOldProtocol() 
+void castor::vdqm::OldProtocolInterpreter::sendAcknCommit() 
 	throw (castor::exception::Exception) {
 		
 	char hdrbuf[VDQM_HDRBUFSIZ];
@@ -491,9 +491,9 @@ void castor::vdqm::OldProtocolInterpreter::acknCommitOldProtocol()
 
 
 //------------------------------------------------------------------------------
-// recvAcknFromOldProtocol
+// recvAcknFromOldClient
 //------------------------------------------------------------------------------
-int castor::vdqm::OldProtocolInterpreter::recvAcknFromOldProtocol() 
+int castor::vdqm::OldProtocolInterpreter::recvAcknFromOldClient() 
 	throw (castor::exception::Exception) {
 	
     char hdrbuf[VDQM_HDRBUFSIZ];
@@ -546,9 +546,9 @@ void castor::vdqm::OldProtocolInterpreter::sendAcknPing(int queuePosition)
 
 
 //------------------------------------------------------------------------------
-// sendAcknRollbackOldProtocol
+// sendAcknRollback
 //------------------------------------------------------------------------------
-void castor::vdqm::OldProtocolInterpreter::sendAcknRollbackOldProtocol(
+void castor::vdqm::OldProtocolInterpreter::sendAcknRollback(
 	int errorCode) 
 	throw (castor::exception::Exception) {
     

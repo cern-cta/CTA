@@ -83,7 +83,7 @@ namespace castor {
 	       * to the TapeDrive
 	       * @exception In case of error
 	       */
-	      int readOldProtocol(newVdqmHdr_t *header, 
+	      int readProtocol(newVdqmHdr_t *header, 
 	      										newVdqmVolReq_t *volumeRequest, 
 	      										newVdqmDrvReq_t *driveRequest) 
 					throw (castor::exception::Exception);
@@ -104,7 +104,7 @@ namespace castor {
 	       * 
 	       * @exception In case of error
 	       */									
-	      void acknCommitOldProtocol() 
+	      void sendAcknCommit() 
 	      	throw (castor::exception::Exception);
 	      	
 	      /**
@@ -114,7 +114,7 @@ namespace castor {
 	       * @return The message type, which has been send from the client
 	       * @exception In case of error
 	       */	
-	      int recvAcknFromOldProtocol()
+	      int recvAcknFromOldClient()
 	      	throw (castor::exception::Exception);
 	      	
 	      /**
@@ -135,7 +135,7 @@ namespace castor {
 	     	 * @param errorCode The errorCode which has been thrown
 	       * @exception In case of error
 	     	 */
-	      void sendAcknRollbackOldProtocol(int errorCode) 
+	      void sendAcknRollback(int errorCode) 
 	      	throw (castor::exception::Exception);          
 	      	
 
