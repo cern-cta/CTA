@@ -18,7 +18,7 @@
 #define LOG_SYSCALL_ERR(func) { \
     int _save_serrno = serrno; \
     (void)dlf_write( \
-                    childUuid, \
+                    (inChild == 0 ? mainUuid : childUuid), \
                     RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL), \
                     (struct Cns_fileid *)NULL, \
                     RTCPCLD_NB_PARAMS+2, \
@@ -36,7 +36,7 @@
     char *_dbErr = NULL; \
     int _save_serrno = serrno; \
     (void)dlf_write( \
-                    childUuid, \
+                    (inChild == 0 ? mainUuid : childUuid), \
                     RTCPCLD_LOG_MSG(RTCPCLD_MSG_DBSVC), \
                     (struct Cns_fileid *)NULL, \
                     RTCPCLD_NB_PARAMS+3, \
@@ -58,7 +58,7 @@
     char *_dbErr = NULL; \
     int _save_serrno = serrno; \
     (void)dlf_write( \
-                    childUuid, \
+                    (inChild == 0 ? mainUuid : childUuid), \
                     RTCPCLD_LOG_MSG(RTCPCLD_MSG_DBSVC), \
                     (struct Cns_fileid *)NULL, \
                     RTCPCLD_NB_PARAMS+4, \
@@ -84,7 +84,7 @@
 #define LOG_SECURITY_ERR(func) {\
     int _save_serrno = serrno; \
     (void)dlf_write( \
-                    childUuid, \
+                    (inChild == 0 ? mainUuid : childUuid), \
                     RTCPCLD_LOG_MSG(RTCPCLD_MSG_SECURITY), \
                     (struct Cns_fileid *)NULL, \
                     RTCPCLD_NB_PARAMS+2, \
@@ -102,7 +102,7 @@
     int _save_serrno = serrno; \
     char *_dbErr = NULL; \
     (void)dlf_write( \
-                    childUuid, \
+                    (inChild == 0 ? mainUuid : childUuid), \
                     RTCPCLD_LOG_MSG(RTCPCLD_MSG_CALL_TRACE), \
                     (struct Cns_fileid *)NULL, \
                     RTCPCLD_NB_PARAMS+1, \
