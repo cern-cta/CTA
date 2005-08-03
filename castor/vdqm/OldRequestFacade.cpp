@@ -25,7 +25,6 @@
  *****************************************************************************/
 
 #include <string>
-//#include <Cthread_api.h>
 
 #include "castor/Constants.hpp"
 
@@ -41,7 +40,7 @@
 // Local Includes
 #include "newVdqm.h"
 #include "OldRequestFacade.hpp"
-#include "VdqmServerSocket.hpp"
+#include "OldProtocolInterpreter.hpp"
 
 // To make the code more readable
 using namespace castor::vdqm::handler;
@@ -143,8 +142,9 @@ bool castor::vdqm::OldRequestFacade::checkRequestType(Cuuid_t cuuid)
   return true;
 }
 
-bool castor::vdqm::OldRequestFacade::handleRequestType(VdqmServerSocket* sock,
-																											Cuuid_t cuuid) 
+bool castor::vdqm::OldRequestFacade::handleRequestType(
+	OldProtocolInterpreter* oldProtInterpreter,
+	Cuuid_t cuuid) 
 	throw (castor::exception::Exception) {
 	
 	bool handleRequest = true;
@@ -213,7 +213,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(VdqmServerSocket* sock,
 				  castor::dlf::Param params[] =
 				  	{castor::dlf::Param("Queue position", queuePosition)};
 					castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 27, 1, params);
-					sock->sendAcknPing(queuePosition);
+					oldProtInterpreter->sendAcknPing(queuePosition);
     		}
     		break;
   	default:

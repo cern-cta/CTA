@@ -24,6 +24,8 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
+#include <net.h>
+#include <unistd.h>
 #include <rtcp_constants.h> /* Definition of RTCOPY_MAGIC   */
 #include <vdqm_constants.h>
 

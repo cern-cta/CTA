@@ -29,20 +29,13 @@
 
 //Include files
 #include "castor/BaseObject.hpp"
-#include "castor/exception/Exception.hpp"
-
-
-//Forward declarations
-//typedef struct vdqmdVolReq vdqmVolReq_t;
-//typedef struct vdqmDrvReq vdqmDrvReq_t;
-//typedef struct vdqmHdr vdqmHdr_t;
 
 namespace castor {
 
   namespace vdqm {
   	
   	//Forward declaration
-  	class VdqmServerSocket;
+  	class OldProtocolInterpreter;
 		typedef struct newVdqmVolReq newVdqmVolReq_t;
 		typedef struct newVdqmDrvReq newVdqmDrvReq_t;
 		typedef struct newVdqmHdr newVdqmHdr_t;  	
@@ -69,7 +62,7 @@ namespace castor {
         * @return true, if there were no complications
         * @exception In case of errors
         */
-       bool handleRequestType(VdqmServerSocket* sock, Cuuid_t cuuid) 
+       bool handleRequestType(OldProtocolInterpreter* oldProtInterpreter, Cuuid_t cuuid) 
        	throw (castor::exception::Exception);
        
        /**

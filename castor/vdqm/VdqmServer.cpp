@@ -51,6 +51,7 @@
 #include "VdqmServer.hpp"
 #include "VdqmServerSocket.hpp"
 #include "OldRequestFacade.hpp"
+#include "OldProtocolInterpreter.hpp"
 
 
 //------------------------------------------------------------------------------
@@ -440,7 +441,18 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
 		if (magicNumber == VDQM_MAGIC) {
 			//Request has MagicNumber from old VDQM Protocol
 			castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 6 );
-			handleOldVdqmRequest(sock, magicNumber, cuuid);
+			
+			try {
+				handleOldVdqmRequest(sock, magicNumber, cuuid);
+		  } catch (castor::exception::Exception e) {
+		  	// most of the exceptions are handled inside the function
+		  	
+		    // "Exception caught" message
+		    castor::dlf::Param params[] =
+		      {castor::dlf::Param("Message", e.getMessage().str()),
+		       castor::dlf::Param("errorCode", e.code())};      
+		    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 2, params);		  	
+		  }
 		}
 	  else {
 			//Wrong Magic number
@@ -453,6 +465,7 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
 	  delete sock;
   }
   else { // If it's not a socket, then it's our dedication loop!
+  	
   	castor::vdqm::handler::TapeRequestDedicationHandler* 
   		tapeRequestDedicationHandler =
   			(castor::vdqm::handler::TapeRequestDedicationHandler*) param;
@@ -464,7 +477,7 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
   	
   	delete tapeRequestDedicationHandler;
   	
-  	std::cout << "loop finished" << std::endl;
+  	std::cout << "tapeRequestDedicationHandler finished" << std::endl;
   }
   
   return 0;
@@ -478,13 +491,19 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
 void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 																					VdqmServerSocket* sock, 
 																					unsigned int magicNumber,
-																					Cuuid_t cuuid) {
+																					Cuuid_t cuuid) 
+	throw (castor::exception::Exception) {
+ 	
  	//Message of the old Protocol
 	newVdqmVolReq_t volumeRequest;
 	newVdqmDrvReq_t driveRequest;
 	newVdqmHdr_t header;
 	int reqtype; // Request type of the message
 	int rc = 0; // For checking purpose
+	OldProtocolInterpreter* oldProtInterpreter;
+	
+	
+	oldProtInterpreter = new OldProtocolInterpreter(sock, &cuuid);
 	
 	// The socket read out phase
 	try {
@@ -496,16 +515,17 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 		// Put the magic number into the header struct
 		header.magic = magicNumber;
 		
-		// read the rest of the vdqm message
-		reqtype = sock->readOldProtocol(&header, 
+		// read the rest of the vdqm message		
+		reqtype = oldProtInterpreter->readOldProtocol(&header, 
 																		&volumeRequest, 
-																		&driveRequest,
-																		cuuid);														
+																		&driveRequest);														
   } catch (castor::exception::Exception e) {  
     // "Unable to read Request from socket" message
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 7, 1, params);
+    
+    return;
   }
   
   /**
@@ -522,7 +542,7 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 		castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 14);
 		
 		oldRequestFacade.checkRequestType(cuuid);
-		oldRequestFacade.handleRequestType(sock, cuuid);
+		oldRequestFacade.handleRequestType(oldProtInterpreter, cuuid);
 
 	} catch (castor::exception::Exception e) {  
     // "Exception caught" message
@@ -540,10 +560,10 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 	    if (reqtype != VDQM_PING) {
 	    	//This is Protocol specific, because normally it receives the positive
 	    	// queue position number back.
-	    	sock->sendAcknPing(-e.code());
+	    	oldProtInterpreter->sendAcknPing(-e.code());
 	    }
 	    else {
-	    	sock->sendAcknRollbackOldProtocol(e.code());
+	    	oldProtInterpreter->sendAcknRollbackOldProtocol(e.code());
 	    }
     } catch (castor::exception::Exception e) {  
 	    // "Exception caught" message
@@ -566,9 +586,9 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 			//Sending reply to client
 			castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 10);
 			
-			sock->acknCommitOldProtocol();
-			sock->sendToOldClient(&header, &volumeRequest, &driveRequest, cuuid);
-			rc = sock->recvAcknFromOldProtocol();
+			oldProtInterpreter->acknCommitOldProtocol();
+			oldProtInterpreter->sendToOldClient(&header, &volumeRequest, &driveRequest);
+			rc = oldProtInterpreter->recvAcknFromOldProtocol();
 		}
 	} catch (castor::exception::Exception e) {  
     // "Exception caught" message
@@ -592,7 +612,7 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 			switch ( reqtype ) {
 				case VDQM_VOL_REQ:
 							  	header.reqtype = VDQM_DEL_VOLREQ;
-									oldRequestFacade.handleRequestType(sock, cuuid);
+									oldRequestFacade.handleRequestType(oldProtInterpreter, cuuid);
 									break;
 
 				case VDQM_DRV_REQ:
@@ -609,4 +629,5 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 	  }
   } // end if
   
+  delete oldProtInterpreter;
 }

@@ -27,19 +27,7 @@
 #ifndef _VDQMSERVERSOCKET_HPP_
 #define _VDQMSERVERSOCKET_HPP_
 
-// Include Files
-//#include <net.h>
-//#include <string>
-//#include <netinet/in.h>
-
-//#include "castor/exception/Exception.hpp"
 #include "castor/io/AbstractSocket.hpp"
-
-// Forward declaration
-typedef struct newVdqmHdr newVdqmHdr_t; 
-typedef struct newVdqmVolReq newVdqmVolReq_t; 
-typedef struct newVdqmDrvReq newVdqmDrvReq_t;  	
-
 
 namespace castor {
 
@@ -85,21 +73,21 @@ namespace castor {
       ~VdqmServerSocket() throw();
 
 
-	  /**
-     * Sets the SO_REUSEADDR option on the socket
-     */
-    void reusable() throw (castor::exception::Exception);
-
-	  /**
-	   * Reads the first four Bytes of the header. This function was added to 
-	   * support also the older VDQM protocol. The magic number defines, which
-	   * protocol is used.
-	   * 
-	   * @return The magic number
-	   * @exception In case of error
-	   */
-      unsigned int readMagicNumber() throw (castor::exception::Exception);
-        
+		  /**
+	     * Sets the SO_REUSEADDR option on the socket
+	     */
+	    void reusable() throw (castor::exception::Exception);
+	
+		  /**
+		   * Reads the first four Bytes of the header. This function was added to 
+		   * support also the older VDQM protocol. The magic number defines, which
+		   * protocol is used.
+		   * 
+		   * @return The magic number
+		   * @exception In case of error
+		   */
+	      unsigned int readMagicNumber() throw (castor::exception::Exception);
+	        
 
       /**
        * start listening on the socket
@@ -116,123 +104,8 @@ namespace castor {
        * 
        * @exception In case of error
        */
-      virtual VdqmServerSocket* accept() throw (castor::exception::Exception);
+      virtual VdqmServerSocket* accept() throw (castor::exception::Exception);      
       
-      
-      /**
-       * Reads an object from the socket. Please use 
-       * this function only after having read out the magic number!
-       * Note that the deallocation of it is the responsability of the caller
-       * 
-       * @return the IObject read
-       * @exception In case of error
-       */
-      virtual castor::IObject* readObject() throw(castor::exception::Exception);
-      
-      /**
-       * This function reads the old vdqm protocol out of the buffer. In fact
-       * it is quite similar to the old vdqm_RecvReq() C function. Please use 
-       * this function only after having read out the magic number! 
-       * 
-       * @return The request Type number of the old vdqm Protocol
-       * @param header The old header
-       * @param volumeRequest The old volumeRequest, which corresponds now 
-       * to the TapeRequest
-       * @param driveRequest the old driveRequest which corresponds now 
-       * to the TapeDrive
-       * @exception In case of error
-       */
-      int readOldProtocol(newVdqmHdr_t *header, 
-      										newVdqmVolReq_t *volumeRequest, 
-      										newVdqmDrvReq_t *driveRequest,
-      										Cuuid_t cuuid) 
-      									throw (castor::exception::Exception);
-      					
-      /**
-       * Sends the request back to the client with its corresponding ID. 
-       * 
-       * @return The request Type number of the old vdqm Protocol
-       * @exception In case of error
-       */				
-      int sendToOldClient(newVdqmHdr_t *header, 
-      										newVdqmVolReq_t *volumeRequest, 
-      										newVdqmDrvReq_t *driveRequest,
-      										Cuuid_t cuuid) 
-      									throw (castor::exception::Exception);
-      									
-      /**
-       * Sends a VDQM_COMMIT back to the client.
-       * 
-       * @exception In case of error
-       */									
-      void acknCommitOldProtocol() 
-      	throw (castor::exception::Exception);
-      	
-      /**
-       * Waits for an acknowledgement of the old tpdaemon, that the
-       * vdqm server has stored its request.
-       * 
-       * @return The message type, which has been send from the client
-       * @exception In case of error
-       */	
-      int recvAcknFromOldProtocol()
-      	throw (castor::exception::Exception);
-      	
-      /**
-       * Sends a commit for a ping request back to the client and informes about
-       * the queue position of the pinged TapeRequest.
-       * 
-       * @param queuePosition The queue position of the pinged TapeRequest
-       * @exception In case of error
-       */
-      void sendAcknPing(int queuePosition) 
-      	throw (castor::exception::Exception);
-      	
-     	/**
-     	 * This funtion is used in case of errors to send back the error code
-     	 * to the client. The similar function in the old vdqm part is 
-     	 * vdqm_AcknRollback().
-     	 * 
-     	 * @param errorCode The errorCode which has been thrown
-       * @exception In case of error
-     	 */
-      void sendAcknRollbackOldProtocol(int errorCode) 
-      	throw (castor::exception::Exception);
-
-
-    protected:
-
-      /**
-       * binds the socket to the given address
-       * 
-       * @exception In case of error
-       */
-      void bind(sockaddr_in saddr)
-        throw (castor::exception::Exception);
-
-
-	//--------------------------------------------------------------------------
-	// Private Part of the class
-	//--------------------------------------------------------------------------
-    private:
-      
-      /**
-       * Internal function to read from a socket the rest of the Message into 
-       * a buffer. This method is only used by readObject.
-       * @param magic the magic number expected as the first 4 bytes read.
-       * An exception is sent if the correct magic number is not found
-       * @param buf allocated by the method, it contains the data read.
-       * Note that the deallocation of this buffer is the responsability
-       * of the caller
-       * 
-       * @param buf Allocated buffer for the rest of the message waiting in the socket
-       * @param n the length of the allocated buffer
-       * @exception In case of error
-       */
-      void readRestOfBuffer(char** buf, int& n)
-        	throw (castor::exception::Exception);
-        	
-       
       /**
        * This function is used internally to write the header buffer 
        * on the socket.
@@ -253,15 +126,27 @@ namespace castor {
       void vdqmNetread(void* hdrbuf) 
         	throw (castor::exception::Exception);       
       
+
+    protected:
+
+      /**
+       * binds the socket to the given address
+       * 
+       * @exception In case of error
+       */
+      void bind(sockaddr_in saddr)
+        throw (castor::exception::Exception);       
+
+
+	//--------------------------------------------------------------------------
+	// Private Part of the class
+	//--------------------------------------------------------------------------
+    private:            	       
+      
       /**
        * Tells whether listen was already called
        */
       bool m_listening;
-      
-     	/**
-     	 * Definition of SendTo and RceiveFrom for the old DO_MARSHALL
-     	 */
-     	typedef enum direction {SendTo, ReceiveFrom} direction_t;
     };
 
   } // end of namespace vdqm

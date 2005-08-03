@@ -28,11 +28,6 @@
 #define RH_VDQMSERVER_HPP 1
 
 #include "castor/BaseObject.hpp"
-#include "castor/exception/Exception.hpp"
-
-//#define CSP_MSG_MAGIC 0xCA001
-//#define CSP_RHSERVER_PORT 9002
-//#define CSP_NOTIFICATION_PORT 9001
 
 namespace castor {
 
@@ -135,7 +130,8 @@ namespace castor {
        */
       void handleOldVdqmRequest(castor::vdqm::VdqmServerSocket* sock, 
       													unsigned int magicNumber,
-      													Cuuid_t cuuid);	    
+      													Cuuid_t cuuid)
+      	throw (castor::exception::Exception);	    
 	
 	    /**
 	     * Flag indicating whether the server should 
