@@ -327,7 +327,7 @@ castor::IObject* castor::db::ora::OraCnvSvc::getObjFromId
   throw (castor::exception::Exception) {
   castor::BaseAddress clientAd;
   clientAd.setTarget(id);
-  clientAd.setCnvSvcName("OraCnvSvc");
+  clientAd.setCnvSvcName("DbCnvSvc");
   clientAd.setCnvSvcType(repType());
   return createObj(&clientAd);
 }

@@ -192,8 +192,8 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
       tape->setTpmode(tpmode);
       tape->setStatus(castor::stager::TAPE_UNUSED);
       castor::BaseAddress ad;
-      ad.setCnvSvcName("OraCnvSvc");
-      ad.setCnvSvcType(castor::SVC_ORACNV);
+      ad.setCnvSvcName("DbCnvSvc");
+      ad.setCnvSvcType(castor::SVC_DBCNV);
       try {
         cnvSvc()->createRep(&ad, tape, false);
         return tape;
@@ -239,8 +239,8 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
   try {
     castor::BaseAddress ad;
     ad.setTarget(id);
-    ad.setCnvSvcName("OraCnvSvc");
-    ad.setCnvSvcType(castor::SVC_ORACNV);
+    ad.setCnvSvcName("DbCnvSvc");
+    ad.setCnvSvcType(castor::SVC_DBCNV);
     castor::IObject* obj = cnvSvc()->createObj(&ad);
     castor::stager::Tape* tape =
       dynamic_cast<castor::stager::Tape*> (obj);

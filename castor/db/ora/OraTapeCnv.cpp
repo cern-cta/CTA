@@ -244,7 +244,7 @@ void castor::db::ora::OraTapeCnv::fillRep(castor::IAddress* address,
       throw ex;
     }
     if (autocommit) {
-      cnvSvc()->getConnection()->commit();
+      cnvSvc()->commit();
     }
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex; // XXX Fix it, depending on ORACLE error
@@ -290,8 +290,8 @@ void castor::db::ora::OraTapeCnv::fillRepStream(castor::stager::Tape* obj)
     oracle::occi::ResultSet *rset = m_checkStreamExistStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::BaseAddress ad;
-      ad.setCnvSvcName("OraCnvSvc");
-      ad.setCnvSvcType(castor::SVC_ORACNV);
+      ad.setCnvSvcName("DbCnvSvc");
+      ad.setCnvSvcType(castor::SVC_DBCNV);
       cnvSvc()->createRep(&ad, obj->stream(), false, OBJ_Tape);
     } else {
       // Check remote update statement
@@ -622,17 +622,17 @@ void castor::db::ora::OraTapeCnv::createRep(castor::IAddress* address,
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
     if (autocommit) {
-      cnvSvc()->getConnection()->commit();
+      cnvSvc()->commit();
     }
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
+      cnvSvc()->rollback();
       if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
         // We've obviously lost the ORACLE connection here
         cnvSvc()->dropConnection();
       }
-    } catch (oracle::occi::SQLException e) {
+    } catch (castor::exception::Exception e) {
       // rollback failed, let's drop the connection for security
       cnvSvc()->dropConnection();
     }
@@ -684,17 +684,17 @@ void castor::db::ora::OraTapeCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setDouble(9, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
-      cnvSvc()->getConnection()->commit();
+      cnvSvc()->commit();
     }
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
+      cnvSvc()->rollback();
       if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
         // We've obviously lost the ORACLE connection here
         cnvSvc()->dropConnection();
       }
-    } catch (oracle::occi::SQLException e) {
+    } catch (castor::exception::Exception e) {
       // rollback failed, let's drop the connection for security
       cnvSvc()->dropConnection();
     }
@@ -738,17 +738,17 @@ void castor::db::ora::OraTapeCnv::deleteRep(castor::IAddress* address,
       cnvSvc()->deleteRep(0, *it, false);
     }
     if (autocommit) {
-      cnvSvc()->getConnection()->commit();
+      cnvSvc()->commit();
     }
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
+      cnvSvc()->rollback();
       if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
         // We've obviously lost the ORACLE connection here
         cnvSvc()->dropConnection();
       }
-    } catch (oracle::occi::SQLException e) {
+    } catch (castor::exception::Exception e) {
       // rollback failed, let's drop the connection for security
       cnvSvc()->dropConnection();
     }
@@ -799,12 +799,12 @@ castor::IObject* castor::db::ora::OraTapeCnv::createObj(castor::IAddress* addres
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
+      cnvSvc()->rollback();
       if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
         // We've obviously lost the ORACLE connection here
         cnvSvc()->dropConnection();
       }
-    } catch (oracle::occi::SQLException e) {
+    } catch (castor::exception::Exception e) {
       // rollback failed, let's drop the connection for security
       cnvSvc()->dropConnection();
     }
@@ -852,12 +852,12 @@ void castor::db::ora::OraTapeCnv::updateObj(castor::IObject* obj)
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
+      cnvSvc()->rollback();
       if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
         // We've obviously lost the ORACLE connection here
         cnvSvc()->dropConnection();
       }
-    } catch (oracle::occi::SQLException e) {
+    } catch (castor::exception::Exception e) {
       // rollback failed, let's drop the connection for security
       cnvSvc()->dropConnection();
     }

@@ -42,7 +42,7 @@ namespace castor {
     namespace ora {
 
       /**
-       * Implementation of the IStagerSvc for Oracle
+       * Implementation of the ICommonSvc for Oracle
        */
       class OraCommonSvc : public BaseSvc,
                            public OraBaseObj,

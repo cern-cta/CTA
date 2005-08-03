@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)OraTapeSvc.cpp,v 1.1 $Release$ 2005/07/07 15:08:21 itglp
+ * @(#)OraTapeSvc.cpp,v 1.2 $Release$ 2005/08/03 17:05:53 itglp
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -355,8 +355,8 @@ castor::db::ora::OraTapeSvc::bestFileSystemForSegment
       ((u_signed64)m_bestFileSystemForSegmentStatement->getDouble(5));
     // Fill result for CastorFile
     castor::BaseAddress ad;
-    ad.setCnvSvcName("OraCnvSvc");
-    ad.setCnvSvcType(castor::SVC_ORACNV);
+    ad.setCnvSvcName("DbCnvSvc");
+    ad.setCnvSvcType(castor::SVC_DBCNV);
     cnvSvc()->fillObj(&ad, result, OBJ_CastorFile);
     // commit
     cnvSvc()->commit();
@@ -397,8 +397,8 @@ bool castor::db::ora::OraTapeSvc::anyTapeCopyForStream
     if (result) {
       searchItem->setStatus(castor::stager::STREAM_WAITMOUNT);
       castor::BaseAddress ad;
-      ad.setCnvSvcName("OraCnvSvc");
-      ad.setCnvSvcType(castor::SVC_ORACNV);
+      ad.setCnvSvcName("DbCnvSvc");
+      ad.setCnvSvcType(castor::SVC_DBCNV);
       cnvSvc()->updateRep(&ad, searchItem, true);
     }
     return result;
@@ -479,8 +479,8 @@ castor::db::ora::OraTapeSvc::bestTapeCopyForStream
     // Fill result for TapeCopy, Segments and Tape
     cnvSvc()->updateObj(result);
     castor::BaseAddress ad;
-    ad.setCnvSvcName("OraCnvSvc");
-    ad.setCnvSvcType(castor::SVC_ORACNV);
+    ad.setCnvSvcName("DbCnvSvc");
+    ad.setCnvSvcType(castor::SVC_DBCNV);
     cnvSvc()->fillObj(&ad, result, OBJ_Segment);
     for (std::vector<castor::stager::Segment*>::iterator it =
            result->segments().begin();
@@ -718,8 +718,8 @@ castor::db::ora::OraTapeSvc::streamsToDo()
       cnvSvc()->updateRep(0, stream, true);
       // Fill TapePool pointer
       castor::BaseAddress ad;
-      ad.setCnvSvcName("OraCnvSvc");
-      ad.setCnvSvcType(castor::SVC_ORACNV);
+      ad.setCnvSvcName("DbCnvSvc");
+      ad.setCnvSvcType(castor::SVC_DBCNV);
       cnvSvc()->fillObj(&ad, obj, OBJ_TapePool);
       result.push_back(stream);
     }

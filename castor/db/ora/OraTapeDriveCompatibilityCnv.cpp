@@ -170,7 +170,7 @@ void castor::db::ora::OraTapeDriveCompatibilityCnv::fillRep(castor::IAddress* ad
       throw ex;
     }
     if (autocommit) {
-      cnvSvc()->getConnection()->commit();
+      cnvSvc()->commit();
     }
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex; // XXX Fix it, depending on ORACLE error
@@ -195,8 +195,8 @@ void castor::db::ora::OraTapeDriveCompatibilityCnv::fillRepTapeAccessSpecificati
     oracle::occi::ResultSet *rset = m_checkTapeAccessSpecificationExistStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::BaseAddress ad;
-      ad.setCnvSvcName("OraCnvSvc");
-      ad.setCnvSvcType(castor::SVC_ORACNV);
+      ad.setCnvSvcName("DbCnvSvc");
+      ad.setCnvSvcType(castor::SVC_DBCNV);
       cnvSvc()->createRep(&ad, obj->tapeAccessSpecification(), false);
     }
     // Close resultset
@@ -304,17 +304,17 @@ void castor::db::ora::OraTapeDriveCompatibilityCnv::createRep(castor::IAddress* 
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
     if (autocommit) {
-      cnvSvc()->getConnection()->commit();
+      cnvSvc()->commit();
     }
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
+      cnvSvc()->rollback();
       if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
         // We've obviously lost the ORACLE connection here
         cnvSvc()->dropConnection();
       }
-    } catch (oracle::occi::SQLException e) {
+    } catch (castor::exception::Exception e) {
       // rollback failed, let's drop the connection for security
       cnvSvc()->dropConnection();
     }
@@ -354,17 +354,17 @@ void castor::db::ora::OraTapeDriveCompatibilityCnv::updateRep(castor::IAddress* 
     m_updateStatement->setDouble(3, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
-      cnvSvc()->getConnection()->commit();
+      cnvSvc()->commit();
     }
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
+      cnvSvc()->rollback();
       if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
         // We've obviously lost the ORACLE connection here
         cnvSvc()->dropConnection();
       }
-    } catch (oracle::occi::SQLException e) {
+    } catch (castor::exception::Exception e) {
       // rollback failed, let's drop the connection for security
       cnvSvc()->dropConnection();
     }
@@ -403,17 +403,17 @@ void castor::db::ora::OraTapeDriveCompatibilityCnv::deleteRep(castor::IAddress* 
     m_deleteStatement->setDouble(1, obj->id());
     m_deleteStatement->executeUpdate();
     if (autocommit) {
-      cnvSvc()->getConnection()->commit();
+      cnvSvc()->commit();
     }
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
+      cnvSvc()->rollback();
       if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
         // We've obviously lost the ORACLE connection here
         cnvSvc()->dropConnection();
       }
-    } catch (oracle::occi::SQLException e) {
+    } catch (castor::exception::Exception e) {
       // rollback failed, let's drop the connection for security
       cnvSvc()->dropConnection();
     }
@@ -458,12 +458,12 @@ castor::IObject* castor::db::ora::OraTapeDriveCompatibilityCnv::createObj(castor
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
+      cnvSvc()->rollback();
       if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
         // We've obviously lost the ORACLE connection here
         cnvSvc()->dropConnection();
       }
-    } catch (oracle::occi::SQLException e) {
+    } catch (castor::exception::Exception e) {
       // rollback failed, let's drop the connection for security
       cnvSvc()->dropConnection();
     }
@@ -505,12 +505,12 @@ void castor::db::ora::OraTapeDriveCompatibilityCnv::updateObj(castor::IObject* o
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
+      cnvSvc()->rollback();
       if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
         // We've obviously lost the ORACLE connection here
         cnvSvc()->dropConnection();
       }
-    } catch (oracle::occi::SQLException e) {
+    } catch (castor::exception::Exception e) {
       // rollback failed, let's drop the connection for security
       cnvSvc()->dropConnection();
     }

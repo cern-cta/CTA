@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/07/12 16:38:01 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/08/03 17:05:52 $ $Author: itglp $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -300,8 +300,8 @@ castor::db::ora::OraJobSvc::getUpdateStart
     if (status == 99) {
       // First get the DiskCopy
       castor::BaseAddress ad;
-      ad.setCnvSvcName("OraCnvSvc");
-      ad.setCnvSvcType(castor::SVC_ORACNV);
+      ad.setCnvSvcName("DbCnvSvc");
+      ad.setCnvSvcType(castor::SVC_DBCNV);
       ad.setTarget(id);
       castor::IObject* iobj = cnvSvc()->createObj(&ad);
       castor::stager::DiskCopy *dc =

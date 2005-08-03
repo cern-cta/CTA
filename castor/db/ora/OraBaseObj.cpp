@@ -42,7 +42,7 @@ castor::db::ora::OraBaseObj::OraBaseObj(castor::ICnvSvc* cnvSvc) :
   m_cnvSvc = dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc);
   if (0 == m_cnvSvc) {
     m_cnvSvc = dynamic_cast<castor::db::ora::OraCnvSvc*>
-      (svcs()->cnvService("OraCnvSvc", SVC_ORACNV));
+      (svcs()->cnvService("DbCnvSvc", SVC_DBCNV));
     if (!m_cnvSvc) {
       castor::exception::Internal ex;
       ex.getMessage() << "No OraCnvSvc available";

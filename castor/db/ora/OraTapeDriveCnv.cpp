@@ -346,7 +346,7 @@ void castor::db::ora::OraTapeDriveCnv::fillRep(castor::IAddress* address,
       throw ex;
     }
     if (autocommit) {
-      cnvSvc()->getConnection()->commit();
+      cnvSvc()->commit();
     }
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex; // XXX Fix it, depending on ORACLE error
@@ -392,8 +392,8 @@ void castor::db::ora::OraTapeDriveCnv::fillRepTape(castor::vdqm::TapeDrive* obj)
     oracle::occi::ResultSet *rset = m_checkTapeExistStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::BaseAddress ad;
-      ad.setCnvSvcName("OraCnvSvc");
-      ad.setCnvSvcType(castor::SVC_ORACNV);
+      ad.setCnvSvcName("DbCnvSvc");
+      ad.setCnvSvcType(castor::SVC_DBCNV);
       cnvSvc()->createRep(&ad, obj->tape(), false, OBJ_TapeDrive);
     } else {
       // Check remote update statement
@@ -454,8 +454,8 @@ void castor::db::ora::OraTapeDriveCnv::fillRepTapeRequest(castor::vdqm::TapeDriv
     oracle::occi::ResultSet *rset = m_checkTapeRequestExistStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::BaseAddress ad;
-      ad.setCnvSvcName("OraCnvSvc");
-      ad.setCnvSvcType(castor::SVC_ORACNV);
+      ad.setCnvSvcName("DbCnvSvc");
+      ad.setCnvSvcType(castor::SVC_DBCNV);
       cnvSvc()->createRep(&ad, obj->runningTapeReq(), false, OBJ_TapeDrive);
     } else {
       // Check remote update statement
@@ -644,8 +644,8 @@ void castor::db::ora::OraTapeDriveCnv::fillRepDeviceGroupName(castor::vdqm::Tape
     oracle::occi::ResultSet *rset = m_checkDeviceGroupNameExistStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::BaseAddress ad;
-      ad.setCnvSvcName("OraCnvSvc");
-      ad.setCnvSvcType(castor::SVC_ORACNV);
+      ad.setCnvSvcName("DbCnvSvc");
+      ad.setCnvSvcType(castor::SVC_DBCNV);
       cnvSvc()->createRep(&ad, obj->deviceGroupName(), false);
     }
     // Close resultset
@@ -676,8 +676,8 @@ void castor::db::ora::OraTapeDriveCnv::fillRepTapeServer(castor::vdqm::TapeDrive
     oracle::occi::ResultSet *rset = m_checkTapeServerExistStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::BaseAddress ad;
-      ad.setCnvSvcName("OraCnvSvc");
-      ad.setCnvSvcType(castor::SVC_ORACNV);
+      ad.setCnvSvcName("DbCnvSvc");
+      ad.setCnvSvcType(castor::SVC_DBCNV);
       cnvSvc()->createRep(&ad, obj->tapeServer(), false);
     }
     // Close resultset
@@ -1080,17 +1080,17 @@ void castor::db::ora::OraTapeDriveCnv::createRep(castor::IAddress* address,
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
     if (autocommit) {
-      cnvSvc()->getConnection()->commit();
+      cnvSvc()->commit();
     }
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
+      cnvSvc()->rollback();
       if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
         // We've obviously lost the ORACLE connection here
         cnvSvc()->dropConnection();
       }
-    } catch (oracle::occi::SQLException e) {
+    } catch (castor::exception::Exception e) {
       // rollback failed, let's drop the connection for security
       cnvSvc()->dropConnection();
     }
@@ -1149,17 +1149,17 @@ void castor::db::ora::OraTapeDriveCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setDouble(11, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
-      cnvSvc()->getConnection()->commit();
+      cnvSvc()->commit();
     }
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
+      cnvSvc()->rollback();
       if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
         // We've obviously lost the ORACLE connection here
         cnvSvc()->dropConnection();
       }
-    } catch (oracle::occi::SQLException e) {
+    } catch (castor::exception::Exception e) {
       // rollback failed, let's drop the connection for security
       cnvSvc()->dropConnection();
     }
@@ -1198,17 +1198,17 @@ void castor::db::ora::OraTapeDriveCnv::deleteRep(castor::IAddress* address,
     m_deleteStatement->setDouble(1, obj->id());
     m_deleteStatement->executeUpdate();
     if (autocommit) {
-      cnvSvc()->getConnection()->commit();
+      cnvSvc()->commit();
     }
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
+      cnvSvc()->rollback();
       if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
         // We've obviously lost the ORACLE connection here
         cnvSvc()->dropConnection();
       }
-    } catch (oracle::occi::SQLException e) {
+    } catch (castor::exception::Exception e) {
       // rollback failed, let's drop the connection for security
       cnvSvc()->dropConnection();
     }
@@ -1261,12 +1261,12 @@ castor::IObject* castor::db::ora::OraTapeDriveCnv::createObj(castor::IAddress* a
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
+      cnvSvc()->rollback();
       if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
         // We've obviously lost the ORACLE connection here
         cnvSvc()->dropConnection();
       }
-    } catch (oracle::occi::SQLException e) {
+    } catch (castor::exception::Exception e) {
       // rollback failed, let's drop the connection for security
       cnvSvc()->dropConnection();
     }
@@ -1316,12 +1316,12 @@ void castor::db::ora::OraTapeDriveCnv::updateObj(castor::IObject* obj)
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
+      cnvSvc()->rollback();
       if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
         // We've obviously lost the ORACLE connection here
         cnvSvc()->dropConnection();
       }
-    } catch (oracle::occi::SQLException e) {
+    } catch (castor::exception::Exception e) {
       // rollback failed, let's drop the connection for security
       cnvSvc()->dropConnection();
     }
