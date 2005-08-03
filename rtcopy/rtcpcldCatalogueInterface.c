@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.133 $ $Release$ $Date: 2005/07/21 09:13:08 $ $Author: itglp $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.134 $ $Release$ $Date: 2005/08/03 11:14:56 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.133 $ $Release$ $Date: 2005/07/21 09:13:08 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.134 $ $Release$ $Date: 2005/08/03 11:14:56 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1289,83 +1289,84 @@ static int nextSegmentToRecall(
     return(-1);
   }
 
-  rc = rtcpcld_nextFileToProcess(tape,&fl);
-  if ( (rc != 1) || (fl == NULL) ) {
-    rc = procSegmentsForTape(tape);
-    if ( rc == -1 ) {
-      save_serrno = serrno;
-      if ( (save_serrno != EAGAIN) && 
-           (save_serrno != ENOENT) ) LOG_SYSCALL_ERR("procSegmentsForTape()");
-      return(-1);
-    }
-    fl = NULL;
+  rc = getStgSvc(&stgsvc);
+  if ( rc == -1 || stgsvc == NULL || *stgsvc == NULL ) return(-1);    
+
+  /*
+   * Get a filesystem for the next segment. Try to skip over problematic requests
+   */
+  for (;;) {
     rc = rtcpcld_nextFileToProcess(tape,&fl);
     if ( (rc != 1) || (fl == NULL) ) {
-      serrno = ENOENT;
-      return(-1);
+      rc = procSegmentsForTape(tape);
+      if ( rc == -1 ) {
+        save_serrno = serrno;
+        if ( (save_serrno != EAGAIN) && 
+             (save_serrno != ENOENT) ) LOG_SYSCALL_ERR("procSegmentsForTape()");
+        return(-1);
+      }
+      fl = NULL;
+      rc = rtcpcld_nextFileToProcess(tape,&fl);
+      if ( (rc != 1) || (fl == NULL) ) {
+        serrno = ENOENT;
+        return(-1);
+      }
     }
-  }
-
-  filereq = &(fl->filereq);
-
-  if ( fl->dbRef == NULL ) {
-    rc = updateSegmentFromDB(fl);
-    if ( rc == -1 ) return(-1);
-    if ( (fl->dbRef == NULL) || (fl->dbRef->row == NULL) ) {
-      serrno = SEINTERNAL;
-      return(-1);
+    
+    filereq = &(fl->filereq);
+    
+    if ( fl->dbRef == NULL ) {
+      rc = updateSegmentFromDB(fl);
+      if ( rc == -1 ) return(-1);
+      if ( (fl->dbRef == NULL) || (fl->dbRef->row == NULL) ) {
+        serrno = SEINTERNAL;
+        return(-1);
+      }
     }
-  }
-  segment = (struct Cstager_Segment_t *)fl->dbRef->row;
-
-  rc = getStgSvc(&stgsvc);
-  if ( rc == -1 || stgsvc == NULL || *stgsvc == NULL ) return(-1);
-  
-  recallCandidate = NULL;
-  LOG_CALL_TRACE((rc = Cstager_ITapeSvc_bestFileSystemForSegment(
+    segment = (struct Cstager_Segment_t *)fl->dbRef->row;
+    
+    recallCandidate = NULL;
+    LOG_CALL_TRACE((rc = Cstager_ITapeSvc_bestFileSystemForSegment(
                                                                    *stgsvc,
                                                                    segment,
                                                                    &recallCandidate
                                                                    )));
-  if ( rc == -1 ) {
-    save_serrno = serrno;
-    LOG_DBCALLANDKEY_ERR("Cstager_ITapeSvc_bestFileSystemForSegment()",
-                         Cstager_ITapeSvc_errorMsg(*stgsvc),
-                         fl->dbRef->key);
-    filereq->err.errorcode = save_serrno;
-    filereq->err.severity = RTCP_FAILED;
-    strncpy(filereq->err.errmsgtxt,
-            Cstager_ITapeSvc_errorMsg(*stgsvc),
-            sizeof(filereq->err.errmsgtxt)-1);
-    (void)rtcpcld_updcRecallFailed(tape,fl);
-    serrno = save_serrno;
-    return(-1);
-  }
+    if ( rc == -1 ) {
+      save_serrno = serrno;
+      LOG_DBCALLANDKEY_ERR("Cstager_ITapeSvc_bestFileSystemForSegment()",
+                           Cstager_ITapeSvc_errorMsg(*stgsvc),
+                           fl->dbRef->key);
+      filereq->err.errorcode = save_serrno;
+      filereq->err.severity = RTCP_FAILED;
+      strncpy(filereq->err.errmsgtxt,
+              Cstager_ITapeSvc_errorMsg(*stgsvc),
+              sizeof(filereq->err.errmsgtxt)-1);
+      (void)rtcpcld_updcRecallFailed(tape,fl);
+      serrno = save_serrno;
+      return(-1);
+    }
 
-  if ( recallCandidate == NULL ) {
-    LOG_DBCALLANDKEY_ERR("Cstager_ITapeSvc_bestFileSystemForSegment()",
-                         "Unexpected successful return without candidate",
-                         fl->dbRef->key);
-    /*
-     * Force something else than ENOENT here because this an error that
-     * can only happen if:
-     *  1) there are no available disk resources
-     *  2) there is a bug
-     *
-     * In either case, ENOENT will be interpreted by the recaller as if
-     * there is nothing more to recall, which is not true since we have
-     * been called with a valid segment. So to avoid that the recaller
-     * thinks it has finished its work, we force another error. ENOSPC
-     * is most appropriate in the normal case when there are no available
-     * disk resources (1 above).
-     */
-    filereq->err.errorcode = ENOSPC;
-    filereq->err.severity = RTCP_FAILED;
-    strcpy(filereq->err.errmsgtxt,
-           "Cstager_ITapeSvc_bestFileSystemForSegment() returned no candidate");
-    (void)rtcpcld_updcRecallFailed(tape,fl);
-    serrno = ENOENT;
-    return(-1);
+    if ( recallCandidate == NULL ) {
+      LOG_DBCALLANDKEY_ERR("Cstager_ITapeSvc_bestFileSystemForSegment()",
+                           "Unexpected successful return without candidate. Continuing with next segment (if any)",
+                           fl->dbRef->key);
+      /*
+       * Force something else than ENOENT here because this an error that
+       * can only happen if:
+       *  1) the client cancelled the request with stager_rm
+       *  2) there are no available disk resources
+       *  3) there is a bug
+       *
+       * Mark the segment as failed 
+       */
+      filereq->err.errorcode = ENOENT;
+      filereq->err.severity = RTCP_FAILED;
+      strcpy(filereq->err.errmsgtxt,
+             "Cstager_ITapeSvc_bestFileSystemForSegment() returned no candidate");
+      (void)rtcpcld_updcRecallFailed(tape,fl);
+      continue;
+    }
+    break;
   }
   
   diskCopy = Cstager_DiskCopyForRecall_getDiskCopy(
