@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.14 $ $Date: 2005/08/04 15:23:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.15 $ $Date: 2005/08/04 15:35:49 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM    Make HSM admin tools.
 
@@ -49,7 +49,7 @@ LIBS2 = $(LIBS)
 LIBS2 = $(LIBS) -L../shlib
 #endif
 SPOOL = HsmToolsSpool
-PERLLIBDIR = "/usr/lib/perl/CASTOR"
+PERLLIBDIR = /usr/lib/perl/CASTOR
  
 COMM######################### FLAGS ##############################
  
