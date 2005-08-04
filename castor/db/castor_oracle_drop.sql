@@ -4,20 +4,36 @@
 /* A small table used to cross check code and DB versions */
 DROP TABLE CastorVersion;
 
-/* SQL statements for object types */
-DROP INDEX I_Id2Type_typeId;
-DROP TABLE Id2Type;
-
-/* Sequence for indices */
+/* Sequence for ids */
 DROP SEQUENCE ids_seq;
 
-/* SQL statements for requests status */
-DROP INDEX I_newRequests_typeId;
+/* indexes for optimizing queries */
+DROP INDEX I_Id2Type_typeId;
+DROP INDEX I_DiskServer_name;
+DROP INDEX I_CastorFile_fileIdNsHost;
+DROP INDEX I_DiskCopy_Castorfile;
+DROP INDEX I_DiskCopy_FileSystem;
+DROP INDEX I_TapeCopy_Castorfile;
+DROP INDEX I_SubRequest_Castorfile;
+DROP INDEX I_FileSystem_DiskPool;
+DROP INDEX I_SubRequest_DiskCopy;
+DROP INDEX I_SubRequest_Request;
+DROP INDEX I_SubRequest_Status;
+DROP INDEX I_SubRequest_Status7;
+DROP INDEX I_QueryParameter_Query;
+DROP INDEX I_NbTapeCopiesInFS_FSStream;
+DROP INDEX I_FileSystem_Rate;
+
+/* SQL statements for object types */
+DROP TABLE Id2Type;
+
+/* SQL statement for requests status */
 DROP TABLE newRequests;
 
 /* support tables - check oracleTrailer_create.sql */
 DROP TABLE NbTapeCopiesInFS;
 DROP TABLE LockTable;
+
 
 ALTER TABLE SvcClass2TapePool
   DROP CONSTRAINT fk_SvcClass2TapePool_P

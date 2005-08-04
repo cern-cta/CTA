@@ -13,8 +13,45 @@ CREATE TABLE Id2Type (id INTEGER PRIMARY KEY, type NUMBER);
 CREATE INDEX I_Id2Type_typeId on Id2Type (type, id);
 
 /* SQL statements for requests status */
-CREATE TABLE newRequests (id INTEGER PRIMARY KEY, type INTEGER, creation DATE);
-CREATE INDEX I_newRequests_typeId on newRequests (type, id);
+/* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
+CREATE TABLE newRequests (type NUMBER(38) NOT NULL, id NUMBER(38) NOT NULL, creation DATE NOT NULL,
+                 PRIMARY KEY (type, id))
+organization index
+compress
+partition by list (type)
+ (
+  partition type_16 values (16)  tablespace stager_data,
+  partition type_21 values (21)  tablespace stager_data,
+  partition type_33 values (33)  tablespace stager_data,
+  partition type_34 values (34)  tablespace stager_data,
+  partition type_35 values (35)  tablespace stager_data,
+  partition type_36 values (36)  tablespace stager_data,
+  partition type_37 values (37)  tablespace stager_data,
+  partition type_38 values (38)  tablespace stager_data,
+  partition type_39 values (39)  tablespace stager_data,
+  partition type_40 values (40)  tablespace stager_data,
+  partition type_41 values (41)  tablespace stager_data,
+  partition type_42 values (42)  tablespace stager_data,
+  partition type_43 values (43)  tablespace stager_data,
+  partition type_44 values (44)  tablespace stager_data,
+  partition type_45 values (45)  tablespace stager_data,
+  partition type_46 values (46)  tablespace stager_data,
+  partition type_48 values (48)  tablespace stager_data,
+  partition type_49 values (49)  tablespace stager_data,
+  partition type_50 values (50)  tablespace stager_data,
+  partition type_51 values (51)  tablespace stager_data,
+  partition type_60 values (60)  tablespace stager_data,
+  partition type_64 values (64)  tablespace stager_data,
+  partition type_65 values (65)  tablespace stager_data,
+  partition type_66 values (66)  tablespace stager_data,
+  partition type_67 values (67)  tablespace stager_data,
+  partition type_78 values (78)  tablespace stager_data,
+  partition type_79 values (79)  tablespace stager_data,
+  partition type_80 values (80)  tablespace stager_data,
+  partition type_84 values (84)  tablespace stager_data,
+  partition type_90 values (90)  tablespace stager_data,
+  partition notlisted values (default) tablespace stager_data
+ );
 
 /* Indexes related to CastorFiles */
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
