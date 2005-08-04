@@ -89,6 +89,10 @@
 #undef BuildStageLibrary
 #define BuildStageLibrary YES
 #endif
+#if !BuildRmLibrary
+#undef BuildRmLibrary
+#define BuildRmLibrary YES
+#endif
 #if UseVmgr
 #if !BuildVolumeMgrLibrary
 #undef BuildVolumeMgrLibrary
