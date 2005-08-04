@@ -1,3 +1,13 @@
+debian/castor/usr/share/man/man1/cleanLostFiles.1castor
 debian/castor/usr/share/man/man1/deleteFileClass.1castor
+debian/castor/usr/share/man/man1/deleteSvcClass.1castor
+debian/castor/usr/share/man/man1/diskServer_qry.1castor
+debian/castor/usr/share/man/man1/diskUsage.1castor
 debian/castor/usr/share/man/man1/enterFileClass.1castor
+debian/castor/usr/share/man/man1/enterSvcClass.1castor
+debian/castor/usr/share/man/man1/listFileClass.1castor
+debian/castor/usr/share/man/man1/listSvcClass.1castor
 debian/castor/usr/share/man/man1/modifyFileClass.1castor
+debian/castor/usr/share/man/man1/modifySvcClass.1castor
+debian/castor/usr/share/man/man1/printFileClass.1castor
+debian/castor/usr/share/man/man1/printSvcClass.1castor
