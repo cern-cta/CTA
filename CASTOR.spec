@@ -57,6 +57,7 @@ make
 rm -rf ${RPM_BUILD_ROOT}
 mkdir -p ${RPM_BUILD_ROOT}/usr/bin
 mkdir -p ${RPM_BUILD_ROOT}/usr/lib/rtcopy
+mkdir -p ${RPM_BUILD_ROOT}/usr/lib/perl/CASTOR
 mkdir -p ${RPM_BUILD_ROOT}/usr/include/shift
 mkdir -p ${RPM_BUILD_ROOT}/usr/share/man/man1
 mkdir -p ${RPM_BUILD_ROOT}/usr/share/man/man3
