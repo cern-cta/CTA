@@ -47,7 +47,7 @@
 #include "OldProtocolInterpreter.hpp"
 #include "VdqmServerSocket.hpp"
 #include "newVdqm.h"
-#include "vdqmMakros.h"  // Needed for marshalling
+#include "vdqmMacros.h"  // Needed for marshalling
 
 
 //------------------------------------------------------------------------------

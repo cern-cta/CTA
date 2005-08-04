@@ -24,6 +24,8 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
+#include <errno.h>
+#include <serrno.h>
 #include <net.h>
 #include <unistd.h>
 #include <rtcp_constants.h> /* Definition of RTCOPY_MAGIC   */
@@ -39,7 +41,7 @@
 
 #include "osdep.h" //for LONGSIZE
 #include "newVdqm.h"
-#include "vdqmMakros.h"  // Needed for marshalling
+#include "vdqmMacros.h"  // Needed for marshalling
     
 
 //------------------------------------------------------------------------------

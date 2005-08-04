@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      vdqmMakros.h
+ *                      vdqmMacros.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,21 +17,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: vdqmMakros.h  Revision: 1.0  Release Date: Aug 4, 2005  Author: mbraeger 
+ * @(#)RCSfile: vdqmMacros.h  Revision: 1.0  Release Date: Aug 4, 2005  Author: mbraeger 
  *
  *
  *
  * @author Matthias Braeger
  *****************************************************************************/
 
-#ifndef _VDQMMAKROS_H_
-#define _VDQMMAKROS_H_
+#ifndef _VDQMMACROS_H_
+#define _VDQMMACROS_H_
 
 #include <vdqm_constants.h>
 #include "marshall.h"
 
 /**
- * Some useful makros, taken from the old vdqm code, 
+ * Some useful macros, taken from the old vdqm code, 
  * to do the (un)marshalling
  */
 #define ADMINREQ(X) ( X == VDQM_HOLD || X == VDQM_RELEASE || \
@@ -57,4 +57,4 @@
  */
 typedef enum direction {SendTo, ReceiveFrom} direction_t;    
 
-#endif //_VDQMMAKROS_H_
+#endif //_VDQMMACROS_H_
