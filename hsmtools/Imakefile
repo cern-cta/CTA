@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.15 $ $Date: 2005/08/04 15:35:49 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.16 $ $Date: 2005/08/04 17:53:09 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM    Make HSM admin tools.
 
@@ -97,22 +97,24 @@ EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUF
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),printFileClass.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),printSvcClass.$(MANSUFFIX)))
 
-PROGS =  ProgramTargetName(reclaim) \
+COMM Warning Warning, our default clean rule deletes PROGS... Changed it to use PROGS_TO_CLEAN
+
+PROGS_TO_CLEAN =  ProgramTargetName(reclaim) \
 	 ProgramTargetName(repack) \
 	 ProgramTargetName(tapetohsm) \
-	 ProgramTargetName(cleanLostFiles) \
 	 ProgramTargetName(enterFileClass) \
 	 ProgramTargetName(enterSvcClass) \
 	 ProgramTargetName(modifyFileClass) \
 	 ProgramTargetName(modifySvcClass) \
 	 ProgramTargetName(deleteFileClass) \
 	 ProgramTargetName(deleteSvcClass) \
-	 ProgramTargetName(diskServer_qry) \
 	 ProgramTargetName(diskUsage) \
-	 ProgramTargetName(listFileClass) \
-	 ProgramTargetName(listSvcClass) \
 	 ProgramTargetName(printFileClass) \
 	 ProgramTargetName(printSvcClass)
+PROGS_TO_KEEP =  ProgramTargetName(cleanLostFiles) \
+	 ProgramTargetName(diskServer_qry) \
+	 ProgramTargetName(listFileClass) \
+	 ProgramTargetName(listSvcClass)
 IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(repack)) \
 	 FileName($(BIN),ProgramTargetName(tapetohsm)) \
@@ -149,7 +151,7 @@ EPROGS = $(EXPORTBIN)/reclaim \
 IPERL = FileName($(PERLLIBDIR),castor_tools.pm)
 EPERL = $(EXPORTPERL)/castor_tools.pm
 
-all: $(PROGS)
+all: $(PROGS_TO_KEEP) $(PROGS_TO_CLEAN)
 
 NormalProgramTarget(reclaim,reclaim.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(repack,repack.Osuf,$(DEPLIB),$(LIBS))
@@ -272,7 +274,7 @@ clean:
 	-@RemoveFiles(FilesToClean)
  
 clobber:        clean
-	-@RemoveFiles($(PROGS))
+	-@RemoveFiles($(PROGS_TO_CLEAN))
  
 #if _WIN32
 depend:
