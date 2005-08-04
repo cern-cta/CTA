@@ -36,9 +36,7 @@
 #include <string>
 #include <sstream>
 
-#include <vdqm_constants.h>
 #include "osdep.h" //for LONGSIZE
-#include "marshall.h"
 #include "h/Cnetdb.h"
 #include <common.h>
 
@@ -49,29 +47,7 @@
 #include "OldProtocolInterpreter.hpp"
 #include "VdqmServerSocket.hpp"
 #include "newVdqm.h"
-
-
-/**
- * Some useful makros, taken from the old vdqm code, 
- * to do the (un)marshalling
- */
-#define ADMINREQ(X) ( X == VDQM_HOLD || X == VDQM_RELEASE || \
-    X == VDQM_SHUTDOWN )
-
-#define DO_MARSHALL(X,Y,Z,W) { \
-    if ( W == SendTo ) {marshall_##X(Y,Z);} \
-    else {unmarshall_##X(Y,Z);} }
-    
-#define DO_MARSHALL_STRING(Y,Z,W,N) { \
-    if ( W == SendTo ) {marshall_STRING(Y,Z);} \
-    else { if(unmarshall_STRINGN(Y,Z,N)) { serrno=EINVAL; return -1; } } }
-
-    
-#define REQTYPE(Y,X) ( X == VDQM_##Y##_REQ || \
-    X == VDQM_DEL_##Y##REQ || \
-    X == VDQM_GET_##Y##QUEUE || (!strcmp(#Y,"VOL") && X == VDQM_PING) || \
-    (!strcmp(#Y,"DRV") && X == VDQM_DEDICATE_DRV) )
-    
+#include "vdqmMakros.h"  // Needed for marshalling
 
 
 //------------------------------------------------------------------------------

@@ -152,11 +152,6 @@ namespace castor {
 	  		 * The cuuid of the request
 	  		 */
 	  		const Cuuid_t* m_cuuid;
-	  		
-	  		/**
-				 * Definition of SendTo and RceiveFrom for the old DO_MARSHALL
-				 */
-				typedef enum direction {SendTo, ReceiveFrom} direction_t;
     };
 
   } // end of namespace vdqm

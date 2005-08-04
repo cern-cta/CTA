@@ -525,6 +525,8 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
       {castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 7, 1, params);
     
+    delete oldProtInterpreter;
+    
     return;
   }
   
@@ -571,6 +573,8 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 	      {castor::dlf::Param("Message", e.getMessage().str())};
 	    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 1, params);
 	  }
+	  
+	  delete oldProtInterpreter;
 	  
 	  // Now, we don't need to make a handshake
 	  return;

@@ -27,11 +27,9 @@
 #include <net.h>
 #include <unistd.h>
 #include <rtcp_constants.h> /* Definition of RTCOPY_MAGIC   */
-#include <vdqm_constants.h>
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/stager/ClientIdentification.hpp"
-#include "castor/io/biniostream.h"
 
 // Local includes
 #include "RTCopyDConnection.hpp"
@@ -40,6 +38,8 @@
 #include "DeviceGroupName.hpp"
 
 #include "osdep.h" //for LONGSIZE
+#include "newVdqm.h"
+#include "vdqmMakros.h"  // Needed for marshalling
     
 
 //------------------------------------------------------------------------------
@@ -114,18 +114,24 @@ void castor::vdqm::RTCopyDConnection::connect()
 //------------------------------------------------------------------------------
 // sendJobToRTCP
 //------------------------------------------------------------------------------
-bool castor::vdqm::RTCopyDConnection::sendJobToRTCP(TapeDrive *tapeDrive) 
+bool castor::vdqm::RTCopyDConnection::sendJobToRTCP(const TapeDrive *tapeDrive) 
 	throw (castor::exception::Exception) {
 	
 	bool acknSucc = true; // The return value
-
-	TapeRequest* tapeRequest;
-	castor::stager::ClientIdentification* clientData;
 	
-	castor::io::biniostream sendStream;
-	castor::io::biniostream& addrPointer = sendStream;
-
+	newVdqmDrvReq_t vdqmDrvReq; 
+	newVdqmVolReq_t vdqmVolReq;
+	
+	const TapeRequest* tapeRequest;
+	const castor::stager::ClientIdentification* clientData;
+	
+	char buf[VDQM_MSGBUFSIZ];
   int len, rc, magic, reqtype;
+  char* p;
+  
+  unsigned int castValue;
+  int intValue;
+  char* stringValue;
 
 
 	if (tapeDrive == NULL || tapeDrive->runningTapeReq() == NULL) {
@@ -154,25 +160,47 @@ bool castor::vdqm::RTCopyDConnection::sendJobToRTCP(TapeDrive *tapeDrive)
 			clientData->machine().length()  + 
       tapeDrive->deviceGroupName()->dgName().length()  + 
       tapeDrive->driveName().length()  + 4;
+      
+  p = buf;
   
+  DO_MARSHALL(LONG, p, magic, SendTo);
+  DO_MARSHALL(LONG, p, reqtype, SendTo);
+  DO_MARSHALL(LONG, p, len, SendTo);
+
+	/**
+	 * We must do a downcast because of the old Protocol.
+	 * Of course we do later the same in case of a comparison
+	 */
+	castValue = (unsigned int)tapeRequest->id();
+  DO_MARSHALL(LONG, p, castValue, SendTo);
   
-  /**
-   * Now we can do the marshalling
-   */
-  addrPointer << magic << reqtype << len;
-  addrPointer << (int)tapeRequest->id(); //Down cast, because
-  addrPointer << clientData->euid();
-	addrPointer << clientData->egid();
-	addrPointer << clientData->machine();
-	addrPointer << tapeDrive->deviceGroupName()->dgName();
-	addrPointer << tapeDrive->driveName();
-	addrPointer << clientData->userName();
+  intValue = clientData->port();
+  DO_MARSHALL(LONG, p, intValue, SendTo);
+  
+  intValue = clientData->euid();
+  DO_MARSHALL(LONG, p, intValue, SendTo);
+  
+  intValue = clientData->egid();
+  DO_MARSHALL(LONG, p, intValue, SendTo);
+  
+  stringValue = (char *)clientData->machine().c_str();
+  DO_MARSHALL_STRING(p, stringValue, SendTo, sizeof(vdqmVolReq.client_host));
+  
+  stringValue = (char *)tapeDrive->deviceGroupName()->dgName().c_str();
+  DO_MARSHALL_STRING(p, stringValue, SendTo, sizeof(vdqmDrvReq.dgn));
+  
+  stringValue = (char *)tapeDrive->driveName().c_str();
+  DO_MARSHALL_STRING(p, stringValue, SendTo, sizeof(vdqmDrvReq.drive));
+  
+  stringValue = (char *)clientData->userName().c_str();
+  DO_MARSHALL_STRING(p, stringValue, SendTo, sizeof(vdqmVolReq.client_name));  
+  
+  len += 3*LONGSIZE;
   
   /**
    * After marshalling we can send the informations to RTCP
    */
-  rc = netwrite_timeout(m_socket, (char*)sendStream.str().c_str(), 
-  											sendStream.str().length(), VDQM_TIMEOUT);
+  rc = netwrite_timeout(m_socket, buf, len, VDQM_TIMEOUT);
 
 	if (rc == -1) {
 		serrno = SECOMERR;
@@ -205,10 +233,10 @@ bool castor::vdqm::RTCopyDConnection::readRTCPAnswer()
 		
   int rc, magic, reqtype, len, errmsglen, msglen, status;
   char errmsg[1024];
-  char hdrbuf[VDQM_MSGBUFSIZ];
-  std::string message;
+  char buffer[VDQM_MSGBUFSIZ];
+	char* p;
   
-  rc = netread_timeout(m_socket, hdrbuf, LONGSIZE*3, VDQM_TIMEOUT);
+  rc = netread_timeout(m_socket, buffer, LONGSIZE*3, VDQM_TIMEOUT);
   
   switch (rc) {
   	case -1: 
@@ -231,17 +259,11 @@ bool castor::vdqm::RTCopyDConnection::readRTCPAnswer()
 	  		}
   }			    
   
+  p = buffer;
   
-  message = hdrbuf;
- 	castor::io::biniostream rcvStream(message);
-	castor::io::biniostream& addrPointer = rcvStream;
-	
-	/**
-	 * Do the unmarshalling of the message
-	 */
-  addrPointer >> magic;
-  addrPointer >> reqtype;
-  addrPointer >> len;
+  unmarshall_LONG(p, magic);
+  unmarshall_LONG(p, reqtype);
+  unmarshall_LONG(p, len);
   
   rc = 0;
   if ( len > 0 ) {
@@ -255,7 +277,7 @@ bool castor::vdqm::RTCopyDConnection::readRTCPAnswer()
       len = VDQM_MSGBUFSIZ - 3*LONGSIZE;
     }
     
-    rc = netread_timeout(m_socket, hdrbuf, len, VDQM_TIMEOUT);
+    rc = netread_timeout(m_socket, buffer, len, VDQM_TIMEOUT);
 	  switch (rc) {
 	  	case -1: 
 		  		{
@@ -277,31 +299,26 @@ bool castor::vdqm::RTCopyDConnection::readRTCPAnswer()
 		  		}
 	  }
 	  
-	  
-	  message = hdrbuf;
-	 	castor::io::biniostream rcvStream2(message);
-	 	castor::io::biniostream& addrPointer2 = rcvStream2;
-	  
     /*
      * Acknowledge message
      */
+    p = buffer;
     errmsglen = 1024;
     *errmsg = '\0';
     status = 0;
     
-    addrPointer2 >> magic;
-    addrPointer2 >> reqtype;
-    addrPointer2 >> len;
-    
+    DO_MARSHALL(LONG, p, magic, ReceiveFrom);
+    DO_MARSHALL(LONG, p, reqtype, ReceiveFrom);
+    DO_MARSHALL(LONG, p, len, ReceiveFrom);
+        
 		if ( (magic != RTCOPY_MAGIC && magic != RTCOPY_MAGIC_OLD0) || 
 					reqtype != VDQM_CLIENTINFO ) return false;    
     
-    addrPointer2 >> status;
-
+		DO_MARSHALL(LONG, p, status, ReceiveFrom);
 
     msglen = len - LONGSIZE -1;
     msglen = msglen < errmsglen-1 ? msglen : errmsglen-1;
-    strncpy(errmsg, hdrbuf, msglen);
+    strncpy(errmsg, p, msglen);
     errmsg[msglen] = '\0';
     errmsglen = msglen;
 
