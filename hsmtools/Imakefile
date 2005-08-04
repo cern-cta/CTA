@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.12 $ $Date: 2005/07/29 15:31:43 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.13 $ $Date: 2005/08/04 15:20:52 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM    Make HSM admin tools.
 
@@ -67,55 +67,84 @@ COMM######################### RULES ##############################
 MANPAGES = $(MANDIR)/reclaim.$(MANSUFFIX) \
 	   $(MANDIR)/repack.$(MANSUFFIX) \
 	   $(MANDIR)/tapetohsm.$(MANSUFFIX) \
+	   $(MANDIR)/cleanLostFiles.$(MANSUFFIX) \
 	   $(MANDIR)/enterFileClass.$(MANSUFFIX) \
+	   $(MANDIR)/enterSvcClass.$(MANSUFFIX) \
 	   $(MANDIR)/modifyFileClass.$(MANSUFFIX) \
-	   $(MANDIR)/deleteFileClass.$(MANSUFFIX)
+	   $(MANDIR)/modifySvcClass.$(MANSUFFIX) \
+	   $(MANDIR)/deleteFileClass.$(MANSUFFIX) \
+	   $(MANDIR)/deleteSvcClass.$(MANSUFFIX) \
+	   $(MANDIR)/diskServer_qry.$(MANSUFFIX) \
+	   $(MANDIR)/diskUsage.$(MANSUFFIX) \
+	   $(MANDIR)/listFileClass.$(MANSUFFIX) \
+	   $(MANDIR)/listSvcClass.$(MANSUFFIX) \
+	   $(MANDIR)/printFileClass.$(MANSUFFIX) \
+	   $(MANDIR)/printSvcClass.$(MANSUFFIX)
 EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),repack.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tapetohsm.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),cleanLostFiles.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),enterFileClass.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),enterSvcClass.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),modifyFileClass.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),deleteFileClass.$(MANSUFFIX)))
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),modifySvcClass.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),deleteFileClass.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),deleteSvcClass.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),diskServer_qry.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),diskUsage.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),listFileClass.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),listSvcClass.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),printFileClass.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),printSvcClass.$(MANSUFFIX)))
 
 PROGS =  ProgramTargetName(reclaim) \
 	 ProgramTargetName(repack) \
 	 ProgramTargetName(tapetohsm) \
+	 ProgramTargetName(cleanLostFiles) \
 	 ProgramTargetName(enterFileClass) \
-	 ProgramTargetName(modifyFileClass) \
-	 ProgramTargetName(deleteFileClass) \
-	 ProgramTargetName(printFileClass) \
 	 ProgramTargetName(enterSvcClass) \
+	 ProgramTargetName(modifyFileClass) \
 	 ProgramTargetName(modifySvcClass) \
+	 ProgramTargetName(deleteFileClass) \
 	 ProgramTargetName(deleteSvcClass) \
-	 ProgramTargetName(printSvcClass) \
+	 ProgramTargetName(diskServer_qry) \
+	 ProgramTargetName(diskUsage) \
+	 ProgramTargetName(listFileClass) \
 	 ProgramTargetName(listSvcClass) \
-	 ProgramTargetName(diskUsage)
+	 ProgramTargetName(printFileClass) \
+	 ProgramTargetName(printSvcClass)
 IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(repack)) \
 	 FileName($(BIN),ProgramTargetName(tapetohsm)) \
+	 FileName($(BIN),ProgramTargetName(cleanLostFiles)) \
 	 FileName($(BIN),ProgramTargetName(enterFileClass)) \
-	 FileName($(BIN),ProgramTargetName(modifyFileClass)) \
-	 FileName($(BIN),ProgramTargetName(deleteFileClass)) \
-	 FileName($(BIN),ProgramTargetName(printFileClass)) \
 	 FileName($(BIN),ProgramTargetName(enterSvcClass)) \
+	 FileName($(BIN),ProgramTargetName(modifyFileClass)) \
 	 FileName($(BIN),ProgramTargetName(modifySvcClass)) \
+	 FileName($(BIN),ProgramTargetName(deleteFileClass)) \
 	 FileName($(BIN),ProgramTargetName(deleteSvcClass)) \
-	 FileName($(BIN),ProgramTargetName(printSvcClass)) \
-	 FileName($(BIN),ProgramTargetName(listSvcClass)) \
+	 FileName($(BIN),ProgramTargetName(diskServer_qry)) \
 	 FileName($(BIN),ProgramTargetName(diskUsage))
+	 FileName($(BIN),ProgramTargetName(listFileClass)) \
+	 FileName($(BIN),ProgramTargetName(listSvcClass)) \
+	 FileName($(BIN),ProgramTargetName(printFileClass)) \
+	 FileName($(BIN),ProgramTargetName(printSvcClass))
 EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/repack \
 	 $(EXPORTBIN)/tapetohsm \
+	 $(EXPORTBIN)/cleanLostFiles \
 	 $(EXPORTBIN)/enterFileClass \
-	 $(EXPORTBIN)/modifyFileClass \
-	 $(EXPORTBIN)/deleteFileClass \
-	 $(EXPORTBIN)/printFileClass \
 	 $(EXPORTBIN)/enterSvcClass \
+	 $(EXPORTBIN)/modifyFileClass \
 	 $(EXPORTBIN)/modifySvcClass \
+	 $(EXPORTBIN)/deleteFileClass \
 	 $(EXPORTBIN)/deleteSvcClass \
-	 $(EXPORTBIN)/printSvcClass \
+	 $(EXPORTBIN)/diskServer_qry \
+	 $(EXPORTBIN)/diskUsage \
+	 $(EXPORTBIN)/listFileClass \
 	 $(EXPORTBIN)/listSvcClass \
-	 $(EXPORTBIN)/diskUsage
+	 $(EXPORTBIN)/printFileClass \
+	 $(EXPORTBIN)/printSvcClass
 
 IPERL = FileName($(PERLLIBDIR),castor_tools.pm)
 EPERL = $(EXPORTPERL)/castor_tools.pm
@@ -126,12 +155,12 @@ NormalProgramTarget(reclaim,reclaim.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(repack,repack.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(tapetohsm,tapetohsm.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(enterFileClass,enterFileClass.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(modifyFileClass,modifyFileClass.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(deleteFileClass,deleteFileClass.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(printFileClass,printFileClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(enterSvcClass,enterSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
+NormalProgramTarget(modifyFileClass,modifyFileClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(modifySvcClass,modifySvcClass.Osuf,$(DEPLIB2),$(LIBS2))
+NormalProgramTarget(deleteFileClass,deleteFileClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(deleteSvcClass,deleteSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
+NormalProgramTarget(printFileClass,printFileClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(printSvcClass,printSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(diskUsage,diskUsage.Osuf,$(DEPLIB2),$(LIBS2))
 
@@ -148,38 +177,47 @@ IEXPORT(repack,$(EXPORTBIN),755);
 InstallProgram(tapetohsm,$(BIN),root,bin,755)
 IEXPORT(tapetohsm,$(EXPORTBIN),755);
 
+InstallProgram(cleanLostFiles,$(BIN),root,bin,755)
+IEXPORT(cleanLostFiles,$(EXPORTBIN),755);
+
 InstallProgram(enterFileClass,$(BIN),root,bin,755)
 IEXPORT(enterFileClass,$(EXPORTBIN),755);
-
-InstallProgram(modifyFileClass,$(BIN),root,bin,755)
-IEXPORT(modifyFileClass,$(EXPORTBIN),755);
-
-InstallProgram(deleteFileClass,$(BIN),root,bin,755)
-IEXPORT(deleteFileClass,$(EXPORTBIN),755);
-
-InstallProgram(printFileClass,$(BIN),root,bin,755)
-IEXPORT(printFileClass,$(EXPORTBIN),755);
 
 InstallProgram(enterSvcClass,$(BIN),root,bin,755)
 IEXPORT(enterSvcClass,$(EXPORTBIN),755);
 
+InstallProgram(modifyFileClass,$(BIN),root,bin,755)
+IEXPORT(modifyFileClass,$(EXPORTBIN),755);
+
 InstallProgram(modifySvcClass,$(BIN),root,bin,755)
 IEXPORT(modifySvcClass,$(EXPORTBIN),755);
 
+InstallProgram(deleteFileClass,$(BIN),root,bin,755)
+IEXPORT(deleteFileClass,$(EXPORTBIN),755);
+
 InstallProgram(deleteSvcClass,$(BIN),root,bin,755)
 IEXPORT(deleteSvcClass,$(EXPORTBIN),755);
+
+InstallProgram(diskServer_qry,$(BIN),root,bin,755)
+IEXPORT(diskServer_qry,$(EXPORTBIN),755);
+
+InstallProgram(diskUsage,$(BIN),root,bin,755)
+IEXPORT(diskUsage,$(EXPORTBIN),755);
+
+InstallProgram(listFileClass,$(BIN),root,bin,755)
+IEXPORT(listFileClass,$(EXPORTBIN),755);
+
+InstallProgram(listSvcClass,$(BIN),root,bin,755)
+IEXPORT(listSvcClass,$(EXPORTBIN),755);
+
+InstallProgram(printFileClass,$(BIN),root,bin,755)
+IEXPORT(printFileClass,$(EXPORTBIN),755);
 
 InstallProgram(printSvcClass,$(BIN),root,bin,755)
 IEXPORT(printSvcClass,$(EXPORTBIN),755);
 
 InstallNonExecFile(castor_tools.pm,$(PERLLIBDIR),root,bin,755)
 IEXPORT(castor_tools.pm,$(EXPORTPERL),755);
-
-InstallProgram(listSvcClass,$(BIN),root,bin,755)
-IEXPORT(listSvcClass,$(EXPORTBIN),755);
-
-InstallProgram(diskUsage,$(BIN),root,bin,755)
-IEXPORT(diskUsage,$(EXPORTBIN),755);
 
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
@@ -192,15 +230,35 @@ MakeDir($(MANDIR),root,bin,0755)
 IMANPAGE(reclaim,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(repack,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(tapetohsm,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(cleanLostFiles,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(enterFileClass,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(enterSvcClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(modifyFileClass,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(modifySvcClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(deleteFileClass,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(deleteSvcClass,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(diskServer_qry,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(diskUsage,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(listFileClass,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(listSvcClass,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(printFileClass,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(printSvcClass,$(MANDIR),$(MANSUFFIX))
 EMANPAGE(reclaim,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(repack,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(tapetohsm,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(cleanLostFiles,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(enterFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(enterSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(modifyFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(modifySvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(deleteFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(deleteSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(diskServer_qry,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(diskUsage,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(listFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(listSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(printFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(printSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 
 export: $(EPROGS) $(EXPORTPERL) $(EPERL)
 
