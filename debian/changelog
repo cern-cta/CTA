@@ -1,3 +1,22 @@
+castor (2.0.0-54) unstable; urgency=low
+
+  * New package castor-config containing /etc/castor/castor.conf.example
+  * Moved CASTOR-client meta package to rpm only (CASTOR.spec) - its name is anyway illegal on debian
+  * New factorization of DB interface: now each service has its own explicit service interface
+  * Continuing VDQM new schema integration
+  * Separation of oracle create/drop statements into two different files
+  * Changed logging level in castor/replier/[ClientConnection,RequestReplier].cpp
+  * Removed explicit link with libcastorCommonOra.so
+  * Added a new 'castor-db-interface' facility provided by DB packages, required by the packages containing the new servers
+  * New executable: /usr/bin/diskUsage, /usr/bin/stager_rm
+  * Revival of static libraries in the packaging
+  * Make sure dlf_write is called with correct uuid in rtcopyclientd
+  * New rtcopyclientd message: RTCPCLD_MSG_NOTPPOOLS, DLF_LVL_ERROR,"No tape pool for service class with migr candidates"
+  * Skip segment without recall candidate and try to continue with next segment
+  * Leak fixes in LSF plugin
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Thu,  4 Aug 2005 16:47:45 +0200
+
 castor (2.0.0-53) unstable; urgency=low
 
   * Vdqm new schema: New files added
