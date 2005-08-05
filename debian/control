@@ -26,9 +26,15 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-devel
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib, castor-lib-oracle
+Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib
 Description: castor (Cern Advanced STORage system)
  API
+
+Package: castor-devel-oracle
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib-oracle
+Description: castor (Cern Advanced STORage system)
+ Oracle API
 
 Package: castor-dlf-client
 Architecture: any
