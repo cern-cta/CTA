@@ -1,3 +1,11 @@
+castor (2.0.0-58) unstable; urgency=low
+
+  * VDQM new schema: Revision of the RtCopyDConnection. Now, it uses the old C (un)marshall makros, because the old protocol can't deal with thebiniostram.h facility.
+  * Fixed the clean rule in PROTO2/hsmtools/Imakefile
+  * Splitted castor-devel into castor-devel and castor-devel-oracle
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Fri,  5 Aug 2005 11:24:34 +0200
+
 castor (2.0.0-57) unstable; urgency=low
 
   * Fix for install of the perl module
