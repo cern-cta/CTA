@@ -102,9 +102,23 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeReqForMountedTapeStat
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeAccessSpecificationStatementString =
   "SELECT id FROM TapeAccessSpecification WHERE accessMode = :1 AND density = :2 AND tapeModel = :3";
   
-/// SQL statement for function s_selectDeviceGroupName
+/// SQL statement for function selectDeviceGroupName
 const std::string castor::db::ora::OraVdqmSvc::s_selectDeviceGroupNameStatementString =
-  "SELECT id FROM DeviceGroupName WHERE dgName = :1";      
+  "SELECT id FROM DeviceGroupName WHERE dgName = :1";
+
+/**
+ * This is the main select statement to dedicate a tape to a tape drive.
+ * It respects the old and of course the new way to select a tape for a 
+ * tape drive.
+ * The old way is to look, if the tapeDrive and the tapeRequest have the same
+ * dgn.
+ * The new way is to look if the TapeAccessSpecification can be served by a 
+ * specific tapeDrive. The tape Request are then orderd by the priorityLevel (for 
+ * the new way) and by the modification time.
+ */  
+/// SQL statement for function matchTape2TapeDrive
+const std::string castor::db::ora::OraVdqmSvc::s_matchTape2TapeDriveStatementString =
+  "SELECT TapeDrive.id, TapeRequest.id FROM TapeDrive, TapeRequest, TapeDrive2TapeDriveComp, TapeDriveCompatibility, DeviceGroupName tapeDriveDgn, DeviceGroupName tapeRequestDgn WHERE TapeDrive.status=0 AND TapeDrive.runningTapeReq=0 AND (TapeRequest.tapeDrive(+)=TapeDrive.id) AND (TapeRequest.requestedSrv(+)=TapeDrive.tapeServer) AND ((TapeDrive2TapeDriveComp.parent=TapeDrive.id AND TapeDrive2TapeDriveComp.child=TapeDriveCompatibility.id AND TapeDriveCompatibility.tapeAccessSpecification=TapeRequest.tapeAccessSpecification AND TapeDrive.deviceGroupName=tapeDriveDgn.id AND TapeRequest.deviceGroupName=tapeRequestDgn.id AND tapeDriveDgn.libraryName=tapeRequestDgn.libraryName) OR TapeDrive.deviceGroupName=TapeRequest.deviceGroupName) AND rownum < 2 ORDER BY TapeDriveCompatibility.priorityLevel DESC, TapeRequest.id ASC FOR UPDATE";        
   
 
 // -----------------------------------------------------------------------
@@ -828,4 +842,102 @@ castor::vdqm::DeviceGroupName*
     throw ex;
   }
   // We should never reach this point 	
+}
+
+
+// -----------------------------------------------------------------------
+// matchTape2TapeDrive
+// -----------------------------------------------------------------------
+void castor::db::ora::OraVdqmSvc::matchTape2TapeDrive (
+	castor::vdqm::TapeDrive& freeTapeDrive, 
+	castor::vdqm::TapeRequest& waitingTapeRequest)
+  throw (castor::exception::Exception) {
+  
+  unsigned long idTapeDrive, idTapeRequest;
+  
+  castor::vdqm::TapeDrive* tapeDrive = NULL;
+	castor::vdqm::TapeRequest* tapeRequest = NULL;
+  
+  // Check whether the statements are ok
+  if (0 == m_matchTape2TapeDriveStatement) {
+    m_matchTape2TapeDriveStatement = createStatement(s_matchTape2TapeDriveStatementString);
+  }
+  
+  // Execute statement and get result
+  try {
+    oracle::occi::ResultSet *rset = m_matchTape2TapeDriveStatement->executeQuery();
+    
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      m_matchTape2TapeDriveStatement->closeResultSet(rset);
+      
+      // we found nothing, so let's just return two NULL Pointers
+      
+      freeTapeDrive = *tapeDrive;      
+      waitingTapeRequest = *tapeRequest;
+      
+      return;
+    }
+    
+    // If we reach this point, then we selected successfully
+    // a TapeDrive + TapeRequest and their id's are in rset
+    idTapeDrive = rset->getInt(1);
+    idTapeRequest = rset->getInt(2);
+    
+    m_matchTape2TapeDriveStatement->closeResultSet(rset);
+    
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to find a TapeRequest for a free TapeDrive: "
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+  
+  // Now get the the two Objects from their id's
+  try {
+    castor::BaseAddress ad;
+    ad.setTarget(idTapeDrive);
+    ad.setCnvSvcName("DbCnvSvc");
+    ad.setCnvSvcType(castor::SVC_DBCNV);
+    
+    castor::IObject* obj = cnvSvc()->createObj(&ad);
+    tapeDrive = dynamic_cast<castor::vdqm::TapeDrive*> (obj);
+    if (0 == tapeDrive) {
+      castor::exception::Internal e;
+      e.getMessage() << "createObj return unexpected type "
+                     << obj->type() << " for id " << idTapeDrive;
+      delete obj;
+      throw e;
+    }
+    
+    ad.setTarget(idTapeRequest);
+		
+		obj = cnvSvc()->createObj(&ad);
+    tapeRequest = dynamic_cast<castor::vdqm::TapeRequest*> (obj);
+    if (0 == tapeRequest) {
+      castor::exception::Internal e;
+      e.getMessage() << "createObj return unexpected type "
+                     << obj->type() << " for id " << idTapeRequest;
+      delete obj;
+      delete tapeDrive;
+      throw e;
+    }  
+    
+    /**
+     * If we are here, everything went fine and we found a new 
+     * tape <--> tape drive couple 
+     */    
+    freeTapeDrive = *tapeDrive;
+    waitingTapeRequest = *tapeRequest;      
+    
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to find a TapeRequest or a TapeDrive for id(TapeDrive) " 
+      << idTapeDrive  
+      << " or for id(TapeRequest) "
+      << idTapeRequest << " :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
 }

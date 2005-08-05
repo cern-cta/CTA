@@ -53,7 +53,7 @@ const castor::ICnvFactory& OraDeviceGroupNameCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraDeviceGroupNameCnv::s_insertStatementString =
-"INSERT INTO DeviceGroupName (dgName, id) VALUES (:1,ids_seq.nextval) RETURNING id INTO :2";
+"INSERT INTO DeviceGroupName (dgName, libraryName, id) VALUES (:1,:2,ids_seq.nextval) RETURNING id INTO :3";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraDeviceGroupNameCnv::s_deleteStatementString =
@@ -61,11 +61,11 @@ const std::string castor::db::ora::OraDeviceGroupNameCnv::s_deleteStatementStrin
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraDeviceGroupNameCnv::s_selectStatementString =
-"SELECT dgName, id FROM DeviceGroupName WHERE id = :1";
+"SELECT dgName, libraryName, id FROM DeviceGroupName WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraDeviceGroupNameCnv::s_updateStatementString =
-"UPDATE DeviceGroupName SET dgName = :1 WHERE id = :2";
+"UPDATE DeviceGroupName SET dgName = :1, libraryName = :2 WHERE id = :3";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraDeviceGroupNameCnv::s_storeTypeStatementString =
@@ -197,15 +197,16 @@ void castor::db::ora::OraDeviceGroupNameCnv::createRep(castor::IAddress* address
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(2, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(3, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->dgName());
+    m_insertStatement->setString(2, obj->libraryName());
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(2));
+    obj->setId((u_signed64)m_insertStatement->getDouble(3));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -231,6 +232,7 @@ void castor::db::ora::OraDeviceGroupNameCnv::createRep(castor::IAddress* address
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
                     << "  dgName : " << obj->dgName() << std::endl
+                    << "  libraryName : " << obj->libraryName() << std::endl
                     << "  id : " << obj->id() << std::endl;
     throw ex;
   }
@@ -254,7 +256,8 @@ void castor::db::ora::OraDeviceGroupNameCnv::updateRep(castor::IAddress* address
     }
     // Update the current object
     m_updateStatement->setString(1, obj->dgName());
-    m_updateStatement->setDouble(2, obj->id());
+    m_updateStatement->setString(2, obj->libraryName());
+    m_updateStatement->setDouble(3, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->commit();
@@ -354,7 +357,8 @@ castor::IObject* castor::db::ora::OraDeviceGroupNameCnv::createObj(castor::IAddr
     castor::vdqm::DeviceGroupName* object = new castor::vdqm::DeviceGroupName();
     // Now retrieve and set members
     object->setDgName(rset->getString(1));
-    object->setId((u_signed64)rset->getDouble(2));
+    object->setLibraryName(rset->getString(2));
+    object->setId((u_signed64)rset->getDouble(3));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -401,7 +405,8 @@ void castor::db::ora::OraDeviceGroupNameCnv::updateObj(castor::IObject* obj)
     castor::vdqm::DeviceGroupName* object = 
       dynamic_cast<castor::vdqm::DeviceGroupName*>(obj);
     object->setDgName(rset->getString(1));
-    object->setId((u_signed64)rset->getDouble(2));
+    object->setLibraryName(rset->getString(2));
+    object->setId((u_signed64)rset->getDouble(3));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

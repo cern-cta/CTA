@@ -113,22 +113,6 @@ namespace castor {
 		    	virtual int checkTapeRequest(
 		    		const castor::vdqm::TapeRequest *tapeRequest)
 		    		throw (castor::exception::Exception);
-		    	
-		    	
-//		    	/**
-//		    	 * Looks for the best fitting tape drive. If it is for example an
-//		    	 * older tape, it will first look if an older drive is free, before
-//		    	 * it chooses a newer one. This strategy should avoid, that the newer
-//		    	 * drive, which are able to deal with several tape models, are blocked
-//		    	 * if an request for a newer tape model arrives.
-//		    	 * Please notice that caller is responsible for deleting the object.
-//		    	 * @parameter the requested Extended Device Group for the tape
-//		    	 * @return the free TapeDrive or NULL if there is none.
-//		    	 * @exception in case of error
-//		    	 */	
-//		    	virtual castor::vdqm::TapeDrive* selectFreeTapeDrive(
-//		    		const castor::vdqm::ExtendedDeviceGroup *extDevGrp) 
-//		    		throw (castor::exception::Exception); 
 
 
 		    	/**
@@ -160,6 +144,13 @@ namespace castor {
 		    	virtual castor::vdqm::DeviceGroupName* selectDeviceGroupName(
 		    		const std::string dgName) 
 		    		throw (castor::exception::Exception);
+		    		
+//------------------ function for TapeRequestDedicationHandler -----------------
+
+					virtual void matchTape2TapeDrive(
+			     	castor::vdqm::TapeDrive& freeTapeDrive, 
+			     	castor::vdqm::TapeRequest& waitingTapeRequest) 
+		    		throw (castor::exception::Exception);		    		
 		    		
 //------------------ functions for TapeDriveRequestHandler ------------------
 
@@ -316,7 +307,13 @@ namespace castor {
 	        static const std::string s_selectDeviceGroupNameStatementString;
 	
 	        /// SQL statement object for function selectDeviceGroupName
-	        oracle::occi::Statement *m_selectDeviceGroupNameStatement;	        	        	        	        	        	        
+	        oracle::occi::Statement *m_selectDeviceGroupNameStatement;
+	        
+ 	        /// SQL statement for function matchTape2TapeDrive
+	        static const std::string s_matchTape2TapeDriveStatementString;
+	
+	        /// SQL statement object for function matchTape2TapeDrive
+	        oracle::occi::Statement *m_matchTape2TapeDriveStatement;	        	        	        	        	        	        
 			};
 		}
 	}
