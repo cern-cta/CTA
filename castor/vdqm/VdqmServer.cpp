@@ -146,7 +146,8 @@ castor::vdqm::VdqmServer::VdqmServer():
      {46, "No free TapeDrive, or no TapeRequest in the db"}, 
      {47, "Try to get information about the tape from the VMGR daemon"},
      {48, "RTCopyDConnection: Too large errmsg buffer requested"},
-     {49, "RTCopyDConnection: rtcopy daemon returned an error"},     
+     {49, "RTCopyDConnection: rtcopy daemon returned an error"}, 
+     {50, "Exception caught in TapeRequestDedicationHandler::run()"}, 
      {-1, ""}};
   castor::dlf::dlf_init("Vdqm", messages);
 }

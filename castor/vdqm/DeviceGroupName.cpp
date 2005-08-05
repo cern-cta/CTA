@@ -40,6 +40,7 @@
 //------------------------------------------------------------------------------
 castor::vdqm::DeviceGroupName::DeviceGroupName() throw() :
   m_dgName(""),
+  m_libraryName(""),
   m_id(0) {
 };
 
@@ -63,6 +64,7 @@ void castor::vdqm::DeviceGroupName::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "dgName : " << m_dgName << std::endl;
+  stream << indent << "libraryName : " << m_libraryName << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

@@ -32,6 +32,10 @@
 namespace castor {
 
   namespace vdqm {
+  	
+  	// Forward declaration
+  	class TapeDrive;
+  	class TapeRequest;
 
 		namespace handler {
 	    /**
@@ -94,10 +98,13 @@ namespace castor {
 					bool _stopLoop;
 					
 	     		/**
-	     		 * This method is used to look, if they are free drives for the queued
-	     		 * tape requests. 
+	     		 * This method is used to handle the dedication of a tape request to
+	     		 * a tape drive. It will update the status in the db and inform the
+	     		 * RTCPD about the dedication.
 	     		 */
-	     		void handleTapeRequestQueue() 
+	     		void handleDedication(
+	     			castor::vdqm::TapeDrive* freeTapeDrive, 
+	     			castor::vdqm::TapeRequest* waitingTapeRequest) 
 						throw (castor::exception::Exception);					
 												
 	    }; // class TapeRequestDedicationHandler

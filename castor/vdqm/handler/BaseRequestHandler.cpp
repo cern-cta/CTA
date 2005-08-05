@@ -149,7 +149,6 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
     }    
 		
 		if ( commit ) {
-      ptr_IVdqmService->commit();
 	    svcs()->commit(&ad);
 	    // "Request stored in DB" message
 	    castor::dlf::Param params[] =
@@ -157,7 +156,6 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
 	    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 12, 1, params);
 		}
   } catch (castor::exception::Exception e) {
-    ptr_IVdqmService->rollback();
     svcs()->rollback(&ad);
     
     castor::vdqm::TapeRequest *tapeRequest =
@@ -215,7 +213,6 @@ void castor::vdqm::handler::BaseRequestHandler::deleteRepresentation
     castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 29, 1, params);
 
   } catch (castor::exception::Exception e) {
-  	ptr_IVdqmService->commit();
     svcs()->rollback(&ad);
     
     castor::exception::Exception ex(EVQREPLICA);
@@ -229,7 +226,7 @@ void castor::vdqm::handler::BaseRequestHandler::deleteRepresentation
 // updateRepresentation
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::BaseRequestHandler::updateRepresentation
-(castor::IObject* fr, Cuuid_t cuuid)
+(castor::IObject* fr, bool commit, Cuuid_t cuuid)
   throw (castor::exception::Exception) {
 
   // Stores it into the data base
@@ -262,15 +259,16 @@ void castor::vdqm::handler::BaseRequestHandler::updateRepresentation
     	svcs()->fillRep(&ad, fr, OBJ_TapeDriveCompatibility, false);          	            
     }
 
-    svcs()->commit(&ad);
-    
-    // "Update of representation in DB" message
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("ID", fr->id())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 45, 1, params);
+		if ( commit ) {
+	    svcs()->commit(&ad);
+	    
+	    // "Update of representation in DB" message
+	    castor::dlf::Param params[] =
+	      {castor::dlf::Param("ID", fr->id())};
+	    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 45, 1, params);
+		}
 
   } catch (castor::exception::Exception e) {
-  	ptr_IVdqmService->rollback();
     svcs()->rollback(&ad);
     
     castor::vdqm::TapeRequest *tapeRequest =

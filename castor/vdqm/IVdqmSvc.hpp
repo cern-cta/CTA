@@ -88,14 +88,19 @@ namespace castor {
 	    	 * older tape, it will first look if an older drive is free, before
 	    	 * it chooses a newer one. This strategy should avoid, that the newer
 	    	 * drive, which are able to deal with several tape models, are blocked
-	    	 * if an request for a newer tape model arrives.
-	    	 * Please notice that caller is responsible for deleting the object.
-	    	 * @parameter the requested Extended Device Group for the tape
-	    	 * @return the free TapeDrive or NULL if there is none.
+	    	 * if an request for a newer tape model arrives.<br>
+	    	 * Please notice that caller is responsible for deleting the object.<br>
+	    	 * This function is used by TapeRequestDedicationHandler.
+	    	 * 
+	    	 * @parameter freeTapeDrive An address poointer to a free tape which 
+	    	 * is found in the db
+	    	 * @parameter waitingTapeRequest An address pointer to a waiting 
+	    	 * TapeRequest, which is the best choice for the selected tapeDrive
 	    	 * @exception in case of error
 	    	 */	
-//	    	virtual TapeDrive* selectFreeTapeDrive(const ExtendedDeviceGroup *extDevGrp) 
-//	    		throw (castor::exception::Exception) = 0;
+	     virtual void matchTape2TapeDrive(
+	     	TapeDrive& freeTapeDrive, TapeRequest& waitingTapeRequest) 
+    		throw (castor::exception::Exception) = 0;
 
 	    		
 	    	/**

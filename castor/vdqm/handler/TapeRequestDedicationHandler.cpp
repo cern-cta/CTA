@@ -23,12 +23,21 @@
  *
  * @author Matthias Braeger
  *****************************************************************************/
+
 #include <unistd.h>
+#include <rtcp_constants.h> /* RTCOPY_PORT  */
+
 #include "castor/exception/Internal.hpp"
+
+#include "castor/BaseAddress.hpp"
+#include "castor/Services.hpp"
  
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
- 
+#include "castor/vdqm/TapeServer.hpp"
+#include "castor/vdqm/RTCopyDConnection.hpp"
+
+
 // Local include
 #include "TapeRequestDedicationHandler.hpp"
 
@@ -83,36 +92,47 @@ castor::vdqm::handler::TapeRequestDedicationHandler::~TapeRequestDedicationHandl
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeRequestDedicationHandler::run() {
 		
-  TapeDrive *freeTapeDrive;
+  TapeDrive* freeTapeDrive;
+  TapeRequest* waitingTapeRequest;
 		
 	_stopLoop = false;
 	
 	while ( !_stopLoop ) {
 		//TODO: Algorithmus schreiben.
+		freeTapeDrive = NULL;
+		waitingTapeRequest = NULL;
+		
 		try {
 			/**
 			 * Look for a free tape drive, which can handle the request
 			 */
-//			freeTapeDrive = ptr_IVdqmService->getFreeTapeDrive(reqExtDevGrp);
-			if ( freeTapeDrive == NULL ) {
+			ptr_IVdqmService->matchTape2TapeDrive(*freeTapeDrive, *waitingTapeRequest);
+			if ( freeTapeDrive == NULL || waitingTapeRequest == NULL) {
 		    // "No free TapeDrive, or no TapeRequest in the db" message
-		   // castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 46);
+		    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 46);
+		  	usleep(m_sleepMilliTime);
 			}
 		  else { //If there was a free drive, start a new job
-			  handleTapeRequestQueue();
+			  handleDedication(freeTapeDrive, waitingTapeRequest);
 		  }
-		   
-		} catch (castor::exception::Exception ex) {
-	    // "Exception caught" message
-	    castor::dlf::Param params[] =
+		} catch (castor::exception::Exception ex) {			
+		  castor::BaseAddress ad;
+  
+		  ad.setCnvSvcName("DbCnvSvc");
+		  ad.setCnvSvcType(castor::SVC_DBCNV);
+			svcs()->rollback(&ad);
+			
+	    // "Exception caught in TapeRequestDedicationHandler::run()" message
+	    castor::dlf::Param param[] =
 	      {castor::dlf::Param("Message", ex.getMessage().str())};      
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 9, 2, params);
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 50, 1, param);
 		}
 	  		
+	  if ( freeTapeDrive ) delete freeTapeDrive;
+	  if ( waitingTapeRequest ) delete waitingTapeRequest; 
 		
 //		std::cout << "TapeRequestDedicationHandler loop" << std::endl;
-		usleep(m_sleepMilliTime);
-		freeTapeDrive = NULL;
+		
 	}
 }
 
@@ -128,49 +148,75 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::stop() {
 //------------------------------------------------------------------------------
 // handleTapeRequestQueue
 //------------------------------------------------------------------------------
-void castor::vdqm::handler::TapeRequestDedicationHandler::handleTapeRequestQueue() 
+void castor::vdqm::handler::TapeRequestDedicationHandler::handleDedication(
+	castor::vdqm::TapeDrive* freeTapeDrive, 
+	castor::vdqm::TapeRequest* waitingTapeRequest) 
 	throw (castor::exception::Exception) {
-	//TODO: Implementation
-//  /* 
-//   * Loop until either the volume queue is empty or
-//   * there are no more suitable drives
-//   */
-//  for (;;) {
-//      rc = SelectVolAndDrv(dgn_context,&volrec,&drvrec);
-//      if ( rc == -1 || volrec == NULL || drvrec == NULL ) {
-//          log(LOG_ERR,"vdqm_NewVolReq(): SelectVolAndDrv() returned rc=%d\n",
-//              rc);
-//          break;
-//      }
-//      /*
-//       * Free memory allocated for previous request for this drive
-//       */
-//      if ( drvrec->vol != NULL ) free(drvrec->vol);
-//      drvrec->vol = volrec;
-//      volrec->drv = drvrec;
-//      drvrec->drv.VolReqID = volrec->vol.VolReqID;
-//      volrec->vol.DrvReqID = drvrec->drv.DrvReqID;
-//      drvrec->drv.jobID = 0;
-//      /*
-//       * Reset the drive status
-//       */
-//      drvrec->drv.status = drvrec->drv.status & 
-//          ~(VDQM_UNIT_RELEASE | VDQM_UNIT_BUSY | VDQM_VOL_MOUNT |
-//          VDQM_VOL_UNMOUNT | VDQM_UNIT_ASSIGN);
-//      drvrec->drv.recvtime = (int)time(NULL);
-//  
-//      /*
-//       * Start the job
-//       */
-//      rc = vdqm_StartJob(volrec);
-//      if ( rc < 0 ) {
-//          log(LOG_ERR,"vdqm_NewVolReq(): vdqm_StartJob() returned error\n");
-//          volrec->vol.DrvReqID = 0;
-//          drvrec->drv.VolReqID = 0;
-//          volrec->drv = NULL;
-//          drvrec->vol = NULL;
-//          break;
-//      }
-//   } /* end of for (;;) */
+		
+	if ( freeTapeDrive->status() != UNIT_UP || 
+			 freeTapeDrive->runningTapeReq() != NULL ) {
+		castor::exception::Internal ex;
+		
+		ex.getMessage() << "The selected TapeDrive from the db is not free or "
+										<< "has still a running job!: id = "
+										<< freeTapeDrive->id() << std::endl;
+										
+		throw ex;
+	}
+	
+	if ( waitingTapeRequest->tapeDrive() != NULL  &&
+			 waitingTapeRequest->tapeDrive()->id() != freeTapeDrive->id()) {
+		castor::exception::Internal ex;
+		
+		ex.getMessage() << "The selected TapeRequest seems to be handled already "
+										<< "by another tapeDrive!: tapeRequestID = "
+										<< waitingTapeRequest->id()
+										<< std::endl;
+										
+		throw ex;
+	}
+		
+		
+	/**
+	 * Updating the informations for the data base
+	 */
+	freeTapeDrive->setStatus(UNIT_STARTING);
+	freeTapeDrive->setJobID(0);
+	freeTapeDrive->setModificationTime((int)time(NULL));
+	
+	waitingTapeRequest->setTapeDrive(freeTapeDrive);
+	waitingTapeRequest->setModificationTime((int)time(NULL));
+	
+	freeTapeDrive->setRunningTapeReq(waitingTapeRequest);
+	
+
+	/**
+	 * .. and of course we must also update the db!
+	 */
+	updateRepresentation(freeTapeDrive, false, nullCuuid);
+	updateRepresentation(waitingTapeRequest, false, nullCuuid);	
+
+	/**
+	 * Now, we can send the information to the RTCPD
+	 */
+	RTCopyDConnection rtcpConnection(RTCOPY_PORT, 
+																	 freeTapeDrive->tapeServer()->serverName());																	 
+	rtcpConnection.connect();
+	rtcpConnection.sendJobToRTCPD(freeTapeDrive);
+	
+	/**
+	 * Now, we can really do a commit!
+	 */
+	castor::BaseAddress ad;
+  
+	ad.setCnvSvcName("DbCnvSvc");
+	ad.setCnvSvcType(castor::SVC_DBCNV);
+	svcs()->commit(&ad);
+	
+	// "Update of representation in DB" message
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("ID tapeDrive", freeTapeDrive->id()),
+     castor::dlf::Param("ID tapeRequest", waitingTapeRequest->id())};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 45, 2, params);	
 }
 

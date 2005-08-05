@@ -389,12 +389,12 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
       // Set new TapeDriveStatusCode
 	    tapeDrive->setStatus(STATUS_UNKNOWN);
 	    
-	    tapeReq->setModificationTime(time(NULL));
+	    tapeReq->setModificationTime((int)time(NULL));
 			  
 			/**
 			 * Update the data base
 			 */
-			updateRepresentation(tapeReq, cuuid);
+			updateRepresentation(tapeReq, true, cuuid);
 
 			    
 		  castor::exception::Exception ex(EVQREQASS);

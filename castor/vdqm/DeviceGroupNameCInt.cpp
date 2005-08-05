@@ -114,6 +114,23 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cvdqm_DeviceGroupName_libraryName
+  //----------------------------------------------------------------------------
+  int Cvdqm_DeviceGroupName_libraryName(castor::vdqm::DeviceGroupName* instance, const char** var) {
+    *var = instance->libraryName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_DeviceGroupName_setLibraryName
+  //----------------------------------------------------------------------------
+  int Cvdqm_DeviceGroupName_setLibraryName(castor::vdqm::DeviceGroupName* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setLibraryName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cvdqm_DeviceGroupName_id
   //----------------------------------------------------------------------------
   int Cvdqm_DeviceGroupName_id(castor::vdqm::DeviceGroupName* instance, u_signed64* var) {

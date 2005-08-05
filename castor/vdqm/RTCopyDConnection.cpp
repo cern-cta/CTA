@@ -116,7 +116,7 @@ void castor::vdqm::RTCopyDConnection::connect()
 //------------------------------------------------------------------------------
 // sendJobToRTCP
 //------------------------------------------------------------------------------
-bool castor::vdqm::RTCopyDConnection::sendJobToRTCP(const TapeDrive *tapeDrive) 
+bool castor::vdqm::RTCopyDConnection::sendJobToRTCPD(const TapeDrive *tapeDrive) 
 	throw (castor::exception::Exception) {
 	
 	bool acknSucc = true; // The return value
