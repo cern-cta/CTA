@@ -170,7 +170,7 @@ CREATE TABLE TapeDriveDedication (clientHost NUMBER, euid NUMBER, egid NUMBER, v
 CREATE TABLE TapeDriveCompatibility (tapeDriveModel VARCHAR2(2048), priorityLevel NUMBER, id INTEGER PRIMARY KEY, tapeAccessSpecification INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type DeviceGroupName */
-CREATE TABLE DeviceGroupName (dgName VARCHAR2(2048), libraryName VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
+CREATE TABLE DeviceGroupName (dgName VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
 ALTER TABLE SvcClass2TapePool
   ADD CONSTRAINT fk_SvcClass2TapePool_P FOREIGN KEY (Parent) REFERENCES SvcClass (id)
@@ -461,6 +461,20 @@ CREATE INDEX I_FileSystem_Rate ON FileSystem(FileSystemRate(weight, deltaWeight,
 /*************************/
 
 /* PL/SQL method to make a SubRequest wait on another one, linked to the given DiskCopy */
+CREATE OR REPLACE PROCEDURE makeSubRequestWait(srId IN INTEGER, dci IN INTEGER) AS
+BEGIN
+ -- all wait on the original one
+ UPDATE SubRequest
+  SET parent = (SELECT SubRequest.id
+                  FROM SubRequest, DiskCopy
+                 WHERE SubRequest.diskCopy = DiskCopy.id
+		   AND DiskCopy.id = dci
+                   AND SubRequest.parent = 0
+                   AND DiskCopy.status IN (1, 2, 5, 11)), -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING
+      status = 5,
+      lastModificationTime = getTime() -- WAITSUBREQ
+  WHERE SubRequest.id = srId;
+END;
 
 /* PL/SQL method to archive a SubRequest and its request if needed */
 CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
