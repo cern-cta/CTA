@@ -1,7 +1,4 @@
 etc/init.d/rtcpclientd
-etc/init.d/MigHunter
-etc/sysconfig/MigHunter.example
-usr/bin/MigHunter
 usr/bin/TapeErrorHandler
 usr/bin/migrator
 usr/bin/recaller

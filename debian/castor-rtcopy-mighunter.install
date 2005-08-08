@@ -1,0 +1,3 @@
+etc/init.d/MigHunter
+etc/sysconfig/MigHunter.example
+usr/bin/MigHunter
