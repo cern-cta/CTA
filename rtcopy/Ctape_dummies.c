@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.16 $ $Date: 2004/09/06 14:13:38 $ CERN IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.17 $ $Date: 2005/08/08 16:02:08 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -198,10 +198,10 @@ int Ctape_mount(char *a, char *b, int c, char *d, char *e, char *f, int g,
         (i==NULL ? "(nil)" : i),j));
 }
 int Ctape_position(char *a, int b, int c, int d, unsigned char *e, int f, int g,
-                   int h, char *i, char *j, int k, int l, int m, int n) {
+                   int h, char *i, char *j, char *k, int l, int m, int n, int o) {
     CTAPE_DECL
-    CTAPE_BODY((stdout,"Ctape_position(%s,%d,%d,%d,0x%lx,%d,%d,%d,%s,%s,%d,%d,%d,%d)\n",
-        a,b,c,d,e,f,g,h,i,j,k,l,m,n));
+    CTAPE_BODY((stdout,"Ctape_position(%s,%d,%d,%d,0x%lx,%d,%d,%d,%s,%s,%s,%d,%d,%d,%d)\n",
+        a,b,c,d,e,f,g,h,i,j,k,l,m,n,o));
 }
 int Ctape_reserve(int a, struct dgn_rsv *b) {
     CTAPE_DECL
