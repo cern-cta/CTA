@@ -118,7 +118,7 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectDeviceGroupNameStatementS
  */  
 /// SQL statement for function matchTape2TapeDrive
 const std::string castor::db::ora::OraVdqmSvc::s_matchTape2TapeDriveStatementString =
-  "SELECT TapeDrive.id, TapeRequest.id FROM TapeDrive, TapeRequest, TapeDrive2TapeDriveComp, TapeDriveCompatibility, DeviceGroupName tapeDriveDgn, DeviceGroupName tapeRequestDgn WHERE TapeDrive.status=0 AND TapeDrive.runningTapeReq=0 AND (TapeRequest.tapeDrive(+)=TapeDrive.id) AND (TapeRequest.requestedSrv(+)=TapeDrive.tapeServer) AND ((TapeDrive2TapeDriveComp.parent=TapeDrive.id AND TapeDrive2TapeDriveComp.child=TapeDriveCompatibility.id AND TapeDriveCompatibility.tapeAccessSpecification=TapeRequest.tapeAccessSpecification AND TapeDrive.deviceGroupName=tapeDriveDgn.id AND TapeRequest.deviceGroupName=tapeRequestDgn.id AND tapeDriveDgn.libraryName=tapeRequestDgn.libraryName) OR TapeDrive.deviceGroupName=TapeRequest.deviceGroupName) AND rownum < 2 ORDER BY TapeDriveCompatibility.priorityLevel DESC, TapeRequest.id ASC FOR UPDATE";        
+  "BEGIN matchTape2TapeDrive(:1, :2); END;";        
   
 
 // -----------------------------------------------------------------------
@@ -136,7 +136,8 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   m_selectTapeByVidStatement(0),
   m_selectTapeReqForMountedTapeStatement(0),
   m_selectTapeAccessSpecificationStatement(0),
-  m_selectDeviceGroupNameStatement(0) {
+  m_selectDeviceGroupNameStatement(0),
+  m_matchTape2TapeDriveStatement(0) {
 }
 
 
@@ -180,6 +181,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
     deleteStatement(m_selectTapeReqForMountedTapeStatement);
     deleteStatement(m_selectTapeAccessSpecificationStatement);
     deleteStatement(m_selectDeviceGroupNameStatement);
+    deleteStatement(m_matchTape2TapeDriveStatement);
   } catch (oracle::occi::SQLException e) {};
   
   // Now reset all pointers to 0
@@ -194,6 +196,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   m_selectTapeReqForMountedTapeStatement = 0;
   m_selectTapeAccessSpecificationStatement = 0;
   m_selectDeviceGroupNameStatement = 0;
+  m_matchTape2TapeDriveStatement = 0;
 }
 
 
@@ -209,7 +212,7 @@ castor::vdqm::TapeServer*
     m_selectTapeServerStatement = createStatement(s_selectTapeServerStatementString);
   }
   // Execute statement and get result
-  unsigned long id;
+  u_signed64 id;
   try {
     m_selectTapeServerStatement->setString(1, serverName);
     oracle::occi::ResultSet *rset = m_selectTapeServerStatement->executeQuery();
@@ -257,7 +260,7 @@ castor::vdqm::TapeServer*
     
     // If we reach this point, then we selected successfully
     // a tapeServer and it's id is in rset
-    id = rset->getInt(1);
+    id = (u_signed64)rset->getDouble(1);
     m_selectTapeServerStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
@@ -323,7 +326,7 @@ int castor::db::ora::OraVdqmSvc::checkTapeRequest(
       m_checkTapeRequestStatement1->closeResultSet(rset);
       return -1;
     }
-    else if ((int)rset->getDouble(1)) {
+    else if ((int)rset->getInt(1)) {
     	//The request is already beeing handled from  a tape Drive
     	// In this case we return the queue position 0
     	return 0;
@@ -379,7 +382,7 @@ castor::vdqm::TapeDrive*
     m_selectTapeDriveStatement = createStatement(s_selectTapeDriveStatementString);
   }
   // Execute statement and get result
-  unsigned long id;
+  u_signed64 id;
   try {
     m_selectTapeDriveStatement->setString(1, driveRequest->drive);
     m_selectTapeDriveStatement->setDouble(2, tapeServer->id());
@@ -394,7 +397,7 @@ castor::vdqm::TapeDrive*
     
     // If we reach this point, then we selected successfully
     // a tapeDrive and it's id is in rset
-    id = rset->getInt(1);
+    id = (u_signed64)rset->getDouble(1);
     m_selectTapeDriveStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
@@ -425,8 +428,7 @@ castor::vdqm::TapeDrive*
     //Now we get the foreign related objects
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_ClientIdentification);
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeRequest);
-    cnvSvc()->fillObj(&ad, obj, castor::OBJ_Tape);
-//    cnvSvc()->fillObj(&ad, obj, castor::OBJ_ExtendedDeviceGroup);
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_Tape);		
     
     tapeDrive->setTapeServer(tapeServer);
 
@@ -467,7 +469,7 @@ bool
   throw (castor::exception::Exception) {
   
   // Execute statement and get result
-  unsigned long id;
+  u_signed64 id;
   	
   // Check whether the statements are ok
   if (0 == m_existTapeDriveWithTapeInUseStatement) {
@@ -485,7 +487,7 @@ bool
     }
     // If we reach this point, then we selected successfully
     // a tape drive and it's id is in rset
-    id = rset->getInt(1);
+    id = (u_signed64)rset->getDouble(1);
     m_existTapeDriveWithTapeInUseStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
@@ -508,7 +510,7 @@ bool
   throw (castor::exception::Exception) {
 
   // Execute statement and get result
-  unsigned long id;
+  u_signed64 id;
   	
   // Check whether the statements are ok
   if (0 == m_existTapeDriveWithTapeMountedStatement) {
@@ -526,7 +528,7 @@ bool
     }
     // If we reach this point, then we selected successfully
     // a tape drive and it's id is in rset
-    id = rset->getInt(1);
+    id = (u_signed64)rset->getDouble(1);
     m_existTapeDriveWithTapeMountedStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
@@ -553,7 +555,7 @@ castor::stager::Tape*
     m_selectTapeByVidStatement = createStatement(s_selectTapeByVidStatementString);
   }
   // Execute statement and get result
-  unsigned long id;
+  u_signed64 id;
   try {
     m_selectTapeByVidStatement->setString(1, volid);
     oracle::occi::ResultSet *rset = m_selectTapeByVidStatement->executeQuery();
@@ -564,7 +566,7 @@ castor::stager::Tape*
     }
     // If we reach this point, then we selected successfully
     // a tape and it's id is in rset
-    id = rset->getInt(1);
+    id = (u_signed64)rset->getDouble(1);
     m_selectTapeByVidStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
@@ -615,7 +617,7 @@ castor::vdqm::TapeRequest*
     	createStatement(s_selectTapeReqForMountedTapeStatementString);
   }
   // Execute statement and get result
-  unsigned long id;
+  u_signed64 id;
   try {
     m_selectTapeReqForMountedTapeStatement->setDouble(1, tapeDrive->tape()->id());
     m_selectTapeReqForMountedTapeStatement->setDouble(2, tapeDrive->tapeServer()->id());
@@ -630,7 +632,7 @@ castor::vdqm::TapeRequest*
     
     // If we reach this point, then we selected successfully
     // a tapeDrive and it's id is in rset
-    id = rset->getInt(1);
+    id = (u_signed64)rset->getDouble(1);
     m_selectTapeReqForMountedTapeStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
@@ -696,7 +698,7 @@ castor::vdqm::TapeAccessSpecification*
     	createStatement(s_selectTapeAccessSpecificationStatementString);
   }
   // Execute statement and get result
-  unsigned long id;
+  u_signed64 id;
   try {
     m_selectTapeAccessSpecificationStatement->setInt(1, accessMode);
     m_selectTapeAccessSpecificationStatement->setString(2, density);
@@ -711,7 +713,7 @@ castor::vdqm::TapeAccessSpecification*
     
     // If we reach this point, then we selected successfully
     // a dgName and it's id is in rset
-    id = rset->getInt(1);
+    id = (u_signed64)rset->getDouble(1);
     m_selectTapeAccessSpecificationStatement->closeResultSet(rset);
   
   } catch (oracle::occi::SQLException e) {
@@ -762,7 +764,7 @@ castor::vdqm::DeviceGroupName*
     m_selectDeviceGroupNameStatement = createStatement(s_selectDeviceGroupNameStatementString);
   }
   // Execute statement and get result
-  unsigned long id;
+  u_signed64 id;
   try {
     m_selectDeviceGroupNameStatement->setString(1, dgName);
     oracle::occi::ResultSet *rset = m_selectDeviceGroupNameStatement->executeQuery();
@@ -808,7 +810,7 @@ castor::vdqm::DeviceGroupName*
     }
     // If we reach this point, then we selected successfully
     // a DeviceGroupName and it's id is in rset
-    id = rset->getInt(1);
+    id = (u_signed64)rset->getDouble(1);
     m_selectDeviceGroupNameStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
@@ -853,7 +855,7 @@ void castor::db::ora::OraVdqmSvc::matchTape2TapeDrive (
 	castor::vdqm::TapeRequest& waitingTapeRequest)
   throw (castor::exception::Exception) {
   
-  unsigned long idTapeDrive, idTapeRequest;
+  u_signed64 idTapeDrive, idTapeRequest;
   
   castor::vdqm::TapeDrive* tapeDrive = NULL;
 	castor::vdqm::TapeRequest* tapeRequest = NULL;
@@ -861,6 +863,11 @@ void castor::db::ora::OraVdqmSvc::matchTape2TapeDrive (
   // Check whether the statements are ok
   if (0 == m_matchTape2TapeDriveStatement) {
     m_matchTape2TapeDriveStatement = createStatement(s_matchTape2TapeDriveStatementString);
+    
+    m_matchTape2TapeDriveStatement->registerOutParam
+        (1, oracle::occi::OCCIDOUBLE);
+    m_matchTape2TapeDriveStatement->registerOutParam
+        (2, oracle::occi::OCCIDOUBLE);
   }
   
   // Execute statement and get result
@@ -880,8 +887,8 @@ void castor::db::ora::OraVdqmSvc::matchTape2TapeDrive (
     
     // If we reach this point, then we selected successfully
     // a TapeDrive + TapeRequest and their id's are in rset
-    idTapeDrive = rset->getInt(1);
-    idTapeRequest = rset->getInt(2);
+    idTapeDrive = (u_signed64)rset->getDouble(1);
+    idTapeRequest = (u_signed64)rset->getDouble(2);
     
     m_matchTape2TapeDriveStatement->closeResultSet(rset);
     
@@ -910,6 +917,12 @@ void castor::db::ora::OraVdqmSvc::matchTape2TapeDrive (
       throw e;
     }
     
+    // Get the foreign related objects
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_DeviceGroupName);
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeRequest);
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_Tape);		
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeServer);		
+    
     ad.setTarget(idTapeRequest);
 		
 		obj = cnvSvc()->createObj(&ad);
@@ -922,6 +935,10 @@ void castor::db::ora::OraVdqmSvc::matchTape2TapeDrive (
       delete tapeDrive;
       throw e;
     }  
+    
+    // Get the foreign related objects
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeDrive);
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_ClientIdentification);		
     
     /**
      * If we are here, everything went fine and we found a new 

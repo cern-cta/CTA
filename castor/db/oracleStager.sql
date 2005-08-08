@@ -2014,3 +2014,38 @@ BEGIN
   internalStageQuery(cfs, svcClassId, result);
 END;
 
+
+/**
+ * This is the main select statement to dedicate a tape to a tape drive.
+ * It respects the old and of course the new way to select a tape for a 
+ * tape drive.
+ * The old way is to look, if the tapeDrive and the tapeRequest have the same
+ * dgn.
+ * The new way is to look if the TapeAccessSpecification can be served by a 
+ * specific tapeDrive. The tape Request are then orderd by the priorityLevel (for 
+ * the new way) and by the modification time.
+ */  
+CREATE OR REPLACE PROCEDURE matchTape2TapeDrive
+ (tapeDriveID OUT NUMBER, tapeRequestID OUT NUMBER) AS
+BEGIN
+  SELECT TapeDrive.id, TapeRequest.id 
+    INTO tapeDriveID, tapeRequestID
+    FROM TapeDrive, TapeRequest, TapeDrive2TapeDriveComp, TapeDriveCompatibility, 
+         DeviceGroupName tapeDriveDgn, DeviceGroupName tapeRequestDgn 
+		WHERE TapeDrive.status=0 
+		      AND TapeDrive.runningTapeReq=0 
+					AND (TapeRequest.tapeDrive(+)=TapeDrive.id) 
+					AND (TapeRequest.requestedSrv(+)=TapeDrive.tapeServer) 
+					AND ((TapeDrive2TapeDriveComp.parent=TapeDrive.id 
+					      AND TapeDrive2TapeDriveComp.child=TapeDriveCompatibility.id 
+								AND TapeDriveCompatibility.tapeAccessSpecification=TapeRequest.tapeAccessSpecification 
+								AND TapeDrive.deviceGroupName=tapeDriveDgn.id 
+								AND TapeRequest.deviceGroupName=tapeRequestDgn.id 
+								AND tapeDriveDgn.libraryName=tapeRequestDgn.libraryName) 
+				       OR TapeDrive.deviceGroupName=TapeRequest.deviceGroupName) 
+				  AND rownum < 2 
+					ORDER BY TapeDriveCompatibility.priorityLevel DESC, 
+					         TapeRequest.id ASC 
+				  FOR UPDATE;
+END;
+				 
