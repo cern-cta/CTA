@@ -2024,6 +2024,7 @@ END;
  * The new way is to look if the TapeAccessSpecification can be served by a 
  * specific tapeDrive. The tape Request are then orderd by the priorityLevel (for 
  * the new way) and by the modification time.
+ * Returns 1 if a couple was found, 0 otherwise.
  */  
 CREATE OR REPLACE PROCEDURE matchTape2TapeDrive
  (tapeDriveID OUT NUMBER, tapeRequestID OUT NUMBER) AS
@@ -2047,5 +2048,9 @@ BEGIN
 					ORDER BY TapeDriveCompatibility.priorityLevel DESC, 
 					         TapeRequest.id ASC 
 				  FOR UPDATE;
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+    tapeDriveID := 0;
+    tapeRequestID := 0;
 END;
-				 
+

@@ -170,7 +170,7 @@ CREATE TABLE TapeDriveDedication (clientHost NUMBER, euid NUMBER, egid NUMBER, v
 CREATE TABLE TapeDriveCompatibility (tapeDriveModel VARCHAR2(2048), priorityLevel NUMBER, id INTEGER PRIMARY KEY, tapeAccessSpecification INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type DeviceGroupName */
-CREATE TABLE DeviceGroupName (dgName VARCHAR2(2048), libraryName VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
+CREATE TABLE DeviceGroupName (dgName VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
 ALTER TABLE SvcClass2TapePool
   ADD CONSTRAINT fk_SvcClass2TapePool_P FOREIGN KEY (Parent) REFERENCES SvcClass (id)
@@ -2210,6 +2210,7 @@ END;
  * The new way is to look if the TapeAccessSpecification can be served by a 
  * specific tapeDrive. The tape Request are then orderd by the priorityLevel (for 
  * the new way) and by the modification time.
+ * Returns 1 if a couple was found, 0 otherwise.
  */  
 CREATE OR REPLACE PROCEDURE matchTape2TapeDrive
  (tapeDriveID OUT NUMBER, tapeRequestID OUT NUMBER) AS
@@ -2233,5 +2234,9 @@ BEGIN
 					ORDER BY TapeDriveCompatibility.priorityLevel DESC, 
 					         TapeRequest.id ASC 
 				  FOR UPDATE;
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+    tapeDriveID := 0;
+    tapeRequestID := 0;
 END;
-				 
+
