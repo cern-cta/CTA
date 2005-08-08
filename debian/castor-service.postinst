@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $Id: castor-service.postinst,v 1.1 2005/08/08 13:19:43 jdurand Exp $
+# $Id: castor-service.postinst,v 1.2 2005/08/08 13:32:09 jdurand Exp $
 #
 # postinst script for castor
 #
@@ -31,11 +31,11 @@ case "$1" in
 	[ -x /sbin/chkconfig ] && /sbin/chkconfig --add $servicename
 	[ -x /usr/sbin/update-rc.d ] && /usr/sbin/update-rc.d $servicename defaults >/dev/null
 
-	if [ "$2" = "" ] ; then
-	    action="start"
-	else
-	    action="condrestart"
-	fi
+	#
+	## Default action is condrestart
+	#
+	action="condrestart"
+
 	if [ -x /sbin/service ]; then
 	    /sbin/service $servicename $action
 	elif [ -x /usr/sbin/invoke-rc.d ]; then
