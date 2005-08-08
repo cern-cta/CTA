@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $Id: castor-service.postrm,v 1.2 2005/08/08 13:59:19 jdurand Exp $
+# $Id: castor-service.postrm,v 1.3 2005/08/08 14:09:17 jdurand Exp $
 #
 # postrm script for castor
 #
@@ -38,6 +38,7 @@ case "$1" in
 	[ -x /sbin/chkconfig ] && /sbin/chkconfig --del $servicename
 	rm -f /etc/init.d/$servicename
 	[ -x /usr/sbin/update-rc.d ] && /usr/sbin/update-rc.d -f $servicename remove >/dev/null
+        [ -n "${CASTOR_SERVICE_SPOOL}" ] && rm -rf ${CASTOR_SERVICE_SPOOL}
 	;;
 
        upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
