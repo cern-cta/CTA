@@ -1,0 +1,8 @@
+! /bin/sh
+#
+# $Id: castor-dlf-server.postrm,v 1.7 2005/08/08 14:05:35 jdurand Exp $
+#
+CASTOR_SERVICE=dlfserver
+export CASTOR_SERVICE
+/usr/sbin/castor-service.postrm ${1+"$@"}
+exit $?
