@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $Id: castor-service.prerm,v 1.1 2005/08/08 13:19:43 jdurand Exp $
+# $Id: castor-service.prerm,v 1.2 2005/08/08 13:32:55 jdurand Exp $
 #
 # prerm script for castor
 #
@@ -27,6 +27,8 @@ servicename=${CASTOR_SERVICE}
 case "$1" in
     remove)
 	[ -x /sbin/chkconfig ] && /sbin/chkconfig --del castor-rfio-server
+	SILENTSTOP=1
+	export SILENTSTOP
 	if [ -x /sbin/service ]; then
 	    /sbin/service $servicename stop
 	elif [ -x /usr/sbin/invoke-rc.d ]; then
