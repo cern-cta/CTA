@@ -1,3 +1,20 @@
+castor (2.0.0-59) unstable; urgency=low
+
+  * DLF gui
+    added mutliple severity select
+    added subrequest ID field for the SELECT query (in ORACLE part)
+  * Oracle interface
+    makeSubRequestWait fix
+  * VDQM new schema
+    One column added to table DeviceGroupName
+    One new function for castor/vdqm/handler/TapeDriveDedicationHandler implemented in the db/ora/OraVdqmSvc class
+    Dedication of a tape drive fully implemented
+    Log messages added to VdqmServer
+  * Packaging
+    Resurrected Provides: libshift.so for castor-lib package (needed by cernlib package)
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Mon,  8 Aug 2005 12:28:33 +0200
+
 castor (2.0.0-58) unstable; urgency=low
 
   * VDQM new schema: Revision of the RtCopyDConnection. Now, it uses the old C (un)marshall makros, because the old protocol can't deal with thebiniostram.h facility.
