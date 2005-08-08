@@ -93,6 +93,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-lib
 Architecture: any
+Provides: libshift.so
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  Static and shared libraries for end-users
