@@ -18,9 +18,7 @@ usr/bin/vmgrlistlibrary
 usr/bin/vmgrlistmodel
 usr/bin/vmgrlistpool
 usr/bin/vmgrlisttape
-usr/bin/vmgrlistweight
 usr/bin/vmgrmodifylibrary
 usr/bin/vmgrmodifypool
 usr/bin/vmgrmodifytape
-usr/bin/vmgrmodifyweight
 usr/bin/vmgrsettag
