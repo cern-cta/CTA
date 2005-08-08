@@ -1,8 +1,8 @@
 #! /bin/sh
 #
-# $Id: castor-expert-server.postinst,v 1.6 2005/08/08 13:19:42 jdurand Exp $
+# $Id: castor-expert-server.postinst,v 1.7 2005/08/08 16:51:22 jdurand Exp $
 #
 CASTOR_SERVICE=expertd
 export CASTOR_SERVICE
-/usr/sbin/castor-service.postinst ${1+"$@"}
+[ -x /usr/sbin/castor-service.postinst ] && /usr/sbin/castor-service.postinst ${1+"$@"}
 exit $?
