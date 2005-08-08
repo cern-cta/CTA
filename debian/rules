@@ -84,9 +84,9 @@ install: build
 	# Install the debian+redhat init script
 	for i in $(CURDIR)/debian/*.init; do install -o root -g bin -m 755 $${i} $(CURDIR)/debian/castor/etc/init.d/`basename $${i} | sed 's/\.init//g'`; done
 	# Install the debian+redhat package scriptlets
-	for i in $(CURDIR)/debian/*.postinst; do install -o root -g bin -m 755 $${i} $(CURDIR)/debian/castor/usr/sbin/$${i}; done
-	for i in $(CURDIR)/debian/*.postrm; do install -o root -g bin -m 755 $${i} $(CURDIR)/debian/castor/usr/sbin/$${i}; done
-	for i in $(CURDIR)/debian/*.prerm; do install -o root -g bin -m 755 $${i} $(CURDIR)/debian/castor/usr/sbin/$${i}; done
+	for i in $(CURDIR)/debian/*.postinst; do install -o root -g bin -m 755 $${i} $(CURDIR)/debian/castor/usr/sbin/`basename $${i}`; done
+	for i in $(CURDIR)/debian/*.postrm; do install -o root -g bin -m 755 $${i} $(CURDIR)/debian/castor/usr/sbin/`basename $${i}`; done
+	for i in $(CURDIR)/debian/*.prerm; do install -o root -g bin -m 755 $${i} $(CURDIR)/debian/castor/usr/sbin/`basename $${i}`; done
 	# Install the sample castor.conf
 	install -o root -g bin -m 644 $(CURDIR)/debian/castor.conf $(CURDIR)/debian/castor/etc/castor/castor.conf.example
 
