@@ -1,8 +1,10 @@
 #! /bin/sh
 #
-# $Id: castor-monitor-server.postrm,v 1.1 2005/08/08 13:19:42 jdurand Exp $
+# $Id: castor-monitor-server.postrm,v 1.2 2005/08/08 14:17:04 jdurand Exp $
 #
 CASTOR_SERVICE=Cmonitd
 export CASTOR_SERVICE
+CASTOR_SERVICE_SPOOL=/var/spool/monitor
+export CASTOR_SERVICE_SPOOL
 /usr/sbin/castor-service.postrm ${1+"$@"}
 exit $?

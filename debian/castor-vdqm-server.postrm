@@ -1,8 +1,10 @@
 #! /bin/sh
 #
-# $Id: castor-vdqm-server.postrm,v 1.6 2005/08/08 13:19:43 jdurand Exp $
+# $Id: castor-vdqm-server.postrm,v 1.7 2005/08/08 14:17:04 jdurand Exp $
 #
 CASTOR_SERVICE=vdqmserver
 export CASTOR_SERVICE
+CASTOR_SERVICE_SPOOL=/var/spool/vdqm
+export CASTOR_SERVICE_SPOOL
 /usr/sbin/castor-service.postrm ${1+"$@"}
 exit $?

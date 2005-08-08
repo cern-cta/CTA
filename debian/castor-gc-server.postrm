@@ -1,8 +1,10 @@
 #! /bin/sh
 #
-# $Id: castor-gc-server.postrm,v 1.5 2005/08/08 13:19:42 jdurand Exp $
+# $Id: castor-gc-server.postrm,v 1.6 2005/08/08 14:17:04 jdurand Exp $
 #
 CASTOR_SERVICE=gcDaemon
 export CASTOR_SERVICE
+CASTOR_SERVICE_SPOOL=/var/spool/gc
+export CASTOR_SERVICE_SPOOL
 /usr/sbin/castor-service.postrm ${1+"$@"}
 exit $?
