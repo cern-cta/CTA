@@ -1,3 +1,6 @@
 etc/init.d/rfiod
 etc/sysconfig/rfiod.example
 usr/bin/rfiod
+usr/sbin/castor-rfio-server.postinst
+usr/sbin/castor-rfio-server.postrm
+usr/sbin/castor-rfio-server.prerm

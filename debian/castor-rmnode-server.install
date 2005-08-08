@@ -2,3 +2,6 @@ etc/castor/RMNODECONFIG.example
 etc/init.d/rmnode
 etc/sysconfig/rmnode.example
 usr/bin/rmnode
+usr/sbin/castor-rmnode-server.postinst
+usr/sbin/castor-rmnode-server.postrm
+usr/sbin/castor-rmnode-server.prerm

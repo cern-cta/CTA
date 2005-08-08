@@ -1,3 +1,6 @@
 etc/init.d/MigHunter
 etc/sysconfig/MigHunter.example
 usr/bin/MigHunter
+usr/sbin/castor-rtcopy-mighunter.postinst
+usr/sbin/castor-rtcopy-mighunter.postrm
+usr/sbin/castor-rtcopy-mighunter.prerm

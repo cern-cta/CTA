@@ -60,6 +60,7 @@ install: build
 
 	# Add here commands to install the package into debian/castor.
 	mkdir -p $(CURDIR)/debian/castor/usr/bin
+	mkdir -p $(CURDIR)/debian/castor/usr/sbin
 	mkdir -p $(CURDIR)/debian/castor/usr/lib/rtcopy
 	mkdir -p $(CURDIR)/debian/castor/usr/lib/perl/CASTOR
 	mkdir -p $(CURDIR)/debian/castor/usr/include/shift
@@ -71,12 +72,21 @@ install: build
 	mkdir -p $(CURDIR)/debian/castor/etc/sysconfig
 	mkdir -p $(CURDIR)/debian/castor/usr/local/lsf/lib
 	mkdir -p $(CURDIR)/debian/castor/usr/local/lsf/etc
+	# Install CASTOR
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/castor
 	$(MAKE) exportman DESTDIR=$(CURDIR)/debian/castor EXPORTMAN=$(CURDIR)/debian/castor/usr/share/man
+	# Install policies
 	(cd clips; ../imake/imake -I../config DESTDIR=$(CURDIR)/debian/castor; make install DESTDIR=$(CURDIR)/debian/castor)
-	for i in $(CURDIR)/debian/*CONFIG; do install -o root -g st -m 640 $$i $(CURDIR)/debian/castor/etc/castor/`basename $$i`.example; done
-	for i in `find $(CURDIR) -name "*.sysconfig"`; do install -o root -g bin -m 644 $${i} $(CURDIR)/debian/castor/etc/sysconfig/`basename $$i | sed 's/\.sysconfig//g'`.example; done
-	for i in $(CURDIR)/debian/*.init; do install -o root -g bin -m 755 $$i $(CURDIR)/debian/castor/etc/init.d/`basename $$i | sed 's/\.init//g'`; done
+	# Install example configuration files
+	for i in $(CURDIR)/debian/*CONFIG; do install -o root -g st -m 640 $${i} $(CURDIR)/debian/castor/etc/castor/`basename $${i}`.example; done
+	# Install example sysconfig files
+	for i in `find $(CURDIR) -name "*.sysconfig"`; do install -o root -g bin -m 644 $${i} $(CURDIR)/debian/castor/etc/sysconfig/`basename $${i} | sed 's/\.sysconfig//g'`.example; done
+	# Install the debian+redhat init script
+	for i in $(CURDIR)/debian/*.init; do install -o root -g bin -m 755 $${i} $(CURDIR)/debian/castor/etc/init.d/`basename $${i} | sed 's/\.init//g'`; done
+	# Install the debian+redhat package scriptlets
+	for i in $(CURDIR)/debian/*.postinst; do install -o root -g bin -m 755 $${i} $(CURDIR)/debian/castor/usr/sbin/$${i}; done
+	for i in $(CURDIR)/debian/*.postrm; do install -o root -g bin -m 755 $${i} $(CURDIR)/debian/castor/usr/sbin/$${i}; done
+	for i in $(CURDIR)/debian/*.prerm; do install -o root -g bin -m 755 $${i} $(CURDIR)/debian/castor/usr/sbin/$${i}; done
 	# Install the sample castor.conf
 	install -o root -g bin -m 644 $(CURDIR)/debian/castor.conf $(CURDIR)/debian/castor/etc/castor/castor.conf.example
 

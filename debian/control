@@ -6,6 +6,12 @@ Maintainer: Jean-Damien Durand <Jean-Damien.Durand@cern.ch>
 Build-Depends: debhelper (>= 4.0.0)
 Standards-Version: 3.6.1
 
+Package: castor-scriptlets
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: castor (Cern Advanced STORage system)
+ Contains packages scriplets, currently supporting Debian and RedHat
+
 Package: castor-sacct
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
@@ -44,7 +50,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-dlf-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Distributed Logging Facility server
 
@@ -63,13 +69,13 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-expert-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Expert server, used to trigger policies
 
 Package: castor-gc-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Garbage collector, running on every worker node
 
@@ -120,7 +126,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-monitor-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Monitoring server
 
@@ -133,7 +139,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-msg-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Messaging server.
  Used to control when necessary tape access, usually needed by an operator
@@ -146,7 +152,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-ns-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Name server daemon
 
@@ -165,19 +171,19 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-rfio-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  RFIO server
 
 Package: castor-rh-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-db-interface
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-db-interface, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Request Handler server
 
 Package: castor-rmc-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Remote Media Controller server
 
@@ -189,13 +195,13 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-rmmaster-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Resource Monitoring Master server
 
 Package: castor-rmnode-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Resource Monitoring running on each worker node
 
@@ -213,13 +219,13 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-rtcopy-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Remote Tape Copy server running on a tape server
 
 Package: castor-rtcopy-clientserver
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-db-interface
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-db-interface, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Remote Tape Copy Client Server running on top of a database.
  This will generate raw RTCOPY commands understood by the rtcopy-server
@@ -227,7 +233,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-rtcopy-mighunter
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-dbtools, castor-db-interface, castor-rtcopy-clientserver
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-dbtools, castor-db-interface, castor-rtcopy-clientserver, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Migration Hunter - goes in pair with castor-rtcopy-clientserver
 
@@ -245,7 +251,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-stager-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-db-interface
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-db-interface, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Stager server
 
@@ -263,7 +269,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-tape-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Tape server
 
@@ -275,7 +281,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-upv-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  User Privilege server
 
@@ -287,7 +293,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-vdqm-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Volume Drive and Queue Manager server
 
@@ -299,6 +305,6 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-vmgr-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Volume Manager server

@@ -1,3 +1,6 @@
 etc/init.d/rhserver
 etc/sysconfig/rhserver.example
 usr/bin/rhserver
+usr/sbin/castor-rh-server.postinst
+usr/sbin/castor-rh-server.postrm
+usr/sbin/castor-rh-server.prerm

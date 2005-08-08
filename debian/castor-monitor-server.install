@@ -1,1 +1,5 @@
+etc/init.d/Cmonitd
 usr/bin/Cmonitd
+usr/sbin/castor-monitor-server.postinst
+usr/sbin/castor-monitor-server.postrm
+usr/sbin/castor-monitor-server.prerm

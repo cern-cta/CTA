@@ -1,0 +1,8 @@
+#! /bin/sh
+#
+# $Id: castor-msg-server.postinst,v 1.1 2005/08/08 13:19:43 jdurand Exp $
+#
+CASTOR_SERVICE=msgdaemon
+export CASTOR_SERVICE
+/usr/sbin/castor-service.postinst ${1+"$@"}
+exit $?

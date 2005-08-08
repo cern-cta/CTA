@@ -1,3 +1,6 @@
 etc/sysconfig/gcDaemon.example
 etc/init.d/gcDaemon
 usr/bin/gcDaemon
+usr/sbin/castor-gc-server.postinst
+usr/sbin/castor-gc-server.postrm
+usr/sbin/castor-gc-server.prerm

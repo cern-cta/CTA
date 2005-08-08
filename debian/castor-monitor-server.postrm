@@ -1,0 +1,8 @@
+#! /bin/sh
+#
+# $Id: castor-monitor-server.postrm,v 1.1 2005/08/08 13:19:42 jdurand Exp $
+#
+CASTOR_SERVICE=Cmonitd
+export CASTOR_SERVICE
+/usr/sbin/castor-service.postrm ${1+"$@"}
+exit $?

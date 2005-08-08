@@ -2,3 +2,6 @@ etc/init.d/stager
 etc/sysconfig/stager.example
 usr/bin/stager
 usr/bin/stageradmin
+usr/sbin/castor-stager-server.postinst
+usr/sbin/castor-stager-server.postrm
+usr/sbin/castor-stager-server.prerm

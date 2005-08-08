@@ -3,3 +3,6 @@ etc/init.d/nsdaemon
 etc/sysconfig/nsdaemon.example
 usr/bin/nsdaemon
 usr/bin/nsshutdown
+usr/sbin/castor-ns-server.postinst
+usr/sbin/castor-ns-server.postrm
+usr/sbin/castor-ns-server.prerm

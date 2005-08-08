@@ -4,3 +4,6 @@ usr/bin/migrator
 usr/bin/recaller
 usr/bin/rtcpclientd
 usr/bin/rtcpcldCleanupDB
+usr/sbin/castor-rtcopy-clientserver.postinst
+usr/sbin/castor-rtcopy-clientserver.postrm
+usr/sbin/castor-rtcopy-clientserver.prerm

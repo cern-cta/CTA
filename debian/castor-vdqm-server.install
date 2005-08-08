@@ -3,3 +3,6 @@ etc/sysconfig/vdqmserv.example
 usr/bin/vdqm_admin
 usr/bin/vdqmbc_serv
 usr/bin/vdqmserv
+usr/sbin/castor-vdqm-server.postinst
+usr/sbin/castor-vdqm-server.postrm
+usr/sbin/castor-vdqm-server.prerm

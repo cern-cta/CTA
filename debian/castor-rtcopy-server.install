@@ -2,3 +2,6 @@ etc/init.d/rtcpd
 etc/sysconfig/rtcpd.example
 usr/bin/killjid
 usr/bin/rtcpd
+usr/sbin/castor-rtcopy-server.postinst
+usr/sbin/castor-rtcopy-server.postrm
+usr/sbin/castor-rtcopy-server.prerm

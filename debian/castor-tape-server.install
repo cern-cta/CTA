@@ -9,3 +9,6 @@ usr/bin/smc
 usr/bin/tpdaemon
 usr/bin/tpdump
 usr/bin/tplabel
+usr/sbin/castor-tape-server.postinst
+usr/sbin/castor-tape-server.postrm
+usr/sbin/castor-tape-server.prerm
