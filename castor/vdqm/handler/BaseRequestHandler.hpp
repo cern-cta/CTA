@@ -30,6 +30,9 @@
 #include "castor/BaseObject.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
 
+#include "errno.h"
+#include "serrno.h"
+
 namespace castor {
 	//Forward declaration
 	class IObject;

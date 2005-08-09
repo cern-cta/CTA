@@ -36,7 +36,6 @@
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/newVdqm.h"
 
-
 // Local Includes
 #include "TapeDriveHandler.hpp"
 #include "TapeDriveConsistencyChecker.hpp" // We are a friend of him!
@@ -335,10 +334,19 @@ castor::vdqm::TapeDrive*
 			/**
 			 * The tape drive does not exist, so we just create it!
 			 * But first we need its device group name out of the db.
-			 * If the dgn doesn't exists, we just create it.
 			 */
 			
 			dgName = ptr_IVdqmService->selectDeviceGroupName(ptr_driveRequest->dgn);
+			
+			if ( dgName == NULL ) {
+				castor::exception::Exception ex(EVQDGNINVL);
+				
+				ex.getMessage() << "castor::vdqm::TapeDriveHandler::getTapeDrive(): "
+												<< "Query request for unknown dgn: "
+												<< ptr_driveRequest->dgn << std::endl;
+
+				throw ex;				
+			}
 			
       tapeDrive = new castor::vdqm::TapeDrive();
 

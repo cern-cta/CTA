@@ -156,20 +156,18 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
 	 																			volumeRequest->mode);	 																	
 	  
 	  //The requested tape server
-	//  reqTapeServer = ptr_IVdqmService->selectTapeServer(volumeRequest->server);
+	  reqTapeServer = ptr_IVdqmService->selectTapeServer(volumeRequest->server);
 	  
 	  memset(&tape_info,'\0',sizeof(vmgr_tape_info));
 	  
 		// "Try to get information about the tape from the VMGR daemon" message
-	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 47);	  
-	  
-//TODO: Open the connection to VMGR Server	  
+	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 47);	   
 	  
 	  /**
 	   * Create a connection to vmgr daemon, to obtain more information about the
 	   * tape, like its density and its tapeModel.
 	   */
-	  rc = vmgr_querytape (tape->vid().c_str(), 0, &tape_info, volumeRequest->dgn);
+	  rc = vmgr_querytape (tape->vid().c_str(), 0, &tape_info, volumeRequest->dgn);	  
 	  
 	  if ( rc == -1) {
 	  	castor::exception::Exception ex(EVQDGNINVL);
@@ -211,7 +209,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
 	  
 	  //Connect the tapeRequest with the additional information
 	  newTapeReq->setClient(clientData);
-//	  newTapeReq->setTapeAccessSpecification(tapeAccessSpec);
+	  newTapeReq->setTapeAccessSpecification(tapeAccessSpec);
 	  newTapeReq->setRequestedSrv(reqTapeServer);
 	  newTapeReq->setTape(tape);
 	  newTapeReq->setDeviceGroupName(dgName);

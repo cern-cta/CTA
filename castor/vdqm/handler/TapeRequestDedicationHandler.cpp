@@ -32,6 +32,9 @@
 #include "castor/BaseAddress.hpp"
 #include "castor/Services.hpp"
  
+#include "castor/stager/Tape.hpp"
+ 
+#include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
@@ -53,7 +56,7 @@ castor::vdqm::handler::TapeRequestDedicationHandler*
  * run.
  */
 unsigned const int
-	castor::vdqm::handler::TapeRequestDedicationHandler::m_sleepMilliTime = 500000;
+	castor::vdqm::handler::TapeRequestDedicationHandler::m_sleepTime = 2;
  	
  	
 //------------------------------------------------------------------------------
@@ -93,7 +96,7 @@ castor::vdqm::handler::TapeRequestDedicationHandler::~TapeRequestDedicationHandl
 void castor::vdqm::handler::TapeRequestDedicationHandler::run() {
 		
   TapeDrive* freeTapeDrive;
-  TapeRequest* waitingTapeRequest;
+  TapeRequest* waitingTapeRequest;	
 		
 	_stopLoop = false;
 	
@@ -106,11 +109,12 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::run() {
 			/**
 			 * Look for a free tape drive, which can handle the request
 			 */
-			ptr_IVdqmService->matchTape2TapeDrive(*freeTapeDrive, *waitingTapeRequest);
+			ptr_IVdqmService->matchTape2TapeDrive(&freeTapeDrive, &waitingTapeRequest);
+			
 			if ( freeTapeDrive == NULL || waitingTapeRequest == NULL) {
 		    // "No free TapeDrive, or no TapeRequest in the db" message
-		    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 46);
-		  	usleep(m_sleepMilliTime);
+//		    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 46);
+		  	sleep(m_sleepTime);
 			}
 		  else { //If there was a free drive, start a new job
 			  handleDedication(freeTapeDrive, waitingTapeRequest);
@@ -127,9 +131,25 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::run() {
 	      {castor::dlf::Param("Message", ex.getMessage().str())};      
 	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 50, 1, param);
 		}
+	  	
+	  if ( waitingTapeRequest ) {
+	  	if ( waitingTapeRequest->tapeDrive() &&
+  				 waitingTapeRequest->tapeDrive() != freeTapeDrive )
+	  		delete waitingTapeRequest->tapeDrive();
+	  	
+	  	delete waitingTapeRequest; 	  	
+	  }
 	  		
-	  if ( freeTapeDrive ) delete freeTapeDrive;
-	  if ( waitingTapeRequest ) delete waitingTapeRequest; 
+	  if ( freeTapeDrive ) {
+	  	if ( freeTapeDrive->tape() )
+		  	delete freeTapeDrive->tape();
+		  if ( freeTapeDrive->runningTapeReq() )
+		  	delete freeTapeDrive->runningTapeReq();
+
+	  	delete freeTapeDrive->tapeServer();
+		  delete freeTapeDrive->deviceGroupName();	  	
+	  	delete freeTapeDrive;
+	  }
 		
 //		std::cout << "TapeRequestDedicationHandler loop" << std::endl;
 		
@@ -154,7 +174,8 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::handleDedication(
 	throw (castor::exception::Exception) {
 		
 	if ( freeTapeDrive->status() != UNIT_UP || 
-			 freeTapeDrive->runningTapeReq() != NULL ) {
+			 freeTapeDrive->runningTapeReq() != NULL ||
+			 freeTapeDrive->tape() != NULL ) {
 		castor::exception::Internal ex;
 		
 		ex.getMessage() << "The selected TapeDrive from the db is not free or "

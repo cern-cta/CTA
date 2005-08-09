@@ -48,10 +48,10 @@ namespace castor {
 	
 				public:
 					/**
-					 * Specifies in which intervalls the loop should be executed.
-					 * The amount of this value should not be more than 1000000!
+					 * Specifies, how many seconds the thread should sleep,
+					 * when it didn't find a free tapeDrive 
 					 */				
-					static unsigned const int m_sleepMilliTime;
+					static unsigned const int m_sleepTime;
 				
 					static TapeRequestDedicationHandler* Instance() 
 						throw(castor::exception::Exception);
