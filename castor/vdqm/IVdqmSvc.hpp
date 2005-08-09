@@ -99,7 +99,7 @@ namespace castor {
 	    	 * @exception in case of error
 	    	 */	
 	     virtual void matchTape2TapeDrive(
-	     	TapeDrive& freeTapeDrive, TapeRequest& waitingTapeRequest) 
+	     	TapeDrive** freeTapeDrive, TapeRequest** waitingTapeRequest) 
     		throw (castor::exception::Exception) = 0;
 
 	    		

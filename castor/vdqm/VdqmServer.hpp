@@ -92,11 +92,6 @@ namespace castor {
 	    void setForeground(bool value);
 	
 	    /**
-	     * Sets the foreground flag
-	     */    
-	    void setSingleThreaded(bool value);
-	
-	    /**
 	     * parses a command line to set the server oprions
 	     */    
 	    void parseCommandLine(int argc, char *argv[]);
