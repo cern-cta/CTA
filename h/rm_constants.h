@@ -1,4 +1,4 @@
-/* $Id: rm_constants.h,v 1.19 2005/07/15 12:08:17 jdurand Exp $ */
+/* $Id: rm_constants.h,v 1.20 2005/08/09 13:21:36 jdurand Exp $ */
 
 #ifndef __rm_constants_h
 
@@ -296,6 +296,7 @@
 #define RM_CHILD_RESUME_MODE   5
 #define RM_CHILD_PING_MODE     6
 #define RM_CHILD_POST_MODE     7
+#define RM_CHILD_DUMMY_MODE    8
 
 #define RM_O_RDONLY            1
 #define RM_O_WRONLY            2

@@ -33,8 +33,24 @@ EXTERN_C void *Crmd_recv_from_users_purge _PROTO((void *));
 EXTERN_C void DLL_DECL Crmd_exit _PROTO((int));
 EXTERN_C void DLL_DECL Crmd_recv_from_users_init _PROTO(());
 #ifdef LSF
+#ifdef RM_REUSE_CONNECTION
+#undef RM_REUSE_CONNECTION
+#endif
+#define RM_REUSE_CONNECTION 1
+#ifdef RM_DO_NOT_REUSE_CONNECTION
+#undef RM_DO_NOT_REUSE_CONNECTION
+#endif
+#define RM_DO_NOT_REUSE_CONNECTION 0
+#ifdef RM_AUTOMATIC_CLOSE_OF_CONNECTION
+#undef RM_AUTOMATIC_CLOSE_OF_CONNECTION
+#endif
+#define RM_AUTOMATIC_CLOSE_OF_CONNECTION 1
+#ifdef RM_NO_AUTOMATIC_CLOSE_OF_CONNECTION
+#undef RM_NO_AUTOMATIC_CLOSE_OF_CONNECTION
+#endif
+#define RM_NO_AUTOMATIC_CLOSE_OF_CONNECTION 0
 EXTERN_C int DLL_DECL Crmd_process_user_lsf_proxy _PROTO(());
-EXTERN_C int  DLL_DECL Crmd_process_user_lsf_request _PROTO((int *, u_signed64, struct rmjob *, LS_LONG_INT *, int, char *));
+EXTERN_C int  DLL_DECL Crmd_process_user_lsf_request _PROTO((int *, u_signed64, struct rmjob *, LS_LONG_INT *, int, char *, int, int *, int));
 #endif
 
 #endif /* __Crmd_recv_from_users_h */
