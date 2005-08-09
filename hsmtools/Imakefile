@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.16 $ $Date: 2005/08/04 17:53:09 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.17 $ $Date: 2005/08/09 13:59:15 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM    Make HSM admin tools.
 
@@ -110,6 +110,7 @@ PROGS_TO_CLEAN =  ProgramTargetName(reclaim) \
 	 ProgramTargetName(deleteSvcClass) \
 	 ProgramTargetName(diskUsage) \
 	 ProgramTargetName(printFileClass) \
+	 ProgramTargetName(vdqmDBInit) \
 	 ProgramTargetName(printSvcClass)
 PROGS_TO_KEEP =  ProgramTargetName(cleanLostFiles) \
 	 ProgramTargetName(diskServer_qry) \
@@ -131,6 +132,11 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(listSvcClass)) \
 	 FileName($(BIN),ProgramTargetName(printFileClass)) \
 	 FileName($(BIN),ProgramTargetName(printSvcClass))
+
+#if BuildVDQMCpp
+IPROGS += FileName($(BIN),ProgramTargetName(vdqmDBInit))
+#endif
+
 EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/repack \
 	 $(EXPORTBIN)/tapetohsm \
@@ -147,6 +153,10 @@ EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/listSvcClass \
 	 $(EXPORTBIN)/printFileClass \
 	 $(EXPORTBIN)/printSvcClass
+
+#if BuildVDQMCpp
+EPROGS +=	$(EXPORTBIN)/vdqmDBInit
+#endif
 
 IPERL = FileName($(PERLLIBDIR),castor_tools.pm)
 EPERL = $(EXPORTPERL)/castor_tools.pm
@@ -165,6 +175,10 @@ NormalProgramTarget(deleteSvcClass,deleteSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(printFileClass,printFileClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(printSvcClass,printSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(diskUsage,diskUsage.Osuf,$(DEPLIB2),$(LIBS2))
+
+#if BuildVDQMCpp
+NormalProgramTarget(vdqmDBInit,vdqmDBInit.Osuf,$(DEPLIB2),$(LIBS2))
+#endif
 
 MakeDepSharedLibrary(shlib,shift)
 
@@ -214,6 +228,11 @@ IEXPORT(listSvcClass,$(EXPORTBIN),755);
 
 InstallProgram(printFileClass,$(BIN),root,bin,755)
 IEXPORT(printFileClass,$(EXPORTBIN),755);
+
+#if BuildVDQMCpp
+InstallProgram(vdqmDBInit,$(BIN),root,bin,755)
+IEXPORT(vdqmDBInit,$(EXPORTBIN),755);
+#endif
 
 InstallProgram(printSvcClass,$(BIN),root,bin,755)
 IEXPORT(printSvcClass,$(EXPORTBIN),755);
