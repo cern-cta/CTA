@@ -220,7 +220,7 @@ castor::vdqm::TapeServer*
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       m_selectTapeServerStatement->closeResultSet(rset);
       
-      // we found nothing, so let's create the tape
+      // we found nothing, so let's create the tape sever
       castor::vdqm::TapeServer* tapeServer = new castor::vdqm::TapeServer();
       tapeServer->setServerName(serverName);
       tapeServer->setStatus(VDQM_TPD_STARTED);
@@ -691,6 +691,10 @@ castor::vdqm::TapeAccessSpecification*
 	 const std::string density,
 	 const std::string tapeModel)
   throw (castor::exception::Exception) {
+  	
+//  std::cout << "accessMode: " << accessMode << std::endl;
+//  std::cout << "density: " << density << std::endl;
+//  std::cout << "tapeModel: " << tapeModel << std::endl;  	
 
   // Check whether the statements are ok
   if (0 == m_selectTapeAccessSpecificationStatement) {
@@ -771,42 +775,9 @@ castor::vdqm::DeviceGroupName*
     
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       m_selectDeviceGroupNameStatement->closeResultSet(rset);
-      // we found nothing, so let's create the DeviceGroupName entry
-      castor::vdqm::DeviceGroupName* deviceGroupName = new castor::vdqm::DeviceGroupName();
-      deviceGroupName->setDgName(dgName);
-
-      castor::BaseAddress ad;
-      ad.setCnvSvcName("DbCnvSvc");
-      ad.setCnvSvcType(castor::SVC_DBCNV);
-      try {
-        cnvSvc()->createRep(&ad, deviceGroupName, false);
-        return deviceGroupName;
-      } catch (oracle::occi::SQLException e) {
-        delete deviceGroupName;
-        if (1 == e.getErrorCode()) {
-          // if violation of unique constraint, ie means that
-          // some other thread was quicker than us on the insertion
-          // So let's select what was inserted
-          rset = m_selectDeviceGroupNameStatement->executeQuery();
-          if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-            // Still nothing ! Here it's a real error
-            m_selectDeviceGroupNameStatement->closeResultSet(rset);
-            castor::exception::Internal ex;
-            ex.getMessage()
-              << "Unable to select DeviceGroupName while inserting "
-              << "violated unique constraint :"
-              << std::endl << e.getMessage();
-            throw ex;
-          }
-        }
-        m_selectDeviceGroupNameStatement->closeResultSet(rset);
-        // Else, "standard" error, throw exception
-        castor::exception::Internal ex;
-        ex.getMessage()
-          << "Exception while inserting new DevicGroupName in the DB :"
-          << std::endl << e.getMessage();
-        throw ex;
-      }
+      // we found nothing, so let's return NULL
+      
+      return NULL;
     }
     // If we reach this point, then we selected successfully
     // a DeviceGroupName and it's id is in rset
@@ -851,8 +822,8 @@ castor::vdqm::DeviceGroupName*
 // matchTape2TapeDrive
 // -----------------------------------------------------------------------
 void castor::db::ora::OraVdqmSvc::matchTape2TapeDrive (
-	castor::vdqm::TapeDrive& freeTapeDrive, 
-	castor::vdqm::TapeRequest& waitingTapeRequest)
+	castor::vdqm::TapeDrive** freeTapeDrive, 
+	castor::vdqm::TapeRequest** waitingTapeRequest)
   throw (castor::exception::Exception) {
   
   u_signed64 idTapeDrive, idTapeRequest;
@@ -872,25 +843,21 @@ void castor::db::ora::OraVdqmSvc::matchTape2TapeDrive (
   
   // Execute statement and get result
   try {
-    oracle::occi::ResultSet *rset = m_matchTape2TapeDriveStatement->executeQuery();
-    
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      m_matchTape2TapeDriveStatement->closeResultSet(rset);
-      
-      // we found nothing, so let's just return two NULL Pointers
-      
-      freeTapeDrive = *tapeDrive;      
-      waitingTapeRequest = *tapeRequest;
-      
-      return;
-    }
+    m_matchTape2TapeDriveStatement->executeUpdate();
     
     // If we reach this point, then we selected successfully
     // a TapeDrive + TapeRequest and their id's are in rset
-    idTapeDrive = (u_signed64)rset->getDouble(1);
-    idTapeRequest = (u_signed64)rset->getDouble(2);
+    idTapeDrive = (u_signed64)m_matchTape2TapeDriveStatement->getDouble(1);
+    idTapeRequest = (u_signed64)m_matchTape2TapeDriveStatement->getDouble(2);
     
-    m_matchTape2TapeDriveStatement->closeResultSet(rset);
+    if ( idTapeDrive == 0 || idTapeRequest == 0 ) {
+      // we found nothing, so let's just return two NULL Pointers
+      
+      *freeTapeDrive = NULL;      
+      *waitingTapeRequest = NULL;
+      
+      return;    	
+    }
     
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
@@ -944,8 +911,8 @@ void castor::db::ora::OraVdqmSvc::matchTape2TapeDrive (
      * If we are here, everything went fine and we found a new 
      * tape <--> tape drive couple 
      */    
-    freeTapeDrive = *tapeDrive;
-    waitingTapeRequest = *tapeRequest;      
+    *freeTapeDrive = tapeDrive;
+    *waitingTapeRequest = tapeRequest;      
     
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;

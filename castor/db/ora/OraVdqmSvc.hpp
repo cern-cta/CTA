@@ -148,8 +148,8 @@ namespace castor {
 //------------------ function for TapeRequestDedicationHandler -----------------
 
 					virtual void matchTape2TapeDrive(
-			     	castor::vdqm::TapeDrive& freeTapeDrive, 
-			     	castor::vdqm::TapeRequest& waitingTapeRequest) 
+			     	castor::vdqm::TapeDrive** freeTapeDrive, 
+			     	castor::vdqm::TapeRequest** waitingTapeRequest) 
 		    		throw (castor::exception::Exception);		    		
 		    		
 //------------------ functions for TapeDriveRequestHandler ------------------
