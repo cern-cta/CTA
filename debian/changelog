@@ -1,3 +1,9 @@
+castor (2.0.0-61) unstable; urgency=low
+
+  * Fixed in specfile
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Wed, 10 Aug 2005 13:53:05 +0200
+
 castor (2.0.0-60) unstable; urgency=low
 
   * Fixed Ctape_Position() prototype
