@@ -1,3 +1,18 @@
+castor (2.0.0-60) unstable; urgency=low
+
+  * Fixed Ctape_Position() prototype
+  * Cstrerror() new function - wrapper on strerror preventing errno change - not used for the moment
+  * Cmonitd startup script
+  * New package castor-scriptlets that externalize scriptlets used on debian or redhat, all service packages depend on it
+  * Removal of vmgr*weight*
+  * Force ldconfig for lib packages
+  * VDQM schema: two new oracle procedures, new tool vdqmDBInit
+  * New package castor-rtcopy-mighunter (MigHunter previously was in castor-rtcopy-clientserver)
+  * TapeMigrationAndRecall documentation update
+  * Optimisation of LSF interface within rmmaster (now re-use the connection to the internal proxy)
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Wed, 10 Aug 2005 11:58:01 +0200
+
 castor (2.0.0-59) unstable; urgency=low
 
   * DLF gui
