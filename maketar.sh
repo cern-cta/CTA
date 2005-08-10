@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.20 2005/08/10 11:52:55 jdurand Exp $
+# $Id: maketar.sh,v 1.21 2005/08/10 12:01:39 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -197,9 +197,9 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
         [ "$package" = "castor-lib-mysql" ] && echo "/sbin/ldconfig" >> CASTOR.spec
     else
 	# Force ldconfig for packages with a shared library
-        [ "$package" = "castor-lib" ] && echo "%post -p /sbin/ldconfig" >> CASTOR.spec
-        [ "$package" = "castor-lib-oracle" ] && echo "%post -p /sbin/ldconfig" >> CASTOR.spec
-        [ "$package" = "castor-lib-mysql" ] && echo "%post -p /sbin/ldconfig" >> CASTOR.spec
+        [ "$package" = "castor-lib" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
+        [ "$package" = "castor-lib-oracle" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
+        [ "$package" = "castor-lib-mysql" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
     fi
     #
     ## Get %preun section
@@ -226,9 +226,9 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
         [ "$package" = "castor-lib-mysql" ] && echo "/sbin/ldconfig" >> CASTOR.spec
     else
 	# Force ldconfig for packages with a shared library
-        [ "$package" = "castor-lib" ] && echo "%postun -p /sbin/ldconfig" >> CASTOR.spec
-        [ "$package" = "castor-lib-oracle" ] && echo "%postun -p /sbin/ldconfig" >> CASTOR.spec
-        [ "$package" = "castor-lib-mysql" ] && echo "%postun -p /sbin/ldconfig" >> CASTOR.spec
+        [ "$package" = "castor-lib" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
+        [ "$package" = "castor-lib-oracle" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
+        [ "$package" = "castor-lib-mysql" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
     fi
     echo >> CASTOR.spec
 done
