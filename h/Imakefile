@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Date: 2005/06/28 13:50:19 $ CERN IT-PDP/DM   Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Date: 2005/08/10 09:29:06 $ CERN IT-PDP/DM   Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -21,6 +21,7 @@ ICOMMON_H = \
 	 FileName($(DESTDIRCASTOR),sacct.h) \
 	 FileName($(DESTDIRCASTOR),Cglobals.h) FileName($(DESTDIRCASTOR),Cnetdb.h) \
 	 FileName($(DESTDIRCASTOR),Cpool_api.h) FileName($(DESTDIRCASTOR),Cpwd.h) \
+	 FileName($(DESTDIRCASTOR),Cstrerror.h) \
 	 FileName($(DESTDIRCASTOR),Cregexp.h) FileName($(DESTDIRCASTOR),Cregexp_magic.h) \
 	 FileName($(DESTDIRCASTOR),Csched_api.h) FileName($(DESTDIRCASTOR),Csched_flags.h) \
 	 FileName($(DESTDIRCASTOR),Csetprocname.h) \
@@ -125,6 +126,7 @@ ECOMMON_H = \
 	 $(EXPORTH)/sacct.h \
 	 $(EXPORTH)/Cglobals.h $(EXPORTH)/Cnetdb.h \
 	 $(EXPORTH)/Cpool_api.h $(EXPORTH)/Cpwd.h \
+	 $(EXPORTH)/Cstrerror.h \
 	 $(EXPORTH)/Cregexp.h $(EXPORTH)/Cregexp_magic.h \
 	 $(EXPORTH)/Csched_api.h $(EXPORTH)/Csched_flags.h \
 	 $(EXPORTH)/Csetprocname.h \
@@ -445,6 +447,9 @@ IEXPORT(Cns_server.h,$(EXPORTH),644)
 
 InstallNonExecFile(Cpool_api.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cpool_api.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cstrerror.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cstrerror.h,$(EXPORTH),644)
 
 InstallNonExecFile(Cpwd.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cpwd.h,$(EXPORTH),644)

@@ -38,6 +38,7 @@ usr/include/shift/Csched_api.h
 usr/include/shift/Csched_flags.h
 usr/include/shift/Csetprocname.h
 usr/include/shift/Csnprintf.h
+usr/include/shift/Cstrerror.h
 usr/include/shift/Ctape.h
 usr/include/shift/Ctape_api.h
 usr/include/shift/Ctape_constants.h
