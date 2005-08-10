@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.19 2005/08/08 14:23:48 jdurand Exp $
+# $Id: maketar.sh,v 1.20 2005/08/10 11:52:55 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -182,8 +182,11 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
 	    fi
 	done
     fi
+    #
+    ## Get %post section
+    #
     if [ -s "debian/$package.postinst" ]; then
-	echo "%post" >> CASTOR.spec
+	echo "%post -n $package" >> CASTOR.spec
 	echo "if [ $1 -ge 1 ]; then" >> CASTOR.spec
 	echo "  ## Condrestart the service if any" >> CASTOR.spec
 	echo "  /usr/sbin/$package.postinst configure" >> CASTOR.spec
@@ -198,15 +201,21 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
         [ "$package" = "castor-lib-oracle" ] && echo "%post -p /sbin/ldconfig" >> CASTOR.spec
         [ "$package" = "castor-lib-mysql" ] && echo "%post -p /sbin/ldconfig" >> CASTOR.spec
     fi
+    #
+    ## Get %preun section
+    #
     if [ -s "debian/$package.prerm" ]; then
-	echo "%preun" >> CASTOR.spec
+	echo "%preun -n $package" >> CASTOR.spec
 	echo "if [ $1 -eq 0 ]; then" >> CASTOR.spec
 	echo "  ## uninstall: stop the service if any" >> CASTOR.spec
 	echo "  /usr/sbin/$package.prerm remove" >> CASTOR.spec
 	echo "fi" >> CASTOR.spec
     fi
+    #
+    ## Get %postun section
+    #
     if [ -s "debian/$package.postrm" ]; then
-	echo "%postun" >> CASTOR.spec
+	echo "%postun -n $package" >> CASTOR.spec
 	echo "if [ $1 -eq 0 ]; then" >> CASTOR.spec
 	echo "  ## uninstall: remove the service" >> CASTOR.spec
 	echo "  /usr/sbin/$package.postrm remove" >> CASTOR.spec
