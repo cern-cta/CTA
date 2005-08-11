@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: deleteFileClass.c,v $ $Revision: 1.3 $ $Release$ $Date: 2005/07/21 09:13:06 $ $Author: itglp $
+ * @(#)$RCSfile: deleteFileClass.c,v $ $Revision: 1.4 $ $Release$ $Date: 2005/08/11 14:30:51 $ $Author: itglp $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: deleteFileClass.c,v $ $Revision: 1.3 $ $Release$ $Date: 2005/07/21 09:13:06 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: deleteFileClass.c,v $ $Revision: 1.4 $ $Release$ $Date: 2005/08/11 14:30:51 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
             sstrerror(serrno));
     return(1);
   }
-  rc = C_Services_service(svcs,"DBStagerSvc",SVC_ORAFSSVC,&iSvc);
+  rc = C_Services_service(svcs,"DbFSSvc",SVC_DBFSSVC,&iSvc);
   if ( rc == -1 ) {
     fprintf(stderr,"Cannot create fs svc: %s, %s\n",
             sstrerror(serrno),
@@ -146,8 +146,8 @@ int main(int argc, char *argv[])
   rc = C_BaseAddress_create(&baseAddr);
   if ( rc == -1 ) return(-1);
 
-  C_BaseAddress_setCnvSvcName(baseAddr,"DBCnvSvc");
-  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
+  C_BaseAddress_setCnvSvcName(baseAddr,"DbCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_DBCNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
   iObj = Cstager_FileClass_getIObject(fileClassOld);
   rc = C_Services_deleteRep(svcs,iAddr,iObj,1);
