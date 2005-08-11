@@ -1,3 +1,9 @@
+castor (2.0.0-64) unstable; urgency=low
+
+  * Fill content of castor-allservicesbuttapeservers-config package
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Thu, 11 Aug 2005 11:52:17 +0200
+
 castor (2.0.0-63) unstable; urgency=low
 
   * Fix in the generation of specfile again, a '$1' got expanded by the script doing the generation
