@@ -120,7 +120,7 @@ done
 # Install the sample castor.conf
 install -o root -g bin -m 644 debian/castor.conf ${RPM_BUILD_ROOT}/etc/castor/castor.conf.example
 # Install the recommended castor.conf for all nodes but tape servers
-install -o root -g bin -m 644 debian/castor-allnodesbuttapeservers.conf ${RPM_BUILD_ROOT}/etc/castor/castor.conf
+install -o root -g bin -m 644 debian/castor-allservicesbuttapeservers.conf ${RPM_BUILD_ROOT}/etc/castor/castor.conf
 for i in debian/*.logrotate; do
     install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/logrotate.d/`basename ${i} | sed 's/\.logrotate//g'`
 done
