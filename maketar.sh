@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.21 2005/08/10 12:01:39 jdurand Exp $
+# $Id: maketar.sh,v 1.22 2005/08/11 09:23:14 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -187,7 +187,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     #
     if [ -s "debian/$package.postinst" ]; then
 	echo "%post -n $package" >> CASTOR.spec
-	echo "if [ $1 -ge 1 ]; then" >> CASTOR.spec
+	echo "if [ \$1 -ge 1 ]; then" >> CASTOR.spec
 	echo "  ## Condrestart the service if any" >> CASTOR.spec
 	echo "  /usr/sbin/$package.postinst configure" >> CASTOR.spec
 	echo "fi" >> CASTOR.spec
@@ -206,7 +206,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     #
     if [ -s "debian/$package.prerm" ]; then
 	echo "%preun -n $package" >> CASTOR.spec
-	echo "if [ $1 -eq 0 ]; then" >> CASTOR.spec
+	echo "if [ \$1 -eq 0 ]; then" >> CASTOR.spec
 	echo "  ## uninstall: stop the service if any" >> CASTOR.spec
 	echo "  /usr/sbin/$package.prerm remove" >> CASTOR.spec
 	echo "fi" >> CASTOR.spec
@@ -216,7 +216,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     #
     if [ -s "debian/$package.postrm" ]; then
 	echo "%postun -n $package" >> CASTOR.spec
-	echo "if [ $1 -eq 0 ]; then" >> CASTOR.spec
+	echo "if [ \$1 -eq 0 ]; then" >> CASTOR.spec
 	echo "  ## uninstall: remove the service" >> CASTOR.spec
 	echo "  /usr/sbin/$package.postrm remove" >> CASTOR.spec
 	echo "fi" >> CASTOR.spec
