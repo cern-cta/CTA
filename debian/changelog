@@ -1,3 +1,10 @@
+castor (2.0.0-63) unstable; urgency=low
+
+  * Fix in the generation of specfile again, a '$1' got expanded by the script doing the generation
+  * New package castor-allservicesbuttapeservers-config containing /etc/castor/castor.conf to be installed on any service, except tape servers where this file needs other entries for RTCOPY
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Thu, 11 Aug 2005 11:42:42 +0200
+
 castor (2.0.0-62) unstable; urgency=low
 
   * Another fix for specfile, unfortunately
