@@ -97,13 +97,17 @@ mkdir -p ${RPM_BUILD_ROOT}/var/spool/vdqm
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/vmgr
 make install DESTDIR=${RPM_BUILD_ROOT}
 make exportman DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
+# Install policies
 (cd clips; ../imake/imake -I../config DESTDIR=${RPM_BUILD_ROOT}; make install DESTDIR=${RPM_BUILD_ROOT})
+# Install example configuration files
 for i in debian/*CONFIG; do
     install -o root -g st -m 640 ${i} ${RPM_BUILD_ROOT}/etc/castor/`basename ${i}`.example
 done
+# Install the debian+redhat init script
 for i in debian/*.init; do
     install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/init.d/`basename ${i} | sed 's/\.init//g'`
 done
+# Install the debian+redhat package scriptlets
 for i in debian/*.postinst; do
     install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/usr/sbin/`basename ${i}`
 done
@@ -113,7 +117,10 @@ done
 for i in debian/*.prerm; do
     install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/usr/sbin/`basename ${i}`
 done
+# Install the sample castor.conf
 install -o root -g bin -m 644 debian/castor.conf ${RPM_BUILD_ROOT}/etc/castor/castor.conf.example
+# Install the recommended castor.conf for all nodes but tape servers
+install -o root -g bin -m 644 debian/castor-allnodesbuttapeservers.conf ${RPM_BUILD_ROOT}/etc/castor/castor.conf
 for i in debian/*.logrotate; do
     install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/logrotate.d/`basename ${i} | sed 's/\.logrotate//g'`
 done
