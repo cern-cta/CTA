@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_procreq.c,v $ $Revision: 1.4 $ $Date: 2003/12/28 12:01:59 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_procreq.c,v $ $Revision: 1.5 $ $Date: 2005/08/12 08:06:54 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
  
 #include <errno.h>
@@ -583,10 +583,10 @@ struct dlf_srv_thread_info *thip;
 	unmarshall_LONG (rbp, gid);
 	dlflogit (func, DLF92, "shutdown", uid, gid, clienthost);
 	unmarshall_WORD (rbp, force);
-	/*
+
 	if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
 		RETURN (serrno);
-	*/
+
 	being_shutdown = force + 1;
 	RETURN (0);
 }
