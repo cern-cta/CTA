@@ -2032,9 +2032,11 @@ BEGIN
   SELECT TapeDrive.id, TapeRequest.id 
     INTO tapeDriveID, tapeRequestID
     FROM TapeDrive, TapeRequest, TapeDrive2TapeDriveComp, TapeDriveCompatibility, 
-         DeviceGroupName tapeDriveDgn, DeviceGroupName tapeRequestDgn 
+         TapeServer, DeviceGroupName tapeDriveDgn, DeviceGroupName tapeRequestDgn 
 		WHERE TapeDrive.status=0 
 		      AND TapeDrive.runningTapeReq=0 
+					AND TapeDrive.tapeServer=TapeServer.id 
+					AND TapeServer.actingMode=0
 					AND (TapeRequest.tapeDrive(+)=TapeDrive.id) 
 					AND (TapeRequest.requestedSrv(+)=TapeDrive.tapeServer) 
 					AND ((TapeDrive2TapeDriveComp.parent=TapeDrive.id 

@@ -80,7 +80,7 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectFreeTapeDriveStatementStr
   
 /// SQL statement for function deleteAllTapeDrvsFromSrv
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveStatementString =
-  "SELECT id FROM TapeDrive WHERE name = :1 AND tapeServer = :2 FOR UPDATE";
+  "SELECT id FROM TapeDrive WHERE driveName = :1 AND tapeServer = :2 FOR UPDATE";
   
 /// SQL statement for function existTapeDriveWithTapeInUse
 const std::string castor::db::ora::OraVdqmSvc::s_existTapeDriveWithTapeInUseStatementString =
@@ -402,7 +402,7 @@ castor::vdqm::TapeDrive*
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Unable to select tapeDrive by vid, side and tpmode :"
+      << "Unable to select tapeDrive by driveName and tapeServer id: "
       << std::endl << e.getMessage();
     throw ex;
   }
@@ -426,9 +426,10 @@ castor::vdqm::TapeDrive*
     }
     
     //Now we get the foreign related objects
-    cnvSvc()->fillObj(&ad, obj, castor::OBJ_ClientIdentification);
+
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeRequest);
-    cnvSvc()->fillObj(&ad, obj, castor::OBJ_Tape);		
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_Tape);	
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_DeviceGroupName);	
     
     tapeDrive->setTapeServer(tapeServer);
 
@@ -437,11 +438,11 @@ castor::vdqm::TapeDrive*
      */
     castor::vdqm::TapeRequest* tapeRequest = tapeDrive->runningTapeReq();
     if (tapeRequest != NULL) {
-        cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);
+//        cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);
         cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_Tape);
-        cnvSvc()->fillObj(&ad, obj, castor::OBJ_DeviceGroupName);
-        cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeAccessSpecification);        
-        cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeServer);
+        cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_DeviceGroupName);
+        cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeAccessSpecification);        
+        cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeServer);
     }
      
     //Reset pointer
