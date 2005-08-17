@@ -230,19 +230,6 @@ namespace castor {
 
 	      private:
 	      
-		      /**
-	         * helper method to rollback
-	         */
-	        void rollback() {
-	          try {
-	            cnvSvc()->getConnection()->rollback();
-	          } catch (castor::exception::Exception) {
-	            // rollback failed, let's drop the connection for security
-	            cnvSvc()->dropConnection();
-	          }
-	        }
-	        
-	        
 	        /// SQL statement for function getTapeServer
 	        static const std::string s_selectTapeServerStatementString;
 	
