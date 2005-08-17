@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2005/07/21 09:13:04 $ $Author: itglp $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2005/08/17 13:05:08 $ $Author: itglp $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -95,6 +95,7 @@ const unsigned int castor::db::ora::OraQuerySvc::ID() {
 void castor::db::ora::OraQuerySvc::reset() throw() {
   // Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
+  OraCommonSvc::reset();
   try {
     deleteStatement(m_diskCopies4FileStatement);
     deleteStatement(m_diskCopies4RequestStatement);
