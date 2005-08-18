@@ -99,7 +99,7 @@ castor::vdqm::VdqmServer::VdqmServer():
   castor::dlf::Message messages[] =
     {{ 0, " - "},
      { 1, "New Request Arrival"},
-     { 2, "Could not get Conversion Service for Oracle"},
+     { 2, "Could not get Conversion Service for Database"},
      { 3, "Could not get Conversion Service for Streaming"},
      { 4, "Exception caught : server is stopping"},
      { 5, "Exception caught : ignored"},
@@ -193,7 +193,7 @@ int castor::vdqm::VdqmServer::main () {
     castor::ICnvSvc *svc =
       svcs()->cnvService("DbCnvSvc", castor::SVC_DBCNV);
     if (0 == svc) {
-      // "Could not get Conversion Service for Oracle" message
+      // "Could not get Conversion Service for Database" message
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2);
       return -1;
     }

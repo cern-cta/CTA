@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2005/07/21 09:13:05 $ $Author: itglp $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2005/08/18 09:51:14 $ $Author: itglp $
  *
  *
  *
@@ -94,7 +94,7 @@ castor::rh::Server::Server() :
   castor::dlf::Message messages[] =
     {{ 0, " - "},
      { 1, "New Request Arrival"},
-     { 2, "Could not get Conversion Service for a database"},
+     { 2, "Could not get Conversion Service for Database"},
      { 3, "Could not get Conversion Service for Streaming"},
      { 4, "Exception caught : server is stopping"},
      { 5, "Exception caught : ignored"},
@@ -119,7 +119,7 @@ int castor::rh::Server::main () {
     castor::ICnvSvc *svc =
       svcs()->cnvService("DbCnvSvc", castor::SVC_DBCNV);
     if (0 == svc) {
-      // "Could not get Conversion Service for Oracle" message
+      // "Could not get Conversion Service for Database" message
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2);
       return -1;
     }
