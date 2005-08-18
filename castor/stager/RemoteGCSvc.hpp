@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteGCSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/07/29 12:32:21 $ $Author: mbraeger $
+ * @(#)$RCSfile: RemoteGCSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/08/18 10:18:50 $ $Author: itglp $
  *
  *
  *
@@ -184,16 +184,6 @@ namespace castor {
       virtual castor::stager::Request* requestToDo
       (std::vector<ObjectsIds> &types)
         throw (castor::exception::Exception);
-        
-	    /**
-	     * helper method to commit
-	     */
-      virtual void commit();
-      
-      /**
-	     * helper method to rollback
-	     */
-      virtual void rollback();              
 
     protected:
       
