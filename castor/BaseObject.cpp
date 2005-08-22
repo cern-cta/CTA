@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2005/06/06 16:41:36 $ $Author: jdurand $
+ * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2005/08/22 15:22:12 $ $Author: itglp $
  *
  * 
  *
@@ -48,7 +48,15 @@ castor::BaseObject::BaseObject() throw() {}
 // -----------------------------------------------------------------------
 // destructor
 // -----------------------------------------------------------------------
-castor::BaseObject::~BaseObject() throw() {}
+castor::BaseObject::~BaseObject() throw() {
+  // clean the TLS for Services
+  void **tls;
+  static int C_BaseObject_TLSkey = -1;
+  getTLS(&C_BaseObject_TLSkey, (void **)&tls);
+  if (0 != *tls) {
+    *tls = 0;
+  }
+}
 
 // -----------------------------------------------------------------------
 // msgSvc
