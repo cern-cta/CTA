@@ -1,0 +1,85 @@
+#
+#                    castor/db/ora/Imakefile
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Release$ $Date: 2005/08/22 16:32:33 $ $Author: itglp $
+#
+# Make Castor DB libraries
+#
+# @author Sebastien Ponce, sebastien.ponce@cern.ch
+#
+
+#include <Project.tmpl>
+
+#if !defined(_WIN32)
+#if linux
+DEBUG  = -g -O0
+#else
+DEBUG  = -g
+#endif
+#endif
+
+INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,demo) -I FileName($(ORACLE_HOME)/rdbms,public) -I FileName(FileName(FileName(..,..),..),h) -I FileName(FileName(..,..),..)
+CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORASTAGERCONFIGFILE=\"OraStagerConfigFile\"
+
+ORALIB_SRCS = OraCnvSvc.cpp \
+    	    OraStatement.cpp \
+            OraResultSet.cpp \
+            OraCommonSvc.cpp \
+            OraStagerSvc.cpp \
+            OraTapeSvc.cpp \
+            OraJobSvc.cpp \
+            OraGCSvc.cpp \
+            OraFSSvc.cpp \
+            OraQuerySvc.cpp
+
+#if BuildVDQMCpp
+ORALIB_SRCS += OraVdqmSvc.cpp
+#endif
+
+ORALIB_OBJS = $(ORALIB_SRCS:.cpp=.Osuf)
+
+COMMONLIB = LibraryTargetName(castorCommonOra)
+LD = g++
+
+all: $(COMMONLIB)
+
+MakeDepSharedLibrary(FileName(FileName(..,..),shlib),shift)
+
+NormalLibraryTarget(castorCommonOra,$(ORALIB_OBJS))
+
+Makefiles:
+
+#if defined(_WIN32)
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend $(INCLUDES) $(ORALIB_SRCS) 2> /dev/null
+#endif
+
+clean:
+	@echo cleaning in CurDir
+	-@RemoveFiles(FilesToClean)
+
+clobber:	clean
+	@echo clobbering in CurDir
+	-@RemoveFiles($(COMMONLIB))
+
+FORCE:
+
