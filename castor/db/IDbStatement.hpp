@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/08/18 10:09:42 $ $Author: itglp $
+ * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/08/22 16:26:40 $ $Author: itglp $
  *
  * 
  *
@@ -33,6 +33,7 @@
 #include "castor/exception/Exception.hpp"
 
 namespace castor {
+
 	namespace db { 
 
 /**
@@ -44,10 +45,11 @@ class IDbStatement {
 	public:
 	
     virtual void autoCommit() = 0;
+    
     /**
-     * 
-     * @param pos 
-     * @param value 
+     * Sets a parameter in the prepared statement 
+     * @param pos the index position of the parameter
+     * @param value its value
      */
     virtual void setInt(int pos, int value) = 0;
     virtual void setInt64(int pos, u_signed64 value) = 0;
@@ -61,6 +63,7 @@ class IDbStatement {
     virtual u_signed64 getInt64(int pos) = 0;
     virtual std::string getString(int pos) = 0;
     virtual float getFloat(int pos) = 0;
+    virtual double getDouble(int pos) = 0;
 
     /**
      * 
@@ -78,10 +81,13 @@ class IDbStatement {
 
 static int DBTYPE_INT = 1;
 static int DBTYPE_INT64 = 2;
-static int DBTYPE_DOUBLE = 3;
-static int DBTYPE_STRING = 4;
+static int DBTYPE_FLOAT = 3;
+static int DBTYPE_DOUBLE = 4;
+static int DBTYPE_STRING = 5;
 
 }
+
 } 
+
 #endif // CASTOR_DB_IDBSTATEMENT_HPP
 
