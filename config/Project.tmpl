@@ -11,10 +11,10 @@
 /* Build dependencies v.s. flags */
 /* ============================= */
 
-/* CUPVDAEMON,NAMESERVERDAEMON,VMGRDAEMON,DLFDAEMON needs UseOracle or UseMySQL */
-/* ---------------------------------------------------------------------------- */
+/* CUPVDAEMON,NAMESERVERDAEMON,VMGRDAEMON,DLFDAEMON need a Database */
+/* ---------------------------------------------------------------- */
 #if BuildCupvDaemon || BuildNameServerDaemon || BuildVolumeMgrDaemon || BuildDlfDaemon
-#if !UseOracle && !UseMySQL
+#if !UseOracle && !UsePgSQL
 #undef UseOracle
 #define UseOracle YES
 #endif
@@ -254,7 +254,7 @@
 #undef BuildVdqmLibrary
 #define BuildVdqmLibrary YES
 #endif
-#if !BuildOraCpp && !BuildMyCpp
+#if !BuildOraCpp && !BuildPgCpp
 #undef BuildOraCpp
 #define BuildOraCpp YES
 #endif
@@ -319,7 +319,7 @@
 #undef BuildCastorClientCPPLibrary
 #define BuildCastorClientCPPLibrary YES
 #endif
-#if !BuildOraCpp && !BuildMyCpp
+#if !BuildOraCpp && !BuildPgCpp
 #undef BuildOraCpp
 #define BuildOraCpp YES
 #endif
@@ -499,7 +499,7 @@
 /* REQUEST HANDLER */
 /* --------------- */
 #if BuildRHCpp
-#if !BuildOraCpp && !BuildMyCpp
+#if !BuildOraCpp && !BuildPgCpp
 #undef BuildOraCpp
 #define BuildOraCpp YES
 #endif
@@ -526,7 +526,7 @@
 /* New VDQM Server */
 /* --------------- */
 #if BuildVDQMCpp
-#if !BuildOraCpp && !BuildMyCpp
+#if !BuildOraCpp && !BuildPgCpp
 #undef BuildOraCpp
 #define BuildOraCpp YES
 #endif
@@ -565,7 +565,7 @@
 /* CPPTEST */
 /* ------- */
 #if BuildCppTest
-#if !BuildOraCpp && !BuildMyCpp
+#if !BuildOraCpp && !BuildPgCpp
 #undef BuildOraCpp
 #define BuildOraCpp YES
 #endif
@@ -601,6 +601,7 @@ COMMANDSDIR = commands
 #endif
 #if BuildCommon
 COMMONDIR = common
+CNVCPPDIR = cnv
 #endif
 #if BuildCupvClient || BuildCupvDaemon || BuildCupvLibrary
 UPVDIR = upv
@@ -662,7 +663,7 @@ VDQMCPPDIR = vdqm
 #if BuildGCCpp
 GCCPPDIR = gc
 #endif
-#if BuildCastorClientCPPLibrary || BuildRHCpp || BuildVDQMCpp  || BuildGCCpp || BuildOraCpp || BuildMyCpp
+#if BuildCastorClientCPPLibrary || BuildRHCpp || BuildVDQMCpp  || BuildGCCpp || BuildOraCpp || BuildPgCpp
 COMMONCPPDIR = castor
 #endif
 #if BuildOraCpp
@@ -671,6 +672,10 @@ DBCPPDIR = db
 #endif
 #if BuildMyCpp
 MYCPPDIR = mysql
+DBCPPDIR = db
+#endif
+#if BuildPgCpp
+PGCPPDIR = pgsql
 DBCPPDIR = db
 #endif
 #if BuildGcDaemon

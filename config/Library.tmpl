@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.22 $ $Date: 2005/05/26 13:48:10 $ CERN IT-ADC/CA Jean-Damien Durand
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.23 $ $Date: 2005/08/23 10:23:07 $ CERN IT-ADC/CA Jean-Damien Durand
  */
 
 #include <Project.tmpl>
@@ -15,6 +15,7 @@
 /* ============================= */
 #if BuildCommon
 COMMONLIB = DepLibraryTargetName(common,common)
+CNVSLIB = DepLibraryTargetName(castor/db/cnv,castorCnvs)
 #endif
 #if BuildCupvLibrary
 UPVLIB = DepLibraryTargetName(upv,upv)
@@ -66,6 +67,9 @@ RHORALIB = DepLibraryTargetName(castor/db/ora,castorCommonOra)
 #endif
 #if BuildMyCpp
 RHMYLIB = DepLibraryTargetName(castor/db/mysql,castorCommonMysql)
+#endif
+#if BuildPgCpp
+RHPGLIB = DepLibraryTargetName(castor/db/pgsql,castorCommonPgsql)
 #endif
 #if BuildSecurity
 SECURITYLIB = DepLibraryTargetName(security,security)
