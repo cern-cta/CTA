@@ -1,5 +1,5 @@
 #
-#                      castor/Imakefile
+#                      castor/db/Imakefile
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Release$ $Date: 2005/07/21 09:13:03 $ $Author: itglp $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Release$ $Date: 2005/08/23 09:55:48 $ $Author: itglp $
 #
 # Make Castor libraries and executables
 #
@@ -26,9 +26,8 @@
 
 #include <Project.tmpl>
 
-SUBDIRS = $(ORACPPDIR) $(PGCPPDIR)
-
-DEPENDDIRS = $(ORACPPDIR) $(PGCPPDIR)
+SUBDIRS = $(CNVCPPDIR) $(ORACPPDIR) $(MYCPPDIR) $(PGCPPDIR)
+DEPENDDIRS = $(CNVCPPDIR) $(ORACPPDIR) $(MYCPPDIR) $(PGCPPDIR)
 
 MakeSubdirs(all,$(SUBDIRS))
 MakeCondSubdirs(clean,$(SUBDIRS),)

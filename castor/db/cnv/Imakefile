@@ -19,7 +19,7 @@
 #
 # @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
 #
-# Make Castor DB libraries
+# Make Castor DB library
 #
 # @author Giuseppe Lo Presti, giuseppe.lopresti@cern.ch
 #
@@ -38,66 +38,7 @@ INCLUDES = -I FileName(FileName(FileName(..,..),..),h) -I FileName(FileName(..,.
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
 # generated via ls *.cpp | gawk '{ print "     " $1 " \\" }'
-CNVSLIB_SRCS = ../../io/StreamBaseCnv.cpp \
-              ../../io/StreamBaseAddressCnv.cpp \
-              ../../io/StreamCastorFileCnv.cpp \
-              ../../io/StreamClientCnv.cpp \
-              ../../io/StreamStartResponseCnv.cpp \
-              ../../io/StreamCnvSvc.cpp \
-              ../../io/StreamDiskCopyCnv.cpp \
-              ../../io/StreamDiskCopyForRecallCnv.cpp \
-              ../../io/StreamEndResponseCnv.cpp \
-              ../../io/StreamFileResponseCnv.cpp \
-              ../../io/StreamFileSystemCnv.cpp \
-              ../../io/StreamFiles2DeleteCnv.cpp \
-              ../../io/StreamFilesDeletedCnv.cpp \
-              ../../io/StreamFilesDeletionFailedCnv.cpp \
-              ../../io/StreamGetUpdateStartRequestCnv.cpp \
-              ../../io/StreamGetUpdateStartResponseCnv.cpp \
-              ../../io/StreamGCFilesResponseCnv.cpp \
-              ../../io/StreamGCLocalFileCnv.cpp \
-              ../../io/StreamGCFileCnv.cpp \
-              ../../io/StreamGetUpdateDoneCnv.cpp \
-              ../../io/StreamGetUpdateFailedCnv.cpp \
-              ../../io/StreamMessageAckCnv.cpp \
-              ../../io/StreamMoverCloseRequestCnv.cpp \
-              ../../io/StreamPtrCnv.cpp \
-              ../../io/StreamPutFailedCnv.cpp \
-              ../../io/StreamPutStartRequestCnv.cpp \
-              ../../io/StreamQueryParameterCnv.cpp \
-              ../../io/StreamDisk2DiskCopyDoneRequestCnv.cpp \
-              ../../io/StreamBasicResponseCnv.cpp \
-              ../../io/StreamPutDoneStartCnv.cpp \
-              ../../io/StreamSegmentCnv.cpp \
-              ../../io/StreamStringResponseCnv.cpp \
-              ../../io/StreamSubRequestCnv.cpp \
-              ../../io/StreamTapeCnv.cpp \
-              ../../io/StreamTapeCopyCnv.cpp \
-              ../../io/StreamTapeCopyForMigrationCnv.cpp \
-              ../../io/StreamTapePoolCnv.cpp \
-              ../../io/StreamStageAbortRequestCnv.cpp \
-              ../../io/StreamStageFileQueryRequestCnv.cpp \
-              ../../io/StreamStageFindRequestRequestCnv.cpp \
-              ../../io/StreamStageGetNextRequestCnv.cpp \
-              ../../io/StreamStageGetRequestCnv.cpp \
-              ../../io/StreamStagePrepareToGetRequestCnv.cpp \
-              ../../io/StreamStagePrepareToPutRequestCnv.cpp \
-              ../../io/StreamStagePrepareToUpdateRequestCnv.cpp \
-              ../../io/StreamStagePutDoneRequestCnv.cpp \
-              ../../io/StreamStagePutNextRequestCnv.cpp \
-              ../../io/StreamStagePutRequestCnv.cpp \
-              ../../io/StreamStageReleaseFilesRequestCnv.cpp \
-              ../../io/StreamStageRequestQueryRequestCnv.cpp \
-              ../../io/StreamStageRmRequestCnv.cpp \
-              ../../io/StreamStageUpdateNextRequestCnv.cpp \
-              ../../io/StreamStageUpdateRequestCnv.cpp \
-              ../../io/StreamAbortResponseCnv.cpp \
-              ../../io/StreamFileQueryResponseCnv.cpp \
-              ../../io/StreamFindReqResponseCnv.cpp \
-              ../../io/StreamIOResponseCnv.cpp \
-              ../../io/StreamRequestQueryResponseCnv.cpp
-
-CNVSLIB_SRCS += DbBaseAddressCnv.cpp \
+CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
             DbBaseCnv.cpp \
             DbCastorFileCnv.cpp \
             DbClientCnv.cpp \
