@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/11/26 09:33:36 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2005/08/23 09:57:50 $ $Author: itglp $
  *
  *
  *
@@ -34,7 +34,9 @@
 #include "ICnvSvc.hpp"
 #include "Constants.hpp"
 #include "BaseSvc.hpp"
+#include "castor/db/IDbStatement.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/SQLError.hpp"
 
 namespace castor {
 
@@ -225,6 +227,14 @@ namespace castor {
     virtual void rollback()
       throw (castor::exception::Exception);
 
+    /**
+     * Creates a prepared statement wrapped with the
+     * db-independent CDBC API
+     * @param stmt the string statement to be prepared 
+     */
+    virtual castor::db::IDbStatement* createStatement(const std::string& stmt)
+      throw (castor::exception::Exception);
+	  
     /**
      * Deletes foreign representation of a C++ Object without
      * needing the object. The cost of this method is higher

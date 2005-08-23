@@ -162,15 +162,17 @@ namespace castor {
     SVC_ORAQUERYSVC = 23,
     SVC_ORAVDQMSVC = 24,
 
-    SVC_MYCNV = 25,
-    SVC_MYCOMMONSVC = 26,
-    SVC_MYSTAGERSVC = 27,
-    SVC_MYTAPESVC = 28,
-    SVC_MYFSSVC = 29,
-    SVC_MYJOBSVC = 30,
-    SVC_MYGCSVC = 31,
-    SVC_MYQUERYSVC = 32,
-    SVC_MYVDQMSVC = 33
+    SVC_PGCNV = 25,
+    SVC_PGCOMMONSVC = 26,
+    SVC_PGSTAGERSVC = 27,
+    SVC_PGTAPESVC = 28,
+    SVC_PGFSSVC = 29,
+    SVC_PGJOBSVC = 30,
+    SVC_PGGCSVC = 31,
+    SVC_PGQUERYSVC = 32,
+    SVC_PGVDQMSVC = 33,
+
+    SVC_MYCNV = 34
   };
 
   /**
@@ -178,9 +180,11 @@ namespace castor {
    */
   enum RepresentationsIds {
     REP_INVALID = 0,
-    REP_ORACLE = 1,
-    REP_MYSQL = 2,
-    REP_STREAM = 3
+    REP_STREAM = 1,
+    REP_DATABASE = 2,
+    REP_ORACLE = 3,
+    REP_MYSQL = 4,
+    REP_PGSQL = 5
   };
 
   /**
@@ -201,12 +205,12 @@ namespace castor {
   /**
    * Nb of ServicesIds currently existing
    */
-  static const unsigned int ServicesIdsNb = 34;
+  static const unsigned int ServicesIdsNb = 35;
 
   /**
    * Nb of RepresentationsIds currently existing
    */
-  static const unsigned int RepresentationsIdsNb = 4;
+  static const unsigned int RepresentationsIdsNb = 6;
 
   /**
    * Names of the differents objects, used to display
@@ -218,13 +222,13 @@ namespace castor {
    * Names of the differents Services, used to display
    * correctly the ServicesIds enum
    */
-  extern const char* ServicesIdStrings[34];
+  extern const char* ServicesIdStrings[35];
 
   /**
    * Names of the differents representations, used to display
    * correctly the RepresentationsIds enum
    */
-  extern const char* RepresentationsIdStrings[4];
+  extern const char* RepresentationsIdStrings[6];
     
 #ifdef __cplusplus
 } // end of namespace castor

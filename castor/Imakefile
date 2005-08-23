@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.106 $ $Release$ $Date: 2005/08/03 16:51:09 $ $Author: mbraeger $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.107 $ $Release$ $Date: 2005/08/23 09:57:50 $ $Author: itglp $
 #
 # Make Castor libraries and executables
 #
@@ -110,6 +110,9 @@ STGLIB_SRCS = IAddressCInt.cpp \
               client/BaseClient.cpp \
               client/BasicResponseHandler.cpp \
               client/VectorResponseHandler.cpp \
+              db/DbBaseObj.cpp \
+              db/DbCnvSvc.cpp \
+              db/DbCommonSvc.cpp \
               dlf/Dlf.cpp \
               dlf/IPAddress.cpp \
               dlf/Message.cpp \
@@ -177,8 +180,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamFindReqResponseCnv.cpp \
               io/StreamIOResponseCnv.cpp \
               io/StreamRequestQueryResponseCnv.cpp \
-	      replier/ClientConnection.cpp \
-	      replier/RequestReplier.cpp \
+              replier/ClientConnection.cpp \
+              replier/RequestReplier.cpp \
               replier/RequestReplierCInt.cpp \
               rh/Client.cpp \
               rh/ClientCInt.cpp \
@@ -262,8 +265,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/PutStartRequestCInt.cpp \
               stager/QryRequest.cpp \
               stager/QryRequestCInt.cpp \
-	      stager/PutDoneStart.cpp \
-	      stager/PutDoneStartCInt.cpp \
+              stager/PutDoneStart.cpp \
+              stager/PutDoneStartCInt.cpp \
               stager/PutFailed.cpp \
               stager/PutFailedCInt.cpp \
               stager/ReqIdRequest.cpp \
@@ -271,9 +274,9 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/Request.cpp \
               stager/RequestHelper.cpp \
               stager/RequestCInt.cpp \
-	      stager/RequestQueryType.cpp \
-	      stager/RemoteGCSvc.cpp \
-	      stager/RemoteJobSvc.cpp \
+              stager/RequestQueryType.cpp \
+              stager/RemoteGCSvc.cpp \
+              stager/RemoteJobSvc.cpp \
               stager/StartRequest.cpp \
               stager/StartRequestCInt.cpp \
               stager/SvcClass.cpp \
@@ -285,36 +288,36 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/SegmentStatusCodes.cpp \
               stager/StageAbortRequest.cpp \
               stager/StageAbortRequestCInt.cpp \
-	      stager/StageFileQueryRequest.cpp \
-	      stager/StageFileQueryRequestCInt.cpp \
-	      stager/StageFindRequestRequest.cpp \
-	      stager/StageFindRequestRequestCInt.cpp \
-	      stager/StageGetNextRequest.cpp \
-	      stager/StageGetNextRequestCInt.cpp \
-	      stager/StageGetRequest.cpp \
-	      stager/StageGetRequestCInt.cpp \
-	      stager/StagePrepareToGetRequest.cpp \
-	      stager/StagePrepareToGetRequestCInt.cpp \
-	      stager/StagePrepareToPutRequest.cpp \
-	      stager/StagePrepareToPutRequestCInt.cpp \
-	      stager/StagePrepareToUpdateRequest.cpp \
-	      stager/StagePrepareToUpdateRequestCInt.cpp \
-	      stager/StagePutDoneRequest.cpp \
-	      stager/StagePutDoneRequestCInt.cpp \
+              stager/StageFileQueryRequest.cpp \
+              stager/StageFileQueryRequestCInt.cpp \
+              stager/StageFindRequestRequest.cpp \
+              stager/StageFindRequestRequestCInt.cpp \
+              stager/StageGetNextRequest.cpp \
+              stager/StageGetNextRequestCInt.cpp \
+              stager/StageGetRequest.cpp \
+              stager/StageGetRequestCInt.cpp \
+              stager/StagePrepareToGetRequest.cpp \
+              stager/StagePrepareToGetRequestCInt.cpp \
+              stager/StagePrepareToPutRequest.cpp \
+              stager/StagePrepareToPutRequestCInt.cpp \
+              stager/StagePrepareToUpdateRequest.cpp \
+              stager/StagePrepareToUpdateRequestCInt.cpp \
+              stager/StagePutDoneRequest.cpp \
+              stager/StagePutDoneRequestCInt.cpp \
               stager/StagePutNextRequest.cpp \
               stager/StagePutNextRequestCInt.cpp \
-	      stager/StagePutRequest.cpp \
-	      stager/StagePutRequestCInt.cpp \
-	      stager/StageReleaseFilesRequest.cpp \
-	      stager/StageReleaseFilesRequestCInt.cpp \
-	      stager/StageRequestQueryRequest.cpp \
-	      stager/StageRequestQueryRequestCInt.cpp \
-	      stager/StageRmRequest.cpp \
-	      stager/StageRmRequestCInt.cpp \
+              stager/StagePutRequest.cpp \
+              stager/StagePutRequestCInt.cpp \
+              stager/StageReleaseFilesRequest.cpp \
+              stager/StageReleaseFilesRequestCInt.cpp \
+              stager/StageRequestQueryRequest.cpp \
+              stager/StageRequestQueryRequestCInt.cpp \
+              stager/StageRmRequest.cpp \
+              stager/StageRmRequestCInt.cpp \
               stager/StageUpdateNextRequest.cpp \
               stager/StageUpdateNextRequestCInt.cpp \
-	      stager/StageUpdateRequest.cpp \
-	      stager/StageUpdateRequestCInt.cpp \
+              stager/StageUpdateRequest.cpp \
+              stager/StageUpdateRequestCInt.cpp \
               stager/Stream.cpp \
               stager/StreamCInt.cpp \
               stager/StreamStatusCodes.cpp \
@@ -349,18 +352,17 @@ STGLIB_SRCS = IAddressCInt.cpp \
               exception/Internal.cpp \
               exception/NotSupported.cpp \
               exception/Communication.cpp \
-              exception/NoEntry.cpp	\
-
+              exception/NoEntry.cpp \
+              exception/SQLError.cpp
 
 #if BuildSecurity
 STGLIB_SRCS += io/AuthServerSocket.cpp io/AuthClientSocket.cpp
 #endif
 
-
 #if BuildVDQMCpp
 STGLIB_SRCS += vdqm/RTCopyDConnection.cpp \
                vdqm/NewProtocolInterpreter.cpp \
-							 vdqm/OldProtocolInterpreter.cpp \
+               vdqm/OldProtocolInterpreter.cpp \
                vdqm/OldRequestFacade.cpp \
                vdqm/VdqmServer.cpp \
                vdqm/VdqmServerSocket.cpp \
@@ -379,10 +381,13 @@ STGLIB_SRCS += DlfMsgSvc.cpp \
 
 STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
 
+
 #if BuildCastorClientCPPLibrary
 COMMONLIB = LibraryTargetName(castorClient)
 #endif
-GLOBLIB = DepSharedLibraryTargetName(shlib,shift)
+
+GLOBLIB = DepSharedLibraryTargetName(shlib,shift) DepSharedLibraryTargetName(shlib,castorCnvs)
+          
 LDFLAGS = $(DEBUG) $(MTLDFLAGS)
 LD = g++
 

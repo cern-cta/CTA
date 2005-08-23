@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2005/07/28 17:20:24 $ $Author: mbraeger $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2005/08/23 09:57:50 $ $Author: itglp $
  *
  *
  *
@@ -132,7 +132,7 @@ const char* castor::ObjectsIdStrings[94] = {
 //=============================================================================
 // ServicesIdStrings
 //=============================================================================
-const char* castor::ServicesIdStrings[34] = {
+const char* castor::ServicesIdStrings[35] = {
   "INVALID",
   "NOMSG",
   "DLFMSG",
@@ -162,23 +162,27 @@ const char* castor::ServicesIdStrings[34] = {
   "ORAQUERYSVC",
   "ORAVDQMSVC",
 
-  "MYCNV",
-  "ORACOMMONSVC",
-  "MYSTAGERSVC",
-  "MYTAPESVC",
-  "MYFSSVC",
-  "MYJOBSVC",
-  "MYGCSVC",
-  "MYQUERYSVC",
-  "MYVDQMSVC"
+  "PGCNV",
+  "PGCOMMONSVC",
+  "PGSTAGERSVC",
+  "PGTAPESVC",
+  "PGFSSVC",
+  "PGJOBSVC",
+  "PGGCSVC",
+  "PGQUERYSVC",
+  "PGVDQMSVC",
+
+  "MYCNV"
 };
 
 //=============================================================================
 // RepresentationsIdStrings
 //=============================================================================
-const char* castor::RepresentationsIdStrings[4] = {
+const char* castor::RepresentationsIdStrings[6] = {
   "INVALID",
+  "STREAM",
+  "DATABASE",
   "ORACLE",
   "MYSQL",
-  "STREAM"
+  "PGSQL"
 };

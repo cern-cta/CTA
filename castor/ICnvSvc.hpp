@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ICnvSvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/04 08:54:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ICnvSvc.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2005/08/23 09:57:50 $ $Author: itglp $
  *
  *
  *
@@ -38,6 +38,10 @@ namespace castor {
   class IConverter;
   class IAddress;
   class IObject;
+
+  namespace db {
+      class IDbStatement;
+  }
 
   /**
    * Abstract interface for services dealing with conversion
@@ -179,6 +183,14 @@ namespace castor {
     virtual void rollback()
       throw (castor::exception::Exception) = 0;
 
+    /**
+     * Creates a prepared statement wrapped with the
+     * db-independent CDBC API
+     * @param stmt the string statement to be prepared 
+     */
+    virtual castor::db::IDbStatement* createStatement(const std::string& stmt)
+      throw (castor::exception::Exception) = 0;
+	  
     /**
      * Deletes foreign representation of a C++ Object without
      * needing the object. The cost of this method is higher

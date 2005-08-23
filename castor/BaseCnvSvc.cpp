@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/26 09:33:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2005/08/23 09:57:50 $ $Author: itglp $
  *
  *
  *
@@ -253,4 +253,13 @@ void castor::BaseCnvSvc::commit()
 void castor::BaseCnvSvc::rollback()
   throw (castor::exception::Exception) {
   // Default implementation, does nothing.
+}
+
+//------------------------------------------------------------------------------
+// createStatement
+//------------------------------------------------------------------------------
+castor::db::IDbStatement* castor::BaseCnvSvc::createStatement(const std::string& stmt)
+  throw (castor::exception::Exception) {
+  // Default implementation, does nothing.
+  return 0;
 }
