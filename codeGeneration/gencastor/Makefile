@@ -14,7 +14,7 @@ UMBRELLOLIBS=$(patsubst %,$(UMBRELLOOBJ)/%,$(UMBRELLORAWLIBS))
 
 MOCOBJS=umbrello/codegenerators/simplecodegenerator.moc
 
-OWNGENSRCS=classifierinfo.cpp codegenfactory.cpp cppcastorwriter.cpp cppbasewriter.cpp cppcppclasswriter.cpp cppcppwriter.cpp cpphclasswriter.cpp cpphwriter.cpp cppwriter.cpp chclasswriter.cpp ccclasswriter.cpp cpphbasecnvwriter.cpp cppcppbasecnvwriter.cpp cpphoracnvwriter.cpp cppcpporacnvwriter.cpp cpphodbccnvwriter.cpp cppcppodbccnvwriter.cpp cpphmycnvwriter.cpp cppcppmycnvwriter.cpp cpphstreamcnvwriter.cpp cppcppstreamcnvwriter.cpp simplecodegenerator.cpp
+OWNGENSRCS=classifierinfo.cpp codegenfactory.cpp cppcastorwriter.cpp cppbasewriter.cpp cppcppclasswriter.cpp cppcppwriter.cpp cpphclasswriter.cpp cpphwriter.cpp cppwriter.cpp chclasswriter.cpp ccclasswriter.cpp cpphbasecnvwriter.cpp cppcppbasecnvwriter.cpp cpphoracnvwriter.cpp cppcpporacnvwriter.cpp cpphdbcnvwriter.cpp cppcppdbcnvwriter.cpp cpphstreamcnvwriter.cpp cppcppstreamcnvwriter.cpp simplecodegenerator.cpp
 OWNGENOBJS=$(patsubst %.cpp,umbrello/codegenerators/%.lo,$(OWNGENSRCS))
 OWNGENRAWOBJS=$(patsubst %.cpp,umbrello/codegenerators/%.o,$(OWNGENSRCS))
 

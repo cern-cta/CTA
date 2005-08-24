@@ -22,10 +22,8 @@
 #include "cppcppclasswriter.h"
 #include "cpphoracnvwriter.h"
 #include "cppcpporacnvwriter.h"
-#include "cpphmycnvwriter.h"
-#include "cppcppmycnvwriter.h"
-//#include "cpphodbccnvwriter.h"
-//#include "cppcppodbccnvwriter.h"
+#include "cpphdbcnvwriter.h"
+#include "cppcppdbcnvwriter.h"
 #include "cpphstreamcnvwriter.h"
 #include "cppcppstreamcnvwriter.h"
 
@@ -44,10 +42,8 @@ CppWriter::CppWriter( UMLDoc *parent, const char *name ) :
   cppw = new CppCppClassWriter(m_doc, ".cpp file generator");
   orahw = new CppHOraCnvWriter(m_doc, "Oracle converter generator");
   oracppw = new CppCppOraCnvWriter(m_doc, "Oracle converter generator");
-  myhw = new CppHMyCnvWriter(m_doc, "MySql converter generator");
-  mycppw = new CppCppMyCnvWriter(m_doc, "MySql converter generator");
-  //odbchw = new CppHOdbcCnvWriter(m_doc, "Odbc converter generator");
-  //odbccppw = new CppCppOdbcCnvWriter(m_doc, "Odbc converter generator");
+  dbhw = new CppHDbCnvWriter(m_doc, "Database converter generator");
+  dbcppw = new CppCppDbCnvWriter(m_doc, "Database converter generator");
   streamhw = new CppHStreamCnvWriter(m_doc, "Stream converter generator");
   streamcppw = new CppCppStreamCnvWriter(m_doc, "Stream converter generator");
   m_noDBCnvs.insert(QString("DiskCopyForRecall"));
@@ -62,10 +58,8 @@ CppWriter::~CppWriter() {
   delete cppw;
   delete orahw;
   delete oracppw;
-  delete myhw;
-  delete mycppw;
-  //delete odbchw;
-  //delete odbccppw;
+  delete dbhw;
+  delete dbcppw;
   delete streamhw;
   delete streamcppw;
 }
@@ -93,12 +87,10 @@ void CppWriter::writeClass(UMLClassifier *c) {
     configGenerator(hw);
     configGenerator(cw);
     configGenerator(cppw);
+    configGenerator(dbhw);
+    configGenerator(dbcppw);
     configGenerator(orahw);
     configGenerator(oracppw);
-    configGenerator(myhw);
-    configGenerator(mycppw);
-    //configGenerator(odbchw);
-    //configGenerator(odbccppw);
     configGenerator(streamhw);
     configGenerator(streamcppw);
     firstGeneration = false;
@@ -242,30 +234,21 @@ void CppWriter::writeClass(UMLClassifier *c) {
                         << "\nPlease check the access rights" << std::endl;
               return;
             }
-            QDir packageDirMysql(getPolicy()->getOutputDirectory().absPath() + "/castor/db/mysql");
-            if (! (packageDirMysql.exists() || packageDirMysql.mkdir(packageDirMysql.absPath()) ) ) {
+            QDir packageDirDb(getPolicy()->getOutputDirectory().absPath() + "/castor/db/cnv");
+            if (! (packageDirDb.exists() || packageDirDb.mkdir(packageDirDb.absPath()) ) ) {
               std::cerr << "Cannot create the package folder "
-                        << packageDirMysql.absPath().ascii()
+                        << packageDirDb.absPath().ascii()
                         << "\nPlease check the access rights" << std::endl;
               return;
             }
-            //           QDir packageDirOdbc(getPolicy()->getOutputDirectory().absPath() + "/castor/db/odbc");
-            //           if (! (packageDirOdbc.exists() || packageDirOdbc.mkdir(packageDirOdbc.absPath()) ) ) {
-            //             std::cerr << "Cannot create the package folder "
-            //                       << packageDirOdbc.absPath().ascii()
-            //                       << "\nPlease check the access rights" << std::endl;
-            //             return;
-            //           }
             
-	    // run generation
+            // run generation
             int i = fileName.findRev('/') + 1;
             QString file = fileName.right(fileName.length()-i);
+            runGenerator(dbhw, "castor/db/cnv/Db" + file + "Cnv.hpp", c);
+            runGenerator(dbcppw, "castor/db/cnv/Db" + file + "Cnv.cpp", c);
             runGenerator(orahw, "castor/db/ora/Ora" + file + "Cnv.hpp", c);
             runGenerator(oracppw, "castor/db/ora/Ora" + file + "Cnv.cpp", c);
-            //runGenerator(pghw, "castor/db/pgsql/Pg" + file + "Cnv.hpp", c);
-            //runGenerator(pgcppw, "castor/db/pgsql/Pg" + file + "Cnv.cpp", c);
-            //runGenerator(myhw, "castor/db/mysql/My" + file + "Cnv.hpp", c);
-            //runGenerator(mycppw, "castor/db/mysql/My" + file + "Cnv.cpp", c);
           }
         }
         UMLObject* obj = m_doc->findUMLObject(QString("castor::IStreamable"),
@@ -291,6 +274,5 @@ void CppWriter::writeClass(UMLClassifier *c) {
   }
 
   emit codeGenerated(c, true);
-  
 }
 

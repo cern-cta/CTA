@@ -28,10 +28,8 @@ class CCClassWriter;
 class CppCppClassWriter;
 class CppHOraCnvWriter;
 class CppCppOraCnvWriter;
-class CppHMyCnvWriter;
-class CppCppMyCnvWriter;
-class CppHOdbcCnvWriter;
-class CppCppOdbcCnvWriter;
+class CppHDbCnvWriter;
+class CppCppDbCnvWriter;
 class CppHStreamCnvWriter;
 class CppCppStreamCnvWriter;
 
@@ -75,10 +73,8 @@ class CppWriter : public CppCastorWriter {
   CppCppClassWriter* cppw;
   CppHOraCnvWriter* orahw;
   CppCppOraCnvWriter* oracppw;
-  CppHMyCnvWriter* myhw;
-  CppCppMyCnvWriter* mycppw;
-  CppHOdbcCnvWriter* odbchw;
-  CppCppOdbcCnvWriter* odbccppw;
+  CppHDbCnvWriter* dbhw;
+  CppCppDbCnvWriter* dbcppw;
   CppHStreamCnvWriter* streamhw;
   CppCppStreamCnvWriter* streamcppw;
 

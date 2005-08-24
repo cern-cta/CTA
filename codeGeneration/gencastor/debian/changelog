@@ -1,3 +1,12 @@
+gencastor (3.3-0) unstable; urgency=low
+
+  * Added generic Database cnv generator. This can work with databases
+    supported by the abstract CDBC (Castor DataBase Connectivity) API.
+    Oracle is already 100% supported but the oracle specific generator is
+    still kept for production.
+
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Mon, 24 Ago 2005 18:00:00 +0200
+
 gencastor (3.2-1) unstable; urgency=low
 
   * Fixed C interfaces generation, only classes and interfaces are
