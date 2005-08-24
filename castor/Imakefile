@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.107 $ $Release$ $Date: 2005/08/23 09:57:50 $ $Author: itglp $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.108 $ $Release$ $Date: 2005/08/24 16:43:39 $ $Author: itglp $
 #
 # Make Castor libraries and executables
 #
@@ -110,9 +110,6 @@ STGLIB_SRCS = IAddressCInt.cpp \
               client/BaseClient.cpp \
               client/BasicResponseHandler.cpp \
               client/VectorResponseHandler.cpp \
-              db/DbBaseObj.cpp \
-              db/DbCnvSvc.cpp \
-              db/DbCommonSvc.cpp \
               dlf/Dlf.cpp \
               dlf/IPAddress.cpp \
               dlf/Message.cpp \
@@ -386,7 +383,7 @@ STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
 COMMONLIB = LibraryTargetName(castorClient)
 #endif
 
-GLOBLIB = DepSharedLibraryTargetName(shlib,shift) DepSharedLibraryTargetName(shlib,castorCnvs)
+GLOBLIB = DepSharedLibraryTargetName(shlib,shift)
           
 LDFLAGS = $(DEBUG) $(MTLDFLAGS)
 LD = g++
