@@ -84,7 +84,10 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
             DbTapeCnv.cpp \
             DbTapeCopyCnv.cpp \
             DbTapePoolCnv.cpp \
-            DbErrorHistoryCnv.cpp
+            DbErrorHistoryCnv.cpp \
+            ../DbBaseObj.cpp \
+            ../DbCnvSvc.cpp \
+            ../DbCommonSvc.cpp
 
 #VDQM related objects
 CNVSLIB_SRCS += DbClientIdentificationCnv.cpp \
