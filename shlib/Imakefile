@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.36 $ $Date: 2005/05/25 12:51:27 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.37 $ $Date: 2005/08/24 15:55:46 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -19,19 +19,26 @@ SYMTABNAM = __.SYMDEF
 
 COMM Libraries to include in SharedLibraryTargetName(shift)
 LIBRARIES0 = $(COMMONLIB) $(RFIOLIB) $(MSGLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHCLIENTLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB) $(RMCLIB) $(EXPERTLIB) $(RESOURCEMONITORINGLIB)
+LIBRARIES3 = $(CNVSLIB)
 LIBRARIES1 = $(RHORALIB)
-SHLIBREQLIBS1 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshift
-LIBRARIES3 = $(RHMYLIB)
-SHLIBREQLIBS3 = $(SHLIBREQLIBS) -lmysqlpp -L.. -lshift
+SHLIBREQLIBS1 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshift -lcastorCnvs
+LIBRARIES4 = $(RHMYLIB)
+SHLIBREQLIBS4 = $(SHLIBREQLIBS) -lmysqlpp -L.. -lshift -lcastorCnvs
+LIBRARIES5 = $(RHPGLIB)
+SHLIBREQLIBS5 = $(SHLIBREQLIBS) -L.. -lshift -lcastorCnvs
 LIBRARIES2 = $(TANKLIB)
 SHLIBREQLIBS2 = $(SHLIBREQLIBS)
 
-ALL0=SharedLibraryTargetName(shift)
+ALL0=SharedLibraryTargetName(castorCnvs) SharedLibraryTargetName(shift)
+
 #if BuildOraCpp
 ALL1=SharedLibraryTargetName(castorCommonOra)
 #endif
 #if BuildMyCpp
 ALL3=SharedLibraryTargetName(castorCommonMysql)
+#endif
+#if BuildPgCpp
+ALL4=SharedLibraryTargetName(castorCommonPgsql)
 #endif
 #if BuildTankPerfMonLibrary
 ALL2=SharedLibraryTargetName(castorTankPerfMon)
@@ -47,58 +54,72 @@ EXPORTSEC=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_ID))
 ALLSEC+= SharedLibraryTargetName(Csec_plugin_GSI)
 INSTALLSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_GSI))
 EXPORTSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_GSI))
-
 #endif
 
 #if UseKRB5
 ALLSEC+= SharedLibraryTargetName(Csec_plugin_KRB5)
 INSTALLSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB5))
 EXPORTSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB5))
-
-
 #endif
 
 #if UseKRB4
 ALLSEC+= SharedLibraryTargetName(Csec_plugin_KRB4)
 INSTALLSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB4))
 EXPORTSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB4))
-
-
 #endif
 
 #endif
 
-all:    $(ALL0) $(ALL1) $(ALL2) $(ALL3) $(ALLSEC)
+all:    $(ALL0) $(ALL1) $(ALL2) $(ALL3) $(ALL4) $(ALLSEC)
 
-INSTALL0=FileName($(LIB),SharedLibraryTargetName(shift))
+INSTALL0=FileName($(LiB),SharedLibraryTargetName(castorCnvs)) FileName($(LIB),SharedLibraryTargetName(shift))
 #if BuildOraCpp
 INSTALL1=FileName($(LIB),SharedLibraryTargetName(castorCommonOra))
 #endif
 #if BuildMyCpp
 INSTALL3=FileName($(LIB),SharedLibraryTargetName(castorCommonMysql))
 #endif
+#if BuildPgCpp
+INSTALL4=FileName($(LIB),SharedLibraryTargetName(castorCommonPgsql))
+#endif
 #if BuildTankPerfMonLibrary
 INSTALL2=FileName($(LIB),SharedLibraryTargetName(castorTankPerfMon))
 #endif
 
-install: $(LIB) $(INSTALL0) $(INSTALL1) $(INSTALL2) $(INSTALL3) $(INSTALLSEC)
+install: $(LIB) $(INSTALL0) $(INSTALL1) $(INSTALL2) $(INSTALL3) $(INSTALL4) $(INSTALLSEC)
 
-EXPORT0=$(EXPORTLIB)/SharedLibraryTargetName(shift)
+EXPORT0=$(EXPORTLIB)/SharedLibraryTargetName(castorCnvs) $(EXPORTLIB)/SharedLibraryTargetName(shift)
 #if BuildOraCpp
 EXPORT1=$(EXPORTLIB)/SharedLibraryTargetName(castorCommonOra)
 #endif
 #if BuildMyCpp
 EXPORT3=$(EXPORTLIB)/SharedLibraryTargetName(castorCommonMysql)
 #endif
+#if BuildPgCpp
+EXPORT4=$(EXPORTLIB)/SharedLibraryTargetName(castorCommonPgsql)
+#endif
 #if BuildProtoCppStager
 EXPORT2=$(EXPORTLIB)/SharedLibraryTargetName(castorTankPerfMon)
 #endif
 
-export: $(EXPORT0) $(EXPORT1) $(EXPORT2) $(EXPORT3) $(EXPORTSEC)
+export: $(EXPORT0) $(EXPORT1) $(EXPORT2) $(EXPORT3) $(EXPORT4) $(EXPORTSEC)
 
 exportman: 
 
 exportshr: 
+
+libcastorCnvs.sl libcastorCnvs.so:     $(LIBRARIES3)
+	@echo " making $@ in `pwd`"
+	@-rm -rf tmp
+	@mkdir tmp
+	for i in $(LIBRARIES3) ;\
+	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
+	(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libshift.so.__MAJOR_CASTOR_VERSION__ -o ../$@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ *.o $(SHLIBREQLIBS))
+	@-rm -rf tmp
+	@-rm -f $@.__MAJOR_CASTOR_VERSION__
+	@-ln -s $@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ $@.__MAJOR_CASTOR_VERSION__
+	@-rm -f $@
+	@-ln -s $@.__MAJOR_CASTOR_VERSION__ $@
 
 libshift.sl libshift.so:     $(LIBRARIES0)
 	@echo " making $@ in `pwd`"
@@ -119,20 +140,33 @@ libcastorCommonOra.so: $(LIBRARIES1)
 	@mkdir tmp
 	@for i in $(LIBRARIES1) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	@(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libcastorCommonOra.so.__MAJOR_CASTOR_VERSION__ -o ../$@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ *.o $(SHLIBREQLIBS1))
+	(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libcastorCommonOra.so.__MAJOR_CASTOR_VERSION__ -o ../$@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ *.o $(SHLIBREQLIBS1))
 	@-rm -rf tmp
 	@-rm -f $@.__MAJOR_CASTOR_VERSION__
 	@-ln -s $@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ $@.__MAJOR_CASTOR_VERSION__
 	@-rm -f $@
 	@-ln -s $@.__MAJOR_CASTOR_VERSION__ $@
 
-libcastorCommonMysql.so: $(LIBRARIES3)
+libcastorCommonMysql.so: $(LIBRARIES4)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
 	@for i in $(LIBRARIES3) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	@(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libcastorCommonMysql.so.__MAJOR_CASTOR_VERSION__ -o ../$@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ *.o $(SHLIBREQLIBS3))
+	(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libcastorCommonMysql.so.__MAJOR_CASTOR_VERSION__ -o ../$@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ *.o $(SHLIBREQLIBS4))
+	@-rm -rf tmp
+	@-rm -f $@.__MAJOR_CASTOR_VERSION__
+	@-ln -s $@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ $@.__MAJOR_CASTOR_VERSION__
+	@-rm -f $@
+	@-ln -s $@.__MAJOR_CASTOR_VERSION__ $@
+
+libcastorCommonPgsql.so: $(LIBRARIES5)
+	@echo " making $@ in `pwd`"
+	@-rm -rf tmp
+	@mkdir tmp
+	@for i in $(LIBRARIES3) ;\
+	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
+	(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libcastorCommonPgsql.so.__MAJOR_CASTOR_VERSION__ -o ../$@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ *.o $(SHLIBREQLIBS5))
 	@-rm -rf tmp
 	@-rm -f $@.__MAJOR_CASTOR_VERSION__
 	@-ln -s $@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ $@.__MAJOR_CASTOR_VERSION__
@@ -145,12 +179,16 @@ libcastorTankPerfMon.so: $(LIBRARIES2)
 	@mkdir tmp
 	@for i in $(LIBRARIES2) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	@(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libcastorTankPerfMon.so.__MAJOR_CASTOR_VERSION__ -o ../$@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ *.o $(SHLIBREQLIBS1))
+	(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libcastorTankPerfMon.so.__MAJOR_CASTOR_VERSION__ -o ../$@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ *.o $(SHLIBREQLIBS1))
 	@-rm -rf tmp
 	@-rm -f $@.__MAJOR_CASTOR_VERSION__
 	@-ln -s $@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ $@.__MAJOR_CASTOR_VERSION__
 	@-rm -f $@
 	@-ln -s $@.__MAJOR_CASTOR_VERSION__ $@
+
+libcastorCnvs.dll:	$(LIBRARIES4)
+	@echo  making $@ in CurDir
+	link /dll /noentry /nologo /out:$@ $**
 
 shift.dll:	$(LIBRARIES0)
 	@echo  making $@ in CurDir
@@ -171,13 +209,17 @@ libcastorTankPerfMon.dll:	$(LIBRARIES2)
 MakeDir($(LIB),root,bin,0755)
 
 InstallSharedLibrary(shift,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
+InstallSharedLibrary(castorCnvs,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
 InstallSharedLibrary(castorCommonOra,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
 InstallSharedLibrary(castorCommonMysql,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
+InstallSharedLibrary(castorCommonPgsql,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
 InstallSharedLibrary(castorTankPerfMon,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
 
 InstallSharedLibrary(shift,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
+InstallSharedLibrary(castorCnvs,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
 InstallSharedLibrary(castorCommonOra,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
 InstallSharedLibrary(castorCommonMysql,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
+InstallSharedLibrary(castorCommonPgsql,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
 InstallSharedLibrary(castorTankPerfMon,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
 
 install.man:
@@ -224,9 +266,13 @@ MakeDepLibrary(dlf,dlf)
 
 MakeDepLibrary(tape,tape)
 
+MakeDepLibrary(castor/db/cnv,castorCnvs)
+
 MakeDepLibrary(castor/db/ora,castorCommonOra)
 
 MakeDepLibrary(castor/db/mysql,castorCommonMysql)
+
+MakeDepLibrary(castor/db/pgsql,castorCommonPgsql)
 
 MakeDepLibrary(expert,expert)
 
