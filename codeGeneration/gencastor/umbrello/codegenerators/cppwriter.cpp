@@ -23,7 +23,7 @@
 #include "cpphoracnvwriter.h"
 #include "cppcpporacnvwriter.h"
 #include "cpphdbcnvwriter.h"
-//#include "cppcppdbcnvwriter.h"
+#include "cppcppdbcnvwriter.h"
 #include "cpphstreamcnvwriter.h"
 #include "cppcppstreamcnvwriter.h"
 
