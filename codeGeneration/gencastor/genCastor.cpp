@@ -49,14 +49,14 @@ int main(int argc, char *argv[]) {
       CppCastorWriter* cgen =
         dynamic_cast<CppCastorWriter*>(gen);
       if (cgen) {
-        cgen->setTopNS(args->getOption("o"));
+        cgen->setTopNS(args->getOption("c"));
       }
       // retrieve policy
       CodeGenerationPolicy *policy = gen->getPolicy();
       // take headers from /etc/castor/gencastor
       policy->setHeadingFileDir("/etc/castor/gencastor");
       // generate code into the right directory
-      if (args->isSet("o")) {
+      if (args->isSet("o")) {        
         QDir outputDir(args->getOption("o"));
         if (!outputDir.exists()) {
           outputDir.mkdir(outputDir.absPath());
