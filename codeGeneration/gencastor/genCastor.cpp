@@ -13,6 +13,7 @@
 #include <kcmdlineargs.h>
 #include <kconfig.h>
 #include "codegenerator.h"
+#include "cppcastorwriter.h"
 #include "codegenerationpolicy.h"
 #include "classifier.h"
 #include "umldoc.h"
@@ -20,6 +21,7 @@
 
 static KCmdLineOptions options[] = {
   { "o <dir>", I18N_NOOP("output directory"), 0 },
+  { "c <package>", I18N_NOOP("name of the package in which the code should be generated"), "castor" },
   { "+File", I18N_NOOP("file to open"), 0 },
   { "!+[classes]", I18N_NOOP("Classes to generate"), 0 },
   KCmdLineLastOption
@@ -44,6 +46,11 @@ int main(int argc, char *argv[]) {
     uml->openDocumentFile(args->url(0));
     CodeGenerator* gen = uml->getGenerator();
     if (gen) {
+      CppCastorWriter* cgen =
+        dynamic_cast<CppCastorWriter*>(gen);
+      if (cgen) {
+        cgen->setTopNS(args->getOption("o"));
+      }
       // retrieve policy
       CodeGenerationPolicy *policy = gen->getPolicy();
       // take headers from /etc/castor/gencastor

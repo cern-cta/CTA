@@ -23,7 +23,7 @@
 #include "cpphoracnvwriter.h"
 #include "cppcpporacnvwriter.h"
 #include "cpphdbcnvwriter.h"
-#include "cppcppdbcnvwriter.h"
+//#include "cppcppdbcnvwriter.h"
 #include "cpphstreamcnvwriter.h"
 #include "cppcppstreamcnvwriter.h"
 
@@ -69,6 +69,7 @@ void CppWriter::configGenerator(CppBaseWriter *cg) {
   CodeGenerationPolicy *childPolicy = cg->getPolicy();
   childPolicy->setHeadingFileDir(parentPolicy->getHeadingFileDir());
   childPolicy->setOutputDirectory(parentPolicy->getOutputDirectory());
+  cg->setTopNS(m_topNS);
 }
 
 void CppWriter::runGenerator(CppBaseWriter *cg,

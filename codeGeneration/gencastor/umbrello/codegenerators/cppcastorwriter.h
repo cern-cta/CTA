@@ -40,6 +40,11 @@ class CppCastorWriter : public SimpleCodeGenerator {
    */
 	QString computeFileName(UMLClassifier* concept, QString ext);
 
+  /**
+   * accessor to topNS
+   */
+  void setTopNS(QString value) { m_topNS = value; }
+
  protected:
   /**
    * Map of castor types with the associated include files
@@ -54,6 +59,9 @@ class CppCastorWriter : public SimpleCodeGenerator {
 
   /** The list of classes to fully ignore */
   std::set<QString> m_ignoreClasses;
+
+  /** The top namespace of the generated software */
+  QString m_topNS;
 
 };
 
