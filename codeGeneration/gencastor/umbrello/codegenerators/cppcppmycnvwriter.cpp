@@ -39,18 +39,18 @@ void CppCppMyCnvWriter::startSQLFile() {
   // Preparing SQL file for creation/deletion of the database
   QFile file;
   openFile(file,
-           "castor/db/mysql.sql",
+           s_topNS + "/db/mysql.sql",
            IO_WriteOnly | IO_Truncate);
   QTextStream stream(&file);
-  insertFileintoStream(stream, "castor/db/mysqlHeader.sql");
+  insertFileintoStream(stream, s_topNS + "/db/mysqlHeader.sql");
   file.close();
-  openFile(file, "castor/db/mysqlGeneratedHeader.sql",
+  openFile(file, s_topNS + "/db/mysqlGeneratedHeader.sql",
            IO_WriteOnly | IO_Truncate);
   file.close();
-  openFile(file, "castor/db/mysqlGeneratedCore.sql",
+  openFile(file, s_topNS + "/db/mysqlGeneratedCore.sql",
            IO_WriteOnly | IO_Truncate);
   file.close();
-  openFile(file, "castor/db/mysqlGeneratedTrailer.sql",
+  openFile(file, s_topNS + "/db/mysqlGeneratedTrailer.sql",
            IO_WriteOnly | IO_Truncate);
   file.close();  
 }
@@ -78,13 +78,13 @@ void CppCppMyCnvWriter::endSQLFile() {
   // Preparing SQL file for creation/deletion of the database
   QFile file;
   openFile(file,
-           "castor/db/mysql.sql",
+           s_topNS + "/db/mysql.sql",
            IO_WriteOnly | IO_Append);
   QTextStream stream(&file);
-  insertFileintoStream(stream, "castor/db/mysqlGeneratedHeader.sql");
-  insertFileintoStream(stream, "castor/db/mysqlGeneratedCore.sql");
-  insertFileintoStream(stream, "castor/db/mysqlGeneratedTrailer.sql");
-  insertFileintoStream(stream, "castor/db/mysqlTrailer.sql");
+  insertFileintoStream(stream, s_topNS + "/db/mysqlGeneratedHeader.sql");
+  insertFileintoStream(stream, s_topNS + "/db/mysqlGeneratedCore.sql");
+  insertFileintoStream(stream, s_topNS + "/db/mysqlGeneratedTrailer.sql");
+  insertFileintoStream(stream, s_topNS + "/db/mysqlTrailer.sql");
   file.close();
 }
 
@@ -96,8 +96,8 @@ bool CppCppMyCnvWriter::init(UMLClassifier* c, QString fileName) {
   this->CppBaseWriter::init(c, fileName);
   // fixes the namespace
   m_originalPackage = m_classInfo->fullPackageName;
-  m_classInfo->packageName = "castor::db::mysql";
-  m_classInfo->fullPackageName = "castor::db::mysql::";
+  m_classInfo->packageName = s_topNS + "::db::mysql";
+  m_classInfo->fullPackageName = s_topNS + "::db::mysql::";
   
   // includes converter header file and object header file
   m_includes.insert(QString("\"My") + m_classInfo->className + "Cnv.hpp\"");
@@ -531,15 +531,15 @@ void CppCppMyCnvWriter::writeConstants() {
 void CppCppMyCnvWriter::writeSqlStatements() {
   QFile file, hFile, tFile;
   openFile(hFile,
-           "castor/db/mysqlGeneratedHeader.sql",
+           s_topNS + "/db/mysqlGeneratedHeader.sql",
            IO_WriteOnly | IO_Append);
   QTextStream hStream(&hFile);
   openFile(file,
-           "castor/db/mysqlGeneratedCore.sql",
+           s_topNS + "/db/mysqlGeneratedCore.sql",
            IO_WriteOnly | IO_Append);
   QTextStream stream(&file);
   openFile(tFile,
-           "castor/db/mysqlGeneratedTrailer.sql",
+           s_topNS + "/db/mysqlGeneratedTrailer.sql",
            IO_WriteOnly | IO_Append);
   QTextStream tStream(&tFile);
   stream << "/* SQL statements for type "
@@ -956,7 +956,7 @@ void CppCppMyCnvWriter::writeFillRep() {
         !isEnum(as->remotePart.typeName)) {
       if (as->type.multiRemote == MULT_ONE ||
           as->type.multiRemote == MULT_N) {
-        addInclude("\"castor/Constants.hpp\"");
+        addInclude(QString("\"") + s_topNS + "/Constants.hpp\"");
         *m_stream << getIndent() << "case castor::OBJ_"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << " :" << endl;
@@ -1067,7 +1067,7 @@ void CppCppMyCnvWriter::writeFillObj() {
         !isEnum(as->remotePart.typeName)) {
       if (as->type.multiRemote == MULT_ONE ||
           as->type.multiRemote == MULT_N) {
-        addInclude("\"castor/Constants.hpp\"");
+        addInclude(QString("\"") + s_topNS + "/Constants.hpp\"");
         *m_stream << getIndent() << "case castor::OBJ_"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << " :" << endl;
@@ -1253,7 +1253,7 @@ void CppCppMyCnvWriter::writeBasicMult1FillRep(Assoc* as) {
               << "if (rset.size() != 1) {"
               << endl;
     m_indent++;
-    addInclude("\"castor/Constants.hpp\"");
+    addInclude(QString("\"") + s_topNS + "/Constants.hpp\"");
     *m_stream << getIndent()
               << fixTypeName("BaseAddress",
                              "castor",
@@ -2281,7 +2281,7 @@ void CppCppMyCnvWriter::writeDeleteRepContent() {
                   << "() != 0) {" << endl;
         m_indent++;
         fixTypeName("MyCnvSvc",
-                    "castor::db::mysql",
+                    s_topNS + "::db::mysql",
                     m_classInfo->packageName);
         *m_stream << getIndent()
                   << "cnvSvc()->deleteRep(0, obj->"
@@ -2306,7 +2306,7 @@ void CppCppMyCnvWriter::writeDeleteRepContent() {
                   << "     it++) {"  << endl;
         m_indent++;
         fixTypeName("MyCnvSvc",
-                    "castor::db::mysql",
+                    s_topNS + "::db::mysql",
                     m_classInfo->packageName);
         *m_stream << getIndent()
                   << "cnvSvc()->deleteRep(0, *it, false);"
@@ -2717,7 +2717,7 @@ QString CppCppMyCnvWriter::getSQLType(QString& type) {
 void CppCppMyCnvWriter::printSQLError(QString name,
                                        MemberList& members,
                                        AssocList& assocs) {
-  fixTypeName("MyCnvSvc", "castor::db::mysql", m_classInfo->packageName);
+  fixTypeName("MyCnvSvc", s_topNS + "::db::mysql", m_classInfo->packageName);
   *m_stream << getIndent() << "try {" << endl;
   m_indent++;
   *m_stream << getIndent()

@@ -70,8 +70,8 @@ bool CppCppOraCnvWriter::init(UMLClassifier* c, QString fileName) {
   this->CppBaseWriter::init(c, fileName);
   // fixes the namespace
   m_originalPackage = m_classInfo->fullPackageName;
-  m_classInfo->packageName = "castor::db::ora";
-  m_classInfo->fullPackageName = "castor::db::ora::";
+  m_classInfo->packageName = s_topNS + "::db::ora";
+  m_classInfo->fullPackageName = s_topNS + "::db::ora::";
   // includes converter  header file and object header file
   m_includes.insert(QString("\"Ora") + m_classInfo->className + "Cnv.hpp\"");
   m_includes.insert(QString("\"") +
@@ -505,19 +505,19 @@ void CppCppOraCnvWriter::writeSqlStatements() {
   /*
   QFile file, tFile, fileD, hFileD;
   openFile(file,
-           "castor/db/oracleGeneratedCore_create.sql",
+           s_topNS + "/db/oracleGeneratedCore_create.sql",
            IO_WriteOnly | IO_Append);
   QTextStream stream(&file);
   openFile(tFile,
-           "castor/db/oracleGeneratedTrailer_create.sql",
+           s_topNS + "/db/oracleGeneratedTrailer_create.sql",
            IO_WriteOnly | IO_Append);
   QTextStream tStream(&tFile);
   openFile(hFileD,
-           "castor/db/oracleGeneratedHeader_drop.sql",
+           s_topNS + "/db/oracleGeneratedHeader_drop.sql",
            IO_WriteOnly | IO_Append);
   QTextStream hStreamD(&hFileD);
   openFile(fileD,
-           "castor/db/oracleGeneratedCore_drop.sql",
+           s_topNS + "/db/oracleGeneratedCore_drop.sql",
            IO_WriteOnly | IO_Append);
   QTextStream streamD(&fileD);
 
@@ -961,7 +961,7 @@ void CppCppOraCnvWriter::writeFillRep() {
         !isEnum(as->remotePart.typeName)) {
       if (as->type.multiRemote == MULT_ONE ||
           as->type.multiRemote == MULT_N) {
-        addInclude("\"castor/Constants.hpp\"");
+        addInclude(QString("\"") + s_topNS + "/Constants.hpp\"");
         *m_stream << getIndent() << "case castor::OBJ_"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << " :" << endl;
@@ -1073,7 +1073,7 @@ void CppCppOraCnvWriter::writeFillObj() {
         !isEnum(as->remotePart.typeName)) {
       if (as->type.multiRemote == MULT_ONE ||
           as->type.multiRemote == MULT_N) {
-        addInclude("\"castor/Constants.hpp\"");
+        addInclude(QString("\"") + s_topNS + "/Constants.hpp\"");
         *m_stream << getIndent() << "case castor::OBJ_"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << " :" << endl;
@@ -1259,7 +1259,7 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as) {
               << "if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {"
               << endl;
     m_indent++;
-    addInclude("\"castor/Constants.hpp\"");
+    addInclude(QString("\"") + s_topNS + "/Constants.hpp\"");
     *m_stream << getIndent()
               << fixTypeName("BaseAddress",
                              "castor",
@@ -2283,7 +2283,7 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
                   << "() != 0) {" << endl;
         m_indent++;
         fixTypeName("OraCnvSvc",
-                    "castor::db::ora",
+                    s_topNS + "::db::ora",
                     m_classInfo->packageName);
         *m_stream << getIndent()
                   << "cnvSvc()->deleteRep(0, obj->"
@@ -2308,7 +2308,7 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
                   << "     it++) {"  << endl;
         m_indent++;
         fixTypeName("OraCnvSvc",
-                    "castor::db::ora",
+                    s_topNS + "::db::ora",
                     m_classInfo->packageName);
         *m_stream << getIndent()
                   << "cnvSvc()->deleteRep(0, *it, false);"
@@ -2723,7 +2723,7 @@ QString CppCppOraCnvWriter::getSQLType(QString& type) {
 void CppCppOraCnvWriter::printSQLError(QString name,
                                        MemberList& members,
                                        AssocList& assocs) {
-  fixTypeName("OraCnvSvc", "castor::db::ora", m_classInfo->packageName);
+  fixTypeName("OraCnvSvc", s_topNS + "::db::ora", m_classInfo->packageName);
   *m_stream << getIndent() << "try {" << endl;
   m_indent++;
   *m_stream << getIndent()

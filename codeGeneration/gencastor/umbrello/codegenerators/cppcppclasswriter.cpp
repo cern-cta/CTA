@@ -415,7 +415,8 @@ void CppCppClassWriter::writeClone(CppBaseWriter* obj,
 //=============================================================================
 void CppCppClassWriter::writeTYPE(CppBaseWriter* obj,
                                   QTextStream &stream) {
-  obj->addInclude("\"castor/Constants.hpp\"");
+  obj->addInclude(QString("\"") + s_topNS +
+                  "/Constants.hpp\"");
   stream << obj->getIndent() << "return OBJ_"
          << obj->classInfo()->className << ";" << endl;
 }
@@ -427,7 +428,7 @@ void CppCppClassWriter::writePrint(CppBaseWriter* obj,
                                    QTextStream &stream) {
   stream << obj->getIndent()
          << obj->fixTypeName("ObjectSet",
-                             obj->getNamespace("ObjectSet"),
+                             "castor",
                              obj->classInfo()->packageName)
          << " alreadyPrinted;" << endl  << obj->getIndent()
          << "print(std::cout, \"\", alreadyPrinted);"

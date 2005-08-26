@@ -43,7 +43,7 @@ class CppCastorWriter : public SimpleCodeGenerator {
   /**
    * accessor to topNS
    */
-  void setTopNS(QString value) { m_topNS = value; }
+  void setTopNS(QString value) { s_topNS = value; }
 
  protected:
   /**
@@ -61,7 +61,7 @@ class CppCastorWriter : public SimpleCodeGenerator {
   std::set<QString> m_ignoreClasses;
 
   /** The top namespace of the generated software */
-  QString m_topNS;
+  static QString s_topNS;
 
 };
 

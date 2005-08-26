@@ -27,8 +27,8 @@ bool CppCppStreamCnvWriter::init(UMLClassifier* c, QString fileName) {
   this->CppBaseWriter::init(c, fileName);
   // fixes the namespace
   m_originalPackage = m_classInfo->fullPackageName;
-  m_classInfo->packageName = "castor::io";
-  m_classInfo->fullPackageName = "castor::io::";
+  m_classInfo->packageName = s_topNS + "::io";
+  m_classInfo->fullPackageName = s_topNS + "::io::";
   // includes converter  header file and object header file
   m_includes.insert(QString("\"Stream") + m_classInfo->className + "Cnv.hpp\"");
   m_includes.insert(QString("\"") +
@@ -71,7 +71,11 @@ void CppCppStreamCnvWriter::writeConstructors() {
                            "castor",
                            m_classInfo->packageName)
             << " cnvSvc) :" << endl
-            << getIndent() << "  StreamBaseCnv(cnvSvc) {}"
+            << getIndent() << " "
+            << fixTypeName("StreamBaseCnv",
+                           "castor::io",
+                           m_classInfo->packageName)
+            << "(cnvSvc) {}"
             << endl << endl;
   // Destructor
   writeWideHeaderComment("Destructor", getIndent(), *m_stream);
@@ -356,9 +360,10 @@ void CppCppStreamCnvWriter::writeUnmarshal() {
             << ") {" << endl;
   m_indent++;
   fixTypeName("StreamCnvSvc", "castor::io", m_classInfo->packageName);
+  addInclude("\"castor/Constants.hpp\"");
   *m_stream << getIndent()
             << fixTypeName("StreamAddress", "castor::io", "")
-            << " ad(stream, \"StreamCnvSvc\", SVC_STREAMCNV);"
+            << " ad(stream, \"StreamCnvSvc\", castor::SVC_STREAMCNV);"
             << endl << getIndent()
             << fixTypeName("IObject*",
                            "castor",

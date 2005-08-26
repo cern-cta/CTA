@@ -2,28 +2,40 @@
 
 if ("$1" == "-h") then
   echo "Usage :"
-  echo "  gencastor [-w castor_workdir] [-h] [-v|--version] XMIFile"
+  echo "  gencastor [-w castor_workdir] [-c topNamespace] [-h] [-v|--version] XMIFile"
   exit
 else if ("$1" == "-v" || "$1" == "--version") then
   /usr/bin/gencastor.bin --version
   exit
 else if ("$1" == "-w") then
   set WORKDIR=$2
-  set XMIFILE=$3
+  if ("$3" == "-c") then
+    set TOPNS = $4
+    set XMIFILE=$5
+  else
+    set TOPNS = 'castor'
+    set XMIFILE=$3
+  endif
 else
   set WORKDIR=`pwd`
-  set XMIFILE=$1
+  if ("$1" == "-c") then
+    set TOPNS = $2
+    set XMIFILE=$3
+  else
+    set TOPNS = 'castor'
+    set XMIFILE=$1
+  endif
 endif
 set TMPDIR=`mktemp /tmp/gencastor-XXXXXX`
 
 rm -rf ${TMPDIR}
-mkdir -p ${TMPDIR}/castor/db
-cp ${WORKDIR}/castor/db/*.sql ${TMPDIR}/castor/db/
+mkdir -p ${TMPDIR}/${TOPNS}/db
+cp ${WORKDIR}/${TOPNS}/db/*.sql ${TMPDIR}/${TOPNS}/db/
 
-/usr/bin/gencastor.bin -o ${TMPDIR} --nocrashhandler ${XMIFILE}
+/usr/bin/gencastor.bin -o ${TMPDIR} -c ${TOPNS} --nocrashhandler ${XMIFILE}
 set pushdsilent
 pushd ${TMPDIR}
-rm -f castor/db/*Generated*
+rm -f ${TOPNS}/db/*Generated*
 foreach f (`find . -type f`)
   #echo $f
   if !(-f ${WORKDIR}/${f}) then

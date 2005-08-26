@@ -25,7 +25,7 @@ bool CppHMyCnvWriter::init(UMLClassifier* c, QString fileName) {
   // call upper class init
   this->CppBaseWriter::init(c, fileName);
   // fixes the namespace
-  m_classInfo->packageName = "castor::db::mysql";
+  m_classInfo->packageName = s_topNS + "::db::mysql";
   // calls the postinit of this class
   postinit(c, fileName);
   return true;

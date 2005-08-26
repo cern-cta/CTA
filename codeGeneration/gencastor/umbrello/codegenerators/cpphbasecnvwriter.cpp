@@ -218,12 +218,11 @@ void CppHBaseCnvWriter::writeClassDecl(const QString& doc) {
             << formatDoc (doc, getIndent() + " * ")
             << getIndent()<<" */" << endl
             << getIndent() << "class " << m_prefix << m_classInfo->className
-            << "Cnv : public " << m_prefix
-            << "BaseCnv {" << endl << endl;
+            << "Cnv : public "
+            << fixTypeName(m_prefix + "BaseCnv",
+                           "castor::io",
+                           m_classInfo->packageName)
+            << " {" << endl << endl;
   m_indent++;
-  // Take care to include the base class declaration
-  fixTypeName(m_prefix + "BaseCnv",
-              m_classInfo->packageName,
-              m_classInfo->packageName);
 }
 

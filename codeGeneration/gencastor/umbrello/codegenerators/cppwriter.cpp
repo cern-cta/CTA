@@ -69,7 +69,7 @@ void CppWriter::configGenerator(CppBaseWriter *cg) {
   CodeGenerationPolicy *childPolicy = cg->getPolicy();
   childPolicy->setHeadingFileDir(parentPolicy->getHeadingFileDir());
   childPolicy->setOutputDirectory(parentPolicy->getOutputDirectory());
-  cg->setTopNS(m_topNS);
+  cg->setTopNS(s_topNS);
 }
 
 void CppWriter::runGenerator(CppBaseWriter *cg,
@@ -112,8 +112,8 @@ void CppWriter::writeClass(UMLClassifier *c) {
   // build information on the calss
   ClassifierInfo classInfo(c, m_doc);
 
-  // If not in namespace castor, ignore the class
-  if (classInfo.packageName.left(6) != "castor") {
+  // If not in our namespace, ignore the class
+  if (classInfo.packageName.left(s_topNS.length()) != s_topNS) {
     return;
   }
 
@@ -221,21 +221,21 @@ void CppWriter::writeClass(UMLClassifier *c) {
           if (classInfo->allImplementedAbstracts.contains(concept)) {
             // check existence of the directory
             QDir outputDirectory = getPolicy()->getOutputDirectory();
-            QDir packageDir(getPolicy()->getOutputDirectory().absPath() + "/castor/db");
+            QDir packageDir(getPolicy()->getOutputDirectory().absPath() + "/" + s_topNS + "/db");
             if (! (packageDir.exists() || packageDir.mkdir(packageDir.absPath()) ) ) {
               std::cerr << "Cannot create the package folder "
                         << packageDir.absPath().ascii()
                         << "\nPlease check the access rights" << std::endl;
               return;
             }
-            QDir packageDirOra(getPolicy()->getOutputDirectory().absPath() + "/castor/db/ora");
+            QDir packageDirOra(getPolicy()->getOutputDirectory().absPath() + "/" + s_topNS + "/db/ora");
             if (! (packageDirOra.exists() || packageDirOra.mkdir(packageDirOra.absPath()) ) ) {
               std::cerr << "Cannot create the package folder "
                         << packageDirOra.absPath().ascii()
                         << "\nPlease check the access rights" << std::endl;
               return;
             }
-            QDir packageDirDb(getPolicy()->getOutputDirectory().absPath() + "/castor/db/cnv");
+            QDir packageDirDb(getPolicy()->getOutputDirectory().absPath() + "/" + s_topNS + "/db/cnv");
             if (! (packageDirDb.exists() || packageDirDb.mkdir(packageDirDb.absPath()) ) ) {
               std::cerr << "Cannot create the package folder "
                         << packageDirDb.absPath().ascii()
@@ -246,10 +246,10 @@ void CppWriter::writeClass(UMLClassifier *c) {
             // run generation
             int i = fileName.findRev('/') + 1;
             QString file = fileName.right(fileName.length()-i);
-            runGenerator(dbhw, "castor/db/cnv/Db" + file + "Cnv.hpp", c);
-            runGenerator(dbcppw, "castor/db/cnv/Db" + file + "Cnv.cpp", c);
-            runGenerator(orahw, "castor/db/ora/Ora" + file + "Cnv.hpp", c);
-            runGenerator(oracppw, "castor/db/ora/Ora" + file + "Cnv.cpp", c);
+            runGenerator(dbhw, s_topNS + "/db/cnv/Db" + file + "Cnv.hpp", c);
+            runGenerator(dbcppw, s_topNS + "/db/cnv/Db" + file + "Cnv.cpp", c);
+            runGenerator(orahw, s_topNS + "/db/ora/Ora" + file + "Cnv.hpp", c);
+            runGenerator(oracppw, s_topNS + "/db/ora/Ora" + file + "Cnv.cpp", c);
           }
         }
         UMLObject* obj = m_doc->findUMLObject(QString("castor::IStreamable"),
@@ -257,7 +257,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
         const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
         if (classInfo->allImplementedAbstracts.contains(concept)) {
           // check existence of the directory
-          QDir packageDir(getPolicy()->getOutputDirectory().absPath() + "/castor/io");
+          QDir packageDir(getPolicy()->getOutputDirectory().absPath() + "/" + s_topNS + "/io");
           if (! (packageDir.exists() || packageDir.mkdir(packageDir.absPath()) ) ) {
             std::cerr << "Cannot create the package folder "
                       << packageDir.absPath().ascii()
@@ -267,8 +267,8 @@ void CppWriter::writeClass(UMLClassifier *c) {
           // run generation
           int i = fileName.findRev('/') + 1;
           QString file = fileName.right(fileName.length()-i);
-          runGenerator(streamhw, "castor/io/Stream" + file + "Cnv.hpp", c);
-          runGenerator(streamcppw, "castor/io/Stream" + file + "Cnv.cpp", c);
+          runGenerator(streamhw, s_topNS + "/io/Stream" + file + "Cnv.hpp", c);
+          runGenerator(streamcppw, s_topNS + "/io/Stream" + file + "Cnv.cpp", c);
         }
       }
     }
