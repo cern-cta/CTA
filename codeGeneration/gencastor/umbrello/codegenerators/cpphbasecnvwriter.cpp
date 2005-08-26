@@ -220,7 +220,7 @@ void CppHBaseCnvWriter::writeClassDecl(const QString& doc) {
             << getIndent() << "class " << m_prefix << m_classInfo->className
             << "Cnv : public "
             << fixTypeName(m_prefix + "BaseCnv",
-                           "castor::io",
+                           QString(m_classInfo->packageName.ascii()).replace(s_topNS, "castor"),
                            m_classInfo->packageName)
             << " {" << endl << endl;
   m_indent++;

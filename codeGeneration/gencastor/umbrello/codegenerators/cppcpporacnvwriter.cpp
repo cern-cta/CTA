@@ -962,7 +962,7 @@ void CppCppOraCnvWriter::writeFillRep() {
       if (as->type.multiRemote == MULT_ONE ||
           as->type.multiRemote == MULT_N) {
         addInclude(QString("\"") + s_topNS + "/Constants.hpp\"");
-        *m_stream << getIndent() << "case castor::OBJ_"
+        *m_stream << getIndent() << "case " + s_topNS + "::OBJ_"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << " :" << endl;
         m_indent++;
@@ -1074,7 +1074,7 @@ void CppCppOraCnvWriter::writeFillObj() {
       if (as->type.multiRemote == MULT_ONE ||
           as->type.multiRemote == MULT_N) {
         addInclude(QString("\"") + s_topNS + "/Constants.hpp\"");
-        *m_stream << getIndent() << "case castor::OBJ_"
+        *m_stream << getIndent() << "case " + s_topNS + "::OBJ_"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << " :" << endl;
         m_indent++;
@@ -1259,7 +1259,7 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as) {
               << "if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {"
               << endl;
     m_indent++;
-    addInclude(QString("\"") + s_topNS + "/Constants.hpp\"");
+    addInclude("\"castor/Constants.hpp\"");
     *m_stream << getIndent()
               << fixTypeName("BaseAddress",
                              "castor",
@@ -1909,7 +1909,11 @@ void CppCppOraCnvWriter::writeBasicMultNFillObj(Assoc* as) {
             << endl << getIndent()
             << "     it++) {"  << endl;
   m_indent++;
-  *m_stream << getIndent() << "IObject* item"
+  *m_stream << getIndent()
+            << fixTypeName("IObject*",
+                           "castor",
+                           m_classInfo->packageName)
+            << " item"
             << " = cnvSvc()->getObjFromId(*it);"
             << endl << getIndent()
             << fixTypeName(as->remotePart.typeName,
@@ -2283,7 +2287,7 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
                   << "() != 0) {" << endl;
         m_indent++;
         fixTypeName("OraCnvSvc",
-                    s_topNS + "::db::ora",
+                    "castor::db::ora",
                     m_classInfo->packageName);
         *m_stream << getIndent()
                   << "cnvSvc()->deleteRep(0, obj->"
@@ -2308,7 +2312,7 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
                   << "     it++) {"  << endl;
         m_indent++;
         fixTypeName("OraCnvSvc",
-                    s_topNS + "::db::ora",
+                    "castor::db::ora",
                     m_classInfo->packageName);
         *m_stream << getIndent()
                   << "cnvSvc()->deleteRep(0, *it, false);"
@@ -2723,7 +2727,7 @@ QString CppCppOraCnvWriter::getSQLType(QString& type) {
 void CppCppOraCnvWriter::printSQLError(QString name,
                                        MemberList& members,
                                        AssocList& assocs) {
-  fixTypeName("OraCnvSvc", s_topNS + "::db::ora", m_classInfo->packageName);
+  fixTypeName("OraCnvSvc", "castor::db::ora", m_classInfo->packageName);
   *m_stream << getIndent() << "try {" << endl;
   m_indent++;
   *m_stream << getIndent()

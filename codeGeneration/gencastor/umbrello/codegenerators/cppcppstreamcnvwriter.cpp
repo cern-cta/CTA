@@ -405,7 +405,10 @@ void CppCppStreamCnvWriter::writeUnmarshal() {
       *m_stream << getIndent()
                 << "ad.setObjType(castor::OBJ_INVALID);"
                 << endl << getIndent()
-                << "IObject* obj"
+                << fixTypeName("IObject*",
+                               "castor",
+                               m_classInfo->packageName)
+                << " obj"
                 << capitalizeFirstLetter(as->remotePart.name)
                 << " = cnvSvc()->unmarshalObject(ad, newlyCreated);"
                 << endl << getIndent()
@@ -432,7 +435,10 @@ void CppCppStreamCnvWriter::writeUnmarshal() {
       *m_stream << getIndent()
                 << "ad.setObjType(castor::OBJ_INVALID);"
                 << endl << getIndent()
-                << "IObject* obj"
+                << fixTypeName("IObject*",
+                               "castor",
+                               m_classInfo->packageName)
+                << " obj"
                 << capitalizeFirstLetter(as->remotePart.name)
                 << " = cnvSvc()->unmarshalObject(ad, newlyCreated);"
                 << endl << getIndent()
