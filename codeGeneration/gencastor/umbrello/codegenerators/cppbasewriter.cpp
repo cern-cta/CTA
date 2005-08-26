@@ -808,9 +808,9 @@ void CppBaseWriter::singleAssocToPairList (UMLAssociation *a,
 //=============================================================================
 CppBaseWriter::Multiplicity CppBaseWriter::parseMulti(QString multi) {
   Multiplicity res = MULT_UNKNOWN;
-  if (multi == "1" | multi == "0..1") {
+  if (multi == "1" || multi == "0..1" || multi == "") {
     res = MULT_ONE;
-  } else if (multi == "0..n") {
+  } else if (multi == "0..n" || multi == "1..n") {
     res = MULT_N;
   }
   return res;
