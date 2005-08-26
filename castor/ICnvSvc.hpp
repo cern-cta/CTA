@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ICnvSvc.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2005/08/23 09:57:50 $ $Author: itglp $
+ * @(#)$RCSfile: ICnvSvc.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2005/08/26 08:56:36 $ $Author: sponcec3 $
  *
  *
  *
@@ -28,8 +28,8 @@
 #define CASTOR_ICNVSVC_HPP 1
 
 // Include Files
-#include "IService.hpp"
-#include "Constants.hpp"
+#include "castor/IService.hpp"
+#include "castor/Constants.hpp"
 #include "castor/exception/Exception.hpp"
 
 namespace castor {
@@ -89,7 +89,7 @@ namespace castor {
     virtual void createRep(IAddress* address,
                            IObject* object,
                            bool autocommit,
-                           unsigned int type = OBJ_INVALID)
+                           unsigned int type = castor::OBJ_INVALID)
       throw (castor::exception::Exception) = 0;
 
     /**
