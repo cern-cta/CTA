@@ -353,15 +353,6 @@ void castor::db::ora::OraTapeDriveCnv::fillRepTape(castor::vdqm::TapeDrive* obj)
       ad.setCnvSvcName("DbCnvSvc");
       ad.setCnvSvcType(castor::SVC_DBCNV);
       cnvSvc()->createRep(&ad, obj->tape(), false, OBJ_TapeDrive);
-    } else {
-      // Check remote update statement
-      if (0 == m_remoteUpdateTapeStatement) {
-        m_remoteUpdateTapeStatement = createStatement(s_remoteUpdateTapeStatementString);
-      }
-      // Update remote object
-      m_remoteUpdateTapeStatement->setDouble(1, obj->id());
-      m_remoteUpdateTapeStatement->setDouble(2, obj->tape()->id());
-      m_remoteUpdateTapeStatement->executeUpdate();
     }
     // Close resultset
     m_checkTapeExistStatement->closeResultSet(rset);
