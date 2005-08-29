@@ -21,4 +21,4 @@ foreach f ( `find ../castor/stager -name '*.hpp'` )
   endif
 end
 
-a2ps --columns=3 -f 8 -o MagicNumbers.ps MagicNumbers
+a2ps --columns=3 -f 7 -o MagicNumbers.ps MagicNumbers
