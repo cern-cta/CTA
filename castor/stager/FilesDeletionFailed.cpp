@@ -73,7 +73,7 @@ void castor::stager::FilesDeletionFailed::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::stager::FilesDeletionFailed::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

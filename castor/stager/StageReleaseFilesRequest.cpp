@@ -73,7 +73,7 @@ void castor::stager::StageReleaseFilesRequest::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::stager::StageReleaseFilesRequest::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

@@ -75,7 +75,7 @@ void castor::rh::FindReqResponse::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::rh::FindReqResponse::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

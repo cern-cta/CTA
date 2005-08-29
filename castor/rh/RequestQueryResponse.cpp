@@ -81,7 +81,7 @@ void castor::rh::RequestQueryResponse::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::rh::RequestQueryResponse::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

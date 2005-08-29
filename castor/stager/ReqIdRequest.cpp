@@ -78,7 +78,7 @@ void castor::stager::ReqIdRequest::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::stager::ReqIdRequest::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

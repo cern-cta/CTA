@@ -82,7 +82,7 @@ void castor::stager::GCFile::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::stager::GCFile::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

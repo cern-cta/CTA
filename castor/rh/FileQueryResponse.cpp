@@ -91,7 +91,7 @@ void castor::rh::FileQueryResponse::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::rh::FileQueryResponse::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

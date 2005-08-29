@@ -75,7 +75,7 @@ void castor::stager::StageFileQueryRequest::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::stager::StageFileQueryRequest::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

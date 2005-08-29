@@ -75,7 +75,7 @@ void castor::rh::AbortResponse::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::rh::AbortResponse::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

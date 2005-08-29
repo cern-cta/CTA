@@ -82,7 +82,7 @@ void castor::stager::StagePutDoneRequest::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::stager::StagePutDoneRequest::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

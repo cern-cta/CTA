@@ -73,7 +73,7 @@ void castor::stager::PutStartRequest::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::stager::PutStartRequest::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

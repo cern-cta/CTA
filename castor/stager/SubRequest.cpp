@@ -133,7 +133,7 @@ void castor::stager::SubRequest::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::stager::SubRequest::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

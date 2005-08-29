@@ -77,7 +77,7 @@ void castor::stager::FileClass::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::stager::FileClass::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

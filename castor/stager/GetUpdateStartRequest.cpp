@@ -73,7 +73,7 @@ void castor::stager::GetUpdateStartRequest::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::stager::GetUpdateStartRequest::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

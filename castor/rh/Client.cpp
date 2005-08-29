@@ -77,7 +77,7 @@ void castor::rh::Client::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::rh::Client::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

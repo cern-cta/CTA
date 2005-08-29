@@ -84,7 +84,7 @@ void castor::stager::QueryParameter::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::stager::QueryParameter::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

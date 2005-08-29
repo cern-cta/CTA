@@ -81,7 +81,7 @@ void castor::stager::ClientIdentification::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::stager::ClientIdentification::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

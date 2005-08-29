@@ -74,7 +74,7 @@ void castor::stager::TapeCopyForMigration::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::stager::TapeCopyForMigration::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

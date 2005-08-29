@@ -75,7 +75,7 @@ void castor::stager::Files2Delete::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::stager::Files2Delete::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

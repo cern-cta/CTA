@@ -77,7 +77,7 @@ void castor::stager::Disk2DiskCopyDoneRequest::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::stager::Disk2DiskCopyDoneRequest::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

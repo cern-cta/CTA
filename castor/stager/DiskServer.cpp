@@ -90,7 +90,7 @@ void castor::stager::DiskServer::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::stager::DiskServer::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

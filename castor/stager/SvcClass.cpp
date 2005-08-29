@@ -118,7 +118,7 @@ void castor::stager::SvcClass::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::stager::SvcClass::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 
