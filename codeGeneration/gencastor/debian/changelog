@@ -1,3 +1,13 @@
+gencastor (3.4-0) unstable; urgency=low
+
+  * Fixed bug for associations 1 to 1 that had no name on one side.
+  * Added -c flag for generating code so that one can generate code outside
+    the castor namespace
+  * modified accordingly the use of namespaces, having in mind that some
+    files are no more using the castor namespace by default
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Mon, 29 Sep 2005 11:00:00 +0200
+
 gencastor (3.3-0) unstable; urgency=low
 
   * Added generic Database cnv generator. This can work with databases
