@@ -39,6 +39,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
+#include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StagePutDoneRequest.hpp"
@@ -59,7 +60,7 @@ const castor::ICnvFactory& StreamStagePutDoneRequestCnvFactory =
 // Constructor
 //------------------------------------------------------------------------------
 castor::io::StreamStagePutDoneRequestCnv::StreamStagePutDoneRequestCnv(castor::ICnvSvc* cnvSvc) :
-  StreamBaseCnv(cnvSvc) {}
+ StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -203,7 +204,7 @@ void castor::io::StreamStagePutDoneRequestCnv::marshalObject(castor::IObject* ob
 castor::IObject* castor::io::StreamStagePutDoneRequestCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                            castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
-  castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
+  castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
@@ -214,17 +215,17 @@ castor::IObject* castor::io::StreamStagePutDoneRequestCnv::unmarshalObject(casto
   ad.stream() >> subRequestsNb;
   for (unsigned int i = 0; i < subRequestsNb; i++) {
     ad.setObjType(castor::OBJ_INVALID);
-    IObject* objSubRequests = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    castor::IObject* objSubRequests = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addSubRequests(dynamic_cast<castor::stager::SubRequest*>(objSubRequests));
   }
   ad.setObjType(castor::OBJ_INVALID);
-  IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  castor::IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));
   ad.setObjType(castor::OBJ_INVALID);
-  IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  castor::IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setClient(dynamic_cast<castor::IClient*>(objClient));
   ad.setObjType(castor::OBJ_INVALID);
-  IObject* objParent = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  castor::IObject* objParent = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setParent(dynamic_cast<castor::stager::FileRequest*>(objParent));
   return object;
 }

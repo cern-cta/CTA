@@ -563,7 +563,7 @@ void castor::db::ora::OraCastorFileCnv::fillObjDiskCopy(castor::stager::CastorFi
   for (std::set<int>::iterator it = diskCopiesList.begin();
        it != diskCopiesList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::DiskCopy* remoteObj = 
       dynamic_cast<castor::stager::DiskCopy*>(item);
     obj->addDiskCopies(remoteObj);
@@ -613,7 +613,7 @@ void castor::db::ora::OraCastorFileCnv::fillObjTapeCopy(castor::stager::CastorFi
   for (std::set<int>::iterator it = tapeCopiesList.begin();
        it != tapeCopiesList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::TapeCopy* remoteObj = 
       dynamic_cast<castor::stager::TapeCopy*>(item);
     obj->addTapeCopies(remoteObj);

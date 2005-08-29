@@ -128,7 +128,7 @@ void castor::vdqm::TapeRequest::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::vdqm::TapeRequest::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

@@ -95,7 +95,7 @@ void castor::vdqm::ErrorHistory::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::vdqm::ErrorHistory::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

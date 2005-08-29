@@ -38,6 +38,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
+#include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
@@ -57,7 +58,7 @@ const castor::ICnvFactory& StreamDeviceGroupNameCnvFactory =
 // Constructor
 //------------------------------------------------------------------------------
 castor::io::StreamDeviceGroupNameCnv::StreamDeviceGroupNameCnv(castor::ICnvSvc* cnvSvc) :
-  StreamBaseCnv(cnvSvc) {}
+ StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -160,7 +161,7 @@ void castor::io::StreamDeviceGroupNameCnv::marshalObject(castor::IObject* object
 castor::IObject* castor::io::StreamDeviceGroupNameCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                        castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
-  castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
+  castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
@@ -171,4 +172,4 @@ castor::IObject* castor::io::StreamDeviceGroupNameCnv::unmarshalObject(castor::i
   ad.stream() >> Nb;
   for (unsigned int i = 0; i < Nb; i++) {
     ad.setObjType(castor::OBJ_INVALID);
-    IObject* obj
+    castor::IObject* obj

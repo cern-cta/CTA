@@ -462,7 +462,7 @@ void castor::db::ora::OraStreamCnv::fillObjTapeCopy(castor::stager::Stream* obj)
   for (std::set<int>::iterator it = tapeCopyList.begin();
        it != tapeCopyList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::TapeCopy* remoteObj = 
       dynamic_cast<castor::stager::TapeCopy*>(item);
     obj->addTapeCopy(remoteObj);

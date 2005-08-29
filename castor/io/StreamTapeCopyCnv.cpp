@@ -38,6 +38,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
+#include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/Segment.hpp"
@@ -58,7 +59,7 @@ const castor::ICnvFactory& StreamTapeCopyCnvFactory =
 // Constructor
 //------------------------------------------------------------------------------
 castor::io::StreamTapeCopyCnv::StreamTapeCopyCnv(castor::ICnvSvc* cnvSvc) :
-  StreamBaseCnv(cnvSvc) {}
+ StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -162,7 +163,7 @@ void castor::io::StreamTapeCopyCnv::marshalObject(castor::IObject* object,
 castor::IObject* castor::io::StreamTapeCopyCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                 castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
-  castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
+  castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
@@ -173,18 +174,18 @@ castor::IObject* castor::io::StreamTapeCopyCnv::unmarshalObject(castor::io::bini
   ad.stream() >> streamNb;
   for (unsigned int i = 0; i < streamNb; i++) {
     ad.setObjType(castor::OBJ_INVALID);
-    IObject* objStream = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    castor::IObject* objStream = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addStream(dynamic_cast<castor::stager::Stream*>(objStream));
   }
   unsigned int segmentsNb;
   ad.stream() >> segmentsNb;
   for (unsigned int i = 0; i < segmentsNb; i++) {
     ad.setObjType(castor::OBJ_INVALID);
-    IObject* objSegments = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    castor::IObject* objSegments = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addSegments(dynamic_cast<castor::stager::Segment*>(objSegments));
   }
   ad.setObjType(castor::OBJ_INVALID);
-  IObject* objCastorFile = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  castor::IObject* objCastorFile = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setCastorFile(dynamic_cast<castor::stager::CastorFile*>(objCastorFile));
   return object;
 }

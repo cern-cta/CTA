@@ -38,6 +38,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
+#include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
@@ -57,7 +58,7 @@ const castor::ICnvFactory& StreamSegmentCnvFactory =
 // Constructor
 //------------------------------------------------------------------------------
 castor::io::StreamSegmentCnv::StreamSegmentCnv(castor::ICnvSvc* cnvSvc) :
-  StreamBaseCnv(cnvSvc) {}
+ StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -202,7 +203,7 @@ void castor::io::StreamSegmentCnv::marshalObject(castor::IObject* object,
 castor::IObject* castor::io::StreamSegmentCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
-  castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
+  castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
@@ -210,10 +211,10 @@ castor::IObject* castor::io::StreamSegmentCnv::unmarshalObject(castor::io::binio
   castor::stager::Segment* obj = 
     dynamic_cast<castor::stager::Segment*>(object);
   ad.setObjType(castor::OBJ_INVALID);
-  IObject* objTape = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  castor::IObject* objTape = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setTape(dynamic_cast<castor::stager::Tape*>(objTape));
   ad.setObjType(castor::OBJ_INVALID);
-  IObject* objCopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  castor::IObject* objCopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setCopy(dynamic_cast<castor::stager::TapeCopy*>(objCopy));
   return object;
 }

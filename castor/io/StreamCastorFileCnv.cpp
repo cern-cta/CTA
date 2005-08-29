@@ -38,6 +38,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
+#include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
@@ -59,7 +60,7 @@ const castor::ICnvFactory& StreamCastorFileCnvFactory =
 // Constructor
 //------------------------------------------------------------------------------
 castor::io::StreamCastorFileCnv::StreamCastorFileCnv(castor::ICnvSvc* cnvSvc) :
-  StreamBaseCnv(cnvSvc) {}
+ StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -180,7 +181,7 @@ void castor::io::StreamCastorFileCnv::marshalObject(castor::IObject* object,
 castor::IObject* castor::io::StreamCastorFileCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                   castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
-  castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
+  castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
@@ -188,23 +189,23 @@ castor::IObject* castor::io::StreamCastorFileCnv::unmarshalObject(castor::io::bi
   castor::stager::CastorFile* obj = 
     dynamic_cast<castor::stager::CastorFile*>(object);
   ad.setObjType(castor::OBJ_INVALID);
-  IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  castor::IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));
   ad.setObjType(castor::OBJ_INVALID);
-  IObject* objFileClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  castor::IObject* objFileClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setFileClass(dynamic_cast<castor::stager::FileClass*>(objFileClass));
   unsigned int diskCopiesNb;
   ad.stream() >> diskCopiesNb;
   for (unsigned int i = 0; i < diskCopiesNb; i++) {
     ad.setObjType(castor::OBJ_INVALID);
-    IObject* objDiskCopies = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    castor::IObject* objDiskCopies = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addDiskCopies(dynamic_cast<castor::stager::DiskCopy*>(objDiskCopies));
   }
   unsigned int tapeCopiesNb;
   ad.stream() >> tapeCopiesNb;
   for (unsigned int i = 0; i < tapeCopiesNb; i++) {
     ad.setObjType(castor::OBJ_INVALID);
-    IObject* objTapeCopies = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    castor::IObject* objTapeCopies = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addTapeCopies(dynamic_cast<castor::stager::TapeCopy*>(objTapeCopies));
   }
   return object;

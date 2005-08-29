@@ -38,6 +38,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
+#include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/QryRequest.hpp"
 #include "castor/stager/QueryParameter.hpp"
@@ -56,7 +57,7 @@ const castor::ICnvFactory& StreamQueryParameterCnvFactory =
 // Constructor
 //------------------------------------------------------------------------------
 castor::io::StreamQueryParameterCnv::StreamQueryParameterCnv(castor::ICnvSvc* cnvSvc) :
-  StreamBaseCnv(cnvSvc) {}
+ StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -148,7 +149,7 @@ void castor::io::StreamQueryParameterCnv::marshalObject(castor::IObject* object,
 castor::IObject* castor::io::StreamQueryParameterCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                       castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
-  castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
+  castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
@@ -156,7 +157,7 @@ castor::IObject* castor::io::StreamQueryParameterCnv::unmarshalObject(castor::io
   castor::stager::QueryParameter* obj = 
     dynamic_cast<castor::stager::QueryParameter*>(object);
   ad.setObjType(castor::OBJ_INVALID);
-  IObject* objQuery = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  castor::IObject* objQuery = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setQuery(dynamic_cast<castor::stager::QryRequest*>(objQuery));
   return object;
 }

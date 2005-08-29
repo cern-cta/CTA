@@ -75,7 +75,7 @@ void castor::vdqm::TapeAccessSpecification::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::vdqm::TapeAccessSpecification::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

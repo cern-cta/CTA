@@ -853,7 +853,7 @@ void castor::db::ora::OraTapeDriveCnv::fillObjErrorHistory(castor::vdqm::TapeDri
   for (std::set<int>::iterator it = errorHistoryList.begin();
        it != errorHistoryList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::vdqm::ErrorHistory* remoteObj = 
       dynamic_cast<castor::vdqm::ErrorHistory*>(item);
     obj->addErrorHistory(remoteObj);
@@ -903,7 +903,7 @@ void castor::db::ora::OraTapeDriveCnv::fillObjTapeDriveDedication(castor::vdqm::
   for (std::set<int>::iterator it = tapeDriveDedicationList.begin();
        it != tapeDriveDedicationList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::vdqm::TapeDriveDedication* remoteObj = 
       dynamic_cast<castor::vdqm::TapeDriveDedication*>(item);
     obj->addTapeDriveDedication(remoteObj);
@@ -952,7 +952,7 @@ void castor::db::ora::OraTapeDriveCnv::fillObjTapeDriveCompatibility(castor::vdq
   for (std::set<int>::iterator it = tapeDriveCompatibilitesList.begin();
        it != tapeDriveCompatibilitesList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::vdqm::TapeDriveCompatibility* remoteObj = 
       dynamic_cast<castor::vdqm::TapeDriveCompatibility*>(item);
     obj->addTapeDriveCompatibilites(remoteObj);

@@ -526,7 +526,7 @@ void castor::db::ora::OraTapeCnv::fillObjErrorHistory(castor::stager::Tape* obj)
   for (std::set<int>::iterator it = errorHistoryList.begin();
        it != errorHistoryList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::vdqm::ErrorHistory* remoteObj = 
       dynamic_cast<castor::vdqm::ErrorHistory*>(item);
     obj->addErrorHistory(remoteObj);
@@ -576,7 +576,7 @@ void castor::db::ora::OraTapeCnv::fillObjSegment(castor::stager::Tape* obj)
   for (std::set<int>::iterator it = segmentsList.begin();
        it != segmentsList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::Segment* remoteObj = 
       dynamic_cast<castor::stager::Segment*>(item);
     obj->addSegments(remoteObj);

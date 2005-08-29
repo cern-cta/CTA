@@ -392,7 +392,7 @@ void castor::db::ora::OraFilesDeletionFailedCnv::fillObjGCFile(castor::stager::F
   for (std::set<int>::iterator it = filesList.begin();
        it != filesList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::GCFile* remoteObj = 
       dynamic_cast<castor::stager::GCFile*>(item);
     obj->addFiles(remoteObj);

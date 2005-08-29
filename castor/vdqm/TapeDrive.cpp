@@ -173,7 +173,7 @@ void castor::vdqm::TapeDrive::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::vdqm::TapeDrive::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

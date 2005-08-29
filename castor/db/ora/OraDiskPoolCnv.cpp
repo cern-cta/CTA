@@ -382,7 +382,7 @@ void castor::db::ora::OraDiskPoolCnv::fillObjFileSystem(castor::stager::DiskPool
   for (std::set<int>::iterator it = fileSystemsList.begin();
        it != fileSystemsList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::FileSystem* remoteObj = 
       dynamic_cast<castor::stager::FileSystem*>(item);
     obj->addFileSystems(remoteObj);
@@ -432,7 +432,7 @@ void castor::db::ora::OraDiskPoolCnv::fillObjSvcClass(castor::stager::DiskPool* 
   for (std::set<int>::iterator it = svcClassesList.begin();
        it != svcClassesList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::SvcClass* remoteObj = 
       dynamic_cast<castor::stager::SvcClass*>(item);
     obj->addSvcClasses(remoteObj);

@@ -38,6 +38,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
+#include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/rh/GCFilesResponse.hpp"
 #include "castor/stager/GCLocalFile.hpp"
@@ -56,7 +57,7 @@ const castor::ICnvFactory& StreamGCFilesResponseCnvFactory =
 // Constructor
 //------------------------------------------------------------------------------
 castor::io::StreamGCFilesResponseCnv::StreamGCFilesResponseCnv(castor::ICnvSvc* cnvSvc) :
-  StreamBaseCnv(cnvSvc) {}
+ StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -153,7 +154,7 @@ void castor::io::StreamGCFilesResponseCnv::marshalObject(castor::IObject* object
 castor::IObject* castor::io::StreamGCFilesResponseCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                        castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
-  castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
+  castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
@@ -164,7 +165,7 @@ castor::IObject* castor::io::StreamGCFilesResponseCnv::unmarshalObject(castor::i
   ad.stream() >> filesNb;
   for (unsigned int i = 0; i < filesNb; i++) {
     ad.setObjType(castor::OBJ_INVALID);
-    IObject* objFiles = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    castor::IObject* objFiles = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addFiles(dynamic_cast<castor::stager::GCLocalFile*>(objFiles));
   }
   return object;

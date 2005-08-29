@@ -382,7 +382,7 @@ void castor::db::ora::OraTapePoolCnv::fillObjSvcClass(castor::stager::TapePool* 
   for (std::set<int>::iterator it = svcClassesList.begin();
        it != svcClassesList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::SvcClass* remoteObj = 
       dynamic_cast<castor::stager::SvcClass*>(item);
     obj->addSvcClasses(remoteObj);
@@ -432,7 +432,7 @@ void castor::db::ora::OraTapePoolCnv::fillObjStream(castor::stager::TapePool* ob
   for (std::set<int>::iterator it = streamsList.begin();
        it != streamsList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::Stream* remoteObj = 
       dynamic_cast<castor::stager::Stream*>(item);
     obj->addStreams(remoteObj);

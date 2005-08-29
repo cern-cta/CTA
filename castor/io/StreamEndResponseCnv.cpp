@@ -38,6 +38,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
+#include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/rh/EndResponse.hpp"
 #include "osdep.h"
@@ -54,7 +55,7 @@ const castor::ICnvFactory& StreamEndResponseCnvFactory =
 // Constructor
 //------------------------------------------------------------------------------
 castor::io::StreamEndResponseCnv::StreamEndResponseCnv(castor::ICnvSvc* cnvSvc) :
-  StreamBaseCnv(cnvSvc) {}
+ StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -145,7 +146,7 @@ void castor::io::StreamEndResponseCnv::marshalObject(castor::IObject* object,
 castor::IObject* castor::io::StreamEndResponseCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                    castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
-  castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
+  castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);

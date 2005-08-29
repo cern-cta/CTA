@@ -385,7 +385,7 @@ void castor::db::ora::OraStageGetRequestCnv::fillObjSubRequest(castor::stager::S
   for (std::set<int>::iterator it = subRequestsList.begin();
        it != subRequestsList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::SubRequest* remoteObj = 
       dynamic_cast<castor::stager::SubRequest*>(item);
     obj->addSubRequests(remoteObj);

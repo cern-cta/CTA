@@ -38,6 +38,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
+#include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
@@ -55,7 +56,7 @@ const castor::ICnvFactory& StreamTapeDriveDedicationCnvFactory =
 // Constructor
 //------------------------------------------------------------------------------
 castor::io::StreamTapeDriveDedicationCnv::StreamTapeDriveDedicationCnv(castor::ICnvSvc* cnvSvc) :
-  StreamBaseCnv(cnvSvc) {}
+ StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -163,7 +164,7 @@ void castor::io::StreamTapeDriveDedicationCnv::marshalObject(castor::IObject* ob
 castor::IObject* castor::io::StreamTapeDriveDedicationCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                            castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
-  castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
+  castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
@@ -171,7 +172,7 @@ castor::IObject* castor::io::StreamTapeDriveDedicationCnv::unmarshalObject(casto
   castor::vdqm::TapeDriveDedication* obj = 
     dynamic_cast<castor::vdqm::TapeDriveDedication*>(object);
   ad.setObjType(castor::OBJ_INVALID);
-  IObject* objTapeDrive = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  castor::IObject* objTapeDrive = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setTapeDrive(dynamic_cast<castor::vdqm::TapeDrive*>(objTapeDrive));
   return object;
 }

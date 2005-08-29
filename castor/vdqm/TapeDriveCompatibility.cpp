@@ -81,7 +81,7 @@ void castor::vdqm::TapeDriveCompatibility::print(std::ostream& stream,
 // print
 //------------------------------------------------------------------------------
 void castor::vdqm::TapeDriveCompatibility::print() const {
-  ObjectSet alreadyPrinted;
+  castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
 

@@ -39,6 +39,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
+#include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/Files2Delete.hpp"
 #include "castor/stager/SvcClass.hpp"
@@ -56,7 +57,7 @@ const castor::ICnvFactory& StreamFiles2DeleteCnvFactory =
 // Constructor
 //------------------------------------------------------------------------------
 castor::io::StreamFiles2DeleteCnv::StreamFiles2DeleteCnv(castor::ICnvSvc* cnvSvc) :
-  StreamBaseCnv(cnvSvc) {}
+ StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -193,7 +194,7 @@ void castor::io::StreamFiles2DeleteCnv::marshalObject(castor::IObject* object,
 castor::IObject* castor::io::StreamFiles2DeleteCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                     castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
-  castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
+  castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
@@ -201,10 +202,10 @@ castor::IObject* castor::io::StreamFiles2DeleteCnv::unmarshalObject(castor::io::
   castor::stager::Files2Delete* obj = 
     dynamic_cast<castor::stager::Files2Delete*>(object);
   ad.setObjType(castor::OBJ_INVALID);
-  IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  castor::IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));
   ad.setObjType(castor::OBJ_INVALID);
-  IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  castor::IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setClient(dynamic_cast<castor::IClient*>(objClient));
   return object;
 }

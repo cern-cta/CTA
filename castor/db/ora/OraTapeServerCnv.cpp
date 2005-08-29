@@ -304,7 +304,7 @@ void castor::db::ora::OraTapeServerCnv::fillObjTapeDrive(castor::vdqm::TapeServe
   for (std::set<int>::iterator it = tapeDrivesList.begin();
        it != tapeDrivesList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::vdqm::TapeDrive* remoteObj = 
       dynamic_cast<castor::vdqm::TapeDrive*>(item);
     obj->addTapeDrives(remoteObj);

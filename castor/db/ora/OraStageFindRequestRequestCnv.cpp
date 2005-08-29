@@ -392,7 +392,7 @@ void castor::db::ora::OraStageFindRequestRequestCnv::fillObjQueryParameter(casto
   for (std::set<int>::iterator it = parametersList.begin();
        it != parametersList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::QueryParameter* remoteObj = 
       dynamic_cast<castor::stager::QueryParameter*>(item);
     obj->addParameters(remoteObj);

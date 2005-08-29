@@ -38,6 +38,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
+#include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/rh/StartResponse.hpp"
 #include "castor/stager/DiskCopy.hpp"
@@ -55,7 +56,7 @@ const castor::ICnvFactory& StreamStartResponseCnvFactory =
 // Constructor
 //------------------------------------------------------------------------------
 castor::io::StreamStartResponseCnv::StreamStartResponseCnv(castor::ICnvSvc* cnvSvc) :
-  StreamBaseCnv(cnvSvc) {}
+ StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -147,7 +148,7 @@ void castor::io::StreamStartResponseCnv::marshalObject(castor::IObject* object,
 castor::IObject* castor::io::StreamStartResponseCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                      castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
-  castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
+  castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
@@ -155,7 +156,7 @@ castor::IObject* castor::io::StreamStartResponseCnv::unmarshalObject(castor::io:
   castor::rh::StartResponse* obj = 
     dynamic_cast<castor::rh::StartResponse*>(object);
   ad.setObjType(castor::OBJ_INVALID);
-  IObject* objDiskCopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  castor::IObject* objDiskCopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setDiskCopy(dynamic_cast<castor::stager::DiskCopy*>(objDiskCopy));
   return object;
 }

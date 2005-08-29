@@ -304,7 +304,7 @@ void castor::db::ora::OraDiskServerCnv::fillObjFileSystem(castor::stager::DiskSe
   for (std::set<int>::iterator it = fileSystemsList.begin();
        it != fileSystemsList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::FileSystem* remoteObj = 
       dynamic_cast<castor::stager::FileSystem*>(item);
     obj->addFileSystems(remoteObj);
