@@ -413,7 +413,8 @@ void CppCppOraCnvWriter::writeConstants() {
     } else {
       if (as->type.multiLocal == MULT_ONE &&
           as->type.multiRemote != MULT_UNKNOWN &&
-          !as->remotePart.abstract) {
+          !as->remotePart.abstract &&
+          as->localPart.name != "") {
         // 1 to * association
         *m_stream << getIndent()
                   << "/// SQL select statement for member "
@@ -701,7 +702,8 @@ void CppCppOraCnvWriter::writeConstructors() {
     } else {
       if (as->type.multiLocal == MULT_ONE &&
           as->type.multiRemote != MULT_UNKNOWN &&
-          !as->remotePart.abstract) {
+          !as->remotePart.abstract &&
+          as->localPart.name != "") {
         // 1 to * association
         *m_stream << "," << endl << getIndent()
                   << "  m_select"
@@ -805,7 +807,8 @@ void CppCppOraCnvWriter::writeReset() {
     } else {
       if (as->type.multiLocal == MULT_ONE &&
           as->type.multiRemote != MULT_UNKNOWN &&
-          !as->remotePart.abstract) {
+          !as->remotePart.abstract &&
+          as->localPart.name != "") {
         // 1 to * association
         *m_stream << getIndent()
                   << "deleteStatement(m_delete"
@@ -885,7 +888,8 @@ void CppCppOraCnvWriter::writeReset() {
     } else {
       if (as->type.multiLocal == MULT_ONE &&
           as->type.multiRemote != MULT_UNKNOWN &&
-          !as->remotePart.abstract) {
+          !as->remotePart.abstract &&
+          as->localPart.name != "") {
         // 1 to * association
         *m_stream << getIndent()
                   << "m_select" << capitalizeFirstLetter(as->remotePart.typeName)
@@ -1147,8 +1151,9 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as) {
             << endl;
   m_indent++;
   if (as->type.multiLocal == MULT_ONE &&
-      !as->remotePart.abstract) {
-    // 1 to 1, wee need to check whether the old remote object
+      !as->remotePart.abstract &&
+      as->localPart.name != "") {
+    // 1 to 1, we need to check whether the old remote object
     // should be updated
     *m_stream << getIndent() << "// Check select"
               << capitalizeFirstLetter(as->remotePart.typeName)
