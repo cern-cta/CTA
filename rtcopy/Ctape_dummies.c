@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.17 $ $Date: 2005/08/08 16:02:08 $ CERN IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.18 $ $Date: 2005/08/30 10:33:34 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -215,11 +215,14 @@ int Ctape_rstatus(char *a, struct rsv_status *b, int c, int d) {
     CTAPE_DECL
     CTAPE_BODY((stdout,"Ctape_rstatus(%s,0x%x,%d,%d)\n",a,b,c,d));
 }
+/*
 void Ctape_seterrbuf(char *a, int b) {
     errbuf = a;
     errbufsz = b;
     return;
 }
+*/
+
 int Ctape_status(char *a, struct drv_status *b, int c) {
     CTAPE_DECL
     CTAPE_BODY((stdout,"Ctape_rstatus(%s,0x%x,%d)\n",a,b,c));
@@ -296,9 +299,11 @@ int Ctape_dmpend() {
 /*
  * Some stage API routines needed by RTCOPY
  */
+/*
 int stage_setlog(void (*a) _PROTO((int, char *))) {
     return(0);
 }
+*/
 
 /*
 int stage_updc_tppos(char *a, int b, int c, int d, char *e, char *f, int g, 
