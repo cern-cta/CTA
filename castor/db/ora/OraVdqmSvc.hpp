@@ -30,8 +30,10 @@
 // Include File
 #include "castor/vdqm/IVdqmSvc.hpp"
 
-//Local Include Files
 #include <string>
+#include <vector>
+
+//Local Include Files
 #include "OraCommonSvc.hpp"
 
 typedef struct newVdqmDrvReq newVdqmDrvReq_t;
@@ -144,6 +146,25 @@ namespace castor {
 		    	virtual castor::vdqm::DeviceGroupName* selectDeviceGroupName(
 		    		const std::string dgName) 
 		    		throw (castor::exception::Exception);
+		    		
+		    		
+		      /**
+		       * Returns all the tapeRequests with their connected objects from 
+		       * foreign tables with the specified dgn an server. If you don't want
+		       * to specify one of the arguments, just give a NULL instead.
+		       * Please notice: The caller is responsible for the deletion of the
+		       * allocated objects!
+		       * @param driveRequest The old struct, which represents the tapeDrive
+		       * @exception Exception in case of error (several tapes drive found, 
+		       * DB problem, etc...)
+		       * @return a list of files. 
+	         * Note that the returned vector should be deallocated
+	         * by the caller as well as its content
+		       */
+					virtual std::vector<castor::vdqm::TapeRequest*>* selectTapeRequestQueue(
+						const std::string dgn, 
+						const std::string requestedSrv)
+		    		throw (castor::exception::Exception);	  		    		
 		    		
 //------------------ function for TapeRequestDedicationHandler -----------------
 
@@ -295,6 +316,12 @@ namespace castor {
 	
 	        /// SQL statement object for function selectDeviceGroupName
 	        oracle::occi::Statement *m_selectDeviceGroupNameStatement;
+	        
+ 	        /// SQL statement for function selectTapeRequestQueue
+	        static const std::string s_selectTapeRequestQueueStatementString;
+	
+	        /// SQL statement object for function selectTapeRequestQueue
+	        oracle::occi::Statement *m_selectTapeRequestQueueStatement;
 	        
  	        /// SQL statement for function matchTape2TapeDrive
 	        static const std::string s_matchTape2TapeDriveStatementString;
