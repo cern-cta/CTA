@@ -435,22 +435,22 @@ namespace castor {
         /// SQL remote update statement object for member tapeDriveDedication
         castor::db::IDbStatement *m_remoteUpdateTapeDriveDedicationStatement;
 
-        /// SQL insert statement for member tapeDriveCompatibilites
+        /// SQL insert statement for member tapeDriveCompatibilities
         static const std::string s_insertTapeDriveCompatibilityStatementString;
 
-        /// SQL insert statement object for member tapeDriveCompatibilites
+        /// SQL insert statement object for member tapeDriveCompatibilities
         castor::db::IDbStatement *m_insertTapeDriveCompatibilityStatement;
 
-        /// SQL delete statement for member tapeDriveCompatibilites
+        /// SQL delete statement for member tapeDriveCompatibilities
         static const std::string s_deleteTapeDriveCompatibilityStatementString;
 
-        /// SQL delete statement object for member tapeDriveCompatibilites
+        /// SQL delete statement object for member tapeDriveCompatibilities
         castor::db::IDbStatement *m_deleteTapeDriveCompatibilityStatement;
 
-        /// SQL select statement for member tapeDriveCompatibilites
+        /// SQL select statement for member tapeDriveCompatibilities
         static const std::string s_selectTapeDriveCompatibilityStatementString;
 
-        /// SQL select statement object for member tapeDriveCompatibilites
+        /// SQL select statement object for member tapeDriveCompatibilities
         castor::db::IDbStatement *m_selectTapeDriveCompatibilityStatement;
 
         /// SQL checkExist statement for member deviceGroupName

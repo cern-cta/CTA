@@ -150,15 +150,15 @@ const std::string castor::db::cnv::DbTapeDriveCnv::s_deleteTapeDriveDedicationSt
 const std::string castor::db::cnv::DbTapeDriveCnv::s_remoteUpdateTapeDriveDedicationStatementString =
 "UPDATE TapeDriveDedication SET tapeDrive = :1 WHERE id = :2";
 
-/// SQL insert statement for member tapeDriveCompatibilites
+/// SQL insert statement for member tapeDriveCompatibilities
 const std::string castor::db::cnv::DbTapeDriveCnv::s_insertTapeDriveCompatibilityStatementString =
 "INSERT INTO TapeDrive2TapeDriveComp (Parent, Child) VALUES (:1, :2)";
 
-/// SQL delete statement for member tapeDriveCompatibilites
+/// SQL delete statement for member tapeDriveCompatibilities
 const std::string castor::db::cnv::DbTapeDriveCnv::s_deleteTapeDriveCompatibilityStatementString =
 "DELETE FROM TapeDrive2TapeDriveComp WHERE Parent = :1 AND Child = :2";
 
-/// SQL select statement for member tapeDriveCompatibilites
+/// SQL select statement for member tapeDriveCompatibilities
 // The FOR UPDATE is needed in order to avoid deletion
 // of a segment after listing and before update/remove
 const std::string castor::db::cnv::DbTapeDriveCnv::s_selectTapeDriveCompatibilityStatementString =
@@ -590,23 +590,23 @@ void castor::db::cnv::DbTapeDriveCnv::fillRepTapeDriveCompatibility(castor::vdqm
     m_selectTapeDriveCompatibilityStatement = createStatement(s_selectTapeDriveCompatibilityStatementString);
   }
   // Get current database data
-  std::set<int> tapeDriveCompatibilitesList;
+  std::set<int> tapeDriveCompatibilitiesList;
   m_selectTapeDriveCompatibilityStatement->setInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectTapeDriveCompatibilityStatement->executeQuery();
   while (rset->next()) {
-    tapeDriveCompatibilitesList.insert(rset->getInt(1));
+    tapeDriveCompatibilitiesList.insert(rset->getInt(1));
   }
   delete rset;
-  // update tapeDriveCompatibilites and create new ones
-  for (std::vector<castor::vdqm::TapeDriveCompatibility*>::iterator it = obj->tapeDriveCompatibilites().begin();
-       it != obj->tapeDriveCompatibilites().end();
+  // update tapeDriveCompatibilities and create new ones
+  for (std::vector<castor::vdqm::TapeDriveCompatibility*>::iterator it = obj->tapeDriveCompatibilities().begin();
+       it != obj->tapeDriveCompatibilities().end();
        it++) {
     if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false);
     }
     std::set<int>::iterator item;
-    if ((item = tapeDriveCompatibilitesList.find((*it)->id())) != tapeDriveCompatibilitesList.end()) {
-      tapeDriveCompatibilitesList.erase(item);
+    if ((item = tapeDriveCompatibilitiesList.find((*it)->id())) != tapeDriveCompatibilitiesList.end()) {
+      tapeDriveCompatibilitiesList.erase(item);
     } else {
       if (0 == m_insertTapeDriveCompatibilityStatement) {
         m_insertTapeDriveCompatibilityStatement = createStatement(s_insertTapeDriveCompatibilityStatementString);
@@ -617,8 +617,8 @@ void castor::db::cnv::DbTapeDriveCnv::fillRepTapeDriveCompatibility(castor::vdqm
     }
   }
   // Delete old links
-  for (std::set<int>::iterator it = tapeDriveCompatibilitesList.begin();
-       it != tapeDriveCompatibilitesList.end();
+  for (std::set<int>::iterator it = tapeDriveCompatibilitiesList.begin();
+       it != tapeDriveCompatibilitiesList.end();
        it++) {
     if (0 == m_deleteTapeDriveCompatibilityStatement) {
       m_deleteTapeDriveCompatibilityStatement = createStatement(s_deleteTapeDriveCompatibilityStatementString);
@@ -921,24 +921,24 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjTapeDriveCompatibility(castor::vdqm
     m_selectTapeDriveCompatibilityStatement = createStatement(s_selectTapeDriveCompatibilityStatementString);
   }
   // retrieve the object from the database
-  std::set<int> tapeDriveCompatibilitesList;
+  std::set<int> tapeDriveCompatibilitiesList;
   m_selectTapeDriveCompatibilityStatement->setInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectTapeDriveCompatibilityStatement->executeQuery();
   while (rset->next()) {
-    tapeDriveCompatibilitesList.insert(rset->getInt(1));
+    tapeDriveCompatibilitiesList.insert(rset->getInt(1));
   }
   // Close ResultSet
   delete rset;
   // Update objects and mark old ones for deletion
   std::vector<castor::vdqm::TapeDriveCompatibility*> toBeDeleted;
-  for (std::vector<castor::vdqm::TapeDriveCompatibility*>::iterator it = obj->tapeDriveCompatibilites().begin();
-       it != obj->tapeDriveCompatibilites().end();
+  for (std::vector<castor::vdqm::TapeDriveCompatibility*>::iterator it = obj->tapeDriveCompatibilities().begin();
+       it != obj->tapeDriveCompatibilities().end();
        it++) {
     std::set<int>::iterator item;
-    if ((item = tapeDriveCompatibilitesList.find((*it)->id())) == tapeDriveCompatibilitesList.end()) {
+    if ((item = tapeDriveCompatibilitiesList.find((*it)->id())) == tapeDriveCompatibilitiesList.end()) {
       toBeDeleted.push_back(*it);
     } else {
-      tapeDriveCompatibilitesList.erase(item);
+      tapeDriveCompatibilitiesList.erase(item);
       cnvSvc()->updateObj((*it));
     }
   }
@@ -946,16 +946,16 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjTapeDriveCompatibility(castor::vdqm
   for (std::vector<castor::vdqm::TapeDriveCompatibility*>::iterator it = toBeDeleted.begin();
        it != toBeDeleted.end();
        it++) {
-    obj->removeTapeDriveCompatibilites(*it);
+    obj->removeTapeDriveCompatibilities(*it);
   }
   // Create new objects
-  for (std::set<int>::iterator it = tapeDriveCompatibilitesList.begin();
-       it != tapeDriveCompatibilitesList.end();
+  for (std::set<int>::iterator it = tapeDriveCompatibilitiesList.begin();
+       it != tapeDriveCompatibilitiesList.end();
        it++) {
     IObject* item = cnvSvc()->getObjFromId(*it);
     castor::vdqm::TapeDriveCompatibility* remoteObj = 
       dynamic_cast<castor::vdqm::TapeDriveCompatibility*>(item);
-    obj->addTapeDriveCompatibilites(remoteObj);
+    obj->addTapeDriveCompatibilities(remoteObj);
   }
 }
 

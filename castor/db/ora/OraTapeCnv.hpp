@@ -299,6 +299,24 @@ namespace castor {
         oracle::occi::Statement *m_updateStreamStatement;
 
         /// SQL select statement for member 
+        static const std::string s_selectTapeRequestStatementString;
+
+        /// SQL select statement object for member 
+        oracle::occi::Statement *m_selectTapeRequestStatement;
+
+        /// SQL delete statement for member 
+        static const std::string s_deleteTapeRequestStatementString;
+
+        /// SQL delete statement object for member 
+        oracle::occi::Statement *m_deleteTapeRequestStatement;
+
+        /// SQL remote update statement for member 
+        static const std::string s_remoteUpdateTapeRequestStatementString;
+
+        /// SQL remote update statement object for member 
+        oracle::occi::Statement *m_remoteUpdateTapeRequestStatement;
+
+        /// SQL select statement for member 
         static const std::string s_selectTapeDriveStatementString;
 
         /// SQL select statement object for member 
