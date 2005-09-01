@@ -1,3 +1,17 @@
+gencastor (3.4-2) unstable; urgency=low
+
+  * Fixed bug for associations n to 1 that had no name on one side.
+    Previous version was actually not compiling.
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Mon, 29 Sep 2005 15:00:00 +0200
+
+gencastor (3.4-1) unstable; urgency=low
+
+  * Further fixed bug for associations 1 to 1 that had no name on one side.
+    Previous version was compiling but was not linking.
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Mon, 29 Sep 2005 15:00:00 +0200
+
 gencastor (3.4-0) unstable; urgency=low
 
   * Fixed bug for associations 1 to 1 that had no name on one side.
