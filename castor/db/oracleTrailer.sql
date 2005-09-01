@@ -2037,8 +2037,8 @@ BEGIN
 		      AND TapeDrive.runningTapeReq=0 
 					AND TapeDrive.tapeServer=TapeServer.id 
 					AND TapeServer.actingMode=0
-					AND (TapeRequest.tapeDrive(+)=TapeDrive.id) 
-					AND (TapeRequest.requestedSrv(+)=TapeDrive.tapeServer) 
+					AND (TapeRequest.tapeDrive=TapeDrive.id(+)) 
+					AND (TapeRequest.requestedSrv=TapeDrive.tapeServer(+)) 
 					AND ((TapeDrive2TapeDriveComp.parent=TapeDrive.id 
 					      AND TapeDrive2TapeDriveComp.child=TapeDriveCompatibility.id 
 								AND TapeDriveCompatibility.tapeAccessSpecification=TapeRequest.tapeAccessSpecification 
@@ -2048,7 +2048,7 @@ BEGIN
 				       OR TapeDrive.deviceGroupName=TapeRequest.deviceGroupName) 
 				  AND rownum < 2 
 					ORDER BY TapeDriveCompatibility.priorityLevel DESC, 
-					         TapeRequest.id ASC 
+					         TapeRequest.modificationTime ASC 
 				  FOR UPDATE;
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
@@ -2056,3 +2056,54 @@ BEGIN
     tapeRequestID := 0;
 END;
 
+
+CREATE OR REPLACE PROCEDURE testMatchTape2TapeDrive
+ (tapeDriveID OUT NUMBER, tapeRequestID OUT NUMBER) AS
+BEGIN
+  SELECT TapeDrive.id, TapeRequest.id INTO tapeDriveID, tapeRequestID
+    FROM TapeDrive, TapeRequest, TapeServer, DeviceGroupName tapeDriveDgn, DeviceGroupName tapeRequestDgn
+    WHERE TapeDrive.status=0
+          AND TapeDrive.runningTapeReq=0
+          AND TapeDrive.tapeServer=TapeServer.id
+          AND TapeServer.actingMode=0
+          AND (TapeRequest.tapeDrive=TapeDrive.id OR TapeRequest.tapeDrive=0)
+          AND (TapeRequest.requestedSrv=TapeDrive.tapeServer OR TapeRequest.requestedSrv=0)
+          AND (TapeDrive.deviceGroupName=TapeRequest.deviceGroupName)
+          AND rownum < 2
+					ORDER BY TapeRequest.modificationTime ASC 
+				  FOR UPDATE;
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+    tapeDriveID := 0;
+    tapeRequestID := 0;
+END;
+
+
+CREATE OR REPLACE PROCEDURE selectTapeRequestQueue
+ (dgn IN VARCHAR2, server IN VARCHAR2, TapeRequestID OUT NUMBER) AS
+BEGIN
+  IF dgn = '' AND server = '' THEN
+    SELECT TapeRequest.id INTO TapeRequestID FROM TapeRequest
+		  ORDER BY TapeRequest.modificationTime ASC;
+  ELSIF dgn = '' THEN
+    SELECT TapeRequest.id INTO TapeRequestID FROM TapeRequest, TapeServer
+      WHERE TapeServer.serverName = server
+            AND TapeServer.id = TapeRequest.requestedSrv
+			ORDER BY TapeRequest.modificationTime ASC;
+  ELSIF server = '' THEN
+    SELECT TapeRequest.id INTO TapeRequestID FROM TapeRequest, DeviceGroupName
+      WHERE DeviceGroupName.dgName = dgn
+            AND DeviceGroupName.id = TapeRequest.deviceGroupName
+			ORDER BY TapeRequest.modificationTime ASC;
+  ELSE 
+    SELECT TapeRequest.id INTO TapeRequestID FROM TapeRequest, DeviceGroupName, TapeServer
+      WHERE DeviceGroupName.dgName = dgn
+            AND DeviceGroupName.id = TapeRequest.deviceGroupName
+            AND TapeServer.serverName = server
+            AND TapeServer.id = TapeRequest.requestedSrv
+			ORDER BY TapeRequest.modificationTime ASC;
+  END IF;
+  EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+      tapeRequestID := 0;	  
+END;

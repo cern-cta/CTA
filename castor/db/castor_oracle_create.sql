@@ -2242,3 +2242,24 @@ BEGIN
     tapeRequestID := 0;
 END;
 
+
+CREATE OR REPLACE PROCEDURE testMatchTape2TapeDrive
+ (tapeDriveID OUT NUMBER, tapeRequestID OUT NUMBER) AS
+BEGIN
+  SELECT TapeDrive.id, TapeRequest.id
+    FROM TapeDrive, TapeRequest, TapeServer, TapeDriveCompatibility, DeviceGroupName tapeDriveDgn, DeviceGroupName tapeRequestDgn
+    WHERE TapeDrive.status=0
+          AND TapeDrive.runningTapeReq=0
+          AND TapeDrive.tapeServer=TapeServer.id
+          AND TapeServer.actingMode=0
+          AND (TapeRequest.tapeDrive=TapeDrive.id OR TapeRequest.tapeDrive=0)
+          AND (TapeRequest.requestedSrv=TapeDrive.tapeServer OR TapeRequest.requestedSrv=0)
+          AND (TapeDrive.deviceGroupName=TapeRequest.deviceGroupName)
+          AND rownum < 2
+				  FOR UPDATE;
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+    tapeDriveID := 0;
+    tapeRequestID := 0;
+END;
+
