@@ -522,7 +522,7 @@ void CppCppOraCnvWriter::writeSqlStatements() {
            IO_WriteOnly | IO_Append);
   QTextStream streamD(&fileD);
 
-  streamD << "/* SQL statements for type "
+  streamD << "/" << "* SQL statements for type "
          << m_classInfo->className
          << " *"  * /
          << endl
@@ -530,7 +530,7 @@ void CppCppOraCnvWriter::writeSqlStatements() {
          << m_classInfo->className
          << ";" << endl;
 
-  stream << "/* SQL statements for type "
+  stream << "/" << "* SQL statements for type "
          << m_classInfo->className
          << " *"  * /
          << endl
@@ -1282,7 +1282,8 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as) {
     }
     *m_stream << ");" << endl;
     m_indent--;
-    if (as->type.multiLocal == MULT_ONE) {
+    if (as->type.multiLocal == MULT_ONE &&
+        as->localPart.name != "") {
       *m_stream << getIndent() << "} else {" << endl;
       m_indent++;
       *m_stream << getIndent() << "// Check remote update statement"
