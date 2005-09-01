@@ -41,7 +41,6 @@
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
-#include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/TapeServerStatusCodes.hpp"
 #include "osdep.h"
@@ -142,12 +141,6 @@ void castor::io::StreamTapeServerCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    address->stream() << obj->().size();
-    for (std::vector<castor::vdqm::TapeRequest*>::iterator it = obj->().begin();
-         it != obj->().end();
-         it++) {
-      cnvSvc()->marshalObject(*it, address, alreadyDone);
-    }
     address->stream() << obj->tapeDrives().size();
     for (std::vector<castor::vdqm::TapeDrive*>::iterator it = obj->tapeDrives().begin();
          it != obj->tapeDrives().end();
@@ -173,8 +166,13 @@ castor::IObject* castor::io::StreamTapeServerCnv::unmarshalObject(castor::io::bi
   // Fill object with associations
   castor::vdqm::TapeServer* obj = 
     dynamic_cast<castor::vdqm::TapeServer*>(object);
-  unsigned int Nb;
-  ad.stream() >> Nb;
-  for (unsigned int i = 0; i < Nb; i++) {
+  unsigned int tapeDrivesNb;
+  ad.stream() >> tapeDrivesNb;
+  for (unsigned int i = 0; i < tapeDrivesNb; i++) {
     ad.setObjType(castor::OBJ_INVALID);
-    castor::IObject* obj
+    castor::IObject* objTapeDrives = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addTapeDrives(dynamic_cast<castor::vdqm::TapeDrive*>(objTapeDrives));
+  }
+  return object;
+}
+

@@ -189,9 +189,9 @@ void castor::io::StreamTapeDriveCnv::marshalObject(castor::IObject* object,
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
-    address->stream() << obj->tapeDriveCompatibilites().size();
-    for (std::vector<castor::vdqm::TapeDriveCompatibility*>::iterator it = obj->tapeDriveCompatibilites().begin();
-         it != obj->tapeDriveCompatibilites().end();
+    address->stream() << obj->tapeDriveCompatibilities().size();
+    for (std::vector<castor::vdqm::TapeDriveCompatibility*>::iterator it = obj->tapeDriveCompatibilities().begin();
+         it != obj->tapeDriveCompatibilities().end();
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
@@ -236,12 +236,12 @@ castor::IObject* castor::io::StreamTapeDriveCnv::unmarshalObject(castor::io::bin
     castor::IObject* objTapeDriveDedication = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addTapeDriveDedication(dynamic_cast<castor::vdqm::TapeDriveDedication*>(objTapeDriveDedication));
   }
-  unsigned int tapeDriveCompatibilitesNb;
-  ad.stream() >> tapeDriveCompatibilitesNb;
-  for (unsigned int i = 0; i < tapeDriveCompatibilitesNb; i++) {
+  unsigned int tapeDriveCompatibilitiesNb;
+  ad.stream() >> tapeDriveCompatibilitiesNb;
+  for (unsigned int i = 0; i < tapeDriveCompatibilitiesNb; i++) {
     ad.setObjType(castor::OBJ_INVALID);
-    castor::IObject* objTapeDriveCompatibilites = cnvSvc()->unmarshalObject(ad, newlyCreated);
-    obj->addTapeDriveCompatibilites(dynamic_cast<castor::vdqm::TapeDriveCompatibility*>(objTapeDriveCompatibilites));
+    castor::IObject* objTapeDriveCompatibilities = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addTapeDriveCompatibilities(dynamic_cast<castor::vdqm::TapeDriveCompatibility*>(objTapeDriveCompatibilities));
   }
   ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objDeviceGroupName = cnvSvc()->unmarshalObject(ad, newlyCreated);

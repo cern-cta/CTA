@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: biniostream.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/01 13:11:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: biniostream.h,v $ $Revision: 1.3 $ $Release$ $Date: 2005/09/01 09:51:44 $ $Author: mbraeger $
  *
  *
  *
@@ -28,6 +28,7 @@
 #define IO_BINIOSTREAM_H 1
 
 #include <sstream>
+#include <netinet/in.h>
 #include "osdep.h"
 
 namespace castor {
@@ -58,31 +59,37 @@ namespace castor {
       }
 
       biniostream& operator<< (int i) {
+        i = htonl((unsigned int)i);
         write((char*)&i, sizeof(int));
         return *this;
       }
 
       biniostream& operator<< (unsigned int i) {
+        i = htonl(i);
         write((char*)&i, sizeof(unsigned int));
         return *this;
       }
 
       biniostream& operator<< (short s) {
+        s = htons((unsigned short)s);
         write((char*)&s, sizeof(short));
         return *this;
       }
 
       biniostream& operator<< (unsigned short s) {
+        s = htons(s);
         write((char*)&s, sizeof(unsigned short));
         return *this;
       }
 
       biniostream& operator<< (long l) {
+        l = htonl((unsigned long)l);
         write((char*)&l, LONGSIZE);
         return *this;
       }
 
       biniostream& operator<< (unsigned long l) {
+        l = htonl(l);
         write((char*)&l, LONGSIZE);
         return *this;
       }
@@ -115,7 +122,11 @@ namespace castor {
       }
 
       biniostream& operator<< (u_signed64 d) {
-        write((char*)&d, sizeof(u_signed64));
+        //write((char*)&d, sizeof(u_signed64));
+        long n = htonl((unsigned long)(d >> 32));   // Most significant part first
+        write((char*)&n, sizeof(unsigned long));
+        n = (unsigned long)d;
+        write((char*)&n, sizeof(unsigned long));
         return *this;
       }
 
@@ -141,31 +152,39 @@ namespace castor {
 
       biniostream& operator>> (int& i) {
         read((char*)&i, sizeof(int));
+        i = ntohl((unsigned int)i);
         return *this;
       }
 
       biniostream& operator>> (unsigned int& i) {
         read((char*)&i, sizeof(unsigned int));
+        i = ntohl(i);
         return *this;
       }
 
       biniostream& operator>> (short& s) {
         read((char*)&s, sizeof(short));
+        s = ntohs((unsigned short)s);
         return *this;
       }
 
       biniostream& operator>> (unsigned short& s) {
         read((char*)&s, sizeof(unsigned short));
+        s = ntohs(s);
         return *this;
       }
 
       biniostream& operator>> (long& l) {
         read((char*)&l, LONGSIZE);
+        l = ntohl((unsigned long)l);
         return *this;
       }
 
       biniostream& operator>> (unsigned long& l) {
         read((char*)&l, LONGSIZE);
+        l = ntohl(l);
+        if((*(char*)((char*)(l)) & (1 << (7%8))) && sizeof(int) > 4)
+            (void) memset((char *)&l, 255, sizeof(int)-4);
         return *this;
       }
 
@@ -197,7 +216,13 @@ namespace castor {
       }
 
       biniostream& operator>> (u_signed64& d) {
-        read((char*)&d, sizeof(u_signed64));
+        //read((char*)&d, sizeof(u_signed64));
+        unsigned long n;
+        read((char*)&n, sizeof(unsigned long));
+        n = ntohl((unsigned long)n);
+        d = (u_signed64)n << 32;   // Most Significant part first
+        read((char*)&n, sizeof(unsigned long));
+        d += ntohl((unsigned long)n);
         return *this;
       }
 

@@ -41,11 +41,9 @@
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
-#include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
 #include "osdep.h"
 #include <string>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -137,12 +135,6 @@ void castor::io::StreamTapeDriveCompatibilityCnv::marshalObject(castor::IObject*
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    address->stream() << obj->().size();
-    for (std::vector<castor::vdqm::TapeDrive*>::iterator it = obj->().begin();
-         it != obj->().end();
-         it++) {
-      cnvSvc()->marshalObject(*it, address, alreadyDone);
-    }
     cnvSvc()->marshalObject(obj->tapeAccessSpecification(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
@@ -163,8 +155,9 @@ castor::IObject* castor::io::StreamTapeDriveCompatibilityCnv::unmarshalObject(ca
   // Fill object with associations
   castor::vdqm::TapeDriveCompatibility* obj = 
     dynamic_cast<castor::vdqm::TapeDriveCompatibility*>(object);
-  unsigned int Nb;
-  ad.stream() >> Nb;
-  for (unsigned int i = 0; i < Nb; i++) {
-    ad.setObjType(castor::OBJ_INVALID);
-    castor::IObject* obj
+  ad.setObjType(castor::OBJ_INVALID);
+  castor::IObject* objTapeAccessSpecification = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setTapeAccessSpecification(dynamic_cast<castor::vdqm::TapeAccessSpecification*>(objTapeAccessSpecification));
+  return object;
+}
+

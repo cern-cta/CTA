@@ -41,11 +41,8 @@
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
-#include "castor/vdqm/TapeDrive.hpp"
-#include "castor/vdqm/TapeRequest.hpp"
 #include "osdep.h"
 #include <string>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -137,18 +134,6 @@ void castor::io::StreamDeviceGroupNameCnv::marshalObject(castor::IObject* object
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    address->stream() << obj->().size();
-    for (std::vector<castor::vdqm::TapeDrive*>::iterator it = obj->().begin();
-         it != obj->().end();
-         it++) {
-      cnvSvc()->marshalObject(*it, address, alreadyDone);
-    }
-    address->stream() << obj->().size();
-    for (std::vector<castor::vdqm::TapeRequest*>::iterator it = obj->().begin();
-         it != obj->().end();
-         it++) {
-      cnvSvc()->marshalObject(*it, address, alreadyDone);
-    }
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -165,11 +150,6 @@ castor::IObject* castor::io::StreamDeviceGroupNameCnv::unmarshalObject(castor::i
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
-  // Fill object with associations
-  castor::vdqm::DeviceGroupName* obj = 
-    dynamic_cast<castor::vdqm::DeviceGroupName*>(object);
-  unsigned int Nb;
-  ad.stream() >> Nb;
-  for (unsigned int i = 0; i < Nb; i++) {
-    ad.setObjType(castor::OBJ_INVALID);
-    castor::IObject* obj
+  return object;
+}
+
