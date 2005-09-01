@@ -200,6 +200,36 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
 					tapeDriveHandler.deleteTapeDrive();
     		}
         break;
+    case VDQM_DEDICATE_DRV:    
+    		if ( ptr_driveRequest == NULL )
+    			handleRequest = false;
+    		else {
+	    		// Handle VDQM_DEDICATE_DRV
+	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 53);
+					//TODO: Implementation
+    		}
+    		break;
+    case VDQM_GET_VOLQUEUE:
+    		// Handle VDQM_GET_VOLQUEUE
+    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 54);
+				{	
+					TapeRequestHandler requestHandler;
+					// Sends the tape request queue back to the client
+					requestHandler.sendTapeRequestQueue(
+					                  ptr_header,
+					                  ptr_volumeRequest, 
+					                  ptr_driveRequest, 
+					                  oldProtInterpreter, 
+					                  cuuid);
+    		}
+    		break;
+    case VDQM_GET_DRVQUEUE:
+    		// Handle VDQM_GET_DRVQUEUE
+    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 55);
+				{					
+					//TODO: Implementation
+    		}
+    		break;
     case VDQM_PING:
     		// Handle VDQM_PING
     		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 25);

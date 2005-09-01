@@ -37,6 +37,8 @@
 #include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
+
+#include "castor/stager/Tape.hpp"
  
 //Local Includes
 #include "BaseRequestHandler.hpp"
@@ -97,7 +99,7 @@ castor::vdqm::handler::BaseRequestHandler::~BaseRequestHandler()
 // handleRequest
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::BaseRequestHandler::handleRequest
-(castor::IObject* fr, bool commit, Cuuid_t cuuid)
+(castor::IObject* fr, Cuuid_t cuuid)
   throw (castor::exception::Exception) {
   
   // Stores it into the data base
@@ -134,9 +136,15 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
       svcs()->updateRep(&ad, (IObject *)tapeDrive->tapeServer(), false);    	
       
       svcs()->fillRep(&ad, fr, OBJ_DeviceGroupName, false);
-      svcs()->fillRep(&ad, fr, OBJ_Tape, false);
+      
+      if ( 0 != tapeDrive->tape() )
+	      svcs()->fillRep(&ad, fr, OBJ_Tape, false);
+  
     	svcs()->fillRep(&ad, fr, OBJ_TapeServer, false);      
-    	svcs()->fillRep(&ad, fr, OBJ_TapeDriveCompatibility, false);          	
+    	
+    	//TODO: Enable this link
+//    	if ( 0 != tapeDrive->tapeDriveCompatibilites() ) 
+//	    	svcs()->fillRep(&ad, fr, OBJ_TapeDriveCompatibility, false);          	
     }
     
     // Store files for ErrorHistory
@@ -148,13 +156,11 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
       svcs()->fillRep(&ad, fr, OBJ_TapeDrive, false);
     }    
 		
-		if ( commit ) {
-	    svcs()->commit(&ad);
-	    // "Request stored in DB" message
-	    castor::dlf::Param params[] =
-	      {castor::dlf::Param("ID", fr->id())};
-	    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 12, 1, params);
-		}
+//	    svcs()->commit(&ad);
+//	    // "Request stored in DB" message
+//	    castor::dlf::Param params[] =
+//	      {castor::dlf::Param("ID", fr->id())};
+//	    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 12, 1, params);
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);
     
@@ -163,7 +169,7 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
     
     if ( 0 != tapeRequest ) {
 	  	castor::exception::Exception ex(EVQNOVOL);
-	  	ex.getMessage() << e.getMessage();
+	  	ex.getMessage() << e.getMessage().str();
 	  									
 	  	tapeRequest = 0;
 
@@ -175,7 +181,7 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
       
     if ( 0 != tapeDrive ) {
 	  	castor::exception::Exception ex(EVQNODRV);
-	  	ex.getMessage() << e.getMessage();					
+	  	ex.getMessage() << e.getMessage().str();					
 	  	
 	  	tapeDrive = 0;
 	  	tapeRequest = 0;
@@ -205,18 +211,18 @@ void castor::vdqm::handler::BaseRequestHandler::deleteRepresentation
   ad.setCnvSvcType(castor::SVC_DBCNV);
   try {
   	// Deletes the table entry
-    svcs()->deleteRep(&ad, fr, true);
+    svcs()->deleteRep(&ad, fr, false);
 
-    // "Request deleted from DB" message
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("ID", fr->id())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 29, 1, params);
+//    // "Request deleted from DB" message
+//    castor::dlf::Param params[] =
+//      {castor::dlf::Param("ID", fr->id())};
+//    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 29, 1, params);
 
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);
     
     castor::exception::Exception ex(EVQREPLICA);
-  	ex.getMessage() << e.getMessage();	
+  	ex.getMessage() << e.getMessage().str();	
   	throw ex;
   }
 } // End of deleteRepresentation
@@ -226,7 +232,7 @@ void castor::vdqm::handler::BaseRequestHandler::deleteRepresentation
 // updateRepresentation
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::BaseRequestHandler::updateRepresentation
-(castor::IObject* fr, bool commit, Cuuid_t cuuid)
+(castor::IObject* fr, Cuuid_t cuuid)
   throw (castor::exception::Exception) {
 
   // Stores it into the data base
@@ -242,31 +248,40 @@ void castor::vdqm::handler::BaseRequestHandler::updateRepresentation
     castor::vdqm::TapeRequest *tapeRequest =
       dynamic_cast<castor::vdqm::TapeRequest*>(fr);    
     if (0 != tapeRequest) {
-      svcs()->updateRep(&ad, (IObject *)tapeRequest->tapeDrive(), false);
+//      svcs()->updateRep(&ad, (IObject *)tapeRequest->tapeDrive(), false);
+      svcs()->fillRep(&ad, fr, OBJ_TapeDrive, false);
     }
+    
     
     // Update files for TapeDrive
     castor::vdqm::TapeDrive *tapeDrive =
       dynamic_cast<castor::vdqm::TapeDrive*>(fr);
     
-    if (0 != tapeDrive) {
-      svcs()->updateRep(&ad, (IObject *)tapeDrive->tapeServer(), false);    	
-      svcs()->updateRep(&ad, (IObject *)tapeDrive->runningTapeReq(), false);
+    if (0 != tapeDrive) {      
+      if (0 != tapeDrive->runningTapeReq() )  {
+	      svcs()->updateRep(&ad, (IObject *)tapeDrive->runningTapeReq(), false);
+      }
+      svcs()->fillRep(&ad, fr, OBJ_TapeRequest, false);
       
-      svcs()->fillRep(&ad, fr, OBJ_DeviceGroupName, false);
-      svcs()->fillRep(&ad, fr, OBJ_Tape, false);
+//      svcs()->fillRep(&ad, fr, OBJ_DeviceGroupName, false);
+
+
+	   	svcs()->fillRep(&ad, fr, OBJ_Tape, false);
+
+  
+      svcs()->updateRep(&ad, (IObject *)tapeDrive->tapeServer(), false);    	
     	svcs()->fillRep(&ad, fr, OBJ_TapeServer, false);      
-    	svcs()->fillRep(&ad, fr, OBJ_TapeDriveCompatibility, false);          	            
+
+    	//TODO: Enable Link
+//    	svcs()->fillRep(&ad, fr, OBJ_TapeDriveCompatibility, false);          	            
     }
 
-		if ( commit ) {
-	    svcs()->commit(&ad);
-	    
-	    // "Update of representation in DB" message
-	    castor::dlf::Param params[] =
-	      {castor::dlf::Param("ID", fr->id())};
-	    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 45, 1, params);
-		}
+//	    svcs()->commit(&ad);
+//	    
+//	    // "Update of representation in DB" message
+//	    castor::dlf::Param params[] =
+//	      {castor::dlf::Param("ID", fr->id())};
+//	    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 45, 1, params);
 
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);
@@ -276,7 +291,7 @@ void castor::vdqm::handler::BaseRequestHandler::updateRepresentation
     
     if ( 0 != tapeRequest ) {
 	  	castor::exception::Exception ex(EVQNOVOL);
-	  	ex.getMessage() << e.getMessage();
+	  	ex.getMessage() << e.getMessage().str();
 	  									
 	  	tapeRequest = 0;
 
@@ -288,7 +303,7 @@ void castor::vdqm::handler::BaseRequestHandler::updateRepresentation
       
     if ( 0 != tapeDrive ) {
 	  	castor::exception::Exception ex(EVQNODRV);
-	  	ex.getMessage() << e.getMessage();					
+	  	ex.getMessage() << e.getMessage().str();					
 	  	
 	  	tapeDrive = 0;
 	  	tapeRequest = 0;

@@ -131,7 +131,26 @@ namespace castor {
 	    	 */	
 	    	virtual DeviceGroupName* selectDeviceGroupName(
 	    		const std::string dgName) 
-	    		throw (castor::exception::Exception) = 0;	    			    	
+	    		throw (castor::exception::Exception) = 0;
+	    		
+	    		
+	      /**
+	       * Returns all the tapeRequests with their connected objects from 
+	       * foreign tables with the specified dgn an server. If you don't want
+	       * to specify one of the arguments, just give a NULL instead.
+	       * Please notice: The caller is responsible for the deletion of the
+	       * allocated objects!
+	       * @param driveRequest The old struct, which represents the tapeDrive
+	       * @exception Exception in case of error (several tapes drive found, 
+	       * DB problem, etc...)
+	       * @return a list of files. 
+         * Note that the returned vector should be deallocated
+         * by the caller as well as its content
+	       */
+				virtual std::vector<TapeRequest*>* selectTapeRequestQueue(
+					const std::string dgn, 
+					const std::string requestedSrv)
+	    		throw (castor::exception::Exception) = 0;	  	    			    			    	
 	 
 	    		
 //------------------ functions for TapeDriveRequestHandler ------------------
@@ -152,8 +171,8 @@ namespace castor {
 				virtual TapeDrive* selectTapeDrive(
 					const newVdqmDrvReq_t* driveRequest,
 					TapeServer* tapeServer)
-	    		throw (castor::exception::Exception) = 0;
-	    		
+	    		throw (castor::exception::Exception) = 0;	
+	    		    		
 //---------------- functions for TapeDriveStatusHandler ------------------------
 
 				/**

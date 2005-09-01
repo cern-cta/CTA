@@ -171,7 +171,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
 	     * Unit must be up before anything else is allowed
 	     */
 	   	castor::exception::Exception ex(EVQUNNOTUP);
-			ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+			ex.getMessage() << "TapeDriveConsistencyChecker::checkConsistency(): "
 											<< "unit is not UP" << std::endl;			
 			throw ex;
 	  }  	
@@ -280,7 +280,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkFreeConsistency()
        	 ptr_tapeDrive->status() == VOL_MOUNTED )) {
 		
 		castor::exception::Exception ex(EVQBADSTAT);
-		ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+		ex.getMessage() << "TapeDriveConsistencyChecker::checkFreeConsistency(): "
 										<< "cannot free assigned unit" 
 										<< ptr_tapeDrive->driveName() << "@"
 										<< tapeServer->serverName() << std::endl;			
@@ -299,7 +299,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkFreeConsistency()
       (tape != NULL) ) {
       
 		castor::exception::Exception ex(EVQBADSTAT);
-  	ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+  	ex.getMessage() << "TapeDriveConsistencyChecker::checkFreeConsistency(): "
 										<< "cannot free unit with tape mounted, volid=" 
 										<< tape->vid() << std::endl;			
 		throw ex;
@@ -333,7 +333,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkAssignConsistency(
       
       if (tapeRequest == NULL) {
  				castor::exception::Exception ex(EVQBADID);
-				ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+				ex.getMessage() << "TapeDriveConsistencyChecker::checkAssignConsistency(): "
 												<< "Inconsistent VolReqIDs ("
 												<< ptr_driveRequest->VolReqID
 												<< ", NULL) on ASSIGN" << std::endl;
@@ -343,7 +343,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkAssignConsistency(
       	if ( (tapeRequest->id() != ptr_driveRequest->VolReqID)) {
       			
 	 				castor::exception::Exception ex(EVQBADID);
-    			ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+    			ex.getMessage() << "TapeDriveConsistencyChecker::checkAssignConsistency(): "
 													<< "Inconsistent VolReqIDs ("
 													<< ptr_driveRequest->VolReqID << ", "
 													<< tapeRequest->id()
@@ -374,7 +374,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkAssignConsistency(
        (ptr_tapeDrive->jobID() != ptr_driveRequest->jobID) ) {
       
     castor::exception::Exception ex(EVQBADID);
-		ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+		ex.getMessage() << "TapeDriveConsistencyChecker::checkAssignConsistency(): "
 										<< "Inconsistent jobIDs ("
 										<< ptr_driveRequest->jobID << ", "
 										<< ptr_tapeDrive->jobID()
@@ -397,7 +397,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkAssignConsistency(
       														 VDQM_VOL_MOUNT | VDQM_VOL_UNMOUNT)) ) {
       	
     castor::exception::Exception ex(EVQBADSTAT);
-		ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+		ex.getMessage() << "TapeDriveConsistencyChecker::checkAssignConsistency(): "
 										<< "Status 0x"
 										<< std::hex << ptr_driveRequest->status 
 										<< "requested on FREE drive" << std::endl;
@@ -415,7 +415,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkAssignConsistency(
            (ptr_tapeDrive->jobID() != ptr_driveRequest->jobID) ) {
           
 	      castor::exception::Exception ex(EVQBADID);
-				ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+				ex.getMessage() << "TapeDriveConsistencyChecker::checkAssignConsistency(): "
 												<< "attempt to re-assign jobID="
 												<< ptr_tapeDrive->jobID() 
 												<< " to an unit assigned to jobID="
@@ -438,7 +438,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkAssignConsistency(
         		 tapeServer->serverName().c_str()) != 0 ) {
             
 		      castor::exception::Exception ex(EPERM);
-					ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+					ex.getMessage() << "TapeDriveConsistencyChecker::checkAssignConsistency(): "
 													<< "unauthorized "
 													<< ptr_driveRequest->drive << "@" 
 													<< ptr_driveRequest->server
@@ -476,7 +476,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkAssignConsistency(
 				ptr_tapeDrive->setStatus(STATUS_UNKNOWN);
 				
 				castor::exception::Exception ex(EVQBADSTAT);
-				ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+				ex.getMessage() << "TapeDriveConsistencyChecker::checkAssignConsistency(): "
 												<< "Cannot put tape drive into UNIT_STARTING mode" 
 												<< std::endl;			
 				throw ex;		        	

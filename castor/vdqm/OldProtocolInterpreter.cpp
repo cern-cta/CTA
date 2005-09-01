@@ -473,7 +473,7 @@ int castor::vdqm::OldProtocolInterpreter::recvAcknFromOldClient()
 	throw (castor::exception::Exception) {
 	
     char hdrbuf[VDQM_HDRBUFSIZ];
-    int magic, recvreqtype, len;
+    unsigned int magic, recvreqtype, len;
     char *p;
     
     magic = VDQM_MAGIC;

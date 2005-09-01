@@ -35,6 +35,7 @@
 #include "Cpool_api.h"
 #include "errno.h"
 
+#include "castor/BaseAddress.hpp"
 #include "castor/IObject.hpp"
 #include "castor/Constants.hpp"
 #include "castor/ICnvSvc.hpp"
@@ -127,7 +128,7 @@ castor::vdqm::VdqmServer::VdqmServer():
      {27, "Send VDQM_PING back to client"},
      {28, "TapeRequest and its ClientIdentification removed"},
      {29, "Request deleted from DB"},
-     {30, "Client error on commit"},
+     {30, "Client didn't send a VDQM_COMMIT => Rollback of request in db"},
      {31, "Verify that the request doesn't exist, by calling IVdqmSvc->checkTapeRequest"},
      {32, "Try to store Request into the data base"},
      {33, "The parameters of the old vdqm DrvReq Request"},
@@ -148,6 +149,12 @@ castor::vdqm::VdqmServer::VdqmServer():
      {48, "RTCopyDConnection: Too large errmsg buffer requested"},
      {49, "RTCopyDConnection: rtcopy daemon returned an error"}, 
      {50, "Exception caught in TapeRequestDedicationHandler::run()"}, 
+     {51, "VdqmServer::handleOldVdqmRequest(): Rollback of the whole request"},
+     {52, "TapeDriveStatusHandler::handleVolMountStatus(): Tape mounted in tapeDrive"},
+     {53, "Handle VDQM_DEDICATE_DRV"},
+     {54, "Handle VDQM_GET_VOLQUEUE"},
+     {55, "Handle VDQM_GET_DRVQUEUE"},
+     {56, "Exception caught in TapeRequestDedicationHandler::handleDedication()"},
      {-1, ""}};
   castor::dlf::dlf_init("Vdqm", messages);
 }
@@ -157,13 +164,7 @@ castor::vdqm::VdqmServer::VdqmServer():
 // destructor
 //------------------------------------------------------------------------------
 castor::vdqm::VdqmServer::~VdqmServer() throw() {
-  // hack to release thread specific allocated memory
-  castor::Services* svcs = services();
-  if (0 != svcs) {
-    delete svcs;
-  }
-  
-  castor::vdqm::handler::TapeRequestDedicationHandler* 
+   castor::vdqm::handler::TapeRequestDedicationHandler* 
   	tapeRequestDedicationHandler = 
   		castor::vdqm::handler::TapeRequestDedicationHandler::Instance();
   	
@@ -172,6 +173,14 @@ castor::vdqm::VdqmServer::~VdqmServer() throw() {
    * to a tape drive
    */
   tapeRequestDedicationHandler->stop();	
+  
+  delete tapeRequestDedicationHandler;
+  
+  // hack to release thread specific allocated memory
+  castor::Services* svcs = services();
+//  if (0 != svcs) {
+//    delete svcs;
+//  }
   	
   sleep(1);
 }
@@ -181,47 +190,11 @@ castor::vdqm::VdqmServer::~VdqmServer() throw() {
 // main
 //------------------------------------------------------------------------------
 int castor::vdqm::VdqmServer::main () {
-  /**
-   * The Singleton with the main loop to dedicate a
-   * tape to a tape drive.
-   */
-  castor::vdqm::handler::TapeRequestDedicationHandler* tapeRequestDedicationHandler;
   
-  try {
-    // create oracle and streaming conversion service
-    // so that it is not deleted and recreated all the time
-    castor::ICnvSvc *svc =
-      svcs()->cnvService("DbCnvSvc", castor::SVC_DBCNV);
-    if (0 == svc) {
-      // "Could not get Conversion Service for Database" message
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2);
-      return -1;
-    }
-    castor::ICnvSvc *svc2 =
-      svcs()->cnvService("StreamCnvSvc", castor::SVC_STREAMCNV);
-    if (0 == svc2) {
-      // "Could not get Conversion Service for Streaming" message
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3);
-      return -1;
-    }
-    
-    
-    try {
-	    /**
-	     * Create thread, which dedicates the tapes to the tape drives
-	     */
-	    tapeRequestDedicationHandler = 
-	  		castor::vdqm::handler::TapeRequestDedicationHandler::Instance();
-    }
-    catch (castor::exception::Exception ex) {
-			// "Unable to initialize TapeRequestDedicationHandler thread" message
-			castor::dlf::Param params[] =
-			  {castor::dlf::Param("Message", ex.getMessage().str())};
-			castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 8, 1, params);    	
-    }
+  try {    
 
 		/** Start the loop in a thread **/
-		threadAssign(tapeRequestDedicationHandler);    
+		threadAssign(NULL);    
     
     /* Create a socket for the server, bind, and listen */
     VdqmServerSocket sock(VDQM_PORT, true); 
@@ -232,14 +205,6 @@ int castor::vdqm::VdqmServer::main () {
       /* handle the command. */
       threadAssign(s);
     }
-    
-    // The code after this pint will never be used.
-    // However it can be useful to cleanup evrything correctly
-    // if one removes the loop for debug purposes
-
-    // release the Oracle Conversion Service
-    svc->release();
-    svc2->release();
     
   } catch(castor::exception::Exception e) {
     // "Exception caught : server is stopping" message
@@ -363,9 +328,9 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[]) {
 
   static struct Coptions longopts[] =
     {
-      {"foreground",         NO_ARGUMENT,        NULL,      'f'},
-      {"nbThreads",         REQUIRED_ARGUMENT,        NULL,      'n'},
-      {NULL,                 0,                  NULL,        0}
+      {"foreground", NO_ARGUMENT, NULL, 'f'},
+      {"nbThreads", REQUIRED_ARGUMENT, NULL, 'n'},
+      {NULL, 0, NULL, 0}
     };
 
   Coptind = 1;
@@ -450,7 +415,7 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
 		  	
 		    // "Exception caught" message
 		    castor::dlf::Param params[] =
-		      {castor::dlf::Param("Message", e.getMessage().str()),
+		      {castor::dlf::Param("Message", e.getMessage().str().c_str()),
 		       castor::dlf::Param("errorCode", e.code())};      
 		    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 2, params);		  	
 		  }
@@ -466,10 +431,32 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
 	  delete sock;
   }
   else { // If it's not a socket, then it's our dedication loop!
-  	
-  	castor::vdqm::handler::TapeRequestDedicationHandler* 
-  		tapeRequestDedicationHandler =
-  			(castor::vdqm::handler::TapeRequestDedicationHandler*) param;
+//  	std::cout << "TapeRequest Thread !!!" << std::endl;
+
+	  /**
+	   * The Singleton with the main loop to dedicate a
+	   * tape to a tape drive.
+	   */
+	  castor::vdqm::handler::TapeRequestDedicationHandler* 
+	  	tapeRequestDedicationHandler;  		
+	  	
+    try {
+	    /**
+	     * Create thread, which dedicates the tapes to the tape drives
+	     */
+	    tapeRequestDedicationHandler = 
+	  		castor::vdqm::handler::TapeRequestDedicationHandler::Instance();
+    }
+    catch (castor::exception::Exception ex) {
+			// "Unable to initialize TapeRequestDedicationHandler thread" message
+			castor::dlf::Param params[] =
+			  {castor::dlf::Param("Message", ex.getMessage().str())};
+			castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 8, 1, params);
+			
+			throw ex;  
+			
+			exit(-1);
+    }	  		
   		
   	/**
   	 * This function ends only, if the stop() function is beeing called.
@@ -501,7 +488,16 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 	newVdqmHdr_t header;
 	int reqtype; // Request type of the message
 	int rc = 0; // For checking purpose
+	int id = 0; // The request ID
+	bool reqHandled = false;
+	
+	// handles the connection to the client
 	OldProtocolInterpreter* oldProtInterpreter;
+
+	// Needed for commit and rollback actions on the database
+	castor::BaseAddress ad;
+  ad.setCnvSvcName("DbCnvSvc");
+	ad.setCnvSvcType(castor::SVC_DBCNV); 	
 	
 	
 	oldProtInterpreter = new OldProtocolInterpreter(sock, &cuuid);
@@ -545,17 +541,21 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 		castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 14);
 		
 		oldRequestFacade.checkRequestType(cuuid);
-		oldRequestFacade.handleRequestType(oldProtInterpreter, cuuid);
+		reqHandled = oldRequestFacade.handleRequestType(oldProtInterpreter, cuuid);
 
-	} catch (castor::exception::Exception e) {  
-    // "Exception caught" message
-//    std::ostringstream hexNumber(std::ostringstream::out);
-//    hexNumber << "0x" << std::hex << e.code();
+	} catch (castor::exception::Exception e) { 
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("errorCode", e.code())};      
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 2, params);
+      {castor::dlf::Param("Message", e.getMessage().str().c_str()),
+       castor::dlf::Param("errorCode", e.code())};   
 
+    // "Exception caught" message   
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 2, params);
+    
+    
+    // "VdqmServer::handleOldVdqmRequest(): Rollback of the whole request" message   
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 51);
+		svcs()->rollback(&ad); 
+		
     /**
      * Tell the client about the error
      */
@@ -581,58 +581,58 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 	  return;
 	}
 	
-	// The Handshake phase
+	
+	/**
+	 *  The Handshake phase !!!
+	 */
 	try {
 		/**
 		 * Ping requests don't need a handshake! It is already handled in 
 		 * OldRequestFacade.
 		 */
-		if (reqtype != VDQM_PING) {
+		if (reqHandled && reqtype != VDQM_PING) {
 			//Sending reply to client
 			castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 10);
 			
 			oldProtInterpreter->sendAcknCommit();
 			oldProtInterpreter->sendToOldClient(&header, &volumeRequest, &driveRequest);
 			rc = oldProtInterpreter->recvAcknFromOldClient();
+
+			/**
+			 * Now we can commit everything for the database... or not
+			 */
+			id = 0;
+			if ( NULL != &volumeRequest ) 
+				id = volumeRequest.VolReqID;
+			else 
+				id = driveRequest.DrvReqID;
+				
+			if ( rc  == VDQM_COMMIT) {
+				svcs()->commit(&ad);
+				
+		    // "Request stored in DB" message
+		    castor::dlf::Param paramID[] =
+		      {castor::dlf::Param("ID", id)};
+		    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 12, 1, paramID);				
+			}
+			else {
+				// "Client didn't send a VDQM_COMMIT => Rollback of request in db"
+				svcs()->rollback(&ad);
+						    castor::dlf::Param paramID[] =
+		      {castor::dlf::Param("ID", id)};
+		    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 30, 1, paramID);				
+			}
 		}
-	} catch (castor::exception::Exception e) {  
+	} catch (castor::exception::Exception e) { 
     // "Exception caught" message
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 1, params);
     
-    rc = -1;
+    // "VdqmServer::handleOldVdqmRequest(): Rollback of the whole request" message   
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 51);        
+ 		svcs()->rollback(&ad);
 	}
-	
-	
-  if (rc == -1) {
-  	// "Client error on commit" message
-  	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 30);
-		
-		/**
-  	 * Well, something went wrong on server side and we must 
-  	 * delete the previously stored request.
-  	 */
-	  try {
-			switch ( reqtype ) {
-				case VDQM_VOL_REQ:
-							  	header.reqtype = VDQM_DEL_VOLREQ;
-									oldRequestFacade.handleRequestType(oldProtInterpreter, cuuid);
-									break;
-
-				case VDQM_DRV_REQ:
-									break;
-
-				default:
-                	break;
-			}
-		} catch (castor::exception::Exception e) {  
-	    // "Exception caught" message
-	    castor::dlf::Param params[] =
-	      {castor::dlf::Param("Message", e.getMessage().str())};
-	    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 1, params);
-	  }
-  } // end if
   
   delete oldProtInterpreter;
 }

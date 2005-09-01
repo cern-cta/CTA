@@ -127,7 +127,9 @@ namespace castor {
 					
 					
 					/**
-					 * Does a logging for the old and new status code
+					 * Creates a log messages for the old and new status code. If the 
+					 * value of the old status is 0, the function just prints the new 
+					 * status.
 					 * 
 					 * @param oldProtocolStatus The status value of the old Protocol
 					 * @param newActStatus The current status of the tape drive in the db

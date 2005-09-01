@@ -37,6 +37,9 @@ namespace castor {
 
   namespace vdqm {
   	
+  	//Forward declaration
+  	class OldProtocolInterpreter;
+  	
   	namespace handler {
 	
 	    /**
@@ -98,6 +101,24 @@ namespace castor {
 					 */
 					int getQueuePosition(newVdqmVolReq_t *VolReq, Cuuid_t cuuid) 
 						throw (castor::exception::Exception);
+
+						
+					/**
+					 * This function replaces the old vdqm_GetVolQueue() C-function. 
+					 * I looks into the data base for all stored tapeRequests and sends
+					 * them back to the client via the OldProtocolInterpreter interface.
+					 *
+					 * @param volumeRequest The TapeRequest in the old protocol
+					 * @param oldProtInterpreter The interface to send the queue to the client
+					 * @param cuuid The unique id of the request. Needed for dlf 
+					 * @exception In case of error
+					 */
+					void sendTapeRequestQueue(newVdqmHdr_t *header, 
+																	 newVdqmVolReq_t *volumeRequest,
+																	 newVdqmDrvReq_t *driveRequest, 
+					                         OldProtocolInterpreter* oldProtInterpreter, 
+					                         Cuuid_t cuuid) 
+						throw (castor::exception::Exception);						
 	
 	    }; // class TapeRequestHandler
     

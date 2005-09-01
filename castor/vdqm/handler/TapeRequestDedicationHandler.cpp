@@ -56,7 +56,7 @@ castor::vdqm::handler::TapeRequestDedicationHandler*
  * run.
  */
 unsigned const int
-	castor::vdqm::handler::TapeRequestDedicationHandler::m_sleepTime = 2;
+	castor::vdqm::handler::TapeRequestDedicationHandler::m_sleepTime = 10;
  	
  	
 //------------------------------------------------------------------------------
@@ -86,7 +86,6 @@ castor::vdqm::handler::TapeRequestDedicationHandler::TapeRequestDedicationHandle
 // Destructor
 //------------------------------------------------------------------------------
 castor::vdqm::handler::TapeRequestDedicationHandler::~TapeRequestDedicationHandler() throw() {
-	delete _instance;
 }
 
 
@@ -114,6 +113,12 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::run() {
 			if ( freeTapeDrive == NULL || waitingTapeRequest == NULL) {
 		    // "No free TapeDrive, or no TapeRequest in the db" message
 //		    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 46);
+		    
+		    castor::BaseAddress ad;
+		   	ad.setCnvSvcName("DbCnvSvc");
+				ad.setCnvSvcType(castor::SVC_DBCNV);
+				svcs()->rollback(&ad);
+				
 		  	sleep(m_sleepTime);
 			}
 		  else { //If there was a free drive, start a new job
@@ -130,25 +135,47 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::run() {
 	    castor::dlf::Param param[] =
 	      {castor::dlf::Param("Message", ex.getMessage().str())};      
 	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 50, 1, param);
+	    
+	    //TODO: Remove this sleep time!
+	    sleep(m_sleepTime);
 		}
 	  	
+	  	
+	  /**
+	   * Deletion of the objects
+	   */
 	  if ( waitingTapeRequest ) {
 	  	if ( waitingTapeRequest->tapeDrive() &&
-  				 waitingTapeRequest->tapeDrive() != freeTapeDrive )
+  				 waitingTapeRequest->tapeDrive() != freeTapeDrive ) {
 	  		delete waitingTapeRequest->tapeDrive();
+	  		waitingTapeRequest->setTapeDrive(0);
+  		}
 	  	
-	  	delete waitingTapeRequest; 	  	
+	  	delete waitingTapeRequest;
+	  	waitingTapeRequest = 0; 	  	
 	  }
 	  		
 	  if ( freeTapeDrive ) {
-	  	if ( freeTapeDrive->tape() )
+	  	if ( freeTapeDrive->tape() ) {
 		  	delete freeTapeDrive->tape();
-		  if ( freeTapeDrive->runningTapeReq() )
+		  	freeTapeDrive->setTape(0);
+	  	}
+		  if ( freeTapeDrive->runningTapeReq() ) {
 		  	delete freeTapeDrive->runningTapeReq();
-
-	  	delete freeTapeDrive->tapeServer();
-		  delete freeTapeDrive->deviceGroupName();	  	
+		  	freeTapeDrive->setRunningTapeReq(0);
+		  }
+		  
+		  delete freeTapeDrive->deviceGroupName();
+		  freeTapeDrive->setDeviceGroupName(0);
+		  
+ 			//The TapeServer must be deleted after its tapeDrive!
+	  	castor::vdqm::TapeServer* tapeServer = freeTapeDrive->tapeServer();
+		  
 	  	delete freeTapeDrive;
+	  	freeTapeDrive = 0;
+	  	
+	  	delete tapeServer;
+	  	tapeServer = 0;
 	  }
 		
 //		std::cout << "TapeRequestDedicationHandler loop" << std::endl;
@@ -214,30 +241,64 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::handleDedication(
 	/**
 	 * .. and of course we must also update the db!
 	 */
-	updateRepresentation(freeTapeDrive, false, nullCuuid);
-	updateRepresentation(waitingTapeRequest, false, nullCuuid);	
+	updateRepresentation(freeTapeDrive, nullCuuid);
+	updateRepresentation(waitingTapeRequest, nullCuuid);	
 
 	/**
 	 * Now, we can send the information to the RTCPD
 	 */
-	RTCopyDConnection rtcpConnection(RTCOPY_PORT, 
-																	 freeTapeDrive->tapeServer()->serverName());																	 
-	rtcpConnection.connect();
-	rtcpConnection.sendJobToRTCPD(freeTapeDrive);
+//	std::cout << "Server name: " 
+//						<< freeTapeDrive->tapeServer()->serverName() << std::endl;
+	
+	// Needed for the commit/rollback
+	castor::BaseAddress ad;
+	ad.setCnvSvcName("DbCnvSvc");
+	ad.setCnvSvcType(castor::SVC_DBCNV);
+	
+	try {
+		RTCopyDConnection rtcpConnection(RTCOPY_PORT, 
+																		 freeTapeDrive->tapeServer()->serverName());																	 
+		rtcpConnection.connect();
+		rtcpConnection.sendJobToRTCPD(freeTapeDrive);
+	} catch (castor::exception::Exception ex) {
+		svcs()->rollback(&ad);
+		
+    // "Exception caught in TapeRequestDedicationHandler::run()" message
+    castor::dlf::Param param[] =
+      {castor::dlf::Param("Message", ex.getMessage().str())};      
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 56, 1, param);
+    
+    freeTapeDrive->setRunningTapeReq(NULL);
+		waitingTapeRequest->setTapeDrive(NULL);
+		/**
+		 * We commit now just the modification time. This is necessary to don't get
+		 * always the same tapeRequest out of the db (.. We get always the oldest 
+		 * fitting tapeRequest).
+		 */
+		updateRepresentation(waitingTapeRequest, nullCuuid);	
+	}
+	
 	
 	/**
 	 * Now, we can really do a commit!
 	 */
-	castor::BaseAddress ad;
-  
-	ad.setCnvSvcName("DbCnvSvc");
-	ad.setCnvSvcType(castor::SVC_DBCNV);
 	svcs()->commit(&ad);
 	
-	// "Update of representation in DB" message
-  castor::dlf::Param params[] =
-    {castor::dlf::Param("ID tapeDrive", freeTapeDrive->id()),
-     castor::dlf::Param("ID tapeRequest", waitingTapeRequest->id())};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 45, 2, params);	
+	
+	if ( waitingTapeRequest->tapeDrive() != NULL ) {
+		// "Update of representation in DB" message
+	  castor::dlf::Param params[] =
+	    {castor::dlf::Param("ID tapeDrive", freeTapeDrive->id()),
+	     castor::dlf::Param("ID tapeRequest", waitingTapeRequest->id()),
+	     castor::dlf::Param("tapeDrive status", "UNIT_STARTING")};
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 45, 3, params);	
+	}
+	else {// If we couldn't connect to rtcp
+		
+		// "Update of representation in DB" message
+	  castor::dlf::Param params[] =
+	    {castor::dlf::Param("ID tapeRequest", waitingTapeRequest->id())};
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 45, 1, params);	
+	}
 }
 

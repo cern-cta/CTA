@@ -31,6 +31,7 @@
 #include "castor/stager/Tape.hpp"
 
 #include "castor/vdqm/DeviceGroupName.hpp"
+#include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
@@ -98,7 +99,7 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
 		 castor::dlf::Param("usecount", ptr_driveRequest->usecount),
 		 castor::dlf::Param("volid", ptr_driveRequest->volid),
 		 castor::dlf::Param("VolReqID", ptr_driveRequest->VolReqID)};
-  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 33, 32, params);
+  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 33, 16, params);
 
 
 	try {
@@ -131,10 +132,7 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
 	/**
 	 * Log the actual "new" status and the old one.
 	 */
-	printStatus(ptr_driveRequest->status,
-																 tapeDrive->status());
-																								
-	
+	printStatus(ptr_driveRequest->status, tapeDrive->status());																						
 
 	/**
    * Verify that new unit status is consistent with the
@@ -168,7 +166,12 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
 	/**
 	 * Now the last thing is to update the data base
 	 */
-	 updateRepresentation(tapeDrive, true, m_cuuid);
+	 updateRepresentation(tapeDrive, m_cuuid);
+	 
+	/**
+	 * Log the actual "new" status.
+	 */
+	printStatus(0, tapeDrive->status());
 	 
   /**
    * Free memory for all Objects, which are not needed any more
@@ -368,16 +371,7 @@ castor::vdqm::TapeDrive*
       tapeDrive->setTotalMB(ptr_driveRequest->TotalMB);
       tapeDrive->setTransferredMB(ptr_driveRequest->MBtransf);
       tapeDrive->setUsecount(ptr_driveRequest->usecount);			
-      
-//      client = new castor::stager::ClientIdentification();
-//      client->setEgid(ptr_driveRequest->gid);
-//      client->setEuid(ptr_driveRequest->uid);
-//      client->setMachine(ptr_driveRequest->reqhost);
-//      client->setMagic(ptr_header->magic);
-//      client->setUserName(ptr_driveRequest->name);
-      
-//      //Add the client informations to the tapeDrive
-//      tapeDrive->setClient(client);
+ 
       
 	    /*
 	     * Make sure it is either up or down. If neither, we put it in
@@ -408,7 +402,7 @@ castor::vdqm::TapeDrive*
       /**
        * We don't want to commit now, because some changes can can still happen
        */
-      handleRequest(tapeDrive, false, m_cuuid);
+      handleRequest(tapeDrive, m_cuuid);
 		}		
 				
 		return tapeDrive;
@@ -458,24 +452,28 @@ void castor::vdqm::handler::TapeDriveHandler::printStatus(
   char vdqm_status_strings[][32] = VDQM_STATUS_STRINGS;
   int i;
   
-  /**
-   * We want first produce a string representation of the old status.
-   * This is just for info reasons.
-   */  
-  oldStatusString = '\0';
-  i=0;
-  while ( *vdqm_status_strings[i] != '\0' ) {
-      if ( oldProtocolStatus & vdqm_status_values[i] ) {
-          oldStatusString = oldStatusString.append(vdqm_status_strings[i]);
-          oldStatusString = oldStatusString.append("|");
-      } 
-      i++;
+  if (oldProtocolStatus != 0) {
+	  /**
+	   * We want first produce a string representation of the old status.
+	   * This is just for info reasons.
+	   */  
+	  oldStatusString = "";
+	  i=0;
+	  while ( *vdqm_status_strings[i] != '\0' ) {
+	      if ( oldProtocolStatus & vdqm_status_values[i] ) {
+	      	if ( oldStatusString.length() > 0 )
+		      	oldStatusString = oldStatusString.append("|");
+		          
+	      	oldStatusString = oldStatusString.append(vdqm_status_strings[i]);
+	      } 
+	      i++;
+	  }
+		
+	  //"The desired old Protocol status of the client" message
+	  castor::dlf::Param param[] =
+	  	{castor::dlf::Param("status", oldStatusString)};
+	  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 35, 1, param);
   }
-	
-  //"The desired old Protocol status of the client" message
-  castor::dlf::Param param[] =
-  	{castor::dlf::Param("status", oldStatusString)};
-  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 35, 1, param);
 	
 	
 	// "The actual \"new Protocol\" status of the client" message
@@ -535,6 +533,7 @@ void castor::vdqm::handler::TapeDriveHandler::printStatus(
 	  					{castor::dlf::Param("status", "WAIT_FOR_UNMOUNT")};
   					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param1);
 					}	
+					break;
 		case STATUS_UNKNOWN:
 					{
 						castor::dlf::Param param1[] =
@@ -562,8 +561,12 @@ void castor::vdqm::handler::TapeDriveHandler::freeMemory(
    */
   delete tapeServer;
   
+  delete tapeDrive->deviceGroupName();
+  
   if ( tapeDrive->tape() )
   	delete tapeDrive->tape();
+	
+	
 	
 	TapeRequest* runningTapeReq = tapeDrive->runningTapeReq();
 	if ( runningTapeReq ) {
@@ -571,6 +574,10 @@ void castor::vdqm::handler::TapeDriveHandler::freeMemory(
 
 		if ( runningTapeReq->requestedSrv() ) 
 			delete runningTapeReq->requestedSrv();
+
+		delete runningTapeReq->deviceGroupName();
+		
+		delete runningTapeReq->tapeAccessSpecification();
 			
 		delete runningTapeReq;	 
 		runningTapeReq = 0;

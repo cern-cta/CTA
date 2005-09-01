@@ -81,7 +81,8 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleOldStatus()
 			
 
 
-	if ( ptr_tapeDrive->status() == UNIT_UP ) {
+	if ( ptr_tapeDrive->status() != UNIT_DOWN &&  
+			 ptr_tapeDrive->status() != STATUS_UNKNOWN) {
 
     if ( (ptr_driveRequest->status & VDQM_UNIT_MBCOUNT) ) {
         /*
@@ -299,6 +300,14 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
 	 * Update usage counter
 	 */
 	ptr_tapeDrive->setUsecount(ptr_tapeDrive->usecount() + 1);
+	
+	
+	// "TapeDriveStatusHandler::handleVolMountStatus(): Tape mounted in tapeDrive"
+	castor::dlf::Param params[] =
+  	{castor::dlf::Param("tapeDrive ID", ptr_tapeDrive->id()),
+		 castor::dlf::Param("tape ID", mountedTape->id()),
+		 castor::dlf::Param("tapeRequest ID", tapeRequest->id())};
+	castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 52, 3, params);
 }
 
 
@@ -365,7 +374,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
 	if ( tapeRequest != NULL) {
 		deleteRepresentation(tapeRequest, m_cuuid);
 		delete tapeRequest;
-		ptr_tapeDrive->setRunningTapeReq(NULL);
+		ptr_tapeDrive->setRunningTapeReq(0);
 	}
 	
 	/**
