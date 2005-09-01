@@ -100,9 +100,8 @@ namespace castor {
       /*********************************/
       /**
        * Get the value of m_dgName
-       * The dgn, which is send with the old protocol and is now used to handle a tape
-       * requests, even if the link between TapeDrive and TapeDriveCompatibility is not
-       * set.
+       * The dgn, which comes with the old protocol and is now used to specify the
+       * physical library.
        * @return the value of m_dgName
        */
       std::string dgName() const {
@@ -111,9 +110,8 @@ namespace castor {
 
       /**
        * Set the value of m_dgName
-       * The dgn, which is send with the old protocol and is now used to handle a tape
-       * requests, even if the link between TapeDrive and TapeDriveCompatibility is not
-       * set.
+       * The dgn, which comes with the old protocol and is now used to specify the
+       * physical library.
        * @param new_var the new value of m_dgName
        */
       void setDgName(std::string new_var) {
@@ -122,7 +120,7 @@ namespace castor {
 
       /**
        * Get the value of m_libraryName
-       * The name of the physical library
+       * The name of the library, to which the tape or tape drive belongs to.
        * @return the value of m_libraryName
        */
       std::string libraryName() const {
@@ -131,7 +129,7 @@ namespace castor {
 
       /**
        * Set the value of m_libraryName
-       * The name of the physical library
+       * The name of the library, to which the tape or tape drive belongs to.
        * @param new_var the new value of m_libraryName
        */
       void setLibraryName(std::string new_var) {
@@ -158,10 +156,10 @@ namespace castor {
 
     private:
 
-      /// The dgn, which is send with the old protocol and is now used to handle a tape requests, even if the link between TapeDrive and TapeDriveCompatibility is not set.
+      /// The dgn, which comes with the old protocol and is now used to specify the physical library.
       std::string m_dgName;
 
-      /// The name of the physical library
+      /// The name of the library, to which the tape or tape drive belongs to.
       std::string m_libraryName;
 
       /// The id of this object

@@ -79,7 +79,7 @@ castor::vdqm::TapeDrive::~TapeDrive() throw() {
     m_tapeDriveDedicationVector[i]->setTapeDrive(0);
   }
   m_tapeDriveDedicationVector.clear();
-  m_tapeDriveCompatibilitesVector.clear();
+  m_tapeDriveCompatibilitiesVector.clear();
   if (0 != m_tapeServer) {
     m_tapeServer->removeTapeDrives(this);
   }
@@ -144,11 +144,11 @@ void castor::vdqm::TapeDrive::print(std::ostream& stream,
     }
   }
   {
-    stream << indent << "TapeDriveCompatibilites : " << std::endl;
+    stream << indent << "TapeDriveCompatibilities : " << std::endl;
     int i;
     std::vector<TapeDriveCompatibility*>::const_iterator it;
-    for (it = m_tapeDriveCompatibilitesVector.begin(), i = 0;
-         it != m_tapeDriveCompatibilitesVector.end();
+    for (it = m_tapeDriveCompatibilitiesVector.begin(), i = 0;
+         it != m_tapeDriveCompatibilitiesVector.end();
          it++, i++) {
       stream << indent << "  " << i << " :" << std::endl;
       (*it)->print(stream, indent + "    ", alreadyPrinted);

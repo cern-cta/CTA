@@ -89,29 +89,27 @@ int Cvdqm_DeviceGroupName_clone(struct Cvdqm_DeviceGroupName_t* instance,
 
 /**
  * Get the value of dgName
- * The dgn, which is send with the old protocol and is now used to handle a tape
- * requests, even if the link between TapeDrive and TapeDriveCompatibility is not
- * set.
+ * The dgn, which comes with the old protocol and is now used to specify the
+ * physical library.
  */
 int Cvdqm_DeviceGroupName_dgName(struct Cvdqm_DeviceGroupName_t* instance, const char** var);
 
 /**
  * Set the value of dgName
- * The dgn, which is send with the old protocol and is now used to handle a tape
- * requests, even if the link between TapeDrive and TapeDriveCompatibility is not
- * set.
+ * The dgn, which comes with the old protocol and is now used to specify the
+ * physical library.
  */
 int Cvdqm_DeviceGroupName_setDgName(struct Cvdqm_DeviceGroupName_t* instance, const char* new_var);
 
 /**
  * Get the value of libraryName
- * The name of the physical library
+ * The name of the library, to which the tape or tape drive belongs to.
  */
 int Cvdqm_DeviceGroupName_libraryName(struct Cvdqm_DeviceGroupName_t* instance, const char** var);
 
 /**
  * Set the value of libraryName
- * The name of the physical library
+ * The name of the library, to which the tape or tape drive belongs to.
  */
 int Cvdqm_DeviceGroupName_setLibraryName(struct Cvdqm_DeviceGroupName_t* instance, const char* new_var);
 

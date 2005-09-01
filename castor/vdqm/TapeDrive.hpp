@@ -391,21 +391,22 @@ namespace castor {
       }
 
       /**
-       * Add a TapeDriveCompatibility* object to the m_tapeDriveCompatibilitesVector list
+       * Add a TapeDriveCompatibility* object to the m_tapeDriveCompatibilitiesVector
+       * list
        */
-      void addTapeDriveCompatibilites(TapeDriveCompatibility* add_object) {
-        m_tapeDriveCompatibilitesVector.push_back(add_object);
+      void addTapeDriveCompatibilities(TapeDriveCompatibility* add_object) {
+        m_tapeDriveCompatibilitiesVector.push_back(add_object);
       }
 
       /**
-       * Remove a TapeDriveCompatibility* object from m_tapeDriveCompatibilitesVector
+       * Remove a TapeDriveCompatibility* object from m_tapeDriveCompatibilitiesVector
        */
-      void removeTapeDriveCompatibilites(TapeDriveCompatibility* remove_object) {
-        for (unsigned int i = 0; i < m_tapeDriveCompatibilitesVector.size(); i++) {
-          TapeDriveCompatibility* item = m_tapeDriveCompatibilitesVector[i];
+      void removeTapeDriveCompatibilities(TapeDriveCompatibility* remove_object) {
+        for (unsigned int i = 0; i < m_tapeDriveCompatibilitiesVector.size(); i++) {
+          TapeDriveCompatibility* item = m_tapeDriveCompatibilitiesVector[i];
           if (item == remove_object) {
-            std::vector<TapeDriveCompatibility*>::iterator it = m_tapeDriveCompatibilitesVector.begin() + i;
-            m_tapeDriveCompatibilitesVector.erase(it);
+            std::vector<TapeDriveCompatibility*>::iterator it = m_tapeDriveCompatibilitiesVector.begin() + i;
+            m_tapeDriveCompatibilitiesVector.erase(it);
             return;
           }
         }
@@ -413,12 +414,12 @@ namespace castor {
 
       /**
        * Get the list of TapeDriveCompatibility* objects held by
-       * m_tapeDriveCompatibilitesVector
+       * m_tapeDriveCompatibilitiesVector
        * @return list of TapeDriveCompatibility* objects held by
-       * m_tapeDriveCompatibilitesVector
+       * m_tapeDriveCompatibilitiesVector
        */
-      std::vector<TapeDriveCompatibility*>& tapeDriveCompatibilites() {
-        return m_tapeDriveCompatibilitesVector;
+      std::vector<TapeDriveCompatibility*>& tapeDriveCompatibilities() {
+        return m_tapeDriveCompatibilitiesVector;
       }
 
       /**
@@ -509,7 +510,7 @@ namespace castor {
 
       std::vector<TapeDriveDedication*> m_tapeDriveDedicationVector;
 
-      std::vector<TapeDriveCompatibility*> m_tapeDriveCompatibilitesVector;
+      std::vector<TapeDriveCompatibility*> m_tapeDriveCompatibilitiesVector;
 
       DeviceGroupName* m_deviceGroupName;
 
