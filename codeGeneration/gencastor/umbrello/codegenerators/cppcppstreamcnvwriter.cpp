@@ -296,7 +296,8 @@ void CppCppStreamCnvWriter::writeMarshal() {
                 << as->remotePart.name
                 << "(), address, alreadyDone);"
                 << endl;
-    } else if (as->type.multiRemote == MULT_N) {
+    } else if (as->type.multiRemote == MULT_N &&
+               as->remotePart.name != "") {
       // One to n association
       *m_stream << getIndent() << "address->stream() << obj->"
                 << as->remotePart.name << "().size();"
@@ -384,9 +385,9 @@ void CppCppStreamCnvWriter::writeUnmarshal() {
        as = assocs.next()) {
     if (first &&
         ((as->type.multiRemote == MULT_ONE &&
-          as->remotePart.name != "" &&
           !isEnum(as->remotePart.typeName)) ||
-         as->type.multiRemote == MULT_N)) {
+         as->type.multiRemote == MULT_N) &&
+        as->remotePart.name != "") {
       // Get the precise object
       *m_stream << getIndent() << "// Fill object with associations"
                 << endl << getIndent() << m_originalPackage
@@ -421,7 +422,8 @@ void CppCppStreamCnvWriter::writeUnmarshal() {
                 << "*>(obj"
                 << capitalizeFirstLetter(as->remotePart.name)
                 << "));" << endl;
-    } else if (as->type.multiRemote == MULT_N) {
+    } else if (as->type.multiRemote == MULT_N &&
+               as->remotePart.name != "") {
       *m_stream << getIndent() << "unsigned int "
                 << as->remotePart.name << "Nb;" << endl
                 << getIndent() << "ad.stream() >> "
