@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.9 $ $Date: 2005/06/17 16:14:20 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.10 $ $Date: 2005/09/02 08:45:12 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -126,6 +126,11 @@ const char* fac_name;
 	case 1403:
 		serrno =  EDLFNOTFOUND;
 		break;
+        case -3113:
+        case -3114:
+        case -12571:
+                serrno =  EDLFNOTCONNECTED;
+                break;
 	default:
 		dlflogit ( func, "DELETE error: %.*s\n",
 			 sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
@@ -154,6 +159,11 @@ int txt_no;
         case 1403:
                 serrno =  EDLFNOTFOUND;
                 break;
+        case -3113:
+        case -3114:
+        case -12571:
+                serrno =  EDLFNOTCONNECTED;
+                break;        
         default:
 		dlflogit ( func, "DELETE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
 			sqlca.sqlerrm.sqlerrmc);
@@ -185,6 +195,11 @@ const char* fac_name;
 	case -1654:
 		serrno = ENOSPC;
 		break;
+        case -3113:
+        case -3114:
+        case -12571:
+                serrno =  EDLFNOTCONNECTED;
+                break;        
 	default:
 		dlflogit (func, "INSERT error: %.*s\n", sqlca.sqlerrm.sqlerrml,
 			sqlca.sqlerrm.sqlerrmc);
@@ -223,6 +238,11 @@ const char* msg_txt;
 	case -1654:
 		serrno = ENOSPC;
 		break;
+        case -3113:
+        case -3114:
+        case -12571:
+                serrno =  EDLFNOTCONNECTED;
+                break;        
 	default:
 		dlflogit (func, "INSERT error: %.*s\n", sqlca.sqlerrm.sqlerrml,
 			sqlca.sqlerrm.sqlerrmc);
@@ -271,6 +291,11 @@ DBLISTPTR* dblistptr;
 		return(0);
 	case 1403:
 		return(1);
+        case -3113:
+        case -3114:
+        case -12571:
+                serrno =  EDLFNOTCONNECTED;
+                return (-1);
 	default:
 		dlflogit(func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
 			sqlca.sqlerrm.sqlerrmc);
@@ -320,6 +345,11 @@ DBLISTPTR* dblistptr;
 		return(0);
 	case 1403:
 		return(1);
+        case -3113:
+        case -3114:
+        case -12571:
+                serrno =  EDLFNOTCONNECTED;
+                return(-1);
 	default:
 		dlflogit(func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
 			sqlca.sqlerrm.sqlerrmc);
@@ -348,6 +378,11 @@ int fac_no;
                 break;
         case 1403:
                 serrno =  EDLFNOTFOUND;
+                break;
+        case -3113:
+        case -3114:
+        case -12571:
+                serrno =  EDLFNOTCONNECTED;
                 break;
         default:
 		dlflogit (func, "UPDATE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
@@ -380,6 +415,11 @@ const char* msg_txt;
 	case 1403:
 		serrno =  EDLFNOTFOUND;
 		break;
+        case -3113:
+        case -3114:
+        case -12571:
+                serrno =  EDLFNOTCONNECTED;
+                break;        
 	default:
 		dlflogit (func, "UPDATE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
 			sqlca.sqlerrm.sqlerrmc);
@@ -418,6 +458,11 @@ DBLISTPTR* dblistptr;
 	case 1403:
 		serrno = EDLFNOFAC;
 		return(1);
+        case -3113:
+        case -3114:
+        case -12571:
+                serrno =  EDLFNOTCONNECTED;
+                break;        
 	default:
 		dlflogit(func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
 			sqlca.sqlerrm.sqlerrmc);
@@ -457,6 +502,11 @@ DBLISTPTR* dblistptr;
                 return(0);
         case 1403:
                 return(1);
+        case -3113:
+        case -3114:
+        case -12571:
+                serrno =  EDLFNOTCONNECTED;
+                return(-1);        
         default:
                 dlflogit(func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
                         sqlca.sqlerrm.sqlerrmc);
@@ -495,6 +545,11 @@ DBLISTPTR* dblistptr;
                 return(0);
         case 1403:
                 return(1);
+        case -3113:
+        case -3114:
+        case -12571:
+                serrno =  EDLFNOTCONNECTED;
+                return(-1);        
         default:
                 dlflogit(func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
                         sqlca.sqlerrm.sqlerrmc);
@@ -529,6 +584,11 @@ int *seq_no;
                 return(0);
         case 1403:
                 return(1);
+        case -3113:
+        case -3114:
+        case -12571:
+                serrno =  EDLFNOTCONNECTED;
+                return(-1);        
         default:
                 dlflogit(func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
                         sqlca.sqlerrm.sqlerrmc);
@@ -563,6 +623,11 @@ int *seq_no;
                 return(0);
         case 1403:
                 return(1);
+        case -3113:
+        case -3114:
+        case -12571:
+                serrno =  EDLFNOTCONNECTED;
+                return(-1);        
         default:
                 dlflogit(func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
                         sqlca.sqlerrm.sqlerrmc);
@@ -621,6 +686,11 @@ dlf_log_message_t *log_message;
 		    case -1654:
 			serrno = ENOSPC;
 			break;
+                    case -3113:
+                    case -3114:
+                    case -12571:
+                        serrno = EDLFNOTCONNECTED;
+                        break;    
 	    	    default:
 			dlflogit (func, "INSERT host error: %.*s\n", sqlca.sqlerrm.sqlerrml,
 			sqlca.sqlerrm.sqlerrmc);
@@ -664,6 +734,11 @@ dlf_log_message_t *log_message;
 		    case -1654:
 			serrno = ENOSPC;
 			break;
+                    case -3113:
+                    case -3114:
+                    case -12571:
+                        serrno =  EDLFNOTCONNECTED;
+                        break;
 	    	    default:
 			dlflogit (func, "INSERT name server host error: %.*s\n", sqlca.sqlerrm.sqlerrml,
 			sqlca.sqlerrm.sqlerrmc);
@@ -717,6 +792,11 @@ dlf_log_message_t *log_message;
 		    case -1654:
 			serrno = ENOSPC;
 			break;
+                    case -3113:
+                    case -3114:
+                    case -12571:
+                        serrno = EDLFNOTCONNECTED;
+                        break;    
 	    	    default:
 			dlflogit (func, "INSERT message error: %.*s\n", sqlca.sqlerrm.sqlerrml,
 			sqlca.sqlerrm.sqlerrmc);
@@ -780,6 +860,11 @@ dlf_log_message_t *log_message;
                     case -1654:
                         serrno = ENOSPC;
                         break;
+                    case -3113:
+                    case -3114:
+                    case -12571:
+                        serrno = EDLFNOTCONNECTED;
+                        break;    
                     default:
                         dlflogit (func, "INSERT parameter error: %.*s\n",
 				sqlca.sqlerrm.sqlerrml,

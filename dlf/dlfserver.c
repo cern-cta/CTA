@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.10 $ $Date: 2005/06/20 14:47:53 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.11 $ $Date: 2005/09/02 08:45:12 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -441,6 +441,7 @@ procreq(magic, req_type, req_data, data_len, clienthost, thip)
     c = SEINTERNAL;
     break;
   }
+  if(c>0 && serrno==EDLFNOTCONNECTED) thip->db_open_done=0;
   if (req_type != DLF_STORE) {
     /*
       Free memory allocated by getreq.
