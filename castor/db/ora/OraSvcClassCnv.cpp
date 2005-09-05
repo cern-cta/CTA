@@ -92,7 +92,7 @@ const std::string castor::db::ora::OraSvcClassCnv::s_deleteTapePoolStatementStri
 // The FOR UPDATE is needed in order to avoid deletion
 // of a segment after listing and before update/remove
 const std::string castor::db::ora::OraSvcClassCnv::s_selectTapePoolStatementString =
-"SELECT Child FROM SvcClass2TapePool WHERE Parent = :1 FOR UPDATE";
+"SELECT Child from SvcClass2TapePool WHERE Parent = :1 FOR UPDATE";
 
 /// SQL insert statement for member diskPools
 const std::string castor::db::ora::OraSvcClassCnv::s_insertDiskPoolStatementString =
@@ -106,7 +106,7 @@ const std::string castor::db::ora::OraSvcClassCnv::s_deleteDiskPoolStatementStri
 // The FOR UPDATE is needed in order to avoid deletion
 // of a segment after listing and before update/remove
 const std::string castor::db::ora::OraSvcClassCnv::s_selectDiskPoolStatementString =
-"SELECT Parent FROM DiskPool2SvcClass WHERE Child = :1 FOR UPDATE";
+"SELECT Parent from DiskPool2SvcClass WHERE Child = :1 FOR UPDATE";
 
 //------------------------------------------------------------------------------
 // Constructor
