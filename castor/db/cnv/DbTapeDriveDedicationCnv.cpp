@@ -297,7 +297,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress* addr
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
-    m_insertStatement->setInt(1, obj->clientHost());
+    m_insertStatement->setString(1, obj->clientHost());
     m_insertStatement->setInt(2, obj->euid());
     m_insertStatement->setInt(3, obj->egid());
     m_insertStatement->setString(4, obj->vid());
@@ -351,7 +351,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::updateRep(castor::IAddress* addr
       m_updateStatement = createStatement(s_updateStatementString);
     }
     // Update the current object
-    m_updateStatement->setInt(1, obj->clientHost());
+    m_updateStatement->setString(1, obj->clientHost());
     m_updateStatement->setInt(2, obj->euid());
     m_updateStatement->setInt(3, obj->egid());
     m_updateStatement->setString(4, obj->vid());
@@ -440,7 +440,7 @@ castor::IObject* castor::db::cnv::DbTapeDriveDedicationCnv::createObj(castor::IA
     // create the new Object
     castor::vdqm::TapeDriveDedication* object = new castor::vdqm::TapeDriveDedication();
     // Now retrieve and set members
-    object->setClientHost(rset->getInt(1));
+    object->setClientHost(rset->getString(1));
     object->setEuid(rset->getInt(2));
     object->setEgid(rset->getInt(3));
     object->setVid(rset->getString(4));
@@ -484,7 +484,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::updateObj(castor::IObject* obj)
     // Now retrieve and set members
     castor::vdqm::TapeDriveDedication* object = 
       dynamic_cast<castor::vdqm::TapeDriveDedication*>(obj);
-    object->setClientHost(rset->getInt(1));
+    object->setClientHost(rset->getString(1));
     object->setEuid(rset->getInt(2));
     object->setEgid(rset->getInt(3));
     object->setVid(rset->getString(4));
