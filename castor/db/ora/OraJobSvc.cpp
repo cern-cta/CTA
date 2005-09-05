@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/08/03 17:05:52 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/09/05 12:53:42 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -126,6 +126,10 @@ const std::string castor::db::ora::OraJobSvc::s_getUpdateFailedStatementString =
 const std::string castor::db::ora::OraJobSvc::s_putFailedStatementString =
   "BEGIN putFailedProc(:1); END;";
 
+/// SQL statement for requestToDo
+const std::string castor::db::ora::OraJobSvc::s_requestToDoStatementString =
+  "BEGIN :1 := 0; DELETE FROM newRequests WHERE type IN (60, 64, 65, 67, 78, 79, 80, 93) AND ROWNUM < 2 RETURNING id INTO :1; END;";
+
 // -----------------------------------------------------------------------
 // OraJobSvc
 // -----------------------------------------------------------------------
@@ -138,7 +142,8 @@ castor::db::ora::OraJobSvc::OraJobSvc(const std::string name) :
   m_prepareForMigrationStatement(0),
   m_getUpdateDoneStatement(0),
   m_getUpdateFailedStatement(0),
-  m_putFailedStatement(0) {
+  m_putFailedStatement(0),
+  m_requestToDoStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -178,6 +183,7 @@ void castor::db::ora::OraJobSvc::reset() throw() {
     deleteStatement(m_getUpdateDoneStatement);
     deleteStatement(m_getUpdateFailedStatement);
     deleteStatement(m_putFailedStatement);
+    deleteStatement(m_requestToDoStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_getUpdateStartStatement = 0;
@@ -188,6 +194,7 @@ void castor::db::ora::OraJobSvc::reset() throw() {
   m_getUpdateDoneStatement = 0;
   m_getUpdateFailedStatement = 0;
   m_putFailedStatement = 0;
+  m_requestToDoStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -835,3 +842,58 @@ int castor::db::ora::OraJobSvc::createTapeCopySegmentsForRecall
   return 0;
 }
 
+// -----------------------------------------------------------------------
+// requestToDo
+// -----------------------------------------------------------------------
+castor::stager::Request*
+castor::db::ora::OraJobSvc::requestToDo()
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_requestToDoStatement) {
+      m_requestToDoStatement =
+        createStatement(s_requestToDoStatementString);
+      m_requestToDoStatement->registerOutParam
+        (1, oracle::occi::OCCIDOUBLE);
+      m_requestToDoStatement->setAutoCommit(true);
+    }
+    // execute the statement
+    m_requestToDoStatement->executeUpdate();
+    // see whether we've found something
+    u_signed64 id = (u_signed64)m_requestToDoStatement->getDouble(1);
+    if (0 == id) {
+      // Found no Request to handle
+      return 0;
+    }
+    // Create result
+    IObject* obj = cnvSvc()->getObjFromId(id);
+    if (0 == obj) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "requestToDo : could not retrieve object for id "
+        << id;
+      throw ex;
+    }
+    castor::stager::Request* result =
+      dynamic_cast<castor::stager::Request*>(obj);
+    if (0 == result) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "requestToDo : object retrieved for id "
+        << id << " was a "
+        << castor::ObjectsIdStrings[obj->type()]
+        << " while a Request was expected.";
+      delete obj;
+      throw ex;
+    }
+    // return
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in requestToDo."
+      << std::endl << e.what();
+    throw ex;
+  }
+}

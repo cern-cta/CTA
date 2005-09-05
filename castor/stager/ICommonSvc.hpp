@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ICommonSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/08/18 10:18:50 $ $Author: itglp $
+ * @(#)$RCSfile: ICommonSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/09/05 12:54:34 $ $Author: sponcec3 $
  *
  * This class provides common methods useful to the stager to
  * deal with database queries
@@ -115,20 +115,6 @@ namespace castor {
                                                const int tpmode)
         throw (castor::exception::Exception) = 0;
 
-      /**
-       * Selects the next request the stager should deal with.
-       * Selects a Request in START status and move its status
-       * PROCESSED to avoid double processing.
-       * The selection is restricted to Request of a given set
-       * of types.
-       * @param types the list of accepted types for the request
-       * @return the Request to process
-       * @exception Exception in case of error
-       */
-      virtual castor::stager::Request* requestToDo
-      (std::vector<ObjectsIds> &types)
-        throw (castor::exception::Exception) = 0;
-    
     }; // end of class ICommonSvc
 
   } // end of namespace stager

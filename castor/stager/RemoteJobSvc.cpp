@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/08/18 10:18:50 $ $Author: itglp $
+ * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/09/05 12:54:34 $ $Author: sponcec3 $
  *
  *
  *
@@ -124,8 +124,7 @@ castor::stager::RemoteJobSvc::selectTape
 // requestToDo
 // -----------------------------------------------------------------------
 castor::stager::Request*
-castor::stager::RemoteJobSvc::requestToDo
-(std::vector<ObjectsIds> &types)
+castor::stager::RemoteJobSvc::requestToDo()
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()

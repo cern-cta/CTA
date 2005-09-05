@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/07/07 15:08:21 $ $Author: itglp $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/09/05 12:53:42 $ $Author: sponcec3 $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -105,6 +105,10 @@ const std::string castor::db::ora::OraGCSvc::s_filesDeletedStatementString =
 const std::string castor::db::ora::OraGCSvc::s_filesDeletionFailedStatementString =
   "BEGIN filesDeletionFailedProc(:1); END;";
 
+/// SQL statement for requestToDo
+const std::string castor::db::ora::OraGCSvc::s_requestToDoStatementString =
+  "BEGIN :1 := 0; DELETE FROM newRequests WHERE type IN (73, 74, 83) AND ROWNUM < 2 RETURNING id INTO :1; END;";
+
 // -----------------------------------------------------------------------
 // OraGCSvc
 // -----------------------------------------------------------------------
@@ -112,7 +116,8 @@ castor::db::ora::OraGCSvc::OraGCSvc(const std::string name) :
   OraCommonSvc(name),
   m_selectFiles2DeleteStatement(0),
   m_filesDeletedStatement(0),
-  m_filesDeletionFailedStatement(0) {
+  m_filesDeletionFailedStatement(0),
+  m_requestToDoStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -147,11 +152,13 @@ void castor::db::ora::OraGCSvc::reset() throw() {
     deleteStatement(m_selectFiles2DeleteStatement);
     deleteStatement(m_filesDeletedStatement);
     deleteStatement(m_filesDeletionFailedStatement);
+    deleteStatement(m_requestToDoStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_selectFiles2DeleteStatement = 0;
   m_filesDeletedStatement = 0;
   m_filesDeletionFailedStatement = 0;
+  m_requestToDoStatement = 0;
 }
 
 
@@ -297,3 +304,58 @@ void castor::db::ora::OraGCSvc::filesDeletionFailed
   }
 }
 
+// -----------------------------------------------------------------------
+// requestToDo
+// -----------------------------------------------------------------------
+castor::stager::Request*
+castor::db::ora::OraGCSvc::requestToDo()
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_requestToDoStatement) {
+      m_requestToDoStatement =
+        createStatement(s_requestToDoStatementString);
+      m_requestToDoStatement->registerOutParam
+        (1, oracle::occi::OCCIDOUBLE);
+      m_requestToDoStatement->setAutoCommit(true);
+    }
+    // execute the statement
+    m_requestToDoStatement->executeUpdate();
+    // see whether we've found something
+    u_signed64 id = (u_signed64)m_requestToDoStatement->getDouble(1);
+    if (0 == id) {
+      // Found no Request to handle
+      return 0;
+    }
+    // Create result
+    IObject* obj = cnvSvc()->getObjFromId(id);
+    if (0 == obj) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "requestToDo : could not retrieve object for id "
+        << id;
+      throw ex;
+    }
+    castor::stager::Request* result =
+      dynamic_cast<castor::stager::Request*>(obj);
+    if (0 == result) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "requestToDo : object retrieved for id "
+        << id << " was a "
+        << castor::ObjectsIdStrings[obj->type()]
+        << " while a Request was expected.";
+      delete obj;
+      throw ex;
+    }
+    // return
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in requestToDo."
+      << std::endl << e.what();
+    throw ex;
+  }
+}

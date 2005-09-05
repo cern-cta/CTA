@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2005/07/21 09:13:04 $ $Author: itglp $
+ * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2005/09/05 12:53:42 $ $Author: sponcec3 $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -118,18 +118,41 @@ namespace castor {
                             u_signed64 svcClassId)
           throw (castor::exception::Exception);
 
+        /**
+         * Selects the next request the query service should deal with.
+         * Selects a Request in START status and move its status
+         * PROCESSED to avoid double processing.
+         * @return the Request to process
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::Request* requestToDo()
+          throw (castor::exception::Exception);
+
       private:
 
-        /// SQL statement for function tapesToDo
+        /// SQL statement for function diskCopies4File
         static const std::string s_diskCopies4FileStatementString;
+
+        /// SQL statement object for function diskCopies4File
+        oracle::occi::Statement *m_diskCopies4FileStatement;
+
+        /// SQL statement for function diskCopies4Request
         static const std::string s_diskCopies4RequestStatementString;
+
+        /// SQL statement object for function diskCopies4Request
+        oracle::occi::Statement *m_diskCopies4RequestStatement;
+
+        /// SQL statement for function diskCopies4UserTag
         static const std::string s_diskCopies4UsertagStatementString;
 
-
-        /// SQL statement object for function tapesToDo
-        oracle::occi::Statement *m_diskCopies4FileStatement;
-        oracle::occi::Statement *m_diskCopies4RequestStatement;
+        /// SQL statement object for function diskCopies4UserTag
         oracle::occi::Statement *m_diskCopies4UsertagStatement;
+
+        /// SQL statement for function requestToDo
+        static const std::string s_requestToDoStatementString;
+
+        /// SQL statement object for function requestToDo
+        oracle::occi::Statement *m_requestToDoStatement;
 
       }; // end of class OraQuerySvc
 

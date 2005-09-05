@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2005/07/21 09:13:05 $ $Author: itglp $
+ * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2005/09/05 12:55:10 $ $Author: sponcec3 $
  *
  *
  *
@@ -94,7 +94,15 @@ namespace castor {
                           u_signed64 svcClassId)
         throw (castor::exception::Exception) = 0;
 
-
+      /**
+       * Selects the next request the query service should deal with.
+       * Selects a Request in START status and move its status
+       * PROCESSED to avoid double processing.
+       * @return the Request to process
+       * @exception Exception in case of error
+       */
+      virtual castor::stager::Request* requestToDo()
+        throw (castor::exception::Exception) = 0;
 
     }; // end of class IQuerySvc
 

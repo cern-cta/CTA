@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/07/12 16:02:57 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/09/05 12:53:42 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -228,6 +228,16 @@ namespace castor {
         virtual void putFailed(u_signed64 subReqId)
           throw (castor::exception::Exception);
 
+        /**
+         * Selects the next request the job service should deal with.
+         * Selects a Request in START status and move its status
+         * PROCESSED to avoid double processing.
+         * @return the Request to process
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::Request* requestToDo()
+          throw (castor::exception::Exception);
+
       private:
 
 	   /**
@@ -297,6 +307,12 @@ namespace castor {
 
         /// SQL statement object for function putFailed
         oracle::occi::Statement *m_putFailedStatement;
+
+        /// SQL statement for function requestToDo
+        static const std::string s_requestToDoStatementString;
+
+        /// SQL statement object for function requestToDo
+        oracle::occi::Statement *m_requestToDoStatement;
 
       }; // end of class OraJobSvc
 

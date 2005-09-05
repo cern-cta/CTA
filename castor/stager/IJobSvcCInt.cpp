@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/07/07 14:58:41 $ $Author: itglp $
+ * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/09/05 12:54:34 $ $Author: sponcec3 $
  *
  *
  *
@@ -78,16 +78,10 @@ extern "C" {
   // Cstager_IJobSvc_requestToDo
   //-------------------------------------------------------------------------
   int Cstager_IJobSvc_requestToDo(struct Cstager_IJobSvc_t* jobSvc,
-                                     enum castor::ObjectsIds* types,
-                                     unsigned int nbTypes,
-                                     castor::stager::Request** request) {
+                                  castor::stager::Request** request) {
     if (!checkIJobSvc(jobSvc)) return -1;
     try {
-      std::vector<enum castor::ObjectsIds> cppTypes;
-      for (unsigned int i = 0; i < nbTypes; i++) {
-        cppTypes.push_back(types[i]);
-      }
-      *request = jobSvc->jobSvc->requestToDo(cppTypes);
+      *request = jobSvc->jobSvc->requestToDo();
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();

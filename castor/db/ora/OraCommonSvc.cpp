@@ -116,7 +116,6 @@ const std::string castor::db::ora::OraCommonSvc::s_selectFileSystemStatementStri
 castor::db::ora::OraCommonSvc::OraCommonSvc(const std::string name) :
   BaseSvc(name), OraBaseObj(0),
   m_selectTapeStatement(0),
-  m_requestToDoStatement(0),
   m_selectSvcClassStatement(0),
   m_selectFileClassStatement(0),
   m_selectFileSystemStatement(0) {
@@ -151,14 +150,12 @@ void castor::db::ora::OraCommonSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   try {
     deleteStatement(m_selectTapeStatement);
-    deleteStatement(m_requestToDoStatement);
     deleteStatement(m_selectSvcClassStatement);
     deleteStatement(m_selectFileClassStatement);
     deleteStatement(m_selectFileSystemStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_selectTapeStatement = 0;
-  m_requestToDoStatement = 0;
   m_selectSvcClassStatement = 0;
   m_selectFileClassStatement = 0;
   m_selectFileSystemStatement = 0;
@@ -260,72 +257,6 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
     throw ex;
   }
   // We should never reach this point
-}
-
-// -----------------------------------------------------------------------
-// requestToDo
-// -----------------------------------------------------------------------
-castor::stager::Request*
-castor::db::ora::OraCommonSvc::requestToDo
-(std::vector<ObjectsIds> &types)
-  throw (castor::exception::Exception) {
-  try {
-    // Check whether the statements are ok
-    if (0 == m_requestToDoStatement) {
-      std::ostringstream stmtString;
-      stmtString << "BEGIN :1 := 0; DELETE FROM newRequests WHERE type IN (";
-      for (std::vector<ObjectsIds>::const_iterator it = types.begin();
-           it!= types.end();
-           it++) {
-        if (types.begin() != it) stmtString << ", ";
-        stmtString << *it;
-      }
-      stmtString << ") AND ROWNUM < 2 RETURNING id INTO :1; END;";
-      m_requestToDoStatement =
-        createStatement(stmtString.str());
-      m_requestToDoStatement->registerOutParam
-        (1, oracle::occi::OCCIDOUBLE);
-      m_requestToDoStatement->setAutoCommit(true);
-    }
-    // execute the statement
-    m_requestToDoStatement->executeUpdate();
-    // see whether we've found something
-    u_signed64 id = (u_signed64)m_requestToDoStatement->getDouble(1);
-    if (0 == id) {
-      // Found no Request to handle
-      return 0;
-    }
-    // Create result
-    IObject* obj = cnvSvc()->getObjFromId(id);
-    if (0 == obj) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "requestToDo : could not retrieve object for id "
-        << id;
-      throw ex;
-    }
-    castor::stager::Request* result =
-      dynamic_cast<castor::stager::Request*>(obj);
-    if (0 == result) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "requestToDo : object retrieved for id "
-        << id << " was a "
-        << castor::ObjectsIdStrings[obj->type()]
-        << " while a Request was expected.";
-      delete obj;
-      throw ex;
-    }
-    // return
-    return result;
-  } catch (oracle::occi::SQLException e) {
-    rollback();
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in requestToDo."
-      << std::endl << e.what();
-    throw ex;
-  }
 }
 
 // -----------------------------------------------------------------------

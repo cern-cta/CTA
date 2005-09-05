@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/07/07 14:58:41 $ $Author: itglp $
+ * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/09/05 12:54:34 $ $Author: sponcec3 $
  *
  *
  *
@@ -287,28 +287,6 @@ extern "C" {
     }
     return 0;
   }
-
-  //-------------------------------------------------------------------------
-  // Cstager_ITapeSvc_requestToDo
-  //-------------------------------------------------------------------------
-  int Cstager_ITapeSvc_requestToDo(struct Cstager_ITapeSvc_t* tpSvc,
-                                     enum castor::ObjectsIds* types,
-                                     unsigned int nbTypes,
-                                     castor::stager::Request** request) {
-    if (!checkITapeSvc(tpSvc)) return -1;
-    try {
-      std::vector<enum castor::ObjectsIds> cppTypes;
-      for (unsigned int i = 0; i < nbTypes; i++) {
-        cppTypes.push_back(types[i]);
-      }
-      *request = tpSvc->tpSvc->requestToDo(cppTypes);
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      tpSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  };
 
   //-------------------------------------------------------------------------
   // Cstager_ITapeSvc_errorMsg

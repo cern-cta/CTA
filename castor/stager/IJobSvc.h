@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.1 $ $Release$ $Date: 2005/07/07 14:58:42 $ $Author: itglp $
+ * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.2 $ $Release$ $Date: 2005/09/05 12:54:34 $ $Author: sponcec3 $
  *
  *
  *
@@ -63,14 +63,10 @@ Cstager_IJobSvc_fromIService(struct C_IService_t* obj);
 int Cstager_IJobSvc_delete(struct Cstager_IJobSvc_t* svcs);
 
 /**
- * Selects the next request the stager should deal with.
+ * Selects the next request the job service should deal with.
  * Selects a Request in START status and move its status
  * PROCESSED to avoid double processing.
- * The selection is restricted to Request of a given set
- * of types.
  * @param jobSvc the IJobSvc used
- * @param types the list of accepted types for the request
- * @param nbTypes the number of types in the list
  * @param request the request to process
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
@@ -79,8 +75,6 @@ int Cstager_IJobSvc_delete(struct Cstager_IJobSvc_t* svcs);
  */
 int Cstager_IJobSvc_requestToDo
 (struct Cstager_IJobSvc_t* jobSvc,
- enum C_ObjectsIds* types,
- unsigned int nbTypes,
  struct Cstager_Request_t** request);
 
 /**
