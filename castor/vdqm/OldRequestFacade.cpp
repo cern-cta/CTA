@@ -227,7 +227,10 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     		// Handle VDQM_GET_DRVQUEUE
     		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 55);
 				{					
-					//TODO: Implementation
+					TapeDriveHandler tapeDriveHandler(ptr_header, ptr_driveRequest, cuuid);
+					tapeDriveHandler.sendTapeDriveQueue(
+					                  ptr_volumeRequest, 
+					                  oldProtInterpreter);
     		}
     		break;
     case VDQM_PING:

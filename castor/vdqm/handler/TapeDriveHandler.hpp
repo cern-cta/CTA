@@ -28,8 +28,10 @@
 #define _TAPEDRIVEHANDLER_HPP_
 
 #include "BaseRequestHandler.hpp"
+#include "castor/vdqm/TapeDriveStatusCodes.hpp"
 
 typedef struct newVdqmHdr newVdqmHdr_t;
+typedef struct newVdqmVolReq newVdqmVolReq_t;
 typedef struct newVdqmDrvReq newVdqmDrvReq_t;
 
 namespace castor {
@@ -39,6 +41,7 @@ namespace castor {
 		//Forward declaration
 		class TapeServer;
 		class TapeDrive;
+		class OldProtocolInterpreter;
 
 		namespace handler {
 	    /**
@@ -84,6 +87,20 @@ namespace castor {
 					 * @exception In case of error
 					 */
 					void deleteTapeDrive() throw (castor::exception::Exception);
+					
+					/**
+					 * This function replaces the old vdqm_GetDrvQueue() C-function. 
+					 * I looks into the data base for all stored tapeDrives and sends
+					 * them back to the client via the OldProtocolInterpreter interface.
+					 *
+					 * @param volumeRequest The TapeRequest in the old protocol
+					 * @param oldProtInterpreter The interface to send the queue to the client
+					 * @param cuuid The unique id of the request. Needed for dlf 
+					 * @exception In case of error
+					 */
+					void sendTapeDriveQueue(newVdqmVolReq_t *volumeRequest,
+																	OldProtocolInterpreter* oldProtInterpreter) 
+						throw (castor::exception::Exception);	
 						
 						
 				private:
@@ -139,12 +156,25 @@ namespace castor {
 													const int newActStatus)
 						throw (castor::exception::Exception);
 						
+						
 					/**
 					 * Deletes the the tape Server and all inner objects of the 
 					 * tapeDrive. Please notice, that the tapeDrive itself is not
 					 * deleted.
 					 */
-					void freeMemory(TapeDrive* tapeDrive, TapeServer* tapeServer);						
+					void freeMemory(TapeDrive* tapeDrive, TapeServer* tapeServer);										
+					
+					
+					/**
+					 * Translates the new status of a Tape drive into the old status
+					 * representation.
+					 * 
+					 * @param newStatusCode The status value of the new Protocol
+					 * @return The translation into the old status
+					 * @exception In case of error
+					 */	
+					int translateNewStatus(TapeDriveStatusCodes newStatusCode)
+						throw (castor::exception::Exception);
 						
 	    }; // class TapeDriveHandler
     

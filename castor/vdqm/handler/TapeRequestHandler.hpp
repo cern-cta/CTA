@@ -32,6 +32,7 @@
 
 typedef struct newVdqmHdr newVdqmHdr_t;
 typedef struct newVdqmVolReq newVdqmVolReq_t;
+typedef struct newVdqmDrvReq newVdqmDrvReq_t;
 
 namespace castor {
 

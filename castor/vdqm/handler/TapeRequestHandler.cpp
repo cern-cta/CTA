@@ -486,82 +486,93 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
 	// The result of the search in the database.
   std::vector<castor::vdqm::TapeRequest*>* result = 0;
   
-  char dgn[CA_MAXDGNLEN+1];
-  char server[CA_MAXHOSTNAMELEN+1];
+  std::string dgn, server;
 		
-	*dgn = '\0';
-  *server = '\0';
+	dgn = "";
+  server = "";
 
-  if ( *(volumeRequest->dgn) != '\0' ) strcpy(dgn, volumeRequest->dgn);
-  if ( *(volumeRequest->server) != '\0' ) strcpy(server, volumeRequest->server);
+  if ( *(volumeRequest->dgn) != '\0' ) dgn = volumeRequest->dgn;
+  if ( *(volumeRequest->server) != '\0' ) server = volumeRequest->server;
 
-	/**
-	 * With this function call we get the requested queue out of the db.
-	 * The result depends on the parameters. If the paramters are not specified,
-	 * then we get all tapeRequests back.
-	 */
-	result = ptr_IVdqmService->selectTapeRequestQueue(dgn, server);
-
-	if ( result->size() > 0 ) {
-		//If we are here, then we got a result which we can send to the client
-		for(std::vector<castor::vdqm::TapeRequest*>::iterator it = result->begin();
-	      it != result->end();
-	      it++) {
-	      	
-	    volumeRequest->VolReqID = (unsigned int)(*it)->id();
-	    
-	    TapeDrive* tapeDrive = (*it)->tapeDrive();
-	    if ( tapeDrive != NULL ) {
-	    	strcpy(volumeRequest->drive, tapeDrive->driveName().c_str());
-		    volumeRequest->DrvReqID = (unsigned int)tapeDrive->id();
+	try {
+		/**
+		 * With this function call we get the requested queue out of the db.
+		 * The result depends on the parameters. If the paramters are not specified,
+		 * then we get all tapeRequests back.
+		 */
+		result = ptr_IVdqmService->selectTapeRequestQueue(dgn, server);
+	
+		if ( result != NULL && result->size() > 0 ) {
+			//If we are here, then we got a result which we can send to the client
+			for(std::vector<castor::vdqm::TapeRequest*>::iterator it = result->begin();
+		      it != result->end();
+		      it++) {
+		      	
+		    volumeRequest->VolReqID = (unsigned int)(*it)->id();
 		    
-		    delete tapeDrive;
-		    tapeDrive = 0;
-		    (*it)->setTapeDrive(0);
-	    } 
-	    else { 
-	    	strcpy(volumeRequest->drive, '\0');
-	    	volumeRequest->DrvReqID = 0;
-	    }
-	    
-	    volumeRequest->priority = (*it)->priority();
-	    volumeRequest->client_port = (*it)->client()->port();
-	    volumeRequest->clientUID = (*it)->client()->euid();
-	    volumeRequest->clientGID = (*it)->client()->egid();
-	    volumeRequest->mode = (*it)->tapeAccessSpecification()->accessMode();
-	    volumeRequest->recvtime = (*it)->modificationTime();
-	    strcpy(volumeRequest->client_host, (*it)->client()->machine().c_str());
-	    strcpy(volumeRequest->volid, (*it)->tape()->vid().c_str());
-	    
-	    TapeServer* requestedSrv = (*it)->requestedSrv();
-	    if ( requestedSrv != NULL ) {
-		    strcpy(volumeRequest->server, requestedSrv->serverName().c_str());
-		   
-		    delete requestedSrv;
-		    requestedSrv = 0;
-		    (*it)->setRequestedSrv(0);
-	    }
-		  else 
-		  	strcpy(volumeRequest->server, '\0');
-		 	 	
-	    
-	    strcpy(volumeRequest->dgn, (*it)->deviceGroupName()->dgName().c_str());
-	    strcpy(volumeRequest->client_name, (*it)->client()->userName().c_str());
-	      	
-	  	
-	  	//free memory
-	  	delete (*it)->client();
-	  	delete (*it)->tape();
-	  	delete (*it)->deviceGroupName();
-	  	delete (*it)->tapeAccessSpecification();
-	  	delete *it;
-	  	
-	  	
-	  	//Send informations to the client
-	  	oldProtInterpreter->sendToOldClient(
-	          			header, volumeRequest, driveRequest);
-	  }
-	}
+		    TapeDrive* tapeDrive = (*it)->tapeDrive();
+		    if ( tapeDrive != NULL ) {
+		    	strcpy(volumeRequest->drive, tapeDrive->driveName().c_str());
+			    volumeRequest->DrvReqID = (unsigned int)tapeDrive->id();
+			    
+			    delete tapeDrive;
+			    tapeDrive = 0;
+			    (*it)->setTapeDrive(0);
+		    } 
+		    else { 
+		    	strcpy(volumeRequest->drive, "");
+		    	volumeRequest->DrvReqID = 0;
+		    }
+		    
+		    volumeRequest->priority = (*it)->priority();
+		    volumeRequest->client_port = (*it)->client()->port();
+		    volumeRequest->clientUID = (*it)->client()->euid();
+		    volumeRequest->clientGID = (*it)->client()->egid();
+		    volumeRequest->mode = (*it)->tapeAccessSpecification()->accessMode();
+		    volumeRequest->recvtime = (*it)->modificationTime();
+		    strcpy(volumeRequest->client_host, (*it)->client()->machine().c_str());
+		    strcpy(volumeRequest->volid, (*it)->tape()->vid().c_str());
+		    
+		    TapeServer* requestedSrv = (*it)->requestedSrv();
+		    if ( requestedSrv != NULL ) {
+			    strcpy(volumeRequest->server, requestedSrv->serverName().c_str());
+			   
+			    delete requestedSrv;
+			    requestedSrv = 0;
+			    (*it)->setRequestedSrv(0);
+		    }
+			  else 
+			  	strcpy(volumeRequest->server, "");
+			 	 	
+		    
+		    strcpy(volumeRequest->dgn, (*it)->deviceGroupName()->dgName().c_str());
+		    strcpy(volumeRequest->client_name, (*it)->client()->userName().c_str());
+		      	
+		  	
+		  	//free memory
+		  	delete (*it)->tape();
+		  	delete (*it)->deviceGroupName();
+		  	delete (*it)->tapeAccessSpecification();
+		  	delete (*it);
+		  	(*it) = 0;
+		  	
+		  	
+		  	//Send informations to the client
+		  	oldProtInterpreter->sendToOldClient(
+		          			header, volumeRequest, driveRequest);
+		  }
+		}
+	} catch (castor::exception::Exception ex) {
+		/**
+		 * To inform the client about the end of the queue, we send again a 
+		 * volumeRequest with the VolReqID = -1
+		 */
+	  volumeRequest->VolReqID = -1;
+	  
+	  oldProtInterpreter->sendToOldClient(header, volumeRequest, driveRequest);
+	  
+		throw ex;
+	}	
 
 	/**
 	 * To inform the client about the end of the queue, we send again a 
