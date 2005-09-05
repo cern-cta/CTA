@@ -100,16 +100,17 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cvdqm_TapeDriveDedication_clientHost
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDriveDedication_clientHost(castor::vdqm::TapeDriveDedication* instance, int* var) {
-    *var = instance->clientHost();
+  int Cvdqm_TapeDriveDedication_clientHost(castor::vdqm::TapeDriveDedication* instance, const char** var) {
+    *var = instance->clientHost().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
   // Cvdqm_TapeDriveDedication_setClientHost
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDriveDedication_setClientHost(castor::vdqm::TapeDriveDedication* instance, int new_var) {
-    instance->setClientHost(new_var);
+  int Cvdqm_TapeDriveDedication_setClientHost(castor::vdqm::TapeDriveDedication* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setClientHost(snew_var);
     return 0;
   }
 

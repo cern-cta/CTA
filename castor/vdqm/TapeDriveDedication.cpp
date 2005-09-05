@@ -40,7 +40,7 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::vdqm::TapeDriveDedication::TapeDriveDedication() throw() :
-  m_clientHost(0),
+  m_clientHost(""),
   m_euid(0),
   m_egid(0),
   m_vid(""),

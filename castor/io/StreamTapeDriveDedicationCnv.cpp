@@ -110,7 +110,7 @@ castor::IObject* castor::io::StreamTapeDriveDedicationCnv::createObj(castor::IAd
   // create the new Object
   castor::vdqm::TapeDriveDedication* object = new castor::vdqm::TapeDriveDedication();
   // Now retrieve and set members
-  int clientHost;
+  std::string clientHost;
   ad->stream() >> clientHost;
   object->setClientHost(clientHost);
   int euid;

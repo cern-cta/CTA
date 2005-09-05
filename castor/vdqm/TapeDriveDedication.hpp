@@ -106,7 +106,7 @@ namespace castor {
        * the client host
        * @return the value of m_clientHost
        */
-      int clientHost() const {
+      std::string clientHost() const {
         return m_clientHost;
       }
 
@@ -115,7 +115,7 @@ namespace castor {
        * the client host
        * @param new_var the new value of m_clientHost
        */
-      void setClientHost(int new_var) {
+      void setClientHost(std::string new_var) {
         m_clientHost = new_var;
       }
 
@@ -250,7 +250,7 @@ namespace castor {
     private:
 
       /// the client host
-      int m_clientHost;
+      std::string m_clientHost;
 
       /// client uid
       int m_euid;

@@ -92,13 +92,13 @@ int Cvdqm_TapeDriveDedication_clone(struct Cvdqm_TapeDriveDedication_t* instance
  * Get the value of clientHost
  * the client host
  */
-int Cvdqm_TapeDriveDedication_clientHost(struct Cvdqm_TapeDriveDedication_t* instance, int* var);
+int Cvdqm_TapeDriveDedication_clientHost(struct Cvdqm_TapeDriveDedication_t* instance, const char** var);
 
 /**
  * Set the value of clientHost
  * the client host
  */
-int Cvdqm_TapeDriveDedication_setClientHost(struct Cvdqm_TapeDriveDedication_t* instance, int new_var);
+int Cvdqm_TapeDriveDedication_setClientHost(struct Cvdqm_TapeDriveDedication_t* instance, const char* new_var);
 
 /**
  * Get the value of euid
