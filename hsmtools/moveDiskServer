@@ -1,0 +1,109 @@
+#!/usr/bin/perl -w
+#/******************************************************************************
+# *                      cleanLostFiles
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @(#)$RCSfile: moveDiskServer,v $ $Revision: 1.1 $ $Release$ $Date: 2005/09/05 13:57:31 $ $Author: sponcec3 $
+# *
+# * moves one or several diskserver(s) from one pool to another.
+# * This script actually moves all filesystems of the given diskservers
+# * from one diskpool to another. It does not take any actions before
+# * hand to prevent consequences of such a move in the middle of
+# * some other activity
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+use strict;
+use diagnostics;
+use lib "/usr/lib/perl/CASTOR";
+use castor_tools;
+
+# usage function
+sub usage {
+  printf("Usage : %s [-h] NewDiskPoolName DiskServerName [...]\n", $0);
+}
+
+# first parse the options
+my $help;
+if (0 == Getopt::Long::GetOptions ('h|help' => \$help)) {
+  usage();
+  exit(1);
+}
+
+if ($help) {
+  usage();
+  exit(0);
+}
+
+# Check the arguments
+if ($#ARGV < 1) {
+  print("Error : wrong number of arguments\n");
+  usage();
+  exit;
+}
+
+#connect to the database and execute the query
+my @castor_conf = castor_conf_getOraStagerSvc();
+my $dbh = DBI->connect('dbi:Oracle:',$castor_conf[0] ,$castor_conf[1]);
+
+# Check the DiskPool exists and gets its ID
+my $dbquery = "SELECT Id FROM DiskPool WHERE name='$ARGV[0]'";
+my $sth = $dbh->prepare("$dbquery");
+$sth->execute;
+my @row;
+my $diskPool;
+if (@row = $sth->fetchrow_array) {
+  $diskPool = $row[0];
+} else {
+  print("no DiskPool found named '$ARGV[0]'.\n");
+  usage();
+  $sth->finish;
+  $dbh->disconnect;
+  exit();
+}
+
+# Check all machines exist
+my $machines = "";
+$sth = $dbh->prepare('SELECT Id FROM DiskServer WHERE name = ?');
+my $i;
+for ($i = 1; $i <= $#ARGV; $i++) {
+  $sth->execute($ARGV[$i]);
+  if (@row = $sth->fetchrow_array) {
+    my $machine = $row[0];
+    if ($machines ne "") {
+      $machines .= ", ";
+    }
+    $machines .= $machine;
+  } else {
+    print("no DiskServer found named '$ARGV[$i]'.\n");
+    usage();
+    $sth->finish;
+    $dbh->disconnect;
+    exit();
+  }
+  $sth->finish;
+}
+
+# Move filesystems
+$dbquery = "UPDATE FileSystem SET DiskPool = $diskPool WHERE DiskServer IN ($machines)";
+#$sth = $dbh->prepare("$dbquery");
+#$sth->execute;
+print $dbquery, "\n";
+
+$sth->finish;
+$dbh->disconnect;
