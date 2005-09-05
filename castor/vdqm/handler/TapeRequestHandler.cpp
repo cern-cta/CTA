@@ -551,11 +551,19 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
 		  	
 		  	//free memory
 		  	delete (*it)->tape();
+		    (*it)->setTape(0);
 		  	delete (*it)->deviceGroupName();
+		  	(*it)->setDeviceGroupName(0);
 		  	delete (*it)->tapeAccessSpecification();
+		  	(*it)->setTapeAccessSpecification(0);
 		  	delete (*it);
 		  	(*it) = 0;
 		  	
+		  	//"Send information for showqueues command" message
+			  castor::dlf::Param param[] =
+	  			{castor::dlf::Param("message", "TapeRequest info"),
+	  			 castor::dlf::Param("TapeRequest ID", volumeRequest->VolReqID)};
+	  		castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 57, 2, param);
 		  	
 		  	//Send informations to the client
 		  	oldProtInterpreter->sendToOldClient(
@@ -563,6 +571,38 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
 		  }
 		}
 	} catch (castor::exception::Exception ex) {
+		
+		//free memory
+		for(std::vector<castor::vdqm::TapeRequest*>::iterator it = result->begin();
+		      it != result->end();
+		      it++) {
+			TapeDrive* tapeDrive = (*it)->tapeDrive();
+	    if ( tapeDrive != NULL ) {
+	    	delete tapeDrive;
+		    tapeDrive = 0;
+		    (*it)->setTapeDrive(0);
+	    }
+	    
+	    TapeServer* requestedSrv = (*it)->requestedSrv();
+	    if ( requestedSrv != NULL ) {
+		    delete requestedSrv;
+		    requestedSrv = 0;
+		    (*it)->setRequestedSrv(0);
+	    }
+	    
+	    delete (*it)->tape();
+	    (*it)->setTape(0);
+	  	delete (*it)->deviceGroupName();
+	  	(*it)->setDeviceGroupName(0);
+	  	delete (*it)->tapeAccessSpecification();
+	  	(*it)->setTapeAccessSpecification(0);
+	  	delete (*it);
+	  	(*it) = 0; 		      	
+		}
+		
+		// deletion of the vector
+		delete result;
+
 		/**
 		 * To inform the client about the end of the queue, we send again a 
 		 * volumeRequest with the VolReqID = -1
@@ -572,7 +612,10 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
 	  oldProtInterpreter->sendToOldClient(header, volumeRequest, driveRequest);
 	  
 		throw ex;
-	}	
+	}
+	
+	// deletion of the vector
+	delete result;	
 
 	/**
 	 * To inform the client about the end of the queue, we send again a 

@@ -155,6 +155,7 @@ castor::vdqm::VdqmServer::VdqmServer():
      {54, "Handle VDQM_GET_VOLQUEUE"},
      {55, "Handle VDQM_GET_DRVQUEUE"},
      {56, "Exception caught in TapeRequestDedicationHandler::handleDedication()"},
+     {57, "Send information for showqueues command"},
      {-1, ""}};
   castor::dlf::dlf_init("Vdqm", messages);
 }
@@ -602,10 +603,10 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 			/**
 			 * Now we can commit everything for the database... or not
 			 */
-			id = 0;
-			if ( NULL != &volumeRequest ) 
+			id = -1;
+			if ( NULL != &volumeRequest && volumeRequest.VolReqID > 0) 
 				id = volumeRequest.VolReqID;
-			else 
+			else if ( NULL != &driveRequest && driveRequest.DrvReqID > 0)
 				id = driveRequest.DrvReqID;
 				
 			if ( rc  == VDQM_COMMIT) {
