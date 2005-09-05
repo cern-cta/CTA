@@ -151,7 +151,7 @@ namespace castor {
 		      /**
 		       * Returns all the tapeRequests with their connected objects from 
 		       * foreign tables with the specified dgn an server. If you don't want
-		       * to specify one of the arguments, just give a NULL instead.
+		       * to specify one of the arguments, just give an empty string instead.
 		       * Please notice: The caller is responsible for the deletion of the
 		       * allocated objects!
 		       * @param driveRequest The old struct, which represents the tapeDrive
@@ -164,7 +164,27 @@ namespace castor {
 					virtual std::vector<castor::vdqm::TapeRequest*>* selectTapeRequestQueue(
 						const std::string dgn, 
 						const std::string requestedSrv)
-		    		throw (castor::exception::Exception);	  		    		
+		    		throw (castor::exception::Exception);	  		
+		    		
+		    		
+		      /**
+		       * Returns all the tape drives with their connected objects from 
+		       * foreign tables with the specified dgn an server. If you don't want
+		       * to specify one of the arguments, just give an empty string 
+		       * instead.
+		       * Please notice: The caller is responsible for the deletion of the
+		       * allocated objects!
+		       * @param driveRequest The old struct, which represents the tapeDrive
+		       * @exception Exception in case of error (several tapes drive found, 
+		       * DB problem, etc...)
+		       * @return a list of files. 
+	         * Note that the returned vector should be deallocated
+	         * by the caller as well as its content
+		       */
+					virtual std::vector<castor::vdqm::TapeDrive*>* selectTapeDriveQueue(
+						const std::string dgn, 
+						const std::string requestedSrv)
+		    		throw (castor::exception::Exception);		    		    		
 		    		
 //------------------ function for TapeRequestDedicationHandler -----------------
 
@@ -322,6 +342,12 @@ namespace castor {
 	
 	        /// SQL statement object for function selectTapeRequestQueue
 	        oracle::occi::Statement *m_selectTapeRequestQueueStatement;
+	        
+ 	        /// SQL statement for function selectTapeDriveQueue
+	        static const std::string s_selectTapeDriveQueueStatementString;
+	
+	        /// SQL statement object for function selectTapeDriveQueue
+	        oracle::occi::Statement *m_selectTapeDriveQueueStatement;
 	        
  	        /// SQL statement for function matchTape2TapeDrive
 	        static const std::string s_matchTape2TapeDriveStatementString;

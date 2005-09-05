@@ -700,6 +700,8 @@ CREATE OR REPLACE PACKAGE castor AS
         diskServerName VARCHAR2(2048),
         fileSystemMountPoint VARCHAR2(2048));
   TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
+	TYPE TapeDrive_Cur IS REF CURSOR RETURN TapeDrive%ROWTYPE;
+	TYPE TapeRequest_Cur IS REF CURSOR RETURN TapeRequest%ROWTYPE;
 END castor;
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
@@ -2080,30 +2082,54 @@ END;
 
 
 CREATE OR REPLACE PROCEDURE selectTapeRequestQueue
- (dgn IN VARCHAR2, server IN VARCHAR2, TapeRequestID OUT NUMBER) AS
+ (dgn IN VARCHAR2, server IN VARCHAR2, tapeRequestID OUT castor.TapeRequest_Cur) AS
 BEGIN
-  IF dgn = '' AND server = '' THEN
-    SELECT TapeRequest.id INTO TapeRequestID FROM TapeRequest
+  IF dgn IS NULL AND server IS NULL THEN
+    OPEN tapeRequestID FOR SELECT * FROM TapeRequest
 		  ORDER BY TapeRequest.modificationTime ASC;
-  ELSIF dgn = '' THEN
-    SELECT TapeRequest.id INTO TapeRequestID FROM TapeRequest, TapeServer
+  ELSIF dgn IS NULL THEN
+    OPEN tapeRequestID FOR SELECT TapeRequest.* FROM TapeRequest, TapeServer
       WHERE TapeServer.serverName = server
             AND TapeServer.id = TapeRequest.requestedSrv
 			ORDER BY TapeRequest.modificationTime ASC;
-  ELSIF server = '' THEN
-    SELECT TapeRequest.id INTO TapeRequestID FROM TapeRequest, DeviceGroupName
+  ELSIF server IS NULL THEN
+    OPEN tapeRequestID FOR SELECT TapeRequest.* FROM TapeRequest, DeviceGroupName
       WHERE DeviceGroupName.dgName = dgn
             AND DeviceGroupName.id = TapeRequest.deviceGroupName
 			ORDER BY TapeRequest.modificationTime ASC;
   ELSE 
-    SELECT TapeRequest.id INTO TapeRequestID FROM TapeRequest, DeviceGroupName, TapeServer
+    OPEN tapeRequestID FOR SELECT TapeRequest.* FROM TapeRequest, DeviceGroupName, TapeServer
       WHERE DeviceGroupName.dgName = dgn
             AND DeviceGroupName.id = TapeRequest.deviceGroupName
             AND TapeServer.serverName = server
             AND TapeServer.id = TapeRequest.requestedSrv
 			ORDER BY TapeRequest.modificationTime ASC;
   END IF;
-  EXCEPTION
-  WHEN NO_DATA_FOUND THEN
-      tapeRequestID := 0;	  
+END;
+
+
+CREATE OR REPLACE PROCEDURE selectTapeDriveQueue
+ (dgn IN VARCHAR2, server IN VARCHAR2, tapeDriveID OUT castor.TapeDrive_Cur) AS
+BEGIN
+  IF dgn IS NULL AND server IS NULL THEN
+    OPEN tapeDriveID FOR SELECT * FROM TapeDrive
+		  ORDER BY TapeDrive.driveName ASC;
+  ELSIF dgn IS NULL THEN
+    OPEN tapeDriveID FOR SELECT TapeDrive.* FROM TapeDrive, TapeServer
+      WHERE TapeServer.serverName = server
+            AND TapeServer.id = TapeDrive.tapeServer
+			ORDER BY TapeDrive.driveName ASC;
+  ELSIF server IS NULL THEN
+    OPEN tapeDriveID FOR SELECT TapeDrive.* FROM TapeDrive, DeviceGroupName
+      WHERE DeviceGroupName.dgName = dgn
+            AND DeviceGroupName.id = TapeDrive.deviceGroupName
+			ORDER BY TapeDrive.driveName ASC;
+  ELSE 
+    OPEN tapeDriveID FOR SELECT TapeDrive.* FROM TapeDrive, DeviceGroupName, TapeServer
+      WHERE DeviceGroupName.dgName = dgn
+            AND DeviceGroupName.id = TapeDrive.deviceGroupName
+            AND TapeServer.serverName = server
+            AND TapeServer.id = TapeDrive.tapeServer
+			ORDER BY TapeDrive.driveName ASC;
+  END IF;
 END;

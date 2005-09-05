@@ -108,6 +108,10 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectDeviceGroupNameStatementS
 /// SQL statement for function selectTapeRequestQueue
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeRequestQueueStatementString =
   "BEGIN selectTapeRequestQueue(:1, :2, :3); END;";
+  
+/// SQL statement for function selectTapeDriveQueue
+const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveQueueStatementString =
+  "BEGIN selectTapeDriveQueue(:1, :2, :3); END;";  
 
 /**
  * This is the main select statement to dedicate a tape to a tape drive.
@@ -838,8 +842,8 @@ std::vector<castor::vdqm::TapeRequest*>*
 	const std::string requestedSrv)
 	throw (castor::exception::Exception) {
 
-  u_signed64 idTapeRequest;
-	castor::vdqm::TapeRequest* tapeRequest = NULL;
+  u_signed64 idTapeRequest = 0;
+	castor::vdqm::TapeRequest* tmpTapeRequest = NULL;
   
   // Check whether the statements are ok
   if (0 == m_selectTapeRequestQueueStatement) {
@@ -847,7 +851,7 @@ std::vector<castor::vdqm::TapeRequest*>*
     	createStatement(s_selectTapeRequestQueueStatementString);
     
     m_selectTapeRequestQueueStatement->registerOutParam
-        (3, oracle::occi::OCCIDOUBLE);
+        (3, oracle::occi::OCCICURSOR);
   }
   
   // Execute statement and get result
@@ -857,9 +861,8 @@ std::vector<castor::vdqm::TapeRequest*>*
     unsigned int nb = m_selectTapeRequestQueueStatement->executeUpdate();
     
     if (0 == nb) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Result is empty";
-      throw ex;
+      //Result is empty, so we return a Null pointer
+      return NULL;
     }    
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
@@ -888,11 +891,9 @@ std::vector<castor::vdqm::TapeRequest*>*
      * from the other tables.
      */
     while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-    	idTapeRequest = 0;
-    	tapeRequest = 0;
     	
       // Fill result
-      idTapeRequest = (u_signed64)rs->getDouble(3);
+      idTapeRequest = (u_signed64)rs->getDouble(3); // 3 = Col number of ID
       
       if ( idTapeRequest != 0 ) {
 	      castor::BaseAddress ad;
@@ -900,28 +901,27 @@ std::vector<castor::vdqm::TapeRequest*>*
 		    ad.setCnvSvcName("DbCnvSvc");
 		    ad.setCnvSvcType(castor::SVC_DBCNV);
 				
-				castor::IObject* obj = cnvSvc()->createObj(&ad);
-		    tapeRequest = dynamic_cast<castor::vdqm::TapeRequest*> (obj);
-		    if (0 == tapeRequest) {
-		      castor::exception::Internal e;
-		      e.getMessage() << "createObj return unexpected type "
-		                     << obj->type() << " for id " << idTapeRequest;
-		      delete obj;
-		      
-		      throw e;
-		    }  
+				tmpTapeRequest = new castor::vdqm::TapeRequest();
+					
+				tmpTapeRequest->setId(idTapeRequest);
+				tmpTapeRequest->setPriority(rs->getInt(1));
+				tmpTapeRequest->setModificationTime(rs->getInt(2));
+				
 		    
 		    // Get the foreign related objects
-		    cnvSvc()->fillObj(&ad, obj, castor::OBJ_DeviceGroupName);
-		    cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeAccessSpecification);
-		    cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeServer);
-		    cnvSvc()->fillObj(&ad, obj, castor::OBJ_Tape);
-		    cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeDrive);
-		    cnvSvc()->fillObj(&ad, obj, castor::OBJ_ClientIdentification);
+		    cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_DeviceGroupName);
+		    cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_TapeAccessSpecification);
+		    cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_TapeServer);
+		    cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_Tape);
+		    cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_TapeDrive);
+		    cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_ClientIdentification);
 	      
 	      
-	      result->push_back(tapeRequest);
+	      result->push_back(tmpTapeRequest);
 	      status = rs->next();
+	      
+	      tmpTapeRequest = 0;
+       	idTapeRequest = 0;
       }
     }
     
@@ -932,6 +932,119 @@ std::vector<castor::vdqm::TapeRequest*>*
       << "Unable to find a TapeRequest for id "
       << idTapeRequest << " :"
       << std::endl << e.getMessage();
+      
+      throw ex;
+  }  
+}
+
+
+// -----------------------------------------------------------------------
+// selectTapeDriveQueue
+// -----------------------------------------------------------------------
+std::vector<castor::vdqm::TapeDrive*>* 
+	castor::db::ora::OraVdqmSvc::selectTapeDriveQueue (
+	const std::string dgn, 
+	const std::string requestedSrv)
+	throw (castor::exception::Exception) {
+
+  u_signed64 idTapeDrive = 0;
+	castor::vdqm::TapeDrive* tmpTapeDrive = NULL;
+  
+  // Check whether the statements are ok
+  if (0 == m_selectTapeDriveQueueStatement) {
+    m_selectTapeDriveQueueStatement = 
+    	createStatement(s_selectTapeDriveQueueStatementString);
+    
+    m_selectTapeDriveQueueStatement->registerOutParam
+        (3, oracle::occi::OCCICURSOR);
+  }
+  
+  // Execute statement and get result
+  try {
+  	m_selectTapeDriveQueueStatement->setString(1, dgn);
+  	m_selectTapeDriveQueueStatement->setString(2, requestedSrv);
+    unsigned int nb = m_selectTapeDriveQueueStatement->executeUpdate();
+    
+    if (0 == nb) {
+      //Result is empty, so we return a Null pointer
+      return NULL;
+    }    
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "OraVdqmSvc::selectTapeRequestQueue(): "
+      << "Unable to find TapeDrives for queue: "
+      << std::endl << e.getMessage();
+    throw ex;
+  }	
+  
+  
+  // Now get the the Objects from their id's
+  try {
+    // create result
+    std::vector<castor::vdqm::TapeDrive*>* result =
+      new std::vector<castor::vdqm::TapeDrive*>;
+      
+    // Run through the cursor
+    oracle::occi::ResultSet *rs =
+      m_selectTapeDriveQueueStatement->getCursor(3);
+    
+    oracle::occi::ResultSet::Status status = rs->next();
+    
+    
+    /**
+     * For each id, we create a TapeDrive object and the needed linked objects
+     * from the other tables.
+     */
+    while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+    	
+      // Fill result
+      idTapeDrive = (u_signed64)rs->getDouble(10); // 10 = Col number of ID
+      
+      if ( idTapeDrive > 0 ) {
+	      castor::BaseAddress ad;
+		    ad.setTarget(idTapeDrive);
+		    ad.setCnvSvcName("DbCnvSvc");
+		    ad.setCnvSvcType(castor::SVC_DBCNV);
+				
+				tmpTapeDrive = new castor::vdqm::TapeDrive();
+				
+				tmpTapeDrive->setId(idTapeDrive);
+				tmpTapeDrive->setJobID(rs->getInt(1));
+				tmpTapeDrive->setModificationTime(rs->getInt(2));
+				tmpTapeDrive->setResettime(rs->getInt(3));
+				tmpTapeDrive->setUsecount(rs->getInt(4));
+				tmpTapeDrive->setErrcount(rs->getInt(5));
+				tmpTapeDrive->setTransferredMB(rs->getInt(6));
+				tmpTapeDrive->setTotalMB((u_signed64)rs->getDouble(7));				
+				tmpTapeDrive->setDriveName(rs->getString(8));
+				tmpTapeDrive->setTapeAccessMode(rs->getInt(9)); 
+		    
+		    // Get the foreign related objects
+		    cnvSvc()->fillObj(&ad, tmpTapeDrive, castor::OBJ_DeviceGroupName);
+		    cnvSvc()->fillObj(&ad, tmpTapeDrive, castor::OBJ_TapeServer);
+		    cnvSvc()->fillObj(&ad, tmpTapeDrive, castor::OBJ_Tape);
+		    cnvSvc()->fillObj(&ad, tmpTapeDrive, castor::OBJ_TapeRequest);
+		    cnvSvc()->fillObj(&ad, tmpTapeDrive, castor::OBJ_TapeDriveCompatibility);
+	      
+	      
+	      result->push_back(tmpTapeDrive);
+	      status = rs->next();
+	      
+	      tmpTapeDrive = 0;
+	    	idTapeDrive = 0;	      
+      }
+    }
+    
+    return result;  	
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to find a TapeDrive for id "
+      << idTapeDrive << " :"
+      << std::endl << e.getMessage();
+      
+    throw ex;
   }  
 }
 
