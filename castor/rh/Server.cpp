@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2005/08/18 09:51:14 $ $Author: itglp $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2005/09/06 09:03:40 $ $Author: sponcec3 $
  *
  *
  *
@@ -105,6 +105,7 @@ castor::rh::Server::Server() :
      {10, "Sending reply to client"},
      {11, "Unable to send Ack to client"},
      {12, "Request stored in DB"},
+     {13, "Waked up all services at once"},
      {-1, ""}};
   castor::dlf::dlf_init("RHLog", messages);
 }
@@ -320,7 +321,48 @@ void castor::rh::Server::handleRequest
     throw e;
   }
 
-  // Send an UDP message to the stager
-  stager_notifyServices();
-
+  // Send an UDP message to the right stager service
+  switch (fr->type()) {
+  case OBJ_StageGetRequest:
+  case OBJ_StagePrepareToGetRequest:
+  case OBJ_StagePutRequest:
+  case OBJ_StagePrepareToPutRequest:
+  case OBJ_StageUpdateRequest:
+  case OBJ_StagePrepareToUpdateRequest:
+  case OBJ_StageRmRequest:
+  case OBJ_StagePutDoneRequest:
+    // Query Service
+    stager_notifyService(::STAGER_SERVICE_DB);
+    break;
+  case OBJ_StageFileQueryRequest :
+  case OBJ_StageFindRequestRequest :
+  case OBJ_StageRequestQueryRequest :
+    // Query Service
+    stager_notifyService(::STAGER_SERVICE_QUERY);
+    break;
+  case OBJ_GetUpdateStartRequest:
+  case OBJ_Disk2DiskCopyDoneRequest:
+  case OBJ_MoverCloseRequest:
+  case OBJ_PutStartRequest :
+  case OBJ_GetUpdateDone :
+  case OBJ_GetUpdateFailed :
+  case OBJ_PutFailed :
+  case OBJ_PutDoneStart :
+    // Job Service
+    stager_notifyService(::STAGER_SERVICE_JOB);
+    break;
+  case OBJ_Files2Delete:
+  case OBJ_FilesDeleted:
+  case OBJ_FilesDeletionFailed:
+    // Garbage Collector Service
+    stager_notifyService(::STAGER_SERVICE_GC);
+    break;
+  default:
+    // We should not go this way, this would not be optimal
+    // "Waked up all services at once"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Request type", fr->type())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 13, 1, params);
+    stager_notifyServices();
+  }
 }
