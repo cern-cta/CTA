@@ -156,6 +156,13 @@ castor::vdqm::VdqmServer::VdqmServer():
      {55, "Handle VDQM_GET_DRVQUEUE"},
      {56, "Exception caught in TapeRequestDedicationHandler::handleDedication()"},
      {57, "Send information for showqueues command"},
+     {58, "Thread pool created"},
+     {59, "Thread pool creation error"},
+     {60, "Error while assigning request to pool"},
+     {61, "Start tape to tape drive dedication thread"},
+     {62, "Dedication thread pool created"},
+     {63, "Exception caught in TapeRequestDedicationHandler::dedicationRequest()"},
+     {64, "No TapeDrive object to commit to RTCPD"},
      {-1, ""}};
   castor::dlf::dlf_init("Vdqm", messages);
 }
@@ -167,13 +174,15 @@ castor::vdqm::VdqmServer::VdqmServer():
 castor::vdqm::VdqmServer::~VdqmServer() throw() {
    castor::vdqm::handler::TapeRequestDedicationHandler* 
   	tapeRequestDedicationHandler = 
-  		castor::vdqm::handler::TapeRequestDedicationHandler::Instance();
+  		castor::vdqm::handler::TapeRequestDedicationHandler::Instance(0);
   	
   /**
    * Stopping the thread, which is handling the dedication of the tape
    * to a tape drive
    */
   tapeRequestDedicationHandler->stop();	
+  
+  sleep(1);
   
   delete tapeRequestDedicationHandler;
   
@@ -182,8 +191,6 @@ castor::vdqm::VdqmServer::~VdqmServer() throw() {
 //  if (0 != svcs) {
 //    delete svcs;
 //  }
-  	
-  sleep(1);
 }
 
 
@@ -194,7 +201,7 @@ int castor::vdqm::VdqmServer::main () {
   
   try {    
 
-		/** Start the loop in a thread **/
+		/** Starts the TapeDriveDedication loop in a thread **/
 		threadAssign(NULL);    
     
     /* Create a socket for the server, bind, and listen */
@@ -240,14 +247,19 @@ int  castor::vdqm::VdqmServer::serverMain () {
   
   m_threadPoolId = Cpool_create(nbThreads, &actualNbThreads);
   if (m_threadPoolId < 0) {
-    clog() << ALERT << "Thread pool creation error : "
-           << m_threadPoolId
-           << std::endl;
+  	// "Thread pool creation error" message
+  	castor::dlf::Param params[] =
+			{castor::dlf::Param("threadPoolId", m_threadPoolId)};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 59, 1, params);
+
     return -1;
   } else {
-    clog() << DEBUG << "Thread pool created : "
-           << m_threadPoolId << ", "
-           << actualNbThreads << std::endl;
+  	// "Thread pool created" message
+		castor::dlf::Param params[] =
+			{castor::dlf::Param("threadPoolId", m_threadPoolId),
+			castor::dlf::Param("actualNbThreads", actualNbThreads)};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 58, 2, params);
+
     m_threadNumber = actualNbThreads;
   }
   
@@ -276,7 +288,9 @@ int castor::vdqm::VdqmServer::threadAssign(void *param) {
                                args,
                                -1);
   if (assign_rc < 0) {
-    clog() << "Error while assigning request to pool" << std::endl;
+  	// "Error while assigning request to pool" message
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 60);
+
     return -1;
   }
   
@@ -331,6 +345,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[]) {
     {
       {"foreground", NO_ARGUMENT, NULL, 'f'},
       {"nbThreads", REQUIRED_ARGUMENT, NULL, 'n'},
+      {"dedicationThreads", REQUIRED_ARGUMENT, NULL, 'd'},
       {NULL, 0, NULL, 0}
     };
 
@@ -338,13 +353,16 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[]) {
   Copterr = 0;
 
   char c;
-  while ((c = Cgetopt_long (argc, argv, "fs", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "fnd", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
       break;
     case 'n':
       m_threadNumber = atoi(Coptarg);
+      break;
+    case 'd':
+      m_dedicationThreadNumber = atoi(Coptarg);
       break;
     }
 	}
@@ -433,7 +451,8 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
 	  delete sock;
   }
   else { // If it's not a socket, then it's our dedication loop!
-//  	std::cout << "TapeRequest Thread !!!" << std::endl;
+  	// "Start tape to tape drive dedication thread" message
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 61);
 
 	  /**
 	   * The Singleton with the main loop to dedicate a
@@ -447,7 +466,8 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
 	     * Create thread, which dedicates the tapes to the tape drives
 	     */
 	    tapeRequestDedicationHandler = 
-	  		castor::vdqm::handler::TapeRequestDedicationHandler::Instance();
+	  		castor::vdqm::handler::TapeRequestDedicationHandler::Instance(
+	  		m_dedicationThreadNumber);
     }
     catch (castor::exception::Exception ex) {
 			// "Unable to initialize TapeRequestDedicationHandler thread" message
@@ -490,7 +510,6 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 	newVdqmHdr_t header;
 	int reqtype; // Request type of the message
 	int rc = 0; // For checking purpose
-	int id = 0; // The request ID
 	bool reqHandled = false;
 	
 	// handles the connection to the client
@@ -603,26 +622,17 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 			/**
 			 * Now we can commit everything for the database... or not
 			 */
-			id = -1;
-			if ( NULL != &volumeRequest && volumeRequest.VolReqID > 0) 
-				id = volumeRequest.VolReqID;
-			else if ( NULL != &driveRequest && driveRequest.DrvReqID > 0)
-				id = driveRequest.DrvReqID;
-				
 			if ( rc  == VDQM_COMMIT) {
 				svcs()->commit(&ad);
 				
 		    // "Request stored in DB" message
-		    castor::dlf::Param paramID[] =
-		      {castor::dlf::Param("ID", id)};
-		    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 12, 1, paramID);				
+		    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 12);				
 			}
 			else {
 				// "Client didn't send a VDQM_COMMIT => Rollback of request in db"
 				svcs()->rollback(&ad);
-						    castor::dlf::Param paramID[] =
-		      {castor::dlf::Param("ID", id)};
-		    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 30, 1, paramID);				
+					
+		    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 30);				
 			}
 		}
 	} catch (castor::exception::Exception e) { 

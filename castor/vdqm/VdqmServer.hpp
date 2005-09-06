@@ -143,6 +143,11 @@ namespace castor {
 	     * Number of threads in the pool
 	     */
 	    int m_threadNumber;
+	    
+	    /**
+	     * Number of threads in the tape to tape drive dedication pool
+	     */
+	    int m_dedicationThreadNumber;
 	
 	    /**
 	     * Name of the server

@@ -38,6 +38,12 @@ namespace castor {
   	class TapeRequest;
 
 		namespace handler {
+			
+	  	/**
+		   * Static method used to pass to Cpool_assign
+		   */
+		  void *staticDedicationRequest(void *param);
+			
 	    /**
 	     * This class looks through the tapeRequests and tries to find the best
 	     * order to handle the requests.
@@ -53,8 +59,15 @@ namespace castor {
 					 */				
 					static unsigned const int m_sleepTime;
 				
-					static TapeRequestDedicationHandler* Instance() 
-						throw(castor::exception::Exception);
+					/**
+					 * Static method to get the Singleton instance of this class
+					 * 
+					 * @param dedicationThreadNumber The number of threads in the thread
+					 * pool. This value is only important at the first call. If you want to 
+					 * take the default value, just give 0 as parameter.
+					 */
+					static TapeRequestDedicationHandler* Instance(
+						int dedicationThreadNumber) throw (castor::exception::Exception);
 					
 		      /**
 		       * Destructor
@@ -71,7 +84,18 @@ namespace castor {
 					/**
 					 * function to stop the run() loop
 					 */
-					void stop();					
+					void stop();
+					
+					/**
+			     * Assigns work to a thread from the pool
+			     */    
+			    int threadAssign(void *param);	
+			    
+			    /**
+		       * Method called once per found pair of fitting tape and tape request
+		       * in an extra thread.
+		       */
+		      virtual void *dedicationRequest(void *param) throw();				
 					
 					
 				protected:
@@ -80,9 +104,13 @@ namespace castor {
 		       * Constructor. 
 		       * Please use Instance() to get an instance of this class.
 		       * 
+		       * @param dedicationThreadNumber The number of threads in the thread
+					 * pool. If you want to take the default value, just give 0 as 
+					 * parameter.
 					 * @exception In case of error
 		       */
-					TapeRequestDedicationHandler() throw(castor::exception::Exception);				
+					TapeRequestDedicationHandler(int dedicationThreadNumber)
+						throw (castor::exception::Exception);				
 					
 				
 				private:
@@ -91,21 +119,64 @@ namespace castor {
 					 * The Singleton instance
 					 */
 					static TapeRequestDedicationHandler* _instance;
+					
+			    /**
+			     * default number of threads in the thread pool
+			     */    
+			    static const int DEFAULT_THREAD_NUMBER = 20;
 	
 					/**
 					 * The run function stops, if this variable is set to false
 					 */
 					bool _stopLoop;
 					
+					/**
+			     * The id of the pool created
+			     */
+			    int m_threadPoolId;
+			    
+			    /**
+			     * Number of threads in the tape to tape drive dedication pool
+			     */
+			    int m_dedicationThreadNumber;		
+			    			
+					
 	     		/**
 	     		 * This method is used to handle the dedication of a tape request to
 	     		 * a tape drive. It will update the status in the db and inform the
 	     		 * RTCPD about the dedication.
+	     		 * 
+	     		 * @param freeTapeDrive The tape drive which has been chosen by the 
+	     		 * db select statement
+	     		 * @param waitingTapeRequest An unhandled tape request, which fits the
+	     		 * best for the free tape drive
+	     		 * @exception In case of errors
 	     		 */
 	     		void handleDedication(
 	     			castor::vdqm::TapeDrive* freeTapeDrive, 
 	     			castor::vdqm::TapeRequest* waitingTapeRequest) 
-						throw (castor::exception::Exception);					
+						throw (castor::exception::Exception);
+						
+					
+					/**
+					 * Creates the thread pool for the tape to tape drive dedication. The
+					 * amount of threads can be specified by the server start parameter -d
+					 * 
+					 * @exception In case of errors
+					 */
+					void createThreadPool() throw (castor::exception::Exception);
+					
+					
+					/**
+					 * Rollback of the dedication in the database
+					 * 
+					 * @param freeTapeDrive The tape drive which has been chosen by the 
+	     		 * db select statement and which has a reference to its dedicated 
+	     		 * tapeRequest
+					 * @exception In case of errors
+					 */
+					void rollback(castor::vdqm::TapeDrive* freeTapeDrive)
+						throw (castor::exception::Exception);
 												
 	    }; // class TapeRequestDedicationHandler
     
@@ -114,5 +185,14 @@ namespace castor {
   } // end of namespace vdqm
 
 } // end of namespace castor
+
+
+/**
+ * Structure used to pass arguments to the method through Cpool_assign
+ */
+struct dedicationRequestArgs {
+  castor::vdqm::handler::TapeRequestDedicationHandler *handler;
+  void *param;
+};
 
 #endif //_TAPEREQUESTDEDICATIONHANDLER_HPP_

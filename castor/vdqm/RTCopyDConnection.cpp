@@ -279,7 +279,7 @@ bool castor::vdqm::RTCopyDConnection::readRTCPAnswer()
       len = VDQM_MSGBUFSIZ - 3*LONGSIZE;
     }
     
-    rc = netread_timeout(m_socket, buffer, len, VDQM_TIMEOUT);
+    rc = netread_timeout(m_socket, p, len, VDQM_TIMEOUT);
 	  switch (rc) {
 	  	case -1: 
 		  		{
