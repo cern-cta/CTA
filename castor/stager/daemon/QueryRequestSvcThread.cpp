@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.22 2005/07/21 09:13:11 itglp Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.23 2005/09/06 14:49:36 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.22 $ $Date: 2005/07/21 09:13:11 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.23 $ $Date: 2005/09/06 14:49:36 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -104,11 +104,7 @@ EXTERN_C int DLL_DECL stager_query_select(void **output) {
     /* Get any new request to do    */
     /* ---------------------------- */
     STAGER_LOG_VERBOSE(NULL,"Getting any request to do");
-    std::vector<castor::ObjectsIds> types;
-    types.push_back(castor::OBJ_StageFileQueryRequest);
-    types.push_back(castor::OBJ_StageFindRequestRequest);
-    types.push_back(castor::OBJ_StageRequestQueryRequest);
-    castor::stager::Request* req = qrySvc->requestToDo(types);
+    castor::stager::Request* req = qrySvc->requestToDo();
 
     if (0 == req) {
       /* Nothing to do */

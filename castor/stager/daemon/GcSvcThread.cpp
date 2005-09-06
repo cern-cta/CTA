@@ -1,5 +1,5 @@
 /*
- * $Id: GcSvcThread.cpp,v 1.8 2005/07/21 09:13:11 itglp Exp $
+ * $Id: GcSvcThread.cpp,v 1.9 2005/09/06 14:49:35 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.8 $ $Date: 2005/07/21 09:13:11 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.9 $ $Date: 2005/09/06 14:49:35 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -95,11 +95,7 @@ EXTERN_C int DLL_DECL stager_gc_select(void **output) {
     /* Get any new request to do    */
     /* ---------------------------- */
     STAGER_LOG_VERBOSE(NULL,"Getting any request to do");
-    std::vector<castor::ObjectsIds> types;
-    types.push_back(castor::OBJ_FilesDeleted);
-    types.push_back(castor::OBJ_FilesDeletionFailed);
-    types.push_back(castor::OBJ_Files2Delete);
-    castor::stager::Request* req = gcSvc->requestToDo(types);
+    castor::stager::Request* req = gcSvc->requestToDo();
 
     if (0 == req) {
       /* Nothing to do */

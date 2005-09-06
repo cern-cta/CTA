@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.32 2005/07/21 09:13:11 itglp Exp $
+ * $Id: JobSvcThread.cpp,v 1.33 2005/09/06 14:49:36 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.32 $ $Date: 2005/07/21 09:13:11 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.33 $ $Date: 2005/09/06 14:49:36 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -107,16 +107,7 @@ EXTERN_C int DLL_DECL stager_job_select(void **output) {
     /* Get any new request to do    */
     /* ---------------------------- */
     STAGER_LOG_VERBOSE(NULL,"Getting any request to do");
-    std::vector<castor::ObjectsIds> types;
-    types.push_back(castor::OBJ_GetUpdateStartRequest);
-    types.push_back(castor::OBJ_PutStartRequest);
-    types.push_back(castor::OBJ_PutDoneStart);
-    types.push_back(castor::OBJ_MoverCloseRequest);
-    types.push_back(castor::OBJ_Disk2DiskCopyDoneRequest);
-    types.push_back(castor::OBJ_GetUpdateDone);
-    types.push_back(castor::OBJ_GetUpdateFailed);
-    types.push_back(castor::OBJ_PutFailed);
-    castor::stager::Request* req = jobSvc->requestToDo(types);
+    castor::stager::Request* req = jobSvc->requestToDo();
 
     if (0 == req) {
       /* Nothing to do */
