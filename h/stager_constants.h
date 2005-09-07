@@ -1,5 +1,5 @@
 /*
- * $Id: stager_constants.h,v 1.15 2005/06/13 14:00:16 jdurand Exp $
+ * $Id: stager_constants.h,v 1.16 2005/09/07 16:48:06 jdurand Exp $
  */
 
 #ifndef __stager_constants_h
@@ -83,7 +83,10 @@
 #define STAGER_MUTEX_EMERGENCYTIMEOUT      60            /* Timeout on getting a mutex in the signal handler */
 #define STAGER_REPBUFSZ           1024                   /* Socket reply buffer size */
 #define STAGER_MAGIC              0x24140701             /* Stager magic number */
-#define STAGER_NOTIFY_MAGIC       0x34140701             /* Stager notification magic number */
+
+#define STAGER_NOTIFY_MAGIC1      0x34140701             /* Stager notification magic number v1 (just a boolean thingy) */
+#define STAGER_NOTIFY_MAGIC2      0x34140702             /* Stager notification magic number v2 (with number of threads wanted) */
+#define STAGER_NOTIFY_MAGIC       STAGER_NOTIFY_MAGIC2   /* Default stager notification magic number */
 
 #define STAGER_RC                 0                      /* Stager RC type */
 #define STAGER_MSG_ERR            1                      /* Stager MSG_ERR type */
