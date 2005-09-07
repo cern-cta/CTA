@@ -1,0 +1,68 @@
+.\" ******************************************************************************
+.\"                      moveDiskServer
+.\"
+.\" This file is part of the Castor project.
+.\" See http://castor.web.cern.ch/castor
+.\"
+.\" Copyright (C) 2003  CERN
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License
+.\" as published by the Free Software Foundation; either version 2
+.\" of the License, or (at your option) any later version.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+.\"
+.\" @(.\")$RCSfile: moveDiskServer.man,v $ $Revision: 1.1 $ $Release$ $Date: 2005/09/07 15:57:27 $ $Author: sponcec3 $
+.\"
+.\" man page for the moveDiskServer command
+.\"
+.\" @author Castor Dev team, castor-dev@cern.ch
+.\" *****************************************************************************/
+.TH MOVEDISKSERVER 1 "$Date: 2005/09/07 15:57:27 $" CASTOR "Move diskServers to a new DiskPool"
+.SH NAME
+moveDiskServer
+.SH SYNOPSIS
+.B moveDiskServer
+[
+.B -h, 
+.B --help
+]
+newDiskPoolName diskServerName [...]
+.SH DESCRIPTION
+.B moveDiskServer 
+Moves all the fileSystems from the given diskServers to the
+specified diskPool. 
+
+.TP 11
+.B \-h,\ \-\-help
+Get usage information
+.LP
+.B diskPoolName
+is the name of the diskPool where to place the filesystems
+of the diskServers specified
+.LP
+.B diskServerName [...]
+is the list of diskServers to move
+
+.LP
+moveDiskServer is checking that the diskPool and the diskServers
+provided all exist before executing the move. In case any of
+them is not found in the database, no action is taken at all and
+an error message is displayed.
+
+.SH EXAMPLES
+.BI #\ moveDiskServer\ cmsprod\ lxfsrk605\ lxfsrk609
+.fi
+.fi
+.SH NOTES
+This command connects directly to the stager database through
+the perl DBI interface to ORACLE. Thus it can only run on
+a machine providing it.
+Configuration for the database access is taken from castor.conf.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
