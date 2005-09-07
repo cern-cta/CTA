@@ -336,10 +336,9 @@ void castor::db::cnv::DbTapeServerCnv::createRep(castor::IAddress* address,
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->serverName());
-    m_insertStatement->setInt(2, obj->status());
-    m_insertStatement->setInt(3, (int)obj->actingMode());
+    m_insertStatement->setInt(2, (int)obj->actingMode());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getInt64(4));
+    obj->setId(m_insertStatement->getInt64(3));
     m_storeTypeStatement->setInt64(1, obj->id());
     m_storeTypeStatement->setInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -357,7 +356,6 @@ void castor::db::cnv::DbTapeServerCnv::createRep(castor::IAddress* address,
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
                     << "  serverName : " << obj->serverName() << std::endl
-                    << "  status : " << obj->status() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  actingMode : " << obj->actingMode() << std::endl;
     throw ex;
@@ -382,9 +380,8 @@ void castor::db::cnv::DbTapeServerCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setString(1, obj->serverName());
-    m_updateStatement->setInt(2, obj->status());
-    m_updateStatement->setInt(3, (int)obj->actingMode());
-    m_updateStatement->setInt64(4, obj->id());
+    m_updateStatement->setInt(2, (int)obj->actingMode());
+    m_updateStatement->setInt64(3, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -473,9 +470,8 @@ castor::IObject* castor::db::cnv::DbTapeServerCnv::createObj(castor::IAddress* a
     castor::vdqm::TapeServer* object = new castor::vdqm::TapeServer();
     // Now retrieve and set members
     object->setServerName(rset->getString(1));
-    object->setStatus(rset->getInt(2));
-    object->setId(rset->getInt64(3));
-    object->setActingMode((enum castor::vdqm::TapeServerStatusCodes)rset->getInt(4));
+    object->setId(rset->getInt64(2));
+    object->setActingMode((enum castor::vdqm::TapeServerStatusCodes)rset->getInt(3));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -514,9 +510,8 @@ void castor::db::cnv::DbTapeServerCnv::updateObj(castor::IObject* obj)
     castor::vdqm::TapeServer* object = 
       dynamic_cast<castor::vdqm::TapeServer*>(obj);
     object->setServerName(rset->getString(1));
-    object->setStatus(rset->getInt(2));
-    object->setId(rset->getInt64(3));
-    object->setActingMode((enum castor::vdqm::TapeServerStatusCodes)rset->getInt(4));
+    object->setId(rset->getInt64(2));
+    object->setActingMode((enum castor::vdqm::TapeServerStatusCodes)rset->getInt(3));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

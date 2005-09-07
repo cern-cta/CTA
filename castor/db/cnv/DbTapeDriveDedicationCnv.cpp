@@ -302,8 +302,9 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress* addr
     m_insertStatement->setInt(3, obj->egid());
     m_insertStatement->setString(4, obj->vid());
     m_insertStatement->setInt(5, obj->accessMode());
-    m_insertStatement->setString(6, obj->timePeriods());
-    m_insertStatement->setInt64(7, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
+    m_insertStatement->setInt(6, obj->startTime());
+    m_insertStatement->setInt(7, obj->endTime());
+    m_insertStatement->setInt64(8, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
     m_insertStatement->execute();
     obj->setId(m_insertStatement->getInt64(8));
     m_storeTypeStatement->setInt64(1, obj->id());
@@ -327,7 +328,8 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress* addr
                     << "  egid : " << obj->egid() << std::endl
                     << "  vid : " << obj->vid() << std::endl
                     << "  accessMode : " << obj->accessMode() << std::endl
-                    << "  timePeriods : " << obj->timePeriods() << std::endl
+                    << "  startTime : " << obj->startTime() << std::endl
+                    << "  endTime : " << obj->endTime() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  tapeDrive : " << obj->tapeDrive() << std::endl;
     throw ex;
@@ -356,8 +358,9 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::updateRep(castor::IAddress* addr
     m_updateStatement->setInt(3, obj->egid());
     m_updateStatement->setString(4, obj->vid());
     m_updateStatement->setInt(5, obj->accessMode());
-    m_updateStatement->setString(6, obj->timePeriods());
-    m_updateStatement->setInt64(7, obj->id());
+    m_updateStatement->setInt(6, obj->startTime());
+    m_updateStatement->setInt(7, obj->endTime());
+    m_updateStatement->setInt64(8, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -445,8 +448,9 @@ castor::IObject* castor::db::cnv::DbTapeDriveDedicationCnv::createObj(castor::IA
     object->setEgid(rset->getInt(3));
     object->setVid(rset->getString(4));
     object->setAccessMode(rset->getInt(5));
-    object->setTimePeriods(rset->getString(6));
-    object->setId(rset->getInt64(7));
+    object->setStartTime(rset->getInt(6));
+    object->setEndTime(rset->getInt(7));
+    object->setId(rset->getInt64(8));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -489,8 +493,9 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::updateObj(castor::IObject* obj)
     object->setEgid(rset->getInt(3));
     object->setVid(rset->getString(4));
     object->setAccessMode(rset->getInt(5));
-    object->setTimePeriods(rset->getString(6));
-    object->setId(rset->getInt64(7));
+    object->setStartTime(rset->getInt(6));
+    object->setEndTime(rset->getInt(7));
+    object->setId(rset->getInt64(8));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

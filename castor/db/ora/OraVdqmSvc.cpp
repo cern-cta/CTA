@@ -237,7 +237,6 @@ castor::vdqm::TapeServer*
       // we found nothing, so let's create the tape sever
       castor::vdqm::TapeServer* tapeServer = new castor::vdqm::TapeServer();
       tapeServer->setServerName(serverName);
-      tapeServer->setStatus(VDQM_TPD_STARTED);
       castor::BaseAddress ad;
       ad.setCnvSvcName("DbCnvSvc");
       ad.setCnvSvcType(castor::SVC_DBCNV);
@@ -301,6 +300,25 @@ castor::vdqm::TapeServer*
       delete obj;
       throw e;
     }
+    
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeDrive);
+    
+    
+    /**
+     * For existing TapeDrives, we want also the corresponding TapeRequest
+     */
+    for (std::vector<castor::vdqm::TapeDrive*>::iterator it = tapeServer->tapeDrives().begin();
+         it != tapeServer->tapeDrives().end();
+         it++) {
+	  	if ((*it) != NULL) {
+	      cnvSvc()->fillObj(&ad, (*it), castor::OBJ_TapeRequest);
+	  	}
+	  }
+   
+    
+    //reset Pointer
+    obj = 0;
+    
     return tapeServer;
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
@@ -452,7 +470,6 @@ castor::vdqm::TapeDrive*
      */
     castor::vdqm::TapeRequest* tapeRequest = tapeDrive->runningTapeReq();
     if (tapeRequest != NULL) {
-//        cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);
         cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_Tape);
         cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_DeviceGroupName);
         cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeAccessSpecification);        

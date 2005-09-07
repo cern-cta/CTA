@@ -55,7 +55,7 @@ const castor::ICnvFactory& OraTapeDriveDedicationCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraTapeDriveDedicationCnv::s_insertStatementString =
-"INSERT INTO TapeDriveDedication (clientHost, euid, egid, vid, accessMode, timePeriods, id, tapeDrive) VALUES (:1,:2,:3,:4,:5,:6,ids_seq.nextval,:7) RETURNING id INTO :8";
+"INSERT INTO TapeDriveDedication (clientHost, euid, egid, vid, accessMode, startTime, endTime, id, tapeDrive) VALUES (:1,:2,:3,:4,:5,:6,:7,ids_seq.nextval,:8) RETURNING id INTO :9";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraTapeDriveDedicationCnv::s_deleteStatementString =
@@ -63,11 +63,11 @@ const std::string castor::db::ora::OraTapeDriveDedicationCnv::s_deleteStatementS
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraTapeDriveDedicationCnv::s_selectStatementString =
-"SELECT clientHost, euid, egid, vid, accessMode, timePeriods, id, tapeDrive FROM TapeDriveDedication WHERE id = :1";
+"SELECT clientHost, euid, egid, vid, accessMode, startTime, endTime, id, tapeDrive FROM TapeDriveDedication WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraTapeDriveDedicationCnv::s_updateStatementString =
-"UPDATE TapeDriveDedication SET clientHost = :1, euid = :2, egid = :3, vid = :4, accessMode = :5, timePeriods = :6 WHERE id = :7";
+"UPDATE TapeDriveDedication SET clientHost = :1, euid = :2, egid = :3, vid = :4, accessMode = :5, startTime = :6, endTime = :7 WHERE id = :8";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraTapeDriveDedicationCnv::s_storeTypeStatementString =
@@ -251,7 +251,7 @@ void castor::db::ora::OraTapeDriveDedicationCnv::fillObjTapeDrive(castor::vdqm::
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeDriveId = (u_signed64)rset->getDouble(8);
+  u_signed64 tapeDriveId = (u_signed64)rset->getDouble(9);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -291,7 +291,7 @@ void castor::db::ora::OraTapeDriveDedicationCnv::createRep(castor::IAddress* add
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(8, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(9, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -302,10 +302,11 @@ void castor::db::ora::OraTapeDriveDedicationCnv::createRep(castor::IAddress* add
     m_insertStatement->setInt(3, obj->egid());
     m_insertStatement->setString(4, obj->vid());
     m_insertStatement->setInt(5, obj->accessMode());
-    m_insertStatement->setString(6, obj->timePeriods());
-    m_insertStatement->setDouble(7, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
+    m_insertStatement->setInt(6, obj->startTime());
+    m_insertStatement->setInt(7, obj->endTime());
+    m_insertStatement->setDouble(8, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(8));
+    obj->setId((u_signed64)m_insertStatement->getDouble(9));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -335,7 +336,8 @@ void castor::db::ora::OraTapeDriveDedicationCnv::createRep(castor::IAddress* add
                     << "  egid : " << obj->egid() << std::endl
                     << "  vid : " << obj->vid() << std::endl
                     << "  accessMode : " << obj->accessMode() << std::endl
-                    << "  timePeriods : " << obj->timePeriods() << std::endl
+                    << "  startTime : " << obj->startTime() << std::endl
+                    << "  endTime : " << obj->endTime() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  tapeDrive : " << obj->tapeDrive() << std::endl;
     throw ex;
@@ -364,8 +366,9 @@ void castor::db::ora::OraTapeDriveDedicationCnv::updateRep(castor::IAddress* add
     m_updateStatement->setInt(3, obj->egid());
     m_updateStatement->setString(4, obj->vid());
     m_updateStatement->setInt(5, obj->accessMode());
-    m_updateStatement->setString(6, obj->timePeriods());
-    m_updateStatement->setDouble(7, obj->id());
+    m_updateStatement->setInt(6, obj->startTime());
+    m_updateStatement->setInt(7, obj->endTime());
+    m_updateStatement->setDouble(8, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->commit();
@@ -469,8 +472,9 @@ castor::IObject* castor::db::ora::OraTapeDriveDedicationCnv::createObj(castor::I
     object->setEgid(rset->getInt(3));
     object->setVid(rset->getString(4));
     object->setAccessMode(rset->getInt(5));
-    object->setTimePeriods(rset->getString(6));
-    object->setId((u_signed64)rset->getDouble(7));
+    object->setStartTime(rset->getInt(6));
+    object->setEndTime(rset->getInt(7));
+    object->setId((u_signed64)rset->getDouble(8));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -521,8 +525,9 @@ void castor::db::ora::OraTapeDriveDedicationCnv::updateObj(castor::IObject* obj)
     object->setEgid(rset->getInt(3));
     object->setVid(rset->getString(4));
     object->setAccessMode(rset->getInt(5));
-    object->setTimePeriods(rset->getString(6));
-    object->setId((u_signed64)rset->getDouble(7));
+    object->setStartTime(rset->getInt(6));
+    object->setEndTime(rset->getInt(7));
+    object->setId((u_signed64)rset->getDouble(8));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

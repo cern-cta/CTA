@@ -58,7 +58,7 @@ const castor::ICnvFactory& OraTapeServerCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraTapeServerCnv::s_insertStatementString =
-"INSERT INTO TapeServer (serverName, status, id, actingMode) VALUES (:1,:2,ids_seq.nextval,:3) RETURNING id INTO :4";
+"INSERT INTO TapeServer (serverName, id, actingMode) VALUES (:1,ids_seq.nextval,:2) RETURNING id INTO :3";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraTapeServerCnv::s_deleteStatementString =
@@ -66,11 +66,11 @@ const std::string castor::db::ora::OraTapeServerCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraTapeServerCnv::s_selectStatementString =
-"SELECT serverName, status, id, actingMode FROM TapeServer WHERE id = :1";
+"SELECT serverName, id, actingMode FROM TapeServer WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraTapeServerCnv::s_updateStatementString =
-"UPDATE TapeServer SET serverName = :1, status = :2, actingMode = :3 WHERE id = :4";
+"UPDATE TapeServer SET serverName = :1, actingMode = :2 WHERE id = :3";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraTapeServerCnv::s_storeTypeStatementString =
@@ -329,17 +329,16 @@ void castor::db::ora::OraTapeServerCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(4, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(3, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->serverName());
-    m_insertStatement->setInt(2, obj->status());
-    m_insertStatement->setInt(3, (int)obj->actingMode());
+    m_insertStatement->setInt(2, (int)obj->actingMode());
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(4));
+    obj->setId((u_signed64)m_insertStatement->getDouble(3));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -365,7 +364,6 @@ void castor::db::ora::OraTapeServerCnv::createRep(castor::IAddress* address,
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
                     << "  serverName : " << obj->serverName() << std::endl
-                    << "  status : " << obj->status() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  actingMode : " << obj->actingMode() << std::endl;
     throw ex;
@@ -390,9 +388,8 @@ void castor::db::ora::OraTapeServerCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setString(1, obj->serverName());
-    m_updateStatement->setInt(2, obj->status());
-    m_updateStatement->setInt(3, (int)obj->actingMode());
-    m_updateStatement->setDouble(4, obj->id());
+    m_updateStatement->setInt(2, (int)obj->actingMode());
+    m_updateStatement->setDouble(3, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->commit();
@@ -497,9 +494,8 @@ castor::IObject* castor::db::ora::OraTapeServerCnv::createObj(castor::IAddress* 
     castor::vdqm::TapeServer* object = new castor::vdqm::TapeServer();
     // Now retrieve and set members
     object->setServerName(rset->getString(1));
-    object->setStatus(rset->getInt(2));
-    object->setId((u_signed64)rset->getDouble(3));
-    object->setActingMode((enum castor::vdqm::TapeServerStatusCodes)rset->getInt(4));
+    object->setId((u_signed64)rset->getDouble(2));
+    object->setActingMode((enum castor::vdqm::TapeServerStatusCodes)rset->getInt(3));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -546,9 +542,8 @@ void castor::db::ora::OraTapeServerCnv::updateObj(castor::IObject* obj)
     castor::vdqm::TapeServer* object = 
       dynamic_cast<castor::vdqm::TapeServer*>(obj);
     object->setServerName(rset->getString(1));
-    object->setStatus(rset->getInt(2));
-    object->setId((u_signed64)rset->getDouble(3));
-    object->setActingMode((enum castor::vdqm::TapeServerStatusCodes)rset->getInt(4));
+    object->setId((u_signed64)rset->getDouble(2));
+    object->setActingMode((enum castor::vdqm::TapeServerStatusCodes)rset->getInt(3));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {
