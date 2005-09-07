@@ -94,7 +94,6 @@ void castor::io::StreamTapeServerCnv::createRep(castor::IAddress* address,
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->serverName();
-  ad->stream() << obj->status();
   ad->stream() << obj->id();
   ad->stream() << obj->actingMode();
 }
@@ -112,9 +111,6 @@ castor::IObject* castor::io::StreamTapeServerCnv::createObj(castor::IAddress* ad
   std::string serverName;
   ad->stream() >> serverName;
   object->setServerName(serverName);
-  int status;
-  ad->stream() >> status;
-  object->setStatus(status);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
