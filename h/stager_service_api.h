@@ -33,6 +33,7 @@ struct stagerService {
   int serviceSelectTimer;
   int serviceProcessTimer;
   int nbActiveThreads;
+  int nbTotalThreads;
   int nbNotifyThreads;
   int notified;
   int notTheFirstTime;
@@ -42,6 +43,7 @@ struct stagerService {
 EXTERN_C int DLL_DECL stager_serviceInit _PROTO(());
 EXTERN_C int DLL_DECL stager_notifyServices _PROTO(());
 EXTERN_C int DLL_DECL stager_notifyService _PROTO((int));
+EXTERN_C int DLL_DECL stager_notifyService_v2 _PROTO((int, int));
 EXTERN_C int DLL_DECL stager_runService _PROTO((int, int,  int (*) _PROTO((void **)), int (*) _PROTO((void *))));
 EXTERN_C int DLL_DECL stager_statService _PROTO((int, int,  int (*) _PROTO((void **)), int (*) _PROTO((void *))));
 
