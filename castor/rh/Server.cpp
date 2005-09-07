@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2005/09/06 09:03:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2005/09/07 16:39:24 $ $Author: sponcec3 $
  *
  *
  *
@@ -279,6 +279,8 @@ void *castor::rh::Server::processRequest(void *param) throw() {
 void castor::rh::Server::handleRequest
 (castor::IObject* fr, Cuuid_t cuuid)
   throw (castor::exception::Exception) {
+  // Number of subrequests (when applicable)
+  unsigned int nbSubReqs = 1;
   // Stores it into Oracle
   castor::BaseAddress ad;
   ad.setCnvSvcName("DbCnvSvc");
@@ -290,6 +292,8 @@ void castor::rh::Server::handleRequest
       dynamic_cast<castor::stager::FileRequest*>(fr);
     if (0 != filreq) {
       svcs()->fillRep(&ad, fr, OBJ_SubRequest, false);
+      // and get number of subrequests
+      nbSubReqs = filreq->subRequests().size();
     }
     // Store client for requests
     castor::stager::Request* req =
@@ -332,7 +336,7 @@ void castor::rh::Server::handleRequest
   case OBJ_StageRmRequest:
   case OBJ_StagePutDoneRequest:
     // Query Service
-    stager_notifyService(::STAGER_SERVICE_DB);
+    stager_notifyService_v2(::STAGER_SERVICE_DB, nbSubReqs);
     break;
   case OBJ_StageFileQueryRequest :
   case OBJ_StageFindRequestRequest :
