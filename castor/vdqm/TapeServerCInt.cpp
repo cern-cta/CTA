@@ -117,22 +117,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_TapeServer_status
-  //----------------------------------------------------------------------------
-  int Cvdqm_TapeServer_status(castor::vdqm::TapeServer* instance, int* var) {
-    *var = instance->status();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cvdqm_TapeServer_setStatus
-  //----------------------------------------------------------------------------
-  int Cvdqm_TapeServer_setStatus(castor::vdqm::TapeServer* instance, int new_var) {
-    instance->setStatus(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cvdqm_TapeServer_id
   //----------------------------------------------------------------------------
   int Cvdqm_TapeServer_id(castor::vdqm::TapeServer* instance, u_signed64* var) {

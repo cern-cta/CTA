@@ -28,6 +28,7 @@
 #include <vector>
 
 #include "castor/exception/InvalidArgument.hpp"
+#include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 
 #include "castor/vdqm/DeviceGroupName.hpp"
@@ -113,10 +114,26 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
 	   */
 		if ( ptr_driveRequest->status == VDQM_TPD_STARTED ) {
 			deleteAllTapeDrvsFromSrv(tapeServer);
+			return;
 		}
 	} catch ( castor::exception::Exception ex ) {
-		if ( tapeServer ) 
-			delete tapeServer;
+		if ( tapeServer ) {
+			for (std::vector<castor::vdqm::TapeDrive*>::iterator it = tapeServer->tapeDrives().begin();
+	         it != tapeServer->tapeDrives().end();
+	         it++) {
+		  	// The old TapeRequest. Normally it should not exist.
+		    TapeRequest* runningTapeReq = (*it)->runningTapeReq();   	
+		    
+		    if (runningTapeReq != 0) {
+		    	delete runningTapeReq;
+		    	runningTapeReq = 0;
+		    	(*it)->setRunningTapeReq(0);
+		    }
+	  	}  
+	  	delete tapeServer;
+	  	tapeServer = 0;
+		}
+			
 		
 		throw ex;
 	}
@@ -128,6 +145,7 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
 
 	if ( ptr_driveRequest->status == VDQM_UNIT_QUERY ) {
 		  copyTapeDriveInformations(tapeDrive);
+		  freeMemory(tapeDrive, tapeServer);
       return;
 	}
 
@@ -291,6 +309,8 @@ void castor::vdqm::handler::TapeDriveHandler::deleteAllTapeDrvsFromSrv(
       if (runningTapeReq != 0) {
 	      deleteRepresentation(runningTapeReq, m_cuuid);
       	delete runningTapeReq;
+      	runningTapeReq = 0;
+      	(*it)->setRunningTapeReq(0);
       }
       
       deleteRepresentation(*it, m_cuuid);
@@ -303,6 +323,7 @@ void castor::vdqm::handler::TapeDriveHandler::deleteAllTapeDrvsFromSrv(
 	}
 	
 	delete tapeServer;
+	tapeServer = 0;
 }
 
 
@@ -432,11 +453,16 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
   ptr_driveRequest->MBtransf = tapeDrive->transferredMB();
   ptr_driveRequest->usecount = tapeDrive->usecount();			
   
-//	client = tapeDrive->client();
-//  ptr_driveRequest->gid = client->egid();
-//  ptr_driveRequest->uid = client->euid();
-//  strcpy(ptr_driveRequest->reqhost, client->machine().c_str());
-//  strcpy(ptr_driveRequest->name, client->userName().c_str());
+  
+  castor::vdqm::TapeRequest* runningTapeReq = tapeDrive->runningTapeReq();
+  if ( NULL != runningTapeReq ) {
+		castor::stager::ClientIdentification* client = runningTapeReq->client();
+	  
+	  strcpy(ptr_driveRequest->reqhost, client->machine().c_str());
+	  
+	  client = 0;
+	  runningTapeReq = 0; 
+  }
 }
 
 
@@ -558,10 +584,9 @@ void castor::vdqm::handler::TapeDriveHandler::freeMemory(
 	TapeDrive* tapeDrive, 
 	TapeServer* tapeServer) {
 
-  /**
+	/**
    * Free memory for all Objects, which are not needed any more
    */
-  delete tapeServer;
   
   delete tapeDrive->deviceGroupName();
   
@@ -584,6 +609,22 @@ void castor::vdqm::handler::TapeDriveHandler::freeMemory(
 		delete runningTapeReq;	 
 		runningTapeReq = 0;
 	}
+	
+	for (std::vector<castor::vdqm::TapeDrive*>::iterator it = tapeServer->tapeDrives().begin();
+         it != tapeServer->tapeDrives().end();
+         it++) {
+  	// The old TapeRequest. Normally it should not exist.
+    TapeRequest* runningTapeReq = (*it)->runningTapeReq();   	
+    
+    if (runningTapeReq != 0) {
+    	delete runningTapeReq;
+    	runningTapeReq = 0;
+    	(*it)->setRunningTapeReq(0);
+    }
+  }  
+  delete tapeServer;
+  tapeServer = 0;
+  tapeDrive->setTapeServer(0);
 }
 
 

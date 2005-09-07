@@ -40,7 +40,7 @@ struct Cvdqm_TapeServer_t;
 // This defines a C interface to the following class
 // class TapeServer
 // Holds the information about the tape server. Every tape server has several tape
-// drives. If its actingMode says that it is in SERVER_IN_MAINTENANCE, then its tape
+// drives. If its actingMode says that it is in SERVER_INACTIVE, then its tape
 // drives are not involved in the CASTOR production.
 //------------------------------------------------------------------------------
 
@@ -101,20 +101,6 @@ int Cvdqm_TapeServer_serverName(struct Cvdqm_TapeServer_t* instance, const char*
  * The name of the tape server
  */
 int Cvdqm_TapeServer_setServerName(struct Cvdqm_TapeServer_t* instance, const char* new_var);
-
-/**
- * Get the value of status
- * the old vdqm status, which is used for the old protocol. At the begining the mode
- * is VDQM_TPD_STARTED.
- */
-int Cvdqm_TapeServer_status(struct Cvdqm_TapeServer_t* instance, int* var);
-
-/**
- * Set the value of status
- * the old vdqm status, which is used for the old protocol. At the begining the mode
- * is VDQM_TPD_STARTED.
- */
-int Cvdqm_TapeServer_setStatus(struct Cvdqm_TapeServer_t* instance, int new_var);
 
 /**
  * Get the value of id

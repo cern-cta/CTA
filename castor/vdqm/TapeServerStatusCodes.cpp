@@ -33,7 +33,7 @@
 // TapeServerStatusCodesStrings
 //------------------------------------------------------------------------------
 const char* castor::vdqm::TapeServerStatusCodesStrings[2] = {
-  "TAPESERVER_PRODUCTION",
-  "TAPESERVER_MAINTENANCE"
+  "TAPESERVER_ACTIVE",
+  "TAPESERVER_INACTIVE"
 };
 

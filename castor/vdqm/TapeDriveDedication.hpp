@@ -194,23 +194,43 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_timePeriods
-       * The time periods, in which the user wants to have the specified tape drive
-       * dedicated for its soecified tape
-       * @return the value of m_timePeriods
+       * Get the value of m_startTime
+       * The starting time, which specifies the beginning of a time slot for a special
+       * tape on a specified tape drive from a specified user
+       * @return the value of m_startTime
        */
-      std::string timePeriods() const {
-        return m_timePeriods;
+      int startTime() const {
+        return m_startTime;
       }
 
       /**
-       * Set the value of m_timePeriods
-       * The time periods, in which the user wants to have the specified tape drive
-       * dedicated for its soecified tape
-       * @param new_var the new value of m_timePeriods
+       * Set the value of m_startTime
+       * The starting time, which specifies the beginning of a time slot for a special
+       * tape on a specified tape drive from a specified user
+       * @param new_var the new value of m_startTime
        */
-      void setTimePeriods(std::string new_var) {
-        m_timePeriods = new_var;
+      void setStartTime(int new_var) {
+        m_startTime = new_var;
+      }
+
+      /**
+       * Get the value of m_endTime
+       * The ending time, which specifies the beginning of a time slot for a special tape
+       * on a specified tape drive from a specified user
+       * @return the value of m_endTime
+       */
+      int endTime() const {
+        return m_endTime;
+      }
+
+      /**
+       * Set the value of m_endTime
+       * The ending time, which specifies the beginning of a time slot for a special tape
+       * on a specified tape drive from a specified user
+       * @param new_var the new value of m_endTime
+       */
+      void setEndTime(int new_var) {
+        m_endTime = new_var;
       }
 
       /**
@@ -264,8 +284,11 @@ namespace castor {
       /// the mode, which the client want to use to access the tape. This can be READ or WRITE access
       int m_accessMode;
 
-      /// The time periods, in which the user wants to have the specified tape drive dedicated for its soecified tape
-      std::string m_timePeriods;
+      /// The starting time, which specifies the beginning of a time slot for a special tape on a specified tape drive from a specified user
+      int m_startTime;
+
+      /// The ending time, which specifies the beginning of a time slot for a special tape on a specified tape drive from a specified user
+      int m_endTime;
 
       /// The id of this object
       u_signed64 m_id;

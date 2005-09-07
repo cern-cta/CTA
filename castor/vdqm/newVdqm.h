@@ -72,7 +72,7 @@ typedef struct newVdqmVolReq {
 
 
 typedef struct newVdqmDrvReq {
-	int status;
+	int status;	/* Status of the VdqmDrvReq */
 	int DrvReqID;
 	int VolReqID;          /* Volume request ID for running requests */
 	int jobID;
@@ -84,7 +84,7 @@ typedef struct newVdqmDrvReq {
 	int mode;       /* WRITE_ENABLE/WRITE_DISABLE from Ctape_constants.h */
 	u_signed64 TotalMB;    /* Total MBytes transfered.           */
   char reqhost[CA_MAXHOSTNAMELEN+1];
-	char volid[CA_MAXVIDLEN+1];
+	char volid[CA_MAXVIDLEN+1]; /* Tape vid */
 	char server[CA_MAXHOSTNAMELEN+1];
 	char drive[CA_MAXUNMLEN+1];
 	char dgn[CA_MAXDGNLEN+1];

@@ -180,19 +180,34 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_TapeDriveDedication_timePeriods
+  // Cvdqm_TapeDriveDedication_startTime
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDriveDedication_timePeriods(castor::vdqm::TapeDriveDedication* instance, const char** var) {
-    *var = instance->timePeriods().c_str();
+  int Cvdqm_TapeDriveDedication_startTime(castor::vdqm::TapeDriveDedication* instance, int* var) {
+    *var = instance->startTime();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cvdqm_TapeDriveDedication_setTimePeriods
+  // Cvdqm_TapeDriveDedication_setStartTime
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDriveDedication_setTimePeriods(castor::vdqm::TapeDriveDedication* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setTimePeriods(snew_var);
+  int Cvdqm_TapeDriveDedication_setStartTime(castor::vdqm::TapeDriveDedication* instance, int new_var) {
+    instance->setStartTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeDriveDedication_endTime
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDriveDedication_endTime(castor::vdqm::TapeDriveDedication* instance, int* var) {
+    *var = instance->endTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeDriveDedication_setEndTime
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDriveDedication_setEndTime(castor::vdqm::TapeDriveDedication* instance, int new_var) {
+    instance->setEndTime(new_var);
     return 0;
   }
 

@@ -131,7 +131,7 @@ namespace castor {
 
       /**
        * Get the value of m_modificationTime
-       * The time, when the tape request is opend by the client or beeing modified
+       * The time, when the tape request has been opend or has been modified
        * @return the value of m_modificationTime
        */
       int modificationTime() const {
@@ -140,11 +140,29 @@ namespace castor {
 
       /**
        * Set the value of m_modificationTime
-       * The time, when the tape request is opend by the client or beeing modified
+       * The time, when the tape request has been opend or has been modified
        * @param new_var the new value of m_modificationTime
        */
       void setModificationTime(int new_var) {
         m_modificationTime = new_var;
+      }
+
+      /**
+       * Get the value of m_creationTime
+       * The time, when the tape request is beeing created
+       * @return the value of m_creationTime
+       */
+      int creationTime() const {
+        return m_creationTime;
+      }
+
+      /**
+       * Set the value of m_creationTime
+       * The time, when the tape request is beeing created
+       * @param new_var the new value of m_creationTime
+       */
+      void setCreationTime(int new_var) {
+        m_creationTime = new_var;
       }
 
       /**
@@ -265,8 +283,11 @@ namespace castor {
 
       int m_priority;
 
-      /// The time, when the tape request is opend by the client or beeing modified
+      /// The time, when the tape request has been opend or has been modified
       int m_modificationTime;
+
+      /// The time, when the tape request is beeing created
+      int m_creationTime;
 
       /// The id of this object
       u_signed64 m_id;

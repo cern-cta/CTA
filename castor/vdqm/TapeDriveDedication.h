@@ -151,18 +151,32 @@ int Cvdqm_TapeDriveDedication_accessMode(struct Cvdqm_TapeDriveDedication_t* ins
 int Cvdqm_TapeDriveDedication_setAccessMode(struct Cvdqm_TapeDriveDedication_t* instance, int new_var);
 
 /**
- * Get the value of timePeriods
- * The time periods, in which the user wants to have the specified tape drive
- * dedicated for its soecified tape
+ * Get the value of startTime
+ * The starting time, which specifies the beginning of a time slot for a special
+ * tape on a specified tape drive from a specified user
  */
-int Cvdqm_TapeDriveDedication_timePeriods(struct Cvdqm_TapeDriveDedication_t* instance, const char** var);
+int Cvdqm_TapeDriveDedication_startTime(struct Cvdqm_TapeDriveDedication_t* instance, int* var);
 
 /**
- * Set the value of timePeriods
- * The time periods, in which the user wants to have the specified tape drive
- * dedicated for its soecified tape
+ * Set the value of startTime
+ * The starting time, which specifies the beginning of a time slot for a special
+ * tape on a specified tape drive from a specified user
  */
-int Cvdqm_TapeDriveDedication_setTimePeriods(struct Cvdqm_TapeDriveDedication_t* instance, const char* new_var);
+int Cvdqm_TapeDriveDedication_setStartTime(struct Cvdqm_TapeDriveDedication_t* instance, int new_var);
+
+/**
+ * Get the value of endTime
+ * The ending time, which specifies the beginning of a time slot for a special tape
+ * on a specified tape drive from a specified user
+ */
+int Cvdqm_TapeDriveDedication_endTime(struct Cvdqm_TapeDriveDedication_t* instance, int* var);
+
+/**
+ * Set the value of endTime
+ * The ending time, which specifies the beginning of a time slot for a special tape
+ * on a specified tape drive from a specified user
+ */
+int Cvdqm_TapeDriveDedication_setEndTime(struct Cvdqm_TapeDriveDedication_t* instance, int new_var);
 
 /**
  * Get the value of id

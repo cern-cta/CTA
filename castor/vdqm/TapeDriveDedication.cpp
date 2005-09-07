@@ -45,7 +45,8 @@ castor::vdqm::TapeDriveDedication::TapeDriveDedication() throw() :
   m_egid(0),
   m_vid(""),
   m_accessMode(0),
-  m_timePeriods(""),
+  m_startTime(0),
+  m_endTime(0),
   m_id(0),
   m_tapeDrive(0) {
 };
@@ -77,7 +78,8 @@ void castor::vdqm::TapeDriveDedication::print(std::ostream& stream,
   stream << indent << "egid : " << m_egid << std::endl;
   stream << indent << "vid : " << m_vid << std::endl;
   stream << indent << "accessMode : " << m_accessMode << std::endl;
-  stream << indent << "timePeriods : " << m_timePeriods << std::endl;
+  stream << indent << "startTime : " << m_startTime << std::endl;
+  stream << indent << "endTime : " << m_endTime << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "TapeDrive : " << std::endl;

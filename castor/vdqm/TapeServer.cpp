@@ -42,7 +42,6 @@
 //------------------------------------------------------------------------------
 castor::vdqm::TapeServer::TapeServer() throw() :
   m_serverName(""),
-  m_status(0),
   m_id(0),
   m_actingMode(TapeServerStatusCodes(0)) {
 };
@@ -72,7 +71,6 @@ void castor::vdqm::TapeServer::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "serverName : " << m_serverName << std::endl;
-  stream << indent << "status : " << m_status << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

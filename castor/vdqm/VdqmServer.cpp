@@ -565,12 +565,12 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 		reqHandled = oldRequestFacade.handleRequestType(oldProtInterpreter, cuuid);
 
 	} catch (castor::exception::Exception e) { 
-    castor::dlf::Param params[] =
+    castor::dlf::Param params2[] =
       {castor::dlf::Param("Message", e.getMessage().str().c_str()),
        castor::dlf::Param("errorCode", e.code())};   
 
     // "Exception caught" message   
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 2, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 2, params2);
     
     
     // "VdqmServer::handleOldVdqmRequest(): Rollback of the whole request" message   

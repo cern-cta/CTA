@@ -50,7 +50,7 @@ namespace castor {
     /**
      * class TapeServer
      * Holds the information about the tape server. Every tape server has several tape
-     * drives. If its actingMode says that it is in SERVER_IN_MAINTENANCE, then its tape
+     * drives. If its actingMode says that it is in SERVER_INACTIVE, then its tape
      * drives are not involved in the CASTOR production.
      */
     class TapeServer : public virtual castor::IObject {
@@ -123,26 +123,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_status
-       * the old vdqm status, which is used for the old protocol. At the begining the mode
-       * is VDQM_TPD_STARTED.
-       * @return the value of m_status
-       */
-      int status() const {
-        return m_status;
-      }
-
-      /**
-       * Set the value of m_status
-       * the old vdqm status, which is used for the old protocol. At the begining the mode
-       * is VDQM_TPD_STARTED.
-       * @param new_var the new value of m_status
-       */
-      void setStatus(int new_var) {
-        m_status = new_var;
-      }
-
-      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -209,9 +189,6 @@ namespace castor {
 
       /// The name of the tape server
       std::string m_serverName;
-
-      /// the old vdqm status, which is used for the old protocol. At the begining the mode is VDQM_TPD_STARTED.
-      int m_status;
 
       /// The id of this object
       u_signed64 m_id;

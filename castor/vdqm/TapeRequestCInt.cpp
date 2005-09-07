@@ -135,6 +135,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cvdqm_TapeRequest_creationTime
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeRequest_creationTime(castor::vdqm::TapeRequest* instance, int* var) {
+    *var = instance->creationTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeRequest_setCreationTime
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeRequest_setCreationTime(castor::vdqm::TapeRequest* instance, int new_var) {
+    instance->setCreationTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cvdqm_TapeRequest_id
   //----------------------------------------------------------------------------
   int Cvdqm_TapeRequest_id(castor::vdqm::TapeRequest* instance, u_signed64* var) {

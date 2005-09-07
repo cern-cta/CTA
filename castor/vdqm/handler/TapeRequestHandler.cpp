@@ -132,6 +132,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
 	  //------------------------------------------------------------------------
 	  //The Tape related informations
 	  newTapeReq = new TapeRequest();
+	  newTapeReq->setCreationTime(time(NULL));
 	 	newTapeReq->setModificationTime(time(NULL));
 	 	/*
 	   * We don't allow client to set priority
@@ -403,6 +404,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 			 * Update the data base
 			 */
 			updateRepresentation(tapeReq, cuuid);
+			updateRepresentation(tapeDrive, cuuid);
 
 			    
 		  castor::exception::Exception ex(EVQREQASS);

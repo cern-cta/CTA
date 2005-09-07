@@ -32,7 +32,8 @@
 //------------------------------------------------------------------------------
 // This defines a C interface to the following enum
 // enum TapeServerStatusCodes
-// 
+// These flags are used to control, wether TapeRequests should be dedicated to tape
+// drives on this tape server or not.
 //------------------------------------------------------------------------------
 
 #define Cvdqm_TapeServerStatusCodes_t TapeServerStatusCodes
