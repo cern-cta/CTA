@@ -79,6 +79,9 @@ ALTER TABLE FileClass ADD UNIQUE (name);
 /* Add unique constraint on castorFiles */
 ALTER TABLE CastorFile ADD UNIQUE (fileId, nsHost); 
 
+/* Add unique constraint on tapes */
+ALTER TABLE Tape ADD UNIQUE (VID, side, tpMode); 
+
 /* get current time as a time_t. Not that easy in ORACLE */
 CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
   ret NUMBER;
