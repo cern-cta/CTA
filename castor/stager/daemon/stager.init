@@ -5,9 +5,9 @@
 # chkconfig: 345 70 35
 # description: STAGER server daemon
 #
-# $Id: stager.init,v 1.1 2005/06/17 08:04:27 jdurand Exp $
+# $Id: stager.init,v 1.2 2005/09/13 14:58:53 jdurand Exp $
 #
-# @(#)$RCSfile: stager.init,v $ $Revision: 1.1 $ $Date: 2005/06/17 08:04:27 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: stager.init,v $ $Revision: 1.2 $ $Date: 2005/09/13 14:58:53 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 #
@@ -77,6 +77,12 @@ fi
 ## Unless sysconfig says no the default is to run the server
 #
 RUN_STAGER=yes
+
+mycheckpid() {
+    pid=`ps -eo pid,ppid,$format4comm | grep " 1 stager" | awk '{print $1}'`
+    [ "$pid" = "$1" ] && return 1
+    return 0
+}
 
 case "$1" in
   start)
@@ -149,11 +155,36 @@ case "$1" in
     if [ -f $PIDFILE ]; then
 	[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Stopping $prog: "
 	if [ $SILENTSTOP -eq 0 ]; then
-	    kill -9 -`cat $PIDFILE`
+	    kill -2 -`cat $PIDFILE`
 	else
-	    kill -9 -`cat $PIDFILE` >& /dev/null
+	    kill -2 -`cat $PIDFILE` >& /dev/null
 	fi
-	RETVAL=$?
+	#
+	## Wait 60 seconds maximum
+	#
+	stopped=0
+	for i in 0 10 20 30 40 50; do
+	    for j in 0 1 2 3 4 5 6 7 8 9; do
+		sleep 1
+		mycheckpid `cat $PIDFILE`
+		if [ $? -eq 0 ]; then
+		    stopped=1
+		    break
+		fi
+		[ $stopped -eq 1 ] && break
+	    done
+	done
+	if [ $stopped -ne 1 ]; then
+	    [ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Using kill -9 ... "
+	    if [ $SILENTSTOP -eq 0 ]; then
+		kill -9 -`cat $PIDFILE`
+	    else
+		kill -9 -`cat $PIDFILE` >& /dev/null
+	    fi
+	    RETVAL=$?
+	else
+	    RETVAL=0
+	fi
 	if [ $RETVAL -eq 0 ]; then
 	    rm -f $PIDFILE
 	fi
@@ -163,11 +194,36 @@ case "$1" in
 	if [ -n "$pid" ]; then
 	    [ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Stopping $prog: "
 	    if [ $SILENTSTOP -eq 0 ]; then
-		kill -9 -$pid
+		kill -2 -$pid
 	    else
-		kill -9 -$pid >& /dev/null
+		kill -2 -$pid >& /dev/null
 	    fi
-	    RETVAL=$?
+	    #
+	    ## Wait 60 seconds maximum
+	    #
+	    stopped=0
+	    for i in 0 10 20 30 40 50; do
+		for j in 0 1 2 3 4 5 6 7 8 9; do
+		    sleep 1
+		    mycheckpid $pid
+		    if [ $? -eq 0 ]; then
+			stopped=1
+			break
+		    fi
+		    [ $stopped -eq 1 ] && break
+		done
+	    done
+	    if [ $stopped -ne 1 ]; then
+		[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Using kill -9 ... "
+		if [ $SILENTSTOP -eq 0 ]; then
+		    kill -9 -`cat $PIDFILE`
+		else
+		    kill -9 -`cat $PIDFILE` >& /dev/null
+		fi
+		RETVAL=$?
+	    else
+		RETVAL=0
+	    fi
 	else
 	    [ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "stager already stopped: "
 	    [ $SILENTSTOP -eq 0 -a -n "$FAILURE" ] && $FAILURE "stager already stopped: "
