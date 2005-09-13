@@ -163,6 +163,7 @@ castor::vdqm::VdqmServer::VdqmServer():
      {62, "Dedication thread pool created"},
      {63, "Exception caught in TapeRequestDedicationHandler::dedicationRequest()"},
      {64, "No TapeDrive object to commit to RTCPD"},
+     {65, "Found a queued tape request for mounted tape"},
      {-1, ""}};
   castor::dlf::dlf_init("Vdqm", messages);
 }

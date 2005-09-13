@@ -58,7 +58,7 @@ castor::vdqm::handler::TapeRequestDedicationHandler*
  * run.
  */
 unsigned const int
-	castor::vdqm::handler::TapeRequestDedicationHandler::m_sleepTime = 10;
+	castor::vdqm::handler::TapeRequestDedicationHandler::m_sleepTime = 2;
  	
  	
 //------------------------------------------------------------------------------
@@ -146,9 +146,6 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::run() {
 	    castor::dlf::Param param[] =
 	      {castor::dlf::Param("Message", ex.getMessage().str())};      
 	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 50, 1, param);
-	    
-	    //TODO: Remove this sleep time!
-	    sleep(m_sleepTime);
 		}
 	  	
 	  	

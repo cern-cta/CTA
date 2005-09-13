@@ -186,7 +186,7 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
 	/**
 	 * Now the last thing is to update the data base
 	 */
-	 updateRepresentation(tapeDrive, m_cuuid);
+	updateRepresentation(tapeDrive, m_cuuid);
 	 
 	/**
 	 * Log the actual "new" status.

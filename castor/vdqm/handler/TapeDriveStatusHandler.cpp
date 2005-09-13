@@ -23,10 +23,13 @@
  *
  * @author Matthias Braeger
  *****************************************************************************/
+
+#include <rtcp_constants.h> /* RTCOPY_PORT  */
  
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/stager/Tape.hpp"
 
+#include "castor/vdqm/RTCopyDConnection.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
@@ -262,7 +265,6 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
 			throw ex;										
 	  }
 	  
-		//TODO: Write a method for IVdqmService!!!
  	  if ( ptr_IVdqmService->existTapeDriveWithTapeInUse(ptr_driveRequest->volid) ||
 			ptr_IVdqmService->existTapeDriveWithTapeMounted(ptr_driveRequest->volid) ) {
 			castor::exception::Exception ex(EBUSY);
@@ -302,12 +304,22 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
 	ptr_tapeDrive->setUsecount(ptr_tapeDrive->usecount() + 1);
 	
 	
-	// "TapeDriveStatusHandler::handleVolMountStatus(): Tape mounted in tapeDrive"
-	castor::dlf::Param params[] =
-  	{castor::dlf::Param("tapeDrive ID", ptr_tapeDrive->id()),
-		 castor::dlf::Param("tape ID", mountedTape->id()),
-		 castor::dlf::Param("tapeRequest ID", tapeRequest->id())};
-	castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 52, 3, params);
+	if ( tapeRequest ) {
+		// "TapeDriveStatusHandler::handleVolMountStatus(): Tape mounted in tapeDrive"
+		castor::dlf::Param params[] =
+	  	{castor::dlf::Param("tapeDrive ID", ptr_tapeDrive->id()),
+			 castor::dlf::Param("tape ID", mountedTape->id()),
+			 castor::dlf::Param("tapeRequest ID", tapeRequest->id())};
+		castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 52, 3, params);
+	}
+	else {
+  	// "TapeDriveStatusHandler::handleVolMountStatus(): Tape mounted in tapeDrive"
+		castor::dlf::Param params[] =
+	  	{castor::dlf::Param("tapeDrive ID", ptr_tapeDrive->id()),
+			 castor::dlf::Param("tape ID", mountedTape->id()),
+			 castor::dlf::Param("tapeRequest ID", "Local Request")};
+		castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 52, 3, params);
+	}
 }
 
 
@@ -385,96 +397,134 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
 	
 	tape = ptr_tapeDrive->tape();
 	if ( tape != NULL ) {
-	    /*
-	     * Consistency check: if input request contains a volid it
-	     * should correspond to the one in the drive record. This
-	     * is not fatal but should be logged.
-	     */
-	    if ( *ptr_driveRequest->volid != '\0' && 
-	         strcmp(ptr_driveRequest->volid, tape->vid().c_str()) ) {
-	       
-	      // "Inconsistent release on tape drive" message 
+    /*
+     * Consistency check: if input request contains a volid it
+     * should correspond to the one in the drive record. This
+     * is not fatal but should be logged.
+     */
+    if ( *ptr_driveRequest->volid != '\0' && 
+         strcmp(ptr_driveRequest->volid, tape->vid().c_str()) ) {
+       
+      // "Inconsistent release on tape drive" message 
+      castor::dlf::Param params[] =
+  			{castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+  			 castor::dlf::Param("serverName", ptr_tapeDrive->tapeServer()->serverName()),
+  			 castor::dlf::Param("volid from client", ptr_driveRequest->volid),
+  			 castor::dlf::Param("volid from tape drive", tape->vid()),
+  			 castor::dlf::Param("jobID", ptr_tapeDrive->jobID())};
+			castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR, 41, 5, params);
+    }
+    
+    /*
+     * Fill in current volid in case we need to request an unmount.
+     */
+    if ( *ptr_driveRequest->volid == '\0' ) 
+    	strcpy(ptr_driveRequest->volid, tape->vid().c_str());
+    
+    /*
+     * If a tape is mounted but the current job ended: check if there
+     * are any other valid requests for the same volume. The volume
+     * can only be re-used on this unit if the modes (R/W) are the 
+     * same. If client indicated an error or forced unmount the
+     * will remain with that state until a VOL_UNMOUNT is received
+     * and both drive and volume cannot be reused until then.
+     * If the drive status was UNKNOWN at entry we must force an
+     * unmount in all cases. This normally happens when a RTCOPY
+     * client has aborted and sent VDQM_DEL_VOLREQ to delete his
+     * volume request before the RTCOPY server has released the
+     * job. 
+     */
+    
+
+    if ( ptr_tapeDrive->status() != STATUS_UNKNOWN && 
+	   		 ptr_tapeDrive->status() != FORCED_UNMOUNT) 
+	   	newTapeRequest = ptr_IVdqmService->selectTapeReqForMountedTape(ptr_tapeDrive);
+    	        
+    if ( ptr_tapeDrive->status() == STATUS_UNKNOWN ||
+    		 ptr_tapeDrive->status() == FORCED_UNMOUNT ||
+         newTapeRequest == NULL) {
+
+      if ( ptr_tapeDrive->status() == FORCED_UNMOUNT ) {
+				// "client has requested a forced unmount." message
+				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR, 42);	            	          
+      }
+      else if ( ptr_tapeDrive->status() == STATUS_UNKNOWN ) {
+				// "tape drive in STATUS_UNKNOWN status. Force unmount!" message
+				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR, 43);	            
+      }
+      
+      if ( newTapeRequest == NULL ) {
+      	// "No tape request left for mounted tape" message
 	      castor::dlf::Param params[] =
 	  			{castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
 	  			 castor::dlf::Param("serverName", ptr_tapeDrive->tapeServer()->serverName()),
-	  			 castor::dlf::Param("volid from client", ptr_driveRequest->volid),
-	  			 castor::dlf::Param("volid from tape drive", tape->vid()),
-	  			 castor::dlf::Param("jobID", ptr_tapeDrive->jobID())};
-				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR, 41, 5, params);
-	    }
-	    
-	    /*
-	     * Fill in current volid in case we need to request an unmount.
-	     */
-	    if ( *ptr_driveRequest->volid == '\0' ) 
-	    	strcpy(ptr_driveRequest->volid, tape->vid().c_str());
-	    
-	    /*
-	     * If a tape is mounted but the current job ended: check if there
-	     * are any other valid requests for the same volume. The volume
-	     * can only be re-used on this unit if the modes (R/W) are the 
-	     * same. If client indicated an error or forced unmount the
-	     * will remain with that state until a VOL_UNMOUNT is received
-	     * and both drive and volume cannot be reused until then.
-	     * If the drive status was UNKNOWN at entry we must force an
-	     * unmount in all cases. This normally happens when a RTCOPY
-	     * client has aborted and sent VDQM_DEL_VOLREQ to delete his
-	     * volume request before the RTCOPY server has released the
-	     * job. 
-	     */
-	    
-
-	    if ( ptr_tapeDrive->status() != STATUS_UNKNOWN && 
-		   		 ptr_tapeDrive->status() != FORCED_UNMOUNT) 
-		   	newTapeRequest = ptr_IVdqmService->selectTapeReqForMountedTape(ptr_tapeDrive);
-	    	        
-	    if ( ptr_tapeDrive->status() == STATUS_UNKNOWN ||
-	    		 ptr_tapeDrive->status() == FORCED_UNMOUNT ||
-	         newTapeRequest == NULL) {
-
-	        if ( ptr_tapeDrive->status() == FORCED_UNMOUNT ) {
-						// "client has requested a forced unmount." message
-						castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR, 42);	            	          
-	        }
-	        else if ( ptr_tapeDrive->status() == STATUS_UNKNOWN ) {
-						// "tape drive in STATUS_UNKNOWN status. Force unmount!" message
-						castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR, 43);	            
-	        }
-	        
- 	        if ( newTapeRequest == NULL ) {
-          	// "No tape request left for mounted tape" message
-			      castor::dlf::Param params[] =
-			  			{castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
-			  			 castor::dlf::Param("serverName", ptr_tapeDrive->tapeServer()->serverName()),
-			  			 castor::dlf::Param("tape vid", tape->vid())};          	
-						castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 44, 3, params);	            
- 	        }
-	        	        
-	        /*
-	         * No, there wasn't any other job for that volume. Tell the
-	         * drive to unmount the volume. Put unit in WAIT_FOR_UNMOUNT status
-	         * until volume has been unmounted to prevent other
-	         * request from being assigned.
-	         */
-	        ptr_driveRequest->status = VDQM_VOL_UNMOUNT;
-	        
-	        /**
-	         * Switch tape Drive to status WAIT_FOR_UNMOUNT
-	         */
-	        ptr_tapeDrive->setStatus(WAIT_FOR_UNMOUNT); 
-	        
-	        if ( newTapeRequest )
-	        	delete newTapeRequest;
-	    } 
-	    else {
-	        newTapeRequest->setTapeDrive(ptr_tapeDrive);
-	        ptr_tapeDrive->setRunningTapeReq(newTapeRequest);
-	        
-	        /**
-	         * Switch tape Drive to status UNIT_STARTING
-	         */
-	        ptr_tapeDrive->setStatus(UNIT_STARTING); 
-	    }
+	  			 castor::dlf::Param("tape vid", tape->vid())};          	
+				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 44, 3, params);	            
+      }
+      	        
+      /*
+       * No, there wasn't any other job for that volume. Tell the
+       * drive to unmount the volume. Put unit in WAIT_FOR_UNMOUNT status
+       * until volume has been unmounted to prevent other
+       * request from being assigned.
+       */
+      ptr_driveRequest->status = VDQM_VOL_UNMOUNT;
+      
+      /**
+       * Switch tape Drive to status WAIT_FOR_UNMOUNT
+       */
+      ptr_tapeDrive->setStatus(WAIT_FOR_UNMOUNT); 
+      
+      if ( newTapeRequest )
+      	delete newTapeRequest;
+    } 
+    else {
+    	// "Found a queued tape request for mounted tape" message
+      castor::dlf::Param params[] =
+  			{castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+  			 castor::dlf::Param("serverName", ptr_tapeDrive->tapeServer()->serverName()),
+  			 castor::dlf::Param("tape vid", tape->vid()),
+  			 castor::dlf::Param("tapeRequest ID", newTapeRequest->id())};          	
+			castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 65, 4, params);
+    	
+      /**
+       * Switch tape Drive to status UNIT_STARTING
+       */
+      ptr_tapeDrive->setStatus(UNIT_STARTING);
+      
+      
+      /**
+			 * Updating the informations for the data base
+			 */
+			ptr_tapeDrive->setJobID(0);
+			ptr_tapeDrive->setModificationTime((int)time(NULL));
+			
+			newTapeRequest->setTapeDrive(ptr_tapeDrive);
+			newTapeRequest->setModificationTime((int)time(NULL));
+			
+			ptr_tapeDrive->setRunningTapeReq(newTapeRequest); 
+				
+				
+			/**
+			 * We must inform the RTCopy daemon about this new Request. If we get
+			 * a positiv reply, we can commit the whole transaction into db.
+			 */
+			RTCopyDConnection rtcpConnection(RTCOPY_PORT, 
+																			ptr_tapeDrive->tapeServer()->serverName());																	 
+			rtcpConnection.connect();
+			
+			if ( !rtcpConnection.sendJobToRTCPD(ptr_tapeDrive) ) {
+				castor::exception::Exception ex(EVQBADSTAT);
+				ex.getMessage() << "TapeDriveStatusHandler::handleUnitReleaseStatus(): "
+												<< "Received an error during sending information to RTCP" 
+												<< std::endl;			
+				throw ex;
+			}
+			
+			
+			//update the TapeRequest in the db
+			updateRepresentation(newTapeRequest, m_cuuid);
+		}
 	} else {
 	    /*
 	     * There is no volume on unit. Since a RELEASE has
