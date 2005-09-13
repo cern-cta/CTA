@@ -5,9 +5,9 @@
 # chkconfig: 345 70 35
 # description: STAGER server daemon
 #
-# $Id: stager.init,v 1.2 2005/09/13 14:58:53 jdurand Exp $
+# $Id: stager.init,v 1.3 2005/09/13 15:06:11 jdurand Exp $
 #
-# @(#)$RCSfile: stager.init,v $ $Revision: 1.2 $ $Date: 2005/09/13 14:58:53 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: stager.init,v $ $Revision: 1.3 $ $Date: 2005/09/13 15:06:11 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 #
@@ -154,11 +154,7 @@ case "$1" in
     export STAGER_HOST
     if [ -f $PIDFILE ]; then
 	[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Stopping $prog: "
-	if [ $SILENTSTOP -eq 0 ]; then
-	    kill -2 -`cat $PIDFILE`
-	else
-	    kill -2 -`cat $PIDFILE` >& /dev/null
-	fi
+	kill -2 -`cat $PIDFILE` >& /dev/null
 	#
 	## Wait 60 seconds maximum
 	#
@@ -175,12 +171,8 @@ case "$1" in
 	    done
 	done
 	if [ $stopped -ne 1 ]; then
-	    [ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Using kill -9 ... "
-	    if [ $SILENTSTOP -eq 0 ]; then
-		kill -9 -`cat $PIDFILE`
-	    else
-		kill -9 -`cat $PIDFILE` >& /dev/null
-	    fi
+	    [ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Using kill -9 `cat $PIDFILE` "
+	    kill -9 -`cat $PIDFILE` >& /dev/null
 	    RETVAL=$?
 	else
 	    RETVAL=0
@@ -193,11 +185,7 @@ case "$1" in
 	pid=`ps -eo pid,ppid,$format4comm | grep " 1 stager" | awk '{print $1}'`
 	if [ -n "$pid" ]; then
 	    [ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Stopping $prog: "
-	    if [ $SILENTSTOP -eq 0 ]; then
-		kill -2 -$pid
-	    else
-		kill -2 -$pid >& /dev/null
-	    fi
+	    kill -2 -$pid >& /dev/null
 	    #
 	    ## Wait 60 seconds maximum
 	    #
@@ -214,12 +202,8 @@ case "$1" in
 		done
 	    done
 	    if [ $stopped -ne 1 ]; then
-		[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Using kill -9 ... "
-		if [ $SILENTSTOP -eq 0 ]; then
-		    kill -9 -`cat $PIDFILE`
-		else
-		    kill -9 -`cat $PIDFILE` >& /dev/null
-		fi
+		[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Using kill -9 `cat $PIDFILE` "
+		kill -9 -`cat $PIDFILE` >& /dev/null
 		RETVAL=$?
 	    else
 		RETVAL=0
