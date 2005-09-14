@@ -488,7 +488,8 @@ void CppCppDbCnvWriter::writeConstants() {
     } else {
       if (as->type.multiLocal == MULT_ONE &&
           as->type.multiRemote != MULT_UNKNOWN &&
-          !as->remotePart.abstract) {
+          !as->remotePart.abstract &&
+          as->localPart.name != "") {
         // 1 to * association
         *m_stream << getIndent()
                   << "/// SQL select statement for member "
@@ -918,7 +919,8 @@ void CppCppDbCnvWriter::writeConstructors() {
     } else {
       if (as->type.multiLocal == MULT_ONE &&
           as->type.multiRemote != MULT_UNKNOWN &&
-          !as->remotePart.abstract) {
+          !as->remotePart.abstract &&
+          as->localPart.name != "") {
         // 1 to * association
         *m_stream << "," << endl << getIndent()
                   << "  m_select"
@@ -1022,7 +1024,8 @@ void CppCppDbCnvWriter::writeReset() {
     } else {
       if (as->type.multiLocal == MULT_ONE &&
           as->type.multiRemote != MULT_UNKNOWN &&
-          !as->remotePart.abstract) {
+          !as->remotePart.abstract &&
+          as->localPart.name != "") {
         // 1 to * association
         *m_stream << getIndent()
                   << "delete m_delete"
@@ -1102,7 +1105,8 @@ void CppCppDbCnvWriter::writeReset() {
     } else {
       if (as->type.multiLocal == MULT_ONE &&
           as->type.multiRemote != MULT_UNKNOWN &&
-          !as->remotePart.abstract) {
+          !as->remotePart.abstract &&
+          as->localPart.name != "") {
         // 1 to * association
         *m_stream << getIndent()
                   << "m_select" << capitalizeFirstLetter(as->remotePart.typeName)
@@ -1364,7 +1368,8 @@ void CppCppDbCnvWriter::writeBasicMult1FillRep(Assoc* as) {
             << endl;
   m_indent++;
   if (as->type.multiLocal == MULT_ONE &&
-      !as->remotePart.abstract) {
+      !as->remotePart.abstract &&
+      as->localPart.name != "") {
     // 1 to 1, wee need to check whether the old remote object
     // should be updated
     *m_stream << getIndent() << "// Check select"
