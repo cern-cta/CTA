@@ -79,7 +79,7 @@ const std::string castor::db::cnv::DbTapeDriveCompatibilityCnv::s_deleteTypeStat
 
 /// SQL existence statement for member tapeAccessSpecification
 const std::string castor::db::cnv::DbTapeDriveCompatibilityCnv::s_checkTapeAccessSpecificationExistStatementString =
-"SELECT id from TapeAccessSpecification WHERE id = :1";
+"SELECT id FROM TapeAccessSpecification WHERE id = :1";
 
 /// SQL update statement for member tapeAccessSpecification
 const std::string castor::db::cnv::DbTapeDriveCompatibilityCnv::s_updateTapeAccessSpecificationStatementString =

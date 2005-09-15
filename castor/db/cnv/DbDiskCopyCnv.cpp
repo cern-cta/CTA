@@ -84,7 +84,7 @@ const std::string castor::db::cnv::DbDiskCopyCnv::s_deleteTypeStatementString =
 
 /// SQL select statement for member subRequests
 const std::string castor::db::cnv::DbDiskCopyCnv::s_selectSubRequestStatementString =
-"SELECT id from SubRequest WHERE diskcopy = :1 FOR UPDATE";
+"SELECT id FROM SubRequest WHERE diskcopy = :1 FOR UPDATE";
 
 /// SQL delete statement for member subRequests
 const std::string castor::db::cnv::DbDiskCopyCnv::s_deleteSubRequestStatementString =
@@ -96,7 +96,7 @@ const std::string castor::db::cnv::DbDiskCopyCnv::s_remoteUpdateSubRequestStatem
 
 /// SQL existence statement for member fileSystem
 const std::string castor::db::cnv::DbDiskCopyCnv::s_checkFileSystemExistStatementString =
-"SELECT id from FileSystem WHERE id = :1";
+"SELECT id FROM FileSystem WHERE id = :1";
 
 /// SQL update statement for member fileSystem
 const std::string castor::db::cnv::DbDiskCopyCnv::s_updateFileSystemStatementString =
@@ -104,7 +104,7 @@ const std::string castor::db::cnv::DbDiskCopyCnv::s_updateFileSystemStatementStr
 
 /// SQL existence statement for member castorFile
 const std::string castor::db::cnv::DbDiskCopyCnv::s_checkCastorFileExistStatementString =
-"SELECT id from CastorFile WHERE id = :1";
+"SELECT id FROM CastorFile WHERE id = :1";
 
 /// SQL update statement for member castorFile
 const std::string castor::db::cnv::DbDiskCopyCnv::s_updateCastorFileStatementString =
@@ -410,7 +410,7 @@ void castor::db::cnv::DbDiskCopyCnv::fillObjSubRequest(castor::stager::DiskCopy*
   for (std::set<int>::iterator it = subRequestsList.begin();
        it != subRequestsList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::SubRequest* remoteObj = 
       dynamic_cast<castor::stager::SubRequest*>(item);
     obj->addSubRequests(remoteObj);

@@ -84,7 +84,7 @@ const std::string castor::db::cnv::DbTapeCnv::s_deleteTypeStatementString =
 
 /// SQL select statement for member stream
 const std::string castor::db::cnv::DbTapeCnv::s_selectStreamStatementString =
-"SELECT id from Stream WHERE tape = :1 FOR UPDATE";
+"SELECT id FROM Stream WHERE tape = :1 FOR UPDATE";
 
 /// SQL delete statement for member stream
 const std::string castor::db::cnv::DbTapeCnv::s_deleteStreamStatementString =
@@ -96,7 +96,7 @@ const std::string castor::db::cnv::DbTapeCnv::s_remoteUpdateStreamStatementStrin
 
 /// SQL existence statement for member stream
 const std::string castor::db::cnv::DbTapeCnv::s_checkStreamExistStatementString =
-"SELECT id from Stream WHERE id = :1";
+"SELECT id FROM Stream WHERE id = :1";
 
 /// SQL update statement for member stream
 const std::string castor::db::cnv::DbTapeCnv::s_updateStreamStatementString =
@@ -104,7 +104,7 @@ const std::string castor::db::cnv::DbTapeCnv::s_updateStreamStatementString =
 
 /// SQL select statement for member errorHistory
 const std::string castor::db::cnv::DbTapeCnv::s_selectErrorHistoryStatementString =
-"SELECT id from ErrorHistory WHERE tape = :1 FOR UPDATE";
+"SELECT id FROM ErrorHistory WHERE tape = :1 FOR UPDATE";
 
 /// SQL delete statement for member errorHistory
 const std::string castor::db::cnv::DbTapeCnv::s_deleteErrorHistoryStatementString =
@@ -116,7 +116,7 @@ const std::string castor::db::cnv::DbTapeCnv::s_remoteUpdateErrorHistoryStatemen
 
 /// SQL select statement for member segments
 const std::string castor::db::cnv::DbTapeCnv::s_selectSegmentStatementString =
-"SELECT id from Segment WHERE tape = :1 FOR UPDATE";
+"SELECT id FROM Segment WHERE tape = :1 FOR UPDATE";
 
 /// SQL delete statement for member segments
 const std::string castor::db::cnv::DbTapeCnv::s_deleteSegmentStatementString =
@@ -526,7 +526,7 @@ void castor::db::cnv::DbTapeCnv::fillObjErrorHistory(castor::stager::Tape* obj)
   for (std::set<int>::iterator it = errorHistoryList.begin();
        it != errorHistoryList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::vdqm::ErrorHistory* remoteObj = 
       dynamic_cast<castor::vdqm::ErrorHistory*>(item);
     obj->addErrorHistory(remoteObj);
@@ -576,7 +576,7 @@ void castor::db::cnv::DbTapeCnv::fillObjSegment(castor::stager::Tape* obj)
   for (std::set<int>::iterator it = segmentsList.begin();
        it != segmentsList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::Segment* remoteObj = 
       dynamic_cast<castor::stager::Segment*>(item);
     obj->addSegments(remoteObj);

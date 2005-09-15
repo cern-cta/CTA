@@ -98,7 +98,7 @@ const std::string castor::db::cnv::DbTapeCopyCnv::s_selectStreamStatementString 
 
 /// SQL select statement for member segments
 const std::string castor::db::cnv::DbTapeCopyCnv::s_selectSegmentStatementString =
-"SELECT id from Segment WHERE copy = :1 FOR UPDATE";
+"SELECT id FROM Segment WHERE copy = :1 FOR UPDATE";
 
 /// SQL delete statement for member segments
 const std::string castor::db::cnv::DbTapeCopyCnv::s_deleteSegmentStatementString =
@@ -110,7 +110,7 @@ const std::string castor::db::cnv::DbTapeCopyCnv::s_remoteUpdateSegmentStatement
 
 /// SQL existence statement for member castorFile
 const std::string castor::db::cnv::DbTapeCopyCnv::s_checkCastorFileExistStatementString =
-"SELECT id from CastorFile WHERE id = :1";
+"SELECT id FROM CastorFile WHERE id = :1";
 
 /// SQL update statement for member castorFile
 const std::string castor::db::cnv::DbTapeCopyCnv::s_updateCastorFileStatementString =
@@ -436,7 +436,7 @@ void castor::db::cnv::DbTapeCopyCnv::fillObjStream(castor::stager::TapeCopy* obj
   for (std::set<int>::iterator it = streamList.begin();
        it != streamList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::Stream* remoteObj = 
       dynamic_cast<castor::stager::Stream*>(item);
     obj->addStream(remoteObj);
@@ -486,7 +486,7 @@ void castor::db::cnv::DbTapeCopyCnv::fillObjSegment(castor::stager::TapeCopy* ob
   for (std::set<int>::iterator it = segmentsList.begin();
        it != segmentsList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::Segment* remoteObj = 
       dynamic_cast<castor::stager::Segment*>(item);
     obj->addSegments(remoteObj);

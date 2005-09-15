@@ -84,7 +84,7 @@ const std::string castor::db::cnv::DbFileSystemCnv::s_deleteTypeStatementString 
 
 /// SQL existence statement for member diskPool
 const std::string castor::db::cnv::DbFileSystemCnv::s_checkDiskPoolExistStatementString =
-"SELECT id from DiskPool WHERE id = :1";
+"SELECT id FROM DiskPool WHERE id = :1";
 
 /// SQL update statement for member diskPool
 const std::string castor::db::cnv::DbFileSystemCnv::s_updateDiskPoolStatementString =
@@ -92,7 +92,7 @@ const std::string castor::db::cnv::DbFileSystemCnv::s_updateDiskPoolStatementStr
 
 /// SQL select statement for member copies
 const std::string castor::db::cnv::DbFileSystemCnv::s_selectDiskCopyStatementString =
-"SELECT id from DiskCopy WHERE fileSystem = :1 FOR UPDATE";
+"SELECT id FROM DiskCopy WHERE fileSystem = :1 FOR UPDATE";
 
 /// SQL delete statement for member copies
 const std::string castor::db::cnv::DbFileSystemCnv::s_deleteDiskCopyStatementString =
@@ -104,7 +104,7 @@ const std::string castor::db::cnv::DbFileSystemCnv::s_remoteUpdateDiskCopyStatem
 
 /// SQL existence statement for member diskserver
 const std::string castor::db::cnv::DbFileSystemCnv::s_checkDiskServerExistStatementString =
-"SELECT id from DiskServer WHERE id = :1";
+"SELECT id FROM DiskServer WHERE id = :1";
 
 /// SQL update statement for member diskserver
 const std::string castor::db::cnv::DbFileSystemCnv::s_updateDiskServerStatementString =
@@ -450,7 +450,7 @@ void castor::db::cnv::DbFileSystemCnv::fillObjDiskCopy(castor::stager::FileSyste
   for (std::set<int>::iterator it = copiesList.begin();
        it != copiesList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::DiskCopy* remoteObj = 
       dynamic_cast<castor::stager::DiskCopy*>(item);
     obj->addCopies(remoteObj);

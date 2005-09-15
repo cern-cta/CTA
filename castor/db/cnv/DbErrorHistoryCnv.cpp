@@ -80,7 +80,7 @@ const std::string castor::db::cnv::DbErrorHistoryCnv::s_deleteTypeStatementStrin
 
 /// SQL existence statement for member tapeDrive
 const std::string castor::db::cnv::DbErrorHistoryCnv::s_checkTapeDriveExistStatementString =
-"SELECT id from TapeDrive WHERE id = :1";
+"SELECT id FROM TapeDrive WHERE id = :1";
 
 /// SQL update statement for member tapeDrive
 const std::string castor::db::cnv::DbErrorHistoryCnv::s_updateTapeDriveStatementString =
@@ -88,7 +88,7 @@ const std::string castor::db::cnv::DbErrorHistoryCnv::s_updateTapeDriveStatement
 
 /// SQL existence statement for member tape
 const std::string castor::db::cnv::DbErrorHistoryCnv::s_checkTapeExistStatementString =
-"SELECT id from Tape WHERE id = :1";
+"SELECT id FROM Tape WHERE id = :1";
 
 /// SQL update statement for member tape
 const std::string castor::db::cnv::DbErrorHistoryCnv::s_updateTapeStatementString =

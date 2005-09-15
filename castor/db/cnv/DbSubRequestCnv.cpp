@@ -82,7 +82,7 @@ const std::string castor::db::cnv::DbSubRequestCnv::s_deleteTypeStatementString 
 
 /// SQL existence statement for member diskcopy
 const std::string castor::db::cnv::DbSubRequestCnv::s_checkDiskCopyExistStatementString =
-"SELECT id from DiskCopy WHERE id = :1";
+"SELECT id FROM DiskCopy WHERE id = :1";
 
 /// SQL update statement for member diskcopy
 const std::string castor::db::cnv::DbSubRequestCnv::s_updateDiskCopyStatementString =
@@ -90,7 +90,7 @@ const std::string castor::db::cnv::DbSubRequestCnv::s_updateDiskCopyStatementStr
 
 /// SQL existence statement for member castorFile
 const std::string castor::db::cnv::DbSubRequestCnv::s_checkCastorFileExistStatementString =
-"SELECT id from CastorFile WHERE id = :1";
+"SELECT id FROM CastorFile WHERE id = :1";
 
 /// SQL update statement for member castorFile
 const std::string castor::db::cnv::DbSubRequestCnv::s_updateCastorFileStatementString =
@@ -98,7 +98,7 @@ const std::string castor::db::cnv::DbSubRequestCnv::s_updateCastorFileStatementS
 
 /// SQL existence statement for member parent
 const std::string castor::db::cnv::DbSubRequestCnv::s_checkSubRequestExistStatementString =
-"SELECT id from SubRequest WHERE id = :1";
+"SELECT id FROM SubRequest WHERE id = :1";
 
 /// SQL update statement for member parent
 const std::string castor::db::cnv::DbSubRequestCnv::s_updateSubRequestStatementString =

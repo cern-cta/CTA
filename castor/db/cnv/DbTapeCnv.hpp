@@ -299,6 +299,24 @@ namespace castor {
         castor::db::IDbStatement *m_updateStreamStatement;
 
         /// SQL select statement for member 
+        static const std::string s_selectTapeRequestStatementString;
+
+        /// SQL select statement object for member 
+        castor::db::IDbStatement *m_selectTapeRequestStatement;
+
+        /// SQL delete statement for member 
+        static const std::string s_deleteTapeRequestStatementString;
+
+        /// SQL delete statement object for member 
+        castor::db::IDbStatement *m_deleteTapeRequestStatement;
+
+        /// SQL remote update statement for member 
+        static const std::string s_remoteUpdateTapeRequestStatementString;
+
+        /// SQL remote update statement object for member 
+        castor::db::IDbStatement *m_remoteUpdateTapeRequestStatement;
+
+        /// SQL select statement for member 
         static const std::string s_selectTapeDriveStatementString;
 
         /// SQL select statement object for member 

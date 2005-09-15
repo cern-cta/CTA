@@ -58,7 +58,7 @@ const castor::ICnvFactory& DbTapeServerCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbTapeServerCnv::s_insertStatementString =
-"INSERT INTO TapeServer (serverName, status, id, actingMode) VALUES (:1,:2,ids_seq.nextval,:3) RETURNING id INTO :4";
+"INSERT INTO TapeServer (serverName, id, actingMode) VALUES (:1,ids_seq.nextval,:2) RETURNING id INTO :3";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbTapeServerCnv::s_deleteStatementString =
@@ -66,11 +66,11 @@ const std::string castor::db::cnv::DbTapeServerCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbTapeServerCnv::s_selectStatementString =
-"SELECT serverName, status, id, actingMode FROM TapeServer WHERE id = :1";
+"SELECT serverName, id, actingMode FROM TapeServer WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbTapeServerCnv::s_updateStatementString =
-"UPDATE TapeServer SET serverName = :1, status = :2, actingMode = :3 WHERE id = :4";
+"UPDATE TapeServer SET serverName = :1, actingMode = :2 WHERE id = :3";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbTapeServerCnv::s_storeTypeStatementString =
@@ -82,7 +82,7 @@ const std::string castor::db::cnv::DbTapeServerCnv::s_deleteTypeStatementString 
 
 /// SQL select statement for member tapeDrives
 const std::string castor::db::cnv::DbTapeServerCnv::s_selectTapeDriveStatementString =
-"SELECT id from TapeDrive WHERE tapeServer = :1 FOR UPDATE";
+"SELECT id FROM TapeDrive WHERE tapeServer = :1 FOR UPDATE";
 
 /// SQL delete statement for member tapeDrives
 const std::string castor::db::cnv::DbTapeServerCnv::s_deleteTapeDriveStatementString =
@@ -304,7 +304,7 @@ void castor::db::cnv::DbTapeServerCnv::fillObjTapeDrive(castor::vdqm::TapeServer
   for (std::set<int>::iterator it = tapeDrivesList.begin();
        it != tapeDrivesList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::vdqm::TapeDrive* remoteObj = 
       dynamic_cast<castor::vdqm::TapeDrive*>(item);
     obj->addTapeDrives(remoteObj);
@@ -329,7 +329,7 @@ void castor::db::cnv::DbTapeServerCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(4, castor::db::DBTYPE_INT64);
+      m_insertStatement->registerOutParam(3, castor::db::DBTYPE_INT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);

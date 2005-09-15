@@ -84,7 +84,7 @@ const std::string castor::db::cnv::DbCastorFileCnv::s_deleteTypeStatementString 
 
 /// SQL existence statement for member svcClass
 const std::string castor::db::cnv::DbCastorFileCnv::s_checkSvcClassExistStatementString =
-"SELECT id from SvcClass WHERE id = :1";
+"SELECT id FROM SvcClass WHERE id = :1";
 
 /// SQL update statement for member svcClass
 const std::string castor::db::cnv::DbCastorFileCnv::s_updateSvcClassStatementString =
@@ -92,7 +92,7 @@ const std::string castor::db::cnv::DbCastorFileCnv::s_updateSvcClassStatementStr
 
 /// SQL existence statement for member fileClass
 const std::string castor::db::cnv::DbCastorFileCnv::s_checkFileClassExistStatementString =
-"SELECT id from FileClass WHERE id = :1";
+"SELECT id FROM FileClass WHERE id = :1";
 
 /// SQL update statement for member fileClass
 const std::string castor::db::cnv::DbCastorFileCnv::s_updateFileClassStatementString =
@@ -100,7 +100,7 @@ const std::string castor::db::cnv::DbCastorFileCnv::s_updateFileClassStatementSt
 
 /// SQL select statement for member diskCopies
 const std::string castor::db::cnv::DbCastorFileCnv::s_selectDiskCopyStatementString =
-"SELECT id from DiskCopy WHERE castorFile = :1 FOR UPDATE";
+"SELECT id FROM DiskCopy WHERE castorFile = :1 FOR UPDATE";
 
 /// SQL delete statement for member diskCopies
 const std::string castor::db::cnv::DbCastorFileCnv::s_deleteDiskCopyStatementString =
@@ -112,7 +112,7 @@ const std::string castor::db::cnv::DbCastorFileCnv::s_remoteUpdateDiskCopyStatem
 
 /// SQL select statement for member tapeCopies
 const std::string castor::db::cnv::DbCastorFileCnv::s_selectTapeCopyStatementString =
-"SELECT id from TapeCopy WHERE castorFile = :1 FOR UPDATE";
+"SELECT id FROM TapeCopy WHERE castorFile = :1 FOR UPDATE";
 
 /// SQL delete statement for member tapeCopies
 const std::string castor::db::cnv::DbCastorFileCnv::s_deleteTapeCopyStatementString =
@@ -563,7 +563,7 @@ void castor::db::cnv::DbCastorFileCnv::fillObjDiskCopy(castor::stager::CastorFil
   for (std::set<int>::iterator it = diskCopiesList.begin();
        it != diskCopiesList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::DiskCopy* remoteObj = 
       dynamic_cast<castor::stager::DiskCopy*>(item);
     obj->addDiskCopies(remoteObj);
@@ -613,7 +613,7 @@ void castor::db::cnv::DbCastorFileCnv::fillObjTapeCopy(castor::stager::CastorFil
   for (std::set<int>::iterator it = tapeCopiesList.begin();
        it != tapeCopiesList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::TapeCopy* remoteObj = 
       dynamic_cast<castor::stager::TapeCopy*>(item);
     obj->addTapeCopies(remoteObj);

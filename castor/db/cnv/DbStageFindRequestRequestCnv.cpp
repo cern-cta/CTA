@@ -87,7 +87,7 @@ const std::string castor::db::cnv::DbStageFindRequestRequestCnv::s_insertNewReqS
 
 /// SQL select statement for member parameters
 const std::string castor::db::cnv::DbStageFindRequestRequestCnv::s_selectQueryParameterStatementString =
-"SELECT id from QueryParameter WHERE query = :1 FOR UPDATE";
+"SELECT id FROM QueryParameter WHERE query = :1 FOR UPDATE";
 
 /// SQL delete statement for member parameters
 const std::string castor::db::cnv::DbStageFindRequestRequestCnv::s_deleteQueryParameterStatementString =
@@ -99,7 +99,7 @@ const std::string castor::db::cnv::DbStageFindRequestRequestCnv::s_remoteUpdateQ
 
 /// SQL existence statement for member svcClass
 const std::string castor::db::cnv::DbStageFindRequestRequestCnv::s_checkSvcClassExistStatementString =
-"SELECT id from SvcClass WHERE id = :1";
+"SELECT id FROM SvcClass WHERE id = :1";
 
 /// SQL update statement for member svcClass
 const std::string castor::db::cnv::DbStageFindRequestRequestCnv::s_updateSvcClassStatementString =
@@ -392,7 +392,7 @@ void castor::db::cnv::DbStageFindRequestRequestCnv::fillObjQueryParameter(castor
   for (std::set<int>::iterator it = parametersList.begin();
        it != parametersList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::QueryParameter* remoteObj = 
       dynamic_cast<castor::stager::QueryParameter*>(item);
     obj->addParameters(remoteObj);

@@ -98,7 +98,7 @@ const std::string castor::db::cnv::DbStreamCnv::s_selectTapeCopyStatementString 
 
 /// SQL select statement for member tape
 const std::string castor::db::cnv::DbStreamCnv::s_selectTapeStatementString =
-"SELECT id from Tape WHERE stream = :1 FOR UPDATE";
+"SELECT id FROM Tape WHERE stream = :1 FOR UPDATE";
 
 /// SQL delete statement for member tape
 const std::string castor::db::cnv::DbStreamCnv::s_deleteTapeStatementString =
@@ -110,7 +110,7 @@ const std::string castor::db::cnv::DbStreamCnv::s_remoteUpdateTapeStatementStrin
 
 /// SQL existence statement for member tape
 const std::string castor::db::cnv::DbStreamCnv::s_checkTapeExistStatementString =
-"SELECT id from Tape WHERE id = :1";
+"SELECT id FROM Tape WHERE id = :1";
 
 /// SQL update statement for member tape
 const std::string castor::db::cnv::DbStreamCnv::s_updateTapeStatementString =
@@ -118,7 +118,7 @@ const std::string castor::db::cnv::DbStreamCnv::s_updateTapeStatementString =
 
 /// SQL existence statement for member tapePool
 const std::string castor::db::cnv::DbStreamCnv::s_checkTapePoolExistStatementString =
-"SELECT id from TapePool WHERE id = :1";
+"SELECT id FROM TapePool WHERE id = :1";
 
 /// SQL update statement for member tapePool
 const std::string castor::db::cnv::DbStreamCnv::s_updateTapePoolStatementString =
@@ -462,7 +462,7 @@ void castor::db::cnv::DbStreamCnv::fillObjTapeCopy(castor::stager::Stream* obj)
   for (std::set<int>::iterator it = tapeCopyList.begin();
        it != tapeCopyList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::TapeCopy* remoteObj = 
       dynamic_cast<castor::stager::TapeCopy*>(item);
     obj->addTapeCopy(remoteObj);

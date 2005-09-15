@@ -87,7 +87,7 @@ const std::string castor::db::cnv::DbFilesDeletionFailedCnv::s_insertNewReqState
 
 /// SQL select statement for member files
 const std::string castor::db::cnv::DbFilesDeletionFailedCnv::s_selectGCFileStatementString =
-"SELECT id from GCFile WHERE request = :1 FOR UPDATE";
+"SELECT id FROM GCFile WHERE request = :1 FOR UPDATE";
 
 /// SQL delete statement for member files
 const std::string castor::db::cnv::DbFilesDeletionFailedCnv::s_deleteGCFileStatementString =
@@ -99,7 +99,7 @@ const std::string castor::db::cnv::DbFilesDeletionFailedCnv::s_remoteUpdateGCFil
 
 /// SQL existence statement for member svcClass
 const std::string castor::db::cnv::DbFilesDeletionFailedCnv::s_checkSvcClassExistStatementString =
-"SELECT id from SvcClass WHERE id = :1";
+"SELECT id FROM SvcClass WHERE id = :1";
 
 /// SQL update statement for member svcClass
 const std::string castor::db::cnv::DbFilesDeletionFailedCnv::s_updateSvcClassStatementString =
@@ -392,7 +392,7 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::fillObjGCFile(castor::stager::Fi
   for (std::set<int>::iterator it = filesList.begin();
        it != filesList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::GCFile* remoteObj = 
       dynamic_cast<castor::stager::GCFile*>(item);
     obj->addFiles(remoteObj);

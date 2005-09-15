@@ -89,7 +89,7 @@ const std::string castor::db::cnv::DbStagePutNextRequestCnv::s_updateFileRequest
 
 /// SQL existence statement for member svcClass
 const std::string castor::db::cnv::DbStagePutNextRequestCnv::s_checkSvcClassExistStatementString =
-"SELECT id from SvcClass WHERE id = :1";
+"SELECT id FROM SvcClass WHERE id = :1";
 
 /// SQL update statement for member svcClass
 const std::string castor::db::cnv::DbStagePutNextRequestCnv::s_updateSvcClassStatementString =

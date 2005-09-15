@@ -86,21 +86,9 @@ const std::string castor::db::cnv::DbTapeDriveCnv::s_storeTypeStatementString =
 const std::string castor::db::cnv::DbTapeDriveCnv::s_deleteTypeStatementString =
 "DELETE FROM Id2Type WHERE id = :1";
 
-/// SQL select statement for member tape
-const std::string castor::db::cnv::DbTapeDriveCnv::s_selectTapeStatementString =
-"SELECT id from Tape WHERE  = :1 FOR UPDATE";
-
-/// SQL delete statement for member tape
-const std::string castor::db::cnv::DbTapeDriveCnv::s_deleteTapeStatementString =
-"UPDATE Tape SET  = 0 WHERE id = :1";
-
-/// SQL remote update statement for member tape
-const std::string castor::db::cnv::DbTapeDriveCnv::s_remoteUpdateTapeStatementString =
-"UPDATE Tape SET  = :1 WHERE id = :2";
-
 /// SQL existence statement for member tape
 const std::string castor::db::cnv::DbTapeDriveCnv::s_checkTapeExistStatementString =
-"SELECT id from Tape WHERE id = :1";
+"SELECT id FROM Tape WHERE id = :1";
 
 /// SQL update statement for member tape
 const std::string castor::db::cnv::DbTapeDriveCnv::s_updateTapeStatementString =
@@ -108,7 +96,7 @@ const std::string castor::db::cnv::DbTapeDriveCnv::s_updateTapeStatementString =
 
 /// SQL select statement for member runningTapeReq
 const std::string castor::db::cnv::DbTapeDriveCnv::s_selectTapeRequestStatementString =
-"SELECT id from TapeRequest WHERE tapeDrive = :1 FOR UPDATE";
+"SELECT id FROM TapeRequest WHERE tapeDrive = :1 FOR UPDATE";
 
 /// SQL delete statement for member runningTapeReq
 const std::string castor::db::cnv::DbTapeDriveCnv::s_deleteTapeRequestStatementString =
@@ -120,7 +108,7 @@ const std::string castor::db::cnv::DbTapeDriveCnv::s_remoteUpdateTapeRequestStat
 
 /// SQL existence statement for member runningTapeReq
 const std::string castor::db::cnv::DbTapeDriveCnv::s_checkTapeRequestExistStatementString =
-"SELECT id from TapeRequest WHERE id = :1";
+"SELECT id FROM TapeRequest WHERE id = :1";
 
 /// SQL update statement for member runningTapeReq
 const std::string castor::db::cnv::DbTapeDriveCnv::s_updateTapeRequestStatementString =
@@ -128,7 +116,7 @@ const std::string castor::db::cnv::DbTapeDriveCnv::s_updateTapeRequestStatementS
 
 /// SQL select statement for member errorHistory
 const std::string castor::db::cnv::DbTapeDriveCnv::s_selectErrorHistoryStatementString =
-"SELECT id from ErrorHistory WHERE tapeDrive = :1 FOR UPDATE";
+"SELECT id FROM ErrorHistory WHERE tapeDrive = :1 FOR UPDATE";
 
 /// SQL delete statement for member errorHistory
 const std::string castor::db::cnv::DbTapeDriveCnv::s_deleteErrorHistoryStatementString =
@@ -140,7 +128,7 @@ const std::string castor::db::cnv::DbTapeDriveCnv::s_remoteUpdateErrorHistorySta
 
 /// SQL select statement for member tapeDriveDedication
 const std::string castor::db::cnv::DbTapeDriveCnv::s_selectTapeDriveDedicationStatementString =
-"SELECT id from TapeDriveDedication WHERE tapeDrive = :1 FOR UPDATE";
+"SELECT id FROM TapeDriveDedication WHERE tapeDrive = :1 FOR UPDATE";
 
 /// SQL delete statement for member tapeDriveDedication
 const std::string castor::db::cnv::DbTapeDriveCnv::s_deleteTapeDriveDedicationStatementString =
@@ -166,7 +154,7 @@ const std::string castor::db::cnv::DbTapeDriveCnv::s_selectTapeDriveCompatibilit
 
 /// SQL existence statement for member deviceGroupName
 const std::string castor::db::cnv::DbTapeDriveCnv::s_checkDeviceGroupNameExistStatementString =
-"SELECT id from DeviceGroupName WHERE id = :1";
+"SELECT id FROM DeviceGroupName WHERE id = :1";
 
 /// SQL update statement for member deviceGroupName
 const std::string castor::db::cnv::DbTapeDriveCnv::s_updateDeviceGroupNameStatementString =
@@ -174,7 +162,7 @@ const std::string castor::db::cnv::DbTapeDriveCnv::s_updateDeviceGroupNameStatem
 
 /// SQL existence statement for member tapeServer
 const std::string castor::db::cnv::DbTapeDriveCnv::s_checkTapeServerExistStatementString =
-"SELECT id from TapeServer WHERE id = :1";
+"SELECT id FROM TapeServer WHERE id = :1";
 
 /// SQL update statement for member tapeServer
 const std::string castor::db::cnv::DbTapeDriveCnv::s_updateTapeServerStatementString =
@@ -191,9 +179,6 @@ castor::db::cnv::DbTapeDriveCnv::DbTapeDriveCnv(castor::ICnvSvc* cnvSvc) :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_selectTapeStatement(0),
-  m_deleteTapeStatement(0),
-  m_remoteUpdateTapeStatement(0),
   m_checkTapeExistStatement(0),
   m_updateTapeStatement(0),
   m_selectTapeRequestStatement(0),
@@ -235,9 +220,6 @@ void castor::db::cnv::DbTapeDriveCnv::reset() throw() {
     delete m_updateStatement;
     delete m_storeTypeStatement;
     delete m_deleteTypeStatement;
-    delete m_deleteTapeStatement;
-    delete m_selectTapeStatement;
-    delete m_remoteUpdateTapeStatement;
     delete m_checkTapeExistStatement;
     delete m_updateTapeStatement;
     delete m_deleteTapeRequestStatement;
@@ -266,9 +248,6 @@ void castor::db::cnv::DbTapeDriveCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
-  m_selectTapeStatement = 0;
-  m_deleteTapeStatement = 0;
-  m_remoteUpdateTapeStatement = 0;
   m_checkTapeExistStatement = 0;
   m_updateTapeStatement = 0;
   m_selectTapeRequestStatement = 0;
@@ -361,27 +340,6 @@ void castor::db::cnv::DbTapeDriveCnv::fillRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbTapeDriveCnv::fillRepTape(castor::vdqm::TapeDrive* obj)
   throw (castor::exception::Exception) {
-  // Check selectTape statement
-  if (0 == m_selectTapeStatement) {
-    m_selectTapeStatement = createStatement(s_selectTapeStatementString);
-  }
-  // retrieve the object from the database
-  m_selectTapeStatement->setInt64(1, obj->id());
-  castor::db::IDbResultSet *rset = m_selectTapeStatement->executeQuery();
-  if (rset->next()) {
-    u_signed64 tapeId = rset->getInt64(1);
-    if (0 != tapeId &&
-        (0 == obj->tape() ||
-         obj->tape()->id() != tapeId)) {
-      if (0 == m_deleteTapeStatement) {
-        m_deleteTapeStatement = createStatement(s_deleteTapeStatementString);
-      }
-      m_deleteTapeStatement->setInt64(1, tapeId);
-      m_deleteTapeStatement->execute();
-    }
-  }
-  // Close resultset
-  delete rset;
   if (0 != obj->tape()) {
     // Check checkTapeExist statement
     if (0 == m_checkTapeExistStatement) {
@@ -853,7 +811,7 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjErrorHistory(castor::vdqm::TapeDriv
   for (std::set<int>::iterator it = errorHistoryList.begin();
        it != errorHistoryList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::vdqm::ErrorHistory* remoteObj = 
       dynamic_cast<castor::vdqm::ErrorHistory*>(item);
     obj->addErrorHistory(remoteObj);
@@ -903,7 +861,7 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjTapeDriveDedication(castor::vdqm::T
   for (std::set<int>::iterator it = tapeDriveDedicationList.begin();
        it != tapeDriveDedicationList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::vdqm::TapeDriveDedication* remoteObj = 
       dynamic_cast<castor::vdqm::TapeDriveDedication*>(item);
     obj->addTapeDriveDedication(remoteObj);
@@ -952,7 +910,7 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjTapeDriveCompatibility(castor::vdqm
   for (std::set<int>::iterator it = tapeDriveCompatibilitiesList.begin();
        it != tapeDriveCompatibilitiesList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::vdqm::TapeDriveCompatibility* remoteObj = 
       dynamic_cast<castor::vdqm::TapeDriveCompatibility*>(item);
     obj->addTapeDriveCompatibilities(remoteObj);

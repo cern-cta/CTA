@@ -55,7 +55,7 @@ const castor::ICnvFactory& DbTapeDriveDedicationCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_insertStatementString =
-"INSERT INTO TapeDriveDedication (clientHost, euid, egid, vid, accessMode, timePeriods, id, tapeDrive) VALUES (:1,:2,:3,:4,:5,:6,ids_seq.nextval,:7) RETURNING id INTO :8";
+"INSERT INTO TapeDriveDedication (clientHost, euid, egid, vid, accessMode, startTime, endTime, id, tapeDrive) VALUES (:1,:2,:3,:4,:5,:6,:7,ids_seq.nextval,:8) RETURNING id INTO :9";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_deleteStatementString =
@@ -63,11 +63,11 @@ const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_deleteStatementSt
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_selectStatementString =
-"SELECT clientHost, euid, egid, vid, accessMode, timePeriods, id, tapeDrive FROM TapeDriveDedication WHERE id = :1";
+"SELECT clientHost, euid, egid, vid, accessMode, startTime, endTime, id, tapeDrive FROM TapeDriveDedication WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_updateStatementString =
-"UPDATE TapeDriveDedication SET clientHost = :1, euid = :2, egid = :3, vid = :4, accessMode = :5, timePeriods = :6 WHERE id = :7";
+"UPDATE TapeDriveDedication SET clientHost = :1, euid = :2, egid = :3, vid = :4, accessMode = :5, startTime = :6, endTime = :7 WHERE id = :8";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_storeTypeStatementString =
@@ -79,7 +79,7 @@ const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_deleteTypeStateme
 
 /// SQL existence statement for member tapeDrive
 const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_checkTapeDriveExistStatementString =
-"SELECT id from TapeDrive WHERE id = :1";
+"SELECT id FROM TapeDrive WHERE id = :1";
 
 /// SQL update statement for member tapeDrive
 const std::string castor::db::cnv::DbTapeDriveDedicationCnv::s_updateTapeDriveStatementString =
@@ -251,7 +251,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::fillObjTapeDrive(castor::vdqm::T
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeDriveId = rset->getInt64(8);
+  u_signed64 tapeDriveId = rset->getInt64(9);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -291,7 +291,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress* addr
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(8, castor::db::DBTYPE_INT64);
+      m_insertStatement->registerOutParam(9, castor::db::DBTYPE_INT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -306,7 +306,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress* addr
     m_insertStatement->setInt(7, obj->endTime());
     m_insertStatement->setInt64(8, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getInt64(8));
+    obj->setId(m_insertStatement->getInt64(9));
     m_storeTypeStatement->setInt64(1, obj->id());
     m_storeTypeStatement->setInt64(2, obj->type());
     m_storeTypeStatement->execute();

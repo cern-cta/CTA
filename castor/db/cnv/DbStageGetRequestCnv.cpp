@@ -83,7 +83,7 @@ const std::string castor::db::cnv::DbStageGetRequestCnv::s_deleteTypeStatementSt
 
 /// SQL select statement for member subRequests
 const std::string castor::db::cnv::DbStageGetRequestCnv::s_selectSubRequestStatementString =
-"SELECT id from SubRequest WHERE request = :1 FOR UPDATE";
+"SELECT id FROM SubRequest WHERE request = :1 FOR UPDATE";
 
 /// SQL delete statement for member subRequests
 const std::string castor::db::cnv::DbStageGetRequestCnv::s_deleteSubRequestStatementString =
@@ -95,7 +95,7 @@ const std::string castor::db::cnv::DbStageGetRequestCnv::s_remoteUpdateSubReques
 
 /// SQL existence statement for member svcClass
 const std::string castor::db::cnv::DbStageGetRequestCnv::s_checkSvcClassExistStatementString =
-"SELECT id from SvcClass WHERE id = :1";
+"SELECT id FROM SvcClass WHERE id = :1";
 
 /// SQL update statement for member svcClass
 const std::string castor::db::cnv::DbStageGetRequestCnv::s_updateSvcClassStatementString =
@@ -385,7 +385,7 @@ void castor::db::cnv::DbStageGetRequestCnv::fillObjSubRequest(castor::stager::St
   for (std::set<int>::iterator it = subRequestsList.begin();
        it != subRequestsList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::SubRequest* remoteObj = 
       dynamic_cast<castor::stager::SubRequest*>(item);
     obj->addSubRequests(remoteObj);

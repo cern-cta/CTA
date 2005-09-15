@@ -81,7 +81,7 @@ const std::string castor::db::cnv::DbSegmentCnv::s_deleteTypeStatementString =
 
 /// SQL existence statement for member tape
 const std::string castor::db::cnv::DbSegmentCnv::s_checkTapeExistStatementString =
-"SELECT id from Tape WHERE id = :1";
+"SELECT id FROM Tape WHERE id = :1";
 
 /// SQL update statement for member tape
 const std::string castor::db::cnv::DbSegmentCnv::s_updateTapeStatementString =
@@ -89,7 +89,7 @@ const std::string castor::db::cnv::DbSegmentCnv::s_updateTapeStatementString =
 
 /// SQL existence statement for member copy
 const std::string castor::db::cnv::DbSegmentCnv::s_checkTapeCopyExistStatementString =
-"SELECT id from TapeCopy WHERE id = :1";
+"SELECT id FROM TapeCopy WHERE id = :1";
 
 /// SQL update statement for member copy
 const std::string castor::db::cnv::DbSegmentCnv::s_updateTapeCopyStatementString =

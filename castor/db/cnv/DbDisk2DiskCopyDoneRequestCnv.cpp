@@ -84,7 +84,7 @@ const std::string castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::s_insertNewReq
 
 /// SQL existence statement for member svcClass
 const std::string castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::s_checkSvcClassExistStatementString =
-"SELECT id from SvcClass WHERE id = :1";
+"SELECT id FROM SvcClass WHERE id = :1";
 
 /// SQL update statement for member svcClass
 const std::string castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::s_updateSvcClassStatementString =

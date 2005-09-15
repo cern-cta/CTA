@@ -82,7 +82,7 @@ const std::string castor::db::cnv::DbDiskPoolCnv::s_deleteTypeStatementString =
 
 /// SQL select statement for member fileSystems
 const std::string castor::db::cnv::DbDiskPoolCnv::s_selectFileSystemStatementString =
-"SELECT id from FileSystem WHERE diskPool = :1 FOR UPDATE";
+"SELECT id FROM FileSystem WHERE diskPool = :1 FOR UPDATE";
 
 /// SQL delete statement for member fileSystems
 const std::string castor::db::cnv::DbDiskPoolCnv::s_deleteFileSystemStatementString =
@@ -382,7 +382,7 @@ void castor::db::cnv::DbDiskPoolCnv::fillObjFileSystem(castor::stager::DiskPool*
   for (std::set<int>::iterator it = fileSystemsList.begin();
        it != fileSystemsList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::FileSystem* remoteObj = 
       dynamic_cast<castor::stager::FileSystem*>(item);
     obj->addFileSystems(remoteObj);
@@ -432,7 +432,7 @@ void castor::db::cnv::DbDiskPoolCnv::fillObjSvcClass(castor::stager::DiskPool* o
   for (std::set<int>::iterator it = svcClassesList.begin();
        it != svcClassesList.end();
        it++) {
-    IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::SvcClass* remoteObj = 
       dynamic_cast<castor::stager::SvcClass*>(item);
     obj->addSvcClasses(remoteObj);
