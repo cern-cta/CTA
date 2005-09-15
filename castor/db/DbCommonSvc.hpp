@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbCommonSvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/08/18 10:01:36 $ $Author: itglp $
+ * @(#)$RCSfile: DbCommonSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/09/15 07:47:47 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for CDBC
  *
@@ -94,20 +94,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Selects the next request the stager should deal with.
-         * Selects a Request in START status and move its status
-         * PROCESSED to avoid double processing.
-         * The selection is restricted to Request of a given set
-         * of types.
-         * @param types the list of accepted types for the request
-         * @return the Request to process
-         * @exception Exception in case of error
-         */
-        virtual castor::stager::Request* requestToDo
-        (std::vector<ObjectsIds> &types)
-          throw (castor::exception::Exception);
-
-        /**
          * Retrieves a SvcClass from the database based on its name.
          * Caller is in charge of the deletion of the allocated object
          * @param name the name of the SvcClass
@@ -164,9 +150,6 @@ namespace castor {
 
         /// SQL statement object for function selectTape
         castor::db::IDbStatement *m_selectTapeStatement;
-
-        /// SQL statement object for function requestToDo
-        castor::db::IDbStatement *m_requestToDoStatement;
 
         /// SQL statement for function selectSvcClass
         static const std::string s_selectSvcClassStatementString;

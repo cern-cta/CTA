@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbCommonSvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/08/18 10:01:35 $ $Author: itglp $
+ * @(#)$RCSfile: DbCommonSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/09/15 07:47:47 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for CDBC
  *
@@ -117,7 +117,6 @@ const std::string castor::db::DbCommonSvc::s_selectFileSystemStatementString =
 castor::db::DbCommonSvc::DbCommonSvc(const std::string name) :
   BaseSvc(name), DbBaseObj(0),
   m_selectTapeStatement(0),
-  m_requestToDoStatement(0),
   m_selectSvcClassStatement(0),
   m_selectFileClassStatement(0),
   m_selectFileSystemStatement(0) {
@@ -152,14 +151,12 @@ void castor::db::DbCommonSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   try {
     delete m_selectTapeStatement;
-    delete m_requestToDoStatement;
     delete m_selectSvcClassStatement;
     delete m_selectFileClassStatement;
     delete m_selectFileSystemStatement;
   } catch (castor::exception::SQLError ignored) {};
   // Now reset all pointers to 0
   m_selectTapeStatement = 0;
-  m_requestToDoStatement = 0;
   m_selectSvcClassStatement = 0;
   m_selectFileClassStatement = 0;
   m_selectFileSystemStatement = 0;
@@ -261,70 +258,6 @@ castor::db::DbCommonSvc::selectTape(const std::string vid,
     throw ex;
   }
   // We should never reach this point
-}
-
-// -----------------------------------------------------------------------
-// requestToDo
-// -----------------------------------------------------------------------
-castor::stager::Request*
-castor::db::DbCommonSvc::requestToDo
-(std::vector<ObjectsIds> &types)
-  throw (castor::exception::Exception) {
-  try {
-    // Check whether the statements are ok
-    if (0 == m_requestToDoStatement) {
-      std::ostringstream stmtString;
-      stmtString << "BEGIN :1 := 0; DELETE FROM newRequests WHERE type IN (";
-      for (std::vector<ObjectsIds>::const_iterator it = types.begin();
-           it!= types.end();
-           it++) {
-        if (types.begin() != it) stmtString << ", ";
-        stmtString << *it;
-      }
-      stmtString << ") AND ROWNUM < 2 RETURNING id INTO :1; END;";
-      m_requestToDoStatement = createStatement(stmtString.str());
-      m_requestToDoStatement->registerOutParam(1, castor::db::DBTYPE_INT64);
-      m_requestToDoStatement->autoCommit();
-    }
-    // execute the statement
-    m_requestToDoStatement->execute();
-    // see whether we've found something
-    u_signed64 id = m_requestToDoStatement->getInt64(1);
-    if (0 == id) {
-      // Found no Request to handle
-      return 0;
-    }
-    // Create result
-    IObject* obj = cnvSvc()->getObjFromId(id);
-    if (0 == obj) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "requestToDo : could not retrieve object for id "
-        << id;
-      throw ex;
-    }
-    castor::stager::Request* result =
-      dynamic_cast<castor::stager::Request*>(obj);
-    if (0 == result) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "requestToDo : object retrieved for id "
-        << id << " was a "
-        << castor::ObjectsIdStrings[obj->type()]
-        << " while a Request was expected.";
-      delete obj;
-      throw ex;
-    }
-    // return
-    return result;
-  } catch (castor::exception::SQLError e) {
-    rollback();
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in requestToDo."
-      << std::endl << e.getMessage();
-    throw ex;
-  }
 }
 
 // -----------------------------------------------------------------------
