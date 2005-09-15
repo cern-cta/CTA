@@ -149,10 +149,10 @@ CREATE TABLE DiskServer (name VARCHAR(2048), id INT8 PRIMARY KEY, status INTEGER
 CREATE TABLE TapeAccessSpecification (accessMode INT4, density VARCHAR(2048), tapeModel VARCHAR(2048), id INT8 PRIMARY KEY);
 
 /* SQL statements for type TapeServer */
-CREATE TABLE TapeServer (serverName VARCHAR(2048), status INT4, id INT8 PRIMARY KEY, actingMode INTEGER);
+CREATE TABLE TapeServer (serverName VARCHAR(2048), id INT8 PRIMARY KEY, actingMode INTEGER);
 
 /* SQL statements for type TapeRequest */
-CREATE TABLE TapeRequest (priority INT4, modificationTime INT4, id INT8 PRIMARY KEY, tape INTEGER, tapeAccessSpecification INTEGER, requestedSrv INTEGER, tapeDrive INTEGER, deviceGroupName INTEGER, client INTEGER);
+CREATE TABLE TapeRequest (priority INT4, modificationTime INT4, creationTime INT4, id INT8 PRIMARY KEY, tape INTEGER, tapeAccessSpecification INTEGER, requestedSrv INTEGER, tapeDrive INTEGER, deviceGroupName INTEGER, client INTEGER);
 
 /* SQL statements for type TapeDrive */
 CREATE TABLE TapeDrive (jobID INT4, modificationTime INT4, resettime INT4, usecount INT4, errcount INT4, transferredMB INT4, totalMB INT8, driveName VARCHAR(2048), tapeAccessMode INT4, id INT8 PRIMARY KEY, tape INTEGER, runningTapeReq INTEGER, deviceGroupName INTEGER, status INTEGER, tapeServer INTEGER);
@@ -164,7 +164,7 @@ CREATE INDEX I_TapeDrive2TapeDriveComp_P on TapeDrive2TapeDriveComp (parent);
 CREATE TABLE ErrorHistory (errorMessage VARCHAR(2048), timeStamp INT4, id INT8 PRIMARY KEY, tapeDrive INTEGER, tape INTEGER);
 
 /* SQL statements for type TapeDriveDedication */
-CREATE TABLE TapeDriveDedication (clientHost INT4, euid INT4, egid INT4, vid VARCHAR(2048), accessMode INT4, timePeriods VARCHAR(2048), id INT8 PRIMARY KEY, tapeDrive INTEGER);
+CREATE TABLE TapeDriveDedication (clientHost VARCHAR(2048), euid INT4, egid INT4, vid VARCHAR(2048), accessMode INT4, startTime INT4, endTime INT4, id INT8 PRIMARY KEY, tapeDrive INTEGER);
 
 /* SQL statements for type TapeDriveCompatibility */
 CREATE TABLE TapeDriveCompatibility (tapeDriveModel VARCHAR(2048), priorityLevel INT4, id INT8 PRIMARY KEY, tapeAccessSpecification INTEGER);

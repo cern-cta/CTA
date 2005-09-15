@@ -149,10 +149,10 @@ CREATE TABLE DiskServer (name VARCHAR2(2048), id INTEGER PRIMARY KEY, status INT
 CREATE TABLE TapeAccessSpecification (accessMode NUMBER, density VARCHAR2(2048), tapeModel VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type TapeServer */
-CREATE TABLE TapeServer (serverName VARCHAR2(2048), status NUMBER, id INTEGER PRIMARY KEY, actingMode INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE TapeServer (serverName VARCHAR2(2048), id INTEGER PRIMARY KEY, actingMode INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type TapeRequest */
-CREATE TABLE TapeRequest (priority NUMBER, modificationTime NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, tapeAccessSpecification INTEGER, requestedSrv INTEGER, tapeDrive INTEGER, deviceGroupName INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE TapeRequest (priority NUMBER, modificationTime NUMBER, creationTime NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, tapeAccessSpecification INTEGER, requestedSrv INTEGER, tapeDrive INTEGER, deviceGroupName INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type TapeDrive */
 CREATE TABLE TapeDrive (jobID NUMBER, modificationTime NUMBER, resettime NUMBER, usecount NUMBER, errcount NUMBER, transferredMB NUMBER, totalMB INTEGER, driveName VARCHAR2(2048), tapeAccessMode NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, runningTapeReq INTEGER, deviceGroupName INTEGER, status INTEGER, tapeServer INTEGER) INITRANS 50 PCTFREE 50;
@@ -164,7 +164,7 @@ CREATE INDEX I_TapeDrive2TapeDriveComp_P on TapeDrive2TapeDriveComp (parent);
 CREATE TABLE ErrorHistory (errorMessage VARCHAR2(2048), timeStamp NUMBER, id INTEGER PRIMARY KEY, tapeDrive INTEGER, tape INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type TapeDriveDedication */
-CREATE TABLE TapeDriveDedication (clientHost NUMBER, euid NUMBER, egid NUMBER, vid VARCHAR2(2048), accessMode NUMBER, timePeriods VARCHAR2(2048), id INTEGER PRIMARY KEY, tapeDrive INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE TapeDriveDedication (clientHost VARCHAR2(2048), euid NUMBER, egid NUMBER, vid VARCHAR2(2048), accessMode NUMBER, startTime NUMBER, endTime NUMBER, id INTEGER PRIMARY KEY, tapeDrive INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type TapeDriveCompatibility */
 CREATE TABLE TapeDriveCompatibility (tapeDriveModel VARCHAR2(2048), priorityLevel NUMBER, id INTEGER PRIMARY KEY, tapeAccessSpecification INTEGER) INITRANS 50 PCTFREE 50;
@@ -264,6 +264,9 @@ ALTER TABLE FileClass ADD UNIQUE (name);
 
 /* Add unique constraint on castorFiles */
 ALTER TABLE CastorFile ADD UNIQUE (fileId, nsHost); 
+
+/* Add unique constraint on tapes */
+ALTER TABLE Tape ADD UNIQUE (VID, side, tpMode); 
 
 /* get current time as a time_t. Not that easy in ORACLE */
 CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
@@ -886,6 +889,8 @@ CREATE OR REPLACE PACKAGE castor AS
         diskServerName VARCHAR2(2048),
         fileSystemMountPoint VARCHAR2(2048));
   TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
+	TYPE TapeDrive_Cur IS REF CURSOR RETURN TapeDrive%ROWTYPE;
+	TYPE TapeRequest_Cur IS REF CURSOR RETURN TapeRequest%ROWTYPE;
 END castor;
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
@@ -2223,8 +2228,8 @@ BEGIN
 		      AND TapeDrive.runningTapeReq=0 
 					AND TapeDrive.tapeServer=TapeServer.id 
 					AND TapeServer.actingMode=0
-					AND (TapeRequest.tapeDrive(+)=TapeDrive.id) 
-					AND (TapeRequest.requestedSrv(+)=TapeDrive.tapeServer) 
+					AND (TapeRequest.tapeDrive=TapeDrive.id(+)) 
+					AND (TapeRequest.requestedSrv=TapeDrive.tapeServer(+)) 
 					AND ((TapeDrive2TapeDriveComp.parent=TapeDrive.id 
 					      AND TapeDrive2TapeDriveComp.child=TapeDriveCompatibility.id 
 								AND TapeDriveCompatibility.tapeAccessSpecification=TapeRequest.tapeAccessSpecification 
@@ -2234,7 +2239,7 @@ BEGIN
 				       OR TapeDrive.deviceGroupName=TapeRequest.deviceGroupName) 
 				  AND rownum < 2 
 					ORDER BY TapeDriveCompatibility.priorityLevel DESC, 
-					         TapeRequest.id ASC 
+					         TapeRequest.modificationTime ASC 
 				  FOR UPDATE;
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
@@ -2246,8 +2251,8 @@ END;
 CREATE OR REPLACE PROCEDURE testMatchTape2TapeDrive
  (tapeDriveID OUT NUMBER, tapeRequestID OUT NUMBER) AS
 BEGIN
-  SELECT TapeDrive.id, TapeRequest.id
-    FROM TapeDrive, TapeRequest, TapeServer, TapeDriveCompatibility, DeviceGroupName tapeDriveDgn, DeviceGroupName tapeRequestDgn
+  SELECT TapeDrive.id, TapeRequest.id INTO tapeDriveID, tapeRequestID
+    FROM TapeDrive, TapeRequest, TapeServer, DeviceGroupName tapeDriveDgn, DeviceGroupName tapeRequestDgn
     WHERE TapeDrive.status=0
           AND TapeDrive.runningTapeReq=0
           AND TapeDrive.tapeServer=TapeServer.id
@@ -2256,6 +2261,7 @@ BEGIN
           AND (TapeRequest.requestedSrv=TapeDrive.tapeServer OR TapeRequest.requestedSrv=0)
           AND (TapeDrive.deviceGroupName=TapeRequest.deviceGroupName)
           AND rownum < 2
+					ORDER BY TapeRequest.modificationTime ASC 
 				  FOR UPDATE;
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
@@ -2263,3 +2269,56 @@ BEGIN
     tapeRequestID := 0;
 END;
 
+
+CREATE OR REPLACE PROCEDURE selectTapeRequestQueue
+ (dgn IN VARCHAR2, server IN VARCHAR2, tapeRequestID OUT castor.TapeRequest_Cur) AS
+BEGIN
+  IF dgn IS NULL AND server IS NULL THEN
+    OPEN tapeRequestID FOR SELECT * FROM TapeRequest
+		  ORDER BY TapeRequest.modificationTime ASC;
+  ELSIF dgn IS NULL THEN
+    OPEN tapeRequestID FOR SELECT TapeRequest.* FROM TapeRequest, TapeServer
+      WHERE TapeServer.serverName = server
+            AND TapeServer.id = TapeRequest.requestedSrv
+			ORDER BY TapeRequest.modificationTime ASC;
+  ELSIF server IS NULL THEN
+    OPEN tapeRequestID FOR SELECT TapeRequest.* FROM TapeRequest, DeviceGroupName
+      WHERE DeviceGroupName.dgName = dgn
+            AND DeviceGroupName.id = TapeRequest.deviceGroupName
+			ORDER BY TapeRequest.modificationTime ASC;
+  ELSE 
+    OPEN tapeRequestID FOR SELECT TapeRequest.* FROM TapeRequest, DeviceGroupName, TapeServer
+      WHERE DeviceGroupName.dgName = dgn
+            AND DeviceGroupName.id = TapeRequest.deviceGroupName
+            AND TapeServer.serverName = server
+            AND TapeServer.id = TapeRequest.requestedSrv
+			ORDER BY TapeRequest.modificationTime ASC;
+  END IF;
+END;
+
+
+CREATE OR REPLACE PROCEDURE selectTapeDriveQueue
+ (dgn IN VARCHAR2, server IN VARCHAR2, tapeDriveID OUT castor.TapeDrive_Cur) AS
+BEGIN
+  IF dgn IS NULL AND server IS NULL THEN
+    OPEN tapeDriveID FOR SELECT * FROM TapeDrive
+		  ORDER BY TapeDrive.driveName ASC;
+  ELSIF dgn IS NULL THEN
+    OPEN tapeDriveID FOR SELECT TapeDrive.* FROM TapeDrive, TapeServer
+      WHERE TapeServer.serverName = server
+            AND TapeServer.id = TapeDrive.tapeServer
+			ORDER BY TapeDrive.driveName ASC;
+  ELSIF server IS NULL THEN
+    OPEN tapeDriveID FOR SELECT TapeDrive.* FROM TapeDrive, DeviceGroupName
+      WHERE DeviceGroupName.dgName = dgn
+            AND DeviceGroupName.id = TapeDrive.deviceGroupName
+			ORDER BY TapeDrive.driveName ASC;
+  ELSE 
+    OPEN tapeDriveID FOR SELECT TapeDrive.* FROM TapeDrive, DeviceGroupName, TapeServer
+      WHERE DeviceGroupName.dgName = dgn
+            AND DeviceGroupName.id = TapeDrive.deviceGroupName
+            AND TapeServer.serverName = server
+            AND TapeServer.id = TapeDrive.tapeServer
+			ORDER BY TapeDrive.driveName ASC;
+  END IF;
+END;
