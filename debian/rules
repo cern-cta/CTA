@@ -69,6 +69,7 @@ install: build
 	mkdir -p $(CURDIR)/debian/castor/usr/share/man/man3
 	mkdir -p $(CURDIR)/debian/castor/usr/share/man/man4
 	mkdir -p $(CURDIR)/debian/castor/etc/castor
+	mkdir -p $(CURDIR)/debian/castor/etc/castor/expert
 	mkdir -p $(CURDIR)/debian/castor/etc/init.d
 	mkdir -p $(CURDIR)/debian/castor/etc/sysconfig
 	mkdir -p $(CURDIR)/debian/castor/usr/local/lsf/lib

@@ -65,6 +65,7 @@ mkdir -p ${RPM_BUILD_ROOT}/usr/share/man/man1
 mkdir -p ${RPM_BUILD_ROOT}/usr/share/man/man3
 mkdir -p ${RPM_BUILD_ROOT}/usr/share/man/man4
 mkdir -p ${RPM_BUILD_ROOT}/etc/castor
+mkdir -p ${RPM_BUILD_ROOT}/etc/castor/expert
 mkdir -p ${RPM_BUILD_ROOT}/etc/sysconfig
 mkdir -p ${RPM_BUILD_ROOT}/etc/init.d
 mkdir -p ${RPM_BUILD_ROOT}/etc/logrotate.d
