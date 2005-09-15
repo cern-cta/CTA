@@ -25,6 +25,7 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
+	find . -type f -exec touch {} \;
 	$(MAKE) -f Makefile.ini Makefiles
 	(PATH=$${PATH}:/usr/X11R6/bin; export PATH; which makedepend >& /dev/null; [ $$? -eq 0 ] && $(MAKE) depend)
 	touch configure-stamp

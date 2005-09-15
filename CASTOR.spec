@@ -39,6 +39,7 @@ The CASTOR Project stands for CERN Advanced STORage Manager, and its goal is to 
 %prep
 %setup -q
 %build
+find . -type f -exec touch {} \;
 make -f Makefile.ini Makefiles
 # In case makedepend is not in the PATH
 PATH=${PATH}:/usr/X11R6/bin
