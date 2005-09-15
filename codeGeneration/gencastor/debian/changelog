@@ -1,16 +1,23 @@
+gencastor (3.4-3) unstable; urgency=low
+
+  * Fixed generator for generic converters to take into account namespaces
+    and other 3.4.x fixes.
+
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Thu, 15 Sep 2005 10:00:00 +0200
+
 gencastor (3.4-2) unstable; urgency=low
 
   * Fixed bug for associations n to 1 that had no name on one side.
     Previous version was actually not compiling.
 
- -- Sebastien Ponce <sebastien.ponce@cern.ch>  Mon, 29 Sep 2005 15:00:00 +0200
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Mon,  5 Sep 2005 15:00:00 +0200
 
 gencastor (3.4-1) unstable; urgency=low
 
   * Further fixed bug for associations 1 to 1 that had no name on one side.
     Previous version was compiling but was not linking.
 
- -- Sebastien Ponce <sebastien.ponce@cern.ch>  Mon, 29 Sep 2005 15:00:00 +0200
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Mon,  5 Sep 2005 15:00:00 +0200
 
 gencastor (3.4-0) unstable; urgency=low
 
@@ -20,7 +27,7 @@ gencastor (3.4-0) unstable; urgency=low
   * modified accordingly the use of namespaces, having in mind that some
     files are no more using the castor namespace by default
 
- -- Sebastien Ponce <sebastien.ponce@cern.ch>  Mon, 29 Sep 2005 11:00:00 +0200
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Mon,  5 Sep 2005 11:00:00 +0200
 
 gencastor (3.3-0) unstable; urgency=low
 

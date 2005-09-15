@@ -502,7 +502,7 @@ void CppCppDbCnvWriter::writeConstants() {
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "StatementString =" << endl
                   << getIndent()
-                  << "\"SELECT id from "
+                  << "\"SELECT id FROM "
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << " WHERE " << as->localPart.name
                   << " = :1 FOR UPDATE\";" << endl << endl
@@ -549,7 +549,7 @@ void CppCppDbCnvWriter::writeConstants() {
                     << capitalizeFirstLetter(as->remotePart.typeName)
                     << "ExistStatementString =" << endl
                     << getIndent()
-                    << "\"SELECT id from "
+                    << "\"SELECT id FROM "
                     << capitalizeFirstLetter(as->remotePart.typeName)
                     << " WHERE id = :1\";" << endl << endl;
         }
@@ -2118,8 +2118,11 @@ void CppCppDbCnvWriter::writeBasicMultNFillObj(Assoc* as) {
             << endl << getIndent()
             << "     it++) {"  << endl;
   m_indent++;
-  *m_stream << getIndent() << "IObject* item"
-            << " = cnvSvc()->getObjFromId(*it);"
+  *m_stream << getIndent()
+            << fixTypeName("IObject*",
+                           "castor",
+                           m_classInfo->packageName)
+            << " item = cnvSvc()->getObjFromId(*it);"
             << endl << getIndent()
             << fixTypeName(as->remotePart.typeName,
                            getNamespace(as->remotePart.typeName),
