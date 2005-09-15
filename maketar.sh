@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.22 2005/08/11 09:23:14 jdurand Exp $
+# $Id: maketar.sh,v 1.23 2005/09/15 11:29:11 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -119,9 +119,13 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     echo "Summary: Cern Advanced mass STORage" >> CASTOR.spec
     echo "Group: Application/Castor" >> CASTOR.spec
     #
+    ## Get Architecture and consider only case of Architecture: all, translated to BuildArch: noarch
+    #
+    architecture=`cat debian/control | perl -e '$package=shift; while (<>) {chomp($this .= " " . $_)}; $this =~ s/.*Package: $package //g; $this =~ s/Description:.*//g; $this =~ /Architecture: ([^ ]+) /;print "$1\n"' $package | sed 's/ //g'`
+    #
     ## Get requires
     #
-    requires=`cat debian/control | perl -e '$package=shift; while (<>) {chomp($this .= " " . $_)}; $this =~ s/.*Package: $package //g; $this =~ s/Description:.*//g; $this =~ /Depends:.*},.*},(.*)/;print "$1\n"' $package | sed 's/ //g'`
+    requires=`cat debian/control | perl -e '$package=shift; while (<>) {chomp($this .= " " . $_)}; $this =~ s/.*Package: $package //g; $this =~ s/Description:.*//g; $this =~ /Depends:.*},.*},(.*) /;print "$1\n"' $package | sed 's/ //g'`
     if [ -n "${requires}" ]; then
 	echo "Requires: ${requires}" >> CASTOR.spec
     fi
