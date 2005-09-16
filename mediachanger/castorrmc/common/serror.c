@@ -352,6 +352,7 @@ char *sys_dlferrlist[EDLFMAXERR-EDLFBASEOFF+2] =
 	 "Can not delete or update parent row: references exist",
 	 "Row was not found in the database",
 	 "Log file format error",
+         "No connection to database",
          "BAD ERROR NUMBER"
         };
 
