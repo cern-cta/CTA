@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.38 $ $Date: 2005/09/16 14:40:41 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.39 $ $Date: 2005/09/16 15:47:14 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -21,7 +21,8 @@ COMM Libraries to include in SharedLibraryTargetName(shift)
 LIBRARIES0 = $(COMMONLIB) $(RFIOLIB) $(MSGLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHCLIENTLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB) $(RMCLIB) $(EXPERTLIB) $(RESOURCEMONITORINGLIB)
 LIBRARIES3 = $(CNVSLIB)
 LIBRARIES1 = $(RHORALIB)
-SHLIBREQLIBS1 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshift -lcastorCnvs
+SHLIBREQLIBS1 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshift
+COMM -lcastorCnvs soon to come
 LIBRARIES4 = $(RHMYLIB)
 SHLIBREQLIBS4 = $(SHLIBREQLIBS) -lmysqlpp -L.. -lshift -lcastorCnvs
 LIBRARIES5 = $(RHPGLIB)
