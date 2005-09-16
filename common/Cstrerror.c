@@ -4,17 +4,18 @@
  */
 
 /*
- * $Id: Cstrerror.c,v 1.1 2005/08/10 09:07:58 jdurand Exp $
+ * $Id: Cstrerror.c,v 1.2 2005/09/16 12:54:41 jdurand Exp $
  */
 
 #include <string.h>
+#include <stdlib.h>
 #include <errno.h>
 #include "osdep.h"
 #include "Cstrerror.h"
 #include "Cglobals.h"
 
 #ifndef lint
-static char sccsid[] =  "@(#)$RCSfile: Cstrerror.c,v $ $Revision: 1.1 $ $Date: 2005/08/10 09:07:58 $ CERN IT-ADC/CA Jean-Damien Durand";
+static char sccsid[] =  "@(#)$RCSfile: Cstrerror.c,v $ $Revision: 1.2 $ $Date: 2005/09/16 12:54:41 $ CERN IT-ADC/CA Jean-Damien Durand";
 #endif
 
 #define INTERNAL_BUFLEN 1023
