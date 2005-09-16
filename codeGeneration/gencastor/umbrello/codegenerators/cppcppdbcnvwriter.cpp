@@ -38,7 +38,7 @@ CppCppDbCnvWriter::~CppCppDbCnvWriter() {
 void CppCppDbCnvWriter::startSQLFile() {
   // Preparing SQL files for creation/deletion of the database(s)
   QFile file;
-  openFile(file, s_topNS + "/db/castor_oracle_create.sql",
+  openFile(file, s_topNS + "/db/" + s_topNS + "_oracle_create.sql",
            IO_WriteOnly | IO_Truncate);
   file.close();
   openFile(file, s_topNS + "/db/oracleGeneratedCore_create.sql",
@@ -48,7 +48,7 @@ void CppCppDbCnvWriter::startSQLFile() {
            IO_WriteOnly | IO_Truncate);
   file.close();  
 
-  openFile(file, s_topNS + "/db/castor_oracle_drop.sql",
+  openFile(file, s_topNS + "/db/" + s_topNS + "_oracle_drop.sql",
            IO_WriteOnly | IO_Truncate);
   file.close();
   openFile(file, s_topNS + "/db/oracleGeneratedHeader_drop.sql",
@@ -58,7 +58,7 @@ void CppCppDbCnvWriter::startSQLFile() {
            IO_WriteOnly | IO_Truncate);
   file.close();
 
-  openFile(file, s_topNS + "/db/castor_postgres_create.sql",
+  openFile(file, s_topNS + "/db/" + s_topNS + "_postgres_create.sql",
            IO_WriteOnly | IO_Truncate);
   file.close();
   openFile(file, s_topNS + "/db/postgresGeneratedCore_create.sql",
@@ -68,7 +68,7 @@ void CppCppDbCnvWriter::startSQLFile() {
            IO_WriteOnly | IO_Truncate);
   file.close();  
 
-  openFile(file, s_topNS + "/db/castor_postgres_drop.sql",
+  openFile(file, s_topNS + "/db/" + s_topNS + "_postgres_drop.sql",
            IO_WriteOnly | IO_Truncate);
   file.close();
   openFile(file, s_topNS + "/db/postgresGeneratedHeader_drop.sql",
@@ -101,7 +101,7 @@ void CppCppDbCnvWriter::insertFileintoStream(QTextStream &stream,
 void CppCppDbCnvWriter::endSQLFile() {
   // Finalizing SQL files for creation/deletion of the database(s)
   QFile file;
-  openFile(file, s_topNS + "/db/castor_oracle_create.sql",
+  openFile(file, s_topNS + "/db/" + s_topNS + "_oracle_create.sql",
            IO_WriteOnly | IO_Append);
   QTextStream streamO(&file);
   insertFileintoStream(streamO, s_topNS + "/db/oracleGeneratedCore_create.sql");
@@ -109,7 +109,7 @@ void CppCppDbCnvWriter::endSQLFile() {
   insertFileintoStream(streamO, s_topNS + "/db/oracleTrailer.sql");
   file.close();
 
-  openFile(file, s_topNS + "/db/castor_oracle_drop.sql",
+  openFile(file, s_topNS + "/db/" + s_topNS + "_oracle_drop.sql",
            IO_WriteOnly | IO_Append);
   QTextStream streamOD(&file);
   insertFileintoStream(streamOD, s_topNS + "/db/oracleHeader_drop.sql");
@@ -118,7 +118,7 @@ void CppCppDbCnvWriter::endSQLFile() {
   insertFileintoStream(streamOD, s_topNS + "/db/oracleTrailer_drop.sql");
   file.close();
 
-  openFile(file, s_topNS + "/db/castor_postgres_create.sql",
+  openFile(file, s_topNS + "/db/" + s_topNS + "_postgres_create.sql",
            IO_WriteOnly | IO_Append);
   QTextStream streamP(&file);
   insertFileintoStream(streamP, s_topNS + "/db/postgresGeneratedCore_create.sql");
@@ -126,7 +126,7 @@ void CppCppDbCnvWriter::endSQLFile() {
   insertFileintoStream(streamP, s_topNS + "/db/postgresTrailer.sql");
   file.close();
 
-  openFile(file, s_topNS + "/db/castor_postgres_drop.sql",
+  openFile(file, s_topNS + "/db/" + s_topNS + "_postgres_drop.sql",
            IO_WriteOnly | IO_Append);
   QTextStream streamPD(&file);
   insertFileintoStream(streamPD, s_topNS + "/db/postgresHeader_drop.sql");

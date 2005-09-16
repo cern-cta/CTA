@@ -1,3 +1,10 @@
+gencastor (3.4-4) unstable; urgency=low
+
+  * One more fix in the generated SQL scripts, which reflect now the specified
+    namespace.
+
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Thu, 16 Sep 2005 15:00:00 +0200
+
 gencastor (3.4-3) unstable; urgency=low
 
   * Fixed generator for generic converters to take into account namespaces
