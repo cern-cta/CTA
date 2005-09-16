@@ -348,7 +348,8 @@
 #define EDLFREFEXIST    EDLFBASEOFF+3   /* References exist */
 #define EDLFNOTFOUND    EDLFBASEOFF+4   /* Row was not found in the database */
 #define EDLFLOGFORMAT   EDLFBASEOFF+5   /* Log file format error */
-#define EDLFMAXERR      EDLFBASEOFF+5
+#define EDLFNOTCONNECTED EDLFBASEOFF+6  /* Connection lost to the database */
+#define EDLFMAXERR      EDLFBASEOFF+6
 
 /*
  *------------------------------------------------------------------------
