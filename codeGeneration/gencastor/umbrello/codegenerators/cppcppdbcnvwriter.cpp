@@ -1496,7 +1496,8 @@ void CppCppDbCnvWriter::writeBasicMult1FillRep(Assoc* as) {
     }
     *m_stream << ");" << endl;
     m_indent--;
-    if (as->type.multiLocal == MULT_ONE) {
+    if (as->type.multiLocal == MULT_ONE &&
+        as->localPart.name != "") {
       *m_stream << getIndent() << "} else {" << endl;
       m_indent++;
       *m_stream << getIndent() << "// Check remote update statement"

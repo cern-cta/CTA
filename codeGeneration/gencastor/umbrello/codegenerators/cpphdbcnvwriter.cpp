@@ -366,7 +366,8 @@ void CppHDbCnvWriter::writeMembers() {
     } else {
       if (as->type.multiLocal == MULT_ONE &&
           as->type.multiRemote != MULT_UNKNOWN &&
-          !as->remotePart.abstract) {
+          !as->remotePart.abstract &&
+          as->localPart.name != "") {
         // 1 to * association
         *m_stream << getIndent()
                   << "/// SQL select statement for member "
