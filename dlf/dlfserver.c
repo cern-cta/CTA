@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.11 $ $Date: 2005/09/02 08:45:12 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.12 $ $Date: 2005/09/16 10:06:38 $  CERN IT $Author: kotlyar $ ";
 #endif /* not lint */
 
 #include <errno.h>
@@ -46,6 +46,35 @@ char localhost[CA_MAXHOSTNAMELEN+1];
 int maxfds;
 struct dlf_srv_thread_info *dlf_srv_thread_info;
 
+unsigned int DLFBUFMESSAGES=DLFBUFMESSAGES_DEFAULT;
+unsigned int DLFBUFPARAM=DLFBUFPARAM_DEFAULT;
+unsigned int DLFFLUSHTIME=DLFFLUSHTIME_DEFUALT;
+
+unsigned long dlf_allocate_buffers(struct dlf_srv_thread_info*);
+void dlf_free_buffers(struct dlf_srv_thread_info*);
+
+
+/* Function to handle real timer*/
+/* (SIGALRM)                                         */
+static void proc_sigalrm (dummy)
+   int dummy;
+   {
+   int i;   
+   for (i = 0; i < num_THR; i++) 
+      {
+      dlf_srv_thread_info[i].param_tag=1;
+ /*     if(dlf_srv_thread_info[i].dbfd.tr_started==0 && dlf_srv_thread_info[i].db_open_done==1)
+         {
+         dlf_start_tr(dlf_srv_thread_info[i].s,&dlf_srv_thread_info[i].dbfd);
+         dlf_flush_buffers(&dlf_srv_thread_info[i]);  
+         dlf_end_tr(&dlf_srv_thread_info[i].dbfd);
+         }
+ need to be changed */
+      }
+   alarm(DLFFLUSHTIME); /* seconds */
+   }
+
+   
 dlf_main(main_args)
      struct main_args *main_args;
 {
@@ -74,31 +103,79 @@ dlf_main(main_args)
   int errflg;
   char *endptr;
   int msgs_set = 0;
+  unsigned long bufmem=0;
+  unsigned long buftmp=0;
 
   char prtbuf[256];
-
+  
+  struct sigaction sact;
+  sigset_t sset;
+  
   jid = getpid();
   strcpy (func, "dlfserver");
   dlflogit (func, "started\n");
   
   errflg = 0;
-
+/*
   if (main_args->argc > 3) {
         dlflogit (func, "Parameter error\n");
   	exit (USERR);
   }
+*/
 
+  /* set SIGALARM handler */
+  
+ if (sigemptyset (&sset) < 0)
+    {
+    dlflogit (func, "Sigset error\n");
+    exit (USERR);
+    }
+
+ sact.sa_handler = proc_sigalrm; /* Set function */
+ sact.sa_flags = SA_NODEFER;   /* Do not block SIGALRM in that function */
+ sact.sa_mask = sset;
+ if (sigaction (SIGALRM, &sact, NULL) < 0)
+    {
+    dlflogit (func, "Sigaction error\n");
+    exit (USERR);
+    }
+ 
   optind = 1;
   opterr = 0;
-
-  while ((c = getopt (main_args->argc, main_args->argv, "t:")) != EOF) {
+  /* usage:  [-t number of thread] [-m messages in buffer per thread] [-p parrameters in buffer per thread] [-f flush buffer time in sec]*/
+  while ((c = getopt (main_args->argc, main_args->argv, "t:m:p:f:")) != EOF) {
     switch (c) {
     case 't':
-      if ((num_THR = atoi(optarg)) <= 0) {
-	dlflogit(func, "-t option value is <= 0\n");
-	errflg++;
-      }
-      break;
+       if ((num_THR = atoi(optarg)) <= 0) 
+          {
+	  dlflogit(func, "-t option value is <= 0\n");
+	  errflg++;
+          }
+       break;
+    case 'm':
+       if((i=atoi(optarg))<10 )
+          {
+          dlflogit(func, "-m option value is incorrect\n");
+	  errflg++;
+          }
+       DLFBUFMESSAGES=i;   
+       break;
+    case 'p':
+       if((i=atoi(optarg))<10)
+          {
+          dlflogit(func, "-p option value is incorrect\n");
+	  errflg++;
+          }
+       DLFBUFPARAM=i;   
+       break;
+    case 'f':
+       if((i=atoi(optarg))<1)
+          {
+          dlflogit(func, "-f option value is incorrect\n");
+	  errflg++;
+          }
+       DLFFLUSHTIME=i;   
+       break;
     default:
       errflg++;
       break;
@@ -111,13 +188,30 @@ dlf_main(main_args)
   }
 
 
- dlflogit(func, "initialize with %d threads\n", num_THR); 
-
+ dlflogit(func, "initialize with %d threads\n", num_THR);
+ dlflogit(func, "initialize with %d messages buffer per thread\n", DLFBUFMESSAGES);
+ dlflogit(func, "initialize with %d parameters buffer per thread\n", DLFBUFPARAM);
+ dlflogit(func, "initialize with %d sec flush buffers time\n", DLFFLUSHTIME);
+ 
  if ((dlf_srv_thread_info = calloc(num_THR,sizeof(struct dlf_srv_thread_info))) == NULL) {
    dlflogit(func, "calloc error (%s)\n", strerror(errno));
    exit(USERR);
  }
 
+ /* allocate memory for the buffers at each thread */
+ for(i=0;i<num_THR;i++)
+    {
+    if((buftmp=dlf_allocate_buffers(&dlf_srv_thread_info[i]))==0)
+       {
+       dlflogit(func, "calloc error for buffers (%s)\n", strerror(errno));
+       exit(USERR);
+       }
+    bufmem+=buftmp;   
+    }
+    
+  bufmem/=1024;
+  dlflogit (func, "Allocated memory for buffers %uKB\n",bufmem);
+ 
   gethostname (localhost, CA_MAXHOSTNAMELEN+1);
   if (strchr (localhost, '.') == NULL) {
     if (Cdomainname (domainname, sizeof(domainname)) < 0) {
@@ -225,7 +319,10 @@ dlf_main(main_args)
   }
 
   FD_SET (s, &readmask);
-
+  
+  /* start flush timer */
+  alarm(DLFFLUSHTIME);
+  
   /* main loop */
   while (1) {
     if (being_shutdown) {
@@ -236,10 +333,18 @@ dlf_main(main_args)
           continue;
         }
         if (dlf_srv_thread_info[i].db_open_done)
-          (void) dlf_closedb (&dlf_srv_thread_info[i].dbfd);
+           {
+           dlf_start_tr(dlf_srv_thread_info[i].s,&dlf_srv_thread_info[i].dbfd);
+           dlf_flush_buffers(&dlf_srv_thread_info[i]);  
+           dlf_end_tr(&dlf_srv_thread_info[i].dbfd);
+           (void) dlf_closedb (&dlf_srv_thread_info[i].dbfd);
+           }
       }
       if (nb_active_threads == 0)
-        return (0);
+         {
+         for (i = 0; i < num_THR; i++) dlf_free_buffers(&dlf_srv_thread_info[i]);
+         return (0);
+         }
     }
     if (FD_ISSET (s, &readfd)) {
       FD_CLR (s, &readfd);
@@ -276,6 +381,215 @@ dlf_main(main_args)
   }
 }
 
+/* returns 0 if errors or allocated memory in other case */
+unsigned long dlf_allocate_buffers(thread_info)
+struct dlf_srv_thread_info *thread_info;
+       { 
+        unsigned long bufmem=0;   
+        if((thread_info->arr_msgseq_no=calloc(DLFBUFMESSAGES,sizeof(unsigned long))) == NULL)
+           {
+           dlflogit (func, "calloc error (%s)\n", strerror(errno));
+           return(0);
+           }
+        bufmem+=DLFBUFMESSAGES*sizeof(unsigned long);   
+        if((thread_info->arr_time_usec=calloc(DLFBUFMESSAGES,sizeof(int))) == NULL)
+           {
+           dlflogit (func, "calloc error (%s)\n", strerror(errno));
+           return(0);
+           }
+        bufmem+=DLFBUFMESSAGES*sizeof(int);
+        if((thread_info->arr_host_id=calloc(DLFBUFMESSAGES,sizeof(int))) == NULL)
+           {
+           dlflogit (func, "calloc error (%s)\n", strerror(errno));
+           return(0);
+           }           
+        bufmem+=DLFBUFMESSAGES*sizeof(int);   
+        if((thread_info->arr_ns_host_id=calloc(DLFBUFMESSAGES,sizeof(int))) == NULL)
+           {
+           dlflogit (func, "calloc error (%s)\n", strerror(errno));
+           return(0);
+           }
+        bufmem+=DLFBUFMESSAGES*sizeof(int);   
+        if((thread_info->arr_facility=calloc(DLFBUFMESSAGES,sizeof(int))) == NULL)
+           {
+           dlflogit (func, "calloc error (%s)\n", strerror(errno));
+           return(0);
+           }
+        bufmem+=DLFBUFMESSAGES*sizeof(int);   
+        if((thread_info->arr_severity=calloc(DLFBUFMESSAGES,sizeof(int))) == NULL)
+           {
+           dlflogit (func, "calloc error (%s)\n", strerror(errno));
+           return(0);
+           }
+        bufmem+=DLFBUFMESSAGES*sizeof(int);   
+        if((thread_info->arr_msg_no=calloc(DLFBUFMESSAGES,sizeof(int))) == NULL)
+           {
+           dlflogit (func, "calloc error (%s)\n", strerror(errno));
+           return(0);
+           }
+        bufmem+=DLFBUFMESSAGES*sizeof(int);    
+        if((thread_info->arr_pid=calloc(DLFBUFMESSAGES,sizeof(int))) == NULL)
+           {
+           dlflogit (func, "calloc error (%s)\n", strerror(errno));
+           return(0);
+           }
+        bufmem+=DLFBUFMESSAGES*sizeof(int);   
+        if((thread_info->arr_thread_id=calloc(DLFBUFMESSAGES,sizeof(int))) == NULL)
+           {
+           dlflogit (func, "calloc error (%s)\n", strerror(errno));
+           return(0);
+           }
+        bufmem+=DLFBUFMESSAGES*sizeof(int);   
+        if((thread_info->arr_time=calloc(DLFBUFMESSAGES,sizeof(chartime))) == NULL)
+           {
+           dlflogit (func, "calloc error (%s)\n", strerror(errno));
+           return(0);
+           }
+        bufmem+=DLFBUFMESSAGES*sizeof(chartime);   
+        if((thread_info->arr_req_id=calloc(DLFBUFMESSAGES,sizeof(charid))) == NULL)
+           {
+           dlflogit (func, "calloc error (%s)\n", strerror(errno));
+           return(0);
+           }
+        bufmem+=DLFBUFMESSAGES*sizeof(charid);           
+        if((thread_info->arr_ns_file_id=calloc(DLFBUFMESSAGES,sizeof(charid))) == NULL)
+           {
+           dlflogit (func, "calloc error (%s)\n", strerror(errno));
+           return(0);
+           }
+        bufmem+=DLFBUFMESSAGES*sizeof(charid);           
+
+        if((thread_info->arr_param_str_par_name=calloc(DLFBUFPARAM,sizeof(charparname))) == NULL)
+           {
+           dlflogit (func, "calloc error (%s)\n", strerror(errno));
+           return(0);
+           }
+        bufmem+=DLFBUFPARAM*sizeof(charparname);           
+        if((thread_info->arr_param_str_val=calloc(DLFBUFPARAM,sizeof(charval))) == NULL)
+           {
+           dlflogit (func, "calloc error (%s)\n", strerror(errno));
+           return(0);
+           }
+        bufmem+=DLFBUFPARAM*sizeof(charparname);    
+        if((thread_info->arr_msg_seq_num_str_param=calloc(DLFBUFPARAM,sizeof(unsigned long))) == NULL)
+           {
+           dlflogit (func, "calloc error (%s)\n", strerror(errno));
+           return(0);
+           }   
+        bufmem+=DLFBUFPARAM*sizeof(unsigned long);   
+        if((thread_info->arr_msg_seq_num_tpvid=calloc(DLFBUFPARAM,sizeof(unsigned long))) == NULL)
+           {
+           dlflogit (func, "calloc error (%s)\n", strerror(errno));
+           return(0);
+           }
+        bufmem+=DLFBUFPARAM*sizeof(unsigned long);   
+        if((thread_info->arr_tpvid_val=calloc(DLFBUFPARAM,sizeof(charval))) == NULL)
+           {
+           dlflogit (func, "calloc error (%s)\n", strerror(errno));
+           return(0);
+           }
+        bufmem+=DLFBUFPARAM*sizeof(charval);  
+        if((thread_info->arr_msg_seq_num_param_int64=calloc(DLFBUFPARAM,sizeof(unsigned long))) == NULL)
+          {
+          dlflogit (func, "calloc error (%s)\n", strerror(errno));
+          return(0);
+          }
+        bufmem+=DLFBUFPARAM*sizeof(unsigned long);
+        if((thread_info->arr_param_int64_par_name=calloc(DLFBUFPARAM,sizeof(charparname))) == NULL)
+          {
+          dlflogit (func, "calloc error (%s)\n", strerror(errno));
+          return(0);
+          }
+        bufmem+=DLFBUFPARAM*sizeof(charparname);
+        if((thread_info->arr_param_int64_par_val=calloc(DLFBUFPARAM,sizeof(charval2))) == NULL)
+          {
+          dlflogit (func, "calloc error (%s)\n", strerror(errno));
+          return(0);
+          }
+        bufmem+=DLFBUFPARAM*sizeof(charval2);
+           
+       if((thread_info->arr_msg_seq_num_param_double=calloc(DLFBUFPARAM,sizeof(unsigned long))) == NULL)
+          {
+          dlflogit (func, "calloc error (%s)\n", strerror(errno));
+          return(0);
+          }
+        bufmem+=DLFBUFPARAM*sizeof(unsigned long);
+        
+        if((thread_info->arr_param_duble_par_name=calloc(DLFBUFPARAM,sizeof(charval))) == NULL)
+          {
+          dlflogit (func, "calloc error (%s)\n", strerror(errno));
+          return(0);
+          }
+        bufmem+=DLFBUFPARAM*sizeof(charval);
+        
+        if((thread_info->arr_param_double_val=calloc(DLFBUFPARAM,sizeof(charval2))) == NULL)
+          {
+          dlflogit (func, "calloc error (%s)\n", strerror(errno));
+          return(0);
+          }
+        bufmem+=DLFBUFPARAM*sizeof(charval2);
+        
+        if((thread_info->arr_msg_seq_num_rq_ids_map=calloc(DLFBUFPARAM,sizeof(unsigned long))) == NULL)
+          {
+          dlflogit (func, "calloc error (%s)\n", strerror(errno));
+          return(0);
+          }
+        bufmem+=DLFBUFPARAM*sizeof(unsigned long);
+        
+        if((thread_info->arr_rq_id_str=calloc(DLFBUFPARAM,sizeof(charid))) == NULL)
+          {
+          dlflogit (func, "calloc error (%s)\n", strerror(errno));
+          return(0);
+          }
+        bufmem+=DLFBUFPARAM*sizeof(charid);
+        if((thread_info->arr_subrq_id_str=calloc(DLFBUFPARAM,sizeof(charid))) == NULL)
+          {
+          dlflogit (func, "calloc error (%s)\n", strerror(errno));
+          return(0);
+          }
+       bufmem+=DLFBUFPARAM*sizeof(charid);
+       
+        thread_info->nummsg=0;
+        thread_info->numparamstr=0;
+        thread_info->numtpvid=0;
+        thread_info->paramint64=0;
+        thread_info->paramdouble=0;
+        thread_info->rqids=0;
+        thread_info->param_tag=0;
+       
+       return (bufmem);
+       }
+void dlf_free_buffers(dlf_srv_thread_info)
+      struct dlf_srv_thread_info *dlf_srv_thread_info;
+        {
+        free(dlf_srv_thread_info->arr_subrq_id_str);
+        free(dlf_srv_thread_info->arr_rq_id_str);
+        free(dlf_srv_thread_info->arr_msg_seq_num_rq_ids_map);
+        free(dlf_srv_thread_info->arr_param_double_val);
+        free(dlf_srv_thread_info->arr_param_duble_par_name);
+        free(dlf_srv_thread_info->arr_msg_seq_num_param_double);
+        free(dlf_srv_thread_info->arr_param_int64_par_val);
+        free(dlf_srv_thread_info->arr_param_int64_par_name);
+        free(dlf_srv_thread_info->arr_msg_seq_num_param_int64);
+        free(dlf_srv_thread_info->arr_tpvid_val);
+        free(dlf_srv_thread_info->arr_msg_seq_num_tpvid);
+        free(dlf_srv_thread_info->arr_msg_seq_num_str_param);
+        free(dlf_srv_thread_info->arr_param_str_val);
+        free(dlf_srv_thread_info->arr_param_str_par_name);
+        
+        free(dlf_srv_thread_info->arr_ns_file_id);
+        free(dlf_srv_thread_info->arr_req_id);
+        free(dlf_srv_thread_info->arr_time);
+        free(dlf_srv_thread_info->arr_thread_id);
+        free(dlf_srv_thread_info->arr_pid);
+        free(dlf_srv_thread_info->arr_msg_no);
+        free(dlf_srv_thread_info->arr_severity);
+        free(dlf_srv_thread_info->arr_facility);
+        free(dlf_srv_thread_info->arr_ns_host_id);
+        free(dlf_srv_thread_info->arr_host_id);
+        free(dlf_srv_thread_info->arr_time_usec);
+        free(dlf_srv_thread_info->arr_msgseq_no);
+        }
 int main(argc,argv)
      int argc;
      char **argv;
@@ -402,7 +716,8 @@ procreq(magic, req_type, req_data, data_len, clienthost, thip)
       thip->db_open_done = 1;
     }
   }
-
+  
+  
   switch (req_type) {
   case DLF_SHUTDOWN:
     c = dlf_srv_shutdown (magic, req_data, clienthost, thip);
