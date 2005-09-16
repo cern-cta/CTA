@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: dlf_server.h,v $ $Revision: 1.2 $ $Date: 2004/07/08 11:18:43 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: dlf_server.h,v $ $Revision: 1.3 $ $Date: 2005/09/16 09:54:48 $ CERN IT-ADC Vitaly Motyakov
  */
  
 #ifndef _DLF_SERVER_H
@@ -92,11 +92,65 @@ typedef Cdb_off_t DBLISTPTR;
 #endif
 #endif
 
+
+typedef char chartime[DLF_TIMESTRLEN + 1];
+typedef char charid[CUUID_STRING_LEN+1];
+typedef char charparname[21]; /* 20 */
+typedef char charval[256]; /* 255 */ 
+typedef char charval2[25]; /* 24 */
+
+#define DLFBUFHOSTID 3
+#define DLFBUFNSHOSTID 3
+
+#define DLFBUFMESSAGES_DEFAULT 1000
+#define DLFBUFPARAM_DEFAULT 10000
+#define DLFFLUSHTIME_DEFUALT 60
+
 struct dlf_srv_thread_info {
 	int		s;		/* socket for communication with client */
 	int		db_open_done;
 	struct dlf_dbfd dbfd;
 	char		errbuf[DLF_PRTBUFSZ];
+        /* buffers for messages */
+        int nummsg;
+        unsigned long *arr_msgseq_no; 
+        chartime *arr_time;
+        int *arr_time_usec;
+        charid *arr_req_id;
+        charid *arr_ns_file_id;
+        int *arr_host_id;
+        int *arr_ns_host_id;
+        int *arr_facility;
+        int *arr_severity;
+        int *arr_msg_no;
+        unsigned long *arr_pid;
+        int *arr_thread_id;
+
+        int numparamstr;
+        charparname *arr_param_str_par_name;
+        charval *arr_param_str_val; 
+        unsigned long *arr_msg_seq_num_str_param;
+
+        int numtpvid;
+        unsigned long *arr_msg_seq_num_tpvid;
+        charval *arr_tpvid_val;
+         
+        int paramint64;
+        unsigned long *arr_msg_seq_num_param_int64;
+        charparname *arr_param_int64_par_name;
+        charval2 *arr_param_int64_par_val;
+
+        int paramdouble;
+        unsigned long *arr_msg_seq_num_param_double;
+        charval *arr_param_duble_par_name;
+        charval2 *arr_param_double_val;
+
+        int rqids;
+        int *arr_msg_seq_num_rq_ids_map;
+        charid *arr_rq_id_str;
+        charid *arr_subrq_id_str;
+
+        int param_tag;
 };
 
 
@@ -125,7 +179,7 @@ EXTERN_C int DLL_DECL dlf_end_tr _PROTO((struct dlf_dbfd*));
 EXTERN_C int DLL_DECL dlf_exec_query _PROTO((char*, struct dlf_dbfd*, char*, MYSQL_RES**));
 #endif
 
-EXTERN_C int DLL_DECL dlf_insert_message_entry _PROTO((struct dlf_dbfd*, dlf_log_message_t*));
+EXTERN_C int DLL_DECL dlf_insert_message_entry _PROTO((struct dlf_srv_thread_info*, dlf_log_message_t*));
 EXTERN_C int DLL_DECL dlf_get_host_id _PROTO((struct dlf_dbfd*, const char*, int*, DBLISTPTR*));
 EXTERN_C int DLL_DECL dlf_insert_text_entry _PROTO((struct dlf_dbfd*, const char*, int, const char*));
 EXTERN_C int DLL_DECL dlf_modify_text_entry _PROTO((struct dlf_dbfd*, const char*, int, const char*));
