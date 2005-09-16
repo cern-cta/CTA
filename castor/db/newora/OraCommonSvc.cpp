@@ -17,11 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/08/22 16:32:33 $ $Author: itglp $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/09/16 16:35:18 $ $Author: itglp $
  *
- * Implementation of the ICommonSvc for Oracle
+ * Implementation of the ICommonSvc for Oracle - CDBC version
  *
- * @author Sebastien Ponce
+ * @author Giuseppe Lo Presti
  *****************************************************************************/
 
 // Include Files
@@ -32,30 +32,10 @@
 #include "castor/Constants.hpp"
 #include "castor/IClient.hpp"
 #include "castor/stager/Tape.hpp"
-#include "castor/stager/Stream.hpp"
-#include "castor/stager/Request.hpp"
-#include "castor/stager/Segment.hpp"
-#include "castor/stager/DiskCopy.hpp"
-#include "castor/stager/DiskPool.hpp"
 #include "castor/stager/SvcClass.hpp"
-#include "castor/stager/TapeCopy.hpp"
-#include "castor/stager/TapePool.hpp"
 #include "castor/stager/FileClass.hpp"
-#include "castor/stager/DiskServer.hpp"
-#include "castor/stager/CastorFile.hpp"
-#include "castor/stager/SubRequest.hpp"
 #include "castor/stager/FileSystem.hpp"
-#include "castor/stager/CastorFile.hpp"
-#include "castor/stager/Files2Delete.hpp"
-#include "castor/stager/FilesDeleted.hpp"
-#include "castor/stager/FilesDeletionFailed.hpp"
-#include "castor/stager/GetUpdateDone.hpp"
-#include "castor/stager/GetUpdateFailed.hpp"
-#include "castor/stager/PutFailed.hpp"
-#include "castor/stager/GCLocalFile.hpp"
-#include "castor/stager/GCFile.hpp"
-#include "castor/stager/DiskCopyForRecall.hpp"
-#include "castor/stager/TapeCopyForMigration.hpp"
+#include "castor/stager/DiskServer.hpp"
 #include "castor/db/ora/OraCommonSvc.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/db/ora/OraStatement.hpp"
@@ -65,12 +45,6 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/NotSupported.hpp"
-#include "castor/stager/TapeStatusCodes.hpp"
-#include "castor/stager/TapeCopyStatusCodes.hpp"
-#include "castor/stager/StreamStatusCodes.hpp"
-#include "castor/stager/SegmentStatusCodes.hpp"
-#include "castor/stager/SubRequestStatusCodes.hpp"
-#include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/BaseAddress.hpp"
 #include "occi.h"
 #include <Cuuid.h>
@@ -117,7 +91,6 @@ const std::string castor::db::ora::OraCommonSvc::s_selectFileSystemStatementStri
 castor::db::ora::OraCommonSvc::OraCommonSvc(const std::string name) :
   BaseSvc(name), DbBaseObj(0),
   m_selectTapeStatement(0),
-  m_requestToDoStatement(0),
   m_selectSvcClassStatement(0),
   m_selectFileClassStatement(0),
   m_selectFileSystemStatement(0) {
@@ -152,14 +125,12 @@ void castor::db::ora::OraCommonSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   try {
     deleteStatement(m_selectTapeStatement);
-    deleteStatement(m_requestToDoStatement);
     deleteStatement(m_selectSvcClassStatement);
     deleteStatement(m_selectFileClassStatement);
     deleteStatement(m_selectFileSystemStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_selectTapeStatement = 0;
-  m_requestToDoStatement = 0;
   m_selectSvcClassStatement = 0;
   m_selectFileClassStatement = 0;
   m_selectFileSystemStatement = 0;
@@ -261,72 +232,6 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
     throw ex;
   }
   // We should never reach this point
-}
-
-// -----------------------------------------------------------------------
-// requestToDo
-// -----------------------------------------------------------------------
-castor::stager::Request*
-castor::db::ora::OraCommonSvc::requestToDo
-(std::vector<ObjectsIds> &types)
-  throw (castor::exception::Exception) {
-  try {
-    // Check whether the statements are ok
-    if (0 == m_requestToDoStatement) {
-      std::ostringstream stmtString;
-      stmtString << "BEGIN :1 := 0; DELETE FROM newRequests WHERE type IN (";
-      for (std::vector<ObjectsIds>::const_iterator it = types.begin();
-           it!= types.end();
-           it++) {
-        if (types.begin() != it) stmtString << ", ";
-        stmtString << *it;
-      }
-      stmtString << ") AND ROWNUM < 2 RETURNING id INTO :1; END;";
-      m_requestToDoStatement =
-        createStatement(stmtString.str());
-      m_requestToDoStatement->registerOutParam
-        (1, oracle::occi::OCCIDOUBLE);
-      m_requestToDoStatement->setAutoCommit(true);
-    }
-    // execute the statement
-    m_requestToDoStatement->executeUpdate();
-    // see whether we've found something
-    u_signed64 id = (u_signed64)m_requestToDoStatement->getDouble(1);
-    if (0 == id) {
-      // Found no Request to handle
-      return 0;
-    }
-    // Create result
-    IObject* obj = cnvSvc()->getObjFromId(id);
-    if (0 == obj) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "requestToDo : could not retrieve object for id "
-        << id;
-      throw ex;
-    }
-    castor::stager::Request* result =
-      dynamic_cast<castor::stager::Request*>(obj);
-    if (0 == result) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "requestToDo : object retrieved for id "
-        << id << " was a "
-        << castor::ObjectsIdStrings[obj->type()]
-        << " while a Request was expected.";
-      delete obj;
-      throw ex;
-    }
-    // return
-    return result;
-  } catch (oracle::occi::SQLException e) {
-    rollback();
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in requestToDo."
-      << std::endl << e.what();
-    throw ex;
-  }
 }
 
 // -----------------------------------------------------------------------
