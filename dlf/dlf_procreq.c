@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_procreq.c,v $ $Revision: 1.5 $ $Date: 2005/08/12 08:06:54 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_procreq.c,v $ $Revision: 1.6 $ $Date: 2005/09/16 10:38:38 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
  
 #include <errno.h>
@@ -342,7 +342,9 @@ struct dlf_srv_thread_info *thip;
 
 	if (dlf_modify_facility_entry (&thip->dbfd, fac_name, fac_no))
 		RETURN (serrno);
-
+        
+        (void) dlf_end_tr (&thip->dbfd);
+             
 	RETURN (0);
 }
 
@@ -376,7 +378,8 @@ struct dlf_srv_thread_info *thip;
 
 	if (dlf_delete_facility_entry (&thip->dbfd, fac_name))
 		RETURN (serrno);
-
+        (void) dlf_end_tr (&thip->dbfd);
+        
 	RETURN (0);
 }
 
@@ -409,7 +412,7 @@ struct dlf_srv_thread_info *thip;
 	/*	if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
 		RETURN (serrno);
 	*/
-
+        
  	(void) dlf_start_tr (thip->s, &thip->dbfd);
 
 	if (dlf_modify_text_entry (&thip->dbfd, fac_name, msg_no, msg_txt)) {
@@ -453,7 +456,8 @@ struct dlf_srv_thread_info *thip;
 
 	if (dlf_delete_text_entry (&thip->dbfd, fac_name, txt_no))
 		RETURN (serrno);
-
+        (void) dlf_end_tr (&thip->dbfd);
+        
 	RETURN (0);
 
 
@@ -549,10 +553,11 @@ int *last;
 	*/
 
 	/* start transaction */
+       /* while(thip->dbfd.tr_started==1){ ;}*/
+	
+        (void) dlf_start_tr (thip->s, &thip->dbfd);
 
-	(void) dlf_start_tr (thip->s, &thip->dbfd);
-
-	if (dlf_insert_message_entry (&thip->dbfd, &log_message)) {
+	if (dlf_insert_message_entry (thip, &log_message)) {
 	    dlf_delete_param_list (&log_message.param_list);
 	    RETURN (serrno);
 	}
@@ -585,7 +590,10 @@ struct dlf_srv_thread_info *thip;
 	unmarshall_WORD (rbp, force);
 
 	if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
-		RETURN (serrno);
+           {
+           dlflogit (func, DLF92, "shutdown Cupv_check error", uid, gid, clienthost);
+           RETURN (serrno);
+           }
 
 	being_shutdown = force + 1;
 	RETURN (0);
