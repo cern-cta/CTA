@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.7 $ $Release$ $Date: 2005/08/03 12:21:28 $ $Author: obarring $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.8 $ $Release$ $Date: 2005/09/18 12:22:19 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.7 $ $Release$ $Date: 2005/08/03 12:21:28 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.8 $ $Release$ $Date: 2005/09/18 12:22:19 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -637,7 +637,6 @@ static int checkRecallRetry(
     return(-1);
   }
 
-  if ( iAddr != NULL ) C_IAddress_delete(iAddr);
 
   Cstager_TapeCopy_segments(tapeCopy,&segments,&nbSegments);
   if ( (segments == NULL) || (nbSegments <= 0) ) {
@@ -659,6 +658,7 @@ static int checkRecallRetry(
                     RTCPCLD_LOG_WHERE
                     );
     serrno = SEINTERNAL;
+    if ( iAddr != NULL ) C_IAddress_delete(iAddr);
     return(-1);
   }
   /*
@@ -696,6 +696,7 @@ static int checkRecallRetry(
     }
   }
   if ( diskCopies != NULL ) free(diskCopies);
+  if ( iAddr != NULL ) C_IAddress_delete(iAddr);
     
   /*
    * Arguments for retry policy are:
