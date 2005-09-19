@@ -107,7 +107,7 @@ const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementStrin
 
   /// SQL statement for selectFileSystem
 const std::string castor::db::ora::OraCommonSvc::s_selectFileSystemStatementString =
-  "SELECT DiskServer.id, DiskServer.status, FileSystem.id, FileSystem.free, FileSystem.weight, FileSystem.fsDeviation, FileSystem.status, FileSystem.minFreeSpace, FileSystem.maxFreeSpace FROM FileSystem, DiskServer WHERE DiskServer.name = :1 AND FileSystem.mountPoint = :2 AND FileSystem.diskserver = DiskServer.id FOR UPDATE";
+  "SELECT DiskServer.id, DiskServer.status, FileSystem.id, FileSystem.free, FileSystem.weight, FileSystem.fsDeviation, FileSystem.status, FileSystem.minFreeSpace, FileSystem.maxFreeSpace, FileSystem.reservedSpace, FileSystem.spaceToBeFreed FROM FileSystem, DiskServer WHERE DiskServer.name = :1 AND FileSystem.mountPoint = :2 AND FileSystem.diskserver = DiskServer.id FOR UPDATE";
 
   
 // -----------------------------------------------------------------------
@@ -387,6 +387,8 @@ castor::db::ora::OraCommonSvc::selectFileSystem
       ((enum castor::stager::FileSystemStatusCodes)rset->getInt(7));
     result->setMinFreeSpace((u_signed64)rset->getDouble(8));
     result->setMaxFreeSpace((u_signed64)rset->getDouble(9));
+    result->setReservedSpace((u_signed64)rset->getDouble(10));
+    result->setSpaceToBeFreed((u_signed64)rset->getDouble(11));
     result->setMountPoint(mountPoint);
     result->setDiskserver(ds);
     ds->addFileSystems(result);
