@@ -385,8 +385,8 @@ castor::db::ora::OraCommonSvc::selectFileSystem
     result->setFsDeviation(rset->getDouble(6));
     result->setStatus
       ((enum castor::stager::FileSystemStatusCodes)rset->getInt(7));
-    result->setMinFreeSpace((u_signed64)rset->getDouble(8));
-    result->setMaxFreeSpace((u_signed64)rset->getDouble(9));
+    result->setMinFreeSpace(rset->getFloat(8));
+    result->setMaxFreeSpace(rset->getFloat(9));
     result->setReservedSpace((u_signed64)rset->getDouble(10));
     result->setSpaceToBeFreed((u_signed64)rset->getDouble(11));
     result->setTotalSize((u_signed64)rset->getDouble(12));
