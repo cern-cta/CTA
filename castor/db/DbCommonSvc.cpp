@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbCommonSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/09/15 07:47:47 $ $Author: itglp $
+ * @(#)$RCSfile: DbCommonSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/09/19 14:41:50 $ $Author: sponcec3 $
  *
  * Implementation of the ICommonSvc for CDBC
  *
@@ -108,7 +108,7 @@ const std::string castor::db::DbCommonSvc::s_selectFileClassStatementString =
 
   /// SQL statement for selectFileSystem
 const std::string castor::db::DbCommonSvc::s_selectFileSystemStatementString =
-  "SELECT DiskServer.id, DiskServer.status, FileSystem.id, FileSystem.free, FileSystem.weight, FileSystem.fsDeviation, FileSystem.status, FileSystem.minFreeSpace, FileSystem.maxFreeSpace FROM FileSystem, DiskServer WHERE DiskServer.name = :1 AND FileSystem.mountPoint = :2 AND FileSystem.diskserver = DiskServer.id FOR UPDATE";
+  "SELECT DiskServer.id, DiskServer.status, FileSystem.id, FileSystem.free, FileSystem.weight, FileSystem.fsDeviation, FileSystem.status, FileSystem.minFreeSpace, FileSystem.maxFreeSpace, FileSystem.reservedSpace, FileSystem.spaceToBeFreed, FileSystem.totalSize FROM FileSystem, DiskServer WHERE DiskServer.name = :1 AND FileSystem.mountPoint = :2 AND FileSystem.diskserver = DiskServer.id FOR UPDATE";
 
   
 // -----------------------------------------------------------------------
@@ -386,8 +386,11 @@ castor::db::DbCommonSvc::selectFileSystem
     result->setFsDeviation(rset->getDouble(6));
     result->setStatus
       ((enum castor::stager::FileSystemStatusCodes)rset->getInt(7));
-    result->setMinFreeSpace(rset->getInt64(8));
-    result->setMaxFreeSpace(rset->getInt64(9));
+    result->setMinFreeSpace(rset->getFloat(8));
+    result->setMaxFreeSpace(rset->getFloat(9));
+    result->setReservedSpace(rset->getInt64(10));
+    result->setSpaceToBeFreed(rset->getInt64(11));
+    result->setTotalSize(rset->getInt64(12));
     result->setMountPoint(mountPoint);
     result->setDiskserver(ds);
     ds->addFileSystems(result);
