@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.134 $ $Release$ $Date: 2005/08/03 11:14:56 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.135 $ $Release$ $Date: 2005/09/19 16:31:39 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.134 $ $Release$ $Date: 2005/08/03 11:14:56 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.135 $ $Release$ $Date: 2005/09/19 16:31:39 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1276,7 +1276,7 @@ static int nextSegmentToRecall(
   struct Cstager_CastorFile_t *castorFile = NULL;
   char *diskServerName = NULL, *mountPointName = NULL, *pathName = NULL;
   char *nsHost = NULL;
-  file_list_t *fl = NULL;
+  file_list_t *fl = NULL, *flOld = NULL;
   int rc, save_serrno;
   rtcpFileRequest_t *filereq = NULL;
   struct Cns_fileid *fileid = NULL;
@@ -1364,6 +1364,9 @@ static int nextSegmentToRecall(
       strcpy(filereq->err.errmsgtxt,
              "Cstager_ITapeSvc_bestFileSystemForSegment() returned no candidate");
       (void)rtcpcld_updcRecallFailed(tape,fl);
+      if ( fl == flOld ) return(-1);
+      flOld = fl;
+      fl = NULL;
       continue;
     }
     break;

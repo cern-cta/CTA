@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/03/14 12:18:37 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.30 $ $Release$ $Date: 2005/09/19 16:31:40 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/03/14 12:18:37 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.30 $ $Release$ $Date: 2005/09/19 16:31:40 $ Olof Barring";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -626,7 +626,10 @@ int rtcpcld_nextFileToProcess(
       }
     }
   CLIST_ITERATE_END(tape->file,fl);
-  if ( (found == 1) && (file != NULL) ) *file = firstFound;
+  if ( file != NULL ) {
+    if ( found == 1 ) *file = firstFound;
+    else *file = NULL;
+  }
   return(found);
 } 
 
