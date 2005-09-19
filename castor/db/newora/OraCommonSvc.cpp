@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/09/16 16:35:18 $ $Author: itglp $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/09/19 17:04:15 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -82,7 +82,7 @@ const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementStrin
 
   /// SQL statement for selectFileSystem
 const std::string castor::db::ora::OraCommonSvc::s_selectFileSystemStatementString =
-  "SELECT DiskServer.id, DiskServer.status, FileSystem.id, FileSystem.free, FileSystem.weight, FileSystem.fsDeviation, FileSystem.status, FileSystem.minFreeSpace, FileSystem.maxFreeSpace FROM FileSystem, DiskServer WHERE DiskServer.name = :1 AND FileSystem.mountPoint = :2 AND FileSystem.diskserver = DiskServer.id FOR UPDATE";
+  "SELECT DiskServer.id, DiskServer.status, FileSystem.id, FileSystem.free, FileSystem.weight, FileSystem.fsDeviation, FileSystem.status, FileSystem.minFreeSpace, FileSystem.maxFreeSpace, FileSystem.reservedSpace, FileSystem.spaceToBeFreed, FileSystem.totalSize FROM FileSystem, DiskServer WHERE DiskServer.name = :1 AND FileSystem.mountPoint = :2 AND FileSystem.diskserver = DiskServer.id FOR UPDATE";
 
   
 // -----------------------------------------------------------------------
@@ -360,8 +360,11 @@ castor::db::ora::OraCommonSvc::selectFileSystem
     result->setFsDeviation(rset->getDouble(6));
     result->setStatus
       ((enum castor::stager::FileSystemStatusCodes)rset->getInt(7));
-    result->setMinFreeSpace((u_signed64)rset->getDouble(8));
-    result->setMaxFreeSpace((u_signed64)rset->getDouble(9));
+    result->setMinFreeSpace(rset->getFloat(8));
+    result->setMaxFreeSpace(rset->getFloat(9));
+    result->setReservedSpace((u_signed64)rset->getDouble(10));
+    result->setSpaceToBeFreed((u_signed64)rset->getDouble(11));
+    result->setTotalSize((u_signed64)rset->getDouble(12));
     result->setMountPoint(mountPoint);
     result->setDiskserver(ds);
     ds->addFileSystems(result);
