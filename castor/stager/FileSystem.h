@@ -175,30 +175,34 @@ int Cstager_FileSystem_setReservedSpace(struct Cstager_FileSystem_t* instance, i
 /**
  * Get the value of minFreeSpace
  * Minimum free space that should be kept on this FileSystem. This limit can be
- * transgressed but the garbage collector will then be launched.
+ * transgressed but the garbage collector will then be launched. This is given as a
+ * fraction of the totalSize.
  */
-int Cstager_FileSystem_minFreeSpace(struct Cstager_FileSystem_t* instance, u_signed64* var);
+int Cstager_FileSystem_minFreeSpace(struct Cstager_FileSystem_t* instance, float* var);
 
 /**
  * Set the value of minFreeSpace
  * Minimum free space that should be kept on this FileSystem. This limit can be
- * transgressed but the garbage collector will then be launched.
+ * transgressed but the garbage collector will then be launched. This is given as a
+ * fraction of the totalSize.
  */
-int Cstager_FileSystem_setMinFreeSpace(struct Cstager_FileSystem_t* instance, u_signed64 new_var);
+int Cstager_FileSystem_setMinFreeSpace(struct Cstager_FileSystem_t* instance, float new_var);
 
 /**
  * Get the value of maxFreeSpace
  * Maximum free space this FileSystem should have. Of course this limit can be
- * transgressed but a Garbage Collector should never go under this limit
+ * transgressed but a Garbage Collector should never go under this limit. This is
+ * given as a fraction of the totalSize.
  */
-int Cstager_FileSystem_maxFreeSpace(struct Cstager_FileSystem_t* instance, u_signed64* var);
+int Cstager_FileSystem_maxFreeSpace(struct Cstager_FileSystem_t* instance, float* var);
 
 /**
  * Set the value of maxFreeSpace
  * Maximum free space this FileSystem should have. Of course this limit can be
- * transgressed but a Garbage Collector should never go under this limit
+ * transgressed but a Garbage Collector should never go under this limit. This is
+ * given as a fraction of the totalSize.
  */
-int Cstager_FileSystem_setMaxFreeSpace(struct Cstager_FileSystem_t* instance, u_signed64 new_var);
+int Cstager_FileSystem_setMaxFreeSpace(struct Cstager_FileSystem_t* instance, float new_var);
 
 /**
  * Get the value of spaceToBeFreed
@@ -215,6 +219,18 @@ int Cstager_FileSystem_spaceToBeFreed(struct Cstager_FileSystem_t* instance, u_s
  * help another iteration of the GC to know what to delete.
  */
 int Cstager_FileSystem_setSpaceToBeFreed(struct Cstager_FileSystem_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of totalSize
+ * Total size of the fileSystem (given in bytes)
+ */
+int Cstager_FileSystem_totalSize(struct Cstager_FileSystem_t* instance, u_signed64* var);
+
+/**
+ * Set the value of totalSize
+ * Total size of the fileSystem (given in bytes)
+ */
+int Cstager_FileSystem_setTotalSize(struct Cstager_FileSystem_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of id

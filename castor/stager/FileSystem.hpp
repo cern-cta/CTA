@@ -231,40 +231,44 @@ namespace castor {
       /**
        * Get the value of m_minFreeSpace
        * Minimum free space that should be kept on this FileSystem. This limit can be
-       * transgressed but the garbage collector will then be launched.
+       * transgressed but the garbage collector will then be launched. This is given as a
+       * fraction of the totalSize.
        * @return the value of m_minFreeSpace
        */
-      u_signed64 minFreeSpace() const {
+      float minFreeSpace() const {
         return m_minFreeSpace;
       }
 
       /**
        * Set the value of m_minFreeSpace
        * Minimum free space that should be kept on this FileSystem. This limit can be
-       * transgressed but the garbage collector will then be launched.
+       * transgressed but the garbage collector will then be launched. This is given as a
+       * fraction of the totalSize.
        * @param new_var the new value of m_minFreeSpace
        */
-      void setMinFreeSpace(u_signed64 new_var) {
+      void setMinFreeSpace(float new_var) {
         m_minFreeSpace = new_var;
       }
 
       /**
        * Get the value of m_maxFreeSpace
        * Maximum free space this FileSystem should have. Of course this limit can be
-       * transgressed but a Garbage Collector should never go under this limit
+       * transgressed but a Garbage Collector should never go under this limit. This is
+       * given as a fraction of the totalSize.
        * @return the value of m_maxFreeSpace
        */
-      u_signed64 maxFreeSpace() const {
+      float maxFreeSpace() const {
         return m_maxFreeSpace;
       }
 
       /**
        * Set the value of m_maxFreeSpace
        * Maximum free space this FileSystem should have. Of course this limit can be
-       * transgressed but a Garbage Collector should never go under this limit
+       * transgressed but a Garbage Collector should never go under this limit. This is
+       * given as a fraction of the totalSize.
        * @param new_var the new value of m_maxFreeSpace
        */
-      void setMaxFreeSpace(u_signed64 new_var) {
+      void setMaxFreeSpace(float new_var) {
         m_maxFreeSpace = new_var;
       }
 
@@ -288,6 +292,24 @@ namespace castor {
        */
       void setSpaceToBeFreed(u_signed64 new_var) {
         m_spaceToBeFreed = new_var;
+      }
+
+      /**
+       * Get the value of m_totalSize
+       * Total size of the fileSystem (given in bytes)
+       * @return the value of m_totalSize
+       */
+      u_signed64 totalSize() const {
+        return m_totalSize;
+      }
+
+      /**
+       * Set the value of m_totalSize
+       * Total size of the fileSystem (given in bytes)
+       * @param new_var the new value of m_totalSize
+       */
+      void setTotalSize(u_signed64 new_var) {
+        m_totalSize = new_var;
       }
 
       /**
@@ -406,14 +428,17 @@ namespace castor {
       /// Space reserved on the filesystem but not yet used and thus not taken into account in free and deltaFree
       int m_reservedSpace;
 
-      /// Minimum free space that should be kept on this FileSystem. This limit can be transgressed but the garbage collector will then be launched.
-      u_signed64 m_minFreeSpace;
+      /// Minimum free space that should be kept on this FileSystem. This limit can be transgressed but the garbage collector will then be launched. This is given as a fraction of the totalSize.
+      float m_minFreeSpace;
 
-      /// Maximum free space this FileSystem should have. Of course this limit can be transgressed but a Garbage Collector should never go under this limit
-      u_signed64 m_maxFreeSpace;
+      /// Maximum free space this FileSystem should have. Of course this limit can be transgressed but a Garbage Collector should never go under this limit. This is given as a fraction of the totalSize.
+      float m_maxFreeSpace;
 
       /// The space that will be deleted in the future by the GC workers. This are files that were selected by the GC but are not yet physically removed. This value can help another iteration of the GC to know what to delete.
       u_signed64 m_spaceToBeFreed;
+
+      /// Total size of the fileSystem (given in bytes)
+      u_signed64 m_totalSize;
 
       /// The id of this object
       u_signed64 m_id;

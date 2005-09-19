@@ -105,6 +105,7 @@ void castor::io::StreamFileSystemCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->minFreeSpace();
   ad->stream() << obj->maxFreeSpace();
   ad->stream() << obj->spaceToBeFreed();
+  ad->stream() << obj->totalSize();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -140,15 +141,18 @@ castor::IObject* castor::io::StreamFileSystemCnv::createObj(castor::IAddress* ad
   int reservedSpace;
   ad->stream() >> reservedSpace;
   object->setReservedSpace(reservedSpace);
-  u_signed64 minFreeSpace;
+  float minFreeSpace;
   ad->stream() >> minFreeSpace;
   object->setMinFreeSpace(minFreeSpace);
-  u_signed64 maxFreeSpace;
+  float maxFreeSpace;
   ad->stream() >> maxFreeSpace;
   object->setMaxFreeSpace(maxFreeSpace);
   u_signed64 spaceToBeFreed;
   ad->stream() >> spaceToBeFreed;
   object->setSpaceToBeFreed(spaceToBeFreed);
+  u_signed64 totalSize;
+  ad->stream() >> totalSize;
+  object->setTotalSize(totalSize);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
