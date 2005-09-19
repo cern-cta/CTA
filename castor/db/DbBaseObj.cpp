@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbBaseObj.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/08/18 10:01:35 $ $Author: itglp $
+ * @(#)$RCSfile: DbBaseObj.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/09/19 13:42:58 $ $Author: itglp $
  *
  *
  *
@@ -38,7 +38,7 @@
 // Constructor
 // -----------------------------------------------------------------------
 castor::db::DbBaseObj::DbBaseObj(castor::ICnvSvc* cnvSvc) :
-  BaseObject(), m_cnvSvc(0), m_ownsCnvSvc(false) {
+  BaseObject(), m_cnvSvc(0) {
   m_cnvSvc = dynamic_cast<castor::db::DbCnvSvc*>(cnvSvc);
   if (0 == m_cnvSvc) {
     m_cnvSvc = dynamic_cast<castor::db::DbCnvSvc*>
@@ -48,18 +48,13 @@ castor::db::DbBaseObj::DbBaseObj(castor::ICnvSvc* cnvSvc) :
       ex.getMessage() << "No DbCnvSvc available";
       throw ex;
     }
-    m_ownsCnvSvc = true;
   }
 }
 
 // -----------------------------------------------------------------------
 // Destructor
 // -----------------------------------------------------------------------
-castor::db::DbBaseObj::~DbBaseObj() throw() {
-  if (m_ownsCnvSvc) {
-    m_cnvSvc->release();
-  }
-}
+castor::db::DbBaseObj::~DbBaseObj() throw() {}
 
 // -----------------------------------------------------------------------
 // createStatement

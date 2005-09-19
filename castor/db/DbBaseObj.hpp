@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbBaseObj.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/08/18 10:01:35 $ $Author: itglp $
+ * @(#)$RCSfile: DbBaseObj.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/09/19 13:42:58 $ $Author: itglp $
  *
  *
  *
@@ -89,9 +89,6 @@ namespace castor {
         /// The corresponding conversion service
         castor::db::DbCnvSvc* m_cnvSvc;
 
-        /// Whether the conversion service should be released
-        bool m_ownsCnvSvc;
-        
       };
 
   } // end of namespace db
