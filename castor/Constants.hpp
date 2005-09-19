@@ -172,7 +172,8 @@ namespace castor {
     SVC_PGQUERYSVC = 32,
     SVC_PGVDQMSVC = 33,
 
-    SVC_MYCNV = 34
+    SVC_MYCNV = 34,
+    SVC_DBSRMSVC = 35
   };
 
   /**
@@ -205,7 +206,7 @@ namespace castor {
   /**
    * Nb of ServicesIds currently existing
    */
-  static const unsigned int ServicesIdsNb = 35;
+  static const unsigned int ServicesIdsNb = 36;
 
   /**
    * Nb of RepresentationsIds currently existing
@@ -222,7 +223,7 @@ namespace castor {
    * Names of the differents Services, used to display
    * correctly the ServicesIds enum
    */
-  extern const char* ServicesIdStrings[35];
+  extern const char* ServicesIdStrings[36];
 
   /**
    * Names of the differents representations, used to display

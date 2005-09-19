@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2005/08/23 09:57:50 $ $Author: itglp $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2005/09/19 14:05:21 $ $Author: itglp $
  *
  *
  *
@@ -120,11 +120,11 @@ const char* castor::ObjectsIdStrings[94] = {
   "ClientIdentification",
   "TapeServer",
   "TapeDrive",
-	"DeviceGroupName",
+  "DeviceGroupName",
   "ErrorHistory",
   "TapeDriveDedication",	
-	"TapeAccessSpecification",
-	"TapeDriveCompatibility",
+  "TapeAccessSpecification",
+  "TapeDriveCompatibility",
   
   "PutDoneStart"
 };
@@ -132,7 +132,7 @@ const char* castor::ObjectsIdStrings[94] = {
 //=============================================================================
 // ServicesIdStrings
 //=============================================================================
-const char* castor::ServicesIdStrings[35] = {
+const char* castor::ServicesIdStrings[36] = {
   "INVALID",
   "NOMSG",
   "DLFMSG",
@@ -172,7 +172,8 @@ const char* castor::ServicesIdStrings[35] = {
   "PGQUERYSVC",
   "PGVDQMSVC",
 
-  "MYCNV"
+  "MYCNV",
+  "DBSRMSVC"
 };
 
 //=============================================================================
