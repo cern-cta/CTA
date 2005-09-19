@@ -104,7 +104,7 @@ const std::string castor::db::ora::OraDiskPoolCnv::s_deleteSvcClassStatementStri
 // The FOR UPDATE is needed in order to avoid deletion
 // of a segment after listing and before update/remove
 const std::string castor::db::ora::OraDiskPoolCnv::s_selectSvcClassStatementString =
-"SELECT Child from DiskPool2SvcClass WHERE Parent = :1 FOR UPDATE";
+"SELECT Child FROM DiskPool2SvcClass WHERE Parent = :1 FOR UPDATE";
 
 //------------------------------------------------------------------------------
 // Constructor
