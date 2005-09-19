@@ -24,10 +24,10 @@ DROP INDEX I_QueryParameter_Query;
 DROP INDEX I_NbTapeCopiesInFS_FSStream;
 DROP INDEX I_FileSystem_Rate;
 
-/* SQL statements for object types */
+/* Object types */
 DROP TABLE Id2Type;
 
-/* SQL statement for requests status */
+/* Requests status */
 DROP TABLE newRequests;
 
 /* support tables - check oracleTrailer_create.sql */
