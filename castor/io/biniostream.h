@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: biniostream.h,v $ $Revision: 1.4 $ $Release$ $Date: 2005/09/01 10:03:16 $ $Author: mbraeger $
+ * @(#)$RCSfile: biniostream.h,v $ $Revision: 1.5 $ $Release$ $Date: 2005/09/19 13:40:45 $ $Author: itglp $
  *
  *
  *
@@ -28,7 +28,27 @@
 #define IO_BINIOSTREAM_H 1
 
 #include <sstream>
+#include <byteswap.h>
 #include "osdep.h"
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+/* The host byte order is the same as the "inverted network byte order",
+   which is the reference used by Castor production setup,
+   so these functions are all just identity.  */
+#define intohl(x)       (x)
+#define intohs(x)       (x)
+#define htoinl(x)       (x)
+#define htoins(x)       (x)
+
+#else
+#if __BYTE_ORDER == __BIG_ENDIAN
+#define intohl(x)     __bswap_32 (x)
+#define intohs(x)     __bswap_16 (x)
+#define htoinl(x)     __bswap_32 (x)
+#define htoins(x)     __bswap_16 (x)
+#endif
+#endif
+
 
 namespace castor {
 
@@ -58,31 +78,37 @@ namespace castor {
       }
 
       biniostream& operator<< (int i) {
+        i = htoinl((unsigned int)i);
         write((char*)&i, sizeof(int));
         return *this;
       }
 
       biniostream& operator<< (unsigned int i) {
+        i = htoinl(i);
         write((char*)&i, sizeof(unsigned int));
         return *this;
       }
 
       biniostream& operator<< (short s) {
+        s = htoins((unsigned short)s);
         write((char*)&s, sizeof(short));
         return *this;
       }
 
       biniostream& operator<< (unsigned short s) {
+        s = htoins(s);
         write((char*)&s, sizeof(unsigned short));
         return *this;
       }
 
       biniostream& operator<< (long l) {
+        l = htoinl((unsigned long)l);
         write((char*)&l, LONGSIZE);
         return *this;
       }
 
       biniostream& operator<< (unsigned long l) {
+        l = htoinl(l);
         write((char*)&l, LONGSIZE);
         return *this;
       }
@@ -115,7 +141,11 @@ namespace castor {
       }
 
       biniostream& operator<< (u_signed64 d) {
-        write((char*)&d, sizeof(u_signed64));
+        //write((char*)&d, sizeof(u_signed64));
+        unsigned long n = (unsigned long)d;   // Least significant part first
+        write((char*)&n, sizeof(unsigned long));
+        n = htoinl((unsigned long)(d >> 32));
+        write((char*)&n, sizeof(unsigned long));
         return *this;
       }
 
@@ -141,31 +171,39 @@ namespace castor {
 
       biniostream& operator>> (int& i) {
         read((char*)&i, sizeof(int));
+        i = intohl((unsigned int)i);
         return *this;
       }
 
       biniostream& operator>> (unsigned int& i) {
         read((char*)&i, sizeof(unsigned int));
+        i = intohl(i);
         return *this;
       }
 
       biniostream& operator>> (short& s) {
         read((char*)&s, sizeof(short));
+        s = intohs((unsigned short)s);
         return *this;
       }
 
       biniostream& operator>> (unsigned short& s) {
         read((char*)&s, sizeof(unsigned short));
+        s = intohs(s);
         return *this;
       }
 
       biniostream& operator>> (long& l) {
         read((char*)&l, LONGSIZE);
+        l = intohl((unsigned long)l);
         return *this;
       }
 
       biniostream& operator>> (unsigned long& l) {
         read((char*)&l, LONGSIZE);
+        l = intohl(l);
+        if((*(char*)((char*)(l)) & (1 << (7%8))) && sizeof(int) > 4)
+            (void) memset((char *)&l, 255, sizeof(int)-4);
         return *this;
       }
 
@@ -197,15 +235,22 @@ namespace castor {
       }
 
       biniostream& operator>> (u_signed64& d) {
-        read((char*)&d, sizeof(u_signed64));
+        //read((char*)&d, sizeof(u_signed64));
+        unsigned long n;
+        read((char*)&n, sizeof(unsigned long));
+        d = intohl((unsigned long)n);     // Least Significant part first
+        read((char*)&n, sizeof(unsigned long));
+        n = intohl((unsigned long)n);
+        d += (u_signed64)n << 32; 
         return *this;
       }
-
+      
     };
 
   } // end of namespace io
 
 } // end of namespace castor
+
 
 template <class charT, class traits, class Allocator>
   castor::io::biniostream&
