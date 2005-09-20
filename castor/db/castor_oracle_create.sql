@@ -1428,7 +1428,7 @@ BEGIN
        WHERE SubRequest.request = Id2Type.id
          AND Id2Type.type = 39       -- PutDone
          AND SubRequest.castorFile = cfId
-         AND SubRequest,status = 5); -- WAITSUBREQ
+         AND SubRequest.status = 5); -- WAITSUBREQ
  END IF;
  COMMIT;
 END;
