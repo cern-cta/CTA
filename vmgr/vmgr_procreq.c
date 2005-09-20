@@ -4,9 +4,10 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_procreq.c,v $ $Revision: 1.4 $ $Date: 2005/08/08 16:15:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_procreq.c,v $ $Revision: 1.5 $ $Date: 2005/09/20 12:00:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
+#include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
