@@ -2,7 +2,6 @@ usr/bin/cleanLostFiles
 usr/bin/deleteFileClass
 usr/bin/deleteSvcClass
 usr/bin/diskServer_qry
-usr/bin/diskUsage
 usr/bin/enterFileClass
 usr/bin/enterSvcClass
 usr/bin/listFileClass
