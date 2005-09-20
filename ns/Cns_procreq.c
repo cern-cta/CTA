@@ -8,6 +8,7 @@ static char sccsid[] = "@(#)Cns_procreq.c,v 1.61 2004/03/03 08:51:31 CERN IT-PDP
 #endif /* not lint */
  
 #include <stdlib.h>
+#include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
