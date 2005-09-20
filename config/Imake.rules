@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.14 $ $Date: 2005/05/25 08:47:54 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.15 $ $Date: 2005/09/20 12:30:00 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #define NullParameter
@@ -171,7 +171,7 @@ name:: cond						@@\
 #ifndef InstallTarget
 #define InstallTarget(file,owner,group,mode,dest)	@@\
 dest/file: file				@@\
-	install -o owner -g group -m mode $? $(DESTDIR)dest
+	if [ "`whoami`" = "root" ]; then install -o owner -g group -m mode $? $(DESTDIR)dest; else install -m mode $? $(DESTDIR)dest; fi
 #endif
 #else
 #ifndef InstallTarget
@@ -179,8 +179,8 @@ dest/file: file				@@\
 dest/file: file				@@\
 	-mv $(DESTDIR)$@ $(DESTDIR)dest/OLD$?		@@\
 	cp $? $(DESTDIR)$@				@@\
-	chown owner $(DESTDIR)$@			@@\
-	chgrp group $(DESTDIR)$@			@@\
+	[ "`whoami`" = "root" ] && chown owner $(DESTDIR)$@	@@\
+	[ "`whoami`" = "root" ] && chgrp group $(DESTDIR)$@	@@\
 	chmod mode $(DESTDIR)$@
 #endif
 #endif
@@ -189,7 +189,7 @@ dest/file: file				@@\
 #ifndef InstallLibrary
 #define InstallLibrary(libname,dest,owner,group,mode)	@@\
 dest/LibraryTargetName(libname): LibraryTargetName(libname)	@@\
-	install -o owner -g group -m mode $? $(DESTDIR)dest
+	if [ "`whoami`" = "root" ]; then install -o owner -g group -m mode $? $(DESTDIR)dest; else install -m mode $? $(DESTDIR)dest; fi
 #endif
 #else
 #ifndef InstallLibrary
@@ -198,8 +198,8 @@ dest/LibraryTargetName(libname): LibraryTargetName(libname)	@@\
 	-mv $(DESTDIR)$@ $(DESTDIR)dest/OLD$?		@@\
 	cp $? $(DESTDIR)$@				@@\
 	@$(RANLIB) $(DESTDIR)$(LIB)/$?			@@\
-	chown owner $(DESTDIR)$@			@@\
-	chgrp group $(DESTDIR)$@			@@\
+	[ "`whoami`" = "root" ] && chown owner $(DESTDIR)$@	@@\
+	[ "`whoami`" = "root" ] && chgrp group $(DESTDIR)$@	@@\
 	chmod mode $(DESTDIR)$@
 #endif
 #endif
@@ -236,15 +236,15 @@ dest/SharedLibraryTargetName(libname): SharedLibraryTargetName(libname)	@@\
 #ifndef MakeDir
 #define MakeDir(dirname,owner,group,mode)		@@\
 dirname:						@@\
-	-install -d $(DESTDIR)dirname -o owner -g group -m mode
+	if [ "`whoami`" = "root" ]; then install -d $(DESTDIR)dirname -o owner -g group -m mode; else install -d $(DESTDIR)dirname -m mode; fi
 #endif
 #else
 #ifndef MakeDir
 #define MakeDir(dirname,owner,group,mode)		@@\
 dirname:						@@\
 	-mkdir -p $(DESTDIR)$@				@@\
-	chown owner $(DESTDIR)$@			@@\
-	chgrp group $(DESTDIR)$@			@@\
+	[ "`whoami`" = "root" ] && chown owner $(DESTDIR)$@	@@\
+	[ "`whoami`" = "root" ] && chgrp group $(DESTDIR)$@	@@\
 	chmod mode $(DESTDIR)/$@
 #endif
 #endif
