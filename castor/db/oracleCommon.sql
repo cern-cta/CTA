@@ -1237,7 +1237,8 @@ BEGIN
  -- If put inside PrepareToPut, restart any PutDone currently
  -- waiting on this put
  IF contextPIPP = 0 THEN
-   UPDATE SubRequest SET status = restart WHERE id IN
+   UPDATE SubRequest SET status = 1 -- RESTART
+    WHERE id IN
      (SELECT SubRequest.id FROM SubRequest, Id2Type
        WHERE SubRequest.request = Id2Type.id
          AND Id2Type.type = 39       -- PutDone
