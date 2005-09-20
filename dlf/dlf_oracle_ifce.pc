@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.11 $ $Date: 2005/09/16 10:15:48 $ CERN-IT $Author: kotlyar $";
+static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.12 $ $Date: 2005/09/20 15:06:31 $ CERN-IT $Author: kotlyar $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -778,8 +778,10 @@ dlf_log_message_t *log_message;
               {
 	      case DLF_MSG_PARAM_STR:
                  thread_info->arr_msg_seq_num_str_param[thread_info->numparamstr]=thread_info->arr_msgseq_no[tmpnummsg]; 
-                 strcpy(thread_info->arr_param_str_par_name[thread_info->numparamstr],param->name);
-                 strcpy(thread_info->arr_param_str_val[thread_info->numparamstr],param->strval);
+                 strncpy(thread_info->arr_param_str_par_name[thread_info->numparamstr],param->name,20);
+                 thread_info->arr_param_str_par_name[thread_info->numparamstr][20]='\0';
+                 strncpy(thread_info->arr_param_str_val[thread_info->numparamstr],param->strval,256);
+                 thread_info->arr_param_str_val[thread_info->numparamstr][256]='\0';
                  thread_info->numparamstr++;
                  if((DLFBUFPARAM-20)<thread_info->numparamstr) thread_info->param_tag=1;
 		 break;
@@ -834,7 +836,10 @@ dlf_log_message_t *log_message;
         if(thread_info->nummsg==(DLFBUFMESSAGES) || thread_info->param_tag==1) 
            {
            thread_info->param_tag=1;
-           if(!dlf_flush_buffers(thread_info)) return (-1);
+           if(dlf_flush_buffers(thread_info)<0)
+              {
+              return (-1);
+              }
            thread_info->param_tag=0;
            }
              
@@ -852,7 +857,6 @@ struct dlf_srv_thread_info* thread_info;
    
    strcpy (func, "dlf_flush_buffers");
    dbfd=&thread_info->dbfd;
-   
    
    if(thread_info->nummsg>0) 
       {

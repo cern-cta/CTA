@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.12 $ $Date: 2005/09/16 10:06:38 $  CERN IT $Author: kotlyar $ ";
+static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.13 $ $Date: 2005/09/20 15:06:31 $  CERN IT $Author: kotlyar $ ";
 #endif /* not lint */
 
 #include <errno.h>
@@ -54,25 +54,26 @@ unsigned long dlf_allocate_buffers(struct dlf_srv_thread_info*);
 void dlf_free_buffers(struct dlf_srv_thread_info*);
 
 
-/* Function to handle real timer*/
-/* (SIGALRM)                                         */
-static void proc_sigalrm (dummy)
-   int dummy;
+
+void* proc_flush (dummy)
+ void* dummy;
+ {
+   int i;
+   while(1)
    {
-   int i;   
+   sleep(DLFFLUSHTIME); /* seconds */
    for (i = 0; i < num_THR; i++) 
       {
       dlf_srv_thread_info[i].param_tag=1;
- /*     if(dlf_srv_thread_info[i].dbfd.tr_started==0 && dlf_srv_thread_info[i].db_open_done==1)
+      if(dlf_srv_thread_info[i].dbfd.tr_started==0 && dlf_srv_thread_info[i].db_open_done==1 && dlf_srv_thread_info[i].s<0)
          {
          dlf_start_tr(dlf_srv_thread_info[i].s,&dlf_srv_thread_info[i].dbfd);
          dlf_flush_buffers(&dlf_srv_thread_info[i]);  
          dlf_end_tr(&dlf_srv_thread_info[i].dbfd);
          }
- need to be changed */
-      }
-   alarm(DLFFLUSHTIME); /* seconds */
+       }
    }
+ }
 
    
 dlf_main(main_args)
@@ -123,22 +124,6 @@ dlf_main(main_args)
   }
 */
 
-  /* set SIGALARM handler */
-  
- if (sigemptyset (&sset) < 0)
-    {
-    dlflogit (func, "Sigset error\n");
-    exit (USERR);
-    }
-
- sact.sa_handler = proc_sigalrm; /* Set function */
- sact.sa_flags = SA_NODEFER;   /* Do not block SIGALRM in that function */
- sact.sa_mask = sset;
- if (sigaction (SIGALRM, &sact, NULL) < 0)
-    {
-    dlflogit (func, "Sigaction error\n");
-    exit (USERR);
-    }
  
   optind = 1;
   opterr = 0;
@@ -319,9 +304,12 @@ dlf_main(main_args)
   }
 
   FD_SET (s, &readmask);
-  
-  /* start flush timer */
-  alarm(DLFFLUSHTIME);
+  /* Creating flushing thread */ 
+  if(Cthread_create(&proc_flush,NULL)<0) 
+     {
+     dlflogit (func, "Cthread_create error", sstrerror(serrno));
+     return (SYERR);
+     }
   
   /* main loop */
   while (1) {
@@ -716,7 +704,6 @@ procreq(magic, req_type, req_data, data_len, clienthost, thip)
       thip->db_open_done = 1;
     }
   }
-  
   
   switch (req_type) {
   case DLF_SHUTDOWN:
