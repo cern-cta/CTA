@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlftest.c,v $ $Revision: 1.4 $ $Date: 2003/12/28 12:07:05 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlftest.c,v $ $Revision: 1.5 $ $Date: 2005/09/21 11:55:47 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -30,7 +30,8 @@ static char sccsid[] = "@(#)$RCSfile: dlftest.c,v $ $Revision: 1.4 $ $Date: 2003
 #include "Cuuid.h"
 #include "Cgetopt.h"
 
-#define NBTHREADS 6
+#define DEFAULT_NBTHREADS 6
+int  NBTHREADS=DEFAULT_NBTHREADS;
 
 extern char *Coptarg;
 extern int Coptind;
@@ -52,7 +53,7 @@ int main(argc, argv)
   char *endptr;
   int msgs_set = 0;
   int num_msgs = 0;
-  int cid[NBTHREADS]; /* Thread identifiers */
+  int *cid; /* Thread identifiers */
   int *status;
 
   uid = geteuid();
@@ -66,11 +67,11 @@ int main(argc, argv)
 #endif
   errflg = 0;
   Coptind = 1; /* REQUIRED */
-  while ((c = Cgetopt (argc, argv, "n:?")) != -1) {
+  while ((c = Cgetopt (argc, argv, "n:?t:")) != -1) {
     switch (c) {
     case 'n':
       num_msgs = strtol(Coptarg, &endptr, 10);
-      if (*endptr != '\0' || num_msgs < 0 || num_msgs > 1000) {
+      if (*endptr != '\0' || num_msgs < 0 || num_msgs > 10000) {
         fprintf (stderr, "%s\n", strerror(EINVAL));
         errflg++;
       }
@@ -78,6 +79,14 @@ int main(argc, argv)
         msgs_set++;
       }
       break;
+    case 't':
+       NBTHREADS=strtol(Coptarg, &endptr, 10);
+       if (*endptr != '\0' || NBTHREADS < 0 || NBTHREADS > 100)
+          {
+          fprintf (stderr, "%s\n", strerror(EINVAL));
+          errflg++;
+          }
+       break;   
     case '?':
       errflg++;
       break;
@@ -95,9 +104,15 @@ int main(argc, argv)
   }
   if (errflg) {
     fprintf (stderr, "usage: %s %s", argv[0],
-             "-n number_of_messages_per_thread\n");
+             "-n number_of_messages_per_thread [-t number_of_thread]\n");
     exit (USERR);
   }
+  
+if((cid=calloc(NBTHREADS,sizeof(int)))==NULL)
+   {
+   fprintf (stderr, "Calloc error\n");
+   exit (USERR);
+   }
 #if defined(_WIN32)
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
     fprintf (stderr, DLF52);
@@ -148,6 +163,7 @@ int main(argc, argv)
   for (i = 0; i < NBTHREADS; i++) {
     Cthread_join(cid[i], &status);
   }
+  free(cid);
   exit(0);
 }
 
@@ -194,7 +210,7 @@ void *gen_log(arg)
     pari64 = ((U_HYPER)(0X12345678) << 32) + 0X87654321;
     parf = 32.768;
     pard = 65.535;
-
+    
     rv = dlf_write (req_id, sev, msgn, &ns_fileid, 7,
                     "PINT", DLF_MSG_PARAM_INT, pari,
                     "PSTR", DLF_MSG_PARAM_STR, "This_is_a_string",
