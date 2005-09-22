@@ -1017,7 +1017,11 @@ BEGIN
   -- update SubRequest
   UPDATE SubRequest set status = 6,
                         lastModificationTime = getTime()
-   WHERE diskCopy = dcId; -- status SUBREQUEST_READY
+   WHERE diskCopy = dcId -- status SUBREQUEST_READY
+  RETURNING id INTO SubRequestId;
+  -- Wake up waiting subrequests
+  UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
+   WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
 END;
 
 /* PL/SQL method implementing recreateCastorFile */
