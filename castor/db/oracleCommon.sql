@@ -874,10 +874,10 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
   WHERE SubRequest.id = srId
     AND SubRequest.castorfile = DiskCopy.castorfile
     AND DiskCopy.status IN (0, 1, 2, 5, 6, 10, 11) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
-    AND FileSystem.id = DiskCopy.fileSystem
-    AND FileSystem.status = 0 -- PRODUCTION
-    AND DiskServer.id = FileSystem.diskserver
-    AND DiskServer.status = 0 -- PRODUCTION
+    AND FileSystem.id(+) = DiskCopy.fileSystem
+    AND FileSystem.status(+) = 0 -- PRODUCTION
+    AND DiskServer.id(+) = FileSystem.diskserver
+    AND DiskServer.status(+) = 0 -- PRODUCTION
     AND ROWNUM < 2;
   -- Found a DiskCopy, Check whether to wait on it
   IF rstatus IN (2,5,11) THEN -- WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING, Make SubRequest Wait
