@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #/******************************************************************************
-# *                      gcAllFS
+# *                      cleanLostFiles
 # *
 # * This file is part of the Castor project.
 # * See http://castor.web.cern.ch/castor
@@ -18,9 +18,12 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: cleanLostFiles,v $ $Revision: 1.5 $ $Release$ $Date: 2005/09/22 14:22:57 $ $Author: sponcec3 $
+# * @(#)$RCSfile: cleanLostFiles,v $ $Revision: 1.6 $ $Release$ $Date: 2005/09/22 14:24:18 $ $Author: sponcec3 $
 # *
-# * garbage collect all filesystems in one go
+# * cleanup files in the DB when they were lost on the disk.
+# * this basically does the second part of the garbage collection
+# * that is the update of the DB after deletion
+# * The input parametersmust be a list of DiskCopy ids
 # *
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
@@ -31,7 +34,7 @@ use castor_tools;
 
 # usage function
 sub usage {
-  printf("Usage : %s [-h]\n", $0);
+  printf("Usage : %s [-h] DiskCopyId [...]\n", $0);
 }
 
 # first parse the options
@@ -49,10 +52,47 @@ if ($help) {
 # The following query (were data are copied) may look strange
 # but I fear there is currently no way to do otherwise...
 my $dbquery = <<EOF;
+DECLARE
+  rawfiles "numList" := "numList"(
+EOF
+
+# Parse command line
+my $arg;
+my $first = 1;
+my $nbargs = 0;
+for $arg (@ARGV) {
+  # take care of empty args
+  if ($arg ne "") {
+    $nbargs++;
+    # avoid SQL injection by keeping only numbers
+    if ($arg =~ /[^0-9]/) {
+      print "Error : \"$arg\" is not a number\n";
+      usage();
+      exit;
+    }
+    if ($first == 1) {
+      $first = 0;
+    } else {
+      $dbquery .= ", ";
+    }
+    $dbquery .= $arg;
+  }
+}
+
+# If no arg, display usage
+if ($nbargs == 0) {
+  usage();
+  exit;
+}
+
+$dbquery .= <<EOF;
+);
+  files castor."cnumList";
 BEGIN
-  FOR fs in (SELECT id from filesytem) LOOP
-    garbageCollectFS(fs.id);
+  FOR i in rawfiles.FIRST .. rawfiles.LAST LOOP
+    files(i):=rawfiles(i);
   end LOOP;
+  filesDeletedProc(files);
 END;
 EOF
 
