@@ -1,0 +1,2 @@
+%attr(0755,root,bin) usr/bin/castor
+%attr(4755,root,bin) usr/bin/newacct

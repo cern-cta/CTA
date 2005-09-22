@@ -1,0 +1,13 @@
+%attr(0755,root,bin) usr/bin/cleanLostFiles
+%attr(0755,root,bin) usr/bin/deleteFileClass
+%attr(0755,root,bin) usr/bin/deleteSvcClass
+%attr(0755,root,bin) usr/bin/diskServer_qry
+%attr(0755,root,bin) usr/bin/enterFileClass
+%attr(0755,root,bin) usr/bin/enterSvcClass
+%attr(0755,root,bin) usr/bin/listFileClass
+%attr(0755,root,bin) usr/bin/listSvcClass
+%attr(0755,root,bin) usr/bin/modifyFileClass
+%attr(0755,root,bin) usr/bin/modifySvcClass
+%attr(0755,root,bin) usr/bin/printFileClass
+%attr(0755,root,bin) usr/bin/printSvcClass
+%attr(0755,root,bin) usr/lib/perl/CASTOR/castor_tools.pm

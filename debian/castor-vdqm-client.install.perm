@@ -1,0 +1,2 @@
+%attr(0755,root,bin) usr/bin/showqueues
+%attr(0750,root,bin) usr/bin/tpsrv_in_prod

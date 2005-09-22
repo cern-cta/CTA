@@ -1,0 +1,6 @@
+%attr(0640,root,bin) etc/sysconfig/stagerJob.example
+%attr(0755,stage,st) usr/bin/postlsfmsg
+%attr(0755,stage,st) usr/bin/readlsfmsg
+%attr(0700,root,bin) usr/bin/rmcreatdirs.sh
+%attr(6755,stage,st) usr/bin/stagerJob
+%attr(0755,stage,st) usr/bin/stagerJob.sh

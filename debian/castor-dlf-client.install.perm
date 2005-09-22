@@ -1,0 +1,9 @@
+%attr(0755,root,bin) usr/bin/dlfdeletefacility
+%attr(0755,root,bin) usr/bin/dlfdeletetext
+%attr(0755,root,bin) usr/bin/dlfenterfacility
+%attr(0755,root,bin) usr/bin/dlfentertext
+%attr(0755,root,bin) usr/bin/dlflistfacility
+%attr(0755,root,bin) usr/bin/dlflisttext
+%attr(0755,root,bin) usr/bin/dlflogstore
+%attr(0755,root,bin) usr/bin/dlfmodifyfacility
+%attr(0755,root,bin) usr/bin/dlfmodifytext

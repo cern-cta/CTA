@@ -1,0 +1,3 @@
+%attr(0640,root,st) etc/castor/ORASTAGERCONFIG.example
+%attr(-,root,root) usr/lib/libcastorCommonOra.so.__MAJOR_CASTOR_VERSION__
+%attr(-,root,root) usr/lib/libcastorCommonOra.so.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__

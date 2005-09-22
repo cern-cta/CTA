@@ -1,0 +1,5 @@
+%attr(0755,root,bin) usr/bin/Cupvadd
+%attr(0755,root,bin) usr/bin/Cupvcheck
+%attr(0755,root,bin) usr/bin/Cupvdelete
+%attr(0755,root,bin) usr/bin/Cupvlist
+%attr(0755,root,bin) usr/bin/Cupvmodify

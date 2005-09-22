@@ -1,0 +1,10 @@
+%attr(0640,root,bin) etc/castor/expert/bestfs.clp
+%attr(0640,root,bin) etc/castor/expert/castor.clp
+%attr(0640,root,bin) etc/castor/expert/castorweight.clp
+%attr(0640,root,bin) etc/castor/expert/fs_capabilities.clp
+%attr(0640,root,bin) etc/castor/expert/fs_garbage.clp
+%attr(0640,root,bin) etc/castor/expert/migrator.pl
+%attr(0640,root,bin) etc/castor/expert/migratorRetryPolicy.pl
+%attr(0640,root,bin) etc/castor/expert/recaller.pl
+%attr(0640,root,bin) etc/castor/expert/recallerRetryPolicy.pl
+%attr(0640,root,bin) etc/castor/expert/replica.pl

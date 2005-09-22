@@ -1,0 +1,5 @@
+%attr(0640,root,bin) etc/sysconfig/castor.example
+%attr(0640,root,bin) etc/sysconfig/castor_compiler.example
+%attr(0640,root,bin) etc/sysconfig/castor_db.example
+%attr(0640,root,bin) etc/sysconfig/castor_env.example
+%attr(0640,root,bin) etc/sysconfig/castor_paths.example

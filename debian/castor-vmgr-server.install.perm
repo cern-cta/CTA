@@ -1,0 +1,8 @@
+%attr(0640,root,st) etc/castor/VMGRCONFIG.example
+%attr(0755,root,bin) etc/init.d/vmgrdaemon
+%attr(0640,root,bin) etc/sysconfig/vmgrdaemon.example
+%attr(0750,root,bin) usr/bin/vmgrdaemon
+%attr(0755,root,bin) usr/bin/vmgrshutdown
+%attr(0755,root,bin) usr/sbin/castor-vmgr-server.postinst
+%attr(0755,root,bin) usr/sbin/castor-vmgr-server.postrm
+%attr(0755,root,bin) usr/sbin/castor-vmgr-server.prerm

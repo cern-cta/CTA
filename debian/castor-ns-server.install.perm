@@ -1,0 +1,8 @@
+%attr(0640,root,st) etc/castor/NSCONFIG.example
+%attr(0755,root,bin) etc/init.d/nsdaemon
+%attr(0640,root,bin) etc/sysconfig/nsdaemon.example
+%attr(0750,root,bin) usr/bin/nsdaemon
+%attr(0755,root,bin) usr/bin/nsshutdown
+%attr(0755,root,bin) usr/sbin/castor-ns-server.postinst
+%attr(0755,root,bin) usr/sbin/castor-ns-server.postrm
+%attr(0755,root,bin) usr/sbin/castor-ns-server.prerm

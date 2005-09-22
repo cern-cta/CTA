@@ -1,0 +1,6 @@
+%attr(0755,root,bin) etc/init.d/MigHunter
+%attr(0640,root,bin) etc/sysconfig/MigHunter.example
+%attr(0755,root,bin) usr/bin/MigHunter
+%attr(0755,root,bin) usr/sbin/castor-rtcopy-mighunter.postinst
+%attr(0755,root,bin) usr/sbin/castor-rtcopy-mighunter.postrm
+%attr(0755,root,bin) usr/sbin/castor-rtcopy-mighunter.prerm

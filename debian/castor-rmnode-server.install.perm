@@ -1,0 +1,7 @@
+%attr(0640,root,st) etc/castor/RMNODECONFIG.example
+%attr(0755,root,bin) etc/init.d/rmnode
+%attr(0640,root,bin) etc/sysconfig/rmnode.example
+%attr(0750,root,bin) usr/bin/rmnode
+%attr(0755,root,bin) usr/sbin/castor-rmnode-server.postinst
+%attr(0755,root,bin) usr/sbin/castor-rmnode-server.postrm
+%attr(0755,root,bin) usr/sbin/castor-rmnode-server.prerm

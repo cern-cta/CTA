@@ -1,0 +1,13 @@
+%attr(0755,root,bin) usr/bin/stagealloc
+%attr(0755,root,bin) usr/bin/stagecat
+%attr(0755,root,bin) usr/bin/stagechng
+%attr(0755,root,bin) usr/bin/stageclr
+%attr(0755,root,bin) usr/bin/stageget
+%attr(0755,root,bin) usr/bin/stagein
+%attr(0755,root,bin) usr/bin/stageout
+%attr(0755,root,bin) usr/bin/stageping
+%attr(0755,root,bin) usr/bin/stageput
+%attr(0755,root,bin) usr/bin/stageqry
+%attr(0755,root,bin) usr/bin/stagestat
+%attr(0755,root,bin) usr/bin/stageupdc
+%attr(0755,root,bin) usr/bin/stagewrt

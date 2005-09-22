@@ -1,0 +1,7 @@
+%attr(0755,root,bin) usr/bin/infd
+%attr(0755,root,bin) usr/bin/msgd
+%attr(0755,root,bin) usr/bin/msgi
+%attr(0755,root,bin) usr/bin/msgr
+%attr(0755,root,bin) usr/bin/oper
+%attr(0755,root,bin) usr/bin/rep
+%attr(0755,root,bin) usr/bin/tpmstat
