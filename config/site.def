@@ -225,7 +225,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #else
 #define ExpertConfigFile  /etc/castor/EXPCONFIG
 #endif
-#define ExpertHost     "localhost"
+#define ExpertHost     "castorexpert"
 #define ExpertSpool    /var/spool/expert
 #define RhHost        "castorrh"
 #define GcSpool        /var/spool/gc
