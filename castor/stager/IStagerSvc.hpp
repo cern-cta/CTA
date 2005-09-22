@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.64 $ $Release$ $Date: 2005/07/21 09:13:05 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.65 $ $Release$ $Date: 2005/09/22 11:05:03 $ $Author: sponcec3 $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -113,7 +113,8 @@ namespace castor {
        *   - if some diskcopies are found but all in WAIT*
        * status, return false (no schedule) and link the SubRequest
        * to the one we're waiting on + set its status to
-       * SUBREQUEST_WAITSUBREQ. Sources stays empty.
+       * SUBREQUEST_WAITSUBREQ. Sources stays empty and the
+       * DB transaction is commited.
        *   - if some diskcopies are found in STAGED/STAGEOUT
        * status, return true and list them in sources.
        * @param subreq the SubRequest to consider

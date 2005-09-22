@@ -119,7 +119,8 @@ int Cstager_IStagerSvc_requestToDo
  *   - if some diskcopies are found but all in WAIT*
  * status, return false (no schedule) and link the SubRequest
  * to the one we're waiting on + set its status to
- * SUBREQUEST_WAITSUBREQ. Sources stays empty.
+ * SUBREQUEST_WAITSUBREQ. Sources stays empty and the
+ * DB transaction is commited.
  *   - if some diskcopies are found in STAGED/STAGEOUT
  * status, return true and list them in sources.
  * @param stgSvc the IStagerSvc used
