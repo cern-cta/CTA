@@ -733,6 +733,7 @@ BEGIN
     -- Only DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
     makeSubRequestWait(rsubreqId, dci(1));
     result := 0;  -- no schedule
+    COMMIT;
     RETURN;
   END IF;
   -- Get the svcclass for this subrequest
