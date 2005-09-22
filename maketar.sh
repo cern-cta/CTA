@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.25 2005/09/20 12:37:24 jdurand Exp $
+# $Id: maketar.sh,v 1.26 2005/09/22 14:01:48 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -79,8 +79,8 @@ done
 #
 ## Change __MAJOR_CASTOR_VERSION and __MINOR_CASTOR_VERSION everywhere it has to be changed
 #
-perl -pi -e s/__MAJOR_CASTOR_VERSION__/${MAJOR_CASTOR_VERSION}/g */Imakefile debian/*.install
-perl -pi -e s/__MINOR_CASTOR_VERSION__/${MINOR_CASTOR_VERSION}/g */Imakefile debian/*.install
+perl -pi -e s/__MAJOR_CASTOR_VERSION__/${MAJOR_CASTOR_VERSION}/g */Imakefile debian/*.install.perm
+perl -pi -e s/__MINOR_CASTOR_VERSION__/${MINOR_CASTOR_VERSION}/g */Imakefile debian/*.install.perm
 #
 # Make spec file in sync
 #
@@ -114,7 +114,7 @@ fi
 ## Append all sub-packages to CASTOR.spec
 #
 for this in `grep Package: debian/control | awk '{print $NF}'`; do
-    package=`echo $this | sed 's/\.install//g'`
+    package=$this
     echo "%package -n $package" >> CASTOR.spec
     echo "Summary: Cern Advanced mass STORage" >> CASTOR.spec
     echo "Group: Application/Castor" >> CASTOR.spec
@@ -138,7 +138,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     echo "%description -n $package" >> CASTOR.spec
     cat debian/control | perl -e '$package=shift; while (<>) {chomp($this .= " " . $_)}; $this =~ s/.*Package: $package//g; $this =~ s/Package:.*//g; $this =~ /Description: (.*)/; print "$1\n"' $package >> CASTOR.spec
     #
-    ## Get file list
+    ## Get file list
     #
     echo "%files -n $package" >> CASTOR.spec
     echo "%defattr(-,root,root)" >> CASTOR.spec
@@ -173,18 +173,21 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     if [ -s "debian/$package.cron.weekly" ]; then
 	echo "%config(noreplace) /etc/cron.weekly/$package" >> CASTOR.spec
     fi
-    if [ -s "debian/$package.install" ]; then
-	for file in `cat debian/$package.install`; do
-	    echo $file | egrep -q "etc\/castor|sysconfig"
-	    if [ $? -eq 0 ]; then
-		echo "%config(noreplace) /$file" >> CASTOR.spec
-	    else
-		echo "/$file" >> CASTOR.spec
-	    fi
-	done
+    if [ -s "debian/$package.install.perm" ]; then
+	cp -f debian/$package.install.perm debian/$package.install.perm.tmp
+	#
+	## Add a missing '/'
+	#
+	perl -pi -e 's/\) /\) \//g' debian/$package.install.perm.tmp
+	#
+	## Handle the case of config files
+	#
+	perl -pi -e 's/\/etc\//\%config\(noreplace\) \/etc\//g' debian/$package.install.perm.tmp
+	cat debian/$package.install.perm.tmp >> CASTOR.spec
+	rm -f debian/$package.install.perm.tmp
     fi
     #
-    ## Get %post section
+    ## Get %post section
     #
     if [ -s "debian/$package.postinst" ]; then
 	echo "%post -n $package" >> CASTOR.spec
@@ -203,7 +206,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
         [ "$package" = "castor-lib-mysql" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
     fi
     #
-    ## Get %preun section
+    ## Get %preun section
     #
     if [ -s "debian/$package.prerm" ]; then
 	echo "%preun -n $package" >> CASTOR.spec
@@ -213,7 +216,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
 	echo "fi" >> CASTOR.spec
     fi
     #
-    ## Get %postun section
+    ## Get %postun section
     #
     if [ -s "debian/$package.postrm" ]; then
 	echo "%postun -n $package" >> CASTOR.spec
