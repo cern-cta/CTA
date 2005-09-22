@@ -1895,22 +1895,26 @@ END;
  * Note that we only launch it when at least 10 gigs are to be deleted
  */
 CREATE OR REPLACE TRIGGER tr_FileSystem_Update
-AFTER UPDATE ON FileSystem
+AFTER UPDATE OF free, deltaFree, reservedSpace ON FileSystem
 FOR EACH ROW
 DECLARE
   freeSpace NUMBER;
+  jobid NUMBER;
 BEGIN
   -- compute the actual free space taking into account reservations (reservedSpace)
   -- and already running GC processes (spaceToBeFreed)
   freeSpace := :new.free + :new.deltaFree - :new.reservedSpace + :new.spaceToBeFreed;
-     -- shall we launch a new GC?
-  IF :new.minFreeSpace > freeSpace AND 
+  -- shall we launch a new GC?
+  IF :new.minFreeSpace > freeSpace AND    -- XXX don't forget * :new.totalSize 
      -- is it really worth launching it? (some other GCs maybe are already running
-     -- so we accept it only if it will free more than 10 Gb)
-     :new.maxFreeSpace > freeSpace + 10000000000 THEN
-    garbageCollectFS(:new.id);
+     -- so we accept it only if it will free more than 5 Gb)
+     :new.maxFreeSpace > freeSpace + 5000000000 THEN     -- XXX don't forget * :new.totalSize 
+    -- here we spawn a job to do the real work. This avoids mutating table error
+    -- and ensures that the current update does not fail if GC fails
+    DBMS_JOB.SUBMIT(jobid,'garbageCollectFS(' || :new.id || ');');
   END IF;
 END;
+
 
 /*
  * PL/SQL method implementing the core part of stage queries
