@@ -1,8 +1,0 @@
-etc/castor/VMGRCONFIG.example
-etc/init.d/vmgrdaemon
-etc/sysconfig/vmgrdaemon.example
-usr/bin/vmgrdaemon
-usr/bin/vmgrshutdown
-usr/sbin/castor-vmgr-server.postinst
-usr/sbin/castor-vmgr-server.postrm
-usr/sbin/castor-vmgr-server.prerm

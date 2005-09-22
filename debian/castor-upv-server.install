@@ -1,8 +1,0 @@
-etc/castor/CUPVCONFIG.example
-etc/init.d/Cupvdaemon
-etc/sysconfig/Cupvdaemon.example
-usr/bin/Cupvdaemon
-usr/bin/Cupvshutdown
-usr/sbin/castor-upv-server.postinst
-usr/sbin/castor-upv-server.postrm
-usr/sbin/castor-upv-server.prerm

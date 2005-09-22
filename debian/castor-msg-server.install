@@ -1,5 +1,0 @@
-etc/init.d/msgdaemon
-usr/bin/msgdaemon
-usr/sbin/castor-msg-server.postinst
-usr/sbin/castor-msg-server.postrm
-usr/sbin/castor-msg-server.prerm

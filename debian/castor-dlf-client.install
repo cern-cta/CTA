@@ -1,9 +1,0 @@
-usr/bin/dlfdeletefacility
-usr/bin/dlfdeletetext
-usr/bin/dlfenterfacility
-usr/bin/dlfentertext
-usr/bin/dlflistfacility
-usr/bin/dlflisttext
-usr/bin/dlflogstore
-usr/bin/dlfmodifyfacility
-usr/bin/dlfmodifytext

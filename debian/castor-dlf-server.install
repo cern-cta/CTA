@@ -1,7 +1,0 @@
-etc/castor/DLFCONFIG.example
-etc/init.d/dlfserver
-usr/bin/dlfserver
-usr/bin/dlfshutdown
-usr/sbin/castor-dlf-server.postinst
-usr/sbin/castor-dlf-server.postrm
-usr/sbin/castor-dlf-server.prerm

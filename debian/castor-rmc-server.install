@@ -1,6 +1,0 @@
-etc/init.d/rmcdaemon
-etc/sysconfig/rmcdaemon.example
-usr/bin/rmcdaemon
-usr/sbin/castor-rmc-server.postinst
-usr/sbin/castor-rmc-server.postrm
-usr/sbin/castor-rmc-server.prerm
