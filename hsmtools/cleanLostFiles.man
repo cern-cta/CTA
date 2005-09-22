@@ -1,25 +1,34 @@
-.\" @(#)$RCSfile: cleanLostFiles.man,v $ $Revision: 1.3 $ $Date: 2005/09/22 14:22:57 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: cleanLostFiles.man,v $ $Revision: 1.4 $ $Date: 2005/09/22 14:25:11 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH GCALLFS 1 "$Date: 2005/09/22 14:22:57 $" CASTOR "Runs garbage collection on all filesystems"
+.TH CLEANLOSTFILES 1 "$Date: 2005/09/22 14:25:11 $" CASTOR "Clean the stager for lost files"
 .SH NAME
-gcAllFS \- Runs garbage collection on all filesystems
+cleanLostFiles \- cleans the stager for files that were lost on diskservers
 .SH SYNOPSIS
-.B gcAllFS
+.B cleanLostFiles
 [
 .BI -h, 
 .BI --help
 ]
+.BI diskCopyId [...]
 .SH DESCRIPTION
-.B gcAllFS
-Runs garbage collection on all filesystems. This should only be used
-when the GC trigger is not working properly.
+.B cleanLostFiles
+cleans up files in the stager when they were (accidentally)
+deleted on the diskservers. Such files could actually not be
+cleaned up through the regular garbage collection mechanism
+since the deletion would fail, setting the file in FAILED status.
 
+This command should be used with care and only for disaster recovery.
 .TP
 .BI \-h,
 .BI \-\-help
 Get usage information
+.TP
+.BI diskCopyId[...]
+The ids of the diskCopies that were lost. Note that these
+can be easily deduced from the file names by taking the number
+after the last '.'.
 .SH NOTES
 This command connects directly to the stager database through
 the perl DBI interface to ORACLE. Thus it can only run on
