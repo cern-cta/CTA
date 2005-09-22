@@ -25,6 +25,8 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
+	echo "Building *.install from *.install.perm files"
+	(cd debian; for i in *.install.perm; do awk '{print $$2}' $${i} > `echo $${i} | sed 's/\.perm//g'`; done)
 	find . -type f -exec touch {} \;
 	$(MAKE) -f Makefile.ini Makefiles
 	(PATH=$${PATH}:/usr/X11R6/bin; export PATH; which makedepend >& /dev/null; [ $$? -eq 0 ] && $(MAKE) depend)
