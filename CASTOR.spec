@@ -103,46 +103,46 @@ make exportman DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/m
 (cd clips; ../imake/imake -I../config DESTDIR=${RPM_BUILD_ROOT}; make install DESTDIR=${RPM_BUILD_ROOT})
 # Install example configuration files
 for i in debian/*CONFIG; do
-    install -o root -g st -m 640 ${i} ${RPM_BUILD_ROOT}/etc/castor/`basename ${i}`.example
+    install -m 640 ${i} ${RPM_BUILD_ROOT}/etc/castor/`basename ${i}`.example
 done
 # Install the debian+redhat init script
 for i in debian/*.init; do
-    install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/init.d/`basename ${i} | sed 's/\.init//g'`
+    install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/init.d/`basename ${i} | sed 's/\.init//g'`
 done
 # Install the debian+redhat package scriptlets
 for i in debian/*.postinst; do
-    install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/usr/sbin/`basename ${i}`
+    install -m 755 ${i} ${RPM_BUILD_ROOT}/usr/sbin/`basename ${i}`
 done
 for i in debian/*.postrm; do
-    install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/usr/sbin/`basename ${i}`
+    install -m 755 ${i} ${RPM_BUILD_ROOT}/usr/sbin/`basename ${i}`
 done
 for i in debian/*.prerm; do
-    install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/usr/sbin/`basename ${i}`
+    install -m 755 ${i} ${RPM_BUILD_ROOT}/usr/sbin/`basename ${i}`
 done
 # Install the sample castor.conf
-install -o root -g bin -m 644 debian/castor.conf ${RPM_BUILD_ROOT}/etc/castor/castor.conf.example
+install -m 644 debian/castor.conf ${RPM_BUILD_ROOT}/etc/castor/castor.conf.example
 # Install the recommended castor.conf for all nodes but tape servers
-install -o root -g bin -m 644 debian/castor-allservicesbuttapeservers.conf ${RPM_BUILD_ROOT}/etc/castor/castor.conf
+install -m 644 debian/castor-allservicesbuttapeservers.conf ${RPM_BUILD_ROOT}/etc/castor/castor.conf
 for i in debian/*.logrotate; do
-    install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/logrotate.d/`basename ${i} | sed 's/\.logrotate//g'`
+    install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/logrotate.d/`basename ${i} | sed 's/\.logrotate//g'`
 done
 #for i in debian/*.cron.d; do
-#    install -o root -g bin -m 644 ${i} ${RPM_BUILD_ROOT}/etc/cron.d/`basename ${i} | sed 's/\.cron\.d//g'`
+#    install -m 644 ${i} ${RPM_BUILD_ROOT}/etc/cron.d/`basename ${i} | sed 's/\.cron\.d//g'`
 #done
 for i in debian/*.cron.hourly; do
-    install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.hourly/`basename ${i} | sed 's/\.cron\.hourly//g'`
+    install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.hourly/`basename ${i} | sed 's/\.cron\.hourly//g'`
 done
 #for i in debian/*.cron.daily; do
-#    install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.daily/`basename ${i} | sed 's/\.cron\.daily//g'`
+#    install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.daily/`basename ${i} | sed 's/\.cron\.daily//g'`
 #done
 #for i in debian/*.cron.weekly; do
-#    install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.weekly/`basename ${i} | sed 's/\.cron\.weekly//g'`
+#    install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.weekly/`basename ${i} | sed 's/\.cron\.weekly//g'`
 #done
 #for i in debian/*.cron.monthly; do
-#    install -o root -g bin -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.monthly/`basename ${i} | sed 's/\.cron\.monthly//g'`
+#    install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.monthly/`basename ${i} | sed 's/\.cron\.monthly//g'`
 #done
 for i in `find . -name "*.sysconfig"`; do
-    install -o root -g bin -m 644 ${i} ${RPM_BUILD_ROOT}/etc/sysconfig/`basename ${i} | sed 's/\.sysconfig//g'`.example
+    install -m 644 ${i} ${RPM_BUILD_ROOT}/etc/sysconfig/`basename ${i} | sed 's/\.sysconfig//g'`.example
 done
 
 #
