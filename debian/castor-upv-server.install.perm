@@ -1,6 +1,6 @@
 %attr(0640,root,st) etc/castor/CUPVCONFIG.example
 %attr(0755,root,bin) etc/init.d/Cupvdaemon
-%attr(0640,root,bin) etc/sysconfig/Cupvdaemon.example
+%attr(0644,root,bin) etc/sysconfig/Cupvdaemon.example
 %attr(0750,root,bin) usr/bin/Cupvdaemon
 %attr(0755,root,bin) usr/bin/Cupvshutdown
 %attr(0755,root,bin) usr/sbin/castor-upv-server.postinst

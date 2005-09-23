@@ -1,5 +1,5 @@
 %attr(0755,root,bin) etc/init.d/vdqmserv
-%attr(0640,root,bin) etc/sysconfig/vdqmserv.example
+%attr(0644,root,bin) etc/sysconfig/vdqmserv.example
 %attr(0750,root,bin) usr/bin/vdqm_admin
 %attr(0750,root,bin) usr/bin/vdqmbc_serv
 %attr(0750,root,bin) usr/bin/vdqmserv

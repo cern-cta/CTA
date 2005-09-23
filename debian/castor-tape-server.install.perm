@@ -1,6 +1,6 @@
 %attr(0640,root,st) etc/castor/TPCONFIG.example
 %attr(0755,root,bin) etc/init.d/tpdaemon
-%attr(0640,root,bin) etc/sysconfig/tpdaemon.example
+%attr(0644,root,bin) etc/sysconfig/tpdaemon.example
 %attr(0750,root,root) usr/bin/confdrive
 %attr(0750,root,root) usr/bin/mounttape
 %attr(0750,root,root) usr/bin/posovl

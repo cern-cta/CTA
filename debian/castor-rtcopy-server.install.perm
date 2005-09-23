@@ -1,5 +1,5 @@
 %attr(0755,root,bin) etc/init.d/rtcpd
-%attr(0640,root,bin) etc/sysconfig/rtcpd.example
+%attr(0644,root,bin) etc/sysconfig/rtcpd.example
 %attr(0750,root,root) usr/bin/killjid
 %attr(0750,root,bin) usr/bin/rtcpd
 %attr(0755,root,bin) usr/sbin/castor-rtcopy-server.postinst

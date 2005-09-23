@@ -1,5 +1,5 @@
 %attr(0755,root,bin) etc/init.d/rhserver
-%attr(0640,root,bin) etc/sysconfig/rhserver.example
+%attr(0644,root,bin) etc/sysconfig/rhserver.example
 %attr(0755,root,bin) usr/bin/rhserver
 %attr(0755,root,bin) usr/sbin/castor-rh-server.postinst
 %attr(0755,root,bin) usr/sbin/castor-rh-server.postrm

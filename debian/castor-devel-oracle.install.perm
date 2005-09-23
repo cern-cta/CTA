@@ -1,2 +1,2 @@
-%attr(0640,root,bin) usr/lib/libcastorCommonOra.a
+%attr(0644,root,bin) usr/lib/libcastorCommonOra.a
 %attr(-,root,root) usr/lib/libcastorCommonOra.so
