@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2005/06/17 11:59:31 $ $Author: sponcec3 $
+ * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2005/09/23 09:36:14 $ $Author: itglp $
  *
  * 
  *
@@ -61,8 +61,8 @@ int main (int argc, char** argv) {
 
   // Stores the castorFile and DiskCopies
   castor::BaseAddress ad;
-  ad.setCnvSvcName("OraCnvSvc");
-  ad.setCnvSvcType(castor::SVC_ORACNV);
+  ad.setCnvSvcName("DbCnvSvc");
+  ad.setCnvSvcType(castor::SVC_DBCNV);
   try {
     svcs->createRep(&ad, cf, false);
     svcs->fillRep(&ad, cf, castor::OBJ_DiskCopy, true);
@@ -79,8 +79,8 @@ int main (int argc, char** argv) {
   // Retrieves everything in a separate objects
   castor::BaseAddress ad2;
   ad2.setTarget(cf->id());
-  ad2.setCnvSvcName("OraCnvSvc");
-  ad2.setCnvSvcType(castor::SVC_ORACNV);
+  ad2.setCnvSvcName("DbCnvSvc");
+  ad2.setCnvSvcType(castor::SVC_DBCNV);
   castor::stager::CastorFile* cf2;
   try{
     castor::IObject* cf2Obj = svcs->createObj(&ad2);
