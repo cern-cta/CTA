@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.27 2005/09/22 15:50:40 jdurand Exp $
+# $Id: maketar.sh,v 1.28 2005/09/23 14:18:26 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -180,9 +180,12 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
 	#
 	perl -pi -e 's/\) /\) \//g' debian/$package.install.perm.tmp
 	#
-	## Handle the case of config files
+	## Handle the case of config files unless for castor-lsf-tools where I know this
+	## regexp will generate a bad output
 	#
-	perl -pi -e 's/\/etc\//\%config\(noreplace\) \/etc\//g' debian/$package.install.perm.tmp
+	if [ "$package" != "castor-lsf-tools" ]; then
+	    perl -pi -e 's/\/etc\//\%config\(noreplace\) \/etc\//g' debian/$package.install.perm.tmp
+	fi
 	cat debian/$package.install.perm.tmp >> CASTOR.spec
 	rm -f debian/$package.install.perm.tmp
     fi
