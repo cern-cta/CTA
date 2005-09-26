@@ -108,7 +108,7 @@ mkdir -p ${RPM_BUILD_ROOT}/etc/logrotate.d
 mkdir -p ${RPM_BUILD_ROOT}/usr/local/lsf/lib64
 %else
 mkdir -p ${RPM_BUILD_ROOT}/usr/local/lsf/lib
-%fi
+%endif
 mkdir -p ${RPM_BUILD_ROOT}/usr/local/lsf/etc
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.d
 # Note: Only castor-job subpackage have a cron job
