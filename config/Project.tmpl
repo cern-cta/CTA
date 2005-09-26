@@ -29,15 +29,6 @@
 #endif
 #endif
 
-/* RMNODE will be worker so it needs JOB */
-/* ------------------------------------- */
-#if BuildRmNode
-#if !BuildJob
-#undef BuildJob
-#define BuildJob YES
-#endif
-#endif
-
 /* JOB needs some ResourceMonitoring tools and daemon */
 /* -------------------------------------------------- */
 #if BuildJob
