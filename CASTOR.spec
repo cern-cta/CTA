@@ -6,6 +6,21 @@
 %define version __A__.__B__.__C__
 %define release __D__
 #
+## Conditional packaging a-la-RPM
+#  ------------------------------
+%{expand:%define has_oracle_home %(if [ -z $ORACLE_HOME ]; then echo 0; else echo 1; fi)}
+%if ! %has_oracle_home
+%{expand:%define has_oracle_home %([ -r /etc/sysconfig/castor ] && . /etc/sysconfig/castor; if [ -z $ORACLE_HOME ]; then echo 0; else echo 1; fi)}
+%endif
+%if ! %has_oracle_home
+%define has_oracle 0
+%else
+%{expand:%define has_oracle %(if [ ! -r $ORACLE_HOME/lib/libclntsh.so ]; then echo 0; else echo 1; fi)}
+%endif
+%{expand:%define has_stk_ssi %(rpm -q stk-ssi-devel >&/dev/null && rpm -q stk-ssi >&/dev/null; if [ $? -ne 0 ]; then echo 0; else echo 1; fi)}
+%{expand:%define has_lsf %(if [ -d /usr/local/lsf/lib -a -d /usr/local/lsf/include ]; then echo 1; else echo 0; fi)}
+
+#
 ## General settings
 #  ----------------
 Summary: Cern Advanced mass STORage
@@ -16,11 +31,6 @@ Source0: %{name}-%{version}.tar.gz
 URL: http://cern.ch/castor
 License: http://cern.ch/castor/DIST/CONDITIONS
 Group: Application/Castor
-#
-## Dependencies
-#  ------------
-# Note: needs an lsf-master repackaging
-#BuildRequires: stk-ssi-devel, lsf-master
 BuildRoot: %{_builddir}/%{name}-%{version}-root
 #
 ## RPM specific definitions
@@ -39,20 +49,41 @@ The CASTOR Project stands for CERN Advanced STORage Manager, and its goal is to 
 %prep
 %setup -q
 %build
-find . -type f -exec touch {} \;
-make -f Makefile.ini Makefiles
 # In case makedepend is not in the PATH
 PATH=${PATH}:/usr/X11R6/bin
 export PATH
-which makedepend >& /dev/null
-[ $? -eq 0 ] && make depend
+%if ! %has_oracle
+echo "### Warning, no ORACLE environment"
+echo "The following packages will NOT be built:"
+echo "castor-devel-oracle, castor-dlf-server, castor-lib-oracle, castor-lsf-plugin, castor-ns-server, castor-rh-server, castor-rtcopy-clientserver, castor-rtcopy-mighunter, castor-stager-server, castor-upv-server, castor-vmgr-server"
+for this in BuildCupvDaemon BuildDlfDaemon BuildNameServerDaemon BuildRHCpp BuildRtcpclientd BuildSchedPlugin BuildVolumeMgrDaemon UseOracle UseScheduler BuildOraCpp BuildStageDaemon; do
+	perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
+done
+%else
 if [ -z "${ORACLE_HOME}" ]; then
   [ -r /etc/sysconfig/castor ] && . /etc/sysconfig/castor
 fi
-if [ -z "${ORACLE_HOME}" ]; then
-  echo "### ERROR ### ORACLE_HOME is not defined"
-  exit 1
-fi
+%endif
+%if ! %has_lsf
+echo "### Warning, no LSF environment"
+echo "The following packages will NOT be built:"
+echo "castor-lsf-plugin, castor-job"
+for this in BuildSchedPlugin BuildJob; do
+	perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
+done
+%endif
+%if ! %has_stk_ssi
+echo "### Warning, no STK environment"
+echo "The following packages will NOT be built:"
+echo "castor-tape-server"
+for this in BuildTapeDaemon; do
+	perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
+done
+%endif
+find . -type f -exec touch {} \;
+make -f Makefile.ini Makefiles
+which makedepend >& /dev/null
+[ $? -eq 0 ] && make depend
 make
 %install
 rm -rf ${RPM_BUILD_ROOT}
