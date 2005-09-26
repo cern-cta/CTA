@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.23 2005/09/06 14:49:36 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.24 2005/09/26 13:02:23 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.23 $ $Date: 2005/09/06 14:49:36 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.24 $ $Date: 2005/09/26 13:02:23 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -558,9 +558,16 @@ namespace castor {
             } catch (castor::exception::Exception e) {
               serrno = e.code();
               error = e.getMessage().str();
-              STAGER_LOG_DB_ERROR(NULL, func,
-                                  e.getMessage().str().c_str());
-
+              // In case the file did not exist, we don't consider
+              // it as an error from the server point of view
+              if (e.code() == ENOENT) {
+                STAGER_LOG(STAGER_MSG_USAGE, NULL,
+                           "STRING", func,
+                           "STRING", e.getMessage().str().c_str());
+              } else {
+                STAGER_LOG_DB_ERROR(NULL, func,
+                                    e.getMessage().str().c_str());
+              }
               /* Send the execption to the client */
               /* -------------------------------- */
               castor::rh::FileQueryResponse res;
