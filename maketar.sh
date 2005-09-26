@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.28 2005/09/23 14:18:26 jdurand Exp $
+# $Id: maketar.sh,v 1.29 2005/09/26 11:05:06 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -110,10 +110,52 @@ if [ -n "${buildrequires}" ]; then
     # perl -pi -e "s/#BuildRequires:.*/BuildRequires: ${buildrequires}/g" CASTOR.spec
 fi
 
+
+#
+## Functions to detect %if/%endif dependencies
+#
+function if_has_oracle {
+    egrep -q "^$1\$" debian/if.has_oracle
+    if [ $? -eq 0 ]; then
+	return 1
+    fi
+    return 0
+}
+
+function if_has_lsf {
+    egrep -q "^$1\$" debian/if.has_lsf
+    if [ $? -eq 0 ]; then
+	return 1
+    fi
+    return 0
+}
+
+function if_has_stk_ssi {
+    egrep -q "^$1\$" debian/if.has_stk_ssi
+    if [ $? -eq 0 ]; then
+	return 1
+    fi
+    return 0
+}
 #
 ## Append all sub-packages to CASTOR.spec
 #
 for this in `grep Package: debian/control | awk '{print $NF}'`; do
+    #
+    ## Do we have an %if dependency ?
+    #
+    if_has_oracle $this
+    if [ $? -eq 1 ]; then
+	echo "%if %has_oracle" >> CASTOR.spec
+    fi
+    if_has_lsf $this
+    if [ $? -eq 1 ]; then
+	echo "%if %has_lsf" >> CASTOR.spec
+    fi
+    if_has_stk_ssi $this
+    if [ $? -eq 1 ]; then
+	echo "%if %has_stk_ssi" >> CASTOR.spec
+    fi
     package=$this
     echo "%package -n $package" >> CASTOR.spec
     echo "Summary: Cern Advanced mass STORage" >> CASTOR.spec
@@ -236,6 +278,18 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
         [ "$package" = "castor-lib" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
         [ "$package" = "castor-lib-oracle" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
         [ "$package" = "castor-lib-mysql" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
+    fi
+    if_has_oracle $this
+    if [ $? -eq 1 ]; then
+	echo "%endif" >> CASTOR.spec
+    fi
+    if_has_lsf $this
+    if [ $? -eq 1 ]; then
+	echo "%endif" >> CASTOR.spec
+    fi
+    if_has_stk_ssi $this
+    if [ $? -eq 1 ]; then
+	echo "%endif" >> CASTOR.spec
     fi
     echo >> CASTOR.spec
 done
