@@ -13,6 +13,24 @@
 export DH_ALWAYS_EXCLUDE=CVS
 
 
+# Compat stuff with previous versions of dpkg
+DEB_HOST_ARCH_CPU := $(shell dpkg-architecture -qDEB_HOST_ARCH_CPU 2>/dev/null)
+DEB_HOST_ARCH_OS := $(shell dpkg-architecture -qDEB_HOST_ARCH_OS 2>/dev/null)
+
+# Take account of old dpkg-architecture output.
+ifeq ($(DEB_HOST_ARCH_CPU),)
+  DEB_HOST_ARCH_CPU := $(shell dpkg-architecture -qDEB_HOST_GNU_CPU)
+  ifeq ($(DEB_HOST_ARCH_CPU),x86_64)
+    DEB_HOST_ARCH_CPU := amd64
+  endif
+endif
+ifeq ($(DEB_HOST_ARCH_OS),)
+  DEB_HOST_ARCH_OS := $(subst -gnu,,$(shell dpkg-architecture -qDEB_HOST_GNU_SYSTEM))
+  ifeq ($(DEB_HOST_ARCH_OS),gnu)
+    DEB_HOST_ARCH_OS := hurd
+  endif
+endif
+
 CFLAGS = -Wall -g
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
@@ -64,8 +82,15 @@ install: build
 	# Add here commands to install the package into debian/castor.
 	mkdir -p $(CURDIR)/debian/castor/usr/bin
 	mkdir -p $(CURDIR)/debian/castor/usr/sbin
+ifeq ($(DEB_HOST_ARCH_CPU),amd64)
+	mkdir -p $(CURDIR)/debian/castor/usr/lib64/rtcopy
+	mkdir -p $(CURDIR)/debian/castor/usr/lib64/perl/CASTOR
+	mkdir -p $(CURDIR)/debian/castor/usr/local/lsf/lib64
+else
 	mkdir -p $(CURDIR)/debian/castor/usr/lib/rtcopy
 	mkdir -p $(CURDIR)/debian/castor/usr/lib/perl/CASTOR
+	mkdir -p $(CURDIR)/debian/castor/usr/local/lsf/lib
+endif
 	mkdir -p $(CURDIR)/debian/castor/usr/include/shift
 	mkdir -p $(CURDIR)/debian/castor/usr/share/man/man1
 	mkdir -p $(CURDIR)/debian/castor/usr/share/man/man3
@@ -74,7 +99,6 @@ install: build
 	mkdir -p $(CURDIR)/debian/castor/etc/castor/expert
 	mkdir -p $(CURDIR)/debian/castor/etc/init.d
 	mkdir -p $(CURDIR)/debian/castor/etc/sysconfig
-	mkdir -p $(CURDIR)/debian/castor/usr/local/lsf/lib
 	mkdir -p $(CURDIR)/debian/castor/usr/local/lsf/etc
 	# Install CASTOR
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/castor
@@ -126,7 +150,11 @@ binary-arch: build install
 #	dh_python
 	dh_makeshlibs
 	dh_installdeb
+ifeq ($(DEB_HOST_ARCH_CPU),amd64)
+	dh_shlibdeps -l$(CURDIR)/debian/castor/usr/lib64
+else
 	dh_shlibdeps -l$(CURDIR)/debian/castor/usr/lib
+endif
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
