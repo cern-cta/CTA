@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.32 2005/09/26 14:41:53 jdurand Exp $
+# $Id: maketar.sh,v 1.33 2005/09/26 15:37:12 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -240,7 +240,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
 	    cat debian/$package.install.perm.tmp >> CASTOR.spec
 	else
 	    echo "%ifarch x86_64" >> CASTOR.spec
-	    cat debian/$package.install.perm.tmp | sed 's/\/lib/\/lib64/g' >> CASTOR.spec
+	    cat debian/$package.install.perm.tmp | sed 's/\/lib\//\/lib64\//g' >> CASTOR.spec
 	    echo "%else" >> CASTOR.spec
 	    cat debian/$package.install.perm.tmp >> CASTOR.spec
 	    echo "%endif" >> CASTOR.spec
