@@ -4,7 +4,8 @@
 ;
 ; PROPOSAL FOR 64BITS QUANTITIES: Use the u64subr.h syntax, e.g. with a unit
 ;
-; $Id: castor.clp,v 1.11 2005/06/25 16:15:44 jdurand Exp $
+; $Id: castor.clp,v 1.12 2005/09/26 09:58:15 jdurand Exp $
+;
 ; (c) CASTOR CERN/IT/ADC/CA 2004 - Jean-Damien.Durand@cern.ch
 ;
 ; ====================
@@ -40,6 +41,7 @@
 	?*procSign* = 1                 ; Does increase of proc increase weight?
 	?*loadSign* = -1                ; Does increase of load increase weight?
 	?*ioSign* = -1                  ; Does increase of i/o increase weight?
+	?*spaceSign* = 1                ; Does increase of space increase weight?
 	?*streamSign* = -1              ; Does increase of number of stream increase weight?
 	?*ramImportance* = 1.           ; How ram counts into a diskserver weight
 	?*memImportance* = 1.           ; How mem counts into a diskserver weight
@@ -47,6 +49,7 @@
 	?*procImportance* = 1.          ; How proc counts into a diskserver weight
 	?*loadImportance* = 2.          ; How load counts into a diskserver weight
 	?*ioImportance* = 5.            ; How i/o counts into a diskserver weight
+	?*spaceImportance* = 5.         ; How space counts into a diskserver weight
 	?*streamImportance* = 0.        ; How number of streams counts into a diskserver weight
 
 	;; Please make sure that filesystemReadImportance + filesystemWriteImportance gives 1.
@@ -61,9 +64,9 @@
 	?*readWriteImportance* = 1.   ; How a read/write stream counts into a diskserver weight
 
 	;; You might want to make sure than a given fsDeviation is at least equal to...:
-	?*minReadWeight* = 0.5          ; Minimum value for a fsDeviation in read-only mode
-	?*minWriteWeight* = 0.5         ; Minimum value for a fsDeviation in write-only mode
-	?*minReadWriteWeight* = 0.5     ; Minimum value for a fsDeviation in read/write-only mode
+	?*minReadWeight* = 0.          ; Minimum value for a fsDeviation in read-only mode
+	?*minWriteWeight* = 0.         ; Minimum value for a fsDeviation in write-only mode
+	?*minReadWriteWeight* = 0.     ; Minimum value for a fsDeviation in read/write-only mode
 
 	;; You might want to make sure than a given fsDeviation is at max equal to...:
 	?*maxReadWeight* = 1000.        ; Minimum value for a fsDeviation in read-only mode
@@ -603,6 +606,27 @@
 		(pattern-match reactive); Changes triggers pattern-matching
 		(type FLOAT)		; Is an integer
 	)
+	(slot diskserverSpaceDone	; Flag to say that space on all
+					; diskservers is done
+		(default 0)
+		(visibility public)	; Any instance can see that slot
+		(pattern-match reactive); Changes triggers
+					; pattern-matching
+		(storage shared)
+		(type INTEGER)		; Is an integer
+	)
+	(slot diskserverSpace	        ; Space
+		(default -1)
+		(visibility public)	; Any instance can see that slot
+		(pattern-match reactive); Changes triggers pattern-matching
+		(type INTEGER)		; Is an integer
+	)
+	(slot diskserverSpaceImportance	; Space importance
+		(default ?*spaceImportance*)
+		(visibility public)	; Any instance can see that slot
+		(pattern-match reactive); Changes triggers pattern-matching
+		(type FLOAT)		; Is an integer
+	)
 	(slot diskserverStreamImportance; Number of streams importance
 		(default ?*streamImportance*)
 		(visibility public)	; Any instance can see that slot
@@ -616,7 +640,20 @@
 		(type INTEGER)		; Is an integer
 		(storage shared)
 	)
+	(slot diskserverCorrectedSpaceMax	; Max corrected space
+		(default -1)		; No default
+		(visibility public)	; Any instance can see that slot
+		(pattern-match reactive); Changes triggers pattern-matching
+		(type INTEGER)		; Is an integer
+		(storage shared)
+	)
 	(slot diskserverIoFactor	; i/o correcting factor
+		(default 1.)
+		(visibility public)	; Any instance can see that slot
+		(pattern-match reactive); Changes triggers pattern-matching
+		(type FLOAT)		; Is a float
+	)
+	(slot diskserverSpaceFactor	; space correcting factor
 		(default 1.)
 		(visibility public)	; Any instance can see that slot
 		(pattern-match reactive); Changes triggers pattern-matching
@@ -834,6 +871,9 @@
 )
 (defmessage-handler FILESYSTEM get-diskserverIo primary ()
   (send ?self:diskserverInstance get-diskserverIo)
+)
+(defmessage-handler FILESYSTEM get-diskserverSpace primary ()
+  (send ?self:diskserverInstance get-diskserverSpace)
 )
 (defmessage-handler FILESYSTEM get-filesystemReadWeight primary ()
   (nth$ ?self:filesystemIndex (send ?self:diskserverInstance get-filesystemReadWeight))

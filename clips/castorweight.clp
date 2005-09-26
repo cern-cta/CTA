@@ -1,4 +1,4 @@
-; $Id: castorweight.clp,v 1.14 2005/06/25 16:16:44 jdurand Exp $
+; castorweight.clp,v 1.14 2005/06/25 16:16:44 jdurand Exp
 
 (load* fs_capabilities.clp)		; Load Filesystem specifities (maxIo in particular)
 (load* fs_garbage.clp)			; Load Filesystem garbage collection functions
@@ -11,32 +11,37 @@
 ; --------------------------------------------
 ; Node weight (each fXxx is between 0. and 1.)
 ; --------------------------------------------
+;
+; NOTE: Space here means freespace
+;
 ; fRam     = diskserverFreeRam   * diskserverRamFactor   / Max(diskserverFreeRam * diskserverRamFactor)
 ; fMem     = diskserverFreeMem   * diskserverMemFactor   / Max(diskserverFreeMem * diskserverMemFactor)
 ; fSwap    = diskserverFreeSwap  * diskserverSwapFactor  / Max(diskserverFreeSwap* diskserverSwapFactor)
 ; fProc    = diskserverAvailProc * diskserverProcFactor  / Max(diskserverAvailProc* diskserverProcFactor)
 ; fLoad    = diskserverLoad      * diskserverLoadFactor  / Max(diskserverLoad     * diskserverLoadFactor)
 ; fIo      = diskserverIo        * diskserverIoFactor    / Max(diskserverIo       * diskserverIoFactor)
+; fSpace   = diskserverSpace     * diskserverSpaceFactor / Max(diskserverSpace    * diskserverSpaceFactor)
 ; fStream  = diskserverNbTot
 
-; fDiskserver =       ramSign    * fRam   * diskserverRamImportance  +
-;                     memSign    * fMem   * diskserverMemImportance  +
-;                     swapSign   * fSwap  * diskserverSwapImportance +
-;                     procSign   * fProc  * diskserverProcImportance +
-;                     loadSign   * fLoad  * diskserverLoadImportance +
-;                     ioSign     * fIo    * diskserverIoImportance   +
-;                     streamSign * fStream * diskserverStreamImportance   +
+; fDiskserver =       ramSign    * fRam    * diskserverRamImportance    +
+;                     memSign    * fMem    * diskserverMemImportance    +
+;                     swapSign   * fSwap   * diskserverSwapImportance   +
+;                     procSign   * fProc   * diskserverProcImportance   +
+;                     loadSign   * fLoad   * diskserverLoadImportance   +
+;                     ioSign     * fIo     * diskserverIoImportance     +
+;                     spaceSign  * fSpace  * diskserverSpaceImportance  +
+;                     streamSign * fStream * diskserverStreamImportance +
 ;                     1
 ; where diskserverIo is the sum of all filesystemWeightedIo defining a diskserver
 ; weighted per filesystem
 ; The weight per filesystem reflects the fact that a filesystem is
-; 'better' than another (example: xfs v.s. ext2 - just a example - hey!)
+; 'better' than another (example: xfs v.s. ext2 - just an example - hey!)
 ; ----------------------
 ; Filesystem weight
 ; ----------------------
 ; The Read and Write factors reflects the configuration of the disk
 ; (RAIDx for example)
-; fFs            = fDiskserver * ((filesystemNbTot / diskserverNbTot) + (filesystemIoTot / diskserverIoTot))
+; fFs            = fDiskserver * ((filesystemNbTot / diskserverNbTot) + (filesystemIoTot / diskserverIoTot) + (1. - filesystemFreeSpace/filesystemTotalSpace))
 ;
 ; Unless you get new monitoring info, we suggest that we you select a filesystem, you update the fFs of all
 ; filesystems on the same machine by the one that you have just selected, except that for this one, indeed,
@@ -253,6 +258,52 @@
 	)
 )
 
+; ++++++++++++++++++++++++++++++++++++
+; Compute space for a given diskserver
+; ++++++++++++++++++++++++++++++++++++
+(defrule diskserverSpace
+	?diskserver <- (object (is-a DISKSERVER)
+			        (diskserverName ?diskserverName)
+				(diskserverSpace ?diskserverSpace)
+				(diskserverNfs ?diskserverNfs)
+				(filesystemCorrectedIo $?filesystemCorrectedIo)
+				(filesystemFactor $?filesystemFactor)
+				(filesystemCorrectedIoDone ?filesystemCorrectedIoDone)
+				(filesystemName $?filesystemName)
+				(filesystemFreeSpace $?filesystemFreeSpace)
+			)
+	(test (< ?diskserverSpace 0))
+=>
+        (bind ?thisSpace 0)
+        (loop-for-count (?index 1 ?diskserverNfs)
+		(if (!= 0 ?*Debug*) then
+		  (printout t "[diskserverSpace] " ?diskserverName ":"
+			    (nth$ ?index ?filesystemName) " Free space is "
+			    (nth$ ?index ?filesystemFreeSpace) crlf)
+		)
+		(bind ?thisSpace (+ ?thisSpace (nth$ ?index ?filesystemFreeSpace)))
+	)
+	(if (!= 0 ?*Debug*) then
+	  (printout t "[diskserverIo] " ?diskserverName ": diskserverSpace is " ?thisSpace crlf)
+	)
+	(send ?diskserver put-diskserverSpace ?thisSpace)
+	; We check if this is done for all diskservers
+	(bind ?Ntodo 0)
+	(do-for-all-instances ((?p DISKSERVER)) TRUE
+		(if (< ?p:diskserverSpace 0) then
+			(bind ?Ntodo 1)
+			(break)
+		)
+	)
+	(if (= ?Ntodo 0) then
+		; We use this instance to fire the rule on all diskservers
+	        (if (!= 0 ?*Debug*) then
+		  (printout t "[diskserverSpace] setting diskserverSpaceDone" crlf)
+		  )
+		(send ?diskserver put-diskserverSpaceDone 1)
+	)
+)
+
 ; +++++++++++++++++++++++++++++++++++++
 ; Compute corrected i/o for filesystems
 ; +++++++++++++++++++++++++++++++++++++
@@ -410,6 +461,40 @@
 	(send ?diskserver put-diskserverCorrectedIoMax ?CorrectedIoMax)
 )
 
+; +++++++++++++++++++++++++++++++++++++++++++++++++++
+; Compute corrected space over all diskserver instances
+; +++++++++++++++++++++++++++++++++++++++++++++++++++
+(defrule diskserverCorrectedSpaceMax
+	?diskserver <- (object (is-a DISKSERVER)
+			        (diskserverCorrectedSpaceMax ?diskserverCorrectedSpaceMax)
+				(diskserverSpace ?diskserverSpace)
+				(diskserverSpaceDone ?diskserverSpaceDone)
+				(diskserverSpaceFactor ?diskserverSpaceFactor)
+			)
+	(test (< ?diskserverCorrectedSpaceMax 0))
+	(test (= ?diskserverSpaceDone 1))
+=>
+        (bind ?CorrectedSpaceMax 0)
+	(do-for-all-instances ((?p DISKSERVER)) TRUE
+		(bind ?thisCorrectedSpace (* ?p:diskserverSpace
+						  ?p:diskserverSpaceFactor))
+		(if (!= 0 ?*Debug*) then
+		  (printout t "[diskserverCorrectedSpaceMax] "
+			    ?p:diskserverName ": diskserverSpace is "
+			    ?p:diskserverSpace ", diskserverSpaceFactor is "
+			    ?p:diskserverSpaceFactor ", leaving to correctedSpace " ?thisCorrectedSpace crlf)
+		)
+		(if (> ?thisCorrectedSpace ?CorrectedSpaceMax)
+		    then
+		  (bind ?CorrectedSpaceMax ?thisCorrectedSpace)
+		)
+	)
+	(if (!= 0 ?*Debug*) then
+	  (printout t "[diskserverCorrectedSpaceMax] diskserverCorrectedSpaceMax is " ?CorrectedSpaceMax crlf)
+	)
+	(send ?diskserver put-diskserverCorrectedSpaceMax ?CorrectedSpaceMax)
+)
+
 ; ++++++++++++++++++++++++++++++
 ; Compute weight of a diskserver
 ; ++++++++++++++++++++++++++++++
@@ -422,24 +507,28 @@
 				(diskserverCorrectedAvailProcMax ?diskserverCorrectedAvailProcMax)
 				(diskserverCorrectedLoadMax ?diskserverCorrectedLoadMax)
 				(diskserverCorrectedIoMax ?diskserverCorrectedIoMax)
+				(diskserverCorrectedSpaceMax ?diskserverCorrectedSpaceMax)
 				(diskserverFreeMem ?diskserverFreeMem)
 				(diskserverFreeRam ?diskserverFreeRam)
 				(diskserverFreeSwap ?diskserverFreeSwap)
 				(diskserverAvailProc ?diskserverAvailProc)
 				(diskserverLoad ?diskserverLoad)
 				(diskserverIo ?diskserverIo)
+				(diskserverSpace ?diskserverSpace)
 				(diskserverMemFactor ?diskserverMemFactor)
 				(diskserverRamFactor ?diskserverRamFactor)
 				(diskserverSwapFactor ?diskserverSwapFactor)
 				(diskserverProcFactor ?diskserverProcFactor)
 				(diskserverLoadFactor ?diskserverLoadFactor)
 				(diskserverIoFactor ?diskserverIoFactor)
+				(diskserverSpaceFactor ?diskserverSpaceFactor)
 				(diskserverMemImportance ?diskserverMemImportance)
 				(diskserverRamImportance ?diskserverRamImportance)
 				(diskserverSwapImportance ?diskserverSwapImportance)
 				(diskserverProcImportance ?diskserverProcImportance)
 				(diskserverLoadImportance ?diskserverLoadImportance)
 				(diskserverIoImportance ?diskserverIoImportance)
+				(diskserverSpaceImportance ?diskserverSpaceImportance)
 				(diskserverStreamImportance ?diskserverStreamImportance)
 				(readImportance ?readImportance)
 				(writeImportance ?writeImportance)
@@ -447,6 +536,8 @@
 				(filesystemNbRdonly $?filesystemNbRdonly)
 				(filesystemNbWronly $?filesystemNbWronly)
 				(filesystemNbReadWrite $?filesystemNbReadWrite)
+				(filesystemTotalSpace $?filesystemTotalSpace)
+				(filesystemFreeSpace $?filesystemFreeSpace)
 				(filesystemName $?filesystemName)
 				(filesystemCorrectedIo $?filesystemCorrectedIo)
 				(diskserverTotalMem ?diskserverTotalMem)
@@ -469,6 +560,7 @@
 	(test (>= ?diskserverCorrectedAvailProcMax 0))
 	(test (>= ?diskserverCorrectedLoadMax 0))
 	(test (>= ?diskserverCorrectedIoMax 0))
+	(test (>= ?diskserverCorrectedSpaceMax 0))
 =>
         ; Compute main node weight
         ; ++++++++++ fRam
@@ -525,6 +617,15 @@
 	(if (!= 0 ?*Debug*) then
 	  (printout t "[diskserverWeight] " ?diskserverName ": fIo is " ?fIo crlf)
 	)
+	; ++++++++++ fSpace
+	(if (> ?diskserverCorrectedSpaceMax 0.) then
+	  (bind ?fSpace (/ (* ?diskserverSpace ?diskserverSpaceFactor) ?diskserverCorrectedSpaceMax))
+	 else
+	  (bind ?fSpace 0.)
+	 )
+	(if (!= 0 ?*Debug*) then
+	  (printout t "[diskserverWeight] " ?diskserverName ": fSpace is " ?fSpace crlf)
+	)
 	; ++++++++++ fStream
 	; Count the total number of streams on that diskserver
 	(bind ?diskserverNbTot 0)
@@ -566,6 +667,10 @@
 	(if (!= 0 ?*Debug*) then
 	  (printout t "[diskserverWeight] " ?diskserverName ": newfIo is " ?newfIo crlf)
 	)
+	(bind ?newfSpace (* ?fSpace   ?diskserverSpaceImportance))
+	(if (!= 0 ?*Debug*) then
+	  (printout t "[diskserverWeight] " ?diskserverName ": newfSpace is " ?newfSpace crlf)
+	)
 	(bind ?newfStream (* ?fStream  ?diskserverStreamImportance))
 	(if (!= 0 ?*Debug*) then
 	  (printout t "[diskserverWeight] " ?diskserverName ": newfStream is " ?newfStream crlf)
@@ -577,6 +682,7 @@
 				   (* ?*procSign* ?newfProc)
 				   (* ?*loadSign* ?newfLoad)
 				   (* ?*ioSign* ?newfIo)
+				   (* ?*spaceSign* ?newfSpace)
 				   (* ?*streamSign* ?newfStream)
 				)
 	)
@@ -597,6 +703,8 @@
 		(bind ?thisFilesystemNbReadWrite (nth$ ?index ?filesystemNbReadWrite))
 		(bind ?thisFilesystemReadRate (nth$ ?index ?filesystemReadRate))
 		(bind ?thisFilesystemWriteRate (nth$ ?index ?filesystemWriteRate))
+		(bind ?thisFilesystemTotalSpace (nth$ ?index ?filesystemTotalSpace))
+		(bind ?thisFilesystemFreeSpace (nth$ ?index ?filesystemFreeSpace))
 		(bind ?thisFilesystemNbTot
 		      (+ ?thisFilesystemNbRdonly
 			 ?thisFilesystemNbWronly
@@ -610,7 +718,7 @@
 		  (printout t "[diskserverWeight] " ?diskserverName
 			    ":"
 			    (nth$ ?index ?filesystemName)
-			    " diskserverNbTot/diskserverIo/nbRdonly/nbWronly/nbReadWrite/readRate/writeRate -> NStreamsTot/IoTot is "
+			    " diskserverNbTot/diskserverIo/fsnbRdonly/fsnbWronly/fsnbReadWrite/fsreadRate/fswriteRate/fsNStreamsTot/fsIoTot/fsfreeSpace/fstotalSpace is "
 			    ?diskserverNbTot
 			    "/"
 			    ?diskserverIo
@@ -628,11 +736,16 @@
 			    ?thisFilesystemNbTot
 			    "/"
 			    ?thisFilesystemIoTot
+			    "/"
+			    ?thisFilesystemFreeSpace
+			    "/"
+			    ?thisFilesystemTotalSpace
 			    crlf
 		   )
 		)
 		(bind ?thisFactorNb 0.)
 		(bind ?thisFactorIo 0.)
+		(bind ?thisFactorSpace 0.)
 
 		; Number of file descriptors
 		; --------------------------
@@ -706,7 +819,21 @@
 		 )
 		)
 
-		(bind ?thisFactor (+ ?thisFactorNb ?thisFactorIo))
+		; Space
+		; -----
+
+		(if (> ?thisFilesystemTotalSpace 0.) then
+			(bind ?thisFactorSpace (- 1. (/ ?thisFilesystemFreeSpace ?thisFilesystemTotalSpace)))
+		)
+
+		(if (!= 0 ?*Debug*) then
+		  (printout t "[diskserverWeight] " ?diskserverName
+		     ":"
+		      (nth$ ?index ?filesystemName)
+		     " fileSystem freeSpace/totalSpace is " ?thisFilesystemFreeSpace "/" ?thisFilesystemTotalSpace crlf)
+		)
+
+		(bind ?thisFactor (+ ?thisFactorNb ?thisFactorIo ?thisFactorSpace))
 
 		(bind ?thisWeight
 			(abs
@@ -717,7 +844,7 @@
 		  (printout t "[diskserverWeight] " ?diskserverName
 			    ":"
 			    (nth$ ?index ?filesystemName )
-			    " fsWeight initialy is "
+			    " fsWeight initially is "
 			    ?thisWeight
 			    crlf
 		   )
@@ -730,24 +857,36 @@
 		(bind ?thisWriteWeight (* ?thisWriteWeight ?writeImportance))
 		(bind ?thisReadWriteWeight (* ?thisReadWriteWeight ?readWriteImportance))
 		; We force a minimum value if any
-		(if (< ?thisReadWeight ?*minReadWeight*) then
-			(bind ?thisReadWeight ?*minReadWeight*)
+		(if (> ?*minReadWeight* 0.) then
+			(if (< ?thisReadWeight ?*minReadWeight*) then
+				(bind ?thisReadWeight ?*minReadWeight*)
+			)
 		)
-		(if (< ?thisWriteWeight ?*minWriteWeight*) then
-			(bind ?thisWriteWeight ?*minWriteWeight*)
+ 		(if (> ?*minWriteWeight* 0.) then
+			(if (< ?thisWriteWeight ?*minWriteWeight*) then
+				(bind ?thisWriteWeight ?*minWriteWeight*)
+			)
 		)
-		(if (< ?thisReadWriteWeight ?*minReadWriteWeight*) then
-			(bind ?thisReadWriteWeight ?*minReadWriteWeight*)
+ 		(if (> ?*minReadWriteWeight* 0.) then
+			(if (< ?thisReadWriteWeight ?*minReadWriteWeight*) then
+				(bind ?thisReadWriteWeight ?*minReadWriteWeight*)
+			)
 		)
 		; We limit to a maximum value if any
-		(if (> ?thisReadWeight ?*maxReadWeight*) then
-			(bind ?thisReadWeight ?*maxReadWeight*)
+		(if (> ?*maxReadWeight* 0.) then
+			(if (> ?thisReadWeight ?*maxReadWeight*) then
+				(bind ?thisReadWeight ?*maxReadWeight*)
+			)
 		)
-		(if (> ?thisWriteWeight ?*maxWriteWeight*) then
-			(bind ?thisWriteWeight ?*maxWriteWeight*)
+ 		(if (> ?*maxWriteWeight* 0.) then
+			(if (> ?thisWriteWeight ?*maxWriteWeight*) then
+				(bind ?thisWriteWeight ?*maxWriteWeight*)
+			)
 		)
-		(if (> ?thisReadWriteWeight ?*maxReadWriteWeight*) then
-			(bind ?thisReadWriteWeight ?*maxReadWriteWeight*)
+ 		(if (> ?*maxReadWriteWeight* 0.) then
+			(if (> ?thisReadWriteWeight ?*maxReadWriteWeight*) then
+				(bind ?thisReadWriteWeight ?*maxReadWriteWeight*)
+			)
 		)
 
 		(if (!= 0 ?*Debug*) then
