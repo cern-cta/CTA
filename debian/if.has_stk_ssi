@@ -1,0 +1,6 @@
+#
+# $Id: if.has_stk_ssi,v 1.1 2005/09/26 10:29:42 jdurand Exp $
+#
+## List of packages to do only if STK is available
+#
+castor-tape-server
