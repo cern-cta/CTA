@@ -89,7 +89,11 @@ make
 rm -rf ${RPM_BUILD_ROOT}
 mkdir -p ${RPM_BUILD_ROOT}/usr/bin
 mkdir -p ${RPM_BUILD_ROOT}/usr/sbin
+%ifarch x86_64
+mkdir -p ${RPM_BUILD_ROOT}/usr/lib64/rtcopy
+%else
 mkdir -p ${RPM_BUILD_ROOT}/usr/lib/rtcopy
+%endif
 mkdir -p ${RPM_BUILD_ROOT}/usr/lib/perl/CASTOR
 mkdir -p ${RPM_BUILD_ROOT}/usr/include/shift
 mkdir -p ${RPM_BUILD_ROOT}/usr/share/man/man1
@@ -100,7 +104,11 @@ mkdir -p ${RPM_BUILD_ROOT}/etc/castor/expert
 mkdir -p ${RPM_BUILD_ROOT}/etc/sysconfig
 mkdir -p ${RPM_BUILD_ROOT}/etc/init.d
 mkdir -p ${RPM_BUILD_ROOT}/etc/logrotate.d
+%ifarch x86_64
+mkdir -p ${RPM_BUILD_ROOT}/usr/local/lsf/lib64
+%else
 mkdir -p ${RPM_BUILD_ROOT}/usr/local/lsf/lib
+%fi
 mkdir -p ${RPM_BUILD_ROOT}/usr/local/lsf/etc
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.d
 # Note: Only castor-job subpackage have a cron job
