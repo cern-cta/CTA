@@ -338,3 +338,14 @@ BEGIN
   UPDATE RequestLife set moverCLoseEnd = SYSDATE WHERE id = :old.id;
 EXCEPTION WHEN OTHERS THEN NULL;
 END;
+
+
+
+/* see where GC is needed */
+SELECT ds.name, fs.mountpoint,  fs.id, 
+       (fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed) / 1000000 as frspace,
+       fs.minfreespace / 1000000
+  FROM FileSystem fs, DiskServer ds
+ WHERE fs.diskserver = ds.id
+ ORDER BY frspace ASC;
+ 
