@@ -1891,6 +1891,60 @@ BEGIN
 END;
 
 /*
+ * Runs only default policy garbage collection on the specified FileSystem
+ */
+CREATE OR REPLACE PROCEDURE defGarbageCollectFS(fsId INTEGER) AS
+  toBeFreed INTEGER;
+  freed INTEGER := 0;
+  dpID INTEGER;
+  cur castorGC.GCItem_Cur;
+  nextItem castorGC.GCItem;
+BEGIN
+  -- Get the DiskPool and the minFree space we want to achieve
+  SELECT diskPool, maxFreeSpace - free - deltaFree + reservedSpace - spaceToBeFreed
+    INTO dpId, toBeFreed
+    FROM FileSystem
+   WHERE FileSystem.id = fsId
+     FOR UPDATE;
+  -- Don't do anything if toBeFreed <= 0
+  IF toBeFreed <= 0 THEN
+    COMMIT;
+    RETURN;
+  END IF;
+  UPDATE FileSystem
+     SET spaceToBeFreed = spaceToBeFreed + toBeFreed
+   WHERE FileSystem.id = fsId;
+  -- release the filesystem lock so that other threads can go on
+  COMMIT;
+  -- policy to be applied defaults to defaultGCPolicy
+  cur := defaultGCPolicy(fsId, toBeFreed);
+  -- Now extract the diskcopies that will be garbaged and
+  -- mark them GCCandidate
+  LOOP
+    FETCH cur INTO nextItem;
+    -- Mark the DiskCopy
+    UPDATE DISKCOPY SET status = 8 -- GCCANDIDATE
+     WHERE id = nextItem.dcId;
+    -- Update toBeFreed
+    freed := freed + nextItem.fileSize;
+    -- Shall we continue ?
+    IF freed > toBeFreed THEN
+      -- enough space freed
+      EXIT;
+    END IF;
+  END LOOP;
+  -- Update Filesystem toBeFreed space to the exact value
+  UPDATE FileSystem
+     SET spaceToBeFreed = spaceToBeFreed + freed - toBeFreed
+   WHERE FileSystem.id = fsId;
+  -- Close cursor
+  CLOSE cur;
+  -- commit everything
+  COMMIT;
+END;
+
+
+/*
  * Trigger launching garbage collection whenever needed
  * Note that we only launch it when at least 10 gigs are to be deleted
  */
@@ -1911,7 +1965,7 @@ BEGIN
      :new.maxFreeSpace > freeSpace + 5000000000 THEN     -- XXX don't forget * :new.totalSize 
     -- here we spawn a job to do the real work. This avoids mutating table error
     -- and ensures that the current update does not fail if GC fails
-    DBMS_JOB.SUBMIT(jobid,'garbageCollectFS(' || :new.id || ');');
+    DBMS_JOB.SUBMIT(jobid,'defGarbageCollectFS(' || :new.id || ');');
   END IF;
 END;
 
