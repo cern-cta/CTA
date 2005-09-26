@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.47 $ $Date: 2005/07/21 09:13:09 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.48 $ $Date: 2005/09/26 12:42:13 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -81,8 +81,6 @@ GLOBLIB = -L../shlib -lshift
 PROGS_STAGER = ProgramTargetName(stager) ProgramTargetName(stageradmin) ProgramTargetName(stagerNotifyService)
 IPROGS_STAGER = FileName($(BIN),ProgramTargetName(stager)) FileName($(BIN),ProgramTargetName(stageradmin))
 EPROGS_STAGER = FileName($(EXPORTBIN),stager) FileName($(EXPORTBIN),stageradmin)
-MANPAGES_STAGER = FileName($(MANDIR),stager_get.$(MANSUFFIX)) FileName($(MANDIR),stager_put.$(MANSUFFIX)) FileName($(MANDIR),stager_putdone.$(MANSUFFIX)) FileName($(MANDIR),stager_qry.$(MANSUFFIX)),stager_rm.$(MANSUFFIX))
-EMANPAGES_STAGER = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_get.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_put.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_putdone.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_qry.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_rm.$(MANSUFFIX)))
 #ifdef STAGE_LINK_STATIC
 DEPLIB2 = DepLibraryTargetName(lib,castorCommonOra)
 GLOBLIB2 = -L../lib
@@ -90,6 +88,8 @@ GLOBLIB2 = -L../lib
 GLOBLIB2 = -L../shlib
 #endif
 #endif
+MANPAGES_STAGER = FileName($(MANDIR),stager_get.$(MANSUFFIX)) FileName($(MANDIR),stager_put.$(MANSUFFIX)) FileName($(MANDIR),stager_putdone.$(MANSUFFIX)) FileName($(MANDIR),stager_qry.$(MANSUFFIX)),stager_rm.$(MANSUFFIX))
+EMANPAGES_STAGER = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_get.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_put.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_putdone.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_qry.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_rm.$(MANSUFFIX)))
 
 #if BuildSecurity
 GLOBLIB += -ldl
