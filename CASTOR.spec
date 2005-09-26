@@ -68,7 +68,7 @@ fi
 echo "### Warning, no LSF environment"
 echo "The following packages will NOT be built:"
 echo "castor-lsf-plugin, castor-job"
-for this in BuildSchedPlugin BuildJob; do
+for this in BuildSchedPlugin BuildJob BuildRmMaster; do
 	perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
 done
 %endif
