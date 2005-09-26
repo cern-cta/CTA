@@ -1,9 +1,8 @@
 #
-# $Id: if.has_lsf,v 1.3 2005/09/26 12:33:50 jdurand Exp $
+# $Id: if.has_lsf,v 1.4 2005/09/26 17:09:23 jdurand Exp $
 #
 ## List of packages to do only if LSF is available
 #
 castor-job
 castor-lsf-plugin
-castor-lsf-tools
 castor-rmmaster-server

@@ -118,12 +118,6 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  Scheduler plugin for LSF (6.1 minimum) framework
 
-Package: castor-lsf-tools
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: castor (Cern Advanced STORage system)
- CASTOR specific replacement for LSF (6.1 minimum) tools
-
 Package: castor-lib-oracle
 Architecture: any
 Provides: castor-db-interface
