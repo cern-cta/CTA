@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.30 $ $Release$ $Date: 2005/09/19 16:31:40 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.31 $ $Release$ $Date: 2005/09/27 11:06:38 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.30 $ $Release$ $Date: 2005/09/19 16:31:40 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.31 $ $Release$ $Date: 2005/09/27 11:06:38 $ Olof Barring";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -598,6 +598,7 @@ int rtcpcld_nextFileToProcess(
         filereq = &(fl->filereq);
         if ( ((filereq->proc_status == RTCP_WAITING) ||
               (filereq->proc_status == RTCP_POSITIONED)) && 
+             ((filereq->err.severity & RTCP_OK) == RTCP_OK) &&
              (rtcpcld_validPath(filereq->file_path) == 1) ) {
           if ( filereq->tape_fseq > lastFseqInProcess ) {
             lastFseqInProcess = filereq->tape_fseq;
@@ -610,7 +611,11 @@ int rtcpcld_nextFileToProcess(
   CLIST_ITERATE_BEGIN(tape->file,fl) 
     {
       filereq = &(fl->filereq);
-      if ( (rtcpcld_validPosition(filereq->tape_fseq,filereq->blockid) == 1) &&
+      if ( ((tape->tapereq.mode == WRITE_ENABLE) ||
+            (((filereq->proc_status == RTCP_WAITING) ||
+              (filereq->proc_status == RTCP_POSITIONED)) &&
+             ((filereq->err.severity & RTCP_OK) == RTCP_OK))) &&
+           (rtcpcld_validPosition(filereq->tape_fseq,filereq->blockid) == 1) &&
            (rtcpcld_validPath(filereq->file_path) == 0) ) {
         if ( found == 0 ) firstFound = fl;
         found = 1;
