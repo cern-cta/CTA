@@ -2145,10 +2145,10 @@ BEGIN
   -- and already running GC processes (spaceToBeFreed)
   freeSpace := :new.free + :new.deltaFree - :new.reservedSpace + :new.spaceToBeFreed;
   -- shall we launch a new GC?
-  IF :new.minFreeSpace > freeSpace AND    -- XXX don't forget * :new.totalSize 
+  IF :new.minFreeSpace * :new.totalSize  > freeSpace AND
      -- is it really worth launching it? (some other GCs maybe are already running
      -- so we accept it only if it will free more than 5 Gb)
-     :new.maxFreeSpace > freeSpace + 5000000000 THEN     -- XXX don't forget * :new.totalSize 
+     :new.maxFreeSpace * :new.totalSize > freeSpace + 5000000000 THEN
     -- here we spawn a job to do the real work. This avoids mutating table error
     -- and ensures that the current update does not fail if GC fails
     DBMS_JOB.SUBMIT(jobid,'defGarbageCollectFS(' || :new.id || ');');
