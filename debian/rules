@@ -45,6 +45,10 @@ configure-stamp:
 	# Add here commands to configure the package.
 	echo "Building *.install from *.install.perm files"
 	(cd debian; for i in *.install.perm; do awk '{print $$2}' $${i} > `echo $${i} | sed 's/\.perm//g'`; done)
+ifeq ($(DEB_HOST_ARCH_CPU),amd64)
+	# For amd64 some files are in lib64 instead of lib, castor-db-tools is an exception
+	(cd debian; for i in *.install; [ "$${i}" != "castor-dbtools" ] && perl -pi -e 's/\/lib\//\/lib64\//g' $${i}; done)
+endif
 	find . -type f -exec touch {} \;
 	$(MAKE) -f Makefile.ini Makefiles
 	(PATH=$${PATH}:/usr/X11R6/bin; export PATH; which makedepend >& /dev/null; [ $$? -eq 0 ] && $(MAKE) depend)
