@@ -299,6 +299,12 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Volume Drive and Queue Manager server
 
+Package: castor-vdqm2-server
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
+Description: castor (Cern Advanced STORage system)
+ Volume Drive and Queue Manager server version 2
+
 Package: castor-vmgr-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
