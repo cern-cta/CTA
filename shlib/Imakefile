@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.41 $ $Date: 2005/09/28 16:59:06 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.42 $ $Date: 2005/09/28 17:23:30 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -28,6 +28,7 @@ LIBRARIES2 = $(TANKLIB)
 SHLIBREQLIBS2 = $(SHLIBREQLIBS)
 
 LIBRARIES3 = $(CNVSLIB)
+SHLIBREQLIBS3 = $(SHLIBREQLIBS)
 
 LIBRARIES4 = $(RHMYLIB)
 SHLIBREQLIBS4 = $(SHLIBREQLIBS) -lmysqlpp -L.. -lshift -lcastorCnvs
@@ -58,9 +59,7 @@ ALL5=SharedLibraryTargetName(castorCommonPgsql)
 #endif
 
 #if BuildVDQMCpp
-#if BuildOraCpp
 ALL6=SharedLibraryTargetName(castorVdqmOra)
-#endif
 #endif
 
 #if BuildSecurity
@@ -111,9 +110,7 @@ INSTALL5=FileName($(LIB),SharedLibraryTargetName(castorCommonPgsql))
 #endif
 
 #if BuildVDQMCpp
-#if BuildOraCpp
 INSTALL6=FileName($(LIB),SharedLibraryTargetName(castorVdqmOra))
-#endif
 #endif
 
 
@@ -134,11 +131,8 @@ EXPORT4=$(EXPORTLIB)/SharedLibraryTargetName(castorCommonMysql)
 #if BuildPgCpp
 EXPORT5=$(EXPORTLIB)/SharedLibraryTargetName(castorCommonPgsql)
 #endif
-
 #if BuildVDQMCpp
-#if BuildOraCpp
 EXPORT6=$(EXPORTLIB)/SharedLibraryTargetName(castorVdqmOra)
-#endif
 #endif
 
 export: $(EXPORT0) $(EXPORT1) $(EXPORT2) $(EXPORT4) $(EXPORT5) $(EXPORT6) $(EXPORTSEC)
@@ -179,7 +173,7 @@ libcastorCnvs.sl libcastorCnvs.so: $(LIBRARIES3)
 	@mkdir tmp
 	for i in $(LIBRARIES3) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libcastorCnvs.so.__MAJOR_CASTOR_VERSION__ -o ../$@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ *.o $(SHLIBREQLIBS))
+	(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libcastorCnvs.so.__MAJOR_CASTOR_VERSION__ -o ../$@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ *.o $(SHLIBREQLIBS3))
 	@-rm -rf tmp
 	@-rm -f $@.__MAJOR_CASTOR_VERSION__
 	@-ln -s $@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ $@.__MAJOR_CASTOR_VERSION__
@@ -247,11 +241,11 @@ shift.dll:	$(LIBRARIES0)
 libcastorCommonOra.dll:	$(LIBRARIES1)
 	@echo  making $@ in CurDir
 	link /dll /noentry /nologo /out:$@ $**
-	
+
 libcastorTankPerfMon.dll:	$(LIBRARIES2)
 	@echo  making $@ in CurDir
 	link /dll /noentry /nologo /out:$@ $**
-	
+
 libcastorCnvs.dll:	$(LIBRARIES3)
 	@echo  making $@ in CurDir
 	link /dll /noentry /nologo /out:$@ $**
@@ -263,7 +257,7 @@ libcastorCommonMysql.dll:	$(LIBRARIES4)
 libcastorCommonPgsql.dll:	$(LIBRARIES5)
 	@echo  making $@ in CurDir
 	link /dll /noentry /nologo /out:$@ $**
-	
+
 libcastorVdqmOra.dll:	$(LIBRARIES6)
 	@echo  making $@ in CurDir
 	link /dll /noentry /nologo /out:$@ $**
@@ -355,19 +349,19 @@ MakeDepLibrary(security,security)
 MakeDepSharedLibrary(security,Csec_plugin_ID)
 
 SharedLibraryTargetName(Csec_plugin_ID): DepSharedLibraryTargetName(security,Csec_plugin_ID)
-		$(CP) DepSharedLibraryTargetName(security,Csec_plugin_ID) ../shlib	
+		$(CP) DepSharedLibraryTargetName(security,Csec_plugin_ID) ../shlib
 
 #if UseGSI
 MakeDepSharedLibrary(security,Csec_plugin_GSI)
 
 SharedLibraryTargetName(Csec_plugin_GSI): DepSharedLibraryTargetName(security,Csec_plugin_GSI)
-		$(CP) DepSharedLibraryTargetName(security,Csec_plugin_GSI) ../shlib	
+		$(CP) DepSharedLibraryTargetName(security,Csec_plugin_GSI) ../shlib
 #endif
 #if UseKRB5
 MakeDepSharedLibrary(security,Csec_plugin_KRB5)
 
 SharedLibraryTargetName(Csec_plugin_KRB5): DepSharedLibraryTargetName(security,Csec_plugin_KRB5)
-		$(CP) DepSharedLibraryTargetName(security,Csec_plugin_KRB5) ../shlib	
+		$(CP) DepSharedLibraryTargetName(security,Csec_plugin_KRB5) ../shlib
 
 #endif
 #if UseKRB4
@@ -375,7 +369,7 @@ SharedLibraryTargetName(Csec_plugin_KRB5): DepSharedLibraryTargetName(security,C
 MakeDepSharedLibrary(security,Csec_plugin_KRB4)
 
 SharedLibraryTargetName(Csec_plugin_KRB4): DepSharedLibraryTargetName(security,Csec_plugin_KRB4)
-		$(CP) DepSharedLibraryTargetName(security,Csec_plugin_KRB4) ../shlib	
+		$(CP) DepSharedLibraryTargetName(security,Csec_plugin_KRB4) ../shlib
 
 #endif
 #endif
