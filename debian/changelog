@@ -1,3 +1,15 @@
+castor (2.0.1-1) unstable; urgency=low
+
+  * Fix for the scriptlets: now package scriptlets are dumped directly into the rpm spec file. In addition they were wrongly putted in *.install.perm
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Wed, 28 Sep 2005 07:26:20 +0200
+
+castor (2.0.1-0) unstable; urgency=low
+
+  * New upstream version (changelog will come later - done in 'emergency')
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Tue, 27 Sep 2005 13:20:27 +0200
+
 castor (2.0.0-64) unstable; urgency=low
 
   * Fill content of castor-allservicesbuttapeservers-config package
