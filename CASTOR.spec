@@ -148,16 +148,10 @@ done
 for i in debian/*.init; do
     install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/init.d/`basename ${i} | sed 's/\.init//g'`
 done
-# Install the debian+redhat package scriptlets
-for i in debian/*.postinst; do
-    install -m 755 ${i} ${RPM_BUILD_ROOT}/usr/sbin/`basename ${i}`
-done
-for i in debian/*.postrm; do
-    install -m 755 ${i} ${RPM_BUILD_ROOT}/usr/sbin/`basename ${i}`
-done
-for i in debian/*.prerm; do
-    install -m 755 ${i} ${RPM_BUILD_ROOT}/usr/sbin/`basename ${i}`
-done
+# Install the debian+redhat package generic scriptlets
+install -m 755 debian/castor-service.postinst ${RPM_BUILD_ROOT}/usr/sbin/castor-service.postinst
+install -m 755 debian/castor-service.postrm ${RPM_BUILD_ROOT}/usr/sbin/castor-service.postrm
+install -m 755 debian/castor-service.prerm ${RPM_BUILD_ROOT}/usr/sbin/castor-service.prerm
 # Install the sample castor.conf
 install -m 644 debian/castor.conf ${RPM_BUILD_ROOT}/etc/castor/castor.conf.example
 # Install the recommended castor.conf for all nodes but tape servers
