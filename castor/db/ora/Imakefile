@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.54 $ $Release$ $Date: 2005/08/03 08:07:02 $ $Author: itglp $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.55 $ $Release$ $Date: 2005/09/28 15:23:28 $ $Author: mbraeger $
 #
 # Make Castor DB libraries
 #
@@ -94,31 +94,37 @@ ORALIB_SRCS = OraBaseAddressCnv.cpp \
             OraFSSvc.cpp \
             OraQuerySvc.cpp
 
-#VDQM related objects
-ORALIB_SRCS += OraClientIdentificationCnv.cpp \
-            OraErrorHistoryCnv.cpp \
-            OraDeviceGroupNameCnv.cpp \
-            OraTapeAccessSpecificationCnv.cpp \
-            OraTapeDriveCnv.cpp \
-            OraTapeDriveCompatibilityCnv.cpp \
-            OraTapeDriveDedicationCnv.cpp \
-            OraTapeRequestCnv.cpp \
-            OraTapeServerCnv.cpp
-
-#if BuildVDQMCpp
-ORALIB_SRCS += OraVdqmSvc.cpp
-#endif
-
 ORALIB_OBJS = $(ORALIB_SRCS:.cpp=.Osuf)
 
 COMMONLIB = LibraryTargetName(castorCommonOra)
 LD = g++
 
-all: $(COMMONLIB)
+#if BuildVDQMCpp
+#VDQM related objects
+ORAVDQMLIB_SRCS += OraClientIdentificationCnv.cpp \
+               	OraErrorHistoryCnv.cpp \
+                OraDeviceGroupNameCnv.cpp \
+                OraTapeAccessSpecificationCnv.cpp \
+                OraTapeDriveCnv.cpp \
+                OraTapeDriveCompatibilityCnv.cpp \
+                OraTapeDriveDedicationCnv.cpp \
+                OraTapeRequestCnv.cpp \
+                OraTapeServerCnv.cpp \
+                OraVdqmSvc.cpp
+
+ORAVDQMLIB_OBJS = $(ORAVDQMLIB_SRCS:.cpp=.Osuf)
+VDQMLIB = LibraryTargetName(castorVdqmOra)
+#endif
+
+all: $(COMMONLIB) $(VDQMLIB)
 
 MakeDepSharedLibrary(FileName(FileName(..,..),shlib),shift)
 
 NormalLibraryTarget(castorCommonOra,$(ORALIB_OBJS))
+
+#if BuildVDQMCpp
+NormalLibraryTarget(castorVdqmOra,$(ORAVDQMLIB_OBJS))
+#endif
 
 Makefiles:
 
