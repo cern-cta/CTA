@@ -1,0 +1,8 @@
+#! /bin/sh
+#
+# $Id: castor-vdqm2-server.prerm,v 1.1 2005/09/28 17:24:05 jdurand Exp $
+#
+CASTOR_SERVICE=vdqmserver
+export CASTOR_SERVICE
+[ -x /usr/sbin/castor-service.prerm ] && /usr/sbin/castor-service.prerm ${1+"$@"}
+exit $?
