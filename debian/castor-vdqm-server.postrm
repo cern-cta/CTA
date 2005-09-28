@@ -1,8 +1,8 @@
 #! /bin/sh
 #
-# $Id: castor-vdqm-server.postrm,v 1.8 2005/08/08 16:51:23 jdurand Exp $
+# $Id: castor-vdqm-server.postrm,v 1.9 2005/09/28 17:24:43 jdurand Exp $
 #
-CASTOR_SERVICE=vdqmserver
+CASTOR_SERVICE=vdqmserv
 export CASTOR_SERVICE
 CASTOR_SERVICE_SPOOL=/var/spool/vdqm
 export CASTOR_SERVICE_SPOOL
