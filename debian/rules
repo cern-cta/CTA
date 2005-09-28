@@ -114,10 +114,11 @@ endif
 	for i in `find $(CURDIR) -name "*.sysconfig"`; do install -o root -g bin -m 644 $${i} $(CURDIR)/debian/castor/etc/sysconfig/`basename $${i} | sed 's/\.sysconfig//g'`.example; done
 	# Install the debian+redhat init script
 	for i in $(CURDIR)/debian/*.init; do install -o root -g bin -m 755 $${i} $(CURDIR)/debian/castor/etc/init.d/`basename $${i} | sed 's/\.init//g'`; done
-	# Install the debian+redhat package scriptlets
-	for i in $(CURDIR)/debian/*.postinst; do install -o root -g bin -m 755 $${i} $(CURDIR)/debian/castor/usr/sbin/`basename $${i}`; done
-	for i in $(CURDIR)/debian/*.postrm; do install -o root -g bin -m 755 $${i} $(CURDIR)/debian/castor/usr/sbin/`basename $${i}`; done
-	for i in $(CURDIR)/debian/*.prerm; do install -o root -g bin -m 755 $${i} $(CURDIR)/debian/castor/usr/sbin/`basename $${i}`; done
+	# Install the debian+redhat generic package scriptlets (package castor-scriptlets, that's why this scripts are not called
+	# castor-scriptlets.postinst and al. to prevent dpkg thinking they have to be executed at install/upgrade/remove/configure/etc...)
+	install -o root -g bin -m 755 $(CURDIR)/debian/castor-service.postinst $(CURDIR)/debian/castor/usr/sbin/castor-service.postinst
+	install -o root -g bin -m 755 $(CURDIR)/debian/castor-service.postrm $(CURDIR)/debian/castor/usr/sbin/castor-service.postrm
+	install -o root -g bin -m 755 $(CURDIR)/debian/castor-service.prerm $(CURDIR)/debian/castor/usr/sbin/castor-service.prerm
 	# Install the sample castor.conf
 	install -o root -g bin -m 644 $(CURDIR)/debian/castor.conf $(CURDIR)/debian/castor/etc/castor/castor.conf.example
 	# Install the recommended castor.conf for all nodes but tape servers
