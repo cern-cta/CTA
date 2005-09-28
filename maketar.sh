@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.33 2005/09/26 15:37:12 jdurand Exp $
+# $Id: maketar.sh,v 1.34 2005/09/28 07:43:15 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -247,53 +247,52 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
 	fi
 	rm -f debian/$package.install.perm.tmp
     fi
-    #
-    ## Get %post section
-    #
-    if [ -s "debian/$package.postinst" ]; then
-	echo "%post -n $package" >> CASTOR.spec
-	echo "if [ \$1 -ge 1 ]; then" >> CASTOR.spec
-	echo "  ## Condrestart the service if any" >> CASTOR.spec
-	echo "  /usr/sbin/$package.postinst configure" >> CASTOR.spec
-	echo "fi" >> CASTOR.spec
-	# Force ldconfig for packages with a shared library
-        [ "$package" = "castor-lib" ] && echo "/sbin/ldconfig" >> CASTOR.spec
-        [ "$package" = "castor-lib-oracle" ] && echo "/sbin/ldconfig" >> CASTOR.spec
-        [ "$package" = "castor-lib-mysql" ] && echo "/sbin/ldconfig" >> CASTOR.spec
-    else
-	# Force ldconfig for packages with a shared library
-        [ "$package" = "castor-lib" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
-        [ "$package" = "castor-lib-oracle" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
-        [ "$package" = "castor-lib-mysql" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
-    fi
-    #
-    ## Get %preun section
-    #
-    if [ -s "debian/$package.prerm" ]; then
-	echo "%preun -n $package" >> CASTOR.spec
-	echo "if [ \$1 -eq 0 ]; then" >> CASTOR.spec
-	echo "  ## uninstall: stop the service if any" >> CASTOR.spec
-	echo "  /usr/sbin/$package.prerm remove" >> CASTOR.spec
-	echo "fi" >> CASTOR.spec
-    fi
-    #
-    ## Get %postun section
-    #
-    if [ -s "debian/$package.postrm" ]; then
-	echo "%postun -n $package" >> CASTOR.spec
-	echo "if [ \$1 -eq 0 ]; then" >> CASTOR.spec
-	echo "  ## uninstall: remove the service" >> CASTOR.spec
-	echo "  /usr/sbin/$package.postrm remove" >> CASTOR.spec
-	echo "fi" >> CASTOR.spec
-	# Force ldconfig for packages with a shared library
-        [ "$package" = "castor-lib" ] && echo "/sbin/ldconfig" >> CASTOR.spec
-        [ "$package" = "castor-lib-oracle" ] && echo "/sbin/ldconfig" >> CASTOR.spec
-        [ "$package" = "castor-lib-mysql" ] && echo "/sbin/ldconfig" >> CASTOR.spec
-    else
-	# Force ldconfig for packages with a shared library
-        [ "$package" = "castor-lib" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
-        [ "$package" = "castor-lib-oracle" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
-        [ "$package" = "castor-lib-mysql" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
+    if [ "$package" != "castor-service" ]; then
+        #
+        ## Get %post section
+        #
+	if [ -s "debian/$package.postinst" ]; then
+	    echo "%post -n $package" >> CASTOR.spec
+	    echo "if [ \$1 -ge 1 ]; then" >> CASTOR.spec
+	    cat debian/$package.postinst | sed 's/\${1+\"$@"}/configure/g' | grep -v /bin/sh | grep -v exit >> CASTOR.spec
+	    echo "fi" >> CASTOR.spec
+	    # Force ldconfig for packages with a shared library
+	    [ "$package" = "castor-lib" ] && echo "/sbin/ldconfig" >> CASTOR.spec
+	    [ "$package" = "castor-lib-oracle" ] && echo "/sbin/ldconfig" >> CASTOR.spec
+	    [ "$package" = "castor-lib-mysql" ] && echo "/sbin/ldconfig" >> CASTOR.spec
+	else
+	    # Force ldconfig for packages with a shared library
+	    [ "$package" = "castor-lib" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
+	    [ "$package" = "castor-lib-oracle" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
+	    [ "$package" = "castor-lib-mysql" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
+	fi
+        #
+        ## Get %preun section
+        #
+	if [ -s "debian/$package.prerm" ]; then
+	    echo "%preun -n $package" >> CASTOR.spec
+	    echo "if [ \$1 -eq 0 ]; then" >> CASTOR.spec
+	    cat debian/$package.prerm | sed 's/\${1+\"$@"}/remove/g' | grep -v /bin/sh | grep -v exit >> CASTOR.spec
+	    echo "fi" >> CASTOR.spec
+	fi
+        #
+        ## Get %postun section
+        #
+	if [ -s "debian/$package.postrm" ]; then
+	    echo "%postun -n $package" >> CASTOR.spec
+	    echo "if [ \$1 -eq 0 ]; then" >> CASTOR.spec
+	    cat debian/$package.postrm | sed 's/\${1+\"$@"}/remove/g' | grep -v /bin/sh | grep -v exit >> CASTOR.spec
+	    echo "fi" >> CASTOR.spec
+	    # Force ldconfig for packages with a shared library
+	    [ "$package" = "castor-lib" ] && echo "/sbin/ldconfig" >> CASTOR.spec
+	    [ "$package" = "castor-lib-oracle" ] && echo "/sbin/ldconfig" >> CASTOR.spec
+	    [ "$package" = "castor-lib-mysql" ] && echo "/sbin/ldconfig" >> CASTOR.spec
+	else
+	    # Force ldconfig for packages with a shared library
+	    [ "$package" = "castor-lib" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
+	    [ "$package" = "castor-lib-oracle" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
+	    [ "$package" = "castor-lib-mysql" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
+	fi
     fi
     if_has_oracle $this
     if [ $? -eq 1 ]; then
