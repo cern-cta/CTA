@@ -4,6 +4,3 @@
 %attr(0750,root,bin) usr/bin/recaller
 %attr(0750,root,bin) usr/bin/rtcpcldCleanupDB
 %attr(0750,root,bin) usr/bin/rtcpclientd
-%attr(0755,root,bin) usr/sbin/castor-rtcopy-clientserver.postinst
-%attr(0755,root,bin) usr/sbin/castor-rtcopy-clientserver.postrm
-%attr(0755,root,bin) usr/sbin/castor-rtcopy-clientserver.prerm

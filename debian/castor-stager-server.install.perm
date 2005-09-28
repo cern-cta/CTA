@@ -2,6 +2,3 @@
 %attr(0644,root,bin) etc/sysconfig/stager.example
 %attr(0750,root,bin) usr/bin/stager
 %attr(0750,root,bin) usr/bin/stageradmin
-%attr(0755,root,bin) usr/sbin/castor-stager-server.postinst
-%attr(0755,root,bin) usr/sbin/castor-stager-server.postrm
-%attr(0755,root,bin) usr/sbin/castor-stager-server.prerm

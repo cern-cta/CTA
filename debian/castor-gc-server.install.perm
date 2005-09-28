@@ -1,6 +1,3 @@
 %attr(0755,root,bin) etc/init.d/gcDaemon
 %attr(0644,root,bin) etc/sysconfig/gcDaemon.example
 %attr(0755,root,bin) usr/bin/gcDaemon
-%attr(0755,root,bin) usr/sbin/castor-gc-server.postinst
-%attr(0755,root,bin) usr/sbin/castor-gc-server.postrm
-%attr(0755,root,bin) usr/sbin/castor-gc-server.prerm

@@ -9,6 +9,3 @@
 %attr(0750,root,root) usr/bin/tpdaemon
 %attr(0755,root,bin) usr/bin/tpdump
 %attr(0755,root,bin) usr/bin/tplabel
-%attr(0755,root,bin) usr/sbin/castor-tape-server.postinst
-%attr(0755,root,bin) usr/sbin/castor-tape-server.postrm
-%attr(0755,root,bin) usr/sbin/castor-tape-server.prerm

@@ -3,6 +3,3 @@
 %attr(0750,root,bin) usr/bin/vdqm_admin
 %attr(0750,root,bin) usr/bin/vdqmbc_serv
 %attr(0750,root,bin) usr/bin/vdqmserv
-%attr(0755,root,bin) usr/sbin/castor-vdqm-server.postinst
-%attr(0755,root,bin) usr/sbin/castor-vdqm-server.postrm
-%attr(0755,root,bin) usr/sbin/castor-vdqm-server.prerm

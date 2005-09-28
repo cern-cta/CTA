@@ -5,6 +5,3 @@
 %attr(0755,root,bin) usr/bin/rmenterjob
 %attr(0755,root,bin) usr/bin/rmkilljob
 %attr(0750,root,bin) usr/bin/rmmaster
-%attr(0755,root,bin) usr/sbin/castor-rmmaster-server.postinst
-%attr(0755,root,bin) usr/sbin/castor-rmmaster-server.postrm
-%attr(0755,root,bin) usr/sbin/castor-rmmaster-server.prerm

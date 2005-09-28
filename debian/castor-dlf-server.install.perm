@@ -2,6 +2,3 @@
 %attr(0755,root,bin) etc/init.d/dlfserver
 %attr(0750,root,bin) usr/bin/dlfserver
 %attr(0755,root,bin) usr/bin/dlfshutdown
-%attr(0755,root,bin) usr/sbin/castor-dlf-server.postinst
-%attr(0755,root,bin) usr/sbin/castor-dlf-server.postrm
-%attr(0755,root,bin) usr/sbin/castor-dlf-server.prerm

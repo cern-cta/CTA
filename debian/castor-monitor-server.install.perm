@@ -1,5 +1,2 @@
 %attr(0755,root,bin) etc/init.d/Cmonitd
 %attr(0750,root,root) usr/bin/Cmonitd
-%attr(0755,root,bin) usr/sbin/castor-monitor-server.postinst
-%attr(0755,root,bin) usr/sbin/castor-monitor-server.postrm
-%attr(0755,root,bin) usr/sbin/castor-monitor-server.prerm
