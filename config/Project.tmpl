@@ -245,7 +245,7 @@
 #undef BuildVdqmLibrary
 #define BuildVdqmLibrary YES
 #endif
-#if !BuildOraCpp && !BuildPgCpp
+#if !BuildOraCpp && !BuildPgCpp && !BuildMyCpp
 #undef BuildOraCpp
 #define BuildOraCpp YES
 #endif
@@ -310,7 +310,7 @@
 #undef BuildCastorClientCPPLibrary
 #define BuildCastorClientCPPLibrary YES
 #endif
-#if !BuildOraCpp && !BuildPgCpp
+#if !BuildOraCpp && !BuildPgCpp && !BuildMyCpp
 #undef BuildOraCpp
 #define BuildOraCpp YES
 #endif
@@ -490,7 +490,7 @@
 /* REQUEST HANDLER */
 /* --------------- */
 #if BuildRHCpp
-#if !BuildOraCpp && !BuildPgCpp
+#if !BuildOraCpp && !BuildPgCpp && !BuildMyCpp
 #undef BuildOraCpp
 #define BuildOraCpp YES
 #endif
@@ -517,7 +517,7 @@
 /* New VDQM Server */
 /* --------------- */
 #if BuildVDQMCpp
-#if !BuildOraCpp && !BuildPgCpp
+#if !BuildOraCpp && !BuildPgCpp && !BuildMyCpp
 #undef BuildOraCpp
 #define BuildOraCpp YES
 #endif
@@ -528,10 +528,6 @@
 #if BuildDlfLibrary != YES
 #undef BuildDlfLibrary
 #define BuildDlfLibrary YES
-#endif
-#if !BuildStageLibrary
-#undef BuildStageLibrary
-#define BuildStageLibrary YES
 #endif
 #endif
 
@@ -556,7 +552,7 @@
 /* CPPTEST */
 /* ------- */
 #if BuildCppTest
-#if !BuildOraCpp && !BuildPgCpp
+#if !BuildOraCpp && !BuildPgCpp && !BuildMyCpp
 #undef BuildOraCpp
 #define BuildOraCpp YES
 #endif
@@ -654,7 +650,7 @@ VDQMCPPDIR = vdqm
 #if BuildGCCpp
 GCCPPDIR = gc
 #endif
-#if BuildCastorClientCPPLibrary || BuildRHCpp || BuildVDQMCpp  || BuildGCCpp || BuildOraCpp || BuildPgCpp
+#if BuildCastorClientCPPLibrary || BuildRHCpp || BuildVDQMCpp  || BuildGCCpp || BuildOraCpp || BuildPgCpp || BuildMyCpp
 COMMONCPPDIR = castor
 #endif
 #if BuildOraCpp

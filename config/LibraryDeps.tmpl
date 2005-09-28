@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: LibraryDeps.tmpl,v $ $Revision: 1.7 $ $Date: 2005/08/23 10:23:07 $ CERN IT-ADC/CA Jean-Damien Durand
+ * @(#)$RCSfile: LibraryDeps.tmpl,v $ $Revision: 1.8 $ $Date: 2005/09/28 17:25:08 $ CERN IT-ADC/CA Jean-Damien Durand
  */
 
 /* ================================ */
@@ -21,6 +21,13 @@
 #if !BuildPgCpp
 #undef BuildPgCpp
 #define BuildPgCpp YES
+#endif
+#endif
+
+#if UseMysql
+#if !BuildMyCpp
+#undef BuildMyCpp
+#define BuildMyCpp YES
 #endif
 #endif
 
@@ -93,5 +100,13 @@
 #if !BuildTankPerfMonLibrary
 #undef BuildTankPerfMonLibrary
 #define BuildTankPerfMonLibrary YES
+#endif
+#endif
+
+/* Setting BuildVDQMCpp will generate also libcastorVdqmOra that depends on 
+#if BuildVDQMCpp
+#if !BuildOraCpp
+#undef BuildOraCpp
+#define BuildOraCpp YES
 #endif
 #endif
