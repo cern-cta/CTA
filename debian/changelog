@@ -1,14 +1,9 @@
 castor (2.0.1-2) unstable; urgency=low
 
   * Fix for marshalling on 64 bits machines
-
- -- Sebastien Ponce <sponcec3@pcitds13>  Wed, 28 Sep 2005 13:01:42 +0200
-
-castor (2.0.1-1) unstable; urgency=low
-
   * Fix for the scriptlets: now package scriptlets are dumped directly into the rpm spec file. In addition they were wrongly putted in *.install.perm
 
- -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Wed, 28 Sep 2005 07:26:20 +0200
+ -- Sebastien Ponce <sponcec3@pcitds13>  Wed, 28 Sep 2005 13:01:42 +0200
 
 castor (2.0.1-0) unstable; urgency=low
 
