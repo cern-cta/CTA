@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.36 2005/09/29 08:10:51 jdurand Exp $
+# $Id: maketar.sh,v 1.37 2005/09/29 09:22:03 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -203,6 +203,23 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
       sed 's/ //g'`
     if [ -n "${provides}" ]; then
 	echo "Provides: ${provides}" >> CASTOR.spec
+    fi
+    #
+    ## Get conflicts
+    #
+    conflicts=`cat debian/control | perl -e '
+      $package=shift;
+      $what=shift;
+      $this = do { local $/; <> };
+      $this =~ s/.*Package: $package[^\w\-]//sg;
+      $this =~ s/Package:.*//sg;
+      map {if (/([^:]+):(.+)/) {$this{$1}=$2};} split("\n",$this);
+      if (defined($this{$what})) {
+        print "$this{$what}\n";
+      }' $package Conflicts |
+      sed 's/ //g'`
+    if [ -n "${conflicts}" ]; then
+	echo "Conflicts: ${conflicts}" >> CASTOR.spec
     fi
     #
     ## Get description
