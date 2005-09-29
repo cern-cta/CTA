@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.35 2005/09/28 17:34:29 jdurand Exp $
+# $Id: maketar.sh,v 1.36 2005/09/29 08:10:51 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -161,16 +161,46 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     echo "Summary: Cern Advanced mass STORage" >> CASTOR.spec
     echo "Group: Application/Castor" >> CASTOR.spec
     #
+    ## Except for Description that is truely a multi-line thing even within debian/control, the other
+    ## fields are always on a single line:
+    ## The following perl script isolates the Package: definition of a package, then split it using
+    ## newlines, then look which line matches the keyword.
+    ## Then we remove spaces
+    #
     ## Get requires
     #
-    requires=`cat debian/control | perl -e '$package=shift; while (<>) {chomp($this .= " " . $_)}; $this =~ s/.*Package: $package //g; $this =~ s/Description:.*//g; $this =~ /Depends:.*},.*},(.*) /;print "$1\n"' $package | sed 's/ //g'`
+    ## Requires might give ${shlibs:Depends},${misc:Depends} in the output: we will drop that
+    ## This is why there are extra sed's after the original that remove the spaces
+    #
+    #
+    requires=`cat debian/control | perl -e '
+      $package=shift;
+      $what=shift;
+      $this = do { local $/; <> };
+      $this =~ s/.*Package: $package[^\w\-]//sg;
+      $this =~ s/Package:.*//sg;
+      map {if (/([^:]+):(.+)/) {$this{$1}=$2};} split("\n",$this);
+      if (defined($this{$what})) {
+        print "$this{$what}\n";
+      }' $package Depends |
+      sed 's/ //g' | sed 's/\${[^{},]*}//g' | sed 's/^,*//g' | sed 's/,,*/,/g'`
     if [ -n "${requires}" ]; then
 	echo "Requires: ${requires}" >> CASTOR.spec
     fi
     #
     ## Get provides
     #
-    provides=`cat debian/control | perl -e '$package=shift; while (<>) {chomp($this .= " " . $_)}; $this =~ s/.*Package: $package //g; $this =~ s/Description:.*//g; $this =~ /Provides: ([^ ]+) /;print "$1\n"' $package | sed 's/ //g'`
+    provides=`cat debian/control | perl -e '
+      $package=shift;
+      $what=shift;
+      $this = do { local $/; <> };
+      $this =~ s/.*Package: $package[^\w\-]//sg;
+      $this =~ s/Package:.*//sg;
+      map {if (/([^:]+):(.+)/) {$this{$1}=$2};} split("\n",$this);
+      if (defined($this{$what})) {
+        print "$this{$what}\n";
+      }' $package Provides |
+      sed 's/ //g'`
     if [ -n "${provides}" ]; then
 	echo "Provides: ${provides}" >> CASTOR.spec
     fi
@@ -178,7 +208,17 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     ## Get description
     #
     echo "%description -n $package" >> CASTOR.spec
-    cat debian/control | perl -e '$package=shift; while (<>) {chomp($this .= " " . $_)}; $this =~ s/.*Package: $package//g; $this =~ s/Package:.*//g; $this =~ /Description: (.*)/; print "$1\n"' $package >> CASTOR.spec
+    cat debian/control | perl -e '
+      $package=shift;
+      $what=shift;
+      $this = do { local $/; <> };
+      $this =~ s/.*Package: $package[^\w\-]//sg;
+      $this =~ s/Package:.*//sg;
+      $this =~ s/.*Description: +//sg;
+      $this =~ s/\n*$//sg;
+      $this =~ s/\n/ \- /sg;
+      $this =~ s/  */ /sg;
+      print "$this\n";' $package >> CASTOR.spec
     #
     ## Get file list
     #
