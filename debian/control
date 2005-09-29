@@ -41,6 +41,7 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-devel
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib
+Recommends: castor-devel-oracle
 Description: castor (Cern Advanced STORage system)
  API
 
@@ -302,12 +303,13 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-vdqm2-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
-Recommends: castor-lib, castor-lib-oracle, castor-vdqm2-lib-oracle
+Recommends: castor-lib-oracle, castor-vdqm2-lib-oracle
 Description: castor (Cern Advanced STORage system)
  Volume Drive and Queue Manager server version 2
 
 Package: castor-vdqm2-lib-oracle
 Architecture: any
+Replaces: castor-vdqm-server
 Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Volume Drive and Queue Manager server version 2 library
