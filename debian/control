@@ -301,6 +301,7 @@ Description: castor (Cern Advanced STORage system)
  Volume Drive and Queue Manager server
 
 Package: castor-vdqm2-server
+Conflicts: castor-vdqm-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Recommends: castor-lib-oracle, castor-vdqm2-lib-oracle
