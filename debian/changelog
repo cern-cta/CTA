@@ -1,3 +1,10 @@
+castor (2.0.1-3) unstable; urgency=low
+
+  * Added vdqm2
+  * Revisited debian/changelog parsing for spec creation
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Wed, 28 Sep 2005 19:29:26 +0200
+
 castor (2.0.1-2) unstable; urgency=low
 
   * Fix for marshalling on 64 bits machines
