@@ -14,7 +14,1806 @@ castor (2.0.1-2) unstable; urgency=low
 
 castor (2.0.1-0) unstable; urgency=low
 
-  * New upstream version (changelog will come later - done in 'emergency')
+  * PROTO2/CASTOR.spec:
+	[r1.35,2005-09-26,jdurand] Typo %fi -> %endif
+	[r1.34,2005-09-26,jdurand] Tentative support of amd64
+	[r1.33,2005-09-26,jdurand] Exclude BuildRmMaster also in the RPM execution if there is no LSF available
+	[r1.32,2005-09-26,jdurand] Implementation of has_stk_ssi, has_lsf and has_oracle a-la-RPM
+	[r1.31,2005-09-22,jdurand] Stop calling 'install' with user/group/mode
+	[r1.30,2005-09-15,jdurand] mkdir of etc/castor/expert (because of flows in the current make of CASTOR: until all Imakefiles are changed, we have rules that install not always where they depend from - notion of $(DESTDIR))
+	[r1.29,2005-09-15,jdurand] Ugly hack but the problem is architectural: to be able to install somewhere else but in the root filesystem, rules are based on dir/name: constraint, and install in $(DESTDIR)dir/name. Those who construct the value of dir/name is every Imakefile. And they FileName() macro to do that. but we cannot impose FileName() macro to prepend $(DESTDIR) in any case, because FileName() macro is often called several times (i.e. recursively). So, even if the correct solution would be to:
+	[r1.29,2005-09-15,jdurand] change config/Imake.rules to depend on $(DESTDIR)dir/name instead of dir/name:
+	[r1.29,2005-09-15,jdurand] change ALL (repeat: ALL) Imakefiles/Makefiles to use $(DESTDIR), once, as soon as they build a relative path
+	[r1.29,2005-09-15,jdurand] 
+	[r1.29,2005-09-15,jdurand] the quick alternative is to touch every file before the build. This horrible thing will guarantee that packaging CASTOR using a tarball made before CASTOR has been locally installed, will anyway correctly install the newly CASTOR in the packaging install path (typically, i.e. in $(DESTDIR))
+  * PROTO2/castor/BaseCnvSvc.cpp:
+	[r1.17,2005-08-23,itglp] Core' files upgraded to manage CDBC API.
+  * PROTO2/castor/BaseCnvSvc.hpp:
+	[r1.14,2005-08-23,itglp] Core' files upgraded to manage CDBC API.
+  * PROTO2/castor/BaseObject.cpp:
+	[r1.13,2005-08-22,itglp] Added proper cleanup in the destructor.
+  * PROTO2/castor/Constants.cpp:
+	[r1.28,2005-09-19,itglp] Added an identifier for the Srm service.
+	[r1.27,2005-08-23,itglp] Core' files upgraded to manage CDBC API.
+  * PROTO2/castor/Constants.hpp:
+	[r1.51,2005-09-19,itglp] Added an identifier for the Srm service.
+	[r1.50,2005-08-23,itglp] Core' files upgraded to manage CDBC API.
+  * PROTO2/castor/ICnvSvc.hpp:
+	[r1.13,2005-08-26,sponcec3] fully qualify some names and paths
+	[r1.12,2005-08-23,itglp] Core' files upgraded to manage CDBC API.
+  * PROTO2/castor/Imakefile:
+	[r1.108,2005-08-24,itglp] Moved some classes to db/cnv/Imakefile.
+	[r1.107,2005-08-23,itglp] Core' files upgraded to manage CDBC API.
+  * PROTO2/castor/Services.cpp:
+	[r1.20,2005-08-23,itglp] Core' files upgraded to manage CDBC API.
+  * PROTO2/castor/db/Imakefile:
+	[r 1.5,2005-08-23,itglp] Upgraded Imakefiles to reflect new packages.
+  * PROTO2/castor/db/castor_oracle_create.sql:
+	[r 1.9,2005-08-18,itglp] Updated to reflect latest changes in oracleTrailer.sql.
+	[r1.22,2005-09-27,sponcec3] Converted GC trigger to the new type of min/maxFreeSpace
+	[r1.21,2005-09-26,itglp] Added defGarbageCollectFS procedure, updated generated scripts.
+	[r1.20,2005-09-22,itglp] Fixed FS trigger to start GC: it spawns a separate db job to do it.
+	[r1.20,2005-09-22,itglp] Fixed comments in the drop script.
+	[r1.19,2005-09-22,sponcec3] In isSubRequestToSchedule, commit in the case where the decision is to not schedule
+	[r1.18,2005-09-22,sponcec3] Fixed isSubRequestToSchedule : diskcopies with no filesystem attached were ignored, leading to duplicated WAITTAPERECALLs
+	[r1.17,2005-09-22,sponcec3] Fixed Disk2DiskCopyDone : subrequest waiting on the disk2disk copy were not ut into restart status
+	[r1.16,2005-09-20,sponcec3] Fixed prepareForMigration for code that was introduced but never used
+	[r1.15,2005-09-20,sponcec3] Fixed typo
+	[r1.14,2005-09-19,sponcec3] Updated DB version after the change of the fileSystem table
+	[r1.13,2005-09-19,sponcec3] Added totalSize field in FileSystem
+	[r1.12,2005-09-15,itglp] Updated scripts due to latest changes in RH.xmi and oracleTrailer.sql.
+	[r1.11,2005-09-01,mbraeger] Added three procedures to oracleTrailer: selectTapeRequestQueue, testMatchTape2TapeDrive, matchTape2TapeDrive
+	[r1.11,2005-09-01,mbraeger] 
+	[r1.11,2005-09-01,mbraeger] testMatchTape2TapeDrive and  matchTape2TapeDrive are used by OraVdqmSvc::matchTape2TapeDrive
+	[r1.11,2005-09-01,mbraeger] selectTapeRequestQueue is used by OraVdqmSvc::selectTapeRequestQueue
+	[r1.10,2005-08-22,itglp] Updated to the latest changes in RH.xmi
+  * PROTO2/castor/db/castor_oracle_drop.sql:
+	[r 1.6,2005-09-26,itglp] Added defGarbageCollectFS procedure, updated generated scripts.
+	[r 1.5,2005-09-22,itglp] Fixed FS trigger to start GC: it spawns a separate db job to do it.
+	[r 1.5,2005-09-22,itglp] Fixed comments in the drop script.
+	[r 1.4,2005-08-22,itglp] Updated to the latest changes in RH.xmi
+  * PROTO2/castor/db/mysql/Imakefile:
+	[r 1.9,2005-08-18,itglp] Removed generated converters, not needed anymore with the upcoming
+	[r 1.9,2005-08-18,itglp] abstracted database converters.
+	[r 1.9,2005-08-18,itglp] Added MySql implementation for access to database.
+  * PROTO2/castor/db/mysql/MyCnvSvc.cpp:
+	[r1.10,2005-08-18,itglp] Removed generated converters, not needed anymore with the upcoming
+	[r1.10,2005-08-18,itglp] abstracted database converters.
+	[r1.10,2005-08-18,itglp] Added MySql implementation for access to database.
+  * PROTO2/castor/db/mysql/MyCnvSvc.hpp:
+	[r 1.5,2005-08-18,itglp] Removed generated converters, not needed anymore with the upcoming
+	[r 1.5,2005-08-18,itglp] abstracted database converters.
+	[r 1.5,2005-08-18,itglp] Added MySql implementation for access to database.
+  * PROTO2/castor/db/ora/OraCastorFileCnv.cpp:
+	[r1.38,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraCnvSvc.cpp:
+	[r1.51,2005-09-19,sponcec3] Updated DB version after the change of the fileSystem table
+  * PROTO2/castor/db/ora/OraCommonSvc.cpp:
+	[r 1.7,2005-09-19,sponcec3] fixe type of min/maxFreeSpace in FileSystem
+	[r 1.6,2005-09-19,sponcec3] Added totalSize field in FileSystem
+	[r 1.5,2005-09-19,sponcec3] empty log message ***
+	[r 1.4,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/db/ora/OraCommonSvc.hpp:
+	[r 1.5,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/db/ora/OraDiskCopyCnv.cpp:
+	[r1.40,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraDiskPoolCnv.cpp:
+	[r1.35,2005-09-19,sponcec3] Fixed case of 'FROM' keyword in some statements
+	[r1.34,2005-09-05,sponcec3] Fixed case of ORACLE statement
+	[r1.33,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraDiskServerCnv.cpp:
+	[r1.32,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraFileSystemCnv.cpp:
+	[r1.39,2005-09-19,sponcec3] Added totalSize field
+	[r1.38,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraFilesDeletedCnv.cpp:
+	[r 1.6,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraFilesDeletionFailedCnv.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraGCSvc.cpp:
+	[r 1.2,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/db/ora/OraGCSvc.hpp:
+	[r 1.3,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/db/ora/OraJobSvc.cpp:
+	[r 1.5,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/db/ora/OraJobSvc.hpp:
+	[r 1.3,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/db/ora/OraQuerySvc.cpp:
+	[r1.19,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+	[r1.18,2005-08-17,itglp] Fixed in reset() a missing call to the inherited method.
+  * PROTO2/castor/db/ora/OraQuerySvc.hpp:
+	[r 1.8,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/db/ora/OraStageFileQueryRequestCnv.cpp:
+	[r1.24,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStageFindRequestRequestCnv.cpp:
+	[r1.23,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStageGetRequestCnv.cpp:
+	[r1.24,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStagePrepareToGetRequestCnv.cpp:
+	[r1.24,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStagePrepareToPutRequestCnv.cpp:
+	[r1.24,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStagePrepareToUpdateRequestCnv.cpp:
+	[r1.24,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStagePutDoneRequestCnv.cpp:
+	[r1.26,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStagePutRequestCnv.cpp:
+	[r1.24,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStageReleaseFilesRequestCnv.cpp:
+	[r1.18,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStageRequestQueryRequestCnv.cpp:
+	[r1.24,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStageRmRequestCnv.cpp:
+	[r1.24,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStageUpdateRequestCnv.cpp:
+	[r1.24,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStagerSvc.hpp:
+	[r1.72,2005-09-22,sponcec3] In isSubRequestToSchedule, commit in the case where the decision is to not schedule
+  * PROTO2/castor/db/ora/OraStreamCnv.cpp:
+	[r1.47,2005-09-19,sponcec3] Fixed case of 'FROM' keyword in some statements
+	[r1.46,2005-09-05,sponcec3] Fixed case of ORACLE statement
+	[r1.45,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraSvcClassCnv.cpp:
+	[r1.39,2005-09-19,sponcec3] Fixed case of 'FROM' keyword in some statements
+	[r1.38,2005-09-05,sponcec3] Fixed case of ORACLE statement
+	[r1.37,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraTapeCnv.cpp:
+	[r1.43,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraTapeCnv.hpp:
+	[r1.18,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have also changed
+  * PROTO2/castor/db/ora/OraTapeCopyCnv.cpp:
+	[r1.45,2005-09-19,sponcec3] Fixed case of 'FROM' keyword in some statements
+	[r1.44,2005-09-05,sponcec3] Fixed case of ORACLE statement
+	[r1.43,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraTapeDriveCnv.cpp:
+	[r1.18,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have also changed
+	[r1.17,2005-08-29,sponcec3] Modifications due to the further fix for 1 to 1 associations on the code generation
+	[r1.16,2005-08-29,sponcec3] Fixes going along with the codegeneration fix concerning 1 to 1 relations with one end having no name
+	[r1.15,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraTapeDriveCnv.hpp:
+	[r1.12,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have also changed
+	[r1.11,2005-08-29,sponcec3] Modifications due to the further fix for 1 to 1 associations on the code generation
+  * PROTO2/castor/db/ora/OraTapeDriveDedicationCnv.cpp:
+	[r 1.4,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, these files has been changed by gencastor
+	[r 1.3,2005-09-05,mbraeger] Due to an attribute bug in the RH.xmi file, the TapeDriveDedication class has to be changed
+  * PROTO2/castor/db/ora/OraTapePoolCnv.cpp:
+	[r1.38,2005-09-19,sponcec3] Fixed case of 'FROM' keyword in some statements
+	[r1.37,2005-09-05,sponcec3] Fixed case of ORACLE statement
+	[r1.36,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraTapeRequestCnv.cpp:
+	[r 1.9,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, these files has been changed by gencastor
+  * PROTO2/castor/db/ora/OraTapeServerCnv.cpp:
+	[r 1.6,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, these files has been changed by gencastor
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraVdqmSvc.cpp:
+	[r1.23,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, these files has been changed by gencastor
+	[r1.22,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM
+	[r1.22,2005-09-05,mbraeger] server.
+	[r1.21,2005-09-01,mbraeger] Two new functions implementd: matchTape2TapeDrive, selectTapeRequestQueue
+	[r1.20,2005-08-12,itglp] Fixed some small bugs
+  * PROTO2/castor/db/ora/OraVdqmSvc.hpp:
+	[r1.19,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM
+	[r1.19,2005-09-05,mbraeger] server.
+	[r1.18,2005-09-01,mbraeger] Two new functions implementd: matchTape2TapeDrive, selectTapeRequestQueue
+	[r1.17,2005-08-17,itglp] Removed a method which is now in the ancestor class.
+  * PROTO2/castor/db/oracleHeader_drop.sql:
+	[r 1.3,2005-09-19,itglp] Fixed some comments.
+  * PROTO2/castor/db/oracleTrailer.sql:
+	[r1.198,2005-09-27,sponcec3] Converted GC trigger to the new type of min/maxFreeSpace
+	[r1.197,2005-09-26,itglp] Added defGarbageCollectFS procedure, updated generated scripts.
+	[r1.196,2005-09-22,itglp] Fixed FS trigger to start GC: it spawns a separate db job to do it.
+	[r1.196,2005-09-22,itglp] Fixed comments in the drop script.
+	[r1.195,2005-09-22,sponcec3] In isSubRequestToSchedule, commit in the case where the decision is to not schedule
+	[r1.194,2005-09-22,sponcec3] Fixed getUpdateStart : diskcopies with no filesystem attached were ignored, leading to duplicated WAITTAPERECALLs
+	[r1.193,2005-09-22,sponcec3] Fixed Disk2DiskCopyDone : subrequest waiting on the disk2disk copy were not ut into restart status
+	[r1.192,2005-09-20,sponcec3] Fixed prepareForMigration for code that was introduced but never used
+	[r1.191,2005-09-20,sponcec3] Fixed typo
+	[r1.190,2005-09-19,sponcec3] Updated DB version after the change of the fileSystem table
+	[r1.189,2005-09-12,sponcec3] Added missing constraint on tape table leading to double insertion of some rows
+	[r1.188,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM
+	[r1.188,2005-09-05,mbraeger] server.
+	[r1.187,2005-09-01,mbraeger] Added three procedures to oracleTrailer: selectTapeRequestQueue, testMatchTape2TapeDrive, matchTape2TapeDrive
+	[r1.187,2005-09-01,mbraeger] 
+	[r1.187,2005-09-01,mbraeger] testMatchTape2TapeDrive and  matchTape2TapeDrive are used by OraVdqmSvc::matchTape2TapeDrive
+	[r1.187,2005-09-01,mbraeger] selectTapeRequestQueue is used by OraVdqmSvc::selectTapeRequestQueue
+	[r1.186,2005-08-12,itglp] Fixed some small bugs
+  * PROTO2/castor/db/oracleTrailer_drop.sql:
+	[r 1.3,2005-09-26,itglp] Added defGarbageCollectFS procedure, updated generated scripts.
+	[r 1.2,2005-08-18,itglp] Added DROP statement for matchTape2TapeDrive.
+  * PROTO2/castor/dlfbuf.h:
+	[r 1.9,2005-09-12,sponcec3] Do not forget mutex unlocking in case of exception !
+  * PROTO2/castor/gc/Imakefile:
+	[r 1.7,2005-09-20,jdurand] Install gcDaemon with mode bits 0750 instead of 0755
+  * PROTO2/castor/io/StreamAbortResponseCnv.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamBaseAddressCnv.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamBasicResponseCnv.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamCastorFileCnv.cpp:
+	[r1.20,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamClientCnv.cpp:
+	[r1.20,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamClientIdentificationCnv.cpp:
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamDeviceGroupNameCnv.cpp:
+	[r 1.5,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have now changed
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamDisk2DiskCopyDoneRequestCnv.cpp:
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamDiskCopyCnv.cpp:
+	[r1.20,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamDiskCopyForRecallCnv.cpp:
+	[r 1.9,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamEndResponseCnv.cpp:
+	[r1.14,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamErrorHistoryCnv.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamFileQueryResponseCnv.cpp:
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamFileResponseCnv.cpp:
+	[r1.17,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamFileSystemCnv.cpp:
+	[r1.20,2005-09-19,sponcec3] Added totalSize field
+	[r1.19,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamFiles2DeleteCnv.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamFilesDeletedCnv.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamFilesDeletionFailedCnv.cpp:
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamFindReqResponseCnv.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamGCFileCnv.cpp:
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamGCFilesResponseCnv.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamGCLocalFileCnv.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamGetUpdateDoneCnv.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamGetUpdateFailedCnv.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamGetUpdateStartRequestCnv.cpp:
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamGetUpdateStartResponseCnv.cpp:
+	[r 1.6,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamIOResponseCnv.cpp:
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamMessageAckCnv.cpp:
+	[r1.19,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamMoverCloseRequestCnv.cpp:
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamPutDoneStartCnv.cpp:
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamPutFailedCnv.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamPutStartRequestCnv.cpp:
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamQueryParameterCnv.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamRequestQueryResponseCnv.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamSegmentCnv.cpp:
+	[r1.16,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageAbortRequestCnv.cpp:
+	[r 1.7,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageFileQueryRequestCnv.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageFindRequestRequestCnv.cpp:
+	[r 1.9,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageGetNextRequestCnv.cpp:
+	[r1.14,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageGetRequestCnv.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStagePrepareToGetRequestCnv.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStagePrepareToPutRequestCnv.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStagePrepareToUpdateRequestCnv.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStagePutDoneRequestCnv.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStagePutNextRequestCnv.cpp:
+	[r 1.6,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStagePutRequestCnv.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageReleaseFilesRequestCnv.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageRequestQueryRequestCnv.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageRmRequestCnv.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageUpdateNextRequestCnv.cpp:
+	[r 1.6,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageUpdateRequestCnv.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStartResponseCnv.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStringResponseCnv.cpp:
+	[r1.14,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamSubRequestCnv.cpp:
+	[r1.21,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamTapeAccessSpecificationCnv.cpp:
+	[r 1.5,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have now changed
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamTapeCnv.cpp:
+	[r1.16,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamTapeCopyCnv.cpp:
+	[r1.16,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamTapeCopyForMigrationCnv.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamTapeDriveCnv.cpp:
+	[r 1.9,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+	[r1.10,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have now changed
+  * PROTO2/castor/io/StreamTapeDriveCompatibilityCnv.cpp:
+	[r 1.3,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have now changed
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamTapeDriveDedicationCnv.cpp:
+	[r 1.6,2005-09-07,mbraeger] Due to the revision of the vdqm diagram, these files has been updated by gencastor
+	[r 1.5,2005-09-05,mbraeger] Due to an attribute bug in the RH.xmi file, the TapeDriveDedication class has to be changed
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamTapePoolCnv.cpp:
+	[r1.16,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamTapeRequestCnv.cpp:
+	[r 1.8,2005-09-07,mbraeger] Due to the revision of the vdqm diagram, these files has been updated by gencastor
+	[r 1.7,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamTapeServerCnv.cpp:
+	[r 1.5,2005-09-07,mbraeger] Due to the revision of the vdqm diagram, these files has been updated by gencastor
+	[r 1.4,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have now changed
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/biniostream.h:
+	[r 1.5,2005-09-19,itglp] Changed implementation to make it endianess-aware: the default endianess
+	[r 1.5,2005-09-19,itglp] is the LITTLE one as in the production setup, and macros are defined to
+	[r 1.5,2005-09-19,itglp] convert from/to host and 'inverted network' representation.
+	[r 1.4,2005-09-01,mbraeger] Return to the version 1.2
+	[r 1.3,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have now changed
+  * PROTO2/castor/query/IQuerySvc.hpp:
+	[r 1.9,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/rh/AbortResponse.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/BasicResponse.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/Client.cpp:
+	[r1.11,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/EndResponse.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/FileQueryResponse.cpp:
+	[r 1.9,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/FileResponse.cpp:
+	[r1.14,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/FindReqResponse.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/GCFilesResponse.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/GetUpdateStartResponse.cpp:
+	[r 1.7,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/IOResponse.cpp:
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/RequestQueryResponse.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/Response.cpp:
+	[r 1.6,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/Server.cpp:
+	[r1.41,2005-09-07,sponcec3] Notify of the number of subrequests for fileRequests so that the right number of threads are waked up
+	[r1.40,2005-09-06,sponcec3] only notify the service concerned when a request arrives
+	[r1.39,2005-08-18,itglp] Fixed DLF message for database.
+  * PROTO2/castor/rh/StartResponse.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/StringResponse.cpp:
+	[r 1.9,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/CastorFile.cpp:
+	[r1.17,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/ClientIdentification.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/Disk2DiskCopyDoneRequest.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/DiskCopy.cpp:
+	[r1.19,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/DiskCopyForRecall.cpp:
+	[r 1.7,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/DiskCopyInfo.cpp:
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/DiskPool.cpp:
+	[r1.12,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/DiskServer.cpp:
+	[r1.12,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/FileClass.cpp:
+	[r1.11,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/FileRequest.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/FileSystem.cpp:
+	[r1.17,2005-09-19,sponcec3] Added totalSize field
+	[r1.16,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/FileSystem.h:
+	[r1.21,2005-09-19,sponcec3] Added totalSize field
+  * PROTO2/castor/stager/FileSystem.hpp:
+	[r1.13,2005-09-19,sponcec3] Added totalSize field
+  * PROTO2/castor/stager/FileSystemCInt.cpp:
+	[r1.14,2005-09-19,sponcec3] Added totalSize field
+  * PROTO2/castor/stager/Files2Delete.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/FilesDeleted.cpp:
+	[r 1.6,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/FilesDeletionFailed.cpp:
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/GCFile.cpp:
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/GCFileList.cpp:
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/GCLocalFile.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/GetUpdateDone.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/GetUpdateFailed.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/GetUpdateStartRequest.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/ICommonSvc.hpp:
+	[r 1.4,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+	[r 1.3,2005-08-18,itglp] Undo the last commit on these files: commit() and rollback() methods
+	[r 1.3,2005-08-18,itglp] are not anymore needed at the client side.
+  * PROTO2/castor/stager/IFSSvcCInt.cpp:
+	[r 1.2,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/stager/IGCSvc.hpp:
+	[r 1.2,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/stager/IJobSvc.h:
+	[r 1.2,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/stager/IJobSvc.hpp:
+	[r 1.2,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/stager/IJobSvcCInt.cpp:
+	[r 1.2,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/stager/IStagerSvc.h:
+	[r1.63,2005-09-22,sponcec3] In isSubRequestToSchedule, commit in the case where the decision is to not schedule
+  * PROTO2/castor/stager/IStagerSvc.hpp:
+	[r1.65,2005-09-22,sponcec3] In isSubRequestToSchedule, commit in the case where the decision is to not schedule
+  * PROTO2/castor/stager/IStagerSvcCInt.cpp:
+	[r1.54,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/stager/ITapeSvcCInt.cpp:
+	[r 1.2,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/stager/MoverCloseRequest.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/PutDoneStart.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/PutFailed.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/PutStartRequest.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/QryRequest.cpp:
+	[r 1.6,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/QueryParameter.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/RemoteGCSvc.cpp:
+	[r 1.4,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+	[r 1.3,2005-08-18,itglp] Undo the last commit on these files: commit() and rollback() methods
+	[r 1.3,2005-08-18,itglp] are not anymore needed at the client side.
+  * PROTO2/castor/stager/RemoteGCSvc.hpp:
+	[r 1.4,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+	[r 1.3,2005-08-18,itglp] Undo the last commit on these files: commit() and rollback() methods
+	[r 1.3,2005-08-18,itglp] are not anymore needed at the client side.
+  * PROTO2/castor/stager/RemoteJobSvc.cpp:
+	[r 1.4,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+	[r 1.3,2005-08-18,itglp] Undo the last commit on these files: commit() and rollback() methods
+	[r 1.3,2005-08-18,itglp] are not anymore needed at the client side.
+  * PROTO2/castor/stager/RemoteJobSvc.hpp:
+	[r 1.4,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+	[r 1.3,2005-08-18,itglp] Undo the last commit on these files: commit() and rollback() methods
+	[r 1.3,2005-08-18,itglp] are not anymore needed at the client side.
+  * PROTO2/castor/stager/ReqIdRequest.cpp:
+	[r 1.7,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/Request.cpp:
+	[r1.14,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/Segment.cpp:
+	[r1.15,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageAbortRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageFileQueryRequest.cpp:
+	[r1.11,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageFindRequestRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageGetNextRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageGetRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StagePrepareToGetRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StagePrepareToPutRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StagePrepareToUpdateRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StagePutDoneRequest.cpp:
+	[r1.12,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StagePutNextRequest.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StagePutRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageReleaseFilesRequest.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageRequestQueryRequest.cpp:
+	[r1.12,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageRmRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageUpdateNextRequest.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageUpdateRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StartRequest.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/Stream.cpp:
+	[r1.16,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/SubRequest.cpp:
+	[r1.21,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/SvcClass.cpp:
+	[r1.14,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/Tape.cpp:
+	[r1.15,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/TapeCopy.cpp:
+	[r1.17,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/TapeCopyForMigration.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/TapePool.cpp:
+	[r1.13,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/vdqm/DeviceGroupName.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/vdqm/DeviceGroupName.h:
+	[r 1.3,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have changed.
+  * PROTO2/castor/vdqm/DeviceGroupName.hpp:
+	[r 1.3,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have changed.
+  * PROTO2/castor/vdqm/ErrorHistory.cpp:
+	[r 1.6,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/vdqm/IVdqmSvc.hpp:
+	[r1.22,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM server.
+	[r1.21,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r1.21,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/OldProtocolInterpreter.cpp:
+	[r 1.5,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r 1.5,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/OldRequestFacade.cpp:
+	[r 1.4,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM server.
+	[r 1.3,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r 1.3,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/RTCopyDConnection.cpp:
+	[r 1.6,2005-09-06,mbraeger] Rollback for RTCPD in handler/TapeRequestDedicationHandler.cpp implemented. Now the protocol to RTCPD is handled in extra threads, so that there is no hanging, if the connection takes too long.
+  * PROTO2/castor/vdqm/TapeAccessSpecification.cpp:
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/vdqm/TapeDrive.cpp:
+	[r1.14,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have changed.
+	[r1.13,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/vdqm/TapeDrive.h:
+	[r1.13,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have changed.
+  * PROTO2/castor/vdqm/TapeDrive.hpp:
+	[r1.12,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have changed.
+  * PROTO2/castor/vdqm/TapeDriveCInt.cpp:
+	[r1.12,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have changed.
+  * PROTO2/castor/vdqm/TapeDriveCompatibility.cpp:
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/vdqm/TapeDriveDedication.cpp:
+	[r 1.8,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+	[r 1.7,2005-09-05,mbraeger] Due to an attribute bug in the RH.xmi file, the TapeDriveDedication class has to be changed
+	[r 1.6,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/vdqm/TapeDriveDedication.h:
+	[r 1.7,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+	[r 1.6,2005-09-05,mbraeger] Due to an attribute bug in the RH.xmi file, the TapeDriveDedication class has to be changed
+  * PROTO2/castor/vdqm/TapeDriveDedication.hpp:
+	[r 1.7,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+	[r 1.6,2005-09-05,mbraeger] Due to an attribute bug in the RH.xmi file, the TapeDriveDedication class has to be changed
+  * PROTO2/castor/vdqm/TapeDriveDedicationCInt.cpp:
+	[r 1.7,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+	[r 1.6,2005-09-05,mbraeger] Due to an attribute bug in the RH.xmi file, the TapeDriveDedication class has to be changed
+  * PROTO2/castor/vdqm/TapeRequest.cpp:
+	[r 1.9,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/vdqm/TapeRequest.h:
+	[r 1.8,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/castor/vdqm/TapeRequest.hpp:
+	[r 1.8,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/castor/vdqm/TapeRequestCInt.cpp:
+	[r 1.8,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/castor/vdqm/TapeServer.cpp:
+	[r 1.6,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/vdqm/TapeServer.h:
+	[r 1.5,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/castor/vdqm/TapeServer.hpp:
+	[r 1.5,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/castor/vdqm/TapeServerCInt.cpp:
+	[r 1.5,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/castor/vdqm/TapeServerStatusCodes.cpp:
+	[r 1.6,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/castor/vdqm/TapeServerStatusCodes.h:
+	[r 1.6,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/castor/vdqm/TapeServerStatusCodes.hpp:
+	[r 1.6,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/castor/vdqm/VdqmServer.cpp:
+	[r1.39,2005-09-13,mbraeger] Solved some bugs, which appeaered during stress tests with rtcpd_test and rtcpc_test
+	[r1.38,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+	[r1.37,2005-09-06,mbraeger] Rollback for RTCPD in handler/TapeRequestDedicationHandler.cpp implemented. Now the protocol to RTCPD is handled in extra threads, so that there is no hanging, if the connection takes too long.
+	[r1.36,2005-09-05,mbraeger] Included Debug message and fixed some memory leakes.
+	[r1.35,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM server.
+	[r1.34,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r1.34,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+	[r1.33,2005-08-18,itglp] Fixed DLF message for database.
+  * PROTO2/castor/vdqm/VdqmServer.hpp:
+	[r 1.9,2005-09-06,mbraeger] Rollback for RTCPD in handler/TapeRequestDedicationHandler.cpp implemented. Now the protocol to RTCPD is handled in extra threads, so that there is no hanging, if the connection takes too long.
+  * PROTO2/castor/vdqm/handler/BaseRequestHandler.cpp:
+	[r1.10,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r1.10,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/handler/BaseRequestHandler.hpp:
+	[r 1.7,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r 1.7,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/handler/TapeDriveConsistencyChecker.cpp:
+	[r 1.8,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r 1.8,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/handler/TapeDriveHandler.cpp:
+	[r1.16,2005-09-13,mbraeger] Solved some bugs, which appeaered during stress tests with rtcpd_test and rtcpc_test
+	[r1.15,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+	[r1.14,2005-09-05,mbraeger] Included Debug message and fixed some memory leakes.
+	[r1.13,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM server.
+	[r1.12,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r1.12,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/handler/TapeDriveHandler.hpp:
+	[r 1.7,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM server.
+	[r 1.6,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r 1.6,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/handler/TapeDriveStatusHandler.cpp:
+	[r1.11,2005-09-13,mbraeger] Solved some bugs, which appeaered during stress tests with rtcpd_test and rtcpc_test
+	[r1.10,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r1.10,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/handler/TapeRequestDedicationHandler.cpp:
+	[r 1.9,2005-09-13,mbraeger] Solved some bugs, which appeaered during stress tests with rtcpd_test and rtcpc_test
+	[r 1.8,2005-09-06,mbraeger] Rollback for RTCPD in handler/TapeRequestDedicationHandler.cpp implemented. Now the protocol to RTCPD is handled in extra threads, so that there is no hanging, if the connection takes too long.
+	[r 1.7,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r 1.7,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/handler/TapeRequestDedicationHandler.hpp:
+	[r 1.6,2005-09-06,mbraeger] Rollback for RTCPD in handler/TapeRequestDedicationHandler.cpp implemented. Now the protocol to RTCPD is handled in extra threads, so that there is no hanging, if the connection takes too long.
+  * PROTO2/castor/vdqm/handler/TapeRequestHandler.cpp:
+	[r1.13,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+	[r1.12,2005-09-05,mbraeger] Included Debug message and fixed some memory leakes.
+	[r1.11,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM server.
+	[r1.10,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r1.10,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/handler/TapeRequestHandler.hpp:
+	[r 1.7,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM server.
+	[r 1.6,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r 1.6,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/newVdqm.h:
+	[r 1.3,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/clips/castor.clp:
+	[r1.12,2005-09-26,jdurand] Support of space
+  * PROTO2/clips/castorweight.clp:
+	[r1.15,2005-09-26,jdurand] Support of space
+  * PROTO2/codeGeneration/RH.xmi:
+	[r1.105,2005-09-19,sponcec3] Added totalSize field in FileSystem
+	[r1.104,2005-09-07,mbraeger] Revision of the vdqm db diagram, due to the vdqm meeting of this afternoon
+	[r1.103,2005-09-05,mbraeger] Bug fix in the TapeDriveDedication class of the cdqm diagram
+	[r1.102,2005-08-29,mbraeger] Modification of the assoziation between TapeRequest and Tape.
+	[r1.101,2005-08-22,mbraeger] Added the library Name to the DeviceGroupName Table of the VDQM diagram
+  * PROTO2/codeGeneration/gencastor/Makefile:
+	[r 1.7,2005-08-24,itglp] Added generation of converters for CDBC API. This makes version 3.3-0.
+  * PROTO2/codeGeneration/gencastor/debian/changelog:
+	[r1.16,2005-09-16,itglp] One more fix to have SQL scripts reflect namespace in the filename.
+	[r1.15,2005-09-15,itglp] Fully fixed generation of generic db converters. This makes vesion 3.4.3.
+	[r1.14,2005-09-01,sponcec3] new minor version of gencastor including recent fixes
+	[r1.13,2005-08-29,sponcec3] New gencastor release
+	[r1.12,2005-08-24,itglp] Added generation of converters for CDBC API. This makes version 3.3-0.
+  * PROTO2/codeGeneration/gencastor/debian/files:
+	[r1.15,2005-09-16,itglp] Version 3.4.4.
+	[r1.14,2005-09-15,itglp] Fully fixed generation of generic db converters. This makes vesion 3.4.3.
+	[r1.13,2005-09-01,sponcec3] new minor version of gencastor including recent fixes
+	[r1.12,2005-08-29,sponcec3] New gencastor release
+	[r1.11,2005-08-24,itglp] Added generation of converters for CDBC API. This makes version 3.3-0.
+  * PROTO2/codeGeneration/gencastor/genCastor.cpp:
+	[r1.17,2005-09-16,itglp] One more fix to have SQL scripts reflect namespace in the filename.
+	[r1.16,2005-09-15,itglp] Fully fixed generation of generic db converters. This makes vesion 3.4.3.
+	[r1.15,2005-09-14,itglp] Version 3.4.2.
+	[r1.14,2005-08-25,sponcec3] fixed typo
+	[r1.13,2005-08-25,sponcec3] Added a -c flag that gives the top namespace to ba used (default castor)
+	[r1.12,2005-08-24,itglp] Added generation of converters for CDBC API. This makes version 3.3-0.
+  * PROTO2/codeGeneration/gencastor/gencastor:
+	[r 1.7,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppbasewriter.cpp:
+	[r1.16,2005-08-29,sponcec3] Remove equivalence of no multiplicity and 1
+	[r1.15,2005-08-26,sponcec3] Improved parsing of multiplicity (none and 1..n understood now)
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppcastorwriter.cpp:
+	[r 1.5,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppcastorwriter.h:
+	[r 1.5,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+	[r 1.4,2005-08-25,sponcec3] Added a -c flag that gives the top namespace to ba used (default castor)
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppcppclasswriter.cpp:
+	[r1.15,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppcppmycnvwriter.cpp:
+	[r 1.8,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppcpporacnvwriter.cpp:
+	[r1.60,2005-09-01,sponcec3] Fixed bug for associations n to 1 that had no name on one side
+	[r1.59,2005-08-29,sponcec3] Fixed bug in 1 to 1 relations when one end has no name
+	[r1.58,2005-08-26,sponcec3] fixes concerning namespaces in the case castor is not the namespace in which we generate
+	[r1.57,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+	[r1.56,2005-08-24,itglp] Added generation of converters for CDBC API. This makes version 3.3-0.
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppcppstreamcnvwriter.cpp:
+	[r1.12,2005-09-01,sponcec3] Fixed bug for associations n to 1 that had no name on one side
+	[r1.11,2005-08-26,sponcec3] fixes concerning namespaces in the case castor is not the namespace in which we generate
+	[r1.10,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cpphbasecnvwriter.cpp:
+	[r 1.8,2005-08-26,sponcec3] fixes concerning namespaces in the case castor is not the namespace in which we generate
+	[r 1.7,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cpphmycnvwriter.cpp:
+	[r 1.3,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cpphoracnvwriter.cpp:
+	[r1.17,2005-09-01,sponcec3] Fixed bug for associations n to 1 that had no name on one side
+	[r1.16,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cpphstreamcnvwriter.cpp:
+	[r 1.4,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppwriter.cpp:
+	[r1.22,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+	[r1.21,2005-08-25,sponcec3] removes comment I introduced by mistake
+	[r1.20,2005-08-25,sponcec3] Added a -c flag that gives the top namespace to ba used (default castor)
+	[r1.19,2005-08-24,itglp] Added generation of converters for CDBC API. This makes version 3.3-0.
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppwriter.h:
+	[r 1.6,2005-08-24,itglp] Added generation of converters for CDBC API. This makes version 3.3-0.
+  * PROTO2/common/Cstrerror.c:
+	[r 1.2,2005-09-16,jdurand] Added #include <stdlib.h> for malloc() declaration
+  * PROTO2/common/serror.c:
+	[r 1.8,2005-09-16,jdurand] Added EDLFNOTCONNECTED error message
+  * PROTO2/config/Imake.rules:
+	[r1.15,2005-09-20,jdurand] Make the install rules working even if we are not root
+	[r1.15,2005-09-20,jdurand] Note: on debian 'fakeroot' indeed pretends that your login is "root")
+  * PROTO2/config/Library.tmpl:
+	[r1.23,2005-08-23,itglp] Added PostgreSql and (partially) removed MySql support, both with CDBC API.
+  * PROTO2/config/LibraryDeps.tmpl:
+	[r 1.7,2005-08-23,itglp] Added PostgreSql and (partially) removed MySql support, both with CDBC API.
+  * PROTO2/config/Project.tmpl:
+	[r1.47,2005-09-26,jdurand] Do not force BuildJob to YES if BuildRmnode is YES
+	[r1.46,2005-08-23,itglp] Added PostgreSql and (partially) removed MySql support, both with CDBC API.
+  * PROTO2/config/site.def:
+	[r1.74,2005-09-22,jdurand] Make "castorexpert" the default expert host
+  * PROTO2/debian/castor-allservicesbuttapeservers.conf:
+	[r 1.3,2005-09-22,jdurand] Commented all hosts except MSG HOST
+	[r 1.2,2005-09-22,jdurand] libcastorCommonOra.so -> libcastorCommonOra.so.2.0
+  * PROTO2/debian/castor.conf:
+	[r 1.6,2005-09-22,jdurand] Commented all hosts except MSG HOST
+	[r 1.5,2005-09-22,jdurand] libcastorCommonOra.so -> libcastorCommonOra.so.2.0
+  * PROTO2/debian/changelog:
+	[r1.65,2005-09-12,jdurand] Fix typo LSF -> DLF
+  * PROTO2/debian/control:
+	[r1.33,2005-09-26,jdurand] Suppress unused and somewhat dangerous package castor-lsf-tools
+	[r1.32,2005-09-22,jdurand] Added Recommends: castor-lib, castor-lib-oracle for castor*-conf packages
+  * PROTO2/debian/rules:
+	[r1.36,2005-09-27,jdurand] A fix to build debs on amd64 (untested)
+	[r1.35,2005-09-26,jdurand] Move creation of $(CURDIR)/debian/castor/usr/lib/perl/CASTOR outside of amd64 or not
+	[r1.34,2005-09-26,jdurand] Added dpkg compat rules
+	[r1.34,2005-09-26,jdurand] Added pragmas for amd64 (untested)
+	[r1.33,2005-09-22,jdurand] Build the *.install from the *.install.perm
+	[r1.32,2005-09-15,jdurand] mkdir of etc/castor/expert (because of flows in the current make of CASTOR: until all Imakefiles are changed, we have rules that install not always where they depend from - notion of $(DESTDIR))
+	[r1.31,2005-09-15,jdurand] Ugly hack but the problem is architectural: to be able to install somewhere else but in the root filesystem, rules are based on dir/name: constraint, and install in $(DESTDIR)dir/name. Those who construct the value of dir/name is every Imakefile. And they FileName() macro to do that. but we cannot impose FileName() macro to prepend $(DESTDIR) in any case, because FileName() macro is often called several times (i.e. recursively). So, even if the correct solution would be to:
+	[r1.31,2005-09-15,jdurand] change config/Imake.rules to depend on $(DESTDIR)dir/name instead of dir/name:
+	[r1.31,2005-09-15,jdurand] change ALL (repeat: ALL) Imakefiles/Makefiles to use $(DESTDIR), once, as soon as they build a relative path
+	[r1.31,2005-09-15,jdurand] 
+	[r1.31,2005-09-15,jdurand] the quick alternative is to touch every file before the build. This horrible thing will guarantee that packaging CASTOR using a tarball made before CASTOR has been locally installed, will anyway correctly install the newly CASTOR in the packaging install path (typically, i.e. in $(DESTDIR))
+  * PROTO2/debian/stager.init:
+	[r 1.3,2005-09-13,jdurand] Always redirect kill output to /dev/null (we handle the error afterwards)
+	[r 1.2,2005-09-13,jdurand] Stop stager using kill -2, poll process status every second, exit if ok, and kill -9 if process is still alive after 60 seconds
+  * PROTO2/doc/package/rtcopy/mrOperation.tex:
+	[r1.15,2005-08-12,obarring] Remove --Name option in printSvcClass examples
+  * PROTO2/doc/uml/StagerSvcs.xmi:
+	[r 1.6,2005-09-16,itglp] Updated to reflect latest changements in db services.
+	[r 1.5,2005-08-23,itglp] Updated class diagrams to represent the new CDBC API.
+  * PROTO2/h/serrno.h:
+	[r 1.9,2005-08-22,itglp] Added SQLERR used by the new SQLError exception.
+	[r1.10,2005-09-16,jdurand] Added EDLFNOTCONNECTED
+  * PROTO2/h/stager_constants.h:
+	[r1.17,2005-09-22,jdurand] Make "castorstager" the default notification host
+	[r1.16,2005-09-07,jdurand] Definition of STAGER_NOTIFY_MAGIC2
+	[r1.16,2005-09-07,jdurand] Make STAGER_NOTIFY_MAGIC equal to STAGER_NOTIFY_MAGIC2 (default value is latest available protocol)
+  * PROTO2/h/stager_service_api.h:
+	[r1.11,2005-09-07,jdurand] New member for per-thread-per-service structure: int nbTotalThreads;
+	[r1.11,2005-09-07,jdurand] New prototype: stager_notifyService_v2(), i.e. notification using version 2 of the notif. protocol, where client gives the wanted number of threads
+  * PROTO2/hsmtools/cleanLostFiles:
+	[r 1.6,2005-09-22,sponcec3] revert previous commit !
+	[r 1.5,2005-09-22,sponcec3] Small utility to launch grabage collection on all filesystems
+  * PROTO2/hsmtools/cleanLostFiles.man:
+	[r 1.4,2005-09-22,sponcec3] revert previous commit
+	[r 1.3,2005-09-22,sponcec3] Small utility to launch grabage collection on all filesystems
+  * PROTO2/hsmtools/deleteFileClass.c:
+	[r 1.4,2005-08-11,itglp] Fixed conversion service names.
+  * PROTO2/hsmtools/deleteSvcClass.c:
+	[r 1.4,2005-08-11,itglp] Fixed conversion service names.
+  * PROTO2/hsmtools/enterFileClass.c:
+	[r 1.5,2005-08-11,itglp] Fixed conversion service names.
+  * PROTO2/hsmtools/modifySvcClass.c:
+	[r 1.6,2005-08-11,itglp] Fixed conversion service names.
+  * PROTO2/job/stagerJob.shell:
+	[r1.36,2005-08-11,jdurand] Recuperate client ip from arguments instead of using readlsfmsg
+  * PROTO2/lib/Imakefile:
+	[r1.19,2005-09-23,jdurand] Fixes for static version of libcastorCommonOra
+	[r1.18,2005-09-16,jdurand] Re-enable rules for libcastorCommonOra.a that is now included in castor-devel-oracle package
+	[r1.17,2005-08-18,itglp] Added rule to remove all .a files in make clean.
+	[r1.17,2005-08-18,itglp] Commented out rules to create static libcastorCommonOra.a.
+  * PROTO2/makerpm.sh:
+	[r 1.2,2005-09-20,jdurand] Do not assume existence of fakeroot when building rpms
+  * PROTO2/maketar.sh:
+	[r1.33,2005-09-26,jdurand] When building the spec convert /lib/ to /lib64/ instead of /lib to /lib64 (otherwise this too greedy change, affecting file with basename starting with 'lib', like libshift.so!)
+	[r1.32,2005-09-26,jdurand] Fix an sed call
+	[r1.31,2005-09-26,jdurand] Handle am64 case (where libraries install under /lib64 !)
+	[r1.30,2005-09-26,jdurand] Make directories owner by (root,bin) instead of (root,root)
+	[r1.29,2005-09-26,jdurand] Use the debian/if.has_oracle, debian/if.has_stk_ssi and debian/if.has_lsf files to build RPM on-the-fly dependnencies
+	[r1.28,2005-09-23,jdurand] Do not manipulate on-the-fly (by adding %config() prama) the "/etc/" string for castor-lsf-tools package (that WRONGLY contains production files in the /etc/ directory...)
+	[r1.27,2005-09-22,jdurand] Added %attr() in a lot of places
+	[r1.26,2005-09-22,jdurand] Now generate the spec using the *.install.perm files
+	[r1.25,2005-09-20,jdurand] Added %defattr(-,root,root) to the spec file
+	[r1.24,2005-09-15,jdurand] Remove the regexp about architecture: RPM is not good enough to be able to produce subpackages for different architectures (everything is i368, or noarch, or x64_64, or... impossible to distinguish rpms that contains only text than rpms that contain arch-specific things within a single spec file!)
+	[r1.23,2005-09-15,jdurand] Added the mechanism to recuperate architecture (not yet translated into rpm language, though)
+	[r1.23,2005-09-15,jdurand] Added a blank somewhere in the perl regexp to ensure we catch what we want (was working before, but sounds safer like that)
+  * PROTO2/ns/Cns_procreq.c:
+	[r 1.3,2005-09-20,jdurand] Added #include <stdio.h> for sprintf() declaration
+  * PROTO2/resourcemonitoring/Crmd_recv_from_users.c:
+	[r1.76,2005-08-11,jdurand] Removed use of the client message box
+  * PROTO2/rtcopy/TapeErrorHandler.c:
+	[r 1.8,2005-09-18,obarring] Move free of iaddr
+  * PROTO2/rtcopy/rtcpcldCatalogueInterface.c:
+	[r1.135,2005-09-19,obarring] Fix rtcpcld_nextFileToProcess() to reset file=NULL in case no other file
+	[r1.135,2005-09-19,obarring] was found
+  * PROTO2/rtcopy/rtcpcldcommon.c:
+	[r1.31,2005-09-27,obarring] Recall candidates must have correct processing status and no flagged error
+	[r1.30,2005-09-19,obarring] Fix rtcpcld_nextFileToProcess() to reset file=NULL in case no other file
+	[r1.30,2005-09-19,obarring] was found
+  * PROTO2/scheduler/LSF/Imakefile:
+	[r1.11,2005-09-27,jdurand] Removed esub
+  * PROTO2/scheduler/LSF/schmod_castor.c:
+	[r1.33,2005-09-14,jdurand] Removed unused routine Castor_DebugLsfJobid2Handle
+	[r1.33,2005-09-14,jdurand] Hashed internal array using lsf_jobid % hash_size (current hash size is 1000)
+	[r1.32,2005-08-11,jdurand] Removed use of the client message box
+  * PROTO2/shlib/Imakefile:
+	[r1.39,2005-09-16,itglp] Removed dependency upon libcastorCnvs, which for the time being is only for development.
+	[r1.38,2005-09-16,jdurand] Fixed production of libcastorCnvs.so (was having the soname libshift.so!)
+	[r1.37,2005-08-24,itglp] Added PostgreSql library, fixed dependencies.
+  * PROTO2/stager/Imakefile:
+	[r1.48,2005-09-26,jdurand] Move MANPAGES_STAGER and EMANPAGES_STAGER outside of the #id BuildStagerDaemon
+  * PROTO2/stager/stager.c:
+	[r1.84,2005-09-13,jdurand] Loop on sleep() every second in the FileSystem thread so that we can catch a signal (killall stager) much more quickly
+  * PROTO2/stager/stager_fs_service.c:
+	[r1.38,2005-09-20,jdurand] Added TotalSpace in the output from clips - changed output parsing accordingly
+	[r1.38,2005-09-20,jdurand] Removed minFreeSpace and maxFreeSpace in the output from clips - changed output parsing accordingly
+	[r1.38,2005-09-20,jdurand] Fill filesystem totalSize in any case
+	[r1.38,2005-09-20,jdurand] Fill filesystem minFreeSpace and maxFreeSpace only at creation time with 0.2 and 0.3 respectively
+  * PROTO2/stager/stager_gc_service.cpp:
+	[r 1.9,2005-09-06,sponcec3] Adapted services to the new requestToDo interface
+  * PROTO2/stager/stager_job_service.cpp:
+	[r1.33,2005-09-06,sponcec3] Adapted services to the new requestToDo interface
+  * PROTO2/stager/stager_query_service.cpp:
+	[r1.24,2005-09-26,sponcec3] Do not consider queries on non existing files as errors from the point of view of the server
+	[r1.23,2005-09-06,sponcec3] Adapted services to the new requestToDo interface
+  * PROTO2/stager/stager_service.c:
+	[r 1.8,2005-09-07,jdurand] stager_notifyService_v2() implementation
+  * PROTO2/stager/stager_service_run.c:
+	[r1.29,2005-09-12,jdurand] In the service threads, decrement stagerService[service].notified only if it is > 0
+	[r1.29,2005-09-12,jdurand] In the notification threads, verify number of bytes received per version of notification protocol, and increment the stagerService[service].notified variable with the number of wanted threads.
+	[r1.28,2005-09-07,jdurand] Support of version 2 (STAGER_NOTIFY_MAGIC2) of the notification, when the number of thread wanted is given by client
+	[r1.27,2005-09-07,jdurand] Fix to make sure only one thread is waked up per notification
+	[r1.26,2005-09-05,jdurand] Make sure only one thread is waked per notification per service
+  * PROTO2/test/castor/db/Imakefile:
+	[r 1.8,2005-09-23,itglp] Minor fixes done to test latest db API changes.
+  * PROTO2/test/castor/db/testdb.cpp:
+	[r1.15,2005-09-23,itglp] Minor fixes done to test latest db API changes.
+  * PROTO2/tools/makeMagicNumbers.csh:
+	[r 1.2,2005-08-29,sponcec3] smaller font so that it fits on one page
+  * PROTO2/vmgr/vmgr_procreq.c:
+	[r 1.5,2005-09-20,jdurand] Added #include <stdio.h> for sprintf() definition
+  * PROTO2/CASTOR.spec:
+	[r1.35,2005-09-26,jdurand] Typo %fi -> %endif
+	[r1.34,2005-09-26,jdurand] Tentative support of amd64
+	[r1.33,2005-09-26,jdurand] Exclude BuildRmMaster also in the RPM execution if there is no LSF available
+	[r1.32,2005-09-26,jdurand] Implementation of has_stk_ssi, has_lsf and has_oracle a-la-RPM
+	[r1.31,2005-09-22,jdurand] Stop calling 'install' with user/group/mode
+	[r1.30,2005-09-15,jdurand] mkdir of etc/castor/expert (because of flows in the current make of CASTOR: until all Imakefiles are changed, we have rules that install not always where they depend from - notion of $(DESTDIR))
+	[r1.29,2005-09-15,jdurand] Ugly hack but the problem is architectural: to be able to install somewhere else but in the root filesystem, rules are based on dir/name: constraint, and install in $(DESTDIR)dir/name. Those who construct the value of dir/name is every Imakefile. And they FileName() macro to do that. but we cannot impose FileName() macro to prepend $(DESTDIR) in any case, because FileName() macro is often called several times (i.e. recursively). So, even if the correct solution would be to:
+	[r1.29,2005-09-15,jdurand] change config/Imake.rules to depend on $(DESTDIR)dir/name instead of dir/name:
+	[r1.29,2005-09-15,jdurand] change ALL (repeat: ALL) Imakefiles/Makefiles to use $(DESTDIR), once, as soon as they build a relative path
+	[r1.29,2005-09-15,jdurand] 
+	[r1.29,2005-09-15,jdurand] the quick alternative is to touch every file before the build. This horrible thing will guarantee that packaging CASTOR using a tarball made before CASTOR has been locally installed, will anyway correctly install the newly CASTOR in the packaging install path (typically, i.e. in $(DESTDIR))
+  * PROTO2/castor/BaseCnvSvc.cpp:
+	[r1.17,2005-08-23,itglp] Core' files upgraded to manage CDBC API.
+  * PROTO2/castor/BaseCnvSvc.hpp:
+	[r1.14,2005-08-23,itglp] Core' files upgraded to manage CDBC API.
+  * PROTO2/castor/BaseObject.cpp:
+	[r1.13,2005-08-22,itglp] Added proper cleanup in the destructor.
+  * PROTO2/castor/Constants.cpp:
+	[r1.28,2005-09-19,itglp] Added an identifier for the Srm service.
+	[r1.27,2005-08-23,itglp] Core' files upgraded to manage CDBC API.
+  * PROTO2/castor/Constants.hpp:
+	[r1.51,2005-09-19,itglp] Added an identifier for the Srm service.
+	[r1.50,2005-08-23,itglp] Core' files upgraded to manage CDBC API.
+  * PROTO2/castor/ICnvSvc.hpp:
+	[r1.13,2005-08-26,sponcec3] fully qualify some names and paths
+	[r1.12,2005-08-23,itglp] Core' files upgraded to manage CDBC API.
+  * PROTO2/castor/Imakefile:
+	[r1.108,2005-08-24,itglp] Moved some classes to db/cnv/Imakefile.
+	[r1.107,2005-08-23,itglp] Core' files upgraded to manage CDBC API.
+  * PROTO2/castor/Services.cpp:
+	[r1.20,2005-08-23,itglp] Core' files upgraded to manage CDBC API.
+  * PROTO2/castor/db/Imakefile:
+	[r 1.5,2005-08-23,itglp] Upgraded Imakefiles to reflect new packages.
+  * PROTO2/castor/db/castor_oracle_create.sql:
+	[r 1.9,2005-08-18,itglp] Updated to reflect latest changes in oracleTrailer.sql.
+	[r1.22,2005-09-27,sponcec3] Converted GC trigger to the new type of min/maxFreeSpace
+	[r1.21,2005-09-26,itglp] Added defGarbageCollectFS procedure, updated generated scripts.
+	[r1.20,2005-09-22,itglp] Fixed FS trigger to start GC: it spawns a separate db job to do it.
+	[r1.20,2005-09-22,itglp] Fixed comments in the drop script.
+	[r1.19,2005-09-22,sponcec3] In isSubRequestToSchedule, commit in the case where the decision is to not schedule
+	[r1.18,2005-09-22,sponcec3] Fixed isSubRequestToSchedule : diskcopies with no filesystem attached were ignored, leading to duplicated WAITTAPERECALLs
+	[r1.17,2005-09-22,sponcec3] Fixed Disk2DiskCopyDone : subrequest waiting on the disk2disk copy were not ut into restart status
+	[r1.16,2005-09-20,sponcec3] Fixed prepareForMigration for code that was introduced but never used
+	[r1.15,2005-09-20,sponcec3] Fixed typo
+	[r1.14,2005-09-19,sponcec3] Updated DB version after the change of the fileSystem table
+	[r1.13,2005-09-19,sponcec3] Added totalSize field in FileSystem
+	[r1.12,2005-09-15,itglp] Updated scripts due to latest changes in RH.xmi and oracleTrailer.sql.
+	[r1.11,2005-09-01,mbraeger] Added three procedures to oracleTrailer: selectTapeRequestQueue, testMatchTape2TapeDrive, matchTape2TapeDrive
+	[r1.11,2005-09-01,mbraeger] 
+	[r1.11,2005-09-01,mbraeger] testMatchTape2TapeDrive and  matchTape2TapeDrive are used by OraVdqmSvc::matchTape2TapeDrive
+	[r1.11,2005-09-01,mbraeger] selectTapeRequestQueue is used by OraVdqmSvc::selectTapeRequestQueue
+	[r1.10,2005-08-22,itglp] Updated to the latest changes in RH.xmi
+  * PROTO2/castor/db/castor_oracle_drop.sql:
+	[r 1.6,2005-09-26,itglp] Added defGarbageCollectFS procedure, updated generated scripts.
+	[r 1.5,2005-09-22,itglp] Fixed FS trigger to start GC: it spawns a separate db job to do it.
+	[r 1.5,2005-09-22,itglp] Fixed comments in the drop script.
+	[r 1.4,2005-08-22,itglp] Updated to the latest changes in RH.xmi
+  * PROTO2/castor/db/mysql/Imakefile:
+	[r 1.9,2005-08-18,itglp] Removed generated converters, not needed anymore with the upcoming
+	[r 1.9,2005-08-18,itglp] abstracted database converters.
+	[r 1.9,2005-08-18,itglp] Added MySql implementation for access to database.
+  * PROTO2/castor/db/mysql/MyCnvSvc.cpp:
+	[r1.10,2005-08-18,itglp] Removed generated converters, not needed anymore with the upcoming
+	[r1.10,2005-08-18,itglp] abstracted database converters.
+	[r1.10,2005-08-18,itglp] Added MySql implementation for access to database.
+  * PROTO2/castor/db/mysql/MyCnvSvc.hpp:
+	[r 1.5,2005-08-18,itglp] Removed generated converters, not needed anymore with the upcoming
+	[r 1.5,2005-08-18,itglp] abstracted database converters.
+	[r 1.5,2005-08-18,itglp] Added MySql implementation for access to database.
+  * PROTO2/castor/db/ora/OraCastorFileCnv.cpp:
+	[r1.38,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraCnvSvc.cpp:
+	[r1.51,2005-09-19,sponcec3] Updated DB version after the change of the fileSystem table
+  * PROTO2/castor/db/ora/OraCommonSvc.cpp:
+	[r 1.7,2005-09-19,sponcec3] fixe type of min/maxFreeSpace in FileSystem
+	[r 1.6,2005-09-19,sponcec3] Added totalSize field in FileSystem
+	[r 1.5,2005-09-19,sponcec3] empty log message ***
+	[r 1.4,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/db/ora/OraCommonSvc.hpp:
+	[r 1.5,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/db/ora/OraDiskCopyCnv.cpp:
+	[r1.40,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraDiskPoolCnv.cpp:
+	[r1.35,2005-09-19,sponcec3] Fixed case of 'FROM' keyword in some statements
+	[r1.34,2005-09-05,sponcec3] Fixed case of ORACLE statement
+	[r1.33,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraDiskServerCnv.cpp:
+	[r1.32,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraFileSystemCnv.cpp:
+	[r1.39,2005-09-19,sponcec3] Added totalSize field
+	[r1.38,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraFilesDeletedCnv.cpp:
+	[r 1.6,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraFilesDeletionFailedCnv.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraGCSvc.cpp:
+	[r 1.2,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/db/ora/OraGCSvc.hpp:
+	[r 1.3,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/db/ora/OraJobSvc.cpp:
+	[r 1.5,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/db/ora/OraJobSvc.hpp:
+	[r 1.3,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/db/ora/OraQuerySvc.cpp:
+	[r1.19,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+	[r1.18,2005-08-17,itglp] Fixed in reset() a missing call to the inherited method.
+  * PROTO2/castor/db/ora/OraQuerySvc.hpp:
+	[r 1.8,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/db/ora/OraStageFileQueryRequestCnv.cpp:
+	[r1.24,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStageFindRequestRequestCnv.cpp:
+	[r1.23,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStageGetRequestCnv.cpp:
+	[r1.24,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStagePrepareToGetRequestCnv.cpp:
+	[r1.24,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStagePrepareToPutRequestCnv.cpp:
+	[r1.24,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStagePrepareToUpdateRequestCnv.cpp:
+	[r1.24,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStagePutDoneRequestCnv.cpp:
+	[r1.26,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStagePutRequestCnv.cpp:
+	[r1.24,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStageReleaseFilesRequestCnv.cpp:
+	[r1.18,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStageRequestQueryRequestCnv.cpp:
+	[r1.24,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStageRmRequestCnv.cpp:
+	[r1.24,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStageUpdateRequestCnv.cpp:
+	[r1.24,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraStagerSvc.hpp:
+	[r1.72,2005-09-22,sponcec3] In isSubRequestToSchedule, commit in the case where the decision is to not schedule
+  * PROTO2/castor/db/ora/OraStreamCnv.cpp:
+	[r1.47,2005-09-19,sponcec3] Fixed case of 'FROM' keyword in some statements
+	[r1.46,2005-09-05,sponcec3] Fixed case of ORACLE statement
+	[r1.45,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraSvcClassCnv.cpp:
+	[r1.39,2005-09-19,sponcec3] Fixed case of 'FROM' keyword in some statements
+	[r1.38,2005-09-05,sponcec3] Fixed case of ORACLE statement
+	[r1.37,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraTapeCnv.cpp:
+	[r1.43,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraTapeCnv.hpp:
+	[r1.18,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have also changed
+  * PROTO2/castor/db/ora/OraTapeCopyCnv.cpp:
+	[r1.45,2005-09-19,sponcec3] Fixed case of 'FROM' keyword in some statements
+	[r1.44,2005-09-05,sponcec3] Fixed case of ORACLE statement
+	[r1.43,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraTapeDriveCnv.cpp:
+	[r1.18,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have also changed
+	[r1.17,2005-08-29,sponcec3] Modifications due to the further fix for 1 to 1 associations on the code generation
+	[r1.16,2005-08-29,sponcec3] Fixes going along with the codegeneration fix concerning 1 to 1 relations with one end having no name
+	[r1.15,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraTapeDriveCnv.hpp:
+	[r1.12,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have also changed
+	[r1.11,2005-08-29,sponcec3] Modifications due to the further fix for 1 to 1 associations on the code generation
+  * PROTO2/castor/db/ora/OraTapeDriveDedicationCnv.cpp:
+	[r 1.4,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, these files has been changed by gencastor
+	[r 1.3,2005-09-05,mbraeger] Due to an attribute bug in the RH.xmi file, the TapeDriveDedication class has to be changed
+  * PROTO2/castor/db/ora/OraTapePoolCnv.cpp:
+	[r1.38,2005-09-19,sponcec3] Fixed case of 'FROM' keyword in some statements
+	[r1.37,2005-09-05,sponcec3] Fixed case of ORACLE statement
+	[r1.36,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraTapeRequestCnv.cpp:
+	[r 1.9,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, these files has been changed by gencastor
+  * PROTO2/castor/db/ora/OraTapeServerCnv.cpp:
+	[r 1.6,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, these files has been changed by gencastor
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/db/ora/OraVdqmSvc.cpp:
+	[r1.23,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, these files has been changed by gencastor
+	[r1.22,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM
+	[r1.22,2005-09-05,mbraeger] server.
+	[r1.21,2005-09-01,mbraeger] Two new functions implementd: matchTape2TapeDrive, selectTapeRequestQueue
+	[r1.20,2005-08-12,itglp] Fixed some small bugs
+  * PROTO2/castor/db/ora/OraVdqmSvc.hpp:
+	[r1.19,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM
+	[r1.19,2005-09-05,mbraeger] server.
+	[r1.18,2005-09-01,mbraeger] Two new functions implementd: matchTape2TapeDrive, selectTapeRequestQueue
+	[r1.17,2005-08-17,itglp] Removed a method which is now in the ancestor class.
+  * PROTO2/castor/db/oracleHeader_drop.sql:
+	[r 1.3,2005-09-19,itglp] Fixed some comments.
+  * PROTO2/castor/db/oracleTrailer.sql:
+	[r1.198,2005-09-27,sponcec3] Converted GC trigger to the new type of min/maxFreeSpace
+	[r1.197,2005-09-26,itglp] Added defGarbageCollectFS procedure, updated generated scripts.
+	[r1.196,2005-09-22,itglp] Fixed FS trigger to start GC: it spawns a separate db job to do it.
+	[r1.196,2005-09-22,itglp] Fixed comments in the drop script.
+	[r1.195,2005-09-22,sponcec3] In isSubRequestToSchedule, commit in the case where the decision is to not schedule
+	[r1.194,2005-09-22,sponcec3] Fixed getUpdateStart : diskcopies with no filesystem attached were ignored, leading to duplicated WAITTAPERECALLs
+	[r1.193,2005-09-22,sponcec3] Fixed Disk2DiskCopyDone : subrequest waiting on the disk2disk copy were not ut into restart status
+	[r1.192,2005-09-20,sponcec3] Fixed prepareForMigration for code that was introduced but never used
+	[r1.191,2005-09-20,sponcec3] Fixed typo
+	[r1.190,2005-09-19,sponcec3] Updated DB version after the change of the fileSystem table
+	[r1.189,2005-09-12,sponcec3] Added missing constraint on tape table leading to double insertion of some rows
+	[r1.188,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM
+	[r1.188,2005-09-05,mbraeger] server.
+	[r1.187,2005-09-01,mbraeger] Added three procedures to oracleTrailer: selectTapeRequestQueue, testMatchTape2TapeDrive, matchTape2TapeDrive
+	[r1.187,2005-09-01,mbraeger] 
+	[r1.187,2005-09-01,mbraeger] testMatchTape2TapeDrive and  matchTape2TapeDrive are used by OraVdqmSvc::matchTape2TapeDrive
+	[r1.187,2005-09-01,mbraeger] selectTapeRequestQueue is used by OraVdqmSvc::selectTapeRequestQueue
+	[r1.186,2005-08-12,itglp] Fixed some small bugs
+  * PROTO2/castor/db/oracleTrailer_drop.sql:
+	[r 1.3,2005-09-26,itglp] Added defGarbageCollectFS procedure, updated generated scripts.
+	[r 1.2,2005-08-18,itglp] Added DROP statement for matchTape2TapeDrive.
+  * PROTO2/castor/dlfbuf.h:
+	[r 1.9,2005-09-12,sponcec3] Do not forget mutex unlocking in case of exception !
+  * PROTO2/castor/gc/Imakefile:
+	[r 1.7,2005-09-20,jdurand] Install gcDaemon with mode bits 0750 instead of 0755
+  * PROTO2/castor/io/StreamAbortResponseCnv.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamBaseAddressCnv.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamBasicResponseCnv.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamCastorFileCnv.cpp:
+	[r1.20,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamClientCnv.cpp:
+	[r1.20,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamClientIdentificationCnv.cpp:
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamDeviceGroupNameCnv.cpp:
+	[r 1.5,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have now changed
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamDisk2DiskCopyDoneRequestCnv.cpp:
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamDiskCopyCnv.cpp:
+	[r1.20,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamDiskCopyForRecallCnv.cpp:
+	[r 1.9,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamEndResponseCnv.cpp:
+	[r1.14,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamErrorHistoryCnv.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamFileQueryResponseCnv.cpp:
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamFileResponseCnv.cpp:
+	[r1.17,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamFileSystemCnv.cpp:
+	[r1.20,2005-09-19,sponcec3] Added totalSize field
+	[r1.19,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamFiles2DeleteCnv.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamFilesDeletedCnv.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamFilesDeletionFailedCnv.cpp:
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamFindReqResponseCnv.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamGCFileCnv.cpp:
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamGCFilesResponseCnv.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamGCLocalFileCnv.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamGetUpdateDoneCnv.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamGetUpdateFailedCnv.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamGetUpdateStartRequestCnv.cpp:
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamGetUpdateStartResponseCnv.cpp:
+	[r 1.6,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamIOResponseCnv.cpp:
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamMessageAckCnv.cpp:
+	[r1.19,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamMoverCloseRequestCnv.cpp:
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamPutDoneStartCnv.cpp:
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamPutFailedCnv.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamPutStartRequestCnv.cpp:
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamQueryParameterCnv.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamRequestQueryResponseCnv.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamSegmentCnv.cpp:
+	[r1.16,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageAbortRequestCnv.cpp:
+	[r 1.7,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageFileQueryRequestCnv.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageFindRequestRequestCnv.cpp:
+	[r 1.9,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageGetNextRequestCnv.cpp:
+	[r1.14,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageGetRequestCnv.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStagePrepareToGetRequestCnv.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStagePrepareToPutRequestCnv.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStagePrepareToUpdateRequestCnv.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStagePutDoneRequestCnv.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStagePutNextRequestCnv.cpp:
+	[r 1.6,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStagePutRequestCnv.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageReleaseFilesRequestCnv.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageRequestQueryRequestCnv.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageRmRequestCnv.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageUpdateNextRequestCnv.cpp:
+	[r 1.6,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStageUpdateRequestCnv.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStartResponseCnv.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamStringResponseCnv.cpp:
+	[r1.14,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamSubRequestCnv.cpp:
+	[r1.21,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamTapeAccessSpecificationCnv.cpp:
+	[r 1.5,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have now changed
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamTapeCnv.cpp:
+	[r1.16,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamTapeCopyCnv.cpp:
+	[r1.16,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamTapeCopyForMigrationCnv.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamTapeDriveCnv.cpp:
+	[r 1.9,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+	[r1.10,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have now changed
+  * PROTO2/castor/io/StreamTapeDriveCompatibilityCnv.cpp:
+	[r 1.3,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have now changed
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamTapeDriveDedicationCnv.cpp:
+	[r 1.6,2005-09-07,mbraeger] Due to the revision of the vdqm diagram, these files has been updated by gencastor
+	[r 1.5,2005-09-05,mbraeger] Due to an attribute bug in the RH.xmi file, the TapeDriveDedication class has to be changed
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamTapePoolCnv.cpp:
+	[r1.16,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamTapeRequestCnv.cpp:
+	[r 1.8,2005-09-07,mbraeger] Due to the revision of the vdqm diagram, these files has been updated by gencastor
+	[r 1.7,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/StreamTapeServerCnv.cpp:
+	[r 1.5,2005-09-07,mbraeger] Due to the revision of the vdqm diagram, these files has been updated by gencastor
+	[r 1.4,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have now changed
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/io/biniostream.h:
+	[r 1.5,2005-09-19,itglp] Changed implementation to make it endianess-aware: the default endianess
+	[r 1.5,2005-09-19,itglp] is the LITTLE one as in the production setup, and macros are defined to
+	[r 1.5,2005-09-19,itglp] convert from/to host and 'inverted network' representation.
+	[r 1.4,2005-09-01,mbraeger] Return to the version 1.2
+	[r 1.3,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have now changed
+  * PROTO2/castor/query/IQuerySvc.hpp:
+	[r 1.9,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/rh/AbortResponse.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/BasicResponse.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/Client.cpp:
+	[r1.11,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/EndResponse.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/FileQueryResponse.cpp:
+	[r 1.9,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/FileResponse.cpp:
+	[r1.14,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/FindReqResponse.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/GCFilesResponse.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/GetUpdateStartResponse.cpp:
+	[r 1.7,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/IOResponse.cpp:
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/RequestQueryResponse.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/Response.cpp:
+	[r 1.6,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/Server.cpp:
+	[r1.41,2005-09-07,sponcec3] Notify of the number of subrequests for fileRequests so that the right number of threads are waked up
+	[r1.40,2005-09-06,sponcec3] only notify the service concerned when a request arrives
+	[r1.39,2005-08-18,itglp] Fixed DLF message for database.
+  * PROTO2/castor/rh/StartResponse.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/rh/StringResponse.cpp:
+	[r 1.9,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/CastorFile.cpp:
+	[r1.17,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/ClientIdentification.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/Disk2DiskCopyDoneRequest.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/DiskCopy.cpp:
+	[r1.19,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/DiskCopyForRecall.cpp:
+	[r 1.7,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/DiskCopyInfo.cpp:
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/DiskPool.cpp:
+	[r1.12,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/DiskServer.cpp:
+	[r1.12,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/FileClass.cpp:
+	[r1.11,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/FileRequest.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/FileSystem.cpp:
+	[r1.17,2005-09-19,sponcec3] Added totalSize field
+	[r1.16,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/FileSystem.h:
+	[r1.21,2005-09-19,sponcec3] Added totalSize field
+  * PROTO2/castor/stager/FileSystem.hpp:
+	[r1.13,2005-09-19,sponcec3] Added totalSize field
+  * PROTO2/castor/stager/FileSystemCInt.cpp:
+	[r1.14,2005-09-19,sponcec3] Added totalSize field
+  * PROTO2/castor/stager/Files2Delete.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/FilesDeleted.cpp:
+	[r 1.6,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/FilesDeletionFailed.cpp:
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/GCFile.cpp:
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/GCFileList.cpp:
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/GCLocalFile.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/GetUpdateDone.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/GetUpdateFailed.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/GetUpdateStartRequest.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/ICommonSvc.hpp:
+	[r 1.4,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+	[r 1.3,2005-08-18,itglp] Undo the last commit on these files: commit() and rollback() methods
+	[r 1.3,2005-08-18,itglp] are not anymore needed at the client side.
+  * PROTO2/castor/stager/IFSSvcCInt.cpp:
+	[r 1.2,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/stager/IGCSvc.hpp:
+	[r 1.2,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/stager/IJobSvc.h:
+	[r 1.2,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/stager/IJobSvc.hpp:
+	[r 1.2,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/stager/IJobSvcCInt.cpp:
+	[r 1.2,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/stager/IStagerSvc.h:
+	[r1.63,2005-09-22,sponcec3] In isSubRequestToSchedule, commit in the case where the decision is to not schedule
+  * PROTO2/castor/stager/IStagerSvc.hpp:
+	[r1.65,2005-09-22,sponcec3] In isSubRequestToSchedule, commit in the case where the decision is to not schedule
+  * PROTO2/castor/stager/IStagerSvcCInt.cpp:
+	[r1.54,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/stager/ITapeSvcCInt.cpp:
+	[r 1.2,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+  * PROTO2/castor/stager/MoverCloseRequest.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/PutDoneStart.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/PutFailed.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/PutStartRequest.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/QryRequest.cpp:
+	[r 1.6,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/QueryParameter.cpp:
+	[r 1.4,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/RemoteGCSvc.cpp:
+	[r 1.4,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+	[r 1.3,2005-08-18,itglp] Undo the last commit on these files: commit() and rollback() methods
+	[r 1.3,2005-08-18,itglp] are not anymore needed at the client side.
+  * PROTO2/castor/stager/RemoteGCSvc.hpp:
+	[r 1.4,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+	[r 1.3,2005-08-18,itglp] Undo the last commit on these files: commit() and rollback() methods
+	[r 1.3,2005-08-18,itglp] are not anymore needed at the client side.
+  * PROTO2/castor/stager/RemoteJobSvc.cpp:
+	[r 1.4,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+	[r 1.3,2005-08-18,itglp] Undo the last commit on these files: commit() and rollback() methods
+	[r 1.3,2005-08-18,itglp] are not anymore needed at the client side.
+  * PROTO2/castor/stager/RemoteJobSvc.hpp:
+	[r 1.4,2005-09-05,sponcec3] Changed implementation of requestToDo. It is no more dynamic
+	[r 1.3,2005-08-18,itglp] Undo the last commit on these files: commit() and rollback() methods
+	[r 1.3,2005-08-18,itglp] are not anymore needed at the client side.
+  * PROTO2/castor/stager/ReqIdRequest.cpp:
+	[r 1.7,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/Request.cpp:
+	[r1.14,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/Segment.cpp:
+	[r1.15,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageAbortRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageFileQueryRequest.cpp:
+	[r1.11,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageFindRequestRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageGetNextRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageGetRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StagePrepareToGetRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StagePrepareToPutRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StagePrepareToUpdateRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StagePutDoneRequest.cpp:
+	[r1.12,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StagePutNextRequest.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StagePutRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageReleaseFilesRequest.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageRequestQueryRequest.cpp:
+	[r1.12,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageRmRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageUpdateNextRequest.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StageUpdateRequest.cpp:
+	[r1.10,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/StartRequest.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/Stream.cpp:
+	[r1.16,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/SubRequest.cpp:
+	[r1.21,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/SvcClass.cpp:
+	[r1.14,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/Tape.cpp:
+	[r1.15,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/TapeCopy.cpp:
+	[r1.17,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/TapeCopyForMigration.cpp:
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/stager/TapePool.cpp:
+	[r1.13,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/vdqm/DeviceGroupName.cpp:
+	[r 1.3,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/vdqm/DeviceGroupName.h:
+	[r 1.3,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have changed.
+  * PROTO2/castor/vdqm/DeviceGroupName.hpp:
+	[r 1.3,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have changed.
+  * PROTO2/castor/vdqm/ErrorHistory.cpp:
+	[r 1.6,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/vdqm/IVdqmSvc.hpp:
+	[r1.22,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM server.
+	[r1.21,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r1.21,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/OldProtocolInterpreter.cpp:
+	[r 1.5,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r 1.5,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/OldRequestFacade.cpp:
+	[r 1.4,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM server.
+	[r 1.3,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r 1.3,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/RTCopyDConnection.cpp:
+	[r 1.6,2005-09-06,mbraeger] Rollback for RTCPD in handler/TapeRequestDedicationHandler.cpp implemented. Now the protocol to RTCPD is handled in extra threads, so that there is no hanging, if the connection takes too long.
+  * PROTO2/castor/vdqm/TapeAccessSpecification.cpp:
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/vdqm/TapeDrive.cpp:
+	[r1.14,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have changed.
+	[r1.13,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/vdqm/TapeDrive.h:
+	[r1.13,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have changed.
+  * PROTO2/castor/vdqm/TapeDrive.hpp:
+	[r1.12,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have changed.
+  * PROTO2/castor/vdqm/TapeDriveCInt.cpp:
+	[r1.12,2005-09-01,mbraeger] Due to bug fixes in the gencastor application, these files have changed.
+  * PROTO2/castor/vdqm/TapeDriveCompatibility.cpp:
+	[r 1.2,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/vdqm/TapeDriveDedication.cpp:
+	[r 1.8,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+	[r 1.7,2005-09-05,mbraeger] Due to an attribute bug in the RH.xmi file, the TapeDriveDedication class has to be changed
+	[r 1.6,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/vdqm/TapeDriveDedication.h:
+	[r 1.7,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+	[r 1.6,2005-09-05,mbraeger] Due to an attribute bug in the RH.xmi file, the TapeDriveDedication class has to be changed
+  * PROTO2/castor/vdqm/TapeDriveDedication.hpp:
+	[r 1.7,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+	[r 1.6,2005-09-05,mbraeger] Due to an attribute bug in the RH.xmi file, the TapeDriveDedication class has to be changed
+  * PROTO2/castor/vdqm/TapeDriveDedicationCInt.cpp:
+	[r 1.7,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+	[r 1.6,2005-09-05,mbraeger] Due to an attribute bug in the RH.xmi file, the TapeDriveDedication class has to be changed
+  * PROTO2/castor/vdqm/TapeRequest.cpp:
+	[r 1.9,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+	[r 1.8,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/vdqm/TapeRequest.h:
+	[r 1.8,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/castor/vdqm/TapeRequest.hpp:
+	[r 1.8,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/castor/vdqm/TapeRequestCInt.cpp:
+	[r 1.8,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/castor/vdqm/TapeServer.cpp:
+	[r 1.6,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+	[r 1.5,2005-08-29,sponcec3] Extra namespaces added after last modifications of the code generation tool
+  * PROTO2/castor/vdqm/TapeServer.h:
+	[r 1.5,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/castor/vdqm/TapeServer.hpp:
+	[r 1.5,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/castor/vdqm/TapeServerCInt.cpp:
+	[r 1.5,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/castor/vdqm/TapeServerStatusCodes.cpp:
+	[r 1.6,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/castor/vdqm/TapeServerStatusCodes.h:
+	[r 1.6,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/castor/vdqm/TapeServerStatusCodes.hpp:
+	[r 1.6,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/castor/vdqm/VdqmServer.cpp:
+	[r1.39,2005-09-13,mbraeger] Solved some bugs, which appeaered during stress tests with rtcpd_test and rtcpc_test
+	[r1.38,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+	[r1.37,2005-09-06,mbraeger] Rollback for RTCPD in handler/TapeRequestDedicationHandler.cpp implemented. Now the protocol to RTCPD is handled in extra threads, so that there is no hanging, if the connection takes too long.
+	[r1.36,2005-09-05,mbraeger] Included Debug message and fixed some memory leakes.
+	[r1.35,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM server.
+	[r1.34,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r1.34,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+	[r1.33,2005-08-18,itglp] Fixed DLF message for database.
+  * PROTO2/castor/vdqm/VdqmServer.hpp:
+	[r 1.9,2005-09-06,mbraeger] Rollback for RTCPD in handler/TapeRequestDedicationHandler.cpp implemented. Now the protocol to RTCPD is handled in extra threads, so that there is no hanging, if the connection takes too long.
+  * PROTO2/castor/vdqm/handler/BaseRequestHandler.cpp:
+	[r1.10,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r1.10,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/handler/BaseRequestHandler.hpp:
+	[r 1.7,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r 1.7,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/handler/TapeDriveConsistencyChecker.cpp:
+	[r 1.8,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r 1.8,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/handler/TapeDriveHandler.cpp:
+	[r1.16,2005-09-13,mbraeger] Solved some bugs, which appeaered during stress tests with rtcpd_test and rtcpc_test
+	[r1.15,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+	[r1.14,2005-09-05,mbraeger] Included Debug message and fixed some memory leakes.
+	[r1.13,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM server.
+	[r1.12,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r1.12,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/handler/TapeDriveHandler.hpp:
+	[r 1.7,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM server.
+	[r 1.6,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r 1.6,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/handler/TapeDriveStatusHandler.cpp:
+	[r1.11,2005-09-13,mbraeger] Solved some bugs, which appeaered during stress tests with rtcpd_test and rtcpc_test
+	[r1.10,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r1.10,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/handler/TapeRequestDedicationHandler.cpp:
+	[r 1.9,2005-09-13,mbraeger] Solved some bugs, which appeaered during stress tests with rtcpd_test and rtcpc_test
+	[r 1.8,2005-09-06,mbraeger] Rollback for RTCPD in handler/TapeRequestDedicationHandler.cpp implemented. Now the protocol to RTCPD is handled in extra threads, so that there is no hanging, if the connection takes too long.
+	[r 1.7,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r 1.7,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/handler/TapeRequestDedicationHandler.hpp:
+	[r 1.6,2005-09-06,mbraeger] Rollback for RTCPD in handler/TapeRequestDedicationHandler.cpp implemented. Now the protocol to RTCPD is handled in extra threads, so that there is no hanging, if the connection takes too long.
+  * PROTO2/castor/vdqm/handler/TapeRequestHandler.cpp:
+	[r1.13,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+	[r1.12,2005-09-05,mbraeger] Included Debug message and fixed some memory leakes.
+	[r1.11,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM server.
+	[r1.10,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r1.10,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/handler/TapeRequestHandler.hpp:
+	[r 1.7,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM server.
+	[r 1.6,2005-09-01,mbraeger] Bug fixing after doing some tests for the whole mechanism
+	[r 1.6,2005-09-01,mbraeger] Implemented the VDQM_GET_VOLQUEUE message
+  * PROTO2/castor/vdqm/newVdqm.h:
+	[r 1.3,2005-09-07,mbraeger] Due to changements in the vdqm db diagram, some files has been updated by gencastor and some has been changed manually.
+  * PROTO2/clips/castor.clp:
+	[r1.12,2005-09-26,jdurand] Support of space
+  * PROTO2/clips/castorweight.clp:
+	[r1.15,2005-09-26,jdurand] Support of space
+  * PROTO2/codeGeneration/RH.xmi:
+	[r1.105,2005-09-19,sponcec3] Added totalSize field in FileSystem
+	[r1.104,2005-09-07,mbraeger] Revision of the vdqm db diagram, due to the vdqm meeting of this afternoon
+	[r1.103,2005-09-05,mbraeger] Bug fix in the TapeDriveDedication class of the cdqm diagram
+	[r1.102,2005-08-29,mbraeger] Modification of the assoziation between TapeRequest and Tape.
+	[r1.101,2005-08-22,mbraeger] Added the library Name to the DeviceGroupName Table of the VDQM diagram
+  * PROTO2/codeGeneration/gencastor/Makefile:
+	[r 1.7,2005-08-24,itglp] Added generation of converters for CDBC API. This makes version 3.3-0.
+  * PROTO2/codeGeneration/gencastor/debian/changelog:
+	[r1.16,2005-09-16,itglp] One more fix to have SQL scripts reflect namespace in the filename.
+	[r1.15,2005-09-15,itglp] Fully fixed generation of generic db converters. This makes vesion 3.4.3.
+	[r1.14,2005-09-01,sponcec3] new minor version of gencastor including recent fixes
+	[r1.13,2005-08-29,sponcec3] New gencastor release
+	[r1.12,2005-08-24,itglp] Added generation of converters for CDBC API. This makes version 3.3-0.
+  * PROTO2/codeGeneration/gencastor/debian/files:
+	[r1.15,2005-09-16,itglp] Version 3.4.4.
+	[r1.14,2005-09-15,itglp] Fully fixed generation of generic db converters. This makes vesion 3.4.3.
+	[r1.13,2005-09-01,sponcec3] new minor version of gencastor including recent fixes
+	[r1.12,2005-08-29,sponcec3] New gencastor release
+	[r1.11,2005-08-24,itglp] Added generation of converters for CDBC API. This makes version 3.3-0.
+  * PROTO2/codeGeneration/gencastor/genCastor.cpp:
+	[r1.17,2005-09-16,itglp] One more fix to have SQL scripts reflect namespace in the filename.
+	[r1.16,2005-09-15,itglp] Fully fixed generation of generic db converters. This makes vesion 3.4.3.
+	[r1.15,2005-09-14,itglp] Version 3.4.2.
+	[r1.14,2005-08-25,sponcec3] fixed typo
+	[r1.13,2005-08-25,sponcec3] Added a -c flag that gives the top namespace to ba used (default castor)
+	[r1.12,2005-08-24,itglp] Added generation of converters for CDBC API. This makes version 3.3-0.
+  * PROTO2/codeGeneration/gencastor/gencastor:
+	[r 1.7,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppbasewriter.cpp:
+	[r1.16,2005-08-29,sponcec3] Remove equivalence of no multiplicity and 1
+	[r1.15,2005-08-26,sponcec3] Improved parsing of multiplicity (none and 1..n understood now)
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppcastorwriter.cpp:
+	[r 1.5,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppcastorwriter.h:
+	[r 1.5,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+	[r 1.4,2005-08-25,sponcec3] Added a -c flag that gives the top namespace to ba used (default castor)
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppcppclasswriter.cpp:
+	[r1.15,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppcppmycnvwriter.cpp:
+	[r 1.8,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppcpporacnvwriter.cpp:
+	[r1.60,2005-09-01,sponcec3] Fixed bug for associations n to 1 that had no name on one side
+	[r1.59,2005-08-29,sponcec3] Fixed bug in 1 to 1 relations when one end has no name
+	[r1.58,2005-08-26,sponcec3] fixes concerning namespaces in the case castor is not the namespace in which we generate
+	[r1.57,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+	[r1.56,2005-08-24,itglp] Added generation of converters for CDBC API. This makes version 3.3-0.
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppcppstreamcnvwriter.cpp:
+	[r1.12,2005-09-01,sponcec3] Fixed bug for associations n to 1 that had no name on one side
+	[r1.11,2005-08-26,sponcec3] fixes concerning namespaces in the case castor is not the namespace in which we generate
+	[r1.10,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cpphbasecnvwriter.cpp:
+	[r 1.8,2005-08-26,sponcec3] fixes concerning namespaces in the case castor is not the namespace in which we generate
+	[r 1.7,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cpphmycnvwriter.cpp:
+	[r 1.3,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cpphoracnvwriter.cpp:
+	[r1.17,2005-09-01,sponcec3] Fixed bug for associations n to 1 that had no name on one side
+	[r1.16,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cpphstreamcnvwriter.cpp:
+	[r 1.4,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppwriter.cpp:
+	[r1.22,2005-08-26,sponcec3] Improvements in order to support generation of code that is not inside castor namespace
+	[r1.21,2005-08-25,sponcec3] removes comment I introduced by mistake
+	[r1.20,2005-08-25,sponcec3] Added a -c flag that gives the top namespace to ba used (default castor)
+	[r1.19,2005-08-24,itglp] Added generation of converters for CDBC API. This makes version 3.3-0.
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppwriter.h:
+	[r 1.6,2005-08-24,itglp] Added generation of converters for CDBC API. This makes version 3.3-0.
+  * PROTO2/common/Cstrerror.c:
+	[r 1.2,2005-09-16,jdurand] Added #include <stdlib.h> for malloc() declaration
+  * PROTO2/common/serror.c:
+	[r 1.8,2005-09-16,jdurand] Added EDLFNOTCONNECTED error message
+  * PROTO2/config/Imake.rules:
+	[r1.15,2005-09-20,jdurand] Make the install rules working even if we are not root
+	[r1.15,2005-09-20,jdurand] Note: on debian 'fakeroot' indeed pretends that your login is "root")
+  * PROTO2/config/Library.tmpl:
+	[r1.23,2005-08-23,itglp] Added PostgreSql and (partially) removed MySql support, both with CDBC API.
+  * PROTO2/config/LibraryDeps.tmpl:
+	[r 1.7,2005-08-23,itglp] Added PostgreSql and (partially) removed MySql support, both with CDBC API.
+  * PROTO2/config/Project.tmpl:
+	[r1.47,2005-09-26,jdurand] Do not force BuildJob to YES if BuildRmnode is YES
+	[r1.46,2005-08-23,itglp] Added PostgreSql and (partially) removed MySql support, both with CDBC API.
+  * PROTO2/config/site.def:
+	[r1.74,2005-09-22,jdurand] Make "castorexpert" the default expert host
+  * PROTO2/debian/castor-allservicesbuttapeservers.conf:
+	[r 1.3,2005-09-22,jdurand] Commented all hosts except MSG HOST
+	[r 1.2,2005-09-22,jdurand] libcastorCommonOra.so -> libcastorCommonOra.so.2.0
+  * PROTO2/debian/castor.conf:
+	[r 1.6,2005-09-22,jdurand] Commented all hosts except MSG HOST
+	[r 1.5,2005-09-22,jdurand] libcastorCommonOra.so -> libcastorCommonOra.so.2.0
+  * PROTO2/debian/changelog:
+	[r1.65,2005-09-12,jdurand] Fix typo LSF -> DLF
+  * PROTO2/debian/control:
+	[r1.33,2005-09-26,jdurand] Suppress unused and somewhat dangerous package castor-lsf-tools
+	[r1.32,2005-09-22,jdurand] Added Recommends: castor-lib, castor-lib-oracle for castor*-conf packages
+  * PROTO2/debian/rules:
+	[r1.36,2005-09-27,jdurand] A fix to build debs on amd64 (untested)
+	[r1.35,2005-09-26,jdurand] Move creation of $(CURDIR)/debian/castor/usr/lib/perl/CASTOR outside of amd64 or not
+	[r1.34,2005-09-26,jdurand] Added dpkg compat rules
+	[r1.34,2005-09-26,jdurand] Added pragmas for amd64 (untested)
+	[r1.33,2005-09-22,jdurand] Build the *.install from the *.install.perm
+	[r1.32,2005-09-15,jdurand] mkdir of etc/castor/expert (because of flows in the current make of CASTOR: until all Imakefiles are changed, we have rules that install not always where they depend from - notion of $(DESTDIR))
+	[r1.31,2005-09-15,jdurand] Ugly hack but the problem is architectural: to be able to install somewhere else but in the root filesystem, rules are based on dir/name: constraint, and install in $(DESTDIR)dir/name. Those who construct the value of dir/name is every Imakefile. And they FileName() macro to do that. but we cannot impose FileName() macro to prepend $(DESTDIR) in any case, because FileName() macro is often called several times (i.e. recursively). So, even if the correct solution would be to:
+	[r1.31,2005-09-15,jdurand] change config/Imake.rules to depend on $(DESTDIR)dir/name instead of dir/name:
+	[r1.31,2005-09-15,jdurand] change ALL (repeat: ALL) Imakefiles/Makefiles to use $(DESTDIR), once, as soon as they build a relative path
+	[r1.31,2005-09-15,jdurand] 
+	[r1.31,2005-09-15,jdurand] the quick alternative is to touch every file before the build. This horrible thing will guarantee that packaging CASTOR using a tarball made before CASTOR has been locally installed, will anyway correctly install the newly CASTOR in the packaging install path (typically, i.e. in $(DESTDIR))
+  * PROTO2/debian/stager.init:
+	[r 1.3,2005-09-13,jdurand] Always redirect kill output to /dev/null (we handle the error afterwards)
+	[r 1.2,2005-09-13,jdurand] Stop stager using kill -2, poll process status every second, exit if ok, and kill -9 if process is still alive after 60 seconds
+  * CASTOR/dlf/dlf_mysql_drop.sql:
+	[r 1.2,2005-09-07,kotlyar] fixed the right order to drop DLF tables
+  * CASTOR/dlf/dlf_mysql_ifce.c:
+	[r1.11,2005-09-16,kotlyar] added support for read buffer in dlf_get_host_id and dlf_get_ns_host_id
+  * CASTOR/dlf/dlf_oracle_ifce.pc:
+	[r1.12,2005-09-20,kotlyar] replaced sigalarm handler to Cthread+sleep for timing buffers flush
+  * CASTOR/dlf/dlf_oracle_tbl.sql:
+	[r1.10,2005-08-30,sponcec3] Added correct tablespace for the indexes
+  * CASTOR/dlf/dlf_procreq.c:
+	[r 1.7,2005-09-21,kotlyar] added some checks for synchronization with buffers flushing
+  * CASTOR/dlf/dlfquery/config.ora.php:
+	[r 1.2,2005-08-12,kotlyar] fixed minor bug "if facility was not all then second level link didn't use it in a GET string"
+  * CASTOR/dlf/dlfquery/dlf_showmsg.mysql.log.php:
+	[r 1.4,2005-08-12,kotlyar] added support for the subrequest id in query parameters
+  * CASTOR/dlf/dlfquery/dlf_showmsg.mysql.php:
+	[r 1.4,2005-08-12,kotlyar] added support for the subrequest id in query parameters
+  * CASTOR/dlf/dlfquery/dlf_showmsg.ora.log.php:
+	[r 1.4,2005-08-12,kotlyar] fixed minor bug "if facility was not all then second level link didn't use it in a GET string"
+  * CASTOR/dlf/dlfquery/dlf_showmsg.ora.php:
+	[r 1.6,2005-08-26,kotlyar] added access for several DBs form dlfquery (by mapping)
+  * CASTOR/dlf/dlfquery/dlf_start.php:
+	[r 1.4,2005-08-12,kotlyar] year lists at the start page now is not static
+  * CASTOR/dlf/dlfquery/main.css:
+	[r 1.3,2005-08-24,kotlyar] added new useful styles
+  * CASTOR/dlf/dlfserver.c:
+	[r1.13,2005-09-20,kotlyar] replaced sigalarm handler to Cthread+sleep for timing buffers flush
+  * PROTO2/doc/package/rtcopy/mrOperation.tex:
+	[r1.15,2005-08-12,obarring] Remove --Name option in printSvcClass examples
+  * PROTO2/doc/uml/StagerSvcs.xmi:
+	[r 1.6,2005-09-16,itglp] Updated to reflect latest changements in db services.
+	[r 1.5,2005-08-23,itglp] Updated class diagrams to represent the new CDBC API.
+  * CASTOR/h/dlf_server.h:
+	[r 1.3,2005-09-16,kotlyar] added buffers for messages in the dlf_srv_thread_info structure
+  * PROTO2/h/serrno.h:
+	[r 1.9,2005-08-22,itglp] Added SQLERR used by the new SQLError exception.
+	[r1.10,2005-09-16,jdurand] Added EDLFNOTCONNECTED
+  * PROTO2/h/stager_constants.h:
+	[r1.17,2005-09-22,jdurand] Make "castorstager" the default notification host
+	[r1.16,2005-09-07,jdurand] Definition of STAGER_NOTIFY_MAGIC2
+	[r1.16,2005-09-07,jdurand] Make STAGER_NOTIFY_MAGIC equal to STAGER_NOTIFY_MAGIC2 (default value is latest available protocol)
+  * PROTO2/h/stager_service_api.h:
+	[r1.11,2005-09-07,jdurand] New member for per-thread-per-service structure: int nbTotalThreads;
+	[r1.11,2005-09-07,jdurand] New prototype: stager_notifyService_v2(), i.e. notification using version 2 of the notif. protocol, where client gives the wanted number of threads
+  * PROTO2/hsmtools/cleanLostFiles:
+	[r 1.6,2005-09-22,sponcec3] revert previous commit !
+	[r 1.5,2005-09-22,sponcec3] Small utility to launch grabage collection on all filesystems
+  * PROTO2/hsmtools/cleanLostFiles.man:
+	[r 1.4,2005-09-22,sponcec3] revert previous commit
+	[r 1.3,2005-09-22,sponcec3] Small utility to launch grabage collection on all filesystems
+  * PROTO2/hsmtools/deleteFileClass.c:
+	[r 1.4,2005-08-11,itglp] Fixed conversion service names.
+  * PROTO2/hsmtools/deleteSvcClass.c:
+	[r 1.4,2005-08-11,itglp] Fixed conversion service names.
+  * PROTO2/hsmtools/enterFileClass.c:
+	[r 1.5,2005-08-11,itglp] Fixed conversion service names.
+  * PROTO2/hsmtools/modifySvcClass.c:
+	[r 1.6,2005-08-11,itglp] Fixed conversion service names.
+  * PROTO2/job/stagerJob.shell:
+	[r1.36,2005-08-11,jdurand] Recuperate client ip from arguments instead of using readlsfmsg
+  * PROTO2/lib/Imakefile:
+	[r1.19,2005-09-23,jdurand] Fixes for static version of libcastorCommonOra
+	[r1.18,2005-09-16,jdurand] Re-enable rules for libcastorCommonOra.a that is now included in castor-devel-oracle package
+	[r1.17,2005-08-18,itglp] Added rule to remove all .a files in make clean.
+	[r1.17,2005-08-18,itglp] Commented out rules to create static libcastorCommonOra.a.
+  * PROTO2/makerpm.sh:
+	[r 1.2,2005-09-20,jdurand] Do not assume existence of fakeroot when building rpms
+  * PROTO2/maketar.sh:
+	[r1.33,2005-09-26,jdurand] When building the spec convert /lib/ to /lib64/ instead of /lib to /lib64 (otherwise this too greedy change, affecting file with basename starting with 'lib', like libshift.so!)
+	[r1.32,2005-09-26,jdurand] Fix an sed call
+	[r1.31,2005-09-26,jdurand] Handle am64 case (where libraries install under /lib64 !)
+	[r1.30,2005-09-26,jdurand] Make directories owner by (root,bin) instead of (root,root)
+	[r1.29,2005-09-26,jdurand] Use the debian/if.has_oracle, debian/if.has_stk_ssi and debian/if.has_lsf files to build RPM on-the-fly dependnencies
+	[r1.28,2005-09-23,jdurand] Do not manipulate on-the-fly (by adding %config() prama) the "/etc/" string for castor-lsf-tools package (that WRONGLY contains production files in the /etc/ directory...)
+	[r1.27,2005-09-22,jdurand] Added %attr() in a lot of places
+	[r1.26,2005-09-22,jdurand] Now generate the spec using the *.install.perm files
+	[r1.25,2005-09-20,jdurand] Added %defattr(-,root,root) to the spec file
+	[r1.24,2005-09-15,jdurand] Remove the regexp about architecture: RPM is not good enough to be able to produce subpackages for different architectures (everything is i368, or noarch, or x64_64, or... impossible to distinguish rpms that contains only text than rpms that contain arch-specific things within a single spec file!)
+	[r1.23,2005-09-15,jdurand] Added the mechanism to recuperate architecture (not yet translated into rpm language, though)
+	[r1.23,2005-09-15,jdurand] Added a blank somewhere in the perl regexp to ensure we catch what we want (was working before, but sounds safer like that)
+  * PROTO2/ns/Cns_procreq.c:
+	[r 1.3,2005-09-20,jdurand] Added #include <stdio.h> for sprintf() declaration
+  * PROTO2/resourcemonitoring/Crmd_recv_from_users.c:
+	[r1.76,2005-08-11,jdurand] Removed use of the client message box
+  * CASTOR/rtcopy/Ctape_dummies.c:
+	[r1.18,2005-08-30,mbraeger] Remove Ctape_seterrbuf() and stage_setlog() due to duplicate definition in libshift
+  * PROTO2/rtcopy/TapeErrorHandler.c:
+	[r 1.8,2005-09-18,obarring] Move free of iaddr
+  * PROTO2/rtcopy/rtcpcldCatalogueInterface.c:
+	[r1.135,2005-09-19,obarring] Fix rtcpcld_nextFileToProcess() to reset file=NULL in case no other file
+	[r1.135,2005-09-19,obarring] was found
+  * PROTO2/rtcopy/rtcpcldcommon.c:
+	[r1.31,2005-09-27,obarring] Recall candidates must have correct processing status and no flagged error
+	[r1.30,2005-09-19,obarring] Fix rtcpcld_nextFileToProcess() to reset file=NULL in case no other file
+	[r1.30,2005-09-19,obarring] was found
+  * PROTO2/scheduler/LSF/Imakefile:
+	[r1.11,2005-09-27,jdurand] Removed esub
+  * PROTO2/scheduler/LSF/schmod_castor.c:
+	[r1.33,2005-09-14,jdurand] Removed unused routine Castor_DebugLsfJobid2Handle
+	[r1.33,2005-09-14,jdurand] Hashed internal array using lsf_jobid % hash_size (current hash size is 1000)
+	[r1.32,2005-08-11,jdurand] Removed use of the client message box
+  * PROTO2/shlib/Imakefile:
+	[r1.39,2005-09-16,itglp] Removed dependency upon libcastorCnvs, which for the time being is only for development.
+	[r1.38,2005-09-16,jdurand] Fixed production of libcastorCnvs.so (was having the soname libshift.so!)
+	[r1.37,2005-08-24,itglp] Added PostgreSql library, fixed dependencies.
+  * PROTO2/stager/Imakefile:
+	[r1.48,2005-09-26,jdurand] Move MANPAGES_STAGER and EMANPAGES_STAGER outside of the #id BuildStagerDaemon
+  * PROTO2/stager/stager.c:
+	[r1.84,2005-09-13,jdurand] Loop on sleep() every second in the FileSystem thread so that we can catch a signal (killall stager) much more quickly
+  * PROTO2/stager/stager_fs_service.c:
+	[r1.38,2005-09-20,jdurand] Added TotalSpace in the output from clips - changed output parsing accordingly
+	[r1.38,2005-09-20,jdurand] Removed minFreeSpace and maxFreeSpace in the output from clips - changed output parsing accordingly
+	[r1.38,2005-09-20,jdurand] Fill filesystem totalSize in any case
+	[r1.38,2005-09-20,jdurand] Fill filesystem minFreeSpace and maxFreeSpace only at creation time with 0.2 and 0.3 respectively
+  * PROTO2/stager/stager_gc_service.cpp:
+	[r 1.9,2005-09-06,sponcec3] Adapted services to the new requestToDo interface
+  * PROTO2/stager/stager_job_service.cpp:
+	[r1.33,2005-09-06,sponcec3] Adapted services to the new requestToDo interface
+  * PROTO2/stager/stager_query_service.cpp:
+	[r1.24,2005-09-26,sponcec3] Do not consider queries on non existing files as errors from the point of view of the server
+	[r1.23,2005-09-06,sponcec3] Adapted services to the new requestToDo interface
+  * PROTO2/stager/stager_service.c:
+	[r 1.8,2005-09-07,jdurand] stager_notifyService_v2() implementation
+  * PROTO2/stager/stager_service_run.c:
+	[r1.29,2005-09-12,jdurand] In the service threads, decrement stagerService[service].notified only if it is > 0
+	[r1.29,2005-09-12,jdurand] In the notification threads, verify number of bytes received per version of notification protocol, and increment the stagerService[service].notified variable with the number of wanted threads.
+	[r1.28,2005-09-07,jdurand] Support of version 2 (STAGER_NOTIFY_MAGIC2) of the notification, when the number of thread wanted is given by client
+	[r1.27,2005-09-07,jdurand] Fix to make sure only one thread is waked up per notification
+	[r1.26,2005-09-05,jdurand] Make sure only one thread is waked per notification per service
+  * PROTO2/test/castor/db/Imakefile:
+	[r 1.8,2005-09-23,itglp] Minor fixes done to test latest db API changes.
+  * PROTO2/test/castor/db/testdb.cpp:
+	[r1.15,2005-09-23,itglp] Minor fixes done to test latest db API changes.
+  * CASTOR/test/dlf/dlftest.c:
+	[r 1.5,2005-09-21,kotlyar] added a command line parameter [-t number_of_threads]
+  * PROTO2/tools/makeMagicNumbers.csh:
+	[r 1.2,2005-08-29,sponcec3] smaller font so that it fits on one page
+  * PROTO2/vmgr/vmgr_procreq.c:
+	[r 1.5,2005-09-20,jdurand] Added #include <stdio.h> for sprintf() definition
 
  -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Tue, 27 Sep 2005 13:20:27 +0200
 
