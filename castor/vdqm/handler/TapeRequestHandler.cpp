@@ -232,7 +232,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
 		// Request priority changed
 	  castor::dlf::Param params2[] =
 	  	{castor::dlf::Param("priority", newTapeReq->priority())};
-	  castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 24, 1, params2);
+	  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 24, 1, params2);
 	  
 	  
 	  // Verify that the request doesn't exist, 

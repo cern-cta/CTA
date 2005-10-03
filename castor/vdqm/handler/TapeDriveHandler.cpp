@@ -419,7 +419,7 @@ castor::vdqm::TapeDrive*
           
       
 			// "Create new TapeDrive in DB" message
-			castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 34);
+			castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, 34);
       
       
       /**

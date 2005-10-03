@@ -310,7 +310,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
 	  	{castor::dlf::Param("tapeDrive ID", ptr_tapeDrive->id()),
 			 castor::dlf::Param("tape ID", mountedTape->id()),
 			 castor::dlf::Param("tapeRequest ID", tapeRequest->id())};
-		castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 52, 3, params);
+		castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, 52, 3, params);
 	}
 	else {
   	// "TapeDriveStatusHandler::handleVolMountStatus(): Tape mounted in tapeDrive"
@@ -318,7 +318,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
 	  	{castor::dlf::Param("tapeDrive ID", ptr_tapeDrive->id()),
 			 castor::dlf::Param("tape ID", mountedTape->id()),
 			 castor::dlf::Param("tapeRequest ID", "Local Request")};
-		castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 52, 3, params);
+		castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, 52, 3, params);
 	}
 }
 
@@ -459,7 +459,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
 	  			{castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
 	  			 castor::dlf::Param("serverName", ptr_tapeDrive->tapeServer()->serverName()),
 	  			 castor::dlf::Param("tape vid", tape->vid())};          	
-				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 44, 3, params);	            
+				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, 44, 3, params);	            
       }
       	        
       /*
@@ -485,7 +485,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
   			 castor::dlf::Param("serverName", ptr_tapeDrive->tapeServer()->serverName()),
   			 castor::dlf::Param("tape vid", tape->vid()),
   			 castor::dlf::Param("tapeRequest ID", newTapeRequest->id())};          	
-			castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 65, 4, params);
+			castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, 65, 4, params);
     	
       /**
        * Switch tape Drive to status UNIT_STARTING

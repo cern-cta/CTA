@@ -404,7 +404,7 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
 			castor::dlf::Param params[] =
 				{castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
 				castor::dlf::Param("Port", port)};
-			castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 1, 2, params);
+			castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 1, 2, params);
 	  } catch(castor::exception::Exception e) {
 	    // "Exception caught : ignored" message
 	    castor::dlf::Param params[] =
@@ -427,7 +427,7 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
 	
 		if (magicNumber == VDQM_MAGIC) {
 			//Request has MagicNumber from old VDQM Protocol
-			castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 6 );
+			castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 6 );
 			
 			try {
 				handleOldVdqmRequest(sock, magicNumber, cuuid);
@@ -453,7 +453,7 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
   }
   else { // If it's not a socket, then it's our dedication loop!
   	// "Start tape to tape drive dedication thread" message
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 61);
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 61);
 
 	  /**
 	   * The Singleton with the main loop to dedicate a
@@ -575,7 +575,7 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
     
     
     // "VdqmServer::handleOldVdqmRequest(): Rollback of the whole request" message   
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 51);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 51);
 		svcs()->rollback(&ad); 
 		
     /**
@@ -614,7 +614,7 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 		 */
 		if (reqHandled && reqtype != VDQM_PING) {
 			//Sending reply to client
-			castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 10);
+			castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 10);
 			
 			oldProtInterpreter->sendAcknCommit();
 			oldProtInterpreter->sendToOldClient(&header, &volumeRequest, &driveRequest);
@@ -627,13 +627,13 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 				svcs()->commit(&ad);
 				
 		    // "Request stored in DB" message
-		    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 12);				
+		    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 12);				
 			}
 			else {
 				// "Client didn't send a VDQM_COMMIT => Rollback of request in db"
 				svcs()->rollback(&ad);
 					
-		    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 30);				
+		    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 30);				
 			}
 		}
 	} catch (castor::exception::Exception e) { 
@@ -643,7 +643,7 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 1, params);
     
     // "VdqmServer::handleOldVdqmRequest(): Rollback of the whole request" message   
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 51);        
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 51);        
  		svcs()->rollback(&ad);
 	}
   

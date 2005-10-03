@@ -160,7 +160,7 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
 //	    // "Request stored in DB" message
 //	    castor::dlf::Param params[] =
 //	      {castor::dlf::Param("ID", fr->id())};
-//	    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 12, 1, params);
+//	    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 12, 1, params);
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);
     
@@ -216,7 +216,7 @@ void castor::vdqm::handler::BaseRequestHandler::deleteRepresentation
 //    // "Request deleted from DB" message
 //    castor::dlf::Param params[] =
 //      {castor::dlf::Param("ID", fr->id())};
-//    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 29, 1, params);
+//    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 29, 1, params);
 
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);
@@ -281,7 +281,7 @@ void castor::vdqm::handler::BaseRequestHandler::updateRepresentation
 //	    // "Update of representation in DB" message
 //	    castor::dlf::Param params[] =
 //	      {castor::dlf::Param("ID", fr->id())};
-//	    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 45, 1, params);
+//	    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 45, 1, params);
 
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);

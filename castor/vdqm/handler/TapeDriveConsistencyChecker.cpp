@@ -130,7 +130,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
     	  // "WAIT DOWN request from tpdaemon client" message
     		castor::dlf::Param param[] =
 					{castor::dlf::Param("reqhost", ptr_driveRequest->reqhost)};
-				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 38, 1, param);
+				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, 38, 1, param);
     
         ptr_tapeDrive->setStatus(UNIT_WAITDOWN);
     }
@@ -210,7 +210,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::deleteOldRequest()
   	// "Remove old TapeRequest from db" message
   	castor::dlf::Param param[] =
 			{castor::dlf::Param("TapeRequest ID", ptr_tapeDrive->runningTapeReq()->id())};
-		castor::dlf::dlf_writep(m_cuuid, DLF_LVL_USAGE, 37, 1, param);
+		castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, 37, 1, param);
 
 		//Delete the tape request from the db and from the tapeDrive Object
     deleteRepresentation(ptr_tapeDrive->runningTapeReq(), m_cuuid);

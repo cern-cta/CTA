@@ -156,7 +156,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     			handleRequest = false;
     		else {
 	    		// Handle VDQM_VOL_REQ
-	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 19);
+	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 19);
 					
   				TapeRequestHandler requestHandler;
 					requestHandler.newTapeRequest(ptr_header, ptr_volumeRequest, cuuid); 
@@ -167,7 +167,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     			handleRequest = false;
     		else {
 	    		// Handle VDQM_DRV_REQ
-	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 20);
+	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 20);
 					TapeDriveHandler tapeDriveHandler(ptr_header, ptr_driveRequest, cuuid);
 					tapeDriveHandler.newTapeDriveRequest();
     		}
@@ -179,7 +179,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
 					// Handle VDQM_DEL_VOLREQ
 			    castor::dlf::Param params[] =
 			      {castor::dlf::Param("volreq ID", ptr_volumeRequest->VolReqID)};
-	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 21);
+	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 21);
 					
 					
     			TapeRequestHandler requestHandler;
@@ -194,7 +194,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
 	    		castor::dlf::Param params[] =
 			      {castor::dlf::Param("tape drive", ptr_driveRequest->drive),
 			       castor::dlf::Param("tape server", ptr_driveRequest->server)};
-	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 22, 2, params);
+	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 22, 2, params);
 	    		
 					TapeDriveHandler tapeDriveHandler(ptr_header, ptr_driveRequest, cuuid);
 					tapeDriveHandler.deleteTapeDrive();
@@ -205,13 +205,13 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     			handleRequest = false;
     		else {
 	    		// Handle VDQM_DEDICATE_DRV
-	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 53);
+	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 53);
 					//TODO: Implementation
     		}
     		break;
     case VDQM_GET_VOLQUEUE:
     		// Handle VDQM_GET_VOLQUEUE
-    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 54);
+    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 54);
 				{	
 					TapeRequestHandler requestHandler;
 					// Sends the tape request queue back to the client
@@ -225,7 +225,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     		break;
     case VDQM_GET_DRVQUEUE:
     		// Handle VDQM_GET_DRVQUEUE
-    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 55);
+    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 55);
 				{					
 					TapeDriveHandler tapeDriveHandler(ptr_header, ptr_driveRequest, cuuid);
 					tapeDriveHandler.sendTapeDriveQueue(
@@ -235,7 +235,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     		break;
     case VDQM_PING:
     		// Handle VDQM_PING
-    		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 25);
+    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 25);
     		
     		{
     			int queuePosition = -1;
@@ -245,7 +245,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
 					// Send VDQM_PING back to client
 				  castor::dlf::Param params[] =
 				  	{castor::dlf::Param("Queue position", queuePosition)};
-					castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 27, 1, params);
+					castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 27, 1, params);
 					oldProtInterpreter->sendAcknPing(queuePosition);
     		}
     		break;
