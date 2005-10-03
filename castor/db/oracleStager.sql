@@ -903,6 +903,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
     UPDATE SubRequest SET diskCopy = ids_seq.nextval,
                           lastModificationTime = getTime() WHERE id = srId
      RETURNING castorFile, diskCopy INTO cfid, dci;
+    SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
+    buildPathFromFileId(fid, nh, dci, rpath);
     INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime)
      VALUES (rpath, dci, fileSystemId, cfid, 1, getTime()); -- status WAITDISK2DISKCOPY
     INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
