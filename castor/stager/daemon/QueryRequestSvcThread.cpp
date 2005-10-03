@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.24 2005/09/26 13:02:23 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.25 2005/10/03 15:14:18 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.24 $ $Date: 2005/09/26 13:02:23 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.25 $ $Date: 2005/10/03 15:14:18 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -412,6 +412,16 @@ namespace castor {
         if (foundDiskCopy) {
           replyToClient(client, &res);
         }
+
+        /* Cleanup */
+        /* ------- */
+        for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+              = result.begin();
+            dcit != result.end();
+            ++dcit) {
+          delete *dcit;
+        }
+
       }
 
 
