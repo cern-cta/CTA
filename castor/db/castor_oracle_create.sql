@@ -1981,7 +1981,7 @@ CREATE OR REPLACE PROCEDURE garbageCollectFS(fsId INTEGER) AS
   bestValue NUMBER;
 BEGIN
   -- Get the DiskPool and the minFree space we want to achieve
-  SELECT diskPool, maxFreeSpace - free - deltaFree + reservedSpace - spaceToBeFreed
+  SELECT diskPool, maxFreeSpace * totalSize - free - deltaFree + reservedSpace - spaceToBeFreed
     INTO dpId, toBeFreed
     FROM FileSystem
    WHERE FileSystem.id = fsId
@@ -2090,7 +2090,7 @@ CREATE OR REPLACE PROCEDURE defGarbageCollectFS(fsId INTEGER) AS
   nextItem castorGC.GCItem;
 BEGIN
   -- Get the DiskPool and the minFree space we want to achieve
-  SELECT diskPool, maxFreeSpace - free - deltaFree + reservedSpace - spaceToBeFreed
+  SELECT diskPool, maxFreeSpace * totalSize - free - deltaFree + reservedSpace - spaceToBeFreed
     INTO dpId, toBeFreed
     FROM FileSystem
    WHERE FileSystem.id = fsId
