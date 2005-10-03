@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2005/09/05 12:53:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2005/10/03 14:54:20 $ $Author: sponcec3 $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -163,6 +163,7 @@ castor::db::ora::OraQuerySvc::diskCopies4File
       item->setMountPoint(rset->getString(10));
       result.push_back(item);
     }
+    m_diskCopies4FileStatement->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
@@ -221,6 +222,7 @@ castor::db::ora::OraQuerySvc::diskCopies4Request
       item->setMountPoint(rset->getString(10));
       result.push_back(item);
     }
+    m_diskCopies4RequestStatement->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
@@ -281,6 +283,7 @@ castor::db::ora::OraQuerySvc::diskCopies4Usertag
       result.push_back(item);
       status = rset->next();
     }
+    m_diskCopies4UsertagStatement->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
