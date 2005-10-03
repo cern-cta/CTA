@@ -1,5 +1,5 @@
 #
-# $Id: if.has_oracle,v 1.1 2005/09/26 10:29:41 jdurand Exp $
+# $Id: if.has_oracle,v 1.2 2005/10/03 16:48:28 jdurand Exp $
 #
 ## List of packages to do only if oracle is available
 #
@@ -14,3 +14,4 @@ castor-rtcopy-mighunter
 castor-stager-server
 castor-upv-server
 castor-vmgr-server
+castor-vdqm2-lib-oracle
