@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCnvSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/11/29 15:40:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCnvSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2005/10/03 13:32:37 $ $Author: sponcec3 $
  *
  *
  *
@@ -139,7 +139,7 @@ castor::IObject* castor::io::StreamCnvSvc::unmarshalObject(castor::io::StreamAdd
   throw (castor::exception::Exception) {
   // If the address has no type, find it out
   if (OBJ_INVALID == address.objType()) {
-    unsigned int objType;
+    int objType;
     address.stream() >> objType;
     address.setObjType(objType);
   }
