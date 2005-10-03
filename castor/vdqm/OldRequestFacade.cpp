@@ -86,7 +86,7 @@ bool castor::vdqm::OldRequestFacade::checkRequestType(Cuuid_t cuuid)
 
 		castor::dlf::Param params[] =
       {castor::dlf::Param("req_string", req_string)};
-		castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 16, 1, params);
+		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 16, 1, params);
 	}
   
   if ( !VDQM_VALID_REQTYPE(m_reqtype) ) {
@@ -106,7 +106,7 @@ bool castor::vdqm::OldRequestFacade::checkRequestType(Cuuid_t cuuid)
 //    }
 //    if ( reqtype == VDQM_SHUTDOWN ) {
 //    	  // shutdown server requested
-//				castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 3);
+//				castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 3);
 //        hold = vdqm_shutdown = 1;
 //        vdqm_PipeHangup();
 //        rc = 1;

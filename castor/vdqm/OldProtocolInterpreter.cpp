@@ -221,7 +221,7 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header,
 		castor::dlf::Param params[] =
     	{castor::dlf::Param("reqtype", reqtype),
      	 castor::dlf::Param("h_name", hp->h_name)};
-  	castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_USAGE, 15, 2, params);
+  	castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, 15, 2, params);
 
 		if ( (isadminhost(ptr_serverSocket->socket(),hp->h_name) != 0) ) {
     	serrno = EPERM;
