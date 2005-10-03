@@ -1200,6 +1200,7 @@ END;
 /* PL/SQL method implementing disk2DiskCopyDone */
 CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
 (dcId IN INTEGER, dcStatus IN INTEGER) AS
+  srid INTEGER;
 BEGIN
   -- update DiskCopy
   UPDATE DiskCopy set status = dcStatus WHERE id = dcId; -- status DISKCOPY_STAGED
@@ -1207,10 +1208,10 @@ BEGIN
   UPDATE SubRequest set status = 6,
                         lastModificationTime = getTime()
    WHERE diskCopy = dcId -- status SUBREQUEST_READY
-  RETURNING id INTO SubRequestId;
+  RETURNING id INTO srid;
   -- Wake up waiting subrequests
   UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
-   WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
+   WHERE parent = srid; -- SUBREQUEST_RESTART
 END;
 
 /* PL/SQL method implementing recreateCastorFile */
