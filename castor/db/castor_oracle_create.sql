@@ -1052,35 +1052,50 @@ BEGIN
    dci := 0;
    rpath := '';
  END IF;
-EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, look in others
+EXCEPTION WHEN NO_DATA_FOUND THEN
+ -- No disk copy found on selected FileSystem, look in others
  BEGIN
-  -- Try to find remote DiskCopies
+  -- Try to see whether we should wait on some DiskCopy
   SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
   INTO dci, rpath, rstatus
   FROM DiskCopy, SubRequest, FileSystem, DiskServer
   WHERE SubRequest.id = srId
     AND SubRequest.castorfile = DiskCopy.castorfile
-    AND DiskCopy.status IN (0, 1, 2, 5, 6, 10, 11) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
+    AND DiskCopy.status IN (1, 2, 5, 11) -- WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, WAITFS_SCHEDULING
     AND FileSystem.id(+) = DiskCopy.fileSystem
     AND FileSystem.status(+) = 0 -- PRODUCTION
     AND DiskServer.id(+) = FileSystem.diskserver
     AND DiskServer.status(+) = 0 -- PRODUCTION
     AND ROWNUM < 2;
-  -- Found a DiskCopy, Check whether to wait on it
-  IF rstatus IN (2,5,11) THEN -- WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING, Make SubRequest Wait
-    makeSubRequestWait(srId, dci);
-    dci := 0;
-    rpath := '';
-    close sources;
-  ELSE
-    OPEN sources
+  -- Found a DiskCopy, we have to wait on it
+  makeSubRequestWait(srId, dci);
+  dci := 0;
+  rpath := '';
+  close sources;
+ EXCEPTION WHEN NO_DATA_FOUND THEN
+   -- No disk copy foundin WAIT*, we don't hae to wait
+  BEGIN
+   -- Check whether there are any diskcopy available
+   SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
+   INTO dci, rpath, rstatus
+   FROM DiskCopy, SubRequest, FileSystem, DiskServer
+   WHERE SubRequest.id = srId
+     AND SubRequest.castorfile = DiskCopy.castorfile
+     AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
+     AND FileSystem.id = DiskCopy.fileSystem
+     AND FileSystem.status = 0 -- PRODUCTION
+     AND DiskServer.id = FileSystem.diskserver
+     AND DiskServer.status = 0 -- PRODUCTION
+     AND ROWNUM < 2;
+   -- We found at least a DiskCopy. Let's list all of them
+   OPEN sources
     FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
                FileSystem.weight, FileSystem.mountPoint,
                DiskServer.name
     FROM DiskCopy, SubRequest, FileSystem, DiskServer
     WHERE SubRequest.id = srId
       AND SubRequest.castorfile = DiskCopy.castorfile
-      AND DiskCopy.status IN (0, 1, 2, 5, 6, 10, 11) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
+      AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
       AND FileSystem.id = DiskCopy.fileSystem
       AND FileSystem.status = 0 -- PRODUCTION
       AND DiskServer.id = FileSystem.diskServer
@@ -1095,18 +1110,19 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
      VALUES (rpath, dci, fileSystemId, cfid, 1, getTime()); -- status WAITDISK2DISKCOPY
     INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
     rstatus := 1; -- status WAITDISK2DISKCOPY
-  END IF;
- EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on any FileSystem
-  -- create one for recall
-  UPDATE SubRequest SET diskCopy = ids_seq.nextval, status = 4,
-                        lastModificationTime = getTime() -- WAITTAPERECALL
-   WHERE id = srId RETURNING castorFile, diskCopy INTO cfid, dci;
-  SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
-  buildPathFromFileId(fid, nh, dci, rpath);
-  INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime)
-   VALUES (rpath, dci, fileSystemId, cfid, 2, getTime()); -- status WAITTAPERECALL
-  INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
-  rstatus := 99; -- WAITTAPERECALL, NEWLY CREATED
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+   -- No disk copy found on any FileSystem
+   -- create one for recall
+   UPDATE SubRequest SET diskCopy = ids_seq.nextval, status = 4,
+                         lastModificationTime = getTime() -- WAITTAPERECALL
+    WHERE id = srId RETURNING castorFile, diskCopy INTO cfid, dci;
+   SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
+   buildPathFromFileId(fid, nh, dci, rpath);
+   INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime)
+    VALUES (rpath, dci, fileSystemId, cfid, 2, getTime()); -- status WAITTAPERECALL
+   INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
+   rstatus := 99; -- WAITTAPERECALL, NEWLY CREATED
+  END;
  END;
 END;
 
