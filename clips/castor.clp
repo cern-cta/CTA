@@ -4,7 +4,7 @@
 ;
 ; PROPOSAL FOR 64BITS QUANTITIES: Use the u64subr.h syntax, e.g. with a unit
 ;
-; $Id: castor.clp,v 1.12 2005/09/26 09:58:15 jdurand Exp $
+; $Id: castor.clp,v 1.13 2005/10/03 09:21:34 jdurand Exp $
 ;
 ; (c) CASTOR CERN/IT/ADC/CA 2004 - Jean-Damien.Durand@cern.ch
 ;
@@ -49,7 +49,7 @@
 	?*procImportance* = 1.          ; How proc counts into a diskserver weight
 	?*loadImportance* = 2.          ; How load counts into a diskserver weight
 	?*ioImportance* = 5.            ; How i/o counts into a diskserver weight
-	?*spaceImportance* = 5.         ; How space counts into a diskserver weight
+	?*spaceImportance* = 3.         ; How space counts into a diskserver weight
 	?*streamImportance* = 0.        ; How number of streams counts into a diskserver weight
 
 	;; Please make sure that filesystemReadImportance + filesystemWriteImportance gives 1.
