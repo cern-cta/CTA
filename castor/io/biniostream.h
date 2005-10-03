@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: biniostream.h,v $ $Revision: 1.6 $ $Release$ $Date: 2005/09/28 10:50:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: biniostream.h,v $ $Revision: 1.7 $ $Release$ $Date: 2005/10/03 13:30:54 $ $Author: sponcec3 $
  *
  *
  *
@@ -236,11 +236,11 @@ namespace castor {
 
       biniostream& operator>> (u_signed64& d) {
         //read((char*)&d, sizeof(u_signed64));
-        unsigned long n;
+        unsigned int n;
         read((char*)&n, LONGSIZE);
-        d = intohl((unsigned long)n);     // Least Significant part first
+        d = intohl((unsigned int)n);     // Least Significant part first
         read((char*)&n, LONGSIZE);
-        n = intohl((unsigned long)n);
+        n = intohl((unsigned int)n);
         d += (u_signed64)n << 32; 
         return *this;
       }
