@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2005/09/07 16:39:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2005/10/03 14:22:57 $ $Author: sponcec3 $
  *
  *
  *
@@ -185,7 +185,7 @@ void *castor::rh::Server::processRequest(void *param) throw() {
   castor::dlf::Param params[] =
     {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
      castor::dlf::Param("Port", port)};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 2, params);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 1, 2, params);
 
   // get the incoming request
   try {
@@ -226,7 +226,7 @@ void *castor::rh::Server::processRequest(void *param) throw() {
       Cuuid2string(uuid, CUUID_STRING_LEN+1, &cuuid);
       fr->setReqId(uuid);
       // "Processing Request" message
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 8);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 8);
 
       // Complete its client field
       castor::rh::Client *client =
@@ -257,7 +257,7 @@ void *castor::rh::Server::processRequest(void *param) throw() {
   }
 
   // "Sending reply to client" message
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 10);
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 10);
   try {
     sock->sendObject(ack);
   } catch (castor::exception::Exception e) {
@@ -318,7 +318,7 @@ void castor::rh::Server::handleRequest
     // "Request stored in DB" message
     castor::dlf::Param params[] =
       {castor::dlf::Param("ID", fr->id())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 12, 1, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 12, 1, params);
 
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);

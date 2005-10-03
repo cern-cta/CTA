@@ -110,7 +110,7 @@ int castor::gc::GcDaemon::start()
   throw (castor::exception::Exception) {
 
   // "Starting Garbage Collector Daemon" message
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 1);
   // Switch to daemon mode
   int rc;
   if (!m_foreground) {
@@ -178,7 +178,7 @@ int castor::gc::GcDaemon::start()
   castor::dlf::Param params[] =
     {castor::dlf::Param("Machine", gctarget),
      castor::dlf::Param("Sleep Interval", gcinterval)};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 5, 2, params);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 2, params);
 
   // Main loop
   // XXX need to wake up on UDP with a time out ?
@@ -201,7 +201,7 @@ int castor::gc::GcDaemon::start()
       castor::dlf::Param params[] =
         {castor::dlf::Param("Machine", gctarget),
          castor::dlf::Param("Sleep Interval", gcinterval)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 7, 2, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 7, 2, params);
     }
 
     // Retrieve list of files to delete
@@ -226,7 +226,7 @@ int castor::gc::GcDaemon::start()
       // "Found files to garbage. Starting removal" message
       castor::dlf::Param params[] =
         {castor::dlf::Param("Nb files", files2Delete->size())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 10, 1, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 10, 1, params);
 
       // Loop over the files and delete them
       std::vector<u_signed64*> deletedFiles;
@@ -274,7 +274,7 @@ int castor::gc::GcDaemon::start()
            castor::dlf::Param("Nb Files failed", gcfilesfailed),
            castor::dlf::Param("Nb Files total", gcfilestotal),
            castor::dlf::Param("Space freed", gcremovedsize)};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 13, 4, params);
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 13, 4, params);
       }
       // Inform stager of the deletion/failure
       if (deletedFiles.size() > 0) {

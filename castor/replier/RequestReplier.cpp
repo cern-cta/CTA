@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2005/07/22 10:27:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2005/10/03 14:23:59 $ $Author: sponcec3 $
  *
  *
  *
@@ -792,7 +792,7 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
   cr.isLast = isLastResponse;
 
 
-  clog() << USAGE << SETW func
+  clog() << SYSTEM << SETW func
          << "Adding Response for ";
   clog() << castor::ip << cr.client.ipAddress() << ":"
          << cr.client.port()
