@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/09/05 12:53:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/10/03 14:20:11 $ $Author: sponcec3 $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -298,7 +298,7 @@ void castor::db::ora::OraGCSvc::filesDeletionFailed
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Unable to remove deleted files :"
+      << "Unable to remove files for which deletion failed :"
       << std::endl << e.getMessage();
     throw ex;
   }
