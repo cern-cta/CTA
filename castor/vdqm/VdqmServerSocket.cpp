@@ -36,7 +36,7 @@
 #include <string>
 
 #include "castor/exception/Internal.hpp"
-#include "castor/io/biniostream.h"
+//#include "castor/io/biniostream.h"
 
 #include <vdqm_constants.h>
 #include "osdep.h" //for LONGSIZE
@@ -45,6 +45,7 @@
 
 // Local Includes
 #include "VdqmServerSocket.hpp"
+#include "vdqmMacros.h"  // Needed for marshalling
 
 // definition of some constants
 #define STG_CALLBACK_BACKLOG 2
@@ -124,7 +125,8 @@ unsigned int castor::vdqm::VdqmServerSocket::readMagicNumber()
 	throw (castor::exception::Exception) {
   
 	char buffer[sizeof(unsigned int)];
-	std::string message;
+	char *p;
+//	std::string message;
   int ret;
   unsigned int magic;
   
@@ -153,14 +155,22 @@ unsigned int castor::vdqm::VdqmServerSocket::readMagicNumber()
     }
   }
   
-  message = std::string(buffer, sizeof(unsigned int));
-  castor::io::biniostream rcvStream(message);
-	castor::io::biniostream& addrPointer = rcvStream;
-	
-	/**
-	 * Do the unmarshalling of the message
-	 */
-  addrPointer >> magic;
+  
+  /**
+   * This is code for the C++ world, which is not compatible with the
+   * C Marshalling of the magic number.
+   */
+//  message = std::string(buffer, sizeof(unsigned int));
+//  castor::io::biniostream rcvStream(message);
+//	castor::io::biniostream& addrPointer = rcvStream;
+//	
+//	/**
+//	 * Do the unmarshalling of the message
+//	 */
+//  addrPointer >> magic;
+
+	p = buffer;
+	DO_MARSHALL(LONG, p, magic, ReceiveFrom);
   
   return magic;
 }

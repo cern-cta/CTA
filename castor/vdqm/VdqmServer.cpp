@@ -91,7 +91,8 @@ int main(int argc, char *argv[]) {
 castor::vdqm::VdqmServer::VdqmServer(): 
 	m_foreground(false), 
 	m_threadPoolId(-1),
-  m_threadNumber(DEFAULT_THREAD_NUMBER), 
+  m_threadNumber(DEFAULT_THREAD_NUMBER),
+  m_dedicationThreadNumber(DEFAULT_THREAD_NUMBER), 
   m_serverName("VdqmServer") {
   	
   initLog("Vdqm", SVC_DLFMSG);
