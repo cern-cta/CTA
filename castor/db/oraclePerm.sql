@@ -2013,9 +2013,14 @@ BEGIN
               FROM tapecopy, segment
              WHERE tapecopy.id = segment.copy (+)) tpseg,
            FileSystem, DiskServer, DiskPool2SvcClass
-     WHERE castorfile.id IN (SELECT * FROM TABLE(cfs)) AND Castorfile.id = DiskCopy.castorFile (+)
-       AND castorfile.id = tpseg.castorfile(+) AND FileSystem.id(+) = DiskCopy.fileSystem
-       AND DiskServer.id(+) = FileSystem.diskServer AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool
+     WHERE castorfile.id IN (SELECT * FROM TABLE(cfs))
+       AND Castorfile.id = DiskCopy.castorFile (+)
+       AND castorfile.id = tpseg.castorfile(+)
+       AND FileSystem.id(+) = DiskCopy.fileSystem
+       AND FileSystem.status(+) = 0 -- PRODUCTION
+       AND DiskServer.id(+) = FileSystem.diskServer
+       AND DiskServer.status(+) = 0 -- PRODUCTION
+       AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool
        AND (DiskPool2SvcClass.child = svcClassId OR DiskPool2SvcClass.child IS NULL)
   ORDER BY fileid, nshost;
 END;
