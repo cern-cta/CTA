@@ -2,7 +2,7 @@
 -- Copyright (C) 2003 by CERN/IT/ADC/CA
 -- All rights reserved
 --
--- @(#)$RCSfile: dlf_oracle_tbl.sql,v $ $Revision: 1.10 $ $Date: 2005/08/30 11:53:53 $ CERN IT-ADC Vitaly Motyakov
+-- @(#)$RCSfile: dlf_oracle_tbl.sql,v $ $Revision: 1.11 $ $Date: 2005/10/05 12:28:09 $ CERN IT-ADC Vitaly Motyakov
 --
 --     Create logging facility ORACLE tables.
 
@@ -105,3 +105,6 @@ CREATE INDEX dlf_i_rqids_seq_no ON dlf_rq_ids_map (msg_seq_no) TABLESPACE DLF_IN
 CREATE INDEX dlf_i_messages_time ON dlf_messages (time) TABLESPACE DLF_INDX;
 CREATE INDEX dlf_i_messages_fileid ON dlf_messages (ns_file_id) TABLESPACE DLF_INDX;
 CREATE INDEX dlf_i_messages_requestid ON dlf_messages (req_id) TABLESPACE DLF_INDX;
+
+--    dlf_oracle_ifce.pc must have the same define  DLF_MESSAGE_SEQ_INCREMENT
+ALTER SEQUENCE message_seq INCREMENT BY 100;
