@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.13 $ $Date: 2005/09/20 15:06:31 $  CERN IT $Author: kotlyar $ ";
+static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.14 $ $Date: 2005/10/05 12:42:42 $  CERN IT $Author: kotlyar $ ";
 #endif /* not lint */
 
 #include <errno.h>
@@ -544,7 +544,9 @@ struct dlf_srv_thread_info *thread_info;
         thread_info->paramdouble=0;
         thread_info->rqids=0;
         thread_info->param_tag=0;
-       
+        thread_info->seq_pos=10000;
+        thread_info->seq_num=0;
+
        return (bufmem);
        }
 void dlf_free_buffers(dlf_srv_thread_info)
@@ -636,7 +638,8 @@ getreq(s, magic, req_type, req_data, data_len, clienthost)
   char req_hdr[3*LONGSIZE];
 
   l = netread_timeout (s, req_hdr, sizeof(req_hdr), DLF_TIMEOUT);
-  if (l == sizeof(req_hdr)) {
+  if (l == sizeof(req_hdr)) 
+    {
     rbp = req_hdr;
     unmarshall_LONG (rbp, n);
     *magic = n;
@@ -647,35 +650,40 @@ getreq(s, magic, req_type, req_data, data_len, clienthost)
     l = msglen - sizeof(req_hdr);
     *data_len = l;
     *req_data = (char*)malloc(l);
-    if (*req_data == NULL) {
-      dlflogit (func, "memory allocation failure (%s)\n", strerror(errno));
-      return (ENOMEM);
-    }
+    if (*req_data == NULL)
+       {
+       dlflogit (func, "memory allocation failure (%s)\n", strerror(errno));
+       return (ENOMEM);
+       }
     n = netread_timeout (s, *req_data, l, DLF_TIMEOUT);
-    if (being_shutdown) {
-      free(*req_data);
-      return (EDLFNACT);
-    }
-    if (getpeername (s, (struct sockaddr *) &from, &fromlen) < 0) {
-      dlflogit (func, DLF02, "getpeername", neterror());
-      free(*req_data);
-      return (SEINTERNAL);
-    }
-    hp = Cgethostbyaddr ((char *)(&from.sin_addr),
-                         sizeof(struct in_addr), from.sin_family);
-    if (hp == NULL)
-      *clienthost = inet_ntoa (from.sin_addr);
-    else
-      *clienthost = hp->h_name ;
+    if (being_shutdown) 
+       {
+       free(*req_data);
+       return (EDLFNACT);
+       }
+    if (getpeername (s, (struct sockaddr *) &from, &fromlen) < 0) 
+       {
+       dlflogit (func, DLF02, "getpeername", neterror());
+       free(*req_data);
+       return (SEINTERNAL);
+       }
+    /* for what? decrease performance , Cupv_check must use then only ip address!? 
+    hp = Cgethostbyaddr ((char *)(&from.sin_addr), sizeof(struct in_addr), from.sin_family);
+    if (hp == NULL) *clienthost = inet_ntoa (from.sin_addr);
+    else    *clienthost = hp->h_name ;
+    */
+    *clienthost = inet_ntoa (from.sin_addr); 
     return (0);
-  } else {
-    if (l > 0)
-      dlflogit (func, DLF04, l);
-    else if (l < 0) {
-      dlflogit (func, DLF02, "netread", strerror(errno));
-    }
+    } 
+  else
+    {
+    if (l > 0)  dlflogit (func, DLF04, l);
+    else if (l < 0)
+       {
+       dlflogit (func, DLF02, "netread", strerror(errno));
+       }
     return (SEINTERNAL);
-  }
+   }
 }
 
 
