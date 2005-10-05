@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_procreq.c,v $ $Revision: 1.7 $ $Date: 2005/09/21 14:57:06 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_procreq.c,v $ $Revision: 1.8 $ $Date: 2005/10/05 12:31:54 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
  
 #include <errno.h>
@@ -475,7 +475,6 @@ struct dlf_srv_thread_info *thip;
         
 	RETURN (0);
 
-
 }
 
 /*	dlf_srv_entermessage - enter a log message into the database */
@@ -567,11 +566,11 @@ int *last;
 		RETURN (serrno);
 	*/
 
-	/* start transaction */
+	/* start transaction */ 
         while(thip->dbfd.tr_started==1){ ;}
 	
         (void) dlf_start_tr (thip->s, &thip->dbfd);
-
+        
 	if (dlf_insert_message_entry (thip, &log_message)) 
            {
 	    dlf_delete_param_list (&log_message.param_list);
@@ -579,7 +578,7 @@ int *last;
 	    RETURN (serrno);
 	   }
 
-	(void) dlf_end_tr (&thip->dbfd);
+	(void) dlf_end_tr_nocommit (&thip->dbfd);
 
 	dlf_delete_param_list (&log_message.param_list);
 	RETURN (0);
