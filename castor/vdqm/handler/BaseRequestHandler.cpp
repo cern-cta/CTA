@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 #include <string>
+//#include "occi.h"
 
 #include "castor/IObject.hpp"
 #include "castor/BaseAddress.hpp"
@@ -58,16 +59,31 @@ castor::vdqm::handler::BaseRequestHandler::BaseRequestHandler()
   
   ptr_svcs = services();
 	
-	/**
-	 * Getting DbVdqmSvc: It can be the OraVdqmSvc or the MyVdqmSvc
-	 */
-	svc = ptr_svcs->service("DbVdqmSvc", castor::SVC_DBVDQMSVC);
-  if (0 == svc) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Could not get DbVdqmSvc" << std::endl;
-    
-    throw ex;
+	try {
+		/**
+		 * Getting DbVdqmSvc: It can be the OraVdqmSvc or the MyVdqmSvc
+		 */
+		svc = ptr_svcs->service("DbVdqmSvc", castor::SVC_DBVDQMSVC);
+	  if (0 == svc) {
+	    castor::exception::Internal ex;
+	    ex.getMessage() << "Could not get DbVdqmSvc" << std::endl;
+	    
+	    throw ex;
+	  }
+//	} catch (oracle::occi::SQLException e) {
+//    castor::exception::Internal ex;
+//    
+//    ex.getMessage() << "Error in castor::vdqm::handler::BaseRequestHandler::BaseRequestHandler(): "
+//                    << std::endl << e.what() << std::endl;
+//    throw ex;
   }
+	catch (...) {
+		castor::exception::Internal ex;
+		
+		ex.getMessage() << "Error in castor::vdqm::handler::BaseRequestHandler::BaseRequestHandler(): "
+                    << std::endl;
+    throw ex;
+	} 
   
   ptr_IVdqmService = dynamic_cast<IVdqmSvc*>(svc);
   if (0 == ptr_IVdqmService) {
