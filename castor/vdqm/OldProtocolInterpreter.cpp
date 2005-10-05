@@ -109,7 +109,7 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header,
 	if (rc == -1) {
 		serrno = SECOMERR;
 		castor::exception::Exception ex(serrno);
-		ex.getMessage() << "OldProtocolInterpreter::readOldProtocol() "
+		ex.getMessage() << "OldProtocolInterpreter::readProtocol() "
 										<< "netread(header): "
                 		<< neterror() << std::endl;
 		throw ex;
@@ -117,7 +117,7 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header,
   else if (rc == 0) {
 		serrno = SECONNDROP;
 		castor::exception::Exception ex(serrno);
-		ex.getMessage() << "OldProtocolInterpreter::readOldProtocol() "
+		ex.getMessage() << "OldProtocolInterpreter::readProtocol() "
 										<< "netread(header): "
 										<< "connection dropped" << std::endl;
 		throw ex;
@@ -134,7 +134,7 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header,
 	} 
 	else {
 		castor::exception::Internal ex;
-    ex.getMessage() << "OldProtocolInterpreter::readOldProtocol(): "
+    ex.getMessage() << "OldProtocolInterpreter::readProtocol(): "
       							<< "header struct == NULL" << std::endl;
     throw ex;
 	}
@@ -146,7 +146,7 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header,
 
 						serrno = SECOMERR;
 						castor::exception::Exception ex(serrno);
-						ex.getMessage() << "OldProtocolInterpreter::readOldProtocol() "
+						ex.getMessage() << "OldProtocolInterpreter::readProtocol() "
 														<< "netread(REQ): "
 														<< neterror() << std::endl;
 						throw ex;
@@ -154,7 +154,7 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header,
 		else if (rc == 0) {
 						serrno = SECONNDROP;
 						castor::exception::Exception ex(serrno);						
-						ex.getMessage() << "OldProtocolInterpreter::readOldProtocol() "
+						ex.getMessage() << "OldProtocolInterpreter::readProtocol() "
       											<< "netread(REQ): "
       											<< "connection dropped" << std::endl;
       			throw ex;
@@ -163,7 +163,7 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header,
 	else if ( len > 0 ) {
 		serrno = SEUMSG2LONG;
 		castor::exception::Exception ex(serrno);						
-		ex.getMessage() << "OldProtocolInterpreter::readOldProtocol() netread(REQ): "
+		ex.getMessage() << "OldProtocolInterpreter::readProtocol() netread(REQ): "
 										<< "invalid message length "
 										<< len << std::endl;
 		throw ex;
@@ -173,7 +173,7 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header,
 	rc = getpeername(ptr_serverSocket->socket(), (struct sockaddr *)&from, (socklen_t *)&fromlen);
 	if ( rc == SOCKET_ERROR ) {
 		castor::exception::Internal ex;
-		ex.getMessage() << "OldProtocolInterpreter::readOldProtocol() getpeername(): "
+		ex.getMessage() << "OldProtocolInterpreter::readProtocol() getpeername(): "
 										<< neterror() << std::endl;			
 		throw ex;
 	} 
@@ -182,7 +182,7 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header,
 														sizeof(struct in_addr),
 														from.sin_family)) == NULL ) {
 		castor::exception::Internal ex;
-		ex.getMessage() << "OldProtocolInterpreter::readOldProtocol() Cgethostbyaddr(): " 
+		ex.getMessage() << "OldProtocolInterpreter::readProtocol() Cgethostbyaddr(): " 
 										<< "h_errno = " << h_errno << neterror() << std::endl;
 		throw ex;
 	}
@@ -191,7 +191,7 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header,
 				(REQTYPE(DRV,reqtype) && driveRequest == NULL) ) {
 		serrno = EINVAL;
 		castor::exception::Exception ex(serrno);
-		ex.getMessage() << "OldProtocolInterpreter::readOldProtocol(): "
+		ex.getMessage() << "OldProtocolInterpreter::readProtocol(): "
 										<< "no buffer for reqtype = 0x" 
 										<< std::hex << reqtype << std::endl;
   	throw ex;   
@@ -204,7 +204,7 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header,
 	  if ( isremote(from.sin_addr, driveRequest->reqhost) == 1 &&
     			getconfent("VDQM", "REMOTE_ACCESS", 1) == NULL ) {
 			castor::exception::Internal ex;
-			ex.getMessage() << "OldProtocolInterpreter::readOldProtocol(): " 
+			ex.getMessage() << "OldProtocolInterpreter::readProtocol(): " 
 											<< "remote access attempted, host = " 
 											<< driveRequest->reqhost << std::endl;
 			throw ex;
@@ -226,7 +226,7 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header,
 		if ( (isadminhost(ptr_serverSocket->socket(),hp->h_name) != 0) ) {
     	serrno = EPERM;
     	castor::exception::Exception ex(serrno);
-			ex.getMessage() << "OldProtocolInterpreter::readOldProtocol(): "
+			ex.getMessage() << "OldProtocolInterpreter::readProtocol(): "
 											<< "unauthorised ADMIN request (0x" << std::hex << reqtype 
 											<< ") from " << hp->h_name << std::endl;
 			throw ex;
@@ -284,7 +284,7 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header,
     			(isadminhost(ptr_serverSocket->socket(),driveRequest->reqhost) != 0) ) {
 			serrno = EPERM;
       castor::exception::Exception ex(serrno);
-			ex.getMessage() << "OldProtocolInterpreter::readOldProtocol(): "
+			ex.getMessage() << "OldProtocolInterpreter::readProtocol(): "
 											<< "unauthorised drive request (0x" << std::hex << reqtype 
 											<< ") for " << driveRequest->drive 
 											<< "@" << driveRequest->server
