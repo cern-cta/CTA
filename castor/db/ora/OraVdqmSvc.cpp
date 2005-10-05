@@ -145,6 +145,7 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   m_selectTapeAccessSpecificationStatement(0),
   m_selectDeviceGroupNameStatement(0),
   m_selectTapeRequestQueueStatement(0),
+  m_selectTapeDriveQueueStatement(0),
   m_matchTape2TapeDriveStatement(0) {
 }
 
@@ -190,6 +191,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
     deleteStatement(m_selectTapeAccessSpecificationStatement);
     deleteStatement(m_selectDeviceGroupNameStatement);
     deleteStatement(m_selectTapeRequestQueueStatement);
+    deleteStatement(m_selectTapeDriveQueueStatement);
     deleteStatement(m_matchTape2TapeDriveStatement);
   } catch (oracle::occi::SQLException e) {};
   
@@ -206,6 +208,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   m_selectTapeAccessSpecificationStatement = 0;
   m_selectDeviceGroupNameStatement = 0;
   m_selectTapeRequestQueueStatement = 0;
+  m_selectTapeDriveQueueStatement = 0;
   m_matchTape2TapeDriveStatement = 0;
 }
 
