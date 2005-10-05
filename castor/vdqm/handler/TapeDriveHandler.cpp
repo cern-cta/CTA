@@ -749,48 +749,49 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
 		}
 	} catch (castor::exception::Exception ex) {	
 		//free memory
-		for(std::vector<castor::vdqm::TapeDrive*>::iterator it = result->begin();
-		      it != result->end();
-		      it++) {
-			if ( (*it) != NULL ) {
-				TapeRequest* tapeRequest = (*it)->runningTapeReq();
-		    if ( tapeRequest != NULL ) {
-			    delete tapeRequest;
-			    tapeRequest = 0;
-			    (*it)->setRunningTapeReq(0);
-		    }
-		    
-		    castor::stager::Tape* tape = (*it)->tape();
-		    if ( tape != NULL ) {
-		    	delete tape;
-		    	tape = 0;
-		    	(*it)->setTape(0);
-		    }
-		    
-		    std::vector<TapeDriveCompatibility*> tapeDriveCompatibilities
-		    	= (*it)->tapeDriveCompatibilities();
-		    if ((&tapeDriveCompatibilities) != NULL &&
-		        tapeDriveCompatibilities.size() > 0) {
-		      for(std::vector<TapeDriveCompatibility*>::iterator it2 = tapeDriveCompatibilities.begin();
-		      		it2 != tapeDriveCompatibilities.end();
-		      		it2++) {
-		      		delete (*it2);
-		      }
-		    }
-				
-		  	castor::vdqm::TapeServer* tapeServer = (*it)->tapeServer();				
-		  	delete (*it)->deviceGroupName();
-		  	(*it)->setDeviceGroupName(0);
-		  	delete (*it);
-		  	delete tapeServer;
-		  	tapeServer = 0;
-		  	(*it) = 0;
+		if ( result != NULL ) {
+			for(std::vector<castor::vdqm::TapeDrive*>::iterator it = result->begin();
+			      it != result->end();
+			      it++) {
+				if ( (*it) != NULL ) {
+					TapeRequest* tapeRequest = (*it)->runningTapeReq();
+			    if ( tapeRequest != NULL ) {
+				    delete tapeRequest;
+				    tapeRequest = 0;
+				    (*it)->setRunningTapeReq(0);
+			    }
+			    
+			    castor::stager::Tape* tape = (*it)->tape();
+			    if ( tape != NULL ) {
+			    	delete tape;
+			    	tape = 0;
+			    	(*it)->setTape(0);
+			    }
+			    
+			    std::vector<TapeDriveCompatibility*> tapeDriveCompatibilities
+			    	= (*it)->tapeDriveCompatibilities();
+			    if ((&tapeDriveCompatibilities) != NULL &&
+			        tapeDriveCompatibilities.size() > 0) {
+			      for(std::vector<TapeDriveCompatibility*>::iterator it2 = tapeDriveCompatibilities.begin();
+			      		it2 != tapeDriveCompatibilities.end();
+			      		it2++) {
+			      		delete (*it2);
+			      }
+			    }
+					
+			  	castor::vdqm::TapeServer* tapeServer = (*it)->tapeServer();				
+			  	delete (*it)->deviceGroupName();
+			  	(*it)->setDeviceGroupName(0);
+			  	delete (*it);
+			  	delete tapeServer;
+			  	tapeServer = 0;
+			  	(*it) = 0;
+				}
 			}
+			
+			// deletion of the vector
+			delete result;
 		}
-		
-		// deletion of the vector
-		delete result;
-		
 		/**
 		 * To inform the client about the end of the queue, we send again a 
 		 * ptr_driveRequest with the VolReqID = -1
