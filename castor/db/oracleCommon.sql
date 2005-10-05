@@ -2017,9 +2017,9 @@ BEGIN
        AND Castorfile.id = DiskCopy.castorFile (+)
        AND castorfile.id = tpseg.castorfile(+)
        AND FileSystem.id(+) = DiskCopy.fileSystem
-       AND FileSystem.status(+) = 0 -- PRODUCTION
+       AND nvl(FileSystem.status,0) = 0 -- PRODUCTION
        AND DiskServer.id(+) = FileSystem.diskServer
-       AND DiskServer.status(+) = 0 -- PRODUCTION
+       AND nvl(DiskServer.status,0) = 0 -- PRODUCTION
        AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool
        AND (DiskPool2SvcClass.child = svcClassId OR DiskPool2SvcClass.child IS NULL)
   ORDER BY fileid, nshost;
