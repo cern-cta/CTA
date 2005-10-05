@@ -913,7 +913,7 @@ std::vector<castor::vdqm::TapeRequest*>*
     while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
     	
       // Fill result
-      idTapeRequest = (u_signed64)rs->getDouble(3); // 3 = Col number of ID
+      idTapeRequest = (u_signed64)rs->getDouble(4); // 4 = Col number of ID
       
       if ( idTapeRequest != 0 ) {
 	      castor::BaseAddress ad;
