@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: dlf_server.h,v $ $Revision: 1.3 $ $Date: 2005/09/16 09:54:48 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: dlf_server.h,v $ $Revision: 1.4 $ $Date: 2005/10/05 12:23:32 $ CERN IT-ADC Vitaly Motyakov
  */
  
 #ifndef _DLF_SERVER_H
@@ -111,6 +111,11 @@ struct dlf_srv_thread_info {
 	int		db_open_done;
 	struct dlf_dbfd dbfd;
 	char		errbuf[DLF_PRTBUFSZ];
+        
+        /* sequences variables */
+        unsigned long seq_pos;
+        unsigned long seq_num;
+        
         /* buffers for messages */
         int nummsg;
         unsigned long *arr_msgseq_no; 
