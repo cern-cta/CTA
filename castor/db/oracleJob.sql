@@ -1362,8 +1362,8 @@ BEGIN
          AND DiskServer.name = machines(i)
          AND FileSystem.diskServer = DiskServer.id
          AND minFree(i) <= FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace
-         AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
-         AND FileSystem.status IN (0, 1); -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+         AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
+         AND FileSystem.status = 0; -- FILESYSTEM_PRODUCTION
       nextIndex := nextIndex + 1;
     EXCEPTION  WHEN NO_DATA_FOUND THEN
       NULL;
@@ -1391,7 +1391,7 @@ BEGIN
       SELECT DiskServer.id INTO mIds(nextIndex)
         FROM DiskServer
        WHERE DiskServer.name = machines(i)
-         AND DiskServer.status IN (0, 1); -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
+         AND DiskServer.status = 0; -- DISKSERVER_PRODUCTION
       nextIndex := nextIndex + 1;
      EXCEPTION  WHEN NO_DATA_FOUND THEN
       NULL;
@@ -1404,7 +1404,7 @@ BEGIN
      WHERE FileSystem.diskserver = DiskServer.id
        AND DiskServer.id MEMBER OF mIds
        AND FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace >= minFree(1)
-       AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+       AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION       
      ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
               FileSystem.fsDeviation ASC;
    END;
@@ -1415,8 +1415,8 @@ BEGIN
     FROM FileSystem, DiskServer
     WHERE FileSystem.diskserver = DiskServer.id
      AND FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace >= minFree(1)
-     AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
-     AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+     AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
+     AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
     ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
              FileSystem.fsDeviation ASC;
   END IF;
