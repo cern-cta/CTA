@@ -473,6 +473,7 @@ castor::vdqm::TapeDrive*
      */
     castor::vdqm::TapeRequest* tapeRequest = tapeDrive->runningTapeReq();
     if (tapeRequest != NULL) {
+    	  cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);
         cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_Tape);
         cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_DeviceGroupName);
         cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeAccessSpecification);        
