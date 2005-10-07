@@ -139,7 +139,7 @@ namespace castor {
 					 * @param tapeDrive The received TapeDrive frome the db
 					 * @exception In case of error
 					 */
-					void copyTapeDriveInformations(const TapeDrive* tapeDrive)
+					void copyTapeDriveInformations(TapeDrive* tapeDrive)
 						throw (castor::exception::Exception);	
 					
 					

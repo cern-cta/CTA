@@ -143,16 +143,18 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
    */
   tapeDrive = getTapeDrive(tapeServer);
 
-	if ( ptr_driveRequest->status == VDQM_UNIT_QUERY ) {
-		  copyTapeDriveInformations(tapeDrive);
-		  freeMemory(tapeDrive, tapeServer);
-      return;
-	}
 
 	/**
 	 * Log the actual "new" status and the old one.
 	 */
-	printStatus(ptr_driveRequest->status, tapeDrive->status());																						
+	printStatus(ptr_driveRequest->status, tapeDrive->status());
+
+
+	if ( ptr_driveRequest->status == VDQM_UNIT_QUERY ) {
+		  copyTapeDriveInformations(tapeDrive);
+		  freeMemory(tapeDrive, tapeServer);
+      return;
+	}																						
 
 	/**
    * Verify that new unit status is consistent with the
@@ -436,7 +438,7 @@ castor::vdqm::TapeDrive*
 // copyTapeDriveInformations
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
-	const TapeDrive* tapeDrive) 
+	TapeDrive* tapeDrive) 
 	throw (castor::exception::Exception) {
 	if (tapeDrive == NULL) {
 		castor::exception::InvalidArgument ex;
@@ -444,25 +446,97 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
   	throw ex;
 	}
 
+	castor::vdqm::TapeRequest* runningTapeReq;
+	castor::stager::Tape* tape;
+	castor::vdqm::TapeServer* tapeServer;
+	castor::vdqm::DeviceGroupName* devGrpName;
+	
+
 //  castor::stager::ClientIdentification* client;
 
-  ptr_driveRequest->errcount = tapeDrive->errcount();
-  ptr_driveRequest->jobID = tapeDrive->jobID();
+	switch ( tapeDrive->status() ) {
+		case UNIT_UP:
+			ptr_driveRequest->status = VDQM_UNIT_UP | VDQM_UNIT_FREE;
+			break;
+		case UNIT_STARTING:
+			ptr_driveRequest->status = VDQM_UNIT_UP | VDQM_UNIT_BUSY;
+			break;
+		case UNIT_ASSIGNED:
+			ptr_driveRequest->status = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_ASSIGN;
+			break;
+		case UNIT_RELEASED:
+			ptr_driveRequest->status = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE;
+			break;
+		case VOL_MOUNTED:
+			ptr_driveRequest->status = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_ASSIGN;
+			break;
+		case FORCED_UNMOUNT:
+			ptr_driveRequest->status = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE 
+			                           | VDQM_UNIT_UNKNOWN | VDQM_FORCE_UNMOUNT;
+			break;
+		case UNIT_DOWN:
+			ptr_driveRequest->status = VDQM_UNIT_DOWN;
+			break;
+		case WAIT_FOR_UNMOUNT:
+			ptr_driveRequest->status = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE 
+			                           | VDQM_UNIT_UNKNOWN;
+			break;
+		case STATUS_UNKNOWN:
+			ptr_driveRequest->status = VDQM_UNIT_UNKNOWN;
+			break;
+		case UNIT_WAITDOWN:
+			ptr_driveRequest->status = VDQM_UNIT_WAITDOWN;
+			break;
+	}
+  
+  
+  ptr_driveRequest->DrvReqID  = (unsigned int)tapeDrive->id();
+  
+  ptr_driveRequest->jobID     = tapeDrive->jobID();
+	ptr_driveRequest->recvtime  = tapeDrive->modificationTime();
   ptr_driveRequest->resettime = tapeDrive->resettime();
-  ptr_driveRequest->TotalMB = tapeDrive->totalMB();
-  ptr_driveRequest->MBtransf = tapeDrive->transferredMB();
-  ptr_driveRequest->usecount = tapeDrive->usecount();			
+  ptr_driveRequest->usecount  = tapeDrive->usecount();			  
+  ptr_driveRequest->errcount  = tapeDrive->errcount();
+  ptr_driveRequest->MBtransf  = tapeDrive->transferredMB();
+  ptr_driveRequest->mode      = tapeDrive->tapeAccessMode();
+  ptr_driveRequest->TotalMB   = tapeDrive->totalMB();
   
-  
-  castor::vdqm::TapeRequest* runningTapeReq = tapeDrive->runningTapeReq();
+  runningTapeReq = tapeDrive->runningTapeReq();
   if ( NULL != runningTapeReq ) {
+  	ptr_driveRequest->VolReqID = (unsigned int)runningTapeReq->id();
+  	
 		castor::stager::ClientIdentification* client = runningTapeReq->client();
-	  
 	  strcpy(ptr_driveRequest->reqhost, client->machine().c_str());
 	  
 	  client = 0;
 	  runningTapeReq = 0; 
   }
+  
+  tape = tapeDrive->tape();
+  if ( NULL != tape ) {
+  	strcpy(ptr_driveRequest->volid, tape->vid().c_str());
+  	
+  	tape = 0;
+  }
+  
+  tapeServer = tapeDrive->tapeServer();
+  strcpy(ptr_driveRequest->server, tapeServer->serverName().c_str());
+  tapeServer = 0;
+  
+  strcpy(ptr_driveRequest->drive, tapeDrive->driveName().c_str());
+  
+  devGrpName = tapeDrive->deviceGroupName();
+  strcpy(ptr_driveRequest->dgn, devGrpName->dgName().c_str());
+  devGrpName = 0;
+  
+  //TODO: Take the last occured error out of the ErrorHistoy table
+//  ptr_driveRequest->errorHistory
+
+	std::vector<castor::vdqm::TapeDriveCompatibility*> driveCompatibilities =
+	  tapeDrive->tapeDriveCompatibilities();
+	if ( driveCompatibilities.size() > 0 ) {
+	  strcpy(ptr_driveRequest->tapeDriveModel, driveCompatibilities[0]->tapeDriveModel().c_str());
+	}
 }
 
 
