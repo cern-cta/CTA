@@ -165,6 +165,7 @@ castor::vdqm::VdqmServer::VdqmServer():
      {63, "Exception caught in TapeRequestDedicationHandler::dedicationRequest()"},
      {64, "No TapeDrive object to commit to RTCPD"},
      {65, "Found a queued tape request for mounted tape"},
+     {66, "VdqmServer::handleOldVdqmRequest(): waiting for client acknowledge"},
      {-1, ""}};
   castor::dlf::dlf_init("Vdqm", messages);
 }
@@ -619,6 +620,9 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
 			
 			oldProtInterpreter->sendAcknCommit();
 			oldProtInterpreter->sendToOldClient(&header, &volumeRequest, &driveRequest);
+			
+			//"VdqmServer::handleOldVdqmRequest(): waiting for client acknowledge" message
+			castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 66);
 			rc = oldProtInterpreter->recvAcknFromOldClient();
 
 			/**

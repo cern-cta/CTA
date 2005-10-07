@@ -400,7 +400,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkAssignConsistency(
 		ex.getMessage() << "TapeDriveConsistencyChecker::checkAssignConsistency(): "
 										<< "Status 0x"
 										<< std::hex << ptr_driveRequest->status 
-										<< "requested on FREE drive" << std::endl;
+										<< " requested on FREE drive" << std::endl;
 		throw ex;
   }
   
