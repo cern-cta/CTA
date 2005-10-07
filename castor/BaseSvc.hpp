@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/05 17:47:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/10/07 16:05:53 $ $Author: sponcec3 $
  *
  * 
  *
@@ -40,7 +40,8 @@ namespace castor {
    * Base class for services.
    * It essentially handles a reference count
    */
-  class BaseSvc : public BaseObject, public virtual IService {
+  class BaseSvc : public virtual BaseObject,
+                  public virtual IService {
 
   public:
 

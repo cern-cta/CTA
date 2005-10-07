@@ -48,7 +48,7 @@ namespace castor {
       /**
        * A base converter for Oracle database
        */
-      class OraBaseObj : public BaseObject {
+      class OraBaseObj : public virtual BaseObject {
 
       public:
 
