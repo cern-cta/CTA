@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlfbuf.h,v $ $Revision: 1.9 $ $Release$ $Date: 2005/09/12 16:23:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: dlfbuf.h,v $ $Revision: 1.10 $ $Release$ $Date: 2005/10/07 15:40:38 $ $Author: sponcec3 $
  *
  * A string buffer for logging into dlf
  *
@@ -49,7 +49,7 @@ namespace castor {
     dlfbuf(const std::string &name)
       throw (castor::exception::Exception) :
       castor::logbuf() {
-      // If dlf_seterrbuf was no tyet called in this thread
+      // If dlf_seterrbuf was not yet called in this thread
       // then create a buffer and call dlf_seterrbuf
       char** errBuf = errorBuffer();
       if (0 == *errBuf) {
