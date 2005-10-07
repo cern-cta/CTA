@@ -276,6 +276,11 @@ BEGIN
   RETURN ret;
 END;
 
+/* Global temporary table to handle output of the filesDeletedProc procedure */
+CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
+  (fileid INTEGER, nshost VARCHAR2(2048))
+ON COMMIT DELETE ROWS;
+
 /****************************************************************/
 /* NbTapeCopiesInFS to work around ORACLE missing optimizations */
 /****************************************************************/
@@ -891,6 +896,7 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
 	TYPE TapeDrive_Cur IS REF CURSOR RETURN TapeDrive%ROWTYPE;
 	TYPE TapeRequest_Cur IS REF CURSOR RETURN TapeRequest%ROWTYPE;
+  TYPE FileList_Cur IS REF CURSOR RETURN FilesDeletedProcOutput%ROWTYPE;
 END castor;
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
@@ -1674,19 +1680,23 @@ END;
  * exact amount of free space. However, we decrease the
  * spaceToBeFreed counter so that a next GC knows the status
  * of the FileSystem
+ * dcIds gives the list of diskcopies to delete.
+ * fileIds returns the list of castor files to be removed
+ * from the name server
  */
 CREATE OR REPLACE PROCEDURE filesDeletedProc
-(fileIds IN castor."cnumList") AS
+(dcIds IN castor."cnumList",
+ fileIds OUT castor.FileList_Cur) AS
   cfId NUMBER;
   fsId NUMBER;
   fsize NUMBER;
   nb NUMBER;
 BEGIN
- IF fileIds.COUNT > 0 THEN
+ IF dcIds.COUNT > 0 THEN
   -- Loop over the deleted files
-  FOR i in fileIds.FIRST .. fileIds.LAST LOOP
+  FOR i in dcIds.FIRST .. dcIds.LAST LOOP
     -- delete the DiskCopy
-    DELETE FROM DiskCopy WHERE id = fileIds(i)
+    DELETE FROM DiskCopy WHERE id = dcIds(i)
       RETURNING castorFile, fileSystem INTO cfId, fsId;
     -- Lock the Castor File and retrieve size
     SELECT fileSize INTO fsize FROM CastorFile where id = cfID FOR UPDATE;
@@ -1709,28 +1719,46 @@ BEGIN
          WHERE castorFile = cfId;
         -- If any SubRequest, give up
         IF nb = 0 THEN
-          -- Delete the CastorFile
-          DELETE FROM CastorFile WHERE id = cfId;
+          DECLARE
+            fid NUMBER;
+            fc NUMBER;
+            nsh VARCHAR2(2048);
+          BEGIN
+            -- Delete the CastorFile
+            DELETE FROM CastorFile WHERE id = cfId
+              RETURNING fileId, nsHost, fileClass
+              INTO fid, nsh, fc;
+            -- check whether this file potentially had TapeCopies
+            SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
+            IF nb = 0 THEN
+              -- This castorfile was created with no TapeCopy
+              -- So removing it from the stager means erasing
+              -- it completely. We should thus also remove it
+              -- from the name server
+              INSERT INTO FilesDeletedProcOutput VALUES (fid, nsh);
+            END IF;
+          END;
         END IF;
       END IF;
     END IF;
   END LOOP;
  END IF;
+ OPEN fileIds FOR SELECT * FROM FilesDeletedProcOutput;
 END;
 
 /* PL/SQL method implementing filesDeleted */
 CREATE OR REPLACE PROCEDURE filesDeletionFailedProc
-(fileIds IN castor."cnumList") AS
+(dcIds IN castor."cnumList") AS
   cfId NUMBER;
   fsId NUMBER;
   fsize NUMBER;
 BEGIN
- IF fileIds.COUNT > 0 THEN
+ IF dcIds.COUNT > 0 THEN
   -- Loop over the deleted files
-  FOR i in fileIds.FIRST .. fileIds.LAST LOOP
+  FOR i in dcIds.FIRST .. dcIds.LAST LOOP
     -- set status of DiskCopy to FAILED
     UPDATE DiskCopy SET status = 4 -- FAILED
-     WHERE id = fileIds(i)
+     WHERE id = dcIds(i)
     RETURNING fileSystem, castorFile INTO fsId, cfId;
     -- Retrieve the file size
     SELECT fileSize INTO fsize FROM CastorFile where id = cfId;

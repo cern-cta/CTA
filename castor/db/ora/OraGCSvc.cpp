@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/10/03 14:20:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/10/07 16:09:19 $ $Author: sponcec3 $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -72,6 +72,7 @@
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/BaseAddress.hpp"
 #include "occi.h"
+#include "Cglobals.h"
 #include <Cuuid.h>
 #include <string>
 #include <sstream>
@@ -99,7 +100,7 @@ const std::string castor::db::ora::OraGCSvc::s_selectFiles2DeleteStatementString
 
 /// SQL statement for filesDeleted
 const std::string castor::db::ora::OraGCSvc::s_filesDeletedStatementString =
-  "BEGIN filesDeletedProc(:1); END;";
+  "BEGIN filesDeletedProc(:1, :2); END;";
 
 /// SQL statement for filesDeleted
 const std::string castor::db::ora::OraGCSvc::s_filesDeletionFailedStatementString =
@@ -224,6 +225,8 @@ void castor::db::ora::OraGCSvc::filesDeleted
   if (0 == m_filesDeletedStatement) {
     m_filesDeletedStatement =
       createStatement(s_filesDeletedStatementString);
+    m_filesDeletedStatement->registerOutParam
+      (2, oracle::occi::OCCICURSOR);
     m_filesDeletedStatement->setAutoCommit(true);
   }
   // Execute statement and get result
@@ -250,6 +253,105 @@ void castor::db::ora::OraGCSvc::filesDeleted
        nba, &unused, 21, lens);
     // execute the statement
     m_filesDeletedStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "filesDeleted : no rows returned.";
+      throw ex;
+    }
+    // get the result, that is a cursor on the files to
+    // remove from the name server
+    oracle::occi::ResultSet *rs =
+      m_filesDeletedStatement->getCursor(2);
+
+    /////////////////////////////////////////////////////////
+    // Here we just want to go through the files to delete //
+    // from the nameserver. However, the interface to the  //
+    // name server is such that it is quite complicated !  //
+    /////////////////////////////////////////////////////////
+
+    // First thing, we need a thread safe variable to store
+    // the error messages comming from the name server
+    // XXX LIMITATION ON A STRING LENGTH : hardcoded to 1024 !
+    static int nsErrBufKey = -1;
+    void *errBuf = NULL;
+    int errBufLen = 1024;
+    if (-1 == Cglobals_get(&nsErrBufKey, &errBuf, errBufLen)) {
+      clog() << ERROR
+             << "Unable to get thread safe variable in filesDeleted. "
+             << "The following files won't be deleted from name server"
+             << " while they should have been (we give fileids here) :"
+             << std::endl;
+      oracle::occi::ResultSet::Status status = rs->next();
+      while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+        u_signed64 fileid = (u_signed64) rs->getDouble(1);
+        std::string nsHost = rs->getString(2);
+        clog() << ERROR << (u_signed64)rs->getDouble(1)
+               << "@" << rs->getString(2)
+               << std::endl;
+        status = rs->next(); 
+      }
+      m_filesDeletedStatement->closeResultSet(rs);
+      return;
+    }
+
+    // Now let's give this buffer to the name server
+    if (0 != Cns_seterrbuf((char*)errBuf, errBufLen)) {
+      clog() << ERROR
+             << "Error caught when calling Cns_seterrbuf in filesDeleted. "
+             << "The following files won't be deleted from name server"
+             << " while they should have been (we give fileids here) :"
+             << std::endl;
+      oracle::occi::ResultSet::Status status = rs->next();
+      while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+        u_signed64 fileid = (u_signed64) rs->getDouble(1);
+        std::string nsHost = rs->getString(2);
+        clog() << ERROR << (u_signed64)rs->getDouble(1)
+               << "@" << rs->getString(2)
+               << std::endl;
+        status = rs->next(); 
+      }
+      m_filesDeletedStatement->closeResultSet(rs);      
+      return;
+    }
+
+    // Second thing, we need a buffer to store the castor
+    // file names. 
+    // XXX LIMITATION ON A STRING LENGTH
+    // XXX THIS IS INHERITED FROM THE NAMESERVER INTERFACE
+    // XXX IT IS A RISK OF MEMORY CORRUPTION IN CASE THE
+    // XXX NAME SERVER RETURNS A TOO LONG NAME !!!!!
+    // However, CA_MAXPATHLEN is also used in the name server
+    // so we should be safe as long as it is not modified
+    char castorFileName[CA_MAXPATHLEN+1];
+
+    // Now let's go through the files to delete
+    oracle::occi::ResultSet::Status status = rs->next();
+    while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      u_signed64 fileid = (u_signed64) rs->getDouble(1);
+      std::string nsHost = rs->getString(2);
+      // and first of all, get the file name
+      if (0 != Cns_getpath((char*)nsHost.c_str(), fileid, castorFileName)) {
+        clog() << ERROR
+               << "Error caught when calling Cns_getpath in filesDeleted "
+               << "for fileid " << fileid << " and nsHost "
+               << nsHost << " : " << (char*) errBuf
+               << ". This file won't be "
+               << "deleted from name server while it should have been."
+               << std::endl;
+      } else {
+        if (0 != Cns_unlink(castorFileName)) {
+          clog() << ERROR
+                 << "Error caught when unlinking "
+                 << castorFileName << " (fileid "
+                 << fileid << ") from name server "
+                 << nsHost << " : "
+                 << (char*) errBuf
+                 << std::endl;
+        }
+      }
+      status = rs->next();
+    }
+    m_filesDeletedStatement->closeResultSet(rs);
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()
