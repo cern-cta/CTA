@@ -1,3 +1,104 @@
+castor (2.0.1-5) unstable; urgency=low
+
+  * PROTO2/castor/BaseSvc.hpp:
+    [r 1.4,2005-10-07,sponcec3] Added missing virutal keyword leading to bad multiple heritance from BaseObject
+  * PROTO2/castor/db/ora/OraBaseObj.hpp:
+    [r 1.4,2005-10-07,sponcec3] Added missing virutal keyword leading to bad multiple heritance from BaseObject
+  * PROTO2/castor/db/castor_oracle_create.sql:
+    [r1.31,2005-10-07,sponcec3] Modified filesDeleted procedure so that it deletes files from the nameserver when they have no tape copies
+    [r1.30,2005-10-06,sponcec3] Fixed bestFileSystemForJob : do not take draining machines and filesystems into account
+    [r1.29,2005-10-05,sponcec3] Fix stageQuery so that the check on filesystem and diskserver status works properly
+    [r1.28,2005-10-04,sponcec3] Fixed filequery so that only PRODUCTION status filesystems are taken into account
+  * PROTO2/castor/db/ora/Imakefile:
+    [r1.56,2005-10-03,mbraeger] ErrorHistory.cpp removed from libcastorCommonOra
+  * PROTO2/castor/db/ora/OraCommonSvc.hpp:
+    [r 1.6,2005-10-07,sponcec3] Removed bad inline keyword leading to warnings when compiling with gcc 4.0
+  * PROTO2/castor/db/ora/OraGCSvc.cpp:
+    [r 1.5,2005-10-10,sponcec3] Better handling of errors + improved efficiency by not calling Cns methods when not needed | fix bug in the commit timing
+    [r 1.4,2005-10-07,sponcec3] Modified filesDeleted procedure so that it deletes files from the nameserver when they have no tape copies
+  * PROTO2/castor/db/ora/OraVdqmSvc.cpp:
+    [r1.26,2005-10-07,mbraeger] Solved bug in function selectTapeDrive
+    [r1.25,2005-10-05,mbraeger] fixed a bug in selectTapeRequestQueue, due to a new column in the TapeRequest table.
+    [r1.24,2005-10-05,mbraeger] Fixed the initialisation bug of m_selectTapeDriveQueueStatement.
+  * PROTO2/castor/db/oracleTrailer.sql:
+    [r1.207,2005-10-07,sponcec3] Modified filesDeleted procedure so that it deletes files from the nameserver when they have no tape copies
+    [r1.206,2005-10-06,sponcec3] Fixed bestFileSystemForJob : do not take draining machines and filesystems into account
+    [r1.205,2005-10-05,sponcec3] Fix stageQuery so that the check on filesystem and diskserver status works properly
+    [r1.204,2005-10-04,sponcec3] Fixed filequery so that only PRODUCTION status filesystems are taken into account
+  * PROTO2/castor/gc/GcDaemon.cpp:
+    [r1.30,2005-10-10,sponcec3] Cleaned code. Removed limitations on string lengths when possible and dropped storage tank specific code
+  * PROTO2/castor/replier/RequestReplier.cpp:
+    [r1.22,2005-10-10,bcouturi] Ignore DONE_FAILURE as the connection will be garbage collected anyway - Should not be logged as an error there
+    [r1.21,2005-10-07,sponcec3] Fixed initalization of a struct where one field was not initialized
+  * PROTO2/castor/vdqm/VdqmServer.cpp:
+    [r1.43,2005-10-10,mbraeger] Due to compiling problems a made a revision of these files.
+    [r1.42,2005-10-07,mbraeger] Debug message added
+    [r1.41,2005-10-04,mbraeger] Fixed Unmarshalling bug for Magic Numbers.
+  * PROTO2/castor/vdqm/VdqmServerSocket.cpp:
+    [r1.13,2005-10-04,mbraeger] Fixed Unmarshalling bug for Magic Numbers.
+  * PROTO2/castor/vdqm/handler/BaseRequestHandler.cpp:
+    [r1.12,2005-10-05,mbraeger] try{...}catch()  block added
+  * PROTO2/castor/vdqm/handler/TapeDriveConsistencyChecker.cpp:
+    [r1.11,2005-10-10,mbraeger] Due to compiling problems a made a revision of these files.
+    [r1.10,2005-10-07,mbraeger] Debug message added
+  * PROTO2/castor/vdqm/handler/TapeDriveConsistencyChecker.hpp:
+    [r 1.7,2005-10-10,mbraeger] Due to compiling problems a made a revision of these files.
+  * PROTO2/castor/vdqm/handler/TapeDriveHandler.cpp:
+    [r1.20,2005-10-10,mbraeger] Solved some memory leaks
+    [r1.19,2005-10-07,mbraeger] copyTapeDriveInformations() function bugs fixed.
+    [r1.18,2005-10-05,mbraeger] Fixed segmentation fault errors
+  * PROTO2/castor/vdqm/handler/TapeDriveHandler.hpp:
+    [r 1.8,2005-10-07,mbraeger] copyTapeDriveInformations() function bugs fixed.
+  * PROTO2/castor/vdqm/handler/TapeDriveStatusHandler.cpp:
+    [r1.13,2005-10-10,mbraeger] Due to compiling problems a made a revision of these files.
+  * PROTO2/castor/vdqm/handler/TapeDriveStatusHandler.hpp:
+    [r 1.7,2005-10-10,mbraeger] Due to compiling problems a made a revision of these files.
+  * PROTO2/castor/vdqm/handler/TapeRequestDedicationHandler.cpp:
+    [r1.11,2005-10-10,mbraeger] Due to compiling problems a made a revision of these files.
+  * PROTO2/castor/vdqm/handler/TapeRequestHandler.cpp:
+    [r1.15,2005-10-05,mbraeger] Fixed segmentation fault errors
+  * PROTO2/debian/changelog:
+    [r1.72,2005-10-10,sponcec3] Remove tabs from the log. dch does not like them
+  * PROTO2/debian/control:
+    [r1.38,2005-10-10,jdurand] Make castor-vdqm2-server depends on castor-db-interface (that castor-lib-<anydb> will have to provide)
+  * PROTO2/debian/if.has_oracle:
+    [r 1.2,2005-10-03,jdurand] Added castor-vdqm2-lib-oracle
+  * CASTOR/dlf/dlf_mysql_ifce.c:
+    [r1.12,2005-10-05,kotlyar] added new function dlf_end_tr_nocommit
+    [r1.12,2005-10-05,kotlyar] added improved sequence usage for oracle
+    [r1.12,2005-10-05,kotlyar] added some border checks for buffers
+  * CASTOR/dlf/dlf_oracle_ifce.pc:
+    [r1.15,2005-10-07,kotlyar] perform 1 commit per 1 sec if dlf server in high load
+    [r1.14,2005-10-06,kotlyar] reduced commits number
+    [r1.13,2005-10-05,kotlyar] added new function dlf_end_tr_nocommit
+    [r1.13,2005-10-05,kotlyar] added improved sequence usage for oracle
+    [r1.13,2005-10-05,kotlyar] added some border checks for buffers
+  * CASTOR/dlf/dlf_oracle_tbl.sql:
+    [r1.11,2005-10-05,kotlyar] added new function dlf_end_tr_nocommit
+    [r1.11,2005-10-05,kotlyar] added improved sequence usage for oracle
+    [r1.11,2005-10-05,kotlyar] added some border checks for buffers
+  * CASTOR/dlf/dlf_procreq.c:
+    [r 1.8,2005-10-05,kotlyar] replaced dlf_end_tr to dlf_end_tr_nocommit for dlf_insert_message (commit when flushing buffers)
+  * CASTOR/dlf/dlfserver.c:
+    [r1.14,2005-10-05,kotlyar] commented gethostbyaddr for each message cause it used used nowhere
+  * CASTOR/h/dlf_server.h:
+    [r 1.4,2005-10-05,kotlyar] added  new variables for sequences usage
+  * PROTO2/hsmtools/castor_tools.pm:
+    [r 1.4,2005-10-10,jdurand] Updated parsing in conformity with new schema OraCnvSvc -> DbCnvSvc
+  * PROTO2/rtcopy/TapeErrorHandler.c:
+    [r 1.9,2005-10-10,obarring] Set serrno=SERTYEXHAUST if Cns segment is no longer valid. This will cause
+    [r 1.9,2005-10-10,obarring] the request to fail. In the longer term a new catalog interface will allow
+    [r 1.9,2005-10-10,obarring] for restarting the original request, which will retrieve the new segment information
+  * PROTO2/stager/Imakefile:
+    [r1.49,2005-10-10,jdurand] Removed #ifdef STAGE_LINK_STATIC
+    [r1.49,2005-10-10,jdurand] Removed MakeDepLibrary(lib,castorCommonOra)
+  * PROTO2/stager/stager_db_service.c:
+    [r1.130,2005-10-07,jdurand] When Cstager_IStagerSvc_isSubRequestToSchedule() returns 0, update our copy of subrequest's status to SUBREQUEST_WAITSUBREQ, even if the stored procedure already changed it: we have a subsequent call to Cstager_IStagerSvc_updateAndCheckSubRequest() that will overwrite the status's request using our copy
+    [r1.129,2005-10-06,sponcec3] The title of the log has to be STRING for strings.
+    [r1.128,2005-10-06,sponcec3] Moved message from ERROR to SYSTEM when a file requested by a client does not exist in the nameserver. Also added the file name in the message
+
+ -- Sebastien Ponce <sponcec3@pcitds13>  Mon, 10 Oct 2005 21:31:38 +0200
+
 castor (2.0.1-4) unstable; urgency=low
 
   * PROTO2/castor/db/ora/OraQuerySvc.cpp:
