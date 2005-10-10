@@ -75,7 +75,7 @@ namespace castor {
 					 * @param cuuid The unique id of the request. Needed for dlf
 					 * @exception In case of error
 		       */
-					TapeDriveStatusHandler(TapeDrive* tapeDrive, 
+					TapeDriveStatusHandler(castor::vdqm::TapeDrive* tapeDrive, 
 													 newVdqmDrvReq_t* driveRequest, Cuuid_t cuuid) 
 													 throw(castor::exception::Exception);
 					
@@ -87,7 +87,7 @@ namespace castor {
 						
 				private:
 					// Private variables
-					TapeDrive* ptr_tapeDrive;
+					castor::vdqm::TapeDrive* ptr_tapeDrive;
 					newVdqmDrvReq_t* ptr_driveRequest;
 					Cuuid_t m_cuuid;
 					

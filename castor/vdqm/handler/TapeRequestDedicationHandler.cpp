@@ -232,7 +232,7 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::handleDedication(
     {castor::dlf::Param("ID tapeDrive", freeTapeDrive->id()),
      castor::dlf::Param("ID tapeRequest", waitingTapeRequest->id()),
      castor::dlf::Param("tapeDrive status", "UNIT_STARTING")};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 45, 3, params);	
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 45, 3, params);	
 
   
  	/**
@@ -422,7 +422,9 @@ void *castor::vdqm::handler::TapeRequestDedicationHandler::dedicationRequest(
      {castor::dlf::Param("function", 
      	"castor::vdqm::handler::TapeRequestDedicationHandler::dedicationRequest")};
   	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 64, 1, param);
-  } 
+  }
+  
+  return 0; 
 }
 
 

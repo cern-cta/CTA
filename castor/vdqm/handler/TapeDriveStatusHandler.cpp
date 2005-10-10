@@ -48,7 +48,7 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::vdqm::handler::TapeDriveStatusHandler::TapeDriveStatusHandler(
-	TapeDrive* tapeDrive, 
+	castor::vdqm::TapeDrive* tapeDrive, 
 	newVdqmDrvReq_t* driveRequest, 
 	Cuuid_t cuuid) throw(castor::exception::Exception) {
 		
@@ -122,69 +122,6 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleOldStatus()
 	  if ( (ptr_driveRequest->status & VDQM_UNIT_FREE) ) {
 			handleUnitFreeStatus();
 		}
-		
-// TODO: This code must be implemented in an own thread		
-//------------------------------------------------------------------------------
-//        /*
-//         * Loop until there is no more volume requests in queue or
-//         * no suitable free drive
-//         */
-//        for (;;) {
-//            /*
-//             * If volrec already assigned by AnyVolRecForMountedVol()
-//             * we skip to start request
-//             */
-//            if ( volrec == NULL ) {
-//                rc = AnyVolRecForDgn(dgn_context);
-//                if ( rc < 0 ) {
-//
-//                    log(LOG_ERR,"vdqm_NewDrvReq(): AnyVolRecForDgn() returned error\n");
-//                    break;
-//                }
-//                if ( rc == 0 ) break;
-//                if ( rc == 1 ) {
-//                    rc = SelectVolAndDrv(dgn_context,&volrec,&drvrec);
-//                    if ( rc == -1 || volrec == NULL || drvrec == NULL ) {
-//                        log(LOG_ERR,"vdqm_NewDrvReq(): SelectVolAndDrv() returned rc=%d\n",
-//                            rc);
-//                        break;
-//                    } else {
-//                        drvrec->vol = volrec;
-//                        volrec->drv = drvrec;
-//                    }
-//                }
-//            }
-//            if ( volrec != NULL ) {
-//                drvrec->drv.VolReqID = volrec->vol.VolReqID;
-//                volrec->vol.DrvReqID = drvrec->drv.DrvReqID;
-//                /*
-//                 * Start the job
-//                 */
-//                rc = vdqm_StartJob(volrec);
-//                if ( rc < 0 ) {
-//                    /*
-//                     * Job could not be started. Mark the drive
-//                     * status as unknown so that it will not be
-//                     * assigned to a new request immediately. The
-//                     * volume record is kept in queue. Note that
-//                     * if a volume is already mounted on unit it
-//                     * is inaccessible for other requests until 
-//                     * drive status is updated.
-//                     */
-//                    log(LOG_ERR,"vdqm_NewDrvReq(): vdqm_StartJob() returned error\n");
-//                    drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
-//                    drvrec->drv.recvtime = (int)time(NULL);
-//                    drvrec->vol = NULL;
-//                    drvrec->drv.VolReqID = 0;
-//                    volrec->vol.DrvReqID = 0;
-//                    drvrec->drv.jobID = 0;
-//                    volrec->drv = NULL;
-//                    break;
-//                } 
-//            } else break;
-//            volrec = NULL;
-//        } /* End of for (;;) */
-//------------------------------------------------------------------------------
 	} 
 	else { // TapeDrive is DOWN
 	  /*

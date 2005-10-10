@@ -44,7 +44,7 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::vdqm::handler::TapeDriveConsistencyChecker::TapeDriveConsistencyChecker(
-	TapeDrive* tapeDrive, 
+	castor::vdqm::TapeDrive* tapeDrive, 
 	newVdqmDrvReq_t* driveRequest, 
 	Cuuid_t cuuid) throw(castor::exception::Exception) {
 		

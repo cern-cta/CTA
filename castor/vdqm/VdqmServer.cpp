@@ -79,9 +79,15 @@ int main(int argc, char *argv[]) {
     std::cerr << "Caught exception : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
+    
+    return 1;
   } catch (...) {
     std::cerr << "Caught exception!" << std::endl;
+    
+    return 1;
   }
+  
+  return 0;
 }
 
 
@@ -223,7 +229,11 @@ int castor::vdqm::VdqmServer::main () {
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
        castor::dlf::Param("Precise Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4, 2, params);
+    
+    return 1;
   }
+  
+  return 0;
 }
 
 
