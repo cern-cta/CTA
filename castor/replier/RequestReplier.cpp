@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2005/10/07 15:41:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2005/10/10 16:36:50 $ $Author: bcouturi $
  *
  *
  *
@@ -578,6 +578,8 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
         //           //close(pl[i].fd);
         //         }
         //         break;
+      case DONE_FAILURE:
+        break;
       default:
         clog() << ERROR << SETW func  <<  cr->toString() <<  "Should not have status "
                << cr->getStatusStr() << " " << pl[i].fd << std::endl;
