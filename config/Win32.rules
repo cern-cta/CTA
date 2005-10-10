@@ -1,0 +1,82 @@
+/*
+ * Copyright (C) 1997-2001 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+/*
+ * @(#)$RCSfile: Win32.rules,v $ $Revision: 1.1 $ $Date: 2005/10/10 16:46:29 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ */
+
+.c.obj:
+	$(CC) -c $*.c @<<
+	$(CFLAGS)
+<<
+
+.SUFFIXES: .c .robj
+.c.robj:
+	$(CC) $(MTCCFLAGS) /Fo$@ -c $*.c @<<
+	$(CFLAGS)
+<<
+
+#define DepSourceName(dirname,source) ..\ ## dirname\ ## source
+#define FileName(dirname,basename) dirname\ ## basename
+
+#define LibraryTargetName(libname) libname.lib
+
+#define NormalLibraryTarget(libname,objects) \
+LibraryTargetName(libname): objects			@@\
+	$(AR) @<<					@@\
+/out:$@ $**						@@\
+<<
+
+#define DepLibraryTargetName(dir,libname) ..\ ## dir\ ## LibraryTargetName(libname)
+#define SharedLibraryTargetName(libname) libname.dll
+
+#define MakeDepLibrary(dir,libname) \
+DepLibraryTargetName(dir,libname):	FORCE		@@\
+	pushd ..\ ## dir & $(MAKE) LibraryTargetName(libname) & popd
+
+#define ProgramTargetName(target) target.exe
+
+#define NormalProgramTarget(program,objects,deplibs,libs) \
+ProgramTargetName(program): objects deplibs		@@\
+        $(LD) @<<					@@\
+/out:$@ $(LDFLAGS) objects libs				@@\
+<<
+
+#define MakeSubdirs(name,dirs) \
+name:							@@\
+	@for %i in ( dirs ) \				@@\
+	do @(echo %i - & cd %i & \			@@\
+		$(MAKE) $(MFLAGS) $@ & cd .. )
+
+#define MakeCondSubdirs(name,dirs,cond) \
+name: cond							@@\
+	@for %i in ( dirs ) \				@@\
+	do @(echo %i - & cd %i & \			@@\
+		$(MAKE) $(MFLAGS) $@ & cd .. )
+
+#define RemoveFile(file) if exist file $(RM) file
+
+#define RemoveFiles(files) for %i in ( files ) do @RemoveFile(%i)
+
+#define InstallTarget(file,owner,group,mode,dest)	@@\
+FileName(dest,file): file				@@\
+	@if exist $(DESTDIR)$@ \				@@\
+		( RemoveFile(FileName($(DESTDIR)dest,OLD$?)) & \	@@\
+		ren $@ FileName($(DESTDIR)dest,OLD$?) )		@@\
+	copy $? $(DESTDIR)$@
+
+#define InstallLibrary(libname,dest,owner,group,mode)	@@\
+InstallTarget(LibraryTargetName(libname),owner,group,mode,dest)
+
+#define InstallSharedLibrary(libname,maj,min,dest)		@@\
+dest\SharedLibraryTargetName(libname): SharedLibraryTargetName(libname)	@@\
+	copy $? $(DESTDIR)$@.maj.min					@@\
+	copy $? $(DESTDIR)$@.maj						@@\
+	copy $? $(DESTDIR)$@
+
+#define MakeDir(dirname,owner,group,mode)		@@\
+dirname:						@@\
+	-mkdir $(DESTDIR)$@
+
