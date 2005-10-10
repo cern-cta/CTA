@@ -139,44 +139,44 @@ int castor::gc::GcDaemon::start()
     return -1;
   }
 
-  char *p;
-  //  Retrieve DiskServerName
-  char diskServerName[CA_MAXHOSTNAMELEN];
-  char gcglobalFS[20] = "Global FileSystem";
-  char *gctarget;
-  // Get DiskServerName from /etc/castor/castor.conf:
-  // example to serve global filesystem: "GC TARGET localhost"
-  if ( (p = getenv ("GC_TARGET")) || (p = getconfent ("GC", "TARGET", 0)) ) {
-    gctarget = strcpy(diskServerName, p);
-    if ( (strcmp(gctarget, "localhost")) == 0) { gctarget = gcglobalFS; }
-  } else { // get real hostname
-    if (gethostname(diskServerName, CA_MAXHOSTNAMELEN) != 0) {
-      // "Cannot get disk server name" message
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4);
-      return (-1);
+  // Retrieve DiskServerName
+  // First attempt is environment, second attempt using
+  // castor.conf and finally gethostname
+  // /etc/castor/castor.conf example: "GC  TARGET  machinename"
+  std::string diskServerName;
+  {
+    char *p;
+    if ( (p = getenv ("GC_TARGET")) || (p = getconfent ("GC", "TARGET", 0)) ) {
+      diskServerName = p;
+    } else { // get real hostname
+      char cName[CA_MAXHOSTNAMELEN];
+      if (gethostname(cName, CA_MAXHOSTNAMELEN) != 0) {
+        // "Cannot get disk server name" message
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4);
+        return (-1);
+      }
+      diskServerName = cName;
     }
-    gctarget = diskServerName;
   }
 
-  int lhostlen = strlen( diskServerName );
-  for (int i = 0; i < lhostlen; i++) {
-    if (diskServerName[i] == '.') {diskServerName[i] = '\0'; break; }
-  }
-  lhostlen = strlen( diskServerName );
-
+  // Be sure we have only the machine name, without domain
+  diskServerName =
+    diskServerName.substr(0, diskServerName.find_first_of('.'));
 
   // set GC sleep interval, sec.
   // /etc/castor/castor.conf example: "GC  INTERVAL  600"
-  char gcint[16];
   int  gcinterval;
-  if ((p = getenv ("GC_INTERVAL")) || (p = getconfent ("GC", "INTERVAL", 0)))
-    gcinterval = atoi( strcpy (gcint, p) );
-  else
-    gcinterval = GCINTERVAL;
-
+  {
+    char *p;
+    if ((p = getenv ("GC_INTERVAL")) || (p = getconfent ("GC", "INTERVAL", 0)))
+      gcinterval = atoi(p);
+    else
+      gcinterval = GCINTERVAL;
+  }
+  
   // "Garbage Collector started successfully" message
   castor::dlf::Param params[] =
-    {castor::dlf::Param("Machine", gctarget),
+    {castor::dlf::Param("Machine", diskServerName),
      castor::dlf::Param("Sleep Interval", gcinterval)};
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 2, params);
 
@@ -187,21 +187,23 @@ int castor::gc::GcDaemon::start()
   for (;;) {
     // "Checking for garbage" message
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Machine", gctarget)};
+      {castor::dlf::Param("Machine", diskServerName)};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 6, 1, params);
 
     // get new sleep interval if the environment has been changed
-    int  gcintervalnew;
-    if ((p = getenv ("GC_INTERVAL")) || (p = getconfent ("GC", "INTERVAL", 0)))
-      gcintervalnew = atoi( strcpy (gcint, p) );
-    else gcintervalnew = gcinterval;
-    if ( gcintervalnew != gcinterval) {
-      gcinterval = gcintervalnew;
-      // "Sleep interval changed" message
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Machine", gctarget),
-         castor::dlf::Param("Sleep Interval", gcinterval)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 7, 2, params);
+    {
+      char *p;
+      int  gcintervalnew;
+      if ((p = getenv ("GC_INTERVAL")) || (p = getconfent ("GC", "INTERVAL", 0)))
+        gcintervalnew = atoi(p);
+      if ( gcintervalnew != gcinterval) {
+        gcinterval = gcintervalnew;
+        // "Sleep interval changed" message
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Machine", diskServerName),
+           castor::dlf::Param("Sleep Interval", gcinterval)};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 7, 2, params);
+      }
     }
 
     // Retrieve list of files to delete
