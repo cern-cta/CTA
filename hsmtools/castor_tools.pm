@@ -17,7 +17,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: castor_tools.pm,v $ $Revision: 1.3 $ $Release$ $Date: 2005/07/28 12:13:45 $ $Author: sponcec3 $
+# * @(#)$RCSfile: castor_tools.pm,v $ $Revision: 1.4 $ $Release$ $Date: 2005/10/10 09:16:54 $ $Author: jdurand $
 # *
 # *
 # *
@@ -43,13 +43,13 @@ sub castor_conf_getOraStagerSvc {
 
   open (CONF, $ORASTAGERCONFIG) or return ("", "");
   while (<CONF>) {
-    if (/OraCnvSvc\s+user\s+(\w+)/) {
+    if (/DbCnvSvc\s+user\s+(\w+)/) {
       $user = $1;
     }
-    if (/OraCnvSvc\s+passwd\s+(\w+)/) {
+    if (/DbCnvSvc\s+passwd\s+(\w+)/) {
       $passwd = $1;
     }
-    if (/OraCnvSvc\s+dbName\s+(\w+)/) {
+    if (/DbCnvSvc\s+dbName\s+(\w+)/) {
       $dbname = $1;
     }
   }
