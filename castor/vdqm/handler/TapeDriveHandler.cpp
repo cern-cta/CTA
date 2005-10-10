@@ -32,10 +32,12 @@
 #include "castor/stager/Tape.hpp"
 
 #include "castor/vdqm/DeviceGroupName.hpp"
+#include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
+#include "castor/vdqm/TapeDriveDedication.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/newVdqm.h"
@@ -152,7 +154,12 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
 
 	if ( ptr_driveRequest->status == VDQM_UNIT_QUERY ) {
 		  copyTapeDriveInformations(tapeDrive);
+		  
 		  freeMemory(tapeDrive, tapeServer);
+		  delete tapeDrive;
+			tapeServer = 0;
+			tapeDrive = 0;
+			
       return;
 	}																						
 
@@ -663,25 +670,35 @@ void castor::vdqm::handler::TapeDriveHandler::freeMemory(
    */
   
   delete tapeDrive->deviceGroupName();
+  tapeDrive->setDeviceGroupName(0);
   
-  if ( tapeDrive->tape() )
+  if ( tapeDrive->tape() ) {
   	delete tapeDrive->tape();
+  	tapeDrive->setTape(0);
+  }
 	
 	
 	
 	TapeRequest* runningTapeReq = tapeDrive->runningTapeReq();
 	if ( runningTapeReq ) {
 		delete runningTapeReq->tape();
+		runningTapeReq->setTape(0);
 
-		if ( runningTapeReq->requestedSrv() ) 
+		if ( runningTapeReq->requestedSrv() ) {
 			delete runningTapeReq->requestedSrv();
+			runningTapeReq->setRequestedSrv(0);
+		}
 
 		delete runningTapeReq->deviceGroupName();
+		runningTapeReq->setDeviceGroupName(0);
 		
 		delete runningTapeReq->tapeAccessSpecification();
+		runningTapeReq->setTapeAccessSpecification(0);
+		
 			
 		delete runningTapeReq;	 
 		runningTapeReq = 0;
+		tapeDrive->setRunningTapeReq(0);
 	}
 	
 	for (std::vector<castor::vdqm::TapeDrive*>::iterator it = tapeServer->tapeDrives().begin();
@@ -699,6 +716,34 @@ void castor::vdqm::handler::TapeDriveHandler::freeMemory(
   delete tapeServer;
   tapeServer = 0;
   tapeDrive->setTapeServer(0);
+  
+  std::vector<castor::vdqm::ErrorHistory*> errorHistoryVector = tapeDrive->errorHistory();
+	for (unsigned int i = 0; i < errorHistoryVector.size(); i++) {
+    if ( errorHistoryVector[i]->tape() != NULL ) {
+    	delete errorHistoryVector[i]->tape();
+    	errorHistoryVector[i]->setTape(0);
+    }
+    
+    delete errorHistoryVector[i];
+  }
+  errorHistoryVector.clear();
+
+	std::vector<castor::vdqm::TapeDriveDedication*> tapeDriveDedicationVector = tapeDrive->tapeDriveDedication();
+  for (unsigned int i = 0; i < tapeDriveDedicationVector.size(); i++) {
+    delete tapeDriveDedicationVector[i];
+  }  
+  tapeDriveDedicationVector.clear();
+  
+  std::vector<castor::vdqm::TapeDriveCompatibility*> tapeDriveCompatibilityVector = tapeDrive->tapeDriveCompatibilities();
+  for (unsigned int i = 0; i < tapeDriveCompatibilityVector.size(); i++) {
+    if ( tapeDriveCompatibilityVector[i]->tapeAccessSpecification() != NULL ) {
+    	delete tapeDriveCompatibilityVector[i]->tapeAccessSpecification();
+    	tapeDriveCompatibilityVector[i]->setTapeAccessSpecification(0);
+    }
+    
+    delete tapeDriveCompatibilityVector[i];
+  }  
+  tapeDriveCompatibilityVector.clear();
 }
 
 
