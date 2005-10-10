@@ -1,30 +1,30 @@
 castor (2.0.1-4) unstable; urgency=low
 
   * PROTO2/castor/db/ora/OraQuerySvc.cpp:
-	[r1.20,2005-10-03,sponcec3] Close unclosed cursors potentially leading to memory leaks
+    [r1.20,2005-10-03,sponcec3] Close unclosed cursors potentially leading to memory leaks
   * PROTO2/castor/db/oracleTrailer.sql:
-	[r1.203,2005-10-03,sponcec3] Fixed getUpdateStart so that we don't start 2 disk2disk copies at the same time
-	[r1.202,2005-10-03,sponcec3] Fixed usage of maxFreeSpace that is now relative to the totalSize
-	[r1.200,2005-10-03,sponcec3] Fixed diskcopy name for replicated files
+    [r1.203,2005-10-03,sponcec3] Fixed getUpdateStart so that we don't start 2 disk2disk copies at the same time
+    [r1.202,2005-10-03,sponcec3] Fixed usage of maxFreeSpace that is now relative to the totalSize
+    [r1.200,2005-10-03,sponcec3] Fixed diskcopy name for replicated files
   * PROTO2/castor/io/StreamCnvSvc.cpp:
-	[r 1.9,2005-10-03,sponcec3] Fix signednes of type when unmarshalled
+    [r 1.9,2005-10-03,sponcec3] Fix signednes of type when unmarshalled
   * PROTO2/castor/io/biniostream.h:
-	[r 1.7,2005-10-03,sponcec3] Fixed unmarshalling of u_signed64 on 64 bits platforms
+    [r 1.7,2005-10-03,sponcec3] Fixed unmarshalling of u_signed64 on 64 bits platforms
   * PROTO2/castor/gc/GcDaemon.cpp:
-	[r1.29,2005-10-03,sponcec3] Use SYSTEM instead of USAGE level for logging regular operations
+    [r1.29,2005-10-03,sponcec3] Use SYSTEM instead of USAGE level for logging regular operations
   * PROTO2/castor/replier/RequestReplier.cpp:
-	[r1.20,2005-10-03,sponcec3] Use SYSTEM instead of USAGE level for logging regular operations
+    [r1.20,2005-10-03,sponcec3] Use SYSTEM instead of USAGE level for logging regular operations
   * PROTO2/castor/rh/Server.cpp:
-	[r1.42,2005-10-03,sponcec3] Use SYSTEM instead of USAGE level for logging regular operations
+    [r1.42,2005-10-03,sponcec3] Use SYSTEM instead of USAGE level for logging regular operations
   * PROTO2/castor/vdqm :  Use SYSTEM instead of USAGE level for logging regular operations
   * PROTO2/clips/castor.clp:
-	[r1.13,2005-10-03,jdurand] Decrease spaceImportance from 5 to 3 (ioImportance is 5)
+    [r1.13,2005-10-03,jdurand] Decrease spaceImportance from 5 to 3 (ioImportance is 5)
   * PROTO2/debian/castor-allservicesbuttapeservers.conf:
-	[r 1.5,2005-09-29,jdurand] var/spool/rh/ -> /var/spool/rhserver/
+    [r 1.5,2005-09-29,jdurand] var/spool/rh/ -> /var/spool/rhserver/
   * PROTO2/debian/castor.conf:
-	[r 1.8,2005-09-29,jdurand] var/spool/rh/ -> /var/spool/rhserver/
+    [r 1.8,2005-09-29,jdurand] var/spool/rh/ -> /var/spool/rhserver/
   * PROTO2/stager/stager_query_service.cpp:
-	[r1.25,2005-10-03,sponcec3] Fixed memory leak
+    [r1.25,2005-10-03,sponcec3] Fixed memory leak
 
  -- Sebastien Ponce <sponcec3@pcitds13>  Mon,  3 Oct 2005 17:16:38 +0200
 
