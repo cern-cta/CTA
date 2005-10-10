@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 #
-# $Id: CASTOR.cvslogs.pl,v 1.1 2005/10/10 15:27:33 jdurand Exp $
+# $Id: CASTOR.cvslogs.pl,v 1.2 2005/10/10 16:14:45 jdurand Exp $
 #
 
 use strict;
@@ -33,7 +33,7 @@ sub printit($$) {
 	    my $date = $$revisions{$revision}{date};
 	    my $who = $$revisions{$revision}{who};
 	    foreach $what (@{$$revisions{$revision}{what}}) {
-		printf "\t[r%4s,%s,%s] %s\n", $revision, $date, $who, $what;
+		printf "    [r%4s,%s,%s] %s\n", $revision, $date, $who, $what;
 	    }
 	}
     }
