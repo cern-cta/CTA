@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_update.cpp,v 1.7 2005/02/15 09:58:57 bcouturi Exp $
+ * $Id: stager_client_api_update.cpp,v 1.8 2005/10/11 13:37:07 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_update.cpp,v $ $Revision: 1.7 $ $Date: 2005/02/15 09:58:57 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_update.cpp,v $ $Revision: 1.8 $ $Date: 2005/10/11 13:37:07 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -33,6 +33,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_update.cpp,v $ $Revision:
 #include "castor/stager/StageUpdateRequest.hpp"
 #include "castor/rh/Response.hpp"
 #include "castor/rh/FileResponse.hpp"
+#include "castor/rh/IOResponse.hpp"
 #include "stager_client_api_common.h"
 
 // To be removed when getting rid of 
@@ -223,7 +224,10 @@ EXTERN_C int DLL_DECL stage_update(const char *userTag,
     // Submitting the request
     std::vector<castor::rh::Response *>respvec;    
     castor::client::VectorResponseHandler rh(&respvec);
-    client.sendRequest(&req, &rh);
+    std::string reqid = client.sendRequest(&req, &rh);
+    if (requestId != NULL) {
+      *requestId = strdup(reqid.c_str());
+    }
 
     // Checking the result
     // Parsing the responses which have been stored in the vector
@@ -249,15 +253,19 @@ EXTERN_C int DLL_DECL stage_update(const char *userTag,
     }
     
     // Casting the response into a FileResponse !
-    castor::rh::FileResponse* fr = 
-      dynamic_cast<castor::rh::FileResponse*>(respvec[0]);
+    castor::rh::IOResponse* fr = 
+      dynamic_cast<castor::rh::IOResponse*>(respvec[0]);
       if (0 == fr) {
         castor::exception::Exception e(SEINTERNAL);
         e.getMessage() << "Error in dynamic cast, response was NOT a file response";
         throw e;
       }
 
-      (*response)->filename = strdup(fr->castorFileName().c_str());
+      (*response)->castor_filename = strdup(fr->castorFileName().c_str());
+      (*response)->protocol = strdup(fr->protocol().c_str());
+      (*response)->server = strdup(fr->server().c_str());
+      (*response)->port = fr->port();
+      (*response)->filename = strdup(fr->fileName().c_str());
       (*response)->status = fr->status();
       (*response)->errorCode = fr->errorCode();
       if (fr->errorMessage().length() > 0) {
