@@ -18,7 +18,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: cleanLostFiles,v $ $Revision: 1.6 $ $Release$ $Date: 2005/09/22 14:24:18 $ $Author: sponcec3 $
+# * @(#)$RCSfile: cleanLostFiles,v $ $Revision: 1.7 $ $Release$ $Date: 2005/10/11 13:19:17 $ $Author: sponcec3 $
 # *
 # * cleanup files in the DB when they were lost on the disk.
 # * this basically does the second part of the garbage collection
@@ -88,11 +88,12 @@ if ($nbargs == 0) {
 $dbquery .= <<EOF;
 );
   files castor."cnumList";
+  fileIds castor.FileList_Cur;
 BEGIN
   FOR i in rawfiles.FIRST .. rawfiles.LAST LOOP
     files(i):=rawfiles(i);
   end LOOP;
-  filesDeletedProc(files);
+  filesDeletedProc(files, fileIds);
 END;
 EOF
 
