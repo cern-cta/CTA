@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2005/10/10 16:36:50 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2005/10/11 14:14:02 $ $Author: bcouturi $
  *
  *
  *
@@ -253,7 +253,7 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
                << std::endl;
         continue;
       } else {
-        clog() << ERROR << SETW func
+        clog() << WARNING << SETW func
                <<  "Error in poll:"
                << strerror(errno)
                << std::endl;
@@ -312,7 +312,7 @@ void castor::replier::RequestReplier::createNewClientConnection(ClientResponse c
       clog() << VERBOSE << SETW func  <<  "ClientConnection " << r << " added fd is "
              << r->fd() << std::endl;
     } catch(castor::exception::Exception e) {
-      clog() << ERROR
+      clog() << WARNING
              << "Exeption while Creating new ClientConnection: "
              << e.getMessage().str() << std::endl;
       r->setStatus(DONE_FAILURE);
@@ -484,7 +484,7 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
       // Fetching the corresponding ClientConnection
       ClientConnection *cr = (*m_connections)[(pl[i].fd)];
       if (0==cr) {
-        clog() << ERROR
+        clog() << WARNING
                << "Could not look up Connection for fd : "
                << pl[i].fd << " (index:" << i << ")" << std::endl;
         continue;
@@ -497,14 +497,14 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
              << std::endl;
 
       if (pl[i].revents & POLLHUP) {
-        clog() << ERROR << SETW func  <<  cr->toString()
+        clog() << WARNING << SETW func  <<  cr->toString()
                << " Connection dropped " << pl[i].fd << std::endl;
         cr->setStatus(DONE_FAILURE);
         cr->setErrorMessage("Peer dropped the connection!");
       }
 
       if (pl[i].revents & POLLERR) {
-        clog() << ERROR << SETW func  <<  cr->toString()
+        clog() << WARNING << SETW func  <<  cr->toString()
                << " POLLERR received " << pl[i].fd << std::endl;
         cr->setStatus(DONE_FAILURE);
         cr->setErrorMessage("Connection error");
@@ -518,7 +518,7 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
         try {
           cr->sendNextMessage();
         } catch (EndConnectionException ex) {
-          clog() << ERROR  << cr->toString()
+          clog() << WARNING  << cr->toString()
                  << " got EndConnectionException closing connection"
                  << std::endl;
           cr->setStatus(CLOSE);
@@ -528,7 +528,7 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
                  << sstrerror(ex.code())
                  << ex.getMessage().str() << std::endl;
         } catch (castor::exception::Exception ex) {
-          clog() << ERROR << cr->toString()
+          clog() << WARNING << cr->toString()
                  << "Exception caught in sending data : "
                  << sstrerror(ex.code())
                  << ex.getMessage().str() << std::endl;
@@ -546,7 +546,7 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
           try {
             cr->sendNextMessage();
           } catch (castor::exception::Exception ex) {
-            clog() << ERROR << SETW func  <<  cr->toString() << "Exception caught in sending data : "
+            clog() << WARNING << SETW func  <<  cr->toString() << "Exception caught in sending data : "
                    << sstrerror(ex.code()) << std::endl
                    << ex.getMessage().str() << std::endl;
           }
@@ -557,7 +557,7 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
           try {
             cr->sendNextMessage();
           } catch (castor::exception::Exception ex) {
-            clog() << ERROR << SETW func  <<  "Exception caught in sending data : "
+            clog() << WARNING << SETW func  <<  "Exception caught in sending data : "
                    << sstrerror(ex.code()) << std::endl
                    << ex.getMessage().str() << std::endl;
           }
@@ -581,7 +581,7 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
       case DONE_FAILURE:
         break;
       default:
-        clog() << ERROR << SETW func  <<  cr->toString() <<  "Should not have status "
+        clog() << WARNING << SETW func  <<  cr->toString() <<  "Should not have status "
                << cr->getStatusStr() << " " << pl[i].fd << std::endl;
       } // End switch
     } // End if revents != 0
