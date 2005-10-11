@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_procreq.c,v $ $Revision: 1.8 $ $Date: 2005/10/05 12:31:54 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_procreq.c,v $ $Revision: 1.9 $ $Date: 2005/10/11 13:12:51 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
  
 #include <errno.h>
@@ -16,6 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: dlf_procreq.c,v $ $Revision: 1.8 $ $Date: 
 #include <time.h>
 #include <sys/types.h>
 #include <string.h>
+#include <netdb.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
@@ -23,6 +24,7 @@ static char sccsid[] = "@(#)$RCSfile: dlf_procreq.c,v $ $Revision: 1.8 $ $Date: 
 #endif
 #include "Cthread_api.h"
 #include "Cupv_api.h"
+#include "Cnetdb.h"
 #include "marshall.h"
 #include "serrno.h"
 #include "u64subr.h"
@@ -597,14 +599,23 @@ struct dlf_srv_thread_info *thip;
 	gid_t gid;
 	char *rbp;
 	uid_t uid;
-
+        struct hostent *hp;
+        struct in_addr inp; 
+                
 	strcpy (func, "dlf_srv_shutdown");
 	rbp = req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	dlflogit (func, DLF92, "shutdown", uid, gid, clienthost);
 	unmarshall_WORD (rbp, force);
-
+        
+        /* special conversion form IP address to domain name form */
+        if(inet_aton(clienthost,&inp)!=0)
+           {
+           hp = Cgethostbyaddr ((char*)&inp, sizeof(struct in_addr),AF_INET);
+           if(hp!=NULL)  clienthost = hp->h_name;
+           }   
+        
 	if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
            {
            dlflogit (func, DLF92, "shutdown Cupv_check error", uid, gid, clienthost);
