@@ -485,6 +485,21 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkAssignConsistency(
       
   } // end of "if ( ptr_driveRequest->status & VDQM_UNIT_ASSIGN )"
   
+  //TODO: This can cause a lot of problems for the whole logic!
+//	  /*
+//	 * VDQM_VOL_MOUNT and VDQM_VOL_UNMOUNT are not persistent unit 
+//	 * status values. Their purpose is twofold: 1) input - update 
+//	 * the volid field in the drive record (both MOUNT and UNMOUNT)
+//	 * and 2) output - tell client to unmount or keep volume mounted
+//	 * in case of deferred unmount (UNMOUNT only). 
+//	 *
+//	 * VDQM_UNIT_MBCOUNT is not a persistent unit status value.
+//	 * It request update of drive statistics.
+//	 */
+//	if ( drvrec->drv.status & VDQM_UNIT_UP )
+//	    drvrec->drv.status |= DrvReq->status & 
+//	                          (~VDQM_VOL_MOUNT & ~VDQM_VOL_UNMOUNT &
+//	                           ~VDQM_UNIT_MBCOUNT );
   
   // Reset pointer
   tapeRequest = 0;
