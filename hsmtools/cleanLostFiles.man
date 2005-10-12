@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: cleanLostFiles.man,v $ $Revision: 1.4 $ $Date: 2005/09/22 14:25:11 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: cleanLostFiles.man,v $ $Revision: 1.5 $ $Date: 2005/10/12 15:30:06 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH CLEANLOSTFILES 1 "$Date: 2005/09/22 14:25:11 $" CASTOR "Clean the stager for lost files"
+.TH CLEANLOSTFILES 1 "$Date: 2005/10/12 15:30:06 $" CASTOR "Clean the stager for lost files"
 .SH NAME
 cleanLostFiles \- cleans the stager for files that were lost on diskservers
 .SH SYNOPSIS
@@ -14,10 +14,15 @@ cleanLostFiles \- cleans the stager for files that were lost on diskservers
 .BI diskCopyId [...]
 .SH DESCRIPTION
 .B cleanLostFiles
-cleans up files in the stager when they were (accidentally)
+cleans up files in the stager when they were (accidentally ?)
 deleted on the diskservers. Such files could actually not be
 cleaned up through the regular garbage collection mechanism
 since the deletion would fail, setting the file in FAILED status.
+
+In case some of the files that were lost have no tapecopy
+(meaning we really lost), they will also be removed from
+the name server. The user will be informed by a printout
+of the nsrm commands run on the command line.
 
 This command should be used with care and only for disaster recovery.
 .TP
@@ -29,6 +34,16 @@ Get usage information
 The ids of the diskCopies that were lost. Note that these
 can be easily deduced from the file names by taking the number
 after the last '.'.
+
+.SH EXAMPLES
+.fi
+.BI #\ cleanLostFiles\ 329042\ 329047
+.fi
+nsrm /castor/cern.ch/user/s/sponcec3/test/dfad9bb5-d227-49c8-9a1d-0c211f71db6a
+.fi
+nsrm /castor/cern.ch/user/s/sponcec3/test/7fe9a4fb-8d12-4749-af90-41c278dcf466
+.fi
+
 .SH NOTES
 This command connects directly to the stager database through
 the perl DBI interface to ORACLE. Thus it can only run on

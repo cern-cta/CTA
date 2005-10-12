@@ -18,7 +18,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: cleanLostFiles,v $ $Revision: 1.7 $ $Release$ $Date: 2005/10/11 13:19:17 $ $Author: sponcec3 $
+# * @(#)$RCSfile: cleanLostFiles,v $ $Revision: 1.8 $ $Release$ $Date: 2005/10/12 15:30:06 $ $Author: sponcec3 $
 # *
 # * cleanup files in the DB when they were lost on the disk.
 # * this basically does the second part of the garbage collection
@@ -31,6 +31,7 @@ use strict;
 use diagnostics;
 use lib "/usr/lib/perl/CASTOR";
 use castor_tools;
+use DBD::Oracle qw(:ora_types);
 
 # usage function
 sub usage {
@@ -88,20 +89,41 @@ if ($nbargs == 0) {
 $dbquery .= <<EOF;
 );
   files castor."cnumList";
-  fileIds castor.FileList_Cur;
 BEGIN
   FOR i in rawfiles.FIRST .. rawfiles.LAST LOOP
     files(i):=rawfiles(i);
   end LOOP;
-  filesDeletedProc(files, fileIds);
+  filesDeletedProc(files, :fileIds);
 END;
 EOF
 
 my @castor_conf = castor_conf_getOraStagerSvc();
-my $dbh = DBI->connect('dbi:Oracle:',$castor_conf[0] ,$castor_conf[1]);
-
+my $dbh = DBI->connect('dbi:Oracle:',$castor_conf[0] ,$castor_conf[1], { AutoCommit => 0 });
 my $sth = $dbh->prepare("$dbquery");
+my $cursor;
+$sth->bind_param_inout(":fileIds",\$cursor,0,{ora_type=>ORA_RSET});
 $sth->execute;
 
+# Retrieve the list of files to remove from name server
+my $comm;
+my $fileName;
+my @fileList;
+while (my @row = $cursor->fetchrow_array) {
+  push(@fileList, ($row[0], $row[1]));
+
+}
+
+# Close DB connection
+$dbh->commit;
 $sth->finish;
 $dbh->disconnect;
+
+# Remove files from the nameserver
+while (my $fileid = pop(@fileList)) {
+  my $nshost = pop(@fileList);
+  $comm = "nsGetPath " . $fileid . " " . $nshost;
+  chomp($fileName = `$comm`);
+  $comm = "nsrm " . $fileName;
+  print $comm, "\n";
+  system($comm);
+}
