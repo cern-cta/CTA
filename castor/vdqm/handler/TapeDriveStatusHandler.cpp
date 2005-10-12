@@ -385,11 +385,11 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
       if ( ptr_tapeDrive->status() == FORCED_UNMOUNT ||
            (ptr_driveRequest->status & VDQM_FORCE_UNMOUNT)) {
 				// "client has requested a forced unmount." message
-				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR, 42);	            	          
+				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_WARNING, 42);	            	          
       }
       else if ( ptr_tapeDrive->status() == STATUS_UNKNOWN ) {
 				// "tape drive in STATUS_UNKNOWN status. Force unmount!" message
-				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR, 43);	            
+				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_WARNING, 43);	            
       }
       
       if ( newTapeRequest == NULL ) {
