@@ -1,0 +1,51 @@
+.\" ******************************************************************************
+.\"                      nsGetPath
+.\"
+.\" This file is part of the Castor project.
+.\" See http://castor.web.cern.ch/castor
+.\"
+.\" Copyright (C) 2003  CERN
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License
+.\" as published by the Free Software Foundation; either version 2
+.\" of the License, or (at your option) any later version.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+.\"
+.\" @(.\")$RCSfile: nsGetPath.man,v $ $Revision: 1.1 $ $Release$ $Date: 2005/10/12 13:53:09 $ $Author: sponcec3 $
+.\"
+.\" man page for the nsGetPath command
+.\"
+.\" @author Castor Dev team, castor-dev@cern.ch
+.\" *****************************************************************************/
+.TH NSGETPATH 1 "$Date: 2005/10/12 13:53:09 $" CASTOR "Gets the path of a castor file from its fileId"
+.SH NAME
+nsGetPath
+.SH SYNOPSIS
+.B nsGetPath
+nameServerMachine castorFileId
+.SH DESCRIPTION
+.B  nsGetPath
+Gets the name of a castorfile given by its fileid and the
+name server where it resides.
+
+.TP 18
+.B nameServerMachine
+the name server where the file resides
+.LP
+.B castorFileId
+the castor fileId of the file
+
+
+.SH EXAMPLES
+.BI #\ nsGetPath\ cnsuser\ 65366316
+.fi
+/castor/cern.ch/user/s/sponcec3/test/7742f5eb-1c87-4676-8314-648c7e0712ac
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
