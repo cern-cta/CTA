@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.28 $ $Release$ $Date: 2005/08/03 13:03:00 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/10/12 10:31:57 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.28 $ $Release$ $Date: 2005/08/03 13:03:00 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/10/12 10:31:57 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1392,6 +1392,7 @@ static int addMigrationCandidatesToStreams(
     }
 
     iObj = Cstager_TapeCopy_getIObject(tapeCopyArray[i]);
+    Cstager_TapeCopy_id(tapeCopyArray[i],&key);
     if ( rc == 1 ) {
       rc = C_Services_fillRep(
                               dbSvc,
@@ -1402,12 +1403,14 @@ static int addMigrationCandidatesToStreams(
                               );
       if ( rc == -1 ) {
         if ( runAsDaemon == 0 ) {
-          fprintf(stderr,"C_Services_fillRep(tapeCopy,OBJ_Stream): %s, %s\n",
+          fprintf(stderr,"C_Services_fillRep(tapeCopy,OBJ_Stream): key=%d, %s, %s\n",
+                  (int)key,
                   sstrerror(serrno),
                   C_Services_errorMsg(dbSvc));
         }
-        LOG_DBCALL_ERR("C_Services_fillRep(tapeCopy,OBJ_Stream)",
-                       C_Services_errorMsg(dbSvc));
+        LOG_DBCALLANDKEY_ERR("C_Services_fillRep(tapeCopy,OBJ_Stream)",
+                             C_Services_errorMsg(dbSvc),
+                             key);
         C_IAddress_delete(iAddr);
         return(-1);
       }
