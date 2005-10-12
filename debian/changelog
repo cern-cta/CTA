@@ -1,3 +1,28 @@
+castor (2.0.1-6) unstable; urgency=low
+
+  * PROTO2/castor/replier/RequestReplier.cpp:
+    [r1.23,2005-10-11,bcouturi] Changed messages from ERROR to WARNING
+  * PROTO2/castor/vdqm/handler/TapeDriveConsistencyChecker.cpp:
+    [r1.12,2005-10-11,mbraeger] There was a wrong behavior, when a tapeDrive received a VDQM_FORCED_UNMOUNT reequest. The problem should be fixed now.
+  * PROTO2/castor/vdqm/handler/TapeDriveStatusHandler.cpp:
+    [r1.15,2005-10-12,mbraeger] Changed two log message status from ERROR to WARNING
+    [r1.14,2005-10-11,mbraeger] There was a wrong behavior, when a tapeDrive received a VDQM_FORCED_UNMOUNT reequest. The problem should be fixed now.
+  * CASTOR/dlf/dlf_procreq.c:
+    [r 1.9,2005-10-11,kotlyar] added convert from IP address form to Domain name form for Cupv check when dlfshutdown
+  * PROTO2/hsmtools/Imakefile:
+    [r1.19,2005-10-12,sponcec3] new utility to get castor file names
+  * PROTO2/hsmtools/cleanLostFiles:
+    [r 1.8,2005-10-12,sponcec3] Improved version removing file from the nameserver when they have no tape copy
+    [r 1.7,2005-10-11,sponcec3] updated call to filesDeletedProc, using the new signature. Will need more work to do something with the output
+  * PROTO2/hsmtools/cleanLostFiles.man:
+    [r 1.5,2005-10-12,sponcec3] Improved version removing file from the nameserver when they have no tape copy
+  * PROTO2/rtcopy/MigHunter.c:
+    [r1.29,2005-10-12,obarring] Add logging of database key in case of failing fillRep()
+  * PROTO2/stager/stager_client_api_update.cpp:
+    [r 1.8,2005-10-11,bcouturi] Fixed stage_update to fill in the IOResponse properly
+
+ -- Sebastien Ponce <sponcec3@pcitds13>  Wed, 12 Oct 2005 21:53:22 +0200
+
 castor (2.0.1-5) unstable; urgency=low
 
   * PROTO2/castor/BaseSvc.hpp:
