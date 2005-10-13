@@ -110,7 +110,7 @@ struct rmnode {
 	int nfs; /* number of filesystems */
 	struct Crm_filesystem *fs; /* filesystems's totalspace,freespace */
 #ifdef _WIN32
-	int s_addr; /* Used to not rely on hostname persistence */
+	int rm_s_addr; /* Used to not rely on hostname persistence */
 #else
 	in_addr_t s_addr; /* Used to not rely on hostname persistence */
 #endif
