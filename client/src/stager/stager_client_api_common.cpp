@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.16 2005/07/06 11:45:20 jdurand Exp $
+ * $Id: stager_client_api_common.cpp,v 1.17 2005/10/13 12:22:44 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.16 $ $Date: 2005/07/06 11:45:20 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.17 $ $Date: 2005/10/13 12:22:44 $ CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
@@ -30,6 +30,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision:
 #include "trace.h"
 #include "Cglobals.h"
 #include "stager_client_api_common.h"
+#include "Csnprintf.h"
 
 EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
 
@@ -279,7 +280,7 @@ EXTERN_C void DLL_DECL stage_trace(int level, char *format, ...) {
     return;
   }
   buffer[STBUFSIZE] = '\0';
-  vsnprintf(buffer, STBUFSIZE, format, args);
+  Cvsnprintf(buffer, STBUFSIZE, format, args);
   va_end(args);
   print_trace_r(thip->trace, level, label, "%s", buffer);
 
