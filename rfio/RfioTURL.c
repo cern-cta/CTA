@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/01 18:14:56 $ $Author: bcouturi $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/10/13 12:17:31 $ $Author: jdurand $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/01 18:14:56 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/10/13 12:17:31 $ Olof Barring";
 #endif /* not lint */
 
 /** RfioTURL.c - RFIO TURL handling
@@ -39,7 +39,9 @@ static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.1 $ $Release$ 
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include <ctype.h>
 #include <errno.h>
 #include <Castor_limits.h>
