@@ -65,6 +65,8 @@
 #define D110G	0x16
 #define D160G   0x17
 #define D300G	0x18
+#define D400G	0x19
+#define D500G	0x20
 #define IDRC	0x100
 #define	D38KC	(D38000 | IDRC)
 #define	D38KDC	(D38KD | IDRC)
@@ -83,6 +85,8 @@
 #define D160GC  (D160G | IDRC)
 #define D200GC	(D200G | IDRC)
 #define D300GC	(D300G | IDRC)
+#define D400GC	(D400G | IDRC)
+#define D500GC	(D500G | IDRC)
 
 #ifdef NOTRACE
 #ifdef __STDC__
