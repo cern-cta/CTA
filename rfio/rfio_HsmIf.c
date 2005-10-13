@@ -505,8 +505,17 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
             if (rc < 0) {
               if ( (save_serrno == SECOMERR) ||
                    (save_serrno == SETIMEDOUT) ||
+#ifdef _WIN32
+                   (save_serrno == WSAECONNREFUSED) ||
+#else
                    (save_serrno == ECONNREFUSED) ||
-                   (save_errno == ECONNREFUSED) ) {
+#endif
+#ifdef _WIN32
+                   (save_errno == WSAECONNREFUSED)
+#else
+                   (save_errno == ECONNREFUSED)
+#endif
+		   ) {
                 int retrySleepTime;
                 retrySleepTime = 1 + (int)(10.0*rand()/(RAND_MAX+1.0));
                 sleep(retrySleepTime);
