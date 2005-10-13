@@ -146,6 +146,15 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::run() {
 	    castor::dlf::Param param[] =
 	      {castor::dlf::Param("Message", ex.getMessage().str())};      
 	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 50, 1, param);
+	    
+	    try {  
+		  	freeMemory(freeTapeDrive, waitingTapeRequest);		  	
+	    } catch (castor::exception::Exception e) {
+		    // "Exception caught in TapeRequestDedicationHandler::run()" message
+		    castor::dlf::Param param[] =
+		      {castor::dlf::Param("Message", e.getMessage().str())};      
+		    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 50, 1, param);			
+			}
 		}
 	  	
 	  	
@@ -381,40 +390,15 @@ void *castor::vdqm::handler::TapeRequestDedicationHandler::dedicationRequest(
 	   * Deletion of the objects
 	   */   
 		castor::vdqm::TapeRequest* waitingTapeRequest = 
-			freeTapeDrive->runningTapeReq();	   
-	  if ( waitingTapeRequest ) {
-	  	if ( waitingTapeRequest->tapeDrive() &&
-  				 waitingTapeRequest->tapeDrive() != freeTapeDrive ) {
-	  		delete waitingTapeRequest->tapeDrive();
-	  		waitingTapeRequest->setTapeDrive(0);
-  		}
-	  	
-	  	delete waitingTapeRequest;
-	  	waitingTapeRequest = 0; 	  	
-	  }
-	  		
-	  if ( freeTapeDrive ) {
-	  	if ( freeTapeDrive->tape() ) {
-		  	delete freeTapeDrive->tape();
-		  	freeTapeDrive->setTape(0);
-	  	}
-		  if ( freeTapeDrive->runningTapeReq() ) {
-		  	delete freeTapeDrive->runningTapeReq();
-		  	freeTapeDrive->setRunningTapeReq(0);
-		  }
-		  
-		  delete freeTapeDrive->deviceGroupName();
-		  freeTapeDrive->setDeviceGroupName(0);
-		  
- 			//The TapeServer must be deleted after its tapeDrive!
-	  	castor::vdqm::TapeServer* tapeServer = freeTapeDrive->tapeServer();
-		  
-	  	delete freeTapeDrive;
-	  	freeTapeDrive = 0;
-	  	
-	  	delete tapeServer;
-	  	tapeServer = 0;
-	  }		  	
+			freeTapeDrive->runningTapeReq();	 
+		try {  
+	  	freeMemory(freeTapeDrive, waitingTapeRequest);		  	
+		} catch (castor::exception::Exception ex) {
+	    // "Exception caught in TapeRequestDedicationHandler::dedicationRequest()" message
+	    castor::dlf::Param param[] =
+	      {castor::dlf::Param("Message", ex.getMessage().str())};      
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 63, 1, param);			
+		}
   }
   else {
   	// "No TapeDrive object to commit to RTCPD" message
@@ -468,4 +452,48 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::rollback(
 	   castor::dlf::Param("ID tapeRequest", waitingTapeRequest->id()),
 	   castor::dlf::Param("tapeDrive status", "UNIT_UP")};
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 45, 3, params);				
+}
+
+
+//------------------------------------------------------------------------------
+// freeMemory
+//------------------------------------------------------------------------------
+void castor::vdqm::handler::TapeRequestDedicationHandler::freeMemory(
+	castor::vdqm::TapeDrive* freeTapeDrive, 
+	castor::vdqm::TapeRequest* waitingTapeRequest) 
+	throw (castor::exception::Exception) {
+	   
+  if ( waitingTapeRequest ) {
+  	if ( waitingTapeRequest->tapeDrive() &&
+				 waitingTapeRequest->tapeDrive() != freeTapeDrive ) {
+  		delete waitingTapeRequest->tapeDrive();
+  		waitingTapeRequest->setTapeDrive(0);
+		}
+  	
+  	delete waitingTapeRequest;
+  	waitingTapeRequest = 0; 	  	
+  }
+  		
+  if ( freeTapeDrive ) {
+  	if ( freeTapeDrive->tape() ) {
+	  	delete freeTapeDrive->tape();
+	  	freeTapeDrive->setTape(0);
+  	}
+	  if ( freeTapeDrive->runningTapeReq() ) {
+	  	delete freeTapeDrive->runningTapeReq();
+	  	freeTapeDrive->setRunningTapeReq(0);
+	  }
+	  
+	  delete freeTapeDrive->deviceGroupName();
+	  freeTapeDrive->setDeviceGroupName(0);
+	  
+		//The TapeServer must be deleted after its tapeDrive!
+  	castor::vdqm::TapeServer* tapeServer = freeTapeDrive->tapeServer();
+	  
+  	delete freeTapeDrive;
+  	freeTapeDrive = 0;
+  	
+  	delete tapeServer;
+  	tapeServer = 0;
+  }		
 }

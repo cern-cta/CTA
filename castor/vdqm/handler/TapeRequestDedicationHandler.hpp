@@ -177,7 +177,20 @@ namespace castor {
 					 */
 					void rollback(castor::vdqm::TapeDrive* freeTapeDrive)
 						throw (castor::exception::Exception);
-												
+						
+					
+					/**
+					 * Free the memory for this thread
+					 * 
+					 * @param freeTapeDrive The tape drive which has been chosen by the 
+	     		 * db select statement
+	     		 * @param waitingTapeRequest An unhandled tape request, which fits the
+	     		 * best for the free tape drive
+	     		 * @exception In case of errors
+					 */
+					void freeMemory(castor::vdqm::TapeDrive* freeTapeDrive,
+					  castor::vdqm::TapeRequest* waitingTapeRequest) 
+						throw (castor::exception::Exception);
 	    }; // class TapeRequestDedicationHandler
     
   	} // end of namespace handler
