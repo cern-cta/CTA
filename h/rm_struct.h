@@ -109,8 +109,11 @@ struct rmnode {
 	char partition[RM_MAXPARTITIONLEN+1]; /* partition */
 	int nfs; /* number of filesystems */
 	struct Crm_filesystem *fs; /* filesystems's totalspace,freespace */
-
+#ifdef _WIN32
+	int s_addr; /* Used to not rely on hostname persistence */
+#else
 	in_addr_t s_addr; /* Used to not rely on hostname persistence */
+#endif
 	int nbrestart;    /* To detect if rmnode was restarted */
 	int n_rdonly;     /* Number of O_RDONLY jobs */
 	int n_wronly;     /* Number of O_WRONLY jobs */
