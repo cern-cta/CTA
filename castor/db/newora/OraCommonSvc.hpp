@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/09/16 16:35:19 $ $Author: itglp $
+ * @(#)$RCSfile: OraCommonSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/10/13 10:31:11 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for Oracle
  *
@@ -63,7 +63,7 @@ namespace castor {
         /**
          * Get the service id
          */
-        virtual inline const unsigned int id() const;
+        virtual const unsigned int id() const;
 
         /**
          * Get the service id

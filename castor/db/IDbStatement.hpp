@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/08/22 16:26:40 $ $Author: itglp $
+ * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/10/13 10:31:11 $ $Author: itglp $
  *
  * 
  *
@@ -57,7 +57,8 @@ class IDbStatement {
     virtual void setFloat(int pos, float value) = 0;
     virtual void setDouble(int pos, double value) = 0;
     
-    virtual void registerOutParam(int pos, int dbType) = 0;
+    virtual void registerOutParam(int pos, int dbType)
+      throw (castor::exception::Exception) = 0;
 
     virtual int getInt(int pos) = 0;
     virtual u_signed64 getInt64(int pos) = 0;

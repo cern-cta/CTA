@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbBaseObj.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/09/19 13:42:58 $ $Author: itglp $
+ * @(#)$RCSfile: DbBaseObj.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/10/13 10:31:11 $ $Author: itglp $
  *
  *
  *
@@ -46,7 +46,7 @@ namespace castor {
 	 /**
        * A base converter for Oracle database
        */
-      class DbBaseObj : public BaseObject {
+      class DbBaseObj : public virtual BaseObject {
 
       public:
 

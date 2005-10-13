@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2005/09/16 16:35:17 $ $Author: itglp $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Release$ $Date: 2005/10/13 10:31:11 $ $Author: itglp $
 #
 # Make Castor DB libraries
 #
@@ -48,21 +48,38 @@ ORALIB_SRCS = OraCnvSvc.cpp \
             OraFSSvc.cpp \
             OraQuerySvc.cpp
 
-#if BuildVDQMCpp
-ORALIB_SRCS += OraVdqmSvc.cpp
-#endif
-
 ORALIB_OBJS = $(ORALIB_SRCS:.cpp=.Osuf)
 
 COMMONLIB = LibraryTargetName(castorCommonOra)
 LD = g++
 
-all: $(COMMONLIB)
+#if BuildVDQMCpp
+#VDQM related objects
+ORAVDQMLIB_SRCS += OraClientIdentificationCnv.cpp \
+               	OraErrorHistoryCnv.cpp \
+                OraDeviceGroupNameCnv.cpp \
+                OraTapeAccessSpecificationCnv.cpp \
+                OraTapeDriveCnv.cpp \
+                OraTapeDriveCompatibilityCnv.cpp \
+                OraTapeDriveDedicationCnv.cpp \
+                OraTapeRequestCnv.cpp \
+                OraTapeServerCnv.cpp \
+                OraVdqmSvc.cpp
+
+ORAVDQMLIB_OBJS = $(ORAVDQMLIB_SRCS:.cpp=.Osuf)
+VDQMLIB = LibraryTargetName(castorVdqmOra)
+#endif
+
+all: $(COMMONLIB) $(VDQMLIB)
 
 MakeDepSharedLibrary(FileName(FileName(..,..),shlib),shift)
 MakeDepSharedLibrary(FileName(FileName(..,..),shlib),castorCnvs)
 
 NormalLibraryTarget(castorCommonOra,$(ORALIB_OBJS))
+
+#if BuildVDQMCpp
+NormalLibraryTarget(castorVdqmOra,$(ORAVDQMLIB_OBJS))
+#endif
 
 Makefiles:
 

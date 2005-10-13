@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/08/22 16:32:34 $ $Author: itglp $
+ * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/10/13 10:31:11 $ $Author: itglp $
  *
  * 
  *
@@ -63,7 +63,8 @@ class OraStatement : public virtual castor::db::IDbStatement {
     virtual void setFloat(int pos, float value);
     virtual void setDouble(int pos, double value);
     
-    virtual void registerOutParam(int pos, int dbType);
+    virtual void registerOutParam(int pos, int dbType)
+      throw (castor::exception::Exception);
 
     virtual int getInt(int pos);
     virtual u_signed64 getInt64(int pos);
