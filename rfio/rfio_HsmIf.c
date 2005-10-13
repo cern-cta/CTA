@@ -15,6 +15,8 @@ static char sccsid[] = "@(#)rfio_HsmIf.c,v 1.58 2004/02/10 15:05:17 CERN/IT/PDP/
 #include <stdlib.h>
 #if !defined(_WIN32)
 #include <unistd.h>
+#else
+#include <winsock2.h>
 #endif /* _WIN32 */
 #include <stdio.h>
 #include <string.h>
