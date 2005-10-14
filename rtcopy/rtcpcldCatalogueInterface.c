@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.135 $ $Release$ $Date: 2005/09/19 16:31:39 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.136 $ $Release$ $Date: 2005/10/14 12:39:04 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.135 $ $Release$ $Date: 2005/09/19 16:31:39 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.136 $ $Release$ $Date: 2005/10/14 12:39:04 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1065,7 +1065,7 @@ static int procSegmentsForTape(
   tape_list_t *tl = NULL;
   unsigned char blockid[4];
   ID_TYPE key;
-  int rc, i, nbItems = 0, save_serrno, fseq, newFileReqs = 0, doCommit = 0;
+  int rc, i, nbItems = 0, save_serrno, fseq, newFileReqs = 0;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_DISABLE) ) {
     serrno = EINVAL;
@@ -1102,8 +1102,18 @@ static int procSegmentsForTape(
   }
 
   if ( nbItems == 0 ) {
+    (void)C_Services_rollback(*svcs,iAddr);
     serrno = ENOENT;
     return(-1);
+  }
+
+  rc = C_Services_commit(
+                         *svcs,
+                         iAddr
+                         );
+  if ( rc == -1 ) {
+    LOG_DBCALL_ERR("C_Services_commit()",
+                   C_Services_errorMsg(*svcs));
   }
 
   /*
@@ -1223,35 +1233,10 @@ static int procSegmentsForTape(
                              segmArray[i],
                              &(fl->filereq.offset)
                              );
-      Cstager_Segment_id(segmArray[i],&key);
-      iObj = Cstager_Segment_getIObject(segmArray[i]);
-      rc = C_Services_updateRep(
-                                *svcs,
-                                iAddr,
-                                iObj,
-                                0
-                                );
-      if ( rc == -1 ) {
-        LOG_DBCALLANDKEY_ERR("C_Services_updateRep()",
-                             C_Services_errorMsg(*svcs),
-                             key);
-      }
-      doCommit = 1;
     }
   }
 
   if ( segmArray != NULL ) free(segmArray);
-
-  if ( doCommit != 0 ) {
-    rc = C_Services_commit(
-                           *svcs,
-                           iAddr
-                           );
-    if ( rc == -1 ) {
-      LOG_DBCALL_ERR("C_Services_commit()",
-                     C_Services_errorMsg(*svcs));
-    }
-  }
 
   if ( newFileReqs == 0 ) {
     serrno = EAGAIN;
