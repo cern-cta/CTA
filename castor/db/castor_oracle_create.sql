@@ -889,10 +889,9 @@ CREATE OR REPLACE PACKAGE castor AS
         diskCopyPath VARCHAR2(2048),
         filesize INTEGER,
         diskCopyStatus INTEGER,
-        tapeStatus INTEGER,
-        segmentStatus INTEGER,
         diskServerName VARCHAR2(2048),
-        fileSystemMountPoint VARCHAR2(2048));
+        fileSystemMountPoint VARCHAR2(2048),
+        nbaccesses INTEGER);
   TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
 	TYPE TapeDrive_Cur IS REF CURSOR RETURN TapeDrive%ROWTYPE;
 	TYPE TapeRequest_Cur IS REF CURSOR RETURN TapeRequest%ROWTYPE;
@@ -2221,7 +2220,7 @@ BEGIN
     SELECT UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
            DiskCopy.path, CastorFile.filesize,
            nvl(DiskCopy.status, -1), DiskServer.name,
-           FileSystem.mountPoint
+           FileSystem.mountPoint, CastorFile.nbaccesses
       FROM CastorFile, DiskCopy, FileSystem, DiskServer
      WHERE castorfile.id IN (SELECT * FROM TABLE(cfs))
        AND Castorfile.id = DiskCopy.castorFile (+)
@@ -2274,7 +2273,6 @@ END;
 CREATE OR REPLACE PROCEDURE fileIdStageQuery
  (fid IN NUMBER,
   nh IN VARCHAR2,
-  svcClassId IN NUMBER,
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
@@ -2287,7 +2285,6 @@ END;
  */
 CREATE OR REPLACE PROCEDURE reqIdStageQuery
  (rid IN VARCHAR2,
-  svcClassId IN NUMBER,
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
@@ -2321,7 +2318,6 @@ END;
  */
 CREATE OR REPLACE PROCEDURE userTagStageQuery
  (tag IN VARCHAR2,
-  svcClassId IN NUMBER,
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
