@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.22 2005/05/13 10:08:00 bcouturi Exp $
+ * $Id: stager_client_api_get.cpp,v 1.23 2005/10/17 12:49:01 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.22 $ $Date: 2005/05/13 10:08:00 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.23 $ $Date: 2005/10/17 12:49:01 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -92,7 +92,11 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
     }
 
     mode_t mask;
+#ifdef _WIN32
+    _umask (mask = _umask(0));
+#else
     umask (mask = umask(0));
+#endif
     req.setMask(mask);
 
     // Preparing the requests
