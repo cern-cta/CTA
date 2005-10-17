@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2005/08/23 09:57:50 $ $Author: itglp $
+ * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2005/10/17 15:42:44 $ $Author: sponcec3 $
  *
  *
  *
@@ -175,7 +175,7 @@ void castor::BaseCnvSvc::deleteRep(castor::IAddress* address,
   // The converter is always valid if no exception is thrown
   IConverter* conv = converter(object->type());
   // convert
-  return conv->deleteRep(address, object, autocommit);
+  conv->deleteRep(address, object, autocommit);
 }
 
 // -----------------------------------------------------------------------
