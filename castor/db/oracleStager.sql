@@ -1466,28 +1466,13 @@ BEGIN
 END;
 
 /* PL/SQL method implementing selectFiles2Delete */
-CREATE OR REPLACE PROCEDURE selectFiles2Delete
-(DiskServerName IN VARCHAR2,
- GCLocalFiles OUT castor.GCLocalFiles_Cur) AS
-  files "numList";
+CREATE OR REPLACE PROCEDURE updateFiles2Delete
+(dcIds IN castor."cnumList") AS
 BEGIN
-  
-  SELECT DiskCopy.id BULK COLLECT INTO files
-    FROM DiskCopy, FileSystem, DiskServer
-   WHERE DiskCopy.fileSystem = FileSystem.id
-     AND FileSystem.DiskServer = DiskServer.id
-     AND DiskServer.name = DiskServerName
-     AND DiskCopy.status = 8 -- GC_CANDIDATE
-     FOR UPDATE;
-  IF files.COUNT > 0 THEN
+  FOR i in dcIds.FIRST .. dcIds.LAST LOOP
     UPDATE DiskCopy set status = 9 -- BEING_DELETED
-     WHERE id MEMBER OF files;
-  END IF;
-  OPEN GCLocalFiles FOR
-    SELECT FileSystem.mountPoint||DiskCopy.path, DiskCopy.id 
-      FROM DiskCopy, FileSystem
-     WHERE DiskCopy.fileSystem = FileSystem.id
-       AND DiskCopy.id MEMBER OF files;
+     WHERE id = i;
+  END LOOP;
 END;
 
 /*

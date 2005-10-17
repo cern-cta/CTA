@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/09/05 12:53:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraGCSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/10/17 09:46:47 $ $Author: sponcec3 $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -127,11 +127,17 @@ namespace castor {
 
       private:
 
-        /// SQL statement for function selectFiles2Delete
+        /// SQL statement for function selectFiles2Delete (select part)
         static const std::string s_selectFiles2DeleteStatementString;
 
-        /// SQL statement object for function selectFiles2Delete
+        /// SQL statement object for function selectFiles2Delete (select part)
         oracle::occi::Statement *m_selectFiles2DeleteStatement;
+
+        /// SQL statement for function selectFiles2Delete (update part)
+        static const std::string s_selectFiles2DeleteStatementString2;
+
+        /// SQL statement object for function selectFiles2Delete (update part)
+        oracle::occi::Statement *m_selectFiles2DeleteStatement2;
 
         /// SQL statement for function filesDeleted
         static const std::string s_filesDeletedStatementString;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/10/10 15:37:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/10/17 09:46:47 $ $Author: sponcec3 $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -94,9 +94,13 @@ OraGCSvcFactory = s_factoryOraGCSvc;
 //------------------------------------------------------------------------------
 // Static constants initialization
 //------------------------------------------------------------------------------
-/// SQL statement for selectFiles2Delete
+/// SQL statement for selectFiles2Delete (select part)
 const std::string castor::db::ora::OraGCSvc::s_selectFiles2DeleteStatementString =
-  "BEGIN selectFiles2Delete(:1, :2); END;";
+  "SELECT FileSystem.mountPoint||DiskCopy.path, DiskCopy.id FROM DiskCopy, FileSystem, DiskServer WHERE DiskCopy.fileSystem = FileSystem.id AND FileSystem.DiskServer = DiskServer.id AND DiskServer.name = :1 AND DiskCopy.status = 8 FOR UPDATE;";
+
+/// SQL statement for selectFiles2Delete (update part)
+const std::string castor::db::ora::OraGCSvc::s_selectFiles2DeleteStatementString2 =
+  "BEGIN updateFiles2Delete(:1); END;";
 
 /// SQL statement for filesDeleted
 const std::string castor::db::ora::OraGCSvc::s_filesDeletedStatementString =
@@ -116,6 +120,7 @@ const std::string castor::db::ora::OraGCSvc::s_requestToDoStatementString =
 castor::db::ora::OraGCSvc::OraGCSvc(const std::string name) :
   OraCommonSvc(name),
   m_selectFiles2DeleteStatement(0),
+  m_selectFiles2DeleteStatement2(0),
   m_filesDeletedStatement(0),
   m_filesDeletionFailedStatement(0),
   m_requestToDoStatement(0) {
@@ -151,12 +156,14 @@ void castor::db::ora::OraGCSvc::reset() throw() {
   OraCommonSvc::reset();
   try {
     deleteStatement(m_selectFiles2DeleteStatement);
+    deleteStatement(m_selectFiles2DeleteStatement2);
     deleteStatement(m_filesDeletedStatement);
     deleteStatement(m_filesDeletionFailedStatement);
     deleteStatement(m_requestToDoStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_selectFiles2DeleteStatement = 0;
+  m_selectFiles2DeleteStatement2 = 0;
   m_filesDeletedStatement = 0;
   m_filesDeletionFailedStatement = 0;
   m_requestToDoStatement = 0;
@@ -174,43 +181,75 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
   if (0 == m_selectFiles2DeleteStatement) {
     m_selectFiles2DeleteStatement =
       createStatement(s_selectFiles2DeleteStatementString);
-    m_selectFiles2DeleteStatement->registerOutParam
-      (2, oracle::occi::OCCICURSOR);
-    m_selectFiles2DeleteStatement->setAutoCommit(true);
   }
-  // Execute statement and get result
-  unsigned long id;
+  if (0 == m_selectFiles2DeleteStatement2) {
+    m_selectFiles2DeleteStatement2 =
+      createStatement(s_selectFiles2DeleteStatementString2);
+  }
+  // vector of results
+  std::vector<castor::stager::GCLocalFile*>* result = 0;
+  // Get files to delete
   try {
     m_selectFiles2DeleteStatement->setString(1, diskServer);
-    unsigned int nb = m_selectFiles2DeleteStatement->executeUpdate();
-    if (0 == nb) {
-      rollback();
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "selectFiles2Delete : Unable to select files to delete.";
-      throw ex;
-    }
+    oracle::occi::ResultSet *rset =
+      m_selectFiles2DeleteStatement->executeQuery();
+    bool foundSomething = false;
     // create result
-    std::vector<castor::stager::GCLocalFile*>* result =
-      new std::vector<castor::stager::GCLocalFile*>;
-    // Run through the cursor
-    oracle::occi::ResultSet *rs =
-      m_selectFiles2DeleteStatement->getCursor(2);
-    oracle::occi::ResultSet::Status status = rs->next();
-    while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+    result = new std::vector<castor::stager::GCLocalFile*>;
+    // create list of ids for the update
+    std::vector<u_signed64> dcIds;
+    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+      foundSomething = true;
       // Fill result
       castor::stager::GCLocalFile* f = new castor::stager::GCLocalFile();
-      f->setFileName(rs->getString(1));
-      f->setDiskCopyId((u_signed64)rs->getDouble(2));
+      f->setFileName(rset->getString(1));
+      f->setDiskCopyId((u_signed64)rset->getDouble(2));      
       result->push_back(f);
-      status = rs->next();
+      // keep id
+      dcIds.push_back(f->diskCopyId());
     }
+    if (foundSomething) {
+      // Deal with the list of diskcopy ids
+      unsigned int nb = dcIds.size();
+      ub2 lens[nb];
+      unsigned char buffer[nb][21];
+      memset(buffer, 0, nb * 21);
+      for (int i = 0; i < nb; i++) {
+        oracle::occi::Number n = (double)(dcIds[i]);
+        oracle::occi::Bytes b = n.toBytes();
+        b.getBytes(buffer[i],b.length());
+        lens[i] = b.length();
+      }
+      ub4 unused = nb;
+      m_selectFiles2DeleteStatement2->setDataBufferArray
+        (1, buffer, oracle::occi::OCCI_SQLT_NUM,
+         nb, &unused, 21, lens);
+      // execute the statement
+      m_selectFiles2DeleteStatement2->executeUpdate();
+    }
+    commit();
     return result;
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Unable to select files to delete :"
-      << std::endl << e.getMessage();
+      << "Unable to select files to delete :\n"
+      << e.getMessage();
+    try {
+      rollback();
+    } catch (oracle::occi::SQLException e2) {
+      ex.getMessage() << "\nAnd I was not even able to rollback:\n"
+                      << e2.getMessage();
+    }
+    // release memory if needed
+    if (0 != result) {
+      for (std::vector<castor::stager::GCLocalFile*>::iterator it =
+             result->begin();
+           it != result->end();
+           it++) {
+        delete *it;
+      }
+      delete result;
+    }
     throw ex;
   }
 }
