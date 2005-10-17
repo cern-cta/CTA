@@ -2,14 +2,14 @@ COMM
 COMM  Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.19 $ $Date: 2005/10/12 13:53:08 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.20 $ $Date: 2005/10/17 11:40:37 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM    Make HSM admin tools.
 
 #include <Project.tmpl>
 
 INCLUDES = FileName(..,h)
-INCLUDES_CPP = FileName(..,)
+INCLUDES_CPP = FileName(..,/)
 
 #if UseTms
 TMS = TMS
