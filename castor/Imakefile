@@ -1,28 +1,28 @@
-#
-#                      castor/Imakefile
-#
-# This file is part of the Castor project.
-# See http://castor.web.cern.ch/castor
-#
-# Copyright (C) 2003  CERN
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-#
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.108 $ $Release$ $Date: 2005/08/24 16:43:39 $ $Author: itglp $
-#
-# Make Castor libraries and executables
-#
-# @author Sebastien Ponce, sebastien.ponce@cern.ch
-#
+COMM
+COMM                      castor/Imakefile
+COMM
+COMM This file is part of the Castor project.
+COMM See http://castor.web.cern.ch/castor
+COMM
+COMM Copyright (C) 2003  CERN
+COMM This program is free software; you can redistribute it and/or
+COMM modify it under the terms of the GNU General Public License
+COMM as published by the Free Software Foundation; either version 2
+COMM of the License, or (at your option) any later version.
+COMM This program is distributed in the hope that it will be useful,
+COMM but WITHOUT ANY WARRANTY; without even the implied warranty of
+COMM MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+COMM GNU General Public License for more details.
+COMM You should have received a copy of the GNU General Public License
+COMM along with this program; if not, write to the Free Software
+COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+COMM
+COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.109 $ $Release$ $Date: 2005/10/17 11:41:26 $ $Author: jdurand $
+COMM
+COMM Make Castor libraries and executables
+COMM
+COMM @author Sebastien Ponce, sebastien.ponce@cern.ch
+COMM
 
 #include <Project.tmpl>
 
@@ -60,11 +60,7 @@ OSLIBS = DepLibraryTargetName(lib,shift) wsock32.lib advapi32.lib
 #endif
 LIBS = $(OSLIBS) $(MTLDLIBS) -ldl
 
-# if BuildSecurity
-# LIBS+= -ldl
-# endif
-
-#if !defined(_WIN32)
+#if !_WIN32
 #if linux
 DEBUG  = -g -O0
 #else
@@ -77,7 +73,7 @@ DEPLIB = DepSharedLibraryTargetName(shlib,shift)
 INCLUDES = -I FileName(..,h) -I ..
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DRH_HOST=\"$(RH_HOST)\"
 
-STGLIB_SRCS = IAddressCInt.cpp \
+STGLIB_SRCS0 = IAddressCInt.cpp \
               BaseAddress.cpp \
               BaseAddressCInt.cpp \
               BaseCnvSvc.cpp \
@@ -353,11 +349,11 @@ STGLIB_SRCS = IAddressCInt.cpp \
               exception/SQLError.cpp
 
 #if BuildSecurity
-STGLIB_SRCS += io/AuthServerSocket.cpp io/AuthClientSocket.cpp
+STGLIB_SRCS1 = io/AuthServerSocket.cpp io/AuthClientSocket.cpp
 #endif
 
 #if BuildVDQMCpp
-STGLIB_SRCS += vdqm/RTCopyDConnection.cpp \
+STGLIB_SRCS2 = vdqm/RTCopyDConnection.cpp \
                vdqm/NewProtocolInterpreter.cpp \
                vdqm/OldProtocolInterpreter.cpp \
                vdqm/OldRequestFacade.cpp \
@@ -372,9 +368,11 @@ STGLIB_SRCS += vdqm/RTCopyDConnection.cpp \
 #endif
 
 #if BuildDlfLibrary
-STGLIB_SRCS += DlfMsgSvc.cpp \
+STGLIB_SRCS3 = DlfMsgSvc.cpp \
                dlfbuf.cpp
 #endif
+
+STGLIB_SRCS = $(STGLIB_SRCS0) $(STGLIB_SRCS1) $(STGLIB_SRCS2) $(STGLIB_SRCS3)
 
 STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
 
@@ -384,7 +382,7 @@ COMMONLIB = LibraryTargetName(castorClient)
 #endif
 
 GLOBLIB = DepSharedLibraryTargetName(shlib,shift)
-          
+
 LDFLAGS = $(DEBUG) $(MTLDFLAGS)
 LD = g++
 
@@ -394,10 +392,10 @@ MakeDepSharedLibrary(shlib,shift)
 NormalLibraryTarget(castorClient,$(STGLIB_OBJS))
 
 MakeSubdirs(all,$(SUBDIRS))
-MakeCondSubdirs(clean,$(SUBDIRS),)
-MakeCondSubdirs(clobber,$(SUBDIRS),)
+MakeCondSubdirs(clean,$(SUBDIRS),/)
+MakeCondSubdirs(clobber,$(SUBDIRS),/)
 
-#if defined(_WIN32)
+#if _WIN32
 Makefiles:
 	@for %i in ( $(SUBDIRS) ) \
 	do @(echo %i - & cd %i & \
@@ -449,11 +447,11 @@ install:
 
 exportman:
 
-clean::
+clean:
 	@echo cleaning in CurDir
 	-@RemoveFiles($(STGLIB_OBJS))
 
-clobber::	clean
+clobber:	clean
 	@echo clobbering in CurDir
 	-@RemoveFiles($(COMMONLIB))
 
