@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2005/10/17 07:43:46 $ $Author: itglp $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2005/10/17 08:04:13 $ $Author: itglp $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -51,13 +51,13 @@ OraQuerySvcFactory = s_factoryOraQuerySvc;
 //------------------------------------------------------------------------------
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4FileStatementString =
-  "BEGIN fileIdStageQuery(:1, :2, :3, :4); END;";
+  "BEGIN fileIdStageQuery(:1, :2, :3); END;";
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4RequestStatementString =
-  "BEGIN reqIdStageQuery(:1, :2, :3); END;";
+  "BEGIN reqIdStageQuery(:1, :2); END;";
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4UsertagStatementString =
-  "BEGIN userTagStageQuery(:1, :2, :3); END;";
+  "BEGIN userTagStageQuery(:1, :2); END;";
 
 /// SQL statement for requestToDo
 const std::string castor::db::ora::OraQuerySvc::s_requestToDoStatementString =
@@ -137,6 +137,7 @@ castor::db::ora::OraQuerySvc::gatherResults(oracle::occi::ResultSet *rset)
       item->setSegmentStatus((castor::stager::SegmentStatusCodes)0);
       item->setDiskServer(rset->getString(7));
       item->setMountPoint(rset->getString(8));
+      //item->setNbAccesses(rset->getInt(9));    ///XXX todo modify DiskCopyInfo to include this information...
       result.push_back(item);
     }
     return result;
@@ -171,7 +172,7 @@ castor::db::ora::OraQuerySvc::diskCopies4File
       throw ex;
     }
     oracle::occi::ResultSet *rset =
-      m_diskCopies4FileStatement->getCursor(4);
+      m_diskCopies4FileStatement->getCursor(3);
     std::list<castor::stager::DiskCopyInfo*> result = gatherResults(rset);
     m_diskCopies4FileStatement->closeResultSet(rset);
     return result;
@@ -211,7 +212,7 @@ castor::db::ora::OraQuerySvc::diskCopies4Request
       throw ex;
     }
     oracle::occi::ResultSet *rset =
-      m_diskCopies4RequestStatement->getCursor(3);
+      m_diskCopies4RequestStatement->getCursor(2);
     std::list<castor::stager::DiskCopyInfo*> result = gatherResults(rset);
     m_diskCopies4RequestStatement->closeResultSet(rset);
     return result;
@@ -250,7 +251,7 @@ castor::db::ora::OraQuerySvc::diskCopies4Usertag
       throw ex;
     }
     oracle::occi::ResultSet *rset =
-      m_diskCopies4UsertagStatement->getCursor(3);
+      m_diskCopies4UsertagStatement->getCursor(2);
     // Gather the results
     std::list<castor::stager::DiskCopyInfo*> result = gatherResults(rset);
     m_diskCopies4UsertagStatement->closeResultSet(rset);
