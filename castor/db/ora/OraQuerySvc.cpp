@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2005/10/17 08:04:13 $ $Author: itglp $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2005/10/17 08:47:59 $ $Author: itglp $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -158,7 +158,7 @@ castor::db::ora::OraQuerySvc::diskCopies4File
       m_diskCopies4FileStatement =
         createStatement(s_diskCopies4FileStatementString);
       m_diskCopies4FileStatement->registerOutParam
-        (4, oracle::occi::OCCICURSOR);
+        (3, oracle::occi::OCCICURSOR);
     }
     // execute the statement and see whether we found something
     m_diskCopies4FileStatement->setString(1, fileId);
@@ -199,7 +199,7 @@ castor::db::ora::OraQuerySvc::diskCopies4Request
       m_diskCopies4RequestStatement =
         createStatement(s_diskCopies4RequestStatementString);
       m_diskCopies4RequestStatement->registerOutParam
-        (3, oracle::occi::OCCICURSOR);
+        (2, oracle::occi::OCCICURSOR);
     }
     // execute the statement and see whether we found something
     m_diskCopies4RequestStatement->setString(1, requestId);
@@ -238,7 +238,7 @@ castor::db::ora::OraQuerySvc::diskCopies4Usertag
       m_diskCopies4UsertagStatement =
         createStatement(s_diskCopies4UsertagStatementString);
       m_diskCopies4UsertagStatement->registerOutParam
-        (3, oracle::occi::OCCICURSOR);
+        (2, oracle::occi::OCCICURSOR);
     }
     // execute the statement and see whether we found something
     m_diskCopies4UsertagStatement->setString(1, usertag);
