@@ -1182,6 +1182,10 @@ BEGIN
              status = 5, -- WAITSUBREQ
              lastModificationTime = getTime()
        WHERE id = srId;
+      -- return an invalid diskcopy
+      dcId := 0;
+      dcStatus := 7; -- INVALID
+      dcPath := '';
       RETURN;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- no put waiting, let continue
@@ -2204,10 +2208,35 @@ END;
 
 
 /*
- * PL/SQL method implementing the core part of stage queries
+ * PL/SQL method implementing the core part of stage queries light version
  * It takes a list of castorfile ids as input
  */
 CREATE OR REPLACE PROCEDURE internalStageQuery
+ (cfs IN "numList",
+  result OUT castor.QueryLine_Cur) AS
+BEGIN
+  -- external select is for the order by
+ OPEN result FOR
+    -- First internal select for files having a filesystem
+    SELECT UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
+           DiskCopy.path, CastorFile.filesize,
+           nvl(DiskCopy.status, -1), DiskServer.name,
+           FileSystem.mountPoint
+      FROM CastorFile, DiskCopy, FileSystem, DiskServer
+     WHERE castorfile.id IN (SELECT * FROM TABLE(cfs))
+       AND Castorfile.id = DiskCopy.castorFile (+)
+       AND FileSystem.id(+) = DiskCopy.fileSystem
+       AND nvl(FileSystem.status,0) = 0 -- PRODUCTION
+       AND DiskServer.id(+) = FileSystem.diskServer
+       AND nvl(DiskServer.status,0) = 0 -- PRODUCTION
+  ORDER BY fileid, nshost;
+END;
+
+/*
+ * PL/SQL method implementing the core part of stage queries full version (for admins)
+ * It takes a list of castorfile ids as input
+ */
+CREATE OR REPLACE PROCEDURE internalFullStageQuery
  (cfs IN "numList",
   svcClassId IN NUMBER,
   result OUT castor.QueryLine_Cur) AS
@@ -2250,7 +2279,7 @@ CREATE OR REPLACE PROCEDURE fileIdStageQuery
   cfs "numList";
 BEGIN
   SELECT id BULK COLLECT INTO cfs FROM CastorFile WHERE fileId = fid AND nshost = nh;
-  internalStageQuery(cfs, svcClassId, result);
+  internalStageQuery(cfs, result);
 END;
 
 /*
@@ -2284,7 +2313,7 @@ BEGIN
             FROM stagePutRequest
            WHERE reqid LIKE rid) reqlist
    WHERE sr.request = reqlist.id;
-  internalStageQuery(cfs, svcClassId, result);
+  internalStageQuery(cfs, result);
 END;
 
 /*
@@ -2318,7 +2347,7 @@ BEGIN
             FROM stagePutRequest
            WHERE userTag LIKE tag) reqlist
    WHERE sr.request = reqlist.id;
-  internalStageQuery(cfs, svcClassId, result);
+  internalStageQuery(cfs, result);
 END;
 
 
@@ -2356,7 +2385,6 @@ BEGIN
 				  AND rownum < 2 
 					ORDER BY TapeDriveCompatibility.priorityLevel DESC, 
 					         TapeRequest.modificationTime ASC 
-				  FOR UPDATE;
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
     tapeDriveID := 0;
@@ -2379,7 +2407,6 @@ BEGIN
           AND (TapeDrive.deviceGroupName=TapeRequest.deviceGroupName)
           AND rownum < 2
           ORDER BY TapeRequest.modificationTime ASC 
-          FOR UPDATE;
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
     tapeDriveID := 0;
