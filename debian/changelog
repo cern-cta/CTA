@@ -1,3 +1,67 @@
+castor (2.0.1-7) unstable; urgency=low
+
+  * PROTO2/castor/db/analyze/useful.sql:
+    [r 1.3,2005-10-17,itglp] Modified queries related to GC analysis.
+  * PROTO2/castor/db/castor_oracle_create.sql:
+    [r1.33,2005-10-17,itglp] Fixed castor sql package for the new stager_qry.
+    [r1.32,2005-10-17,itglp] Modified procedure for the lighter version of stager_qry without svcClass and tape infos.
+  * PROTO2/castor/db/ora/OraGCSvc.cpp:
+    [r 1.6,2005-10-17,sponcec3] Better implementation of files2Delete that should reduce the impact on the DB
+  * PROTO2/castor/db/ora/OraGCSvc.hpp:
+    [r 1.4,2005-10-17,sponcec3] Better implementation of files2Delete that should reduce the impact on the DB
+  * PROTO2/castor/db/ora/OraQuerySvc.cpp:
+    [r1.23,2005-10-17,itglp] Further fix, now it works.
+    [r1.22,2005-10-17,itglp] Fixed call to procedures.
+    [r1.21,2005-10-17,itglp] Lighter version of stager_qry without svcClass and tape infos.
+  * PROTO2/castor/db/ora/OraQuerySvc.hpp:
+    [r 1.9,2005-10-17,itglp] Lighter version of stager_qry without svcClass and tape infos.
+  * PROTO2/castor/db/oracleTrailer.sql:
+    [r1.211,2005-10-17,sponcec3] Better implementation of files2Delete that should reduce the impact on the DB
+    [r1.210,2005-10-17,itglp] Fixed castor sql package for the new stager_qry.
+    [r1.209,2005-10-17,itglp] Modified procedure for the lighter version of stager_qry without svcClass and tape infos.
+    [r1.208,2005-10-13,mbraeger] Remove the FOR UPDATE statement from matchTapeToTapeDrive procedure, because nobody else is selecting a free tape drive or a queued tape request.
+  * PROTO2/castor/vdqm/handler/TapeRequestDedicationHandler.cpp:
+    [r1.12,2005-10-13,mbraeger] Add a new function, called freeMemory() and solved a memory leak.
+  * PROTO2/castor/vdqm/handler/TapeRequestDedicationHandler.hpp:
+    [r 1.7,2005-10-13,mbraeger] Add a new function, called freeMemory() and solved a memory leak.
+  * CASTOR/dlf/dlf_oracle_ifce.pc:
+    [r1.16,2005-10-13,kotlyar] fixed incorrect assignment
+  * CASTOR/h/Castor_limits.h:
+    [r1.30,2005-10-13,bcouturi] LTO3 Patch - Added new densities
+  * CASTOR/h/Ctape.h:
+    [r1.46,2005-10-13,bcouturi] LTO3 Patch - Added new densities
+  * PROTO2/h/rm_struct.h:
+    [r1.14,2005-10-13,jdurand] Bad luck, s_addr is already used on _WIN32 - renamed to rm_s_addr (ok until rmmaster isn't compiled)
+    [r1.13,2005-10-13,jdurand] map in_addr_r to int on _WIN32
+  * PROTO2/resourcemonitoring/rm_api.c:
+    [r1.17,2005-10-13,jdurand] Added #include <limits.h> for _WIN32
+  * PROTO2/resourcemonitoring/rmenterjob.c:
+    [r 1.6,2005-10-13,jdurand] Enclose signal(SIGPIPE,...) with #ifdef SIGPIPE/#endif
+  * PROTO2/rfio/RfioTURL.c:
+    [r 1.2,2005-10-13,jdurand] Do not #include <unistd.h> on _WIN32
+  * PROTO2/rfio/rfio_HsmIf.c:
+    [r1.11,2005-10-13,jdurand] On windows ECONNREFUSED is called WSAECONNREFUSED - one should use WSAGetLastError() in addition but this should be done in the layer below (stager api)
+    [r1.10,2005-10-13,jdurand] Added #include <winsock2.h> to get ECONNREFUSED defined
+  * PROTO2/rtcopy/rtcpcldCatalogueInterface.c:
+    [r1.136,2005-10-14,obarring] Remove useless updateRep() after segmentsForTape(). This was a remnant from
+    [r1.136,2005-10-14,obarring] an old implementation where the status had to be updated for each segment.
+  * PROTO2/stager/stager_admin_api.c:
+    [r1.26,2005-10-13,jdurand] On _WIN32 only, replace serrno = ECONNREFUSED with serrno = SECOMERR
+  * PROTO2/stager/stager_client_api_common.cpp:
+    [r1.17,2005-10-13,jdurand] Use Cvsnprintf() instead of vsnprintf() [CASTOR portable wrapper - on _WIN32 vsnprintf() is called... _vsnprintf()]
+  * PROTO2/stager/stager_qry.c:
+    [r 1.9,2005-10-17,itglp] Lighter version of stager_qry without svcClass and tape infos.
+  * PROTO2/stager/stager_query_service.cpp:
+    [r1.26,2005-10-17,itglp] Lighter version of stager_qry without svcClass and tape infos.
+  * CASTOR/tape/Ctape_devinfo.c:
+    [r1.13,2005-10-13,bcouturi] LTO3 Patch - New densities and LTO3 support
+  * CASTOR/tape/Ctape_dmpfil.c:
+    [r1.23,2005-10-13,bcouturi] LTO3 Patch - New densities and LTO3 support
+  * CASTOR/tape/cvtden.c:
+    [r1.10,2005-10-13,bcouturi] LTO3 Patch - New densities and LTO3 support
+
+ -- Sebastien Ponce <sponcec3@pcitds13>  Mon, 17 Oct 2005 12:21:55 +0200
+
 castor (2.0.1-6) unstable; urgency=low
 
   * PROTO2/castor/replier/RequestReplier.cpp:
