@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Win32.rules,v $ $Revision: 1.1 $ $Date: 2005/10/10 16:46:29 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Win32.rules,v $ $Revision: 1.2 $ $Date: 2005/10/17 14:08:10 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 .c.obj:
@@ -46,19 +46,21 @@ ProgramTargetName(program): objects deplibs		@@\
 
 #define MakeSubdirs(name,dirs) \
 name:							@@\
-	@for %i in ( dirs ) \				@@\
+	-@for %i in ( dirs ) \				@@\
 	do @(echo %i - & cd %i & \			@@\
 		$(MAKE) $(MFLAGS) $@ & cd .. )
 
 #define MakeCondSubdirs(name,dirs,cond) \
 name: cond							@@\
-	@for %i in ( dirs ) \				@@\
+	-@for %i in ( dirs ) \				@@\
 	do @(echo %i - & cd %i & \			@@\
 		$(MAKE) $(MFLAGS) $@ & cd .. )
 
 #define RemoveFile(file) if exist file $(RM) file
 
-#define RemoveFiles(files) for %i in ( files ) do @RemoveFile(%i)
+#define RemoveFiles(files) $(RM) @<<			@@\
+files							@@\
+<<
 
 #define InstallTarget(file,owner,group,mode,dest)	@@\
 FileName(dest,file): file				@@\
