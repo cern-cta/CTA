@@ -31,11 +31,14 @@ set TMPDIR=`mktemp /tmp/gencastor-XXXXXX`
 rm -rf ${TMPDIR}
 mkdir -p ${TMPDIR}/${TOPNS}/db
 cp ${WORKDIR}/${TOPNS}/db/*.sql ${TMPDIR}/${TOPNS}/db/
+grep 'CREATE OR REPLACE' ${TMPDIR}/${TOPNS}/db/oracleTrailer.sql | awk 'BEGIN { FS="[ (]+" } { print "DROP " $4, $5 ";" }' > ${TMPDIR}/${TOPNS}/db/oracleTrailer_drop.sql
+grep 'CREATE OR REPLACE' ${TMPDIR}/${TOPNS}/db/postgresTrailer.sql | awk 'BEGIN { FS="[ (]+" } { print "DROP " $4, $5 ";" }' > ${TMPDIR}/${TOPNS}/db/postgresTrailer_drop.sql
 
 /usr/bin/gencastor.bin -o ${TMPDIR} -c ${TOPNS} --nocrashhandler ${XMIFILE}
 set pushdsilent
 pushd ${TMPDIR}
 rm -f ${TOPNS}/db/*Generated*
+rm -f ${TOPNS}/db/*Trailer_drop*
 foreach f (`find . -type f`)
   #echo $f
   if !(-f ${WORKDIR}/${f}) then
