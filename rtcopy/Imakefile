@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.25 $ $Date: 2005/07/21 09:13:07 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.26 $ $Date: 2005/10/17 11:38:52 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -12,7 +12,7 @@ COMM
 COMM         Make RTCOPY API library and server
 
 INCLUDES = FileName(..,h)
-INCLUDES_CPP = FileName(..,)
+INCLUDES_CPP = FileName(..,/)
 
 COMM
 COMM Define the remote tape copy daemon log file.
@@ -170,9 +170,9 @@ DFLAGS = -DBIN=\"$(BIN)\" \
 CFLAGS = $(CCOPTIM) -I$(INCLUDES) -I$(INCLUDES_CPP) $(THREADFLAGS) $(DFLAGS) $(SECURITYFLAG)
 
 COMM######################### DEPENDENCY LIBRARIES ###############
-DEPLIB += DepSharedLibraryTargetName(shlib,shift)
+DEPLIB = DepSharedLibraryTargetName(shlib,shift)
 
-GLOBLIB += -L../shlib -lshift
+GLOBLIB = -L../shlib -lshift
 
 COMM######################### RULES ##############################
 
