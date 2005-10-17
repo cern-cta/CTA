@@ -17,7 +17,7 @@ COMM You should have received a copy of the GNU General Public License
 COMM along with this program; if not, write to the Free Software
 COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 COMM
-COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.109 $ $Release$ $Date: 2005/10/17 11:41:26 $ $Author: jdurand $
+COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.110 $ $Release$ $Date: 2005/10/17 12:03:32 $ $Author: jdurand $
 COMM
 COMM Make Castor libraries and executables
 COMM
@@ -397,7 +397,7 @@ MakeCondSubdirs(clobber,$(SUBDIRS),/)
 
 #if _WIN32
 Makefiles:
-	@for %i in ( $(SUBDIRS) ) \
+	-@for %i in ( $(SUBDIRS) ) \
 	do @(echo %i - & cd %i & \
 		..\..\imake\imake -I..\..\config & \
 		$(MAKE) $(MFLAGS) $@ & cd .. )
