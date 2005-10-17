@@ -2,13 +2,12 @@
 #
 ## Cleanup of job output files
 #
-if [ -r /etc/sysconfig/stagerJob ]; then
-  . /etc/sysconfig/stagerJob
-fi
-#
 ## Unless sysconfig says no the default is to run the crontab
 #
 RUN_CLEANUP=yes
+if [ -r /etc/sysconfig/stagerJob ]; then
+  . /etc/sysconfig/stagerJob
+fi
 
 if [ "${RUN_CLEANUP}" = "yes" ]; then
   if [ "x${CLEANUP_MAX_SIZE_KB}" = "x" ]; then
