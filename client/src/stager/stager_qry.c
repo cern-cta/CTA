@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.8 2005/07/06 09:16:25 jdurand Exp $
+ * $Id: stager_qry.c,v 1.9 2005/10/17 07:41:57 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.8 $ $Date: 2005/07/06 09:16:25 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.9 $ $Date: 2005/10/17 07:41:57 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -74,7 +74,7 @@ main(int argc, char *argv[]) {
   /* Setting the error buffer */
   stage_seterrbuf(errbuf, sizeof(errbuf));
 
-  /* Actual call to prepareToGet */
+  /* Actual call to fileQuery */
   rc = stage_filequery(args.requests,
                        args.nbreqs,
                        &responses,
@@ -90,14 +90,17 @@ main(int argc, char *argv[]) {
   printf("Received %d responses\n", nbresps);
 
   for (i=0; i<nbresps; i++) {
-    printf("%s %s",
-           responses[i].filename,
-           stage_fileStatusName(responses[i].status));
-    if (responses[i].errorCode != 0) {
-      printf(" Error %d/%s (%s)",
-             responses[i].errorCode,
-             sstrerror(responses[i].errorCode),
-             responses[i].errorMessage);
+    if (responses[i].errorCode == 0) {
+      printf("%s %s %s",
+            (const char *)args.requests[i].param,
+            responses[i].filename,
+            stage_fileStatusName(responses[i].status));
+    } else {
+      printf("%s Error %d/%s (%s)",
+            (const char *)args.requests[i].param,
+            responses[i].errorCode,
+            sstrerror(responses[i].errorCode),
+            responses[i].errorMessage);
     }
     printf ("\n");
   }

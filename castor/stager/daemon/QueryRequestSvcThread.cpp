@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.25 2005/10/03 15:14:18 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.26 2005/10/17 07:41:57 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.25 $ $Date: 2005/10/03 15:14:18 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.26 $ $Date: 2005/10/17 07:41:57 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -218,6 +218,9 @@ namespace castor {
              dc->tapeCopyStatus(),
              dc->segmentStatus()); */
 
+          st = FILE_STAGEOUT;
+          diskServer = dc->diskServer();
+          /*
           switch (dc->tapeCopyStatus()) {
           case -1:
             st =  FILE_STAGEOUT;
@@ -241,6 +244,7 @@ namespace castor {
             }
             break;
           }
+          */
           break;
 
         case DISKCOPY_CANBEMIGR:
@@ -525,13 +529,14 @@ namespace castor {
               }
 
               // Get the SvcClass associated to the request
+              /*
               castor::stager::SvcClass* svcClass = uReq->svcClass();
               if (0 == svcClass) {
                 castor::exception::Internal e;
                 e.getMessage() << "found attached with no SvcClass.\n"
                                << uReq;
                 throw e;
-              }
+              }*/
 
               // This time call the proper handling request
               switch(ptype) {
@@ -542,7 +547,7 @@ namespace castor {
                                                  client,
                                                  fid,
                                                  nshost,
-                                                 svcClass->id());
+                                                 0 /* svcClass */);
 
                 break;
               case REQUESTQUERYTYPE_REQID:
@@ -550,7 +555,7 @@ namespace castor {
                 handle_fileQueryRequest_byRequest(qrySvc,
                                                   client,
                                                   pval,
-                                                  svcClass->id(),
+                                                  0 /* svcClass */,
                                                   false);
                 break;
               case REQUESTQUERYTYPE_USERTAG:
@@ -558,7 +563,7 @@ namespace castor {
                 handle_fileQueryRequest_byRequest(qrySvc,
                                                   client,
                                                   pval,
-                                                  svcClass->id(),
+                                                  0 /* svcClass */,
                                                   true);
                 break;
 
@@ -747,6 +752,7 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
 
     /* Getting the svcClass */
     /* -------------------- */
+    /*
     STAGER_LOG_VERBOSE(NULL, "Getting query's className");
     std::string className = req->svcClassName();
     if ("" == className) {
@@ -761,9 +767,11 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
     }
 
     /* Filling SvcClass in the DataBase */
-    /* -------------------------------- */
+    /* -------------------------------- *
     req->setSvcClass(svcClass);
     svcs->fillRep(&ad, req, castor::OBJ_SvcClass, true);
+    */
+    req->setSvcClass(0);
 
   } catch (castor::exception::Exception e) {
     // If we fail here, we do NOT have enough information to
