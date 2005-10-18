@@ -1890,6 +1890,7 @@ BEGIN
       cur := cur3;
     END IF;
     FETCH cur INTO nextItems(bestCandidate);
+    EXIT WHEN cur%NOTFOUND;
     -- Update toBeFreed
     freed := freed + nextItems(bestCandidate).fileSize;
     -- Shall we continue ?
@@ -1957,6 +1958,7 @@ BEGIN
   -- mark them GCCandidate
   LOOP
     FETCH cur INTO nextItem;
+    EXIT WHEN cur%NOTFOUND;
     -- Mark the DiskCopy
     UPDATE DISKCOPY SET status = 8 -- GCCANDIDATE
      WHERE id = nextItem.dcId;
