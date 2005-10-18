@@ -194,15 +194,16 @@ int castor::gc::GcDaemon::start()
     {
       char *p;
       int  gcintervalnew;
-      if ((p = getenv ("GC_INTERVAL")) || (p = getconfent ("GC", "INTERVAL", 0)))
+      if ((p = getenv ("GC_INTERVAL")) || (p = getconfent ("GC", "INTERVAL", 0))) {
         gcintervalnew = atoi(p);
-      if ( gcintervalnew != gcinterval) {
-        gcinterval = gcintervalnew;
-        // "Sleep interval changed" message
-        castor::dlf::Param params[] =
-          {castor::dlf::Param("Machine", diskServerName),
-           castor::dlf::Param("Sleep Interval", gcinterval)};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 7, 2, params);
+	if ( gcintervalnew != gcinterval) {
+	  gcinterval = gcintervalnew;
+	  // "Sleep interval changed" message
+	  castor::dlf::Param params[] =
+	    {castor::dlf::Param("Machine", diskServerName),
+	     castor::dlf::Param("Sleep Interval", gcinterval)};
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 7, 2, params);
+	}
       }
     }
 
