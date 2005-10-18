@@ -1,3 +1,53 @@
+castor (2.0.1-8) unstable; urgency=low
+
+  * PROTO2/castor/BaseCnvSvc.cpp:
+    [r1.18,2005-10-17,sponcec3] Remove return statement that should not be there
+  * PROTO2/castor/Imakefile:
+    [r1.112,2005-10-17,jdurand] Go back to MakeCondSubdirs() but this time with a valid parameter
+    [r1.111,2005-10-17,jdurand] Replaced MakeCondSubdirs() with a dummy or irrelevant argument with MakeSubDirs()
+    [r1.110,2005-10-17,jdurand] Added a '-' to ignore error coming from for loop on empty list (is fatal on win32)
+    [r1.109,2005-10-17,jdurand] Made _WIN32 compliant
+  * PROTO2/castor/db/oracleTrailer.sql:
+    [r1.212,2005-10-18,sponcec3] Added error handling in garbage collector main method
+  * PROTO2/castor/gc/GcDaemon.cpp:
+    [r1.31,2005-10-18,jdurand] Fix for #12479 (gcDaemon sleep interval corrupted)
+  * PROTO2/codeGeneration/gencastor/gencastor:
+    [r 1.8,2005-10-17,itglp] Improved script to autogenerate DROP part of the SQL scripts.
+  * PROTO2/config/Win32.rules:
+    [r 1.2,2005-10-17,jdurand] use a temporary file to delete a list of files (risk to exceed 'cmd' max number of characters)
+    [r 1.2,2005-10-17,jdurand] ignore failure in case of a for () loop (case of empty list)
+  * PROTO2/debian/castor-job.cron.hourly:
+    [r 1.5,2005-10-17,jdurand] Load the sysconfig after setting the default value for RUN_CLEANUP
+  * CASTOR/dlf/dlf_procreq.c:
+    [r1.10,2005-10-18,kotlyar] added missed checks for start/stop dlf transaction
+  * PROTO2/h/stager_client_api.h:
+    [r1.24,2005-10-17,jdurand] On _WIN32 only, add inclusion of <io.h> and <sys/stat.h>, necessary for _umask() declaration at least
+  * PROTO2/hsmtools/Imakefile:
+    [r1.20,2005-10-17,jdurand] Do not call FileName() with empty argument (win32's name does not like that)
+  * PROTO2/job/Imakefile:
+    [r1.22,2005-10-17,jdurand] Support of OPTIONS from /etc/sysconfig/stagerJob: job will then use them - example: --nodlf --log stderr --debug
+  * PROTO2/job/stagerJob.shell:
+    [r1.37,2005-10-17,jdurand] Support of OPTIONS from /etc/sysconfig/stagerJob: job will then use them - example: --nodlf --log stderr --debug
+  * PROTO2/job/stagerJob.sysconfig:
+    [r 1.2,2005-10-17,jdurand] Support of OPTIONS from /etc/sysconfig/stagerJob: job will then use them - example: --nodlf --log stderr --debug
+  * PROTO2/maketar.sh:
+    [r1.38,2005-10-18,jdurand] Added /bin/true at the end of every scriptlet so that they never fail
+  * PROTO2/resourcemonitoring/Imakefile:
+    [r1.24,2005-10-17,jdurand] Do not call FileName() with empty argument (win32's name does not like that)
+    [r1.24,2005-10-17,jdurand] Make declaration of LFSLIBS without +=, but simply =
+    [r1.24,2005-10-17,jdurand] Remove call of MakeDir for undefined variable $(SPOOL)
+  * PROTO2/rtcopy/Imakefile:
+    [r1.26,2005-10-17,jdurand] Do not call FileName() with empty argument (win32's name does not like that)
+    [r1.26,2005-10-17,jdurand] Make the 1st DEPLIB and GLOBLIB declarations without +=, but simply =
+  * PROTO2/scheduler/LSF/Imakefile:
+    [r1.12,2005-10-17,jdurand] Do not call FileName() with empty argument (win32's name does not like that)
+  * PROTO2/stager/Imakefile:
+    [r1.50,2005-10-17,jdurand] Do not call FileName() macro with an empty argument (win32's nmake does not like that)
+  * PROTO2/stager/stager_client_api_get.cpp:
+    [r1.23,2005-10-17,jdurand] On windows, umask() is called _umask()
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Tue, 18 Oct 2005 16:07:44 +0200
+
 castor (2.0.1-7) unstable; urgency=low
 
   * PROTO2/castor/db/analyze/useful.sql:
