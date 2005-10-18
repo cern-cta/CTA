@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_procreq.c,v $ $Revision: 1.9 $ $Date: 2005/10/11 13:12:51 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_procreq.c,v $ $Revision: 1.10 $ $Date: 2005/10/18 12:19:20 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
  
 #include <errno.h>
@@ -127,7 +127,13 @@ struct dlf_srv_thread_info* thip;
 	marshall_BYTE (sbp, status);		/* will be updated (may be)*/
 
 	/* Try to obtain facility number */
-	c = dlf_get_facility_no (&thip->dbfd, facname, &fac_no, &dblistptr);
+        while(thip->dbfd.tr_started==1){ ;}
+ 	(void) dlf_start_tr (thip->s, &thip->dbfd);
+	
+        c = dlf_get_facility_no (&thip->dbfd, facname, &fac_no, &dblistptr);
+        
+        (void) dlf_end_tr_nocommit (&thip->dbfd);
+        
 	if (c != 0) {
 	  RETURN (serrno);
 	}
@@ -138,6 +144,8 @@ struct dlf_srv_thread_info* thip;
 	buf_end = outbuf + sizeof(outbuf);
 
 	while (status == 0) {
+            while(thip->dbfd.tr_started==1){ ;}
+ 	    (void) dlf_start_tr (thip->s, &thip->dbfd);
 	    while ((buf_end - sbp) > (DLF_MAXSTRVALLEN + 3)) { /* Have we room to store message? */
 
 		if ((c = dlf_get_text_entry (&thip->dbfd, bol, fac_no, &msg_no, msg_text,
@@ -149,6 +157,7 @@ struct dlf_srv_thread_info* thip;
 		else
 		  break;
 	    }
+            (void) dlf_end_tr_nocommit (&thip->dbfd);
 	    if (c < 0) {
 		RETURN (serrno);
 	    }
@@ -204,6 +213,9 @@ struct dlf_srv_thread_info* thip;
 	/* Try to not overload the buffer */
 	buf_end = outbuf + sizeof(outbuf);
 	while (status == 0) {
+            while(thip->dbfd.tr_started==1){ ;}
+ 	    (void) dlf_start_tr (thip->s, &thip->dbfd);
+        
 	    while ((buf_end - sbp) > (DLF_MAXFACNAMELEN + 3)) { /* Have we room to store message? */
 		if ((c = dlf_get_facility_entry (&thip->dbfd, bol, &fac_no, fac_name,
 					     endlist, &dblistptr)) == 0) {
@@ -214,6 +226,7 @@ struct dlf_srv_thread_info* thip;
 		else
 		  break;
 	    }
+            (void) dlf_end_tr_nocommit (&thip->dbfd);
 	    if (c < 0) {
 		RETURN (serrno);
 	    }
@@ -306,7 +319,7 @@ struct dlf_srv_thread_info *thip;
 
 	if (dlf_insert_text_entry (&thip->dbfd, fac_name, msg_no, msg_txt)) 
            {
-           (void) dlf_start_tr (thip->s, &thip->dbfd);
+           (void) dlf_end_tr (&thip->dbfd);
 	   RETURN (serrno);
 	   }
 
