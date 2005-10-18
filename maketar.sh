@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.37 2005/09/29 09:22:03 jdurand Exp $
+# $Id: maketar.sh,v 1.38 2005/10/18 14:02:19 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -312,6 +312,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
 	    echo "%post -n $package" >> CASTOR.spec
 	    echo "if [ \$1 -ge 1 ]; then" >> CASTOR.spec
 	    cat debian/$package.postinst | sed 's/\${1+\"$@"}/configure/g' | grep -v /bin/sh | grep -v exit >> CASTOR.spec
+	    echo "/bin/true" >> CASTOR.spec
 	    echo "fi" >> CASTOR.spec
 	    # Force ldconfig for packages with a shared library
 	    [ "$package" = "castor-lib" ] && echo "/sbin/ldconfig" >> CASTOR.spec
@@ -330,6 +331,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
 	    echo "%preun -n $package" >> CASTOR.spec
 	    echo "if [ \$1 -eq 0 ]; then" >> CASTOR.spec
 	    cat debian/$package.prerm | sed 's/\${1+\"$@"}/remove/g' | grep -v /bin/sh | grep -v exit >> CASTOR.spec
+	    echo "/bin/true" >> CASTOR.spec
 	    echo "fi" >> CASTOR.spec
 	fi
         #
@@ -339,6 +341,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
 	    echo "%postun -n $package" >> CASTOR.spec
 	    echo "if [ \$1 -eq 0 ]; then" >> CASTOR.spec
 	    cat debian/$package.postrm | sed 's/\${1+\"$@"}/remove/g' | grep -v /bin/sh | grep -v exit >> CASTOR.spec
+	    echo "/bin/true" >> CASTOR.spec
 	    echo "fi" >> CASTOR.spec
 	    # Force ldconfig for packages with a shared library
 	    [ "$package" = "castor-lib" ] && echo "/sbin/ldconfig" >> CASTOR.spec
