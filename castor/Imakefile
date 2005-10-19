@@ -17,7 +17,7 @@ COMM You should have received a copy of the GNU General Public License
 COMM along with this program; if not, write to the Free Software
 COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 COMM
-COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.112 $ $Release$ $Date: 2005/10/17 12:59:42 $ $Author: jdurand $
+COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.113 $ $Release$ $Date: 2005/10/19 13:40:07 $ $Author: jdurand $
 COMM
 COMM Make Castor libraries and executables
 COMM
@@ -447,9 +447,19 @@ install:
 
 exportman:
 
+#if _WIN32
+COMM
+COMM Because of cmd length limit in shell expansion
+COMM
+STGLIB_OBJS_WIN32=*.obj dlf\*.obj io\*.obj rh\*.obj stager\*.obj vdqm\*.obj exception\*.obj vdqm\handler\*.obj
+clean0:
+        @echo cleaning in CurDir
+        -@RemoveFiles($(STGLIB_OBJS_WIN32))
+#else
 clean0:
 	@echo cleaning in CurDir
 	-@RemoveFiles($(STGLIB_OBJS))
+#endif
 
 clobber0:	clean
 	@echo clobbering in CurDir
