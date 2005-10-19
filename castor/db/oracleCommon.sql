@@ -2180,7 +2180,7 @@ BEGIN
 				       OR TapeDrive.deviceGroupName=TapeRequest.deviceGroupName) 
 				  AND rownum < 2 
 					ORDER BY TapeDriveCompatibility.priorityLevel DESC, 
-					         TapeRequest.modificationTime ASC 
+					         TapeRequest.modificationTime ASC;
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
     tapeDriveID := 0;
@@ -2202,7 +2202,7 @@ BEGIN
           AND (TapeRequest.requestedSrv=TapeDrive.tapeServer OR TapeRequest.requestedSrv=0)
           AND (TapeDrive.deviceGroupName=TapeRequest.deviceGroupName)
           AND rownum < 2
-          ORDER BY TapeRequest.modificationTime ASC 
+          ORDER BY TapeRequest.modificationTime ASC; 
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
     tapeDriveID := 0;
