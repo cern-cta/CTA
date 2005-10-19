@@ -1,5 +1,5 @@
 /*
- * $Id: uxid.c,v 1.9 2001/05/03 15:38:03 baud Exp $
+ * $Id: uxid.c,v 1.10 2005/10/19 13:44:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: uxid.c,v $ $Revision: 1.9 $ $Date: 2001/05/03 15:38:03 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: uxid.c,v $ $Revision: 1.10 $ $Date: 2005/10/19 13:44:45 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #define _POSIX_
@@ -20,9 +20,6 @@ static char sccsid[] = "@(#)$RCSfile: uxid.c,v $ $Revision: 1.9 $ $Date: 2001/05
 #include "grp.h"
 #include "pwd.h"
 #include "Castor_limits.h"
-
-FILE *fopen();
-char *getenv();
 
 static int winux_uid_key = 0;
 static int winux_gid_key = 0;
