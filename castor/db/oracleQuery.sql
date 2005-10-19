@@ -804,7 +804,7 @@ BEGIN
       FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
                   FileSystem.weight, FileSystem.mountPoint,
                   DiskServer.name
-            FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
+            FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
            WHERE SubRequest.id = rsubreqId
              AND SubRequest.castorfile = DiskCopy.castorfile
              AND FileSystem.diskpool = DiskPool2SvcClass.parent
