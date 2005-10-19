@@ -990,7 +990,7 @@ BEGIN
       FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
                   FileSystem.weight, FileSystem.mountPoint,
                   DiskServer.name
-            FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
+            FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
            WHERE SubRequest.id = rsubreqId
              AND SubRequest.castorfile = DiskCopy.castorfile
              AND FileSystem.diskpool = DiskPool2SvcClass.parent
@@ -1652,28 +1652,13 @@ BEGIN
 END;
 
 /* PL/SQL method implementing selectFiles2Delete */
-CREATE OR REPLACE PROCEDURE selectFiles2Delete
-(DiskServerName IN VARCHAR2,
- GCLocalFiles OUT castor.GCLocalFiles_Cur) AS
-  files "numList";
+CREATE OR REPLACE PROCEDURE updateFiles2Delete
+(dcIds IN castor."cnumList") AS
 BEGIN
-  
-  SELECT DiskCopy.id BULK COLLECT INTO files
-    FROM DiskCopy, FileSystem, DiskServer
-   WHERE DiskCopy.fileSystem = FileSystem.id
-     AND FileSystem.DiskServer = DiskServer.id
-     AND DiskServer.name = DiskServerName
-     AND DiskCopy.status = 8 -- GC_CANDIDATE
-     FOR UPDATE;
-  IF files.COUNT > 0 THEN
+  FOR i in dcIds.FIRST .. dcIds.LAST LOOP
     UPDATE DiskCopy set status = 9 -- BEING_DELETED
-     WHERE id MEMBER OF files;
-  END IF;
-  OPEN GCLocalFiles FOR
-    SELECT FileSystem.mountPoint||DiskCopy.path, DiskCopy.id 
-      FROM DiskCopy, FileSystem
-     WHERE DiskCopy.fileSystem = FileSystem.id
-       AND DiskCopy.id MEMBER OF files;
+     WHERE id = i;
+  END LOOP;
 END;
 
 /*
@@ -2091,6 +2076,7 @@ BEGIN
       cur := cur3;
     END IF;
     FETCH cur INTO nextItems(bestCandidate);
+    EXIT WHEN cur%NOTFOUND;
     -- Update toBeFreed
     freed := freed + nextItems(bestCandidate).fileSize;
     -- Shall we continue ?
@@ -2158,6 +2144,7 @@ BEGIN
   -- mark them GCCandidate
   LOOP
     FETCH cur INTO nextItem;
+    EXIT WHEN cur%NOTFOUND;
     -- Mark the DiskCopy
     UPDATE DISKCOPY SET status = 8 -- GCCANDIDATE
      WHERE id = nextItem.dcId;
@@ -2214,10 +2201,10 @@ CREATE OR REPLACE PROCEDURE internalStageQuery
  (cfs IN "numList",
   result OUT castor.QueryLine_Cur) AS
 BEGIN
-  -- external select is for the order by
  OPEN result FOR
-    -- First internal select for files having a filesystem
-    SELECT UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
+    -- we need to give these hints to the optimizer otherwise it goes for a full table scan (!)
+    SELECT /*+ INDEX (CastorFile) INDEX (DiskCopy) INDEX (FileSystem) INDEX (DiskServer) */
+           UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
            DiskCopy.path, CastorFile.filesize,
            nvl(DiskCopy.status, -1), DiskServer.name,
            FileSystem.mountPoint, CastorFile.nbaccesses
@@ -2240,9 +2227,7 @@ CREATE OR REPLACE PROCEDURE internalFullStageQuery
   svcClassId IN NUMBER,
   result OUT castor.QueryLine_Cur) AS
 BEGIN
-  -- external select is for the order by
  OPEN result FOR
-    -- First internal select for files having a filesystem
     SELECT UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
            DiskCopy.path, CastorFile.filesize,
            nvl(DiskCopy.status, -1), nvl(tpseg.tstatus, -1),
@@ -2276,9 +2261,10 @@ CREATE OR REPLACE PROCEDURE fileIdStageQuery
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
-  SELECT id BULK COLLECT INTO cfs FROM CastorFile WHERE fileId = fid AND nshost = nh;
-  internalStageQuery(cfs, result);
+ SELECT id BULK COLLECT INTO cfs FROM CastorFile WHERE fileId = fid AND nshost = nh;
+ internalStageQuery(cfs, result);
 END;
+
 
 /*
  * PL/SQL method implementing the stage_query based on request id

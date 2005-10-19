@@ -2015,10 +2015,10 @@ CREATE OR REPLACE PROCEDURE internalStageQuery
  (cfs IN "numList",
   result OUT castor.QueryLine_Cur) AS
 BEGIN
-  -- external select is for the order by
  OPEN result FOR
-    -- First internal select for files having a filesystem
-    SELECT UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
+    -- we need to give these hints to the optimizer otherwise it goes for a full table scan (!)
+    SELECT /*+ INDEX (CastorFile) INDEX (DiskCopy) INDEX (FileSystem) INDEX (DiskServer) */
+           UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
            DiskCopy.path, CastorFile.filesize,
            nvl(DiskCopy.status, -1), DiskServer.name,
            FileSystem.mountPoint, CastorFile.nbaccesses
@@ -2041,9 +2041,7 @@ CREATE OR REPLACE PROCEDURE internalFullStageQuery
   svcClassId IN NUMBER,
   result OUT castor.QueryLine_Cur) AS
 BEGIN
-  -- external select is for the order by
  OPEN result FOR
-    -- First internal select for files having a filesystem
     SELECT UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
            DiskCopy.path, CastorFile.filesize,
            nvl(DiskCopy.status, -1), nvl(tpseg.tstatus, -1),
@@ -2077,9 +2075,10 @@ CREATE OR REPLACE PROCEDURE fileIdStageQuery
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
-  SELECT id BULK COLLECT INTO cfs FROM CastorFile WHERE fileId = fid AND nshost = nh;
-  internalStageQuery(cfs, result);
+ SELECT id BULK COLLECT INTO cfs FROM CastorFile WHERE fileId = fid AND nshost = nh;
+ internalStageQuery(cfs, result);
 END;
+
 
 /*
  * PL/SQL method implementing the stage_query based on request id
