@@ -15,7 +15,7 @@
 #define _CASTOR_LIMITS_H
 
 	/* all maximum lengths defined below do not include the trailing null */
-#define CA_MAXDENNUM      25    /*  ...  */
+#define CA_MAXDENNUM      27    /*  ...  */
 
 #define CA_MAXCLASNAMELEN 15	/* maximum length for a fileclass name */
 #define	CA_MAXCOMMENTLEN 255	/* maximum length for user comments in metadata */
