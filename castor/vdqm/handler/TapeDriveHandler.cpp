@@ -121,8 +121,8 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
 	} catch ( castor::exception::Exception ex ) {
 		if ( tapeServer ) {
 			for (std::vector<castor::vdqm::TapeDrive*>::iterator it = tapeServer->tapeDrives().begin();
-	         it != tapeServer->tapeDrives().end();
-	         it++) {
+		         it != tapeServer->tapeDrives().end();
+		         it++) {
 		  	// The old TapeRequest. Normally it should not exist.
 		    TapeRequest* runningTapeReq = (*it)->runningTapeReq();   	
 		    
@@ -131,9 +131,12 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
 		    	runningTapeReq = 0;
 		    	(*it)->setRunningTapeReq(0);
 		    }
-	  	}  
-	  	delete tapeServer;
-	  	tapeServer = 0;
+		    
+		    delete (*it);
+		  } 
+		  tapeServer->tapeDrives().clear();
+		  delete tapeServer;
+		  tapeServer = 0;			
 		}
 			
 		
@@ -712,7 +715,10 @@ void castor::vdqm::handler::TapeDriveHandler::freeMemory(
     	runningTapeReq = 0;
     	(*it)->setRunningTapeReq(0);
     }
-  }  
+    
+    delete (*it);
+  } 
+  tapeServer->tapeDrives().clear();
   delete tapeServer;
   tapeServer = 0;
   tapeDrive->setTapeServer(0);
