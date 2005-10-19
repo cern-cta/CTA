@@ -1228,7 +1228,7 @@ void CppCppDbCnvWriter::writeFillRep() {
             << endl << getIndent()
             << "ex.getMessage() << \"Error in fillRep for type \" << type"
             << endl << getIndent()
-            << "                << std::endl << e.getMessage() << std::endl;"
+            << "                << std::endl << e.getMessage().str() << std::endl;"
             << endl << getIndent() << "throw ex;" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
@@ -2978,7 +2978,7 @@ void CppCppDbCnvWriter::printSQLError(QString name,
             << "ex.getMessage() << \"Error in " << name
             << " request :\""
             << endl << getIndent()
-            << "                << std::endl << e.getMessage() << std::endl"
+            << "                << std::endl << e.getMessage().str() << std::endl"
             << endl << getIndent()
             << "                << \"Statement was :\" << std::endl"
             << endl << getIndent()
