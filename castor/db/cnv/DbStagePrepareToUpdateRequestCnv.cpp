@@ -213,7 +213,7 @@ void castor::db::cnv::DbStagePrepareToUpdateRequestCnv::fillRep(castor::IAddress
   } catch (castor::exception::SQLError e) {
     castor::exception::Internal ex;
     ex.getMessage() << "Error in fillRep for type " << type
-                    << std::endl << e.getMessage() << std::endl;
+                    << std::endl << e.getMessage().str() << std::endl;
     throw ex;
   }
 }
@@ -520,7 +520,7 @@ void castor::db::cnv::DbStagePrepareToUpdateRequestCnv::createRep(castor::IAddre
     catch(castor::exception::SQLError ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
-                    << std::endl << e.getMessage() << std::endl
+                    << std::endl << e.getMessage().str() << std::endl
                     << "Statement was :" << std::endl
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
@@ -582,7 +582,7 @@ void castor::db::cnv::DbStagePrepareToUpdateRequestCnv::updateRep(castor::IAddre
     catch(castor::exception::SQLError ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
-                    << std::endl << e.getMessage() << std::endl
+                    << std::endl << e.getMessage().str() << std::endl
                     << "Statement was :" << std::endl
                     << s_updateStatementString << std::endl
                     << "and id was " << obj->id() << std::endl;;
@@ -631,7 +631,7 @@ void castor::db::cnv::DbStagePrepareToUpdateRequestCnv::deleteRep(castor::IAddre
     catch(castor::exception::SQLError ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
-                    << std::endl << e.getMessage() << std::endl
+                    << std::endl << e.getMessage().str() << std::endl
                     << "Statement was :" << std::endl
                     << s_deleteStatementString << std::endl
                     << "and id was " << obj->id() << std::endl;;
@@ -683,7 +683,7 @@ castor::IObject* castor::db::cnv::DbStagePrepareToUpdateRequestCnv::createObj(ca
     catch(castor::exception::SQLError ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
-                    << std::endl << e.getMessage() << std::endl
+                    << std::endl << e.getMessage().str() << std::endl
                     << "Statement was :" << std::endl
                     << s_selectStatementString << std::endl
                     << "and id was " << ad->target() << std::endl;;
@@ -732,7 +732,7 @@ void castor::db::cnv::DbStagePrepareToUpdateRequestCnv::updateObj(castor::IObjec
     catch(castor::exception::SQLError ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
-                    << std::endl << e.getMessage() << std::endl
+                    << std::endl << e.getMessage().str() << std::endl
                     << "Statement was :" << std::endl
                     << s_updateStatementString << std::endl
                     << "and id was " << obj->id() << std::endl;;
