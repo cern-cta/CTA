@@ -2013,6 +2013,7 @@ END;
  */
 CREATE OR REPLACE PROCEDURE internalStageQuery
  (cfs IN "numList",
+  svcClassId IN NUMBER,
   result OUT castor.QueryLine_Cur) AS
 BEGIN
  OPEN result FOR
@@ -2022,13 +2023,16 @@ BEGIN
            DiskCopy.path, CastorFile.filesize,
            nvl(DiskCopy.status, -1), DiskServer.name,
            FileSystem.mountPoint, CastorFile.nbaccesses
-      FROM CastorFile, DiskCopy, FileSystem, DiskServer
+      FROM CastorFile, DiskCopy, FileSystem, DiskServer,
+           DiskPool2SvcClass
      WHERE castorfile.id IN (SELECT * FROM TABLE(cfs))
        AND Castorfile.id = DiskCopy.castorFile (+)
        AND FileSystem.id(+) = DiskCopy.fileSystem
        AND nvl(FileSystem.status,0) = 0 -- PRODUCTION
        AND DiskServer.id(+) = FileSystem.diskServer
        AND nvl(DiskServer.status,0) = 0 -- PRODUCTION
+       AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool
+       AND (DiskPool2SvcClass.child = svcClassId OR DiskPool2SvcClass.child IS NULL)
   ORDER BY fileid, nshost;
 END;
 
@@ -2072,11 +2076,12 @@ END;
 CREATE OR REPLACE PROCEDURE fileIdStageQuery
  (fid IN NUMBER,
   nh IN VARCHAR2,
+  svcClassId IN INTEGER,
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
  SELECT id BULK COLLECT INTO cfs FROM CastorFile WHERE fileId = fid AND nshost = nh;
- internalStageQuery(cfs, result);
+ internalStageQuery(cfs, svcClassId, result);
 END;
 
 
@@ -2085,6 +2090,7 @@ END;
  */
 CREATE OR REPLACE PROCEDURE reqIdStageQuery
  (rid IN VARCHAR2,
+  svcClassId IN INTEGER,
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
@@ -2110,7 +2116,7 @@ BEGIN
             FROM stagePutRequest
            WHERE reqid LIKE rid) reqlist
    WHERE sr.request = reqlist.id;
-  internalStageQuery(cfs, result);
+  internalStageQuery(cfs, svcClassId, result);
 END;
 
 /*
@@ -2118,6 +2124,7 @@ END;
  */
 CREATE OR REPLACE PROCEDURE userTagStageQuery
  (tag IN VARCHAR2,
+  svcClassId IN INTEGER,
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
@@ -2143,7 +2150,7 @@ BEGIN
             FROM stagePutRequest
            WHERE userTag LIKE tag) reqlist
    WHERE sr.request = reqlist.id;
-  internalStageQuery(cfs, result);
+  internalStageQuery(cfs, svcClassId, result);
 END;
 
 
