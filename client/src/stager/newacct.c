@@ -1,5 +1,5 @@
 /*
- * $Id: newacct.c,v 1.6 2000/02/04 14:10:03 baud Exp $
+ * $Id: newacct.c,v 1.7 2005/10/20 15:59:56 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: newacct.c,v $ $Revision: 1.6 $ $Date: 2000/02/04 14:10:03 $ CERN/IT/PDP/DM Antoine Trannoy";
+static char sccsid[] = "@(#)$RCSfile: newacct.c,v $ $Revision: 1.7 $ $Date: 2005/10/20 15:59:56 $ CERN/IT/PDP/DM Antoine Trannoy";
 #endif /* not lint */
 
 /* newacct		Command to change current account	*/
@@ -87,7 +87,7 @@ static void setacct(pwd,account,shell_opt)
 		cp ++ ; 
 	else
 		cp= shell;
-	execl(shell,cp,0) ;
+	execl(shell,cp,NULL) ;
 	(void) fprintf(stderr,"newacct: %s not found\n",shell) ; 
 	exit(1) ; 
 }
