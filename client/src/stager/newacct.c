@@ -1,5 +1,5 @@
 /*
- * $Id: newacct.c,v 1.7 2005/10/20 15:59:56 jdurand Exp $
+ * $Id: newacct.c,v 1.8 2005/10/20 16:01:51 jdurand Exp $
  */
 
 /*
@@ -8,11 +8,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: newacct.c,v $ $Revision: 1.7 $ $Date: 2005/10/20 15:59:56 $ CERN/IT/PDP/DM Antoine Trannoy";
+static char sccsid[] = "@(#)$RCSfile: newacct.c,v $ $Revision: 1.8 $ $Date: 2005/10/20 16:01:51 $ CERN/IT/PDP/DM Antoine Trannoy";
 #endif /* not lint */
 
 /* newacct		Command to change current account	*/
 
+#include <stdlib.h>
 #include <stdio.h>
 #if !defined(apollo) && !defined(_WIN32)
 #include <unistd.h>
