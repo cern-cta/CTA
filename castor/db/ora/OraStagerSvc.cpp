@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.175 $ $Release$ $Date: 2005/07/25 09:06:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.176 $ $Release$ $Date: 2005/10/20 12:40:45 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -828,7 +828,7 @@ void castor::db::ora::OraStagerSvc::stageRm
     if (returnCode != 0) {
       castor::exception::Busy e;
       if (returnCode == 1) {
-        e.getMessage() << "The file is being migrated.";
+        e.getMessage() << "The file is not yet migrated.";
       } else if (returnCode == 2) {
         e.getMessage() << "The file is being replicated.";
       } else {

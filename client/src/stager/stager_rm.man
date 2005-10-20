@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_rm.man,v $ $Revision: 1.1 $ $Date: 2005/07/07 15:20:03 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_rm.man,v $ $Revision: 1.2 $ $Date: 2005/10/20 12:41:31 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_PUT 1castor "$Date: 2005/07/07 15:20:03 $" CASTOR "STAGER Commands"
+.TH STAGER_PUT 1castor "$Date: 2005/10/20 12:41:31 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_rm \- request for removing a file from the CASTOR stager
 .SH SYNOPSIS
@@ -27,7 +27,7 @@ will be untouched and could lead to a new copy of the file on disk
 just after the stager_rm has been performed.
 
 .B stager_rm
-can return EBUSY if the file is being migrated or 
+can return EBUSY if the file is not yet migrated or being
 replicated at the moment the command is issued. Otherwise, it is 
 always successful.
 

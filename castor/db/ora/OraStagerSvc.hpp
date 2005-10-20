@@ -289,7 +289,7 @@ namespace castor {
         /**
          * Implements a single file stageRm.
          * It throws a Busy exception in case the file is
-         * beging migrated. Otherwise, it deletes all
+         * not yet migrated. Otherwise, it deletes all
          * running requests for the file and marks all
          * the copies of the file as candidate for the
          * garbage collection.

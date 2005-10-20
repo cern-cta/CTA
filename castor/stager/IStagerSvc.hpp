@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.65 $ $Release$ $Date: 2005/09/22 11:05:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.66 $ $Release$ $Date: 2005/10/20 12:40:57 $ $Author: sponcec3 $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -288,7 +288,7 @@ namespace castor {
       /**
        * Implements a single file stageRm.
        * It throws a Busy exception in case the file is
-       * beging migrated. Otherwise, it deletes all
+       * not yet migrated. Otherwise, it deletes all
        * running requests for the file and marks all
        * the copies of the file as candidate for the
        * garbage collection.

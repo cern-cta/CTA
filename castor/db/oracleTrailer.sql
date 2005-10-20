@@ -1678,7 +1678,7 @@ BEGIN
   WHERE fileId = fid AND nsHost = nh FOR UPDATE;
  -- check if removal is possible for Migration
  SELECT count(*) INTO nbRes FROM TapeCopy
-  WHERE status = 3 -- TAPECOPY_SELECTED
+  WHERE status IN (0, 1, 2, 3) -- CREATED, TOBEMIGRATED, WAITINSTREAMS, SELECTED
     AND castorFile = cfId;
  IF nbRes > 0 THEN
    -- We found something, thus we cannot recreate
