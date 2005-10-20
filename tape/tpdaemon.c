@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.3 2005/03/15 23:07:55 bcouturi Exp $
+ * $Id: tpdaemon.c,v 1.4 2005/10/20 15:54:11 bcouturi Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.3 $ $Date: 2005/03/15 23:07:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.4 $ $Date: 2005/10/20 15:54:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -460,7 +460,7 @@ int reason;
 		execlp (progfullpath, "confdrive", tunp->drive,
 			tunp->devp->dvn, arg_rpfd, arg_uid, arg_gid,
 			arg_jid, tunp->dgn, tunp->dvrname, arg_status,
-			arg_reason, 0);
+			arg_reason, NULL);
 		tplogit (func, "TP002 - confdrive : execlp error : %s\n",
 		    strerror(errno));
 		exit (errno);
@@ -1287,12 +1287,13 @@ bldtfd:
 		sprintf (arg_side, "%d", side);
 
 		tplogit (func, "execing mounttape, pid=%d\n", getpid());
+
 		execlp (progfullpath, "mounttape", tunp->drive, vid, 
 			tunp->cdevp->dvn, arg_rpfd, arg_uid, arg_gid,
 			rrtp->user, tunp->acctname, arg_jid, arg_ux, tunp->dgn,
 			tunp->devtype, tunp->dvrname, tunp->loader, arg_mode,
 			arg_lbl, vsn, tunp->filp->path, arg_den, arg_prelabel,
-			arg_vdqmid, arg_tpmounted, arg_side, clienthost, 0);
+			arg_vdqmid, arg_tpmounted, arg_side, clienthost, NULL);
 		tplogit (func, "TP002 - mounttape : execlp error : %s\n",
 		    strerror(errno));
 		exit (errno);
@@ -1525,7 +1526,7 @@ char *clienthost;
 			tunp->vsn, arg_blockid, arg_cfseq, filp->fid, arg_filstat,
 			arg_fsec, arg_fseq, arg_method, filp->path, arg_Qfirst,
 			arg_Qlast, arg_retentd, filp->recfm, arg_blksize, arg_lrecl,
-			arg_den, arg_flags, fsid, domainname, 0);
+			arg_den, arg_flags, fsid, domainname, NULL);
 		tplogit (func, "TP002 - posovl : execlp error : %s\n",
 		    strerror(errno));
 		exit (errno);
@@ -2093,7 +2094,7 @@ int rlsflags;
 			tunp->cdevp->dvn, arg_rpfd, arg_uid, arg_gid, user,
 			tunp->acctname, arg_jid, arg_ux, arg_rlsflags, tunp->dgn,
 			tunp->devtype, tunp->dvrname, tunp->loader, arg_mode,
-			arg_den, 0);
+			arg_den, NULL);
 		tplogit (func, "TP002 - rlstape : execlp error : %s\n",
 		    strerror(errno));
 		exit (errno);
