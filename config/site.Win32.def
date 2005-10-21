@@ -1,0 +1,401 @@
+
+/*
+ * $Id: site.Win32.def,v 1.1 2005/10/21 08:20:40 jdurand Exp $
+*/
+/*
+ * Copyright (C) 1993-2003 by CERN/IT/ADC/CA
+ * All rights reserved
+ */
+
+/*
+ * @(#)$RCSfile: site.Win32.def,v $ $Revision: 1.1 $ $Date: 2005/10/21 08:20:40 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ */
+/* Platform is normally guessed from the CPP predefined symbols
+   But you may define special flags, for example
+   #define RS6000PCTA
+   if you have an RS6000 Parallel Channel Tape Attachment or ESCON
+   #define ADSTAR
+   if you have SCSI connected 3490 or 3590 
+   
+   If your platform is Digital Unix 4 and you have
+   a 100BT Ethernet interface on a busy CPU/Disk
+   server we advice you to enable the RFIODaemonRealTime
+   option : the RFIO daemon will then run as a real time process
+   This option has no efect on all other platforms.
+*/
+
+/* Uncomment this for linux ppc64 systems. Currently, the arch is not
+correctly identified by CPP flags (tested on SuSE SLES9)
+*/
+/*
+#if linux
+#define ppc64
+#define __ppc64__
+#endif
+*/
+
+#define AdminHosts "castor tms-2 lxcastor sure01 sure02 castoradm1 castoradm2 castoradm3 castorsrv1 castorsrv2 castorsrv3 castorsrv4 castorsrv5 castorsrv6 castorsrv7 castorsrv8 castorsrv9"
+#if defined(_WIN32)
+#define AuthorizedHosts	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\rtcopy.hosts
+#else
+#define AuthorizedHosts	/etc/castor/rtcopy.hosts
+#endif
+#define CDKDir	/usr
+#if defined(_WIN32)
+#define CupvConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\CUPVCONFIG
+#else
+#define CupvConfigFile	/etc/castor/CUPVCONFIG
+#endif
+#define CupvHost	"castorcupv"
+#if defined(_WIN32)
+#define PolicySpool	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\expert
+#else
+#define PolicySpool	/etc/castor/expert
+#endif
+#define CupvSpool	/var/spool/upv
+#define JobSpool	/var/spool/job
+#define RmMasterSpool	/var/spool/rmmaster
+#if defined(_WIN32)
+#define RmMasterConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\RMMASTERCONFIG
+#else
+#define RmMasterConfigFile	/etc/castor/RMMASTERCONFIG
+#endif
+#define RmNodeSpool	/var/spool/rmnode
+#if defined(_WIN32)
+#define RmNodeConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\RMNODECONFIG
+#else
+#define RmNodeConfigFile	/etc/castor/RMNODECONFIG
+#endif
+#define	DMSCDir	/dms/fbs/src
+#if defined(_WIN32)
+#define DbConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\DBCONFIG
+#else
+#define DbConfigFile	/etc/castor/DBCONFIG
+#endif
+#define DbSpool	/var/spool/db
+#define DomainName	cern.ch
+#define FilManDir       /usr/share/man/man4
+#define FilManSuffix    4
+#define HsmToolsSpool	/var/spool/hsmtools
+#if defined(_WIN32)
+#define InstallConfigDir	\\cern.ch\dfs\Applications\CERN\CASTOR\sysconfig
+#else
+#define InstallConfigDir	/etc/sysconfig
+#endif
+#if defined(_WIN32)
+#define InstallBinDir	\\cern.ch\dfs\Applications\CERN\CASTOR\bin
+#else
+#define InstallBinDir	/usr/bin
+#endif
+#if defined(_WIN32)
+#define InstallIncludeDir       \\cern.ch\dfs\Applications\CERN\CASTOR\include
+#else
+#define InstallIncludeDir       /usr/include
+#endif
+#if defined(_WIN32)
+#define InstallLibDir	\\cern.ch\dfs\Applications\CERN\CASTOR\lib
+#else
+#if defined(__x86_64)||defined(__ppc64__)
+#define InstallLibDir	/usr/lib64
+#else
+#define InstallLibDir	/usr/lib
+#endif
+#endif
+#define LibManDir       /usr/share/man/man3
+#define LibManSuffix    3
+#if defined(_WIN32)
+#define LocalHostsList 	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\castor.localhosts
+#else
+#define LocalHostsList  /etc/castor/castor.localhosts
+#endif
+#define ManDir  /usr/share/man/man1
+#define ManSuffix       1
+#if defined(_WIN32)
+#define MappingFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\ext.users
+#else
+#define MappingFile	/etc/castor/ext.users
+#endif
+#define MonitorHost	"castormon"
+#define MonitorSpool	/var/spool/monitor
+#if defined(_WIN32)
+#define MsgdaemonAuthHosts	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\msg.hosts
+#else
+#define MsgdaemonAuthHosts /etc/castor/msg.hosts
+#endif
+#define MsgdaemonHost	"castormsg"
+#define NfsRoot	/shift
+#if defined(_WIN32)
+#define NsConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\NSCONFIG
+#else
+#define NsConfigFile	/etc/castor/NSCONFIG
+#endif
+#define NsHost	"castorns"
+#define NsHostPfx	cns
+#define NsSpool	/var/spool/ns
+#define NsRoot  "/castor"
+#if defined(_WIN32)
+#define OperConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\OPERCONFIG
+#else
+#define OperConfigFile	/etc/castor/OPERCONFIG
+#endif
+#define OperatorGid	root
+#if defined(_WIN32)
+#define OperatorDir	%%SystemRoot%%
+#else
+#define OperatorDir	/var/run
+#endif
+#define RaimaDir	/usr/local/raima
+#if defined(_WIN32)
+#define RemoteHostsList	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\castor.remhosts
+#else
+#define RemoteHostsList /etc/castor/castor.remhosts
+#endif
+#define RfioAlarmFile	rfio_alrm
+#define RfioSpool	/var/spool/rfio
+#define RmcSpool	/var/spool/rmc
+#define RtcopySpool	/var/spool/rtcopy
+#define RtcopyWorkDir	/var/tmp/RTCOPY
+#define	RtcpclientdHost	"castorrtcpcld"
+#define SacctDir	/var/spool/sacct
+#if defined(_WIN32)
+#define ShiftConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\castor.conf
+#else
+#define ShiftConfigFile	/etc/castor/castor.conf
+#endif
+#if defined(_WIN32)
+#define StageConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\STGCONFIG
+#else
+#define StageConfigFile	/etc/castor/STGCONFIG
+#endif
+#if defined(_WIN32)
+#define StageConfigDbLogin	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\STGDBCONFIG
+#else
+#define StageConfigDbLogin	/etc/castor/STGDBCONFIG
+#endif
+#if defined(_WIN32)
+#define StageMapFile   %%SystemRoot%%\\system32\\drivers\\etc\\castor\\stagemap.conf
+#else
+#define StageMapFile   /etc/castor/stagemap.conf
+#endif
+#if defined(_WIN32)
+#define StageTypeFile  %%SystemRoot%%\\system32\\drivers\\etc\\castor\\stagetype.conf
+#else
+#define StageTypeFile  /etc/castor/stagetype.conf
+#endif
+#if defined(_WIN32)
+#define OraStagerConfigFile  %%SystemRoot%%\\system32\\drivers\\etc\\castor\\ORASTAGERCONFIG
+#else
+#define OraStagerConfigFile  /etc/castor/ORASTAGERCONFIG
+#endif
+#if defined(_WIN32)
+#define MyStagerConfigFile  %%SystemRoot%%\\system32\\drivers\\etc\\castor\\MYSTAGERCONFIG
+#else
+#define MyStagerConfigFile  /etc/castor/MYSTAGERCONFIG
+#endif
+#define StagerSuperGroup	st
+#define StagerSuperUser	stage
+#define StageHost	"stagepublic"
+#define StageSpool	/var/spool/stage
+#define StagerGid	st
+#define SysreqHost	"sysreq tms-2 tms"
+#if defined(_WIN32)
+#define TapeConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\TPCONFIG
+#else
+#define TapeConfigFile	/etc/castor/TPCONFIG
+#endif
+#define TapeSpool	/var/spool/tape
+#define VdqmHost        "castorvdqm1 castorvdqm2"
+#define VdqmSpool	/var/spool/vdqm
+#if defined(_WIN32)
+#define VmgrConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\VMGRCONFIG
+#else
+#define VmgrConfigFile	/etc/castor/VMGRCONFIG
+#endif
+#define VmgrHost	"castorvmgr"
+#define VmgrSpool	/var/spool/vmgr
+#if defined(_WIN32)
+#define DlfConfigFile  %%SystemRoot%%\\system32\\drivers\\etc\\castor\\DLFCONFIG
+#else
+#define DlfConfigFile  /etc/castor/DLFCONFIG
+#endif
+#define DlfHost        "castordlf"
+#define DlfSpool       /var/spool/dlf
+#if defined(_WIN32)
+#define ExpertConfigFile  %%SystemRoot%%\\system32\\drivers\\etc\\castor\\EXPCONFIG
+#else
+#define ExpertConfigFile  /etc/castor/EXPCONFIG
+#endif
+#define ExpertHost     "castorexpert"
+#define ExpertSpool    /var/spool/expert
+#define RhHost        "castorrh"
+#define GcSpool        /var/spool/gc
+
+#define W2000MapDir	\\\\cern.ch\\dfs\\Applications\\CERN\\CASTOR\\Config
+#define WntMapDir	\\\\cerndfs01\\dfs\\Applications\\CERN\\CASTOR\\Config
+
+#if defined(_WIN32)
+#define LsfInstallDir %%SystemRoot%%\\system32
+#else
+#define LsfInstallDir /usr/local/lsf
+#endif
+
+#define BuildCommands	YES
+#define BuildCommon	YES
+#define BuildCupvClient	YES
+#define BuildCupvDaemon	NO
+#define	BuildCupvLibrary	YES
+#define BuildExamples	NO
+#define BuildGcDaemon	NO
+#define BuildHsmTools	YES
+#define BuildMonitorClient	YES
+#define BuildMonitorServer	NO
+#define BuildMonitorLibrary	YES
+#define BuildMsgClient	YES
+#define BuildMsgServer	NO
+#define BuildMsgLibrary	YES
+#define BuildNameServerClient	YES
+#define BuildNameServerDaemon	NO
+#define BuildNameServerLibrary	YES
+#define BuildRfioClient	YES
+#define BuildRfioServer	YES
+#define BuildRfioLibrary	YES
+/* To be added when there will be end-user RMC client(s) */
+/* #define BuildRmcClient		NO */
+#define BuildRmcServer	NO
+#define BuildRmcLibrary	YES
+#define BuildJob	NO
+#define BuildRtcopyClient	YES
+#define BuildRtcopyServer	NO
+#define BuildRtcopyLibrary	YES
+#define BuildRtstat	YES
+#define BuildRtcpclientd	NO
+#define BuildStageClient	YES
+#define BuildStageClientOld	YES
+#define BuildStageDaemon	NO
+#define BuildStageLibrary	YES
+#define BuildRmMaster	NO
+#define BuildRmNode	YES
+#define BuildRmClient	YES
+#define	BuildRmLibrary	YES
+#define BuildTapeClient	YES
+#define BuildTapeDaemon	NO
+#define BuildTapeLibrary	YES
+#define BuildTest	NO
+#define BuildTpusage	YES
+#define BuildVdqmClient	YES
+#define BuildVdqmServer	NO
+#define BuildVdqmLibrary	YES
+#define BuildVolumeMgrClient	YES
+#define BuildVolumeMgrDaemon	NO
+#define BuildVolumeMgrLibrary	YES
+#define BuildDlfClient	YES
+#define BuildDlfDaemon	NO
+#define BuildDlfLibrary	YES
+#define BuildExpertClient	YES
+#define BuildExpertDaemon	NO
+#define BuildExpertLibrary	YES
+#define BuildSchedPlugin	NO
+#define BuildRHCpp	NO
+#define BuildVDQMCpp	NO
+#define BuildGCCpp	NO
+#define BuildOraCpp	NO
+#define BuildMyCpp              NO
+#define BuildCastorClientCPPLibrary	YES
+#define BuildCppTest	NO
+#define BuildTankPerfMonLibrary	NO
+
+#define Accounting	YES
+#define ClientLogging	NO
+#define HasNis	NO
+#define HasNroff	NO
+#define HasCDK	NO
+#define RFIODaemonRealTime	NO	
+#define UseAdns	NO
+#define UseCupv	YES
+#define UseDMSCapi	NO
+#define	UseHpss	NO
+#define UseMtx	NO
+#define UseMySQL	NO
+#define UseOracle	NO
+#define UseVmgr	YES
+#define UseLsf	NO
+#define UseScheduler	NO
+/* Scheduler options: Supported LSF versions are: 6.1 */
+/* Default is defined in config files */
+#define UseExpert	NO
+#define UseMaui	NO
+#define UseStorageTank		NO
+#define UseCastorOnGlobalFileSystem	NO
+
+/* 
+ * The following flag enables rfio client interface
+ * To follow links. It brings an overhead at rfio_open()
+ */
+#define FollowRtLinks	NO
+
+/*
+ * Section specifying the build of the Security packages
+ */
+
+#define BuildSecurity	NO
+#define UseGSI	YES
+#define UseKRB5	YES
+#define UseHeimdalKrb5	NO
+#define UseKRB4	YES
+
+#if BuildSecurity
+
+#define SecMakeStaticLibrary	NO
+
+#define BuildSecureTape	YES
+#define BuildSecureVmgr	YES
+#define BuildSecureCupv	YES
+#define	BuildSecureVdqm	YES
+#define	BuildSecureRfio	YES
+#define BuildSecureRtcopy	YES
+#define BuildSecureCns	YES
+#define BuildSecureStage	YES
+
+#if UseHeimdalKrb5
+#define KRB5CONFIG /usr/heimdal/bin/krb5-config
+#else
+#define KRB5CONFIG /usr/kerberos/bin/krb5-config
+#endif
+#define KRB4CONFIG /usr/kerberos4/bin/krb4-config
+
+#if UseKRB5
+#define KRB5Mech KRB5
+#if UseHeimdalKrb5
+#define SecAuthMechKRB5    -DKRB5 -DHEIMDAL
+#else
+#define SecAuthMechKRB5    -DKRB5
+#endif
+#define SecIncludeDirKRB5 $(shell KRB5CONFIG gssapi --cflags)
+#define SecLibsKRB5 $(shell KRB5CONFIG gssapi --libs)
+#else
+#define KRB5Mech
+#endif
+
+#if UseGSI
+#define GSIMech GSI
+#define SecAuthMechGSI       -DGSI 
+#define SecIncludeDirGSI -I/opt/globus/include/gcc32dbg
+#define SecLibsGSI -L/opt/globus/lib -lglobus_gssapi_gsi_gcc32dbg -lglobus_gss_assist_gcc32dbg
+#else
+#define GSIMech
+#endif
+
+#if UseKRB4
+#define KRB4Mech KRB4
+#define SecIncludeDirKRB4 $(shell KRB4CONFIG  --cflags)
+#define SecLibsKRB4 $(shell KRB4CONFIG  --libs)
+#else
+#define KRB4Mech
+#endif
+
+#define IDMech ID
+
+#define CSEC_Mechlist KRB5Mech GSIMech KRB4Mech IDMech
+
+
+#endif /* BuildSecurity */
