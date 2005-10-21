@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.h,v $ $Revision: 1.16 $ $Release$ $Date: 2005/04/04 09:34:25 $ $Author: bcouturi $
+ * @(#)$RCSfile: logstream.h,v $ $Revision: 1.17 $ $Release$ $Date: 2005/10/21 08:43:07 $ $Author: jdurand $
  *
  * A generic logstream for castor, handling IP addresses
  * and timestamps
@@ -212,6 +212,7 @@ namespace castor {
        * prints a timeStamp to the stream
        */
       void printTimeStamp(time_t t) {
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
         struct tm tmstruc;
         localtime_r (&t, &tmstruc);
         *((std::ostream*)this)
@@ -220,6 +221,16 @@ namespace castor {
           << " " << tmstruc.tm_hour
           << ":" << tmstruc.tm_min
           << ":" << tmstruc.tm_sec;
+#else
+        struct tm *tmstruc;
+        tmstruc = localtime (&t);
+        *((std::ostream*)this)
+          << std::setw(2) << tmstruc->tm_mon+1
+          << "/" << tmstruc->tm_mday
+          << " " << tmstruc->tm_hour
+          << ":" << tmstruc->tm_min
+          << ":" << tmstruc->tm_sec;
+#endif
       }
 
   private:
