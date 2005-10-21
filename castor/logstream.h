@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.h,v $ $Revision: 1.17 $ $Release$ $Date: 2005/10/21 08:43:07 $ $Author: jdurand $
+ * @(#)$RCSfile: logstream.h,v $ $Revision: 1.18 $ $Release$ $Date: 2005/10/21 09:57:36 $ $Author: jdurand $
  *
  * A generic logstream for castor, handling IP addresses
  * and timestamps
@@ -259,6 +259,12 @@ namespace castor {
    */
   MANIPULATOR(EMERGENCY);
   MANIPULATOR(ALERT);
+#ifdef _WIN32
+  /* On VC7 (.NET) ERROR will expand to 0 */
+#ifdef ERROR
+#undef ERROR
+#endif
+#endif
   MANIPULATOR(ERROR);
   MANIPULATOR(WARNING);
   MANIPULATOR(AUTH);
