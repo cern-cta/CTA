@@ -1,12 +1,12 @@
 /*
- * $Id: Cuuid.h,v 1.7 2005/04/05 14:25:08 sponcec3 Exp $
+ * $Id: Cuuid.h,v 1.8 2005/10/21 08:54:51 jdurand Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
  * Based on: http://www.webdav.org/specs/draft-leach-uuids-guids-01.txt
  *
- * $RCSfile: Cuuid.h,v $ $Revision: 1.7 $ $Date: 2005/04/05 14:25:08 $ CERN IT-PDP/DM Jean-Damien Durand
+ * $RCSfile: Cuuid.h,v $ $Revision: 1.8 $ $Date: 2005/10/21 08:54:51 $ CERN IT-PDP/DM Jean-Damien Durand
  */
 
 
@@ -15,6 +15,9 @@
 
 #include <osdep.h>
 #include <sys/types.h>
+#ifdef _WIN32
+#include <stddef.h>
+#endif
 
 #define CUUID_STRING_LEN 36
 #define CUUID_STRING_FMT "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x"
