@@ -17,7 +17,7 @@ COMM You should have received a copy of the GNU General Public License
 COMM along with this program; if not, write to the Free Software
 COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 COMM
-COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.113 $ $Release$ $Date: 2005/10/19 13:40:07 $ $Author: jdurand $
+COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.114 $ $Release$ $Date: 2005/10/21 10:03:24 $ $Author: jdurand $
 COMM
 COMM Make Castor libraries and executables
 COMM
@@ -70,7 +70,11 @@ DEBUG  = -g
 
 DEPLIB = DepSharedLibraryTargetName(shlib,shift)
 
+#if !_WIN32
 INCLUDES = -I FileName(..,h) -I ..
+#else
+INCLUDES = -I FileName(..,h) -I .. -I FileName(..,win32)
+#endif
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DRH_HOST=\"$(RH_HOST)\"
 
 STGLIB_SRCS0 = IAddressCInt.cpp \
