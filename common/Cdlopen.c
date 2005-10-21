@@ -1,9 +1,9 @@
 /*
- * $Id: Cdlopen.c,v 1.1 2005/10/21 13:54:27 jdurand Exp $
+ * $Id: Cdlopen.c,v 1.2 2005/10/21 14:00:50 jdurand Exp $
  */
 
 /*
- * $RCSfile: Cdlopen.c,v $ $Revision: 1.1 $ $Date: 2005/10/21 13:54:27 $ CERN IT-ADC/CA Jean-Damien Durand
+ * $RCSfile: Cdlopen.c,v $ $Revision: 1.2 $ $Date: 2005/10/21 14:00:50 $ CERN IT-ADC/CA Jean-Damien Durand
  */
 
 
@@ -50,7 +50,7 @@ void DLL_DECL *Cdlopen(filename,flag)
      CONST char *filename;
      int flag;
 {
-  return((void *)LoadLibrary(filenamew));
+  return((void *)LoadLibrary(filename));
 }
 
 /* Note: GetLastError() is thread-safe */
