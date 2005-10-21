@@ -424,7 +424,7 @@ castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
         continue;
       }
       castor::exception::Communication e(requestId(), errno); // XXX To be changed
-      e.getMessage() << "Poll error:" < strerror(errno);
+      e.getMessage() << "Poll error:" << strerror(errno);
       throw e;
     } else if (rc > 0) {
       stop = true;
