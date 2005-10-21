@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Date: 2005/08/10 09:29:06 $ CERN IT-PDP/DM   Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Date: 2005/10/21 13:54:27 $ CERN IT-PDP/DM   Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -59,6 +59,7 @@ ICOMMON_H = \
 	 FileName($(DESTDIRCASTOR),stager_services.h) \
 	 FileName($(DESTDIRCASTOR),stager_util.h) \
 	 FileName($(DESTDIRCASTOR),stager_uuid.h) \
+	 FileName($(DESTDIRCASTOR),Cdlopen_api.h) \
 	 FileName($(DESTDIRCASTOR),Cgrp.h) \
 	 FileName($(DESTDIRCASTOR),Cinit.h) \
 	 FileName($(DESTDIRCASTOR),Cmonit_api.h) \
@@ -164,6 +165,7 @@ ECOMMON_H = \
 	 $(EXPORTH)/stager_services.h \
 	 $(EXPORTH)/stager_util.h \
 	 $(EXPORTH)/stager_uuid.h \
+	 $(EXPORTH)/Cdlopen_api.h \
 	 $(EXPORTH)/Cgrp.h \
 	 $(EXPORTH)/Cinit.h \
 	 $(EXPORTH)/Cmonit_api.h \
@@ -429,6 +431,9 @@ IEXPORT(Cmonitd_lock.h,$(EXPORTH),644)
 
 InstallNonExecFile(Cmutex.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cmutex.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cdlopen_api.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cdlopen_api.h,$(EXPORTH),644)
 
 InstallNonExecFile(Cnetdb.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cnetdb.h,$(EXPORTH),644)
