@@ -787,20 +787,24 @@ void CppBaseWriter::singleAssocToPairList (UMLAssociation *a,
                              parseAssocKind(a->getAssocType(), true)),
                    Member(a->getRoleName(B),
                           a->getObject(B)->getName(),
-                          a->getObject(B)->getAbstract()),
+                          a->getObject(B)->getAbstract(),
+                          a->getObject(B)->getStereotype()),
                    Member(a->getRoleName(A),
                           a->getObject(A)->getName(),
-                          a->getObject(A)->getAbstract()));
+                          a->getObject(A)->getAbstract(),
+                          a->getObject(A)->getStereotype()));
   } else {
     as = new Assoc(AssocType(parseMulti(a->getMulti(A)),
                              parseMulti(a->getMulti(B)),
                              parseAssocKind(a->getAssocType(), false)),
                    Member(a->getRoleName(A),
                           a->getObject(A)->getName(),
-                          a->getObject(A)->getAbstract()),
+                          a->getObject(A)->getAbstract(),
+                          a->getObject(A)->getStereotype()),
                    Member(a->getRoleName(B),
                           a->getObject(B)->getName(),
-                          a->getObject(B)->getAbstract()));
+                          a->getObject(B)->getAbstract(),
+                          a->getObject(B)->getStereotype()));
   }
   list.append(as);
 }
@@ -848,5 +852,7 @@ bool CppBaseWriter::isEnum(QString name) {
   if (0 == obj) return false;
   UMLClass *concept = dynamic_cast<UMLClass*>(obj);
   if (0 == concept) return false;
-  return concept->isEnumeration();
+  QString stereo = concept->getStereotype();
+  return "enumeration" == stereo ||
+    "enumerationNoStream" == stereo;
 }
