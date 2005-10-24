@@ -111,6 +111,9 @@ void CppCppStreamCnvWriter::writeCreateRepContent() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
+    // don't take into account members we don't want to stream
+    if (mem->stereotype == "DoNotStream") continue;
+    // Otherwise, stream the member;
     *m_stream << getIndent() << "ad->stream()";
     if (mem->typeName.find('[') > 0) {
       QString sl = mem->typeName;
@@ -167,6 +170,9 @@ void CppCppStreamCnvWriter::writeCreateObjContent() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
+    // don't take into account members we don't want to stream
+    if (mem->stereotype == "DoNotStream") continue;
+    // Otherwise, unstream the member;    
     *m_stream << getIndent()
               << fixTypeName(mem->typeName,
                              getNamespace(mem->typeName),

@@ -759,14 +759,16 @@ CppBaseWriter::MemberList CppBaseWriter::createMembersList() {
     for (UMLAttribute *at = ci.getAttList()->first();
          0 != at;
          at = ci.getAttList()->next()) {
-      result.append(new Member(at->getName(), at->getTypeName()));
+      result.append(new Member(at->getName(), at->getTypeName(),
+                               false, at->getStereotype()));
     }
   }
   // Current class
   for (UMLAttribute *at = m_classInfo->getAttList()->first();
        0 != at;
        at = m_classInfo->getAttList()->next()) {
-    result.append(new Member(at->getName(), at->getTypeName()));
+    result.append(new Member(at->getName(), at->getTypeName(),
+                             false, at->getStereotype()));
   }
   return result;
 }
