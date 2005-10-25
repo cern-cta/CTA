@@ -890,7 +890,6 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   makeSubRequestWait(srId, dci);
   dci := 0;
   rpath := '';
-  close sources;
  EXCEPTION WHEN NO_DATA_FOUND THEN
    -- No disk copy foundin WAIT*, we don't hae to wait
   BEGIN
@@ -1042,11 +1041,11 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   srid INTEGER;
 BEGIN
   -- update DiskCopy
-  UPDATE DiskCopy set status = dcStatus WHERE id = dcId; -- status DISKCOPY_STAGED
+  UPDATE DiskCopy set status = dcStatus WHERE id = dcId;
   -- update SubRequest
-  UPDATE SubRequest set status = 6,
+  UPDATE SubRequest set status = 6, -- status SUBREQUEST_READY
                         lastModificationTime = getTime()
-   WHERE diskCopy = dcId -- status SUBREQUEST_READY
+   WHERE diskCopy = dcId
   RETURNING id INTO srid;
   -- Wake up waiting subrequests
   UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
