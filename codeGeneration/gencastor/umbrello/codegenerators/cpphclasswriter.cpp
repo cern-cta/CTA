@@ -29,7 +29,7 @@ void CppHClassWriter::writeClass(UMLClassifier *c) {
   writeClassDecl(c, *m_stream);
 
   // Deal with enumerations
-  if (!m_classInfo->isInterface && m_classInfo->isEnum) {
+  if (!m_classInfo->isInterface && isEnum(c)) {
     UMLClass* k = dynamic_cast<UMLClass*>(c);
     QPtrList<UMLAttribute>* atl = k->getFilteredAttributeList();
     for (UMLAttribute *at=atl->first(); at ; ) {
@@ -90,7 +90,7 @@ void CppHClassWriter::writeClass(UMLClassifier *c) {
   // end of class header
   m_indent--;
   *m_stream << getIndent() << "}; // end of ";
-  if (!m_classInfo->isInterface && m_classInfo->isEnum) {
+  if (!m_classInfo->isInterface && isEnum(c)) {
     *m_stream << "enum";
   } else {
     *m_stream << "class";
@@ -99,7 +99,7 @@ void CppHClassWriter::writeClass(UMLClassifier *c) {
             << endl << endl;
 
   // Enum strings
-  if (!m_classInfo->isInterface && m_classInfo->isEnum) {
+  if (!m_classInfo->isInterface && isEnum(c)) {
     UMLClass* k = dynamic_cast<UMLClass*>(c);
     QPtrList<UMLAttribute>* atl = k->getFilteredAttributeList();
     int n = 0;
@@ -162,7 +162,7 @@ void CppHClassWriter::writeClassDecl(UMLClassifier *c,
   stream << getIndent() << "/**" << endl
          << getIndent() << " * ";
 
-  if (!m_classInfo->isInterface && m_classInfo->isEnum) {
+  if (!m_classInfo->isInterface && isEnum(c)) {
     stream << "enum";
   } else {
     stream << "class";
@@ -172,7 +172,7 @@ void CppHClassWriter::writeClassDecl(UMLClassifier *c,
   stream << getIndent()<<" */" << endl;
 
   // Deal with enumerations
-  if (!m_classInfo->isInterface && m_classInfo->isEnum) {
+  if (!m_classInfo->isInterface && isEnum(c)) {
     stream << getIndent() << "enum "
            << m_classInfo->className << " {" << endl;
     m_indent++;

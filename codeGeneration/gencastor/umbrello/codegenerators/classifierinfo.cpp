@@ -344,14 +344,6 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
 	// SINGLE objects, and WONT be declared as Vectors, so this
 	// is a bit overly inclusive (I guess that's better than the other way around)
 	hasVectorFields = hasAssociations ? true : false;
-
-  UMLClass* cl = dynamic_cast<UMLClass*>(c);
-  if (0 == cl) {
-    isEnum = false;
-  } else {
-    isEnum = cl->isEnumeration();
-  }
-
 }
 
 UMLClassifierList ClassifierInfo::getPlainAssocChildClassifierList() {

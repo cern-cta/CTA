@@ -65,7 +65,7 @@ bool CppHWriter::postinit(UMLClassifier* /*c*/, QString fileName) {
 //=============================================================================
 // Finalization
 //=============================================================================
-bool CppHWriter::finalize() {
+bool CppHWriter::finalize(UMLClassifier* c) {
   int innerIndent = m_indent;
   m_indent = 0;
   // Writes the includes files
@@ -73,11 +73,11 @@ bool CppHWriter::finalize() {
   // If there was any include, put a new line after includes
   if (!m_firstInclude) *m_mainStream << endl;
   // Write the forward declarations and namespace declarations
-  if (m_classInfo->isEnum) {
+  if (isEnum(c)) {
     *m_mainStream << "#ifdef __cplusplus" << endl;
   }
   writeNSForward(*m_mainStream, m_classInfo->packageName);
-  if (m_classInfo->isEnum) {
+  if (isEnum(c)) {
     *m_mainStream << "#endif" << endl;
   }
   // and put the buffer content into the file
@@ -85,7 +85,7 @@ bool CppHWriter::finalize() {
   // end of class namespace, if any
   m_indent = innerIndent;
   if(!m_classInfo->packageName.isEmpty()) {
-    if (m_classInfo->isEnum) {
+    if (isEnum(c)) {
       *m_mainStream << "#ifdef __cplusplus" << endl;
     }
     QString ns = m_classInfo->packageName;
@@ -95,7 +95,7 @@ bool CppHWriter::finalize() {
       ns = ns.mid(0, colonPos);
     }
     writeNSClose(*m_mainStream, ns);
-    if (m_classInfo->isEnum) {
+    if (isEnum(c)) {
       *m_mainStream << "#endif" << endl;
     }
   }
@@ -107,6 +107,6 @@ bool CppHWriter::finalize() {
   hashDefine.append(m_classInfo->className.upper().simplifyWhiteSpace().replace(QRegExp(" "),  "_"));
   *m_mainStream << "#endif // " << hashDefine << "_HPP" << endl;
   // call upperclass method
-  this->CppBaseWriter::finalize();
+  this->CppBaseWriter::finalize(c);
   return true;
 }

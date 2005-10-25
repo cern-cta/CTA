@@ -77,7 +77,7 @@ void CppWriter::runGenerator(CppBaseWriter *cg,
                              UMLClassifier *c) {
   if (cg->init(c, fileName)) {
     cg->writeClass(c);
-    cg->finalize();
+    cg->finalize(c);
   }
 }
 
@@ -195,7 +195,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
     runGenerator(hw, fileName + ".h", c);
     // Write C implementation.
     // Needed even when the CPP one does not exist, except for enums
-    if (!classInfo.isEnum) {
+    if (!CppBaseWriter::isEnum(c)) {
       QString fileNameC = fileName;
       runGenerator(cw, fileNameC + "CInt.cpp", c);
     }

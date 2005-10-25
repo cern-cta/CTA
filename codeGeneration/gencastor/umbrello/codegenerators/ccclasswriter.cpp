@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ccclasswriter.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2005/03/18 13:58:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ccclasswriter.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2005/10/25 09:09:30 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -80,7 +80,7 @@ bool CCClassWriter::init(UMLClassifier* c, QString fileName) {
 //=============================================================================
 // Finalization
 //=============================================================================
-bool CCClassWriter::finalize() {
+bool CCClassWriter::finalize(UMLClassifier* c) {
   m_indent = 0;
   // includes corresponding header file
   writeIncludesFromSet(*m_mainStream, m_includes);
@@ -88,7 +88,7 @@ bool CCClassWriter::finalize() {
   // and put the buffer content into the file
   *m_mainStream << m_buffer;
   // call upperclass method
-  this->CppBaseWriter::finalize();
+  this->CppBaseWriter::finalize(c);
   return true;
 }
 

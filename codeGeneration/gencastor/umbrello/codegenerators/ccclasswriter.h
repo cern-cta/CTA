@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ccclasswriter.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/11 07:57:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ccclasswriter.h,v $ $Revision: 1.3 $ $Release$ $Date: 2005/10/25 09:09:30 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -63,7 +63,7 @@ class CCClassWriter : public CppBaseWriter {
    * Finalizes the writer. This means writing the footer
    * of the file and closing it
    */
-  virtual bool finalize();
+  virtual bool finalize(UMLClassifier* c);
 
  private:
 

@@ -37,7 +37,7 @@ class CppCppWriter : public CppBaseWriter {
    * Finalizes the writer. This means writing the footer
    * of the file and closing it
    */
-  virtual bool finalize();
+  virtual bool finalize(UMLClassifier* c);
 
 };
 

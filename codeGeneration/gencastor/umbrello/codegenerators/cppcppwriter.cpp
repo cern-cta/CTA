@@ -53,12 +53,12 @@ bool CppCppWriter::postinit(UMLClassifier* /*c*/, QString fileName) {
 //=============================================================================
 // Finalization
 //=============================================================================
-bool CppCppWriter::finalize() {
+bool CppCppWriter::finalize(UMLClassifier* c) {
   // Writes the includes files
   writeIncludesFromSet(*m_mainStream, m_includes);
   // and put the buffer content into the file
   *m_mainStream << endl << m_buffer;
   // call upperclass method
-  this->CppBaseWriter::finalize();
+  this->CppBaseWriter::finalize(c);
   return true;
 }

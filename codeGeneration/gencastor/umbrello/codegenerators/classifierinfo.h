@@ -203,10 +203,7 @@ class ClassifierInfo {
    */
   UMLAttributeList* getAttList();
 
-  /// Says whether the object is an enum
-    bool isEnum;
-
-    int id() { return m_nID; }
+  int id() { return m_nID; }
 
  protected:
     void init (UMLClassifier *c, UMLDoc *doc);

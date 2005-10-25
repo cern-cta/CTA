@@ -44,7 +44,7 @@ class CppBaseWriter : public CppCastorWriter {
    * Finalizes the writer. This means writing the footer
    * of the file and closing it
    */
-  virtual bool finalize();
+  virtual bool finalize(UMLClassifier* c);
   
   /***********************/
   /* For including files */
@@ -215,7 +215,7 @@ class CppBaseWriter : public CppCastorWriter {
   /**
    * Gets the base type for a given type
    */
-  QString getSimpleType(QString type);
+  static QString getSimpleType(QString type);
 
   /**
    * Gets the namespace for a given type
@@ -226,6 +226,11 @@ class CppBaseWriter : public CppCastorWriter {
    * Tells whether the given name denotes an enumeration
    */
   bool isEnum(QString name);
+
+  /**
+   * Tells whether the given object is an enumeration
+   */
+  static bool isEnum(UMLObject* obj);
 
   /******************/
   /* For operations */

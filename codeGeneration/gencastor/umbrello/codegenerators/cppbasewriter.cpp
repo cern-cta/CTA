@@ -412,7 +412,7 @@ bool CppBaseWriter::init(UMLClassifier* c, QString fileName) {
 //=============================================================================
 // Finalization
 //=============================================================================
-bool CppBaseWriter::finalize() {
+bool CppBaseWriter::finalize(UMLClassifier* /*c*/) {
   // Delete class Info
   delete (m_classInfo);
   m_classInfo = 0;
@@ -850,6 +850,13 @@ CppBaseWriter::AssocKind CppBaseWriter::parseAssocKind(Uml::Association_Type t,
 bool CppBaseWriter::isEnum(QString name) {
   UMLObject* obj = getClassifier(name);
   if (0 == obj) return false;
+  return isEnum(obj);
+}
+
+//=============================================================================
+// isEnum
+//=============================================================================
+bool CppBaseWriter::isEnum(UMLObject* obj) {
   UMLClass *concept = dynamic_cast<UMLClass*>(obj);
   if (0 == concept) return false;
   QString stereo = concept->getStereotype();

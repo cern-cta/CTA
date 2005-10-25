@@ -42,7 +42,7 @@ CppCppClassWriter::CppCppClassWriter(UMLDoc *parent, const char *name) :
 // writeClass
 //=============================================================================
 void CppCppClassWriter::writeClass(UMLClassifier *c) {
-  if (m_classInfo->isEnum) {
+  if (isEnum(c)) {
     // Deal With enum
     UMLClass* k = dynamic_cast<UMLClass*>(c);
     QPtrList<UMLAttribute>* atl = k->getFilteredAttributeList();
@@ -352,7 +352,7 @@ void CppCppClassWriter::writeAssocDeleteInDestructor(UMLAssociation *a) {
       m_classInfo->allSuperclassIds.contains(a->getRoleId(A))) {
     if (a->getRoleName(B) != "") {
       UMLClass* cl = dynamic_cast<UMLClass*>(a->getObject(B));
-      if (0 == cl || !cl->isEnumeration()) {
+      if (0 == cl || !isEnum(cl)) {
         fixTypeName(a->getObject(B)->getName(),
                     getNamespace(a->getObject(B)->getName()),
                     m_classInfo->packageName);
@@ -365,7 +365,7 @@ void CppCppClassWriter::writeAssocDeleteInDestructor(UMLAssociation *a) {
   } else {
     if (a->getRoleName(A) != "") {
       UMLClass* cl = dynamic_cast<UMLClass*>(a->getObject(A));
-      if (0 == cl || !cl->isEnumeration()) {
+      if (0 == cl || !isEnum(cl)) {
         fixTypeName(a->getObject(A)->getName(),
                     getNamespace(a->getObject(A)->getName()),
                     m_classInfo->packageName);
@@ -535,12 +535,12 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
         {
           UMLInterface* in = dynamic_cast<UMLInterface*>(a->getObject(B));
           UMLClass* cl = dynamic_cast<UMLClass*>(a->getObject(B));
-          if (in != 0 || (cl != 0 && ! cl->isEnumeration())) {
+          if (in != 0 || (cl != 0 && ! isEnum(cl))) {
             writeAssoc1Print (a->getRoleName(B),
                               a->getObject(B)->getName(),
                               obj,
                               stream);
-          } else if (cl != 0 && cl->isEnumeration()) {
+          } else if (cl != 0 && isEnum(cl)) {
             writeEnumPrint (obj->getIndent(), a->getRoleName(B),
                             a->getObject(B)->getName(), stream);
           } else {
@@ -566,12 +566,12 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
         {
           UMLInterface* in = dynamic_cast<UMLInterface*>(a->getObject(A));
           UMLClass* cl = dynamic_cast<UMLClass*>(a->getObject(A));
-          if (in != 0 || (cl != 0 && ! cl->isEnumeration())) {
+          if (in != 0 || (cl != 0 && ! isEnum(cl))) {
             writeAssoc1Print (a->getRoleName(A),
                               a->getObject(A)->getName(),
                               obj,
                               stream);
-          } else if (cl != 0 && cl->isEnumeration()) {
+          } else if (cl != 0 && isEnum(cl)) {
             writeEnumPrint (obj->getIndent(), a->getRoleName(A),
                             a->getObject(A)->getName(), stream);
           } else {

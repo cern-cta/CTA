@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2005/08/02 14:09:49 $ $Author: itglp $
+ * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2005/10/25 09:09:30 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -45,7 +45,7 @@ void CHClassWriter::writeClass(UMLClassifier *c) {
   // compute prefix for the functions of this class
   m_prefix = convertType(m_classInfo->className,
                          m_classInfo->packageName);
-  if (m_classInfo->isEnum) {
+  if (isEnum(c)) {
     m_prefix = m_prefix.right(m_prefix.length() - 5);
   } else {
     m_prefix = m_prefix.right(m_prefix.length() - 7);
@@ -53,13 +53,13 @@ void CHClassWriter::writeClass(UMLClassifier *c) {
   m_prefix = m_prefix.left(m_prefix.length() - 2) + "_";
   // Generates file header
   QString comment = "This defines a C interface to the following ";
-  if (m_classInfo->isEnum) {
+  if (isEnum(c)) {
     comment.append("enum");
   } else {
     comment.append("class");
   }
   comment = comment + "\n" + getIndent() + "// ";
-  if (m_classInfo->isEnum) {
+  if (isEnum(c)) {
     comment.append("enum");
   } else {
     comment.append("class");
@@ -70,7 +70,7 @@ void CHClassWriter::writeClass(UMLClassifier *c) {
   writeWideHeaderComment(comment, getIndent(), *m_stream);
   *m_stream << endl;
   // Deal with enumerations
-  if (m_classInfo->isEnum) {
+  if (isEnum(c)) {
     *m_stream << "#define " << m_prefix
               << "t " << m_classInfo->className
               << endl << endl << "#include \""
@@ -111,9 +111,9 @@ bool CHClassWriter::init(UMLClassifier* c, QString fileName) {
 //=============================================================================
 // Finalization
 //=============================================================================
-bool CHClassWriter::finalize() {
+bool CHClassWriter::finalize(UMLClassifier* c) {
   m_indent = 0;
-  if (!m_classInfo->isEnum) {
+  if (!isEnum(c)) {
     // Writes the includes files
     writeCForwardFromSet(*m_mainStream, m_includes);
   }
@@ -127,7 +127,7 @@ bool CHClassWriter::finalize() {
   hashDefine.append(m_classInfo->className.upper().simplifyWhiteSpace().replace(QRegExp(" "),  "_"));
   *m_mainStream << "#endif // " << hashDefine << "_H" << endl;
   // call upperclass method
-  this->CppBaseWriter::finalize();
+  this->CppBaseWriter::finalize(c);
   return true;
 }
 
