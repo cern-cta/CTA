@@ -83,7 +83,7 @@ CREATE TABLE StageRequestQueryRequest (flags INTEGER, userName VARCHAR2(2048), e
 CREATE TABLE StageFindRequestRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type SubRequest */
-CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StageReleaseFilesRequest */
 CREATE TABLE StageReleaseFilesRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
@@ -832,7 +832,7 @@ BEGIN
      AND DiskCopy.status = 2;
   UPDATE DiskCopy SET status = 0 WHERE id = dci RETURNING fileSystem INTO fsid; -- DISKCOPY_STAGED
   IF SubRequestId IS NOT NULL THEN
-    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
+    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0, getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
      WHERE id = SubRequestId; -- SUBREQUEST_RESTART
     UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
      WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
@@ -1864,7 +1864,7 @@ BEGIN
   WHERE fileId = fid AND nsHost = nh FOR UPDATE;
  -- check if removal is possible for Migration
  SELECT count(*) INTO nbRes FROM TapeCopy
-  WHERE status = 3 -- TAPECOPY_SELECTED
+  WHERE status IN (0, 1, 2, 3) -- CREATED, TOBEMIGRATED, WAITINSTREAMS, SELECTED
     AND castorFile = cfId;
  IF nbRes > 0 THEN
    -- We found something, thus we cannot recreate
@@ -1907,7 +1907,7 @@ BEGIN
       AND TapeCopy.id = Segment.copy
       AND Segment.status = 7 -- SELECTED
       AND ROWNUM < 2;
-   -- Something is running, so give uu
+   -- Something is running, so give up
  EXCEPTION WHEN NO_DATA_FOUND THEN
    -- Nothing running
    -- Delete the segment(s)
@@ -2199,6 +2199,7 @@ END;
  */
 CREATE OR REPLACE PROCEDURE internalStageQuery
  (cfs IN "numList",
+  svcClassId IN NUMBER,
   result OUT castor.QueryLine_Cur) AS
 BEGIN
  OPEN result FOR
@@ -2208,13 +2209,16 @@ BEGIN
            DiskCopy.path, CastorFile.filesize,
            nvl(DiskCopy.status, -1), DiskServer.name,
            FileSystem.mountPoint, CastorFile.nbaccesses
-      FROM CastorFile, DiskCopy, FileSystem, DiskServer
+      FROM CastorFile, DiskCopy, FileSystem, DiskServer,
+           DiskPool2SvcClass
      WHERE castorfile.id IN (SELECT * FROM TABLE(cfs))
        AND Castorfile.id = DiskCopy.castorFile (+)
        AND FileSystem.id(+) = DiskCopy.fileSystem
        AND nvl(FileSystem.status,0) = 0 -- PRODUCTION
        AND DiskServer.id(+) = FileSystem.diskServer
        AND nvl(DiskServer.status,0) = 0 -- PRODUCTION
+       AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool
+       AND (DiskPool2SvcClass.child = svcClassId OR DiskPool2SvcClass.child IS NULL)
   ORDER BY fileid, nshost;
 END;
 
@@ -2258,19 +2262,20 @@ END;
 CREATE OR REPLACE PROCEDURE fileIdStageQuery
  (fid IN NUMBER,
   nh IN VARCHAR2,
+  svcClassId IN INTEGER,
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
  SELECT id BULK COLLECT INTO cfs FROM CastorFile WHERE fileId = fid AND nshost = nh;
- internalStageQuery(cfs, result);
+ internalStageQuery(cfs, svcClassId, result);
 END;
-
 
 /*
  * PL/SQL method implementing the stage_query based on request id
  */
 CREATE OR REPLACE PROCEDURE reqIdStageQuery
  (rid IN VARCHAR2,
+  svcClassId IN INTEGER,
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
@@ -2296,7 +2301,7 @@ BEGIN
             FROM stagePutRequest
            WHERE reqid LIKE rid) reqlist
    WHERE sr.request = reqlist.id;
-  internalStageQuery(cfs, result);
+  internalStageQuery(cfs, svcClassId, result);
 END;
 
 /*
@@ -2304,6 +2309,7 @@ END;
  */
 CREATE OR REPLACE PROCEDURE userTagStageQuery
  (tag IN VARCHAR2,
+  svcClassId IN INTEGER,
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
@@ -2329,7 +2335,26 @@ BEGIN
             FROM stagePutRequest
            WHERE userTag LIKE tag) reqlist
    WHERE sr.request = reqlist.id;
-  internalStageQuery(cfs, result);
+  internalStageQuery(cfs, svcClassId, result);
+END;
+
+/*
+ * PL/SQL method implementing the getLastRecalls stage_query
+ */
+CREATE OR REPLACE PROCEDURE getLastRecallsStageQuery
+ (rid IN VARCHAR2,
+  svcClassId IN INTEGER,
+  result OUT castor.QueryLine_Cur) AS
+  cfs "numList";
+BEGIN
+  UPDATE SubRequest
+     SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
+   WHERE getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
+     AND request IN
+         (SELECT id FROM StagePreparetogetRequest
+           WHERE reqid LIKE rid)
+  RETURNING castorfile BULK COLLECT INTO cfs;
+  internalStageQuery(cfs, svcClassId, result);
 END;
 
 
@@ -2366,7 +2391,7 @@ BEGIN
 				       OR TapeDrive.deviceGroupName=TapeRequest.deviceGroupName) 
 				  AND rownum < 2 
 					ORDER BY TapeDriveCompatibility.priorityLevel DESC, 
-					         TapeRequest.modificationTime ASC 
+					         TapeRequest.modificationTime ASC;
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
     tapeDriveID := 0;
@@ -2388,7 +2413,7 @@ BEGIN
           AND (TapeRequest.requestedSrv=TapeDrive.tapeServer OR TapeRequest.requestedSrv=0)
           AND (TapeDrive.deviceGroupName=TapeRequest.deviceGroupName)
           AND rownum < 2
-          ORDER BY TapeRequest.modificationTime ASC 
+          ORDER BY TapeRequest.modificationTime ASC; 
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
     tapeDriveID := 0;

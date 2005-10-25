@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.27 2005/10/20 14:53:20 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.28 2005/10/25 12:06:50 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.27 $ $Date: 2005/10/20 14:53:20 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.28 $ $Date: 2005/10/25 12:06:50 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -49,9 +49,11 @@ static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.
 #include "castor/stager/SvcClass.hpp"
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/rh/FileQueryResponse.hpp"
+#include "castor/rh/FileQryResponse.hpp"
 #include "castor/query/IQuerySvc.hpp"
-#include "stager_client_api.h"
 
+#include "stager_client_api.h"
+#include "Cns_api.h"
 
 #undef logfunc
 
@@ -63,7 +65,7 @@ static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.
 #define NULL 0
 
 /* ------------------------------------- */
-/* stager_query_select()                   */
+/* stager_query_select()                 */
 /*                                       */
 /* Purpose: Query 'select' part of service */
 /*                                       */
@@ -144,7 +146,6 @@ namespace castor {
       int naStatusCode = 10000;
 
 
-
       /**
        * Sends a Response to a client
        * In case of error, on writes a message to the log
@@ -182,7 +183,7 @@ namespace castor {
       }
 
 
-      void setFileResponseStatus(castor::rh::FileQueryResponse* fr,
+      void setFileResponseStatusOld(castor::rh::FileQueryResponse* fr,
                                  castor::stager::DiskCopyInfo*  dc,
                                  bool& foundDiskCopy) {
         char *func = "setFileResponseStatus";
@@ -212,39 +213,8 @@ namespace castor {
 
         case DISKCOPY_WAITFS:
         case DISKCOPY_STAGEOUT:
-
-          /* fprintf(stderr, "---------> DC %d TC %d Seg %d\n",
-             dc->diskCopyStatus(),
-             dc->tapeCopyStatus(),
-             dc->segmentStatus()); */
-
           st = FILE_STAGEOUT;
           diskServer = dc->diskServer();
-          /*
-          switch (dc->tapeCopyStatus()) {
-          case -1:
-            st =  FILE_STAGEOUT;
-            diskServer = dc->diskServer();
-            break;
-          case TAPECOPY_CREATED:
-            st = FILE_CANBEMIGR;
-            diskServer = dc->diskServer();
-            break;
-          case TAPECOPY_TOBEMIGRATED:
-          case TAPECOPY_WAITINSTREAMS:
-            st = FILE_WAITINGMIGR;
-            diskServer = dc->diskServer();
-            break;
-          case TAPECOPY_SELECTED:
-            if (dc->segmentStatus() == SEGMENT_FAILED) {
-              st = FILE_PUTFAILED;
-            } else {
-              st = FILE_BEINGMIGR;
-              diskServer = dc->diskServer();
-            }
-            break;
-          }
-          */
           break;
 
         case DISKCOPY_CANBEMIGR:
@@ -272,9 +242,81 @@ namespace castor {
             STAGER_LOG_DEBUG(NULL, diskServer.c_str());
           }
         }
+        
+        // glp: if/when we need to propagate nbAccesses just uncomment the line
+        //fr->setNbAccesses(dc->nbAccesses());
       }
 
 
+      void setFileResponseStatus(castor::rh::FileQryResponse* fr,
+                                 castor::stager::DiskCopyInfo*  dc,
+                                 bool& foundDiskCopy) {
+        char *func = "setFileResponseStatus";
+
+        // 1. Mapping diskcopy/tapecopy/segment status to one file status
+        stage_fileStatus st = FILE_INVALID_STATUS;
+        std::string diskServer = "";
+
+        switch(dc->diskCopyStatus()) {
+          // Just IGNORE the discopies in those statuses !
+        case DISKCOPY_WAITDISK2DISKCOPY:
+        case DISKCOPY_DELETED:
+        case DISKCOPY_FAILED:
+        case DISKCOPY_GCCANDIDATE:
+        case DISKCOPY_BEINGDELETED:
+        case DISKCOPY_INVALID:
+          return;
+
+        case DISKCOPY_WAITTAPERECALL:
+          st = FILE_STAGEIN;
+          break;
+
+        case  DISKCOPY_STAGED:
+          st = FILE_STAGED;
+          diskServer = dc->diskServer();
+          break;
+
+        case DISKCOPY_WAITFS:
+        case DISKCOPY_STAGEOUT:
+          st = FILE_STAGEOUT;
+          diskServer = dc->diskServer();
+          break;
+
+        case DISKCOPY_CANBEMIGR:
+          st =  FILE_CANBEMIGR;
+          diskServer = dc->diskServer();
+          break;
+
+        }
+
+        // 2. Aggregate status for the various diskcopies
+        if (!foundDiskCopy) {
+          STAGER_LOG_DEBUG(NULL, "Setting diskServer");
+          STAGER_LOG_DEBUG(NULL, diskServer.c_str());
+          fr->setStatus(st);
+          fr->setDiskServer(diskServer);
+          foundDiskCopy = true;
+        } else {
+          // If there are sevral diskcopies for the file
+          // set the status to staged if ANY of the disk copies is
+          // staged, otherwise keep the original status.
+          if (dc->diskCopyStatus() == DISKCOPY_STAGED) {
+            fr->setStatus(FILE_STAGED);
+            fr->setDiskServer(dc->diskServer());
+            STAGER_LOG_DEBUG(NULL, "Setting diskServer");
+            STAGER_LOG_DEBUG(NULL, diskServer.c_str());
+          }
+        }
+        
+        // glp: if/when we need to propagate nbAccesses just uncomment the line
+        //fr->setNbAccesses(dc->nbAccesses());
+      }
+
+
+      
+      /**
+       * Handles a filequery by fileId and replies to client.
+       */
       void handle_fileQueryRequest_byFileId(castor::query::IQuerySvc* qrySvc,
                                             castor::IClient *client,
                                             std::string &fid,
@@ -311,7 +353,7 @@ namespace castor {
           /* Preparing the response */
           /* ---------------------- */
           res.setSize(diskcopy->size());
-          setFileResponseStatus(&res, diskcopy, foundDiskCopy);
+          setFileResponseStatusOld(&res, diskcopy, foundDiskCopy);
         }
 
         // INVALID status is like nothing
@@ -337,9 +379,10 @@ namespace castor {
 
       }
 
-
-
-
+      
+      /**
+       * Handles a filequery by reqId and replies to client.
+       */
       void handle_fileQueryRequest_byRequest(castor::query::IQuerySvc* qrySvc,
                                              castor::IClient *client,
                                              std::string &val,
@@ -409,6 +452,87 @@ namespace castor {
 
           /* Preparing the response */
           /* ---------------------- */
+          setFileResponseStatusOld(&res, diskcopy, foundDiskCopy);
+        }
+
+        // Send the last response if necessary
+        if (foundDiskCopy) {
+          replyToClient(client, &res);
+        }
+
+        /* Cleanup */
+        /* ------- */
+        for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+              = result.begin();
+            dcit != result.end();
+            ++dcit) {
+          delete *dcit;
+        }
+
+      }
+
+      /**
+       * Handles a getLastRecallsRequest and replies to client.
+       */
+      void handle_fileQueryRequest_getLastRecalls(castor::query::IQuerySvc* qrySvc,
+                                                  castor::IClient *client,
+                                                  std::string &val,
+                                                  u_signed64 svcClassId) {
+        char *func =  "castor::stager::queryService::handle_fileQueryRequest_getLastRecalls";
+
+        // Performing the query on the database
+        std::list<castor::stager::DiskCopyInfo*> result;
+
+        result = qrySvc->getLastRecalls(val, svcClassId);
+        if (result.size() == 0) {
+          castor::exception::Exception e(ENOENT);
+          e.getMessage() << "Could not find request for reqId " << val;
+          throw e;
+        }
+
+        /*
+         * Iterates over the list of disk copies, and returns one result
+         * per fileid to the client. It needs the SQL statement to return the diskcopies
+         * sorted by fileid/nshost.
+         */
+        u_signed64 fileid = 0;
+        std::string nshost = "";
+        castor::rh::FileQryResponse res;
+        char cfn[CA_MAXPATHLEN+1];     // XXX unchecked string length in Cns_getpath() call
+        bool foundDiskCopy = false;
+
+        for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+              = result.begin();
+            dcit != result.end();
+            ++dcit) {
+
+          castor::stager::DiskCopyInfo* diskcopy = *dcit;
+
+          if (diskcopy->fileId() != fileid
+              || diskcopy->nsHost() != nshost) {
+
+            // Sending the response for the previous
+            // castor file being processed
+            if (foundDiskCopy) {
+              replyToClient(client, &res);
+            }
+
+            // Now processing a new file !
+            bool foundDiskCopy = false;
+            fileid = diskcopy->fileId();
+            nshost = diskcopy->nsHost();
+
+            std::ostringstream sst;
+            sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
+            res.setFileName(sst.str());
+            res.setSize(diskcopy->size());
+            
+            Cns_getpath((char*)nshost.c_str(), fileid, cfn);
+            res.setCastorFileName(cfn);
+          }
+
+          /* Preparing the response */
+          /* ---------------------- */
           setFileResponseStatus(&res, diskcopy, foundDiskCopy);
         }
 
@@ -428,9 +552,7 @@ namespace castor {
 
       }
 
-
-
-
+      
       /**
        * Handles a fileQueryRequest and replies to client.
        * @param req the request to handle
@@ -500,12 +622,6 @@ namespace castor {
                   throw e;
                 }
                 break;
-              case REQUESTQUERYTYPE_REQID:
-                queryOk = true;
-                break;
-              case REQUESTQUERYTYPE_USERTAG:
-                queryOk = true;
-                break;
               case REQUESTQUERYTYPE_FILEID:
                 STAGER_LOG_DEBUG(NULL, "Received fileid parameter");
                 std::string::size_type idx = pval.find('@');
@@ -516,6 +632,11 @@ namespace castor {
                   fid = pval.substr(0, idx);
                   nshost = pval.substr(idx + 1);
                 }
+                queryOk = true;
+                break;
+              case REQUESTQUERYTYPE_REQID:
+              case REQUESTQUERYTYPE_USERTAG:
+              case REQUESTQUERYTYPE_GETNEXT:
                 queryOk = true;
                 break;
               }
@@ -564,6 +685,13 @@ namespace castor {
                                                   pval,
                                                   svcClass->id(),
                                                   true);
+                break;
+              case REQUESTQUERYTYPE_GETNEXT:
+                STAGER_LOG_DEBUG(NULL, "Calling handle_fileQueryRequest_getLastRecalls");
+                handle_fileQueryRequest_getLastRecalls(qrySvc,
+                                                  client,
+                                                  pval,
+                                                  svcClass->id());
                 break;
 
               }
@@ -618,17 +746,13 @@ namespace castor {
           /* Reply To Client                */
           /* ------------------------------ */
           replyToClient(client, &res);
-
         }
 
-
         sendEndResponse(client);
-
       }
 
-
-
-
+      
+      
       /**
        * Handles a findRequestRequest and replies to client.
        * @param req the request to handle
@@ -645,6 +769,8 @@ namespace castor {
         char *func = "handle_findRequestRequest";
         STAGER_LOG_VERBOSE(NULL,"Handling findRequestRequest");
       }
+
+
 
       /**
        * Handles a requestQueryRequest and replies to client.

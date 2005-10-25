@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.12 2005/07/25 08:52:26 sponcec3 Exp $
+ * $Id: stager_client_api_query.cpp,v 1.13 2005/10/25 12:06:50 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.12 $ $Date: 2005/07/25 08:52:26 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.13 $ $Date: 2005/10/25 12:06:50 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -27,6 +27,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 
 #include "castor/client/BaseClient.hpp"
 #include "castor/client/VectorResponseHandler.hpp"
 #include "castor/rh/FileQueryResponse.hpp"
+#include "castor/rh/FileQryResponse.hpp"
 #include "castor/rh/RequestQueryResponse.hpp"
 #include "castor/stager/StageRequestQueryRequest.hpp"
 #include "castor/stager/StageFileQueryRequest.hpp"
@@ -100,8 +101,8 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
     }
 
     // Using the VectorResponseHandler which stores everything in
-    // A vector. BEWARE, the responses must be de-allocated afterwards
-    std::vector<castor::rh::Response *>respvec;    
+    // a vector. BEWARE, the responses must be de-allocated afterwards
+    std::vector<castor::rh::Response*>respvec;    
     castor::client::VectorResponseHandler rh(&respvec);
     client.sendRequest(&req, &rh);
 
@@ -128,28 +129,62 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
     }
     *nbresps = nbResponses;
     
+    bool newProto = (dynamic_cast<castor::rh::FileQryResponse*>(respvec[0]) != 0);
+    bool retCastorFileName = (nbreqs == nbResponses);
+    if(!newProto) {    
+        // with the old protocol we can return the castor filename only
+        // if it's provided in the request via -M option
+        for(int i=0; i<nbreqs; i++) {
+            if(requests[i].type != BY_FILENAME) {
+                retCastorFileName = false;
+            }
+        }
+    }
+    
     for (int i=0; i<(int)respvec.size(); i++) {
 
       // Casting the response into a FileResponse !
-      castor::rh::FileQueryResponse* fr = 
-        dynamic_cast<castor::rh::FileQueryResponse*>(respvec[i]);
-      if (0 == fr) {
-        castor::exception::Exception e(SEINTERNAL);
-        e.getMessage() << "Error in dynamic cast, response was NOT a file query response";
-        throw e;
-      }
+      if(newProto) {
+          castor::rh::FileQryResponse* fr = 
+            dynamic_cast<castor::rh::FileQryResponse*>(respvec[i]);
 
-      (*responses)[i].errorCode = fr->errorCode();
-      (*responses)[i].errorMessage = strdup(fr->errorMessage().c_str());
-      (*responses)[i].filename = strdup(fr->fileName().c_str());
-      (*responses)[i].fileid = fr->fileId();
-      (*responses)[i].status = fr->status();
-      (*responses)[i].size = fr->size();
-      (*responses)[i].diskserver = strdup(fr->diskServer().c_str());
-      (*responses)[i].poolname = strdup(fr->poolName().c_str());
-      (*responses)[i].creationTime = (time_t)fr->creationTime();
-      (*responses)[i].accessTime = (time_t)fr->accessTime();
-      (*responses)[i].nbAccesses = fr->nbAccesses();
+          (*responses)[i].errorCode = fr->errorCode();
+          (*responses)[i].errorMessage = strdup(fr->errorMessage().c_str());
+          (*responses)[i].filename = strdup(fr->fileName().c_str());
+          (*responses)[i].castorfilename = strdup(fr->castorFileName().c_str());
+          (*responses)[i].fileid = fr->fileId();
+          (*responses)[i].status = fr->status();
+          (*responses)[i].size = fr->size();
+          (*responses)[i].diskserver = strdup(fr->diskServer().c_str());
+          (*responses)[i].poolname = strdup(fr->poolName().c_str());
+          (*responses)[i].creationTime = (time_t)fr->creationTime();
+          (*responses)[i].accessTime = (time_t)fr->accessTime();
+          (*responses)[i].nbAccesses = fr->nbAccesses();
+      }
+      else {   // old protocol - this will go away
+          castor::rh::FileQueryResponse* fr = 
+            dynamic_cast<castor::rh::FileQueryResponse*>(respvec[i]);
+          if (0 == fr) {
+              castor::exception::Exception e(SEINTERNAL);
+              e.getMessage() << "Error in dynamic cast, response was NOT a file query response";
+              throw e;
+          }
+          (*responses)[i].errorCode = fr->errorCode();
+          (*responses)[i].errorMessage = strdup(fr->errorMessage().c_str());
+          (*responses)[i].filename = strdup(fr->fileName().c_str());
+          if(retCastorFileName)
+              (*responses)[i].castorfilename = strdup((char*)requests[i].param);
+          else
+              (*responses)[i].castorfilename = "NA";
+          (*responses)[i].fileid = fr->fileId();
+          (*responses)[i].status = fr->status();
+          (*responses)[i].size = fr->size();
+          (*responses)[i].diskserver = strdup(fr->diskServer().c_str());
+          (*responses)[i].poolname = strdup(fr->poolName().c_str());
+          (*responses)[i].creationTime = (time_t)fr->creationTime();
+          (*responses)[i].accessTime = (time_t)fr->accessTime();
+          (*responses)[i].nbAccesses = fr->nbAccesses();
+      }
 
       // The responses should be deallocated by the API !
       delete respvec[i];

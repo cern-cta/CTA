@@ -283,6 +283,7 @@ DROP PROCEDURE internalFullStageQuery;
 DROP PROCEDURE fileIdStageQuery;
 DROP PROCEDURE reqIdStageQuery;
 DROP PROCEDURE userTagStageQuery;
+DROP PROCEDURE getLastRecallsStageQuery;
 DROP PROCEDURE matchTape2TapeDrive;
 DROP PROCEDURE testMatchTape2TapeDrive;
 DROP PROCEDURE selectTapeRequestQueue;

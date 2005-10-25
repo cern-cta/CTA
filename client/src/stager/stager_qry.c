@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.9 2005/10/17 07:41:57 itglp Exp $
+ * $Id: stager_qry.c,v 1.10 2005/10/25 12:06:50 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.9 $ $Date: 2005/10/17 07:41:57 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.10 $ $Date: 2005/10/25 12:06:50 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -32,6 +32,7 @@ static struct Coptions longopts[] =
     {"fileid",             REQUIRED_ARGUMENT,  NULL,      'F'},
     {"usertag",            REQUIRED_ARGUMENT,  NULL,      'U'},
     {"requestid",          REQUIRED_ARGUMENT,  NULL,      'r'},
+    {"getnext",            REQUIRED_ARGUMENT,  NULL,      'n'},
     {"help",               NO_ARGUMENT,        NULL,      'h'},
     {NULL,                 0,                  NULL,        0}
   };
@@ -92,12 +93,11 @@ main(int argc, char *argv[]) {
   for (i=0; i<nbresps; i++) {
     if (responses[i].errorCode == 0) {
       printf("%s %s %s",
-            (const char *)args.requests[i].param,
+            responses[i].castorfilename,
             responses[i].filename,
             stage_fileStatusName(responses[i].status));
     } else {
-      printf("%s Error %d/%s (%s)",
-            (const char *)args.requests[i].param,
+      printf("Error %d/%s (%s)",
             responses[i].errorCode,
             sstrerror(responses[i].errorCode),
             responses[i].errorMessage);
@@ -122,7 +122,7 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
   Copterr = 1;
   errflg = 0;
   nbargs = 0;
-  while ((c = Cgetopt_long (argc, argv, "M:F:U:r:h", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "M:F:U:r:n:h", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
       args->requests[nbargs].type = BY_FILENAME;
@@ -141,6 +141,11 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
       break;
     case 'r':
       args->requests[nbargs].type = BY_REQID;
+      args->requests[nbargs].param = (char *)strdup(Coptarg);
+      nbargs++;
+      break;
+    case 'n':
+      args->requests[nbargs].type = BY_REQID_GETNEXT;
       args->requests[nbargs].param = (char *)strdup(Coptarg);
       nbargs++;
       break;
@@ -167,12 +172,13 @@ cmd_countArguments(int argc, char *argv[]) {
   Copterr = 1;
   errflg = 0;
   nbargs = 0;
-  while ((c = Cgetopt_long (argc, argv, "M:F:U:r:h", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "M:F:U:r:n:h", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
     case 'F':
     case 'U':
     case 'r':
+    case 'n':
       nbargs++;
       break;
     case 'h':
@@ -195,5 +201,5 @@ void
 usage(char *cmd) {
   fprintf (stderr, "usage: %s ", cmd);
   fprintf (stderr, "%s",
-           "[-M hsmfile [-M ...]] [-F fileid@nshost] [-U usertag] [-r requestid] [-h]\n");
+           "[-M hsmfile [-M ...]] [-F fileid@nshost] [-U usertag] [-r requestid] [-n requestid] [-h]\n");
 }

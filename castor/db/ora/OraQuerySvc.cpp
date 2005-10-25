@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2005/10/20 14:59:47 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2005/10/25 12:09:27 $ $Author: itglp $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -58,6 +58,9 @@ const std::string castor::db::ora::OraQuerySvc::s_diskCopies4RequestStatementStr
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4UsertagStatementString =
   "BEGIN userTagStageQuery(:1, :2, :3); END;";
+
+const std::string castor::db::ora::OraQuerySvc::s_getLastRecallsStatementString =
+  "BEGIN getLastRecallsStageQuery(:1, :2, :3); END;";
 
 /// SQL statement for requestToDo
 const std::string castor::db::ora::OraQuerySvc::s_requestToDoStatementString =
@@ -137,7 +140,10 @@ castor::db::ora::OraQuerySvc::gatherResults(oracle::occi::ResultSet *rset)
       item->setSegmentStatus((castor::stager::SegmentStatusCodes)0);
       item->setDiskServer(rset->getString(7));
       item->setMountPoint(rset->getString(8));
-      //item->setNbAccesses(rset->getInt(9));    ///XXX todo modify DiskCopyInfo to include this information...
+      //item->setNbAccesses(rset->getInt(9));
+          // glp: if/when we need to propagate this information
+          // this field has to be added to DiskCopyInfo,
+          // while the FileQueryResponse already includes it!
       result.push_back(item);
     }
     return result;
@@ -263,6 +269,48 @@ castor::db::ora::OraQuerySvc::diskCopies4Usertag
     throw ex;
   }
 }
+
+// -----------------------------------------------------------------------
+// getLastRecalls
+// -----------------------------------------------------------------------
+std::list<castor::stager::DiskCopyInfo*>
+castor::db::ora::OraQuerySvc::getLastRecalls
+(std::string requestId, u_signed64 svcClassId)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_getLastRecallsStatement) {
+      m_getLastRecallsStatement =
+        createStatement(s_getLastRecallsStatementString);
+      m_getLastRecallsStatement->setString(1, requestId);
+      m_getLastRecallsStatement->setDouble(2, svcClassId);
+      m_getLastRecallsStatement->registerOutParam
+        (3, oracle::occi::OCCICURSOR);
+    }
+    // execute the statement and see whether we found something
+    m_getLastRecallsStatement->setString(1, requestId);
+
+    unsigned int nb = m_getLastRecallsStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "diskCopies4File : Unable to execute query.";
+      throw ex;
+    }
+    oracle::occi::ResultSet *rset =
+      m_getLastRecallsStatement->getCursor(3);
+    // Gather the results
+    std::list<castor::stager::DiskCopyInfo*> result = gatherResults(rset);
+    m_getLastRecallsStatement->closeResultSet(rset);
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Error caught in getLastRecalls."
+                    << std::endl << e.what();
+    throw ex;
+  }
+}
+
 
 // -----------------------------------------------------------------------
 // requestToDo

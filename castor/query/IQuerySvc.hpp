@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2005/09/05 12:55:10 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2005/10/25 12:09:27 $ $Author: itglp $
  *
  *
  *
@@ -90,8 +90,25 @@ namespace castor {
        * @exception in case of error
        */
       virtual std::list<castor::stager::DiskCopyInfo*>
-      diskCopies4Usertag (std::string requestId,
+      diskCopies4Usertag (std::string usertag,
                           u_signed64 svcClassId)
+        throw (castor::exception::Exception) = 0;
+        
+      /**
+       * Gets the newly staged DiskCopies for a given request.
+       * This is meaningful for a PrepareToGet request of several files:
+       * once correspondent DiskCopies are in STAGED status, they're
+       * returned by getLastRecalls and the correspondent subRequests are
+       * flagged as already returned, so that the function returns a given
+       * DiskCopy only once.
+       * @param requestId The CASTOR ID of the request
+       * @param svcClassId the Id of the service class we're using
+       * @return the list of DiskCopies newly available
+       * @exception in case of error
+       */
+      virtual std::list<castor::stager::DiskCopyInfo*>
+      getLastRecalls (std::string requestId,
+                      u_signed64 svcClassId)
         throw (castor::exception::Exception) = 0;
 
       /**

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2005/10/17 07:43:46 $ $Author: itglp $
+ * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2005/10/25 12:09:27 $ $Author: itglp $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -29,11 +29,11 @@
 
 // Include Files
 #include "castor/BaseSvc.hpp"
+#include "castor/stager/DiskCopyInfo.hpp"
 #include "castor/db/ora/OraCommonSvc.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/query/IQuerySvc.hpp"
 #include "occi.h"
-#include "castor/stager/DiskCopyInfo.hpp"
 #include <list>
 
 namespace castor {
@@ -119,6 +119,23 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Gets the newly staged DiskCopies for a given request.
+         * This is meaningful for a PrepareToGet request of several files:
+         * once correspondent DiskCopies are in STAGED status, they're
+         * returned by getLastRecalls and the correspondent subRequests are
+         * flagged as already returned, so that the function returns a given
+         * DiskCopy only once.
+         * @param requestId The CASTOR ID of the request
+         * @param svcClassId the Id of the service class we're using
+         * @return the list of DiskCopies newly available
+         * @exception in case of error
+         */
+        virtual std::list<castor::stager::DiskCopyInfo*>
+        getLastRecalls (std::string requestId,
+                        u_signed64 svcClassId)
+          throw (castor::exception::Exception);
+
+        /**
          * Selects the next request the query service should deal with.
          * Selects a Request in START status and move its status
          * PROCESSED to avoid double processing.
@@ -148,12 +165,19 @@ namespace castor {
         /// SQL statement object for function diskCopies4UserTag
         oracle::occi::Statement *m_diskCopies4UsertagStatement;
 
+        /// SQL statement for function getLastRecalls
+        static const std::string s_getLastRecallsStatementString;
+
+        /// SQL statement object for function getLastRecalls
+        oracle::occi::Statement *m_getLastRecallsStatement;
+
         /// SQL statement for function requestToDo
         static const std::string s_requestToDoStatementString;
 
         /// SQL statement object for function requestToDo
         oracle::occi::Statement *m_requestToDoStatement;
         
+        /// Private function to parse and return the list of results
         std::list<castor::stager::DiskCopyInfo*>
         gatherResults(oracle::occi::ResultSet *rset)        
           throw (castor::exception::Exception);

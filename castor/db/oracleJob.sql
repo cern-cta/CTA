@@ -646,7 +646,7 @@ BEGIN
      AND DiskCopy.status = 2;
   UPDATE DiskCopy SET status = 0 WHERE id = dci RETURNING fileSystem INTO fsid; -- DISKCOPY_STAGED
   IF SubRequestId IS NOT NULL THEN
-    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
+    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0, getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
      WHERE id = SubRequestId; -- SUBREQUEST_RESTART
     UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
      WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
@@ -1721,7 +1721,7 @@ BEGIN
       AND TapeCopy.id = Segment.copy
       AND Segment.status = 7 -- SELECTED
       AND ROWNUM < 2;
-   -- Something is running, so give uu
+   -- Something is running, so give up
  EXCEPTION WHEN NO_DATA_FOUND THEN
    -- Nothing running
    -- Delete the segment(s)
@@ -2084,7 +2084,6 @@ BEGIN
  internalStageQuery(cfs, svcClassId, result);
 END;
 
-
 /*
  * PL/SQL method implementing the stage_query based on request id
  */
@@ -2150,6 +2149,25 @@ BEGIN
             FROM stagePutRequest
            WHERE userTag LIKE tag) reqlist
    WHERE sr.request = reqlist.id;
+  internalStageQuery(cfs, svcClassId, result);
+END;
+
+/*
+ * PL/SQL method implementing the getLastRecalls stage_query
+ */
+CREATE OR REPLACE PROCEDURE getLastRecallsStageQuery
+ (rid IN VARCHAR2,
+  svcClassId IN INTEGER,
+  result OUT castor.QueryLine_Cur) AS
+  cfs "numList";
+BEGIN
+  UPDATE SubRequest
+     SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
+   WHERE getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
+     AND request IN
+         (SELECT id FROM StagePreparetogetRequest
+           WHERE reqid LIKE rid)
+  RETURNING castorfile BULK COLLECT INTO cfs;
   internalStageQuery(cfs, svcClassId, result);
 END;
 
