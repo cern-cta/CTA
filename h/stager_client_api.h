@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.24 $ $Release$ $Date: 2005/10/17 12:17:32 $ $Author: jdurand $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.25 $ $Release$ $Date: 2005/10/25 12:16:36 $ $Author: itglp $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.24 $
- * @date $Date: 2005/10/17 12:17:32 $
+ * @version $Revision: 1.25 $
+ * @date $Date: 2005/10/25 12:16:36 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.24 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.25 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -819,7 +819,7 @@ EXTERN_C int DLL_DECL stage_abortRequest _PROTO((char *requestId,
 //    stage_filequery                                     //
 ////////////////////////////////////////////////////////////
 
-enum query_type { BY_FILENAME, BY_REQID, BY_USERTAG, BY_FILEID };
+enum query_type { BY_FILENAME, BY_REQID, BY_USERTAG, BY_FILEID, BY_REQID_GETNEXT };
 
 
 /**
@@ -838,14 +838,20 @@ struct stage_query_req {
  };
 
 /**
- * Request structure to put a file to CASTOR.
+ * Response structure query a file in CASTOR.
  */
 struct stage_filequery_resp {
 
   /**
-   * The name of the CASTOR file on which the put is done
+   * The internal name of the CASTOR file: it's exposed
+   * for the time being only for SRM/GridFTP
    */
   char		*filename;
+
+  /**
+   * The external name of the CASTOR file as from the name server
+   */
+  char		*castorfilename;
 
   /**
    * The CASTOR file id
