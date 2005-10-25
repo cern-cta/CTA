@@ -52,30 +52,13 @@ BEGIN
   END LOOP;
 END;
 
--- Cleaning of old subrequests (failed here)
-drop index I_SubRequest_Status7;
-CREATE INDEX I_SubRequest_Status7 on SubRequest
-  (CASE status WHEN 7 THEN status ELSE NULL end) online;
-
-DECLARE
-  nb INTEGER;
-  dc INTEGER;
-  req INTEGER;
-  cli INTEGER;
+-- Cleaning of failed subrequests
 BEGIN
  LOOP
-   FOR i IN 1..50 LOOP 
-     SELECT id, diskcopy, request INTO nb, dc, req FROM SubRequest
-      WHERE (CASE status WHEN 7 THEN status ELSE NULL end) = 7 AND ROWNUM < 2 AND creationTime < 1109561011;
-     UPDATE diskcopy set status = 7 where id = dc;
-     DELETE FROM StagePutRequest WHERE id = req RETURNING Client INTO cli;
-     DELETE FROM Id2Type WHERE id = req;
-     DELETE FROM Client where id = cli;
-     DELETE FROM Id2Type WHERE id = cli;
-     DELETE FROM SubRequest WHERE id = nb;
-     DELETE FROM Id2Type WHERE id = nb;
-     COMMIT;
+   FOR sr IN (SELECT id FROM SubRequest WHERE status = 9 and ROWNUM <= 100) LOOP
+     archiveSubReq(sr.id);
    END LOOP;
+   COMMIT;
    DBMS_LOCK.sleep(seconds => 5.0);
  END LOOP;
  EXCEPTION WHEN NO_DATA_FOUND THEN NULL;
