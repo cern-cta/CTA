@@ -1,16 +1,25 @@
+gencastor (3.5-0) unstable; urgency=low
+
+  * Improved generation of Objects and Stream converters: a member with
+    stereotype 'DoNotStream' or an association to a class with stereotype
+    'enumerationNotStream' will not be included in the Stream converter but
+    only in the object and database converter.
+
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Tue, 25 Oct 2005 15:00:00 +0200
+
 gencastor (3.4-5) unstable; urgency=low
 
-  * Fix in the database exception handling for the CDBC API.
+  * Fix the database exception handling for the CDBC API.
   * Improved SQL script generation, the drop part is automatically generated.
 
- -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Thu, 19 Oct 2005 15:00:00 +0200
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Mon, 19 Oct 2005 15:00:00 +0200
 
 gencastor (3.4-4) unstable; urgency=low
 
   * One more fix in the generated SQL scripts, which reflect now the specified
     namespace.
 
- -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Thu, 16 Sep 2005 15:00:00 +0200
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Fri, 16 Sep 2005 15:00:00 +0200
 
 gencastor (3.4-3) unstable; urgency=low
 
