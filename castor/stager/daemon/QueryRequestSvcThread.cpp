@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.28 2005/10/25 12:06:50 itglp Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.29 2005/10/25 13:40:59 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.28 $ $Date: 2005/10/25 12:06:50 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.29 $ $Date: 2005/10/25 13:40:59 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -624,15 +624,17 @@ namespace castor {
                 break;
               case REQUESTQUERYTYPE_FILEID:
                 STAGER_LOG_DEBUG(NULL, "Received fileid parameter");
-                std::string::size_type idx = pval.find('@');
-                if (idx == std::string::npos) {
-                  fid = pval;
-                  nshost = '%';
-                } else {
-                  fid = pval.substr(0, idx);
-                  nshost = pval.substr(idx + 1);
+                {
+                  std::string::size_type idx = pval.find('@');
+                  if (idx == std::string::npos) {
+                    fid = pval;
+                    nshost = '%';
+                  } else {
+                    fid = pval.substr(0, idx);
+                    nshost = pval.substr(idx + 1);
+                  }
+                  queryOk = true;
                 }
-                queryOk = true;
                 break;
               case REQUESTQUERYTYPE_REQID:
               case REQUESTQUERYTYPE_USERTAG:
