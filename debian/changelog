@@ -1,3 +1,62 @@
+castor (2.0.1-11) unstable; urgency=low
+
+  * PROTO2/castor/Constants.cpp:
+  * PROTO2/castor/Constants.hpp:
+  * PROTO2/castor/Imakefile:
+  * PROTO2/castor/rh/FileQueryResponse.h:
+  * PROTO2/castor/rh/FileQueryResponse.hpp:
+  * PROTO2/castor/stager/RequestQueryType.cpp:
+  * PROTO2/castor/stager/RequestQueryType.hpp:
+  * PROTO2/castor/stager/SubRequest.cpp:
+  * PROTO2/castor/stager/SubRequest.h:
+  * PROTO2/castor/stager/SubRequest.hpp:
+  * PROTO2/castor/stager/SubRequestCInt.cpp:
+        Added a new 'getNext'-like query to get latest recalled files for a get request.
+  * PROTO2/castor/Imakefile:
+    [r1.114,2005-10-21,jdurand] Add -I ../win32 for _WIN32
+  * PROTO2/castor/client/BaseClient.cpp:
+    [r1.34,2005-10-21,jdurand] fix < into <<
+  * PROTO2/castor/db/castor_oracle_create.sql:
+  * PROTO2/castor/db/castor_oracle_drop.sql:
+  * PROTO2/castor/db/castor_postgres_create.sql:
+  * PROTO2/castor/db/cnv/DbSubRequestCnv.cpp:
+  * PROTO2/castor/db/ora/OraQuerySvc.cpp:
+  * PROTO2/castor/db/ora/OraQuerySvc.hpp:
+  * PROTO2/castor/db/ora/OraSubRequestCnv.cpp:
+  * PROTO2/castor/db/oracleTrailer.sql:
+  * PROTO2/castor/query/IQuerySvc.hpp:
+  * PROTO2/stager/stager_client_api_query.cpp:
+  * PROTO2/stager/stager_qry.c:
+  * PROTO2/stager/stager_qry.man:
+  * PROTO2/stager/stager_query_service.cpp:
+        Fixed stager_qry to retrieve castorFileName, added a new 'getNext'-like query to get latest recalled files for a get request.
+  * PROTO2/h/stager_client_api.h:
+    [r1.25,2005-10-25,itglp] Added castorfilename to stage_filequery_resp, extended query_type enum.
+    [r1.25,2005-10-25,itglp] This affects the public API stage_filequery().
+  * PROTO2/codeGeneration/RH.xmi:
+    [r1.108,2005-10-25,itglp] Added GETNEXT to RequestQueryType for the new getNext stager query.
+    [r1.107,2005-10-24,itglp] Fixed type for FileQryResponse.castorFileName.
+    [r1.106,2005-10-24,itglp] New enumeration added for GetNext status in SubRequests.
+  * PROTO2/castor/logstream.h:
+    [r1.18,2005-10-21,jdurand] On VC7 (.NET) ERROR will expand to 0 ./..
+    [r1.17,2005-10-21,jdurand] Fix for bug #12528, localtime_r on _WIN32
+  * CASTOR/commands/newacct.c:
+    [r 1.8,2005-10-20,jdurand] Added #include <stdlib.h> (definition of exit())
+    [r 1.7,2005-10-20,jdurand] execl() should end with NULL instead of 0
+  * PROTO2/common/Imakefile:
+  * PROTO2/h/Imakefile:
+        CASTOR thread-safe portable dlopen() interface [_WIN32 + unix-like only]
+  * CASTOR/h/Cuuid.h:
+    [r 1.8,2005-10-21,jdurand] Fix for bugs #12562, compilation on _WIN32
+  * CASTOR/h/osdep.h:
+    [r1.19,2005-10-21,jdurand] VC6->VC7 port (VC7 already defined BYTE, SHORT, LONG + I don't know why but QUAD structure does not compile using a LONG on VC7 - but compiled with 'int'...)
+  * CASTOR/msg/oper.c:
+    [r 1.6,2005-10-20,bcouturi] Terminate execl command by NULL rather than 0 to avoid cast problem on IA64
+  * PROTO2/tape/tpdaemon.c:
+    [r 1.4,2005-10-20,bcouturi] Terminate execlp command by NULL rather than 0 to avoid cast problem on IA64
+
+ -- Sebastien Ponce <sponcec3@pcitds13>  Tue, 25 Oct 2005 15:58:49 +0200
+
 castor (2.0.1-10) unstable; urgency=low
 
   * PROTO2/castor/db/castor_oracle_create.sql:
