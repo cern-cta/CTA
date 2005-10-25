@@ -30,6 +30,7 @@
 #define CASTOR_STAGER_SUBREQUEST_H
 
 // Include Files and Forward declarations for the C world
+#include "castor/stager/SubRequestGetNextStatusCodes.h"
 #include "castor/stager/SubRequestStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
@@ -41,7 +42,7 @@ struct Cstager_SubRequest_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class SubRequest
-// A subpart of a request delaing with a single castor file
+// A subpart of a request dealing with a single castor file
 //------------------------------------------------------------------------------
 
 /**
@@ -311,5 +312,15 @@ int Cstager_SubRequest_request(struct Cstager_SubRequest_t* instance, struct Cst
  * Set the value of request
  */
 int Cstager_SubRequest_setRequest(struct Cstager_SubRequest_t* instance, struct Cstager_FileRequest_t* new_var);
+
+/**
+ * Get the value of getNextStatus
+ */
+int Cstager_SubRequest_getNextStatus(struct Cstager_SubRequest_t* instance, enum Cstager_SubRequestGetNextStatusCodes_t* var);
+
+/**
+ * Set the value of getNextStatus
+ */
+int Cstager_SubRequest_setGetNextStatus(struct Cstager_SubRequest_t* instance, enum Cstager_SubRequestGetNextStatusCodes_t new_var);
 
 #endif // CASTOR_STAGER_SUBREQUEST_H

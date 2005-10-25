@@ -17,7 +17,7 @@ COMM You should have received a copy of the GNU General Public License
 COMM along with this program; if not, write to the Free Software
 COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 COMM
-COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.114 $ $Release$ $Date: 2005/10/21 10:03:24 $ $Author: jdurand $
+COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.115 $ $Release$ $Date: 2005/10/25 12:10:46 $ $Author: itglp $
 COMM
 COMM Make Castor libraries and executables
 COMM
@@ -173,6 +173,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamStageUpdateNextRequestCnv.cpp \
               io/StreamStageUpdateRequestCnv.cpp \
               io/StreamAbortResponseCnv.cpp \
+              io/StreamFileQryResponseCnv.cpp \
               io/StreamFileQueryResponseCnv.cpp \
               io/StreamFindReqResponseCnv.cpp \
               io/StreamIOResponseCnv.cpp \
@@ -198,6 +199,8 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               rh/StringResponseCInt.cpp \
               rh/AbortResponse.cpp \
               rh/AbortResponseCInt.cpp \
+              rh/FileQryResponse.cpp \
+              rh/FileQryResponseCInt.cpp \
               rh/FileQueryResponse.cpp \
               rh/FileQueryResponseCInt.cpp \
               rh/FindReqResponse.cpp \
@@ -321,6 +324,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/SubRequest.cpp \
               stager/SubRequestCInt.cpp \
               stager/SubRequestStatusCodes.cpp \
+	      stager/SubRequestGetNextStatusCodes.cpp \
               stager/Tape.cpp \
               stager/TapeCInt.cpp \
               stager/TapeCopy.cpp \
@@ -356,27 +360,12 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
 STGLIB_SRCS1 = io/AuthServerSocket.cpp io/AuthClientSocket.cpp
 #endif
 
-#if BuildVDQMCpp
-STGLIB_SRCS2 = vdqm/RTCopyDConnection.cpp \
-               vdqm/NewProtocolInterpreter.cpp \
-               vdqm/OldProtocolInterpreter.cpp \
-               vdqm/OldRequestFacade.cpp \
-               vdqm/VdqmServer.cpp \
-               vdqm/VdqmServerSocket.cpp \
-               vdqm/handler/BaseRequestHandler.cpp \
-               vdqm/handler/TapeDriveConsistencyChecker.cpp \
-               vdqm/handler/TapeDriveHandler.cpp \
-               vdqm/handler/TapeDriveStatusHandler.cpp \
-               vdqm/handler/TapeRequestHandler.cpp \
-               vdqm/handler/TapeRequestDedicationHandler.cpp
-#endif
-
 #if BuildDlfLibrary
-STGLIB_SRCS3 = DlfMsgSvc.cpp \
+STGLIB_SRCS2 = DlfMsgSvc.cpp \
                dlfbuf.cpp
 #endif
 
-STGLIB_SRCS = $(STGLIB_SRCS0) $(STGLIB_SRCS1) $(STGLIB_SRCS2) $(STGLIB_SRCS3)
+STGLIB_SRCS = $(STGLIB_SRCS0) $(STGLIB_SRCS1) $(STGLIB_SRCS2)
 
 STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
 

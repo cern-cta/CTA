@@ -32,6 +32,7 @@
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
+#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "osdep.h"
 #include <vector>
@@ -402,6 +403,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_SubRequest_setRequest(castor::stager::SubRequest* instance, castor::stager::FileRequest* new_var) {
     instance->setRequest(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_getNextStatus
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_getNextStatus(castor::stager::SubRequest* instance, castor::stager::SubRequestGetNextStatusCodes* var) {
+    *var = instance->getNextStatus();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setGetNextStatus
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setGetNextStatus(castor::stager::SubRequest* instance, castor::stager::SubRequestGetNextStatusCodes new_var) {
+    instance->setGetNextStatus(new_var);
     return 0;
   }
 

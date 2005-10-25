@@ -38,7 +38,7 @@ struct Crh_Response_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class FileQueryResponse
-// Response to the FileQueryRequest
+// Response to the FileQueryRequest - old version
 //------------------------------------------------------------------------------
 
 /**

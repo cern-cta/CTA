@@ -127,6 +127,7 @@ namespace castor {
     OBJ_TapeDriveCompatibility = 92,   
 
     OBJ_PutDoneStart = 93,
+    OBJ_FileQryResponse = 94
   };
     
   /**
@@ -201,7 +202,7 @@ namespace castor {
   /**
    * Nb of objectIds currently existing
    */
-  static const unsigned int ObjectsIdsNb = 94;
+  static const unsigned int ObjectsIdsNb = 95;
 
   /**
    * Nb of ServicesIds currently existing
@@ -217,7 +218,7 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[94];
+  extern const char* ObjectsIdStrings[95];
 
   /**
    * Names of the differents Services, used to display

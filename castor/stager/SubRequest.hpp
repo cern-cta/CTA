@@ -31,6 +31,7 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -51,7 +52,7 @@ namespace castor {
 
     /**
      * class SubRequest
-     * A subpart of a request delaing with a single castor file
+     * A subpart of a request dealing with a single castor file
      */
     class SubRequest : public virtual castor::IObject {
 
@@ -441,6 +442,22 @@ namespace castor {
         m_request = new_var;
       }
 
+      /**
+       * Get the value of m_getNextStatus
+       * @return the value of m_getNextStatus
+       */
+      SubRequestGetNextStatusCodes getNextStatus() const {
+        return m_getNextStatus;
+      }
+
+      /**
+       * Set the value of m_getNextStatus
+       * @param new_var the new value of m_getNextStatus
+       */
+      void setGetNextStatus(SubRequestGetNextStatusCodes new_var) {
+        m_getNextStatus = new_var;
+      }
+
     private:
 
       unsigned int m_retryCounter;
@@ -494,6 +511,8 @@ namespace castor {
       SubRequestStatusCodes m_status;
 
       FileRequest* m_request;
+
+      SubRequestGetNextStatusCodes m_getNextStatus;
 
     }; // end of class SubRequest
 

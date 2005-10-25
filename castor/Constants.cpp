@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2005/09/19 14:05:21 $ $Author: itglp $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2005/10/25 12:10:46 $ $Author: itglp $
  *
  *
  *
@@ -30,7 +30,7 @@
 //=============================================================================
 // ObjectsIdStrings
 //=============================================================================
-const char* castor::ObjectsIdStrings[94] = {
+const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "INVALID",
   "Ptr", // Only used for streaming for circular dependencies
   "CastorFile",
@@ -126,13 +126,14 @@ const char* castor::ObjectsIdStrings[94] = {
   "TapeAccessSpecification",
   "TapeDriveCompatibility",
   
-  "PutDoneStart"
+  "PutDoneStart",
+  "FileQryResponse"
 };
 
 //=============================================================================
 // ServicesIdStrings
 //=============================================================================
-const char* castor::ServicesIdStrings[36] = {
+const char* castor::ServicesIdStrings[ServicesIdsNb] = {
   "INVALID",
   "NOMSG",
   "DLFMSG",
@@ -179,7 +180,7 @@ const char* castor::ServicesIdStrings[36] = {
 //=============================================================================
 // RepresentationsIdStrings
 //=============================================================================
-const char* castor::RepresentationsIdStrings[6] = {
+const char* castor::RepresentationsIdStrings[RepresentationsIdsNb] = {
   "INVALID",
   "STREAM",
   "DATABASE",
