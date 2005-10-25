@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.12 $ $Release$ $Date: 2005/08/03 16:50:16 $ $Author: mbraeger $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.13 $ $Release$ $Date: 2005/10/25 16:17:36 $ $Author: mbraeger $
 #
 # Make Castor vdqm library
 #
@@ -39,28 +39,18 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
 LIBS = -lshift
 
-VDQMBIN_SRCS =DeviceGroupName.cpp \
-							ErrorHistory.cpp \
-              NewProtocolInterpreter.cpp \
-              OldProtocolInterpreter.cpp \
-							OldRequestFacade.cpp \
-							RTCopyDConnection.cpp \
-							TapeAccessSpecification.cpp \
-              TapeDrive.cpp \
-							TapeDriveCompatibility.cpp \
-							TapeDriveDedication.cpp \
-              TapeDriveStatusCodes.cpp \
-              TapeRequest.cpp \
-              TapeServer.cpp \
-							TapeServerStatusCodes.cpp \
-              VdqmServer.cpp \
-              VdqmServerSocket.cpp \
-							handler/BaseRequestHandler.cpp \
-							handler/TapeDriveConsistencyChecker.cpp \
-							handler/TapeDriveHandler.cpp \
-							handler/TapeDriveStatusHandler.cpp \
-							handler/TapeRequestHandler.cpp \
-							handler/TapeRequestDedicationHandler.cpp
+VDQMBIN_SRCS =  NewProtocolInterpreter.cpp \
+                OldProtocolInterpreter.cpp \
+                OldRequestFacade.cpp \
+                RTCopyDConnection.cpp \
+                VdqmServer.cpp \
+                VdqmServerSocket.cpp \
+                handler/BaseRequestHandler.cpp \
+                handler/TapeDriveConsistencyChecker.cpp \
+                handler/TapeDriveHandler.cpp \
+                handler/TapeDriveStatusHandler.cpp \
+                handler/TapeRequestHandler.cpp \
+                handler/TapeRequestDedicationHandler.cpp
 							
 
 
