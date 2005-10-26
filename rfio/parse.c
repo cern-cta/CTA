@@ -28,6 +28,7 @@ static char sccsid[] = "@(#)parse.c,v 1.17 2004/03/02 09:17:40 CERN/IT/PDP/DM Fr
 #include "osdep.h"
 #include "Cns_api.h"
 #include "rfio.h"               /* remote file I/O definitions          */
+#include "Csnprintf.h"
 #include <Cglobals.h>
 #include <RfioTURL.h>
 
@@ -65,7 +66,7 @@ int   	ln ; 	/* solve links or not ? */
     if (turl.rfioPort > 0) {
       int hostlen, portlen;
       hostlen = strlen(turl.rfioHostName);
-      snprintf(buf, CA_MAXHOSTNAMELEN, ":%ld", turl.rfioPort);
+      Csnprintf(buf, CA_MAXHOSTNAMELEN, ":%ld", turl.rfioPort);
       buf[CA_MAXHOSTNAMELEN] = '\0';
       portlen = strlen(buf);
       *host =(char *)malloc(hostlen + portlen + 1);
