@@ -1,9 +1,9 @@
 /*
- * $Id: Cdlopen.c,v 1.2 2005/10/21 14:00:50 jdurand Exp $
+ * $Id: Cdlopen.c,v 1.3 2005/10/26 08:53:50 jdurand Exp $
  */
 
 /*
- * $RCSfile: Cdlopen.c,v $ $Revision: 1.2 $ $Date: 2005/10/21 14:00:50 $ CERN IT-ADC/CA Jean-Damien Durand
+ * $RCSfile: Cdlopen.c,v $ $Revision: 1.3 $ $Date: 2005/10/26 08:53:50 $ CERN IT-ADC/CA Jean-Damien Durand
  */
 
 
@@ -69,7 +69,6 @@ int DLL_DECL Cdlclose(void *handler) {
 }
 #else
 /* Assuming standard dlopen() interface */
-#include <dlfcn.h>
 void DLL_DECL *Cdlopen(filename,flag)
      CONST char *filename;
      int flag;
