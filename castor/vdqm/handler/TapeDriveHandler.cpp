@@ -236,12 +236,14 @@ void castor::vdqm::handler::TapeDriveHandler::deleteTapeDrive()
 			tapeDrive = ptr_IVdqmService->selectTapeDrive(ptr_driveRequest, tapeServer);    
 		} catch (castor::exception::Exception ex) {
 			delete tapeServer;
+			tapeServer = 0;
 			
 			throw ex;
 		}
         
     if ( tapeDrive == NULL ) {
     	delete tapeServer;
+    	tapeServer = 0;
   	
       castor::exception::Exception ex(EVQNOSDRV);
       ex.getMessage() << "TapeDriveHandler::deleteTapeDrive(): "

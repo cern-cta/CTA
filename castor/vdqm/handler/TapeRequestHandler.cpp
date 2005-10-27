@@ -342,6 +342,11 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 	     castor::dlf::Param("function", "castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest()")};
 	  castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 67, 2, params);
     
+    if ( tapeReq ) {
+    	delete tapeReq;
+	  	tapeReq = 0;
+    }
+    
     return;
   }
 		
@@ -355,6 +360,9 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 	   */
 	  rowNumber = ptr_IVdqmService->checkTapeRequest(tapeReq);
 	  if ( rowNumber == -1 ) {
+	  	delete tapeReq;
+	  	tapeReq = 0;
+	  	
 	    castor::exception::Internal ex;
 	    ex.getMessage() << "Can't delete TapeRequest with ID = " 
 	    								<< volumeRequest->VolReqID
@@ -388,6 +396,8 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 			updateRepresentation(tapeReq, cuuid);
 			updateRepresentation(tapeDrive, cuuid);
 
+	  	delete tapeReq;
+	  	tapeReq = 0;
 			    
 		  castor::exception::Exception ex(EVQREQASS);
 		  ex.getMessage() << "TapeRequest is assigned to a TapeDrive. "
@@ -404,14 +414,17 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 		  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 28, 1, params);
 	  }
   } catch(castor::exception::Exception e) {
- 		if (tapeReq)
+ 		if (tapeReq) {
 	 		delete tapeReq;
+	 		tapeReq = 0;
+ 		}
   
     throw e;
   }
   
   // Delete all Objects
   delete tapeReq;
+  tapeReq = 0;
 }
 
 
