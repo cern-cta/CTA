@@ -266,33 +266,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
 		 * This is still sufficient to have a unique TapeRequest ID, because
 		 * the requests don't stay for long time in the db.
 		 */
-		volumeRequest->VolReqID = (unsigned int)newTapeReq->id();
-	   
-	//------------------------------------------------------------------------------
-	//------------------------------------------------------------------------------
-	// TODO: This must be put in an own thread
-	
-	//	/**
-	//	 * Look for a free tape drive, which can handle the request
-	//	 */
-	//	freeTapeDrive = ptr_IVdqmService->getFreeTapeDrive(reqExtDevGrp);
-	//	if ( freeTapeDrive == NULL ) {
-	//	  castor::exception::Internal ex;
-	//	  ex.getMessage() << "No free tape drive for TapeRequest "
-	//	  								<< "with ExtendedDeviceGroup " 
-	//	  								<< reqExtDevGrp->dgName()
-	//	  								<< " and mode = "
-	//	  								<< reqExtDevGrp->mode()
-	//	  								<< std::endl;
-	//	  throw ex;
-	//	}
-	//  else { //If there was a free drive, start a new job
-	//	  handleTapeRequestQueue();
-	//  }
-	  
-	//------------------------------------------------------------------------------
-	//------------------------------------------------------------------------------
-	
+		volumeRequest->VolReqID = (unsigned int)newTapeReq->id();	
   } catch(castor::exception::Exception e) {
  		if (newTapeReq)
 	 		delete newTapeReq; //also deletes clientData, because of composition
@@ -357,15 +331,23 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
     
     obj = 0;
   } catch (castor::exception::Exception e) {
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to select tape for id " << volumeRequest->VolReqID  << " :"
-      << std::endl << e.getMessage().str();
+    /**
+     * If we don't find the tapeRequest in the db it is normally not a big deal,
+     * because the assigned tape drive has probably already finished the transfer.
+     */
     
-    throw ex;
+    //"Couldn't find the tape request in db. Maybe it is already deleted?" message
+    castor::dlf::Param params[] =
+	  	{castor::dlf::Param("tapeRequest ID", volumeRequest->VolReqID),
+	     castor::dlf::Param("function", "castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest()")};
+	  castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 67, 2, params);
+    
+    return;
   }
 		
-	//OK, now we have the tapeReq and its client :-)
+	/**
+	 * OK, now we have the tapeReq and its client :-)
+	 */
 	
 	try {	
 		/*

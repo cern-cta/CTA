@@ -172,6 +172,7 @@ castor::vdqm::VdqmServer::VdqmServer():
      {64, "No TapeDrive object to commit to RTCPD"},
      {65, "Found a queued tape request for mounted tape"},
      {66, "VdqmServer::handleOldVdqmRequest(): waiting for client acknowledge"},
+     {67, "Couldn't find the tape request in db. Maybe it is already deleted?"},
      {-1, ""}};
   castor::dlf::dlf_init("Vdqm", messages);
 }
@@ -582,8 +583,17 @@ void castor::vdqm::VdqmServer::handleOldVdqmRequest(
       {castor::dlf::Param("Message", e.getMessage().str().c_str()),
        castor::dlf::Param("errorCode", e.code())};   
 
-    // "Exception caught" message   
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 2, params2);
+    // "Exception caught" message 
+    if (e.code() == EVQREQASS) {
+    	/**
+    	 * This error code is used, when tpread/tpdump wants to delete 
+    	 * a tape request, which is still assigned to a tape drive or vice versa.
+    	 * Anyway, it is not a big deal, so we just log a warning message.
+    	 */
+	    castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 9, 2, params2);
+    }
+	  else
+	  	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 2, params2);
     
     
     // "VdqmServer::handleOldVdqmRequest(): Rollback of the whole request" message   
