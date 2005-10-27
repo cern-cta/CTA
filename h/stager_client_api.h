@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.25 $ $Release$ $Date: 2005/10/25 12:16:36 $ $Author: itglp $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.26 $ $Release$ $Date: 2005/10/27 17:21:17 $ $Author: itglp $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.25 $
- * @date $Date: 2005/10/25 12:16:36 $
+ * @version $Revision: 1.26 $
+ * @date $Date: 2005/10/27 17:21:17 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.25 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.26 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -819,7 +819,7 @@ EXTERN_C int DLL_DECL stage_abortRequest _PROTO((char *requestId,
 //    stage_filequery                                     //
 ////////////////////////////////////////////////////////////
 
-enum query_type { BY_FILENAME, BY_REQID, BY_USERTAG, BY_FILEID, BY_REQID_GETNEXT };
+enum query_type { BY_FILENAME, BY_REQID, BY_USERTAG, BY_FILEID, BY_REQID_GETNEXT, BY_USERTAG_GETNEXT };
 
 
 /**
