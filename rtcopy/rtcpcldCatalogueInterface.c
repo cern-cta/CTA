@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.136 $ $Release$ $Date: 2005/10/14 12:39:04 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.137 $ $Release$ $Date: 2005/10/27 11:57:53 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.136 $ $Release$ $Date: 2005/10/14 12:39:04 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.137 $ $Release$ $Date: 2005/10/27 11:57:53 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1208,13 +1208,6 @@ static int procSegmentsForTape(
         fl->filereq.position_method = TPPOSIT_FSEQ;
       }
       fl->filereq.proc_status = RTCP_WAITING;
-      /*
-       * TODO: remove this temporary hack when rtcpd_MainCntl.c fix
-       * (revision 1.94) has been deployed on all tape servers
-       */
-      fl->filereq.blocksize = 32760;
-      if ( strcmp(tape->tapereq.devtype,"3592") == 0 ) 
-        fl->filereq.blocksize = 256*1024;
       
       /*
        * Path is set when this segment is ready for processing.
