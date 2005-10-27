@@ -892,7 +892,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   dci := 0;
   rpath := '';
  EXCEPTION WHEN NO_DATA_FOUND THEN
-   -- No disk copy foundin WAIT*, we don't hae to wait
+   -- No disk copy foundin WAIT*, we don't have to wait
   BEGIN
    -- Check whether there are any diskcopy available
    SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
@@ -920,7 +920,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       AND DiskServer.id = FileSystem.diskServer
       AND DiskServer.status = 0; -- PRODUCTION
     -- create DiskCopy for Disk to Disk copy
-    UPDATE SubRequest SET diskCopy = ids_seq.nextval,
+    UPDATE SubRequest SET diskCopy = ids_seq.nextval
                           lastModificationTime = getTime() WHERE id = srId
      RETURNING castorFile, diskCopy INTO cfid, dci;
     SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
@@ -1045,6 +1045,7 @@ BEGIN
   UPDATE DiskCopy set status = dcStatus WHERE id = dcId;
   -- update SubRequest
   UPDATE SubRequest set status = 6, -- status SUBREQUEST_READY
+                        getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
                         lastModificationTime = getTime()
    WHERE diskCopy = dcId
   RETURNING id INTO srid;
@@ -2153,9 +2154,9 @@ BEGIN
 END;
 
 /*
- * PL/SQL method implementing the getLastRecalls stage_query
+ * PL/SQL method implementing the LastRecalls stage_query based on request id
  */
-CREATE OR REPLACE PROCEDURE getLastRecallsStageQuery
+CREATE OR REPLACE PROCEDURE reqIdLastRecallsStageQuery
  (rid IN VARCHAR2,
   svcClassId IN INTEGER,
   result OUT castor.QueryLine_Cur) AS
@@ -2167,6 +2168,25 @@ BEGIN
      AND request IN
          (SELECT id FROM StagePreparetogetRequest
            WHERE reqid LIKE rid)
+  RETURNING castorfile BULK COLLECT INTO cfs;
+  internalStageQuery(cfs, svcClassId, result);
+END;
+
+/*
+ * PL/SQL method implementing the LastRecalls stage_query based on user tag
+ */
+CREATE OR REPLACE PROCEDURE userTagLastRecallsStageQuery
+ (tag IN VARCHAR2,
+  svcClassId IN INTEGER,
+  result OUT castor.QueryLine_Cur) AS
+  cfs "numList";
+BEGIN
+  UPDATE SubRequest
+     SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
+   WHERE getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
+     AND request IN
+         (SELECT id FROM StagePreparetogetRequest
+           WHERE usertag LIKE tag)
   RETURNING castorfile BULK COLLECT INTO cfs;
   internalStageQuery(cfs, svcClassId, result);
 END;

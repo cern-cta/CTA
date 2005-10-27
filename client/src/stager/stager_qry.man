@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.6 $ $Date: 2005/10/25 12:06:50 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.7 $ $Date: 2005/10/27 14:31:44 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_QRY 1castor "$Date: 2005/10/25 12:06:50 $" CASTOR "STAGER Commands"
+.TH STAGER_QRY 1castor "$Date: 2005/10/27 14:31:44 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_qry \- query the CASTOR stager for files and requests
 .SH SYNOPSIS
@@ -30,7 +30,6 @@ stager_qry \- query the CASTOR stager for files and requests
 ]
 [
 .BI -n
-.BI requestid
 ]
 [
 .BI -h
@@ -74,6 +73,9 @@ and
 .B stager_put(1castor)
 commands. There is no constraint on the uniqueness of the usertag so it is up to the user
 to make sure that the string is unique enough to not clash with other users' usertags.
+.fi
+Note that if the request has been fully processed (i.e. all requested files are STAGED),
+it will not be possible anymore to query by usertag.
 .TP
 .BI \-r,\ \-\-requestid " requestid"
 allows for querying the status of a request identified by the stager request identifier.
@@ -86,15 +88,24 @@ option is specified with the
 and
 .B stager_put(1castor)
 commands.
+.fi
+Note that if the request has been fully processed (i.e. all requested files are STAGED),
+it will not be possible anymore to query by request id.
 .TP
-.BI \-n,\ \-\-getnext " requestid"
-allows for querying the list of files which have been recalled so far and not yet retrieved
-for a given get request. The request is identified by the stager request identifier (see above).
+.BI \-n,\ \-\-getnext
+switches to getnext mode: allows for querying the list of files which have been recalled so
+far and not yet retrieved for a given GET request. The request can be identified by the
+stager request identifier or the user tag (see above).
 Each file is given only once, allowing users to get the latest recalled files since
 last usage of the command.
-This command applies only for
+.fi
+This option applies only for
 .B stager_get
-requests and gives no answer for other requests.
+requests and gives no answer for other requests. Moreover, it has to be used in conjunction with
+.BI \-U
+or
+.BI \-r
+options.
 .TP
 .BI \-h,\ \-\-help
 display command usage help
@@ -118,10 +129,22 @@ Received 2 responses
 .fi
 /castor/cern.ch/user/t/test/file2 STAGED
 .fi
+# stager_qry -n -U test1
+.fi
+Received 1 responses
+.fi
+/castor/cern.ch/user/t/test/file2 STAGED
+.fi
+# stager_qry -n -U test1   (after some time)
+.fi
+Received 1 responses
+.fi
+/castor/cern.ch/user/t/test/file1 STAGED
+.fi
 .fi
 # nsls -i /castor/cern.ch/user/t/test/file2
 .fi
-           59316770 /castor/cern.ch/user/t/test/file2
+    59316770 /castor/cern.ch/user/t/test/file2
 .fi
 # stager_qry -F 59316770@castorns
 .fi

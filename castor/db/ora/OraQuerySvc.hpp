@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2005/10/25 12:09:27 $ $Author: itglp $
+ * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2005/10/27 14:31:20 $ $Author: itglp $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -94,46 +94,25 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Gets all DiskCopies for a given request.
-         * @param requestId the CASTOR ID of the request
-         * @param svcClassId the Id of the service class we're using
-         * @return the list of DiskCopies available
-         * @exception in case of error
-         */
-        virtual std::list<castor::stager::DiskCopyInfo*>
-        diskCopies4Request (std::string requestId,
-                            u_signed64 svcClassId)
-          throw (castor::exception::Exception);
-
-
-        /**
-         * Gets all DiskCopies for a given request Usertag.
-         * @param requestId the CASTOR ID of the request
-         * @param svcClassId the Id of the service class we're using
-         * @return the list of DiskCopies available
-         * @exception in case of error
-         */
-        virtual std::list<castor::stager::DiskCopyInfo*>
-        diskCopies4Usertag (std::string usertag,
-                            u_signed64 svcClassId)
-          throw (castor::exception::Exception);
-
-        /**
-         * Gets the newly staged DiskCopies for a given request.
+         * Gets all DiskCopies for a given request by reqId or userTag.
+         * For the GETNEXT requests, gets the newly staged DiskCopies.
          * This is meaningful for a PrepareToGet request of several files:
          * once correspondent DiskCopies are in STAGED status, they're
-         * returned by getLastRecalls and the correspondent subRequests are
-         * flagged as already returned, so that the function returns a given
+         * returned and the correspondent subRequests are flagged as
+         * already returned, so that the function returns a given
          * DiskCopy only once.
-         * @param requestId The CASTOR ID of the request
+         * @param reqType the request type
+         * @param param the query param, either a requestId or userTag 
          * @param svcClassId the Id of the service class we're using
-         * @return the list of DiskCopies newly available
+         * @return the list of DiskCopies available
          * @exception in case of error
          */
         virtual std::list<castor::stager::DiskCopyInfo*>
-        getLastRecalls (std::string requestId,
-                        u_signed64 svcClassId)
+        diskCopies4Request (castor::stager::RequestQueryType reqType,
+                            std::string param,
+                            u_signed64 svcClassId)
           throw (castor::exception::Exception);
+
 
         /**
          * Selects the next request the query service should deal with.
@@ -153,23 +132,29 @@ namespace castor {
         /// SQL statement object for function diskCopies4File
         oracle::occi::Statement *m_diskCopies4FileStatement;
 
-        /// SQL statement for function diskCopies4Request
-        static const std::string s_diskCopies4RequestStatementString;
+        /// SQL statement for function diskCopies4ReqId
+        static const std::string s_diskCopies4ReqIdStatementString;
 
-        /// SQL statement object for function diskCopies4Request
-        oracle::occi::Statement *m_diskCopies4RequestStatement;
+        /// SQL statement object for function diskCopies4ReqId
+        oracle::occi::Statement *m_diskCopies4ReqIdStatement;
 
         /// SQL statement for function diskCopies4UserTag
-        static const std::string s_diskCopies4UsertagStatementString;
+        static const std::string s_diskCopies4UserTagStatementString;
 
         /// SQL statement object for function diskCopies4UserTag
-        oracle::occi::Statement *m_diskCopies4UsertagStatement;
+        oracle::occi::Statement *m_diskCopies4UserTagStatement;
 
-        /// SQL statement for function getLastRecalls
-        static const std::string s_getLastRecallsStatementString;
+        /// SQL statement for function diskCopies4ReqIdLastRecalls
+        static const std::string s_diskCopies4ReqIdLastRecallsStatementString;
 
-        /// SQL statement object for function getLastRecalls
-        oracle::occi::Statement *m_getLastRecallsStatement;
+        /// SQL statement object for function diskCopies4ReqIdLastRecalls
+        oracle::occi::Statement *m_diskCopies4ReqIdLastRecallsStatement;
+
+        /// SQL statement for function diskCopies4UserTagLastRecalls
+        static const std::string s_diskCopies4UserTagLastRecallsStatementString;
+
+        /// SQL statement object for function diskCopies4UserTagLastRecalls
+        oracle::occi::Statement *m_diskCopies4UserTagLastRecallsStatement;
 
         /// SQL statement for function requestToDo
         static const std::string s_requestToDoStatementString;

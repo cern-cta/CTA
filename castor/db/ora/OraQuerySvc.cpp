@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2005/10/25 12:09:27 $ $Author: itglp $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2005/10/27 14:31:19 $ $Author: itglp $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -53,14 +53,17 @@ OraQuerySvcFactory = s_factoryOraQuerySvc;
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4FileStatementString =
   "BEGIN fileIdStageQuery(:1, :2, :3, :4); END;";
 
-const std::string castor::db::ora::OraQuerySvc::s_diskCopies4RequestStatementString =
+const std::string castor::db::ora::OraQuerySvc::s_diskCopies4ReqIdStatementString =
   "BEGIN reqIdStageQuery(:1, :2, :3); END;";
 
-const std::string castor::db::ora::OraQuerySvc::s_diskCopies4UsertagStatementString =
+const std::string castor::db::ora::OraQuerySvc::s_diskCopies4UserTagStatementString =
   "BEGIN userTagStageQuery(:1, :2, :3); END;";
 
-const std::string castor::db::ora::OraQuerySvc::s_getLastRecallsStatementString =
-  "BEGIN getLastRecallsStageQuery(:1, :2, :3); END;";
+const std::string castor::db::ora::OraQuerySvc::s_diskCopies4ReqIdLastRecallsStatementString =
+  "BEGIN reqIdLastRecallsStageQuery(:1, :2, :3); END;";
+
+const std::string castor::db::ora::OraQuerySvc::s_diskCopies4UserTagLastRecallsStatementString =
+  "BEGIN userTagLastRecallsStageQuery(:1, :2, :3); END;";
 
 /// SQL statement for requestToDo
 const std::string castor::db::ora::OraQuerySvc::s_requestToDoStatementString =
@@ -72,8 +75,10 @@ const std::string castor::db::ora::OraQuerySvc::s_requestToDoStatementString =
 castor::db::ora::OraQuerySvc::OraQuerySvc(const std::string name) :
   OraCommonSvc(name),
   m_diskCopies4FileStatement(0),
-  m_diskCopies4RequestStatement(0),
-  m_diskCopies4UsertagStatement(0),
+  m_diskCopies4ReqIdStatement(0),
+  m_diskCopies4UserTagStatement(0),
+  m_diskCopies4ReqIdLastRecallsStatement(0),
+  m_diskCopies4UserTagLastRecallsStatement(0),
   m_requestToDoStatement(0) {}
 
 // -----------------------------------------------------------------------
@@ -106,14 +111,18 @@ void castor::db::ora::OraQuerySvc::reset() throw() {
   OraCommonSvc::reset();
   try {
     deleteStatement(m_diskCopies4FileStatement);
-    deleteStatement(m_diskCopies4RequestStatement);
-    deleteStatement(m_diskCopies4UsertagStatement);
+    deleteStatement(m_diskCopies4ReqIdStatement);
+    deleteStatement(m_diskCopies4UserTagStatement);
+    deleteStatement(m_diskCopies4ReqIdLastRecallsStatement);
+    deleteStatement(m_diskCopies4UserTagLastRecallsStatement);
     deleteStatement(m_requestToDoStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_diskCopies4FileStatement = 0;
-  m_diskCopies4RequestStatement = 0;
-  m_diskCopies4UsertagStatement = 0;
+  m_diskCopies4ReqIdStatement = 0;
+  m_diskCopies4UserTagStatement = 0;
+  m_diskCopies4ReqIdLastRecallsStatement = 0;
+  m_diskCopies4UserTagLastRecallsStatement = 0;
   m_requestToDoStatement = 0;
 }
 
@@ -155,8 +164,7 @@ castor::db::ora::OraQuerySvc::gatherResults(oracle::occi::ResultSet *rset)
 // -----------------------------------------------------------------------
 std::list<castor::stager::DiskCopyInfo*>
 castor::db::ora::OraQuerySvc::diskCopies4File
-(std::string fileId, std::string nsHost,
- u_signed64 svcClassId)
+(std::string fileId, std::string nsHost, u_signed64 svcClassId)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -197,30 +205,63 @@ castor::db::ora::OraQuerySvc::diskCopies4File
 // -----------------------------------------------------------------------
 std::list<castor::stager::DiskCopyInfo*>
 castor::db::ora::OraQuerySvc::diskCopies4Request
-(std::string requestId, u_signed64 svcClassId)
+(castor::stager::RequestQueryType reqType, std::string param, u_signed64 svcClassId)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
-    if (0 == m_diskCopies4RequestStatement) {
-      m_diskCopies4RequestStatement =
-        createStatement(s_diskCopies4RequestStatementString);
-      m_diskCopies4RequestStatement->registerOutParam
+    if (0 == m_diskCopies4ReqIdStatement) {
+      m_diskCopies4ReqIdStatement =
+        createStatement(s_diskCopies4ReqIdStatementString);
+      m_diskCopies4ReqIdStatement->registerOutParam
+        (3, oracle::occi::OCCICURSOR);
+      m_diskCopies4UserTagStatement =
+        createStatement(s_diskCopies4UserTagStatementString);
+      m_diskCopies4UserTagStatement->registerOutParam
+        (3, oracle::occi::OCCICURSOR);
+      m_diskCopies4ReqIdLastRecallsStatement =
+        createStatement(s_diskCopies4ReqIdLastRecallsStatementString);
+      m_diskCopies4ReqIdLastRecallsStatement->registerOutParam
+        (3, oracle::occi::OCCICURSOR);
+      m_diskCopies4UserTagLastRecallsStatement =
+        createStatement(s_diskCopies4UserTagLastRecallsStatementString);
+      m_diskCopies4UserTagLastRecallsStatement->registerOutParam
         (3, oracle::occi::OCCICURSOR);
     }
+    // identify the statement to be used
+    oracle::occi::Statement *requestStatement = 0;
+    switch(reqType) {
+      case castor::stager::REQUESTQUERYTYPE_REQID:
+        requestStatement = m_diskCopies4ReqIdStatement;
+        break;
+      case castor::stager::REQUESTQUERYTYPE_USERTAG:
+        requestStatement = m_diskCopies4UserTagStatement;
+        break;
+      case castor::stager::REQUESTQUERYTYPE_REQID_GETNEXT:
+        requestStatement = m_diskCopies4ReqIdLastRecallsStatement;
+        break;
+      case castor::stager::REQUESTQUERYTYPE_USERTAG_GETNEXT:
+        requestStatement = m_diskCopies4UserTagLastRecallsStatement;
+        break;
+      default:
+        castor::exception::Internal ex;
+        ex.getMessage()
+          << "diskCopies4Request: request type" << reqType << " not allowed.";
+        throw ex;
+    }        
+    
     // execute the statement and see whether we found something
-    m_diskCopies4RequestStatement->setString(1, requestId);
-    m_diskCopies4RequestStatement->setDouble(2, svcClassId);
-    unsigned int nb = m_diskCopies4RequestStatement->executeUpdate();
+    requestStatement->setString(1, param);
+    requestStatement->setDouble(2, svcClassId);
+    unsigned int nb = requestStatement->executeUpdate();
     if (0 == nb) {
       castor::exception::Internal ex;
       ex.getMessage()
-        << "diskCopies4File : Unable to execute query.";
+        << "diskCopies4Request: unable to execute query.";
       throw ex;
     }
-    oracle::occi::ResultSet *rset =
-      m_diskCopies4RequestStatement->getCursor(3);
+    oracle::occi::ResultSet *rset = requestStatement->getCursor(3);
     std::list<castor::stager::DiskCopyInfo*> result = gatherResults(rset);
-    m_diskCopies4RequestStatement->closeResultSet(rset);
+    requestStatement->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
@@ -229,88 +270,6 @@ castor::db::ora::OraQuerySvc::diskCopies4Request
     throw ex;
   }
 }
-
-
-// -----------------------------------------------------------------------
-// diskCopies4Usertag
-// -----------------------------------------------------------------------
-std::list<castor::stager::DiskCopyInfo*>
-castor::db::ora::OraQuerySvc::diskCopies4Usertag
-(std::string usertag, u_signed64 svcClassId)
-  throw (castor::exception::Exception) {
-  try {
-    // Check whether the statements are ok
-    if (0 == m_diskCopies4UsertagStatement) {
-      m_diskCopies4UsertagStatement =
-        createStatement(s_diskCopies4UsertagStatementString);
-      m_diskCopies4UsertagStatement->registerOutParam
-        (3, oracle::occi::OCCICURSOR);
-    }
-    // execute the statement and see whether we found something
-    m_diskCopies4UsertagStatement->setString(1, usertag);
-    m_diskCopies4UsertagStatement->setDouble(2, svcClassId);
-    unsigned int nb = m_diskCopies4UsertagStatement->executeUpdate();
-    if (0 == nb) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "diskCopies4File : Unable to execute query.";
-      throw ex;
-    }
-    oracle::occi::ResultSet *rset =
-      m_diskCopies4UsertagStatement->getCursor(3);
-    // Gather the results
-    std::list<castor::stager::DiskCopyInfo*> result = gatherResults(rset);
-    m_diskCopies4UsertagStatement->closeResultSet(rset);
-    return result;
-  } catch (oracle::occi::SQLException e) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Error caught in diskCopies4Usertag."
-                    << std::endl << e.what();
-    throw ex;
-  }
-}
-
-// -----------------------------------------------------------------------
-// getLastRecalls
-// -----------------------------------------------------------------------
-std::list<castor::stager::DiskCopyInfo*>
-castor::db::ora::OraQuerySvc::getLastRecalls
-(std::string requestId, u_signed64 svcClassId)
-  throw (castor::exception::Exception) {
-  try {
-    // Check whether the statements are ok
-    if (0 == m_getLastRecallsStatement) {
-      m_getLastRecallsStatement =
-        createStatement(s_getLastRecallsStatementString);
-      m_getLastRecallsStatement->setString(1, requestId);
-      m_getLastRecallsStatement->setDouble(2, svcClassId);
-      m_getLastRecallsStatement->registerOutParam
-        (3, oracle::occi::OCCICURSOR);
-    }
-    // execute the statement and see whether we found something
-    m_getLastRecallsStatement->setString(1, requestId);
-
-    unsigned int nb = m_getLastRecallsStatement->executeUpdate();
-    if (0 == nb) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "diskCopies4File : Unable to execute query.";
-      throw ex;
-    }
-    oracle::occi::ResultSet *rset =
-      m_getLastRecallsStatement->getCursor(3);
-    // Gather the results
-    std::list<castor::stager::DiskCopyInfo*> result = gatherResults(rset);
-    m_getLastRecallsStatement->closeResultSet(rset);
-    return result;
-  } catch (oracle::occi::SQLException e) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Error caught in getLastRecalls."
-                    << std::endl << e.what();
-    throw ex;
-  }
-}
-
 
 // -----------------------------------------------------------------------
 // requestToDo

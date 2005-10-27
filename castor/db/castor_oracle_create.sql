@@ -249,6 +249,7 @@ CREATE INDEX I_SubRequest_Castorfile on SubRequest (castorFile);
 CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
 CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_Request on SubRequest (request);
+CREATE INDEX I_SubRequest_GetNextStatus on SubRequest (decode(getNextStatus,1,NULL));
 
 /* A little function base index to speed up subrequestToDo */
 CREATE INDEX I_SubRequest_Status on SubRequest (decode(status,0,status,1,status,2,status,NULL));
@@ -1076,9 +1077,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   makeSubRequestWait(srId, dci);
   dci := 0;
   rpath := '';
-  close sources;
  EXCEPTION WHEN NO_DATA_FOUND THEN
-   -- No disk copy foundin WAIT*, we don't hae to wait
+   -- No disk copy foundin WAIT*, we don't have to wait
   BEGIN
    -- Check whether there are any diskcopy available
    SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
@@ -1106,7 +1106,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       AND DiskServer.id = FileSystem.diskServer
       AND DiskServer.status = 0; -- PRODUCTION
     -- create DiskCopy for Disk to Disk copy
-    UPDATE SubRequest SET diskCopy = ids_seq.nextval,
+    UPDATE SubRequest SET diskCopy = ids_seq.nextval
                           lastModificationTime = getTime() WHERE id = srId
      RETURNING castorFile, diskCopy INTO cfid, dci;
     SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
@@ -1228,11 +1228,12 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   srid INTEGER;
 BEGIN
   -- update DiskCopy
-  UPDATE DiskCopy set status = dcStatus WHERE id = dcId; -- status DISKCOPY_STAGED
+  UPDATE DiskCopy set status = dcStatus WHERE id = dcId;
   -- update SubRequest
-  UPDATE SubRequest set status = 6,
+  UPDATE SubRequest set status = 6, -- status SUBREQUEST_READY
+                        getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
                         lastModificationTime = getTime()
-   WHERE diskCopy = dcId -- status SUBREQUEST_READY
+   WHERE diskCopy = dcId
   RETURNING id INTO srid;
   -- Wake up waiting subrequests
   UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
@@ -2339,9 +2340,9 @@ BEGIN
 END;
 
 /*
- * PL/SQL method implementing the getLastRecalls stage_query
+ * PL/SQL method implementing the LastRecalls stage_query based on request id
  */
-CREATE OR REPLACE PROCEDURE getLastRecallsStageQuery
+CREATE OR REPLACE PROCEDURE reqIdLastRecallsStageQuery
  (rid IN VARCHAR2,
   svcClassId IN INTEGER,
   result OUT castor.QueryLine_Cur) AS
@@ -2353,6 +2354,25 @@ BEGIN
      AND request IN
          (SELECT id FROM StagePreparetogetRequest
            WHERE reqid LIKE rid)
+  RETURNING castorfile BULK COLLECT INTO cfs;
+  internalStageQuery(cfs, svcClassId, result);
+END;
+
+/*
+ * PL/SQL method implementing the LastRecalls stage_query based on user tag
+ */
+CREATE OR REPLACE PROCEDURE userTagLastRecallsStageQuery
+ (tag IN VARCHAR2,
+  svcClassId IN INTEGER,
+  result OUT castor.QueryLine_Cur) AS
+  cfs "numList";
+BEGIN
+  UPDATE SubRequest
+     SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
+   WHERE getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
+     AND request IN
+         (SELECT id FROM StagePreparetogetRequest
+           WHERE usertag LIKE tag)
   RETURNING castorfile BULK COLLECT INTO cfs;
   internalStageQuery(cfs, svcClassId, result);
 END;
