@@ -14,8 +14,7 @@ CREATE INDEX I_Id2Type_typeId on Id2Type (type, id);
 
 /* SQL statements for requests status */
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
-CREATE TABLE newRequests (type NUMBER(38) NOT NULL, id NUMBER(38) NOT NULL, creation DATE NOT NULL,
-                 PRIMARY KEY (type, id))
+CREATE TABLE newRequests (type NUMBER(38) NOT NULL, id NUMBER(38) NOT NULL, creation DATE NOT NULL, PRIMARY KEY (type, id))
 organization index
 compress
 partition by list (type)
@@ -73,6 +72,9 @@ CREATE INDEX I_SubRequest_Status7 on SubRequest (decode(status,7,status,null));
 
 /* an index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
 CREATE INDEX I_QueryParameter_Query on QueryParameter (query);
+
+/* an index to speed the queries on Segments by copy */
+CREATE INDEX I_Segment_Copy on Segment (copy);
 
 /* Constraint on FileClass name */
 ALTER TABLE FileClass ADD UNIQUE (name); 
