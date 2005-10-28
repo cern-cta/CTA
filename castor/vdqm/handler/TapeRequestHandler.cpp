@@ -391,10 +391,11 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 	    tapeReq->setModificationTime((int)time(NULL));
 			  
 			/**
-			 * Update the data base
+			 * Update the data base. To avoid a deadlock, the tape drive has to be 
+			 * updated first!
 			 */
+ 			updateRepresentation(tapeDrive, cuuid);
 			updateRepresentation(tapeReq, cuuid);
-			updateRepresentation(tapeDrive, cuuid);
 
 	  	delete tapeReq;
 	  	tapeReq = 0;

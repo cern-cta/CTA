@@ -86,6 +86,7 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
 	castor::vdqm::TapeDrive* tapeDrive = NULL;
   
 
+	// XXX: This log doesn't appear in th log!
 	//"The parameters of the old vdqm DrvReq Request" message
   castor::dlf::Param params[] =
   	{castor::dlf::Param("errorHistory (dedidcate)", ptr_driveRequest->errorHistory),
