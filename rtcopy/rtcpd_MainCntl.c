@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.95 $ $Date: 2005/01/14 10:03:13 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.96 $ $Date: 2005/10/28 20:30:37 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -280,8 +280,14 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
     }
     filereq = &tape->file->filereq;
   } else { /* tape != NULL */
-    sprintf(logline,"New file request: ");
     filereq = &file->filereq;
+    if ( filereq->proc_status == RTCP_REQUEST_MORE_WORK ) {
+      sprintf(logline,"New placeholder for more work");
+      if ( *logline != '\0' ) rtcp_log(LOG_INFO,"%s\n",logline);
+      return(0);
+    } else {
+      sprintf(logline,"New file request: ");
+    }
   }
 
   if ( *filereq->recfm != '\0' ) {
@@ -1725,7 +1731,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
      * Get default blocksize if not already set by client
      * Error is not fatal
      */
-  if ( rc == 0 ) {
+  if ( rc != -1 ) {
     if ( rtcpd_drvinfo(tape) == -1 ) {
       rtcp_log(LOG_ERR,"rtcpd_GetRequestList() rtcpd_drvinfo(): %s\n",
                sstrerror(serrno));
