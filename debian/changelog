@@ -1,3 +1,64 @@
+castor (2.0.2-1) unstable; urgency=low
+
+  * PROTO2/castor/db/castor_oracle_create.sql:
+  * PROTO2/castor/db/castor_oracle_drop.sql:
+  * PROTO2/castor/db/ora/OraQuerySvc.cpp:
+  * PROTO2/castor/db/ora/OraQuerySvc.hpp:
+  * PROTO2/castor/query/IQuerySvc.hpp:
+  * PROTO2/castor/stager/RequestQueryType.cpp:
+  * PROTO2/castor/stager/RequestQueryType.hpp:
+  * PROTO2/stager/stager_qry.c:
+  * PROTO2/stager/stager_qry.man:
+  * PROTO2/stager/stager_query_service.cpp:
+        [2005-10-27,itglp] New 'getNext'-like stager_qry fully implemented on the server side.
+  * PROTO2/doc/StgSvcsMethods.hpp:
+  * PROTO2/doc/uml/StagerSvcs.xmi:
+        [2005-10-27,itglp] Updated docs with the new stager queries.
+  * PROTO2/h/stager_client_api.h:
+    [r1.26,2005-10-27,itglp] Extended query type enum.
+  * PROTO2/codeGeneration/RH.xmi:
+    [r1.109,2005-10-27,itglp] Extended RequestQueryType for the new 'getNext'-like query.
+  * PROTO2/castor/db/oracleTrailer.sql:
+    [r1.222,2005-10-27,sponcec3] Added index on the copy column of the Segment table
+    [r1.221,2005-10-27,itglp] New 'getNext'-like stager_qry fully implemented on the server side.
+    [r1.220,2005-10-25,itglp] Added function based index for the new getNextStatus field in SubRequest.
+    [r1.219,2005-10-25,sponcec3] remove a close cursor that should not be there(+ cosmetic changes)
+  * PROTO2/castor/vdqm/Imakefile:
+    [r1.13,2005-10-25,mbraeger] Removed the genereted classes by Umbrello
+  * PROTO2/castor/vdqm/VdqmServer.cpp:
+    [r1.44,2005-10-27,mbraeger] Changed the log level of two log messages from ERROR to WARNING in the deleteTapeRequest() function.
+  * PROTO2/castor/vdqm/handler/TapeDriveHandler.cpp:
+  * PROTO2/castor/vdqm/handler/TapeRequestHandler.cpp:
+        [2005-10-28,mbraeger] Solved a deadlock problem in the TapeRequestHandler.cpp
+        [2005-10-27,mbraeger] Solved memory leaks.
+  * PROTO2/common/Cdlopen.c:
+    [r 1.3,2005-10-26,jdurand] Moved necessary includes in the header file, added definition of RT_* for _WIN32
+  * PROTO2/config/Win32.rules:
+    [r 1.5,2005-10-26,jdurand] Added MakeDepSharedLibrary() rule
+    [r 1.4,2005-10-26,jdurand] Better rules, especially when source file is locate in a subdirectory
+  * PROTO2/h/Cdlopen_api.h:
+    [r 1.2,2005-10-26,jdurand] Moved necessary includes in the header file, added definition of RT_* for _WIN32
+  * PROTO2/resourcemonitoring/Crmd_recv_from_users.c:
+    [r1.77,2005-10-26,jdurand] Map LSBE_BAD_HOST, LSBE_BAD_QUEUE and LSBE_BAD_RESREQ to serrno = EINVAL
+  * PROTO2/resourcemonitoring/rm_api.c:
+    [r1.18,2005-10-26,jdurand] Definition of S_ISDIR() on _WIN32
+  * PROTO2/resourcemonitoring/usersend2rmd.c:
+    [r1.10,2005-10-26,jdurand] Do not use strtok_r() on _WIN32
+  * PROTO2/rfio/RfioTURL.c:
+    [r 1.3,2005-10-26,jdurand] Added #include "net.h" on _WIN32
+  * PROTO2/rfio/connect.c:
+    [r1.13,2005-10-26,jdurand] Restrict use of strtok_r() where applicable
+  * PROTO2/rfio/parse.c:
+    [r 1.4,2005-10-26,jdurand] Use Csnprintf() instead of snprintf()
+  * PROTO2/rfio/stream.c:
+    [r 1.5,2005-10-26,jdurand] Restrict use of strtok_r() where applicable
+  * PROTO2/rtcopy/migrator.c:
+  * PROTO2/rtcopy/rtcpcldCatalogueInterface.c:
+        [2005-10-27,obarring] Remove temporary hack setting default blocksize. From now on, we rely on that
+        [2005-10-27,obarring] it is properly set on the tape server
+
+ -- Sebastien Ponce <sponcec3@pcitds13>  Fri, 28 Oct 2005 14:39:50 +0200
+
 castor (2.0.2-0) unstable; urgency=low
 
   * PROTO2/castor/Constants.cpp:
