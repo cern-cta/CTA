@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.20 $ $Date: 2005/10/17 11:40:37 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.21 $ $Date: 2005/10/28 14:47:59 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM    Make HSM admin tools.
 
@@ -80,7 +80,9 @@ MANPAGES = $(MANDIR)/reclaim.$(MANSUFFIX) \
 	   $(MANDIR)/listSvcClass.$(MANSUFFIX) \
 	   $(MANDIR)/printFileClass.$(MANSUFFIX) \
 	   $(MANDIR)/printSvcClass.$(MANSUFFIX) \
-	   $(MANDIR)/nsGetPath.$(MANSUFFIX)
+	   $(MANDIR)/nsGetPath.$(MANSUFFIX) \
+	   $(MANDIR)/gcAllFS.$(MANSUFFIX) \
+	   $(MANDIR)/moveDiskServer.$(MANSUFFIX)
 EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),repack.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tapetohsm.$(MANSUFFIX))) \
@@ -97,7 +99,9 @@ EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUF
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),listSvcClass.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),printFileClass.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),printSvcClass.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),nsGetPath.$(MANSUFFIX)))
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),nsGetPath.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),gcAllFS.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),moveDiskServer.$(MANSUFFIX)))
 
 COMM Warning Warning, our default clean rule deletes PROGS... Changed it to use PROGS_TO_CLEAN
 
@@ -122,7 +126,9 @@ PROGS_TO_CLEAN += ProgramTargetName(vdqmDBInit)
 PROGS_TO_KEEP =  ProgramTargetName(cleanLostFiles) \
 	 ProgramTargetName(diskServer_qry) \
 	 ProgramTargetName(listFileClass) \
-	 ProgramTargetName(listSvcClass)
+	 ProgramTargetName(listSvcClass) \
+	 ProgramTargetName(gcAllFS) \
+	 ProgramTargetName(moveDiskServer)
 
 IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(repack)) \
@@ -140,7 +146,9 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(listSvcClass)) \
 	 FileName($(BIN),ProgramTargetName(printFileClass)) \
 	 FileName($(BIN),ProgramTargetName(printSvcClass)) \
-	 FileName($(BIN),ProgramTargetName(nsGetPath))
+	 FileName($(BIN),ProgramTargetName(nsGetPath)) \
+	 FileName($(BIN),ProgramTargetName(gcAllFS)) \
+	 FileName($(BIN),ProgramTargetName(moveDiskServer))
 
 #if BuildVDQMCpp
 IPROGS += FileName($(BIN),ProgramTargetName(vdqmDBInit))
@@ -162,7 +170,9 @@ EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/listSvcClass \
 	 $(EXPORTBIN)/printFileClass \
 	 $(EXPORTBIN)/printSvcClass \
-	 $(EXPORTBIN)/nsGetPath
+	 $(EXPORTBIN)/nsGetPath \
+	 $(EXPORTBIN)/gcAllFS \
+	 $(EXPORTBIN)/moveDiskServer
 
 #if BuildVDQMCpp
 EPROGS +=	$(EXPORTBIN)/vdqmDBInit
@@ -243,6 +253,12 @@ IEXPORT(printFileClass,$(EXPORTBIN),755);
 InstallProgram(nsGetPath,$(BIN),root,bin,755)
 IEXPORT(nsGetPath,$(EXPORTBIN),755);
 
+InstallProgram(gcAllFS,$(BIN),root,bin,755)
+IEXPORT(gcAllFS,$(EXPORTBIN),755);
+
+InstallProgram(moveDiskServer,$(BIN),root,bin,755)
+IEXPORT(moveDiskServer,$(EXPORTBIN),755);
+
 #if BuildVDQMCpp
 InstallProgram(vdqmDBInit,$(BIN),root,bin,755)
 IEXPORT(vdqmDBInit,$(EXPORTBIN),755);
@@ -278,6 +294,9 @@ IMANPAGE(listFileClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(listSvcClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(printFileClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(printSvcClass,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(nsGetPath,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(gcAllFS,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(moveDiskServer,$(MANDIR),$(MANSUFFIX))
 EMANPAGE(reclaim,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(repack,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(tapetohsm,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
@@ -295,6 +314,8 @@ EMANPAGE(listSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(printFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(printSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(nsGetPath,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(gcAllFS,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(moveDiskServer,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 
 export: $(EPROGS) $(EXPORTPERL) $(EPERL)
 
