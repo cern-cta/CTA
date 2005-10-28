@@ -1,4 +1,3 @@
-%attr(0755,root,bin) usr/bin/diskUsage
 %attr(0755,root,bin) usr/bin/rmgetjobs
 %attr(0755,root,bin) usr/bin/rmgetnodes
 %attr(0755,root,bin) usr/bin/rmgettime
