@@ -651,7 +651,7 @@ BEGIN
   IF SubRequestId IS NOT NULL THEN
     UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0, getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
      WHERE id = SubRequestId; -- SUBREQUEST_RESTART
-    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
+    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0, getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
      WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
   END IF;
   updateFsFileClosed(fsId, fileSize, fileSize);
@@ -784,7 +784,7 @@ BEGIN
            WHERE SubRequest.castorfile = cfId
              AND SubRequest.request = Id2Type.id
              AND Id2Type.type = 40 -- Put
-             AND SubRequest.status IN (0, 1, 2, 3) -- START, RESTART, RETRY, WAITSCHED
+             AND SubRequest.status IN (0, 1, 2, 3, 6) -- START, RESTART, RETRY, WAITSCHED, READY
              AND ROWNUM < 2;
           -- we've found one, putDone will have to wait
           UPDATE SubRequest
