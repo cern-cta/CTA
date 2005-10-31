@@ -1,19 +1,17 @@
 #
-# $Id: castor-ns-server.logrotate,v 1.1 2005/01/19 21:57:31 jdurand Exp $
+# $Id: castor-ns-server.logrotate,v 1.2 2005/10/31 11:02:01 jdurand Exp $
 #
-# @(#)$RCSfile: castor-ns-server.logrotate,v $ $Revision: 1.1 $ $Date: 2005/01/19 21:57:31 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-ns-server.logrotate,v $ $Revision: 1.2 $ $Date: 2005/10/31 11:02:01 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 /var/log/nsdaemon {
     compress
     daily
-    delaycompress
     missingok
     rotate 15
 }
 /var/spool/ns/log {
     compress
     daily
-    delaycompress
     missingok
     rotate 15
 }

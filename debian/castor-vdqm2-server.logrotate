@@ -1,19 +1,17 @@
 #
-# $Id: castor-vdqm2-server.logrotate,v 1.1 2005/09/28 17:24:05 jdurand Exp $
+# $Id: castor-vdqm2-server.logrotate,v 1.2 2005/10/31 11:02:02 jdurand Exp $
 #
-# @(#)$RCSfile: castor-vdqm2-server.logrotate,v $ $Revision: 1.1 $ $Date: 2005/09/28 17:24:05 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-vdqm2-server.logrotate,v $ $Revision: 1.2 $ $Date: 2005/10/31 11:02:02 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 /var/log/vdqmserv {
     compress
     daily
-    delaycompress
     missingok
     rotate 15
 }
 /var/spool/vdqm/log {
     compress
     daily
-    delaycompress
     missingok
     rotate 15
 }
