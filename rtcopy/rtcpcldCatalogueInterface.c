@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.137 $ $Release$ $Date: 2005/10/27 11:57:53 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.138 $ $Release$ $Date: 2005/10/31 15:03:16 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.137 $ $Release$ $Date: 2005/10/27 11:57:53 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.138 $ $Release$ $Date: 2005/10/31 15:03:16 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -2869,6 +2869,7 @@ int rtcpcld_updcFileRecalled(
       Cstager_CastorFile_fileSize(castorFile,&sz);
       rc = rfio_stat64(filereq->file_path,&st);
       if ( rc == -1 ) {
+        save_serrno = rfio_serrno();
         (void)dlf_write(
                         (inChild == 0 ? mainUuid : childUuid),
                         RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
@@ -2886,6 +2887,7 @@ int rtcpcld_updcFileRecalled(
                         RTCPCLD_LOG_WHERE
                         );
         if ( segmentArray != NULL ) free(segmentArray);
+        serrno = save_serrno;
         return(-1);
       } else if ( st.st_size != sz ) {
         (void)dlf_write(
@@ -2904,6 +2906,7 @@ int rtcpcld_updcFileRecalled(
                         st.st_size
                         );
         if ( segmentArray != NULL ) free(segmentArray);
+        serrno = SEINTERNAL;
         return(-1);
       }
     }
