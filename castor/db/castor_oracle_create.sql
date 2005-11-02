@@ -200,8 +200,7 @@ CREATE INDEX I_Id2Type_typeId on Id2Type (type, id);
 
 /* SQL statements for requests status */
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
-CREATE TABLE newRequests (type NUMBER(38) NOT NULL, id NUMBER(38) NOT NULL, creation DATE NOT NULL,
-                 PRIMARY KEY (type, id))
+CREATE TABLE newRequests (type NUMBER(38) NOT NULL, id NUMBER(38) NOT NULL, creation DATE NOT NULL, PRIMARY KEY (type, id))
 organization index
 compress
 partition by list (type)
@@ -259,6 +258,9 @@ CREATE INDEX I_SubRequest_Status7 on SubRequest (decode(status,7,status,null));
 
 /* an index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
 CREATE INDEX I_QueryParameter_Query on QueryParameter (query);
+
+/* an index to speed the queries on Segments by copy */
+CREATE INDEX I_Segment_Copy on Segment (copy);
 
 /* Constraint on FileClass name */
 ALTER TABLE FileClass ADD UNIQUE (name); 
@@ -835,7 +837,7 @@ BEGIN
   IF SubRequestId IS NOT NULL THEN
     UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0, getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
      WHERE id = SubRequestId; -- SUBREQUEST_RESTART
-    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
+    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0, getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
      WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
   END IF;
   updateFsFileClosed(fsId, fileSize, fileSize);
@@ -968,7 +970,7 @@ BEGIN
            WHERE SubRequest.castorfile = cfId
              AND SubRequest.request = Id2Type.id
              AND Id2Type.type = 40 -- Put
-             AND SubRequest.status IN (0, 1, 2, 3) -- START, RESTART, RETRY, WAITSCHED
+             AND SubRequest.status IN (0, 1, 2, 3, 6) -- START, RESTART, RETRY, WAITSCHED, READY
              AND ROWNUM < 2;
           -- we've found one, putDone will have to wait
           UPDATE SubRequest
@@ -1106,7 +1108,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       AND DiskServer.id = FileSystem.diskServer
       AND DiskServer.status = 0; -- PRODUCTION
     -- create DiskCopy for Disk to Disk copy
-    UPDATE SubRequest SET diskCopy = ids_seq.nextval
+    UPDATE SubRequest SET diskCopy = ids_seq.nextval,
                           lastModificationTime = getTime() WHERE id = srId
      RETURNING castorFile, diskCopy INTO cfid, dci;
     SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
