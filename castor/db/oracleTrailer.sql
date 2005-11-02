@@ -922,7 +922,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       AND DiskServer.id = FileSystem.diskServer
       AND DiskServer.status = 0; -- PRODUCTION
     -- create DiskCopy for Disk to Disk copy
-    UPDATE SubRequest SET diskCopy = ids_seq.nextval
+    UPDATE SubRequest SET diskCopy = ids_seq.nextval,
                           lastModificationTime = getTime() WHERE id = srId
      RETURNING castorFile, diskCopy INTO cfid, dci;
     SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
