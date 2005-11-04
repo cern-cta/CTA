@@ -32,6 +32,7 @@ static struct devinfo devinfo[] = {
   "SD3",  1, 1, 1, 0, 1,   262144, 262144, 0x10, D10G, 0, D25G, 0, D50G, 0, D10GC, 0, D25GC, 0, D50GC, 0, 0, 0, 0 , 0, 0, 0,
   "SDLT", 1, 1, 1,-1, 4, 16777212,  32760, 0x10, D20G, 0x1A, D35G, 0x1B, D40G, 0x41, D110G, 0x48, D20GC, 0x1A, D35GC, 0x1B, D40GC, 0x41, D110GC, 0x48, D160GC, 0x49,
   "3592", 1, 1, 1, 1, 1,  2097152, 262144, 0x10, D300G, 0, D300GC, 0, D500G, 0, D500GC, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  "T10000", 1, 1, 1, 0, 1,   262144,  262144, 0x10, D500G, 0, D500GC, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   /* new devices should be added here */
 
   /* last line corresponds to unknown device */

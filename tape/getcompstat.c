@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.18 $ $Date: 2005/03/01 13:52:06 $ CERN Fabien Collin/Jean-Philippe Baud/Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.19 $ $Date: 2005/11/04 09:53:44 $ CERN Fabien Collin/Jean-Philippe Baud/Benjamin Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -72,6 +72,7 @@ COMPRESSION_STATS *comp_stats;
 	else if (strcmp (devtype, "SD3") == 0)
 		cdb[2] = 0x40 | 0x30;	/* PC = 1, compression page  */
 	else if (strcmp (devtype, "9840") == 0 ||
+		 strcmp (devtype, "T10000") == 0 ||
 		 strcmp (devtype, "9940") == 0)
 	        cdb[2] = 0x40 | 0x0C;   /* PC = 1, sequential access device page */
 	else {
