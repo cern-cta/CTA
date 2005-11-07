@@ -43,7 +43,6 @@ namespace castor {
       UNIT_UP, //This means, that the unit is up and free. So it is ready to accept a new request.
       UNIT_STARTING, //The tape drive is reserved for one tape request and waits to be ASSIGNED to it.
       UNIT_ASSIGNED, //A tape is in the tape drive but is not MOUNTED, yet. It can happen that it still receives a message to release the tape. In this case it will returns to UNIT_UP.
-      UNIT_RELEASED, //The tape drive is in RELEASED status, if a tape is still mounted but the job for this drive is already handled. It waits now, that a new job for the same tape will be started, so that it can go to UNIT_STARTING status. If there is no request for the same tape the status will be set to WAIT_FOR_UNMOUNT
       VOL_MOUNTED, //A tape is mounted and the assigned request for this tape is currently in process.
       FORCED_UNMOUNT, //A FORCE_UNMOUNT can interrupt a request in process. In this case the tape drive waits, that the tpdaemon sends an unmount message. 
       UNIT_DOWN, //When the tape drive is down, it means that it is not ready to receive any requests. It must first be set back to UNIT_UP status.
@@ -57,7 +56,7 @@ namespace castor {
      * Names of the differents representations, used to display
      * correctly the TapeDriveStatusCodes enum
      */
-    extern const char* TapeDriveStatusCodesStrings[11];
+    extern const char* TapeDriveStatusCodesStrings[10];
 
 #ifdef __cplusplus
   }; // end of namespace vdqm

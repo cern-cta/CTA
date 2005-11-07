@@ -246,8 +246,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkBusyConsistency()
   }
 
 	if ( (ptr_tapeDrive->status() == UNIT_UP) ||
-			 (ptr_tapeDrive->status() == WAIT_FOR_UNMOUNT) ||
-			 (ptr_tapeDrive->status() == UNIT_RELEASED)) {
+			 (ptr_tapeDrive->status() == WAIT_FOR_UNMOUNT)) {
 		//The tapeDrive is now in starting mode
 		ptr_tapeDrive->setStatus(UNIT_STARTING);
 	}

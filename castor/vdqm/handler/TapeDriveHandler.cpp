@@ -477,9 +477,6 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
 		case UNIT_ASSIGNED:
 			ptr_driveRequest->status = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_ASSIGN;
 			break;
-		case UNIT_RELEASED:
-			ptr_driveRequest->status = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE;
-			break;
 		case VOL_MOUNTED:
 			ptr_driveRequest->status = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_ASSIGN;
 			break;
@@ -611,13 +608,6 @@ void castor::vdqm::handler::TapeDriveHandler::printStatus(
 					{
 						castor::dlf::Param param1[] =
 	  					{castor::dlf::Param("status", "UNIT_ASSIGNED")};
-  					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param1);
-					}		
-					break;
-		case UNIT_RELEASED:
-					{
-						castor::dlf::Param param1[] =
-	  					{castor::dlf::Param("status", "UNIT_RELEASED")};
   					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 36, 1, param1);
 					}		
 					break;
@@ -962,9 +952,6 @@ int castor::vdqm::handler::TapeDriveHandler::translateNewStatus(
 				break;
 		case UNIT_ASSIGNED:
 				oldStatus |= VDQM_UNIT_UP | VDQM_UNIT_ASSIGN | VDQM_UNIT_BUSY;
-				break;
-		case UNIT_RELEASED:
-				oldStatus |= VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE;
 				break;
 		case VOL_MOUNTED:
 				oldStatus |= VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_ASSIGN;
