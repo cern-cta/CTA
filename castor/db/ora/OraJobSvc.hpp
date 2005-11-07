@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/09/05 12:53:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/11/07 12:56:48 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -169,7 +169,7 @@ namespace castor {
         /**
          * Updates database after successful completion of a
          * disk to disk copy. This includes setting the DiskCopy
-         * status to DISKCOPY_STAGED and setting the SubRequest
+         * status to status and setting the SubRequest
          * status to SUBREQUEST_READY.
          * Changes are commited
          * @param diskcopyId the id of the new DiskCopy
