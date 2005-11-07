@@ -118,10 +118,23 @@ namespace castor {
 	     */
 	    int serverMain();
 	    
+	    /**
+	     * Internal function to handle the different protocol versions.
+	     * 
+	     * @param sock The used socket connection
+	     * @param cuuid The log id of the request
+	     * @exception Throws an exception in case of errors
+	     */
+	    void handleProtocolVersion(VdqmServerSocket* sock, Cuuid_t cuuid)
+     		throw (castor::exception::Exception);	    
+	    
       /**
        * Internal function to handle the old Vdqm request. Puts the values into
        * the old structs and reads out the request typr number, to delegates
        * them to the right function.
+       * 
+       * @param sock The used socket connection
+       * @exception Throws an exception in case of errors
        */
       void handleOldVdqmRequest(castor::vdqm::VdqmServerSocket* sock, 
       													unsigned int magicNumber,

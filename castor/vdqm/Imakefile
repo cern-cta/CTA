@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.13 $ $Release$ $Date: 2005/10/25 16:17:36 $ $Author: mbraeger $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.14 $ $Release$ $Date: 2005/11/07 18:27:31 $ $Author: mbraeger $
 #
 # Make Castor vdqm library
 #
@@ -42,6 +42,7 @@ LIBS = -lshift
 VDQMBIN_SRCS =  NewProtocolInterpreter.cpp \
                 OldProtocolInterpreter.cpp \
                 OldRequestFacade.cpp \
+								ProtocolFacade.cpp \
                 RTCopyDConnection.cpp \
                 VdqmServer.cpp \
                 VdqmServerSocket.cpp \
