@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2005/10/03 14:22:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2005/11/07 12:57:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -226,7 +226,9 @@ void *castor::rh::Server::processRequest(void *param) throw() {
       Cuuid2string(uuid, CUUID_STRING_LEN+1, &cuuid);
       fr->setReqId(uuid);
       // "Processing Request" message
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 8);
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Type", fr->type())};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 8, 1, params);
 
       // Complete its client field
       castor::rh::Client *client =
