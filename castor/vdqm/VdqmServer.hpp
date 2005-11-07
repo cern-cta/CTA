@@ -49,6 +49,11 @@ namespace castor {
     class VdqmServer : public castor::BaseObject {
 
     public:
+    
+	    /**
+	     * default number of threads in the server thread pool
+	     */    
+	    static const int DEFAULT_THREAD_NUMBER = 20;
 
       /**
        * Constructor
@@ -77,11 +82,6 @@ namespace castor {
 	    virtual int start();
 	
 	    /**
-	     * default number of threads in the server thread pool
-	     */    
-	    static const int DEFAULT_THREAD_NUMBER = 20;
-	
-	    /**
 	     * Assigns work to a thread from the pool
 	     */    
 	    int threadAssign(void *param);
@@ -95,21 +95,6 @@ namespace castor {
 	     * parses a command line to set the server oprions
 	     */    
 	    void parseCommandLine(int argc, char *argv[]);
-	
-	    /**
-	     * Gets a pointer in thread local storage
-	     * Returns 0 if the void * could be allocated
-	     * -1 otherwise.
-	     */    
-	    static int gettls(void **thip);
-	
-	    /**
-	     * gets the message service log stream
-	     * Note that the service has to be released after usage
-	     * @return a pointer to the message service or 0 if none
-	     * is available.
-	     */
-	    std::ostream& log() throw (castor::exception::Exception);      
 
     private:
     
@@ -117,29 +102,6 @@ namespace castor {
 	     * BaseServer main method called by start
 	     */
 	    int serverMain();
-	    
-	    /**
-	     * Internal function to handle the different protocol versions.
-	     * 
-	     * @param sock The used socket connection
-	     * @param cuuid The log id of the request
-	     * @exception Throws an exception in case of errors
-	     */
-	    void handleProtocolVersion(VdqmServerSocket* sock, Cuuid_t cuuid)
-     		throw (castor::exception::Exception);	    
-	    
-      /**
-       * Internal function to handle the old Vdqm request. Puts the values into
-       * the old structs and reads out the request typr number, to delegates
-       * them to the right function.
-       * 
-       * @param sock The used socket connection
-       * @exception Throws an exception in case of errors
-       */
-      void handleOldVdqmRequest(castor::vdqm::VdqmServerSocket* sock, 
-      													unsigned int magicNumber,
-      													Cuuid_t cuuid)
-      	throw (castor::exception::Exception);	    
 	
 	    /**
 	     * Flag indicating whether the server should 
