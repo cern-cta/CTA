@@ -271,6 +271,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus()
 	
 	castor::stager::Tape* tape = ptr_tapeDrive->tape();
 	delete tape;
+	tape = 0;
 	
 	ptr_tapeDrive->setTape(NULL);
 	ptr_tapeDrive->setTapeAccessMode(-1); // UNKNOWN
@@ -326,6 +327,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
 	if ( tapeRequest != NULL) {
 		deleteRepresentation(tapeRequest, m_cuuid);
 		delete tapeRequest;
+		tapeRequest = 0;
 		ptr_tapeDrive->setRunningTapeReq(0);
 	}
 	
@@ -417,8 +419,10 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
        */
       ptr_tapeDrive->setStatus(WAIT_FOR_UNMOUNT); 
       
-      if ( newTapeRequest )
+      if ( newTapeRequest ) {
       	delete newTapeRequest;
+      	newTapeRequest = 0;
+      }
     } 
     else {
     	// "Found a queued tape request for mounted tape" message

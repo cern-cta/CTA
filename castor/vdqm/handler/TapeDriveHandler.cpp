@@ -331,9 +331,10 @@ void castor::vdqm::handler::TapeDriveHandler::deleteAllTapeDrvsFromSrv(
       deleteRepresentation(*it, m_cuuid);
     }
 	} catch ( castor::exception::Exception ex ) {
-		if ( tapeServer ) 
+		if ( tapeServer ) { 
 			delete tapeServer;
-
+			tapeServer = 0;
+		}
 		throw ex;
 	}
 	
@@ -700,14 +701,16 @@ void castor::vdqm::handler::TapeDriveHandler::freeMemory(
 	for (std::vector<castor::vdqm::TapeDrive*>::iterator it = tapeServer->tapeDrives().begin();
          it != tapeServer->tapeDrives().end();
          it++) {
-  	// The old TapeRequest. Normally it should not exist.
-    TapeRequest* runningTapeReq = (*it)->runningTapeReq();   	
-    
-    if (runningTapeReq != 0) {
-    	delete runningTapeReq;
-    	runningTapeReq = 0;
-    	(*it)->setRunningTapeReq(0);
-    }
+      
+      //XXX: Caused a core dump ;-)
+//  	// The old TapeRequest. Normally it should not exist.
+//    TapeRequest* runningTapeReq = (*it)->runningTapeReq();   	
+//    
+//    if (runningTapeReq != 0) {
+//    	delete runningTapeReq;
+//    	runningTapeReq = 0;
+//    	(*it)->setRunningTapeReq(0);
+//    }
     
     delete (*it);
   } 
@@ -909,6 +912,7 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
 			
 			// deletion of the vector
 			delete result;
+			result = 0;
 		}
 		/**
 		 * To inform the client about the end of the queue, we send again a 
@@ -923,6 +927,7 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
 	
 	// deletion of the vector
 	delete result;
+	result = 0;
 	
 	/**
 	 * To inform the client about the end of the queue, we send again a 
