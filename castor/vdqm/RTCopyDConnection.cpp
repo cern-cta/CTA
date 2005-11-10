@@ -31,10 +31,18 @@
 #include <rtcp_constants.h> /* Definition of RTCOPY_MAGIC   */
 
 #include "castor/exception/InvalidArgument.hpp"
+
 #include "castor/stager/ClientIdentification.hpp"
+#include "castor/stager/Tape.hpp"
+
+#include "castor/Constants.hpp"
+#include "castor/BaseAddress.hpp"
+#include "castor/Services.hpp"
+
 
 // Local includes
 #include "RTCopyDConnection.hpp"
+#include "ErrorHistory.hpp"
 #include "TapeDrive.hpp"
 #include "TapeRequest.hpp"
 #include "DeviceGroupName.hpp"
@@ -116,7 +124,7 @@ void castor::vdqm::RTCopyDConnection::connect()
 //------------------------------------------------------------------------------
 // sendJobToRTCP
 //------------------------------------------------------------------------------
-bool castor::vdqm::RTCopyDConnection::sendJobToRTCPD(const TapeDrive *tapeDrive) 
+bool castor::vdqm::RTCopyDConnection::sendJobToRTCPD(TapeDrive *tapeDrive) 
 	throw (castor::exception::Exception) {
 	
 	bool acknSucc = true; // The return value
@@ -221,7 +229,7 @@ bool castor::vdqm::RTCopyDConnection::sendJobToRTCPD(const TapeDrive *tapeDrive)
 	}
  
  
-	acknSucc = readRTCPAnswer();
+	acknSucc = readRTCPAnswer(tapeDrive);
 	
 	return acknSucc;
 }
@@ -230,7 +238,7 @@ bool castor::vdqm::RTCopyDConnection::sendJobToRTCPD(const TapeDrive *tapeDrive)
 //------------------------------------------------------------------------------
 // readRTCPAnswer
 //------------------------------------------------------------------------------
-bool castor::vdqm::RTCopyDConnection::readRTCPAnswer() 
+bool castor::vdqm::RTCopyDConnection::readRTCPAnswer(TapeDrive *tapeDrive) 
 	throw (castor::exception::Exception) {
 		
   int rc, magic, reqtype, len, errmsglen, msglen, status;
@@ -332,6 +340,47 @@ bool castor::vdqm::RTCopyDConnection::readRTCPAnswer()
 			  {castor::dlf::Param("status", status),
 			   castor::dlf::Param("error msg", errmsg)};
 			castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 49, 2, params);
+			
+			/**
+			 * We store this error also into the database
+			 */
+			castor::vdqm::ErrorHistory *errorHistory = new ErrorHistory();
+			errorHistory->setErrorMessage(errmsg);
+			errorHistory->setTimeStamp(time(NULL));
+			errorHistory->setTapeDrive(tapeDrive);
+			errorHistory->setTape(tapeDrive->runningTapeReq()->tape());
+			
+			try {
+				/**
+				 * Store the error into the database
+				 */
+			  castor::BaseAddress ad;
+			  ad.setCnvSvcName("DbCnvSvc");
+			  ad.setCnvSvcType(castor::SVC_DBCNV);
+			  
+			  /**
+			   * Rollback for the last changes, because of this error!
+			   * This can affects only the tape drive status release request.
+			   */
+			  svcs()->rollback(&ad);
+			  
+			  //Create a new entry in the table
+		    svcs()->createRep(&ad, errorHistory, false);
+		    
+		    svcs()->fillRep(&ad, errorHistory, OBJ_Tape, false);
+	      svcs()->fillRep(&ad, errorHistory, OBJ_TapeDrive, true);
+			} catch (castor::exception::Exception e) {
+				// "RTCopyDConnection: rtcopy daemon returned an error" message
+				castor::dlf::Param params[] =
+				  {castor::dlf::Param("info", "The message couldn't be save into the ErrorHistory table"),
+				   castor::dlf::Param("Reason", e.getMessage().str())};
+				castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 49, 2, params);
+			}
+			
+			errorHistory->setTapeDrive(NULL);
+			errorHistory->setTape(NULL);
+			delete errorHistory;
+			errorHistory = 0;
 			
 			return false;
     }
