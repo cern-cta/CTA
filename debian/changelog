@@ -1,3 +1,60 @@
+castor (2.0.2-2) unstable; urgency=low
+
+  * PROTO2/Imakefile:
+    [r1.18,2005-11-01,mbraeger] Changes the make command to create the doxygen documentation.
+                                Now you have to type: make doxygen
+  * PROTO2/castor/db/oracleTrailer.sql:
+    [r1.223,2005-10-28,itglp] Fixed isSubrequestToSchedule to avoid putDone before put.
+    [r1.223,2005-10-28,itglp] Fixed getNext status update.
+  * PROTO2/castor/rh/Server.cpp:
+    [r1.43,2005-11-07,sponcec3] Added type of request to 'Processing Request' message
+  * PROTO2/castor/vdqm/VdqmServer.cpp:
+  * PROTO2/castor/vdqm/Imakefile:
+  * PROTO2/castor/vdqm/VdqmServer.hpp:
+      [2005-11-07,mbraeger] Code revision: The decision, which Protocol version has to be used is now taken in the ProtocolFacade class. Now, the VdqmServer doesn't care any more, which protocol is sent via the socket.
+  * PROTO2/castor/vdqm/RTCopyDConnection.cpp:
+  * PROTO2/castor/vdqm/RTCopyDConnection.hpp:
+    [2005-11-10,mbraeger] In case of errors on RTCPD side during a tape assign, the error message is now written to the ErrorHistory db table.
+  * PROTO2/castor/vdqm/TapeDriveStatusCodes.cpp:
+  * PROTO2/castor/vdqm/TapeDriveStatusCodes.hpp:
+  * PROTO2/castor/vdqm/handler/TapeDriveConsistencyChecker.cpp:
+  * PROTO2/castor/vdqm/handler/TapeDriveHandler.cpp:
+      [2005-11-07,mbraeger] Revision of the tape drive status Codes. The intermediate status UNIT_RELEASED is not needed any more.
+  * PROTO2/castor/vdqm/handler/TapeDriveHandler.cpp:
+  * PROTO2/castor/vdqm/handler/TapeDriveStatusHandler.cpp:
+      [2005-11-10,mbraeger] Solved a core dump error in the TapeDriveHandler.cpp
+  * PROTO2/castor/vdqm/handler/TapeDriveStatusHandler.cpp:
+    [r1.16,2005-10-31,mbraeger] Solved an Error in the handleVolMountStatus() function. The Tape was not right selected and caused sometimes errors.
+  * PROTO2/codeGeneration/RH.xmi:
+    [r1.111,2005-11-08,itglp] Added a simplified class diagram for the catalog db.
+    [r1.110,2005-11-07,mbraeger] Removed from the VDQM db diagram the UNIT_RELEASED status of the TapeDriveStatusCodes enumeration class.
+  * CASTOR/dlf/dlf_oracle_grant.sql:
+    [r 1.2,2005-11-09,sponcec3] New views for lemon monitoring
+  * CASTOR/dlf/dlf_oracle_tbl.sql:
+    [r1.12,2005-11-09,sponcec3] New index on dlf_messages based on hostid
+  * PROTO2/doc/uml/vdqm.xmi:
+    [r 1.8,2005-11-10,mbraeger] Sequence diagram for an incoming tape drive requested added
+    [r 1.7,2005-11-09,mbraeger] Updated all diagrams for Umbrello 1.4.2. ProtocolFacade Sequence diagram included
+    [r 1.6,2005-11-07,mbraeger] Revision of the class diagram. Actualization of the vdqm class diagram
+  * PROTO2/rtcopy/rtcpcldCatalogueInterface.c:
+    [r1.138,2005-10-31,obarring] Set serrno in case the checkFile fails in fileRecalled()
+  * CASTOR/rtcopy/rtcpd_MainCntl.c:
+    [r1.96,2005-10-28,obarring] Change (stupid) check preventing the default blocksize to be set
+  * PROTO2/stager/stager_service_run.c:
+    [r1.31,2005-10-31,jdurand] Variations on time to wait at the next round
+    [r1.30,2005-10-31,jdurand] Use a single cond_wait instead of a cond_waits broken down per second
+  * CASTOR/tape/Ctape_devinfo.c:
+    [r1.15,2005-11-04,bcouturi] Added T10000 support
+    [r1.14,2005-11-03,bcouturi] 3592B support - Added 500GB density
+  * CASTOR/tape/Ctape_dmpfil.c:
+    [r1.24,2005-11-04,bcouturi] Added T10000 support
+  * CASTOR/tape/getcompstat.c:
+    [r1.19,2005-11-04,bcouturi] Added T10000 support
+  * CASTOR/vmgr/vmgr_db_init.sh:
+    [r1.10,2005-11-04,bcouturi] Fixed VMGR init script for T10000, 3592 and LTO3
+
+ -- Sebastien Ponce <sponcec3@pcitds13>  Thu, 10 Nov 2005 15:52:11 +0100
+
 castor (2.0.2-1) unstable; urgency=low
 
   * PROTO2/castor/db/castor_oracle_create.sql:
