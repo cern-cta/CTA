@@ -44,6 +44,7 @@ castor (2.0.2-2) unstable; urgency=low
     [r1.31,2005-10-31,jdurand] Variations on time to wait at the next round
     [r1.30,2005-10-31,jdurand] Use a single cond_wait instead of a cond_waits broken down per second
   * CASTOR/tape/Ctape_devinfo.c:
+    [r1.16,2005-11-10,bcouturi] Changed LTO Block size to 256K
     [r1.15,2005-11-04,bcouturi] Added T10000 support
     [r1.14,2005-11-03,bcouturi] 3592B support - Added 500GB density
   * CASTOR/tape/Ctape_dmpfil.c:
