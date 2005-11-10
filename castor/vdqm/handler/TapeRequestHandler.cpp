@@ -95,7 +95,6 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
   
   struct vmgr_tape_info tape_info; // used to get information about the tape
   
-  //TODO: The connection is not realised, yet.
   TapeServer *reqTapeServer = NULL;
   DeviceGroupName *dgName = NULL;
   TapeAccessSpecification *tapeAccessSpec = NULL;
