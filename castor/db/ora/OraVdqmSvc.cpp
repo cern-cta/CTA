@@ -47,7 +47,7 @@
 #include "OraVdqmSvc.hpp"
 
 
- 
+
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
@@ -83,11 +83,11 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveStatementString 
   
 /// SQL statement for function existTapeDriveWithTapeInUse
 const std::string castor::db::ora::OraVdqmSvc::s_existTapeDriveWithTapeInUseStatementString =
-  "SELECT id FROM TapeDrive WHERE runningTapeReq = (SELECT id FROM TapeRequest WHERE tape = (SELECT id FROM Tape WHERE vid = :1))";
+  "SELECT td.id FROM TapeDrive td, TapeRequest tr, Tape WHERE td.runningTapeReq = tr.id AND tr.tape = Tape.id AND Tape.vid = :1";
   
 /// SQL statement for function existTapeDriveWithTapeMounted
 const std::string castor::db::ora::OraVdqmSvc::s_existTapeDriveWithTapeMountedStatementString =
-  "SELECT id FROM TapeDrive WHERE tape = (SELECT id FROM Tape WHERE vid = :1)";
+  "SELECT td.id FROM TapeDrive td, Tape WHERE td.tape = Tape.id AND Tape.vid = :1";
   
 /// SQL statement for function selectTapeByVid
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeByVidStatementString =
