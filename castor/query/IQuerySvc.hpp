@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2005/10/27 14:31:20 $ $Author: itglp $
+ * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2005/11/11 10:32:26 $ $Author: itglp $
  *
  *
  *
@@ -64,7 +64,7 @@ namespace castor {
        * @return the list of DiskCopies available
        * @exception in case of error
        */
-      virtual std::list<castor::stager::DiskCopyInfo*>
+      virtual std::list<castor::stager::DiskCopyInfo*>*
       diskCopies4File (std::string fileId,
                        std::string nsHost,
                        u_signed64 svcClassId)
@@ -82,10 +82,12 @@ namespace castor {
        * @param reqType the request type
        * @param param the query param, either a requestId or userTag 
        * @param svcClassId the Id of the service class we're using
-       * @return the list of DiskCopies available
+       * @return the list of DiskCopies available; an empty list if
+       * none is available, NULL if the reqId or the userTag have not
+       * been found.
        * @exception in case of error
        */
-      virtual std::list<castor::stager::DiskCopyInfo*>
+      virtual std::list<castor::stager::DiskCopyInfo*>*
        diskCopies4Request (castor::stager::RequestQueryType reqType,
                            std::string param,
                            u_signed64 svcClassId)
@@ -94,7 +96,7 @@ namespace castor {
 
       /**
        * Selects the next request the query service should deal with.
-       * Selects a Request in START status and move its status
+       * Selects a Request in START status and move its status to
        * PROCESSED to avoid double processing.
        * @return the Request to process
        * @exception Exception in case of error

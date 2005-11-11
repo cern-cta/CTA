@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IQuerySvcCInt.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/05/19 15:53:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IQuerySvcCInt.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/11/11 10:32:26 $ $Author: itglp $
  *
  * 
  *
@@ -84,16 +84,22 @@ extern "C" {
    unsigned int* diskCopiesNb) {
     if (!checkIQuerySvc(qrySvc)) return -1;
     try {
-      std::list<castor::stager::DiskCopyInfo*> result =
+      std::list<castor::stager::DiskCopyInfo*>* result =
         qrySvc->qrySvc->diskCopies4File(fileId, nsHost, svcClassId);
-      *diskCopiesNb = result.size();
+      if(0 == result) {
+          *diskCopiesNb = 0;
+          *diskCopies = 0;
+          return 0;
+      }
+      *diskCopiesNb = result->size();
       *diskCopies = (castor::stager::DiskCopyInfo**)
         malloc((*diskCopiesNb) * sizeof(castor::stager::DiskCopyInfo*));
       std::list<castor::stager::DiskCopyInfo*>::iterator it =
-        result.begin();
+        result->begin();
       for (int i = 0; i < *diskCopiesNb; i++, it++) {
         (*diskCopies)[i] = *it;
       }
+      delete result;
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       qrySvc->errorMsg = e.getMessage().str();

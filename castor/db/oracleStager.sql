@@ -2028,8 +2028,8 @@ BEGIN
            FileSystem.mountPoint, CastorFile.nbaccesses
       FROM CastorFile, DiskCopy, FileSystem, DiskServer,
            DiskPool2SvcClass
-     WHERE castorfile.id IN (SELECT * FROM TABLE(cfs))
-       AND Castorfile.id = DiskCopy.castorFile (+)
+     WHERE CastorFile.id IN (SELECT * FROM TABLE(cfs))
+       AND CastorFile.id = DiskCopy.castorFile (+)
        AND FileSystem.id(+) = DiskCopy.fileSystem
        AND nvl(FileSystem.status,0) = 0 -- PRODUCTION
        AND DiskServer.id(+) = FileSystem.diskServer
@@ -2061,8 +2061,8 @@ BEGIN
               FROM tapecopy, segment
              WHERE tapecopy.id = segment.copy (+)) tpseg,
            FileSystem, DiskServer, DiskPool2SvcClass
-     WHERE castorfile.id IN (SELECT * FROM TABLE(cfs))
-       AND Castorfile.id = DiskCopy.castorFile (+)
+     WHERE CastorFile.id IN (SELECT * FROM TABLE(cfs))
+       AND CastorFile.id = DiskCopy.castorFile (+)
        AND castorfile.id = tpseg.castorfile(+)
        AND FileSystem.id(+) = DiskCopy.fileSystem
        AND nvl(FileSystem.status,0) = 0 -- PRODUCTION
@@ -2074,7 +2074,7 @@ BEGIN
 END;
 
 /*
- * PL/SQL method implementing the stage_query based on fileId
+ * PL/SQL method implementing the stage_query based on file id
  */
 CREATE OR REPLACE PROCEDURE fileIdStageQuery
  (fid IN NUMBER,
@@ -2093,6 +2093,7 @@ END;
 CREATE OR REPLACE PROCEDURE reqIdStageQuery
  (rid IN VARCHAR2,
   svcClassId IN INTEGER,
+  notfound OUT INTEGER,
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
@@ -2118,7 +2119,11 @@ BEGIN
             FROM stagePutRequest
            WHERE reqid LIKE rid) reqlist
    WHERE sr.request = reqlist.id;
-  internalStageQuery(cfs, svcClassId, result);
+  IF cfs.COUNT > 0 THEN
+    internalStageQuery(cfs, svcClassId, result);
+  ELSE
+    notfound := 1;
+  END IF;
 END;
 
 /*
@@ -2127,6 +2132,7 @@ END;
 CREATE OR REPLACE PROCEDURE userTagStageQuery
  (tag IN VARCHAR2,
   svcClassId IN INTEGER,
+  notfound OUT INTEGER,
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
@@ -2152,7 +2158,11 @@ BEGIN
             FROM stagePutRequest
            WHERE userTag LIKE tag) reqlist
    WHERE sr.request = reqlist.id;
-  internalStageQuery(cfs, svcClassId, result);
+  IF cfs.COUNT > 0 THEN
+    internalStageQuery(cfs, svcClassId, result);
+  ELSE
+    notfound := 1;
+  END IF;
 END;
 
 /*
@@ -2161,17 +2171,24 @@ END;
 CREATE OR REPLACE PROCEDURE reqIdLastRecallsStageQuery
  (rid IN VARCHAR2,
   svcClassId IN INTEGER,
+  notfound OUT INTEGER,
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
+  reqs "numList";
 BEGIN
-  UPDATE SubRequest
-     SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
-   WHERE getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
-     AND request IN
-         (SELECT id FROM StagePreparetogetRequest
-           WHERE reqid LIKE rid)
-  RETURNING castorfile BULK COLLECT INTO cfs;
-  internalStageQuery(cfs, svcClassId, result);
+  SELECT id BULK COLLECT INTO reqs
+    FROM StagePreparetogetRequest
+   WHERE reqid LIKE rid;
+  IF reqs.COUNT > 0 THEN
+    UPDATE SubRequest
+       SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
+     WHERE getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
+       AND request IN (SELECT * FROM TABLE(reqs))
+    RETURNING castorfile BULK COLLECT INTO cfs;
+    internalStageQuery(cfs, svcClassId, result);
+  ELSE
+    notfound := 1;
+  END IF;
 END;
 
 /*
@@ -2180,19 +2197,25 @@ END;
 CREATE OR REPLACE PROCEDURE userTagLastRecallsStageQuery
  (tag IN VARCHAR2,
   svcClassId IN INTEGER,
+  notfound OUT INTEGER,
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
+  reqs "numList";
 BEGIN
-  UPDATE SubRequest
-     SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
-   WHERE getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
-     AND request IN
-         (SELECT id FROM StagePreparetogetRequest
-           WHERE usertag LIKE tag)
-  RETURNING castorfile BULK COLLECT INTO cfs;
-  internalStageQuery(cfs, svcClassId, result);
+  SELECT id BULK COLLECT INTO reqs
+    FROM StagePreparetogetRequest
+   WHERE userTag LIKE tag;
+  IF reqs.COUNT > 0 THEN
+    UPDATE SubRequest
+       SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
+     WHERE getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
+       AND request IN (SELECT * FROM TABLE(reqs))
+    RETURNING castorfile BULK COLLECT INTO cfs;
+    internalStageQuery(cfs, svcClassId, result);
+  ELSE
+    notfound := 1;
+  END IF;
 END;
-
 
 /**
  * This is the main select statement to dedicate a tape to a tape drive.

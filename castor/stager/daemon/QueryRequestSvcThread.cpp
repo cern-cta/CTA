@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.30 2005/10/27 14:31:44 itglp Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.31 2005/11/11 10:31:03 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.30 $ $Date: 2005/10/27 14:31:44 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.31 $ $Date: 2005/11/11 10:31:03 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -195,7 +195,6 @@ namespace castor {
 
         switch(dc->diskCopyStatus()) {
           // Just IGNORE the discopies in those statuses !
-        case DISKCOPY_WAITDISK2DISKCOPY:
         case DISKCOPY_DELETED:
         case DISKCOPY_FAILED:
         case DISKCOPY_GCCANDIDATE:
@@ -203,6 +202,7 @@ namespace castor {
         case DISKCOPY_INVALID:
           return;
 
+        case DISKCOPY_WAITDISK2DISKCOPY:
         case DISKCOPY_WAITTAPERECALL:
           st = FILE_STAGEIN;
           break;
@@ -265,13 +265,17 @@ namespace castor {
         /* Invoking the method                */
         /* ---------------------------------- */
         STAGER_LOG_DEBUG(NULL, "Invoking diskCopies4File");
-        std::list<castor::stager::DiskCopyInfo*> result =
+        std::list<castor::stager::DiskCopyInfo*>* result =
           qrySvc->diskCopies4File(fid, nshost, svcClassId);
 
-        if (result.size() == 0) {
+        if (result == 0) {
+          castor::exception::Exception e(EINVAL);
+          e.getMessage() << "Unknown File " << fid << "@" << nshost;
+          throw e;
+        }
+        if (result->size() == 0) {
           castor::exception::Exception e(ENOENT);
-          e.getMessage() << "File " << fid << "@"
-                         << nshost << " not in stager";
+          e.getMessage() << "File " << fid << "@" << nshost << " not in stager";
           throw e;
         }
 
@@ -280,7 +284,8 @@ namespace castor {
         sst << fid << "@" << nshost;
         res.setFileName(sst.str());
         
-        if(filename != 0) {     // the incoming query is by filename, don't query again the nameserver
+        if(filename != 0) {  
+            // the incoming query is by filename, don't query again the nameserver
             res.setCastorFileName(filename);
         }
         else {                  // we know only the fileid, get the filename
@@ -292,8 +297,8 @@ namespace castor {
         bool foundDiskCopy = false;
 
         for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
-              = result.begin();
-            dcit != result.end();
+              = result->begin();
+            dcit != result->end();
             ++dcit) {
 
           castor::stager::DiskCopyInfo* diskcopy = *dcit;
@@ -318,11 +323,12 @@ namespace castor {
         /* Cleanup */
         /* ------- */
         for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
-              = result.begin();
-            dcit != result.end();
+              = result->begin();
+            dcit != result->end();
             ++dcit) {
           delete *dcit;
         }
+        delete result;
 
       }
 
@@ -338,14 +344,23 @@ namespace castor {
         char *func =  "castor::stager::queryService::handle_fileQueryRequest_byRequest";
 
         // Performing the query on the database
-        std::list<castor::stager::DiskCopyInfo*> result;
+        std::list<castor::stager::DiskCopyInfo*>* result;
         result = qrySvc->diskCopies4Request(reqType, val, svcClassId);
 
-        if (result.size() == 0) {
+        if (result == 0) {
+          castor::exception::Exception e(EINVAL);
+          e.getMessage() << "Unknown " 
+                         << ((reqType == REQUESTQUERYTYPE_USERTAG ||
+                              reqType == REQUESTQUERYTYPE_USERTAG_GETNEXT) ?
+                              "user tag " : "request id ") << val;
+          throw e;
+        }
+        if (result->size() == 0) {
           castor::exception::Exception e(ENOENT);
-          e.getMessage() << "Could not find results for " 
-             << ((reqType == REQUESTQUERYTYPE_USERTAG ||
-                  reqType == REQUESTQUERYTYPE_USERTAG_GETNEXT) ? "user tag " : "request id ") << val;
+          e.getMessage() << "Could not find results for "
+                         << ((reqType == REQUESTQUERYTYPE_USERTAG ||
+                              reqType == REQUESTQUERYTYPE_USERTAG_GETNEXT) ? 
+                              "user tag " : "request id ") << val;
           throw e;
         }
 
@@ -363,8 +378,8 @@ namespace castor {
 
 
         for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
-              = result.begin();
-            dcit != result.end();
+              = result->begin();
+            dcit != result->end();
             ++dcit) {
 
           castor::stager::DiskCopyInfo* diskcopy = *dcit;
@@ -404,11 +419,12 @@ namespace castor {
         /* Cleanup */
         /* ------- */
         for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
-              = result.begin();
-            dcit != result.end();
+              = result->begin();
+            dcit != result->end();
             ++dcit) {
           delete *dcit;
         }
+        delete result;
 
       }
 
