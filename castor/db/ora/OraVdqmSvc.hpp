@@ -94,12 +94,15 @@ namespace castor {
 		       * The caller is also responsible for the deletion of the
 		       * allocated object
 		       * @param serverName The name of the server
+		       * @param withTapeDrive True, if the selected server should include
+		       * its tape drives.
 		       * @return the tapeServer. the return value can never be 0
 		       * @exception Exception in case of error (no tape server found,
 		       * several tape servers found, DB problem, etc...)
 		       */
 		    	virtual castor::vdqm::TapeServer* selectTapeServer(
-		    		const std::string serverName)
+		    		const std::string serverName,
+		    		bool withTapeDrives)
 		    		throw (castor::exception::Exception);
 		    		
 		    		

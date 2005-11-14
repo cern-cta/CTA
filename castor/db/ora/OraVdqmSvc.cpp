@@ -217,7 +217,9 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
 // selectTapeServer
 // -----------------------------------------------------------------------
 castor::vdqm::TapeServer* 
-	castor::db::ora::OraVdqmSvc::selectTapeServer(const std::string serverName)
+	castor::db::ora::OraVdqmSvc::selectTapeServer(
+	const std::string serverName,
+	bool withTapeDrives)
   throw (castor::exception::Exception) {
   
   //Check, if the parameter isn't empty 
@@ -304,19 +306,20 @@ castor::vdqm::TapeServer*
       throw e;
     }
     
-    cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeDrive);
-    
-    
-    /**
-     * For existing TapeDrives, we want also the corresponding TapeRequest
-     */
-    for (std::vector<castor::vdqm::TapeDrive*>::iterator it = tapeServer->tapeDrives().begin();
-         it != tapeServer->tapeDrives().end();
-         it++) {
-	  	if ((*it) != NULL) {
-	      cnvSvc()->fillObj(&ad, (*it), castor::OBJ_TapeRequest);
-	  	}
-	  }
+    if ( withTapeDrives ) {
+	    cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeDrive);
+	        
+	    /**
+	     * For existing TapeDrives, we want also the corresponding TapeRequest
+	     */
+	    for (std::vector<castor::vdqm::TapeDrive*>::iterator it = tapeServer->tapeDrives().begin();
+	         it != tapeServer->tapeDrives().end();
+	         it++) {
+		  	if ((*it) != NULL) {
+		      cnvSvc()->fillObj(&ad, (*it), castor::OBJ_TapeRequest);
+		  	}
+		  }
+    }
    
     
     //reset Pointer
