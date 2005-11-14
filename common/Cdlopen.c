@@ -1,9 +1,9 @@
 /*
- * $Id: Cdlopen.c,v 1.3 2005/10/26 08:53:50 jdurand Exp $
+ * $Id: Cdlopen.c,v 1.4 2005/11/14 13:25:35 jdurand Exp $
  */
 
 /*
- * $RCSfile: Cdlopen.c,v $ $Revision: 1.3 $ $Date: 2005/10/26 08:53:50 $ CERN IT-ADC/CA Jean-Damien Durand
+ * $RCSfile: Cdlopen.c,v $ $Revision: 1.4 $ $Date: 2005/11/14 13:25:35 $ CERN IT-ADC/CA Jean-Damien Durand
  */
 
 
@@ -15,7 +15,7 @@
 #include "Csnprintf.h"
 #include "Cmutex.h"
 
-static char **C__Cdlopen_buffer();
+static char *C__Cdlopen_buffer();
 
 #ifndef _MSC_VER
 static int Cdlopen_mutex = -1;
@@ -23,13 +23,13 @@ static int Cdlopen_mutex = -1;
 
 static int Cdlopen_buffer_key = -1; /* Our static key, integer, init value -1 */
 #define CDLOPEN_BUFLEN 1024
-#define Cdlopen_buffer (*C__Cdlopen_buffer())
+#define Cdlopen_buffer (C__Cdlopen_buffer())
 
 static char my_Cdlopen_buffer[CDLOPEN_BUFLEN+1]; /* If Cglobals_get error in order not to crash */
 
-static char **C__Cdlopen_buffer()
+static char *C__Cdlopen_buffer()
 {
-  char **var;
+  char *var;
   /* Call Cglobals_get */
   Cglobals_get(&Cdlopen_buffer_key,
 	       (void **) &var,
@@ -37,7 +37,7 @@ static char **C__Cdlopen_buffer()
 	       );
   /* If error, var will be NULL */
   if (var == NULL) {
-    return((char **) &my_Cdlopen_buffer);
+    return(my_Cdlopen_buffer);
   }
   return(var);
 }
