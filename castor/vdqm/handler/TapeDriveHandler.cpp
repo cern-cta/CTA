@@ -109,7 +109,10 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
 
 
 	try {
-		tapeServer = ptr_IVdqmService->selectTapeServer(ptr_driveRequest->reqhost);
+		bool withTapeDrives = (ptr_driveRequest->status == VDQM_TPD_STARTED);
+		tapeServer = 
+			ptr_IVdqmService->selectTapeServer(ptr_driveRequest->reqhost, withTapeDrives);
+		
 
 	  /**
 	   * If it is an tape daemon startup status we delete all TapeDrives 
@@ -228,7 +231,7 @@ void castor::vdqm::handler::TapeDriveHandler::deleteTapeDrive()
 		TapeServer* tapeServer = NULL; // the tape server, where the tape drive is installed
   
   	// Get the tape server
-		tapeServer = ptr_IVdqmService->selectTapeServer(ptr_driveRequest->reqhost);
+		tapeServer = ptr_IVdqmService->selectTapeServer(ptr_driveRequest->reqhost, false);
 			
 		try {
 			/**
@@ -329,9 +332,27 @@ void castor::vdqm::handler::TapeDriveHandler::deleteAllTapeDrvsFromSrv(
       }
       
       deleteRepresentation(*it, m_cuuid);
+      delete *it;
     }
+    
+    tapeServer->tapeDrives().clear();
 	} catch ( castor::exception::Exception ex ) {
 		if ( tapeServer ) { 
+			for (std::vector<castor::vdqm::TapeDrive*>::iterator it = tapeServer->tapeDrives().begin();
+         it != tapeServer->tapeDrives().end();
+         it++) 
+    	{
+    		TapeRequest* runningTapeReq = (*it)->runningTapeReq();   	
+    
+		    if (runningTapeReq != 0) {
+		    	delete runningTapeReq;
+		    	runningTapeReq = 0;
+		    	(*it)->setRunningTapeReq(0);
+		    }
+    
+    		delete (*it);
+    	}
+			
 			delete tapeServer;
 			tapeServer = 0;
 		}
@@ -698,23 +719,6 @@ void castor::vdqm::handler::TapeDriveHandler::freeMemory(
 		tapeDrive->setRunningTapeReq(0);
 	}
 	
-	for (std::vector<castor::vdqm::TapeDrive*>::iterator it = tapeServer->tapeDrives().begin();
-         it != tapeServer->tapeDrives().end();
-         it++) {
-      
-      //XXX: Caused a core dump ;-)
-//  	// The old TapeRequest. Normally it should not exist.
-//    TapeRequest* runningTapeReq = (*it)->runningTapeReq();   	
-//    
-//    if (runningTapeReq != 0) {
-//    	delete runningTapeReq;
-//    	runningTapeReq = 0;
-//    	(*it)->setRunningTapeReq(0);
-//    }
-    
-    delete (*it);
-  } 
-  tapeServer->tapeDrives().clear();
   delete tapeServer;
   tapeServer = 0;
   tapeDrive->setTapeServer(0);

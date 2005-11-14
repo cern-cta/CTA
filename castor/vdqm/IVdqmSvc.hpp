@@ -66,7 +66,7 @@ namespace castor {
 	       * @exception Exception in case of error (no tape server found,
 	       * several tape servers found, DB problem, etc...)
 	       */
-	      virtual TapeServer* selectTapeServer(const std::string serverName)
+	      virtual TapeServer* selectTapeServer(const std::string serverName, bool withTapeDrive)
 	        throw (castor::exception::Exception) = 0;
 	    		
 	    		
