@@ -1,5 +1,6 @@
 %attr(0644,root,bin) usr/include/shift.h
 %attr(0644,root,bin) usr/include/shift/Castor_limits.h
+%attr(0644,root,bin) usr/include/shift/Cdlopen_api.h
 %attr(0644,root,bin) usr/include/shift/Cgetopt.h
 %attr(0644,root,bin) usr/include/shift/Cglobals.h
 %attr(0644,root,bin) usr/include/shift/Cgrp.h
