@@ -1,3 +1,4 @@
 debian/castor/usr/share/man/man1/reclaim.1castor
 debian/castor/usr/share/man/man1/repack.1castor
 debian/castor/usr/share/man/man1/tapetohsm.1castor
+debian/castor/usr/share/man/man1/vdqmDBInit.1castor
