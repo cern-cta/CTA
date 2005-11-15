@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vdqmDBInit.man,v $ $Revision: 1.1 $ $Date: 2005/11/15 15:42:02 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: vdqmDBInit.man,v $ $Revision: 1.2 $ $Date: 2005/11/15 16:04:06 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH VDQMDBINIT 1 "$Date: 2005/11/15 15:42:02 $" CASTOR "Initializes VDQM database with static values"
+.TH VDQMDBINIT 1 "$Date: 2005/11/15 16:04:06 $" CASTOR "Initializes VDQM database with static values"
 .SH NAME
 vdqmDBInit
 .SH SYNOPSIS
@@ -20,12 +20,36 @@ accordingly.
 .fi
 Try to update DeviceGroupName table in db...
 .fi
-The entries in the DeviceGroupName table are already up to date!
+New DeviceGroupName row inserted into db: dgName = 3592A0, libraryName = IBM_LIB0
+.fi
+New DeviceGroupName row inserted into db: dgName = 3592B1, libraryName = IBM_LIB1
+.fi
+New DeviceGroupName row inserted into db: dgName = 994BR4, libraryName = STK_ACS4
+.fi
+New DeviceGroupName row inserted into db: dgName = 994BR5, libraryName = STK_ACS5
+.fi
+ ...
 .fi
 
 Try to update TapeAccessSpecification table in db...
 .fi
-The entries in the TapeAccessSpecification table are already up to date!
+New TapeAccessSpecification row inserted into db: accessMode = 0, density = 500G, tapeModel = 3592
+.fi
+New TapeAccessSpecification row inserted into db: accessMode = 1, density = 500G, tapeModel = 3592
+.fi
+New TapeAccessSpecification row inserted into db: accessMode = 0, density = 500GC, tapeModel = 3592
+.fi
+New TapeAccessSpecification row inserted into db: accessMode = 1, density = 500GC, tapeModel = 3592
+.fi
+New TapeAccessSpecification row inserted into db: accessMode = 0, density = 200G, tapeModel = 9940
+.fi
+New TapeAccessSpecification row inserted into db: accessMode = 1, density = 200G, tapeModel = 9940
+.fi
+New TapeAccessSpecification row inserted into db: accessMode = 0, density = 200GC, tapeModel = 9940
+.fi
+New TapeAccessSpecification row inserted into db: accessMode = 1, density = 200GC, tapeModel = 9940
+.fi
+ ...
 .ft
 .fi
 .SH AUTHOR
