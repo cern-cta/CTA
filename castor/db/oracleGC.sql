@@ -1765,14 +1765,14 @@ BEGIN
        AND DiskCopy.status = 7 -- INVALID
     UNION
     SELECT DiskCopy.id, CastorFile.fileSize,
-           getTime() - CastorFile.LastAccessTime - GREATEST(0,86400*LN((CastorFile.fileSize+1)/1024))
+           getTime() - CastorFile.LastAccessTime + GREATEST(0,86400*LN((CastorFile.fileSize+1)/1024))
       FROM DiskCopy, CastorFile, SubRequest
      WHERE CastorFile.id = DiskCopy.castorFile
        AND DiskCopy.fileSystem = fsId
        AND DiskCopy.status = 0 -- STAGED
        AND DiskCopy.id = SubRequest.DiskCopy (+)
        AND Subrequest.id IS NULL
-     ORDER BY 3;
+     ORDER BY 3 DESC;
   return result;
 END;
 
@@ -1797,7 +1797,7 @@ BEGIN
     UNION
     SELECT DiskCopy.id, CastorFile.fileSize,
            getTime() - CastorFile.LastAccessTime -- older first
-           - GREATEST(0,86400*LN((CastorFile.fileSize+1)/1024)) -- biggest first
+           + GREATEST(0,86400*LN((CastorFile.fileSize+1)/1024)) -- biggest first
            + CASE CastorFile.nbAccesses
                WHEN 0 THEN 86400 -- non accessed last
                ELSE 20000 * CastorFile.nbAccesses -- most accessed last
@@ -1808,7 +1808,7 @@ BEGIN
        AND DiskCopy.status = 0 -- STAGED
        AND DiskCopy.id = SubRequest.DiskCopy (+)
        AND Subrequest.id IS NULL
-     ORDER BY 3;
+     ORDER BY 3 DESC;
   return result;
 END;
 
