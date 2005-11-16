@@ -179,6 +179,18 @@ int Cvdqm_TapeDriveDedication_endTime(struct Cvdqm_TapeDriveDedication_t* instan
 int Cvdqm_TapeDriveDedication_setEndTime(struct Cvdqm_TapeDriveDedication_t* instance, int new_var);
 
 /**
+ * Get the value of reason
+ * the reason for the tape drive dedication
+ */
+int Cvdqm_TapeDriveDedication_reason(struct Cvdqm_TapeDriveDedication_t* instance, const char** var);
+
+/**
+ * Set the value of reason
+ * the reason for the tape drive dedication
+ */
+int Cvdqm_TapeDriveDedication_setReason(struct Cvdqm_TapeDriveDedication_t* instance, const char* new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

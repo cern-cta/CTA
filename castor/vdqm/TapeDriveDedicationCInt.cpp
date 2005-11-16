@@ -212,6 +212,23 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cvdqm_TapeDriveDedication_reason
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDriveDedication_reason(castor::vdqm::TapeDriveDedication* instance, const char** var) {
+    *var = instance->reason().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cvdqm_TapeDriveDedication_setReason
+  //----------------------------------------------------------------------------
+  int Cvdqm_TapeDriveDedication_setReason(castor::vdqm::TapeDriveDedication* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setReason(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cvdqm_TapeDriveDedication_id
   //----------------------------------------------------------------------------
   int Cvdqm_TapeDriveDedication_id(castor::vdqm::TapeDriveDedication* instance, u_signed64* var) {

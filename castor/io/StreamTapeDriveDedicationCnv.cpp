@@ -98,6 +98,7 @@ void castor::io::StreamTapeDriveDedicationCnv::createRep(castor::IAddress* addre
   ad->stream() << obj->accessMode();
   ad->stream() << obj->startTime();
   ad->stream() << obj->endTime();
+  ad->stream() << obj->reason();
   ad->stream() << obj->id();
 }
 
@@ -132,6 +133,9 @@ castor::IObject* castor::io::StreamTapeDriveDedicationCnv::createObj(castor::IAd
   int endTime;
   ad->stream() >> endTime;
   object->setEndTime(endTime);
+  std::string reason;
+  ad->stream() >> reason;
+  object->setReason(reason);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

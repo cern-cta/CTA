@@ -164,7 +164,7 @@ CREATE INDEX I_TapeDrive2TapeDriveComp_P on TapeDrive2TapeDriveComp (parent);
 CREATE TABLE ErrorHistory (errorMessage VARCHAR2(2048), timeStamp NUMBER, id INTEGER PRIMARY KEY, tapeDrive INTEGER, tape INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type TapeDriveDedication */
-CREATE TABLE TapeDriveDedication (clientHost VARCHAR2(2048), euid NUMBER, egid NUMBER, vid VARCHAR2(2048), accessMode NUMBER, startTime NUMBER, endTime NUMBER, id INTEGER PRIMARY KEY, tapeDrive INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE TapeDriveDedication (clientHost VARCHAR2(2048), euid NUMBER, egid NUMBER, vid VARCHAR2(2048), accessMode NUMBER, startTime NUMBER, endTime NUMBER, reason VARCHAR2(2048), id INTEGER PRIMARY KEY, tapeDrive INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type TapeDriveCompatibility */
 CREATE TABLE TapeDriveCompatibility (tapeDriveModel VARCHAR2(2048), priorityLevel NUMBER, id INTEGER PRIMARY KEY, tapeAccessSpecification INTEGER) INITRANS 50 PCTFREE 50;
@@ -1951,14 +1951,14 @@ BEGIN
        AND DiskCopy.status = 7 -- INVALID
     UNION
     SELECT DiskCopy.id, CastorFile.fileSize,
-           getTime() - CastorFile.LastAccessTime - GREATEST(0,86400*LN((CastorFile.fileSize+1)/1024))
+           getTime() - CastorFile.LastAccessTime + GREATEST(0,86400*LN((CastorFile.fileSize+1)/1024))
       FROM DiskCopy, CastorFile, SubRequest
      WHERE CastorFile.id = DiskCopy.castorFile
        AND DiskCopy.fileSystem = fsId
        AND DiskCopy.status = 0 -- STAGED
        AND DiskCopy.id = SubRequest.DiskCopy (+)
        AND Subrequest.id IS NULL
-     ORDER BY 3;
+     ORDER BY 3 DESC;
   return result;
 END;
 
@@ -1983,7 +1983,7 @@ BEGIN
     UNION
     SELECT DiskCopy.id, CastorFile.fileSize,
            getTime() - CastorFile.LastAccessTime -- older first
-           - GREATEST(0,86400*LN((CastorFile.fileSize+1)/1024)) -- biggest first
+           + GREATEST(0,86400*LN((CastorFile.fileSize+1)/1024)) -- biggest first
            + CASE CastorFile.nbAccesses
                WHEN 0 THEN 86400 -- non accessed last
                ELSE 20000 * CastorFile.nbAccesses -- most accessed last
@@ -1994,7 +1994,7 @@ BEGIN
        AND DiskCopy.status = 0 -- STAGED
        AND DiskCopy.id = SubRequest.DiskCopy (+)
        AND Subrequest.id IS NULL
-     ORDER BY 3;
+     ORDER BY 3 DESC;
   return result;
 END;
 

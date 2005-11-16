@@ -234,6 +234,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_reason
+       * the reason for the tape drive dedication
+       * @return the value of m_reason
+       */
+      std::string reason() const {
+        return m_reason;
+      }
+
+      /**
+       * Set the value of m_reason
+       * the reason for the tape drive dedication
+       * @param new_var the new value of m_reason
+       */
+      void setReason(std::string new_var) {
+        m_reason = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -289,6 +307,9 @@ namespace castor {
 
       /// The ending time, which specifies the beginning of a time slot for a special tape on a specified tape drive from a specified user
       int m_endTime;
+
+      /// the reason for the tape drive dedication
+      std::string m_reason;
 
       /// The id of this object
       u_signed64 m_id;
