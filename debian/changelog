@@ -1,3 +1,39 @@
+castor (2.0.2-3) unstable; urgency=low
+
+  * CASTOR/h/Ctape.h:
+    [r1.47,2005-11-15,bcouturi] Changed value of D500G/D500GC as it should be the index of the density as defined in cvtden.c
+  * PROTO2/castor/db/oracleTrailer.sql:
+    [r1.226,2005-11-16,sponcec3] Fixed GC policies. The ordering was wrong !
+  * PROTO2/castor/db/castor_oracle_create.sql:
+  * PROTO2/castor/db/ora/OraQuerySvc.cpp:
+  * PROTO2/castor/db/ora/OraQuerySvc.hpp:
+  * PROTO2/castor/db/oracleTrailer.sql:
+  * PROTO2/castor/query/IQuerySvc.hpp:
+  * PROTO2/castor/query/IQuerySvcCInt.cpp:
+  * PROTO2/stager/stager_query_service.cpp:
+      [2005-11-11,itglp] Enhanced query by reqId and userTag: if the queried reqId/userTag was not found, the reply is EINVAL, while ENOENT is given when no file is found and the request is still there (meaningful for the getLastRecalls mode).
+  * PROTO2/castor/db/ora/OraVdqmSvc.cpp:
+    [r1.28,2005-11-14,mbraeger] Extension of selectServer()
+    [r1.27,2005-11-11,itglp] Optimized some queries.
+  * PROTO2/castor/db/ora/OraVdqmSvc.hpp:
+    [r1.20,2005-11-14,mbraeger] Extension of selectServer()
+  * PROTO2/castor/vdqm/IVdqmSvc.hpp:
+  * PROTO2/castor/vdqm/handler/TapeDriveHandler.cpp:
+  * PROTO2/castor/vdqm/handler/TapeRequestHandler.cpp:
+      [2005-11-14,mbraeger] Extension of the selectServer() function in OraVdqmSvc
+  * PROTO2/common/Cdlopen.c:
+    [r 1.4,2005-11-14,jdurand] Fix segfault in Cdlerror
+  * PROTO2/debian/changelog:
+    [r1.83,2005-11-10,sponcec3] Added tape blocksize change to release
+  * PROTO2/resourcemonitoring/Crmd_recv_from_users.c:
+    [r1.80,2005-11-14,jdurand] Automatic close of connection between rmmaster thread and the LSF proxy - otherwise the LSF proxy will wait for an event until netread timeout (not fatal, though)
+    [r1.79,2005-11-14,jdurand] Stop submitting the job in PSUSP: now the job is submitted in a normal state, a message box sent afterwards (which triggers another parsing of resources)
+    [r1.78,2005-11-11,jdurand] Optimization of rmmaster <-> LSF protocol (now rmmaster posts in a single message box instead of 8 previously)
+  * PROTO2/scheduler/LSF/schmod_castor.c:
+    [r1.34,2005-11-11,jdurand] Optimization of rmmaster <-> LSF protocol (now rmmaster posts in a single message box instead of 8 previously)
+
+ -- Sebastien Ponce <sponcec3@pcitds13>  Tue, 15 Nov 2005 18:25:37 +0100
+
 castor (2.0.2-2) unstable; urgency=low
 
   * PROTO2/Imakefile:
