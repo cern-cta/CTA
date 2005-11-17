@@ -27,6 +27,12 @@
 #include <vdqm_constants.h>
 #include <vector>
 
+// Includes for VMGR
+#include <sys/types.h>
+#include "vmgr_api.h"
+// for WRITE_ENABLE WRITE_DISABLE
+#include <Ctape_constants.h>
+
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
@@ -455,10 +461,28 @@ castor::vdqm::TapeDrive*
           ~VDQM_VOL_UNMOUNT & ~VDQM_UNIT_MBCOUNT );
           
       
+      
+      std::vector<castor::vdqm::TapeDriveCompatibility*> *tapeDriveCompatibilities = 
+				ptr_IVdqmService->selectCompatibilitiesForDriveModel(ptr_driveRequest->tapeDriveModel);
+          
+      if ( tapeDriveCompatibilities == NULL ||
+           tapeDriveCompatibilities->size() == 0 ) {
+	      /**
+	       * Handle the conection to the priority list of the tape Drives
+	       */
+	      handleTapeDriveCompatibilities(tapeDrive, ptr_driveRequest->tapeDriveModel);
+      }
+      else {
+      	for (unsigned int i = 0; i < tapeDriveCompatibilities->size(); i++) {
+	      	tapeDrive->addTapeDriveCompatibilities((*tapeDriveCompatibilities)[i]);
+      	}
+      	delete tapeDriveCompatibilities;
+      	tapeDriveCompatibilities = 0;
+      }
+      
+      
 			// "Create new TapeDrive in DB" message
 			castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, 34);
-      
-      
       /**
        * We don't want to commit now, because some changes can can still happen
        */
@@ -989,4 +1013,96 @@ int castor::vdqm::handler::TapeDriveHandler::translateNewStatus(
 	}	
 	
 	return oldStatus;
+}
+
+
+//------------------------------------------------------------------------------
+// handleTapeDriveCompatibilities
+//------------------------------------------------------------------------------
+void castor::vdqm::handler::TapeDriveHandler::handleTapeDriveCompatibilities(
+	castor::vdqm::TapeDrive *newTapeDrive, std::string driveModel) 
+	throw (castor::exception::Exception) {
+		
+	castor::vdqm::DeviceGroupName *dgName = NULL;
+	castor::vdqm::TapeDriveCompatibility *driveCompatibility = NULL;
+	std::vector<castor::vdqm::TapeAccessSpecification*> *tapeAccessSpecs = NULL;
+	
+	vmgr_list list;
+	struct vmgr_tape_dgnmap *dgnmap;
+	bool tdcUpdate;
+	int flags, priorityLevel;
+	unsigned int i = 0;
+	
+	// The DeviceGroupName is absolutely necessary!!!
+	dgName = newTapeDrive->deviceGroupName();
+	if ( dgName == NULL ) {
+		castor::exception::Exception ex(EVQDGNINVL);
+		ex.getMessage() << "castor::vdqm::TapeDriveHandler::handleTapeDriveCompatibilities(): "
+										<< "Query request for unknown dgn."
+										<< std::endl;
+
+		throw ex;
+	}
+	
+	priorityLevel = 0;
+	
+	/**
+	 * Retrieve the information about the dgName of the tapeModel out of
+	 */
+	flags = VMGR_LIST_BEGIN;
+	while ((dgnmap = vmgr_listdgnmap (flags, &list)) != NULL) {
+		if ( std::strcmp(dgnmap->dgn, dgName->dgName().c_str()) == 0 ) {
+			tapeAccessSpecs =
+				ptr_IVdqmService->selectTapeAccessSpecifications(dgnmap->model);
+			
+			/**
+			 * Add for each found specification an entry in the tapeDriveCompatibility
+			 * vector. Later, we will set then right priority order
+			 */
+			for (i = 0; i < tapeAccessSpecs->size(); i++) {
+				driveCompatibility = new castor::vdqm::TapeDriveCompatibility();
+		    driveCompatibility->setPriorityLevel(priorityLevel++); //Highest Priority = 0
+		    driveCompatibility->setTapeDriveModel(driveModel);
+		    driveCompatibility->setTapeAccessSpecification((*tapeAccessSpecs)[i]);
+		    newTapeDrive->addTapeDriveCompatibilities(driveCompatibility);
+		  }
+		  delete tapeAccessSpecs;
+		  tapeAccessSpecs = 0;
+		}
+		
+		flags = VMGR_LIST_CONTINUE;
+	}
+	(void) vmgr_listdgnmap (VMGR_LIST_END, &list);
+	
+	if ( priorityLevel == 0 ) {
+		castor::exception::Exception ex(EVQDGNINVL);
+		ex.getMessage() << "castor::vdqm::TapeDriveHandler::handleTapeDriveCompatibilities(): "
+										<< "There are no tape models stored in the TapeAccessSpecification "
+										<< "table for dgn = " << dgName->dgName()  << ". "
+										<< "Please run the 'vdqmDBInit' command to solve the Problem!"
+										<< std::endl;
+
+		throw ex;
+	}
+	else if ( priorityLevel > 2) {
+		/**
+		 * If there are more than 2 entries, we have to order the priority List again:
+		 * First write, then read!
+		 */
+		priorityLevel = 0;
+		std::vector<castor::vdqm::TapeDriveCompatibility*> tapeDriveCompatibilityVector = 
+			newTapeDrive->tapeDriveCompatibilities();
+	  // Let's change the WRITE_ENABLE priority...
+	  for (i = 0; i < tapeDriveCompatibilityVector.size(); i++) {
+	    if ( tapeDriveCompatibilityVector[i]->tapeAccessSpecification()->accessMode() == WRITE_ENABLE ) {
+	    	tapeDriveCompatibilityVector[i]->setPriorityLevel(priorityLevel++);
+	    }
+	  } 
+	  // ... and then WRITE_DISABLE priority
+	  for (i = 0; i < tapeDriveCompatibilityVector.size(); i++) {
+	    if ( tapeDriveCompatibilityVector[i]->tapeAccessSpecification()->accessMode() == WRITE_DISABLE ) {
+	    	tapeDriveCompatibilityVector[i]->setPriorityLevel(priorityLevel++);
+	    }
+	  } 
+	} 
 }

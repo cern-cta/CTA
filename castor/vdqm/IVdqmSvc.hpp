@@ -45,6 +45,7 @@ namespace castor {
 		class TapeRequest;
 		class TapeDrive;
 		class TapeServer;
+		class TapeDriveCompatibility;
 
     /**
      * This class provides methods to deal with the VDQM service
@@ -245,12 +246,39 @@ namespace castor {
 				 * @param tapeDrive the tape drive, with the mounted tape
 				 * @exception Exception in case of error (DB problem, no mounted Tape, 
 				 * etc...)	
-	       * @return The found tape request	           
+	       * @return The found tape request           
 	    	 */	
 	    	virtual TapeRequest* selectTapeReqForMountedTape(
 					const TapeDrive* tapeDrive)
 	    		throw (castor::exception::Exception) = 0;	
-				
+	    		
+	    	
+	    	/**
+	    	 * Selects from the TapeDriveCompatibility table all entries for the
+	    	 * specified drive model.
+	    	 * 
+	    	 * @param tapeDriveModel The model of the tape drive
+	    	 * @exception Exception in case of error (DB problem, no mounted Tape, 
+				 * etc...)	
+				 * @return All entries in the table for the selected drive model
+	    	 */
+	    	virtual std::vector<TapeDriveCompatibility*>* 
+	    		selectCompatibilitiesForDriveModel(const std::string tapeDriveModel)
+	    		throw (castor::exception::Exception) = 0;
+	    	
+	    	/**
+	    	 * Selects from the TapeAccessSpecification table all entries for the
+	    	 * specified tape model.
+	    	 * 
+	    	 * @param tapeModel The model of the tape
+	    	 * @exception Exception in case of error (DB problem, no mounted Tape, 
+				 * etc...)	
+				 * @return All entries in the table for the selected tape model. The 
+				 * list is sorted by accessMode (first write, then read)
+	    	 */	
+	    	virtual std::vector<TapeAccessSpecification*>*
+	    		selectTapeAccessSpecifications(const std::string tapeModel)
+	    		throw (castor::exception::Exception) = 0;					    		
 	    		
     }; // end of class IVdqmSvc
 

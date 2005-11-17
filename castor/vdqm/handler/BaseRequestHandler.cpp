@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 #include <string>
+#include <vector>
 //#include "occi.h"
 
 #include "castor/IObject.hpp"
@@ -158,9 +159,8 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
   
     	svcs()->fillRep(&ad, fr, OBJ_TapeServer, false);      
     	
-    	//TODO: Enable this link
-//    	if ( 0 != tapeDrive->tapeDriveCompatibilites() ) 
-//	    	svcs()->fillRep(&ad, fr, OBJ_TapeDriveCompatibility, false);          	
+    	if ( tapeDrive->tapeDriveCompatibilities().size() != 0 ) 
+	    	svcs()->fillRep(&ad, fr, OBJ_TapeDriveCompatibility, false);          	
     }
     
     // Store files for ErrorHistory

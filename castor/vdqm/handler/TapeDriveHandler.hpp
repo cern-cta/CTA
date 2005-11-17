@@ -176,6 +176,20 @@ namespace castor {
 					int translateNewStatus(TapeDriveStatusCodes newStatusCode)
 						throw (castor::exception::Exception);
 						
+					/**
+					 * Connects the new tape drive with the TapeDriveCompatibility objects.
+					 * If there are now rows for this model inside the table, it starts
+					 * to create the default entries for tapes with the same dgName. 
+					 * Therefore it has to retrieve information from the VMGR daemon.
+					 * 
+					 * @param newTapeDrive the new Tape Drive
+					 * @param tapeModel The model of the tape drive
+					 * @exception In case of errors
+					 */	
+					void handleTapeDriveCompatibilities(
+						castor::vdqm::TapeDrive *newTapeDrive, std::string driveModel) 
+						throw (castor::exception::Exception);
+						
 	    }; // class TapeDriveHandler
     
   	} // end of namespace handler
