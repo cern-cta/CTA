@@ -120,7 +120,7 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectCompatibilitiesForDriveMo
   
 /// SQL statement for function selectTapeAccessSpecifications
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeAccessSpecificationsStatementString =
-  "SELECT id FROM TapeAccessSpecification WHERE tapeModel = :1";  
+  "SELECT id FROM TapeAccessSpecification WHERE tapeModel = :1 ORDER BY accessMode DESC";  
 
 /**
  * This is the main select statement to dedicate a tape to a tape drive.
