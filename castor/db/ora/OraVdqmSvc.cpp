@@ -34,6 +34,7 @@
 #include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
+#include "castor/vdqm/TapeDriveCompatibility.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/newVdqm.h"
@@ -111,7 +112,15 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeRequestQueueStatement
   
 /// SQL statement for function selectTapeDriveQueue
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveQueueStatementString =
-  "BEGIN selectTapeDriveQueue(:1, :2, :3); END;";  
+  "BEGIN selectTapeDriveQueue(:1, :2, :3); END;";
+  
+/// SQL statement for function selectCompatibilitiesForDriveModel
+const std::string castor::db::ora::OraVdqmSvc::s_selectCompatibilitiesForDriveModelStatementString =
+  "SELECT id FROM TapeDriveCompatibility WHERE tapeDriveModel = :1";
+  
+/// SQL statement for function selectTapeAccessSpecifications
+const std::string castor::db::ora::OraVdqmSvc::s_selectTapeAccessSpecificationsStatementString =
+  "SELECT id FROM TapeAccessSpecification WHERE tapeModel = :1";  
 
 /**
  * This is the main select statement to dedicate a tape to a tape drive.
@@ -125,7 +134,7 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveQueueStatementSt
  */  
 /// SQL statement for function matchTape2TapeDrive
 const std::string castor::db::ora::OraVdqmSvc::s_matchTape2TapeDriveStatementString =
-  "BEGIN testMatchTape2TapeDrive(:1, :2); END;";        
+  "BEGIN matchTape2TapeDrive(:1, :2); END;";        
   
 
 // -----------------------------------------------------------------------
@@ -146,7 +155,9 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   m_selectDeviceGroupNameStatement(0),
   m_selectTapeRequestQueueStatement(0),
   m_selectTapeDriveQueueStatement(0),
-  m_matchTape2TapeDriveStatement(0) {
+  m_matchTape2TapeDriveStatement(0),
+  m_selectCompatibilitiesForDriveModelStatement(0),
+  m_selectTapeAccessSpecificationsStatement(0) {
 }
 
 
@@ -193,6 +204,8 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
     deleteStatement(m_selectTapeRequestQueueStatement);
     deleteStatement(m_selectTapeDriveQueueStatement);
     deleteStatement(m_matchTape2TapeDriveStatement);
+    deleteStatement(m_selectCompatibilitiesForDriveModelStatement);
+    deleteStatement(m_selectTapeAccessSpecificationsStatement);
   } catch (oracle::occi::SQLException e) {};
   
   // Now reset all pointers to 0
@@ -210,6 +223,8 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   m_selectTapeRequestQueueStatement = 0;
   m_selectTapeDriveQueueStatement = 0;
   m_matchTape2TapeDriveStatement = 0;
+  m_selectCompatibilitiesForDriveModelStatement = 0;
+  m_selectTapeAccessSpecificationsStatement = 0;
 }
 
 
@@ -1183,4 +1198,187 @@ void castor::db::ora::OraVdqmSvc::matchTape2TapeDrive (
       << std::endl << e.getMessage();
     throw ex;
   }
+}
+
+// -----------------------------------------------------------------------
+// selectCompatibilitiesForDriveModel
+// -----------------------------------------------------------------------
+std::vector<castor::vdqm::TapeDriveCompatibility*>* 
+  castor::db::ora::OraVdqmSvc::selectCompatibilitiesForDriveModel(
+  const std::string tapeDriveModel)
+	throw (castor::exception::Exception) {
+	
+	//The result from the select statement
+	oracle::occi::ResultSet *rset;
+	// Execute statement and get result
+  u_signed64 id;
+	
+  // Check whether the statements are ok
+  if (0 == m_selectCompatibilitiesForDriveModelStatement) {
+    m_selectCompatibilitiesForDriveModelStatement = createStatement(
+    	s_selectCompatibilitiesForDriveModelStatementString);
+  }
+ 
+  try {
+    m_selectCompatibilitiesForDriveModelStatement->setString(1, tapeDriveModel);
+    oracle::occi::ResultSet *rset = 
+    	m_selectCompatibilitiesForDriveModelStatement->executeQuery();
+    
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      m_selectCompatibilitiesForDriveModelStatement->closeResultSet(rset);
+      // we found nothing, so let's return NULL
+      
+      return NULL;
+    }
+    
+    // If we reach this point, then we selected successfully
+    // a TapeDriveCompatibility object and it's id is in rset
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select TapeDriveCompatibility by tapeDriveModel :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+  
+  // Now get the TapeDriveCompatibility from its id
+  std::vector<castor::vdqm::TapeDriveCompatibility*>* result;
+  try {
+    castor::BaseAddress ad;
+    ad.setCnvSvcName("DbCnvSvc");
+    ad.setCnvSvcType(castor::SVC_DBCNV);
+    
+ 	  // create result
+	  result = new std::vector<castor::vdqm::TapeDriveCompatibility*>; 
+    castor::vdqm::TapeDriveCompatibility* driveCompatibility = NULL;
+    
+    do {
+    	id = (u_signed64)rset->getDouble(1);
+	    ad.setTarget(id);
+	    castor::IObject* obj = cnvSvc()->createObj(&ad);
+	    driveCompatibility =
+	      dynamic_cast<castor::vdqm::TapeDriveCompatibility*> (obj);
+	    
+	    if (0 == driveCompatibility) {
+	      castor::exception::Internal e;
+	      e.getMessage() << "createObj return unexpected type "
+	                     << obj->type() << " for id " << id;
+	      delete obj;
+	      obj = 0;
+	      throw e;
+	    }
+	    
+			result->push_back(driveCompatibility);
+    } while (oracle::occi::ResultSet::END_OF_FETCH != rset->next());
+    
+		m_selectCompatibilitiesForDriveModelStatement->closeResultSet(rset);
+		return result;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select TapeDriveCompatibility for id " << id  << " :"
+      << std::endl << e.getMessage();
+      
+    for (unsigned int i = 0; i < result->size(); i++) {
+    	delete (*result)[i];
+  	}
+  	result->clear();
+    delete result;
+    result = 0;
+      
+    throw ex;
+  }
+  // We should never reach this point 
+}
+
+
+// -----------------------------------------------------------------------
+// selectTapeAccessSpecifications
+// -----------------------------------------------------------------------
+std::vector<castor::vdqm::TapeAccessSpecification*>*
+	castor::db::ora::OraVdqmSvc::selectTapeAccessSpecifications(
+	const std::string tapeModel)
+	throw (castor::exception::Exception) {
+	
+	//The result from the select statement
+	oracle::occi::ResultSet *rset;
+	// Execute statement and get result
+  u_signed64 id;
+	
+  // Check whether the statements are ok
+  if (0 == m_selectTapeAccessSpecificationsStatement) {
+    m_selectTapeAccessSpecificationsStatement = createStatement(
+    	s_selectTapeAccessSpecificationsStatementString);
+  }
+ 
+  try {
+    m_selectTapeAccessSpecificationsStatement->setString(1, tapeModel);
+    oracle::occi::ResultSet *rset = 
+    	m_selectTapeAccessSpecificationsStatement->executeQuery();
+    
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      m_selectTapeAccessSpecificationsStatement->closeResultSet(rset);
+      // we found nothing, so let's return NULL
+      
+      return NULL;
+    }
+    
+    // If we reach this point, then we selected successfully
+    // a TapeAccessSpecification object and it's id is in rset
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select TapeAccessSpecification by tapeModel :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+  
+  // Now get the TapeAccessSpecification from its id
+  std::vector<castor::vdqm::TapeAccessSpecification*>* result;
+  try {
+    castor::BaseAddress ad;
+    ad.setCnvSvcName("DbCnvSvc");
+    ad.setCnvSvcType(castor::SVC_DBCNV);
+    
+ 	  // create result
+	  result = new std::vector<castor::vdqm::TapeAccessSpecification*>; 
+    castor::vdqm::TapeAccessSpecification* tapeAccessSpec = NULL;
+    
+    do {
+    	id = (u_signed64)rset->getDouble(1);
+	    ad.setTarget(id);
+	    castor::IObject* obj = cnvSvc()->createObj(&ad);
+	    tapeAccessSpec = 
+	    	dynamic_cast<castor::vdqm::TapeAccessSpecification*> (obj);
+	    
+	    if (0 == tapeAccessSpec) {
+	      castor::exception::Internal e;
+	      e.getMessage() << "createObj return unexpected type "
+	                     << obj->type() << " for id " << id;
+	      delete obj;
+	      obj = 0;
+	      throw e;
+	    }
+	    
+			result->push_back(tapeAccessSpec);
+    } while (oracle::occi::ResultSet::END_OF_FETCH != rset->next());
+    
+		m_selectTapeAccessSpecificationsStatement->closeResultSet(rset);
+		return result;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select TapeAccessSpecification for id " << id  << " :"
+      << std::endl << e.getMessage();
+      
+    for (unsigned int i = 0; i < result->size(); i++) {
+    	delete (*result)[i];
+  	}
+  	result->clear();
+    delete result;
+    result = 0;
+      
+    throw ex;
+  }
+  // We should never reach this point
 }

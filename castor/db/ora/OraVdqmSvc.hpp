@@ -44,6 +44,7 @@ namespace castor {
   class stager::Tape;
   class vdqm::DeviceGroupName;
   class vdqm::TapeAccessSpecification;
+  class vdqm::TapeDriveCompatibility;
 	class vdqm::TapeRequest;
 	class vdqm::TapeDrive;
 	class vdqm::TapeServer;
@@ -187,7 +188,34 @@ namespace castor {
 					virtual std::vector<castor::vdqm::TapeDrive*>* selectTapeDriveQueue(
 						const std::string dgn, 
 						const std::string requestedSrv)
-		    		throw (castor::exception::Exception);		    		    		
+		    		throw (castor::exception::Exception);		 
+		    		
+		    	/**
+		    	 * Selects from the TapeDriveCompatibility table all entries for the
+		    	 * specified drive model.
+		    	 * 
+		    	 * @param tapeDriveModel The model of the tape drive
+		    	 * @exception Exception in case of error (DB problem, no mounted Tape, 
+					 * etc...)	
+					 * @return All entries in the table for the selected drive model
+		    	 */
+		    	virtual std::vector<castor::vdqm::TapeDriveCompatibility*>* 
+		    		selectCompatibilitiesForDriveModel(const std::string tapeDriveModel)
+		    		throw (castor::exception::Exception);
+		    	
+		    	/**
+		    	 * Selects from the TapeAccessSpecification table all entries for the
+		    	 * specified tape model.
+		    	 * 
+		    	 * @param tapeModel The model of the tape
+		    	 * @exception Exception in case of error (DB problem, no mounted Tape, 
+					 * etc...)	
+					 * @return All entries in the table for the selected tape model. The 
+					 * list is sorted by accessMode (first write, then read)
+		    	 */	
+		    	virtual std::vector<castor::vdqm::TapeAccessSpecification*>*
+		    		selectTapeAccessSpecifications(const std::string tapeModel)
+		    		throw (castor::exception::Exception);		    		   		    		
 		    		
 //------------------ function for TapeRequestDedicationHandler -----------------
 
@@ -356,7 +384,19 @@ namespace castor {
 	        static const std::string s_matchTape2TapeDriveStatementString;
 	
 	        /// SQL statement object for function matchTape2TapeDrive
-	        oracle::occi::Statement *m_matchTape2TapeDriveStatement;	        	        	        	        	        	        
+	        oracle::occi::Statement *m_matchTape2TapeDriveStatement;
+	        
+ 	        /// SQL statement for function selectCompatibilitiesForDriveModel
+	        static const std::string s_selectCompatibilitiesForDriveModelStatementString;
+	
+	        /// SQL statement object for function selectCompatibilitiesForDriveModel
+	        oracle::occi::Statement *m_selectCompatibilitiesForDriveModelStatement;
+	        
+	        /// SQL statement for function selectTapeAccessSpecifications
+	        static const std::string s_selectTapeAccessSpecificationsStatementString;
+	
+	        /// SQL statement object for function selectTapeAccessSpecifications
+	        oracle::occi::Statement *m_selectTapeAccessSpecificationsStatement;
 			};
 		}
 	}
