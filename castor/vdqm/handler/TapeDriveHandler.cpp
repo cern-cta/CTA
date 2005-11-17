@@ -1092,16 +1092,17 @@ void castor::vdqm::handler::TapeDriveHandler::handleTapeDriveCompatibilities(
 		priorityLevel = 0;
 		std::vector<castor::vdqm::TapeDriveCompatibility*> tapeDriveCompatibilityVector = 
 			newTapeDrive->tapeDriveCompatibilities();
-	  // Let's change the WRITE_ENABLE priority...
+	  // Let's change the WRITE_ENABLE priority to 0;
 	  for (i = 0; i < tapeDriveCompatibilityVector.size(); i++) {
 	    if ( tapeDriveCompatibilityVector[i]->tapeAccessSpecification()->accessMode() == WRITE_ENABLE ) {
-	    	tapeDriveCompatibilityVector[i]->setPriorityLevel(priorityLevel++);
+	    	tapeDriveCompatibilityVector[i]->setPriorityLevel(priorityLevel);
 	    }
 	  } 
-	  // ... and then WRITE_DISABLE priority
+	  // ... and then WRITE_DISABLE priority to 1;
+	  priorityLevel++;
 	  for (i = 0; i < tapeDriveCompatibilityVector.size(); i++) {
 	    if ( tapeDriveCompatibilityVector[i]->tapeAccessSpecification()->accessMode() == WRITE_DISABLE ) {
-	    	tapeDriveCompatibilityVector[i]->setPriorityLevel(priorityLevel++);
+	    	tapeDriveCompatibilityVector[i]->setPriorityLevel(priorityLevel);
 	    }
 	  } 
 	} 
