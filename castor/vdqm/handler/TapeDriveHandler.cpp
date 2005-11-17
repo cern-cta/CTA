@@ -1055,19 +1055,21 @@ void castor::vdqm::handler::TapeDriveHandler::handleTapeDriveCompatibilities(
 			tapeAccessSpecs =
 				ptr_IVdqmService->selectTapeAccessSpecifications(dgnmap->model);
 			
-			/**
-			 * Add for each found specification an entry in the tapeDriveCompatibility
-			 * vector. Later, we will set then right priority order
-			 */
-			for (i = 0; i < tapeAccessSpecs->size(); i++) {
-				driveCompatibility = new castor::vdqm::TapeDriveCompatibility();
-		    driveCompatibility->setPriorityLevel(priorityLevel++); //Highest Priority = 0
-		    driveCompatibility->setTapeDriveModel(driveModel);
-		    driveCompatibility->setTapeAccessSpecification((*tapeAccessSpecs)[i]);
-		    newTapeDrive->addTapeDriveCompatibilities(driveCompatibility);
-		  }
-		  delete tapeAccessSpecs;
-		  tapeAccessSpecs = 0;
+			if ( tapeAccessSpecs != NULL) {
+				/**
+				 * Add for each found specification an entry in the tapeDriveCompatibility
+				 * vector. Later, we will set then right priority order
+				 */
+				for (i = 0; i < tapeAccessSpecs->size(); i++) {
+					driveCompatibility = new castor::vdqm::TapeDriveCompatibility();
+			    driveCompatibility->setPriorityLevel(priorityLevel++); //Highest Priority = 0
+			    driveCompatibility->setTapeDriveModel(driveModel);
+			    driveCompatibility->setTapeAccessSpecification((*tapeAccessSpecs)[i]);
+			    newTapeDrive->addTapeDriveCompatibilities(driveCompatibility);
+			  }
+			  delete tapeAccessSpecs;
+			  tapeAccessSpecs = 0;
+			}
 		}
 		
 		flags = VMGR_LIST_CONTINUE;
