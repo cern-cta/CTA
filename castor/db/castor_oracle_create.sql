@@ -2413,7 +2413,7 @@ END;
  * specific tapeDrive. The tape Request are then orderd by the priorityLevel (for 
  * the new way) and by the modification time.
  * Returns 1 if a couple was found, 0 otherwise.
- */  
+ *  
 CREATE OR REPLACE PROCEDURE matchTape2TapeDrive
  (tapeDriveID OUT NUMBER, tapeRequestID OUT NUMBER) AS
 BEGIN
@@ -2442,9 +2442,21 @@ BEGIN
     tapeDriveID := 0;
     tapeRequestID := 0;
 END;
+*/
 
 
-CREATE OR REPLACE PROCEDURE testMatchTape2TapeDrive
+/**
+ * This is the main select statement to dedicate a tape to a tape drive.
+ * It respects the old and of course the new way to select a tape for a 
+ * tape drive.
+ * The old way is to look, if the tapeDrive and the tapeRequest have the same
+ * dgn.
+ * The new way is to look if the TapeAccessSpecification can be served by a 
+ * specific tapeDrive. The tape Request are then orderd by the priorityLevel (for 
+ * the new way) and by the modification time.
+ * Returns 1 if a couple was found, 0 otherwise.
+ */
+CREATE OR REPLACE PROCEDURE matchTape2TapeDrive
  (tapeDriveID OUT NUMBER, tapeRequestID OUT NUMBER) AS
 BEGIN
   SELECT TapeDrive.id, TapeRequest.id INTO tapeDriveID, tapeRequestID

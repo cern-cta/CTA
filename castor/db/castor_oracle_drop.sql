@@ -286,6 +286,6 @@ DROP PROCEDURE userTagStageQuery;
 DROP PROCEDURE reqIdLastRecallsStageQuery;
 DROP PROCEDURE userTagLastRecallsStageQuery;
 DROP PROCEDURE matchTape2TapeDrive;
-DROP PROCEDURE testMatchTape2TapeDrive;
+DROP PROCEDURE matchTape2TapeDrive;
 DROP PROCEDURE selectTapeRequestQueue;
 DROP PROCEDURE selectTapeDriveQueue;
