@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DlfMsgSvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/07/12 14:19:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DlfMsgSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/11/18 16:54:04 $ $Author: sponcec3 $
  *
  * A message service writing into DLF
  *
@@ -36,8 +36,8 @@
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
-static castor::SvcFactory<castor::DlfMsgSvc> s_factoryDlfMsgSvc;
-const castor::IFactory<castor::IService>& DlfMsgSvcFactory = s_factoryDlfMsgSvc;
+static castor::SvcFactory<castor::DlfMsgSvc>* s_factoryDlfMsgSvc =
+  new castor::SvcFactory<castor::DlfMsgSvc>();
 
 // -----------------------------------------------------------------------
 // Constructor

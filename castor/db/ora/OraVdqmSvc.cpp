@@ -52,10 +52,8 @@
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
-static castor::SvcFactory<castor::db::ora::OraVdqmSvc> s_factoryOraVdqmSvc;
-const castor::IFactory<castor::IService>&
-OraVdqmSvcFactory = s_factoryOraVdqmSvc;
-
+static castor::SvcFactory<castor::db::ora::OraVdqmSvc>* s_factoryOraVdqmSvc =
+  new castor::SvcFactory<castor::db::ora::OraVdqmSvc>();
 
 //------------------------------------------------------------------------------
 // Static constants initialization

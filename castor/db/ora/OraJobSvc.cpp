@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/09/05 12:53:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/11/18 16:54:04 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -86,9 +86,8 @@
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
-static castor::SvcFactory<castor::db::ora::OraJobSvc> s_factoryOraJobSvc;
-const castor::IFactory<castor::IService>&
-OraJobSvcFactory = s_factoryOraJobSvc;
+static castor::SvcFactory<castor::db::ora::OraJobSvc>* s_factoryOraJobSvc =
+  new castor::SvcFactory<castor::db::ora::OraJobSvc>();
 
 //------------------------------------------------------------------------------
 // Static constants initialization

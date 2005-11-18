@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbCommonSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/09/19 14:41:50 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DbCommonSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/11/18 16:54:04 $ $Author: sponcec3 $
  *
  * Implementation of the ICommonSvc for CDBC
  *
@@ -87,9 +87,8 @@
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
-static castor::SvcFactory<castor::db::DbCommonSvc> s_factoryDbCommonSvc;
-const castor::IFactory<castor::IService>&
-DbCommonSvcFactory = s_factoryDbCommonSvc;
+static castor::SvcFactory<castor::db::DbCommonSvc>* s_factoryDbCommonSvc =
+  new castor::SvcFactory<castor::db::DbCommonSvc>();
 
 //------------------------------------------------------------------------------
 // Static constants initialization

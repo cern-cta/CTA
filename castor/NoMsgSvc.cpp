@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NoMsgSvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/07/12 14:19:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: NoMsgSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/11/18 16:54:04 $ $Author: sponcec3 $
  *
  * A message service writing nowhere
  *
@@ -35,8 +35,8 @@
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
-static castor::SvcFactory<castor::NoMsgSvc> s_factoryNoMsgSvc;
-const castor::IFactory<castor::IService>& NoMsgSvcFactory = s_factoryNoMsgSvc;
+static castor::SvcFactory<castor::NoMsgSvc>* s_factoryNoMsgSvc =
+  new castor::SvcFactory<castor::NoMsgSvc>();
 
 // -----------------------------------------------------------------------
 // Constructor

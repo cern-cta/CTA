@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2005/11/11 10:32:26 $ $Author: itglp $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2005/11/18 16:54:04 $ $Author: sponcec3 $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -42,9 +42,8 @@
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
-static castor::SvcFactory<castor::db::ora::OraQuerySvc> s_factoryOraQuerySvc;
-const castor::IFactory<castor::IService>&
-OraQuerySvcFactory = s_factoryOraQuerySvc;
+static castor::SvcFactory<castor::db::ora::OraQuerySvc>* s_factoryOraQuerySvc =
+  new castor::SvcFactory<castor::db::ora::OraQuerySvc>();
 
 //------------------------------------------------------------------------------
 // Static constants initialization

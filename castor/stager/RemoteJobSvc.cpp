@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/09/05 12:54:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/11/18 16:54:05 $ $Author: sponcec3 $
  *
  *
  *
@@ -74,10 +74,8 @@ const int   castor::stager::DEFAULT_REMOTEJOBSVC_TIMEOUT = 1800;
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
-static castor::SvcFactory<castor::stager::RemoteJobSvc>
-s_factoryRemoteJobSvc;
-const castor::IFactory<castor::IService>&
-RemoteJobSvcFactory = s_factoryRemoteJobSvc;
+static castor::SvcFactory<castor::stager::RemoteJobSvc>* s_factoryRemoteJobSvc =
+  new castor::SvcFactory<castor::stager::RemoteJobSvc>();
 
 // -----------------------------------------------------------------------
 // RemoteJobSvc

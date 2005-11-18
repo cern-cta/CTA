@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)OraTapeSvc.cpp,v 1.2 $Release$ 2005/08/03 17:05:53 itglp
+ * @(#)OraTapeSvc.cpp,v 1.3 $Release$ 2005/11/18 16:54:04 sponcec3
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -86,9 +86,8 @@
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
-static castor::SvcFactory<castor::db::ora::OraTapeSvc> s_factoryOraTapeSvc;
-const castor::IFactory<castor::IService>&
-OraTapeSvcFactory = s_factoryOraTapeSvc;
+static castor::SvcFactory<castor::db::ora::OraTapeSvc>* s_factoryOraTapeSvc =
+  new castor::SvcFactory<castor::db::ora::OraTapeSvc>();
 
 //------------------------------------------------------------------------------
 // Static constants initialization

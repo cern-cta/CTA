@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2005/10/17 14:25:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2005/11/18 16:54:04 $ $Author: sponcec3 $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -87,9 +87,8 @@
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
-static castor::SvcFactory<castor::db::ora::OraGCSvc> s_factoryOraGCSvc;
-const castor::IFactory<castor::IService>&
-OraGCSvcFactory = s_factoryOraGCSvc;
+static castor::SvcFactory<castor::db::ora::OraGCSvc>* s_factoryOraGCSvc =
+  new castor::SvcFactory<castor::db::ora::OraGCSvc>();
 
 //------------------------------------------------------------------------------
 // Static constants initialization

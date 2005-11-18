@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraFSSvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/07/07 15:08:21 $ $Author: itglp $
+ * @(#)$RCSfile: OraFSSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/11/18 16:54:04 $ $Author: sponcec3 $
  *
  * Implementation of the IFSSvc for Oracle
  *
@@ -86,9 +86,8 @@
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
-static castor::SvcFactory<castor::db::ora::OraFSSvc> s_factoryOraFSSvc;
-const castor::IFactory<castor::IService>&
-OraFSSvcFactory = s_factoryOraFSSvc;
+static castor::SvcFactory<castor::db::ora::OraFSSvc>* s_factoryOraFSSvc =
+  new castor::SvcFactory<castor::db::ora::OraFSSvc>();
 
 //------------------------------------------------------------------------------
 // Static constants initialization

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.176 $ $Release$ $Date: 2005/10/20 12:40:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.177 $ $Release$ $Date: 2005/11/18 16:54:04 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -86,9 +86,8 @@
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
-static castor::SvcFactory<castor::db::ora::OraStagerSvc> s_factoryOraStagerSvc;
-const castor::IFactory<castor::IService>&
-OraStagerSvcFactory = s_factoryOraStagerSvc;
+static castor::SvcFactory<castor::db::ora::OraStagerSvc>* s_factoryOraStagerSvc =
+  new castor::SvcFactory<castor::db::ora::OraStagerSvc>();
 
 //------------------------------------------------------------------------------
 // Static constants initialization
