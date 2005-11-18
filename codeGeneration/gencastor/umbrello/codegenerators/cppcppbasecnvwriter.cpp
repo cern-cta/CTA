@@ -21,25 +21,24 @@ CppCppBaseCnvWriter::CppCppBaseCnvWriter(UMLDoc *parent, const char *name) :
 // writeFactory
 //=============================================================================
 void CppCppBaseCnvWriter::writeFactory() {
-  writeWideHeaderComment("Instantiation of a static factory class",
-                         getIndent(),
-                         *m_stream);
+  writeWideHeaderComment
+    ("Instantiation of a static factory class - should never be used",
+     getIndent(),
+     *m_stream);
   *m_stream << getIndent() << "static "
             << fixTypeName("CnvFactory",
                            "castor",
                            m_classInfo->packageName)
             << "<" << m_classInfo->fullPackageName << m_prefix
-            << m_classInfo->className << "Cnv> s_factory"
+            << m_classInfo->className << "Cnv>* s_factory"
             << m_prefix
-            << m_classInfo->className << "Cnv;" << endl
-            << getIndent() << "const "
-            << fixTypeName("ICnvFactory",
+            << m_classInfo->className << "Cnv =" << endl
+            << getIndent() << "  new "
+            << fixTypeName("CnvFactory",
                            "castor",
                            m_classInfo->packageName)
-            << "& " << m_prefix << m_classInfo->className
-            << "CnvFactory = " << endl << getIndent()
-            << "  s_factory" << m_prefix << m_classInfo->className
-            << "Cnv;" << endl << endl;
+            << "<" << m_classInfo->fullPackageName << m_prefix
+            << m_classInfo->className << "Cnv>();" << endl << endl;
 }
 
 
