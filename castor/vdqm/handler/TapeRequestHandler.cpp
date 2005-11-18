@@ -359,15 +359,21 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 	   */
 	  rowNumber = ptr_IVdqmService->checkTapeRequest(tapeReq);
 	  if ( rowNumber == -1 ) {
-	  	delete tapeReq;
-	  	tapeReq = 0;
-	  	
-	    castor::exception::Internal ex;
-	    ex.getMessage() << "Can't delete TapeRequest with ID = " 
-	    								<< volumeRequest->VolReqID
-	    								<< ".The entry does not exist in the DB!" 
-	    								<< std::endl;
-	    throw ex;
+//	  	delete tapeReq;
+//	  	tapeReq = 0;
+//	  	
+//	    castor::exception::Internal ex;
+//	    ex.getMessage() << "Can't delete TapeRequest with ID = " 
+//	    								<< volumeRequest->VolReqID
+//	    								<< ".The entry does not exist in the DB!" 
+//	    								<< std::endl;
+//	    throw ex;
+//	    
+	    //"Couldn't find the tape request in db. Maybe it is already deleted?" message
+	    castor::dlf::Param params[] =
+		  	{castor::dlf::Param("tapeRequest ID", volumeRequest->VolReqID),
+		     castor::dlf::Param("function", "castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest()")};
+		  castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 67, 2, params);
 	  }
 	  else if ( rowNumber == 0 ) {
 	  	// If we are here, the TapeRequest is already assigned to a TapeDrive
