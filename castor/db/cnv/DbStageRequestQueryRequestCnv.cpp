@@ -33,7 +33,6 @@
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IClient.hpp"
-#include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/db/DbCnvSvc.hpp"
@@ -48,11 +47,10 @@
 #include <vector>
 
 //------------------------------------------------------------------------------
-// Instantiation of a static factory class
+// Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::db::cnv::DbStageRequestQueryRequestCnv> s_factoryDbStageRequestQueryRequestCnv;
-const castor::ICnvFactory& DbStageRequestQueryRequestCnvFactory = 
-  s_factoryDbStageRequestQueryRequestCnv;
+static castor::CnvFactory<castor::db::cnv::DbStageRequestQueryRequestCnv>* s_factoryDbStageRequestQueryRequestCnv =
+  new castor::CnvFactory<castor::db::cnv::DbStageRequestQueryRequestCnv>();
 
 //------------------------------------------------------------------------------
 // Static constants initialization

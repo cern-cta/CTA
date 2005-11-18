@@ -31,7 +31,6 @@
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
-#include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectCatalog.hpp"
@@ -48,11 +47,10 @@
 #include <vector>
 
 //------------------------------------------------------------------------------
-// Instantiation of a static factory class
+// Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamTapePoolCnv> s_factoryStreamTapePoolCnv;
-const castor::ICnvFactory& StreamTapePoolCnvFactory = 
-  s_factoryStreamTapePoolCnv;
+static castor::CnvFactory<castor::io::StreamTapePoolCnv>* s_factoryStreamTapePoolCnv =
+  new castor::CnvFactory<castor::io::StreamTapePoolCnv>();
 
 //------------------------------------------------------------------------------
 // Constructor

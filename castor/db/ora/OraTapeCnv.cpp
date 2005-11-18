@@ -32,7 +32,6 @@
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
-#include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
@@ -49,11 +48,10 @@
 #include <vector>
 
 //------------------------------------------------------------------------------
-// Instantiation of a static factory class
+// Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::db::ora::OraTapeCnv> s_factoryOraTapeCnv;
-const castor::ICnvFactory& OraTapeCnvFactory = 
-  s_factoryOraTapeCnv;
+static castor::CnvFactory<castor::db::ora::OraTapeCnv>* s_factoryOraTapeCnv =
+  new castor::CnvFactory<castor::db::ora::OraTapeCnv>();
 
 //------------------------------------------------------------------------------
 // Static constants initialization

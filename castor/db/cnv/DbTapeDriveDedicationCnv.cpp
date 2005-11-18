@@ -32,7 +32,6 @@
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
-#include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/db/DbCnvSvc.hpp"
@@ -44,11 +43,10 @@
 #include "castor/vdqm/TapeDriveDedication.hpp"
 
 //------------------------------------------------------------------------------
-// Instantiation of a static factory class
+// Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::db::cnv::DbTapeDriveDedicationCnv> s_factoryDbTapeDriveDedicationCnv;
-const castor::ICnvFactory& DbTapeDriveDedicationCnvFactory = 
-  s_factoryDbTapeDriveDedicationCnv;
+static castor::CnvFactory<castor::db::cnv::DbTapeDriveDedicationCnv>* s_factoryDbTapeDriveDedicationCnv =
+  new castor::CnvFactory<castor::db::cnv::DbTapeDriveDedicationCnv>();
 
 //------------------------------------------------------------------------------
 // Static constants initialization

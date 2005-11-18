@@ -33,7 +33,6 @@
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IClient.hpp"
-#include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/db/DbCnvSvc.hpp"
@@ -45,11 +44,10 @@
 #include "castor/stager/SvcClass.hpp"
 
 //------------------------------------------------------------------------------
-// Instantiation of a static factory class
+// Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv> s_factoryDbDisk2DiskCopyDoneRequestCnv;
-const castor::ICnvFactory& DbDisk2DiskCopyDoneRequestCnvFactory = 
-  s_factoryDbDisk2DiskCopyDoneRequestCnv;
+static castor::CnvFactory<castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv>* s_factoryDbDisk2DiskCopyDoneRequestCnv =
+  new castor::CnvFactory<castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv>();
 
 //------------------------------------------------------------------------------
 // Static constants initialization

@@ -31,7 +31,6 @@
 #include "castor/BaseAddress.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/IAddress.hpp"
-#include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/db/DbCnvSvc.hpp"
@@ -41,11 +40,10 @@
 #include "castor/exception/NoEntry.hpp"
 
 //------------------------------------------------------------------------------
-// Instantiation of a static factory class
+// Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::db::cnv::DbBaseAddressCnv> s_factoryDbBaseAddressCnv;
-const castor::ICnvFactory& DbBaseAddressCnvFactory = 
-  s_factoryDbBaseAddressCnv;
+static castor::CnvFactory<castor::db::cnv::DbBaseAddressCnv>* s_factoryDbBaseAddressCnv =
+  new castor::CnvFactory<castor::db::cnv::DbBaseAddressCnv>();
 
 //------------------------------------------------------------------------------
 // Static constants initialization

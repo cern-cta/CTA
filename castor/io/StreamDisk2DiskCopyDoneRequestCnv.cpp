@@ -32,7 +32,6 @@
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IClient.hpp"
-#include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectCatalog.hpp"
@@ -47,11 +46,10 @@
 #include <string>
 
 //------------------------------------------------------------------------------
-// Instantiation of a static factory class
+// Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamDisk2DiskCopyDoneRequestCnv> s_factoryStreamDisk2DiskCopyDoneRequestCnv;
-const castor::ICnvFactory& StreamDisk2DiskCopyDoneRequestCnvFactory = 
-  s_factoryStreamDisk2DiskCopyDoneRequestCnv;
+static castor::CnvFactory<castor::io::StreamDisk2DiskCopyDoneRequestCnv>* s_factoryStreamDisk2DiskCopyDoneRequestCnv =
+  new castor::CnvFactory<castor::io::StreamDisk2DiskCopyDoneRequestCnv>();
 
 //------------------------------------------------------------------------------
 // Constructor

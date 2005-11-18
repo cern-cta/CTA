@@ -32,7 +32,6 @@
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
-#include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
@@ -49,11 +48,10 @@
 #include "castor/vdqm/TapeServer.hpp"
 
 //------------------------------------------------------------------------------
-// Instantiation of a static factory class
+// Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::db::ora::OraTapeRequestCnv> s_factoryOraTapeRequestCnv;
-const castor::ICnvFactory& OraTapeRequestCnvFactory = 
-  s_factoryOraTapeRequestCnv;
+static castor::CnvFactory<castor::db::ora::OraTapeRequestCnv>* s_factoryOraTapeRequestCnv =
+  new castor::CnvFactory<castor::db::ora::OraTapeRequestCnv>();
 
 //------------------------------------------------------------------------------
 // Static constants initialization

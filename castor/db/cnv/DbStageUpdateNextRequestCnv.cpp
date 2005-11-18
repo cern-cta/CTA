@@ -33,7 +33,6 @@
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IClient.hpp"
-#include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/db/DbCnvSvc.hpp"
@@ -46,11 +45,10 @@
 #include "castor/stager/SvcClass.hpp"
 
 //------------------------------------------------------------------------------
-// Instantiation of a static factory class
+// Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::db::cnv::DbStageUpdateNextRequestCnv> s_factoryDbStageUpdateNextRequestCnv;
-const castor::ICnvFactory& DbStageUpdateNextRequestCnvFactory = 
-  s_factoryDbStageUpdateNextRequestCnv;
+static castor::CnvFactory<castor::db::cnv::DbStageUpdateNextRequestCnv>* s_factoryDbStageUpdateNextRequestCnv =
+  new castor::CnvFactory<castor::db::cnv::DbStageUpdateNextRequestCnv>();
 
 //------------------------------------------------------------------------------
 // Static constants initialization

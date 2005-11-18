@@ -32,7 +32,6 @@
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
-#include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/db/DbCnvSvc.hpp"
@@ -45,11 +44,10 @@
 #include "castor/stager/RequestQueryType.hpp"
 
 //------------------------------------------------------------------------------
-// Instantiation of a static factory class
+// Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::db::cnv::DbQueryParameterCnv> s_factoryDbQueryParameterCnv;
-const castor::ICnvFactory& DbQueryParameterCnvFactory = 
-  s_factoryDbQueryParameterCnv;
+static castor::CnvFactory<castor::db::cnv::DbQueryParameterCnv>* s_factoryDbQueryParameterCnv =
+  new castor::CnvFactory<castor::db::cnv::DbQueryParameterCnv>();
 
 //------------------------------------------------------------------------------
 // Static constants initialization

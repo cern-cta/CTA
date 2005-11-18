@@ -31,7 +31,6 @@
 #include "castor/BaseAddress.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/IAddress.hpp"
-#include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
@@ -42,11 +41,10 @@
 #include "castor/vdqm/DeviceGroupName.hpp"
 
 //------------------------------------------------------------------------------
-// Instantiation of a static factory class
+// Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::db::ora::OraDeviceGroupNameCnv> s_factoryOraDeviceGroupNameCnv;
-const castor::ICnvFactory& OraDeviceGroupNameCnvFactory = 
-  s_factoryOraDeviceGroupNameCnv;
+static castor::CnvFactory<castor::db::ora::OraDeviceGroupNameCnv>* s_factoryOraDeviceGroupNameCnv =
+  new castor::CnvFactory<castor::db::ora::OraDeviceGroupNameCnv>();
 
 //------------------------------------------------------------------------------
 // Static constants initialization
