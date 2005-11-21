@@ -310,25 +310,22 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 	
 	// Get the tapeReq from its id
 	try {
-    ad.setTarget(volumeRequest->VolReqID);
-    ad.setCnvSvcName("DbCnvSvc");
-    ad.setCnvSvcType(castor::SVC_DBCNV);
+    tapeReq = ptr_IVdqmService->selectTapeRequest(volumeRequest->VolReqID);
     
-    castor::IObject* obj = svcs()->createObj(&ad);
-    
-    tapeReq = dynamic_cast<TapeRequest*> (obj);
-    if (0 == tapeReq) {
-      castor::exception::Internal e;
-      e.getMessage() << "createObj return unexpected type "
-                     << obj->type() << " for id " << volumeRequest->VolReqID;
-      delete obj;
-      throw e;
+    if ( tapeReq == NULL ) {
+    	/**
+	     * If we don't find the tapeRequest in the db it is normally not a big deal,
+	     * because the assigned tape drive has probably already finished the transfer.
+	     */
+	    
+	    //"Couldn't find the tape request in db. Maybe it is already deleted?" message
+	    castor::dlf::Param params[] =
+		  	{castor::dlf::Param("tapeRequest ID", volumeRequest->VolReqID),
+		     castor::dlf::Param("function", "castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest()")};
+		  castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 67, 2, params);
+		  
+		  return;
     }
-    
-    //Now we get the foreign ClientIdentification object
-    svcs()->fillObj(&ad, obj, castor::OBJ_ClientIdentification);
-    
-    obj = 0;
   } catch (castor::exception::Exception e) {
     /**
      * If we don't find the tapeRequest in the db it is normally not a big deal,
@@ -338,7 +335,8 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
     //"Couldn't find the tape request in db. Maybe it is already deleted?" message
     castor::dlf::Param params[] =
 	  	{castor::dlf::Param("tapeRequest ID", volumeRequest->VolReqID),
-	     castor::dlf::Param("function", "castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest()")};
+	     castor::dlf::Param("function", "castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest()"),
+	     castor::dlf::Param("Message", e.getMessage().str().c_str())};
 	  castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 67, 2, params);
     
     if ( tapeReq ) {
@@ -359,16 +357,6 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 	   */
 	  rowNumber = ptr_IVdqmService->checkTapeRequest(tapeReq);
 	  if ( rowNumber == -1 ) {
-//	  	delete tapeReq;
-//	  	tapeReq = 0;
-//	  	
-//	    castor::exception::Internal ex;
-//	    ex.getMessage() << "Can't delete TapeRequest with ID = " 
-//	    								<< volumeRequest->VolReqID
-//	    								<< ".The entry does not exist in the DB!" 
-//	    								<< std::endl;
-//	    throw ex;
-//	    
 	    //"Couldn't find the tape request in db. Maybe it is already deleted?" message
 	    castor::dlf::Param params[] =
 		  	{castor::dlf::Param("tapeRequest ID", volumeRequest->VolReqID),
@@ -463,13 +451,16 @@ int castor::vdqm::handler::TapeRequestHandler::getQueuePosition(
 	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 26, 1, params);
 	  
   } catch(castor::exception::Exception e) {
- 		if (tapeReq)
+ 		if (tapeReq) {
 	 		delete tapeReq;
+	 		tapeReq = 0;
+ 		}
   
     throw e;
   }
   // Delete the tapeRequest Object
   delete tapeReq;
+  tapeReq = 0;
   
   return queuePosition;
 }

@@ -117,7 +117,8 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
     
     ptr_tapeDrive->setStatus(UNIT_DOWN);
   } 
-  
+ 
+ 	//XXX: Remove VDQM_UNIT_WAITDOWN state. Seems that it is never sent! 
 	else if ( ptr_driveRequest->status & VDQM_UNIT_WAITDOWN ) {
     /*
      * Intermediate state until tape daemon confirms that
@@ -157,9 +158,6 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
 	    
       ptr_tapeDrive->setStatus(UNIT_UP);
     }
-    
-//    drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_DOWN;
-//    drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_WAITDOWN;
 
     if ( ptr_driveRequest->status == VDQM_UNIT_UP )
 			ptr_tapeDrive->setStatus(UNIT_UP);

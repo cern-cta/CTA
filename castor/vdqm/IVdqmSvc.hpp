@@ -172,7 +172,19 @@ namespace castor {
 				virtual std::vector<TapeDrive*>* selectTapeDriveQueue(
 					const std::string dgn, 
 					const std::string requestedSrv)
-	    		throw (castor::exception::Exception) = 0;	    		 	    			    			    	
+	    		throw (castor::exception::Exception) = 0;	  
+		  		 	    			    			    	
+
+				/**
+				 * Manages the casting of VolReqID, to find also tape requests, which
+				 * have an id bigger than 32 bit.
+				 * 
+				 * @param VolReqID The id, which has been sent by RTCPCopyD
+				 * @return The tape request and its ClientIdentification, or NULL
+				 * @exception in case of error
+				 */
+				virtual TapeRequest* selectTapeRequest(const int VolReqID) 
+	    		throw (castor::exception::Exception) = 0;		  		 	    			    			    	
 	 
 	    		
 //------------------ functions for TapeDriveRequestHandler ------------------
