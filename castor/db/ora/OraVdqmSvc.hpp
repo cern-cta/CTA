@@ -215,7 +215,20 @@ namespace castor {
 		    	 */	
 		    	virtual std::vector<castor::vdqm::TapeAccessSpecification*>*
 		    		selectTapeAccessSpecifications(const std::string tapeModel)
-		    		throw (castor::exception::Exception);		    		   		    		
+		    		throw (castor::exception::Exception);	
+		    		
+		    		
+		    	/**
+					 * Manages the casting of VolReqID, to find also tape requests, which
+					 * have an id bigger than 32 bit.
+					 * 
+					 * @param VolReqID The id, which has been sent by RTCPCopyD
+					 * @return The tape request and its ClientIdentification, or NULL
+					 * @exception in case of error
+					 */
+					virtual castor::vdqm::TapeRequest* selectTapeRequest(
+						const int VolReqID) 
+		    		throw (castor::exception::Exception);	    		   		    		
 		    		
 //------------------ function for TapeRequestDedicationHandler -----------------
 
@@ -397,6 +410,12 @@ namespace castor {
 	
 	        /// SQL statement object for function selectTapeAccessSpecifications
 	        oracle::occi::Statement *m_selectTapeAccessSpecificationsStatement;
+	        
+	        /// SQL statement for function selectTapeRequest
+	        static const std::string s_selectTapeRequestStatementString;
+	
+	        /// SQL statement object for function selectTapeRequest
+	        oracle::occi::Statement *m_selectTapeRequestStatement;
 			};
 		}
 	}
