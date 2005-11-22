@@ -95,49 +95,6 @@ bool castor::vdqm::OldRequestFacade::checkRequestType(Cuuid_t cuuid)
                     << std::hex << m_reqtype << "\n";
     throw ex;
   } 
-  else {
-//    rc = 0;
-//    if ( Cthread_mutex_lock_ext(hold_lock)==-1 ) {
-//    		
-//    	
-//        log(LOG_ERR,"vdqm_ProcReq() Cthread_mutex_lock_ext(): %s\n",
-//            sstrerror(serrno));
-//        return((void *)&return_status);
-//    }
-//    if ( reqtype == VDQM_SHUTDOWN ) {
-//    	  // shutdown server requested
-//				castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 3);
-//        hold = vdqm_shutdown = 1;
-//        vdqm_PipeHangup();
-//        rc = 1;
-//    }
-//    if ( reqtype == VDQM_HOLD ) {
-//        if ( !hold ) log(LOG_INFO,"vdqm_ProcReq(): set server HOLD status\n");
-//        hold = 1;
-//        rc = 1;
-//    }
-//    if ( reqtype == VDQM_RELEASE ) {
-//        if ( hold ) log(LOG_INFO,"vdqm_ProcReq(): set server RELEASE status\n");
-//        hold = 0;
-//        rc = 1;
-//    }
-//    if ( hold && reqtype != VDQM_REPLICA ) {
-//        log(LOG_INFO,"vdqm_ProcReq(): server in HOLD status\n");
-//        vdqm_SetError(EVQHOLD);
-//        rc = -1;
-//        
-//        castor::exception::Internal ex;
-//		    ex.getMessage() << "Request processing error"
-//    		                << hex << reqtype << "\n";
-//    }
-//    if ( Cthread_mutex_unlock_ext(hold_lock)==-1 ) {
-//        log(LOG_ERR,"vdqm_ProcReq() Cthread_mutex_unlock_ext(): %s\n",
-//            sstrerror(serrno));
-//        return((void *)&return_status);
-//    }
-//
-//	  vdqm_ReqStarted();
-  } // end else
   
   return true;
 }
@@ -200,15 +157,6 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
 					tapeDriveHandler.deleteTapeDrive();
     		}
         break;
-    case VDQM_DEDICATE_DRV:    
-    		if ( ptr_driveRequest == NULL )
-    			handleRequest = false;
-    		else {
-	    		// Handle VDQM_DEDICATE_DRV
-	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 53);
-					//TODO: Implementation
-    		}
-    		break;
     case VDQM_GET_VOLQUEUE:
     		// Handle VDQM_GET_VOLQUEUE
     		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 54);
@@ -260,26 +208,5 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
   			}
 	}
 	
-	
- return handleRequest;
-
-//
-//  /*
-//   * Commit failed somewhere. If it was a volume request we must
-//   * remove it since client is either dead or unreachable.
-//   */
-//  if ( rc == -1 ) {
-//     switch (reqtype) {
-//	     case VDQM_VOL_REQ:
-//	          log(LOG_INFO,"vdqm_ProcReq() remove volume request from queue\n");
-//	          (void)vdqm_DelVolReq(&volumeRequest); 
-//	          break;
-//	     case VDQM_DRV_REQ:
-//	          log(LOG_INFO,"vdqm_ProcReq() rollback drive request\n");
-//	          (void)vdqm_QueueOpRollback(NULL,&driveRequest);
-//	          break;
-//	     default:
-//	          break;
-//     }
-//  }
+	return handleRequest;
 }
