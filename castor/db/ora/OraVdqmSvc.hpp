@@ -107,17 +107,28 @@ namespace castor {
 		    		throw (castor::exception::Exception);
 		    		
 		    		
-		    	/**
+			    /**
 		    	 * Checks, if there is already an entry for that tapeRequest. The entry
-		    	 * must have exactly the same ID.	
+		    	 * must have exactly the same associations!
 		    	 * 
-		    	 * @return 0<: The row number, 
+		    	 * @return true, if the request does not exist.
+		    	 * @exception in case of error
+		    	 */
+		    	virtual bool checkTapeRequest(
+		    		const castor::vdqm::TapeRequest *newTapeRequest)
+		    		throw (castor::exception::Exception);
+		    	
+		    	
+		    	/**
+		    	 * Returns the queue position of the tape request.
+		    	 * 
+		    	 * @return The row number, 
 		    	 *         0 : The request is handled at the moment from a TapeDrive, 
 		    	 *         -1: if there is no entry for it.
 		    	 * @exception in case of error
-		    	 */
-		    	virtual int checkTapeRequest(
-		    		const castor::vdqm::TapeRequest *tapeRequest)
+		    	 */	
+		    	virtual int getQueuePosition(const 
+		    		castor::vdqm::TapeRequest *tapeRequest)
 		    		throw (castor::exception::Exception);
 
 
@@ -325,13 +336,19 @@ namespace castor {
 	        static const std::string s_checkTapeRequestStatement1String;
 	
 	        /// SQL statement object for function checkTapeRequest
-	        oracle::occi::Statement *m_checkTapeRequestStatement1; 
+	        oracle::occi::Statement *m_checkTapeRequestStatement1;
 	        
- 	        /// SQL statement for function checkTapeRequest
+	        /// SQL statement for function checkTapeRequest
 	        static const std::string s_checkTapeRequestStatement2String;
 	
 	        /// SQL statement object for function checkTapeRequest
 	        oracle::occi::Statement *m_checkTapeRequestStatement2; 
+	        
+ 	        /// SQL statement for function getQueuePosition
+	        static const std::string s_getQueuePositionStatementString;
+	
+	        /// SQL statement object for function getQueuePosition
+	        oracle::occi::Statement *m_getQueuePositionStatement; 
 	        
  	        /// SQL statement for function getFreeTapeDrive
 	        static const std::string s_selectFreeTapeDriveStatementString;

@@ -73,15 +73,26 @@ namespace castor {
 	    		
 	    	/**
 	    	 * Checks, if there is already an entry for that tapeRequest. The entry
-	    	 * must have exactly the same ID.
+	    	 * must have exactly the same associations!
 	    	 * 
-	    	 * @return 0 : The row number, 
+	    	 * @return true, if the request does not exist.
+	    	 * @exception in case of error
+	    	 */
+	    	virtual bool checkTapeRequest(const TapeRequest *newTapeRequest)
+	    		throw (castor::exception::Exception) = 0;
+	    	
+	    	
+	    	/**
+	    	 * Returns the queue position of the tape request.
+	    	 * 
+	    	 * @return The row number, 
 	    	 *         0 : The request is handled at the moment from a TapeDrive, 
 	    	 *         -1: if there is no entry for it.
 	    	 * @exception in case of error
-	    	 */
-	    	virtual int checkTapeRequest(const TapeRequest *tapeRequest)
+	    	 */	
+	    	virtual int getQueuePosition(const TapeRequest *tapeRequest)
 	    		throw (castor::exception::Exception) = 0;
+	    	
 	    	
 	    	
 	    	/**

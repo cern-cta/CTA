@@ -29,6 +29,7 @@
 #include "castor/BaseAddress.hpp"
 #include "castor/Constants.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 
 #include "castor/vdqm/TapeAccessSpecification.hpp"
@@ -62,14 +63,17 @@ static castor::SvcFactory<castor::db::ora::OraVdqmSvc>* s_factoryOraVdqmSvc =
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeServerStatementString =
   "SELECT id FROM TapeServer WHERE serverName = :1 FOR UPDATE";
 
-
 /// SQL statement for function checkTapeRequest
 const std::string castor::db::ora::OraVdqmSvc::s_checkTapeRequestStatement1String =
-  "SELECT id, tapeDrive FROM TapeRequest WHERE CAST(id AS INT) = :1";
+  "SELECT id FROM ClientIdentification WHERE machine = :1 AND userName = :2 AND port = :3 AND euid = :4 AND egid = :5 and magic = :6";
 
 /// SQL statement for function checkTapeRequest
 const std::string castor::db::ora::OraVdqmSvc::s_checkTapeRequestStatement2String =
-  "SELECT count(*) FROM TapeRequest WHERE id <= :1";
+  "SELECT id FROM TapeRequest WHERE tapeAccessSpecification = :1 AND tape = :2 AND requestedSrv = :3 AND client = :4";
+
+/// SQL statement for function getQueuePosition
+const std::string castor::db::ora::OraVdqmSvc::s_getQueuePositionStatementString =
+  "SELECT count(*) FROM TapeRequest tr1, TapeRequest tr2 WHERE tr1.id = :1 AND tr1.deviceGroupName = tr2.deviceGroupName AND tr2.modificationTime <= tr1.modificationTime";
   
 
 /// SQL statement for function selectFreeTapeDrive
@@ -147,6 +151,7 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   m_selectTapeServerStatement(0),
   m_checkTapeRequestStatement1(0),
   m_checkTapeRequestStatement2(0),
+  m_getQueuePositionStatement(0),
   m_selectFreeTapeDriveStatement(0),
   m_selectTapeDriveStatement(0),
   m_existTapeDriveWithTapeInUseStatement(0),
@@ -195,7 +200,8 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   try {
     deleteStatement(m_selectTapeServerStatement);
     deleteStatement(m_checkTapeRequestStatement1);
-    deleteStatement(m_checkTapeRequestStatement2);
+     deleteStatement(m_checkTapeRequestStatement2);
+    deleteStatement(m_getQueuePositionStatement);
     deleteStatement(m_selectFreeTapeDriveStatement);
     deleteStatement(m_selectTapeDriveStatement);
     deleteStatement(m_existTapeDriveWithTapeInUseStatement);
@@ -216,6 +222,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   m_selectTapeServerStatement = 0;
   m_checkTapeRequestStatement1 = 0;
   m_checkTapeRequestStatement2 = 0;
+  m_getQueuePositionStatement = 0;
   m_selectFreeTapeDriveStatement = 0;
   m_selectTapeDriveStatement = 0;
   m_existTapeDriveWithTapeInUseStatement = 0;
@@ -360,11 +367,11 @@ castor::vdqm::TapeServer*
 // -----------------------------------------------------------------------
 // checkTapeRequest
 // -----------------------------------------------------------------------
-int castor::db::ora::OraVdqmSvc::checkTapeRequest(
-	const castor::vdqm::TapeRequest *tapeRequest) 
+bool castor::db::ora::OraVdqmSvc::checkTapeRequest(
+	const castor::vdqm::TapeRequest *newTapeRequest) 
 	throw (castor::exception::Exception) {
-  	
-  try {
+		
+	try {
     // Check whether the statements are ok
     if (0 == m_checkTapeRequestStatement1) {
       m_checkTapeRequestStatement1 =
@@ -376,41 +383,47 @@ int castor::db::ora::OraVdqmSvc::checkTapeRequest(
         createStatement(s_checkTapeRequestStatement2String);
     }
     
-    // execute the statement1 and see whether we found something   
-    m_checkTapeRequestStatement1->setDouble(1, tapeRequest->id());
+    castor::stager::ClientIdentification *client = newTapeRequest->client();
+    
+    m_checkTapeRequestStatement1->setString(1, client->machine());
+    m_checkTapeRequestStatement1->setString(2, client->userName());
+    m_checkTapeRequestStatement1->setInt(3, client->port());
+    m_checkTapeRequestStatement1->setInt(4, client->euid());
+    m_checkTapeRequestStatement1->setInt(5, client->egid());
+    m_checkTapeRequestStatement1->setInt(6, client->magic());
+    client = 0;
+    
+    // execute the statement
     oracle::occi::ResultSet *rset = m_checkTapeRequestStatement1->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      // Nothing found, return -1
+      // Nothing found
       m_checkTapeRequestStatement1->closeResultSet(rset);
-      return -1;
-    }
-    else if ((u_signed64)rset->getDouble(2)) {
-    	m_checkTapeRequestStatement1->closeResultSet(rset);
-    	//The request is already beeing handled from  a tape Drive
-    	// In this case we return the queue position 0
-    	return 0;
+      return true;
     }
     
-    u_signed64 id = (u_signed64)rset->getDouble(1);
+    // If we reach this point, then we selected successfully
+    // a ClientIdentification and it's id is in rset
+    u_signed64 clientId = (u_signed64)rset->getDouble(1);
     m_checkTapeRequestStatement1->closeResultSet(rset);
     
-    // If we come up to this line, the job is not handled till now, but it exists
-    // execute the statement2 and see whether we found something
-    m_checkTapeRequestStatement2->setDouble(1, id);
+    m_checkTapeRequestStatement2->setDouble(1, newTapeRequest->tapeAccessSpecification()->id());
+    m_checkTapeRequestStatement2->setDouble(2, newTapeRequest->tape()->id());
+    m_checkTapeRequestStatement2->setDouble(3, newTapeRequest->requestedSrv()->id());
+    m_checkTapeRequestStatement2->setDouble(4, newTapeRequest->client()->id());
     rset = m_checkTapeRequestStatement2->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      // Nothing found, return -1
-      //Normally, the second statement should always find something!
+      // Nothing found
       m_checkTapeRequestStatement2->closeResultSet(rset);
-      return -1;
+      return true;
     }
     
-    // Return the TapeRequest queue position
-    int queuePosition = (int)rset->getInt(1);
-    m_checkTapeRequestStatement2->closeResultSet(rset);
     
-    // TODO: Maybe in future the return value should be double!
-    return queuePosition;
+    /**
+     * If we are here, there is really already the same tape reqeust
+     * queued!
+     */
+    m_checkTapeRequestStatement2->closeResultSet(rset);
+    return false;
   } catch (oracle::occi::SQLException e) {
     rollback();
     castor::exception::Internal ex;
@@ -420,17 +433,51 @@ int castor::db::ora::OraVdqmSvc::checkTapeRequest(
     throw ex;
   }
   // We should never reach this point.
+    
+  return true;
 }
 
-//// -----------------------------------------------------------------------
-//// selectFreeTapeDrive
-//// -----------------------------------------------------------------------
-//castor::vdqm::TapeDrive* 
-//	castor::db::ora::OraVdqmSvc::selectFreeTapeDrive
-//	(const castor::vdqm::ExtendedDeviceGroup *extDevGrp)
-//  throw (castor::exception::Exception) {
-// return NULL; 	
-//}
+
+// -----------------------------------------------------------------------
+// getQueuePosition
+// -----------------------------------------------------------------------
+int castor::db::ora::OraVdqmSvc::getQueuePosition(
+	const castor::vdqm::TapeRequest *tapeRequest) 
+	throw (castor::exception::Exception) {
+  	
+  try {
+    // Check whether the statements are ok
+    if (0 == m_getQueuePositionStatement) {
+      m_getQueuePositionStatement =
+        createStatement(s_getQueuePositionStatementString);
+    }
+    
+    // execute the statement
+    m_getQueuePositionStatement->setDouble(1, tapeRequest->id());
+    oracle::occi::ResultSet *rset = m_getQueuePositionStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      // Nothing found, return -1
+      //Normally, the statement should always find something!
+      m_getQueuePositionStatement->closeResultSet(rset);
+      return -1;
+    }
+    
+    // Return the TapeRequest queue position
+    int queuePosition = (int)rset->getInt(1);
+    m_getQueuePositionStatement->closeResultSet(rset);
+    
+    // XXX: Maybe in future the return value should be double!
+    return queuePosition;
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in getQueuePosition."
+      << std::endl << e.what();
+    throw ex;
+  }
+  // We should never reach this point.
+}
 
 
 // -----------------------------------------------------------------------
@@ -1153,6 +1200,7 @@ castor::vdqm::TapeRequest*
     
     // Get the foreign related object
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_ClientIdentification);
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeDrive);
     obj = 0;
     
     return tapeRequest;

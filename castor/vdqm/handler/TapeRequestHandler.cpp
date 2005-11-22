@@ -215,7 +215,6 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
 	  newTapeReq->setRequestedSrv(reqTapeServer);
 	  newTapeReq->setTape(tape);
 	  newTapeReq->setDeviceGroupName(dgName);
-	  newTapeReq->setId(volumeRequest->VolReqID);
 	  
 	
 	  /*
@@ -239,10 +238,10 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
 	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 31);
 	  /*
 	   * Verify that the request doesn't (yet) exist. If it doesn't exist,
-	   * the return value should be -1.
+	   * the return value should be true.
 	   */
-	  rowNumber = ptr_IVdqmService->checkTapeRequest(newTapeReq);
-	  if ( rowNumber != -1 ) {
+	  bool requestNotExists = ptr_IVdqmService->checkTapeRequest(newTapeReq);
+	  if ( requestNotExists == false ) {
 	    castor::exception::Exception ex(EVQALREADY);
 	    ex.getMessage() << "Input request already queued: " 
 	    								<< "Position = " << rowNumber << std::endl;
@@ -277,8 +276,6 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
 			delete reqTapeServer;
 		if (dgName)
 			delete dgName;
-//		if (0 != freeTapeDrive)
-//	delete freeTapeDrive;
   
     throw e;
   }
@@ -292,7 +289,6 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
 	  delete reqTapeServer;
 	
 	delete dgName;
-//	delete freeTapeDrive;
 }
 
 
@@ -340,6 +336,11 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 	  castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 67, 2, params);
     
     if ( tapeReq ) {
+    	if ( tapeReq->tapeDrive() ) {
+    		delete tapeReq->tapeDrive();
+    		tapeReq->setTapeDrive(0);
+    	}
+    	
     	delete tapeReq;
 	  	tapeReq = 0;
     }
@@ -352,18 +353,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 	 */
 	
 	try {	
-		/*
-	   * Verify that the request is not already assigned to a TapeDrive
-	   */
-	  rowNumber = ptr_IVdqmService->checkTapeRequest(tapeReq);
-	  if ( rowNumber == -1 ) {
-	    //"Couldn't find the tape request in db. Maybe it is already deleted?" message
-	    castor::dlf::Param params[] =
-		  	{castor::dlf::Param("tapeRequest ID", volumeRequest->VolReqID),
-		     castor::dlf::Param("function", "castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest()")};
-		  castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 67, 2, params);
-	  }
-	  else if ( rowNumber == 0 ) {
+		if ( tapeReq->tapeDrive() ) {
 	  	// If we are here, the TapeRequest is already assigned to a TapeDrive
 	  	//TODO:
 	  	/*
@@ -372,11 +362,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 	     * it should be cleanup by resetting the drive status to RELEASE + FREE.
 	     * Mark it as UNKNOWN until an unit status clarifies what has happened.
 	     */
-   		TapeDrive* tapeDrive;
-   
-   		//Ok, now we need the foreign TapeDrive, too
-	    svcs()->fillObj(&ad, tapeReq, castor::OBJ_TapeDrive);
-	    tapeDrive = tapeReq->tapeDrive();
+   		TapeDrive* tapeDrive = tapeReq->tapeDrive();
 	    
       // Set new TapeDriveStatusCode
 	    tapeDrive->setStatus(STATUS_UNKNOWN);
@@ -390,6 +376,9 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
  			updateRepresentation(tapeDrive, cuuid);
 			updateRepresentation(tapeReq, cuuid);
 
+			delete tapeDrive;
+			tapeDrive=0;
+			tapeReq->setTapeDrive(0);
 	  	delete tapeReq;
 	  	tapeReq = 0;
 			    
@@ -432,23 +421,24 @@ int castor::vdqm::handler::TapeRequestHandler::getQueuePosition(
 		
 	//To store the db related informations
   castor::vdqm::TapeRequest *tapeReq = NULL;
-  
-  int queuePosition = -1;
-  
+  int queuePosition = 0;
   
   try {
-	  tapeReq = new castor::vdqm::TapeRequest();
-	  tapeReq->setId(volumeRequest->VolReqID);
+	  tapeReq = ptr_IVdqmService->selectTapeRequest(volumeRequest->VolReqID);
 	  
-	  /**
-	   * returns -1, if there is Request with this ID or the queuePosition
-	   */
-	  queuePosition = ptr_IVdqmService->checkTapeRequest(tapeReq);
+	  if ( tapeReq->tapeDrive() ) {
+	  	delete tapeReq->tapeDrive();
+	  	tapeReq->setTapeDrive(0);
+  	}
+  	else {
+		  queuePosition = ptr_IVdqmService->getQueuePosition(tapeReq);
+  	}
 	  
 		// Queue position of TapeRequest
 	  castor::dlf::Param params[] =
-	  	{castor::dlf::Param("Queue position", queuePosition)};
-	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 26, 1, params);
+	  	{castor::dlf::Param("Queue position", queuePosition),
+	  	 castor::dlf::Param("TapeRequest id", tapeReq->id())};
+	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 26, 2, params);
 	  
   } catch(castor::exception::Exception e) {
  		if (tapeReq) {
