@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 #
-# $Id: bestfs.pl,v 1.1 2005/11/21 13:54:41 jdurand Exp $
+# $Id: bestfs.pl,v 1.2 2005/11/22 09:24:23 jdurand Exp $
 #
 
 use strict;                      # Strict coding
@@ -47,7 +47,7 @@ $mode = 2;
 #
 ## Select debug level (0=off, not 0 means true)
 #
-$debug = 1;
+$debug = 0;
 
 #
 ## Create objects using output from input parsing
