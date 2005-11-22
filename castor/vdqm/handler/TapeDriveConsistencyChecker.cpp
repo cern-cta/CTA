@@ -117,26 +117,6 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
     
     ptr_tapeDrive->setStatus(UNIT_DOWN);
   } 
- 
- 	//XXX: Remove VDQM_UNIT_WAITDOWN state. Seems that it is never sent! 
-	else if ( ptr_driveRequest->status & VDQM_UNIT_WAITDOWN ) {
-    /*
-     * Intermediate state until tape daemon confirms that
-     * the drive is down. If a volume request is assigned 
-     * we cannot put it back in queue until drive is confirmed
-     * down since the volume may still be stuck in the unit.
-     * First check the drive isn't already down...
-     */ 
-    if ( ptr_tapeDrive->status() != UNIT_DOWN ) {
-    	  // "WAIT DOWN request from tpdaemon client" message
-    		castor::dlf::Param param[] =
-					{castor::dlf::Param("reqhost", ptr_driveRequest->reqhost)};
-				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, 38, 1, param);
-    
-        ptr_tapeDrive->setStatus(UNIT_WAITDOWN);
-    }
-  } 
-  
   else if ( ptr_driveRequest->status & VDQM_UNIT_UP ) {
     /*
      * Unit configured up. Make sure that "down" status is reset.

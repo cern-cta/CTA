@@ -540,9 +540,6 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
 		case STATUS_UNKNOWN:
 			ptr_driveRequest->status = VDQM_UNIT_UNKNOWN;
 			break;
-		case UNIT_WAITDOWN:
-			ptr_driveRequest->status = VDQM_UNIT_WAITDOWN;
-			break;
 	}
   
   
@@ -1002,9 +999,6 @@ int castor::vdqm::handler::TapeDriveHandler::translateNewStatus(
 				break;
 		case STATUS_UNKNOWN:
 				oldStatus |= VDQM_UNIT_UNKNOWN;
-				break;
-		case UNIT_WAITDOWN:
-				oldStatus |= VDQM_UNIT_WAITDOWN;
 				break;		
 		default:
 				castor::exception::InvalidArgument ex;
