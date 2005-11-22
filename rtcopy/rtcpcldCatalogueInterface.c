@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.138 $ $Release$ $Date: 2005/10/31 15:03:16 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.139 $ $Release$ $Date: 2005/11/22 12:04:54 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.138 $ $Release$ $Date: 2005/10/31 15:03:16 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.139 $ $Release$ $Date: 2005/11/22 12:04:54 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1696,13 +1696,6 @@ int nextSegmentToMigrate(
   strcpy(filereq->recfm,"F");
   filereq->def_alloc = 0;
   filereq->proc_status = RTCP_WAITING;
-  /*
-   * TODO: remove this temporary hack when rtcpd_MainCntl.c fix
-   * (revision 1.94) has been deployed on all tape servers
-   */
-  fl->filereq.blocksize = 32760;
-  if ( strstr(tape->tapereq.dgn,"3592") != NULL ) 
-    fl->filereq.blocksize = 256*1024;
 
   if ( diskServer != NULL ) {
     sprintf(filereq->file_path,"%s:%s/%s",diskServer,mountPoint,relPath);
