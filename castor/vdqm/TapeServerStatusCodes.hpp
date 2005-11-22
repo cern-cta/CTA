@@ -41,8 +41,8 @@ namespace castor {
      * drives on this tape server or not.
      */
     enum TapeServerStatusCodes {
-      TAPESERVER_ACTIVE, //If the tape server is in ACTIVE status, then its tape drives are used for the actual CASTOR production and the tapeRequest can be dedicated to this tape server
-      TAPESERVER_INACTIVE //If the tape server is in INCATIVE status, then its tape drives are not involved into the actual CASTOR production.
+      TAPESERVER_ACTIVE = 0, //If the tape server is in ACTIVE status, then its tape drives are used for the actual CASTOR production and the tapeRequest can be dedicated to this tape server
+      TAPESERVER_INACTIVE = 1 //If the tape server is in INCATIVE status, then its tape drives are not involved into the actual CASTOR production.
     }; // end of enum TapeServerStatusCodes
 
     /**
