@@ -96,7 +96,7 @@ namespace castor {
        * make sure, that the TapeRequest is already included in the TaepDrive!
        * @exception In case of errors 
        */
-      bool sendJobToRTCPD(TapeDrive *tapeDrive) 
+      bool sendJobToRTCPD(const TapeDrive *tapeDrive) 
         throw (castor::exception::Exception);    
         
       
@@ -109,7 +109,7 @@ namespace castor {
        * @return false, in case of problems on RTCP side
        * @exception In case of errors 
        */
-      bool readRTCPAnswer(TapeDrive *tapeDrive)
+      bool readRTCPAnswer()
 	     throw (castor::exception::Exception);    
     };
 
