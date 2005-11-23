@@ -102,7 +102,7 @@ ON COMMIT DELETE ROWS;
 /* NbTapeCopiesInFS to work around ORACLE missing optimizations */
 /****************************************************************/
 
-/* This table keeps track of the number of TapeCopy to migrate
+/* This table keeps track of the number of TapeCopy waiting for migration
  * which have a diskCopy on this fileSystem. This table only exist
  * because Oracle is not able to optimize the following query :
  * SELECT max(A) from A, B where A.pk = B.fk;
@@ -164,7 +164,8 @@ BEGIN
    WHERE FS IN (SELECT DiskCopy.FileSystem
                   FROM DiskCopy, TapeCopy
                  WHERE DiskCopy.CastorFile = TapeCopy.castorFile
-                   AND TapeCopy.id = :new.child)
+                   AND TapeCopy.id = :new.child
+                   AND DiskCopy.status = 10) -- CANBEMIGR
      AND Stream = :new.parent;
 END;
 
@@ -178,7 +179,8 @@ BEGIN
    WHERE FS IN (SELECT DiskCopy.FileSystem
                   FROM DiskCopy, TapeCopy
                  WHERE DiskCopy.CastorFile = TapeCopy.castorFile
-                   AND TapeCopy.id = :new.child)
+                   AND TapeCopy.id = :new.child
+                   AND DiskCopy.status = 10) -- CANBEMIGR
      AND Stream = :new.parent;
 END;
 
@@ -191,30 +193,29 @@ FOR EACH ROW
 WHEN (old.status = 3 AND new.status = 2) -- SELECTED AND WAITINSTREAMS
 BEGIN
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
-   WHERE FS IN (SELECT FileSystem FROM DiskCopy WHERE CastorFile = :new.castorFile)
+   WHERE FS IN (SELECT FileSystem FROM DiskCopy
+                 WHERE CastorFile = :new.castorFile AND status = 10) -- CANBEMIGR
      AND Stream IN (SELECT parent FROM Stream2TapeCopy WHERE child = :new.id);
 END;
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
    whenever a DiskCopy has been replicated and the new one
-   is put into STAGEOUT status from the
+   is put into CANBEMIGR status from the
    WAITDISK2DISKCOPY status */
 CREATE OR REPLACE TRIGGER tr_DiskCopy_Update
 AFTER UPDATE of status ON DiskCopy
 FOR EACH ROW
 WHEN (old.status = 1 AND -- WAITDISK2DISKCOPY
-      new.status = 6) -- STAGEOUT
+      new.status = 10) -- CANBEMIGR
 BEGIN
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
    WHERE FS = :new.fileSystem
      AND Stream IN (SELECT Stream2TapeCopy.parent
                       FROM Stream2TapeCopy, TapeCopy
                      WHERE TapeCopy.castorFile = :new.castorFile
-                       AND Stream2TapeCopy.child = TapeCopy.id);
+                       AND Stream2TapeCopy.child = TapeCopy.id
+                       AND TapeCopy.status = 2); -- WAITINSTREAMS
 END;
-
-/* XXX update count into NbTapeCopiesInFS when a Disk2Disk copy occurs
-   FOR a file in CANBEMIGR */
 
 /***************************************/
 /* Some triggers to prevent dead locks */
@@ -552,7 +553,8 @@ BEGIN
    WHERE FS IN (SELECT DiskCopy.FileSystem
                   FROM DiskCopy, TapeCopy
                  WHERE DiskCopy.CastorFile = TapeCopy.castorFile
-                   AND TapeCopy.id = tapeCopyId)
+                   AND TapeCopy.id = tapeCopyId
+                   AND DiskCopy.status = 10) -- CANBEMIGR
      AND Stream IN (SELECT parent FROM Stream2TapeCopy WHERE child = tapeCopyId);
   -- Update Filesystem state
   updateFsFileOpened(fsDiskServer, fileSystemId, deviation, 0);
