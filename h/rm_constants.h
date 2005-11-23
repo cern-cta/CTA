@@ -1,4 +1,4 @@
-/* $Id: rm_constants.h,v 1.20 2005/08/09 13:21:36 jdurand Exp $ */
+/* $Id: rm_constants.h,v 1.21 2005/11/23 09:41:58 jdurand Exp $ */
 
 #ifndef __rm_constants_h
 
@@ -194,7 +194,7 @@
 #ifdef RMMASTER_HOST
 #undef RMMASTER_HOST
 #endif
-#define RMMASTER_HOST "localhost"
+#define RMMASTER_HOST "castorrmmaster"
 
 #ifdef RMSTAGER_HOST
 #undef RMSTAGER_HOST
@@ -209,7 +209,12 @@
 #ifdef RMMASTER_PROTO
 #undef RMMASTER_PROTO
 #endif
-#define RMMASTER_PROTO "udp"
+#define RMMASTER_PROTO "udp"           /* UDP messages for monitoring info */
+
+#ifdef RMMASTER_USER_PROTO
+#undef RMMASTER_USER_PROTO
+#endif
+#define RMMASTER_USER_PROTO "tcp"      /* TCP messages for querying rmmaster */
 
 #ifdef RMMASTER_PORT                   /* rmmaster port for rmnode->rmmaster UDP communication */
 #undef RMMASTER_PORT
