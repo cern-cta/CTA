@@ -1030,6 +1030,10 @@ BEGIN
  UPDATE SubRequest SET status = newStatus,
                        answered = 1,
                        lastModificationTime = getTime() WHERE id = srId;
+ IF newStatus = 6 THEN  -- READY
+   UPDATE SubRequest SET getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
+    WHERE id = srId;
+ END IF;
  -- Check whether it was the last subrequest in the request
  SELECT id INTO result FROM SubRequest
   WHERE request = reqId
@@ -1048,7 +1052,7 @@ BEGIN
   -- update DiskCopy
   UPDATE DiskCopy set status = dcStatus WHERE id = dcId;
   -- update SubRequest
-  UPDATE SubRequest set status = 6, -- status SUBREQUEST_READY
+  UPDATE SubRequest set status = 6, -- SUBREQUEST_READY
                         getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
                         lastModificationTime = getTime()
    WHERE diskCopy = dcId
