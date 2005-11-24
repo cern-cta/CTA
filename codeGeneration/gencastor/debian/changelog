@@ -1,3 +1,9 @@
+gencastor (3.6-0) unstable; urgency=low
+
+  * Fixed the way static factories are instantiated so that they can be freed.    
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Thu, 24 Nov 2005 15:00:00 +0200
+
 gencastor (3.5-0) unstable; urgency=low
 
   * Improved generation of Objects and Stream converters: a member with
@@ -5,7 +11,7 @@ gencastor (3.5-0) unstable; urgency=low
     'enumerationNotStream' will not be included in the Stream converter but
     only in the object and database converter.
 
- -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Tue, 25 Oct 2005 15:00:00 +0200
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Tue, 25 Oct 2005 15:00:00 +0200
 
 gencastor (3.4-5) unstable; urgency=low
 
