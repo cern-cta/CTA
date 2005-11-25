@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.178 $ $Release$ $Date: 2005/11/25 11:11:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.179 $ $Release$ $Date: 2005/11/25 14:34:09 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -868,7 +868,7 @@ void castor::db::ora::OraStagerSvc::setFileGCWeight
     m_setFileGCWeightStatement->setFloat(1, weight);
     m_setFileGCWeightStatement->setDouble(2, fileId);
     m_setFileGCWeightStatement->setString(3, nsHost);
-    unsigned int nb = m_stageRmStatement->executeUpdate();
+    unsigned int nb = m_setFileGCWeightStatement->executeUpdate();
     if (0 == nb) {
       castor::exception::Internal ex;
       ex.getMessage()
