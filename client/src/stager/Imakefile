@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.51 $ $Date: 2005/11/25 11:11:01 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.52 $ $Date: 2005/11/25 14:27:22 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -153,7 +153,7 @@ NormalProgramTarget(stager_qry,stager_qry.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(stager_put,stager_put.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(stager_putdone,stager_putdone.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(stager_rm,stager_rm.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
-NormalProgramTarget(stager_setFileGCWeight,stager_rm.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
+NormalProgramTarget(stager_setFileGCWeight,stager_setFileGCWeight.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 #endif
 
 MakeDepLibrary(lib,shift)
