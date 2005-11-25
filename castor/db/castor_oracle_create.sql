@@ -145,6 +145,9 @@ CREATE TABLE FileClass (name VARCHAR2(2048), minFileSize INTEGER, maxFileSize IN
 /* SQL statements for type DiskServer */
 CREATE TABLE DiskServer (name VARCHAR2(2048), id INTEGER PRIMARY KEY, status INTEGER) INITRANS 50 PCTFREE 50;
 
+/* SQL statements for type SetFileGCWeight */
+CREATE TABLE SetFileGCWeight (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, weight float, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
+
 /* SQL statements for type TapeAccessSpecification */
 CREATE TABLE TapeAccessSpecification (accessMode NUMBER, density VARCHAR2(2048), tapeModel VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
@@ -1689,6 +1692,7 @@ BEGIN
   -- Loop over the deleted files
   FOR i in dcIds.FIRST .. dcIds.LAST LOOP
     -- delete the DiskCopy
+    DELETE FROM Id2Type WHERE id = dcIds(i);
     DELETE FROM DiskCopy WHERE id = dcIds(i)
       RETURNING castorFile, fileSystem INTO cfId, fsId;
     -- Lock the Castor File and retrieve size
@@ -1718,6 +1722,7 @@ BEGIN
             nsh VARCHAR2(2048);
           BEGIN
             -- Delete the CastorFile
+            DELETE FROM id2Type WHERE id = cfId;
             DELETE FROM CastorFile WHERE id = cfId
               RETURNING fileId, nsHost, fileClass
               INTO fid, nsh, fc;
@@ -1737,6 +1742,57 @@ BEGIN
   END LOOP;
  END IF;
  OPEN fileIds FOR SELECT * FROM FilesDeletedProcOutput;
+END;
+
+/*
+ * PL/SQL method removing completely a file from the stager
+ * including all its related objects (diskcopy, tapecopy, segments...)
+ * The given files are supposed to already have been removed from the
+ * name server
+ * Note that we don't increase the freespace of the fileSystem.
+ * This is done by the monitoring daemon, that knows the
+ * exact amount of free space. However, we decrease the
+ * spaceToBeFreed counter so that a next GC knows the status
+ * of the FileSystem
+ * fsIds gives the list of files to delete.
+ */
+CREATE OR REPLACE PROCEDURE filesClearedProc
+(cfIds IN castor."cnumList") AS
+  fsize NUMBER;
+  fsid NUMBER;
+BEGIN
+  -- Loop over the deleted files
+  FOR i in cfIds.FIRST .. cfIds.LAST LOOP
+    -- Lock the Castor File and retrieve size
+    SELECT fileSize INTO fsize FROM CastorFile WHERE id = cfIds(i);
+    -- delete the DiskCopies
+    FOR d in (SELECT id FROM Diskcopy WHERE castorfile = cfIds(i)) LOOP
+      DELETE FROM Id2Type WHERE id = d.id;
+      DELETE FROM DiskCopy WHERE id = d.id
+        RETURNING fileSystem INTO fsId;
+      -- update the FileSystem
+      UPDATE FileSystem
+         SET spaceToBeFreed = spaceToBeFreed - fsize
+       WHERE id = fsId;
+    END LOOP;
+    -- put SubRequests into FAILED (for non FINISHED ONES)
+    UPDATE SubRequest SET status = 7 WHERE castorfile = cfIds(i) AND status < 7;
+    -- TapeCopy part
+    FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfIds(i)) LOOP
+      FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
+        -- Delete the segment(s)
+        DELETE FROM Id2Type WHERE id = s.id;
+        DELETE FROM Segment WHERE id = s.id;
+      END LOOP;
+      -- Delete from Stream2TapeCopy
+      DELETE FROM Stream2TapeCopy WHERE child = t.id;
+      -- Delete the TapeCopy
+      DELETE FROM Id2Type WHERE id = t.id;
+      DELETE FROM TapeCopy WHERE id = t.id;
+    END LOOP;
+    DELETE FROM Id2Type WHERE id = cfIds(i);
+    DELETE FROM CastorFile WHERE id = cfIds(i);
+  END LOOP;
 END;
 
 /* PL/SQL method implementing filesDeleted */
@@ -1915,10 +1971,16 @@ BEGIN
    -- Something is running, so give up
  EXCEPTION WHEN NO_DATA_FOUND THEN
    -- Nothing running
-   -- Delete the segment(s)
-   DELETE FROM Segment WHERE copy IN (SELECT id FROM TapeCopy WHERE castorfile = cfId); 
-   -- Delete the TapeCopy
-   DELETE FROM TapeCopy WHERE castorfile = cfId;
+   FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfId) LOOP
+     FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
+       -- Delete the segment(s)
+       DELETE FROM Id2Type WHERE id = s.id;
+       DELETE FROM Segment WHERE id = s.id;
+     END LOOP;
+     -- Delete the TapeCopy
+     DELETE FROM Id2Type WHERE id = t.id;
+     DELETE FROM TapeCopy WHERE id = t.id;
+   END LOOP;
    -- Delete the DiskCopies
    UPDATE DiskCopy
       SET status = 8
