@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_setFileGCWeight.c,v $ $Revision: 1.1 $ $Release$ $Date: 2005/11/25 11:11:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_setFileGCWeight.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/11/25 14:26:55 $ $Author: sponcec3 $
  *
  * command line for stager_setFileGCWeight
  *
@@ -38,7 +38,7 @@ static struct Coptions longopts[] =
   };
 
 void usage _PROTO((char *));
-int cmd_parse(int argc, char *argv[], struct stage_filereq **reqs, int* nbreqs);
+int cmd_parse(int argc, char *argv[], struct stage_filereq **reqs, int* nbreqs, float *weight);
 int cmd_countHsmFiles(int argc, char *argv[]);
 
 #define ERRBUFSIZE 255
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
 int cmd_parse(int argc,
               char *argv[],
               struct stage_filereq **reqs,
-              int* nbreqs, &float weight) {
+              int* nbreqs, float *weight) {
   int nbfiles, Coptind, Copterr, errflg;
   char c;
 
@@ -144,7 +144,7 @@ int cmd_parse(int argc,
   if (argc != 1) {
     errflg++;
   } else {
-    weight = atof(argv[0]);
+    *weight = atof(argv[0]);
   }
   return errflg;
 }
