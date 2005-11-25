@@ -301,6 +301,17 @@ namespace castor {
         (const u_signed64 fileId, const std::string nsHost)
           throw (castor::exception::Exception);
 
+        /**
+         * Updates the gcWeight of all copies a a given file.
+         * @param fileId the fileId of the CastorFile
+         * @param nsHost the name server to use
+         * @param weight the new gcWeight for the file
+         * @exception in case of error
+         */
+        virtual void setFileGCWeight
+        (const u_signed64 fileId, const std::string nsHost, const float weight)
+          throw (castor::exception::Exception);
+
       private:
 
         /// SQL statement object for function subRequestToDo
@@ -365,6 +376,12 @@ namespace castor {
 
         /// SQL statement object for function stageRm
         oracle::occi::Statement *m_stageRmStatement;
+
+        /// SQL statement for function setFileGCWeight
+        static const std::string s_setFileGCWeightStatementString;
+
+        /// SQL statement object for function setFileGCWeight
+        oracle::occi::Statement *m_setFileGCWeightStatement;
 
       }; // end of class OraStagerSvc
 

@@ -194,6 +194,9 @@ DROP TABLE FileClass;
 /* SQL statements for type DiskServer */
 DROP TABLE DiskServer;
 
+/* SQL statements for type SetFileGCWeight */
+DROP TABLE SetFileGCWeight;
+
 /* SQL statements for type TapeAccessSpecification */
 DROP TABLE TapeAccessSpecification;
 
@@ -265,6 +268,7 @@ DROP PROCEDURE anySegmentsForTape;
 DROP PROCEDURE segmentsForTape;
 DROP PROCEDURE updateFiles2Delete;
 DROP PROCEDURE filesDeletedProc;
+DROP PROCEDURE filesClearedProc;
 DROP PROCEDURE filesDeletionFailedProc;
 DROP PROCEDURE getUpdateDoneProc;
 DROP PROCEDURE getUpdateFailedProc;

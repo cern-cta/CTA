@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.50 $ $Date: 2005/10/17 11:36:19 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.51 $ $Date: 2005/11/25 11:11:01 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -75,8 +75,8 @@ IPROGS_STAGER = FileName($(BIN),ProgramTargetName(stager)) FileName($(BIN),Progr
 EPROGS_STAGER = FileName($(EXPORTBIN),stager) FileName($(EXPORTBIN),stageradmin)
 GLOBLIB2 = -L../shlib
 #endif
-MANPAGES_STAGER = FileName($(MANDIR),stager_get.$(MANSUFFIX)) FileName($(MANDIR),stager_put.$(MANSUFFIX)) FileName($(MANDIR),stager_putdone.$(MANSUFFIX)) FileName($(MANDIR),stager_qry.$(MANSUFFIX)),stager_rm.$(MANSUFFIX))
-EMANPAGES_STAGER = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_get.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_put.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_putdone.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_qry.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_rm.$(MANSUFFIX)))
+MANPAGES_STAGER = FileName($(MANDIR),stager_get.$(MANSUFFIX)) FileName($(MANDIR),stager_put.$(MANSUFFIX)) FileName($(MANDIR),stager_putdone.$(MANSUFFIX)) FileName($(MANDIR),stager_qry.$(MANSUFFIX)),FileName($(MANDIR),stager_rm.$(MANSUFFIX)),FileName($(MANDIR),stager_setFileGCWeight.$(MANSUFFIX))
+EMANPAGES_STAGER = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_get.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_put.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_putdone.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_qry.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_rm.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_setFileGCWeight.$(MANSUFFIX)))
 
 #if BuildSecurity
 GLOBLIB += -ldl
@@ -113,6 +113,7 @@ STAGERLIB_OBJS = \
 		stager_client_api_open.Osuf \
 		stager_client_api_query.Osuf \
 		stager_client_api_rm.Osuf \
+		stager_client_api_setFileGCWeight.Osuf \
 		stager_client_api_next.Osuf \
 		stager_errmsg.Osuf \
 		stager_extern_globals.Osuf \
@@ -129,13 +130,13 @@ STAGELIBTARGET=LibraryTargetName(stager)
 
 #if BuildStageClient
 PROGS_STAGERCLIENT=ProgramTargetName(stager_get) ProgramTargetName(stager_qry)  ProgramTargetName(stager_put) \
-	ProgramTargetName(stager_putdone) ProgramTargetName(stager_rm)
+	ProgramTargetName(stager_putdone) ProgramTargetName(stager_rm) ProgramTargetName(stager_setFileGCWeight)
 IPROGS_STAGERCLIENT = FileName($(BIN),ProgramTargetName(stager_get)) FileName($(BIN),ProgramTargetName(stager_qry)) \
 	FileName($(BIN),ProgramTargetName(stager_put)) FileName($(BIN),ProgramTargetName(stager_putdone)) \
-        FileName($(BIN),ProgramTargetName(stager_rm))
+        FileName($(BIN),ProgramTargetName(stager_rm)) FileName($(BIN),ProgramTargetName(stager_setFileGCWeight))
 EPROGS_STAGERCLIENT = FileName($(EXPORTBIN),stager_get) FileName($(EXPORTBIN),stager_qry) \
 	FileName($(EXPORTBIN),stager_put) FileName($(EXPORTBIN),stager_putdone) \
-        FileName($(EXPORTBIN),stager_rm)
+        FileName($(EXPORTBIN),stager_rm) FileName($(EXPORTBIN),stager_setFileGCWeight)
 #endif
 
 
@@ -152,6 +153,7 @@ NormalProgramTarget(stager_qry,stager_qry.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(stager_put,stager_put.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(stager_putdone,stager_putdone.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(stager_rm,stager_rm.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
+NormalProgramTarget(stager_setFileGCWeight,stager_rm.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 #endif
 
 MakeDepLibrary(lib,shift)
@@ -170,6 +172,7 @@ InstallProgram(stager_qry,$(BIN),root,bin,0755)
 InstallProgram(stager_put,$(BIN),root,bin,0755)
 InstallProgram(stager_putdone,$(BIN),root,bin,0755)
 InstallProgram(stager_rm,$(BIN),root,bin,0755)
+InstallProgram(stager_setFileGCWeight,$(BIN),root,bin,0755)
 #endif
 install.man: $(MANDIR) $(MANPAGES_STAGER)
 
@@ -178,6 +181,7 @@ IMANPAGE(stager_put,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(stager_putdone,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(stager_qry,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(stager_rm,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(stager_setFileGCWeight,$(MANDIR),$(MANSUFFIX))
 
 export: $(EPROGS_STAGER) $(EPROGS_STAGERCLIENT)
 
@@ -189,6 +193,7 @@ IEXPORT(stager_qry,$(EXPORTBIN),755)
 IEXPORT(stager_put,$(EXPORTBIN),755)
 IEXPORT(stager_putdone,$(EXPORTBIN),755)
 IEXPORT(stager_rm,$(EXPORTBIN),755)
+IEXPORT(stager_setFileGCWeight,$(EXPORTBIN),755)
 #endif
 exportman: $(EMANPAGES_STAGER)
 
@@ -197,6 +202,7 @@ EMANPAGE(stager_put,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(stager_putdone,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(stager_qry,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(stager_rm,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(stager_setFileGCWeight,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)

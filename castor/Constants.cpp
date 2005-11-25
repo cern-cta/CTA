@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2005/10/25 12:10:46 $ $Author: itglp $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2005/11/25 11:11:01 $ $Author: sponcec3 $
  *
  *
  *
@@ -127,7 +127,8 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "TapeDriveCompatibility",
   
   "PutDoneStart",
-  "FileQryResponse"
+  "FileQryResponse",
+  "SetFileGCWeight"
 };
 
 //=============================================================================

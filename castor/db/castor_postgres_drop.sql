@@ -194,6 +194,9 @@ DROP TABLE FileClass;
 /* SQL statements for type DiskServer */
 DROP TABLE DiskServer;
 
+/* SQL statements for type SetFileGCWeight */
+DROP TABLE SetFileGCWeight;
+
 /* SQL statements for type TapeAccessSpecification */
 DROP TABLE TapeAccessSpecification;
 

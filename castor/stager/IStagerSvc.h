@@ -385,4 +385,21 @@ int Cstager_IStagerSvc_stageRm
  const u_signed64 fileId,
  const char* nsHost);
 
+/*
+ * Updates the gcWeight of all copies a a given file.
+ * @param stgSvc the IStagerSvc used
+ * @param fileId the fileId of the CastorFile
+ * @param nsHost the name server to use
+ * @param weight the new gcWeight for the file
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_setFileGCWeight
+(struct Cstager_IStagerSvc_t* stgSvc,
+ const u_signed64 fileId,
+ const char* nsHost,
+ const float weight);
+
 #endif // CASTOR_ISTAGERSVC_H

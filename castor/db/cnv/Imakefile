@@ -65,6 +65,7 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbPutStartRequestCnv.cpp \
      DbQueryParameterCnv.cpp \
      DbSegmentCnv.cpp \
+     DbSetFileGCWeightCnv.cpp \
      DbStageAbortRequestCnv.cpp \
      DbStageFileQueryRequestCnv.cpp \
      DbStageFindRequestRequestCnv.cpp \

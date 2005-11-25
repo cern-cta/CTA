@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.26 $ $Release$ $Date: 2005/10/27 17:21:17 $ $Author: itglp $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.27 $ $Release$ $Date: 2005/11/25 11:11:00 $ $Author: sponcec3 $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.26 $
- * @date $Date: 2005/10/27 17:21:17 $
+ * @version $Revision: 1.27 $
+ * @date $Date: 2005/11/25 11:11:00 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.26 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.27 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -812,6 +812,38 @@ EXTERN_C int DLL_DECL stage_releaseFiles _PROTO((struct stage_filereq *requests,
  */
 EXTERN_C int DLL_DECL stage_abortRequest _PROTO((char *requestId,
                                                  struct stage_options* opts));
+
+
+
+////////////////////////////////////////////////////////////
+//    stage_setFileGCWeight                               //
+////////////////////////////////////////////////////////////
+
+/**
+ * stage_setFileGCWeight
+ * Sets the weight of a set of files for garbage collection
+ * \ingroup Functions
+ * 
+ * @param requests   Pointer to the list of filereq requests
+ * @param nbreqs     Number of file requests in the list
+ * @param weight     Thenew GC weight of the files
+ * @param responses  List of file responses, created by the call itself
+ * @param nbresps    Number of file responses in the list
+ * @param requestId  Reference number to be used by the client to look
+ *                   up his request in the castor stager.
+ * @param opts       CASTOR stager specific options 
+ *
+ * @returns 0 in case of success, -1 otherwise
+ * @note requestId and responses are allocated by the call, and therefore
+ *       should be freed by the client.
+ */
+EXTERN_C int DLL_DECL stage_setFileGCWeight _PROTO ((struct stage_filereq *requests,
+                                                     int nbreqs,
+                                                     float weight,
+                                                     struct stage_fileresp **responses,
+                                                     int *nbresps,
+                                                     char **requestId,
+                                                     struct stage_options* opts));
 
 
 

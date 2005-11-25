@@ -145,6 +145,9 @@ CREATE TABLE FileClass (name VARCHAR(2048), minFileSize INT8, maxFileSize INT8, 
 /* SQL statements for type DiskServer */
 CREATE TABLE DiskServer (name VARCHAR(2048), id INT8 PRIMARY KEY, status INTEGER);
 
+/* SQL statements for type SetFileGCWeight */
+CREATE TABLE SetFileGCWeight (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, weight float, id INT8 PRIMARY KEY, svcClass INTEGER, client INTEGER);
+
 /* SQL statements for type TapeAccessSpecification */
 CREATE TABLE TapeAccessSpecification (accessMode INT4, density VARCHAR(2048), tapeModel VARCHAR(2048), id INT8 PRIMARY KEY);
 

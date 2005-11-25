@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.56 $ $Release$ $Date: 2005/10/03 16:29:34 $ $Author: mbraeger $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.57 $ $Release$ $Date: 2005/11/25 11:11:01 $ $Author: sponcec3 $
 #
 # Make Castor DB libraries
 #
@@ -63,6 +63,7 @@ ORALIB_SRCS = OraBaseAddressCnv.cpp \
             OraPutStartRequestCnv.cpp \
             OraQueryParameterCnv.cpp \
             OraSegmentCnv.cpp \
+            OraSetFileGCWeightCnv.cpp \
             OraStageAbortRequestCnv.cpp \
             OraStageFileQueryRequestCnv.cpp \
             OraStageFindRequestRequestCnv.cpp \
@@ -101,7 +102,7 @@ LD = g++
 #if BuildVDQMCpp
 #VDQM related objects
 ORAVDQMLIB_SRCS += OraClientIdentificationCnv.cpp \
-               	OraErrorHistoryCnv.cpp \
+                OraErrorHistoryCnv.cpp \
                 OraDeviceGroupNameCnv.cpp \
                 OraTapeAccessSpecificationCnv.cpp \
                 OraTapeDriveCnv.cpp \

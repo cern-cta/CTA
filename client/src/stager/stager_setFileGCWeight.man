@@ -1,0 +1,53 @@
+.\" @(#)$RCSfile: stager_setFileGCWeight.man,v $ $Revision: 1.1 $ $Date: 2005/11/25 11:11:01 $ CERN IT/ADC Olof Barring
+.\" Copyright (C) 2005 by CERN/IT
+.\" All rights reserved
+.\"
+.TH STAGER_SETFILEGCWEIGHT 1castor "$Date: 2005/11/25 11:11:01 $" CASTOR "STAGER Commands"
+.SH NAME
+stager_setFileGCWeight \- Sets the weight of a file for the garbage collection 
+.SH SYNOPSIS
+.B stager_setFileGCWeight
+.BI -M
+.BI hsmfile
+[
+.BI -M
+.BI ...
+]
+[
+.BI -h
+]
+.BI <weight>
+.SH DESCRIPTION
+The
+.B stager_setFileGCWeight
+command sets or update the weight of one or many castor file(s) in the stager for the future
+garbage collections.
+
+.SH OPTIONS
+
+.TP
+.BI \-M,\ \-\-filename " hsmfile"
+specifies the CASTOR HSM file(s) or which the weight should be changed.
+.TP
+.BI \-h,\ \-\-help
+display command usage help
+.TP
+.BI <weight>
+the new weight of the file(s)
+.TP
+
+.SH EXAMPLE
+.fi
+# stager_setFileGCWeight -M /castor/cern.ch/user/t/test/file1 2.4
+.fi
+42cd469e-0000-1000-81ea-8514e17e0800 Received 1 responses
+.fi
+/castor/cern.ch/user/t/test/file1:SUBRQUEST_READY
+.fi
+
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

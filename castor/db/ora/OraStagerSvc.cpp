@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.177 $ $Release$ $Date: 2005/11/18 16:54:04 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.178 $ $Release$ $Date: 2005/11/25 11:11:01 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -133,6 +133,10 @@ const std::string castor::db::ora::OraStagerSvc::s_stageReleaseStatementString =
 const std::string castor::db::ora::OraStagerSvc::s_stageRmStatementString =
   "BEGIN stageRm(:1, :2, :3); END;";
 
+/// SQL statement for setFileGCWeight
+const std::string castor::db::ora::OraStagerSvc::s_setFileGCWeightStatementString =
+  "UPDATE DiskCopy SET gcWeight = :1 WHERE castorfile = (SELECT id FROM castorfile WHERE fileId = :2 and nsHost = :3);";
+
 // -----------------------------------------------------------------------
 // OraStagerSvc
 // -----------------------------------------------------------------------
@@ -148,7 +152,8 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_updateFileSystemForJobStatement(0),
   m_archiveSubReqStatement(0),
   m_stageReleaseStatement(0),
-  m_stageRmStatement(0) {
+  m_stageRmStatement(0),
+  m_setFileGCWeightStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -191,6 +196,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_archiveSubReqStatement);
     deleteStatement(m_stageReleaseStatement);
     deleteStatement(m_stageRmStatement);
+    deleteStatement(m_setFileGCWeightStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_subRequestToDoStatement = 0;
@@ -204,6 +210,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_archiveSubReqStatement = 0;
   m_stageReleaseStatement = 0;
   m_stageRmStatement = 0;
+  m_setFileGCWeightStatement = 0;
 }
 
 
@@ -839,6 +846,39 @@ void castor::db::ora::OraStagerSvc::stageRm
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in stageRm."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// setFileGCWeight
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::setFileGCWeight
+(const u_signed64 fileId, const std::string nsHost, const float weight)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_setFileGCWeightStatement) {
+      m_setFileGCWeightStatement =
+        createStatement(s_setFileGCWeightStatementString);
+      m_setFileGCWeightStatement->setAutoCommit(true);
+    }
+    // execute the statement and see whether we found something
+    m_setFileGCWeightStatement->setFloat(1, weight);
+    m_setFileGCWeightStatement->setDouble(2, fileId);
+    m_setFileGCWeightStatement->setString(3, nsHost);
+    unsigned int nb = m_stageRmStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "setFileGCWeightStatement : No return code after PL/SQL call.";
+      throw ex;
+    }
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in setFileGCWeight."
       << std::endl << e.what();
     throw ex;
   }

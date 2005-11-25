@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.66 $ $Release$ $Date: 2005/10/20 12:40:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.67 $ $Release$ $Date: 2005/11/25 11:11:02 $ $Author: sponcec3 $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -298,6 +298,17 @@ namespace castor {
        */
       virtual void stageRm
       (const u_signed64 fileId, const std::string nsHost)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Updates the gcWeight of all copies a a given file.
+       * @param fileId the fileId of the CastorFile
+       * @param nsHost the name server to use
+       * @param weight the new gcWeight for the file
+       * @exception in case of error
+       */
+      virtual void setFileGCWeight
+      (const u_signed64 fileId, const std::string nsHost, const float weight)
         throw (castor::exception::Exception) = 0;
 
     }; // end of class IStagerSvc

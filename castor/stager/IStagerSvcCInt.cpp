@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.54 $ $Release$ $Date: 2005/09/05 12:54:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.55 $ $Release$ $Date: 2005/11/25 11:11:02 $ $Author: sponcec3 $
  *
  *
  *
@@ -318,6 +318,25 @@ extern "C" {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       stgSvc->stgSvc->stageRelease(fileId, nsHost);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_setFileGCWeight
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_setFileGCWeight
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   const u_signed64 fileId,
+   const char* nsHost,
+   const float weight) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      stgSvc->stgSvc->setFileGCWeight(fileId, nsHost, weight);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();
