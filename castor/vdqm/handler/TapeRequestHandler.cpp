@@ -426,7 +426,10 @@ int castor::vdqm::handler::TapeRequestHandler::getQueuePosition(
   try {
 	  tapeReq = ptr_IVdqmService->selectTapeRequest(volumeRequest->VolReqID);
 	  
-	  if ( tapeReq->tapeDrive() ) {
+	  if ( tapeReq == NULL ) {
+	  	return -1;
+  	}
+	  else if ( tapeReq->tapeDrive() ) {
 	  	delete tapeReq->tapeDrive();
 	  	tapeReq->setTapeDrive(0);
   	}
