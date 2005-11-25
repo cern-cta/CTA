@@ -1,3 +1,127 @@
+castor (2.0.2-4) unstable; urgency=low
+
+  * Added setFileGCWeight request for setting the GC weight of a given file
+    This includes : UML design, C++ objects, Streaming facility, ORACLE interface, C++ API, public C API, stager server side support, command line and man page
+  * Fixed creation of converters and services factories by explicitely allocating them. This fixes segfaults that occured when 2 converters/services are created for the same type of objects
+  * PROTO2/castor/db/ora/OraTapeDriveDedicationCnv.cpp:
+    [r 1.5,2005-11-16,itglp] Add 'reason' column to TapeDriveDedication table
+  * PROTO2/castor/db/ora/OraVdqmSvc.cpp:
+    [r1.33,2005-11-22,mbraeger] Revision of the checkTapeRequest() function in OraVdqmSvc
+    [r1.32,2005-11-21,mbraeger] Inserted a function, called 'selectTapeRequest', which solves the downcast
+    [r1.32,2005-11-21,mbraeger] problem of the big unique id's of the database for the VDQM_DEL_VOLREQ request.
+    [r1.31,2005-11-18,sponcec3] Fixed double delete for services. This was leading to seg fault when unloading a service
+    [r1.30,2005-11-17,mbraeger] Ordered the results for the TapeAccessSpecificationTable by accessMode DESC
+    [r1.29,2005-11-17,mbraeger] Two new functions inserted into OraVdqmSvc class, to handle queries on the TapeAccessSpecification
+    [r1.29,2005-11-17,mbraeger] and TapeDriveCompatibility table.
+    [r1.29,2005-11-17,mbraeger] I put in oracleTrailer.sql in comments a possible second algorithm for the matchTape2TapeDrive procedure
+  * PROTO2/castor/db/ora/OraVdqmSvc.hpp:
+    [r1.23,2005-11-22,mbraeger] Revision of the checkTapeRequest() function in OraVdqmSvc
+    [r1.22,2005-11-21,mbraeger] Inserted a function, called 'selectTapeRequest', which solves the downcast
+    [r1.22,2005-11-21,mbraeger] problem of the big unique id's of the database for the VDQM_DEL_VOLREQ request.
+    [r1.21,2005-11-17,mbraeger] Two new functions inserted into OraVdqmSvc class, to handle queries on the TapeAccessSpecification
+    [r1.21,2005-11-17,mbraeger] and TapeDriveCompatibility table.
+    [r1.21,2005-11-17,mbraeger] I put in oracleTrailer.sql in comments a possible second algorithm for the matchTape2TapeDrive procedure
+  * PROTO2/castor/db/oracleTrailer.sql:
+    [r1.230,2005-11-25,sponcec3] added a file cleared procedure to be used in the future for clearing files abruptly. Also fixed fileDeleted for missing deletions in Id2Type
+    [r1.229,2005-11-24,itglp] Fixed handling of getLastRecalls queries for files already staged.
+    [r1.228,2005-11-23,sponcec3] Attempt to fix counters in nbTapeCopiesInFS. This table now only take into account files in CANBEMIGR with a tapecopy in WAITINSTREAM. Also fixed the trigger dealing with disk2disk copies : it should handle CANBEMIGR case, not STAGEOUT
+    [r1.227,2005-11-17,mbraeger] Two new functions inserted into OraVdqmSvc class, to handle queries on the TapeAccessSpecification
+    [r1.227,2005-11-17,mbraeger] and TapeDriveCompatibility table.
+    [r1.227,2005-11-17,mbraeger] I put in oracleTrailer.sql in comments a possible second algorithm for the matchTape2TapeDrive procedure
+  * PROTO2/castor/vdqm/IVdqmSvc.hpp:
+    [r1.26,2005-11-22,mbraeger] Revision of the checkTapeRequest() function in OraVdqmSvc
+    [r1.25,2005-11-21,mbraeger] Fixed the problem with the protocol restriction for the big unique id's.
+    [r1.25,2005-11-21,mbraeger] Now, VDQM_DEL_VOLREQ should also work with 64 bit id's
+    [r1.24,2005-11-17,mbraeger] Wrote a function in the BaseRequestHandler class, which fills automatically the
+    [r1.24,2005-11-17,mbraeger] tapeDriveComaptibility table, if there are no entries for a new tapeDriveModel.
+  * PROTO2/castor/vdqm/OldRequestFacade.cpp:
+    [r 1.7,2005-11-22,mbraeger] Removed unused code
+  * PROTO2/castor/vdqm/RTCopyDConnection.cpp:
+    [r 1.8,2005-11-23,mbraeger] Switched back to the previous version.
+  * PROTO2/castor/vdqm/RTCopyDConnection.hpp:
+    [r 1.5,2005-11-23,mbraeger] Switched back to the previous version.
+  * PROTO2/castor/vdqm/TapeDriveDedication.cpp:
+    [r 1.9,2005-11-16,itglp] Add 'reason' column to TapeDriveDedication table
+  * PROTO2/castor/vdqm/TapeDriveDedication.h:
+    [r 1.8,2005-11-16,itglp] Add 'reason' column to TapeDriveDedication table
+  * PROTO2/castor/vdqm/TapeDriveDedication.hpp:
+    [r 1.8,2005-11-16,itglp] Add 'reason' column to TapeDriveDedication table
+  * PROTO2/castor/vdqm/TapeDriveDedicationCInt.cpp:
+    [r 1.8,2005-11-16,itglp] Add 'reason' column to TapeDriveDedication table
+  * PROTO2/castor/vdqm/TapeDriveStatusCodes.cpp:
+    [r 1.7,2005-11-22,mbraeger] This files have changed due to a revision of the database diagram. The UNIT_WAITDOWN status
+    [r 1.7,2005-11-22,mbraeger] has been removed.
+  * PROTO2/castor/vdqm/TapeDriveStatusCodes.hpp:
+    [r 1.7,2005-11-22,mbraeger] This files have changed due to a revision of the database diagram. The UNIT_WAITDOWN status
+    [r 1.7,2005-11-22,mbraeger] has been removed.
+  * PROTO2/castor/vdqm/TapeServerStatusCodes.hpp:
+    [r 1.7,2005-11-22,mbraeger] This files have changed due to a revision of the database diagram. The UNIT_WAITDOWN status
+    [r 1.7,2005-11-22,mbraeger] has been removed.
+  * PROTO2/castor/vdqm/handler/BaseRequestHandler.cpp:
+    [r1.13,2005-11-17,mbraeger] Wrote a function in the BaseRequestHandler class, which fills automatically the
+    [r1.13,2005-11-17,mbraeger] tapeDriveComaptibility table, if there are no entries for a new tapeDriveModel.
+  * PROTO2/castor/vdqm/handler/TapeDriveConsistencyChecker.cpp:
+    [r1.15,2005-11-22,mbraeger] Remove the VDQM_UNIT_WAITDOWN status from the code, because it is never used.
+    [r1.14,2005-11-21,mbraeger] Fixed the problem with the protocol restriction for the big unique id's.
+    [r1.14,2005-11-21,mbraeger] Now, VDQM_DEL_VOLREQ should also work with 64 bit id's
+  * PROTO2/castor/vdqm/handler/TapeDriveHandler.cpp:
+    [r1.30,2005-11-22,mbraeger] Remove the VDQM_UNIT_WAITDOWN status from the code, because it is never used.
+    [r1.29,2005-11-17,mbraeger] Forgot to check, if the result from IVdqmService is != NULL
+    [r1.28,2005-11-17,mbraeger] All priorityLevels for WRITE_ENABLE are set to 0 and
+    [r1.28,2005-11-17,mbraeger] all priorityLevels for WRITE_DISABLE are set to 1 for table entries in TapeDriveCompatibility
+    [r1.27,2005-11-17,mbraeger] Wrote a function in the BaseRequestHandler class, which fills automatically the
+    [r1.27,2005-11-17,mbraeger] tapeDriveComaptibility table, if there are no entries for a new tapeDriveModel.
+  * PROTO2/castor/vdqm/handler/TapeDriveHandler.hpp:
+    [r 1.9,2005-11-17,mbraeger] Wrote a function in the BaseRequestHandler class, which fills automatically the
+    [r 1.9,2005-11-17,mbraeger] tapeDriveComaptibility table, if there are no entries for a new tapeDriveModel.
+  * PROTO2/castor/vdqm/handler/TapeRequestHandler.cpp:
+    [r1.23,2005-11-22,mbraeger] Revision of the checkTapeRequest() function in OraVdqmSvc
+    [r1.22,2005-11-21,mbraeger] Fixed the problem with the protocol restriction for the big unique id's.
+    [r1.22,2005-11-21,mbraeger] Now, VDQM_DEL_VOLREQ should also work with 64 bit id's
+    [r1.21,2005-11-18,mbraeger] Reduced the severity of an error message from ERROR to WARNING
+  * PROTO2/codeGeneration/RH.xmi:
+    [r1.115,2005-11-25,sponcec3] Added SetFileGCWeight request
+    [r1.114,2005-11-24,itglp] Cosmetic changes by Matthias.
+    [r1.113,2005-11-22,mbraeger] Removed the UNIT_WAITDOWN status of the TapeDriveStatusCodes table in the VDQM database diagram.
+    [r1.113,2005-11-22,mbraeger] It is not used any more!
+    [r1.112,2005-11-16,itglp] field for a 'reason' added to the TapeDriveDedication table in the VDQM diagram
+  * PROTO2/codeGeneration/gencastor/debian/changelog:
+    [r1.19,2005-11-24,itglp] Version 3.6-0.
+  * PROTO2/codeGeneration/gencastor/debian/files:
+    [r1.18,2005-11-24,itglp] Version 3.6-0.
+  * PROTO2/codeGeneration/gencastor/genCastor.cpp:
+    [r1.20,2005-11-24,itglp] Version 3.6-0.
+  * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppcppbasecnvwriter.cpp:
+    [r 1.5,2005-11-18,sponcec3] Fixed the way static factories are instantiated so that they can be freed
+  * PROTO2/debian/castor-allservicesbuttapeservers.conf:
+    [r 1.6,2005-11-23,jdurand] Added RMMASTER HOST
+  * PROTO2/debian/castor.conf:
+    [r 1.9,2005-11-23,jdurand] Added RMMASTER HOST
+  * CASTOR/dlf/dlfquery/func.php:
+    [r 1.2,2005-11-25,waldron] missing 'arrtostr' function
+  * PROTO2/h/rm_constants.h:
+    [r1.21,2005-11-23,jdurand] Default rmmaster host is castorrmmaster
+    [r1.21,2005-11-23,jdurand] Definition of RMMASTER_USER_PROTO "tcp"
+  * PROTO2/h/stager_client_api.h:
+    [r1.27,2005-11-25,sponcec3] Added setFileGCWeight request for setting the GC weight of a given file
+  * PROTO2/resourcemonitoring/Imakefile:
+    [r1.25,2005-11-22,jdurand] Replaced a target by ProgramTargetName(target) in some LinkFile() directives
+  * PROTO2/resourcemonitoring/usersend2rmd.c:
+    [r1.15,2005-11-23,jdurand] User RMMASTER_USER_PORT instead of RMMASTER_PORT when checking for config, to avoid confusion with udp messages sent in file send2rmd.c
+    [r1.14,2005-11-23,jdurand] Cast explicitely ntohs argument and output in the log() call when connect fails
+    [r1.13,2005-11-23,jdurand] Use RMMASTER_USER_PROTO (tcp) instead of RMMASTER_PROTO (udp) to get port from /etc/services
+    [r1.12,2005-11-22,jdurand] Now get rmmaster host from: environment, or master config file, or RMNODECONFIG, or default
+    [r1.12,2005-11-22,jdurand] Now get rmmaster port from: environment, or master config file, or RMNODECONFIG, or services, or default
+    [r1.12,2005-11-22,jdurand] Do not strerror(errno) if Cgethostbyname() fails (irrelevant - h_errno is setted then, not errno)
+    [r1.12,2005-11-22,jdurand] Put to error buffer the port number together with the hostname when connection fails
+    [r1.11,2005-11-22,jdurand] Change a test that is always true per def (test pointer != NULL instead of *pointer - pointer is a variable on the stack)
+  * PROTO2/rtcopy/rtcpcldCatalogueInterface.c:
+    [r1.139,2005-11-22,obarring] Remove temporary hack forcing blocksize
+  * PROTO2/stager/stager_db_service.c:
+    [r1.131,2005-11-24,itglp] Fixed handling of getLastRecalls queries for files already staged.
+
+ -- Sebastien Ponce <sponcec3@pcitds13>  Fri, 25 Nov 2005 15:44:59 +0100
+
 castor (2.0.2-3) unstable; urgency=low
 
   * CASTOR/h/Ctape.h:
