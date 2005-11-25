@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.179 $ $Release$ $Date: 2005/11/25 14:34:09 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.180 $ $Release$ $Date: 2005/11/25 14:37:19 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -135,7 +135,7 @@ const std::string castor::db::ora::OraStagerSvc::s_stageRmStatementString =
 
 /// SQL statement for setFileGCWeight
 const std::string castor::db::ora::OraStagerSvc::s_setFileGCWeightStatementString =
-  "UPDATE DiskCopy SET gcWeight = :1 WHERE castorfile = (SELECT id FROM castorfile WHERE fileId = :2 and nsHost = :3);";
+  "UPDATE DiskCopy SET gcWeight = :1 WHERE castorfile = (SELECT id FROM castorfile WHERE fileId = :2 and nsHost = :3)";
 
 // -----------------------------------------------------------------------
 // OraStagerSvc
