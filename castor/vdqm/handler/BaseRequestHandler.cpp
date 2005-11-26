@@ -39,6 +39,7 @@
 #include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
+#include "castor/vdqm/TapeDriveCompatibility.hpp"
 
 #include "castor/stager/Tape.hpp"
  
@@ -163,6 +164,15 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
 	    	svcs()->fillRep(&ad, fr, OBJ_TapeDriveCompatibility, false);          	
     }
     
+    
+    // Store files for TapeDriveCompatibility
+    castor::vdqm::TapeDriveCompatibility* tapeDriveCompatibility =
+      dynamic_cast<castor::vdqm::TapeDriveCompatibility*>(fr); 
+    if (0 != tapeDriveCompatibility) {
+      svcs()->fillRep(&ad, fr, OBJ_TapeAccessSpecification, false);
+    }
+    
+    
     // Store files for ErrorHistory
     castor::vdqm::ErrorHistory* errorHistory =
       dynamic_cast<castor::vdqm::ErrorHistory*>(fr);
@@ -171,12 +181,6 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
       svcs()->fillRep(&ad, fr, OBJ_Tape, false);
       svcs()->fillRep(&ad, fr, OBJ_TapeDrive, false);
     }    
-		
-//	    svcs()->commit(&ad);
-//	    // "Request stored in DB" message
-//	    castor::dlf::Param params[] =
-//	      {castor::dlf::Param("ID", fr->id())};
-//	    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 12, 1, params);
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);
     

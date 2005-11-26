@@ -1101,5 +1101,15 @@ void castor::vdqm::handler::TapeDriveHandler::handleTapeDriveCompatibilities(
 	    	tapeDriveCompatibilityVector[i]->setPriorityLevel(priorityLevel);
 	    }
 	  } 
-	} 
+	}
+	
+	
+	/**
+	 * Finally, we have to store the new TapeDriveCompatibility objects
+	 */
+	std::vector<castor::vdqm::TapeDriveCompatibility*> tapeDriveCompatibilityVector = 
+			newTapeDrive->tapeDriveCompatibilities();
+  for (i = 0; i < tapeDriveCompatibilityVector.size(); i++) {
+    handleRequest(tapeDriveCompatibilityVector[i], m_cuuid);
+  }  
 }
