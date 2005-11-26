@@ -348,13 +348,7 @@ namespace castor {
 	        static const std::string s_getQueuePositionStatementString;
 	
 	        /// SQL statement object for function getQueuePosition
-	        oracle::occi::Statement *m_getQueuePositionStatement; 
-	        
- 	        /// SQL statement for function getFreeTapeDrive
-	        static const std::string s_selectFreeTapeDriveStatementString;
-	
-	        /// SQL statement object for function getFreeTapeDrive
-	        oracle::occi::Statement *m_selectFreeTapeDriveStatement;	 
+	        oracle::occi::Statement *m_getQueuePositionStatement;  
 	        
  	        /// SQL statement for function selectTapeDrive
 	        static const std::string s_selectTapeDriveStatementString;

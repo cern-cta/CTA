@@ -75,11 +75,6 @@ const std::string castor::db::ora::OraVdqmSvc::s_checkTapeRequestStatement2Strin
 const std::string castor::db::ora::OraVdqmSvc::s_getQueuePositionStatementString =
   "SELECT count(*) FROM TapeRequest tr1, TapeRequest tr2 WHERE tr1.id = :1 AND tr1.deviceGroupName = tr2.deviceGroupName AND tr2.modificationTime <= tr1.modificationTime";
   
-
-/// SQL statement for function selectFreeTapeDrive
-const std::string castor::db::ora::OraVdqmSvc::s_selectFreeTapeDriveStatementString =
-  "SELECT id FROM Tape WHERE status = :1";
-  
 /// SQL statement for function deleteAllTapeDrvsFromSrv
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveStatementString =
   "SELECT id FROM TapeDrive WHERE driveName = :1 AND tapeServer = :2 FOR UPDATE";
@@ -152,7 +147,6 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   m_checkTapeRequestStatement1(0),
   m_checkTapeRequestStatement2(0),
   m_getQueuePositionStatement(0),
-  m_selectFreeTapeDriveStatement(0),
   m_selectTapeDriveStatement(0),
   m_existTapeDriveWithTapeInUseStatement(0),
   m_existTapeDriveWithTapeMountedStatement(0),
@@ -202,7 +196,6 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
     deleteStatement(m_checkTapeRequestStatement1);
      deleteStatement(m_checkTapeRequestStatement2);
     deleteStatement(m_getQueuePositionStatement);
-    deleteStatement(m_selectFreeTapeDriveStatement);
     deleteStatement(m_selectTapeDriveStatement);
     deleteStatement(m_existTapeDriveWithTapeInUseStatement);
     deleteStatement(m_existTapeDriveWithTapeMountedStatement);
@@ -223,7 +216,6 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   m_checkTapeRequestStatement1 = 0;
   m_checkTapeRequestStatement2 = 0;
   m_getQueuePositionStatement = 0;
-  m_selectFreeTapeDriveStatement = 0;
   m_selectTapeDriveStatement = 0;
   m_existTapeDriveWithTapeInUseStatement = 0;
   m_existTapeDriveWithTapeMountedStatement = 0;
@@ -1347,8 +1339,7 @@ std::vector<castor::vdqm::TapeDriveCompatibility*>*
  
   try {
     m_selectCompatibilitiesForDriveModelStatement->setString(1, tapeDriveModel);
-    oracle::occi::ResultSet *rset = 
-    	m_selectCompatibilitiesForDriveModelStatement->executeQuery();
+    rset = m_selectCompatibilitiesForDriveModelStatement->executeQuery();
     
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       m_selectCompatibilitiesForDriveModelStatement->closeResultSet(rset);
@@ -1439,8 +1430,7 @@ std::vector<castor::vdqm::TapeAccessSpecification*>*
  
   try {
     m_selectTapeAccessSpecificationsStatement->setString(1, tapeModel);
-    oracle::occi::ResultSet *rset = 
-    	m_selectTapeAccessSpecificationsStatement->executeQuery();
+    rset = m_selectTapeAccessSpecificationsStatement->executeQuery();
     
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       m_selectTapeAccessSpecificationsStatement->closeResultSet(rset);
