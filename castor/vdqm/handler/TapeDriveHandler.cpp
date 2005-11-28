@@ -461,16 +461,41 @@ castor::vdqm::TapeDrive*
           ~VDQM_VOL_UNMOUNT & ~VDQM_UNIT_MBCOUNT );
           
       
+      std::string driveModel = ptr_driveRequest->tapeDriveModel;
+      if ( driveModel == "" ) {
+	      vmgr_list list;
+				struct vmgr_tape_dgnmap *dgnmap;
+				int flags;
+	      
+	      /**
+				 * Retrieve the information about the cartridge model, if the tape drive
+				 * name is not provided by the client.
+				 * Please note, that this is a work around!
+				 */
+				flags = VMGR_LIST_BEGIN;
+				while ((dgnmap = vmgr_listdgnmap (flags, &list)) != NULL) {
+					if ( std::strcmp(dgnmap->dgn, ptr_driveRequest->dgn) == 0 ) {
+						driveModel = dgnmap->model;
+						break;
+					}
+					flags = VMGR_LIST_CONTINUE;
+				}
+				(void) vmgr_listdgnmap (VMGR_LIST_END, &list);
+      }
       
+      /**
+       * Looks, wheter there is already existing entries in the 
+       * TapeDriveCompatibility table for that model
+       */
       std::vector<castor::vdqm::TapeDriveCompatibility*> *tapeDriveCompatibilities = 
-				ptr_IVdqmService->selectCompatibilitiesForDriveModel(ptr_driveRequest->tapeDriveModel);
+				ptr_IVdqmService->selectCompatibilitiesForDriveModel(driveModel);
           
       if ( tapeDriveCompatibilities == NULL ||
            tapeDriveCompatibilities->size() == 0 ) {
 	      /**
 	       * Handle the conection to the priority list of the tape Drives
 	       */
-	      handleTapeDriveCompatibilities(tapeDrive, ptr_driveRequest->tapeDriveModel);
+	      handleTapeDriveCompatibilities(tapeDrive, driveModel);
       }
       else {
       	for (unsigned int i = 0; i < tapeDriveCompatibilities->size(); i++) {
@@ -1050,6 +1075,16 @@ void castor::vdqm::handler::TapeDriveHandler::handleTapeDriveCompatibilities(
 				ptr_IVdqmService->selectTapeAccessSpecifications(dgnmap->model);
 			
 			if ( tapeAccessSpecs != NULL) {
+				
+				/**
+				 * XXX
+				 * In case that the tape drive model name is not sent with the
+				 * client request, we have to take the same name as the tape model.
+				 */
+				if ( driveModel == "" ) {
+					driveModel = dgnmap->model;
+				}
+				
 				/**
 				 * Add for each found specification an entry in the tapeDriveCompatibility
 				 * vector. Later, we will set then right priority order
