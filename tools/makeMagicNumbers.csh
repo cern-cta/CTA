@@ -12,7 +12,7 @@ echo "\n    REPRESENTATIONS\n" >> MagicNumbers
 grep REP_ ../castor/Constants.hpp | grep '=' | sed 's/ *\([^ ]*\) = \([0-9]*\).*$/\2  \1/' >> MagicNumbers
 echo >> MagicNumbers
 
-foreach f ( `find ../castor/stager -name '*.hpp'` )
+foreach f ( `find ../castor/stager ../castor/vdqm -name '*Codes.hpp'` )
   set output=`grep '_' $f | grep '=' | grep -v 'm_' | grep -v "if" | sed 's/\/\/.*$//'`
   if !("$output" == "") then
     echo $output | sed 's/^\([^_]*\).*$/    \1\n/' >> MagicNumbers
@@ -21,4 +21,4 @@ foreach f ( `find ../castor/stager -name '*.hpp'` )
   endif
 end
 
-a2ps --columns=3 -f 7 -o MagicNumbers.ps MagicNumbers
+a2ps --columns=4 -f 7.5 -c -o MagicNumbers.ps MagicNumbers
