@@ -136,7 +136,7 @@ void CppCppStreamCnvWriter::writeCreateRepContent() {
        as = assocs.next()) {
     if (as->type.multiRemote == MULT_ONE &&
         isEnum(as->remotePart.typeName) &&
-        as->remotePart.stereotype != "enumerationNoStream") {
+        as->remotePart.stereotype != "«enumerationNoStream»") {
       *m_stream << getIndent() << "ad->stream() << obj->"
                 << as->remotePart.name << "();" << endl;
     }
@@ -215,7 +215,7 @@ void CppCppStreamCnvWriter::writeCreateObjContent() {
        as = assocs.next()) {
     if (as->type.multiRemote == MULT_ONE &&
         isEnum(as->remotePart.typeName) &&
-        as->remotePart.stereotype != "enumerationNoStream") {
+        as->remotePart.stereotype != "«enumerationNoStream»") {
       *m_stream << getIndent() << "int "
                 << as->remotePart.name << ";" << endl
                 << getIndent() << "ad->stream() >> "

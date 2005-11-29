@@ -60,7 +60,7 @@ void CppHStreamCnvWriter::writeMarshal() {
   writeDocumentation
     ("Marshals an object using a StreamAddress.",
      QString("If the object is in alreadyDone, just marshal its id.\n") +
-     "Otherwise, call createRep and recursively marshal the\n" +
+     "Otherwise, call createRep and recursively marshal the " +
      "refered objects.",
      QString("@param object the object to marshal\n") +
      "@param address the address where to marshal\n" +

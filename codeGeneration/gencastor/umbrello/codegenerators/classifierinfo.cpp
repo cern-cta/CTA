@@ -21,6 +21,7 @@
 #include "../class.h"
 #include "../interface.h"
 #include "../operation.h"
+#include "umlrole.h"
 
 ClassifierInfo::ClassifierInfo( UMLClassifier *classifier, UMLDoc *doc)
 {
@@ -33,7 +34,7 @@ UMLClassifierList ClassifierInfo::findSuperClassConcepts
 (UMLClassifier *c) {
   UMLAssociationList list = c->getSpecificAssocs(Uml::at_Generalization);
 	UMLClassifierList parentConcepts;
-	int myID = c->getID();
+	Uml::IDType myID = c->getID();
   for (UMLAssociation *a = list.first(); a; a = list.next()) {
     // Concepts on the "A" side inherit FROM this class
     // as long as the ID of the role A class isnt US (in
@@ -41,8 +42,8 @@ UMLClassifierList ClassifierInfo::findSuperClassConcepts
     // from another class).
     // SO check for roleA id, it DOESNT match this concepts ID,
     // then its a concept which inherits from us
-		if (a->getRoleId(B) != myID) {
-			UMLObject* obj = a->getObject(B);
+    if (a->getUMLRole(Uml::B)->getObject()->getID() != myID) {
+      UMLObject* obj = a->getObject(Uml::B);
 			UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
 			if (concept)
 				parentConcepts.append(concept);
@@ -54,15 +55,15 @@ UMLClassifierList ClassifierInfo::findSuperClassConcepts
 UMLClassifierList ClassifierInfo::findSuperInterfaceConcepts
 (UMLClassifier *c) {
   UMLClassifierList parentConcepts;
-  int myID = c->getID();
+  Uml::IDType myID = c->getID();
   // First the realizations, ie the actual interface implementations
   UMLAssociationList list = c->getRealizations();
   for (UMLAssociation *a = list.first(); a; a = list.next()) {
     // Concepts on the "B" side are parent (super) classes of this one
     // So check for roleB id, it DOESNT match this concepts ID,
     // then its a concept which we inherit from
-    if (a->getRoleId(B) != myID) {
-      UMLObject* obj = a->getObject(B);
+    if (a->getUMLRole(Uml::B)->getObject()->getID() != myID) {
+      UMLObject* obj = a->getObject(Uml::B);
       UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
       if (concept)
         parentConcepts.append(concept);
@@ -100,7 +101,7 @@ UMLClassifierList ClassifierInfo::findAllImplementedClasses
 
 UMLClassifierList ClassifierInfo::findSuperAbstractConcepts
 (UMLClassifier *c) {
-  int myID = c->getID();
+  Uml::IDType myID = c->getID();
   // First the interfaces
   UMLClassifierList parentConcepts = findSuperInterfaceConcepts(c);
   // Then add the generalizations of abstract objects
@@ -109,8 +110,8 @@ UMLClassifierList ClassifierInfo::findSuperAbstractConcepts
     // Concepts on the "B" side are parent (super) classes of this one
     // So check for roleB id, it DOESNT match this concepts ID,
     // then its a concept which we inherit from
-    if (a->getRoleId(B) != myID) {
-      UMLObject* obj = a->getObject(B);
+    if (a->getUMLRole(Uml::B)->getObject()->getID() != myID) {
+      UMLObject* obj = a->getObject(Uml::B);
       UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
       if (concept && concept->getAbstract())
         parentConcepts.append(concept);
@@ -152,8 +153,8 @@ UMLClassifierList ClassifierInfo::findAllImplementedAbstractConcepts
 
 UMLOperationList*
 ClassifierInfo::getFilteredOperationsList
-(UMLClassifier *c, Scope permitScope, bool keepAbstractOnly) {
-  UMLOperationList baseList = c->getFilteredOperationsList(false);
+(UMLClassifier *c, Uml::Scope permitScope, bool keepAbstractOnly) {
+  UMLOperationList baseList = c->getOpList(false);
   QPtrList<UMLOperation>* operationList = new QPtrList<UMLOperation>;
 	for(UMLOperation* listItem = baseList.first(); listItem;
 	    listItem = baseList.next())  {
@@ -197,8 +198,8 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
 	// sort attributes by Scope
 	if(!isInterface) {
 		UMLClass * myClass = dynamic_cast<UMLClass *>(c);
-		UMLAttributeList *atl = myClass->getFilteredAttributeList();
-		for(UMLAttribute *at=atl->first(); at ; at=atl->next()) {
+		UMLAttributeList atl = myClass->getAttributeList();
+		for(UMLAttribute *at=atl.first(); at ; at=atl.next()) {
 			switch(at->getScope())
 			{
 			case Uml::Public:
@@ -286,9 +287,8 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
        uc = allSuperclasses.next()) {
     UMLClass * myClass = dynamic_cast<UMLClass *>(uc);
     if (0 == myClass) continue;
-    UMLAttributeList *atl = myClass->getFilteredAttributeList();
-    if (0 == atl) continue;
-    for(UMLAttribute *at=atl->first(); at ; at=atl->next()) {
+    UMLAttributeList atl = myClass->getAttributeList();
+    for(UMLAttribute *at=atl.first(); at ; at=atl.next()) {
       allAttributes.append(at);
     }
   }
@@ -313,7 +313,7 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
 	hasAccessorMethods[Uml::Private] =
     atpriv.count() > 0 || static_atpriv.count() > 0;
 
-  UMLOperationList opl = c->getFilteredOperationsList();
+  UMLOperationList opl = c->getOpList();
 	hasOperationMethods[Uml::Public] = false;
 	hasOperationMethods[Uml::Protected] = false;
 	hasOperationMethods[Uml::Private] = false;
@@ -324,7 +324,7 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
     for (UMLClassifier *interface = implementedAbstracts.first();
          interface !=0;
          interface = implementedAbstracts.next()) { 
-      opl = interface->getFilteredOperationsList();
+      opl = interface->getOpList();
       for(UMLClassifierListItem* item = opl.first(); item; item = opl.next()) {
         if (item->getAbstract()) {
           hasOperationMethods[item->getScope()] = true;
@@ -371,12 +371,12 @@ UMLClassifierList ClassifierInfo::findAssocClassifierObjsInRoles (UMLAssociation
 		// the association.
 		// We also ignore classfiers which are the same as the current one
 		// (e.g. id matches), we only want the "other" classfiers
-		if (a->getRoleId(A) == m_nID && a->getRoleName(B) != "") {
-			UMLClassifier *c = dynamic_cast<UMLClassifier*>(a->getObject(B));
+          if (a->getUMLRole(Uml::A)->getObject()->getID() == m_nID && a->getRoleName(Uml::B) != "") {
+			UMLClassifier *c = dynamic_cast<UMLClassifier*>(a->getObject(Uml::B));
 			if(c)
 				classifiers.append(c);
-		} else if (a->getRoleId(B) == m_nID && a->getRoleName(A) != "") {
-			UMLClassifier *c = dynamic_cast<UMLClassifier*>(a->getObject(A));
+          } else if (a->getUMLRole(Uml::B)->getObject()->getID() == m_nID && a->getRoleName(Uml::A) != "") {
+			UMLClassifier *c = dynamic_cast<UMLClassifier*>(a->getObject(Uml::A));
 			if(c)
 				classifiers.append(c);
 		}

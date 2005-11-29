@@ -178,15 +178,15 @@ QString SimpleCodeGenerator::overwritableName(UMLClassifier* concept, QString na
 
 
 bool SimpleCodeGenerator::hasDefaultValueAttr(UMLClass *c) {
-        QPtrList<UMLAttribute> *atl = c->getFilteredAttributeList();
-        for(UMLAttribute *at = atl->first(); at; at = atl->next())
+        QPtrList<UMLAttribute> atl = c->getAttributeList();
+        for(UMLAttribute *at = atl.first(); at; at = atl.next())
                 if(!at->getInitialValue().isEmpty())
                         return true;
         return false;
 }
 
 bool SimpleCodeGenerator::hasAbstractOps(UMLClassifier *c) {
-        UMLOperationList opl = c->getFilteredOperationsList();
+        UMLOperationList opl = c->getOpList();
         for(UMLOperation *op = opl.first(); op ; op = opl.next())
                 if(op->getAbstract())
                         return true;

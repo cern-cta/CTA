@@ -160,7 +160,7 @@ class ClassifierInfo {
    */
   UMLClassifierList superclasses;
   UMLClassifierList allSuperclasses;
-  QMap<int, bool> allSuperclassIds;
+  QMap<Uml::IDType, bool> allSuperclassIds;
   UMLClassifierList superInterfaces;
   UMLClassifierList superAbstracts;
   UMLClassifierList implementedAbstracts;
@@ -203,14 +203,14 @@ class ClassifierInfo {
    */
   UMLAttributeList* getAttList();
 
-  int id() { return m_nID; }
+  Uml::IDType id() { return m_nID; }
 
  protected:
     void init (UMLClassifier *c, UMLDoc *doc);
 
  private:
 
-    int m_nID; // id of the classifier
+    Uml::IDType m_nID; // id of the classifier
 
     /**
      * Utility method called by "get*ChildClassfierList()" methods. It basically

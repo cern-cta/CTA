@@ -12,6 +12,7 @@
 #include "cppcastorwriter.h"
 #include "../attribute.h"
 #include "../classifier.h"
+#include "../datatype.h"
 #include "../class.h"
 
 //-----------------------------------------------------------------------------
@@ -113,4 +114,46 @@ QString CppCastorWriter::computeFileName(UMLClassifier* concept, QString ext) {
 
   m_fileMap->insert(concept,name);
   return name; //if not, "name" is OK and we have not much to to
+}
+
+//=============================================================================
+// getSimpleType
+//=============================================================================
+QString CppCastorWriter::getSimpleType(QString type) {
+  type.replace("*", "");
+  type.replace("&", "");
+  type.replace("const", "");
+  type.replace("unsigned", "");
+  type = type.stripWhiteSpace();
+  if (type.startsWith("::"))
+    type = type.right(type.length()-2);
+  return type;
+}
+
+//=============================================================================
+// getClassifier
+//=============================================================================
+UMLClassifier* CppCastorWriter::getClassifier(QString type) {
+  QString name = getSimpleType(type);
+  UMLClassifierList inList = m_doc->getClassesAndInterfaces();
+  for (UMLClassifier * obj = inList.first(); obj != 0; obj = inList.next()) {
+    if (obj->getName() == name) {
+      return obj;
+    }
+  }
+  return NULL;
+}
+
+//=============================================================================
+// getDatatype
+//=============================================================================
+UMLDatatype* CppCastorWriter::getDatatype(QString type) {
+  QString name = getSimpleType(type);
+  UMLDatatypeList daList = m_doc->getDatatypes();
+  for (UMLDatatype * obj = daList.first(); obj != 0; obj = daList.next()) {
+    if (obj->getName() == name) {
+      return obj;
+    }
+  }
+  return NULL;
 }

@@ -208,16 +208,6 @@ class CppBaseWriter : public CppCastorWriter {
   }
 
   /**
-   * Gets the classifier for a given type
-   */
-  UMLClassifier* getClassifier(QString type);
-
-  /**
-   * Gets the base type for a given type
-   */
-  static QString getSimpleType(QString type);
-
-  /**
    * Gets the namespace for a given type
    */
   QString getNamespace(QString type);
@@ -246,7 +236,7 @@ class CppBaseWriter : public CppCastorWriter {
 	void writeOperations
     (UMLClassifier *c,
      bool isHeaderMethod,
-     Scope permitScope,
+     Uml::Scope permitScope,
      QTextStream &j,
      QValueList<std::pair<QString, int> >& alreadyGenerated);
 

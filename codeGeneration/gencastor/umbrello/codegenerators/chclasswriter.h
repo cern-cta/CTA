@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.h,v $ $Revision: 1.3 $ $Release$ $Date: 2005/10/25 09:09:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: chclasswriter.h,v $ $Revision: 1.4 $ $Release$ $Date: 2005/11/29 10:15:08 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -113,7 +113,7 @@ class CHClassWriter : public CppBaseWriter {
    * Write associations accessors
    */
   void writeAssociationMethods (QPtrList<UMLAssociation> associations,
-                                int myID,
+                                Uml::IDType myID,
                                 QTextStream &stream);
 	/**
 	 * calls @ref writeSingleAttributeAccessorMethods() or @ref
@@ -124,7 +124,7 @@ class CHClassWriter : public CppBaseWriter {
                                   QString roleName,
                                   Multiplicity multi, 
                                   QString description,
-                                  Changeability_Type change,  
+                                  Uml::Changeability_Type change,  
                                   QTextStream &stream); 
 	/**
 	 * Writes getFoo() and setFoo() accessor methods for the attribute
@@ -132,7 +132,7 @@ class CHClassWriter : public CppBaseWriter {
 	void writeSingleAttributeAccessorMethods(QString fieldClassName,
                                            QString fieldName,
                                            QString description, 
-                                           Changeability_Type change,
+                                           Uml::Changeability_Type change,
                                            bool isStatic,
                                            QTextStream &cpp);
 
@@ -142,7 +142,7 @@ class CHClassWriter : public CppBaseWriter {
 	void writeVectorAttributeAccessorMethods(QString fieldClassName,
                                            QString fieldName,
                                            QString description, 
-                                           Changeability_Type change,
+                                           Uml::Changeability_Type change,
                                            QTextStream &cpp);
 	/**
 	 * write all operations for a given class

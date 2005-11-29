@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2005/10/25 09:09:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2005/11/29 10:15:07 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -28,6 +28,7 @@
 // Include files
 #include "chclasswriter.h"
 #include <qregexp.h>
+#include "umlrole.h"
 
 //=============================================================================
 // Standard constructor, initializes variables
@@ -247,7 +248,7 @@ void CHClassWriter::writeAttributeMethods(QPtrList <UMLAttribute>& attribs,
     writeSingleAttributeAccessorMethods(at->getTypeName(),
                                         methodBaseName,
                                         at->getDoc(),
-                                        chg_Changeable,
+                                        Uml::chg_Changeable,
                                         at->getStatic(),
                                         stream);
   }
@@ -257,37 +258,37 @@ void CHClassWriter::writeAttributeMethods(QPtrList <UMLAttribute>& attribs,
 // writeAssociationMethods
 //=============================================================================
 void CHClassWriter::writeAssociationMethods (QPtrList<UMLAssociation> associations,
-                                             int myID,
+                                             Uml::IDType myID,
                                              QTextStream &stream) {
   if (forceSections() || !associations.isEmpty()) {
     for(UMLAssociation *a = associations.first(); a; a = associations.next()) {
       // insert the methods to access the role of the other
       // class in the code of this one
-      if (a->getRoleId(A) == myID && a->getVisibility(A) == Uml::Public) {
+      if (a->getUMLRole(Uml::A)->getObject()->getID() == myID && a->getVisibility(Uml::A) == Uml::Public) {
         // only write out IF there is a rolename given
-        if(!a->getRoleName(B).isEmpty()) {
-          QString name = a->getObject(B)->getName();
+        if(!a->getRoleName(Uml::B).isEmpty()) {
+          QString name = a->getObject(Uml::B)->getName();
           if (!isEnum(name)) name.append("*");
           writeAssociationRoleMethod
             (name,
-             a->getRoleName(B),
-             parseMulti(a->getMulti(B)),
-             a->getRoleDoc(B),
-             a->getChangeability(B),
+             a->getRoleName(Uml::B),
+             parseMulti(a->getMulti(Uml::B)),
+             a->getRoleDoc(Uml::B),
+             a->getChangeability(Uml::B),
              stream);
         }
       }
-      if (a->getRoleId(B) == myID && a->getVisibility(B) == Uml::Public) {
+      if (a->getUMLRole(Uml::B)->getObject()->getID() == myID && a->getVisibility(Uml::B) == Uml::Public) {
         // only write out IF there is a rolename given
-        if(!a->getRoleName(A).isEmpty()) {
-          QString name = a->getObject(A)->getName();
+        if(!a->getRoleName(Uml::A).isEmpty()) {
+          QString name = a->getObject(Uml::A)->getName();
           if (!isEnum(name)) name.append("*");
           writeAssociationRoleMethod
             (name,
-             a->getRoleName(A),
-             parseMulti(a->getMulti(A)),
-             a->getRoleDoc(A),
-             a->getChangeability(A),
+             a->getRoleName(Uml::A),
+             parseMulti(a->getMulti(Uml::A)),
+             a->getRoleDoc(Uml::A),
+             a->getChangeability(Uml::A),
              stream);
         }
       }
@@ -302,7 +303,7 @@ void CHClassWriter::writeAssociationRoleMethod (QString fieldClassName,
                                                 QString roleName,
                                                 Multiplicity multi,
                                                 QString description,
-                                                Changeability_Type change,
+                                                Uml::Changeability_Type change,
                                                 QTextStream &stream) {
   switch (multi) {
   case MULT_ONE:
@@ -337,7 +338,7 @@ void CHClassWriter::writeAssociationRoleMethod (QString fieldClassName,
 void CHClassWriter::writeSingleAttributeAccessorMethods(QString fieldClassName,
                                                         QString fieldName,
                                                         QString description,
-                                                        Changeability_Type change,
+                                                        Uml::Changeability_Type change,
                                                         bool isStatic,
                                                         QTextStream &stream) {
   QString fieldNamespace = getNamespace(fieldClassName);
@@ -364,7 +365,7 @@ void CHClassWriter::writeSingleAttributeAccessorMethods(QString fieldClassName,
   // set method
   if ((!fieldClassName.contains("const ") ||
        fieldClassName.contains("const char*"))&&
-      change == chg_Changeable && !isStatic) {
+      change == Uml::chg_Changeable && !isStatic) {
     writeDocumentation("Set the value of " + fieldName,
                        description, "", stream);
     stream << getIndent() << "int " << m_prefix
@@ -386,13 +387,13 @@ void CHClassWriter::writeSingleAttributeAccessorMethods(QString fieldClassName,
 void CHClassWriter::writeVectorAttributeAccessorMethods (QString fieldClassName,
                                                          QString fieldName,
                                                          QString description,
-                                                         Changeability_Type changeType,
+                                                         Uml::Changeability_Type changeType,
                                                          QTextStream &stream) {
   QString fieldNamespace = getNamespace(fieldClassName);
   fieldClassName = convertType(fieldClassName,
                                fieldNamespace);
   // ONLY IF changeability is NOT Frozen
-  if (changeType != chg_Frozen) {
+  if (changeType != Uml::chg_Frozen) {
     writeDocumentation
       ("Add a " + fieldClassName + " object to the " + fieldName + " list",
        description,
@@ -406,7 +407,7 @@ void CHClassWriter::writeVectorAttributeAccessorMethods (QString fieldClassName,
            << endl << endl;
   }
   // ONLY IF changeability is Changeable
-  if (changeType == chg_Changeable) {
+  if (changeType == Uml::chg_Changeable) {
     writeDocumentation
       ("Remove a " + fieldClassName + " object from " +
        fieldName,
@@ -560,13 +561,13 @@ void CHClassWriter::writeOperations(QPtrList<UMLOperation> &oplist,
       }
     }
     // return type of method
-    QString methodReturnType = op->getReturnType();
+    QString methodReturnType = op->getTypeName();
     if (methodReturnType.left(8) == "virtual ") {
       methodReturnType = methodReturnType.remove(0,8);
     }
     methodReturnType = convertType(methodReturnType,
                                    getNamespace(methodReturnType));
-    if (methodReturnType != "void") {
+    if (methodReturnType != "void" && methodReturnType != "") {
       if (pl->count() > 0 || !op->getStatic()) {
         stream << "," << endl << getIndent(paramIndent);
       }

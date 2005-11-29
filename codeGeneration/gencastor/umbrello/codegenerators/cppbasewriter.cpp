@@ -10,6 +10,7 @@
 #include "../attribute.h"
 #include "../classifier.h"
 #include "../class.h"
+#include "umlrole.h"
 
 //-----------------------------------------------------------------------------
 // Implementation file for class : cppbasewriter
@@ -380,6 +381,7 @@ QString CppBaseWriter::fixTypeName(QString string,
                         forceNamespace);
     string.replace(start, end - start, itype);
   }
+  if (string == "") string = "void";
   return string;
 }
 
@@ -441,7 +443,7 @@ bool CppBaseWriter::finalize(UMLClassifier* /*c*/) {
 void CppBaseWriter::writeOperations
 (UMLClassifier *c,
  bool isHeaderMethod,
- Scope permitScope,
+ Uml::Scope permitScope,
  QTextStream &stream,
  QValueList<std::pair<QString, int> >& alreadyGenerated) {
   // First this object methods
@@ -563,8 +565,8 @@ void CppBaseWriter::writeOperations
   // Now write the method itself
   int paramIndent = INDENT*m_indent;
   QString methodReturnType =
-    fixTypeName(op->getReturnType(),
-                getNamespace(op->getReturnType()),
+    fixTypeName(op->getTypeName(),
+                getNamespace(op->getTypeName()),
                 m_classInfo->packageName,
                 !isHeaderMethod);
   bool forceVirtual = false;
@@ -654,34 +656,6 @@ QString CppBaseWriter::scopeToCPPDecl(Uml::Scope scope) {
     break;
   }
   return QString("UnknownScope");
-}
-
-//=============================================================================
-// getSimpleType
-//=============================================================================
-QString CppBaseWriter::getSimpleType(QString type) {
-  type.replace("*", "");
-  type.replace("&", "");
-  type.replace("const", "");
-  type.replace("unsigned", "");
-  type = type.stripWhiteSpace();
-  if (type.startsWith("::"))
-    type = type.right(type.length()-2);
-  return type;
-}
-
-//=============================================================================
-// getClassifier
-//=============================================================================
-UMLClassifier* CppBaseWriter::getClassifier(QString type) {
-  QString name = getSimpleType(type);
-  UMLClassifierList inList = m_doc->getClassesAndInterfaces();
-  for (UMLClassifier * obj = inList.first(); obj != 0; obj = inList.next()) {
-		if (obj->getName() == name) {
-      return obj;
-    }
-	}
-	return NULL;
 }
 
 //=============================================================================
@@ -780,31 +754,31 @@ void CppBaseWriter::singleAssocToPairList (UMLAssociation *a,
                                            AssocList &list,
                                            ClassifierInfo &ci) {
   Assoc* as;
-  if (ci.id() == a->getRoleId(A) ||
-      ci.allSuperclassIds.contains(a->getRoleId(A))) {
-    as = new Assoc(AssocType(parseMulti(a->getMulti(B)),
-                             parseMulti(a->getMulti(A)),
+  if (ci.id() == a->getUMLRole(Uml::A)->getObject()->getID() ||
+      ci.allSuperclassIds.contains(a->getUMLRole(Uml::A)->getObject()->getID())) {
+    as = new Assoc(AssocType(parseMulti(a->getMulti(Uml::B)),
+                             parseMulti(a->getMulti(Uml::A)),
                              parseAssocKind(a->getAssocType(), true)),
-                   Member(a->getRoleName(B),
-                          a->getObject(B)->getName(),
-                          a->getObject(B)->getAbstract(),
-                          a->getObject(B)->getStereotype()),
-                   Member(a->getRoleName(A),
-                          a->getObject(A)->getName(),
-                          a->getObject(A)->getAbstract(),
-                          a->getObject(A)->getStereotype()));
+                   Member(a->getRoleName(Uml::B),
+                          a->getObject(Uml::B)->getName(),
+                          a->getObject(Uml::B)->getAbstract(),
+                          a->getObject(Uml::B)->getStereotype()),
+                   Member(a->getRoleName(Uml::A),
+                          a->getObject(Uml::A)->getName(),
+                          a->getObject(Uml::A)->getAbstract(),
+                          a->getObject(Uml::A)->getStereotype()));
   } else {
-    as = new Assoc(AssocType(parseMulti(a->getMulti(A)),
-                             parseMulti(a->getMulti(B)),
+    as = new Assoc(AssocType(parseMulti(a->getMulti(Uml::A)),
+                             parseMulti(a->getMulti(Uml::B)),
                              parseAssocKind(a->getAssocType(), false)),
-                   Member(a->getRoleName(A),
-                          a->getObject(A)->getName(),
-                          a->getObject(A)->getAbstract(),
-                          a->getObject(A)->getStereotype()),
-                   Member(a->getRoleName(B),
-                          a->getObject(B)->getName(),
-                          a->getObject(B)->getAbstract(),
-                          a->getObject(B)->getStereotype()));
+                   Member(a->getRoleName(Uml::A),
+                          a->getObject(Uml::A)->getName(),
+                          a->getObject(Uml::A)->getAbstract(),
+                          a->getObject(Uml::A)->getStereotype()),
+                   Member(a->getRoleName(Uml::B),
+                          a->getObject(Uml::B)->getName(),
+                          a->getObject(Uml::B)->getAbstract(),
+                          a->getObject(Uml::B)->getStereotype()));
   }
   list.append(as);
 }
@@ -860,6 +834,6 @@ bool CppBaseWriter::isEnum(UMLObject* obj) {
   UMLClass *concept = dynamic_cast<UMLClass*>(obj);
   if (0 == concept) return false;
   QString stereo = concept->getStereotype();
-  return "enumeration" == stereo ||
-    "enumerationNoStream" == stereo;
+  return "«enumeration»" == stereo ||
+    "«enumerationNoStream»" == stereo;
 }

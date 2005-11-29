@@ -5,6 +5,7 @@
 
 // Local includes
 #include "cpphwriter.h"
+#include "umlrole.h"
 
 class CppHClassWriter : public CppHWriter {
 
@@ -46,13 +47,13 @@ class CppHClassWriter : public CppHWriter {
    * Writes all accessor methods for attributes and associations
    */
   void writeHeaderAccessorMethodDecl(UMLClassifier *c,
-                                     Scope permitScope,
+                                     Uml::Scope permitScope,
                                      QTextStream &stream);
 
   /**
    * Writes accessor methods for attributes
    */
-  void writeHeaderAttributeAccessorMethods (Scope visibility,
+  void writeHeaderAttributeAccessorMethods (Uml::Scope visibility,
                                             bool writeStatic,
                                             QTextStream &stream);
 
@@ -69,7 +70,7 @@ class CppHClassWriter : public CppHWriter {
    * @param writeStatic whether to write static or non-static attributes out
    * @param stream text stream
    */
-  void writeAttributeDecls (Scope visibility,
+  void writeAttributeDecls (Uml::Scope visibility,
                             bool writeStatic,
                             QTextStream &stream);
 
@@ -78,8 +79,8 @@ class CppHClassWriter : public CppHWriter {
    * out as attributes
    */
   void writeAssociationDecls(QPtrList<UMLAssociation> associations,
-                             Scope permit,
-                             int id,
+                             Uml::Scope permit,
+                             Uml::IDType id,
                              QTextStream &stream);
 
   /**
@@ -95,9 +96,9 @@ class CppHClassWriter : public CppHWriter {
    * Write associations accessors
    */
   void writeAssociationMethods (QPtrList<UMLAssociation> associations,
-                                Scope permitVisib,
+                                Uml::Scope permitVisib,
                                 bool writePointerVar,
-                                int myID,
+                                Uml::IDType myID,
                                 QTextStream &stream);
 	/**
 	 * calls @ref writeSingleAttributeAccessorMethods() or @ref
@@ -109,7 +110,7 @@ class CppHClassWriter : public CppHWriter {
                                   QString roleName,
                                   Multiplicity multi, 
                                   QString description,
-                                  Changeability_Type change,  
+                                  Uml::Changeability_Type change,  
                                   QTextStream &stream); 
 
 	/**
@@ -128,7 +129,7 @@ class CppHClassWriter : public CppHWriter {
                                            QString fieldVarName,
                                            QString fieldName,
                                            QString description, 
-                                           Changeability_Type change,
+                                           Uml::Changeability_Type change,
                                            bool isStatic,
                                            QTextStream &cpp);
 
@@ -140,7 +141,7 @@ class CppHClassWriter : public CppHWriter {
                                            QString fieldVarName,
                                            QString fieldName,
                                            QString description, 
-                                           Changeability_Type change,
+                                           Uml::Changeability_Type change,
                                            QTextStream &cpp);
 
   /** builds an attribute name */

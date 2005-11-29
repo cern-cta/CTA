@@ -10,6 +10,7 @@
 #include "../codegenerator.h"
 #include "simplecodegenerator.h"
 #include "../classifier.h"
+#include "../datatype.h"
 
 /**
  * Castor cpp writer.
@@ -44,6 +45,21 @@ class CppCastorWriter : public SimpleCodeGenerator {
    * accessor to topNS
    */
   void setTopNS(QString value) { s_topNS = value; }
+
+  /**
+   * Gets the base type for a given type
+   */
+  static QString getSimpleType(QString type);
+
+  /**
+   * Gets the classifier for a given type
+   */
+  UMLClassifier* getClassifier(QString type);
+
+  /**
+   * Gets the datatype for a given type
+   */
+  UMLDatatype* getDatatype(QString type);
 
  protected:
   /**

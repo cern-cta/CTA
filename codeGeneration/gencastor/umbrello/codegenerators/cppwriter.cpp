@@ -31,6 +31,8 @@
 #include "../class.h"
 #include "../interface.h"
 #include <iostream>
+#include <model_utils.h>
+#include "uml.h"
 
 CppWriter::CppWriter( UMLDoc *parent, const char *name ) :
   CppCastorWriter(parent, name), firstGeneration(true) {
@@ -125,10 +127,10 @@ void CppWriter::writeClass(UMLClassifier *c) {
     const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
     if (classInfo.allImplementedAbstracts.contains(concept) ||
         classInfo.className == "IObject") {
-      UMLAttributeList param;
+      Umbrello::NameAndType_List params;
       UMLOperation* printOp =
-        getDocument()->createOperation(c,"print const", &param);
-      printOp->setReturnType("virtual void");
+        c->createOperation("print const", NULL, &params);
+      printOp->setTypeName("virtual void");
       printOp->setID(m_doc->getUniqueID());
       printOp->setDoc("Outputs this object in a human readable format");
       if (classInfo.isInterface) {
@@ -136,18 +138,18 @@ void CppWriter::writeClass(UMLClassifier *c) {
       }
       UMLAttribute* streamParam =
         new UMLAttribute(printOp, "stream",
-                         1, "ostream&");
+                         "1", Uml::Public, "ostream&");
       streamParam->setDoc("The stream where to print this object");
       printOp->getParmList()->append(streamParam);
       UMLAttribute* indentParam =
         new UMLAttribute(printOp, "indent",
-                         2,
+                         "2", Uml::Public,
                          "string");
       indentParam->setDoc("The indentation to use");
       printOp->getParmList()->append(indentParam);
       UMLAttribute* alreadyPrintedParam =
         new UMLAttribute(printOp, "alreadyPrinted",
-                         3,
+                         "3", Uml::Public,
                          "castor::ObjectSet&");
       alreadyPrintedParam->setDoc
         (QString("The set of objects already printed.\n") +
@@ -155,8 +157,8 @@ void CppWriter::writeClass(UMLClassifier *c) {
       printOp->getParmList()->append(alreadyPrintedParam);
       c->getOpList().append(printOp);
       // Second print method, with no arguments
-      printOp = getDocument()->createOperation(c,"print const", &param);
-      printOp->setReturnType("virtual void");
+      printOp = c->createOperation("print const", NULL, &params);
+      printOp->setTypeName("virtual void");
       printOp->setID(m_doc->getUniqueID());
       printOp->setDoc("Outputs this object in a human readable format");
       if (classInfo.isInterface) {
@@ -166,8 +168,8 @@ void CppWriter::writeClass(UMLClassifier *c) {
       // For first level of concrete implementations
       if (!c->getAbstract()) {
         // TYPE method
-        UMLOperation* typeOp = getDocument()->createOperation(c, "TYPE", &param);
-        typeOp->setReturnType("int");
+        UMLOperation* typeOp = c->createOperation("TYPE", NULL, &params);
+        typeOp->setTypeName("int");
         typeOp->setID(m_doc->getUniqueID());
         typeOp->setDoc("Gets the type of this kind of objects");
         typeOp->setStatic(true);
@@ -179,10 +181,10 @@ void CppWriter::writeClass(UMLClassifier *c) {
           // ID attribute
           UMLClass* cl = dynamic_cast <UMLClass*>(c);
           if (0 != cl) {
-            UMLAttribute* idAt = new UMLAttribute
-              (c, "id", m_doc->getUniqueID(), "u_signed64", Uml::Public);
+            UMLAttribute* idAt =
+              cl->addAttribute
+              ("id", getDatatype("u_signed64"), Uml::Public);
             idAt->setDoc("The id of this object");
-            cl->getAttList()->append(idAt);
           }
         }
       }

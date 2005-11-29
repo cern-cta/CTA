@@ -1,12 +1,12 @@
 DEV=$(CASTORDEV_HOME)/codeGeneration/gencastor
-UMBRELLOBASE=../kdesdk-3.3.2
+UMBRELLOBASE=../kdesdk-3.4.2
 
 UMBRELLO=$(UMBRELLOBASE)/umbrello/umbrello
-UMBRELLOOBJBASE=$(UMBRELLOBASE)/obj-i386-linux
+UMBRELLOOBJBASE=$(UMBRELLOBASE)
 UMBRELLOOBJ=$(UMBRELLOOBJBASE)/umbrello/umbrello
 UMBRELLOGEN=$(UMBRELLOOBJ)/codegenerators
 
-RAWOBJS=activitywidget.o actor.o actorwidget.o aligntoolbar.o artifact.o artifactwidget.o association.o associationwidget.o assocrules.o attribute.o boxwidget.o class.o classifier.o classifiercodedocument.o classifierlistitem.o classifierwidget.o classimport.o classwidget.o codeaccessormethod.o codeblock.o codeblockwithcomments.o codeclassfield.o codeclassfielddeclarationblock.o codecomment.o codedocument.o codegenerationpolicy.o codegenerator.o codegenobjectwithtextblocks.o codemethodblock.o codeoperation.o codeparameter.o component.o componentwidget.o configurable.o datatype.o datatypewidget.o docwindow.o enum.o enumliteral.o enumwidget.o floatingtext.o hierarchicalcodeblock.o infowidget.o interface.o interfacewidget.o kplayerslideraction.o kstartuplogo.o linepath.o linkwidget.o listpopupmenu.o messagewidget.o node.o nodewidget.o notewidget.o objectwidget.o operation.o ownedcodeblock.o ownedhierarchicalcodeblock.o package.o packagewidget.o plugin.o pluginloader.o seqlinewidget.o statewidget.o stereotype.o template.o textblock.o toolbarstate.o toolbarstatearrow.o toolbarstateassociation.o toolbarstatefactory.o toolbarstatemessages.o toolbarstateother.o toolbarstatepool.o uml.o umlattributelist.o umlcanvasobject.o umlclassifierlistitemlist.o umldoc.o umllistview.o umllistviewitem.o umlnamespace.o umlobject.o umlobjectlist.o umlrole.o umlview.o umlviewcanvas.o umlwidget.o usecase.o usecasewidget.o worktoolbar.o
+RAWOBJS=activitywidget.o actor.o actorwidget.o aligntoolbar.o artifact.o artifactwidget.o association.o associationwidget.o assocrules.o attribute.o boxwidget.o class.o classifier.o classifiercodedocument.o classifierlistitem.o classifierwidget.o classimport.o classwidget.o codeaccessormethod.o codeblock.o codeblockwithcomments.o codeclassfield.o codeclassfielddeclarationblock.o codecomment.o codedocument.o codegenerationpolicy.o codegenerator.o codegenobjectwithtextblocks.o codemethodblock.o codeoperation.o codeparameter.o component.o componentwidget.o configurable.o datatype.o datatypewidget.o docwindow.o dialog_utils.o entity.o entityattribute.o entitywidget.o enum.o enumliteral.o enumwidget.o floatingtext.o hierarchicalcodeblock.o idlimport.o infowidget.o interface.o interfacewidget.o kplayerslideraction.o kstartuplogo.o linepath.o linkwidget.o listpopupmenu.o messagewidget.o model_utils.o node.o nodewidget.o notewidget.o objectwidget.o operation.o ownedcodeblock.o ownedhierarchicalcodeblock.o package.o packagewidget.o plugin.o pluginloader.o seqlinewidget.o statewidget.o stereotype.o template.o textblock.o toolbarstate.o toolbarstatearrow.o toolbarstateassociation.o toolbarstatefactory.o toolbarstatemessages.o toolbarstateother.o toolbarstatepool.o uml.o umlattributelist.o umlcanvasobject.o umlclassifierlistitemlist.o umldoc.o umllistview.o umllistviewitem.o umlnamespace.o umlobject.o umlobjectlist.o umlrole.o umlview.o umlviewcanvas.o umlwidget.o usecase.o usecasewidget.o widgetbase.o widget_utils.o worktoolbar.o
 OBJS=$(patsubst %,$(UMBRELLOOBJ)/%,$(RAWOBJS))
 
 UMBRELLORAWLIBS=refactoring/.libs/librefactoring.a classparser/.libs/libclassparser.a clipboard/.libs/libclipboard.a dialogs/.libs/libdialogs.a
@@ -53,7 +53,7 @@ gencastor.bin : genCastor.o $(MOCOBJS) $(DEV)/libcodegenerator.la
 
 genCastor.o : genCastor.cpp
 	@echo Compiling $<
-	@gcc -c $(INCLUDES) $(MACROS) -o $@ $<
+	gcc -c $(INCLUDES) $(MACROS) -o $@ $<
 
 clean :
 	@echo Cleaning
