@@ -44,7 +44,6 @@ namespace castor {
 
     /**
      * class DiskCopyInfo
-     * 
      */
     class DiskCopyInfo : public virtual castor::IObject {
 

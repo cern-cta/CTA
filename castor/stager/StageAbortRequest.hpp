@@ -45,7 +45,6 @@ namespace castor {
 
     /**
      * class StageAbortRequest
-     * 
      */
     class StageAbortRequest : public virtual ReqIdRequest {
 

@@ -45,9 +45,9 @@ namespace castor {
 
     /**
      * class MoverCloseRequest
-     * Internal request used when a file was closed in a mover after writing. This
-     * request exists to avoid the jobs on the diskservers to handle a connection to the
-     * database. 
+     * Internal request used when a file was closed in a mover after writing.
+     * This request exists to avoid the jobs on the diskservers to handle a connection
+     * to the database.
      */
     class MoverCloseRequest : public virtual Request {
 

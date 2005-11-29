@@ -44,7 +44,6 @@ namespace castor {
 
     /**
      * class DiskCopyForRecall
-     * 
      */
     class DiskCopyForRecall : public DiskCopy {
 

@@ -103,17 +103,17 @@ int Cstager_SubRequest_setRetryCounter(struct Cstager_SubRequest_t* instance, un
 
 /**
  * Get the value of fileName
- * Name of the file this SubRequest deals with. When stored in the catalog, this is
- * redundant with the link to the CastorFile table. However, this is needed in the
- * client
+ * Name of the file this SubRequest deals with.
+ * When stored in the catalog, this is redundant with the link to the CastorFile
+ * table. However, this is needed in the client
  */
 int Cstager_SubRequest_fileName(struct Cstager_SubRequest_t* instance, const char** var);
 
 /**
  * Set the value of fileName
- * Name of the file this SubRequest deals with. When stored in the catalog, this is
- * redundant with the link to the CastorFile table. However, this is needed in the
- * client
+ * Name of the file this SubRequest deals with.
+ * When stored in the catalog, this is redundant with the link to the CastorFile
+ * table. However, this is needed in the client
  */
 int Cstager_SubRequest_setFileName(struct Cstager_SubRequest_t* instance, const char* new_var);
 
@@ -220,18 +220,18 @@ int Cstager_SubRequest_setLastModificationTime(struct Cstager_SubRequest_t* inst
 /**
  * Get the value of answered
  * Whether somebody answered to this subRequest already. 1 means that it is the
- * case, 0 does not ensure it is not the case. This was introduced to deal with
- * prepareToGet where the answer is sent before the status of the subrequest
- * changes
+ * case, 0 does not ensure it is not the case.
+ * This was introduced to deal with prepareToGet where the answer is sent before the
+ * status of the subrequest changes
  */
 int Cstager_SubRequest_answered(struct Cstager_SubRequest_t* instance, int* var);
 
 /**
  * Set the value of answered
  * Whether somebody answered to this subRequest already. 1 means that it is the
- * case, 0 does not ensure it is not the case. This was introduced to deal with
- * prepareToGet where the answer is sent before the status of the subrequest
- * changes
+ * case, 0 does not ensure it is not the case.
+ * This was introduced to deal with prepareToGet where the answer is sent before the
+ * status of the subrequest changes
  */
 int Cstager_SubRequest_setAnswered(struct Cstager_SubRequest_t* instance, int new_var);
 

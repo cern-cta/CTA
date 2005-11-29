@@ -46,7 +46,7 @@ namespace castor {
      * class ClientIdentification
      * An object to store all client related informations. In future this should be
      * replaced by an abstract class to support also other identification methods, like
-     * Kerberos. 
+     * Kerberos.
      */
     class ClientIdentification : public virtual castor::IObject {
 

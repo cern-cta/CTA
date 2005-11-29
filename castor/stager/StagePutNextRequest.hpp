@@ -45,7 +45,6 @@ namespace castor {
 
     /**
      * class StagePutNextRequest
-     * 
      */
     class StagePutNextRequest : public virtual ReqIdRequest {
 

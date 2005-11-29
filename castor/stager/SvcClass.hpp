@@ -49,8 +49,9 @@ namespace castor {
 
     /**
      * class SvcClass
-     * A service, as seen by the user. A SvcClass is a container of resources and may be
-     * given as parameter of the request.
+     * A service, as seen by the user.
+     * A SvcClass is a container of resources and may be given as parameter of the
+     * request.
      */
     class SvcClass : public virtual castor::IObject {
 
@@ -105,9 +106,9 @@ namespace castor {
       /*********************************/
       /**
        * Get the value of m_nbDrives
-       * Number of drives to use for this service class. This is the default number, but
-       * it could be that occasionnally more drives are used, if a resource is shared with
-       * another service class using more drives
+       * Number of drives to use for this service class.
+       * This is the default number, but it could be that occasionnally more drives are
+       * used, if a resource is shared with another service class using more drives
        * @return the value of m_nbDrives
        */
       unsigned int nbDrives() const {
@@ -116,9 +117,9 @@ namespace castor {
 
       /**
        * Set the value of m_nbDrives
-       * Number of drives to use for this service class. This is the default number, but
-       * it could be that occasionnally more drives are used, if a resource is shared with
-       * another service class using more drives
+       * Number of drives to use for this service class.
+       * This is the default number, but it could be that occasionnally more drives are
+       * used, if a resource is shared with another service class using more drives
        * @param new_var the new value of m_nbDrives
        */
       void setNbDrives(unsigned int new_var) {

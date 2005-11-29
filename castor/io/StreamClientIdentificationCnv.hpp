@@ -111,8 +111,8 @@ namespace castor {
 
       /**
        * Marshals an object using a StreamAddress.
-       * If the object is in alreadyDone, just marshal its id. Otherwise, call createRep
-       * and recursively marshal the refered objects.
+       * If the object is in alreadyDone, just marshal its id.
+       * Otherwise, call createRep and recursively marshal the refered objects.
        * @param object the object to marshal
        * @param address the address where to marshal
        * @param alreadyDone the list of objects already marshalled

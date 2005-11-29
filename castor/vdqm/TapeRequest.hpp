@@ -60,7 +60,7 @@ namespace castor {
     /**
      * class TapeRequest
      * A TapeRequest object is instanciated, when a client wants to read or write a file
-     * frome a tape. 
+     * frome a tape.
      */
     class TapeRequest : public virtual castor::IObject {
 

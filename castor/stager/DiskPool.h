@@ -39,8 +39,9 @@ struct Cstager_SvcClass_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class DiskPool
-// A Resource as seen by the Scheduler. Resources can be allocated to one or many
-// projects are are composed of a set of filesystems.
+// A Resource as seen by the Scheduler.
+// Resources can be allocated to one or many projects are are composed of a set of
+// filesystems.
 //------------------------------------------------------------------------------
 
 /**

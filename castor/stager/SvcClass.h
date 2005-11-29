@@ -39,8 +39,9 @@ struct Cstager_TapePool_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class SvcClass
-// A service, as seen by the user. A SvcClass is a container of resources and may be
-// given as parameter of the request.
+// A service, as seen by the user.
+// A SvcClass is a container of resources and may be given as parameter of the
+// request.
 //------------------------------------------------------------------------------
 
 /**
@@ -91,17 +92,17 @@ int Cstager_SvcClass_clone(struct Cstager_SvcClass_t* instance,
 
 /**
  * Get the value of nbDrives
- * Number of drives to use for this service class. This is the default number, but
- * it could be that occasionnally more drives are used, if a resource is shared with
- * another service class using more drives
+ * Number of drives to use for this service class.
+ * This is the default number, but it could be that occasionnally more drives are
+ * used, if a resource is shared with another service class using more drives
  */
 int Cstager_SvcClass_nbDrives(struct Cstager_SvcClass_t* instance, unsigned int* var);
 
 /**
  * Set the value of nbDrives
- * Number of drives to use for this service class. This is the default number, but
- * it could be that occasionnally more drives are used, if a resource is shared with
- * another service class using more drives
+ * Number of drives to use for this service class.
+ * This is the default number, but it could be that occasionnally more drives are
+ * used, if a resource is shared with another service class using more drives
  */
 int Cstager_SvcClass_setNbDrives(struct Cstager_SvcClass_t* instance, unsigned int new_var);
 

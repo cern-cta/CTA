@@ -42,7 +42,6 @@ struct Cstager_SubRequest_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class DiskCopyForRecall
-// 
 //------------------------------------------------------------------------------
 
 /**

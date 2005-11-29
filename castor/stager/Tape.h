@@ -41,9 +41,10 @@ struct Cvdqm_ErrorHistory_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class Tape
-// Tape Information  The Tape Object contains all tape information required to be
-// stored in the stager request catalog. The remaining tape parameters are taken
-// from VMGR when the request is processed by the rtcpclientd daemon.
+// Tape Information
+// The Tape Object contains all tape information required to be stored in the stager
+// request catalog. The remaining tape parameters are taken from VMGR when the
+// request is processed by the rtcpclientd daemon.
 //------------------------------------------------------------------------------
 
 /**

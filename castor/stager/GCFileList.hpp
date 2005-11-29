@@ -47,7 +47,6 @@ namespace castor {
 
     /**
      * class GCFileList
-     * 
      */
     class GCFileList : public virtual Request {
 

@@ -39,7 +39,7 @@ struct Cstager_ClientIdentification_t;
 // class ClientIdentification
 // An object to store all client related informations. In future this should be
 // replaced by an abstract class to support also other identification methods, like
-// Kerberos. 
+// Kerberos.
 //------------------------------------------------------------------------------
 
 /**

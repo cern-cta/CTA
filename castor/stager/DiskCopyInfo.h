@@ -37,7 +37,6 @@ struct Cstager_DiskCopyInfo_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class DiskCopyInfo
-// 
 //------------------------------------------------------------------------------
 
 /**

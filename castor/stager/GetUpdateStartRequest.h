@@ -42,9 +42,9 @@ struct Cstager_SvcClass_t;
 // This defines a C interface to the following class
 // class GetUpdateStartRequest
 // Internal request used when a get or update job has just started. It does the
-// scheduling of the given subrequest and returns the client information. This
-// request exists to avoid the jobs on the diskservers to handle a connection to the
-// database. 
+// scheduling of the given subrequest and returns the client information.
+// This request exists to avoid the jobs on the diskservers to handle a connection
+// to the database.
 //------------------------------------------------------------------------------
 
 /**

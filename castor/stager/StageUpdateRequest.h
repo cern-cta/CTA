@@ -42,7 +42,6 @@ struct Cstager_SvcClass_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class StageUpdateRequest
-// 
 //------------------------------------------------------------------------------
 
 /**

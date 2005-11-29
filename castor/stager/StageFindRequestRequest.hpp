@@ -45,7 +45,6 @@ namespace castor {
 
     /**
      * class StageFindRequestRequest
-     * 
      */
     class StageFindRequestRequest : public virtual QryRequest {
 

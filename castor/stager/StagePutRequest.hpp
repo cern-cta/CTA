@@ -45,7 +45,6 @@ namespace castor {
 
     /**
      * class StagePutRequest
-     * 
      */
     class StagePutRequest : public virtual FileRequest {
 

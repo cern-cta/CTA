@@ -49,8 +49,9 @@ namespace castor {
 
     /**
      * class DiskPool
-     * A Resource as seen by the Scheduler. Resources can be allocated to one or many
-     * projects are are composed of a set of filesystems.
+     * A Resource as seen by the Scheduler.
+     * Resources can be allocated to one or many projects are are composed of a set of
+     * filesystems.
      */
     class DiskPool : public virtual castor::IObject {
 

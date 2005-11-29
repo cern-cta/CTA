@@ -49,10 +49,11 @@ namespace castor {
 
     /**
      * class Segment
-     * Segment Information  The Segment object contains all tape file (segment)
-     * information required to be stored in the stager request catalog. The remaining
-     * tape file parameters such as record format and blocksize are either defined by
-     * defaults or taken from the tape label.
+     * Segment Information
+     * The Segment object contains all tape file (segment) information required to be
+     * stored in the stager request catalog. The remaining tape file parameters such as
+     * record format and blocksize are either defined by defaults or taken from the tape
+     * label.
      */
     class Segment : public virtual castor::IObject {
 
