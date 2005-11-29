@@ -1,3 +1,9 @@
+gencastor (4.0-0) unstable; urgency=low
+
+  * Port to new umbrello and new KDE (3.4.2)
+
+ -- sponcec3 <sponcec3@seblap.cern.ch>  Tue, 29 Nov 2005 11:26:23 +0100
+
 gencastor (3.6-0) unstable; urgency=low
 
   * Fixed the way static factories are instantiated so that they can be freed.    
