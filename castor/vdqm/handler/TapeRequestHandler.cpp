@@ -132,7 +132,12 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
 	  //The Tape related informations
 	  newTapeReq = new TapeRequest();
 	  newTapeReq->setCreationTime(time(NULL));
-	 	newTapeReq->setModificationTime(time(NULL));
+	  /**
+	   * The modification time will only be changed,
+	   * in case that an error occures during the tape assignment
+	   * procedure with RTCPD
+	   */
+	 	newTapeReq->setModificationTime(newTapeReq->creationTime());
 	 	/*
 	   * We don't allow client to set priority
 	   */
