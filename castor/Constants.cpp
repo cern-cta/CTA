@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2005/11/25 11:11:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2005/11/30 14:21:59 $ $Author: itglp $
  *
  *
  *
@@ -175,7 +175,9 @@ const char* castor::ServicesIdStrings[ServicesIdsNb] = {
   "PGVDQMSVC",
 
   "MYCNV",
-  "DBSRMSVC"
+  
+  "DBSRMSVC",
+  "DBSRMDAEMONSVC"
 };
 
 //=============================================================================
