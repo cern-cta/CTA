@@ -28,7 +28,6 @@
 #include <signal.h>
 #include <string>
 
-//#include "castor/Services.hpp"
 #include "Cgetopt.h"
 #include "Cinit.h"
 #include "Cuuid.h"
@@ -97,7 +96,7 @@ castor::vdqm::VdqmServer::VdqmServer():
   	
   initLog("Vdqm", SVC_DLFMSG);
   // Initializes the DLF logging. This includes
-  // defining the predefined messages
+  // registration of the predefined messages
   castor::dlf::Message messages[] =
     {{ 0, " - "},
      { 1, "New Request Arrival"},
@@ -361,7 +360,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[]) {
   Copterr = 0;
 
   char c;
-  while ((c = Cgetopt_long (argc, argv, "fnd", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "fn:d:", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
