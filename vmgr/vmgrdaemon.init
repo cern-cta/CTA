@@ -5,9 +5,9 @@
 # chkconfig: 345 67 38
 # description: VMGR server daemon
 #
-# $Id: vmgrdaemon.init,v 1.1 2005/06/17 08:04:27 jdurand Exp $
+# $Id: vmgrdaemon.init,v 1.2 2005/11/30 09:06:00 jdurand Exp $
 #
-# @(#)$RCSfile: vmgrdaemon.init,v $ $Revision: 1.1 $ $Date: 2005/06/17 08:04:27 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: vmgrdaemon.init,v $ $Revision: 1.2 $ $Date: 2005/11/30 09:06:00 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 #
@@ -85,7 +85,7 @@ case "$1" in
   start)
 	echo $ECHOOPT "Starting $prog: "
     if [ $sysname = "Linux" -a `whoami` = "root" ]; then
-        netstat -ap | egrep '\*:5013|\*:vmgr' | grep LISTEN | grep vmgrdaemon > /dev/null
+        netstat -ap | egrep '\*:5013|\*:vmgr' | grep LISTEN | egrep "\/vmgrdaemon *\$" > /dev/null
     else
         netstat -a  | egrep '\*:5013|\*:vmgr' | egrep 'LISTEN *$' > /dev/null
     fi

@@ -5,9 +5,9 @@
 # chkconfig: 345 67 38
 # description: DLF server
 #
-# $Id: dlfserver.init,v 1.1 2005/06/17 08:04:24 jdurand Exp $
+# $Id: dlfserver.init,v 1.2 2005/11/30 09:06:00 jdurand Exp $
 #
-# @(#)$RCSfile: dlfserver.init,v $ $Revision: 1.1 $ $Date: 2005/06/17 08:04:24 $ CERN/IT/ADC/CA Vitaly Motyakov
+# @(#)$RCSfile: dlfserver.init,v $ $Revision: 1.2 $ $Date: 2005/11/30 09:06:00 $ CERN/IT/ADC/CA Vitaly Motyakov
 #
 
 #
@@ -85,7 +85,7 @@ case "$1" in
   start)
 	echo $ECHOOPT "Starting $prog: "
     if [ $sysname = "Linux" -a `whoami` = "root" ]; then
-        netstat -ap | egrep '\*:5035|\*:dlf' | grep LISTEN | grep dlfserver > /dev/null
+        netstat -ap | egrep '\*:5035|\*:dlf' | grep LISTEN | egrep "\/dlfserver *\$" > /dev/null
     else
         netstat -a  | egrep '\*:5035|\*:dlf' | egrep 'LISTEN *$' > /dev/null
     fi

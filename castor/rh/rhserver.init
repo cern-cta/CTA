@@ -5,9 +5,9 @@
 # chkconfig: 345 63 52
 # description: Request Handler daemon
 #
-# $Id: rhserver.init,v 1.1 2005/06/17 08:04:25 jdurand Exp $
+# $Id: rhserver.init,v 1.2 2005/11/30 09:06:00 jdurand Exp $
 #
-# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.1 $ $Date: 2005/06/17 08:04:25 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.2 $ $Date: 2005/11/30 09:06:00 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 #
@@ -85,7 +85,7 @@ case "$1" in
   start)
 	echo $ECHOOPT "Starting $prog: "
     if [ $sysname = "Linux" -a `whoami` = "root" ]; then
-        netstat -ap | egrep '\*:9002|\*:rhserver' | grep LISTEN | grep rhserver > /dev/null
+        netstat -ap | egrep '\*:9002|\*:rhserver' | grep LISTEN | egrep "\/rhserver *\$" > /dev/null
     else
         netstat -a  | egrep '\*:9002|\*:rhserver' | egrep 'LISTEN *$' > /dev/null
     fi

@@ -5,9 +5,9 @@
 # chkconfig: 345 70 35
 # description: STAGER server daemon
 #
-# $Id: stager.init,v 1.3 2005/09/13 15:06:11 jdurand Exp $
+# $Id: stager.init,v 1.4 2005/11/30 09:06:00 jdurand Exp $
 #
-# @(#)$RCSfile: stager.init,v $ $Revision: 1.3 $ $Date: 2005/09/13 15:06:11 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: stager.init,v $ $Revision: 1.4 $ $Date: 2005/11/30 09:06:00 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 #
@@ -88,7 +88,7 @@ case "$1" in
   start)
 	echo $ECHOOPT "Starting $prog: "
         if [ $sysname = "Linux" -a `whoami` = "root" ]; then
-            netstat -ap | egrep '\*:5007|\*:stage' | grep LISTEN | grep stager > /dev/null
+            netstat -ap | egrep '\*:5007|\*:stage' | grep LISTEN | egrep "\/stager *\$" > /dev/null
         else
             netstat -a  | egrep '\*:5007|\*:stage' | egrep 'LISTEN *$' > /dev/null
         fi

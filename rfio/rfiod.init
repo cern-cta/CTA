@@ -5,9 +5,9 @@
 # chkconfig: 345 65 40
 # description: RFIO server daemon
 #
-# $Id: rfiod.init,v 1.1 2005/06/17 08:04:25 jdurand Exp $
+# $Id: rfiod.init,v 1.2 2005/11/30 09:06:00 jdurand Exp $
 #
-# @(#)$RCSfile: rfiod.init,v $ $Revision: 1.1 $ $Date: 2005/06/17 08:04:25 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: rfiod.init,v $ $Revision: 1.2 $ $Date: 2005/11/30 09:06:00 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -75,7 +75,7 @@ case "$1" in
 		RETVAL=1
 	else
         if [ $sysname = "Linux" -a `whoami` = "root" ]; then
-            netstat -ap | egrep '\*:5001|\*:rfio' | grep LISTEN | grep rfiod > /dev/null
+            netstat -ap | egrep '\*:5001|\*:rfio' | grep LISTEN | egrep "\/rfiod *\$" > /dev/null
         else
             netstat -a  | egrep '\*:5001|\*:rfio' | egrep 'LISTEN *$' > /dev/null
         fi

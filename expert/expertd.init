@@ -5,9 +5,9 @@
 # chkconfig: 345 75 30
 # description: EXPERT server daemon
 #
-# $Id: expertd.init,v 1.1 2005/06/17 08:04:24 jdurand Exp $
+# $Id: expertd.init,v 1.2 2005/11/30 09:06:00 jdurand Exp $
 #
-# @(#)$RCSfile: expertd.init,v $ $Revision: 1.1 $ $Date: 2005/06/17 08:04:24 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: expertd.init,v $ $Revision: 1.2 $ $Date: 2005/11/30 09:06:00 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -72,7 +72,7 @@ case "$1" in
   start)
 	echo $ECHOOPT "Starting $prog: "
     if [ $sysname = "Linux" -a `whoami` = "root" ]; then
-        netstat -ap | egrep '\*:5045|\*:expertd' | grep LISTEN | grep expertd > /dev/null
+        netstat -ap | egrep '\*:5045|\*:expertd' | grep LISTEN | egrep "\/expertd *\$" > /dev/null
     else
         netstat -a  | egrep '\*:5045|\*:expertd' | egrep 'LISTEN *$' > /dev/null
     fi

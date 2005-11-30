@@ -5,9 +5,9 @@
 # chkconfig: 345 66 39
 # description: NS server daemon
 #
-# $Id: nsdaemon.init,v 1.1 2005/06/17 08:04:25 jdurand Exp $
+# $Id: nsdaemon.init,v 1.2 2005/11/30 09:06:00 jdurand Exp $
 #
-# @(#)$RCSfile: nsdaemon.init,v $ $Revision: 1.1 $ $Date: 2005/06/17 08:04:25 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: nsdaemon.init,v $ $Revision: 1.2 $ $Date: 2005/11/30 09:06:00 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 #
@@ -85,7 +85,7 @@ case "$1" in
   start)
 	echo $ECHOOPT "Starting $prog: "
 	if [ $sysname = "Linux" -a `whoami` = "root" ]; then
-        netstat -ap | egrep '\*:5010|\*:cns' | grep LISTEN | grep nsdaemon > /dev/null
+        netstat -ap | egrep '\*:5010|\*:cns' | grep LISTEN | egrep "\/nsdaemon *\$" > /dev/null
     else
         netstat -a  | egrep '\*:5010|\*:cns' | egrep 'LISTEN *$' > /dev/null
     fi

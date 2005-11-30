@@ -5,9 +5,9 @@
 # chkconfig: 345 73 32
 # description: RTCPCLIENTD server daemon
 #
-# $Id: rtcpclientd.init,v 1.1 2005/06/17 08:04:26 jdurand Exp $
+# $Id: rtcpclientd.init,v 1.2 2005/11/30 09:06:00 jdurand Exp $
 #
-# @(#)$RCSfile: rtcpclientd.init,v $ $Revision: 1.1 $ $Date: 2005/06/17 08:04:26 $ CERN/IT/ADC Olof Barring
+# @(#)$RCSfile: rtcpclientd.init,v $ $Revision: 1.2 $ $Date: 2005/11/30 09:06:00 $ CERN/IT/ADC Olof Barring
 #
 
 #
@@ -87,7 +87,7 @@ case "$1" in
   start)
 	echo $ECHOOPT "Starting $prog: "
     if [ $sysname = "Linux" -a `whoami` = "root" ]; then
-        netstat -ap | egrep '\*:5003|\*:rtcopy' | grep LISTEN | grep rtcpclientd > /dev/null
+        netstat -ap | egrep '\*:5003|\*:rtcopy' | grep LISTEN | egrep "\/rtcpclientd *\$" > /dev/null
     else
         netstat -a  | egrep '\*:5003|\*:rtcopy' | egrep 'LISTEN *$' > /dev/null
     fi

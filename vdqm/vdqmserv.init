@@ -5,9 +5,9 @@
 # chkconfig: 345 64 41
 # description: VDQM server daemon
 #
-# $Id: vdqmserv.init,v 1.1 2005/06/17 08:04:27 jdurand Exp $
+# $Id: vdqmserv.init,v 1.2 2005/11/30 09:06:00 jdurand Exp $
 #
-# @(#)$RCSfile: vdqmserv.init,v $ $Revision: 1.1 $ $Date: 2005/06/17 08:04:27 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: vdqmserv.init,v $ $Revision: 1.2 $ $Date: 2005/11/30 09:06:00 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -71,7 +71,7 @@ case "$1" in
   start)
 	echo $ECHOOPT "Starting $prog: "
 	if [ $sysname = "Linux" -a `whoami` = "root" ]; then
-        netstat -ap | egrep '\*:5012|\*:vdqmserv' | grep LISTEN | grep vdqmserv > /dev/null
+        netstat -ap | egrep '\*:5012|\*:vdqmserv' | grep LISTEN | egrep "\/vdqmserv *\$" > /dev/null
     else
         netstat -a  | egrep '\*:5012|\*:vdqmserv' | egrep 'LISTEN *$' > /dev/null
     fi

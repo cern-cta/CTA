@@ -5,9 +5,9 @@
 # chkconfig: 345 80 20
 # description: CASTOR Monitor Daemon
 #
-# $Id: Cmonitd.init,v 1.1 2005/08/08 13:15:10 jdurand Exp $
+# $Id: Cmonitd.init,v 1.2 2005/11/30 09:06:00 jdurand Exp $
 #
-# @(#)$RCSfile: Cmonitd.init,v $ $Revision: 1.1 $ $Date: 2005/08/08 13:15:10 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: Cmonitd.init,v $ $Revision: 1.2 $ $Date: 2005/11/30 09:06:00 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -71,7 +71,7 @@ case "$1" in
   start)
 	echo $ECHOOPT "Starting $prog: "
     if [ $sysname = "Linux" -a `whoami` = "root" ]; then
-        netstat -ap | egrep '\*:20001|\*:Cmonitd' | grep LISTEN | grep Cmonitd > /dev/null
+        netstat -ap | egrep '\*:20001|\*:Cmonitd' | grep LISTEN | egrep "\/Cmonitd *\$" > /dev/null
     else
         netstat -a  | egrep '\*:20001|\*:Cmonitd' | egrep 'LISTEN *$' > /dev/null
     fi
