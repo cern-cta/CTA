@@ -190,7 +190,7 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
     if ( 0 != tapeRequest ) {
 	  	castor::exception::Exception ex(EVQNOVOL);
 	  	ex.getMessage() << e.getMessage().str();
-	  									
+	  		
 	  	tapeRequest = 0;
 
 	  	throw ex;
@@ -204,15 +204,9 @@ void castor::vdqm::handler::BaseRequestHandler::handleRequest
 	  	ex.getMessage() << e.getMessage().str();					
 	  	
 	  	tapeDrive = 0;
-	  	tapeRequest = 0;
-	  		
 	  	throw ex;    	
   	}
   	else {
-  		// If we are here, we have an exception during a handling of ErrorHistory
-  		tapeDrive = 0;
-  		tapeRequest = 0;
-  		
   		throw e;
   	}
   }
