@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.14 $ $Date: 2005/01/20 16:25:55 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.15 $ $Date: 2005/11/30 14:36:00 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	send_scsi_cmd - Send a SCSI command to a device */
@@ -194,6 +194,7 @@ struct scsi_info scsi_codmsg[] = {
 	0xFF,				 NULL
 };
 static char err_msgbuf[132];
+#define PROCBUFSZ 80
 send_scsi_cmd (tapefd, path, do_not_open, cdb, cdblen, buffer, buflen, sense, senselen, timeout, flags, nb_sense_ret, msgaddr)
 int tapefd;
 char *path;
@@ -582,15 +583,34 @@ char **msgaddr;
 	char sgpath[80];
 	int st_index;
 	static int Timeout = 0;
+	int sg_big_buff_val =  SG_BIG_BUFF;
+	int procfd, nbread;
+	char procbuf[PROCBUFSZ];
+	
+	/* First the value in /proc of the max buffer size for the sg driver */
+	procfd = open("/proc/scsi/sg/def_reserved_size", O_RDONLY);
+	if (procfd > 0) {
+	  memset(procbuf, 0, PROCBUFSZ);
+	  nbread = read(procfd, procbuf, PROCBUFSZ -1);
+	  if (nbread > 0) {
+	    long int tmp;
+	    char *endptr = NULL;
+	    tmp = strtol(procbuf, &endptr, 10);
+	    if (endptr == NULL || *endptr == '\n') {
+	      sg_big_buff_val = (int) tmp;
+	    }
+	  }
+	  close(procfd);
+	}
 
-	if (sizeof(struct sg_header) + cdblen + buflen > SG_BIG_BUFF) {
+	if (sizeof(struct sg_header) + cdblen + buflen > sg_big_buff_val) {
 #if defined(TAPE)
 		sprintf (tp_err_msgbuf, "blocksize too large (max %d)\n",
-		    SG_BIG_BUFF - sizeof(struct sg_header) - cdblen);
+		    sg_big_buff_val - sizeof(struct sg_header) - cdblen);
 		*msgaddr = tp_err_msgbuf;
 #else
 		sprintf (err_msgbuf, "blocksize too large (max %d)",
-		    SG_BIG_BUFF - sizeof(struct sg_header) - cdblen);
+		    sg_big_buff_val - sizeof(struct sg_header) - cdblen);
 		*msgaddr = err_msgbuf;
 #endif
 		serrno = EINVAL;
