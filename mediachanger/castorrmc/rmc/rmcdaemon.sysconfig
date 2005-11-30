@@ -1,12 +1,12 @@
 #
-# $Id: rmcdaemon.sysconfig,v 1.1 2003/10/31 10:03:34 jdurand Exp $
+# $Id: rmcdaemon.sysconfig,v 1.2 2005/11/30 08:54:13 jdurand Exp $
 #
-# @(#)$RCSfile: rmcdaemon.sysconfig,v $ $Revision: 1.1 $ $Date: 2003/10/31 10:03:34 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: rmcdaemon.sysconfig,v $ $Revision: 1.2 $ $Date: 2005/11/30 08:54:13 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 # should rmcdaemon run?
 # any string but "yes" will equivalent to "NO"
 #
-RUN_RMCDAEMON="NO"
+RUN_RMCDAEMON="yes"
 #
 # Very important: what is the parameter to rmcdaemon
 # This is device, for example /dev/sga
