@@ -5,9 +5,9 @@
 # chkconfig: 345 71 34
 # description: RMC server daemon
 #
-# $Id: rmcdaemon.init,v 1.1 2005/06/17 08:04:25 jdurand Exp $
+# $Id: rmcdaemon.init,v 1.2 2005/11/30 09:06:00 jdurand Exp $
 #
-# @(#)$RCSfile: rmcdaemon.init,v $ $Revision: 1.1 $ $Date: 2005/06/17 08:04:25 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: rmcdaemon.init,v $ $Revision: 1.2 $ $Date: 2005/11/30 09:06:00 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -74,7 +74,7 @@ case "$1" in
   start)
 	echo $ECHOOPT "Starting $prog: "
     if [ $sysname = "Linux" -a `whoami` = "root" ]; then
-        netstat -ap | egrep '\*:5014|\*:rmc' | grep LISTEN | grep rmcdaemon > /dev/null
+        netstat -ap | egrep '\*:5014|\*:rmc' | grep LISTEN | egrep "\/rmcdaemon *\$" > /dev/null
     else
         netstat -a  | egrep '\*:5014|\*:rmc' | egrep 'LISTEN *$' > /dev/null
     fi
