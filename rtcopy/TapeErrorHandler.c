@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.9 $ $Release$ $Date: 2005/10/10 16:30:56 $ $Author: obarring $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.10 $ $Release$ $Date: 2005/11/30 16:48:30 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.9 $ $Release$ $Date: 2005/10/10 16:30:56 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.10 $ $Release$ $Date: 2005/11/30 16:48:30 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -479,6 +479,7 @@ static int checkRecallRetry(
   char castorFileName[CA_MAXPATHLEN+1], *vid = NULL;
   unsigned char blockid[4], nullblockid[4] = {'\0','\0','\0','\0'};
   int expertBufferLen = 0, nsSegmentOK = 0, nbDiskCopies = 0, anyStagedSegment;
+  int save_serrno = 0;
   ID_TYPE key;
 
   if ( (tapeCopy == NULL) || (segment == NULL) ) {
@@ -566,10 +567,12 @@ static int checkRecallRetry(
                        &nsSegmentAttrs
                        );
   if ( rc == -1 ) {
+    save_serrno = serrno;
     LOG_SYSCALL_ERR("Cns_getsegattrs()");
     /*
-     * Not fatal when checking a retry. Assume the segment is valid
+     * Not fatal unless ENOENT when checking a retry. Assume the segment is valid
      */
+    if ( save_serrno != ENOENT ) nsSegmentOK = 1;
   } else {
     Cstager_Segment_fseq(segment,&fseq);
     Cstager_Segment_blockId0(segment,&blockid[0]);
@@ -1475,14 +1478,15 @@ int main(
         } else if ( serrno == SERTYEXHAUST ) {
           Cstager_TapeCopy_id(tapeCopy,&key);
           rc = Cstager_ITapeSvc_fileRecallFailed(
-                                                   tpSvc,
-                                                   tapeCopy
-                                                   );
+                                                 tpSvc,
+                                                 tapeCopy
+                                                 );
           if ( rc == -1 ) {
             LOG_DBCALLANDKEY_ERR("Cstager_ITapeSvc_fileRecallFailed()",
                                  Cstager_ITapeSvc_errorMsg(tpSvc),
                                  key);
           }
+          (void)cleanupSegment(segm);
         }
       }
       castorFile = NULL;
