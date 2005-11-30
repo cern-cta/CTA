@@ -1,8 +1,8 @@
 #! /bin/sh
 #
-# $Id: castor-rmc-server.prerm,v 1.4 2005/08/08 16:51:22 jdurand Exp $
+# $Id: castor-rmc-server.prerm,v 1.5 2005/11/30 08:47:03 jdurand Exp $
 #
-CASTOR_SERVICE=rmdaemon
+CASTOR_SERVICE=rmcdaemon
 export CASTOR_SERVICE
 [ -x /usr/sbin/castor-service.prerm ] && /usr/sbin/castor-service.prerm ${1+"$@"}
 exit $?
