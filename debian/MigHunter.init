@@ -5,9 +5,9 @@
 # chkconfig: 345 73 32
 # description: MigHunter daemons
 #
-# $Id: MigHunter.init,v 1.2 2005/06/30 11:03:55 jdurand Exp $
+# $Id: MigHunter.init,v 1.3 2005/11/30 09:14:52 jdurand Exp $
 #
-# @(#)$RCSfile: MigHunter.init,v $ $Revision: 1.2 $ $Date: 2005/06/30 11:03:55 $ CERN/IT/ADC Jean-Damien Durand
+# @(#)$RCSfile: MigHunter.init,v $ $Revision: 1.3 $ $Date: 2005/11/30 09:14:52 $ CERN/IT/ADC Jean-Damien Durand
 #
 
 #
@@ -113,7 +113,7 @@ case "$1" in
         fi
 	;;
   stop)
-	pid=`ps -eo pid,ppid,$format4comm | grep " 1 MigHunter" | awk '{print $1}'`
+	pid=`ps -eo pid,ppid,$format4comm | egrep " 1 MigHunter\$" | awk '{print $1}'`
 	if [ -n "$pid" ]; then
 		[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Stopping ${prog}(s): "
             if [ $SILENTSTOP -eq 0 ]; then
@@ -170,7 +170,7 @@ case "$1" in
     RETVAL=$?
 	;;
   status)
-	pid=`ps -eo pid,ppid,$format4comm | grep " 1 MigHunter" | awk '{print $1}' | xargs`
+	pid=`ps -eo pid,ppid,$format4comm | egrep " 1 MigHunter\$" | awk '{print $1}' | xargs`
 	if [ -n "$pid" ]; then
 		echo $ECHOOPT "MigHunter (pid $pid) is running..."
 		$ECHO_SUCCESS

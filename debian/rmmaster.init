@@ -5,9 +5,9 @@
 # chkconfig: 345 72 33
 # description: RMMASTER (Node Resource Monitoring Master Daemon)
 #
-# $Id: rmmaster.init,v 1.1 2005/06/17 08:04:26 jdurand Exp $
+# $Id: rmmaster.init,v 1.2 2005/11/30 09:14:52 jdurand Exp $
 #
-# @(#)$RCSfile: rmmaster.init,v $ $Revision: 1.1 $ $Date: 2005/06/17 08:04:26 $ CERN/IT/ADC/CA Vitaly Motyakov
+# @(#)$RCSfile: rmmaster.init,v $ $Revision: 1.2 $ $Date: 2005/11/30 09:14:52 $ CERN/IT/ADC/CA Vitaly Motyakov
 #
 
 sysname=`uname -s`
@@ -126,7 +126,7 @@ case "$1" in
                 if [ $? -eq 0 ]; then
                     [ -d $SUBSYSDIR ] && touch $SUBSYS
 		    if [ -d $PIDDIR ]; then
-			pid=`ps -eo pid,ppid,$format4comm | grep " 1 rmmaster" | awk '{print $1}'`
+			pid=`ps -eo pid,ppid,$format4comm | egrep " 1 rmmaster\$" | awk '{print $1}'`
                         # The point of $PIDFILE is that it kills only
                         # the master daemon.
 			rm -f $PIDFILE
@@ -165,7 +165,7 @@ case "$1" in
         fi
 	else
 		# rmmaster might have been started by hand
-		pid=`ps -eo pid,ppid,$format4comm | grep " 1 rmmaster" | awk '{print $1}'`
+		pid=`ps -eo pid,ppid,$format4comm | egrep " 1 rmmaster\$" | awk '{print $1}'`
 		if [ -n "$pid" ]; then
 			[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Stopping $prog: "
             if [ $SILENTSTOP -eq 0 ]; then
@@ -224,7 +224,7 @@ case "$1" in
     RETVAL=$?
 	;;
   status)
-	pid=`ps -eo pid,ppid,$format4comm | grep " 1 rmmaster" | awk '{print $1}'`
+	pid=`ps -eo pid,ppid,$format4comm | egrep " 1 rmmaster\$" | awk '{print $1}'`
 	if [ -n "$pid" ]; then
 		echo $ECHOOPT "rmmaster (pid $pid) is running..."
 		$ECHO_SUCCESS
