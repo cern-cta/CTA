@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/11/28 09:42:51 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:01 $ $Author: itglp $
  *
  *
  *
@@ -35,9 +35,8 @@
 //------------------------------------------------------------------------------
 castor::server::SignalThreadPool::SignalThreadPool(const std::string poolName,
                                  castor::server::IThread* thread,
-                                 const int nbThreads,
                                  const int notifyPort) throw() :
-  BaseThreadPool(poolName, new castor::server::ServiceThread(thread, 0), nbThreads),   // XXX timeout = 0 by default -> check consistency with mutex timeout...
+  BaseThreadPool(poolName, new castor::server::ServiceThread(thread, 0)),   // XXX timeout = 0 by default -> check consistency with mutex timeout...
   m_notifyPort(notifyPort) {}
 
 //------------------------------------------------------------------------------
@@ -77,35 +76,28 @@ void castor::server::SignalThreadPool::run()
 {
   // create pool of detached threads
   int n = 0;
-  for (int i = 0; i < m_nbTotalThreads; i++) {
-    if (Cthread_create_detached(castor::server::_thread_run,this) >= 0) {
+  struct threadArgs *args = new threadArgs();
+  args->handler = this;
+  args->param = this;
+  
+  // even for a single thread it will run detached because we
+  // always run the notification and the signal handler thread.
+  for (int i = 0; i < m_nbThreads; i++) {
+    if (Cthread_create_detached(castor::server::_thread_run, args) >= 0) {
       ++n;
     }
   }
   if (n <= 0) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to create pool '" << m_poolName;
+    ex.getMessage() << "Failed to create pool " << m_poolName;
     throw ex;
   }
-  // create notification thread
-  //m_notifThread = new NotificationThread(this);
-  //...
-  // now the detached threads run the old service_runService
-}
+  else
+    m_nbThreads = n;
 
-
-
-//------------------------------------------------------------------------------
-// commitRun
-//------------------------------------------------------------------------------
-void castor::server::SignalThreadPool::commitRun()
-  throw (castor::exception::Exception)
-{
-  // get lock on the shared mutex
-  m_poolMutex->lock();
-
-  /* Try to start the notification thread */
+  // create and start notification thread
   /* XXX not supported for now */
+  //m_notifThread = new NotificationThread(this);
   //if (singleService.nbNotifyThreads == 0) {
 
     /* The following is a trick to make sure that only one service thread is waiting on the notification thread's notification! */
@@ -119,9 +111,21 @@ void castor::server::SignalThreadPool::commitRun()
     /* Wait for nbNotifyThreads to change */
     //while (singleService.nbNotifyThreads != 1) {
     //  Cthread_cond_timedwait_ext(single_service_serviceLockCthreadStructure,SINGLE_SERVICE_NOTIFICATION_TIMEOUT);
+    //  ==> m_poolMutex->wait();
     //}
-
   //}
+}
+
+
+
+//------------------------------------------------------------------------------
+// commitRun
+//------------------------------------------------------------------------------
+void castor::server::SignalThreadPool::commitRun()
+  throw (castor::exception::Exception)
+{
+  // get lock on the shared mutex
+  m_poolMutex->lock();
 
   /* At startup we assume that a service can start at least once right /now/ */
   if (!m_notTheFirstTime) {
@@ -157,9 +161,9 @@ void castor::server::SignalThreadPool::waitSignalOrTimeout()
   /* - we were notified */
   /* - we got timeout */
   /* - waiting on condition variable got interrupted */
-  /* - the very first time that service is running, singleService.notified is already 1, bypassing the wait */
+  /* - the very first time that service is running, m_notified is already 1, bypassing the wait */
 
-  /* Notify that we are a running service */
+  /* Notify that the calling thread is a running service */
   m_nbActiveThreads++;
 
   /* In case we were waked up because of a notification, make sure we reset the notification flag */
@@ -183,8 +187,8 @@ void castor::server::SignalThreadPool::waitSignalOrTimeout()
 //------------------------------------------------------------------------------
 void castor::server::SignalThreadPool::commitRelease()
 {
-  /* Re-aquire the mutex */
   try {
+    /* The calling thread is not anymore a running service */
     m_poolMutex->lock();
     m_nbActiveThreads--;
   }
@@ -192,5 +196,10 @@ void castor::server::SignalThreadPool::commitRelease()
     m_nbActiveThreads--;   // unsafe
     throw e;
   }
+
+  //try {
+  //  m_poolMutex->release();
+  //}
+  //catch (castor::exception::Exception ignored) {}  // not much to do here
 }
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SelectProcessThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/11/28 09:42:51 $ $Author: itglp $
+ * @(#)$RCSfile: SelectProcessThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:01 $ $Author: itglp $
  *
  *
  *
@@ -46,7 +46,7 @@ namespace castor {
     /**
   	 * Initializes a service thread.
   	 */
-  	SelectProcessThread() {};
+  	SelectProcessThread() : stopped(false) {};
 
     /**
   	 * Select part of the service
@@ -61,13 +61,23 @@ namespace castor {
   	/**
      * Main work for this thread.
   	 */
-	virtual void run() {
-      while(true) {
-	    castor::IObject* selectOutput = select();
+    virtual void run() {
+      while(!stopped) {
+        castor::IObject* selectOutput = select();
         if(selectOutput == 0) break;
         process(selectOutput);
       }
-  	}
+    };
+
+    /**
+     * Convenience method to stop the thread.
+     */
+    virtual void stop() {
+      stopped = true;
+    };
+    
+  private:
+    bool stopped;
 
   };
 

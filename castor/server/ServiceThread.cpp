@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServiceThread.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/11/28 09:42:51 $ $Author: itglp $
+ * @(#)$RCSfile: ServiceThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:01 $ $Author: itglp $
  *
  *
  *
@@ -41,7 +41,8 @@ castor::server::ServiceThread::ServiceThread(IThread* userThread, int timeout) :
 //------------------------------------------------------------------------------
 castor::server::ServiceThread::~ServiceThread() throw()
 {
-  delete m_userThread;
+  if(m_userThread)
+    delete m_userThread;
 }
 
 //------------------------------------------------------------------------------
@@ -79,22 +80,25 @@ void castor::server::ServiceThread::run()
       serrno = 0;
 
       /* Do the user job */
-      m_userThread->run();
+      try {
+        m_userThread->run();
+      } catch (castor::exception::Exception e) {
+        // LOG
+        std::cerr << "Exception caught in the user thread: " << e.getMessage().str() << std::endl;
+      }
 
-      /* Notify that are not anymore a running service */
+      /* Notify that we are not anymore a running service */
       m_owner->commitRelease();
 
-      /* And continue */
+      /* And continue forever */
     }
-
-    //owner->nbTotalThreads--;   XXX we can't reach this point!
-
   }
   catch (castor::exception::Exception any) {
     try {
       m_owner->getMutex()->release();
     } catch(...) {}
     // LOG
+    std::cerr << "thread.run error: " << any.getMessage().str() << std::endl;
   }
 }
 

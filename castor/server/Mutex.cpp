@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Mutex.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/11/28 09:42:51 $ $Author: itglp $
+ * @(#)$RCSfile: Mutex.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:00 $ $Author: itglp $
  *
  *
  *
@@ -78,7 +78,7 @@ void castor::server::Mutex::setValue(int newValue)
   throw (castor::exception::Exception)
 {
   int oldValue = m_var;
-  wait();
+  lock();
   m_var = newValue;
   try {
     release();
@@ -106,13 +106,11 @@ void castor::server::Mutex::setValueNoEx(int newValue)
 //------------------------------------------------------------------------------
 // wait
 //------------------------------------------------------------------------------
-void castor::server::Mutex::wait() throw (castor::exception::Exception)
+void castor::server::Mutex::wait()
 {
-  if (m_mutexCthread == 0 || Cthread_cond_timedwait_ext(m_mutexCthread, COND_TIMEOUT) != 0) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Failed on waiting for a signal";
-    throw ex;
-  }
+  if (m_mutexCthread == 0)
+    return;
+  Cthread_cond_timedwait_ext(m_mutexCthread, COND_TIMEOUT);
 }
 
 //------------------------------------------------------------------------------
@@ -120,7 +118,8 @@ void castor::server::Mutex::wait() throw (castor::exception::Exception)
 //------------------------------------------------------------------------------
 void castor::server::Mutex::lock() throw (castor::exception::Exception)
 {
-  if (m_mutexCthread == 0 || Cthread_mutex_timedlock_ext(m_mutexCthread, TIMEOUT) != 0) {
+  if (m_mutexCthread == 0 ||
+      Cthread_mutex_timedlock_ext(m_mutexCthread, TIMEOUT) != 0) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to lock mutex";
     throw ex;

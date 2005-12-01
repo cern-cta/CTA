@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/11/28 09:42:51 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:00 $ $Author: itglp $
  *
  *
  *
@@ -64,8 +64,7 @@ namespace castor {
      * constructor
      */
     BaseThreadPool(const std::string poolName,
-                   castor::server::IThread* thread,
-                   int nbThreads) throw();
+                   castor::server::IThread* thread) throw();
 
     /*
      * destructor
@@ -96,9 +95,9 @@ namespace castor {
     void setForeground(bool value);
 
     /**
-     * Sets the single thread flag
+     * Sets the number of threads
      */
-    void setSingleThreaded(bool value);
+    void setNbThreads(int value);
 
     /**
      * Gets the message service log stream
@@ -141,20 +140,19 @@ namespace castor {
     bool m_foreground;
 
     /**
-     * Flag indicating whether the server should run in single threaded
-     * or monothreaded mode
-     */
-    bool m_singleThreaded;
-
-    /**
      * The id of the pool created
      */
     int m_threadPoolId;
 
     /**
-     * Number of threads in the pool
+     * Number of threads in the pool.
+     * If 1, in this pool the Cthread API will not 
+     * be used and the user thread will be run directly.
+     * XXX to be reviewed since multiple thread pools wouldn't work in this case!
+     * See also the SignalThreadPool, which always runs
+     * multithreaded.
      */
-    int m_threadNumber;
+    int m_nbThreads;
 
     /**
      * Name of the pool

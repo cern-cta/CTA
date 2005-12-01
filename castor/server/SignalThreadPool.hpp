@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/11/28 09:42:51 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:01 $ $Author: itglp $
  *
  *
  *
@@ -80,7 +80,6 @@ namespace castor {
      */
     SignalThreadPool(const std::string poolName,
                    castor::server::IThread* thread,
-                   const int nbThreads = DEFAULT_THREAD_NUMBER,
                    const int notifyPort = DEFAULT_NOTIFY_PORT) throw();
 
     /*

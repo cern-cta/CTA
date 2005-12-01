@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/11/28 09:42:51 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:00 $ $Author: itglp $
  *
  *
  *
@@ -34,6 +34,7 @@
 #include "castor/BaseObject.hpp"
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/server/BaseServer.hpp"
+#include "castor/server/Mutex.hpp"
 
 namespace castor {
 
@@ -60,11 +61,11 @@ namespace castor {
     virtual ~BaseDaemon() throw() {};
 
     /**
-     * Starts the thread pools in detached mode and returns immediately.
-     * XXX later: starts also the signal thread (one per daemon).
+     * Starts the thread pools in detached mode.
+     * Then starts also the signal thread (one per daemon) and waits
+     * for incoming signals forever.
      */
     virtual void start() throw (castor::exception::Exception);
-
 
   protected:
 
@@ -80,15 +81,21 @@ namespace castor {
      */
     void waitAllThreads() throw ();
     
+  private:
+  
     /// set of catched signal
     sigset_t m_signalSet;   
-    bool m_signaled;
 
-  private:
+    /// a mutex for the signal handler thread    
+    Mutex* m_signalMutex;
+    
+    /// signal handler; friend function to access private fields.
+    friend void* _signalThread_run(void* arg); 
 
   };
 
-  // XXX external static function for the signal handler thread - not needed?
+  // entrypoint for the signal handler thread
+  void* _signalThread_run(void* arg);
 
  } // end of namespace server
 

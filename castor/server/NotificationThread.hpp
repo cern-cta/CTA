@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/11/28 09:42:51 $ $Author: itglp $
+ * @(#)$RCSfile: NotificationThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:00 $ $Author: itglp $
  *
  *
  *
@@ -75,16 +75,6 @@ namespace castor {
   	 * XXX To be implemented later.
      */
     virtual void stop() {};
-
-    /**
-     * Gets the timeout until next wakeup for this thread.
-     * Not relevant for a notification thread.
-     * @return always 0.
-     */
-    virtual int getTimeout() {
-      return 0;
-    };
-
 
   private:
 

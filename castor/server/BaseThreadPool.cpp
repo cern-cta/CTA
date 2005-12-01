@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/11/28 09:42:51 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:00 $ $Author: itglp $
  *
  *
  *
@@ -41,10 +41,10 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::server::BaseThreadPool::BaseThreadPool(const std::string poolName,
-                                               castor::server::IThread* thread,
-                                               int nbThreads = castor::server::DEFAULT_THREAD_NUMBER) throw() :
-  BaseObject(), m_foreground(false), m_singleThreaded(false), m_threadPoolId(-1),
-  m_threadNumber(nbThreads), m_poolName(poolName), m_thread(thread) {}
+                                               castor::server::IThread* thread) throw() :
+  BaseObject(), m_foreground(false), m_threadPoolId(-1),
+  m_nbThreads(castor::server::DEFAULT_THREAD_NUMBER),
+  m_poolName(poolName), m_thread(thread) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -61,10 +61,9 @@ castor::server::BaseThreadPool::~BaseThreadPool() throw()
 void castor::server::BaseThreadPool::init() throw (castor::exception::Exception)
 {
   // create threads if in multithreaded mode
-  int nbThreads, actualNbThreads;
-  nbThreads = m_threadNumber;
-  if (!m_singleThreaded) {
-    m_threadPoolId = Cpool_create(nbThreads, &actualNbThreads);
+  int actualNbThreads;
+  if (m_nbThreads > 1) {
+    m_threadPoolId = Cpool_create(m_nbThreads, &actualNbThreads);
     if (m_threadPoolId < 0) {
       castor::exception::Internal ex;
       ex.getMessage() << "Thread pool '" << m_poolName << "' creation error: "
@@ -76,7 +75,7 @@ void castor::server::BaseThreadPool::init() throw (castor::exception::Exception)
       clog() << DEBUG << "Thread pool created: "
              << m_threadPoolId << ", "
              << actualNbThreads << std::endl;
-      m_threadNumber = actualNbThreads;
+      m_nbThreads = actualNbThreads;
     }
   }
 }
@@ -100,7 +99,7 @@ int castor::server::BaseThreadPool::threadAssign(void *param)
   args->handler = this;
   args->param = param;
 
-  if (!m_singleThreaded) {
+  if (m_nbThreads > 1) {
     int assign_rc = Cpool_assign(m_threadPoolId,
                                  &castor::server::_thread_run,
                                  args,
@@ -125,11 +124,11 @@ void castor::server::BaseThreadPool::setForeground(bool value)
 }
 
 //------------------------------------------------------------------------------
-// setSingleThreaded
+// setNbThreads
 //------------------------------------------------------------------------------
-void castor::server::BaseThreadPool::setSingleThreaded(bool value)
+void castor::server::BaseThreadPool::setNbThreads(int value)
 {
-  m_singleThreaded = value;
+  m_nbThreads = value;
 }
 
 

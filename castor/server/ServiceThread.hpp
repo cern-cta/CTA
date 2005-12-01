@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServiceThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/11/28 09:42:51 $ $Author: itglp $
+ * @(#)$RCSfile: ServiceThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:01 $ $Author: itglp $
  *
  *
  *
@@ -52,6 +52,11 @@ namespace castor {
   	 * @param timeout the timeout until next wakeup for this thread.
   	 */
   	ServiceThread(IThread* userThread, int timeout);
+    
+    /**
+     * Destructor
+     */
+     ~ServiceThread() throw();
 
     /**
      * Thread initialization.
@@ -63,22 +68,11 @@ namespace castor {
   	 */
     virtual void run();
 
-	  /**
-  	 * Convenience method to stop the thread.
-  	 * XXX To be implemented later.
+    /**
+     * Convenience method to stop the thread.
+     * XXX To be implemented later.
      */
     virtual void stop() {};
-
-    /**
-     * Gets the timeout until next wakeup for this thread.
-     * @return int a timeout in seconds.
-     * XXX to be implemented later - maybe with a vector of threads and the binding function calling
-     * something like getThread(tid)->run() where tid is passed at thread creation/detaching time.
-     */
-    virtual int getTimeout() {
-      return m_timeout;
-    };
-
 
   private:
 

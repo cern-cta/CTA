@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/11/28 09:42:51 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:00 $ $Author: itglp $
  *
  *
  *
@@ -62,6 +62,11 @@ namespace castor {
     virtual void start() throw (castor::exception::Exception);
 
     /**
+     * Parses a command line to set the server options
+     */
+    virtual void parseCommandLine(int argc, char *argv[]);
+
+    /**
      * Sets the foreground flag
      */
     void setForeground(bool value);
@@ -83,11 +88,6 @@ namespace castor {
      * Initializes the server as daemon
      */
     virtual void init() throw (castor::exception::Exception);
-
-    /**
-     * Parses a command line to set the server options
-     */
-    virtual void parseCommandLine(int argc, char *argv[]);
 
     /**
      * Prints out the online help
@@ -117,9 +117,15 @@ namespace castor {
     bool m_foreground;
 
     /**
-     * Name of the server. Not very useful...
+     * Name of the server, for logging purposes.
      */
     std::string m_serverName;
+    
+    /**
+     * Command line parameters. Includes by default a parameter
+     * per each thread pool to specify the number of threads.
+     */
+    std::stringstream m_cmdLineParams;
 
     /**
      * List of thread pools running on this server,

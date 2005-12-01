@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/11/28 09:42:51 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:00 $ $Author: itglp $
  *
  *
  *
@@ -44,7 +44,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::server::BaseDaemon::BaseDaemon(const std::string serverName) :
-  BaseServer(serverName) {}
+  castor::server::BaseServer(serverName) {}
 
 
 //------------------------------------------------------------------------------
@@ -53,13 +53,13 @@ castor::server::BaseDaemon::BaseDaemon(const std::string serverName) :
 void castor::server::BaseDaemon::init() throw(castor::exception::Exception)
 {
   // Server initialization (in foreground or not)
-  BaseServer::init();
+  castor::server::BaseServer::init();
 
   /* Initialize CASTOR Thread interface */
   Cthread_init();
 
   /* Initialize mutex variable in case of a signal */
-  m_signaled = false;
+  m_signalMutex = new Mutex(0);
 
   /* Initialize errno, serrno */
   errno = serrno = 0;
@@ -77,14 +77,9 @@ void castor::server::BaseDaemon::init() throw(castor::exception::Exception)
     ex.getMessage() << "Failed pthread_sigmask" << std::endl;
     throw ex;
   }
-
-  // SINGLE_CREATE_LOCK(singleSignaled,singleSignalCthreadStructure);
-  // -> create a Mutex for this var.
-
-
+  
   /* Start the thread handling all the signals */
-  /* ========================================= */
-  // XXX to be done -> the entrypoint is at the end of this file
+  Cthread_create_detached(castor::server::_signalThread_run, this);
 }
 
 //------------------------------------------------------------------------------
@@ -92,28 +87,24 @@ void castor::server::BaseDaemon::init() throw(castor::exception::Exception)
 //------------------------------------------------------------------------------
 void castor::server::BaseDaemon::start() throw(castor::exception::Exception)
 {
-  BaseServer::start();
+  castor::server::BaseServer::start();
 
-  /* Wait on a catched signal */
-  /* ======================== */
+  /* Wait forever on a catched signal */
+  try {
+    m_signalMutex->lock();
 
-  /*  XXX this is not yet supported XXX
-
-  if (Cthread_mutex_timedlock_ext(singleSignalCthreadStructure,SINGLE_SERVICE_MUTEX_TIMEOUT) != 0) {
-    castor::exception::Internal ex;
-    throw ex;
+    while (!m_signalMutex->getValue()) {
+      // Note: Without SINGLE_SERVICE_COND_TIMEOUT > 0 this will never work - because the condition variable
+      // is changed in a signal handler - we cannot use condition signal in this signal handler
+      m_signalMutex->wait();
+    }
+  
+    m_signalMutex->release();
   }
-
-  while (singleSignaled < 0) {
-    // Note: Without SINGLE_SERVICE_COND_TIMEOUT > 0 this will never work - because the condition variable
-    // is changed in a signal handler - we cannot use condition signal in this signal handler
-    Cthread_cond_timedwait_ext(singleSignalCthreadStructure,SINGLE_SERVICE_COND_TIMEOUT);
+  catch (castor::exception::Exception e) {
+    // LOG
+    std::cerr << "Exception during wait for signal loop: " << e.getMessage().str() << std::endl;
   }
-  if (Cthread_mutex_unlock_ext(singleSignalCthreadStructure) != 0) {
-    rc = EXIT_FAILURE;
-    goto _singleMainReturn;
-  }
-  */
 }
 
 
@@ -144,25 +135,23 @@ void castor::server::BaseDaemon::waitAllThreads() throw()
 }
 
 
-
-/*
-static void* _signalThread_run(void* arg)
+//------------------------------------------------------------------------------
+// signalThread_run
+//------------------------------------------------------------------------------
+void* castor::server::_signalThread_run(void* arg)
 {
   int sig_number;
-  sigset_t signalSet;
-  signalSet = arg->handler->getSignalSet();
+  castor::server::BaseDaemon* daemon = (castor::server::BaseDaemon*)arg;
 
-  while (1) {
-    if (sigwait(&signalSet, &sig_number) == 0) {
-
+  while (true) {
+    if (sigwait(&daemon->m_signalSet, &sig_number) == 0) {
       /* Note: from now on this is unsafe but here we go, we cannot use mutex/condition/printing etc... */
       /* e.g. things unsafe in a signal handler */
-      /* So from now on this function is calling nothing external *
-
-      //singleSignaled = 1;
+      /* So from now on this function is calling nothing external */
+      daemon->m_signalMutex->setValueNoMutex(1);
       exit(0);  // EXIT_SUCCESS
     }
   }
-  return(NULL);
+  return 0;
 }
-*/
+

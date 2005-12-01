@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/11/28 09:42:51 $ $Author: itglp $
+ * @(#)$RCSfile: IThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:00 $ $Author: itglp $
  *
  *
  *
@@ -48,28 +48,22 @@ namespace castor {
      * @param param any relevant initialization value which
      * will be passed in by the pool.
      */
-	virtual void init(void* param) = 0;
+    virtual void init(void* param) = 0;
 	
-	/**
-	 * Main work for this thread.
-	 * This method is supposed to run a single "loop" of
-	 * the job, so that 
-	 */
-	virtual void run() = 0;
+    /**
+     * Main work for this thread.
+     * This method is supposed to run a single "loop" of
+     * the job, so that 
+     */
+    virtual void run() = 0;
+    
+    /**
+     * Convenience method to stop the thread.
+     * It is up to the inherited classes to implement
+     * the correct behaviour.
+     */
+    virtual void stop() = 0;
 	
-	/**
-	 * Convenience method to stop the thread.
-	 * It is up to the inherited classes to implement
-	 * the correct behaviour.
-	 */
-	virtual void stop() = 0;
-	
-	/**
-	 * For infinite loop threads, gets the timeout
-	 * until next wakeup for this thread.
-	 * @return int a timeout in seconds.
-	 */
-	virtual int getTimeout() = 0;
   };
   
  } // end of namespace server
