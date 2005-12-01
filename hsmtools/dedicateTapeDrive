@@ -1,0 +1,270 @@
+#!/usr/bin/perl -w
+#/******************************************************************************
+# *                     tapeDrive_dedication
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @(#)$RCSfile: dedicateTapeDrive,v $ $Revision: 1.1 $ $Release$ $Date: 2005/12/01 19:19:18 $ $Author: bcouturi $
+# *
+# * Adds new entries to the TapeDriveDedication table
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+#use strict;
+use diagnostics;
+use lib "/usr/lib/perl/CASTOR";
+use castor_tools;
+use POSIX;
+
+
+# usage function
+sub usage {
+    printf("Usage : %s [-h|--help] [-d] [-V|--vid vid]  [-a|--accessMode mode (0|1)]\n", $0);
+    print  "           [-s|--startTime st] [-e|--endTime et]\n";
+    print  "           [-u|--uid uid] [-g|--gid gid] [-t|--host host] -r reason drive[\@server] drive[\@server]\n";
+}
+
+
+###########################################################
+# parsing the options                                     #
+###########################################################
+
+
+my $help;
+my $vid;
+my $accessMode;
+my $startTime;
+my $endTime;
+my $uid;
+my $gid;
+my $host;
+my $reason;
+my $deleteMode;
+my $nbdrives = 0;
+my @drives = ();
+
+
+if (0 == Getopt::Long::GetOptions ('h|help' => \$help,
+		                   'd|delete' => \$deleteMode,
+                                   'V|vid=s' => \$vid,
+                                   'm|mode=i' => \$accessMode,
+				   'u|uid=i' =>  \$uid,
+				   'g|gid=i' =>  \$gid,
+                                   's|startTime=s' => \$startTime,
+                                   'e|endTime=s' => \$endTime,
+				   't|host=s' => \$host,
+				   'r|reason=s' => \$reason)) {
+    usage();
+    exit(1);
+}
+
+if ($help) {
+    usage();
+    exit(0);
+}
+
+$nbdrives = scalar  @ARGV;
+
+# Check the arguments
+if ($nbdrives <= 0) {
+    print("Error : Please specify at least a tape drive to dedicate\n");
+    usage();
+    exit;
+}
+
+my $d;
+foreach $d (@ARGV) {
+    push  @drives, $d;
+}
+
+if ($reason eq "") {
+    print("Error : Please specify a reason for the dedication (with -r)\n");
+    usage();
+    exit;
+} else {
+#    print  "Reason for dedication is: $reason\n";
+}
+
+###########################################################
+# Preparing the string with the values to be set          #
+###########################################################
+
+my $columns;
+my $values;
+my $count = 0;
+
+my %rmapping = ("VID" => $vid,
+	       "ACCESSMODE" => $accessMode,
+	       "EUID" =>  $uid,
+	       "EGID" => $gid,
+	        "STARTTIME" => $startTime,
+	       "ENDTIME" => $endTime,
+	       "REASON" => $reason);
+
+my %quotechar  = ("VID" => "'",
+		  "ACCESSMODE" => "",
+		  "EUID" =>  "",
+		  "EGID" => "",
+		  "STARTTIME" => "\"",
+		  "ENDTIME" =>  "\"",
+		  "REASON" => "'");
+
+
+	
+map { 
+    if (defined $rmapping{$_}) { 
+	$count++;
+	$columns .= ", " . $_;
+	$values  .= ", " . $quotechar{$_} . $rmapping{$_} . $quotechar{$_};
+    }
+} keys %rmapping;
+
+if ($count<= 1) {
+    #Reason does not count it is compulsory !
+    print "Please specify at least one criterium for the dedication\n";
+    usage();
+    exit;    
+}
+
+print $columns, "\n";
+print $values, "\n";
+
+
+###########################################################
+# connect to the database                                 #
+###########################################################
+
+my @castor_conf = castor_conf_getOraStagerSvc();
+
+#print "Using DB: $castor_conf[0] ,$castor_conf[1]\n";
+my $dbh = DBI->connect('dbi:Oracle:',$castor_conf[0] ,$castor_conf[1]);
+
+
+
+###########################################################
+# Looking up the drive IDs                                #
+###########################################################
+
+my @driveids = ();
+
+foreach $d (@drives) {
+    my $drive;
+    my $server;
+    chomp($d);
+    if ($d =~ /(\w+)\@(\w+)/) {
+	$drive = $1;
+	$server = $2;
+	
+	my $dbquery = <<EOF;
+	
+	SELECT td.id
+	    FROM tapedrive td, tapeserver ts
+	    WHERE td.tapeserver = ts.id
+	    AND td.drivename = '$drive'
+	    AND ts.servername = '$server'
+EOF
+	    
+my $sth = $dbh->prepare("$dbquery");
+	$sth->execute;
+	
+	my @row;
+	my $rownum = 0;
+	my @ids;
+	while (@row = $sth->fetchrow_array) {
+	    push @ids, $row[0];
+	    $rownum++;
+	}
+	$sth->finish;
+
+	# Now checking the number of rows returned 
+	if ($rownum == 0) {
+	    print "Could not find drive $d\n";
+	    usage();
+	    $dbh->disconnect;
+	    exit;    
+	} elsif ($rownum > 1) {
+	    print "Found several IDs for $d: ";
+	    map { print " $_" } @ids;
+	    print "\n";
+	    usage();
+	    $dbh->disconnect;
+	    exit;    
+	}
+	push @driveids, $ids[0];
+
+    } else {
+	# Now this is the case when the server was not specified 
+
+	my $dbquery = <<EOF;
+	
+	SELECT td.id, ts.servername
+	    FROM tapedrive td, tapeserver ts
+	    WHERE td.tapeserver = ts.id
+	    AND td.drivename = '$d'
+EOF
+	    
+my $sth = $dbh->prepare("$dbquery");
+	$sth->execute;
+	
+	my @row;
+	my $rownum = 0;
+	my @ids;
+	my @tmpsrv;
+	while (@row = $sth->fetchrow_array) {
+	    push @ids, $row[0];
+	    push @tmpsrv, $row[1];
+	    $rownum++;
+	}
+	$sth->finish;
+
+	# Now checking the number of rows returned 
+	if ($rownum == 0) {
+	    print "Could not find drive $d\n";
+	    usage();
+	    $dbh->disconnect;
+	    exit;    
+	} elsif ($rownum > 1) {
+	    print "Found several possibilities for $d:\n";
+	    map { print " $d\@$_\n" } @tmpsrv;
+	    print "Please choose one \n";
+	    usage();
+	    $dbh->disconnect;
+	    exit;    
+	}
+	push @driveids, $ids[0];
+    }
+}
+
+
+map { print "ID: $_ \n"; }  @driveids;
+
+
+map {
+    
+    my $insertStatement = "INSERT INTO TapeDriveDedication"
+	. "(ID" . $columns . ") VALUES ($_" . $values . ")";
+
+    print $insertStatement, "\n";
+    my $sth = $dbh->prepare("$insertStatement");
+    $sth->execute;
+    $sth->finish;
+
+
+} @driveids;
+
+# Close DB connection
+$dbh->disconnect;
