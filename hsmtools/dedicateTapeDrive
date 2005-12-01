@@ -18,7 +18,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: dedicateTapeDrive,v $ $Revision: 1.1 $ $Release$ $Date: 2005/12/01 19:19:18 $ $Author: bcouturi $
+# * @(#)$RCSfile: dedicateTapeDrive,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:26:21 $ $Author: bcouturi $
 # *
 # * Adds new entries to the TapeDriveDedication table
 # *
@@ -53,7 +53,7 @@ my $uid;
 my $gid;
 my $host;
 my $reason;
-my $deleteMode;
+my $deleteMode = 0;
 my $nbdrives = 0;
 my @drives = ();
 
@@ -253,18 +253,36 @@ my $sth = $dbh->prepare("$dbquery");
 map { print "ID: $_ \n"; }  @driveids;
 
 
-map {
-    
-    my $insertStatement = "INSERT INTO TapeDriveDedication"
-	. "(ID" . $columns . ") VALUES ($_" . $values . ")";
+if ($deleteMode) {
+   map {
+	
+	my $deleteStatement = "DELETE FROM TapeDriveDedication"
+	    . " WHERE ID = $_";
+	
+	print $deleteStatement, "\n";
+	my $sth = $dbh->prepare("$deleteStatement");
+	$sth->execute;
+	$sth->finish;
+	
+	
+    } @driveids;
 
-    print $insertStatement, "\n";
-    my $sth = $dbh->prepare("$insertStatement");
-    $sth->execute;
-    $sth->finish;
 
 
-} @driveids;
 
+} else {
+    map {
+	
+	my $insertStatement = "INSERT INTO TapeDriveDedication"
+	    . "(ID" . $columns . ") VALUES ($_" . $values . ")";
+	
+	print $insertStatement, "\n";
+	my $sth = $dbh->prepare("$insertStatement");
+	$sth->execute;
+	$sth->finish;
+	
+	
+    } @driveids;
+}
 # Close DB connection
 $dbh->disconnect;
