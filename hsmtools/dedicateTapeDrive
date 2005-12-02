@@ -18,7 +18,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: dedicateTapeDrive,v $ $Revision: 1.4 $ $Release$ $Date: 2005/12/02 11:27:54 $ $Author: bcouturi $
+# * @(#)$RCSfile: dedicateTapeDrive,v $ $Revision: 1.5 $ $Release$ $Date: 2005/12/02 14:47:53 $ $Author: bcouturi $
 # *
 # * Adds new entries to the TapeDriveDedication table
 # *
@@ -33,20 +33,39 @@ use POSIX;
 
 # usage function
 sub usage {
-    printf("Usage : %s [-h|--help] [-d] [-V|--vid vid]  [-a|--accessMode mode (0|1)]\n", $0);
-    print  "           [-s|--startTime st] [-e|--endTime et]\n";
-    print  "           [-u|--uid uid] [-g|--gid gid] [-t|--host host] -r reason drive[\@server] drive[\@server]\n";
-    print  "Mode: 0:read-Only 1:Write-Only\n";
-    print  "Starttime, Endtime should be expressed as +n (in days) or 'YYYY/MM/DD HH:MM'\n";
+
+    my $help = <<EOD;
+
+ Usage : $0 \[-h|--help\] \[-d\] \[-V|--vid vid\]  \[-a|--accessMode mode (0|1)\]
+           \[-s|--startTime st\] \[-e|--endTime et\]
+           \[-u|--uid uid\] \[-g|--gid gid\] \[-t|--host host\] -r reason drive\[\@server\] drive\[\@server\]
+            (to add new dedications)
+
+    or :  $0 -d drive\[\@server\] drive\[\@server\]
+            (to remove the dedications)
+
+Syntax:
+Mode: 0:read-Only 1:Write-Only
+Starttime, Endtime should be expressed as +n (in days) or 'YYYY/MM/DD HH:MM'
+When specifying a drive, the server name is necessary only when several drives have the same name.
+
+BEWARE: This script needs:
+ - The Oracle environment defined
+ - /etc/castor/ORASTAGERCONFIG containing the DB connection parameters
+
+EOD
+
+print $help;
+
 }
 
 
-sub parse_time {
-    my ($time) =  @_;
+sub parse_time($) {
+    my $time =  shift;
     if ($time =~ /\+[\d\.]+/) {
-	return " (sysdate $time  -  to_date('01-jan-1970','dd-mon-yyyy')) * (24*60*60)";
+	return " trunc(sysdate $time  -  to_date('01-jan-1970','dd-mon-yyyy')) * (24*60*60)";
     }  else {
-	return "(to_date('$time', 'YYYY/MM/DD HH24:MI') -  to_date('01-jan-1970','dd-mon-yyyy')) * (24*60*60)";
+	return " trunc(to_date('$time', 'YYYY/MM/DD HH24:MI') -  to_date('01-jan-1970','dd-mon-yyyy')) * (24*60*60)";
     }
 
 
@@ -83,12 +102,12 @@ if (0 == Getopt::Long::GetOptions ('h|help' => \$help,
 				   't|host=s' => \$host,
 				   'r|reason=s' => \$reason)) {
     usage();
-    exit(1);
+    exit(EXIT_FAILURE);
 }
 
 if ($help) {
     usage();
-    exit(0);
+    exit(EXIT_SUCCESS);
 }
 
 $nbdrives = scalar  @ARGV;
@@ -97,21 +116,16 @@ $nbdrives = scalar  @ARGV;
 if ($nbdrives <= 0) {
     print("Error : Please specify at least a tape drive to dedicate\n");
     usage();
-    exit;
+    exit(EXIT_FAILURE);
 }
 
-my $d;
-foreach $d (@ARGV) {
-    push  @drives, $d;
-}
+@drives = @ARGV;
 
-if ($reason eq "") {
+if ( (!defined($reason)) && ($deleteMode == 0)) {
     print("Error : Please specify a reason for the dedication (with -r)\n");
     usage();
-    exit;
-} else {
-#    print  "Reason for dedication is: $reason\n";
-}
+    exit(EXIT_FAILURE);
+} 
 
 ###########################################################
 # Preparing the string with the values to be set          #
@@ -121,33 +135,31 @@ my $columns;
 my $values;
 my $count = 0;
 
-my %rmapping = ("VID" => $vid,
-	       "ACCESSMODE" => $accessMode,
-	       "EUID" =>  $uid,
-	       "EGID" => $gid,
-	       "REASON" => $reason);
+my %rmapping = ("VID" => [$vid, "'"],
+	       "ACCESSMODE" => [$accessMode, ""],
+	       "EUID" =>  [$uid, ""],
+	       "EGID" => [$gid, ""],
+	       "CLIENTHOST" => [$host, "'"],
+	       "REASON" => [$reason, "'"]);
 
-my %quotechar  = ("VID" => "'",
-		  "ACCESSMODE" => "",
-		  "EUID" =>  "",
-		  "EGID" => "",
-		  "REASON" => "'");
-
-
-	
-map { 
-    if (defined $rmapping{$_}) { 
+map {
+    if (defined(${$rmapping{$_}}[0])) { 
 	$count++;
-	$columns .= ", " . $_;
-	$values  .= ", " . $quotechar{$_} . $rmapping{$_} . $quotechar{$_};
+	$columns .= ", $_";
+	$values  .= ", ${$rmapping{$_}}[1]${$rmapping{$_}}[0]${$rmapping{$_}}[1]";
     }
 } keys %rmapping;
 
-if ($count<= 1) {
+if (! $deleteMode
+    && !defined($uid)
+    && !defined($gid)
+    && !defined($accessMode)
+    && !defined($host)
+    && !defined($vid)) {
     #Reason does not count it is compulsory !
     print "Please specify at least one criterium for the dedication\n";
     usage();
-    exit;    
+    exit(EXIT_FAILURE);    
 }
 
 
@@ -190,6 +202,7 @@ my $dbh = DBI->connect('dbi:Oracle:',$castor_conf[0] ,$castor_conf[1]);
 
 my @driveids = ();
 
+my $d;
 foreach $d (@drives) {
     my $drive;
     my $server;
@@ -224,14 +237,14 @@ my $sth = $dbh->prepare("$dbquery");
 	    print "Could not find drive $d\n";
 	    usage();
 	    $dbh->disconnect;
-	    exit;    
+	    exit(EXIT_FAILURE);    
 	} elsif ($rownum > 1) {
 	    print "Found several IDs for $d: ";
 	    map { print " $_" } @ids;
 	    print "\n";
 	    usage();
 	    $dbh->disconnect;
-	    exit;    
+	    exit(EXIT_FAILURE);    
 	}
 	push @driveids, $ids[0];
 
@@ -265,14 +278,14 @@ my $sth = $dbh->prepare("$dbquery");
 	    print "Could not find drive $d\n";
 	    usage();
 	    $dbh->disconnect;
-	    exit;    
+	    exit(EXIT_FAILURE);    
 	} elsif ($rownum > 1) {
 	    print "Found several possibilities for $d:\n";
 	    map { print " $d\@$_\n" } @tmpsrv;
 	    print "Please choose one \n";
 	    usage();
 	    $dbh->disconnect;
-	    exit;    
+	    exit(EXIT_FAILURE);    
 	}
 	push @driveids, $ids[0];
     }
