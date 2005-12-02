@@ -36,8 +36,8 @@ struct C_IObject_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class IAddress
-// Base class for all addresses. An address allows to find a foreign representation
-// of an object.
+// Base class for all addresses.
+// An address allows to find a foreign representation of an object.
 //------------------------------------------------------------------------------
 
 /**

@@ -41,8 +41,8 @@ namespace castor {
 
   /**
    * class IAddress
-   * Base class for all addresses. An address allows to find a foreign representation
-   * of an object.
+   * Base class for all addresses.
+   * An address allows to find a foreign representation of an object.
    */
   class IAddress : public virtual IObject {
 
