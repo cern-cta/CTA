@@ -995,7 +995,7 @@ std::vector<castor::vdqm::TapeRequest*>*
 					
 				tmpTapeRequest->setId(idTapeRequest);
 				tmpTapeRequest->setPriority(rs->getInt(1));
-				tmpTapeRequest->setModificationTime(rs->getInt(2));
+				tmpTapeRequest->setModificationTime((u_signed64)rs->getDouble(2));
 				
 		    
 		    // Get the foreign related objects
@@ -1101,8 +1101,8 @@ std::vector<castor::vdqm::TapeDrive*>*
 				
 				tmpTapeDrive->setId(idTapeDrive);
 				tmpTapeDrive->setJobID(rs->getInt(1));
-				tmpTapeDrive->setModificationTime(rs->getInt(2));
-				tmpTapeDrive->setResettime(rs->getInt(3));
+				tmpTapeDrive->setModificationTime((u_signed64)rs->getDouble(2));
+				tmpTapeDrive->setResettime((u_signed64)rs->getDouble(3));
 				tmpTapeDrive->setUsecount(rs->getInt(4));
 				tmpTapeDrive->setErrcount(rs->getInt(5));
 				tmpTapeDrive->setTransferredMB(rs->getInt(6));
