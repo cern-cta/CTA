@@ -1675,7 +1675,7 @@ BEGIN
        AND StagePrepareToPutRequest.id = SubRequest.request;
     -- the select worked out, so we have a prepareToPut
     -- In such a case, we do not cleanup DiskCopy and CastorFile
-  EXCEPTION WHEN TOO_MANY_ROWS THEN
+  EXCEPTION WHEN NO_DATA_FOUND THEN
     -- this means we are a standalone put
     -- thus cleanup DiskCopy and CastorFile
     DELETE FROM DiskCopy WHERE id = dcId;
