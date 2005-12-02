@@ -18,7 +18,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: dedicateTapeDrive,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/02 09:36:37 $ $Author: bcouturi $
+# * @(#)$RCSfile: dedicateTapeDrive,v $ $Revision: 1.4 $ $Release$ $Date: 2005/12/02 11:27:54 $ $Author: bcouturi $
 # *
 # * Adds new entries to the TapeDriveDedication table
 # *
@@ -44,7 +44,7 @@ sub usage {
 sub parse_time {
     my ($time) =  @_;
     if ($time =~ /\+[\d\.]+/) {
-	return "(new_time(sysdate $time ,'EDT','GMT') -  to_date('01-jan-1970','dd-mon-yyyy')) * (24*60*60)";
+	return " (sysdate $time  -  to_date('01-jan-1970','dd-mon-yyyy')) * (24*60*60)";
     }  else {
 	return "(to_date('$time', 'YYYY/MM/DD HH24:MI') -  to_date('01-jan-1970','dd-mon-yyyy')) * (24*60*60)";
     }
@@ -156,8 +156,7 @@ $columns .= ", STARTTIME";
 if (defined $startTime) {
     $values .= ", " . parse_time($startTime);
 } else {
-
-    $values .= ", (new_time(sysdate,'EDT','GMT') -  to_date('01-jan-1970','dd-mon-yyyy')) * (24*60*60)";
+    $values .= ", (sysdate -  to_date('01-jan-1970','dd-mon-yyyy')) * (24*60*60)";
 }
 
 # Setting the time
@@ -165,7 +164,7 @@ $columns .= ", ENDTIME";
 if (defined $endTime) {
     $values .= ", " . parse_time($endTime);
 } else {
-    $values .= ", (new_time(trunc(sysdate)+1,'EDT','GMT') -  to_date('01-jan-1970','dd-mon-yyyy')) * (24*60*60)";
+    $values .= ", (trunc(sysdate) +1 -  to_date('01-jan-1970','dd-mon-yyyy')) * (24*60*60)";
 }
 
 
