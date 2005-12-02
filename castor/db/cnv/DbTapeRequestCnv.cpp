@@ -802,7 +802,7 @@ void castor::db::cnv::DbTapeRequestCnv::createRep(castor::IAddress* address,
     }
     // Now Save the current object
     m_insertStatement->setInt(1, obj->priority());
-    m_insertStatement->setInt(2, obj->modificationTime());
+    m_insertStatement->setInt64(2, obj->modificationTime());
     m_insertStatement->setInt(3, time(0));
     m_insertStatement->setInt64(4, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
     m_insertStatement->setInt64(5, (type == OBJ_TapeAccessSpecification && obj->tapeAccessSpecification() != 0) ? obj->tapeAccessSpecification()->id() : 0);
@@ -860,7 +860,7 @@ void castor::db::cnv::DbTapeRequestCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setInt(1, obj->priority());
-    m_updateStatement->setInt(2, obj->modificationTime());
+    m_updateStatement->setInt64(2, obj->modificationTime());
     m_updateStatement->setInt64(3, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
@@ -948,8 +948,8 @@ castor::IObject* castor::db::cnv::DbTapeRequestCnv::createObj(castor::IAddress* 
     castor::vdqm::TapeRequest* object = new castor::vdqm::TapeRequest();
     // Now retrieve and set members
     object->setPriority(rset->getInt(1));
-    object->setModificationTime(rset->getInt(2));
-    object->setCreationTime(rset->getInt(3));
+    object->setModificationTime(rset->getInt64(2));
+    object->setCreationTime(rset->getInt64(3));
     object->setId(rset->getInt64(4));
     delete rset;
     return object;
@@ -989,8 +989,8 @@ void castor::db::cnv::DbTapeRequestCnv::updateObj(castor::IObject* obj)
     castor::vdqm::TapeRequest* object = 
       dynamic_cast<castor::vdqm::TapeRequest*>(obj);
     object->setPriority(rset->getInt(1));
-    object->setModificationTime(rset->getInt(2));
-    object->setCreationTime(rset->getInt(3));
+    object->setModificationTime(rset->getInt64(2));
+    object->setCreationTime(rset->getInt64(3));
     object->setId(rset->getInt64(4));
     delete rset;
   } catch (castor::exception::SQLError e) {

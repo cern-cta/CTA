@@ -113,25 +113,25 @@ int Cvdqm_TapeDrive_setJobID(struct Cvdqm_TapeDrive_t* instance, int new_var);
  * Get the value of modificationTime
  * The time, when the tape drive begins with its job or modified it
  */
-int Cvdqm_TapeDrive_modificationTime(struct Cvdqm_TapeDrive_t* instance, int* var);
+int Cvdqm_TapeDrive_modificationTime(struct Cvdqm_TapeDrive_t* instance, u_signed64* var);
 
 /**
  * Set the value of modificationTime
  * The time, when the tape drive begins with its job or modified it
  */
-int Cvdqm_TapeDrive_setModificationTime(struct Cvdqm_TapeDrive_t* instance, int new_var);
+int Cvdqm_TapeDrive_setModificationTime(struct Cvdqm_TapeDrive_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of resettime
  * Last time counters were reset
  */
-int Cvdqm_TapeDrive_resettime(struct Cvdqm_TapeDrive_t* instance, int* var);
+int Cvdqm_TapeDrive_resettime(struct Cvdqm_TapeDrive_t* instance, u_signed64* var);
 
 /**
  * Set the value of resettime
  * Last time counters were reset
  */
-int Cvdqm_TapeDrive_setResettime(struct Cvdqm_TapeDrive_t* instance, int new_var);
+int Cvdqm_TapeDrive_setResettime(struct Cvdqm_TapeDrive_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of usecount

@@ -121,7 +121,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cvdqm_TapeRequest_modificationTime
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeRequest_modificationTime(castor::vdqm::TapeRequest* instance, int* var) {
+  int Cvdqm_TapeRequest_modificationTime(castor::vdqm::TapeRequest* instance, u_signed64* var) {
     *var = instance->modificationTime();
     return 0;
   }
@@ -129,7 +129,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cvdqm_TapeRequest_setModificationTime
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeRequest_setModificationTime(castor::vdqm::TapeRequest* instance, int new_var) {
+  int Cvdqm_TapeRequest_setModificationTime(castor::vdqm::TapeRequest* instance, u_signed64 new_var) {
     instance->setModificationTime(new_var);
     return 0;
   }
@@ -137,7 +137,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cvdqm_TapeRequest_creationTime
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeRequest_creationTime(castor::vdqm::TapeRequest* instance, int* var) {
+  int Cvdqm_TapeRequest_creationTime(castor::vdqm::TapeRequest* instance, u_signed64* var) {
     *var = instance->creationTime();
     return 0;
   }
@@ -145,7 +145,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cvdqm_TapeRequest_setCreationTime
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeRequest_setCreationTime(castor::vdqm::TapeRequest* instance, int new_var) {
+  int Cvdqm_TapeRequest_setCreationTime(castor::vdqm::TapeRequest* instance, u_signed64 new_var) {
     instance->setCreationTime(new_var);
     return 0;
   }

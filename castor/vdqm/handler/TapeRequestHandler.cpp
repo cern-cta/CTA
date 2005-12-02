@@ -372,7 +372,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
       // Set new TapeDriveStatusCode
 	    tapeDrive->setStatus(STATUS_UNKNOWN);
 	    
-	    tapeReq->setModificationTime((int)time(NULL));
+	    tapeReq->setModificationTime(time(NULL));
 			  
 			/**
 			 * Update the data base. To avoid a deadlock, the tape drive has to be 
@@ -521,7 +521,7 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
 		    volumeRequest->clientUID = (*it)->client()->euid();
 		    volumeRequest->clientGID = (*it)->client()->egid();
 		    volumeRequest->mode = (*it)->tapeAccessSpecification()->accessMode();
-		    volumeRequest->recvtime = (*it)->modificationTime();
+		    volumeRequest->recvtime = (int)(*it)->modificationTime();
 		    strcpy(volumeRequest->client_host, (*it)->client()->machine().c_str());
 		    strcpy(volumeRequest->volid, (*it)->tape()->vid().c_str());
 		    

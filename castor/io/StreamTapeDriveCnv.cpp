@@ -123,10 +123,10 @@ castor::IObject* castor::io::StreamTapeDriveCnv::createObj(castor::IAddress* add
   int jobID;
   ad->stream() >> jobID;
   object->setJobID(jobID);
-  int modificationTime;
+  u_signed64 modificationTime;
   ad->stream() >> modificationTime;
   object->setModificationTime(modificationTime);
-  int resettime;
+  u_signed64 resettime;
   ad->stream() >> resettime;
   object->setResettime(resettime);
   int usecount;

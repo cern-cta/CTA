@@ -182,7 +182,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cvdqm_TapeDriveDedication_startTime
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDriveDedication_startTime(castor::vdqm::TapeDriveDedication* instance, int* var) {
+  int Cvdqm_TapeDriveDedication_startTime(castor::vdqm::TapeDriveDedication* instance, u_signed64* var) {
     *var = instance->startTime();
     return 0;
   }
@@ -190,7 +190,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cvdqm_TapeDriveDedication_setStartTime
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDriveDedication_setStartTime(castor::vdqm::TapeDriveDedication* instance, int new_var) {
+  int Cvdqm_TapeDriveDedication_setStartTime(castor::vdqm::TapeDriveDedication* instance, u_signed64 new_var) {
     instance->setStartTime(new_var);
     return 0;
   }
@@ -198,7 +198,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cvdqm_TapeDriveDedication_endTime
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDriveDedication_endTime(castor::vdqm::TapeDriveDedication* instance, int* var) {
+  int Cvdqm_TapeDriveDedication_endTime(castor::vdqm::TapeDriveDedication* instance, u_signed64* var) {
     *var = instance->endTime();
     return 0;
   }
@@ -206,7 +206,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cvdqm_TapeDriveDedication_setEndTime
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDriveDedication_setEndTime(castor::vdqm::TapeDriveDedication* instance, int new_var) {
+  int Cvdqm_TapeDriveDedication_setEndTime(castor::vdqm::TapeDriveDedication* instance, u_signed64 new_var) {
     instance->setEndTime(new_var);
     return 0;
   }

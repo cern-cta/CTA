@@ -107,25 +107,25 @@ int Cvdqm_TapeRequest_setPriority(struct Cvdqm_TapeRequest_t* instance, int new_
  * Get the value of modificationTime
  * The time, when the tape request has been opend or has been modified
  */
-int Cvdqm_TapeRequest_modificationTime(struct Cvdqm_TapeRequest_t* instance, int* var);
+int Cvdqm_TapeRequest_modificationTime(struct Cvdqm_TapeRequest_t* instance, u_signed64* var);
 
 /**
  * Set the value of modificationTime
  * The time, when the tape request has been opend or has been modified
  */
-int Cvdqm_TapeRequest_setModificationTime(struct Cvdqm_TapeRequest_t* instance, int new_var);
+int Cvdqm_TapeRequest_setModificationTime(struct Cvdqm_TapeRequest_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of creationTime
  * The time, when the tape request is beeing created
  */
-int Cvdqm_TapeRequest_creationTime(struct Cvdqm_TapeRequest_t* instance, int* var);
+int Cvdqm_TapeRequest_creationTime(struct Cvdqm_TapeRequest_t* instance, u_signed64* var);
 
 /**
  * Set the value of creationTime
  * The time, when the tape request is beeing created
  */
-int Cvdqm_TapeRequest_setCreationTime(struct Cvdqm_TapeRequest_t* instance, int new_var);
+int Cvdqm_TapeRequest_setCreationTime(struct Cvdqm_TapeRequest_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of id

@@ -125,10 +125,10 @@ castor::IObject* castor::io::StreamTapeDriveDedicationCnv::createObj(castor::IAd
   int accessMode;
   ad->stream() >> accessMode;
   object->setAccessMode(accessMode);
-  int startTime;
+  u_signed64 startTime;
   ad->stream() >> startTime;
   object->setStartTime(startTime);
-  int endTime;
+  u_signed64 endTime;
   ad->stream() >> endTime;
   object->setEndTime(endTime);
   std::string reason;

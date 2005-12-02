@@ -571,8 +571,8 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
   ptr_driveRequest->DrvReqID  = (unsigned int)tapeDrive->id();
   
   ptr_driveRequest->jobID     = tapeDrive->jobID();
-	ptr_driveRequest->recvtime  = tapeDrive->modificationTime();
-  ptr_driveRequest->resettime = tapeDrive->resettime();
+	ptr_driveRequest->recvtime  = (int)tapeDrive->modificationTime();
+  ptr_driveRequest->resettime = (int)tapeDrive->resettime();
   ptr_driveRequest->usecount  = tapeDrive->usecount();			  
   ptr_driveRequest->errcount  = tapeDrive->errcount();
   ptr_driveRequest->MBtransf  = tapeDrive->transferredMB();
@@ -847,8 +847,8 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
 		    	ptr_driveRequest->VolReqID = 0;
 		    
 		    ptr_driveRequest->jobID = (*it)->jobID();
-		    ptr_driveRequest->recvtime = (*it)->modificationTime();
-		    ptr_driveRequest->resettime = (*it)->resettime();
+		    ptr_driveRequest->recvtime = (int)(*it)->modificationTime();
+		    ptr_driveRequest->resettime = (int)(*it)->resettime();
 		    ptr_driveRequest->usecount = (*it)->usecount();
 		    ptr_driveRequest->errcount = (*it)->errcount();
 		    ptr_driveRequest->MBtransf = (*it)->transferredMB();

@@ -1008,8 +1008,8 @@ void castor::db::cnv::DbTapeDriveCnv::createRep(castor::IAddress* address,
     }
     // Now Save the current object
     m_insertStatement->setInt(1, obj->jobID());
-    m_insertStatement->setInt(2, obj->modificationTime());
-    m_insertStatement->setInt(3, obj->resettime());
+    m_insertStatement->setInt64(2, obj->modificationTime());
+    m_insertStatement->setInt64(3, obj->resettime());
     m_insertStatement->setInt(4, obj->usecount());
     m_insertStatement->setInt(5, obj->errcount());
     m_insertStatement->setInt(6, obj->transferredMB());
@@ -1076,8 +1076,8 @@ void castor::db::cnv::DbTapeDriveCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setInt(1, obj->jobID());
-    m_updateStatement->setInt(2, obj->modificationTime());
-    m_updateStatement->setInt(3, obj->resettime());
+    m_updateStatement->setInt64(2, obj->modificationTime());
+    m_updateStatement->setInt64(3, obj->resettime());
     m_updateStatement->setInt(4, obj->usecount());
     m_updateStatement->setInt(5, obj->errcount());
     m_updateStatement->setInt(6, obj->transferredMB());
@@ -1169,8 +1169,8 @@ castor::IObject* castor::db::cnv::DbTapeDriveCnv::createObj(castor::IAddress* ad
     castor::vdqm::TapeDrive* object = new castor::vdqm::TapeDrive();
     // Now retrieve and set members
     object->setJobID(rset->getInt(1));
-    object->setModificationTime(rset->getInt(2));
-    object->setResettime(rset->getInt(3));
+    object->setModificationTime(rset->getInt64(2));
+    object->setResettime(rset->getInt64(3));
     object->setUsecount(rset->getInt(4));
     object->setErrcount(rset->getInt(5));
     object->setTransferredMB(rset->getInt(6));
@@ -1217,8 +1217,8 @@ void castor::db::cnv::DbTapeDriveCnv::updateObj(castor::IObject* obj)
     castor::vdqm::TapeDrive* object = 
       dynamic_cast<castor::vdqm::TapeDrive*>(obj);
     object->setJobID(rset->getInt(1));
-    object->setModificationTime(rset->getInt(2));
-    object->setResettime(rset->getInt(3));
+    object->setModificationTime(rset->getInt64(2));
+    object->setResettime(rset->getInt64(3));
     object->setUsecount(rset->getInt(4));
     object->setErrcount(rset->getInt(5));
     object->setTransferredMB(rset->getInt(6));

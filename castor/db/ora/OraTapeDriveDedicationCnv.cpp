@@ -300,8 +300,8 @@ void castor::db::ora::OraTapeDriveDedicationCnv::createRep(castor::IAddress* add
     m_insertStatement->setInt(3, obj->egid());
     m_insertStatement->setString(4, obj->vid());
     m_insertStatement->setInt(5, obj->accessMode());
-    m_insertStatement->setInt(6, obj->startTime());
-    m_insertStatement->setInt(7, obj->endTime());
+    m_insertStatement->setDouble(6, obj->startTime());
+    m_insertStatement->setDouble(7, obj->endTime());
     m_insertStatement->setString(8, obj->reason());
     m_insertStatement->setDouble(9, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
     m_insertStatement->executeUpdate();
@@ -366,8 +366,8 @@ void castor::db::ora::OraTapeDriveDedicationCnv::updateRep(castor::IAddress* add
     m_updateStatement->setInt(3, obj->egid());
     m_updateStatement->setString(4, obj->vid());
     m_updateStatement->setInt(5, obj->accessMode());
-    m_updateStatement->setInt(6, obj->startTime());
-    m_updateStatement->setInt(7, obj->endTime());
+    m_updateStatement->setDouble(6, obj->startTime());
+    m_updateStatement->setDouble(7, obj->endTime());
     m_updateStatement->setString(8, obj->reason());
     m_updateStatement->setDouble(9, obj->id());
     m_updateStatement->executeUpdate();
@@ -473,8 +473,8 @@ castor::IObject* castor::db::ora::OraTapeDriveDedicationCnv::createObj(castor::I
     object->setEgid(rset->getInt(3));
     object->setVid(rset->getString(4));
     object->setAccessMode(rset->getInt(5));
-    object->setStartTime(rset->getInt(6));
-    object->setEndTime(rset->getInt(7));
+    object->setStartTime((u_signed64)rset->getDouble(6));
+    object->setEndTime((u_signed64)rset->getDouble(7));
     object->setReason(rset->getString(8));
     object->setId((u_signed64)rset->getDouble(9));
     m_selectStatement->closeResultSet(rset);
@@ -527,8 +527,8 @@ void castor::db::ora::OraTapeDriveDedicationCnv::updateObj(castor::IObject* obj)
     object->setEgid(rset->getInt(3));
     object->setVid(rset->getString(4));
     object->setAccessMode(rset->getInt(5));
-    object->setStartTime(rset->getInt(6));
-    object->setEndTime(rset->getInt(7));
+    object->setStartTime((u_signed64)rset->getDouble(6));
+    object->setEndTime((u_signed64)rset->getDouble(7));
     object->setReason(rset->getString(8));
     object->setId((u_signed64)rset->getDouble(9));
     m_selectStatement->closeResultSet(rset);

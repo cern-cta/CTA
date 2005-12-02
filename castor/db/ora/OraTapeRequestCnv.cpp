@@ -802,7 +802,7 @@ void castor::db::ora::OraTapeRequestCnv::createRep(castor::IAddress* address,
     }
     // Now Save the current object
     m_insertStatement->setInt(1, obj->priority());
-    m_insertStatement->setInt(2, obj->modificationTime());
+    m_insertStatement->setDouble(2, obj->modificationTime());
     m_insertStatement->setInt(3, time(0));
     m_insertStatement->setDouble(4, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
     m_insertStatement->setDouble(5, (type == OBJ_TapeAccessSpecification && obj->tapeAccessSpecification() != 0) ? obj->tapeAccessSpecification()->id() : 0);
@@ -868,7 +868,7 @@ void castor::db::ora::OraTapeRequestCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setInt(1, obj->priority());
-    m_updateStatement->setInt(2, obj->modificationTime());
+    m_updateStatement->setDouble(2, obj->modificationTime());
     m_updateStatement->setDouble(3, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
@@ -972,8 +972,8 @@ castor::IObject* castor::db::ora::OraTapeRequestCnv::createObj(castor::IAddress*
     castor::vdqm::TapeRequest* object = new castor::vdqm::TapeRequest();
     // Now retrieve and set members
     object->setPriority(rset->getInt(1));
-    object->setModificationTime(rset->getInt(2));
-    object->setCreationTime(rset->getInt(3));
+    object->setModificationTime((u_signed64)rset->getDouble(2));
+    object->setCreationTime((u_signed64)rset->getDouble(3));
     object->setId((u_signed64)rset->getDouble(4));
     m_selectStatement->closeResultSet(rset);
     return object;
@@ -1021,8 +1021,8 @@ void castor::db::ora::OraTapeRequestCnv::updateObj(castor::IObject* obj)
     castor::vdqm::TapeRequest* object = 
       dynamic_cast<castor::vdqm::TapeRequest*>(obj);
     object->setPriority(rset->getInt(1));
-    object->setModificationTime(rset->getInt(2));
-    object->setCreationTime(rset->getInt(3));
+    object->setModificationTime((u_signed64)rset->getDouble(2));
+    object->setCreationTime((u_signed64)rset->getDouble(3));
     object->setId((u_signed64)rset->getDouble(4));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {

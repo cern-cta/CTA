@@ -300,8 +300,8 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress* addr
     m_insertStatement->setInt(3, obj->egid());
     m_insertStatement->setString(4, obj->vid());
     m_insertStatement->setInt(5, obj->accessMode());
-    m_insertStatement->setInt(6, obj->startTime());
-    m_insertStatement->setInt(7, obj->endTime());
+    m_insertStatement->setInt64(6, obj->startTime());
+    m_insertStatement->setInt64(7, obj->endTime());
     m_insertStatement->setString(8, obj->reason());
     m_insertStatement->setInt64(9, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
     m_insertStatement->execute();
@@ -358,8 +358,8 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::updateRep(castor::IAddress* addr
     m_updateStatement->setInt(3, obj->egid());
     m_updateStatement->setString(4, obj->vid());
     m_updateStatement->setInt(5, obj->accessMode());
-    m_updateStatement->setInt(6, obj->startTime());
-    m_updateStatement->setInt(7, obj->endTime());
+    m_updateStatement->setInt64(6, obj->startTime());
+    m_updateStatement->setInt64(7, obj->endTime());
     m_updateStatement->setString(8, obj->reason());
     m_updateStatement->setInt64(9, obj->id());
     m_updateStatement->execute();
@@ -449,8 +449,8 @@ castor::IObject* castor::db::cnv::DbTapeDriveDedicationCnv::createObj(castor::IA
     object->setEgid(rset->getInt(3));
     object->setVid(rset->getString(4));
     object->setAccessMode(rset->getInt(5));
-    object->setStartTime(rset->getInt(6));
-    object->setEndTime(rset->getInt(7));
+    object->setStartTime(rset->getInt64(6));
+    object->setEndTime(rset->getInt64(7));
     object->setReason(rset->getString(8));
     object->setId(rset->getInt64(9));
     delete rset;
@@ -495,8 +495,8 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::updateObj(castor::IObject* obj)
     object->setEgid(rset->getInt(3));
     object->setVid(rset->getString(4));
     object->setAccessMode(rset->getInt(5));
-    object->setStartTime(rset->getInt(6));
-    object->setEndTime(rset->getInt(7));
+    object->setStartTime(rset->getInt64(6));
+    object->setEndTime(rset->getInt64(7));
     object->setReason(rset->getString(8));
     object->setId(rset->getInt64(9));
     delete rset;

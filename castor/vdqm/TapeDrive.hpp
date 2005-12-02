@@ -141,7 +141,7 @@ namespace castor {
        * The time, when the tape drive begins with its job or modified it
        * @return the value of m_modificationTime
        */
-      int modificationTime() const {
+      u_signed64 modificationTime() const {
         return m_modificationTime;
       }
 
@@ -150,7 +150,7 @@ namespace castor {
        * The time, when the tape drive begins with its job or modified it
        * @param new_var the new value of m_modificationTime
        */
-      void setModificationTime(int new_var) {
+      void setModificationTime(u_signed64 new_var) {
         m_modificationTime = new_var;
       }
 
@@ -159,7 +159,7 @@ namespace castor {
        * Last time counters were reset
        * @return the value of m_resettime
        */
-      int resettime() const {
+      u_signed64 resettime() const {
         return m_resettime;
       }
 
@@ -168,7 +168,7 @@ namespace castor {
        * Last time counters were reset
        * @param new_var the new value of m_resettime
        */
-      void setResettime(int new_var) {
+      void setResettime(u_signed64 new_var) {
         m_resettime = new_var;
       }
 
@@ -476,10 +476,10 @@ namespace castor {
       int m_jobID;
 
       /// The time, when the tape drive begins with its job or modified it
-      int m_modificationTime;
+      u_signed64 m_modificationTime;
 
       /// Last time counters were reset
-      int m_resettime;
+      u_signed64 m_resettime;
 
       /// Usage counter (total number of VolReqs so far)
       int m_usecount;

@@ -212,10 +212,10 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::handleDedication(
 	 */
 	freeTapeDrive->setStatus(UNIT_STARTING);
 	freeTapeDrive->setJobID(0);
-	freeTapeDrive->setModificationTime((int)time(NULL));
+	freeTapeDrive->setModificationTime(time(NULL));
 	
 	waitingTapeRequest->setTapeDrive(freeTapeDrive);
-	waitingTapeRequest->setModificationTime((int)time(NULL));
+	waitingTapeRequest->setModificationTime(time(NULL));
 	
 	freeTapeDrive->setRunningTapeReq(waitingTapeRequest);
 	
@@ -426,12 +426,12 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::rollback(
 		
 	//Rollback all changes!
 	freeTapeDrive->setStatus(UNIT_UP);
-	freeTapeDrive->setModificationTime((int)time(NULL));
+	freeTapeDrive->setModificationTime(time(NULL));
 	
 	castor::vdqm::TapeRequest* waitingTapeRequest 
 		= freeTapeDrive->runningTapeReq();
 	waitingTapeRequest->setTapeDrive(0);
-	waitingTapeRequest->setModificationTime((int)time(NULL));
+	waitingTapeRequest->setModificationTime(time(NULL));
 	
 	freeTapeDrive->setRunningTapeReq(0);
 	

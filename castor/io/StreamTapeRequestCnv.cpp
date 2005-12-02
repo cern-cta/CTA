@@ -112,10 +112,10 @@ castor::IObject* castor::io::StreamTapeRequestCnv::createObj(castor::IAddress* a
   int priority;
   ad->stream() >> priority;
   object->setPriority(priority);
-  int modificationTime;
+  u_signed64 modificationTime;
   ad->stream() >> modificationTime;
   object->setModificationTime(modificationTime);
-  int creationTime;
+  u_signed64 creationTime;
   ad->stream() >> creationTime;
   object->setCreationTime(creationTime);
   u_signed64 id;

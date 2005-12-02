@@ -443,10 +443,10 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
 			 * Updating the informations for the data base
 			 */
 			ptr_tapeDrive->setJobID(0);
-			ptr_tapeDrive->setModificationTime((int)time(NULL));
+			ptr_tapeDrive->setModificationTime(time(NULL));
 			
 			newTapeRequest->setTapeDrive(ptr_tapeDrive);
-			newTapeRequest->setModificationTime((int)time(NULL));
+			newTapeRequest->setModificationTime(time(NULL));
 			
 			ptr_tapeDrive->setRunningTapeReq(newTapeRequest); 
 				

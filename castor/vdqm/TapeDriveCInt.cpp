@@ -124,7 +124,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cvdqm_TapeDrive_modificationTime
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_modificationTime(castor::vdqm::TapeDrive* instance, int* var) {
+  int Cvdqm_TapeDrive_modificationTime(castor::vdqm::TapeDrive* instance, u_signed64* var) {
     *var = instance->modificationTime();
     return 0;
   }
@@ -132,7 +132,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cvdqm_TapeDrive_setModificationTime
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_setModificationTime(castor::vdqm::TapeDrive* instance, int new_var) {
+  int Cvdqm_TapeDrive_setModificationTime(castor::vdqm::TapeDrive* instance, u_signed64 new_var) {
     instance->setModificationTime(new_var);
     return 0;
   }
@@ -140,7 +140,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cvdqm_TapeDrive_resettime
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_resettime(castor::vdqm::TapeDrive* instance, int* var) {
+  int Cvdqm_TapeDrive_resettime(castor::vdqm::TapeDrive* instance, u_signed64* var) {
     *var = instance->resettime();
     return 0;
   }
@@ -148,7 +148,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cvdqm_TapeDrive_setResettime
   //----------------------------------------------------------------------------
-  int Cvdqm_TapeDrive_setResettime(castor::vdqm::TapeDrive* instance, int new_var) {
+  int Cvdqm_TapeDrive_setResettime(castor::vdqm::TapeDrive* instance, u_signed64 new_var) {
     instance->setResettime(new_var);
     return 0;
   }

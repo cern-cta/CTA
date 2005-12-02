@@ -199,7 +199,7 @@ namespace castor {
        * tape on a specified tape drive from a specified user
        * @return the value of m_startTime
        */
-      int startTime() const {
+      u_signed64 startTime() const {
         return m_startTime;
       }
 
@@ -209,7 +209,7 @@ namespace castor {
        * tape on a specified tape drive from a specified user
        * @param new_var the new value of m_startTime
        */
-      void setStartTime(int new_var) {
+      void setStartTime(u_signed64 new_var) {
         m_startTime = new_var;
       }
 
@@ -219,7 +219,7 @@ namespace castor {
        * on a specified tape drive from a specified user
        * @return the value of m_endTime
        */
-      int endTime() const {
+      u_signed64 endTime() const {
         return m_endTime;
       }
 
@@ -229,7 +229,7 @@ namespace castor {
        * on a specified tape drive from a specified user
        * @param new_var the new value of m_endTime
        */
-      void setEndTime(int new_var) {
+      void setEndTime(u_signed64 new_var) {
         m_endTime = new_var;
       }
 
@@ -303,10 +303,10 @@ namespace castor {
       int m_accessMode;
 
       /// The starting time, which specifies the beginning of a time slot for a special tape on a specified tape drive from a specified user
-      int m_startTime;
+      u_signed64 m_startTime;
 
       /// The ending time, which specifies the beginning of a time slot for a special tape on a specified tape drive from a specified user
-      int m_endTime;
+      u_signed64 m_endTime;
 
       /// the reason for the tape drive dedication
       std::string m_reason;
