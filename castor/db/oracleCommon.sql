@@ -2320,8 +2320,8 @@ BEGIN
      AND TapeDrive.runningTapeReq = 0  -- not associated with tapeReq
      AND TapeDrive.tapeServer = TapeServer.id 
      AND TapeServer.actingMode = 0  -- ACTIVE
-     AND TapeRequest.tapeDrive IS NULL 
-     AND TapeRequest.requestedSrv(+) = TapeDrive.tapeServer 
+     AND TapeRequest.tapeDrive = 0
+     AND (TapeRequest.requestedSrv = TapeServer.id OR TapeRequest.requestedSrv = 0)
      AND TapeDrive2TapeDriveComp.parent = TapeDrive.id 
      AND TapeDrive2TapeDriveComp.child = TapeDriveCompatibility.id 
      AND TapeDriveCompatibility.tapeAccessSpecification = TapeRequest.tapeAccessSpecification
@@ -2334,7 +2334,7 @@ BEGIN
      */
      ORDER BY TapeDriveCompatibility.priorityLevel ASC, 
               TapeRequest.modificationTime ASC;
-              
+
   LOOP
     FETCH d2rCur INTO d2r;
     EXIT WHEN d2rCur%NOTFOUND;
@@ -2346,7 +2346,7 @@ BEGIN
     IF countDed = 0 THEN    -- no dedications valid for this TapeDrive
       tapeDriveID := d2r.tapeDrive;   -- fine, we can assign it
       tapeRequestID := d2r.tapeRequest;
-      CLOSE d2rCur;
+      --CLOSE d2rCur;
       EXIT;
     END IF;
 
@@ -2368,7 +2368,7 @@ BEGIN
     IF countDed > 0 THEN  -- there's a matching dedication for at least a criterium
       tapeDriveID := d2r.tapeDrive;   -- fine, we can assign it
       tapeRequestID := d2r.tapeRequest;
-      CLOSE d2rCur;
+      --CLOSE d2rCur;
       EXIT;
     END IF;
     -- else the tape drive is dedicated to other request(s), check the next couple
