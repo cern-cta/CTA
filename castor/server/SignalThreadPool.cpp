@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:01 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/05 15:06:08 $ $Author: itglp $
  *
  *
  *
@@ -163,13 +163,13 @@ void castor::server::SignalThreadPool::waitSignalOrTimeout()
   /* - waiting on condition variable got interrupted */
   /* - the very first time that service is running, m_notified is already 1, bypassing the wait */
 
-  /* Notify that the calling thread is a running service */
-  m_nbActiveThreads++;
-
   /* In case we were waked up because of a notification, make sure we reset the notification flag */
   if (m_notified > 0) {
     m_notified--;
   }
+
+  /* Notify that the calling thread is a running service */
+  m_nbActiveThreads++;
 
   /* Unlock the mutex */
   try {
@@ -196,10 +196,5 @@ void castor::server::SignalThreadPool::commitRelease()
     m_nbActiveThreads--;   // unsafe
     throw e;
   }
-
-  //try {
-  //  m_poolMutex->release();
-  //}
-  //catch (castor::exception::Exception ignored) {}  // not much to do here
 }
 
