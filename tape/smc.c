@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smc.c,v $ $Revision: 1.8 $ $Date: 2005/06/16 09:43:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smc.c,v $ $Revision: 1.9 $ $Date: 2005/12/05 10:23:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -206,8 +206,8 @@ char **argv;
 		fprintf (stderr, SR008, robot_info.device_count);
 		exit (USERR);
 	}
-	if (req_type != 'M' && slotaddr >= robot_info.slot_count) {
-		fprintf (stderr, SR016, robot_info.slot_count);
+	if (req_type != 'M' && slotaddr > (robot_info.slot_count + robot_info.slot_start)) {
+		fprintf (stderr, SR016, robot_info.slot_count + robot_info.slot_start);
 		exit (USERR);
 	}
 
