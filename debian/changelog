@@ -1,3 +1,97 @@
+castor (2.0.2-5) unstable; urgency=low
+
+  * PROTO2/castor/db/castor_postgres_create.sql:
+  * PROTO2/castor/db/cnv/DbTapeDriveCnv.cpp:
+  * PROTO2/castor/db/cnv/DbTapeDriveDedicationCnv.cpp:
+  * PROTO2/castor/db/cnv/DbTapeRequestCnv.cpp:
+  * PROTO2/castor/db/ora/OraTapeDriveCnv.cpp:
+  * PROTO2/castor/db/ora/OraTapeDriveDedicationCnv.cpp:
+  * PROTO2/castor/db/ora/OraTapeRequestCnv.cpp:
+      [2005-12-02,mbraeger] Changed the time fields in the VDQM database to u_signed64
+  * PROTO2/castor/db/ora/OraVdqmSvc.cpp:
+    [r1.35,2005-12-02,mbraeger] Fixed the recall of the time, which is now stored as double
+    [r1.34,2005-11-26,mbraeger] Fixed small bugs in the selectTapeAccessSpecifications()
+    [r1.34,2005-11-26,mbraeger] and selectCompatibilitiesForDriveModel() function.
+  * PROTO2/castor/db/ora/OraVdqmSvc.hpp:
+    [r1.24,2005-11-26,mbraeger] Fixed small bugs in the selectTapeAccessSpecifications()
+    [r1.24,2005-11-26,mbraeger] and selectCompatibilitiesForDriveModel() function.
+  * PROTO2/castor/db/oracleTrailer.sql:
+    [r1.233,2005-12-03,mbraeger] Bug fixes in the matchTape2TapeDrive procedure
+    [r1.232,2005-12-02,itglp] Implementation of the matchTape2TapeDrive logic taking into account dedications.
+    [r1.231,2005-12-02,sponcec3] Fixed wrong exception catching in putFailedProd leading to SubRequest staying in READY state
+  * PROTO2/castor/io/StreamTapeDriveCnv.cpp:
+  * PROTO2/castor/io/StreamTapeDriveDedicationCnv.cpp:
+  * PROTO2/castor/io/StreamTapeRequestCnv.cpp:
+  * PROTO2/castor/vdqm/TapeDrive.h:
+  * PROTO2/castor/vdqm/TapeDrive.hpp:
+  * PROTO2/castor/vdqm/TapeDriveCInt.cpp:
+  * PROTO2/castor/vdqm/TapeDriveDedication.h:
+  * PROTO2/castor/vdqm/TapeDriveDedication.hpp:
+  * PROTO2/castor/vdqm/TapeDriveDedicationCInt.cpp:
+  * PROTO2/castor/vdqm/TapeRequest.h:
+  * PROTO2/castor/vdqm/TapeRequest.hpp:
+  * PROTO2/castor/vdqm/TapeRequestCInt.cpp:
+      [2005-12-02,mbraeger] Changed the time fields in the VDQM database to u_signed64
+  * PROTO2/castor/vdqm/VdqmServer.cpp:
+    [r1.46,2005-11-30,mbraeger] Fixed a bug, in the parseCommandLine() function. Now, it is finally possible to specify the amount of threads in the pools.
+  * PROTO2/castor/vdqm/handler/BaseRequestHandler.cpp:
+    [r1.15,2005-11-30,mbraeger] Removed unneeded code.
+    [r1.14,2005-11-26,mbraeger] Fixed a bug for the TapeDriveCompatibility storage
+  * PROTO2/castor/vdqm/handler/TapeDriveHandler.cpp:
+    [r1.33,2005-12-02,mbraeger] Changed the time fields in the VDQM database to u_signed64
+    [r1.32,2005-11-28,mbraeger] Included a small work around for the asymmetric tape drive problem: If the tape drive model is not provided by the client (which is the case for the moment), then the TapeDriveCompatibility table will be filled with the cartridge model name instead.
+    [r1.31,2005-11-26,mbraeger] Fixed a bug for the TapeDriveCompatibility storage
+  * PROTO2/castor/vdqm/handler/TapeDriveStatusHandler.cpp:
+  * PROTO2/castor/vdqm/handler/TapeRequestDedicationHandler.cpp:
+  * PROTO2/castor/vdqm/handler/TapeRequestHandler.cpp:
+      [2005-12-02,mbraeger] Changed the time fields in the VDQM database to u_signed64
+  * PROTO2/castor/vdqm/handler/TapeRequestHandler.cpp:
+    [r1.25,2005-11-30,mbraeger] Synchronized the modification time and the creation time of a TapeRequest. The modification time of a tape request will now only be different to the creation time, if the assign of a tape to a tape drive has failed on RTCPD side.
+    [r1.24,2005-11-25,mbraeger] Solved a segmentation fault, which occured on the VDQM Ping request from the vdqm_admin command.
+  * CASTOR/common/sendscsicmd.c:
+    [r1.15,2005-11-30,bcouturi] On linux, check /proc/scsi/sg/def_reserved_size if it exists to get the maximum buffer size for the sg driver
+  * PROTO2/debian/castor-rmc-server.postinst:
+  * PROTO2/debian/castor-rmc-server.postrm:
+  * PROTO2/debian/castor-rmc-server.prerm:
+      [2005-11-30,jdurand] rmdaemon -> rmcdaemon
+  * PROTO2/debian/Cmonitd.init:
+  * PROTO2/debian/Cupvdaemon.init:
+  * PROTO2/debian/MigHunter.init:
+  * PROTO2/debian/dlfserver.init:
+  * PROTO2/debian/expertd.init:
+  * PROTO2/debian/gcDaemon.init:
+  * PROTO2/debian/msgdaemon.init:
+  * PROTO2/debian/nsdaemon.init:
+  * PROTO2/debian/rfiod.init:
+  * PROTO2/debian/rhserver.init:
+  * PROTO2/debian/rmcdaemon.init:
+  * PROTO2/debian/rmmaster.init:
+  * PROTO2/debian/rmnode.init:
+  * PROTO2/debian/rtcpclientd.init:
+  * PROTO2/debian/rtcpd.init:
+  * PROTO2/debian/stager.init:
+  * PROTO2/debian/tpdaemon.init:
+  * PROTO2/debian/vdqmserv.init:
+  * PROTO2/debian/vdqmserver.init:
+  * PROTO2/debian/vmgrdaemon.init:
+      [2005-11-30,jdurand] grep " 1 program" -> egrep " 1 program\$"
+      [2005-11-30,jdurand] grep program -> egrep "\/program *\$"
+  * PROTO2/hsmtools/Imakefile:
+    [r1.23,2005-12-02,bcouturi] Added dedicateTapeDrive and  listDedications
+  * PROTO2/hsmtools/modifySvcClass.c:
+    [r 1.7,2005-11-30,obarring] Revoke change made 31/5. Pass empty string instead of NULL when revoking the
+    [r 1.7,2005-11-30,obarring] policy values. NULL caused a segv in Cstager_SvcClass_setMigratorPolicy
+  * PROTO2/resourcemonitoring/rmnode.c:
+    [r1.24,2005-12-05,jdurand] Exit if configfile contains partitions that rmnode cannot map to a device
+  * CASTOR/rmc/rmcdaemon.sysconfig:
+    [r 1.2,2005-11-30,jdurand] RUN_RMCDAEMON="NO" -> RUN_RMCDAEMON="yes"
+  * PROTO2/rtcopy/TapeErrorHandler.c:
+    [r1.10,2005-11-30,obarring] Fix processing of migration candidates where the castor file has been deleted from the name server
+  * CASTOR/tape/smc.c:
+    [r 1.9,2005-12-05,bcouturi] Fixed tape slot range checking
+
+ -- Sebastien Ponce <sponcec3@pcitds13>  Mon,  5 Dec 2005 11:42:57 +0100
+
 castor (2.0.2-4) unstable; urgency=low
 
   * Added setFileGCWeight request for setting the GC weight of a given file
