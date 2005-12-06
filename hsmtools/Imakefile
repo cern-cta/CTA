@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.23 $ $Date: 2005/12/02 11:27:28 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.24 $ $Date: 2005/12/06 10:52:56 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM    Make HSM admin tools.
 
@@ -280,11 +280,11 @@ IEXPORT(printSvcClass,$(EXPORTBIN),755);
 InstallNonExecFile(castor_tools.pm,$(PERLLIBDIR),root,bin,755)
 IEXPORT(castor_tools.pm,$(EXPORTPERL),755);
 
-InstallProgram(dedicateTapeDrive,$(BIN),root,bin,755)$
-IEXPORT(dedicateTapeDrive,$(EXPORTBIN),755);$
+InstallProgram(dedicateTapeDrive,$(BIN),root,bin,755)
+IEXPORT(dedicateTapeDrive,$(EXPORTBIN),755);
 
-InstallProgram(listDedications,$(BIN),root,bin,755)$$
-IEXPORT(listDedications,$(EXPORTBIN),755);$$
+InstallProgram(listDedications,$(BIN),root,bin,755)
+IEXPORT(listDedications,$(EXPORTBIN),755);
 
 
 MakeDir($(BIN),root,bin,0755)
