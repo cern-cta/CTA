@@ -651,10 +651,10 @@ BEGIN
      AND DiskCopy.status = 2;
   UPDATE DiskCopy SET status = 0 WHERE id = dci RETURNING fileSystem INTO fsid; -- DISKCOPY_STAGED
   IF SubRequestId IS NOT NULL THEN
-    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
-     WHERE id = SubRequestId; -- SUBREQUEST_RESTART
-    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
-     WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
+    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
+     WHERE id = SubRequestId; 
+    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
+     WHERE parent = SubRequestId;
   END IF;
   updateFsFileClosed(fsId, fileSize, fileSize);
 END;
@@ -2283,7 +2283,7 @@ BEGIN
 END;
 
 
-/* PL/SQL method implementing castorVdqm package */
+/* PL/SQL code for castorVdqm package */
 CREATE OR REPLACE PACKAGE castorVdqm AS
   TYPE Drive2Req IS RECORD (
         tapeDrive NUMBER,
@@ -2295,14 +2295,11 @@ END castorVdqm;
 
 /**
  * This is the main select statement to dedicate a tape to a tape drive.
- * It respects the old and of course the new way to select a tape for a 
- * tape drive.
- * The old way is to look, if the tapeDrive and the tapeRequest have the same
- * dgn.
- * The new way is to look if the TapeAccessSpecification can be served by a 
- * specific tapeDrive. The tape Request are then orderd by the priorityLevel (for 
- * the new way) and by the modification time.
- * Returns 1 if a couple was found, 0 otherwise.
+ * First it checks the preconditions that a tapeDrive must meet in order to be
+ * assigned. The couples (drive,requests) are then orderd by the priorityLevel 
+ * and by the modification time and processed one by one to verify
+ * if any dedication exists and has to be applied.
+ * Returns the relevant IDs if a couple was found, (0,0) otherwise.
  */  
 CREATE OR REPLACE PROCEDURE matchTape2TapeDrive
  (tapeDriveID OUT NUMBER, tapeRequestID OUT NUMBER) AS
@@ -2313,6 +2310,7 @@ BEGIN
   tapeDriveID := 0;
   tapeRequestID := 0;
   
+  -- Check all preconditions a tape drive must meet in order to be used by pending tape requests
   OPEN d2rCur FOR
   SELECT TapeDrive.id, TapeRequest.id
     FROM TapeDrive, TapeRequest, TapeDrive2TapeDriveComp, TapeDriveCompatibility, TapeServer
@@ -2336,6 +2334,7 @@ BEGIN
               TapeRequest.modificationTime ASC;
 
   LOOP
+    -- For each candidate couple, verify that the dedications (if any) are met
     FETCH d2rCur INTO d2r;
     EXIT WHEN d2rCur%NOTFOUND;
 
@@ -2346,7 +2345,6 @@ BEGIN
     IF countDed = 0 THEN    -- no dedications valid for this TapeDrive
       tapeDriveID := d2r.tapeDrive;   -- fine, we can assign it
       tapeRequestID := d2r.tapeRequest;
-      --CLOSE d2rCur;
       EXIT;
     END IF;
 
@@ -2368,15 +2366,14 @@ BEGIN
     IF countDed > 0 THEN  -- there's a matching dedication for at least a criterium
       tapeDriveID := d2r.tapeDrive;   -- fine, we can assign it
       tapeRequestID := d2r.tapeRequest;
-      --CLOSE d2rCur;
       EXIT;
     END IF;
-    -- else the tape drive is dedicated to other request(s), check the next couple
+    -- else the tape drive is dedicated to other request(s) and we can't use it, go on
   END LOOP;
+  -- if the loop has been fully completed without assignment,
+  -- no free tape drive has been found. 
   CLOSE d2rCur;
-  -- no free tape drive has been found 
 END;
-
 
 
 /**
@@ -2411,6 +2408,7 @@ BEGIN
     tapeRequestID := 0;
 END;
 */
+
 
 CREATE OR REPLACE PROCEDURE selectTapeRequestQueue
  (dgn IN VARCHAR2, server IN VARCHAR2, tapeRequests OUT castorVdqm.TapeRequest_Cur) AS
@@ -2464,3 +2462,4 @@ BEGIN
 			ORDER BY TapeDrive.driveName ASC;
   END IF;
 END;
+
