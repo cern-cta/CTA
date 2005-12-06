@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:01 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/06 18:13:39 $ $Author: itglp $
  *
  *
  *
@@ -46,6 +46,7 @@
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/server/Mutex.hpp"
+//#include "castor/server/NotificationThread.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
 
@@ -56,6 +57,7 @@ namespace castor {
 
   // FOrward declaration
   class Mutex;
+  //class NotificationThread;
 
   static int DEFAULT_NOTIFY_PORT = 65015;
 
@@ -66,6 +68,8 @@ namespace castor {
    * and periodical run after timeout.
    */
   class SignalThreadPool : public BaseThreadPool {
+    
+  //friend class NotificationThread;
 
   public:
 
@@ -93,8 +97,8 @@ namespace castor {
     virtual void init() throw (castor::exception::Exception);
 
     /**
-     * Create and run the pool starting the threads in detached mode.
-     * XXX later: starts the notification thread for this pool.
+     * Creates and runs the pool starting the threads in detached mode.
+     * Moreover, it starts the notification thread for this pool.
      */
     virtual void run();
 
@@ -153,7 +157,11 @@ namespace castor {
     int m_notified;
     bool m_notTheFirstTime;
 
+    /// a mutex used by the threads to safely access this class' fields
     Mutex* m_poolMutex;
+    
+    /// the notification thread; it is a pool only to reuse the thread entrypoint
+    BaseThreadPool* m_notifTPool;
 
   };
 

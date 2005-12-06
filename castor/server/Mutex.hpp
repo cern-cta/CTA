@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Mutex.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:00 $ $Author: itglp $
+ * @(#)$RCSfile: Mutex.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/06 18:13:39 $ $Author: itglp $
  *
  *
  *
@@ -98,8 +98,15 @@ namespace castor {
 	   */
     void lock() throw (castor::exception::Exception);
 
+    /**
+	   * Tries to release the lock on this mutex.
+	   */
     void release() throw (castor::exception::Exception);
 
+    /**
+	   * Tries to signal the mutex by calling Cthread_cond_signal().
+	   */
+    void signal() throw (castor::exception::Exception);
 
   private:
 

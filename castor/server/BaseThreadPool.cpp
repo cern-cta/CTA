@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:00 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/06 18:13:38 $ $Author: itglp $
  *
  *
  *
@@ -51,8 +51,10 @@ castor::server::BaseThreadPool::BaseThreadPool(const std::string poolName,
 //------------------------------------------------------------------------------
 castor::server::BaseThreadPool::~BaseThreadPool() throw()
 {
-  if(m_thread != 0)
+  if(m_thread != 0) {
     m_thread->stop();
+    delete m_thread;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -62,21 +64,19 @@ void castor::server::BaseThreadPool::init() throw (castor::exception::Exception)
 {
   // create threads if in multithreaded mode
   int actualNbThreads;
-  if (m_nbThreads > 1) {
-    m_threadPoolId = Cpool_create(m_nbThreads, &actualNbThreads);
-    if (m_threadPoolId < 0) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Thread pool '" << m_poolName << "' creation error: "
-             << m_threadPoolId << std::endl;
-      clog() << ALERT << ex.getMessage().str();
-      throw ex;
-    }
-    else {
-      clog() << DEBUG << "Thread pool created: "
-             << m_threadPoolId << ", "
-             << actualNbThreads << std::endl;
-      m_nbThreads = actualNbThreads;
-    }
+  m_threadPoolId = Cpool_create(m_nbThreads, &actualNbThreads);
+  if (m_threadPoolId < 0) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Thread pool '" << m_poolName << "' creation error: "
+           << m_threadPoolId << std::endl;
+    clog() << ALERT << ex.getMessage().str();
+    throw ex;
+  }
+  else {
+    clog() << DEBUG << "Thread pool created: "
+           << m_threadPoolId << ", "
+           << actualNbThreads << std::endl;
+    m_nbThreads = actualNbThreads;
   }
 }
 
@@ -99,7 +99,8 @@ int castor::server::BaseThreadPool::threadAssign(void *param)
   args->handler = this;
   args->param = param;
 
-  if (m_nbThreads > 1) {
+  if (m_nbThreads > 0) {   // always true
+  // for debugging purposes it could be useful to run the user thread code in the same thread. 
     int assign_rc = Cpool_assign(m_threadPoolId,
                                  &castor::server::_thread_run,
                                  args,
@@ -132,9 +133,8 @@ void castor::server::BaseThreadPool::setNbThreads(int value)
 }
 
 
-
 //------------------------------------------------------------------------------
-// static _thread_run
+// _thread_run
 //------------------------------------------------------------------------------
 void* castor::server::_thread_run(void* param)
 {

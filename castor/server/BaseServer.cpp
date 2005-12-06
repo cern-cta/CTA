@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:00 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/06 18:13:38 $ $Author: itglp $
  *
  *
  *
@@ -105,13 +105,11 @@ void castor::server::BaseServer::start() throw (castor::exception::Exception)
   for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
     tp->second->init();
     // in case of exception, don't go further and propagate it
-    }
+  }
 
-  // if we got here, we're ready to start all the pools
+  // if we got here, we're ready to start all the pools and detach corresponding threads
   for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
-    tp->second->run();  // this supposes that run() detaches and returns immediately!
-    // XXX To be understood how to distinguish threadpools
-    // XXX waiting for instance on a socket.accept()...       
+    tp->second->run();  // here run returns immediately
   }
 }
 
@@ -137,7 +135,6 @@ const castor::server::BaseThreadPool*
 {
   return m_threadPools[id];
 }
-
 
 //------------------------------------------------------------------------------
 // parseCommandLine
@@ -172,7 +169,7 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
   Copterr = 0;
 
   char c;
-  while ((c = Cgetopt_long (argc, argv, (char*)cmdParams, longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long(argc, argv, (char*)cmdParams, longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;

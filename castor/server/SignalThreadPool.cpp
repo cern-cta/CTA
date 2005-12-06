@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/05 15:06:08 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/12/06 18:13:39 $ $Author: itglp $
  *
  *
  *
@@ -44,7 +44,7 @@ castor::server::SignalThreadPool::SignalThreadPool(const std::string poolName,
 //------------------------------------------------------------------------------
 castor::server::SignalThreadPool::~SignalThreadPool() throw()
 {
-  //delete m_notifThread;
+  delete m_notifTPool;
   delete m_poolMutex;
 }
 
@@ -61,7 +61,6 @@ void castor::server::SignalThreadPool::init()
   m_nbActiveThreads = 0;  /* Number of threads currently running that service */
   m_nbTotalThreads = 0;   /* Number of threads currently running that service */
   m_notified = 0;         /* By default no signal yet has been received */
-  m_nbNotifyThreads = 0;  /* Maximum one notification thread should run -- XXX this var can assume values in {-1,0,1} -> move to enum */
   m_notTheFirstTime = false;
 
   /* Create a mutex (could throw exception) */
@@ -80,7 +79,7 @@ void castor::server::SignalThreadPool::run()
   args->handler = this;
   args->param = this;
   
-  // even for a single thread it will run detached because we
+  // even if nbThreads = 1 it will run detached because we
   // always run the notification and the signal handler thread.
   for (int i = 0; i < m_nbThreads; i++) {
     if (Cthread_create_detached(castor::server::_thread_run, args) >= 0) {
@@ -96,24 +95,25 @@ void castor::server::SignalThreadPool::run()
     m_nbThreads = n;
 
   // create and start notification thread
-  /* XXX not supported for now */
-  //m_notifThread = new NotificationThread(this);
-  //if (singleService.nbNotifyThreads == 0) {
+  /*
+  m_notifTPool = new BaseThreadPool(
+                       m_poolName + " notification", new NotificationThread());
+  struct threadArgs *nArgs = new threadArgs();
+  nArgs->handler = m_notifTPool;
+  nArgs->param = this;
+  
+  if(Cthread_create_detached(castor::server::_thread_run, nArgs) < 0) {
+    delete m_notifTPool;
+    delete nArgs;
+    return;
+  }
 
-    /* The following is a trick to make sure that only one service thread is waiting on the notification thread's notification! */
-    //singleService.nbNotifyThreads = -1;
-
-    //if (Cthread_create_detached(single_service_notifyThread,NULL) < 0) {
-    //  rc = -1;
-    //  goto single_service_serviceCleanupAndReturn;
-    //}
-
-    /* Wait for nbNotifyThreads to change */
-    //while (singleService.nbNotifyThreads != 1) {
-    //  Cthread_cond_timedwait_ext(single_service_serviceLockCthreadStructure,SINGLE_SERVICE_NOTIFICATION_TIMEOUT);
-    //  ==> m_poolMutex->wait();
-    //}
-  //}
+  /* Wait for nbNotifyThreads to change *
+  while (some flag here) {
+    m_poolMutex->wait();
+  }
+  delete nArgs;
+  */
 }
 
 

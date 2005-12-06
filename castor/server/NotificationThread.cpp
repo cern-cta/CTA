@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/11/28 09:42:51 $ $Author: itglp $
+ * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/06 18:13:39 $ $Author: itglp $
  *
  *
  *
@@ -84,7 +84,7 @@ void castor::server::NotificationThread::run()
   if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
     goto single_service_notifyThreadReturn;
   }
-  memset ((char *)&serverAddress, 0, sizeof(serverAddress)) ;
+  memset ((char *)&serverAddress, 0, sizeof(serverAddress));
   serverAddress.sin_family = AF_INET;
   serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
   serverAddress.sin_port = htons(port);
@@ -191,21 +191,20 @@ void castor::server::NotificationThread::run()
     /* And we continue */
   }
 
- single_service_notifyThreadReturn:
-
-  if (s >= 0) {
-    netclose(s);
-  }
-
-#if defined(_WIN32)
-  WSACleanup();
-#endif
-
   }
   catch (castor::exception::Exception any) {
+    if (s >= 0) {
+      netclose(s);
+    }
+
+    #if defined(_WIN32)
+      WSACleanup();
+    #endif
+
     try {
       owner->getMutex()->release();
     } catch(...) {}
     // LOG
   }
 }
+

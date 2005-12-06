@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:00 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/06 18:13:39 $ $Author: itglp $
  *
  *
  *
@@ -36,11 +36,6 @@
 namespace castor {
 
  namespace server {
-
-  /**
-   * Static method used to pass to Cpool_assign
-   */
-  void* _thread_run(void* param);
 
   /**
    * default number of threads in the pool
@@ -165,6 +160,12 @@ namespace castor {
     IThread* m_thread;
 
   };
+
+/**
+ * External entrypoint for the thread.
+ * It is passed to Cpool_assign.
+ */
+ void* _thread_run(void* param);
 
  } // end of namespace server
 

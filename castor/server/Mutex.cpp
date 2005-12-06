@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Mutex.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:00 $ $Author: itglp $
+ * @(#)$RCSfile: Mutex.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/06 18:13:39 $ $Author: itglp $
  *
  *
  *
@@ -137,4 +137,18 @@ void castor::server::Mutex::release() throw (castor::exception::Exception)
     throw ex;
   }
 }
+
+//------------------------------------------------------------------------------
+// signal
+//------------------------------------------------------------------------------
+void castor::server::Mutex::signal() throw (castor::exception::Exception)
+{
+  if (m_mutexCthread == 0 ||
+      Cthread_cond_signal_ext(m_mutexCthread) != 0) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to signal mutex";
+    throw ex;
+  }
+}
+
 
