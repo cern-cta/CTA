@@ -108,7 +108,7 @@ castor::IObject* castor::io::StreamErrorHistoryCnv::createObj(castor::IAddress* 
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
-  int timeStamp;
+  u_signed64 timeStamp;
   ad->stream() >> timeStamp;
   object->setTimeStamp(timeStamp);
   u_signed64 id;

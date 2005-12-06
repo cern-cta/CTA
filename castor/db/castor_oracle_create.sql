@@ -164,7 +164,7 @@ CREATE INDEX I_TapeDrive2TapeDriveComp_C on TapeDrive2TapeDriveComp (child);
 CREATE INDEX I_TapeDrive2TapeDriveComp_P on TapeDrive2TapeDriveComp (parent);
 
 /* SQL statements for type ErrorHistory */
-CREATE TABLE ErrorHistory (errorMessage VARCHAR2(2048), timeStamp NUMBER, id INTEGER PRIMARY KEY, tapeDrive INTEGER, tape INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE ErrorHistory (errorMessage VARCHAR2(2048), timeStamp INTEGER, id INTEGER PRIMARY KEY, tapeDrive INTEGER, tape INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type TapeDriveDedication */
 CREATE TABLE TapeDriveDedication (clientHost VARCHAR2(2048), euid NUMBER, egid NUMBER, vid VARCHAR2(2048), accessMode NUMBER, startTime INTEGER, endTime INTEGER, reason VARCHAR2(2048), id INTEGER PRIMARY KEY, tapeDrive INTEGER) INITRANS 50 PCTFREE 50;
@@ -840,10 +840,10 @@ BEGIN
      AND DiskCopy.status = 2;
   UPDATE DiskCopy SET status = 0 WHERE id = dci RETURNING fileSystem INTO fsid; -- DISKCOPY_STAGED
   IF SubRequestId IS NOT NULL THEN
-    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0, getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
-     WHERE id = SubRequestId; -- SUBREQUEST_RESTART
-    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0, getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
-     WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
+    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
+     WHERE id = SubRequestId; 
+    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
+     WHERE parent = SubRequestId;
   END IF;
   updateFsFileClosed(fsId, fileSize, fileSize);
 END;
@@ -865,9 +865,11 @@ BEGIN
   UPDATE DiskCopy SET status = 4 WHERE id = dci RETURNING fileSystem into fsid; -- DISKCOPY_FAILED
   IF SubRequestId IS NOT NULL THEN
     UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
+                          getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED (not strictly correct but the request is over anyway)
                           lastModificationTime = getTime()
      WHERE id = SubRequestId;
     UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
+                          getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
                           lastModificationTime = getTime()
      WHERE parent = SubRequestId;
   END IF;
@@ -901,8 +903,6 @@ CREATE OR REPLACE PACKAGE castor AS
         fileSystemMountPoint VARCHAR2(2048),
         nbaccesses INTEGER);
   TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
-	TYPE TapeDrive_Cur IS REF CURSOR RETURN TapeDrive%ROWTYPE;
-	TYPE TapeRequest_Cur IS REF CURSOR RETURN TapeRequest%ROWTYPE;
   TYPE FileList_Cur IS REF CURSOR RETURN FilesDeletedProcOutput%ROWTYPE;
 END castor;
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
@@ -2471,46 +2471,98 @@ BEGIN
   END IF;
 END;
 
+
+/* PL/SQL code for castorVdqm package */
+CREATE OR REPLACE PACKAGE castorVdqm AS
+  TYPE Drive2Req IS RECORD (
+        tapeDrive NUMBER,
+        tapeRequest NUMBER);
+  TYPE Drive2Req_Cur IS REF CURSOR RETURN Drive2Req;
+	TYPE TapeDrive_Cur IS REF CURSOR RETURN TapeDrive%ROWTYPE;
+	TYPE TapeRequest_Cur IS REF CURSOR RETURN TapeRequest%ROWTYPE;
+END castorVdqm;
+
 /**
  * This is the main select statement to dedicate a tape to a tape drive.
- * It respects the old and of course the new way to select a tape for a 
- * tape drive.
- * The old way is to look, if the tapeDrive and the tapeRequest have the same
- * dgn.
- * The new way is to look if the TapeAccessSpecification can be served by a 
- * specific tapeDrive. The tape Request are then orderd by the priorityLevel (for 
- * the new way) and by the modification time.
- * Returns 1 if a couple was found, 0 otherwise.
- *  
+ * First it checks the preconditions that a tapeDrive must meet in order to be
+ * assigned. The couples (drive,requests) are then orderd by the priorityLevel 
+ * and by the modification time and processed one by one to verify
+ * if any dedication exists and has to be applied.
+ * Returns the relevant IDs if a couple was found, (0,0) otherwise.
+ */  
 CREATE OR REPLACE PROCEDURE matchTape2TapeDrive
  (tapeDriveID OUT NUMBER, tapeRequestID OUT NUMBER) AS
+  d2rCur castorVdqm.Drive2Req_Cur;
+  d2r castorVdqm.Drive2Req;
+  countDed INTEGER;
 BEGIN
-  SELECT TapeDrive.id, TapeRequest.id 
-    INTO tapeDriveID, tapeRequestID
-    FROM TapeDrive, TapeRequest, TapeDrive2TapeDriveComp, TapeDriveCompatibility, 
-         TapeServer, DeviceGroupName tapeDriveDgn, DeviceGroupName tapeRequestDgn 
-		WHERE TapeDrive.status=0 
-		      AND TapeDrive.runningTapeReq=0 
-					AND TapeDrive.tapeServer=TapeServer.id 
-					AND TapeServer.actingMode=0
-					AND (TapeRequest.tapeDrive=TapeDrive.id(+)) 
-					AND (TapeRequest.requestedSrv=TapeDrive.tapeServer(+)) 
-					AND ((TapeDrive2TapeDriveComp.parent=TapeDrive.id 
-					      AND TapeDrive2TapeDriveComp.child=TapeDriveCompatibility.id 
-								AND TapeDriveCompatibility.tapeAccessSpecification=TapeRequest.tapeAccessSpecification 
-								AND TapeDrive.deviceGroupName=tapeDriveDgn.id 
-								AND TapeRequest.deviceGroupName=tapeRequestDgn.id 
-								AND tapeDriveDgn.libraryName=tapeRequestDgn.libraryName) 
-				       OR TapeDrive.deviceGroupName=TapeRequest.deviceGroupName) 
-				  AND rownum < 2 
-					ORDER BY TapeDriveCompatibility.priorityLevel DESC, 
-					         TapeRequest.modificationTime ASC;
-  EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-    tapeDriveID := 0;
-    tapeRequestID := 0;
+  tapeDriveID := 0;
+  tapeRequestID := 0;
+  
+  -- Check all preconditions a tape drive must meet in order to be used by pending tape requests
+  OPEN d2rCur FOR
+  SELECT TapeDrive.id, TapeRequest.id
+    FROM TapeDrive, TapeRequest, TapeDrive2TapeDriveComp, TapeDriveCompatibility, TapeServer
+   WHERE TapeDrive.status = 0  -- UNIT_UP
+     AND TapeDrive.runningTapeReq = 0  -- not associated with tapeReq
+     AND TapeDrive.tapeServer = TapeServer.id 
+     AND TapeServer.actingMode = 0  -- ACTIVE
+     AND TapeRequest.tapeDrive = 0
+     AND (TapeRequest.requestedSrv = TapeServer.id OR TapeRequest.requestedSrv = 0)
+     AND TapeDrive2TapeDriveComp.parent = TapeDrive.id 
+     AND TapeDrive2TapeDriveComp.child = TapeDriveCompatibility.id 
+     AND TapeDriveCompatibility.tapeAccessSpecification = TapeRequest.tapeAccessSpecification
+     AND TapeDrive.deviceGroupName = TapeRequest.deviceGroupName
+     /*
+     AND TapeDrive.deviceGroupName = tapeDriveDgn.id 
+     AND TapeRequest.deviceGroupName = tapeRequestDgn.id 
+     AND tapeDriveDgn.libraryName = tapeRequestDgn.libraryName 
+         -- in case we want to match by libraryName only
+     */
+     ORDER BY TapeDriveCompatibility.priorityLevel ASC, 
+              TapeRequest.modificationTime ASC;
+
+  LOOP
+    -- For each candidate couple, verify that the dedications (if any) are met
+    FETCH d2rCur INTO d2r;
+    EXIT WHEN d2rCur%NOTFOUND;
+
+    SELECT count(*) INTO countDed
+      FROM TapeDriveDedication
+     WHERE tapeDrive = d2r.tapeDrive
+       AND getTime() BETWEEN startTime AND endTime;
+    IF countDed = 0 THEN    -- no dedications valid for this TapeDrive
+      tapeDriveID := d2r.tapeDrive;   -- fine, we can assign it
+      tapeRequestID := d2r.tapeRequest;
+      EXIT;
+    END IF;
+
+    -- We must check if the request matches the dedications for this tape drive
+    SELECT count(*) INTO countDed
+      FROM TapeDriveDedication tdd, Tape, TapeRequest, ClientIdentification, 
+           TapeAccessSpecification, TapeDrive
+     WHERE tdd.tapeDrive = d2r.tapeDrive
+       AND getTime() BETWEEN startTime AND endTime
+       AND tdd.clientHost(+) = ClientIdentification.machine
+       AND tdd.euid(+) = ClientIdentification.euid
+       AND tdd.egid(+) = ClientIdentification.egid
+       AND tdd.vid(+) = Tape.vid
+       AND tdd.accessMode(+) = TapeAccessSpecification.accessMode
+       AND TapeRequest.id = d2r.tapeRequest
+       AND TapeRequest.tape = Tape.id
+       AND TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
+       AND TapeRequest.client = ClientIdentification.id;
+    IF countDed > 0 THEN  -- there's a matching dedication for at least a criterium
+      tapeDriveID := d2r.tapeDrive;   -- fine, we can assign it
+      tapeRequestID := d2r.tapeRequest;
+      EXIT;
+    END IF;
+    -- else the tape drive is dedicated to other request(s) and we can't use it, go on
+  END LOOP;
+  -- if the loop has been fully completed without assignment,
+  -- no free tape drive has been found. 
+  CLOSE d2rCur;
 END;
-*/
 
 
 /**
@@ -2523,7 +2575,7 @@ END;
  * specific tapeDrive. The tape Request are then orderd by the priorityLevel (for 
  * the new way) and by the modification time.
  * Returns 1 if a couple was found, 0 otherwise.
- */
+ *
 CREATE OR REPLACE PROCEDURE matchTape2TapeDrive
  (tapeDriveID OUT NUMBER, tapeRequestID OUT NUMBER) AS
 BEGIN
@@ -2534,7 +2586,7 @@ BEGIN
           AND TapeDrive.tapeServer=TapeServer.id
           AND TapeRequest.tape NOT IN (SELECT tape FROM TapeDrive WHERE status!=0)
           AND TapeServer.actingMode=0
-          AND (TapeRequest.tapeDrive=TapeDrive.id OR TapeRequest.tapeDrive=0)
+          AND TapeRequest.tapeDrive IS NULL
           AND (TapeRequest.requestedSrv=TapeDrive.tapeServer OR TapeRequest.requestedSrv=0)
           AND (TapeDrive.deviceGroupName=TapeRequest.deviceGroupName)
           AND rownum < 2
@@ -2544,10 +2596,11 @@ BEGIN
     tapeDriveID := 0;
     tapeRequestID := 0;
 END;
+*/
 
 
 CREATE OR REPLACE PROCEDURE selectTapeRequestQueue
- (dgn IN VARCHAR2, server IN VARCHAR2, tapeRequests OUT castor.TapeRequest_Cur) AS
+ (dgn IN VARCHAR2, server IN VARCHAR2, tapeRequests OUT castorVdqm.TapeRequest_Cur) AS
 BEGIN
   IF dgn IS NULL AND server IS NULL THEN
     OPEN tapeRequests FOR SELECT * FROM TapeRequest
@@ -2574,7 +2627,7 @@ END;
 
 
 CREATE OR REPLACE PROCEDURE selectTapeDriveQueue
- (dgn IN VARCHAR2, server IN VARCHAR2, tapeDrives OUT castor.TapeDrive_Cur) AS
+ (dgn IN VARCHAR2, server IN VARCHAR2, tapeDrives OUT castorVdqm.TapeDrive_Cur) AS
 BEGIN
   IF dgn IS NULL AND server IS NULL THEN
     OPEN tapeDrives FOR SELECT * FROM TapeDrive
@@ -2598,3 +2651,4 @@ BEGIN
 			ORDER BY TapeDrive.driveName ASC;
   END IF;
 END;
+

@@ -164,7 +164,7 @@ CREATE INDEX I_TapeDrive2TapeDriveComp_C on TapeDrive2TapeDriveComp (child);
 CREATE INDEX I_TapeDrive2TapeDriveComp_P on TapeDrive2TapeDriveComp (parent);
 
 /* SQL statements for type ErrorHistory */
-CREATE TABLE ErrorHistory (errorMessage VARCHAR(2048), timeStamp INT4, id INT8 PRIMARY KEY, tapeDrive INTEGER, tape INTEGER);
+CREATE TABLE ErrorHistory (errorMessage VARCHAR(2048), timeStamp INT8, id INT8 PRIMARY KEY, tapeDrive INTEGER, tape INTEGER);
 
 /* SQL statements for type TapeDriveDedication */
 CREATE TABLE TapeDriveDedication (clientHost VARCHAR(2048), euid INT4, egid INT4, vid VARCHAR(2048), accessMode INT4, startTime INT8, endTime INT8, reason VARCHAR(2048), id INT8 PRIMARY KEY, tapeDrive INTEGER);

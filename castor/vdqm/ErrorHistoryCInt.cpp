@@ -118,7 +118,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cvdqm_ErrorHistory_timeStamp
   //----------------------------------------------------------------------------
-  int Cvdqm_ErrorHistory_timeStamp(castor::vdqm::ErrorHistory* instance, int* var) {
+  int Cvdqm_ErrorHistory_timeStamp(castor::vdqm::ErrorHistory* instance, u_signed64* var) {
     *var = instance->timeStamp();
     return 0;
   }
@@ -126,7 +126,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cvdqm_ErrorHistory_setTimeStamp
   //----------------------------------------------------------------------------
-  int Cvdqm_ErrorHistory_setTimeStamp(castor::vdqm::ErrorHistory* instance, int new_var) {
+  int Cvdqm_ErrorHistory_setTimeStamp(castor::vdqm::ErrorHistory* instance, u_signed64 new_var) {
     instance->setTimeStamp(new_var);
     return 0;
   }

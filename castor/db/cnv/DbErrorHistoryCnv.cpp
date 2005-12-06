@@ -389,7 +389,7 @@ void castor::db::cnv::DbErrorHistoryCnv::createRep(castor::IAddress* address,
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->errorMessage());
-    m_insertStatement->setInt(2, obj->timeStamp());
+    m_insertStatement->setInt64(2, obj->timeStamp());
     m_insertStatement->setInt64(3, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
     m_insertStatement->setInt64(4, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
     m_insertStatement->execute();
@@ -437,7 +437,7 @@ void castor::db::cnv::DbErrorHistoryCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setString(1, obj->errorMessage());
-    m_updateStatement->setInt(2, obj->timeStamp());
+    m_updateStatement->setInt64(2, obj->timeStamp());
     m_updateStatement->setInt64(3, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
@@ -522,7 +522,7 @@ castor::IObject* castor::db::cnv::DbErrorHistoryCnv::createObj(castor::IAddress*
     castor::vdqm::ErrorHistory* object = new castor::vdqm::ErrorHistory();
     // Now retrieve and set members
     object->setErrorMessage(rset->getString(1));
-    object->setTimeStamp(rset->getInt(2));
+    object->setTimeStamp(rset->getInt64(2));
     object->setId(rset->getInt64(3));
     delete rset;
     return object;
@@ -562,7 +562,7 @@ void castor::db::cnv::DbErrorHistoryCnv::updateObj(castor::IObject* obj)
     castor::vdqm::ErrorHistory* object = 
       dynamic_cast<castor::vdqm::ErrorHistory*>(obj);
     object->setErrorMessage(rset->getString(1));
-    object->setTimeStamp(rset->getInt(2));
+    object->setTimeStamp(rset->getInt64(2));
     object->setId(rset->getInt64(3));
     delete rset;
   } catch (castor::exception::SQLError e) {

@@ -389,7 +389,7 @@ void castor::db::ora::OraErrorHistoryCnv::createRep(castor::IAddress* address,
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->errorMessage());
-    m_insertStatement->setInt(2, obj->timeStamp());
+    m_insertStatement->setDouble(2, obj->timeStamp());
     m_insertStatement->setDouble(3, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
     m_insertStatement->setDouble(4, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
     m_insertStatement->executeUpdate();
@@ -445,7 +445,7 @@ void castor::db::ora::OraErrorHistoryCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setString(1, obj->errorMessage());
-    m_updateStatement->setInt(2, obj->timeStamp());
+    m_updateStatement->setDouble(2, obj->timeStamp());
     m_updateStatement->setDouble(3, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
@@ -546,7 +546,7 @@ castor::IObject* castor::db::ora::OraErrorHistoryCnv::createObj(castor::IAddress
     castor::vdqm::ErrorHistory* object = new castor::vdqm::ErrorHistory();
     // Now retrieve and set members
     object->setErrorMessage(rset->getString(1));
-    object->setTimeStamp(rset->getInt(2));
+    object->setTimeStamp((u_signed64)rset->getDouble(2));
     object->setId((u_signed64)rset->getDouble(3));
     m_selectStatement->closeResultSet(rset);
     return object;
@@ -594,7 +594,7 @@ void castor::db::ora::OraErrorHistoryCnv::updateObj(castor::IObject* obj)
     castor::vdqm::ErrorHistory* object = 
       dynamic_cast<castor::vdqm::ErrorHistory*>(obj);
     object->setErrorMessage(rset->getString(1));
-    object->setTimeStamp(rset->getInt(2));
+    object->setTimeStamp((u_signed64)rset->getDouble(2));
     object->setId((u_signed64)rset->getDouble(3));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {

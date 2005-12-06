@@ -107,13 +107,13 @@ int Cvdqm_ErrorHistory_setErrorMessage(struct Cvdqm_ErrorHistory_t* instance, co
  * Get the value of timeStamp
  * The time, when the error occured
  */
-int Cvdqm_ErrorHistory_timeStamp(struct Cvdqm_ErrorHistory_t* instance, int* var);
+int Cvdqm_ErrorHistory_timeStamp(struct Cvdqm_ErrorHistory_t* instance, u_signed64* var);
 
 /**
  * Set the value of timeStamp
  * The time, when the error occured
  */
-int Cvdqm_ErrorHistory_setTimeStamp(struct Cvdqm_ErrorHistory_t* instance, int new_var);
+int Cvdqm_ErrorHistory_setTimeStamp(struct Cvdqm_ErrorHistory_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of id

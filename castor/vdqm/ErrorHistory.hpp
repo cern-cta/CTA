@@ -134,7 +134,7 @@ namespace castor {
        * The time, when the error occured
        * @return the value of m_timeStamp
        */
-      int timeStamp() const {
+      u_signed64 timeStamp() const {
         return m_timeStamp;
       }
 
@@ -143,7 +143,7 @@ namespace castor {
        * The time, when the error occured
        * @param new_var the new value of m_timeStamp
        */
-      void setTimeStamp(int new_var) {
+      void setTimeStamp(u_signed64 new_var) {
         m_timeStamp = new_var;
       }
 
@@ -203,7 +203,7 @@ namespace castor {
       std::string m_errorMessage;
 
       /// The time, when the error occured
-      int m_timeStamp;
+      u_signed64 m_timeStamp;
 
       /// The id of this object
       u_signed64 m_id;

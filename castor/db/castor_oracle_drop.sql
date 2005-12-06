@@ -289,6 +289,7 @@ DROP PROCEDURE reqIdStageQuery;
 DROP PROCEDURE userTagStageQuery;
 DROP PROCEDURE reqIdLastRecallsStageQuery;
 DROP PROCEDURE userTagLastRecallsStageQuery;
+DROP PACKAGE castorVdqm;
 DROP PROCEDURE matchTape2TapeDrive;
 DROP PROCEDURE matchTape2TapeDrive;
 DROP PROCEDURE selectTapeRequestQueue;
