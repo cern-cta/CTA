@@ -440,8 +440,9 @@
 #define ESEC_NO_SVC_NAME   ESECBASEOFF + 10 /* Service name not set */
 #define ESEC_NO_SVC_TYPE   ESECBASEOFF + 11 /* Service type not set */
 #define ESEC_NO_SECPROT   ESECBASEOFF + 12 /* Could not lookup security protocol */
-
-#define ESECMAXERR     ESECBASEOFF + 12
+#define ESEC_BAD_CSEC_VERSION ESECBASEOFF + 13 /* Csec incompatability */
+#define ESEC_BAD_PEER_RESP ESECBASEOFF + 14 /* Unexpected response from peer */
+#define ESECMAXERR     ESECBASEOFF + 14
 
 
 /*

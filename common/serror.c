@@ -447,18 +447,20 @@ char *sys_monerrlist[EMONMAXERR - EMONBASEOFF +2] =
 char *sys_secerrlist[ESECMAXERR-ESECBASEOFF+2] = 
          {"Error 0",
 	  "System error",
-          "Bad credentials",
-          "Could not establish context",
-          "Bad magic number",
-          "Could not map username to uid/gid",
-          "Could not map principal to username",
-          "Could not load security mechanism",
-          "Context not initialized",
-          "Security protocol not supported",
+	  "Bad credentials",
+	  "Could not establish context",
+	  "Bad magic number",
+	  "Could not map username to uid/gid",
+	  "Could not map principal to username",
+	  "Could not load security mechanism",
+	  "Context not initialized",
+	  "Security protocol not supported",
 	  "Could not set service name",
 	  "Service type not set",
 	  "Could not lookup security protocol",
-          "BAD ERROR NUMBER"
+	  "Csec incompatibility",
+	  "Unexpected response from peer",
+	  "BAD ERROR NUMBER"
          };
 
 
