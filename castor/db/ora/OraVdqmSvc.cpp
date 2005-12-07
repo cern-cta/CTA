@@ -398,9 +398,12 @@ bool castor::db::ora::OraVdqmSvc::checkTapeRequest(
     u_signed64 clientId = (u_signed64)rset->getDouble(1);
     m_checkTapeRequestStatement1->closeResultSet(rset);
     
-    m_checkTapeRequestStatement2->setDouble(1, newTapeRequest->tapeAccessSpecification()->id());
-    m_checkTapeRequestStatement2->setDouble(2, newTapeRequest->tape()->id());
-    m_checkTapeRequestStatement2->setDouble(3, newTapeRequest->requestedSrv()->id());
+    m_checkTapeRequestStatement2->setDouble
+      (1, newTapeRequest->tapeAccessSpecification()->id());
+    m_checkTapeRequestStatement2->setDouble
+      (2, newTapeRequest->tape()->id());
+    m_checkTapeRequestStatement2->setDouble
+      (3, newTapeRequest->requestedSrv() == 0 ? 0 : newTapeRequest->requestedSrv()->id());
     m_checkTapeRequestStatement2->setDouble(4, newTapeRequest->client()->id());
     rset = m_checkTapeRequestStatement2->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
@@ -724,9 +727,12 @@ castor::vdqm::TapeRequest*
   // Execute statement and get result
   u_signed64 id;
   try {
-    m_selectTapeReqForMountedTapeStatement->setDouble(1, tapeDrive->tape()->id());
-    m_selectTapeReqForMountedTapeStatement->setDouble(2, tapeDrive->tapeServer()->id());
-    oracle::occi::ResultSet *rset = m_selectTapeReqForMountedTapeStatement->executeQuery();
+    m_selectTapeReqForMountedTapeStatement->setDouble
+      (1, tapeDrive->tape() == 0 ? 0 : tapeDrive->tape()->id());
+    m_selectTapeReqForMountedTapeStatement->setDouble
+      (2, tapeDrive->tapeServer()->id());
+    oracle::occi::ResultSet *rset =
+      m_selectTapeReqForMountedTapeStatement->executeQuery();
     
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       m_selectTapeReqForMountedTapeStatement->closeResultSet(rset);
