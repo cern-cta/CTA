@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/12/06 18:13:39 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/12/07 17:11:58 $ $Author: itglp $
  *
  *
  *
@@ -44,7 +44,7 @@ castor::server::SignalThreadPool::SignalThreadPool(const std::string poolName,
 //------------------------------------------------------------------------------
 castor::server::SignalThreadPool::~SignalThreadPool() throw()
 {
-  delete m_notifTPool;
+  //delete m_notifTPool;
   delete m_poolMutex;
 }
 
@@ -91,9 +91,11 @@ void castor::server::SignalThreadPool::run()
     ex.getMessage() << "Failed to create pool " << m_poolName;
     throw ex;
   }
-  else
+  else {
     m_nbThreads = n;
-
+    clog() << DEBUG << "Thread pool " << m_poolName << " created with "
+           << m_nbThreads << " threads" << std::endl;
+  }
   // create and start notification thread
   /*
   m_notifTPool = new BaseThreadPool(

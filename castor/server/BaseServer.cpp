@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/06 18:13:38 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/12/07 17:11:58 $ $Author: itglp $
  *
  *
  *
@@ -72,9 +72,6 @@ castor::server::BaseServer::~BaseServer() throw()
 //------------------------------------------------------------------------------
 void castor::server::BaseServer::init() throw (castor::exception::Exception)
 {
-  // init logging with streaming
-  initLog(m_serverName, castor::SVC_DLFMSG);
-  
   // init daemon if to be run in background 
   if (!m_foreground) {
     int rc;
@@ -87,6 +84,8 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
   }
 
   // Ignore SIGPIPE AND SIGXFSZ
+  // to avoid crashing when a file is too big or
+  // when the connection is lost with a client
 #if !defined(_WIN32)
 	signal (SIGPIPE,SIG_IGN);
 	signal (SIGXFSZ,SIG_IGN);

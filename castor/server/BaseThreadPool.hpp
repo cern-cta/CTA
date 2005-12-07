@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/06 18:13:39 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/12/07 17:11:58 $ $Author: itglp $
  *
  *
  *
@@ -158,6 +158,9 @@ namespace castor {
      * The working thread
      */
     IThread* m_thread;
+    
+    /// Thread entrypoint made friend to access private fields.
+    friend void* _thread_run(void* param);
 
   };
 

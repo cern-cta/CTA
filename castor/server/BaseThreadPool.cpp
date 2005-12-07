@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/06 18:13:38 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/12/07 17:11:58 $ $Author: itglp $
  *
  *
  *
@@ -69,13 +69,11 @@ void castor::server::BaseThreadPool::init() throw (castor::exception::Exception)
     castor::exception::Internal ex;
     ex.getMessage() << "Thread pool '" << m_poolName << "' creation error: "
            << m_threadPoolId << std::endl;
-    clog() << ALERT << ex.getMessage().str();
     throw ex;
   }
   else {
-    clog() << DEBUG << "Thread pool created: "
-           << m_threadPoolId << ", "
-           << actualNbThreads << std::endl;
+    clog() << DEBUG << "Thread pool '" << m_poolName << "' created with "
+           << m_nbThreads << " threads" << std::endl;
     m_nbThreads = actualNbThreads;
   }
 }
@@ -139,7 +137,6 @@ void castor::server::BaseThreadPool::setNbThreads(int value)
 void* castor::server::_thread_run(void* param)
 {
   castor::server::BaseThreadPool* pool = 0;
-  castor::server::IThread* thread = 0;
   struct threadArgs *args;
 
   if (param == NULL) {
@@ -149,24 +146,20 @@ void* castor::server::_thread_run(void* param)
   // Recovering the processRequestArgs
   args = (struct threadArgs*)param;
   pool = dynamic_cast<castor::server::BaseThreadPool *>(args->handler);
-  if (pool == 0) {
-    delete args;
-    return 0;
-  }
-  thread = pool->getThread();
-  if (thread == 0) {
+  if (pool == 0 || pool->m_thread == 0) {
     delete args;
     return 0;
   }
 
   // Executing the thread
   try {
-    thread->init(args->param);
-    thread->run();
-  } catch(...) {
-    // XXX for the time being, it is the responsibility of the thread
-    // to log any error.
-  }
+    pool->m_thread->init(args->param);
+    pool->m_thread->run();
+  } catch(castor::exception::Exception any) {
+    pool->clog() << "Uncatched exception in a thread from pool " << pool->m_poolName
+                 << " : " << any.getMessage().str() << std::endl;
+  } catch(...) {}     // all the rest is ignored
+  
   delete args;
   return 0;
 }
