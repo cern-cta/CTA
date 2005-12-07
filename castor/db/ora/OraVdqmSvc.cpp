@@ -393,32 +393,46 @@ bool castor::db::ora::OraVdqmSvc::checkTapeRequest(
       return true;
     }
     
-    // If we reach this point, then we selected successfully
-    // a ClientIdentification and it's id is in rset
-    u_signed64 clientId = (u_signed64)rset->getDouble(1);
-    m_checkTapeRequestStatement1->closeResultSet(rset);
+    /**
+     * For every found ClientIdentification has to be checked whether
+     * a tape request can be found, with the matching values. If yes, 
+     * we return false, because we don't want to queue twice the same
+     * request!
+     */
     
-    m_checkTapeRequestStatement2->setDouble
-      (1, newTapeRequest->tapeAccessSpecification()->id());
-    m_checkTapeRequestStatement2->setDouble
-      (2, newTapeRequest->tape()->id());
-    m_checkTapeRequestStatement2->setDouble
+		m_checkTapeRequestStatement2->setDouble
+			(1, newTapeRequest->tapeAccessSpecification()->id());
+		m_checkTapeRequestStatement2->setDouble
+			(2, newTapeRequest->tape()->id());
+		m_checkTapeRequestStatement2->setDouble
       (3, newTapeRequest->requestedSrv() == 0 ? 0 : newTapeRequest->requestedSrv()->id());
-    m_checkTapeRequestStatement2->setDouble(4, newTapeRequest->client()->id());
-    rset = m_checkTapeRequestStatement2->executeQuery();
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      // Nothing found
-      m_checkTapeRequestStatement2->closeResultSet(rset);
-      return true;
-    }
     
+    oracle::occi::ResultSet *rset2 = NULL;
+    u_signed64 clientId = 0;
+    do {
+	    // If we reach this point, then we selected successfully
+	    // a ClientIdentification and it's id is in rset
+	    clientId = (u_signed64)rset->getDouble(1);
+	    
+	    m_checkTapeRequestStatement2->setDouble(4, clientId);
+	    rset2 = m_checkTapeRequestStatement2->executeQuery();
+	    if (oracle::occi::ResultSet::END_OF_FETCH == rset2->next()) {
+	      // Nothing found
+	      m_checkTapeRequestStatement2->closeResultSet(rset2);
+	    }
+	    else {
+	    	// We found the same request in the database!
+	    	m_checkTapeRequestStatement1->closeResultSet(rset);
+	      m_checkTapeRequestStatement2->closeResultSet(rset2);
+	      return false;
+	    } 
+    } while (oracle::occi::ResultSet::END_OF_FETCH != rset->next());
     
     /**
-     * If we are here, there is really already the same tape reqeust
-     * queued!
+     * If we are here, the request doesn't yet exist.
      */
-    m_checkTapeRequestStatement2->closeResultSet(rset);
-    return false;
+    m_checkTapeRequestStatement1->closeResultSet(rset);
+    return true;
   } catch (oracle::occi::SQLException e) {
     rollback();
     castor::exception::Internal ex;
