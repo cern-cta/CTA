@@ -1,0 +1,69 @@
+INSTALL http://lxservb02.cern.ch/swrep/i386_slc3/ca_CERN-1.0-1.noarch.rpm
+
+Running the test suite
+----------------------
+
+client:
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/sebastian/PROTO2/shlib
+	export CSEC_MECH="GSI"
+	export CSEC_TRACE=3 
+	export X509_USER_CERT=/home/sebastian/.globus/usercert.pem
+	export X509_USER_KEY=/home/sebastian/.globus/userkey.pem
+	grid-proxy-init
+
+server (run as root!):
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/sebastian/PROTO2/shlib
+	export CSEC_AUTHMECH=GSI
+	export CSEC_TRACE=3 
+	export X509_USER_CERT=/root/certificate/hostcert.pem
+	export X509_USER_KEY=/root/certificate/hostkey.pem
+	
+or as root@lxs5012
+	cd /afs/cern.ch/user/l/lopic3/CASTOR2/Csec_test
+	./run_server.sh KRB5 GSI
+
+============================================
+
+QUESTIONS:
+
+1. Does CSEC_AUTHMECH work?
+	I've set CSEC_AUTHMECH=GSI on the server side, and  CSEC_MECH="KRB5" on the client side,
+	and it worked (KRB5). Only with CSEC_MECH="" I got:
+	
+	_Csec_client_negociateProtocol Could not agree on protocol with server
+	Could not establish context: <(null)> !
+
+STRANGE, IT SHOULD WORK CORRECTLY (AS DESCRIBED IN THE DOC)
+
+-----
+
+2. How to get *.so.1
+	
+	Is this enough: 
+	ln -s libCsec_plugin_KRB5.so libCsec_plugin_KRB5.so.1
+	
+YES
+
+-----
+
+3. What is:
+	initializing context GSS Error: Miscellaneous failure MECH Error: No credentials cache found
+	
+FOR KRB5: NO KEYTAB FILE:
+
+	https://uimon.cern.ch/twiki/bin/view/LCG/SetUpAnLHCbUI
+	https://uimon.cern.ch/twiki/bin/view/FIOgroup/NcmW4001
+
+	when /etc/srvtab works & not /etc/krb5.keytab. try the following:
+	/usr/heimdal/sbin/ktutil -k /etc/krb5.keytab list
+                                                                                                                                                         
+	note carefully the Vno (1st column), very likely 2, for host/`hostname`
+                                                                                                                                                         
+	/usr/heimdal/sbin/ktutil -k /etc/krb5.keytab remove -p host/`hostname` -V <this Vno>	
+	/usr/heimdal/bin/ktutil -k /etc/krb5.keytab srvconvert -s /etc/srvtab
+	/usr/heimdal/bin/kinit -k -t /etc/krb5.keytab host/`hostname`
+	should now say:  kinit: NOTICE: ticket renewable lifetime is 1 day
+                                                                                                                                                         
+                                                                                                                                                         
+                                                                                                                                                         
+	
