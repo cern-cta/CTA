@@ -1,3 +1,27 @@
+castor (2.0.2-7) unstable; urgency=low
+
+  * PROTO2/debian/castor.conf
+    Fixed default castor.conf for VDQM log and library
+  * PROTO2/castor/vdqm/handler/TapeDriveHandler.cpp
+    Fixed a bug for the showqueue command. Now the right status is sent back
+to the client.
+  * PROTO2/castor/db/ora/OraVdqmSvc.cpp
+    Fixed access to relationships in case the relation leads to a null pointer
+  * PROTO2/security/Imakefile
+  * PROTO2/config/site.def
+    Fixed build rules
+  * PROTO2/h/serrno.h
+  * PROTO2/common/serrno.c
+    Added security errors
+
+ -- Sebastien Ponce <sponcec3@pcitds13>  Wed,  7 Dec 2005 15:38:05 +0100
+
+castor (2.0.2-6) unstable; urgency=low
+
+  * Somehow I've lost this part. Everything is merged in 2.0.2-7
+    
+ -- Sebastien Ponce <sponcec3@pcitds13>  Wed,  7 Dec 2005 10:??:?? +0100
+
 castor (2.0.2-5) unstable; urgency=low
 
   * PROTO2/castor/db/castor_postgres_create.sql:
