@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Csec_plugin_GSS.c,v $ $Revision: 1.12 $ $Date: 2005/12/07 10:19:21 $ CERN IT/ADC/CA Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: Csec_plugin_GSS.c,v $ $Revision: 1.13 $ $Date: 2005/12/07 13:33:17 $ CERN IT/ADC/CA Benjamin Couturier";
 #endif
 
 /*
@@ -464,7 +464,6 @@ int (CSEC_METHOD_NAME(Csec_server_establish_context_ext, MECH))(FP,ctx, s, buf, 
     }
   }
   server_creds=&(ctx->credentials);
-  printf("Accepting the context\n");
   
   do {
 
