@@ -341,7 +341,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define UseGSI                  YES
 #define UseKRB5                 YES
 #define UseHeimdalKrb5		NO
-#define UseKRB4                 YES
+#define UseKRB4                 NO
 
 #if BuildSecurity
 
@@ -357,11 +357,11 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildSecureStage	YES
 
 #if UseHeimdalKrb5
-#define KRB5CONFIG /usr/heimdal/bin/krb5-config
+#define Krb5Config /usr/heimdal/bin/krb5-config
 #else
-#define KRB5CONFIG /usr/kerberos/bin/krb5-config
+#define Krb5Config /usr/kerberos/bin/krb5-config
 #endif
-#define KRB4CONFIG /usr/kerberos4/bin/krb4-config
+#define Krb4Config /usr/kerberos4/bin/krb4-config
 
 #if UseKRB5
 #define KRB5Mech KRB5
@@ -370,8 +370,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #else
 #define SecAuthMechKRB5    -DKRB5
 #endif
-#define SecIncludeDirKRB5 $(shell KRB5CONFIG gssapi --cflags)
-#define SecLibsKRB5 $(shell KRB5CONFIG gssapi --libs)
 #else
 #define KRB5Mech
 #endif
@@ -379,16 +377,19 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #if UseGSI
 #define GSIMech GSI
 #define SecAuthMechGSI       -DGSI 
-#define SecIncludeDirGSI -I/opt/globus/include/gcc32dbg
-#define SecLibsGSI -L/opt/globus/lib -lglobus_gssapi_gsi_gcc32dbg -lglobus_gss_assist_gcc32dbg
+#define GlobusLocation  /opt/globus
+#define VomsLocation    /opt/edg
+#if defined(__ia64__) || defined(__x86_64)
+#define GlobusFlavour   gcc64dbg
+#else
+#define GlobusFlavour   gcc32dbg
+#endif
 #else
 #define GSIMech
 #endif
 
 #if UseKRB4
 #define KRB4Mech KRB4
-#define SecIncludeDirKRB4 $(shell KRB4CONFIG  --cflags)
-#define SecLibsKRB4 $(shell KRB4CONFIG  --libs)
 #else
 #define KRB4Mech
 #endif
