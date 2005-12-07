@@ -1,7 +1,7 @@
 # Makefile written by Sebastian Lopienski
 # based on Makefile provided by Benjamin Couturier
 #
-# $Id: Makefile,v 1.1 2005/12/07 16:10:32 lopic3 Exp $
+# $Id: Makefile,v 1.2 2005/12/07 16:15:13 lopic3 Exp $
 #
 
 CC=gcc
@@ -14,8 +14,8 @@ LIBS=-L./shlib -lshift
 #INCLUDE=-I/opt/PROTO2_SEC/PROTO2/h
 #LIBS=-L/opt/PROTO2_SEC/PROTO2/shlib -lshift -ldl
 
-#CSEC_INCLUDE=-I/afs/cern.ch/user/b/bcouturi/w0/projects/CSEC-VOMS/LCG-DM/h
-#CSEC_LIBS=-L/afs/cern.ch/user/b/bcouturi/w0/projects/CSEC-VOMS/LCG-DM/shlib -ldpm -ldl
+#INCLUDE=-I/afs/cern.ch/user/b/bcouturi/w0/projects/CSEC-VOMS/LCG-DM/h
+#LIBS=-L/afs/cern.ch/user/b/bcouturi/w0/projects/CSEC-VOMS/LCG-DM/shlib -ldpm -ldl
 
 CFLAGS += $(INCLUDES)
 LDLIBS += $(LIBS)
@@ -35,12 +35,12 @@ Csec_client: Csec_client.o nw.o
 Csec_server: Csec_server.o nw.o
 
 install:
-	cp Csec_server $(SERVER_PATH); cp run_server.sh $(SERVER_PATH); \
-	cp Csec_client $(SERVER_PATH); cp run_client.sh $(SERVER_PATH); \
-	mkdir -p $(SERVER_PATH)/shlib; \
-	cp shlib/libCsec_plugin_*.so* $(SERVER_PATH)/shlib; \
-	cp -u shlib/libshift.so.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ $(SERVER_PATH)/shlib; \
-	cd $(SERVER_PATH)/shlib; \
+	cp Csec_server $(INSTALL_PATH); cp run_server.sh $(INSTALL_PATH); \
+	cp Csec_client $(INSTALL_PATH); cp run_client.sh $(INSTALL_PATH); \
+	mkdir -p $(INSTALL_PATH)/shlib; \
+	cp shlib/libCsec_plugin_*.so* $(INSTALL_PATH)/shlib; \
+	cp -u shlib/libshift.so.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ $(INSTALL_PATH)/shlib; \
+	cd $(INSTALL_PATH)/shlib; \
 	rm libshift.so.__MAJOR_CASTOR_VERSION__; \
 	ln -s libshift.so.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ libshift.so.__MAJOR_CASTOR_VERSION__ ; \
 	rm libshift.so; \
