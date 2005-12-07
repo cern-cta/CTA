@@ -1,23 +1,23 @@
 /*
- * $Id: Csec_plugin_GSS_mapper.c,v 1.7 2005/03/15 22:52:37 bcouturi Exp $
  * Copyright (C) 2003 by CERN/IT/ADC/CA Benjamin Couturier
  * All rights reserved
  */
-/** 
- * Csec_mapper.c - Provides functions for mapping a principal to a local user.
- */
 
 #ifndef lint 
-static char sccsid[] = "@(#)Csec_plugin_GSS_mapper.c,v 1.1 2004/01/12 10:31:40 CERN IT/ADC/CA Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: Csec_plugin_GSS_mapper.c,v $ $Revision: 1.8 $ $Date: 2005/12/07 10:19:21 $ CERN IT/ADC/CA Benjamin Couturier";
 #endif
+
+/** 
+ * Csec_plugin_GSS_mapper.c - Provides functions for mapping a principal to a local user.
+ */
+
 #include <stdio.h>
 #include <errno.h>
 #include "serrno.h"
 #include <string.h>
-#include <stdlib.h>
-
 #include "Castor_limits.h"
 #include "Cpwd.h"
+
 #include "Csec_plugin.h"
 
 #if defined KRB5
@@ -72,79 +72,66 @@ static char *GSI_DN_header = "";
 /**
  * Maps the credential to the corresponding name
  */
-int (CSEC_METHOD_NAME(Csec_plugin_map2name, MECH))(Csec_id_t *user_id,
-						   Csec_id_t **mapped_id) {
+int (CSEC_METHOD_NAME(Csec_map2name, MECH))(FPARG, Csec_context_t *ctx, const char *principal, char *name, int maxnamelen) {
     char *p,*pri;
-    char *func = "Csec_plugin_map2name";
-
-    if (user_id == NULL || mapped_id == NULL) {
-      serrno = EINVAL;
-      _Csec_errmsg(func, "Userid of mapped id are NULL");
-      return -1;
-    }
-
-
+    char *func = "Csec_map2name";
 #ifdef KRB5
-
-
-    p = strchr(_Csec_id_name(user_id), SEP);
+    p = strchr(principal, SEP);
     if (p== NULL) {
-      *mapped_id = _Csec_create_id(USERNAME_MECH, _Csec_id_name(user_id));
+        strncpy(name, principal, maxnamelen);
     } else {
-      char *tmp;
-      size_t pos = (p - _Csec_id_name(user_id));
-      tmp = (char *)malloc(pos +1);
-      memcpy(tmp, _Csec_id_name(user_id), pos);
-      tmp[pos] = '\0';
-      *mapped_id = _Csec_create_id(USERNAME_MECH, tmp);
+        size_t pos = (p - principal);
+        memcpy(name, principal, pos);
+        name[pos] = '\0';
     }
-
+        
     return 0;
-
+    
+}
 #endif
     /* ESEC_NO_PRINC */
 
 
 #ifdef GSI
 
-    _Csec_trace(func, "Looking for mapping for <%s>\n", _Csec_id_name(user_id));
+    Csec_trace(func, "Looking for mapping for <%s>\n", principal);
 
-    pri = strdup(_Csec_id_name(user_id));
+    pri = strdup(principal);
     
     if (pri != NULL && !globus_gss_assist_gridmap(pri, &p)){
         /* We have a mapping */
-        _Csec_trace(func, "We have a mapping to <%s>\n", p);
-	*mapped_id = _Csec_create_id(USERNAME_MECH, p);
+        Csec_trace(func, "We have a mapping to <%s>\n", p);
+        strncpy(name, p, maxnamelen);
         free(p);
         free(pri);
     } else {
-      if (pri!=NULL)
-	free(pri);
-      *mapped_id = NULL;
-      return -1;
+        if (pri!=NULL)
+          free(pri);
+
+        name[0]=0;
+        return -1;
     }
     return 0;
-#endif
 }
+#endif
+
     
-int (CSEC_METHOD_NAME(Csec_plugin_servicetype2name, MECH))(enum  Csec_service_type  service_type,
-							   char *host, 
-							   char *domain,
-							   char *service_name,
-							   int service_namelen) {
+int (CSEC_METHOD_NAME(Csec_get_service_name, MECH))(FPARG, Csec_context_t *ctx, int service_type, char *host, char *domain,
+                          char *service_name, int service_namelen) {
+
     int rc;
-    char *func = "Csec_plugin_servicetype2name";
+    char *func = "Csec_get_service_name";
 
 /*     Csec_end_trim(host); */
     
-    _Csec_trace(func, "Type: %d, host:<%s> domain:<%s> (%p,%d)\n",
-		service_type,
-		host,
-		domain,
-		service_name,
-		service_namelen);
+    Csec_trace(func, "Type: %d, host:<%s> domain:<%s> (%p,%d)\n",
+               service_type,
+               host,
+               domain,
+               service_name,
+               service_namelen);
     
-    if (service_type < 0 ||  service_type >= CSEC_SERVICE_TYPE_MAX
+    if (service_type < 0 ||  service_type >= CSEC_SERVICE_(MAX)
         || service_name == NULL || service_namelen <= 0) {
         serrno = EINVAL;
         return -1;
@@ -181,7 +168,7 @@ int (CSEC_METHOD_NAME(Csec_plugin_servicetype2name, MECH))(enum  Csec_service_ty
 #endif
 #endif
 
-    _Csec_trace(func,"derived service name:<%s>\n", service_name);
+    Csec_trace(func,"derived service name:<%s>\n", service_name);
     
     if (rc < 0) {
         serrno = E2BIG;
@@ -190,9 +177,3 @@ int (CSEC_METHOD_NAME(Csec_plugin_servicetype2name, MECH))(enum  Csec_service_ty
 
     return 0;
 }
-
-
-int (CSEC_METHOD_NAME(Csec_plugin_isIdService, MECH))(Csec_id_t *id) {
-  return -1;
-}
-

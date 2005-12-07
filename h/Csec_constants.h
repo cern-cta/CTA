@@ -12,16 +12,12 @@
 #define CSEC_TOKEN_MAGIC_1   0xCA03
 
 /* Magic number to ensure the structure is properly initialized */
+#define CSEC_CONTEXT_MAGIC_CLIENT_1 0x8CA00001
+#define CSEC_CONTEXT_MAGIC_SERVER_1 0x0CA00001
+
 /* BEWARE, all client magic numbers must correspond
    to this client mask ! */
 #define CSEC_CONTEXT_MAGIC_CLIENT_MASK  0x80000000
-#define CSEC_CONTEXT_MAGIC_SERVER_1 0x0CA00001
-#define CSEC_CONTEXT_MAGIC_CLIENT_1 (CSEC_CONTEXT_MAGIC_SERVER_1|CSEC_CONTEXT_MAGIC_CLIENT_MASK)
-
-/* Name of local protocols for mapped identity */
-#define USERNAME_MECH "USERNAME"
-#define LOCALID_MECH  "LOCALID"
-
 
 /** Various token types */
 #define CSEC_TOKEN_TYPE_PROTOCOL_REQ   0x1
@@ -32,7 +28,7 @@
 /** Buffer size for errors */
 #define SECPRTBUFSZ 2000
 /** Timeout used in the netread/netwrites */
-#define CSEC_NET_TIMEOUT 10000
+#define CSEC_NET_TIMEOUT 20
 
 /** Environment variables to set to use Csec_trace */
 #define CSEC_TRACE "CSEC_TRACE"
@@ -45,42 +41,43 @@
 #define CSEC_CONF_ENTRY_MECH "MECH"
 #define CSEC_CONF_ENTRY_AUTHMECH "AUTHMECH"
 
-enum Csec_context_type { 
-  CSEC_CONTEXT_CLIENT=0, 
-  CSEC_CONTEXT_SERVER=1 
-};
+#define CSEC_SERVICE_TYPE_MASK   0x07FFFFFFL
+#define CSEC_SERVICE_THREAD_MASK 0x08000000L
+#define CSEC_SERVICE_(x) ((CSEC_SERVICE_TYPE_ ## x) & CSEC_SERVICE_TYPE_MASK)
 
-enum Csec_service_type {
-  CSEC_SERVICE_TYPE_HOST =0,
-  CSEC_SERVICE_TYPE_CENTRAL =1,
-  CSEC_SERVICE_TYPE_DISK =2,
-  CSEC_SERVICE_TYPE_TAPE =3,
-  CSEC_SERVICE_TYPE_STAGER =4,
-  CSEC_SERVICE_TYPE_MAX =5
+enum Csec_service_types {
+#ifdef _THREAD_SAFE
+  CSEC_SERVICE_TYPE_HOST = CSEC_SERVICE_THREAD_MASK,
+#else
+  CSEC_SERVICE_TYPE_HOST,
+#endif
+  CSEC_SERVICE_TYPE_CENTRAL,
+  CSEC_SERVICE_TYPE_DISK,
+  CSEC_SERVICE_TYPE_TAPE,
+  CSEC_SERVICE_TYPE_STAGER,
+  CSEC_SERVICE_TYPE_MAX
 };
-
-/* Various flags */
 
 #define PROT_STAT_INITIAL       0x0
 #define PROT_STAT_REQ_SENT      0x1
 #define PROT_STAT_NOK           0x2
 #define PROT_STAT_OK            0x4
 
-/* Constants for protocol status */
-
-#define PROT_REQ_OK 1
-#define PROT_REQ_NOK 0
+#define PROT_REQ_OK "OK"
+#define PROT_REQ_NOK "NOK"
 
 /* Status of the context */
 #define CSEC_CTX_INITIALIZED          0x00000001L
 #define CSEC_CTX_SERVICE_TYPE_SET     0x00000002L
 #define CSEC_CTX_PROTOCOL_LOADED      0x00000004L
-#define CSEC_CTX_PROTOCOL_CHOSEN      0x00000008L
-#define CSEC_CTX_PLUGIN_LOADED        0x00000010L
-#define CSEC_CTX_PLUGIN_INITIALIZED   0x00000020L
+
+#define CSEC_CTX_SHLIB_LOADED         0x00000008L
+#define CSEC_CTX_SERVICE_NAME_SET     0x00000010L
+#define CSEC_CTX_CREDENTIALS_LOADED   0x00000020L
 #define CSEC_CTX_CONTEXT_ESTABLISHED  0x00000040L
-#define CSEC_CTX_DELEGCREDS_EXPORTED  0x00000080L
-#define CSEC_CTX_USER_MAPPING_DONE    0x00000100L
+#define CSEC_CTX_USER_MAPPED          0x00000080L
+#define CSEC_CTX_DELEG_CRED_LOADED    0x00000100L
+#define CSEC_CTX_AUTHID_AVAIL         0x00000200L
 
 /* Status of the protocols when being checked */
 #define CSEC_PROT_NOSHLIB             0x00000001L
@@ -89,5 +86,7 @@ enum Csec_service_type {
 
 /* Security options */
 #define CSEC_OPT_DELEG_FLAG           0x00000001L
+#define CSEC_OPT_NODELEG_FLAG         0x00000002L
+
 
 #endif /* _CSEC_CONSTANTS */

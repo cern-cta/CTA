@@ -1,15 +1,14 @@
 /*
- * $Id: Csec_plugin_KRB4.c,v 1.10 2004/10/22 20:15:41 jdurand Exp $
  * Copyright (C) 2003 by CERN/IT/ADC/CA Benjamin Couturier
  * All rights reserved
  */
 
 /*
- * Cauth_api.c - API function used for authentication in CASTOR
+ * Csec_plugin_KRB4.c - Plugin function used for authentication in CASTOR
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)Csec_plugin_KRB4.c,v 1.1 2004/01/12 10:31:40 CERN IT/ADC/CA Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: Csec_plugin_KRB4.c,v $ $Revision: 1.11 $ $Date: 2005/12/07 10:19:21 $ CERN IT/ADC/CA Benjamin Couturier";
 #endif
 
 
@@ -37,15 +36,13 @@ static char sccsid[] = "@(#)Csec_plugin_KRB4.c,v 1.1 2004/01/12 10:31:40 CERN IT
 #include "serrno.h"
 #include "Cnetdb.h"
 #include <sys/stat.h>
-#include <Cmutex.h>
-#include <Cglobals.h>
-#include <Cthread_api.h>
+#include "Cglobals.h"
 #include <net.h>
 #include <pwd.h>
 #include <sys/types.h>
 
 #include <krb.h>
-#include <Csec_plugin.h>
+#include "Csec_plugin.h"
 
 #define TMPBUFSIZE 100
 
@@ -87,43 +84,46 @@ int get_local_ticket(char *tkfile, char *myname, char *realm);
 /* EXPORTED FUNCTIONS */
 /******************************************************************************/
 
+int Csec_activate_KRB4(FP, ctx)
+    FPARG;
+    Csec_context_t *ctx;
+{  
+  return 0;
+}  
+ 
+int Csec_deactivate_KRB4(FP, ctx)
+    FPARG;
+    Csec_context_t *ctx;
+{  
+  return 0;
+}  
+
 /**
- * Initializes the Csec the context.
- * Just sets the area to 0 for the moment.
+ * Not used.
  */
-int Csec_init_context_KRB4(ctx)
+int Csec_init_context_KRB4(FP, ctx)
+    FPARG;
     Csec_context_t *ctx;
 {
-
-    memset(ctx, 0, sizeof(Csec_context_t));
-    ctx->flags = CSEC_CTX_INITIALIZED;
     return 0;
 }
 
 
 /**
- * Reinitializes the security context
+ * Not used.
  */
-int Csec_reinit_context_KRB4(ctx)
+int Csec_reinit_context_KRB4(FP, ctx)
+    FPARG;
     Csec_context_t *ctx;
 {
-
-    if (ctx->flags & CSEC_CTX_CONTEXT_ESTABLISHED) {
-        Csec_delete_connection_context_KRB4(ctx);
-    }
-
-    if (ctx->flags & CSEC_CTX_CREDENTIALS_LOADED) {
-        Csec_delete_creds_KRB4(ctx);
-    }
-
-    memset(ctx, 0, sizeof(Csec_context_t));
     return 0;
 }
 
 /**
  * Deletes the security context inside the Csec_context_t
  */
-int Csec_delete_connection_context_KRB4(ctx)
+int Csec_delete_connection_context_KRB4(FP, ctx)
+    FPARG;
     Csec_context_t *ctx;
 {
     free(ctx->connection_context);
@@ -134,7 +134,8 @@ int Csec_delete_connection_context_KRB4(ctx)
 /**
  * Deletes the credentials inside the Csec_context_t
  */
-int Csec_delete_creds_KRB4(ctx)
+int Csec_delete_creds_KRB4(FP, ctx)
+    FPARG;
     Csec_context_t *ctx;
 {
   return 0;
@@ -149,7 +150,8 @@ int Csec_delete_creds_KRB4(ctx)
  * This function caches the credentials in the Csec_context_t object.
  * This function must be called again to refresh the credentials.
  */
-int Csec_acquire_creds_KRB4(ctx, service_name, is_client)
+int Csec_acquire_creds_KRB4(FP, ctx, service_name, is_client)
+    FPARG;
     Csec_context_t *ctx;
     char *service_name;
     int is_client;
@@ -163,7 +165,8 @@ int Csec_acquire_creds_KRB4(ctx, service_name, is_client)
  * API function for the server to establish the context
  *
  */
-int Csec_server_establish_context_ext_KRB4(ctx, s, buf, len)
+int Csec_server_establish_context_ext_KRB4(FP, ctx, s, buf, len)
+    FPARG;
     Csec_context_t *ctx;
     int s;
     char *buf;
@@ -209,7 +212,7 @@ int Csec_server_establish_context_ext_KRB4(ctx, s, buf, len)
     }
     
     /* Looking up PEER name */
-    hp = gethostbyaddr ((char *)(&client.sin_addr),
+    hp = Cgethostbyaddr ((char *)(&client.sin_addr),
                         sizeof(struct in_addr), client.sin_family);
     if (hp == NULL)
       clienthost = (char *)inet_ntoa (client.sin_addr);
@@ -258,7 +261,7 @@ int Csec_server_establish_context_ext_KRB4(ctx, s, buf, len)
     Csec_trace(func, "Client name is <%s>\n", kctx->client_name);
     Csec_trace(func, "Credentials are <%s>\n", kctx->client_creds);
 
-    strncpy(ctx->peer_name, kctx->client_creds , CA_MAXCSECNAMELEN);
+    strncpy(ctx->effective_peer_name, kctx->client_creds , CA_MAXCSECNAMELEN);
     ctx->connection_context = kctx;
     
     /* Setting the flag in the context object ! */
@@ -272,7 +275,8 @@ int Csec_server_establish_context_ext_KRB4(ctx, s, buf, len)
 /**
  * API function for client to establish function with the server
  */
-int Csec_client_establish_context_KRB4(ctx, s)
+int Csec_client_establish_context_KRB4(FP, ctx, s)
+    FPARG;
     Csec_context_t *ctx;
     int s;
 {
@@ -322,7 +326,7 @@ int Csec_client_establish_context_KRB4(ctx, s)
         return -1;
     }
     
-    hp = gethostbyaddr ((char *)(&server.sin_addr),
+    hp = Cgethostbyaddr ((char *)(&server.sin_addr),
                          sizeof(struct in_addr), server.sin_family);
     if (hp == NULL)
       clienthost = (char *)inet_ntoa (server.sin_addr);
@@ -333,6 +337,8 @@ int Csec_client_establish_context_KRB4(ctx, s)
     if ((c=strchr(kctx->remote_host,'.')) != NULL) {
         *c=0;		/* 'name' part only */
     }
+
+    strncpy(ctx->effective_peer_name, kctx->remote_host, CA_MAXCSECNAMELEN);
 
     Csec_trace(func, "Client: <%s> Server: <%s>\n",
            kctx->local_host,
@@ -384,7 +390,7 @@ int Csec_client_establish_context_KRB4(ctx, s)
 }
 
 
-int Csec_get_service_name_KRB4(Csec_context_t *ctx, 
+int Csec_get_service_name_KRB4(FPARG, Csec_context_t *ctx, 
 			       int service_type, char *host, char *domain,
 			       char *service_name, int service_namelen) {
 
@@ -399,7 +405,7 @@ int Csec_get_service_name_KRB4(Csec_context_t *ctx,
                service_name,
                service_namelen);
     
-    if (service_type < 0 ||  service_type >= CSEC_SERVICE_TYPE_MAX
+    if (service_type < 0 ||  service_type >= CSEC_SERVICE_(MAX)
         || service_name == NULL || service_namelen <= 0) {
         serrno = EINVAL;
         return -1;
@@ -435,7 +441,7 @@ int Csec_get_service_name_KRB4(Csec_context_t *ctx,
 
 #define SEP '@'
 
-int Csec_map2name_KRB4(Csec_context_t *ctx, char *principal, char *name, int maxnamelen) {
+int Csec_map2name_KRB4(FPARG, Csec_context_t *ctx, const char *principal, char *name, int maxnamelen) {
     char *p;
     
     p = strchr(principal, SEP);
