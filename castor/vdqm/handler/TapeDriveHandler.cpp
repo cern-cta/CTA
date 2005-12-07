@@ -996,34 +996,34 @@ int castor::vdqm::handler::TapeDriveHandler::translateNewStatus(
 	castor::vdqm::TapeDriveStatusCodes newStatusCode) 
 	throw (castor::exception::Exception) {
 	
-	int oldStatus = VDQM_STATUS_MIN;
+	int oldStatus = 0;
 	
 	switch (newStatusCode) {
 		case UNIT_UP:
-				oldStatus |= VDQM_UNIT_UP | VDQM_UNIT_FREE;
+				oldStatus = VDQM_UNIT_UP | VDQM_UNIT_FREE;
 				break;
 		case UNIT_STARTING:
-				oldStatus |= VDQM_UNIT_UP | VDQM_UNIT_BUSY;
+				oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY;
 				break;
 		case UNIT_ASSIGNED:
-				oldStatus |= VDQM_UNIT_UP | VDQM_UNIT_ASSIGN | VDQM_UNIT_BUSY;
+				oldStatus = VDQM_UNIT_UP | VDQM_UNIT_ASSIGN | VDQM_UNIT_BUSY;
 				break;
 		case VOL_MOUNTED:
-				oldStatus |= VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_ASSIGN;
+				oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_ASSIGN;
 				break;
 		case FORCED_UNMOUNT:
-				oldStatus |= VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE | 
+				oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE | 
 				             VDQM_FORCE_UNMOUNT | VDQM_UNIT_UNKNOWN;
 				break;
 		case UNIT_DOWN:
-				oldStatus |= VDQM_UNIT_DOWN;
+				oldStatus = VDQM_UNIT_DOWN;
 				break;
 		case WAIT_FOR_UNMOUNT:
-				oldStatus |= VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE | 
+				oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE | 
 				             VDQM_UNIT_UNKNOWN;
 				break;
 		case STATUS_UNKNOWN:
-				oldStatus |= VDQM_UNIT_UNKNOWN;
+				oldStatus = VDQM_UNIT_UNKNOWN;
 				break;		
 		default:
 				castor::exception::InvalidArgument ex;
