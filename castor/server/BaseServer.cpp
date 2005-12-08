@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/12/08 14:04:33 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/12/08 17:08:33 $ $Author: itglp $
  *
  *
  *
@@ -46,7 +46,7 @@
 castor::server::BaseServer::BaseServer(const std::string serverName) :
   m_foreground(false), m_serverName(serverName)
 {
-  m_cmdLineParams << "fh";
+  m_cmdLineParams << "fhc:";
 }
 
 //------------------------------------------------------------------------------
@@ -140,20 +140,24 @@ castor::server::BaseThreadPool* castor::server::BaseServer::getThreadPool(const 
 void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
 {
   const char* cmdParams = m_cmdLineParams.str().c_str();
-  Coptions_t* longopts = new Coptions_t[m_threadPools.size()+3];
+  Coptions_t* longopts = new Coptions_t[m_threadPools.size()+4];
   char tparam[] = "Xthreads";
   
   longopts[0].name = "foreground";
   longopts[0].has_arg = NO_ARGUMENT;
   longopts[0].flag = NULL;
   longopts[0].val = 'f';
-  longopts[1].name = "help";
-  longopts[1].has_arg = NO_ARGUMENT;
+  longopts[1].name = "config";
+  longopts[1].has_arg = REQUIRED_ARGUMENT;
   longopts[1].flag = NULL;
-  longopts[1].val = 'h';
+  longopts[1].val = 'c';
+  longopts[2].name = "help";
+  longopts[2].has_arg = NO_ARGUMENT;
+  longopts[2].flag = NULL;
+  longopts[2].val = 'h';
   
   std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
-  int i = 2;
+  int i = 3;
   for(tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++, i++) {
     tparam[0] = tp->first;
     longopts[i].name = strdup(tparam);
@@ -171,6 +175,16 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
     switch (c) {
     case 'f':
       m_foreground = true;
+      break;
+      case 'c':
+      {
+        char* cfgFile = (char *)malloc(strlen("PATH_CONFIG=") + strlen(Coptarg)+2);
+        if(cfgFile != NULL) {
+          sprintf(cfgFile,"PATH_CONFIG=%s",Coptarg);
+          printf("Using configuration file %s (%s)\n",Coptarg, cfgFile);
+          putenv(cfgFile);
+        }
+      }
       break;
     case 'h':
       help(argv[0]);
@@ -199,8 +213,9 @@ void castor::server::BaseServer::help(std::string programName)
 	  "\n"
 	  "where options can be:\n"
 	  "\n"
-	  "\t--foreground   or -f                \tForeground\n"
-	  "\t--help         or -h                \tThis help\n"
+	  "\t--foreground      or -f                \tForeground\n"
+	  "\t--config cfgFile  or -c                \tConfiguration\n"
+	  "\t--help            or -h                \tThis help\n"
 	  "\n"
 	  "Comments to: Castor.Support@cern.ch\n";
 }
