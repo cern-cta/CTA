@@ -36,6 +36,7 @@
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
+#include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/newVdqm.h"
@@ -1128,7 +1129,35 @@ std::vector<castor::vdqm::TapeDrive*>*
 				tmpTapeDrive->setTransferredMB(rs->getInt(6));
 				tmpTapeDrive->setTotalMB((u_signed64)rs->getDouble(7));				
 				tmpTapeDrive->setDriveName(rs->getString(8));
-				tmpTapeDrive->setTapeAccessMode(rs->getInt(9)); 
+				tmpTapeDrive->setTapeAccessMode(rs->getInt(9));
+				
+				//Status of the TapeDrive
+				switch ( rs->getInt(14) ) {
+				  case 0:
+				  	tmpTapeDrive->setStatus(castor::vdqm::UNIT_UP);
+				  	break;
+				  case 1:
+				  	tmpTapeDrive->setStatus(castor::vdqm::UNIT_STARTING);
+				  	break;
+				  case 2:
+				  	tmpTapeDrive->setStatus(castor::vdqm::UNIT_ASSIGNED);
+				  	break;
+				  case 3:
+				  	tmpTapeDrive->setStatus(castor::vdqm::VOL_MOUNTED);
+				  	break;
+				  case 4:
+				  	tmpTapeDrive->setStatus(castor::vdqm::FORCED_UNMOUNT);
+				  	break;
+				  case 5:
+				  	tmpTapeDrive->setStatus(castor::vdqm::UNIT_DOWN);
+				  	break;
+				  case 6:
+				  	tmpTapeDrive->setStatus(castor::vdqm::WAIT_FOR_UNMOUNT);
+				  	break;
+				  default:
+				  	tmpTapeDrive->setStatus(castor::vdqm::STATUS_UNKNOWN);
+				  	break;
+				}
 		    
 		    // Get the foreign related objects
 		    cnvSvc()->fillObj(&ad, tmpTapeDrive, castor::OBJ_DeviceGroupName);
