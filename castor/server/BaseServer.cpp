@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/12/08 17:08:33 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2005/12/08 18:10:14 $ $Author: itglp $
  *
  *
  *
@@ -46,7 +46,7 @@
 castor::server::BaseServer::BaseServer(const std::string serverName) :
   m_foreground(false), m_serverName(serverName)
 {
-  m_cmdLineParams << "fhc:";
+  m_cmdLineParams << "fc:h";
 }
 
 //------------------------------------------------------------------------------
@@ -188,6 +188,7 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
       break;
     case 'h':
       help(argv[0]);
+      exit(0);
       break;
     default:
       BaseThreadPool* p = m_threadPools[c];
