@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Date: 2005/12/08 08:38:09 $ CERN IT-PDP/DM   Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Date: 2005/12/08 12:20:50 $ CERN IT-PDP/DM   Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -79,7 +79,6 @@ ICOMMON_H = \
 	 FileName($(DESTDIRCASTOR),Csec_common.h) \
 	 FileName($(DESTDIRCASTOR),Csec_constants.h) \
 	 FileName($(DESTDIRCASTOR),Csec_plugin.h) \
-	 FileName($(DESTDIRCASTOR),Csec_struct.h) \
 	 FileName($(DESTDIRCASTOR),Csemaphore.h) \
 	 FileName($(DESTDIRCASTOR),Csnprintf.h) \
 	 FileName($(DESTDIRCASTOR),Cupv.h) \
@@ -183,7 +182,6 @@ ECOMMON_H = \
 	 $(EXPORTH)/Csec_common.h \
 	 $(EXPORTH)/Csec_constants.h \
 	 $(EXPORTH)/Csec_plugin.h \
-	 $(EXPORTH)/Csec_struct.h \
 	 $(EXPORTH)/Csemaphore.h \
 	 $(EXPORTH)/Csnprintf.h \
 	 $(EXPORTH)/Cupv.h \
@@ -493,9 +491,6 @@ IEXPORT(Csec_constants.h,$(EXPORTH),644)
 
 InstallNonExecFile(Csec_plugin.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Csec_plugin.h,$(EXPORTH),644)
-
-InstallNonExecFile(Csec_struct.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(Csec_struct.h,$(EXPORTH),644)
 
 InstallNonExecFile(Csemaphore.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Csemaphore.h,$(EXPORTH),644)
