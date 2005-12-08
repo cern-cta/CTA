@@ -1,0 +1,6 @@
+- Improve efficiency of showqueues on the server side
+  by calling ORACLE only once instead of calling it
+  first in selectTapeRequestQueue
+  (castor/db/ora/OraVdqmSvc.cpp) and then calling
+  fillObj 6 times per row.
+
