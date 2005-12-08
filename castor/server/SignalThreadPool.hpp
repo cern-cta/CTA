@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/06 18:13:39 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/12/08 14:04:33 $ $Author: itglp $
  *
  *
  *
@@ -55,7 +55,7 @@ namespace castor {
 
  namespace server {
 
-  // FOrward declaration
+  // Forward declaration
   class Mutex;
   //class NotificationThread;
 
@@ -153,15 +153,11 @@ namespace castor {
     /* Formerly struct singleService */
     int m_nbTotalThreads;
     int m_nbActiveThreads;
-    int m_nbNotifyThreads;
     int m_notified;
     bool m_notTheFirstTime;
 
     /// a mutex used by the threads to safely access this class' fields
     Mutex* m_poolMutex;
-    
-    /// the notification thread; it is a pool only to reuse the thread entrypoint
-    BaseThreadPool* m_notifTPool;
 
   };
 

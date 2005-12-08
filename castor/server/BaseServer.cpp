@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/12/07 17:11:58 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/12/08 14:04:33 $ $Author: itglp $
  *
  *
  *
@@ -129,8 +129,7 @@ void castor::server::BaseServer::addThreadPool(castor::server::BaseThreadPool* p
 //-----------------------------------------------------------------------------
 // getThreadPool
 //-----------------------------------------------------------------------------
-const castor::server::BaseThreadPool*
- castor::server::BaseServer::getThreadPool(const char id) throw()
+castor::server::BaseThreadPool* castor::server::BaseServer::getThreadPool(const char id) throw()
 {
   return m_threadPools[id];
 }

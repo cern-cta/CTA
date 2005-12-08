@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/12/07 17:11:58 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/12/08 14:04:33 $ $Author: itglp $
  *
  *
  *
@@ -55,15 +55,13 @@ castor::server::SignalThreadPool::~SignalThreadPool() throw()
 void castor::server::SignalThreadPool::init()
   throw (castor::exception::Exception)
 {
-  /* Initialize service api (it is important to do that only after the signal mask creation) */
-  /* ======================================================================================= */
-
+  // Initialize shared variables (former singleService structure)
   m_nbActiveThreads = 0;  /* Number of threads currently running that service */
   m_nbTotalThreads = 0;   /* Number of threads currently running that service */
   m_notified = 0;         /* By default no signal yet has been received */
   m_notTheFirstTime = false;
 
-  /* Create a mutex (could throw exception) */
+  // Create a mutex (could throw exception)
   m_poolMutex = new Mutex(-1);
 }
 
@@ -93,13 +91,12 @@ void castor::server::SignalThreadPool::run()
   }
   else {
     m_nbThreads = n;
-    clog() << DEBUG << "Thread pool " << m_poolName << " created with "
+    clog() << DEBUG << "Thread pool " << m_poolName << " started with "
            << m_nbThreads << " threads" << std::endl;
   }
-  // create and start notification thread
+  // XXX create and start notification thread -> BaseDaemon
   /*
-  m_notifTPool = new BaseThreadPool(
-                       m_poolName + " notification", new NotificationThread());
+  m_notifTPool = new BaseThreadPool("_NotificationThread", new NotificationThread());
   struct threadArgs *nArgs = new threadArgs();
   nArgs->handler = m_notifTPool;
   nArgs->param = this;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:00 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/08 14:04:33 $ $Author: itglp $
  *
  *
  *
@@ -79,7 +79,7 @@ namespace castor {
     /**
      * Gets a pool by its name initial
      */
-    const BaseThreadPool* getThreadPool(const char nameIn) throw();
+    BaseThreadPool* getThreadPool(const char nameIn) throw();
 
 
   protected:
