@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServiceThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:01 $ $Author: itglp $
+ * @(#)$RCSfile: ServiceThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/08 14:05:59 $ $Author: itglp $
  *
  *
  *
@@ -52,7 +52,7 @@ void castor::server::ServiceThread::init(void* param)
 {
   m_owner = (SignalThreadPool*)param;
   if(m_userThread)
-    m_userThread->init(m_owner);
+    m_userThread->init(m_owner->getMutex());
 };
 
 //------------------------------------------------------------------------------
