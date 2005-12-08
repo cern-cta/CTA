@@ -33,9 +33,6 @@
 %attr(0644,root,bin) usr/include/shift/Csec_common.h
 %attr(0644,root,bin) usr/include/shift/Csec_constants.h
 %attr(0644,root,bin) usr/include/shift/Csec_plugin.h
-%attr(0644,root,bin) usr/include/shift/Csec_plugin_loader.h
-%attr(0644,root,bin) usr/include/shift/Csec_protocol.h
-%attr(0644,root,bin) usr/include/shift/Csec_struct.h
 %attr(0644,root,bin) usr/include/shift/Csemaphore.h
 %attr(0644,root,bin) usr/include/shift/Csetprocname.h
 %attr(0644,root,bin) usr/include/shift/Csnprintf.h
