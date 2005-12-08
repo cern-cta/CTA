@@ -7,6 +7,7 @@ castor (2.0.2-7) unstable; urgency=low
 to the client.
   * PROTO2/castor/db/ora/OraVdqmSvc.cpp
     Fixed access to relationships in case the relation leads to a null pointer
+    Fixed the showqueue problem in the selectTapeDriveQueue() function
   * PROTO2/security/Imakefile
   * PROTO2/config/site.def
     Fixed build rules
