@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.42 $ $Date: 2005/09/28 17:23:30 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.43 $ $Date: 2005/12/09 11:28:28 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -21,8 +21,7 @@ COMM Libraries to include in SharedLibraryTargetName(shift)
 LIBRARIES0 = $(COMMONLIB) $(RFIOLIB) $(MSGLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHCLIENTLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB) $(RMCLIB) $(EXPERTLIB) $(RESOURCEMONITORINGLIB)
 
 LIBRARIES1 = $(RHORALIB)
-SHLIBREQLIBS1 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshift
-COMM -lcastorCnvs soon to come
+SHLIBREQLIBS1 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshift -lcastorCnvs
 
 LIBRARIES2 = $(TANKLIB)
 SHLIBREQLIBS2 = $(SHLIBREQLIBS)
@@ -40,10 +39,10 @@ LIBRARIES6 = $(VDQMORALIB)
 SHLIBREQLIBS6 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshift -lcastorCommonOra
 
 
-ALL0=SharedLibraryTargetName(castorCnvs) SharedLibraryTargetName(shift)
+ALL0=SharedLibraryTargetName(shift)
 
 #if BuildOraCpp
-ALL1=SharedLibraryTargetName(castorCommonOra)
+ALL1=SharedLibraryTargetName(castorCnvs) SharedLibraryTargetName(castorCommonOra)
 #endif
 
 #if BuildTankPerfMonLibrary
@@ -51,11 +50,11 @@ ALL2=SharedLibraryTargetName(castorTankPerfMon)
 #endif
 
 #if BuildMyCpp
-ALL4=SharedLibraryTargetName(castorCommonMysql)
+ALL4=SharedLibraryTargetName(castorCnvs) SharedLibraryTargetName(castorCommonMysql)
 #endif
 
 #if BuildPgCpp
-ALL5=SharedLibraryTargetName(castorCommonPgsql)
+ALL5=SharedLibraryTargetName(castorCnvs) SharedLibraryTargetName(castorCommonPgsql)
 #endif
 
 #if BuildVDQMCpp
