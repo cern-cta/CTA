@@ -474,6 +474,10 @@
 #undef BuildDlfLibrary
 #define BuildDlfLibrary YES
 #endif
+#if !BuildCupvLibrary
+#undef BuildCupvLibrary
+#define BuildCupvLibrary YES
+#endif
 #endif
 
 /* ------ */
