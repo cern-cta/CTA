@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.31 2005/11/11 10:31:03 itglp Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.32 2005/12/09 11:29:54 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.31 $ $Date: 2005/11/11 10:31:03 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.32 $ $Date: 2005/12/09 11:29:54 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -361,6 +361,7 @@ namespace castor {
                          << ((reqType == REQUESTQUERYTYPE_USERTAG ||
                               reqType == REQUESTQUERYTYPE_USERTAG_GETNEXT) ? 
                               "user tag " : "request id ") << val;
+          delete result;
           throw e;
         }
 
