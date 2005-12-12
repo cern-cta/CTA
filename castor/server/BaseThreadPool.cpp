@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/12/07 17:11:58 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/12/12 16:01:19 $ $Author: itglp $
  *
  *
  *
@@ -69,6 +69,7 @@ void castor::server::BaseThreadPool::init() throw (castor::exception::Exception)
     castor::exception::Internal ex;
     ex.getMessage() << "Thread pool '" << m_poolName << "' creation error: "
            << m_threadPoolId << std::endl;
+    clog() << ALERT << ex.getMessage().str();
     throw ex;
   }
   else {
@@ -143,9 +144,8 @@ void* castor::server::_thread_run(void* param)
     return 0;
   }
 
-  // Recovering the processRequestArgs
   args = (struct threadArgs*)param;
-  pool = dynamic_cast<castor::server::BaseThreadPool *>(args->handler);
+  pool = dynamic_cast<castor::server::BaseThreadPool*>(args->handler);
   if (pool == 0 || pool->m_thread == 0) {
     delete args;
     return 0;
@@ -156,8 +156,8 @@ void* castor::server::_thread_run(void* param)
     pool->m_thread->init(args->param);
     pool->m_thread->run();
   } catch(castor::exception::Exception any) {
-    pool->clog() << "Uncatched exception in a thread from pool " << pool->m_poolName
-                 << " : " << any.getMessage().str() << std::endl;
+    pool->clog() << ERROR << "Uncatched exception in a thread from pool " 
+                 << pool->m_poolName << " : " << any.getMessage().str() << std::endl;
   } catch(...) {}     // all the rest is ignored
   
   delete args;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/12/08 14:04:33 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2005/12/12 16:01:19 $ $Author: itglp $
  *
  *
  *
@@ -94,9 +94,9 @@ void castor::server::SignalThreadPool::run()
     clog() << DEBUG << "Thread pool " << m_poolName << " started with "
            << m_nbThreads << " threads" << std::endl;
   }
-  // XXX create and start notification thread -> BaseDaemon
+  // create and start notification thread
   /*
-  m_notifTPool = new BaseThreadPool("_NotificationThread", new NotificationThread());
+  m_notifTPool = new BaseThreadPool("_NotificationThread", new NotificationThread(m_notifPort));
   struct threadArgs *nArgs = new threadArgs();
   nArgs->handler = m_notifTPool;
   nArgs->param = this;

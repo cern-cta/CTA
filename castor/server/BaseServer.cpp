@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2005/12/08 18:10:14 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2005/12/12 16:01:19 $ $Author: itglp $
  *
  *
  *
@@ -83,12 +83,12 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
     }
   }
 
-  // Ignore SIGPIPE AND SIGXFSZ
-  // to avoid crashing when a file is too big or
-  // when the connection is lost with a client
+  // Ignore SIGPIPE (connection lost with client),
+  // SIGXFSZ (a file is too big), SIGCHLD (zombies)
 #if !defined(_WIN32)
-	signal (SIGPIPE,SIG_IGN);
-	signal (SIGXFSZ,SIG_IGN);
+	signal(SIGPIPE,SIG_IGN);
+	signal(SIGXFSZ,SIG_IGN);
+  signal(SIGCHLD,SIG_IGN);
 #endif
 }
 
@@ -181,7 +181,7 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
         char* cfgFile = (char *)malloc(strlen("PATH_CONFIG=") + strlen(Coptarg)+2);
         if(cfgFile != NULL) {
           sprintf(cfgFile,"PATH_CONFIG=%s",Coptarg);
-          printf("Using configuration file %s (%s)\n",Coptarg, cfgFile);
+          printf("Using configuration file %s\n", Coptarg);
           putenv(cfgFile);
         }
       }

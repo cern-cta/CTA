@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/12/08 14:04:33 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/12/12 16:01:19 $ $Author: itglp $
  *
  *
  *
@@ -147,9 +147,6 @@ namespace castor {
     /// timeout between two subsequent wake ups of the underlying threads
     int m_timeout;
 
-    /// UDP port where to listen for wake up signals
-    int m_notifyPort;
-
     /* Formerly struct singleService */
     int m_nbTotalThreads;
     int m_nbActiveThreads;
@@ -158,6 +155,12 @@ namespace castor {
 
     /// a mutex used by the threads to safely access this class' fields
     Mutex* m_poolMutex;
+
+    /// UDP port where to listen for wake up signals
+    int m_notifyPort;
+    
+    /// the notification thread; we keep a pool only to reuse the already defined thread entrypoint.
+    BaseThreadPool* m_notifPool;
 
   };
 
