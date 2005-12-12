@@ -1,12 +1,12 @@
 /*
- * $Id: Cupv_main.c,v 1.5 2005/07/11 12:43:12 jdurand Exp $
+ * $Id: Cupv_main.c,v 1.6 2005/12/12 10:25:53 lopic3 Exp $
  *
  * Copyright (C) 1999-2002 by CERN IT-DS/HSM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: Cupv_main.c,v $ $Revision: 1.5 $ $Date: 2005/07/11 12:43:12 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "$RCSfile: Cupv_main.c,v $ $Revision: 1.6 $ $Date: 2005/12/12 10:25:53 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -260,7 +260,7 @@ void *arg;
 #ifdef CSEC
 	Csec_server_reinitContext(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
 	if (Csec_server_establishContext(&(thip->sec_ctx),thip->s) < 0) {
-	  Cupvlogit(func, "Could not establish context: %s !\n", Csec_geterrmsg());
+	  Cupvlogit(func, "Could not establish context: %s !\n", Csec_getErrorMessage());
 	  netclose (thip->s);
 	  thip->s = -1;
 	  return (NULL);

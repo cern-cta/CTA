@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_main.c,v 1.11 2005/07/12 15:31:07 jdurand Exp $
+ * $Id: Cns_main.c,v 1.12 2005/12/12 10:29:00 lopic3 Exp $
  *
  * Copyright (C) 1999-2004 by CERN/IT/PDP/DM
  * All rights reserved
@@ -312,7 +312,7 @@ void *arg;
 #ifdef CSEC
 	Csec_server_reinitContext(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
 	if (Csec_server_establishContext(&(thip->sec_ctx),thip->s) < 0) {
-	  nslogit(func, "Could not establish context: %s !\n", Csec_geterrmsg());
+	  nslogit(func, "Could not establish context: %s !\n", Csec_getErrorMessage());
 	  netclose (thip->s);
 	  thip->s = -1;
 	  return NULL;

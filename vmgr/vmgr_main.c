@@ -1,12 +1,12 @@
 /*
- * $Id: vmgr_main.c,v 1.5 2005/03/15 22:56:54 bcouturi Exp $
+ * $Id: vmgr_main.c,v 1.6 2005/12/12 10:25:53 lopic3 Exp $
  *
  * Copyright (C) 1999-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: vmgr_main.c,v $ $Revision: 1.5 $ $Date: 2005/03/15 22:56:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: vmgr_main.c,v $ $Revision: 1.6 $ $Date: 2005/12/12 10:25:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -236,7 +236,7 @@ void *arg;
 	char *username;
 	Csec_server_reinitContext(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
 	if (Csec_server_establishContext(&(thip->sec_ctx),thip->s) < 0) {
-	  vmgrlogit(func, "Could not establish context: %s !\n", Csec_geterrmsg());
+	  vmgrlogit(func, "Could not establish context: %s !\n", Csec_getErrorMessage());
 	  netclose (thip->s);
 	  thip->s = -1;
 	  return (NULL);

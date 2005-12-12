@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthClientSocket.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/03/15 23:08:44 $ $Author: bcouturi $
+ * @(#)$RCSfile: AuthClientSocket.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/12 10:22:54 $ $Author: lopic3 $
  *
  *
  *
@@ -70,7 +70,7 @@ castor::io::AuthClientSocket::AuthClientSocket(const unsigned short port,
 				 service_type, 
 				 NULL) < 0) {
       castor::exception::Exception ex(serrno);
-      ex.getMessage() << Csec_geterrmsg();
+      ex.getMessage() << Csec_getErrorMessage();
       throw ex;
     }
 }
@@ -86,7 +86,7 @@ castor::io::AuthClientSocket::AuthClientSocket(const unsigned short port,
 				 service_type, 
 				 NULL) < 0) {
       castor::exception::Exception ex(serrno);
-      ex.getMessage() << Csec_geterrmsg();
+      ex.getMessage() << Csec_getErrorMessage();
       throw ex;
     }
 }
@@ -111,7 +111,7 @@ void castor::io::AuthClientSocket::connect()
   if (Csec_client_establishContext(&m_security_context, 
 				    this->socket()) < 0) {
     castor::exception::Exception ex(serrno);
-    ex.getMessage() << Csec_geterrmsg();
+    ex.getMessage() << Csec_getErrorMessage();
     throw ex;
   }  
 }

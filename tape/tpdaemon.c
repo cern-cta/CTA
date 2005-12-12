@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.4 2005/10/20 15:54:11 bcouturi Exp $
+ * $Id: tpdaemon.c,v 1.5 2005/12/12 10:25:53 lopic3 Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.4 $ $Date: 2005/10/20 15:54:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.5 $ $Date: 2005/12/12 10:25:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -193,7 +193,7 @@ struct main_args *main_args;
 #ifdef CSEC
 			Csec_server_reinitContext(&sec_ctx, CSEC_SERVICE_TYPE_TAPE, NULL);
 			if (Csec_server_establishContext(&sec_ctx, rqfd) < 0) {
-			  tplogit(func, "CSEC: Could not establish context: %s !\n", Csec_geterrmsg());
+			  tplogit(func, "CSEC: Could not establish context: %s !\n", Csec_getErrorMessage());
 			  netclose (rqfd);
 			  continue;
 			}

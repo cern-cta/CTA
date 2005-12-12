@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.20 2005/08/02 14:50:14 jdurand Exp $
+ * $Id: rfio_serv.c,v 1.21 2005/12/12 10:25:52 lopic3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.20 $ $Date: 2005/08/02 14:50:14 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.21 $ $Date: 2005/12/12 10:25:52 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */
@@ -989,13 +989,13 @@ char tmpbuf[21], tmpbuf2[21];
    char *mech, *clientid;
 
    if (Csec_server_initContext(&ctx, CSEC_SERVICE_TYPE_DISK, NULL)<0) {
-     log(LOG_ERR, "Could not initailize context: %s\n", Csec_geterrmsg()); 
+     log(LOG_ERR, "Could not initailize context: %s\n", Csec_getErrorMessage()); 
      closesocket(s);
      exit(1);
    }
 
    if (Csec_server_establishContext(&ctx, s)<0) {
-     log(LOG_ERR, "Could not establish context: %s\n", Csec_geterrmsg());
+     log(LOG_ERR, "Could not establish context: %s\n", Csec_getErrorMessage());
      closesocket(s);
      exit(1);
    }

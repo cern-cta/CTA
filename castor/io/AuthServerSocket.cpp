@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/03/15 23:08:44 $ $Author: bcouturi $
+ * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/12 10:22:54 $ $Author: lopic3 $
  *
  *
  *
@@ -70,7 +70,7 @@ castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
 				 service_type, 
 				 NULL) < 0) {
       castor::exception::Exception ex(serrno);
-      ex.getMessage() << Csec_geterrmsg();
+      ex.getMessage() << Csec_getErrorMessage();
       throw ex;
     }
   }
@@ -88,7 +88,7 @@ castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
 				 service_type, 
 				 NULL) < 0) {
       castor::exception::Exception ex(serrno);
-      ex.getMessage() << Csec_geterrmsg();
+      ex.getMessage() << Csec_getErrorMessage();
       throw ex;
     }  
   }
@@ -105,7 +105,7 @@ castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
 				 service_type, 
 				 NULL) < 0) {
       castor::exception::Exception ex(serrno);
-      ex.getMessage() << Csec_geterrmsg();
+      ex.getMessage() << Csec_getErrorMessage();
       throw ex;
     }  
     
@@ -130,7 +130,7 @@ castor::io::ServerSocket* castor::io::AuthServerSocket::accept()
   if (Csec_server_establishContext(&m_security_context, 
 				   as->socket()) < 0) {
     castor::exception::Exception ex(serrno);
-    ex.getMessage() << Csec_geterrmsg();
+    ex.getMessage() << Csec_getErrorMessage();
     throw ex;
   }  
   return as; 

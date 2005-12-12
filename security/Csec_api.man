@@ -40,7 +40,7 @@ Common functions:
 .sp
 .BI "int Csec_clear_context (Csec_context_t *" ctx );
 .br
-.BI "int Csec_geterrmsg();"
+.BI "int Csec_getErrorMessage();"
 .br
 .BI "Csec_context_t * Csec_get_default_context();"
 
@@ -84,7 +84,7 @@ Utility function that provides the applications with one default per thread secu
 
 .SH ERROR HANDLING
 In case of errors in the Csec_pai layer, the functions return -1 (or NULL for the functions returning strings), the serrno is set accourdingly. It is possible to get the detailed error message by using the
-.B Csec_geterrmsg()
+.B Csec_getErrorMessage()
 function.
 
 
