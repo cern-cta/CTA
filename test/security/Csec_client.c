@@ -55,11 +55,8 @@ int main(argc, argv)
 
     printf("<%d> Context established ok\n", i);
 
-
-/*    
     printf("<%d> Context established ok with: %s\n", 
            i, Csec_client_get_service_name(&sec_ctx));
-*/
 
     Csec_clearContext(&sec_ctx);
 
