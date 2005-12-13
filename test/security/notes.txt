@@ -1,5 +1,9 @@
 INSTALL http://lxservb02.cern.ch/swrep/i386_slc3/ca_CERN-1.0-1.noarch.rpm
 
+Compiling the test suite
+------------------------
+
+
 Running the test suite
 ----------------------
 
