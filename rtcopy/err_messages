@@ -334,3 +334,4 @@
 "Volume held",6,
 "write protected",6,
 "rtcpd_StartDiskIO(): Input/output error",6,
+"rtcpd_StartTapeIO(): Thread interface call error",6,
