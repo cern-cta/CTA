@@ -19,7 +19,7 @@ fi
 #ln -s libshift.so.__MAJOR_CASTOR_VERSION__ libshift.so.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__
 #cd -
 
-export LD_LIBRARY_PATH=./shlib:/opt/globus/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=./shlib:../../shlib:/opt/globus/lib:$LD_LIBRARY_PATH
 export CSEC_AUTHMECH=$*
 export CSEC_TRACE=3 
 export X509_USER_CERT=/etc/grid-security/hostcert.pem

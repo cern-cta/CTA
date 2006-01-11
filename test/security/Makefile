@@ -1,15 +1,15 @@
 # Makefile written by Sebastian Lopienski
 # based on Makefile provided by Benjamin Couturier
 #
-# $Id: Makefile,v 1.2 2005/12/07 16:15:13 lopic3 Exp $
+# $Id: Makefile,v 1.3 2006/01/11 16:14:31 lopic3 Exp $
 #
 
 CC=gcc
 
 CFLAGS=-g -Wall -fPIC 
 
-INCLUDES=-I./h
-LIBS=-L./shlib -lshift
+INCLUDES=-I../../h -I./h
+LIBS=-L../../shlib -L./shlib -lshift
 
 #INCLUDE=-I/opt/PROTO2_SEC/PROTO2/h
 #LIBS=-L/opt/PROTO2_SEC/PROTO2/shlib -lshift -ldl

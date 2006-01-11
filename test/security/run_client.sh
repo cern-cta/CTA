@@ -11,7 +11,7 @@ fi
 SERVER=$1
 shift
 
-export LD_LIBRARY_PATH=./shlib:/opt/globus/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=./shlib:../../shlib:/opt/globus/lib:$LD_LIBRARY_PATH
 export CSEC_MECH=$*
 export CSEC_TRACE=3 
 export X509_USER_CERT=/afs/cern.ch/user/l/lopic3/.globus/hostcert.pem
