@@ -64,7 +64,7 @@ FOR KRB5: NO KEYTAB FILE:
 	note carefully the Vno (1st column), very likely 2, for host/`hostname`
                                                                                                                                                          
 	/usr/heimdal/sbin/ktutil -k /etc/krb5.keytab remove -p host/`hostname` -V <this Vno>	
-	/usr/heimdal/bin/ktutil -k /etc/krb5.keytab srvconvert -s /etc/srvtab
+	/usr/heimdal/sbin/ktutil -k /etc/krb5.keytab srvconvert -s /etc/srvtab
 	/usr/heimdal/bin/kinit -k -t /etc/krb5.keytab host/`hostname`
 	should now say:  kinit: NOTICE: ticket renewable lifetime is 1 day
                                                                                                                                                          
