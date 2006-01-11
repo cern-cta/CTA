@@ -16,9 +16,12 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include "nw.h"
+#define _THREAD_SAFE
 #include <Csec_api.h>
 
 static  FILE *log;
+
+
 
 static int process_request(int s);
 
@@ -55,7 +58,7 @@ main(argc, argv)
     int argc;
     char **argv;
 {
-    u_short port = 1974;
+    u_short port = 1975;
     int s;
     int stmp;
     struct sockaddr_in cliaddr;
@@ -118,7 +121,7 @@ static int process_request(int s) {
 
   /*   while (1) { */
 /*     Csec_seterrbuf(buf2, BUF_SIZE); */
-    Csec_server_initContext(&sec_ctx, 0, NULL);
+    Csec_server_initContext(&sec_ctx, CSEC_SERVICE_TYPE_HOST, NULL);
     Csec_server_setSecurityOpts(&sec_ctx, CSEC_OPT_DELEG_FLAG);
       
     /*   if (Csec_acquireCreds(&sec_ctx) < 0) { */

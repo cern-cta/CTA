@@ -32,7 +32,7 @@ int main(argc, argv)
 
 
   if (log) fprintf(log, "Connecting to server: %s\n", argv[1]);
-  s = nw_connect_to_server(argv[1], 1974);
+  s = nw_connect_to_server(argv[1], 1975);
   if (s < 0) {
     fprintf(stderr, "Could not connect to server !\n");
     return -1;
