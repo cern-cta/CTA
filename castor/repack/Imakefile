@@ -1,0 +1,108 @@
+#
+#                      castor/repack/Imakefile
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Release$ $Date: 2006/01/12 14:05:31 $ $Author: felixehm $
+#
+# Make Castor Repack System
+#
+# @author Felix Ehm, felixehm@cern.ch
+#
+
+#include <Project.tmpl>
+
+#if !defined(_WIN32)
+#if linux
+DEBUG  = -g -O0
+#else
+DEBUG  = -g
+#endif
+#endif
+
+INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
+CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
+
+REPACKLIB = LibraryTargetName(castorRepack)
+
+LIBS = -lshift 
+#LIBS = -lshift -LcastorRepack
+
+REPACKCOMMON_SRC = ../io/StreamRepackRequestCnv.cpp RepackRequest.cpp
+REPACKSERVERBIN_SRCS =  RepackServer.cpp RepackWorker.cpp $(REPACKCOMMON_SRC)
+REPACKBIN_SRCS =  RepackClient.cpp ../io/ClientSocket.cpp $(REPACKCOMMON_SRC)
+
+
+# Repack library
+REPACKLIB_SRCS = ../io/StreamRepackRequestCnv.cpp RepackRequest.cpp
+REPACKLIB_OBJS = $(REPACKLIB_SRCS:.cpp=.Osuf)
+
+# The Binary-Objects
+REPACKSERVERBIN_OBJS = $(REPACKSERVERBIN_SRCS:.cpp=.Osuf)
+REPACKBIN_OBJS = $(REPACKBIN_SRCS:.cpp=.Osuf)
+
+DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift) 
+
+
+LDFLAGS = -L FileName(..,FileName(..,shlib)) $(MTLDFLAGS)
+LD = g++
+
+
+all: $(REPACKLIB) \
+	ProgramTargetName(repackserver) \
+	ProgramTargetName(repack)
+
+NormalProgramTarget(repackserver,$(REPACKSERVERBIN_OBJS),$(DEPLIB),$(LIBS))
+NormalProgramTarget(repack,$(REPACKBIN_OBJS),$(DEPLIB),$(LIBS))
+
+MakeDepSharedLibrary(FileName(..,shlib),shift)
+
+
+# The repack Library
+NormalLibraryTarget(castorRepack,$(REPACKLIB_OBJS))
+
+
+
+Makefiles:
+
+#if defined(_WIN32)
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend $(INCLUDES) $(REPACKSERVERBIN_SRCS) 2> /dev/null
+	makedepend $(INCLUDES) $(REPACKBIN_SRCS) 2> /dev/null
+#endif
+
+install: FileName($(BIN),repackserver)
+
+InstallProgram(repackserver,$(BIN),root,bin,755)
+InstallProgram(repack,$(BIN),root,bin,755)
+
+exportman:
+
+clean:
+	@echo cleaning in CurDir
+	-@RemoveFiles(FilesToClean)
+
+clobber:	clean
+	@echo clobbering in CurDir
+	-@RemoveFiles(ProgramTargetName(repackserver))
+	-@RemoveFiles(ProgramTargetName(repack))
+
+FORCE:
+
