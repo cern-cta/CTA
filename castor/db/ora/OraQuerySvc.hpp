@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2005/11/11 10:32:26 $ $Author: itglp $
+ * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/01/12 16:42:21 $ $Author: itglp $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -167,7 +167,7 @@ namespace castor {
         /// Private function to parse and return the list of results
         std::list<castor::stager::DiskCopyInfo*>*
         gatherResults(oracle::occi::ResultSet *rset)        
-          throw (castor::exception::Exception);
+          throw (oracle::occi::SQLException);
 
       }; // end of class OraQuerySvc
 

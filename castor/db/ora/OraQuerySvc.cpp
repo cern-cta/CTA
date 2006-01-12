@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2005/11/18 16:54:04 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2006/01/12 16:42:21 $ $Author: itglp $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -131,7 +131,7 @@ void castor::db::ora::OraQuerySvc::reset() throw() {
 // -----------------------------------------------------------------------
 std::list<castor::stager::DiskCopyInfo*>*
 castor::db::ora::OraQuerySvc::gatherResults(oracle::occi::ResultSet *rset)
-  throw (castor::exception::Exception) {
+  throw (oracle::occi::SQLException) {
     // Gather the results
     std::list<castor::stager::DiskCopyInfo*>* result =
       new std::list<castor::stager::DiskCopyInfo*>();
