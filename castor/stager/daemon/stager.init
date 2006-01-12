@@ -5,22 +5,27 @@
 # chkconfig: 345 70 35
 # description: STAGER server daemon
 #
-# $Id: stager.init,v 1.5 2005/11/30 09:14:52 jdurand Exp $
+# $Id: stager.init,v 1.6 2006/01/12 11:16:14 itglp Exp $
 #
-# @(#)$RCSfile: stager.init,v $ $Revision: 1.5 $ $Date: 2005/11/30 09:14:52 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: stager.init,v $ $Revision: 1.6 $ $Date: 2006/01/12 11:16:14 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 #
-## Try to guess about oracle environment - cross your fingers or use sysconfig
+## Try to guess the oracle environment using sysconfig
 #
-DBHOME=`which dbhome 2>/dev/null`
-if [ -n "$DBHOME" ]; then
-  export ORACLE_HOME=`dbhome CASTOR`
-else
-  # Cross your fingers
-  export ORACLE_HOME=/oracle/product/castor
+if [ -r /etc/sysconfig/castor ]; then
+	. /etc/sysconfig/castor
 fi
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$ORACLE_HOME/lib
+
+if [ -n "$ORACLE_HOME" ]; then
+	echo Fatal, Oracle environment not setup.
+	exit
+fi
+if [ -n "$TNSADMIN/tnsnames.ora" ]; then
+	echo Fatal, $TNSADMIN/tnsnames.ora not found.
+	exit
+fi
+
 export PATH=${PATH}:${ORACLE_HOME}/bin
 
 sysname=`uname -s`

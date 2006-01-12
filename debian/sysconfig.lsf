@@ -1,0 +1,15 @@
+#
+# $Id: sysconfig.lsf,v 1.1 2006/01/12 11:16:14 itglp Exp $
+#
+# Global setup for LSF
+
+RUN_LSF=yes
+
+if [ -n "$LD_LIBRARY_PATH" ]; then
+  LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lsf/lib
+else
+  LD_LIBRARY_PATH=/usr/local/lsf/lib
+fi
+
+# inherit db config
+[ -r /etc/sysconfig/castor ] && . /etc/sysconfig/castor

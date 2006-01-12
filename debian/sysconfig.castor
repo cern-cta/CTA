@@ -1,0 +1,25 @@
+#
+# $Id: sysconfig.castor,v 1.1 2006/01/12 11:16:14 itglp Exp $
+#
+# Global Db setup for CASTOR
+
+#export ORACLE_HOME=/usr/lib/oracle/10.2.0.1/client
+export ORACLE_HOME=/afs/cern.ch/project/oracle/instantclient/10.2.0.1/slc3_ia32_gcc323
+ORACLE_LIB=${ORACLE_HOME}/lib
+ORACLE_BIN=${ORACLE_HOME}/bin
+
+export TNS_ADMIN=/etc/castor
+
+if [ -n "$PATH" ]; then
+  PATH=${PATH}:${ORACLE_BIN}
+else
+  PATH=${ORACLE_BIN}
+fi
+if [ -n "$LD_LIBRARY_PATH" ]; then
+  LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ORACLE_LIB}
+else
+  LD_LIBRARY_PATH=${ORACLE_LIB}
+fi
+
+export PATH
+export LD_LIBRARY_PATH

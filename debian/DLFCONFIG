@@ -1,9 +1,5 @@
-# Should contain an entry like 
+# This file must contain a single line like:
+# <dbusername>/<password>@<dbserver>
 #
-# 	<username>/<password>@<server>
-#
-# E.g.: 
-#
-#	castor/ABCDEF123456@castor
-#
-#username/password@server
+# - Remove these comments in the real file -
+dbusername/password@dbserver

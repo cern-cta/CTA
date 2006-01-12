@@ -5,23 +5,22 @@
 # chkconfig: 345 67 38
 # description: DLF server
 #
-# $Id: dlfserver.init,v 1.3 2005/11/30 09:14:52 jdurand Exp $
+# $Id: dlfserver.init,v 1.4 2006/01/12 11:16:14 itglp Exp $
 #
-# @(#)$RCSfile: dlfserver.init,v $ $Revision: 1.3 $ $Date: 2005/11/30 09:14:52 $ CERN/IT/ADC/CA Vitaly Motyakov
+# @(#)$RCSfile: dlfserver.init,v $ $Revision: 1.4 $ $Date: 2006/01/12 11:16:14 $ CERN/IT/ADC/CA Vitaly Motyakov
 #
 
 #
-## Try to guess about oracle environment - cross your fingers or use sysconfig
+## Try to guess the oracle environment using sysconfig
 #
-DBHOME=`which dbhome 2>/dev/null`
-if [ -n "$DBHOME" ]; then
-  export ORACLE_HOME=`dbhome CASTOR`
-else
-  # Cross your fingers
-  export ORACLE_HOME=/oracle/product/castor
+if [ -r /etc/sysconfig/castor ]; then
+	. /etc/sysconfig/castor
 fi
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$ORACLE_HOME/lib
-export PATH=${PATH}:${ORACLE_HOME}/bin
+
+if [ -n "$ORACLE_HOME" ]; then
+	echo Fatal, Oracle environment not setup.
+	exit
+fi
 
 sysname=`uname -s`
 

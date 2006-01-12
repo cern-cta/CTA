@@ -1,0 +1,19 @@
+#
+# $Id: sysconfig.rmmaster,v 1.1 2006/01/12 11:16:14 itglp Exp $
+#
+# should stgdaemon run?
+# any string but "yes" will equivalent to "NO"
+#
+RUN_RMMASTER="yes"
+#
+# should we run with another limit on the number of file descriptors than the default?
+# any string will be passed to ulimit -n
+#ULIMIT_N=4096
+#
+# should we run with another limit on the core file size than the default?
+# any string will be passed to ulimit -c
+ULIMIT_C=unlimited
+#
+# options for rmmaster
+#
+OPTIONS="--lsf"
