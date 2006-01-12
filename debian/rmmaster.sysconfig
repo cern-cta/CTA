@@ -1,5 +1,5 @@
 #
-# $Id: sysconfig.rmmaster,v 1.1 2006/01/12 11:16:14 itglp Exp $
+# $Id: rmmaster.sysconfig,v 1.1 2006/01/12 14:53:28 itglp Exp $
 #
 # should stgdaemon run?
 # any string but "yes" will equivalent to "NO"
