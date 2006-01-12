@@ -1133,6 +1133,8 @@ BEGIN
   -- delete all tapeCopies
   DELETE from Stream2TapeCopy WHERE child IN
     (SELECT id FROM TapeCopy WHERE castorFile = cfId);
+  DELETE FROM Id2Type WHERE id IN 
+    (SELECT id FROM TapeCopy WHERE castorFile = cfId);
   DELETE from TapeCopy WHERE castorFile = cfId;
   -- set DiskCopies to INVALID
   UPDATE DiskCopy SET status = 7 -- INVALID
@@ -1194,7 +1196,7 @@ BEGIN
     WHERE castorFile = cfId AND status = 6 -- STAGEOUT
    RETURNING fileSystem INTO fsId;
  ELSE
-   -- update the DiskCopy status TO CANBEMIGR
+   -- update the DiskCopy status to CANBEMIGR
    UPDATE DiskCopy SET status = 10 -- CANBEMIGR
     WHERE castorFile = cfId AND status = 6 -- STAGEOUT
     RETURNING fileSystem INTO fsId;
@@ -2112,7 +2114,7 @@ END;
 /*
  * PL/SQL method implementing the core part of stage queries full version (for admins)
  * It takes a list of castorfile ids as input
- */
+ *
 CREATE OR REPLACE PROCEDURE internalFullStageQuery
  (cfs IN "numList",
   svcClassId IN NUMBER,
@@ -2142,6 +2144,7 @@ BEGIN
        AND (DiskPool2SvcClass.child = svcClassId OR DiskPool2SvcClass.child IS NULL)
   ORDER BY fileid, nshost;
 END;
+*/
 
 /*
  * PL/SQL method implementing the stage_query based on file id
