@@ -587,10 +587,15 @@ END;
 /* PL/SQL method to update FileSystem free space when file are closed */
 CREATE OR REPLACE PROCEDURE updateFsFileClosed
 (fs IN INTEGER, reservation IN INTEGER, fileSize IN INTEGER) AS
+  deviation NUMBER;
+  ds INTEGER;
 BEGIN
- UPDATE FileSystem SET deltaFree = deltaFree - fileSize,
+ UPDATE FileSystem SET fsDeviation = fsdeviation / 2,
+                       deltaFree = deltaFree - fileSize,
                        reservedSpace = reservedSpace - reservation
-  WHERE id = fs;
+  WHERE id = fs RETURNING fsDeviation, diskServer INTO deviation, ds;
+ UPDATE FileSystem SET deltaWeight = deltaWeight + deviation
+  WHERE diskServer = ds;
 END;
 
 /* This table is needed to insure that bestTapeCopyForStream works Ok.
