@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.10 $ $Release$ $Date: 2005/11/30 16:48:30 $ $Author: obarring $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.11 $ $Release$ $Date: 2006/01/13 17:28:30 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.10 $ $Release$ $Date: 2005/11/30 16:48:30 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.11 $ $Release$ $Date: 2006/01/13 17:28:30 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -763,9 +763,9 @@ static int checkRecallRetry(
   }
   strcat(expertBuffer,"\n");
   rc = callExpert(WRITE_DISABLE,expertBuffer);
-  if ( rc <= 0 ) {
+  if ( rc == 0 ) {
     /*
-     *GET_FAILED
+     * Recall retry was refused. GET_FAILED !
      */
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
@@ -778,6 +778,30 @@ static int checkRecallRetry(
                     RTCPCLD_LOG_WHERE
                     );
     serrno = SERTYEXHAUST;
+    rc = -1;
+  } else if ( rc < 0 ) {
+    /*
+     * The call to the expert system failed. Log it and let the next TapeErrorHandler pick
+     * up the segment with the hope that the error was temporary.
+     */
+    save_serrno = serrno;
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
+                    (struct Cns_fileid *)&fileid,
+                    RTCPCLD_NB_PARAMS+3,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    "callExpert(WRITE_DISABLE)",
+                    "ERROR_STRING",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(save_serrno),
+                    "DBKEY",
+                    DLF_MSG_PARAM_INT64,
+                    key,
+                    RTCPCLD_LOG_WHERE
+                    );
+    serrno = save_serrno;
     rc = -1;
   } else {
     /*
