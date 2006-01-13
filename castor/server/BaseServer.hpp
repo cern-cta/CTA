@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/08 14:04:33 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/13 17:21:35 $ $Author: itglp $
  *
  *
  *
@@ -40,6 +40,7 @@ namespace castor {
 
   /**
    * Basic CASTOR multithreaded server.
+   * Credits to Ben Couturier.
    */
   class BaseServer : public castor::BaseObject {
 

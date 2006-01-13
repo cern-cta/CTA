@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/12/07 17:11:58 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/01/13 17:21:36 $ $Author: itglp $
  *
  *
  *
@@ -72,17 +72,11 @@ namespace castor {
     virtual void init() throw (castor::exception::Exception);
 
     /**
-     * User function to run the pool.
-     * Default implementation forks a single thread by
-     * calling threadAssign(0).
+     * Runs the pool. This function is supposed to spawn
+     * the threads and immediately return.
+     * Specialized pools implement it according to their needs.
      */
-    virtual void run();
-
-    /**
-     * Forks and assigns work to a thread from the pool.
-     * @param param user parameter passed to thread->init().
-     */
-    virtual int threadAssign(void *param);
+     virtual void run() {};
 
     /**
      * Sets the foreground flag

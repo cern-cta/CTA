@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      NotificationThread.hpp
+ *                      ListenerThreadPool.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,68 +17,68 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/13 17:21:36 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/01/13 17:21:36 $ $Author: itglp $
  *
  *
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-#ifndef CASTOR_SERVER_NOTIFICATIONTHREAD_HPP
-#define CASTOR_SERVER_NOTIFICATIONTHREAD_HPP 1
-
-#if defined(_WIN32)
-#include <time.h>
-#include <winsock2.h>                   /* For struct servent */
-#else
-#include <sys/time.h>
-#include <unistd.h>
-#include <netdb.h>                      /* For struct servent */
-#endif
+#ifndef CASTOR_SERVER_LISTENERTHREADPOOL_HPP
+#define CASTOR_SERVER_LISTENERTHREADPOOL_HPP 1
 
 #include <iostream>
 #include <string>
-#include "castor/IObject.hpp"
-#include "castor/server/IThread.hpp"
-#include "castor/server/SignalThreadPool.hpp"
+#include "castor/server/BaseThreadPool.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/io/ServerSocket.hpp"
 
 namespace castor {
 
  namespace server {
 
   /**
-   * Notification thread for internal stager notifications.
-   * This thread can handle infinite loops from user threads.
+   * Listener thread pool: handles a ServerSocket and allows
+   * processing upcoming requests in dedicated threads.
    */
-  class NotificationThread : public virtual IThread {
+  class ListenerThreadPool : public BaseThreadPool {
 
   public:
 
     /**
-  	 * Initializes a notification thread.
-  	 */
-  	NotificationThread();
+     * empty constructor
+     */
+    ListenerThreadPool() throw() : 
+       BaseThreadPool() {};
 
     /**
-     * Thread initialization.
+     * constructor
      */
-  	virtual void init(void* param);
+    ListenerThreadPool(const std::string poolName,
+                   castor::server::IThread* thread, int listenPort) throw();
 
-  	/**
-     * Main work for this thread.
-  	 */
-    virtual void run() throw();
+    /*
+     * destructor
+     */
+    virtual ~ListenerThreadPool() throw();
 
     /**
-  	 * Convenience method to stop the thread.
-  	 * XXX To be implemented later.
+     * User function to run the pool.
+     * Default implementation forks a single thread by
+     * calling threadAssign(0).
      */
-    virtual void stop() {};
+    virtual void run();
 
-  private:
+  protected:
+  
+    /**
+     * Forks and assigns work to a thread from the pool.
+     * @param param user parameter passed to thread->init().
+     */
+    virtual int threadAssign(void *param);
 
-    SignalThreadPool* m_owner;
+    /// TCP port to listen for
+    int m_port;
 
   };
 
@@ -87,4 +87,4 @@ namespace castor {
 } // end of namespace castor
 
 
-#endif // CASTOR_SERVER_NOTIFICATIONTHREAD_HPP
+#endif // CASTOR_SERVER_LISTENERTHREADPOOL_HPP

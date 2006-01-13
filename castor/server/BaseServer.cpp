@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2005/12/12 16:01:19 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/01/13 17:21:35 $ $Author: itglp $
  *
  *
  *
@@ -86,9 +86,9 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
   // Ignore SIGPIPE (connection lost with client),
   // SIGXFSZ (a file is too big), SIGCHLD (zombies)
 #if !defined(_WIN32)
-	signal(SIGPIPE,SIG_IGN);
-	signal(SIGXFSZ,SIG_IGN);
-  signal(SIGCHLD,SIG_IGN);
+	signal(SIGPIPE, SIG_IGN);
+	signal(SIGXFSZ, SIG_IGN);
+  signal(SIGCHLD, SIG_IGN);
 #endif
 }
 
@@ -176,12 +176,12 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
     case 'f':
       m_foreground = true;
       break;
-      case 'c':
+    case 'c':
       {
-        char* cfgFile = (char *)malloc(strlen("PATH_CONFIG=") + strlen(Coptarg)+2);
+        char* cfgFile = (char *)malloc(strlen("PATH_CONFIG=") + strlen(Coptarg) + 1);
         if(cfgFile != NULL) {
           sprintf(cfgFile,"PATH_CONFIG=%s",Coptarg);
-          printf("Using configuration file %s\n", Coptarg);
+          printf("Using configuration file %s\n", cfgFile);
           putenv(cfgFile);
         }
       }

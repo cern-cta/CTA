@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServiceThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/08 14:05:59 $ $Author: itglp $
+ * @(#)$RCSfile: ServiceThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/13 17:21:36 $ $Author: itglp $
  *
  *
  *
@@ -58,7 +58,7 @@ void castor::server::ServiceThread::init(void* param)
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::server::ServiceThread::run()
+void castor::server::ServiceThread::run() throw()
 {
   if (m_userThread == 0) {
     serrno = EINVAL;

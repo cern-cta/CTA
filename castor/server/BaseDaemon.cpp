@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:00 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/13 17:21:35 $ $Author: itglp $
  *
  *
  *
@@ -65,10 +65,10 @@ void castor::server::BaseDaemon::init() throw(castor::exception::Exception)
   errno = serrno = 0;
 
   sigemptyset(&m_signalSet);
-  sigaddset(&m_signalSet,SIGINT);
-  sigaddset(&m_signalSet,SIGTERM);
-  //sigaddset(&m_signalSet,SIGHUP);
-  //sigaddset(&m_signalSet,SIGABRT);
+  sigaddset(&m_signalSet, SIGINT);
+  sigaddset(&m_signalSet, SIGTERM);
+  //sigaddset(&m_signalSet, SIGHUP);
+  //sigaddset(&m_signalSet, SIGABRT);
 
   int c;
   if ((c = pthread_sigmask(SIG_BLOCK,&m_signalSet,NULL)) != 0) {

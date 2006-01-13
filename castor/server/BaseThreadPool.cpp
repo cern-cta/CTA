@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/12/12 16:01:19 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/01/13 17:21:36 $ $Author: itglp $
  *
  *
  *
@@ -78,42 +78,6 @@ void castor::server::BaseThreadPool::init() throw (castor::exception::Exception)
     m_nbThreads = actualNbThreads;
   }
 }
-
-
-//------------------------------------------------------------------------------
-// run
-//------------------------------------------------------------------------------
-void castor::server::BaseThreadPool::run()
-{
-  threadAssign(0);   // starts thread->run() in a forked thread
-}
-
-//------------------------------------------------------------------------------
-// threadAssign
-//------------------------------------------------------------------------------
-int castor::server::BaseThreadPool::threadAssign(void *param)
-{
-  // Initializing the arguments to pass to the static request processor
-  struct threadArgs *args = new threadArgs();
-  args->handler = this;
-  args->param = param;
-
-  if (m_nbThreads > 0) {   // always true
-  // for debugging purposes it could be useful to run the user thread code in the same thread. 
-    int assign_rc = Cpool_assign(m_threadPoolId,
-                                 &castor::server::_thread_run,
-                                 args,
-                                 -1);
-    if (assign_rc < 0) {
-      clog() << "Error while forking thread in pool " << m_poolName << std::endl;
-      return -1;
-    }
-  } else {
-    castor::server::_thread_run(args);
-  }
-  return 0;
-}
-
 
 //------------------------------------------------------------------------------
 // setForeground

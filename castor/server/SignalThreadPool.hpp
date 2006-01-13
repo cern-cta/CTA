@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/12/12 16:01:19 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/01/13 17:21:36 $ $Author: itglp $
  *
  *
  *
@@ -66,6 +66,7 @@ namespace castor {
   /**
    * CASTOR thread pool supporting wakeup on signals
    * and periodical run after timeout.
+   * Credits to Jean-Damien Durand.
    */
   class SignalThreadPool : public BaseThreadPool {
     
@@ -101,14 +102,6 @@ namespace castor {
      * Moreover, it starts the notification thread for this pool.
      */
     virtual void run();
-
-    /**
-     * Assigns work to a thread from the pool.
-     * In this implementation we have to override the fork.
-     * XXX To be reviewed later...
-     */
-    virtual int threadAssign(void *param) {};
-
 
     /**
      * Commit a thread in the list of active threads
