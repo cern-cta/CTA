@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.139 $ $Release$ $Date: 2005/11/22 12:04:54 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.140 $ $Release$ $Date: 2006/01/13 17:17:53 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.139 $ $Release$ $Date: 2005/11/22 12:04:54 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.140 $ $Release$ $Date: 2006/01/13 17:17:53 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -2562,6 +2562,7 @@ int rtcpcld_updcRecallFailed(
   rtcpFileRequest_t *filereq;
   struct Cns_fileid *fileid;
   int rc = 0, save_serrno;
+  file_list_t *fl = NULL;
   ID_TYPE key = 0;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_DISABLE ) ||
@@ -2570,10 +2571,28 @@ int rtcpcld_updcRecallFailed(
     return(-1);
   }
 
-  filereq = &(file->filereq);
+  fl = file;
+  if ( file->dbRef == NULL ) {
+    /*
+     * This probably means that this file has already been staged but the file request
+     * but the acknowledge to rtcpd after the callback failed with a communication error.
+     * If so, try to attribute the error to next non-staged segment to force
+     * the TapeErrorHandler to check if a retry is necessary
+     */
+    if ( file->filereq.proc_status == RTCP_FINISHED ) {
+      CLIST_ITERATE_BEGIN(file,fl) 
+        {
+          if ( (fl->filereq.proc_status != RTCP_FINISHED) &&
+               (file->dbRef != NULL) ) break;
+        }
+      CLIST_ITERATE_END(file,fl);
+    }
+  }
+
+  filereq = &(fl->filereq);
 
   fileid = NULL;
-  (void)rtcpcld_getFileId(file,&fileid);
+  (void)rtcpcld_getFileId(fl,&fileid);
 
   rc = verifyTape(tape);
   if ( rc == -1 ) {
@@ -2591,7 +2610,7 @@ int rtcpcld_updcRecallFailed(
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
   tp = (struct Cstager_Tape_t *)tape->dbRef->row;
-  segment = (struct Cstager_Segment_t *)file->dbRef->row;
+  segment = (struct Cstager_Segment_t *)fl->dbRef->row;
   if (segment == NULL ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
