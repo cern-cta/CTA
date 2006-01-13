@@ -17,17 +17,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/04/05 13:50:31 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/13 17:31:11 $ $Author: itglp $
  *
  *
  *
- * @author Sebastien Ponce
+ * @author Giuseppe Lo Presti
  *****************************************************************************/
 
 #ifndef RH_SERVER_HPP
 #define RH_SERVER_HPP 1
 
-#include "castor/BaseServer.hpp"
+#include "castor/server/BaseServer.hpp"
 #include "castor/exception/Exception.hpp"
 
 #define CSP_MSG_MAGIC 0xCA001
@@ -39,11 +39,11 @@ namespace castor {
   namespace rh {
 
     /**
-     * The Request Handler server. This is were client requests
+     * The Request Handler server. This is where client requests
      * arrive. The main task of this component is to store them
-     * for future use
+     * for future processing.
      */
-    class Server : public castor::BaseServer {
+    class Server : public castor::server::BaseServer {
 
     public:
 
@@ -52,31 +52,6 @@ namespace castor {
        */
       Server();
 
-      /**
-       * Method called once per request, where all the code resides
-       */
-      void *processRequest(void *param) throw();
-
-      /**
-       * Main Server loop, listening for the clients
-       */
-      int main();
-
-      /**
-       * Overriding start method for logging purposes
-       */
-      //virtual int start();
-
-    private:
-
-      /**
-       * handles an incoming request
-       * @param fr the request
-       * @param cuuid its uuid (for logging purposes only)
-       */
-      void handleRequest(castor::IObject* fr, Cuuid_t cuuid)
-        throw (castor::exception::Exception);
-
     }; // class Server
 
   } // end of namespace rh
@@ -84,3 +59,4 @@ namespace castor {
 } // end of namespace castor
 
 #endif // RH_SERVER_HPP
+
