@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.7 $ $Date: 2005/10/27 14:31:44 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.8 $ $Date: 2006/01/13 15:38:42 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_QRY 1castor "$Date: 2005/10/27 14:31:44 $" CASTOR "STAGER Commands"
+.TH STAGER_QRY 1castor "$Date: 2006/01/13 15:38:42 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_qry \- query the CASTOR stager for files and requests
 .SH SYNOPSIS
@@ -45,6 +45,24 @@ submitted using the
 or
 .BI rfcp(1castor) 
 commands.
+.fi
+Default output includes 3 columns: the basename of the HSM name, the fileid in the used castor
+name server, and the current status of the found record. The latter can be:
+.TP
+STAGEIN: the file is being recalled from tape or being internally disk-to-disk copied from
+another diskpool.
+.TP
+STAGED: the file has been successfully staged from tape and it is available on disk, or
+the file is only available on disk if its associated nbTapeCopies = 0 (see
+.BI nschclass
+).
+.TP
+STAGEOUT: the file is being staged from client.
+.TP
+CANBEMIGR: the file is on disk and any transfer from client has been completed. The migrator
+will take it for tape migration.
+.TP
+INVALID: a failure happened concerning this file.
 
 .SH OPTIONS
 
