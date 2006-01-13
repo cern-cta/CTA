@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.8 $ $Date: 2006/01/13 15:38:42 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.9 $ $Date: 2006/01/13 16:49:18 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_QRY 1castor "$Date: 2006/01/13 15:38:42 $" CASTOR "STAGER Commands"
+.TH STAGER_QRY 1castor "$Date: 2006/01/13 16:49:18 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_qry \- query the CASTOR stager for files and requests
 .SH SYNOPSIS
@@ -46,21 +46,15 @@ or
 .BI rfcp(1castor) 
 commands.
 .fi
-Default output includes 3 columns: the basename of the HSM name, the fileid in the used castor
-name server, and the current status of the found record. The latter can be:
+Default output includes 3 columns: the basename of the HSM name, the fileid in the used castor name server, and the current status of the found record. The latter can be:
 .TP
-STAGEIN: the file is being recalled from tape or being internally disk-to-disk copied from
-another diskpool.
+STAGEIN: the file is being recalled from tape or being internally disk-to-disk copied from another diskpool.
 .TP
-STAGED: the file has been successfully staged from tape and it is available on disk, or
-the file is only available on disk if its associated nbTapeCopies = 0 (see
-.BI nschclass
-).
+STAGED: the file has been successfully staged from tape and it is available on disk, or the file is only available on disk if its associated nbTapeCopies = 0, see the nschclass(1castor) command.
 .TP
 STAGEOUT: the file is being staged from client.
 .TP
-CANBEMIGR: the file is on disk and any transfer from client has been completed. The migrator
-will take it for tape migration.
+CANBEMIGR: the file is on disk and any transfer from client has been completed. The migrator will take it for tape migration.
 .TP
 INVALID: a failure happened concerning this file.
 
@@ -73,27 +67,22 @@ specifies the CASTOR HSM file to be queried for. The
 option can be repeated, which allows for querying the status of many files with a single command.
 .TP
 .BI \-F,\ \-\-fileid " fileid@nshost"
-query by CASTOR fileid and nshost. The fileid is a unique 64bit number assigned by
-the CASTOR name server to each file in its namespace. The fileid can be retrieved using
-the
+query by CASTOR fileid and nshost. The fileid is a unique 64bit number assigned by the CASTOR name server to each file in its namespace. The fileid can be retrieved using the
 .BI nsls(1castor)
 command with the
 .BI \-i
 switch.
 .TP
 .BI \-U,\ \-\-usertag " usertag"
-allows for querying the status of a request identified by usertag. An usertag is a user
-defined string specified with the
+allows for querying the status of a request identified by usertag. An usertag is a user defined string specified with the
 .BI \-U
 option to the
 .B stager_get(1castor)
 and
 .B stager_put(1castor)
-commands. There is no constraint on the uniqueness of the usertag so it is up to the user
-to make sure that the string is unique enough to not clash with other users' usertags.
+commands. There is no constraint on the uniqueness of the usertag so it is up to the user to make sure that the string is unique enough to not clash with other users' usertags.
 .fi
-Note that if the request has been fully processed (i.e. all requested files are STAGED),
-it will not be possible anymore to query by usertag.
+Note that if the request has been fully processed (i.e. all requested files are STAGED), it will not be possible anymore to query by usertag.
 .TP
 .BI \-r,\ \-\-requestid " requestid"
 allows for querying the status of a request identified by the stager request identifier.
@@ -107,15 +96,11 @@ and
 .B stager_put(1castor)
 commands.
 .fi
-Note that if the request has been fully processed (i.e. all requested files are STAGED),
-it will not be possible anymore to query by request id.
+Note that if the request has been fully processed (i.e. all requested files are STAGED), it will not be possible anymore to query by request id.
 .TP
 .BI \-n,\ \-\-getnext
-switches to getnext mode: allows for querying the list of files which have been recalled so
-far and not yet retrieved for a given GET request. The request can be identified by the
-stager request identifier or the user tag (see above).
-Each file is given only once, allowing users to get the latest recalled files since
-last usage of the command.
+switches to getnext mode: allows for querying the list of files which have been recalled so far and not yet retrieved for a given GET request. The request can be identified by the stager request identifier or the user tag (see above).
+Each file is given only once, allowing users to get the latest recalled files since last usage of the command.
 .fi
 This option applies only for
 .B stager_get
@@ -131,40 +116,44 @@ display command usage help
 
 .SH EXAMPLE
 .fi
-# stager_get -M /castor/cern.ch/user/t/test/file1 -M /castor/cern.ch/user/t/test/file2 -U test1
+$ stager_get -M /castor/cern.ch/user/t/test/file1 -M /castor/cern.ch/user/t/test/file2 -M /castor/cern.ch/user/t/test/file3 -U test1
 .fi
-Received 2 responses
+Received 3 responses
 .fi
 /castor/cern.ch/user/t/test/file1 SUBREQUEST_READY
 .fi
 /castor/cern.ch/user/t/test/file2 SUBREQUEST_READY
 .fi
-# stager_qry -U test1
+/castor/cern.ch/user/t/test/file3 SUBREQUEST_READY
 .fi
-Received 2 responses
+$ stager_qry -U test1
+.fi
+Received 3 responses
 .fi
 /castor/cern.ch/user/t/test/file1 STAGEIN
 .fi
 /castor/cern.ch/user/t/test/file2 STAGED
 .fi
-# stager_qry -n -U test1
+/castor/cern.ch/user/t/test/file3 STAGEIN
+.fi
+$ stager_qry -n -U test1
 .fi
 Received 1 responses
 .fi
 /castor/cern.ch/user/t/test/file2 STAGED
 .fi
-# stager_qry -n -U test1   (after some time)
+$ stager_qry -n -U test1   (after some time)
 .fi
 Received 1 responses
 .fi
 /castor/cern.ch/user/t/test/file1 STAGED
 .fi
 .fi
-# nsls -i /castor/cern.ch/user/t/test/file2
+$ nsls -i /castor/cern.ch/user/t/test/file2
 .fi
     59316770 /castor/cern.ch/user/t/test/file2
 .fi
-# stager_qry -F 59316770@castorns
+$ stager_qry -F 59316770@castorns
 .fi
 Received 1 responses
 .fi
