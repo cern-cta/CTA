@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/01/13 17:21:36 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/01/16 10:09:48 $ $Author: itglp $
  *
  *
  *
@@ -62,7 +62,7 @@ castor::server::BaseThreadPool::~BaseThreadPool() throw()
 //------------------------------------------------------------------------------
 void castor::server::BaseThreadPool::init() throw (castor::exception::Exception)
 {
-  // create threads if in multithreaded mode
+  // create the thread pool
   int actualNbThreads;
   m_threadPoolId = Cpool_create(m_nbThreads, &actualNbThreads);
   if (m_threadPoolId < 0) {

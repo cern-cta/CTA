@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/01/13 17:21:36 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/01/16 10:09:48 $ $Author: itglp $
  *
  *
  *
@@ -135,11 +135,7 @@ namespace castor {
 
     /**
      * Number of threads in the pool.
-     * If 1, in this pool the Cthread API will not 
-     * be used and the user thread will be run directly.
-     * XXX to be reviewed since multiple thread pools wouldn't work in this case!
-     * See also the SignalThreadPool, which always runs
-     * multithreaded.
+     * The pool uses the Cthread API even if this is 1.
      */
     int m_nbThreads;
 

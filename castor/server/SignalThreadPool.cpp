@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2005/12/12 16:01:19 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/01/16 10:09:48 $ $Author: itglp $
  *
  *
  *
@@ -36,7 +36,7 @@
 castor::server::SignalThreadPool::SignalThreadPool(const std::string poolName,
                                  castor::server::IThread* thread,
                                  const int notifyPort) throw() :
-  BaseThreadPool(poolName, new castor::server::ServiceThread(thread, 0)),   // XXX timeout = 0 by default -> check consistency with mutex timeout...
+  BaseThreadPool(poolName, new castor::server::ServiceThread(thread)),
   m_notifyPort(notifyPort) {}
 
 //------------------------------------------------------------------------------

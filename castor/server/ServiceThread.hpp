@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServiceThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/13 17:21:36 $ $Author: itglp $
+ * @(#)$RCSfile: ServiceThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/16 10:09:48 $ $Author: itglp $
  *
  *
  *
@@ -49,9 +49,8 @@ namespace castor {
     /**
   	 * Initializes a service thread.
   	 * @param userThread the thread class containing the user code to be executed.
-  	 * @param timeout the timeout until next wakeup for this thread.
   	 */
-  	ServiceThread(IThread* userThread, int timeout);
+  	ServiceThread(IThread* userThread);
     
     /**
      * Destructor
@@ -70,17 +69,17 @@ namespace castor {
 
     /**
      * Convenience method to stop the thread.
-     * XXX To be implemented later.
+     * Simply delegates to the user thread.
      */
-    virtual void stop() {};
+    virtual void stop() {
+      m_userThread->stop();
+    };
 
   private:
 
     SignalThreadPool* m_owner;
     
     IThread* m_userThread;
-
-    int m_timeout;
 
   };
 

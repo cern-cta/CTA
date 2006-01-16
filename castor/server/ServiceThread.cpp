@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServiceThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/13 17:21:36 $ $Author: itglp $
+ * @(#)$RCSfile: ServiceThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/01/16 10:09:48 $ $Author: itglp $
  *
  *
  *
@@ -31,8 +31,8 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::server::ServiceThread::ServiceThread(IThread* userThread, int timeout) :
-  m_userThread(userThread), m_owner(0), m_timeout(timeout)
+castor::server::ServiceThread::ServiceThread(IThread* userThread) :
+  m_userThread(userThread), m_owner(0)
 {
 };
 
@@ -83,8 +83,7 @@ void castor::server::ServiceThread::run() throw()
       try {
         m_userThread->run();
       } catch (castor::exception::Exception e) {
-        // LOG
-        std::cerr << "Exception caught in the user thread: " << e.getMessage().str() << std::endl;
+        m_owner->clog() << ERROR << "Exception caught in the user thread: " << e.getMessage().str() << std::endl;
       }
 
       /* Notify that we are not anymore a running service */
@@ -97,8 +96,7 @@ void castor::server::ServiceThread::run() throw()
     try {
       m_owner->getMutex()->release();
     } catch(...) {}
-    // LOG
-    std::cerr << "thread.run error: " << any.getMessage().str() << std::endl;
+    m_owner->clog() << ERROR << "Thread run error: " << any.getMessage().str() << std::endl;
   }
 }
 

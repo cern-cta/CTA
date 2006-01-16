@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/13 17:21:35 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/16 10:09:48 $ $Author: itglp $
  *
  *
  *
@@ -102,8 +102,7 @@ void castor::server::BaseDaemon::start() throw(castor::exception::Exception)
     m_signalMutex->release();
   }
   catch (castor::exception::Exception e) {
-    // LOG
-    std::cerr << "Exception during wait for signal loop: " << e.getMessage().str() << std::endl;
+    clog() << ERROR << "Exception during wait for signal loop: " << e.getMessage().str() << std::endl;
   }
 }
 

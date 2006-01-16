@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/01/13 17:21:36 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/16 10:09:48 $ $Author: itglp $
  *
  *
  *
@@ -62,6 +62,8 @@ castor::server::ListenerThreadPool::~ListenerThreadPool() throw()
 //------------------------------------------------------------------------------
 void castor::server::ListenerThreadPool::run()
 {
+  // XXX a possible improvement here is to fork a thread to run this loop,
+  // because if the user adds several thread pools this one will lock the others!
   try {
     /* Create a socket for the server, bind, and listen */
     castor::io::ServerSocket sock(m_port, true);  
