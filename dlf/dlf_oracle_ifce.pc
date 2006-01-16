@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.16 $ $Date: 2005/10/13 13:00:44 $ CERN-IT $Author: kotlyar $";
+static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.17 $ $Date: 2006/01/16 14:55:21 $ CERN-IT $Author: motiakov $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -505,10 +505,10 @@ DBLISTPTR* dblistptr;
         int i;
 	char func[23];
         struct sqlca sqlca;
-        
+/* buffering bug       
         for(i=0;i<DLFBUFHOSTID;i++)
            if(strcmp(arr_get_host_id_hostname[i],hostname)==0) {*host_id=arr_get_host_id_hostid[i];return (0);}
-        
+  */      
 	strcpy(func, "dlf_get_host_id");
         
         EXEC SQL SELECT host_id INTO :*host_id FROM dlf_host_map WHERE host_name=:hostname;  
@@ -516,10 +516,11 @@ DBLISTPTR* dblistptr;
         switch (sqlca.sqlcode) 
            {
            case 0:
+              /* buffering bug
               strcpy(arr_get_host_id_hostname[bufptr_get_host_id],hostname);
               arr_get_host_id_hostid[bufptr_get_host_id]=*host_id;
               if(bufptr_get_host_id==(DLFBUFHOSTID-1)) bufptr_get_host_id=0;
-              else bufptr_get_host_id++;
+              else bufptr_get_host_id++; */
               return(0);
            case 1403:
               return(1);
@@ -550,9 +551,10 @@ DBLISTPTR* dblistptr;
         int i;
 	char func[23];
         struct sqlca sqlca;
+/* buffering bug
         for(i=0;i<DLFBUFNSHOSTID;i++)
            if(strcmp(arr_get_ns_host_id_hostname[i],hostname)==0) {*host_id=arr_get_ns_host_id_hostid[i];return (0);}
-        
+        */
 	strcpy(func, "dlf_get_ns_host_id");
 
         EXEC SQL SELECT ns_host_id INTO :*host_id FROM dlf_ns_host_map WHERE ns_host_name=:hostname;
@@ -560,10 +562,11 @@ DBLISTPTR* dblistptr;
         switch (sqlca.sqlcode)
            {
            case 0:
+          /* buffering bug
               strcpy(arr_get_ns_host_id_hostname[bufptr_get_ns_host_id],hostname);
               arr_get_ns_host_id_hostid[bufptr_get_ns_host_id]=*host_id;
               if(bufptr_get_ns_host_id==(DLFBUFNSHOSTID-1)) bufptr_get_ns_host_id=0;
-              else bufptr_get_ns_host_id++;
+              else bufptr_get_ns_host_id++; */
               return(0);
            case 1403:
               return(1);
