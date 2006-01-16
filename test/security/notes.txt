@@ -16,6 +16,10 @@ client:
 	grid-proxy-init
 
 server (run as root!):
+	/etc/grid-security/grid-mapfile must contain
+	"/C=CH/O=CERN/OU=GRID/CN=Sebastian Lopienski 4134" lopic3
+
+
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/sebastian/PROTO2/shlib
 	export CSEC_AUTHMECH=GSI
 	export CSEC_TRACE=3 
