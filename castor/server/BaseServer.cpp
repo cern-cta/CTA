@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/01/13 17:21:35 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/01/16 10:30:37 $ $Author: felixehm $
  *
  *
  *
@@ -202,7 +202,7 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
       break;
     }
   }
-  delete longopts;
+  delete [] longopts;
 }
 
 //------------------------------------------------------------------------------
