@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/01/16 10:30:37 $ $Author: felixehm $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/01/16 14:29:22 $ $Author: itglp $
  *
  *
  *
@@ -180,8 +180,8 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
       {
         char* cfgFile = (char *)malloc(strlen("PATH_CONFIG=") + strlen(Coptarg) + 1);
         if(cfgFile != NULL) {
-          sprintf(cfgFile,"PATH_CONFIG=%s",Coptarg);
-          printf("Using configuration file %s\n", cfgFile);
+          sprintf(cfgFile,"PATH_CONFIG=%s", Coptarg);
+          printf("Using configuration file %s\n", Coptarg);
           putenv(cfgFile);
         }
       }
