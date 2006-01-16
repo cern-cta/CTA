@@ -1,10 +1,98 @@
+castor (2.0.2-8) unstable; urgency=low
+
+  * PROTO2/castor/db/ora/OraVdqmSvc.cpp:
+    [r1.39,2005-12-08,mbraeger] Solved the bug of showqueues in another way, than in the last version. Both ways are equivalent and works, but this version is more elegant and faster.
+  * PROTO2/castor/Imakefile:
+    [r1.117,2006-01-13,itglp] Changes to compile the castor::server package.
+  * PROTO2/castor/db/ora/OraQuerySvc.cpp:
+  * PROTO2/castor/db/ora/OraQuerySvc.hpp:
+    [2006-01-12,itglp] Fixed a function header with the right exception.
+  * PROTO2/castor/db/oracleTrailer.sql:
+    [r1.236,2006-01-12,itglp] Added missing DELETE clause in recreateCastorFile.
+    [r1.235,2006-01-05,sponcec3] Fixed updateFsFileClosed to modify fsDeviation and deltaWeight, taking into account that there is one less stream on the filesystem
+  * PROTO2/castor/rh/Server.cpp:
+  * PROTO2/castor/rh/Server.hpp:
+    [2006-01-13,itglp] Request Handler refactorization using the castor::server framework for thread handling.
+  * PROTO2/castor/server/BaseDaemon.cpp:
+  * PROTO2/castor/server/BaseServer.cpp:
+  * PROTO2/castor/server/BaseServer.hpp:
+  * PROTO2/castor/server/BaseThreadPool.cpp:
+  * PROTO2/castor/server/BaseThreadPool.hpp:
+  * PROTO2/castor/server/IThread.hpp:
+  * PROTO2/castor/server/NotificationThread.cpp:
+  * PROTO2/castor/server/NotificationThread.hpp:
+  * PROTO2/castor/server/ServiceThread.cpp:
+  * PROTO2/castor/server/ServiceThread.hpp:
+  * PROTO2/castor/server/SignalThreadPool.hpp:
+    [2006-01-13,itglp] Added a new thread pool to be used for listening servers (like the RH). Updated/improved other classes in the framework.
+  * PROTO2/castor/server/BaseServer.cpp:
+    [r 1.7,2005-12-08,itglp] Fixed parseCommandLine.
+    [r 1.6,2005-12-08,itglp] Added option to parseCommandLine to handle the configuration file.
+    [r1.10,2006-01-16,felixehm] Fix memory leak.
+  * PROTO2/castor/server/BaseServer.hpp:
+    [r 1.3,2005-12-08,itglp] Fixed getThreadPool signature, fixed some comments.
+  * PROTO2/castor/server/BaseThreadPool.cpp:
+    [r 1.5,2005-12-12,itglp] Minor fixes; handling SIGCHLD signal.
+  * PROTO2/castor/server/ServiceThread.cpp:
+    [r 1.3,2005-12-08,itglp] Initialized the user thread with the shared Mutex. This feature is not used for the time being.
+  * PROTO2/castor/server/BaseServer.cpp:
+  * PROTO2/castor/server/SignalThreadPool.cpp:
+  * PROTO2/castor/server/SignalThreadPool.hpp:
+    [r 1.7,2005-12-12,itglp] Minor fixes; handling SIGCHLD signal.
+    [r 1.6,2005-12-08,itglp] Fixed getThreadPool signature, fixed some comments.
+  * PROTO2/config/Project.tmpl:
+    [r1.49,2005-12-09,waldron] added BuildCupvLibrary dependancy for DLF
+  * PROTO2/debian/Cupvdaemon.init:
+  * PROTO2/debian/DLFCONFIG:
+  * PROTO2/debian/EXPCONFIG:
+  * PROTO2/debian/MYSTAGERCONFIG:
+  * PROTO2/debian/MigHunter.init:
+  * PROTO2/debian/castor.conf:
+  * PROTO2/debian/dlfserver.init:
+  * PROTO2/debian/nsdaemon.init:
+  * PROTO2/debian/rhserver.init:
+  * PROTO2/debian/rtcpclientd.init:
+  * PROTO2/debian/stager.init:
+  * PROTO2/debian/vmgrdaemon.init:
+    [2006-01-12,itglp] Fixed configuration & initialization scripts. Added sysconfig files for castor, LSF, rmmaster; to be packaged.
+  * PROTO2/debian/castor-rtcopy-clientserver.postinst:
+    [r 1.8,2006-01-12,itglp] Added chown stage.st /var/spool/rtcpclientd.
+  * CASTOR/dlf/dlf_oracle_ifce.pc:
+    [r1.17,2006-01-16,motiakov] Commented non thread-safe code.
+  * PROTO2/dlf/dlfmysetup.sh:
+  * PROTO2/dlf/dlforasetup.sh:
+    [2005-12-09,sponcec3] Added SRM facilities to the DLF setup scripts
+  * PROTO2/ns/Cns_main.c:
+  * PROTO2/castor/io/AuthClientSocket.cpp:
+  * PROTO2/castor/io/AuthServerSocket.cpp:
+  * PROTO2/rfio/connect.c:
+  * PROTO2/rfio/rfio_serv.c:
+  * PROTO2/security/Csec_api.man:
+  * PROTO2/tape/tpdaemon.c:
+  * PROTO2/upv/Cupv_main.c:
+  * PROTO2/vdqm/vdqm_Listen.c:
+  * PROTO2/vmgr/vmgr_main.c:
+    [2005-12-12,lopic3] changed Csec_geterrmsg() to Csec_getErrorMessage()
+  * PROTO2/rtcopy/TapeErrorHandler.c:
+    [r1.11,2006-01-13,obarring] Make sure that failure calling the expert system is not interpreted as an exhausted retry limit.
+  * CASTOR/rtcopy/err_messages:
+    [r1.18,2005-12-13,obarring] Classify new message (rtcpd_StartTapeIO(): Thread interface call error) under OTHER errors (6)
+    [r1.17,2005-12-13,obarring] Change some USER and SHIFT errors to TAPE. See remedy ticket CT0000000300180.
+  * PROTO2/rtcopy/rtcpcldCatalogueInterface.c:
+    [r1.140,2006-01-13,obarring] Try to ensure a retry in case of a communication failure or other client errors
+  * PROTO2/shlib/Imakefile:
+    [r1.43,2005-12-09,itglp] Fixed rules to properly compile libCastorCnvs.
+  * PROTO2/stager/stager_query_service.cpp:
+    [r1.32,2005-12-09,itglp] Fixed missing delete leading to a memory leak in case of exception.
+
+ -- Sebastien Ponce <sponcec3@pcitds13>  Mon, 16 Jan 2006 16:08:34 +0100
+
 castor (2.0.2-7) unstable; urgency=low
 
   * PROTO2/debian/castor.conf
     Fixed default castor.conf for VDQM log and library
   * PROTO2/castor/vdqm/handler/TapeDriveHandler.cpp
-    Fixed a bug for the showqueue command. Now the right status is sent back
-to the client.
+    Fixed a bug for the showqueue command. Now the right status is sent back to the client.
   * PROTO2/castor/db/ora/OraVdqmSvc.cpp
     Fixed access to relationships in case the relation leads to a null pointer
     Fixed the showqueue problem in the selectTapeDriveQueue() function
