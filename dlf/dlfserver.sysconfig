@@ -1,2 +1,6 @@
+#
+# $Id: dlfserver.sysconfig,v 1.2 2006/01/16 08:24:41 itglp Exp $
+#
+
 RUN_DLFSERVER=yes
 OPTIONS="-t 100"
