@@ -128,7 +128,10 @@ namespace castor {
 
     OBJ_PutDoneStart = 93,
     OBJ_FileQryResponse = 94,
-    OBJ_SetFileGCWeight = 95
+    OBJ_SetFileGCWeight = 95,
+
+    OBJ_RepackRequest = 96,
+    OBJ_RepackSegment = 97
   };
     
   /**
@@ -178,6 +181,8 @@ namespace castor {
     
     SVC_DBSRMSVC = 35,
     SVC_DBSRMDAEMONSVC = 36
+    
+
   };
 
   /**
