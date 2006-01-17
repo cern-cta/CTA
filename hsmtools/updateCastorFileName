@@ -1,0 +1,96 @@
+#!/usr/bin/perl -w
+#/******************************************************************************
+# *                      updateCastorFileName
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @(#)$RCSfile: updateCastorFileName,v $ $Revision: 1.1 $ $Release$ $Date: 2006/01/17 14:07:39 $ $Author: sponcec3 $
+# *
+# * updates the names of the castorfiles given in input by
+# * querying the given nameserver (default is castor)
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+use strict;
+use diagnostics;
+use lib "/usr/lib/perl/CASTOR";
+use castor_tools;
+use DBD::Oracle qw(:ora_types);
+
+# usage function
+sub usage {
+  printf("Usage : %s [-h] [-n <nameserver>] fileId [...]\n", $0);
+}
+
+# first parse the options
+my $help;
+my $nameserver = 'castor.cern.ch';
+if (0 == Getopt::Long::GetOptions ('h|help' => \$help,
+				   'n|nameserver=s' => \$nameserver)) {
+  usage();
+  exit(1);
+}
+
+if ($help) {
+  usage();
+  exit(0);
+}
+
+# avoid SQL injection by keeping only letters and . for nameserver machine
+if ($nameserver =~ /[^a-zA-Z\._0-9]/) {
+  print "Error : \"" . $nameserver . "\" is not a machine name\n";
+  usage();
+  exit;
+}
+
+# Check the arguments
+if ($#ARGV < 0) {
+  print("Error : wrong number of arguments\n");
+  usage();
+  exit;
+}
+
+#connect to the database and prepare the query
+my @castor_conf = castor_conf_getOraStagerSvc();
+my $dbh = DBI->connect('dbi:Oracle:',$castor_conf[0] ,$castor_conf[1]);
+my $dbquery = 'UPDATE Castorfile SET bestKnownFileName = :filename WHERE fileid = :fileid AND nsHost = \'' . $nameserver . '\'';
+my $sth = $dbh->prepare("$dbquery");
+
+# loop on given fileids
+my $i;
+my $filename;
+my $comm;;
+for ($i = 0; $i <= $#ARGV; $i++) {
+  # avoid SQL injection by keeping only numbers
+  if ($ARGV[$i] =~ /[^0-9]/) {
+    print "Error : \"$ARGV[$i]\" is not a fileid\n";
+    usage();
+    exit;
+  }
+  # connects to the nameserver and get file name
+  $comm = 'nsGetPath ' . $nameserver . " " . $ARGV[$i];
+  chomp($filename = `$comm`);
+  if ($filename ne '') {
+    print '' . $ARGV[$i] . ' -> ' . $filename, "\n";
+    $sth->bind_param_inout(":filename",\$filename,2048);
+    $sth->bind_param_inout(":fileid",\$ARGV[$i],0);
+    $sth->execute;
+  }
+}
+
+$sth->finish;
+$dbh->disconnect;

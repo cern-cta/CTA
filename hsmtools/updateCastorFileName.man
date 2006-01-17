@@ -1,0 +1,58 @@
+.\" @(#)$RCSfile: updateCastorFileName.man,v $ $Revision: 1.1 $ $Date: 2006/01/17 14:07:39 $ CERN IT/ADC Olof Barring
+.\" Copyright (C) 2005 by CERN IT/ADC
+.\" All rights reserved
+.\"
+.TH UPDATECASTORFILENAME 1 "$Date: 2006/01/17 14:07:39 $" CASTOR "Updates the name of a file in the stager"
+.SH NAME
+updateCastorFileName \- Updates the best known filename of one or many CastorFiles in the stager
+.SH SYNOPSIS
+.B updateCastorFileName
+[
+.BI -h, 
+.BI --help
+]
+[
+.BI -n, 
+.BI --nameserver
+nameserver
+]
+.BI fileId [...]
+.SH DESCRIPTION
+.B updateCastorFileName
+queries the nameserver for the given files and updates
+accordingly the best known filename in the stager database.
+It displays on the output the updates that are made to the DB.
+
+.TP 4
+.BI \-h,
+.BI \-\-help
+Get usage information
+.TP
+.BI \-n,
+.BI \-\-nameserver
+.BI nameserver
+The name server to be used. Take care that this must be
+the content of the nsHost column in the stager database.
+Otherwise no update will take place.
+.TP
+.BI fileId\ [...]
+The ids of the files that should be updated.
+
+.SH EXAMPLES
+.fi
+.BI #\ updateCastorFileName\ -n\ lxs5010\ 67030828\ 67031773\ 61312514
+.fi
+67030828 -> /castor/cern.ch/user/j/jdurand/24235427-4f0b-4748-bc3c-b61671bc17c4
+.fi
+67031773 -> /castor/cern.ch/user/j/jdurand/b579f2bf-a57b-44e6-88a2-17f765f02c2b
+.fi
+Server lxs5010 Fileid 61312514, No such file or directory
+.fi
+
+.SH NOTES
+This command connects directly to the stager database through
+the perl DBI interface to ORACLE. Thus it can only run on
+a machine providing it.
+Configuration for the database access is taken from castor.conf.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
