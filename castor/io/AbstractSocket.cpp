@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AbstractSocket.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/04/18 15:08:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: AbstractSocket.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/01/17 09:52:22 $ $Author: itglp $
  *
  *
  *
@@ -168,8 +168,9 @@ sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port,
   // get host information
   struct hostent *hp;
   if ((hp = gethostbyname(host.c_str())) == 0) {
+    errno = EHOSTUNREACH;
     castor::exception::Exception ex(errno);
-    ex.getMessage() << "Unknown host : " << host;
+    ex.getMessage() << "Unknown host " << host << " (h_errno = " << h_errno << ")";
     throw ex;
   }
   // Builds the address
