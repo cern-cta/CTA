@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.11 2005/10/27 14:31:44 itglp Exp $
+ * $Id: stager_qry.c,v 1.12 2006/01/17 09:51:50 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.11 $ $Date: 2005/10/27 14:31:44 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.12 $ $Date: 2006/01/17 09:51:50 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -83,7 +83,9 @@ main(int argc, char *argv[]) {
                        &(args.opts));
 
   if (rc < 0) {
-    fprintf(stderr, "Error: %s\n", sstrerror(serrno));
+    if(serrno != 0) {
+      fprintf(stderr, "Error: %s\n", sstrerror(serrno));
+    }
     fprintf(stderr, "%s\n", errbuf);
     exit(EXIT_FAILURE);
   }
@@ -128,12 +130,12 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
     case 'M':
       args->requests[nbargs].type = BY_FILENAME;
       args->requests[nbargs].param = (char *)strdup(Coptarg);
-      nbargs++;;
+      nbargs++;
       break;
     case 'F':
       args->requests[nbargs].type = BY_FILEID;
       args->requests[nbargs].param = (char *)strdup(Coptarg);
-      nbargs++;;
+      nbargs++;
       break;
     case 'U':
       args->requests[nbargs].type = BY_USERTAG;
