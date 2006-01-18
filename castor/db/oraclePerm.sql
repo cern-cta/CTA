@@ -911,9 +911,9 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
      AND SubRequest.castorfile = DiskCopy.castorfile
      AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
      AND FileSystem.id = DiskCopy.fileSystem
-     AND FileSystem.status = 0 -- PRODUCTION
+     AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
      AND DiskServer.id = FileSystem.diskserver
-     AND DiskServer.status = 0 -- PRODUCTION
+     AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
      AND ROWNUM < 2;
    -- We found at least a DiskCopy. Let's list all of them
    OPEN sources
