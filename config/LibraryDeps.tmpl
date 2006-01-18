@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: LibraryDeps.tmpl,v $ $Revision: 1.10 $ $Date: 2005/12/06 10:00:05 $ CERN IT-ADC/CA Jean-Damien Durand
+ * @(#)$RCSfile: LibraryDeps.tmpl,v $ $Revision: 1.11 $ $Date: 2006/01/18 17:19:51 $ CERN IT-ADC/CA Jean-Damien Durand
  */
 
 /* ================================ */
@@ -37,6 +37,17 @@
 #endif
 #endif
 
+#if BuildRfioLibrary
+#if !BuildNameServerLibrary
+#undef BuildNameServerLibrary
+#define BuildNameServerLibrary	YES
+#endif
+#if !BuildStageLibrary
+#undef BuildStageLibrary
+#define BuildStageLibrary YES
+#endif
+#endif
+
 #if BuildStageLibrary
 #if !BuildNameServerLibrary
 #undef BuildNameServerLibrary
@@ -46,16 +57,9 @@
 #undef BuildRfioLibrary
 #define BuildRfioLibrary YES
 #endif
-#endif
-
-#if BuildRfioLibrary
-#if !BuildNameServerLibrary
-#undef BuildNameServerLibrary
-#define BuildNameServerLibrary	YES
-#endif
-#if !BuildStageLibrary
-#undef BuildStageLibrary
-#define BuildStageLibrary YES
+#if !BuildVolumeMgrLibrary
+#undef BuildVolumeMgrLibrary
+#define BuildVolumeMgrLibrary YES
 #endif
 #endif
 
