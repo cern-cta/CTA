@@ -31,16 +31,21 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/repack/RepackRequest.hpp"
-#include "castor/stager/Request.hpp"
+#include "castor/repack/RepackSegment.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
 castor::repack::RepackRequest::RepackRequest() throw() :
-  Request(),
   m_vid(""),
+  m_machine(""),
+  m_userName(""),
+  m_creationTime(0),
+  m_pid(0),
   m_id(0) {
 };
 
@@ -48,6 +53,10 @@ castor::repack::RepackRequest::RepackRequest() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::repack::RepackRequest::~RepackRequest() throw() {
+  for (unsigned int i = 0; i < m_segmentVector.size(); i++) {
+    m_segmentVector[i]->setVid(0);
+  }
+  m_segmentVector.clear();
 };
 
 //------------------------------------------------------------------------------
@@ -62,12 +71,25 @@ void castor::repack::RepackRequest::print(std::ostream& stream,
     stream << indent << "Back pointer, see above" << std::endl;
     return;
   }
-  // Call print on the parent class(es)
-  this->castor::stager::Request::print(stream, indent, alreadyPrinted);
   // Output of all members
   stream << indent << "vid : " << m_vid << std::endl;
+  stream << indent << "machine : " << m_machine << std::endl;
+  stream << indent << "userName : " << m_userName << std::endl;
+  stream << indent << "creationTime : " << m_creationTime << std::endl;
+  stream << indent << "pid : " << m_pid << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  {
+    stream << indent << "Segment : " << std::endl;
+    int i;
+    std::vector<RepackSegment*>::const_iterator it;
+    for (it = m_segmentVector.begin(), i = 0;
+         it != m_segmentVector.end();
+         it++, i++) {
+      stream << indent << "  " << i << " :" << std::endl;
+      (*it)->print(stream, indent + "    ", alreadyPrinted);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------

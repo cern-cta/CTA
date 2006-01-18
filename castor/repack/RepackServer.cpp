@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/01/12 14:05:31 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 14:17:33 $ $Author: felixehm $
  *
  *
  *
@@ -32,7 +32,7 @@
 #include "castor/Services.hpp"
 
 #include "castor/server/BaseThreadPool.hpp"
-#include "castor/server/SignalThreadPool.hpp"
+#include "castor/server/ListenerThreadPool.hpp"
 
 #include "castor/io/ServerSocket.hpp"
 #include "castor/BaseObject.hpp"
@@ -53,10 +53,15 @@ int main(int argc, char *argv[]) {
    
     try {
       // new BaseDeamon as Server 
-      castor::repack::RepackServer daemon("Repack");
-      daemon.parseCommandLine(argc, argv);
-      daemon.start();
-      
+    castor::repack::RepackServer server;
+    server.addThreadPool(
+      new castor::server::ListenerThreadPool("RepackWorker", new castor::repack::RepackWorker(), CSP_REPACKSERVER_PORT));
+
+    // We only need one thread by default at this moment 
+    server.getThreadPool('R')->setNbThreads(1);
+    
+    server.parseCommandLine(argc, argv);
+    server.start();
       }// end try block
       catch (castor::exception::Exception e) {
       std::cerr << "Caught castor exception : "
@@ -73,12 +78,10 @@ int main(int argc, char *argv[]) {
 // RepackServer Constructor
 // also initialises the logging facility
 //------------------------------------------------------------------------------
-castor::repack::RepackServer::RepackServer(const std::string serverName) : castor::server::BaseServer(serverName) 
+castor::repack::RepackServer::RepackServer() : castor::server::BaseServer("RepackServer") 
 {
   
-  m_threadpoolname = "RepackWorker";
-  
-  castor::BaseObject::initLog(serverName, castor::SVC_STDMSG);
+  castor::BaseObject::initLog("RepackServer", castor::SVC_STDMSG);
   // Initializes the DLF logging. This includes
   // registration of the predefined messages
    castor::dlf::Message messages[] =
@@ -91,57 +94,25 @@ castor::repack::RepackServer::RepackServer(const std::string serverName) : casto
      { 6, "Invalid Request Arrival"},
      { 7, "Unable to read Request object from socket"},
      {-1, ""}};
-   castor::dlf::dlf_init((char *)serverName.c_str(), messages);
+   castor::dlf::dlf_init("RepackServer", messages);
+
    
+   
+   /*
    // Create the ThreadPool 
    this->addThreadPool(
         new castor::server::BaseThreadPool(m_threadpoolname,
-            new castor::repack::RepackWorker() 
+            new castor::repack::RepackServerReqSvcThread() 
         )
     ); 
-   // We only need one thread at this moment 
-   this->getThreadPool(m_threadpoolname[0])->setNbThreads(1);
    
    // don't forget to initialise the Pool !
    this->getThreadPool(m_threadpoolname[0])->init();
+   
+   */
 }
 
 
 
-void castor::repack::RepackServer::start() throw (castor::exception::Exception)
-{
-  // BaseServer initialisation (foreground/background)
-  try {
-    castor::server::BaseServer::init();   
-  }catch (castor::exception::Exception e) {
-    // "Exception caught : ignored" message
-    // Message is already done by BaseServer
-    return;
-  }
-  stage_trace(3, "Starting Repack and wait for connections.. on port %d",CSP_REPACKSERVER_PORT);
-  castor::io::ServerSocket sock(CSP_REPACKSERVER_PORT, true);  
-  for (;;) {
-      // Accept connections 
-      castor::io::ServerSocket* s = sock.accept();
-      // handle the command.
-      castor::server::BaseThreadPool* temp = this->getThreadPool(m_threadpoolname[0]);   // id of the threadpool
-      temp->threadAssign((void*)s);
-  }
-}
 
-//------------------------------------------------------------------------------
-// help
-//------------------------------------------------------------------------------
-void castor::repack::RepackServer::help(std::string programName)
-{
-  std::cout << "Usage: " << programName << " [options]\n"
-	  "\n"
-	  "where options can be:\n"
-	  "\n"
-	  "\t--foreground   or -f                \tForeground\n"
-	  "\t--help         or -h                \tThis help\n"
-	  "\t--Sthreads     or -S {integer >= 0} \tNumber of RepackRequest handler threads\n"
-	  "\n"
-	  "Comments to: Castor.Support@cern.ch\n";
-}
 

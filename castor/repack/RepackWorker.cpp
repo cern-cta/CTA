@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/01/12 14:05:31 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 14:17:33 $ $Author: felixehm $
  *
  *
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 
-#include <iostream>
+#include "castor/repack/RepackCommonHeader.hpp" /* the Common Header */
 #include <sys/types.h>
 #include <time.h>
 #include <common.h>     /* for conversion of numbers to char */
@@ -38,8 +38,6 @@
 /* ============= */
 #include "stager_api.h"
 #include "stager_uuid.h"                /* Thread-specific uuids */
-#include "serrno.h"
-#include "Cns_api.h"
 #include "vmgr_api.h"
 
 #include "castor/Services.hpp"
@@ -49,12 +47,11 @@
 #include "castor/MessageAck.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/io/ServerSocket.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 
+#include "castor/repack/RepackCommonHeader.hpp"
 #include "castor/repack/RepackWorker.hpp"
-
-
+#include "castor/repack/FileListHelper.hpp"
+#include "castor/repack/DatabaseHelper.hpp"
 
 
 namespace castor {
@@ -71,10 +68,12 @@ RepackWorker::RepackWorker()
   /* -------------------------------- */
   stage_trace(3, "Thread No. %d created!", counter);
 
-  param = NULL; // this is the ServerSocket, if the Thread is runed this 
+  m_param = NULL; // this is the ServerSocket, if the Thread is runed this 
                 // must be initialisied before by calling the init(void*param) function
 
-  nameserver = "castorns.cern.ch";  // The default Nameserver
+  m_nameserver = "castorns.cern.ch";  // The default Nameserver
+  m_filelisthelper = new castor::repack::FileListHelper(m_nameserver);
+  m_databasehelper = new castor::repack::DatabaseHelper();
 
   // Initializes the DLF logging. This includes
   // defining the predefined messages
@@ -100,12 +99,26 @@ RepackWorker::RepackWorker()
 
 }
 
+
+//------------------------------------------------------------------------------
+// initialises the thread
+//------------------------------------------------------------------------------
+void RepackWorker::init(void* param)
+{
+  stage_trace (3, "Thread No. %d init", counter);
+  this->m_param = param;
+}
+
+
+
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 RepackWorker::~RepackWorker() throw()
 {
   stage_trace(3, "Thread No. %d killed!", counter); 
+  delete m_filelisthelper;
+  delete m_databasehelper;
 }
 
 
@@ -113,16 +126,17 @@ RepackWorker::~RepackWorker() throw()
 //------------------------------------------------------------------------------
 // runs the htread starts by threadassign()
 //------------------------------------------------------------------------------
-void RepackWorker::run()
+void RepackWorker::run() throw()
 {
   stage_trace(3, "Thread No. %d started and Request is now handled!", counter);
-
   MessageAck ack; // Response for client
   ack.setStatus(true);
+  
 
   // We know it's a ServerSocket
-  castor::io::ServerSocket* sock = (castor::io::ServerSocket*) param;
+  castor::io::ServerSocket* sock = (castor::io::ServerSocket*) m_param;
   castor::repack::RepackRequest* rreq = 0;
+
 
   // Retrieve info on the client
   unsigned short port;
@@ -136,6 +150,8 @@ void RepackWorker::run()
        castor::dlf::Param("Precise Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4, 2, params);
   }
+  
+  
   // "New Request Arrival" message
   castor::dlf::Param params[] =
     {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
@@ -172,8 +188,18 @@ void RepackWorker::run()
     stage_trace(3, "Unable to read Request object from socket.");
   }
   
+  // Store the Request and the filelist in the Database
   try{
-    store_RequestDB(rreq);
+  	/**
+  	 * retrieves the filelist from Helper 
+  	 */
+    
+    m_filelisthelper->getFileList(rreq);
+    m_databasehelper->store_Request(rreq);
+
+    delete rreq;
+
+    	
   }catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
@@ -182,8 +208,8 @@ void RepackWorker::run()
   }
   
   //send_Ack(ack, sock);
-  print_filelist(rreq->vid());
   getTapeInfo(rreq->vid());
+
   
   delete sock;  // originally created from RepackServer
   delete rreq;
@@ -212,108 +238,12 @@ void RepackWorker::send_Ack(MessageAck ack, castor::io::ServerSocket* sock)
 }
 
 
-//------------------------------------------------------------------------------
-// Stores the Request in the DB
-//------------------------------------------------------------------------------
-void RepackWorker::store_RequestDB(RepackRequest* rreq) throw ()
-{
-  stage_trace(3,"Storing Request in DB" );
-/*
-  castor::BaseAddress ad;
-  ad.setCnvSvcName("DbCnvSvc");
-  ad.setCnvSvcType(castor::SVC_DBCNV);
-  try {
-    svcs()->createRep(&ad, rreq, false);
-    // Store files for file requests
-
-    if (0 != rreq) {
-      svcs()->fillRep(&ad, rreq, OBJ_SubRequest, false);
-    }
-
-    svcs()->commit(&ad);
-    // "Request stored in DB" message
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("ID", rreq->id())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 12, 1, params);
-
-  } catch (castor::exception::Exception e) {
-    svcs()->rollback(&ad);
-    throw e;
-  }
-  */
-}
-
-
-void RepackWorker::print_filelist(const std::string buf)
-{
-  Cns_direntape *dtp;
-
-  
-  std::vector<Cns_direntape*> seg_list;
-
-  Cns_list list;
-  int nbsegs = 0;
-  int nbsegs_notused = 0;
-  double size_requested = 0;
-  double wasted_size = 0;
-  int flags = CNS_LIST_BEGIN;
-  char* vid = (char*)buf.c_str();	// we copy the buf, so its faster
-  
-
-  stage_trace(3,"Getting filelist for %s from %s", vid, nameserver);
-  {
-  // "Getting filelist" message
-  castor::dlf::Param params[] =
-    {castor::dlf::Param("VID", vid ),
-     castor::dlf::Param("NS", nameserver)};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 99, 2, params);
-  }
- 
- 
-  // Now the active segments of the tape
-  while ((dtp = Cns_listtape (nameserver, vid, flags, &list)) != NULL) {
-    flags = CNS_LIST_CONTINUE;
-
-    if (dtp->s_status == 'D') {
-    	nbsegs_notused++;
-    	wasted_size += dtp->segsize;
-    }
-    else {
-	    seg_list.push_back(dtp);
-	    size_requested += dtp->segsize;
-	    nbsegs++;
-    }
-  }
-  (void) Cns_listtape (nameserver, vid, CNS_LIST_END, &list);
-
-
-// MByte calculation:
-  if ( size_requested > 0 )
-	size_requested /= 100000000;
-  if ( wasted_size > 0 )
-  	wasted_size /= 100000000;
-
-// logging
-
-  stage_trace(3,
-  	"Vid %s: %d segments to repack (%.6f MB), %d segments wasted (%G MB)\n",
-  	 vid, nbsegs, size_requested, nbsegs_notused, wasted_size);
-  {
-  	castor::dlf::Param params[] =
-    {castor::dlf::Param("VID", vid ),
-     castor::dlf::Param("Segments to Repack", nbsegs),
-     castor::dlf::Param("Requested Space", size_requested),
-     castor::dlf::Param("Segments wasted", nbsegs_notused),
-     castor::dlf::Param("Space wasted", wasted_size)};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 99, 4, params);
-  }
-}
 
 
 //------------------------------------------------------------------------------
 // Stops the Thread
 //------------------------------------------------------------------------------
-void RepackWorker::stop()
+void RepackWorker::stop() throw()
 {
   stage_trace(3,"Thread No. %d stopped!", counter );
 }
@@ -322,14 +252,14 @@ void RepackWorker::stop()
 //------------------------------------------------------------------------------
 // Gets the Tape information
 //------------------------------------------------------------------------------
-int RepackWorker::getTapeInfo(const std::string buf){
+int RepackWorker::getTapeInfo(const std::string vid){
 	
-	char p_stat[9];
+	std::string p_stat = "?";
 	struct vmgr_tape_info tape_info;
-	char* vid = (char*)buf.c_str();	// we copy the buf, so its faster
-	
 	typedef std::map<int,std::string> TapeDriveStatus;
 	TapeDriveStatus statusname;
+
+	/* just to have a nice access for output */
 	statusname[DISABLED] = "Disabled";
 	statusname[EXPORTED] = "Exported";
 	statusname[TAPE_BUSY] = "Busy";
@@ -337,36 +267,28 @@ int RepackWorker::getTapeInfo(const std::string buf){
 	statusname[TAPE_RDONLY] = "TAPE_RDONLY";
 	statusname[ARCHIVED] = "Archived";
 	
-	
-	if (vmgr_querytape (vid, 0, &tape_info, NULL) < 0) {
-		stage_trace (3, "No such volume %s",vid );
+	/* check if the volume exists and is marked FULL */
+	if (vmgr_querytape ((char*)vid.c_str(), 0, &tape_info, NULL) < 0) {
+		stage_trace (3, "No such volume %s",vid.c_str() );
 		return (-1);
 	}
 	if ((tape_info.status & TAPE_FULL) == 0) {
-		if (tape_info.status == 0) strcpy (p_stat, "FREE");
-		else if (tape_info.status & TAPE_BUSY) strcpy (p_stat, "BUSY");
-		else if (tape_info.status & TAPE_RDONLY) strcpy (p_stat, "RDONLY");
-		else if (tape_info.status & EXPORTED) strcpy (p_stat, "EXPORTED");
-		else if (tape_info.status & DISABLED) strcpy (p_stat, "DISABLED");
-		else strcpy (p_stat, "?");
-		stage_trace(3, "Volume %s has status %s\n", vid, p_stat);
+		switch ( tape_info.status )
+		{
+			case 0			:	p_stat = "FREE";break;
+			case TAPE_BUSY  :	p_stat = "BUSY";break;
+			case TAPE_RDONLY:	p_stat = "RDONLY";break;
+			case EXPORTED	:	p_stat = "EXPORTED";break;
+			case DISABLED	:	p_stat = "DISABLED";break;
+		}
+		stage_trace(3, "Volume %s has status %s\n", vid.c_str(), p_stat.c_str());
 		return (-1);
 	}
+
 	stage_trace(3, "Volume %s in Pool %s : %s !\n", 
-				vid, tape_info.poolname, statusname[tape_info.status].c_str());
+				vid.c_str(), tape_info.poolname, 
+				statusname[tape_info.status].c_str());
 }
-
-
-
-//------------------------------------------------------------------------------
-// initialises the thread
-//------------------------------------------------------------------------------
-void RepackWorker::init(void* param)
-{
-  stage_trace (3, "Thread No. %d init", counter);
-  this->param = param;
-}
-
 
 
 

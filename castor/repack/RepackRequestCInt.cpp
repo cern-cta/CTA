@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackRequestCInt.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/01/12 14:05:31 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackRequestCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 14:17:33 $ $Author: felixehm $
  *
  * 
  *
@@ -29,8 +29,9 @@
 // Include Files
 #include "castor/IObject.hpp"
 #include "castor/repack/RepackRequest.hpp"
-#include "castor/stager/Request.hpp"
+#include "castor/repack/RepackSegment.hpp"
 #include "osdep.h"
+#include <vector>
 
 extern "C" {
 
@@ -47,20 +48,6 @@ extern "C" {
   int Crepack_RepackRequest_delete(castor::repack::RepackRequest* obj) {
     delete obj;
     return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_getRequest
-  //----------------------------------------------------------------------------
-  castor::stager::Request* Crepack_RepackRequest_getRequest(castor::repack::RepackRequest* obj) {
-    return obj;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_fromRequest
-  //----------------------------------------------------------------------------
-  castor::repack::RepackRequest* Crepack_RepackRequest_fromRequest(castor::stager::Request* obj) {
-    return dynamic_cast<castor::repack::RepackRequest*>(obj);
   }
 
   //----------------------------------------------------------------------------
@@ -94,99 +81,37 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_flags
+  // Crepack_RepackRequest_type
   //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_flags(castor::repack::RepackRequest* instance, u_signed64* var) {
-    *var = instance->flags();
+  int Crepack_RepackRequest_type(castor::repack::RepackRequest* instance,
+                                 int* ret) {
+    *ret = instance->type();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_setFlags
+  // Crepack_RepackRequest_clone
   //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_setFlags(castor::repack::RepackRequest* instance, u_signed64 new_var) {
-    instance->setFlags(new_var);
+  int Crepack_RepackRequest_clone(castor::repack::RepackRequest* instance,
+                                  castor::IObject** ret) {
+    *ret = instance->clone();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_userName
+  // Crepack_RepackRequest_vid
   //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_userName(castor::repack::RepackRequest* instance, const char** var) {
-    *var = instance->userName().c_str();
+  int Crepack_RepackRequest_vid(castor::repack::RepackRequest* instance, const char** var) {
+    *var = instance->vid().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_setUserName
+  // Crepack_RepackRequest_setVid
   //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_setUserName(castor::repack::RepackRequest* instance, const char* new_var) {
+  int Crepack_RepackRequest_setVid(castor::repack::RepackRequest* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
-    instance->setUserName(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_euid
-  //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_euid(castor::repack::RepackRequest* instance, unsigned long* var) {
-    *var = instance->euid();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_setEuid
-  //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_setEuid(castor::repack::RepackRequest* instance, unsigned long new_var) {
-    instance->setEuid(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_egid
-  //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_egid(castor::repack::RepackRequest* instance, unsigned long* var) {
-    *var = instance->egid();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_setEgid
-  //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_setEgid(castor::repack::RepackRequest* instance, unsigned long new_var) {
-    instance->setEgid(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_mask
-  //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_mask(castor::repack::RepackRequest* instance, unsigned long* var) {
-    *var = instance->mask();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_setMask
-  //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_setMask(castor::repack::RepackRequest* instance, unsigned long new_var) {
-    instance->setMask(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_pid
-  //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_pid(castor::repack::RepackRequest* instance, unsigned long* var) {
-    *var = instance->pid();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_setPid
-  //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_setPid(castor::repack::RepackRequest* instance, unsigned long new_var) {
-    instance->setPid(new_var);
+    instance->setVid(snew_var);
     return 0;
   }
 
@@ -208,60 +133,26 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_svcClassName
+  // Crepack_RepackRequest_userName
   //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_svcClassName(castor::repack::RepackRequest* instance, const char** var) {
-    *var = instance->svcClassName().c_str();
+  int Crepack_RepackRequest_userName(castor::repack::RepackRequest* instance, const char** var) {
+    *var = instance->userName().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_setSvcClassName
+  // Crepack_RepackRequest_setUserName
   //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_setSvcClassName(castor::repack::RepackRequest* instance, const char* new_var) {
+  int Crepack_RepackRequest_setUserName(castor::repack::RepackRequest* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
-    instance->setSvcClassName(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_userTag
-  //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_userTag(castor::repack::RepackRequest* instance, const char** var) {
-    *var = instance->userTag().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_setUserTag
-  //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_setUserTag(castor::repack::RepackRequest* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setUserTag(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_reqId
-  //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_reqId(castor::repack::RepackRequest* instance, const char** var) {
-    *var = instance->reqId().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_setReqId
-  //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_setReqId(castor::repack::RepackRequest* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setReqId(snew_var);
+    instance->setUserName(snew_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
   // Crepack_RepackRequest_creationTime
   //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_creationTime(castor::repack::RepackRequest* instance, u_signed64* var) {
+  int Crepack_RepackRequest_creationTime(castor::repack::RepackRequest* instance, unsigned long* var) {
     *var = instance->creationTime();
     return 0;
   }
@@ -269,65 +160,31 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Crepack_RepackRequest_setCreationTime
   //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_setCreationTime(castor::repack::RepackRequest* instance, u_signed64 new_var) {
+  int Crepack_RepackRequest_setCreationTime(castor::repack::RepackRequest* instance, unsigned long new_var) {
     instance->setCreationTime(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_lastModificationTime
+  // Crepack_RepackRequest_pid
   //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_lastModificationTime(castor::repack::RepackRequest* instance, u_signed64* var) {
-    *var = instance->lastModificationTime();
+  int Crepack_RepackRequest_pid(castor::repack::RepackRequest* instance, unsigned long* var) {
+    *var = instance->pid();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_setLastModificationTime
+  // Crepack_RepackRequest_setPid
   //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_setLastModificationTime(castor::repack::RepackRequest* instance, u_signed64 new_var) {
-    instance->setLastModificationTime(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_type
-  //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_type(castor::repack::RepackRequest* instance,
-                                 int* ret) {
-    *ret = instance->type();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_clone
-  //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_clone(castor::repack::RepackRequest* instance,
-                                  castor::IObject** ret) {
-    *ret = instance->clone();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_vid
-  //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_vid(castor::repack::RepackRequest* instance, char** var) {
-    *var = instance->vid();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_setVid
-  //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_setVid(castor::repack::RepackRequest* instance, char* new_var) {
-    instance->setVid(new_var);
+  int Crepack_RepackRequest_setPid(castor::repack::RepackRequest* instance, unsigned long new_var) {
+    instance->setPid(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
   // Crepack_RepackRequest_id
   //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_id(castor::repack::RepackRequest* instance, int* var) {
+  int Crepack_RepackRequest_id(castor::repack::RepackRequest* instance, u_signed64* var) {
     *var = instance->id();
     return 0;
   }
@@ -335,8 +192,37 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Crepack_RepackRequest_setId
   //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_setId(castor::repack::RepackRequest* instance, int new_var) {
+  int Crepack_RepackRequest_setId(castor::repack::RepackRequest* instance, u_signed64 new_var) {
     instance->setId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crepack_RepackRequest_addSegment
+  //----------------------------------------------------------------------------
+  int Crepack_RepackRequest_addSegment(castor::repack::RepackRequest* instance, castor::repack::RepackSegment* obj) {
+    instance->addSegment(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crepack_RepackRequest_removeSegment
+  //----------------------------------------------------------------------------
+  int Crepack_RepackRequest_removeSegment(castor::repack::RepackRequest* instance, castor::repack::RepackSegment* obj) {
+    instance->removeSegment(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crepack_RepackRequest_segment
+  //----------------------------------------------------------------------------
+  int Crepack_RepackRequest_segment(castor::repack::RepackRequest* instance, castor::repack::RepackSegment*** var, int* len) {
+    std::vector<castor::repack::RepackSegment*>& result = instance->segment();
+    *len = result.size();
+    *var = (castor::repack::RepackSegment**) malloc((*len) * sizeof(castor::repack::RepackSegment*));
+    for (int i = 0; i < *len; i++) {
+      (*var)[i] = result[i];
+    }
     return 0;
   }
 

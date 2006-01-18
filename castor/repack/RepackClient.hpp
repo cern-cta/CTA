@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/01/12 14:05:31 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 14:17:33 $ $Author: felixehm $
  *
  *
  *
@@ -27,11 +27,20 @@
 #ifndef REPACKCLIENT_HPP
 #define REPACKCLIENT_HPP 1
 
-#include "castor/client/BaseCmdLineClient.hpp"
-#include "castor/Constants.hpp"
-#include "castor/repack/RepackServer.hpp"
-#include <iostream>
-#include <string>
+/* Common includes */
+#include "castor/repack/RepackCommonHeader.hpp"
+#include <common.h>
+#include <dlfcn.h>
+#include "castor/ICnvSvc.hpp"
+#include "castor/Services.hpp"
+#include "castor/repack/RepackRequest.hpp"
+#include "castor/repack/RepackServer.hpp"	/*TODO: remove! CSP_REPACKSERVERPORT  
+											should be declared in Constants.hpp 
+											*/
+#include "h/stager_client_api_common.h" 
+#include "Cgetopt.h"
+#include "castor/io/ClientSocket.hpp"
+#include "castor/repack/RepackRequest.hpp"
 
 namespace castor {
 
@@ -42,10 +51,10 @@ namespace castor {
    */
     
     /** 
-      * struct to pass Parameters later on to the woring thread
+      * struct to pass Parameters later on to the working thread
       */
     struct cmd_params{
-      std::string vid;
+      char* vid;
     };
 
   class RepackClient : public castor::BaseObject{
@@ -73,7 +82,7 @@ namespace castor {
 */
   protected:
     bool parseInput(int argc, char** argv);
-    castor::stager::Request* buildRequest()             throw ();
+    castor::repack::RepackRequest* buildRequest()             throw ();
     void usage(std::string message)                     throw ();
     void setRemotePort() throw (castor::exception::Exception);
     void setRemoteHost() throw (castor::exception::Exception);
@@ -83,8 +92,6 @@ namespace castor {
     std::string m_defaulthost;
     castor::ICnvSvc *svc;
     cmd_params cp;
-
-    
 
   };
 

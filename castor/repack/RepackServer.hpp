@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/01/12 14:05:31 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 14:17:33 $ $Author: felixehm $
  *
  *
  *
@@ -30,7 +30,7 @@
 #include <iostream>
 #include <string>
 #include "castor/exception/Exception.hpp"
-#include "castor/server/BaseDaemon.hpp"
+#include "castor/server/BaseServer.hpp"
 
 
 #define CSP_REPACKSERVER_PORT 62800
@@ -50,20 +50,12 @@ namespace castor {
     /**
      * constructor
      */
-    RepackServer(const std::string serverName);
+    RepackServer();
 
     /**
      * destructor
      */
     virtual ~RepackServer() throw() {};
-    virtual void start() throw (castor::exception::Exception);
-
-  protected:
-   
-    virtual void help(std::string programName);
-
-  private:
-    std::string m_threadpoolname;
 
   };
 

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Release$ $Date: 2006/01/12 14:05:31 $ $Author: felixehm $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 14:17:33 $ $Author: felixehm $
 #
 # Make Castor Repack System
 #
@@ -42,25 +42,36 @@ REPACKLIB = LibraryTargetName(castorRepack)
 LIBS = -lshift 
 #LIBS = -lshift -LcastorRepack
 
-REPACKCOMMON_SRC = ../io/StreamRepackRequestCnv.cpp RepackRequest.cpp
-REPACKSERVERBIN_SRCS =  RepackServer.cpp RepackWorker.cpp $(REPACKCOMMON_SRC)
-REPACKBIN_SRCS =  RepackClient.cpp ../io/ClientSocket.cpp $(REPACKCOMMON_SRC)
+REPACKCOMMON_SRC = ../io/StreamRepackRequestCnv.cpp \
+					RepackRequest.cpp \
+					RepackSegment.cpp
+REPACKSERVERBIN_SRCS =  RepackServer.cpp \
+					 RepackWorker.cpp \
+					 FileListHelper.cpp \
+					 DatabaseHelper.cpp \
+					 ../db/cnv/DbRepackRequestCnv.cpp \
+					 ../db/cnv/DbRepackSegmentCnv.cpp \
+					 ../db/ora/OraRepackRequestCnv.cpp \
+					 ../db/ora/OraRepackSegmentCnv.cpp \
+					 $(REPACKCOMMON_SRC)
+REPACKBIN_SRCS =  RepackClient.cpp \
+					../io/ClientSocket.cpp \
+					$(REPACKCOMMON_SRC)
 
 
-# Repack library
-REPACKLIB_SRCS = ../io/StreamRepackRequestCnv.cpp RepackRequest.cpp
+#Repack library
+REPACKLIB_SRCS = ../io/StreamRepackRequestCnv.cpp RepackRequest.cpp RepackSegment.cpp
 REPACKLIB_OBJS = $(REPACKLIB_SRCS:.cpp=.Osuf)
 
-# The Binary-Objects
+
+
 REPACKSERVERBIN_OBJS = $(REPACKSERVERBIN_SRCS:.cpp=.Osuf)
 REPACKBIN_OBJS = $(REPACKBIN_SRCS:.cpp=.Osuf)
 
 DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift) 
 
-
 LDFLAGS = -L FileName(..,FileName(..,shlib)) $(MTLDFLAGS)
 LD = g++
-
 
 all: $(REPACKLIB) \
 	ProgramTargetName(repackserver) \
@@ -68,7 +79,6 @@ all: $(REPACKLIB) \
 
 NormalProgramTarget(repackserver,$(REPACKSERVERBIN_OBJS),$(DEPLIB),$(LIBS))
 NormalProgramTarget(repack,$(REPACKBIN_OBJS),$(DEPLIB),$(LIBS))
-
 MakeDepSharedLibrary(FileName(..,shlib),shift)
 
 

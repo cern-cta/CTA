@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/01/12 14:05:31 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 14:17:33 $ $Author: felixehm $
  *
  *
  *
@@ -27,15 +27,14 @@
 #ifndef REPACKWORKER_HPP
 #define REPACKWORKER_HPP 1
 
-#include <iostream>
-#include <string>
+#include "castor/repack/RepackCommonHeader.hpp"
 #include "castor/IObject.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/server/IThread.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/MessageAck.hpp"
-#include "h/stager_client_api_common.h"   // for stage_trace("..")
 #include "RepackRequest.hpp"
+#include "FileListHelper.hpp"
+#include "DatabaseHelper.hpp"
 
 #define BUFSIZE 1024
 
@@ -71,16 +70,16 @@ namespace castor {
     virtual void init(void* param);
     
     
-    virtual void run();
-    virtual void stop();
+    virtual void run() throw();
+    virtual void stop() throw();
     
   private:
     void send_Ack(MessageAck ack, castor::io::ServerSocket* sock);
-    void store_RequestDB(RepackRequest* rreq) throw ();
-    int getTapeInfo(const std::string buf);
-    void print_filelist(std::string vid);
-    void* param;
-    char* nameserver;
+    int getTapeInfo(const std::string vid);
+    void* m_param;
+    char *m_nameserver;
+    castor::repack::FileListHelper* m_filelisthelper;
+    castor::repack::DatabaseHelper* m_databasehelper;
     
   };
 

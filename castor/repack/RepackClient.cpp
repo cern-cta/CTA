@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/01/12 14:05:31 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 14:17:33 $ $Author: felixehm $
  *
  * The Repack Client.
  * It inherits from BaseCmdLineClient and is responsible to create a Request
@@ -27,23 +27,11 @@
  * @author Felix Ehm
  *****************************************************************************/
 
-/* Common includes */
-#include "castor/Constants.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
-#include "castor/ICnvSvc.hpp"
-#include "castor/Services.hpp"
 
 /* Client  includes */
 #include "castor/repack/RepackClient.hpp"
-#include "castor/stager/Request.hpp"
-#include "castor/repack/RepackRequest.hpp"
-#include "h/stager_client_api_common.h" 
-#include <common.h>
-#include <dlfcn.h>
-#include "Cgetopt.h"
 
-#include "castor/io/ClientSocket.hpp"
+
 
 /** By including the Header file, the Factory is automatically active !! 
   */
@@ -129,7 +117,7 @@ RepackClient::~RepackClient() throw()
   */
 bool RepackClient::parseInput(int argc, char** argv)
 {
-  const char* cmdParams = "v:h"; //m_cmdLineParams.str().c_str();
+  const char* cmdParams = "V:h"; //m_cmdLineParams.str().c_str();
   if (argc == 1){
     usage(argv[0]);
     return false;
@@ -157,7 +145,7 @@ bool RepackClient::parseInput(int argc, char** argv)
       usage(argv[0]);
       exit(0);
       break;
-    case 'v':
+    case 'V':
       cp.vid = Coptarg; // store it for later use in building Request
       break;
     default:
@@ -170,7 +158,7 @@ bool RepackClient::parseInput(int argc, char** argv)
 
 void RepackClient::usage(std::string message) throw ()
 {
-   std::cout << "Usage: "<< message  << " -v [VolumeID]" << std::endl;
+   std::cout << "Usage: "<< message  << " -V [VolumeID]" << std::endl;
 }
 
 /** Builds the Request, which is send to the repack server.
@@ -178,7 +166,7 @@ void RepackClient::usage(std::string message) throw ()
 * !! Note that the Caller has to delete the Request Object !!
 * @return pointer to Request Object
 */
-castor::stager::Request* RepackClient::buildRequest() throw ()
+castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
 {
   setRemotePort();
   setRemoteHost();
@@ -188,11 +176,8 @@ castor::stager::Request* RepackClient::buildRequest() throw ()
   RepackRequest* req = new RepackRequest();
   req->setVid(cp.vid);
   req->setPid(getpid());
-  //req->setReqId(nullCuuid);
   req->setUserName(pw->pw_name);
   req->setCreationTime(time(NULL));
-  req->print();
-  
   return req;
 }
 
@@ -207,8 +192,9 @@ void RepackClient::run(int argc, char** argv)
     if (!parseInput(argc, argv)) {
       return;
     }
-    // builds a request
-    castor::stager::Request* req = buildRequest();
+    // builds a request and prints it
+    castor::repack::RepackRequest* req = buildRequest();
+    req->print();
 
     // creates a socket
     castor::io::ClientSocket s(m_defaultport, m_defaulthost);

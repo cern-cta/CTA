@@ -31,9 +31,10 @@
 
 // Include Files
 #include "castor/IObject.hpp"
-#include "castor/stager/Request.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace castor {
 
@@ -42,12 +43,13 @@ namespace castor {
 
   namespace repack {
 
+    // Forward declarations
+    class RepackSegment;
+
     /**
      * class RepackRequest
-     * This is the Request Class for the Communication between RepackServer and
-     * RepackClient
      */
-    class RepackRequest : public virtual castor::stager::Request, public virtual castor::IObject {
+    class RepackRequest : public virtual castor::IObject {
 
     public:
 
@@ -115,6 +117,70 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_machine
+       * @return the value of m_machine
+       */
+      std::string machine() const {
+        return m_machine;
+      }
+
+      /**
+       * Set the value of m_machine
+       * @param new_var the new value of m_machine
+       */
+      void setMachine(std::string new_var) {
+        m_machine = new_var;
+      }
+
+      /**
+       * Get the value of m_userName
+       * @return the value of m_userName
+       */
+      std::string userName() const {
+        return m_userName;
+      }
+
+      /**
+       * Set the value of m_userName
+       * @param new_var the new value of m_userName
+       */
+      void setUserName(std::string new_var) {
+        m_userName = new_var;
+      }
+
+      /**
+       * Get the value of m_creationTime
+       * @return the value of m_creationTime
+       */
+      unsigned long creationTime() const {
+        return m_creationTime;
+      }
+
+      /**
+       * Set the value of m_creationTime
+       * @param new_var the new value of m_creationTime
+       */
+      void setCreationTime(unsigned long new_var) {
+        m_creationTime = new_var;
+      }
+
+      /**
+       * Get the value of m_pid
+       * @return the value of m_pid
+       */
+      unsigned long pid() const {
+        return m_pid;
+      }
+
+      /**
+       * Set the value of m_pid
+       * @param new_var the new value of m_pid
+       */
+      void setPid(unsigned long new_var) {
+        m_pid = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -132,12 +198,51 @@ namespace castor {
         m_id = new_var;
       }
 
+      /**
+       * Add a RepackSegment* object to the m_segmentVector list
+       */
+      void addSegment(RepackSegment* add_object) {
+        m_segmentVector.push_back(add_object);
+      }
+
+      /**
+       * Remove a RepackSegment* object from m_segmentVector
+       */
+      void removeSegment(RepackSegment* remove_object) {
+        for (unsigned int i = 0; i < m_segmentVector.size(); i++) {
+          RepackSegment* item = m_segmentVector[i];
+          if (item == remove_object) {
+            std::vector<RepackSegment*>::iterator it = m_segmentVector.begin() + i;
+            m_segmentVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of RepackSegment* objects held by m_segmentVector
+       * @return list of RepackSegment* objects held by m_segmentVector
+       */
+      std::vector<RepackSegment*>& segment() {
+        return m_segmentVector;
+      }
+
     private:
 
       std::string m_vid;
 
+      std::string m_machine;
+
+      std::string m_userName;
+
+      unsigned long m_creationTime;
+
+      unsigned long m_pid;
+
       /// The id of this object
       u_signed64 m_id;
+
+      std::vector<RepackSegment*> m_segmentVector;
 
     }; // end of class RepackRequest
 
