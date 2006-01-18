@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/01/13 17:29:18 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 11:16:31 $ $Author: sponcec3 $
  *
  *
  *
@@ -49,6 +49,7 @@
 #include "h/stager_service_api.h"
 
 #include <iostream>
+#include <errno.h>
 
 
 //------------------------------------------------------------------------------
