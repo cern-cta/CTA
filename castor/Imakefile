@@ -17,7 +17,7 @@ COMM You should have received a copy of the GNU General Public License
 COMM along with this program; if not, write to the Free Software
 COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 COMM
-COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.117 $ $Release$ $Date: 2006/01/13 17:33:01 $ $Author: itglp $
+COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.118 $ $Release$ $Date: 2006/01/18 16:50:15 $ $Author: felixehm $
 COMM
 COMM Make Castor libraries and executables
 COMM
@@ -28,8 +28,8 @@ COMM
 
 RH_HOST=RhHost
 
-SUBDIRS = $(DBCPPDIR) $(RHCPPDIR) $(VDQMCPPDIR) $(GCCPPDIR)
-DEPENDDIRS = $(DBCPPDIR) $(RHCPPDIR) $(VDQMCPPDIR) $(GCCPPDIR)
+SUBDIRS = $(DBCPPDIR) $(RHCPPDIR) $(VDQMCPPDIR) $(GCCPPDIR) $(REPACKDIR) 
+DEPENDDIRS = $(DBCPPDIR) $(RHCPPDIR) $(VDQMCPPDIR) $(GCCPPDIR) 
 
 #if _AIX
 OSLIBS = -L FileName(..,shlib) -lshift
