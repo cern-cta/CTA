@@ -925,9 +925,9 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       AND SubRequest.castorfile = DiskCopy.castorfile
       AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
       AND FileSystem.id = DiskCopy.fileSystem
-      AND FileSystem.status = 0 -- PRODUCTION
+      AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
       AND DiskServer.id = FileSystem.diskServer
-      AND DiskServer.status = 0; -- PRODUCTION
+      AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
     -- create DiskCopy for Disk to Disk copy
     UPDATE SubRequest SET diskCopy = ids_seq.nextval,
                           lastModificationTime = getTime() WHERE id = srId
