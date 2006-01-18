@@ -303,7 +303,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildCastorClientCPPLibrary	NO
 #define BuildCppTest	        NO
 #define BuildTankPerfMonLibrary	NO
-
+#define BuildRepackClient	NO
 #define Accounting		YES
 #define ClientLogging           NO
 #define HasNis			NO
