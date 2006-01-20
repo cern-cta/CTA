@@ -17,11 +17,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Release$ $Date: 2005/10/13 10:31:11 $ $Author: itglp $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/20 09:53:04 $ $Author: itglp $
 #
-# Make Castor DB libraries
+# Make Castor Oracle library for CDBC API
 #
-# @author Sebastien Ponce, sebastien.ponce@cern.ch
+# @author Giuseppe Lo Presti, giuseppe.lopresti@cern.ch
 #
 
 #include <Project.tmpl>
@@ -41,45 +41,24 @@ ORALIB_SRCS = OraCnvSvc.cpp \
     	    OraStatement.cpp \
             OraResultSet.cpp \
             OraCommonSvc.cpp \
-            OraStagerSvc.cpp \
+            ../ora/OraStagerSvc.cpp \
             OraTapeSvc.cpp \
-            OraJobSvc.cpp \
-            OraGCSvc.cpp \
-            OraFSSvc.cpp \
-            OraQuerySvc.cpp
+            ../ora/OraJobSvc.cpp \
+            ../ora/OraGCSvc.cpp \
+            ../ora/OraFSSvc.cpp \
+            ../ora/OraQuerySvc.cpp
 
 ORALIB_OBJS = $(ORALIB_SRCS:.cpp=.Osuf)
 
 COMMONLIB = LibraryTargetName(castorCommonOra)
 LD = g++
 
-#if BuildVDQMCpp
-#VDQM related objects
-ORAVDQMLIB_SRCS += OraClientIdentificationCnv.cpp \
-               	OraErrorHistoryCnv.cpp \
-                OraDeviceGroupNameCnv.cpp \
-                OraTapeAccessSpecificationCnv.cpp \
-                OraTapeDriveCnv.cpp \
-                OraTapeDriveCompatibilityCnv.cpp \
-                OraTapeDriveDedicationCnv.cpp \
-                OraTapeRequestCnv.cpp \
-                OraTapeServerCnv.cpp \
-                OraVdqmSvc.cpp
-
-ORAVDQMLIB_OBJS = $(ORAVDQMLIB_SRCS:.cpp=.Osuf)
-VDQMLIB = LibraryTargetName(castorVdqmOra)
-#endif
-
-all: $(COMMONLIB) $(VDQMLIB)
+all: $(COMMONLIB)
 
 MakeDepSharedLibrary(FileName(FileName(..,..),shlib),shift)
 MakeDepSharedLibrary(FileName(FileName(..,..),shlib),castorCnvs)
 
 NormalLibraryTarget(castorCommonOra,$(ORALIB_OBJS))
-
-#if BuildVDQMCpp
-NormalLibraryTarget(castorVdqmOra,$(ORAVDQMLIB_OBJS))
-#endif
 
 Makefiles:
 
