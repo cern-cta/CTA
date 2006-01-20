@@ -1,3 +1,4 @@
+
 /*
  * $Id$
 */
@@ -238,76 +239,77 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define LsfInstallDir /usr/local/lsf
 #endif
 
-#define BuildCommands	YES
-#define BuildCommon	YES
-#define BuildCupvClient	NO
-#define BuildCupvDaemon	NO
+#define BuildCommands		NO
+#define BuildCommon		NO
+#define BuildCupvClient		NO
+#define BuildCupvDaemon		NO
 #define	BuildCupvLibrary	NO
-#define BuildExamples	NO
-#define BuildGcDaemon	NO
-#define BuildHsmTools	YES
-#define BuildMonitorClient	YES
-#define BuildMonitorServer	YES
-#define BuildMonitorLibrary	YES
-#define BuildMsgClient	YES
-#define BuildMsgServer	YES
-#define BuildMsgLibrary	YES
+#define BuildExamples		NO
+#define BuildGcDaemon		NO
+#define BuildHsmTools		NO
+#define BuildMonitorClient	NO
+#define BuildMonitorServer	NO
+#define BuildMonitorLibrary	NO
+#define BuildMsgClient		NO
+#define BuildMsgServer		NO
+#define BuildMsgLibrary		NO
 #define BuildNameServerClient	NO
 #define BuildNameServerDaemon	NO
 #define BuildNameServerLibrary	NO
-#define BuildRfioClient	YES
-#define BuildRfioServer	YES
-#define BuildRfioLibrary	YES
+#define BuildRfioClient		NO
+#define BuildRfioServer		NO
+#define BuildRfioLibrary	NO
 /* To be added when there will be end-user RMC client(s) */
 /* #define BuildRmcClient		NO */
-#define BuildRmcServer	YES
-#define BuildRmcLibrary	YES
-#define BuildJob	YES
-#define BuildRtcopyClient	YES
-#define BuildRtcopyServer	YES
-#define BuildRtcopyLibrary	YES
-#define BuildRtstat	YES
-#define BuildRtcpclientd	YES
-#define BuildStageClient	YES
-#define BuildStageClientOld	YES
-#define BuildStageDaemon	YES
-#define BuildStageLibrary	YES
-#define BuildRmMaster	YES
-#define BuildRmNode	YES
-#define BuildRmClient	YES
-#define	BuildRmLibrary	YES
-#define BuildTapeClient	NO
-#define BuildTapeDaemon	NO
-#define BuildTapeLibrary	YES
-#define BuildTest	NO
-#define BuildTpusage	YES
-#define BuildVdqmClient	YES
-#define BuildVdqmServer	YES
-#define BuildVdqmLibrary	YES
-#define BuildVolumeMgrClient	YES
-#define BuildVolumeMgrDaemon	YES
-#define BuildVolumeMgrLibrary	YES
-#define BuildDlfClient	NO
-#define BuildDlfDaemon	NO
-#define BuildDlfLibrary	NO
-#define BuildExpertClient	YES
-#define BuildExpertDaemon	YES
-#define BuildExpertLibrary	YES
-#define BuildSchedPlugin	YES
-#define BuildRHCpp	YES
-#define BuildVDQMCpp    YES 
-#define BuildGCCpp	YES
-#define BuildOraCpp	YES
+#define BuildRmcServer		NO
+#define BuildRmcLibrary		NO
+#define BuildJob		NO
+#define BuildRtcopyClient	NO
+#define BuildRtcopyServer	NO
+#define BuildRtcopyLibrary	NO
+#define BuildRtstat		NO
+#define BuildRtcpclientd	NO
+#define BuildStageClient	NO
+#define BuildStageClientOld	NO
+#define BuildStageDaemon	NO
+#define BuildStageLibrary	NO
+#define BuildRmMaster		NO
+#define BuildRmNode		NO
+#define BuildRmClient		NO
+#define	BuildRmLibrary		NO
+#define BuildTapeClient		NO
+#define BuildTapeDaemon		NO
+#define BuildTapeLibrary	NO
+#define BuildTest	        NO
+#define BuildTpusage		NO
+#define BuildVdqmClient		NO
+#define BuildVdqmServer		NO
+#define BuildVdqmLibrary	NO
+#define BuildVolumeMgrClient	NO
+#define BuildVolumeMgrDaemon	NO
+#define BuildVolumeMgrLibrary	NO
+#define BuildDlfClient    	NO
+#define BuildDlfDaemon    	NO
+#define BuildDlfLibrary    	NO
+#define BuildExpertClient	NO
+#define BuildExpertDaemon	NO
+#define BuildExpertLibrary	NO
+#define BuildSchedPlugin	NO
+#define BuildRHCpp              NO
+#define BuildVDQMCpp            NO
+#define BuildGCCpp              NO
+#define BuildOraCpp             NO
 #define BuildMyCpp              NO
-#define BuildCastorClientCPPLibrary	YES
-#define BuildCppTest	NO
+#define BuildPgCpp		NO
+#define BuildCastorClientCPPLibrary	NO
+#define BuildCppTest	        NO
 #define BuildTankPerfMonLibrary	NO
 #define BuildRepack		NO
 #define Accounting		YES
 #define ClientLogging           NO
 #define HasNis			NO
 #define HasNroff		YES
-#define HasCDK			YES
+#define HasCDK			NO
 #define RFIODaemonRealTime 	NO	
 #define UseAdns			NO
 #define UseCupv			YES
@@ -315,16 +317,16 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define	UseHpss			NO
 #define UseMtx			NO
 #define UseOracle		YES
-#define UseOraCDBC		YES
+#define UseOraCDBC		NO
 #define UsePgSQL		NO
 #define UseMySQL		NO
 #define UseVmgr			YES
-#define UseLsf			YES
+#define UseLsf			NO
 #define UseScheduler	YES
 /* Scheduler options: Supported LSF versions are: 6.1 */
 /* Default is defined in config files */
-#define UseExpert	YES
-#define UseMaui	NO
+#define UseExpert		YES
+#define UseMaui			YES
 #define UseStorageTank		NO
 #define UseCastorOnGlobalFileSystem	NO
 
@@ -332,7 +334,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
  * The following flag enables rfio client interface
  * To follow links. It brings an overhead at rfio_open()
  */
-#define FollowRtLinks	NO
+#define FollowRtLinks		NO
 
 /*
  * Section specifying the build of the Security packages
@@ -348,13 +350,13 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 
 #define SecMakeStaticLibrary	NO
 
-#define BuildSecureTape	YES
-#define BuildSecureVmgr YES
-#define BuildSecureCupv	YES
-#define	BuildSecureVdqm	YES
-#define	BuildSecureRfio	YES
+#define BuildSecureTape		YES
+#define BuildSecureVmgr		YES
+#define BuildSecureCupv		YES
+#define	BuildSecureVdqm		YES
+#define	BuildSecureRfio		YES
 #define BuildSecureRtcopy	YES
-#define BuildSecureCns	YES
+#define BuildSecureCns		YES
 #define BuildSecureStage	YES
 
 #if UseHeimdalKrb5
@@ -401,4 +403,3 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 
 
 #endif /* BuildSecurity */
-
