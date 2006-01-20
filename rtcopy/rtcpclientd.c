@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.30 $ $Release$ $Date: 2005/07/06 07:11:34 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.31 $ $Release$ $Date: 2006/01/20 09:47:02 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.30 $ $Release$ $Date: 2005/07/06 07:11:34 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.31 $ $Release$ $Date: 2006/01/20 09:47:02 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -645,7 +645,7 @@ static void checkWorkerExit(
         }
       }
       /*
-       * In all cases where 
+       * In all cases
        */
       CLIST_DELETE(requestList,item);
       (void)rtcpcld_cleanupTape(item->tape);
