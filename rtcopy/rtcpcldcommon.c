@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.31 $ $Release$ $Date: 2005/09/27 11:06:38 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.32 $ $Release$ $Date: 2006/01/20 09:47:55 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.31 $ $Release$ $Date: 2005/09/27 11:06:38 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.32 $ $Release$ $Date: 2006/01/20 09:47:55 $ Olof Barring";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -118,6 +118,13 @@ void rtcpcld_extlog(
   } else {
     msgNo = RTCPCLD_MSG_EXTERR;
     dlfLevel = DLF_LVL_ERROR;
+    if ( strstr(tmpbuf,"CPDSKTP ! ERROR, TAPE VOLUMES OVERFLOW") != NULL ) {
+      /*
+       * This particular message should not be logged as an error
+       */
+      msgNo = RTCPCLD_MSG_EXTINFO;
+      dlfLevel = DLF_LVL_DEBUG;
+    }
   }
   (void)dlf_write(
                   (inChild == 0 ? mainUuid : childUuid),
