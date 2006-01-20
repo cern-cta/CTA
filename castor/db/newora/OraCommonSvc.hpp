@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/db/ora/OraCommonSvc.hpp
+ *                castor/db/newora/OraCommonSvc.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/10/13 10:31:11 $ $Author: itglp $
+ * @(#)$RCSfile: OraCommonSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/20 15:28:58 $ $Author: itglp $
  *
- * Implementation of the ICommonSvc for Oracle
+ * Implementation of the ICommonSvc for Oracle/CDBC
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -30,7 +30,7 @@
 // Include Files
 #include "castor/BaseSvc.hpp"
 #include "castor/db/DbBaseObj.hpp"
-#include "castor/db/ora/OraCnvSvc.hpp"
+#include "castor/db/newora/OraCnvSvc.hpp"
 #include "castor/stager/ICommonSvc.hpp"
 #include "occi.h"
 #include <vector>

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/11/01 16:30:34 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/20 15:28:58 $ $Author: itglp $
  *
  *
  *
@@ -32,7 +32,7 @@
 #include "castor/SvcFactory.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/db/DbBaseObj.hpp"
-#include "castor/db/ora/OraStatement.hpp"
+#include "castor/db/newora/OraStatement.hpp"
 #include "castor/exception/BadVersion.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -41,7 +41,7 @@
 #include <iomanip>
 
 // Local Files
-#include "OraCnvSvc.hpp"
+#include "castor/db/newora/OraCnvSvc.hpp"
 
 // -----------------------------------------------------------------------
 // External C function used for getting configuration from shift.conf file
