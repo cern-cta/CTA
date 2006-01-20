@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.27 $ $Date: 2006/01/20 15:25:41 $ CERN IT-ADC/CA Jean-Damien Durand
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.28 $ $Date: 2006/01/20 17:47:39 $ CERN IT-ADC/CA Jean-Damien Durand
  */
 
 #include <Project.tmpl>
@@ -62,11 +62,9 @@ EXPERTLIB = DepLibraryTargetName(expert,expert)
 RHCLIENTLIB = DepLibraryTargetName(castor,castorClient)
 #endif
 #if BuildOraCpp
+RHORALIB = DepLibraryTargetName(castor/db/$(ORACPPDIR),castorCommonOra)
 #if UseOraCDBC
-RHORALIB = DepLibraryTargetName(castor/db/newora,castorCommonOra)
 CNVSLIB = DepLibraryTargetName(castor/db/cnv,castorCnvs)
-#else
-RHORALIB = DepLibraryTargetName(castor/db/ora,castorCommonOra)
 #endif
 #endif
 #if BuildMyCpp
@@ -85,6 +83,6 @@ TANKLIB = DepLibraryTargetName(tank,castorTankPerfMon)
 #endif
 #if BuildVDQMCpp
 #if BuildOraCpp
-VDQMORALIB = DepLibraryTargetName(castor/db/ora,castorVdqmOra)
+VDQMORALIB = DepLibraryTargetName(castor/db/$(ORACPPDIR),castorVdqmOra)
 #endif
 #endif
