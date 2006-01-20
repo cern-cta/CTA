@@ -300,6 +300,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildGCCpp              NO
 #define BuildOraCpp             NO
 #define BuildMyCpp              NO
+#define BuildPgCpp		NO
 #define BuildCastorClientCPPLibrary	NO
 #define BuildCppTest	        NO
 #define BuildTankPerfMonLibrary	NO
@@ -315,8 +316,10 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define UseDMSCapi		NO
 #define	UseHpss			NO
 #define UseMtx			NO
-#define UseMySQL		NO
 #define UseOracle		YES
+#define UseOraCDBC		NO
+#define UsePgSQL		NO
+#define UseMySQL		NO
 #define UseVmgr			YES
 #define UseLsf			NO
 #define UseScheduler	YES

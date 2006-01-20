@@ -686,7 +686,11 @@ GCCPPDIR = gc
 COMMONCPPDIR = castor
 #endif
 #if BuildOraCpp
+#if UseOraCDBC
+ORACPPDIR = newora
+#else
 ORACPPDIR = ora
+#endif
 DBCPPDIR = db
 #endif
 #if BuildMyCpp
