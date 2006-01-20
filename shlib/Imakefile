@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.43 $ $Date: 2005/12/09 11:28:28 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.44 $ $Date: 2006/01/20 09:48:22 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -21,7 +21,10 @@ COMM Libraries to include in SharedLibraryTargetName(shift)
 LIBRARIES0 = $(COMMONLIB) $(RFIOLIB) $(MSGLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHCLIENTLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB) $(RMCLIB) $(EXPERTLIB) $(RESOURCEMONITORINGLIB)
 
 LIBRARIES1 = $(RHORALIB)
-SHLIBREQLIBS1 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshift -lcastorCnvs
+SHLIBREQLIBS1 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshift
+#if UseOraCDBC
+SHLIBREQLIBS1 += -lcastorCnvs
+#endif
 
 LIBRARIES2 = $(TANKLIB)
 SHLIBREQLIBS2 = $(SHLIBREQLIBS)
@@ -42,7 +45,10 @@ SHLIBREQLIBS6 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshif
 ALL0=SharedLibraryTargetName(shift)
 
 #if BuildOraCpp
-ALL1=SharedLibraryTargetName(castorCnvs) SharedLibraryTargetName(castorCommonOra)
+ALL1=SharedLibraryTargetName(castorCommonOra)
+#if UseOraCDBC
+ALL1+=SharedLibraryTargetName(castorCnvs)
+#endif
 #endif
 
 #if BuildTankPerfMonLibrary
@@ -90,24 +96,23 @@ EXPORTSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB4))
 COMM ALL3 will come very soon!
 all: $(ALL0) $(ALL1) $(ALL2) $(ALL4) $(ALL5) $(ALL6) $(ALLSEC)
 
-INSTALL0=FileName($(LiB),SharedLibraryTargetName(castorCnvs)) FileName($(LIB),SharedLibraryTargetName(shift))
+
+INSTALL0=FileName($(LIB),SharedLibraryTargetName(shift))
 #if BuildOraCpp
-
 INSTALL1=FileName($(LIB),SharedLibraryTargetName(castorCommonOra))
+#if UseOraCDBC
+INSTALL1+=FileName($(LiB),SharedLibraryTargetName(castorCnvs))
 #endif
-
+#endif
 #if BuildTankPerfMonLibrary
 INSTALL2=FileName($(LIB),SharedLibraryTargetName(castorTankPerfMon))
 #endif
-
 #if BuildMyCpp
-INSTALL4=FileName($(LIB),SharedLibraryTargetName(castorCommonMysql))
+INSTALL4=FileName($(LIB),SharedLibraryTargetName(castorCommonMysql)) FileName($(LiB),SharedLibraryTargetName(castorCnvs))
 #endif
-
 #if BuildPgCpp
-INSTALL5=FileName($(LIB),SharedLibraryTargetName(castorCommonPgsql))
+INSTALL5=FileName($(LIB),SharedLibraryTargetName(castorCommonPgsql)) FileName($(LiB),SharedLibraryTargetName(castorCnvs))
 #endif
-
 #if BuildVDQMCpp
 INSTALL6=FileName($(LIB),SharedLibraryTargetName(castorVdqmOra))
 #endif
@@ -116,19 +121,21 @@ INSTALL6=FileName($(LIB),SharedLibraryTargetName(castorVdqmOra))
 
 install: $(LIB) $(INSTALL0) $(INSTALL1) $(INSTALL2) $(INSTALL4) $(INSTALL5) $(INSTALL6) $(INSTALLSEC)
 
-EXPORT0=$(EXPORTLIB)/SharedLibraryTargetName(castorCnvs) $(EXPORTLIB)/SharedLibraryTargetName(shift)
-
+EXPORT0=$(EXPORTLIB)/SharedLibraryTargetName(shift)
 #if BuildOraCpp
 EXPORT1=$(EXPORTLIB)/SharedLibraryTargetName(castorCommonOra)
+#if UseOraCDBC
+EXPORT1+=$(EXPORTLIB)/SharedLibraryTargetName(castorCnvs)
 #endif
-#if BuildProtoCppStager
+#endif
+#if BuildTankPerfMonLibrary
 EXPORT2=$(EXPORTLIB)/SharedLibraryTargetName(castorTankPerfMon)
 #endif
 #if BuildMyCpp
-EXPORT4=$(EXPORTLIB)/SharedLibraryTargetName(castorCommonMysql)
+EXPORT4=$(EXPORTLIB)/SharedLibraryTargetName(castorCommonMysql) $(EXPORTLIB)/SharedLibraryTargetName(castorCnvs)
 #endif
 #if BuildPgCpp
-EXPORT5=$(EXPORTLIB)/SharedLibraryTargetName(castorCommonPgsql)
+EXPORT5=$(EXPORTLIB)/SharedLibraryTargetName(castorCommonPgsql) $(EXPORTLIB)/SharedLibraryTargetName(castorCnvs)
 #endif
 #if BuildVDQMCpp
 EXPORT6=$(EXPORTLIB)/SharedLibraryTargetName(castorVdqmOra)
@@ -166,7 +173,7 @@ libcastorCommonOra.so: $(LIBRARIES1)
 	@-rm -f $@
 	@-ln -s $@.__MAJOR_CASTOR_VERSION__ $@
 
-libcastorCnvs.sl libcastorCnvs.so: $(LIBRARIES3)
+libcastorCnvs.so: $(LIBRARIES3)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
@@ -218,8 +225,6 @@ libcastorVdqmOra.so: $(LIBRARIES6)
 	@-rm -f $@
 	@-ln -s $@.__MAJOR_CASTOR_VERSION__ $@
 
-
-
 libcastorTankPerfMon.so: $(LIBRARIES2)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
@@ -232,6 +237,7 @@ libcastorTankPerfMon.so: $(LIBRARIES2)
 	@-ln -s $@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ $@.__MAJOR_CASTOR_VERSION__
 	@-rm -f $@
 	@-ln -s $@.__MAJOR_CASTOR_VERSION__ $@
+
 
 shift.dll:	$(LIBRARIES0)
 	@echo  making $@ in CurDir
@@ -324,7 +330,9 @@ MakeDepLibrary(dlf,dlf)
 
 MakeDepLibrary(tape,tape)
 
+#if UseOraCDBC
 MakeDepLibrary(castor/db/cnv,castorCnvs)
+#endif
 
 MakeDepLibrary(castor/db/ora,castorCommonOra)
 
