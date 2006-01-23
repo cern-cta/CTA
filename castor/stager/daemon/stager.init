@@ -5,9 +5,9 @@
 # chkconfig: 345 70 35
 # description: STAGER server daemon
 #
-# $Id: stager.init,v 1.6 2006/01/12 11:16:14 itglp Exp $
+# $Id: stager.init,v 1.7 2006/01/23 18:25:10 itglp Exp $
 #
-# @(#)$RCSfile: stager.init,v $ $Revision: 1.6 $ $Date: 2006/01/12 11:16:14 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: stager.init,v $ $Revision: 1.7 $ $Date: 2006/01/23 18:25:10 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 #
@@ -17,12 +17,12 @@ if [ -r /etc/sysconfig/castor ]; then
 	. /etc/sysconfig/castor
 fi
 
-if [ -n "$ORACLE_HOME" ]; then
+if [ -z "$ORACLE_HOME" ]; then
 	echo Fatal, Oracle environment not setup.
 	exit
 fi
-if [ -n "$TNSADMIN/tnsnames.ora" ]; then
-	echo Fatal, $TNSADMIN/tnsnames.ora not found.
+if [ -z "$TNS_ADMIN/tnsnames.ora" ]; then
+	echo Fatal, $TNS_ADMIN/tnsnames.ora not found.
 	exit
 fi
 
