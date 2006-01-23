@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 14:17:33 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/23 14:56:44 $ $Author: felixehm $
  *
  *
  *
@@ -33,13 +33,14 @@
 #include <dlfcn.h>
 #include "castor/ICnvSvc.hpp"
 #include "castor/Services.hpp"
-#include "castor/repack/RepackRequest.hpp"
+#include "castor/io/ClientSocket.hpp"
 #include "castor/repack/RepackServer.hpp"	/*TODO: remove! CSP_REPACKSERVERPORT  
 											should be declared in Constants.hpp 
 											*/
-#include "h/stager_client_api_common.h" 
 #include "Cgetopt.h"
-#include "castor/io/ClientSocket.hpp"
+#include "h/stager_client_api_common.h" 
+#include "castor/repack/RepackRequest.hpp"
+#include "castor/repack/RepackSubRequest.hpp"
 #include "castor/repack/RepackRequest.hpp"
 
 namespace castor {
@@ -55,6 +56,7 @@ namespace castor {
       */
     struct cmd_params{
       char* vid;
+      char* pool;
     };
 
   class RepackClient : public castor::BaseObject{
@@ -72,14 +74,7 @@ namespace castor {
     ~RepackClient()                                             throw();
 
     void RepackClient::run(int argc, char** argv);
-/*
-     IMPLEMENTATION OF IOBJECT 
-      virtual int castor::repack::RepackClient::TYPE();
-      virtual int castor::repack::RepackClient::type() const;
-      virtual castor::IObject* castor::repack::RepackClient::clone();
-      virtual u_signed64 castor::IObject::id() {return m_id; }
-      virtual void castor::IObject::setId(long long unsigned int newid) { m_id = newid; }
-*/
+
   protected:
     bool parseInput(int argc, char** argv);
     castor::repack::RepackRequest* buildRequest()             throw ();

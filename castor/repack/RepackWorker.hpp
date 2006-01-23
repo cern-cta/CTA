@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 14:17:33 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/23 14:56:45 $ $Author: felixehm $
  *
  *
  *
@@ -33,10 +33,9 @@
 #include "castor/server/IThread.hpp"
 #include "castor/MessageAck.hpp"
 #include "RepackRequest.hpp"
+#include "RepackSubRequest.hpp"
 #include "FileListHelper.hpp"
 #include "DatabaseHelper.hpp"
-
-#define BUFSIZE 1024
 
 
 namespace castor {
@@ -74,11 +73,45 @@ namespace castor {
     virtual void stop() throw();
     
   private:
+    
+    /**
+     * Sends a Response to the Client
+     * @param sock the Socket the Message is send to
+     */
     void send_Ack(MessageAck ack, castor::io::ServerSocket* sock);
+
+	/**
+	 * Retrieves the Information of a tape and returns it status, otherwise -1
+	 * @param vid The Volumeid of the tape
+	 */
     int getTapeInfo(const std::string vid);
+
+    /**
+     * Retrieves information about the tapes in a pool and counts the tape
+     * in the pool.
+     * @param pool the name of the tape pool
+     * @throws castor::exception::Exception if the pool does not exist
+     */ 
+    int getPoolInfo(const std::string pool) throw();
+
+	/**
+	 * the Socket passed during init(..), we store it here for later use
+	 */
     void* m_param;
+    /**
+     * the nameserver, which is contacted for all Requests
+     */
     char *m_nameserver;
+    
+    /**
+     * the FileListHelper, which helps to get the filelist from the nameserver
+     * of a tape.
+     */
     castor::repack::FileListHelper* m_filelisthelper;
+
+    /**
+     * the DatabaseHelper, which helps to store the Request in the DB.
+     */
     castor::repack::DatabaseHelper* m_databasehelper;
     
   };

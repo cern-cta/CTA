@@ -17,13 +17,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 14:17:33 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/23 14:56:44 $ $Author: felixehm $
  *
  * The Repack Client.
- * It inherits from BaseCmdLineClient and is responsible to create a Request
- * for the RepackServer from the command line input. It now sends it to the 
- * specified server (castor config or given by Parameter)
+ * Creates a RepackRequest and send it to the Repack server, specified in the 
+ * castor config file, or from the enviroment.
+ * 
+ * For the enviroment serveral possibilities are possible:
+ * REPACK_HOST and REPACK_HOST_ALT , the REPACK_HOST_ALT  is an alternative, if 
+ * no server entry is found in the config file or REPACK_HOST is not set.
+ * REPACK_PORT and REPACK_PORT_ALT : same as for the REPACK_HOST
  *
+ * 
  * @author Felix Ehm
  *****************************************************************************/
 
@@ -33,9 +38,11 @@
 
 
 
-/** By including the Header file, the Factory is automatically active !! 
-  */
+/** 
+ * By including the Header file, the Factory is automatically active !! 
+ */
 #include "castor/io/StreamRepackRequestCnv.hpp"
+#include "castor/io/StreamRepackSubRequestCnv.hpp"
 
 
 
@@ -58,27 +65,18 @@ int main(int argc, char *argv[])
 
 
 
-//------------------------------------------------------------------------------
-// String constants, default values, if no other is given - should not happen !
-//------------------------------------------------------------------------------
-
-
-
-
 namespace castor {
 
  namespace repack {
 
 
-  const char* HOST_ENV_ALT = "REPACK_HOST";
+  const char* HOST_ENV_ALT = "REPACK_HOST_ALT";
   const char* HOST_ENV = "REPACK_HOST";
-  const char* PORT_ENV_ALT = "REPACK_PORT";
+  const char* PORT_ENV_ALT = "REPACK_PORT_ALT";
   const char* PORT_ENV = "REPACK_PORT";
   const char* CATEGORY_CONF = "REPACK";
   const char* HOST_CONF = "HOST";
   const char* PORT_CONF = "PORT";
-  const char* STAGE_EUID = "REPACK_EUID";
-  const char* STAGE_EGID = "REPACK_EGID";
 
 
 RepackClient::RepackClient()
@@ -86,6 +84,10 @@ RepackClient::RepackClient()
   m_defaultport = CSP_REPACKSERVER_PORT;
   m_defaulthost = "localhost";
   std::string clientname = "RepackClient";
+
+	cp.vid =  NULL;
+	cp.pool = NULL;
+
 
   castor::BaseObject::initLog(clientname, castor::SVC_STDMSG);
   // Initializes the DLF logging. This includes
@@ -117,7 +119,7 @@ RepackClient::~RepackClient() throw()
   */
 bool RepackClient::parseInput(int argc, char** argv)
 {
-  const char* cmdParams = "V:h"; //m_cmdLineParams.str().c_str();
+  const char* cmdParams = "V:h:P"; //m_cmdLineParams.str().c_str();
   if (argc == 1){
     usage(argv[0]);
     return false;
@@ -148,17 +150,25 @@ bool RepackClient::parseInput(int argc, char** argv)
     case 'V':
       cp.vid = Coptarg; // store it for later use in building Request
       break;
+    case 'P':
+      cp.pool = Coptarg; // store it for later use in building Request
+      break;
     default:
       break;
     }
   }
-  return true;
+  
+  if ( cp.pool != NULL && cp.vid != NULL )
+  	return false;
+  
+  else
+  	return true;
 }
 
 
 void RepackClient::usage(std::string message) throw ()
 {
-   std::cout << "Usage: "<< message  << " -V [VolumeID]" << std::endl;
+   std::cout << "Usage: "<< message  << " -V [VolumeID] -P [PoolID]" << std::endl;
 }
 
 /** Builds the Request, which is send to the repack server.
@@ -170,15 +180,27 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
 {
   setRemotePort();
   setRemoteHost();
-
+  char* vid;
   struct passwd *pw = Cgetpwuid(getuid());
 
-  RepackRequest* req = new RepackRequest();
-  req->setVid(cp.vid);
-  req->setPid(getpid());
-  req->setUserName(pw->pw_name);
-  req->setCreationTime(time(NULL));
-  return req;
+  RepackRequest* rreq = new RepackRequest();
+  
+  if ( cp.vid != NULL ) {
+	  for (vid = strtok (cp.vid, ":"); vid;  vid = strtok (NULL, ":")) {
+	  	RepackSubRequest *sreq = new RepackSubRequest();
+	  	sreq->setVid(vid);
+	  	rreq->addSubRequest(sreq);
+	  }
+  }
+  if ( cp.pool != NULL )
+       rreq->setPool(cp.pool);
+
+  rreq->setPid(getpid());
+  rreq->setUserName(pw->pw_name);
+  rreq->setCreationTime(time(NULL));
+  
+  return rreq;
+  
 }
 
 //------------------------------------------------------------------------------

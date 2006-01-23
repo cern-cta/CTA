@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 14:17:33 $ $Author: felixehm $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/23 14:56:44 $ $Author: felixehm $
 #
 # Make Castor Repack System
 #
@@ -43,24 +43,31 @@ LIBS = -lshift
 #LIBS = -lshift -LcastorRepack
 
 REPACKCOMMON_SRC = ../io/StreamRepackRequestCnv.cpp \
-					RepackRequest.cpp \
-					RepackSegment.cpp
+		RepackRequest.cpp \
+		RepackSubRequest.cpp \
+		RepackSegment.cpp \
+
+REPACKDBCNVSRC =../db/cnv/DbBaseCnv.cpp \
+		../db/DbBaseObj.cpp \
+		../db/DbCnvSvc.cpp \
+		../db/cnv/DbRepackRequestCnv.cpp \
+		../db/cnv/DbRepackSegmentCnv.cpp 
+		
+
 REPACKSERVERBIN_SRCS =  RepackServer.cpp \
-					 RepackWorker.cpp \
-					 FileListHelper.cpp \
-					 DatabaseHelper.cpp \
-					 ../db/cnv/DbRepackRequestCnv.cpp \
-					 ../db/cnv/DbRepackSegmentCnv.cpp \
-					 ../db/ora/OraRepackRequestCnv.cpp \
-					 ../db/ora/OraRepackSegmentCnv.cpp \
-					 $(REPACKCOMMON_SRC)
+		RepackWorker.cpp \
+		FileListHelper.cpp \
+		DatabaseHelper.cpp \
+		$(REPACKCOMMON_SRC) \
+		$(REPACKDBCNVSRC)
+
 REPACKBIN_SRCS =  RepackClient.cpp \
-					../io/ClientSocket.cpp \
-					$(REPACKCOMMON_SRC)
+		../io/ClientSocket.cpp \
+		$(REPACKCOMMON_SRC)
 
 
 #Repack library
-REPACKLIB_SRCS = ../io/StreamRepackRequestCnv.cpp RepackRequest.cpp RepackSegment.cpp
+REPACKLIB_SRCS = $(REPACKCOMMON_SRC)
 REPACKLIB_OBJS = $(REPACKLIB_SRCS:.cpp=.Osuf)
 
 
@@ -79,8 +86,9 @@ all: $(REPACKLIB) \
 
 NormalProgramTarget(repackserver,$(REPACKSERVERBIN_OBJS),$(DEPLIB),$(LIBS))
 NormalProgramTarget(repack,$(REPACKBIN_OBJS),$(DEPLIB),$(LIBS))
-MakeDepSharedLibrary(FileName(..,shlib),shift)
 
+MakeDepSharedLibrary(FileName(..,shlib),shift)
+MakeDepSharedLibrary(FileName(..,shlib),castorCnvs)
 
 # The repack Library
 NormalLibraryTarget(castorRepack,$(REPACKLIB_OBJS))

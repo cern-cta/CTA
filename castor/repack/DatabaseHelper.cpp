@@ -49,7 +49,6 @@ castor::repack::DatabaseHelper::~DatabaseHelper() throw() {
 int castor::repack::DatabaseHelper::store_Request(castor::repack::RepackRequest* rreq)
 {
 	stage_trace(2,"Storing Request in DB" );
-
 	castor::BaseAddress ad;
 	ad.setCnvSvcName("DbCnvSvc");
 	ad.setCnvSvcType(castor::SVC_DBCNV);
@@ -71,6 +70,10 @@ int castor::repack::DatabaseHelper::store_Request(castor::repack::RepackRequest*
 	
 	  } catch (castor::exception::Exception e) {
 	    svcs()->rollback(&ad);
+	    castor::dlf::Param params[] =
+      	{castor::dlf::Param("Standard Message", sstrerror(e.code())),
+      	 castor::dlf::Param("Precise Message", e.getMessage().str())};
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 13, 2, params);
 	    throw e;
 	  }
 

@@ -30,8 +30,8 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/repack/RepackRequest.hpp"
 #include "castor/repack/RepackSegment.hpp"
+#include "castor/repack/RepackSubRequest.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>

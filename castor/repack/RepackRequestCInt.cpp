@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackRequestCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 14:17:33 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackRequestCInt.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/23 14:56:44 $ $Author: felixehm $
  *
  * 
  *
@@ -29,7 +29,7 @@
 // Include Files
 #include "castor/IObject.hpp"
 #include "castor/repack/RepackRequest.hpp"
-#include "castor/repack/RepackSegment.hpp"
+#include "castor/repack/RepackSubRequest.hpp"
 #include "osdep.h"
 #include <vector>
 
@@ -99,23 +99,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_vid
-  //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_vid(castor::repack::RepackRequest* instance, const char** var) {
-    *var = instance->vid().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_setVid
-  //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_setVid(castor::repack::RepackRequest* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setVid(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Crepack_RepackRequest_machine
   //----------------------------------------------------------------------------
   int Crepack_RepackRequest_machine(castor::repack::RepackRequest* instance, const char** var) {
@@ -166,9 +149,26 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crepack_RepackRequest_pool
+  //----------------------------------------------------------------------------
+  int Crepack_RepackRequest_pool(castor::repack::RepackRequest* instance, const char** var) {
+    *var = instance->pool().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crepack_RepackRequest_setPool
+  //----------------------------------------------------------------------------
+  int Crepack_RepackRequest_setPool(castor::repack::RepackRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setPool(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crepack_RepackRequest_pid
   //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_pid(castor::repack::RepackRequest* instance, unsigned long* var) {
+  int Crepack_RepackRequest_pid(castor::repack::RepackRequest* instance, u_signed64* var) {
     *var = instance->pid();
     return 0;
   }
@@ -176,7 +176,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Crepack_RepackRequest_setPid
   //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_setPid(castor::repack::RepackRequest* instance, unsigned long new_var) {
+  int Crepack_RepackRequest_setPid(castor::repack::RepackRequest* instance, u_signed64 new_var) {
     instance->setPid(new_var);
     return 0;
   }
@@ -198,28 +198,28 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_addSegment
+  // Crepack_RepackRequest_addSubRequest
   //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_addSegment(castor::repack::RepackRequest* instance, castor::repack::RepackSegment* obj) {
-    instance->addSegment(obj);
+  int Crepack_RepackRequest_addSubRequest(castor::repack::RepackRequest* instance, castor::repack::RepackSubRequest* obj) {
+    instance->addSubRequest(obj);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_removeSegment
+  // Crepack_RepackRequest_removeSubRequest
   //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_removeSegment(castor::repack::RepackRequest* instance, castor::repack::RepackSegment* obj) {
-    instance->removeSegment(obj);
+  int Crepack_RepackRequest_removeSubRequest(castor::repack::RepackRequest* instance, castor::repack::RepackSubRequest* obj) {
+    instance->removeSubRequest(obj);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crepack_RepackRequest_segment
+  // Crepack_RepackRequest_subRequest
   //----------------------------------------------------------------------------
-  int Crepack_RepackRequest_segment(castor::repack::RepackRequest* instance, castor::repack::RepackSegment*** var, int* len) {
-    std::vector<castor::repack::RepackSegment*>& result = instance->segment();
+  int Crepack_RepackRequest_subRequest(castor::repack::RepackRequest* instance, castor::repack::RepackSubRequest*** var, int* len) {
+    std::vector<castor::repack::RepackSubRequest*>& result = instance->subRequest();
     *len = result.size();
-    *var = (castor::repack::RepackSegment**) malloc((*len) * sizeof(castor::repack::RepackSegment*));
+    *var = (castor::repack::RepackSubRequest**) malloc((*len) * sizeof(castor::repack::RepackSubRequest*));
     for (int i = 0; i < *len; i++) {
       (*var)[i] = result[i];
     }

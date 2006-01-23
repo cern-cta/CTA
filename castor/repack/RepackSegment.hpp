@@ -43,7 +43,7 @@ namespace castor {
   namespace repack {
 
     // Forward declarations
-    class RepackRequest;
+    class RepackSubRequest;
 
     /**
      * class RepackSegment
@@ -153,7 +153,7 @@ namespace castor {
        * Get the value of m_vid
        * @return the value of m_vid
        */
-      RepackRequest* vid() const {
+      RepackSubRequest* vid() const {
         return m_vid;
       }
 
@@ -161,7 +161,7 @@ namespace castor {
        * Set the value of m_vid
        * @param new_var the new value of m_vid
        */
-      void setVid(RepackRequest* new_var) {
+      void setVid(RepackSubRequest* new_var) {
         m_vid = new_var;
       }
 
@@ -174,7 +174,7 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-      RepackRequest* m_vid;
+      RepackSubRequest* m_vid;
 
     }; // end of class RepackSegment
 

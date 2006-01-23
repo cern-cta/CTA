@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 14:17:33 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/23 14:56:44 $ $Author: felixehm $
  *
  *
  *
@@ -77,10 +77,11 @@ RepackWorker::RepackWorker()
 
   // Initializes the DLF logging. This includes
   // defining the predefined messages
+  
+  castor::BaseObject::initLog("Repack", castor::SVC_STDMSG);
   castor::dlf::Message messages[] =
     {{ 0, " - "},
      { 1, "New Request Arrival"},
-     { 2, "Could not get Conversion Service for Database"},
      { 3, "Could not get Conversion Service for Streaming"},
      { 4, "Exception caught : server is stopping"},
      { 5, "Exception caught : ignored"},
@@ -90,12 +91,13 @@ RepackWorker::RepackWorker()
      { 9, "Exception caught"},
      {10, "Sending reply to client"},
      {11, "Unable to send Ack to client"},
-     {12, "Request stored in DB"},
+     {12, "Request storing in DB"},
      {13, "Unable to store Request in DB"},
-     {14, "Waked up all services at once"},
+     {14, "Fetching filelist from Nameserver"},
+     {15, "Cannot get Filepathname"},
      {99, "TODO::MESSAGE"},
      {-1, ""}};
-  castor::dlf::dlf_init("RepackServerLog", messages);
+  castor::dlf::dlf_init("Repack", messages);
 
 }
 
@@ -132,11 +134,7 @@ void RepackWorker::run() throw()
   MessageAck ack; // Response for client
   ack.setStatus(true);
   
-
-  // We know it's a ServerSocket
   castor::io::ServerSocket* sock = (castor::io::ServerSocket*) m_param;
-  castor::repack::RepackRequest* rreq = 0;
-
 
   // Retrieve info on the client
   unsigned short port;
@@ -149,6 +147,7 @@ void RepackWorker::run() throw()
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
        castor::dlf::Param("Precise Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4, 2, params);
+    return;
   }
   
   
@@ -161,6 +160,9 @@ void RepackWorker::run() throw()
   stage_trace(2, "Request from %3d.%3d.%3d.%3d:%d", 
   				 (ip%265),((ip >> 8)%256),((ip >> 16)%256),(ip >> 24), port);
 
+  
+
+  castor::repack::RepackRequest* rreq = 0;
 
   // get the incoming request
   try {
@@ -186,6 +188,7 @@ void RepackWorker::run() throw()
          << std::endl << e.getMessage().str();
     ack.setErrorMessage(stst.str());
     stage_trace(3, "Unable to read Request object from socket.");
+    return;
   }
   
   // Store the Request and the filelist in the Database
@@ -193,13 +196,12 @@ void RepackWorker::run() throw()
   	/**
   	 * retrieves the filelist from Helper 
   	 */
-    
-    m_filelisthelper->getFileList(rreq);
-    m_databasehelper->store_Request(rreq);
-
+    for ( int i = rreq->subRequest().size(); i < 0 ; i++ ) {
+    	m_filelisthelper->getFileList(rreq->subRequest().at(i));
+    	getTapeInfo(rreq->subRequest().at(i)->vid());
+		m_databasehelper->store_Request(rreq);
+  	}
     delete rreq;
-
-    	
   }catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
@@ -208,9 +210,6 @@ void RepackWorker::run() throw()
   }
   
   //send_Ack(ack, sock);
-  getTapeInfo(rreq->vid());
-
-  
   delete sock;  // originally created from RepackServer
   delete rreq;
 }
@@ -234,6 +233,7 @@ void RepackWorker::send_Ack(MessageAck ack, castor::io::ServerSocket* sock)
        castor::dlf::Param("Precise Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 11, 2, params);
     std::cout << e.getMessage();
+    return;
   }
 }
 
@@ -247,6 +247,39 @@ void RepackWorker::stop() throw()
 {
   stage_trace(3,"Thread No. %d stopped!", counter );
 }
+
+
+int RepackWorker::getPoolInfo(const std::string pool) throw()
+{
+	char *pool_name = (char*)pool.c_str();
+	int flags;
+	vmgr_list list;
+	struct vmgr_tape_info *lp;
+	int nbvol = 0;
+
+	/* check if pool_name exists */
+	
+	if (vmgr_querypool (pool_name, NULL, NULL, NULL, NULL) < 0) {
+		castor::exception::Internal ex;
+		ex.getMessage() << "RepackWorker::getPoolInfo(..): "
+						<< "No such Pool %s" << pool << std::endl;
+		//ex.code() << sstrerror(serrno);
+		throw ex;
+	}
+
+	flags = VMGR_LIST_BEGIN;
+	while ((lp = vmgr_listtape (NULL, pool_name, flags, &list)) != NULL) {
+		flags = VMGR_LIST_CONTINUE;
+		
+		if ( getTapeInfo(lp->vid) > 0){
+			nbvol++;
+			/*TODO: break if max. Number of vid is reached !*/
+		}
+	}
+	vmgr_listtape (NULL, pool_name, VMGR_LIST_END, &list);
+	return nbvol;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -270,8 +303,9 @@ int RepackWorker::getTapeInfo(const std::string vid){
 	/* check if the volume exists and is marked FULL */
 	if (vmgr_querytape ((char*)vid.c_str(), 0, &tape_info, NULL) < 0) {
 		stage_trace (3, "No such volume %s",vid.c_str() );
-		return (-1);
+		return -1;
 	}
+	/* this is just done for nice output */
 	if ((tape_info.status & TAPE_FULL) == 0) {
 		switch ( tape_info.status )
 		{
@@ -282,12 +316,14 @@ int RepackWorker::getTapeInfo(const std::string vid){
 			case DISABLED	:	p_stat = "DISABLED";break;
 		}
 		stage_trace(3, "Volume %s has status %s\n", vid.c_str(), p_stat.c_str());
-		return (-1);
+		return tape_info.status;
 	}
 
+	/* Tape has status FULL !*/
 	stage_trace(3, "Volume %s in Pool %s : %s !\n", 
 				vid.c_str(), tape_info.poolname, 
 				statusname[tape_info.status].c_str());
+	return tape_info.status;
 }
 
 

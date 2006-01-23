@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 14:17:32 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/23 14:56:44 $ $Author: felixehm $
  *
  *
  *
@@ -62,7 +62,7 @@ FileListHelper::~FileListHelper()
 // getFileList
 //------------------------------------------------------------------------------
 std::vector<std::string>* FileListHelper::getFileList(
-      							castor::repack::RepackRequest *rreq) throw()
+      							castor::repack::RepackSubRequest *subreq) throw()
 {
 	char path[CA_MAXPATHLEN+1];
 	char *server = (char*)m_ns.c_str();
@@ -71,17 +71,26 @@ std::vector<std::string>* FileListHelper::getFileList(
 
 	std::vector<std::string>* filenamelist = new std::vector<std::string>();
 	
-	if ( (vecsize = getFileListSegs(rreq)) > 0 )
+	if ( (vecsize = getFileListSegs(subreq)) > 0 )
 	{
 		stage_trace(2,"Fetching filenames for %d Segments",vecsize);
+		castor::dlf::Param params[] =
+     		 {castor::dlf::Param("Segments", vecsize)};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 13, 1, params);
+		
 		for ( i=0; i<vecsize; i++)
 		{
-			RepackSegment* tmp = rreq->segment().at(i);
+			RepackSegment* tmp = subreq->segment().at(i);
 			if (Cns_getpath (server, tmp->parent_fileid(), path) < 0) {
 					stage_trace (3, "%s\n", sstrerror(serrno));
 					castor::exception::Internal ex;
 	    			ex.getMessage() << "FileListHelper::getFileList(..):" 
 	    							<< sstrerror(serrno) << std::endl;
+	    							
+	    			castor::dlf::Param params[] =
+      				{castor::dlf::Param("Standard Message", sstrerror(ex.code())),
+      				 castor::dlf::Param("Precise Message", ex.getMessage().str())};
+      				castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 15, 2, params);
 	    		    throw ex;
 			}
 			filenamelist->push_back(path);
@@ -95,34 +104,40 @@ std::vector<std::string>* FileListHelper::getFileList(
 //------------------------------------------------------------------------------
 // getFileListSegs
 //------------------------------------------------------------------------------
-int FileListHelper::getFileListSegs(castor::repack::RepackRequest *rreq)
+int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
 {
 	int flags;
 	u_signed64 segs_size = 0;
 	char path[CA_MAXPATHLEN+1];
 	char *server = (char*)m_ns.c_str();
-	char *vid = (char*)rreq->vid().c_str();
+	char *vid = (char*)subreq->vid().c_str();
 	
 
 	struct Cns_direntape *dtp;
 	Cns_list list;
 	signed64 parent_fileid = -1;
 	
-	flags = CNS_LIST_BEGIN;
-	/* all Segments from a tape belong to one Request ! */
-	while ((dtp = Cns_listtape (server, vid, flags, &list)) != NULL) {
-		RepackSegment* rseg= new RepackSegment();
-		rseg->setVid(rreq);
-		rseg->setFileid(dtp->fileid);
-		rseg->setParent_fileid(dtp->parent_fileid);
-		rreq->addSegment(rseg);
-		stage_trace(3,"Added Segment %d %d, fileseq : %d",dtp->parent_fileid, dtp->fileid, dtp->fsec, dtp->fseq);
-		segs_size += dtp->segsize;
-		flags = CNS_LIST_CONTINUE;
+	if ( subreq != NULL )
+	{
+		flags = CNS_LIST_BEGIN;
+		/* all Segments from a tape belong to one Request ! */
+		while ((dtp = Cns_listtape (server, vid, flags, &list)) != NULL) {
+			RepackSegment* rseg= new RepackSegment();
+			rseg->setVid(subreq);
+			rseg->setFileid(dtp->fileid);
+			rseg->setParent_fileid(dtp->parent_fileid);
+			subreq->addSegment(rseg);
+
+			segs_size += dtp->segsize;
+			flags = CNS_LIST_CONTINUE;
+
+			stage_trace(3,"Added Segment %d %d, fileseq : %d",dtp->parent_fileid, dtp->fileid, dtp->fsec, dtp->fseq);
+		}
+		Cns_listtape (server, vid, CNS_LIST_END, &list);
+		stage_trace(2,"Size on disk to be allocated: %d", (segs_size/100000000));
+		return subreq->segment().size();
 	}
-	Cns_listtape (server, vid, CNS_LIST_END, &list);
-	stage_trace(2,"Size on disk to be allocated: %d", (segs_size/100000000));
-	return rreq->segment().size();
+	return -1;
 }
       							
 

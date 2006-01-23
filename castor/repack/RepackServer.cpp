@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 14:17:33 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/23 14:56:44 $ $Author: felixehm $
  *
  *
  *
@@ -80,8 +80,8 @@ int main(int argc, char *argv[]) {
 //------------------------------------------------------------------------------
 castor::repack::RepackServer::RepackServer() : castor::server::BaseServer("RepackServer") 
 {
-  
-  castor::BaseObject::initLog("RepackServer", castor::SVC_STDMSG);
+  /*
+  castor::BaseObject::initLog("Repack", castor::SVC_STDMSG);
   // Initializes the DLF logging. This includes
   // registration of the predefined messages
    castor::dlf::Message messages[] =
@@ -94,22 +94,10 @@ castor::repack::RepackServer::RepackServer() : castor::server::BaseServer("Repac
      { 6, "Invalid Request Arrival"},
      { 7, "Unable to read Request object from socket"},
      {-1, ""}};
-   castor::dlf::dlf_init("RepackServer", messages);
-
-   
-   
-   /*
-   // Create the ThreadPool 
-   this->addThreadPool(
-        new castor::server::BaseThreadPool(m_threadpoolname,
-            new castor::repack::RepackServerReqSvcThread() 
-        )
-    ); 
-   
-   // don't forget to initialise the Pool !
-   this->getThreadPool(m_threadpoolname[0])->init();
+   castor::dlf::dlf_init("Repack", messages);
    
    */
+
 }
 
 
