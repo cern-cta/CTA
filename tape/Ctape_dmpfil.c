@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.24 $ $Date: 2005/11/04 09:53:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.25 $ $Date: 2006/01/23 12:21:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -157,10 +157,7 @@ int flags;
 	dev1tm = (devinfo->eoitpmrks == 1) ? 1 : 0;
 
 	if (maxblksize < 0)
-		if (strcmp (devtype, "SD3") == 0)
-			maxblksize = 262144;
-		else
-			maxblksize = 65536;
+		maxblksize = devinfo->maxblksize;
 #if defined(_AIX) && defined(RS6000PCTA)
 	if (maxblksize > 65535) maxblksize = 65535;
 #endif
