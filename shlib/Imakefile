@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.44 $ $Date: 2006/01/20 09:48:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.45 $ $Date: 2006/01/25 13:30:53 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -45,10 +45,10 @@ SHLIBREQLIBS6 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshif
 ALL0=SharedLibraryTargetName(shift)
 
 #if BuildOraCpp
-ALL1=SharedLibraryTargetName(castorCommonOra)
 #if UseOraCDBC
-ALL1+=SharedLibraryTargetName(castorCnvs)
+ALL1=SharedLibraryTargetName(castorCnvs)
 #endif
+ALL1+=SharedLibraryTargetName(castorCommonOra)
 #endif
 
 #if BuildTankPerfMonLibrary
@@ -94,7 +94,7 @@ EXPORTSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB4))
 #endif
 
 COMM ALL3 will come very soon!
-all: $(ALL0) $(ALL1) $(ALL2) $(ALL4) $(ALL5) $(ALL6) $(ALLSEC)
+all: $(ALL0) $(ALL1) $(ALL2) $(ALL4) $(ALL5) $(ALL6) $(ALLSEC)  
 
 
 INSTALL0=FileName($(LIB),SharedLibraryTargetName(shift))
