@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/23 14:56:44 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/25 08:24:27 $ $Author: felixehm $
  *
  *
  *
@@ -95,6 +95,7 @@ RepackWorker::RepackWorker()
      {13, "Unable to store Request in DB"},
      {14, "Fetching filelist from Nameserver"},
      {15, "Cannot get Filepathname"},
+     {16, "No such Tape!"},
      {99, "TODO::MESSAGE"},
      {-1, ""}};
   castor::dlf::dlf_init("Repack", messages);
@@ -191,28 +192,38 @@ void RepackWorker::run() throw()
     return;
   }
   
-  // Store the Request and the filelist in the Database
+  
+/****************************************************************************/
+  /* Store the Request and the filelist in the Database */
   try{
   	/**
-  	 * retrieves the filelist from Helper 
+  	 * check if the tape/pool exist and get the filenames
   	 */
-    for ( int i = rreq->subRequest().size(); i < 0 ; i++ ) {
-    	m_filelisthelper->getFileList(rreq->subRequest().at(i));
-    	getTapeInfo(rreq->subRequest().at(i)->vid());
-		m_databasehelper->store_Request(rreq);
+    getPoolInfo(rreq);
+    
+    for ( int i = 0; i < rreq->subRequest().size() ; i++ ) 
+    {
+    	if ( getTapeInfo(rreq->subRequest().at(i)) > 0 )
+    	{
+	    	m_filelisthelper->getFileList( rreq->subRequest().at(i) );
+			m_databasehelper->store_Request(rreq);
+    	}
   	}
-    delete rreq;
   }catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
        castor::dlf::Param("Precise Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 2, params);
   }
-  
+/****************************************************************************/  
   //send_Ack(ack, sock);
   delete sock;  // originally created from RepackServer
   delete rreq;
 }
+
+
+
+
 
 
 
@@ -249,35 +260,43 @@ void RepackWorker::stop() throw()
 }
 
 
-int RepackWorker::getPoolInfo(const std::string pool) throw()
+
+//------------------------------------------------------------------------------
+// Retrieves Information about the Pool of the Request
+//------------------------------------------------------------------------------
+int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw()
 {
-	char *pool_name = (char*)pool.c_str();
+	char *pool_name;
 	int flags;
 	vmgr_list list;
 	struct vmgr_tape_info *lp;
 	int nbvol = 0;
 
-	/* check if pool_name exists */
-	
-	if (vmgr_querypool (pool_name, NULL, NULL, NULL, NULL) < 0) {
-		castor::exception::Internal ex;
-		ex.getMessage() << "RepackWorker::getPoolInfo(..): "
-						<< "No such Pool %s" << pool << std::endl;
-		//ex.code() << sstrerror(serrno);
-		throw ex;
-	}
+	if ( rreq != NULL )	{
+		if ( rreq->pool().length() > 0 ) {
 
-	flags = VMGR_LIST_BEGIN;
-	while ((lp = vmgr_listtape (NULL, pool_name, flags, &list)) != NULL) {
-		flags = VMGR_LIST_CONTINUE;
-		
-		if ( getTapeInfo(lp->vid) > 0){
-			nbvol++;
-			/*TODO: break if max. Number of vid is reached !*/
+			/* check if pool_name exists */
+			pool_name = (char*)rreq->pool().c_str();
+			if (vmgr_querypool (pool_name, NULL, NULL, NULL, NULL) < 0) {
+				castor::exception::Internal ex;
+				ex.getMessage() << "RepackWorker::getPoolInfo(..): "
+								<< "No such Pool %s" << pool_name << std::endl;
+				throw ex;
+			}
+			flags = VMGR_LIST_BEGIN;
+			while ((lp = vmgr_listtape (NULL, pool_name, flags, &list)) != NULL) {
+				flags = VMGR_LIST_CONTINUE;
+				RepackSubRequest* tmp = new RepackSubRequest();
+				tmp->setVid(lp->vid);
+				rreq->addSubRequest(tmp);
+					/*TODO: Add SubRequests to RepackRequest*/
+			}
+			vmgr_listtape (NULL, pool_name, VMGR_LIST_END, &list);
+			return nbvol;
 		}
+		return 0;
 	}
-	vmgr_listtape (NULL, pool_name, VMGR_LIST_END, &list);
-	return nbvol;
+	return -1;
 }
 
 
@@ -285,12 +304,13 @@ int RepackWorker::getPoolInfo(const std::string pool) throw()
 //------------------------------------------------------------------------------
 // Gets the Tape information
 //------------------------------------------------------------------------------
-int RepackWorker::getTapeInfo(const std::string vid){
+int RepackWorker::getTapeInfo(castor::repack::RepackSubRequest* subreq){
 	
 	std::string p_stat = "?";
 	struct vmgr_tape_info tape_info;
 	typedef std::map<int,std::string> TapeDriveStatus;
 	TapeDriveStatus statusname;
+	char *vid = (char*)(subreq->vid().c_str());
 
 	/* just to have a nice access for output */
 	statusname[DISABLED] = "Disabled";
@@ -301,8 +321,10 @@ int RepackWorker::getTapeInfo(const std::string vid){
 	statusname[ARCHIVED] = "Archived";
 	
 	/* check if the volume exists and is marked FULL */
-	if (vmgr_querytape ((char*)vid.c_str(), 0, &tape_info, NULL) < 0) {
-		stage_trace (3, "No such volume %s",vid.c_str() );
+	if (vmgr_querytape (vid, 0, &tape_info, NULL) < 0) {
+		castor::dlf::Param params[] =
+  		{castor::dlf::Param("VID", vid)};
+  		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 16, 1, params);
 		return -1;
 	}
 	/* this is just done for nice output */
@@ -315,13 +337,13 @@ int RepackWorker::getTapeInfo(const std::string vid){
 			case EXPORTED	:	p_stat = "EXPORTED";break;
 			case DISABLED	:	p_stat = "DISABLED";break;
 		}
-		stage_trace(3, "Volume %s has status %s\n", vid.c_str(), p_stat.c_str());
+		stage_trace(3, "Volume %s has status %s\n", vid, p_stat.c_str());
 		return tape_info.status;
 	}
 
 	/* Tape has status FULL !*/
-	stage_trace(3, "Volume %s in Pool %s : %s !\n", 
-				vid.c_str(), tape_info.poolname, 
+	stage_trace(3, "Volume %s in Pool :%s ==> %s <==!\n", 
+				vid, tape_info.poolname, 
 				statusname[tape_info.status].c_str());
 	return tape_info.status;
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/23 14:56:45 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/25 08:24:27 $ $Author: felixehm $
  *
  *
  *
@@ -84,7 +84,7 @@ namespace castor {
 	 * Retrieves the Information of a tape and returns it status, otherwise -1
 	 * @param vid The Volumeid of the tape
 	 */
-    int getTapeInfo(const std::string vid);
+    int getTapeInfo(castor::repack::RepackSubRequest* subreq);
 
     /**
      * Retrieves information about the tapes in a pool and counts the tape
@@ -92,7 +92,7 @@ namespace castor {
      * @param pool the name of the tape pool
      * @throws castor::exception::Exception if the pool does not exist
      */ 
-    int getPoolInfo(const std::string pool) throw();
+    int getPoolInfo(castor::repack::RepackRequest* rreq) throw();
 
 	/**
 	 * the Socket passed during init(..), we store it here for later use

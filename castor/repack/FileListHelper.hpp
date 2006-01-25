@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/01/23 14:56:44 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/25 08:24:27 $ $Author: felixehm $
  *
  * 
  *
@@ -31,6 +31,7 @@
 
 // Include Files
 #include <vector>
+#include <algorithm>
 #include "castor/repack/RepackCommonHeader.hpp"
 #include "castor/repack/RepackSegment.hpp"
 #include "castor/repack/RepackRequest.hpp"

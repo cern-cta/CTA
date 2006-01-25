@@ -26,8 +26,11 @@
 
 // Include Files
 #include "castor/repack/DatabaseHelper.hpp"
-#include "castor/io/StreamRepackRequestCnv.hpp"
 
+
+#include "castor/db/cnv/DbRepackRequestCnv.hpp"
+#include "castor/db/cnv/DbRepackSubRequestCnv.hpp"
+#include "castor/db/cnv/DbRepackSegmentCnv.hpp"
 
 
 
@@ -59,6 +62,7 @@ int castor::repack::DatabaseHelper::store_Request(castor::repack::RepackRequest*
 	    // Store files for RepackRequest
 		if ( rreq != NULL ) {
 		  svcs()->createRep(&ad, rreq, false);
+		  svcs()->fillRep(&ad, rreq, OBJ_RepackSubRequest, false);
 		  svcs()->fillRep(&ad, rreq, OBJ_RepackSegment, false);
 		}
 	
