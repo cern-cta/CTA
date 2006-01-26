@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: LibraryDeps.tmpl,v $ $Revision: 1.11 $ $Date: 2006/01/18 17:19:51 $ CERN IT-ADC/CA Jean-Damien Durand
+ * @(#)$RCSfile: LibraryDeps.tmpl,v $ $Revision: 1.12 $ $Date: 2006/01/26 13:09:56 $ CERN IT-ADC/CA Jean-Damien Durand
  */
 
 /* ================================ */
@@ -36,6 +36,14 @@
 #endif
 #endif
 #endif
+
+#if BuildNameServerLibrary
+#if UseCupv
+#undef BuildCupvLibrary
+#define BuildCupvLibrary YES
+#endif
+#endif
+
 
 #if BuildRfioLibrary
 #if !BuildNameServerLibrary
