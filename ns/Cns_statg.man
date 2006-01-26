@@ -1,0 +1,190 @@
+.\" @(#)$RCSfile: Cns_statg.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:21 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2005 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_STATG 3 "$Date: 2006/01/26 15:36:21 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_statg \- get information about a CASTOR file or directory in the name server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_statg (const char *" path ,
+.BI "const char *" guid,
+.BI "struct Cns_filestatg *" statbuf )
+.sp
+.BI "int Cns_statr (const char *" sfn ,
+.BI "struct Cns_filestatg *" statbuf )
+.SH DESCRIPTION
+.B Cns_statg
+gets information about a CASTOR file or directory, having the given GUID, in the name server.
+.LP
+.B Cns_statr
+retrieves information about the given replica. 
+.LP
+The file can be specified by
+.I path
+name or by
+.IR guid .
+If both are given, they must point at the same file.
+.TP
+.I guid
+specifies the Grid Unique IDentifier.
+.TP
+.I path
+specifies the logical pathname relative to the current CASTOR directory or
+the full CASTOR pathname.
+.TP
+.I sfn
+is either the Site URL or the Physical File Name for the replica.
+.LP
+The structure pointed to by
+.I statbuf
+contains the following members:
+.RS
+u_signed64	fileid;			/* entry unique identifier */
+.br
+char		guid[CA_MAXGUIDLEN+1]	/* GUID */
+.br
+mode_t		filemode;		/* see below */
+.br
+int		nlink;			/* number of files in a directory */
+.br
+uid_t		uid;
+.br
+gid_t		gid;
+.br
+u_signed64	filesize;
+.br
+time_t		atime;			/* last access to file */
+.br
+time_t		mtime;			/* last file modification */
+.br
+time_t		ctime;			/* last metadata modification */
+.br
+short		fileclass;		/* 1--> experiment, 2 --> user */
+.br
+char		status;			/* '-' --> online, 'm' --> migrated */
+.br
+char		csumtype[3];
+.br
+char		csumvalue[33];
+.RE
+.LP
+filemode is constructed by OR'ing the bits defined in
+.RB < sys/stat.h >
+under Unix or \fB "statbits.h"\fR under Windows/NT:
+.sp
+.RS
+.B S_IFLNK	0xA000		
+symbolic link
+.br
+.B S_IFREG	0x8000		
+regular file
+.br
+.B S_IFDIR	0x4000		
+directory
+.br
+.B S_ISUID	0004000		
+set user ID on execution
+.br
+.B S_ISGID	0002000		
+set group ID on execution
+.br
+.B S_ISVTX	0001000		
+sticky bit
+.br
+.B S_IRUSR	0000400		
+read by owner
+.br
+.B S_IWUSR	0000200		
+write by owner
+.br
+.B S_IXUSR	0000100		
+execute/search by owner
+.br
+.B S_IRGRP	0000040		
+read by group
+.br
+.B S_IWGRP	0000020		
+write by group
+.br
+.B S_IXGRP	0000010		
+execute/search by group
+.br
+.B S_IROTH	0000004		
+read by others
+.br
+.B S_IWOTH	0000002		
+write by others
+.br
+.B S_IXOTH	0000001		
+execute/search by others
+.RE
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named file/directory does not exist or is a null pathname.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix.
+.TP
+.B EFAULT
+.I path
+or
+.I statbuf
+is a NULL pointer.
+.TP
+.B EINVAL
+The length of the
+.I guid
+component exceeds
+.B CA_MAXGUIDLEN
+or path and guid are both given and they point at a different file.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN
+or the length of the
+.I sfn
+exceeds
+.BR CA_MAXSFNLEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chdir(3) ,
+.BR Cns_chmod(3) ,
+.BR Cns_chown(3) ,
+.BR Cns_creatg(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

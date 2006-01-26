@@ -1,0 +1,119 @@
+.\" @(#)$RCSfile: Cns_setacl.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:20 $ CERN IT-ADC/CA Jean-Philippe Baud
+.\" Copyright (C) 2003 by CERN/IT/ADC/CA
+.\" All rights reserved
+.\"
+.TH CNS_SETACL 3 "$Date: 2006/01/26 15:36:20 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_setacl \- set CASTOR directory/file access control lists
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_setacl (const char *" path ,
+.BI "int " nentries ,
+.BI "struct Cns_acl *" acl )
+.SH DESCRIPTION
+.B Cns_setacl
+sets the Access Control List associated with a CASTOR directory/file.
+.TP
+.I path
+specifies the logical pathname relative to the current CASTOR directory or
+the full CASTOR pathname.
+.TP
+.I nentries
+specifies the number of entries present in the buffer.
+.TP
+.I acl
+is a pointer to an array of Cns_acl structures provided by the application.
+.PP
+.nf
+.ft CW
+struct Cns_acl {
+        unsigned char   a_type;
+        int             a_id;
+        unsigned char   a_perm;
+};
+.ft
+.fi
+.TP
+.I a_type
+is the ACL type: CNS_ACL_USER_OBJ, CNS_ACL_USER, CNS_ACL_GROUP_OBJ,
+CNS_ACL_GROUP, CNS_ACL_MASK or CNS_ACL_OTHER.
+Types for default entries are obtained by OR'ing the flag CNS_ACL_DEFAULT with
+one of the above types.
+.TP
+.I a_id
+is the user or group numeric id.
+.TP
+.I a_perm
+is the access permission in numeric form obtained by OR'ing some of the bits
+S_IROTH, S_IWOTH, S_IXOTH.
+.LP
+The effective user ID of the process must match the owner of the file or
+the caller must have ADMIN privilege in the Cupv database.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EPERM
+The effective user ID does not match the owner of the file and
+the caller does not have ADMIN privilege in the Cupv database.
+.TP
+.B ENOENT
+The named file/directory does not exist or is a null pathname.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix.
+.TP
+.B EFAULT
+.I path
+or
+.I acl
+is a NULL pointer.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B EINVAL
+.I nentries
+is not greater than zero or is greater than CA_MAXACLENTRIES or the ACL entries
+are not valid.
+.TP
+.B ENOSPC
+The name server database is full.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chdir(3) ,
+.BR Cns_chmod(3) ,
+.BR nssetacl(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

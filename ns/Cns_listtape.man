@@ -1,0 +1,83 @@
+.\" @(#)$RCSfile: Cns_listtape.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:18 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_LISTTAPE 3 "$Date: 2006/01/26 15:36:18 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_listtape \- list the file segments residing on a volume
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "struct Cns_direntape *Cns_listtape (char *" server ,
+.BI "char *" vid ,
+.BI "int " flags ,
+.BI "Cns_list *" listp )
+.SH DESCRIPTION
+.B Cns_listtape
+lists the file segments residing on a volume.
+.TP
+.I server
+specifies the CASTOR Name Server to be contacted to get the full path name
+for the file segments residing on the volume.
+.TP
+.I vid
+is the visual identifier of the volume.
+.TP
+.I flags
+may be one of the following constant:
+.RS
+.TP
+.B CNS_LIST_BEGIN
+the first call for a volume must have this flag set to allocate buffers and
+initialize pointers.
+.TP
+.B CNS_LIST_CONTINUE
+all the following calls must have this flag set.
+.TP
+.B CNS_LIST_END
+final call to terminate the list and free resources.
+.RE
+.SH RETURN VALUE
+This routine returns a pointer to a structure containing the current tape segment
+if the operation was successful or NULL if all segments have been returned
+or if the operation failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The referenced volume does not exist anymore.
+.TP
+.B ENOMEM
+Memory could not be allocated for the output buffer.
+.TP
+.B EFAULT
+.I vid
+or
+.I listp
+is a NULL pointer.
+.TP
+.B EINVAL
+The length of
+.I vid
+exceeds
+.BR CA_MAXVIDLEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.B Cns_getsegattrs(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

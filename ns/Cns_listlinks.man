@@ -1,0 +1,98 @@
+.\" @(#)$RCSfile: Cns_listlinks.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:18 $ CERN IT-GD/CT Jean-Philippe Baud
+.\" Copyright (C) 2004 by CERN/IT/GD/CT
+.\" All rights reserved
+.\"
+.TH CNS_LISTLINKS 3 "$Date: 2006/01/26 15:36:18 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_listlinks \- list link entries for a given file
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "struct Cns_linkinfo *Cns_listlinks (const char *" path ,
+.BI "const char *" guid ,
+.BI "int " flags ,
+.BI "Cns_list *" listp )
+.SH DESCRIPTION
+.B Cns_listlinks
+lists link entries for a given file.
+The first entry in the list is the actual file name, while the other entries
+are the symbolic links pointing at this file.
+.TP
+.I path
+specifies the logical pathname.
+.TP
+.I guid
+specifies the Grid Unique IDentifier.
+.TP
+.I flags
+may be one of the following constant:
+.RS
+.TP
+.B CNS_LIST_BEGIN
+the first call must have this flag set to allocate buffers and
+initialize pointers.
+.TP
+.B CNS_LIST_CONTINUE
+all the following calls must have this flag set.
+.TP
+.B CNS_LIST_END
+final call to terminate the list and free resources.
+.RE
+.SH RETURN VALUE
+This routine returns a pointer to a structure containing the current link entry
+if the operation was successful or NULL if all entries have been returned
+or if the operation failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named file does not exist.
+.TP
+.B EACCES
+Search permission is denied on a component of the parent directory.
+.TP
+.B ENOMEM
+Memory could not be allocated for the output buffer.
+.TP
+.B EFAULT
+.I path
+and
+.I guid
+are NULL pointers or
+.I listp
+is a NULL pointer.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B EINVAL
+The length of
+.I guid
+exceeds
+.BR CA_MAXGUIDLEN .
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.BR CA_MAXPATHNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_symlink(3)

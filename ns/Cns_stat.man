@@ -1,0 +1,181 @@
+.\" @(#)$RCSfile: Cns_stat.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:21 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_STAT 3 "$Date: 2006/01/26 15:36:21 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_stat \- get information about a CASTOR file or directory in the name server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_lstat (const char *" path ,
+.BI "struct Cns_filestat *" statbuf )
+.sp
+.BI "int Cns_stat (const char *" path ,
+.BI "struct Cns_filestat *" statbuf )
+.sp
+.BI "int Cns_statx (const char *" path ,
+.BI "struct Cns_fileid *" file_uniqueid ,
+.BI "struct Cns_filestat *" statbuf )
+.SH DESCRIPTION
+.B Cns_stat
+gets information about a CASTOR file or directory in the name server.
+.LP
+.B Cns_lstat
+is identical to
+.B Cns_stat
+except for symbolic links.
+.B Cns_lstat
+retrieves information about the link itself, while
+.B Cns_stat
+gets information about the file/directory referenced by the symbolic link.
+.LP
+.B Cns_statx
+returns the same information plus the file unique id (name server hostname
+and file id).
+The file can be specified by
+.I path
+name or by
+.IR file_uniqueid .
+If both are given,
+.I file_uniqueid
+is used.
+.TP
+.I path
+specifies the logical pathname relative to the current CASTOR directory or
+the full CASTOR pathname.
+.LP
+The structure pointed to by
+.I statbuf
+contains the following members:
+.RS
+u_signed64	fileid;		/* entry unique identifier */
+.br
+mode_t		filemode;	/* see below */
+.br
+int		nlink;		/* number of files in a directory */
+.br
+uid_t		uid;
+.br
+gid_t		gid;
+.br
+u_signed64	filesize;
+.br
+time_t		atime;		/* last access to file */
+.br
+time_t		mtime;		/* last file modification */
+.br
+time_t		ctime;		/* last metadata modification */
+.br
+short		fileclass;		/* 1--> experiment, 2 --> user */
+.br
+char		status;		/* '-' --> online, 'm' --> migrated */
+.RE
+.LP
+filemode is constructed by OR'ing the bits defined in
+.RB < sys/stat.h >
+under Unix or \fB "statbits.h"\fR under Windows/NT:
+.sp
+.RS
+.B S_IFLNK	0xA000		
+symbolic link
+.br
+.B S_IFREG	0x8000		
+regular file
+.br
+.B S_IFDIR	0x4000		
+directory
+.br
+.B S_ISUID	0004000		
+set user ID on execution
+.br
+.B S_ISGID	0002000		
+set group ID on execution
+.br
+.B S_ISVTX	0001000		
+sticky bit
+.br
+.B S_IRUSR	0000400		
+read by owner
+.br
+.B S_IWUSR	0000200		
+write by owner
+.br
+.B S_IXUSR	0000100		
+execute/search by owner
+.br
+.B S_IRGRP	0000040		
+read by group
+.br
+.B S_IWGRP	0000020		
+write by group
+.br
+.B S_IXGRP	0000010		
+execute/search by group
+.br
+.B S_IROTH	0000004		
+read by others
+.br
+.B S_IWOTH	0000002		
+write by others
+.br
+.B S_IXOTH	0000001		
+execute/search by others
+.RE
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named file/directory does not exist or is a null pathname.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix.
+.TP
+.B EFAULT
+.I path
+or
+.I statbuf
+is a NULL pointer.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chdir(3) ,
+.BR Cns_chmod(3) ,
+.BR Cns_chown(3) ,
+.B Cns_creat(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

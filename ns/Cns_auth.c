@@ -1,25 +1,73 @@
 /*
- * Copyright (C) 2004 by CERN/IT/ADC/CA Ben Couturier
+ * Copyright (C) 2005 by CERN/IT/GD/CT
  * All rights reserved
  */
- 
+
 #ifndef lint
-static char sccsid[] = "$id$";
+static char sccsid[] = "@(#)$RCSfile: Cns_auth.c,v $ $Revision: 1.4 $ $Date: 2006/01/26 15:36:17 $ CERN IT-GD/SC Jean-Philippe Baud";
 #endif /* not lint */
 
-/*	Cns_auth.c - Sets the authorization in the CASTOR name server API */
-
-#include <string.h>
 #include <errno.h>
-#include <stdlib.h>
 #include <sys/types.h>
+#include <string.h>
+#include "Castor_limits.h"
 #include "Cns_api.h"
 #include "serrno.h"
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
-#include <unistd.h>
+
+/*      Cns_client_getAuthorizationId - get the authorization id from the thread-specific structure */
+
+int DLL_DECL
+Cns_client_getAuthorizationId(uid_t *uid, gid_t *gid, char **mech, char **id)
+{
+	struct Cns_api_thread_info *thip;
+
+#ifdef CSEC
+	if (Cns_apiinit (&thip))
+		return (-1);
+	if (thip->use_authorization_id == 0)
+		return (0);
+	if (uid)
+		*uid = thip->Csec_uid;
+	if (gid)
+		*gid = thip->Csec_gid;
+	if (mech)
+		*mech = thip->Csec_mech;
+	if (id)
+		*id = thip->Csec_auth_id;
 #endif
+	return (0);
+}
+
+/*      Cns_client_setAuthorizationId - set the authorization id in the thread-specific structure */
+
+int DLL_DECL
+Cns_client_setAuthorizationId(uid_t uid, gid_t gid, const char *mech, char *id)
+{
+	char func[30];
+	struct Cns_api_thread_info *thip;
+
+#ifdef CSEC
+	strcpy (func, "Cns_client_setAuthorizationId");
+	if (Cns_apiinit (&thip))
+		return (-1);
+	thip->Csec_uid = uid;
+	thip->Csec_gid = gid;
+	if (strlen (mech) > CA_MAXCSECPROTOLEN) {
+		Cns_errmsg (func, "Supplied Csec protocol is too long\n");
+		serrno = EINVAL;
+		return (-1);
+	}
+	strcpy (thip->Csec_mech, mech);
+	if (strlen (id) > CA_MAXCSECNAMELEN) {
+		Cns_errmsg (func, "Supplied authorization id is too long\n");
+		serrno = EINVAL;
+		return (-1);
+	}
+	strcpy (thip->Csec_auth_id, id);
+	thip->use_authorization_id = 1;
+#endif
+	return (0);
+}
 
 #define MODE_EFFECTIVE_ID 0
 #define MODE_REAL_ID      1

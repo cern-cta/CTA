@@ -1,0 +1,53 @@
+.\" @(#)$RCSfile: Cns_rmgrpmap.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:20 $ CERN IT-GD/SC Jean-Philippe Baud
+.\" Copyright (C) 2005 by CERN/IT/GD/SC
+.\" All rights reserved
+.\"
+.TH CNS_RMGRPMAP 3 "$Date: 2006/01/26 15:36:20 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_rmgrpmap \- suppress group entry corresponding to a given virtual gid or group name
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_rmgrpmap (gid_t " gid ,
+.BI "char *" groupname )
+.SH DESCRIPTION
+.B Cns_rmgrpmap
+suppresses the group entry corresponding to a given virtual gid or group name.
+If both are specified, they must point at the same entry.
+.TP
+.I gid
+specifies the Virtual Group Id.
+.TP
+.I groupname
+specifies the group name.
+.LP
+This function requires ADMIN privilege.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EINVAL
+This group does not exist in the internal mapping table or the length of
+.I groupname
+exceeds 255 or
+.I gid
+and
+.I groupname
+do not point at the same entry.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.

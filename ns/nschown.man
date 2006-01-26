@@ -1,0 +1,74 @@
+.\" @(#)$RCSfile: nschown.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH NSCHOWN 1 "$Date: 2006/01/26 15:36:22 $" CASTOR "Cns User Commands"
+.SH NAME
+nschown \- change owner and group of a CASTOR directory/file in the name server
+.SH SYNOPSIS
+.B nschown
+.RB [ -h ]
+.RB [ -R ]
+.IR owner [: group ]
+.IR path ...
+.SH DESCRIPTION
+.B nschown
+sets the owner and optionally the group of a CASTOR directory/file in the name
+server to the values in
+.I owner
+and
+.I group
+respectively.
+.LP
+To change the owner ID, if the group ID does not change and if the caller and
+the new owner ID belong to that group, GRP_ADMIN privilege is needed, otherwise
+the caller must have ADMIN privilege in the Cupv database.
+To change the group ID, the effective user ID of the process must match the
+owner ID of the file and the new group must be in the list of groups the caller
+belong to or the caller must have ADMIN privilege in the Cupv database.
+.TP
+.I owner
+is either a valid username from the
+.B passwd
+file or a valid numeric ID.
+.TP
+.I group
+is either a valid group name from the
+.B group
+file or a valid numeric ID.
+.TP
+.I path
+specifies the CASTOR pathname.
+If
+.I path
+does not start with
+.BR / ,
+it is prefixed by the content of the
+.B CASTOR_HOME
+environment variable.
+.SH OPTIONS
+The following options are supported:
+.TP
+.B -h
+If
+.I path
+is a symbolic link, changes the ownership of the link itself.
+.TP
+.B -R
+Recursive mode.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH FILES
+.TP
+.B /etc/group
+.TP
+.B /etc/passwd
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chown(3) ,
+.BR Cupvlist(1) ,
+.BR group(4) ,
+.B passwd(4)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

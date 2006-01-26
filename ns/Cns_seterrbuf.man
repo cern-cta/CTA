@@ -1,0 +1,27 @@
+.\" @(#)$RCSfile: Cns_seterrbuf.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_SETERRBUF 3 "$Date: 2006/01/26 15:36:20 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_seterrbuf \- set receiving buffer for error messages
+.SH SYNOPSIS
+.BI "int Cns_seterrbuf (char *" buffer ,
+.BI "int " buflen )
+.SH DESCRIPTION
+.B Cns_seterrbuf
+tells the name server client API the address and the size of the buffer
+to be used for error messages. If this routine is not called, the messages
+are printed on
+.BR stderr .
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOMEM
+memory could not be allocated for the thread specific information.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

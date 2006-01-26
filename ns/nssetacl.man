@@ -1,0 +1,177 @@
+.\" @(#)$RCSfile: nssetacl.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:23 $ CERN IT-ADC/CA Jean-Philippe Baud
+.\" Copyright (C) 2003 by CERN/IT/ADC/CA
+.\" All rights reserved
+.\"
+.TH NSSETACL 1 "$Date: 2006/01/26 15:36:23 $" CASTOR "Cns User Commands"
+.SH NAME
+nssetacl \- set CASTOR directory/file access control lists
+.SH SYNOPSIS
+.B nssetacl
+.RB [ -d ]
+.RB [ -m ]
+.RB [ -s ]
+.I acl_entries
+.IR path ...
+.SH DESCRIPTION
+.B nssetacl
+sets the Access Control List associated with a CASTOR directory/file.
+.LP
+.I acl_entries
+is a comma separated list of entries. Each entry has colon separated fields:
+ACL type, id (uid or gid), permission. Only directories can have default ACL
+entries.
+.LP
+The entries look like:
+.sp
+.nf
+.ft CW
+     user::perm
+     user:uid:perm
+     group::perm
+     group:gid:perm
+     mask:perm
+     other:perm
+     default:user::perm
+     default:user:uid:perm
+     default:group::perm
+     default:group:gid:perm
+     default:mask:perm
+     default:other:perm
+.ft
+.fi
+.LP
+The ACL type can be abbreviated to the first letter.
+The first "user" entry gives the permissions granted to the owner of the file.
+The following "user" entries show the permissions granted to specific users,
+they are sorted in ascending order of uid.
+The first "group" entry gives the permissions granted to the group owner of the
+file.
+The following "group" entries show the permissions granted to specific groups,
+they are sorted in ascending order of gid.
+The "mask" entry is the maximum permission granted to specific users or groups.
+It does not affect the "owner" and "other" permissions.
+The "mask" entry must be present if there are specific "user" or "group" entries.
+"default" entries associated with a directory are inherited as access ACL by
+the files or sub-directories created in that directory. The
+.B umask
+is not used.
+Sub-directories also inherit the default ACL as default ACL.
+As soon as there is one default ACL entry, the 3 default ACL base entries
+(default user, default group, default other) must be present.
+.LP
+The entry processing conforms to the Posix 1003.1e draft standard 17.
+.LP
+The effective user ID of the process must match the owner of the file or
+the caller must have ADMIN privilege in the Cupv database.
+.TP
+.I path
+specifies the CASTOR pathname.
+If
+.I path
+does not start with
+.BR / ,
+it is prefixed by the content of the
+.B CASTOR_HOME
+environment variable.
+.TP
+.I uid
+can be given as the username or the corresponding numeric id.
+.TP
+.I gid
+can be given as the groupname or the corresponding numeric id.
+.TP
+.I perm
+can be expressed as a combination of characters
+.B rwx-
+or as a value between 0 and 7.
+.SH OPTIONS
+.TP
+.B -d
+remove ACL entries. The "perm" field is ignored.
+.TP
+.B -m
+modify existing ACL entries or add new entries.
+.TP
+.B -s
+set the ACL entries. The complete set of ACL entries is replaced.
+.SH EXAMPLES
+Let's create a directory:
+.nf
+.ft CW
+	nsmkdir /castor/cern.ch/user/b/baud/d6
+.ft
+.fi
+and add write permission for user bcouturi:
+.nf
+.ft CW
+	nssetacl -m u:bcouturi:rwx,m:rwx /castor/cern.ch/user/b/baud/d6
+.ft
+.fi
+Let's create a directory:
+.nf
+.ft CW
+	nsmkdir /castor/cern.ch/user/b/baud/d7
+.ft
+.fi
+and add default ACLs to it:
+.nf
+.ft CW
+	nssetacl -m d:u::7,d:g::7,d:o:5 /castor/cern.ch/user/b/baud/d7
+.ft
+.fi
+Let's check the resulting ACLs:
+.nf
+.ft CW
+	nsgetacl /castor/cern.ch/user/b/baud/d7
+# file: /castor/cern.ch/user/b/baud/d7
+# owner: baud
+# group: c3
+user::rwx
+group::r-x              #effective:r-x
+other::r-x
+default:user::rwx
+default:group::rwx
+default:other::r-x
+.ft
+.fi
+.sp
+Let's create a sub-directory and check the resulting ACLs:
+.nf
+.ft CW
+	nsmkdir /castor/cern.ch/user/b/baud/d7/d2
+	nsgetacl /castor/cern.ch/user/b/baud/d7/d2
+# file: /castor/cern.ch/user/b/baud/d7/d2
+# owner: baud
+# group: c3
+user::rwx
+group::rwx              #effective:rwx
+other::r-x
+default:user::rwx
+default:group::rwx
+default:other::r-x
+.ft
+.fi
+.sp
+Let's create a file in the same directory and check the resulting ACLs:
+.nf
+.ft CW
+	nstouch /castor/cern.ch/user/b/baud/d7/f2
+	nsgetacl /castor/cern.ch/user/b/baud/d7/f2
+# file: /castor/cern.ch/user/b/baud/d7/f2
+# owner: baud
+# group: c3
+user::rw-
+group::rw-              #effective:rw-
+other::r--
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chmod(3) ,
+.BR Cns_chown(3) ,
+.BR Cupvlist(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

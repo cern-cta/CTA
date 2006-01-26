@@ -1,0 +1,115 @@
+.\" @(#)$RCSfile: nsgetacl.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-ADC/CA Jean-Philippe Baud
+.\" Copyright (C) 2003-2005 by CERN/IT/ADC/CA
+.\" All rights reserved
+.\"
+.TH NSGETACL 1 "$Date: 2006/01/26 15:36:22 $" CASTOR "Cns User Commands"
+.SH NAME
+nsgetacl \- get CASTOR directory/file access control lists
+.SH SYNOPSIS
+.B nsgetacl
+.RB [ -a ]
+.RB [ -d ]
+.IR path ...
+.SH DESCRIPTION
+.B nsgetacl
+gets the Access Control List associated with a CASTOR directory/file.
+For each
+.IR path ,
+it  displays the file name, owner, the group, and the Access Control List (ACL)
+if present. If a directory has a default ACL,
+.B nsgetacl
+also displays the default ACL. Regular files cannot have default ACLs.
+.LP
+The output looks like:
+.sp
+.nf
+.ft CW
+     # file: filename
+     # owner: username
+     # group: groupname
+     user::perm
+     user:uid:perm
+     group::perm
+     group:gid:perm
+     mask:perm
+     other:perm
+     default:user::perm
+     default:user:uid:perm
+     default:group::perm
+     default:group:gid:perm
+     default:mask:perm
+     default:other:perm
+.ft
+.fi
+.LP
+The first "user" entry gives the permissions granted to the owner of the file.
+The following "user" entries show the permissions granted to specific users,
+they are sorted in ascending order of uid.
+The first "group" entry gives the permissions granted to the group owner of the
+file.
+The following "group" entries show the permissions granted to specific groups,
+they are sorted in ascending order of gid.
+The "mask" entry is the maximum permission granted to specific users or groups.
+It does not affect the "owner" and "other" permissions.
+The "mask" entry must be present if there are specific "user" or "group" entries.
+"default" entries associated with a directory are inherited as access ACL by
+the files or sub-directories created in that directory. The
+.B umask
+is not used.
+Sub-directories also inherit the default ACL as default ACL.
+As soon as there is one default ACL entry, the 3 default ACL base entries
+(default user, default group, default other) must be present.
+.LP
+The entry processing conforms to the Posix 1003.1e draft standard 17.
+.TP
+.I path
+specifies the CASTOR pathname.
+If
+.I path
+does not start with
+.BR / ,
+it is prefixed by the content of the
+.B CASTOR_HOME
+environment variable.
+.TP
+.I uid
+is displayed as the username if known else as the numeric id.
+.TP
+.I gid
+is displayed as the groupname if known else as the numeric id.
+.TP
+.I perm
+is expressed as a combination of characters
+.B rwx-
+.SH OPTIONS
+.TP
+.B -a
+only display the access ACL.
+.TP
+.B -d
+only display the default ACL.
+.SH EXAMPLES
+.nf
+.ft CW
+nsgetacl /castor/cern.ch/user/b/baud/d2
+
+# file: /castor/cern.ch/user/b/baud/d2
+# owner: baud
+# group: c3
+user::rwx
+group::r-x              #effective:r-x
+other::r-x
+default:user::rwx
+default:group::r-x
+default:other::r-x
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chmod(3) ,
+.BR Cns_chown(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

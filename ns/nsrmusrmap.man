@@ -1,0 +1,30 @@
+.\" @(#)$RCSfile: nsrmusrmap.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:23 $ CERN IT-GD/SC Jean-Philippe Baud
+.\" Copyright (C) 2005 by CERN/IT/GD/SC
+.\" All rights reserved
+.\"
+.TH NSRMUSRMAP 3 "$Date: 2006/01/26 15:36:23 $" CASTOR "Cns Administrator Commands"
+.SH NAME
+nsrmusrmap \- suppress user entry corresponding to a given virtual uid or user name
+.SH SYNOPSIS
+.B nsrmusrmap
+.BI --uid " uid"
+.BI --user " username"
+.SH DESCRIPTION
+.B nsrmusrmap
+suppresses the user entry corresponding to a given virtual uid or user name.
+If both are specified, they must point at the same entry.
+.LP
+This command requires ADMIN privilege.
+.SH OPTIONS
+.TP
+.BI --uid " uid"
+specifies the Virtual User Id.
+.TP
+.BI --user " username"
+specifies the new user name.
+It must be at most 255 characters long.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.B Cns_rmusrmap(3)

@@ -1,0 +1,155 @@
+.\" @(#)$RCSfile: nsdaemon.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2005 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH NSDAEMON 1 "$Date: 2006/01/26 15:36:22 $" CASTOR "Cns Administrator Commands"
+.SH NAME
+nsdaemon \- start the name server
+.SH SYNOPSIS
+.B nsdaemon
+[
+.BI -c " config_file"
+] [
+.BI -l " log_file"
+] [
+.BI -m " map_file"
+] [
+.B -r
+] [
+.BI -t " nbthreads"
+]
+.SH DESCRIPTION
+.LP
+The
+.B nsdaemon
+command starts the name server.
+This command is usually executed at system startup time
+.RB ( /etc/rc.local ).
+This will read the name server configuration file,
+create the "/" entry in the database if it does not exist yet,
+create a pool of threads and look for requests.
+Each of them is processed in a thread which opens a connection to the
+database server if necessary.
+When a request has been completed, the thread becomes idle until it is allocated
+to another request.
+The connection to the database server is kept open between 2 requests.
+If the name server is being shutdown or not active, the requests are
+automatically retried by the client API.
+.LP
+All error messages and statistical information are kept in a log.
+.LP
+The name server listen port number can be defined on client hosts and
+on the name server itself in either of the following ways:
+.RS
+.LP
+setting an environment variable CNS_PORT
+.RS
+.HP
+setenv CNS_PORT 5010
+.RE
+.LP
+an entry in
+.B /etc/shift.conf
+like:
+.RS
+.HP
+CNS	PORT	5010
+.RE
+.LP
+an entry in
+.B /etc/services
+like:
+.RS
+.HP
+cns           5010/tcp                        # CASTOR name server
+.RE
+.RE
+.LP
+If none of these methods is used, the default port number is taken from the
+definition of CNS_PORT in Cns_constants.h.
+.LP
+The name server host name can be defined on client hosts
+in either of the following ways:
+.RS
+.LP
+setting an environment variable CNS_HOST, for example:
+.RS
+.HP
+setenv CNS_HOST castor5
+.RE
+.LP
+an entry in
+.B /etc/shift.conf
+for example:
+.RS
+.HP
+CNS	HOST	castor5
+.RE
+.RE
+.LP
+If none of these methods is used, the default host is taken from the
+definition of NsHost in site.def.
+.LP
+The name server database keeps the metadata information: filename, file size,
+access time, permissions and migration status.
+.LP
+The name server configuration file contains password information for the
+database and must be readable/writable only by root.
+It contains a single line in the format:
+.HP
+.RS
+username/password@server
+.RE
+or
+.RS
+username/password@server/dbname
+.RE
+.sp
+where 'username' and 'password' are the credentials to login to the database
+instance identified by 'server'. If 'dbname' is not specified, "cns_db" is used.
+.LP
+In the log each entry has a timestamp.
+All entries corresponding to one request have the same request id.
+For each user command there is one message NS092 giving information about
+the requestor (hostname, uid, gid) and one message NS098 giving the command
+itself.
+The completion code of the command is also logged.
+.SH OPTIONS
+.TP
+.BI -c " config_file"
+Specifies a different path for the Name Server configuration file.
+.TP
+.BI -l " log_file"
+Specifies a different path for the Name Server log file.
+.TP
+.BI -m " map_file"
+Specifies a different path for the Name Server mapping file.
+.TP
+.B -r
+read-only mode. Only query operations are allowed.
+.TP
+.BI -t " nbthreads"
+specifies the number of threads. Default is 20.
+.SH FILES
+.TP 1.5i
+.B /etc/NSCONFIG
+configuration file
+.TP
+.B /usr/spool/ns/log
+.SH EXAMPLES
+.TP
+Here is a small log:
+.nf
+09/13 14:36:35  6089 Cns_serv: started
+09/13 14:36:36  6089 Cns_serv: creating /
+09/13 14:37:02  6089 Cns_srv_mkdir: NS092 - mkdir request by 0,0 from castor5.cern.ch
+09/13 14:37:02  6089 Cns_srv_mkdir: NS098 - mkdir /castor 777 22
+09/13 14:37:02  6089 Cns_srv_mkdir: returns 0
+09/13 14:37:18  6089 Cns_srv_stat: NS092 - stat request by 0,0 from castor5.cern.ch
+09/13 14:37:18  6089 Cns_srv_stat: NS098 - stat /castor
+09/13 14:37:18  6089 Cns_srv_stat: returns 0
+.fi
+.SH SEE ALSO
+.B nsshutdown(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

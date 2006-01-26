@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2004 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_mkdir.c,v $ $Revision: 1.2 $ $Date: 2004/11/03 09:49:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_mkdir.c,v $ $Revision: 1.3 $ $Date: 2006/01/26 15:36:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Cns_mkdir - create a directory entry */
@@ -24,7 +24,7 @@ static char sccsid[] = "@(#)$RCSfile: Cns_mkdir.c,v $ $Revision: 1.2 $ $Date: 20
 #include "serrno.h"
 
 int DLL_DECL
-Cns_mkdir(const char *path, mode_t mode)
+Cns_mkdirg(const char *path, const char *guid, mode_t mode)
 {
 	char *actual_path;
 	int c, n;
@@ -60,6 +60,10 @@ Cns_mkdir(const char *path, mode_t mode)
 		serrno = ENAMETOOLONG;
 		return (-1);
 	}
+	if (guid && strlen (guid) > CA_MAXGUIDLEN) {
+		serrno = EINVAL;
+		return (-1);
+	}
 
 	mode &= 07777;
 
@@ -69,7 +73,7 @@ Cns_mkdir(const char *path, mode_t mode)
 	/* Build request header */
 
 	sbp = sendbuf;
-	marshall_LONG (sbp, CNS_MAGIC);
+	marshall_LONG (sbp, guid ? CNS_MAGIC2 : CNS_MAGIC);
 	marshall_LONG (sbp, CNS_MKDIR);
 	q = sbp;        /* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
@@ -83,6 +87,8 @@ Cns_mkdir(const char *path, mode_t mode)
 	marshall_HYPER (sbp, thip->cwd);
 	marshall_STRING (sbp, actual_path);
 	marshall_LONG (sbp, mode);
+	if (guid)
+		marshall_STRING (sbp, guid);
 
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
@@ -92,4 +98,10 @@ Cns_mkdir(const char *path, mode_t mode)
 		sleep (RETRYI);
 	if (c && serrno == SENAMETOOLONG) serrno = ENAMETOOLONG;
 	return (c);
+}
+
+int DLL_DECL
+Cns_mkdir(const char *path, mode_t mode)
+{
+	return (Cns_mkdirg (path, NULL, mode));
 }

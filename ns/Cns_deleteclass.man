@@ -1,0 +1,70 @@
+.\" @(#)$RCSfile: Cns_deleteclass.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:17 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_DELETECLASS 3 "$Date: 2006/01/26 15:36:17 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_deleteclass \- delete a fileclass definition in the name server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_deleteclass (char *" server ,
+.BI "int " classid ,
+.BI "char *" class_name )
+.SH DESCRIPTION
+.B Cns_deleteclass
+deletes a fileclass definition in the name server.
+The fileclass can be identified by
+.I classid
+or by
+.IR class_name .
+If both are specified, they must point at the same class.
+.TP
+.I server
+specifies the CASTOR Name Server where the fileclass is currently defined.
+.LP
+This function requires ADMIN privilege in the Cupv database.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named fileclass does not exist.
+.TP
+.B EACCES
+The caller does not have ADMIN privilege in the Cupv database.
+.TP
+.B EEXIST
+There are directories using this class.
+.TP
+.B EINVAL
+.I classid
+and
+.I class_name
+do not point at same class entry or the length of
+.I class_name
+exceeds
+.BR CA_MAXCLASNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_enterclass(3) ,
+.BR Cupvlist(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

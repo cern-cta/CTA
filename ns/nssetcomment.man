@@ -1,0 +1,37 @@
+.\" @(#)$RCSfile: nssetcomment.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:23 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH NSSETCOMMENT 1 "$Date: 2006/01/26 15:36:23 $" CASTOR "Cns User Commands"
+.SH NAME
+nssetcomment \- add/replace a comment associated with a file/directory
+.SH SYNOPSIS
+.B nssetcomment
+.I path
+.I comment
+.SH DESCRIPTION
+.B nssetcomment
+adds/replaces a comment associated with a file/directory in the CASTOR
+name server.
+.LP
+The effective user ID of the process must match the owner of the file or
+the caller must have ADMIN privilege in the Cupv database.
+.TP
+.I path
+specifies the CASTOR pathname.
+If
+.I path
+does not start with
+.BR / ,
+it is prefixed by the content of the
+.B CASTOR_HOME
+environment variable.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_setcomment(3) ,
+.B Cupvlist(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

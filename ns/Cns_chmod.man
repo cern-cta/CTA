@@ -1,0 +1,136 @@
+.\" @(#)$RCSfile: Cns_chmod.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:17 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_CHMOD 3 "$Date: 2006/01/26 15:36:17 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_chmod \- change access mode of a CASTOR directory/file in the name server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_chmod (const char *" path ,
+.BI "mode_t " mode )
+.SH DESCRIPTION
+.B Cns_chmod
+sets the access permission portion of the mode of a CASTOR directory/file in
+the name server to the bit pattern in
+.IR mode.
+.TP
+.I path
+specifies the logical pathname relative to the current CASTOR directory or
+the full CASTOR pathname.
+.TP
+.I mode
+is constructed by OR'ing the bits defined in
+.RB < sys/stat.h >
+under Unix or \fB "statbits.h"\fR under Windows/NT:
+.sp
+.RS
+.B S_ISUID	0004000		
+set user ID on execution
+.br
+.B S_ISGID	0002000		
+set group ID on execution
+.br
+.B S_ISVTX	0001000		
+sticky bit
+.br
+.B S_IRUSR	0000400		
+read by owner
+.br
+.B S_IWUSR	0000200		
+write by owner
+.br
+.B S_IXUSR	0000100		
+execute/search by owner
+.br
+.B S_IRGRP	0000040		
+read by group
+.br
+.B S_IWGRP	0000020		
+write by group
+.br
+.B S_IXGRP	0000010		
+execute/search by group
+.br
+.B S_IROTH	0000004		
+read by others
+.br
+.B S_IWOTH	0000002		
+write by others
+.br
+.B S_IXOTH	0000001		
+execute/search by others
+.RE
+.sp
+The effective user ID of the process must match the owner of the file or
+the caller must have ADMIN privilege in the Cupv database.
+If a directory is writable and has the sticky bit set, files/directories within
+that directory can be removed or renamed only if:
+.RS
+.LP
+the effective user ID of the requestor matches the owner ID of the file or
+.LP
+the effective user ID of the requestor matches the owner ID of the directory or
+.LP
+the file is writable by the requestor or
+.LP
+the requestor has ADMIN privilege in the Cupv database.
+.RE
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EPERM
+The effective user ID does not match the owner of the file and 
+the caller does not have ADMIN privilege in the Cupv database.
+.TP
+.B ENOENT
+The named file/directory does not exist or is a null pathname.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix.
+.TP
+.B EFAULT
+.I path
+is a NULL pointer.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chdir(3) ,
+.BR Cupvlist(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

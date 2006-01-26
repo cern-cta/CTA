@@ -1,0 +1,107 @@
+.\" @(#)$RCSfile: Cns_updateseg_checksum.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:21 $ CERN IT-DS/HSM Jean-Philippe Baud
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH CNS_UPDATESEG_CHECKSUM 3 "$Date: 2006/01/26 15:36:21 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_updateseg_checksum \- Updates the checksum of a file segment
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_updateseg_checksum (char *" server ,
+.BI "u_signed64 " fileid ,
+.BI "struct Cns_segattrs *" oldsegattrs ,
+.BI "struct Cns_segattrs *" newsegattrs )
+.SH DESCRIPTION
+.B Cns_updateseg_checksum
+Updates the checksum of a file segment.
+This function should be called by the stager to update the checksum
+of file segment for files which did not previously 
+have a checksum computed
+The file is identified by
+.I server
+and
+.IR fileid .
+.TP
+.I oldsegattrs
+is a pointer to a Cns_segattrs structure containing the old segment attributes.
+.TP
+.I newsegattrs
+is a pointer to a Cns_segattrs structure containing the new segment attributes.
+.PP
+.nf
+.ft CW
+struct Cns_segattrs {
+        int             copyno;         /* copy number */
+        int             fsec;           /* file segment number */
+        u_signed64      segsize;        /* file segment size */
+        int             compression;    /* compression factor */
+        char            s_status;       /* 'd' --> deleted */
+        char            vid[CA_MAXVIDLEN+1];
+        int             side;
+        int             fseq;           /* file sequence number */
+        unsigned char   blockid[4];     /* for positionning with locate */
+        char            checksum_name[CA_MAXCKSUMNAMELEN+1];
+        unsigned long   checksum;
+};
+.ft
+.fi
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The referenced file does not exist anymore.
+.TP
+.B EFAULT
+.I oldsegattrs
+or
+.I newsegattrs
+are NULL pointers.
+.TP
+.B EISDIR
+The file is not a regular file.
+.TP
+.B EINVAL
+copyno/fsec pair in
+.I newsegattrs
+is not identical to the copyno/fsec pair in
+.I oldsegattrs
+or the length of
+.I vid
+in either 
+.I oldsegattrs
+or
+.I newsegattrs
+exceeds
+.BR CA_MAXVIDLEN .
+.TP
+.B EPERM
+Cannot update the checksum for a segment which already had a checksum.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SEENTRYNFND
+vid, side or fseq in
+.I oldsegattrs
+does not match the current values in the database.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_getsegattrs(3) ,
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

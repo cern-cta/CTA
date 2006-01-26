@@ -1,0 +1,73 @@
+.\" @(#)$RCSfile: nslistclass.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH NSLISTCLASS 1 "$Date: 2006/01/26 15:36:22 $" CASTOR "Cns User Commands"
+.SH NAME
+nslistclass \- query the CASTOR Name Server about a given class or list all existing classes
+.SH SYNOPSIS
+.B nslistclass
+.BI --id " classid"
+.BI --name " class_name"
+[
+.BI -h " name_server"
+] [
+.B --nohdr
+]
+.SH DESCRIPTION
+.B nslistclass
+queries the CASTOR Name Server about a given class or lists all existing classes:
+The fileclass can be identified by
+.I classid
+or by
+.IR class_name .
+If both are specified, they must point at the same class.
+.SH OPTIONS
+.TP
+.BI -h " name_server"
+.TP
+.BI --id " classid"
+The class number of the class to be displayed.
+.TP
+.BI --name " class_name"
+The name of the class to be displayed.
+.SH EXAMPLES
+.nf
+.ft CW
+nslistclass --id 2
+
+CLASS_ID        2
+CLASS_NAME      user
+CLASS_UID       -
+CLASS_GID       -
+FLAGS           0x0
+MAXDRIVES       2
+MIN FILESIZE    0
+MAX FILESIZE    0
+MAX SEGSIZE     0
+MIGR INTERVAL   1800
+MIN TIME        0
+NBCOPIES        1
+RETENP_ON_DISK  AS_LONG_AS_POSSIBLE
+TAPE POOLS      default
+
+
+nslistclass --id 2 -nohdr
+
+2 user -        -      0x0 2 0 0 0 1800 1 AS_LONG_AS_POSSIBLE default
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH FILES
+.TP
+.B /etc/group
+.TP
+.B /etc/passwd
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_listclass(3) ,
+.B Cns_queryclass(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

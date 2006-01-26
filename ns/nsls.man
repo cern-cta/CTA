@@ -1,0 +1,144 @@
+.\" @(#)$RCSfile: nsls.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH NSLS 1 "$Date: 2006/01/26 15:36:22 $" CASTOR "Cns User Commands"
+.SH NAME
+nsls \- list CASTOR name server directory/file entries
+.SH SYNOPSIS
+.B nsls
+.RB [ -cdiLlRTu ]
+.RB [ --class ]
+.RB [ --comment ]
+.RB [ --deleted ]
+.RB [ --display_side ]
+.RB [ --ds ]
+.IR path ...
+.SH DESCRIPTION
+.B nsls
+lists CASTOR name server directory/file entries.
+If
+.I path
+is a directory,
+.B nsls
+list the entries in the directory; they are sorted alphabetically.
+.TP
+.I path
+specifies the CASTOR pathname.
+If
+.I path
+does not start with
+.BR / ,
+it is prefixed by the content of the
+.B CASTOR_HOME
+environment variable.
+.SH OPTIONS
+.TP
+.B -c
+use time of last metadata modification instead of last file modification.
+.TP
+.B -d
+if
+.I path
+is a directory, list the directory entry itself, not the files in that
+directory.
+.TP
+.B -i
+print the file uniqueid in front of each entry.
+.TP
+.B -L
+for symbolic links, print target attributes instead of link attributes.
+.TP
+.B -l
+long listing (see below).
+.TP
+.B -R
+list the contents of directories recursively.
+.TP
+.B -T
+list file segments migrated to tape.
+.TP
+.B -u
+use last access time instead of last modification.
+.TP
+.B --class
+print the file class in front of each entry.
+.TP
+.B --comment
+print the comment associated with the entry after the pathname.
+.TP
+.B --deleted
+print also the logically deleted files.
+.TP
+.BR --display_side " or " --ds
+print the vid followed by a slash followed by the media side number.
+This option is valid only if -T is specified and is useful for multi-sided
+media like DVD.
+.LP
+The long list gives the file mode, the number of entries in the directory,
+the owner in alphabetic form if the user ID is defined in the
+.B passwd
+file else as a decimal number,
+the group in alphabetic form if the group ID is defined in the
+.B group
+file else as a decimal number, the file size, the last modification date and
+the file name.
+.LP
+The mode is printed as 10 characters, the first one is
+.B d
+for a directory,
+.B D
+for a logically deleted file,
+.B l
+for a symbolic link,
+.B m
+for a migrated file and
+.B -
+for a regular file.
+The next 9 characters are three triplets: the first triplet gives read, write
+and execute/search permission for the owner, the second triplet for the group
+and the last one for the others.
+.RS
+.TP
+.B r
+the file is readable
+.TP
+.B w
+the file is writable
+.TP
+.B x
+the file is executable or the directory is searchable
+.TP
+.B -
+permission is not granted
+.TP
+.B s
+set-user-ID or set-group-ID bit is on
+.TP
+.B t
+sticky bit is on
+.RE
+.LP
+The file segments list gives the file segment status, the copy number, the file
+segment number, the tape visual identifier, the file sequence number on tape,
+the blockid, the segment size, the compression factor and the file name.
+The segment status can be either
+.B -
+for an active segment or
+.B D
+for a logically deleted segment.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH FILES
+.TP
+.B /etc/group
+.TP
+.B /etc/passwd
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chmod(3) ,
+.BR Cns_getcomment(3) ,
+.B Cns_getsegattrs(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

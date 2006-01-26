@@ -1,0 +1,128 @@
+.\" @(#)$RCSfile: Cns_listreplicax.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:18 $ CERN IT-GD/CT Jean-Philippe Baud
+.\" Copyright (C) 2005 by CERN/IT/GD/CT
+.\" All rights reserved
+.\"
+.TH CNS_LISTREPLICAX 3 "$Date: 2006/01/26 15:36:18 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_listreplicax \- list replica entries for a given pool/server/filesystem
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "struct Cns_filereplica *Cns_listreplicax (const char *" poolname ,
+.BI "const char *" server ,
+.BI "const char *" fs ,
+.BI "int " flags ,
+.BI "Cns_list *" listp )
+.SH DESCRIPTION
+.B Cns_listreplicax
+lists replica entries for a given pool/server/filesystem.
+This routine returns a pointer to a structure containing the current replica
+entry.
+.PP
+.nf
+.ft CW
+struct Cns_filereplica {
+	u_signed64	fileid;
+	u_signed64	nbaccesses;
+	time_t		atime;		/* last access to replica */
+	time_t		ptime;		/* replica pin time */
+	char		status;
+	char		f_type;		/* 'V' for Volatile, 'P' for Permanent */
+	char		poolname[CA_MAXPOOLNAMELEN+1];
+	char		host[CA_MAXHOSTNAMELEN+1];
+	char		fs[80];
+	char		sfn[CA_MAXSFNLEN+1];
+};
+.ft
+.fi
+.TP
+.I poolname
+specifies the disk pool (only meaningful for the DPM).
+.TP
+.I server
+specifies the Storage Element or disk server hostname.
+.TP
+.I fs
+specifies the file system (only meaningful for the DPM).
+.TP
+.I flags
+may be one of the following constant:
+.RS
+.TP
+.B CNS_LIST_BEGIN
+the first call must have this flag set to allocate buffers and
+initialize pointers.
+.TP
+.B CNS_LIST_CONTINUE
+all the following calls must have this flag set.
+.TP
+.B CNS_LIST_END
+final call to terminate the list and free resources.
+.RE
+.SH RETURN VALUE
+This routine returns a pointer to a structure containing the current replica
+entry if the operation was successful or NULL if all entries have been returned
+or if the operation failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH EXAMPLES
+A C program listing the files residing on a given server could look like:
+.sp
+.nf
+.ft CW
+	int flags;
+	Cns_list list;
+	struct Cns_filereplica *lp;
+
+	flags = CNS_LIST_BEGIN;
+	while ((lp = Cns_listreplicax (NULL, server, NULL, flags, &list))) {
+		flags = CNS_LIST_CONTINUE;
+		/* process the entry */
+		.....
+	}
+	(void) Cns_listreplicax (NULL, server, NULL, CNS_LIST_END, &list);
+.ft
+.fi
+.SH ERRORS
+.TP 1.3i
+.B ENOMEM
+Memory could not be allocated for the output buffer.
+.TP
+.B EFAULT
+.IR poolname ,
+.I server
+and
+.I fs
+are NULL pointers or
+.I listp
+is a NULL pointer.
+.TP
+.B EINVAL
+The length of
+.I poolname
+exceeds
+.B CA_MAXPOOLNAMELEN
+or the length of
+.I server
+exceeds
+.B CA_MAXHOSTNAMELEN
+or the length of
+.I fs
+exceeds 79.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_addreplica(3)

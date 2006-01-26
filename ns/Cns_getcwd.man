@@ -1,0 +1,73 @@
+.\" @(#)$RCSfile: Cns_getcwd.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:18 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_GETCWD 3 "$Date: 2006/01/26 15:36:18 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_getcwd \- get CASTOR current directory used by the name server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "char *Cns_getcwd (char *" buf ,
+.BI "int " size )
+.SH DESCRIPTION
+.B Cns_getcwd
+gets the CASTOR current directory used by the name server.
+This current working directory is stored in a thread-safe variable in the client.
+.LP
+If
+.I buf
+is not NULL, the current directory name will be stored there.
+.br
+If
+.I buf
+is NULL,
+.B Cns_getcwd
+allocates a buffer of
+.I size
+bytes using
+.BR malloc .
+.LP
+.I size
+must be at least the length of the directory name to be returned plus one byte.
+.SH RETURN VALUE
+This routine returns
+.I buf
+if the operation was successful or NULL if the operation failed.
+In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The current directory has not been set yet or does not exist anymore.
+.TP
+.B ENOMEM
+.I buf
+is a NULL pointer and memory could not be allocated.
+.TP
+.B EINVAL
+.I size
+is less than or equal to zero.
+.TP
+.B ERANGE
+.I size
+is greater than 0 and less than size of current directory name plus 1.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Cns_chdir(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

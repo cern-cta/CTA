@@ -1,0 +1,102 @@
+.\" @(#)$RCSfile: Cns_mkdir.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:19 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_MKDIR 3 "$Date: 2006/01/26 15:36:19 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_mkdir \- create a new CASTOR directory in the name server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_mkdir (const char *" path ,
+.BI "mode_t " mode )
+.SH DESCRIPTION
+.B Cns_mkdir
+creates a new CASTOR directory in the name server.
+.LP
+An entry is created in the name server database and the directory's owner ID
+is set to the effective user ID of the requestor.
+The group ID of the directory is set to the effective group ID of the requestor
+or is taken from the parent directory if the latter has the
+.B S_ISGID
+bit set.
+.LP
+The access permission bits for the directory are taken from
+.IR mode ,
+then all bits set in the requestor's file mode creation mask are cleared (see
+.BR Cns_umask (3)).
+The
+.BR S_ISGID ,
+.B S_ISUID
+and
+.B S_ISVTX
+bits are silently cleared.
+.TP
+.I path
+specifies the logical pathname relative to the current CASTOR directory or
+the full CASTOR pathname.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+A component of
+.I path
+prefix does not exist or
+.I path
+is a null pathname.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix or write permission on the parent directory is denied.
+.TP
+.B EFAULT
+.I path
+is a NULL pointer.
+.TP
+.B EEXIST
+.I path
+exists already.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B ENOSPC
+The name server database is full.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chdir(3) ,
+.BR Cns_chmod(3) ,
+.BR Cns_umask(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

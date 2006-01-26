@@ -1,0 +1,73 @@
+.\" @(#)$RCSfile: Cns_delcomment.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:17 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_DELCOMMENT 3 "$Date: 2006/01/26 15:36:17 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_delcomment \- delete the comment associated with a CASTOR file/directory in the name server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_delcomment (const char *" path )
+.SH DESCRIPTION
+.B Cns_delcomment
+deletes the comment associated with a CASTOR file/directory in the
+name server.
+.TP
+.I path
+specifies the logical pathname relative to the current CASTOR directory or
+the full CASTOR pathname.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EPERM
+The effective user ID does not match the owner of the directory and
+the caller does not have ADMIN privilege in the Cupv database.
+.TP
+.B ENOENT
+The named file/directory does not exist or is a null pathname or
+there is no comment associated with this entry.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix or write permission on the file/directory itself is denied.
+.TP
+.B EFAULT
+.I path
+is a NULL pointer.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chdir(3) ,
+.BR Cns_setcomment(3) ,
+.B Cupvlist(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

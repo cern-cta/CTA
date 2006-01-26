@@ -1,0 +1,74 @@
+.\" @(#)$RCSfile: Cns_modifyclass.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:19 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2003 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_MODIFYCLASS 3 "$Date: 2006/01/26 15:36:19 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_modifyclass \- modify an existing fileclass definition in the name server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_modifyclass (char *" server ,
+.BI "int " classid ,
+.BI "char *" class_name ,
+.BI "struct Cns_fileclass *" Cns_fileclass )
+.SH DESCRIPTION
+.B Cns_modifyclass
+modifies an existing fileclass definition in the name server.
+The fileclass can be identified by
+.I classid
+or by
+.IR class_name .
+If both are specified, they must point at the same class.
+.TP
+.I server
+specifies the CASTOR Name Server where the fileclass is currently defined.
+.TP
+.I Cns_fileclass
+contains the new fileclass definition.
+.LP
+This function requires ADMIN privilege in the Cupv database.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+When a numeric value is negative, the field is not modified.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named fileclass does not exist.
+.TP
+.B EACCES
+The caller does not have ADMIN privilege in the Cupv database.
+.TP
+.B EINVAL
+.I classid
+and
+.I class_name
+do not point at same class entry or the length of
+.I class_name
+exceeds
+.BR CA_MAXCLASNAMELEN
+or the length of stager name exceeds
+.BR CA_MAXSHORTHOSTLEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_enterclass(3) ,
+.BR Cupvlist(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

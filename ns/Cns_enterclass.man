@@ -1,0 +1,62 @@
+.\" @(#)$RCSfile: Cns_enterclass.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:17 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2003 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_ENTERCLASS 3 "$Date: 2006/01/26 15:36:17 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_enterclass \- define a new fileclass in the name server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_enterclass (char *" server ,
+.BI "struct Cns_fileclass *" Cns_fileclass )
+.SH DESCRIPTION
+.B Cns_enterclass
+defines a new fileclass in the name server.
+.TP
+.I server
+specifies the CASTOR Name Server where the fileclass should be defined.
+.LP
+This function requires ADMIN privilege in the Cupv database.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EACCES
+The caller does not have ADMIN privilege in the Cupv database.
+.TP
+.B EEXIST
+The class exists already.
+.TP
+.B EINVAL
+classid is not strictly positive or class name is a null string or the length of
+class name exceeds
+.B CA_MAXCLASNAMELEN
+or stager name exceeds
+.B CA_MAXSHORTHOSTLEN
+or max_filesize < min_filesize.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_deleteclass(3) ,
+.BR Cns_modifyclass(3) ,
+.BR Cns_queryclass(3) ,
+.BR Cupvlist(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

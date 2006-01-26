@@ -1,0 +1,79 @@
+.\" @(#)$RCSfile: Cns_setfsizeg.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:21 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2004-2005 by CERN/IT/GD/CT
+.\" All rights reserved
+.\"
+.TH CNS_SETFSIZEG 3 "$Date: 2006/01/26 15:36:21 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_setfsizeg \- set filesize for a regular file having the given GUID; set also last modification time to the current time
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_setfsizeg (const char *" guid ,
+.BI "u_signed64 " filesize ,
+.BI "const char *" csumtype ,
+.BI "char *" csumvalue )
+.SH DESCRIPTION
+.B Cns_setfsizeg
+sets the filesize for a regular file having the given GUID; set also the last modification time to the
+current time.
+This function should only be called by the stager after the last write
+operation has been performed on the file.
+The file is identified by its
+.IR guid .
+.TP
+.I guid
+specifies the Grid Unique IDentifier.
+.TP
+.I csumtype
+specifies the type of checksum. Valid types are:
+.RS
+.TP
+.B CS
+standard 32 bits checksum
+.TP
+.B AD
+Adler 32 bits checksum
+.TP
+.B MD
+MD5 128 bits checksum
+.TP
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EFAULT
+.I guid
+is a NULL pointer.
+.TP
+.B EINVAL
+The length of the
+.I guid
+exceeds
+.B CA_MAXGUIDLEN
+or the length of the
+.I csumtype
+exceeds 2 or
+.I csumtype
+is an unknown type or the length of the
+.I csumvalue
+exceeds 32.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_statg(3)

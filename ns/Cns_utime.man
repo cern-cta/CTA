@@ -1,0 +1,93 @@
+.\" @(#)$RCSfile: Cns_utime.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:21 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_UTIME 3 "$Date: 2006/01/26 15:36:21 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_utime \- set last access and modification times
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_utime (const char *" path ,
+.BI "struct utimbuf *" times )
+.SH DESCRIPTION
+.B Cns_utime
+sets last access and modification times.
+.TP
+.I path
+specifies the logical pathname relative to the current CASTOR directory or
+the full CASTOR pathname.
+.LP
+If
+.I times
+is NULL, the access and modification times are set to the current time else
+they are set to the
+.B utimbuf
+structure member values.
+ctime is set to current time.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EPERM
+.I times
+is not NULL and the caller effective user ID does not match the owner ID of the
+file and the caller does not have ADMIN privilege in the Cupv database.
+.TP
+.B ENOENT
+A component of
+.I path
+prefix does not exist or
+.I path
+is a null pathname.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix or the caller effective user ID does not match the owner ID of the file
+or write permission on the file itself is denied and
+.I times
+is NULL.
+.TP
+.B EFAULT
+.I path
+is a  NULL pointer.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chdir(3) ,
+.BR Cns_stat(3) ,
+.BR Cupvlist(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

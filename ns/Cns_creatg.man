@@ -1,0 +1,119 @@
+.\" @(#)$RCSfile: Cns_creatg.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:17 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2005 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_CREATG 3 "$Date: 2006/01/26 15:36:17 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_creatg \- create a new CASTOR file with the specified GUID or reset it in the name server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_creatg (const char *" path ,
+.BI " const char *" guid ,
+.BI "mode_t " mode )
+.SH DESCRIPTION
+.B Cns_creatg
+creates a new CASTOR file with the specified GUID or resets it in the name server.
+.LP
+If the file exists, the length is truncated to 0 and the mode and owner
+are unchanged.
+.LP
+If the file does not exist yet, an entry is created in the name server
+database and the file's owner ID is set to the effective user ID of the
+requestor.
+The group ID of the file is set to the effective group ID of the requestor
+or is taken from the parent directory if the latter has the
+.B S_ISGID
+bit set.
+.LP
+The access permission bits for the file are taken from
+.IR mode ,
+then all bits set in the requestor's file mode creation mask are cleared (see
+.BR Cns_umask (3)).
+.LP
+.TP
+.I guid
+specifies the Grid Unique IDentifier.
+.TP
+.I path
+specifies the logical pathname relative to the current CASTOR directory or
+the full CASTOR pathname.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+A component of
+.I path
+prefix does not exist or
+.I path
+is a null pathname.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix or the file does not exist and write permission on the parent directory
+is denied or the file exists and write permission on the file itself is denied.
+.TP
+.B EFAULT
+.I path
+or
+.I file_uniqueid
+is a NULL pointer.
+.TP
+.B EEXIST
+File exists already with a different GUID or has replicas.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B EISDIR
+.I path
+is an existing directory.
+.TP
+.B EINVAL
+The fileclass in the parent directory is zero
+or the length of the
+.I guid
+exceeds
+.B CA_MAXGUIDLEN.
+.TP
+.B ENOSPC
+The name server database is full.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chdir(3) ,
+.BR Cns_chmod(3) ,
+.BR Cns_statg(3) ,
+.BR Cns_umask(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

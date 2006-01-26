@@ -1,0 +1,99 @@
+.\" @(#)$RCSfile: Cns_opendirg.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:19 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2005 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_OPENDIRG 3 "$Date: 2006/01/26 15:36:19 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_opendirg \- open a CASTOR directory, having the specified GUID, in the name server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "Cns_DIR *Cns_opendirg (const char *" path , 
+.BI "const char *" guid )
+.sp
+.BI "Cns_DIR *Cns_opendirxg (char *" server , 
+.BI "const char *" path , 
+.BI "const char *" guid )
+.SH DESCRIPTION
+.B Cns_opendirg
+opens a CASTOR directory, having the specified GUID, in the name server to be used in subsequent
+.B Cns_readdirg
+operations.
+A
+.B Cns_DIR
+structure and a buffer to cache the directory entries are allocated in the
+client API.
+.TP
+.I guid
+specifies the Grid Unique IDentifier.
+.TP
+.I path
+specifies the logical pathname relative to the current CASTOR directory or
+the full CASTOR pathname.
+.SH RETURN VALUE
+This routine returns a pointer to be used in the subsequent directory
+function calls if the operation was successful or NULL if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+A component of
+.I path
+prefix does not exist or
+.I path
+is a null pathname.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix or read permission is denied on
+.IR path .
+.TP
+.B EFAULT
+.I path
+is a NULL pointer.
+.TP
+.B EINVAL
+The length of the
+.I guid
+component exceeds 
+.BR CA_MAXGUIDLEN.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chdir(3) ,
+.BR Cns_closedir(3) ,
+.BR Cns_readdirg(3) ,
+.BR Cns_rewinddir(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

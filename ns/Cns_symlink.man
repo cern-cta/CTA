@@ -1,0 +1,94 @@
+.\" @(#)$RCSfile: Cns_symlink.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:21 $ CERN IT-GD/CT Jean-Philippe Baud
+.\" Copyright (C) 2004 by CERN/IT/GD/CT
+.\" All rights reserved
+.\"
+.TH CNS_SYMLINK 3 "$Date: 2006/01/26 15:36:21 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_symlink \- make a symbolic link to a file or a directory in the CASTOR Name Server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_symlink (const char *" target ,
+.BI "const char *" linkname )
+.SH DESCRIPTION
+.B Cns_symlink
+makes a symbolic link to a file or a directory in the CASTOR Name Server.
+.TP
+.I linkname
+specifies the link name relative to the current CASTOR directory or
+the full CASTOR pathname.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+A component of
+.I linkname
+prefix does not exist.
+.TP
+.B EACCES
+Search permission is denied on a component of
+.I linkname
+prefix or write permission on
+.I linkname
+parent directory is denied.
+.TP
+.B EFAULT
+.I target
+or
+.I linkname
+is a NULL pointer.
+.TP
+.B EEXIST
+.I linkname
+exists already.
+.TP
+.B ENOTDIR
+A component of
+.I linkname
+prefix is not a directory.
+.TP
+.B ENOSPC
+The name server database is full.
+.TP
+.B ENAMETOOLONG
+The length of
+.I target
+or
+.I linkname
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I linkname
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B SELOOP
+Too many symbolic links encountered when parsing
+.IR linkname .
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chdir(3) ,
+.BR Cns_chmod(3) ,
+.BR Cns_readlink(3) ,
+.BR Cns_stat(3) ,
+.B Cupvlist(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

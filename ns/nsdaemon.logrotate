@@ -1,0 +1,19 @@
+#
+# $Id: nsdaemon.logrotate,v 1.2 2006/01/26 15:36:22 bcouturi Exp $
+#
+# @(#)$RCSfile: nsdaemon.logrotate,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN/IT/ADC/CA Jean-Damien Durand
+#
+/var/log/nsdaemon {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}
+/usr/spool/ns/log {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}

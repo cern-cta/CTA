@@ -1,0 +1,30 @@
+.\" @(#)$RCSfile: Cns_rewinddir.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_REWINDDIR 3 "$Date: 2006/01/26 15:36:20 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_rewinddir \- reset position to the beginning of a CASTOR directory opened by
+.B Cns_opendir
+in the name server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "void Cns_rewinddir (Cns_DIR *" dirp )
+.SH DESCRIPTION
+.B Cns_rewinddir
+resets the position to the beginning of a CASTOR directory opened by
+.B Cns_opendir
+in the name server.
+.TP
+.I dirp
+specifies the pointer value returned by
+.BR Cns_opendir .
+.SH SEE ALSO
+.BR Cns_closedir(3) ,
+.BR Cns_opendir(3) ,
+.BR Cns_readdir(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

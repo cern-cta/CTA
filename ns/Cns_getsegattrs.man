@@ -1,0 +1,125 @@
+.\" @(#)$RCSfile: Cns_getsegattrs.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:18 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_GETSEGATTRS 3 "$Date: 2006/01/26 15:36:18 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_getsegattrs \- get file segment attributes
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_getsegattrs (const char *" path ,
+.BI "struct Cns_fileid *" file_uniqueid ,
+.BI "int *" nbseg ,
+.BI "struct Cns_segattrs **" segattrs )
+.SH DESCRIPTION
+.B Cns_getsegattrs
+gets the file segment(s) attributes.
+This function should be called by the stager to get the tape visual identifier
+and the file sequence number or blockid before executing tpread.
+The file can be identified by
+.I path
+name or by
+.IR file_uniqueid .
+If both are specified,
+.I file_uniqueid
+is used.
+.TP
+.I path
+specifies the logical pathname relative to the current CASTOR directory or
+the full CASTOR pathname.
+.TP
+.I segattrs
+is a pointer to an array of Cns_segattrs structures allocated by the API.
+The client application is responsible for freeing the array when not needed
+anymore.
+.PP
+.nf
+.ft CW
+struct Cns_segattrs {
+        int             copyno;
+        int             fsec;           /* file section number */
+        u_signed64      segsize;        /* file section size */
+        int             compression;    /* compression factor */
+        char            s_status;       /* 'd' --> deleted */
+        char            vid[CA_MAXVIDLEN+1];
+        int             side;
+        int             fseq;           /* file sequence number */
+        unsigned char   blockid[4];     /* for positionning with locate */
+        char            checksum_name[CA_MAXCKSUMNAMELEN+1];
+        unsigned long   checksum;
+};
+.ft
+.fi
+.TP
+.I copyno
+is the copy number.
+.TP
+.I fsec
+is the file segment number, It is 1 for single volume files and >= 1 for files
+spanning over several tapes.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The referenced file does not exist anymore.
+.TP
+.B ENOMEM
+Memory could not be allocated for the output buffer.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix or the caller effective user ID does not match the owner ID of the file
+or write permission on the file itself is denied.
+.TP
+.B EFAULT
+.I path
+and
+.IR file_uniqueid ,
+.I nbseg
+or
+.I segattrs
+is a NULL pointer.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B EISDIR
+The file is not a regular file.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chdir(3) ,
+.BR Cns_setsegattrs(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

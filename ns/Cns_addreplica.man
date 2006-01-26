@@ -1,0 +1,146 @@
+.\" @(#)$RCSfile: Cns_addreplica.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:16 $ CERN IT-GD/CT Jean-Philippe Baud
+.\" Copyright (C) 2004-2005 by CERN/IT/GD/CT
+.\" All rights reserved
+.\"
+.TH CNS_ADDREPLICA 3 "$Date: 2006/01/26 15:36:16 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_addreplica \- add a replica for a given file
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_addreplica (const char *" guid ,
+.BI "struct Cns_fileid *" file_uniqueid ,
+.BI "const char *" server ,
+.BI "const char *" sfn ,
+.BI "const char " status ,
+.BI "const char " f_type ,
+.BI "const char *" poolname ,
+.BI "const char *" fs )
+.SH DESCRIPTION
+.B Cns_addreplica
+adds a replica for a given file.
+The file can be specified by
+.I guid
+or by
+.IR file_uniqueid .
+If both are given,
+.I file_uniqueid
+is used.
+.TP
+.I guid
+specifies the Grid Unique IDentifier.
+.TP
+.I server
+is either the Storage Element fully qualified hostname or the disk server.
+.TP
+.I sfn
+is either the Site URL or the Physical File Name for the replica.
+.TP
+.I status
+can be set to
+.RS
+.TP
+.B -
+file is available
+.TP
+.B P
+file is being populated
+.TP
+.B D
+file is being deleted.
+.RE
+.TP
+.I f_type
+may be one of the following:
+.RS 
+.TP
+.B V
+Volatile
+.TP
+.B D
+Durable
+.TP
+.B P
+Permanent.
+.RE
+.TP
+.I poolname
+specifies the disk pool name (this argument is only meaningful for the Disk Pool
+Manager).
+.TP
+.I fs
+specifies the mount point of the dedicated filesystem (this argument is only
+meaningful for the Disk Pool Manager).
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named file does not exist.
+.TP
+.B EACCES
+Search permission is denied on a component of the parent directory or
+the effective user ID does not match the owner of the file or
+read permission on the file entry itself is denied.
+.TP
+.B EFAULT
+.I guid
+and
+.I file_uniqueid
+are NULL pointers or
+.I server
+or
+.I sfn
+is a NULL pointer.
+.TP
+.B EEXIST
+The
+.I sfn
+exists already.
+.TP
+.B EISDIR
+The file is not a regular file.
+.TP
+.B EINVAL
+The length of
+.I guid
+exceeds
+.BR CA_MAXGUIDLEN ,
+the length of
+.I server
+exceeds
+.BR CA_MAXHOSTNAMELEN ,
+the length of
+.I poolname
+exceeds
+.B CA_MAXPOOLNAMELEN
+or the length of
+.I fs
+exceeds 79.
+.TP
+.B ENAMETOOLONG
+The length of
+.I sfn
+exceeds
+.BR CA_MAXSFNLEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_delreplica(3) ,
+.BR Cns_listreplica(3)

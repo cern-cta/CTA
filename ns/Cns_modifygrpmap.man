@@ -1,0 +1,53 @@
+.\" @(#)$RCSfile: Cns_modifygrpmap.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:19 $ CERN IT-GD/SC Jean-Philippe Baud
+.\" Copyright (C) 2005 by CERN/IT/GD/SC
+.\" All rights reserved
+.\"
+.TH CNS_MODIFYGRPMAP 3 "$Date: 2006/01/26 15:36:19 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_modifygrpmap \- modify group entry corresponding to a given virtual gid
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_modifygrpmap (gid_t " gid ,
+.BI "char *" newname )
+.SH DESCRIPTION
+.B Cns_modifygrpmap
+modifies the group entry corresponding to a given virtual gid.
+.TP
+.I gid
+specifies the Virtual Group Id.
+.TP
+.I newname
+specifies the new group name.
+It must be at most 255 characters long.
+.LP
+This function requires ADMIN privilege.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EFAULT
+.I newname
+is a NULL pointer.
+.TP
+.B EINVAL
+This gid does not exist in the internal mapping table or the length of
+.I newname
+exceeds 255.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.

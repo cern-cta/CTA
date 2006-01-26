@@ -1,0 +1,122 @@
+.\" @(#)$RCSfile: nsfind.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH NSFIND 1 "$Date: 2006/01/26 15:36:22 $" CASTOR "Cns User Commands"
+.SH NAME
+nsfind \- search for files in CASTOR name server
+.SH SYNOPSIS
+.B nsfind
+.I path-list
+[
+.BI -atime " nbdays"
+] [
+.BI -ctime " nbdays"
+] [
+.BI -inum " fileid"
+] [
+.B -ls
+] [
+.BI -mtime " nbdays"
+] [
+.BI -name " pattern"
+]
+.SH DESCRIPTION
+.B nsfind
+searches for files in CASTOR name server.
+.TP
+.I path-list
+specifies the list of CASTOR pathnames.
+If
+.I path
+does not start with
+.BR / ,
+it is prefixed by the content of the
+.B CASTOR_HOME
+environment variable.
+.SH OPTIONS
+.TP
+.BI -atime " nbdays"
+if
+.I nbdays
+is is just a number, the file is selected if it was accessed exactly
+.I nbdays
+ago. If the argument is in the form +n, this means more than n days ago and
+if the argument is in the form -n, this means less than n days ago.
+.TP
+.BI -ctime " nbdays"
+the file is selected if its status changed
+.I nbdays
+ago. See -atime above.
+.TP
+.BI -inum " fileid"
+the file is selected if its fileid matches
+.IR fileid .
+.TP
+.B -ls
+list current file in "nsls -dil" format, i.e.
+gives the file id, the file mode, the number of entries in the directory,
+the owner in alphabetic form if the user ID is defined in the
+.B passwd
+file else as a decimal number,
+the group in alphabetic form if the group ID is defined in the
+.B group
+file else as a decimal number, the file size, the last modification date and
+the file name.
+.LP
+.RS
+The mode is printed as 10 characters, the first one is
+.B d
+for a directory,
+.B D
+for a logically deleted file,
+.B m
+for a migrated file and
+.B -
+for a regular file.
+The next 9 characters are three triplets: the first triplet gives read, write
+and execute/search permission for the owner, the second triplet for the group
+and the last one for the others.
+.RS
+.TP
+.B r
+the file is readable
+.TP
+.B w
+the file is writable
+.TP
+.B x
+the file is executable or the directory is searchable
+.TP
+.B -
+permission is not granted
+.TP
+.B s
+set-user-ID or set-group-ID bit is on
+.TP
+.B t
+sticky bit is on
+.RE
+.RE
+.TP
+.BI -mtime " nbdays"
+the file is selected if it has been modified
+.I nbdays
+ago. See -atime above.
+.TP
+.BI -name " pattern"
+select the file if the file name matches regular expression
+.IR pattern .
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH FILES
+.TP
+.B /etc/group
+.TP
+.B /etc/passwd
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.B Cns_chmod(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

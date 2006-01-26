@@ -1,0 +1,125 @@
+.\" @(#)$RCSfile: nsmodifyclass.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH NSMODIFYCLASS 1 "$Date: 2006/01/26 15:36:22 $" CASTOR "Cns Administrator Commands"
+.SH NAME
+nsmodifyclass \- modify an existing file class
+.SH SYNOPSIS
+.B nsmodifyclass
+.BI --id " classid"
+.BI --name " class_name"
+[
+.BI -h " name_server"
+] [
+.BI --flags " flags"
+] [
+.BI --gid " class_gid"
+] [
+.BI --group " class_group"
+] [
+.BI --maxdrives " n"
+] [
+.BI --maxfilesize " n"
+] [
+.BI --maxsegsize " n"
+] [
+.BI --migr_interval " n"
+] [
+.BI --minfilesize " n"
+] [
+.BI --mintime " n"
+] [
+.BI --nbcopies " n"
+] [
+.BI --newname " class_name"
+] [
+.BI --retenp_on_disk " n"
+] [
+.BI --tppools " pool1:pool2..."
+] [
+.BI --uid " class_uid"
+] [
+.BI --user " class_user"
+]
+.SH DESCRIPTION
+.B nsmodifyclass
+modifies an existing file class.
+The fileclass can be identified by
+.I classid
+or by
+.IR class_name .
+If both are specified, they must point at the same class.
+.LP
+This command requires ADMIN privilege in the Cupv database.
+.SH OPTIONS
+.TP
+.BI -h " name_server"
+.TP
+.BI --flags " flags"
+.TP
+.BI --gid " class_gid"
+The class is restricted to this group gid.
+.TP
+.BI --id " classid"
+The class number of the class to be modified.
+.TP
+.BI --maxdrives " n"
+Specifies the number of drives which can be used in parallel for a migration.
+.TP
+.BI --maxfilesize " n"
+Specifies the maximum file size. There is no limit by default.
+.TP
+.BI --maxsegsize " n"
+Specifies the maximum segment size. There is no limit by default.
+.TP
+.BI --migr_interval " n"
+A new migration will be started if at least
+.I n
+seconds have elapsed since the last migration.
+.TP
+.BI --minfilesize " n"
+Specifies the minimum file size. The default value is 0.
+.TP
+.BI --mintime " n"
+A file will not be migrated unless at least
+.I n
+seconds have elapsed since the last update.
+.TP
+.BI --name " class_name"
+The name of the class to be modified.
+.TP
+.BI --nbcopies " n"
+Specifies the number of copies for a file. Each copy is written to a different
+tape pool.
+.TP
+.BI --newname " class_name"
+The class name must be at most CA_MAXCLASNAMELEN characters long.
+.TP
+.BI --retenp_on_disk " n"
+Specifies the maximum retention period (in seconds) for a file on disk.
+The retention period can also be set to AS_LONG_AS_POSSIBLE or INFINITE_LIFETIME.
+If zero, the file is purged immediately after migration.
+Default is AS_LONG_AS_POSSIBLE, i.e. purged when disk space is needed.
+.TP
+.BI --tppools " pool1:pool2..."
+Specifies the tape pools to be used for migration. The number of tape pools
+must be at least as big as the number of copies.
+Pool names must be at most CA_MAXPOOLNAMELEN characters long.
+.TP
+.BI --uid " class_uid"
+The class is restricted to this user uid.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH FILES
+.TP
+.B /etc/group
+.TP
+.B /etc/passwd
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_modifyclass(3) ,
+.B Cupvlist(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

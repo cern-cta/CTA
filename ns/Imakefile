@@ -21,7 +21,7 @@ LIBS = -no_so -L../shlib -lshift -so_archive
 LIBS = -L../shlib -lshift
 #else
 #if linux
-LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl
+LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl -luuid
 #else
 #if sgi
 LIBS = -L../shlib -lshift
@@ -45,6 +45,7 @@ SACCTDIR = SacctDir
 SACCTFILE = FileName(SacctDir,sacct)
 ACCTFILE = -DACCTFILE=\"$(SACCTFILE)\"
 #endif
+LCGDM_MAPFILE = IdMapFile
 NSCONFIG = NsConfigFile
 #if UseOracle
 DBOBJS = Cns_oracle_ifce.Osuf
@@ -63,24 +64,6 @@ MYSFLG = -DUSE_MYSQL
 MYSINC = -I/usr/include/mysql
 MYSLIB = /usr/lib/mysql/libmysqlclient.a
 LIBMYS = -L/usr/lib/mysql -lmysqlclient -lz
-#else
-#if UseRaima
-DBOBJS = Cns_raima_ifce.Osuf
-#if _WIN32
-RDSFLG = -DUSE_RAIMA -DWIN32_NT
-#else
-RDSFLG = -DUSE_RAIMA -DUNIX
-#endif
-RDSHOME = RaimaDir
-RDSINC = -I$(RDSHOME)/include
-RDSLIB = $(RDSHOME)/lib/libCadm.so $(RDSHOME)/lib/libCrdm.so \
-	 $(RDSHOME)/lib/libCncp.so $(RDSHOME)/lib/libCrpc.so \
-	 $(RDSHOME)/lib/libCrm.so $(RDSHOME)/lib/libCenc.so
-LIBRDS = -L$(RDSHOME)/lib -lCadm -lCrdm -lCncp -lCrpc -lCrm -lCenc
-#else
-CDBANA = FileName(FileName(..,db),ProgramTargetName(Cdbana))
-DBOBJS = Cns_db.Osuf Cns_Cdb_ifce.Osuf
-#endif
 #endif
 #endif
 #if BuildSecurity
@@ -91,6 +74,7 @@ COMM######################### FLAGS ##############################
  
 DFLAGS = -DBIN=\"$(BIN)\" -DCNS_HOST=\"$(CNS_HOST)\" \
          -DCNSHOSTPFX=\"$(CNSHOSTPFX)\" \
+         -DLCGDM_MAPFILE=\"$(LCGDM_MAPFILE)\" \
          -DLOGFILE=\"$(LOGFILE)\" \
          -DNSCONFIG=\"$(NSCONFIG)\" \
          $(ACCTFLAG) $(ACCTFILE) $(RDSFLG) $(ORAFLG) $(MYSFLG)
@@ -103,99 +87,146 @@ DEPLIB = DepSharedLibraryTargetName(shlib,shift)
  
 COMM######################### RULES ##############################
 
-MANPAGES = $(LIBMANDIR)/Cns_access.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_chclass.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_chdir.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_chmod.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_chown.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_closedir.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_creat.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_delcomment.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_delete.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_deleteclass.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_enterclass.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_getcomment.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_getcwd.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_getsegattrs.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_listclass.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_listtape.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_mkdir.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_modifyclass.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_opendir.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_queryclass.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_readdir.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_readdirc.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_readdirx.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_readdirxc.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_readdirxt.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_rename.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_replaceseg.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_rewinddir.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_rmdir.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_selectsrvr.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_setatime.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_setcomment.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_setfsize.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_setsegattrs.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_stat.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_umask.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_undelete.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_unlink.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_updateseg_checksum.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cns_utime.$(LIBMANSUFFIX) \
+
+MANPAGES = $(LIBMANDIR)/Cns_aborttrans.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_access.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_addreplica.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_chclass.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_chdir.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_chmod.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_chown.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_closedir.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_creat.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_creatg.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_delcomment.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_delete.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_deleteclass.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_delreplica.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_endsess.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_endtrans.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_enterclass.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_getacl.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_getcomment.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_getcwd.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_getsegattrs.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_lchown.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_listclass.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_listtape.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_listlinks.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_listrep4gc.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_listreplica.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_listreplicax.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_mkdir.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_mkdirg.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_modifyclass.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_opendir.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_opendirg.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_queryclass.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_readdir.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_readdirc.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_readdirg.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_readdirx.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_readdirxc.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_readdirxt.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_readlink.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_rename.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_replaceseg.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_rewinddir.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_rmdir.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_selectsrvr.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_setacl.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_setatime.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_setcomment.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_setfsize.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_setsegattrs.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_setptime.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_setratime.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_setrstatus.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_startsess.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_starttrans.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_stat.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_statg.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_statr.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_symlink.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_umask.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_undelete.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_updateseg_checksum.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_unlink.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_utime.$(LIBMANSUFFIX) \
 	   $(MANDIR)/nschclass.$(MANSUFFIX) \
-	   $(MANDIR)/nschmod.$(MANSUFFIX) \
-	   $(MANDIR)/nschown.$(MANSUFFIX) \
-	   $(MANDIR)/nsdaemon.$(MANSUFFIX) \
-	   $(MANDIR)/nsdelcomment.$(MANSUFFIX) \
-	   $(MANDIR)/nsdeleteclass.$(MANSUFFIX) \
-	   $(MANDIR)/nsenterclass.$(MANSUFFIX) \
-	   $(MANDIR)/nsfind.$(MANSUFFIX) \
-	   $(MANDIR)/nslistclass.$(MANSUFFIX) \
-	   $(MANDIR)/nslisttape.$(MANSUFFIX) \
-	   $(MANDIR)/nsls.$(MANSUFFIX) \
-	   $(MANDIR)/nsmkdir.$(MANSUFFIX) \
-	   $(MANDIR)/nsmodifyclass.$(MANSUFFIX) \
-	   $(MANDIR)/nsrename.$(MANSUFFIX) \
-	   $(MANDIR)/nsrm.$(MANSUFFIX) \
-	   $(MANDIR)/nssetchecksum.$(MANSUFFIX) \
-	   $(MANDIR)/nssetcomment.$(MANSUFFIX) \
-	   $(MANDIR)/nsshutdown.$(MANSUFFIX)
-EXPORTMANPAGES = $(EXPORTMAN)/man3/Cns_access.$(LIBMANSUFFIX) \
+           $(MANDIR)/nschmod.$(MANSUFFIX) \
+           $(MANDIR)/nschown.$(MANSUFFIX) \
+           $(MANDIR)/nsdelcomment.$(MANSUFFIX) \
+           $(MANDIR)/nsdeleteclass.$(MANSUFFIX) \
+           $(MANDIR)/nsenterclass.$(MANSUFFIX) \
+           $(MANDIR)/nsfind.$(MANSUFFIX) \
+           $(MANDIR)/nsgetacl.$(MANSUFFIX) \
+           $(MANDIR)/nslistclass.$(MANSUFFIX) \
+           $(MANDIR)/nslisttape.$(MANSUFFIX) \
+           $(MANDIR)/nsln.$(MANSUFFIX) \
+           $(MANDIR)/nsls.$(MANSUFFIX) \
+           $(MANDIR)/nsmkdir.$(MANSUFFIX) \
+           $(MANDIR)/nsmodifyclass.$(MANSUFFIX) \
+           $(MANDIR)/nsrename.$(MANSUFFIX) \
+           $(MANDIR)/nssetchecksum.$(MANSUFFIX) \
+           $(MANDIR)/nsrm.$(MANSUFFIX) \
+           $(MANDIR)/nssetacl.$(MANSUFFIX) \
+           $(MANDIR)/nssetcomment.$(MANSUFFIX)
+
+EXPORTMANPAGES = $(EXPORTMAN)/man3/Cns_aborttrans.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_access.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_addreplica.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_chclass.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_chdir.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_chmod.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_chown.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_closedir.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_creat.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_creatg.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_delcomment.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_delete.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_deleteclass.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_delreplica.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_endsess.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_endtrans.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_enterclass.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_getacl.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_getcomment.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_getcwd.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_getsegattrs.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_listclass.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_listtape.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_listlinks.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_listreplica.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_mkdir.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_mkdirg.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_modifyclass.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_opendir.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_opendirg.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_queryclass.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_readdir.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_readdirc.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_readdirg.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_readdirx.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_readdirxc.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_readdirxt.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_readlink.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_rename.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_replaceseg.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_rewinddir.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_rmdir.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_selectsrvr.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_setacl.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_setatime.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_setcomment.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_setfsize.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_setsegattrs.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_startsess.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_starttrans.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_stat.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_statg.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_statr.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_symlink.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_umask.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_undelete.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_unlink.$(LIBMANSUFFIX) \
@@ -209,14 +240,17 @@ EXPORTMANPAGES = $(EXPORTMAN)/man3/Cns_access.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsdeleteclass.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsenterclass.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsfind.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/nsgetacl.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nslistclass.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nslisttape.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/nsln.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsls.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsmkdir.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsmodifyclass.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsrename.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsrm.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nssetchecksum.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/nssetacl.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nssetcomment.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsshutdown.$(MANSUFFIX)
 
@@ -225,21 +259,25 @@ NSLIBTARGET=LibraryTargetName(ns)
 #endif
 
 #if BuildNameServerClient
-CLIENT = ProgramTargetName(nschclass) \
+CLIENT = LibraryTargetName(ns) \
+	 ProgramTargetName(nschclass) \
 	 ProgramTargetName(nschmod) \
 	 ProgramTargetName(nschown) \
 	 ProgramTargetName(nsdelcomment) \
 	 ProgramTargetName(nsdeleteclass) \
 	 ProgramTargetName(nsenterclass) \
 	 ProgramTargetName(nsfind) \
+	 ProgramTargetName(nsgetacl) \
 	 ProgramTargetName(nslistclass) \
 	 ProgramTargetName(nslisttape) \
+	 ProgramTargetName(nsln) \
 	 ProgramTargetName(nsls) \
 	 ProgramTargetName(nsmkdir) \
 	 ProgramTargetName(nsmodifyclass) \
 	 ProgramTargetName(nsrename) \
 	 ProgramTargetName(nsrm) \
 	 ProgramTargetName(nssetchecksum) \
+	 ProgramTargetName(nssetacl) \
 	 ProgramTargetName(nssetcomment) \
 	 ProgramTargetName(nsshutdown) \
 	 ProgramTargetName(nstouch)
@@ -250,14 +288,17 @@ IPROGS_C = FileName($(BIN),ProgramTargetName(nschclass)) \
 	   FileName($(BIN),ProgramTargetName(nsdeleteclass)) \
 	   FileName($(BIN),ProgramTargetName(nsenterclass)) \
 	   FileName($(BIN),ProgramTargetName(nsfind)) \
+	   FileName($(BIN),ProgramTargetName(nsgetacl)) \
 	   FileName($(BIN),ProgramTargetName(nslistclass)) \
 	   FileName($(BIN),ProgramTargetName(nslisttape)) \
+	   FileName($(BIN),ProgramTargetName(nsln)) \
 	   FileName($(BIN),ProgramTargetName(nsls)) \
 	   FileName($(BIN),ProgramTargetName(nsmkdir)) \
 	   FileName($(BIN),ProgramTargetName(nsmodifyclass)) \
 	   FileName($(BIN),ProgramTargetName(nsrename)) \
 	   FileName($(BIN),ProgramTargetName(nsrm)) \
 	   FileName($(BIN),ProgramTargetName(nssetchecksum)) \
+	   FileName($(BIN),ProgramTargetName(nssetacl)) \
 	   FileName($(BIN),ProgramTargetName(nssetcomment)) \
 	   FileName($(BIN),ProgramTargetName(nsshutdown)) \
 	   FileName($(BIN),ProgramTargetName(nstouch))
@@ -268,75 +309,104 @@ EPROGS_C = $(EXPORTBIN)/nschclass \
 	   $(EXPORTBIN)/nsdeleteclass \
 	   $(EXPORTBIN)/nsenterclass \
 	   $(EXPORTBIN)/nsfind \
+	   $(EXPORTBIN)/nsgetacl \
 	   $(EXPORTBIN)/nslistclass \
 	   $(EXPORTBIN)/nslisttape \
+	   $(EXPORTBIN)/nsln \
 	   $(EXPORTBIN)/nsls \
 	   $(EXPORTBIN)/nsmkdir \
 	   $(EXPORTBIN)/nsmodifyclass \
 	   $(EXPORTBIN)/nsrename \
 	   $(EXPORTBIN)/nsrm \
 	   $(EXPORTBIN)/nssetchecksum \
+	   $(EXPORTBIN)/nssetacl \
 	   $(EXPORTBIN)/nssetcomment \
 	   $(EXPORTBIN)/nsshutdown \
 	   $(EXPORTBIN)/nstouch
 #endif
+
 #if BuildNameServerDaemon
 PROGS_D = ProgramTargetName(nsdaemon)
 IPROGS_D = FileName($(BIN),ProgramTargetName(nsdaemon))
 EPROGS_D = $(EXPORTBIN)/nsdaemon
 #endif
 
+
 NSDAEMON_OBJS	=	Cns_main.Osuf \
+			Cns_acl.Osuf \
 			Cns_chkperm.Osuf \
 			$(DBOBJS) \
 			Cns_procreq.Osuf \
 			sendrep.Osuf \
 			nslogit.Osuf
-NSLIB_OBJS	=	Cns_access.Osuf \
-			Cns_apiinit.Osuf \
-			Cns_auth.Osuf    \
-			Cns_chclass.Osuf \
-			Cns_chdir.Osuf \
-			Cns_chmod.Osuf \
-			Cns_chown.Osuf \
-			Cns_closedir.Osuf \
-			Cns_creat.Osuf \
-			Cns_delcomment.Osuf \
-			Cns_delete.Osuf \
-			Cns_deleteclass.Osuf \
-			Cns_enterclass.Osuf \
-			Cns_errmsg.Osuf \
-			Cns_getcomment.Osuf \
-			Cns_getcwd.Osuf \
-			Cns_getpath.Osuf \
-			Cns_getsegattrs.Osuf \
-			Cns_listclass.Osuf \
-			Cns_listtape.Osuf \
-			Cns_mkdir.Osuf \
-			Cns_modifyclass.Osuf \
-			Cns_opendir.Osuf \
-			Cns_queryclass.Osuf \
-			Cns_readdir.Osuf \
-			Cns_readdirc.Osuf \
-			Cns_readdirx.Osuf \
-			Cns_readdirxc.Osuf \
-			Cns_readdirxt.Osuf \
-			Cns_rename.Osuf \
-			Cns_replaceseg.Osuf \
-			Cns_rewinddir.Osuf \
-			Cns_rmdir.Osuf \
-			Cns_selectsrvr.Osuf \
-			Cns_setatime.Osuf \
-			Cns_setcomment.Osuf \
-			Cns_setfsize.Osuf \
-			Cns_setsegattrs.Osuf \
-			Cns_stat.Osuf \
-			Cns_umask.Osuf \
-			Cns_undelete.Osuf \
-			Cns_unlink.Osuf \
-			Cns_updateseg_checksum.Osuf \
-			Cns_utime.Osuf \
-			send2nsd.Osuf
+NSLIB_OBJS	=	Cns_aborttrans.Osuf \
+                        Cns_access.Osuf \
+                        Cns_addreplica.Osuf \
+                        Cns_apiinit.Osuf \
+                        Cns_auth.Osuf \
+                        Cns_chclass.Osuf \
+                        Cns_chdir.Osuf \
+                        Cns_chmod.Osuf \
+                        Cns_chown.Osuf \
+                        Cns_closedir.Osuf \
+                        Cns_creat.Osuf \
+                        Cns_delcomment.Osuf \
+                        Cns_delete.Osuf \
+                        Cns_deleteclass.Osuf \
+                        Cns_delreplica.Osuf \
+                        Cns_du.Osuf \
+                        Cns_endsess.Osuf \
+                        Cns_endtrans.Osuf \
+                        Cns_enterclass.Osuf \
+                        Cns_errmsg.Osuf \
+                        Cns_getacl.Osuf \
+                        Cns_getcomment.Osuf \
+                        Cns_getcwd.Osuf \
+                        Cns_getlinks.Osuf \
+                        Cns_getpath.Osuf \
+                        Cns_getreplica.Osuf \
+                        Cns_getsegattrs.Osuf \
+                        Cns_listclass.Osuf \
+                        Cns_listtape.Osuf \
+                        Cns_listlinks.Osuf \
+                        Cns_listrep4gc.Osuf \
+                        Cns_listreplica.Osuf \
+                        Cns_listreplicax.Osuf \
+                        Cns_mkdir.Osuf \
+                        Cns_modifyclass.Osuf \
+                        Cns_opendir.Osuf \
+                        Cns_queryclass.Osuf \
+                        Cns_readdir.Osuf \
+                        Cns_readdirc.Osuf \
+                        Cns_readdirg.Osuf \
+                        Cns_readdirx.Osuf \
+                        Cns_readdirxc.Osuf \
+                        Cns_readdirxr.Osuf \
+                        Cns_readdirxt.Osuf \
+                        Cns_readlink.Osuf \
+                        Cns_rename.Osuf \
+                        Cns_replaceseg.Osuf \
+                        Cns_rewinddir.Osuf \
+                        Cns_rmdir.Osuf \
+                        Cns_selectsrvr.Osuf \
+                        Cns_setacl.Osuf \
+                        Cns_setatime.Osuf \
+                        Cns_setcomment.Osuf \
+                        Cns_setfsize.Osuf \
+                        Cns_setsegattrs.Osuf \
+                        Cns_setptime.Osuf \
+                        Cns_setratime.Osuf \
+                        Cns_setrstatus.Osuf \
+                        Cns_startsess.Osuf \
+                        Cns_starttrans.Osuf \
+                        Cns_stat.Osuf \
+                        Cns_symlink.Osuf \
+                        Cns_umask.Osuf \
+                        Cns_undelete.Osuf \
+                        Cns_unlink.Osuf \
+                        Cns_updateseg_checksum.Osuf \
+                        Cns_utime.Osuf \
+                        send2nsd.Osuf
 
 all: $(NSLIBTARGET) $(CLIENT) $(PROGS_D)
 
@@ -345,46 +415,42 @@ Cns_oracle_ifce.c: Cns_oracle_ifce.pc
 	proc INAME=Cns_oracle_ifce INCLUDE=$(INCLUDES) THREADS=YES CHAR_MAP=STRING PARSE=FULL $(WNT_SYS_INCLUDE)
 #define YES 1
 
-Cns_db.c Cns_db.h: $(CDBANA) Cns_db.des
-	$(CDBANA) -c Cns_db.c -h Cns_db.h Cns_db.des
-
-NormalProgramTarget(nschclass,nschclass.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
-NormalProgramTarget(nschmod,nschmod.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
-NormalProgramTarget(nschown,nschown.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nschclass,nschclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nschmod,nschmod.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nschown,nschown.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 #if UseOracle && !defined(_WIN32)
 nsdaemon: $(NSDAEMON_OBJS) $(DEPLIB)
 	$(MAKE) -f oralink.mk nsdaemon NSDAEMON_OBJS="$(NSDAEMON_OBJS)" CLDFLAGS=$(MTLDFLAGS) LIBS="$(LIBS) $(MTLDLIBS)"
 #else
-NormalProgramTarget(nsdaemon,$(NSDAEMON_OBJS), $(DEPLIB), $(MTLDFLAGS) $(LIBS) $(MTLDLIBS) $(LIBORA) $(LIBRDS) $(LIBMYS))
+NormalProgramTarget(nsdaemon,$(NSDAEMON_OBJS), $(DEPLIB), $(MTLDFLAGS) $(LIBS) $(MTLDLIBS) $(LIBORA) $(LIBMYS))
 #endif
-NormalProgramTarget(nsdelcomment,nsdelcomment.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
-NormalProgramTarget(nsdeleteclass,nsdeleteclass.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
-NormalProgramTarget(nsenterclass,nsenterclass.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
-NormalProgramTarget(nsfind,nsfind.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
-NormalProgramTarget(nslistclass,nslistclass.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nsdelcomment,nsdelcomment.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsdeleteclass,nsdeleteclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsenterclass,nsenterclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsfind,nsfind.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsgetacl,nsgetacl.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nslistclass,nslistclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 NormalProgramTarget(nslisttape,nslisttape.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
-NormalProgramTarget(nsls,nsls.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
-NormalProgramTarget(nsmkdir,nsmkdir.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
-NormalProgramTarget(nsmodifyclass,nsmodifyclass.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
-NormalProgramTarget(nsrename,nsrename.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
-NormalProgramTarget(nsrm,nsrm.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nsln,nsln.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsls,nsls.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsmkdir,nsmkdir.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsmodifyclass,nsmodifyclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsrename,nsrename.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsrm,nsrm.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 NormalProgramTarget(nssetchecksum,nssetchecksum.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
-NormalProgramTarget(nssetcomment,nssetcomment.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
-NormalProgramTarget(nsshutdown,nsshutdown.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
-NormalProgramTarget(nstouch,nstouch.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nssetacl,nssetacl.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nssetcomment,nssetcomment.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsshutdown,nsshutdown.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nstouch,nstouch.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 
 NormalLibraryTarget(ns,$(NSLIB_OBJS))
 
 MakeDepSharedLibrary(shlib,shift)
 
-#if UseOracle == NO && UseRaima == NO && UseMySQL == NO
-#if defined(_WIN32)
-$(CDBANA): FORCE
-	pushd ..\db & $(MAKE) Cdbana.exe & popd
+#if BuildNameServerDaemon
+install: $(BIN) $(IPROGS_C) $(IPROGS_D) $(SPOOL) $(SACCTDIR)
 #else
-$(CDBANA): FORCE
-	cd ../db ; $(MAKE) Cdbana
-#endif
+install: $(BIN) $(IPROGS_C)
 #endif
 
 #if BuildNameServerDaemon
@@ -417,11 +483,17 @@ IEXPORT(nsenterclass,$(EXPORTBIN),755);
 InstallProgram(nsfind,$(BIN),root,bin,755)
 IEXPORT(nsfind,$(EXPORTBIN),755);
 
+InstallProgram(nsgetacl,$(BIN),root,bin,755)
+IEXPORT(nsgetacl,$(EXPORTBIN),755);
+
 InstallProgram(nslistclass,$(BIN),root,bin,755)
 IEXPORT(nslistclass,$(EXPORTBIN),755);
 
 InstallProgram(nslisttape,$(BIN),root,bin,755)
 IEXPORT(nslisttape,$(EXPORTBIN),755);
+
+InstallProgram(nsln,$(BIN),root,bin,755)
+IEXPORT(nsln,$(EXPORTBIN),755);
 
 InstallProgram(nsls,$(BIN),root,bin,755)
 IEXPORT(nsls,$(EXPORTBIN),755);
@@ -440,6 +512,9 @@ IEXPORT(nsrm,$(EXPORTBIN),755);
 
 InstallProgram(nssetchecksum,$(BIN),root,bin,755)
 IEXPORT(nssetchecksum,$(EXPORTBIN),755);
+
+InstallProgram(nssetacl,$(BIN),root,bin,755)
+IEXPORT(nssetacl,$(EXPORTBIN),755);
 
 InstallProgram(nssetcomment,$(BIN),root,bin,755)
 IEXPORT(nssetcomment,$(EXPORTBIN),755);
@@ -461,41 +536,69 @@ install.man: $(MANDIR) $(MANPAGES)
 
 MakeDir($(MANDIR),root,bin,0755)
 
+IMANPAGE(nsdaemon,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(nsshutdown,$(MANDIR),$(MANSUFFIX))
+
+IMANPAGE(Cns_aborttrans,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_access,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_addreplica,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_chclass,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_chdir,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_chmod,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_chown,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_closedir,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_creat,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_creatg,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_delcomment,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_delete,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_deleteclass,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_delreplica,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_endsess,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_endtrans,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_enterclass,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_getacl,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_getcomment,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_getcwd,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_getsegattrs,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_lchown,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_listclass,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_listtape,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_listlinks,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_listrep4gc,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_listreplica,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_listreplicax,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_mkdir,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_mkdirg,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_modifyclass,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_opendir,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_opendirg,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_queryclass,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_readdir,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_readdirc,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_readdirg,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_readdirx,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_readdirxc,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_readdirxt,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_readlink,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_rename,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_replaceseg,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_rewinddir,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_rmdir,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_selectsrvr,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_setacl,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_setatime,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_setcomment,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_setfsize,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_setsegattrs,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_setptime,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_setratime,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_setrstatus,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_startsess,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_starttrans,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_stat,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_statg,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_statr,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_symlink,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_umask,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_undelete,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_unlink,$(LIBMANDIR),$(LIBMANSUFFIX))
@@ -504,56 +607,77 @@ IMANPAGE(Cns_updateseg_checksum,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(nschclass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nschmod,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nschown,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(nsdaemon,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsdelcomment,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsdeleteclass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsenterclass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsfind,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(nsgetacl,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nslistclass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nslisttape,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(nsln,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsls,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsmkdir,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsmodifyclass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsrename,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsrm,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nssetchecksum,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(nssetacl,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nssetcomment,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(nsshutdown,$(MANDIR),$(MANSUFFIX))
+
+EMANPAGE(Cns_aborttrans,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_access,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_addreplica,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_chclass,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_chdir,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_chmod,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_chown,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_closedir,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_creat,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_creatg,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_delcomment,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_delete,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_deleteclass,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_delreplica,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_endsess,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_endtrans,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_enterclass,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_getacl,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_getcomment,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_getcwd,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_getsegattrs,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_listclass,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_listtape,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_listlinks,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_listreplica,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_mkdir,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_mkdirg,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_modifyclass,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_opendir,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_opendirg,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_queryclass,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_readdir,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_readdirc,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_readdirg,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_readdirx,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_readdirxc,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_readdirxt,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_readlink,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_rename,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_replaceseg,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_rewinddir,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_rmdir,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_selectsrvr,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_setacl,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_setatime,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_setcomment,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_setfsize,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_setsegattrs,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_startsess,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_starttrans,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_stat,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_statg,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_statr,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_symlink,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_umask,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_undelete,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_unlink,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
@@ -567,14 +691,17 @@ EMANPAGE(nsdelcomment,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsdeleteclass,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsenterclass,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsfind,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(nsgetacl,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nslistclass,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nslisttape,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(nsln,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsls,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsmkdir,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsmodifyclass,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsrename,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsrm,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nssetchecksum,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(nssetacl,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nssetcomment,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsshutdown,$(EXPORTMAN)/man1,$(MANSUFFIX))
 

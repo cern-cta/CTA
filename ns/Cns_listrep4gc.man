@@ -1,0 +1,73 @@
+.\" @(#)$RCSfile: Cns_listrep4gc.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:18 $ CERN IT-GD/CT Jean-Philippe Baud
+.\" Copyright (C) 2005 by CERN/IT/GD/CT
+.\" All rights reserved
+.\"
+.TH CNS_LISTREP4GC 3 "$Date: 2006/01/26 15:36:18 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_listrep4gc \- list replica entries that can be garbage collected
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "struct Cns_filereplica *Cns_listrep4gc (const char *" poolname ,
+.BI "int " flags ,
+.BI "Cns_list *" listp )
+.SH DESCRIPTION
+.B Cns_listrep4gc
+lists replica entries that can be garbage collected.
+.TP
+.I poolname
+specifies the disk pool.
+.TP
+.I flags
+may be one of the following constant:
+.RS
+.TP
+.B CNS_LIST_BEGIN
+the first call must have this flag set to allocate buffers and
+initialize pointers.
+.TP
+.B CNS_LIST_CONTINUE
+all the following calls must have this flag set.
+.TP
+.B CNS_LIST_END
+final call to terminate the list and free resources.
+.RE
+.SH RETURN VALUE
+This routine returns a pointer to a structure containing the current replica
+entry if the operation was successful or NULL if all entries have been returned
+or if the operation failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOMEM
+Memory could not be allocated for the output buffer.
+.TP
+.B EFAULT
+.I poolname
+or
+.I listp
+is a NULL pointer.
+.TP
+.B EINVAL
+The length of
+.I poolname
+exceeds
+.BR CA_MAXPOOLNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_addreplica(3)

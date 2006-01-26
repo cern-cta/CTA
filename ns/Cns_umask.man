@@ -1,0 +1,29 @@
+.\" @(#)$RCSfile: Cns_umask.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:21 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_UMASK 3 "$Date: 2006/01/26 15:36:21 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_umask \- set and get CASTOR file creation mask used by the name server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "mode_t Cns_umask (mode_t " cmask )
+.SH DESCRIPTION
+.B Cns_umask
+sets the CASTOR file creation mask used by the name server to
+.I cmask
+and returns the previous value of the mask.
+The current mask is stored in a thread-safe variable in the client.
+Only the access permission bits of
+.I cmask
+are used.
+.SH SEE ALSO
+.BR Cns_chmod(3) ,
+.BR Cns_creat(3) ,
+.BR Cns_mkdir(3) ,
+.BR Cns_stat(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,0 +1,52 @@
+.\" @(#)$RCSfile: nsmkdir.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH NSMKDIR 1 "$Date: 2006/01/26 15:36:22 $" CASTOR "Cns User Commands"
+.SH NAME
+nsmkdir \- make CASTOR directory in the name server
+.SH SYNOPSIS
+.B nsmkdir
+.RB [ -m
+.IR mode ]
+.RB [ -p ]
+.IR path ...
+.SH DESCRIPTION
+.B nsmkdir
+creates the specified CASTOR directories in the name server.
+.LP
+This requires write permission in the parent directory.
+The owner ID and group ID of the new directories are set to the requestor's
+real user ID and group ID, respectively.
+.TP
+.I path
+specifies the CASTOR pathname.
+If
+.I path
+does not start with
+.BR / ,
+it is prefixed by the content of the
+.B CASTOR_HOME
+environment variable.
+.LP
+The
+.B nsmkdir
+command has the following options:
+.TP
+.B -m
+specifies the mode to be used.  Default mode is 777.
+.TP
+.B -p
+creates all the non-existing parent directories first.
+The mode set for the created intermediate directories is the logical difference
+between 0777 and the user umask but at least 0300.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chmod(3) ,
+.BR Cns_mkdir(3) ,
+.BR Cns_umask(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

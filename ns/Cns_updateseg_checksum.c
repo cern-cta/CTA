@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_updateseg_checksum.c,v $ $Revision: 1.2 $ $Date: 2004/11/03 09:49:50 $ CERN IT-DS/HSM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_updateseg_checksum.c,v $ $Revision: 1.3 $ $Date: 2006/01/26 15:36:21 $ CERN IT-DS/HSM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      Cns_updateseg_checksum - Updates the segment checksum */
@@ -40,6 +40,7 @@ Cns_updateseg_checksum(char *server, u_signed64 fileid, struct Cns_segattrs *old
                 return (-1);
         Cns_getid(&uid, &gid);
         
+#        
 #if defined(_WIN32)
         if (uid < 0 || gid < 0) {
                 Cns_errmsg (func, NS053);

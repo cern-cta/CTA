@@ -1,0 +1,88 @@
+.\" @(#)$RCSfile: Cns_setatime.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_SETATIME 3 "$Date: 2006/01/26 15:36:20 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_setatime \- set last access time for a regular file to the current time
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_setatime (const char *" path ,
+.BI "struct Cns_fileid *" file_uniqueid )
+.SH DESCRIPTION
+.B Cns_setatime
+sets the last access time for a regular file to the current time.
+This function should only be called by the stager after the file has been
+successfully recalled and every time a stagein requests this file, even if
+the file already resides in the disk pool.
+The file can be identified by
+.I path
+name or by
+.IR file_uniqueid .
+If both are specified,
+.I file_uniqueid
+is used.
+.TP
+.I path
+specifies the logical pathname relative to the current CASTOR directory or
+the full CASTOR pathname.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named file does not exist or is a null pathname.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.IR path
+prefix or the caller effective user ID does not match the owner ID of the file
+or read permission on the file itself is denied.
+.TP
+.B EFAULT
+.I path
+and
+.I file_uniqueid
+are NULL pointers.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B EISDIR
+The file is not a regular file.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chdir(3) ,
+.B Cns_stat(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

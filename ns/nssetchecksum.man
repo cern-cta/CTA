@@ -1,0 +1,65 @@
+.\" @(#)$RCSfile: nssetchecksum.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:23 $ CERN IT-ADC-CA Ben Couturier
+.\" Copyright (C) 2004 by CERN/IT/ADC/CA
+.\" All rights reserved
+.\"
+.TH NSSETCHECKSUM 1 "$Date: 2006/01/26 15:36:23 $" CASTOR "Cns User Commands"
+.SH NAME
+nssetchecksum \- Sets or resets the checksum for a tape segment.
+.SH SYNOPSIS
+.B nssetchecksum
+.B --copyno  
+.RB copy_number
+.B --segmentno 
+.RB segment_number
+.RB [ --update ]
+.B --checksum_name
+.RB checksum_name
+.B --checksum
+.RB checksum 
+.IR path ...
+.sp
+.B nssetchecksum
+.B --copyno  
+.RB copy_number
+.B --segmentno 
+.RB segment_number
+.B --clr
+.IR path ...
+.SH DESCRIPTION
+.B nssetchecksum
+Sets or resets the checksum for a tape segment. Requires the ADMIN privilege in
+Cupv, unless the
+.B --update 
+option is used, in which case tape segments with empty checksum
+can be updated without special privileges.
+.TP
+.I path
+specifies the CASTOR pathname.
+.SH OPTIONS
+.TP
+.B --copyno
+specifies which copy of the file should be modified.
+.TP
+.B --segmentno
+specifies which tape segment should be modified.
+.TP
+.B --update
+use the Cns_updateseg_checksum call rather than Cns_replaceseg.
+.TP
+.B --checksum_name
+Name of the checksum to be stored in the database.
+.TP
+.B --checksum
+Value of the checksum to be stored in the database.
+.TP
+.B --clr
+Resets the checksum to a NULL name, and a 0 value. Cannot be used in conjunction
+with --checksum_name and --checksum nor --update. Requires the ADMIN UPV privileges.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Cns_replaceseg(3) ,
+.BR Cns_updateseg_checksum(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

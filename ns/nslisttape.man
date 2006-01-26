@@ -1,0 +1,64 @@
+.\" @(#)$RCSfile: nslisttape.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH NSLISTTAPE 1 "$Date: 2006/01/26 15:36:22 $" CASTOR "Cns User Commands"
+.SH NAME
+nslisttape \- list the file segments residing on a volume
+.SH SYNOPSIS
+.B nslisttape
+[
+.B -h
+.I name_server
+]
+.B -V
+.I vid
+[
+.B --display_side
+] [
+.B --ds
+] [
+.B --checksum
+]
+.SH DESCRIPTION
+.B nslisttape
+lists the file segments residing on a volume.
+.TP
+.I vid
+specifies the visual identifier for the volume.
+.TP
+.BR --display_side " or " --ds
+print the vid followed by a slash followed by the media side number.
+This option is useful for multi-sided media like DVD.
+.TP
+.BR --checksum
+Display the tape segments checksum.
+.LP
+The list gives the file segment status, the copy number, the file segment
+number, the tape visual identifier, the file sequence number on tape,
+the blockid, the segment size, the compression factor and the file name.
+The segment status can be either
+.B -
+for an active segment or
+.B D
+for a logically deleted segment.
+.SH EXAMPLES
+.nf
+.ft CW
+nslisttape -V RT0003
+- 1   1 RT0003     1 00000000         6 0 /castor/cern.ch/user/j/jdurand/TOTO6
+- 1   1 RT0003     2 00000000         7 0 /castor/cern.ch/user/j/jdurand/TOTO10
+- 1   1 RT0003     3 00000000         7 0 /castor/cern.ch/user/j/jdurand/TOTO18
+- 1   1 RT0003     4 00000000         7 0 /castor/cern.ch/user/j/jdurand/TOTO29
+- 1   1 RT0003     5 00000000         7 0 /castor/cern.ch/user/j/jdurand/TOTO16
+- 1   1 RT0003     6 00000000         7 0 /castor/cern.ch/user/j/jdurand/TOTO25
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.B Cns_listtape(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

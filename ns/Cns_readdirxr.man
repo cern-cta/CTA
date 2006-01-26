@@ -1,0 +1,97 @@
+.\" @(#)$RCSfile: Cns_readdirxr.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:20 $ CERN IT-GD/SC Jean-Philippe Baud
+.\" Copyright (C) 2005 by CERN/IT/GD/SC
+.\" All rights reserved
+.\"
+.TH CNS_READDIRXR 3 "$Date: 2006/01/26 15:36:20 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_readdirxr \- read CASTOR directory opened by
+.B Cns_opendir
+in the name server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "struct Cns_direnrep *Cns_readdirxr (Cns_DIR *" dirp ,
+.BI "char *" se )
+.SH DESCRIPTION
+.B Cns_readdirxr
+reads the CASTOR directory opened by
+.B Cns_opendir
+in the name server.
+This routine returns a pointer to a structure containing the current directory
+entry (basename, guid and filesize) and the replica information.
+.PP
+.nf
+.ft CW
+struct Cns_rep_info {
+	u_signed64	fileid;
+	char		status;
+	char		*host;
+	char		*sfn;
+};
+
+struct Cns_direnrep {
+	u_signed64	fileid;
+	char		guid[CA_MAXGUIDLEN+1];
+	mode_t		filemode;
+	u_signed64	filesize;
+	int		nbreplicas;
+	struct Cns_rep_info *rep;	/* array of replica info structures */
+	unsigned short	d_reclen;	/* length of this entry */
+	char		d_name[1];	/* basename in variable length */
+};
+.ft
+.fi
+.PP
+.B Cns_readdirxr
+caches a variable number of such entries, depending on the filename size, to
+minimize the number of requests to the name server.
+.TP
+.I dirp
+specifies the pointer value returned by
+.BR Cns_opendir .
+.TP
+.I se
+allows to restrict the replica entries to a given SE.
+.SH RETURN VALUE
+This routine returns a pointer to a structure containing the current directory
+entry if the operation was successful or NULL if the end of the directory was
+reached or if the operation failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EBADF
+File descriptor in DIR structure is invalid.
+.TP 
+.B ENOMEM
+Memory could not be allocated for unmarshalling the reply.
+.TP
+.B EFAULT
+.I dirp
+is a NULL pointer.
+.TP
+.B EINVAL
+The length of
+.I se
+exceeds
+.BR CA_MAXHOSTNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Cns_closedir(3) ,
+.BR Cns_opendir(3) ,
+.B Cns_rewinddir(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

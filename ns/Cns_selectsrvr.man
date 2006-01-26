@@ -1,0 +1,137 @@
+.\" @(#)$RCSfile: Cns_selectsrvr.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_SELECTSRVR 3 "$Date: 2006/01/26 15:36:20 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_selectsrvr \- select the CASTOR Name Server
+.SH SYNOPSIS
+.BI "int Cns_selectsrvr (char *" path ,
+.BI "char *" current_directory_server ,
+.BI "char *" server ,
+.BI "char **" actual_path );
+.SH DESCRIPTION
+.B Cns_selectsrvr
+selects the CASTOR Name Server.
+.LP
+The name server host name is selected according to the following rules:
+.RS
+.LP
+if
+.I path
+is in the form
+.IR server:pathname ,
+.I server
+is used else
+.LP
+if the environment variable CNS_HOST is set, its value is used as server name
+else
+.LP
+if an entry for CNS HOST exists in the configuration file
+.BR /etc/shift.conf ,
+the corresponding value is used else
+.LP
+if
+.I path
+is an absolute path and contains at least 3 components,
+the second component of the pathname is the domain name and the third component
+is prefixed by the value of
+.B CnsHostPfx
+(defined in
+.BR site.def )
+to give the hostname or its alias else
+.LP
+the Name Server running on the local machine is used.
+.RE
+.SH EXAMPLES
+.LP
+1)
+.I path
+is
+castor1:/castor/cern.ch/user/b/baud/test
+.br
+.I server
+will be
+castor1
+and
+.I actual_path will be
+/castor/cern.ch/user/b/baud/test
+.LP
+2) The environment variable has been set using
+.RS
+setenv CNS_HOST castor5
+.RE
+and
+.I path 
+is
+/castor/cern.ch/user/b/baud/test
+.br
+.I server
+will be
+castor5
+and
+.I actual_path will be
+/castor/cern.ch/user/b/baud/test
+.LP
+3) The environment varaible is not set, but there is an entry in
+.B /etc/shift.conf
+like
+.RS
+CNS	HOST	castor2
+.RE
+and
+.I path 
+is
+/castor/cern.ch/user/b/baud/test
+.br
+.I server
+will be
+castor2
+and
+.I actual_path will be
+/castor/cern.ch/user/b/baud/test
+.LP
+4) The environment variable is not set, there is no entry in
+.BR /etc/shift.conf,
+NsHostPfx is defined as
+.B cns
+in
+.B site.def
+and
+.I path 
+is
+/castor/cern.ch/user/b/baud/test
+.br
+.I server
+will be
+cnsuser
+and
+.I actual_path will be
+/castor/cern.ch/user/b/baud/test
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EFAULT
+.IR path ,
+.I server
+or
+.I actual_path
+is NULL.
+.TP
+.B EINVAL
+the server name is too long.
+.SH FILES
+.TP 1.3i
+.B /etc/shift.conf
+CASTOR global configuration file
+.TP
+.B site.def
+site specific CASTOR compilation options
+.SH SEE ALSO
+.BR Castor_limits(4)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,0 +1,64 @@
+.\" @(#)$RCSfile: Cns_setptime.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:21 $ CERN IT-GD/CT Jean-Philippe Baud
+.\" Copyright (C) 2004-2005 by CERN/IT/GD/CT
+.\" All rights reserved
+.\"
+.TH CNS_SETPTIME 3 "$Date: 2006/01/26 15:36:21 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_setptime \- set replica pin time
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_setptime (const char *" sfn ,
+.BI "time_t " ptime )
+.SH DESCRIPTION
+.B Cns_setptime
+sets the pin time for a file replica to a given time.
+This function should be called everytime a file replica is created,
+when its lifetime is extended or when the replica is released.
+.TP
+.I sfn
+is the Physical File Name for the replica.
+.TP
+.I ptime
+specifies the new lifetime.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named replica does not exist.
+.TP
+.B EACCES
+Search permission is denied on a component of the file prefix or
+the caller effective user ID does not match the owner ID of the file
+or read permission on the file itself is denied.
+.TP
+.B EFAULT
+.I sfn
+is a NULL pointer.
+.TP
+.B ENAMETOOLONG
+The length of
+.I sfn
+exceeds
+.BR CA_MAXSFNLEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.B Cns_listreplica(3)

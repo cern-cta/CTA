@@ -1,0 +1,47 @@
+.\" @(#)$RCSfile: nsln.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-GD/CT Jean-Philippe Baud
+.\" Copyright (C) 2004 by CERN/IT/GD/CT
+.\" All rights reserved
+.\"
+.TH NSLN 1 "$Date: 2006/01/26 15:36:22 $" CASTOR "Cns User Commands"
+.SH NAME
+nsln \- make a symbolic link to a file or a directory in the CASTOR Name Server
+.SH SYNOPSIS
+.B nsln -s
+.I target
+[
+.I linkname
+]
+.LP
+.B nsln -s
+.I target...
+.I directory
+.SH DESCRIPTION
+.B nsln
+makes a symbolic link to a file or a directory in the CASTOR Name Server.
+.LP
+This requires write permission in
+.I linkname
+parent directory.
+.LP
+If
+.I linkname
+does not start with
+.BR / ,
+it is prefixed by the content of the
+.B CASTOR_HOME
+environment variable.
+If
+.I linkname
+is not specified, the link is created in the current directory with the same
+basename as the target.
+In the second form, it creates in
+.I directory
+a link for each target.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_symlink(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

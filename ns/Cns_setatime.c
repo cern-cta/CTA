@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2005 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_setatime.c,v $ $Revision: 1.2 $ $Date: 2004/11/03 09:49:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_setatime.c,v $ $Revision: 1.3 $ $Date: 2006/01/26 15:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Cns_setatime - set last access (read) date */
@@ -82,7 +82,7 @@ Cns_setatime(const char *path, struct Cns_fileid *file_uniqueid)
 	marshall_LONG (sbp, uid);
 	marshall_LONG (sbp, gid);
 	marshall_HYPER (sbp, thip->cwd);
-	if (*file_uniqueid->server) {
+	if (file_uniqueid && *file_uniqueid->server) {
 		marshall_HYPER (sbp, file_uniqueid->fileid);
 		marshall_STRING (sbp, "");
 	} else {

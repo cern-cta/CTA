@@ -1,0 +1,74 @@
+.\" @(#)$RCSfile: nsrm.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:23 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH NSRM 1 "$Date: 2006/01/26 15:36:23 $" CASTOR "Cns User Commands"
+.SH NAME
+nsrm \- remove CASTOR files or directories in the name server
+.SH SYNOPSIS
+.B nsrm
+.RB [ -f ]
+.RB [ -i ]
+.IR filename ...
+.LP
+.B nsrm
+.RB [ -f ]
+.RB [ -i ]
+.B -r
+.IR dirname ...
+.SH DESCRIPTION
+.B nsrm
+removes CASTOR files or directories in the name server.
+For directories either
+.B -r
+or
+.B -R
+must be present.
+For regular files, it calls
+.B Cns_unlink
+while for directories, it calls
+.BR Cns_rmdir .
+.LP
+This requires write permission in the parent directory and the file itself.
+If write permission on an entry is denied, the standard input is a terminal and
+the
+.B -f
+option is not given, the prompt "override write protection" appears and if the
+response is not
+.BR y ,
+the entry is not deleted.
+Entries directly under a protected directory are never deleted.
+.TP
+.I path
+specifies the CASTOR pathname.
+If
+.I path
+does not start with
+.BR / ,
+it is prefixed by the content of the
+.B CASTOR_HOME
+environment variable.
+.SH OPTIONS
+The following options are supported:
+.TP
+.B -f
+Do not give an error message if the file/directory does not exist.
+.TP
+.B -i
+Request acknowledge before removing each individual entry.
+.TP
+.B -R
+Recursive mode (equivalent to
+.BR -r ).
+.TP
+.B -r
+Recursive mode.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_rmdir(3) ,
+.B Cns_unlink(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

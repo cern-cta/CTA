@@ -1,0 +1,119 @@
+.\" @(#)$RCSfile: Cns_access.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:16 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_ACCESS 3 "$Date: 2006/01/26 15:36:16 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_access \- check existence/accessibility of a file/directory
+.SH SYNOPSIS
+Under Unix:
+.br
+.B #include <sys/types.h>
+.br
+.B #include <unistd.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+Under Windows/NT:
+.br
+.B #include <sys/types.h>
+.br
+.B #define R_OK 4
+.br
+.B #define W_OK 2
+.br
+.B #define X_OK 1
+.br
+.B #define F_OK 0
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_access (const char *" path ,
+.BI "int " amode );
+.SH DESCRIPTION
+.B Cns_access
+checks in the name server database the existence or the accessibility of the
+file/directory
+.I path
+according to the bit pattern in
+.I amode
+using the real user ID.
+.TP
+.I path
+specifies the logical pathname relative to the current CASTOR directory or
+the full CASTOR pathname.
+.TP
+.I amode
+the bit pattern is built by an OR of the constants defined in
+.RB < unistd.h >
+under Unix or to be explicitely defined under Windows/NT:
+.RS
+.TP
+.B R_OK
+test for read permission
+.TP
+.B W_OK
+test for write permission
+.TP
+.B X_OK
+test for search/execute permission
+.TP
+.B F_OK
+test for existence of the directory/file.
+.RE
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named file/directory does not exist.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix or specified access to the file itself is denied.
+.TP
+.B EFAULT
+.I path
+is a NULL pointer.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B EINVAL
+.I amode
+is invalid.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chdir(3) ,
+.BR Cns_chmod(3) ,
+.B Cns_stat(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

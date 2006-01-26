@@ -1,0 +1,131 @@
+.\" @(#)$RCSfile: Cns_getreplica.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:18 $ CERN IT-GD/SC Jean-Philippe Baud
+.\" Copyright (C) 2005 by CERN/IT/GD/SC
+.\" All rights reserved
+.\"
+.TH CNS_GETREPLICA 3 "$Date: 2006/01/26 15:36:18 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_getreplica \- get the replica entries associated with a CASTOR file in the name server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_getreplica (const char *" path ,
+.BI "const char *" guid ,
+.BI "const char *" se ,
+.BI "int *" nbentries ,
+.BI "Cns_filereplica **" rep_entries )
+.SH DESCRIPTION
+.B Cns_getreplica
+gets the replica entries associated with a CASTOR file in the name server.
+LP
+The file can be specified by
+.I path
+name or by
+.IR guid .
+If both are given, they must point at the same file.
+.TP
+.I path
+specifies the logical pathname relative to the current CASTOR directory or
+the full CASTOR pathname.
+.TP
+.I guid
+specifies the Grid Unique IDentifier.
+.TP
+.I se
+allows to restrict the replica entries to a given SE.
+.TP
+.I nbentries
+will be set to the number of entries in the array of replicas.
+.TP
+.I rep_entries
+will be set to the address of an array of Cns_filereplica structures allocated
+by the API. The client application is responsible for freeing the array when not
+needed anymore.
+.PP
+.nf
+.ft CW
+struct Cns_filereplica {
+	u_signed64	fileid;
+	u_signed64	nbaccesses;
+	time_t		atime;		/* last access to replica */
+	time_t		ptime;		/* replica pin time */
+	char		status;
+	char		f_type;		/* 'V' for Volatile, 'P' for Permanent */
+	char		poolname[CA_MAXPOOLNAMELEN+1];
+	char		host[CA_MAXHOSTNAMELEN+1];
+	char		fs[80];
+	char		sfn[CA_MAXSFNLEN+1];
+};
+.ft
+.fi
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named file does not exist.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix.
+.TP
+.B ENOMEM
+Memory could not be allocated for unmarshalling the reply.
+.TP
+.B EFAULT
+.I path
+and
+.I guid
+are NULL pointers or
+.I nbentries
+or
+.I rep_entries
+is a NULL pointer.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B EINVAL
+The length of
+.I guid
+exceeds
+.B CA_MAXGUIDLEN
+or the length of
+.I se
+exceeds
+.B CA_MAXHOSTNAMELEN
+or path and guid are both given and they point at a different file.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chdir(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

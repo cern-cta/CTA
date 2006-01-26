@@ -1,0 +1,139 @@
+.\" @(#)$RCSfile: Cns_rename.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2005 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_RENAME 3 "$Date: 2006/01/26 15:36:20 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_rename \- rename a CASTOR file or directory in the name server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_rename (const char *" oldpath ,
+.BI "const char *" newpath )
+.SH DESCRIPTION
+.B Cns_rename
+renames a CASTOR file or directory in the name server.
+.LP
+.I oldpath
+and
+.I newpath
+must be of the same type, i.e. both regular files or both directories.
+.LP
+If
+.I newpath
+exists already, it will be removed before the rename takes place. If
+.I newpath
+is a directory, it must be empty.
+.LP
+When renaming a directory,
+.I newpath
+must not be a descendant of
+.IR oldpath ,
+i.e.
+.I newpath
+must not contain a path prefix that names
+.IR oldpath .
+.LP
+Write permission is required on both parents. If
+.I oldpath
+is a directory, write permission is required on it and if
+.I newpath
+is an existing directory, write permission is also required on it.
+.LP
+If any of the parents has the sticky bit S_ISVTX set, either
+.RS
+.LP
+the effective user ID of the requestor must match the owner ID of the file or
+.LP
+the effective user ID of the requestor must match the owner ID of the directory or
+.LP
+the file must be writable by the requestor or
+.LP
+the requestor must have ADMIN privilege in the Cupv database.
+.RE
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+A component of
+.I oldpath
+prefix does not exist or
+.I oldpath
+or
+.I newpath
+is a null pathname.
+.TP
+.B EACCES
+Search permission is denied on a component of the path prefixes or
+write permission on the parent directories is denied or
+.I oldpath
+is a directory and write permission is denied on
+.I oldpath
+or
+.IR newpath .
+.TP
+.B EFAULT
+.I oldpath
+or
+.I newpath
+is a NULL pointer.
+.TP
+.B EEXIST
+.I newpath
+is an existing directory and is not empty or
+.I newpath
+is an existing file with replicas.
+.TP
+.B ENOTDIR
+A component of the path prefixes is not a directory or
+.I oldpath
+is a directory and
+.I newpath
+is an existing regular file.
+.TP
+.B EISDIR
+.I newpath
+is a directory while
+.I oldpath
+is a regular file.
+.TP
+.B EINVAL
+.I newpath
+is a descendant of
+.IR oldpath .
+.TP
+.B ENAMETOOLONG
+The length of
+.I oldpath
+or
+.I newpath
+exceeds
+.B CA_MAXPATHLEN
+or the length of a path component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chdir(3) ,
+.BR Cns_chmod(3) ,
+.BR Cns_unlink(3) ,
+.B Cupvlist(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

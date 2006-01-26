@@ -1,0 +1,30 @@
+.\" @(#)$RCSfile: nsrmgrpmap.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:23 $ CERN IT-GD/SC Jean-Philippe Baud
+.\" Copyright (C) 2005 by CERN/IT/GD/SC
+.\" All rights reserved
+.\"
+.TH NSRMGRPMAP 3 "$Date: 2006/01/26 15:36:23 $" CASTOR "Cns Administrator Commands"
+.SH NAME
+nsrmgrpmap \- suppress group entry corresponding to a given virtual gid or group name
+.SH SYNOPSIS
+.B nsrmgrpmap
+.BI --gid " gid"
+.BI --group " groupname"
+.SH DESCRIPTION
+.B nsrmgrpmap
+suppresses the group entry corresponding to a given virtual gid or group name.
+If both are specified, they must point at the same entry.
+.LP
+This command requires ADMIN privilege.
+.SH OPTIONS
+.TP
+.BI --gid " gid"
+specifies the Virtual Group Id.
+.TP
+.BI --group " groupname"
+specifies the new group name.
+It must be at most 255 characters long.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.B Cns_rmgrpmap(3)

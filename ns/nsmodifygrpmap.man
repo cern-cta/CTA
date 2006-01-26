@@ -1,0 +1,29 @@
+.\" @(#)$RCSfile: nsmodifygrpmap.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:23 $ CERN IT-GD/SC Jean-Philippe Baud
+.\" Copyright (C) 2005 by CERN/IT/GD/SC
+.\" All rights reserved
+.\"
+.TH NSMODIFYGRPMAP 3 "$Date: 2006/01/26 15:36:23 $" CASTOR "Cns Administrator Commands"
+.SH NAME
+nsmodifygrpmap \- modify group entry corresponding to a given virtual gid
+.SH SYNOPSIS
+.B nsmodifygrpmap
+.BI --gid " gid"
+.BI --group " newname"
+.SH DESCRIPTION
+.B nsmodifygrpmap
+modifies the group entry corresponding to a given virtual gid.
+.LP
+This command requires ADMIN privilege.
+.SH OPTIONS
+.TP
+.BI --gid " gid"
+specifies the Virtual Group Id.
+.TP
+.BI --group " newname"
+specifies the new group name.
+It must be at most 255 characters long.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.B Cns_modifygrpmap(3)

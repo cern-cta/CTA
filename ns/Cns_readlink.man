@@ -1,0 +1,86 @@
+.\" @(#)$RCSfile: Cns_readlink.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:20 $ CERN IT-GD/CT Jean-Philippe Baud
+.\" Copyright (C) 2004 by CERN/IT/GD/CT
+.\" All rights reserved
+.\"
+.TH CNS_READLINK 3 "$Date: 2006/01/26 15:36:20 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_readlink \- read value of a symbolic link in the CASTOR Name Server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_readlink (const char *" path ,
+.BI "char *" buf ,
+.BI "size_t " bufsiz )
+.SH DESCRIPTION
+.B Cns_readlink
+reads the value of a symbolic link in the CASTOR Name Server.
+.TP
+.I path
+specifies the link name relative to the current CASTOR directory or
+the full CASTOR pathname.
+.TP
+.I buf
+points at a buffer to receive the value.
+.TP
+.I bufsiz
+gives the buffer size.
+.SH RETURN VALUE
+This routine returns the number of characters put in the buffer if the operation
+was successful or -1 if the operation failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named link does not exist or is a null pathname.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix.
+.TP
+.B EFAULT
+.I path
+or
+.I buf
+is a NULL pointer.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B EINVAL
+.I path
+is not a symbolic link.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chdir(3) ,
+.BR Cns_stat(3) ,
+.B Cns_symlink(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

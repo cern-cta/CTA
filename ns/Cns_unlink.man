@@ -1,0 +1,91 @@
+.\" @(#)$RCSfile: Cns_unlink.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:21 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2005 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_UNLINK 3 "$Date: 2006/01/26 15:36:21 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_unlink \- remove a CASTOR file entry in the name server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_unlink (const char *" path )
+.SH DESCRIPTION
+.B Cns_unlink
+removes a CASTOR file entry in the name server.
+.TP
+.I path
+specifies the logical pathname relative to the current CASTOR directory or
+the full CASTOR pathname.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EPERM
+.I path
+is a directory.
+.TP
+.B ENOENT
+The named file does not exist or is a null pathname.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.IR path
+prefix or write permission is denied on the parent directory or
+the parent has the sticky bit S_ISVTX set and
+.RS 1.5i
+.LP
+the effective user ID of the requestor does not match the owner ID of the file and
+.LP
+the effective user ID of the requestor does not match the owner ID of the
+directory and
+.LP
+the file is not writable by the requestor and
+.LP
+the requestor does not have ADMIN privilege in the Cupv database.
+.RE
+.TP
+.B EFAULT
+.I path
+is a NULL pointer.
+.TP
+.B EEXIST
+File has replicas.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chdir(3) ,
+.BR Cns_rmdir(3) ,
+.B Cupvlist(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

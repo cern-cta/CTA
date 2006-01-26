@@ -1,0 +1,120 @@
+.\" @(#)$RCSfile: Cns_getacl.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:17 $ CERN IT-ADC/CA Jean-Philippe Baud
+.\" Copyright (C) 2003 by CERN/IT/ADC/CA
+.\" All rights reserved
+.\"
+.TH CNS_GETACL 3 "$Date: 2006/01/26 15:36:17 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_getacl \- get CASTOR directory/file access control lists
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_getacl (const char *" path ,
+.BI "int " nentries ,
+.BI "struct Cns_acl *" acl )
+.SH DESCRIPTION
+.B Cns_getacl
+gets the Access Control List associated with a CASTOR directory/file.
+.TP
+.I path
+specifies the logical pathname relative to the current CASTOR directory or
+the full CASTOR pathname.
+.TP
+.I nentries
+specifies the number of entries that can fit in the buffer. If
+.I nentries
+is zero, the
+.I acl
+pointer can be NULL and the routine just returns the actual number of entries.
+.TP
+.I acl
+is a pointer to an array of Cns_acl structures allocated by the application
+to receive the reply.
+.PP
+.nf
+.ft CW
+struct Cns_acl {
+        unsigned char   a_type;
+        int             a_id;
+        unsigned char   a_perm;
+};
+.ft
+.fi
+.TP
+.I a_type
+is the ACL type: CNS_ACL_USER_OBJ, CNS_ACL_USER, CNS_ACL_GROUP_OBJ,
+CNS_ACL_GROUP, CNS_ACL_MASK or CNS_ACL_OTHER.
+Types for default entries are obtained by OR'ing the flag CNS_ACL_DEFAULT with
+one of the above types.
+.TP
+.I a_id
+is the user or group numeric id.
+.TP
+.I a_perm
+is the access permission in numeric form obtained by OR'ing some of the bits
+S_IROTH, S_IWOTH, S_IXOTH.
+.SH RETURN VALUE
+This routine returns the actual number of entries if the operation was
+successful or -1 if the operation failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named file/directory does not exist or is a null pathname.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix.
+.TP
+.B EFAULT
+.I path
+is a NULL pointer or
+.I acl
+is a NULL pointer and
+.I nentries
+is greater than zero.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B EINVAL
+.I nentries
+is negative.
+.TP
+.B ENOSPC
+.I nentries
+is less than the number of entries returned by the server.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chdir(3) ,
+.BR Cns_chmod(3) ,
+.BR nsgetacl(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

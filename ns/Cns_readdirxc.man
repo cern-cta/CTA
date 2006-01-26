@@ -1,0 +1,65 @@
+.\" @(#)$RCSfile: Cns_readdirxc.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CNS_READDIRXC 3 "$Date: 2006/01/26 15:36:20 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_readdirxc \- read CASTOR directory opened by
+.B Cns_opendir
+in the name server
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "struct Cns_direnstatc *Cns_readdirxc (Cns_DIR *" dirp )
+.SH DESCRIPTION
+.B Cns_readdirxc
+reads the CASTOR directory opened by
+.B Cns_opendir
+in the name server.
+This routine returns a pointer to a structure containing the current directory
+entry including the
+.B stat
+information and the comment associated.
+.B Cns_readdirxc
+caches a variable number of such entries, depending on the filename size, to
+minimize the number of requests to the name server.
+.TP
+.I dirp
+specifies the pointer value returned by
+.BR Cns_opendir .
+.SH RETURN VALUE
+This routine returns a pointer to a structure containing the current directory
+entry if the operation was successful or NULL if the end of the directory was
+reached or if the operation failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EBADF
+File descriptor in DIR structure is invalid.
+.TP
+.B EFAULT
+.I dirp
+is a NULL pointer.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Cns_closedir(3) ,
+.BR Cns_opendir(3) ,
+.BR Cns_rewinddir(3) ,
+.BR Cns_setcomment (3) ,
+.B stat(2)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
