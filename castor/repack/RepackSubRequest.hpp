@@ -138,6 +138,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_status
+       * @return the value of m_status
+       */
+      int status() const {
+        return m_status;
+      }
+
+      /**
+       * Set the value of m_status
+       * @param new_var the new value of m_status
+       */
+      void setStatus(int new_var) {
+        m_status = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -207,6 +223,8 @@ namespace castor {
 
       /// The full size of the request in Bytes.
       u_signed64 m_size;
+
+      int m_status;
 
       /// The id of this object
       u_signed64 m_id;

@@ -24,7 +24,7 @@
 
 
 void markStatus(int status, castor::repack::RepackSubRequest* sreq){
-	sreq->status = status;
+	sreq->setStatus(status);
 }
 
 
