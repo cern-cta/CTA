@@ -1,14 +1,14 @@
 /*
- * $Id: Cns_constants.h,v 1.2 2004/08/12 14:01:03 motiakov Exp $
+ * $Id: Cns_constants.h,v 1.3 2006/01/26 15:32:41 bcouturi Exp $
  */
 
 /*
- * Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2005 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * @(#)Cns_constants.h,v 1.10 2001/04/29 16:00:59 CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_constants.h,v $ $Revision: 1.3 $ $Date: 2006/01/26 15:32:41 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_CONSTANTS_H
@@ -26,6 +26,21 @@
 
 #define	AS_LONG_AS_POSSIBLE	0x7FFFFFFF
 #define	INFINITE_LIFETIME	0x7FFFFFFE
+
+			/* ACL types */
+
+#define CNS_ACL_USER_OBJ	1
+#define CNS_ACL_USER		2
+#define CNS_ACL_GROUP_OBJ	3
+#define CNS_ACL_GROUP		4
+#define CNS_ACL_MASK		5
+#define CNS_ACL_OTHER		6
+#define CNS_ACL_DEFAULT		0x20
+
+			/* path parsing options */
+
+#define CNS_MUST_EXIST	1
+#define CNS_NOFOLLOW	2
 
 			/* long options for Cns utilities */
 
@@ -46,6 +61,10 @@
 #define	OPT_NEW_C_NAME	14
 #define	OPT_RETENP_DISK	15
 #define	OPT_TPPOOLS	16
+#define	OPT_IDMAP_GID	17
+#define	OPT_IDMAP_GROUP	18
+#define	OPT_IDMAP_UID	17
+#define	OPT_IDMAP_USER	18
 
 			/* name server utilities exit codes */
 
