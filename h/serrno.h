@@ -76,8 +76,9 @@
 #define SEGROUPUNKN     SEBASEOFF+36    /* Group Unknown                */
 #define SECHECKSUM      SEBASEOFF+37    /* Wrong checksum               */
 #define SESQLERR        SEBASEOFF+38    /* SQL exception from database  */
+#define SELOOP          SEBASEOFF+39    /* Too many symbolic links encountered */
 
-#define SEMAXERR        SEBASEOFF+38    /* Maximum error number         */
+#define SEMAXERR        SEBASEOFF+39    /* Maximum error number         */
 
 #define SERRNO  (serrno - SEBASEOFF)    /* User convenience             */
 /*
