@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/23 14:56:44 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/26 13:50:02 $ $Author: felixehm $
  *
  *
  *
@@ -25,22 +25,8 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/Constants.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
-#include "castor/ICnvSvc.hpp"
-#include "castor/Services.hpp"
-
-#include "castor/server/BaseThreadPool.hpp"
-#include "castor/server/ListenerThreadPool.hpp"
-
-#include "castor/io/ServerSocket.hpp"
-#include "castor/BaseObject.hpp"
-#include "castor/MsgSvc.hpp"
-#include "h/stager_client_api_common.h"   // for stage_trace("..")
-
-#include "castor/repack/RepackWorker.hpp"
 #include "castor/repack/RepackServer.hpp"
+
 
 
 

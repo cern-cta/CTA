@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 14:17:33 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/26 13:50:02 $ $Author: felixehm $
  *
  *
  *
@@ -27,13 +27,18 @@
 #ifndef REPACKSERVER_HPP
 #define REPACKSERVER_HPP 1
 
+#include "RepackCommonHeader.hpp"
 #include <iostream>
 #include <string>
-#include "castor/exception/Exception.hpp"
+
+#include "castor/server/ListenerThreadPool.hpp"
 #include "castor/server/BaseServer.hpp"
+#include "castor/repack/RepackWorker.hpp"
 
 
-#define CSP_REPACKSERVER_PORT 62800
+
+
+
 
 namespace castor {
 

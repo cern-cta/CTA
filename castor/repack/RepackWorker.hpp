@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/25 08:24:27 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/01/26 13:50:02 $ $Author: felixehm $
  *
  *
  *
@@ -27,15 +27,27 @@
 #ifndef REPACKWORKER_HPP
 #define REPACKWORKER_HPP 1
 
-#include "castor/repack/RepackCommonHeader.hpp"
+#include "castor/repack/RepackCommonHeader.hpp" /* the Common Header */
+#include <sys/types.h>
+#include <time.h>
+#include <common.h>     /* for conversion of numbers to char */
+#include <vector>
+#include <map>
+
+
+
+/* ============= */
+/* Local headers */
+/* ============= */
+#include "vmgr_api.h"
 #include "castor/IObject.hpp"
-#include "castor/BaseAddress.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/MessageAck.hpp"
-#include "RepackRequest.hpp"
-#include "RepackSubRequest.hpp"
+#include "castor/BaseObject.hpp"
+#include "castor/io/ServerSocket.hpp"
 #include "FileListHelper.hpp"
 #include "DatabaseHelper.hpp"
+
 
 
 namespace castor {

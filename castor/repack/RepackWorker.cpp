@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/25 08:24:27 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/01/26 13:50:02 $ $Author: felixehm $
  *
  *
  *
@@ -25,33 +25,10 @@
  *****************************************************************************/
 
 
-#include "castor/repack/RepackCommonHeader.hpp" /* the Common Header */
-#include <sys/types.h>
-#include <time.h>
-#include <common.h>     /* for conversion of numbers to char */
-#include <vector>
-#include <map>
+
+#include "RepackWorker.hpp"
 
 
-/* ============= */
-/* Local headers */
-/* ============= */
-#include "stager_api.h"
-#include "stager_uuid.h"                /* Thread-specific uuids */
-#include "vmgr_api.h"
-
-#include "castor/Services.hpp"
-#include "castor/Constants.hpp"
-#include "castor/BaseAddress.hpp"
-#include "castor/IService.hpp"
-#include "castor/MessageAck.hpp"
-#include "castor/BaseObject.hpp"
-#include "castor/io/ServerSocket.hpp"
-
-#include "castor/repack/RepackCommonHeader.hpp"
-#include "castor/repack/RepackWorker.hpp"
-#include "castor/repack/FileListHelper.hpp"
-#include "castor/repack/DatabaseHelper.hpp"
 
 
 namespace castor {
@@ -91,7 +68,7 @@ RepackWorker::RepackWorker()
      { 9, "Exception caught"},
      {10, "Sending reply to client"},
      {11, "Unable to send Ack to client"},
-     {12, "Request storing in DB"},
+     {12, "Request stored in DB"},
      {13, "Unable to store Request in DB"},
      {14, "Fetching filelist from Nameserver"},
      {15, "Cannot get Filepathname"},
@@ -170,12 +147,12 @@ void RepackWorker::run() throw()
     castor::IObject* obj = sock->readObject();
     rreq = dynamic_cast<castor::repack::RepackRequest*>(obj);
     if (0 == rreq) {
-      delete obj;
+      delete obj; 
       // "Invalid Request" message
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6);
       ack.setStatus(false);
       ack.setErrorCode(EINVAL);
-      ack.setErrorMessage("Invalid Request object sent to server.");
+      ack.setErrorMessage("Invalid Request!");
     }
   } catch (castor::exception::Exception e) {
     // "Unable to read Request from socket" message
@@ -184,10 +161,7 @@ void RepackWorker::run() throw()
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params);
     ack.setStatus(false);
     ack.setErrorCode(EINVAL);
-    std::ostringstream stst;
-    stst << "Unable to read Request object from socket."
-         << std::endl << e.getMessage().str();
-    ack.setErrorMessage(stst.str());
+    ack.setErrorMessage("Unable to read Request object from socket.");
     stage_trace(3, "Unable to read Request object from socket.");
     return;
   }
@@ -206,6 +180,7 @@ void RepackWorker::run() throw()
     	if ( getTapeInfo(rreq->subRequest().at(i)) > 0 )
     	{
 	    	m_filelisthelper->getFileList( rreq->subRequest().at(i) );
+			markStatus(SUBREQUEST_READYFORSTAGING,rreq->subRequest().at(i));
 			m_databasehelper->store_Request(rreq);
     	}
   	}
@@ -213,12 +188,17 @@ void RepackWorker::run() throw()
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
        castor::dlf::Param("Precise Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 9, 2, params);
+    stage_trace(2,"Exception : %s\n%s",sstrerror(e.code()), e.getMessage().str().c_str() );
   }
 /****************************************************************************/  
-  //send_Ack(ack, sock);
+  
+  
+  send_Ack(ack, sock);
   delete sock;  // originally created from RepackServer
   delete rreq;
+  
+
 }
 
 

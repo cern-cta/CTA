@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/23 14:56:44 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/26 13:50:02 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -81,14 +81,16 @@ namespace castor {
 
 RepackClient::RepackClient()
 {
+  /* the default server port */
   m_defaultport = CSP_REPACKSERVER_PORT;
+  /* the default repackserver host */
   m_defaulthost = "localhost";
   std::string clientname = "RepackClient";
 
-	cp.vid =  NULL;
-	cp.pool = NULL;
+  cp.vid =  NULL;
+  cp.pool = NULL;
 
-
+  /* DLF Logging */
   castor::BaseObject::initLog(clientname, castor::SVC_STDMSG);
   // Initializes the DLF logging. This includes
   // registration of the predefined messages

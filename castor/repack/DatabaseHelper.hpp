@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/23 14:56:44 $ $Author: felixehm $
+ * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/26 13:50:02 $ $Author: felixehm $
  *
  * 
  *
@@ -33,8 +33,6 @@
 #include "castor/repack/RepackCommonHeader.hpp"
 #include <vector>
 #include "castor/exception/Internal.hpp"
-#include "castor/repack/RepackRequest.hpp"
-#include "castor/repack/RepackSubRequest.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/Services.hpp"

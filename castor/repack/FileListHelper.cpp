@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/25 08:24:27 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/01/26 13:50:02 $ $Author: felixehm $
  *
  *
  *
@@ -115,8 +115,10 @@ std::vector<std::string>* FileListHelper::getFileList(
 		if ( pathname == (*j) ){
 			filenamelist->erase(j);
 		}
-		else
+		else{
 			pathname = (*j);
+			stage_trace(3,"%s",(*j).c_str());
+		}
 	}
 	
 	return filenamelist;
