@@ -4,3 +4,4 @@
 %attr(0750,root,bin) usr/bin/recaller
 %attr(0750,root,bin) usr/bin/rtcpcldCleanupDB
 %attr(0750,root,bin) usr/bin/rtcpclientd
+%attr(0777,stage,st) var/spool/rtcpclientd
