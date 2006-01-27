@@ -1,2 +1,1 @@
 %attr(0755,root,bin) usr/local/lsf/lib/schmod_castor.so
-%attr(0777,root,bin) var/spool/scheduler

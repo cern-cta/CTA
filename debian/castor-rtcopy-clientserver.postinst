@@ -1,8 +1,9 @@
 #! /bin/sh
 #
-# $Id: castor-rtcopy-clientserver.postinst,v 1.9 2006/01/27 09:49:12 itglp Exp $
+# $Id: castor-rtcopy-clientserver.postinst,v 1.10 2006/01/27 14:08:52 itglp Exp $
 #
 CASTOR_SERVICE=rtcpclientd
 export CASTOR_SERVICE
 [ -x /usr/sbin/castor-service.postinst ] && /usr/sbin/castor-service.postinst ${1+"$@"}
+chown stage.st /var/spool/rtcpclientd
 exit $?
