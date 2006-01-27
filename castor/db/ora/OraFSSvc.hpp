@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraFSSvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/07/07 15:08:21 $ $Author: itglp $
+ * @(#)$RCSfile: OraFSSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/27 14:40:34 $ $Author: itglp $
  *
  * Implementation of the IFSSvc for Oracle
  *
@@ -29,8 +29,11 @@
 
 // Include Files
 #include "castor/BaseSvc.hpp"
+#ifdef ORACDBC
+#include "castor/db/newora/OraCommonSvc.hpp"
+#else
 #include "castor/db/ora/OraCommonSvc.hpp"
-#include "castor/db/ora/OraCnvSvc.hpp"
+#endif
 #include "castor/stager/IFSSvc.hpp"
 #include "occi.h"
 #include <vector>

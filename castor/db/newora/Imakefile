@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Release$ $Date: 2006/01/20 17:43:20 $ $Author: itglp $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Release$ $Date: 2006/01/27 14:40:35 $ $Author: itglp $
 #
 # Make Castor Oracle library for CDBC API
 #
@@ -35,7 +35,7 @@ DEBUG  = -g
 #endif
 
 INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,demo) -I FileName($(ORACLE_HOME)/rdbms,public) -I FileName(FileName(FileName(..,..),..),h) -I FileName(FileName(..,..),..)
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORASTAGERCONFIGFILE=\"OraStagerConfigFile\"
+CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORASTAGERCONFIGFILE=\"OraStagerConfigFile\" -DORACDBC=1
 
 ORALIB_SRCS = OraCnvSvc.cpp \
     	    OraStatement.cpp \
@@ -54,7 +54,10 @@ LD = g++
 
 #if BuildVDQMCpp
 #VDQM related objects
-ORAVDQMLIB_SRCS = ../ora/OraClientIdentificationCnv.cpp \
+ORAVDQMLIB_SRCS = ../ora/OraBaseObj.cpp \
+		../ora/OraBaseCnv.cpp \
+		../ora/OraCnvSvc.cpp \
+		../ora/OraClientIdentificationCnv.cpp \
                 ../ora/OraErrorHistoryCnv.cpp \
                 ../ora/OraDeviceGroupNameCnv.cpp \
                 ../ora/OraTapeAccessSpecificationCnv.cpp \

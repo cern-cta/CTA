@@ -29,12 +29,15 @@
 
 // Include File
 #include "castor/vdqm/IVdqmSvc.hpp"
+#ifdef ORACDBC
+#include "castor/db/newora/OraCommonSvc.hpp"
+#else
+#include "castor/db/ora/OraCommonSvc.hpp"
+#endif
 
 #include <string>
 #include <vector>
 
-//Local Include Files
-#include "OraCommonSvc.hpp"
 
 typedef struct newVdqmDrvReq newVdqmDrvReq_t;
 

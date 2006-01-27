@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.180 $ $Release$ $Date: 2005/11/25 14:37:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.181 $ $Release$ $Date: 2006/01/27 14:40:35 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -56,8 +56,6 @@
 #include "castor/stager/GCFile.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/TapeCopyForMigration.hpp"
-#include "castor/db/ora/OraStagerSvc.hpp"
-#include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Busy.hpp"
@@ -71,6 +69,7 @@
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/BaseAddress.hpp"
+#include "OraStagerSvc.hpp"
 #include "occi.h"
 #include <Cuuid.h>
 #include <string>

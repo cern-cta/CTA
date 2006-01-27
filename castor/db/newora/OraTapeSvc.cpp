@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraTapeSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/20 15:28:58 $ $Author: itglp $
+ * @(#)$RCSfile: OraTapeSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/27 14:40:35 $ $Author: itglp $
  *
  * Implementation of the ITapeSvc for Oracle/CDBC
  *
@@ -57,7 +57,6 @@
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/TapeCopyForMigration.hpp"
 #include "castor/db/ora/OraTapeSvc.hpp"
-#include "castor/db/newora/OraCnvSvc.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Busy.hpp"

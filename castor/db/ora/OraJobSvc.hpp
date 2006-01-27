@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/11/07 12:56:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/01/27 14:40:35 $ $Author: itglp $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -29,8 +29,11 @@
 
 // Include Files
 #include "castor/BaseSvc.hpp"
+#ifdef ORACDBC
+#include "castor/db/newora/OraCommonSvc.hpp"
+#else
 #include "castor/db/ora/OraCommonSvc.hpp"
-#include "castor/db/ora/OraCnvSvc.hpp"
+#endif
 #include "castor/stager/IJobSvc.hpp"
 #include "occi.h"
 #include <vector>

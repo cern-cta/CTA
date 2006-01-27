@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/10/17 09:46:47 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraGCSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/01/27 14:40:35 $ $Author: itglp $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -28,8 +28,11 @@
 #define ORA_ORAGCSVC_HPP 1
 
 // Include Files
+#ifdef ORACDBC
+#include "castor/db/newora/OraCommonSvc.hpp"
+#else
 #include "castor/db/ora/OraCommonSvc.hpp"
-#include "castor/db/ora/OraCnvSvc.hpp"
+#endif
 #include "castor/stager/IGCSvc.hpp"
 #include "occi.h"
 #include <vector>
