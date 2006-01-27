@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Release$ $Date: 2005/07/21 09:13:05 $ $Author: itglp $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Release$ $Date: 2006/01/27 14:45:29 $ $Author: itglp $
 #
 # Make Castor RH library
 #
@@ -39,7 +39,7 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
 LIBS = -lshift
 
-RHBIN_SRCS = Server.cpp
+RHBIN_SRCS = Server.cpp RHThread.cpp
 
 RHBIN_OBJS = $(RHBIN_SRCS:.cpp=.Osuf)
 
