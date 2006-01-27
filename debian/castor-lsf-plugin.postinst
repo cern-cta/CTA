@@ -1,1 +1,6 @@
+#! /bin/sh
+#
+# $Id: castor-lsf-plugin.postinst,v 1.2 2006/01/27 14:11:42 itglp Exp $
+#
+
 chmod 777 /var/spool/scheduler

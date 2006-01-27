@@ -1,1 +1,6 @@
+#! /bin/sh
+#
+# $Id: castor-job.postinst,v 1.2 2006/01/27 14:11:42 itglp Exp $
+#
+
 chown stage.st /var/spool/job
