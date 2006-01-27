@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/01/26 13:50:02 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/01/27 13:08:32 $ $Author: felixehm $
  *
  *
  *
@@ -86,13 +86,7 @@ namespace castor {
     
   private:
     
-    /**
-     * Sends a Response to the Client
-     * @param sock the Socket the Message is send to
-     */
-    void send_Ack(MessageAck ack, castor::io::ServerSocket* sock);
-
-	/**
+   	/**
 	 * Retrieves the Information of a tape and returns it status, otherwise -1
 	 * @param vid The Volumeid of the tape
 	 */

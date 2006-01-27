@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/01/26 13:50:02 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/01/27 13:08:32 $ $Author: felixehm $
  *
  *
  *
@@ -109,7 +109,7 @@ RepackWorker::~RepackWorker() throw()
 void RepackWorker::run() throw()
 {
   stage_trace(3, "Thread No. %d started and Request is now handled!", counter);
-  MessageAck ack; // Response for client
+  castor::MessageAck ack; // Response for client
   ack.setStatus(true);
   
   castor::io::ServerSocket* sock = (castor::io::ServerSocket*) m_param;
@@ -177,14 +177,18 @@ void RepackWorker::run() throw()
     
     for ( int i = 0; i < rreq->subRequest().size() ; i++ ) 
     {
-    	if ( getTapeInfo(rreq->subRequest().at(i)) > 0 )
+    	RepackSubRequest* subRequest = rreq->subRequest().at(i);
+    	if ( getTapeInfo(subRequest) > 0 )
     	{
-	    	m_filelisthelper->getFileList( rreq->subRequest().at(i) );
-			markStatus(SUBREQUEST_READYFORSTAGING,rreq->subRequest().at(i));
+	    	m_filelisthelper->getFileListSegs( subRequest );
+			subRequest->setStatus(SUBREQUEST_READYFORSTAGING);
 			m_databasehelper->store_Request(rreq);
     	}
   	}
   }catch (castor::exception::Exception e) {
+  	ack.setStatus(false);
+    ack.setErrorCode(e.code());
+    ack.setErrorMessage(e.getMessage().str());
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
        castor::dlf::Param("Precise Message", e.getMessage().str())};
@@ -194,27 +198,7 @@ void RepackWorker::run() throw()
 /****************************************************************************/  
   
   
-  send_Ack(ack, sock);
-  delete sock;  // originally created from RepackServer
-  delete rreq;
-  
 
-}
-
-
-
-
-
-
-
-//------------------------------------------------------------------------------
-// Sends Response to Client
-//------------------------------------------------------------------------------
-void RepackWorker::send_Ack(MessageAck ack, castor::io::ServerSocket* sock)
-{
-  // Send Response to Client
-  stage_trace(3,"Sending Response to Client" );
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 10);
   try {
     sock->sendObject(ack);
   } catch (castor::exception::Exception e) {
@@ -224,10 +208,14 @@ void RepackWorker::send_Ack(MessageAck ack, castor::io::ServerSocket* sock)
        castor::dlf::Param("Precise Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 11, 2, params);
     std::cout << e.getMessage();
-    return;
   }
-}
+  
+  
+  delete sock;  // originally created from RepackServer
+  delete rreq;
+  
 
+}
 
 
 

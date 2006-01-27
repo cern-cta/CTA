@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/26 13:50:02 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/01/27 13:08:32 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -225,9 +225,20 @@ void RepackClient::run(int argc, char** argv)
     s.connect();
     // sends the request
     s.sendObject(*req);
-
+	castor::IObject* obj = s.readObject();
+	
+	MessageAck* ack = dynamic_cast<castor::MessageAck*>(obj);
+	if ( ack != 0 ){
+		if ( !ack->status() ){
+			std::cout << "Repackserver respond with an error (ErrorCode "
+				      << ack->errorCode() << ") :" << std::endl
+					  << ack->errorMessage() << std::endl;
+		}
+	}
+	
     // free memory
     delete req;
+    delete ack;
   } catch (castor::exception::Exception ex) {
     std::cout << ex.getMessage().str() << std::endl;
   }
