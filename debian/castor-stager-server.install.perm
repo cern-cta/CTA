@@ -1,4 +1,5 @@
 %attr(0755,root,bin) etc/init.d/stager
 %attr(0644,root,bin) etc/sysconfig/stager.example
+%attr(0640,root,st)  etc/castor/RMNODECONFIG.example
 %attr(0750,root,bin) usr/bin/stager
 %attr(0750,root,bin) usr/bin/stageradmin
