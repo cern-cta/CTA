@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.17 2005/10/13 12:22:44 jdurand Exp $
+ * $Id: stager_client_api_common.cpp,v 1.18 2006/01/30 15:20:01 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.17 $ $Date: 2005/10/13 12:22:44 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.18 $ $Date: 2006/01/30 15:20:01 $ CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
@@ -19,6 +19,8 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision:
 #include <sstream>
 #include <errno.h>
 #include <stdarg.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 /* ============= */
 /* Local headers */
@@ -26,6 +28,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision:
 #include "stager_api.h"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/DiskCopy.hpp"
+#include "castor/client/BaseClient.hpp"
 #include "serrno.h"
 #include "trace.h"
 #include "Cglobals.h"
@@ -261,6 +264,7 @@ stage_apiInit(struct stager_client_api_thread_info **thip) {
   if(! (*thip)->initialized) {
     init_trace_r(&((*thip)->trace), STAGER_TRACE_NAME); 
     (*thip)->initialized = 1;
+    (*thip)->authorization_id_specified = 0;
   }
   return (0);
 }
@@ -284,4 +288,58 @@ EXTERN_C void DLL_DECL stage_trace(int level, char *format, ...) {
   va_end(args);
   print_trace_r(thip->trace, level, label, "%s", buffer);
 
+}
+
+
+EXTERN_C int DLL_DECL stage_setid(uid_t uid, gid_t gid) {
+
+  struct stager_client_api_thread_info *thip;
+  if(stage_apiInit(&thip)) {
+    return -1;
+  }
+
+  thip->uid = uid;
+  thip->gid = gid;
+  thip->authorization_id_specified = 1;
+  return 0;
+}
+
+
+EXTERN_C int DLL_DECL stage_getid(uid_t *uid, gid_t *gid) {
+
+  struct stager_client_api_thread_info *thip;
+  if(stage_apiInit(&thip)) {
+    return -1;
+  }
+
+  if(thip->authorization_id_specified == 1) {
+    if (uid != NULL) *uid = thip->uid;
+    if (gid != NULL) *gid = thip->gid;
+  } else {
+    if (uid != NULL) *uid = getuid();
+    if (gid != NULL) *gid = getgid();
+  }
+  return 0;
+}
+
+
+EXTERN_C int DLL_DECL stage_resetid() {
+
+  struct stager_client_api_thread_info *thip;
+  if(stage_apiInit(&thip)) {
+    return -1;
+  }
+  thip->authorization_id_specified = 0;
+  return 0;
+}
+
+
+int DLL_DECL stage_setClientAuthorizationId(castor::client::BaseClient *client) {
+
+  uid_t authUid;
+  gid_t authGid;
+
+  stage_getid(&authUid, &authGid);
+  client->setAuthorizationId(authUid, authGid);
+  return 0;
 }
