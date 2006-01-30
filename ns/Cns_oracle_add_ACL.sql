@@ -19,7 +19,6 @@ ALTER TABLE Cns_symlinks
 ALTER TABLE Cns_symlinks
        ADD CONSTRAINT fk_l_fileid FOREIGN KEY (fileid) REFERENCES Cns_file_metadata(fileid);
 
-CREATE INDEX PARENT_FILEID_IDX on Cns_file_metadata(PARENT_FILEID);
 
 DROP TABLE schema_version;
 CREATE TABLE schema_version (major NUMBER(1), minor NUMBER(1), patch NUMBER(1));
