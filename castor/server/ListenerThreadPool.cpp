@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/16 10:09:48 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/30 13:50:28 $ $Author: sponcec3 $
  *
  *
  *
@@ -48,13 +48,7 @@ castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolNam
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::server::ListenerThreadPool::~ListenerThreadPool() throw()
-{
-  if(m_thread != 0) {
-    m_thread->stop();
-    delete m_thread;
-  }
-}
+castor::server::ListenerThreadPool::~ListenerThreadPool() throw() {}
 
 
 //------------------------------------------------------------------------------
