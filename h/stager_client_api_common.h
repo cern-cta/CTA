@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.h,v 1.1 2005/02/14 17:20:44 bcouturi Exp $
+ * $Id: stager_client_api_common.h,v 1.2 2006/01/30 20:57:16 bcouturi Exp $
  */
 
 #ifndef stager_client_api_common_h
@@ -13,6 +13,9 @@
 struct stager_client_api_thread_info {
   bool initialized;
   void *trace;
+  int authorization_id_specified;
+  uid_t uid;
+  gid_t gid;
 };
 
 
