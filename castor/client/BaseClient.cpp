@@ -119,7 +119,8 @@ void DLL_DECL BaseClient_util_time(time_t then, char *timestr) {
 //------------------------------------------------------------------------------
 castor::client::BaseClient::BaseClient(int acceptTimeout) throw() :
   BaseObject(), m_callbackSocket(0), m_rhPort(-1), m_requestId(""),
-  m_acceptTimeout(acceptTimeout) {}
+  m_acceptTimeout(acceptTimeout),  m_hasAuthorizationId(true), m_authUid(0), 
+  m_authGid(0) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -145,7 +146,11 @@ std::string castor::client::BaseClient::sendRequest
   if (0 != stgeuid) {
     euid = atoi(stgeuid);
   } else {
-    euid = geteuid();
+    if (m_hasAuthorizationId) {
+      euid = m_authUid;
+    } else {
+      euid = geteuid();
+    }
   }
   req->setEuid(euid);
   // GID
@@ -154,7 +159,11 @@ std::string castor::client::BaseClient::sendRequest
   if (0 != stgegid) {
     egid = atoi(stgegid);
   } else {
-    egid = getegid();
+    if (m_hasAuthorizationId) {
+      egid = m_authGid;
+    } else {
+      egid = getegid();
+    }
   }
   req->setEgid(egid);
   // Username
@@ -517,4 +526,14 @@ void castor::client::BaseClient::setRequestId(std::string requestId) {
 //------------------------------------------------------------------------------
 std::string castor::client::BaseClient::requestId() {
   return m_requestId;
+}
+
+
+//------------------------------------------------------------------------------
+// setAutorizationId
+//------------------------------------------------------------------------------
+int castor::client::BaseClient::setAuthorizationId(uid_t uid, gid_t gid) throw() {
+  m_authUid = uid;
+  m_authGid = gid;
+  m_hasAuthorizationId = true;
 }

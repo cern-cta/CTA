@@ -100,6 +100,12 @@ namespace castor {
                               castor::client::IResponseHandler* rh)
         throw(castor::exception::Exception);
       
+
+      /**
+       * Sets the authorization ID under which the request should be sent.
+       */
+      int setAuthorizationId(uid_t uid, gid_t gid) throw();
+
     protected:
 
       /**
@@ -178,6 +184,12 @@ namespace castor {
 
       /// Timeout for the accept
       int m_acceptTimeout;
+
+      /// Autorization ID parameters
+      bool m_hasAuthorizationId;
+      uid_t m_authUid;
+      gid_t m_authGid;
+
       
     };
 
