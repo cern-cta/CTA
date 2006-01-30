@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlfbuf.h,v $ $Revision: 1.10 $ $Release$ $Date: 2005/10/07 15:40:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: dlfbuf.h,v $ $Revision: 1.11 $ $Release$ $Date: 2006/01/30 14:10:48 $ $Author: sponcec3 $
  *
  * A string buffer for logging into dlf
  *
@@ -83,7 +83,7 @@ namespace castor {
             } else {
               e.getMessage() << "Unable to initialize DLF :\n"
                              << sstrerror(serrno) << "\n"
-                             << errorBuffer();
+                             << *(errorBuffer());
             }
             // Don't forget the mutex !
             Cthread_mutex_unlock(&s_lock);
