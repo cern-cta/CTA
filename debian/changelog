@@ -1,3 +1,170 @@
+castor (2.0.2-10) unstable; urgency=low
+
+  * PROTO2/castor/Constants.hpp:
+    [r1.56,2006-01-23,felixehm] Added new Repack Object for Request handling
+  * PROTO2/castor/client/BaseClient.cpp:
+  * PROTO2/castor/client/BaseClient.hpp:
+    [r1.15,2006-01-30,bcouturi] AUTHID Added Authorization ID to client
+  * PROTO2/castor/db/newora/Imakefile:
+    [r 1.4,2006-01-20,itglp] Take into account the flag UseOraCDBC to compile the new db access layer for Oracle.
+  * PROTO2/castor/db/newora/OraCnvSvc.cpp:
+  * PROTO2/castor/db/newora/OraCommonSvc.cpp:
+  * PROTO2/castor/db/newora/OraCommonSvc.hpp:
+  * PROTO2/castor/db/newora/OraStatement.hpp:
+  * PROTO2/castor/db/newora/OraTapeSvc.cpp:
+  * PROTO2/castor/db/ora/OraFSSvc.cpp:
+  * PROTO2/castor/db/ora/OraFSSvc.hpp:
+  * PROTO2/castor/db/ora/OraGCSvc.cpp:
+  * PROTO2/castor/db/ora/OraGCSvc.hpp:
+  * PROTO2/castor/db/ora/OraJobSvc.cpp:
+  * PROTO2/castor/db/ora/OraJobSvc.hpp:
+  * PROTO2/castor/db/ora/OraQuerySvc.hpp:
+  * PROTO2/castor/db/ora/OraStagerSvc.cpp:
+  * PROTO2/castor/db/ora/OraStagerSvc.hpp:
+  * PROTO2/castor/db/ora/OraTapeSvc.hpp:
+  * PROTO2/castor/db/ora/OraVdqmSvc.hpp:
+    [r1.25,2006-01-27,itglp] Fixes to compile libcastorCommonOra taking into account UseOraCDBC.
+  * PROTO2/castor/dlfbuf.h:
+    [r1.11,2006-01-30,sponcec3] Fixed proper output of error message in case of Unable to initialize DLF
+  * PROTO2/castor/repack/DatabaseHelper.cpp:
+  * PROTO2/castor/repack/DatabaseHelper.hpp:
+  * PROTO2/castor/repack/FileListHelper.cpp:
+  * PROTO2/castor/repack/Imakefile:
+    [r 1.5,2006-01-26,felixehm] Cleaned Header inclusions and added new common function to Common Repack Header
+    [r 1.4,2006-01-25,felixehm] first implementation of database handling
+    [r 1.4,2006-01-25,felixehm] SubRequest handling
+    [r 1.3,2006-01-23,felixehm] Added new RepackSubRequest for multi-tape requests
+    [r 1.4,2006-01-25,felixehm] first implementation of database handling
+  * PROTO2/castor/repack/RepackClient.cpp:
+  * PROTO2/castor/repack/RepackClient.hpp:
+    [r 1.5,2006-01-27,felixehm] Added sending response to client, after storing the Request
+    [r 1.4,2006-01-26,felixehm] Cleaned Header inclusions and added new common function to Common Repack Header
+    [r 1.3,2006-01-23,felixehm] Added new RepackSubRequest for multi-tape requests
+  * PROTO2/castor/repack/RepackCommonHeader.hpp:
+    [r 1.3,2006-01-26,felixehm] Added new FileOrganizer and added status flag to RepackSubRequest
+    [r 1.2,2006-01-26,felixehm] Cleaned Header inclusions and added new common function to Common Repack Header
+  * PROTO2/castor/repack/RepackRequest.cpp:
+  * PROTO2/castor/repack/RepackRequest.hpp:
+  * PROTO2/castor/repack/RepackRequestCInt.cpp:
+  * PROTO2/castor/repack/RepackSegment.cpp:
+  * PROTO2/castor/repack/RepackSegment.hpp:
+  * PROTO2/castor/repack/RepackServer.cpp:
+  * PROTO2/castor/repack/RepackServer.hpp:
+  * PROTO2/castor/repack/RepackWorker.cpp:
+  * PROTO2/castor/repack/RepackWorker.hpp:
+    [r 1.5,2006-01-26,felixehm] Added new FileOrganizer and added status flag to RepackSubRequest
+    [r 1.4,2006-01-26,felixehm] Cleaned Header inclusions and added new common function to Common Repack Header
+    [r 1.3,2006-01-25,felixehm] first implementation of database handling
+    [r 1.3,2006-01-25,felixehm] SubRequest handling
+    [r 1.2,2006-01-23,felixehm] Added new RepackSubRequest for multi-tape requests
+  * PROTO2/castor/rh/Imakefile:
+    [r 1.9,2006-01-27,itglp] Added explicitely RHThread to the sources (was included by dependencies).
+  * PROTO2/castor/server/ListenerThreadPool.cpp:
+    [r 1.3,2006-01-30,sponcec3] Removed double deletion of m_thread
+  * PROTO2/config/Library.tmpl:
+    [r1.28,2006-01-20,itglp] Fixed source path for the castor-oracle library.
+    [r1.27,2006-01-20,itglp] Fixed rule for UseOraCDBC flag
+  * PROTO2/config/LibraryDeps.tmpl:
+    [r1.12,2006-01-26,bcouturi] Added dependency on Cupv to Cns when UseCupv is on
+  * PROTO2/debian/Cupvdaemon.init:
+  * PROTO2/debian/MigHunter.init:
+    [r 1.5,2006-01-27,itglp] Fixed scripts and rules form RPM build.
+  * PROTO2/debian/castor-dlf-server.install.perm:
+    [r 1.3,2006-01-27,itglp] Added sysconfig.
+  * PROTO2/debian/castor-job.install.perm:
+  * PROTO2/debian/castor-lsf-plugin.install.perm:
+    [r 1.4,2006-01-27,itglp] Added sysconfig.
+    [r 1.2,2006-01-27,itglp] Fixed scripts and rules form RPM build.
+  * PROTO2/debian/castor-rtcopy-clientserver.install.perm:
+  * PROTO2/debian/castor-rtcopy-clientserver.postinst:
+    [r 1.9,2006-01-27,itglp] Fixed scripts and rules form RPM build.
+  * PROTO2/debian/castor-stager-server.install.perm:
+    [r 1.4,2006-01-30,itglp] Added RMNODECONFIG.example
+  * PROTO2/debian/dlfserver.init:
+  * PROTO2/debian/nsdaemon.init:
+  * PROTO2/debian/rhserver.init:
+  * PROTO2/debian/rmmaster.init:
+    [r 1.3,2006-01-27,itglp] Fixed scripts and rules form RPM build.
+  * PROTO2/debian/rmmaster.sysconfig:
+    [r 1.3,2006-01-30,itglp] Removed file, was already in resourcemonitoring.
+  * PROTO2/debian/rtcpclientd.init:
+    [r 1.5,2006-01-27,itglp] Fixed scripts and rules form RPM build.
+  * PROTO2/debian/stager.init:
+    [r 1.7,2006-01-23,itglp] Fixed check of TNS_ADMIN and ORACLE_HOME.
+  * PROTO2/debian/vmgrdaemon.init:
+    [r 1.5,2006-01-27,itglp] Fixed scripts and rules form RPM build.
+  * CASTOR/dlf/dlfquery/base.cfg.php:
+    [r 1.2,2006,sponcec3] Removed logins and passwords from CVS !
+  * PROTO2/h/Castor_limits.h:
+    [r 1.9,2006-01-26,bcouturi] Added new limit for name server with ACLs
+  * PROTO2/h/Cns_api.h:
+  * PROTO2/h/Cns_constants.h:
+  * PROTO2/h/Cns_server.h:
+    [r 1.6,2006-01-26,bcouturi] Changed Cns headers for NS with ACLs
+  * PROTO2/h/serrno.h:
+    [r1.12,2006-01-26,bcouturi] Added new error for NS with ACLs
+  * PROTO2/h/stager_client_api_common.h:
+    [r 1.2,2006-01-30,bcouturi] AUTHID Added new fields to stager per thread structure for Authorization ID
+  * PROTO2/lib/Imakefile:
+    [r1.20,2006-01-20,itglp] Fixed rule to take into account the new flag UseOraCDBC.
+  * PROTO2/maketar.sh:
+    [r1.39,2006-01-27,itglp] Removed UseMAUI from the 'YES' list.
+  * PROTO2/ns/Cns_access.c:
+  * PROTO2/ns/Cns_auth.c:
+  * PROTO2/ns/Cns_chclass.c:
+  * PROTO2/ns/Cns_chdir.c:
+  * PROTO2/ns/Cns_chmod.c:
+  * PROTO2/ns/Cns_chown.c:
+  * PROTO2/ns/Cns_creat.c:
+  * PROTO2/ns/Cns_delcomment.c:
+  * PROTO2/ns/Cns_delete.c:
+  * PROTO2/ns/Cns_deleteclass.c:
+  * PROTO2/ns/Cns_enterclass.c:
+  * PROTO2/ns/Cns_getcomment.c:
+  * PROTO2/ns/Cns_getpath.c:
+  * PROTO2/ns/Cns_getsegattrs.c:
+  * PROTO2/ns/Cns_listclass.c:
+  * PROTO2/ns/Cns_listtape.c:
+  * PROTO2/ns/Cns_main.c:
+  * PROTO2/ns/Cns_mkdir.c:
+  * PROTO2/ns/Cns_modifyclass.c:
+  * PROTO2/ns/Cns_opendir.c:
+  * PROTO2/ns/Cns_procreq.c:
+  * PROTO2/ns/Cns_queryclass.c:
+  * PROTO2/ns/Cns_readdir.c:
+  * PROTO2/ns/Cns_readdirc.c:
+  * PROTO2/ns/Cns_readdirx.c:
+  * PROTO2/ns/Cns_readdirxc.c:
+  * PROTO2/ns/Cns_readdirxt.c:
+  * PROTO2/ns/Cns_rename.c:
+  * PROTO2/ns/Cns_replaceseg.c:
+  * PROTO2/ns/Cns_rmdir.c:
+  * PROTO2/ns/Cns_setatime.c:
+  * PROTO2/ns/Cns_setcomment.c:
+  * PROTO2/ns/Cns_setfsize.c:
+  * PROTO2/ns/Cns_setsegattrs.c:
+  * PROTO2/ns/Cns_stat.c:
+  * PROTO2/ns/Cns_undelete.c:
+  * PROTO2/ns/Cns_unlink.c:
+  * PROTO2/ns/Cns_updateseg_checksum.c:
+  * PROTO2/ns/Cns_utime.c:
+  * PROTO2/ns/Imakefile:
+  * PROTO2/ns/nsdaemon.sysconfig:
+  * PROTO2/ns/send2nsd.c:
+    [r 1.8,2006-01-26,bcouturi] Imported new version of name server with ACLs
+  * PROTO2/resourcemonitoring/rmmaster.sysconfig:
+    [r 1.2,2006-01-30,itglp] Fixed options to enable LSF in rmmaster.
+  * PROTO2/rtcopy/rtcpcldCatalogueInterface.c:
+    [r1.141,2006-01-20,obarring] Don't log ENOENT from bestTapeCopyForStream() as an error
+  * PROTO2/shlib/Imakefile:
+    [r1.45,2006-01-25,felixehm] changed built order of libcastorCnvs.so, it has to be created before libshift.so
+  * PROTO2/stager/stager_client_api_common.cpp:
+    [r1.18,2006-01-30,bcouturi] AUTHID Added per thread Authorization ID to the API
+  * CASTOR/tape/Ctape_dmpfil.c:
+    [r1.25,2006,hcacote] use maxblksize from devinfo if no -b specified in cmmand line
+
+ -- Giuseppe LO PRESTI <itglp@localhost.localdomain>  Tue, 31 Jan 2006 16:07:12 +0100
+
 castor (2.0.2-9) unstable; urgency=low
 
   * PROTO2/castor/db/oracleTrailer.sql:
