@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SelectProcessThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/17 16:50:13 $ $Author: itglp $
+ * @(#)$RCSfile: SelectProcessThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/02/01 17:11:47 $ $Author: itglp $
  *
  *
  *
@@ -61,7 +61,7 @@ namespace castor {
   	/**
      * Main work for this thread.
   	 */
-    virtual void run() throw() {
+    virtual void run(void* param) throw() {
       while(!stopped) {
         castor::IObject* selectOutput = select();
         if(selectOutput == 0) break;

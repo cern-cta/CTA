@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/16 14:29:22 $ $Author: itglp $
+ * @(#)$RCSfile: NotificationThread.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/01 17:11:47 $ $Author: itglp $
  *
  *
  *
@@ -60,15 +60,10 @@ namespace castor {
   	 */
   	NotificationThread();
 
-    /**
-     * Thread initialization.
-     */
-  	virtual void init(void* param);
-
   	/**
      * Main work for this thread.
   	 */
-    virtual void run() throw();
+    virtual void run(void* param) throw();
 
     /**
   	 * Convenience method to stop the thread.

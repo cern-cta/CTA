@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/13 17:21:36 $ $Author: itglp $
+ * @(#)$RCSfile: IThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/02/01 17:11:46 $ $Author: itglp $
  *
  *
  *
@@ -43,19 +43,15 @@ namespace castor {
   class IThread {
   
   public:
-    /**
-     * Thread initialization.
-     * @param param any relevant initialization value which
-     * will be passed in by the pool.
-     */
-    virtual void init(void* param) = 0;
 	
     /**
      * Main work for this thread.
      * This method will run on a dedicated thread, so
      * it can include an infinite loop.
+     * @param param any relevant initialization value which
+     * will be passed in by the pool.
      */
-    virtual void run() throw() = 0;
+    virtual void run(void *param) throw() = 0;
     
     /**
      * Convenience method to stop the thread.

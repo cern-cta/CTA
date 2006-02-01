@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/01/16 10:09:48 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/02/01 17:11:46 $ $Author: itglp $
  *
  *
  *
@@ -117,8 +117,7 @@ void* castor::server::_thread_run(void* param)
 
   // Executing the thread
   try {
-    pool->m_thread->init(args->param);
-    pool->m_thread->run();
+    pool->m_thread->run(args->param);
   } catch(castor::exception::Exception any) {
     pool->clog() << ERROR << "Uncatched exception in a thread from pool " 
                  << pool->m_poolName << " : " << any.getMessage().str() << std::endl;

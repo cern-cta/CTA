@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/16 10:09:48 $ $Author: itglp $
+ * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/01 17:11:46 $ $Author: itglp $
  *
  *
  *
@@ -44,17 +44,12 @@ castor::server::NotificationThread::NotificationThread() :
 //}
 
 //------------------------------------------------------------------------------
-// init
-//------------------------------------------------------------------------------
-void castor::server::NotificationThread::init(void* param)
-  m_owner = (SignalThreadPool*)param;
-};
-
-//------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::server::NotificationThread::run() throw()
+void castor::server::NotificationThread::run(void* param) throw()
 {
+  m_owner = (SignalThreadPool*)param;
+
   try {
 
   int s = -1;

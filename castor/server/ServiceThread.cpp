@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServiceThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/01/16 10:09:48 $ $Author: itglp $
+ * @(#)$RCSfile: ServiceThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/01 17:11:47 $ $Author: itglp $
  *
  *
  *
@@ -46,19 +46,9 @@ castor::server::ServiceThread::~ServiceThread() throw()
 }
 
 //------------------------------------------------------------------------------
-// init
-//------------------------------------------------------------------------------
-void castor::server::ServiceThread::init(void* param)
-{
-  m_owner = (SignalThreadPool*)param;
-  if(m_userThread)
-    m_userThread->init(m_owner->getMutex());
-};
-
-//------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::server::ServiceThread::run() throw()
+void castor::server::ServiceThread::run(void* param) throw()
 {
   if (m_userThread == 0) {
     serrno = EINVAL;
@@ -66,6 +56,7 @@ void castor::server::ServiceThread::run() throw()
   }
 
   try {
+    m_owner = (SignalThreadPool*)param;
 
     /* Notify the pool that we are starting */
     m_owner->commitRun();
@@ -81,7 +72,7 @@ void castor::server::ServiceThread::run() throw()
 
       /* Do the user job */
       try {
-        m_userThread->run();
+        m_userThread->run(0);
       } catch (castor::exception::Exception e) {
         m_owner->clog() << ERROR << "Exception caught in the user thread: " << e.getMessage().str() << std::endl;
       }
