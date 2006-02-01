@@ -41,8 +41,7 @@ namespace castor {
 
   /**
    * class IObject
-   * Base class for all objects
-   * Implements the id methods
+   * Base class for all objects Implements the id methods
    */
   class IObject {
 
