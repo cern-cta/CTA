@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/01/13 17:29:18 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/02/01 17:12:33 $ $Author: itglp $
  *
  *
  *
@@ -44,22 +44,15 @@ namespace castor {
     public:
 
       /**
-       * Gets the socket from the calling thread pool
-       */
-      virtual void init(void *param);
-
-      /**
        * Method called once per request, where all the code resides
+       * @param param the socket obtained from the calling thread pool
        */
-      virtual void run() throw();
+      virtual void run(void *param) throw();
       
       /// not implemented
       virtual void stop() {};
       
     private:
-      
-      /// the socket with the request to be processed
-      castor::io::ServerSocket* m_sock;
       
       /**
        * handles an incoming request

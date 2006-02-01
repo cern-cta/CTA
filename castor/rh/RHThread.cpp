@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/01/18 11:16:31 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/02/01 17:12:33 $ $Author: itglp $
  *
  *
  *
@@ -53,20 +53,14 @@
 
 
 //------------------------------------------------------------------------------
-// init
-//------------------------------------------------------------------------------
-void castor::rh::RHThread::init(void *param) {
-  // We know it's a ServerSocket
-  m_sock = (castor::io::ServerSocket*) param;
-}
-
-
-//------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::rh::RHThread::run() throw() {
+void castor::rh::RHThread::run(void* param) throw() {
   MessageAck ack;
   ack.setStatus(true);
+
+  // We know it's a ServerSocket
+  castor::io::ServerSocket* sock = (castor::io::ServerSocket*) param;
 
   castor::stager::Request* fr = 0;
 
@@ -74,7 +68,7 @@ void castor::rh::RHThread::run() throw() {
   unsigned short port;
   unsigned long ip;
   try {
-    m_sock->getPeerIp(port, ip);
+    sock->getPeerIp(port, ip);
   } catch(castor::exception::Exception e) {
     // "Exception caught : ignored" message
     castor::dlf::Param params[] =
@@ -90,7 +84,7 @@ void castor::rh::RHThread::run() throw() {
 
   // get the incoming request
   try {
-    castor::IObject* obj = m_sock->readObject();
+    castor::IObject* obj = sock->readObject();
     fr = dynamic_cast<castor::stager::Request*>(obj);
     if (0 == fr) {
       delete obj;
@@ -162,7 +156,7 @@ void castor::rh::RHThread::run() throw() {
   // "Sending reply to client" message
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 10);
   try {
-    m_sock->sendObject(ack);
+    sock->sendObject(ack);
   } catch (castor::exception::Exception e) {
     // "Unable to send Ack to client" message
     castor::dlf::Param params[] =
@@ -172,7 +166,7 @@ void castor::rh::RHThread::run() throw() {
   }
 
   delete fr;
-  delete m_sock;
+  delete sock;
 }
 
 //------------------------------------------------------------------------------
