@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2006/01/12 16:42:21 $ $Author: itglp $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2006/02/01 11:36:58 $ $Author: sponcec3 $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -31,12 +31,15 @@
 #include "castor/stager/DiskCopyInfo.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/TooBig.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/stager/TapeCopyStatusCodes.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
+#include <common.h>
 
 #include <sstream>
 #include <string>
+#include <stdlib.h>
 #include <list>
 
 // -----------------------------------------------------------------------
@@ -51,6 +54,9 @@ static castor::SvcFactory<castor::db::ora::OraQuerySvc>* s_factoryOraQuerySvc =
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4FileStatementString =
   "BEGIN fileIdStageQuery(:1, :2, :3, :4); END;";
+
+const std::string castor::db::ora::OraQuerySvc::s_diskCopies4FileNameStatementString =
+  "BEGIN fileNameStageQuery(:1, :2, :3, :4); END;";
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4ReqIdStatementString =
   "BEGIN reqIdStageQuery(:1, :2, :3, :4); END;";
@@ -73,6 +79,7 @@ const std::string castor::db::ora::OraQuerySvc::s_requestToDoStatementString =
 // -----------------------------------------------------------------------
 castor::db::ora::OraQuerySvc::OraQuerySvc(const std::string name) :
   OraCommonSvc(name),
+  m_diskCopies4FileNameStatement(0),
   m_diskCopies4FileStatement(0),
   m_diskCopies4ReqIdStatement(0),
   m_diskCopies4UserTagStatement(0),
@@ -109,6 +116,7 @@ void castor::db::ora::OraQuerySvc::reset() throw() {
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
+    deleteStatement(m_diskCopies4FileNameStatement);
     deleteStatement(m_diskCopies4FileStatement);
     deleteStatement(m_diskCopies4ReqIdStatement);
     deleteStatement(m_diskCopies4UserTagStatement);
@@ -117,6 +125,7 @@ void castor::db::ora::OraQuerySvc::reset() throw() {
     deleteStatement(m_requestToDoStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
+  m_diskCopies4FileNameStatement = 0;
   m_diskCopies4FileStatement = 0;
   m_diskCopies4ReqIdStatement = 0;
   m_diskCopies4UserTagStatement = 0;
@@ -149,14 +158,80 @@ castor::db::ora::OraQuerySvc::gatherResults(oracle::occi::ResultSet *rset)
       item->setSegmentStatus((castor::stager::SegmentStatusCodes)0);
       item->setDiskServer(rset->getString(7));
       item->setMountPoint(rset->getString(8));
-      //item->setNbAccesses(rset->getInt(9));
-          // glp: if/when we need to propagate this information
-          // this field has to be added to DiskCopyInfo,
-          // while the FileQueryResponse already includes it!
+      item->setNbAccesses(rset->getInt(9));
+      item->setLastKnownFileName(rset->getString(10));
       result->push_back(item);
     }
     return result;
 }
+
+
+// -----------------------------------------------------------------------
+// diskCopies4FileName
+// -----------------------------------------------------------------------
+std::list<castor::stager::DiskCopyInfo*>*
+castor::db::ora::OraQuerySvc::diskCopies4FileName
+(std::string fileName, u_signed64 svcClassId)
+  throw (castor::exception::Exception) {
+  // default value for the maximal number of responses to give
+  unsigned long maxNbResponses = 1000;
+  try {
+    // Check whether the statements are ok
+    if (0 == m_diskCopies4FileNameStatement) {
+      m_diskCopies4FileNameStatement =
+        createStatement(s_diskCopies4FileNameStatementString);
+      m_diskCopies4FileNameStatement->registerOutParam
+        (4, oracle::occi::OCCICURSOR);
+    }
+    // get max number of responses for a file name query
+    char* p;
+    if ( (p = getenv ("FILEQUERY_MAXNBRESPONSES")) || (p = getconfent ("FILEQUERY", "MAXNBRESPONSES", 0)) ) {
+      char* pend = p;
+      unsigned long ip = strtoul(p, &pend, 0);
+      if (*pend != 0) {
+	clog() << ERROR
+	       << "Invalid limit for number of responses to a file query : '"
+	       << pend << "'. Should be a number." << std::endl;
+      } else if (ip > 30000) {
+	clog() << ERROR
+	       << "Limit for number of responses to a file query is too high : "
+	       << ip << " > 30000. Will use default : 1000." << std::endl;
+      } else {
+	maxNbResponses = ip;
+      }
+    }
+    // execute the statement and see whether we found something
+    m_diskCopies4FileNameStatement->setString(1, fileName);
+    m_diskCopies4FileNameStatement->setDouble(2, svcClassId);
+    m_diskCopies4FileNameStatement->setInt(3, maxNbResponses);
+    unsigned int nb = m_diskCopies4FileNameStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "diskCopies4FileName : Unable to execute query.";
+      throw ex;
+    }
+    oracle::occi::ResultSet *rset =
+      m_diskCopies4FileNameStatement->getCursor(4);
+    std::list<castor::stager::DiskCopyInfo*>* result = gatherResults(rset);
+    m_diskCopies4FileNameStatement->closeResultSet(rset);
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    if (e.getErrorCode() == 20102) {
+      // Too may files would have been returned, give up !
+      castor::exception::TooBig ex;
+      ex.getMessage() << "Too many matching files : more than "
+		      << maxNbResponses;
+      throw ex;
+    } else {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Error caught in diskCopies4FileName."
+		      << std::endl << e.what();
+      throw ex;
+    }
+  }
+}
+
 
 
 // -----------------------------------------------------------------------
@@ -255,8 +330,8 @@ castor::db::ora::OraQuerySvc::diskCopies4Request
         ex.getMessage()
           << "diskCopies4Request: request type" << reqType << " not allowed.";
         throw ex;
-    }        
-    
+    }
+
     // execute the statement and see whether we found something
     requestStatement->setString(1, param);
     requestStatement->setDouble(2, svcClassId);

@@ -1303,6 +1303,7 @@ CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
                                               sc IN INTEGER,
                                               fc IN INTEGER,
                                               fs IN INTEGER,
+                                              fn IN VARCHAR2,
                                               rid OUT INTEGER,
                                               rfs OUT INTEGER) AS
   CONSTRAINT_VIOLATED EXCEPTION;
@@ -1313,13 +1314,15 @@ BEGIN
     SELECT id, fileSize INTO rid, rfs FROM CastorFile
       WHERE fileId = fid AND nsHost = nh;
     -- update lastAccess time
-    UPDATE CastorFile SET LastAccessTime = getTime(), nbAccesses = nbAccesses + 1
+    UPDATE CastorFile SET LastAccessTime = getTime(),
+                          nbAccesses = nbAccesses + 1,
+                          lastKnownFileName = fn
       WHERE id = rid;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
-                            creationTime, lastAccessTime, nbAccesses)
-      VALUES (ids_seq.nextval, fId, nh, sc, fc, fs, getTime(), getTime(), 1)
+                            creationTime, lastAccessTime, nbAccesses, lastKnownFileName)
+      VALUES (ids_seq.nextval, fId, nh, sc, fc, fs, getTime(), getTime(), 1, fn)
       RETURNING id, fileSize INTO rid, rfs;
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
   END;
@@ -2097,7 +2100,8 @@ BEGIN
            UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
            DiskCopy.path, CastorFile.filesize,
            nvl(DiskCopy.status, -1), DiskServer.name,
-           FileSystem.mountPoint, CastorFile.nbaccesses
+           FileSystem.mountPoint, CastorFile.nbaccesses,
+           CastorFile.lastKnownFileName
       FROM CastorFile, DiskCopy, FileSystem, DiskServer,
            DiskPool2SvcClass
      WHERE CastorFile.id IN (SELECT * FROM TABLE(cfs))
@@ -2107,7 +2111,7 @@ BEGIN
        AND DiskServer.id(+) = FileSystem.diskServer
        AND nvl(DiskServer.status,0) = 0 -- PRODUCTION
        AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool
-       AND (DiskPool2SvcClass.child = svcClassId OR DiskPool2SvcClass.child IS NULL)
+       AND (DiskPool2SvcClass.child = svcClassId OR svcClassId = 0)
   ORDER BY fileid, nshost;
 END;
 
@@ -2145,6 +2149,24 @@ BEGIN
   ORDER BY fileid, nshost;
 END;
 */
+
+/*
+ * PL/SQL method implementing the stage_query based on file id
+ */
+CREATE OR REPLACE PROCEDURE fileNameStageQuery
+ (fn IN VARCHAR2,
+  svcClassId IN INTEGER,
+  maxNbResponses IN INTEGER,
+  result OUT castor.QueryLine_Cur) AS
+  cfs "numList";
+BEGIN
+ SELECT id BULK COLLECT INTO cfs FROM CastorFile WHERE  REGEXP_LIKE(lastKnownFileName,fn) AND ROWNUM <= maxNbResponses + 1;
+ IF cfs.COUNT > maxNbResponses THEN
+   -- We have too many rows, we just give up
+   raise_application_error(-20102, 'Too many matching files');
+ END IF;
+ internalStageQuery(cfs, svcClassId, result);
+END;
 
 /*
  * PL/SQL method implementing the stage_query based on file id

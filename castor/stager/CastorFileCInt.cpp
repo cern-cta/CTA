@@ -199,6 +199,23 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_CastorFile_lastKnownFileName
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_lastKnownFileName(castor::stager::CastorFile* instance, const char** var) {
+    *var = instance->lastKnownFileName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_CastorFile_setLastKnownFileName
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_setLastKnownFileName(castor::stager::CastorFile* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setLastKnownFileName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_CastorFile_id
   //----------------------------------------------------------------------------
   int Cstager_CastorFile_id(castor::stager::CastorFile* instance, u_signed64* var) {

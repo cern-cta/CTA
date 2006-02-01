@@ -163,6 +163,24 @@ int Cstager_CastorFile_nbAccesses(struct Cstager_CastorFile_t* instance, unsigne
 int Cstager_CastorFile_setNbAccesses(struct Cstager_CastorFile_t* instance, unsigned int new_var);
 
 /**
+ * Get the value of lastKnownFileName
+ * The name of the castorfile at the time it was created in this database. This can
+ * very well be different from the current name if the file was renamed.
+ * This information is only here for efficient and approximate querying. It should
+ * never be used in processing. There, only the fileid/nshost couple is trustable
+ */
+int Cstager_CastorFile_lastKnownFileName(struct Cstager_CastorFile_t* instance, const char** var);
+
+/**
+ * Set the value of lastKnownFileName
+ * The name of the castorfile at the time it was created in this database. This can
+ * very well be different from the current name if the file was renamed.
+ * This information is only here for efficient and approximate querying. It should
+ * never be used in processing. There, only the fileid/nshost couple is trustable
+ */
+int Cstager_CastorFile_setLastKnownFileName(struct Cstager_CastorFile_t* instance, const char* new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

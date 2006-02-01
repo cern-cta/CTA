@@ -146,13 +146,15 @@ namespace castor {
          * Used only in case of creation of a new castor file.
          * @param fileSize the size fo the castor file.
          * Used only in case of creation of a new castor file.
+         * @param fileName the name of the castor file at the time
+         * if this call. This will go to the DB as lastKnownFileName.
          * @return the CastorFile, or 0 if none found
          * @exception Exception in case of error
          */
         virtual castor::stager::CastorFile* selectCastorFile
         (const u_signed64 fileId, const std::string nsHost,
          u_signed64 svcClass, u_signed64 fileClass,
-         u_signed64 fileSize)
+         u_signed64 fileSize, std::string fileName)
           throw (castor::exception::Exception);
 
         /**

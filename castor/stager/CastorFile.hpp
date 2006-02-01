@@ -213,6 +213,30 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_lastKnownFileName
+       * The name of the castorfile at the time it was created in this database. This can
+       * very well be different from the current name if the file was renamed.
+       * This information is only here for efficient and approximate querying. It should
+       * never be used in processing. There, only the fileid/nshost couple is trustable
+       * @return the value of m_lastKnownFileName
+       */
+      std::string lastKnownFileName() const {
+        return m_lastKnownFileName;
+      }
+
+      /**
+       * Set the value of m_lastKnownFileName
+       * The name of the castorfile at the time it was created in this database. This can
+       * very well be different from the current name if the file was renamed.
+       * This information is only here for efficient and approximate querying. It should
+       * never be used in processing. There, only the fileid/nshost couple is trustable
+       * @param new_var the new value of m_lastKnownFileName
+       */
+      void setLastKnownFileName(std::string new_var) {
+        m_lastKnownFileName = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -339,6 +363,12 @@ namespace castor {
 
       /// Number of accesses to this CastorFile since its creation
       unsigned int m_nbAccesses;
+
+      /*
+       * The name of the castorfile at the time it was created in this database. This can very well be different from the current name if the file was renamed.
+       * This information is only here for efficient and approximate querying. It should never be used in processing. There, only the fileid/nshost couple is trustable
+      */
+      std::string m_lastKnownFileName;
 
       /// The id of this object
       u_signed64 m_id;

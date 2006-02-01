@@ -261,6 +261,39 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_DiskCopyInfo_nbAccesses
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyInfo_nbAccesses(castor::stager::DiskCopyInfo* instance, unsigned int* var) {
+    *var = instance->nbAccesses();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyInfo_setNbAccesses
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyInfo_setNbAccesses(castor::stager::DiskCopyInfo* instance, unsigned int new_var) {
+    instance->setNbAccesses(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyInfo_lastKnownFileName
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyInfo_lastKnownFileName(castor::stager::DiskCopyInfo* instance, const char** var) {
+    *var = instance->lastKnownFileName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyInfo_setLastKnownFileName
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyInfo_setLastKnownFileName(castor::stager::DiskCopyInfo* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setLastKnownFileName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_DiskCopyInfo_id
   //----------------------------------------------------------------------------
   int Cstager_DiskCopyInfo_id(castor::stager::DiskCopyInfo* instance, u_signed64* var) {

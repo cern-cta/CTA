@@ -277,6 +277,44 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_nbAccesses
+       * Number of accesses to the CastorFile this DiskCopy is linked with
+       * @return the value of m_nbAccesses
+       */
+      unsigned int nbAccesses() const {
+        return m_nbAccesses;
+      }
+
+      /**
+       * Set the value of m_nbAccesses
+       * Number of accesses to the CastorFile this DiskCopy is linked with
+       * @param new_var the new value of m_nbAccesses
+       */
+      void setNbAccesses(unsigned int new_var) {
+        m_nbAccesses = new_var;
+      }
+
+      /**
+       * Get the value of m_lastKnownFileName
+       * Last known file name for this file, from the stager point of view. This does not
+       * mean it is the current one in the nameserver
+       * @return the value of m_lastKnownFileName
+       */
+      std::string lastKnownFileName() const {
+        return m_lastKnownFileName;
+      }
+
+      /**
+       * Set the value of m_lastKnownFileName
+       * Last known file name for this file, from the stager point of view. This does not
+       * mean it is the current one in the nameserver
+       * @param new_var the new value of m_lastKnownFileName
+       */
+      void setLastKnownFileName(std::string new_var) {
+        m_lastKnownFileName = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -325,6 +363,12 @@ namespace castor {
 
       /// mount point of the file system where the DiskCopy resides on the diskserver
       std::string m_mountPoint;
+
+      /// Number of accesses to the CastorFile this DiskCopy is linked with
+      unsigned int m_nbAccesses;
+
+      /// Last known file name for this file, from the stager point of view. This does not mean it is the current one in the nameserver
+      std::string m_lastKnownFileName;
 
       /// The id of this object
       u_signed64 m_id;

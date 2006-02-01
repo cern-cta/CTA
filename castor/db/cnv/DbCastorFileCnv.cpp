@@ -58,7 +58,7 @@ static castor::CnvFactory<castor::db::cnv::DbCastorFileCnv>* s_factoryDbCastorFi
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbCastorFileCnv::s_insertStatementString =
-"INSERT INTO CastorFile (fileId, nsHost, fileSize, creationTime, lastAccessTime, nbAccesses, id, svcClass, fileClass) VALUES (:1,:2,:3,:4,NULL,0,ids_seq.nextval,:5,:6) RETURNING id INTO :7";
+"INSERT INTO CastorFile (fileId, nsHost, fileSize, creationTime, lastAccessTime, nbAccesses, lastKnownFileName, id, svcClass, fileClass) VALUES (:1,:2,:3,:4,NULL,0,:5,ids_seq.nextval,:6,:7) RETURNING id INTO :8";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbCastorFileCnv::s_deleteStatementString =
@@ -66,11 +66,11 @@ const std::string castor::db::cnv::DbCastorFileCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbCastorFileCnv::s_selectStatementString =
-"SELECT fileId, nsHost, fileSize, creationTime, lastAccessTime, nbAccesses, id, svcClass, fileClass FROM CastorFile WHERE id = :1";
+"SELECT fileId, nsHost, fileSize, creationTime, lastAccessTime, nbAccesses, lastKnownFileName, id, svcClass, fileClass FROM CastorFile WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbCastorFileCnv::s_updateStatementString =
-"UPDATE CastorFile SET fileId = :1, nsHost = :2, fileSize = :3 WHERE id = :4";
+"UPDATE CastorFile SET fileId = :1, nsHost = :2, fileSize = :3, lastKnownFileName = :4 WHERE id = :5";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbCastorFileCnv::s_storeTypeStatementString =
@@ -460,7 +460,7 @@ void castor::db::cnv::DbCastorFileCnv::fillObjSvcClass(castor::stager::CastorFil
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = rset->getInt64(8);
+  u_signed64 svcClassId = rset->getInt64(9);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -498,7 +498,7 @@ void castor::db::cnv::DbCastorFileCnv::fillObjFileClass(castor::stager::CastorFi
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 fileClassId = rset->getInt64(9);
+  u_signed64 fileClassId = rset->getInt64(10);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -636,7 +636,7 @@ void castor::db::cnv::DbCastorFileCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(7, castor::db::DBTYPE_INT64);
+      m_insertStatement->registerOutParam(8, castor::db::DBTYPE_INT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -646,10 +646,11 @@ void castor::db::cnv::DbCastorFileCnv::createRep(castor::IAddress* address,
     m_insertStatement->setString(2, obj->nsHost());
     m_insertStatement->setInt64(3, obj->fileSize());
     m_insertStatement->setInt(4, time(0));
-    m_insertStatement->setInt64(5, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setInt64(6, (type == OBJ_FileClass && obj->fileClass() != 0) ? obj->fileClass()->id() : 0);
+    m_insertStatement->setString(5, obj->lastKnownFileName());
+    m_insertStatement->setInt64(6, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setInt64(7, (type == OBJ_FileClass && obj->fileClass() != 0) ? obj->fileClass()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getInt64(7));
+    obj->setId(m_insertStatement->getInt64(8));
     m_storeTypeStatement->setInt64(1, obj->id());
     m_storeTypeStatement->setInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -672,6 +673,7 @@ void castor::db::cnv::DbCastorFileCnv::createRep(castor::IAddress* address,
                     << "  creationTime : " << obj->creationTime() << std::endl
                     << "  lastAccessTime : " << obj->lastAccessTime() << std::endl
                     << "  nbAccesses : " << obj->nbAccesses() << std::endl
+                    << "  lastKnownFileName : " << obj->lastKnownFileName() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  svcClass : " << obj->svcClass() << std::endl
                     << "  fileClass : " << obj->fileClass() << std::endl;
@@ -699,7 +701,8 @@ void castor::db::cnv::DbCastorFileCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt64(1, obj->fileId());
     m_updateStatement->setString(2, obj->nsHost());
     m_updateStatement->setInt64(3, obj->fileSize());
-    m_updateStatement->setInt64(4, obj->id());
+    m_updateStatement->setString(4, obj->lastKnownFileName());
+    m_updateStatement->setInt64(5, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -793,7 +796,8 @@ castor::IObject* castor::db::cnv::DbCastorFileCnv::createObj(castor::IAddress* a
     object->setCreationTime(rset->getInt64(4));
     object->setLastAccessTime(rset->getInt64(5));
     object->setNbAccesses(rset->getInt(6));
-    object->setId(rset->getInt64(7));
+    object->setLastKnownFileName(rset->getString(7));
+    object->setId(rset->getInt64(8));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -837,7 +841,8 @@ void castor::db::cnv::DbCastorFileCnv::updateObj(castor::IObject* obj)
     object->setCreationTime(rset->getInt64(4));
     object->setLastAccessTime(rset->getInt64(5));
     object->setNbAccesses(rset->getInt(6));
-    object->setId(rset->getInt64(7));
+    object->setLastKnownFileName(rset->getString(7));
+    object->setId(rset->getInt64(8));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

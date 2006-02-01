@@ -206,6 +206,32 @@ int Cstager_DiskCopyInfo_mountPoint(struct Cstager_DiskCopyInfo_t* instance, con
 int Cstager_DiskCopyInfo_setMountPoint(struct Cstager_DiskCopyInfo_t* instance, const char* new_var);
 
 /**
+ * Get the value of nbAccesses
+ * Number of accesses to the CastorFile this DiskCopy is linked with
+ */
+int Cstager_DiskCopyInfo_nbAccesses(struct Cstager_DiskCopyInfo_t* instance, unsigned int* var);
+
+/**
+ * Set the value of nbAccesses
+ * Number of accesses to the CastorFile this DiskCopy is linked with
+ */
+int Cstager_DiskCopyInfo_setNbAccesses(struct Cstager_DiskCopyInfo_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of lastKnownFileName
+ * Last known file name for this file, from the stager point of view. This does not
+ * mean it is the current one in the nameserver
+ */
+int Cstager_DiskCopyInfo_lastKnownFileName(struct Cstager_DiskCopyInfo_t* instance, const char** var);
+
+/**
+ * Set the value of lastKnownFileName
+ * Last known file name for this file, from the stager point of view. This does not
+ * mean it is the current one in the nameserver
+ */
+int Cstager_DiskCopyInfo_setLastKnownFileName(struct Cstager_DiskCopyInfo_t* instance, const char* new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

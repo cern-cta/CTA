@@ -58,7 +58,7 @@ static castor::CnvFactory<castor::db::ora::OraCastorFileCnv>* s_factoryOraCastor
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraCastorFileCnv::s_insertStatementString =
-"INSERT INTO CastorFile (fileId, nsHost, fileSize, creationTime, lastAccessTime, nbAccesses, id, svcClass, fileClass) VALUES (:1,:2,:3,:4,NULL,0,ids_seq.nextval,:5,:6) RETURNING id INTO :7";
+"INSERT INTO CastorFile (fileId, nsHost, fileSize, creationTime, lastAccessTime, nbAccesses, lastKnownFileName, id, svcClass, fileClass) VALUES (:1,:2,:3,:4,NULL,0,:5,ids_seq.nextval,:6,:7) RETURNING id INTO :8";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraCastorFileCnv::s_deleteStatementString =
@@ -66,11 +66,11 @@ const std::string castor::db::ora::OraCastorFileCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraCastorFileCnv::s_selectStatementString =
-"SELECT fileId, nsHost, fileSize, creationTime, lastAccessTime, nbAccesses, id, svcClass, fileClass FROM CastorFile WHERE id = :1";
+"SELECT fileId, nsHost, fileSize, creationTime, lastAccessTime, nbAccesses, lastKnownFileName, id, svcClass, fileClass FROM CastorFile WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraCastorFileCnv::s_updateStatementString =
-"UPDATE CastorFile SET fileId = :1, nsHost = :2, fileSize = :3 WHERE id = :4";
+"UPDATE CastorFile SET fileId = :1, nsHost = :2, fileSize = :3, lastKnownFileName = :4 WHERE id = :5";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraCastorFileCnv::s_storeTypeStatementString =
@@ -460,7 +460,7 @@ void castor::db::ora::OraCastorFileCnv::fillObjSvcClass(castor::stager::CastorFi
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = (u_signed64)rset->getDouble(8);
+  u_signed64 svcClassId = (u_signed64)rset->getDouble(9);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -498,7 +498,7 @@ void castor::db::ora::OraCastorFileCnv::fillObjFileClass(castor::stager::CastorF
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 fileClassId = (u_signed64)rset->getDouble(9);
+  u_signed64 fileClassId = (u_signed64)rset->getDouble(10);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -636,7 +636,7 @@ void castor::db::ora::OraCastorFileCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(7, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(8, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -646,10 +646,11 @@ void castor::db::ora::OraCastorFileCnv::createRep(castor::IAddress* address,
     m_insertStatement->setString(2, obj->nsHost());
     m_insertStatement->setDouble(3, obj->fileSize());
     m_insertStatement->setInt(4, time(0));
-    m_insertStatement->setDouble(5, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setDouble(6, (type == OBJ_FileClass && obj->fileClass() != 0) ? obj->fileClass()->id() : 0);
+    m_insertStatement->setString(5, obj->lastKnownFileName());
+    m_insertStatement->setDouble(6, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setDouble(7, (type == OBJ_FileClass && obj->fileClass() != 0) ? obj->fileClass()->id() : 0);
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(7));
+    obj->setId((u_signed64)m_insertStatement->getDouble(8));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -680,6 +681,7 @@ void castor::db::ora::OraCastorFileCnv::createRep(castor::IAddress* address,
                     << "  creationTime : " << obj->creationTime() << std::endl
                     << "  lastAccessTime : " << obj->lastAccessTime() << std::endl
                     << "  nbAccesses : " << obj->nbAccesses() << std::endl
+                    << "  lastKnownFileName : " << obj->lastKnownFileName() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  svcClass : " << obj->svcClass() << std::endl
                     << "  fileClass : " << obj->fileClass() << std::endl;
@@ -707,7 +709,8 @@ void castor::db::ora::OraCastorFileCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setDouble(1, obj->fileId());
     m_updateStatement->setString(2, obj->nsHost());
     m_updateStatement->setDouble(3, obj->fileSize());
-    m_updateStatement->setDouble(4, obj->id());
+    m_updateStatement->setString(4, obj->lastKnownFileName());
+    m_updateStatement->setDouble(5, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->commit();
@@ -817,7 +820,8 @@ castor::IObject* castor::db::ora::OraCastorFileCnv::createObj(castor::IAddress* 
     object->setCreationTime((u_signed64)rset->getDouble(4));
     object->setLastAccessTime((u_signed64)rset->getDouble(5));
     object->setNbAccesses(rset->getInt(6));
-    object->setId((u_signed64)rset->getDouble(7));
+    object->setLastKnownFileName(rset->getString(7));
+    object->setId((u_signed64)rset->getDouble(8));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -869,7 +873,8 @@ void castor::db::ora::OraCastorFileCnv::updateObj(castor::IObject* obj)
     object->setCreationTime((u_signed64)rset->getDouble(4));
     object->setLastAccessTime((u_signed64)rset->getDouble(5));
     object->setNbAccesses(rset->getInt(6));
-    object->setId((u_signed64)rset->getDouble(7));
+    object->setLastKnownFileName(rset->getString(7));
+    object->setId((u_signed64)rset->getDouble(8));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

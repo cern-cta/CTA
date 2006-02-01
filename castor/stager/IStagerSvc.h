@@ -192,6 +192,8 @@ int Cstager_IStagerSvc_selectFileClass(struct Cstager_IStagerSvc_t* stgSvc,
  * Used only in case of creation of a new castor file.
  * @param fileSize the size fo the castor file.
  * Used only in case of creation of a new castor file.
+ * @param fileName the name of the castor file at the time
+ * if this call. This will go to the DB as lastKnownFileName.
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -201,7 +203,8 @@ int Cstager_IStagerSvc_selectCastorFile
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_CastorFile_t** castorFile,
  const u_signed64 fileId, const char* nsHost,
- u_signed64 svcClass, u_signed64 fileClass, u_signed64 fileSize);
+ u_signed64 svcClass, u_signed64 fileClass,
+ u_signed64 fileSize, const char* fileName);
 
 /**
  * Updates a SubRequest status in the DB, including

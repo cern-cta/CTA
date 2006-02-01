@@ -113,7 +113,7 @@ CREATE TABLE TapePool (name VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 
 CREATE TABLE TapeCopy (copyNb NUMBER, id INTEGER PRIMARY KEY, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type CastorFile */
-CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER, creationTime INTEGER, lastAccessTime INTEGER, nbAccesses NUMBER, id INTEGER PRIMARY KEY, svcClass INTEGER, fileClass INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER, creationTime INTEGER, lastAccessTime INTEGER, nbAccesses NUMBER, lastKnownFileName VARCHAR2(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, fileClass INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type DiskCopy */
 CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight float, creationTime INTEGER, id INTEGER PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50;
@@ -1322,6 +1322,8 @@ BEGIN
   -- delete all tapeCopies
   DELETE from Stream2TapeCopy WHERE child IN
     (SELECT id FROM TapeCopy WHERE castorFile = cfId);
+  DELETE FROM Id2Type WHERE id IN 
+    (SELECT id FROM TapeCopy WHERE castorFile = cfId);
   DELETE from TapeCopy WHERE castorFile = cfId;
   -- set DiskCopies to INVALID
   UPDATE DiskCopy SET status = 7 -- INVALID
@@ -1383,7 +1385,7 @@ BEGIN
     WHERE castorFile = cfId AND status = 6 -- STAGEOUT
    RETURNING fileSystem INTO fsId;
  ELSE
-   -- update the DiskCopy status TO CANBEMIGR
+   -- update the DiskCopy status to CANBEMIGR
    UPDATE DiskCopy SET status = 10 -- CANBEMIGR
     WHERE castorFile = cfId AND status = 6 -- STAGEOUT
     RETURNING fileSystem INTO fsId;
@@ -1490,6 +1492,7 @@ CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
                                               sc IN INTEGER,
                                               fc IN INTEGER,
                                               fs IN INTEGER,
+                                              fn IN VARCHAR2,
                                               rid OUT INTEGER,
                                               rfs OUT INTEGER) AS
   CONSTRAINT_VIOLATED EXCEPTION;
@@ -1500,13 +1503,15 @@ BEGIN
     SELECT id, fileSize INTO rid, rfs FROM CastorFile
       WHERE fileId = fid AND nsHost = nh;
     -- update lastAccess time
-    UPDATE CastorFile SET LastAccessTime = getTime(), nbAccesses = nbAccesses + 1
+    UPDATE CastorFile SET LastAccessTime = getTime(),
+                          nbAccesses = nbAccesses + 1,
+                          bestKnownFileName = fn
       WHERE id = rid;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
-                            creationTime, lastAccessTime, nbAccesses)
-      VALUES (ids_seq.nextval, fId, nh, sc, fc, fs, getTime(), getTime(), 1)
+                            creationTime, lastAccessTime, nbAccesses, bestKnownFileName)
+      VALUES (ids_seq.nextval, fId, nh, sc, fc, fs, getTime(), getTime(), 1, fn)
       RETURNING id, fileSize INTO rid, rfs;
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
   END;
@@ -2294,14 +2299,14 @@ BEGIN
        AND DiskServer.id(+) = FileSystem.diskServer
        AND nvl(DiskServer.status,0) = 0 -- PRODUCTION
        AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool
-       AND (DiskPool2SvcClass.child = svcClassId OR DiskPool2SvcClass.child IS NULL)
+       AND (DiskPool2SvcClass.child = svcClassId OR svcClassId = 0)
   ORDER BY fileid, nshost;
 END;
 
 /*
  * PL/SQL method implementing the core part of stage queries full version (for admins)
  * It takes a list of castorfile ids as input
- */
+ *
 CREATE OR REPLACE PROCEDURE internalFullStageQuery
  (cfs IN "numList",
   svcClassId IN NUMBER,
@@ -2331,6 +2336,7 @@ BEGIN
        AND (DiskPool2SvcClass.child = svcClassId OR DiskPool2SvcClass.child IS NULL)
   ORDER BY fileid, nshost;
 END;
+*/
 
 /*
  * PL/SQL method implementing the stage_query based on file id

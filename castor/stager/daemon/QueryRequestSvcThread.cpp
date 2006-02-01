@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.32 2005/12/09 11:29:54 itglp Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.33 2006/02/01 11:37:33 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.32 $ $Date: 2005/12/09 11:29:54 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.33 $ $Date: 2006/02/01 11:37:33 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -243,20 +243,106 @@ namespace castor {
             STAGER_LOG_DEBUG(NULL, diskServer.c_str());
           }
         }
-        
-        // glp: if/when we need to propagate nbAccesses just uncomment the line
-        //fr->setNbAccesses(dc->nbAccesses());
+
+        fr->setNbAccesses(dc->nbAccesses());
       }
 
 
-      
+      /**
+       * Handles a filequery by fileId and replies to client.
+       */
+      void handle_fileQueryRequest_byFileName(castor::query::IQuerySvc* qrySvc,
+                                              castor::IClient *client,
+                                              std::string& fileName,
+                                              u_signed64 svcClassId) {
+        
+        char *func =  "castor::stager::queryService::handle_fileQueryRequest_byFileName";
+
+        /* Invoking the method                */
+        /* ---------------------------------- */
+        STAGER_LOG_DEBUG(NULL, "Invoking diskCopies4File");
+        std::list<castor::stager::DiskCopyInfo*>* result =
+          qrySvc->diskCopies4FileName(fileName, svcClassId);
+
+        if (result == 0) {
+          castor::exception::Exception e(EINVAL);
+          e.getMessage() << "Unknown File " << fileName;
+          throw e;
+        }
+        if (result->size() == 0) {
+          castor::exception::Exception e(ENOENT);
+          e.getMessage() << "File " << fileName << " not in stager";
+          throw e;
+        }
+
+        /*
+         * Iterates over the list of disk copies, and returns one result
+         * per fileid to the client. It needs the SQL statement to return the diskcopies
+         * sorted by fileid/nshost.
+         */
+
+        u_signed64 fileid = 0;
+        std::string nshost = "";
+        castor::rh::FileQryResponse res;
+        bool foundDiskCopy = false;
+
+        for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+              = result->begin();
+            dcit != result->end();
+            ++dcit) {
+
+          castor::stager::DiskCopyInfo* diskcopy = *dcit;
+
+          if (diskcopy->fileId() != fileid
+              || diskcopy->nsHost() != nshost) {
+
+            // Sending the response for the previous
+            // castor file being processed
+            if (foundDiskCopy) {
+              replyToClient(client, &res);
+            }
+
+            // Now processing a new file !
+            bool foundDiskCopy = false;
+            fileid = diskcopy->fileId();
+            nshost = diskcopy->nsHost();
+
+            std::ostringstream sst;
+            sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
+            res.setFileName(sst.str());
+            res.setCastorFileName(diskcopy->lastKnownFileName());
+            res.setSize(diskcopy->size());
+          }
+
+          /* Preparing the response */
+          /* ---------------------- */
+          setFileResponseStatus(&res, diskcopy, foundDiskCopy);
+        }
+
+        // Send the last response if necessary
+        if (foundDiskCopy) {
+          replyToClient(client, &res);
+        }
+
+        /* Cleanup */
+        /* ------- */
+        for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+              = result->begin();
+            dcit != result->end();
+            ++dcit) {
+          delete *dcit;
+        }
+        delete result;
+
+      }
+
+
       /**
        * Handles a filequery by fileId and replies to client.
        */
       void handle_fileQueryRequest_byFileId(castor::query::IQuerySvc* qrySvc,
                                             castor::IClient *client,
                                             std::string &fid,
-                                            const char *filename,
                                             std::string &nshost,
                                             u_signed64 svcClassId) {
 
@@ -283,17 +369,12 @@ namespace castor {
         std::ostringstream sst;
         sst << fid << "@" << nshost;
         res.setFileName(sst.str());
-        
-        if(filename != 0) {  
-            // the incoming query is by filename, don't query again the nameserver
-            res.setCastorFileName(filename);
-        }
-        else {                  // we know only the fileid, get the filename
-            char cfn[CA_MAXPATHLEN+1];     // XXX unchecked string length in Cns_getpath() call
-            Cns_getpath((char*)nshost.c_str(), strtou64(fid.c_str()), cfn);
-            res.setCastorFileName(cfn);
-        }
-        
+
+        // query the nameserver for the file name
+        char cfn[CA_MAXPATHLEN+1];     // XXX unchecked string length in Cns_getpath() call
+        Cns_getpath((char*)nshost.c_str(), strtou64(fid.c_str()), cfn);
+        res.setCastorFileName(cfn);
+
         bool foundDiskCopy = false;
 
         for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
@@ -332,7 +413,7 @@ namespace castor {
 
       }
 
-      
+
       /**
        * Handles a filequery by reqId/userTag or getLastRecalls version and replies to client.
        */
@@ -349,18 +430,18 @@ namespace castor {
 
         if (result == 0) {
           castor::exception::Exception e(EINVAL);
-          e.getMessage() << "Unknown " 
+          e.getMessage() << "Unknown "
                          << ((reqType == REQUESTQUERYTYPE_USERTAG ||
                               reqType == REQUESTQUERYTYPE_USERTAG_GETNEXT) ?
-                              "user tag " : "request id ") << val;
+                             "user tag " : "request id ") << val;
           throw e;
         }
         if (result->size() == 0) {
           castor::exception::Exception e(ENOENT);
           e.getMessage() << "Could not find results for "
                          << ((reqType == REQUESTQUERYTYPE_USERTAG ||
-                              reqType == REQUESTQUERYTYPE_USERTAG_GETNEXT) ? 
-                              "user tag " : "request id ") << val;
+                              reqType == REQUESTQUERYTYPE_USERTAG_GETNEXT) ?
+                             "user tag " : "request id ") << val;
           delete result;
           throw e;
         }
@@ -429,7 +510,7 @@ namespace castor {
 
       }
 
-      
+
       /**
        * Handles a fileQueryRequest and replies to client.
        * @param req the request to handle
@@ -480,24 +561,6 @@ namespace castor {
               bool queryOk = false;
 
               switch(ptype) {
-              case REQUESTQUERYTYPE_FILENAME:
-                STAGER_LOG_DEBUG(NULL, "Looking up file id from filename");
-                struct Cns_fileid Cnsfileid;
-                memset(&Cnsfileid,'\0',sizeof(Cnsfileid));
-                struct Cns_filestat Cnsfilestat;
-                statcode =  Cns_statx(pval.c_str(),&Cnsfileid,&Cnsfilestat);
-                if (statcode == 0) {
-                  std::stringstream sst;
-                  sst << Cnsfileid.fileid;
-                  fid = sst.str();
-                  nshost = std::string(Cnsfileid.server);
-                  queryOk = true;
-                } else {
-                  castor::exception::Exception e(serrno);
-                  e.getMessage() << pval.c_str() << " not found";
-                  throw e;
-                }
-                break;
               case REQUESTQUERYTYPE_FILEID:
                 STAGER_LOG_DEBUG(NULL, "Received fileid parameter");
                 {
@@ -512,6 +575,7 @@ namespace castor {
                   queryOk = true;
                 }
                 break;
+              case REQUESTQUERYTYPE_FILENAME:
               case REQUESTQUERYTYPE_REQID:
               case REQUESTQUERYTYPE_USERTAG:
               case REQUESTQUERYTYPE_REQID_GETNEXT:
@@ -529,34 +593,33 @@ namespace castor {
               }
 
               // Get the SvcClass associated to the request
+	      u_signed64 svcClassId = 0;
               castor::stager::SvcClass* svcClass = uReq->svcClass();
-              if (0 == svcClass) {
-                castor::exception::Internal e;
-                e.getMessage() << "found attached with no SvcClass.\n"
-                               << uReq;
-                throw e;
+              if (0 != svcClass) {
+		svcClassId = svcClass->id();
               }
 
               // call the proper handling request
-              if(ptype == REQUESTQUERYTYPE_FILENAME ||
-              ptype == REQUESTQUERYTYPE_FILEID) {
+              if(ptype == REQUESTQUERYTYPE_FILENAME) {
+                handle_fileQueryRequest_byFileName(qrySvc,
+                                                   client,
+                                                   pval,
+                                                   svcClassId);
+              } else if (ptype == REQUESTQUERYTYPE_FILEID) {
                 STAGER_LOG_DEBUG(NULL, "Calling handle_fileQueryRequest_byFileId");
                 handle_fileQueryRequest_byFileId(qrySvc,
                                                  client,
                                                  fid,
-                                                 (ptype == REQUESTQUERYTYPE_FILENAME ? pval.c_str() : 0),
                                                  nshost,
-                                                 svcClass->id());
-              }
-              else {
+                                                 svcClassId);
+              } else {
                 STAGER_LOG_DEBUG(NULL, "Calling handle_fileQueryRequest_byRequest");
                 handle_fileQueryRequest_byRequest(qrySvc,
                                                   client,
                                                   ptype,
                                                   pval,
-                                                  svcClass->id());
+                                                  svcClassId);
               }
-
 
             } catch (castor::exception::Exception e) {
               serrno = e.code();
@@ -571,7 +634,7 @@ namespace castor {
                 STAGER_LOG_DB_ERROR(NULL, func,
                                     e.getMessage().str().c_str());
               }
-              /* Send the execption to the client */
+              /* Send the exception to the client */
               /* -------------------------------- */
               castor::rh::FileQryResponse res;
               if (0 != serrno) {
@@ -594,7 +657,7 @@ namespace castor {
           STAGER_LOG_DEBUG(NULL, "Building Response for error");
 
           // try/catch this as well ?
-          /* Send the execption to the client */
+          /* Send the exception to the client */
           /* -------------------------------- */
           castor::rh::FileQryResponse res;
           res.setStatus(naStatusCode);
@@ -611,8 +674,8 @@ namespace castor {
         sendEndResponse(client);
       }
 
-      
-      
+
+
       /**
        * Handles a findRequestRequest and replies to client.
        * @param req the request to handle
@@ -656,17 +719,17 @@ namespace castor {
 } // End of namespace castor
 
 
-/* --------------------------------------- */
-/* stager_query_process()                  */
-/*                                         */
-/* Purpose:Query 'process' part of service */
-/*                                         */
-/* Input:  (void *) output    Selection    */
-/*                                         */
-/* Output: n/a                             */
-/*                                         */
-/* Return: 0 [OK] or -1 [ERROR, serrno]    */
-/* --------------------------------------- */
+  /* --------------------------------------- */
+  /* stager_query_process()                  */
+  /*                                         */
+  /* Purpose:Query 'process' part of service */
+  /*                                         */
+  /* Input:  (void *) output    Selection    */
+  /*                                         */
+  /* Output: n/a                             */
+  /*                                         */
+  /* Return: 0 [OK] or -1 [ERROR, serrno]    */
+  /* --------------------------------------- */
 EXTERN_C int DLL_DECL stager_query_process(void *output) {
 
   char *func =  "stager_query_process";
@@ -724,37 +787,6 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
       throw e;
     }
 
-    /* Getting the parameters  */
-    /* ----------------------- */
-    //     castor::stager::QryRequest* qryreq =
-    //       dynamic_cast<castor::stager::QryRequest*>(req);
-    //     if (0 == qryreq) {
-    //       castor::exception::Internal e;
-    //       e.getMessage() << "Should be preocessing a QryRequest!";
-    //       throw e;
-    //     }
-    svcs->fillObj(&ad, req, castor::OBJ_QueryParameter);
-
-    /* Getting the svcClass */
-    /* -------------------- */
-    STAGER_LOG_VERBOSE(NULL, "Getting query's className");
-    std::string className = req->svcClassName();
-    if ("" == className) {
-      STAGER_LOG_DEBUG(NULL,"No className - using \"default\"");
-      className = "default";
-    }
-    castor::stager::SvcClass* svcClass = qrySvc->selectSvcClass(className);
-    if (0 == svcClass) {
-      castor::exception::InvalidArgument e;
-      e.getMessage() << "Invalid className : " << className;
-      throw e;
-    }
-
-    /* Filling SvcClass in the DataBase */
-    /* -------------------------------- */
-    req->setSvcClass(svcClass);
-    svcs->fillRep(&ad, req, castor::OBJ_SvcClass, true);
-
   } catch (castor::exception::Exception e) {
     // If we fail here, we do NOT have enough information to
     // reply to the client !
@@ -772,10 +804,66 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
     return -1;
   }
 
+  /* ----------------------------------------------- */
+  /* At this point we can send a reply to the client */
+  /* ----------------------------------------------- */
+
+  try {
+
+    /* Getting the parameters  */
+    /* ----------------------- */
+    //     castor::stager::QryRequest* qryreq =
+    //       dynamic_cast<castor::stager::QryRequest*>(req);
+    //     if (0 == qryreq) {
+    //       castor::exception::Internal e;
+    //       e.getMessage() << "Should be preocessing a QryRequest!";
+    //       throw e;
+    //     }
+    svcs->fillObj(&ad, req, castor::OBJ_QueryParameter);
+
+    /* Getting the svcClass */
+    /* -------------------- */
+    STAGER_LOG_VERBOSE(NULL, "Getting query's className");
+    std::string className = req->svcClassName();
+    if ("" != className) {
+      castor::stager::SvcClass* svcClass = qrySvc->selectSvcClass(className);
+      if (0 == svcClass) {
+	castor::exception::InvalidArgument e;
+	e.getMessage() << "Invalid className : " << className;
+	throw e;
+      }
+
+      /* Filling SvcClass in the DataBase */
+      /* -------------------------------- */
+      req->setSvcClass(svcClass);
+      svcs->fillRep(&ad, req, castor::OBJ_SvcClass, true);
+    }
+  } catch (castor::exception::Exception e) {
+    // Log error
+    serrno = e.code();
+    STAGER_LOG_DB_ERROR(NULL,"stager_query_select",
+                        e.getMessage().str().c_str());
+    // reply to the client
+    castor::rh::FileQryResponse res;
+    res.setStatus(10001); // XXX put decent status for bad SvcClassName 
+    res.setErrorCode(serrno);
+    res.setErrorMessage(e.getMessage().str());
+    castor::stager::queryService::replyToClient(client, &res);
+    castor::stager::queryService::sendEndResponse(client);
+    if (0 != req) {
+      castor::stager::SvcClass *svcClass = req->svcClass();
+      if (0 != svcClass) {
+        delete svcClass;
+      }
+      delete req;
+    }
+    if (qrySvc) qrySvc->release();
+    return -1;
+  }
+
   /* ===========================================================
    *
    * 2) CALLING PHASE
-   * At this point we can send a reply to the client
    * We get prepared to call the method
    */
 

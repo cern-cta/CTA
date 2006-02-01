@@ -99,6 +99,7 @@ void castor::io::StreamCastorFileCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->creationTime();
   ad->stream() << obj->lastAccessTime();
   ad->stream() << obj->nbAccesses();
+  ad->stream() << obj->lastKnownFileName();
   ad->stream() << obj->id();
 }
 
@@ -130,6 +131,9 @@ castor::IObject* castor::io::StreamCastorFileCnv::createObj(castor::IAddress* ad
   unsigned int nbAccesses;
   ad->stream() >> nbAccesses;
   object->setNbAccesses(nbAccesses);
+  std::string lastKnownFileName;
+  ad->stream() >> lastKnownFileName;
+  object->setLastKnownFileName(lastKnownFileName);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

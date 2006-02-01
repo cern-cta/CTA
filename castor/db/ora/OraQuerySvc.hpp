@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/01/27 14:40:35 $ $Author: itglp $
+ * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/02/01 11:36:58 $ $Author: sponcec3 $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -81,6 +81,27 @@ namespace castor {
       public:
 
         /**
+         * Gets all DiskCopies for a given file name.
+         * The caller is responsible for the deallocation of
+         * the returned objects.
+	 * Note that this function only makes use of the
+         * lastKnownFileName stored in the stager database
+	 * for each file, that is in no way accurate. In case
+	 * a renaming took place between the last request for
+	 * this file and the call to this function, no
+	 * DiskCopy will be returned for the new name while
+	 * the old name will still be known
+         * @param fileName the fileName to be used for the query
+         * @param svcClassId the Id of the service class we're using
+         * @return the list of DiskCopies available
+         * @exception in case of error
+         */
+        virtual std::list<castor::stager::DiskCopyInfo*>*
+        diskCopies4FileName (std::string fileName,
+                             u_signed64 svcClassId)
+          throw (castor::exception::Exception);
+
+        /**
          * Gets all DiskCopies for a given file.
          * The caller is responsible for the deallocation of
          * the returned objects
@@ -131,7 +152,13 @@ namespace castor {
 
       private:
 
-        /// SQL statement for function diskCopies4File
+        /// SQL statement for function diskCopies4FileName
+        static const std::string s_diskCopies4FileNameStatementString;
+
+        /// SQL statement object for function diskCopies4File
+        oracle::occi::Statement *m_diskCopies4FileNameStatement;
+
+        /// SQL statement for function diskCopies4FileName
         static const std::string s_diskCopies4FileStatementString;
 
         /// SQL statement object for function diskCopies4File

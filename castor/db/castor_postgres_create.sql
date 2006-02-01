@@ -113,7 +113,7 @@ CREATE TABLE TapePool (name VARCHAR(2048), id INT8 PRIMARY KEY);
 CREATE TABLE TapeCopy (copyNb INT4, id INT8 PRIMARY KEY, castorFile INTEGER, status INTEGER);
 
 /* SQL statements for type CastorFile */
-CREATE TABLE CastorFile (fileId INT8, nsHost VARCHAR(2048), fileSize INT8, creationTime INT8, lastAccessTime INT8, nbAccesses INT4, id INT8 PRIMARY KEY, svcClass INTEGER, fileClass INTEGER);
+CREATE TABLE CastorFile (fileId INT8, nsHost VARCHAR(2048), fileSize INT8, creationTime INT8, lastAccessTime INT8, nbAccesses INT4, lastKnownFileName VARCHAR(2048), id INT8 PRIMARY KEY, svcClass INTEGER, fileClass INTEGER);
 
 /* SQL statements for type DiskCopy */
 CREATE TABLE DiskCopy (path VARCHAR(2048), gcWeight float, creationTime INT8, id INT8 PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER);
