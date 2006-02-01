@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.9 $ $Date: 2006/01/13 16:49:18 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.10 $ $Date: 2006/02/01 10:37:25 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_QRY 1castor "$Date: 2006/01/13 16:49:18 $" CASTOR "STAGER Commands"
+.TH STAGER_QRY 1castor "$Date: 2006/02/01 10:37:25 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_qry \- query the CASTOR stager for files and requests
 .SH SYNOPSIS
@@ -62,9 +62,11 @@ INVALID: a failure happened concerning this file.
 
 .TP
 .BI \-M,\ \-\-hsm_filename " hsmfile"
-specifies the CASTOR HSM file to be queried for. The
+specifies the CASTOR HSM file to be queried for as a POSIX regular expression. The
 .B \-M
 option can be repeated, which allows for querying the status of many files with a single command.
+Note that the number of responses for a given file is limited on the server side. In case the limitation
+is reached, nothing is returned and an error message is displayed.
 .TP
 .BI \-F,\ \-\-fileid " fileid@nshost"
 query by CASTOR fileid and nshost. The fileid is a unique 64bit number assigned by the CASTOR name server to each file in its namespace. The fileid can be retrieved using the
