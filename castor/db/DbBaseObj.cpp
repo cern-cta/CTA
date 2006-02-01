@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbBaseObj.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/09/19 13:42:58 $ $Author: itglp $
+ * @(#)$RCSfile: DbBaseObj.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/02/01 10:22:33 $ $Author: itglp $
  *
  *
  *
@@ -71,3 +71,31 @@ castor::db::DbBaseObj::createStatement(const std::string &stmtString)
 castor::db::DbCnvSvc* castor::db::DbBaseObj::cnvSvc() const {
   return m_cnvSvc;
 }
+
+
+// -----------------------------------------------------------------------
+// commit
+// -----------------------------------------------------------------------
+void
+castor::db::DbBaseObj::commit() {
+	try {
+	  m_cnvSvc->commit();
+	} catch (castor::exception::Exception) {
+	  // commit failed, let's rollback for security
+	  rollback();
+	}
+}
+
+// -----------------------------------------------------------------------
+// rollback
+// -----------------------------------------------------------------------
+void
+castor::db::DbBaseObj::rollback() {
+  try {
+    m_cnvSvc->rollback();
+  } catch (castor::exception::Exception) {
+    // rollback failed, let's drop the connection for security
+    m_cnvSvc->dropConnection();
+  }
+}
+

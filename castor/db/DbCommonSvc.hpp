@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbCommonSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/10/13 10:31:11 $ $Author: itglp $
+ * @(#)$RCSfile: DbCommonSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/02/01 10:22:33 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for CDBC
  *
@@ -131,18 +131,6 @@ namespace castor {
          const std::string diskServer)
           throw (castor::exception::Exception);
           
-      protected:
-      
-        /**
-         * helper method to commit
-         */
-        virtual void commit();          
-
-        /**
-         * helper method to rollback
-         */
-        virtual void rollback();
-        
       private:
 
         /// SQL statement for function selectTape

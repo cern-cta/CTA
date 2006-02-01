@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbCommonSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/11/18 16:54:04 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DbCommonSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/01 10:22:33 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for CDBC
  *
@@ -404,30 +404,3 @@ castor::db::DbCommonSvc::selectFileSystem
   }
 }
 
-
-// -----------------------------------------------------------------------
-// commit
-// -----------------------------------------------------------------------
-void
-castor::db::DbCommonSvc::commit() {
-	try {
-	  cnvSvc()->commit();
-	} catch (castor::exception::Exception) {
-	  // commit failed, let's rollback for security
-	  rollback();
-	}
-}
-
-
-// -----------------------------------------------------------------------
-// rollback
-// -----------------------------------------------------------------------
-void
-castor::db::DbCommonSvc::rollback() {
-  try {
-    cnvSvc()->rollback();
-  } catch (castor::exception::Exception) {
-    // rollback failed, let's drop the connection for security
-    cnvSvc()->dropConnection();
-  }
-}

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbBaseObj.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/10/13 10:31:11 $ $Author: itglp $
+ * @(#)$RCSfile: DbBaseObj.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/02/01 10:22:33 $ $Author: itglp $
  *
  *
  *
@@ -84,8 +84,16 @@ namespace castor {
          */
         castor::db::DbCnvSvc* cnvSvc() const;
 
-      protected:
+        /**
+         * helper method to commit
+         */
+        virtual void commit();          
 
+        /**
+         * helper method to rollback
+         */
+        virtual void rollback();
+        
         /// The corresponding conversion service
         castor::db::DbCnvSvc* m_cnvSvc;
 
