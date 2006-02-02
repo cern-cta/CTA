@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/01/27 13:08:32 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/02 18:03:26 $ $Author: felixehm $
  *
  *
  *
@@ -41,13 +41,6 @@ namespace castor {
 //------------------------------------------------------------------------------
 RepackWorker::RepackWorker()
 {
-  /* Setting the address to access db */
-  /* -------------------------------- */
-  stage_trace(3, "Thread No. %d created!", counter);
-
-  m_param = NULL; // this is the ServerSocket, if the Thread is runed this 
-                // must be initialisied before by calling the init(void*param) function
-
   m_nameserver = "castorns.cern.ch";  // The default Nameserver
   m_filelisthelper = new castor::repack::FileListHelper(m_nameserver);
   m_databasehelper = new castor::repack::DatabaseHelper();
@@ -59,6 +52,7 @@ RepackWorker::RepackWorker()
   castor::dlf::Message messages[] =
     {{ 0, " - "},
      { 1, "New Request Arrival"},
+     { 2, "Could not get Conversion Service for Database"},
      { 3, "Could not get Conversion Service for Streaming"},
      { 4, "Exception caught : server is stopping"},
      { 5, "Exception caught : ignored"},
@@ -71,22 +65,14 @@ RepackWorker::RepackWorker()
      {12, "Request stored in DB"},
      {13, "Unable to store Request in DB"},
      {14, "Fetching filelist from Nameserver"},
-     {15, "Cannot get Filepathname"},
+     {15, "Cannot get Filepathname"},		// FileListHelper::getFilePathnames
      {16, "No such Tape!"},
+     {17, "Unable to stage files!"},		// FileOrganizer:stage_files
+     {18, "FileOrganizer: Staging files.."},		// FileOrganizer:run()
      {99, "TODO::MESSAGE"},
      {-1, ""}};
   castor::dlf::dlf_init("Repack", messages);
 
-}
-
-
-//------------------------------------------------------------------------------
-// initialises the thread
-//------------------------------------------------------------------------------
-void RepackWorker::init(void* param)
-{
-  stage_trace (3, "Thread No. %d init", counter);
-  this->m_param = param;
 }
 
 
@@ -96,7 +82,6 @@ void RepackWorker::init(void* param)
 //------------------------------------------------------------------------------
 RepackWorker::~RepackWorker() throw()
 {
-  stage_trace(3, "Thread No. %d killed!", counter); 
   delete m_filelisthelper;
   delete m_databasehelper;
 }
@@ -106,13 +91,13 @@ RepackWorker::~RepackWorker() throw()
 //------------------------------------------------------------------------------
 // runs the htread starts by threadassign()
 //------------------------------------------------------------------------------
-void RepackWorker::run() throw()
+void RepackWorker::run(void* param) throw()
 {
-  stage_trace(3, "Thread No. %d started and Request is now handled!", counter);
+  stage_trace(3, "RepackWorker started and Request is now handled!");
   castor::MessageAck ack; // Response for client
   ack.setStatus(true);
   
-  castor::io::ServerSocket* sock = (castor::io::ServerSocket*) m_param;
+  castor::io::ServerSocket* sock = (castor::io::ServerSocket*) param;
 
   // Retrieve info on the client
   unsigned short port;
@@ -180,9 +165,9 @@ void RepackWorker::run() throw()
     	RepackSubRequest* subRequest = rreq->subRequest().at(i);
     	if ( getTapeInfo(subRequest) > 0 )
     	{
-	    	m_filelisthelper->getFileListSegs( subRequest );
+	    	//m_filelisthelper->getFileListSegs( subRequest );
 			subRequest->setStatus(SUBREQUEST_READYFORSTAGING);
-			m_databasehelper->store_Request(rreq);
+			m_databasehelper->storeRequest(rreq);
     	}
   	}
   }catch (castor::exception::Exception e) {
@@ -213,8 +198,6 @@ void RepackWorker::run() throw()
   
   delete sock;  // originally created from RepackServer
   delete rreq;
-  
-
 }
 
 
@@ -224,7 +207,7 @@ void RepackWorker::run() throw()
 //------------------------------------------------------------------------------
 void RepackWorker::stop() throw()
 {
-  stage_trace(3,"Thread No. %d stopped!", counter );
+
 }
 
 

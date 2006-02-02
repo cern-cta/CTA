@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/01/27 13:08:32 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/02 18:03:26 $ $Author: felixehm $
  *
  *
  *
@@ -54,8 +54,6 @@ namespace castor {
 
  namespace repack {
 
-  static int counter;
-
   /**
    * A thread to process Put/Get request and submit them to the stager.
    */
@@ -73,15 +71,9 @@ namespace castor {
      */
     ~RepackWorker() throw();
 
-    /**
-     * Initialization for this thread
-     * XXX @param is the ThreadPool owning the thread,
-     * we ignore it for the time being.
-     */
-    virtual void init(void* param);
+
     
-    
-    virtual void run() throw();
+    virtual void run(void* param) throw();
     virtual void stop() throw();
     
   private:
@@ -100,10 +92,6 @@ namespace castor {
      */ 
     int getPoolInfo(castor::repack::RepackRequest* rreq) throw();
 
-	/**
-	 * the Socket passed during init(..), we store it here for later use
-	 */
-    void* m_param;
     /**
      * the nameserver, which is contacted for all Requests
      */
