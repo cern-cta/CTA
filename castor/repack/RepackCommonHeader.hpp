@@ -25,7 +25,7 @@ namespace castor{
 		#define SUBREQUEST_DONE				1060
 		
 		
-		const char* REPACK_POLL = "REPACK_POLL";
+		
 	}
 }
 
