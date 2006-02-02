@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/26 13:50:02 $ $Author: felixehm $
+ * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/02/02 18:15:27 $ $Author: felixehm $
  *
  * 
  *
@@ -32,10 +32,12 @@
 // Include Files
 #include "castor/repack/RepackCommonHeader.hpp"
 #include <vector>
-#include "castor/exception/Internal.hpp"
-#include "castor/BaseObject.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/Services.hpp"
+#include "castor/db/DbBaseObj.hpp"
+#include "castor/db/DbCnvSvc.hpp"
+#include "castor/exception/SQLError.hpp"
+
 
 namespace castor {
 	
@@ -51,7 +53,7 @@ namespace castor {
      * class DatabaseHelper
      * 
      */
-    class DatabaseHelper  : public castor::BaseObject{
+    class DatabaseHelper  : public castor::db::DbBaseObj{
 
     public:
 
@@ -69,9 +71,42 @@ namespace castor {
        * Stores a RepackRequest in the Database
        * @param rreq The RepackRequest
        */
-      int store_Request(castor::repack::RepackRequest* rreq);
-            
+      void storeRequest(castor::repack::RepackRequest* rreq) 
+					throw(castor::exception::Internal);
 
+
+      /**
+	   * Selects the next request the Repack daemon should deal with.
+	   * It returns a RepackSubRequest, so directly the tape to repack.
+	   * The corresponding main Request can be fetched by TODO:: <other function>>
+	   * 
+	   * @return the Request to process
+	   * @exception Exception in case of error
+	   */
+	  virtual castor::repack::RepackSubRequest* requestToDo() 
+					throw (castor::exception::Exception);
+
+	  /**
+       * Resets the converter. In particular any prepared
+       * statements are destroyed
+       */
+      virtual void reset() throw();
+      
+      void updateRep(castor::IObject* obj) throw ();
+      
+      bool checkForVid(std::string vid) throw();
+      private:
+      
+      /// SQL statement for function ToDo
+        static const std::string m_selectToDoStatementString;
+        castor::db::IDbStatement *m_selectToDoStatement;
+
+        static const std::string m_selectCheckStatementString;
+        castor::db::IDbStatement *m_selectCheckStatement;
+      
+      
+		castor::BaseAddress ad;
+      
     }; // end of class DatabaseHelper
 
   }; // end of namespace repack
