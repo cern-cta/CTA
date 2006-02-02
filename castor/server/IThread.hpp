@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/02/01 17:11:46 $ $Author: itglp $
+ * @(#)$RCSfile: IThread.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/02 10:47:26 $ $Author: itglp $
  *
  *
  *
@@ -38,7 +38,7 @@ namespace castor {
 
   /**
    * Basic CASTOR thread interface.
-   * Can be used within BaseThreadPool and SignalThreadPool.
+   * Can be used within ListenerThreadPool and SignalThreadPool.
    */
   class IThread {
   
@@ -46,8 +46,11 @@ namespace castor {
 	
     /**
      * Main work for this thread.
-     * This method will run on a dedicated thread, so
-     * it can include an infinite loop.
+     * This method will run on a dedicated thread, so it may
+     * contain an infinite loop; however, it is advised to let it
+     * run a chunk of your job and let the pool rerun it when
+     * needed (either a new request coming for ListenerThreadPools
+     * or timeout elapsed/notification got for SignalThreadPools).
      * @param param any relevant initialization value which
      * will be passed in by the pool.
      */
@@ -56,7 +59,7 @@ namespace castor {
     /**
      * Convenience method to stop the thread.
      * It is up to the inherited classes to implement
-     * the correct behaviour.
+     * the expected behaviour.
      */
     virtual void stop() = 0;
 	
