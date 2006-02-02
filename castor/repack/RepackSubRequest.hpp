@@ -120,21 +120,21 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_size
+       * Get the value of m_xsize
        * The full size of the request in Bytes.
-       * @return the value of m_size
+       * @return the value of m_xsize
        */
-      u_signed64 size() const {
-        return m_size;
+      u_signed64 xsize() const {
+        return m_xsize;
       }
 
       /**
-       * Set the value of m_size
+       * Set the value of m_xsize
        * The full size of the request in Bytes.
-       * @param new_var the new value of m_size
+       * @param new_var the new value of m_xsize
        */
-      void setSize(u_signed64 new_var) {
-        m_size = new_var;
+      void setXsize(u_signed64 new_var) {
+        m_xsize = new_var;
       }
 
       /**
@@ -222,7 +222,7 @@ namespace castor {
       std::string m_vid;
 
       /// The full size of the request in Bytes.
-      u_signed64 m_size;
+      u_signed64 m_xsize;
 
       int m_status;
 
