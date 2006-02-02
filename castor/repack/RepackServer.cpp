@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/26 13:50:02 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/02 18:05:07 $ $Author: felixehm $
  *
  *
  *
@@ -36,26 +36,52 @@
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
 
+	char* port;
+	const char* REPACK_PORT = "REPACK_PORT";
+	int iport;
+	if ( (port = getenv (REPACK_PORT)) != 0 ) {
+	    char* dp = port;
+	    iport = strtoul(port, &dp, 0);
+	    if (*dp != 0) {
+			std::cerr << "Bad port value in enviroment variable " << REPACK_PORT
+			<< std::endl;
+			return 1;
+    	}
+    	if ( iport > 65535 ){
+    		std::cerr << "Given port no. in enviroment variable " << REPACK_PORT 
+			<< "exceeds 65535 !"<< std::endl;
+			return 1;
+		}
+	}
+	else
+		iport = CSP_REPACKSERVER_PORT;
+	
+
    
     try {
       // new BaseDeamon as Server 
     castor::repack::RepackServer server;
     server.addThreadPool(
-      new castor::server::ListenerThreadPool("RepackWorker", new castor::repack::RepackWorker(), CSP_REPACKSERVER_PORT));
+      new castor::server::SignalThreadPool("FileOrganizer", new castor::repack::FileOrganizer() ));
 
+    server.addThreadPool(
+      new castor::server::ListenerThreadPool("RepackWorker", new castor::repack::RepackWorker(), iport));
+    
     // We only need one thread by default at this moment 
     server.getThreadPool('R')->setNbThreads(1);
+    server.getThreadPool('F')->setNbThreads(1);
     
     server.parseCommandLine(argc, argv);
     server.start();
       }// end try block
       catch (castor::exception::Exception e) {
-      std::cerr << "Caught castor exception : "
+	      std::cerr << "Caught castor exception : "
                   << sstrerror(e.code()) << std::endl
                   << e.getMessage().str() << std::endl;
       }
       catch (...) {
-      std::cerr << "Caught general exception!" << std::endl;
+	      std::cerr << "Caught general exception!" << std::endl;
+	      return 1;
       }
       return 0;
 }
@@ -64,26 +90,14 @@ int main(int argc, char *argv[]) {
 // RepackServer Constructor
 // also initialises the logging facility
 //------------------------------------------------------------------------------
-castor::repack::RepackServer::RepackServer() : castor::server::BaseServer("RepackServer") 
+castor::repack::RepackServer::RepackServer() : 
+	castor::server::BaseDaemon("RepackServer")
 {
-  /*
-  castor::BaseObject::initLog("Repack", castor::SVC_STDMSG);
-  // Initializes the DLF logging. This includes
-  // registration of the predefined messages
-   castor::dlf::Message messages[] =
-    {{ 0, " - "},
-     { 1, "New Request Arrival"},
-     { 2, "Could not get Conversion Service for Database"},
-     { 3, "Could not get Conversion Service for Streaming"},
-     { 4, "Could not read Socket"},
-     { 5, "New Request Arrival"},
-     { 6, "Invalid Request Arrival"},
-     { 7, "Unable to read Request object from socket"},
-     {-1, ""}};
-   castor::dlf::dlf_init("Repack", messages);
-   
-   */
+ 
+}
 
+castor::repack::RepackServer::~RepackServer() throw()
+{
 }
 
 

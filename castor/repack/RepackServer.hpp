@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/26 13:50:02 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/02/02 18:05:07 $ $Author: felixehm $
  *
  *
  *
@@ -32,8 +32,11 @@
 #include <string>
 
 #include "castor/server/ListenerThreadPool.hpp"
-#include "castor/server/BaseServer.hpp"
-#include "castor/repack/RepackWorker.hpp"
+#include "castor/server/SignalThreadPool.hpp"
+#include "castor/server/BaseDaemon.hpp"
+#include "RepackWorker.hpp"
+#include "FileOrganizer.hpp"
+
 
 
 
@@ -48,7 +51,7 @@ namespace castor {
    * CASTOR Repack main daemon.
    */
 
-  class RepackServer : public castor::server::BaseServer {
+  class RepackServer : public castor::server::BaseDaemon {
 
   public:
 
@@ -60,7 +63,7 @@ namespace castor {
     /**
      * destructor
      */
-    virtual ~RepackServer() throw() {};
+    virtual ~RepackServer() throw();
 
   };
 
