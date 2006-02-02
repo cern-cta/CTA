@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.18 2006/01/30 15:20:01 bcouturi Exp $
+ * $Id: stager_client_api_common.cpp,v 1.19 2006/02/02 17:23:59 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.18 $ $Date: 2006/01/30 15:20:01 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.19 $ $Date: 2006/02/02 17:23:59 $ CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
@@ -33,6 +33,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision:
 #include "trace.h"
 #include "Cglobals.h"
 #include "stager_client_api_common.h"
+#include "stager_client_api_authid.hpp"
 #include "Csnprintf.h"
 
 EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
@@ -334,12 +335,13 @@ EXTERN_C int DLL_DECL stage_resetid() {
 }
 
 
-int DLL_DECL stage_setClientAuthorizationId(castor::client::BaseClient *client) {
+int DLL_DECL castor::client::setClientAuthorizationId
+(castor::client::BaseClient &client) throw() {
 
   uid_t authUid;
   gid_t authGid;
 
   stage_getid(&authUid, &authGid);
-  client->setAuthorizationId(authUid, authGid);
+  client.setAuthorizationId(authUid, authGid);
   return 0;
 }
