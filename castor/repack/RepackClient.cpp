@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/01/27 13:08:32 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/02 18:07:08 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -183,9 +183,15 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
   setRemotePort();
   setRemoteHost();
   char* vid;
+  char cName[CA_MAXHOSTNAMELEN];
   struct passwd *pw = Cgetpwuid(getuid());
 
   RepackRequest* rreq = new RepackRequest();
+  
+  if ( gethostname(cName, CA_MAXHOSTNAMELEN) != 0 ){
+  	std::cerr << "Cannot get hostname ! Aborting.." << std::endl;
+  	return NULL;
+  }
   
   if ( cp.vid != NULL ) {
 	  for (vid = strtok (cp.vid, ":"); vid;  vid = strtok (NULL, ":")) {
@@ -200,6 +206,7 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
   rreq->setPid(getpid());
   rreq->setUserName(pw->pw_name);
   rreq->setCreationTime(time(NULL));
+  rreq->setMachine(cName);
   
   return rreq;
   
@@ -218,6 +225,9 @@ void RepackClient::run(int argc, char** argv)
     }
     // builds a request and prints it
     castor::repack::RepackRequest* req = buildRequest();
+    
+    if ( req == NULL )
+    	return;
     req->print();
 
     // creates a socket
@@ -279,7 +289,6 @@ void RepackClient::setRemotePort()
     
   }
   stage_trace(3, "Setting up Server Port - Using %d", m_defaultport);
-  clog() << "Setting up Server Port - Using " << m_defaultport << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -297,16 +306,8 @@ void RepackClient::setRemoteHost()
     m_defaulthost = host;
   } else {
     m_defaulthost = m_defaulthost;
-//     castor::exception::Exception e(ETPRM);
-//     e.getMessage()
-//       << "Unable to deduce the name of the RH server.\n"
-//       << "No -h option was given, RH_HOST is not set and "
-//       << "your castor.conf file does not contain a RH/HOST entry."
-//       << std::endl;
-//     throw e;
   }
   stage_trace(3, "Looking up Server Host - Using %s", m_defaulthost.c_str());
-  clog() << "Looking up Server Host - Using " << m_defaulthost << std::endl;
 }
 
 
