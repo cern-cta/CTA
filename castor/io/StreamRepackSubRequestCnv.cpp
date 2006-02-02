@@ -92,7 +92,7 @@ void castor::io::StreamRepackSubRequestCnv::createRep(castor::IAddress* address,
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->vid();
-  ad->stream() << obj->size();
+  ad->stream() << obj->xsize();
   ad->stream() << obj->status();
   ad->stream() << obj->id();
 }
@@ -110,9 +110,9 @@ castor::IObject* castor::io::StreamRepackSubRequestCnv::createObj(castor::IAddre
   std::string vid;
   ad->stream() >> vid;
   object->setVid(vid);
-  u_signed64 size;
-  ad->stream() >> size;
-  object->setSize(size);
+  u_signed64 xsize;
+  ad->stream() >> xsize;
+  object->setXsize(xsize);
   int status;
   ad->stream() >> status;
   object->setStatus(status);
