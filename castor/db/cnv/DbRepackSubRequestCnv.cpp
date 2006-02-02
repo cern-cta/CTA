@@ -56,7 +56,7 @@ static castor::CnvFactory<castor::db::cnv::DbRepackSubRequestCnv>* s_factoryDbRe
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_insertStatementString =
-"INSERT INTO RepackSubRequest (vid, size, status, id, requestID) VALUES (:1,:2,:3,ids_seq.nextval,:4) RETURNING id INTO :5";
+"INSERT INTO RepackSubRequest (vid, xsize, status, id, requestID) VALUES (:1,:2,:3,ids_seq.nextval,:4) RETURNING id INTO :5";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_deleteStatementString =
@@ -64,11 +64,11 @@ const std::string castor::db::cnv::DbRepackSubRequestCnv::s_deleteStatementStrin
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_selectStatementString =
-"SELECT vid, size, status, id, requestID FROM RepackSubRequest WHERE id = :1";
+"SELECT vid, xsize, status, id, requestID FROM RepackSubRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_updateStatementString =
-"UPDATE RepackSubRequest SET vid = :1, size = :2, status = :3 WHERE id = :4";
+"UPDATE RepackSubRequest SET vid = :1, xsize = :2, status = :3 WHERE id = :4";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_storeTypeStatementString =
@@ -426,7 +426,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::createRep(castor::IAddress* address
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->vid());
-    m_insertStatement->setInt64(2, obj->size());
+    m_insertStatement->setInt64(2, obj->xsize());
     m_insertStatement->setInt(3, obj->status());
     m_insertStatement->setInt64(4, (type == OBJ_RepackRequest && obj->requestID() != 0) ? obj->requestID()->id() : 0);
     m_insertStatement->execute();
@@ -448,7 +448,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::createRep(castor::IAddress* address
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
                     << "  vid : " << obj->vid() << std::endl
-                    << "  size : " << obj->size() << std::endl
+                    << "  xsize : " << obj->xsize() << std::endl
                     << "  status : " << obj->status() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  requestID : " << obj->requestID() << std::endl;
@@ -474,7 +474,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::updateRep(castor::IAddress* address
     }
     // Update the current object
     m_updateStatement->setString(1, obj->vid());
-    m_updateStatement->setInt64(2, obj->size());
+    m_updateStatement->setInt64(2, obj->xsize());
     m_updateStatement->setInt(3, obj->status());
     m_updateStatement->setInt64(4, obj->id());
     m_updateStatement->execute();
@@ -560,7 +560,7 @@ castor::IObject* castor::db::cnv::DbRepackSubRequestCnv::createObj(castor::IAddr
     castor::repack::RepackSubRequest* object = new castor::repack::RepackSubRequest();
     // Now retrieve and set members
     object->setVid(rset->getString(1));
-    object->setSize(rset->getInt64(2));
+    object->setXsize(rset->getInt64(2));
     object->setStatus(rset->getInt(3));
     object->setId(rset->getInt64(4));
     delete rset;
@@ -601,7 +601,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::updateObj(castor::IObject* obj)
     castor::repack::RepackSubRequest* object = 
       dynamic_cast<castor::repack::RepackSubRequest*>(obj);
     object->setVid(rset->getString(1));
-    object->setSize(rset->getInt64(2));
+    object->setXsize(rset->getInt64(2));
     object->setStatus(rset->getInt(3));
     object->setId(rset->getInt64(4));
     delete rset;
