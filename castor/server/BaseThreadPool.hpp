@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/01/16 10:09:48 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/02 11:19:51 $ $Author: itglp $
  *
  *
  *
@@ -76,7 +76,7 @@ namespace castor {
      * the threads and immediately return.
      * Specialized pools implement it according to their needs.
      */
-     virtual void run() {};
+     virtual void run() = 0;
 
     /**
      * Sets the foreground flag
