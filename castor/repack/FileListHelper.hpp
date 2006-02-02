@@ -19,8 +19,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/26 13:50:02 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/02/02 18:00:46 $ $Author: felixehm $
  *
+ * The Filelisthelper offers some little functions for getting the file 
+ * information for a tape.
  * 
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -69,7 +71,7 @@ namespace castor {
        * Returns a vector with a filelist with full pathname.
        * @param rreq The Request of the Tape
        */
-      std::vector<std::string>* getFileList(
+      std::vector<u_signed64>* getFileList(
       							castor::repack::RepackSubRequest *sreq) throw();
 
       /**
@@ -78,6 +80,10 @@ namespace castor {
        * @param vid The Request of the Tape
        */
       int getFileListSegs(castor::repack::RepackSubRequest *sreq);
+      
+      
+      std::vector<std::string>* getFilePathnames(
+								castor::repack::RepackSubRequest *subreq) throw();
                           
 	private:
 		/**
