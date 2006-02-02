@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "h/stager_client_api_common.h"   // for stage_trace("..")
@@ -12,19 +13,20 @@
 #include "RepackSubRequest.hpp"
 #include "RepackSegment.hpp"
 
-
-#define CSP_REPACKSERVER_PORT 62800
-
-#define SUBREQUEST_READYFORSTAGING	1001
-#define SUBREQUEST_STAGING			1020
-#define SUBREQUEST_READYFORMIG		1030
-#define SUBREQUEST_MIGRATING		1040
-#define SUBREQUEST_READYFORCLEANUP	1050
-#define SUBREQUEST_DONE				1060
-
-
-void markStatus(int status, castor::repack::RepackSubRequest* sreq){
-	sreq->setStatus(status);
+namespace castor{
+	namespace repack {
+		#define CSP_REPACKSERVER_PORT 62800
+		
+		#define SUBREQUEST_READYFORSTAGING	1001
+		#define SUBREQUEST_STAGING			1020
+		#define SUBREQUEST_READYFORMIG		1030
+		#define SUBREQUEST_MIGRATING		1040
+		#define SUBREQUEST_READYFORCLEANUP	1050
+		#define SUBREQUEST_DONE				1060
+		
+		
+		const char* REPACK_POLL = "REPACK_POLL";
+	}
 }
 
 
