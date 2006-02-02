@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileOrganizer.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/02/02 18:11:51 $ $Author: felixehm $
+ * @(#)$RCSfile: FileOrganizer.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/02/02 18:27:12 $ $Author: felixehm $
  *
  *
  *
@@ -31,7 +31,7 @@
 namespace castor {
 	namespace repack {
 		
-
+	const char* REPACK_POLL = "REPACK_POLL";
 		
 		
 //------------------------------------------------------------------------------
