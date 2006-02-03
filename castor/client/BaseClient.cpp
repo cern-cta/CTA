@@ -119,7 +119,7 @@ void DLL_DECL BaseClient_util_time(time_t then, char *timestr) {
 //------------------------------------------------------------------------------
 castor::client::BaseClient::BaseClient(int acceptTimeout) throw() :
   BaseObject(), m_callbackSocket(0), m_rhPort(-1), m_requestId(""),
-  m_acceptTimeout(acceptTimeout),  m_hasAuthorizationId(true), m_authUid(0), 
+  m_acceptTimeout(acceptTimeout),  m_hasAuthorizationId(false), m_authUid(0), 
   m_authGid(0) {}
 
 //------------------------------------------------------------------------------
