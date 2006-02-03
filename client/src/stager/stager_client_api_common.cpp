@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.19 2006/02/02 17:23:59 sponcec3 Exp $
+ * $Id: stager_client_api_common.cpp,v 1.20 2006/02/03 11:40:17 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.19 $ $Date: 2006/02/02 17:23:59 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.20 $ $Date: 2006/02/03 11:40:17 $ CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
@@ -335,13 +335,18 @@ EXTERN_C int DLL_DECL stage_resetid() {
 }
 
 
-int DLL_DECL castor::client::setClientAuthorizationId
-(castor::client::BaseClient &client) throw() {
+void DLL_DECL castor::client::setClientAuthorizationId
+(castor::client::BaseClient &client)
+  throw(castor::exception::Exception) {
 
   uid_t authUid;
   gid_t authGid;
 
-  stage_getid(&authUid, &authGid);
+  if (stage_getid(&authUid, &authGid) < 0) {
+    castor::exception::Exception e(serrno);
+    e.getMessage()
+      << "Error in stage_getid" << std::endl;
+    throw e;
+  }
   client.setAuthorizationId(authUid, authGid);
-  return 0;
 }

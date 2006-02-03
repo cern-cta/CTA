@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api_authid.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/02/02 17:24:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_client_api_authid.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/02/03 11:40:17 $ $Author: sponcec3 $
  *
  * Interface to set the Authorization id of a client
  *
@@ -37,10 +37,11 @@ namespace castor {
     /**
      * Sets the client authorization id of the given BaseClient
      * @param client The client concerned
-     * @return always returns 0
+     * @exception Exception throws an Exception in case of error
      */
-    int DLL_DECL setClientAuthorizationId
-    (castor::client::BaseClient &client) throw();
+    void DLL_DECL setClientAuthorizationId
+    (castor::client::BaseClient &client)
+      throw(castor::exception::Exception);
 
   }
 }
