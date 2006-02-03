@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileOrganizer.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/02/02 18:27:12 $ $Author: felixehm $
+ * @(#)$RCSfile: FileOrganizer.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/02/03 15:49:31 $ $Author: felixehm $
  *
  *
  *
@@ -82,8 +82,8 @@ void FileOrganizer::run(void *param) throw() {
 		if ( sreq != NULL ){
 			castor::dlf::Param params[] =
 			{castor::dlf::Param("VID", sreq->vid()),
-			 castor::dlf::Param("VID", sreq->id()),
-			 castor::dlf::Param("VID", sreq->status())};
+			 castor::dlf::Param("ID", sreq->id()),
+			 castor::dlf::Param("STATUS", sreq->status())};
 			castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 18, 3, params);
 			/* stage the files */
 			stage_files(sreq);
@@ -123,10 +123,12 @@ void FileOrganizer::sortReadOrder(std::vector<u_signed64>* fileidlist) throw()
 //------------------------------------------------------------------------------
 void FileOrganizer::stage_files(RepackSubRequest* sreq) throw() {
 
-	int rc;					// the return code for the stager_prepareToGet call.
+	int rc=0;					// the return code for the stager_prepareToGet call.
 	int i,j;
 	char path[CA_MAXPATHLEN+1];
 	FileListHelper flh;
+
+	std::vector<u_signed64>* filenamelist;	// the returned filelist with ids
 
 	/* stage_prepareToGet stuff */
 	int nbresps;
@@ -134,25 +136,31 @@ void FileOrganizer::stage_files(RepackSubRequest* sreq) throw() {
 	struct stage_prepareToGet_fileresp* response;
 	/*-------------------------*/
 
-	/* get the filenames as strings */
-	std::vector<u_signed64>* filenamelist;
-	filenamelist = flh.getFileList(sreq);
+	flh.getFileListSegs(sreq);				/* TODO: retrieve the segments from NS to be up-to-date
+											this is still neccessary, because right now we don't save the segments
+											in the DB - so not really todo!*/
+	filenamelist = flh.getFileList(sreq);	/* and now all parent_fileids */
+
 	struct stage_prepareToGet_filereq requests [filenamelist->size()] ;
 
+
+
 	/* now call the stager */
-	for (i = 0; i < filenamelist->size(); i++) {
+	for (i=0; i < filenamelist->size();i++) {
 		Cns_getpath("castorns.cern.ch",filenamelist->at(i),path);	//TODO: remove hardcoded ns name
+		stage_trace(3,"%s", path);
         requests[i].filename = path;
         requests[i].protocol = "repack";		// for the stager to recognize
         										// that this is a special call
-
       }
       
         // Before calling the stager, set the status of all the subrequests to in progress
+        stage_trace(3,"Updating Request to STAGING");
 		sreq->setStatus(SUBREQUEST_STAGING);
 		m_dbhelper->updateRep(sreq);
-		
+		stage_trace(3,"Now staging");
       //rc = stage_prepareToGet(NULL, requests, filenamelist->size(), &response, &nbresps, &reqId, NULL);
+
       
       if ( rc != 0 ) {
       	castor::exception::Internal ex;
@@ -163,8 +171,11 @@ void FileOrganizer::stage_files(RepackSubRequest* sreq) throw() {
     	 castor::dlf::Param("Precise Message", ex.getMessage().str())};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 15, 2, params);
 	    throw ex;
-	    return;
       }
+      
+      delete filenamelist;
+      //TODO: if stageing this has to be uncommented !    delete response;
+      
 	  // the Request has now status SUBREQUEST_STAGING
 }
 		

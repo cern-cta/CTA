@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/02 18:03:26 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/02/03 15:49:31 $ $Author: felixehm $
  *
  *
  *
@@ -44,35 +44,6 @@ RepackWorker::RepackWorker()
   m_nameserver = "castorns.cern.ch";  // The default Nameserver
   m_filelisthelper = new castor::repack::FileListHelper(m_nameserver);
   m_databasehelper = new castor::repack::DatabaseHelper();
-
-  // Initializes the DLF logging. This includes
-  // defining the predefined messages
-  
-  castor::BaseObject::initLog("Repack", castor::SVC_STDMSG);
-  castor::dlf::Message messages[] =
-    {{ 0, " - "},
-     { 1, "New Request Arrival"},
-     { 2, "Could not get Conversion Service for Database"},
-     { 3, "Could not get Conversion Service for Streaming"},
-     { 4, "Exception caught : server is stopping"},
-     { 5, "Exception caught : ignored"},
-     { 6, "Invalid Request"},
-     { 7, "Unable to read Request from socket"},
-     { 8, "Processing Request"},
-     { 9, "Exception caught"},
-     {10, "Sending reply to client"},
-     {11, "Unable to send Ack to client"},
-     {12, "Request stored in DB"},
-     {13, "Unable to store Request in DB"},
-     {14, "Fetching filelist from Nameserver"},
-     {15, "Cannot get Filepathname"},		// FileListHelper::getFilePathnames
-     {16, "No such Tape!"},
-     {17, "Unable to stage files!"},		// FileOrganizer:stage_files
-     {18, "FileOrganizer: Staging files.."},		// FileOrganizer:run()
-     {99, "TODO::MESSAGE"},
-     {-1, ""}};
-  castor::dlf::dlf_init("Repack", messages);
-
 }
 
 
@@ -166,11 +137,12 @@ void RepackWorker::run(void* param) throw()
     	if ( getTapeInfo(subRequest) > 0 )
     	{
 	    	//m_filelisthelper->getFileListSegs( subRequest );
+	    	//
 			subRequest->setStatus(SUBREQUEST_READYFORSTAGING);
 			m_databasehelper->storeRequest(rreq);
     	}
   	}
-  }catch (castor::exception::Exception e) {
+  }catch (castor::exception::Internal e) {
   	ack.setStatus(false);
     ack.setErrorCode(e.code());
     ack.setErrorMessage(e.getMessage().str());
@@ -178,7 +150,7 @@ void RepackWorker::run(void* param) throw()
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
        castor::dlf::Param("Precise Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 9, 2, params);
-    stage_trace(2,"Exception : %s\n%s",sstrerror(e.code()), e.getMessage().str().c_str() );
+    stage_trace(2,"%s\n%s",sstrerror(e.code()), e.getMessage().str().c_str() );
   }
 /****************************************************************************/  
   
@@ -278,7 +250,7 @@ int RepackWorker::getTapeInfo(castor::repack::RepackSubRequest* subreq){
   		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 16, 1, params);
 		return -1;
 	}
-	/* this is just done for nice output */
+	/* this is just done for nice output *	getFileListSegs(subreq);/
 	if ((tape_info.status & TAPE_FULL) == 0) {
 		switch ( tape_info.status )
 		{

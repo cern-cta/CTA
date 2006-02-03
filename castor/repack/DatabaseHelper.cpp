@@ -42,7 +42,7 @@
 const std::string castor::repack::DatabaseHelper::m_selectToDoStatementString =
   "SELECT q.id FROM RepackSubRequest q WHERE q.status = 1001 AND ROWNUM < 2 FOR UPDATE";
 const std::string castor::repack::DatabaseHelper::m_selectCheckStatementString =
-  "SELECT q.vid FROM RepackSubRequest q WHERE q.vid=";
+  "SELECT q.vid FROM RepackSubRequest q WHERE q.vid= :1";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -58,12 +58,12 @@ castor::repack::DatabaseHelper::DatabaseHelper() throw() :
 	
     // create oracle and streaming conversion service
     // so that it is not deleted and recreated all the time
-    castor::IService *svc =
-	    svcs()->service("DbCnvSvc", castor::SVC_DBCNV);
-    if (0 == svc) {
+    //castor::IService *svc =
+	//    svcs()->service("DbCnvSvc", castor::SVC_DBCNV);
+    //if (0 == svc) {
       // "Could not get Conversion Service for Database" message
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2);
-    }
+      //castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2);
+    //}
   } catch(castor::exception::Exception e) {
     // "Exception caught : server is stopping" message
     castor::dlf::Param params[] =
@@ -112,7 +112,7 @@ void castor::repack::DatabaseHelper::storeRequest(castor::repack::RepackRequest*
 {
 	stage_trace(2,"Storing Request in DB" );
 	
-	try {
+	
 		/* Check, if one of the tapes is already in DB */
 		for ( int i=0; i<rreq->subRequest().size(); i++ ){
 			if ( checkForVid( rreq->subRequest().at(i)->vid() )){
@@ -123,7 +123,8 @@ void castor::repack::DatabaseHelper::storeRequest(castor::repack::RepackRequest*
 				throw ex;
 			}
 		}
-		
+	
+	try {
 		
 	    // Store files for RepackRequest
 		if ( rreq != NULL ) {
@@ -160,25 +161,19 @@ void castor::repack::DatabaseHelper::storeRequest(castor::repack::RepackRequest*
 bool castor::repack::DatabaseHelper::checkForVid(std::string vid) throw()
 {
 	bool result = false;
-	std::string realStatementString = m_selectCheckStatementString;
-	vid.insert(0,"'");	/* SQL wants to have '' in query !*/
-	vid.append("'");
-	realStatementString.append(vid);
-	
 	stage_trace(2,"Checking, if %s is already in DB ",vid.c_str());
-	stage_trace(3,"%s",realStatementString.c_str());
 	try {
 		// Check whether the statements are ok
 		if ( m_selectCheckStatement == NULL ) {
-			m_selectCheckStatement = createStatement(realStatementString);
+			m_selectCheckStatement = createStatement(m_selectCheckStatementString);
 		}
+		m_selectCheckStatement->setString(1, vid);
 		castor::db::IDbResultSet *rset = m_selectCheckStatement->executeQuery();
 
-		if ( !rset->next() ){
-			result = false;	
-		}
-		else
-			result = true;
+		if ( rset->next() )	/* Something found : return true*/
+			result = true;	
+
+		delete rset;
 	}catch (castor::exception::SQLError e){
 		delete m_selectCheckStatement;
 		castor::exception::Internal ex;
@@ -187,8 +182,6 @@ bool castor::repack::DatabaseHelper::checkForVid(std::string vid) throw()
 		throw ex;
 	}
 	
-	// we want to delete it evertyime, because it is only for one tape!
-	delete m_selectCheckStatement;
 	return result;
 }
 
@@ -200,7 +193,7 @@ void castor::repack::DatabaseHelper::updateRep(castor::IObject* obj) throw ()
 {
 	try {
 		// Stores it into the data base
-		svcs()->updateRep(&ad, obj, false);
+		svcs()->updateRep(&ad, obj, true);
 		svcs()->commit(&ad);
 	 } catch (castor::exception::Exception e) {
        svcs()->rollback(&ad);

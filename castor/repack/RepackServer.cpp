@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/02 18:05:07 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/03 15:49:31 $ $Author: felixehm $
  *
  *
  *
@@ -64,11 +64,11 @@ int main(int argc, char *argv[]) {
     server.addThreadPool(
       new castor::server::SignalThreadPool("FileOrganizer", new castor::repack::FileOrganizer() ));
 
-    server.addThreadPool(
-      new castor::server::ListenerThreadPool("RepackWorker", new castor::repack::RepackWorker(), iport));
+    //server.addThreadPool(
+    //  new castor::server::ListenerThreadPool("RepackWorker", new castor::repack::RepackWorker(), iport));
     
     // We only need one thread by default at this moment 
-    server.getThreadPool('R')->setNbThreads(1);
+    //server.getThreadPool('R')->setNbThreads(1);
     server.getThreadPool('F')->setNbThreads(1);
     
     server.parseCommandLine(argc, argv);
@@ -93,7 +93,33 @@ int main(int argc, char *argv[]) {
 castor::repack::RepackServer::RepackServer() : 
 	castor::server::BaseDaemon("RepackServer")
 {
- 
+  // Initializes the DLF logging. This includes
+  // defining the predefined messages
+  
+  castor::BaseObject::initLog("Repack", castor::SVC_STDMSG);
+  castor::dlf::Message messages[] =
+    {{ 0, " - "},
+     { 1, "New Request Arrival"},
+     { 2, "Could not get Conversion Service for Database"},
+     { 3, "Could not get Conversion Service for Streaming"},
+     { 4, "Exception caught : server is stopping"},
+     { 5, "Exception caught : ignored"},
+     { 6, "Invalid Request"},
+     { 7, "Unable to read Request from socket"},
+     { 8, "Processing Request"},
+     { 9, "Exception caught"},
+     {10, "Sending reply to client"},
+     {11, "Unable to send Ack to client"},
+     {12, "Request stored in DB"},
+     {13, "Unable to store Request in DB"},
+     {14, "Fetching filelist from Nameserver"},
+     {15, "Cannot get Filepathname"},		// FileListHelper::getFilePathnames
+     {16, "No such Tape!"},
+     {17, "Unable to stage files!"},		// FileOrganizer:stage_files
+     {18, "FileOrganizer: New Request for staging files"},		// FileOrganizer:run()
+     {99, "TODO::MESSAGE"},
+     {-1, ""}};
+  castor::dlf::dlf_init("Repack", messages); 
 }
 
 castor::repack::RepackServer::~RepackServer() throw()

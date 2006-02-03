@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/02 18:00:46 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/03 15:49:31 $ $Author: felixehm $
  *
  *
  *
@@ -29,7 +29,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include "castor/repack/FileListHelper.hpp"
-
+#include <map>
 namespace castor {
 
 	namespace repack {
@@ -105,41 +105,42 @@ std::vector<u_signed64>* FileListHelper::getFileList(
 {
 	unsigned long i = 0;
 	double vecsize = 0;
-	signed64 parent_fileid = -1;
-
-	std::vector<u_signed64>* filenamelist = new std::vector<u_signed64>();
+	std::vector<RepackSegment*>::iterator iterseg;
+	/* pointer to vector of all Segments */
+	std::vector<u_signed64>* parentlist = new std::vector<u_signed64>();
 	
-	vecsize = getFileListSegs(subreq);
-	if ( vecsize > 0 )
-	{
+	vecsize = subreq->segment().size();
+
+	if ( vecsize > 0 ) {
 		castor::dlf::Param params[] =
      		 {castor::dlf::Param("Segments", vecsize),
      		  castor::dlf::Param("DiskSpace", subreq->xsize())};
 		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 14, 2, params);
 		
-		for ( i=0; i<vecsize; i++)
-		{
-			RepackSegment* tmp = subreq->segment().at(i);
-			filenamelist->push_back(tmp->parent_fileid());
-			parent_fileid = tmp->parent_fileid();
+		/* make up a new list with all parent_fileids */
+		iterseg=subreq->segment().begin();
+		while ( iterseg!=subreq->segment().end() ) {
+			parentlist->push_back( (*iterseg)->parent_fileid() );
+			iterseg++;
 		}
 	}
 	
-	sort(filenamelist->begin(),filenamelist->end());
-	std::vector<u_signed64>::iterator j;
-	u_signed64 fileid;
-	for (j=filenamelist->begin(); j!= filenamelist->end(); j++ ){
-			if ( fileid == (*j) ){
-			filenamelist->erase(j);
+	/* sort this list and remove double entries */
+	sort(parentlist->begin(),parentlist->end());
+	std::vector<u_signed64>::iterator j=parentlist->begin();
+	u_signed64 fileid=0;
+	
+	while ( j!= parentlist->end() ){
+		if ( fileid == (*j) ){
+			parentlist->erase(j);
 		}
 		else{
 			fileid = (*j);
-			//stage_trace(3,"%.0f",(*j));
+			j++;
 		}
 	}
-
-
-	return filenamelist;
+	stage_trace(3,"Number of parents: %d",parentlist->size());
+	return parentlist;
 }
 
 
@@ -157,7 +158,6 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
 
 	struct Cns_direntape *dtp;
 	Cns_list list;
-	signed64 parent_fileid = -1;
 	
 	if ( subreq != NULL )
 	{
