@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/01/13 17:21:36 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/06 15:11:35 $ $Author: itglp $
  *
  *
  *
@@ -162,4 +162,4 @@ namespace castor {
 } // end of namespace castor
 
 
-#endif // CASTOR_SERVER_BASETHREADPOOL_HPP
+#endif // CASTOR_SERVER_SIGNALTHREADPOOL_HPP
