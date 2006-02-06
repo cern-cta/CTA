@@ -1,0 +1,410 @@
+#!/usr/bin/perl
+# 
+# This program is for removing castor disk nodes from production for 
+# intervention. It should be run from one of the castoradm nodes under a 
+# *USER* account 
+#
+# NB it will NOT run under root as lsf objects to root submitted jobs
+
+# author         : alasdair.earl@cern.ch 
+# first released : 15/12/2005 
+# last change    : 27/01/06
+
+use strict;
+use POSIX qw(setsid);
+use vars qw/ %opt /;
+
+#################################################################################
+
+=pod 
+
+=head1 NAME
+
+disknodeShutdown - migrates files off a disk server node in Castor for shutdown
+
+=head1 SYNOPSIS
+
+This program is used to move a node from its current to the Recovery pool, generate a list 
+of files it contains and migrate these as necessary. The node is then available to be 
+physically powered down for intervention.
+
+=head1 DESCRIPTION
+
+disknodeShutdown can (must) be run from a user account on the castoradm nodes with 
+various command line arguments. This moves the specified node from the production svcclass 
+to recovery and then migrates valid files from the node to others. It is then possible to 
+shutdown the node without effecting the rest of the Castor system. 
+
+It is possible to run disknodeShutdown in a "dummy mode" which generates the list of 
+files which need migrating from the node but without moving the node's service class or 
+actually migrating any files.
+
+=head2 Command Line Options
+
+=item -n <node name>	name of node to be shutdown *REQUIRED*
+
+
+=item -s <svcclass>	name of service class files are migrated to *REQUIRED*
+
+
+=item -a <email> 	alternative email address to castor_delopy for messages
+
+
+=item -m <email>	additional email address to send messages to
+
+
+=item -d		dummy mode. Provides a dry run of what would happen without changing node or files.
+
+
+=item -h		provides help on usage
+
+
+=item -v		value for type of files are to be migrated from node. 
+			Default is DISKCOPY_STAGED|DISKCOPY_CANBEMIGR
+			Alternatives should be in the form value|value|value ...
+
+
+=head1 BUGS
+
+Files are generated in /tmp in the form /tmp/recov.<date/time>. These are not automatically 
+deleted. 
+
+=head1 TO DO LIST
+
+Support for partially completed lists.
+
+=cut
+
+#################################################################################
+
+########################### Variables ########################################
+
+ my $DUMMY_MODE = 0;    # the secret don't do anything mode 
+                        # which should be set to 0 for release version
+ 
+ my $DUMMY_MSG = "DUMMY MODE : ";
+
+ my $DELAY = 60;       #delay between checks of the node for monitoring progress
+ my $DEF_EMAIL = "castor-operations\@cern.ch";    #default email address for status
+
+ my $MSG1 = "ShutdownDiskServer has set the node : "; 
+ my $MSG2 = " to DOWN and is draining it"; 
+ my $SUBJECT = "Disk Server Node Shutdown Alert"; 
+ 
+ my $USER_EMAIL;
+ my $NODE;
+ my $SVCCLASS;
+ my $VALUES = "DISKCOPY_STAGED|DISKCOPY_CANBEMIGR";
+
+ my $count = 0;
+
+#################################################################################
+# sub init_vars() - sorts out the command line arguments
+#               this is a standard perl piece of code 
+# INPUT  : command line args
+# OUTPUT : none
+#
+sub init_vars()
+#################################################################################
+    {
+        use Getopt::Std;
+        my $opt_string = 'dhn:s:a:m:v:';
+        getopts( "$opt_string", \%opt ) or usage();
+        usage() if $opt{h};
+        $DUMMY_MODE = 1 if $opt{d};
+	$NODE       = $opt{n} if $opt{n};
+	$SVCCLASS   = $opt{s} if $opt{s};
+	$DEF_EMAIL  = $opt{a} if $opt{a};
+	$USER_EMAIL = $opt{m} if $opt{m};
+	$VALUES     = $opt{v} if $opt{v} 
+  }#end init_vars
+
+
+#################################################################################
+#sub usage() 
+# Message / help message about this program and how to use it 
+# INPUT  : none 
+# OUTPUT : none
+#
+sub usage() 
+#################################################################################
+    {
+        print STDERR  "This program automates the shutdown of Castor disk servers.\n\n"; 
+
+        print STDERR  "usage: $0 [-h] [-n node] [-s svcclass] [[-a email address] | [-m email address] ]\n";
+        print STDERR  "-h                 : this help message.\n";
+        print STDERR  "-n <node>.cern.ch  : FQDN of node to be taken out of production.\n";
+	print STDERR  "-s <svcclass>      : the service class files will be migrated to. See Twiki for more information.\n";
+        print STDERR  "-a <email address> : alternative email address to $DEF_EMAIL e.g. messages to this address only.\n";
+        print STDERR  "-m <email address> : additional email address to $DEF_EMAIL\n";
+        print STDERR  "                     e.g. messages to $DEF_EMAIL and CC'd to the additional email address.\n";
+	print STDERR  "-v <values>        : provide values for which type of files are to be migrated from node.\n";
+        print STDERR  "                     Default is DISKCOPY_STAGED|DISKCOPY_CANBEMIGR\n\n\n";
+        print STDERR  "example: $0 -n node001.cern.ch -m name.surname\@cern.ch\n\n";
+
+	exit;
+        
+    }#end usage
+
+
+#################################################################################
+# sub send_email()
+# simple subroutine to send email to castor ops / user as needed
+# INPUT  : none / globals
+# OUTPUT : none
+#
+sub send_email ()
+#################################################################################
+{
+     if (!$DUMMY_MODE) {
+        if (!$USER_EMAIL){
+            `echo $MSG1 . $NODE . $MSG2 | mail -s \"$SUBJECT\" $DEF_EMAIL`;
+        } else{
+            `echo $MSG1 . $NODE . $MSG2 | mail -s \"$SUBJECT\" $DEF_EMAIL -c $USER_EMAIL`;
+        }
+     } else {
+     	 if (!$USER_EMAIL){
+            print $DUMMY_MSG . "mail message : \"$MSG1 . $NODE . $MSG2 | mail -s \"$SUBJECT\" $DEF_EMAIL\"\n\n";
+        } else{
+            print $DUMMY_MSG . "mail message : \"$MSG1 . $NODE . $MSG2 | mail -s \"$SUBJECT\" $DEF_EMAIL -c $USER_EMAIL\"\n\n";
+        }
+     }#end else email
+
+}#end send_email
+
+
+#################################################################################
+# sub dummy_mode_msg()
+# INPUT  : none 
+# OUTPUT : none
+#
+#
+sub dummy_mode_msg()
+#################################################################################
+{
+     if ($DUMMY_MODE) {
+         print "\n\n##################################################################################################\n\n";
+	 print "You have now entered dummy mode of the disk server intervention software.\n";
+         print "No commands which change things will be issued BUT we will check if the node is reachable and its status\n\n";
+         print "Email option set to : ";
+	 if ($USER_EMAIL) { 
+	     print $USER_EMAIL . " and " . $DEF_EMAIL . "\n\n"; 
+	 }
+	 else {
+	     print $DEF_EMAIL . "\n\n";
+	 }
+	 print "##################################################################################################\n\n";
+     }
+}#end dummy_mode_msg
+
+#################################################################################
+# sub wait_for_input()
+# simple subroutine to pause program while waiting for user to agree to continuing
+# INPUT  : none (direct) | command line interaction
+# OUTPUT : none
+#
+#
+sub wait_for_input()
+#################################################################################
+{
+        my $data = "";
+
+        do {
+                print "Please enter y(es) to continue or q(uit) to quit program and then enter.\n";
+                chomp ($data = <STDIN>);
+        }while ($data !~ m/(y|yes|q|quit)$/i);
+
+        if ($data =~ m/(y|yes)$/i) { return 1; }
+
+        if ($data =~ m/(quit|q)$/i) { exit; }
+
+}#end wait_for_input()
+
+#################################################################################
+# sub check_progress () 
+# INPUT  :
+# OUTPUT :
+#
+#
+sub check_progress () {
+#################################################################################
+	my @ary = @_;    
+	my $i;
+	my $total = 0;
+
+   # `source /etc/sysconfig/castor`;
+    #`export STAGE_HOST=castorrh`;
+    #open (EXT, "export STAGE_SVCCLASS=$SVCCLASS |); close (EXT);
+    #`setenv STAGE_HOST castorrh`;
+    #open (EXT1, "setenv STAGE_SVCCLASS $SVCCLASS |"); close (EXT1);
+                
+	for ($i =0; $i <= $#ary; $i++) {
+
+	  open (CHECK, "stager_qry -M `nsGetPath castor $ary[$i]` 2>&1 |");
+	  while (<CHECK>) {
+ 		print $_;
+ 		if ($_ =~ m/STAGED$/i ){ print $_; $total++;}
+		if ($_ =~ m/No\ such\ file\ or\ directory/i){ print $_; $total++;}
+	  }
+	}
+
+	if ($total != 10) { print $total . "\n"; sleep (60);} else { sleep(2); }
+	return $total;
+}
+
+
+#################################################################################
+# INPUT  : none
+# OUTPUT : filename as string
+#
+#
+sub create_file () {
+#################################################################################
+
+	my ($line);	
+	my $file = "/tmp/recov." . time();
+
+    print "Creating file to contain list of files to move.\n"; 
+
+    open (TOUCH, "touch $file |"); close (TOUCH);
+
+    print "Creating a list of files to move - this should not take long\n";
+
+    open(FILE, ">$file") or die "Problem opening file $file for writing\n";
+
+    open(CMD, "diskServer_qry -i $NODE | egrep '$VALUES' | awk \'{print \$1}\' |");
+
+        while ($line = <CMD>) {
+		chomp($line);
+        	open(X, "nsGetPath castor $line |");
+		print FILE $line . " " . <X>;
+		$count++;
+		if ($count % 100 == 0) {print ".";}
+		if ($count % 1000 == 0) {print " $count files processed.\n";}
+        }
+
+    close(CMD);
+    close(FILE);
+    print "\n";
+
+    return $file;
+}
+
+#################################################################################
+# sub TransferManager()
+# process to transfer files off the node
+# This subroutine generates a file of the id and path to the files which need to 
+# potentially be moved from the current node to others.
+#
+#      notes: log into castorscheduler and run bhoststo get current status
+#
+#
+sub TransferManager()
+#################################################################################
+{
+    my @working_files; 		#an array of the files currently being worked on
+    my $file;			#file name for list of files on node
+    my $active_transfers = 0;
+    my $active = 0;
+    my $total_done = 0;
+
+    #`source /etc/sysconfig/castor`;
+    #`export STAGE_HOST=castorrh`;
+    #open (EXT, "export STAGE_SVCCLASS=$SVCCLASS |); close (EXT);
+    #`setenv STAGE_HOST castorrh`;
+    #open (EXT, "setenv STAGE_SVCCLASS $SVCCLASS|"); close (EXT);
+
+    $file = &create_file();
+
+    open(FILE, $file) or die "Problem opening file $file for reading\n";
+    print "List of files to move has been created with $count entries. Do you want to start the transfer?.\n"; 
+    &wait_for_input();
+   
+    $active = 0;
+    foreach (<FILE>){
+	my ($ID, $URL) = split / /, $_;
+
+	if ($active < 10) {
+
+	    if ( !$DUMMY_MODE ) { 
+		open(EXECUTE, "stager_get -U recovery -S $SVCCLASS -M $URL |"); 
+                $working_files[$active++] = $ID;
+		print <EXECUTE>; 
+                close (EXECUTE);
+            }
+	    else { 
+		print $DUMMY_MSG . "stager_get -U recovery -S $SVCCLASS -M $URL"; 
+                $working_files[$active++] = $ID;
+	    }
+
+        } else {
+            if ( !$DUMMY_MODE ) {
+		print "End of 10 file ops. Checking progress before continuing.\n";
+		do { 
+			$active_transfers = &check_progress(@working_files); 
+		} while ($active_transfers != 10); 
+		$active = 0;	
+		$total_done += 10;
+		print "$total_done files of $count processed. \n"; 
+	    } else {
+		print $DUMMY_MSG . "End of 10 file ops. Checking progress before continuing.\n";
+                &check_progress(@working_files);  
+		do { 
+			$active_transfers = &check_progress(@working_files); 
+		} while ($active_transfers != 10); 
+		$active = 0;
+		$total_done += 10;
+		print "$total_done files of $count processed. \n"; 
+	    }
+        } #end else COUNT !=10
+    }#END FOREACH
+    print "Finished!\n";
+    return; #RETURN TO MAIN
+
+}#end transfermanager
+
+
+#################################################################################
+# start of main code
+#
+# Note: we have used open (X ...  and then piped stuff because using `` format to 
+#       execute on the command line wasn't translating the variables to their value
+#       This was the best work around we could find. 
+
+     &init_vars();                 #sort out the getopts arguments for node name and email addresses
+     &dummy_mode_msg();	
+
+     if (!$NODE){ print "You need to supply the name of a node to be taken out of service.\n"; exit;} 
+
+     if ($USER_EMAIL && $USER_EMAIL !~ /@/) { print "Your email address - $USER_EMAIL - needs an \@ somewhere.\n"; exit;} 	
+
+     if ($DEF_EMAIL !~ /@/) { print "Your email address - $DEF_EMAIL - needs an \@ somewhere!\n"; exit;}
+
+     if (!$DUMMY_MODE) {
+
+	if (-e "/etc/sysconf/castor") {`source /etc/sysconf/castor`;} 
+	else {print "Unable to find \"/etc/sysconf/castor\". Continuing.\n";}
+
+        open(JUNKVAL, "diskServer_qry $NODE | egrep 'DISKCOPY_WAIT|DISKCOPY_STAGEOUT' |"); close (JUNKVAL); 
+	print "If there are active transfers please decide if you wish to continue.\n";	
+	&wait_for_input();		
+	print "Moving $NODE to recovery pool.\n";
+        open(JUNKVAL, "moveDiskServer recovery $NODE |"); close (JUNKVAL); 	
+	print "$NODE has been moved to recovery.\n";
+
+     }
+     else {
+
+	 print $DUMMY_MSG . "source /etc/sysconf/castor\n";
+	 print $DUMMY_MSG . "Moving $NODE to recovery pool.\n";
+	 print $DUMMY_MSG . "moveDiskServer recovery $NODE\n";
+  	 print $DUMMY_MSG . "$NODE has been moved to recovery. Querying open files.\n";
+	 print $DUMMY_MSG . "diskServer_qry $NODE | egrep 'DISKCOPY_WAIT|DISKCOPY_STAGEOUT'\n";
+ 	 print "If there are active transfers please decide if you wish to continue.\n";
+	 &wait_for_input();		
+     }
+
+     &send_email();	
+     &TransferManager(); #now start transfering files
+
+    1;
