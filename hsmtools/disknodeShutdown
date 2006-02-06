@@ -8,7 +8,7 @@
 
 # author         : alasdair.earl@cern.ch 
 # first released : 15/12/2005 
-# last change    : 27/01/06
+# last change    : 6/02/06
 
 use strict;
 use POSIX qw(setsid);
@@ -20,7 +20,7 @@ use vars qw/ %opt /;
 
 =head1 NAME
 
-disknodeShutdown - migrates files off a disk server node in Castor for shutdown
+disknodeShutdown - migrates files off a disk server node in Castor for shutdown. This version deals with multiple nodes.
 
 =head1 SYNOPSIS
 
@@ -92,6 +92,7 @@ Support for partially completed lists.
  my $SUBJECT = "Disk Server Node Shutdown Alert"; 
  
  my $USER_EMAIL;
+ my @NODES;
  my $NODE;
  my $SVCCLASS;
  my $VALUES = "DISKCOPY_STAGED|DISKCOPY_CANBEMIGR";
@@ -112,7 +113,7 @@ sub init_vars()
         getopts( "$opt_string", \%opt ) or usage();
         usage() if $opt{h};
         $DUMMY_MODE = 1 if $opt{d};
-	$NODE       = $opt{n} if $opt{n};
+	@NODES       = split / /,$opt{n} if $opt{n};
 	$SVCCLASS   = $opt{s} if $opt{s};
 	$DEF_EMAIL  = $opt{a} if $opt{a};
 	$USER_EMAIL = $opt{m} if $opt{m};
@@ -133,14 +134,15 @@ sub usage()
 
         print STDERR  "usage: $0 [-h] [-n node] [-s svcclass] [[-a email address] | [-m email address] ]\n";
         print STDERR  "-h                 : this help message.\n";
-        print STDERR  "-n <node>.cern.ch  : FQDN of node to be taken out of production.\n";
+        print STDERR  "-n <node>          : name of node to be taken out of production.\n";
+        print STDERR  "-n "<node> <node>" : names of the nodes to be taken out of production - in quotes with spaces.\n";
 	print STDERR  "-s <svcclass>      : the service class files will be migrated to. See Twiki for more information.\n";
         print STDERR  "-a <email address> : alternative email address to $DEF_EMAIL e.g. messages to this address only.\n";
         print STDERR  "-m <email address> : additional email address to $DEF_EMAIL\n";
         print STDERR  "                     e.g. messages to $DEF_EMAIL and CC'd to the additional email address.\n";
 	print STDERR  "-v <values>        : provide values for which type of files are to be migrated from node.\n";
         print STDERR  "                     Default is DISKCOPY_STAGED|DISKCOPY_CANBEMIGR\n\n\n";
-        print STDERR  "example: $0 -n node001.cern.ch -m name.surname\@cern.ch\n\n";
+        print STDERR  "example: $0 -n node001 -m name.surname\@cern.ch\n\n";
 
 	exit;
         
@@ -156,6 +158,7 @@ sub usage()
 sub send_email ()
 #################################################################################
 {
+    foreach $NODE (@NODES){
      if (!$DUMMY_MODE) {
         if (!$USER_EMAIL){
             `echo $MSG1 . $NODE . $MSG2 | mail -s \"$SUBJECT\" $DEF_EMAIL`;
@@ -169,7 +172,7 @@ sub send_email ()
             print $DUMMY_MSG . "mail message : \"$MSG1 . $NODE . $MSG2 | mail -s \"$SUBJECT\" $DEF_EMAIL -c $USER_EMAIL\"\n\n";
         }
      }#end else email
-
+     }#end foreach node
 }#end send_email
 
 
@@ -231,12 +234,6 @@ sub check_progress () {
 	my @ary = @_;    
 	my $i;
 	my $total = 0;
-
-   # `source /etc/sysconfig/castor`;
-    #`export STAGE_HOST=castorrh`;
-    #open (EXT, "export STAGE_SVCCLASS=$SVCCLASS |); close (EXT);
-    #`setenv STAGE_HOST castorrh`;
-    #open (EXT1, "setenv STAGE_SVCCLASS $SVCCLASS |"); close (EXT1);
                 
 	for ($i =0; $i <= $#ary; $i++) {
 
@@ -258,11 +255,12 @@ sub check_progress () {
 # OUTPUT : filename as string
 #
 #
-sub create_file () {
+sub create_file ($) {
 #################################################################################
 
-	my ($line);	
-	my $file = "/tmp/recov." . time();
+    my ($NODE) = @_[0];
+    my ($line);	
+    my $file = "/tmp/recov.$NODE" . time();
 
     print "Creating file to contain list of files to move.\n"; 
 
@@ -299,22 +297,17 @@ sub create_file () {
 #      notes: log into castorscheduler and run bhoststo get current status
 #
 #
-sub TransferManager()
+sub TransferManager($)
 #################################################################################
 {
+    my ($NODE) = @_[0];
     my @working_files; 		#an array of the files currently being worked on
     my $file;			#file name for list of files on node
     my $active_transfers = 0;
     my $active = 0;
     my $total_done = 0;
 
-    #`source /etc/sysconfig/castor`;
-    #`export STAGE_HOST=castorrh`;
-    #open (EXT, "export STAGE_SVCCLASS=$SVCCLASS |); close (EXT);
-    #`setenv STAGE_HOST castorrh`;
-    #open (EXT, "setenv STAGE_SVCCLASS $SVCCLASS|"); close (EXT);
-
-    $file = &create_file();
+    $file = &create_file($NODE);
 
     open(FILE, $file) or die "Problem opening file $file for reading\n";
     print "List of files to move has been created with $count entries. Do you want to start the transfer?.\n"; 
@@ -374,7 +367,7 @@ sub TransferManager()
      &init_vars();                 #sort out the getopts arguments for node name and email addresses
      &dummy_mode_msg();	
 
-     if (!$NODE){ print "You need to supply the name of a node to be taken out of service.\n"; exit;} 
+     if (!@NODE){ print "You need to supply the name of a node to be taken out of service.\n"; exit;} 
 
      if ($USER_EMAIL && $USER_EMAIL !~ /@/) { print "Your email address - $USER_EMAIL - needs an \@ somewhere.\n"; exit;} 	
 
@@ -383,10 +376,12 @@ sub TransferManager()
      if (!$DUMMY_MODE) {
 
 	if (-e "/etc/sysconf/castor") {`source /etc/sysconf/castor`;} 
-	else {print "Unable to find \"/etc/sysconf/castor\". Continuing.\n";}
+	else {print "Unable to find \"/etc/sysconf/castor\". Continuing but you may need to do this by hand.\n";}
+
+	foreach $NODE (@NODES){
 
         open(JUNKVAL, "diskServer_qry $NODE | egrep 'DISKCOPY_WAIT|DISKCOPY_STAGEOUT' |"); close (JUNKVAL); 
-	print "If there are active transfers please decide if you wish to continue.\n";	
+	print "If there are active transfers for $NODE please decide if you wish to continue.\n";	
 	&wait_for_input();		
 	print "Moving $NODE to recovery pool.\n";
         open(JUNKVAL, "moveDiskServer recovery $NODE |"); close (JUNKVAL); 	
@@ -396,15 +391,20 @@ sub TransferManager()
      else {
 
 	 print $DUMMY_MSG . "source /etc/sysconf/castor\n";
+	 foreach $NODE (@NODES){
+
 	 print $DUMMY_MSG . "Moving $NODE to recovery pool.\n";
 	 print $DUMMY_MSG . "moveDiskServer recovery $NODE\n";
   	 print $DUMMY_MSG . "$NODE has been moved to recovery. Querying open files.\n";
 	 print $DUMMY_MSG . "diskServer_qry $NODE | egrep 'DISKCOPY_WAIT|DISKCOPY_STAGEOUT'\n";
  	 print "If there are active transfers please decide if you wish to continue.\n";
 	 &wait_for_input();		
+     }#end foreach nodes
      }
 
      &send_email();	
-     &TransferManager(); #now start transfering files
 
+     foreach (@NODES) {	
+        &TransferManager($_); #now start transfering files
+     }
     1;
