@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/01/13 17:21:36 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/02/06 15:09:30 $ $Author: itglp $
  *
  *
  *
@@ -53,9 +53,12 @@ namespace castor {
 
     /**
      * constructor
+     * @param poolName, thread as in BaseThreadPool
+     * @param listenPort the TCP port to which to attach the ServerSocket.
+     * @param listenereOnOwnThread if false the listener loop is run directly. See run().
      */
-    ListenerThreadPool(const std::string poolName,
-                   castor::server::IThread* thread, int listenPort) throw();
+    ListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
+       int listenPort, bool listenerOnOwnThread = true) throw();
 
     /*
      * destructor
@@ -63,9 +66,9 @@ namespace castor {
     virtual ~ListenerThreadPool() throw();
 
     /**
-     * User function to run the pool.
-     * Default implementation forks a single thread by
-     * calling threadAssign(0).
+     * Starts the listener loop to accept connections.
+     * If m_spawnListener (default), the loop is started on a separate thread,
+     * otherwise it is run directly: in the latter case the method does NOT return.
      */
     virtual void run();
 
@@ -73,14 +76,24 @@ namespace castor {
   
     /**
      * Forks and assigns work to a thread from the pool.
-     * @param param user parameter passed to thread->init().
+     * @param param user parameter passed to thread->run().
      */
     virtual int threadAssign(void *param);
 
     /// TCP port to listen for
     int m_port;
+    
+    /// flag to decide whether the listener loop has to run in a separate thread
+    bool m_spawnListener;
+
+    /// Thread entrypoint made friend to access private fields.
+    friend void* _listener_run(void* param);
 
   };
+
+
+  // Entrypoint for the listener loop
+  void* _listener_run(void* param);
 
  } // end of namespace server
 

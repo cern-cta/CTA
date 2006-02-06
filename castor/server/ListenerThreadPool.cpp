@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/30 13:50:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/02/06 15:09:30 $ $Author: itglp $
  *
  *
  *
@@ -42,8 +42,9 @@
 //------------------------------------------------------------------------------
 castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolName,
                                                castor::server::IThread* thread,
-                                               int listenPort) throw() :
-  BaseThreadPool(poolName, thread), m_port(listenPort) {}
+                                               int listenPort,
+                                               bool listenerOnOwnThread) throw() :
+  BaseThreadPool(poolName, thread), m_port(listenPort), m_spawnListener(listenerOnOwnThread) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -56,21 +57,36 @@ castor::server::ListenerThreadPool::~ListenerThreadPool() throw() {}
 //------------------------------------------------------------------------------
 void castor::server::ListenerThreadPool::run()
 {
-  // XXX a possible improvement here is to fork a thread to run this loop,
-  // because if the user adds several thread pools this one will lock the others!
+  if(m_spawnListener) {
+    Cthread_create_detached(castor::server::_listener_run, this);
+  }
+  else {
+    _listener_run(this);
+  }
+}
+
+//------------------------------------------------------------------------------
+// _listener_run
+//------------------------------------------------------------------------------
+void* castor::server::_listener_run(void* param)
+{
+  castor::server::ListenerThreadPool* tp = (castor::server::ListenerThreadPool*)param;
+  
   try {
     /* Create a socket for the server, bind, and listen */
-    castor::io::ServerSocket sock(m_port, true);  
+    castor::io::ServerSocket sock(tp->m_port, true);
     for (;;) {
       /* accept connections */
       castor::io::ServerSocket* s = sock.accept();
       /* handle the command */
-      threadAssign(s);
+      tp->threadAssign(s);
     }
   } catch(castor::exception::Exception any) {
-    clog() << "Error while listening to port " << m_port << ": "
-           << any.getMessage().str() << std::endl;
+    tp->clog() << "Error while listening to port " << tp->m_port << ": "
+               << any.getMessage().str() << std::endl;
   }
+
+  return 0;
 }
 
 //------------------------------------------------------------------------------

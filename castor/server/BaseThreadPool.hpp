@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/02 11:19:51 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/02/06 15:09:30 $ $Author: itglp $
  *
  *
  *
@@ -154,11 +154,12 @@ namespace castor {
 
   };
 
-/**
- * External entrypoint for the thread.
- * It is passed to Cpool_assign.
- */
- void* _thread_run(void* param);
+
+  /**
+   * External entrypoint for the thread.
+   * It is passed to Cpool_assign or Cthread_create_detached
+   */
+  void* _thread_run(void* param);
 
  } // end of namespace server
 
