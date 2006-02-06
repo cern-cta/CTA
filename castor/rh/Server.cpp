@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2006/01/13 17:31:11 $ $Author: itglp $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2006/02/06 15:11:10 $ $Author: itglp $
  *
  *
  *
@@ -43,7 +43,8 @@ int main(int argc, char *argv[]) {
   try {
     castor::rh::Server server;
     server.addThreadPool(
-      new castor::server::ListenerThreadPool("RH", new castor::rh::RHThread(), CSP_RHSERVER_PORT));
+      new castor::server::ListenerThreadPool("RH", new castor::rh::RHThread(), CSP_RHSERVER_PORT, false));
+      // we don't need a separated thread for the listener loop here
     server.parseCommandLine(argc, argv);
     server.start();
   } catch (castor::exception::Exception e) {
