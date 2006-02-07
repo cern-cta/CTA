@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.13 2005/10/25 12:06:50 itglp Exp $
+ * $Id: stager_client_api_query.cpp,v 1.14 2006/02/07 10:34:10 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.13 $ $Date: 2005/10/25 12:06:50 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.14 $ $Date: 2006/02/07 10:34:10 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -26,7 +26,6 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 
 #include "castor/client/IResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
 #include "castor/client/VectorResponseHandler.hpp"
-#include "castor/rh/FileQueryResponse.hpp"
 #include "castor/rh/FileQryResponse.hpp"
 #include "castor/rh/RequestQueryResponse.hpp"
 #include "castor/stager/StageRequestQueryRequest.hpp"
@@ -92,12 +91,9 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
       par->setValue((const char *)requests[i].param);
       par->setQuery(&req);
       req.addParameters(par);
-
       
       stage_trace(3, "%s type=%d param=%s", 
 		  func, requests[i].type, requests[i].param);
-
-
     }
 
     // Using the VectorResponseHandler which stores everything in
@@ -110,7 +106,7 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
     int nbResponses =  respvec.size();
 
     if (nbResponses <= 0) {
-      // We got not replies, this is not normal !
+      // We got no replies, this is not normal !
       serrno = SEINTERNAL;
       stage_errmsg(func, "No responses received");
       return -1;
@@ -129,62 +125,29 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
     }
     *nbresps = nbResponses;
     
-    bool newProto = (dynamic_cast<castor::rh::FileQryResponse*>(respvec[0]) != 0);
-    bool retCastorFileName = (nbreqs == nbResponses);
-    if(!newProto) {    
-        // with the old protocol we can return the castor filename only
-        // if it's provided in the request via -M option
-        for(int i=0; i<nbreqs; i++) {
-            if(requests[i].type != BY_FILENAME) {
-                retCastorFileName = false;
-            }
-        }
-    }
-    
     for (int i=0; i<(int)respvec.size(); i++) {
 
-      // Casting the response into a FileResponse !
-      if(newProto) {
-          castor::rh::FileQryResponse* fr = 
-            dynamic_cast<castor::rh::FileQryResponse*>(respvec[i]);
+      // Casting the response into a FileResponse
+      castor::rh::FileQryResponse* fr = 
+        dynamic_cast<castor::rh::FileQryResponse*>(respvec[i]);
+      if (0 == fr) {
+          castor::exception::Exception e(SEINTERNAL);
+          e.getMessage() << "Error in dynamic cast, response was NOT a FileQryResponse";
+          throw e;
+      }
 
-          (*responses)[i].errorCode = fr->errorCode();
-          (*responses)[i].errorMessage = strdup(fr->errorMessage().c_str());
-          (*responses)[i].filename = strdup(fr->fileName().c_str());
-          (*responses)[i].castorfilename = strdup(fr->castorFileName().c_str());
-          (*responses)[i].fileid = fr->fileId();
-          (*responses)[i].status = fr->status();
-          (*responses)[i].size = fr->size();
-          (*responses)[i].diskserver = strdup(fr->diskServer().c_str());
-          (*responses)[i].poolname = strdup(fr->poolName().c_str());
-          (*responses)[i].creationTime = (time_t)fr->creationTime();
-          (*responses)[i].accessTime = (time_t)fr->accessTime();
-          (*responses)[i].nbAccesses = fr->nbAccesses();
-      }
-      else {   // old protocol - this will go away
-          castor::rh::FileQueryResponse* fr = 
-            dynamic_cast<castor::rh::FileQueryResponse*>(respvec[i]);
-          if (0 == fr) {
-              castor::exception::Exception e(SEINTERNAL);
-              e.getMessage() << "Error in dynamic cast, response was NOT a file query response";
-              throw e;
-          }
-          (*responses)[i].errorCode = fr->errorCode();
-          (*responses)[i].errorMessage = strdup(fr->errorMessage().c_str());
-          (*responses)[i].filename = strdup(fr->fileName().c_str());
-          if(retCastorFileName)
-              (*responses)[i].castorfilename = strdup((char*)requests[i].param);
-          else
-              (*responses)[i].castorfilename = "NA";
-          (*responses)[i].fileid = fr->fileId();
-          (*responses)[i].status = fr->status();
-          (*responses)[i].size = fr->size();
-          (*responses)[i].diskserver = strdup(fr->diskServer().c_str());
-          (*responses)[i].poolname = strdup(fr->poolName().c_str());
-          (*responses)[i].creationTime = (time_t)fr->creationTime();
-          (*responses)[i].accessTime = (time_t)fr->accessTime();
-          (*responses)[i].nbAccesses = fr->nbAccesses();
-      }
+      (*responses)[i].errorCode = fr->errorCode();
+      (*responses)[i].errorMessage = strdup(fr->errorMessage().c_str());
+      (*responses)[i].filename = strdup(fr->fileName().c_str());
+      (*responses)[i].castorfilename = strdup(fr->castorFileName().c_str());
+      (*responses)[i].fileid = fr->fileId();
+      (*responses)[i].status = fr->status();
+      (*responses)[i].size = fr->size();
+      (*responses)[i].diskserver = strdup(fr->diskServer().c_str());
+      (*responses)[i].poolname = strdup(fr->poolName().c_str());
+      (*responses)[i].creationTime = (time_t)fr->creationTime();
+      (*responses)[i].accessTime = (time_t)fr->accessTime();
+      (*responses)[i].nbAccesses = fr->nbAccesses();
 
       // The responses should be deallocated by the API !
       delete respvec[i];
@@ -241,7 +204,8 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
       }
       
       castor::stager::QueryParameter *par = new castor::stager::QueryParameter();
-      par->setQueryType((castor::stager::RequestQueryType)(requests[i].type));
+      // beware, here the order in enum query_type and RequestQueryType must match
+      par->setQueryType((castor::stager::RequestQueryType)(requests[i].type)); 
       par->setValue((const char *)requests[i].param);
       req.addParameters(par);
     }
@@ -278,7 +242,7 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
 
       // Casting the response into a FileResponse !
       castor::rh::RequestQueryResponse* fr = 
-        dynamic_cast<castor::rh::RequestQueryResponse*>(respvec[i]);
+        dynamic_cast<castor::rh::RequestQueryResponse*>(respvec[i]); 
       if (0 == fr) {
         castor::exception::Exception e(SEINTERNAL);
         e.getMessage() << "Error in dynamic cast, response was NOT a file query response";
