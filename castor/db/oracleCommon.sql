@@ -186,7 +186,7 @@ END;
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
    whenever a TapeCopy has failed to be migrated and is
-   put back in WAITINSTREAM from the SELECTED status */
+   put back in WAITINSTREAM fro delete Request(srId IN INTEGER,  ) ASm the SELECTED status */
 CREATE OR REPLACE TRIGGER tr_TapeCopy_Update
 AFTER UPDATE of status ON TapeCopy
 FOR EACH ROW
@@ -211,7 +211,7 @@ BEGIN
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
    WHERE FS = :new.fileSystem
      AND Stream IN (SELECT Stream2TapeCopy.parent
-                      FROM Stream2TapeCopy, TapeCopy
+                      FROM Stre delete Request(srId IN INTEGER,  ) ASam2TapeCopy, TapeCopy
                      WHERE TapeCopy.castorFile = :new.castorFile
                        AND Stream2TapeCopy.child = TapeCopy.id
                        AND TapeCopy.status = 2); -- WAITINSTREAMS
@@ -241,7 +241,7 @@ END;
    to be safe */
 CREATE OR REPLACE TRIGGER tr_DiskCopy_CastorFile
 BEFORE INSERT OR UPDATE OF castorFile ON DiskCopy
-FOR EACH ROW WHEN (new.castorFile > 0)
+FOR EACH ROW WHEN (new.castorFi delete Request(srId IN INTEGER,  ) ASle > 0)
 DECLARE
   unused CastorFile%ROWTYPE;
 BEGIN
@@ -302,7 +302,9 @@ BEGIN
   WHERE SubRequest.id = srId;
 END;
 
-/* PL/SQL method to archive a SubRequest and its request if needed */
+
+/*  PL/SQL method to archive a SubRequest   */
+
 CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
   rid INTEGER;
   rtype INTEGER;
@@ -312,43 +314,105 @@ BEGIN
   -- update status of SubRequest
   UPDATE SubRequest SET status = 8 -- FINISHED
    WHERE id = srId RETURNING request INTO rid;
+
   -- Try to see whether another subrequest in the same
   -- request is still processing
+
   SELECT count(*) INTO nb FROM SubRequest
-   WHERE request = rid AND status NOT IN (8, 9); -- FINISHED, FAILED_FINISHED
-  -- Archive request, client and SubRequests if needed
+   WHERE request = rid AND status NOT IN (8); -- ALL FINISHED
+
+  -- Archive request if all subrequests have finished
+
   IF nb = 0 THEN
-    -- DELETE request from Id2Type
-    DELETE FROM Id2Type WHERE id = rid RETURNING type INTO rtype;
-    -- delete request and get client id
-    IF rtype = 35 THEN -- StageGetRequest
-      DELETE FROM StageGetRequest WHERE id = rid RETURNING client into rclient;
-    ELSIF rtype = 40 THEN -- StagePutRequest
-      DELETE FROM StagePutRequest WHERE id = rid RETURNING client INTO rclient;
-    ELSIF rtype = 44 THEN -- StageUpdateRequest
-      DELETE FROM StageUpdateRequest WHERE id = rid RETURNING client INTO rclient;
-    ELSIF rtype = 39 THEN -- StagePutDoneRequest
-      DELETE FROM StagePutDoneRequest WHERE id = rid RETURNING client INTO rclient;
-    ELSIF rtype = 42 THEN -- StageRmRequest
-      DELETE FROM StageRmRequest WHERE id = rid RETURNING client INTO rclient;
-    ELSIF rtype = 51 THEN -- StageReleaseFilesRequest
-      DELETE FROM StageReleaseFilesRequest WHERE id = rid RETURNING client INTO rclient;
-    ELSIF rtype = 36 THEN -- StagePrepareToGetRequest
-      DELETE FROM StagePrepareToGetRequest WHERE id = rid RETURNING client INTO rclient;
-    ELSIF rtype = 37 THEN -- StagePrepareToPutRequest
-      DELETE FROM StagePrepareToPutRequest WHERE id = rid RETURNING client INTO rclient;
-    ELSIF rtype = 38 THEN -- StagePrepareToUpdateRequest
-      DELETE FROM StagePrepareToUpdateRequest WHERE id = rid RETURNING client INTO rclient;
-    END IF;
-    -- DELETE Client
-    DELETE FROM Id2Type WHERE id = rclient;
-    DELETE FROM Client WHERE id = rclient;
-    -- Delete SubRequests
-    DELETE FROM Id2Type WHERE id IN
-      (SELECT id FROM SubRequest WHERE request = rid);
-    DELETE FROM SubRequest WHERE request = rid;
+    UPDATE SubRequest SET status=11 WHERE request=rid and status=8; /* ARCHIVED */ 
   END IF;
 END;
+
+
+/* PL/SQL method to delete  request*/
+
+CREATE OR REPLACE PROCEDURE deleteRequest(rId IN INTEGER) AS
+
+  rtype INTEGER;
+  rclient INTEGER;
+
+BEGIN
+  -- delete Request, Client and SubRequests
+
+  -- delete  request from Id2Type
+
+  DELETE FROM Id2Type WHERE id = rId RETURNING type INTO rtype;
+ 
+  -- delete request and get client id
+
+  IF rtype = 35 THEN -- StageGetRequest
+    DELETE FROM StageGetRequest WHERE id = rId RETURNING client into rclient;
+  ELSIF rtype = 40 THEN -- StagePutRequest
+    DELETE FROM StagePutRequest WHERE id = rId RETURNING client INTO rclient;
+  ELSIF rtype = 44 THEN -- StageUpdateRequest
+    DELETE FROM StageUpdateRequest WHERE id = rId RETURNING client INTO rclient;
+  ELSIF rtype = 39 THEN -- StagePutDoneRequest
+    DELETE FROM StagePutDoneRequest WHERE id = rId RETURNING client INTO rclient;
+  ELSIF rtype = 42 THEN -- StageRmRequest
+    DELETE FROM StageRmRequest WHERE id = rId RETURNING client INTO rclient;
+  ELSIF rtype = 51 THEN -- StageReleaseFilesRequest
+    DELETE FROM StageReleaseFilesRequest WHERE id = rId RETURNING client INTO rclient;
+  ELSIF rtype = 36 THEN -- StagePrepareToGetRequest
+    DELETE FROM StagePrepareToGetRequest WHERE id = rId RETURNING client INTO rclient;
+  ELSIF rtype = 37 THEN -- StagePrepareToPutRequest
+    DELETE FROM StagePrepareToPutRequest WHERE id = rId RETURNING client INTO rclient;
+  ELSIF rtype = 38 THEN -- StagePrepareToUpdateRequest
+    DELETE FROM StagePrepareToUpdateRequest WHERE id = rId RETURNING client INTO rclient;
+  END IF;
+
+  -- Delete Client
+  
+  DELETE FROM Id2Type WHERE id = rclient;
+  DELETE FROM Client WHERE id = rclient;
+  
+  -- Delete SubRequests
+
+  DELETE FROM Id2Type WHERE id IN
+        (SELECT id FROM SubRequest WHERE request = rId);
+  DELETE FROM SubRequest WHERE request = rId;
+
+END;
+
+
+/* Search and delete  too old archived subrequests and its request */
+
+CREATE OR REPLACE PROCEDURE deleteArchivedRequests(timeOut IN NUMBER) AS
+
+  myReq SubRequest.request%TYPE;
+  CURSOR cur IS SELECT DISTINCT request  FROM SubRequest WHERE status=11 AND getTime()- lastModificationTime >= timeOut;
+
+BEGIN
+	OPEN cur;
+	LOOP 
+	   FETCH cur into myReq;
+           EXIT WHEN cur%NOTFOUND;
+           deleteRequest(myReq);
+        END LOOP;
+	CLOSE cur;
+END;
+
+/* Search and delete "out of date" subrequests and its request */
+
+CREATE OR REPLACE PROCEDURE deleteOutOfDateRequests(timeOut IN NUMBER) AS
+
+  myReq SubRequest.request%TYPE;
+  CURSOR cur IS SELECT DISTINCT request  FROM SubRequest WHERE getTime()- lastModificationTime >= timeOut;
+ 
+BEGIN
+	OPEN cur;
+	LOOP
+	   FETCH cur into myReq;
+           EXIT WHEN cur%NOTFOUND;
+           deleteRequest(myReq);
+        END LOOP;
+	CLOSE cur;
+END;
+
 
 /* PL/SQL method implementing anyTapeCopyForStream.
  * This implementation is not the original one. It uses NbTapeCopiesInFS
@@ -717,8 +781,7 @@ CREATE OR REPLACE PACKAGE castor AS
         diskCopyStatus INTEGER,
         diskServerName VARCHAR2(2048),
         fileSystemMountPoint VARCHAR2(2048),
-        nbaccesses INTEGER,
-        lastKnownFileName VARCHAR2(2048));
+        nbaccesses INTEGER);
   TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
   TYPE FileList_Cur IS REF CURSOR RETURN FilesDeletedProcOutput%ROWTYPE;
 END castor;
@@ -912,9 +975,9 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
      AND SubRequest.castorfile = DiskCopy.castorfile
      AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
      AND FileSystem.id = DiskCopy.fileSystem
-     AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+     AND FileSystem.status = 0 -- PRODUCTION
      AND DiskServer.id = FileSystem.diskserver
-     AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+     AND DiskServer.status = 0 -- PRODUCTION
      AND ROWNUM < 2;
    -- We found at least a DiskCopy. Let's list all of them
    OPEN sources
@@ -926,9 +989,9 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       AND SubRequest.castorfile = DiskCopy.castorfile
       AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
       AND FileSystem.id = DiskCopy.fileSystem
-      AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+      AND FileSystem.status = 0 -- PRODUCTION
       AND DiskServer.id = FileSystem.diskServer
-      AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
+      AND DiskServer.status = 0; -- PRODUCTION
     -- create DiskCopy for Disk to Disk copy
     UPDATE SubRequest SET diskCopy = ids_seq.nextval,
                           lastModificationTime = getTime() WHERE id = srId
@@ -1304,7 +1367,6 @@ CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
                                               sc IN INTEGER,
                                               fc IN INTEGER,
                                               fs IN INTEGER,
-                                              fn IN VARCHAR2,
                                               rid OUT INTEGER,
                                               rfs OUT INTEGER) AS
   CONSTRAINT_VIOLATED EXCEPTION;
@@ -1315,15 +1377,13 @@ BEGIN
     SELECT id, fileSize INTO rid, rfs FROM CastorFile
       WHERE fileId = fid AND nsHost = nh;
     -- update lastAccess time
-    UPDATE CastorFile SET LastAccessTime = getTime(),
-                          nbAccesses = nbAccesses + 1,
-                          lastKnownFileName = fn
+    UPDATE CastorFile SET LastAccessTime = getTime(), nbAccesses = nbAccesses + 1
       WHERE id = rid;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
-                            creationTime, lastAccessTime, nbAccesses, lastKnownFileName)
-      VALUES (ids_seq.nextval, fId, nh, sc, fc, fs, getTime(), getTime(), 1, fn)
+                            creationTime, lastAccessTime, nbAccesses)
+      VALUES (ids_seq.nextval, fId, nh, sc, fc, fs, getTime(), getTime(), 1)
       RETURNING id, fileSize INTO rid, rfs;
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
   END;
@@ -2101,8 +2161,7 @@ BEGIN
            UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
            DiskCopy.path, CastorFile.filesize,
            nvl(DiskCopy.status, -1), DiskServer.name,
-           FileSystem.mountPoint, CastorFile.nbaccesses,
-           CastorFile.lastKnownFileName
+           FileSystem.mountPoint, CastorFile.nbaccesses
       FROM CastorFile, DiskCopy, FileSystem, DiskServer,
            DiskPool2SvcClass
      WHERE CastorFile.id IN (SELECT * FROM TABLE(cfs))
@@ -2112,7 +2171,7 @@ BEGIN
        AND DiskServer.id(+) = FileSystem.diskServer
        AND nvl(DiskServer.status,0) = 0 -- PRODUCTION
        AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool
-       AND (DiskPool2SvcClass.child = svcClassId OR svcClassId = 0)
+       AND (DiskPool2SvcClass.child = svcClassId OR DiskPool2SvcClass.child IS NULL)
   ORDER BY fileid, nshost;
 END;
 
@@ -2150,24 +2209,6 @@ BEGIN
   ORDER BY fileid, nshost;
 END;
 */
-
-/*
- * PL/SQL method implementing the stage_query based on file id
- */
-CREATE OR REPLACE PROCEDURE fileNameStageQuery
- (fn IN VARCHAR2,
-  svcClassId IN INTEGER,
-  maxNbResponses IN INTEGER,
-  result OUT castor.QueryLine_Cur) AS
-  cfs "numList";
-BEGIN
- SELECT id BULK COLLECT INTO cfs FROM CastorFile WHERE  REGEXP_LIKE(lastKnownFileName,fn) AND ROWNUM <= maxNbResponses + 1;
- IF cfs.COUNT > maxNbResponses THEN
-   -- We have too many rows, we just give up
-   raise_application_error(-20102, 'Too many matching files');
- END IF;
- internalStageQuery(cfs, svcClassId, result);
-END;
 
 /*
  * PL/SQL method implementing the stage_query based on file id
