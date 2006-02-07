@@ -17,7 +17,7 @@ COMM You should have received a copy of the GNU General Public License
 COMM along with this program; if not, write to the Free Software
 COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 COMM
-COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.119 $ $Release$ $Date: 2006/02/01 10:35:30 $ $Author: sponcec3 $
+COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.120 $ $Release$ $Date: 2006/02/07 10:45:47 $ $Author: itglp $
 COMM
 COMM Make Castor libraries and executables
 COMM
@@ -174,7 +174,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamStageUpdateRequestCnv.cpp \
               io/StreamAbortResponseCnv.cpp \
               io/StreamFileQryResponseCnv.cpp \
-              io/StreamFileQueryResponseCnv.cpp \
               io/StreamFindReqResponseCnv.cpp \
               io/StreamIOResponseCnv.cpp \
               io/StreamRequestQueryResponseCnv.cpp \
@@ -203,8 +202,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               rh/AbortResponseCInt.cpp \
               rh/FileQryResponse.cpp \
               rh/FileQryResponseCInt.cpp \
-              rh/FileQueryResponse.cpp \
-              rh/FileQueryResponseCInt.cpp \
               rh/FindReqResponse.cpp \
               rh/FindReqResponseCInt.cpp \
               rh/IOResponse.cpp \
