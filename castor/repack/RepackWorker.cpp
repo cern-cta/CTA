@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/02/03 15:49:31 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/02/07 19:58:10 $ $Author: felixehm $
  *
  *
  *
@@ -130,26 +130,29 @@ void RepackWorker::run(void* param) throw()
   	 * check if the tape/pool exist and get the filenames
   	 */
     getPoolInfo(rreq);
-    
+	u_signed64 size = 0;
     for ( int i = 0; i < rreq->subRequest().size() ; i++ ) 
     {
     	RepackSubRequest* subRequest = rreq->subRequest().at(i);
-    	if ( getTapeInfo(subRequest) > 0 )
-    	{
-	    	//m_filelisthelper->getFileListSegs( subRequest );
-	    	//
-			subRequest->setStatus(SUBREQUEST_READYFORSTAGING);
-			m_databasehelper->storeRequest(rreq);
-    	}
+    	getTapeInfo(subRequest);
+    	// set the status
+		subRequest->setStatus(SUBREQUEST_READYFORSTAGING);
   	}
+
+	/* Go to DB !*/
+  	m_databasehelper->storeRequest(rreq);
+
   }catch (castor::exception::Internal e) {
   	ack.setStatus(false);
     ack.setErrorCode(e.code());
     ack.setErrorMessage(e.getMessage().str());
+    
+    /*
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
        castor::dlf::Param("Precise Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 9, 2, params);
+    */
     stage_trace(2,"%s\n%s",sstrerror(e.code()), e.getMessage().str().c_str() );
   }
 /****************************************************************************/  
@@ -204,15 +207,19 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw()
 				castor::exception::Internal ex;
 				ex.getMessage() << "RepackWorker::getPoolInfo(..): "
 								<< "No such Pool %s" << pool_name << std::endl;
+				castor::dlf::Param params[] =
+				{castor::dlf::Param("POOL", pool_name),
+		         castor::dlf::Param("ERRORTEXT", sstrerror(serrno))};
+		  		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 19, 2, params);
 				throw ex;
 			}
 			flags = VMGR_LIST_BEGIN;
+			castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 20, 0, NULL);
 			while ((lp = vmgr_listtape (NULL, pool_name, flags, &list)) != NULL) {
 				flags = VMGR_LIST_CONTINUE;
 				RepackSubRequest* tmp = new RepackSubRequest();
 				tmp->setVid(lp->vid);
 				rreq->addSubRequest(tmp);
-					/*TODO: Add SubRequests to RepackRequest*/
 			}
 			vmgr_listtape (NULL, pool_name, VMGR_LIST_END, &list);
 			return nbvol;
@@ -234,40 +241,54 @@ int RepackWorker::getTapeInfo(castor::repack::RepackSubRequest* subreq){
 	typedef std::map<int,std::string> TapeDriveStatus;
 	TapeDriveStatus statusname;
 	char *vid = (char*)(subreq->vid().c_str());
+	
+
 
 	/* just to have a nice access for output */
-	statusname[DISABLED] = "Disabled";
-	statusname[EXPORTED] = "Exported";
-	statusname[TAPE_BUSY] = "Busy";
-	statusname[TAPE_FULL] = "Full";
+	statusname[DISABLED] 	= "Disabled";
+	statusname[EXPORTED] 	= "Exported";
+	statusname[TAPE_BUSY] 	= "Busy";
+	statusname[TAPE_FULL] 	= "Full";
 	statusname[TAPE_RDONLY] = "TAPE_RDONLY";
-	statusname[ARCHIVED] = "Archived";
+	statusname[ARCHIVED] 	= "Archived";
+	statusname[0]			= "Free";
 	
-	/* check if the volume exists and is marked FULL */
+	/* check if the volume exists and get its status */
 	if (vmgr_querytape (vid, 0, &tape_info, NULL) < 0) {
+		castor::exception::Internal ex;
+		ex.getMessage() << sstrerror(serrno);
 		castor::dlf::Param params[] =
-  		{castor::dlf::Param("VID", vid)};
+        {castor::dlf::Param("VID", vid),
+         castor::dlf::Param("ErrorText", sstrerror(serrno))};
   		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 16, 1, params);
-		return -1;
-	}
-	/* this is just done for nice output *	getFileListSegs(subreq);/
-	if ((tape_info.status & TAPE_FULL) == 0) {
-		switch ( tape_info.status )
-		{
-			case 0			:	p_stat = "FREE";break;
-			case TAPE_BUSY  :	p_stat = "BUSY";break;
-			case TAPE_RDONLY:	p_stat = "RDONLY";break;
-			case EXPORTED	:	p_stat = "EXPORTED";break;
-			case DISABLED	:	p_stat = "DISABLED";break;
-		}
-		stage_trace(3, "Volume %s has status %s\n", vid, p_stat.c_str());
-		return tape_info.status;
+		//throw ex;
 	}
 
-	/* Tape has status FULL !*/
-	stage_trace(3, "Volume %s in Pool :%s ==> %s <==!\n", 
-				vid, tape_info.poolname, 
-				statusname[tape_info.status].c_str());
+	/* Tapestatus is unkown - nothing to be done !*/
+	if ( statusname[tape_info.status] == "" ){
+		castor::exception::Internal ex;
+		ex.getMessage() << 	"Tape "<< vid << " has unkown status, repack abort for this tape!";
+		castor::dlf::Param params[] =
+        {castor::dlf::Param("VID", vid)};
+  		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 17, 1, params);
+  		//throw ex;
+	}
+	/* Tape is Free - nothing to be done !*/
+	else if ( tape_info.status == 0) {
+		castor::exception::Internal ex;
+		ex.getMessage() << 	"Tape "<< vid << " is marked as FREE, no repack to be done!";
+		castor::dlf::Param params[] =
+        {castor::dlf::Param("VID", vid)};
+  		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 18, 1, params);
+  		//throw ex;
+	}
+	/* Ok,we got a valid status. fine, we can proceed*/
+	else
+		p_stat = statusname[tape_info.status];
+	
+	stage_trace(3, "Volume %s in Pool :%s ==> %s (%d)<==!\n", 
+				vid, tape_info.poolname, p_stat.c_str(), tape_info.status);
+
 	return tape_info.status;
 }
 
