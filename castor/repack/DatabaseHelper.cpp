@@ -40,7 +40,7 @@
 //------------------------------------------------------------------------------
 /// SQL statement for ToDo
 const std::string castor::repack::DatabaseHelper::m_selectToDoStatementString =
-  "SELECT q.id FROM RepackSubRequest q WHERE q.status = 1001 AND ROWNUM < 2 FOR UPDATE";
+  "SELECT q.id FROM RepackSubRequest q WHERE q.status = 1001 AND ROWNUM < 2 ";
 const std::string castor::repack::DatabaseHelper::m_selectCheckStatementString =
   "SELECT q.vid FROM RepackSubRequest q WHERE q.vid= :1";
 
@@ -117,10 +117,13 @@ void castor::repack::DatabaseHelper::storeRequest(castor::repack::RepackRequest*
 		for ( int i=0; i<rreq->subRequest().size(); i++ ){
 			if ( checkForVid( rreq->subRequest().at(i)->vid() )){
 				castor::exception::Internal ex;
+				castor::dlf::Param params[] =
+		      	{castor::dlf::Param("VID", rreq->subRequest().at(i)->vid())};
+			    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 99, 1, params);
 				ex.getMessage() << " VID : " << rreq->subRequest().at(i)->vid() 
-								<< " already in Database ! Aborting.."
+								<< " already in Database ! Skipping.."
 								<< std::endl;
-				throw ex;
+				//throw ex;
 			}
 		}
 	
@@ -128,8 +131,9 @@ void castor::repack::DatabaseHelper::storeRequest(castor::repack::RepackRequest*
 		
 	    // Store files for RepackRequest
 		if ( rreq != NULL ) {
-		  svcs()->createRep(&ad, rreq, false);
-		  svcs()->fillRep(&ad, rreq, OBJ_RepackSubRequest, false);
+		  svcs()->createRep(&ad, rreq, false);			// Create Representation in DB
+		  svcs()->fillRep(&ad, rreq, OBJ_RepackSubRequest, false);	//and fill it
+		  // we must not forget the segments
 		  for (int i = 0; i < rreq->subRequest().size(); i++)
 			  svcs()->fillRep(&ad, rreq->subRequest().at(i), OBJ_RepackSegment, false);
 		}
@@ -189,14 +193,17 @@ bool castor::repack::DatabaseHelper::checkForVid(std::string vid) throw()
 
 
 
-void castor::repack::DatabaseHelper::updateRep(castor::IObject* obj) throw ()
+void castor::repack::DatabaseHelper::updateSubRequest(castor::repack::RepackSubRequest* obj) throw ()
 {
 	try {
+		std::vector<castor::repack::RepackSegment*>::iterator iter=obj->segment().begin();
 		// Stores it into the data base
-		svcs()->updateRep(&ad, obj, true);
+		svcs()->updateRep(&ad, obj, false);
+		svcs()->fillRep(&ad, obj,OBJ_RepackSegment, false);
 		svcs()->commit(&ad);
 	 } catch (castor::exception::Exception e) {
-       svcs()->rollback(&ad);
+	 	std::cerr << "Error updating DB" << std::endl;
+        svcs()->rollback(&ad);
 	}
 }
 

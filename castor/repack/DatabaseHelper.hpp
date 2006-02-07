@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/02/02 18:15:27 $ $Author: felixehm $
+ * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/07 20:03:54 $ $Author: felixehm $
  *
  * 
  *
@@ -92,7 +92,7 @@ namespace castor {
        */
       virtual void reset() throw();
       
-      void updateRep(castor::IObject* obj) throw ();
+      void updateSubRequest(castor::repack::RepackSubRequest* obj) throw ();
       
       bool checkForVid(std::string vid) throw();
       private:
