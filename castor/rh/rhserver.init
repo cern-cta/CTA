@@ -5,23 +5,17 @@
 # chkconfig: 345 63 52
 # description: Request Handler daemon
 #
-# $Id: rhserver.init,v 1.5 2006/01/27 09:49:12 itglp Exp $
+# $Id: rhserver.init,v 1.6 2006/02/07 08:37:21 itglp Exp $
 #
-# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.5 $ $Date: 2006/01/27 09:49:12 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.6 $ $Date: 2006/02/07 08:37:21 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 #
-## Try to guess the oracle environment using sysconfig
+## Oracle environment not needed if cern-instantclient is used
 #
 if [ -r /etc/sysconfig/castor ]; then
-	. /etc/sysconfig/castor
+        . /etc/sysconfig/castor
 fi
-
-if [ -z "$ORACLE_HOME" ]; then
-	echo Fatal, Oracle environment not setup.
-	exit
-fi
-export PATH=${PATH}:${ORACLE_HOME}/bin
 
 sysname=`uname -s`
 

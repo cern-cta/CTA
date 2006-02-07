@@ -5,23 +5,17 @@
 # chkconfig: 345 68 37
 # description: CUPV server daemon
 #
-# $Id: Cupvdaemon.init,v 1.5 2006/01/27 09:49:12 itglp Exp $
+# $Id: Cupvdaemon.init,v 1.6 2006/02/07 08:37:21 itglp Exp $
 #
-# @(#)$RCSfile: Cupvdaemon.init,v $ $Revision: 1.5 $ $Date: 2006/01/27 09:49:12 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: Cupvdaemon.init,v $ $Revision: 1.6 $ $Date: 2006/02/07 08:37:21 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 #
-## Try to guess the oracle environment using sysconfig
+## Oracle environment not needed if cern-instantclient is used
 #
 if [ -r /etc/sysconfig/castor ]; then
-	. /etc/sysconfig/castor
+        . /etc/sysconfig/castor
 fi
-
-if [ -z "$ORACLE_HOME" ]; then
-	echo Fatal, Oracle environment not setup.
-	exit
-fi
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$ORACLE_HOME/lib
 
 sysname=`uname -s`
 
