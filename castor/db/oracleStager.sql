@@ -717,7 +717,8 @@ CREATE OR REPLACE PACKAGE castor AS
         diskCopyStatus INTEGER,
         diskServerName VARCHAR2(2048),
         fileSystemMountPoint VARCHAR2(2048),
-        nbaccesses INTEGER);
+        nbaccesses INTEGER,
+        lastKnownFileName VARCHAR2(2048));
   TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
   TYPE FileList_Cur IS REF CURSOR RETURN FilesDeletedProcOutput%ROWTYPE;
 END castor;
