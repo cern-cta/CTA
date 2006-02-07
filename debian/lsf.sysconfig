@@ -1,5 +1,5 @@
 #
-# $Id: lsf.sysconfig,v 1.1 2006/01/12 14:53:28 itglp Exp $
+# $Id: lsf.sysconfig,v 1.2 2006/02/07 08:39:49 itglp Exp $
 #
 # Global setup for LSF
 
@@ -11,5 +11,4 @@ else
   LD_LIBRARY_PATH=/usr/local/lsf/lib
 fi
 
-# inherit db config
-[ -r /etc/sysconfig/castor ] && . /etc/sysconfig/castor
+# no need for db configuration if cern-oracle-instantclient is used
