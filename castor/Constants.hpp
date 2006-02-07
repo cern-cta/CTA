@@ -210,7 +210,7 @@ namespace castor {
   /**
    * Nb of objectIds currently existing
    */
-  static const unsigned int ObjectsIdsNb = 96;
+  static const unsigned int ObjectsIdsNb = 99;
 
   /**
    * Nb of ServicesIds currently existing
@@ -226,7 +226,7 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[96];
+  extern const char* ObjectsIdStrings[99];
 
   /**
    * Names of the differents Services, used to display

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2005/11/30 14:21:59 $ $Author: itglp $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2006/02/07 10:46:55 $ $Author: itglp $
  *
  *
  *
@@ -87,7 +87,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "IOResponse",
   "AbortResponse",
   "RequestQueryResponse",
-  "FileQueryResponse",
+  "DELETED TYPE",
   "FindReqResponse",
   "DiskCopyForRecall",
   "TapeCopyForMigration",
@@ -128,7 +128,10 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   
   "PutDoneStart",
   "FileQryResponse",
-  "SetFileGCWeight"
+  "SetFileGCWeight",
+  "RepackRequest",
+  "RepackSubRequest",
+  "RepackSegment"
 };
 
 //=============================================================================
