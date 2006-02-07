@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/03 15:49:31 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/07 20:00:24 $ $Author: felixehm $
  *
  *
  *
@@ -61,15 +61,19 @@ int main(int argc, char *argv[]) {
     try {
       // new BaseDeamon as Server 
     castor::repack::RepackServer server;
+
+    server.addThreadPool(
+      new castor::server::ListenerThreadPool("RepackWorker", new castor::repack::RepackWorker(), iport));
+	server.getThreadPool('R')->setNbThreads(1);
+	
     server.addThreadPool(
       new castor::server::SignalThreadPool("FileOrganizer", new castor::repack::FileOrganizer() ));
-
-    //server.addThreadPool(
-    //  new castor::server::ListenerThreadPool("RepackWorker", new castor::repack::RepackWorker(), iport));
+	server.getThreadPool('F')->setNbThreads(1);
+    
     
     // We only need one thread by default at this moment 
-    //server.getThreadPool('R')->setNbThreads(1);
-    server.getThreadPool('F')->setNbThreads(1);
+
+    
     
     server.parseCommandLine(argc, argv);
     server.start();
@@ -108,15 +112,23 @@ castor::repack::RepackServer::RepackServer() :
      { 7, "Unable to read Request from socket"},
      { 8, "Processing Request"},
      { 9, "Exception caught"},
-     {10, "Sending reply to client"},
+     {10, "Sending reply to client"},		// remove ?
      {11, "Unable to send Ack to client"},
      {12, "Request stored in DB"},
      {13, "Unable to store Request in DB"},
-     {14, "Fetching filelist from Nameserver"},
-     {15, "Cannot get Filepathname"},		// FileListHelper::getFilePathnames
-     {16, "No such Tape!"},
-     {17, "Unable to stage files!"},		// FileOrganizer:stage_files
-     {18, "FileOrganizer: New Request for staging files"},		// FileOrganizer:run()
+     {14, "FileListHelper: Fetching files from Nameserver"},						// FileListHelper::getFileList()
+     {15, "FileListHelper: Cannot get file pathname"},								// FileListHelper::getFilePathnames
+     {16, "RepackWorker : No such Tape!"},											// RepackWorker:getTapeInfo()
+   	 {17, "RepackWorker : Tape has unkown status, repack abort for this tape!"},	// RepackWorker:getTapeInfo()
+   	 {18, "RepackWorker : Tape is marked as FREE, no repack to be done"},			// RepackWorker:getTapeInfo()
+     {19, "RepackWorker : No such pool!"},											// RepackWorker:getPoolInfo()
+     {20, "RepackWorker : Adding tapes for pool repacking!"},						// RepackWorker:getPoolInfo()
+     {21, "FileOrganizer: Unable to stage files!"},								// FileOrganizer:stage_files
+     {22, "FileOrganizer: New request for staging files"},			// FileOrganizer:run()
+     {23, "FileOrganizer: Not enough space for this RepackRequest. Skipping..."},	// FileOrganizer:stage_files
+     {24, "FileOrganizer: Getting segs for SubRequest."},							// FileListHelper:getFileListSegs()
+     {25, "FileOrganizer: Updating Request to STAGING and add its segs."},			// FileOrganizer:stage_files
+	 {26, "FileOrganizer: Staging files."},			// FileOrganizer:stage_files
      {99, "TODO::MESSAGE"},
      {-1, ""}};
   castor::dlf::dlf_init("Repack", messages); 
