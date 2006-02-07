@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TooBig.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/02/01 10:35:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: TooBig.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/02/07 13:13:26 $ $Author: sponcec3 $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 // Include Files
-#include "serrno.h"
+#include "errno.h"
 #include "castor/exception/TooBig.hpp"
 
 // -----------------------------------------------------------------------
