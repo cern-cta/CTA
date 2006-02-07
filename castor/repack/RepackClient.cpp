@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/02 18:07:08 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/07 20:05:59 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -121,13 +121,14 @@ RepackClient::~RepackClient() throw()
   */
 bool RepackClient::parseInput(int argc, char** argv)
 {
-  const char* cmdParams = "V:h:P"; //m_cmdLineParams.str().c_str();
+  const char* cmdParams = "V:P:h"; //m_cmdLineParams.str().c_str();
   if (argc == 1){
     usage(argv[0]);
     return false;
   }
   struct Coptions longopts[] = {
-    {"volumeid", REQUIRED_ARGUMENT, NULL, 'v'},
+    {"volumeid", REQUIRED_ARGUMENT, NULL, 'V'},
+    {"poolid", REQUIRED_ARGUMENT, NULL, 'P'},
     /*{"library", REQUIRED_ARGUMENT, 0, OPT_LIBRARY_NAME},
     {"min_free", REQUIRED_ARGUMENT, 0, 'm'},
     {"model", REQUIRED_ARGUMENT, 0, OPT_MODEL},

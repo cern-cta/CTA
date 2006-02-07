@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/26 13:50:02 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/07 20:05:59 $ $Author: felixehm $
  *
  *
  *
@@ -34,9 +34,7 @@
 #include "castor/ICnvSvc.hpp"
 #include "castor/Services.hpp"
 #include "castor/io/ClientSocket.hpp"
-#include "castor/repack/RepackServer.hpp"	/*TODO: remove! CSP_REPACKSERVERPORT  
-											should be declared in Constants.hpp 
-											*/
+#include "castor/MessageAck.hpp"
 #include "Cgetopt.h"
 #include "h/stager_client_api_common.h" 
 
