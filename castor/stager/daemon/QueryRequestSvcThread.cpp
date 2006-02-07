@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.33 2006/02/01 11:37:33 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.34 2006/02/07 10:10:22 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.33 $ $Date: 2006/02/01 11:37:33 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.34 $ $Date: 2006/02/07 10:10:22 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -260,7 +260,7 @@ namespace castor {
 
         /* Invoking the method                */
         /* ---------------------------------- */
-        STAGER_LOG_DEBUG(NULL, "Invoking diskCopies4File");
+        STAGER_LOG_DEBUG(NULL, "Invoking diskCopies4FileName");
         std::list<castor::stager::DiskCopyInfo*>* result =
           qrySvc->diskCopies4FileName(fileName, svcClassId);
 
