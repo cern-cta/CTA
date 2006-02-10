@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/01/27 14:40:35 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/02/10 15:08:13 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -339,7 +339,7 @@ castor::db::ora::OraJobSvc::getUpdateStart
       if(crSegFailed == 0) return 0;
       // else throw the exception to the stager_job_service
       castor::exception::Internal e;
-      e.getMessage() << "getUpdateStart : no valid copy found";
+      e.getMessage() << "getUpdateStart : no valid copy found on tape";
       throw e;
     }
     // Else create a resulting DiskCopy
