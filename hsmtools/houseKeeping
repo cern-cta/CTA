@@ -1,0 +1,42 @@
+#!/usr/bin/perl -w
+
+
+use strict;
+use diagnostics;
+use lib "/usr/lib/perl/CASTOR";
+use castor_tools;
+
+# usage function
+sub usage {
+  printf("Usage : %s [-t|--timeOut hours] [-h|--help]\n", $0);
+}
+
+# first parse the options
+my $help;
+my $myTime;
+if (0 == Getopt::Long::GetOptions('h|help' => \$help, 't|timeOut=i' => \$myTime)){
+  usage();
+  exit(1);
+}
+
+if ($help) {
+  usage();
+  exit(0);
+}
+
+if($myTime == 0){ $myTime=48;}
+
+$myTime=$myTime*60*60;
+
+#connect to the database and execute the query
+
+my @castor_conf = castor_conf_getOraStagerSvc();
+my $dbh = DBI->connect('dbi:Oracle:',$castor_conf[0] ,$castor_conf[1])|| die $!;
+
+my $dbquery = "BEGIN deleteArchivedRequests($myTime); END;";
+my $sth = $dbh->prepare("$dbquery");
+$sth->execute() || die $!;
+
+# Close DB connection
+$sth->finish;
+$dbh->disconnect;

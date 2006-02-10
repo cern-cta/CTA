@@ -1,0 +1,45 @@
+#!/usr/bin/perl -w
+
+
+#use strict;
+use diagnostics;
+use lib "/usr/lib/perl/CASTOR";
+use DBI;
+use DBD::Oracle qw(:ora_types);
+use castor_tools;
+
+# usage function
+sub usage {
+  printf("Usage : %s [-t|--timeOut days] [-h|--help]\n", $0);
+}
+
+# first parse the options
+my $help;
+my $myTime=0;
+if (0 == Getopt::Long::GetOptions('h|help' => \$help, 't|timeOut=i' => \$myTime)){
+  usage();
+  exit(1);
+}
+
+if ($help) {
+  usage();
+  exit(0);
+}
+
+if($myTime == 0){ $myTime=60;}
+
+$myTime=$myTime*24*60*60;
+
+#connect to the database and execute the query
+
+my @castor_conf = castor_conf_getOraStagerSvc();
+
+my $dbh = DBI->connect('dbi:Oracle:',$castor_conf[0] ,$castor_conf[1])|| die $!;
+my $sth = $dbh->prepare("BEGIN deleteOutOfDateRequests($myTime);END;");
+$sth->execute() || die $!;
+
+
+# Close DB connection
+
+$sth->finish();
+$dbh->disconnect();
