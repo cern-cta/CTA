@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# $Id: makeshlib.sh,v 1.1 2006/02/13 09:47:31 itglp Exp $
+
+if [ "x$MAJOR_CASTOR_VERSION" = "x" ]; then MAJOR_CASTOR_VERSION=__MAJOR_CASTOR_VERSION__ ; fi
+if [ "x$MINOR_CASTOR_VERSION" = "x" ]; then MINOR_CASTOR_VERSION=__MINOR_CASTOR_VERSION__ ; fi
+echo  building $2.$MAJOR_CASTOR_VERSION
+cd tmp ; \
+$1 -Wl,-soname,$2.$MAJOR_CASTOR_VERSION -o ../$2.$MAJOR_CASTOR_VERSION.$MINOR_CASTOR_VERSION *.o $3 $4 $5 $6 $7 $8 $9
+cd ..
+rm -rf tmp
+rm -f $2.$MAJOR_CASTOR_VERSION
+ln -s $2.$MAJOR_CASTOR_VERSION.$MINOR_CASTOR_VERSION $2.$MAJOR_CASTOR_VERSION
+rm -f $2
+ln -s $2.$MAJOR_CASTOR_VERSION $2
+
