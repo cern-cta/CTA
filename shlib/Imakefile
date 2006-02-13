@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.46 $ $Date: 2006/02/13 09:48:50 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.47 $ $Date: 2006/02/13 12:57:46 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -151,7 +151,7 @@ libshift.sl libshift.so: $(LIBRARIES0)
 	@mkdir tmp
 	@for i in $(LIBRARIES0) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	./makeshlib.sh '$(CXX)' libshift.so '$(SHLIBLDFLAGS)' $(SHLIBREQLIBS)
+	./makeshlib.sh '$(CXX)' libshift.so $(SHLIBLDFLAGS) $(SHLIBREQLIBS)
 
 libcastorCommonOra.so: $(LIBRARIES1)
 	@echo " making $@ in `pwd`"
@@ -159,7 +159,7 @@ libcastorCommonOra.so: $(LIBRARIES1)
 	@mkdir tmp
 	@for i in $(LIBRARIES1) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	./makeshlib.sh '$(CXX)' libcastorCommonOra.so '$(SHLIBLDFLAGS)' $(SHLIBREQLIBS1)
+	./makeshlib.sh '$(CXX)' libcastorCommonOra.so $(SHLIBLDFLAGS) $(SHLIBREQLIBS1)
 
 libcastorCnvs.so: $(LIBRARIES3)
 	@echo " making $@ in `pwd`"
@@ -167,7 +167,7 @@ libcastorCnvs.so: $(LIBRARIES3)
 	@mkdir tmp
 	for i in $(LIBRARIES3) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	./makeshlib.sh '$(CXX)' libcastorCnvs.so '$(SHLIBLDFLAGS)' $(SHLIBREQLIBS3)
+	./makeshlib.sh '$(CXX)' libcastorCnvs.so $(SHLIBLDFLAGS) $(SHLIBREQLIBS3)
 
 libcastorCommonMysql.so: $(LIBRARIES4)
 	@echo " making $@ in `pwd`"
@@ -175,7 +175,7 @@ libcastorCommonMysql.so: $(LIBRARIES4)
 	@mkdir tmp
 	@for i in $(LIBRARIES4) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	./makeshlib.sh '$(CXX)' libcastorCommonMysql.so '$(SHLIBLDFLAGS)' $(SHLIBREQLIBS4)
+	./makeshlib.sh '$(CXX)' libcastorCommonMysql.so $(SHLIBLDFLAGS) $(SHLIBREQLIBS4)
 
 libcastorCommonPgsql.so: $(LIBRARIES5)
 	@echo " making $@ in `pwd`"
@@ -183,7 +183,7 @@ libcastorCommonPgsql.so: $(LIBRARIES5)
 	@mkdir tmp
 	@for i in $(LIBRARIES5) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	./makeshlib.sh '$(CXX)' libcastorCommonPgsql.so '$(SHLIBLDFLAGS)' $(SHLIBREQLIBS5)
+	./makeshlib.sh '$(CXX)' libcastorCommonPgsql.so $(SHLIBLDFLAGS) $(SHLIBREQLIBS5)
 
 libcastorVdqmOra.so: $(LIBRARIES6)
 	@echo " making $@ in `pwd`"
@@ -191,7 +191,7 @@ libcastorVdqmOra.so: $(LIBRARIES6)
 	@mkdir tmp
 	@for i in $(LIBRARIES6) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	./makeshlib.sh '$(CXX)' libcastorVdqmOra.so '$(SHLIBLDFLAGS)' $(SHLIBREQLIBS6)
+	./makeshlib.sh '$(CXX)' libcastorVdqmOra.so $(SHLIBLDFLAGS) $(SHLIBREQLIBS6)
 
 libcastorTankPerfMon.so: $(LIBRARIES2)
 	@echo " making $@ in `pwd`"
@@ -199,7 +199,7 @@ libcastorTankPerfMon.so: $(LIBRARIES2)
 	@mkdir tmp
 	@for i in $(LIBRARIES2) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	./makeshlib.sh '$(CXX)' libcastorTankPerfMon.so '$(SHLIBLDFLAGS)' $(SHLIBREQLIBS2)
+	./makeshlib.sh '$(CXX)' libcastorTankPerfMon.so $(SHLIBLDFLAGS) $(SHLIBREQLIBS2)
 
 
 shift.dll:	$(LIBRARIES0)
