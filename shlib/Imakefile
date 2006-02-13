@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.45 $ $Date: 2006/01/25 13:30:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.46 $ $Date: 2006/02/13 09:48:50 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -93,9 +93,7 @@ EXPORTSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB4))
 
 #endif
 
-COMM ALL3 will come very soon!
 all: $(ALL0) $(ALL1) $(ALL2) $(ALL4) $(ALL5) $(ALL6) $(ALLSEC)  
-
 
 INSTALL0=FileName($(LIB),SharedLibraryTargetName(shift))
 #if BuildOraCpp
@@ -151,14 +149,9 @@ libshift.sl libshift.so: $(LIBRARIES0)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
-	for i in $(LIBRARIES0) ;\
+	@for i in $(LIBRARIES0) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libshift.so.__MAJOR_CASTOR_VERSION__ -o ../$@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ *.o $(SHLIBREQLIBS))
-	@-rm -rf tmp
-	@-rm -f $@.__MAJOR_CASTOR_VERSION__
-	@-ln -s $@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ $@.__MAJOR_CASTOR_VERSION__
-	@-rm -f $@
-	@-ln -s $@.__MAJOR_CASTOR_VERSION__ $@
+	./makeshlib.sh '$(CXX)' libshift.so '$(SHLIBLDFLAGS)' $(SHLIBREQLIBS)
 
 libcastorCommonOra.so: $(LIBRARIES1)
 	@echo " making $@ in `pwd`"
@@ -166,12 +159,7 @@ libcastorCommonOra.so: $(LIBRARIES1)
 	@mkdir tmp
 	@for i in $(LIBRARIES1) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libcastorCommonOra.so.__MAJOR_CASTOR_VERSION__ -o ../$@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ *.o $(SHLIBREQLIBS1))
-	@-rm -rf tmp
-	@-rm -f $@.__MAJOR_CASTOR_VERSION__
-	@-ln -s $@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ $@.__MAJOR_CASTOR_VERSION__
-	@-rm -f $@
-	@-ln -s $@.__MAJOR_CASTOR_VERSION__ $@
+	./makeshlib.sh '$(CXX)' libcastorCommonOra.so '$(SHLIBLDFLAGS)' $(SHLIBREQLIBS1)
 
 libcastorCnvs.so: $(LIBRARIES3)
 	@echo " making $@ in `pwd`"
@@ -179,12 +167,7 @@ libcastorCnvs.so: $(LIBRARIES3)
 	@mkdir tmp
 	for i in $(LIBRARIES3) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libcastorCnvs.so.__MAJOR_CASTOR_VERSION__ -o ../$@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ *.o $(SHLIBREQLIBS3))
-	@-rm -rf tmp
-	@-rm -f $@.__MAJOR_CASTOR_VERSION__
-	@-ln -s $@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ $@.__MAJOR_CASTOR_VERSION__
-	@-rm -f $@
-	@-ln -s $@.__MAJOR_CASTOR_VERSION__ $@
+	./makeshlib.sh '$(CXX)' libcastorCnvs.so '$(SHLIBLDFLAGS)' $(SHLIBREQLIBS3)
 
 libcastorCommonMysql.so: $(LIBRARIES4)
 	@echo " making $@ in `pwd`"
@@ -192,12 +175,7 @@ libcastorCommonMysql.so: $(LIBRARIES4)
 	@mkdir tmp
 	@for i in $(LIBRARIES4) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libcastorCommonMysql.so.__MAJOR_CASTOR_VERSION__ -o ../$@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ *.o $(SHLIBREQLIBS4))
-	@-rm -rf tmp
-	@-rm -f $@.__MAJOR_CASTOR_VERSION__
-	@-ln -s $@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ $@.__MAJOR_CASTOR_VERSION__
-	@-rm -f $@
-	@-ln -s $@.__MAJOR_CASTOR_VERSION__ $@
+	./makeshlib.sh '$(CXX)' libcastorCommonMysql.so '$(SHLIBLDFLAGS)' $(SHLIBREQLIBS4)
 
 libcastorCommonPgsql.so: $(LIBRARIES5)
 	@echo " making $@ in `pwd`"
@@ -205,12 +183,7 @@ libcastorCommonPgsql.so: $(LIBRARIES5)
 	@mkdir tmp
 	@for i in $(LIBRARIES5) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libcastorCommonPgsql.so.__MAJOR_CASTOR_VERSION__ -o ../$@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ *.o $(SHLIBREQLIBS5))
-	@-rm -rf tmp
-	@-rm -f $@.__MAJOR_CASTOR_VERSION__
-	@-ln -s $@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ $@.__MAJOR_CASTOR_VERSION__
-	@-rm -f $@
-	@-ln -s $@.__MAJOR_CASTOR_VERSION__ $@
+	./makeshlib.sh '$(CXX)' libcastorCommonPgsql.so '$(SHLIBLDFLAGS)' $(SHLIBREQLIBS5)
 
 libcastorVdqmOra.so: $(LIBRARIES6)
 	@echo " making $@ in `pwd`"
@@ -218,12 +191,7 @@ libcastorVdqmOra.so: $(LIBRARIES6)
 	@mkdir tmp
 	@for i in $(LIBRARIES6) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libcastorVdqmOra.so.__MAJOR_CASTOR_VERSION__ -o ../$@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ *.o $(SHLIBREQLIBS6))
-	@-rm -rf tmp
-	@-rm -f $@.__MAJOR_CASTOR_VERSION__
-	@-ln -s $@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ $@.__MAJOR_CASTOR_VERSION__
-	@-rm -f $@
-	@-ln -s $@.__MAJOR_CASTOR_VERSION__ $@
+	./makeshlib.sh '$(CXX)' libcastorVdqmOra.so '$(SHLIBLDFLAGS)' $(SHLIBREQLIBS6)
 
 libcastorTankPerfMon.so: $(LIBRARIES2)
 	@echo " making $@ in `pwd`"
@@ -231,12 +199,7 @@ libcastorTankPerfMon.so: $(LIBRARIES2)
 	@mkdir tmp
 	@for i in $(LIBRARIES2) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libcastorTankPerfMon.so.__MAJOR_CASTOR_VERSION__ -o ../$@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ *.o $(SHLIBREQLIBS1))
-	@-rm -rf tmp
-	@-rm -f $@.__MAJOR_CASTOR_VERSION__
-	@-ln -s $@.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ $@.__MAJOR_CASTOR_VERSION__
-	@-rm -f $@
-	@-ln -s $@.__MAJOR_CASTOR_VERSION__ $@
+	./makeshlib.sh '$(CXX)' libcastorTankPerfMon.so '$(SHLIBLDFLAGS)' $(SHLIBREQLIBS2)
 
 
 shift.dll:	$(LIBRARIES0)
@@ -270,21 +233,21 @@ libcastorVdqmOra.dll:	$(LIBRARIES6)
 
 MakeDir($(LIB),root,bin,0755)
 
-InstallSharedLibrary(shift,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
-InstallSharedLibrary(castorCnvs,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
-InstallSharedLibrary(castorCommonOra,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
-InstallSharedLibrary(castorCommonMysql,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
-InstallSharedLibrary(castorCommonPgsql,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
-InstallSharedLibrary(castorVdqmOra,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
-InstallSharedLibrary(castorTankPerfMon,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
+InstallSharedLibrary(shift,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIB))
+InstallSharedLibrary(castorCnvs,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIB))
+InstallSharedLibrary(castorCommonOra,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIB))
+InstallSharedLibrary(castorCommonMysql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIB))
+InstallSharedLibrary(castorCommonPgsql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIB))
+InstallSharedLibrary(castorVdqmOra,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIB))
+InstallSharedLibrary(castorTankPerfMon,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIB))
 
-InstallSharedLibrary(shift,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
-InstallSharedLibrary(castorCnvs,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
-InstallSharedLibrary(castorCommonOra,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
-InstallSharedLibrary(castorCommonMysql,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
-InstallSharedLibrary(castorCommonPgsql,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
-InstallSharedLibrary(castorVdqmOra,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
-InstallSharedLibrary(castorTankPerfMon,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
+InstallSharedLibrary(shift,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
+InstallSharedLibrary(castorCnvs,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
+InstallSharedLibrary(castorCommonOra,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
+InstallSharedLibrary(castorCommonMysql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
+InstallSharedLibrary(castorCommonPgsql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
+InstallSharedLibrary(castorVdqmOra,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
+InstallSharedLibrary(castorTankPerfMon,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
 
 install.man:
 
@@ -330,7 +293,7 @@ MakeDepLibrary(dlf,dlf)
 
 MakeDepLibrary(tape,tape)
 
-#if UseOraCDBC
+#if UseOraCDBC || UseMySql || UsePgSql
 MakeDepLibrary(castor/db/cnv,castorCnvs)
 #endif
 
