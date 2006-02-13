@@ -4,16 +4,10 @@
  */
 
 /*
- * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.16 $ $Date: 2006/02/10 17:34:00 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.17 $ $Date: 2006/02/13 09:02:52 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #define NullParameter
-
-#ifndef CheckCastorVersion
-#define CheckCastorVersion \
-	@(if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then MAJOR_CASTOR_VERSION=__MAJOR_CASTOR_VERSION__ ; fi ; ) ;\ @@\
-	@(if [ "x${MINOR_CASTOR_VERSION}" = "x" ]; then MINOR_CASTOR_VERSION=__MINOR_CASTOR_VERSION__ ; fi ; ) ;\
-#endif
 
 #ifndef ManPageTargetName
 #if defined(__STDC__)
