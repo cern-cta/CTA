@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/02/02 18:00:46 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/14 15:33:41 $ $Author: felixehm $
  *
  * The Filelisthelper offers some little functions for getting the file 
  * information for a tape.
@@ -32,13 +32,13 @@
 #define CASTOR_REPACK_FILELISTHELPER_HPP
 
 // Include Files
-#include <vector>
-#include <algorithm>
+
 #include "castor/repack/RepackCommonHeader.hpp"
 #include "osdep.h"
 #include "Cns_api.h"
-
-
+#include <common.h>
+#include <map>
+#include <vector>
 
 namespace castor {
 
@@ -52,12 +52,14 @@ namespace castor {
     public:
 
       /**
-       * Empty Constructor
+       * Empty Constructor, initialises with the nameserver given by the castor
+       * config file.
+       * @throws castor::exception::Internal if no entry is found in the config file.
        */
-      FileListHelper();
+      FileListHelper() throw (castor::exception::Internal);
       
       /**
-       * Contructor, with initialises the FilelistHelper 
+       * Contructor, which initialises the FilelistHelper 
        * with a special nameserver
        */
       FileListHelper(std::string nameserver);
@@ -72,24 +74,24 @@ namespace castor {
        * @param rreq The Request of the Tape
        */
       std::vector<u_signed64>* getFileList(
-      							castor::repack::RepackSubRequest *sreq) throw();
+      							castor::repack::RepackSubRequest *sreq, Cuuid_t& cuuid) throw();
 
       /**
        * Fills the Request with the segments on the tape
        * elements
        * @param vid The Request of the Tape
        */
-      int getFileListSegs(castor::repack::RepackSubRequest *sreq);
+      int getFileListSegs(castor::repack::RepackSubRequest *sreq, Cuuid_t& cuuid);
       
       
       std::vector<std::string>* getFilePathnames(
-								castor::repack::RepackSubRequest *subreq) throw();
+								castor::repack::RepackSubRequest *subreq, Cuuid_t& cuuid) throw();
                           
 	private:
 		/**
 		 * The nameserver this Class contacts
 		 */
-		std::string m_ns;
+		char* m_ns;
 		
     }; // end of class FileListHelper
 

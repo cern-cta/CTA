@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/03 15:49:31 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/02/14 15:33:41 $ $Author: felixehm $
  *
  *
  *
@@ -25,11 +25,8 @@
  *****************************************************************************/
 
 
-#include <iostream>
-#include <sys/types.h>
-#include <time.h>
 #include "castor/repack/FileListHelper.hpp"
-#include <map>
+
 namespace castor {
 
 	namespace repack {
@@ -38,16 +35,22 @@ namespace castor {
 //------------------------------------------------------------------------------
 // Constructor 1
 //------------------------------------------------------------------------------
-FileListHelper::FileListHelper(std::string nameserver){
-	m_ns = nameserver;
+FileListHelper::FileListHelper(std::string nameserver)
+{
+	m_ns = (char*)nameserver.c_str();
 }
 
 
 //------------------------------------------------------------------------------
-// Constructor 2
+// Constructor 2, initialises the m_ns from the castor config file
 //------------------------------------------------------------------------------
-FileListHelper::FileListHelper(){
-	m_ns = "castorns.cern.ch";
+FileListHelper::FileListHelper() throw (castor::exception::Internal) {
+	if ( !(m_ns = getconfent("CNS", "HOST",0)) ){
+		castor::exception::Internal ex;
+		ex.getMessage() << "Unable to initialise FileListHelper with nameserver "
+		<< "entry in castor config file";
+		throw ex;		
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -62,65 +65,58 @@ FileListHelper::~FileListHelper()
 // getFilePathnames
 //------------------------------------------------------------------------------
 std::vector<std::string>* FileListHelper::getFilePathnames(
-								castor::repack::RepackSubRequest *subreq) throw()
+								castor::repack::RepackSubRequest *subreq, Cuuid_t& cuuid) throw()
 {
 	int i=0;
 	char path[CA_MAXPATHLEN+1];
-	char *server = (char*)m_ns.c_str();
 	
 	std::vector<u_signed64>* tmp;
 	std::vector<std::string>* pathlist = new std::vector<std::string>();
 
 	/* this function already checks if subreq is not NULL */
 	/* and get the parentfileids */
-	tmp = getFileList(subreq);
+	tmp = getFileList(subreq, cuuid);
 
 	stage_trace(2,"Fetching filenames for %f Files",tmp->size());
 	for ( i=0; i< tmp->size(); i++ )
 	{
 		/* get the full path and push it into the list */
-		if ( Cns_getpath(server, tmp->at(i), path) < 0 ) {
+		if ( Cns_getpath(m_ns, tmp->at(i), path) < 0 ) {
 				castor::exception::Internal ex;
 				ex.getMessage() << "FileListHelper::getFileList(..):" 
 								<< sstrerror(serrno) << std::endl;
-								
 				castor::dlf::Param params[] =
-				{castor::dlf::Param("Standard Message", sstrerror(ex.code())),
-				 castor::dlf::Param("Precise Message", ex.getMessage().str())};
-				castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 15, 2, params);
+				{castor::dlf::Param("Standard Message", sstrerror(ex.code()))};
+				castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 15, 1, params);
 			    throw ex;
 		}
-		else
+		else{
+			std::cout << path << std::endl;
 			pathlist->push_back(path);
+		}
 	}
 	return pathlist;
 }
 
 
 //------------------------------------------------------------------------------
-// getFileList
+// getFileList, check if double entries are in list (should never happen !!!)
 //------------------------------------------------------------------------------
 std::vector<u_signed64>* FileListHelper::getFileList(
-      							castor::repack::RepackSubRequest *subreq) throw()
+      							castor::repack::RepackSubRequest *subreq, Cuuid_t& cuuid) throw()
 {
 	unsigned long i = 0;
 	double vecsize = 0;
 	std::vector<RepackSegment*>::iterator iterseg;
 	/* pointer to vector of all Segments */
 	std::vector<u_signed64>* parentlist = new std::vector<u_signed64>();
-	
 	vecsize = subreq->segment().size();
 
 	if ( vecsize > 0 ) {
-		castor::dlf::Param params[] =
-     		 {castor::dlf::Param("Segments", vecsize),
-     		  castor::dlf::Param("DiskSpace", subreq->xsize())};
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 14, 2, params);
-		
 		/* make up a new list with all parent_fileids */
 		iterseg=subreq->segment().begin();
 		while ( iterseg!=subreq->segment().end() ) {
-			parentlist->push_back( (*iterseg)->parent_fileid() );
+			parentlist->push_back( (*iterseg)->fileid() );
 			iterseg++;
 		}
 	}
@@ -132,12 +128,13 @@ std::vector<u_signed64>* FileListHelper::getFileList(
 	
 	while ( j!= parentlist->end() ){
 		if ( fileid == (*j) ){
-			parentlist->erase(j);
+			std::cerr << "ERROR : Double entry for fileid " << (*j) 
+					  << "on tape " << subreq->vid() << std::endl;
 		}
 		else{
 			fileid = (*j);
-			j++;
 		}
+		j++;
 	}
 	stage_trace(3,"Number of parents: %d",parentlist->size());
 	return parentlist;
@@ -147,47 +144,55 @@ std::vector<u_signed64>* FileListHelper::getFileList(
 //------------------------------------------------------------------------------
 // getFileListSegs
 //------------------------------------------------------------------------------
-int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
+int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq, Cuuid_t& cuuid)
 {
 	int flags;
 	u_signed64 segs_size = 0;
 	char path[CA_MAXPATHLEN+1];
-	char *server = (char*)m_ns.c_str();
 	char *vid = (char*)subreq->vid().c_str();
-	
-
 	struct Cns_direntape *dtp;
 	Cns_list list;
+
 	
 	if ( subreq != NULL )
 	{
 		/* the tape check was before ! */
-		
-		
+	
 		flags = CNS_LIST_BEGIN;
 		/* all Segments from a tape belong to one Request ! */
-		while ((dtp = Cns_listtape (server, vid, flags, &list)) != NULL) {
+		while ((dtp = Cns_listtape (m_ns, vid, flags, &list)) != NULL) {
+			Cns_getpath(m_ns, dtp->fileid, path);
+			
 			RepackSegment* rseg= new RepackSegment();
 			rseg->setVid(subreq);
 			rseg->setFileid(dtp->fileid);
-			rseg->setParent_fileid(dtp->parent_fileid);
+			rseg->setFilesec(dtp->fsec);
+			rseg->setCompression(dtp->compression);
+			rseg->setSegsize(dtp->segsize);
 			subreq->addSegment(rseg);
 
 			segs_size += dtp->segsize;
 			flags = CNS_LIST_CONTINUE;
-			//stage_trace(3,"Added Segment %f %f, fileseq : %f",dtp->parent_fileid, dtp->fileid, dtp->fsec, dtp->fseq);
+			/* TODO:just for debug 
+			std::cout //<< path  
+					  << " fileid " << dtp->fileid
+					  << " filesec " << dtp->fsec
+					  << " fileseq " << dtp->fseq 
+					  << " block1 " << (unsigned short)dtp->blockid[0] 
+					  << " block2 " << (unsigned short)dtp->blockid[1] 
+					  << " block3 " << (unsigned short)dtp->blockid[2] 
+					  << " block4 " << (unsigned short)dtp->blockid[3] 
+					  << std::endl;
+			*/
 		}
-		Cns_listtape (server, vid, CNS_LIST_END, &list);
-		stage_trace(2,"Size on disk to be allocated: %d", (segs_size/100000000));
+		Cns_listtape (m_ns, vid, CNS_LIST_END, &list);
+		stage_trace(2,"Size on disk to be allocated: %d", segs_size);
 		subreq->setXsize(segs_size);
 
-		/* TODO: We want to have a ordered list of segments */
-		//std::sort(subreq->segment().begin(),subreq->segment().end());
-
-		/*std::vector<RepackSegment*>::iterator i;
-		for (i=subreq->segment().begin(); i != subreq->segment().end(); i++ ){
-			std::cout << (*i)->parent_fileid() << std::endl;
-		}*/
+		castor::dlf::Param params[] =
+     		 {castor::dlf::Param("Segments", subreq->segment().size()),
+     		  castor::dlf::Param("DiskSpace", subreq->xsize())};
+		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 24, 2, params);
 		
 		return subreq->segment().size();
 	}
