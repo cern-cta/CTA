@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/07 20:00:24 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/02/14 17:23:40 $ $Author: felixehm $
  *
  *
  *
@@ -54,12 +54,12 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	else
-		iport = CSP_REPACKSERVER_PORT;
+		iport = castor::repack::CSP_REPACKSERVER_PORT;
 	
 
    
     try {
-      // new BaseDeamon as Server 
+
     castor::repack::RepackServer server;
 
     server.addThreadPool(
@@ -71,23 +71,23 @@ int main(int argc, char *argv[]) {
 	server.getThreadPool('F')->setNbThreads(1);
     
     
-    // We only need one thread by default at this moment 
-
-    
-    
     server.parseCommandLine(argc, argv);
     server.start();
-      }// end try block
-      catch (castor::exception::Exception e) {
-	      std::cerr << "Caught castor exception : "
-                  << sstrerror(e.code()) << std::endl
-                  << e.getMessage().str() << std::endl;
-      }
-      catch (...) {
-	      std::cerr << "Caught general exception!" << std::endl;
-	      return 1;
-      }
-      return 0;
+    } catch (castor::exception::Internal i){
+    	std::cerr << "Caught castor internal exception : "
+			<< sstrerror(i.code()) << std::endl
+			<< i.getMessage().str() << std::endl;
+    }
+	catch (castor::exception::Exception e) {
+			std::cerr << "Caught castor exception : "
+			<< sstrerror(e.code()) << std::endl
+			<< e.getMessage().str() << std::endl;
+	}
+	catch (...) {
+		std::cerr << "Caught general exception!" << std::endl;
+		return 1;
+	}
+	return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -114,8 +114,8 @@ castor::repack::RepackServer::RepackServer() :
      { 9, "Exception caught"},
      {10, "Sending reply to client"},		// remove ?
      {11, "Unable to send Ack to client"},
-     {12, "Request stored in DB"},
-     {13, "Unable to store Request in DB"},
+     {12, "DatabaseHelper: Request stored in DB"},
+     {13, "DatabaseHelper: Unable to store Request in DB"},
      {14, "FileListHelper: Fetching files from Nameserver"},						// FileListHelper::getFileList()
      {15, "FileListHelper: Cannot get file pathname"},								// FileListHelper::getFilePathnames
      {16, "RepackWorker : No such Tape!"},											// RepackWorker:getTapeInfo()
@@ -126,9 +126,14 @@ castor::repack::RepackServer::RepackServer() :
      {21, "FileOrganizer: Unable to stage files!"},								// FileOrganizer:stage_files
      {22, "FileOrganizer: New request for staging files"},			// FileOrganizer:run()
      {23, "FileOrganizer: Not enough space for this RepackRequest. Skipping..."},	// FileOrganizer:stage_files
-     {24, "FileOrganizer: Getting segs for SubRequest."},							// FileListHelper:getFileListSegs()
+     {24, "FileListHelper: Retrieved segs for SubRequest."},								// FileListHelper:getFileListSegs()
      {25, "FileOrganizer: Updating Request to STAGING and add its segs."},			// FileOrganizer:stage_files
 	 {26, "FileOrganizer: Staging files."},			// FileOrganizer:stage_files
+     {27, "DatabaseHelper: Unable to update SubRequest!"},
+     {28, "DatabaseHelper: Tape already in repack que!"},
+     {29, "FileOrganizer: Getting Segs for SubRequest!"},
+     {30, "DatabaseHelper: SubRequest updated!"},
+     {31, "RepackWorker: Tape is good for repack!"},
      {99, "TODO::MESSAGE"},
      {-1, ""}};
   castor::dlf::dlf_init("Repack", messages); 
