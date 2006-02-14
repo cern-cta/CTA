@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileOrganizer.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/07 20:02:53 $ $Author: felixehm $
+ * @(#)$RCSfile: FileOrganizer.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/14 17:20:05 $ $Author: felixehm $
  *
  *
  *
@@ -32,16 +32,26 @@ namespace castor {
 	namespace repack {
 		
 	const char* REPACK_POLL = "REPACK_POLL";
-		
+	
 		
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-FileOrganizer::FileOrganizer() throw()
+FileOrganizer::FileOrganizer() throw (castor::exception::Exception)
 {
-	m_dbhelper = new DatabaseHelper();
-	m_run = true;
+	//m_ns = (char*) malloc(CA_MAXHOSTNAMELEN*sizeof(char));
+	char * CNS_CAT = "CNS";
+	char * CNS_HOST = "HOST";
+	if ( !(m_ns = getconfent((char*)CNS_CAT, (char*)CNS_HOST,0)) ){
+		castor::exception::Internal ex;
+		ex.getMessage() << "Unable to initialise FileListHelper with nameserver "
+		<< "entry in castor config file";
+		throw ex;	
+	}
 	
+	m_dbhelper = new DatabaseHelper();	
+	m_filehelper = new FileListHelper(m_ns);
+	m_run = true;
 }
 
 
@@ -50,6 +60,8 @@ FileOrganizer::FileOrganizer() throw()
 //------------------------------------------------------------------------------
 FileOrganizer::~FileOrganizer() throw() {
 	delete m_dbhelper;
+	delete m_filehelper;
+	delete m_ns;
 }
 
 
@@ -68,14 +80,13 @@ void FileOrganizer::run(void *param) throw() {
 		polling_time = strtol(ptime, &error,0);
 		if ( *error != 0 ){
 			castor::exception::Internal ex;
-			ex.getMessage()<< "FileOrganizer: run (..): Fatal Error! " 
-					<< std::endl
+			ex.getMessage()<< "FileOrganizer: run (..): Fatal Error!"<< std::endl
 					<< "The passed polling time in the enviroment varible is "
 					<< "not vaild ! " << std::endl;
 			throw ex;
 		}
 	}else
-		polling_time = 10;
+		polling_time = 10;	/* 10 sek. is standard polling time */
 	
 	/* now, here we go */
 	while ( m_run )
@@ -84,19 +95,28 @@ void FileOrganizer::run(void *param) throw() {
 		RepackSubRequest* sreq = m_dbhelper->requestToDo();
 		
 		if ( sreq != NULL ){
+			cuuid = nullCuuid;
+	    	Cuuid_create(&cuuid);
 			stage_trace(3,"New Job! %s",sreq->vid().c_str());
 			castor::dlf::Param params[] =
 			{castor::dlf::Param("VID", sreq->vid()),
 			 castor::dlf::Param("ID", sreq->id()),
 			 castor::dlf::Param("STATUS", sreq->status())};
-			castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 22, 3, params);
-			/* stage the files */
-			stage_files(sreq);
-			/* we are responsible for this object, so we have to delete it */
-			delete sreq;
+			castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 22, 3, params);
+			try {
+				/* stage the files, and we forget errors */
+				stage_files(sreq);
+			}
+			catch (castor::exception::Internal e){
+				delete sreq;
+			}
+			catch (castor::exception::Exception ex){
+				delete sreq;
+			}
+			
 		}
-		else
-			std::cerr << "Running, but no Job!" << std::endl;
+		else	/*TODO:DEBUG */
+			std::cout << "Running, but no Job!" << std::endl;
 		
 		sleep(polling_time);
 	}
@@ -128,10 +148,10 @@ void FileOrganizer::sortReadOrder(std::vector<u_signed64>* fileidlist) throw()
 //------------------------------------------------------------------------------
 void FileOrganizer::stage_files(RepackSubRequest* sreq) throw() {
 
-	int rc=0;					// the return code for the stager_prepareToGet call.
+	int rc=0;				// the return code for the stager_prepareToGet call.
 	int i,j;
-	char path[CA_MAXPATHLEN+1];
-	FileListHelper flh;
+	
+	
 
 	std::vector<u_signed64>* filenamelist;	// the returned filelist with ids
 
@@ -139,11 +159,14 @@ void FileOrganizer::stage_files(RepackSubRequest* sreq) throw() {
 	int nbresps;
     char* reqId = 0;
 	struct stage_prepareToGet_fileresp* response;
+	struct stage_options opts;
+	opts.stage_host = NULL;	
+	opts.service_class = "repack";
 	/*-------------------------*/
 
 	stage_trace(3,"Updating SubRequest with its segs");
-	
-	flh.getFileListSegs(sreq);				/* get the Segs for this tape !*/
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 29, 0, NULL);
+	m_filehelper->getFileListSegs(sreq,cuuid);				/* get the Segs for this tape !*/
 
 	/* 
 	 * TODO:We have to check for space on the DiscCache !
@@ -158,30 +181,21 @@ void FileOrganizer::stage_files(RepackSubRequest* sreq) throw() {
 	}
 	*/
 
-	filenamelist = flh.getFileList(sreq);	/* and now all parent_fileids */
+	filenamelist = m_filehelper->getFileList(sreq,cuuid);	/* and now all parent_fileids */
 	struct stage_prepareToGet_filereq requests [filenamelist->size()] ;
-
 	stage_trace(3,"Now, get the paths.");
 
 	/* now call the stager */
 	for (i=0; i < filenamelist->size();i++) {
-		Cns_getpath("castorns.cern.ch",filenamelist->at(i),path);	//TODO: remove hardcoded ns name
-		//stage_trace(3,"%s", path);
+		char path[CA_MAXPATHLEN+1];
+		Cns_getpath(m_ns,filenamelist->at(i),path);
 		requests[i].filename = path;
-		requests[i].protocol = "repack";		// for the stager to recognize
-											// that this is a special call
+		requests[i].protocol = "rfio";	// TODO: now changing the file status in the DB
 	}
-      
-        
-	// Before calling the stager, set the status of all the subrequests to in progress
-	stage_trace(3,"Updating Request to STAGING and add its segs");
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 25, 0, NULL);
-	sreq->setStatus(SUBREQUEST_STAGING);
-	m_dbhelper->updateSubRequest(sreq);
 	
 	stage_trace(3,"Now staging");
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 26, 0, NULL);
-	//rc = stage_prepareToGet(NULL, requests, filenamelist->size(), &response, &nbresps, &reqId, NULL);
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 26, 0, NULL);
+	rc = stage_prepareToGet(NULL, requests, filenamelist->size(), &response, &nbresps, &reqId, &opts);
 
       
 	if ( rc != 0 ) {
@@ -191,9 +205,15 @@ void FileOrganizer::stage_files(RepackSubRequest* sreq) throw() {
 		castor::dlf::Param params[] =
 		{castor::dlf::Param("Standard Message", sstrerror(ex.code())),
 		 castor::dlf::Param("Precise Message", ex.getMessage().str())};
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 21, 2, params);
+		castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 21, 2, params);
 		throw ex;
 	}
+	
+	stage_trace(3,"Updating Request to STAGING and add its segs");
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 25, 0, NULL);
+	sreq->setStatus(SUBREQUEST_STAGING);
+	m_dbhelper->updateSubRequest(sreq,cuuid);
+	
     filenamelist->clear();
 	delete filenamelist;
     //TODO: if staging this has to be uncommented !    delete response;
