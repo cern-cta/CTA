@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/02/14 15:33:41 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/02/14 17:17:51 $ $Author: felixehm $
  *
  *
  *
@@ -45,6 +45,7 @@ FileListHelper::FileListHelper(std::string nameserver)
 // Constructor 2, initialises the m_ns from the castor config file
 //------------------------------------------------------------------------------
 FileListHelper::FileListHelper() throw (castor::exception::Internal) {
+	
 	if ( !(m_ns = getconfent("CNS", "HOST",0)) ){
 		castor::exception::Internal ex;
 		ex.getMessage() << "Unable to initialise FileListHelper with nameserver "
@@ -58,7 +59,7 @@ FileListHelper::FileListHelper() throw (castor::exception::Internal) {
 //------------------------------------------------------------------------------
 FileListHelper::~FileListHelper()
 {
-	
+	delete m_ns;
 }
 
 //------------------------------------------------------------------------------
