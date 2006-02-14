@@ -186,7 +186,7 @@ END;
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
    whenever a TapeCopy has failed to be migrated and is
-   put back in WAITINSTREAM fro delete Request(srId IN INTEGER,  ) ASm the SELECTED status */
+   put back in WAITINSTREAM from the SELECTED status */
 CREATE OR REPLACE TRIGGER tr_TapeCopy_Update
 AFTER UPDATE of status ON TapeCopy
 FOR EACH ROW
@@ -211,7 +211,7 @@ BEGIN
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
    WHERE FS = :new.fileSystem
      AND Stream IN (SELECT Stream2TapeCopy.parent
-                      FROM Stre delete Request(srId IN INTEGER,  ) ASam2TapeCopy, TapeCopy
+                      FROM Stream2TapeCopy, TapeCopy
                      WHERE TapeCopy.castorFile = :new.castorFile
                        AND Stream2TapeCopy.child = TapeCopy.id
                        AND TapeCopy.status = 2); -- WAITINSTREAMS
@@ -241,7 +241,7 @@ END;
    to be safe */
 CREATE OR REPLACE TRIGGER tr_DiskCopy_CastorFile
 BEFORE INSERT OR UPDATE OF castorFile ON DiskCopy
-FOR EACH ROW WHEN (new.castorFi delete Request(srId IN INTEGER,  ) ASle > 0)
+FOR EACH ROW WHEN (new.castorFile > 0)
 DECLARE
   unused CastorFile%ROWTYPE;
 BEGIN
@@ -302,9 +302,7 @@ BEGIN
   WHERE SubRequest.id = srId;
 END;
 
-
 /*  PL/SQL method to archive a SubRequest   */
-
 CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
   rid INTEGER;
   rtype INTEGER;
@@ -412,7 +410,6 @@ BEGIN
         END LOOP;
 	CLOSE cur;
 END;
-
 
 /* PL/SQL method implementing anyTapeCopyForStream.
  * This implementation is not the original one. It uses NbTapeCopiesInFS
@@ -781,7 +778,8 @@ CREATE OR REPLACE PACKAGE castor AS
         diskCopyStatus INTEGER,
         diskServerName VARCHAR2(2048),
         fileSystemMountPoint VARCHAR2(2048),
-        nbaccesses INTEGER);
+        nbaccesses INTEGER,
+        lastKnownFileName VARCHAR2(2048));
   TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
   TYPE FileList_Cur IS REF CURSOR RETURN FilesDeletedProcOutput%ROWTYPE;
 END castor;
@@ -975,9 +973,9 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
      AND SubRequest.castorfile = DiskCopy.castorfile
      AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
      AND FileSystem.id = DiskCopy.fileSystem
-     AND FileSystem.status = 0 -- PRODUCTION
+     AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
      AND DiskServer.id = FileSystem.diskserver
-     AND DiskServer.status = 0 -- PRODUCTION
+     AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
      AND ROWNUM < 2;
    -- We found at least a DiskCopy. Let's list all of them
    OPEN sources
@@ -989,9 +987,9 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       AND SubRequest.castorfile = DiskCopy.castorfile
       AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
       AND FileSystem.id = DiskCopy.fileSystem
-      AND FileSystem.status = 0 -- PRODUCTION
+      AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
       AND DiskServer.id = FileSystem.diskServer
-      AND DiskServer.status = 0; -- PRODUCTION
+      AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
     -- create DiskCopy for Disk to Disk copy
     UPDATE SubRequest SET diskCopy = ids_seq.nextval,
                           lastModificationTime = getTime() WHERE id = srId
@@ -1367,6 +1365,7 @@ CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
                                               sc IN INTEGER,
                                               fc IN INTEGER,
                                               fs IN INTEGER,
+                                              fn IN VARCHAR2,
                                               rid OUT INTEGER,
                                               rfs OUT INTEGER) AS
   CONSTRAINT_VIOLATED EXCEPTION;
@@ -1377,13 +1376,15 @@ BEGIN
     SELECT id, fileSize INTO rid, rfs FROM CastorFile
       WHERE fileId = fid AND nsHost = nh;
     -- update lastAccess time
-    UPDATE CastorFile SET LastAccessTime = getTime(), nbAccesses = nbAccesses + 1
+    UPDATE CastorFile SET LastAccessTime = getTime(),
+                          nbAccesses = nbAccesses + 1,
+                          lastKnownFileName = fn
       WHERE id = rid;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
-                            creationTime, lastAccessTime, nbAccesses)
-      VALUES (ids_seq.nextval, fId, nh, sc, fc, fs, getTime(), getTime(), 1)
+                            creationTime, lastAccessTime, nbAccesses, lastKnownFileName)
+      VALUES (ids_seq.nextval, fId, nh, sc, fc, fs, getTime(), getTime(), 1, fn)
       RETURNING id, fileSize INTO rid, rfs;
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
   END;
@@ -2161,7 +2162,8 @@ BEGIN
            UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
            DiskCopy.path, CastorFile.filesize,
            nvl(DiskCopy.status, -1), DiskServer.name,
-           FileSystem.mountPoint, CastorFile.nbaccesses
+           FileSystem.mountPoint, CastorFile.nbaccesses,
+           CastorFile.lastKnownFileName
       FROM CastorFile, DiskCopy, FileSystem, DiskServer,
            DiskPool2SvcClass
      WHERE CastorFile.id IN (SELECT * FROM TABLE(cfs))
@@ -2171,7 +2173,7 @@ BEGIN
        AND DiskServer.id(+) = FileSystem.diskServer
        AND nvl(DiskServer.status,0) = 0 -- PRODUCTION
        AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool
-       AND (DiskPool2SvcClass.child = svcClassId OR DiskPool2SvcClass.child IS NULL)
+       AND (DiskPool2SvcClass.child = svcClassId OR svcClassId = 0)
   ORDER BY fileid, nshost;
 END;
 
@@ -2209,6 +2211,24 @@ BEGIN
   ORDER BY fileid, nshost;
 END;
 */
+
+/*
+ * PL/SQL method implementing the stage_query based on file id
+ */
+CREATE OR REPLACE PROCEDURE fileNameStageQuery
+ (fn IN VARCHAR2,
+  svcClassId IN INTEGER,
+  maxNbResponses IN INTEGER,
+  result OUT castor.QueryLine_Cur) AS
+  cfs "numList";
+BEGIN
+ SELECT id BULK COLLECT INTO cfs FROM CastorFile WHERE  REGEXP_LIKE(lastKnownFileName,fn) AND ROWNUM <= maxNbResponses + 1;
+ IF cfs.COUNT > maxNbResponses THEN
+   -- We have too many rows, we just give up
+   raise_application_error(-20102, 'Too many matching files');
+ END IF;
+ internalStageQuery(cfs, svcClassId, result);
+END;
 
 /*
  * PL/SQL method implementing the stage_query based on file id
