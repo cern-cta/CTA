@@ -53,7 +53,7 @@ static castor::CnvFactory<castor::db::ora::OraRepackSegmentCnv>* s_factoryOraRep
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraRepackSegmentCnv::s_insertStatementString =
-"INSERT INTO RepackSegment (fileid, parent_fileid, id, vid) VALUES (:1,:2,ids_seq.nextval,:3) RETURNING id INTO :4";
+"INSERT INTO RepackSegment (fileid, segsize, compression, filesec, id, vid) VALUES (:1,:2,:3,:4,ids_seq.nextval,:5) RETURNING id INTO :6";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraRepackSegmentCnv::s_deleteStatementString =
@@ -61,11 +61,11 @@ const std::string castor::db::ora::OraRepackSegmentCnv::s_deleteStatementString 
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraRepackSegmentCnv::s_selectStatementString =
-"SELECT fileid, parent_fileid, id, vid FROM RepackSegment WHERE id = :1";
+"SELECT fileid, segsize, compression, filesec, id, vid FROM RepackSegment WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraRepackSegmentCnv::s_updateStatementString =
-"UPDATE RepackSegment SET fileid = :1, parent_fileid = :2 WHERE id = :3";
+"UPDATE RepackSegment SET fileid = :1, segsize = :2, compression = :3, filesec = :4 WHERE id = :5";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraRepackSegmentCnv::s_storeTypeStatementString =
@@ -249,7 +249,7 @@ void castor::db::ora::OraRepackSegmentCnv::fillObjRepackSubRequest(castor::repac
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 vidId = (u_signed64)rset->getDouble(4);
+  u_signed64 vidId = (u_signed64)rset->getDouble(6);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -289,17 +289,19 @@ void castor::db::ora::OraRepackSegmentCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(4, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(6, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
     m_insertStatement->setDouble(1, obj->fileid());
-    m_insertStatement->setDouble(2, obj->parent_fileid());
-    m_insertStatement->setDouble(3, (type == OBJ_RepackSubRequest && obj->vid() != 0) ? obj->vid()->id() : 0);
+    m_insertStatement->setDouble(2, obj->segsize());
+    m_insertStatement->setInt(3, obj->compression());
+    m_insertStatement->setInt(4, obj->filesec());
+    m_insertStatement->setDouble(5, (type == OBJ_RepackSubRequest && obj->vid() != 0) ? obj->vid()->id() : 0);
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(4));
+    obj->setId((u_signed64)m_insertStatement->getDouble(6));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -325,7 +327,9 @@ void castor::db::ora::OraRepackSegmentCnv::createRep(castor::IAddress* address,
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
                     << "  fileid : " << obj->fileid() << std::endl
-                    << "  parent_fileid : " << obj->parent_fileid() << std::endl
+                    << "  segsize : " << obj->segsize() << std::endl
+                    << "  compression : " << obj->compression() << std::endl
+                    << "  filesec : " << obj->filesec() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  vid : " << obj->vid() << std::endl;
     throw ex;
@@ -350,8 +354,10 @@ void castor::db::ora::OraRepackSegmentCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setDouble(1, obj->fileid());
-    m_updateStatement->setDouble(2, obj->parent_fileid());
-    m_updateStatement->setDouble(3, obj->id());
+    m_updateStatement->setDouble(2, obj->segsize());
+    m_updateStatement->setInt(3, obj->compression());
+    m_updateStatement->setInt(4, obj->filesec());
+    m_updateStatement->setDouble(5, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->commit();
@@ -451,8 +457,10 @@ castor::IObject* castor::db::ora::OraRepackSegmentCnv::createObj(castor::IAddres
     castor::repack::RepackSegment* object = new castor::repack::RepackSegment();
     // Now retrieve and set members
     object->setFileid((u_signed64)rset->getDouble(1));
-    object->setParent_fileid((u_signed64)rset->getDouble(2));
-    object->setId((u_signed64)rset->getDouble(3));
+    object->setSegsize((u_signed64)rset->getDouble(2));
+    object->setCompression(rset->getInt(3));
+    object->setFilesec(rset->getInt(4));
+    object->setId((u_signed64)rset->getDouble(5));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -499,8 +507,10 @@ void castor::db::ora::OraRepackSegmentCnv::updateObj(castor::IObject* obj)
     castor::repack::RepackSegment* object = 
       dynamic_cast<castor::repack::RepackSegment*>(obj);
     object->setFileid((u_signed64)rset->getDouble(1));
-    object->setParent_fileid((u_signed64)rset->getDouble(2));
-    object->setId((u_signed64)rset->getDouble(3));
+    object->setSegsize((u_signed64)rset->getDouble(2));
+    object->setCompression(rset->getInt(3));
+    object->setFilesec(rset->getInt(4));
+    object->setId((u_signed64)rset->getDouble(5));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

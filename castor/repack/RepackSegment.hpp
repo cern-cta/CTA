@@ -116,19 +116,51 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_parent_fileid
-       * @return the value of m_parent_fileid
+       * Get the value of m_segsize
+       * @return the value of m_segsize
        */
-      u_signed64 parent_fileid() const {
-        return m_parent_fileid;
+      u_signed64 segsize() const {
+        return m_segsize;
       }
 
       /**
-       * Set the value of m_parent_fileid
-       * @param new_var the new value of m_parent_fileid
+       * Set the value of m_segsize
+       * @param new_var the new value of m_segsize
        */
-      void setParent_fileid(u_signed64 new_var) {
-        m_parent_fileid = new_var;
+      void setSegsize(u_signed64 new_var) {
+        m_segsize = new_var;
+      }
+
+      /**
+       * Get the value of m_compression
+       * @return the value of m_compression
+       */
+      int compression() const {
+        return m_compression;
+      }
+
+      /**
+       * Set the value of m_compression
+       * @param new_var the new value of m_compression
+       */
+      void setCompression(int new_var) {
+        m_compression = new_var;
+      }
+
+      /**
+       * Get the value of m_filesec
+       * @return the value of m_filesec
+       */
+      int filesec() const {
+        return m_filesec;
+      }
+
+      /**
+       * Set the value of m_filesec
+       * @param new_var the new value of m_filesec
+       */
+      void setFilesec(int new_var) {
+        m_filesec = new_var;
       }
 
       /**
@@ -169,7 +201,11 @@ namespace castor {
 
       u_signed64 m_fileid;
 
-      u_signed64 m_parent_fileid;
+      u_signed64 m_segsize;
+
+      int m_compression;
+
+      int m_filesec;
 
       /// The id of this object
       u_signed64 m_id;
