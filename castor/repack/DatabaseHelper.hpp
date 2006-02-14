@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/07 20:03:54 $ $Author: felixehm $
+ * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/14 15:29:48 $ $Author: felixehm $
  *
  * 
  *
@@ -88,13 +88,17 @@ namespace castor {
 
 	  /**
        * Resets the converter. In particular any prepared
-       * statements are destroyed
+       * statements are destroyed.
        */
       virtual void reset() throw();
+
+      /**
+       * updates the RepackSubRequest. For logging purpose the cuuid is given as
+       * parameter.
+       */
+      void updateSubRequest(castor::repack::RepackSubRequest* obj, Cuuid_t& cuuid) throw ();
       
-      void updateSubRequest(castor::repack::RepackSubRequest* obj) throw ();
-      
-      bool checkForVid(std::string vid) throw();
+      bool is_stored(std::string vid) throw();
       private:
       
       /// SQL statement for function ToDo

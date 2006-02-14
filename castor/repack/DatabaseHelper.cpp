@@ -49,21 +49,13 @@ const std::string castor::repack::DatabaseHelper::m_selectCheckStatementString =
 //------------------------------------------------------------------------------
 castor::repack::DatabaseHelper::DatabaseHelper() throw() : 
 	DbBaseObj(NULL),
-	m_selectToDoStatement(NULL) {
+	m_selectToDoStatement(NULL),
+    m_selectCheckStatement(NULL) {
   try {
     
   	ad.setCnvSvcName("DbCnvSvc");
 	ad.setCnvSvcType(castor::SVC_DBCNV);
-	
-	
-    // create oracle and streaming conversion service
-    // so that it is not deleted and recreated all the time
-    //castor::IService *svc =
-	//    svcs()->service("DbCnvSvc", castor::SVC_DBCNV);
-    //if (0 == svc) {
-      // "Could not get Conversion Service for Database" message
-      //castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2);
-    //}
+   
   } catch(castor::exception::Exception e) {
     // "Exception caught : server is stopping" message
     castor::dlf::Param params[] =
@@ -94,10 +86,13 @@ void castor::repack::DatabaseHelper::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
-   delete m_selectToDoStatement;
+   if ( m_selectToDoStatement ) delete m_selectToDoStatement;
+   if ( m_selectCheckStatement ) delete m_selectCheckStatement;
   } catch (castor::exception::SQLError ignored) {};
   // Now reset all pointers to 0
-  m_selectToDoStatement = NULL;
+   m_selectToDoStatement = NULL;
+   m_selectCheckStatement = NULL;
+
 }
 
 
@@ -111,22 +106,7 @@ void castor::repack::DatabaseHelper::storeRequest(castor::repack::RepackRequest*
 						throw (castor::exception::Internal)
 {
 	stage_trace(2,"Storing Request in DB" );
-	
-	
-		/* Check, if one of the tapes is already in DB */
-		for ( int i=0; i<rreq->subRequest().size(); i++ ){
-			if ( checkForVid( rreq->subRequest().at(i)->vid() )){
-				castor::exception::Internal ex;
-				castor::dlf::Param params[] =
-		      	{castor::dlf::Param("VID", rreq->subRequest().at(i)->vid())};
-			    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 99, 1, params);
-				ex.getMessage() << " VID : " << rreq->subRequest().at(i)->vid() 
-								<< " already in Database ! Skipping.."
-								<< std::endl;
-				//throw ex;
-			}
-		}
-	
+
 	try {
 		
 	    // Store files for RepackRequest
@@ -141,8 +121,9 @@ void castor::repack::DatabaseHelper::storeRequest(castor::repack::RepackRequest*
 		svcs()->commit(&ad);
 		// "Request stored in DB" message
 		castor::dlf::Param params[] =
-		  {castor::dlf::Param("ID", rreq->id())};
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 12, 1, params);
+		  {castor::dlf::Param("ID", rreq->id()),
+		   castor::dlf::Param("SubRequests", rreq->subRequest().size())};
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 12, 2, params);
 	
 	  } catch (castor::exception::Exception e) {
 	    svcs()->rollback(&ad);
@@ -162,7 +143,7 @@ void castor::repack::DatabaseHelper::storeRequest(castor::repack::RepackRequest*
 //------------------------------------------------------------------------------
 // requestToDo
 //------------------------------------------------------------------------------
-bool castor::repack::DatabaseHelper::checkForVid(std::string vid) throw()
+bool castor::repack::DatabaseHelper::is_stored(std::string vid) throw()
 {
 	bool result = false;
 	stage_trace(2,"Checking, if %s is already in DB ",vid.c_str());
@@ -174,10 +155,17 @@ bool castor::repack::DatabaseHelper::checkForVid(std::string vid) throw()
 		m_selectCheckStatement->setString(1, vid);
 		castor::db::IDbResultSet *rset = m_selectCheckStatement->executeQuery();
 
-		if ( rset->next() )	/* Something found : return true*/
-			result = true;	
-
+		if ( rset->next() )	/* Something found : return false*/
+		{
+			castor::dlf::Param params[] =
+		      	{castor::dlf::Param("VID", vid)};
+			    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28, 1, params);
+				stage_trace(3," VID : %s already in Database ! Skipping..", 
+								vid.c_str());
+				result = true;
+		}
 		delete rset;
+		
 	}catch (castor::exception::SQLError e){
 		delete m_selectCheckStatement;
 		castor::exception::Internal ex;
@@ -185,7 +173,7 @@ bool castor::repack::DatabaseHelper::checkForVid(std::string vid) throw()
 							<< std::endl << e.getMessage();
 		throw ex;
 	}
-	
+	delete m_selectCheckStatement;
 	return result;
 }
 
@@ -193,18 +181,26 @@ bool castor::repack::DatabaseHelper::checkForVid(std::string vid) throw()
 
 
 
-void castor::repack::DatabaseHelper::updateSubRequest(castor::repack::RepackSubRequest* obj) throw ()
+void castor::repack::DatabaseHelper::updateSubRequest(castor::repack::RepackSubRequest* obj, Cuuid_t& cuuid) throw ()
 {
 	try {
-		std::vector<castor::repack::RepackSegment*>::iterator iter=obj->segment().begin();
 		// Stores it into the data base
+		// TODO: only the segments are stored, even if the corrresponding 
+		// subrequest was removed from DB before !!!!
 		svcs()->updateRep(&ad, obj, false);
 		svcs()->fillRep(&ad, obj,OBJ_RepackSegment, false);
 		svcs()->commit(&ad);
+		
 	 } catch (castor::exception::Exception e) {
-	 	std::cerr << "Error updating DB" << std::endl;
-        svcs()->rollback(&ad);
+	 	svcs()->rollback(&ad);
+	    castor::dlf::Param params[] =
+      	{castor::dlf::Param("Standard Message", sstrerror(e.code())),
+      	 castor::dlf::Param("Precise Message", e.getMessage().str())};
+	 	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 27, 2, params);
+	 	stage_trace(3,"DatabaseHelper: Error updating DB");
+        return;
 	}
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 30, 0, NULL);
 }
 
 
@@ -232,6 +228,8 @@ castor::repack::RepackSubRequest* castor::repack::DatabaseHelper::requestToDo()
 		{
 			// get the request we found, which the ID we got from DB
 			u_signed64 id = (u_signed64)rset->getDouble(1);
+			delete rset;
+
 			castor::IObject* obj = cnvSvc()->getObjFromId( id );
 			if (obj == NULL) {
 				castor::exception::Internal ex;
@@ -249,17 +247,14 @@ castor::repack::RepackSubRequest* castor::repack::DatabaseHelper::requestToDo()
 						<< "castor::repack::DatabaseHelper::requestToDo(..) :"
 						   " object retrieved for id : " << id << "was a "
 						   << castor::ObjectsIdStrings[obj->type()];
-				throw ex;
 				delete obj;	/* never forget to delete everything used */
-				delete rset;
-				return NULL;
+				throw ex;
+
 		    }
+		    
 		    svcs()->fillObj(&ad,result,OBJ_RepackSegment);
 		    return result;
 		}
-	  	delete rset;
-	  	
-	  	
 	} catch (castor::exception::SQLError e) {
 		castor::exception::Internal ex;
 		ex.getMessage()
