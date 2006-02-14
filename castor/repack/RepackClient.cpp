@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/07 20:05:59 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/02/14 17:21:04 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -48,9 +48,9 @@
 
 
 
-/** The main function 
-  * 
-  */
+//------------------------------------------------------------------------------
+// main method
+//------------------------------------------------------------------------------
 int main(int argc, char *argv[]) 
 {
    castor::repack::RepackClient *client = new castor::repack::RepackClient();
@@ -78,7 +78,9 @@ namespace castor {
   const char* HOST_CONF = "HOST";
   const char* PORT_CONF = "PORT";
 
-
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
 RepackClient::RepackClient()
 {
   /* the default server port */
@@ -90,40 +92,34 @@ RepackClient::RepackClient()
   cp.vid =  NULL;
   cp.pool = NULL;
 
-  /* DLF Logging */
-  castor::BaseObject::initLog(clientname, castor::SVC_STDMSG);
-  // Initializes the DLF logging. This includes
-  // registration of the predefined messages
-  castor::dlf::Message messages[] =
-    {{ 0, " - "},
-     { 1, "New Request Arrival"},
-     { 2, "Could not get Conversion Service for Streaming"},
-     {-1, ""}};
-  castor::dlf::dlf_init((char *)clientname.c_str(), messages);
-
   svc = svcs()->cnvService("StreamCnvSvc", castor::SVC_STREAMCNV);
   if (0 == svc) {
       // "Could not get Conversion Service for Streaming" message
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2);
+	std::cerr << "Could not get Conversion Service for Streaming" << std::endl;
+	return;
   }
 }
 
-
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
 RepackClient::~RepackClient() throw()
 {
   svc->release();
 }
 
 
-/** 
-  * parses the input and validates the parameters
-  * @return bool 
-  */
+
+
+
+//------------------------------------------------------------------------------
+// parseInput
+//------------------------------------------------------------------------------
 bool RepackClient::parseInput(int argc, char** argv)
 {
   const char* cmdParams = "V:P:h"; //m_cmdLineParams.str().c_str();
   if (argc == 1){
-    usage(argv[0]);
+    usage();
     return false;
   }
   struct Coptions longopts[] = {
@@ -147,7 +143,7 @@ bool RepackClient::parseInput(int argc, char** argv)
   while ((c = Cgetopt_long(argc, argv, (char*)cmdParams, longopts, NULL)) != -1) {
     switch (c) {
     case 'h':
-      usage(argv[0]);
+      help();
       exit(0);
       break;
     case 'V':
@@ -161,24 +157,48 @@ bool RepackClient::parseInput(int argc, char** argv)
     }
   }
   
-  if ( cp.pool != NULL && cp.vid != NULL )
-  	return false;
-  
-  else
-  	return true;
+  return ( cp.pool != NULL || cp.vid != NULL );
 }
 
 
-void RepackClient::usage(std::string message) throw ()
+
+
+//------------------------------------------------------------------------------
+// usage
+//------------------------------------------------------------------------------
+void RepackClient::usage() 
 {
-   std::cout << "Usage: "<< message  << " -V [VolumeID] -P [PoolID]" << std::endl;
+	std::cout << "Usage: repack -V [VolumeID] -P [PoolID] | -h " << std::endl;
 }
 
-/** Builds the Request, which is send to the repack server.
-* The Request includes the Job (Volume ID) and a IClient Object.
-* !! Note that the Caller has to delete the Request Object !!
-* @return pointer to Request Object
-*/
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+void RepackClient::help(){
+	std::cout << "The RepackClient" << std::endl
+	<< "This client sends a request to the repack server with tapes or one pool to be repacked. "<< std::endl 
+	<< "Several tapes can be added by sperating them by ':'.It is also possible to repack a tape pool."<< std::endl 
+	<< "Here, only the name of one tape pool is allowed." << std::endl;
+
+	std::cout << "The hostname and port can be changed easily by changing them in your castor " << std::endl 
+	<< "config file or by defining them in your enviroment." << std::endl << std::endl 
+	<< "The enviroment variables are: "<< std::endl 
+	<< "REPACK_PORT or REPACK_PORT_ALT "<< std::endl 
+	<< "REPACK_HOST or REPACK_HOST_ALT "<< std::endl << std::endl 
+	<< "The castor config file :" << std::endl
+	<< "REPACK PORT <port number> "<< std::endl
+	<< "REPACK HOST <hostname> "<< std::endl<< std::endl
+	<< "If the enviroment has no vaild entries the castor configuration file" << std::endl
+	<< "is read." << std::endl << std::endl;
+		
+        usage();
+}
+
+
+//------------------------------------------------------------------------------
+// buildRequest
+//------------------------------------------------------------------------------
 castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
 {
   setRemotePort();
@@ -191,9 +211,13 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
   
   if ( gethostname(cName, CA_MAXHOSTNAMELEN) != 0 ){
   	std::cerr << "Cannot get hostname ! Aborting.." << std::endl;
+ 	delete rreq;
   	return NULL;
   }
   
+
+  
+  /* add the given tapes as SubRequests */
   if ( cp.vid != NULL ) {
 	  for (vid = strtok (cp.vid, ":"); vid;  vid = strtok (NULL, ":")) {
 	  	RepackSubRequest *sreq = new RepackSubRequest();
@@ -201,9 +225,23 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
 	  	rreq->addSubRequest(sreq);
 	  }
   }
-  if ( cp.pool != NULL )
-       rreq->setPool(cp.pool);
 
+  /* or, we want to repack a pool */
+  if ( cp.pool != NULL ) {
+  	if ( !rreq->subRequest().size() )
+       rreq->setPool(cp.pool);
+    else
+    {
+    	std::cerr << "You must specify either a pool name or one or more volume ids" 
+    			  << std::endl;
+    	usage();
+    	delete rreq;
+    	return NULL;  	
+     }
+  }
+  
+  
+  
   rreq->setPid(getpid());
   rreq->setUserName(pw->pw_name);
   rreq->setCreationTime(time(NULL));
@@ -283,12 +321,14 @@ void RepackClient::setRemotePort()
       throw e;
     }
     m_defaultport = iport;
-  } else {
-    m_defaultport = m_defaultport;
-    clog() << "Contacting server on default port ("
-           << m_defaultport << ")." << std::endl;
-    
   }
+  else {
+  	castor::exception::Exception e(-1);
+      e.getMessage()
+        << "No repack server port in config file or in enviroment found! " << std::endl;
+      throw e;
+  }
+  
   stage_trace(3, "Setting up Server Port - Using %d", m_defaultport);
 }
 
@@ -306,7 +346,10 @@ void RepackClient::setRemoteHost()
       || (host = getconfent((char*)CATEGORY_CONF,(char *)HOST_CONF,0)) != 0) {
     m_defaulthost = host;
   } else {
-    m_defaulthost = m_defaulthost;
+    castor::exception::Exception e(-1);
+      e.getMessage()
+        << "No repack server hostname in config file or in enviroment found! " << std::endl;
+      throw e;
   }
   stage_trace(3, "Looking up Server Host - Using %s", m_defaulthost.c_str());
 }

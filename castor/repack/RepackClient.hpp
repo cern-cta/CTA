@@ -17,9 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/07 20:05:59 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/14 17:21:05 $ $Author: felixehm $
  *
- *
+ * The Repack Client. This is the client part of the repack project, which just
+ * sends and Request to the server. One Request can have serveral tapes 
+ * or one tapepool to be repacked.
+ * 
  *
  * @author Felix Ehm
  *****************************************************************************/
@@ -30,7 +33,6 @@
 /* Common includes */
 #include "castor/repack/RepackCommonHeader.hpp"
 #include <common.h>
-#include <dlfcn.h>
 #include "castor/ICnvSvc.hpp"
 #include "castor/Services.hpp"
 #include "castor/io/ClientSocket.hpp"
@@ -71,10 +73,43 @@ namespace castor {
     void RepackClient::run(int argc, char** argv);
 
   protected:
+    /** 
+     * parses the input and validates the parameters
+     * @return bool 
+     */
     bool parseInput(int argc, char** argv);
+    /**
+     * Builds the RepackRequest from the given parameters.
+     * Either a pool name can be specified OR volume ids seperated by ':'
+     * @return RepackRequest a new Repack Request or NULL
+     */
     castor::repack::RepackRequest* buildRequest()             throw ();
-    void usage(std::string message)                     throw ();
+    /**
+     * Little method to show a short usage description.
+     */
+    void usage();
+    /**
+     * Little method to show the full help of the repack client.
+     */
+    void help();
+    
+    /**
+     * Sets the remote port of the repack server. This port is used to contact
+     * the server. The searching order for the port is the following:
+     * 
+     * 1.enviroment variable		: REPACK_PORT
+     * 2.enviroment variable		: REPACK_PORT_ALT
+     * 3./etc/castor/castor.conf	: REPACK PORT <portnumber>
+     */
     void setRemotePort() throw (castor::exception::Exception);
+    /**
+     * Sets the hostname of the repack server. This host is used to contact
+     * the server. The searching for the name order is the following:
+     * 
+     * 1.enviroment variable		: REPACK_HOST
+     * 2.enviroment variable		: REPACK_HOST_ALT
+     * 3./etc/castor/castor.conf	: REPACK HOST <hostname>
+     */
     void setRemoteHost() throw (castor::exception::Exception);
 
   private:
