@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/02 18:03:26 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/02/14 15:26:26 $ $Author: felixehm $
  *
  *
  *
@@ -79,10 +79,12 @@ namespace castor {
   private:
     
    	/**
-	 * Retrieves the Information of a tape and returns it status, otherwise -1
+	 * Retrieves the Information of a tape and returns its status, otherwise -1
 	 * @param vid The Volumeid of the tape
 	 */
-    int getTapeInfo(castor::repack::RepackSubRequest* subreq);
+    int getTapeInfo(std::string tapename);
+
+	bool checkTapeForRepack(std::string);
 
     /**
      * Retrieves information about the tapes in a pool and counts the tape
