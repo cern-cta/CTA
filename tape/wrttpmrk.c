@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: wrttpmrk.c,v $ $Revision: 1.4 $ $Date: 2001/01/24 08:40:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: wrttpmrk.c,v $ $Revision: 1.5 $ $Date: 2006/02/14 15:09:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -27,6 +27,7 @@ static char sccsid[] = "@(#)$RCSfile: wrttpmrk.c,v $ $Revision: 1.4 $ $Date: 200
 #endif
 #include "Ctape.h"
 #include "serrno.h"
+#include "scsictl.h"
 wrttpmrk(tapefd, path, n)
 #if defined(_WIN32)
 HANDLE tapefd;
@@ -38,14 +39,20 @@ int n;
 {
 	char func[16];
 #if !defined(_WIN32)
-	struct mtop mtop;
+	unsigned char cdb[6];
+	char *msgaddr;
+	int nb_sense_ret;
+	unsigned char sense[MAXSENSE];
 #endif
 
 	ENTRY (wrttpmrk);
 #if !defined(_WIN32)
-	mtop.mt_op = MTWEOF;	/* write tape mark */
-	mtop.mt_count = n;
-	if (ioctl (tapefd, MTIOCTOP, &mtop) < 0) {
+	memset (cdb, 0, sizeof(cdb));
+	cdb[0] = 0x10;  	/* write tape mark code*/
+	cdb[1] = 0x01;          /* immediate bit set*/
+	cdb[4] = cdb[4] | n;    /* number of tapemarks*/
+
+	if (send_scsi_cmd (tapefd, path, 0, cdb, 6, NULL, 36, sense, 38, 30000, 8, &nb_sense_ret, &msgaddr) < 0) {
 #else
 	if (WriteTapemark (tapefd, TAPE_FILEMARKS, n, n ? (BOOL)1 : (BOOL)0)) {
 #endif
