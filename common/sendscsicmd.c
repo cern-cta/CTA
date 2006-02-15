@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.15 $ $Date: 2005/11/30 14:36:00 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.16 $ $Date: 2006/02/15 18:49:49 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	send_scsi_cmd - Send a SCSI command to a device */
@@ -586,7 +586,7 @@ char **msgaddr;
 	int sg_big_buff_val =  SG_BIG_BUFF;
 	int procfd, nbread;
 	char procbuf[PROCBUFSZ];
-	
+                                                                                                                                                            
 	/* First the value in /proc of the max buffer size for the sg driver */
 	procfd = open("/proc/scsi/sg/def_reserved_size", O_RDONLY);
 	if (procfd > 0) {
@@ -645,10 +645,10 @@ char **msgaddr;
 #endif
 			return (-1);
 		}
-		if (stat ("/dev/sga", &sbufa) < 0) {
+		if (stat ("/dev/sg0", &sbufa) < 0) {
 			serrno = errno;
 #if defined(TAPE)
-			USRMSG (TP042, "/dev/sga", "stat", strerror(errno));
+			USRMSG (TP042, "/dev/sg0", "stat", strerror(errno));
 #else
 			sprintf (err_msgbuf, "stat error: %s", strerror(errno));
 			*msgaddr = err_msgbuf;
@@ -669,8 +669,9 @@ char **msgaddr;
 				if (st_index == (sbuf.st_rdev & 0x1F)) break;
 			}
 			fclose (sgf);
-			sprintf (sgpath, "/dev/sg%c", sg_index + 'a');
+			sprintf (sgpath, "/dev/sg%d", sg_index);
 		}
+
 		if ((fd = open (sgpath, O_RDWR)) < 0) {
 			serrno = errno;
 #if defined(TAPE)
