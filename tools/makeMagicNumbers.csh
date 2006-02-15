@@ -3,21 +3,21 @@
 rm -f MagicNumbers
 
 echo Parsing Castor constants...
-echo "    OBJECTS\n" > MagicNumbers
+echo "     OBJECTS\n" > MagicNumbers
 grep OBJ_ ../castor/Constants.hpp | grep '=' | sed 's/ *\([^ ]*\) = \([0-9]*\).*$/\2  \1/' >> MagicNumbers
 
-echo "\n    SERVICES\n" >> MagicNumbers
+echo "\n     SERVICES\n" >> MagicNumbers
 grep SVC_ ../castor/Constants.hpp | grep '=' | sed 's/ *\([^ ]*\) = \([0-9]*\).*$/\2  \1/' >> MagicNumbers
 
-echo "\n    REPRESENTATIONS\n" >> MagicNumbers
+echo "\n     REPRESENTATIONS\n" >> MagicNumbers
 grep REP_ ../castor/Constants.hpp | grep '=' | sed 's/ *\([^ ]*\) = \([0-9]*\).*$/\2  \1/' >> MagicNumbers
 echo >> MagicNumbers
 
-foreach f ( `find ../castor/stager ../castor/vdqm -name '*Code*.hpp'` )
-  set output=`grep '_' $f | grep '=' | grep -v 'm_' | grep -v "if" | sed 's/\/\/.*$//'`
+foreach f ( `find ../castor/stager ../castor/vdqm ../castor/repack -name '*.hpp'` )
+  set output=`grep -H '_' $f | grep '=' | grep -v 'm_' | grep -v "if" | grep -v 'static' | sed 's/\/\/.*$//' | sed 's/^.*\/\([a-zA-Z]*\).hpp:/\1/'`
   if !("$output" == "") then
-    echo $output | sed 's/^\([^_]*\).*$/    \1\n/' >> MagicNumbers
-    echo $output | sed 's/,/\n/g' | sed 's/ *\([^ ]*\) = \([0-9]*\).*$/\2  \1/' >> MagicNumbers
+    echo $output | sed 's/^ *\([^ ]*\).*$/    \1\n/' | sed 's/StatusCodes*//' | awk '{print "    ", toupper($1);}' >> MagicNumbers
+    echo $output | sed 's/,/\n/g' | sed 's/ *[^ ]* *\([^ ]*\) = \([0-9]*\).*$/\2  \1/' >> MagicNumbers
     echo >> MagicNumbers
   endif
 end
