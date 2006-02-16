@@ -284,6 +284,7 @@ DROP PROCEDURE defGarbageCollectFS;
 DROP TRIGGER tr_FileSystem_Update;
 DROP PROCEDURE internalStageQuery;
 DROP PROCEDURE internalFullStageQuery;
+DROP PROCEDURE fileNameStageQuery;
 DROP PROCEDURE fileIdStageQuery;
 DROP PROCEDURE reqIdStageQuery;
 DROP PROCEDURE userTagStageQuery;

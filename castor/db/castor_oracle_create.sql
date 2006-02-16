@@ -906,7 +906,8 @@ CREATE OR REPLACE PACKAGE castor AS
         diskCopyStatus INTEGER,
         diskServerName VARCHAR2(2048),
         fileSystemMountPoint VARCHAR2(2048),
-        nbaccesses INTEGER);
+        nbaccesses INTEGER,
+        lastKnownFileName VARCHAR2(2048));
   TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
   TYPE FileList_Cur IS REF CURSOR RETURN FilesDeletedProcOutput%ROWTYPE;
 END castor;
@@ -1100,9 +1101,9 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
      AND SubRequest.castorfile = DiskCopy.castorfile
      AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
      AND FileSystem.id = DiskCopy.fileSystem
-     AND FileSystem.status = 0 -- PRODUCTION
+     AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
      AND DiskServer.id = FileSystem.diskserver
-     AND DiskServer.status = 0 -- PRODUCTION
+     AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
      AND ROWNUM < 2;
    -- We found at least a DiskCopy. Let's list all of them
    OPEN sources
@@ -1114,9 +1115,9 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       AND SubRequest.castorfile = DiskCopy.castorfile
       AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
       AND FileSystem.id = DiskCopy.fileSystem
-      AND FileSystem.status = 0 -- PRODUCTION
+      AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
       AND DiskServer.id = FileSystem.diskServer
-      AND DiskServer.status = 0; -- PRODUCTION
+      AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
     -- create DiskCopy for Disk to Disk copy
     UPDATE SubRequest SET diskCopy = ids_seq.nextval,
                           lastModificationTime = getTime() WHERE id = srId
@@ -1505,12 +1506,12 @@ BEGIN
     -- update lastAccess time
     UPDATE CastorFile SET LastAccessTime = getTime(),
                           nbAccesses = nbAccesses + 1,
-                          bestKnownFileName = fn
+                          lastKnownFileName = fn
       WHERE id = rid;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
-                            creationTime, lastAccessTime, nbAccesses, bestKnownFileName)
+                            creationTime, lastAccessTime, nbAccesses, lastKnownFileName)
       VALUES (ids_seq.nextval, fId, nh, sc, fc, fs, getTime(), getTime(), 1, fn)
       RETURNING id, fileSize INTO rid, rfs;
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
@@ -2289,7 +2290,8 @@ BEGIN
            UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
            DiskCopy.path, CastorFile.filesize,
            nvl(DiskCopy.status, -1), DiskServer.name,
-           FileSystem.mountPoint, CastorFile.nbaccesses
+           FileSystem.mountPoint, CastorFile.nbaccesses,
+           CastorFile.lastKnownFileName
       FROM CastorFile, DiskCopy, FileSystem, DiskServer,
            DiskPool2SvcClass
      WHERE CastorFile.id IN (SELECT * FROM TABLE(cfs))
@@ -2337,6 +2339,24 @@ BEGIN
   ORDER BY fileid, nshost;
 END;
 */
+
+/*
+ * PL/SQL method implementing the stage_query based on file id
+ */
+CREATE OR REPLACE PROCEDURE fileNameStageQuery
+ (fn IN VARCHAR2,
+  svcClassId IN INTEGER,
+  maxNbResponses IN INTEGER,
+  result OUT castor.QueryLine_Cur) AS
+  cfs "numList";
+BEGIN
+ SELECT id BULK COLLECT INTO cfs FROM CastorFile WHERE  REGEXP_LIKE(lastKnownFileName,fn) AND ROWNUM <= maxNbResponses + 1;
+ IF cfs.COUNT > maxNbResponses THEN
+   -- We have too many rows, we just give up
+   raise_application_error(-20102, 'Too many matching files');
+ END IF;
+ internalStageQuery(cfs, svcClassId, result);
+END;
 
 /*
  * PL/SQL method implementing the stage_query based on file id
