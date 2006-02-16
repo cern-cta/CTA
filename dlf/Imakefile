@@ -2,13 +2,12 @@ COMM
 COMM  Copyright (C) 2003 by CERN/IT/ADC
 COMM  All rights reserved
 COMM
-COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Date: 2006/02/16 14:55:48 $ CERN IT-ADC Vitaly Motyakov
+COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Date: 2006/02/16 15:06:01 $ CERN IT-ADC Vitaly Motyakov
 COMM    Make dlf programs.
 
 #include <Project.tmpl>
 
 SUBDIRS = $(DLFGUIDIR)
-EXPORTSUBDIRS = $(DLFGUIDIR)
 
 INCLUDES = FileName(..,h)
 #if _AIX
@@ -349,17 +348,6 @@ MakeCondSubdirs(clean,$(SUBDIRS),clean)
 MakeCondSubdirs(clobber,$(SUBDIRS),clobber)
 
 export: $(EPROGS_C) $(EPROGS_D)
-	(if [ "x$(EXPORT)" = "x" ] ; \
-	 then \
-	 echo "EXPORT must be set (thru make or environment)" ; exit 1 ; \
-	 else \
-	 echo "exporting to $(EXPORT)" ; \
-	fi ; \
-	for i in $(EXPORTSUBDIRS) ;\
-	do (echo " $$i (EXPORT):" ; cd $$i ; \
-	    $(MAKE) $(MFLAGS) EXPORTBIN=$(EXPORTBIN) EXPORTLIB=$(EXPORTLIB) $@ ; \
-	 ) ; done ; \
-	) ;
 
 exportman: $(EXPORTMANPAGES)
 
