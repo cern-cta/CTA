@@ -247,7 +247,6 @@ std::string castor::client::BaseClient::sendRequest
   clog() << DEBUG << "Opened callback socket on port "
          << port << std::endl;
   stage_trace(3, "Will wait for stager callback on port %d", port);
-  m_rhPort = port;
   // set the Client
   castor::IClient *cl = createClient();
   req->setClient(cl);
@@ -359,7 +358,7 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
   clock_t startTime = times(&buf);
 
   // creates a socket
-  castor::io::ClientSocket s(RHSERVER_PORT, m_rhHost);
+  castor::io::ClientSocket s(m_rhPort, m_rhHost);
   s.connect();
   // sends the request
   s.sendObject(request);
