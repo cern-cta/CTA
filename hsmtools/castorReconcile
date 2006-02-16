@@ -1,0 +1,635 @@
+#!/usr/bin/perl
+#
+# This program provides the user with a complete set of clean up options 
+# in terms of nodes, file systems and files.
+#
+# author	: alasdair.earl@cern.ch
+# started	: jan 2006
+# last change   : 16-2-06
+#
+#	code layout
+#
+#  init_vars ()				- sort cmd line args
+#
+#    DATA GATHERING ROUTINES
+# @nodes getCDBNodeList (clustername)	- get list of nodes from cdb using wget
+# @nodes getRMMasterNodeList (clustername)	- get list of nodes from rmmaster using cmd line args
+# @nodes getLSFNodeList (clustername)	 		- get castor cluster details from file
+# @nodes getStagerNodeList (clustername)		- get details from oracle db
+# %node/value generateHash ()				- creates a hash of nodes and values. Values are:
+#		1	in cdb only
+#		2	in rmmaster only
+#		3	in cdb + rmmaster
+#		4	in lsf only
+#		5	in lsf + cdb
+#		6	in lsf + rmmaster
+#		7	in lsf + rmmaster + cdb
+#		8	in stager db only
+#		9	in stager + cdb
+#		10	in stager + rmmaster
+#		11	in stager + rmmaster + cdb
+#		12	in stager + lsf
+#		13	in stager + lsf + cdb
+#		14	in stager + lsf + rmmaster
+#		15	in all
+#
+# %node/[filesystems] generateCDBFilesystems () 
+# %node/[filesystems] generateRMMasterFilesystems ()
+# %node/[filesystems] generateStagerFilesystems ()
+#
+#
+#    USEFUL/AGGREGATE ROUTINES
+# checkNodesFilesystems (%nodes)	- find nodes which are not in all four systems and 
+#				        see if they have file systems associated with them
+#
+# orphanFilesystems ()
+##
+# getStagerSvcclassList () 
+
+#      DISPLAY METHODS
+# produceHTMLTable ()	- produce an html table of nodes and their status 
+#	       		  in relation to lsf/cdb/rmmaster/stager
+
+#
+
+# 9. cleanOrphanFiles (@nodes) 
+
+use Data::Dumper; 
+use HTML::Table;
+use DBI;
+	
+my %ignore_svcclass = ('server' => 1, 'fileserver' => 1, 'dbserver' => 1);
+
+my $NODE, $TABLE, $SVCCLASS, $ORPHAN, $CLUSTER, $BAD;
+my $MASTER, $RM;
+
+#########################################################################
+# Subroutine to manage command line arguments
+#
+# INPUT  : 
+# OUTPUT : array of nodes
+sub init_vars() {
+        use Getopt::Std;
+        my $opt_string = 'bo:s:tn:hrm';  
+        getopts( "$opt_string", \%opt ) or usage();
+        usage() if $opt{h};
+        $BAD           = 1 if $opt{b};
+	$ORPHAN        = $opt{o};
+	$SVCCLASS      = $opt{s};
+	$TABLE         = $opt{t};
+	$NODE          = $opt{n};
+	$RM = 1 if $opt{r};
+	$MASTER = 1 if $opt{m};
+  }#end init_vars   
+
+
+sub usage ()
+
+{ 
+  print "-h help \n";
+  print "-o cluster      - orphaned file systems\n";
+  print "-s cluster      - undefined svcclass\n";
+  print "-t cluster      - table of node status'\n";
+  print "-n cluster      - node status'\n";
+  print "-b              - with -n, bad nodes only\n";
+
+}
+#########################################################################
+# Subroutine to retrieve a list of nodes from cdb based on cluster name
+#
+# INPUT  : cluster name as string
+# OUTPUT : array of nodes
+
+sub getCDBNodeList ($) {
+
+	my $cluster = @_[0];
+	my @nodelist;
+
+    my $cluster_url ="'http://oraweb.cern.ch/pls/cdbsql/web.show?p_fld1=clustername&p_data1=".
+$cluster."&p_hostname=yes&p_clustername=yes&p_clustersubname=yes&p_default=no&p_quat=all&p_outputformat=xml'";
+
+    open(LSF,"wget ".$cluster_url." --no-verbose -O- -o/dev/null|") or return ();
+    <LSF>;
+    <LSF>;
+    while (<LSF>){
+        if (/ID\=\"(\S+)\"/){
+                push @nodelist, $1;
+        }else{next;}
+    }
+    close(LSF);
+    return @nodelist;     
+}
+
+#########################################################################
+# Subroutine to retrieve a list of nodes from rmmaster based on cluster name
+#
+# INPUT  : cluster name as string
+# OUTPUT : array of nodes
+#
+sub getRMMasterNodeList ($) {
+
+	my $cluster = @_[0];
+        my @nodelist; 
+
+    open(RM,"/usr/bin/rmgetnodes --host ".$cluster."rmmaster 2>&1|") or return ();
+    my $node = undef;
+    while(<RM>){
+        chomp;
+        if (/usersend2rmd: (recv error : Timed out|rmmaster daemon not available on)/){
+            print "[ERR] rmgetnodes: $_\n";
+            last;
+        }
+        if (/^NODE (\S+)/){
+            $node = $1;
+            $node =~ s/\..*//g;
+	    push @nodelist, $node;
+        }
+    }
+    close(RM);
+    return @nodelist;
+}
+
+#########################################################################
+# Subroutine to retrieve a list of nodes from lsf
+#
+# INPUT  : cluster name as string
+# OUTPUT : array of nodes
+#
+sub getLSFNodeList () {
+
+	my $cluster = @_[0];
+	my @nodelist;
+        if ($cluster eq "castor2"){$cluster = "castor";}
+	my $file = "/afs/cern.ch/project/lsf/6.1/mnt/$cluster/conf/lsf.cluster.$cluster";
+
+	my $first_value = "'{print \$1}\'";
+	open (LSF, "cat $file | grep \"(\" | egrep -v ^# | awk $first_value |");
+
+	while (<LSF>) {
+		chomp($_);
+        	push (@nodelist, $_);
+	}
+	close LSF;
+
+	return @nodelist;
+}
+
+#########################################################################
+# Subroutine to retrieve a list of nodes from stager
+#
+# INPUT  : cluster name as string
+# OUTPUT : array of nodes
+#'castor_read', 'castor2read'
+sub getStagerNodeList () {
+        
+        my $user = $_[0];
+	my $pswd = $_[1];
+	my $cluster = $_[2];
+	my @nodelist;
+
+        $dbh = DBI->connect("dbi:Oracle:".$cluster."stgdb", $user, $pswd);
+        $sth = $dbh->prepare("select ds.name from castor_stager.diskserver ds");
+        
+        $sth->execute( );
+        
+        while ( @row = $sth->fetchrow_array ) {
+                push (@nodelist, $row[0]);
+        }
+        $rc  = $dbh->disconnect; 
+
+	return @nodelist;
+}
+
+#########################################################################
+# Subroutine to generate a hash list of all the nodes and their instance values
+#
+# INPUT  : cluster name as string
+# OUTPUT : hash ( nodes , values )
+#
+sub generateHash ()
+{
+	my $cluster = @_[0];
+        my (%nodeshash) = undef;
+
+	foreach (&getCDBNodeList ($cluster)) {$nodeshash{$_} += 1;}
+	foreach (&getRMMasterNodeList($cluster)) {$nodeshash{$_} += 2;}
+	foreach (&getLSFNodeList($cluster)) {$nodeshash{$_} += 4;}
+	foreach (&getStagerNodeList("castor_read", "castor2read", $cluster)) {$nodeshash{$_} += 8;}
+
+        #these values seem to be turning up from the stager ...
+	delete $nodeshash{''};
+	delete $nodeshash{'"'};
+
+	return %nodeshash;
+}
+
+#########################################################################
+# Subroutine to generate a hash of the nodes in rmmaster (key) and the file
+# systems associated with them (hash (fs, 1)
+#
+# It filters out nodes which have status set to down by deleting them from 
+# the hash before it is returned.
+#
+sub generateRMMasterFilesystems () 
+#
+{
+    my $cluster = $_[0];
+    %nodelist = undef;
+    my $node;
+    my @del;
+
+    $part1 = "'NODE\\|name\\|state'";
+    $part2 = "osname\\|nickname\\|eth\\|forced";
+                                                                                                                             
+    open (PIPE, "rmgetnodes --host ".$cluster."rmmaster | grep $part1 | egrep -v $part2 |");
+
+    while (<PIPE>){
+        if ($_ =~ /^NODE/) {
+	    my @t = split(" ", $_);
+	    $node = $t[1];
+        } elsif ($_ =~ /Down/) { push(@del, $node); 
+	} elsif ($_ =~ /name/) {    
+                my @t = split(" ", $_);
+		%{$nodelist{$node}}->{$t[4]} = 1;
+        }                                                                  
+    }#end while
+	
+    foreach (@del){ delete $nodelist{$_};}
+
+    return %nodelist;
+}
+
+#########################################################################
+# Subroutine to generate a hash of the nodes in stager (node = key) and the file
+# systems associated with them (value = hash (fs, 1)
+# 'castor_read', 'castor2read'
+sub generateStagerFilesystems () {
+#
+    my $user = $_[0];
+    my $pswd = $_[1];
+    my $cluster = $_[2];
+
+   	my %nodelist;
+
+        $a = "select unique ds.name, fs.mountpoint from ";
+        $b = "castor_stager.filesystem fs, castor_stager.diskserver ds where ";
+	$c = "fs.diskserver = ds.id";
+     
+        $dbh = DBI->connect("dbi:Oracle:".$cluster."stgdb", $user, $pswd);
+
+        $sth = $dbh->prepare($a.$b.$c);
+
+        $sth->execute( );
+        
+        while ( @row = $sth->fetchrow_array ) {
+	    my $node = $row[0];
+	    my $fs = $row[1];
+
+		if (! exists $nodelist{$node}) {$nodelist{$node} = {};}
+		%{$nodelist{$node}}->{$fs} = 1;
+        }
+        $rc  = $dbh->disconnect; 
+
+	return %nodelist;
+}
+
+#########################################################################
+# Subroutine to retrieve svcclass list from stager
+#
+# INPUT  : cluster name as string
+# OUTPUT : array of nodes
+#
+sub getStagerSvcclassList () {
+                                                                                                                             
+    my $user = $_[0];
+    my $pswd = $_[1];
+    my $cluster = $_[2];
+
+    my %results;
+                                                                                                                             
+        $dbh = DBI->connect("dbi:Oracle:".$cluster."stgdb", $user, $pswd);
+        $sth = $dbh->prepare("select svc.name from castor_stager.svcclass svc");
+                                                                                                                             
+        $sth->execute( );
+                                                                                                                             
+        while ( @row = $sth->fetchrow_array ) {
+                $results{$row[0]} = 1;
+        }
+        $rc  = $dbh->disconnect;
+                                                                                                                             
+        return %results;
+}
+
+#########################################################################
+# Subroutine to retrieve a list of nodes and svcclass from cdb based on cluster name
+#
+# INPUT  : cluster name as string
+# OUTPUT : array of nodes
+ 
+sub getCDBSvcclassList ($) {
+
+	my $cluster = @_[0];
+	my %results;
+	my $tmp;
+
+	my $cluster_url ="'http://oraweb.cern.ch/pls/cdbsql/web.show?p_fld1=clustername&p_data1=".$cluster."&p_hostname=yes&p_clustersubname=yes&p_default=no&p_quat=all&p_outputformat=xml'";
+
+    open(LSF,"wget ".$cluster_url." --no-verbose -O- -o/dev/null|") or return ();
+    <LSF>;
+    <LSF>;
+    while (<LSF>){
+	@tmp = split(/"/, $_);
+        if ($tmp[1] ne "") {$results{$tmp[1]} = $tmp[3];}
+
+    }
+    close(LSF);	
+    return %results;     
+}
+
+#########################################################################
+sub rmmasterStatus () 
+{
+    my $cluster = $_[0];
+    %nodelist = undef;
+    my $node;
+
+    $part1 = "'NODE\\|state'";
+    $part2 = "'\\['";
+                                                                                                                             
+    open (PIPE, "rmgetnodes --host ".$cluster."rmmaster | grep $part1 | egrep -v $part2 |");
+
+    while (<PIPE>){
+        if ($_ =~ /^NODE/) {
+	    my @t = split(" ", $_);
+	    $node = $t[1];
+	} else {    
+                my @t = split(" ", $_);
+		$nodelist{$node} = $t[3];
+        }                                                                  
+    }#end while
+
+    return %nodelist;
+}
+
+#########################################################################
+
+#Data Presentation Section
+
+#########################################################################
+#########################################################################
+# Subroutine to generate a html table of nodes and if the exist in various systems
+#
+# INPUT  : cluster name as string
+# OUTPUT : array of nodes
+#
+
+sub produceHTMLTable () {
+
+	my ($cluster) = $_[0];
+      	my $table2;
+        my %status;
+
+        my (@myary, @myary2, @myary3, @myary4);
+	my %nodevalues = &generateHash ($cluster);
+	
+        $table2 = new HTML::Table(-padding=>1, -border=>1);
+
+	$table2->addCol("Node", sort keys %nodevalues);
+
+	foreach (sort keys %nodevalues) {
+		if ($nodevalues{$_} =~ /^(1|3|5|7|9|11|13|15)$/) {
+			push (@myary, "<font color=green>OK</font>");
+		} else {
+			push (@myary, "<font color=red>Missing</font>");
+		}
+	}
+	$table2->addCol("CDB", @myary);
+
+        %status = &rmmasterStatus($cluster); 
+
+	foreach (sort keys %nodevalues) {
+		if ($nodevalues{$_} =~ /^(2|3|6|7|10|11|14|15)$/) {
+			push (@myary2, "<font color=green>$status{$_}</font>");
+		} else {
+			push (@myary2, "<font color=red>Missing</font>");
+		}
+	}
+	$table2->addCol("RMMaster", @myary2);
+
+	foreach (sort keys %nodevalues) {
+		if ($nodevalues{$_} =~ /^(4|5|6|7|12|13|14|15)$/) {
+			push (@myary3, "<font color=green>OK</font>");
+		} else {
+			push (@myary3, "<font color=red>Missing</font>");
+		}
+	}
+	$table2->addCol("LSF", @myary3);
+
+	foreach (sort keys %nodevalues) {
+		if ($nodevalues{$_} =~ /^(8|9|10|11|12|13|14|15)$/) {
+			push (@myary4, "<font color=green>OK</font>");
+		} else {
+			push (@myary4, "<font color=red>Missing</font>");
+		}
+	}
+
+	$table2->addCol("Stager", @myary4);
+       
+	print "<HTML><HEAD><TITLE>$cluster</TITLE></HEAD><BODY>\n";
+	print "<CENTER>$cluster -".`date`."</CENTER>";
+	$table2->print;
+	print "</BODY></HTML>";
+}
+
+#########################################################################
+sub produceTable () {
+
+	my ($cluster) = $_[0];
+      	my $table2;
+        my (@myary, @myary2, @myary3, @myary4, @node);
+        my %status;
+
+	my %nodevalues = &generateHash ($cluster);
+	
+        $table2 = new HTML::Table(-padding=>1, -border=>1);
+        %status = &rmmasterStatus($cluster); 	
+	foreach (sort keys %nodevalues) {
+	    if ($nodevalues{$_} != 15) {
+
+		push (@node, $_);
+
+ 	       
+		if ($nodevalues{$_} =~ /^(1|3|5|7|9|11|13|15)$/) {
+			push (@myary, "<font color=green>OK</font>");
+		} else {
+			push (@myary, "<font color=red>Missing</font>");
+		}
+	        
+
+
+
+
+		if ($nodevalues{$_} =~ /^(2|3|6|7|10|11|14|15)$/) {
+			push (@myary2, "<font color=green>$status{$_}</font>");
+		} else {
+			push (@myary2, "<font color=red>Missing</font>");
+		}
+
+
+		if ($nodevalues{$_} =~ /^(4|5|6|7|12|13|14|15)$/) {
+			push (@myary3, "<font color=green>OK</font>");
+		} else {
+			push (@myary3, "<font color=red>Missing</font>");
+		}
+       
+
+		if ($nodevalues{$_} =~ /^(8|9|10|11|12|13|14|15)$/) {
+			push (@myary4, "<font color=green>OK</font>");
+		} else {
+			push (@myary4, "<font color=red>Missing</font>");
+		}
+	
+
+	    }#end if
+       }#end foreach
+
+
+
+	$table2->addCol("Node", @node);
+        $table2->addCol("CDB", @myary);
+        $table2->addCol("RMMaster", @myary2);
+        $table2->addCol("LSF", @myary3);
+        $table2->addCol("Stager", @myary4);
+	print "<HTML><HEAD><TITLE>$cluster</TITLE></HEAD><BODY>\n";
+	print "<CENTER>".$cluster." - ". `date`."</CENTER>";
+	$table2->print;
+	print "</BODY></HTML>";
+
+}
+
+#########################################################################
+
+#Data Analysis section
+
+#########################################################################
+# Subroutine to create list of questionable nodes based on entries in cdb and rmmaster
+# not being used at moment
+# INPUT  : cluster name as string
+# OUTPUT : array of nodes
+#
+sub checkNodesFilesystems () {
+
+	my $cluster = @_[0];
+        my (@myary, @myary2, @myary3, @myary4);
+
+	my %nodevalues = &generateHash ($cluster);
+         
+	foreach (sort keys %nodevalues) {
+		if ($nodevalues{$_} != 15) {
+			   push @questionable_nodes, $_;
+	}}
+
+	foreach (@questionable_nodes) {
+		
+        	my $node = $_;
+		
+                open (TMP, "diskServer_qry $node 2>&1 |");
+                while(<TMP>) {
+                	if (! m/FileName$/) {print "Files found on node $node by diskServer_qry including \n$_"; last;}
+                }
+	}
+}
+
+#########################################################################
+
+sub orphanFilesystems () {
+
+    my $cluster = $_[0];
+    my %rmMasterValues = &generateRMMasterFilesystems ($cluster);
+    my %stagerValues = &generateStagerFilesystems ("castor_read","castor2read", $cluster);
+    my $node, $fs;
+    my %totality;
+
+   my $table2;
+   my (@myary, @myary2);
+   $table2 = new HTML::Table(-padding=>1, -border=>1);
+
+    if ($RM == 1 || ($RM eq `` && $MASTER eq ``)) {
+    foreach $node (sort keys %rmMasterValues){
+       foreach $fs (sort keys %{$rmMasterValues{$node}}) { 
+          if (! exists %{$stagerValues{$node}}->{$fs}) { 
+	      %{$totality{$node}}->{rmmaster} = $fs;
+#	      print "$node $fs in RMMaster but not Stager\n"; 
+          }
+       }	    
+    }    
+    }#end if
+
+    if ($MASTER == 1 || ($RM eq `` && $MASTER eq ``)) {
+    foreach $node (sort keys %stagerValues){
+       foreach $fs (sort keys %{$stagerValues{$node}}){
+	   if (! exists %{$rmMasterValues{$node}}->{$fs}){
+	      %{$totality{$node}}->{stager} = $fs;
+#	       print "$node $fs in Stager but not RMMaster or node is Down in RMMaster\n";
+	   }
+       }
+    }    }
+
+    foreach (sort keys %totality){
+	if (exists %{$totality{$_}}->{stager}) { push (@myary, %{$totality{$_}}->{stager}); }
+	else {push (@myary, "-");}
+	if (exists %{$totality{$_}}->{rmmaster}) { push (@myary2, %{$totality{$_}}->{rmmaster}); }
+	else {push (@myary2, "-");}
+    }
+#    print Data::Dumper->Dump([%totality]);
+
+
+ 	$table2->addCol("Node", sort keys %totality);
+        $table2->addCol("Stager", @myary);
+        $table2->addCol("RMMaster", @myary2);
+	print "<HTML><HEAD><TITLE>$cluster Orphaned Filesystem Check</TITLE></HEAD><BODY>\n";
+	print "<CENTER>Orphaned Filesystem Check for ".$cluster." - ". `date`."</CENTER>";
+	$table2->print;
+	print "</BODY></HTML>";
+
+    return;
+}
+#########################################################################
+sub svcClassCheck () {
+
+   my $cluster = $_[0];
+   my %r1 = &getCDBSvcclassList($cluster);
+   my %r2 = &getStagerSvcclassList ("castor_read", "castor2read", $cluster);
+   my $table2;
+   my (@myary, @myary2);
+   $table2 = new HTML::Table(-padding=>1, -border=>1);
+
+
+   foreach (sort keys %ignore_svcclass) {$r2{$_} = $ignore_svcclass{$_};}
+   foreach (sort keys %r1) {
+       if (! exists $r2{$r1{$_}}) {
+	   push (@myary, $_);
+           push (@myary2, $r1{$_});
+       }
+   }
+	$table2->addCol("Node", @myary);
+        $table2->addCol("SvcClass", @myary2);
+	print "<HTML><HEAD><TITLE>$cluster SvcClass Check</TITLE></HEAD><BODY>\n";
+	print "<CENTER>SVCClass check for ".$cluster." - ". `date`."</CENTER>";
+	$table2->print;
+	print "</BODY></HTML>";
+  return;  
+}#end svcclasscheck
+
+#########################################################################
+
+#main code segment
+
+   &init_vars();
+
+   if (	 $SVCCLASS  ) {   &svcClassCheck ($SVCCLASS); }
+   if (   $ORPHAN   ) {   &orphanFilesystems ($ORPHAN); } 
+   if (   $NODE     )    { if ( $BAD != 1) { &produceHTMLTable ($NODE);} 
+		           else {&produceTable($NODE);}}
+
+   exit;
