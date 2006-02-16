@@ -103,6 +103,7 @@ endif
 	mkdir -p $(CURDIR)/debian/castor/etc/init.d
 	mkdir -p $(CURDIR)/debian/castor/etc/sysconfig
 	mkdir -p $(CURDIR)/debian/castor/usr/local/lsf/etc
+	mkdir -p $(CURDIR)/debian/castor/var/www/html/dlf
 	# Install CASTOR
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/castor
 	$(MAKE) exportman DESTDIR=$(CURDIR)/debian/castor EXPORTMAN=$(CURDIR)/debian/castor/usr/share/man

@@ -326,3 +326,10 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Volume Manager server
+
+Package: castor-dlf-gui
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: castor (Cern Advanced STORage system)
+ Distributed Logging Facility GUI
+  
