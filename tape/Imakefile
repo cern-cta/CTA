@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Date: 2005/05/02 07:49:57 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Date: 2006/02/16 11:12:42 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM 	Make tape daemon programs. 
 
@@ -83,7 +83,11 @@ LIBDMSC = -L$(DMSC)/lib -lfbs
 CDK = CDKDir
 CDKFLG = -DCDK -DLINUX
 CDKINC = -I$(CDK)/include/CDK
+#ifdef __x86_64
+LIBCDK = -L$(CDK)/lib64/CDK -lapi -lutl -lapi -lipc -lcl
+#else
 LIBCDK = -L$(CDK)/lib/CDK -lapi -lutl -lapi -lipc -lcl
+#endif
 #endif
 #if BuildSecurity
 SECURITYFLAG=-DCSEC
