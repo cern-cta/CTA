@@ -35,6 +35,24 @@ BEGIN
  EXCEPTION WHEN NO_DATA_FOUND THEN NULL;
 END;
 
+-- some requests have all there subrequests FINISHED
+----------------------------------------------------
+-- TAKE CARE : DO NOT USE IF THERE ARE FINISHED SUBREQUESTS IN OTHER SITUATIONS
+BEGIN
+ LOOP
+   -- do it 100 by 100 in order to not slow down the normal requests
+   FOR sr IN (SELECT id FROM SubRequest
+               WHERE creationtime < getTime() - 10000
+                 AND status = 8 and ROWNUM <= 100) LOOP
+     archiveSubReq(sr.id);
+   END LOOP;
+   -- commit and wait 5 seconds between each bunch of 100
+   COMMIT;
+   DBMS_LOCK.sleep(seconds => 5.0);
+ END LOOP;
+ EXCEPTION WHEN NO_DATA_FOUND THEN NULL;
+END;
+
 -- SubRequests waiting on nothing (mostly non existing parents -> restart them with no parent
 ---------------------------------------------------------------------------------------------
 UPDATE SubRequest SET status = 1, parent = NULL

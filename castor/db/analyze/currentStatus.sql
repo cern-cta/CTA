@@ -21,7 +21,9 @@ SELECT s1.status, count(*) from subrequest s1, subrequest s2
 --     we will see on next next step how tape recalls are doing
 --   - some in status 5 (WAITSUBREQ) : some other part of the request is waiting on a waiting file
 --     we will see on next step what they are waiting on
---   - some in status 6 (READY) : should be a (very) small number (running ones)
+--   - some in status 6 (READY) : these requests are READY for too long now. See solutions.sql for cleaning
+--   - nothing : remaining FINISHED subrequests are within requests where everything is over. See
+--     solutions.sql to clean that up.
 
 -- What are WAITSUBREQ subrequests waiting on ?
 SELECT p.status, count(*) from subrequest c, subrequest p
@@ -50,7 +52,7 @@ select unique t.* from subrequest sr, tapecopy tc, tape t, segment s
 
 
 
--- distribution of old subrequests (more than 10000s)
+-- distribution of old DiskCopies (more than 10000s)
 select status, count(*) from diskcopy where creationtime < getTime() - 10000 group by status;
 
 -- What are the WAITDisk2DiskCopy ones ?
