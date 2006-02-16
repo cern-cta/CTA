@@ -2,10 +2,13 @@ COMM
 COMM  Copyright (C) 2003 by CERN/IT/ADC
 COMM  All rights reserved
 COMM
-COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Date: 2005/01/23 08:27:50 $ CERN IT-ADC Vitaly Motyakov
+COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Date: 2006/02/16 14:55:48 $ CERN IT-ADC Vitaly Motyakov
 COMM    Make dlf programs.
 
 #include <Project.tmpl>
+
+SUBDIRS = $(DLFGUIDIR)
+EXPORTSUBDIRS = $(DLFGUIDIR)
 
 INCLUDES = FileName(..,h)
 #if _AIX
@@ -241,8 +244,28 @@ $(CDBANA): FORCE
 
 #if BuildDlfDaemon
 install: $(BIN) $(IPROGS_C) $(IPROGS_D) $(SPOOL) $(SACCTDIR)
+	for i in $(SUBDIRS) ;\
+	do (if [ -d $$i ] ;\
+	    then \
+	      (echo " $$i:" ; cd $$i ;\
+	      $(MAKE) $(MFLAGS) $@) ;\
+	    else \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;\
+	    fi )\
+	done ;
 #else
 install: $(BIN) $(IPROGS_C)
+	for i in $(SUBDIRS) ;\
+	do (if [ -d $$i ] ;\
+	    then \
+	      (echo " $$i:" ; cd $$i ;\
+	      $(MAKE) $(MFLAGS) $@) ;\
+	    else \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;\
+	    fi )\
+	done ;
 #endif
 
 InstallProgram(dlfserver,$(BIN),root,bin,750)
@@ -321,7 +344,22 @@ EMANPAGE(dlf_init,$(EXPORTMAN)/man3,$(MANSUFFIX))
 EMANPAGE(dlf_write,$(EXPORTMAN)/man3,$(MANSUFFIX))
 EMANPAGE(dlf_seterrbuf,$(EXPORTMAN)/man3,$(MANSUFFIX))
 
+MakeSubdirs(all,$(SUBDIRS))
+MakeCondSubdirs(clean,$(SUBDIRS),clean)
+MakeCondSubdirs(clobber,$(SUBDIRS),clobber)
+
 export: $(EPROGS_C) $(EPROGS_D)
+	(if [ "x$(EXPORT)" = "x" ] ; \
+	 then \
+	 echo "EXPORT must be set (thru make or environment)" ; exit 1 ; \
+	 else \
+	 echo "exporting to $(EXPORT)" ; \
+	fi ; \
+	for i in $(EXPORTSUBDIRS) ;\
+	do (echo " $$i (EXPORT):" ; cd $$i ; \
+	    $(MAKE) $(MFLAGS) EXPORTBIN=$(EXPORTBIN) EXPORTLIB=$(EXPORTLIB) $@ ; \
+	 ) ; done ; \
+	) ;
 
 exportman: $(EXPORTMANPAGES)
 
@@ -329,22 +367,51 @@ exportshr:
 
 COMM###################### CLEANING RULES ########################
  
-clean:
+clean::
 	-@RemoveFiles(FilesToClean)
  
-clobber:        clean
+clobber::        clean
 	-@RemoveFiles($(CLIENT) $(PROGS_D) dlf_oracle_ifce.c dlf_oracle_ifce.lis)
  
 #if _WIN32
+Makefiles:
+	-@for %i in ( $(SUBDIRS) ) \
+	do @(echo %i - & cd %i & \
+		..\..\imake\imake -I..\..\config & \
+		$(MAKE) $(MFLAGS) $@ & cd .. )
+
 depend:
 	@echo Not supported on this platform
 #else
+Makefiles:
+	@. ../setosflags ;\
+	for i in $(SUBDIRS) ;\
+	do (if [ -d $$i ] ;\
+	    then \
+	      (echo " $$i:" ; cd $$i ;\
+	      ../../imake/imake -I../../config -DOSMajorVersion="$$OSMAJNO" -DOSMinorVersion="$$OSMINNO" ;\
+	      $(MAKE) $(MFLAGS) $@) ;\
+	    else \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;\
+	    fi )\
+	done ;
+
 depend:
-	makedepend -Y$(INCLUDES) *.c 2> /dev/null
+	makedepend -- $(INCLUDES) -- $(STGLIB_SRCS) 2> /dev/null; \
+	for i in $(DEPENDDIRS) ;\
+	do (if [ -d $$i ] ;\
+	    then \
+	      (echo " $$i:" ; cd $$i ;\
+	      $(MAKE) $(MFLAGS) $@) ;\
+	    else \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;\
+	    fi )\
+	done ;
+
 #endif
 
-Makefiles:
- 
 FORCE:
 
 COMM###################### DEPENDENCIES ##########################
