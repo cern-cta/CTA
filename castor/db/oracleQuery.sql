@@ -3,7 +3,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(2048));
-INSERT INTO CastorVersion VALUES ('2_0_0_65');
+INSERT INTO CastorVersion VALUES ('2_0_3_0');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq;

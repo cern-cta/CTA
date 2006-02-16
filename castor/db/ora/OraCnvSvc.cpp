@@ -150,7 +150,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
       m_environment->createConnection(m_user, m_passwd, m_dbName);
     clog() << DEBUG << "Created new Oracle connection : "
            << m_connection << std::endl;
-    std::string codeVersion = "2_0_0_65";
+    std::string codeVersion = "2_0_3_0";
     std::string DBVersion = "";
     oracle::occi::Statement* stmt = 0;
     try {

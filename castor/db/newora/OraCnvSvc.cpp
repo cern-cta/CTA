@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/20 15:28:58 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/16 17:00:06 $ $Author: sponcec3 $
  *
  *
  *
@@ -130,7 +130,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     }
     m_connection =
       m_environment->createConnection(m_user, m_passwd, m_dbName);
-    std::string codeVersion = "2_0_0_65";
+    std::string codeVersion = "2_0_3_0";
     std::string DBVersion = "";
     oracle::occi::Statement* stmt = 0;
     try {
