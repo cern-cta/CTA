@@ -37,8 +37,8 @@ bool CppHOraCnvWriter::init(UMLClassifier* c, QString fileName) {
 void CppHOraCnvWriter::writeFillRep() {
   // First write the main function, dispatching the requests
   writeDocumentation
-    (QString("Fill the foreign representation with some of the objects.") +
-     "refered by a given C++ object.",
+    (QString("Fill the foreign representation with some of the objects ") +
+     "referred by a given C++ object.",
      "",
      QString("@param address the place where to find the foreign representation\n") +
      "@param object the original C++ object\n" +
