@@ -1,5 +1,5 @@
 #
-# $Id: if.has_oracle,v 1.4 2006/02/16 13:30:36 sponcec3 Exp $
+# $Id: if.has_oracle,v 1.5 2006/02/16 13:43:17 sponcec3 Exp $
 #
 ## List of packages to do only if oracle is available
 #
@@ -16,4 +16,4 @@ castor-upv-server
 castor-vmgr-server
 castor-vdqm2-lib-oracle
 castor-vdqm2-server
-castor-hsmtools
+castor-dbtools
