@@ -291,6 +291,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildDlfClient    	NO
 #define BuildDlfDaemon    	NO
 #define BuildDlfLibrary    	NO
+#define BuildDlfGui             NO
 #define BuildExpertClient	NO
 #define BuildExpertDaemon	NO
 #define BuildExpertLibrary	NO
