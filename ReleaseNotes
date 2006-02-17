@@ -5,6 +5,7 @@
   New Features and Changes
   ------------------------
 
+    - Support for ACLs in the nameserver
     - Regular expression support in stager_qry. The feature is
       limited on the server side via the FILEQUERY/MAXNBRESPONSES
       entry in the castor.conf.
@@ -29,3 +30,8 @@
       are accessed but you can update it by hand using upgrades/2.0.2_to_2.0.3.pl
       Note that the only disadvantage of not updating is that stager_qry -M will
       not return files that were not updated.
+    - For the nameserver, the database must be updated first, using the script
+      ns/Cns_oracle_add_ACL.sql. Then the daemons can be updated and finally the
+      clients. Note that each step is backward compatible, so that an old daemon
+      can run on a new database and an old client can contact a new daemon.
+
