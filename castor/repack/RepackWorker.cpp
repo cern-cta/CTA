@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/02/14 15:26:25 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/02/17 19:03:06 $ $Author: felixehm $
  *
  *
  *
@@ -41,7 +41,6 @@ namespace castor {
 //------------------------------------------------------------------------------
 RepackWorker::RepackWorker()
 {
-  m_nameserver = "castorns.cern.ch";  // The default Nameserver
   m_databasehelper = new castor::repack::DatabaseHelper();
 }
 
@@ -244,13 +243,14 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw()
 
 bool RepackWorker::checkTapeForRepack(std::string tapename)
 {
-	return ( getTapeInfo(tapename) && !m_databasehelper->is_stored(tapename) );
+	return ( (getTapeStatus(tapename)>0) && !m_databasehelper->is_stored(tapename) );
 }
+
 
 //------------------------------------------------------------------------------
 // Gets the Tape information
 //------------------------------------------------------------------------------
-int RepackWorker::getTapeInfo(std::string tapename){
+int RepackWorker::getTapeStatus(std::string tapename){
 	
 	std::string p_stat = "?";
 	struct vmgr_tape_info tape_info;
@@ -258,7 +258,7 @@ int RepackWorker::getTapeInfo(std::string tapename){
 	TapeDriveStatus statusname;
 	char *vid = (char*)tapename.c_str();
 	
-
+	
 
 	/* just to have a nice access for output */
 	statusname[DISABLED] 	= "Disabled";
@@ -276,7 +276,7 @@ int RepackWorker::getTapeInfo(std::string tapename){
 		castor::dlf::Param params[] =
         {castor::dlf::Param("VID", vid),
          castor::dlf::Param("ErrorText", sstrerror(serrno))};
-  		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 16, 1, params);
+  		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 16, 1, params);
 		return -1;
 	}
 
@@ -287,7 +287,7 @@ int RepackWorker::getTapeInfo(std::string tapename){
 		castor::dlf::Param params[] =
         {castor::dlf::Param("VID", vid),
          castor::dlf::Param("Status", tape_info.status)};
-  		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 17, 2, params);
+  		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 17, 2, params);
   		return -1;
 	}
 	/* Tape is Free - nothing to be done !*/
@@ -296,8 +296,8 @@ int RepackWorker::getTapeInfo(std::string tapename){
 		ex.getMessage() << 	"Tape "<< vid << " is marked as FREE, no repack to be done!";
 		castor::dlf::Param params[] =
         {castor::dlf::Param("VID", vid)};
-  		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 18, 1, params);
-  		return 0;
+  		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 18, 1, params);
+  		return 1; //TODO: remove, we don't watn to repack free tapes - just for testing purpose
 	}
 	/* Ok,we got a valid status. fine, we can proceed*/
 	else
