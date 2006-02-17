@@ -1,0 +1,31 @@
+-----------
+- 2.0.3-0 -
+-----------
+
+  New Features and Changes
+  ------------------------
+
+    - Regular expression support in stager_qry. The feature is
+      limited on the server side via the FILEQUERY/MAXNBRESPONSES
+      entry in the castor.conf.
+    - LSF plugin is using new fixes coming with LSF 6.1-24. This
+      allows to remove an internal fork. This change is incompatible
+      with any old version of LSF
+    - Interface for passing an authorization id to the stager on top
+      of a user id.
+    - Framework for multithreaded applications was ported to C++
+    - Fixed compilation for x86_64 architecture
+    - New package castor-dlf-gui
+    - tpdaemon uses sg0 device instead of sga
+    - Write filemarks with sg driver and immediate bit set
+
+  Upgrade from 2.0.2-*
+  --------------------
+
+    - LSF 6.1-24 or higher must be used
+    - The database schema has evolved. Use upgrades/2.0.2_to_2.0.3.sql to upgrade
+    - Once the database is upgraded, the content of the lastKnownFileName column
+      of the CastorFile table is still empty. It will be updated when the files
+      are accessed but you can update it by hand using upgrades/2.0.2_to_2.0.3.pl
+      Note that the only disadvantage of not updating is that stager_qry -M will
+      not return files that were not updated.
