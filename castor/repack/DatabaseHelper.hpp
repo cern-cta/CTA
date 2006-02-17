@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/14 15:29:48 $ $Author: felixehm $
+ * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/17 18:54:41 $ $Author: felixehm $
  *
  * 
  *
@@ -79,12 +79,17 @@ namespace castor {
 	   * Selects the next request the Repack daemon should deal with.
 	   * It returns a RepackSubRequest, so directly the tape to repack.
 	   * The corresponding main Request can be fetched by TODO:: <other function>>
+ 	   * TODO: select statement
 	   * 
 	   * @return the Request to process
 	   * @exception Exception in case of error
 	   */
-	  virtual castor::repack::RepackSubRequest* requestToDo() 
+	  castor::repack::RepackSubRequest* requestToDo() 
 					throw (castor::exception::Exception);
+
+
+
+	  
 
 	  /**
        * Resets the converter. In particular any prepared
@@ -97,9 +102,24 @@ namespace castor {
        * parameter.
        */
       void updateSubRequest(castor::repack::RepackSubRequest* obj, Cuuid_t& cuuid) throw ();
-      
+
+	  /**
+	   * Checks the RepackDB for SubRequests in a certain status.
+	   * TODO: select statement
+	   */
+	  RepackSubRequest* checkSubRequestStatus(int status) throw();
+
+      /**
+       * Checks,wether a Tape is already stored in the RepackSubRequest Table.
+       * This is needed before a Tape is inserted as a new repackjob.
+       */
       bool is_stored(std::string vid) throw();
       private:
+      
+        /**
+         * Little Helper to get a get a SubRequest from DB.
+         */
+	  	RepackSubRequest* DatabaseHelper::getSubRequest(u_signed64 id) throw();
       
       /// SQL statement for function ToDo
         static const std::string m_selectToDoStatementString;
@@ -107,6 +127,9 @@ namespace castor {
 
         static const std::string m_selectCheckStatementString;
         castor::db::IDbStatement *m_selectCheckStatement;
+        
+        static const std::string m_selectCheckSubRequestStatementString;
+        castor::db::IDbStatement *m_selectCheckSubRequestStatement;
       
       
 		castor::BaseAddress ad;
