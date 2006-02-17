@@ -56,7 +56,7 @@ static castor::CnvFactory<castor::db::ora::OraRepackSubRequestCnv>* s_factoryOra
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraRepackSubRequestCnv::s_insertStatementString =
-"INSERT INTO RepackSubRequest (vid, xsize, status, id, requestID) VALUES (:1,:2,:3,ids_seq.nextval,:4) RETURNING id INTO :5";
+"INSERT INTO RepackSubRequest (vid, xsize, status, cuuid, id, requestID) VALUES (:1,:2,:3,:4,ids_seq.nextval,:5) RETURNING id INTO :6";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraRepackSubRequestCnv::s_deleteStatementString =
@@ -64,11 +64,11 @@ const std::string castor::db::ora::OraRepackSubRequestCnv::s_deleteStatementStri
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraRepackSubRequestCnv::s_selectStatementString =
-"SELECT vid, xsize, status, id, requestID FROM RepackSubRequest WHERE id = :1";
+"SELECT vid, xsize, status, cuuid, id, requestID FROM RepackSubRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraRepackSubRequestCnv::s_updateStatementString =
-"UPDATE RepackSubRequest SET vid = :1, xsize = :2, status = :3 WHERE id = :4";
+"UPDATE RepackSubRequest SET vid = :1, xsize = :2, status = :3, cuuid = :4 WHERE id = :5";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraRepackSubRequestCnv::s_storeTypeStatementString =
@@ -379,7 +379,7 @@ void castor::db::ora::OraRepackSubRequestCnv::fillObjRepackRequest(castor::repac
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 requestIDId = (u_signed64)rset->getDouble(5);
+  u_signed64 requestIDId = (u_signed64)rset->getDouble(6);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -419,7 +419,7 @@ void castor::db::ora::OraRepackSubRequestCnv::createRep(castor::IAddress* addres
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(5, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(6, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -428,9 +428,10 @@ void castor::db::ora::OraRepackSubRequestCnv::createRep(castor::IAddress* addres
     m_insertStatement->setString(1, obj->vid());
     m_insertStatement->setDouble(2, obj->xsize());
     m_insertStatement->setInt(3, obj->status());
-    m_insertStatement->setDouble(4, (type == OBJ_RepackRequest && obj->requestID() != 0) ? obj->requestID()->id() : 0);
+    m_insertStatement->setString(4, obj->cuuid());
+    m_insertStatement->setDouble(5, (type == OBJ_RepackRequest && obj->requestID() != 0) ? obj->requestID()->id() : 0);
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(5));
+    obj->setId((u_signed64)m_insertStatement->getDouble(6));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -458,6 +459,7 @@ void castor::db::ora::OraRepackSubRequestCnv::createRep(castor::IAddress* addres
                     << "  vid : " << obj->vid() << std::endl
                     << "  xsize : " << obj->xsize() << std::endl
                     << "  status : " << obj->status() << std::endl
+                    << "  cuuid : " << obj->cuuid() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  requestID : " << obj->requestID() << std::endl;
     throw ex;
@@ -484,7 +486,8 @@ void castor::db::ora::OraRepackSubRequestCnv::updateRep(castor::IAddress* addres
     m_updateStatement->setString(1, obj->vid());
     m_updateStatement->setDouble(2, obj->xsize());
     m_updateStatement->setInt(3, obj->status());
-    m_updateStatement->setDouble(4, obj->id());
+    m_updateStatement->setString(4, obj->cuuid());
+    m_updateStatement->setDouble(5, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->commit();
@@ -586,7 +589,8 @@ castor::IObject* castor::db::ora::OraRepackSubRequestCnv::createObj(castor::IAdd
     object->setVid(rset->getString(1));
     object->setXsize((u_signed64)rset->getDouble(2));
     object->setStatus(rset->getInt(3));
-    object->setId((u_signed64)rset->getDouble(4));
+    object->setCuuid(rset->getString(4));
+    object->setId((u_signed64)rset->getDouble(5));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -635,7 +639,8 @@ void castor::db::ora::OraRepackSubRequestCnv::updateObj(castor::IObject* obj)
     object->setVid(rset->getString(1));
     object->setXsize((u_signed64)rset->getDouble(2));
     object->setStatus(rset->getInt(3));
-    object->setId((u_signed64)rset->getDouble(4));
+    object->setCuuid(rset->getString(4));
+    object->setId((u_signed64)rset->getDouble(5));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

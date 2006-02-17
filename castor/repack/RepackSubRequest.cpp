@@ -45,6 +45,7 @@ castor::repack::RepackSubRequest::RepackSubRequest() throw() :
   m_vid(""),
   m_xsize(0),
   m_status(0),
+  m_cuuid(""),
   m_id(0),
   m_requestID(0) {
 };
@@ -78,6 +79,7 @@ void castor::repack::RepackSubRequest::print(std::ostream& stream,
   stream << indent << "vid : " << m_vid << std::endl;
   stream << indent << "xsize : " << m_xsize << std::endl;
   stream << indent << "status : " << m_status << std::endl;
+  stream << indent << "cuuid : " << m_cuuid << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

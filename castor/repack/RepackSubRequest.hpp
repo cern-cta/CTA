@@ -154,6 +154,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_cuuid
+       * @return the value of m_cuuid
+       */
+      std::string cuuid() const {
+        return m_cuuid;
+      }
+
+      /**
+       * Set the value of m_cuuid
+       * @param new_var the new value of m_cuuid
+       */
+      void setCuuid(std::string new_var) {
+        m_cuuid = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -225,6 +241,8 @@ namespace castor {
       u_signed64 m_xsize;
 
       int m_status;
+
+      std::string m_cuuid;
 
       /// The id of this object
       u_signed64 m_id;
