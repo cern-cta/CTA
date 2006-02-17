@@ -22,7 +22,7 @@ namespace castor {
 		/**
 	     * Empty Constructor
 	     */
-		FileOrganizer() throw (castor::exception::Exception);
+		FileOrganizer() throw ();
 		
 		/**
 	     * Destructor
