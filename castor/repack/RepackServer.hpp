@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/07 20:00:24 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/17 19:01:31 $ $Author: felixehm $
  *
  *
  *
@@ -33,6 +33,7 @@
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/BaseDaemon.hpp"
 #include "RepackWorker.hpp"
+#include "RepackCleaner.hpp"
 #include "FileOrganizer.hpp"
 
 

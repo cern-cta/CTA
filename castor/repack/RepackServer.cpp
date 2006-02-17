@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/02/14 17:23:40 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/02/17 19:01:31 $ $Author: felixehm $
  *
  *
  *
@@ -61,15 +61,19 @@ int main(int argc, char *argv[]) {
     try {
 
     castor::repack::RepackServer server;
-
+	
     server.addThreadPool(
-      new castor::server::ListenerThreadPool("RepackWorker", new castor::repack::RepackWorker(), iport));
-	server.getThreadPool('R')->setNbThreads(1);
+      new castor::server::ListenerThreadPool("Worker", new castor::repack::RepackWorker(), iport));
+	server.getThreadPool('W')->setNbThreads(1);
 	
     server.addThreadPool(
       new castor::server::SignalThreadPool("FileOrganizer", new castor::repack::FileOrganizer() ));
 	server.getThreadPool('F')->setNbThreads(1);
-    
+	/*
+	server.addThreadPool(
+      new castor::server::SignalThreadPool("Cleaner", new castor::repack::RepackCleaner() ));
+	server.getThreadPool('C')->setNbThreads(1);
+    */
     
     server.parseCommandLine(argc, argv);
     server.start();
