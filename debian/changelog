@@ -1,3 +1,293 @@
+castor (2.0.3-0) unstable; urgency=low
+
+  * PROTO2/CASTOR.spec:
+    [r1.40,2006-02-17,sponcec3] Fix castor version for the install rule and the building of hsmtools/dbtools when oracle is not present
+    [r1.39,2006-02-16,sponcec3] Don't build hsmtools package if ORACLE is not present
+    [r1.38,2006-02-16,sponcec3] Fix case for BuildVDQMCpp
+    [r1.37,2006-02-15,sponcec3] Do not build new Vdqm when ORACLE not available
+  * PROTO2/castor/BaseServer.cpp:
+  * PROTO2/castor/BaseServer.hpp:
+    [2006-02-07,itglp] Removed old BaseServer, now replaced by castor::server::BaseServer.
+  * PROTO2/castor/Constants.cpp:
+  * PROTO2/castor/Constants.hpp:
+    [2006-02-07,itglp] FileQueryResponse flagged as deleted type, fixed constants for Repack.
+  * PROTO2/castor/Imakefile:
+    [r1.120,2006-02-07,itglp] Removed FileQueryResponse compilation.
+    [r1.119,2006-02-01,sponcec3] Added TooBig exception to C++ framework, corresponding to E2BIG
+  * PROTO2/castor/client/BaseClient.cpp:
+    [r1.37,2006-02-16,sponcec3] Fix the choice of the RH port in the client
+    [r1.36,2006-02-03,sponcec3] fix initialization of m_hasAuthorizationId
+  * PROTO2/castor/db/DbBaseObj.cpp:
+  * PROTO2/castor/db/DbBaseObj.hpp:
+  * PROTO2/castor/db/DbCommonSvc.cpp:
+  * PROTO2/castor/db/DbCommonSvc.hpp:
+    [2006-02-01,itglp] Moved commit() and rollback() methods up one level.
+  * PROTO2/castor/db/analyze/currentStatus.sql:
+  * PROTO2/castor/db/analyze/solutions.sql:
+    [2006-02-16,sponcec3] Added cleanup of finished subrequests
+  * PROTO2/castor/db/castor_oracle_create.sql:
+  * PROTO2/castor/db/castor_oracle_drop.sql:
+    [2006-02-16,sponcec3] Integrated changes from oracleTrailer.sql up to version 1.240
+  * PROTO2/castor/db/castor_oracle_create.sql:
+  * PROTO2/castor/db/castor_postgres_create.sql:
+  * PROTO2/castor/db/cnv/DbCastorFileCnv.cpp:
+  * PROTO2/castor/db/ora/OraCastorFileCnv.cpp:
+  * PROTO2/castor/db/ora/OraQuerySvc.cpp:
+  * PROTO2/castor/db/ora/OraQuerySvc.hpp:
+  * PROTO2/castor/db/ora/OraStagerSvc.cpp:
+  * PROTO2/castor/db/ora/OraStagerSvc.hpp:
+  * PROTO2/castor/db/oracleTrailer.sql:
+  * PROTO2/castor/io/StreamCastorFileCnv.cpp:
+  * PROTO2/castor/query/IQuerySvc.hpp:
+  * PROTO2/castor/stager/CastorFile.cpp:
+  * PROTO2/castor/stager/CastorFile.h:
+  * PROTO2/castor/stager/CastorFile.hpp:
+  * PROTO2/castor/stager/CastorFileCInt.cpp:
+  * PROTO2/castor/stager/DiskCopyInfo.cpp:
+  * PROTO2/castor/stager/DiskCopyInfo.h:
+  * PROTO2/castor/stager/DiskCopyInfo.hpp:
+  * PROTO2/castor/stager/DiskCopyInfoCInt.cpp:
+  * PROTO2/castor/stager/IStagerSvc.h:
+  * PROTO2/castor/stager/IStagerSvc.hpp:
+  * PROTO2/castor/stager/IStagerSvcCInt.cpp:
+  * PROTO2/h/stager_catalogInterface.h:
+  * PROTO2/stager/stager_db_service.c:
+  * PROTO2/stager/stager_query_service.cpp:
+    [2006-02-01,sponcec3] Implementation of stage_qry with regexp support
+  * PROTO2/castor/db/cnv/DbRepackRequestCnv.cpp:
+  * PROTO2/castor/db/cnv/DbRepackSegmentCnv.cpp:
+  * PROTO2/castor/db/cnv/DbRepackRequestCnv.hpp:
+  * PROTO2/castor/db/cnv/DbRepackSegmentCnv.hpp:
+  * PROTO2/castor/db/cnv/DbRepackSubRequestCnv.cpp:
+  * PROTO2/castor/db/cnv/DbRepackSubRequestCnv.hpp:
+  * PROTO2/castor/db/ora/OraRepackRequestCnv.cpp:
+  * PROTO2/castor/db/ora/OraRepackRequestCnv.hpp:
+  * PROTO2/castor/db/ora/OraRepackSegmentCnv.cpp:
+  * PROTO2/castor/db/ora/OraRepackSegmentCnv.hpp:
+  * PROTO2/castor/db/ora/OraRepackSubRequestCnv.cpp:
+  * PROTO2/castor/db/ora/OraRepackSubRequestCnv.hpp:
+  * PROTO2/castor/io/StreamRepackRequestCnv.cpp:
+  * PROTO2/castor/io/StreamRepackRequestCnv.hpp:
+  * PROTO2/castor/io/StreamRepackSubRequestCnv.cpp:
+  * PROTO2/castor/io/StreamRepackSubRequestCnv.hpp:
+  * PROTO2/castor/repack/RepackRequest.cpp:
+  * PROTO2/castor/repack/RepackRequest.hpp:
+  * PROTO2/castor/repack/RepackSegment.cpp:
+  * PROTO2/castor/repack/RepackSegment.hpp:
+  * PROTO2/castor/repack/RepackSubRequest.cpp:
+  * PROTO2/castor/repack/RepackSubRequest.hpp:
+    [2006-02-02,felixehm] changed RepackSubrequest.size to xsize, due to naming problems with oracle
+  * PROTO2/castor/db/cnv/DbRepackSegmentCnv.cpp:
+  * PROTO2/castor/db/cnv/DbRepackSegmentCnv.hpp:
+  * PROTO2/castor/db/ora/OraRepackSegmentCnv.cpp:
+  * PROTO2/castor/db/ora/OraRepackSegmentCnv.hpp:
+  * PROTO2/castor/repack/RepackSegment.cpp:
+  * PROTO2/castor/repack/RepackSegment.hpp:
+    [2006-02-14,felixehm] compression and filesec for positioning now also stored
+  * PROTO2/castor/db/cnv/Imakefile:
+    [r 1.6,2006-02-15,sponcec3] Fixed clean rule
+  * PROTO2/castor/db/castor_oracle_create.sql:
+  * PROTO2/castor/db/newora/OraCnvSvc.cpp:
+  * PROTO2/castor/db/ora/OraCnvSvc.cpp:
+  * PROTO2/castor/db/oracleTrailer.sql:
+    [2006-02-16,sponcec3] Changed DB version
+  * PROTO2/castor/db/oracleTrailer.sql:
+    [r1.242,2006-02-14,gtaur] Fixed clashing commits. Revision 1.241 should never be used
+    [r1.241,2006-02-07,gtaur] status for archived subrequests and procedures to delete old subrequests added.
+    [r1.240,2006-02-07,sponcec3] Fix the query_line cursor for new stqger_query (forgot to commit it before)
+  * PROTO2/castor/io/StreamFileQueryResponseCnv.cpp:
+  * PROTO2/castor/io/StreamFileQueryResponseCnv.hpp:
+  * PROTO2/castor/rh/FileQueryResponse.cpp:
+  * PROTO2/castor/rh/FileQueryResponse.h:
+  * PROTO2/castor/rh/FileQueryResponse.hpp:
+  * PROTO2/castor/rh/FileQueryResponseCInt.cpp:
+  * PROTO2/stager/stager_client_api_query.cpp:
+    [2006-02-07,itglp] FileQueryResponse was replaced by FileQryResponse.
+  * PROTO2/castor/repack/DatabaseHelper.cpp:
+  * PROTO2/castor/repack/DatabaseHelper.hpp:
+    [2006-02-14,felixehm] changed Method name (is_stored)
+    [2006-02-14,felixehm] improve DLF logging
+    [2006-02-14,felixehm] removed 1 possible memory leak
+    [2006-02-07,felixehm] Changed update method for Subrequest.
+    [2006-02-02,felixehm] 1.New function for polling DB (needed by FileOrganizer)
+    [2006-02-02,felixehm] 2.New SQL Statements
+    [2006-02-02,felixehm] 3.Inherits now from DbBaseObj for comfortable access to DB
+    [2006-02-02,felixehm] 4.Provides function for updating Object in DB
+    [2006-02-02,felixehm] 5.provides function to check, if a vid is already in DB (needed in storeRequest)
+  * PROTO2/castor/repack/FileListHelper.cpp:
+  * PROTO2/castor/repack/FileListHelper.hpp:
+    [2006-02-14,felixehm] removed mem leak for m_ns
+    [2006-02-14,felixehm] Added the initialisation of the m_ns (nameserver var) by castor config file
+    [2006-02-14,felixehm] Added cuuid for message follow
+    [2006-02-14,felixehm] 
+    [2006-02-14,felixehm] very important : not parent_fileid, but fileid is the correct one!!
+    [2006-02-14,felixehm] more information is stored with the segment
+    [2006-02-14,felixehm] 
+    [2006-02-14,felixehm] and last but not least, DLF
+    [2006-02-03,felixehm] Experimental version for finding error during update in db.
+    [2006-02-03,felixehm] two connections are opened, this cause a lock.
+    [2006-02-02,felixehm] creation of sorted list of file, which are on tape
+    [2006-02-02,felixehm] function returns now only the parent_fileids, not the full path -> faster
+  * PROTO2/castor/repack/FileOrganizer.cpp:
+  * PROTO2/castor/repack/FileOrganizer.hpp:
+    [2006-02-14,felixehm] added cuuid information
+    [2006-02-14,felixehm] storing request in to DB AFTER stage_command
+    [2006-02-14,felixehm] 
+    [2006-02-14,felixehm] stages file
+    [2006-02-14,felixehm] 
+    [2006-02-14,felixehm] removed mistake for putting filenames into stager_request
+    [2006-02-14,felixehm] filehelper is now dynamically
+    [2006-02-07,felixehm] Added new Messages for DLF
+    [2006-02-07,felixehm] If a request job arrives, now the segments are added and the subrequest updated in DB
+    [2006-02-07,felixehm] removed mem lack
+    [2006-02-03,felixehm] Experimental version for finding error during update in db.
+    [2006-02-03,felixehm] two connections are opened, this cause a lock.
+    [2006-02-02,felixehm] Added polling time from CommonHeader
+    [2006-02-02,felixehm] Inheritnace from IThread, so the Organizer can be started as a ThreadPool from RepackServer
+    [2006-02-02,felixehm] now polling DB for new Requests and  get the filenames - no staging right until now
+    [2006-02-02,felixehm] The state of the Request will be changed before staging files : implemented!
+  * PROTO2/castor/repack/Imakefile:
+    [r 1.5,2006-02-02,felixehm] 1.removed compilation of DbCnvSvc (this is already provied in Library
+    [r 1.5,2006-02-02,felixehm] 2.Added new "Deamon" FileOrganzier"
+  * PROTO2/castor/repack/RepackClient.cpp:
+  * PROTO2/castor/repack/RepackClient.hpp:
+    [2006-02-14,felixehm] added help section
+    [2006-02-14,felixehm] removed DLF logging
+    [2006-02-07,felixehm] Added new Feature : Tapepool can be repacked!
+    [2006-02-07,felixehm] Added Header for MesageAck from Server (formerly included with RepackServer.hpp)
+    [2006-02-02,felixehm] Added machine name to the Request
+  * PROTO2/castor/repack/RepackCommonHeader.hpp:
+    [r 1.6,2006-02-14,felixehm] no macros  (removed defines)
+    [r 1.5,2006-02-02,felixehm] Removed REPACK_POLL due to compiling probs - little mistake, yes, yes
+    [r 1.4,2006-02-02,felixehm] added defines to namespace of castor::repack
+  * PROTO2/castor/repack/RepackRequestCInt.cpp:
+    [r 1.7,2006-02-02,felixehm] not neccessary
+  * PROTO2/castor/repack/RepackServer.cpp:
+  * PROTO2/castor/repack/RepackServer.hpp:
+    [2006-02-14,felixehm] now the port is in repack namespace
+    [2006-02-07,felixehm] Added new Messages
+    [2006-02-07,felixehm] 
+    [2006-02-07,felixehm] Test with new ListenerThread runs successfully. Former version of ListenerThreadPool
+    [2006-02-07,felixehm] was not created properly (blocked the main process)
+    [2006-02-03,felixehm] Experimental version for finding error during update in db.
+    [2006-02-03,felixehm] two connections are opened, this cause a lock.
+    [2006-02-02,felixehm] changed inheritance to BaseDaemon
+    [2006-02-02,felixehm] added new ThreadPool FileOrganizer for querying the DB
+    [2006-02-02,felixehm] removed Messages (they are in RepackWorker)
+  * PROTO2/castor/repack/RepackWorker.cpp:
+    [r 1.9,2006-02-07,felixehm] Removed storing Segments (takes to long for request handling)
+    [r 1.9,2006-02-07,felixehm] changed some messages
+    [r 1.9,2006-02-07,felixehm] now tape pool is handled
+    [r 1.8,2006-02-03,felixehm] Experimental version for finding error during update in db.
+    [r 1.8,2006-02-03,felixehm] two connections are opened, this cause a lock.
+    [r 1.7,2006-02-02,felixehm] added new Messages for FileOrganizer;
+    [r 1.7,2006-02-02,felixehm] removed init() due to changes of IThread
+    [r1.10,2006-02-14,felixehm] Added new method to check tape status
+    [r1.10,2006-02-14,felixehm] cleaned code and improve messages
+  * PROTO2/castor/repack/RepackWorker.hpp:
+    [r 1.8,2006-02-14,felixehm] Added new method to check tape status
+    [r 1.8,2006-02-14,felixehm] cleaned code and improve messages
+    [r 1.7,2006-02-02,felixehm] added new Messages for FileOrganizer;
+    [r 1.7,2006-02-02,felixehm] removed init() due to changes of IThread
+  * PROTO2/castor/rh/RHThread.cpp:
+  * PROTO2/castor/rh/RHThread.hpp:
+    [2006-02-01,itglp] Fixed thread-unsafe condition.
+  * PROTO2/castor/rh/Server.cpp:
+    [r1.45,2006-02-06,itglp] Use the ListenerPool without spawning a thread for the loop.
+  * PROTO2/castor/server/BaseThreadPool.cpp:
+    [r 1.8,2006-02-01,itglp] Changed interface of threads to fix thread-unsafe condition shown in the RH.
+  * PROTO2/castor/server/BaseThreadPool.hpp:
+    [r 1.8,2006-02-06,itglp] Made Listener pool on a separated thread by default.
+    [r 1.7,2006-02-02,itglp] Made this class abstract to prevent direct usage.
+  * PROTO2/castor/server/IThread.hpp:
+    [r 1.5,2006-02-02,itglp] Better comment to explain the interface.
+    [r 1.4,2006-02-01,itglp] Changed interface of threads to fix thread-unsafe condition shown in the RH.
+  * PROTO2/castor/server/ListenerThreadPool.cpp:
+  * PROTO2/castor/server/ListenerThreadPool.hpp:
+    [2006-02-06,itglp] Made Listener pool on a separated thread by default.
+  * PROTO2/castor/server/NotificationThread.cpp:
+  * PROTO2/castor/server/NotificationThread.hpp:
+  * PROTO2/castor/server/SelectProcessThread.hpp:
+  * PROTO2/castor/server/ServiceThread.cpp:
+  * PROTO2/castor/server/ServiceThread.hpp:
+    [2006-02-01,itglp] Changed interface of threads to fix thread-unsafe condition shown in the RH.
+  * CASTOR/common/sendscsicmd.c:
+    [r1.16,2006-02-15,hcacote] tpdaemon uses sg0 device instead of sga
+  * PROTO2/config/Imake.rules:
+    [r1.17,2006-02-13,itglp] Revert last commit.
+    [r1.16,2006-02-10,itglp] Added macro to check Castor version.
+  * PROTO2/config/Project.tmpl:
+  * PROTO2/config/site.def:
+  * PROTO2/dlf/Imakefile:
+  * PROTO2/debian/control:
+  * PROTO2/debian/rules:
+    [2006-02-16,sponcec3] dlfgui is now packaged. You can set BuildDlfGui to YES and make install will install it
+  * PROTO2/debian/Cupvdaemon.init:
+  * PROTO2/debian/MigHunter.init:
+  * PROTO2/debian/dlfserver.init:
+  * PROTO2/debian/nsdaemon.init:
+  * PROTO2/debian/rhserver.init:
+  * PROTO2/debian/rtcpclientd.init:
+  * PROTO2/debian/stager.init:
+  * PROTO2/debian/vmgrdaemon.init:
+    [2006-02-07,itglp] Removed check for ORACLE_HOME since now it is not needed with oracle-instantclient.
+  * PROTO2/debian/castor-dbtools.install.perm:
+  * PROTO2/debian/castor-dbtools.manpages:
+  * PROTO2/debian/castor-hsmtools.install.perm:
+  * PROTO2/debian/castor-hsmtools.manpages:
+    [2006-02-16,sponcec3] move vdqmDBInit from the hsmtools to the dbtools package
+  * PROTO2/debian/castor-job.postinst:
+    [r 1.3,2006-02-07,itglp] Fixed missing commands.
+  * PROTO2/debian/castor.conf:
+    [r1.12,2006-02-01,sponcec3] Included new option FILEQUERY MAXNBRESPONSES to default castor.conf
+  * PROTO2/debian/castor.sysconfig:
+    [r 1.3,2006-02-07,itglp] Removed db related settings, not needed with oracle-instantclient.
+  * PROTO2/debian/if.has_oracle:
+    [r 1.5,2006-02-16,sponcec3] it is not hsmtools but dbtools that should not be compile if ORACLE in not present
+    [r 1.4,2006-02-16,sponcec3] Don't compile VDQM server if Oracle is not present
+    [r 1.3,2006-02-16,sponcec3] Don't build hsmtools package if ORACLE is not present
+  * PROTO2/debian/lsf.sysconfig:
+    [r 1.2,2006-02-07,itglp] Removed db related settings, not needed with oracle-instantclient.
+  * PROTO2/dlf/dlforasetup.sh:
+    [r 1.6,2006-02-10,itglp] Added Repack in the list of facilities.
+  * PROTO2/h/stager_client_api_common.h:
+    [r 1.3,2006-02-02,sponcec3] Added stage_setid stage_getid and stage_resetid to stager client interface
+  * PROTO2/job/stagerJob.c:
+    [r1.148,2006-01-31,itglp] Fixed log call for setServer with the correct argument.
+  * PROTO2/maketar.sh:
+    [r1.41,2006-02-17,sponcec3] Fix castor version for the install rule
+    [r1.40,2006-02-13,itglp] When version is overridden, override shlib/makeshlib.sh too.
+  * PROTO2/resourcemonitoring/Crmd_recv_from_users.c:
+    [r1.81,2006-02-08,jdurand] Re-enabled the job submission in three steps otherwise there is a time-window where a job can be started by LSF without the message box No 1 posted (despite the plugin will say NO in all steps), i.e.:
+    [r1.81,2006-02-08,jdurand] submit job in PSUSP state
+    [r1.81,2006-02-08,jdurand] post the message box No 1
+    [r1.81,2006-02-08,jdurand] Release job
+  * PROTO2/scheduler/LSF/schmod_castor.c:
+    [r1.37,2006-02-08,jdurand] Added JOBID when logging the normal tracing operation: New phase ok, Notify phase ok, Delete phase ok
+    [r1.36,2006-02-08,jdurand] Add internal code debug, disabled by default
+    [r1.36,2006-02-08,jdurand] Add jobid whenever possible to error logs
+    [r1.35,2006-02-07,jdurand] Remove internal fork - works with LSF 6.1-24
+  * PROTO2/shlib/Imakefile:
+    [r1.46,2006-02-13,itglp] Changed the rule to build shared libraries: makeshlib.sh is used now.
+  * PROTO2/stager/stager.c:
+    [r1.85,2006-01-31,sponcec3] Allows the stager to start when dlf not running
+  * PROTO2/stager/stager_client_api_common.cpp:
+    [r1.20,2006-02-03,sponcec3] Made the setClientAuthorizationId method fully C++ compliant, by using exceptions instead of int return code
+    [r1.19,2006-02-02,sponcec3] New version of setClientAuthorizationId, purely C++ and using namespaces
+
+  * PROTO2/stager/stager_qry.man:
+    [r1.10,2006-02-01,sponcec3] Implemented limitation on the number of responses a filequery may give
+  * PROTO2/tape/Imakefile:
+    [r 1.5,2006-02-16,sponcec3] Support for x86_64 (CDK lib is in a different place on this platform)
+  * CASTOR/tape/wrttpmrk.c:
+    [r 1.5,2006-02-14,hcacote] write filemarks with sg driver and immediate bit set
+  * PROTO2/tools/makeMagicNumbers.csh:
+    [r 1.6,2006-02-15,sponcec3] better script that parses more files in order to not forget constants and put better titles
+    [r 1.5,2006-01-31,itglp] Improved scan to take into account more codes files.
+
+
+ -- Sebastien Ponce <sponcec3@pcitds13>  Fri, 17 Feb 2006 16:40:00 +0100
+
 castor (2.0.2-10) unstable; urgency=low
 
   * PROTO2/castor/Constants.hpp:
