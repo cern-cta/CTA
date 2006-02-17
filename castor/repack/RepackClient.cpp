@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/02/14 17:21:04 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/02/17 19:00:52 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -289,7 +289,7 @@ void RepackClient::run(int argc, char** argv)
     delete req;
     delete ack;
   } catch (castor::exception::Exception ex) {
-    std::cout << ex.getMessage().str() << std::endl;
+    std::cerr << ex.getMessage().str() << std::endl;
   }
 }
 
@@ -299,12 +299,11 @@ void RepackClient::run(int argc, char** argv)
 void RepackClient::setRemotePort()
   throw (castor::exception::Exception) {
   char* port;
-  // RH server port. Can be given through the environment
-  // variable RH_PORT or in the castor.conf file as a
-  // RH/PORT entry. If none is given, default is used
+  // Repack server port. Can be given through the environment
+  // variable REPACK_PORT or in the castor.conf file as a
+  // REPACK_PORT entry. If none is given, default is used
   if ((port = getenv (PORT_ENV)) != 0 
-      || (port = getenv ((char*)PORT_ENV_ALT)) != 0
-      || (port = getconfent((char*)CATEGORY_CONF, (char*)PORT_CONF,0)) != 0) {
+      || (port = getenv ((char*)PORT_ENV_ALT)) != 0 ) {
     char* dp = port;
     errno = 0;
     int iport = strtoul(port, &dp, 0);
@@ -323,10 +322,7 @@ void RepackClient::setRemotePort()
     m_defaultport = iport;
   }
   else {
-  	castor::exception::Exception e(-1);
-      e.getMessage()
-        << "No repack server port in config file or in enviroment found! " << std::endl;
-      throw e;
+		stage_trace(3,"No repack server port in enviroment found using default(%d)! ", CSP_REPACKSERVER_PORT);
   }
   
   stage_trace(3, "Setting up Server Port - Using %d", m_defaultport);
@@ -346,7 +342,7 @@ void RepackClient::setRemoteHost()
       || (host = getconfent((char*)CATEGORY_CONF,(char *)HOST_CONF,0)) != 0) {
     m_defaulthost = host;
   } else {
-    castor::exception::Exception e(-1);
+    castor::exception::Exception e(serrno);
       e.getMessage()
         << "No repack server hostname in config file or in enviroment found! " << std::endl;
       throw e;
