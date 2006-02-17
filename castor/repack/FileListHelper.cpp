@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/02/14 17:17:51 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/02/17 18:56:16 $ $Author: felixehm $
  *
  *
  *
@@ -149,10 +149,10 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq, Cu
 {
 	int flags;
 	u_signed64 segs_size = 0;
-	char path[CA_MAXPATHLEN+1];
-	char *vid = (char*)subreq->vid().c_str();
-	struct Cns_direntape *dtp;
+	struct Cns_direntape *dtp = NULL;
 	Cns_list list;
+	list.fd = list.eol = list.offset = list.len = 0;
+	list.buf = NULL;
 
 	
 	if ( subreq != NULL )
@@ -161,8 +161,7 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq, Cu
 	
 		flags = CNS_LIST_BEGIN;
 		/* all Segments from a tape belong to one Request ! */
-		while ((dtp = Cns_listtape (m_ns, vid, flags, &list)) != NULL) {
-			Cns_getpath(m_ns, dtp->fileid, path);
+		while ((dtp = Cns_listtape (m_ns, (char*)subreq->vid().c_str(), flags, &list)) != NULL) {
 			
 			RepackSegment* rseg= new RepackSegment();
 			rseg->setVid(subreq);
@@ -186,14 +185,15 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq, Cu
 					  << std::endl;
 			*/
 		}
-		Cns_listtape (m_ns, vid, CNS_LIST_END, &list);
-		stage_trace(2,"Size on disk to be allocated: %d", segs_size);
+		Cns_listtape (m_ns, (char*)subreq->vid().c_str(), CNS_LIST_END, &list);
+		stage_trace(2,"Size on disk to be allocated: %u", segs_size);
 		subreq->setXsize(segs_size);
 
 		castor::dlf::Param params[] =
-     		 {castor::dlf::Param("Segments", subreq->segment().size()),
+     		 {castor::dlf::Param("Vid", subreq->vid()),
+     		  castor::dlf::Param("Segments", subreq->segment().size()),
      		  castor::dlf::Param("DiskSpace", subreq->xsize())};
-		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 24, 2, params);
+		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 24, 3, params);
 		
 		return subreq->segment().size();
 	}
