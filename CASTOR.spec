@@ -146,6 +146,7 @@ mkdir -p ${RPM_BUILD_ROOT}/var/spool/stager
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/tape
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/upv
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/vdqm
+mkdir -p ${RPM_BUILD_ROOT}/var/spool/scheduler
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/vmgr
 make install DESTDIR=${RPM_BUILD_ROOT}
 make exportman DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
