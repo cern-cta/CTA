@@ -52,11 +52,17 @@ The CASTOR Project stands for CERN Advanced STORage Manager, and its goal is to 
 # In case makedepend is not in the PATH
 PATH=${PATH}:/usr/X11R6/bin
 export PATH
+# define castor version (modified by maketar.sh to put the exact version)
+MAJOR_CASTOR_VERSION=__MAJOR_CASTOR_VERSION__
+MINOR_CASTOR_VERSION=__MINOR_CASTOR_VERSION__
+export MAJOR_CASTOR_VERSION
+export MINOR_CASTOR_VERSION
+# Don't compile ORACLE related packages if ORACLE is not present
 %if ! %has_oracle
 echo "### Warning, no ORACLE environment"
 echo "The following packages will NOT be built:"
 echo "castor-devel-oracle, castor-dlf-server, castor-lib-oracle, castor-lsf-plugin, castor-ns-server, castor-rh-server, castor-rtcopy-clientserver, castor-rtcopy-mighunter, castor-stager-server, castor-upv-server, castor-vmgr-server"
-for this in BuildCupvDaemon BuildDlfDaemon BuildNameServerDaemon BuildRHCpp BuildRtcpclientd BuildSchedPlugin BuildVolumeMgrDaemon UseOracle UseScheduler BuildOraCpp BuildStageDaemon BuildVDQMCpp BuildHsmTools; do
+for this in BuildCupvDaemon BuildDlfDaemon BuildNameServerDaemon BuildRHCpp BuildRtcpclientd BuildSchedPlugin BuildVolumeMgrDaemon UseOracle UseScheduler BuildOraCpp BuildStageDaemon BuildVDQMCpp BuildDbTools; do
 	perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
 done
 %else
@@ -86,6 +92,11 @@ which makedepend >& /dev/null
 [ $? -eq 0 ] && make depend
 make
 %install
+# define castor version (modified by maketar.sh to put the exact version)
+MAJOR_CASTOR_VERSION=__MAJOR_CASTOR_VERSION__
+MINOR_CASTOR_VERSION=__MINOR_CASTOR_VERSION__
+export MAJOR_CASTOR_VERSION
+export MINOR_CASTOR_VERSION
 rm -rf ${RPM_BUILD_ROOT}
 mkdir -p ${RPM_BUILD_ROOT}/usr/bin
 mkdir -p ${RPM_BUILD_ROOT}/usr/sbin
