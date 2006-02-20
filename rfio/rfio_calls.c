@@ -7,6 +7,11 @@
  * All rights reserved
  */
 
+/* NOTE(fuji): AIX might support O_DIRECT as well, to be verified. */
+#if defined(linux) && !defined(__ia64__)
+#define _GNU_SOURCE		/* O_DIRECT */
+#endif
+
 #ifndef lint
 static char sccsid[] = "@(#)rfio_calls.c,v 1.3 2004/03/22 12:11:24 CERN/IT/PDP/DM Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
@@ -33,6 +38,10 @@ static char sccsid[] = "@(#)rfio_calls.c,v 1.3 2004/03/22 12:11:24 CERN/IT/PDP/D
 #endif
 #if defined(_AIX) || defined(hpux) || defined(SOLARIS) || defined(linux)
 #include <signal.h>
+#endif
+
+#if USE_XFSPREALLOC
+#include "rfio_xfsprealloc.h"
 #endif
 
 #include "rfio.h"
@@ -67,6 +76,7 @@ static char sccsid[] = "@(#)rfio_calls.c,v 1.3 2004/03/22 12:11:24 CERN/IT/PDP/D
 
 #ifdef linux
 #include <sys/uio.h>
+#include "rfio_alignedbuf.h"
 #endif
 
 #ifdef CS2
@@ -3964,10 +3974,19 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
            rfio_alrm(rcode,alarmbuf) ;
 	 }
 
-
+	 /* NOTE(fuji): from now on, flags is in host byte-order... */
+         flags = ntohopnflg(flags);
+         if ( getconfent("RFIOD","DIRECTIO",0) ) {
+#if defined(linux)
+            log(LOG_DEBUG, "%s: O_DIRECT requested\n", __func__);
+            flags |= O_DIRECT;
+#else
+	    log(LOG_DEBUG, "%s: O_DIRECT requested but ignored.");
+#endif
+         }
 
 #if !defined(_WIN32)  
-       if (need_user_check && ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
+       if (need_user_check && ((status=check_user_perm(&uid,&gid,host,&rcode,((flags & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
             ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
          if (status == -2)
            log(LOG_ERR,"ropen_v3: uid %d not allowed to open()\n",uid);
@@ -3977,7 +3996,7 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
        }  else
 #endif
        {
-         fd = open(CORRECT_FILENAME(filename), ntohopnflg(flags), mode);
+         fd = open(CORRECT_FILENAME(filename), flags, mode);
 #if defined(_WIN32)
          _setmode( fd, _O_BINARY );        /* default is text mode  */
 #endif
@@ -4237,7 +4256,7 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
       log(LOG_DEBUG,"setsockopt nodelay option set on ctrl socket\n");
    }
 #if defined(SACCT)
-   rfioacct(RQST_OPEN_V3,uid,gid,s,(int)ntohopnflg(flags),(int)mode,status,rcode,NULL,CORRECT_FILENAME(filename),NULL);
+   rfioacct(RQST_OPEN_V3,uid,gid,s,(int)flags,(int)mode,status,rcode,NULL,CORRECT_FILENAME(filename),NULL);
 #endif /* SACCT */
    return fd ;
 }
@@ -4575,7 +4594,12 @@ struct  rfiostat* infop;
          /* Allocating memory for each element of circular buffer */
          for (el=0; el < daemonv3_rdmt_nbuf; el++) { 
             log(LOG_DEBUG, "rread_v3 allocating circular buffer element %d: %d bytes\n",el,daemonv3_rdmt_bufsize);
-            if ((array[el].p = (char *)malloc(daemonv3_rdmt_bufsize)) == NULL)  {
+            if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+               array[el].p = (char *)malloc_page_aligned(daemonv3_rdmt_bufsize);
+            } else {
+               array[el].p = (char *)malloc(daemonv3_rdmt_bufsize);
+            }
+            if ( array[el].p == NULL)  {
                log(LOG_ERR, "rread_v3: malloc array element %d: ERROR occured (errno=%d)", el, errno);
                return -1 ;
             }
@@ -4584,7 +4608,12 @@ struct  rfiostat* infop;
       }
       else {
          log(LOG_DEBUG, "rread_v3 allocating malloc buffer : %d bytes\n",DISKBUFSIZE_READ);
-         if ((iobuffer = (char *)malloc(DISKBUFSIZE_READ)) == NULL)  {
+         if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+            iobuffer = (char *)malloc_page_aligned(DISKBUFSIZE_READ);
+         } else {
+            iobuffer = (char *)malloc(DISKBUFSIZE_READ);
+         }
+         if ( iobuffer == NULL)  {
            log(LOG_ERR, "rread_v3: malloc: ERROR occured (errno=%d)", errno);
            return -1 ;
          }
@@ -4718,7 +4747,11 @@ struct  rfiostat* infop;
 #if !defined(HPSS)
             if (!daemonv3_rdmt) {
                log(LOG_DEBUG,"freeing iobuffer at 0X%X\n",iobuffer);
-               free(iobuffer);
+               if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+                  free_page_aligned(iobuffer);
+               } else {
+                  free(iobuffer);
+               }
             }
             else {
                if(!join_done) {
@@ -4739,7 +4772,11 @@ struct  rfiostat* infop;
                }
                for (el=0; el < daemonv3_rdmt_nbuf; el++) {
                   log(LOG_DEBUG,"freeing array element %d at 0X%X\n",el,array[el].p);
-                  free(array[el].p);
+                  if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+                     free_page_aligned(array[el].p);
+                  } else {
+                     free(array[el].p);
+                  }
                }
                log(LOG_DEBUG,"freeing array at 0X%X\n",array);
                free(array);
@@ -4942,6 +4979,12 @@ struct rfiostat *infop;
    log(LOG_DEBUG, "rwrite_v3(%d, %d)\n",s, fd);
    if( first_write )  {
       char *p;
+
+#ifdef USE_XFSPREALLOC
+      if ( p = getconfent("RFIOD","XFSPREALLOC",0) ) {
+         rfio_xfs_resvsp64(fd, atoi(p));
+      }
+#endif
       
       first_write = 0;
       rfio_handle_firstwrite(handler_context);
@@ -4988,7 +5031,12 @@ struct rfiostat *infop;
          /* Allocating memory for each element of circular buffer */
          for (el=0; el < daemonv3_wrmt_nbuf; el++) { 
             log(LOG_DEBUG, "rwrite_v3 allocating circular buffer element %d: %d bytes\n",el,daemonv3_wrmt_bufsize);
-            if ((array[el].p = (char *)malloc(daemonv3_wrmt_bufsize)) == NULL)  {
+            if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+               array[el].p = (char *)malloc_page_aligned(daemonv3_wrmt_bufsize);
+            } else {
+               array[el].p = (char *)malloc(daemonv3_wrmt_bufsize);
+            }
+            if ( array[el].p == NULL)  {
                log(LOG_ERR, "rwrite_v3: malloc array element %d: ERROR occured (errno=%d)", el, errno);
                return -1 ;
             }
@@ -4997,7 +5045,12 @@ struct rfiostat *infop;
       }
       else {
          log(LOG_DEBUG, "rwrite_v3 allocating malloc buffer : %d bytes\n",DISKBUFSIZE_WRITE);
-         if ((iobuffer = (char *)malloc(DISKBUFSIZE_WRITE)) == NULL) {
+         if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+            iobuffer = (char *)malloc_page_aligned(DISKBUFSIZE_WRITE);
+         } else {
+            iobuffer = (char *)malloc(DISKBUFSIZE_WRITE);
+         }
+         if ( iobuffer == NULL)  {
             log(LOG_ERR, "rwrite_v3: malloc: ERROR occured (errno=%d)", errno);
             return -1 ;
          }
@@ -5285,17 +5338,30 @@ struct rfiostat *infop;
 #if !defined(HPSS)
             if (!daemonv3_wrmt) {
                log(LOG_DEBUG,"freeing iobuffer at 0X%X\n",iobuffer);
-               free(iobuffer);
+               if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+                  free_page_aligned(iobuffer);
+               } else {
+                  free(iobuffer);
+               }
             }
             else {
                for (el=0; el < daemonv3_wrmt_nbuf; el++) {
                   log(LOG_DEBUG,"freeing array element %d at 0X%X\n",el,array[el].p);
-                  free(array[el].p);
+                  if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+                     free_page_aligned(array[el].p);
+                  } else {
+                     free(array[el].p);
+                  }
                }
                log(LOG_DEBUG,"freeing array at 0X%X\n",array);
                free(array);
             }
 #endif   /* !HPSS */
+#ifdef USE_XFSPREALLOC
+            if ( p = getconfent("RFIOD","XFSPREALLOC",0) ) {
+               rfio_xfs_unresvsp64(fd, atoi(p), myinfo.wnbr);
+            }
+#endif
             srclose_v3(ctrl_sock, &myinfo, fd);
             return 0;
          } /*  if( byte_read_from_network == byte_written_by_client ) */
@@ -5505,12 +5571,20 @@ struct rfiostat *infop;
 #if !defined(HPSS)
             if (!daemonv3_wrmt) {
                log(LOG_DEBUG,"freeing iobuffer at 0X%X\n",iobuffer);
-               free(iobuffer);
+               if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+                  free_page_aligned(iobuffer);
+               } else {
+                  free(iobuffer);
+               }
             }
             else {
                for (el=0; el < daemonv3_wrmt_nbuf; el++) {
                   log(LOG_DEBUG,"freeing array element %d at 0X%X\n",el,array[el].p);
-                  free(array[el].p);
+                  if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+                     free_page_aligned(array[el].p);
+                  } else {
+                     free(array[el].p);
+                  }
                }
                log(LOG_DEBUG,"freeing array at 0X%X\n",array);
                free(array);
@@ -5719,12 +5793,20 @@ struct rfiostat *infop;
 #if !defined(HPSS)
                         if (!daemonv3_wrmt) {
                            log(LOG_DEBUG,"freeing iobuffer at 0X%X\n",iobuffer);
-                           free(iobuffer);
+                           if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+			      free_page_aligned(iobuffer);
+			   } else {
+                              free(iobuffer);
+                           }
                         }
                         else {
                            for (el=0; el < daemonv3_wrmt_nbuf; el++) {
                               log(LOG_DEBUG,"freeing array element %d at 0X%X\n",el,array[el].p);
-                              free(array[el].p);
+                              if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+                                 free_page_aligned(array[el].p);
+                              } else {
+                                 free(array[el].p);
+                              }
                            }
                            log(LOG_DEBUG,"freeing array at 0X%X\n",array);
                            free(array);
