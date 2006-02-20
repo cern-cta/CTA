@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IThread.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/02 10:47:26 $ $Author: itglp $
+ * @(#)$RCSfile: IThread.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/20 14:37:32 $ $Author: itglp $
  *
  *
  *
@@ -53,8 +53,9 @@ namespace castor {
      * or timeout elapsed/notification got for SignalThreadPools).
      * @param param any relevant initialization value which
      * will be passed in by the pool.
+     * @throw any exception thrown here is handled in the BaseThreadPool. 
      */
-    virtual void run(void *param) throw() = 0;
+    virtual void run(void *param) = 0;
     
     /**
      * Convenience method to stop the thread.
