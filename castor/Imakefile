@@ -17,7 +17,7 @@ COMM You should have received a copy of the GNU General Public License
 COMM along with this program; if not, write to the Free Software
 COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 COMM
-COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.121 $ $Release$ $Date: 2006/02/20 11:38:18 $ $Author: gtaur $
+COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.122 $ $Release$ $Date: 2006/02/20 14:39:55 $ $Author: itglp $
 COMM
 COMM Make Castor libraries and executables
 COMM
@@ -215,6 +215,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               server/BaseThreadPool.cpp \
               server/ListenerThreadPool.cpp \
               server/Mutex.cpp \
+	      server/NotificationThread.cpp \
               server/ServiceThread.cpp \
               server/SignalThreadPool.cpp \
               stager/CastorFile.cpp \
