@@ -180,7 +180,8 @@ namespace castor {
     SVC_MYCNV = 34,
     
     SVC_DBSRMSVC = 35,
-    SVC_DBSRMDAEMONSVC = 36
+    SVC_DBSRMDAEMONSVC = 36,
+    SVC_ORACLEANSVC = 37
     
 
   };
