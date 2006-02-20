@@ -1,5 +1,6 @@
 Source: castor
 Build-Depends: make, perl, stk-ssi-devel, lsf-master
+Build-Depends: xfslibs-dev
 Section: science
 Priority: optional
 Maintainer: Jean-Damien Durand <Jean-Damien.Durand@cern.ch>
