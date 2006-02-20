@@ -312,6 +312,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define HasNroff		YES
 #define HasCDK			NO
 #define RFIODaemonRealTime 	NO	
+#define UseXFSPrealloc		YES
 #define UseAdns			NO
 #define UseCupv			YES
 #define UseDMSCapi		NO
