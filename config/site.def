@@ -239,26 +239,26 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define LsfInstallDir /usr/local/lsf
 #endif
 
-#define BuildCommands		NO
-#define BuildCommon		NO
+#define BuildCommands		YES
+#define BuildCommon		YES
 #define BuildCupvClient		NO
 #define BuildCupvDaemon		NO
 #define	BuildCupvLibrary	NO
 #define BuildExamples		NO
 #define BuildGcDaemon		NO
-#define BuildHsmTools		NO
+#define BuildHsmTools		YES
 #define BuildMonitorClient	NO
 #define BuildMonitorServer	NO
 #define BuildMonitorLibrary	NO
 #define BuildMsgClient		NO
 #define BuildMsgServer		NO
 #define BuildMsgLibrary		NO
-#define BuildNameServerClient	NO
+#define BuildNameServerClient	YES
 #define BuildNameServerDaemon	NO
 #define BuildNameServerLibrary	NO
-#define BuildRfioClient		NO
+#define BuildRfioClient		YES
 #define BuildRfioServer		NO
-#define BuildRfioLibrary	NO
+#define BuildRfioLibrary	YES
 /* To be added when there will be end-user RMC client(s) */
 /* #define BuildRmcClient		NO */
 #define BuildRmcServer		NO
@@ -269,10 +269,10 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildRtcopyLibrary	NO
 #define BuildRtstat		NO
 #define BuildRtcpclientd	NO
-#define BuildStageClient	NO
+#define BuildStageClient	YES
 #define BuildStageClientOld	NO
 #define BuildStageDaemon	NO
-#define BuildStageLibrary	NO
+#define BuildStageLibrary	YES
 #define BuildRmMaster		NO
 #define BuildRmNode		NO
 #define BuildRmClient		NO
@@ -296,16 +296,17 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildExpertDaemon	NO
 #define BuildExpertLibrary	NO
 #define BuildSchedPlugin	NO
-#define BuildRHCpp              NO
+#define BuildRHCpp              YES
 #define BuildVDQMCpp            NO
 #define BuildGCCpp              NO
-#define BuildOraCpp             NO
+#define BuildOraCpp             YES
 #define BuildMyCpp              NO
 #define BuildPgCpp		NO
 #define BuildCastorClientCPPLibrary	NO
 #define BuildCppTest	        NO
 #define BuildTankPerfMonLibrary	NO
 #define BuildRepack		NO
+#define BuildCleaning		NO
 #define Accounting		YES
 #define ClientLogging           NO
 #define HasNis			NO
