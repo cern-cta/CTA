@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.43 2006/02/20 11:23:16 jdurand Exp $
+# $Id: maketar.sh,v 1.44 2006/02/20 12:17:22 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -99,9 +99,9 @@ perl -pi -e s/__TIMESTAMP__/\"${timestamp}\"/g h/patchlevel.h
 echo "### INFO ### Customizing spec file"
 
 #
-## Attemps to get debian's Build-Requires
+## Attempt to get debian's Build-Requires - We assume that debian/RedHat compatible stuff is on the first found line
 #
-buildrequires=`grep Build-Depends: debian/control | grep -v debhelper | sed 's/Build-Depends: //g'`
+buildrequires=`grep Build-Depends: debian/control | grep -v debhelper | sed 's/Build-Depends: //g' | head -1`
 if [ -n "${buildrequires}" ]; then
     #
     ## We know per construction that lsf-master is called LSF-master in CERN's rpms
