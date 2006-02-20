@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/16 10:09:48 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
  *
  *
  *
@@ -77,7 +77,7 @@ void castor::server::BaseDaemon::init() throw(castor::exception::Exception)
     ex.getMessage() << "Failed pthread_sigmask" << std::endl;
     throw ex;
   }
-  
+
   /* Start the thread handling all the signals */
   Cthread_create_detached(castor::server::_signalThread_run, this);
 }
@@ -98,7 +98,7 @@ void castor::server::BaseDaemon::start() throw(castor::exception::Exception)
       // is changed in a signal handler - we cannot use condition signal in this signal handler
       m_signalMutex->wait();
     }
-  
+
     m_signalMutex->release();
   }
   catch (castor::exception::Exception e) {
@@ -107,15 +107,14 @@ void castor::server::BaseDaemon::start() throw(castor::exception::Exception)
 }
 
 
+
 //------------------------------------------------------------------------------
 // waitAllThreads
 //------------------------------------------------------------------------------
 void castor::server::BaseDaemon::waitAllThreads() throw()
 {
-  // XXX when the handling of signals is properly done
-  // we need to do the following for all SignalThreadPools we own:
   /*
-  while (1) {
+  while (true) {
     int nbthread;
 
     if (Cthread_mutex_timedlock_ext(singlePoolNidCthreadStructure,SINGLE_SERVICE_MUTEX_TIMEOUT) != 0) {

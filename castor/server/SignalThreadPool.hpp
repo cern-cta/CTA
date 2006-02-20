@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/06 15:11:35 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
  *
  *
  *
@@ -46,9 +46,13 @@
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/server/Mutex.hpp"
-//#include "castor/server/NotificationThread.hpp"
+#include "castor/server/NotificationThread.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
+
+
+#define NOTIFY_PROTO "udp"         /* Notify Proto in /etc/services if any */
+#define NOTIFY_PORT  "NOTIFYPORT"  /* Sub-label in config file for notification port */
 
 
 namespace castor {
@@ -57,27 +61,25 @@ namespace castor {
 
   // Forward declaration
   class Mutex;
-  //class NotificationThread;
-
-  static int DEFAULT_NOTIFY_PORT = 65015;
-
-  static long NOTIFY_MAGIC = 0x44140701;
+  class NotificationThread;
 
   /**
    * CASTOR thread pool supporting wakeup on signals
    * and periodical run after timeout.
-   * Credits to Jean-Damien Durand.
+   * Credits to Jean-Damien Durand for the underlying C code.
    */
   class SignalThreadPool : public BaseThreadPool {
-    
-  //friend class NotificationThread;
+
+  friend class NotificationThread;
 
   public:
 
+    const static int NOTIFY_PORT_BASE = 65015;
+    
     /**
      * empty constructor
      */
-     SignalThreadPool() throw() :
+     SignalThreadPool() :
        BaseThreadPool(), m_poolMutex(0) {};
 
     /**
@@ -85,7 +87,8 @@ namespace castor {
      */
     SignalThreadPool(const std::string poolName,
                    castor::server::IThread* thread,
-                   const int notifyPort = DEFAULT_NOTIFY_PORT) throw();
+                   const int timeout = castor::server::Mutex::TIMEOUT,
+                   const int notifPort = 0);
 
     /*
      * destructor
@@ -134,6 +137,11 @@ namespace castor {
       return m_poolMutex;
     }
 
+    /**
+     * Gets the notification port from config or from the environment.
+     */
+    int getNotifPort();
+
 
   private:
 
@@ -150,10 +158,10 @@ namespace castor {
     Mutex* m_poolMutex;
 
     /// UDP port where to listen for wake up signals
-    int m_notifyPort;
-    
+    int m_notifPort;
+
     /// the notification thread; we keep a pool only to reuse the already defined thread entrypoint.
-    BaseThreadPool* m_notifPool;
+    BaseThreadPool* m_notifTPool;
 
   };
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/02/06 15:09:30 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
  *
  *
  *
@@ -52,14 +52,14 @@ namespace castor {
     /**
      * empty constructor
      */
-    BaseThreadPool() throw() : 
+    BaseThreadPool() : 
        BaseObject(), m_thread(0), m_poolName("") {};
 
     /**
      * constructor
      */
     BaseThreadPool(const std::string poolName,
-                   castor::server::IThread* thread) throw();
+                   castor::server::IThread* thread);
 
     /*
      * destructor
@@ -76,7 +76,7 @@ namespace castor {
      * the threads and immediately return.
      * Specialized pools implement it according to their needs.
      */
-     virtual void run() = 0;
+     virtual void run() {};
 
     /**
      * Sets the foreground flag

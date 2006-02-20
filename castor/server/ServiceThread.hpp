@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServiceThread.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/01 17:11:47 $ $Author: itglp $
+ * @(#)$RCSfile: ServiceThread.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
  *
  *
  *
@@ -47,20 +47,20 @@ namespace castor {
   public:
 
     /**
-  	 * Initializes a service thread.
-  	 * @param userThread the thread class containing the user code to be executed.
-  	 */
-  	ServiceThread(IThread* userThread);
+     * Initializes a service thread.
+     * @param userThread the thread class containing the user code to be executed.
+     */
+    ServiceThread(IThread* userThread);
     
     /**
      * Destructor
      */
-     ~ServiceThread() throw();
+    ~ServiceThread() throw();
 
-  	/**
+    /**
      * Main work for this thread.
-  	 */
-    virtual void run(void* param) throw();
+     */
+    virtual void run(void* param);
 
     /**
      * Convenience method to stop the thread.

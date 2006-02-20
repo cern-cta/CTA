@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/02/06 15:09:30 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
  *
  *
  *
@@ -68,7 +68,9 @@ namespace castor {
     /**
      * Starts the listener loop to accept connections.
      * If m_spawnListener (default), the loop is started on a separate thread,
-     * otherwise it is run directly: in the latter case the method does NOT return.
+     * otherwise it is run directly: in the latter case the method does NOT return,
+     * thus it does NOT obey the contract of BaseThreadPool; however, for simple
+     * listening servers like the RH, this results in less overhead.
      */
     virtual void run();
 

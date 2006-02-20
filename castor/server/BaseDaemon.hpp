@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/12/01 19:27:00 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
  *
  *
  *
@@ -36,13 +36,14 @@
 #include "castor/server/BaseServer.hpp"
 #include "castor/server/Mutex.hpp"
 
+
 namespace castor {
 
  namespace server {
 
-  // Forward declaration   
+  // Forward declaration
   class BaseServer;
-  
+
   /**
    * Basic CASTOR multithreaded daemon.
    */
@@ -80,17 +81,17 @@ namespace castor {
      * XXX To be implemented later.
      */
     void waitAllThreads() throw ();
-    
-  private:
-  
-    /// set of catched signal
-    sigset_t m_signalSet;   
 
-    /// a mutex for the signal handler thread    
+  private:
+
+    /// set of catched signal
+    sigset_t m_signalSet;
+
+    /// a mutex for the signal handler thread
     Mutex* m_signalMutex;
-    
+
     /// signal handler; friend function to access private fields.
-    friend void* _signalThread_run(void* arg); 
+    friend void* _signalThread_run(void* arg);
 
   };
 

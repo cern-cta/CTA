@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/01/16 14:29:22 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
  *
  *
  *
@@ -25,19 +25,31 @@
  *****************************************************************************/
 
 // Include Files
-#include <signal.h>
 #include "castor/server/BaseServer.hpp"
-#include "castor/MsgSvc.hpp"
+#include "castor/server/SignalThreadPool.hpp"
+#include "castor/server/NotificationThread.hpp"
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
 #include "castor/exception/Internal.hpp"
+
 #include "Cgetopt.h"
 #include "Cinit.h"
 #include "Cuuid.h"
 #include "Cpool_api.h"
 #include "castor/logstream.h"
+#include "marshall.h"
 #include <iostream>
 #include <sstream>
+#include <signal.h>
+#if defined(_WIN32)
+#include <time.h>
+#include <winsock2.h>                   /* For struct servent */
+#else
+#include <sys/time.h>
+#include <unistd.h>
+#include <netdb.h>                      /* For struct servent */
+#include <net.h>
+#endif
 
 
 //------------------------------------------------------------------------------
@@ -99,10 +111,19 @@ void castor::server::BaseServer::start() throw (castor::exception::Exception)
 {
   init();
   std::cout << "Starting " << m_serverName << std::endl;
+  
+  bool checkTPType = typeid(this) == typeid(castor::server::BaseServer);
 
   std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
   for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
-    tp->second->init();
+
+    if(checkTPType && typeid(tp->second) == typeid(castor::server::SignalThreadPool)) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Fatal: to use a SignalThreadPool you need to inherit your server from BaseDaemon.";
+      throw ex;
+    }
+    else
+      tp->second->init();
     // in case of exception, don't go further and propagate it
   }
 
@@ -219,5 +240,62 @@ void castor::server::BaseServer::help(std::string programName)
 	  "\t--help            or -h                \tThis help\n"
 	  "\n"
 	  "Comments to: Castor.Support@cern.ch\n";
+}
+
+
+//------------------------------------------------------------------------------
+// sendNotification
+//------------------------------------------------------------------------------
+void castor::server::BaseServer::sendNotification(std::string host, int port, int nbThreads)
+  throw(castor::exception::Exception)
+{
+  //char serviceHost[CA_MAXHOSTNAMELEN+1];
+  struct hostent *hp;
+  struct sockaddr_in sin;
+  int s;
+  char buf[HYPERSIZE + LONGSIZE];
+  char *p;
+
+  /* Get service host *
+  if (single_service_notifyHost(CA_MAXHOSTNAMELEN, serviceHost) != 0) {
+    rc = -1;
+    goto single_service_notifyServiceReturn;
+  }
+
+  /* Get notification port *
+  if (single_service_configNotifyPort(&port) != 0) {
+    rc = -1;
+    goto single_service_notifyServiceReturn;
+  }
+  */
+
+  /* Resolve host address */
+  if ((hp = Cgethostbyname(host.c_str())) == NULL) {
+    serrno = errno;
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to resolve hostname " << host;
+    throw ex;
+  }
+
+  /* Prepare the request */
+  p = buf;
+  marshall_HYPER(p, castor::server::NotificationThread::NOTIFY_MAGIC);
+  marshall_LONG(p, nbThreads);
+
+  /* Create socket */
+  if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    serrno = errno;
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to send notification to host " << host << ":" << port;
+    throw ex;
+  }
+
+  /* Send packet containing notification magic number + service number */
+  memset((char *) &sin, 0, sizeof(sin));
+  sin.sin_family = AF_INET;
+  sin.sin_port = htons(port);
+  sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
+  sendto(s, buf, sizeof(buf), 0, (struct sockaddr *) &sin, sizeof(struct sockaddr_in));
+  netclose(s);
 }
 

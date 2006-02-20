@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/02/01 17:11:46 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
  *
  *
  *
@@ -41,7 +41,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::server::BaseThreadPool::BaseThreadPool(const std::string poolName,
-                                               castor::server::IThread* thread) throw() :
+                                               castor::server::IThread* thread) :
   BaseObject(), m_foreground(false), m_threadPoolId(-1),
   m_nbThreads(castor::server::DEFAULT_THREAD_NUMBER),
   m_poolName(poolName), m_thread(thread) {}
@@ -115,13 +115,16 @@ void* castor::server::_thread_run(void* param)
     return 0;
   }
 
-  // Executing the thread
+  // Executes the thread
   try {
     pool->m_thread->run(args->param);
   } catch(castor::exception::Exception any) {
     pool->clog() << ERROR << "Uncatched exception in a thread from pool " 
                  << pool->m_poolName << " : " << any.getMessage().str() << std::endl;
-  } catch(...) {}     // all the rest is ignored
+  } catch(...) {
+    pool->clog() << ERROR << "Uncatched GENERAL exception in a thread from pool " 
+                 << pool->m_poolName << std::endl;
+  }
   
   delete args;
   return 0;

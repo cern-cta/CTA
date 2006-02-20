@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/01 17:11:47 $ $Author: itglp $
+ * @(#)$RCSfile: NotificationThread.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
  *
  *
  *
@@ -27,15 +27,6 @@
 #ifndef CASTOR_SERVER_NOTIFICATIONTHREAD_HPP
 #define CASTOR_SERVER_NOTIFICATIONTHREAD_HPP 1
 
-#if defined(_WIN32)
-#include <time.h>
-#include <winsock2.h>                   /* For struct servent */
-#else
-#include <sys/time.h>
-#include <unistd.h>
-#include <netdb.h>                      /* For struct servent */
-#endif
-
 #include <iostream>
 #include <string>
 #include "castor/IObject.hpp"
@@ -43,10 +34,15 @@
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/exception/Exception.hpp"
 
+#define MAX_BIND_RETRY 5
+
+
 namespace castor {
 
  namespace server {
 
+  class SignalThreadPool;
+  
   /**
    * Notification thread for internal stager notifications.
    * This thread can handle infinite loops from user threads.
@@ -55,27 +51,31 @@ namespace castor {
 
   public:
 
+    /// magic number for notification threads
+    static const long NOTIFY_MAGIC = 0x44180876;
+
     /**
   	 * Initializes a notification thread.
   	 */
-  	NotificationThread();
+  	NotificationThread(int notifPort);
+    
+    ~NotificationThread() {};
 
   	/**
      * Main work for this thread.
   	 */
-    virtual void run(void* param) throw();
+    virtual void run(void* param);
 
     /**
-  	 * Convenience method to stop the thread.
-  	 * XXX To be implemented later.
+  	 * The notification thread is never stopped.
      */
     virtual void stop() {};
 
   private:
 
     SignalThreadPool* m_owner;
-    
-    int getNotificationPort();
+
+    int m_notifPort;
 
   };
 

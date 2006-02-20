@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServiceThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/01 17:11:47 $ $Author: itglp $
+ * @(#)$RCSfile: ServiceThread.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
  *
  *
  *
@@ -41,14 +41,16 @@ castor::server::ServiceThread::ServiceThread(IThread* userThread) :
 //------------------------------------------------------------------------------
 castor::server::ServiceThread::~ServiceThread() throw()
 {
-  if(m_userThread)
+  if(m_userThread) {
     delete m_userThread;
+    m_userThread = 0;
+  }
 }
 
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::server::ServiceThread::run(void* param) throw()
+void castor::server::ServiceThread::run(void* param)
 {
   if (m_userThread == 0) {
     serrno = EINVAL;
@@ -72,7 +74,7 @@ void castor::server::ServiceThread::run(void* param) throw()
 
       /* Do the user job */
       try {
-        m_userThread->run(0);
+        m_userThread->run(m_owner);
       } catch (castor::exception::Exception e) {
         m_owner->clog() << ERROR << "Exception caught in the user thread: " << e.getMessage().str() << std::endl;
       }

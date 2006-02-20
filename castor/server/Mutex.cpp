@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Mutex.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/06 18:13:39 $ $Author: itglp $
+ * @(#)$RCSfile: Mutex.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
  *
  *
  *
@@ -33,9 +33,9 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::server::Mutex::Mutex(int value)
+castor::server::Mutex::Mutex(int value, int timeout)
   throw (castor::exception::Exception) :
-  m_var(value)
+  m_var(value), m_timeout(timeout)
 {
   if(createLock() != 0) {
     castor::exception::Internal ex;
@@ -57,7 +57,7 @@ castor::server::Mutex::~Mutex()
 //------------------------------------------------------------------------------
 int castor::server::Mutex::createLock()
 {
-  if(Cthread_mutex_timedlock(&m_var, TIMEOUT) != 0) {
+  if(Cthread_mutex_timedlock(&m_var, m_timeout) != 0) {
   	return -1;
   }
   m_mutexCthread = Cthread_mutex_lock_addr(&m_var);
@@ -93,7 +93,7 @@ void castor::server::Mutex::setValue(int newValue)
 //------------------------------------------------------------------------------
 void castor::server::Mutex::setValueNoEx(int newValue)
 {
-  if (Cthread_mutex_timedlock_ext(m_mutexCthread, TIMEOUT) == 0) {
+  if (Cthread_mutex_timedlock_ext(m_mutexCthread, m_timeout) == 0) {
     m_var = newValue;
     Cthread_mutex_unlock_ext(m_mutexCthread);
   }
@@ -119,7 +119,7 @@ void castor::server::Mutex::wait()
 void castor::server::Mutex::lock() throw (castor::exception::Exception)
 {
   if (m_mutexCthread == 0 ||
-      Cthread_mutex_timedlock_ext(m_mutexCthread, TIMEOUT) != 0) {
+      Cthread_mutex_timedlock_ext(m_mutexCthread, m_timeout) != 0) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to lock mutex";
     throw ex;

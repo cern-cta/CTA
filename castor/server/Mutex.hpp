@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Mutex.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/06 18:13:39 $ $Author: itglp $
+ * @(#)$RCSfile: Mutex.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
  *
  *
  *
@@ -38,7 +38,7 @@ namespace castor {
   /**
    * C++ interface to mutex handling in Cthread API.
    */
-  // template<class TYPE> class Mutex {   could be next step
+  // template<class TYPE> class Mutex  could be next step
   class Mutex {
 
   public:
@@ -48,8 +48,10 @@ namespace castor {
     /**
      * Mutex initialization.
      * @param var the shared variable.
+     * @param timeout interval to be used in Cthread calls.
      */
-    Mutex(int value) throw (castor::exception::Exception);
+    Mutex(int value, int timeout = TIMEOUT)
+      throw (castor::exception::Exception);
 
     ~Mutex();
 
@@ -111,6 +113,7 @@ namespace castor {
   private:
 
   	int m_var;
+    int m_timeout;
   	void* m_mutexCthread;
 
     int createLock();

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/01/16 10:09:48 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
  *
  *
  *
@@ -29,22 +29,32 @@
 #include "castor/server/ServiceThread.hpp"
 #include "castor/exception/Internal.hpp"
 
+extern "C" {
+  char* getconfent (const char *, const char *, int);
+}
+
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::server::SignalThreadPool::SignalThreadPool(const std::string poolName,
                                  castor::server::IThread* thread,
-                                 const int notifyPort) throw() :
+                                 const int timeout,
+                                 const int notifPort) :
   BaseThreadPool(poolName, new castor::server::ServiceThread(thread)),
-  m_notifyPort(notifyPort) {}
+  m_notifPort(notifPort), m_timeout(timeout)
+{
+  if(m_notifPort == 0) {
+     m_notifPort = getNotifPort();
+  }
+}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 castor::server::SignalThreadPool::~SignalThreadPool() throw()
 {
-  //delete m_notifTPool;
+  delete m_notifTPool;
   delete m_poolMutex;
 }
 
@@ -56,13 +66,13 @@ void castor::server::SignalThreadPool::init()
   throw (castor::exception::Exception)
 {
   // Initialize shared variables (former singleService structure)
-  m_nbActiveThreads = 0;  /* Number of threads currently running that service */
-  m_nbTotalThreads = 0;   /* Number of threads currently running that service */
+  m_nbActiveThreads = 0;  /* Number of threads currently running the service */
+  m_nbTotalThreads = 0;   /* Total number of threads for this service */
   m_notified = 0;         /* By default no signal yet has been received */
   m_notTheFirstTime = false;
 
   // Create a mutex (could throw exception)
-  m_poolMutex = new Mutex(-1);
+  m_poolMutex = new Mutex(-1, m_timeout);
 }
 
 
@@ -76,7 +86,7 @@ void castor::server::SignalThreadPool::run()
   struct threadArgs *args = new threadArgs();
   args->handler = this;
   args->param = this;
-  
+
   // even if nbThreads = 1 it will run detached because we
   // always run the notification and the signal handler thread.
   for (int i = 0; i < m_nbThreads; i++) {
@@ -94,27 +104,23 @@ void castor::server::SignalThreadPool::run()
     clog() << DEBUG << "Thread pool " << m_poolName << " started with "
            << m_nbThreads << " threads" << std::endl;
   }
-  // create and start notification thread
-  /*
+
+  /* create and start notification thread */
+  m_notifPort = getNotifPort();    // get notification port from config
+  if(m_notifPort <= 0)
+    return;
+
   m_notifTPool = new BaseThreadPool("_NotificationThread", new NotificationThread(m_notifPort));
   struct threadArgs *nArgs = new threadArgs();
   nArgs->handler = m_notifTPool;
-  nArgs->param = this;
-  
+  nArgs->param = this;          // reuse BaseThreadPool and the thread entrypoint
+
   if(Cthread_create_detached(castor::server::_thread_run, nArgs) < 0) {
     delete m_notifTPool;
-    delete nArgs;
-    return;
   }
 
-  /* Wait for nbNotifyThreads to change *
-  while (some flag here) {
-    m_poolMutex->wait();
-  }
-  delete nArgs;
-  */
+  /* here we had a Wait loop for nbNotifyThreads to change ... not needed in principle! */
 }
-
 
 
 //------------------------------------------------------------------------------
@@ -195,5 +201,44 @@ void castor::server::SignalThreadPool::commitRelease()
     m_nbActiveThreads--;   // unsafe
     throw e;
   }
+}
+
+
+//------------------------------------------------------------------------------
+// getNotifPort
+//------------------------------------------------------------------------------
+int castor::server::SignalThreadPool::getNotifPort()
+{
+  if(m_notifPort > 0)
+    return m_notifPort;
+
+  /* First time try to get port */
+  /* - From environment variable */
+  std::string envName = m_poolName + "NotifyPort";
+  char *port = NULL;
+  if ((port = getenv(envName.c_str())) != NULL) {
+    m_notifPort = atoi(port);
+  } else {
+    /* - From configuration file */
+    if ((port = getconfent(m_poolName.c_str(), NOTIFY_PORT, 0)) != NULL) {
+      m_notifPort = atoi(port);
+    } else {
+      // XXX ???
+      //struct servent *sp = NULL;
+      //if ((sp = Cgetservbyname(m_poolName.c_str(), NOTIFY_PROTO)) != NULL) {
+      //  m_notifPort = ntohs(sp->s_port);
+      //} else {
+    	  /* - Default value */
+        m_notifPort = NOTIFY_PORT_BASE + (int)getPoolId();
+      //}
+    }
+  }
+
+  if (m_notifPort <= 0) {
+    /* A port must be > 0 */
+    serrno = EINVAL;
+  }
+
+  return m_notifPort;
 }
 

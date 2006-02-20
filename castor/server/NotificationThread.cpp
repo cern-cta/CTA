@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/01 17:11:46 $ $Author: itglp $
+ * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
  *
  *
  *
@@ -27,40 +27,42 @@
 // Include Files
 #include "castor/server/NotificationThread.hpp"
 #include "castor/exception/Internal.hpp"
+#include "marshall.h"
+
+#if defined(_WIN32)
+#include <time.h>
+#include <winsock2.h>                   /* For struct servent */
+#else
+#include <sys/time.h>
+#include <unistd.h>
+#include <netdb.h>                      /* For struct servent */
+#include <net.h>
+#endif
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::server::NotificationThread::NotificationThread() :
-  m_owner(0)
+castor::server::NotificationThread::NotificationThread(int notifPort) :
+  m_notifPort(notifPort), m_owner(0)
 {
 };
 
 //------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-//castor::server::NotificationThread::~NotificationThread() throw()
-//{
-//}
-
-//------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::server::NotificationThread::run(void* param) throw()
+void castor::server::NotificationThread::run(void* param)
 {
   m_owner = (SignalThreadPool*)param;
+  int s = -1;
 
   try {
 
-  int s = -1;
-  int port;
   struct sockaddr_in serverAddress, clientAddress;
   int on = 1;	/* for REUSEADDR */
   int ibind;
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
-#define MAX_BIND_RETRY 5
 
 #if defined(_WIN32)
   if (WSAStartup(MAKEWORD (2, 0), &wsadata)) {
@@ -69,51 +71,40 @@ void castor::server::NotificationThread::run(void* param) throw()
   }
 #endif
 
-  /* Get notification port */
-  if (single_service_configNotifyPort(&port) != 0) {
-    goto single_service_notifyThreadReturn;
-  }
-
   /* Create a socket */
   if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-    goto single_service_notifyThreadReturn;
+    castor::exception::Internal ex;
+    ex.getMessage() << "NotificationThread: failed to create socket";
+    throw ex;
   }
   memset ((char *)&serverAddress, 0, sizeof(serverAddress));
   serverAddress.sin_family = AF_INET;
   serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-  serverAddress.sin_port = htons(port);
+  serverAddress.sin_port = htons(m_notifPort);
   setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on));
 
   /* Bind on it - we know that the port can be reused but not always immediately */
   ibind = 0;
-  while (1) {
-    ++ibind;
-    if (bind(s, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0) {
-      if (ibind >= MAX_BIND_RETRY) {
-	goto single_service_notifyThreadReturn;
-      }
-    } else {
+  while (ibind++ < MAX_BIND_RETRY) {
+    if (bind(s, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) >= 0)
       break;
-    }
+  }
+  if (ibind == MAX_BIND_RETRY) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "NotificationThread: failed to bind to port " << m_notifPort;
+    throw ex;
   }
 
-  /* Say to our parent that we successfully started */
-  if (Cthread_mutex_timedlock_ext(single_service_serviceLockCthreadStructure,SINGLE_SERVICE_MUTEX_TIMEOUT) != 0) {
-    goto single_service_notifyThreadReturn;
-  }
+  /* Say to our parent that we successfully started - not needed in principle */
+  //m_owner->m_poolMutex->lock();
 
-  singleService.nbNotifyThreads = 1;
-  if (Cthread_cond_signal_ext(single_service_serviceLockCthreadStructure) != 0) {
-    singleService.nbNotifyThreads = 0;
-    goto single_service_notifyThreadReturn;
-  }
-  if (Cthread_mutex_unlock_ext(single_service_serviceLockCthreadStructure) != 0) {
-    singleService.nbNotifyThreads = 0;
-    goto single_service_notifyThreadReturn;
-  }
+  //m_owner->nbNotifyThreads = 1;
+
+  //m_owner->m_poolMutex->signal();
+  //m_owner->m_poolMutex->release();
 
   /* Wait for a notification */
-  while(1) {
+  while(true) {
     int magic;
     int nb_recv;
     char buf[HYPERSIZE + LONGSIZE];
@@ -137,52 +128,57 @@ void castor::server::NotificationThread::run(void* param) throw()
       nb_recv = recvfrom(s, buf, 1024, 0, (struct sockaddr *)&clientAddress, &clientAddressLen );
 
       if (nb_recv != (HYPERSIZE+LONGSIZE)) {
-	/* Ignore this packet */
-	continue;
+      	/* Ignore this packet */
+      	continue;
       }
 
       p = buf;
       unmarshall_HYPER(p, magic);
       unmarshall_LONG(p, nb_thread_wanted);
 
-      if (magic != SINGLE_SERVICE_NOTIFY_MAGIC) {
-	/* Not a packet for us (!?) */
-	continue;
+      if (magic != NOTIFY_MAGIC) {
+      	/* Not a packet for us (!?) */
+      	continue;
       }
 
       /* Okay - we have received a notification - we signal our condition variable */
-      if (Cthread_mutex_timedlock_ext(single_service_serviceLockCthreadStructure,SINGLE_SERVICE_MUTEX_TIMEOUT) == 0) {
-	int NbThreadInactive;
+      try {
+        m_owner->m_poolMutex->lock();
 
-	singleService.notified += nb_thread_wanted;
+      	m_owner->m_notified += nb_thread_wanted;
 
-	/* We make sure that 0 <= singleService.notified <= NbThreadInactive */
-	if (singleService.notified < 0) {
-	  /* Impossible */
-	  singleService.notified = 1;
-	}
-	NbThreadInactive = singleService.nbTotalThreads - singleService.nbActiveThreads;
-	if (NbThreadInactive < 0) {
-	  /* Impossible */
-	  NbThreadInactive = 0;
-	}
-	if (NbThreadInactive == 0) {
-	  /* All threads are already busy : try to get one couting on timing windows */
-	  singleService.notified = 1;
-	} else {
-	  if (singleService.notified > NbThreadInactive) {
-	    singleService.notified = NbThreadInactive;
-	  }
-	}
+      	/* We make sure that 0 <= singleService.notified <= NbThreadInactive */
+      	if(m_owner->m_notified < 0) {
+      	  m_owner->m_notified = 1;
+      	}
+      	int nbThreadInactive = m_owner->m_nbTotalThreads - m_owner->m_nbActiveThreads;
+      	if(nbThreadInactive < 0) {
+          nbThreadInactive = 0;
+      	}
+      	if (nbThreadInactive == 0) {
+      	  /* All threads are already busy : try to get one couting on timing windows */
+      	  m_owner->m_notified = 1;
+      	} else {
+      	  if (m_owner->m_notified > nbThreadInactive) {
+      	    m_owner->m_notified = nbThreadInactive;
+      	  }
+      	}
 
-	if (singleService.notified > 0) {
-	  Cthread_cond_signal_ext(single_service_serviceLockCthreadStructure);
-	}
-	Cthread_mutex_unlock_ext(single_service_serviceLockCthreadStructure);
+      	if (m_owner->m_notified > 0) {
+          m_owner->m_poolMutex->signal();
+      	}
+
+        m_owner->m_poolMutex->release();
+      }
+      catch (castor::exception::Exception any) {
+        /* just ignore for this loop all mutex errors and try again */
+        try {
+          m_owner->m_poolMutex->release();
+        } catch(...) {}
       }
     }
 
-    /* And we continue */
+  /* And we continue for ever */
   }
 
   }
@@ -196,9 +192,10 @@ void castor::server::NotificationThread::run(void* param) throw()
     #endif
 
     try {
-      owner->getMutex()->release();
+      m_owner->m_poolMutex->release();
     } catch(...) {}
-    // LOG
+
+    m_owner->clog() << WARNING << any.getMessage().str() << std::endl;
   }
 }
 
