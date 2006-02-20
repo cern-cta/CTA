@@ -141,6 +141,13 @@ LDLIBS = -L../shlib -lshift $(MTLDLIBS)
 #if BuildSecurity
 LDLIBS += -ldl
 #endif
+#if defined(linux)
+#if UseXFSPrealloc
+CFLAGS += -DUSE_XFSPREALLOC
+LDLIBS += -lxfs
+#endif
+#endif
+
 LIBS = $(OPTLIBS)
 
 #if BuildRfioLibrary
@@ -307,6 +314,10 @@ SRVOBJS = $(NTSERVICEO) Csemaphore.Osuf rfio_serv.Osuf rfio_calls.Osuf \
 		rfio_call64.Osuf rfio_fcalls.Osuf rfio_callhandlers.Osuf switch_req.Osuf \
 		checkkey.Osuf $(FIOO) $(CRAYFORTRANO) rfstatfs.Osuf alrm.Osuf \
 		rfioacct.Osuf
+
+#if defined(linux)
+SRVOBJS += rfio_alignedbuf.Osuf rfio_xfsprealloc.Osuf
+#endif
 
 RFIOLIB_OBJS = access.Osuf alrm.Osuf chdir.Osuf checkkey.Osuf chmod.Osuf \
 		chown.Osuf close.Osuf closedir.Osuf connect.Osuf error.Osuf \
