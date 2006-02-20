@@ -560,7 +560,27 @@
 #endif
 
 
-
+/* ----------------- */
+/* Cleaning          */
+/* ----------------- */
+#if BuildCleaning
+#if !BuildOraCpp && !BuildPgCpp && !BuildMyCpp
+#undef BuildOraCpp
+#define BuildOraCpp YES
+#endif
+#if !BuildStageLibrary
+#undef BuildStageLibrary
+#define BuildStageLibrary YES
+#endif
+#if !BuildCastorClientCPPLibrary
+#undef BuildCastorClientCPPLibrary
+#define BuildCastorClientCPPLibrary YES
+#endif
+#if BuildDlfLibrary != YES
+#undef BuildDlfLibrary
+#define BuildDlfLibrary YES
+#endif
+#endif
 
 /* ------------------ */
 /* Garbage Collection */
@@ -676,13 +696,13 @@ RHCPPDIR = rh
 #if BuildVDQMCpp
 VDQMCPPDIR = vdqm
 #endif
-#if BuildRepack
-REPACKDIR = repack
+#if BuildCleaning
+CLEANINGDIR = cleaning
 #endif
 #if BuildGCCpp
 GCCPPDIR = gc
 #endif
-#if BuildCastorClientCPPLibrary || BuildRHCpp || BuildVDQMCpp || BuildRepack || BuildGCCpp || BuildOraCpp || BuildPgCpp || BuildMyCpp
+#if BuildCastorClientCPPLibrary || BuildRHCpp || BuildVDQMCpp || BuildCleaning || BuildGCCpp || BuildOraCpp || BuildPgCpp || BuildMyCpp
 COMMONCPPDIR = castor
 #endif
 #if BuildOraCpp
