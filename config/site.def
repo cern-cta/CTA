@@ -188,6 +188,11 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define OraStagerConfigFile  /etc/castor/ORASTAGERCONFIG
 #endif
 #if defined(_WIN32)
+#define CleaningConfigFile  %%SystemRoot%%\\system32\\drivers\\etc\\castor\\CLEANINGCONFIG
+#else
+#define CleaningConfigFile  /etc/castor/CLEANINGCONFIG
+#endif
+#if defined(_WIN32)
 #define MyStagerConfigFile  %%SystemRoot%%\\system32\\drivers\\etc\\castor\\MYSTAGERCONFIG
 #else
 #define MyStagerConfigFile  /etc/castor/MYSTAGERCONFIG
