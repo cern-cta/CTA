@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Mutex.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
+ * @(#)$RCSfile: Mutex.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/22 11:22:29 $ $Author: itglp $
  *
  *
  *
@@ -110,7 +110,8 @@ void castor::server::Mutex::wait()
 {
   if (m_mutexCthread == 0)
     return;
-  Cthread_cond_timedwait_ext(m_mutexCthread, COND_TIMEOUT);
+  Cthread_cond_timedwait_ext(m_mutexCthread, m_timeout);
+  // here the timeout was previously defined as COND_TIMEOUT, by default = TIMEOUT
 }
 
 //------------------------------------------------------------------------------
