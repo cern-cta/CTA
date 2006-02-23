@@ -25,20 +25,26 @@ RepackCleaner::~RepackCleaner(){
 void RepackCleaner::run(void* param) throw(){
 	
 	RepackSubRequest* tape = NULL;
+	Cuuid_t cuuid;
 	
 	/* Check currently */
 	while ( !m_stop ) {
-		
 		try {
+
 			tape = m_dbhelper->checkSubRequestStatus(SUBREQUEST_STAGING);
 
-			if ( tape != NULL )
-			{
-				if ( getStageStatus(tape) == castor::stager::SUBREQUEST_FINISHED )
+			if ( tape != NULL )	{
+				if ( getStageStatus(tape) == castor::stager::SUBREQUEST_FINISHED ){
+					string2Cuuid(&cuuid,(char*)tape->cuuid().c_str());
 					tape->setStatus(SUBREQUEST_READYFORMIG);
+					castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 40, 1, NULL);
+					m_dbhelper->updateSubRequest(tape,cuuid);
+				}
+				cuuid = nullCuuid;
 				delete tape;
 				tape = NULL;
 			}
+
 		}catch (castor::exception::Internal ex){
 			std::cerr << ex.getMessage();
 			break;
@@ -66,12 +72,9 @@ int RepackCleaner::getStageStatus(RepackSubRequest* sreq) throw()
 	int rc = 0;
 			
 
-	_Cuuid_t* cuuid;
-	Cuuid2string((char*)sreq->cuuid().c_str(),sreq->cuuid().length(), cuuid);
-
 	request.type = BY_REQID;
 	request.param = (void*)sreq->cuuid().c_str();
-			
+	stage_trace(3,"Getting Status for Request: %s ",(char*)sreq->cuuid().c_str());
 	rc = stage_requestquery(&request,1,&response,&nbresps,NULL);
 
 	if ( rc != 0 ){
@@ -82,8 +85,8 @@ int RepackCleaner::getStageStatus(RepackSubRequest* sreq) throw()
 
 	if ( nbresps == 1){
 		castor::dlf::Param params[] =
-				{castor::dlf::Param("STAGERSTATUS", response[0].status)};
-				castor::dlf::dlf_writep((*cuuid), DLF_LVL_DEBUG, 99, 1, params);
+		{castor::dlf::Param("STAGERSTATUS", response[0].status)};
+		castor::dlf::dlf_writep((*cuuid), DLF_LVL_DEBUG, 99, 1, params);
 		free(response);
 		return response[0].status;
 	}
