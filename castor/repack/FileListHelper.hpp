@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/14 15:33:41 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/23 12:43:12 $ $Author: felixehm $
  *
  * The Filelisthelper offers some little functions for getting the file 
  * information for a tape.
@@ -80,6 +80,7 @@ namespace castor {
        * Fills the Request with the segments on the tape
        * elements
        * @param vid The Request of the Tape
+       * @return -1 in case of an error, the error Message is written to DLF!
        */
       int getFileListSegs(castor::repack::RepackSubRequest *sreq, Cuuid_t& cuuid);
       
@@ -91,7 +92,7 @@ namespace castor {
 		/**
 		 * The nameserver this Class contacts
 		 */
-		char* m_ns;
+		std::string m_ns;
 		
     }; // end of class FileListHelper
 

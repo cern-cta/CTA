@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/02/17 18:56:16 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/02/23 12:43:12 $ $Author: felixehm $
  *
  *
  *
@@ -37,7 +37,7 @@ namespace castor {
 //------------------------------------------------------------------------------
 FileListHelper::FileListHelper(std::string nameserver)
 {
-	m_ns = (char*)nameserver.c_str();
+	m_ns = nameserver;
 }
 
 
@@ -45,13 +45,14 @@ FileListHelper::FileListHelper(std::string nameserver)
 // Constructor 2, initialises the m_ns from the castor config file
 //------------------------------------------------------------------------------
 FileListHelper::FileListHelper() throw (castor::exception::Internal) {
-	
+	/*
 	if ( !(m_ns = getconfent("CNS", "HOST",0)) ){
 		castor::exception::Internal ex;
 		ex.getMessage() << "Unable to initialise FileListHelper with nameserver "
 		<< "entry in castor config file";
 		throw ex;		
 	}
+	*/
 }
 
 //------------------------------------------------------------------------------
@@ -59,7 +60,7 @@ FileListHelper::FileListHelper() throw (castor::exception::Internal) {
 //------------------------------------------------------------------------------
 FileListHelper::~FileListHelper()
 {
-	delete m_ns;
+	//delete m_ns;
 }
 
 //------------------------------------------------------------------------------
@@ -82,7 +83,7 @@ std::vector<std::string>* FileListHelper::getFilePathnames(
 	for ( i=0; i< tmp->size(); i++ )
 	{
 		/* get the full path and push it into the list */
-		if ( Cns_getpath(m_ns, tmp->at(i), path) < 0 ) {
+		if ( Cns_getpath((char*)m_ns.c_str(), tmp->at(i), path) < 0 ) {
 				castor::exception::Internal ex;
 				ex.getMessage() << "FileListHelper::getFileList(..):" 
 								<< sstrerror(serrno) << std::endl;
@@ -153,7 +154,7 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq, Cu
 	Cns_list list;
 	list.fd = list.eol = list.offset = list.len = 0;
 	list.buf = NULL;
-
+	serrno = SENOERR; 	// Begin:no error
 	
 	if ( subreq != NULL )
 	{
@@ -161,8 +162,10 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq, Cu
 	
 		flags = CNS_LIST_BEGIN;
 		/* all Segments from a tape belong to one Request ! */
-		while ((dtp = Cns_listtape (m_ns, (char*)subreq->vid().c_str(), flags, &list)) != NULL) {
-			
+		std::cout << m_ns << std::endl;
+
+		while ((dtp = Cns_listtape ((char*)m_ns.c_str(), (char*)subreq->vid().c_str(), flags, &list)) != NULL) {
+
 			RepackSegment* rseg= new RepackSegment();
 			rseg->setVid(subreq);
 			rseg->setFileid(dtp->fileid);
@@ -173,19 +176,9 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq, Cu
 
 			segs_size += dtp->segsize;
 			flags = CNS_LIST_CONTINUE;
-			/* TODO:just for debug 
-			std::cout //<< path  
-					  << " fileid " << dtp->fileid
-					  << " filesec " << dtp->fsec
-					  << " fileseq " << dtp->fseq 
-					  << " block1 " << (unsigned short)dtp->blockid[0] 
-					  << " block2 " << (unsigned short)dtp->blockid[1] 
-					  << " block3 " << (unsigned short)dtp->blockid[2] 
-					  << " block4 " << (unsigned short)dtp->blockid[3] 
-					  << std::endl;
-			*/
 		}
-		Cns_listtape (m_ns, (char*)subreq->vid().c_str(), CNS_LIST_END, &list);
+		
+		Cns_listtape ((char*)m_ns.c_str(), (char*)subreq->vid().c_str(), CNS_LIST_END, &list);
 		stage_trace(2,"Size on disk to be allocated: %u", segs_size);
 		subreq->setXsize(segs_size);
 
@@ -194,10 +187,8 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq, Cu
      		  castor::dlf::Param("Segments", subreq->segment().size()),
      		  castor::dlf::Param("DiskSpace", subreq->xsize())};
 		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 24, 3, params);
-		
-		return subreq->segment().size();
+		return 0;
 	}
-	return -1;
 }
 
 	} // End namespace repack
