@@ -26,6 +26,11 @@ namespace castor{
 		SUBREQUEST_READYFORCLEANUP = 1050,
 		SUBREQUEST_DONE			 = 1060
 		};
+		
+		enum RepackServerCodes {
+		REMOVE_TAPE	= 1,
+		GET_STATUS = 2	//TODO
+		};
 	}
 }
 
