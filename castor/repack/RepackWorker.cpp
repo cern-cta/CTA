@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/02/17 19:03:06 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/02/23 12:40:31 $ $Author: felixehm $
  *
  *
  *
@@ -64,7 +64,6 @@ void RepackWorker::run(void* param) throw()
   stage_trace(3, "RepackWorker started and Request is now handled!");
   castor::MessageAck ack; // Response for client
   ack.setStatus(true);
-  int tapecnt =0;
   castor::io::ServerSocket* sock = (castor::io::ServerSocket*) param;
 
   // Retrieve info on the client
@@ -127,16 +126,11 @@ void RepackWorker::run(void* param) throw()
   	 */
     getPoolInfo(rreq);
 
-    for ( tapecnt = 0; tapecnt < rreq->subRequest().size() ; tapecnt++ ) 
-    {
-    	RepackSubRequest* subRequest = rreq->subRequest().at(tapecnt);
-    	// set the status
-		subRequest->setStatus(SUBREQUEST_READYFORSTAGING);
-  	}
-
-	/* Go to DB, but only if tapes were found !*/
-	if ( tapecnt )
-	  	m_databasehelper->storeRequest(rreq);
+	switch ( rreq->id() ){
+	
+	case REMOVE_TAPE: removeRequest(rreq);break;
+    default: handleRepack(rreq);break;
+	}
 
   }catch (castor::exception::Internal e) {
   	ack.setStatus(false);
@@ -158,9 +152,9 @@ void RepackWorker::run(void* param) throw()
     std::cout << e.getMessage();
   }
   
-  
-  delete sock;  // originally created from RepackServer
   delete rreq;
+  delete sock;  // originally created from RepackServer
+
 }
 
 
@@ -171,8 +165,51 @@ void RepackWorker::run(void* param) throw()
 void RepackWorker::stop() throw()
 {
 
+
 }
 
+
+
+//------------------------------------------------------------------------------
+// Stops the Thread
+//------------------------------------------------------------------------------
+void RepackWorker::removeRequest(RepackRequest* rreq) throw ()
+{
+	std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
+	while ( tape != rreq->subRequest().end() ){
+		m_databasehelper->remove(
+			m_databasehelper->getSubRequestByVid( (*tape)->vid() ));
+		 tape++;
+	}
+	
+}
+
+
+
+//------------------------------------------------------------------------------
+// handle RepackRequest
+//------------------------------------------------------------------------------
+void RepackWorker::handleRepack(RepackRequest* rreq) throw()
+{
+	int tapecnt =0;
+	for ( tapecnt = 0; tapecnt < rreq->subRequest().size() ; tapecnt++ ) 
+    {
+    	RepackSubRequest* subRequest = rreq->subRequest().at(tapecnt);
+    	// set the status
+		subRequest->setStatus(SUBREQUEST_READYFORSTAGING);
+		// and for each subrequest a own cuuid, for DLF logging
+		Cuuid_t cuuid = nullCuuid;
+	   	Cuuid_create(&cuuid);
+	   	char buf[CUUID_STRING_LEN+1];
+	    Cuuid2string(buf, CUUID_STRING_LEN+1, &cuuid);
+	    std::string tmp (buf,CUUID_STRING_LEN);
+	   	subRequest->setCuuid(tmp);
+  	}
+
+	/* Go to DB, but only if tapes were found !*/
+	if ( tapecnt )
+	  	m_databasehelper->storeRequest(rreq);
+}
 
 
 //------------------------------------------------------------------------------
@@ -211,6 +248,7 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw()
 				if ( checkTapeForRepack(lp->vid) ){
 					RepackSubRequest* tmp = new RepackSubRequest();
 					tmp->setVid(lp->vid);
+					tmp->setRequestID(rreq);
 					rreq->addSubRequest(tmp);
 					nbvol++;
 				}
