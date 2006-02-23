@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/02/17 19:00:52 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/02/23 12:37:40 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -132,6 +132,7 @@ bool RepackClient::parseInput(int argc, char** argv)
     {"output_tppool", REQUIRED_ARGUMENT, 0, 'o'},
     {"otp", REQUIRED_ARGUMENT, 0, 'o'},*/
     {"help", NO_ARGUMENT,NULL, 'h' },
+    {"delete", NO_ARGUMENT,NULL, 'd' },
     {0, 0, 0, 0}
   };
 
@@ -152,6 +153,10 @@ bool RepackClient::parseInput(int argc, char** argv)
     case 'P':
       cp.pool = Coptarg; // store it for later use in building Request
       break;
+    case 'd':
+      cp.vid = Coptarg;
+      deleteTapes();
+      break;
     default:
       break;
     }
@@ -169,6 +174,18 @@ bool RepackClient::parseInput(int argc, char** argv)
 void RepackClient::usage() 
 {
 	std::cout << "Usage: repack -V [VolumeID] -P [PoolID] | -h " << std::endl;
+}
+
+
+//------------------------------------------------------------------------------
+// deleteTape
+//------------------------------------------------------------------------------
+void RepackClient::deleteTapes()
+{
+	RepackRequest* rreq = new RepackRequest();
+	
+	rreq->setCommand(REMOVE_TAPE);
+	addTapes(rreq);
 }
 
 
@@ -196,6 +213,26 @@ void RepackClient::help(){
 }
 
 
+
+//------------------------------------------------------------------------------
+// addTapes
+//------------------------------------------------------------------------------
+int RepackClient::addTapes(RepackRequest *rreq)
+{
+	char* vid;
+  /* add the given tapes as SubRequests */
+	if ( cp.vid != NULL ) {
+	  for (vid = strtok (cp.vid, ":"); vid;  vid = strtok (NULL, ":")) {
+	  	RepackSubRequest *sreq = new RepackSubRequest();
+	  	sreq->setVid(vid);
+	  	sreq->setRequestID(rreq);
+	  	rreq->addSubRequest(sreq);
+	  }
+  }	
+}
+
+
+
 //------------------------------------------------------------------------------
 // buildRequest
 //------------------------------------------------------------------------------
@@ -215,17 +252,8 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
   	return NULL;
   }
   
-
+   addTapes(rreq);
   
-  /* add the given tapes as SubRequests */
-  if ( cp.vid != NULL ) {
-	  for (vid = strtok (cp.vid, ":"); vid;  vid = strtok (NULL, ":")) {
-	  	RepackSubRequest *sreq = new RepackSubRequest();
-	  	sreq->setVid(vid);
-	  	rreq->addSubRequest(sreq);
-	  }
-  }
-
   /* or, we want to repack a pool */
   if ( cp.pool != NULL ) {
   	if ( !rreq->subRequest().size() )
@@ -279,8 +307,7 @@ void RepackClient::run(int argc, char** argv)
 	MessageAck* ack = dynamic_cast<castor::MessageAck*>(obj);
 	if ( ack != 0 ){
 		if ( !ack->status() ){
-			std::cout << "Repackserver respond with an error (ErrorCode "
-				      << ack->errorCode() << ") :" << std::endl
+			std::cout << "Repackserver respond :" << std::endl
 					  << ack->errorMessage() << std::endl;
 		}
 	}
