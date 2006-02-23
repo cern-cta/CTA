@@ -42,7 +42,7 @@
 const std::string castor::repack::DatabaseHelper::m_selectToDoStatementString =
   "SELECT q.id FROM RepackSubRequest q WHERE q.status = 1001 AND ROWNUM < 2 ";
 const std::string castor::repack::DatabaseHelper::m_selectCheckStatementString =
-  "SELECT q.vid FROM RepackSubRequest q WHERE q.vid= :1";
+  "SELECT q.id FROM RepackSubRequest q WHERE q.vid= :1";
 const std::string castor::repack::DatabaseHelper::m_selectCheckSubRequestStatementString =
   "SELECT q.id FROM RepackSubRequest q WHERE q.status= :1 AND ROWNUM < 2";
 
@@ -146,12 +146,33 @@ void castor::repack::DatabaseHelper::storeRequest(castor::repack::RepackRequest*
 
 
 //------------------------------------------------------------------------------
-// requestToDo
+// is_stored
 //------------------------------------------------------------------------------
 bool castor::repack::DatabaseHelper::is_stored(std::string vid) throw()
 {
 	bool result = false;
 	stage_trace(2,"Checking, if %s is already in DB ",vid.c_str());
+	
+	if ( getSubRequestByVid(vid) ){
+		castor::dlf::Param params[] =
+		      	{castor::dlf::Param("VID", vid)};
+			    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28, 1, params);
+				stage_trace(3," VID : %s already in Database ! Skipping..", 
+								vid.c_str());
+		result = true;
+	}
+	
+
+	return result;
+}
+
+//------------------------------------------------------------------------------
+// getSubRequestByVid
+//------------------------------------------------------------------------------
+castor::repack::RepackSubRequest* 
+	castor::repack::DatabaseHelper::getSubRequestByVid(std::string vid) throw ()
+{
+	RepackSubRequest* result = NULL;
 	try {
 		// Check whether the statements are ok
 		if ( m_selectCheckStatement == NULL ) {
@@ -162,12 +183,8 @@ bool castor::repack::DatabaseHelper::is_stored(std::string vid) throw()
 
 		if ( rset->next() )	/* Something found : return false*/
 		{
-			castor::dlf::Param params[] =
-		      	{castor::dlf::Param("VID", vid)};
-			    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28, 1, params);
-				stage_trace(3," VID : %s already in Database ! Skipping..", 
-								vid.c_str());
-				result = true;
+			u_signed64 id = (u_signed64)rset->getDouble(1);
+		    result = getSubRequest(id);
 		}
 		delete rset;
 		
@@ -177,14 +194,13 @@ bool castor::repack::DatabaseHelper::is_stored(std::string vid) throw()
 		ex.getMessage() 	<< "Unable to get a RepackSubRequest from DB " 
 							<< std::endl << e.getMessage();
 		throw ex;
-	}
+	}	
+	
 	delete m_selectCheckStatement;
 	m_selectCheckStatement = NULL;
+	
 	return result;
 }
-
-
-
 
 
 void castor::repack::DatabaseHelper::updateSubRequest(castor::repack::RepackSubRequest* obj, Cuuid_t& cuuid) throw ()
@@ -237,8 +253,7 @@ castor::repack::RepackSubRequest* castor::repack::DatabaseHelper::requestToDo()
 			// get the request we found, which the ID we got from DB
 			u_signed64 id = (u_signed64)rset->getDouble(1);
 			delete rset;
-
-			result = getSubRequest(id);
+		    result = getSubRequest(id);
 		    
 		    svcs()->fillObj(&ad,result,OBJ_RepackSegment);
 		    return result;
@@ -256,14 +271,14 @@ castor::repack::RepackSubRequest* castor::repack::DatabaseHelper::requestToDo()
 //------------------------------------------------------------------------------
 // internal : getSubRequest
 //------------------------------------------------------------------------------
-castor::repack::RepackSubRequest* castor::repack::DatabaseHelper::getSubRequest(u_signed64 id) throw()
+castor::repack::RepackSubRequest* castor::repack::DatabaseHelper::getSubRequest(u_signed64 sub_id) throw()
 {
-	castor::IObject* obj = cnvSvc()->getObjFromId( id );
+	castor::IObject* obj = cnvSvc()->getObjFromId( sub_id );
 	if (obj == NULL) {
 		castor::exception::Internal ex;
 		ex.getMessage()
 				<< "castor::repack::DatabaseHelper::requestToDo(..) :"
-				   " could not retrieve object for id "	<< id;
+				   " could not retrieve object for id "	<< sub_id;
 		throw ex;
     	}
 	/* Now, lets see if the right Object was retrieved */ 
@@ -273,7 +288,7 @@ castor::repack::RepackSubRequest* castor::repack::DatabaseHelper::getSubRequest(
     	castor::exception::Internal ex;
 		ex.getMessage()
 				<< "castor::repack::DatabaseHelper::requestToDo(..) :"
-				   " object retrieved for id : " << id << "was a "
+				   " object retrieved for id : " << sub_id << "was a "
 				   << castor::ObjectsIdStrings[obj->type()];
 		delete obj;	/* never forget to delete everything used */
 		throw ex;
@@ -328,4 +343,18 @@ castor::repack::RepackSubRequest* castor::repack::DatabaseHelper::checkSubReques
 					// The Segments are missing !!!
 }
 
+
+
+//------------------------------------------------------------------------------
+// private : getSubRequest
+//------------------------------------------------------------------------------
+void castor::repack::DatabaseHelper::remove(castor::IObject* obj) throw ()
+{
+	if ( obj->type() == OBJ_RepackSubRequest ){
+		RepackSubRequest* rseq = dynamic_cast<RepackSubRequest*>(obj);
+		stage_abortRequest( (char*)rseq->cuuid().c_str() ,NULL);
+	}
+	svcs()->deleteRep(&ad,obj, false);
+	svcs()->commit(&ad);
+}
 

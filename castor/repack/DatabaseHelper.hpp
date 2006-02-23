@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/17 18:54:41 $ $Author: felixehm $
+ * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/02/23 12:36:03 $ $Author: felixehm $
  *
  * 
  *
@@ -37,7 +37,7 @@
 #include "castor/db/DbBaseObj.hpp"
 #include "castor/db/DbCnvSvc.hpp"
 #include "castor/exception/SQLError.hpp"
-
+#include "stager_client_api.h"
 
 namespace castor {
 	
@@ -108,7 +108,10 @@ namespace castor {
 	   * TODO: select statement
 	   */
 	  RepackSubRequest* checkSubRequestStatus(int status) throw();
+	  
+	  void remove(castor::IObject* obj) throw() ;
 
+	  RepackSubRequest* getSubRequestByVid(std::string vid) throw();
       /**
        * Checks,wether a Tape is already stored in the RepackSubRequest Table.
        * This is needed before a Tape is inserted as a new repackjob.
@@ -119,7 +122,7 @@ namespace castor {
         /**
          * Little Helper to get a get a SubRequest from DB.
          */
-	  	RepackSubRequest* DatabaseHelper::getSubRequest(u_signed64 id) throw();
+	  	RepackSubRequest* DatabaseHelper::getSubRequest(u_signed64 sub_id) throw();
       
       /// SQL statement for function ToDo
         static const std::string m_selectToDoStatementString;
