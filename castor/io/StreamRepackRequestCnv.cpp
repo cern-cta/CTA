@@ -95,6 +95,7 @@ void castor::io::StreamRepackRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->creationTime();
   ad->stream() << obj->pool();
   ad->stream() << obj->pid();
+  ad->stream() << obj->command();
   ad->stream() << obj->id();
 }
 
@@ -123,6 +124,9 @@ castor::IObject* castor::io::StreamRepackRequestCnv::createObj(castor::IAddress*
   u_signed64 pid;
   ad->stream() >> pid;
   object->setPid(pid);
+  int command;
+  ad->stream() >> command;
+  object->setCommand(command);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

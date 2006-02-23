@@ -55,7 +55,7 @@ static castor::CnvFactory<castor::db::cnv::DbRepackRequestCnv>* s_factoryDbRepac
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbRepackRequestCnv::s_insertStatementString =
-"INSERT INTO RepackRequest (machine, userName, creationTime, pool, pid, id) VALUES (:1,:2,:3,:4,:5,ids_seq.nextval) RETURNING id INTO :6";
+"INSERT INTO RepackRequest (machine, userName, creationTime, pool, pid, command, id) VALUES (:1,:2,:3,:4,:5,:6,ids_seq.nextval) RETURNING id INTO :7";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbRepackRequestCnv::s_deleteStatementString =
@@ -63,11 +63,11 @@ const std::string castor::db::cnv::DbRepackRequestCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbRepackRequestCnv::s_selectStatementString =
-"SELECT machine, userName, creationTime, pool, pid, id FROM RepackRequest WHERE id = :1";
+"SELECT machine, userName, creationTime, pool, pid, command, id FROM RepackRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbRepackRequestCnv::s_updateStatementString =
-"UPDATE RepackRequest SET machine = :1, userName = :2, pool = :3, pid = :4 WHERE id = :5";
+"UPDATE RepackRequest SET machine = :1, userName = :2, pool = :3, pid = :4, command = :5 WHERE id = :6";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbRepackRequestCnv::s_storeTypeStatementString =
@@ -326,7 +326,7 @@ void castor::db::cnv::DbRepackRequestCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(6, castor::db::DBTYPE_INT64);
+      m_insertStatement->registerOutParam(7, castor::db::DBTYPE_INT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -337,8 +337,9 @@ void castor::db::cnv::DbRepackRequestCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(3, time(0));
     m_insertStatement->setString(4, obj->pool());
     m_insertStatement->setInt64(5, obj->pid());
+    m_insertStatement->setInt(6, obj->command());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getInt64(6));
+    obj->setId(m_insertStatement->getInt64(7));
     m_storeTypeStatement->setInt64(1, obj->id());
     m_storeTypeStatement->setInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -360,6 +361,7 @@ void castor::db::cnv::DbRepackRequestCnv::createRep(castor::IAddress* address,
                     << "  creationTime : " << obj->creationTime() << std::endl
                     << "  pool : " << obj->pool() << std::endl
                     << "  pid : " << obj->pid() << std::endl
+                    << "  command : " << obj->command() << std::endl
                     << "  id : " << obj->id() << std::endl;
     throw ex;
   }
@@ -386,7 +388,8 @@ void castor::db::cnv::DbRepackRequestCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setString(2, obj->userName());
     m_updateStatement->setString(3, obj->pool());
     m_updateStatement->setInt64(4, obj->pid());
-    m_updateStatement->setInt64(5, obj->id());
+    m_updateStatement->setInt(5, obj->command());
+    m_updateStatement->setInt64(6, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -474,7 +477,8 @@ castor::IObject* castor::db::cnv::DbRepackRequestCnv::createObj(castor::IAddress
     object->setCreationTime(rset->getInt(3));
     object->setPool(rset->getString(4));
     object->setPid(rset->getInt64(5));
-    object->setId(rset->getInt64(6));
+    object->setCommand(rset->getInt(6));
+    object->setId(rset->getInt64(7));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -517,7 +521,8 @@ void castor::db::cnv::DbRepackRequestCnv::updateObj(castor::IObject* obj)
     object->setCreationTime(rset->getInt(3));
     object->setPool(rset->getString(4));
     object->setPid(rset->getInt64(5));
-    object->setId(rset->getInt64(6));
+    object->setCommand(rset->getInt(6));
+    object->setId(rset->getInt64(7));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

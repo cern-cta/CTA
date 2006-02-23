@@ -46,6 +46,7 @@ castor::repack::RepackRequest::RepackRequest() throw() :
   m_creationTime(0),
   m_pool(""),
   m_pid(0),
+  m_command(0),
   m_id(0) {
 };
 
@@ -77,6 +78,7 @@ void castor::repack::RepackRequest::print(std::ostream& stream,
   stream << indent << "creationTime : " << m_creationTime << std::endl;
   stream << indent << "pool : " << m_pool << std::endl;
   stream << indent << "pid : " << m_pid << std::endl;
+  stream << indent << "command : " << m_command << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

@@ -55,7 +55,7 @@ static castor::CnvFactory<castor::db::ora::OraRepackRequestCnv>* s_factoryOraRep
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraRepackRequestCnv::s_insertStatementString =
-"INSERT INTO RepackRequest (machine, userName, creationTime, pool, pid, id) VALUES (:1,:2,:3,:4,:5,ids_seq.nextval) RETURNING id INTO :6";
+"INSERT INTO RepackRequest (machine, userName, creationTime, pool, pid, command, id) VALUES (:1,:2,:3,:4,:5,:6,ids_seq.nextval) RETURNING id INTO :7";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraRepackRequestCnv::s_deleteStatementString =
@@ -63,11 +63,11 @@ const std::string castor::db::ora::OraRepackRequestCnv::s_deleteStatementString 
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraRepackRequestCnv::s_selectStatementString =
-"SELECT machine, userName, creationTime, pool, pid, id FROM RepackRequest WHERE id = :1";
+"SELECT machine, userName, creationTime, pool, pid, command, id FROM RepackRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraRepackRequestCnv::s_updateStatementString =
-"UPDATE RepackRequest SET machine = :1, userName = :2, pool = :3, pid = :4 WHERE id = :5";
+"UPDATE RepackRequest SET machine = :1, userName = :2, pool = :3, pid = :4, command = :5 WHERE id = :6";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraRepackRequestCnv::s_storeTypeStatementString =
@@ -326,7 +326,7 @@ void castor::db::ora::OraRepackRequestCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(6, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(7, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -337,8 +337,9 @@ void castor::db::ora::OraRepackRequestCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(3, time(0));
     m_insertStatement->setString(4, obj->pool());
     m_insertStatement->setDouble(5, obj->pid());
+    m_insertStatement->setInt(6, obj->command());
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(6));
+    obj->setId((u_signed64)m_insertStatement->getDouble(7));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -368,6 +369,7 @@ void castor::db::ora::OraRepackRequestCnv::createRep(castor::IAddress* address,
                     << "  creationTime : " << obj->creationTime() << std::endl
                     << "  pool : " << obj->pool() << std::endl
                     << "  pid : " << obj->pid() << std::endl
+                    << "  command : " << obj->command() << std::endl
                     << "  id : " << obj->id() << std::endl;
     throw ex;
   }
@@ -394,7 +396,8 @@ void castor::db::ora::OraRepackRequestCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setString(2, obj->userName());
     m_updateStatement->setString(3, obj->pool());
     m_updateStatement->setDouble(4, obj->pid());
-    m_updateStatement->setDouble(5, obj->id());
+    m_updateStatement->setInt(5, obj->command());
+    m_updateStatement->setDouble(6, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->commit();
@@ -498,7 +501,8 @@ castor::IObject* castor::db::ora::OraRepackRequestCnv::createObj(castor::IAddres
     object->setCreationTime(rset->getInt(3));
     object->setPool(rset->getString(4));
     object->setPid((u_signed64)rset->getDouble(5));
-    object->setId((u_signed64)rset->getDouble(6));
+    object->setCommand(rset->getInt(6));
+    object->setId((u_signed64)rset->getDouble(7));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -549,7 +553,8 @@ void castor::db::ora::OraRepackRequestCnv::updateObj(castor::IObject* obj)
     object->setCreationTime(rset->getInt(3));
     object->setPool(rset->getString(4));
     object->setPid((u_signed64)rset->getDouble(5));
-    object->setId((u_signed64)rset->getDouble(6));
+    object->setCommand(rset->getInt(6));
+    object->setId((u_signed64)rset->getDouble(7));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

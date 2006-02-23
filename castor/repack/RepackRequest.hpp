@@ -183,6 +183,26 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_command
+       * This field is set from the Client and can be commands for Repack.
+       * i.e  the removal of tapes from Repack
+       * @return the value of m_command
+       */
+      int command() const {
+        return m_command;
+      }
+
+      /**
+       * Set the value of m_command
+       * This field is set from the Client and can be commands for Repack.
+       * i.e  the removal of tapes from Repack
+       * @param new_var the new value of m_command
+       */
+      void setCommand(int new_var) {
+        m_command = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -241,6 +261,12 @@ namespace castor {
       std::string m_pool;
 
       u_signed64 m_pid;
+
+      /*
+       * This field is set from the Client and can be commands for Repack.
+       * i.e  the removal of tapes from Repack
+      */
+      int m_command;
 
       /// The id of this object
       u_signed64 m_id;
