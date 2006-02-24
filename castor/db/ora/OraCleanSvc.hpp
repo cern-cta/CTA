@@ -26,10 +26,20 @@
 #ifndef ORA_ORACLEANSVC_HPP
 #define ORA_ORACLEANSVC_HPP 1
 
+
+// Include File
+
+#include "castor/vdqm/IVdqmSvc.hpp"
+#ifdef ORACDBC
+#include "castor/db/newora/OraCommonSvc.hpp"
+#else
+#include "castor/db/ora/OraCommonSvc.hpp"
+#endif
+
+
 // Include Files
 #include "castor/BaseSvc.hpp"
 #include "castor/db/ora/OraCommonSvc.hpp"
-//#include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/cleaning/ICleanSvc.hpp"
 #include "occi.h"
 #include <vector>
@@ -76,28 +86,22 @@ namespace castor {
       public:
 
          /*
-         * @param 
-         * @return 
-         * @exception 
+         * @param maximum numbers of days that I request can stay in the datebase before being deleted.
+         * @return 0 if everything is fine or -1 in case of error.
+         * @exception castor::exception::Exception
          */
 
         int removeOutOfDateRequests(int numDays)
         throw (castor::exception::Exception);
          
          /*
-         * @param 
-         * @return 
-         * @exception 
+         * @param maximum number of hours that I archived request can stay in the database before being deleted.
+         * @return 0 if everything is fine or -1 in case of error.
+         * @exception castor::exception::Exception
          */
 
         int  removeArchivedRequests(int hours)
         throw (castor::exception::Exception);
-
-         /*
-         * @param 
-         * @return 
-         * @exception 
-         */
 
 
       private:
