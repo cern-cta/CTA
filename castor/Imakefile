@@ -17,7 +17,7 @@ COMM You should have received a copy of the GNU General Public License
 COMM along with this program; if not, write to the Free Software
 COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 COMM
-COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.122 $ $Release$ $Date: 2006/02/20 14:39:55 $ $Author: itglp $
+COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.123 $ $Release$ $Date: 2006/02/27 15:19:27 $ $Author: itglp $
 COMM
 COMM Make Castor libraries and executables
 COMM
@@ -182,8 +182,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               replier/RequestReplierCInt.cpp \
               rh/Client.cpp \
               rh/ClientCInt.cpp \
-              rh/Server.cpp \
-              rh/RHThread.cpp \
               rh/StartResponse.cpp \
               rh/StartResponseCInt.cpp \
               rh/EndResponse.cpp \
