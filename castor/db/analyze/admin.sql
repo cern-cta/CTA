@@ -8,6 +8,7 @@ create user username identified by passwd default tablespace tsname quota 300M o
 
 grant designer to username;
 
+grant execute on dbms_lock to username;
 
 -- to take a snapshot of the db for monitoring:
 begin dbms_workload_repository.create_snapshot; end;
