@@ -1,0 +1,15 @@
+.\" @(#)houseKeeping.man,v 0.0 2006/02/28 11:00:00 CERN IT-FIO giulia taurelli
+.\" Copyright (C) 2006 by CERN/IT/FIO
+.\" All rights reserved
+.\"
+.TH HOUSEKEEPING 1 "2006/02/28 11:00:00 CERN IT-FIO" CASTOR "Perl script to clean archived requests."
+.SH NAME
+perl houseKeeping\- run the script.
+.SH SYNOPSIS
+.B perl houseKeeping [-t|--timeOut hours] [-h|--help]
+.SH DESCRIPTION
+.LP
+This script removes all the archived requests (status of surequests 11)  older than the number of hours specified with -t or --timeOut options. If nothing is specified the default value of 48 hours is used.
+.LP
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
