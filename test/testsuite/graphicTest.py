@@ -3,6 +3,7 @@
 import Tkinter
 import threading
 import os
+import sys
 
 
 # function called if one of the request takes too much time
@@ -220,15 +221,15 @@ def cleanBoard():
       
       
 def runTestSuite():
-
-	os.system("python ./test1.py "+"/castor/cern.ch/user/"+userId[0]+"/"+userId+"/")
-	myOutput.insert(Tkinter.END,os.popen4("python ./myTestSuite.py "+userId)[1].read())
+	pathname = os.path.dirname(sys.argv[0]) 
+        testDir= os.path.abspath(pathname)
+	os.system("python "+testDir+"/test1.py "+"/castor/cern.ch/user/"+userId[0]+"/"+userId+"/")
+	myOutput.insert(Tkinter.END,os.popen4("python "+testDir+"/myTestSuite.py "+userId)[1].read())
 
 
 ############ MAIN #####################
 
 # main window and 3 frames
-
 
 myWin=Tkinter.Tk()
 myWin.title("Stager Test")
