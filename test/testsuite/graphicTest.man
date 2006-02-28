@@ -1,0 +1,69 @@
+.lf 1 expertd.man
+.\" @(#)graphicTest.man,v 0.0 2006/02/28 11:00:00 CERN IT-FIO giulia taurelli
+.\" Copyright (C) 2006 by CERN/IT/FIO
+.\" All rights reserved
+.\"
+.TH GRAPHICTEST 1 "2006/02/28 11:00:00 CERN IT-FIO" CASTOR "Graphic Interface to test the Stager"
+.SH NAME
+python graphicTest.py\- run the script.
+.SH DESCRIPTION
+.LP
+In the edit boxs the name of files  can be entered using the full path or writing  castor:nameFile to access your castor directory.
+.LP
+e.g. castor:myFile.txt or castor:tmp/MyNewFile.txt.
+.LP
+The following functions can be run using the relative buttons:
+.LP
+.B STAGER_QRY:
+.LP
+Insert the name of the file in File 1 or the user tag in Tag.
+You can add more option with the following syntax.
+[-M hsmfile [-M ...]] [-F fileid@nshost] [-U usertag] [-r requestid] [-n] [-h]
+.LP
+.B STAGER_PUT:
+.LP
+Insert the name of the file in File 1  and, if you want, the user tag in Tag.
+You can add more option with the following syntax.
+[-M hsmfile ...] [-S svcClass] [-U usertag] [-r] [-h]
+.LP
+.B STAGER_PUTDONE:
+.LP
+Insert the name of the file in File 1.
+You can add more option with the following syntax.
+[-M hsmfile ...] [-r requestid] [-h]
+.LP
+.B STAGER_GET:
+.LP Insert the name of the file in File 1 or the user tag in Tag.
+You can add more option with the following syntax.
+[-M...] [-S service_class] [-U usertag] [-r] [-h]
+
+.LP 
+.B STAGER_RM:
+.LP
+Insert the name of the file in File 1.
+You can add more option with the following syntax.
+file [-M ...]
+.LP
+.B RFCP:
+.LP
+To copy the File 1 into File 2.
+As option you can use [-s maxsize][-v2]. 
+.LP
+.B RFRM:
+.LP To remove File 1. 
+As option you can use [-r]. 
+.LP
+.B NSLS:
+.LP To look your castor dir or in its folders using the path in File1.
+Possible options are:
+[-cdilRTu] [--class] [--comment] [--deleted] [--checksum]
+.LP
+.B Important:
+.LP
+ - "graphicTest.py" uses "Test1.py" and "myTestSuite.py" which must be on the same directory.
+.LP
+ - "myTestSuite.py" can be run from console to test the stager without graphic Interface.
+.LP
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
