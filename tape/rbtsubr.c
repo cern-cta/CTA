@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.16 $ $Date: 2005/06/22 12:19:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.17 $ $Date: 2006/03/01 14:44:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -1200,6 +1200,7 @@ char *loader;
 	struct smc_status smc_status;
 
 	ENTRY (smcmount);
+
 	if ((c = opensmc (loader)) != 0)
 		RETURN (c);
 	if (rmc_host) {
@@ -1261,7 +1262,7 @@ int force;
 	char *msgaddr;
 	char *p;
 	struct smc_status smc_status;
-
+	
 	ENTRY (smcdismount);
 	if ((c = opensmc (loader)) != 0)
 		RETURN (c);
@@ -1290,7 +1291,7 @@ int force;
 	}
 	if ((element_info.state & 0x1) == 0) {
 		usrmsg (func, TP041, "demount", vid, cur_unm, "Medium Not Present");
-		RETURN (RBT_NORETRY);
+		RETURN (RBT_OK);
 	}
 	if ((element_info.state & 0x8) == 0) {
 		usrmsg (func, TP041, "demount", vid, cur_unm, "Drive Not Unloaded");

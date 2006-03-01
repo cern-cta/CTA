@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smcsubr2.c,v $ $Revision: 1.3 $ $Date: 2003/01/24 13:41:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smcsubr2.c,v $ $Revision: 1.4 $ $Date: 2006/03/01 14:44:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -39,7 +39,7 @@ char *vid;
 	}
 	if ((element_info.state & 0x1) == 0) {
 		usrmsg (func, SR018, "demount", vid, drvord, "Medium Not Present");
-		RETURN (RBT_NORETRY);
+		RETURN (RBT_OK);
 	}
 	if ((element_info.state & 0x8) == 0) {
 		usrmsg (func, SR018, "demount", vid, drvord, "Drive Not Unloaded");
