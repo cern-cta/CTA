@@ -1,3 +1,105 @@
+castor (2.0.3-1) unstable; urgency=low
+
+  * PROTO2/castor/Constants.hpp:
+    [r1.58,2006-02-20,gtaur] SVC_ORACLEANSVC = 37 added
+  * PROTO2/castor/db/cnv/DbRepackSubRequestCnv.cpp:
+  * PROTO2/castor/db/cnv/DbRepackSubRequestCnv.hpp:
+  * PROTO2/castor/db/ora/OraRepackSubRequestCnv.cpp:
+  * PROTO2/castor/db/ora/OraRepackSubRequestCnv.hpp:
+  * PROTO2/castor/io/StreamRepackSubRequestCnv.cpp:
+  * PROTO2/castor/io/StreamRepackSubRequestCnv.hpp:
+  * PROTO2/castor/repack/RepackSubRequest.cpp:
+  * PROTO2/castor/repack/RepackSubRequest.hpp:
+    [2006-02-17,felixehm] new member cuuid. the cuuid is stored with the subrequest, so it can be followd easily in the dlf
+  * PROTO2/castor/db/cnv/DbRepackRequestCnv.cpp:
+  * PROTO2/castor/db/cnv/DbRepackRequestCnv.hpp:
+  * PROTO2/castor/db/ora/OraRepackRequestCnv.cpp:
+  * PROTO2/castor/db/ora/OraRepackRequestCnv.hpp:
+  * PROTO2/castor/io/StreamRepackRequestCnv.cpp:
+  * PROTO2/castor/io/StreamRepackRequestCnv.hpp:
+    [2006-02-23,felixehm] Added command member for specifying repack commands like removal of tapes from repack, etc.
+  * PROTO2/castor/repack/DatabaseHelper.cpp:
+  * PROTO2/castor/repack/DatabaseHelper.hpp:
+    [r 1.9,2006-02-17,felixehm] Added new function for RepackCleaner. substracted common part into new private method
+    [r1.10,2006-02-23,felixehm] added new function to remove a subrequest. also the stager request is removed by calling the api function. added new function getSubRequestByVid. usefull if only the vid is known.
+  * PROTO2/castor/repack/FileListHelper.cpp:
+    [r1.11,2006-02-23,felixehm] the getFileListSegs method now returns a value if an error occurs
+    [r1.10,2006-02-17,felixehm] Removed unnecessary parts (Cns_getpath) and changed a DLF Message Number
+  * PROTO2/castor/repack/FileListHelper.hpp:
+    [r 1.6,2006-02-23,felixehm] the getFileListSegs method now returns a value if an error occurs
+  * PROTO2/castor/repack/FileOrganizer.cpp:
+  * PROTO2/castor/repack/FileOrganizer.hpp:
+    [r 1.7,2006-02-17,felixehm] Corrected copy of strings to stager request and added deallocation of them after use. The filelass is now a constant. renamed vars
+  * PROTO2/castor/repack/Imakefile:
+    [r 1.7,2006-02-23,felixehm] renamed FileOrganizer to RepackDaemon, this also has to be done here
+    [r 1.6,2006-02-17,felixehm] added new Class for RepackServer : RepackCleaner
+  * PROTO2/castor/repack/RepackClient.cpp:
+    [r 1.9,2006-02-17,felixehm] the Repack port is now hard-coded, but still changeable in enviroment
+    [r1.10,2006-02-23,felixehm] added new functionality: remove a running repack Request
+    [r1.10,2006-02-23,felixehm] 
+    [r1.10,2006-02-23,felixehm] added little helper method to add the given tapes to the subrequest
+  * PROTO2/castor/repack/RepackClient.hpp:
+    [r 1.7,2006-02-23,felixehm] added new functionality: remove a running repack Request
+    [r 1.7,2006-02-23,felixehm] 
+    [r 1.7,2006-02-23,felixehm] added little helper method to add the given tapes to the subrequest
+  * PROTO2/castor/repack/RepackCommonHeader.hpp:
+    [r 1.7,2006-02-23,felixehm] added RepackCommands.
+  * PROTO2/castor/repack/RepackRequest.cpp:
+  * PROTO2/castor/repack/RepackRequest.hpp:
+    [2006-02-23,felixehm] Added command member for specifying repack commands like removal of tapes from repack, etc.
+  * PROTO2/castor/repack/RepackServer.cpp:
+  * PROTO2/castor/repack/RepackServer.hpp:
+    [2006-02-17,felixehm] new Thread running : RepackCleaner
+  * PROTO2/castor/repack/RepackWorker.cpp:
+  * PROTO2/castor/repack/RepackWorker.hpp:
+    [r1.12,2006-02-23,felixehm] now better handling of the RepackRequest by checking the command member of a RepackRequest. there is now a own method for each functionality (repack and removal of tapes from repack)
+    [r1.11,2006-02-17,felixehm] Renamed Method (better understanding)
+    [r1.11,2006-02-17,felixehm] if a tape is not found, has invalid status or is marked as free the DLF message is an WARNING not an ERROR.
+
+  * PROTO2/castor/server/BaseDaemon.cpp:
+  * PROTO2/castor/server/BaseDaemon.hpp:
+  * PROTO2/castor/server/BaseServer.cpp:
+  * PROTO2/castor/server/BaseServer.hpp:
+  * PROTO2/castor/server/BaseThreadPool.cpp:
+  * PROTO2/castor/server/BaseThreadPool.hpp:
+  * PROTO2/castor/server/ListenerThreadPool.hpp:
+  * PROTO2/castor/server/Mutex.cpp:
+  * PROTO2/castor/server/Mutex.hpp:
+  * PROTO2/castor/server/NotificationThread.cpp:
+  * PROTO2/castor/server/NotificationThread.hpp:
+  * PROTO2/castor/server/SelectProcessThread.hpp:
+  * PROTO2/castor/server/ServiceThread.cpp:
+  * PROTO2/castor/server/ServiceThread.hpp:
+  * PROTO2/castor/server/SignalThreadPool.cpp:
+  * PROTO2/castor/server/SignalThreadPool.hpp:
+    [2006-02-20,itglp] First implementation of NotificationThread. Mutex timeout can be specified as parameter, to be passed to BaseThreadPool's ctor.
+  * PROTO2/castor/server/IThread.hpp:
+    [r 1.6,2006-02-20,itglp] Removed throw() from run() method signature.
+  * PROTO2/castor/server/Mutex.cpp:
+  * PROTO2/castor/server/Mutex.hpp:
+    [2006-02-22,itglp] Fixed timeout handling.
+  * PROTO2/config/site.def:
+    [r1.86,2006-02-22,gtaur] CleaningConfiFile path defined
+    [r1.85,2006-02-20,gtaur] BuildCleaning added
+    [r1.84,2006-02-20,jdurand] Added: #define UseXFSPrealloc YES
+  * PROTO2/debian/control:
+    [r1.40,2006-02-20,jdurand] Added xfslibs-dev in Build-Depends
+  * PROTO2/maketar.sh:
+    [r1.44,2006-02-20,jdurand] Consider only the first Build-Depend for debian/RedHat compat list
+    [r1.43,2006-02-20,jdurand] Force UseXFSPrealloc to YES in any case
+  * PROTO2/rfio/Imakefile:
+    [r1.11,2006-02-20,jdurand] Added rfio_alignedbuf.Osuf rfio_xfsprealloc.Osuf objects
+  * PROTO2/rfio/rfio_call64.c:
+  * PROTO2/rfio/rfio_calls.c:
+    [2006-02-20,jdurand] Peter Kelemen's xfs and direct i/o hooks
+  * CASTOR/tape/rbtsubr.c:
+  * CASTOR/tape/smcsubr2.c:
+    [2006-03-01,hcacote] if medium not present smcdismount returns RBT_OK and tapedrive is not configured down
+  * PROTO2/test/stager/graphicTest.py:
+    [r 1.2,2006-02-28,gtaur] better solution for path to run test scripts.
+
+ -- Sebastien Ponce <sponcec3@pcitds13>  Thu,  2 Mar 2006 09:09:36 +0100
+
 castor (2.0.3-0) unstable; urgency=low
 
   * PROTO2/CASTOR.spec:
