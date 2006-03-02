@@ -144,7 +144,7 @@ LDLIBS += -ldl
 #if defined(linux)
 #if UseXFSPrealloc
 CFLAGS += -DUSE_XFSPREALLOC
-LDLIBS += -lxfs
+XFSLIBS = -lxfs
 #endif
 #endif
 
@@ -316,7 +316,9 @@ SRVOBJS = $(NTSERVICEO) Csemaphore.Osuf rfio_serv.Osuf rfio_calls.Osuf \
 		rfioacct.Osuf
 
 #if defined(linux)
+#if UseXFSPrealloc
 SRVOBJS += rfio_alignedbuf.Osuf rfio_xfsprealloc.Osuf
+#endif
 #endif
 
 RFIOLIB_OBJS = access.Osuf alrm.Osuf chdir.Osuf checkkey.Osuf chmod.Osuf \
@@ -362,10 +364,10 @@ NormalLibraryTarget(rfio,$(RFIOLIB_OBJS))
 #if BuildHpssServer
 NormalProgramTarget(rfiod,$(SRVOBJS),DepSharedLibraryTargetName(shlib,shift) \
  DepLibraryTargetName(hpss,rfio_hpss), \
- $(LDLIBS) $(HPSSLIBS))
+ $(LDLIBS) $(HPSSLIBS) $(XFSLIBS))
 #else
 NormalProgramTarget(rfiod,$(SRVOBJS),DepSharedLibraryTargetName(shlib,shift), \
- $(MTLDFLAGS) $(RTFLAGS) $(RTLIBS) $(LDLIBS))
+ $(MTLDFLAGS) $(RTFLAGS) $(RTLIBS) $(LDLIBS) $(XFSLIBS))
 #endif
 
 #if ((defined(__osf__) && defined(__alpha) && (OSMajorVersion == 4)) || defined(linux))
