@@ -40,7 +40,7 @@
 //------------------------------------------------------------------------------
 /// SQL statement for ToDo
 const std::string castor::repack::DatabaseHelper::m_selectToDoStatementString =
-  "SELECT q.id FROM RepackSubRequest q WHERE q.status = 1001 AND ROWNUM < 2 ";
+  "SELECT q.id FROM RepackSubRequest q WHERE q.status = 1001 AND ROWNUM < 2 "; // status READYFORSTAGING AND READYFORMIG
 const std::string castor::repack::DatabaseHelper::m_selectCheckStatementString =
   "SELECT q.id FROM RepackSubRequest q WHERE q.vid= :1";
 const std::string castor::repack::DatabaseHelper::m_selectCheckSubRequestStatementString =
@@ -55,8 +55,7 @@ castor::repack::DatabaseHelper::DatabaseHelper() throw() :
     m_selectCheckStatement(NULL),
     m_selectCheckSubRequestStatement(NULL) {
   try {
-    
-  	ad.setCnvSvcName("DbCnvSvc");
+	ad.setCnvSvcName("DbCnvSvc");
 	ad.setCnvSvcType(castor::SVC_DBCNV);
    
   } catch(castor::exception::Exception e) {
@@ -181,10 +180,10 @@ castor::repack::RepackSubRequest*
 		m_selectCheckStatement->setString(1, vid);
 		castor::db::IDbResultSet *rset = m_selectCheckStatement->executeQuery();
 
-		if ( rset->next() )	/* Something found : return false*/
+		if ( rset->next() )	/* Something found*/
 		{
 			u_signed64 id = (u_signed64)rset->getDouble(1);
-		    result = getSubRequest(id);
+			result = getSubRequest(id);
 		}
 		delete rset;
 		
@@ -253,7 +252,7 @@ castor::repack::RepackSubRequest* castor::repack::DatabaseHelper::requestToDo()
 			// get the request we found, which the ID we got from DB
 			u_signed64 id = (u_signed64)rset->getDouble(1);
 			delete rset;
-		    result = getSubRequest(id);
+		   result = getSubRequest(id);
 		    
 		    svcs()->fillObj(&ad,result,OBJ_RepackSegment);
 		    return result;
@@ -277,24 +276,23 @@ castor::repack::RepackSubRequest* castor::repack::DatabaseHelper::getSubRequest(
 	if (obj == NULL) {
 		castor::exception::Internal ex;
 		ex.getMessage()
-				<< "castor::repack::DatabaseHelper::requestToDo(..) :"
+				<< "castor::repack::DatabaseHelper::getSubRequest(..) :"
 				   " could not retrieve object for id "	<< sub_id;
 		throw ex;
-    	}
+	}
 	/* Now, lets see if the right Object was retrieved */ 
-    RepackSubRequest* result = dynamic_cast<RepackSubRequest*>(obj);
-
-    if ( result == NULL ){ /* oops */
-    	castor::exception::Internal ex;
+	RepackSubRequest* result = dynamic_cast<RepackSubRequest*>(obj);
+	
+	if ( result == NULL ){ /* oops */
+		castor::exception::Internal ex;
 		ex.getMessage()
-				<< "castor::repack::DatabaseHelper::requestToDo(..) :"
+				<< "castor::repack::DatabaseHelper::getSubRequest(..) :"
 				   " object retrieved for id : " << sub_id << "was a "
 				   << castor::ObjectsIdStrings[obj->type()];
 		delete obj;	/* never forget to delete everything used */
 		throw ex;
-
-    }
-    return result;
+	}
+  return result;
 }
 
 //------------------------------------------------------------------------------
@@ -325,7 +323,6 @@ castor::repack::RepackSubRequest* castor::repack::DatabaseHelper::checkSubReques
 			// get the request we found, which the ID we got from DB
 				u_signed64 id = (u_signed64)rset->getDouble(1);
 				delete rset;
-	
 				result = getSubRequest(id);
 		}
 	}catch (castor::exception::SQLError e) {
