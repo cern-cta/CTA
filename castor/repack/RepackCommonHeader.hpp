@@ -28,8 +28,9 @@ namespace castor{
 		};
 		
 		enum RepackServerCodes {
-		REMOVE_TAPE	= 1,
-		GET_STATUS = 2	//TODO
+		REPACK = 1,
+		REMOVE_TAPE	= 2,
+		GET_STATUS = 3	//TODO
 		};
 	}
 }
