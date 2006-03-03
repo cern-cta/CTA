@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2005/08/23 09:57:50 $ $Author: itglp $
+ * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2006/03/03 10:34:30 $ $Author: itglp $
  *
  *
  *
@@ -36,7 +36,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "common.h"   // for getconfent
-#include <dlfcn.h>
+#include "Cdlopen_api.h"
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -71,33 +71,34 @@ castor::IService* castor::Services::service(const std::string name,
       if (fac == 0) {
         // no factory found: search for id remapping in the config file
         char* targetId = getconfent("SvcMapping", (char*)castor::ServicesIdStrings[id], 0);
-	int id2 = id;
+        int id2 = id;
         if (0 != targetId) {
           id2 = strtol(targetId, NULL, 10);
           if(id2 == 0) id2 = id;
-	}
-          
-        // moreover check if a .so library has to be loaded
+        }
+        // build the service using the new associated factory - 2nd try
+        fac = castor::Factories::instance()->factory(id2);
+      }
+      if (fac == 0) {
+        // not yet found: check if a .so library has to be loaded
         char* targetLib = getconfent("DynamicLib", (char*)castor::ServicesIdStrings[id2], 0);
         if(0 != targetLib) {
-#if !defined(_WIN32)
-          //@todo to be moved to a Cdlopen
-          void* handle = dlopen(targetLib, RTLD_NOW | RTLD_GLOBAL);
+          void* handle = Cdlopen(targetLib, RTLD_NOW | RTLD_GLOBAL);
           if(handle == 0) {
             // something wrong in the config file?
             castor::exception::Internal ex;
             ex.getMessage() << "Couldn't load dynamic library for service " 
-                            << name << ": " << dlerror();
+                            << name << ": " << Cdlerror();
             throw ex;
           }
-#endif
         }
-        // build the service using the new associated factory
+        // build the service - 3rd try
         fac = castor::Factories::instance()->factory(id2);
-        
-        // if no factory is available yet, we give up
-        if(fac == 0) return 0;
       }
+        
+      // if no factory is available yet, we give up
+      if(fac == 0) return 0;
+
       IService* svc = fac->instantiate(name);
       if (0 == svc) {
         return 0;
