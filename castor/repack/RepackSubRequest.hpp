@@ -170,6 +170,26 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_originPool
+       * This Attribute is the original tape pool.
+       * It is used for Migration process to write the files to the correct tape pool.
+       * @return the value of m_originPool
+       */
+      std::string originPool() const {
+        return m_originPool;
+      }
+
+      /**
+       * Set the value of m_originPool
+       * This Attribute is the original tape pool.
+       * It is used for Migration process to write the files to the correct tape pool.
+       * @param new_var the new value of m_originPool
+       */
+      void setOriginPool(std::string new_var) {
+        m_originPool = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -243,6 +263,12 @@ namespace castor {
       int m_status;
 
       std::string m_cuuid;
+
+      /*
+       * This Attribute is the original tape pool.
+       * It is used for Migration process to write the files to the correct tape pool.
+      */
+      std::string m_originPool;
 
       /// The id of this object
       u_signed64 m_id;
