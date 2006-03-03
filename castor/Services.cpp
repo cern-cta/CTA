@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2006/03/03 10:34:30 $ $Author: itglp $
+ * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2006/03/03 10:37:30 $ $Author: itglp $
  *
  *
  *
@@ -68,10 +68,10 @@ castor::IService* castor::Services::service(const std::string name,
     if (id > 0) {
       // build the service using the associated factory
       const ISvcFactory* fac = castor::Factories::instance()->factory(id);
+      int id2 = id;
       if (fac == 0) {
         // no factory found: search for id remapping in the config file
         char* targetId = getconfent("SvcMapping", (char*)castor::ServicesIdStrings[id], 0);
-        int id2 = id;
         if (0 != targetId) {
           id2 = strtol(targetId, NULL, 10);
           if(id2 == 0) id2 = id;
@@ -79,6 +79,7 @@ castor::IService* castor::Services::service(const std::string name,
         // build the service using the new associated factory - 2nd try
         fac = castor::Factories::instance()->factory(id2);
       }
+      
       if (fac == 0) {
         // not yet found: check if a .so library has to be loaded
         char* targetLib = getconfent("DynamicLib", (char*)castor::ServicesIdStrings[id2], 0);
