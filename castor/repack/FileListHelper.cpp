@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/02/23 12:43:12 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/03/03 17:21:37 $ $Author: felixehm $
  *
  *
  *
@@ -162,7 +162,6 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq, Cu
 	
 		flags = CNS_LIST_BEGIN;
 		/* all Segments from a tape belong to one Request ! */
-		std::cout << m_ns << std::endl;
 
 		while ((dtp = Cns_listtape ((char*)m_ns.c_str(), (char*)subreq->vid().c_str(), flags, &list)) != NULL) {
 
