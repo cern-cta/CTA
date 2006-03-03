@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/23 12:38:01 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/03/03 17:17:09 $ $Author: felixehm $
  *
  * The Repack Client. This is the client part of the repack project, which just
  * sends and Request to the server. One Request can have serveral tapes 
@@ -54,6 +54,7 @@ namespace castor {
     struct cmd_params{
       char* vid;
       char* pool;
+      int command;
     };
 
   class RepackClient : public castor::BaseObject{
@@ -115,11 +116,7 @@ namespace castor {
 
   private:
     int m_defaultport;
-   	/**
-	 * Sets the Code for removal of given tape(s) from a repack que.
-	 * The Tape(s) given as parameter after '-d' <VID1:VID2...>
-	 */
-	void deleteTapes();
+
 	/**
 	 * adds the given tape(s) in cp.vid (seperated by ':') to the repack request
 	 * as new RepackSubRequest(s).

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/02/23 12:37:40 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/03/03 17:17:09 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -117,12 +117,13 @@ RepackClient::~RepackClient() throw()
 //------------------------------------------------------------------------------
 bool RepackClient::parseInput(int argc, char** argv)
 {
-  const char* cmdParams = "V:P:h"; //m_cmdLineParams.str().c_str();
+  const char* cmdParams = "R:V:P:h"; //m_cmdLineParams.str().c_str();
   if (argc == 1){
     usage();
     return false;
   }
   struct Coptions longopts[] = {
+    {"delete", REQUIRED_ARGUMENT,NULL, 'R' },
     {"volumeid", REQUIRED_ARGUMENT, NULL, 'V'},
     {"poolid", REQUIRED_ARGUMENT, NULL, 'P'},
     /*{"library", REQUIRED_ARGUMENT, 0, OPT_LIBRARY_NAME},
@@ -132,7 +133,6 @@ bool RepackClient::parseInput(int argc, char** argv)
     {"output_tppool", REQUIRED_ARGUMENT, 0, 'o'},
     {"otp", REQUIRED_ARGUMENT, 0, 'o'},*/
     {"help", NO_ARGUMENT,NULL, 'h' },
-    {"delete", NO_ARGUMENT,NULL, 'd' },
     {0, 0, 0, 0}
   };
 
@@ -149,13 +149,14 @@ bool RepackClient::parseInput(int argc, char** argv)
       break;
     case 'V':
       cp.vid = Coptarg; // store it for later use in building Request
+      cp.command = REPACK;
       break;
     case 'P':
       cp.pool = Coptarg; // store it for later use in building Request
       break;
-    case 'd':
+    case 'R':
       cp.vid = Coptarg;
-      deleteTapes();
+      cp.command = REMOVE_TAPE;
       break;
     default:
       break;
@@ -174,18 +175,6 @@ bool RepackClient::parseInput(int argc, char** argv)
 void RepackClient::usage() 
 {
 	std::cout << "Usage: repack -V [VolumeID] -P [PoolID] | -h " << std::endl;
-}
-
-
-//------------------------------------------------------------------------------
-// deleteTape
-//------------------------------------------------------------------------------
-void RepackClient::deleteTapes()
-{
-	RepackRequest* rreq = new RepackRequest();
-	
-	rreq->setCommand(REMOVE_TAPE);
-	addTapes(rreq);
 }
 
 
@@ -251,8 +240,9 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
  	delete rreq;
   	return NULL;
   }
-  
-   addTapes(rreq);
+
+  addTapes(rreq);
+  rreq->setCommand(cp.command);
   
   /* or, we want to repack a pool */
   if ( cp.pool != NULL ) {
@@ -267,8 +257,6 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
     	return NULL;  	
      }
   }
-  
-  
   
   rreq->setPid(getpid());
   rreq->setUserName(pw->pw_name);
