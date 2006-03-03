@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      RepackServer.hpp
+ *                      RepackFileMigrator.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,60 +17,51 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/03/03 17:14:03 $ $Author: felixehm $
  *
  *
  *
  * @author Felix Ehm
  *****************************************************************************/
 
-#ifndef REPACKSERVER_HPP
-#define REPACKSERVER_HPP 1
+#ifndef _REPACKFILEMIGRATOR_HPP_
+#define _REPACKFILEMIGRATOR_HPP_
 
 #include "RepackCommonHeader.hpp"
-
-#include "castor/server/ListenerThreadPool.hpp"
-#include "castor/server/SignalThreadPool.hpp"
-#include "castor/server/BaseDaemon.hpp"
-#include "RepackWorker.hpp"
-#include "RepackCleaner.hpp"
-#include "RepackFileStager.hpp"
-#include "RepackFileMigrator.hpp"
-
-
-
-
+#include "DatabaseHelper.hpp"
+#include "castor/server/IThread.hpp"
+#include "stager_client_api.h"
 
 
 
 namespace castor {
+	namespace repack {
+		
+	class RepackFileMigrator : public castor::server::IThread {
+		
+		public :
+		
+		RepackFileMigrator();
+		~RepackFileMigrator();
+		
+		/* 
+		 * Implementation from IThread
+		 */
+		virtual void run(void* param) throw();
+		/* 
+		 * Implementation from IThread
+		 */
+	    virtual void stop() throw();
+		
+		private:
+			void handle(struct stage_filequery_resp* response, int nbresps);
+			bool m_stop;
+			DatabaseHelper* m_dbhelper;
+	};
+		
+		
+	}
+}
 
- namespace repack {
-  
-  /**
-   * CASTOR Repack main daemon.
-   */
-
-  class RepackServer : public castor::server::BaseDaemon {
-
-  public:
-
-    /**
-     * constructor
-     */
-    RepackServer();
-
-    /**
-     * destructor
-     */
-    virtual ~RepackServer() throw();
-
-  };
-
- } // end of namespace repack
-
-} // end of namespace castor
 
 
-
-#endif // REPACKSERVER_HPP
+#endif //_REPACKFILEMIGRATOR_HPP_

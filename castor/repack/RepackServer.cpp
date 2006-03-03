@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/02/17 19:01:31 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/03/03 17:14:03 $ $Author: felixehm $
  *
  *
  *
@@ -57,8 +57,7 @@ int main(int argc, char *argv[]) {
 		iport = castor::repack::CSP_REPACKSERVER_PORT;
 	
 
-   
-    try {
+	try {
 
     castor::repack::RepackServer server;
 	
@@ -67,8 +66,12 @@ int main(int argc, char *argv[]) {
 	server.getThreadPool('W')->setNbThreads(1);
 	
     server.addThreadPool(
-      new castor::server::SignalThreadPool("FileOrganizer", new castor::repack::FileOrganizer() ));
-	server.getThreadPool('F')->setNbThreads(1);
+      new castor::server::SignalThreadPool("Stager", new castor::repack::RepackFileStager() ));
+	server.getThreadPool('S')->setNbThreads(1);
+
+	server.addThreadPool(
+      new castor::server::SignalThreadPool("Migrator", new castor::repack::RepackFileMigrator() ));
+	server.getThreadPool('M')->setNbThreads(1);
 	/*
 	server.addThreadPool(
       new castor::server::SignalThreadPool("Cleaner", new castor::repack::RepackCleaner() ));
@@ -127,15 +130,15 @@ castor::repack::RepackServer::RepackServer() :
    	 {18, "RepackWorker : Tape is marked as FREE, no repack to be done"},			// RepackWorker:getTapeInfo()
      {19, "RepackWorker : No such pool!"},											// RepackWorker:getPoolInfo()
      {20, "RepackWorker : Adding tapes for pool repacking!"},						// RepackWorker:getPoolInfo()
-     {21, "FileOrganizer: Unable to stage files!"},								// FileOrganizer:stage_files
-     {22, "FileOrganizer: New request for staging files"},			// FileOrganizer:run()
-     {23, "FileOrganizer: Not enough space for this RepackRequest. Skipping..."},	// FileOrganizer:stage_files
+     {21, "RepackDaemon: Unable to stage files!"},								// RepackDaemon:stage_files
+     {22, "RepackDaemon: New request for staging files"},			// RepackDaemon:run()
+     {23, "RepackDaemon: Not enough space for this RepackRequest. Skipping..."},	// RepackDaemon:stage_files
      {24, "FileListHelper: Retrieved segs for SubRequest."},								// FileListHelper:getFileListSegs()
-     {25, "FileOrganizer: Updating Request to STAGING and add its segs."},			// FileOrganizer:stage_files
-	 {26, "FileOrganizer: Staging files."},			// FileOrganizer:stage_files
+     {25, "RepackDaemon: Updating Request to STAGING and add its segs."},			// RepackDaemon:stage_files
+     {26, "RepackDaemon: Staging files."},			// RepackDaemon:stage_files
      {27, "DatabaseHelper: Unable to update SubRequest!"},
      {28, "DatabaseHelper: Tape already in repack que!"},
-     {29, "FileOrganizer: Getting Segs for SubRequest!"},
+     {29, "RepackDaemon: Getting Segs for SubRequest!"},
      {30, "DatabaseHelper: SubRequest updated!"},
      {31, "RepackWorker: Tape is good for repack!"},
      {99, "TODO::MESSAGE"},
