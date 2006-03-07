@@ -59,9 +59,11 @@ char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
          "requestor is not administrator",
          "User unknown",
          "Duplicate key value",
-	 "Entry already exists",
-	 "Group unknown",
-	 "Bad checksum",
+         "Entry already exists",
+         "Group unknown",
+         "Bad checksum",
+         "Got SQL exception from database",
+         "Too many symbolic links",
          "BAD ERROR NUMBER"
         };
 /*
