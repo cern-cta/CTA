@@ -36,6 +36,7 @@
 #define EDLFBASEOFF     2500            /* DLF error base offset        */
 #define ESECBASEOFF     2700            /* Security error base offset   */
 #define EEXPBASEOFF     2900            /* Expert system error base offset */
+#define EDNSBASEOFF     3000            /* DNS error base offset        */
 
 #define SENOERR         SEBASEOFF       /* No error                     */
 #define SENOSHOST       SEBASEOFF+1     /* Host unknown                 */
@@ -365,6 +366,18 @@
 #define EEXPEXECV       EEXPBASEOFF+6   /* Can't launch execv() */
 #define EEXPCDWDIR      EEXPBASEOFF+7   /* Can't change to working directory */
 #define EEXPMAXERR      EEXPBASEOFF+7
+
+/*
+ *------------------------------------------------------------------------
+ * DNS errors - See netdb.h for details
+ *------------------------------------------------------------------------
+ */
+#define EDNSHOSTNOTFOUND EDNSBASEOFF+1  /* Authoritative Answer Host not found. */
+#define EDNSTRYAGAIN    EDNSBASEOFF+2   /* Non-Authoritative Host not found, or SERVERFAIL */
+#define EDNSNORECOVERY  EDNSBASEOFF+3   /* Non recoverable errors, FORMERR, REFUSED, NOTIMP. */
+#define EDNSNODATA      EDNSBASEOFF+4   /* Valid name, no data record of requested type. */
+#define EDNSNOADDRESS   EDNSBASEOFF+5   /* No address, look for MX record. */
+#define EDNSMAXERR      EDNSBASEOFF+6
 
 /*
  *------------------------------------------------------------------------
