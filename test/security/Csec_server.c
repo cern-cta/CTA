@@ -122,7 +122,7 @@ static int process_request(int s) {
   /*   while (1) { */
 /*     Csec_seterrbuf(buf2, BUF_SIZE); */
     Csec_server_initContext(&sec_ctx, CSEC_SERVICE_TYPE_HOST, NULL);
-    Csec_server_setSecurityOpts(&sec_ctx, CSEC_OPT_DELEG_FLAG);
+    Csec_server_setSecurityOpts(&sec_ctx, 0); //CSEC_OPT_DELEG_FLAG);
       
     /*   if (Csec_acquireCreds(&sec_ctx) < 0) { */
 /*         fprintf(stderr, "Could not acquire credentials !\n"); */
