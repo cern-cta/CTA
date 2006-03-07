@@ -42,7 +42,7 @@ int main(argc, argv)
   for(i=1; i<=nbauths; i++) {
     
     Csec_client_initContext(&sec_ctx,CSEC_SERVICE_TYPE_HOST, NULL);
-    Csec_client_setSecurityOpts(&sec_ctx, CSEC_OPT_DELEG_FLAG);
+    Csec_client_setSecurityOpts(&sec_ctx, 0); //CSEC_OPT_DELEG_FLAG);
     // Csec_client_setAuthorizationId(&sec_ctx, "GSI", "totototototo");
 
     if (log) fprintf(log, "<%d> Establishing context\n", i);    
