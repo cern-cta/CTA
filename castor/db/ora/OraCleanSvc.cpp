@@ -29,12 +29,10 @@
 #include "castor/IObject.hpp"
 #include "castor/IFactory.hpp"
 #include "castor/SvcFactory.hpp"
-//#include "castor/Constants.hpp"
 #include "castor/IClient.hpp"
 #include "castor/db/ora/OraCleanSvc.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-//#include "castor/exception/Exception.hpp"
 #include "castor/exception/Busy.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NoEntry.hpp"
@@ -83,6 +81,8 @@ castor::db::ora::OraCleanSvc::OraCleanSvc(const std::string name) :
   m_removeArchivedRequestsStatement(0){
 
 stage_trace(3, "Ora clean service chiamato il construttore!");
+ printf("GIULIA almeno il construttore ...");
+
 
 }
 
@@ -117,7 +117,11 @@ void castor::db::ora::OraCleanSvc::reset() throw() {
   try {
     deleteStatement(m_removeOutOfDateRequestsStatement);
     deleteStatement(m_removeArchivedRequestsStatement);
-  } catch (oracle::occi::SQLException e) {};
+  } catch (oracle::occi::SQLException e) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("message", e.getMessage())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params);
+     };
 
   // Now reset all pointers to 0
 
@@ -133,36 +137,49 @@ void castor::db::ora::OraCleanSvc::reset() throw() {
  
 int castor::db::ora::OraCleanSvc::removeOutOfDateRequests(int numDays)
         throw (castor::exception::Exception){
+  printf ("GIULIA here I am ");
     try{
        if (0 == m_removeOutOfDateRequestsStatement) {
            m_removeOutOfDateRequestsStatement 
               =createStatement(s_removeOutOfDateRequestsString);
            m_removeOutOfDateRequestsStatement->setAutoCommit(true);
+
+	   printf("GIULIA creata");
        }
 
     // execute the statement
    
       m_removeOutOfDateRequestsStatement->setInt(1, numDays*24*60*60);
+
+      printf("GIULIA parametro");
     
       unsigned int nb = m_removeOutOfDateRequestsStatement->executeUpdate();
        
        if (nb == 0) {
+	 printf("GIULIA troiaio");
          rollback();
          castor::exception::NoEntry e;
          e.getMessage() << "deleteOutOfDateRequests function not found";
          throw e;
        }
+       
+       castor::dlf::Param logParams[] =
+	 {castor::dlf::Param("message", "Removed out of date request.")};
+       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 2, 1, logParams);
+       printf("GIULIA Dlf fatto");
        return 0;
+
     }catch (oracle::occi::SQLException e) {
-	  
-           // rollback();
+      printf("GIULIA troiaio ora");
+            rollback();
             castor::exception::Internal ex;
-            ex.getMessage()
-               << "Error caught in removeOutOfDateRequest"
-                 << std::endl << e.what();
-            throw ex;
-            return -1;
-     }
+
+	    castor::dlf::Param params[] =
+	      {castor::dlf::Param("message",e.getMessage())};
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 5, 1, params);
+	    throw ex;
+	    return -1;
+    }
 }
 
 
@@ -191,16 +208,22 @@ int  castor::db::ora::OraCleanSvc::removeArchivedRequests(int hours)
          e.getMessage() << "deleteArchivedRequests function not found";
          throw e;
        }
+       castor::dlf::Param logParams[] =
+         {castor::dlf::Param("message", "Removed archived request.")};
+       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 3, 1, logParams);
        return 0;
-    }catch (oracle::occi::SQLException e) { 
-            //rollback();
-            castor::exception::Internal ex;
-            ex.getMessage()
-               << "Error caught in removeArchivedRequests"
-                 << std::endl << e.what();
-            throw ex;
-            return -1;
-     }
+    }catch (oracle::occi::SQLException e) {
+
+      rollback();
+      castor::exception::Internal ex;
+
+      castor::dlf::Param params[] =
+	{castor::dlf::Param(castor::dlf::Param("message",e.getMessage()))};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 1, params);
+      throw ex;
+      return -1;
+    }
+
 }
 
 
