@@ -80,9 +80,6 @@ castor::db::ora::OraCleanSvc::OraCleanSvc(const std::string name) :
   m_removeOutOfDateRequestsStatement(0),
   m_removeArchivedRequestsStatement(0){
 
-stage_trace(3, "Ora clean service chiamato il construttore!");
- printf("GIULIA almeno il construttore ...");
-
 
 }
 
@@ -137,26 +134,20 @@ void castor::db::ora::OraCleanSvc::reset() throw() {
  
 int castor::db::ora::OraCleanSvc::removeOutOfDateRequests(int numDays)
         throw (castor::exception::Exception){
-  printf ("GIULIA here I am ");
     try{
        if (0 == m_removeOutOfDateRequestsStatement) {
            m_removeOutOfDateRequestsStatement 
               =createStatement(s_removeOutOfDateRequestsString);
            m_removeOutOfDateRequestsStatement->setAutoCommit(true);
-
-	   printf("GIULIA creata");
        }
 
     // execute the statement
    
       m_removeOutOfDateRequestsStatement->setInt(1, numDays*24*60*60);
-
-      printf("GIULIA parametro");
     
       unsigned int nb = m_removeOutOfDateRequestsStatement->executeUpdate();
        
        if (nb == 0) {
-	 printf("GIULIA troiaio");
          rollback();
          castor::exception::NoEntry e;
          e.getMessage() << "deleteOutOfDateRequests function not found";
@@ -166,11 +157,9 @@ int castor::db::ora::OraCleanSvc::removeOutOfDateRequests(int numDays)
        castor::dlf::Param logParams[] =
 	 {castor::dlf::Param("message", "Removed out of date request.")};
        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 2, 1, logParams);
-       printf("GIULIA Dlf fatto");
        return 0;
 
     }catch (oracle::occi::SQLException e) {
-      printf("GIULIA troiaio ora");
             rollback();
             castor::exception::Internal ex;
 
