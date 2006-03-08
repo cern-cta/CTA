@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCleanSvc.hpp,v $ $Author: gtaur $
+ * @(#)$RCSfile: OraCleanSvc.hpp,v $ $Author: itglp $
  *
  *
  * @author Giulia Taurelli
@@ -27,7 +27,7 @@
 #define ORA_ORACLEANSVC_HPP 1
 
 
-// Include File
+// Include Files
 
 #include "castor/vdqm/IVdqmSvc.hpp"
 #ifdef ORACDBC
@@ -36,10 +36,7 @@
 #include "castor/db/ora/OraCommonSvc.hpp"
 #endif
 
-
-// Include Files
 #include "castor/BaseSvc.hpp"
-#include "castor/db/ora/OraCommonSvc.hpp"
 #include "castor/cleaning/ICleanSvc.hpp"
 #include "occi.h"
 #include <vector>
