@@ -135,7 +135,7 @@ sub usage()
         print STDERR  "usage: $0 [-h] [-n node] [-s svcclass] [[-a email address] | [-m email address] ]\n";
         print STDERR  "-h                 : this help message.\n";
         print STDERR  "-n <node>          : name of node to be taken out of production.\n";
-        print STDERR  "-n "<node> <node>" : names of the nodes to be taken out of production - in quotes with spaces.\n";
+        print STDERR  "-n <node> <node> : names of the nodes to be taken out of production - in quotes with spaces.\n";
 	print STDERR  "-s <svcclass>      : the service class files will be migrated to. See Twiki for more information.\n";
         print STDERR  "-a <email address> : alternative email address to $DEF_EMAIL e.g. messages to this address only.\n";
         print STDERR  "-m <email address> : additional email address to $DEF_EMAIL\n";
@@ -367,7 +367,7 @@ sub TransferManager($)
      &init_vars();                 #sort out the getopts arguments for node name and email addresses
      &dummy_mode_msg();	
 
-     if (!@NODE){ print "You need to supply the name of a node to be taken out of service.\n"; exit;} 
+     if (!@NODES){ print "You need to supply the name of a node to be taken out of service.\n"; exit;} 
 
      if ($USER_EMAIL && $USER_EMAIL !~ /@/) { print "Your email address - $USER_EMAIL - needs an \@ somewhere.\n"; exit;} 	
 
@@ -387,19 +387,20 @@ sub TransferManager($)
         open(JUNKVAL, "moveDiskServer recovery $NODE |"); close (JUNKVAL); 	
 	print "$NODE has been moved to recovery.\n";
 
-     }
+        }#end foreach
+	}
      else {
 
 	 print $DUMMY_MSG . "source /etc/sysconf/castor\n";
 	 foreach $NODE (@NODES){
 
-	 print $DUMMY_MSG . "Moving $NODE to recovery pool.\n";
-	 print $DUMMY_MSG . "moveDiskServer recovery $NODE\n";
-  	 print $DUMMY_MSG . "$NODE has been moved to recovery. Querying open files.\n";
-	 print $DUMMY_MSG . "diskServer_qry $NODE | egrep 'DISKCOPY_WAIT|DISKCOPY_STAGEOUT'\n";
- 	 print "If there are active transfers please decide if you wish to continue.\n";
-	 &wait_for_input();		
-     }#end foreach nodes
+	   print $DUMMY_MSG . "Moving $NODE to recovery pool.\n";
+	   print $DUMMY_MSG . "moveDiskServer recovery $NODE\n";
+  	   print $DUMMY_MSG . "$NODE has been moved to recovery. Querying open files.\n";
+	   print $DUMMY_MSG . "diskServer_qry $NODE | egrep 'DISKCOPY_WAIT|DISKCOPY_STAGEOUT'\n";
+ 	   print "If there are active transfers please decide if you wish to continue.\n";
+	   &wait_for_input();		
+         }#end foreach nodes
      }
 
      &send_email();	
