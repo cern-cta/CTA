@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: wrttpmrk.c,v $ $Revision: 1.5 $ $Date: 2006/02/14 15:09:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: wrttpmrk.c,v $ $Revision: 1.6 $ $Date: 2006/03/09 17:17:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -41,6 +41,8 @@ int n;
 #if !defined(_WIN32)
 	unsigned char cdb[6];
 	char *msgaddr;
+	char *getconfent();
+	char *p;
 	int nb_sense_ret;
 	unsigned char sense[MAXSENSE];
 #endif
@@ -48,8 +50,18 @@ int n;
 	ENTRY (wrttpmrk);
 #if !defined(_WIN32)
 	memset (cdb, 0, sizeof(cdb));
-	cdb[0] = 0x10;  	/* write tape mark code*/
-	cdb[1] = 0x01;          /* immediate bit set*/
+	cdb[0] = 0x10;                /* write tape mark code */
+
+    if ((p = getconfent ("TAPE", "IMMEDIATE", 0)) != NULL) {
+	  if (strcmp (p, "YES") || strcmp (p, "yes")){
+	    cdb[1]= 0x01;             /* immediate bit set */
+	  } else {
+	       cdb[1]= 0x00;             /* immediate bit not set */
+      }
+    } else {
+	      cdb[1] = 0x00;        /* immediate bit not set */
+    } 
+
 	cdb[4] = cdb[4] | n;    /* number of tapemarks*/
 
 	if (send_scsi_cmd (tapefd, path, 0, cdb, 6, NULL, 36, sense, 38, 30000, 8, &nb_sense_ret, &msgaddr) < 0) {
