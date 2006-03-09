@@ -1,22 +1,24 @@
 #!/usr/bin/perl
 #
-# This program provides the user with a complete set of clean up options 
-# in terms of nodes, file systems and files.
+# This program provides the user with a status monitoring system to check
+# consistancy between lsf, cdb, rmmaster and the stager.
+# This can be done in terms of nodes, file systems and files.
 #
 # author	: alasdair.earl@cern.ch
 # started	: jan 2006
-# last change   : 16-2-06
+# last change   : 7-3-06
 #
 #	code layout
 #
 #  init_vars ()				- sort cmd line args
+#  usage ()                             - help > stdout 
 #
 #    DATA GATHERING ROUTINES
-# @nodes getCDBNodeList (clustername)	- get list of nodes from cdb using wget
+# @nodes getCDBNodeList (clustername)	        - get list of nodes from cdb using wget
 # @nodes getRMMasterNodeList (clustername)	- get list of nodes from rmmaster using cmd line args
-# @nodes getLSFNodeList (clustername)	 		- get castor cluster details from file
-# @nodes getStagerNodeList (clustername)		- get details from oracle db
-# %node/value generateHash ()				- creates a hash of nodes and values. Values are:
+# @nodes getLSFNodeList (clustername)	       	- get castor cluster details from file
+# @nodes getStagerNodeList (clustername)       	- get details from oracle db
+# %node/value generateHash ()		       	- creates a hash of nodes and values. Values are:
 #		1	in cdb only
 #		2	in rmmaster only
 #		3	in cdb + rmmaster
@@ -33,26 +35,20 @@
 #		14	in stager + lsf + rmmaster
 #		15	in all
 #
-# %node/[filesystems] generateCDBFilesystems () 
 # %node/[filesystems] generateRMMasterFilesystems ()
-# %node/[filesystems] generateStagerFilesystems ()
+# %node/[filesystems] generateStagerFilesystems (user pswd cluster) 
+# getCDBSvcclassList (cluster)
 #
-#
-#    USEFUL/AGGREGATE ROUTINES
-# checkNodesFilesystems (%nodes)	- find nodes which are not in all four systems and 
-#				        see if they have file systems associated with them
-#
-# orphanFilesystems ()
-##
-# getStagerSvcclassList () 
-
 #      DISPLAY METHODS
 # produceHTMLTable ()	- produce an html table of nodes and their status 
 #	       		  in relation to lsf/cdb/rmmaster/stager
-
+# produceTable(cluster)
 #
-
-# 9. cleanOrphanFiles (@nodes) 
+# checkNodeFilesystems (cluster)	- find nodes which are not in all four systems and 
+#				        see if they have file systems associated with them
+# orphanFilesystems(cluster) 
+# svcClassCheck(cluster)
+#########################################################################
 
 use Data::Dumper; 
 use HTML::Table;
@@ -70,16 +66,16 @@ my $MASTER, $RM;
 # OUTPUT : array of nodes
 sub init_vars() {
         use Getopt::Std;
-        my $opt_string = 'bo:s:tn:hrm';  
+        my $opt_string = 'bo:s:n:hrm';  
         getopts( "$opt_string", \%opt ) or usage();
         usage() if $opt{h};
         $BAD           = 1 if $opt{b};
 	$ORPHAN        = $opt{o};
 	$SVCCLASS      = $opt{s};
-	$TABLE         = $opt{t};
 	$NODE          = $opt{n};
-	$RM = 1 if $opt{r};
-	$MASTER = 1 if $opt{m};
+        $RM = 1 if $opt{r};
+        $MASTER = 1 if $opt{m};
+
   }#end init_vars   
 
 
@@ -89,7 +85,6 @@ sub usage ()
   print "-h help \n";
   print "-o cluster      - orphaned file systems\n";
   print "-s cluster      - undefined svcclass\n";
-  print "-t cluster      - table of node status'\n";
   print "-n cluster      - node status'\n";
   print "-b              - with -n, bad nodes only\n";
 
@@ -105,10 +100,9 @@ sub getCDBNodeList ($) {
 	my $cluster = @_[0];
 	my @nodelist;
 
-    my $cluster_url ="'http://oraweb.cern.ch/pls/cdbsql/web.show?p_fld1=clustername&p_data1=".
-$cluster."&p_hostname=yes&p_clustername=yes&p_clustersubname=yes&p_default=no&p_quat=all&p_outputformat=xml'";
+    my $cluster_url ="'http://oraweb.cern.ch/pls/cdbsql/web.show?p_fld1=clustername&p_data1=${cluster}&p_hostname=yes&p_clustername=yes&p_clustersubname=yes&p_default=no&p_quat=all&p_outputformat=xml'";
 
-    open(LSF,"wget ".$cluster_url." --no-verbose -O- -o/dev/null|") or return ();
+    open(LSF,"wget ".$cluster_url." --no-verbose -O- -o/dev/null|") or return (-1);
     <LSF>;
     <LSF>;
     while (<LSF>){
@@ -130,18 +124,20 @@ sub getRMMasterNodeList ($) {
 
 	my $cluster = @_[0];
         my @nodelist; 
-
-    open(RM,"/usr/bin/rmgetnodes --host ".$cluster."rmmaster 2>&1|") or return ();
+    open(RM,"/usr/bin/rmgetnodes --host ".$cluster."rmmaster 2>&1|") or die "[ERR] rmgetnodes issue in getRMMasterNodeList";
     my $node = undef;
     while(<RM>){
         chomp;
+	#print "$_\n";
         if (/usersend2rmd: (recv error : Timed out|rmmaster daemon not available on)/){
-            print "[ERR] rmgetnodes: $_\n";
-            last;
+            print "[ERR] rmgetnodes in getRMMasterNodeList: $_\nExiting.\n";
+            exit;
         }
         if (/^NODE (\S+)/){
             $node = $1;
+	    #print "Node = $node\n";
             $node =~ s/\..*//g;
+	    #print "Node = $node\n";
 	    push @nodelist, $node;
         }
     }
@@ -159,8 +155,13 @@ sub getLSFNodeList () {
 
 	my $cluster = @_[0];
 	my @nodelist;
+
+	#because castor2 is special and because I don't have a big stick for the SMOD! 
         if ($cluster eq "castor2"){$cluster = "castor";}
+
 	my $file = "/afs/cern.ch/project/lsf/6.1/mnt/$cluster/conf/lsf.cluster.$cluster";
+
+	if (! -e $file) {return -1;}
 
 	my $first_value = "'{print \$1}\'";
 	open (LSF, "cat $file | grep \"(\" | egrep -v ^# | awk $first_value |");
@@ -169,7 +170,7 @@ sub getLSFNodeList () {
 		chomp($_);
         	push (@nodelist, $_);
 	}
-	close LSF;
+	close (LSF);
 
 	return @nodelist;
 }
@@ -187,7 +188,7 @@ sub getStagerNodeList () {
 	my $cluster = $_[2];
 	my @nodelist;
 
-        $dbh = DBI->connect("dbi:Oracle:".$cluster."stgdb", $user, $pswd);
+        $dbh = DBI->connect("dbi:Oracle:".$cluster."stgdb", $user, $pswd) or return "[ERR] unable to connect to db\n";
         $sth = $dbh->prepare("select ds.name from castor_stager.diskserver ds");
         
         $sth->execute( );
@@ -240,20 +241,31 @@ sub generateRMMasterFilesystems ()
 
     $part1 = "'NODE\\|name\\|state'";
     $part2 = "osname\\|nickname\\|eth\\|forced";
-                                                                                                                             
-    open (PIPE, "rmgetnodes --host ".$cluster."rmmaster | grep $part1 | egrep -v $part2 |");
 
-    while (<PIPE>){
-        if ($_ =~ /^NODE/) {
-	    my @t = split(" ", $_);
-	    $node = $t[1];
-        } elsif ($_ =~ /Down/) { push(@del, $node); 
-	} elsif ($_ =~ /name/) {    
+    open (PIPE, "rmgetnodes --host ${cluster}rmmaster 2>&1 |") or die "[ERR] rmgetnodes issue in  generateRMMasterFilesystems";
+
+    while (<PIPE>) {
+	chomp;
+	#print "$_\n";
+        if (/usersend2rmd: (recv error : Timed out|rmmaster daemon not available on)/){
+            print "[ERR] rmgetnodes in generateRMMasterFilesystems: $_\nExiting.\n";
+            exit;
+        }
+        if (/^NODE (\S+)/) {
+	    $node = $1;
+        } 
+	if (/Down/) { push(@del, $node); }
+	if (/\s+name/) {
+	    if (!/eth[0-9]+$/) {
+	#	print  "$_\n";
                 my @t = split(" ", $_);
 		%{$nodelist{$node}}->{$t[4]} = 1;
+	    }
         }                                                                  
     }#end while
 	
+    close (PIPE);
+
     foreach (@del){ delete $nodelist{$_};}
 
     return %nodelist;
@@ -275,8 +287,7 @@ sub generateStagerFilesystems () {
         $b = "castor_stager.filesystem fs, castor_stager.diskserver ds where ";
 	$c = "fs.diskserver = ds.id";
      
-        $dbh = DBI->connect("dbi:Oracle:".$cluster."stgdb", $user, $pswd);
-
+        $dbh = DBI->connect("dbi:Oracle:".$cluster."stgdb", $user, $pswd) or die "[ERR] unable to connect to db\n";
         $sth = $dbh->prepare($a.$b.$c);
 
         $sth->execute( );
@@ -307,7 +318,7 @@ sub getStagerSvcclassList () {
 
     my %results;
                                                                                                                              
-        $dbh = DBI->connect("dbi:Oracle:".$cluster."stgdb", $user, $pswd);
+    $dbh = DBI->connect("dbi:Oracle:".$cluster."stgdb", $user, $pswd) or die "[ERR] unable to connect to db\n";
         $sth = $dbh->prepare("select svc.name from castor_stager.svcclass svc");
                                                                                                                              
         $sth->execute( );
@@ -332,7 +343,7 @@ sub getCDBSvcclassList ($) {
 	my %results;
 	my $tmp;
 
-	my $cluster_url ="'http://oraweb.cern.ch/pls/cdbsql/web.show?p_fld1=clustername&p_data1=".$cluster."&p_hostname=yes&p_clustersubname=yes&p_default=no&p_quat=all&p_outputformat=xml'";
+	my $cluster_url ="'http://oraweb.cern.ch/pls/cdbsql/web.show?p_fld1=clustername&p_data1=${cluster}&p_hostname=yes&p_clustersubname=yes&p_default=no&p_quat=all&p_outputformat=xml'";
 
     open(LSF,"wget ".$cluster_url." --no-verbose -O- -o/dev/null|") or return ();
     <LSF>;
@@ -355,18 +366,25 @@ sub rmmasterStatus ()
 
     $part1 = "'NODE\\|state'";
     $part2 = "'\\['";
-                                                                                                                             
-    open (PIPE, "rmgetnodes --host ".$cluster."rmmaster | grep $part1 | egrep -v $part2 |");
+
+    open (PIPE, "rmgetnodes --host ${cluster}rmmaster 2>&1 |") or die "[ERR] rmgetnodes issue in rmmasterStatus";
 
     while (<PIPE>){
-        if ($_ =~ /^NODE/) {
-	    my @t = split(" ", $_);
-	    $node = $t[1];
-	} else {    
-                my @t = split(" ", $_);
-		$nodelist{$node} = $t[3];
+	chomp;
+	#print "$_\n";
+	if (/usersend2rmd: (recv error : Timed out|rmmaster daemon not available on)/){    
+	    print "[ERR] rmgetnodes in rmmasterStatus: $_\nExiting.\n";
+            exit; 
+	}
+        if (/^NODE (\S+)/) {
+	    $node = $1;
+	} 
+	if (/^\.+\s+state\s+:\s+(\S+)/) {    
+	    #print "$1\n";
+		$nodelist{$node} = $1;
         }                                                                  
     }#end while
+    close(PIPE);
 
     return %nodelist;
 }
@@ -415,6 +433,7 @@ sub produceHTMLTable () {
 		}
 	}
 	$table2->addCol("RMMaster", @myary2);
+       
 
 	foreach (sort keys %nodevalues) {
 		if ($nodevalues{$_} =~ /^(4|5|6|7|12|13|14|15)$/) {
@@ -464,10 +483,6 @@ sub produceTable () {
 		} else {
 			push (@myary, "<font color=red>Missing</font>");
 		}
-	        
-
-
-
 
 		if ($nodevalues{$_} =~ /^(2|3|6|7|10|11|14|15)$/) {
 			push (@myary2, "<font color=green>$status{$_}</font>");
@@ -475,14 +490,12 @@ sub produceTable () {
 			push (@myary2, "<font color=red>Missing</font>");
 		}
 
-
 		if ($nodevalues{$_} =~ /^(4|5|6|7|12|13|14|15)$/) {
 			push (@myary3, "<font color=green>OK</font>");
 		} else {
 			push (@myary3, "<font color=red>Missing</font>");
 		}
        
-
 		if ($nodevalues{$_} =~ /^(8|9|10|11|12|13|14|15)$/) {
 			push (@myary4, "<font color=green>OK</font>");
 		} else {
@@ -492,8 +505,6 @@ sub produceTable () {
 
 	    }#end if
        }#end foreach
-
-
 
 	$table2->addCol("Node", @node);
         $table2->addCol("CDB", @myary);
@@ -537,6 +548,7 @@ sub checkNodesFilesystems () {
                 while(<TMP>) {
                 	if (! m/FileName$/) {print "Files found on node $node by diskServer_qry including \n$_"; last;}
                 }
+		close (TMP);
 	}
 }
 
@@ -547,19 +559,23 @@ sub orphanFilesystems () {
     my $cluster = $_[0];
     my %rmMasterValues = &generateRMMasterFilesystems ($cluster);
     my %stagerValues = &generateStagerFilesystems ("castor_read","castor2read", $cluster);
+   
     my $node, $fs;
-    my %totality;
+    my %totality; #old version - has issues with multiple filesystems associate with each node
 
    my $table2;
-   my (@myary, @myary2);
+    my (@myary, @myary2, @myary3);
    $table2 = new HTML::Table(-padding=>1, -border=>1);
 
     if ($RM == 1 || ($RM eq `` && $MASTER eq ``)) {
     foreach $node (sort keys %rmMasterValues){
        foreach $fs (sort keys %{$rmMasterValues{$node}}) { 
           if (! exists %{$stagerValues{$node}}->{$fs}) { 
-	      %{$totality{$node}}->{rmmaster} = $fs;
-#	      print "$node $fs in RMMaster but not Stager\n"; 
+	      push (@myary, $node);
+	      push (@myary2,$fs);
+	      push (@myary3,"-");
+#	      %{$totality{$node}}->{rmmaster} = $fs;
+#	       print "$node $fs in RMMaster  but not in Stager\n";
           }
        }	    
     }    
@@ -569,23 +585,25 @@ sub orphanFilesystems () {
     foreach $node (sort keys %stagerValues){
        foreach $fs (sort keys %{$stagerValues{$node}}){
 	   if (! exists %{$rmMasterValues{$node}}->{$fs}){
-	      %{$totality{$node}}->{stager} = $fs;
+	      push (@myary, $node);
+	      push (@myary2, "-");
+	      push (@myary3, $fs);
+#	      %{$totality{$node}}->{stager} = $fs;
 #	       print "$node $fs in Stager but not RMMaster or node is Down in RMMaster\n";
 	   }
        }
     }    }
 
-    foreach (sort keys %totality){
-	if (exists %{$totality{$_}}->{stager}) { push (@myary, %{$totality{$_}}->{stager}); }
-	else {push (@myary, "-");}
-	if (exists %{$totality{$_}}->{rmmaster}) { push (@myary2, %{$totality{$_}}->{rmmaster}); }
-	else {push (@myary2, "-");}
-    }
-#    print Data::Dumper->Dump([%totality]);
 
+#    foreach (sort keys %totality){
+#	if (exists %{$totality{$_}}->{stager}) { push (@myary, %{$totality{$_}}->{stager}); }
+#	else {push (@myary, "-");}
+#	if (exists %{$totality{$_}}->{rmmaster}) { push (@myary2, %{$totality{$_}}->{rmmaster}); }
+#	else {push (@myary2, "-");}
+#    }
 
- 	$table2->addCol("Node", sort keys %totality);
-        $table2->addCol("Stager", @myary);
+ 	$table2->addCol("Node", @myary);#sort keys %totality);
+        $table2->addCol("Stager", @myary3);
         $table2->addCol("RMMaster", @myary2);
 	print "<HTML><HEAD><TITLE>$cluster Orphaned Filesystem Check</TITLE></HEAD><BODY>\n";
 	print "<CENTER>Orphaned Filesystem Check for ".$cluster." - ". `date`."</CENTER>";
@@ -624,8 +642,14 @@ sub svcClassCheck () {
 #########################################################################
 
 #main code segment
-
+   $ENV{'ORACLE_HOME'} = "/usr/lib/oracle/10.2.0.1/client";
+   $ENV{'ORACLE_LIB'} = "/usr/lib/oracle/10.2.0.1/client/lib";
+   $ENV{'ORACLE_BIN'} = "/usr/lib/oracle/10.2.0.1/client/bin";
+   $ENV{'LD_LIBRARY_PATH'} = "/usr/local/lsf/lib:/usr/lib/oracle/10.2.0.1/client/lib";
+   $ENV{'PATH'} = "/bin:/sbin:/usr/bin:/usr/sbin:/root/bin:/usr/lib/oracle/10.2.0.1/client/bin";
+   $ENV{'TNS_ADMIN'} = "/etc/castor";
    &init_vars();
+
 
    if (	 $SVCCLASS  ) {   &svcClassCheck ($SVCCLASS); }
    if (   $ORPHAN   ) {   &orphanFilesystems ($ORPHAN); } 
