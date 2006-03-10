@@ -12,6 +12,7 @@
 #include "RepackRequest.hpp"
 #include "RepackSubRequest.hpp"
 #include "RepackSegment.hpp"
+#include "Tools.hpp"
 
 namespace castor{
 	namespace repack {
