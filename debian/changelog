@@ -1,3 +1,74 @@
+castor (2.0.3-2) unstable; urgency=low
+
+  * PROTO2/castor/Services.cpp:
+    [r1.21,2006-03-03,itglp] Enhanced algorithm to load and instantiate services.
+    [r1.21,2006-03-03,itglp] Cdlopen() used instead of dlopen().
+  * PROTO2/castor/cleaning/CleaningDaemon.cpp:
+  * PROTO2/castor/cleaning/CleaningDaemon.hpp:
+  * PROTO2/castor/cleaning/HouseKeeping.cpp:
+  * PROTO2/castor/cleaning/HouseKeeping.hpp:
+  * PROTO2/castor/cleaning/SpringCleaning.cpp:
+  * PROTO2/castor/cleaning/SpringCleaning.hpp:
+    [2006-03-07,gtaur] Just one object  for OraCleanSvc
+  * PROTO2/castor/db/cnv/DbRepackSubRequestCnv.cpp:
+  * PROTO2/castor/db/cnv/DbRepackSubRequestCnv.hpp:
+    [2006-03-03,felixehm] added new attribute originpool
+  * PROTO2/castor/db/ora/OraCleanSvc.hpp:
+    [r 1.4,2006-03-08,itglp] Fixed includes.
+  * PROTO2/castor/db/ora/OraRepackSubRequestCnv.cpp:
+  * PROTO2/castor/db/ora/OraRepackSubRequestCnv.hpp:
+    [2006-03-03,felixehm] added new attribute originpool
+  * PROTO2/castor/repack/Imakefile:
+  * PROTO2/castor/repack/RepackServer.cpp:
+  * PROTO2/castor/repack/RepackServer.hpp:
+    [2006-03-03,felixehm] New Modules:
+    [2006-03-03,felixehm] RepackFileMigrator : marks the file, with are staged in CANBEMIGRATED
+    [2006-03-03,felixehm] RepackFileStager   : old RepackDaemon - stages the files of a new repack request
+    [2006-03-03,felixehm] corrected Server and Imakefile for new modules
+  * PROTO2/castor/repack/RepackClient.cpp:
+  * PROTO2/castor/repack/RepackClient.hpp:
+    [2006-03-03,felixehm] changes for corrected removal of Repack Requests. Now done by the parameter 'R'.
+  * PROTO2/castor/repack/RepackCommonHeader.hpp:
+    [r 1.8,2006-03-03,felixehm] The normal command is also now added to the list of possible commands for the repack process. If the requets has no valid command set, the server will do nothing.
+  * PROTO2/castor/repack/RepackSubRequest.cpp:
+  * PROTO2/castor/repack/RepackSubRequest.hpp:
+    [2006-03-03,felixehm] new Attribute : originPool.
+    [2006-03-03,felixehm] this is needed for the migration process, so the files can be migrated to the origin tapepool.
+  * PROTO2/castor/repack/RepackWorker.cpp:
+    [r1.13,2006-03-03,felixehm] improving removal of repack request (still, this is not sure, since we don't get any answer from the stager call.
+    [r1.13,2006-03-03,felixehm] the origin tape pool is now stored with the subrequest
+  * PROTO2/common/serror.c:
+  * PROTO2/h/serrno.h:
+    [2006-03-07,sponcec3] Inserted DNS specific error messages. They will be used by Cgethostbyname/addr
+    [2006-03-07,sponcec3] Fixed missing messages leading to segfault when one wants to display them
+  * PROTO2/config/Imake.rules:
+    [r1.18,2006-03-02,itglp] Fixed rule to make install shared libraries with correct versioning.
+  * PROTO2/debian/castor-lsf-plugin.postinst:
+    [r 1.3,2006-03-02,itglp] Changed chmod 777 -> 775 /var/spool/scheduler.
+  * PROTO2/hsmtools/castorReconcile:
+    [r 1.2,2006-03-09,aearl] bug fixed version - better handling of rmmaster and database failures so that
+    [r 1.2,2006-03-09,aearl] processes don't hang around forever trying to get info from non-existant
+    [r 1.2,2006-03-09,aearl] clusters
+  * PROTO2/hsmtools/disknodeShutdown:
+    [r 1.3,2006-03-09,aearl] three bug fixes - extra quotes in help section, @NODE -> @NODES in main and an extra } to solve issue in main
+  * PROTO2/job/stagerJob.shell:
+    [r1.38,2006-03-02,itglp] Unset STAGER_HOST & STAGER_PORT so that the job takes the parameters
+    [r1.38,2006-03-02,itglp] from castor.conf and not from the user's profile.
+  * PROTO2/rfio/Imakefile:
+    [r1.12,2006-03-02,jdurand] Restrict -lxfs to rfiod
+    [r1.12,2006-03-02,jdurand] Compile rfio_alignedbuf.Osuf rfio_xfsprealloc.Osuf only if UseXFSPrealloc is set (dependency problem: rfio_alignedbuf will call xfs routines within rfio_xfsprealloc)
+  * PROTO2/shlib/makeshlib.sh:
+    [r 1.4,2006-03-02,itglp] Fixed rule to make install shared libraries with correct versioning.
+  * CASTOR/tape/wrttpmrk.c:
+    [r 1.6,2006-03-09,hcacote] 
+    [r 1.6,2006-03-09,hcacote] write filemark controlled by entry in castor.conf default immediate bit off
+  * PROTO2/test/security/Csec_client.c:
+    [r 1.5,2006-03-07,lopic3] 0 instead of delegation flag
+  * PROTO2/test/security/Csec_server.c:
+    [r 1.3,2006-03-07,lopic3] no delegation
+
+ -- sponcec3 <sponcec3@seblap.cern.ch>  Fri, 10 Mar 2006 10:33:40 +0100
+
 castor (2.0.3-1) unstable; urgency=low
 
   * PROTO2/castor/Constants.hpp:
