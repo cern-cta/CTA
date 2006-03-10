@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.19 $ $Date: 2006/03/10 10:45:28 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.20 $ $Date: 2006/03/10 13:50:39 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #define NullParameter
@@ -214,7 +214,7 @@ InstallTarget(ProgramTargetName(program),owner,group,mode,dest)
 #ifndef InstallSharedLibrary
 #define InstallSharedLibrary(libname,maj,min,dest)		@@\
 dest/SharedLibraryTargetName(libname): SharedLibraryTargetName(libname)	@@\
-	./makeshlib.sh install libname $(DESTDIR)dest
+	./makeshlib.sh install $? $(DESTDIR)$@
 #endif
 #else
 /* itglp: not used anymore? */
