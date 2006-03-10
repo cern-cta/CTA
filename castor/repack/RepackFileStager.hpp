@@ -7,6 +7,15 @@
 #include "castor/server/IThread.hpp"
 #include "stager_client_api.h"
 #include <common.h>
+/* for sending the request to stager */
+#include "castor/stager/StagePrepareToGetRequest.hpp"
+#include "castor/stager/SubRequest.hpp"
+#include "castor/rh/Response.hpp"
+#include "castor/rh/FileResponse.hpp"
+#include "castor/client/VectorResponseHandler.hpp"
+#include "castor/client/BaseClient.hpp"
+#include "castor/stager/RequestHelper.hpp"
+/*************************************/
 
 namespace castor {
 	
@@ -47,8 +56,8 @@ namespace castor {
 		 * Stages the files
 		 */
 		void stage_files(RepackSubRequest* sreq) throw();
-		void sortReadOrder(std::vector<u_signed64>* fileidlist) throw();
 
+		void RepackFileStager::sendStagerRepackRequest(castor::stager::StagePrepareToGetRequest* req, std::string *reqId) throw ();
 		/**
 		 * Pointer to DatabaseHelper Instance. Created by the contructor.
 		 * Stores and updates RepackRequest.
