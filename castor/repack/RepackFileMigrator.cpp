@@ -25,7 +25,7 @@ RepackFileMigrator::~RepackFileMigrator(){
 void RepackFileMigrator::run(void* param) throw(){
 	
 	int rc, nbresps;
-	nbresps = rc = 0;
+	nbresps = rc = errno = serrno = 0;
 	Cuuid_t cuuid;
 	struct stage_query_req request;
 	struct stage_filequery_resp *response;
@@ -48,8 +48,8 @@ void RepackFileMigrator::run(void* param) throw(){
 		
 		/* handle and delete the recieved objects */
 		if (nbresps){
-			handle(response,nbresps);
-			delete [] response;
+			handle(response,nbresps,sreq);
+			free(response);
 		}
 		delete sreq;
 	}
@@ -67,13 +67,49 @@ void RepackFileMigrator::stop() throw(){
 //------------------------------------------------------------------------------
 // handle 
 //------------------------------------------------------------------------------
-void RepackFileMigrator::handle(struct stage_filequery_resp* response, int nbresps){
-	int i=0;
-	for (i=0;i < nbresps; i++)
-	{
-		std::cout << response[i].castorfilename << " " << response[i].status << std::endl;
-	}
+void RepackFileMigrator::handle(struct stage_filequery_resp* files_to_mig, int count_files, RepackSubRequest* sreq){
+	int i, nbresps; i = nbresps = 0;
+	char **requestId;
+	struct stage_filereq request [count_files];
+	struct stage_fileresp *responses;
+	struct stage_options;	/* not used, but in case good to know that it is there !*/
 
+
+	castor::dlf::Param params[] =
+		{castor::dlf::Param("VID", sreq->vid()),
+		 castor::dlf::Param("Number of files", count_files)};
+	castor::dlf::dlf_writep(stringtoCuuid(sreq->cuuid()), DLF_LVL_DEBUG, 99, 2, params);
+
+	/* Create new struct requests for putdone */
+	for (i=0;i < count_files; i++)
+	{
+		std::cout << files_to_mig[i].fileid << "(" << files_to_mig[i].castorfilename << ") " << files_to_mig[i].status << std::endl;
+		request[i].filename = strdup(files_to_mig[i].castorfilename);
+	}	
+	
+	/* now send the putDone Request */
+	if ( stage_putDone ((char*)sreq->cuuid().c_str(), request, count_files, &responses, &nbresps, requestId, NULL) < 0 ){
+		stage_trace(3,sstrerror(serrno));
+	}
+		/* analyse the response and deallocate it after use.*/
+	while (--nbresps > -1 ){
+		if ( responses[nbresps].errorCode > 0 ){
+			castor::dlf::Param params[] =
+				{castor::dlf::Param("VID", sreq->vid()),
+				castor::dlf::Param("ErrorCode", responses[nbresps].errorCode),
+				castor::dlf::Param("ErrorMsg", responses[nbresps].errorMessage),
+				castor::dlf::Param("Method", "RepackFileMigrator::handle"),
+				castor::dlf::Param("Line", 102)};
+			castor::dlf::dlf_writep(stringtoCuuid(sreq->cuuid()), DLF_LVL_WARNING, 32, 5, params);
+			free (responses[nbresps].errorMessage);
+		}
+		free (responses[nbresps].filename);
+	}
+	free (requestId);
+	
+	/**
+		The staged files are now marked as CANBEMIGRATED
+	*/
 }
 
 

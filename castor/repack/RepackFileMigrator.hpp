@@ -53,7 +53,7 @@ namespace castor {
 	    virtual void stop() throw();
 		
 		private:
-			void handle(struct stage_filequery_resp* response, int nbresps);
+			void handle(struct stage_filequery_resp* files_to_mig, int count_files, RepackSubRequest* sreq);
 			bool m_stop;
 			DatabaseHelper* m_dbhelper;
 	};
