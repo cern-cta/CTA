@@ -1009,7 +1009,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
    SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
    buildPathFromFileId(fid, nh, dci, rpath);
    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime)
-    VALUES (rpath, dci, fileSystemId, cfid, 2, getTime()); -- status WAITTAPERECALL
+    VALUES (rpath, dci, 0, cfid, 2, getTime()); -- status WAITTAPERECALL
    INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
    rstatus := 99; -- WAITTAPERECALL, NEWLY CREATED
   END;
