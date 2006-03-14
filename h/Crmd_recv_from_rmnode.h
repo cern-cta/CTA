@@ -1,4 +1,4 @@
-/* $Id: Crmd_recv_from_rmnode.h,v 1.1 2004/11/24 15:47:33 jdurand Exp $ */
+/* $Id: Crmd_recv_from_rmnode.h,v 1.2 2006/03/14 16:50:53 motiakov Exp $ */
 
 #ifndef __Crmd_recv_from_rmnode
 #define __Crmd_recv_from_rmnode
@@ -17,5 +17,6 @@ EXTERN_C void DLL_DECL Crmd_exit _PROTO((int));
 EXTERN_C void DLL_DECL *Crmd_recv_from_rmnode _PROTO((void *));
 EXTERN_C int  DLL_DECL Crmd_recv_from_rmnode_getnode _PROTO((char *, struct rmnode *));
 EXTERN_C void DLL_DECL Crmd_recv_from_rmnode_init _PROTO(());
+EXTERN_C void DLL_DECL Crmd_strip_local_domain _PROTO((char *, const char *));
 
 #endif /* __Crmd_recv_from_rmnode */
