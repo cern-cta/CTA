@@ -131,7 +131,8 @@ namespace castor {
     OBJ_SetFileGCWeight = 95,
     OBJ_RepackRequest = 96,
     OBJ_RepackSubRequest = 97,
-    OBJ_RepackSegment = 98
+    OBJ_RepackSegment = 98,
+    OBJ_RepackAck = 99
   };
     
   /**
