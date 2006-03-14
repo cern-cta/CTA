@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/03/03 17:08:59 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/03/14 17:44:20 $ $Author: felixehm $
  *
  *
  *
@@ -62,8 +62,9 @@ RepackWorker::~RepackWorker() throw()
 void RepackWorker::run(void* param) throw()
 {
   stage_trace(3, "RepackWorker started and Request is now handled!");
-  castor::MessageAck ack; // Response for client
-  ack.setStatus(true);
+  // Response for client
+  RepackAck ack;
+
   castor::io::ServerSocket* sock = (castor::io::ServerSocket*) param;
 
   // Retrieve info on the client
@@ -102,7 +103,6 @@ void RepackWorker::run(void* param) throw()
       delete obj; 
       // "Invalid Request" message
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6);
-      ack.setStatus(false);
       ack.setErrorCode(EINVAL);
       ack.setErrorMessage("Invalid Request!");
     }
@@ -111,9 +111,8 @@ void RepackWorker::run(void* param) throw()
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params);
-    ack.setStatus(false);
     ack.setErrorCode(EINVAL);
-    ack.setErrorMessage(e.getMessage().str().c_str());
+    ack.setErrorMessage(e.getMessage().str());
     stage_trace(3, (char*)e.getMessage().str().c_str());
     return;
   }
@@ -125,13 +124,19 @@ void RepackWorker::run(void* param) throw()
 
 	switch ( rreq->command() ){
 	
-	 case REMOVE_TAPE: removeRequest(rreq);break;
-	 case REPACK: handleRepack(rreq);break;
-  default:break;
+	 case REMOVE_TAPE:	removeRequest(rreq);break;
+	 case REPACK: 			handleRepack(rreq);break;
+	 case GET_STATUS: 	
+								getStatus(rreq);
+								ack.addRequest(rreq);
+								break;
+	 case GET_STATUS_ALL:getStatusAll(rreq);
+								ack.addRequest(rreq);
+								break;
+	 default:break;	/** Do nothing by default */
 	}
 
   }catch (castor::exception::Internal e) {
-  	ack.setStatus(false);
     ack.setErrorCode(e.code());
     ack.setErrorMessage(e.getMessage().str());
     stage_trace(2,"%s\n%s",sstrerror(e.code()), e.getMessage().str().c_str() );
@@ -164,6 +169,43 @@ void RepackWorker::stop() throw()
 {
 
 
+}
+
+//------------------------------------------------------------------------------
+// Retrieves the subrequests for client answer
+//------------------------------------------------------------------------------
+void RepackWorker::getStatus(RepackRequest* rreq) throw()
+{
+	std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
+	while ( tape != rreq->subRequest().end() ){
+		
+		RepackSubRequest* tmp = 
+								m_databasehelper->getSubRequestByVid( (*tape)->vid());
+		
+		if ( tmp != NULL ) {
+			rreq->subRequest().erase((tape)); /** we don't need the subrequest from 
+															the client, we replace it */
+         rreq->subRequest().insert(tape,tmp);
+      }
+		tape++;
+	}
+}
+
+
+//------------------------------------------------------------------------------
+// Retrieves all subrequests in the repack system
+//------------------------------------------------------------------------------
+void RepackWorker::getStatusAll(RepackRequest* rreq) throw()
+{
+	std::vector<castor::repack::RepackSubRequest*>* result = 
+											m_databasehelper->getAllSubRequests();
+	
+	std::vector<RepackSubRequest*>::iterator tape = result->begin();
+	
+	while ( tape != result->end() ){
+		rreq->subRequest().push_back((*tape));
+		tape++;
+	}
 }
 
 
@@ -254,7 +296,7 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw()
 					RepackSubRequest* tmp = new RepackSubRequest();
 					tmp->setVid(lp->vid);
 					tmp->setRequestID(rreq);
-					tmp->setOriginPool(lp->poolname);
+					//tmp->setOriginPool(lp->poolname);
 					rreq->addSubRequest(tmp);
 					nbvol++;
 				}
@@ -274,7 +316,7 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw()
 				if ( checkTapeForRepack((*tape)->vid()) ){
 					memset((void*)lp,'\0',sizeof(vmgr_tape_info));
 					vmgr_querytape ((char*)(*tape)->vid().c_str(), 0, lp, NULL);
-					(*tape)->setOriginPool(lp->poolname);
+					//(*tape)->setOriginPool(lp->poolname);
 					nbvol++;
 					tape++;
 				}

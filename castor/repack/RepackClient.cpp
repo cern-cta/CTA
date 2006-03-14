@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/03/03 17:17:09 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/03/14 17:44:20 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -43,6 +43,8 @@
  */
 #include "castor/io/StreamRepackRequestCnv.hpp"
 #include "castor/io/StreamRepackSubRequestCnv.hpp"
+#include "castor/io/StreamRepackAckCnv.hpp"
+
 
 
 
@@ -117,12 +119,14 @@ RepackClient::~RepackClient() throw()
 //------------------------------------------------------------------------------
 bool RepackClient::parseInput(int argc, char** argv)
 {
-  const char* cmdParams = "R:V:P:h"; //m_cmdLineParams.str().c_str();
+  const char* cmdParams = "S:sR:V:P:h";
   if (argc == 1){
     usage();
     return false;
   }
   struct Coptions longopts[] = {
+    {"status", 0,NULL, 's' },
+	 {"status", REQUIRED_ARGUMENT,NULL, 'S' },
     {"delete", REQUIRED_ARGUMENT,NULL, 'R' },
     {"volumeid", REQUIRED_ARGUMENT, NULL, 'V'},
     {"poolid", REQUIRED_ARGUMENT, NULL, 'P'},
@@ -133,7 +137,7 @@ bool RepackClient::parseInput(int argc, char** argv)
     {"output_tppool", REQUIRED_ARGUMENT, 0, 'o'},
     {"otp", REQUIRED_ARGUMENT, 0, 'o'},*/
     {"help", NO_ARGUMENT,NULL, 'h' },
-    {0, 0, 0, 0}
+    {NULL, 0, NULL, 0}
   };
 
   
@@ -158,6 +162,13 @@ bool RepackClient::parseInput(int argc, char** argv)
       cp.vid = Coptarg;
       cp.command = REMOVE_TAPE;
       break;
+	 case 'S':
+		cp.vid = Coptarg;
+		cp.command = GET_STATUS;
+		return true;
+	case 's':
+		cp.command = GET_STATUS_ALL;
+		return true;
     default:
       break;
     }
@@ -292,21 +303,50 @@ void RepackClient::run(int argc, char** argv)
     s.sendObject(*req);
 	castor::IObject* obj = s.readObject();
 	
-	MessageAck* ack = dynamic_cast<castor::MessageAck*>(obj);
+	RepackAck* ack = dynamic_cast<castor::repack::RepackAck*>(obj);
 	if ( ack != 0 ){
-		if ( !ack->status() ){
-			std::cout << "Repackserver respond :" << std::endl
-					  << ack->errorMessage() << std::endl;
-		}
+		handleResponse(ack);
 	}
 	
     // free memory
     delete req;
     delete ack;
   } catch (castor::exception::Exception ex) {
-    std::cerr << ex.getMessage().str() << std::endl;
+    	std::cerr << ex.getMessage().str() << std::endl;
   }
 }
+
+
+void RepackClient::handleResponse(RepackAck* ack){
+	
+	if ( ack->errorCode() ){
+			std::cerr << "Repackserver respond :" << std::endl
+					  << ack->errorMessage() << std::endl;
+			return;
+		}
+
+	RepackRequest* rreq = ack->request().at(0);
+	std::cout << "==========================================================" << std::endl;
+	std::cout << " Tape Request : " << std::endl;
+	switch ( rreq->command() ){
+		case GET_STATUS_ALL : 
+   	case GET_STATUS : 
+		{
+			std::cout << "VID\tSTATUS\tCUUID" <<std::endl;
+			
+			std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
+			while ( tape != rreq->subRequest().end() ){
+         	std::cout << (*tape)->vid() << "\t" << (*tape)->status() << "\t" << (*tape)->cuuid() << std::endl;
+				tape++;
+			}
+			break;
+		}
+	}
+
+
+}
+
+
 
 //------------------------------------------------------------------------------
 // setRemotePort()

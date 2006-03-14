@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/02/23 12:36:03 $ $Author: felixehm $
+ * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/03/14 17:44:20 $ $Author: felixehm $
  *
  * 
  *
@@ -117,6 +117,10 @@ namespace castor {
        * This is needed before a Tape is inserted as a new repackjob.
        */
       bool is_stored(std::string vid) throw();
+
+		std::vector<castor::repack::RepackSubRequest*>* 
+																getAllSubRequests() throw ();
+
       private:
       
         /**
@@ -133,7 +137,9 @@ namespace castor {
         
         static const std::string m_selectCheckSubRequestStatementString;
         castor::db::IDbStatement *m_selectCheckSubRequestStatement;
-      
+        
+		  static const std::string m_selectAllSubRequestsStatementString;
+		  castor::db::IDbStatement *m_selectAllSubRequestsStatement;
       
 		castor::BaseAddress ad;
       

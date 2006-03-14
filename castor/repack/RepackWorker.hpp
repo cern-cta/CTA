@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/02/23 12:40:32 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/03/14 17:44:20 $ $Author: felixehm $
  *
  *
  *
@@ -47,7 +47,7 @@
 #include "castor/io/ServerSocket.hpp"
 #include "FileListHelper.hpp"
 #include "DatabaseHelper.hpp"
-
+#include "RepackAck.hpp"
 
 
 namespace castor {
@@ -95,9 +95,9 @@ namespace castor {
     int getPoolInfo(castor::repack::RepackRequest* rreq) throw();
 
 	void handleRepack(RepackRequest* rreq) throw();
-	void RepackWorker::removeRequest(RepackRequest* rreq) throw ();
-	
-
+	void removeRequest(RepackRequest* rreq) throw ();
+	void getStatus(RepackRequest* rreq) throw();
+   void getStatusAll(RepackRequest* rreq) throw();
     /**
      * the nameserver, which is contacted for all Requests
      */

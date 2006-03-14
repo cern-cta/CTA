@@ -45,15 +45,18 @@ const std::string castor::repack::DatabaseHelper::m_selectCheckStatementString =
   "SELECT q.id FROM RepackSubRequest q WHERE q.vid= :1";
 const std::string castor::repack::DatabaseHelper::m_selectCheckSubRequestStatementString =
   "SELECT q.id FROM RepackSubRequest q WHERE q.status= :1 AND ROWNUM < 2";
+const std::string castor::repack::DatabaseHelper::m_selectAllSubRequestsStatementString =
+  "SELECT id FROM RepackSubRequest";
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
 castor::repack::DatabaseHelper::DatabaseHelper() throw() : 
 	DbBaseObj(NULL),
-	m_selectToDoStatement(NULL),
+	 m_selectToDoStatement(NULL),
     m_selectCheckStatement(NULL),
-    m_selectCheckSubRequestStatement(NULL) {
+    m_selectCheckSubRequestStatement(NULL),
+    m_selectAllSubRequestsStatement(NULL) {
   try {
 	ad.setCnvSvcName("DbCnvSvc");
 	ad.setCnvSvcType(castor::SVC_DBCNV);
@@ -91,12 +94,13 @@ void castor::repack::DatabaseHelper::reset() throw() {
    if ( m_selectToDoStatement ) delete m_selectToDoStatement;
    if ( m_selectCheckStatement ) delete m_selectCheckStatement;
    if ( m_selectCheckSubRequestStatement ) delete m_selectCheckSubRequestStatement;
+	if ( m_selectAllSubRequestsStatement ) delete m_selectAllSubRequestsStatement;
   } catch (castor::exception::SQLError ignored) {};
   // Now reset all pointers to 0
    m_selectToDoStatement = NULL;
    m_selectCheckStatement = NULL;
    m_selectCheckSubRequestStatement = NULL;
-
+   m_selectAllSubRequestsStatement = NULL;
 }
 
 
@@ -186,7 +190,11 @@ castor::repack::RepackSubRequest*
 			result = getSubRequest(id);
 		}
 		delete rset;
-		
+		/*
+		if (fill){
+			svcs()->fillObj(&ad,result,OBJ_RepackSegment);
+		}
+      */
 	}catch (castor::exception::SQLError e){
 		delete m_selectCheckStatement;
 		castor::exception::Internal ex;
@@ -355,3 +363,34 @@ void castor::repack::DatabaseHelper::remove(castor::IObject* obj) throw ()
 	svcs()->commit(&ad);
 }
 
+
+
+std::vector<castor::repack::RepackSubRequest*>*
+	castor::repack::DatabaseHelper::getAllSubRequests() throw ()
+{
+	std::vector<castor::repack::RepackSubRequest*>* result 
+						= new std::vector<castor::repack::RepackSubRequest*>();
+   
+	if ( m_selectAllSubRequestsStatement == NULL ) {
+		m_selectAllSubRequestsStatement = createStatement(m_selectAllSubRequestsStatementString);
+	}
+
+	try {	
+		castor::db::IDbResultSet *rset = m_selectAllSubRequestsStatement->executeQuery();
+		
+		while ( rset->next() ){		/** now add the subrequests to vector */
+			u_signed64 id = (u_signed64)rset->getDouble(1);
+			RepackSubRequest* tape = getSubRequest(id);
+			result->push_back(tape);
+		}
+		delete rset;
+	
+	}catch (castor::exception::SQLError e) {
+		castor::exception::Internal ex;
+		ex.getMessage() << "DatabaseHelper::Unable to get all RepackSubRequests" 
+			<< std::endl << e.getMessage();
+		throw ex;
+	}
+	
+	return result;
+}

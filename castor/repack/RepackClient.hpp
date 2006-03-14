@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/03/03 17:17:09 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/03/14 17:44:20 $ $Author: felixehm $
  *
  * The Repack Client. This is the client part of the repack project, which just
  * sends and Request to the server. One Request can have serveral tapes 
@@ -36,7 +36,7 @@
 #include "castor/ICnvSvc.hpp"
 #include "castor/Services.hpp"
 #include "castor/io/ClientSocket.hpp"
-#include "castor/MessageAck.hpp"
+#include "RepackAck.hpp"
 #include "Cgetopt.h"
 #include "h/stager_client_api_common.h" 
 
@@ -93,7 +93,13 @@ namespace castor {
      * Little method to show the full help of the repack client.
      */
     void help();
-    
+	    
+    /**
+     * Handles the response from the Repack server. In case of an subrequest
+	    query from the client, the queried tapes are printed.
+	  */
+    void handleResponse(RepackAck* ack);
+
     /**
      * Sets the remote port of the repack server. This port is used to contact
      * the server. The searching order for the port is the following:
