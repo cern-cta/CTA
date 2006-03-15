@@ -14,7 +14,7 @@
 #define INIT_HOST(thishost) {                               \
 	(thishost)->s_addr = clientAddress.sin_addr.s_addr;     \
 	(thishost)->nbrestart = nbrestart;                      \
-	strncpy((thishost)->host,hp->h_name,CA_MAXHOSTNAMELEN); \
+	strncpy((thishost)->host,rec_host_name,CA_MAXHOSTNAMELEN); \
 	(thishost)->hostlen = strlen((thishost)->host);         \
 	strcpy((thishost)->state,"Idle");                       \
 }
