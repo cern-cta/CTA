@@ -1,3 +1,12 @@
+castor (2.0.3-3) unstable; urgency=low
+
+  * Bug fix release on top of the 2.0.3-0 one (branching)
+  * PROTO2/castor/Imakefile:
+    [r1.120.0.2,2006-03-16,sponcec3] Introduce the changes from v122 here in order to issue a bug fix release
+
+
+ -- sponcec3 <sponcec3@seblap.cern.ch>  Thu, 16 Mar 2006 15:47:11 +0100
+
 castor (2.0.3-2) unstable; urgency=low
 
   * PROTO2/castor/Services.cpp:
