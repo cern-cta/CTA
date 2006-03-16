@@ -35,7 +35,6 @@
 #include "castor/db/ora/OraCommonSvc.hpp"
 #endif
 #include "castor/stager/ITapeSvc.hpp"
-#include "occi.h"
 #include <vector>
 
 namespace castor {
