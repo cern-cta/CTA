@@ -1,4 +1,12 @@
 -----------
+- 2.0.3-3 -
+-----------
+
+  Bug fix release. This release should be used in place of v2_0_3_0. It fixes
+  a packaging bug that was introducing a symbol main in the library libshift.
+  It is otherwise fully identical to v2_0_3_0.
+
+-----------
 - 2.0.3-2 -
 -----------
 
