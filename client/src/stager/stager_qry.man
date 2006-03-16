@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.10 $ $Date: 2006/02/01 10:37:25 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.11 $ $Date: 2006/03/16 16:04:25 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_QRY 1castor "$Date: 2006/02/01 10:37:25 $" CASTOR "STAGER Commands"
+.TH STAGER_QRY 1castor "$Date: 2006/03/16 16:04:25 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_qry \- query the CASTOR stager for files and requests
 .SH SYNOPSIS
@@ -62,9 +62,11 @@ INVALID: a failure happened concerning this file.
 
 .TP
 .BI \-M,\ \-\-hsm_filename " hsmfile"
-specifies the CASTOR HSM file to be queried for as a POSIX regular expression. The
+specifies the CASTOR HSM file to be queried for. The
 .B \-M
 option can be repeated, which allows for querying the status of many files with a single command.
+If the hsmfile begins with 'regexp:', it is considered as a POSIX regular expression.
+If the hsmfile ends with '/', it is considered as a directory, allowing for recursively querying the status of all files in it.
 Note that the number of responses for a given file is limited on the server side. In case the limitation
 is reached, nothing is returned and an error message is displayed.
 .TP
@@ -118,48 +120,51 @@ display command usage help
 
 .SH EXAMPLE
 .fi
-$ stager_get -M /castor/cern.ch/user/t/test/file1 -M /castor/cern.ch/user/t/test/file2 -M /castor/cern.ch/user/t/test/file3 -U test1
+$ stager_get -M /castor/cern.ch/user/t/test/file1 -M /castor/cern.ch/user/t/test/file2 -U test1
 .fi
-Received 3 responses
+Received 2 responses
 .fi
 /castor/cern.ch/user/t/test/file1 SUBREQUEST_READY
 .fi
 /castor/cern.ch/user/t/test/file2 SUBREQUEST_READY
 .fi
-/castor/cern.ch/user/t/test/file3 SUBREQUEST_READY
-.fi
 $ stager_qry -U test1
 .fi
-Received 3 responses
+Received 2 responses
 .fi
-/castor/cern.ch/user/t/test/file1 STAGEIN
+/castor/cern.ch/user/t/test/file1 8235742@castorns STAGEIN
 .fi
-/castor/cern.ch/user/t/test/file2 STAGED
-.fi
-/castor/cern.ch/user/t/test/file3 STAGEIN
+/castor/cern.ch/user/t/test/file2 8235743@castorns STAGED
 .fi
 $ stager_qry -n -U test1
 .fi
 Received 1 responses
 .fi
-/castor/cern.ch/user/t/test/file2 STAGED
+/castor/cern.ch/user/t/test/file2 8235743@castorns STAGED
 .fi
 $ stager_qry -n -U test1   (after some time)
 .fi
 Received 1 responses
 .fi
-/castor/cern.ch/user/t/test/file1 STAGED
+/castor/cern.ch/user/t/test/file1 8235742@castorns STAGED
 .fi
+$ stager_qry -M /castor/cern.ch/user/t/test/
 .fi
-$ nsls -i /castor/cern.ch/user/t/test/file2
+Received 2 responses
 .fi
-    59316770 /castor/cern.ch/user/t/test/file2
+/castor/cern.ch/user/t/test/file1 8235742@castorns STAGED
+.fi
+/castor/cern.ch/user/t/test/file2 8235743@castorns STAGED
+.fi
+$ nsls -i /castor/cern.ch/user/t/test2/file
+.fi
+    59316770 /castor/cern.ch/user/t/test2/file
 .fi
 $ stager_qry -F 59316770@castorns
 .fi
 Received 1 responses
 .fi
-59316770@castorns STAGEOUT
+/castor/cern.ch/user/t/test2/file 59316770@castorns STAGEOUT
 .fi
 
 .SH EXIT STATUS
