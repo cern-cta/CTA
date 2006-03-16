@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.34 2006/02/07 10:10:22 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.35 2006/03/16 16:03:28 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.34 $ $Date: 2006/02/07 10:10:22 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.35 $ $Date: 2006/03/16 16:03:28 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -219,7 +219,7 @@ namespace castor {
           break;
 
         case DISKCOPY_CANBEMIGR:
-          st =  FILE_CANBEMIGR;
+          st = FILE_CANBEMIGR;
           diskServer = dc->diskServer();
           break;
 
@@ -233,7 +233,7 @@ namespace castor {
           fr->setDiskServer(diskServer);
           foundDiskCopy = true;
         } else {
-          // If there are sevral diskcopies for the file
+          // If there are several diskcopies for the file
           // set the status to staged if ANY of the disk copies is
           // staged, otherwise keep the original status.
           if (dc->diskCopyStatus() == DISKCOPY_STAGED) {
@@ -264,14 +264,10 @@ namespace castor {
         std::list<castor::stager::DiskCopyInfo*>* result =
           qrySvc->diskCopies4FileName(fileName, svcClassId);
 
-        if (result == 0) {
-          castor::exception::Exception e(EINVAL);
-          e.getMessage() << "Unknown File " << fileName;
-          throw e;
-        }
-        if (result->size() == 0) {
+        if(result == 0 || result->size() == 0) {   // sanity check, result always is != 0
           castor::exception::Exception e(ENOENT);
           e.getMessage() << "File " << fileName << " not in stager";
+          delete result;
           throw e;
         }
 
@@ -303,7 +299,7 @@ namespace castor {
             }
 
             // Now processing a new file !
-            bool foundDiskCopy = false;
+            foundDiskCopy = false;
             fileid = diskcopy->fileId();
             nshost = diskcopy->nsHost();
 
@@ -354,14 +350,10 @@ namespace castor {
         std::list<castor::stager::DiskCopyInfo*>* result =
           qrySvc->diskCopies4File(fid, nshost, svcClassId);
 
-        if (result == 0) {
-          castor::exception::Exception e(EINVAL);
-          e.getMessage() << "Unknown File " << fid << "@" << nshost;
-          throw e;
-        }
-        if (result->size() == 0) {
+        if(result == 0 || result->size() == 0) {   // sanity check, result always is != 0
           castor::exception::Exception e(ENOENT);
           e.getMessage() << "File " << fid << "@" << nshost << " not in stager";
+          delete result;
           throw e;
         }
 
@@ -454,10 +446,9 @@ namespace castor {
 
         u_signed64 fileid = 0;
         std::string nshost = "";
-        char cfn[CA_MAXPATHLEN+1];     // XXX unchecked string length in Cns_getpath() call
+        //char cfn[CA_MAXPATHLEN+1];     // XXX unchecked string length in Cns_getpath() call
         castor::rh::FileQryResponse res;
         bool foundDiskCopy = false;
-
 
         for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
               = result->begin();
@@ -476,15 +467,15 @@ namespace castor {
             }
 
             // Now processing a new file !
-            bool foundDiskCopy = false;
+            foundDiskCopy = false;
             fileid = diskcopy->fileId();
             nshost = diskcopy->nsHost();
 
             std::ostringstream sst;
             sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
             res.setFileName(sst.str());
-            Cns_getpath((char*)nshost.c_str(), fileid, cfn);
-            res.setCastorFileName(cfn);
+            //Cns_getpath((char*)nshost.c_str(), fileid, cfn);
+            res.setCastorFileName(diskcopy->lastKnownFileName());
             res.setSize(diskcopy->size());
           }
 
