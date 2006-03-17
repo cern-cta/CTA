@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.35 2006/03/16 16:03:28 itglp Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.36 2006/03/17 10:28:33 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.35 $ $Date: 2006/03/16 16:03:28 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.36 $ $Date: 2006/03/17 10:28:33 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -185,11 +185,11 @@ namespace castor {
 
 
       void setFileResponseStatus(castor::rh::FileQryResponse* fr,
-                                 castor::stager::DiskCopyInfo*  dc,
+                                 castor::stager::DiskCopyInfo* dc,
                                  bool& foundDiskCopy) {
         char *func = "setFileResponseStatus";
 
-        // 1. Mapping diskcopy/tapecopy/segment status to one file status
+        // 1. Mapping diskcopy status to file status
         stage_fileStatus st = FILE_INVALID_STATUS;
         std::string diskServer = "";
 
@@ -222,7 +222,6 @@ namespace castor {
           st = FILE_CANBEMIGR;
           diskServer = dc->diskServer();
           break;
-
         }
 
         // 2. Aggregate status for the various diskcopies
@@ -231,6 +230,7 @@ namespace castor {
           STAGER_LOG_DEBUG(NULL, diskServer.c_str());
           fr->setStatus(st);
           fr->setDiskServer(diskServer);
+          fr->setNbAccesses(dc->nbAccesses());
           foundDiskCopy = true;
         } else {
           // If there are several diskcopies for the file
@@ -238,13 +238,16 @@ namespace castor {
           // staged, otherwise keep the original status.
           if (dc->diskCopyStatus() == DISKCOPY_STAGED) {
             fr->setStatus(FILE_STAGED);
-            fr->setDiskServer(dc->diskServer());
+            fr->setDiskServer(diskServer);
+            fr->setNbAccesses(dc->nbAccesses());
             STAGER_LOG_DEBUG(NULL, "Setting diskServer");
             STAGER_LOG_DEBUG(NULL, diskServer.c_str());
           }
         }
-
-        fr->setNbAccesses(dc->nbAccesses());
+        
+        // 3. Set other common attributes from the castorFile
+        fr->setCastorFileName(dc->lastKnownFileName());
+        fr->setSize(dc->size());
       }
 
 
@@ -267,7 +270,8 @@ namespace castor {
         if(result == 0 || result->size() == 0) {   // sanity check, result always is != 0
           castor::exception::Exception e(ENOENT);
           e.getMessage() << "File " << fileName << " not in stager";
-          delete result;
+          if(result != 0)
+            delete result;
           throw e;
         }
 
@@ -302,12 +306,9 @@ namespace castor {
             foundDiskCopy = false;
             fileid = diskcopy->fileId();
             nshost = diskcopy->nsHost();
-
             std::ostringstream sst;
             sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
             res.setFileName(sst.str());
-            res.setCastorFileName(diskcopy->lastKnownFileName());
-            res.setSize(diskcopy->size());
           }
 
           /* Preparing the response */
@@ -350,36 +351,27 @@ namespace castor {
         std::list<castor::stager::DiskCopyInfo*>* result =
           qrySvc->diskCopies4File(fid, nshost, svcClassId);
 
-        if(result == 0 || result->size() == 0) {   // sanity check, result always is != 0
+        if(result == 0 || result->size() != 1) {   // sanity check, result.size() must be == 1
           castor::exception::Exception e(ENOENT);
           e.getMessage() << "File " << fid << "@" << nshost << " not in stager";
-          delete result;
+          if(result != 0)
+            delete result;
           throw e;
         }
 
+        /* Preparing the response */
+        /* ---------------------- */
         castor::rh::FileQryResponse res;
         std::ostringstream sst;
         sst << fid << "@" << nshost;
         res.setFileName(sst.str());
 
-        // query the nameserver for the file name
-        char cfn[CA_MAXPATHLEN+1];     // XXX unchecked string length in Cns_getpath() call
-        Cns_getpath((char*)nshost.c_str(), strtou64(fid.c_str()), cfn);
-        res.setCastorFileName(cfn);
+        //char cfn[CA_MAXPATHLEN+1];     // XXX unchecked string length in Cns_getpath() call
+        //Cns_getpath((char*)nshost.c_str(), strtou64(fid.c_str()), cfn);
 
+        castor::stager::DiskCopyInfo* diskcopy = *result->begin();
         bool foundDiskCopy = false;
-
-        for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
-              = result->begin();
-            dcit != result->end();
-            ++dcit) {
-
-          castor::stager::DiskCopyInfo* diskcopy = *dcit;
-          /* Preparing the response */
-          /* ---------------------- */
-          res.setSize(diskcopy->size());
-          setFileResponseStatus(&res, diskcopy, foundDiskCopy);
-        }
+        setFileResponseStatus(&res, diskcopy, foundDiskCopy);
 
         // INVALID status is like nothing
         if (res.status() == FILE_INVALID_STATUS) {
@@ -395,14 +387,8 @@ namespace castor {
 
         /* Cleanup */
         /* ------- */
-        for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
-              = result->begin();
-            dcit != result->end();
-            ++dcit) {
-          delete *dcit;
-        }
+        delete diskcopy;
         delete result;
-
       }
 
 
@@ -446,7 +432,6 @@ namespace castor {
 
         u_signed64 fileid = 0;
         std::string nshost = "";
-        //char cfn[CA_MAXPATHLEN+1];     // XXX unchecked string length in Cns_getpath() call
         castor::rh::FileQryResponse res;
         bool foundDiskCopy = false;
 
@@ -474,9 +459,6 @@ namespace castor {
             std::ostringstream sst;
             sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
             res.setFileName(sst.str());
-            //Cns_getpath((char*)nshost.c_str(), fileid, cfn);
-            res.setCastorFileName(diskcopy->lastKnownFileName());
-            res.setSize(diskcopy->size());
           }
 
           /* Preparing the response */
@@ -584,10 +566,10 @@ namespace castor {
               }
 
               // Get the SvcClass associated to the request
-	      u_signed64 svcClassId = 0;
+              u_signed64 svcClassId = 0;
               castor::stager::SvcClass* svcClass = uReq->svcClass();
               if (0 != svcClass) {
-		svcClassId = svcClass->id();
+                svcClassId = svcClass->id();
               }
 
               // call the proper handling request
