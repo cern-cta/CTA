@@ -302,7 +302,7 @@ BEGIN
   WHERE SubRequest.id = srId;
 END;
 
-/*  PL/SQL method to archive a SubRequest   */
+/*  PL/SQL method to archive a SubRequest */
 CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
   rid INTEGER;
   rtype INTEGER;
@@ -315,34 +315,26 @@ BEGIN
 
   -- Try to see whether another subrequest in the same
   -- request is still processing
-
   SELECT count(*) INTO nb FROM SubRequest
    WHERE request = rid AND status NOT IN (8); -- ALL FINISHED
 
   -- Archive request if all subrequests have finished
-
   IF nb = 0 THEN
-    UPDATE SubRequest SET status=11 WHERE request=rid and status=8; /* ARCHIVED */ 
+    UPDATE SubRequest SET status=11 WHERE request=rid and status=8;  -- ARCHIVED 
   END IF;
 END;
 
 
-/* PL/SQL method to delete  request*/
+/* PL/SQL method to delete request */
 
 CREATE OR REPLACE PROCEDURE deleteRequest(rId IN INTEGER) AS
-
   rtype INTEGER;
   rclient INTEGER;
-
-BEGIN
-  -- delete Request, Client and SubRequests
-
-  -- delete  request from Id2Type
-
+BEGIN  -- delete Request, Client and SubRequests
+  -- delete request from Id2Type
   DELETE FROM Id2Type WHERE id = rId RETURNING type INTO rtype;
  
   -- delete request and get client id
-
   IF rtype = 35 THEN -- StageGetRequest
     DELETE FROM StageGetRequest WHERE id = rId RETURNING client into rclient;
   ELSIF rtype = 40 THEN -- StagePutRequest
@@ -364,50 +356,47 @@ BEGIN
   END IF;
 
   -- Delete Client
-  
   DELETE FROM Id2Type WHERE id = rclient;
   DELETE FROM Client WHERE id = rclient;
   
   -- Delete SubRequests
-
   DELETE FROM Id2Type WHERE id IN
         (SELECT id FROM SubRequest WHERE request = rId);
   DELETE FROM SubRequest WHERE request = rId;
-
 END;
 
 
-/* Search and delete  too old archived subrequests and its request */
+/* Search and delete too old archived subrequests and its request */
 
 CREATE OR REPLACE PROCEDURE deleteArchivedRequests(timeOut IN NUMBER) AS
-
   myReq SubRequest.request%TYPE;
-  CURSOR cur IS SELECT DISTINCT request  FROM SubRequest WHERE status=11 AND getTime()- lastModificationTime >= timeOut;
-
+  CURSOR cur IS 
+   SELECT DISTINCT request FROM SubRequest
+    WHERE status=11 AND getTime() - lastModificationTime >= timeOut;
 BEGIN
 	OPEN cur;
-	LOOP 
-	   FETCH cur into myReq;
-           EXIT WHEN cur%NOTFOUND;
-           deleteRequest(myReq);
-        END LOOP;
+	LOOP
+    FETCH cur into myReq;
+      EXIT WHEN cur%NOTFOUND;
+    deleteRequest(myReq);
+  END LOOP;
 	CLOSE cur;
 END;
 
 /* Search and delete "out of date" subrequests and its request */
 
 CREATE OR REPLACE PROCEDURE deleteOutOfDateRequests(timeOut IN NUMBER) AS
-
   myReq SubRequest.request%TYPE;
-  CURSOR cur IS SELECT DISTINCT request  FROM SubRequest WHERE getTime()- lastModificationTime >= timeOut;
- 
+  CURSOR cur IS
+   SELECT DISTINCT request FROM SubRequest
+    WHERE getTime() - lastModificationTime >= timeOut;
 BEGIN
 	OPEN cur;
 	LOOP
-	   FETCH cur into myReq;
-           EXIT WHEN cur%NOTFOUND;
-           deleteRequest(myReq);
-        END LOOP;
+    FETCH cur into myReq;
+      EXIT WHEN cur%NOTFOUND;
+    deleteRequest(myReq);
+  END LOOP;
 	CLOSE cur;
 END;
 
@@ -706,16 +695,18 @@ CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   dci NUMBER;
   fsId NUMBER;
   fileSize NUMBER;
+  isRepack INT;
 BEGIN
-  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize
-    INTO SubRequestId, dci, fileSize
+  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize, SubRequest.isRepack
+    INTO SubRequestId, dci, fileSize, isRepack
     FROM TapeCopy, SubRequest, DiskCopy, CastorFile
    WHERE TapeCopy.id = tapecopyId
      AND CastorFile.id = TapeCopy.castorFile
      AND DiskCopy.castorFile = TapeCopy.castorFile
      AND SubRequest.diskcopy(+) = DiskCopy.id
      AND DiskCopy.status = 2;
-  UPDATE DiskCopy SET status = 0 WHERE id = dci RETURNING fileSystem INTO fsid; -- DISKCOPY_STAGED
+  UPDATE DiskCopy SET status = decode(isRepack,0,isRepack,6,isRepack,0)  -- DISKCOPY_STAGED or STAGEOUT 
+   WHERE id = dci RETURNING fileSystem INTO fsid;
   IF SubRequestId IS NOT NULL THEN
     UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
      WHERE id = SubRequestId; 
@@ -2148,7 +2139,7 @@ END;
 
 
 /*
- * PL/SQL method implementing the core part of stage queries light version
+ * PL/SQL method implementing the core part of stage queries
  * It takes a list of castorfile ids as input
  */
 CREATE OR REPLACE PROCEDURE internalStageQuery
@@ -2156,24 +2147,35 @@ CREATE OR REPLACE PROCEDURE internalStageQuery
   svcClassId IN NUMBER,
   result OUT castor.QueryLine_Cur) AS
 BEGIN
- OPEN result FOR
-    -- we need to give these hints to the optimizer otherwise it goes for a full table scan (!)
-    SELECT /*+ INDEX (CastorFile) INDEX (DiskCopy) INDEX (FileSystem) INDEX (DiskServer) */
+  OPEN result FOR
+    -- Here we get the status for each cf as follows: if a valid diskCopy is found,
+    -- its status is returned, else if a (prepareTo)Get request is found and no diskCopy is there,
+    -- WAITTAPERECALL is returned, else -1 (INVALID) is returned
+    SELECT /*+ INDEX (CastorFile) INDEX (DiskCopy) INDEX (FileSystem) INDEX (DiskServer) INDEX (SubRequest) */
+           -- we need to give these hints to the optimizer otherwise it goes for a full table scan (!)
            UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
            DiskCopy.path, CastorFile.filesize,
-           nvl(DiskCopy.status, -1), DiskServer.name,
-           FileSystem.mountPoint, CastorFile.nbaccesses,
-           CastorFile.lastKnownFileName
+           nvl(DiskCopy.status, decode(SubRequest.status, NULL,-1, 2)),   -- 2 = DISKCOPY_WAITTAPERECALL
+           DiskServer.name, FileSystem.mountPoint,
+           CastorFile.nbaccesses, CastorFile.lastKnownFileName
       FROM CastorFile, DiskCopy, FileSystem, DiskServer,
-           DiskPool2SvcClass
+           DiskPool2SvcClass, SubRequest,
+           (SELECT id, svcClass FROM StagePrepareToGetRequest UNION
+            SELECT id, svcClass FROM StageGetRequest) Req
      WHERE CastorFile.id IN (SELECT * FROM TABLE(cfs))
-       AND CastorFile.id = DiskCopy.castorFile (+)
+       AND CastorFile.id = DiskCopy.castorFile(+)    -- search for valid diskcopy
        AND FileSystem.id(+) = DiskCopy.fileSystem
-       AND nvl(FileSystem.status,0) = 0 -- PRODUCTION
+       AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
        AND DiskServer.id(+) = FileSystem.diskServer
-       AND nvl(DiskServer.status,0) = 0 -- PRODUCTION
-       AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool
-       AND (DiskPool2SvcClass.child = svcClassId OR svcClassId = 0)
+       AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
+       AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool 
+       AND CastorFile.id = SubRequest.castorFile(+)  -- or search for a get request
+       AND SubRequest.request = Req.id
+       AND (svcClassId = 0                  -- no svcClass given
+         OR DiskPool2SvcClass.child = svcClassId    -- found diskcopy on the given svcClass
+         OR ((DiskCopy.fileSystem = 0       -- diskcopy not yet associated with filesystem...
+             OR DiskCopy.id IS NULL)        -- or diskcopy not yet created at all...
+           AND Req.svcClass = svcClassId))    -- ...but found stagein request
   ORDER BY fileid, nshost;
 END;
 
@@ -2213,7 +2215,7 @@ END;
 */
 
 /*
- * PL/SQL method implementing the stage_query based on file id
+ * PL/SQL method implementing the stager_qry based on file name
  */
 CREATE OR REPLACE PROCEDURE fileNameStageQuery
  (fn IN VARCHAR2,
@@ -2222,7 +2224,16 @@ CREATE OR REPLACE PROCEDURE fileNameStageQuery
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
- SELECT id BULK COLLECT INTO cfs FROM CastorFile WHERE  REGEXP_LIKE(lastKnownFileName,fn) AND ROWNUM <= maxNbResponses + 1;
+ IF substr(fn, 1, 7) = 'regexp:' THEN  -- posix-syle regular expressions
+   SELECT id BULK COLLECT INTO cfs FROM CastorFile
+    WHERE REGEXP_LIKE(lastKnownFileName,substr(fn, 8)) AND ROWNUM <= maxNbResponses + 1;
+ ELSIF substr(fn, -1, 1) = '/' THEN    -- files in a 'subdirectory'
+   SELECT id BULK COLLECT INTO cfs FROM CastorFile 
+    WHERE lastKnownFileName LIKE fn||'%' AND ROWNUM <= maxNbResponses + 1;
+ ELSE                                  -- exact match
+   SELECT id BULK COLLECT INTO cfs FROM CastorFile 
+    WHERE lastKnownFileName = fn;
+ END IF;
  IF cfs.COUNT > maxNbResponses THEN
    -- We have too many rows, we just give up
    raise_application_error(-20102, 'Too many matching files');
@@ -2231,7 +2242,7 @@ BEGIN
 END;
 
 /*
- * PL/SQL method implementing the stage_query based on file id
+ * PL/SQL method implementing the stager_qry based on file id
  */
 CREATE OR REPLACE PROCEDURE fileIdStageQuery
  (fid IN NUMBER,
@@ -2245,7 +2256,7 @@ BEGIN
 END;
 
 /*
- * PL/SQL method implementing the stage_query based on request id
+ * PL/SQL method implementing the stager_qry based on request id
  */
 CREATE OR REPLACE PROCEDURE reqIdStageQuery
  (rid IN VARCHAR2,
@@ -2284,7 +2295,7 @@ BEGIN
 END;
 
 /*
- * PL/SQL method implementing the stage_query based on user tag
+ * PL/SQL method implementing the stager_qry based on user tag
  */
 CREATE OR REPLACE PROCEDURE userTagStageQuery
  (tag IN VARCHAR2,
@@ -2323,7 +2334,7 @@ BEGIN
 END;
 
 /*
- * PL/SQL method implementing the LastRecalls stage_query based on request id
+ * PL/SQL method implementing the LastRecalls stager_qry based on request id
  */
 CREATE OR REPLACE PROCEDURE reqIdLastRecallsStageQuery
  (rid IN VARCHAR2,
@@ -2349,7 +2360,7 @@ BEGIN
 END;
 
 /*
- * PL/SQL method implementing the LastRecalls stage_query based on user tag
+ * PL/SQL method implementing the LastRecalls stager_qry based on user tag
  */
 CREATE OR REPLACE PROCEDURE userTagLastRecallsStageQuery
  (tag IN VARCHAR2,
@@ -2375,6 +2386,7 @@ BEGIN
 END;
 
 
+
 /* PL/SQL code for castorVdqm package */
 CREATE OR REPLACE PACKAGE castorVdqm AS
   TYPE Drive2Req IS RECORD (
@@ -2385,8 +2397,9 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
 	TYPE TapeRequest_Cur IS REF CURSOR RETURN TapeRequest%ROWTYPE;
 END castorVdqm;
 
+
 /**
- * This is the main select statement to dedicate a tape to a tape drive.
+ * PL/SQL method to dedicate a tape to a tape drive.
  * First it checks the preconditions that a tapeDrive must meet in order to be
  * assigned. The couples (drive,requests) are then orderd by the priorityLevel 
  * and by the modification time and processed one by one to verify
@@ -2502,6 +2515,9 @@ END;
 */
 
 
+/*
+ * PL/SQL method implementing the select from tapereq queue
+ */
 CREATE OR REPLACE PROCEDURE selectTapeRequestQueue
  (dgn IN VARCHAR2, server IN VARCHAR2, tapeRequests OUT castorVdqm.TapeRequest_Cur) AS
 BEGIN
@@ -2529,6 +2545,9 @@ BEGIN
 END;
 
 
+/*
+ * PL/SQL method implementing the select from tapedrive queue
+ */
 CREATE OR REPLACE PROCEDURE selectTapeDriveQueue
  (dgn IN VARCHAR2, server IN VARCHAR2, tapeDrives OUT castorVdqm.TapeDrive_Cur) AS
 BEGIN
