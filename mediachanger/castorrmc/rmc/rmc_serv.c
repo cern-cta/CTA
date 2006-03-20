@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmc_serv.c,v $ $Revision: 1.6 $ $Date: 2005/07/11 11:34:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rmc_serv.c,v $ $Revision: 1.7 $ $Date: 2006/03/20 17:56:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -58,6 +58,7 @@ struct main_args *main_args;
 	char *robot;
 	int rqfd;
 	int s;
+    int n=0;
 	char sense[MAXSENSE];
 	struct sockaddr_in sin;
 	struct smc_status smc_status;
@@ -104,15 +105,24 @@ struct main_args *main_args;
 	extended_robot_info.smc_fd = -1;
 #endif
 
-	/* get robot geometry */
-
-	if (c = smc_get_geometry (extended_robot_info.smc_fd,
-	    extended_robot_info.smc_ldr, &extended_robot_info.robot_info)) {
-		c = smc_lasterror (&smc_status, &msgaddr);
-		rmclogit (func, RMC02, "get_geometry", msgaddr);
-		exit (c);
-	}
-
+	/* get robot geometry, try 2 times */
+   
+    while (n < 2) {
+	     if (c = smc_get_geometry (extended_robot_info.smc_fd,
+	        extended_robot_info.smc_ldr, &extended_robot_info.robot_info)) {
+            c = smc_lasterror (&smc_status, &msgaddr);
+            rmclogit (func, RMC02, "get_geometry", msgaddr);
+            rmclogit (func,"trying again get_geometry\n");
+            n++;
+            if (n==2) {
+              rmclogit (func, RMC02, "get_geometry", msgaddr);
+              exit(c);
+            }
+	     } else {
+             n = 0;
+             break;
+         }
+    }
 	/* check if robot support Volume Tag */
 
 	extended_robot_info.smc_support_voltag = 1;
