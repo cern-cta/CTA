@@ -520,10 +520,32 @@
 	strcpy(funcrep_name,func);                    \
 	funcrep_name[MAX_FUNCREP_NAME_LENGTH] = '\0'; \
 	log(LOG_INFO, "%s: Entering\n", func);        \
+	if (! nodlf_flag) {                          \
+	    int _save_serrno = serrno;               \
+	    dlf_write(                               \
+	   	     rmmaster_uuid,                  \
+	     	     DLF_LVL_DEBUG,                  \
+	     	     RM_DLF_MSG_ENTERING,      \
+		     (struct Cns_fileid *) NULL,     \
+		     1,                              \
+		     "FUNC",DLF_MSG_PARAM_STR,func); \
+	   serrno = _save_serrno;                    \
+       }                                             \
 }
 
 #define RM_LEAVE() {                              \
 	log(LOG_INFO, "%s: Leaving\n", func);         \
+	if (! nodlf_flag) {                          \
+	    int _save_serrno = serrno;               \
+	    dlf_write(                               \
+	   	     rmmaster_uuid,                  \
+	     	     DLF_LVL_DEBUG,                  \
+	     	     RM_DLF_MSG_LEAVING,      \
+		     (struct Cns_fileid *) NULL,     \
+		     1,                              \
+		     "FUNC",DLF_MSG_PARAM_STR,func); \
+	   serrno = _save_serrno;                    \
+       }                                             \
 }
 
 #define RM_RETURN(value) {                        \
