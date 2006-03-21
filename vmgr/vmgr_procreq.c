@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_procreq.c,v $ $Revision: 1.5 $ $Date: 2005/09/20 12:00:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_procreq.c,v $ $Revision: 1.6 $ $Date: 2006/03/21 15:00:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <stdio.h>
@@ -900,7 +900,7 @@ struct vmgr_srv_thread_info *thip;
 		if (vmgr_insert_side_entry (&thip->dbfd, &side_entry))
 			RETURN (serrno);
 		pool_entry.capacity += denmap_entry.native_capacity;
-		if (side_entry.status == 0)
+		if (side_entry.status == 0 || side_entry.status == TAPE_FULL) // Tape can be full but having free space
 			pool_entry.tot_free_space += denmap_entry.native_capacity;
 	}
 
@@ -1982,9 +1982,9 @@ struct vmgr_srv_thread_info *thip;
 			need_update++;
 		}
 		if (status >= 0) {
-			if (status & TAPE_FULL)
-				side_entry.estimated_free_space = 0;
-			else if (side_entry.estimated_free_space == 0)
+		  /*			if (status & TAPE_FULL)     // Commented out by V.Motyakov (14.03.2006) 
+				side_entry.estimated_free_space = 0; // Tape can be FULL but having free space
+				else */ if (side_entry.estimated_free_space == 0)
 				status |= TAPE_FULL;
 			side_entry.status = status;
 			need_update++;
@@ -2501,6 +2501,7 @@ struct vmgr_srv_thread_info *thip;
 	int i;
 	char logbuf[CA_MAXVIDLEN+52];
 	int n;
+	int diff_free_space;
 	struct vmgr_tape_pool pool_entry;
 	char *rbp;
 	vmgr_dbrec_addr rec_addr;
@@ -2561,16 +2562,45 @@ struct vmgr_srv_thread_info *thip;
 		n = BytesWritten / 1024;
 	else
 		n = (BytesWritten / 1024) * 100 / CompressionFactor;
-	if ((Flags & TAPE_FULL) || (n > side_entry.estimated_free_space))
+	/*
+	        // Modified by V.Motyakov (14.03.2006) 
+                // Tape can be full but having free space
+                if ((Flags & TAPE_FULL) || (n > side_entry.estimated_free_space))
 		n = side_entry.estimated_free_space;
-	side_entry.estimated_free_space -= n;
+	*/
+	if(Flags & TAPE_FULL) {                   // V.Motyakov (15.03.2006)
+	        
+	        if (FilesWritten == 0) {
+		        diff_free_space = side_entry.estimated_free_space;
+	                side_entry.estimated_free_space = n;
+		}
+		else {
+		        n = side_entry.estimated_free_space;
+			side_entry.estimated_free_space = 0;
+		}
+	}
+	else {
+	        if (n > side_entry.estimated_free_space)
+		        n = side_entry.estimated_free_space;
+	        side_entry.estimated_free_space -= n;
+	}
+	if(side_entry.estimated_free_space < 0)   // V.Motyakov (14.03.2006)
+	        side_entry.estimated_free_space = 0;
 	side_entry.nbfiles += FilesWritten;
 	side_entry.status &= ~TAPE_BUSY;
-	if (side_entry.status == 0 && (Flags & (DISABLED|EXPORTED|TAPE_RDONLY|ARCHIVED)) != 0)
-		n = side_entry.estimated_free_space;
+	if (side_entry.status == 0 && (Flags & TAPE_FULL) != 0 && FilesWritten == 0)
+	{
+	        n = diff_free_space;
+	}
+	else if (side_entry.status == 0 && (Flags & (DISABLED|EXPORTED|TAPE_RDONLY|ARCHIVED)) != 0)
+	{
+	        n = side_entry.estimated_free_space;
+	}
 	else if (side_entry.status)
+	{
 		n = 0;		/* do not decrement pool free space if
 				   status was already non zero */
+	}
 	side_entry.status |= Flags;
 	if (side_entry.estimated_free_space == 0)
 		side_entry.status |= TAPE_FULL;
