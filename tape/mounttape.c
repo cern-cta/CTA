@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.41 $ $Date: 2005/04/29 16:55:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.42 $ $Date: 2006/03/21 11:57:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -242,9 +242,9 @@ char	**argv;
 	/* build mount message */
 
 	if (mode == WRITE_DISABLE)
-		strcpy (rings, "ring-out");
+		strcpy (rings, "read");
 	else
-		strcpy (rings, "ring-in");
+		strcpy (rings, "write");
 	why = "";
 	why4a = 0;
 	msg_num = 0;
