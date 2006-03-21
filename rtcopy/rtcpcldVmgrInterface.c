@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.20 $ $Release$ $Date: 2005/02/03 11:43:53 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.21 $ $Release$ $Date: 2006/03/21 14:30:41 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.20 $ $Release$ $Date: 2005/02/03 11:43:53 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.21 $ $Release$ $Date: 2006/03/21 14:30:41 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -710,19 +710,10 @@ int rtcpcld_updateTape(
             flags = TAPE_FULL;
           }
           /**
-           * @todo: FIX VMGR
-           *
-           * Try to set the real free space... this is really ugly but it works
-           * exploiting some hidden feature (bug) in VMGR we give it a negative
-           * byte count and it will happily update the volume free space even if
-           * status is FULL.
-           *
+           * Set the real free space in bytesWritten when a tape is FULL.
            */
-          bytesWritten = - filereq->bytes_out;
+          bytesWritten = filereq->bytes_out;
           filesWritten = 0;
-          /*
-           * Another hack, anything else than 100 would result in TBs free on tape..
-           */
           compressionFactor = 100;
         } else {
           if ( (filereq->cprc == 0) || (filereq->host_bytes > 0) ) {
@@ -755,42 +746,14 @@ int rtcpcld_updateTape(
   statusStr = rtcpcld_tapeStatusStr(flags);
 
   (void)getVmgrErrBuf(&vmgrErrMsg);
-  if ( flags == TAPE_FULL ) {
-    /**
-     * @todo: FIX VMGR
-     * A dirty hack to make the free space work for FULL tapes:
-     * we must first declare the tape full and *thereafter* give
-     * the free space in terms of a negative increment (decrement)
-     * from 0Bytes.... yeerrrk, but it works :)
-     */
-    rc = vmgr_updatetape(
-                         tapereq->vid,
-                         tapereq->side,
-                         0,
-                         0,
-                         0,
-                         flags
-                         );
-    if ( rc != -1 ) {
-      rc = vmgr_updatetape(
-                           tapereq->vid,
-                           tapereq->side,
-                           bytesWritten,
-                           compressionFactor,
-                           filesWritten,
-                           0
-                           );
-    }
-  } else {
-    rc = vmgr_updatetape(
-                         tapereq->vid,
-                         tapereq->side,
-                         bytesWritten,
-                         compressionFactor,
-                         filesWritten,
-                         flags
-                         );
-  }
+  rc = vmgr_updatetape(
+                       tapereq->vid,
+                       tapereq->side,
+                       bytesWritten,
+                       compressionFactor,
+                       filesWritten,
+                       flags
+                       );
   if ( rc == -1 ) {
     save_serrno = serrno;
     (void)dlf_write(
