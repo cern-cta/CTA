@@ -113,6 +113,7 @@ ON COMMIT DELETE ROWS;
  * of the number of triggers ensuring consistency of the whole database */
 CREATE TABLE NbTapeCopiesInFS (FS NUMBER, Stream NUMBER, NbTapeCopies NUMBER);
 CREATE UNIQUE INDEX I_NbTapeCopiesInFS_FSStream on NbTapeCopiesInFS(FS, Stream);
+CREATE INDEX I_NbTapeCopiesInFS_Stream on NbTapeCopiesInFS(Stream);
 
 /* Used to create a row INTO NbTapeCopiesInFS whenever a new
    FileSystem is created */
@@ -495,6 +496,7 @@ BEGIN
   DELETE FROM LockTable WHERE DiskServerId = :old.id;
 END;
 
+
 /* PL/SQL method implementing updateFileSystemForJob */
 CREATE OR REPLACE PROCEDURE updateFileSystemForJob
 (fs IN VARCHAR2, ds IN VARCHAR2,
@@ -517,6 +519,7 @@ BEGIN
   updateFsFileOpened(dsId, fsId, dev, fileSize);
 END;
 
+
 /* PL/SQL method implementing bestTapeCopyForStream */
 CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
                                                   diskServerName OUT VARCHAR2, mountPoint OUT VARCHAR2,
@@ -530,94 +533,97 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
  fsDiskServer NUMBER;
 BEGIN
   -- We lock here a given DiskServer. See the comment for the creation of the LockTable
-  -- table for a full explanation of why we need such a stupid UPDATE statement.
-  UPDATE LockTable SET TheLock = 1
-   WHERE DiskServerId =
-   (SELECT DiskServer.id 
-      FROM FileSystem, NbTapeCopiesInFS, DiskServer
-     WHERE FileSystemRate(FileSystem.weight, FileSystem.deltaWeight, FileSystem.fsDeviation) =
-     -- The double level of subselects is due to the fact that ORACLE is unable
-     -- to use ROWNUM and ORDER BY at the same time. Thus, we have to first computes
-     -- the maxRate and then select on it.
-     (SELECT MAX(FileSystemRate(FileSystem.weight, FileSystem.deltaWeight, FileSystem.fsDeviation))
-        FROM FileSystem, NbTapeCopiesInFS, DiskServer
-       WHERE FileSystem.id = NbTapeCopiesInFS.FS
-         AND NbTapeCopiesInFS.NbTapeCopies > 0
-         AND NbTapeCopiesInFS.Stream = StreamId
-         AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
-         AND DiskServer.id = FileSystem.diskserver
-         AND DiskServer.status IN (0, 1)) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
-       -- here we need to put all the check again in case we have 2 filesystems
-       -- with the same rate and one is not eligible !
-       AND FileSystem.id = NbTapeCopiesInFS.FS
-       AND NbTapeCopiesInFS.NbTapeCopies > 0
-       AND NbTapeCopiesInFS.Stream = StreamId
-       AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
-       AND DiskServer.id = FileSystem.diskserver
-       AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
-       AND ROWNUM < 2)
-   RETURNING DiskServerId INTO dsid;
+  -- table for a full explanation of why we need such a stupid UPDATE statement
+  UPDATE LockTable SET theLock = 1
+   WHERE diskServerId = (
+     SELECT DS.diskserver_id
+       FROM (
+         -- The double level of subselects is due to the fact that ORACLE is unable
+         -- to use ROWNUM and ORDER BY at the same time. Thus, we have to first computes
+         -- the maxRate and then select on it.
+         SELECT diskserver.id diskserver_id
+           FROM FileSystem FS, NbTapeCopiesInFS, DiskServer
+          WHERE FS.id = NbTapeCopiesInFS.FS
+            AND NbTapeCopiesInFS.NbTapeCopies > 0
+            AND NbTapeCopiesInFS.Stream = StreamId
+            AND FS.status IN (0, 1)
+            AND DiskServer.id = FS.diskserver
+            AND DiskServer.status IN (0, 1)
+          ORDER BY FileSystemRate(FS.weight, FS.deltaWeight, FS.fsDeviation) DESC
+          ) DS
+      WHERE ROWNUM < 2)
+  RETURNING diskServerId INTO dsid;
+
   -- Now we got our Diskserver but we lost all other data (due to the fact we had
-  -- to do an update and we could not do a join in the update)
-  -- So let's get again the best filesystem on the diskServer (we could not get it straight
-  -- due to the need of an update on the LockTable
-  SELECT FileSystem.id INTO fileSystemId
-    FROM FileSystem, NbTapeCopiesInFS
-   WHERE FileSystemRate(FileSystem.weight, FileSystem.deltaWeight, FileSystem.fsDeviation) =
-     (SELECT MAX(FileSystemRate(FileSystem.weight, FileSystem.deltaWeight, FileSystem.fsDeviation))
-        FROM FileSystem, NbTapeCopiesInFS
-       WHERE FileSystem.id = NbTapeCopiesInFS.FS
+  -- to do an update for the lock and we could not do a join in the update).
+  -- So here we select all we need
+  SELECT FN.name, FN.mountPoint, FN.fsDeviation, FN.diskserver, FN.id
+    INTO diskServerName, mountPoint, deviation, fsDiskServer, fileSystemId
+    FROM (
+      SELECT DiskServer.name, FS.mountPoint, FS.fsDeviation,
+             FS.diskserver, FS.id
+        FROM FileSystem FS, NbTapeCopiesInFS, Diskserver
+       WHERE FS.id = NbTapeCopiesInFS.FS
+         AND DiskServer.id = FS.diskserver
          AND NbTapeCopiesInFS.NbTapeCopies > 0
          AND NbTapeCopiesInFS.Stream = StreamId
-         AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
-         AND FileSystem.diskserver = dsId)
-     -- Again, we need to put all the check again in case we have 2 filesystems
-     -- with the same rate and one is not eligible !
-     AND FileSystem.id = NbTapeCopiesInFS.FS
-     AND NbTapeCopiesInFS.NbTapeCopies > 0
-     AND NbTapeCopiesInFS.Stream = StreamId
-     AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
-     AND FileSystem.diskserver = dsId
-     AND ROWNUM < 2;
-  -- Now select what we need
-  SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.fsDeviation, FileSystem.diskserver, FileSystem.id
-    INTO diskServerName, mountPoint, deviation, fsDiskServer, fileSystemId
-    FROM FileSystem, DiskServer
-   WHERE FileSystem.id = fileSystemId
-     AND DiskServer.id = FileSystem.diskserver;
-  SELECT /*+ FIRST_ROWS */
-    DiskCopy.path, DiskCopy.id, CastorFile.id, CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, TapeCopy.id
-    INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-    FROM DiskCopy, CastorFile, TapeCopy, Stream2TapeCopy
-   WHERE DiskCopy.filesystem = fileSystemId
-     AND DiskCopy.castorfile = CastorFile.id
-     AND DiskCopy.status = 10 -- CANBEMIGR
-     AND TapeCopy.castorfile = Castorfile.id
-     AND Stream2TapeCopy.child = TapeCopy.id
-     AND Stream2TapeCopy.parent = streamId
-     AND TapeCopy.status = 2 -- WAITINSTREAMS
-     AND ROWNUM < 2;
+         AND FS.status IN (0, 1)    -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+         AND FS.diskserver = dsId
+       ORDER BY FileSystemRate(FS.weight, FS.deltaWeight, FS.fsDeviation) DESC
+       ) FN
+  WHERE ROWNUM < 2;   
+
+  SELECT DC.path, DC.diskcopy_id, DC.castorfile_id,
+         DC.fileId, DC.nsHost, DC.fileSize, TapeCopy.id
+  INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
+  FROM TapeCopy, Stream2TapeCopy,
+       (SELECT DiskCopy.path path, DiskCopy.id diskcopy_id, CastorFile.id castorfile_id,
+               CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize
+          FROM DiskCopy, CastorFile
+         WHERE DiskCopy.castorfile = CastorFile.id
+           AND DiskCopy.status = 10 -- CANBEMIGR
+           AND DiskCopy.filesystem = fileSystemId 
+       ) DC
+  WHERE TapeCopy.castorfile = DC.castorfile_id
+    AND Stream2TapeCopy.child = TapeCopy.id
+    AND Stream2TapeCopy.parent = streamId
+    AND TapeCopy.status = 2 -- WAITINSTREAMS
+    AND ROWNUM < 2;
+
   -- update status of selected tapecopy and stream
   UPDATE TapeCopy SET status = 3 -- SELECTED
    WHERE id = tapeCopyId;
   UPDATE Stream SET status = 3 -- RUNNING
    WHERE id = streamId;
+
   -- update NbTapeCopiesInFS accordingly. Take care to remove the
   -- TapeCopy from all streams and all filesystems
-  UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies - 1
-   WHERE FS IN (SELECT DiskCopy.FileSystem
-                  FROM DiskCopy, TapeCopy
-                 WHERE DiskCopy.CastorFile = TapeCopy.castorFile
-                   AND TapeCopy.id = tapeCopyId
-                   AND DiskCopy.status = 10) -- CANBEMIGR
-     AND Stream IN (SELECT parent FROM Stream2TapeCopy WHERE child = tapeCopyId);
+  UPDATE NbTapeCopiesInFS NTC 
+     SET NTC.NbTapeCopies = NTC.NbTapeCopies - 1
+   WHERE EXISTS (
+       SELECT 'x' 
+         FROM DiskCopy, TapeCopy
+        WHERE DiskCopy.CastorFile = TapeCopy.castorFile
+          AND TapeCopy.id = tapeCopyId
+          AND DiskCopy.status = 10 -- CANBEMIGR
+          AND DiskCopy.FileSystem = NTC.FS
+       )
+     AND EXISTS (
+       SELECT 'x' 
+         FROM Stream2TapeCopy 
+        WHERE child = tapeCopyId
+          AND parent = NTC.Stream
+       );
+
   -- Update Filesystem state
-  updateFsFileOpened(fsDiskServer, fileSystemId, deviation, 0);
+  updateFSFileOpened(fsDiskServer, fileSystemId, deviation, 0);
+
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- No data found means the selected filesystem has no
     -- tapecopies to be migrated. Thus we go to next one
     NULL;
-END; 
+END;
+
 
 /* PL/SQL method implementing bestFileSystemForSegment */
 CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskServerName OUT VARCHAR2,
@@ -1415,10 +1421,9 @@ BEGIN
 END;
 
 /* PL/SQL method implementing bestFileSystemForJob */
-CREATE OR REPLACE PROCEDURE bestFileSystemForJob
-(fileSystems IN castor."strList", machines IN castor."strList",
- minFree IN castor."cnumList", rMountPoint OUT VARCHAR2,
- rDiskServer OUT VARCHAR2) AS
+CREATE OR REPLACE PROCEDURE bestFileSystemForJob (fileSystems IN castor."strList",
+             machines IN castor."strList", minFree IN castor."cnumList",
+             rMountPoint OUT VARCHAR2, rDiskServer OUT VARCHAR2) AS
  ds NUMBER;
  fs NUMBER;
  dev NUMBER;
@@ -1427,7 +1432,8 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForJob
     dsId NUMBER, fsId NUMBER, deviation NUMBER);
  TYPE AnyCursor IS REF CURSOR RETURN cursorContent;
  c1 AnyCursor;
-BEGIN
+ 
+ BEGIN
  IF fileSystems.COUNT > 0 THEN
   -- here machines AND filesystems should be given
   DECLARE
@@ -1443,6 +1449,8 @@ BEGIN
          AND DiskServer.name = machines(i)
          AND FileSystem.diskServer = DiskServer.id
          AND minFree(i) <= FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace
+      -- AND FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(i) 
+      --     > FileSystem.minAllowedFreeSpace * FileSystem.totalSize
          AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
          AND FileSystem.status = 0; -- FILESYSTEM_PRODUCTION
       nextIndex := nextIndex + 1;
@@ -1484,7 +1492,8 @@ BEGIN
      FROM FileSystem, DiskServer
      WHERE FileSystem.diskserver = DiskServer.id
        AND DiskServer.id MEMBER OF mIds
-       AND FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace >= minFree(1)
+    -- AND FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(1) 
+    --     > FileSystem.minAllowedFreeSpace * FileSystem.totalSize
        AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION       
      ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
               FileSystem.fsDeviation ASC;
@@ -1495,9 +1504,10 @@ BEGIN
            DiskServer.id, FileSystem.id, FileSystem.fsDeviation
     FROM FileSystem, DiskServer
     WHERE FileSystem.diskserver = DiskServer.id
-     AND FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace >= minFree(1)
-     AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
-     AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
+   -- AND FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(1) 
+   --     > FileSystem.minAllowedFreeSpace * FileSystem.totalSize
+      AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
+      AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
     ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
              FileSystem.fsDeviation ASC;
   END IF;
@@ -1907,7 +1917,7 @@ END;
 /*
  * GC policy that mimic the old GC and takes into account
  * the number of accesses to the file. Namely we garbage
- * collect the oldest and biggest file that add the less
+ * collect the oldest and biggest file that had the less
  * accesses but not 0, as a file having 0 accesses will
  * probably be read soon !
  */
@@ -1924,7 +1934,7 @@ BEGIN
        AND DiskCopy.status = 7 -- INVALID
     UNION
     SELECT DiskCopy.id, CastorFile.fileSize,
-           getTime() - CastorFile.LastAccessTime -- older first
+           getTime() - CastorFile.LastAccessTime -- oldest first
            + GREATEST(0,86400*LN((CastorFile.fileSize+1)/1024)) -- biggest first
            + CASE CastorFile.nbAccesses
                WHEN 0 THEN 86400 -- non accessed last
@@ -1939,6 +1949,21 @@ BEGIN
      ORDER BY 3 DESC;
   return result;
 END;
+
+/*
+ * dummy GC policy for disk-only file systems
+ */
+CREATE OR REPLACE FUNCTION nullGCPolicy
+(fsId INTEGER, garbageSize INTEGER)
+  RETURN castorGC.GCItem_Cur AS
+  result castorGC.GCItem_Cur;
+BEGIN
+  OPEN result FOR
+    SELECT 0, -1, 2**31
+      FROM Dual;
+  return result;
+END;
+
 
 /*
  * Runs Garbage collection on the specified FileSystem
@@ -1983,6 +2008,7 @@ BEGIN
      AND SvcClass.Id = DiskPool2SvcClass.Child;
   -- Get candidates for each policy
   nextItems.EXTEND(policies.COUNT);
+  bestCandidate := -1;
   bestValue := 2**31;
   IF policies.COUNT > 0 THEN
     EXECUTE IMMEDIATE 'BEGIN :1 := '||policies(policies.FIRST)||'(:2, :3); END;'
@@ -2007,6 +2033,10 @@ BEGIN
       bestValue := nextItems(i).utility;
     END IF;
   END LOOP;
+  -- if no candidate has been found (this can happen with the null GC policy) just give up
+  IF bestCandidate = -1 THEN
+    RETURN;
+  END IF;
   -- Now extract the diskcopies that will be garbaged and
   -- mark them GCCandidate
   LOOP
@@ -2133,7 +2163,7 @@ BEGIN
      :new.maxFreeSpace * :new.totalSize > freeSpace + 5000000000 THEN
     -- here we spawn a job to do the real work. This avoids mutating table error
     -- and ensures that the current update does not fail if GC fails
-    DBMS_JOB.SUBMIT(jobid,'defGarbageCollectFS(' || :new.id || ');');
+    DBMS_JOB.SUBMIT(jobid,'garbageCollectFS(' || :new.id || ');');
   END IF;
 END;
 
@@ -2170,7 +2200,7 @@ BEGIN
        AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
        AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool 
        AND CastorFile.id = SubRequest.castorFile(+)  -- or search for a get request
-       AND SubRequest.request = Req.id
+       AND SubRequest.request = Req.id(+)
        AND (svcClassId = 0                  -- no svcClass given
          OR DiskPool2SvcClass.child = svcClassId    -- found diskcopy on the given svcClass
          OR ((DiskCopy.fileSystem = 0       -- diskcopy not yet associated with filesystem...
