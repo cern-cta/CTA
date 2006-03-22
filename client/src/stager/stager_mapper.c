@@ -1,5 +1,5 @@
 /*
- * $Id: stager_mapper.c,v 1.7 2005/07/06 08:47:59 jdurand Exp $
+ * $Id: stager_mapper.c,v 1.8 2006/03/22 11:32:44 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_mapper.c,v $ $Revision: 1.7 $ $Date: 2005/07/06 08:47:59 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_mapper.c,v $ $Revision: 1.8 $ $Date: 2006/03/22 11:32:44 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -159,7 +159,7 @@ stage_mapper_setenv(const char *username,
   char *stager = NULL, *svcclass = NULL;
   enum stager_type stgtype;
 
-  if (stager == NULL && groupname == NULL) {
+  if (username == NULL && groupname == NULL) {
     stage_errmsg(func, "Both parameters are NULL");
     serrno = EINVAL;
     return -1;
