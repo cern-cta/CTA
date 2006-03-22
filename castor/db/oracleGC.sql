@@ -1,5 +1,10 @@
+/* @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.247 $ $Release$ $Date: 2006/03/22 17:26:07 $ $Author: itglp $
+/*
 /* This file contains SQL code that is not generated automatically */
 /* and is inserted at the end of the generated code                */
+/*
+/* @author Castor Dev team, castor-dev@cern.ch
+/*******************************************************************/
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(2048));
@@ -538,7 +543,7 @@ BEGIN
    WHERE diskServerId = (
      SELECT DS.diskserver_id
        FROM (
-         -- The double level of subselects is due to the fact that ORACLE is unable
+         -- The double level of selects is due to the fact that ORACLE is unable
          -- to use ROWNUM and ORDER BY at the same time. Thus, we have to first computes
          -- the maxRate and then select on it.
          SELECT diskserver.id diskserver_id
@@ -711,7 +716,7 @@ BEGIN
      AND DiskCopy.castorFile = TapeCopy.castorFile
      AND SubRequest.diskcopy(+) = DiskCopy.id
      AND DiskCopy.status = 2;
-  UPDATE DiskCopy SET status = decode(isRepack,0,isRepack,6,isRepack,0)  -- DISKCOPY_STAGED or STAGEOUT 
+  UPDATE DiskCopy SET status = decode(isRepack, 1,6, 0)  -- DISKCOPY_STAGEOUT if isRepack = 1, else DISKCOPY_STAGED 
    WHERE id = dci RETURNING fileSystem INTO fsid;
   IF SubRequestId IS NOT NULL THEN
     UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
