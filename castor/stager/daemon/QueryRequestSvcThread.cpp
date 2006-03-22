@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.36 2006/03/17 10:28:33 itglp Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.37 2006/03/22 10:50:26 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.36 $ $Date: 2006/03/17 10:28:33 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.37 $ $Date: 2006/03/22 10:50:26 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -194,34 +194,38 @@ namespace castor {
         std::string diskServer = "";
 
         switch(dc->diskCopyStatus()) {
-          // Just IGNORE the discopies in those statuses !
-        case DISKCOPY_DELETED:
-        case DISKCOPY_FAILED:
-        case DISKCOPY_GCCANDIDATE:
-        case DISKCOPY_BEINGDELETED:
-        case DISKCOPY_INVALID:
-          return;
-
-        case DISKCOPY_WAITDISK2DISKCOPY:
-        case DISKCOPY_WAITTAPERECALL:
-          st = FILE_STAGEIN;
-          break;
-
-        case  DISKCOPY_STAGED:
-          st = FILE_STAGED;
-          diskServer = dc->diskServer();
-          break;
-
-        case DISKCOPY_WAITFS:
-        case DISKCOPY_STAGEOUT:
-          st = FILE_STAGEOUT;
-          diskServer = dc->diskServer();
-          break;
-
-        case DISKCOPY_CANBEMIGR:
-          st = FILE_CANBEMIGR;
-          diskServer = dc->diskServer();
-          break;
+          case DISKCOPY_GCCANDIDATE:
+          case DISKCOPY_BEINGDELETED:
+          case DISKCOPY_DELETED:
+            // just IGNORE the discopies in those statuses
+            return;
+  
+          case DISKCOPY_INVALID:
+          case DISKCOPY_FAILED:
+            // don't ignore here, but return INVALID
+            break;
+            
+          case DISKCOPY_WAITDISK2DISKCOPY:
+          case DISKCOPY_WAITTAPERECALL:
+            st = FILE_STAGEIN;
+            break;
+  
+          case  DISKCOPY_STAGED:
+            st = FILE_STAGED;
+            diskServer = dc->diskServer();
+            break;
+  
+          case DISKCOPY_WAITFS:
+          case DISKCOPY_WAITFS_SCHEDULING:
+          case DISKCOPY_STAGEOUT:
+            st = FILE_STAGEOUT;
+            diskServer = dc->diskServer();
+            break;
+  
+          case DISKCOPY_CANBEMIGR:
+            st = FILE_CANBEMIGR;
+            diskServer = dc->diskServer();
+            break;
         }
 
         // 2. Aggregate status for the various diskcopies

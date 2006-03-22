@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.11 $ $Date: 2006/03/16 16:04:25 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.12 $ $Date: 2006/03/22 10:50:26 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_QRY 1castor "$Date: 2006/03/16 16:04:25 $" CASTOR "STAGER Commands"
+.TH STAGER_QRY 1castor "$Date: 2006/03/22 10:50:26 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_qry \- query the CASTOR stager for files and requests
 .SH SYNOPSIS
@@ -56,7 +56,7 @@ STAGEOUT: the file is being staged from client.
 .TP
 CANBEMIGR: the file is on disk and any transfer from client has been completed. The migrator will take it for tape migration.
 .TP
-INVALID: a failure happened concerning this file.
+INVALID: the file has no valid diskcopy/tapecopy, or a failure happened concerning the file. 
 
 .SH OPTIONS
 
