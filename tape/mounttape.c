@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.42 $ $Date: 2006/03/21 11:57:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.43 $ $Date: 2006/03/23 16:05:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -358,9 +358,23 @@ remount_loop:
 			if (c) {
 				if (errno == ENXIO)	/* drive not operational */
 					configdown (drive);
-				else
+				else {
 					usrmsg (func, TP042, path, "open",
 						strerror(errno));
+	                                if (strcmp (devtype, "3592") == 0) {
+#if VDQM
+	                                  vdqm_status = VDQM_VOL_MOUNT;
+	                                  tplogit (func, "calling vdqm_UnitStatus(VDQM_VOL_MOUNT)\n");
+	                                  while ((vdqm_rc = vdqm_UnitStatus (NULL, vid, dgn, NULL, drive,
+		                                  &vdqm_status, NULL, jid)) &&
+		                                  (serrno == SECOMERR || serrno == EVQHOLD))
+			                          sleep (60);
+	                                          tplogit (func, "vdqm_UnitStatus returned %s\n",
+		                                           vdqm_rc ? sstrerror(serrno) : "ok");
+#endif
+                                        }
+				}
+
 				goto reply;
 			}
 			if (testorep (&readfds)) {
