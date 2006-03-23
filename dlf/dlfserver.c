@@ -3,10 +3,12 @@
  * Copyright (C) 2003 by CERN/IT/ADC
  * All rights reserved
  *
+ * $Id: dlfserver.c,v 1.15 2006/03/23 14:28:26 motiakov Exp $
+ *
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.14 $ $Date: 2005/10/05 12:42:42 $  CERN IT $Author: kotlyar $ ";
+static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.15 $ $Date: 2006/03/23 14:28:26 $  CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>

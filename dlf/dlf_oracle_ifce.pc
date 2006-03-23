@@ -3,10 +3,12 @@
  * Copyright (C) 2003 by CERN/IT/ADC
  * All rights reserved
  *
+ * $Id: dlf_oracle_ifce.pc,v 1.18 2006/03/23 14:28:27 motiakov Exp $
+ *
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.17 $ $Date: 2006/01/16 14:55:21 $ CERN-IT $Author: motiakov $";
+static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.18 $ $Date: 2006/03/23 14:28:27 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
