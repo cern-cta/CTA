@@ -3,10 +3,13 @@
 * Copyright (C) 2003 by CERN/IT/ADC
 * All rights reserved
 *
+* $Id: dlf_api.c,v 1.24 2006/03/23 14:31:10 motiakov Exp $
+*
 */
 
+
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.23 $ $Date: 2005/07/11 11:17:16 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.24 $ $Date: 2006/03/23 14:31:10 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -293,6 +296,15 @@ const char *fac_name;
 int DLL_DECL dlf_reinit(fac_name)
 const char *fac_name;
 {
+        dlf_shutdown();
+	return (dlf_init(fac_name));
+}
+
+void DLL_DECL dlf_shutdown()
+{
+
+        /* Free memory allocated by dlf_init()
+           Should be called at the application exit */
 	
 	dlf_log_dst_t *p;
 	dlf_log_dst_t *p1;
@@ -315,7 +327,6 @@ const char *fac_name;
 		free (p4->msg_text);
 		free (p4);
 	}
-	return (dlf_init(fac_name));
 }
 
 char DLL_DECL * dlf_get_token (ptr, delim, del, buf, buf_size)

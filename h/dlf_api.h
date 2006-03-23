@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: dlf_api.h,v $ $Revision: 1.12 $ $Date: 2005/03/23 11:16:12 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: dlf_api.h,v $ $Revision: 1.13 $ $Date: 2006/03/23 14:31:28 $ CERN IT-ADC Vitaly Motyakov
  */
 
 #ifndef _DLFAPI_H_
@@ -49,6 +49,7 @@
 /* Function prototypes */
 
 EXTERN_C int DLL_DECL dlf_init _PROTO((const char*));
+EXTERN_C void DLL_DECL dlf_shutdown _PROTO((void));
 EXTERN_C int DLL_DECL dlf_reinit _PROTO((const char*));
 EXTERN_C char DLL_DECL * dlf_get_severity_name _PROTO((int));
 EXTERN_C char DLL_DECL * dlf_get_token _PROTO((const char*, const char*, char*, char*, int));
