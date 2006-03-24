@@ -1,10 +1,12 @@
-/* @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.247 $ $Release$ $Date: 2006/03/22 17:26:07 $ $Author: itglp $
-/*
-/* This file contains SQL code that is not generated automatically */
-/* and is inserted at the end of the generated code                */
-/*
-/* @author Castor Dev team, castor-dev@cern.ch
-/*******************************************************************/
+/*******************************************************************
+ *
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.248 $ $Release$ $Date: 2006/03/24 16:29:09 $ $Author: itglp $
+ *
+ * This file contains SQL code that is not generated automatically
+ * and is inserted at the end of the generated code
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
+ *******************************************************************/
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(2048));
@@ -1901,21 +1903,17 @@ CREATE OR REPLACE FUNCTION defaultGCPolicy
   result castorGC.GCItem_Cur;
 BEGIN
   OPEN result FOR
-    SELECT DiskCopy.id, CastorFile.fileSize, 0
-      FROM DiskCopy, CastorFile
-     WHERE CastorFile.id = DiskCopy.castorFile
-       AND DiskCopy.fileSystem = fsId
-       AND DiskCopy.status = 7 -- INVALID
-    UNION
-    SELECT DiskCopy.id, CastorFile.fileSize,
-           getTime() - CastorFile.LastAccessTime + GREATEST(0,86400*LN((CastorFile.fileSize+1)/1024))
-      FROM DiskCopy, CastorFile, SubRequest
-     WHERE CastorFile.id = DiskCopy.castorFile
-       AND DiskCopy.fileSystem = fsId
-       AND DiskCopy.status = 0 -- STAGED
-       AND DiskCopy.id = SubRequest.DiskCopy (+)
-       AND Subrequest.id IS NULL
-     ORDER BY 3 DESC;
+    SELECT /*+ INDEX(CF) INDEX(DS) */ DS.id, CF.fileSize,
+         CASE status
+           WHEN 7 THEN 0
+           WHEN 0 THEN getTime() - CF.lastAccessTime + greatest(0,86400*ln((CF.fileSize+1)/1024))
+         END
+     FROM DiskCopy DS, CastorFile CF
+    WHERE CF.id = DS.castorFile
+      AND DS.fileSystem = fsId
+      AND NOT EXISTS (select 'x' from SubRequest where DS.status = 0 and diskcopy = DS.id)
+      AND DS.status in (0,7)
+    ORDER BY 3 DESC;
   return result;
 END;
 
@@ -1968,7 +1966,6 @@ BEGIN
       FROM Dual;
   return result;
 END;
-
 
 /*
  * Runs Garbage collection on the specified FileSystem
