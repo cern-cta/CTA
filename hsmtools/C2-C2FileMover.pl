@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #/******************************************************************************
-# *                      listFileClass
+# *                      C2-C2FileMover.pl
 # *
 # * This file is part of the Castor project.
 # * See http://castor.web.cern.ch/castor
@@ -18,9 +18,12 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: C2-C2FileMover.pl,v $ $Revision: 1.1 $ $Release$ $Date: 2006/03/17 15:56:56 $ $Author: sponcec3 $
+# * @(#)$RCSfile: C2-C2FileMover.pl,v $ $Revision: 1.2 $ $Release$ $Date: 2006/03/24 16:31:57 $ $Author: itglp $
 # *
-# * Lists existing service classes
+# * Copies a list of files from a Castor2 stager to another one.
+# * The file is disk-to-disk copied from the source diskserver to a suitable
+# * destination diskserver obtained by calling the bestFileSystemForJob SQL
+# * procedure, and bypassing the scheduler.
 # *
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
