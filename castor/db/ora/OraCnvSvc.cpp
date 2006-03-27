@@ -38,6 +38,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include <iomanip>
+#include <stdlib.h>                            // For getenv()
 
 // Local Files
 #include "OraCnvSvc.hpp"
@@ -73,11 +74,13 @@ castor::db::ora::OraCnvSvc::OraCnvSvc(const std::string name) :
   m_environment(0),
   m_connection(0),
   m_getTypeStatement(0) {
-  char* cuser = getconfent_fromfile(ORASTAGERCONFIGFILE, name.c_str(), "user", 0);
+  std::string full_name = name;
+  if(char* p = getenv("CASTOR_INSTANCE")) full_name = full_name + "_" + p;
+  char* cuser = getconfent_fromfile(ORASTAGERCONFIGFILE, full_name.c_str(), "user", 0);
   if (0 != cuser) m_user = std::string(cuser);
-  char* cpasswd = getconfent_fromfile(ORASTAGERCONFIGFILE, name.c_str(), "passwd", 0);
+  char* cpasswd = getconfent_fromfile(ORASTAGERCONFIGFILE, full_name.c_str(), "passwd", 0);
   if (0 != cpasswd) m_passwd = std::string(cpasswd);
-  char* cdbName = getconfent_fromfile(ORASTAGERCONFIGFILE, name.c_str(), "dbName", 0);
+  char* cdbName = getconfent_fromfile(ORASTAGERCONFIGFILE, full_name.c_str(), "dbName", 0);
   if (0 != cdbName) m_dbName = std::string(cdbName);
   // Add alias for DiskCopyForRecall on DiskCopy
   addAlias(58, 5);
