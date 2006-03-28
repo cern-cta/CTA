@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2003 by CERN/IT/ADC
 COMM  All rights reserved
 COMM
-COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Date: 2006/02/16 15:06:01 $ CERN IT-ADC Vitaly Motyakov
+COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Date: 2006/03/28 12:14:41 $ CERN IT-ADC Vitaly Motyakov
 COMM    Make dlf programs.
 
 #include <Project.tmpl>
@@ -118,6 +118,7 @@ MANPAGES = $(MANDIR)/dlfserver.$(MANSUFFIX) \
 	   $(MANDIR)/dlflisttext.$(MANSUFFIX) \
 	   $(MANDIR)/dlflogstore.$(MANSUFFIX) \
 	   $(MANDIR)/dlf_init.$(MANSUFFIX) \
+	   $(MANDIR)/dlf_shutdown.$(MANSUFFIX) \
 	   $(MANDIR)/dlf_seterrbuf.$(MANSUFFIX) \
 	   $(MANDIR)/dlf_write.$(MANSUFFIX)
 
@@ -134,6 +135,7 @@ EXPORTMANPAGES = $(EXPORTMAN)/man1/dlfserver.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/dlflisttext.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/dlflogstore.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man3/dlf_init.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man3/dlf_shutdown.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man3/dlf_seterrbuf.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man3/dlf_write.$(MANSUFFIX)
 
@@ -324,6 +326,7 @@ IMANPAGE(dlfmodifytext,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlflisttext,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlflogstore,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlf_init,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(dlf_shutdown,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlf_write,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlf_seterrbuf,$(MANDIR),$(MANSUFFIX))
 
@@ -340,6 +343,7 @@ EMANPAGE(dlfmodifytext,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(dlflisttext,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(dlflogstore,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(dlf_init,$(EXPORTMAN)/man3,$(MANSUFFIX))
+EMANPAGE(dlf_shutdown,$(EXPORTMAN)/man3,$(MANSUFFIX))
 EMANPAGE(dlf_write,$(EXPORTMAN)/man3,$(MANSUFFIX))
 EMANPAGE(dlf_seterrbuf,$(EXPORTMAN)/man3,$(MANSUFFIX))
 
