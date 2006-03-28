@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.12 $ $Date: 2006/03/22 10:50:26 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.13 $ $Date: 2006/03/28 10:05:45 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_QRY 1castor "$Date: 2006/03/22 10:50:26 $" CASTOR "STAGER Commands"
+.TH STAGER_QRY 1castor "$Date: 2006/03/28 10:05:45 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_qry \- query the CASTOR stager for files and requests
 .SH SYNOPSIS
@@ -67,6 +67,16 @@ specifies the CASTOR HSM file to be queried for. The
 option can be repeated, which allows for querying the status of many files with a single command.
 If the hsmfile begins with 'regexp:', it is considered as a POSIX regular expression.
 If the hsmfile ends with '/', it is considered as a directory, allowing for recursively querying the status of all files in it.
+Note that the number of responses for a given file is limited on the server side. In case the limitation
+is reached, nothing is returned and an error message is displayed.
+.TP
+.BI \-E,\ \-\-regexp " regular_expression"
+specifies the CASTOR HSM file to be queried for. This option is equivalent to the
+.B \-M
+option when the file name begins with 'regexp:'. regular_expression is considered as a POSIX regular expression.
+The
+.B \-E
+option can be repeated, which allows for querying the status of many files with a single command.
 Note that the number of responses for a given file is limited on the server side. In case the limitation
 is reached, nothing is returned and an error message is displayed.
 .TP

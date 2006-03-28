@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.12 2006/01/17 09:51:50 itglp Exp $
+ * $Id: stager_qry.c,v 1.13 2006/03/28 10:05:45 motiakov Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.12 $ $Date: 2006/01/17 09:51:50 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.13 $ $Date: 2006/03/28 10:05:45 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -29,6 +29,7 @@ struct cmd_args {
 static struct Coptions longopts[] =
   {
     {"hsm_filename",       REQUIRED_ARGUMENT,  NULL,      'M'},
+    {"regexp",             REQUIRED_ARGUMENT,  NULL,      'E'},
     {"fileid",             REQUIRED_ARGUMENT,  NULL,      'F'},
     {"usertag",            REQUIRED_ARGUMENT,  NULL,      'U'},
     {"requestid",          REQUIRED_ARGUMENT,  NULL,      'r'},
@@ -125,11 +126,22 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
   errflg = 0;
   nbargs = 0;
   getNextMode = 0;
-  while ((c = Cgetopt_long (argc, argv, "M:F:U:r:nh", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "M:E:F:U:r:nh", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
       args->requests[nbargs].type = BY_FILENAME;
       args->requests[nbargs].param = (char *)strdup(Coptarg);
+      nbargs++;
+      break;
+    case 'E':
+      args->requests[nbargs].type = BY_FILENAME;
+      args->requests[nbargs].param = (char *)malloc(strlen("regexp:") + strlen(Coptarg) + 1);
+      if(args->requests[nbargs].param == NULL) {
+	errflg++;
+	break;
+      }
+      strcpy(args->requests[nbargs].param, "regexp:");
+      strcat(args->requests[nbargs].param, Coptarg);
       nbargs++;
       break;
     case 'F':
@@ -187,9 +199,10 @@ cmd_countArguments(int argc, char *argv[]) {
   Copterr = 1;
   errflg = 0;
   nbargs = 0;
-  while ((c = Cgetopt_long (argc, argv, "M:F:U:r:nh", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "M:E:F:U:r:nh", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
+    case 'E':
     case 'F':
     case 'U':
     case 'r':
@@ -216,5 +229,5 @@ cmd_countArguments(int argc, char *argv[]) {
 void
 usage(char *cmd) {
   fprintf (stderr, "usage: %s ", cmd);
-  fprintf (stderr, "%s", "[-M hsmfile [-M ...]] [-F fileid@nshost] [-U usertag] [-r requestid] [-n] [-h]\n");
+  fprintf (stderr, "%s", "[-M hsmfile [-M ...]] [-E regular_expression [-E ...]] [-F fileid@nshost] [-U usertag] [-r requestid] [-n] [-h]\n");
 }
