@@ -16,6 +16,7 @@
 %attr(0644,root,bin) usr/include/shift/Cns_api.h
 %attr(0644,root,bin) usr/include/shift/Cns_constants.h
 %attr(0644,root,bin) usr/include/shift/Cns_server.h
+%attr(0644,root,bin) usr/include/shift/Cns_struct.h
 %attr(0644,root,bin) usr/include/shift/Cpool_api.h
 %attr(0644,root,bin) usr/include/shift/Cpwd.h
 %attr(0644,root,bin) usr/include/shift/Cregexp.h
