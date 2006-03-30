@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Date: 2005/12/08 12:20:50 $ CERN IT-PDP/DM   Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.12 $ $Date: 2006/03/30 15:17:23 $ CERN IT-PDP/DM   Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -230,9 +230,9 @@ EDB_H = \
 #endif
 #if BuildNameServerClient || BuildNameServerLibrary
 INS_H = \
-	 FileName($(DESTDIRCASTOR),Cns_api.h) FileName($(DESTDIRCASTOR),Cns_constants.h) FileName($(DESTDIRCASTOR),Cns.h) FileName($(DESTDIRCASTOR),Cns_server.h)
+	 FileName($(DESTDIRCASTOR),Cns_struct.h) FileName($(DESTDIRCASTOR),Cns_api.h) FileName($(DESTDIRCASTOR),Cns_constants.h) FileName($(DESTDIRCASTOR),Cns.h) FileName($(DESTDIRCASTOR),Cns_server.h)
 ENS_H = \
-	 $(EXPORTH)/Cns_api.h $(EXPORTH)/Cns_constants.h $(EXPORTH)/Cns.h $(EXPORTH)/Cns_server.h
+	 $(EXPORTH)/Cns_struct.h $(EXPORTH)/Cns_api.h $(EXPORTH)/Cns_constants.h $(EXPORTH)/Cns.h $(EXPORTH)/Cns_server.h
 #endif
 #if BuildRfioClient
 IRFIO_H = \
@@ -434,6 +434,9 @@ IEXPORT(Cnetdb.h,$(EXPORTH),644)
 
 InstallNonExecFile(Cns.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cns.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cns_struct.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cns_struct.h,$(EXPORTH),644)
 
 InstallNonExecFile(Cns_api.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cns_api.h,$(EXPORTH),644)
