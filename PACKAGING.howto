@@ -1,57 +1,27 @@
 #
-## $Id: PACKAGING.howto,v 1.9 2005/10/03 16:49:01 sponcec3 Exp $
-#
-## Example of packaging of version
+## $Id: PACKAGING.howto,v 1.10 2006/03/31 09:45:27 sponcec3 Exp $
 #
 
-
+#
+## To create the source tar ball
+#
 cd somewhere
-rm -rf WORKDIR/PROTO2 CVS
-mkdir -p WORKDIR/PROTO2
-mkdir CVS
-cd CVS
-cvs -d/afs/cern.ch/project/castor/CASTOR_MASTER/cvsroot co CASTOR
-cvs -d:kserver:isscvs.cern.ch:2000/local/reps/castor co PROTO2
-cd PROTO2
+cvs -d:kserver:isscvs.cern.ch:2000/local/reps/castor co CASTOR2
+# cvs -d :gserver:lxcvs05.cern.ch/local/reps/castor co CASTOR2
+cd CASTOR2
 dch -i
 cvs commit debian/changelog
-#
-## The CVS TAG will be: vx_y_z_r (example: v2_0_0_44)
-#
-cd ../../CVS/CASTOR
+vim ReleaseNotes
+cvs commit ReleaseNotes
 cvs tag vx_y_z_r .
-cd ../../CVS/PROTO2
-cvs tag vx_y_z_r .
-#
-## Do the Workdir
-#
-cd ../../WORKDIR/PROTO2
-lndir ../../CVS/PROTO2 .
-lndir ../../CVS/CASTOR .
-#
-## Make the tarball
-#
 make -f Makefile.ini Makefiles
 make tar
 
-#
-## BUILD DEPENDENCIES
-#  ------------------
-# Anywhere you will be you will need:
-# stk-ssi
-# stk-ssi-devel
-# LSF
-# Oracle
 
 #
-## To do an RPM:
-#  -------------
-## Export the tarball to a machine where you can build the rpms
+## To create RPMs
 #
 scp ../castor-x.y.z-r.tar.gz machine:/tmp
-#
-## Go to machine (example: castorscheduler):
-#
 ssh root@machine
 cd /tmp
 #
