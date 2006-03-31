@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.44 2006/02/20 12:17:22 jdurand Exp $
+# $Id: maketar.sh,v 1.45 2006/03/31 09:39:54 sponcec3 Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -95,6 +95,12 @@ timestamp=`date "+%s"`
 perl -pi -e s/__BASEVERSION__/\"${a}.${b}.${c}\"/g h/patchlevel.h
 perl -pi -e s/__PATCHLEVEL__/${d}/g h/patchlevel.h
 perl -pi -e s/__TIMESTAMP__/\"${timestamp}\"/g h/patchlevel.h
+#
+## make sure imake is not shipped with object files
+#
+cd imake
+make -f Makefile.ini clobber
+cd ..
 
 echo "### INFO ### Customizing spec file"
 
