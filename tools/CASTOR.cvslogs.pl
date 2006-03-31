@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 #
-# $Id: CASTOR.cvslogs.pl,v 1.2 2005/10/10 16:14:45 jdurand Exp $
+# $Id: CASTOR.cvslogs.pl,v 1.3 2006/03/31 09:07:46 sponcec3 Exp $
 #
 
 use strict;
@@ -40,32 +40,16 @@ sub printit($$) {
 }
 
 # goto doitnow;
-my $dir = tempdir( CLEANUP => 1 );
-chdir($dir) || die "Cannot go to $dir, $!\n";
-print STDERR "Working directory: $dir\n";
 my $comm;
 
-$comm = "cvs -d/afs/cern.ch/project/castor/CASTOR_MASTER/cvsroot co CASTOR";
-print STDERR "$comm\n"; system($comm);
-
-$comm = "cvs -d:kserver:isscvs.cern.ch:2000/local/reps/castor co PROTO2";
-print STDERR "$comm\n"; system($comm);
-
-$comm = "cd CASTOR; cvs log \"@ARGV\" . > ../CASTOR.cvslog.txt";
-print STDERR "$comm\n"; system($comm);
-
-$comm = "cd PROTO2; cvs log \"@ARGV\" . > ../PROTO2.cvslog.txt";
+$comm = "cd CASTOR2; cvs log \"@ARGV\" . > ../CASTOR2.cvslog.txt";
 print STDERR "$comm\n"; system($comm);
 
 # doitnow:
-my @input = qw/PROTO2.cvslog.txt CASTOR.cvslog.txt/;
+my @input = qw/CASTOR2.cvslog.txt/;
 foreach $input (@input) {
 
-    my $type = 'PROTO2';
-    if ($input eq $input[1]) {
-	$type = 'CASTOR';
-    }
-
+    my $type = 'CASTOR2';
     my $working_file = '';
     my $revision = 0;
     my $date = '';
@@ -113,17 +97,6 @@ foreach $input (@input) {
 		## Eventual spaces
 		#
 		s/^ *//g;
-		if ($input eq $input[1]) {
-		    #
-		    ## This is the CASTOR cvs log: we do not push if the has entry already exist
-		    ## (meaning it has been taken over by PROTO2)
-		    #
-		    if (defined($types{$working_file})) {
-			if ($types{$working_file} eq 'PROTO2') {
-			    next;
-			}
-		    }
-		}
 		if (! defined($types{$working_file})) {
 		    $types{$working_file}=$type;
 		}
