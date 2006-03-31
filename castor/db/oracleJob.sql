@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.248 $ $Release$ $Date: 2006/03/24 16:29:09 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.249 $ $Release$ $Date: 2006/03/31 11:45:12 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -67,9 +67,19 @@ CREATE INDEX I_DiskCopy_FileSystem on DiskCopy (fileSystem);
 CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
 CREATE INDEX I_SubRequest_Castorfile on SubRequest (castorFile);
 CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
+CREATE INDEX I_FileSystem_DiskServer on FileSystem(diskServer);
 CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_Request on SubRequest (request);
 CREATE INDEX I_SubRequest_GetNextStatus on SubRequest (decode(getNextStatus,1,NULL));
+
+/* some constraints */
+ALTER TABLE FileSystem ADD CONSTRAINT diskserver_fk FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
+ALTER TABLE FileSystem MODIFY (status NOT NULL);
+ALTER TABLE FileSystem MODIFY (diskServer NOT NULL);
+ALTER TABLE DiskServer MODIFY (status NOT NULL);
+
+/* enable row movements in Diskcopy */
+ALTER TABLE DiskCopy ENABLE ROW MOVEMENT;
 
 /* A little function base index to speed up subrequestToDo */
 CREATE INDEX I_SubRequest_Status on SubRequest (decode(status,0,status,1,status,2,status,NULL));
