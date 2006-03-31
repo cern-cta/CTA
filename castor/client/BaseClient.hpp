@@ -185,7 +185,7 @@ namespace castor {
       /// Timeout for the accept
       int m_acceptTimeout;
 
-      /// Autorization ID parameters
+      /// Authorization ID parameters
       bool m_hasAuthorizationId;
       uid_t m_authUid;
       gid_t m_authGid;
