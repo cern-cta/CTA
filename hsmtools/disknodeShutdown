@@ -240,7 +240,7 @@ sub check_progress () {
 	  open (CHECK, "stager_qry -M `nsGetPath castor $ary[$i]` 2>&1 |");
 	  while (<CHECK>) {
  		print $_;
- 		if ($_ =~ m/STAGED$/i ){ print $_; $total++;}
+ 		if ($_ =~ m/(STAGED$|CANBEMIGR$)/i ){ print $_; $total++;}
 		if ($_ =~ m/No\ such\ file\ or\ directory/i){ print $_; $total++;}
 	  }
 	}
