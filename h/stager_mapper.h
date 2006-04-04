@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_mapper.h,v $ $Revision: 1.2 $ $Release$ $Date: 2005/05/25 16:09:22 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_mapper.h,v $ $Revision: 1.3 $ $Release$ $Date: 2006/04/04 12:26:38 $ $Author: gtaur $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_mapper.h,v $
- * @version $Revision: 1.2 $
- * @date $Date: 2005/05/25 16:09:22 $
+ * @version $Revision: 1.3 $
+ * @date $Date: 2006/04/04 12:26:38 $
  */
 /** @mainpage CASTOR Mapper
- * $RCSfile: stager_mapper.h,v $ $Revision: 1.2 $
+ * $RCSfile: stager_mapper.h,v $ $Revision: 1.3 $
  *
  * @section intro Introduction
  * The stage mapper consists of utility functions to help applications
@@ -99,4 +99,20 @@ EXTERN_C int DLL_DECL stage_mapper_setenv _PROTO((const char *username,
 
 /*\@}*/
 
+/**
+ *just_stage_mapper
+ * Sets the environment variable for a user acoording to its name and group
+ * \ingroup Functions
+ * @param username       The name of the user
+ * @param groupname      The group to which the user belongs
+ *
+ * @returns 0 in case of success, -1 otherwise
+ */
+EXTERN_C int DLL_DECL just_stage_mapper _PROTO((const char *username,
+						   const char *groupname,
+						   char **mstager,
+						   char **msvcclass,
+				                   int* isV2));
+
+/*\@}*/
 #endif /* stager_mapper_h */

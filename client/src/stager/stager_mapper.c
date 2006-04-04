@@ -1,5 +1,5 @@
 /*
- * $Id: stager_mapper.c,v 1.8 2006/03/22 11:32:44 gtaur Exp $
+ * $Id: stager_mapper.c,v 1.9 2006/04/04 12:26:39 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_mapper.c,v $ $Revision: 1.8 $ $Date: 2006/03/22 11:32:44 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_mapper.c,v $ $Revision: 1.9 $ $Date: 2006/04/04 12:26:39 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -79,7 +79,6 @@ get_mapping(enum mapping_type mt,
     serrno = EINVAL;
     return -1;
   }
-
   if (stager != NULL)
     *stager = NULL;
   if (svcclass != NULL)
@@ -90,7 +89,7 @@ get_mapping(enum mapping_type mt,
 				 (char *)name,
 				 1,
 				 &vals,
-				 &nbvals);
+				 &nbvals); 
   if (rc == 0) {
     if (nbvals >=1) {
       if (stager != NULL) {
@@ -104,7 +103,7 @@ get_mapping(enum mapping_type mt,
       }
     }
 
-    free_list(vals, nbvals);
+    free_list(vals, nbvals); 
   } else {
     /* errno should have been set already */
     stage_errmsg(func, "Could not find mapping for %\n", name);
@@ -119,7 +118,6 @@ enum stager_type { V1, V2 };
 
 static enum stager_type
 get_stager_type(const char *name) {
-
   char *func = "get_stager_type";
   char *val;
   enum stager_type ret = V1;
@@ -129,7 +127,6 @@ get_stager_type(const char *name) {
     serrno = EINVAL;
     return -1;
   }
-
   val = getconfent_fromfile(STAGETYPE,
 			    STAGER_TYPE_CATEGORY,
 			    (char *)name,
@@ -140,7 +137,6 @@ get_stager_type(const char *name) {
       ret = V2;
     }
   }
-    
   return ret;
 }
 
@@ -234,6 +230,75 @@ stage_mapper_setenv(const char *username,
 }
 
 
+/* without setting Enviroment Variable*/
 
+int 
+ just_stage_mapper(const char *username, 
+		    const char *groupname,
+		    char **mstager,
+		    char **msvcclass,
+		    int *isV2) {
+  char *func = "just_stage_mapper";
+
+  char *stager = NULL, *svcclass = NULL;
+  enum stager_type stgtype;
+
+  if (username == NULL && groupname == NULL) {
+    stage_errmsg(func, "Both parameters are NULL");
+    serrno = EINVAL;
+    return -1;
+  }
+ 
+  if (username != NULL) {
+    if (get_mapping(USERMAPPING,
+		    username,
+		    &stager,
+		    &svcclass) != 0) {
+      return -1;
+    } 
+  }
+
+  if (stager == NULL 
+      && svcclass == NULL
+      && groupname != NULL) {
+      if (get_mapping(GROUPMAPPING,
+		    groupname,
+		    &stager,
+		    &svcclass) != 0) {
+      return -1;
+    }
+  }
+ 
+  if (stager != NULL) stgtype = get_stager_type(stager) ;
+
+  if (stager!= NULL) {
+    
+    if (mstager != NULL) {
+      *mstager = stager;
+    } else {
+      free(stager);
+    }
+  }
+ 
+  if (svcclass!= NULL) {
+ 
+    if (msvcclass != NULL) {
+      *msvcclass = svcclass;
+    } else {
+      free(svcclass);
+    }
+  }
+
+  if (isV2 != NULL) {
+    if (stgtype == V2) {
+      *isV2 = 1;
+    } else {
+      *isV2 = 0;
+    }
+
+  }
+
+  return 0;
+}
 
 

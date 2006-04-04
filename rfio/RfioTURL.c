@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.4 $ $Release$ $Date: 2006/03/22 11:26:14 $ $Author: gtaur $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.5 $ $Release$ $Date: 2006/04/04 12:26:37 $ $Author: gtaur $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.4 $ $Release$ $Date: 2006/03/22 11:26:14 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.5 $ $Release$ $Date: 2006/04/04 12:26:37 $ Olof Barring";
 #endif /* not lint */
 /** RfioTURL.c - RFIO TURL handling
  *
@@ -48,12 +48,16 @@ static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.4 $ $Release$ 
 
 #include <RfioTURL.h>
 #include <stager_mapper.h>
-
+#include <Castor_limits.h>
 
 
 static int tURLPrefixKey = -1;
 static int tURLPrefixLenKey = -1;
 
+int tStageHostKey = -1;
+int tStagePortKey = -1;
+int tSvcClassKey = -1;
+int tCastorVersionKey = -1;
 // functions used only in this file.
 
 static int checkAlphaNum(char *p) 
@@ -110,12 +114,16 @@ int rfioTURLFromString(
   char *p, *q, *q1, *orig, *prefix;
   RfioTURL_t _tURL;
   int ret;
-  char *path1, *path2, *mySvcClass, *myCastorVersion;
-  path1=path2=mySvcClass=myCastorVersion=NULL;
+  char *path1, *path2, *mySvcClass, *myCastorVersion, *svcDefault, *hostDefault;
+  path1=path2=mySvcClass=myCastorVersion=mySvcClass=myCastorVersion=NULL;
   char* buff;
-  char* svcDefault=0;
-  char* hostDefault=0;
   int versionDefault=0;
+  //void ** auxPointer=0;
+
+char ** globalHost,  **globalSvc;
+int *globalVersion, *globalPort;
+globalHost=globalSvc=0;
+globalVersion=globalPort=0;
 
   if ( tURLStr == NULL || tURL == NULL ) {
     serrno = EINVAL;
@@ -123,12 +131,10 @@ int rfioTURLFromString(
   }
   prefix = getRfioTURLPrefix();
   if ( prefix == NULL ) return(-1);	
-
   if ( strstr(tURLStr,prefix) != tURLStr ) {
     serrno = EINVAL;
     return(-1);
   }  
-
   /*
    * Extract the protocol name
    */
@@ -188,7 +194,6 @@ int rfioTURLFromString(
     _tURL.rfioPort = atoi(q1);
   } else _tURL.rfioPort = 0;
 
-  
   if ( strlen(p) >= sizeof(tURL->rfioHostName) ) {
     serrno = E2BIG;
     free(orig);
@@ -199,8 +204,7 @@ int rfioTURLFromString(
   /*
    * Finally we only have the path and parameters  left
    */
-
-
+  
   p = q+1;
 
   if (!p){
@@ -214,6 +218,7 @@ int rfioTURLFromString(
 
   q=strstr(p,"?");
   if (!q){
+
      // no parameters specified
         path1=p;
   }
@@ -313,69 +318,100 @@ int rfioTURLFromString(
     /* from here setting the proper enviroment variable */
     /* getting default value that can be used */
 
-	svcDefault=malloc(sizeof(tURL->rfioPath));
-	strcpy(svcDefault,"");
-	hostDefault=malloc(sizeof(tURL->rfioHostName));
-	strcpy(hostDefault,"");
 	// I set the default values taken from stagermap.conf
-	ret=stage_mapper_setenv(getenv("USER"),NULL,&hostDefault,&svcDefault,&versionDefault); 
- 	
-  	if(strcmp(_tURL.rfioHostName,"")){ // overwrite stage_host if I have a value in the turl
-      		 if (setenv("STAGE_HOST",_tURL.rfioHostName,1)){
-                // setenv failed
-                  serrno = EINVAL;
-                  free(orig);
-		  free(svcDefault);
-		  free(hostDefault);
-                  return(-1);
-        	}
-     	}
-    	if (_tURL.rfioPort){  
-		buff=malloc(sizeof("STAGE_PORT")+6); // a port number is made of 5 digit max if converted to string
-      		sprintf(buff,"%d",_tURL.rfioPort);     
-       		if (setenv("STAGE_PORT",buff,1)){ // overwrite in case of value given by Turl
-               		 // setenv failed
-               		  serrno = EINVAL;
-			  free(svcDefault);
-		  	  free(hostDefault);
-                	  free(buff);
-			  free(orig);
-                	  return(-1);
-
-        	}
-		free(buff); 
-     	}
-    	if (mySvcClass && strcmp(mySvcClass,"")){ // overwrite in case of value given by Turl
-	
-       		 if (setenv("STAGE_SVCCLASS",mySvcClass,1)){
-                	// setenv failed
-               		   serrno = EINVAL;
-                	   free(orig);
-			   free(svcDefault);
-		 	   free(hostDefault);
-                  	   return(-1);
-
-        	}
-     	}
-   	
-     	if (myCastorVersion){ // overwrite in case of value given by Turl
-      		 if (!strcmp(myCastorVersion,"2")){
-       			 if (setenv("RFIO_USE_CASTOR_V2","YES",1)){
-             			   // setenv failed
-                  		serrno = EINVAL;
-                 		free(orig);
-		  		free(svcDefault);
-		  		free(hostDefault);
-                  		return(-1);
-
-        		}
+	ret=just_stage_mapper(getenv("USER"),NULL,&hostDefault,&svcDefault,&versionDefault); 
+	versionDefault+=1; // because it is 0 for version 1 and 1 for version 2 
+     	
+	if (myCastorVersion){ 
+      		if (!strcmp(myCastorVersion,"2")){
+       			 versionDefault=2;
        		}
-     	} 
-    	free(svcDefault);
-     	free(hostDefault);	
+		if (!strcmp(myCastorVersion,"1")){
+       			 versionDefault=1;
+       		}
+		
+     	}
+	
+	/* Let's now set the global variable thread specific */
+	
+	ret=Cglobals_get(&tStageHostKey,(void **)&globalHost,sizeof(void*));
+        
+	if (ret<0){
+		serrno = EINVAL;
+		free(orig);
+		return -1;
+
+	}
+	//*globalHost=(char*)malloc(CA_MAXHOSTNAMELEN);
+	
+	if (strcmp(_tURL.rfioHostName,"")){
+		if(*globalHost){free(*globalHost);}
+		*globalHost=strdup(_tURL.rfioHostName);	
+		//strcpy(globalHost,_tURL.rfioHostName);
+	}else{
+		if(strcmp(hostDefault,"")){
+			if(*globalHost){free(*globalHost);}
+			*globalHost=strdup(hostDefault);
+			//strcpy(globalHost,hostDefault);
+		}
+	}
+
+	printf("ancora nel RfioTURL host %s\n",*globalHost);
+
+	ret=Cglobals_get(&tSvcClassKey,(void **)&globalSvc,sizeof(void*));
+	if (ret<0){
+		serrno = EINVAL;
+		free(orig);
+		return -1;
+
+	}
+	
+	/* *globalSvc=(char*)malloc(CA_MAXSVCCLASSNAMELEN);
+	printf("len string %i vs %i\n",strlen(*globalSvc),strlen(svcDefault));fflush(stdout);	
+       */
+	if (mySvcClass && strcmp(mySvcClass,"")){
+		if(*globalSvc){free(*globalSvc);}
+		*globalSvc=strdup(mySvcClass);
+		//strcpy(*globalSvc,mySvcClass);
+	}
+	else{
+		if(svcDefault && strcmp(svcDefault,"")){
+			if(*globalSvc){free(*globalSvc);}
+			*globalSvc=strdup(svcDefault);
+			//strcpy(*globalSvc,svcDefault);
+		}
+	}
+	printf("ancora nel RfioTURL svc %s\n",*globalSvc);
+	if (_tURL.rfioPort){
+		ret=Cglobals_get(&tStagePortKey,(void **)&globalPort,sizeof(int));
+		if (ret<0){
+			serrno = EINVAL;
+			free(orig);
+			return -1;
+
+		}
+		*globalPort=_tURL.rfioPort;
+	}
+	if (versionDefault){
+		ret=Cglobals_get(&tCastorVersionKey,(void **)&globalVersion,sizeof(int));
+		if (ret<0){
+			serrno = EINVAL;
+			free(orig);
+			return -1;
+
+		}
+		
+		*globalVersion=versionDefault;
+	}
+	//free(*globalHost);
+	//free(*globalSvc);
+	
      }
-     
+    
      free(orig);
+
+     
+
   /*
    * Everything OK. Copy the temporary structure to the output
    */
