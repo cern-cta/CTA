@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)OraTapeSvc.cpp,v 1.3 $Release$ 2005/11/18 16:54:04 sponcec3
+ * @(#)OraTapeSvc.cpp,v 1.4 $Release$ 2006/04/04 16:42:14 itglp
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -682,7 +682,7 @@ castor::db::ora::OraTapeSvc::tapesToDo()
     throw ex;
   }
   // Commit all status changes
-  cnvSvc()->getConnection()->commit();
+  cnvSvc()->commit();
   return result;
 }
 
@@ -732,7 +732,7 @@ castor::db::ora::OraTapeSvc::streamsToDo()
     throw ex;
   }
   // Commit all status changes
-  cnvSvc()->getConnection()->commit();
+  cnvSvc()->commit();
   return result;
 }
 
