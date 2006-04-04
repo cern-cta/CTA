@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/16 17:00:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/04/04 16:40:07 $ $Author: itglp $
  *
  *
  *
@@ -66,11 +66,13 @@ castor::db::ora::OraCnvSvc::OraCnvSvc(const std::string name) :
   m_dbName(""),
   m_environment(0),
   m_connection(0) {
-  char* cuser = getconfent_fromfile(ORASTAGERCONFIGFILE, name.c_str(), "user", 0);
+  std::string full_name = name;
+  if(char* p = getenv("CASTOR_INSTANCE")) full_name = full_name + "_" + p;
+  char* cuser = getconfent_fromfile(ORASTAGERCONFIGFILE, full_name.c_str(), "user", 0);
   if (0 != cuser) m_user = std::string(cuser);
-  char* cpasswd = getconfent_fromfile(ORASTAGERCONFIGFILE, name.c_str(), "passwd", 0);
+  char* cpasswd = getconfent_fromfile(ORASTAGERCONFIGFILE, full_name.c_str(), "passwd", 0);
   if (0 != cpasswd) m_passwd = std::string(cpasswd);
-  char* cdbName = getconfent_fromfile(ORASTAGERCONFIGFILE, name.c_str(), "dbName", 0);
+  char* cdbName = getconfent_fromfile(ORASTAGERCONFIGFILE, full_name.c_str(), "dbName", 0);
   if (0 != cdbName) m_dbName = std::string(cdbName);
 }
 
