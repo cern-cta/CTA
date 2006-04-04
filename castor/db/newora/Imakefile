@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/27 15:11:11 $ $Author: itglp $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Release$ $Date: 2006/04/04 16:41:29 $ $Author: itglp $
 #
 # Make Castor Oracle library for CDBC API
 #
@@ -42,7 +42,7 @@ ORALIB_SRCS = OraCnvSvc.cpp \
             OraResultSet.cpp \
             OraCommonSvc.cpp \
             ../ora/OraStagerSvc.cpp \
-            OraTapeSvc.cpp \
+            ../ora/OraTapeSvc.cpp \
             ../ora/OraJobSvc.cpp \
             ../ora/OraGCSvc.cpp \
             ../ora/OraFSSvc.cpp \
