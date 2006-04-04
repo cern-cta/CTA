@@ -30,6 +30,7 @@
 #define	CA_MAXGRPNAMELEN   2	/* maximum length for a group name */
 #define	CA_MAXGUIDLEN     36	/* maximum length for a guid */
 #define CA_MAXHOSTNAMELEN 63	/* maximum length for a hostname */
+#define CA_MAXSVCCLASSNAMELEN 63	/* maximum length for a svc class name */
 #define	CA_MAXLBLTYPLEN    3	/* maximum length for a label type */
 #define CA_MAXLINELEN   1023	/* maximum length for a line in a log */
 #define	CA_MAXMANUFLEN    12	/* maximum length for a cartridge manufacturer */
@@ -65,6 +66,8 @@
 #define CA_MAXDMPROTNAMELEN 15    /* maximum length for Disk Mover protocol name */
 #define CA_MAXJOBIDLEN     36   /* Maximum length for the representation of the Cuuid */
 #define CA_MAXUSERTAGLEN    63   /* Maximum length for a user tag (stage request) */
+
+#define CA_MAXSVCCLASSNAMELEN 63 /*Maximum lenght for a Svc Class name */
 
 
 /* Max allowed uid/gif */
