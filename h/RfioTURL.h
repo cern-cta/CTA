@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.h,v $ $Revision: 1.2 $ $Release$ $Date: 2006/03/22 11:26:15 $ $Author: gtaur $
+ * @(#)$RCSfile: RfioTURL.h,v $ $Revision: 1.3 $ $Release$ $Date: 2006/04/05 14:47:39 $ $Author: gtaur $
  *
  *
  *
@@ -78,6 +78,13 @@ typedef struct RfioTURL
 
 } RfioTURL_t;
 
+
+
+EXTERN_C int DLL_DECL getDefaultForGlobal _PROTO((
+				char** host,
+				int* port,
+				char** svc,
+				int* version));
 
 
 /** Build a RFIO TURL structure from a string representation

@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.5 $ $Release$ $Date: 2006/04/04 12:26:37 $ $Author: gtaur $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.6 $ $Release$ $Date: 2006/04/05 14:47:38 $ $Author: gtaur $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.5 $ $Release$ $Date: 2006/04/04 12:26:37 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.6 $ $Release$ $Date: 2006/04/05 14:47:38 $ Olof Barring";
 #endif /* not lint */
 /** RfioTURL.c - RFIO TURL handling
  *
@@ -99,10 +99,112 @@ char *getRfioTURLPrefix()
 
 
 /********************************************************************************************************************
+ * This Function:                                                                                                   *
+ * if *host or *svc are null or empty strings retrive the values, the same if *port and *version are <= 0.          * 
+ * To retrive the values it looks if:                                                                               *
+ * enviroment variables are set or stager_mapper as values defined or castor.conf or (if it doesn't have valid)     * 
+ * it uses default hard coded values.                                                                               *
+ *                                                                                                                  *
+ *******************************************************************************************************************/   
+
+int getDefaultForGlobal(
+			char** host,
+			int* port,
+			char** svc,
+			int* version)
+
+
+{      
+	char *hostMap, *hostDefault, *svcMap, *svcDefault;
+	int versionMap,versionDefault, portDefault, ret;
+	char* groupStr; // fix the group string ... 
+	char* aux=NULL;
+	if(host == NULL || port == NULL || svc == NULL || version == NULL ){ return (-1);}
+	hostDefault=*host;
+	svcDefault=*svc;
+	portDefault=*port;
+	versionDefault=*version;
+	ret=just_stage_mapper(getenv("USER"),NULL,&hostMap,&svcMap,&versionMap); 
+	if(hostDefault==NULL || strcmp(hostDefault,"")==0){
+		if(hostDefault){free(hostDefault);}
+		aux=getenv("STAGE_HOST");
+		hostDefault=aux==NULL?NULL:strdup(aux);
+		if (hostDefault==NULL || strcmp(hostDefault,"")==0 ){
+			if(hostDefault){free(hostDefault);}
+			if (hostMap==NULL || strcmp(hostMap,"")==0 ){
+				aux=(char*)getconfent("STAGER","HOST", 0);
+				hostDefault=aux==NULL?NULL:strdup(aux);
+				if (hostDefault==NULL || strcmp(hostDefault,"")==0 ){
+					if(hostDefault){free(hostDefault);}
+					hostDefault=strdup("mySTAGEDef");
+				}
+			}
+			else{
+				if(hostDefault){free(hostDefault);}
+				hostDefault=strdup(hostMap);
+			}
+		}
+	}
+	if (portDefault<=0){
+		aux=getenv("STAGE_PORT");
+		portDefault=aux==NULL?0:atoi(aux);
+		if (portDefault<=0){
+			aux=(char*)getconfent("STAGER", "PORT", 0);
+			portDefault=aux==NULL?0:atoi(aux);
+			if (portDefault<=0){
+				portDefault= 256665588;
+			}
+		}
+		
+	}
+
+	if (svcDefault==NULL || strcmp(svcDefault,"")==0){
+		if(svcDefault){free(svcDefault);}
+		aux=getenv("STAGE_SVCCLASS");
+		svcDefault= aux==NULL? NULL: strdup(aux);
+		if (svcDefault==NULL || strcmp(svcDefault,"")==0 ){
+			if(svcDefault){free(svcDefault);}
+			if (svcMap==NULL || strcmp(svcMap,"")==0 ){
+				aux=(char*)getconfent("STAGER","SVC_CLASS", 0);
+				svcDefault=aux==NULL?NULL:strdup(aux);
+				if (svcDefault==NULL || strcmp(svcDefault,"")==0 ){
+					if(svcDefault){free(svcDefault);}
+					svcDefault=strdup("mySvcDef");
+				}
+			}
+			else{
+				svcDefault=strdup(svcMap);
+			}
+		}
+
+	}
+	if (versionDefault<=0){
+		aux=getenv("RFIO_USE_CASTOR_V2");
+		if(aux){
+			versionDefault=strcmp(aux,"YES")==0?2:1;
+		}else{versionDefault=0;}
+    		if (versionDefault<=0){
+			versionDefault=versionMap;
+			if (versionDefault<=0){
+			aux=(char*)getconfent("STAGER","VERSION",0);
+			versionDefault=aux==NULL?0:atoi(aux);
+				if (versionDefault<=0){
+					   versionDefault= 1;
+			 	}
+			}
+		}
+	}
+	if (*host==NULL || strcmp(*host,"")){*host=hostDefault;}	
+	if (port==NULL || *port<=0) {*port=portDefault;}
+	if (*svc==NULL || strcmp(*svc,"")){*svc=svcDefault;}
+	if (version==NULL || *version<=0){*version=versionDefault;}
+ 
+	return (1);
+}
+
+/********************************************************************************************************************
  * This Function is parsing the string and returning the Turl struct that will be used by parse.c.                  *
- * Also it sets STAGE_HOST, STAGE_PORT and STAGE_SVCCLASS enviroment variables that are used in the other functions,*
- * and eventually it overwrite that if they are already set in the enviroment.                                      *  
- * It's not a clean solution ... but we couldn't do aything else better without changing the interface... :(.       * 
+ * Also it sets global variables thread safe that are used in the other functions.                                  *
  *                                                                                                                  *
  *******************************************************************************************************************/   
 
@@ -114,10 +216,10 @@ int rfioTURLFromString(
   char *p, *q, *q1, *orig, *prefix;
   RfioTURL_t _tURL;
   int ret;
-  char *path1, *path2, *mySvcClass, *myCastorVersion, *svcDefault, *hostDefault;
-  path1=path2=mySvcClass=myCastorVersion=mySvcClass=myCastorVersion=NULL;
+  char *path1, *path2, *mySvcClass, *myCastorVersion;
+  path1=path2=myCastorVersion=mySvcClass=myCastorVersion=NULL;
   char* buff;
-  int versionDefault=0;
+  int versionNum=0;
   //void ** auxPointer=0;
 
 char ** globalHost,  **globalSvc;
@@ -317,17 +419,12 @@ globalVersion=globalPort=0;
 
     /* from here setting the proper enviroment variable */
     /* getting default value that can be used */
-
-	// I set the default values taken from stagermap.conf
-	ret=just_stage_mapper(getenv("USER"),NULL,&hostDefault,&svcDefault,&versionDefault); 
-	versionDefault+=1; // because it is 0 for version 1 and 1 for version 2 
-     	
 	if (myCastorVersion){ 
       		if (!strcmp(myCastorVersion,"2")){
-       			 versionDefault=2;
+       			 versionNum=2;
        		}
 		if (!strcmp(myCastorVersion,"1")){
-       			 versionDefault=1;
+       			 versionNum=1;
        		}
 		
      	}
@@ -342,75 +439,66 @@ globalVersion=globalPort=0;
 		return -1;
 
 	}
-	//*globalHost=(char*)malloc(CA_MAXHOSTNAMELEN);
-	
+	if(*globalHost){free(*globalHost); *globalHost=NULL;}
+
 	if (strcmp(_tURL.rfioHostName,"")){
-		if(*globalHost){free(*globalHost);}
 		*globalHost=strdup(_tURL.rfioHostName);	
-		//strcpy(globalHost,_tURL.rfioHostName);
-	}else{
-		if(strcmp(hostDefault,"")){
-			if(*globalHost){free(*globalHost);}
-			*globalHost=strdup(hostDefault);
-			//strcpy(globalHost,hostDefault);
-		}
 	}
 
-	printf("ancora nel RfioTURL host %s\n",*globalHost);
-
 	ret=Cglobals_get(&tSvcClassKey,(void **)&globalSvc,sizeof(void*));
+
 	if (ret<0){
 		serrno = EINVAL;
+		if(*globalHost){free(*globalHost);*globalHost=NULL;}
 		free(orig);
 		return -1;
 
 	}
-	
-	/* *globalSvc=(char*)malloc(CA_MAXSVCCLASSNAMELEN);
-	printf("len string %i vs %i\n",strlen(*globalSvc),strlen(svcDefault));fflush(stdout);	
-       */
-	if (mySvcClass && strcmp(mySvcClass,"")){
-		if(*globalSvc){free(*globalSvc);}
-		*globalSvc=strdup(mySvcClass);
-		//strcpy(*globalSvc,mySvcClass);
-	}
-	else{
-		if(svcDefault && strcmp(svcDefault,"")){
-			if(*globalSvc){free(*globalSvc);}
-			*globalSvc=strdup(svcDefault);
-			//strcpy(*globalSvc,svcDefault);
-		}
-	}
-	printf("ancora nel RfioTURL svc %s\n",*globalSvc);
-	if (_tURL.rfioPort){
-		ret=Cglobals_get(&tStagePortKey,(void **)&globalPort,sizeof(int));
-		if (ret<0){
-			serrno = EINVAL;
-			free(orig);
-			return -1;
+	if(*globalSvc){free(*globalSvc);*globalSvc=NULL;}
 
-		}
+	if (mySvcClass && strcmp(mySvcClass,"")){
+		*globalSvc=strdup(mySvcClass);
+	}
+	ret=Cglobals_get(&tStagePortKey,(void **)&globalPort,sizeof(int));
+	if (ret<0){
+		serrno = EINVAL;
+		if(*globalHost){free(*globalHost);*globalHost=NULL;}
+		if(*globalSvc){free(*globalSvc);*globalSvc=NULL;}
+		free(orig);
+		return -1;
+
+	}
+	*globalPort=0;
+	if (_tURL.rfioPort){
 		*globalPort=_tURL.rfioPort;
 	}
-	if (versionDefault){
-		ret=Cglobals_get(&tCastorVersionKey,(void **)&globalVersion,sizeof(int));
-		if (ret<0){
+	ret=Cglobals_get(&tCastorVersionKey,(void **)&globalVersion,sizeof(int));
+
+	if (ret<0){
+		serrno = EINVAL;
+		if(*globalHost){free(*globalHost);*globalHost=NULL;}
+		if(*globalSvc){free(*globalSvc);*globalSvc=NULL;}
+		free(orig);
+		return -1;
+
+	}
+	*globalVersion=0;
+	if (versionNum){
+		*globalVersion=versionNum;
+	}
+	
+	ret=getDefaultForGlobal(globalHost,globalPort,globalSvc,globalVersion);
+	if (ret<0){
 			serrno = EINVAL;
+			if(*globalHost){free(*globalHost);*globalHost=NULL;}
+			if(*globalSvc){free(*globalSvc);*globalSvc=NULL;}
 			free(orig);
 			return -1;
 
-		}
-		
-		*globalVersion=versionDefault;
 	}
-	//free(*globalHost);
-	//free(*globalSvc);
-	
      }
     
      free(orig);
-
-     
 
   /*
    * Everything OK. Copy the temporary structure to the output
