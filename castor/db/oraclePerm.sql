@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.249 $ $Release$ $Date: 2006/03/31 11:45:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.250 $ $Release$ $Date: 2006/04/05 14:19:57 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1846,11 +1846,14 @@ BEGIN
    ret := 2;
    RETURN;
  END IF;
- -- drop all requests for the file
- FOR sr IN (SELECT id
+ -- mark all requests for the file as failed
+ -- so the clients eventually get an answer
+ FOR sr IN (SELECT id, status
               FROM SubRequest
              WHERE castorFile = cfId) LOOP
-   archiveSubReq(sr.id);
+   IF sr.status NOT IN (8, 9) THEN   -- FINISHED, FAILED_FINISHED
+     UPDATE SubRequest SET status = 7 WHERE id = sr.id;  -- FAILED
+   END IF;
  END LOOP;
  -- set DiskCopies to GCCANDIDATE. Note that we keep
  -- WAITTAPERECALL diskcopies so that recalls can continue
@@ -1888,8 +1891,8 @@ BEGIN
    END LOOP;
    -- Delete the DiskCopies
    UPDATE DiskCopy
-      SET status = 8
-    WHERE status = 2
+      SET status = 8  -- GCCANDIDATE
+    WHERE status = 2  -- WAITTAPERECALL
       AND castorFile = cfId;
  END;
  ret := 0;
