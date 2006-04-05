@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/03/10 09:46:18 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/04/05 13:30:53 $ $Author: felixehm $
  *
  *
  *
@@ -141,7 +141,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq) throw() {
 	while (filename != filelist->end()) {
 		castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
 		subreq->setFileName((*filename));
-		subreq->setIsRepack(true);			// this marks the Request as a 'special' one.
+		subreq->setIsRepack(sreq->vid());			// this marks the Request as a 'special' one.
 		subreq->setProtocol(REPACK_PROTOCOL);	// we have to specify a protocol, otherwise our call is not scheduled!
 		subreq->setRequest(&req);
 		req.addSubRequests(subreq);
