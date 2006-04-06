@@ -230,13 +230,13 @@ class CppBaseWriter : public CppCastorWriter {
 	 * write all operations for a given class
 	 * @param c the class for which we are generating code
 	 * @param i whether or not we are writing this to a source or header file
-	 * @param j what type of method to write (by Scope)
+	 * @param j what type of method to write (by Visibility)
 	 * @param k the stream associated with the output file
 	 */
 	void writeOperations
     (UMLClassifier *c,
      bool isHeaderMethod,
-     Uml::Scope permitScope,
+     Uml::Visibility permitVisibility,
      QTextStream &j,
      QValueList<std::pair<QString, int> >& alreadyGenerated);
 
@@ -267,7 +267,7 @@ class CppBaseWriter : public CppCastorWriter {
   /**
 	 * a little method for converting scope to string value
 	 */
-	QString scopeToCPPDecl(Uml::Scope scope);
+	QString scopeToCPPDecl(Uml::Visibility scope);
 
   /********************************/
   /* For Members and associations */

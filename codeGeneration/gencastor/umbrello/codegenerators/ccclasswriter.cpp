@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ccclasswriter.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2005/11/29 10:15:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ccclasswriter.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/04/06 07:08:44 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -228,7 +228,7 @@ void CCClassWriter::writeAssociationMethods (QPtrList<UMLAssociation> associatio
     for(UMLAssociation *a = associations.first(); a; a = associations.next()) {
       // insert the methods to access the role of the other
       // class in the code of this one
-      if (a->getUMLRole(Uml::A)->getObject()->getID() == myID && a->getVisibility(Uml::B) == Uml::Public) {
+      if (a->getUMLRole(Uml::A)->getObject()->getID() == myID && a->getVisibility(Uml::B) == Uml::Visibility::Public) {
         // only write out IF there is a rolename given
         if(!a->getRoleName(Uml::B).isEmpty()) {
           QString className = a->getObject(Uml::B)->getName();
@@ -241,7 +241,7 @@ void CCClassWriter::writeAssociationMethods (QPtrList<UMLAssociation> associatio
              stream);
         }
       }
-      if (a->getUMLRole(Uml::B)->getObject()->getID() == myID && a->getVisibility(Uml::A) == Uml::Public) {
+      if (a->getUMLRole(Uml::B)->getObject()->getID() == myID && a->getVisibility(Uml::A) == Uml::Visibility::Public) {
         // only write out IF there is a rolename given
         if(!a->getRoleName(Uml::A).isEmpty()) {
           QString className = a->getObject(Uml::A)->getName();
@@ -485,7 +485,7 @@ void CCClassWriter::writeOperations(UMLClassifier *c,
                                     QValueList<QString>& alreadyGenerated) {
   // First this object methods
   QPtrList<UMLOperation> *opl;
-  opl = ClassifierInfo::getFilteredOperationsList(c,Uml::Public);
+  opl = ClassifierInfo::getFilteredOperationsList(c,Uml::Visibility::Public);
   writeOperations(*opl, stream, alreadyGenerated);
   delete opl;
   opl = 0;
@@ -495,7 +495,7 @@ void CCClassWriter::writeOperations(UMLClassifier *c,
        interface !=0;
        interface = m_classInfo->allSuperclasses.next()) {
     if (!c->getAbstract()) {
-      opl = ClassifierInfo::getFilteredOperationsList(interface, Uml::Public, true);
+      opl = ClassifierInfo::getFilteredOperationsList(interface, Uml::Visibility::Public, true);
       writeOperations(*opl, stream, alreadyGenerated);
       delete opl;
     }

@@ -41,7 +41,7 @@ void CppHStreamCnvWriter::writeClass(UMLClassifier* /*c*/) {
                  m_classInfo->className + " into/from stl streams");
   // Constructor and methods
   *m_stream << getIndent(INDENT*ClassIndentLevel)
-            << scopeToCPPDecl(Uml::Public) << ":" << endl << endl;
+            << scopeToCPPDecl(Uml::Visibility::Public) << ":" << endl << endl;
   writeMethods(false);
   // marshal methods
   writeMarshal();

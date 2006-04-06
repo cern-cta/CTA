@@ -9,7 +9,6 @@
 #include "cppbasewriter.h"
 #include "../attribute.h"
 #include "../classifier.h"
-#include "../class.h"
 #include "umlrole.h"
 
 //-----------------------------------------------------------------------------
@@ -443,12 +442,12 @@ bool CppBaseWriter::finalize(UMLClassifier* /*c*/) {
 void CppBaseWriter::writeOperations
 (UMLClassifier *c,
  bool isHeaderMethod,
- Uml::Scope permitScope,
+ Uml::Visibility permitVisibility,
  QTextStream &stream,
  QValueList<std::pair<QString, int> >& alreadyGenerated) {
   // First this object methods
   QPtrList<UMLOperation> *opl;
-  opl = ClassifierInfo::getFilteredOperationsList(c, permitScope);
+  opl = ClassifierInfo::getFilteredOperationsList(c, permitVisibility);
   for (UMLOperation *op = opl->first();
        0 != op;
        op = opl->next()) {
@@ -472,7 +471,7 @@ void CppBaseWriter::writeOperations
         com += " interface";
       else
         com += " abstract class";
-      opl = ClassifierInfo::getFilteredOperationsList(interface, permitScope, true);
+      opl = ClassifierInfo::getFilteredOperationsList(interface, permitVisibility, true);
       for (UMLOperation *op = opl->first();
            0 != op;
            op = opl->next()) {
@@ -644,18 +643,18 @@ void CppBaseWriter::writeOperations
 //=============================================================================
 // scopeToCPPDecl
 //=============================================================================
-QString CppBaseWriter::scopeToCPPDecl(Uml::Scope scope) {
+QString CppBaseWriter::scopeToCPPDecl(Uml::Visibility scope) {
   switch(scope) {
-  case Uml::Public:
+  case Uml::Visibility::Public:
     return QString("public");
-  case Uml::Protected:
+  case Uml::Visibility::Protected:
     return QString("protected");
-  case Uml::Private:
+  case Uml::Visibility::Private:
     return QString("private");
   default:
     break;
   }
-  return QString("UnknownScope");
+  return QString("UnknownVisibility");
 }
 
 //=============================================================================
@@ -831,9 +830,7 @@ bool CppBaseWriter::isEnum(QString name) {
 // isEnum
 //=============================================================================
 bool CppBaseWriter::isEnum(UMLObject* obj) {
-  UMLClass *concept = dynamic_cast<UMLClass*>(obj);
-  if (0 == concept) return false;
-  QString stereo = concept->getStereotype();
-  return "«enumeration»" == stereo ||
-    "«enumerationNoStream»" == stereo;
+  QString stereo = obj->getStereotype();
+  return "enumeration" == stereo ||
+    "enumerationNoStream" == stereo;
 }

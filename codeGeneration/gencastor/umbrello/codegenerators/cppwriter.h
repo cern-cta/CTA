@@ -45,7 +45,7 @@ class CppWriter : public CppCastorWriter {
   /**
    * Constructor, initialises a couple of variables
    */
-  CppWriter(UMLDoc* parent = 0, const char* name = 0);
+  CppWriter( );
 
   /**
    * Destructor, empty

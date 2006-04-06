@@ -13,7 +13,6 @@
 #include "../attribute.h"
 #include "../classifier.h"
 #include "../datatype.h"
-#include "../class.h"
 
 //-----------------------------------------------------------------------------
 // Implementation file for class : cppcastorwriter
@@ -29,8 +28,7 @@ QString CppCastorWriter::s_topNS = "castor";
 //=============================================================================
 // Standard constructor, initializes variables
 //=============================================================================
-CppCastorWriter::CppCastorWriter(UMLDoc *parent,
-                                 const char *name) :
+CppCastorWriter::CppCastorWriter(UMLDoc* parent, const char *name) :
   SimpleCodeGenerator(parent, name) {
   // All used castor types
   m_castorTypes[QString("Cuuid")] = QString("\"Cuuid.h\"");

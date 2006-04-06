@@ -16,12 +16,12 @@
 #ifndef CLASSIFIERINFO_H
 #define CLASSIFIERINFO_H
 
-#include "../class.h"
 #include "../umldoc.h"
 #include "../attribute.h"
 #include "../association.h"
 #include "../umlclassifierlist.h"
 #include "../umlassociationlist.h"
+#include "../umloperationlist.h"
 #include "../umlattributelist.h"
 
 #include <qptrlist.h>
@@ -55,7 +55,7 @@ class ClassifierInfo {
    * set to true, only keeps abstract operations.
    */
   UMLOperationList*
-    getFilteredOperationsList(Uml::Scope permitScope,
+    getFilteredOperationsList(Uml::Visibility permitVisibility,
                               bool keepAbstractOnly = false);
 
 	/**
@@ -118,7 +118,7 @@ class ClassifierInfo {
 	 */
 	static UMLOperationList*
     getFilteredOperationsList(UMLClassifier *c,
-                              Uml::Scope permitScope,
+                              Uml::Visibility permitVisibility,
                               bool keepAbstractOnly = false);
 
  public:
@@ -173,11 +173,11 @@ class ClassifierInfo {
   bool isInterface; // Whether or not this classifier is an interface.
   bool isAbstract; // Whether or not this classifier is abstract.
   bool hasAssociations;
-  std::map<Uml::Scope, bool> hasAttributes;
-  std::map<Uml::Scope, bool> hasStaticAttributes;
-  std::map<Uml::Scope, bool> hasMethods;
-  std::map<Uml::Scope, bool> hasAccessorMethods;
-  std::map<Uml::Scope, bool> hasOperationMethods;
+  std::map<Uml::Visibility, bool> hasAttributes;
+  std::map<Uml::Visibility, bool> hasStaticAttributes;
+  std::map<Uml::Visibility, bool> hasMethods;
+  std::map<Uml::Visibility, bool> hasAccessorMethods;
+  std::map<Uml::Visibility, bool> hasOperationMethods;
   bool hasVectorFields;
 
   /**

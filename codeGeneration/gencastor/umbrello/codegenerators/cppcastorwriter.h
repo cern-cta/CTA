@@ -26,7 +26,7 @@ class CppCastorWriter : public SimpleCodeGenerator {
   virtual ~CppCastorWriter() {};
 
   virtual bool isType (QString & type) { return type == "CppWriter"; }
-  virtual QString getLanguage() { return "Cpp"; }
+  virtual Uml::Programming_Language getLanguage() { return Uml::pl_Cpp; }
 
   /**
    * Helper method for opening a file

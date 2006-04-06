@@ -28,14 +28,12 @@
 #include "cppcppstreamcnvwriter.h"
 
 #include "../umldoc.h"
-#include "../class.h"
-#include "../interface.h"
 #include <iostream>
-#include <model_utils.h>
+#include "model_utils.h"
 #include "uml.h"
 
-CppWriter::CppWriter( UMLDoc *parent, const char *name ) :
-  CppCastorWriter(parent, name), firstGeneration(true) {
+CppWriter::CppWriter( ) :
+  CppCastorWriter(UMLApp::app()->getDocument(), "Cpp"), firstGeneration(true) {
   std::cout << "Generation started !" << std::endl;
   // Create all needed generators
   hppw = new CppHClassWriter(m_doc, ".hpp file generator");
@@ -127,7 +125,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
     const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
     if (classInfo.allImplementedAbstracts.contains(concept) ||
         classInfo.className == "IObject") {
-      Umbrello::NameAndType_List params;
+      Model_Utils::NameAndType_List params;
       UMLOperation* printOp =
         c->createOperation("print const", NULL, &params);
       printOp->setTypeName("virtual void");
@@ -138,18 +136,18 @@ void CppWriter::writeClass(UMLClassifier *c) {
       }
       UMLAttribute* streamParam =
         new UMLAttribute(printOp, "stream",
-                         "1", Uml::Public, "ostream&");
+                         "1", Uml::Visibility::Public, "ostream&");
       streamParam->setDoc("The stream where to print this object");
       printOp->getParmList()->append(streamParam);
       UMLAttribute* indentParam =
         new UMLAttribute(printOp, "indent",
-                         "2", Uml::Public,
+                         "2", Uml::Visibility::Public,
                          "string");
       indentParam->setDoc("The indentation to use");
       printOp->getParmList()->append(indentParam);
       UMLAttribute* alreadyPrintedParam =
         new UMLAttribute(printOp, "alreadyPrinted",
-                         "3", Uml::Public,
+                         "3", Uml::Visibility::Public,
                          "castor::ObjectSet&");
       alreadyPrintedParam->setDoc
         (QString("The set of objects already printed.\n") +
@@ -179,11 +177,10 @@ void CppWriter::writeClass(UMLClassifier *c) {
         if (classInfo.allSuperclasses.count() ==
             classInfo.implementedAbstracts.count()) {
           // ID attribute
-          UMLClass* cl = dynamic_cast <UMLClass*>(c);
-          if (0 != cl) {
+          if (!c->isInterface()) {
             UMLAttribute* idAt =
-              cl->addAttribute
-              ("id", getDatatype("u_signed64"), Uml::Public);
+              c->addAttribute
+              ("id", getDatatype("u_signed64"), Uml::Visibility::Public);
             idAt->setDoc("The id of this object");
           }
         }
@@ -206,7 +203,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
   // Determine whether the implementation file is required.
   // (It is not required if the class is an interface
   // or an enumeration.)
-  if ((dynamic_cast<UMLInterface*>(c)) == 0) {
+  if (!c->isInterface()) {
     runGenerator(cppw, fileName + ".cpp", c);
 
     // Persistency and streaming for castor type is done by hand

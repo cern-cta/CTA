@@ -30,8 +30,7 @@ void CppHClassWriter::writeClass(UMLClassifier *c) {
 
   // Deal with enumerations
   if (!m_classInfo->isInterface && isEnum(c)) {
-    UMLClass* k = dynamic_cast<UMLClass*>(c);
-    QPtrList<UMLAttribute> atl = k->getAttributeList();
+    QPtrList<UMLAttribute> atl = c->getAttributeList();
     for (UMLAttribute *at=atl.first(); at ; ) {
       QString attrName = at->getName();
       *m_stream << getIndent() << attrName;
@@ -54,34 +53,34 @@ void CppHClassWriter::writeClass(UMLClassifier *c) {
 
     // PUBLIC constructor/methods/accessors
     *m_stream << getIndent(INDENT*ClassIndentLevel)
-              << scopeToCPPDecl(Uml::Public) << ":" << endl << endl;
+              << scopeToCPPDecl(Uml::Visibility::Public) << ":" << endl << endl;
     writeConstructorDecls(*m_stream);
     QValueList<std::pair<QString, int> > alreadyGeneratedMethods;
-    writeOperations(c,true,Uml::Public,*m_stream, alreadyGeneratedMethods);
-    writeHeaderAccessorMethodDecl(c, Uml::Public, *m_stream);
+    writeOperations(c,true,Uml::Visibility::Public,*m_stream, alreadyGeneratedMethods);
+    writeHeaderAccessorMethodDecl(c, Uml::Visibility::Public, *m_stream);
 
     // PROTECTED methods/accessors
-    if (m_classInfo->hasMethods[Uml::Protected]) {
+    if (m_classInfo->hasMethods[Uml::Visibility::Protected]) {
       *m_stream << getIndent(INDENT*ClassIndentLevel)
-                << scopeToCPPDecl(Uml::Protected) << ":" << endl << endl;
-      writeOperations(c,true,Uml::Protected,*m_stream, alreadyGeneratedMethods);
-      writeHeaderAccessorMethodDecl(c, Uml::Protected, *m_stream);
+                << scopeToCPPDecl(Uml::Visibility::Protected) << ":" << endl << endl;
+      writeOperations(c,true,Uml::Visibility::Protected,*m_stream, alreadyGeneratedMethods);
+      writeHeaderAccessorMethodDecl(c, Uml::Visibility::Protected, *m_stream);
     }
 
     // PRIVATE attribs/methods
-    if (m_classInfo->hasMethods[Uml::Private] ||
-        m_classInfo->hasAttributes[Uml::Private] ||
+    if (m_classInfo->hasMethods[Uml::Visibility::Private] ||
+        m_classInfo->hasAttributes[Uml::Visibility::Private] ||
         m_classInfo->hasAssociations) {
-      if (m_classInfo->hasMethods[Uml::Private]) {
+      if (m_classInfo->hasMethods[Uml::Visibility::Private]) {
         // print visibility decl.
         *m_stream << getIndent(INDENT*ClassIndentLevel)
-                  << scopeToCPPDecl(Uml::Private) << ":" << endl << endl;
-        writeOperations(c,true,Uml::Private,*m_stream, alreadyGeneratedMethods);
+                  << scopeToCPPDecl(Uml::Visibility::Private) << ":" << endl << endl;
+        writeOperations(c,true,Uml::Visibility::Private,*m_stream, alreadyGeneratedMethods);
       }
-      if (m_classInfo->hasAttributes[Uml::Private] ||
+      if (m_classInfo->hasAttributes[Uml::Visibility::Private] ||
           m_classInfo->hasAssociations) {
         *m_stream << getIndent(INDENT*ClassIndentLevel)
-                  << scopeToCPPDecl(Uml::Private) << ":" << endl << endl;
+                  << scopeToCPPDecl(Uml::Visibility::Private) << ":" << endl << endl;
         writeHeaderFieldDecls(c, *m_stream);
       }
     }
@@ -100,8 +99,7 @@ void CppHClassWriter::writeClass(UMLClassifier *c) {
 
   // Enum strings
   if (!m_classInfo->isInterface && isEnum(c)) {
-    UMLClass* k = dynamic_cast<UMLClass*>(c);
-    QPtrList<UMLAttribute> atl = k->getAttributeList();
+    QPtrList<UMLAttribute> atl = c->getAttributeList();
     int n = 0;
     for (UMLAttribute *at=atl.first(); at; at = atl.next()) {
       QString value = at->getInitialValue();
@@ -247,20 +245,20 @@ void CppHClassWriter::writeConstructorDecls(QTextStream &stream) {
 // writeHeaderAccessorMethodDecl
 //=============================================================================
 void CppHClassWriter::writeHeaderAccessorMethodDecl(UMLClassifier *c,
-                                                    Uml::Scope permitScope,
+                                                    Uml::Visibility permitVisibility,
                                                     QTextStream &stream) {
   // attributes (write static attributes first)
-  writeHeaderAttributeAccessorMethods(permitScope, true, stream);
-  writeHeaderAttributeAccessorMethods(permitScope, false, stream);
+  writeHeaderAttributeAccessorMethods(permitVisibility, true, stream);
+  writeHeaderAttributeAccessorMethods(permitVisibility, false, stream);
   // associations
   writeAssociationMethods
-    (m_classInfo->plainAssociations, permitScope,
+    (m_classInfo->plainAssociations, permitVisibility,
      true, c->getID(), stream);
   writeAssociationMethods
-    (m_classInfo->aggregations, permitScope,
+    (m_classInfo->aggregations, permitVisibility,
      true, c->getID(), stream);
   writeAssociationMethods
-    (m_classInfo->compositions, permitScope,
+    (m_classInfo->compositions, permitVisibility,
      true, c->getID(), stream);
 }
 
@@ -268,24 +266,24 @@ void CppHClassWriter::writeHeaderAccessorMethodDecl(UMLClassifier *c,
 // writeHeaderAttributeAccessorMethods
 //=============================================================================
 void
-CppHClassWriter::writeHeaderAttributeAccessorMethods (Uml::Scope visibility,
+CppHClassWriter::writeHeaderAttributeAccessorMethods (Uml::Visibility visibility,
                                                       bool writeStatic,
                                                       QTextStream &stream ) {
   QPtrList <UMLAttribute> * list;
   switch (visibility) {
-  case Uml::Private:
+  case Uml::Visibility::Private:
     if(writeStatic)
       list = &(m_classInfo->static_atpriv);
     else
       list = &(m_classInfo->atpriv);
     break;
-  case Uml::Protected:
+  case Uml::Visibility::Protected:
     if(writeStatic)
       list = &(m_classInfo->static_atprot);
     else
       list = &(m_classInfo->atprot);
     break;
-  case Uml::Public:
+  case Uml::Visibility::Public:
   default:
     if(writeStatic)
       list = &(m_classInfo->static_atpub);
@@ -303,56 +301,56 @@ CppHClassWriter::writeHeaderAttributeAccessorMethods (Uml::Scope visibility,
 void CppHClassWriter::writeHeaderFieldDecls(UMLClassifier *c,
                                             QTextStream &stream) {
   // attributes
-  writeAttributeDecls(Uml::Public, true, stream); // write static attributes first
-  writeAttributeDecls(Uml::Public, false, stream);
-  writeAttributeDecls(Uml::Protected, true, stream); // write static attributes first
-  writeAttributeDecls(Uml::Protected, false, stream);
-  writeAttributeDecls(Uml::Private, true, stream); // write static attributes first
-  writeAttributeDecls(Uml::Private, false, stream);
+  writeAttributeDecls(Uml::Visibility::Public, true, stream); // write static attributes first
+  writeAttributeDecls(Uml::Visibility::Public, false, stream);
+  writeAttributeDecls(Uml::Visibility::Protected, true, stream); // write static attributes first
+  writeAttributeDecls(Uml::Visibility::Protected, false, stream);
+  writeAttributeDecls(Uml::Visibility::Private, true, stream); // write static attributes first
+  writeAttributeDecls(Uml::Visibility::Private, false, stream);
   // associations
   writeAssociationDecls(m_classInfo->plainAssociations,
-                        Uml::Public, c->getID(), stream);
+                        Uml::Visibility::Public, c->getID(), stream);
   writeAssociationDecls(m_classInfo->aggregations,
-                        Uml::Public, c->getID(), stream);
+                        Uml::Visibility::Public, c->getID(), stream);
   writeAssociationDecls(m_classInfo->compositions,
-                        Uml::Public, c->getID(), stream);
+                        Uml::Visibility::Public, c->getID(), stream);
   writeAssociationDecls(m_classInfo->plainAssociations,
-                        Uml::Protected, c->getID(), stream);
+                        Uml::Visibility::Protected, c->getID(), stream);
   writeAssociationDecls(m_classInfo->aggregations,
-                        Uml::Protected, c->getID(), stream);
+                        Uml::Visibility::Protected, c->getID(), stream);
   writeAssociationDecls(m_classInfo->compositions,
-                        Uml::Protected, c->getID(), stream);
+                        Uml::Visibility::Protected, c->getID(), stream);
   writeAssociationDecls(m_classInfo->plainAssociations,
-                        Uml::Private, c->getID(), stream);
+                        Uml::Visibility::Private, c->getID(), stream);
   writeAssociationDecls(m_classInfo->aggregations,
-                        Uml::Private, c->getID(), stream);
+                        Uml::Visibility::Private, c->getID(), stream);
   writeAssociationDecls(m_classInfo->compositions,
-                        Uml::Private, c->getID(), stream);
+                        Uml::Visibility::Private, c->getID(), stream);
 }
 
 //=============================================================================
 // writeAttributeDecls
 //=============================================================================
-void CppHClassWriter::writeAttributeDecls(Uml::Scope visibility,
+void CppHClassWriter::writeAttributeDecls(Uml::Visibility visibility,
                                           bool writeStatic,
                                           QTextStream &stream) {
   if(m_classInfo->isInterface)
     return;
   QPtrList <UMLAttribute> * list;
   switch (visibility) {
-  case Uml::Private:
+  case Uml::Visibility::Private:
     if(writeStatic)
       list = &(m_classInfo->static_atpriv);
     else
       list = &(m_classInfo->atpriv);
     break;
-  case Uml::Protected:
+  case Uml::Visibility::Protected:
     if(writeStatic)
       list = &(m_classInfo->static_atprot);
     else
       list = &(m_classInfo->atprot);
     break;
-  case Uml::Public:
+  case Uml::Visibility::Public:
   default:
     if(writeStatic)
       list = &(m_classInfo->static_atpub);
@@ -386,7 +384,7 @@ void CppHClassWriter::writeAttributeDecls(Uml::Scope visibility,
 // writeAssociationDecls
 //=============================================================================
 void CppHClassWriter::writeAssociationDecls(QPtrList<UMLAssociation> associations,
-                                            Uml::Scope permitScope,
+                                            Uml::Visibility permitVisibility,
                                             Uml::IDType id,
                                             QTextStream &h) {
   if( forceSections() || !associations.isEmpty() ) {
@@ -405,7 +403,7 @@ void CppHClassWriter::writeAssociationDecls(QPtrList<UMLAssociation> association
         writeComment(a->getDoc(), getIndent(), h);
       // print RoleB decl
       if (printRoleB &&
-          a->getVisibility(Uml::B) == permitScope &&
+          a->getVisibility(Uml::B) == permitVisibility &&
           !a->getRoleName(Uml::B).isEmpty()) {
         QString rawClassName = a->getObject(Uml::B)->getName();
         if (!isEnum(rawClassName)) rawClassName.append("*");
@@ -420,7 +418,7 @@ void CppHClassWriter::writeAssociationDecls(QPtrList<UMLAssociation> association
       }
       // print RoleA decl
       if (printRoleA &&
-          a->getVisibility(Uml::A) == permitScope &&
+          a->getVisibility(Uml::A) == permitVisibility &&
           !a->getRoleName(Uml::A).isEmpty()) {
         QString rawClassName = a->getObject(Uml::A)->getName();
         if (!isEnum(rawClassName)) rawClassName.append("*");
@@ -480,7 +478,7 @@ void CppHClassWriter::writeAssociationRoleDecl(QString fieldClassName,
 // writeAssociationMethods
 //=============================================================================
 void CppHClassWriter::writeAssociationMethods (QPtrList<UMLAssociation> associations,
-                                               Uml::Scope permitVisib,
+                                               Uml::Visibility permitVisib,
                                                bool writePointerVar,
                                                Uml::IDType myID,
                                                QTextStream &stream) {

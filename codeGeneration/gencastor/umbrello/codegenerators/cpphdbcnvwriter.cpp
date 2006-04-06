@@ -195,7 +195,7 @@ void CppHDbCnvWriter::writeClass(UMLClassifier *c) {
                  m_classInfo->className + " into/from a generic database");
   // Constructor and methods
   *m_stream << getIndent(INDENT*ClassIndentLevel)
-            << scopeToCPPDecl(Uml::Public) << ":" << endl << endl;
+            << scopeToCPPDecl(Uml::Visibility::Public) << ":" << endl << endl;
   writeMethods();
   // Add reset method
   writeReset(c);
@@ -205,7 +205,7 @@ void CppHDbCnvWriter::writeClass(UMLClassifier *c) {
   writeFillObj();
   // Members
   *m_stream << getIndent(INDENT*ClassIndentLevel)
-            << scopeToCPPDecl(Uml::Private) << ":" << endl << endl;
+            << scopeToCPPDecl(Uml::Visibility::Private) << ":" << endl << endl;
   writeMembers();
   // end of class header
   m_indent--;

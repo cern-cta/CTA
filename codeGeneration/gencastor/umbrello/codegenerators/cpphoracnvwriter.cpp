@@ -37,8 +37,8 @@ bool CppHOraCnvWriter::init(UMLClassifier* c, QString fileName) {
 void CppHOraCnvWriter::writeFillRep() {
   // First write the main function, dispatching the requests
   writeDocumentation
-    (QString("Fill the foreign representation with some of the objects ") +
-     "referred by a given C++ object.",
+    (QString("Fill the foreign representation with some of the objects.") +
+     "refered by a given C++ object.",
      "",
      QString("@param address the place where to find the foreign representation\n") +
      "@param object the original C++ object\n" +
@@ -195,7 +195,7 @@ void CppHOraCnvWriter::writeClass(UMLClassifier *c) {
                  m_classInfo->className + " into/from an Oracle database");
   // Constructor and methods
   *m_stream << getIndent(INDENT*ClassIndentLevel)
-            << scopeToCPPDecl(Uml::Public) << ":" << endl << endl;
+            << scopeToCPPDecl(Uml::Visibility::Public) << ":" << endl << endl;
   writeMethods();
   // Add reset method
   writeReset(c);
@@ -205,7 +205,7 @@ void CppHOraCnvWriter::writeClass(UMLClassifier *c) {
   writeFillObj();
   // Members
   *m_stream << getIndent(INDENT*ClassIndentLevel)
-            << scopeToCPPDecl(Uml::Private) << ":" << endl << endl;
+            << scopeToCPPDecl(Uml::Visibility::Private) << ":" << endl << endl;
   writeMembers();
   // end of class header
   m_indent--;

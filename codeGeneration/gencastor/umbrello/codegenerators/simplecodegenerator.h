@@ -25,7 +25,7 @@
 #include "../umldoc.h"
 
 class UMLAttribute;
-class UMLClass;
+class UMLClassifier;
 class CodeBlockWithComments;
 
 /** 
@@ -54,8 +54,8 @@ public:
 	// Public attribute accessor methods
 	//  
 
-        virtual bool isType (QString & type) = 0;
-	virtual QString getLanguage() = 0;  
+  virtual bool isType (QString & type) = 0;
+	virtual Uml::Programming_Language getLanguage() = 0;  
 
 	void writeCodeToFile ( UMLClassifierList & concepts);
 	void writeCodeToFile ( );
@@ -79,7 +79,7 @@ protected:
 	// compatability methods..
 	QString findFileName(UMLClassifier* concept, QString ext);
 	QString overwritableName(UMLClassifier* concept, QString name, QString ext);
-        bool hasDefaultValueAttr(UMLClass *c);
+        bool hasDefaultValueAttr(UMLClassifier *c);
         bool hasAbstractOps(UMLClassifier *c);
 
         /**

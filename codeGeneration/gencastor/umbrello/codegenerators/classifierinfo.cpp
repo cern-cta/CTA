@@ -18,8 +18,6 @@
 #include "../classifier.h"
 #include "classifierinfo.h"
 
-#include "../class.h"
-#include "../interface.h"
 #include "../operation.h"
 #include "umlrole.h"
 
@@ -153,12 +151,12 @@ UMLClassifierList ClassifierInfo::findAllImplementedAbstractConcepts
 
 UMLOperationList*
 ClassifierInfo::getFilteredOperationsList
-(UMLClassifier *c, Uml::Scope permitScope, bool keepAbstractOnly) {
+(UMLClassifier *c, Uml::Visibility permitVisibility, bool keepAbstractOnly) {
   UMLOperationList baseList = c->getOpList(false);
   QPtrList<UMLOperation>* operationList = new QPtrList<UMLOperation>;
 	for(UMLOperation* listItem = baseList.first(); listItem;
 	    listItem = baseList.next())  {
-    if (listItem->getScope() == permitScope &&
+    if (listItem->getVisibility() == permitVisibility &&
         (!keepAbstractOnly || listItem->getAbstract())) {
       operationList->append(listItem);
     }
@@ -185,36 +183,32 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
 	className = c->getName();
 	fileName = c->getName().lower();
 
-	// determine up-front what we are dealing with
-	if(dynamic_cast<UMLInterface*>(c))
-		isInterface = true;
-	else
-		isInterface = false;
-  isAbstract = c->getAbstract();
+        // determine up-front what we are dealing with
+        isInterface = c->isInterface();
+        isAbstract = c->getAbstract();
 
 	// set id
 	m_nID = c->getID();
 
-	// sort attributes by Scope
+	// sort attributes by Visibility
 	if(!isInterface) {
-		UMLClass * myClass = dynamic_cast<UMLClass *>(c);
-		UMLAttributeList atl = myClass->getAttributeList();
+		UMLAttributeList atl = c->getAttributeList();
 		for(UMLAttribute *at=atl.first(); at ; at=atl.next()) {
-			switch(at->getScope())
+			switch(at->getVisibility())
 			{
-			case Uml::Public:
+			case Uml::Visibility::Public:
 				if(at->getStatic())
 					static_atpub.append(at);
 				else
 					atpub.append(at);
 				break;
-			case Uml::Protected:
+			case Uml::Visibility::Protected:
 				if(at->getStatic())
 					static_atprot.append(at);
 				else
 					atprot.append(at);
 				break;
-			case Uml::Private:
+			case Uml::Visibility::Private:
 				if(at->getStatic())
 					static_atprot.append(at);
 				else
@@ -285,9 +279,7 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
   for (UMLClassifier *uc = allSuperclasses.first();
        0 != uc;
        uc = allSuperclasses.next()) {
-    UMLClass * myClass = dynamic_cast<UMLClass *>(uc);
-    if (0 == myClass) continue;
-    UMLAttributeList atl = myClass->getAttributeList();
+    UMLAttributeList atl = uc->getAttributeList();
     for(UMLAttribute *at=atl.first(); at ; at=atl.next()) {
       allAttributes.append(at);
     }
@@ -295,30 +287,30 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
       
 	// set some summary information about the classifier now
 	hasAssociations = plainAssociations.count() > 0 || aggregations.count() > 0 || compositions.count() > 0;
-  hasAttributes[Uml::Public] = false;
-  hasAttributes[Uml::Protected] = false;
-	hasAttributes[Uml::Private] =
+  hasAttributes[Uml::Visibility::Public] = false;
+  hasAttributes[Uml::Visibility::Protected] = false;
+	hasAttributes[Uml::Visibility::Private] =
     atpriv.count() > 0 || static_atpriv.count() > 0 ||
     atprot.count() > 0 || static_atprot.count() > 0 ||
     atpub.count() > 0 || static_atpub.count() > 0;
 
-	hasStaticAttributes[Uml::Public] = static_atpub.count() > 0;
-  hasStaticAttributes[Uml::Protected] = static_atprot.count() > 0;
-  hasStaticAttributes[Uml::Private] = static_atpriv.count() > 0;
+	hasStaticAttributes[Uml::Visibility::Public] = static_atpub.count() > 0;
+  hasStaticAttributes[Uml::Visibility::Protected] = static_atprot.count() > 0;
+  hasStaticAttributes[Uml::Visibility::Private] = static_atpriv.count() > 0;
 
-	hasAccessorMethods[Uml::Public] =
+	hasAccessorMethods[Uml::Visibility::Public] =
     atpub.count() > 0 || static_atpub.count() > 0 || hasAssociations;
-	hasAccessorMethods[Uml::Protected] =
+	hasAccessorMethods[Uml::Visibility::Protected] =
     atprot.count() > 0 || static_atprot.count() > 0;
-	hasAccessorMethods[Uml::Private] =
+	hasAccessorMethods[Uml::Visibility::Private] =
     atpriv.count() > 0 || static_atpriv.count() > 0;
 
   UMLOperationList opl = c->getOpList();
-	hasOperationMethods[Uml::Public] = false;
-	hasOperationMethods[Uml::Protected] = false;
-	hasOperationMethods[Uml::Private] = false;
+	hasOperationMethods[Uml::Visibility::Public] = false;
+	hasOperationMethods[Uml::Visibility::Protected] = false;
+	hasOperationMethods[Uml::Visibility::Private] = false;
   for(UMLClassifierListItem* item = opl.first(); item; item = opl.next()) {
-    hasOperationMethods[item->getScope()] = true;
+    hasOperationMethods[item->getVisibility()] = true;
 	}
   if (!c->getAbstract()) {
     for (UMLClassifier *interface = implementedAbstracts.first();
@@ -327,18 +319,18 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
       opl = interface->getOpList();
       for(UMLClassifierListItem* item = opl.first(); item; item = opl.next()) {
         if (item->getAbstract()) {
-          hasOperationMethods[item->getScope()] = true;
+          hasOperationMethods[item->getVisibility()] = true;
         }
       }
     }
   }
 
-	hasMethods[Uml::Public] =
-    hasOperationMethods[Uml::Public] || hasAccessorMethods[Uml::Public];
-	hasMethods[Uml::Protected] =
-    hasOperationMethods[Uml::Protected] || hasAccessorMethods[Uml::Protected];
-	hasMethods[Uml::Private] =
-    hasOperationMethods[Uml::Private] || hasAccessorMethods[Uml::Private];
+	hasMethods[Uml::Visibility::Public] =
+    hasOperationMethods[Uml::Visibility::Public] || hasAccessorMethods[Uml::Visibility::Public];
+	hasMethods[Uml::Visibility::Protected] =
+    hasOperationMethods[Uml::Visibility::Protected] || hasAccessorMethods[Uml::Visibility::Protected];
+	hasMethods[Uml::Visibility::Private] =
+    hasOperationMethods[Uml::Visibility::Private] || hasAccessorMethods[Uml::Visibility::Private];
 
 	// this is a bit too simplistic..some associations are for
 	// SINGLE objects, and WONT be declared as Vectors, so this

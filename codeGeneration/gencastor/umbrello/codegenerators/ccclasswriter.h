@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ccclasswriter.h,v $ $Revision: 1.4 $ $Release$ $Date: 2005/11/29 10:15:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ccclasswriter.h,v $ $Revision: 1.5 $ $Release$ $Date: 2006/04/06 07:08:44 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -135,7 +135,7 @@ class CCClassWriter : public CppBaseWriter {
 	/**
 	 * write all operations for a given class
 	 * @param c the class for which we are generating code
-	 * @param j what type of method to write (by Scope)
+	 * @param j what type of method to write (by Visibility)
 	 * @param k the stream associated with the output file
 	 */
 	void writeOperations(UMLClassifier *c,

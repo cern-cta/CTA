@@ -31,7 +31,6 @@
 
 #include <qregexp.h>
 #include "../attribute.h"
-#include "../class.h"
 #include "../classifier.h"
 #include "../codedocument.h"
 #include "../operation.h"
@@ -40,7 +39,7 @@
 //
 
 SimpleCodeGenerator::SimpleCodeGenerator (UMLDoc * parentDoc , const char * name, bool /*createDirHierarchyForPackages*/)
-  : CodeGenerator( parentDoc, name)
+  : CodeGenerator()
 {
 	parentDoc->disconnect(this); // disconnect from UMLDoc.. we arent planning to be synced at all
 	initFields(parentDoc);
@@ -177,7 +176,7 @@ QString SimpleCodeGenerator::overwritableName(UMLClassifier* concept, QString na
 }
 
 
-bool SimpleCodeGenerator::hasDefaultValueAttr(UMLClass *c) {
+bool SimpleCodeGenerator::hasDefaultValueAttr(UMLClassifier *c) {
         QPtrList<UMLAttribute> atl = c->getAttributeList();
         for(UMLAttribute *at = atl.first(); at; at = atl.next())
                 if(!at->getInitialValue().isEmpty())

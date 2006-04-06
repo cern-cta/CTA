@@ -33,38 +33,14 @@ CodeGeneratorFactory::CodeGeneratorFactory()  {
 CodeGeneratorFactory::~CodeGeneratorFactory() {
 }
 
-QStringList CodeGeneratorFactory::languagesAvailable() {
-	kdDebug()<<"Querying languages available"<<endl;
+CodeGenerator* CodeGeneratorFactory::createObject(Uml::Programming_Language pl) {
+  CodeGenerator* obj = 0;
 
-	QStringList l;
-	l.append("Cpp");
-	return l;
-}
-
-QString CodeGeneratorFactory::generatorName(const QString &l) {
-	kdDebug()<<"Looking up generator for language "<<l<<endl;
-	if (l=="Cpp")
-		return "CppWriter";
-	//else...
-	kdDebug()<<"CodeGeneratorFactory::Error: no generator for language "<<l<<endl;
-	return "";
-}
-
-CodeGenerator* CodeGeneratorFactory::createObject(UMLDoc* doc, const char* name)  {
-	CodeGenerator* obj = 0;
-	QString cname(name);
-
-	if (doc) {
-
-    if(cname == "CppWriter") {
-      obj = new CppWriter( doc, name );
-		} else {
-			kdWarning() << "cannot create object of type " << name <<
-				". Type unknown" << endl;
-		}
-
-	} else {
-		kdWarning() << "cannot create parent UML document" << endl;
-	}
-	return obj;
+  if(pl == Uml::pl_Cpp) {
+    obj = new CppWriter( );
+  } else {
+    kdWarning() << "cannot create object of type " << pl
+                << ". Type unknown" << endl;
+  }
+  return obj;
 }

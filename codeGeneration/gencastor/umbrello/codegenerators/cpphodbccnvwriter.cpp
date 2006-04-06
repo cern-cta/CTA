@@ -41,11 +41,11 @@ void CppHOdbcCnvWriter::writeClass(UMLClassifier */*c*/) {
                  m_classInfo->className + " into/from an Odbccle database");
   // Constructor and methods
   *m_stream << getIndent(INDENT*ClassIndentLevel)
-            << scopeToCPPDecl(Uml::Public) << ":" << endl << endl;
+            << scopeToCPPDecl(Uml::Visibility::Public) << ":" << endl << endl;
   writeMethods();
   // Members
   *m_stream << getIndent(INDENT*ClassIndentLevel)
-            << scopeToCPPDecl(Uml::Private) << ":" << endl << endl;
+            << scopeToCPPDecl(Uml::Visibility::Private) << ":" << endl << endl;
   writeMembers();
   // end of class header
   m_indent--;

@@ -1,8 +1,6 @@
 // Include files
 #include <qstring.h>
 #include <qvaluelist.h>
-#include <../class.h>
-#include <../interface.h>
 #include <vector>
 // local
 #include "cppcppclasswriter.h"
@@ -45,8 +43,7 @@ CppCppClassWriter::CppCppClassWriter(UMLDoc *parent, const char *name) :
 void CppCppClassWriter::writeClass(UMLClassifier *c) {
   if (isEnum(c)) {
     // Deal With enum
-    UMLClass* k = dynamic_cast<UMLClass*>(c);
-    QPtrList<UMLAttribute> atl = k->getAttributeList();
+    QPtrList<UMLAttribute> atl = c->getAttributeList();
     writeWideHeaderComment
       (m_classInfo->className + "Strings", getIndent(), *m_stream);
     std::vector<QString> values;
@@ -86,9 +83,9 @@ void CppCppClassWriter::writeClass(UMLClassifier *c) {
   }
   // Operation methods
   QValueList<std::pair<QString, int> > alreadyGenerated;
-  writeOperations(c,false,Uml::Public,*m_stream, alreadyGenerated);
-  writeOperations(c,false,Uml::Protected,*m_stream, alreadyGenerated);
-  writeOperations(c,false,Uml::Private,*m_stream, alreadyGenerated);
+  writeOperations(c,false,Uml::Visibility::Public,*m_stream, alreadyGenerated);
+  writeOperations(c,false,Uml::Visibility::Protected,*m_stream, alreadyGenerated);
+  writeOperations(c,false,Uml::Visibility::Private,*m_stream, alreadyGenerated);
 }
 
 //=============================================================================
@@ -352,7 +349,7 @@ void CppCppClassWriter::writeAssocDeleteInDestructor(UMLAssociation *a) {
   if (m_classInfo->id() == a->getUMLRole(Uml::A)->getObject()->getID() ||
       m_classInfo->allSuperclassIds.contains(a->getUMLRole(Uml::A)->getObject()->getID())) {
     if (a->getRoleName(Uml::B) != "") {
-      UMLClass* cl = dynamic_cast<UMLClass*>(a->getObject(Uml::B));
+      UMLClassifier* cl = dynamic_cast<UMLClassifier*>(a->getObject(Uml::B));
       if (0 == cl || !isEnum(cl)) {
         fixTypeName(a->getObject(Uml::B)->getName(),
                     getNamespace(a->getObject(Uml::B)->getName()),
@@ -365,7 +362,7 @@ void CppCppClassWriter::writeAssocDeleteInDestructor(UMLAssociation *a) {
     }
   } else {
     if (a->getRoleName(Uml::A) != "") {
-      UMLClass* cl = dynamic_cast<UMLClass*>(a->getObject(Uml::A));
+      UMLClassifier* cl = dynamic_cast<UMLClassifier*>(a->getObject(Uml::A));
       if (0 == cl || !isEnum(cl)) {
         fixTypeName(a->getObject(Uml::A)->getName(),
                     getNamespace(a->getObject(Uml::A)->getName()),
@@ -534,14 +531,13 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
       switch (multiB) {
       case MULT_ONE:
         {
-          UMLInterface* in = dynamic_cast<UMLInterface*>(a->getObject(Uml::B));
-          UMLClass* cl = dynamic_cast<UMLClass*>(a->getObject(Uml::B));
-          if (in != 0 || (cl != 0 && ! isEnum(cl))) {
+          UMLClassifier* cl = dynamic_cast<UMLClassifier*>(a->getObject(Uml::B));
+          if (cl->isInterface() || (!cl->isInterface() && ! isEnum(cl))) {
             writeAssoc1Print (a->getRoleName(Uml::B),
                               a->getObject(Uml::B)->getName(),
                               obj,
                               stream);
-          } else if (cl != 0 && isEnum(cl)) {
+          } else if (!cl->isInterface() && isEnum(cl)) {
             writeEnumPrint (obj->getIndent(), a->getRoleName(Uml::B),
                             a->getObject(Uml::B)->getName(), stream);
           } else {
@@ -565,14 +561,13 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
       switch (multiA) {
       case MULT_ONE:
         {
-          UMLInterface* in = dynamic_cast<UMLInterface*>(a->getObject(Uml::A));
-          UMLClass* cl = dynamic_cast<UMLClass*>(a->getObject(Uml::A));
-          if (in != 0 || (cl != 0 && ! isEnum(cl))) {
+          UMLClassifier* cl = dynamic_cast<UMLClassifier*>(a->getObject(Uml::A));
+          if (cl->isInterface() || (!cl->isInterface() && ! isEnum(cl))) {
             writeAssoc1Print (a->getRoleName(Uml::A),
                               a->getObject(Uml::A)->getName(),
                               obj,
                               stream);
-          } else if (cl != 0 && isEnum(cl)) {
+          } else if (!cl->isInterface() && isEnum(cl)) {
             writeEnumPrint (obj->getIndent(), a->getRoleName(Uml::A),
                             a->getObject(Uml::A)->getName(), stream);
           } else {

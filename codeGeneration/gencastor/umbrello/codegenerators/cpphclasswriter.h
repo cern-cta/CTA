@@ -47,13 +47,13 @@ class CppHClassWriter : public CppHWriter {
    * Writes all accessor methods for attributes and associations
    */
   void writeHeaderAccessorMethodDecl(UMLClassifier *c,
-                                     Uml::Scope permitScope,
+                                     Uml::Visibility permitVisibility,
                                      QTextStream &stream);
 
   /**
    * Writes accessor methods for attributes
    */
-  void writeHeaderAttributeAccessorMethods (Uml::Scope visibility,
+  void writeHeaderAttributeAccessorMethods (Uml::Visibility visibility,
                                             bool writeStatic,
                                             QTextStream &stream);
 
@@ -70,7 +70,7 @@ class CppHClassWriter : public CppHWriter {
    * @param writeStatic whether to write static or non-static attributes out
    * @param stream text stream
    */
-  void writeAttributeDecls (Uml::Scope visibility,
+  void writeAttributeDecls (Uml::Visibility visibility,
                             bool writeStatic,
                             QTextStream &stream);
 
@@ -79,7 +79,7 @@ class CppHClassWriter : public CppHWriter {
    * out as attributes
    */
   void writeAssociationDecls(QPtrList<UMLAssociation> associations,
-                             Uml::Scope permit,
+                             Uml::Visibility permit,
                              Uml::IDType id,
                              QTextStream &stream);
 
@@ -96,7 +96,7 @@ class CppHClassWriter : public CppHWriter {
    * Write associations accessors
    */
   void writeAssociationMethods (QPtrList<UMLAssociation> associations,
-                                Uml::Scope permitVisib,
+                                Uml::Visibility permitVisib,
                                 bool writePointerVar,
                                 Uml::IDType myID,
                                 QTextStream &stream);
