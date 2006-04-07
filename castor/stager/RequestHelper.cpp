@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestHelper.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/10/26 13:58:45 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestHelper.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/04/07 14:50:11 $ $Author: gtaur $
  *
  * 
  *
@@ -30,8 +30,10 @@
 #include <iostream>
 #include <string>
 
-const char *castor::stager::SVCCLASS_ENV = "STAGE_SVCCLASS";
-const char *castor::stager::SVCCLASS_ENV_ALT = "SVCCLASS";
+#define DEFAULT_HOST "stagepublic"
+#define DEFAULT_PORT 5015
+#define DEFAULT_SVCCLASS ""
+#define DEFAULT_VERSION 1
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -49,21 +51,20 @@ castor::stager::RequestHelper::~RequestHelper() throw() {};
 // setOptions
 //------------------------------------------------------------------------------
 void castor::stager::RequestHelper::setOptions(struct stage_options* opts) {
-  // Setting the service class
-  if (0 != opts && opts->service_class != 0) {
-    stage_trace(3, "Opt SVCCLASS=%s", opts->service_class);
-    m_request->setSvcClassName(std::string(opts->service_class));
-  } else {
-    char *svc = 0;
-    svc = (char *)getenv(castor::stager::SVCCLASS_ENV);
-    if (0 == svc) {
-      svc = (char *)getenv(castor::stager::SVCCLASS_ENV_ALT);
-    }
-    if (0 != svc) {
-      stage_trace(3, "Env SVCCLASS=%s", svc);
-      m_request->setSvcClassName(std::string(svc));
-    }
-  }
+  // Setting the options
+     if(opts !=0){
+	if ( opts->stage_host == NULL || strcmp(opts->stage_host,"")) {
+		if (opts->stage_host){free(opts->stage_host);}
+		opts->stage_host=strdup(DEFAULT_HOST);
+	}
+	if ( opts->service_class == NULL || strcmp(opts->service_class,"")) {
+		if (opts->service_class){free(opts->service_class);}
+		opts->service_class=strdup(DEFAULT_SVCCLASS);
+	}
+	if (opts->stage_version<=0){opts->stage_version=DEFAULT_VERSION;} 
+	if (opts->stage_port<=0){opts->stage_port=DEFAULT_PORT;} 
+        }
 }
+
 
 
