@@ -34,7 +34,7 @@ cp ${WORKDIR}/${TOPNS}/db/*.sql ${TMPDIR}/${TOPNS}/db/
 grep 'CREATE OR REPLACE' ${TMPDIR}/${TOPNS}/db/oracleTrailer.sql | awk 'BEGIN { FS="[ (]+" } { print "DROP " $4, $5 ";" }' > ${TMPDIR}/${TOPNS}/db/oracleTrailer_drop.sql
 grep 'CREATE OR REPLACE' ${TMPDIR}/${TOPNS}/db/postgresTrailer.sql | awk 'BEGIN { FS="[ (]+" } { print "DROP " $4, $5 ";" }' > ${TMPDIR}/${TOPNS}/db/postgresTrailer_drop.sql
 
-/usr/bin/gencastor.bin -o ${TMPDIR} -c ${TOPNS} --nocrashhandler ${XMIFILE}
+(/usr/bin/gencastor.bin -o ${TMPDIR} -c ${TOPNS} --nocrashhandler ${XMIFILE} > /dev/tty) >& /dev/null
 set pushdsilent
 pushd ${TMPDIR}
 rm -f ${TOPNS}/db/*Generated*
@@ -56,5 +56,6 @@ foreach f (`find . -type f`)
     endif
   endif
 end
+echo Code generation done
 popd
 rm -rf ${TMPDIR}

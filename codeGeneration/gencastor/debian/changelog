@@ -1,3 +1,11 @@
+gencastor (5.0-0) unstable; urgency=low
+
+  * Port to umbrello 1.5 and KDE 3.5.1.
+  * Improved the way SQL indexes for N-to-N relationship tables are generated.
+  * Enhanced fillObj() API with autocommit support.
+
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Fri,  7 Apr 2006 12:00:00 +0200
+
 gencastor (4.0-0) unstable; urgency=low
 
   * Port to new umbrello and new KDE (3.4.2)
@@ -159,4 +167,4 @@ gencastor (1.0-1) unstable; urgency=low
   * Initial Release.
 
  -- Sebastien Ponce <sebastien.ponce@cern.ch>  Fri, 24 Sep 2004 16:08:26 +0200
-	  
+
