@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCnvSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2005/10/03 13:32:37 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCnvSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/04/07 14:03:16 $ $Author: itglp $
  *
  *
  *
@@ -40,8 +40,8 @@
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
-static castor::SvcFactory<castor::io::StreamCnvSvc> s_factoryStreamCnvSvc;
-const castor::IFactory<castor::IService>& StreamCnvSvcFactory = s_factoryStreamCnvSvc;
+static castor::SvcFactory<castor::io::StreamCnvSvc>* s_factoryStreamCnvSvc =
+  new castor::SvcFactory<castor::io::StreamCnvSvc>();
 
 // -----------------------------------------------------------------------
 // StreamCnvSvc
