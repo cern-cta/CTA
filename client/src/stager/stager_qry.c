@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.13 2006/03/28 10:05:45 motiakov Exp $
+ * $Id: stager_qry.c,v 1.14 2006/04/07 10:14:31 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.13 $ $Date: 2006/03/28 10:05:45 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.14 $ $Date: 2006/04/07 10:14:31 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -17,6 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.13 $ $Date: 
 #include "stager_api.h"
 #include "serrno.h"
 #include "Cgetopt.h"
+#include "RfioTURL.h"
 
 #define BUFSIZE 200
 struct cmd_args {
@@ -53,11 +54,13 @@ int
 main(int argc, char *argv[]) {
   struct cmd_args args;
   struct  stage_filequery_resp *responses;
-  int nbresps, rc, errflg, i;
+  int nbresps, rc, errflg, i,ret;
   char errbuf[BUFSIZE];
 
   args.opts.stage_host = NULL;
   args.opts.service_class = NULL;
+  args.opts.stage_version=0;
+  args.opts.stage_port=0;
 
   if ((args.nbreqs = cmd_countArguments(argc, argv)) <= 0) {
     usage(argv[0]);
@@ -75,6 +78,8 @@ main(int argc, char *argv[]) {
 
   /* Setting the error buffer */
   stage_seterrbuf(errbuf, sizeof(errbuf));
+
+  ret=getDefaultForGlobal(&args.opts.stage_host,&args.opts.stage_port,&args.opts.service_class,&args.opts.stage_version);
 
   /* Actual call to fileQuery */
   rc = stage_filequery(args.requests,

@@ -17,6 +17,7 @@ static char sccsid[] = "";
 #include "stager_api.h"
 #include "serrno.h"
 #include "Cgetopt.h"
+#include "RfioTURL.h"
 
 struct cmd_args {
   int nbreqs;
@@ -53,16 +54,22 @@ main(int argc, char *argv[]) {
 
   /* Parsing the command line */
   memset(&errbuf,  '\0', sizeof(errbuf));
-
+  args.opts.stage_host = NULL;
+  args.opts.service_class = NULL;
+  args.opts.stage_version=0;
+  args.opts.stage_port=0;
+  
   errflg =  cmd_parse(argc, argv, &args);
   if (errflg != 0) {
     usage (argv[0]);
     exit (EXIT_FAILURE);
   }
-
-
+  
   /* Setting the error buffer */
   stage_seterrbuf(errbuf, sizeof(errbuf));
+
+   ret=getDefaultForGlobal (&args.opts.stage_host,&args.opts.stage_port,&args.opts.service_class,&args.opts.stage_version);
+   ret=1;
 
   /* Performing the actual call */
   rc = stage_putDone(args.requestid,

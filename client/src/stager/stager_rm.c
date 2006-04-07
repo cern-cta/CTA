@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_rm.c,v $ $Revision: 1.1 $ $Release$ $Date: 2005/07/07 15:14:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_rm.c,v $ $Revision: 1.2 $ $Release$ $Date: 2006/04/07 10:14:31 $ $Author: gtaur $
  *
  * command line for stager_rm
  *
@@ -49,8 +49,15 @@ int main(int argc, char *argv[]) {
   int nbresps, nbreqs;
   char *reqid;
   char errbuf[ERRBUFSIZE+1];
-  int errflg, rc, i;
-  
+  int errflg, rc, i,ret;
+  struct stage_options opts;
+
+  opts.stage_host = NULL;
+  opts.service_class = NULL;
+  opts.stage_version=0;
+  opts.stage_port=0;
+  ret=getDefaultForGlobal (&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
+
   /* Parsing the command line */
   memset(&errbuf,  '\0', sizeof(errbuf));
   errflg =  cmd_parse(argc, argv, &reqs, &nbreqs);
@@ -68,7 +75,7 @@ int main(int argc, char *argv[]) {
                 &response,
                 &nbresps,
                 &reqid,
-                NULL);
+                &opts);
  
   if (rc < 0) { 
     fprintf(stderr, "Error %s\n", sstrerror(serrno));
