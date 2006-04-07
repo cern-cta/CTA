@@ -106,7 +106,7 @@ namespace castor {
        */
       int setAuthorizationId(uid_t uid, gid_t gid) throw();
 
-    protected:
+    //protected:
 
       /**
        * gets the request handler port to use and put it
@@ -116,8 +116,8 @@ namespace castor {
        * May be overwritten in case this behavior should be
        * modified.
        */
-      virtual void setRhPort() throw (castor::exception::Exception);
-
+      virtual void setRhPort(int optPort) throw (castor::exception::Exception);
+      virtual void setRhPort();
       /**
        * gets the request handler host to use and put it
        * into m_rhHost. First try environment (RH_HOST)
@@ -126,8 +126,10 @@ namespace castor {
        * May be overwritten in case this behavior should be
        * modified.
        */
-      virtual void setRhHost() throw (castor::exception::Exception);
-
+      virtual void setRhHost(std::string optHost) throw (castor::exception::Exception);
+      virtual void setRhHost();
+      virtual void setRhSvcClass(std::string optSvcClass) throw (castor::exception::Exception);
+      virtual void setRhSvcClass();
       /**
        * Sets the request ID in the base client
        */
@@ -168,14 +170,17 @@ namespace castor {
 
       
 
-    protected:
+      public: // protected:
       
       /// The request handler host
       std::string m_rhHost;
 
       /// The request handler port
       int m_rhPort;
-      
+
+      /// The request handler svc class
+      std::string m_rhSvcClass;
+
       /// The callback socket
       castor::io::ServerSocket* m_callbackSocket;
 

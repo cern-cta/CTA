@@ -450,49 +450,70 @@ castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
 //------------------------------------------------------------------------------
 // setRhPort
 //------------------------------------------------------------------------------
-void castor::client::BaseClient::setRhPort()
+
+void castor::client::BaseClient::setRhPort(){setRhPort(0);}
+void castor::client::BaseClient::setRhPort(int optPort)
   throw (castor::exception::Exception) {
-  char* port;
+
+
+  if(optPort > 65535 ){
+      castor::exception::Exception e(errno);
+      e.getMessage()
+        << "Invalid port value : " << optPort
+        << ". Must be < 65535." << std::endl;
+      throw e;
+   }
+   if (optPort >0){
+	 m_rhPort=optPort;
+	 return;
+   }
+   char* port;
   // RH server port. Can be given through the environment
   // variable RH_PORT or in the castor.conf file as a
   // RH/PORT entry. If none is given, default is used
-  if ((port = getenv (castor::client::PORT_ENV)) != 0 
+   if ((port = getenv (castor::client::PORT_ENV)) != 0 
       || (port = getenv (castor::client::PORT_ENV_ALT)) != 0
       || (port = getconfent((char *)castor::client::CATEGORY_CONF,
 			    (char *)castor::client::PORT_CONF,0)) != 0) {
-    char* dp = port;
-    errno = 0;
-    int iport = strtoul(port, &dp, 0);
-    if (*dp != 0) {
-      castor::exception::Exception e(errno);
-      e.getMessage() << "Bad port value." << std::endl;
-      throw e;
-    }
-    if (iport > 65535) {
-      castor::exception::Exception e(errno);
-      e.getMessage()
-        << "Invalid port value : " << iport
-        << ". Must be < 65535." << std::endl;
-      throw e;
-    }
-    m_rhPort = iport;
-  } else {
-    clog() << "Contacting RH server on default port ("
-           << CSP_RHSERVER_PORT << ")." << std::endl;
-    m_rhPort = CSP_RHSERVER_PORT;
-  }
+  	  char* dp = port;
+          errno = 0;
+          int iport = strtoul(port, &dp, 0);
+          if (*dp != 0) {
+          castor::exception::Exception e(errno);
+          e.getMessage() << "Bad port value." << std::endl;
+          throw e;
+          }
+          if (iport > 65535) {
+      		castor::exception::Exception e(errno);
+      		e.getMessage()
+        	<< "Invalid port value : " << iport
+        	<< ". Must be < 65535." << std::endl;
+      		throw e;
+    	  }
+    	   m_rhPort = iport;
+  		} else {
+    			clog() << "Contacting RH server on default port ("
+           		<< CSP_RHSERVER_PORT << ")." << std::endl;
+    			m_rhPort = CSP_RHSERVER_PORT;
+  		}
 
-  stage_trace(3, "Looking up RH Port - Using %d", m_rhPort);
+  	   stage_trace(3, "Looking up RH Port - Using %d", m_rhPort);
 }
 
 //------------------------------------------------------------------------------
 // setRhHost
 //------------------------------------------------------------------------------
-void castor::client::BaseClient::setRhHost()
+void castor::client::BaseClient::setRhHost(){setRhHost(NULL);}
+void castor::client::BaseClient::setRhHost(std::string optHost)
   throw (castor::exception::Exception) {
   // RH server host. Can be passed given through the
   // RH_HOST environment variable or in the castor.conf
   // file as a RH/HOST entry
+  if (!optHost.compare(NULL)){
+	m_rhHost = optHost;
+	return;
+  }
+
   char* host;
   if ((host = getenv (castor::client::HOST_ENV)) != 0
       || (host = getenv (castor::client::HOST_ENV_ALT)) != 0
@@ -512,7 +533,38 @@ void castor::client::BaseClient::setRhHost()
 
   stage_trace(3, "Looking up RH Host - Using %s", m_rhHost.c_str());
 }
+//------------------------------------------------------------------------------
+// setRhSvcClass
+//------------------------------------------------------------------------------
+void castor::client::BaseClient::setRhSvcClass(){setRhSvcClass(NULL);}
+void castor::client::BaseClient::setRhSvcClass(std::string optSvcClass)
+  throw (castor::exception::Exception) {
+  // RH server host. Can be passed given through the
+  // RH_HOST environment variable or in the castor.conf
+  // file as a RH/HOST entry
+  if (!optSvcClass.compare(NULL)){
+	m_rhSvcClass = optSvcClass;
+	return;
+  }
 
+  char* svc;
+  if ((svc = getenv ("STAGE_SVCCLASS")) != 0
+      || (svc = getconfent("STAGER",
+			    "SVCCLASS",0)) != 0) {
+    m_rhSvcClass = svc;
+  } else {
+    m_rhSvcClass = "";
+//     castor::exception::Exception e(ETPRM);
+//     e.getMessage()
+//       << "Unable to deduce the name of the RH server.\n"
+//       << "No -h option was given, RH_HOST is not set and "
+//       << "your castor.conf file does not contain a RH/HOST entry."
+//       << std::endl;
+//     throw e;
+  }
+
+  stage_trace(3, "Looking up RH svc class - Using %s", m_rhSvcClass.c_str());
+}
 //------------------------------------------------------------------------------
 // setRequestId
 //------------------------------------------------------------------------------
