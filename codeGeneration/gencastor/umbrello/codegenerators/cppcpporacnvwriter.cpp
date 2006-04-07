@@ -1052,7 +1052,9 @@ void CppCppOraCnvWriter::writeFillObj() {
                                    "castor",
                                    "")
             << " object," << endl << getIndent()
-            << func << "unsigned int type)"
+            << func << "unsigned int type,"
+            << endl << getIndent()
+            << func << "bool autocommit)"
             << endl << getIndent() << "  throw ("
             << fixTypeName("Exception",
                            "castor.exception",
@@ -1104,8 +1106,13 @@ void CppCppOraCnvWriter::writeFillObj() {
             << "throw ex;" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
+  *m_stream << getIndent() << "if (autocommit) {" << endl;
+  m_indent++;
+  *m_stream << getIndent() << "cnvSvc()->commit();" << endl;
   m_indent--;
-  *m_stream << getIndent() << "}" << endl << endl;
+  *m_stream << getIndent() << "}" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
 
   // Now write the dedicated fillObj Methods
   MemberList members = createMembersList();

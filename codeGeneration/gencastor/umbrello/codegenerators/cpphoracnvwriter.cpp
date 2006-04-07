@@ -106,7 +106,9 @@ void CppHOraCnvWriter::writeFillObj() {
                            "castor",
                            m_classInfo->packageName)
             << " object," << endl << getIndent()
-            << "                     unsigned int type)"
+            << "                     unsigned int type,"
+            << endl << getIndent()
+            << "                     bool autocommit)"
             << endl << getIndent() << "  throw ("
             << fixTypeName("Exception",
                            "castor.exception",
