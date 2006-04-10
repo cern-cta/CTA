@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamPtrCnv.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/11/05 17:47:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamPtrCnv.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/04/10 10:43:50 $ $Author: itglp $
  *
  * 
  *
@@ -41,9 +41,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamPtrCnv> s_factoryStreamPtrCnv;
-const castor::ICnvFactory& StreamPtrCnvFactory = 
-  s_factoryStreamPtrCnv;
+static castor::CnvFactory<castor::io::StreamPtrCnv>* s_factoryStreamPtrCnv =
+  new castor::CnvFactory<castor::io::StreamPtrCnv>();
 
 //------------------------------------------------------------------------------
 // Constructor
