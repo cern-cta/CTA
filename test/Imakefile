@@ -9,8 +9,8 @@ COMM		Make CASTOR tests
 #include <Project.tmpl>
 
 SUBDIRS = $(COMMONDIR) $(DBDIR) $(MSGDIR) $(NSDIR) $(RFIODIR) \
-	  $(SYSREQDIR) $(RTCOPYDIR) $(STAGEDIR) $(TAPEDIR) $(VDQMDIR) \
-	  $(VMGRDIR) $(COPYTAPEDIR) $(DLFDIR)
+	  $(SYSREQDIR) $(RTCOPYDIR) $(STAGEDIR) $(TAPEDIR) \
+	  $(COPYTAPEDIR) $(DLFDIR)
 
 MakeSubdirs(all,$(SUBDIRS))
 MakeSubdirs(clean,$(SUBDIRS))
