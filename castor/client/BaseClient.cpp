@@ -27,13 +27,20 @@
 
 // Include Files
 #include <errno.h>
+#if !defined(_WIN32)
 #include <unistd.h>
-#include <stdlib.h>
 #include <sys/ioctl.h>
-#include <sys/types.h>
 #include <sys/poll.h>
-#include <sys/stat.h>
 #include <sys/times.h>
+#else
+#include <io.h>
+#include "poll.h"
+#endif
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+//#include "castor/stager/Request.hpp"
+
 #include <Cpwd.h>
 #include "castor/io/ClientSocket.hpp"
 #include "castor/io/ServerSocket.hpp"
@@ -43,7 +50,10 @@
 #include "castor/MessageAck.hpp"
 #include "castor/rh/Client.hpp"
 #include "castor/rh/Response.hpp"
+
+#include "castor/stager/StageFileQueryRequest.hpp"
 #include "castor/stager/Request.hpp"
+
 #include "castor/client/IResponseHandler.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Communication.hpp"
@@ -136,7 +146,7 @@ std::string castor::client::BaseClient::sendRequest
 (castor::stager::Request* req,
  castor::client::IResponseHandler* rh)
   throw(castor::exception::Exception) {
-  // Now the common part of the request
+   // Now the common part of the request
   // Request handler host and port
   setRhHost();
   setRhPort();
@@ -152,6 +162,7 @@ std::string castor::client::BaseClient::sendRequest
       euid = geteuid();
     }
   }
+  stage_trace(3, "Setting euid: %d", euid);
   req->setEuid(euid);
   // GID
   uid_t egid;
@@ -165,6 +176,7 @@ std::string castor::client::BaseClient::sendRequest
       egid = getegid();
     }
   }
+  stage_trace(3, "Setting egid: %d", egid);
   req->setEgid(egid);
   // Username
   errno = 0;
@@ -174,7 +186,8 @@ std::string castor::client::BaseClient::sendRequest
     e.getMessage() << "Unknown User" << std::endl;
     throw e;
   } else {
-    req->setUserName(pw->pw_name);
+	  stage_trace(3, "Setting username %s", pw->pw_name);
+	  req->setUserName(pw->pw_name);
   }
   // Mask
   mode_t mask = umask(0);
@@ -232,6 +245,7 @@ std::string castor::client::BaseClient::sendRequest
         }
       }
     }
+	stage_trace(3, "Setting hostname %s", hostname);
     req->setMachine(hostname);
     if (m_rhHost == "") {
       m_rhHost = hostname;
@@ -239,6 +253,7 @@ std::string castor::client::BaseClient::sendRequest
     free(hostname);
   }
   // create a socket for the callback
+  stage_trace(3, "Creating socket for stager callback");
   m_callbackSocket = new castor::io::ServerSocket(0, true);
   m_callbackSocket->listen();
   unsigned short port;
@@ -251,6 +266,7 @@ std::string castor::client::BaseClient::sendRequest
   castor::IClient *cl = createClient();
   req->setClient(cl);
   // sends the request
+  stage_trace(3, "Sending request");
   std::string requestId = internalSendRequest(*req);
   stage_trace(3, "Request sent to RH - Request ID: %s", requestId.c_str());
   // waits for callbacks, first loop on the request
@@ -320,6 +336,7 @@ std::string castor::client::BaseClient::sendRequest
   return requestId;
 }
 
+
 //------------------------------------------------------------------------------
 // createClient
 //------------------------------------------------------------------------------
@@ -354,15 +371,20 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
   BaseClient_util_time(now, timestr);
   stage_trace(3, "%s (%u) Sending request", timestr, now);
   // preparing the timing information
+  clock_t startTime;
+#if !defined(_WIN32)
   struct tms buf;
-  clock_t startTime = times(&buf);
-
+  startTime = times(&buf);
+#else
+  startTime = clock();
+#endif
   // creates a socket
   castor::io::ClientSocket s(m_rhPort, m_rhHost);
   s.connect();
   // sends the request
   s.sendObject(request);
   // wait for acknowledgment
+  stage_trace(3, "Waiting for acknowledgement");
   IObject* obj = s.readObject();
   castor::MessageAck* ack =
     dynamic_cast<castor::MessageAck*>(obj);
@@ -383,12 +405,18 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
     throw e;
   }
   delete ack;
-
+#if !defined(_WIN32)
   clock_t endTime = times(&buf);
+#else
+  clock_t endTime = clock();
+#endif
   stage_trace(3, "%s SND %.2f s to send the request", 
               requestId.c_str(),
+#if !defined(_WIN32)
               ((float)(endTime - startTime)) / ((float)sysconf(_SC_CLK_TCK)) );
-
+#else
+              ((float)(endTime - startTime)) / CLOCKS_PER_SEC );
+#endif
 
   return requestId;
 }
@@ -401,11 +429,22 @@ castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
   throw (castor::exception::Exception) {
 
   stage_trace(3, "Waiting for callback from stager");
+  clock_t startTime;
+#if !defined(_WIN32)
   struct tms buf;
-  clock_t startTime = times(&buf);
-  int rc, nonblocking=1;
-  
+  startTime = times(&buf);
+#else
+  startTime = clock();
+#endif
+
+  int rc; 
+#if !defined(_WIN32)
+  int nonblocking=1;
   rc = ioctl(m_callbackSocket->socket(),FIONBIO,&nonblocking);
+#else
+  u_long nonblocking=1;
+  rc = ioctlsocket(m_callbackSocket->socket(),FIONBIO,&nonblocking);
+#endif
   if (rc == SOCKET_ERROR) {
     castor::exception::InvalidArgument e; // XXX To be changed
     e.getMessage() << "Could not set socket asynchonous";
@@ -438,11 +477,18 @@ castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
       stop = true;
     }
   }
-
+#if !defined(_WIN32)
   clock_t endTime = times(&buf);
+#else
+  clock_t endTime = clock();
+#endif
   stage_trace(3, "%s CBK %.2f s before callback was received", 
               requestId().c_str(),
+#if !defined(_WIN32)
               ((float)(endTime - startTime)) / ((float)sysconf(_SC_CLK_TCK)) );
+#else
+              ((float)(endTime - startTime)) / CLOCKS_PER_SEC );
+#endif
 
   return m_callbackSocket->accept();
 }
@@ -450,70 +496,49 @@ castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
 //------------------------------------------------------------------------------
 // setRhPort
 //------------------------------------------------------------------------------
-
-void castor::client::BaseClient::setRhPort(){setRhPort(0);}
-void castor::client::BaseClient::setRhPort(int optPort)
+void castor::client::BaseClient::setRhPort()
   throw (castor::exception::Exception) {
-
-
-  if(optPort > 65535 ){
-      castor::exception::Exception e(errno);
-      e.getMessage()
-        << "Invalid port value : " << optPort
-        << ". Must be < 65535." << std::endl;
-      throw e;
-   }
-   if (optPort >0){
-	 m_rhPort=optPort;
-	 return;
-   }
-   char* port;
+  char* port;
   // RH server port. Can be given through the environment
   // variable RH_PORT or in the castor.conf file as a
   // RH/PORT entry. If none is given, default is used
-   if ((port = getenv (castor::client::PORT_ENV)) != 0 
+  if ((port = getenv (castor::client::PORT_ENV)) != 0 
       || (port = getenv (castor::client::PORT_ENV_ALT)) != 0
       || (port = getconfent((char *)castor::client::CATEGORY_CONF,
 			    (char *)castor::client::PORT_CONF,0)) != 0) {
-  	  char* dp = port;
-          errno = 0;
-          int iport = strtoul(port, &dp, 0);
-          if (*dp != 0) {
-          castor::exception::Exception e(errno);
-          e.getMessage() << "Bad port value." << std::endl;
-          throw e;
-          }
-          if (iport > 65535) {
-      		castor::exception::Exception e(errno);
-      		e.getMessage()
-        	<< "Invalid port value : " << iport
-        	<< ". Must be < 65535." << std::endl;
-      		throw e;
-    	  }
-    	   m_rhPort = iport;
-  		} else {
-    			clog() << "Contacting RH server on default port ("
-           		<< CSP_RHSERVER_PORT << ")." << std::endl;
-    			m_rhPort = CSP_RHSERVER_PORT;
-  		}
+    char* dp = port;
+    errno = 0;
+    int iport = strtoul(port, &dp, 0);
+    if (*dp != 0) {
+      castor::exception::Exception e(errno);
+      e.getMessage() << "Bad port value." << std::endl;
+      throw e;
+    }
+    if (iport > 65535) {
+      castor::exception::Exception e(errno);
+      e.getMessage()
+        << "Invalid port value : " << iport
+        << ". Must be < 65535." << std::endl;
+      throw e;
+    }
+    m_rhPort = iport;
+  } else {
+   clog() << "Contacting RH server on default port ("
+          << CSP_RHSERVER_PORT << ")." << std::endl;
+    m_rhPort = CSP_RHSERVER_PORT;
+  }
 
-  	   stage_trace(3, "Looking up RH Port - Using %d", m_rhPort);
+  stage_trace(3, "Looking up RH Port - Using %d", m_rhPort);
 }
 
 //------------------------------------------------------------------------------
 // setRhHost
 //------------------------------------------------------------------------------
-void castor::client::BaseClient::setRhHost(){setRhHost(NULL);}
-void castor::client::BaseClient::setRhHost(std::string optHost)
+void castor::client::BaseClient::setRhHost()
   throw (castor::exception::Exception) {
   // RH server host. Can be passed given through the
   // RH_HOST environment variable or in the castor.conf
   // file as a RH/HOST entry
-  if (!optHost.compare(NULL)){
-	m_rhHost = optHost;
-	return;
-  }
-
   char* host;
   if ((host = getenv (castor::client::HOST_ENV)) != 0
       || (host = getenv (castor::client::HOST_ENV_ALT)) != 0
@@ -533,38 +558,7 @@ void castor::client::BaseClient::setRhHost(std::string optHost)
 
   stage_trace(3, "Looking up RH Host - Using %s", m_rhHost.c_str());
 }
-//------------------------------------------------------------------------------
-// setRhSvcClass
-//------------------------------------------------------------------------------
-void castor::client::BaseClient::setRhSvcClass(){setRhSvcClass(NULL);}
-void castor::client::BaseClient::setRhSvcClass(std::string optSvcClass)
-  throw (castor::exception::Exception) {
-  // RH server host. Can be passed given through the
-  // RH_HOST environment variable or in the castor.conf
-  // file as a RH/HOST entry
-  if (!optSvcClass.compare(NULL)){
-	m_rhSvcClass = optSvcClass;
-	return;
-  }
 
-  char* svc;
-  if ((svc = getenv ("STAGE_SVCCLASS")) != 0
-      || (svc = getconfent("STAGER",
-			    "SVCCLASS",0)) != 0) {
-    m_rhSvcClass = svc;
-  } else {
-    m_rhSvcClass = "";
-//     castor::exception::Exception e(ETPRM);
-//     e.getMessage()
-//       << "Unable to deduce the name of the RH server.\n"
-//       << "No -h option was given, RH_HOST is not set and "
-//       << "your castor.conf file does not contain a RH/HOST entry."
-//       << std::endl;
-//     throw e;
-  }
-
-  stage_trace(3, "Looking up RH svc class - Using %s", m_rhSvcClass.c_str());
-}
 //------------------------------------------------------------------------------
 // setRequestId
 //------------------------------------------------------------------------------
@@ -583,7 +577,7 @@ std::string castor::client::BaseClient::requestId() {
 //------------------------------------------------------------------------------
 // setAutorizationId
 //------------------------------------------------------------------------------
-int castor::client::BaseClient::setAuthorizationId(uid_t uid, gid_t gid) throw() {
+void castor::client::BaseClient::setAuthorizationId(uid_t uid, gid_t gid) throw() {
   m_authUid = uid;
   m_authGid = gid;
   m_hasAuthorizationId = true;
