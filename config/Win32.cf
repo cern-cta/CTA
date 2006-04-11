@@ -1,7 +1,7 @@
 COMM
-COMM $Id: Win32.cf,v 1.1 2005/10/13 15:10:15 jdurand Exp $
+COMM Win32.cf,v 1.1 2005/10/13 15:10:15 jdurand Exp
 COMM
-COMM       @(#)$RCSfile: Win32.cf,v $ $Revision: 1.1 $ $Date: 2005/10/13 15:10:15 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)Win32.cf,v 1.1 2005/10/13 15:10:15 CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1997-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -10,10 +10,11 @@ COMM
 COMM  Default rules for Make         Windows/NT
 
 AR = lib /nologo
-CC = cl /nologo -I../win32
+CC = cl /nologo -I../win32 -I.. /FI disable4290.h
+CXX = cl /nologo -I../win32 -I.. /FI disable4290.h
 CP = copy
 FC = df
-LD = link /nologo
+LD = link /nologo /STACK:5000000
 LN = copy
 MAKE = nmake /nologo
 RM = del
@@ -27,9 +28,9 @@ SHLIBLDFLAGS = /dll /noentry
 #include <Win32.rules>
 
 #if UseMtx
-MTCCFLAGS = -GX /GR /MD -DCTHREAD_WIN32 -D_CTHREAD_WIN32MTX -D_THREAD_SAFE -D_REENTRANT
+MTCCFLAGS = /GX /GR /MTd /Od /RTC1 /GS /EHsc /W3 /Zi -DCTHREAD_WIN32 -D_CTHREAD_WIN32MTX -D_THREAD_SAFE -D_REENTRANT
 #else
-MTCCFLAGS = -GX /GR /MD -DCTHREAD_WIN32 -D_THREAD_SAFE -D_REENTRANT
+MTCCFLAGS = /GX /GR /MTd /Od /RTC1 /GS /EHsc /W3 /Zi -DCTHREAD_WIN32 -D_THREAD_SAFE -D_REENTRANT
 #endif
 MTLDLIBS = /NODEFAULTLIB:libc.lib
 MTLDFLAGS =
