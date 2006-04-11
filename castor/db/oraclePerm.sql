@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.250 $ $Release$ $Date: 2006/04/05 14:19:57 $ $Author: itglp $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.251 $ $Release$ $Date: 2006/04/11 12:35:08 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -718,17 +718,17 @@ CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   dci NUMBER;
   fsId NUMBER;
   fileSize NUMBER;
-  isRepack INT;
+  -- repackVid VARCHAR2(2048);
 BEGIN
-  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize, SubRequest.isRepack
-    INTO SubRequestId, dci, fileSize, isRepack
+  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize  --, SubRequest.repackVid
+    INTO SubRequestId, dci, fileSize  --, repackVid
     FROM TapeCopy, SubRequest, DiskCopy, CastorFile
    WHERE TapeCopy.id = tapecopyId
      AND CastorFile.id = TapeCopy.castorFile
      AND DiskCopy.castorFile = TapeCopy.castorFile
      AND SubRequest.diskcopy(+) = DiskCopy.id
      AND DiskCopy.status = 2;
-  UPDATE DiskCopy SET status = decode(isRepack, 1,6, 0)  -- DISKCOPY_STAGEOUT if isRepack = 1, else DISKCOPY_STAGED 
+  UPDATE DiskCopy SET status = 0  -- decode(repackVid, NULL,0, 6)  -- DISKCOPY_STAGEOUT if repackVid != NULL, else DISKCOPY_STAGED 
    WHERE id = dci RETURNING fileSystem INTO fsid;
   IF SubRequestId IS NOT NULL THEN
     UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
