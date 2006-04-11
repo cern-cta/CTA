@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2003 by CERN/IT/ADC
 COMM  All rights reserved
 COMM
-COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Date: 2006/03/28 12:14:41 $ CERN IT-ADC Vitaly Motyakov
+COMM     @(#)Imakefile,v 1.5 2006/03/28 12:14:41 CERN IT-ADC Vitaly Motyakov
 COMM    Make dlf programs.
 
 #include <Project.tmpl>
@@ -348,8 +348,8 @@ EMANPAGE(dlf_write,$(EXPORTMAN)/man3,$(MANSUFFIX))
 EMANPAGE(dlf_seterrbuf,$(EXPORTMAN)/man3,$(MANSUFFIX))
 
 MakeSubdirs(all,$(SUBDIRS))
-MakeCondSubdirs(clean,$(SUBDIRS),clean)
-MakeCondSubdirs(clobber,$(SUBDIRS),clobber)
+MakeCondSubdirs(clean,$(SUBDIRS),clean0)
+MakeCondSubdirs(clobber,$(SUBDIRS),clobber0)
 
 export: $(EPROGS_C) $(EPROGS_D)
 
@@ -359,11 +359,11 @@ exportshr:
 
 COMM###################### CLEANING RULES ########################
  
-clean::
+clean0:
 	-@RemoveFiles(FilesToClean)
  
-clobber::        clean
-	-@RemoveFiles($(CLIENT) $(PROGS_D) dlf_oracle_ifce.c dlf_oracle_ifce.lis)
+clobber0:        clean
+	-@RemoveFiles($(DLFLIBTARGET) $(CLIENT) $(PROGS_D) dlf_oracle_ifce.c dlf_oracle_ifce.lis)
  
 #if _WIN32
 Makefiles:
