@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nsrm.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)nsrm.c,v 1.2 2006/01/26 15:36:23 CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	nsrm - remove name server directory/file entries */
@@ -16,6 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: nsrm.c,v $ $Revision: 1.2 $ $Date: 2006/01
 #include <sys/types.h>
 #if defined(_WIN32)
 #define W_OK 2
+#define S_IFLNK 0120000 // Symbolic link.
 #include <winsock2.h>
 #else
 #include <unistd.h>
