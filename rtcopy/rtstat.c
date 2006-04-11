@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.16 $ $Date: 2004/04/28 08:37:43 $ CERN IT/ADC Claire Redmond";
+static char sccsid[] = "@(#)rtstat.c,v 1.16 2004/04/28 08:37:43 CERN IT/ADC Claire Redmond";
 #endif /* not lint */
 
 #if !defined(_WIN32)
@@ -39,7 +39,11 @@ static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.16 $ $Date: 2004
 #include <Cuuid.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
+#if !defined(_WIN32)
 #include <sys/times.h>
+#else
+#include "times.h"
+#endif
 
 Cregexp_t *expstruct = NULL;		/* Regular expression structure */
 
