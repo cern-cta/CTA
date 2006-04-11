@@ -12,6 +12,11 @@
 #define _GNU_SOURCE		/* O_DIRECT */
 #endif
 
+#ifdef _WIN32
+#define malloc_page_aligned(x) malloc(x)
+#define free_page_aligned(x) free(x)
+#endif
+
 #ifndef lint
 static char sccsid[] = "@(#)rfio_calls.c,v 1.3 2004/03/22 12:11:24 CERN/IT/PDP/DM Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */

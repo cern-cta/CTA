@@ -1,5 +1,9 @@
 /*
- * $Id: stager_qry.c,v 1.14 2006/04/07 10:14:31 gtaur Exp $
+<<<<<<< stager_qry.c
+ * stager_qry.c,v 1.13 2006/03/28 10:05:45 motiakov Exp
+=======
+ * $Id: stager_qry.c,v 1.15 2006/04/11 17:59:14 motiakov Exp $
+>>>>>>> 1.14
  */
 
 /*
@@ -8,12 +12,15 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.14 $ $Date: 2006/04/07 10:14:31 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.15 $ $Date: 2006/04/11 17:59:14 $ $Author: motiakov $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
+#include <winsock2.h>
+#endif
 #include "stager_api.h"
 #include "serrno.h"
 #include "Cgetopt.h"
@@ -40,7 +47,6 @@ static struct Coptions longopts[] =
   };
 
 
-
 void usage _PROTO((char *));
 int cmd_countArguments(int argc, char *argv[]);
 int cmd_parse(int argc, char *argv[], struct cmd_args *args);
@@ -56,6 +62,10 @@ main(int argc, char *argv[]) {
   struct  stage_filequery_resp *responses;
   int nbresps, rc, errflg, i,ret;
   char errbuf[BUFSIZE];
+
+#if defined(_WIN32)
+  WSADATA wsadata;
+#endif
 
   args.opts.stage_host = NULL;
   args.opts.service_class = NULL;
@@ -74,8 +84,14 @@ main(int argc, char *argv[]) {
     usage (argv[0]);
     exit (EXIT_FAILURE);
   }
+#ifdef _WIN32
 
+  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
+	  fprintf (stderr, "Can not initialize Windows Socket layer.\n");
+	  exit (1);
+  }
 
+#endif
   /* Setting the error buffer */
   stage_seterrbuf(errbuf, sizeof(errbuf));
 

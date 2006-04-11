@@ -129,7 +129,7 @@ LDLIBS =  -L../shlib -lshift $(MTLDLIBS)
 LDLIBS = -L../lib -lshift -lnsl -lbsd
 #else
 #if _WIN32
-LDLIBS = ..\shlib\shift.lib ws2_32.lib advapi32.lib mpr.lib
+LDLIBS = ..\lib\shift.lib ws2_32.lib advapi32.lib mpr.lib
 #else
 LDLIBS = -L../shlib -lshift $(MTLDLIBS)
 #endif

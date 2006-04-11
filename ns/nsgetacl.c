@@ -4,8 +4,14 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nsgetacl.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-ADC/CA Jean-Philippe Baud";
+static char sccsid[] = "@(#)nsgetacl.c,v 1.2 2006/01/26 15:36:22 CERN IT-ADC/CA Jean-Philippe Baud";
 #endif /* not lint */
+
+#ifdef _WIN32
+#define S_IROTH 00004
+#define S_IWOTH 00002
+#define S_IXOTH 00001
+#endif
 
 /*	nsgetacl - get the Access Control List for a file/directory */
 #include <errno.h>

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpapi.c,v $ $Revision: 1.7 $ $Date: 2005/03/24 17:59:13 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)rtcpapi.c,v 1.7 2005/03/24 17:59:13 CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -16,6 +16,9 @@ static char sccsid[] = "@(#)$RCSfile: rtcpapi.c,v $ $Revision: 1.7 $ $Date: 2005
 #if defined(_WIN32)
 #include <winsock2.h>
 #include <direct.h>
+#include <io.h>
+#include <fcntl.h>
+#define pipe(x) _pipe(x, 512, O_BINARY)
 #else  /* _WIN32 */
 #include <sys/types.h>                  /* Standard data types          */
 #include <netdb.h>                      /* Network "data base"          */

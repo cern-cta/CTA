@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.26 $ $Date: 2005/10/17 11:38:52 $ CERN IT-PDP/DM Olof Barring
+COMM Imakefile,v 1.26 2005/10/17 11:38:52 CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -129,7 +129,7 @@ LDLIBS = -lodm
 LDLIBS = $(ADNSLIB) -lnsl
 #else
 #if _WIN32
-LDLIBS = wsock32.lib ws2_32.lib advapi32.lib
+LDLIBS = ..\lib\shift.lib ws2_32.lib advapi32.lib
 #endif
 #endif
 #endif
@@ -172,7 +172,9 @@ CFLAGS = $(CCOPTIM) -I$(INCLUDES) -I$(INCLUDES_CPP) $(THREADFLAGS) $(DFLAGS) $(S
 COMM######################### DEPENDENCY LIBRARIES ###############
 DEPLIB = DepSharedLibraryTargetName(shlib,shift)
 
+#if !defined(_WIN32)
 GLOBLIB = -L../shlib -lshift
+#endif
 
 COMM######################### RULES ##############################
 

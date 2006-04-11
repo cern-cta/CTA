@@ -1,5 +1,5 @@
 COMM
-COMM $Id: Imakefile,v 1.3 2005/01/23 08:51:57 jdurand Exp $
+COMM Imakefile,v 1.3 2005/01/23 08:51:57 jdurand Exp
 COMM
 
 COMM
@@ -35,13 +35,16 @@ LDLIBS = -lsocket -lnsl
 LDLIBS = $(ADNSLIB) -lnsl
 #else
 #if _WIN32
-LDLIBS = ws2_32.lib advapi32.lib mpr.lib
+LDLIBS = ..\lib\shift.lib ws2_32.lib advapi32.lib mpr.lib
 #endif
 #endif
 #endif
 
 DEPLIB = DepSharedLibraryTargetName(shlib,shift)
+
+#if !defined(_WIN32)
 GLOBLIB = -L../shlib -lshift
+#endif
 
 #if BuildVdqmLibrary
 VDQMLIBTARGET=LibraryTargetName(vdqmapi)

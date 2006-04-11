@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.47 $ $Date: 2006/02/13 12:57:46 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)Imakefile,v 1.47 2006/02/13 12:57:46 CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -8,7 +8,7 @@ COMM 		Make CASTOR shared libraries           GENERIC
 
 #include <Library.tmpl>
 
-LIB = InstallLibDir
+LIBDIR = InstallLibDir
 
 COMM Archive symbol table entry name
 #if __osf__ && __alpha
@@ -70,54 +70,54 @@ ALL6=SharedLibraryTargetName(castorVdqmOra)
 #if BuildSecurity
 
 ALLSEC=SharedLibraryTargetName(Csec_plugin_ID)
-INSTALLSEC=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_ID))
-EXPORTSEC=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_ID))
+INSTALLSEC=FileName($(LIBDIR),SharedLibraryTargetName(Csec_plugin_ID))
+EXPORTSEC=FileName($(LIBDIR),SharedLibraryTargetName(Csec_plugin_ID))
 
 #if UseGSI
 ALLSEC+= SharedLibraryTargetName(Csec_plugin_GSI)
-INSTALLSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_GSI))
-EXPORTSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_GSI))
+INSTALLSEC+=FileName($(LIBDIR),SharedLibraryTargetName(Csec_plugin_GSI))
+EXPORTSEC+=FileName($(LIBDIR),SharedLibraryTargetName(Csec_plugin_GSI))
 #endif
 
 #if UseKRB5
 ALLSEC+= SharedLibraryTargetName(Csec_plugin_KRB5)
-INSTALLSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB5))
-EXPORTSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB5))
+INSTALLSEC+=FileName($(LIBDIR),SharedLibraryTargetName(Csec_plugin_KRB5))
+EXPORTSEC+=FileName($(LIBDIR),SharedLibraryTargetName(Csec_plugin_KRB5))
 #endif
 
 #if UseKRB4
 ALLSEC+= SharedLibraryTargetName(Csec_plugin_KRB4)
-INSTALLSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB4))
-EXPORTSEC+=FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB4))
+INSTALLSEC+=FileName($(LIBDIR),SharedLibraryTargetName(Csec_plugin_KRB4))
+EXPORTSEC+=FileName($(LIBDIR),SharedLibraryTargetName(Csec_plugin_KRB4))
 #endif
 
 #endif
 
 all: $(ALL0) $(ALL1) $(ALL2) $(ALL4) $(ALL5) $(ALL6) $(ALLSEC)  
 
-INSTALL0=FileName($(LIB),SharedLibraryTargetName(shift))
+INSTALL0=FileName($(LIBDIR),SharedLibraryTargetName(shift))
 #if BuildOraCpp
-INSTALL1=FileName($(LIB),SharedLibraryTargetName(castorCommonOra))
+INSTALL1=FileName($(LIBDIR),SharedLibraryTargetName(castorCommonOra))
 #if UseOraCDBC
-INSTALL1+=FileName($(LiB),SharedLibraryTargetName(castorCnvs))
+INSTALL1+=FileName($(LIBDIR),SharedLibraryTargetName(castorCnvs))
 #endif
 #endif
 #if BuildTankPerfMonLibrary
-INSTALL2=FileName($(LIB),SharedLibraryTargetName(castorTankPerfMon))
+INSTALL2=FileName($(LIBDIR),SharedLibraryTargetName(castorTankPerfMon))
 #endif
 #if BuildMyCpp
-INSTALL4=FileName($(LIB),SharedLibraryTargetName(castorCommonMysql)) FileName($(LiB),SharedLibraryTargetName(castorCnvs))
+INSTALL4=FileName($(LIBDIR),SharedLibraryTargetName(castorCommonMysql)) FileName($(LIBDIR),SharedLibraryTargetName(castorCnvs))
 #endif
 #if BuildPgCpp
-INSTALL5=FileName($(LIB),SharedLibraryTargetName(castorCommonPgsql)) FileName($(LiB),SharedLibraryTargetName(castorCnvs))
+INSTALL5=FileName($(LIBDIR),SharedLibraryTargetName(castorCommonPgsql)) FileName($(LIBDIR),SharedLibraryTargetName(castorCnvs))
 #endif
 #if BuildVDQMCpp
-INSTALL6=FileName($(LIB),SharedLibraryTargetName(castorVdqmOra))
+INSTALL6=FileName($(LIBDIR),SharedLibraryTargetName(castorVdqmOra))
 #endif
 
 
 
-install: $(LIB) $(INSTALL0) $(INSTALL1) $(INSTALL2) $(INSTALL4) $(INSTALL5) $(INSTALL6) $(INSTALLSEC)
+install: $(LIBDIR) $(INSTALL0) $(INSTALL1) $(INSTALL2) $(INSTALL4) $(INSTALL5) $(INSTALL6) $(INSTALLSEC)
 
 EXPORT0=$(EXPORTLIB)/SharedLibraryTargetName(shift)
 #if BuildOraCpp
@@ -231,15 +231,15 @@ libcastorVdqmOra.dll:	$(LIBRARIES6)
 	link /dll /noentry /nologo /out:$@ $**
 
 
-MakeDir($(LIB),root,bin,0755)
+MakeDir($(LIBDIR),root,bin,0755)
 
-InstallSharedLibrary(shift,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIB))
-InstallSharedLibrary(castorCnvs,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIB))
-InstallSharedLibrary(castorCommonOra,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIB))
-InstallSharedLibrary(castorCommonMysql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIB))
-InstallSharedLibrary(castorCommonPgsql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIB))
-InstallSharedLibrary(castorVdqmOra,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIB))
-InstallSharedLibrary(castorTankPerfMon,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIB))
+InstallSharedLibrary(shift,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
+InstallSharedLibrary(castorCnvs,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
+InstallSharedLibrary(castorCommonOra,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
+InstallSharedLibrary(castorCommonMysql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
+InstallSharedLibrary(castorCommonPgsql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
+InstallSharedLibrary(castorVdqmOra,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
+InstallSharedLibrary(castorTankPerfMon,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
 
 InstallSharedLibrary(shift,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
 InstallSharedLibrary(castorCnvs,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))

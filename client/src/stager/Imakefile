@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.52 $ $Date: 2005/11/25 14:27:22 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)Imakefile,v 1.52 2005/11/25 14:27:22 CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -53,7 +53,7 @@ LDLIBS = -lodm
 LDLIBS = $(ADNSLIB) -lnsl
 #else
 #if _WIN32
-LDLIBS = wsock32.lib ws2_32.lib advapi32.lib
+LDLIBS = ..\lib\shift.lib wsock32.lib ws2_32.lib advapi32.lib
 #endif
 #endif
 #endif
@@ -67,7 +67,10 @@ CFLAGS = $(CCOPTIM) -I$(INCLUDES) -I$(INCLUDES_CPP) $(SECURITYFLAG) $(THREADFLAG
 CPPFLAGS=$(CFLAGS) -I..
 
 DEPLIB = DepSharedLibraryTargetName(shlib,shift)
+
+#if !defined(_WIN32)
 GLOBLIB = -L../shlib -lshift
+#endif
 
 #if BuildStageDaemon
 PROGS_STAGER = ProgramTargetName(stager) ProgramTargetName(stageradmin) ProgramTargetName(stagerNotifyService)

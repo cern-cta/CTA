@@ -29,8 +29,11 @@ static char sccsid[] = "@(#)rfio_call64.c,v 1.3 2004/03/22 12:34:03 CERN/IT/PDP/
 #include <string.h>
 #include <pwd.h>
 #include <grp.h>
+#include "common.h"
 #if defined(_WIN32)
 #include "syslog.h"
+#include "ws_errmsg.h"
+#include <io.h>
 #else
 #include <sys/param.h>
 #include <syslog.h>                     /* System logger                */
@@ -150,6 +153,11 @@ size DAEMONV3_RDMT_BUFSIZE. Defaults values are defined below */
 #define DAEMONV3_RDMT (1)
 #define DAEMONV3_RDMT_NBUF (4) 
 #define DAEMONV3_RDMT_BUFSIZE (256*1024)
+
+#ifdef _WIN32
+#define malloc_page_aligned(x) malloc(x)
+#define free_page_aligned(x) free(x)
+#endif
 
 static int daemonv3_rdmt, daemonv3_rdmt_nbuf, daemonv3_rdmt_bufsize;
 
@@ -1296,7 +1304,11 @@ struct rfiostat *infop ;
       if ((iobuffer = malloc(size+WORDSIZE+3*LONGSIZE)) == NULL)    {
 	 log(LOG_ERR, "rreadahd64: malloc(): %s\n", strerror(errno)) ;
 #if !defined(HPSS)
+#if !defined(_WIN32)
 	 (void) close(s) ;
+#else
+	 closesocket(s) ;
+#endif /* _WIN32 */
 #endif /* HPSS */
 	 return -1 ; 
       }
@@ -2005,6 +2017,8 @@ char        *host;         /* Where the request comes from        */
 #if defined(linux)
             log(LOG_DEBUG, "%s: O_DIRECT requested\n", __func__);
             flags |= O_DIRECT;
+#elif defined(_WIN32)
+	    log(LOG_DEBUG, "%s: O_DIRECT requested but ignored.", __FUNCTION__);
 #else
 	    log(LOG_DEBUG, "%s: O_DIRECT requested but ignored.", __func__);
 #endif
