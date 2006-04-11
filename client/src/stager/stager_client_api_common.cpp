@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.20 2006/02/03 11:40:17 sponcec3 Exp $
+ * stager_client_api_common.cpp,v 1.20 2006/02/03 11:40:17 sponcec3 Exp
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.20 $ $Date: 2006/02/03 11:40:17 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)stager_client_api_common.cpp,v 1.20 2006/02/03 11:40:17 CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
@@ -16,25 +16,29 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision:
 /* ============== */
 #include <stdlib.h>
 #include <string.h>
-#include <sstream>
 #include <errno.h>
 #include <stdarg.h>
+#if !defined(_WIN32)
 #include <unistd.h>
+#else
+#include "pwd.h"	// For getuid(), getgid()
+#endif
 #include <sys/types.h>
+#include <sstream>
 
 /* ============= */
 /* Local headers */
 /* ============= */
+#include "stager_client_api_common.h"
+#include "serrno.h"
+#include "trace.h"
+#include "Cglobals.h"
+#include "Csnprintf.h"
 #include "stager_api.h"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/client/BaseClient.hpp"
-#include "serrno.h"
-#include "trace.h"
-#include "Cglobals.h"
-#include "stager_client_api_common.h"
 #include "stager_client_api_authid.hpp"
-#include "Csnprintf.h"
 
 EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
 
