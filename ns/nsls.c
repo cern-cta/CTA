@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nsls.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)nsls.c,v 1.2 2006/01/26 15:36:22 CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	nsls - list name server directory/file entries */
@@ -21,6 +21,7 @@ static char sccsid[] = "@(#)$RCSfile: nsls.c,v $ $Revision: 1.2 $ $Date: 2006/01
 #if defined(_WIN32)
 #include <winsock2.h>
 #include "statbits.h"
+#define F_OK 0
 #else
 #include <unistd.h>
 #endif
