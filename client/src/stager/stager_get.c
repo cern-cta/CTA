@@ -1,5 +1,5 @@
 /*
- * $Id: stager_get.c,v 1.7 2006/04/11 14:27:20 gtaur Exp $
+ * $Id: stager_get.c,v 1.8 2006/04/11 14:30:20 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_get.c,v $ $Revision: 1.7 $ $Date: 2006/04/11 14:27:20 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_get.c,v $ $Revision: 1.8 $ $Date: 2006/04/11 14:30:20 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdlib.h>
