@@ -1,5 +1,5 @@
 /*
- * $Id: stager_get.c,v 1.6 2005/07/06 09:16:04 jdurand Exp $
+ * $Id: stager_get.c,v 1.7 2006/04/11 14:27:20 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_get.c,v $ $Revision: 1.6 $ $Date: 2005/07/06 09:16:04 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_get.c,v $ $Revision: 1.7 $ $Date: 2006/04/11 14:27:20 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -117,7 +117,8 @@ int main(argc, argv)
 
   opts.stage_host = NULL;
   opts.service_class = NULL;
-
+  opts.stage_port=0;
+  opts.stage_version=0;
 
   usertag = NULL;
 
@@ -137,6 +138,7 @@ int main(argc, argv)
     opts.stage_host = stage_host;
   }
 
+  ret=getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
 
   /* Setting the error buffer and preparing the array of file requests */
   stage_seterrbuf(errbuf, sizeof(errbuf));
