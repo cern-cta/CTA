@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2005/10/11 14:14:02 $ $Author: bcouturi $
+ * @(#)RequestReplier.cpp,v 1.23 $Release$ 2005/10/11 14:14:02 bcouturi
  *
  *
  *
@@ -39,10 +39,16 @@
 #include "castor/Services.hpp"
 #include "castor/rh/EndResponse.hpp"
 
+#if !defined(_WIN32)
 #include <sys/poll.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#else
+#include "poll.h"
+#include <io.h>
+#include <fcntl.h>
+#endif
 #include <errno.h>
 #include <time.h>
 
@@ -108,7 +114,11 @@ castor::replier::RequestReplier::RequestReplier() throw() {
   m_connectionStatusCallback = 0;
 
   // Establishing the pipe used for notification with ReplierThread
+#if !defined(_WIN32)
   int rc = pipe(m_commPipe);
+#else
+  int rc = _pipe(m_commPipe, 512, O_BINARY);
+#endif
   if (-1 == rc) {
     clog() << ERROR << SETW func  <<  "Could not establish communication pipe !" << std::endl;
   }

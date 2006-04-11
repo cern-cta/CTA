@@ -23,7 +23,7 @@ CCOPTFLAGS = -DNIS -cckr
 SYSDEP_OBJS = getarghp.o
 #endif
 #if _WIN32
-SYSDEP_OBJS = Cinitservice.obj cmdf2argv.obj getopt.obj sleep.obj syslog.obj uxid.obj ws_errmsg.obj inet_netof.obj getregkey.obj
+SYSDEP_OBJS = InitSVC.obj times.obj poll.obj Cinitservice.obj cmdf2argv.obj getopt.obj sleep.obj syslog.obj uxid.obj ws_errmsg.obj inet_netof.obj getregkey.obj
 #endif
 
 #ifdef USESCONFIGD
@@ -89,6 +89,7 @@ NFSROOT0 = NfsRoot
 NFSROOT  = -DNFSROOT=\"$(NFSROOT0)\"
 #endif
 CFLAGS = $(CCOPTIM) -I$(INCLUDES) $(CTHREAD_FLAGS) $(CTHREAD_DEBUG) $(CPOOL_DEBUG) -DPATH_CONFIG=\"$(PATH_CONFIG)\" -DLOCALHOSTSFILE=\"$(LOCHOSTSFILE)\" -DMAPPING_FILE=\"$(MAPPING)\" -DRTHOSTSFILE=\"$(RTHOSTSFILE)\" -DADMIN_HOSTS=\"$(ADMINHOSTS)\" $(W2000MAPDIR) $(WNTMAPDIR) $(CCOPTFLAGS) $(DEFCFLAGS) $(NEWGETCONF) $(ACCTFILE) $(ADNS) $(NFSROOT)
+CPPFLAGS = $(CCOPTIM) -I$(INCLUDES) $(CTHREAD_FLAGS) $(CTHREAD_DEBUG) $(CPOOL_DEBUG) -DPATH_CONFIG=\"$(PATH_CONFIG)\" -DLOCALHOSTSFILE=\"$(LOCHOSTSFILE)\" -DMAPPING_FILE=\"$(MAPPING)\" -DRTHOSTSFILE=\"$(RTHOSTSFILE)\" -DADMIN_HOSTS=\"$(ADMINHOSTS)\" $(W2000MAPDIR) $(WNTMAPDIR) $(CCOPTFLAGS) $(DEFCFLAGS) $(NEWGETCONF) $(ACCTFILE) $(ADNS) $(NFSROOT)
 FFLAGS = $(FFOPTFLAGS)
 
 .PRECIOUS:	LibraryTargetName(common)
@@ -171,6 +172,15 @@ Csetprocname.Osuf: Csetprocname.c
 	$(CC) $(CFLAGS) -g $(LINUXOPTIM) -c Csetprocname.c
 #endif
 #if _WIN32
+InitSVC.cpp:	..\win32\InitSVC.cpp
+	RemoveFile(InitSVC.cpp)
+	copy ..\win32\InitSVC.cpp InitSVC.cpp
+times.c:	..\win32\times.c
+	RemoveFile(times.c)
+	copy ..\win32\times.c times.c
+poll.c:	..\win32\poll.c
+	RemoveFile(poll.c)
+	copy ..\win32\poll.c poll.c
 Cinitservice.c:	..\win32\Cinitservice.c
 	RemoveFile(Cinitservice.c)
 	copy ..\win32\Cinitservice.c Cinitservice.c
@@ -269,6 +279,8 @@ depend:
 Makefiles:
 
 #if _WIN32
+times.obj:	..\win32\times.h
+poll.obj:	..\win32\poll.h
 syslog.obj:	..\win32\syslog.h ..\win32\slogmsg.h
 uxid.obj:	..\win32\grp.h ..\win32\pwd.h
 ws_errmsg.obj:	..\win32\ws_errmsg.h

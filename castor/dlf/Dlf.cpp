@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Dlf.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/04/05 11:51:33 $ $Author: sponcec3 $
+ * @(#)Dlf.cpp,v 1.1 $Release$ 2005/04/05 11:51:33 sponcec3
  *
  * C++ interface to DLF
  *
@@ -67,11 +67,13 @@ void castor::dlf::dlf_writep
  castor::dlf::Param params[],
  struct Cns_fileid *ns_invariant) {
   // Place holder for the C version of the parameters
-  dlf_write_param_t cparams[numparams];
+//  dlf_write_param_t cparams[numparams]; // Doesn't work on windows compiler!!!
+  dlf_write_param_t* cparams = new dlf_write_param_t[numparams];
   // Translate paramters from C++ to C
   for (int i = 0; i < numparams; i++) {
     cparams[i] = params[i].cParam();
   }
   ::dlf_writep(uuid, severity, message_no,
                ns_invariant, numparams, cparams);
+  delete[] cparams;
 }

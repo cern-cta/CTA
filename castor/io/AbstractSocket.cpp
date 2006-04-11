@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AbstractSocket.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/01/17 09:52:22 $ $Author: itglp $
+ * @(#)AbstractSocket.cpp,v 1.6 $Release$ 2006/01/17 09:52:22 itglp
  *
  *
  *
@@ -26,14 +26,18 @@
 
 // Include Files
 #include <net.h>
+#if !defined(_WIN32)
 #include <netdb.h>
-#include <errno.h>
-#include <serrno.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#else
+#include <winsock2.h>
+#endif
+#include <errno.h>
+#include <serrno.h>
+#include <sys/types.h>
 #include <string>
 #include "castor/IObject.hpp"
 #include "castor/Constants.hpp"
@@ -57,7 +61,11 @@ void castor::io::AbstractSocket::getPortIp(unsigned short& port,
                                            unsigned long& ip) const
   throw (castor::exception::Exception) {
   // get address
+#if !defined(_WIN32)
   unsigned int soutlen = sizeof(struct sockaddr_in);
+#else
+  int soutlen = sizeof(struct sockaddr_in);
+#endif
   struct sockaddr_in sout;
   if (getsockname(m_socket, (struct sockaddr*)&sout, &soutlen) < 0) {
     castor::exception::Exception ex(errno);
@@ -77,7 +85,11 @@ void castor::io::AbstractSocket::getPeerIp(unsigned short& port,
                                            unsigned long& ip) const
   throw (castor::exception::Exception) {
   // get address
+#if !defined(_WIN32)
   unsigned int soutlen = sizeof(struct sockaddr_in);
+#else
+  int soutlen = sizeof(struct sockaddr_in);
+#endif
   struct sockaddr_in sout;
   if (getpeername(m_socket, (struct sockaddr*)&sout, &soutlen) < 0) {
     castor::exception::Exception ex(errno);
@@ -168,7 +180,11 @@ sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port,
   // get host information
   struct hostent *hp;
   if ((hp = gethostbyname(host.c_str())) == 0) {
-    errno = EHOSTUNREACH;
+#if !defined(_WIN32)
+	errno = EHOSTUNREACH;
+#else
+	errno = WSAEHOSTUNREACH;
+#endif
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Unknown host " << host << " (h_errno = " << h_errno << ")";
     throw ex;
@@ -259,7 +275,11 @@ void castor::io::AbstractSocket::readBuffer(const unsigned int magic,
   *buf = (char*) malloc(n);
   ssize_t readBytes = 0;
   while (readBytes < n) {
+#if !defined(_WIN32)
     ssize_t nb = ::read(m_socket, (*buf)+readBytes, n - readBytes);
+#else
+    ssize_t nb = ::recv(m_socket, (*buf)+readBytes, n - readBytes, 0);
+#endif
     if (nb == -1) {
       if (errno == EAGAIN) {
         continue;

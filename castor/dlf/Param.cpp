@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Param.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/05 13:36:36 $ $Author: sponcec3 $
+ * @(#)Param.cpp,v 1.2 $Release$ 2005/04/05 13:36:36 sponcec3
  *
  * 
  *
@@ -70,9 +70,17 @@ castor::dlf::Param::Param(char* name,
   m_deallocate(true) {
   m_cParam.name = name;
   m_cParam.type = DLF_MSG_PARAM_STR;
-  struct tm tmstruc;
   time_t time = value.time();
+  // There is NO localtime_r() on Windows,
+  // so we will use non-reentrant version localtime().
+  struct tm tmstruc;
+#if !defined(_WIN32)
   localtime_r (&time, &tmstruc);
+#else
+  struct tm* p_tmstruc;
+  p_tmstruc = localtime(&time);
+  tmstruc = *p_tmstruc;
+#endif;
   std::ostringstream s;
   s << std::setw(2) << tmstruc.tm_mon+1
     << "/" << tmstruc.tm_mday

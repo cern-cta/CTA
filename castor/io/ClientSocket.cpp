@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ClientSocket.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/06/09 13:24:10 $ $Author: bcouturi $
+ * @(#)ClientSocket.cpp,v 1.4 $Release$ 2005/06/09 13:24:10 bcouturi
  *
  *
  *
@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 // Include Files
+#if !defined(_WIN32)
 #include <net.h>
 #include <netdb.h>
 #include <errno.h>
@@ -34,6 +35,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#else
+#include <winsock2.h>
+#endif
 #include <string>
 #include "castor/IObject.hpp"
 #include "castor/Constants.hpp"
@@ -80,7 +84,11 @@ castor::io::ClientSocket::ClientSocket(const unsigned short port,
 // destructor
 //------------------------------------------------------------------------------
 castor::io::ClientSocket::~ClientSocket() throw () {
-  close(m_socket);
+#if !defined(_WIN32)
+	close(m_socket);
+#else
+	closesocket(m_socket);
+#endif
 }
 
 
@@ -93,7 +101,11 @@ void castor::io::ClientSocket::connect()
   if (::connect(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr)) < 0) {
     int tmpserrno = errno;
     int tmperrno = errno;
+#if !defined(_WIN32)
     if (errno != ECONNREFUSED) {
+#else
+    if (WSAGetLastError() != WSAECONNREFUSED) {
+#endif
       tmpserrno = SECOMERR;
     }
     castor::exception::Exception ex(tmpserrno);
@@ -107,7 +119,11 @@ void castor::io::ClientSocket::connect()
                       << (ip >> 24) << ":"
                       << ntohs(m_saddr.sin_port);
     }
+#if !defined(_WIN32)
     close(m_socket);
+#else
+    closesocket(m_socket);
+#endif
     errno = tmperrno;
     throw ex;
   }

@@ -31,8 +31,8 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/Constants.hpp"
 
+#if !defined(_WIN32)
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
@@ -40,6 +40,8 @@
 #include <arpa/inet.h>
 #include <net.h>
 #include <netdb.h>
+#endif
+#include <sys/types.h>
 #include <errno.h>
 
 #include <cstring>
@@ -137,7 +139,11 @@ std::string castor::replier::ClientConnection::getStatusStr()
 void castor::replier::ClientConnection::close() throw() {
 
   char *func = "cc::close ";
+#if !defined(_WIN32)
   ::close(m_fd);
+#else
+  ::closesocket(m_fd);
+#endif
   clog() << VERBOSE << SETW func  << this->toString() << " Deleting while "
 	 << m_messages.size() << " messages are left"
 	 << std::endl;
@@ -211,18 +217,31 @@ void castor::replier::ClientConnection::createSocket()
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Can't set socket to TCP_NODELAY mode:"
                     << strerror(errno) << std::endl;
-    ::close(s);
+#if !defined(_WIN32)
+	::close(s);
+#else
+	::closesocket(s);
+#endif
     throw ex;
 
   }
 
   // Setting the socket to asynchonous mode
+#if !defined(_WIN32)
   int nonblocking= 1 ;
   if (ioctl(s, FIONBIO,&nonblocking) == -1 ) {
+#else
+  u_long nonblocking= 1 ;
+  if (ioctlsocket(s, FIONBIO,&nonblocking) == -1 ) {
+#endif
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Can't set socket to asynchonous mode:"
                     << strerror(errno) << std::endl;
-    ::close(s);
+#if !defined(_WIN32)
+	::close(s);
+#else
+	::closesocket(s);
+#endif
     throw ex;
   }
 
@@ -245,11 +264,19 @@ void castor::replier::ClientConnection::connect()
 
   // Connecting to the client
   int rc = ::connect(m_fd, (struct sockaddr *)&saddr, sizeof(saddr));
+#if !defined(_WIN32)
   if (rc == -1 && errno != EINPROGRESS) {
+#else
+  if (rc == -1 && WSAGetLastError() != WSAEINPROGRESS) {
+#endif
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Can't connect to client:"
                     << strerror(errno) << std::endl;
-    ::close(m_fd);
+#if !defined(_WIN32)
+	::close(m_fd);
+#else
+	::closesocket(m_fd);
+#endif
     throw ex;
   }
   clog() << VERBOSE << SETW func  << this->toString() 
@@ -314,9 +341,17 @@ void castor::replier::ClientConnection::send()
   char *pc = (char *)buf;
 
   size_t written = 0;
+#if !defined(_WIN32)
   ssize_t rc = 0;
+#else
+  int rc = 0;
+#endif
   while (written < buflen) {
+#if !defined(_WIN32)
     rc = write(m_fd, (char *)(buf + written), buflen - written);
+#else
+    rc = ::send(m_fd, (char *)(buf + written), buflen - written, 0);
+#endif
     if (rc == -1) {
       if (errno == EAGAIN) {
         continue;

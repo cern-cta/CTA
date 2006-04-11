@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServerSocket.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/21 10:43:43 $ $Author: sponcec3 $
+ * @(#)ServerSocket.cpp,v 1.3 $Release$ 2004/07/21 10:43:43 sponcec3
  *
  *
  *
@@ -25,15 +25,19 @@
  *****************************************************************************/
 
 // Include Files
+#if !defined(_WIN32)
 #include <net.h>
 #include <netdb.h>
-#include <errno.h>
-#include <serrno.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#else
+#include <winsock2.h>
+#endif
+#include <errno.h>
+#include <serrno.h>
 #include <string>
 #include "castor/IObject.hpp"
 #include "castor/Constants.hpp"
@@ -108,7 +112,11 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
 // destructor
 //------------------------------------------------------------------------------
 castor::io::ServerSocket::~ServerSocket() throw () {
-  close(m_socket);
+#if !defined(_WIN32)
+	close(m_socket);
+#else
+	closesocket(m_socket);
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -136,7 +144,11 @@ void castor::io::ServerSocket::listen()
   if (::listen(m_socket, STG_CALLBACK_BACKLOG) < 0) {
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Unable to listen on socket";
-    (void) close(m_socket);
+#if !defined(_WIN32)
+	close(m_socket);
+#else
+	closesocket(m_socket);
+#endif
     m_socket = 0;
     throw ex;
   }
@@ -183,7 +195,11 @@ void castor::io::ServerSocket::bind(sockaddr_in saddr)
   if (::bind(m_socket, (struct sockaddr *)&saddr, sizeof(saddr)) < 0) {
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Unable to bind socket";
-    close(m_socket);
+#if !defined(_WIN32)
+	close(m_socket);
+#else
+	closesocket(m_socket);
+#endif
     throw ex;
   }
 }
