@@ -80,7 +80,7 @@ castor::dlf::Param::Param(char* name,
   struct tm* p_tmstruc;
   p_tmstruc = localtime(&time);
   tmstruc = *p_tmstruc;
-#endif;
+#endif
   std::ostringstream s;
   s << std::setw(2) << tmstruc.tm_mon+1
     << "/" << tmstruc.tm_mday
