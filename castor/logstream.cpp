@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2005/06/27 13:33:45 $ $Author: sponcec3 $
+ * @(#)logstream.cpp,v 1.7 $Release$ 2005/06/27 13:33:45 sponcec3
  *
  * A generic logstream for castor, handling IP addresses
  * and timestamps
@@ -27,8 +27,9 @@
 
 // Include Files
 #include "logstream.h"
+#if !defined(_WIN32)
 #include <execinfo.h> /* for stackframe tracing */
-
+#endif
 #define MANIPULATORIMPL(T)                              \
   castor::logstream& castor::T(castor::logstream& s) {  \
     s.setLevel(DLF_LVL_##T);                            \
@@ -58,6 +59,7 @@ castor::logstream& castor::ip(castor::logstream& s) {
 }
 
 castor::logstream& castor::trace(castor::logstream& s) {
+#if !defined(_WIN32)
   void* trace[20];
   int trace_size = backtrace(trace,20);
   char **symbols = backtrace_symbols(trace, trace_size);
@@ -66,6 +68,7 @@ castor::logstream& castor::trace(castor::logstream& s) {
   }
   s << std::flush;
   free(symbols);
+#endif
   return s;
 }
 
