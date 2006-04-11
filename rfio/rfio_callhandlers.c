@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_callhandlers.c,v 1.6 2005/07/21 09:13:07 itglp Exp $
+ * rfio_callhandlers.c,v 1.6 2005/07/21 09:13:07 itglp Exp
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_callhandlers.c,v $ $Revision: 1.6 $ $Date: 2005/07/21 09:13:07 $ CERN IT-ADC/CA Benjamin Couturier";
+static char sccsid[] = "@(#)rfio_callhandlers.c,v 1.6 2005/07/21 09:13:07 CERN IT-ADC/CA Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -17,6 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: rfio_callhandlers.c,v $ $Revision: 1.6 $ $
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
+#include "rfio.h"
 #include "u64subr.h"
 #include "log.h"
 #include "castor/BaseObject.h"
