@@ -344,6 +344,13 @@ int rtcpcld_updcFileRecalled _PROTO((
                                      tape_list_t *,
                                      file_list_t *
                                      ));
+
+#ifdef CASTOR_STAGER_TAPECOPY_H
+int rtcpcld_putFailed _PROTO((
+                              struct Cstager_TapeCopy_t *
+                              ));
+#endif /* CASTOR_STAGER_TAPECOPY_H */
+
 int rtcpcld_initNsInterface _PROTO((
                                     void
                                     ));
