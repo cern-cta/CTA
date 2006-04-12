@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestHelper.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/04/07 14:50:11 $ $Author: gtaur $
+ * @(#)$RCSfile: RequestHelper.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/04/12 07:40:17 $ $Author: gtaur $
  *
  * 
  *
@@ -53,17 +53,18 @@ castor::stager::RequestHelper::~RequestHelper() throw() {};
 void castor::stager::RequestHelper::setOptions(struct stage_options* opts) {
   // Setting the options
      if(opts !=0){
-	if ( opts->stage_host == NULL || strcmp(opts->stage_host,"")) {
+	if ( opts->stage_host == NULL || !strcmp(opts->stage_host,"")) {
 		if (opts->stage_host){free(opts->stage_host);}
 		opts->stage_host=strdup(DEFAULT_HOST);
 	}
-	if ( opts->service_class == NULL || strcmp(opts->service_class,"")) {
+	if ( opts->service_class == NULL || !strcmp(opts->service_class,"")) {
 		if (opts->service_class){free(opts->service_class);}
 		opts->service_class=strdup(DEFAULT_SVCCLASS);
 	}
 	if (opts->stage_version<=0){opts->stage_version=DEFAULT_VERSION;} 
 	if (opts->stage_port<=0){opts->stage_port=DEFAULT_PORT;} 
         }
+	
 }
 
 
