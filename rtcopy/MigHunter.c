@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/10/12 10:31:57 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.30 $ $Release$ $Date: 2006/04/12 13:40:04 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/10/12 10:31:57 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.30 $ $Release$ $Date: 2006/04/12 13:40:04 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1004,6 +1004,7 @@ static int addTapeCopyToStreams(
   struct Cns_filestat statbuf;
   struct Cns_fileid fileId;
   int rc, i, j, nbTapePools = 0, nbStreams = 0, addedToStream = 0;
+  int save_serrno = 0;
   unsigned int cpNb = 0;
 
   if ( (svcClass == NULL) || (tapeCopy == NULL) ) {
@@ -1030,18 +1031,22 @@ static int addTapeCopyToStreams(
     *castorFileName = '\0';
     rc = Cns_statx(castorFileName,&fileId,&statbuf);
     if ( rc == -1 ) {
+      save_serrno = serrno;
       if ( runAsDaemon == 0 ) {
         fprintf(stderr,"Cns_statx(): %s\n",sstrerror(serrno));
       }
       LOG_SYSCALL_ERR("Cns_statx()");
+      serrno = save_serrno;
       return(-1);
     }
     rc = Cns_getpath(fileId.server,fileId.fileid,castorFileName);
     if ( rc == -1 ) {
+      save_serrno = serrno;
       if ( runAsDaemon == 0 ) {
         fprintf(stderr,"Cns_getpath(): %s\n",sstrerror(serrno));
       }
       LOG_SYSCALL_ERR("Cns_getpath()");
+      serrno = save_serrno;
       return(-1);
     }
   }
@@ -1356,7 +1361,7 @@ static int addMigrationCandidatesToStreams(
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_ITapeSvc_t *tpSvc = NULL;
   ID_TYPE key;
-  int rc, i;
+  int rc, i, save_serrno = 0;
   char *nsHost, buf[22];
   struct Cns_fileid fileid;
 
@@ -1385,6 +1390,7 @@ static int addMigrationCandidatesToStreams(
                               (nsFileClassArray == NULL ? NULL : nsFileClassArray[i])
                               );
     if ( rc == -1 ) {
+      save_serrno = serrno;
       if ( runAsDaemon == 0 ) {
         fprintf(stderr,"addTapeCopyToStreams(): %s\n",sstrerror(serrno));
       }
@@ -1428,7 +1434,6 @@ static int addMigrationCandidatesToStreams(
        * an alert for manual check.
        */
       Cstager_TapeCopy_id(tapeCopyArray[i],&key);
-      Cstager_TapeCopy_setStatus(tapeCopyArray[i],TAPECOPY_FAILED);
       Cstager_TapeCopy_castorFile(tapeCopyArray[i],&castorFile);
       memset(&fileid,'\0',sizeof(fileid));
       nsHost = NULL;
@@ -1450,6 +1455,19 @@ static int addMigrationCandidatesToStreams(
           fprintf(stderr,"PUT_FAILED: %s@%s\n",u64tostr(fileid.fileid,buf,-1),
                   fileid.server);
         }
+        if ( save_serrno == ENOENT ) {
+          /*
+           * Castor file has been deleted
+           */
+          if ( rtcpcld_putFailed(tapeCopyArray[i]) == -1 ) {
+            LOG_SYSCALL_ERR("rtcpcld_putFailed");
+            C_IAddress_delete(iAddr);
+            return(-1);
+          }
+          continue;
+        } else {
+          Cstager_TapeCopy_setStatus(tapeCopyArray[i],TAPECOPY_FAILED);
+        }
       } else {
         if ( runAsDaemon == 0 ) {
           fprintf(stderr,"Reset to TAPECOPY_TOBEMIGRATED: %s@%s\n",
@@ -1458,7 +1476,7 @@ static int addMigrationCandidatesToStreams(
         }
         Cstager_TapeCopy_setStatus(tapeCopyArray[i],TAPECOPY_TOBEMIGRATED);
       }
-      
+
       rc = C_Services_updateRep(
                                 dbSvc,
                                 iAddr,

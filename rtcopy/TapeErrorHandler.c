@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.12 $ $Release$ $Date: 2006/03/22 16:34:32 $ $Author: obarring $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.13 $ $Release$ $Date: 2006/04/12 13:40:04 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.12 $ $Release$ $Date: 2006/03/22 16:34:32 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.13 $ $Release$ $Date: 2006/04/12 13:40:04 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -880,68 +880,6 @@ static int doMigrationRetry(
   return(0);
 }
 
-static int putFailed(
-                     segment,
-                     tapeCopy
-                     )
-     struct Cstager_Segment_t *segment;
-     struct Cstager_TapeCopy_t *tapeCopy;
-{
-  struct C_IObject_t *iObj = NULL;
-  struct C_Services_t *dbSvc;
-  struct C_BaseAddress_t *baseAddr;
-  struct C_IAddress_t *iAddr = NULL;
-  struct Cstager_ITapeSvc_t *tpSvc = NULL;
-  int rc;
-  ID_TYPE key;
-
-  if ( tapeCopy == NULL ) {
-    serrno = EINVAL;
-    return(-1);
-  }
-
-  rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
-  if ( rc == -1 ) return(-1);
-
-  /*
-   * Flag failed segment retried so that it won't be selected again
-   */
-  iObj = Cstager_Segment_getIObject(segment);
-  Cstager_Segment_setStatus(segment,SEGMENT_RETRIED);
-  rc = C_Services_updateRep(
-                            dbSvc,
-                            iAddr,
-                            iObj,
-                            1
-                            );
-  if ( rc == -1 ) {
-    LOG_DBCALLANDKEY_ERR("C_Services_updateRep(segment)",
-                         C_Services_errorMsg(dbSvc),
-                         key);
-    C_IAddress_delete(iAddr);
-    return(-1);
-  }
-
-  iObj = Cstager_TapeCopy_getIObject(tapeCopy);
-  Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_FAILED);
-  rc = C_Services_updateRep(
-                            dbSvc,
-                            iAddr,
-                            iObj,
-                            1
-                            );
-  if ( rc == -1 ) {
-    LOG_DBCALLANDKEY_ERR("C_Services_updateRep(tapeCopy)",
-                         C_Services_errorMsg(dbSvc),
-                         key);
-    C_IAddress_delete(iAddr);
-    return(-1);
-  }
-
-  if ( iAddr != NULL ) C_IAddress_delete(iAddr);
-  return(0);
-}
-
 /*
  * Check if the failed migration candidate is retryable:
  *  - castor file still exists
@@ -1507,9 +1445,9 @@ int main(
         } else if (serrno == ENOENT ) {
           (void)cleanupSegment(segm);
         } else if ( serrno = SERTYEXHAUST ) {
-          rc = putFailed(segm,tapeCopy);
+          rc = rtcpcld_putFailed(tapeCopy);
           if ( rc == -1 ) {
-            LOG_SYSCALL_ERR("putFailed()");
+            LOG_SYSCALL_ERR("rtcpcld_putFailed()");
           }
         }
       } else {
