@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.141 $ $Release$ $Date: 2006/01/20 10:28:30 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.142 $ $Release$ $Date: 2006/04/12 13:37:41 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.141 $ $Release$ $Date: 2006/01/20 10:28:30 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.142 $ $Release$ $Date: 2006/04/12 13:37:41 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -3230,6 +3230,183 @@ int rtcpcld_updcFileMigrated(
 
   return(0);
 }
+
+/**
+ * Called by the TapeErrorHandler or MigHunter when a migration has failed after retries
+ * or a retry would not make sense (e.g. castor file has been removed).
+ *  - Flag all TapeCopies TAPECOPY_FAILED
+ *  - Flag all DiskCopies that are in DISKCOPY_CANBEMIGR status DISKCOPY_GCCANDIDATE
+ *  - Flag all Segments SEGMENT_FAILED
+ */
+int rtcpcld_putFailed(
+                      tapeCopy
+                      ) 
+     struct Cstager_TapeCopy_t *tapeCopy;
+{
+  struct C_IObject_t *iObj = NULL;
+  struct C_Services_t **svcs = NULL;
+  struct C_BaseAddress_t *baseAddr = NULL;
+  struct C_IAddress_t *iAddr = NULL;
+  struct Cstager_ITapeSvc_t *tpSvc = NULL;
+  struct Cstager_Segment_t **segmentArray = NULL;
+  struct Cstager_DiskCopy_t **diskCopyArray = NULL;
+  struct Cstager_CastorFile_t *castorFile = NULL;
+  enum Cstager_SegmentStatusCodes_t segmentStatus;
+  enum Cstager_DiskCopyStatusCodes_t diskCopyStatus;
+  int rc, i, nbSegments = 0, nbDiskCopies = 0;
+  ID_TYPE key;
+
+  if ( tapeCopy == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
+  rc = getDbSvc(&svcs);
+  if ( rc == -1 || svcs == NULL || *svcs == NULL ) {
+    return(-1);
+  }
+
+  rc = C_BaseAddress_create(&baseAddr);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("C_BaseAddress_create()");
+    return(-1);
+  }
+
+  C_BaseAddress_setCnvSvcName(baseAddr,"DbCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_DBCNV);
+  iAddr = C_BaseAddress_getIAddress(baseAddr);
+
+  iObj = Cstager_TapeCopy_getIObject(tapeCopy);
+  rc = C_Services_fillObj(
+                          *svcs,
+                          iAddr,
+                          iObj,
+                          OBJ_Segment
+                          );
+  if ( rc == -1 ) {
+    Cstager_TapeCopy_id(tapeCopy,&key);
+    LOG_DBCALLANDKEY_ERR("C_Services_fillObj(tapeCopy,OBJ_Segment)",
+                         C_Services_errorMsg(*svcs),
+                         key);
+    C_IAddress_delete(iAddr);
+    return(-1);
+  }
+  rc = C_Services_fillObj(
+                          *svcs,
+                          iAddr,
+                          iObj,
+                          OBJ_CastorFile
+                          );
+  if ( rc == -1 ) {
+    Cstager_TapeCopy_id(tapeCopy,&key);
+    LOG_DBCALLANDKEY_ERR("C_Services_fillObj(tapeCopy,OBJ_CastorFile)",
+                         C_Services_errorMsg(*svcs),
+                         key);
+    C_IAddress_delete(iAddr);
+    return(-1);
+  }
+
+  Cstager_TapeCopy_segments(tapeCopy,&segmentArray,&nbSegments);
+  if ( segmentArray != NULL ) {
+    for ( i=0; i<nbSegments; i++ ) {
+      Cstager_Segment_status(segmentArray[i],&segmentStatus);
+      if ( segmentStatus == SEGMENT_FAILED ) {
+        /*
+         * Flag failed segment retried so that it won't be selected for retry
+         */
+        iObj = Cstager_Segment_getIObject(segmentArray[i]);
+        Cstager_Segment_setStatus(segmentArray[i],SEGMENT_RETRIED);
+        rc = C_Services_updateRep(
+                                  *svcs,
+                                  iAddr,
+                                  iObj,
+                                  1
+                                  );
+        if ( rc == -1 ) {
+          Cstager_Segment_id(segmentArray[i],&key);
+          LOG_DBCALLANDKEY_ERR("C_Services_updateRep(segment)",
+                               C_Services_errorMsg(*svcs),
+                               key);
+          C_IAddress_delete(iAddr);
+          return(-1);
+        }
+      }
+      Cstager_Segment_delete(segmentArray[i]);
+    }
+    free(segmentArray);
+  }
+
+  /*
+   * Flag the TapeCopy FAILED
+   */
+  iObj = Cstager_TapeCopy_getIObject(tapeCopy);
+  Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_FAILED);
+  rc = C_Services_updateRep(
+                            *svcs,
+                            iAddr,
+                            iObj,
+                            1
+                            );
+  if ( rc == -1 ) {
+    Cstager_TapeCopy_id(tapeCopy,&key);
+    LOG_DBCALLANDKEY_ERR("C_Services_updateRep(tapeCopy)",
+                         C_Services_errorMsg(*svcs),
+                         key);
+    C_IAddress_delete(iAddr);
+    return(-1);
+  }
+
+  Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
+  iObj = Cstager_CastorFile_getIObject(castorFile);
+  rc = C_Services_fillObj(
+                          *svcs,
+                          iAddr,
+                          iObj,
+                          OBJ_DiskCopy
+                          );
+  if ( rc == -1 ) {
+    Cstager_CastorFile_id(castorFile,&key);
+    LOG_DBCALLANDKEY_ERR("C_Services_fillObj(castorFile,OBJ_DiskCopy)",
+                         C_Services_errorMsg(*svcs),
+                         key);
+    C_IAddress_delete(iAddr);
+    return(-1);
+  }
+  Cstager_CastorFile_diskCopies(castorFile,&diskCopyArray,&nbDiskCopies);
+  if ( diskCopyArray != NULL ) {
+    for ( i=0; i<nbDiskCopies; i++ ) {
+      Cstager_DiskCopy_status(diskCopyArray[i],&diskCopyStatus);
+      if ( diskCopyStatus == DISKCOPY_CANBEMIGR ) {
+        /*
+         * Flag all CANBEMIGR diskCopies for GC
+         */
+        iObj = Cstager_DiskCopy_getIObject(diskCopyArray[i]);
+        Cstager_DiskCopy_setStatus(diskCopyArray[i],DISKCOPY_GCCANDIDATE);
+         rc = C_Services_updateRep(
+                                  *svcs,
+                                  iAddr,
+                                  iObj,
+                                  1
+                                  );
+        if ( rc == -1 ) {
+          Cstager_DiskCopy_id(diskCopyArray[i],&key);
+          LOG_DBCALLANDKEY_ERR("C_Services_updateRep(diskCopy)",
+                               C_Services_errorMsg(*svcs),
+                               key);
+          C_IAddress_delete(iAddr);
+          return(-1);
+        }
+      }
+      Cstager_DiskCopy_delete(diskCopyArray[i]);
+    }
+    free(diskCopyArray);
+  }
+  Cstager_CastorFile_delete(castorFile);
+
+  if ( iAddr != NULL ) C_IAddress_delete(iAddr);
+  return(0);
+}
+
 
 /**
  * This method is called from methods used by both the recaller/migrator
