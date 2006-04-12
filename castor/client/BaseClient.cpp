@@ -548,13 +548,13 @@ void castor::client::BaseClient::setRhPort(int optPort)
 //------------------------------------------------------------------------------
 // setRhHost
 //------------------------------------------------------------------------------
-void castor::client::BaseClient::setRhHost(){setRhHost(NULL);}
+void castor::client::BaseClient::setRhHost(){setRhHost("");}
 void castor::client::BaseClient::setRhHost(std::string optHost)
   throw (castor::exception::Exception) {
   // RH server host. Can be passed given through the
   // RH_HOST environment variable or in the castor.conf
   // file as a RH/HOST entry
-  if (!optHost.compare(NULL)){
+  if (!optHost.compare("")){
 	m_rhHost = optHost;
 	return;
   }
@@ -581,13 +581,13 @@ void castor::client::BaseClient::setRhHost(std::string optHost)
 //------------------------------------------------------------------------------
 // setRhSvcClass
 //------------------------------------------------------------------------------
-void castor::client::BaseClient::setRhSvcClass(){setRhSvcClass(NULL);}
+void castor::client::BaseClient::setRhSvcClass(){setRhSvcClass("");}
 void castor::client::BaseClient::setRhSvcClass(std::string optSvcClass)
   throw (castor::exception::Exception) {
   // RH server host. Can be passed given through the
   // RH_HOST environment variable or in the castor.conf
   // file as a RH/HOST entry
-  if (!optSvcClass.compare(NULL)){
+  if (!optSvcClass.compare("")){
 	m_rhSvcClass = optSvcClass;
 	return;
   }
@@ -633,3 +633,7 @@ int castor::client::BaseClient::setAuthorizationId(uid_t uid, gid_t gid) throw()
   m_authGid = gid;
   m_hasAuthorizationId = true;
 }
+
+
+
+
