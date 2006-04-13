@@ -15,3 +15,5 @@ debian/castor/usr/share/man/man1/nsGetPath.1castor
 debian/castor/usr/share/man/man1/printFileClass.1castor
 debian/castor/usr/share/man/man1/printSvcClass.1castor
 debian/castor/usr/share/man/man1/vdqmDBInit.1castor
+debian/castor/usr/share/man/man1/houseKeeping.1castor
+debian/castor/usr/share/man/man1/springCleaning.1castor

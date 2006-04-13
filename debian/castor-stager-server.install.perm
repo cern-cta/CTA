@@ -3,3 +3,4 @@
 %attr(0644,root,st) etc/castor/RMNODECONFIG.example
 %attr(0750,root,bin) usr/bin/stager
 %attr(0750,root,bin) usr/bin/stageradmin
+%attr(0750,root,bin) usr/bin/cleaningDaemon

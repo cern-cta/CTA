@@ -16,3 +16,5 @@
 %attr(0755,root,bin) usr/bin/printSvcClass
 %attr(0755,root,bin) usr/lib/perl/CASTOR/castor_tools.pm
 %attr(0755,root,bin) usr/bin/vdqmDBInit
+%attr(0755,root,bin) usr/bin/houseKeeping
+%attr(0755,root,bin) usr/bin/springCleaning

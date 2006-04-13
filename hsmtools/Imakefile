@@ -86,7 +86,9 @@ MANPAGES = $(MANDIR)/reclaim.$(MANSUFFIX) \
 	   $(MANDIR)/printSvcClass.$(MANSUFFIX) \
 	   $(MANDIR)/nsGetPath.$(MANSUFFIX) \
 	   $(MANDIR)/gcAllFS.$(MANSUFFIX) \
-	   $(MANDIR)/moveDiskServer.$(MANSUFFIX)
+	   $(MANDIR)/moveDiskServer.$(MANSUFFIX) \
+	   $(MANDIR)/houseKeeping.$(MANSUFFIX) \
+	   $(MANDIR)/springCleaning.$(MANSUFFIX)
 EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),repack.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tapetohsm.$(MANSUFFIX))) \
@@ -105,7 +107,9 @@ EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUF
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),printSvcClass.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),nsGetPath.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),gcAllFS.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),moveDiskServer.$(MANSUFFIX)))
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),moveDiskServer.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),houseKeeping.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),springCleaning.$(MANSUFFIX)))
 
 COMM Warning Warning, our default clean rule deletes PROGS... Changed it to use PROGS_TO_CLEAN
 
@@ -137,7 +141,9 @@ PROGS_TO_KEEP =  ProgramTargetName(cleanLostFiles) \
 	 ProgramTargetName(gcAllFS) \
 	 ProgramTargetName(moveDiskServer) \
 	 ProgramTargetName(dedicateTapeDrive) \
-	 ProgramTargetName(listDedications)
+	 ProgramTargetName(listDedications) \
+	 ProgramTargetName(houseKeeping) \
+	 ProgramTargetName(springCleaning)
 #endif
 
 IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
@@ -160,7 +166,9 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(gcAllFS)) \
 	 FileName($(BIN),ProgramTargetName(moveDiskServer)) \
 	 FileName($(BIN),ProgramTargetName(dedicateTapeDrive)) \
-	 FileName($(BIN),ProgramTargetName(listDedications))
+	 FileName($(BIN),ProgramTargetName(listDedications)) \
+	 FileName($(BIN),ProgramTargetName(houseKeeping)) \
+	 FileName($(BIN),ProgramTargetName(springCleaning))
 
 
 #if BuildVDQMCpp
@@ -187,7 +195,9 @@ EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/gcAllFS \
 	 $(EXPORTBIN)/moveDiskServer \
 	 $(EXPORTBIN)/dedicateTapeDrive \
-	 $(EXPORTBIN)/listDedications
+	 $(EXPORTBIN)/listDedications \
+	 $(EXPORTBIN)/houseKeeping \
+	 $(EXPORTBIN)/springCleaning \
 
 
 #if BuildVDQMCpp
@@ -275,6 +285,12 @@ IEXPORT(gcAllFS,$(EXPORTBIN),755);
 InstallProgram(moveDiskServer,$(BIN),root,bin,755)
 IEXPORT(moveDiskServer,$(EXPORTBIN),755);
 
+InstallProgram(houseKeeping,$(BIN),root,bin,755)
+IEXPORT(houseKeeping,$(EXPORTBIN),755);
+
+InstallProgram(springCleaning,$(BIN),root,bin,755)
+IEXPORT(springCleaning,$(EXPORTBIN),755);
+
 #if BuildVDQMCpp
 InstallProgram(vdqmDBInit,$(BIN),root,bin,755)
 IEXPORT(vdqmDBInit,$(EXPORTBIN),755);
@@ -320,6 +336,8 @@ IMANPAGE(printSvcClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsGetPath,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(gcAllFS,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(moveDiskServer,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(houseKeeping,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(springCleaning,$(MANDIR),$(MANSUFFIX))
 EMANPAGE(reclaim,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(repack,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(tapetohsm,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
@@ -339,6 +357,8 @@ EMANPAGE(printSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(nsGetPath,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(gcAllFS,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(moveDiskServer,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(houseKeeping,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(springCleaning,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 
 #if BuildVDQMCpp
 IMANPAGE(vdqmDBInit,$(MANDIR),$(MANSUFFIX))
