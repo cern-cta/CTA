@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.15 2006/04/13 16:14:18 sponcec3 Exp $
+ * $Id: stager_client_api_query.cpp,v 1.16 2006/04/13 21:06:05 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.15 $ $Date: 2006/04/13 16:14:18 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.16 $ $Date: 2006/04/13 21:06:05 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -404,7 +404,9 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::query::DiskPoolQuery req;
     castor::stager::RequestHelper reqh(&req);
-    req.setSvcClassName(svcClassName);
+    if (0 != svcClassName) {
+      req.setSvcClassName(svcClassName);
+    }
 
     // Using the VectorResponseHandler which stores everything in
     // A vector. BEWARE, the responses must be de-allocated afterwards
