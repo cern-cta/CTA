@@ -224,6 +224,9 @@ DROP TABLE TapeDriveCompatibility;
 /* SQL statements for type DeviceGroupName */
 DROP TABLE DeviceGroupName;
 
+/* SQL statements for type DiskPoolQuery */
+DROP TABLE DiskPoolQuery;
+
 DROP FUNCTION getTime;
 DROP TRIGGER tr_FileSystem_Insert;
 DROP TRIGGER tr_FileSystem_Delete;
@@ -239,6 +242,9 @@ DROP TRIGGER tr_Stream2TapeCopy_Stream;
 DROP FUNCTION FileSystemRate;
 DROP PROCEDURE makeSubRequestWait;
 DROP PROCEDURE archiveSubReq;
+DROP PROCEDURE deleteRequest;
+DROP PROCEDURE deleteArchivedRequests;
+DROP PROCEDURE deleteOutOfDateRequests;
 DROP PROCEDURE anyTapeCopyForStream;
 DROP PROCEDURE updateFsFileOpened;
 DROP PROCEDURE updateFsFileClosed;
@@ -279,6 +285,7 @@ DROP PROCEDURE stageRm;
 DROP PACKAGE castorGC;
 DROP FUNCTION defaultGCPolicy;
 DROP FUNCTION nopinGCPolicy;
+DROP FUNCTION nullGCPolicy;
 DROP PROCEDURE garbageCollectFS;
 DROP PROCEDURE defGarbageCollectFS;
 DROP TRIGGER tr_FileSystem_Update;
@@ -295,3 +302,5 @@ DROP PROCEDURE matchTape2TapeDrive;
 DROP PROCEDURE matchTape2TapeDrive;
 DROP PROCEDURE selectTapeRequestQueue;
 DROP PROCEDURE selectTapeDriveQueue;
+DROP PROCEDURE describeDiskPools;
+DROP PROCEDURE describeDiskPool;
