@@ -224,6 +224,9 @@ DROP TABLE TapeDriveCompatibility;
 /* SQL statements for type DeviceGroupName */
 DROP TABLE DeviceGroupName;
 
+/* SQL statements for type DiskPoolQuery */
+DROP TABLE DiskPoolQuery;
+
 DROP FUNCTION getTime;
 DROP TRIGGER tr_FileSystem_Insert;
 DROP TRIGGER tr_FileSystem_Delete;

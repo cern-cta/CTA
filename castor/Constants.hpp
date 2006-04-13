@@ -132,7 +132,12 @@ namespace castor {
     OBJ_RepackRequest = 96,
     OBJ_RepackSubRequest = 97,
     OBJ_RepackSegment = 98,
-    OBJ_RepackAck = 99
+    OBJ_RepackAck = 99,
+
+    OBJ_DiskPoolQueryResponse = 100,
+    OBJ_DiskServerDescription = 101,
+    OBJ_FileSystemDescription = 102,
+    OBJ_DiskPoolQuery = 103
   };
     
   /**
@@ -212,12 +217,12 @@ namespace castor {
   /**
    * Nb of objectIds currently existing
    */
-  static const unsigned int ObjectsIdsNb = 99;
+  static const unsigned int ObjectsIdsNb = 104;
 
   /**
    * Nb of ServicesIds currently existing
    */
-  static const unsigned int ServicesIdsNb = 37;
+  static const unsigned int ServicesIdsNb = 38;
 
   /**
    * Nb of RepresentationsIds currently existing
@@ -228,13 +233,13 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[99];
+  extern const char* ObjectsIdStrings[104];
 
   /**
    * Names of the differents Services, used to display
    * correctly the ServicesIds enum
    */
-  extern const char* ServicesIdStrings[37];
+  extern const char* ServicesIdStrings[38];
 
   /**
    * Names of the differents representations, used to display

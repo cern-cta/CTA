@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/02/01 11:36:58 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/04/13 15:41:43 $ $Author: sponcec3 $
  *
  *
  *
@@ -33,6 +33,7 @@
 #include "castor/exception/Exception.hpp"
 #include <string>
 #include <list>
+#include <vector>
 
 namespace castor {
 
@@ -45,6 +46,9 @@ namespace castor {
   }
 
   namespace query {
+    
+    // Forward declaration
+    class DiskPoolQueryResponse;
 
     /**
      * This class provides methods usefull to the query
@@ -124,6 +128,28 @@ namespace castor {
        */
       virtual castor::stager::Request* requestToDo()
         throw (castor::exception::Exception) = 0;
+
+      /**
+       * Lists diskpools and give details on their machine/filesystems
+       * @param svcClass the Service class to consider, or empty string if none
+       * @return a vector of diskpool descriptions. Note that the caller
+       * is responsible for freeing the allocated memory
+       * @exception Exception in case of error
+       */
+      virtual std::vector<castor::query::DiskPoolQueryResponse*>*
+      describeDiskPools (std::string svcClass)
+	throw (castor::exception::Exception) = 0;
+
+      /**
+       * Give details on the machines/filesystems of a given diskpool
+       * @param diskPool the DiskPool name
+       * @return the descriptions of the DiksPool. Note that the caller
+       * is responsible for freeing the allocated memory
+       * @exception Exception in case of error
+       */
+      virtual castor::query::DiskPoolQueryResponse*
+      describeDiskPool(std::string diskPool)
+	throw (castor::exception::Exception) = 0;
 
     }; // end of class IQuerySvc
 

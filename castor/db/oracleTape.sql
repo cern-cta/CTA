@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.252 $ $Release$ $Date: 2006/04/13 10:24:53 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.253 $ $Release$ $Date: 2006/04/13 15:48:42 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -812,6 +812,32 @@ CREATE OR REPLACE PACKAGE castor AS
         lastKnownFileName VARCHAR2(2048));
   TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
   TYPE FileList_Cur IS REF CURSOR RETURN FilesDeletedProcOutput%ROWTYPE;
+  TYPE DiskPoolQueryLine IS RECORD (
+        isDS INTEGER,
+        diskServerName VARCHAR(2048),
+	diskServerStatus INTEGER,
+        fileSystemmountPoint VARCHAR(2048),
+	fileSystemfreeSpace INTEGER,
+	fileSystemtotalSpace INTEGER,
+	fileSystemreservedSpace INTEGER,
+	fileSystemminfreeSpace INTEGER,
+        fileSystemmaxFreeSpace INTEGER,
+        fileSystemStatus INTEGER);
+  TYPE DiskPoolQueryLine_Cur IS REF CURSOR RETURN DiskPoolQueryLine;
+  TYPE DiskPoolsQueryLine IS RECORD (
+        isDP INTEGER,
+        isDS INTEGER,
+        diskPoolName VARCHAR(2048),
+        diskServerName VARCHAR(2048),
+	diskServerStatus INTEGER,
+        fileSystemmountPoint VARCHAR(2048),
+	fileSystemfreeSpace INTEGER,
+	fileSystemtotalSpace INTEGER,
+	fileSystemreservedSpace INTEGER,
+	fileSystemminfreeSpace INTEGER,
+        fileSystemmaxFreeSpace INTEGER,
+        fileSystemStatus INTEGER);
+  TYPE DiskPoolsQueryLine_Cur IS REF CURSOR RETURN DiskPoolQueryLine;
 END castor;
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
@@ -2635,3 +2661,73 @@ BEGIN
   END IF;
 END;
 
+
+/*
+ * PL/SQL method implementing the diskPoolQuery when listing pools
+ */
+CREATE OR REPLACE PROCEDURE describeDiskPools
+(svcClassName IN VARCHAR2,
+ result OUT castor.DiskPoolsQueryLine_Cur) AS
+BEGIN
+  -- We use here analytic functions and the grouping sets
+  -- functionnality to get both the list of filesystems
+  -- and a summary per diskserver and per diskpool
+  -- The grouping analytic function also allows to mark
+  -- the summary lines for easy detection in the C++ code
+  OPEN result FOR
+    SELECT grouping(ds.name) as IsDSGrouped,
+           grouping(fs.mountPoint) as IsFSGrouped,
+           dp.name,
+           ds.name, ds.status, fs.mountPoint,
+           sum(fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed) as freeSpace,
+           sum(fs.totalSize), sum(fs.reservedSpace),
+           fs.minFreeSpace, fs.maxFreeSpace, fs.status
+      FROM FileSystem fs, DiskServer ds, DiskPool dp,
+           DiskPool2SvcClass d2s, SvcClass sc
+     WHERE sc.name = svcClassName
+       AND sc.id = d2s.child
+       AND d2s.parent = dp.id
+       AND dp.id = fs.diskPool
+       AND ds.id = fs.diskServer
+       group by grouping sets(
+        (dp.name, ds.name, ds.status, fs.mountPoint,
+           fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed,
+           fs.totalSize, fs.reservedSpace,
+           fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+          (dp.name, ds.name, ds.status),
+	  (dp.name)
+           )
+       order by dp.name, IsDSGrouped desc, IsFSGrouped desc, fs.mountpoint;
+END;
+
+/*
+ * PL/SQL method implementing the diskPoolQuery for a given pool
+ */
+CREATE OR REPLACE PROCEDURE describeDiskPool
+(diskPoolName IN VARCHAR2,
+ result OUT castor.DiskPoolQueryLine_Cur) AS
+BEGIN
+  -- We use here analytic functions and the grouping sets
+  -- functionnality to get both the list of filesystems
+  -- and a summary per diskserver and per diskpool
+  -- The grouping analytic function also allows to mark
+  -- the summary lines for easy detection in the C++ code
+  OPEN result FOR 
+    SELECT grouping(fs.mountPoint) as IsGrouped,
+           ds.name, ds.status, fs.mountPoint,
+           sum(fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed) as freeSpace,
+           sum(fs.totalSize), sum(fs.reservedSpace),
+           fs.minFreeSpace, fs.maxFreeSpace, fs.status
+      FROM FileSystem fs, DiskServer ds, DiskPool dp
+     WHERE dp.id = fs.diskPool
+       AND dp.name = diskPoolName
+       AND ds.id = fs.diskServer
+       group by grouping sets(
+        (ds.name, ds.status, fs.mountPoint,
+           fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed,
+           fs.totalSize, fs.reservedSpace,
+           fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+          (ds.name, ds.status) 
+           )
+       order by ds.name, IsGrouped desc, fs.mountpoint;
+end;

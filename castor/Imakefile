@@ -177,6 +177,10 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamFindReqResponseCnv.cpp \
               io/StreamIOResponseCnv.cpp \
               io/StreamRequestQueryResponseCnv.cpp \
+              io/StreamDiskPoolQueryResponseCnv.cpp \
+              io/StreamFileSystemDescriptionCnv.cpp \
+              io/StreamDiskServerDescriptionCnv.cpp \
+              io/StreamDiskPoolQueryCnv.cpp \
               replier/ClientConnection.cpp \
               replier/RequestReplier.cpp \
               replier/RequestReplierCInt.cpp \
@@ -359,7 +363,15 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               exception/Communication.cpp \
               exception/NoEntry.cpp \
               exception/SQLError.cpp \
-              exception/TooBig.cpp
+              exception/TooBig.cpp \
+              query/DiskPoolQueryResponseCInt.cpp \
+              query/DiskPoolQueryResponse.cpp \
+              query/FileSystemDescriptionCInt.cpp \
+              query/FileSystemDescription.cpp \
+              query/DiskServerDescriptionCInt.cpp \
+              query/DiskServerDescription.cpp \
+              query/DiskPoolQueryCInt.cpp \
+              query/DiskPoolQuery.cpp
 
 #if !defined(_WIN32)
 STGLIB_SRCSNW32 =  server/BaseDaemon.cpp  server/BaseServer.cpp server/NotificationThread.cpp

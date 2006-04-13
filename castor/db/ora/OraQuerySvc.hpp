@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/02/01 11:36:58 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2006/04/13 15:44:49 $ $Author: sponcec3 $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -38,8 +38,16 @@
 #include "castor/query/IQuerySvc.hpp"
 #include "occi.h"
 #include <list>
+#include <map>
 
 namespace castor {
+
+  namespace query {
+
+    // Forward declaration
+    class DiskPoolQueryResponse;
+
+  }
 
   namespace db {
 
@@ -150,6 +158,28 @@ namespace castor {
         virtual castor::stager::Request* requestToDo()
           throw (castor::exception::Exception);
 
+        /**
+         * Lists diskpools and give details on their machine/filesystems
+         * @param svcClass the Service class to consider, or empty string if none
+         * @return a vector of diskpool descriptions. Note that the caller
+         * is responsible for freeing the allocated memory
+         * @exception Exception in case of error
+         */
+	virtual std::vector<castor::query::DiskPoolQueryResponse*>*
+        describeDiskPools (std::string svcClass)
+          throw (castor::exception::Exception);
+        
+        /**
+         * Give details on the machines/filesystems of a given diskpool
+         * @param diskPool the DiskPool name
+         * @return the descriptions of the DiksPool. Note that the caller
+         * is responsible for freeing the allocated memory
+         * @exception Exception in case of error
+         */
+        virtual castor::query::DiskPoolQueryResponse*
+        describeDiskPool(std::string diskPool)
+          throw (castor::exception::Exception);
+
       private:
 
         /// SQL statement for function diskCopies4FileName
@@ -193,6 +223,18 @@ namespace castor {
 
         /// SQL statement object for function requestToDo
         oracle::occi::Statement *m_requestToDoStatement;
+
+        /// SQL statement for function describeDiskPools
+        static const std::string s_describeDiskPoolsStatementString;
+
+        /// SQL statement object for function describeDiskPools
+        oracle::occi::Statement *m_describeDiskPoolsStatement;
+
+        /// SQL statement for function describeDiskPool
+        static const std::string s_describeDiskPoolStatementString;
+
+        /// SQL statement object for function describeDiskPool
+        oracle::occi::Statement *m_describeDiskPoolStatement;
         
         /// Private function to parse and return the list of results
         std::list<castor::stager::DiskCopyInfo*>*
