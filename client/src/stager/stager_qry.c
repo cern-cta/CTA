@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.16 2006/04/13 16:14:18 sponcec3 Exp $
+ * $Id: stager_qry.c,v 1.17 2006/04/13 21:06:30 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.16 $ $Date: 2006/04/13 16:14:18 $ $Author: sponcec3 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.17 $ $Date: 2006/04/13 21:06:30 $ $Author: sponcec3 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -401,6 +401,8 @@ int parseCmdLineDiskPoolQuery(int argc, char *argv[],
     case 'd':
       *diskPool = (char *)strdup(Coptarg);
       break;
+    case 's':
+      break;
     default:
       errflg++;
       break;
@@ -411,7 +413,7 @@ int parseCmdLineDiskPoolQuery(int argc, char *argv[],
 }
 
 // -----------------------------------------------------------------------
-// parseCmdLineDiskPoolQuery
+// checkAndCountArguments
 // -----------------------------------------------------------------------
 int checkAndCountArguments(int argc, char *argv[],
                            int* count, enum queryType* type) {
@@ -460,5 +462,6 @@ void usage(char *cmd) {
   fprintf (stderr, "%s%s",
            "[-M hsmfile [-M ...]] [-E regular_expression [-E ...]] ",
            "[-F fileid@nshost] [-U usertag] [-r requestid] [-n] [-h]\n");
+  fprintf (stderr, "       %s ", cmd);
   fprintf (stderr, "%s", "-s [-S svcClass] [diskPool] [-h]\n");
 }
