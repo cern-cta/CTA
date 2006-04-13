@@ -1,8 +1,8 @@
 #! /bin/sh
 #
-# $Id: castor-upv-server.postinst,v 1.7 2005/08/08 16:51:23 jdurand Exp $
+# $Id: castor-upv-server.postinst,v 1.8 2006/04/13 12:44:43 sponcec3 Exp $
 #
-CASTOR_SERVICE=Cupdaemon
+CASTOR_SERVICE=Cupvdaemon
 export CASTOR_SERVICE
 [ -x /usr/sbin/castor-service.postinst ] && /usr/sbin/castor-service.postinst ${1+"$@"}
 exit $?

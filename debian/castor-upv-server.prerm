@@ -1,8 +1,8 @@
 #! /bin/sh
 #
-# $Id: castor-upv-server.prerm,v 1.4 2005/08/08 16:51:23 jdurand Exp $
+# $Id: castor-upv-server.prerm,v 1.5 2006/04/13 12:44:43 sponcec3 Exp $
 #
-CASTOR_SERVICE=Cupdaemon
+CASTOR_SERVICE=Cupvdaemon
 export CASTOR_SERVICE
 [ -x /usr/sbin/castor-service.prerm ] && /usr/sbin/castor-service.prerm ${1+"$@"}
 exit $?

@@ -1,8 +1,8 @@
 #! /bin/sh
 #
-# $Id: castor-upv-server.postrm,v 1.8 2005/08/08 16:51:23 jdurand Exp $
+# $Id: castor-upv-server.postrm,v 1.9 2006/04/13 12:44:43 sponcec3 Exp $
 #
-CASTOR_SERVICE=Cupdaemon
+CASTOR_SERVICE=Cupvdaemon
 export CASTOR_SERVICE
 CASTOR_SERVICE_SPOOL=/var/spool/upv
 export CASTOR_SERVICE_SPOOL
