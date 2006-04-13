@@ -25,6 +25,7 @@ begin
 			   and dc.status = 0     -- STAGED
 			   and dc.filesystem = fs.id
 			   and dccount.filesystem = fs.id
+                           and dccount.status = 0   -- STAGED
 			 group by dccount.filesystem
 			 order by count(dccount.id) desc
 			)
