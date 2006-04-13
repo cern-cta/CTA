@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.251 $ $Release$ $Date: 2006/04/11 12:35:08 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.252 $ $Release$ $Date: 2006/04/13 10:24:53 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -73,7 +73,9 @@ CREATE INDEX I_SubRequest_Request on SubRequest (request);
 CREATE INDEX I_SubRequest_GetNextStatus on SubRequest (decode(getNextStatus,1,NULL));
 
 /* some constraints */
+/* Can not be added since some code (stager_fs_service) creates FileSystems with no DiskServer
 ALTER TABLE FileSystem ADD CONSTRAINT diskserver_fk FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
+*/
 ALTER TABLE FileSystem MODIFY (status NOT NULL);
 ALTER TABLE FileSystem MODIFY (diskServer NOT NULL);
 ALTER TABLE DiskServer MODIFY (status NOT NULL);
@@ -391,14 +393,21 @@ CREATE OR REPLACE PROCEDURE deleteArchivedRequests(timeOut IN NUMBER) AS
   CURSOR cur IS 
    SELECT DISTINCT request FROM SubRequest
     WHERE status=11 AND getTime() - lastModificationTime >= timeOut;
+  counter NUMBER := 0;
 BEGIN
-	OPEN cur;
-	LOOP
-    FETCH cur into myReq;
-      EXIT WHEN cur%NOTFOUND;
-    deleteRequest(myReq);
-  END LOOP;
-	CLOSE cur;
+  OPEN cur;
+    LOOP
+      counter := counter + 1;
+      FETCH cur into myReq;
+        EXIT WHEN cur%NOTFOUND;
+      deleteRequest(myReq);
+      IF (counter = 100) THEN
+        COMMIT;
+        counter := 0;
+      END IF;
+    END LOOP;
+    COMMIT;
+  CLOSE cur;
 END;
 
 /* Search and delete "out of date" subrequests and its request */
@@ -408,14 +417,21 @@ CREATE OR REPLACE PROCEDURE deleteOutOfDateRequests(timeOut IN NUMBER) AS
   CURSOR cur IS
    SELECT DISTINCT request FROM SubRequest
     WHERE getTime() - lastModificationTime >= timeOut;
+  counter NUMBER := 0;
 BEGIN
-	OPEN cur;
-	LOOP
-    FETCH cur into myReq;
-      EXIT WHEN cur%NOTFOUND;
-    deleteRequest(myReq);
-  END LOOP;
-	CLOSE cur;
+  OPEN cur;
+    LOOP
+      counter := counter + 1;
+      FETCH cur into myReq;
+        EXIT WHEN cur%NOTFOUND;
+      deleteRequest(myReq);
+      IF (counter = 100) THEN
+        COMMIT;
+        counter := 0;
+      END IF;
+    END LOOP;
+    COMMIT;
+  CLOSE cur;
 END;
 
 /* PL/SQL method implementing anyTapeCopyForStream.
