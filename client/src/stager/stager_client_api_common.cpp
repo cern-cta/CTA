@@ -38,6 +38,8 @@ static char *sccsid = "@(#)stager_client_api_common.cpp,v 1.20 2006/02/03 11:40:
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/client/BaseClient.hpp"
+#include "castor/stager/DiskServerStatusCode.hpp"
+#include "castor/stager/FileSystemStatusCodes.hpp"
 #include "stager_client_api_authid.hpp"
 
 EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
@@ -206,6 +208,13 @@ EXTERN_C char *stage_fileStatusName(int statusCode) {
   return ret;
 }
 
+EXTERN_C char *stage_diskServerStatusName(int statusCode) {
+  return (char*)castor::stager::DiskServerStatusCodeStrings[statusCode];
+}
+
+EXTERN_C char *stage_fileSystemStatusName(int statusCode) {
+  return (char*)castor::stager::FileSystemStatusCodesStrings[statusCode];
+}
 
 EXTERN_C char* DLL_DECL stage_geturl(struct stage_io_fileresp *io) {
   

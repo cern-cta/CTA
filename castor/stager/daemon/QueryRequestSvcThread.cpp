@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.37 2006/03/22 10:50:26 itglp Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.38 2006/04/13 16:14:18 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.37 $ $Date: 2006/03/22 10:50:26 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.38 $ $Date: 2006/04/13 16:14:18 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -34,12 +34,16 @@ static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.
 #include "castor/IService.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/NoEntry.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/replier/RequestReplier.hpp"
 #include "castor/stager/StageFileQueryRequest.hpp"
 #include "castor/stager/StageFindRequestRequest.hpp"
 #include "castor/stager/StageRequestQueryRequest.hpp"
+#include "castor/query/DiskPoolQuery.hpp"
+#include "castor/query/DiskPoolQueryResponse.hpp"
+#include "castor/query/DiskServerDescription.hpp"
 #include "castor/stager/RequestQueryType.hpp"
 #include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/DiskCopyInfo.hpp"
@@ -689,6 +693,107 @@ namespace castor {
         STAGER_LOG_VERBOSE(NULL,"Handling requestQueryRequest");
       }
 
+      /**
+       * Handles a DiskPoolQuery and replies to client.
+       * @param req the request to handle
+       * @param client the client where to send the response
+       * @param svcs the Services object to use
+       * @param qrySvc the stager service to use
+       * @param ad the address where to load/store objects in the DB
+       */
+      void handle_diskPoolQuery(castor::stager::Request* req,
+				castor::IClient *client,
+				castor::Services* svcs,
+				castor::query::IQuerySvc* qrySvc,
+				castor::BaseAddress &ad) {
+
+        // Usefull Variables
+        char *func =  "castor::stager::queryService::handle_DiskPoolQuery";
+        std::string error;
+        castor::query::DiskPoolQuery *uReq;
+
+        try {
+
+          /* get the StageFileQueryRequest */
+          /* ----------------------------- */
+          // cannot return 0 since we check the type before calling this method
+          uReq = dynamic_cast<castor::query::DiskPoolQuery*> (req);
+
+	  if ("" == uReq->diskPoolName()) { // list all DiskPools for a given svcclass
+
+	    // Get the SvcClass associated to the request
+            std::string svcClassName;
+	    castor::stager::SvcClass* svcClass = uReq->svcClass();
+	    if (0 != svcClass) {
+	      svcClassName = svcClass->name();
+	    }
+	    
+	    // Invoking the method
+	    STAGER_LOG_DEBUG(NULL, "Invoking describeDiskPools");
+	    std::vector<castor::query::DiskPoolQueryResponse*>* result =
+	      qrySvc->describeDiskPools(svcClassName);
+	  
+	    if(result == 0) {   // sanity check, result always is != 0
+	      castor::exception::NoEntry e;
+	      e.getMessage() << " describeDiskPools returned NULL";
+	      throw e;
+	    }
+
+	    for (std::vector<castor::query::DiskPoolQueryResponse*>::const_iterator it =
+		   result->begin();
+		 it != result->end();
+		 it++) {
+	      replyToClient(client, *it);
+	    }
+
+	    // Send the last response if necessary
+	    sendEndResponse(client);
+
+	    // Cleanup
+	    delete result;
+
+	  } else { // list all DiskPools for a given svcclass
+	    
+	    // Invoking the method
+	    STAGER_LOG_DEBUG(NULL, "Invoking describeDiskPool");
+	    castor::query::DiskPoolQueryResponse* result =
+	      qrySvc->describeDiskPool(uReq->diskPoolName());
+	  
+	    if(result == 0) {   // sanity check, result always is != 0
+	      castor::exception::NoEntry e;
+	      e.getMessage() << " describeDiskPool returned NULL";
+	      throw e;
+	    }
+
+	    replyToClient(client, result);
+	    sendEndResponse(client);
+
+	  }
+
+	} catch (castor::exception::Exception e) {
+          serrno = e.code();
+          error = e.getMessage().str();
+          STAGER_LOG_DB_ERROR(NULL, func,
+                              e.getMessage().str().c_str());
+          STAGER_LOG_DEBUG(NULL, "Building Response for error");
+
+          // try/catch this as well ?
+          /* Send the exception to the client */
+          /* -------------------------------- */
+          castor::query::DiskPoolQueryResponse res;
+          if (0 != serrno) {
+            res.setErrorCode(serrno);
+            res.setErrorMessage(error);
+          }
+
+          /* Reply To Client                */
+          /* ------------------------------ */
+          replyToClient(client, &res);
+        }
+
+        sendEndResponse(client);
+      }
+
     } // End of namespace query service
 
   } // End of namespace stager
@@ -789,14 +894,9 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
 
     /* Getting the parameters  */
     /* ----------------------- */
-    //     castor::stager::QryRequest* qryreq =
-    //       dynamic_cast<castor::stager::QryRequest*>(req);
-    //     if (0 == qryreq) {
-    //       castor::exception::Internal e;
-    //       e.getMessage() << "Should be preocessing a QryRequest!";
-    //       throw e;
-    //     }
-    svcs->fillObj(&ad, req, castor::OBJ_QueryParameter);
+    if (req->type() != castor::OBJ_DiskPoolQuery) {
+      svcs->fillObj(&ad, req, castor::OBJ_QueryParameter);
+    }
 
     /* Getting the svcClass */
     /* -------------------- */
@@ -858,6 +958,11 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
 
   case castor::OBJ_StageRequestQueryRequest:
     castor::stager::queryService::handle_requestQueryRequest
+      (req, client, svcs, qrySvc, ad);
+    break;
+
+  case castor::OBJ_DiskPoolQuery:
+    castor::stager::queryService::handle_diskPoolQuery
       (req, client, svcs, qrySvc, ad);
     break;
 

@@ -1,9 +1,5 @@
 /*
-<<<<<<< stager_qry.c
- * stager_qry.c,v 1.13 2006/03/28 10:05:45 motiakov Exp
-=======
- * $Id: stager_qry.c,v 1.15 2006/04/11 17:59:14 motiakov Exp $
->>>>>>> 1.14
+ * $Id: stager_qry.c,v 1.16 2006/04/13 16:14:18 sponcec3 Exp $
  */
 
 /*
@@ -12,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.15 $ $Date: 2006/04/11 17:59:14 $ $Author: motiakov $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.16 $ $Date: 2006/04/13 16:14:18 $ $Author: sponcec3 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -27,13 +23,19 @@ static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.15 $ $Date: 
 #include "RfioTURL.h"
 
 #define BUFSIZE 200
+
+/**
+ * struct to collect date from the command line for file queries
+ */
 struct cmd_args {
   int nbreqs;
   struct stage_query_req *requests;
   struct stage_options opts;
 };
 
-
+/**
+ * Complete set of options for stage_qry
+ */
 static struct Coptions longopts[] =
   {
     {"hsm_filename",       REQUIRED_ARGUMENT,  NULL,      'M'},
@@ -42,55 +44,161 @@ static struct Coptions longopts[] =
     {"usertag",            REQUIRED_ARGUMENT,  NULL,      'U'},
     {"requestid",          REQUIRED_ARGUMENT,  NULL,      'r'},
     {"next",               NO_ARGUMENT,        NULL,      'n'},
+    {"statistic",          NO_ARGUMENT,        NULL,      's'},
+    {"svcClass",           REQUIRED_ARGUMENT,  NULL,      'S'},
     {"help",               NO_ARGUMENT,        NULL,      'h'},
     {NULL,                 0,                  NULL,        0}
   };
 
+/**
+ * Set of options for file queries
+ */
+static struct Coptions longopts_fileQuery[] =
+  {
+    {"hsm_filename",       REQUIRED_ARGUMENT,  NULL,      'M'},
+    {"regexp",             REQUIRED_ARGUMENT,  NULL,      'E'},
+    {"fileid",             REQUIRED_ARGUMENT,  NULL,      'F'},
+    {"usertag",            REQUIRED_ARGUMENT,  NULL,      'U'},
+    {"requestid",          REQUIRED_ARGUMENT,  NULL,      'r'},
+    {"next",               NO_ARGUMENT,        NULL,      'n'},
+    {"svcClass",           REQUIRED_ARGUMENT,  NULL,      'S'},
+    {NULL,                 0,                  NULL,        0}
+  };
 
-void usage _PROTO((char *));
-int cmd_countArguments(int argc, char *argv[]);
-int cmd_parse(int argc, char *argv[], struct cmd_args *args);
+/**
+ * Set of options for diskpool queries
+ */
+static struct Coptions longopts_diskPoolQuery[] =
+  {
+    {"statistic",          NO_ARGUMENT,        NULL,      's'},
+    {"svcClass",           REQUIRED_ARGUMENT,  NULL,      'S'},
+    {NULL,                 0,                  NULL,        0}
+  };
+
+/**
+ * Small enum defining the type of a query
+ */
+enum queryType {
+  FILEQUERY,
+  DISKPOOLQUERY
+};
+
+/**
+ * Displays usage
+ * @param cmd the command to use when displaying usage
+ */
+void usage _PROTO((char *cmd));
+
+/**
+ * Checks the type of query and counts the numberof arguments
+ * @param argc the number of arguments on the command line
+ * @param argv the command line
+ * @param count filled with the number of arguments to the command,
+ *              options excluded
+ * @param type the type of query the user did
+ * @return 0 if parsing was ok, else -1
+ */
+int checkAndCountArguments(int argc, char *argv[],
+                           int* count, enum queryType* type);
+
+/**
+ * handles a FileQuery request
+ * @param argc the number of arguments on the command line
+ * @param argv the command line
+ * @param nbArgs the number of arguments to the command
+ */
+void handleFileQuery(int argc, char *argv[], int nbArgs);
+
+/**
+ * handles a DiskPool request
+ * @param argc the number of arguments on the command line
+ * @param argv the command line
+ * @param nbArgs the number of arguments to the command
+ */
+void handleDiskPoolQuery(int argc, char *argv[], int nbArgs);
+
+/**
+ * parses the command line for a file query
+ * @param argc the number of arguments on the command line
+ * @param argv the command line
+ * @param args a struct filled with the result of the parsing
+ * @return 0 if parsing succeeded
+ */
+int parseCmdLineFileQuery(int argc, char *argv[], struct cmd_args *args);
+
+/**
+ * parses the command line for a diskPool query
+ * @param argc the number of arguments on the command line
+ * @param argv the command line
+ * @param diksPool the diskPool given (if any), or NULL
+ * @param svcClass the svcClass specified (if any), or NULL
+ * @return 0 if parsing succeeded
+ */
+int parseCmdLineDiskPool(int argc, char *argv[],
+                         char** diskpool, char** svcClass);
 
 
+// -----------------------------------------------------------------------
+// main
+// -----------------------------------------------------------------------
+int main(int argc, char *argv[]) {
+  int nbArgs;
+  enum queryType type;
+  int rc = checkAndCountArguments(argc, argv, &nbArgs, &type);
+  if (rc < 0) {
+    usage(argv[0]);
+    exit(EXIT_FAILURE);
+  }
+  switch (type) {
+  case FILEQUERY:
+    if (nbArgs <= 0) {
+      usage(argv[0]);
+      exit(EXIT_FAILURE);
+    }
+    handleFileQuery(argc, argv, nbArgs);
+    break;
+  case DISKPOOLQUERY:
+    if (nbArgs != 0) {
+      usage(argv[0]);
+      exit(EXIT_FAILURE);
+    }
+    handleDiskPoolQuery(argc, argv, nbArgs);
+    break;    
+  }
+}
 
-
-
-
-int
-main(int argc, char *argv[]) {
+// -----------------------------------------------------------------------
+// handleFileQuery
+// -----------------------------------------------------------------------
+void handleFileQuery(int argc, char *argv[], int nbArgs) {
+  
   struct cmd_args args;
   struct  stage_filequery_resp *responses;
   int nbresps, rc, errflg, i,ret;
   char errbuf[BUFSIZE];
-
+  
+  args.nbreqs = nbArgs;
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
-
   args.opts.stage_host = NULL;
   args.opts.service_class = NULL;
   args.opts.stage_version=0;
   args.opts.stage_port=0;
-
-  if ((args.nbreqs = cmd_countArguments(argc, argv)) <= 0) {
-    usage(argv[0]);
-    exit(EXIT_FAILURE);
-  }
+  args.nbreqs = nbArgs;
 
   create_query_req(&(args.requests), args.nbreqs);
 
-  errflg =  cmd_parse(argc, argv, &args);
+  errflg = parseCmdLineFileQuery(argc, argv, &args);
   if (errflg != 0) {
     usage (argv[0]);
     exit (EXIT_FAILURE);
   }
 #ifdef _WIN32
-
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
 	  fprintf (stderr, "Can not initialize Windows Socket layer.\n");
 	  exit (1);
   }
-
 #endif
   /* Setting the error buffer */
   stage_seterrbuf(errbuf, sizeof(errbuf));
@@ -135,10 +243,69 @@ main(int argc, char *argv[]) {
   exit(EXIT_SUCCESS);
 }
 
+// -----------------------------------------------------------------------
+// handleDiskPoolQuery
+// -----------------------------------------------------------------------
+void handleDiskPoolQuery(int argc, char *argv[], int nbArgs) {
+  
+  int errflg;
+  char errbuf[BUFSIZE];
+  char *diskPool = NULL;
+  char *svcClass = NULL;
 
+  // parsing the commane line
+  errflg = parseCmdLineDiskPoolQuery(argc, argv, &diskPool, &svcClass);
+  if (errflg != 0) {
+    usage (argv[0]);
+    exit (EXIT_FAILURE);
+  }
+  /* Setting the error buffer */
+  stage_seterrbuf(errbuf, sizeof(errbuf));
 
-int
-cmd_parse(int argc, char *argv[], struct cmd_args *args) {
+  /* Actual call to stage_diskpoolquery */
+  if (NULL == diskPool) {
+    struct stage_diskpoolquery_resp *responses;
+    int i, nbresps;
+    int rc = stage_diskpoolsquery(svcClass,
+                                  &responses,
+                                  &nbresps);
+    // check for errors
+    if (rc < 0) {
+      if(serrno != 0) {
+        fprintf(stderr, "Error: %s\n", sstrerror(serrno));
+      }
+      fprintf(stderr, "%s\n", errbuf);
+      exit(EXIT_FAILURE);
+    }
+    // display and cleanup memory
+    for (i = 0; i < nbresps; i++) {
+      stage_print_diskpoolquery_resp(stdout, &(responses[i]));
+      stage_delete_diskpoolquery_resp(&(responses[i]));
+    }
+  } else {
+    struct stage_diskpoolquery_resp response;
+    int rc = stage_diskpoolquery(diskPool, &response);    
+    // check for errors
+    if (rc < 0) {
+      if(serrno != 0) {
+        fprintf(stderr, "Error: %s\n", sstrerror(serrno));
+      }
+      fprintf(stderr, "%s\n", errbuf);
+      exit(EXIT_FAILURE);
+    }
+    // display and cleanup memory
+    stage_print_diskpoolquery_resp(stdout, &response);
+    stage_delete_diskpoolquery_resp(&response);
+  }
+  // end
+  exit(EXIT_SUCCESS);
+}
+
+// -----------------------------------------------------------------------
+// parseCmdLineFileQuery
+// -----------------------------------------------------------------------
+int parseCmdLineFileQuery(int argc, char *argv[],
+                          struct cmd_args *args) {
   int nbargs, Coptind, Copterr, errflg, getNextMode;
   char c;
 
@@ -147,7 +314,9 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
   errflg = 0;
   nbargs = 0;
   getNextMode = 0;
-  while ((c = Cgetopt_long (argc, argv, "M:E:F:U:r:nh", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv,
+                            "M:E:F:U:r:nS:",
+                            longopts_fileQuery, NULL)) != -1) {
     switch (c) {
     case 'M':
       args->requests[nbargs].type = BY_FILENAME;
@@ -156,10 +325,11 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
       break;
     case 'E':
       args->requests[nbargs].type = BY_FILENAME;
-      args->requests[nbargs].param = (char *)malloc(strlen("regexp:") + strlen(Coptarg) + 1);
+      args->requests[nbargs].param = 
+        (char *)malloc(strlen("regexp:") + strlen(Coptarg) + 1);
       if(args->requests[nbargs].param == NULL) {
-	errflg++;
-	break;
+        errflg++;
+        break;
       }
       strcpy(args->requests[nbargs].param, "regexp:");
       strcat(args->requests[nbargs].param, Coptarg);
@@ -180,10 +350,12 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
       args->requests[nbargs].param = (char *)strdup(Coptarg);
       nbargs++;
       break;
+    case 'S':
+      args->opts.service_class = (char *)strdup(Coptarg);
+      break;
     case 'n':
       getNextMode = 1;
       break;
-    case 'h':
     default:
       errflg++;
       break;
@@ -208,27 +380,63 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
   return errflg;
 }
 
-/**
- * Just count the number of args so as to prepare stage_fileQuery argument list
- */
-int
-cmd_countArguments(int argc, char *argv[]) {
-  int Coptind, Copterr, errflg, nbargs;
+// -----------------------------------------------------------------------
+// parseCmdLineDiskPoolQuery
+// -----------------------------------------------------------------------
+int parseCmdLineDiskPoolQuery(int argc, char *argv[],
+                              char** diskPool, char** svcClass) {
+  int Coptind, Copterr, errflg;
   char c;
 
   Coptind = 1;
   Copterr = 1;
   errflg = 0;
-  nbargs = 0;
-  while ((c = Cgetopt_long (argc, argv, "M:E:F:U:r:nh", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv,
+                            "sd:S:",
+                            longopts_diskPoolQuery, NULL)) != -1) {
+    switch (c) {
+    case 'S':
+      *svcClass = (char *)strdup(Coptarg);
+      break;
+    case 'd':
+      *diskPool = (char *)strdup(Coptarg);
+      break;
+    default:
+      errflg++;
+      break;
+    }
+    if (errflg != 0) break;
+  }  
+  return errflg;
+}
+
+// -----------------------------------------------------------------------
+// parseCmdLineDiskPoolQuery
+// -----------------------------------------------------------------------
+int checkAndCountArguments(int argc, char *argv[],
+                           int* count, enum queryType* type) {
+  int Coptind, Copterr, errflg;
+  char c;
+
+  Coptind = 1;
+  Copterr = 1;
+  errflg = 0;
+  *count = 0;
+  *type = FILEQUERY;
+  while ((c = Cgetopt_long
+          (argc, argv, "M:E:F:U:r:nhsS:", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
     case 'E':
     case 'F':
     case 'U':
     case 'r':
-      nbargs++;
+      (*count)++;
       break;
+    case 's':
+      *type = DISKPOOLQUERY;
+      break;
+    case 'S':
     case 'n':
       break;
     case 'h':
@@ -238,17 +446,19 @@ cmd_countArguments(int argc, char *argv[]) {
     }
     if (errflg != 0) break;
   }
-
   if (errflg)
     return -1;
   else
-    return nbargs;
+    return 0;
 }
 
-
-
-void
-usage(char *cmd) {
+// -----------------------------------------------------------------------
+// usage
+// -----------------------------------------------------------------------
+void usage(char *cmd) {
   fprintf (stderr, "usage: %s ", cmd);
-  fprintf (stderr, "%s", "[-M hsmfile [-M ...]] [-E regular_expression [-E ...]] [-F fileid@nshost] [-U usertag] [-r requestid] [-n] [-h]\n");
+  fprintf (stderr, "%s%s",
+           "[-M hsmfile [-M ...]] [-E regular_expression [-E ...]] ",
+           "[-F fileid@nshost] [-U usertag] [-r requestid] [-n] [-h]\n");
+  fprintf (stderr, "%s", "-s [-S svcClass] [diskPool] [-h]\n");
 }

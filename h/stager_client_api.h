@@ -17,19 +17,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.28 $ $Release$ $Date: 2006/04/10 11:55:11 $ $Author: felixehm $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.29 $ $Release$ $Date: 2006/04/13 16:14:18 $ $Author: sponcec3 $
  *
- * 
+ * the client API to the castor stager
  *
- * @author Ben Couturier
+ * @author castor dev team
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.28 $
- * @date $Date: 2006/04/10 11:55:11 $
+ * @version $Revision: 1.29 $
+ * @date $Date: 2006/04/13 16:14:18 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.28 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.29 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -140,6 +140,7 @@
 #ifndef stager_client_api_h
 #define stager_client_api_h
 
+#include <stdio.h>
 #include <osdep.h>
 #ifdef _WIN32
 #include <io.h>
@@ -963,6 +964,196 @@ EXTERN_C int DLL_DECL stage_filequery _PROTO((struct stage_query_req *requests,
                                               int *nbresps,
                                               struct stage_options* opts));
 
+////////////////////////////////////////////////////////////
+//    stage_diskpoolquery                                 //
+////////////////////////////////////////////////////////////
+
+/**
+ * FileSystem description
+ */
+struct stage_fileSystemDescription {
+
+  /**
+   * The mountpoint of the filesystem
+   */
+  char* mountPoint;
+
+  /**
+   * Amount of free space on this fileSystem (in bytes)
+   */
+  u_signed64 freeSpace;
+
+  /**
+   * Total size of this fileSystem (in bytes)
+   */
+  u_signed64 totalSpace;
+
+  /**
+   * Space reserved for future file writing (in bytes)
+   */
+  u_signed64 reservedSpace;
+
+  /**
+   * Minimum freespace the garbage collector should keep if possible (values from 0 to 1, as a portion of the totalSpace)
+   */
+  float minFreeSpace;
+
+  /**
+   * Minimum freespace the garbage collector should create when it runs (values from 0 to 1, as a portion of the totalSpace)
+   */
+  float maxFreeSpace;
+
+  /**
+   * The status of the FileSystem
+   */
+  int status;
+
+};
+  
+/**
+ * DiskServer description
+ */
+struct stage_diskServerDescription {
+
+  /**
+   * The name of the diskServer
+   */
+  char *name;
+
+  /**
+   * The status of the diskServer
+   */
+  int status;
+
+  /**
+   * Total amount of free space on this diskServer (in bytes)
+   */
+  u_signed64 freeSpace;
+
+  /**
+   * Total space provided by this diskServer (in bytes)
+   */
+  u_signed64 totalSpace;
+
+  /**
+   * Total space reserved for future file writing on this diskServer (in bytes)
+   */
+  u_signed64 reservedSpace;
+  
+  /**
+   * The list of fileSystem it contains
+   */
+  struct stage_fileSystemDescription *fileSystems;
+
+  /**
+   * Number of fileSystems in the list
+   */ 
+  int nbFileSystems;
+
+};
+  
+/**
+ * Response structure query a file in CASTOR.
+ */
+struct stage_diskpoolquery_resp {
+
+  /**
+   * The name of the diskPool
+   */
+  char *diskPoolName;
+
+  /**
+   * Total amount of free space on this diskPool (in bytes)
+   */
+  u_signed64 freeSpace;
+
+  /**
+   * Total space provided by this diskPool (in bytes)
+   */
+  u_signed64 totalSpace;
+
+  /**
+   * Total space reserved for future file writing on this diskPool (in bytes)
+   */
+  u_signed64 reservedSpace;
+  
+  /**
+   * The list of diskservers it contains
+   */
+  struct stage_diskServerDescription *diskServers;
+
+  /**
+   * Number of diskservers in the list
+   */ 
+  int nbDiskServers;
+
+  /**
+   * Error code
+   */
+  int	errorCode;
+
+  /**
+   * Error message, if the error code indicates a problem
+   */
+  char *errorMessage;
+
+};
+
+
+/**
+ * stage_diskpoolquery
+ * Returns summary information about a CASTOR diskpool
+ * \ingroup Functions
+ * 
+ * 
+ * @param diskPoolName name of the diskPool to query
+ * @param response the diskPool description
+ *
+ * @returns 0 in case of success, -1 otherwise
+ * @note the subparts of response are allocated by the call
+ *       and therefore should be freed by the client.
+ */
+EXTERN_C int DLL_DECL stage_diskpoolquery _PROTO
+((char *diskPoolName,
+  struct stage_diskpoolquery_resp *response));
+
+/**
+ * stage_diskpoolsquery
+ * Returns summary information about CASTOR diskpools
+ * \ingroup Functions
+ * 
+ * 
+ * @param svcClassName svcClass to use (or empty string)
+ * @param responses List of diskPool descriptions
+ * @param nbresps number of diskPool descriptions in the list
+ *
+ * @returns 0 in case of success, -1 otherwise
+ * @note responses is allocated by the call, as well as all its subparts
+ *       and therefore should be freed by the client.
+ */
+EXTERN_C int DLL_DECL stage_diskpoolsquery _PROTO
+((char *svcClassName,
+  struct stage_diskpoolquery_resp **responses,
+  int *nbresps));
+
+/**
+ * stage_delete_diskpoolquery_resp
+ * frees the memory used by a stage_diskpoolquery_resp structure
+ *
+ * @param response the structure to free
+ */
+EXTERN_C void DLL_DECL stage_delete_diskpoolquery_resp _PROTO
+((struct stage_diskpoolquery_resp *response));
+
+/**
+ * stage_print_diskpoolquery_resp
+ * prints out a stage_diskpoolquery_resp structure
+ *
+ * @param stream the stream where to print the diskPool
+ * @param response the structure to free
+ */
+EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp _PROTO
+((FILE *stream, struct stage_diskpoolquery_resp *response));
 
 ////////////////////////////////////////////////////////////
 //    stage_requestquery                                  //
@@ -1222,12 +1413,33 @@ enum stage_fileStatus {
  * Returns the name of a file status
  * \ingroup Functions
  * 
- * @param statusCode the code of the request
+ * @param statusCode the code of the status
  *
  * @returns The status name as char*
  */
 EXTERN_C char* DLL_DECL stage_fileStatusName _PROTO((int statusCode));
 
+/**
+ * stage_diskServerStatusName
+ * Returns the name of a diskServer status
+ * \ingroup Functions
+ * 
+ * @param statusCode the code of the status
+ *
+ * @returns The status name as char*
+ */
+EXTERN_C char* DLL_DECL stage_diskServerStatusName _PROTO((int statusCode));
+
+/**
+ * stage_fileSystemStatusName
+ * Returns the name of a fileSystem status
+ * \ingroup Functions
+ * 
+ * @param statusCode the code of the status
+ *
+ * @returns The status name as char*
+ */
+EXTERN_C char* DLL_DECL stage_fileSystemStatusName _PROTO((int statusCode));
 
 ////////////////////////////////////////////////////////////
 //    Utility to get the current client timeout           //
