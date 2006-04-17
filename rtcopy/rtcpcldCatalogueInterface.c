@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.142 $ $Release$ $Date: 2006/04/12 13:37:41 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.143 $ $Release$ $Date: 2006/04/17 07:53:03 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.142 $ $Release$ $Date: 2006/04/12 13:37:41 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.143 $ $Release$ $Date: 2006/04/17 07:53:03 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1819,7 +1819,8 @@ int nextSegmentToMigrate(
       Cstager_CastorFile_delete(castorFile);
       CLIST_DELETE(tape->file,fl);
       free(fl);
-    } else  if ( save_serrno == ENOENT ) {
+    } else  if ( (save_serrno == ENOENT) ||
+                 (save_serrno == EISDIR) ) {
       /*
        * CASTOR file removed. Not fatal but we can mark the
        * the tape copy failed
