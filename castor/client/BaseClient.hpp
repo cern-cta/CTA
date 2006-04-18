@@ -32,6 +32,7 @@
 #include <string>
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
+#include "stager_client_api.h"
 
 #define CSP_RHSERVER_PORT 9002
 
@@ -117,7 +118,7 @@ namespace castor {
        * modified.
        */
       virtual void setRhPort(int optPort) throw (castor::exception::Exception);
-      virtual void setRhPort();
+      virtual void setRhPort()throw (castor::exception::Exception);
       /**
        * gets the request handler host to use and put it
        * into m_rhHost. First try environment (RH_HOST)
@@ -127,9 +128,12 @@ namespace castor {
        * modified.
        */
       virtual void setRhHost(std::string optHost) throw (castor::exception::Exception);
-      virtual void setRhHost();
+      virtual void setRhHost()throw (castor::exception::Exception);
       virtual void setRhSvcClass(std::string optSvcClass) throw (castor::exception::Exception);
-      virtual void setRhSvcClass();
+      virtual void setRhSvcClass()throw (castor::exception::Exception);
+      virtual void setOption(struct stage_options* opts)throw (castor::exception::Exception);
+
+
       /**
        * Sets the request ID in the base client
        */

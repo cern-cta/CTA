@@ -59,6 +59,8 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "stager_client_api_common.h"
+
+
 extern "C" {
 #include <Cgetopt.h>
 #include <common.h>
@@ -147,9 +149,11 @@ std::string castor::client::BaseClient::sendRequest
   throw(castor::exception::Exception) {
    // Now the common part of the request
   // Request handler host and port
-  setRhHost();
-  setRhPort();
-  // Uid
+  
+//setRhHost();
+//  setRhPort();
+  
+// Uid
   uid_t euid;
   char *stgeuid = getenv(castor::client::STAGE_EUID);
   if (0 != stgeuid) {
@@ -247,7 +251,14 @@ std::string castor::client::BaseClient::sendRequest
 	stage_trace(3, "Setting hostname %s", hostname);
     req->setMachine(hostname);
     if (m_rhHost == "") {
-      m_rhHost = hostname;
+	    clog() << "Rh host not speciefied: "
+                   << strerror(errno) << std::endl;
+                   free(hostname);
+            castor::exception::Exception e(errno);
+            e.getMessage() << "Could not get rh host name"
+                           <<  strerror(errno);
+            throw e;
+      //m_rhHost = hostname;
     }
     free(hostname);
   }
@@ -496,7 +507,7 @@ castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
 // setRhPort
 //------------------------------------------------------------------------------
 
-void castor::client::BaseClient::setRhPort(){setRhPort(0);}
+void castor::client::BaseClient::setRhPort()throw (castor::exception::Exception){setRhPort(0);}
 void castor::client::BaseClient::setRhPort(int optPort)
   throw (castor::exception::Exception) {
 
@@ -548,13 +559,13 @@ void castor::client::BaseClient::setRhPort(int optPort)
 //------------------------------------------------------------------------------
 // setRhHost
 //------------------------------------------------------------------------------
-void castor::client::BaseClient::setRhHost(){setRhHost("");}
+void castor::client::BaseClient::setRhHost()throw (castor::exception::Exception){setRhHost("");}
 void castor::client::BaseClient::setRhHost(std::string optHost)
   throw (castor::exception::Exception) {
   // RH server host. Can be passed given through the
   // RH_HOST environment variable or in the castor.conf
   // file as a RH/HOST entry
-  if (!optHost.compare("")){
+  if (optHost.compare("")){
 	m_rhHost = optHost;
 	return;
   }
@@ -581,13 +592,13 @@ void castor::client::BaseClient::setRhHost(std::string optHost)
 //------------------------------------------------------------------------------
 // setRhSvcClass
 //------------------------------------------------------------------------------
-void castor::client::BaseClient::setRhSvcClass(){setRhSvcClass("");}
+void castor::client::BaseClient::setRhSvcClass()throw (castor::exception::Exception){setRhSvcClass("");}
 void castor::client::BaseClient::setRhSvcClass(std::string optSvcClass)
   throw (castor::exception::Exception) {
   // RH server host. Can be passed given through the
   // RH_HOST environment variable or in the castor.conf
   // file as a RH/HOST entry
-  if (!optSvcClass.compare("")){
+  if (optSvcClass.compare("")){
 	m_rhSvcClass = optSvcClass;
 	return;
   }
@@ -610,6 +621,29 @@ void castor::client::BaseClient::setRhSvcClass(std::string optSvcClass)
 
   stage_trace(3, "Looking up RH svc class - Using %s", m_rhSvcClass.c_str());
 }
+
+
+//------------------------------------------------------------------------------
+// setOption
+//------------------------------------------------------------------------------
+
+void castor::client::BaseClient::setOption(struct stage_options* opts)throw (castor::exception::Exception){
+	
+ 	if(opts !=0){
+
+		setRhHost(opts->stage_host);
+        	setRhPort(opts->stage_port);
+        	setRhSvcClass(opts->service_class);
+	}
+	else{
+       	 	setRhHost("");
+        	setRhPort(0);
+        	setRhSvcClass("");
+	
+	}
+}        
+
+
 //------------------------------------------------------------------------------
 // setRequestId
 //------------------------------------------------------------------------------
