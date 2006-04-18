@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_rm.cpp,v 1.3 2005/02/01 10:48:30 bcouturi Exp $
+ * $Id: stager_client_api_rm.cpp,v 1.4 2006/04/18 15:36:17 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_rm.cpp,v $ $Revision: 1.3 $ $Date: 2005/02/01 10:48:30 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_rm.cpp,v $ $Revision: 1.4 $ $Date: 2006/04/18 15:36:17 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -27,7 +27,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_rm.cpp,v $ $Revision: 1.3
 #include "castor/Constants.hpp"
 #include "castor/client/VectorResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
-#include "castor/stager/RequestHelper.hpp"
+//#include "castor/stager/RequestHelper.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StageRmRequest.hpp"
@@ -72,8 +72,8 @@ static int _processFileRequest(char *func,
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
 
-    castor::stager::RequestHelper reqh(&req);
-    reqh.setOptions(opts);
+   // castor::stager::RequestHelper reqh(&req);
+    client.setOption(opts);
 
     // Preparing the requests
     for(int i=0; i<nbreqs; i++) {
@@ -244,8 +244,8 @@ EXTERN_C int DLL_DECL stage_abortRequest(char *requestId,
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StageAbortRequest req;
 
-    castor::stager::RequestHelper reqh(&req);
-    reqh.setOptions(opts);   
+    //castor::stager::RequestHelper reqh(&req);
+    client.setOption(opts);   
 
     // Using the VectorResponseHandler which stores everything in
     // A vector. BEWARE, the responses must be de-allocated afterwards

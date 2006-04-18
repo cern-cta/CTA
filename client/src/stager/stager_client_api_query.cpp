@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.16 2006/04/13 21:06:05 sponcec3 Exp $
+ * $Id: stager_client_api_query.cpp,v 1.17 2006/04/18 15:36:17 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.16 $ $Date: 2006/04/13 21:06:05 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.17 $ $Date: 2006/04/18 15:36:17 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -35,7 +35,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 
 #include "castor/stager/SubRequest.hpp"
 #include "stager_client_api_common.h"
 #include "stager_client_api.h"
-#include "castor/stager/RequestHelper.hpp"
+//#include "castor/stager/RequestHelper.hpp"
 #include "castor/query/DiskPoolQuery.hpp"
 #include "castor/query/DiskPoolQueryResponse.hpp"
 #include "castor/query/DiskServerDescription.hpp"
@@ -79,8 +79,8 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StageFileQueryRequest req;
 
-    castor::stager::RequestHelper reqh(&req);
-    reqh.setOptions(opts);
+    //castor::stager::RequestHelper reqh(&req);
+    client.setOption(opts);
 
     
     // Preparing the requests
@@ -197,8 +197,8 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StageRequestQueryRequest req;
     
-    castor::stager::RequestHelper reqh(&req);
-    reqh.setOptions(opts);
+    //castor::stager::RequestHelper reqh(&req);
+    client.setOption(opts);
     
     // Preparing the requests
     for(int i=0; i<nbreqs; i++) {
@@ -343,7 +343,7 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::query::DiskPoolQuery req;
-    castor::stager::RequestHelper reqh(&req);
+   // castor::stager::RequestHelper reqh(&req);
     req.setDiskPoolName(diskPoolName);
 
     // Using the VectorResponseHandler which stores everything in
@@ -403,7 +403,7 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::query::DiskPoolQuery req;
-    castor::stager::RequestHelper reqh(&req);
+    //castor::stager::RequestHelper reqh(&req);
     if (0 != svcClassName) {
       req.setSvcClassName(svcClassName);
     }

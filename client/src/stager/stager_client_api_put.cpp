@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.22 2005/05/20 12:10:33 bcouturi Exp $
+ * $Id: stager_client_api_put.cpp,v 1.23 2006/04/18 15:36:17 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.22 $ $Date: 2005/05/20 12:10:33 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.23 $ $Date: 2006/04/18 15:36:17 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -85,9 +85,9 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StagePrepareToPutRequest req;
-
     castor::stager::RequestHelper reqh(&req);
-    reqh.setOptions(opts);
+
+    client.setOption(opts);
 
     if (0 != userTag) {
       req.setUserTag(std::string(userTag));
@@ -225,8 +225,8 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
     castor::stager::StagePutRequest req;
     castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
 
-    castor::stager::RequestHelper reqh(&req);
-    reqh.setOptions(opts);
+    //castor::stager::RequestHelper reqh(&req);
+    client.setOption(opts);
 
     if (0 != userTag) {
       req.setUserTag(std::string(userTag));
@@ -348,8 +348,8 @@ EXTERN_C int DLL_DECL stage_putDone(char *putRequestId,
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StagePutDoneRequest req;
 
-    castor::stager::RequestHelper reqh(&req);
-    reqh.setOptions(opts);
+    //castor::stager::RequestHelper reqh(&req);
+    client.setOption(opts);
 
     // Setting the request ID if specified
     if (putRequestId != NULL) {

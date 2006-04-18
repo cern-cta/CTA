@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.23 2005/10/17 12:49:01 jdurand Exp $
+ * $Id: stager_client_api_get.cpp,v 1.24 2006/04/18 15:36:17 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.23 $ $Date: 2005/10/17 12:49:01 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.24 $ $Date: 2006/04/18 15:36:17 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -29,7 +29,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.
 #include "castor/client/VectorResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
 #include "castor/stager/StageGetRequest.hpp"
-#include "castor/stager/RequestHelper.hpp"
+//#include "castor/stager/RequestHelper.hpp"
 #include "castor/stager/StagePrepareToGetRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/ObjectSet.hpp"
@@ -84,8 +84,8 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StagePrepareToGetRequest req;
 
-    castor::stager::RequestHelper reqh(&req);
-    reqh.setOptions(opts);
+    //castor::stager::RequestHelper reqh(&req);
+    client.setOption(opts);
 
     if (0 != userTag) {
       req.setUserTag(std::string(userTag));
@@ -232,8 +232,7 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
     castor::stager::StageGetRequest req;
     castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
 
-    castor::stager::RequestHelper reqh(&req);
-    reqh.setOptions(opts);
+    client.setOption(opts);
 
     if (userTag) {
       std::string suserTag(userTag);
