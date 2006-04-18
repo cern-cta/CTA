@@ -4,7 +4,7 @@
 ;
 ; PROPOSAL FOR 64BITS QUANTITIES: Use the u64subr.h syntax, e.g. with a unit
 ;
-; $Id: castor.clp,v 1.13 2005/10/03 09:21:34 jdurand Exp $
+; $Id: castor.clp,v 1.14 2006/04/18 10:02:23 sponcec3 Exp $
 ;
 ; (c) CASTOR CERN/IT/ADC/CA 2004 - Jean-Damien.Durand@cern.ch
 ;
@@ -43,14 +43,14 @@
 	?*ioSign* = -1                  ; Does increase of i/o increase weight?
 	?*spaceSign* = 1                ; Does increase of space increase weight?
 	?*streamSign* = -1              ; Does increase of number of stream increase weight?
-	?*ramImportance* = 1.           ; How ram counts into a diskserver weight
-	?*memImportance* = 1.           ; How mem counts into a diskserver weight
-	?*swapImportance* = 1.          ; How swap counts into a diskserver weight
-	?*procImportance* = 1.          ; How proc counts into a diskserver weight
+	?*ramImportance* = 0.           ; How ram counts into a diskserver weight
+	?*memImportance* = 0.           ; How mem counts into a diskserver weight
+	?*swapImportance* = 0.          ; How swap counts into a diskserver weight
+	?*procImportance* = 0.          ; How proc counts into a diskserver weight
 	?*loadImportance* = 2.          ; How load counts into a diskserver weight
 	?*ioImportance* = 5.            ; How i/o counts into a diskserver weight
-	?*spaceImportance* = 3.         ; How space counts into a diskserver weight
-	?*streamImportance* = 0.        ; How number of streams counts into a diskserver weight
+	?*spaceImportance* = 1.         ; How space counts into a diskserver weight
+	?*streamImportance* = 2.        ; How number of streams counts into a diskserver weight
 
 	;; Please make sure that filesystemReadImportance + filesystemWriteImportance gives 1.
 
@@ -59,14 +59,14 @@
 
 	;; Please make sure that readImportance + writeImportance + readWriteImportance gives 1.
 
-	?*readImportance* = 1.        ; How a read stream counts into a diskserver weight
-	?*writeImportance* = 1.       ; How a read stream counts into a diskserver weight
-	?*readWriteImportance* = 1.   ; How a read/write stream counts into a diskserver weight
+	?*readImportance* = 0.3        ; How a read stream counts into a diskserver weight
+	?*writeImportance* = 0.3       ; How a read stream counts into a diskserver weight
+	?*readWriteImportance* = 0.4   ; How a read/write stream counts into a diskserver weight
 
 	;; You might want to make sure than a given fsDeviation is at least equal to...:
-	?*minReadWeight* = 0.          ; Minimum value for a fsDeviation in read-only mode
-	?*minWriteWeight* = 0.         ; Minimum value for a fsDeviation in write-only mode
-	?*minReadWriteWeight* = 0.     ; Minimum value for a fsDeviation in read/write-only mode
+	?*minReadWeight* = 2           ; Minimum value for a fsDeviation in read-only mode
+	?*minWriteWeight* = 2          ; Minimum value for a fsDeviation in write-only mode
+	?*minReadWriteWeight* = 2      ; Minimum value for a fsDeviation in read/write-only mode
 
 	;; You might want to make sure than a given fsDeviation is at max equal to...:
 	?*maxReadWeight* = 1000.        ; Minimum value for a fsDeviation in read-only mode
