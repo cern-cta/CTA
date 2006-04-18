@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.6 $ $Release$ $Date: 2006/04/05 14:47:38 $ $Author: gtaur $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.7 $ $Release$ $Date: 2006/04/18 15:32:19 $ $Author: gtaur $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.6 $ $Release$ $Date: 2006/04/05 14:47:38 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.7 $ $Release$ $Date: 2006/04/18 15:32:19 $ Olof Barring";
 #endif /* not lint */
 /** RfioTURL.c - RFIO TURL handling
  *
@@ -49,7 +49,13 @@ static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.6 $ $Release$ 
 #include <RfioTURL.h>
 #include <stager_mapper.h>
 #include <Castor_limits.h>
+#include <grp.h>
+#include <sys/types.h>
 
+#define DEFAULT_HOST "stagepublic"
+#define DEFAULT_PORT 9002
+#define DEFAULT_SVCCLASS "ITDC"  
+#define DEFAULT_VERSION 1
 
 static int tURLPrefixKey = -1;
 static int tURLPrefixLenKey = -1;
@@ -114,17 +120,31 @@ int getDefaultForGlobal(
 			int* version)
 
 
-{      
+{ 
 	char *hostMap, *hostDefault, *svcMap, *svcDefault;
 	int versionMap,versionDefault, portDefault, ret;
-	char* groupStr; // fix the group string ... 
-	char* aux=NULL;
+	char* aux=NULL; 
+        struct group* grp=NULL; 
+	gid_t gid;
+
+       hostMap=hostDefault=svcMap=svcDefault=NULL;
+       versionMap=versionDefault=portDefault=ret=0;
+
 	if(host == NULL || port == NULL || svc == NULL || version == NULL ){ return (-1);}
 	hostDefault=*host;
 	svcDefault=*svc;
 	portDefault=*port;
 	versionDefault=*version;
-	ret=just_stage_mapper(getenv("USER"),NULL,&hostMap,&svcMap,&versionMap); 
+
+	gid=getgid();
+
+	if((grp = getgrgid(gid)) == NULL ){
+		ret=just_stage_mapper(getenv("USER"),NULL,&hostMap,&svcMap,&versionMap); 
+	}
+	else{
+		ret=just_stage_mapper(NULL,grp->gr_name,&hostMap,&svcMap,&versionMap);
+	}
+
 	if(hostDefault==NULL || strcmp(hostDefault,"")==0){
 		if(hostDefault){free(hostDefault);}
 		aux=getenv("STAGE_HOST");
@@ -136,7 +156,7 @@ int getDefaultForGlobal(
 				hostDefault=aux==NULL?NULL:strdup(aux);
 				if (hostDefault==NULL || strcmp(hostDefault,"")==0 ){
 					if(hostDefault){free(hostDefault);}
-					hostDefault=strdup("mySTAGEDef");
+					hostDefault=strdup(DEFAULT_HOST);
 				}
 			}
 			else{
@@ -152,7 +172,7 @@ int getDefaultForGlobal(
 			aux=(char*)getconfent("STAGER", "PORT", 0);
 			portDefault=aux==NULL?0:atoi(aux);
 			if (portDefault<=0){
-				portDefault= 256665588;
+				portDefault= DEFAULT_PORT;
 			}
 		}
 		
@@ -169,11 +189,11 @@ int getDefaultForGlobal(
 				svcDefault=aux==NULL?NULL:strdup(aux);
 				if (svcDefault==NULL || strcmp(svcDefault,"")==0 ){
 					if(svcDefault){free(svcDefault);}
-					svcDefault=strdup("mySvcDef");
+					svcDefault=strdup("");
 				}
 			}
 			else{
-				svcDefault=strdup(svcMap);
+				svcDefault=strdup(DEFAULT_SVCCLASS);
 			}
 		}
 
@@ -189,7 +209,7 @@ int getDefaultForGlobal(
 			aux=(char*)getconfent("STAGER","VERSION",0);
 			versionDefault=aux==NULL?0:atoi(aux);
 				if (versionDefault<=0){
-					   versionDefault= 1;
+					   versionDefault= DEFAULT_VERSION;
 			 	}
 			}
 		}
@@ -226,6 +246,7 @@ char ** globalHost,  **globalSvc;
 int *globalVersion, *globalPort;
 globalHost=globalSvc=0;
 globalVersion=globalPort=0;
+
 
   if ( tURLStr == NULL || tURL == NULL ) {
     serrno = EINVAL;
@@ -415,6 +436,7 @@ globalVersion=globalPort=0;
      strcpy(_tURL.rfioPath,path2);
    }
 
+
    if (strstr(_tURL.rfioPath,"/castor")){
 
     /* from here setting the proper enviroment variable */
@@ -486,7 +508,7 @@ globalVersion=globalPort=0;
 	if (versionNum){
 		*globalVersion=versionNum;
 	}
-	
+	printf("dentro il grande deb1\n");fflush(stdout);
 	ret=getDefaultForGlobal(globalHost,globalPort,globalSvc,globalVersion);
 	if (ret<0){
 			serrno = EINVAL;
