@@ -600,6 +600,7 @@ void castor::client::BaseClient::setRhSvcClass(std::string optSvcClass)
   // file as a RH/HOST entry
   if (optSvcClass.compare("")){
 	m_rhSvcClass = optSvcClass;
+	printf("setto la service class %s",optSvcClass);
 	return;
   }
 
