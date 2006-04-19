@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.23 2006/04/18 15:36:17 gtaur Exp $
+ * $Id: stager_client_api_put.cpp,v 1.24 2006/04/19 12:28:07 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.23 $ $Date: 2006/04/18 15:36:17 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.24 $ $Date: 2006/04/19 12:28:07 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -225,7 +225,8 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
     castor::stager::StagePutRequest req;
     castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
 
-    //castor::stager::RequestHelper reqh(&req);
+    castor::stager::RequestHelper reqh(&req);
+    reqh.setOptions(opts);
     client.setOption(opts);
 
     if (0 != userTag) {
@@ -348,7 +349,8 @@ EXTERN_C int DLL_DECL stage_putDone(char *putRequestId,
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StagePutDoneRequest req;
 
-    //castor::stager::RequestHelper reqh(&req);
+    castor::stager::RequestHelper reqh(&req);
+    reqh.setOptions(opts);
     client.setOption(opts);
 
     // Setting the request ID if specified

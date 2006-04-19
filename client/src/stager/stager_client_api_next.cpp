@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_next.cpp,v 1.2 2005/02/01 10:48:30 bcouturi Exp $
+ * $Id: stager_client_api_next.cpp,v 1.3 2006/04/19 12:31:06 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_next.cpp,v $ $Revision: 1.2 $ $Date: 2005/02/01 10:48:30 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_next.cpp,v $ $Revision: 1.3 $ $Date: 2006/04/19 12:31:06 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -65,7 +65,7 @@ static int _processReqIdRequest(char *func,
     castor::client::BaseClient client(stage_getClientTimeout());
 
     castor::stager::RequestHelper reqh(&req);
-    reqh.setOptions(opts);
+    client.setOption(opts);
     
     req.setParentUuid(std::string(prevRequestId));
 
