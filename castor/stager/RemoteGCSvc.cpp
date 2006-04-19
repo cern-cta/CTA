@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/11/18 16:54:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/04/19 15:01:45 $ $Author: gtaur $
  *
  *
  *
@@ -260,6 +260,7 @@ castor::stager::RemoteGCSvc::selectFiles2Delete
   Files2DeleteResponseHandler rh(result);
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteGCClientTimeout());
+  client.setOption(NULL);
   client.sendRequest(&req, &rh);
   return result;
 }
@@ -288,7 +289,9 @@ void castor::stager::RemoteGCSvc::filesDeleted
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteGCClientTimeout());
+  client.setOption(NULL);
   client.sendRequest(&req, &rh);
+ 
   // no need to cleanup files since the ownership of its content
   // was transmitted to req and the deletion of req will delete it !
 }
@@ -317,6 +320,7 @@ void castor::stager::RemoteGCSvc::filesDeletionFailed
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteGCClientTimeout());
+  client.setOption(NULL);
   client.sendRequest(&req, &rh);
   // no need to cleanup files since the ownership of its content
   // was transmitted to req and the deletion of req will delete it !
