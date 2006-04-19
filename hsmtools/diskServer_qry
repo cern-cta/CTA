@@ -18,7 +18,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: diskServer_qry,v $ $Revision: 1.1 $ $Release$ $Date: 2005/07/29 10:16:53 $ $Author: sponcec3 $
+# * @(#)$RCSfile: diskServer_qry,v $ $Revision: 1.2 $ $Release$ $Date: 2006/04/19 08:13:32 $ $Author: sponcec3 $
 # *
 # * queries the stager for the files residing on a given diskServer
 # *
@@ -90,10 +90,16 @@ printf("%-30s %s\n", "Status", "FileName");
 
 # display results
 my @row;
+my $statusStr;
 while (@row = $sth->fetchrow_array) {
   if ($giveFileId) { printf("%-15lld ", $row[3]); }
   if ($giveDCId) { printf("%-15lld ", $row[2]); }
-  printf("%-30s %s\n", $DiskCopyStatus[$row[1]], $row[0]);
+  if ($row[1] <= $#DiskCopyStatus) {
+    $statusStr = $DiskCopyStatus[$row[1]];
+  } else {
+    $statusStr = "Unknown status : " . $row[1];
+  }
+  printf("%-30s %s\n", $statusStr, $row[0]);
 }
 
 # Close DB connection
