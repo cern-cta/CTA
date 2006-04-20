@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.10 2006/03/31 09:45:27 sponcec3 Exp $
+## $Id: PACKAGING.howto,v 1.11 2006/04/20 18:25:06 itglp Exp $
 #
 
 #
@@ -8,6 +8,7 @@
 cd somewhere
 cvs -d:kserver:isscvs.cern.ch:2000/local/reps/castor co CASTOR2
 # cvs -d :gserver:lxcvs05.cern.ch/local/reps/castor co CASTOR2
+CASTOR2/tools/CASTOR.cvslogs.pl -rvx_y_z_r::   # last tagged version so far
 cd CASTOR2
 dch -i
 cvs commit debian/changelog
