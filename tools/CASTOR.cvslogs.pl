@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 #
-# $Id: CASTOR.cvslogs.pl,v 1.3 2006/03/31 09:07:46 sponcec3 Exp $
+# $Id: CASTOR.cvslogs.pl,v 1.4 2006/04/20 18:23:46 itglp Exp $
 #
 
 use strict;
@@ -12,7 +12,8 @@ use File::Temp qw/ tempfile tempdir /;
 ## Usage: $0 [CVSLOGOPTION], please do cvs log --help for more. In particular:
 #
 ## Example: rm -f /tmp/logs.txt; $0 "2005-04-27 16:32:45<2010-04-27 16:32:45" > /tmp/logs.txt
-##          rm -f /tmp/logs.txt; $0 r2_0_0_54:v2_0_0_64                       > /tmp/logs.txt
+##          rm -f /tmp/logs.txt; $0 -rv2_0_3_0::                              > /tmp/logs.txt
+##          rm -f /tmp/logs.txt; $0 -rv2_0_3_0::v2_0_3_1                      > /tmp/logs.txt
 #
 
 my $input;
