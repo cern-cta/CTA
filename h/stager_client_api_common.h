@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.h,v 1.3 2006/02/02 17:38:23 sponcec3 Exp $
+ * $Id: stager_client_api_common.h,v 1.4 2006/04/20 10:04:09 gtaur Exp $
  */
 
 #ifndef stager_client_api_common_h
@@ -35,5 +35,8 @@ stage_getid(uid_t *uid, gid_t *gid);
 
 EXTERN_C int DLL_DECL
 stage_resetid();
+
+EXTERN_C int DLL_DECL 
+setDefaultOption(struct stage_options* opts);
 
 #endif /* stager_client_api_common_h */
