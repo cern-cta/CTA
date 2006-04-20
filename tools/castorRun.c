@@ -1,5 +1,5 @@
 /*
- * $Id: castorRun.c,v 1.3 2005/03/31 13:37:11 jdurand Exp $
+ * $Id: castorRun.c,v 1.4 2006/04/20 08:01:26 gtaur Exp $
  */
 
 /* cc -Wall -fPIC -D_LARGEFILE64_SOURCE -g -I../h -I../  -pthread -DCTHREAD_POSIX -D_THREAD_SAFE -D_REENTRANT -o castorRun castorRun.c -L../shlib -lshift */
@@ -41,7 +41,7 @@ mode_t mode = 0;
 u_signed64 size = 0;
 int create = 0;
 int help = 0;
-struct stage_options opts = {NULL,NULL};
+struct stage_options opts = {NULL,0,NULL,0};
 
 /* -------------------------------------------------------------------- */
 /* main                                                                 */
