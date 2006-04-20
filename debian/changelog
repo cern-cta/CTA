@@ -10,7 +10,6 @@ castor (2.0.3-5) unstable; urgency=low
     [r1.250,2006-04-05,itglp] Fixed stageRm: pending requests on the file being removed are moved to
     [r1.250,2006-04-05,itglp] FAILED instead of being archived, so clients may get an answer.
     [r1.249,2006-03-31,sponcec3] New improvements in the indexes/table setups thanks to Nilo
-    [r1.248,2006-03-24,itglp] Optimized defaultGCPolicy function (credits to Nilo)
   * CASTOR2/castor/repack/RepackFileStager.cpp:
     [r 1.3,2006-04-05,felixehm] Changing the Stager SubRequest : the isRepack contains now the vid
     [r 1.3,2006-04-05,felixehm] Before it was a bool, but because this information is needed for further
@@ -57,34 +56,38 @@ castor (2.0.3-5) unstable; urgency=low
   * CASTOR2/stager/stager_qry.c:
   * CASTOR2/stager/stager_qry.man:
     [2006-03-28,motiakov] Added support for the --regexp (-E) command line option.
-  * CASTOR2/tape/Ctape_dmpfil.c:
-    [r1.25,2006-01-23,hcacote] use maxblksize from devinfo if no -b specified in cmmand line
-  * CASTOR2/tape/mounttape.c:
-    [r1.43,2006-03-23,hcacote] for 3592 if I/0 error at open tape device change VDQM status to MOUNT and continue to release
-    [r1.42,2006-03-21,hcacote] ring-out and ring-in changed respectively by read and  write
-  * CASTOR2/tape/rbtsubr.c:
-  * CASTOR2/tape/smcsubr2.c:
-    [r 1.4,2006-03-01,hcacote] if medium not present smcdismount returns RBT_OK and tapedrive is not configured down
-  * CASTOR2/tape/wrttpmrk.c:
-    [r 1.7,2006-03-13,hcacote] rolling back to version 1.4 with st driver
-    [r 1.6,2006-03-09,hcacote] write filemark controlled by entry in castor.conf default immediate bit off
-    [r 1.5,2006-02-14,hcacote] write filemarks with sg driver and immediate bit set
   * CASTOR2/test/Imakefile:
     [r 1.9,2006-04-10,itglp] Removed also ns
     [r 1.8,2006-04-10,itglp] Removed vdqm and vmgr test dirs
-  * CASTOR2/tools/CASTOR.cvslogs.pl:
-    [r 1.3,2006-03-31,sponcec3] Adapted log gathering tool to the new CASTOR2 module
-  * CASTOR2/upv/Cupv_oracle_ifce.pc:
-    [r 1.9,2006-03-22,motiakov] Enabled remote connections to ORACLE.
-  * CASTOR2/vmgr/vmgr_oracle_ifce.pc:
-    [r1.29,2006-03-21,motiakov] Modified connection string to enable connections to remote databases
 
  -- Sebastien Ponce <sponcec3@pcitds13>  Mon, 10 Apr 2006 18:49:21 +0200
 
 castor (2.0.3-4) unstable; urgency=low
 
-  * Changelog to be added later... 
-
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    [r1.248,2006-03-24,itglp] Optimized defaultGCPolicy function (credits to Nilo)
+  * CASTOR2/dlf/dlf_api.c:
+    [r1.24,2006-03-23,motiakov] Added new function dlf_shutdown();
+    [r1.24,2006-03-23,motiakov] It frees memory occupied by the dlf global structure.
+    [r1.24,2006-03-23,motiakov] This function should be called just before application exit.
+  * CASTOR2/h/dlf_api.h:
+    [r1.13,2006-03-23,motiakov] Added new function dlf_shutdown();
+    [r1.13,2006-03-23,motiakov] It frees memory occupied by the dlf global structure.
+    [r1.13,2006-03-23,motiakov] This function should be called just before application exit.
+  * CASTOR2/job/stagerJob.shell:
+    [r1.39,2006-03-24,itglp] Unset STAGE_HOST too
+  * CASTOR2/rmc/rmc_serv.c:
+    [r 1.7,2006-03-20,hcacote] try 2 times to get the robot gemometry at startup to avoid scsi bus reset at reboot
+  * CASTOR2/tape/Ctape_dmpfil.c:
+    [r1.25,2006-01-23,hcacote] use maxblksize from devinfo if no -b specified in cmmand line
+  * CASTOR2/tape/mounttape.c:
+    [r1.43,2006-03-23,hcacote] for 3592 if I/0 error at open tape device change VDQM status to MOUNT and continue to release
+    [r1.42,2006-03-21,hcacote] ring-out and ring-in changed respectively by read and  write
+  * CASTOR2/upv/Cupv_oracle_ifce.pc:
+    [r 1.9,2006-03-22,motiakov] Enabled remote connections to ORACLE.
+  * CASTOR2/vmgr/vmgr_oracle_ifce.pc:
+    [r1.29,2006-03-21,motiakov] Modified connection string to enable connections to remote databases
+    
  -- Giuseppe LO PRESTI <itglp@localhost.localdomain>  Fri, 24 Mar 2006 14:35:24 +0100
 
 castor (2.0.3-3) unstable; urgency=low
