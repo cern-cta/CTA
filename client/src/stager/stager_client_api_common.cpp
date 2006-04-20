@@ -42,6 +42,10 @@ static char *sccsid = "@(#)stager_client_api_common.cpp,v 1.20 2006/02/03 11:40:
 #include "castor/stager/FileSystemStatusCodes.hpp"
 #include "stager_client_api_authid.hpp"
 
+#define DEFAULT_HOST "stagepublic"
+#define DEFAULT_PORT 9002
+#define DEFAULT_SVCCLASS ""  
+
 EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
 
 /* ================= */
@@ -362,4 +366,20 @@ void DLL_DECL castor::client::setClientAuthorizationId
     throw e;
   }
   client.setAuthorizationId(authUid, authGid);
+}
+
+int DLL_DECL setDefaultOption
+(struct stage_options* opts){
+
+	if (!opts){
+                opts=(struct stage_options*)malloc(sizeof(struct stage_options));
+		opts->stage_host=DEFAULT_HOST;
+		opts->stage_port =DEFAULT_PORT;
+		opts->service_class =DEFAULT_SVCCLASS;
+		return -1;
+	}
+	if (!opts->stage_host){opts->stage_host=DEFAULT_HOST;}
+        if (!opts->stage_port){ opts->stage_port =DEFAULT_PORT;}
+        if (!opts->service_class){ opts->service_class =DEFAULT_SVCCLASS;}
+        return 0;
 }

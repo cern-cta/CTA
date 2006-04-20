@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_rm.cpp,v 1.5 2006/04/19 12:28:07 gtaur Exp $
+ * $Id: stager_client_api_rm.cpp,v 1.6 2006/04/20 09:52:13 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_rm.cpp,v $ $Revision: 1.5 $ $Date: 2006/04/19 12:28:07 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_rm.cpp,v $ $Revision: 1.6 $ $Date: 2006/04/20 09:52:13 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -22,6 +22,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_rm.cpp,v $ $Revision: 1.5
 /* ============= */
 #include "errno.h"
 #include "stager_client_api.h"
+#include "stager_client_api_common.h"
 #include "stager_admin_api.h"
 #include "castor/BaseObject.hpp"
 #include "castor/Constants.hpp"
@@ -54,7 +55,7 @@ static int _processFileRequest(char *func,
 			       int *nbresps,
 			       char **requestId,
 			       struct stage_options* opts) {
-
+ int ret=0;
   if (requests == NULL
       || nbreqs <= 0
       || responses == NULL
@@ -71,9 +72,11 @@ static int _processFileRequest(char *func,
 	
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
-
+    ret=setDefaultOption(opts);
     castor::stager::RequestHelper reqh(&req);
+    reqh.setOptions(opts);
     client.setOption(opts);
+    if(ret==-1){free(opts);}
 
     // Preparing the requests
     for(int i=0; i<nbreqs; i++) {
@@ -229,6 +232,7 @@ EXTERN_C int DLL_DECL stage_abortRequest(char *requestId,
 
 
   char *func = "stage_abortRequest";
+  int ret=0;
 
   if (requestId == NULL) {
     serrno = EINVAL;
@@ -245,8 +249,10 @@ EXTERN_C int DLL_DECL stage_abortRequest(char *requestId,
     castor::stager::StageAbortRequest req;
 
     castor::stager::RequestHelper reqh(&req);
+    ret=setDefaultOption(opts);
     reqh.setOptions(opts);
     client.setOption(opts);   
+    if(ret==-1){free(opts);}
 
     // Using the VectorResponseHandler which stores everything in
     // A vector. BEWARE, the responses must be de-allocated afterwards

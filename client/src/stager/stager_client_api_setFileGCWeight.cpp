@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_setFileGCWeight.cpp,v 1.1 2005/11/25 11:11:01 sponcec3 Exp $
+ * $Id: stager_client_api_setFileGCWeight.cpp,v 1.2 2006/04/20 09:52:13 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_setFileGCWeight.cpp,v $ $Revision: 1.1 $ $Date: 2005/11/25 11:11:01 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_setFileGCWeight.cpp,v $ $Revision: 1.2 $ $Date: 2006/04/20 09:52:13 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -22,6 +22,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_setFileGCWeight.cpp,v $ $
 /* ============= */
 #include "errno.h"
 #include "stager_client_api.h"
+#include "stager_client_api_common.h"
 #include "stager_admin_api.h"
 #include "castor/BaseObject.hpp"
 #include "castor/Constants.hpp"
@@ -52,7 +53,7 @@ static int _processFileRequest(char *func,
                                int *nbresps,
                                char **requestId,
                                struct stage_options* opts) {
-
+  int ret=0;
   if (requests == NULL
       || nbreqs <= 0
       || responses == NULL
@@ -67,9 +68,12 @@ static int _processFileRequest(char *func,
 
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
-
+    ret=setDefaultOption(opts);
     castor::stager::RequestHelper reqh(&req);
+    ret=setDefaultOption(opts);
     reqh.setOptions(opts);
+    client.setOption(opts);
+    if (ret==-1){free(opts);}
 
     // Preparing the requests
     req.setWeight(weight);

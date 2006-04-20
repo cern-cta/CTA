@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.24 2006/04/19 12:28:07 gtaur Exp $
+ * $Id: stager_client_api_put.cpp,v 1.25 2006/04/20 09:52:13 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.24 $ $Date: 2006/04/19 12:28:07 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.25 $ $Date: 2006/04/20 09:52:13 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -64,7 +64,7 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
 					 struct stage_options* opts) {
 
   char *func = "stage_prepareToPut";
- 
+  int ret=0;
   if (requests == NULL
       || nbreqs <= 0
       || responses == NULL
@@ -84,10 +84,13 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
 	
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
+
+    ret=setDefaultOption(opts);
     castor::stager::StagePrepareToPutRequest req;
     castor::stager::RequestHelper reqh(&req);
-
+    reqh.setOptions(opts);
     client.setOption(opts);
+    if(ret==-1){free(opts);}
 
     if (0 != userTag) {
       req.setUserTag(std::string(userTag));
@@ -202,7 +205,7 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
 				struct stage_options* opts) {
   
   char *func = "stage_put";
-
+  int ret=0;
 
   if (0 == filename
       || 0 ==  response) {
@@ -226,8 +229,10 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
     castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
 
     castor::stager::RequestHelper reqh(&req);
+    ret=setDefaultOption(opts);
     reqh.setOptions(opts);
     client.setOption(opts);
+    if (ret==-1){free(opts);}
 
     if (0 != userTag) {
       req.setUserTag(std::string(userTag));
@@ -327,6 +332,7 @@ EXTERN_C int DLL_DECL stage_putDone(char *putRequestId,
                                     struct stage_options* opts) {
 
   char *func = "stage_putDone";
+  int ret=0;
  
   if (requests == NULL
       || nbreqs <= 0
@@ -350,8 +356,10 @@ EXTERN_C int DLL_DECL stage_putDone(char *putRequestId,
     castor::stager::StagePutDoneRequest req;
 
     castor::stager::RequestHelper reqh(&req);
+    ret=setDefaultOption(opts);
     reqh.setOptions(opts);
     client.setOption(opts);
+    if(ret==-1){free(opts);}
 
     // Setting the request ID if specified
     if (putRequestId != NULL) {

@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_next.cpp,v 1.3 2006/04/19 12:31:06 gtaur Exp $
+ * $Id: stager_client_api_next.cpp,v 1.4 2006/04/20 09:52:13 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_next.cpp,v $ $Revision: 1.3 $ $Date: 2006/04/19 12:31:06 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_next.cpp,v $ $Revision: 1.4 $ $Date: 2006/04/20 09:52:13 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -21,6 +21,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_next.cpp,v $ $Revision: 1
 /* Local headers */
 /* ============= */
 #include "errno.h"
+#include "stager_client_api_common.h"
 #include "stager_client_api.h"
 #include "stager_admin_api.h"
 #include "castor/BaseObject.hpp"
@@ -50,6 +51,8 @@ static int _processReqIdRequest(char *func,
 				const char *prevRequestId,
 				struct stage_io_fileresp ** response,
 				struct stage_options* opts) {
+  
+  int ret=0;
 
   if (prevRequestId == NULL) {    serrno = EINVAL;
     stage_errmsg(func, "Invalid input parameter");
@@ -63,9 +66,11 @@ static int _processReqIdRequest(char *func,
 	
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
-
+    ret=setDefaultOption(opts);
     castor::stager::RequestHelper reqh(&req);
+    reqh.setOptions(opts);
     client.setOption(opts);
+    if(ret==-1){free(opts);}
     
     req.setParentUuid(std::string(prevRequestId));
 
@@ -144,8 +149,9 @@ static int _processReqIdRequest(char *func,
 EXTERN_C int stage_getNext(const char *reqId,
 			   struct stage_io_fileresp ** response,
 			   struct stage_options* opts) {
-
+ 
   char *func = "stage_getNext";
+  int ret=0;
   castor::stager::StageGetNextRequest req;
   int rc =  _processReqIdRequest(func, req, reqId, response, opts);
   return rc;

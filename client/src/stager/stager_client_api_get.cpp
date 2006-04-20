@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.25 2006/04/19 12:28:06 gtaur Exp $
+ * $Id: stager_client_api_get.cpp,v 1.26 2006/04/20 09:52:13 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.25 $ $Date: 2006/04/19 12:28:06 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.26 $ $Date: 2006/04/20 09:52:13 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -62,7 +62,8 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
 
  
   char *func = "stage_prepareToGet";
- 
+  int ret=0;
+
   if (requests == NULL
       || nbreqs <= 0
       || responses == NULL
@@ -79,12 +80,17 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
   try {
     castor::BaseObject::initLog("", castor::SVC_NOMSG);
     
-	
+
     // Uses a BaseClient to handle the request
+
+
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StagePrepareToGetRequest req;
     castor::stager::RequestHelper reqh(&req);
+    ret=setDefaultOption(opts);
+    reqh.setOptions(opts);
     client.setOption(opts);
+    if (ret==-1){free(opts);}
 
     if (0 != userTag) {
       req.setUserTag(std::string(userTag));
@@ -209,6 +215,7 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
   char *func = "stage_get";
   int rc = -1;
   int saved_serrno = 0;
+  int ret=0;
   std::vector<castor::rh::Response *>respvec;
 
 
@@ -231,8 +238,10 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
     castor::stager::StageGetRequest req;
     castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
     castor::stager::RequestHelper reqh(&req);
+    ret=setDefaultOption(opts);
     reqh.setOptions(opts);
     client.setOption(opts);
+    if(ret==-1){free(opts);}
 
     if (userTag) {
       std::string suserTag(userTag);

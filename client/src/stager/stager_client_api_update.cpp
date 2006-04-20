@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_update.cpp,v 1.9 2006/04/19 12:31:08 gtaur Exp $
+ * $Id: stager_client_api_update.cpp,v 1.10 2006/04/20 09:52:13 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_update.cpp,v $ $Revision: 1.9 $ $Date: 2006/04/19 12:31:08 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_update.cpp,v $ $Revision: 1.10 $ $Date: 2006/04/20 09:52:13 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -58,6 +58,7 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate(const char *userTag,
 					 struct stage_options* opts) {
 
   char *func = "stage_prepareToUpdate";
+  int ret=0;
  
   if (requests == NULL
       || nbreqs <= 0
@@ -80,8 +81,10 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate(const char *userTag,
     castor::stager::StagePrepareToUpdateRequest req;
 
     castor::stager::RequestHelper reqh(&req);  
+    ret=setDefaultOption(opts);
     reqh.setOptions(opts);
     client.setOption(opts);
+    if (ret==-1){free(opts);}
 
    if (0 != userTag) {
       req.setUserTag(std::string(userTag));
@@ -181,6 +184,7 @@ EXTERN_C int DLL_DECL stage_update(const char *userTag,
                                    struct stage_options* opts) {
   
   char *func = "stage_update";
+ int ret=0;
 
   if (0 == filename
       || 0 ==  response) {
@@ -207,9 +211,10 @@ EXTERN_C int DLL_DECL stage_update(const char *userTag,
     }
 
     castor::stager::RequestHelper reqh(&req);
+    ret=setDefaultOption(opts);
     reqh.setOptions(opts);
     client.setOption(opts);
-
+    if (ret==-1){free(opts);}  
     if (0 != protocol) {
       subreq->setProtocol(protocol);
     }
