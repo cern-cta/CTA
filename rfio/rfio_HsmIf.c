@@ -445,7 +445,12 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
     struct Cns_filestat st;
     void (*this_stglog) _PROTO((int, char *)) = NULL;
 #endif /* CNS_ROOT */
-
+	struct stage_options opts;
+        opts.stage_host=NULL;
+        opts.stage_port=0;
+        opts.service_class=NULL;
+        opts.stage_version=2;
+        int ret= getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
 #if defined(CNS_ROOT)
     if ( rfio_HsmIf_IsCnsFile(path) ) {
         char *mover_protocol_rfio = MOVER_PROTOCOL_RFIO;
@@ -499,7 +504,7 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
                             0,
                             &response,
                             &requestId,
-                            NULL);
+                            &opts);
             save_errno = errno;
             save_serrno = serrno;
             if (rc < 0) {
@@ -732,6 +737,14 @@ int DLL_DECL rfio_HsmIf_open_limbysz(const char *path, int flags, mode_t mode, u
 	  mover_protocol_rfio = mover_protocol_alt;
 	}
 #endif
+
+        struct stage_options opts;
+        opts.stage_host=NULL;
+        opts.stage_port=0;
+        opts.service_class=NULL;
+        opts.stage_version=2;
+        int ret= getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
+
         /*
          * Check if an existing file is going to be updated
          */
@@ -768,7 +781,7 @@ int DLL_DECL rfio_HsmIf_open_limbysz(const char *path, int flags, mode_t mode, u
 			  maxsize,
                           &response,
                           &requestId,
-                          NULL);
+                          &opts);
           if (rc < 0) {
             return -1;
           }

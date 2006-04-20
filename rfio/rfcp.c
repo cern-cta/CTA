@@ -1237,8 +1237,13 @@ int copyfile_stager(input,output,mode,input_size,input_is_hpss)
 	char *requestId, *url;
 	int rc;
 	char tmpbuf[21];
+        struct stage_options opts;
+        opts.stage_host=NULL;
+        opts.stage_port=0;
+        opts.service_class=NULL;
+        opts.stage_version=2;
+        int ret= getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
 
-       
 	TRACE(2,"rfio","copyfile_stager: Calling stage_get of %s", input);
 	for(;;) {
 	  rc = stage_open(NULL,
@@ -1249,7 +1254,7 @@ int copyfile_stager(input,output,mode,input_size,input_is_hpss)
 			  0,
 			  &response,
 			  NULL,
-			  NULL);
+			  &opts);
 	  
 	  if (rc != 0) {
 	    /* Unless EBUSY or ENOSPC we do not retry, especially if the error is USERR */
@@ -1296,7 +1301,7 @@ int copyfile_stager(input,output,mode,input_size,input_is_hpss)
 			  input_size,
 			  &putResponse,
 			  NULL,
-			  NULL);
+			  &opts);
 	  
 	  if (rc != 0) {
 	    /* Unless EBUSY or ENOSPC we do not retry, especially if the error is USERR */
