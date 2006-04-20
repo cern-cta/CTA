@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.7 $ $Release$ $Date: 2006/04/18 15:32:19 $ $Author: gtaur $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.8 $ $Release$ $Date: 2006/04/20 15:15:49 $ $Author: gtaur $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.7 $ $Release$ $Date: 2006/04/18 15:32:19 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.8 $ $Release$ $Date: 2006/04/20 15:15:49 $ Olof Barring";
 #endif /* not lint */
 /** RfioTURL.c - RFIO TURL handling
  *
@@ -508,7 +508,6 @@ globalVersion=globalPort=0;
 	if (versionNum){
 		*globalVersion=versionNum;
 	}
-	printf("dentro il grande deb1\n");fflush(stdout);
 	ret=getDefaultForGlobal(globalHost,globalPort,globalSvc,globalVersion);
 	if (ret<0){
 			serrno = EINVAL;
