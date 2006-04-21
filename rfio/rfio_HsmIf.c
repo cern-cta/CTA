@@ -45,6 +45,13 @@ static char sccsid[] = "@(#)rfio_HsmIf.c,v 1.58 2004/02/10 15:05:17 CERN/IT/PDP/
 #endif
 
 #if defined(CNS_ROOT)
+
+
+extern int tStageHostKey;
+extern int tStagePortKey;
+extern int tSvcClassKey;
+extern int tCastorVersionKey;
+
 typedef struct CnsFiles {
     int s;
     int mode;
@@ -440,6 +447,8 @@ int DLL_DECL rfio_HsmIf_mkdir(const char *path, mode_t mode) {
 int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64) {
     int rc = -1;
     int save_serrno, save_errno;
+    int* auxVal;
+    char ** auxPoint;
 #if defined(CNS_ROOT)
     stage_hsm_t *hsmfile = NULL;
     struct Cns_filestat st;
@@ -449,8 +458,26 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
         opts.stage_host=NULL;
         opts.stage_port=0;
         opts.service_class=NULL;
-        opts.stage_version=2;
-        int ret= getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
+        opts.stage_version=0;
+
+	int ret=Cglobals_get(& tStageHostKey, (void**) &auxPoint,sizeof(void*));
+	if(ret==0){
+		opts.stage_host=*auxPoint;
+	}
+	ret=Cglobals_get(& tStagePortKey, (void**) &auxVal,sizeof(int));
+        if(ret==0){
+		opts.stage_port=*auxVal;
+	}
+	ret=Cglobals_get(& tCastorVersionKey, (void**) &auxVal,sizeof(int));
+	if(ret==0){
+		opts.stage_version=*auxVal;
+        }
+	ret=Cglobals_get(& tSvcClassKey, (void**) &auxPoint,sizeof(void*));
+	if (ret==0){
+                opts.service_class=*auxPoint;
+	}
+
+        ret= getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
 #if defined(CNS_ROOT)
     if ( rfio_HsmIf_IsCnsFile(path) ) {
         char *mover_protocol_rfio = MOVER_PROTOCOL_RFIO;
@@ -737,13 +764,32 @@ int DLL_DECL rfio_HsmIf_open_limbysz(const char *path, int flags, mode_t mode, u
 	  mover_protocol_rfio = mover_protocol_alt;
 	}
 #endif
-
+        int* auxVal;
+        char ** auxPoint;
         struct stage_options opts;
         opts.stage_host=NULL;
         opts.stage_port=0;
         opts.service_class=NULL;
-        opts.stage_version=2;
-        int ret= getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
+        opts.stage_version=0;
+
+	int ret=Cglobals_get(& tStageHostKey, (void**) &auxPoint,sizeof(void*));
+	if(ret==1){
+		opts.stage_host=*auxPoint;
+	}
+	ret=Cglobals_get(& tStagePortKey, (void**) &auxVal,sizeof(int));
+        if(ret==1){
+		opts.stage_port=*auxVal;
+	}
+	ret=Cglobals_get(& tCastorVersionKey, (void**) &auxVal,sizeof(int));
+	if(ret==1){
+		opts.stage_version=*auxVal;
+        }
+	ret=Cglobals_get(& tSvcClassKey, (void**) &auxPoint,sizeof(void*));
+	if (ret==1){
+                opts.service_class=*auxPoint;
+	}
+
+        ret= getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
 
         /*
          * Check if an existing file is going to be updated
@@ -1437,6 +1483,13 @@ static int rfio_CnsFilesfdt_freeentry(s)
 /* Function that is saying if we work in old CASTOR1 compat mode (default) or CASTOR2 mode */
 int DLL_DECL use_castor2_api() {
   char *p;
+  int *auxVal;
+  int ret=0;
+  ret=Cglobals_get(& tCastorVersionKey, (void**) &auxVal,sizeof(int));
+  if(ret==0 && (*auxVal==1 ||*auxVal==2)){
+	return (*auxVal-1);
+	      
+  }
 
   if (((p = getenv(RFIO_USE_CASTOR_V2)) == NULL) &&
       ((p = getconfent("RFIO","USE_CASTOR_V2",0)) == NULL)) {
