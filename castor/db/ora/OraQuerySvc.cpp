@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2006/04/13 15:44:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2006/04/21 12:27:27 $ $Author: sponcec3 $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -32,6 +32,7 @@
 #include "castor/stager/Request.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/TooBig.hpp"
+#include "castor/exception/InvalidArgument.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/stager/TapeCopyStatusCodes.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
@@ -77,10 +78,10 @@ const std::string castor::db::ora::OraQuerySvc::s_requestToDoStatementString =
   "BEGIN :1 := 0; DELETE FROM newRequests WHERE type IN (33, 34, 41, 103) AND ROWNUM < 2 RETURNING id INTO :1; END;";
 
 const std::string castor::db::ora::OraQuerySvc::s_describeDiskPoolsStatementString =
-  "SELECT dp.name, ds.name, ds.status, fs.mountPoint, fs.free + fs.deltaFree - fs.reservedSpace AS free, fs.reservedSpace, fs.minFreeSpace, fs.maxFreeSpace, fs.spaceToBeFreed, fs.totalSize, fs.status FROM DiskServer ds, Filesystem fs, DiskPool dp, DiskPool2SvcClass d2s, SvcClass sc WHERE ds.id = fs.diskserver AND dp.id = fs.diskpool AND dp.id = d2s.parent AND ds2.child = sc.id AND sc.name = :1;";
+  "BEGIN describeDiskPools(:1, :2); END;";
 
 const std::string castor::db::ora::OraQuerySvc::s_describeDiskPoolStatementString =
-  "SELECT ds.name, ds.status, fs.mountPoint, fs.free + fs.deltaFree - fs.reservedSpace AS free, fs.reservedSpace, fs.minFreeSpace, fs.maxFreeSpace, fs.spaceToBeFreed, fs.totalSize, fs.status FROM DiskServer ds, Filesystem fs, DiskPool dp WHERE ds.id = fs.diskserver AND dp.id = fs.diskpool AND dp.name = :1;";
+  "BEGIN describeDiskPool(:1, :2); END;";
 
 // -----------------------------------------------------------------------
 // OraQuerySvc
@@ -442,17 +443,23 @@ castor::db::ora::OraQuerySvc::describeDiskPools (std::string svcClass)
     }
     // execute the statement and gather results
     m_describeDiskPoolsStatement->setString(1, svcClass);
-    oracle::occi::ResultSet *rset = m_describeDiskPoolsStatement->executeQuery();
+    unsigned int nb = m_describeDiskPoolsStatement->executeUpdate();
+    if(0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "describeDiskPools : unable to execute query.";
+      throw ex;
+    }
+    oracle::occi::ResultSet *rset = m_describeDiskPoolsStatement->getCursor(2);
     std::vector<castor::query::DiskPoolQueryResponse*>* result =
       new std::vector<castor::query::DiskPoolQueryResponse*>();
+    castor::query::DiskPoolQueryResponse* resp = 0;
+    castor::query::DiskServerDescription* dsd = 0;
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      castor::query::DiskPoolQueryResponse* resp = 0;
-      castor::query::DiskServerDescription* dsd = 0;
       if (rset->getInt(1) == 1) {
 	// This line indicates a new DiskPool and gives
 	// summary info
-	castor::query::DiskPoolQueryResponse* resp =
-	  new castor::query::DiskPoolQueryResponse();
+	resp = new castor::query::DiskPoolQueryResponse();
 	resp->setDiskPoolName(rset->getString(3));
         resp->setFreeSpace((u_signed64)rset->getDouble(7));
         resp->setTotalSpace((u_signed64)rset->getDouble(8));
@@ -464,30 +471,36 @@ castor::db::ora::OraQuerySvc::describeDiskPools (std::string svcClass)
 	  // This line indicates a new DiskServer and
 	  // gives summary info
 	  dsd = new castor::query::DiskServerDescription();
-	  dsd->setName(rset->getString(2));
-	  dsd->setStatus(rset->getInt(3));
-	  dsd->setFreeSpace((u_signed64)rset->getDouble(5));
-	  dsd->setTotalSpace((u_signed64)rset->getDouble(6));
-	  dsd->setReservedSpace((u_signed64)rset->getDouble(7));
+	  dsd->setName(rset->getString(4));
+	  dsd->setStatus(rset->getInt(5));
+	  dsd->setFreeSpace((u_signed64)rset->getDouble(7));
+	  dsd->setTotalSpace((u_signed64)rset->getDouble(8));
+	  dsd->setReservedSpace((u_signed64)rset->getDouble(9));
 	  dsd->setQuery(resp);
 	  resp->addDiskServers(dsd);
 	} else {
 	  // This is a fileSystem description
 	  castor::query::FileSystemDescription* fsd =
 	    new castor::query::FileSystemDescription();
-	  fsd->setMountPoint(rset->getString(4));
-	  fsd->setFreeSpace((u_signed64)rset->getDouble(5));
-	  fsd->setTotalSpace((u_signed64)rset->getDouble(6));
-	  fsd->setReservedSpace((u_signed64)rset->getDouble(7));
-	  fsd->setMinFreeSpace(rset->getFloat(8));
-	  fsd->setMaxFreeSpace(rset->getFloat(9));
-	  fsd->setStatus(rset->getInt(10));
+	  fsd->setMountPoint(rset->getString(6));
+	  fsd->setFreeSpace((u_signed64)rset->getDouble(7));
+	  fsd->setTotalSpace((u_signed64)rset->getDouble(8));
+	  fsd->setReservedSpace((u_signed64)rset->getDouble(9));
+	  fsd->setMinFreeSpace(rset->getFloat(10));
+	  fsd->setMaxFreeSpace(rset->getFloat(11));
+	  fsd->setStatus(rset->getInt(12));
 	  fsd->setDiskServer(dsd);
 	  dsd->addFileSystems(fsd);
 	}
       }
     }
-    m_describeDiskPoolsStatement->closeResultSet(rset);
+    // If no answer, send an error
+    if (0 == result->size()) {
+      delete result;
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() << "No Diskpool found";
+      throw ex;      
+    }
     return result;
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
@@ -513,36 +526,53 @@ castor::db::ora::OraQuerySvc::describeDiskPool (std::string diskPool)
     }
     // execute the statement and gather results
     m_describeDiskPoolStatement->setString(1, diskPool);
-    castor::query::DiskPoolQueryResponse* result =
-      new castor::query::DiskPoolQueryResponse();
-    result->setDiskPoolName(diskPool);
-    oracle::occi::ResultSet *rset = m_describeDiskPoolStatement->executeQuery();
+    castor::query::DiskPoolQueryResponse* result = 0;
+    unsigned int nb = m_describeDiskPoolStatement->executeUpdate();
+    if(0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "describeDiskPool : unable to execute query.";
+      throw ex;
+    }
+    oracle::occi::ResultSet *rset = m_describeDiskPoolStatement->getCursor(2);
     castor::query::DiskServerDescription* dsd = 0;
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
       if (rset->getInt(1) == 1) {
+	result = new castor::query::DiskPoolQueryResponse();
+	result->setDiskPoolName(diskPool);
+	result->setFreeSpace((u_signed64)rset->getDouble(6));
+	result->setTotalSpace((u_signed64)rset->getDouble(7));
+	result->setReservedSpace((u_signed64)rset->getDouble(8));
+      } else if (rset->getInt(2) == 1) {
 	dsd = new castor::query::DiskServerDescription();
-	dsd->setName(rset->getString(2));
-	dsd->setStatus(rset->getInt(3));
-        dsd->setFreeSpace((u_signed64)rset->getDouble(5));
-        dsd->setTotalSpace((u_signed64)rset->getDouble(6));
-        dsd->setReservedSpace((u_signed64)rset->getDouble(7));
+	dsd->setName(rset->getString(3));
+	dsd->setStatus(rset->getInt(4));
+        dsd->setFreeSpace((u_signed64)rset->getDouble(6));
+        dsd->setTotalSpace((u_signed64)rset->getDouble(7));
+        dsd->setReservedSpace((u_signed64)rset->getDouble(8));
 	dsd->setQuery(result);
 	result->addDiskServers(dsd);
       } else {
         castor::query::FileSystemDescription* fsd =
           new castor::query::FileSystemDescription();
-        fsd->setMountPoint(rset->getString(4));
-        fsd->setFreeSpace((u_signed64)rset->getDouble(5));
-        fsd->setTotalSpace((u_signed64)rset->getDouble(6));
-        fsd->setReservedSpace((u_signed64)rset->getDouble(7));
-        fsd->setMinFreeSpace(rset->getFloat(8));
-        fsd->setMaxFreeSpace(rset->getFloat(9));
-        fsd->setStatus(rset->getInt(10));
+        fsd->setMountPoint(rset->getString(5));
+        fsd->setFreeSpace((u_signed64)rset->getDouble(6));
+        fsd->setTotalSpace((u_signed64)rset->getDouble(7));
+        fsd->setReservedSpace((u_signed64)rset->getDouble(8));
+        fsd->setMinFreeSpace(rset->getFloat(9));
+        fsd->setMaxFreeSpace(rset->getFloat(10));
+        fsd->setStatus(rset->getInt(11));
         fsd->setDiskServer(dsd);
         dsd->addFileSystems(fsd);
       }
     }
-    m_describeDiskPoolsStatement->closeResultSet(rset);
+    // if nothing found, send error
+    if (0 == result) {
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() << "No Diskpool found with name '"
+		      << diskPool << "'";
+      throw ex;
+    }
     return result;
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;

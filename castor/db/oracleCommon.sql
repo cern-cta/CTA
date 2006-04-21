@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.253 $ $Release$ $Date: 2006/04/13 15:48:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.254 $ $Release$ $Date: 2006/04/21 12:27:20 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -813,6 +813,7 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
   TYPE FileList_Cur IS REF CURSOR RETURN FilesDeletedProcOutput%ROWTYPE;
   TYPE DiskPoolQueryLine IS RECORD (
+        isDP INTEGER,
         isDS INTEGER,
         diskServerName VARCHAR(2048),
 	diskServerStatus INTEGER,
@@ -837,7 +838,7 @@ CREATE OR REPLACE PACKAGE castor AS
 	fileSystemminfreeSpace INTEGER,
         fileSystemmaxFreeSpace INTEGER,
         fileSystemStatus INTEGER);
-  TYPE DiskPoolsQueryLine_Cur IS REF CURSOR RETURN DiskPoolQueryLine;
+  TYPE DiskPoolsQueryLine_Cur IS REF CURSOR RETURN DiskPoolsQueryLine;
 END castor;
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
@@ -2684,7 +2685,7 @@ BEGIN
            fs.minFreeSpace, fs.maxFreeSpace, fs.status
       FROM FileSystem fs, DiskServer ds, DiskPool dp,
            DiskPool2SvcClass d2s, SvcClass sc
-     WHERE sc.name = svcClassName
+     WHERE sc.name = svcClassName OR svcClassName is NULL
        AND sc.id = d2s.child
        AND d2s.parent = dp.id
        AND dp.id = fs.diskPool
@@ -2713,7 +2714,8 @@ BEGIN
   -- The grouping analytic function also allows to mark
   -- the summary lines for easy detection in the C++ code
   OPEN result FOR 
-    SELECT grouping(fs.mountPoint) as IsGrouped,
+    SELECT grouping(ds.name) as IsDSGrouped,
+           grouping(fs.mountPoint) as IsGrouped,
            ds.name, ds.status, fs.mountPoint,
            sum(fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed) as freeSpace,
            sum(fs.totalSize), sum(fs.reservedSpace),
@@ -2727,7 +2729,8 @@ BEGIN
            fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed,
            fs.totalSize, fs.reservedSpace,
            fs.minFreeSpace, fs.maxFreeSpace, fs.status),
-          (ds.name, ds.status) 
+          (ds.name, ds.status),
+	  (dp.name) 
            )
-       order by ds.name, IsGrouped desc, fs.mountpoint;
+       order by IsDSGrouped desc, ds.name, IsGrouped desc, fs.mountpoint;
 end;

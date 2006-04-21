@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.19 2006/04/20 09:52:13 gtaur Exp $
+ * $Id: stager_client_api_query.cpp,v 1.20 2006/04/21 12:27:28 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.19 $ $Date: 2006/04/20 09:52:13 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.20 $ $Date: 2006/04/21 12:27:28 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -77,6 +77,7 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
     
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
+    client.setOption(NULL);
     castor::stager::StageFileQueryRequest req;
     
     castor::stager::RequestHelper reqh(&req);
@@ -198,6 +199,7 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
     
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
+    client.setOption(NULL);
     castor::stager::StageRequestQueryRequest req;
     ret=setDefaultOption(opts);
     castor::stager::RequestHelper reqh(&req);  
@@ -346,6 +348,7 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
     
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
+    client.setOption(NULL);
     castor::query::DiskPoolQuery req;
     castor::stager::RequestHelper reqh(&req);
     req.setDiskPoolName(diskPoolName);
@@ -371,14 +374,22 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
       dynamic_cast<castor::query::DiskPoolQueryResponse*>(respvec[0]);
     if (0 == fr) {
       castor::exception::Exception e(SEINTERNAL);
-      e.getMessage() << "Error in dynamic cast, response was NOT a diskpool query response";
+      e.getMessage() << "Error in dynamic cast, response was NOT a diskpool query response."
+		     << " Type was " << respvec[0]->type();
       throw e;
     }
 
     // build C response from C++ one
-    stage_translateDiskPoolResponse(fr, response);
+    if (fr->errorCode() != 0) {
+      castor::exception::Exception e(fr->errorCode());
+      e.getMessage() << fr->errorMessage();
+      delete respvec[0];
+      throw e;
+    } else {
+      stage_translateDiskPoolResponse(fr, response);
+    }
 
-    // Cleenup memory
+    // Cleanup memory
     delete respvec[0];
     
   } catch (castor::exception::Exception e) {
@@ -406,6 +417,7 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
     
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
+    client.setOption(NULL);
     castor::query::DiskPoolQuery req;
     castor::stager::RequestHelper reqh(&req);
     if (0 != svcClassName) {
@@ -419,11 +431,11 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
     client.sendRequest(&req, &rh);
 
     // Creating the array of file responses
-    int nbResponses =  respvec.size();
+    *nbresps =  respvec.size();
     // Same size as requests as we only do files for the moment
     *responses = (struct stage_diskpoolquery_resp*)
-      malloc(sizeof(struct stage_diskpoolquery_resp) * nbResponses);
-    if (nbResponses <= 0) {
+      malloc(sizeof(struct stage_diskpoolquery_resp) * (*nbresps));
+    if (*nbresps <= 0) {
       // We found no diskpool
       return 0;
     }
@@ -434,7 +446,24 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
     }
 
     // Loop on the responses
-    for (int i = 0; i < nbResponses; i++) {
+    for (int i = 0; i < *nbresps; i++) {
+
+      if (respvec[i]->errorCode() != 0) {
+	castor::exception::Exception e(respvec[i]->errorCode());
+	e.getMessage() << respvec[i]->errorMessage();
+        // cleanup previous responses
+        for (int j = 0; j < i; j++) {
+          stage_delete_diskpoolquery_resp(responses[j]);
+        }
+        // cleanup the list
+        free(*responses);
+	// free remaining C++ responses
+	for (int j = i; j < *nbresps; j++) {
+	  delete respvec[j];
+	}
+	// throw exception
+	throw e;
+      }
 
       // Casting the response into a DiskPoolQueryResponse
       castor::query::DiskPoolQueryResponse* fr = 
@@ -446,8 +475,13 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
         }
         // cleanup the list
         free(*responses);
+	// free remaining C++ responses
+	for (int j = i; j < *nbresps; j++) {
+	  delete respvec[j];
+	}
         castor::exception::Exception e(SEINTERNAL);
-        e.getMessage() << "Error in dynamic cast, response was NOT a diskpool query response";
+        e.getMessage() << "Error in dynamic cast, response was NOT a diskpool query response."
+		       << " Type was " << respvec[i]->type();
         throw e;
       }
 
@@ -494,35 +528,56 @@ EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp
   char freeBuf[21];
   char totalBuf[21];
   char reservedBuf[21];
+  char freepBuf[21];
+  char reservedpBuf[21];
   if (0 == response) return;
   u64tostru(response->freeSpace, freeBuf, 0);
   u64tostru(response->totalSpace, totalBuf, 0);
   u64tostru(response->reservedSpace, reservedBuf, 0);
-  fprintf(stream, "POOL %s CAPACITY %s FREE %s(%d\%) RESERVED %s\n",
-          response->diskPoolName, totalBuf, freeBuf,
-          (100*response->freeSpace)/response->totalSpace,
-          reservedBuf);
+  if (0 == response->totalSpace) {
+    strncpy(freepBuf, " -", 3);
+    strncpy(reservedpBuf, " -", 3);
+  } else {
+    snprintf(freepBuf, 3, "%2lld", (100*response->freeSpace)/response->totalSpace);
+    snprintf(reservedpBuf, 3, "%2lld", (100*response->reservedSpace)/response->totalSpace);
+  }
+  fprintf(stream, "POOL %-16s CAPACITY %-12s FREE %7s(%s\%)    RESERVED %7s(%-2s\%)\n",
+	  response->diskPoolName, totalBuf, freeBuf,
+	  freepBuf, reservedBuf, reservedpBuf);
   for (int i = 0; i < response->nbDiskServers; i++) {
     struct stage_diskServerDescription& dsd = response->diskServers[i];
     u64tostru(dsd.freeSpace, freeBuf, 0);
     u64tostru(dsd.totalSpace, totalBuf, 0);
     u64tostru(dsd.reservedSpace, reservedBuf, 0);
-    fprintf(stream, "  DiskServer %16s, status %s CAPACITY %s FREE %s(%d\%) RESERVED %s\n",
-            dsd.name,
-            stage_diskServerStatusName(dsd.status),
-            totalBuf, freeBuf,
-            (100*dsd.freeSpace)/dsd.totalSpace, reservedBuf);
+    if (0 == dsd.totalSpace) {
+      strncpy(freepBuf, " -", 3);
+      strncpy(reservedpBuf, " -", 3);
+    } else {
+      snprintf(freepBuf, 3, "%2lld", (100*dsd.freeSpace)/dsd.totalSpace);
+      snprintf(reservedpBuf, 3, "%2lld", (100*dsd.reservedSpace)/dsd.totalSpace);
+    }
+    fprintf(stream, "  DiskServer %-16s STATUS %-25s CAPACITY %-12s FREE %7s(%-2s\%)     RESERVED %7s(%-2s\%)\n",
+	    dsd.name,
+	    stage_diskServerStatusName(dsd.status),
+	    totalBuf, freeBuf, freepBuf, reservedBuf, reservedpBuf);
     for (int j = 0; j < dsd.nbFileSystems; j++) {
       struct stage_fileSystemDescription& fsd = dsd.fileSystems[j];
       u64tostru(fsd.freeSpace, freeBuf, 0);
       u64tostru(fsd.totalSpace, totalBuf, 0);
       u64tostru(fsd.reservedSpace, reservedBuf, 0);
-      fprintf(stream, "     %32s STATUS %s CAPACITY %s FREE %s(%d\%) RESERVED %s GCBOUNDS %f,%f\n",
-              fsd.mountPoint,
-              stage_fileSystemStatusName(fsd.status),
-              totalBuf, freeBuf, (100*fsd.freeSpace)/fsd.totalSpace,
-              reservedBuf, fsd.minFreeSpace,
-              fsd.maxFreeSpace);
+      if (0 == fsd.totalSpace) {
+	strncpy(freepBuf, " -", 3);
+	strncpy(reservedpBuf, " -", 3);
+      } else {
+	snprintf(freepBuf, 3, "%2lld", (100*fsd.freeSpace)/fsd.totalSpace);
+	snprintf(reservedpBuf, 3, "%2lld", (100*fsd.reservedSpace)/fsd.totalSpace);
+      }
+      fprintf(stream, "     %-32s STATUS %-25s CAPACITY %-12s FREE %7s(%-2s\%)    RESERVED %7s(%-2s\%)    GCBOUNDS %4.2f, %4.2f\n",
+	      fsd.mountPoint,
+	      stage_fileSystemStatusName(fsd.status),
+	      totalBuf, freeBuf, freepBuf,
+	      reservedBuf, reservedpBuf,
+	      fsd.minFreeSpace, fsd.maxFreeSpace);
     }
   }
 }
