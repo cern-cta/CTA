@@ -53,6 +53,11 @@ static char sccsid[] = "@(#)rfcp.c,v 1.61 2004/03/02 16:18:33 CERN/IT/DS/HSM Fel
 #define OK    1
 #endif  /* vms */
 
+extern int tStageHostKey;
+extern int tStagePortKey;
+extern int tSvcClassKey;
+extern int tCastorVersionKey;
+
 extern int serrno ;
 extern int rfio_errno ;
 extern char *getconfent() ;
@@ -178,7 +183,7 @@ int main(argc, argv)
 	/* Init important variable for the cleaner */
 	stpp_input.upath[0] = '\0';
 #endif
-
+        path1=path2=NULL;
 	have_maxsize = -1;
 	maxsize = 0;
 	cfargc = 0;
@@ -469,7 +474,7 @@ int main(argc, argv)
 		if (strcmp(inpfile,"-") == 0) {
 			fd1 = fileno(stdin);
 		} else {
-			fd1 = rfio_open64(inpfile,O_RDONLY|binmode ,0644);
+			fd1 = rfio_open64((!path1?inpfile:path1),O_RDONLY|binmode ,0644);
 		}
 #ifdef CNS_ROOT
 	}
@@ -552,7 +557,8 @@ int main(argc, argv)
 #endif /* HPSSCLIENT */
 
 	serrno = rfio_errno = 0;
-	fd2 = rfio_open64(filename , O_WRONLY|O_CREAT|O_TRUNC|binmode ,sbuf.st_mode & 0777);
+	
+        fd2 = rfio_open64((!path2?filename:path2), O_WRONLY|O_CREAT|O_TRUNC|binmode ,sbuf.st_mode & 0777);
 	if (fd2 < 0) {
 		if (serrno) {
 			rfio_perror(outfile);
@@ -1237,12 +1243,31 @@ int copyfile_stager(input,output,mode,input_size,input_is_hpss)
 	char *requestId, *url;
 	int rc;
 	char tmpbuf[21];
+        int* auxVal;
+        char ** auxPoint;
         struct stage_options opts;
         opts.stage_host=NULL;
         opts.stage_port=0;
         opts.service_class=NULL;
-        opts.stage_version=2;
-        int ret= getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
+        opts.stage_version=0;
+        
+        int ret=Cglobals_get(& tStageHostKey, (void**) &auxPoint,sizeof(void*));
+	if(ret==1){
+		opts.stage_host=*auxPoint;
+	}
+	ret=Cglobals_get(& tStagePortKey, (void**) &auxVal,sizeof(int));
+        if(ret==1){
+		opts.stage_port=*auxVal;
+	}
+	ret=Cglobals_get(& tCastorVersionKey, (void**) &auxVal,sizeof(int));
+	if(ret==1){
+		opts.stage_version=*auxVal;
+        }
+	ret=Cglobals_get(& tSvcClassKey, (void**) &auxPoint,sizeof(void*));
+	if (ret==1){
+                opts.service_class=*auxPoint;
+	}
+        ret= getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
 
 	TRACE(2,"rfio","copyfile_stager: Calling stage_get of %s", input);
 	for(;;) {
