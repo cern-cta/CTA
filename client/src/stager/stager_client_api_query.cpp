@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.20 2006/04/21 12:27:28 sponcec3 Exp $
+ * $Id: stager_client_api_query.cpp,v 1.21 2006/04/24 12:23:00 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.20 $ $Date: 2006/04/21 12:27:28 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.21 $ $Date: 2006/04/24 12:23:00 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -453,7 +453,7 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
 	e.getMessage() << respvec[i]->errorMessage();
         // cleanup previous responses
         for (int j = 0; j < i; j++) {
-          stage_delete_diskpoolquery_resp(responses[j]);
+          stage_delete_diskpoolquery_resp(&((*responses)[j]));
         }
         // cleanup the list
         free(*responses);
@@ -471,7 +471,7 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
       if (0 == fr) {
         // cleanup previous responses
         for (int j = 0; j < i; j++) {
-          stage_delete_diskpoolquery_resp(responses[j]);
+          stage_delete_diskpoolquery_resp(&((*responses)[j]));
         }
         // cleanup the list
         free(*responses);
@@ -486,7 +486,7 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
       }
 
       // build C response from C++ one
-      stage_translateDiskPoolResponse(fr, responses[i]);
+      stage_translateDiskPoolResponse(fr, &((*responses)[i]));
 
       // Cleenup memory
       delete respvec[i];

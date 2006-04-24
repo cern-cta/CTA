@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.18 2006/04/21 12:27:29 sponcec3 Exp $
+ * $Id: stager_qry.c,v 1.19 2006/04/24 12:23:00 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.18 $ $Date: 2006/04/21 12:27:29 $ $Author: sponcec3 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.19 $ $Date: 2006/04/24 12:23:00 $ $Author: sponcec3 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -73,7 +73,8 @@ static struct Coptions longopts_diskPoolQuery[] =
   {
     {"statistic",          NO_ARGUMENT,        NULL,      's'},
     {"diskPool",           REQUIRED_ARGUMENT,  NULL,      'd'},
-    {NULL,                 0,                  NULL,        0}
+    {"svcClass",           REQUIRED_ARGUMENT,  NULL,      'S'}, 
+   {NULL,                 0,                  NULL,        0}
   };
 
 /**
@@ -393,11 +394,14 @@ int parseCmdLineDiskPoolQuery(int argc, char *argv[],
   Copterr = 1;
   errflg = 0;
   while ((c = Cgetopt_long (argc, argv,
-                            "sd:",
+                            "sd:S:",
                             longopts_diskPoolQuery, NULL)) != -1) {
     switch (c) {
     case 'd':
       *diskPool = (char *)strdup(Coptarg);
+      break;
+    case 'S':
+      *svcClass = (char *)strdup(Coptarg);
       break;
     case 's':
       break;
@@ -460,7 +464,7 @@ void usage(char *cmd) {
   fprintf (stderr, "usage: %s ", cmd);
   fprintf (stderr, "%s%s",
            "[-M hsmfile [-M ...]] [-E regular_expression [-E ...]] ",
-           "[-F fileid@nshost] [-U usertag] [-r requestid] [-n] [-h]\n");
+           "[-F fileid@nshost] [-S svcClass] [-U usertag] [-r requestid] [-n] [-h]\n");
   fprintf (stderr, "       %s ", cmd);
-  fprintf (stderr, "%s", "-s [-d diskPool] [-h]\n");
+  fprintf (stderr, "%s", "-s [-S svcClass] [-d diskPool] [-h]\n");
 }
