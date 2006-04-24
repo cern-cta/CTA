@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: updateCastorFileName.man,v $ $Revision: 1.1 $ $Date: 2006/01/17 14:07:39 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: updateCastorFileName.man,v $ $Revision: 1.2 $ $Date: 2006/04/24 16:13:40 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH UPDATECASTORFILENAME 1 "$Date: 2006/01/17 14:07:39 $" CASTOR "Updates the name of a file in the stager"
+.TH UPDATECASTORFILENAME 1 "$Date: 2006/04/24 16:13:40 $" CASTOR "Updates the name of a file in the stager"
 .SH NAME
 updateCastorFileName \- Updates the best known filename of one or many CastorFiles in the stager
 .SH SYNOPSIS
@@ -54,5 +54,9 @@ This command connects directly to the stager database through
 the perl DBI interface to ORACLE. Thus it can only run on
 a machine providing it.
 Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR adminMultiInstance(1castor)
+
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

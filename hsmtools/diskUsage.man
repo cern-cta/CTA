@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: diskUsage.man,v $ $Revision: 1.1 $ $Date: 2005/07/27 14:02:28 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: diskUsage.man,v $ $Revision: 1.2 $ $Date: 2006/04/24 16:13:40 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH DISKUSAGE 1 "$Date: 2005/07/27 14:02:28 $" CASTOR "disk server usage and free space"
+.TH DISKUSAGE 1 "$Date: 2006/04/24 16:13:40 $" CASTOR "disk server usage and free space"
 .SH NAME
 diskUsage \- prints out the status of the disk servers in terms of used and free space
 .SH SYNOPSIS
@@ -71,6 +71,8 @@ Summary of Available filesystems - Free:    1.10T       Total:    1.11T  99.89% 
 .ft
 .fi
 .SH SEE ALSO
-.BR rmmaster(1castor)
+.BR rmmaster(1castor),
+.BR adminMultiInstance(1castor)
+
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: printFileClass.man,v $ $Revision: 1.1 $ $Date: 2005/07/29 15:44:55 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: printFileClass.man,v $ $Revision: 1.2 $ $Date: 2006/04/24 16:13:40 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH PRINTFILECLASS 1 "$Date: 2005/07/29 15:44:55 $" CASTOR "Prints out a given file class"
+.TH PRINTFILECLASS 1 "$Date: 2006/04/24 16:13:40 $" CASTOR "Prints out a given file class"
 .SH NAME
 printFileClass
 .SH SYNOPSIS
@@ -39,8 +39,13 @@ id : 1
 .fi
 .ft
 .fi
+
 .SH NOTES
 This command requires database client access to the stager catalogue.
 Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR adminMultiInstance(1castor)
+
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

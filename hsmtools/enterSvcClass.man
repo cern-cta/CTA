@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: enterSvcClass.man,v $ $Revision: 1.1 $ $Date: 2005/04/22 16:42:25 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: enterSvcClass.man,v $ $Revision: 1.2 $ $Date: 2006/04/24 16:13:40 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH ENTERSVCCLASS 1 "$Date: 2005/04/22 16:42:25 $" CASTOR "stager catalogue administrative commands"
+.TH ENTERSVCCLASS 1 "$Date: 2006/04/24 16:13:40 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 enterSvcClass \- define a new service class in the stager catalogue
 .SH SYNOPSIS
@@ -139,7 +139,8 @@ enterSvcClass --Name alicemdc6 --NbDrives 24 --DefaultFileSize 3221225472 --Tape
 .BR modifySvcClass(1castor) ,
 .BR deleteSvcClass(1castor) ,
 .BR printSvcClass(1castor) ,
-.BR expertd(1castor)
+.BR expertd(1castor),
+.BR adminMultiInstance(1castor)
 .SH NOTES
 The definition of FileClass and SvcClass classes in the stager catalogue is
 an important change with the new CASTOR stager. The previous CASTOR stgdaemon,

@@ -1,0 +1,77 @@
+.\" ******************************************************************************
+.\"                   adminMultiInstance
+.\"
+.\" This file is part of the Castor project.
+.\" See http://castor.web.cern.ch/castor
+.\"
+.\" Copyright (C) 2003  CERN
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License
+.\" as published by the Free Software Foundation; either version 2
+.\" of the License, or (at your option) any later version.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+.\"
+.\" @(.\")$RCSfile: adminMultiInstance.man,v $ $Revision: 1.1 $ $Release$ $Date: 2006/04/24 16:13:40 $ $Author: sponcec3 $
+.\"
+.\" man page concerning the administration of several castor
+.\" instances from the same administration node
+.\"
+.\" @author Castor Dev team, castor-dev@cern.ch
+.\" *****************************************************************************/
+.TH ADMINMULTIINSTANCE 1 "$Date: 2006/04/24 16:13:40 $" CASTOR "Administration of several castor instance from a single node"
+.SH SUBJECT
+How to administrate several castor
+instances from the same administration node
+.SH DESCRIPTION
+
+In order to administrate several CASTOR instances from a
+single administration node, the CASTOR config file
+.BI /etc/stager/ORASTAGERCONFIG
+allows to define several
+sets of connection parameters to the stager database.
+The default set has key
+.BI DbCnvSvc
+and you can define other sets by adding '_' and an
+extension to the default.
+
+The extra sets can then be used by simply setting the
+.BI CASTOR_INSTANCE
+environment variable to the extension you've used.
+
+.SH EXAMPLES
+.nf
+> cat /etc/castor/ORASTAGERCONFIG
+DbCnvSvc       user    main_dev2
+DbCnvSvc       passwd  ****
+DbCnvSvc       dbName  castor_dev
+DbCnvSvc_ITDC  user    castor_stager
+DbCnvSvc_ITDC  passwd  ****
+DbCnvSvc_ITDC  dbName  castorstager
+
+> unset CASTOR_INSTANCE
+> listSvcClass
+default
+test
+
+> export CASTOR_INSTANCE ITDC
+> listSvcClass
+ITDC
+alimdc
+ITDC2
+default
+readtests
+
+
+.SH NOTES
+
+This applies to all administrative commands but does not
+apply to client command lines.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

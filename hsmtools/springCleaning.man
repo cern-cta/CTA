@@ -11,5 +11,9 @@ perl springCleaning\- run the script.
 .LP
 This script removes all requests older than the number of days specified with -t or --timeOut options. If nothing is specified the default value of 60 days is used.
 .LP
+
+.SH SEE ALSO
+.BR adminMultiInstance(1castor)
+
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

@@ -17,13 +17,13 @@
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .\"
-.\" @(.\")$RCSfile: moveDiskServer.man,v $ $Revision: 1.1 $ $Release$ $Date: 2005/09/07 15:57:27 $ $Author: sponcec3 $
+.\" @(.\")$RCSfile: moveDiskServer.man,v $ $Revision: 1.2 $ $Release$ $Date: 2006/04/24 16:13:40 $ $Author: sponcec3 $
 .\"
 .\" man page for the moveDiskServer command
 .\"
 .\" @author Castor Dev team, castor-dev@cern.ch
 .\" *****************************************************************************/
-.TH MOVEDISKSERVER 1 "$Date: 2005/09/07 15:57:27 $" CASTOR "Move diskServers to a new DiskPool"
+.TH MOVEDISKSERVER 1 "$Date: 2006/04/24 16:13:40 $" CASTOR "Move diskServers to a new DiskPool"
 .SH NAME
 moveDiskServer
 .SH SYNOPSIS
@@ -64,5 +64,9 @@ This command connects directly to the stager database through
 the perl DBI interface to ORACLE. Thus it can only run on
 a machine providing it.
 Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR adminMultiInstance(1castor)
+
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

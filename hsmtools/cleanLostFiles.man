@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: cleanLostFiles.man,v $ $Revision: 1.5 $ $Date: 2005/10/12 15:30:06 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: cleanLostFiles.man,v $ $Revision: 1.6 $ $Date: 2006/04/24 16:13:40 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH CLEANLOSTFILES 1 "$Date: 2005/10/12 15:30:06 $" CASTOR "Clean the stager for lost files"
+.TH CLEANLOSTFILES 1 "$Date: 2006/04/24 16:13:40 $" CASTOR "Clean the stager for lost files"
 .SH NAME
 cleanLostFiles \- cleans the stager for files that were lost on diskservers
 .SH SYNOPSIS
@@ -48,6 +48,10 @@ nsrm /castor/cern.ch/user/s/sponcec3/test/7fe9a4fb-8d12-4749-af90-41c278dcf466
 This command connects directly to the stager database through
 the perl DBI interface to ORACLE. Thus it can only run on
 a machine providing it.
-Configuration for the database access is taken from castor.conf.
+Configuration for the database access is taken from ORASTAGERCONFIG.
+
+.SH SEE ALSO
+.BR adminMultiInstance(1castor)
+
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

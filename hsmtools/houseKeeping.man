@@ -11,5 +11,9 @@ perl houseKeeping\- run the script.
 .LP
 This script removes all the archived requests (status of surequests 11)  older than the number of hours specified with -t or --timeOut options. If nothing is specified the default value of 48 hours is used.
 .LP
+
+.SH SEE ALSO
+.BR adminMultiInstance(1castor)
+
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
