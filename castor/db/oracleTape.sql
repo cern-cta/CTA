@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.256 $ $Release$ $Date: 2006/04/24 08:12:07 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.257 $ $Release$ $Date: 2006/04/24 08:49:12 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2686,19 +2686,19 @@ BEGIN
            fs.minFreeSpace, fs.maxFreeSpace, fs.status
       FROM FileSystem fs, DiskServer ds, DiskPool dp,
            DiskPool2SvcClass d2s, SvcClass sc
-     WHERE sc.name = svcClassName OR svcClassName is NULL
+     WHERE (sc.name = svcClassName OR svcClassName is NULL)
        AND sc.id = d2s.child
        AND d2s.parent = dp.id
        AND dp.id = fs.diskPool
        AND ds.id = fs.diskServer
        group by grouping sets(
-        (dp.name, ds.name, ds.status, fs.mountPoint,
-           fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed,
-           fs.totalSize, fs.reservedSpace,
-           fs.minFreeSpace, fs.maxFreeSpace, fs.status),
-          (dp.name, ds.name, ds.status),
-	  (dp.name)
-           )
+           (dp.name, ds.name, ds.status, fs.mountPoint,
+             fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed,
+             fs.totalSize, fs.reservedSpace,
+             fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+           (dp.name, ds.name, ds.status),
+           (dp.name)
+          )
        order by dp.name, IsDSGrouped desc, IsFSGrouped desc, fs.mountpoint;
 END;
 
@@ -2726,12 +2726,13 @@ BEGIN
        AND dp.name = diskPoolName
        AND ds.id = fs.diskServer
        group by grouping sets(
-        (ds.name, ds.status, fs.mountPoint,
-           fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed,
-           fs.totalSize, fs.reservedSpace,
-           fs.minFreeSpace, fs.maxFreeSpace, fs.status),
-          (ds.name, ds.status),
-	  (dp.name) 
-           )
+           (ds.name, ds.status, fs.mountPoint,
+             fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed,
+             fs.totalSize, fs.reservedSpace,
+             fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+           (ds.name, ds.status),
+           (dp.name)
+          )
        order by IsDSGrouped desc, ds.name, IsGrouped desc, fs.mountpoint;
-end;
+END;
+
