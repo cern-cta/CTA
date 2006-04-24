@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.255 $ $Release$ $Date: 2006/04/24 07:51:18 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.256 $ $Release$ $Date: 2006/04/24 08:12:07 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2015,9 +2015,11 @@ CREATE OR REPLACE FUNCTION nullGCPolicy
 (fsId INTEGER, garbageSize INTEGER)
   RETURN castorGC.GCItem_Cur AS
   result castorGC.GCItem_Cur;
+  badValue NUMBER;
 BEGIN
+  badValue := 2**31;
   OPEN result FOR
-    SELECT 0, -1, 2**31
+    SELECT 0, -1, badValue
       FROM Dual;
   return result;
 END;
