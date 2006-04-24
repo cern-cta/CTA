@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.254 $ $Release$ $Date: 2006/04/21 12:27:20 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.255 $ $Release$ $Date: 2006/04/24 07:51:18 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -70,7 +70,7 @@ CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer on FileSystem(diskServer);
 CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_Request on SubRequest (request);
-CREATE INDEX I_SubRequest_GetNextStatus on SubRequest (decode(getNextStatus,1,NULL));
+CREATE INDEX I_SubRequest_GetNextStatus on SubRequest (decode(getNextStatus,1,getNextStatus,NULL));
 
 /* some constraints */
 /* Can not be added since some code (stager_fs_service) creates FileSystems with no DiskServer
@@ -1508,9 +1508,8 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForJob (fileSystems IN castor."strList
        WHERE FileSystem.mountPoint = fileSystems(i)
          AND DiskServer.name = machines(i)
          AND FileSystem.diskServer = DiskServer.id
-         AND minFree(i) <= FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace
-      -- AND FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(i) 
-      --     > FileSystem.minAllowedFreeSpace * FileSystem.totalSize
+         AND FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(i) 
+             > FileSystem.minAllowedFreeSpace * FileSystem.totalSize
          AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
          AND FileSystem.status = 0; -- FILESYSTEM_PRODUCTION
       nextIndex := nextIndex + 1;
@@ -1552,8 +1551,8 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForJob (fileSystems IN castor."strList
      FROM FileSystem, DiskServer
      WHERE FileSystem.diskserver = DiskServer.id
        AND DiskServer.id MEMBER OF mIds
-    -- AND FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(1) 
-    --     > FileSystem.minAllowedFreeSpace * FileSystem.totalSize
+       AND FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(1) 
+           > FileSystem.minAllowedFreeSpace * FileSystem.totalSize
        AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION       
      ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
               FileSystem.fsDeviation ASC;
@@ -1564,8 +1563,8 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForJob (fileSystems IN castor."strList
            DiskServer.id, FileSystem.id, FileSystem.fsDeviation
     FROM FileSystem, DiskServer
     WHERE FileSystem.diskserver = DiskServer.id
-   -- AND FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(1) 
-   --     > FileSystem.minAllowedFreeSpace * FileSystem.totalSize
+      AND FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(1) 
+          > FileSystem.minAllowedFreeSpace * FileSystem.totalSize
       AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
       AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
     ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
@@ -2438,7 +2437,7 @@ BEGIN
   IF reqs.COUNT > 0 THEN
     UPDATE SubRequest
        SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
-     WHERE getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
+     WHERE decode(getNextStatus,1,getNextStatus,NULL) = 1 -- GETNEXTSTATUS_FILESTAGED
        AND request IN (SELECT * FROM TABLE(reqs))
     RETURNING castorfile BULK COLLECT INTO cfs;
     internalStageQuery(cfs, svcClassId, result);
@@ -2464,7 +2463,7 @@ BEGIN
   IF reqs.COUNT > 0 THEN
     UPDATE SubRequest
        SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
-     WHERE getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
+     WHERE decode(getNextStatus,1,getNextStatus,NULL) = 1 -- GETNEXTSTATUS_FILESTAGED
        AND request IN (SELECT * FROM TABLE(reqs))
     RETURNING castorfile BULK COLLECT INTO cfs;
     internalStageQuery(cfs, svcClassId, result);
