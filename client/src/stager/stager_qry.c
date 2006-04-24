@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.19 2006/04/24 12:23:00 sponcec3 Exp $
+ * $Id: stager_qry.c,v 1.20 2006/04/24 13:38:43 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.19 $ $Date: 2006/04/24 12:23:00 $ $Author: sponcec3 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.20 $ $Date: 2006/04/24 13:38:43 $ $Author: sponcec3 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -176,7 +176,7 @@ void handleFileQuery(int argc, char *argv[], int nbArgs) {
   
   struct cmd_args args;
   struct  stage_filequery_resp *responses;
-  int nbresps, rc, errflg, i,ret;
+  int nbresps, rc, errflg, i;
   char errbuf[BUFSIZE];
   
   args.nbreqs = nbArgs;
@@ -205,7 +205,8 @@ void handleFileQuery(int argc, char *argv[], int nbArgs) {
   /* Setting the error buffer */
   stage_seterrbuf(errbuf, sizeof(errbuf));
 
-  ret=getDefaultForGlobal(&args.opts.stage_host,&args.opts.stage_port,&args.opts.service_class,&args.opts.stage_version);
+  /* Getting env and default arguments */
+  getDefaultForGlobal(&args.opts.stage_host,&args.opts.stage_port,&args.opts.service_class,&args.opts.stage_version);
 
   /* Actual call to fileQuery */
   rc = stage_filequery(args.requests,
@@ -253,14 +254,26 @@ void handleDiskPoolQuery(int argc, char *argv[], int nbArgs) {
   int errflg;
   char errbuf[BUFSIZE];
   char *diskPool = NULL;
-  char *svcClass = NULL;
-
+  struct stage_options opts;
+  
   // parsing the commane line
-  errflg = parseCmdLineDiskPoolQuery(argc, argv, &diskPool, &svcClass);
+  opts.stage_host = NULL;
+  opts.stage_port = 0;
+  opts.service_class = NULL;
+  opts.stage_version=2;
+  errflg = parseCmdLineDiskPoolQuery
+    (argc, argv, &diskPool, &(opts.service_class));
   if (errflg != 0) {
     usage (argv[0]);
     exit (EXIT_FAILURE);
   }
+
+  /* Setting the error buffer */
+  stage_seterrbuf(errbuf, sizeof(errbuf));
+
+  /* Getting env and default arguments */
+  getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
+
   /* Setting the error buffer */
   stage_seterrbuf(errbuf, sizeof(errbuf));
 
@@ -268,9 +281,9 @@ void handleDiskPoolQuery(int argc, char *argv[], int nbArgs) {
   if (NULL == diskPool) {
     struct stage_diskpoolquery_resp *responses;
     int i, nbresps;
-    int rc = stage_diskpoolsquery(svcClass,
-                                  &responses,
-                                  &nbresps);
+    int rc = stage_diskpoolsquery(&responses,
+                                  &nbresps,
+				  &opts);
     // check for errors
     if (rc < 0) {
       if(serrno != 0) {
@@ -286,7 +299,7 @@ void handleDiskPoolQuery(int argc, char *argv[], int nbArgs) {
     }
   } else {
     struct stage_diskpoolquery_resp response;
-    int rc = stage_diskpoolquery(diskPool, &response);    
+    int rc = stage_diskpoolquery(diskPool, &response, &opts);    
     // check for errors
     if (rc < 0) {
       if(serrno != 0) {

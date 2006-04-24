@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.21 2006/04/24 12:23:00 sponcec3 Exp $
+ * $Id: stager_client_api_query.cpp,v 1.22 2006/04/24 13:38:43 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.21 $ $Date: 2006/04/24 12:23:00 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.22 $ $Date: 2006/04/24 13:38:43 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -339,9 +339,11 @@ void stage_translateDiskPoolResponse
 
 EXTERN_C int DLL_DECL stage_diskpoolquery
 (char *diskPoolName,
- struct stage_diskpoolquery_resp *response) {
+ struct stage_diskpoolquery_resp *response,
+ struct stage_options* opts) {
 
-   char *func = "stage_diskpoolquery";
+  int ret;
+  char *func = "stage_diskpoolquery";
  
   try {
     castor::BaseObject::initLog("", castor::SVC_NOMSG);
@@ -352,6 +354,12 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
     castor::query::DiskPoolQuery req;
     castor::stager::RequestHelper reqh(&req);
     req.setDiskPoolName(diskPoolName);
+
+    // Dealing with options
+    ret = setDefaultOption(opts);
+    reqh.setOptions(opts);
+    client.setOption(opts);
+    if (-1 == ret) { free(opts); }
 
     // Using the VectorResponseHandler which stores everything in
     // A vector. BEWARE, the responses must be de-allocated afterwards
@@ -368,7 +376,16 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
       stage_errmsg(func, "No diskpool found");
       return -1;
     }
-    
+
+    // Check for error
+    if (respvec[0]->errorCode() != 0) {
+      castor::exception::Exception e(respvec[0]->errorCode());
+      e.getMessage() << respvec[0]->errorMessage();
+      delete respvec[0];
+      // throw exception
+      throw e;
+    }
+
     // Casting the response into a DiskPoolQueryResponse
     castor::query::DiskPoolQueryResponse* fr = 
       dynamic_cast<castor::query::DiskPoolQueryResponse*>(respvec[0]);
@@ -380,14 +397,7 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
     }
 
     // build C response from C++ one
-    if (fr->errorCode() != 0) {
-      castor::exception::Exception e(fr->errorCode());
-      e.getMessage() << fr->errorMessage();
-      delete respvec[0];
-      throw e;
-    } else {
-      stage_translateDiskPoolResponse(fr, response);
-    }
+    stage_translateDiskPoolResponse(fr, response);
 
     // Cleanup memory
     delete respvec[0];
@@ -406,11 +416,12 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
 ////////////////////////////////////////////////////////////
 
 EXTERN_C int DLL_DECL stage_diskpoolsquery
-(char *svcClassName,
- struct stage_diskpoolquery_resp **responses,
- int *nbresps) {
+(struct stage_diskpoolquery_resp **responses,
+ int *nbresps,
+ struct stage_options* opts) {
 
-   char *func = "stage_diskpoolsquery";
+  int ret;
+  char *func = "stage_diskpoolsquery";
  
   try {
     castor::BaseObject::initLog("", castor::SVC_NOMSG);
@@ -420,9 +431,12 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
     client.setOption(NULL);
     castor::query::DiskPoolQuery req;
     castor::stager::RequestHelper reqh(&req);
-    if (0 != svcClassName) {
-      req.setSvcClassName(svcClassName);
-    }
+
+    // Dealing with options
+    ret = setDefaultOption(opts);
+    reqh.setOptions(opts);
+    client.setOption(opts);
+    if (-1 == ret) { free(opts); }
 
     // Using the VectorResponseHandler which stores everything in
     // A vector. BEWARE, the responses must be de-allocated afterwards

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.29 $ $Release$ $Date: 2006/04/13 16:14:18 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.30 $ $Release$ $Date: 2006/04/24 13:38:43 $ $Author: sponcec3 $
  *
  * the client API to the castor stager
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.29 $
- * @date $Date: 2006/04/13 16:14:18 $
+ * @version $Revision: 1.30 $
+ * @date $Date: 2006/04/24 13:38:43 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.29 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.30 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -1108,6 +1108,7 @@ struct stage_diskpoolquery_resp {
  * 
  * @param diskPoolName name of the diskPool to query
  * @param response the diskPool description
+ * @param opts CASTOR stager specific options
  *
  * @returns 0 in case of success, -1 otherwise
  * @note the subparts of response are allocated by the call
@@ -1115,7 +1116,8 @@ struct stage_diskpoolquery_resp {
  */
 EXTERN_C int DLL_DECL stage_diskpoolquery _PROTO
 ((char *diskPoolName,
-  struct stage_diskpoolquery_resp *response));
+  struct stage_diskpoolquery_resp *response,
+  struct stage_options* opts));
 
 /**
  * stage_diskpoolsquery
@@ -1123,18 +1125,18 @@ EXTERN_C int DLL_DECL stage_diskpoolquery _PROTO
  * \ingroup Functions
  * 
  * 
- * @param svcClassName svcClass to use (or empty string)
  * @param responses List of diskPool descriptions
  * @param nbresps number of diskPool descriptions in the list
+ * @param opts CASTOR stager specific options
  *
  * @returns 0 in case of success, -1 otherwise
  * @note responses is allocated by the call, as well as all its subparts
  *       and therefore should be freed by the client.
  */
 EXTERN_C int DLL_DECL stage_diskpoolsquery _PROTO
-((char *svcClassName,
-  struct stage_diskpoolquery_resp **responses,
-  int *nbresps));
+((struct stage_diskpoolquery_resp **responses,
+  int *nbresps,
+  struct stage_options* opts));
 
 /**
  * stage_delete_diskpoolquery_resp
