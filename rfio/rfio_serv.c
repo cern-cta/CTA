@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.21 2005/12/12 10:25:52 lopic3 Exp $
+ * $Id: rfio_serv.c,v 1.22 2006/04/24 09:10:48 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.21 $ $Date: 2005/12/12 10:25:52 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.22 $ $Date: 2006/04/24 09:10:48 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */
@@ -570,7 +570,7 @@ char    **argv;
 #endif
 
 	  if (Socket_parent >= 0) {
-		  log(LOG_INFO, "Socket yet created, file descriptor %d\n", Socket_parent);
+		  log(LOG_INFO, "Socket inherited from parent, file descriptor %d\n", Socket_parent);
 		  s = Socket_parent;
 	  } else {
 #if defined(_WIN32)
@@ -588,7 +588,7 @@ char    **argv;
 #endif
 	  }
 	  if (Socket_parent_port >= 0) {
-		  log(LOG_INFO, "Socket yet binded to port %d\n", Socket_parent_port);
+		  log(LOG_INFO, "Socket already bound to port %d\n", Socket_parent_port);
 		  port = Socket_parent_port;
 	  } else {
 		  if (!port)  {
@@ -951,7 +951,7 @@ int mode;
    struct   hostent *hp;
 #endif
    int      lun;
-   int      access;
+   int      access, yes;
    struct   rfiostat info;
 #if !defined(HPSS)
    int      is_remote = 0;              /* Is requestor in another site ? */
@@ -1057,7 +1057,8 @@ char tmpbuf[21], tmpbuf2[21];
 #else /* HPSS */
    if ( (p1 = getconfent("RFIOD","KEEPALIVE",0)) != NULL && !strcmp(p1,"YES") )   {
 #endif /* HPSS */
-      if (setsockopt(s, SOL_SOCKET, SO_KEEPALIVE,(char *)&access, sizeof (int) ) == -1) {
+      yes = 1;
+      if (setsockopt(s, SOL_SOCKET, SO_KEEPALIVE,(char *)&yes, sizeof (yes) ) == -1) {
          log(LOG_ERR,"setsockopt(SO_KEEPALIVE) failed");
       }
       /*
