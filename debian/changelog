@@ -64,30 +64,100 @@ castor (2.0.3-5) unstable; urgency=low
 
 castor (2.0.3-4) unstable; urgency=low
 
+  * CASTOR2/CASTOR.spec:
+    [r1.42,2006-03-24,itglp] Removed castor-rfio-server from metapackage CASTOR-client
+  * CASTOR2/castor/Constants.hpp:
+    [r1.59,2006-03-14,felixehm] Added new Repack Acknowledgement
   * CASTOR2/castor/db/oracleTrailer.sql:
-    [r1.248,2006-03-24,itglp] Optimized defaultGCPolicy function (credits to Nilo)
-  * CASTOR2/dlf/dlf_api.c:
-    [r1.24,2006-03-23,motiakov] Added new function dlf_shutdown();
-    [r1.24,2006-03-23,motiakov] It frees memory occupied by the dlf global structure.
-    [r1.24,2006-03-23,motiakov] This function should be called just before application exit.
-  * CASTOR2/h/dlf_api.h:
-    [r1.13,2006-03-23,motiakov] Added new function dlf_shutdown();
-    [r1.13,2006-03-23,motiakov] It frees memory occupied by the dlf global structure.
-    [r1.13,2006-03-23,motiakov] This function should be called just before application exit.
-  * CASTOR2/job/stagerJob.shell:
-    [r1.39,2006-03-24,itglp] Unset STAGE_HOST too
-  * CASTOR2/rmc/rmc_serv.c:
-    [r 1.7,2006-03-20,hcacote] try 2 times to get the robot gemometry at startup to avoid scsi bus reset at reboot
-  * CASTOR2/tape/Ctape_dmpfil.c:
-    [r1.25,2006-01-23,hcacote] use maxblksize from devinfo if no -b specified in cmmand line
-  * CASTOR2/tape/mounttape.c:
-    [r1.43,2006-03-23,hcacote] for 3592 if I/0 error at open tape device change VDQM status to MOUNT and continue to release
-    [r1.42,2006-03-21,hcacote] ring-out and ring-in changed respectively by read and  write
-  * CASTOR2/upv/Cupv_oracle_ifce.pc:
-    [r 1.9,2006-03-22,motiakov] Enabled remote connections to ORACLE.
-  * CASTOR2/vmgr/vmgr_oracle_ifce.pc:
-    [r1.29,2006-03-21,motiakov] Modified connection string to enable connections to remote databases
-    
+    [r1.247,2006-03-22,itglp] Fixed fileRecalled for the repack case.
+    [r1.247,2006-03-22,itglp] Added 'standard' header comment.
+    [r1.246,2006-03-22,itglp] Improved efficiency of bestTapeCopyForStream (credits to Nilo Segura).
+    [r1.246,2006-03-22,itglp] Added nullGCPolicy function to be used for disk-only pools.
+    [r1.246,2006-03-22,itglp] Reenabled generic garbage collector based on policies.
+    [r1.246,2006-03-22,itglp] Fixed internalStageQuery (missing outer join).
+    [r1.245,2006-03-17,itglp] Fixed internalStagerQuery to give an answer in case of ongoing recalls.
+    [r1.245,2006-03-17,itglp] Enhanced stager_qry by filename by regexp, directory or exact match.
+    [r1.244,2006-03-13,sponcec3] Fix problem of recall tape copies being created with a filesystem (Thanks to Olof)
+  * CASTOR2/castor/repack/DatabaseHelper.cpp:
+  * CASTOR2/castor/repack/DatabaseHelper.hpp:
+  * CASTOR2/castor/repack/RepackClient.cpp:
+  * CASTOR2/castor/repack/RepackClient.hpp:
+    [2006-03-14,felixehm] Added new functionality: now the user can do requests on the tapes in the repack system
+  * CASTOR2/castor/repack/RepackCommonHeader.hpp:
+    [r 1.9,2006-03-10,felixehm] New Tools Header for the Tools.
+    [r1.10,2006-03-14,felixehm] Added new functionality: now the user can do requests on the tapes in the repack system
+  * CASTOR2/castor/repack/RepackFileMigrator.cpp:
+  * CASTOR2/castor/repack/RepackFileMigrator.hpp:
+    [2006-03-13,felixehm] added functionality, but not tested.
+  * CASTOR2/castor/repack/RepackFileStager.cpp:
+  * CASTOR2/castor/repack/RepackFileStager.hpp:
+    [r 1.2,2006-03-10,felixehm] Now the Stager Request is created and send manually. Before we used the stager api.
+    [r 1.2,2006-03-10,felixehm] Since I added a new Attribute in the Stager SubRequest (isRepack), the stage api should not be
+    [r 1.2,2006-03-10,felixehm] changed. This option would then also be accessable for normal users, which we don't like.
+    [r 1.2,2006-03-10,felixehm] So, the Requets is created with the option isrepack set to true.
+    [r 1.2,2006-03-10,felixehm] 
+    [r 1.2,2006-03-10,felixehm] This option would put the file in STAGEOUT and not (like the normal preparetoget request into STAGED).
+    [r 1.2,2006-03-10,felixehm] Then we can use putdone from thge api to migrate the files.
+  * CASTOR2/castor/repack/RepackServer.cpp:
+    [r1.11,2006-03-10,felixehm] Added new messages and again renamed the RepackDaemon to RepackFileMigrator
+  * CASTOR2/castor/repack/RepackWorker.cpp:
+  * CASTOR2/castor/repack/RepackWorker.hpp:
+    [2006-03-14,felixehm] Added new functionality: now the user can do requests on the tapes in the repack system
+  * CASTOR2/codeGeneration/Repack.xmi:
+    [r 1.3,2006-03-17,felixehm] Added new Attributes to Acknowledgement
+    [r 1.2,2006-03-13,felixehm] new Acknowledgement for Client Requests,
+    [r 1.2,2006-03-13,felixehm] added attributes for segment
+  * CASTOR2/common/sendscsicmd.c:
+    [r1.16,2006-02-15,hcacote] tpdaemon uses sg0 device instead of sga
+  * CASTOR2/dlf/dlfquery/base.cfg.php:
+    [r 1.2,2006-01-23,sponcec3] Removed logins and passwords from CVS !
+  * CASTOR2/doc/uml/Repack.xmi:
+    [r 1.2,2006-03-13,felixehm] Added overview for repack classes
+  * CASTOR2/h/Crmd_recv_from_rmnode.h:
+    [r 1.2,2006-03-14,motiakov] New function added (Crmd_strip_local_domain)
+  * CASTOR2/h/RfioTURL.h:
+    [r 1.2,2006-03-22,gtaur] New parsing for TURL with params
+  * CASTOR2/h/rm_macros.h:
+  * CASTOR2/h/rm_messages.h:
+    [2006-03-21,motiakov] Added DLF messages
+    [r 1.3,2006-03-21,motiakov] Added DLF messages
+  * CASTOR2/resourcemonitoring/Crmd_checkpoint.c:
+  * CASTOR2/resourcemonitoring/Crmd_recv_from_maui.c:
+  * CASTOR2/resourcemonitoring/Crmd_recv_from_users.c:
+  * CASTOR2/resourcemonitoring/Crmd_survey.c:
+  * CASTOR2/resourcemonitoring/Crmd_tape_feature.c:
+  * CASTOR2/resourcemonitoring/rm_messages.c:
+  * CASTOR2/resourcemonitoring/rmmaster.c:
+    [2006-03-21,motiakov] Added DLF logging to RMMASTER.
+  * CASTOR2/resourcemonitoring/Crmd_recv_from_rmnode.c:
+    [r1.24,2006-03-21,motiakov] Added DLF logging to RMMASTER.
+    [r1.22,2006-03-14,motiakov] Search rmnode by name, not by IP address
+  * CASTOR2/resourcemonitoring/rmnode.c:
+    [r1.25,2006-03-14,motiakov] Issue error message if RMMASTER_HOST is not defined in the configuration file,
+    [r1.25,2006-03-14,motiakov] not rely on the default.
+  * CASTOR2/rfio/RfioTURL.c:
+    [r 1.4,2006-03-22,gtaur] New parsing for TURL with params
+  * CASTOR2/rtcopy/TapeErrorHandler.c:
+    [r1.12,2006-03-22,obarring] Fix "TapeCopy not in TAPECOPY_SELECTED status" problems
+  * CASTOR2/rtcopy/rtcpcldVmgrInterface.c:
+    [r1.21,2006-03-21,obarring] Remove hacks for flagging tape FULL with freespace>0.
+  * CASTOR2/stager/stager_mapper.c:
+    [r 1.8,2006-03-22,gtaur] stage_mapper_setenv, fixed wrong variable line 162
+  * CASTOR2/stager/stager_qry.man:
+    [r1.12,2006-03-22,itglp] Files with diskcopies only in invalid status are returned as INVALID
+    [r1.12,2006-03-22,itglp] by stager_qry. Man page updated accordingly.
+    [r1.11,2006-03-16,itglp] Added the new syntax to be used for regexps
+  * CASTOR2/stager/stager_query_service.cpp:
+    [r1.37,2006-03-22,itglp] Files with diskcopies only in invalid status are returned as INVALID
+    [r1.37,2006-03-22,itglp] by stager_qry. Man page updated accordingly.
+    [r1.36,2006-03-17,itglp] Removed calls to the NS, only CastorFile.lastKnownFileName is used.
+    [r1.36,2006-03-17,itglp] Minor refactoring.
+    [r1.35,2006-03-16,itglp] Added delete statements, fixed bug #15381 (stager_qry giving the same status
+    [r1.35,2006-03-16,itglp] for files in different statuses)
+  * CASTOR2/vmgr/vmgr_procreq.c:
+    [r 1.6,2006-03-21,motiakov] Set estimated free space to bytes_written when vmgr_update is called with
+    [r 1.6,2006-03-21,motiakov] TAPE_FULL and number of written files is zero.
+
  -- Giuseppe LO PRESTI <itglp@localhost.localdomain>  Fri, 24 Mar 2006 14:35:24 +0100
 
 castor (2.0.3-3) unstable; urgency=low
@@ -95,7 +165,6 @@ castor (2.0.3-3) unstable; urgency=low
   * Bug fix release on top of the 2.0.3-0 one (branching)
   * PROTO2/castor/Imakefile:
     [r1.120.0.2,2006-03-16,sponcec3] Introduce the changes from v122 here in order to issue a bug fix release
-
 
  -- sponcec3 <sponcec3@seblap.cern.ch>  Thu, 16 Mar 2006 15:47:11 +0100
 
