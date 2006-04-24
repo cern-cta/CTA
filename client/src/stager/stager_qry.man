@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.13 $ $Date: 2006/03/28 10:05:45 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.14 $ $Date: 2006/04/24 12:23:23 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_QRY 1castor "$Date: 2006/03/28 10:05:45 $" CASTOR "STAGER Commands"
+.TH STAGER_QRY 1castor "$Date: 2006/04/24 12:23:23 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_qry \- query the CASTOR stager for files and requests
 .SH SYNOPSIS
@@ -16,6 +16,10 @@ stager_qry \- query the CASTOR stager for files and requests
 }
 .BI ...
 ]]
+[
+.BI -S
+.BI svcClass
+]
 [
 .BI -U
 .BI usertag
@@ -34,6 +38,20 @@ stager_qry \- query the CASTOR stager for files and requests
 [
 .BI -h
 ]
+
+.B stager_qry
+.BI -s
+[
+.BI -S
+.BI svcClass
+]
+[
+.BI -d
+.BI diskPool
+]
+[
+.BI -h
+]
 .SH DESCRIPTION
 The
 .B stager_qry
@@ -44,19 +62,36 @@ submitted using the
 .BI stager_put(1castor)
 or
 .BI rfcp(1castor) 
-commands.
+commands as well as for getting statistics concerning the diskpools (-s option).
 .fi
+
+.BI File\ querying
+
 Default output includes 3 columns: the basename of the HSM name, the fileid in the used castor name server, and the current status of the found record. The latter can be:
+.TP 10
+.BI STAGEIN
+the file is being recalled from tape or being internally disk-to-disk copied from another diskpool.
 .TP
-STAGEIN: the file is being recalled from tape or being internally disk-to-disk copied from another diskpool.
+.BI STAGED
+the file has been successfully staged from tape and it is available on disk, or the file is only available on disk if its associated nbTapeCopies = 0, see the nschclass(1castor) command.
 .TP
-STAGED: the file has been successfully staged from tape and it is available on disk, or the file is only available on disk if its associated nbTapeCopies = 0, see the nschclass(1castor) command.
+.BI STAGEOUT
+the file is being staged from client.
 .TP
-STAGEOUT: the file is being staged from client.
+.BI CANBEMIGR
+the file is on disk and any transfer from client has been completed. The migrator will take it for tape migration.
 .TP
-CANBEMIGR: the file is on disk and any transfer from client has been completed. The migrator will take it for tape migration.
-.TP
-INVALID: the file has no valid diskcopy/tapecopy, or a failure happened concerning the file. 
+.BI INVALID
+the file has no valid diskcopy/tapecopy, or a failure happened concerning the file. 
+
+
+.TP 0
+.BI DiskPool\ querying
+
+All disk servers and file systems composing the disk pool are listed. For each filesystem, the mountpoint, status, capacity, free space, reserved space and garbage collector bounds are given. These bounds are the minimum and maximum amout of free space desired (given as fraction of the total space).
+For each diskserver, the name, status, aggregated capacity, free space and reserved space are given.
+Finally for each pool, the aggregated capacity, free and reserved space are given.
+
 
 .SH OPTIONS
 
@@ -86,6 +121,9 @@ query by CASTOR fileid and nshost. The fileid is a unique 64bit number assigned 
 command with the
 .BI \-i
 switch.
+.TP
+.BI \-S,\ \-\-svcClass " svcClass"
+specifies the service class to be used for the query
 .TP
 .BI \-U,\ \-\-usertag " usertag"
 allows for querying the status of a request identified by usertag. An usertag is a user defined string specified with the
@@ -124,11 +162,20 @@ or
 .BI \-r
 options.
 .TP
+.BI \-s,\ \-\-statistic
+display statistics concerning the disk pools
+.TP
+.BI \-d,\ \-\-diskPool " diskPool"
+Specifies the disk pool for which statistics should be displayed. It has to be used in conjunction with
+.BI \-s
+and takes precedence over
+.BI \-S
+.TP
 .BI \-h,\ \-\-help
 display command usage help
 .TP
 
-.SH EXAMPLE
+.SH EXAMPLES
 .fi
 $ stager_get -M /castor/cern.ch/user/t/test/file1 -M /castor/cern.ch/user/t/test/file2 -U test1
 .fi
@@ -138,6 +185,7 @@ Received 2 responses
 .fi
 /castor/cern.ch/user/t/test/file2 SUBREQUEST_READY
 .fi
+
 $ stager_qry -U test1
 .fi
 Received 2 responses
@@ -146,18 +194,21 @@ Received 2 responses
 .fi
 /castor/cern.ch/user/t/test/file2 8235743@castorns STAGED
 .fi
+
 $ stager_qry -n -U test1
 .fi
 Received 1 responses
 .fi
 /castor/cern.ch/user/t/test/file2 8235743@castorns STAGED
 .fi
+
 $ stager_qry -n -U test1   (after some time)
 .fi
 Received 1 responses
 .fi
 /castor/cern.ch/user/t/test/file1 8235742@castorns STAGED
 .fi
+
 $ stager_qry -M /castor/cern.ch/user/t/test/
 .fi
 Received 2 responses
@@ -166,6 +217,7 @@ Received 2 responses
 .fi
 /castor/cern.ch/user/t/test/file2 8235743@castorns STAGED
 .fi
+
 $ nsls -i /castor/cern.ch/user/t/test2/file
 .fi
     59316770 /castor/cern.ch/user/t/test2/file
@@ -175,6 +227,25 @@ $ stager_qry -F 59316770@castorns
 Received 1 responses
 .fi
 /castor/cern.ch/user/t/test2/file 59316770@castorns STAGEOUT
+.fi
+
+$ stager_qry -s
+.fi
+.nf
+POOL default          CAPACITY 372.45G      FREE 372.04G(99%)    RESERVED       0( 0%)
+  DiskServer lxfsrk605        STATUS DISKSERVER_PRODUCTION     CAPACITY 372.45G      FREE 372.04G(99%)     RESERVED       0( 0%)
+     /shift/lxfsrk605/data02/         STATUS FILESYSTEM_PRODUCTION     CAPACITY 372.45G      FREE 372.04G(99%)    RESERVED       0( 0%)    GCBOUNDS 0.20, 0.30
+POOL test             CAPACITY 372.51G      FREE 372.31G(99%)    RESERVED       0( 0%)
+  DiskServer lxfsrk605        STATUS DISKSERVER_PRODUCTION     CAPACITY 372.51G      FREE 372.31G(99%)     RESERVED       0( 0%)
+     /shift/lxfsrk605/data01/         STATUS FILESYSTEM_PRODUCTION     CAPACITY 372.51G      FREE 372.31G(99%)    RESERVED       0( 0%)    GCBOUNDS 0.20, 0.30
+.fi
+
+$ stager_qry -s -d test
+.fi
+.nf
+POOL test             CAPACITY 372.51G      FREE 372.31G(99%)    RESERVED       0( 0%)
+  DiskServer lxfsrk605        STATUS DISKSERVER_PRODUCTION     CAPACITY 372.51G      FREE 372.31G(99%)     RESERVED       0( 0%)
+     /shift/lxfsrk605/data01/         STATUS FILESYSTEM_PRODUCTION     CAPACITY 372.51G      FREE 372.31G(99%)    RESERVED       0( 0%)    GCBOUNDS 0.20, 0.30
 .fi
 
 .SH EXIT STATUS
