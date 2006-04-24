@@ -1,4 +1,43 @@
 -----------
+- 2.0.4-0 -
+-----------
+
+  New Features and Changes (from 2.0.3-0)
+  ---------------------------------------
+
+    - Fixes concerning the IBM 3592 tapes
+    - Support for preallocation and direct i/o were added to RFIO
+    - A Cleaning service was added that cleans up old requests
+      and errors after some (configurable) time
+    - stager_qry support for regexp was improved. Regexp is
+      no more the default but can be activated using options.
+      Directory listing is also supported and several fixes were applied.
+    - RFIO was modified for supporting extended TURLs needed for
+      SRM : rfio://stager:port//castor/.../file?svcclass=...&castorversion=...
+    - /etc/castor/ORASTAGERCONFIG can now contain several lines in order
+      to be able to switch between several CASTOR2 instances. The environment
+      variable CASTOR_INSTANCE defines which line to use
+    - VMGR now updates correctly the estimated free space, even for full tapes
+    - rmnode has no more default for the RMMASTER_HOST. It raises an error
+      if nothing is set.
+    - Better logging of rmmaster to DLF
+
+  Upgrade from 2.0.3-*
+  --------------------
+
+    - The database schema has evolved. Use upgrades/2.0.3_to_2.0.4.sql to upgrade.
+      This can be done independently of the software update but must be done first.
+    - The server code can then be updated.
+    - Clients can be updated completely independently (before or after). New
+      functionnalities will lead to errors in case servers were not updated.
+      Typical error :
+          > stager_qry -s
+          Error: Invalid argument
+          stage_diskpoolsquery: Server Error 22 :
+          Unable to read Request object from socket.
+          No factory found for object type 103 and representation type 1
+
+-----------
 - 2.0.3-5 -
 -----------
 
