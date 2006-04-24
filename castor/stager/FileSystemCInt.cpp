@@ -247,6 +247,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_FileSystem_minAllowedFreeSpace
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_minAllowedFreeSpace(castor::stager::FileSystem* instance, float* var) {
+    *var = instance->minAllowedFreeSpace();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_setMinAllowedFreeSpace
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_setMinAllowedFreeSpace(castor::stager::FileSystem* instance, float new_var) {
+    instance->setMinAllowedFreeSpace(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_FileSystem_spaceToBeFreed
   //----------------------------------------------------------------------------
   int Cstager_FileSystem_spaceToBeFreed(castor::stager::FileSystem* instance, u_signed64* var) {

@@ -52,6 +52,7 @@ castor::stager::FileSystem::FileSystem() throw() :
   m_reservedSpace(0),
   m_minFreeSpace(0.0),
   m_maxFreeSpace(0.0),
+  m_minAllowedFreeSpace(0.0),
   m_spaceToBeFreed(0),
   m_totalSize(0),
   m_id(0),
@@ -98,6 +99,7 @@ void castor::stager::FileSystem::print(std::ostream& stream,
   stream << indent << "reservedSpace : " << m_reservedSpace << std::endl;
   stream << indent << "minFreeSpace : " << m_minFreeSpace << std::endl;
   stream << indent << "maxFreeSpace : " << m_maxFreeSpace << std::endl;
+  stream << indent << "minAllowedFreeSpace : " << m_minAllowedFreeSpace << std::endl;
   stream << indent << "spaceToBeFreed : " << m_spaceToBeFreed << std::endl;
   stream << indent << "totalSize : " << m_totalSize << std::endl;
   stream << indent << "id : " << m_id << std::endl;
