@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.257 $ $Release$ $Date: 2006/04/24 08:49:12 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.258 $ $Release$ $Date: 2006/04/25 13:31:25 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -701,11 +701,11 @@ BEGIN
      CURSOR c1 IS SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id,
                        FileSystem.fsDeviation, FileSystem.diskserver, CastorFile.fileSize
                     FROM DiskServer, FileSystem, DiskPool2SvcClass,
-                         (SELECT id, svcClass from StageGetRequest UNION
-                          SELECT id, svcClass from StagePrepareToGetRequest UNION
-                          SELECT id, svcClass from StageGetNextRequest UNION
-                          SELECT id, svcClass from StageUpdateRequest UNION
-                          SELECT id, svcClass from StagePrepareToUpdateRequest UNION
+                         (SELECT id, svcClass from StageGetRequest UNION ALL
+                          SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
+                          SELECT id, svcClass from StageGetNextRequest UNION ALL
+                          SELECT id, svcClass from StageUpdateRequest UNION ALL
+                          SELECT id, svcClass from StagePrepareToUpdateRequest UNION ALL
                           SELECT id, svcClass from StageUpdateNextRequest) Request,
                          SubRequest, CastorFile
                    WHERE CastorFile.id = castorfileId
@@ -873,10 +873,10 @@ BEGIN
   -- Get the svcclass for this subrequest
   SELECT Request.id, Request.svcclass, SubRequest.castorfile
     INTO reqId, svcClassId, cfId
-    FROM (SELECT id, svcClass from StageGetRequest UNION
-          SELECT id, svcClass from StagePrepareToGetRequest UNION
-          SELECT id, svcClass from StageUpdateRequest UNION
-          SELECT id, svcClass from StagePrepareToUpdateRequest UNION
+    FROM (SELECT id, svcClass from StageGetRequest UNION ALL
+          SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
+          SELECT id, svcClass from StageUpdateRequest UNION ALL
+          SELECT id, svcClass from StagePrepareToUpdateRequest UNION ALL
           SELECT id, svcClass from StagePutDoneRequest) Request,
          SubRequest
    WHERE Subrequest.request = Request.id
@@ -975,9 +975,9 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
 BEGIN
  -- Get and uid, gid
  SELECT euid, egid INTO reuid, regid FROM SubRequest,
-      (SELECT id, euid, egid from StageGetRequest UNION
-       SELECT id, euid, egid from StagePrepareToGetRequest UNION
-       SELECT id, euid, egid from StageUpdateRequest UNION
+      (SELECT id, euid, egid from StageGetRequest UNION ALL
+       SELECT id, euid, egid from StagePrepareToGetRequest UNION ALL
+       SELECT id, euid, egid from StageUpdateRequest UNION ALL
        SELECT id, euid, egid from StagePrepareToUpdateRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
  -- Take a lock on the CastorFile. Associated with triggers,
@@ -1387,7 +1387,7 @@ BEGIN
  END;
  -- get uid, gid and reserved space from Request
  SELECT euid, egid, xsize INTO userId, groupId, reservedSpace FROM SubRequest,
-     (SELECT euid, egid, id from StagePutRequest UNION
+     (SELECT euid, egid, id from StagePutRequest UNION ALL
       SELECT euid, egid, id from StagePutDoneRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
  -- If not a put inside a PrepareToPut, update the FileSystem free space
@@ -2249,7 +2249,7 @@ BEGIN
            CastorFile.nbaccesses, CastorFile.lastKnownFileName
       FROM CastorFile, DiskCopy, FileSystem, DiskServer,
            DiskPool2SvcClass, SubRequest,
-           (SELECT id, svcClass FROM StagePrepareToGetRequest UNION
+           (SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
             SELECT id, svcClass FROM StageGetRequest) Req
      WHERE CastorFile.id IN (SELECT * FROM TABLE(cfs))
        AND CastorFile.id = DiskCopy.castorFile(+)    -- search for valid diskcopy
@@ -2359,19 +2359,19 @@ BEGIN
          (SELECT id
             FROM StagePreparetogetRequest
            WHERE reqid LIKE rid
-          UNION
+          UNION ALL
           SELECT id
             FROM StagePreparetoputRequest
            WHERE reqid LIKE rid
-          UNION
+          UNION ALL
           SELECT id
             FROM StagePreparetoupdateRequest
            WHERE reqid LIKE rid
-          UNION
+          UNION ALL
           SELECT id
             FROM stageGetRequest
            WHERE reqid LIKE rid
-          UNION
+          UNION ALL
           SELECT id
             FROM stagePutRequest
            WHERE reqid LIKE rid) reqlist
@@ -2398,19 +2398,19 @@ BEGIN
          (SELECT id
             FROM StagePreparetogetRequest
            WHERE userTag LIKE tag
-          UNION
+          UNION ALL
           SELECT id
             FROM StagePreparetoputRequest
            WHERE userTag LIKE tag
-          UNION
+          UNION ALL
           SELECT id
             FROM StagePreparetoupdateRequest
            WHERE userTag LIKE tag
-          UNION
+          UNION ALL
           SELECT id
             FROM stageGetRequest
            WHERE userTag LIKE tag
-          UNION
+          UNION ALL
           SELECT id
             FROM stagePutRequest
            WHERE userTag LIKE tag) reqlist
