@@ -189,7 +189,6 @@ std::string castor::client::BaseClient::sendRequest
     e.getMessage() << "Unknown User" << std::endl;
     throw e;
   } else {
-	  stage_trace(3, "Setting username %s", pw->pw_name);
 	  req->setUserName(pw->pw_name);
   }
   // Mask
@@ -248,7 +247,6 @@ std::string castor::client::BaseClient::sendRequest
         }
       }
     }
-	stage_trace(3, "Setting hostname %s", hostname);
     req->setMachine(hostname);
     if (m_rhHost == "") {
 	    clog() << "Rh host not speciefied: "
@@ -276,7 +274,6 @@ std::string castor::client::BaseClient::sendRequest
   castor::IClient *cl = createClient();
   req->setClient(cl);
   // sends the request
-  stage_trace(3, "Sending request");
   std::string requestId = internalSendRequest(*req);
   stage_trace(3, "Request sent to RH - Request ID: %s", requestId.c_str());
   // waits for callbacks, first loop on the request
@@ -605,21 +602,12 @@ void castor::client::BaseClient::setRhSvcClass(std::string optSvcClass)
 
   char* svc;
   if ((svc = getenv ("STAGE_SVCCLASS")) != 0
-      || (svc = getconfent("STAGER",
-			    "SVCCLASS",0)) != 0) {
+      || (svc = getconfent("STAGER", "SVCCLASS",0)) != 0) {
     m_rhSvcClass = svc;
+    stage_trace(3, "Looking up RH svc class - Using %s", m_rhSvcClass.c_str());
   } else {
     m_rhSvcClass = "";
-//     castor::exception::Exception e(ETPRM);
-//     e.getMessage()
-//       << "Unable to deduce the name of the RH server.\n"
-//       << "No -h option was given, RH_HOST is not set and "
-//       << "your castor.conf file does not contain a RH/HOST entry."
-//       << std::endl;
-//     throw e;
   }
-
-  stage_trace(3, "Looking up RH svc class - Using %s", m_rhSvcClass.c_str());
 }
 
 
@@ -629,7 +617,7 @@ void castor::client::BaseClient::setRhSvcClass(std::string optSvcClass)
 
 void castor::client::BaseClient::setOption(struct stage_options* opts)throw (castor::exception::Exception){
 	
- 	if(opts !=0){
+ 	if(opts != 0){
 
 		setRhHost(opts->stage_host);
         	setRhPort(opts->stage_port);
