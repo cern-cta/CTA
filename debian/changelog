@@ -1,3 +1,171 @@
+castor (2.0.4-0) unstable; urgency=low
+
+  * CASTOR2/castor/Constants.cpp:
+  * CASTOR2/castor/Constants.hpp:
+  * CASTOR2/castor/Imakefile:
+  * CASTOR2/castor/db/castor_postgres_create.sql:
+  * CASTOR2/castor/db/castor_postgres_drop.sql:
+  * CASTOR2/castor/db/ora/Imakefile:
+  * CASTOR2/castor/db/ora/OraQuerySvc.cpp:
+  * CASTOR2/castor/db/ora/OraQuerySvc.hpp:
+  * CASTOR2/castor/db/oracleTrailer.sql:
+  * CASTOR2/castor/query/IQuerySvc.hpp:
+  * CASTOR2/h/stager_client_api.h:
+  * CASTOR2/stager/stager_client_api_query.cpp:
+  * CASTOR2/stager/stager_qry.c:
+  * CASTOR2/stager/stager_query_service.cpp:
+    [2006-04-13,sponcec3] Implementation of stager_qry -s
+  * CASTOR2/stager/stager_qry.man:
+    [r1.14,2006-04-24,sponcec3] Updated man page for -s option
+  * CASTOR2/castor/client/BaseClient.cpp:
+  * CASTOR2/castor/dlf/Dlf.cpp:
+  * CASTOR2/castor/dlf/Param.cpp:
+  * CASTOR2/castor/io/AbstractSocket.cpp:
+  * CASTOR2/castor/io/ClientSocket.cpp:
+  * CASTOR2/castor/io/ServerSocket.cpp:
+  * CASTOR2/castor/logstream.cpp:
+  * CASTOR2/castor/replier/ClientConnection.cpp:
+  * CASTOR2/castor/replier/RequestReplier.cpp:
+  * CASTOR2/ns/nsgetacl.c:
+  * CASTOR2/resourcemonitoring/rmnode.c:
+  * CASTOR2/rfio/Imakefile:
+  * CASTOR2/rfio/rfio_call64.c:
+  * CASTOR2/rfio/rfio_calls.c:
+  * CASTOR2/rtcopy/Imakefile:
+  * CASTOR2/rtcopy/rtcpapi.c:
+  * CASTOR2/rtcopy/rtstat.c:
+  * CASTOR2/shlib/Imakefile:
+  * CASTOR2/stager/Imakefile:
+  * CASTOR2/stager/stager_client_api_common.cpp:
+  * CASTOR2/stager/stager_qry.c:
+    [2006-04-11,motiakov] Port to Windows.
+  * CASTOR2/castor/stager/FileSystem.cpp:
+  * CASTOR2/castor/stager/FileSystem.h:
+  * CASTOR2/castor/stager/FileSystem.hpp:
+  * CASTOR2/castor/stager/FileSystemCInt.cpp:
+    [2006-04-24,itglp] Added field minAllowedFreeSpace
+  * CASTOR2/castor/db/analyze/cleanDiskCopyReplicas.sql:
+    [r 1.4,2006-04-13,sponcec3] Fixed scripts by adding a check
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    [r1.258,2006-04-25,itglp] Replaced UNION by UNION ALL (thanks to Nilo).
+    [r1.257,2006-04-24,itglp] Fixed parenthesis in describeDiskPools().
+    [r1.256,2006-04-24,itglp] Fixed nullGCPolicy function.
+    [r1.255,2006-04-24,itglp] Fixed declaration and usage of index for getNextStatus.
+    [r1.255,2006-04-24,itglp] Improved fileSystem selection taking into account minAllowedFreeSpace.
+    [r1.252,2006-04-13,sponcec3] Commented a constraint causing problems and added some commits inside the delete methods when to many files are commited
+    [r1.251,2006-04-11,itglp] Commented out repack-aware queries in fileRecalled
+  * CASTOR2/castor/stager/RemoteGCSvc.cpp:
+  * CASTOR2/castor/stager/RemoteJobSvc.cpp:
+    [2006-04-19,felixehm] Due to changes of BaseClient the Instantiation of it is not complete if there is no enviroment variables set. To set the correct ones, the memberBaseClient::setOption(NULL) has to be called, which reads the information for the stager and rh host from the castor config file.
+  * CASTOR2/castor/stager/SubRequestStatusCodes.cpp:
+  * CASTOR2/castor/stager/SubRequestStatusCodes.hpp:
+    [2006-04-21,sponcec3] Added new status SUBREQUEST_ARCHIVED
+  * CASTOR2/clips/castor.clp:
+    [r1.14,2006-04-18,sponcec3] New set of defaults corresponding to the ITDC optimization
+  * CASTOR2/h/rtcpcld.h:
+    [r1.46,2006-04-12,obarring] Add prototype for new method (rtcpcld_putFailed())
+  * CASTOR2/h/stager_client_api.h:
+    [r1.30,2006-04-24,sponcec3] Correct handling of env variables using Giulia's new functions
+  * CASTOR2/hsmtools/diskServer_qry:
+    [r 1.2,2006-04-19,sponcec3] Take care of strange status
+  * CASTOR2/hsmtools/cleanLostFiles.man:
+  * CASTOR2/hsmtools/deleteFileClass.man:
+  * CASTOR2/hsmtools/deleteSvcClass.man:
+  * CASTOR2/hsmtools/diskServer_qry.man:
+  * CASTOR2/hsmtools/diskUsage.man:
+  * CASTOR2/hsmtools/enterFileClass.man:
+  * CASTOR2/hsmtools/enterSvcClass.man:
+  * CASTOR2/hsmtools/gcAllFS.man:
+  * CASTOR2/hsmtools/houseKeeping.man:
+  * CASTOR2/hsmtools/listFileClass.man:
+  * CASTOR2/hsmtools/listSvcClass.man:
+  * CASTOR2/hsmtools/modifyFileClass.man:
+  * CASTOR2/hsmtools/modifySvcClass.man:
+  * CASTOR2/hsmtools/moveDiskServer.man:
+  * CASTOR2/hsmtools/printFileClass.man:
+  * CASTOR2/hsmtools/printSvcClass.man:
+  * CASTOR2/hsmtools/springCleaning.man:
+  * CASTOR2/hsmtools/updateCastorFileName.man:
+    [2006-04-24,sponcec3] man page for administration of multiple instances of CASTOR from a single node
+  * CASTOR2/ns/nsls.c:
+    [r 1.3,2006-04-11,motiakov] define F_OK for Windows.
+  * CASTOR2/ns/nsrm.c:
+    [r 1.3,2006-04-11,motiakov] define S_IFLNK 0120000 for Windows
+  * CASTOR2/rfio/RfioTURL.c:
+    [r 1.8,2006-04-20,gtaur] printf removed
+    [r 1.7,2006-04-18,gtaur] right default
+  * CASTOR2/rfio/rfcp.c:
+    [r 1.9,2006-04-21,gtaur] still to fix from Castor to local
+    [r 1.8,2006-04-21,gtaur] modified parameter used to call  rfio_open64 to be compatible with the new Turl
+    [r 1.7,2006-04-20,gtaur] options for the stage_open retieved and used to call the function
+  * CASTOR2/rfio/rfio_HsmIf.c:
+    [r1.13,2006-04-21,gtaur] still to fix from Castor to local
+    [r1.12,2006-04-20,gtaur] options for the stage_open retieved and used to call the function
+  * CASTOR2/rfio/rfio_callhandlers.c:
+    [r 1.7,2006-04-11,motiakov] Added missing include "rfio.h"
+  * CASTOR2/rfio/rfio_serv.c:
+    [r1.22,2006-04-24,obarring] Fix the setsockopt(SO_KEEPALIVE) call (was using an uninitialized variable)
+  * CASTOR2/rtcopy/MigHunter.c:
+  * CASTOR2/rtcopy/TapeErrorHandler.c:
+    [2006-04-12,obarring] Add calls to new method rtcpcld_putFailed()
+  * CASTOR2/rtcopy/rtcpcldCatalogueInterface.c:
+    [r1.143,2006-04-17,obarring] Skip migration candidates failing with EISDIR until the stager has been fixed!
+    [r1.142,2006-04-12,obarring] New method, rtcpcld_putFailed(), for cleaning up from failed migrations
+  * CASTOR2/h/stager_client_api_common.h:
+  * CASTOR2/stager/stager_client_api_common.cpp:
+    [2006-04-20,gtaur] added default values for stage_option used by the BaseClient. New function to set that in stager_client_api_common.cpp
+  * CASTOR2/stager/stager_client_api_get.cpp:
+    [r1.26,2006-04-20,gtaur] added default values for stage_option used by the BaseClient. New function to set that in stager_client_api_common.cpp
+    [r1.25,2006-04-19,gtaur] put back the request helper
+    [r1.24,2006-04-18,gtaur] setOption added to the Client
+  * CASTOR2/stager/stager_client_api_next.cpp:
+    [r 1.4,2006-04-20,gtaur] added default values for stage_option used by the BaseClient. New function to set that in stager_client_api_common.cpp
+    [r 1.3,2006-04-19,gtaur] put back the request helper
+  * CASTOR2/stager/stager_client_api_put.cpp:
+    [r1.25,2006-04-20,gtaur] added default values for stage_option used by the BaseClient. New function to set that in stager_client_api_common.cpp
+    [r1.24,2006-04-19,gtaur] put back the request helper
+    [r1.23,2006-04-18,gtaur] setOption added to the Client
+  * CASTOR2/stager/stager_client_api_query.cpp:
+    [r1.22,2006-04-24,sponcec3] Correct handling of env variables using Giulia's new functions
+    [r1.21,2006-04-24,sponcec3] More fixes
+    [r1.19,2006-04-20,gtaur] added default values for stage_option used by the BaseClient. New function to set that in stager_client_api_common.cpp
+    [r1.18,2006-04-19,gtaur] put back the request helper
+    [r1.17,2006-04-18,gtaur] setOption added to the Client
+    [r1.16,2006-04-13,sponcec3] Fix svcClassName usage
+  * CASTOR2/stager/stager_client_api_rm.cpp:
+    [r 1.6,2006-04-20,gtaur] added default values for stage_option used by the BaseClient. New function to set that in stager_client_api_common.cpp
+    [r 1.5,2006-04-19,gtaur] put back the request helper
+    [r 1.4,2006-04-18,gtaur] setOption added to the Client
+  * CASTOR2/stager/stager_client_api_setFileGCWeight.cpp:
+    [r 1.2,2006-04-20,gtaur] added default values for stage_option used by the BaseClient. New function to set that in stager_client_api_common.cpp
+  * CASTOR2/stager/stager_client_api_update.cpp:
+    [r 1.9,2006-04-19,gtaur] put back the request helper
+    [r1.10,2006-04-20,gtaur] added default values for stage_option used by the BaseClient. New function to set that in stager_client_api_common.cpp
+  * CASTOR2/stager/stager_db_service.c:
+    [r1.136,2006-04-22,obarring] Log the castor fileid
+    [r1.135,2006-04-22,obarring] Fix log message for attempt to open directory
+    [r1.134,2006-04-22,obarring] 16265 fix. Add protection against put/get/update request on a directory
+  * CASTOR2/stager/stager_fs_service.c:
+    [r1.40,2006-04-24,itglp] Inizialize FileSystem.minAllowedFreeSpace
+    [r1.39,2006-04-24,itglp] Inizialize FileSystem.minAllowedFreeSpace
+  * CASTOR2/stager/stager_get.c:
+    [r 1.8,2006-04-11,gtaur] getGlobal add
+    [r 1.7,2006-04-11,gtaur] getGlobal add
+  * CASTOR2/stager/stager_qry.c:
+    [r1.20,2006-04-24,sponcec3] Correct handling of env variables using Giulia's new functions
+    [r1.19,2006-04-24,sponcec3] More fixes
+  * CASTOR2/test/stager/myTestSuite.py:
+    [r 1.2,2006-04-26,gtaur] user tag is not lost anymore
+  * CASTOR2/tools/castorRun.c:
+    [r 1.4,2006-04-20,gtaur] to be compatible with new stage_options (maybe this file is just a test used)
+  * CASTOR2/upgrades/2.0.3_to_2.0.4.sql:
+    [r 1.5,2006-04-26,sponcec3] Do not drop non existent index
+    [r 1.4,2006-04-24,sponcec3] Don't change the DB version since the DB code is backward compatible
+    [r 1.3,2006-04-24,sponcec3] Don't recreate FilesDeletedProcOutput
+    [r 1.2,2006-04-24,itglp] Generated SQL script for next version upgrade.
+
+ -- sponcec3 <sponcec3@seblap.cern.ch>  Wed, 26 Apr 2006 15:19:28 +0200
+
 castor (2.0.3-5) unstable; urgency=low
 
   * CASTOR2/castor/client/BaseClient.cpp:
