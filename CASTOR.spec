@@ -127,6 +127,7 @@ mkdir -p ${RPM_BUILD_ROOT}/etc/cron.hourly
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.daily
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.weekly
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.monthly
+mkdir -p ${RPM_BUILD_ROOT}/var/spool/cleaning
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/dlf
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/expert
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/gc
