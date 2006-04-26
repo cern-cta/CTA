@@ -33,20 +33,24 @@ class StagerTestCase(unittest.TestCase):
         fi.close()
         
         fi=open("./tmpTest/query0","r")
-        assert fi.read().find("not found")!= -1, "stager_qry doesn't work if there isn't the file"
+        assert fi.read().find("not in stager")!= -1, "stager_qry doesn't work if there isn't the file"
         fi.close()
         
         fi=open("./tmpTest/query1","r")
         assert fi.read().find("CANBEMIGR") != -1, "stager_qry doesn't work"
         fi.close()
+             
+        fi=open("./tmpTest/query2","r")
+        assert fi.read().find("No such file or directory") != -1, "stager_qry doesn't work"
+        fi.close()
+
         
-        for n in range(2,7):
-            fi=open("./tmpTest/query"+str(n),"r")
-            assert fi.read().find("STAGEOUT") != -1, "stager_qry doesn't work"
-            fi.close()
-        
+        fi=open("./tmpTest/query7","r")
+        assert fi.read().find("STAGEOUT") != -1, "stager_qry doesn't work"
+        fi.close()
+
         fi=open("./tmpTest/query8","r")
-        assert fi.read().find("Unknown user tag") != -1, "stager_qry doesn't work"
+        assert fi.read().find("CANBEMIGR") != -1, "stager_qry doesn't work"
         fi.close()
 
         fi=open("./tmpTest/query10","r")
@@ -63,7 +67,7 @@ class StagerTestCase(unittest.TestCase):
         fi=open("./tmpTest/query9","r")
         flag=0
         resp=fi.read()
-        if ((resp.find("Unknown user tag") != -1) and flagP):
+        if ((resp.find("CANBEMIGR") != -1) and flagP):
             flag=1
         if (resp.find("STAGEOUT")!= -1 and not flagP):
             flag=1                                                          
