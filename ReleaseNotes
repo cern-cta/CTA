@@ -12,6 +12,8 @@
     - stager_qry support for regexp was improved. Regexp is
       no more the default but can be activated using options.
       Directory listing is also supported and several fixes were applied.
+    - stager_qry -s was implemented for getting statistics on diskpools
+    - (prepareTo)Get/Put requests now detect directory names
     - RFIO was modified for supporting extended TURLs needed for
       SRM : rfio://stager:port//castor/.../file?svcclass=...&castorversion=...
     - /etc/castor/ORASTAGERCONFIG can now contain several lines in order
@@ -26,11 +28,13 @@
   --------------------
 
     - The database schema has evolved. Use upgrades/2.0.3_to_2.0.4.sql to upgrade.
-      This can be done independently of the software update but must be done first.
-    - The server code can then be updated.
-    - Clients can be updated completely independently (before or after). New
-      functionnalities will lead to errors in case servers were not updated.
-      Typical error :
+      This can be done anytime before the software upgrade and does not imply any
+      service interruption.
+    - The server code can be updated after the DB, still without service interruption
+      if you play with several processes.
+    - Clients can be updated completely independently (before or after the server
+      update). However, new functionnalities will lead to strange errors in case
+      servers were not updated, typically :
           > stager_qry -s
           Error: Invalid argument
           stage_diskpoolsquery: Server Error 22 :
