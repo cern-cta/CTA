@@ -406,6 +406,8 @@ MakeDepSharedLibrary(shlib,shift)
 NormalLibraryTarget(castorClient,$(STGLIB_OBJS))
 
 MakeSubdirs(all,$(SUBDIRS))
+MakeSubdirs(install,$(SUBDIRS))
+MakeSubdirs(install.man,$(SUBDIRS))
 MakeCondSubdirs(clean,$(SUBDIRS),clean0)
 MakeCondSubdirs(clobber,$(SUBDIRS),clobber0)
 
