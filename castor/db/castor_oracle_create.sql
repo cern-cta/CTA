@@ -119,7 +119,7 @@ CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER
 CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight float, creationTime INTEGER, id INTEGER PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type FileSystem */
-CREATE TABLE FileSystem (free INTEGER, weight float, fsDeviation float, mountPoint VARCHAR2(2048), deltaWeight float, deltaFree NUMBER, reservedSpace NUMBER, minFreeSpace float, maxFreeSpace float, spaceToBeFreed INTEGER, totalSize INTEGER, id INTEGER PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE FileSystem (free INTEGER, weight float, fsDeviation float, mountPoint VARCHAR2(2048), deltaWeight float, deltaFree NUMBER, reservedSpace NUMBER, minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, spaceToBeFreed INTEGER, totalSize INTEGER, id INTEGER PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type SvcClass */
 CREATE TABLE SvcClass (nbDrives NUMBER, name VARCHAR2(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, replicationPolicy VARCHAR2(2048), gcPolicy VARCHAR2(2048), migratorPolicy VARCHAR2(2048), recallerPolicy VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
@@ -192,7 +192,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.51 $ $Release$ $Date: 2006/04/13 16:12:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.52 $ $Release$ $Date: 2006/04/27 16:07:29 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -262,10 +262,12 @@ CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer on FileSystem(diskServer);
 CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_Request on SubRequest (request);
-CREATE INDEX I_SubRequest_GetNextStatus on SubRequest (decode(getNextStatus,1,NULL));
+CREATE INDEX I_SubRequest_GetNextStatus on SubRequest (decode(getNextStatus,1,getNextStatus,NULL));
 
 /* some constraints */
+/* Can not be added since some code (stager_fs_service) creates FileSystems with no DiskServer
 ALTER TABLE FileSystem ADD CONSTRAINT diskserver_fk FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
+*/
 ALTER TABLE FileSystem MODIFY (status NOT NULL);
 ALTER TABLE FileSystem MODIFY (diskServer NOT NULL);
 ALTER TABLE DiskServer MODIFY (status NOT NULL);
@@ -583,14 +585,21 @@ CREATE OR REPLACE PROCEDURE deleteArchivedRequests(timeOut IN NUMBER) AS
   CURSOR cur IS 
    SELECT DISTINCT request FROM SubRequest
     WHERE status=11 AND getTime() - lastModificationTime >= timeOut;
+  counter NUMBER := 0;
 BEGIN
-	OPEN cur;
-	LOOP
-    FETCH cur into myReq;
-      EXIT WHEN cur%NOTFOUND;
-    deleteRequest(myReq);
-  END LOOP;
-	CLOSE cur;
+  OPEN cur;
+    LOOP
+      counter := counter + 1;
+      FETCH cur into myReq;
+        EXIT WHEN cur%NOTFOUND;
+      deleteRequest(myReq);
+      IF (counter = 100) THEN
+        COMMIT;
+        counter := 0;
+      END IF;
+    END LOOP;
+    COMMIT;
+  CLOSE cur;
 END;
 
 /* Search and delete "out of date" subrequests and its request */
@@ -600,14 +609,21 @@ CREATE OR REPLACE PROCEDURE deleteOutOfDateRequests(timeOut IN NUMBER) AS
   CURSOR cur IS
    SELECT DISTINCT request FROM SubRequest
     WHERE getTime() - lastModificationTime >= timeOut;
+  counter NUMBER := 0;
 BEGIN
-	OPEN cur;
-	LOOP
-    FETCH cur into myReq;
-      EXIT WHEN cur%NOTFOUND;
-    deleteRequest(myReq);
-  END LOOP;
-	CLOSE cur;
+  OPEN cur;
+    LOOP
+      counter := counter + 1;
+      FETCH cur into myReq;
+        EXIT WHEN cur%NOTFOUND;
+      deleteRequest(myReq);
+      IF (counter = 100) THEN
+        COMMIT;
+        counter := 0;
+      END IF;
+    END LOOP;
+    COMMIT;
+  CLOSE cur;
 END;
 
 /* PL/SQL method implementing anyTapeCopyForStream.
@@ -877,11 +893,11 @@ BEGIN
      CURSOR c1 IS SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id,
                        FileSystem.fsDeviation, FileSystem.diskserver, CastorFile.fileSize
                     FROM DiskServer, FileSystem, DiskPool2SvcClass,
-                         (SELECT id, svcClass from StageGetRequest UNION
-                          SELECT id, svcClass from StagePrepareToGetRequest UNION
-                          SELECT id, svcClass from StageGetNextRequest UNION
-                          SELECT id, svcClass from StageUpdateRequest UNION
-                          SELECT id, svcClass from StagePrepareToUpdateRequest UNION
+                         (SELECT id, svcClass from StageGetRequest UNION ALL
+                          SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
+                          SELECT id, svcClass from StageGetNextRequest UNION ALL
+                          SELECT id, svcClass from StageUpdateRequest UNION ALL
+                          SELECT id, svcClass from StagePrepareToUpdateRequest UNION ALL
                           SELECT id, svcClass from StageUpdateNextRequest) Request,
                          SubRequest, CastorFile
                    WHERE CastorFile.id = castorfileId
@@ -989,6 +1005,7 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
   TYPE FileList_Cur IS REF CURSOR RETURN FilesDeletedProcOutput%ROWTYPE;
   TYPE DiskPoolQueryLine IS RECORD (
+        isDP INTEGER,
         isDS INTEGER,
         diskServerName VARCHAR(2048),
 	diskServerStatus INTEGER,
@@ -1013,14 +1030,9 @@ CREATE OR REPLACE PACKAGE castor AS
 	fileSystemminfreeSpace INTEGER,
         fileSystemmaxFreeSpace INTEGER,
         fileSystemStatus INTEGER);
-  TYPE DiskPoolsQueryLine_Cur IS REF CURSOR RETURN DiskPoolQueryLine;
+  TYPE DiskPoolsQueryLine_Cur IS REF CURSOR RETURN DiskPoolsQueryLine;
 END castor;
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
-
-/* Global temporary table to handle output of the describeDiskPools procedure */
-CREATE GLOBAL TEMPORARY TABLE DescribeDiskPoolsOutput
-  (name VARCHAR2(2048), ds DiskServerDescTab)
-ON COMMIT DELETE ROWS;
 
 /* PL/SQL method implementing isSubRequestToSchedule */
 CREATE OR REPLACE PROCEDURE isSubRequestToSchedule
@@ -1053,10 +1065,10 @@ BEGIN
   -- Get the svcclass for this subrequest
   SELECT Request.id, Request.svcclass, SubRequest.castorfile
     INTO reqId, svcClassId, cfId
-    FROM (SELECT id, svcClass from StageGetRequest UNION
-          SELECT id, svcClass from StagePrepareToGetRequest UNION
-          SELECT id, svcClass from StageUpdateRequest UNION
-          SELECT id, svcClass from StagePrepareToUpdateRequest UNION
+    FROM (SELECT id, svcClass from StageGetRequest UNION ALL
+          SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
+          SELECT id, svcClass from StageUpdateRequest UNION ALL
+          SELECT id, svcClass from StagePrepareToUpdateRequest UNION ALL
           SELECT id, svcClass from StagePutDoneRequest) Request,
          SubRequest
    WHERE Subrequest.request = Request.id
@@ -1155,9 +1167,9 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
 BEGIN
  -- Get and uid, gid
  SELECT euid, egid INTO reuid, regid FROM SubRequest,
-      (SELECT id, euid, egid from StageGetRequest UNION
-       SELECT id, euid, egid from StagePrepareToGetRequest UNION
-       SELECT id, euid, egid from StageUpdateRequest UNION
+      (SELECT id, euid, egid from StageGetRequest UNION ALL
+       SELECT id, euid, egid from StagePrepareToGetRequest UNION ALL
+       SELECT id, euid, egid from StageUpdateRequest UNION ALL
        SELECT id, euid, egid from StagePrepareToUpdateRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
  -- Take a lock on the CastorFile. Associated with triggers,
@@ -1567,7 +1579,7 @@ BEGIN
  END;
  -- get uid, gid and reserved space from Request
  SELECT euid, egid, xsize INTO userId, groupId, reservedSpace FROM SubRequest,
-     (SELECT euid, egid, id from StagePutRequest UNION
+     (SELECT euid, egid, id from StagePutRequest UNION ALL
       SELECT euid, egid, id from StagePutDoneRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
  -- If not a put inside a PrepareToPut, update the FileSystem free space
@@ -1688,9 +1700,8 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForJob (fileSystems IN castor."strList
        WHERE FileSystem.mountPoint = fileSystems(i)
          AND DiskServer.name = machines(i)
          AND FileSystem.diskServer = DiskServer.id
-         AND minFree(i) <= FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace
-      -- AND FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(i) 
-      --     > FileSystem.minAllowedFreeSpace * FileSystem.totalSize
+         AND FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(i) 
+             > FileSystem.minAllowedFreeSpace * FileSystem.totalSize
          AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
          AND FileSystem.status = 0; -- FILESYSTEM_PRODUCTION
       nextIndex := nextIndex + 1;
@@ -1732,8 +1743,8 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForJob (fileSystems IN castor."strList
      FROM FileSystem, DiskServer
      WHERE FileSystem.diskserver = DiskServer.id
        AND DiskServer.id MEMBER OF mIds
-    -- AND FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(1) 
-    --     > FileSystem.minAllowedFreeSpace * FileSystem.totalSize
+       AND FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(1) 
+           > FileSystem.minAllowedFreeSpace * FileSystem.totalSize
        AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION       
      ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
               FileSystem.fsDeviation ASC;
@@ -1744,8 +1755,8 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForJob (fileSystems IN castor."strList
            DiskServer.id, FileSystem.id, FileSystem.fsDeviation
     FROM FileSystem, DiskServer
     WHERE FileSystem.diskserver = DiskServer.id
-   -- AND FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(1) 
-   --     > FileSystem.minAllowedFreeSpace * FileSystem.totalSize
+      AND FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(1) 
+          > FileSystem.minAllowedFreeSpace * FileSystem.totalSize
       AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
       AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
     ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
@@ -2196,9 +2207,11 @@ CREATE OR REPLACE FUNCTION nullGCPolicy
 (fsId INTEGER, garbageSize INTEGER)
   RETURN castorGC.GCItem_Cur AS
   result castorGC.GCItem_Cur;
+  badValue NUMBER;
 BEGIN
+  badValue := 2**31;
   OPEN result FOR
-    SELECT 0, -1, 2**31
+    SELECT 0, -1, badValue
       FROM Dual;
   return result;
 END;
@@ -2428,7 +2441,7 @@ BEGIN
            CastorFile.nbaccesses, CastorFile.lastKnownFileName
       FROM CastorFile, DiskCopy, FileSystem, DiskServer,
            DiskPool2SvcClass, SubRequest,
-           (SELECT id, svcClass FROM StagePrepareToGetRequest UNION
+           (SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
             SELECT id, svcClass FROM StageGetRequest) Req
      WHERE CastorFile.id IN (SELECT * FROM TABLE(cfs))
        AND CastorFile.id = DiskCopy.castorFile(+)    -- search for valid diskcopy
@@ -2538,19 +2551,19 @@ BEGIN
          (SELECT id
             FROM StagePreparetogetRequest
            WHERE reqid LIKE rid
-          UNION
+          UNION ALL
           SELECT id
             FROM StagePreparetoputRequest
            WHERE reqid LIKE rid
-          UNION
+          UNION ALL
           SELECT id
             FROM StagePreparetoupdateRequest
            WHERE reqid LIKE rid
-          UNION
+          UNION ALL
           SELECT id
             FROM stageGetRequest
            WHERE reqid LIKE rid
-          UNION
+          UNION ALL
           SELECT id
             FROM stagePutRequest
            WHERE reqid LIKE rid) reqlist
@@ -2577,19 +2590,19 @@ BEGIN
          (SELECT id
             FROM StagePreparetogetRequest
            WHERE userTag LIKE tag
-          UNION
+          UNION ALL
           SELECT id
             FROM StagePreparetoputRequest
            WHERE userTag LIKE tag
-          UNION
+          UNION ALL
           SELECT id
             FROM StagePreparetoupdateRequest
            WHERE userTag LIKE tag
-          UNION
+          UNION ALL
           SELECT id
             FROM stageGetRequest
            WHERE userTag LIKE tag
-          UNION
+          UNION ALL
           SELECT id
             FROM stagePutRequest
            WHERE userTag LIKE tag) reqlist
@@ -2618,7 +2631,7 @@ BEGIN
   IF reqs.COUNT > 0 THEN
     UPDATE SubRequest
        SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
-     WHERE getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
+     WHERE decode(getNextStatus,1,getNextStatus,NULL) = 1 -- GETNEXTSTATUS_FILESTAGED
        AND request IN (SELECT * FROM TABLE(reqs))
     RETURNING castorfile BULK COLLECT INTO cfs;
     internalStageQuery(cfs, svcClassId, result);
@@ -2644,7 +2657,7 @@ BEGIN
   IF reqs.COUNT > 0 THEN
     UPDATE SubRequest
        SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
-     WHERE getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
+     WHERE decode(getNextStatus,1,getNextStatus,NULL) = 1 -- GETNEXTSTATUS_FILESTAGED
        AND request IN (SELECT * FROM TABLE(reqs))
     RETURNING castorfile BULK COLLECT INTO cfs;
     internalStageQuery(cfs, svcClassId, result);
@@ -2865,19 +2878,19 @@ BEGIN
            fs.minFreeSpace, fs.maxFreeSpace, fs.status
       FROM FileSystem fs, DiskServer ds, DiskPool dp,
            DiskPool2SvcClass d2s, SvcClass sc
-     WHERE sc.name = svcClassName
+     WHERE (sc.name = svcClassName OR svcClassName is NULL)
        AND sc.id = d2s.child
        AND d2s.parent = dp.id
        AND dp.id = fs.diskPool
        AND ds.id = fs.diskServer
        group by grouping sets(
-        (dp.name, ds.name, ds.status, fs.mountPoint,
-           fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed,
-           fs.totalSize, fs.reservedSpace,
-           fs.minFreeSpace, fs.maxFreeSpace, fs.status),
-          (dp.name, ds.name, ds.status),
-	  (dp.name)
-           )
+           (dp.name, ds.name, ds.status, fs.mountPoint,
+             fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed,
+             fs.totalSize, fs.reservedSpace,
+             fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+           (dp.name, ds.name, ds.status),
+           (dp.name)
+          )
        order by dp.name, IsDSGrouped desc, IsFSGrouped desc, fs.mountpoint;
 END;
 
@@ -2894,7 +2907,8 @@ BEGIN
   -- The grouping analytic function also allows to mark
   -- the summary lines for easy detection in the C++ code
   OPEN result FOR 
-    SELECT grouping(fs.mountPoint) as IsGrouped,
+    SELECT grouping(ds.name) as IsDSGrouped,
+           grouping(fs.mountPoint) as IsGrouped,
            ds.name, ds.status, fs.mountPoint,
            sum(fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed) as freeSpace,
            sum(fs.totalSize), sum(fs.reservedSpace),
@@ -2904,11 +2918,13 @@ BEGIN
        AND dp.name = diskPoolName
        AND ds.id = fs.diskServer
        group by grouping sets(
-        (ds.name, ds.status, fs.mountPoint,
-           fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed,
-           fs.totalSize, fs.reservedSpace,
-           fs.minFreeSpace, fs.maxFreeSpace, fs.status),
-          (ds.name, ds.status) 
-           )
-       order by ds.name, IsGrouped desc, fs.mountpoint;
-end;
+           (ds.name, ds.status, fs.mountPoint,
+             fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed,
+             fs.totalSize, fs.reservedSpace,
+             fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+           (ds.name, ds.status),
+           (dp.name)
+          )
+       order by IsDSGrouped desc, ds.name, IsGrouped desc, fs.mountpoint;
+END;
+
