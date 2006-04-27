@@ -34,8 +34,8 @@ DEBUG  = -g
 #endif
 #endif
 
-MANPAGES = $(MANDIR)/gcdaemon.$(MANSUFFIX)
-EXPORTMANPAGES = $(EXPORTMAN)/man1/gcdaemon.$(MANSUFFIX)
+MANPAGES = $(MANDIR)/gcDaemon.$(MANSUFFIX)
+EXPORTMANPAGES = $(EXPORTMAN)/man1/gcDaemon.$(MANSUFFIX)
 
 INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
@@ -78,8 +78,8 @@ InstallProgram(gcDaemon,$(BIN),root,bin,750)
 
 install.man: $(MANDIR) $(MANPAGES)
 MakeDir($(MANDIR),root,bin,0755)
-IMANPAGE(gcdaemon,$(MANDIR),$(MANSUFFIX))
-EMANPAGE(gcdaemon,$(EXPORTMAN)/man1,$(MANSUFFIX))
+IMANPAGE(gcDaemon,$(MANDIR),$(MANSUFFIX))
+EMANPAGE(gcDaemon,$(EXPORTMAN)/man1,$(MANSUFFIX))
 
 
 exportman: $(EXPORTMANPAGES)
