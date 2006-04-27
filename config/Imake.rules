@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.20 $ $Date: 2006/03/10 13:50:39 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.21 $ $Date: 2006/04/27 10:28:06 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #define NullParameter
@@ -145,9 +145,15 @@ ProgramTargetName(program): objects deplibs		@@\
 #define MakeSubdirs(name,dirs) \
 name:						@@\
 	@for i in dirs ;\			@@\
-	do (echo " $$i:" ; cd $$i ;\		@@\
-		$(MAKE) $(MFLAGS) $@ \		@@\
-	) ; done
+	do (if [ -d $$i ] ;\                    @@\
+	    then \                              @@\
+	      (echo " $$i:" ; cd $$i ;\		@@\
+	      $(MAKE) $(MFLAGS) $@) ;\		@@\
+            else \                              @@\
+	      (echo "ERROR : No directory $$i" ;\  @@\
+	      exit 1) ;\                        @@\
+	    fi ) ;\                             @@\
+	done;
 #endif
 
 #ifndef MakeCondSubdirs

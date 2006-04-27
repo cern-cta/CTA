@@ -408,6 +408,7 @@ NormalLibraryTarget(castorClient,$(STGLIB_OBJS))
 MakeSubdirs(all,$(SUBDIRS))
 MakeSubdirs(install,$(SUBDIRS))
 MakeSubdirs(install.man,$(SUBDIRS))
+MakeSubdirs(exportman,$(SUBDIRS))
 MakeCondSubdirs(clean,$(SUBDIRS),clean0)
 MakeCondSubdirs(clobber,$(SUBDIRS),clobber0)
 
@@ -448,20 +449,7 @@ depend:
 	    fi )\
 	done ;
 
-install:
-	for i in $(SUBDIRS) ;\
-	do (if [ -d $$i ] ;\
-	    then \
-	      (echo " $$i:" ; cd $$i ;\
-	      $(MAKE) $(MFLAGS) $@) ;\
-	    else \
-	      (echo "ERROR : No directory $$i" ;\
-	      exit 1) ;\
-	    fi )\
-	done ;
 #endif
-
-exportman:
 
 #if _WIN32
 COMM
