@@ -1,5 +1,7 @@
 castor (2.0.4-0) unstable; urgency=low
 
+  * CASTOR2/castor/db/ora/OraQuerySvc.cpp:
+    [r1.34,2006-04-24,felixehm] retrieving of DiskCopy Object crashed, when trying to get a double from db as int
   * CASTOR2/castor/Constants.cpp:
   * CASTOR2/castor/Constants.hpp:
   * CASTOR2/castor/Imakefile:
