@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.39 2006/04/28 10:08:20 itglp Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.40 2006/04/28 18:19:01 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.39 $ $Date: 2006/04/28 10:08:20 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.40 $ $Date: 2006/04/28 18:19:01 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -588,8 +588,9 @@ namespace castor {
                 if((Cnsfilestat.filemode & S_IFDIR) == S_IFDIR) {
                   // it is a directory, query for the content (don't perform a query by ID)
                   ptype = REQUESTQUERYTYPE_FILENAME;
-                  pval = pval + "/";
-                  }
+                  if(pval[pval.length()-1] != '/')
+                    pval = pval + "/";
+                }
               }
 
               // Get the SvcClass associated to the request
