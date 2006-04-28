@@ -1,5 +1,5 @@
 /*
- * $Id: rfcat.c,v 1.4 2005/07/11 11:30:18 jdurand Exp $
+ * $Id: rfcat.c,v 1.5 2006/04/28 14:38:04 gtaur Exp $
  */
 
 /*
@@ -8,9 +8,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfcat.c,v $ $Revision: 1.4 $ $Date: 2005/07/11 11:30:18 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rfcat.c,v $ $Revision: 1.5 $ $Date: 2006/04/28 14:38:04 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
+#include <RfioTURL.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
@@ -19,6 +20,7 @@ static char sccsid[] = "@(#)$RCSfile: rfcat.c,v $ $Revision: 1.4 $ $Date: 2005/0
 #include <winsock2.h>
 #endif
 #include "rfio_api.h"
+
 main(argc, argv)
 int argc;
 char **argv;
@@ -53,7 +55,11 @@ char *inpfile;
 	int rc;
 	FILE *s;
 	int v;
+        int ret;
 
+        RfioTURL_t turl;
+        ret= rfioTURLFromString(inpfile,&turl);
+        if(ret!=-1){inpfile=turl.rfioPath;}
 
 	/* Streaming opening is always better */
 	v = RFIO_STREAM;
