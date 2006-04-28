@@ -1,5 +1,5 @@
 /*
- * $Id: rfcat.c,v 1.5 2006/04/28 14:38:04 gtaur Exp $
+ * $Id: rfcat.c,v 1.6 2006/04/28 16:24:46 gtaur Exp $
  */
 
 /*
@@ -8,10 +8,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfcat.c,v $ $Revision: 1.5 $ $Date: 2006/04/28 14:38:04 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rfcat.c,v $ $Revision: 1.6 $ $Date: 2006/04/28 16:24:46 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
-#include <RfioTURL.h>
+
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
@@ -55,11 +55,6 @@ char *inpfile;
 	int rc;
 	FILE *s;
 	int v;
-        int ret;
-
-        RfioTURL_t turl;
-        ret= rfioTURLFromString(inpfile,&turl);
-        if(ret!=-1){inpfile=turl.rfioPath;}
 
 	/* Streaming opening is always better */
 	v = RFIO_STREAM;

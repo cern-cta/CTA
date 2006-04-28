@@ -1,5 +1,5 @@
 /*
- * $Id: rfrename.c,v 1.7 2006/04/28 14:01:56 gtaur Exp $
+ * $Id: rfrename.c,v 1.8 2006/04/28 16:24:46 gtaur Exp $
  */
 
 /*
@@ -8,14 +8,14 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrename.c,v $ $Revision: 1.7 $ $Date: 2006/04/28 14:01:56 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrename.c,v $ $Revision: 1.8 $ $Date: 2006/04/28 16:24:46 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
  * Make remote directory
  */
 
-#include <RfioTURL.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,9 +34,7 @@ char *argv[];
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
-  RfioTURL_t t1;
-  RfioTURL_t t2;
-  int ret;
+ 
 
   if ( argc < 3 ) {
     fprintf(stderr,"Usage: %s old-path new-path\n",argv[0]);
@@ -45,11 +43,6 @@ char *argv[];
   old_path = ckpath(argv[1]);
   new_path = ckpath(argv[2]);
   
-  ret= rfioTURLFromString(old_path,&t1);
-  if (ret!=-1){old_path=t1.rfioPath;}
-
-  ret= rfioTURLFromString(new_path,&t2);
-  if (ret!=-1){new_path=t2.rfioPath;}
   
 #if defined(_WIN32)
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {

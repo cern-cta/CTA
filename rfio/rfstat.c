@@ -1,5 +1,5 @@
 /*
- * $Id: rfstat.c,v 1.9 2006/04/28 14:01:56 gtaur Exp $
+ * $Id: rfstat.c,v 1.10 2006/04/28 16:24:46 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfstat.c,v $ $Revision: 1.9 $ $Date: 2006/04/28 14:01:56 $ CERN/IT/PDP/DM fhe";
+static char sccsid[] = "@(#)$RCSfile: rfstat.c,v $ $Revision: 1.10 $ $Date: 2006/04/28 16:24:46 $ CERN/IT/PDP/DM fhe";
 #endif /* not lint */
 
 #include <rfio_api.h>
@@ -23,7 +23,7 @@ static char sccsid[] = "@(#)$RCSfile: rfstat.c,v $ $Revision: 1.9 $ $Date: 2006/
 #include <statbits.h>
 #endif
 #include <u64subr.h>
-#include <RfioTURL.h>
+
 
 static char *ftype="dbclps-";
 static char *perm="rwx-";
@@ -155,14 +155,11 @@ char    **argv;
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
-        RfioTURL_t turl;
-        int ret;
-        char* path=argv[1];
-        ret= rfioTURLFromString(path,&turl);
-        if(ret!=-1){path=turl.rfioPath;}
+        
+        
 
 	if (argc != 2)  {
-		fprintf(stderr,"usage: %s <file_path>\n",path);
+		fprintf(stderr,"usage: %s <file_path>\n",argv[0]);
 		exit(1);
 	}
 #if defined(_WIN32)
@@ -173,8 +170,8 @@ char    **argv;
 #endif
 	
 
-	if (rfio_stat64(path,&buf) < 0) {
-		rfio_perror(path);
+	if (rfio_stat64(argv[1],&buf) < 0) {
+		rfio_perror(argv[1]);
 #if defined(_WIN32)
 		WSACleanup();
 #endif

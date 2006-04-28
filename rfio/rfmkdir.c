@@ -4,14 +4,13 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfmkdir.c,v $ $Revision: 1.8 $ $Date: 2006/04/28 14:01:56 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfmkdir.c,v $ $Revision: 1.9 $ $Date: 2006/04/28 16:24:46 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
  * Make remote directory
  */
 
-#include <RfioTURL.h>
 #include <limits.h>
 #include <string.h>
 #include <sys/types.h>
@@ -36,8 +35,6 @@ char *argv[];
   int recursive = 0;
   char *path,*root_path,*p;
   int rc, c;
-  int ret;
-  RfioTURL_t turl;
   mode_t mode = 0777;
   long int lmode = 0;       /* For conversion, then casting to mode  IN2P3*/
   char *endprt;             /* For conversion                        IN2P3*/
@@ -81,8 +78,7 @@ char *argv[];
 
   for (;optind<argc;optind++) {
     path = ckpath(argv[optind]);
-    ret= rfioTURLFromString(path,&turl);
-    if(ret!=-1){path=turl.rfioPath;}
+    
     
     if ( recursive) {
       root_path = (char *)malloc(strlen(path)+1);
