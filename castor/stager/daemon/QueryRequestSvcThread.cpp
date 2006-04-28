@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.38 2006/04/13 16:14:18 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.39 2006/04/28 10:08:20 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.38 $ $Date: 2006/04/13 16:14:18 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.39 $ $Date: 2006/04/28 10:08:20 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -22,6 +22,8 @@ static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.
 /* ============== */
 #include <list>
 #include <vector>
+#include <sys/stat.h>
+
 
 /* ============= */
 /* Local headers */
@@ -571,6 +573,23 @@ namespace castor {
                                << ptype << "/"
                                << pval;
                 throw e;
+              }
+              
+              // Verify whether we are querying a directory
+              if(ptype == REQUESTQUERYTYPE_FILEID || ptype == REQUESTQUERYTYPE_FILENAME) {
+                if(ptype == REQUESTQUERYTYPE_FILEID) {
+                  char cfn[CA_MAXPATHLEN+1];     // XXX unchecked string length in Cns_getpath() call
+                  Cns_getpath((char*)nshost.c_str(), strtou64(fid.c_str()), cfn);
+                  pval = cfn;
+                }
+
+                struct Cns_filestat Cnsfilestat;
+                Cns_stat(pval.c_str(), &Cnsfilestat);
+                if((Cnsfilestat.filemode & S_IFDIR) == S_IFDIR) {
+                  // it is a directory, query for the content (don't perform a query by ID)
+                  ptype = REQUESTQUERYTYPE_FILENAME;
+                  pval = pval + "/";
+                  }
               }
 
               // Get the SvcClass associated to the request
