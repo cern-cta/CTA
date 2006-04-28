@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2006/04/21 12:27:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2006/04/28 07:20:23 $ $Author: felixehm $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -162,11 +162,11 @@ castor::db::ora::OraQuerySvc::gatherResults(oracle::occi::ResultSet *rset)
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
       castor::stager::DiskCopyInfo* item =
         new castor::stager::DiskCopyInfo();
-      item->setFileId(rset->getInt(1));
+      item->setFileId((u_signed64)rset->getDouble(1));
       item->setNsHost(rset->getString(2));
-      item->setId(rset->getInt(3));
+      item->setId((u_signed64)rset->getDouble(3));
       item->setDiskCopyPath(rset->getString(4));
-      item->setSize(rset->getInt(5));
+      item->setSize((u_signed64)rset->getDouble(5));
       item->setDiskCopyStatus((castor::stager::DiskCopyStatusCodes)
                               rset->getInt(6));
       item->setTapeCopyStatus((castor::stager::TapeCopyStatusCodes)0);
