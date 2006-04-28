@@ -1,5 +1,5 @@
 /*
- * $Id: rfchmod.c,v 1.1 2002/02/13 10:14:08 baud Exp $
+ * $Id: rfchmod.c,v 1.2 2006/04/28 14:01:56 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfchmod.c,v $ $Revision: 1.1 $ $Date: 2002/02/13 10:14:08 $ IN2P3 CC Philippe Gaillardon";
+static char sccsid[] = "@(#)$RCSfile: rfchmod.c,v $ $Revision: 1.2 $ $Date: 2006/04/28 14:01:56 $ IN2P3 CC Philippe Gaillardon";
 #endif /* not lint */
 
 /*
@@ -22,6 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: rfchmod.c,v $ $Revision: 1.1 $ $Date: 2002
 #include <winsock2.h>
 #endif /* _WIN32 */
 #include <rfio_api.h>
+#include <RfioTURL.h>
 
 static char *ckpath();
 char *getconfent();
@@ -49,6 +50,8 @@ char *argv[];
   long int lmode = 0;       /* For conversion, then casting to mode  IN2P3*/
   char     *endprt;             /* For conversion                        IN2P3*/
   struct   stat st;
+  int ret;
+  RfioTURL_t turl;
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
@@ -92,6 +95,9 @@ char *argv[];
 
   for (;optind<argc;optind++) {
     path = ckpath(argv[optind]);
+    ret= rfioTURLFromString(path,&turl);
+    if(ret!=-1){path=turl.rfioPath;}
+
     if ( rfio_chmod(path,mode) ) {
       fprintf(stderr, "chmod(): %s: %s\n", path, rfio_serror() );
       exit_rc++;

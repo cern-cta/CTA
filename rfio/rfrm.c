@@ -1,5 +1,5 @@
 /*
- * $Id: rfrm.c,v 1.13 2002/11/19 12:55:34 baud Exp $
+ * $Id: rfrm.c,v 1.14 2006/04/28 14:01:56 gtaur Exp $
  */
 
 /*
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.13 $ $Date: 2002/11/19 12:55:34 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.14 $ $Date: 2006/04/28 14:01:56 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -27,6 +27,7 @@ static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.13 $ $Date: 2002/1
 #endif
 #define RFIO_KERNEL 1
 #include <rfio.h>
+#include <RfioTURL.h>
 
 struct dirstack {
   char *dir;
@@ -49,6 +50,9 @@ char *argv[];
   int recursive = 0;
   int ask_yesno = 1;
   struct stat64 st;
+  int ret;
+  RfioTURL_t turl;
+
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif /* _WIN32 */
@@ -77,6 +81,8 @@ char *argv[];
 
   for (;optind<argc;optind++) {
     path = ckpath(argv[optind]);
+    ret= rfioTURLFromString(path,&turl);
+    if (ret !=-1) {path=turl.rfioPath;}
     if ( recursive ) {
       root_path = (char *)malloc(strlen(path)+1);
       strcpy(root_path,path);

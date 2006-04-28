@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.8 $ $Release$ $Date: 2006/04/20 15:15:49 $ $Author: gtaur $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.9 $ $Release$ $Date: 2006/04/28 14:01:55 $ $Author: gtaur $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.8 $ $Release$ $Date: 2006/04/20 15:15:49 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.9 $ $Release$ $Date: 2006/04/28 14:01:55 $ Olof Barring";
 #endif /* not lint */
 /** RfioTURL.c - RFIO TURL handling
  *
@@ -437,7 +437,7 @@ globalVersion=globalPort=0;
    }
 
 
-   if (strstr(_tURL.rfioPath,"/castor")){
+   if (strstr(_tURL.rfioPath,"/castor") == _tURL.rfioPath){
 
     /* from here setting the proper enviroment variable */
     /* getting default value that can be used */
@@ -517,6 +517,8 @@ globalVersion=globalPort=0;
 			return -1;
 
 	}
+	strcpy(_tURL.rfioHostName,"");
+	_tURL.rfioPort=0;
      }
     
      free(orig);

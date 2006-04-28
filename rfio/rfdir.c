@@ -1,5 +1,5 @@
 /*
- * $Id: rfdir.c,v 1.14 2004/03/03 08:23:31 obarring Exp $
+ * $Id: rfdir.c,v 1.15 2006/04/28 14:01:56 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.14 $ $Date: 2004/03/03 08:23:31 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.15 $ $Date: 2006/04/28 14:01:56 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
@@ -30,6 +30,7 @@ static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.14 $ $Date: 2004/
 #include <grp.h>
 #include <rfio.h>
 #include <u64subr.h>
+#include <RfioTURL.h>
 
 #define SIXMONTHS (6*30*24*60*60)
 #ifndef PATH_MAX
@@ -76,6 +77,8 @@ char *argv[];
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
+  int ret;
+  RfioTURL_t turl;  
 
   strcpy(ftype,"pcdb-ls");
   ftype_v[0] = S_IFIFO; ftype_v[1] = S_IFCHR; ftype_v[2] = S_IFDIR; 
@@ -113,7 +116,8 @@ char *argv[];
   for (;optind<argc;optind++) {
     
     dir = ckpath(argv[optind]);
-    
+    ret= rfioTURLFromString(dir,&turl);
+    if(ret!=-1){dir=turl.rfioPath;}
     rc = rfio_stat64(dir,&st);
     if ( rc ) {
       fprintf(stderr,"%s: %s\n",dir,rfio_serror());
