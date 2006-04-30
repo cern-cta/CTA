@@ -1,5 +1,5 @@
 /*
- * $Id: rfdir.c,v 1.16 2006/04/28 16:24:46 gtaur Exp $
+ * $Id: rfdir.c,v 1.17 2006/04/30 15:08:27 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.16 $ $Date: 2006/04/28 16:24:46 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.17 $ $Date: 2006/04/30 15:08:27 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
@@ -254,7 +254,7 @@ int recursively,multiple;
     strcpy(path,host);
     strcat(path,":");
     strcat(path,filename);
-  } else strcpy(path,dir);
+  } else strcpy(path,filename);
   rootpathlen = strlen(path);
   path[rootpathlen] = '/';
   while ( ( de = rfio_readdir(dirp) ) != NULL ) {

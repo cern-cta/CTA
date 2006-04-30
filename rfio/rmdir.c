@@ -1,5 +1,5 @@
 /*
- * $Id: rmdir.c,v 1.8 2004/03/03 11:15:59 obarring Exp $
+ * $Id: rmdir.c,v 1.9 2006/04/30 15:08:27 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmdir.c,v $ $Revision: 1.8 $ $Date: 2004/03/03 11:15:59 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rmdir.c,v $ $Revision: 1.9 $ $Date: 2006/04/30 15:08:27 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* rmdir.c       Remote File I/O - make a directory file                */
@@ -44,7 +44,7 @@ char		*dirpath;          /* remote directory path             */
                           dirpath);
                     END_TRACE();
                     rfio_errno = 0;
-                    return(rfio_HsmIf_rmdir(dirpath));
+                    return(rfio_HsmIf_rmdir(filename));
                 }
 
 		TRACE(1, "rfio", "rfio_rmdir: using local rmdir(%s)",

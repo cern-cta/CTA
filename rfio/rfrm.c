@@ -1,5 +1,5 @@
 /*
- * $Id: rfrm.c,v 1.15 2006/04/28 16:24:46 gtaur Exp $
+ * $Id: rfrm.c,v 1.16 2006/04/30 15:08:27 gtaur Exp $
  */
 
 /*
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.15 $ $Date: 2006/04/28 16:24:46 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.16 $ $Date: 2006/04/30 15:08:27 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -27,7 +27,6 @@ static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.15 $ $Date: 2006/0
 #endif
 #define RFIO_KERNEL 1
 #include <rfio.h>
-
 
 struct dirstack {
   char *dir;
@@ -50,8 +49,6 @@ char *argv[];
   int recursive = 0;
   int ask_yesno = 1;
   struct stat64 st;
-  
-
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif /* _WIN32 */
@@ -80,7 +77,6 @@ char *argv[];
 
   for (;optind<argc;optind++) {
     path = ckpath(argv[optind]);
-    
     if ( recursive ) {
       root_path = (char *)malloc(strlen(path)+1);
       strcpy(root_path,path);
@@ -202,6 +198,8 @@ int *yesno;
   struct dirstack *ds = NULL;
   int ask_yesno = 1;
   int empty = 1;
+  char* hostname,*pathname;
+  int rc;
   
   if ( !rfio_lstat64(path,&st) ) {
     if ( S_ISDIR(st.st_mode) ) {
@@ -210,13 +208,14 @@ int *yesno;
         if ( read_yesno() != 'y' ) return(-1);
         if ( yesno != NULL ) *yesno = 0;
       }
-
+     
       dirp = (DIR *)rfio_opendir(path);
       while ( ( de = (struct dirent *)rfio_readdir((RDIR *)dirp) ) != NULL ) {
         if ( strcmp(de->d_name,".") && strcmp(de->d_name,"..") ) {
           empty = 0;
           p = (char *)malloc(strlen(path)+strlen(de->d_name)+2);
-          strcpy(p,path);
+          rfio_parse(path,&hostname,&pathname);
+          strcpy(p,pathname);
           strcat(p,"/");
           strcat(p,de->d_name);
           if ( rfio_lstat64(p,&st) == -1 ) {
@@ -235,6 +234,7 @@ int *yesno;
           }
         }
       }
+      
       rfio_closedir((RDIR *)dirp);
       if ( empty ) {
         printf("%s: remove directory `%s'? ",cmd,path);
@@ -259,4 +259,3 @@ int *yesno;
   }
   return(0);
 }
-
