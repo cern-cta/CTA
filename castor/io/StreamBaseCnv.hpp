@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/11/05 17:47:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamBaseCnv.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/05/02 10:13:02 $ $Author: itglp $
  *
  * 
  *
@@ -65,25 +65,20 @@ namespace castor {
       virtual ~StreamBaseCnv() throw();
 
       /**
-       * gets the representation type, that is the type of
+       * Gets the representation type, that is the type of
        * the representation this converter can deal with
        */
       static const unsigned int RepType();
 
       /**
-       * gets the representation type, that is the type of
+       * Gets the representation type, that is the type of
        * the representation this converter can deal with
        */
       virtual const unsigned int repType() const;
       
       /**
        * Updates foreign representation from a C++ Object.
-       * @param address where the representation of
-       * the object is stored
-       * @param object the object to deal with
-       * @param autocommit whether the changes to the database
-       * should be commited or not
-       * @exception Exception throws an Exception in cas of error
+       * This streaming implementation always throws an exception.
        */
       virtual void updateRep(castor::IAddress* address,
                              castor::IObject* object,
@@ -92,12 +87,7 @@ namespace castor {
 
       /**
        * Deletes foreign representation of a C++ Object.
-       * @param address where the representation of
-       * the object is stored
-       * @param object the object to deal with
-       * @param autocommit whether the changes to the database
-       * should be commited or not
-       * @exception Exception throws an Exception in cas of error
+       * This streaming implementation always throws an exception.
        */
       virtual void deleteRep(castor::IAddress* address,
                              castor::IObject* object,
@@ -106,8 +96,7 @@ namespace castor {
 
       /**
        * Updates C++ object from its foreign representation.
-       * @param obj the object to deal with
-       * @exception Exception throws an Exception in cas of error
+       * This streaming implementation always throws an exception.
        */
       virtual void updateObj(castor::IObject* obj)
         throw (castor::exception::Exception);
@@ -115,36 +104,29 @@ namespace castor {
       /**
        * Fill the foreign representation with some of the objects
        * refered by a given C++ object.
-       * @param address the place where to find the foreign representation
-       * @param object the original C++ object
-       * @param type the type of the refered objects to store
-       * @param autocommit whether the changes to the database
-       * should be commited or not
-       * @exception Exception throws an Exception in case of error
+       * This streaming implementation always throws an exception.
        */
       virtual void fillRep(castor::IAddress* address,
                            castor::IObject* object,
                            unsigned int type,
-                           bool autocommit)
+                           bool autocommit = false)
         throw (castor::exception::Exception);
       
       /**
        * Retrieve from the foreign representation some of the
        * objects refered by a given C++ object.
-       * @param address the place where to find the foreign representation
-       * @param object the original object
-       * @param type the type of the refered objects to retrieve
-       * @exception Exception throws an Exception in case of error
+       * This streaming implementation always throws an exception.
        */
       virtual void fillObj(castor::IAddress* address,
                            castor::IObject* object,
-                           unsigned int type)
+                           unsigned int type,
+                           bool autocommit = false)
         throw (castor::exception::Exception);
 
     protected:
       
       /**
-       * access to the stream conversion service for child classes
+       * Access to the stream conversion service for child classes
        */
       castor::io::StreamCnvSvc* cnvSvc() const;
 
