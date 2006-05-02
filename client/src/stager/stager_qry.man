@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.14 $ $Date: 2006/04/24 12:23:23 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.15 $ $Date: 2006/05/02 10:17:21 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_QRY 1castor "$Date: 2006/04/24 12:23:23 $" CASTOR "STAGER Commands"
+.TH STAGER_QRY 1castor "$Date: 2006/05/02 10:17:21 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_qry \- query the CASTOR stager for files and requests
 .SH SYNOPSIS
@@ -101,7 +101,7 @@ specifies the CASTOR HSM file to be queried for. The
 .B \-M
 option can be repeated, which allows for querying the status of many files with a single command.
 If the hsmfile begins with 'regexp:', it is considered as a POSIX regular expression.
-If the hsmfile ends with '/', it is considered as a directory, allowing for recursively querying the status of all files in it.
+If the hsmfile ends with '/', or if it's a directory according to the nameserver, the query is performed recursively on the status of all files into it.
 Note that the number of responses for a given file is limited on the server side. In case the limitation
 is reached, nothing is returned and an error message is displayed.
 .TP
