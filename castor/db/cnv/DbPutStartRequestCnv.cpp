@@ -248,7 +248,8 @@ void castor::db::cnv::DbPutStartRequestCnv::fillRepIClient(castor::stager::PutSt
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbPutStartRequestCnv::fillObj(castor::IAddress* address,
                                                     castor::IObject* object,
-                                                    unsigned int type)
+                                                    unsigned int type,
+                                                    bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::PutStartRequest* obj = 
     dynamic_cast<castor::stager::PutStartRequest*>(object);
@@ -266,8 +267,10 @@ void castor::db::cnv::DbPutStartRequestCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjSvcClass
 //------------------------------------------------------------------------------

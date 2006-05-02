@@ -164,7 +164,8 @@ void castor::db::cnv::DbClientIdentificationCnv::fillRep(castor::IAddress* addre
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbClientIdentificationCnv::fillObj(castor::IAddress* address,
                                                          castor::IObject* object,
-                                                         unsigned int type)
+                                                         unsigned int type,
+                                                         bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::ClientIdentification* obj = 
     dynamic_cast<castor::stager::ClientIdentification*>(object);
@@ -176,8 +177,10 @@ void castor::db::cnv::DbClientIdentificationCnv::fillObj(castor::IAddress* addre
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------

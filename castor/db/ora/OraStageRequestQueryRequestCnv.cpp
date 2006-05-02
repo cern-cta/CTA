@@ -325,7 +325,8 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::fillRepIClient(castor::sta
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStageRequestQueryRequestCnv::fillObj(castor::IAddress* address,
                                                               castor::IObject* object,
-                                                              unsigned int type)
+                                                              unsigned int type,
+                                                              bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::StageRequestQueryRequest* obj = 
     dynamic_cast<castor::stager::StageRequestQueryRequest*>(object);
@@ -346,8 +347,10 @@ void castor::db::ora::OraStageRequestQueryRequestCnv::fillObj(castor::IAddress* 
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjQueryParameter
 //------------------------------------------------------------------------------

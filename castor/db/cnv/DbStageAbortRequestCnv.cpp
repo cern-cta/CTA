@@ -274,7 +274,8 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillRepIClient(castor::stager::Sta
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageAbortRequestCnv::fillObj(castor::IAddress* address,
                                                       castor::IObject* object,
-                                                      unsigned int type)
+                                                      unsigned int type,
+                                                      bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::StageAbortRequest* obj = 
     dynamic_cast<castor::stager::StageAbortRequest*>(object);
@@ -295,8 +296,10 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjFileRequest
 //------------------------------------------------------------------------------

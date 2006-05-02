@@ -164,7 +164,8 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::fillRep(castor::IAddress* ad
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbTapeAccessSpecificationCnv::fillObj(castor::IAddress* address,
                                                             castor::IObject* object,
-                                                            unsigned int type)
+                                                            unsigned int type,
+                                                            bool autocommit)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeAccessSpecification* obj = 
     dynamic_cast<castor::vdqm::TapeAccessSpecification*>(object);
@@ -176,8 +177,10 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::fillObj(castor::IAddress* ad
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------

@@ -369,7 +369,8 @@ void castor::db::ora::OraTapeCopyCnv::fillRepCastorFile(castor::stager::TapeCopy
 //------------------------------------------------------------------------------
 void castor::db::ora::OraTapeCopyCnv::fillObj(castor::IAddress* address,
                                               castor::IObject* object,
-                                              unsigned int type)
+                                              unsigned int type,
+                                              bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::TapeCopy* obj = 
     dynamic_cast<castor::stager::TapeCopy*>(object);
@@ -390,8 +391,10 @@ void castor::db::ora::OraTapeCopyCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjStream
 //------------------------------------------------------------------------------

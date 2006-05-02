@@ -318,7 +318,8 @@ void castor::db::ora::OraStageReleaseFilesRequestCnv::fillRepIClient(castor::sta
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStageReleaseFilesRequestCnv::fillObj(castor::IAddress* address,
                                                               castor::IObject* object,
-                                                              unsigned int type)
+                                                              unsigned int type,
+                                                              bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::StageReleaseFilesRequest* obj = 
     dynamic_cast<castor::stager::StageReleaseFilesRequest*>(object);
@@ -339,8 +340,10 @@ void castor::db::ora::OraStageReleaseFilesRequestCnv::fillObj(castor::IAddress* 
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjSubRequest
 //------------------------------------------------------------------------------

@@ -215,7 +215,8 @@ void castor::db::ora::OraTapeDriveDedicationCnv::fillRepTapeDrive(castor::vdqm::
 //------------------------------------------------------------------------------
 void castor::db::ora::OraTapeDriveDedicationCnv::fillObj(castor::IAddress* address,
                                                          castor::IObject* object,
-                                                         unsigned int type)
+                                                         unsigned int type,
+                                                         bool autocommit)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeDriveDedication* obj = 
     dynamic_cast<castor::vdqm::TapeDriveDedication*>(object);
@@ -230,8 +231,10 @@ void castor::db::ora::OraTapeDriveDedicationCnv::fillObj(castor::IAddress* addre
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjTapeDrive
 //------------------------------------------------------------------------------

@@ -163,7 +163,8 @@ void castor::db::ora::OraBaseAddressCnv::fillRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::ora::OraBaseAddressCnv::fillObj(castor::IAddress* address,
                                                  castor::IObject* object,
-                                                 unsigned int type)
+                                                 unsigned int type,
+                                                 bool autocommit)
   throw (castor::exception::Exception) {
   castor::BaseAddress* obj = 
     dynamic_cast<castor::BaseAddress*>(object);
@@ -175,8 +176,10 @@ void castor::db::ora::OraBaseAddressCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------

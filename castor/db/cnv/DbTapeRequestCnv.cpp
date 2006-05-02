@@ -516,7 +516,8 @@ void castor::db::cnv::DbTapeRequestCnv::fillRepClientIdentification(castor::vdqm
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbTapeRequestCnv::fillObj(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                unsigned int type)
+                                                unsigned int type,
+                                                bool autocommit)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeRequest* obj = 
     dynamic_cast<castor::vdqm::TapeRequest*>(object);
@@ -546,8 +547,10 @@ void castor::db::cnv::DbTapeRequestCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjTape
 //------------------------------------------------------------------------------

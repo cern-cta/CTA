@@ -344,7 +344,8 @@ void castor::db::cnv::DbStagePutDoneRequestCnv::fillRepFileRequest(castor::stage
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStagePutDoneRequestCnv::fillObj(castor::IAddress* address,
                                                         castor::IObject* object,
-                                                        unsigned int type)
+                                                        unsigned int type,
+                                                        bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::StagePutDoneRequest* obj = 
     dynamic_cast<castor::stager::StagePutDoneRequest*>(object);
@@ -368,8 +369,10 @@ void castor::db::cnv::DbStagePutDoneRequestCnv::fillObj(castor::IAddress* addres
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjSubRequest
 //------------------------------------------------------------------------------

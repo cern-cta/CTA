@@ -243,7 +243,8 @@ void castor::db::cnv::DbDiskServerCnv::fillRepFileSystem(castor::stager::DiskSer
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbDiskServerCnv::fillObj(castor::IAddress* address,
                                                castor::IObject* object,
-                                               unsigned int type)
+                                               unsigned int type,
+                                               bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::DiskServer* obj = 
     dynamic_cast<castor::stager::DiskServer*>(object);
@@ -258,8 +259,10 @@ void castor::db::cnv::DbDiskServerCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjFileSystem
 //------------------------------------------------------------------------------

@@ -164,7 +164,8 @@ void castor::db::cnv::DbDeviceGroupNameCnv::fillRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbDeviceGroupNameCnv::fillObj(castor::IAddress* address,
                                                     castor::IObject* object,
-                                                    unsigned int type)
+                                                    unsigned int type,
+                                                    bool autocommit)
   throw (castor::exception::Exception) {
   castor::vdqm::DeviceGroupName* obj = 
     dynamic_cast<castor::vdqm::DeviceGroupName*>(object);
@@ -176,8 +177,10 @@ void castor::db::cnv::DbDeviceGroupNameCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------

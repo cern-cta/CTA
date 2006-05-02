@@ -248,7 +248,8 @@ void castor::db::cnv::DbDiskPoolQueryCnv::fillRepIClient(castor::query::DiskPool
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbDiskPoolQueryCnv::fillObj(castor::IAddress* address,
                                                   castor::IObject* object,
-                                                  unsigned int type)
+                                                  unsigned int type,
+                                                  bool autocommit)
   throw (castor::exception::Exception) {
   castor::query::DiskPoolQuery* obj = 
     dynamic_cast<castor::query::DiskPoolQuery*>(object);
@@ -266,8 +267,10 @@ void castor::db::cnv::DbDiskPoolQueryCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjSvcClass
 //------------------------------------------------------------------------------

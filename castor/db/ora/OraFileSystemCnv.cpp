@@ -58,7 +58,7 @@ static castor::CnvFactory<castor::db::ora::OraFileSystemCnv>* s_factoryOraFileSy
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraFileSystemCnv::s_insertStatementString =
-"INSERT INTO FileSystem (free, weight, fsDeviation, mountPoint, deltaWeight, deltaFree, reservedSpace, minFreeSpace, maxFreeSpace, spaceToBeFreed, totalSize, id, diskPool, diskserver, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,ids_seq.nextval,:12,:13,:14) RETURNING id INTO :15";
+"INSERT INTO FileSystem (free, weight, fsDeviation, mountPoint, deltaWeight, deltaFree, reservedSpace, minFreeSpace, minAllowedFreeSpace, maxFreeSpace, spaceToBeFreed, totalSize, id, diskPool, diskserver, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,ids_seq.nextval,:13,:14,:15) RETURNING id INTO :16";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraFileSystemCnv::s_deleteStatementString =
@@ -66,11 +66,11 @@ const std::string castor::db::ora::OraFileSystemCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraFileSystemCnv::s_selectStatementString =
-"SELECT free, weight, fsDeviation, mountPoint, deltaWeight, deltaFree, reservedSpace, minFreeSpace, maxFreeSpace, spaceToBeFreed, totalSize, id, diskPool, diskserver, status FROM FileSystem WHERE id = :1";
+"SELECT free, weight, fsDeviation, mountPoint, deltaWeight, deltaFree, reservedSpace, minFreeSpace, minAllowedFreeSpace, maxFreeSpace, spaceToBeFreed, totalSize, id, diskPool, diskserver, status FROM FileSystem WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraFileSystemCnv::s_updateStatementString =
-"UPDATE FileSystem SET free = :1, weight = :2, fsDeviation = :3, mountPoint = :4, deltaWeight = :5, deltaFree = :6, reservedSpace = :7, minFreeSpace = :8, maxFreeSpace = :9, spaceToBeFreed = :10, totalSize = :11, status = :12 WHERE id = :13";
+"UPDATE FileSystem SET free = :1, weight = :2, fsDeviation = :3, mountPoint = :4, deltaWeight = :5, deltaFree = :6, reservedSpace = :7, minFreeSpace = :8, minAllowedFreeSpace = :9, maxFreeSpace = :10, spaceToBeFreed = :11, totalSize = :12, status = :13 WHERE id = :14";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraFileSystemCnv::s_storeTypeStatementString =
@@ -343,7 +343,8 @@ void castor::db::ora::OraFileSystemCnv::fillRepDiskServer(castor::stager::FileSy
 //------------------------------------------------------------------------------
 void castor::db::ora::OraFileSystemCnv::fillObj(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                unsigned int type)
+                                                unsigned int type,
+                                                bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::FileSystem* obj = 
     dynamic_cast<castor::stager::FileSystem*>(object);
@@ -364,8 +365,10 @@ void castor::db::ora::OraFileSystemCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjDiskPool
 //------------------------------------------------------------------------------
@@ -383,7 +386,7 @@ void castor::db::ora::OraFileSystemCnv::fillObjDiskPool(castor::stager::FileSyst
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 diskPoolId = (u_signed64)rset->getDouble(13);
+  u_signed64 diskPoolId = (u_signed64)rset->getDouble(14);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -473,7 +476,7 @@ void castor::db::ora::OraFileSystemCnv::fillObjDiskServer(castor::stager::FileSy
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 diskserverId = (u_signed64)rset->getDouble(14);
+  u_signed64 diskserverId = (u_signed64)rset->getDouble(15);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -513,7 +516,7 @@ void castor::db::ora::OraFileSystemCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(15, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(16, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -527,14 +530,15 @@ void castor::db::ora::OraFileSystemCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(6, obj->deltaFree());
     m_insertStatement->setInt(7, obj->reservedSpace());
     m_insertStatement->setFloat(8, obj->minFreeSpace());
-    m_insertStatement->setFloat(9, obj->maxFreeSpace());
-    m_insertStatement->setDouble(10, obj->spaceToBeFreed());
-    m_insertStatement->setDouble(11, obj->totalSize());
-    m_insertStatement->setDouble(12, (type == OBJ_DiskPool && obj->diskPool() != 0) ? obj->diskPool()->id() : 0);
-    m_insertStatement->setDouble(13, (type == OBJ_DiskServer && obj->diskserver() != 0) ? obj->diskserver()->id() : 0);
-    m_insertStatement->setInt(14, (int)obj->status());
+    m_insertStatement->setFloat(9, obj->minAllowedFreeSpace());
+    m_insertStatement->setFloat(10, obj->maxFreeSpace());
+    m_insertStatement->setDouble(11, obj->spaceToBeFreed());
+    m_insertStatement->setDouble(12, obj->totalSize());
+    m_insertStatement->setDouble(13, (type == OBJ_DiskPool && obj->diskPool() != 0) ? obj->diskPool()->id() : 0);
+    m_insertStatement->setDouble(14, (type == OBJ_DiskServer && obj->diskserver() != 0) ? obj->diskserver()->id() : 0);
+    m_insertStatement->setInt(15, (int)obj->status());
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(15));
+    obj->setId((u_signed64)m_insertStatement->getDouble(16));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -567,6 +571,7 @@ void castor::db::ora::OraFileSystemCnv::createRep(castor::IAddress* address,
                     << "  deltaFree : " << obj->deltaFree() << std::endl
                     << "  reservedSpace : " << obj->reservedSpace() << std::endl
                     << "  minFreeSpace : " << obj->minFreeSpace() << std::endl
+                    << "  minAllowedFreeSpace : " << obj->minAllowedFreeSpace() << std::endl
                     << "  maxFreeSpace : " << obj->maxFreeSpace() << std::endl
                     << "  spaceToBeFreed : " << obj->spaceToBeFreed() << std::endl
                     << "  totalSize : " << obj->totalSize() << std::endl
@@ -603,11 +608,12 @@ void castor::db::ora::OraFileSystemCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(6, obj->deltaFree());
     m_updateStatement->setInt(7, obj->reservedSpace());
     m_updateStatement->setFloat(8, obj->minFreeSpace());
-    m_updateStatement->setFloat(9, obj->maxFreeSpace());
-    m_updateStatement->setDouble(10, obj->spaceToBeFreed());
-    m_updateStatement->setDouble(11, obj->totalSize());
-    m_updateStatement->setInt(12, (int)obj->status());
-    m_updateStatement->setDouble(13, obj->id());
+    m_updateStatement->setFloat(9, obj->minAllowedFreeSpace());
+    m_updateStatement->setFloat(10, obj->maxFreeSpace());
+    m_updateStatement->setDouble(11, obj->spaceToBeFreed());
+    m_updateStatement->setDouble(12, obj->totalSize());
+    m_updateStatement->setInt(13, (int)obj->status());
+    m_updateStatement->setDouble(14, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->commit();
@@ -714,11 +720,12 @@ castor::IObject* castor::db::ora::OraFileSystemCnv::createObj(castor::IAddress* 
     object->setDeltaFree(rset->getInt(6));
     object->setReservedSpace(rset->getInt(7));
     object->setMinFreeSpace(rset->getFloat(8));
-    object->setMaxFreeSpace(rset->getFloat(9));
-    object->setSpaceToBeFreed((u_signed64)rset->getDouble(10));
-    object->setTotalSize((u_signed64)rset->getDouble(11));
-    object->setId((u_signed64)rset->getDouble(12));
-    object->setStatus((enum castor::stager::FileSystemStatusCodes)rset->getInt(15));
+    object->setMinAllowedFreeSpace(rset->getFloat(9));
+    object->setMaxFreeSpace(rset->getFloat(10));
+    object->setSpaceToBeFreed((u_signed64)rset->getDouble(11));
+    object->setTotalSize((u_signed64)rset->getDouble(12));
+    object->setId((u_signed64)rset->getDouble(13));
+    object->setStatus((enum castor::stager::FileSystemStatusCodes)rset->getInt(16));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -772,11 +779,12 @@ void castor::db::ora::OraFileSystemCnv::updateObj(castor::IObject* obj)
     object->setDeltaFree(rset->getInt(6));
     object->setReservedSpace(rset->getInt(7));
     object->setMinFreeSpace(rset->getFloat(8));
-    object->setMaxFreeSpace(rset->getFloat(9));
-    object->setSpaceToBeFreed((u_signed64)rset->getDouble(10));
-    object->setTotalSize((u_signed64)rset->getDouble(11));
-    object->setId((u_signed64)rset->getDouble(12));
-    object->setStatus((enum castor::stager::FileSystemStatusCodes)rset->getInt(15));
+    object->setMinAllowedFreeSpace(rset->getFloat(9));
+    object->setMaxFreeSpace(rset->getFloat(10));
+    object->setSpaceToBeFreed((u_signed64)rset->getDouble(11));
+    object->setTotalSize((u_signed64)rset->getDouble(12));
+    object->setId((u_signed64)rset->getDouble(13));
+    object->setStatus((enum castor::stager::FileSystemStatusCodes)rset->getInt(16));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

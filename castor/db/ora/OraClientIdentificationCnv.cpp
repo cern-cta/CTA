@@ -164,7 +164,8 @@ void castor::db::ora::OraClientIdentificationCnv::fillRep(castor::IAddress* addr
 //------------------------------------------------------------------------------
 void castor::db::ora::OraClientIdentificationCnv::fillObj(castor::IAddress* address,
                                                           castor::IObject* object,
-                                                          unsigned int type)
+                                                          unsigned int type,
+                                                          bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::ClientIdentification* obj = 
     dynamic_cast<castor::stager::ClientIdentification*>(object);
@@ -176,8 +177,10 @@ void castor::db::ora::OraClientIdentificationCnv::fillObj(castor::IAddress* addr
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------

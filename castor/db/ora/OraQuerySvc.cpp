@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2006/04/28 07:20:23 $ $Author: felixehm $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2006/05/02 10:04:59 $ $Author: itglp $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -343,7 +343,7 @@ castor::db::ora::OraQuerySvc::diskCopies4Request
       default:
         castor::exception::Internal ex;
         ex.getMessage()
-          << "diskCopies4Request: request type" << reqType << " not allowed.";
+          << "diskCopies4Request: request type " << reqType << " not allowed.";
         throw ex;
     }
 

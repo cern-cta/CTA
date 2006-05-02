@@ -343,7 +343,8 @@ void castor::db::cnv::DbDiskCopyCnv::fillRepCastorFile(castor::stager::DiskCopy*
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbDiskCopyCnv::fillObj(castor::IAddress* address,
                                              castor::IObject* object,
-                                             unsigned int type)
+                                             unsigned int type,
+                                             bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::DiskCopy* obj = 
     dynamic_cast<castor::stager::DiskCopy*>(object);
@@ -364,8 +365,10 @@ void castor::db::cnv::DbDiskCopyCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjSubRequest
 //------------------------------------------------------------------------------

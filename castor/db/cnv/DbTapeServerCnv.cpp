@@ -243,7 +243,8 @@ void castor::db::cnv::DbTapeServerCnv::fillRepTapeDrive(castor::vdqm::TapeServer
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbTapeServerCnv::fillObj(castor::IAddress* address,
                                                castor::IObject* object,
-                                               unsigned int type)
+                                               unsigned int type,
+                                               bool autocommit)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeServer* obj = 
     dynamic_cast<castor::vdqm::TapeServer*>(object);
@@ -258,8 +259,10 @@ void castor::db::cnv::DbTapeServerCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjTapeDrive
 //------------------------------------------------------------------------------

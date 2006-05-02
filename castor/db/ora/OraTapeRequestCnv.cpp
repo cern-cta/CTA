@@ -516,7 +516,8 @@ void castor::db::ora::OraTapeRequestCnv::fillRepClientIdentification(castor::vdq
 //------------------------------------------------------------------------------
 void castor::db::ora::OraTapeRequestCnv::fillObj(castor::IAddress* address,
                                                  castor::IObject* object,
-                                                 unsigned int type)
+                                                 unsigned int type,
+                                                 bool autocommit)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeRequest* obj = 
     dynamic_cast<castor::vdqm::TapeRequest*>(object);
@@ -546,8 +547,10 @@ void castor::db::ora::OraTapeRequestCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjTape
 //------------------------------------------------------------------------------

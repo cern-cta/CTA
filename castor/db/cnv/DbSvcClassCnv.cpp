@@ -319,7 +319,8 @@ void castor::db::cnv::DbSvcClassCnv::fillRepDiskPool(castor::stager::SvcClass* o
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbSvcClassCnv::fillObj(castor::IAddress* address,
                                              castor::IObject* object,
-                                             unsigned int type)
+                                             unsigned int type,
+                                             bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::SvcClass* obj = 
     dynamic_cast<castor::stager::SvcClass*>(object);
@@ -337,8 +338,10 @@ void castor::db::cnv::DbSvcClassCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjTapePool
 //------------------------------------------------------------------------------

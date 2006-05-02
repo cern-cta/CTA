@@ -248,7 +248,8 @@ void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::fillRepIClient(castor::stag
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::fillObj(castor::IAddress* address,
                                                              castor::IObject* object,
-                                                             unsigned int type)
+                                                             unsigned int type,
+                                                             bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::Disk2DiskCopyDoneRequest* obj = 
     dynamic_cast<castor::stager::Disk2DiskCopyDoneRequest*>(object);
@@ -266,8 +267,10 @@ void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::fillObj(castor::IAddress* a
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjSvcClass
 //------------------------------------------------------------------------------

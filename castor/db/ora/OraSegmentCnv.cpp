@@ -266,7 +266,8 @@ void castor::db::ora::OraSegmentCnv::fillRepTapeCopy(castor::stager::Segment* ob
 //------------------------------------------------------------------------------
 void castor::db::ora::OraSegmentCnv::fillObj(castor::IAddress* address,
                                              castor::IObject* object,
-                                             unsigned int type)
+                                             unsigned int type,
+                                             bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::Segment* obj = 
     dynamic_cast<castor::stager::Segment*>(object);
@@ -284,8 +285,10 @@ void castor::db::ora::OraSegmentCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjTape
 //------------------------------------------------------------------------------

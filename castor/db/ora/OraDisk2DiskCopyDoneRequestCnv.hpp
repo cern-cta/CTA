@@ -56,7 +56,6 @@ namespace castor {
       /**
        * class OraDisk2DiskCopyDoneRequestCnv
        * A converter for storing/retrieving Disk2DiskCopyDoneRequest into/from an Oracle
-       * database
        */
       class OraDisk2DiskCopyDoneRequestCnv : public OraBaseCnv {
 
@@ -157,7 +156,6 @@ namespace castor {
 
         /**
          * Fill the foreign representation with some of the objects.refered by a given C++
-         * object.
          * @param address the place where to find the foreign representation
          * @param object the original C++ object
          * @param type the type of the refered objects to store
@@ -195,7 +193,8 @@ namespace castor {
          */
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
-                             unsigned int type)
+                             unsigned int type,
+                             bool autocommit)
           throw (castor::exception::Exception);
 
         /**

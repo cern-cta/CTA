@@ -164,7 +164,8 @@ void castor::db::ora::OraGCLocalFileCnv::fillRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::ora::OraGCLocalFileCnv::fillObj(castor::IAddress* address,
                                                  castor::IObject* object,
-                                                 unsigned int type)
+                                                 unsigned int type,
+                                                 bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::GCLocalFile* obj = 
     dynamic_cast<castor::stager::GCLocalFile*>(object);
@@ -176,8 +177,10 @@ void castor::db::ora::OraGCLocalFileCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------

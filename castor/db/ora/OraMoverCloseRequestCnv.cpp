@@ -248,7 +248,8 @@ void castor::db::ora::OraMoverCloseRequestCnv::fillRepIClient(castor::stager::Mo
 //------------------------------------------------------------------------------
 void castor::db::ora::OraMoverCloseRequestCnv::fillObj(castor::IAddress* address,
                                                        castor::IObject* object,
-                                                       unsigned int type)
+                                                       unsigned int type,
+                                                       bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::MoverCloseRequest* obj = 
     dynamic_cast<castor::stager::MoverCloseRequest*>(object);
@@ -266,8 +267,10 @@ void castor::db::ora::OraMoverCloseRequestCnv::fillObj(castor::IAddress* address
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjSvcClass
 //------------------------------------------------------------------------------

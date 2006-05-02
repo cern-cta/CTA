@@ -395,7 +395,8 @@ void castor::db::cnv::DbStreamCnv::fillRepTapePool(castor::stager::Stream* obj)
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStreamCnv::fillObj(castor::IAddress* address,
                                            castor::IObject* object,
-                                           unsigned int type)
+                                           unsigned int type,
+                                           bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::Stream* obj = 
     dynamic_cast<castor::stager::Stream*>(object);
@@ -416,8 +417,10 @@ void castor::db::cnv::DbStreamCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjTapeCopy
 //------------------------------------------------------------------------------

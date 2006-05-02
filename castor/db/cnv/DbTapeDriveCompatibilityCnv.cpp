@@ -215,7 +215,8 @@ void castor::db::cnv::DbTapeDriveCompatibilityCnv::fillRepTapeAccessSpecificatio
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbTapeDriveCompatibilityCnv::fillObj(castor::IAddress* address,
                                                            castor::IObject* object,
-                                                           unsigned int type)
+                                                           unsigned int type,
+                                                           bool autocommit)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeDriveCompatibility* obj = 
     dynamic_cast<castor::vdqm::TapeDriveCompatibility*>(object);
@@ -230,8 +231,10 @@ void castor::db::cnv::DbTapeDriveCompatibilityCnv::fillObj(castor::IAddress* add
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjTapeAccessSpecification
 //------------------------------------------------------------------------------

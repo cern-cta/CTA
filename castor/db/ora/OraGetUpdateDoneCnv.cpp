@@ -248,7 +248,8 @@ void castor::db::ora::OraGetUpdateDoneCnv::fillRepIClient(castor::stager::GetUpd
 //------------------------------------------------------------------------------
 void castor::db::ora::OraGetUpdateDoneCnv::fillObj(castor::IAddress* address,
                                                    castor::IObject* object,
-                                                   unsigned int type)
+                                                   unsigned int type,
+                                                   bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::GetUpdateDone* obj = 
     dynamic_cast<castor::stager::GetUpdateDone*>(object);
@@ -266,8 +267,10 @@ void castor::db::ora::OraGetUpdateDoneCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjSvcClass
 //------------------------------------------------------------------------------

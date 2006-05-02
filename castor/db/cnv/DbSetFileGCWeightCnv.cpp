@@ -318,7 +318,8 @@ void castor::db::cnv::DbSetFileGCWeightCnv::fillRepIClient(castor::stager::SetFi
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbSetFileGCWeightCnv::fillObj(castor::IAddress* address,
                                                     castor::IObject* object,
-                                                    unsigned int type)
+                                                    unsigned int type,
+                                                    bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::SetFileGCWeight* obj = 
     dynamic_cast<castor::stager::SetFileGCWeight*>(object);
@@ -339,8 +340,10 @@ void castor::db::cnv::DbSetFileGCWeightCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjSubRequest
 //------------------------------------------------------------------------------

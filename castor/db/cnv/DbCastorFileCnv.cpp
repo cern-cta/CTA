@@ -417,7 +417,8 @@ void castor::db::cnv::DbCastorFileCnv::fillRepTapeCopy(castor::stager::CastorFil
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbCastorFileCnv::fillObj(castor::IAddress* address,
                                                castor::IObject* object,
-                                               unsigned int type)
+                                               unsigned int type,
+                                               bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::CastorFile* obj = 
     dynamic_cast<castor::stager::CastorFile*>(object);
@@ -441,8 +442,10 @@ void castor::db::cnv::DbCastorFileCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjSvcClass
 //------------------------------------------------------------------------------

@@ -318,7 +318,8 @@ void castor::db::cnv::DbStagePrepareToUpdateRequestCnv::fillRepIClient(castor::s
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStagePrepareToUpdateRequestCnv::fillObj(castor::IAddress* address,
                                                                 castor::IObject* object,
-                                                                unsigned int type)
+                                                                unsigned int type,
+                                                                bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::StagePrepareToUpdateRequest* obj = 
     dynamic_cast<castor::stager::StagePrepareToUpdateRequest*>(object);
@@ -339,8 +340,10 @@ void castor::db::cnv::DbStagePrepareToUpdateRequestCnv::fillObj(castor::IAddress
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjSubRequest
 //------------------------------------------------------------------------------

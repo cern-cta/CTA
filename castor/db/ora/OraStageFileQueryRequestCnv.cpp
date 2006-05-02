@@ -325,7 +325,8 @@ void castor::db::ora::OraStageFileQueryRequestCnv::fillRepIClient(castor::stager
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStageFileQueryRequestCnv::fillObj(castor::IAddress* address,
                                                            castor::IObject* object,
-                                                           unsigned int type)
+                                                           unsigned int type,
+                                                           bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::StageFileQueryRequest* obj = 
     dynamic_cast<castor::stager::StageFileQueryRequest*>(object);
@@ -346,8 +347,10 @@ void castor::db::ora::OraStageFileQueryRequestCnv::fillObj(castor::IAddress* add
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjQueryParameter
 //------------------------------------------------------------------------------

@@ -192,7 +192,8 @@ void castor::db::ora::OraQueryParameterCnv::fillRepQryRequest(castor::stager::Qu
 //------------------------------------------------------------------------------
 void castor::db::ora::OraQueryParameterCnv::fillObj(castor::IAddress* address,
                                                     castor::IObject* object,
-                                                    unsigned int type)
+                                                    unsigned int type,
+                                                    bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::QueryParameter* obj = 
     dynamic_cast<castor::stager::QueryParameter*>(object);
@@ -207,8 +208,10 @@ void castor::db::ora::OraQueryParameterCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjQryRequest
 //------------------------------------------------------------------------------

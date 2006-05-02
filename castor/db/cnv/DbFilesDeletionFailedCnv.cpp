@@ -325,7 +325,8 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::fillRepIClient(castor::stager::F
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbFilesDeletionFailedCnv::fillObj(castor::IAddress* address,
                                                         castor::IObject* object,
-                                                        unsigned int type)
+                                                        unsigned int type,
+                                                        bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::FilesDeletionFailed* obj = 
     dynamic_cast<castor::stager::FilesDeletionFailed*>(object);
@@ -346,8 +347,10 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::fillObj(castor::IAddress* addres
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjGCFile
 //------------------------------------------------------------------------------

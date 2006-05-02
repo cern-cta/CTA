@@ -191,7 +191,8 @@ void castor::db::ora::OraGCFileCnv::fillRepGCFileList(castor::stager::GCFile* ob
 //------------------------------------------------------------------------------
 void castor::db::ora::OraGCFileCnv::fillObj(castor::IAddress* address,
                                             castor::IObject* object,
-                                            unsigned int type)
+                                            unsigned int type,
+                                            bool autocommit)
   throw (castor::exception::Exception) {
   castor::stager::GCFile* obj = 
     dynamic_cast<castor::stager::GCFile*>(object);
@@ -206,8 +207,10 @@ void castor::db::ora::OraGCFileCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
+  if (autocommit) {
+    cnvSvc()->commit();
+  }
 }
-
 //------------------------------------------------------------------------------
 // fillObjGCFileList
 //------------------------------------------------------------------------------
