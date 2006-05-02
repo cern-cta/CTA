@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.258 $ $Release$ $Date: 2006/04/25 13:31:25 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.259 $ $Release$ $Date: 2006/05/02 14:16:04 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2434,8 +2434,14 @@ CREATE OR REPLACE PROCEDURE reqIdLastRecallsStageQuery
   reqs "numList";
 BEGIN
   SELECT id BULK COLLECT INTO reqs
-    FROM StagePreparetogetRequest
-   WHERE reqid LIKE rid;
+    FROM (SELECT id
+            FROM StagePreparetogetRequest
+           WHERE reqid LIKE rid
+          UNION ALL
+          SELECT id
+            FROM StagePreparetoupdateRequest
+           WHERE reqid LIKE rid
+          );
   IF reqs.COUNT > 0 THEN
     UPDATE SubRequest
        SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
@@ -2460,8 +2466,14 @@ CREATE OR REPLACE PROCEDURE userTagLastRecallsStageQuery
   reqs "numList";
 BEGIN
   SELECT id BULK COLLECT INTO reqs
-    FROM StagePreparetogetRequest
-   WHERE userTag LIKE tag;
+    FROM (SELECT id
+            FROM StagePreparetogetRequest
+           WHERE userTag LIKE tag
+          UNION ALL
+          SELECT id
+            FROM StagePreparetoupdateRequest
+           WHERE userTag LIKE tag
+          );
   IF reqs.COUNT > 0 THEN
     UPDATE SubRequest
        SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
