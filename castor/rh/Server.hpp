@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/01/13 17:31:11 $ $Author: itglp $
+ * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/05/02 10:07:02 $ $Author: itglp $
  *
  *
  *
@@ -51,6 +51,13 @@ namespace castor {
        * Constructor
        */
       Server();
+
+    protected:
+ 
+      /**
+       * Prints out the online help
+       */
+      virtual void help(std::string programName);
 
     }; // class Server
 

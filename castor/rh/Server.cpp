@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2006/02/06 15:11:10 $ $Author: itglp $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2006/05/02 10:07:02 $ $Author: itglp $
  *
  *
  *
@@ -107,5 +107,21 @@ castor::rh::Server::Server() :
        castor::dlf::Param("Precise Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4, 2, params);
   }
+}
+
+//------------------------------------------------------------------------------
+// help
+//------------------------------------------------------------------------------
+void castor::rh::Server::help(std::string programName)
+{
+  std::cout << "Usage: " << programName << " [options]\n"
+	  "\n"
+	  "where options can be:\n"
+	  "\n"
+	  "\t--foreground      or -f                \tForeground\n"
+	  "\t--help            or -h                \tThis help\n"
+	  "\t--Rthreads        or -R {integer >= 0} \tNumber of Request Handler threads\n"
+	  "\n"
+	  "Comments to: Castor.Support@cern.ch\n";
 }
 
