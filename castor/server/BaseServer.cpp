@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/05/02 10:10:33 $ $Author: itglp $
  *
  *
  *
@@ -255,19 +255,6 @@ void castor::server::BaseServer::sendNotification(std::string host, int port, in
   int s;
   char buf[HYPERSIZE + LONGSIZE];
   char *p;
-
-  /* Get service host *
-  if (single_service_notifyHost(CA_MAXHOSTNAMELEN, serviceHost) != 0) {
-    rc = -1;
-    goto single_service_notifyServiceReturn;
-  }
-
-  /* Get notification port *
-  if (single_service_configNotifyPort(&port) != 0) {
-    rc = -1;
-    goto single_service_notifyServiceReturn;
-  }
-  */
 
   /* Resolve host address */
   if ((hp = Cgethostbyname(host.c_str())) == NULL) {

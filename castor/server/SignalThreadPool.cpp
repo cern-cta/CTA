@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/05/02 10:10:33 $ $Author: itglp $
  *
  *
  *
@@ -39,15 +39,10 @@ extern "C" {
 //------------------------------------------------------------------------------
 castor::server::SignalThreadPool::SignalThreadPool(const std::string poolName,
                                  castor::server::IThread* thread,
-                                 const int timeout,
-                                 const int notifPort) :
+                                 const int notifPort,
+                                 const int timeout) :
   BaseThreadPool(poolName, new castor::server::ServiceThread(thread)),
-  m_notifPort(notifPort), m_timeout(timeout)
-{
-  if(m_notifPort == 0) {
-     m_notifPort = getNotifPort();
-  }
-}
+  m_notifPort(notifPort), m_timeout(timeout) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -105,21 +100,22 @@ void castor::server::SignalThreadPool::run()
            << m_nbThreads << " threads" << std::endl;
   }
 
-  /* create and start notification thread */
-  m_notifPort = getNotifPort();    // get notification port from config
+  /* create and start notification thread if requested */
   if(m_notifPort <= 0)
     return;
 
-  m_notifTPool = new BaseThreadPool("_NotificationThread", new NotificationThread(m_notifPort));
+  m_notifTPool = new BaseThreadPool("_Notif_" + m_poolName, new NotificationThread(m_notifPort));
   struct threadArgs *nArgs = new threadArgs();
   nArgs->handler = m_notifTPool;
-  nArgs->param = this;          // reuse BaseThreadPool and the thread entrypoint
+  nArgs->param = this;          // reuse BaseThreadPool only for the thread entrypoint
 
   if(Cthread_create_detached(castor::server::_thread_run, nArgs) < 0) {
+    delete nArgs;
     delete m_notifTPool;
+    return;
   }
 
-  /* here we had a Wait loop for nbNotifyThreads to change ... not needed in principle! */
+  /* here we had a wait loop for nbNotifyThreads to change - not needed anymore */
 }
 
 
@@ -205,40 +201,39 @@ void castor::server::SignalThreadPool::commitRelease()
 
 
 //------------------------------------------------------------------------------
-// getNotifPort
+// getNotifPort - deprecated
 //------------------------------------------------------------------------------
-int castor::server::SignalThreadPool::getNotifPort()
-{
-  if(m_notifPort > 0)
-    return m_notifPort;
+//int castor::server::SignalThreadPool::getNotifPort()
+//{
+//  if(m_notifPort > 0)
+//    return m_notifPort;
 
-  /* First time try to get port */
-  /* - From environment variable */
-  std::string envName = m_poolName + "NotifyPort";
-  char *port = NULL;
-  if ((port = getenv(envName.c_str())) != NULL) {
-    m_notifPort = atoi(port);
-  } else {
-    /* - From configuration file */
-    if ((port = getconfent(m_poolName.c_str(), NOTIFY_PORT, 0)) != NULL) {
-      m_notifPort = atoi(port);
-    } else {
-      // XXX ???
-      //struct servent *sp = NULL;
-      //if ((sp = Cgetservbyname(m_poolName.c_str(), NOTIFY_PROTO)) != NULL) {
-      //  m_notifPort = ntohs(sp->s_port);
-      //} else {
-    	  /* - Default value */
-        m_notifPort = NOTIFY_PORT_BASE + (int)getPoolId();
-      //}
-    }
-  }
-
-  if (m_notifPort <= 0) {
-    /* A port must be > 0 */
-    serrno = EINVAL;
-  }
-
-  return m_notifPort;
-}
+//  /* Try to get port if not provided */
+//  /* - From environment variable */
+//  std::string varName = getPoolId() + NOTIFY_PORT;
+//  std::string envName = "DAEMON_" + varName;
+//  char *port = NULL;
+//  if ((port = getenv(envName.c_str())) != NULL) {
+//    m_notifPort = atoi(port);
+//  } else {
+//    /* - From configuration file */
+//    if ((port = getconfent("DAEMON", varName.c_str(), 0)) != NULL) {
+//      m_notifPort = atoi(port);
+//    } else {
+//      /* - (obsolete) from /etc/services or NIS */
+//      struct servent *sp = NULL;
+//      if ((sp = Cgetservbyname(m_poolName.c_str(), NOTIFY_PROTO)) != NULL) {
+//        m_notifPort = ntohs(sp->s_port);
+//     } else {
+//    	  /* - Default value: use the ASCII value of the pool id */
+//        m_notifPort = NOTIFY_PORT_BASE + (int)getPoolId();
+//      }
+//    }
+//  }
+//  if (m_notifPort <= 0) {
+//    /* A port must be > 0 */
+//    serrno = EINVAL;
+//  }
+//  return m_notifPort;
+//}
 

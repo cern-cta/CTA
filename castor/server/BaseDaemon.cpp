@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/05/02 10:10:33 $ $Author: itglp $
  *
  *
  *
@@ -145,7 +145,7 @@ void* castor::server::_signalThread_run(void* arg)
     if (sigwait(&daemon->m_signalSet, &sig_number) == 0) {
       /* Note: from now on this is unsafe but here we go, we cannot use mutex/condition/printing etc... */
       /* e.g. things unsafe in a signal handler */
-      /* So from now on this function is calling nothing external */
+      /* so from now on this function is calling nothing external */
       daemon->m_signalMutex->setValueNoMutex(1);
       exit(0);  // EXIT_SUCCESS
     }

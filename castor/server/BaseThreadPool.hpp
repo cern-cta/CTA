@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/05/02 10:10:33 $ $Author: itglp $
  *
  *
  *
@@ -53,7 +53,7 @@ namespace castor {
      * empty constructor
      */
     BaseThreadPool() : 
-       BaseObject(), m_thread(0), m_poolName("") {};
+       BaseObject(), m_poolName(""), m_thread(0) {};
 
     /**
      * constructor
@@ -112,13 +112,6 @@ namespace castor {
       return m_poolName[0];
     }
 
-    /**
-     * Gets a pointer in thread local storage
-     * Returns 0 if the void * could be allocated
-     * -1 otherwise.
-     * XXX TODO to be made accessible from threads?
-     */
-    //static int gettls(void **thip);
 
   protected:
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/02/06 15:09:30 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/05/02 10:10:33 $ $Author: itglp $
  *
  *
  *
@@ -100,7 +100,6 @@ int castor::server::ListenerThreadPool::threadAssign(void *param)
   args->param = param;
 
   if (m_nbThreads > 0) {   // always true
-  // for debugging purposes it could be useful to run the user thread code in the same thread. 
     int assign_rc = Cpool_assign(m_threadPoolId,
                                  &castor::server::_thread_run,
                                  args,
@@ -110,6 +109,7 @@ int castor::server::ListenerThreadPool::threadAssign(void *param)
       return -1;
     }
   } else {
+  // for debugging purposes it could be useful to run the user thread code in the same thread. 
     castor::server::_thread_run(args);
   }
   return 0;

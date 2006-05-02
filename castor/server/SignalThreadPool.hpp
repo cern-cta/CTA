@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/05/02 10:10:33 $ $Author: itglp $
  *
  *
  *
@@ -51,7 +51,7 @@
 #include "castor/BaseObject.hpp"
 
 
-#define NOTIFY_PROTO "udp"         /* Notify Proto in /etc/services if any */
+// #define NOTIFY_PROTO "udp"         /* Notify Proto in /etc/services if any */
 #define NOTIFY_PORT  "NOTIFYPORT"  /* Sub-label in config file for notification port */
 
 
@@ -87,8 +87,8 @@ namespace castor {
      */
     SignalThreadPool(const std::string poolName,
                    castor::server::IThread* thread,
-                   const int timeout = castor::server::Mutex::TIMEOUT,
-                   const int notifPort = 0);
+                   const int notifPort = 0,
+                   const int timeout = castor::server::Mutex::TIMEOUT);
 
     /*
      * destructor
@@ -136,11 +136,6 @@ namespace castor {
     Mutex* getMutex() {
       return m_poolMutex;
     }
-
-    /**
-     * Gets the notification port from config or from the environment.
-     */
-    int getNotifPort();
 
 
   private:

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/05/02 10:10:33 $ $Author: itglp $
  *
  *
  *
@@ -86,7 +86,7 @@ namespace castor {
      * Sends a notification message to the given host,port
      * to wake up nbThreads threads to handle pending requests.
      */
-    void sendNotification(std::string host, int port, int nbThreads = 1)
+    static void sendNotification(std::string host, int port, int nbThreads = 1)
       throw(castor::exception::Exception);
 
 
