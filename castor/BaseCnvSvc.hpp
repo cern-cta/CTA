@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2005/08/23 09:57:50 $ $Author: itglp $
+ * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/05/02 10:01:18 $ $Author: itglp $
  *
  *
  *
@@ -191,7 +191,7 @@ namespace castor {
     virtual void fillRep(castor::IAddress* address,
                          castor::IObject* object,
                          unsigned int type,
-                         bool autocommit)
+                         bool autocommit = false)
       throw (castor::exception::Exception);
     
     /**
@@ -200,11 +200,14 @@ namespace castor {
      * @param address the place where to find the foreign representation
      * @param object the original object
      * @param type the type of the refered objects to retrieve
+     * @param autocommit whether the lock taken on the database
+     * should be released or not
      * @exception Exception throws an Exception in case of error
      */
     virtual void fillObj(castor::IAddress* address,
                          castor::IObject* object,
-                         unsigned int type)
+                         unsigned int type,
+                         bool autocommit = false)
       throw (castor::exception::Exception);
 
     /**

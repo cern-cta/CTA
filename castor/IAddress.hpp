@@ -55,13 +55,11 @@ namespace castor {
 
     /**
      * gets the object type, that is the type of object whose representation is pointed
-     * to by this address
      */
     virtual unsigned int objType() const = 0;
 
     /**
      * sets the object type, that is the type of object whose representation is pointed
-     * to by this address.
      * @param type The new type of this address
      */
     virtual void setObjType(unsigned int type) = 0;

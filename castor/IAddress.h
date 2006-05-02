@@ -57,14 +57,12 @@ struct C_IAddress_t* C_IAddress_fromIObject(struct C_IObject_t* obj);
 
 /**
  * gets the object type, that is the type of object whose representation is pointed
- * to by this address
  */
 int C_IAddress_objType(struct C_IAddress_t* instance,
                        unsigned int* ret);
 
 /**
  * sets the object type, that is the type of object whose representation is pointed
- * to by this address.
  */
 int C_IAddress_setObjType(struct C_IAddress_t* instance,
                           unsigned int type);

@@ -36,7 +36,8 @@ struct C_IObject_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class IObject
-// Base class for all objects Implements the id methods
+// Base class for all objects
+// Implements the id methods
 //------------------------------------------------------------------------------
 
 /**

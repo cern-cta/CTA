@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2005/10/17 15:42:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2006/05/02 10:01:18 $ $Author: itglp $
  *
  *
  *
@@ -220,12 +220,13 @@ void castor::BaseCnvSvc::fillRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::BaseCnvSvc::fillObj(castor::IAddress* address,
                                  castor::IObject* object,
-                                 unsigned int type)
+                                 unsigned int type,
+                                 bool autocommit)
   throw (castor::exception::Exception) {
   // Look for an adapted converter
   // The converter is always valid if no exception is thrown
   castor::IConverter* conv = converter(object->type());
-  return conv->fillObj(address, object, type);
+  return conv->fillObj(address, object, type, autocommit);
 }
 
 // -----------------------------------------------------------------------
