@@ -55,7 +55,7 @@ namespace castor {
   namespace client {
 
     /**
-     * Name of the Service class environment variables
+     * Constants
      */
     extern const char* HOST_ENV;;
     extern const char* HOST_ENV_ALT;
@@ -66,6 +66,11 @@ namespace castor {
     extern const char* PORT_CONF;
     extern const char* STAGE_EUID;
     extern const char* STAGE_EGID;
+    extern const char* CLIENT_CONF;
+    extern const char* LOWPORT_CONF;
+    extern const char* HIGHPORT_CONF;
+    extern const int LOW_CLIENT_PORT_RANGE;
+    extern const int HIGH_CLIENT_PORT_RANGE;
 
     // Forward declaration
     class IResponseHandler;
@@ -171,10 +176,17 @@ namespace castor {
       castor::io::ServerSocket* waitForCallBack()
         throw (castor::exception::Exception);
 
+      /**
+       * converts a string into a port number, checking
+       * the values
+       * @param str the string giving the port number
+       * @return the port as an int
+       * @exception in case of invalid value
+       */
+      int porttoi(char* str)
+        throw (castor::exception::Exception);
 
-      
-
-      public: // protected:
+    public: // protected:
       
       /// The request handler host
       std::string m_rhHost;

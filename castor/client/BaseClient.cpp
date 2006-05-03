@@ -81,6 +81,15 @@ const char *castor::client::HOST_CONF = "HOST";
 const char *castor::client::PORT_CONF = "PORT";
 const char *castor::client::STAGE_EUID = "STAGE_EUID";
 const char *castor::client::STAGE_EGID = "STAGE_EGID";
+const char *castor::client::CLIENT_CONF = "CLIENT";
+const char *castor::client::LOWPORT_CONF = "LOWPORT";
+const char *castor::client::HIGHPORT_CONF = "HIGHPORT";
+
+//------------------------------------------------------------------------------
+// Numeric constants
+//------------------------------------------------------------------------------
+const int castor::client::LOW_CLIENT_PORT_RANGE = 30000;
+const int castor::client::HIGH_CLIENT_PORT_RANGE = 30100;
 
 //------------------------------------------------------------------------------
 // Timing utility
@@ -260,9 +269,23 @@ std::string castor::client::BaseClient::sendRequest
     }
     free(hostname);
   }
-  // create a socket for the callback
+  // create a socket for the callback with no port
   stage_trace(3, "Creating socket for stager callback");
-  m_callbackSocket = new castor::io::ServerSocket(0, true);
+  m_callbackSocket = new castor::io::ServerSocket(true);
+  // get the port range to be used
+  int lowPort = LOW_CLIENT_PORT_RANGE;
+  int highPort = HIGH_CLIENT_PORT_RANGE;
+  char* sport;
+  if ((sport = getconfent((char *)castor::client::CLIENT_CONF,
+                         (char *)castor::client::LOWPORT_CONF,0)) != 0) {
+    lowPort = porttoi(sport);
+  }
+  if ((sport = getconfent((char *)castor::client::CLIENT_CONF,
+                         (char *)castor::client::HIGHPORT_CONF,0)) != 0) {
+    highPort = porttoi(sport);
+  }
+  // bind the socket
+  m_callbackSocket->bind(lowPort, highPort);
   m_callbackSocket->listen();
   unsigned short port;
   unsigned long ip;
@@ -528,23 +551,7 @@ void castor::client::BaseClient::setRhPort(int optPort)
       || (port = getenv (castor::client::PORT_ENV_ALT)) != 0
       || (port = getconfent((char *)castor::client::CATEGORY_CONF,
 			    (char *)castor::client::PORT_CONF,0)) != 0) {
-
-    char* dp = port;
-    errno = 0;
-    int iport = strtoul(port, &dp, 0);
-    if (*dp != 0) {
-      castor::exception::Exception e(errno);
-      e.getMessage() << "Bad port value." << std::endl;
-      throw e;
-    }
-    if (iport > 65535) {
-      castor::exception::Exception e(errno);
-      e.getMessage()
-        << "Invalid port value : " << iport
-        << ". Must be < 65535." << std::endl;
-      throw e;
-    }
-    m_rhPort = iport;
+     m_rhPort = porttoi(port);
   } else {
    clog() << "Contacting RH server on default port ("
           << CSP_RHSERVER_PORT << ")." << std::endl;
@@ -656,6 +663,26 @@ int castor::client::BaseClient::setAuthorizationId(uid_t uid, gid_t gid) throw()
   m_hasAuthorizationId = true;
 }
 
-
-
+//------------------------------------------------------------------------------
+// porttoi
+//------------------------------------------------------------------------------
+int castor::client::BaseClient::porttoi(char* str)
+  throw (castor::exception::Exception) {
+  char* dp = str;
+  errno = 0;
+  int iport = strtoul(str, &dp, 0);
+  if (*dp != 0) {
+    castor::exception::Exception e(errno);
+    e.getMessage() << "Bad port value." << std::endl;
+    throw e;
+  }
+  if (iport > 65535) {
+    castor::exception::Exception e(errno);
+    e.getMessage()
+      << "Invalid port value : " << iport
+      << ". Must be < 65535." << std::endl;
+    throw e;
+  }
+  return iport;
+}
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServerSocket.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/21 10:43:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServerSocket.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/05/03 11:57:14 $ $Author: sponcec3 $
  *
  * defines a dedicated socket that handles most of the network
  * calls
@@ -58,13 +58,22 @@ namespace castor {
       ServerSocket(int socket) throw ();
 
       /**
+       * Constructor building a socket with no port. As a consequence,
+       * the used port will be 0 and the socket will not be bound.
+       * The bind method should be call independently
+       * @param reusable whether the socket should be reusable
+       */
+      ServerSocket(const bool reusable) throw (castor::exception::Exception);
+
+      /**
        * Constructor building a socket on a given local port
        * @param port the local port for this socket. Use 0 if
        * you want the system to allocate a port
        * @param doListen whether to start listening on the socket.
+       * @param reusable whether the socket should be reusable
        */
       ServerSocket(const unsigned short port,
-		   const bool reusable)
+                   const bool reusable)
         throw (castor::exception::Exception);
 
       /**
@@ -72,10 +81,11 @@ namespace castor {
        * @param port the port on which the socket should be opened on
        * remote host
        * @param host the host to connect to, given by its name
+       * @param reusable whether the socket should be reusable
        */
       ServerSocket(const unsigned short port,
-		   const std::string host,
-		   const bool reusable)
+                   const std::string host,
+                   const bool reusable)
         throw (castor::exception::Exception);
 
       /**
@@ -83,10 +93,11 @@ namespace castor {
        * @param port the port on which the socket should be opened on
        * remote host
        * @param host the host to connect to, given as an ip address
+       * @param reusable whether the socket should be reusable
        */
       ServerSocket(const unsigned short port,
-		   const unsigned long ip,
-		   const bool reusable)
+                   const unsigned long ip,
+                   const bool reusable)
         throw (castor::exception::Exception);
 
       /**
@@ -111,13 +122,14 @@ namespace castor {
        */
       virtual ServerSocket* accept() throw(castor::exception::Exception);
 
-
-    protected:
-
       /**
-       * binds the socket to the given address
+       * binds the socket and let the system choose a port
+       * in a given range. Giving 0 for both ends of the
+       * range allows to system to freely choose the port
+       * @param lowPort the low value in the port range (included)
+       * @param highPort the high value in the port range (included)
        */
-      void bind(sockaddr_in saddr)
+      void bind(int lowPort, int highPort)
         throw (castor::exception::Exception);
 
     private:
@@ -126,7 +138,7 @@ namespace castor {
        * Tells whether listen was already called
        */
       bool m_listening;
-      
+
     };
 
   } // end of namespace io
