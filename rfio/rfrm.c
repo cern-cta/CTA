@@ -1,5 +1,5 @@
 /*
- * $Id: rfrm.c,v 1.16 2006/04/30 15:08:27 gtaur Exp $
+ * $Id: rfrm.c,v 1.17 2006/05/03 09:21:36 gtaur Exp $
  */
 
 /*
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.16 $ $Date: 2006/04/30 15:08:27 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.17 $ $Date: 2006/05/03 09:21:36 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*

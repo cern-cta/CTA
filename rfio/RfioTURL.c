@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.10 $ $Release$ $Date: 2006/04/28 16:24:46 $ $Author: gtaur $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.11 $ $Release$ $Date: 2006/05/03 09:21:36 $ $Author: gtaur $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.10 $ $Release$ $Date: 2006/04/28 16:24:46 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.11 $ $Release$ $Date: 2006/05/03 09:21:36 $ Olof Barring";
 #endif /* not lint */
 /** RfioTURL.c - RFIO TURL handling
  *
@@ -254,7 +254,7 @@ globalVersion=globalPort=0;
   }
   prefix = getRfioTURLPrefix();
   if ( prefix == NULL ) return(-1);	
-  if ( strstr(tURLStr,prefix) != tURLStr ) {
+  if ( strstr(tURLStr,prefix) != tURLStr) {
     serrno = EINVAL;
     return(-1);
   }  
@@ -432,12 +432,16 @@ globalVersion=globalPort=0;
          free(orig);
          return(-1);
      }
-
+     
      strcpy(_tURL.rfioPath,path2);
    }
 
-
-   if (strstr(_tURL.rfioPath,"/castor") == _tURL.rfioPath){
+   if (_tURL.rfioPath && strstr(_tURL.rfioPath,"//")){ 
+	strcpy(_tURL.rfioPath,(char*)&_tURL.rfioPath[1]);}
+ 
+   
+   if (strstr(_tURL.rfioPath,"/castor") == _tURL.rfioPath ){ 
+                               // the //castor is due to srm 1 problems
 
     /* from here setting the proper enviroment variable */
     /* getting default value that can be used */

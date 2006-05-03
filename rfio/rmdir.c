@@ -1,5 +1,5 @@
 /*
- * $Id: rmdir.c,v 1.9 2006/04/30 15:08:27 gtaur Exp $
+ * $Id: rmdir.c,v 1.10 2006/05/03 09:21:37 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmdir.c,v $ $Revision: 1.9 $ $Date: 2006/04/30 15:08:27 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rmdir.c,v $ $Revision: 1.10 $ $Date: 2006/05/03 09:21:37 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* rmdir.c       Remote File I/O - make a directory file                */
