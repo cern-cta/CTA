@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_open.cpp,v 1.4 2004/12/14 14:36:40 bcouturi Exp $
+ * $Id: stager_client_api_open.cpp,v 1.5 2006/05/03 15:34:49 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_open.cpp,v $ $Revision: 1.4 $ $Date: 2004/12/14 14:36:40 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_open.cpp,v $ $Revision: 1.5 $ $Date: 2006/05/03 15:34:49 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -50,7 +50,9 @@ EXTERN_C int DLL_DECL stage_open(const char *userTag,
   
   char *func = "stage_open_ext";
 
-  if (flags == O_RDONLY) {
+  if ((flags == O_RDONLY) ||
+      (flags == O_TRUNC) ||
+      (flags == O_CREAT)) {
     //std::cout << "-------------> STAGE_GET" << std::endl;
     /* Always use stage_get for read-only mode */
     return stage_get(userTag, 
