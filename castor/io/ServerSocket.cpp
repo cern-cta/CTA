@@ -203,9 +203,9 @@ castor::io::ServerSocket* castor::io::ServerSocket::accept()
 void castor::io::ServerSocket::bind(int lowPort, int highPort)
   throw (castor::exception::Exception) {
   // let's go through the port range
-  int rc = 0;
+  int rc = -1;
   for (int port = lowPort;
-       (port <= highPort) && 0 == rc;
+       (port <= highPort) && 0 != rc;
        port++) {
     // trying to bind the socket
     m_saddr.sin_port = htons(port);
