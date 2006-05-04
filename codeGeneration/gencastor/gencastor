@@ -37,7 +37,6 @@ grep 'CREATE OR REPLACE' ${TMPDIR}/${TOPNS}/db/postgresTrailer.sql | awk 'BEGIN 
 # hack to prevent Umbrello from overwriting the original XMI file
 cp ${XMIFILE} ${TMPDIR}
 set XMITOUSE=`echo ${XMIFILE} | awk -F'/' '{ print $NF }'`
-echo ${XMITOUSE}
 (/usr/bin/gencastor.bin -o ${TMPDIR} -c ${TOPNS} --nocrashhandler ${TMPDIR}/${XMITOUSE} > /dev/tty) >& /dev/null
 set pushdsilent
 pushd ${TMPDIR}
