@@ -1,3 +1,47 @@
+castor (2.0.4-1) unstable; urgency=low
+
+  * CASTOR2/castor/client/BaseClient.cpp:
+  * CASTOR2/castor/client/BaseClient.hpp:
+  * CASTOR2/castor/io/ServerSocket.cpp:
+  * CASTOR2/castor/io/ServerSocket.hpp:
+    [2006-05-03,sponcec3] Implemented a port range for the callback from the stager
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    [r1.259,2006-05-02,itglp] Extend the getNext-like query to PrepareToUpdate requests
+  * CASTOR2/castor/rh/Server.cpp:
+  * CASTOR2/castor/rh/Server.hpp:
+    [2006-05-02,itglp] Added correct help() with RH usage
+  * CASTOR2/debian/castor-stager-server.install.perm:
+    [r 1.7,2006-05-02,itglp] Added init.d script for cleaningDaemon
+  * CASTOR2/debian/castor.conf:
+    [r1.17,2006-05-03,sponcec3] New entry for the client port range
+  * CASTOR2/rfio/rfio_HsmIf.c:
+    [r1.14,2006-05-04,obarring] Add O_CREAT to mover open after a successful return from stage_open() with O_TRUNC
+  * CASTOR2/rfio/RfioTURL.c:
+  * CASTOR2/rfio/rfrm.c:
+  * CASTOR2/rfio/rmdir.c:
+    [2006-05-03,gtaur] now it is possible to use //castor in the path
+  * CASTOR2/rfio/RfioTURL.c:
+  * CASTOR2/rfio/rfcat.c:
+  * CASTOR2/rfio/rfchmod.c:
+  * CASTOR2/rfio/rfdir.c:
+  * CASTOR2/rfio/rfmkdir.c:
+  * CASTOR2/rfio/rfrename.c:
+  * CASTOR2/rfio/rfrm.c:
+  * CASTOR2/rfio/rfstat.c:
+  * CASTOR2/rfio/rmdir.c:
+    [2006-04-28,gtaur] patch
+  * CASTOR2/stager/stager_client_api_open.cpp:
+    [r 1.5,2006-05-03,sponcec3] Fixed the handling of read only file opens with only O_TRUNC or only O_CREAT set
+  * CASTOR2/stager/stager_db_service.c:
+    [r1.138,2006-05-03,sponcec3] Fixed updateRequest processing in the case of non existing files opened with O_CREAT set
+    [r1.137,2006-05-03,obarring] Add missing file access permissions checks
+  * CASTOR2/stager/stager_qry.man:
+    [r1.15,2006-05-02,itglp] Updated queries for directories.
+  * CASTOR2/stager/stager_query_service.cpp:
+    [r1.39,2006-04-28,itglp] Be aware of queries on directories and show the content as using the final '/'.
+
+ -- sponcec3 <sponcec3@seblap.cern.ch>  Thu,  4 May 2006 17:32:39 +0200
+
 castor (2.0.4-0) unstable; urgency=low
 
   * CASTOR2/castor/db/ora/OraQuerySvc.cpp:
