@@ -1,4 +1,27 @@
 -----------
+- 2.0.4-1 -
+-----------
+
+  New Features and Changes (from 2.0.3-1)
+  ---------------------------------------
+    
+    - Fixes concerning the TURL parsing in RFIO
+    - Implementation of a port range for the ports used by the stager clients.
+      Default range in [30000,30100], it can be overwritten in castor.conf
+    - The file permission checks were fixed in the stager
+    - The getNext functionnalities were made available to update requests
+    - The cleaning daemon now has an init script
+    - The flags given to RFIO when opening a file are now correctly handled
+    - Queries on directories are now handled properly
+
+  Upgrade from 2.0.4-0
+  --------------------
+
+    - The 2 releases are fully compatible and can be freely mixed
+    - The database schema has not evolved. However, some fixes in the PL/SQL code
+      were added. Use upgrades/2.0.4-0_to_2.0.4-1.sql to upgrade.
+
+-----------
 - 2.0.4-0 -
 -----------
 
