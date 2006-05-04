@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-## $Id: dlforasetup.sh,v 1.6 2006/02/10 11:13:47 itglp Exp $
+## $Id: dlforasetup.sh,v 1.7 2006/05/04 15:30:52 itglp Exp $
 #
 
 killall -9 dlfserver
@@ -38,5 +38,6 @@ dlfenterfacility -F rfio -n 12
 dlfenterfacility -F SRMServer -n 13
 dlfenterfacility -F SRMDaemon -n 14
 dlfenterfacility -F Repack -n 15
+dlfenterfacility -F cleaning -n 16
 
 dlflistfacility
