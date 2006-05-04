@@ -192,7 +192,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.52 $ $Release$ $Date: 2006/04/27 16:07:29 $ $Author: itglp $
+ * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.53 $ $Release$ $Date: 2006/05/04 16:20:22 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2626,8 +2626,14 @@ CREATE OR REPLACE PROCEDURE reqIdLastRecallsStageQuery
   reqs "numList";
 BEGIN
   SELECT id BULK COLLECT INTO reqs
-    FROM StagePreparetogetRequest
-   WHERE reqid LIKE rid;
+    FROM (SELECT id
+            FROM StagePreparetogetRequest
+           WHERE reqid LIKE rid
+          UNION ALL
+          SELECT id
+            FROM StagePreparetoupdateRequest
+           WHERE reqid LIKE rid
+          );
   IF reqs.COUNT > 0 THEN
     UPDATE SubRequest
        SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
@@ -2652,8 +2658,14 @@ CREATE OR REPLACE PROCEDURE userTagLastRecallsStageQuery
   reqs "numList";
 BEGIN
   SELECT id BULK COLLECT INTO reqs
-    FROM StagePreparetogetRequest
-   WHERE userTag LIKE tag;
+    FROM (SELECT id
+            FROM StagePreparetogetRequest
+           WHERE userTag LIKE tag
+          UNION ALL
+          SELECT id
+            FROM StagePreparetoupdateRequest
+           WHERE userTag LIKE tag
+          );
   IF reqs.COUNT > 0 THEN
     UPDATE SubRequest
        SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
