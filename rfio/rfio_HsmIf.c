@@ -576,6 +576,17 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
             return -1;
           }
 
+          /*
+           * Warning, this is a special case for castor2 when a file is recreated
+           * with O_TRUNC but without O_CREAT: the correct behaviour is to 
+           * recreate the castorfile and schedule access to the new diskcopy. 
+           * However, because of there is no O_CREAT the mover open will fail
+           * to create the new diskcopy. We must therefore add O_CREAT but
+           * only after stage_open() has processed the request and recreated
+           * the castorfile.
+           */
+          if ( (flags & O_TRUNC) == O_TRUNC ) flags |= O_CREAT;
+
 #if defined(CASTOR_ON_GLOBAL_FILESYSTEM)
 	  got_protocol = response->protocol;
 	  if (strcmp(response->protocol,"file") == 0) {
