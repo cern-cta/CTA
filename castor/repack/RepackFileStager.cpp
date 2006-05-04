@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/04/05 13:30:53 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/05/04 07:54:09 $ $Author: felixehm $
  *
  *
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
  
 #include "RepackFileStager.hpp"
-
+#include "vmgr_api.h"
  
 namespace castor {
 	namespace repack {
@@ -126,10 +126,14 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq) throw() {
 	if ( m_filehelper->getFileListSegs(sreq,cuuid) )
 		return;
 
+	/** Here we check, if the segment list contains a file, which was already repacked
+	    (segmented file)
+	*/
+
 
 	// ---------------------------------------------------------------
 	// This part has to be removed, if the stager also accepts only fileid
-	// as parameter. Now we have to get the paths first.
+	// as parameter. For now we have to get the paths first.
 	stage_trace(3,"Now, get the paths.");
 	std::vector<std::string>* filelist = m_filehelper->getFilePathnames(sreq,cuuid);
 	std::vector<std::string>::iterator filename = filelist->begin();
@@ -152,7 +156,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq) throw() {
 	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 26, 0, NULL);
 	try {
 		if (filelist->size() > 0 )
-			sendStagerRepackRequest(&req, &reqId);
+			;//sendStagerRepackRequest(&req, &reqId);
 	
 	}catch (castor::exception::Exception ex){
 		castor::dlf::Param params[] =
@@ -175,6 +179,12 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq) throw() {
 	
 	filelist->clear();
 	delete filelist;
+      
+      	/** finally, we would like to lock the tape, so nothing can be 
+	    written to it
+	*/
+
+	vmgr_modifytape(sreq->vid().c_str(),NULL,NULL,NULL,NULL,NULL,NULL,NULL,TAPE_RDONLY);
       
 	// the Request has now status SUBREQUEST_STAGING
 }
@@ -222,6 +232,8 @@ void RepackFileStager::sendStagerRepackRequest(castor::stager::StagePrepareToGet
 	}
 	respvec.clear();
 }
+
+
 
 //------------------------------------------------------------------------------
 // createSvcClass, for repacking to different tapepool than origin
