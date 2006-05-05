@@ -13,6 +13,7 @@
     - The cleaning daemon now has an init script
     - The flags given to RFIO when opening a file are now correctly handled
     - Queries on directories are now handled properly
+    - SQL scripts are now also provided for sqlplus
 
   Upgrade from 2.0.4-0
   --------------------
