@@ -31,8 +31,9 @@ set TMPDIR=`mktemp /tmp/gencastor-XXXXXX`
 rm -rf ${TMPDIR}
 mkdir -p ${TMPDIR}/${TOPNS}/db
 cp ${WORKDIR}/${TOPNS}/db/*.sql ${TMPDIR}/${TOPNS}/db/
-grep 'CREATE OR REPLACE' ${TMPDIR}/${TOPNS}/db/oracleTrailer.sql | awk 'BEGIN { FS="[ (]+" } { print "DROP " $4, $5 ";" }' > ${TMPDIR}/${TOPNS}/db/oracleTrailer_drop.sql
-grep 'CREATE OR REPLACE' ${TMPDIR}/${TOPNS}/db/postgresTrailer.sql | awk 'BEGIN { FS="[ (]+" } { print "DROP " $4, $5 ";" }' > ${TMPDIR}/${TOPNS}/db/postgresTrailer_drop.sql
+grep 'CREATE OR REPLACE' ${TMPDIR}/${TOPNS}/db/oracleTrailer.sql | grep -v 'TRIGGER' | grep -v I_CastorFile_fileIdNsHost | awk 'BEGIN { FS="[ (]+" } { print "DROP " $4, $5 ";" }' > ${TMPDIR}/${TOPNS}/db/oracleTrailer_drop.sql
+grep 'CREATE OR REPLACE' ${TMPDIR}/${TOPNS}/db/postgresTrailer.sql | grep -v 'TRIGGER' | grep -v I_CastorFile_fileIdNsHost | awk 'BEGIN { FS="[ (]+" } { print "DROP " $4, $5 ";" }' > ${TMPDIR}/${TOPNS}/db/postgresTrailer_drop.sql
+sed 's/^END;/END;\n\//' ${TMPDIR}/${TOPNS}/db/castor_oracle_create.sql | sed 's/^\(END castor[a-zA-Z]*;\)/\1\n\//' | sed 's/\(CREATE OR REPLACE TYPE .*\)$/\1\n\//' > ${TMPDIR}/${TOPNS}/db/castor_oracle_create.sqlplus
 
 # hack to prevent Umbrello from overwriting the original XMI file
 cp ${XMIFILE} ${TMPDIR}
