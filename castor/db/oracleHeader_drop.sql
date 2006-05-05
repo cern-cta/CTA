@@ -33,5 +33,6 @@ DROP TABLE newRequests;
 /* support tables - check oracleTrailer_create.sql */
 DROP TABLE NbTapeCopiesInFS;
 DROP TABLE LockTable;
+DROP TABLE FilesDeletedProcOutput;
 
 
