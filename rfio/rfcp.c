@@ -330,7 +330,7 @@ int main(argc, argv)
 		strcpy(shost1,host1) ;
 		input_is_local = 0;
 	}
-	cleanInp=strdup(!path1?inpfile:path1);
+	cleanInp=strdup((!path1 || !strstr(path1,"/castor"))?inpfile:path1);
 	strcpy( filename, path1 );
 
 	l2 = rfio_parseln( filename_sav , &host2, &path2, NORDLINKS ) ;
@@ -339,7 +339,8 @@ int main(argc, argv)
 		free(cleanInp);
 		exit(USERR);
 	}
-	cleanOut=strdup(!path2?filename_sav:path2);
+	cleanOut=strdup((!path2 || !strstr(path2,"/castor"))?filename_sav:path2);
+	printf("cleanOut %s",cleanOut);
 
 	/* Command is of the form cp f1 f2. */
 	serrno = rfio_errno = 0;
