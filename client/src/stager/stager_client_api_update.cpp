@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_update.cpp,v 1.10 2006/04/20 09:52:13 gtaur Exp $
+ * $Id: stager_client_api_update.cpp,v 1.11 2006/05/05 16:36:12 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_update.cpp,v $ $Revision: 1.10 $ $Date: 2006/04/20 09:52:13 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_update.cpp,v $ $Revision: 1.11 $ $Date: 2006/05/05 16:36:12 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -176,7 +176,7 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate(const char *userTag,
 EXTERN_C int DLL_DECL stage_update(const char *userTag,
                                    const char *protocol,
                                    const char *filename,
-                                   int create,
+                                   int flags,
                                    mode_t mode,
 				   u_signed64 size,
                                    struct stage_io_fileresp ** response,
@@ -195,8 +195,8 @@ EXTERN_C int DLL_DECL stage_update(const char *userTag,
 
   const char *duserTag = (userTag != 0)?userTag:"NULL";
   const char *dprotocol = (protocol != 0)?protocol:"NULL";
-  stage_trace(3, "%s Usertag=%s Protocol=%s File=%s mode=%d/size=%llu/create=%d", 
-	      func, duserTag, dprotocol, filename, mode, size, create);
+  stage_trace(3, "%s Usertag=%s Protocol=%s File=%s mode=%d/size=%llu/flags=%d", 
+	      func, duserTag, dprotocol, filename, mode, size, flags);
     
   try {
     castor::BaseObject::initLog("", castor::SVC_NOMSG);
@@ -224,9 +224,7 @@ EXTERN_C int DLL_DECL stage_update(const char *userTag,
     subreq->setRequest(&req);
     subreq->setXsize(size);
     subreq->setModeBits(mode);
-    if (create) {
-      subreq->setFlags(O_CREAT );
-    }
+    subreq->setFlags(flags);
 
     // Submitting the request
     std::vector<castor::rh::Response *>respvec;    

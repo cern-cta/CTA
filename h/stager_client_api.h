@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.30 $ $Release$ $Date: 2006/04/24 13:38:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.31 $ $Release$ $Date: 2006/05/05 16:36:05 $ $Author: sponcec3 $
  *
  * the client API to the castor stager
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.30 $
- * @date $Date: 2006/04/24 13:38:43 $
+ * @version $Revision: 1.31 $
+ * @date $Date: 2006/05/05 16:36:05 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.30 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.31 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -464,7 +464,7 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate _PROTO((const char *userTag,
  * @param userTag    A string chosen by user to group requests
  * @param protocol   The protocol requested to access the file
  * @param filename   The CASTOR filename
- * @param create     If set to one, the file will be created if it does not exist
+ * @param flags      The POSIX flags for the file opening. Only O_CREAT and O_TRUC will be considered
  * @param mode       The mode bits for the file when created
  * @param size       The expected final size of the file, or 0 if not known
  * @param response   fileresponse structure
@@ -479,7 +479,7 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate _PROTO((const char *userTag,
 EXTERN_C int DLL_DECL stage_update _PROTO ((const char *userTag,
                                             const char *protocol,
                                             const char *filename,
-                                            int    create,
+                                            int   flags,
                                             mode_t mode,
 					    u_signed64 size,
                                             struct stage_io_fileresp **response,

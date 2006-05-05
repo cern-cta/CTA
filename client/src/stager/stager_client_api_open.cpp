@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_open.cpp,v 1.5 2006/05/03 15:34:49 sponcec3 Exp $
+ * $Id: stager_client_api_open.cpp,v 1.6 2006/05/05 16:36:11 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_open.cpp,v $ $Revision: 1.5 $ $Date: 2006/05/03 15:34:49 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_open.cpp,v $ $Revision: 1.6 $ $Date: 2006/05/05 16:36:11 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -51,9 +51,8 @@ EXTERN_C int DLL_DECL stage_open(const char *userTag,
   char *func = "stage_open_ext";
 
   if ((flags == O_RDONLY) ||
-      (flags == O_TRUNC) ||
-      (flags == O_CREAT)) {
-    //std::cout << "-------------> STAGE_GET" << std::endl;
+      (flags == O_TRUNC|O_RDONLY) ||
+      (flags == O_CREAT|O_RDONLY)) {
     /* Always use stage_get for read-only mode */
     return stage_get(userTag, 
                      protocol, 
@@ -61,9 +60,15 @@ EXTERN_C int DLL_DECL stage_open(const char *userTag,
                      response,
                      requestId, 
                      opts);
-  } else if ((flags & O_TRUNC) == O_TRUNC) {
-    //std::cout << "-------------> STAGE_PUT" << std::endl;
-    /* Always use stage_put when O_TRUNC is requested */
+  } else if (((flags & O_TRUNC) == O_TRUNC) &&
+	     ((flags & O_CREAT) == O_CREAT)) {
+    /* We should always use stage_put when O_TRUNC is requested but we do it only is O_CREAT is
+       also set. Otherwise, we do an update and it will be handled as a put due to the O_TRUNC flag.
+       The reason for this is that a put is always first removing the file before recreating it.
+       This leads to a problem when the O_CREAT flag is not set that the recreation fails. Thus
+       the O_CREAT flag is forced in rfio_hsmif when O_TRUNC is set. We rely here on the fact
+       that in case of no O_CREAT, the request is stopped at the stager level. However, this is
+       not the case if we use put, only if we use update and set the flags. */
     return stage_put(userTag, 
                      protocol, 
                      filename,
@@ -73,13 +78,12 @@ EXTERN_C int DLL_DECL stage_open(const char *userTag,
                      requestId, 
                      opts);
   } else {
-    //std::cout << "-------------> STAGE_UPDATE" << std::endl;
-    /* In the rest of the cases, use stage_update, checking for O_CREAT
-       to see whether the create option of update should be set ! */
+    /* In the rest of the cases, use stage_update, passing the flags for further
+       checks in the stager ! */
     return stage_update(userTag, 
                         protocol,
                         filename, 
-                        ((flags & O_CREAT) == O_CREAT),
+                        flags,
                         mode, 
 			size,
                         response,
