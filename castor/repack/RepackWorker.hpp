@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/03/14 17:44:20 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/05/06 15:35:25 $ $Author: felixehm $
  *
  *
  *
@@ -69,12 +69,12 @@ namespace castor {
     /**
      * Standard destructor
      */
-    ~RepackWorker() throw();
+    ~RepackWorker();
 
 
     
-    virtual void run(void* param) throw();
-    virtual void stop() throw();
+    virtual void run(void* param);
+    virtual void stop() ;
     
   private:
     
@@ -82,9 +82,9 @@ namespace castor {
 	 * Retrieves the Information of a tape and returns its status, otherwise -1
 	 * @param vid The Volumeid of the tape
 	 */
-    int getTapeStatus(std::string tapename);
+    int getTapeStatus(std::string tapename) throw (castor::exception::Internal);
 
-	bool checkTapeForRepack(std::string);
+	bool checkTapeForRepack(std::string) throw (castor::exception::Internal);
 
     /**
      * Retrieves information about the tapes in a pool and counts the tape
@@ -92,12 +92,12 @@ namespace castor {
      * @param pool the name of the tape pool
      * @throws castor::exception::Exception if the pool does not exist
      */ 
-    int getPoolInfo(castor::repack::RepackRequest* rreq) throw();
+    int getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor::exception::Internal);
 
-	void handleRepack(RepackRequest* rreq) throw();
-	void removeRequest(RepackRequest* rreq) throw ();
-	void getStatus(RepackRequest* rreq) throw();
-   void getStatusAll(RepackRequest* rreq) throw();
+	void handleRepack(RepackRequest* rreq) throw (castor::exception::Internal);
+	void removeRequest(RepackRequest* rreq) throw (castor::exception::Internal);
+	void getStatus(RepackRequest* rreq) throw (castor::exception::Internal);
+   void getStatusAll(RepackRequest* rreq) throw (castor::exception::Internal);
     /**
      * the nameserver, which is contacted for all Requests
      */
