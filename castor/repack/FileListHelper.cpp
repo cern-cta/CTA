@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/03/03 17:21:37 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/05/06 14:55:04 $ $Author: felixehm $
  *
  *
  *
@@ -45,6 +45,8 @@ FileListHelper::FileListHelper(std::string nameserver)
 // Constructor 2, initialises the m_ns from the castor config file
 //------------------------------------------------------------------------------
 FileListHelper::FileListHelper() throw (castor::exception::Internal) {
+	
+   
 	/*
 	if ( !(m_ns = getconfent("CNS", "HOST",0)) ){
 		castor::exception::Internal ex;
@@ -79,13 +81,13 @@ std::vector<std::string>* FileListHelper::getFilePathnames(
 	/* and get the parentfileids */
 	tmp = getFileList(subreq, cuuid);
 
-	stage_trace(2,"Fetching filenames for %f Files",tmp->size());
+	stage_trace(2,"Fetching filenames for %d Files",tmp->size());
 	for ( i=0; i< tmp->size(); i++ )
 	{
 		/* get the full path and push it into the list */
 		if ( Cns_getpath((char*)m_ns.c_str(), tmp->at(i), path) < 0 ) {
 				castor::exception::Internal ex;
-				ex.getMessage() << "FileListHelper::getFileList(..):" 
+				ex.getMessage() << "FileListHelper::getFilePathnames(..):" 
 								<< sstrerror(serrno) << std::endl;
 				castor::dlf::Param params[] =
 				{castor::dlf::Param("Standard Message", sstrerror(ex.code()))};
@@ -164,7 +166,9 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq, Cu
 		/* all Segments from a tape belong to one Request ! */
 
 		while ((dtp = Cns_listtape ((char*)m_ns.c_str(), (char*)subreq->vid().c_str(), flags, &list)) != NULL) {
-
+			
+			if (dtp->s_status == 'D') continue;
+			
 			RepackSegment* rseg= new RepackSegment();
 			rseg->setVid(subreq);
 			rseg->setFileid(dtp->fileid);
