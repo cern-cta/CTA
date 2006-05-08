@@ -192,7 +192,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.53 $ $Release$ $Date: 2006/05/04 16:20:22 $ $Author: itglp $
+ * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.54 $ $Release$ $Date: 2006/05/08 11:54:03 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1850,9 +1850,10 @@ BEGIN
        WHERE castorFile = cfId;
       -- If any TapeCopy, give up
       IF nb = 0 THEN
-        -- See whether the castorfile has any SubRequest
+        -- See whether the castorfile has any pending SubRequest
         SELECT count(*) INTO nb FROM SubRequest
-         WHERE castorFile = cfId;
+         WHERE castorFile = cfId
+           AND status NOT IN (8, 9, 11);  -- FINISHED, FAILED_FINISHED, ARCHIVED
         -- If any SubRequest, give up
         IF nb = 0 THEN
           DECLARE
@@ -2085,7 +2086,7 @@ BEGIN
  FOR sr IN (SELECT id, status
               FROM SubRequest
              WHERE castorFile = cfId) LOOP
-   IF sr.status NOT IN (8, 9) THEN   -- FINISHED, FAILED_FINISHED
+   IF sr.status NOT IN (8, 9, 11) THEN   -- FINISHED, FAILED_FINISHED, ARCHIVED
      UPDATE SubRequest SET status = 7 WHERE id = sr.id;  -- FAILED
    END IF;
  END LOOP;
@@ -2436,7 +2437,8 @@ BEGIN
            -- we need to give these hints to the optimizer otherwise it goes for a full table scan (!)
            UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
            DiskCopy.path, CastorFile.filesize,
-           nvl(DiskCopy.status, decode(SubRequest.status, NULL,-1, 2)),   -- 2 = DISKCOPY_WAITTAPERECALL
+           nvl(DiskCopy.status, decode(SubRequest.status, 0,2, 3,2, -1)), 
+               -- SubRequest in status 0,3 (START,WAITSCHED) => 2 = DISKCOPY_WAITTAPERECALL is returned
            DiskServer.name, FileSystem.mountPoint,
            CastorFile.nbaccesses, CastorFile.lastKnownFileName
       FROM CastorFile, DiskCopy, FileSystem, DiskServer,

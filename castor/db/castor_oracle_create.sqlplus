@@ -192,7 +192,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)$RCSfile: castor_oracle_create.sqlplus,v $ $Revision: 1.1 $ $Release$ $Date: 2006/05/05 09:53:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: castor_oracle_create.sqlplus,v $ $Revision: 1.2 $ $Release$ $Date: 2006/05/08 11:54:03 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
