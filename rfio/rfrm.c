@@ -1,5 +1,5 @@
 /*
- * $Id: rfrm.c,v 1.17 2006/05/03 09:21:36 gtaur Exp $
+ * $Id: rfrm.c,v 1.18 2006/05/08 13:37:03 gtaur Exp $
  */
 
 /*
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.17 $ $Date: 2006/05/03 09:21:36 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.18 $ $Date: 2006/05/08 13:37:03 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -215,7 +215,8 @@ int *yesno;
           empty = 0;
           p = (char *)malloc(strlen(path)+strlen(de->d_name)+2);
           rfio_parse(path,&hostname,&pathname);
-          strcpy(p,pathname);
+          if (pathname && (strstr(pathname,"/castor")==pathname ||strstr(pathname,"//castor")==pathname  )) strcpy(p,pathname);
+	  else strcpy(p,path);
           strcat(p,"/");
           strcat(p,de->d_name);
           if ( rfio_lstat64(p,&st) == -1 ) {
