@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.261 $ $Release$ $Date: 2006/05/09 09:56:51 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.262 $ $Release$ $Date: 2006/05/09 09:59:36 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -336,7 +336,7 @@ BEGIN
   -- Try to see whether another subrequest in the same
   -- request is still processing
   SELECT count(*) INTO nb FROM SubRequest
-   WHERE request = rid AND status NOT IN (8); -- ALL FINISHED
+   WHERE request = rid AND status NOT IN (8); -- all but FINISHED
 
   -- Archive request if all subrequests have finished
   IF nb = 0 THEN
