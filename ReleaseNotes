@@ -2,7 +2,7 @@
 - 2.0.4-1 -
 -----------
 
-  New Features and Changes (from 2.0.3-1)
+  New Features and Changes (from 2.0.4-0)
   ---------------------------------------
     
     - Fixes concerning the TURL parsing in RFIO
@@ -12,8 +12,9 @@
     - The getNext functionnalities were made available to update requests
     - The cleaning daemon now has an init script
     - The flags given to RFIO when opening a file are now correctly handled
-    - Queries on directories are now handled properly
+    - Queries on directories are now properly handled
     - SQL scripts are now also provided for sqlplus
+    - The garbage collection was fixed (it was broken in 2.0.4-0 due to the new archiving of subrequests)
 
   Upgrade from 2.0.4-0
   --------------------
@@ -21,6 +22,8 @@
     - The 2 releases are fully compatible and can be freely mixed
     - The database schema has not evolved. However, some fixes in the PL/SQL code
       were added. Use upgrades/2.0.4-0_to_2.0.4-1.sql to upgrade.
+    - Clients can be updated completely independently (before or after the server
+      update).
 
 -----------
 - 2.0.4-0 -
