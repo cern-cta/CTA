@@ -34,5 +34,5 @@ DROP TABLE newRequests;
 DROP TABLE NbTapeCopiesInFS;
 DROP TABLE LockTable;
 DROP TABLE FilesDeletedProcOutput;
-
+DROP TABLE FileSystemGC;
 
