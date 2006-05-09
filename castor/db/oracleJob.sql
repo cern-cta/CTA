@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.260 $ $Release$ $Date: 2006/05/05 15:35:57 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.261 $ $Release$ $Date: 2006/05/09 09:56:51 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1967,7 +1967,9 @@ BEGIN
      FROM DiskCopy DS, CastorFile CF
     WHERE CF.id = DS.castorFile
       AND DS.fileSystem = fsId
-      AND NOT EXISTS (select 'x' from SubRequest where DS.status = 0 and diskcopy = DS.id)
+      AND NOT EXISTS (
+        SELECT 'x' FROM SubRequest 
+         WHERE DS.status = 0 AND diskcopy = DS.id AND SubRequest.status NOT IN (9, 11))   -- FAILED_FINISHED, ARCHIVED
       AND DS.status in (0,7)
     ORDER BY 3 DESC;
   return result;
