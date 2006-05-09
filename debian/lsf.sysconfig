@@ -1,9 +1,7 @@
 #
-# $Id: lsf.sysconfig,v 1.2 2006/02/07 08:39:49 itglp Exp $
+# $Id: lsf.sysconfig,v 1.3 2006/05/09 17:11:33 itglp Exp $
 #
 # Global setup for LSF
-
-RUN_LSF=yes
 
 if [ -n "$LD_LIBRARY_PATH" ]; then
   LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lsf/lib
