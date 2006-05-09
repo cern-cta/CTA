@@ -192,7 +192,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.54 $ $Release$ $Date: 2006/05/08 11:54:03 $ $Author: itglp $
+ * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.55 $ $Release$ $Date: 2006/05/09 10:09:12 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2141,6 +2141,7 @@ CREATE OR REPLACE PACKAGE castorGC AS
   TYPE policiesList IS TABLE OF VARCHAR2(2048);
 END castorGC;
 
+
 /*
  * GC policy that mimic the old GC :
  * a mix of oldest first and biggest first
@@ -2159,7 +2160,9 @@ BEGIN
      FROM DiskCopy DS, CastorFile CF
     WHERE CF.id = DS.castorFile
       AND DS.fileSystem = fsId
-      AND NOT EXISTS (select 'x' from SubRequest where DS.status = 0 and diskcopy = DS.id)
+      AND NOT EXISTS (
+        SELECT 'x' FROM SubRequest 
+         WHERE DS.status = 0 AND diskcopy = DS.id AND SubRequest.status NOT IN (9, 11))   -- FAILED_FINISHED, ARCHIVED
       AND DS.status in (0,7)
     ORDER BY 3 DESC;
   return result;
