@@ -446,6 +446,7 @@ int DLL_DECL rfio_HsmIf_mkdir(const char *path, mode_t mode) {
 
 int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64) {
     int rc = -1;
+    int ret;
     int save_serrno, save_errno;
     int* auxVal;
     char ** auxPoint;
@@ -460,7 +461,7 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
         opts.service_class=NULL;
         opts.stage_version=0;
 
-	int ret=Cglobals_get(& tStageHostKey, (void**) &auxPoint,sizeof(void*));
+	ret=Cglobals_get(& tStageHostKey, (void**) &auxPoint,sizeof(void*));
 	if(ret==0){
 		opts.stage_host=*auxPoint;
 	}
@@ -755,6 +756,7 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
 
 int DLL_DECL rfio_HsmIf_open_limbysz(const char *path, int flags, mode_t mode, u_signed64 maxsize, int mode64) {
     int rc = -1;
+    int ret;
     int save_serrno;
 #if defined(CNS_ROOT)
     stage_hsm_t *hsmfile = NULL;
@@ -783,7 +785,7 @@ int DLL_DECL rfio_HsmIf_open_limbysz(const char *path, int flags, mode_t mode, u
         opts.service_class=NULL;
         opts.stage_version=0;
 
-	int ret=Cglobals_get(& tStageHostKey, (void**) &auxPoint,sizeof(void*));
+	ret=Cglobals_get(& tStageHostKey, (void**) &auxPoint,sizeof(void*));
 	if(ret==1){
 		opts.stage_host=*auxPoint;
 	}

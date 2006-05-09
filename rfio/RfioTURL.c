@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.11 $ $Release$ $Date: 2006/05/03 09:21:36 $ $Author: gtaur $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.12 $ $Release$ $Date: 2006/05/09 10:24:06 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.11 $ $Release$ $Date: 2006/05/03 09:21:36 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.12 $ $Release$ $Date: 2006/05/09 10:24:06 $ Olof Barring";
 #endif /* not lint */
 /** RfioTURL.c - RFIO TURL handling
  *
@@ -237,17 +237,17 @@ int rfioTURLFromString(
   RfioTURL_t _tURL;
   int ret;
   char *path1, *path2, *mySvcClass, *myCastorVersion;
-  path1=path2=myCastorVersion=mySvcClass=myCastorVersion=NULL;
   char* buff;
   int versionNum=0;
   //void ** auxPointer=0;
 
-char ** globalHost,  **globalSvc;
-int *globalVersion, *globalPort;
-globalHost=globalSvc=0;
-globalVersion=globalPort=0;
+  char ** globalHost,  **globalSvc;
+  int *globalVersion, *globalPort;
 
+  globalHost=globalSvc=0;
+  globalVersion=globalPort=0;
 
+  path1=path2=myCastorVersion=mySvcClass=myCastorVersion=NULL;
   if ( tURLStr == NULL || tURL == NULL ) {
     serrno = EINVAL;
     return(-1);
