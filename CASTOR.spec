@@ -192,30 +192,6 @@ for i in `find . -name "*.sysconfig"`; do
 done
 
 #
-## IP tables modification to allow the castor client to open ports
-%post lib
-if [ -e /etc/sysconfig/iptables ]; then
-  if ! /bin/grep -q 'controlled by CASTOR-client RPM' /etc/sysconfig/iptables; then
-    /bin/cat <<EOFiptable |\
-    /bin/sed -i.castor -e '/-A RH-Firewall-1-INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT/r /dev/stdin' /etc/sysconfig/iptables
-    # controlled by CASTOR-client RPM 
-    # allow callbacks for RFIO, port range corresponds to default callback range
-    -A RH-Firewall-1-INPUT -m state --state NEW -m tcp -p tcp --dport 30000:30101 -j ACCEPT
-    # end of CASTOR-client RPM modifications
-    EOFiptable
-    /sbin/service iptables condrestart 
-  fi
-fi
-
-%postun lib
-if [ "$1" = "0" ] ; then # final uninstall
-  if [ -e /etc/sysconfig/iptables ]; then
-    /bin/sed -i.castor -e '/controlled by CASTOR-client RPM/,/end of CASTOR-client RPM modifications/d' /etc/sysconfig/iptables
-    /sbin/service iptables condrestart 
-  fi
-fi
-			   
-#
 ## Hardcoded package name CASTOR-client for RPM transation from castor1 to castor2
 %package -n CASTOR-client
 Summary: Cern Advanced mass STORage
