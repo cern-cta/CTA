@@ -1,0 +1,6 @@
+#
+## IP tables modification to allow the castor client to open ports
+if [ -e /etc/sysconfig/iptables ]; then
+  /bin/sed -i.castor -e '/controlled by CASTOR-client RPM/,/end of CASTOR-client RPM modifications/d' /etc/sysconfig/iptables
+  /sbin/service iptables condrestart 
+fi
