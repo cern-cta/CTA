@@ -15,6 +15,7 @@
     - Queries on directories are now properly handled
     - SQL scripts are now also provided for sqlplus
     - The garbage collection was fixed (it was broken in 2.0.4-0 due to the new archiving of subrequests)
+    - stager_qry -s was fixed (ordering was wrong)
 
   Upgrade from 2.0.4-0
   --------------------
