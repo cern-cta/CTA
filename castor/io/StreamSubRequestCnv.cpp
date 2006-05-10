@@ -153,7 +153,7 @@ castor::IObject* castor::io::StreamSubRequestCnv::createObj(castor::IAddress* ad
   int answered;
   ad->stream() >> answered;
   object->setAnswered(answered);
-  std:std::string repackVid;
+  std::string repackVid;
   ad->stream() >> repackVid;
   object->setRepackVid(repackVid);
   u_signed64 id;

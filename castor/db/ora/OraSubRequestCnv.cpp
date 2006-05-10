@@ -563,7 +563,7 @@ void castor::db::ora::OraSubRequestCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(9, time(0));
     m_insertStatement->setInt(10, time(0));
     m_insertStatement->setInt(11, obj->answered());
-    m_insertStatement->setStd:string(12, obj->repackVid());
+    m_insertStatement->setString(12, obj->repackVid());
     m_insertStatement->setDouble(13, (type == OBJ_DiskCopy && obj->diskcopy() != 0) ? obj->diskcopy()->id() : 0);
     m_insertStatement->setDouble(14, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
     m_insertStatement->setDouble(15, (type == OBJ_SubRequest && obj->parent() != 0) ? obj->parent()->id() : 0);
@@ -646,7 +646,7 @@ void castor::db::ora::OraSubRequestCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(8, obj->modeBits());
     m_updateStatement->setInt(9, time(0));
     m_updateStatement->setInt(10, obj->answered());
-    m_updateStatement->setStd:string(11, obj->repackVid());
+    m_updateStatement->setString(11, obj->repackVid());
     m_updateStatement->setInt(12, (int)obj->status());
     m_updateStatement->setInt(13, (int)obj->getNextStatus());
     m_updateStatement->setDouble(14, obj->id());
@@ -759,7 +759,7 @@ castor::IObject* castor::db::ora::OraSubRequestCnv::createObj(castor::IAddress* 
     object->setCreationTime((u_signed64)rset->getDouble(9));
     object->setLastModificationTime((u_signed64)rset->getDouble(10));
     object->setAnswered(rset->getInt(11));
-    object->setRepackVid(rset->getStd:string(12));
+    object->setRepackVid(rset->getString(12));
     object->setId((u_signed64)rset->getDouble(13));
     object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(17));
     object->setGetNextStatus((enum castor::stager::SubRequestGetNextStatusCodes)rset->getInt(19));
@@ -819,7 +819,7 @@ void castor::db::ora::OraSubRequestCnv::updateObj(castor::IObject* obj)
     object->setCreationTime((u_signed64)rset->getDouble(9));
     object->setLastModificationTime((u_signed64)rset->getDouble(10));
     object->setAnswered(rset->getInt(11));
-    object->setRepackVid(rset->getStd:string(12));
+    object->setRepackVid(rset->getString(12));
     object->setId((u_signed64)rset->getDouble(13));
     object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(17));
     object->setGetNextStatus((enum castor::stager::SubRequestGetNextStatusCodes)rset->getInt(19));

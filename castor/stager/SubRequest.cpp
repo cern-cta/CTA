@@ -53,7 +53,7 @@ castor::stager::SubRequest::SubRequest() throw() :
   m_creationTime(0),
   m_lastModificationTime(0),
   m_answered(0),
-  m_repackVid(AIE : std:string),
+  m_repackVid(""),
   m_id(0),
   m_diskcopy(0),
   m_castorFile(0),

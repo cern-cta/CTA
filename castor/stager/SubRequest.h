@@ -34,7 +34,6 @@
 #include "castor/stager/SubRequestStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
-struct C_std:string_t;
 struct Cstager_CastorFile_t;
 struct Cstager_DiskCopy_t;
 struct Cstager_FileRequest_t;
@@ -230,13 +229,13 @@ int Cstager_SubRequest_setAnswered(struct Cstager_SubRequest_t* instance, int ne
  * Get the value of repackVid
  * If the request comes from repack, this field contains the Vid of the tape to be
  */
-int Cstager_SubRequest_repackVid(struct Cstager_SubRequest_t* instance, struct C_std:string_t* var);
+int Cstager_SubRequest_repackVid(struct Cstager_SubRequest_t* instance, const char** var);
 
 /**
  * Set the value of repackVid
  * If the request comes from repack, this field contains the Vid of the tape to be
  */
-int Cstager_SubRequest_setRepackVid(struct Cstager_SubRequest_t* instance, struct C_std:string_t new_var);
+int Cstager_SubRequest_setRepackVid(struct Cstager_SubRequest_t* instance, const char* new_var);
 
 /**
  * Get the value of id

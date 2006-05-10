@@ -310,7 +310,7 @@ namespace castor {
        * If the request comes from repack, this field contains the Vid of the tape to be
        * @return the value of m_repackVid
        */
-      std:std::string repackVid() const {
+      std::string repackVid() const {
         return m_repackVid;
       }
 
@@ -319,7 +319,7 @@ namespace castor {
        * If the request comes from repack, this field contains the Vid of the tape to be
        * @param new_var the new value of m_repackVid
        */
-      void setRepackVid(std:std::string new_var) {
+      void setRepackVid(std::string new_var) {
         m_repackVid = new_var;
       }
 
@@ -506,7 +506,7 @@ namespace castor {
       int m_answered;
 
       /// If the request comes from repack, this field contains the Vid of the tape to be repacked
-      std:std::string m_repackVid;
+      std::string m_repackVid;
 
       /// The id of this object
       u_signed64 m_id;
