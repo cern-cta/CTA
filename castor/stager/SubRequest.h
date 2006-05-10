@@ -34,6 +34,7 @@
 #include "castor/stager/SubRequestStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
+struct C_std:string_t;
 struct Cstager_CastorFile_t;
 struct Cstager_DiskCopy_t;
 struct Cstager_FileRequest_t;
@@ -105,7 +106,6 @@ int Cstager_SubRequest_setRetryCounter(struct Cstager_SubRequest_t* instance, un
  * Get the value of fileName
  * Name of the file this SubRequest deals with.
  * When stored in the catalog, this is redundant with the link to the CastorFile
- * table. However, this is needed in the client
  */
 int Cstager_SubRequest_fileName(struct Cstager_SubRequest_t* instance, const char** var);
 
@@ -113,7 +113,6 @@ int Cstager_SubRequest_fileName(struct Cstager_SubRequest_t* instance, const cha
  * Set the value of fileName
  * Name of the file this SubRequest deals with.
  * When stored in the catalog, this is redundant with the link to the CastorFile
- * table. However, this is needed in the client
  */
 int Cstager_SubRequest_setFileName(struct Cstager_SubRequest_t* instance, const char* new_var);
 
@@ -143,7 +142,6 @@ int Cstager_SubRequest_setXsize(struct Cstager_SubRequest_t* instance, u_signed6
  * Get the value of priority
  * The priority defines in which order the files will be processed by the user when
  * calling stage_get_next. The files of the SubRequest of same priority are given in
- * a random order and lower priority files come first.
  */
 int Cstager_SubRequest_priority(struct Cstager_SubRequest_t* instance, unsigned int* var);
 
@@ -151,7 +149,6 @@ int Cstager_SubRequest_priority(struct Cstager_SubRequest_t* instance, unsigned 
  * Set the value of priority
  * The priority defines in which order the files will be processed by the user when
  * calling stage_get_next. The files of the SubRequest of same priority are given in
- * a random order and lower priority files come first.
  */
 int Cstager_SubRequest_setPriority(struct Cstager_SubRequest_t* instance, unsigned int new_var);
 
@@ -182,14 +179,12 @@ int Cstager_SubRequest_setFlags(struct Cstager_SubRequest_t* instance, int new_v
 /**
  * Get the value of modeBits
  * Permissions for the file handled by this SubRequest (essentially used at creation
- * time)
  */
 int Cstager_SubRequest_modeBits(struct Cstager_SubRequest_t* instance, int* var);
 
 /**
  * Set the value of modeBits
  * Permissions for the file handled by this SubRequest (essentially used at creation
- * time)
  */
 int Cstager_SubRequest_setModeBits(struct Cstager_SubRequest_t* instance, int new_var);
 
@@ -220,20 +215,28 @@ int Cstager_SubRequest_setLastModificationTime(struct Cstager_SubRequest_t* inst
 /**
  * Get the value of answered
  * Whether somebody answered to this subRequest already. 1 means that it is the
- * case, 0 does not ensure it is not the case.
  * This was introduced to deal with prepareToGet where the answer is sent before the
- * status of the subrequest changes
  */
 int Cstager_SubRequest_answered(struct Cstager_SubRequest_t* instance, int* var);
 
 /**
  * Set the value of answered
  * Whether somebody answered to this subRequest already. 1 means that it is the
- * case, 0 does not ensure it is not the case.
  * This was introduced to deal with prepareToGet where the answer is sent before the
- * status of the subrequest changes
  */
 int Cstager_SubRequest_setAnswered(struct Cstager_SubRequest_t* instance, int new_var);
+
+/**
+ * Get the value of repackVid
+ * If the request comes from repack, this field contains the Vid of the tape to be
+ */
+int Cstager_SubRequest_repackVid(struct Cstager_SubRequest_t* instance, struct C_std:string_t* var);
+
+/**
+ * Set the value of repackVid
+ * If the request comes from repack, this field contains the Vid of the tape to be
+ */
+int Cstager_SubRequest_setRepackVid(struct Cstager_SubRequest_t* instance, struct C_std:string_t new_var);
 
 /**
  * Get the value of id
@@ -289,7 +292,6 @@ int Cstager_SubRequest_removeChild(struct Cstager_SubRequest_t* instance, struct
 
 /**
  * Get the list of struct Cstager_SubRequest_t* objects held by child. Note that the
- * caller is responsible for the deletion of the returned vector.
  */
 int Cstager_SubRequest_child(struct Cstager_SubRequest_t* instance, struct Cstager_SubRequest_t*** var, int* len);
 

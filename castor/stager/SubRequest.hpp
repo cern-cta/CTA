@@ -125,7 +125,6 @@ namespace castor {
        * Get the value of m_fileName
        * Name of the file this SubRequest deals with.
        * When stored in the catalog, this is redundant with the link to the CastorFile
-       * table. However, this is needed in the client
        * @return the value of m_fileName
        */
       std::string fileName() const {
@@ -136,7 +135,6 @@ namespace castor {
        * Set the value of m_fileName
        * Name of the file this SubRequest deals with.
        * When stored in the catalog, this is redundant with the link to the CastorFile
-       * table. However, this is needed in the client
        * @param new_var the new value of m_fileName
        */
       void setFileName(std::string new_var) {
@@ -181,7 +179,6 @@ namespace castor {
        * Get the value of m_priority
        * The priority defines in which order the files will be processed by the user when
        * calling stage_get_next. The files of the SubRequest of same priority are given in
-       * a random order and lower priority files come first.
        * @return the value of m_priority
        */
       unsigned int priority() const {
@@ -192,7 +189,6 @@ namespace castor {
        * Set the value of m_priority
        * The priority defines in which order the files will be processed by the user when
        * calling stage_get_next. The files of the SubRequest of same priority are given in
-       * a random order and lower priority files come first.
        * @param new_var the new value of m_priority
        */
       void setPriority(unsigned int new_var) {
@@ -238,7 +234,6 @@ namespace castor {
       /**
        * Get the value of m_modeBits
        * Permissions for the file handled by this SubRequest (essentially used at creation
-       * time)
        * @return the value of m_modeBits
        */
       int modeBits() const {
@@ -248,7 +243,6 @@ namespace castor {
       /**
        * Set the value of m_modeBits
        * Permissions for the file handled by this SubRequest (essentially used at creation
-       * time)
        * @param new_var the new value of m_modeBits
        */
       void setModeBits(int new_var) {
@@ -294,9 +288,7 @@ namespace castor {
       /**
        * Get the value of m_answered
        * Whether somebody answered to this subRequest already. 1 means that it is the
-       * case, 0 does not ensure it is not the case.
        * This was introduced to deal with prepareToGet where the answer is sent before the
-       * status of the subrequest changes
        * @return the value of m_answered
        */
       int answered() const {
@@ -306,13 +298,29 @@ namespace castor {
       /**
        * Set the value of m_answered
        * Whether somebody answered to this subRequest already. 1 means that it is the
-       * case, 0 does not ensure it is not the case.
        * This was introduced to deal with prepareToGet where the answer is sent before the
-       * status of the subrequest changes
        * @param new_var the new value of m_answered
        */
       void setAnswered(int new_var) {
         m_answered = new_var;
+      }
+
+      /**
+       * Get the value of m_repackVid
+       * If the request comes from repack, this field contains the Vid of the tape to be
+       * @return the value of m_repackVid
+       */
+      std:std::string repackVid() const {
+        return m_repackVid;
+      }
+
+      /**
+       * Set the value of m_repackVid
+       * If the request comes from repack, this field contains the Vid of the tape to be
+       * @param new_var the new value of m_repackVid
+       */
+      void setRepackVid(std:std::string new_var) {
+        m_repackVid = new_var;
       }
 
       /**
@@ -496,6 +504,9 @@ namespace castor {
        * This was introduced to deal with prepareToGet where the answer is sent before the status of the subrequest changes
       */
       int m_answered;
+
+      /// If the request comes from repack, this field contains the Vid of the tape to be repacked
+      std:std::string m_repackVid;
 
       /// The id of this object
       u_signed64 m_id;

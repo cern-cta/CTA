@@ -83,7 +83,7 @@ CREATE TABLE StageRequestQueryRequest (flags INTEGER, userName VARCHAR2(2048), e
 CREATE TABLE StageFindRequestRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type SubRequest */
-CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, repackVid std:string, id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StageReleaseFilesRequest */
 CREATE TABLE StageReleaseFilesRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
@@ -192,7 +192,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.56 $ $Release$ $Date: 2006/05/10 15:00:13 $ $Author: itglp $
+ * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.57 $ $Release$ $Date: 2006/05/10 15:16:58 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -306,7 +306,7 @@ END;
 
 /* Global temporary table to handle output of the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
-  (fileid INTEGER, nshost VARCHAR2(2048))
+  (fileid NUMBER, nshost VARCHAR2(2048))
 ON COMMIT DELETE ROWS;
 
 /****************************************************************/
@@ -528,7 +528,7 @@ BEGIN
   -- Try to see whether another subrequest in the same
   -- request is still processing
   SELECT count(*) INTO nb FROM SubRequest
-   WHERE request = rid AND status NOT IN (8); -- ALL FINISHED
+   WHERE request = rid AND status NOT IN (8); -- all but FINISHED
 
   -- Archive request if all subrequests have finished
   IF nb = 0 THEN
@@ -2141,7 +2141,6 @@ CREATE OR REPLACE PACKAGE castorGC AS
   TYPE policiesList IS TABLE OF VARCHAR2(2048);
 END castorGC;
 
-
 /*
  * GC policy that mimic the old GC :
  * a mix of oldest first and biggest first
@@ -2396,10 +2395,38 @@ BEGIN
   COMMIT;
 END;
 
+/* This table keeps the current queue of the garbage collector:
+ * whenever a new filesystem has to be garbage collected, a row is inserted
+ * in this table and a db job runs on it to actually execute the gc.
+ * In low load conditions this table will be empty and the db job is fired
+ * for each new entered filesystem. In high load conditions the db job will
+ * keep running and no other jobs will be fired */
+CREATE TABLE FileSystemGC (fsid NUMBER PRIMARY KEY, submissionTime NUMBER);
+
+/*
+ * Runs Garbage collection anywhere needed.
+ * This is fired as a DBMS JOB from the FS trigger.
+ */
+CREATE OR REPLACE PROCEDURE garbageCollect AS
+  fs NUMBER;
+BEGIN
+  LOOP
+    -- get the oldest FileSystem to be garbage collected
+    SELECT fsid INTO fs FROM
+      (SELECT fsid FROM FileSystemGC ORDER BY submissionTime ASC)
+    WHERE ROWNUM < 2;
+    garbageCollectFS(fs);
+    DELETE FROM FileSystemGC WHERE fsid = fs;
+    -- yield to other jobs/transactions
+    DBMS_LOCK.sleep(seconds => 1.0);
+  END LOOP;
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN NULL;  -- terminate the job
+END;
 
 /*
  * Trigger launching garbage collection whenever needed
- * Note that we only launch it when at least 10 gigs are to be deleted
+ * Note that we only launch it when at least 5 gigs are to be deleted
  */
 CREATE OR REPLACE TRIGGER tr_FileSystem_Update
 AFTER UPDATE OF free, deltaFree, reservedSpace ON FileSystem
@@ -2407,6 +2434,9 @@ FOR EACH ROW
 DECLARE
   freeSpace NUMBER;
   jobid NUMBER;
+  gccount INTEGER;
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
 BEGIN
   -- compute the actual free space taking into account reservations (reservedSpace)
   -- and already running GC processes (spaceToBeFreed)
@@ -2416,10 +2446,20 @@ BEGIN
      -- is it really worth launching it? (some other GCs maybe are already running
      -- so we accept it only if it will free more than 5 Gb)
      :new.maxFreeSpace * :new.totalSize > freeSpace + 5000000000 THEN
-    -- here we spawn a job to do the real work. This avoids mutating table error
-    -- and ensures that the current update does not fail if GC fails
-    DBMS_JOB.SUBMIT(jobid,'garbageCollectFS(' || :new.id || ');');
+    -- ok, we queue this filesystem for being garbage collected
+    INSERT INTO FileSystemGC VALUES (:new.id, getTime());
+    SELECT count(*) INTO gccount FROM FileSystemGC;
+    -- is there only this single filesystem waiting for GC?
+    IF gccount = 1 THEN
+      -- we spawn a job to do the real work. This avoids mutating table error
+      -- and ensures that the current update does not fail if GC fails
+      DBMS_JOB.SUBMIT(jobid,'garbageCollect();');
+    END IF;
+    -- otherwise, a job is already running and will take over this file system too
   END IF;
+  EXCEPTION
+    -- the filesystem was already selected for GC, do nothing
+    WHEN CONSTRAINT_VIOLATED THEN NULL;
 END;
 
 

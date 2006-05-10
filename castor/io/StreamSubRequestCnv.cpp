@@ -43,6 +43,7 @@
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
+#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "osdep.h"
 #include <string>
@@ -103,8 +104,10 @@ void castor::io::StreamSubRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->creationTime();
   ad->stream() << obj->lastModificationTime();
   ad->stream() << obj->answered();
+  ad->stream() << obj->repackVid();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
+  ad->stream() << obj->getNextStatus();
 }
 
 //------------------------------------------------------------------------------
@@ -150,12 +153,18 @@ castor::IObject* castor::io::StreamSubRequestCnv::createObj(castor::IAddress* ad
   int answered;
   ad->stream() >> answered;
   object->setAnswered(answered);
+  std:std::string repackVid;
+  ad->stream() >> repackVid;
+  object->setRepackVid(repackVid);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
   int status;
   ad->stream() >> status;
   object->setStatus((castor::stager::SubRequestStatusCodes)status);
+  int getNextStatus;
+  ad->stream() >> getNextStatus;
+  object->setGetNextStatus((castor::stager::SubRequestGetNextStatusCodes)getNextStatus);
   return object;
 }
 

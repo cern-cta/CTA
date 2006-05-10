@@ -35,6 +35,7 @@
 #include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "osdep.h"
+#include <string>
 #include <vector>
 
 extern "C" {
@@ -278,6 +279,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_SubRequest_setAnswered(castor::stager::SubRequest* instance, int new_var) {
     instance->setAnswered(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_repackVid
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_repackVid(castor::stager::SubRequest* instance, std:std::string* var) {
+    *var = instance->repackVid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setRepackVid
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setRepackVid(castor::stager::SubRequest* instance, std:std::string new_var) {
+    instance->setRepackVid(new_var);
     return 0;
   }
 

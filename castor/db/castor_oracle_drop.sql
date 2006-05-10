@@ -34,7 +34,7 @@ DROP TABLE newRequests;
 DROP TABLE NbTapeCopiesInFS;
 DROP TABLE LockTable;
 DROP TABLE FilesDeletedProcOutput;
-
+DROP TABLE FileSystemGC;
 
 ALTER TABLE SvcClass2TapePool
   DROP CONSTRAINT fk_SvcClass2TapePool_P
@@ -276,6 +276,7 @@ DROP FUNCTION nopinGCPolicy;
 DROP FUNCTION nullGCPolicy;
 DROP PROCEDURE garbageCollectFS;
 DROP PROCEDURE defGarbageCollectFS;
+DROP PROCEDURE garbageCollect;
 DROP PROCEDURE internalStageQuery;
 DROP PROCEDURE internalFullStageQuery;
 DROP PROCEDURE fileNameStageQuery;
