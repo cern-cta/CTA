@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/07/07 14:58:42 $ $Author: itglp $
+ * @(#)$RCSfile: ITapeSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/05/11 12:46:38 $ $Author: felixehm $
  *
  * This class provides methods related to tape handling
  *
@@ -264,6 +264,18 @@ namespace castor {
       virtual std::vector<castor::stager::Segment*>
       failedSegments()
         throw (castor::exception::Exception) = 0;
+
+      /**
+       * Checks, if the fileid is in a actual repack process.
+       * This method is run by the migrator. It looks into the
+       * Stager Catalog, if a repack vid was assigned with a subrequest.
+       * @return the corresponding SubRequest object in the catalogue
+       * @exception in case of an error
+       */
+      virtual castor::stager::SubRequest* checkFileForRepack
+      (const u_signed64 fileId) throw (castor::exception::Exception) = 0;
+
+
 
     }; // end of class ITapeSvc
 

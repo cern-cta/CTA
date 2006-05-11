@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/09/05 12:54:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/05/11 12:46:39 $ $Author: felixehm $
  *
  *
  *
@@ -379,5 +379,28 @@ extern "C" {
     }
     return 0;
   }
+
+
+  //-------------------------------------------------------------------------
+  // C_stager_ITapeSvc_getSubRequestForFile
+  //-------------------------------------------------------------------------
+  int Cstager_ITapeSvc_checkFileForRepack
+  (struct Cstager_ITapeSvc_t* tpSvc,
+   castor::stager::SubRequest** subRequest,
+   const u_signed64 fileid) {
+    if (!checkITapeSvc(tpSvc) ) return -1;
+    try {
+      *subRequest = tpSvc->tpSvc->checkFileForRepack(fileid);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      tpSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+
+
+
 
 }

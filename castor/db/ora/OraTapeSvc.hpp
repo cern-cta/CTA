@@ -35,6 +35,7 @@
 #include "castor/db/ora/OraCommonSvc.hpp"
 #endif
 #include "castor/stager/ITapeSvc.hpp"
+#include "occi.h"
 #include <vector>
 
 namespace castor {
@@ -273,6 +274,19 @@ namespace castor {
         failedSegments()
           throw (castor::exception::Exception);
 
+
+
+        /**
+          * Checks, if the fileid is in a actual repack process.
+	  * This method is run by the migrator. It looks into the
+	  * Stager Catalog, if a repack vid was assigned with a subrequest.
+	  * @return the corresponding SubRequest object in the catalogue
+	  * @exception in case of an error
+          */
+        virtual castor::stager::SubRequest* checkFileForRepack
+		  (const u_signed64 file)	 throw (castor::exception::Exception);
+
+
       private:
 
         /// SQL statement for function tapesToDo
@@ -352,6 +366,12 @@ namespace castor {
 
         /// SQL statement object for function failedSegments
         oracle::occi::Statement *m_failedSegmentsStatement;
+
+        /// SQL statement for checkFileForRepack
+        static const std::string s_checkFileForRepackStatementString;
+
+        /// SQL statement object for function checkFileForRepack
+        oracle::occi::Statement *m_checkFileForRepackStatement;
 
       }; // end of class OraTapeSvc
 

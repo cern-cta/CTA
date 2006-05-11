@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvc.h,v $ $Revision: 1.1 $ $Release$ $Date: 2005/07/07 14:58:42 $ $Author: itglp $
+ * @(#)$RCSfile: ITapeSvc.h,v $ $Revision: 1.2 $ $Release$ $Date: 2006/05/11 12:46:39 $ $Author: felixehm $
  *
  *
  *
@@ -333,5 +333,18 @@ int Cstager_ITapeSvc_failedSegments
 (struct Cstager_ITapeSvc_t* stgSvc,
  struct Cstager_Segment_t*** segmentArray,
  int* nbItems);
+
+
+/**
+  * Checks, if the fileid is in a actual repack process.
+  * This method is run by the migrator. It looks into the
+  * Stager Catalog, if a repack vid was assigned with a subrequest.
+  * @return the corresponding SubRequest object in the catalogue
+  * @exception in case of an error
+  */
+int Cstager_ITapeSvc_checkFileForRepack
+(struct Cstager_ITapeSvc_t* stgSvc, 
+ struct Cstager_SubRequest_t* subRequest,
+ const u_signed64 key);
 
 #endif // CASTOR_ITAPESVC_H

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)OraTapeSvc.cpp,v 1.4 $Release$ 2006/04/04 16:42:14 itglp
+ * @(#)OraTapeSvc.cpp,v 1.5 $Release$ 2006/05/11 12:46:39 felixehm
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -144,6 +144,9 @@ const std::string castor::db::ora::OraTapeSvc::s_anySegmentsForTapeStatementStri
 const std::string castor::db::ora::OraTapeSvc::s_failedSegmentsStatementString =
   "BEGIN failedSegments(:1); END;";
 
+/// SQL statement for checkFileForRepack
+const std::string castor::db::ora::OraTapeSvc::s_checkFileForRepackStatementString = 
+ "SELECT subrequest.id FROM subrequest, diskcopy, castorfile WHERE diskcopy.id = subrequest.diskcopy AND diskcopy.status = 10 AND diskcopy.castorfile = castorfile.id and castorfile.fileid = :1";
 // -----------------------------------------------------------------------
 // OraTapeSvc
 // -----------------------------------------------------------------------
@@ -161,7 +164,8 @@ castor::db::ora::OraTapeSvc::OraTapeSvc(const std::string name) :
   m_resetStreamStatement(0),
   m_segmentsForTapeStatement(0),
   m_anySegmentsForTapeStatement(0),
-  m_failedSegmentsStatement(0) {
+  m_failedSegmentsStatement(0),
+  m_checkFileForRepackStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -206,6 +210,7 @@ void castor::db::ora::OraTapeSvc::reset() throw() {
     deleteStatement(m_segmentsForTapeStatement);
     deleteStatement(m_anySegmentsForTapeStatement);
     deleteStatement(m_failedSegmentsStatement);
+    deleteStatement(m_checkFileForRepackStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;
@@ -221,6 +226,7 @@ void castor::db::ora::OraTapeSvc::reset() throw() {
   m_segmentsForTapeStatement = 0;
   m_anySegmentsForTapeStatement = 0;
   m_failedSegmentsStatement = 0;
+  m_checkFileForRepackStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -866,5 +872,65 @@ castor::db::ora::OraTapeSvc::failedSegments ()
     throw ex;
   }
   return result;
+}
+
+
+// -----------------------------------------------------------------------
+// checkFileForRepack
+// -----------------------------------------------------------------------
+castor::stager::SubRequest*
+castor::db::ora::OraTapeSvc::checkFileForRepack
+(const u_signed64 fileId)
+  throw (castor::exception::Exception) {
+  
+  
+  oracle::occi::ResultSet *rset = NULL;
+  castor::stager::SubRequest* result = NULL;
+  u_signed64 id = 0;
+  
+  try {
+    
+    if (0 == m_checkFileForRepackStatement) {
+      m_checkFileForRepackStatement =
+        createStatement(s_checkFileForRepackStatementString);
+    }
+    
+    m_checkFileForRepackStatement->setDouble(1, fileId); 
+    rset = m_checkFileForRepackStatement->executeQuery();
+    rset->next();
+    
+    if ( rset != NULL ){
+      
+      id = (u_signed64)rset->getDouble(1);
+  
+      // Create result
+      castor::IObject* obj = cnvSvc()->getObjFromId( id );
+      result = dynamic_cast<castor::stager::SubRequest*>(obj);
+
+
+      /** we are supposed to have only one result on a repack system */
+      if ( rset->next() != oracle::occi::ResultSet::END_OF_FETCH){
+        delete rset;
+        castor::exception::Internal ex;
+        ex.getMessage() << "Found >1 candidates for fileid " 
+        << fileId  << "for segment replacement in NS." << std::endl;
+         throw ex;
+      }
+    }
+
+    delete rset;
+    // return
+    return result;
+    
+  
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in checkFileForRepack(): Fileid (" 
+      << fileId << ","
+      << id << ")"
+      << std::endl << e.what();
+    throw ex;
+  }
 }
 
