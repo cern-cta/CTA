@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)OraTapeSvc.cpp,v 1.5 $Release$ 2006/05/11 12:46:39 felixehm
+ * @(#)OraTapeSvc.cpp,v 1.6 $Release$ 2006/05/11 14:54:09 felixehm
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -146,7 +146,7 @@ const std::string castor::db::ora::OraTapeSvc::s_failedSegmentsStatementString =
 
 /// SQL statement for checkFileForRepack
 const std::string castor::db::ora::OraTapeSvc::s_checkFileForRepackStatementString = 
- "SELECT subrequest.id FROM subrequest, diskcopy, castorfile WHERE diskcopy.id = subrequest.diskcopy AND diskcopy.status = 10 AND diskcopy.castorfile = castorfile.id and castorfile.fileid = :1";
+ "SELECT subrequest.id FROM subrequest, diskcopy, castorfile WHERE diskcopy.id = subrequest.diskcopy AND diskcopy.status = 10 AND diskcopy.castorfile = castorfile.id AND castorfile.fileid = :1 AND subrequest.repackvid IS NOT NULL";
 // -----------------------------------------------------------------------
 // OraTapeSvc
 // -----------------------------------------------------------------------
