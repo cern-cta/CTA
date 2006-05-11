@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.264 $ $Release$ $Date: 2006/05/10 15:00:13 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.265 $ $Release$ $Date: 2006/05/11 08:07:41 $ $Author: felixehm $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -729,23 +729,27 @@ BEGIN
 END;
 
 /* PL/SQL method implementing fileRecalled */
-CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
+CREATE OR REPLACE PROCEDURE main_dev3.fileRecalled(tapecopyId IN INTEGER) AS
   SubRequestId NUMBER;
   dci NUMBER;
   fsId NUMBER;
   fileSize NUMBER;
-  -- repackVid VARCHAR2(2048);
+  repackVid VARCHAR2(2048);
+  cfid NUMBER;
 BEGIN
-  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize  --, SubRequest.repackVid
-    INTO SubRequestId, dci, fileSize  --, repackVid
+  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize, SubRequest.repackVid, CastorFile.id
+    INTO SubRequestId, dci, fileSize, repackVid, cfid
     FROM TapeCopy, SubRequest, DiskCopy, CastorFile
    WHERE TapeCopy.id = tapecopyId
      AND CastorFile.id = TapeCopy.castorFile
      AND DiskCopy.castorFile = TapeCopy.castorFile
      AND SubRequest.diskcopy(+) = DiskCopy.id
      AND DiskCopy.status = 2;
-  UPDATE DiskCopy SET status = 0  -- decode(repackVid, NULL,0, 6)  -- DISKCOPY_STAGEOUT if repackVid != NULL, else DISKCOPY_STAGED 
+  UPDATE DiskCopy SET status = decode( repackVid, NULL,NULL, 6)  -- DISKCOPY_STAGEOUT if repackVid != NULL, else DISKCOPY_STAGED 
    WHERE id = dci RETURNING fileSystem INTO fsid;
+  IF repackVid IS NOT NULL THEN
+  	putdonefunc(cfid, fsId,0);
+  END IF;
   IF SubRequestId IS NOT NULL THEN
     UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
      WHERE id = SubRequestId; 

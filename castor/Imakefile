@@ -151,8 +151,9 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamSegmentCnv.cpp \
               io/StreamSetFileGCWeightCnv.cpp \
               io/StreamStringResponseCnv.cpp \
-              io/StreamSubRequestCnv.cpp \
               io/StreamTapeCnv.cpp \
+              io/StreamSubRequestCnv.cpp \
+              io/StreamOldSubRequestCnv.cpp \
               io/StreamTapeCopyCnv.cpp \
               io/StreamTapeCopyForMigrationCnv.cpp \
               io/StreamTapePoolCnv.cpp \
