@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.44 $ $Release$ $Date: 2005/10/27 11:57:53 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.45 $ $Release$ $Date: 2006/05/11 12:25:53 $ $Author: felixehm $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.44 $ $Release$ $Date: 2005/10/27 11:57:53 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.45 $ $Release$ $Date: 2006/05/11 12:25:53 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -202,7 +202,7 @@ int migratorCallbackFileCopied(
 
     if ( (filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED) ) {
       (void)rtcpcld_getTapeCopyNumber(file,&tapeCopyNb);
-      rc = rtcpcld_updateNsSegmentAttributes(tape,file,tapeCopyNb);
+      rc = rtcpcld_updateNsSegmentAttributes(tape,file,tapeCopyNb,castorFileId);
       if ( rc == -1 ) {
         save_serrno = serrno;
         (void)dlf_write(

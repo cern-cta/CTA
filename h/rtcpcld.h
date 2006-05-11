@@ -360,7 +360,8 @@ int rtcpcld_initCatalogueInterface _PROTO((
 int rtcpcld_updateNsSegmentAttributes _PROTO((
                                               tape_list_t *,
                                               file_list_t *,
-                                              int
+                                              int,
+					      struct Cns_fileid*
                                               ));
 int rtcpcld_checkNsSegment _PROTO((
                                    tape_list_t *,

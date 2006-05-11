@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.30 $ $Release$ $Date: 2005/05/24 12:46:07 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.31 $ $Release$ $Date: 2006/05/11 12:25:54 $ $Author: felixehm $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.30 $ $Release$ $Date: 2005/05/24 12:46:07 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.31 $ $Release$ $Date: 2006/05/11 12:25:54 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -76,6 +76,7 @@ WSADATA wsadata;
 #include <castor/stager/SegmentStatusCodes.h>
 #include <castor/stager/CastorFile.h>
 #include <castor/stager/TapeCopy.h>
+#include <castor/stager/SubRequest.h>
 #include <castor/Constants.h>
 #include <rtcp_constants.h>
 #include <vdqm_api.h>
@@ -189,11 +190,13 @@ static int checkSegment(
 int rtcpcld_updateNsSegmentAttributes(
                                       tape,
                                       file,
-                                      tapeCopyNb
+                                      tapeCopyNb,
+				      castorFile
                                       )
      tape_list_t *tape;
      file_list_t *file;
      int tapeCopyNb;
+     struct Cns_fileid *castorFile;
 {
   rtcpTapeRequest_t *tapereq;
   rtcpFileRequest_t *filereq;
@@ -362,12 +365,62 @@ int rtcpcld_updateNsSegmentAttributes(
                   nsSegAttrs->checksum
                   );
   free(blkid);
-  rc = Cns_setsegattrs(
-                       (char *)NULL, /* CASTOR file name */
+
+
+
+  /** For repacking purpose we have to decide what CNS function we have
+      to call. In one case we update (replace), and in the normal case we
+      add (setsegattr)
+   */
+  struct Cstager_SubRequest_t *sreq = NULL;
+  serrno = rc = 0;
+  
+  /** try to get a subrequest in the stager catalogue for this file
+      which has a valid repack attribute and which 
+      DISKCOPY is in CANBEMIGRATED
+   */
+  rc = rtcpcld_checkFileForRepack( castorFile, &sreq );
+  
+  if (rc == -1){
+   (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
+                      (struct Cns_fileid *)&castorFileId,
+                      1,
+                      "CHECKFORREPACK",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(serrno));
+    return (-1);
+  }
+
+  if ( sreq != NULL ) {
+    /* we found a repackfile, so get the oldvid, from the SubRequest*/
+    const char** oldvid;
+    Cstager_SubRequest_repackVid(sreq,&oldvid);
+    
+    /* replace the old tapecopy. Note that the old segments are deleted!
+       and the old tapecopyno is assigned to the new tapecopy.*/
+    rc = Cns_replacetapecopy(
+                       &castorFileId,
+                       oldvid,
+                       nsSegAttrs->vid,
+                       nbSegms,
+                       nsSegAttrs
+                       );
+  }
+  else {
+
+  /* the normal Case */
+    rc = Cns_setsegattrs(
+                       (char *)NULL, // CASTOR file name 
                        &castorFileId,
                        nbSegms,
                        nsSegAttrs
                        );
+  }
+  
+
+
   if ( rc == -1 ) {
     save_serrno = serrno;
     if ( save_serrno == ENOENT ) {
@@ -382,7 +435,7 @@ int rtcpcld_updateNsSegmentAttributes(
                       2,
                       "SYSCALL",
                       DLF_MSG_PARAM_STR,
-                      "Cns_setsegattrs()",
+                      "Cns_setsegattrs/Cns_replacetapecopy",
                       "ERROR_STR",
                       DLF_MSG_PARAM_STR,
                       sstrerror(save_serrno)
@@ -396,7 +449,7 @@ int rtcpcld_updateNsSegmentAttributes(
                       RTCPCLD_NB_PARAMS+2,
                       "SYSCALL",
                       DLF_MSG_PARAM_STR,
-                      "Cns_setsegattrs()",
+                      "Cns_setsegattrs()/Cns_replacetapecopy()",
                       "ERROR_STR",
                       DLF_MSG_PARAM_STR,
                       sstrerror(save_serrno),

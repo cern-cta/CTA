@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.143 $ $Release$ $Date: 2006/04/17 07:53:03 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.144 $ $Release$ $Date: 2006/05/11 12:25:54 $ $Author: felixehm $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.143 $ $Release$ $Date: 2006/04/17 07:53:03 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.144 $ $Release$ $Date: 2006/05/11 12:25:54 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -75,6 +75,7 @@ WSADATA wsadata;
 #include <castor/stager/Segment.h>
 #include <castor/stager/Stream.h>
 #include <castor/stager/TapeCopy.h>
+#include <castor/stager/SubRequest.h>
 #include <castor/stager/TapeCopyForMigration.h>
 #include <castor/stager/DiskCopy.h>
 #include <castor/stager/DiskCopyForRecall.h>
@@ -94,6 +95,7 @@ WSADATA wsadata;
 #include <Cthread_api.h>
 #include <rfio_api.h>
 #include <vdqm_api.h>
+#include <Cns_api.h>
 #include <rtcp.h>
 #include <rtcp_api.h>
 #include <rtcpcld_constants.h>
@@ -1122,13 +1124,16 @@ static int procSegmentsForTape(
    * order so that at least consecutive tape files are positioned
    * efficiently.
    */
+  
+  
   qsort(
         (void *)segmArray,
         (size_t)nbItems,
         sizeof(struct Cstager_Segment_t *),
         compareSegments
         );
-
+  
+   
   tl = tape;
   for ( i=0; i<nbItems; i++ ) {
     Cstager_Segment_status(segmArray[i],&cmpStatus);
@@ -3978,3 +3983,46 @@ int rtcpcld_setVidWorkerAddress(
   return(0);
 }
 
+
+
+/** This function retrieves the (1!)SubRequest for a file
+  * from the stager DB. We don't get more than one, because
+  * a file always belongs to one active (DISKCOPY in CANBEMIGRATED)
+  * repack process.
+  * This is needed for the migrator. It checks, if the
+  * subrequest is a repack one or not.
+  */
+int rtcpcld_checkFileForRepack(
+                               castorFile,
+                               sreq
+                               )
+     struct Cns_fileid *castorFile;
+     struct Cstager_SubRequest_t **sreq;
+{
+  int rc = 0;
+  ID_TYPE key;
+  struct Cstager_ITapeSvc_t **tpSvc = NULL;
+  
+  serrno = errno = 0;
+
+  rc = getStgSvc(&tpSvc);
+  
+  if ( rc == -1 || tpSvc == NULL || *tpSvc == NULL ) return(-1);
+     
+  if ( (castorFile == NULL) || (castorFile->fileid == 0) ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  rc =0;
+  
+  rc = Cstager_ITapeSvc_checkFileForRepack( *tpSvc, sreq, castorFile->fileid );
+  
+  if (rc == -1){
+    LOG_DBCALL_ERR(
+                    "C_Services_checkFileForRepack()",
+                     Cstager_ITapeSvc_errorMsg(*tpSvc)
+                  );
+      return(-1);
+  }
+  return 0;
+}
