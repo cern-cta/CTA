@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_procreq.c,v $ $Revision: 1.4 $ $Date: 2006/01/26 15:36:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_procreq.c,v $ $Revision: 1.5 $ $Date: 2006/05/11 12:38:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
@@ -904,7 +904,7 @@ struct Cns_srv_thread_info *thip;
 
 	if (Cns_parsepath (&thip->dbfd, cwd, path, uid, gid, clienthost,
 	    &parent_dir, &rec_addrp, &filentry, &rec_addr, 0))
-		RETURN (serrno);
+	    	RETURN (serrno);
 
 	if (*filentry.name == '/')	/* Cns_creat / */
 		RETURN (EISDIR);
@@ -4234,6 +4234,235 @@ struct Cns_srv_thread_info *thip;
 
 	RETURN (0);
 }
+
+
+
+/*	Cns_srv_replacetapecopy - replace a tapecopy 
+ *	
+ * This function replaces a tapecopy by another one.
+ * For compatibility reasons, it is also able to recieve
+ * >1 segs for replacement, although the new stager policy 
+ * is not to segment file anymore.
+ * ! It deletes the old entries in the DB (no!! update to status 'D') !
+ * FE, 05/2006
+*/
+Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
+int magic;
+char *req_data;
+char *clienthost;
+struct Cns_srv_thread_info *thip;
+{
+	u_signed64 fileid = 0;
+	int rc,checksum_ok, nboldsegs, nbseg ,copyno, bof, i;
+	DBLISTPTR dblistptr;	//in fact an int
+	int CA_MAXSEGS = 20;	// maximum number of segments of a file
+	
+	gid_t gid;
+	uid_t uid;
+	char *user;
+
+	struct Cns_seg_metadata new_smd_entry[CA_MAXSEGS]; // the new entries
+	struct Cns_seg_metadata old_smd_entry[CA_MAXSEGS]; // the old entries
+	struct Cns_file_metadata filentry;
+	
+
+	Cns_dbrec_addr backup_rec_addr[CA_MAXSEGS];	// db keys of old segs
+	Cns_dbrec_addr rec_addr;			// db key for file
+	
+	
+	char *rbp;		// Pointer to recieve buffer
+	
+	char func[23];		// Name of the function
+	char tmpbuf[21];
+	char tmpbuf2[21];
+	char logbuf[CA_MAXPATHLEN+34];
+	char newvid[CA_MAXVIDLEN+1];
+	char oldvid[CA_MAXVIDLEN+1];	
+	
+	
+	/* --------------the header stuff ------------------ */
+
+	strcpy (func, "Cns_srv_replacetapecopy");
+	rbp = req_data;
+	unmarshall_LONG (rbp, uid);
+	unmarshall_LONG (rbp, gid);
+	get_client_actual_id (thip, &uid, &gid, &user);
+	nslogit (func, NS092, "replacetapecopy", user, uid, gid, clienthost);
+	unmarshall_HYPER (rbp, fileid);
+	if (unmarshall_STRINGN (rbp, newvid, CA_MAXVIDLEN+1))
+		RETURN (EINVAL);
+	if (unmarshall_STRINGN (rbp, oldvid, CA_MAXVIDLEN+1))
+		RETURN (EINVAL);
+
+	sprintf (logbuf, "for FileId %lld: %s->%s",fileid, oldvid, newvid);
+	Cns_logreq (func, logbuf);
+
+	/* check if the user is authorized to replace segment attributes */
+
+	/* if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+	*/	RETURN (serrno);
+	
+	
+	/* start transaction */
+	(void) Cns_start_tr (thip->s, &thip->dbfd);
+
+	/* get/lock basename entry */
+	if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &filentry, 1, &rec_addr))
+		RETURN (serrno);
+
+	/* check if the entry is a regular file */
+	if (filentry.filemode & S_IFDIR)
+		RETURN (EISDIR);
+
+
+	/* -------------- get the old segs for a file ------------------ */
+	copyno = -1;		
+	bof = 1;	/* first time: open cursor */
+	nboldsegs = 0;
+	while ((rc = Cns_get_smd_by_pfid (&thip->dbfd, bof,
+                                          filentry.fileid, 
+                                          &old_smd_entry[nboldsegs],
+					  1, 
+					  &backup_rec_addr[nboldsegs],
+					  0, 
+					  &dblistptr)) == 0 )
+	{
+		// we want only segments, which are on the oldvid !
+		if ( strcmp( old_smd_entry[nboldsegs].vid,oldvid )==0 ){
+			/* Store the copyno for first right segment.
+			   we have to know it for the new segments */
+			if (!nboldsegs){
+				copyno = old_smd_entry[nboldsegs].copyno;
+			}
+
+			/** this marks the old segment as deleted in ns*/
+			old_smd_entry[nboldsegs].s_status = 'D';
+			nboldsegs++;
+		}
+		
+		bof = 0;	/* no creation of cursor for next call */
+		
+		/* SHOULD NEVER HAPPEN !*/
+		if (nboldsegs > CA_MAXSEGS ){ 
+			sprintf (logbuf,"Abort! Too many segments for file %s.",
+			  	u64tostr (fileid, tmpbuf, 0), nboldsegs );
+			Cns_logreq (func, logbuf);
+			RETURN (EINVAL);
+		}
+	}
+		    
+   	if (rc < 0){
+		RETURN (serrno);
+	}
+   	
+	if ( !nboldsegs || copyno == -1 ) {
+		sprintf (logbuf, "Can't find old segs or copyno.Abort!%d,%d", nboldsegs, copyno);
+		Cns_logreq (func, logbuf);
+		RETURN (-1);
+	}
+	
+	unmarshall_WORD(rbp, nbseg);
+	sprintf (logbuf, "Replacing %d old Segments by %d from Stream, the tapecopyno is %d",
+		nboldsegs, nbseg, copyno);
+	Cns_logreq (func, logbuf);
+	
+
+
+	/* -------------- get the new segs from stream ------------------ */
+	for (i = 0; i < nbseg; i++) {
+		memset ((char *) &new_smd_entry[i], 0, sizeof(struct Cns_seg_metadata));
+		/* same fileid for all segs */
+		new_smd_entry[i].s_fileid = filentry.fileid;
+		
+		unmarshall_WORD (rbp, new_smd_entry[i].copyno);
+		unmarshall_WORD (rbp, new_smd_entry[i].fsec);
+		unmarshall_HYPER (rbp, new_smd_entry[i].segsize);
+		unmarshall_LONG (rbp, new_smd_entry[i].compression);
+		unmarshall_BYTE (rbp, new_smd_entry[i].s_status);
+   
+		if (unmarshall_STRINGN (rbp, new_smd_entry[i].vid, CA_MAXVIDLEN+1))
+			RETURN (EINVAL);
+		if (magic >= CNS_MAGIC2)
+			unmarshall_WORD (rbp, new_smd_entry[i].side);
+		unmarshall_LONG (rbp, new_smd_entry[i].fseq);
+		unmarshall_OPAQUE (rbp, new_smd_entry[i].blockid, 4);
+		
+		/* we want to have the same copyno as our old segs */
+		new_smd_entry[i].copyno = copyno;
+		
+		if (magic >= CNS_MAGIC4) {
+			unmarshall_STRINGN (rbp, new_smd_entry[i].checksum_name, CA_MAXCKSUMNAMELEN);
+			new_smd_entry[i].checksum_name[CA_MAXCKSUMNAMELEN] = '\0';
+			unmarshall_LONG (rbp, new_smd_entry[i].checksum);
+       		}
+		else {
+			new_smd_entry[i].checksum_name[0] = '\0';
+			new_smd_entry[i].checksum = 0;
+		}
+		
+		if (new_smd_entry[i].checksum_name == NULL || 
+			 strlen(new_smd_entry[i].checksum_name) == 0) {
+			checksum_ok = 0;
+		}
+		else {
+			checksum_ok = 1;
+	    	}
+		
+		if (magic >= CNS_MAGIC4) {
+				/* Checking that we can't have a NULL checksum name when a
+					checksum is specified */
+				if (!checksum_ok && new_smd_entry[i].checksum != 0) {
+					sprintf (logbuf, "%s: NULL checksum name with non zero value, overriding", func);
+					Cns_logreq (func, logbuf);
+					new_smd_entry[i].checksum = 0;
+				} 
+		}
+		
+		sprintf (logbuf, "setsegattrs %s %d %d %s %d %c %s %d %02x%02x%02x%02x %s:%x",
+		    u64tostr (new_smd_entry[i].s_fileid, tmpbuf, 0), new_smd_entry[i].copyno,
+		    new_smd_entry[i].fsec, u64tostr (new_smd_entry[i].segsize, tmpbuf2, 0),
+		    new_smd_entry[i].compression, new_smd_entry[i].s_status, new_smd_entry[i].vid,
+		    new_smd_entry[i].fseq, new_smd_entry[i].blockid[0], new_smd_entry[i].blockid[1],
+                    new_smd_entry[i].blockid[2], new_smd_entry[i].blockid[3],
+                    new_smd_entry[i].checksum_name, new_smd_entry[i].checksum);
+		Cns_logreq (func, logbuf);
+		
+		
+	}	// end for(..)
+	
+	
+
+	
+	
+	/* -------------- remove old segs ------------------ */
+	for (i=0; i< nboldsegs; i++){
+		
+		if (Cns_delete_smd_entry (&thip->dbfd,
+		                      &backup_rec_addr[i])  )
+		{
+			sprintf (logbuf,"%s",sstrerror(serrno));
+			Cns_logreq (func, logbuf);
+			RETURN (serrno);
+		}
+	}
+	
+	/* -------------- insert new segs ------------------ */
+	for (i=0; i< nbseg; i++){
+		/* insert new file segment entry */
+		if (Cns_insert_smd_entry (&thip->dbfd,&new_smd_entry[i])){
+			sprintf (logbuf,"%s",sstrerror(serrno));
+			Cns_logreq (func, logbuf);
+			RETURN (serrno);
+		}
+	}
+	
+	RETURN (0);
+}
+
+
+
+
+
 
 /*      Cns_srv_rmdir - remove a directory entry */
  

@@ -131,6 +131,7 @@ MANPAGES = $(LIBMANDIR)/Cns_aborttrans.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_readlink.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_rename.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_replaceseg.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_replacetapecopy.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_rewinddir.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_rmdir.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_selectsrvr.$(LIBMANSUFFIX) \
@@ -385,8 +386,9 @@ NSLIB_OBJS	=	Cns_aborttrans.Osuf \
                         Cns_readdirxt.Osuf \
                         Cns_readlink.Osuf \
                         Cns_rename.Osuf \
-                        Cns_replaceseg.Osuf \
                         Cns_rewinddir.Osuf \
+                        Cns_replaceseg.Osuf \
+                        Cns_replacetapecopy.Osuf \
                         Cns_rmdir.Osuf \
                         Cns_selectsrvr.Osuf \
                         Cns_setacl.Osuf \

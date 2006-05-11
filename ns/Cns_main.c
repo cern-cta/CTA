@@ -5,7 +5,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_main.c,v $ $Revision: 1.13 $ $Date: 2006/01/26 15:36:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_main.c,v $ $Revision: 1.14 $ $Date: 2006/05/11 12:38:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -724,6 +724,9 @@ struct Cns_srv_thread_info *thip;
 		break;
 	case CNS_REPLACESEG:
 		c = Cns_srv_replaceseg (magic, req_data, clienthost, thip);
+		break;
+	case CNS_REPLACETAPECOPY:
+		c = Cns_srv_replacetapecopy (magic, req_data, clienthost, thip);
 		break;
 	case CNS_UPDATESEG_CHECKSUM:
 		c = Cns_srv_updateseg_checksum (magic, req_data, clienthost, thip);

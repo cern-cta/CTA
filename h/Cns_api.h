@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_api.h,v 1.4 2006/01/26 15:32:41 bcouturi Exp $
+ * $Id: Cns_api.h,v 1.5 2006/05/11 12:38:38 felixehm Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.4 $ $Date: 2006/01/26 15:32:41 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.5 $ $Date: 2006/05/11 12:38:38 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_API_H
@@ -314,6 +314,7 @@ EXTERN_C struct Cns_direntape DLL_DECL *Cns_readdirxt _PROTO((Cns_DIR *));
 EXTERN_C struct Cns_direnrep DLL_DECL *Cns_readdirxr _PROTO((Cns_DIR *, char *));
 EXTERN_C int DLL_DECL Cns_readlink _PROTO((const char *, char *, size_t));
 EXTERN_C int DLL_DECL Cns_rename _PROTO((const char *, const char *));
+EXTERN_C int DLL_DECL Cns_replacetapecopy _PROTO((struct Cns_fileid *, const char*, const char*, int, struct Cns_segattrs *));
 EXTERN_C int DLL_DECL Cns_replaceseg _PROTO((char *, u_signed64, struct Cns_segattrs *, struct Cns_segattrs *));
 EXTERN_C int DLL_DECL Cns_updateseg_checksum _PROTO((char *, u_signed64, struct Cns_segattrs *, struct Cns_segattrs *));
 EXTERN_C void DLL_DECL Cns_rewinddir _PROTO((Cns_DIR *));

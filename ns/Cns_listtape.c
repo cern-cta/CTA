@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_listtape.c,v $ $Revision: 1.3 $ $Date: 2006/01/26 15:36:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_listtape.c,v $ $Revision: 1.4 $ $Date: 2006/05/11 12:38:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Cns_listtape - list the file segments residing on a volume */
@@ -80,7 +80,6 @@ Cns_listtape(char *server, char *vid, int flags, Cns_list *listp)
 
 	dp = (struct Cns_direntape *) listp->buf;
 	direntsz = &dp->d_name[0] - (char *) dp;
-
 	if (listp->len == 0	/* no data in the cache */
 	    || flags == CNS_LIST_END) {
 
