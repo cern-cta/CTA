@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_procreq.c,v $ $Revision: 1.5 $ $Date: 2006/05/11 12:38:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_procreq.c,v $ $Revision: 1.6 $ $Date: 2006/05/12 09:44:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
@@ -4300,7 +4300,8 @@ struct Cns_srv_thread_info *thip;
 	/* check if the user is authorized to replace segment attributes */
 
 	/* if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
-	*/	RETURN (serrno);
+		RETURN (serrno);
+	*/
 	
 	
 	/* start transaction */
@@ -4418,7 +4419,7 @@ struct Cns_srv_thread_info *thip;
 				} 
 		}
 		
-		sprintf (logbuf, "setsegattrs %s %d %d %s %d %c %s %d %02x%02x%02x%02x %s:%x",
+		sprintf (logbuf, "replaceseg %s %d %d %s %d %c %s %d %02x%02x%02x%02x %s:%x",
 		    u64tostr (new_smd_entry[i].s_fileid, tmpbuf, 0), new_smd_entry[i].copyno,
 		    new_smd_entry[i].fsec, u64tostr (new_smd_entry[i].segsize, tmpbuf2, 0),
 		    new_smd_entry[i].compression, new_smd_entry[i].s_status, new_smd_entry[i].vid,
