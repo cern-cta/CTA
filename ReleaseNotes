@@ -14,7 +14,7 @@
   --------------------
 
     - nothing to do.
-    - Note that for the client part, we advice to let castor-lib 2.0.4-1 live
+    - Note that for the client part, we advice to let castor-lib 2.0.* live
       aside the new one, so that application linked with libshift.2.0 don't
       break suddently. Once all users have relinked there applications with
       the new version, it can be removed.
