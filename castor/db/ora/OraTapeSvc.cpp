@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)OraTapeSvc.cpp,v 1.6 $Release$ 2006/05/11 14:54:09 felixehm
+ * @(#)OraTapeSvc.cpp,v 1.7 $Release$ 2006/05/15 14:22:59 felixehm
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -913,7 +913,7 @@ castor::db::ora::OraTapeSvc::checkFileForRepack
         delete rset;
         castor::exception::Internal ex;
         ex.getMessage() << "Found >1 candidates for fileid " 
-        << fileId  << "for segment replacement in NS." << std::endl;
+        << fileId  << "for repack purpose in stager catalogue!" << std::endl;
          throw ex;
       }
     }
