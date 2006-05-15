@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.6 2006/01/26 15:32:41 bcouturi Exp $
+ * $Id: Cns_server.h,v 1.7 2006/05/15 14:24:46 felixehm Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 /*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.6 $ $Date: 2006/01/26 15:32:41 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.7 $ $Date: 2006/05/15 14:24:46 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
  
 #ifndef _CNS_SERVER_H
@@ -204,6 +204,7 @@ EXTERN_C int Cns_get_max_copyno _PROTO((struct Cns_dbfd *, u_signed64, int *));
 EXTERN_C int Cns_get_rep_by_sfn _PROTO((struct Cns_dbfd *, char *, struct Cns_file_replica *, int, Cns_dbrec_addr *));
 EXTERN_C int Cns_get_smd_by_fullid _PROTO((struct Cns_dbfd *, u_signed64, int, int, struct Cns_seg_metadata *, int, Cns_dbrec_addr *));
 EXTERN_C int Cns_get_smd_by_pfid _PROTO((struct Cns_dbfd *, int, u_signed64, struct Cns_seg_metadata *, int,  Cns_dbrec_addr *, int, DBLISTPTR *));
+EXTERN_C int Cns_get_smd_by_copyno _PROTO((struct Cns_dbfd *, int, u_signed64, int,struct Cns_seg_metadata *, int, Cns_dbrec_addr *, int, DBLISTPTR *));
 EXTERN_C int Cns_get_smd_by_vid _PROTO((struct Cns_dbfd *, int, char *, struct Cns_seg_metadata *, int, DBLISTPTR *));
 EXTERN_C int Cns_get_tppool_by_cid _PROTO((struct Cns_dbfd *, int, int, struct Cns_tp_pool *, int,  Cns_dbrec_addr *, int, DBLISTPTR *));
 EXTERN_C int Cns_get_umd_by_fileid _PROTO((struct Cns_dbfd *, u_signed64, struct Cns_user_metadata *, int, Cns_dbrec_addr *));
@@ -228,7 +229,6 @@ EXTERN_C int Cns_update_fmd_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *, s
 EXTERN_C int Cns_update_rep_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_file_replica *));
 EXTERN_C int Cns_update_smd_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_seg_metadata *));
 EXTERN_C int Cns_update_umd_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_user_metadata *));
-
 EXTERN_C int Cns_delete_group_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *));
 EXTERN_C int Cns_delete_user_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *));
 EXTERN_C int Cns_get_grpinfo_by_gid _PROTO((struct Cns_dbfd *, gid_t, struct Cns_groupinfo *, int, Cns_dbrec_addr *));

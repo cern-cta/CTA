@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_oracle_ifce.pc,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_oracle_ifce.pc,v $ $Revision: 1.3 $ $Date: 2006/05/15 14:24:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -915,6 +915,103 @@ Cns_dbrec_addr *rec_addr;
 	return (-1);
 }
 
+
+
+
+/**
+ * Get segments for a specified tapecopy 
+ */
+Cns_get_smd_by_copyno(dbfd, bof, fileid, copyno, smd_entry, lock, rec_addr, endlist,dblistptr)
+struct Cns_dbfd *dbfd;
+int bof;
+u_signed64 fileid;
+int copyno;
+struct Cns_seg_metadata *smd_entry;
+int lock;
+Cns_dbrec_addr *rec_addr;
+int endlist;
+DBLISTPTR *dblistptr;
+{
+	char fileid_str[21];
+	char func[20];
+	char rowid_value[19];
+	char segsize_str[21];
+	struct sqlca sqlca;
+	short checksum_name_ind;
+	
+	EXEC SQL VAR smd_entry->blockid IS RAW(4);
+	EXEC SQL DECLARE smd_copyno_cursor CURSOR FOR
+		SELECT ROWID,
+		 TO_CHAR(S_FILEID), COPYNO, FSEC,
+		 TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
+		 VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0)
+		FROM Cns_seg_metadata
+		WHERE s_fileid = TO_NUMBER(:fileid_str)
+		AND copyno = :copyno;
+
+	/** for update statement */
+	EXEC SQL DECLARE smd_copyno_cursor4upd CURSOR FOR
+		SELECT ROWID,
+		 TO_CHAR(S_FILEID), COPYNO, FSEC,
+		 TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
+		 VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0)
+		FROM Cns_seg_metadata
+		WHERE s_fileid = TO_NUMBER(:fileid_str)
+		AND copyno = :copyno
+		FOR UPDATE;
+	
+	strcpy (func, "Cns_get_smd_by_copyno");
+
+	if (endlist)
+		return (1);
+	
+	(void) u64tostr (fileid, fileid_str, -1);
+	
+	if (bof) {
+		if (lock)
+			EXEC SQL OPEN smd_copyno_cursor4upd;
+		else
+			EXEC SQL OPEN smd_copyno_cursor;
+		if (sqlca.sqlcode) {
+			Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+			return (-1);
+		}
+	}
+	if (lock) {
+		EXEC SQL FETCH smd_copyno_cursor4upd INTO
+		 :rowid_value, :fileid_str, :smd_entry->copyno, :smd_entry->fsec,
+		 :segsize_str, :smd_entry->compression, :smd_entry->s_status,
+		 :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
+		 :smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
+		 :smd_entry->checksum;
+	} else {
+		EXEC SQL FETCH smd_copyno_cursor INTO
+		 :fileid_str, :smd_entry->copyno, :smd_entry->fsec,
+		 :segsize_str, :smd_entry->compression, :smd_entry->s_status,
+		 :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
+		 :smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
+		 :smd_entry->checksum;
+	}
+
+	switch (sqlca.sqlcode) {
+	case 0:
+		if (lock)
+			memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+		smd_entry->s_fileid = fileid;
+		smd_entry->segsize = strtou64 (segsize_str);
+		return (0);
+	case 1403:
+		return (1);
+	default:
+		Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+		return (-1);
+	}
+	
+}
+
+
+
+
 Cns_get_smd_by_fullid(dbfd, fileid, copyno, fsec, smd_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 u_signed64 fileid;
@@ -988,8 +1085,9 @@ Cns_dbrec_addr *rec_addr;
 		break;
 	default:
 		Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+		return (-1);
 	}
-	return (-1);
+	
 }
 
 Cns_get_smd_by_pfid(dbfd, bof, fileid, smd_entry, lock, rec_addr, endlist, dblistptr)
