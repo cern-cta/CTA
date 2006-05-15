@@ -1,4 +1,25 @@
 -----------
+- 2.1.0.0 -
+-----------
+
+  New Features and Changes (from 2.0.4-1)
+  ---------------------------------------
+
+  This version is strictly identical to 2.0.4-1.
+  It is however prefered to 2.0.4-* since the soname of the libraries changed
+  which was needed after we introduced some non backward compatible change in
+  the interface.
+
+  Upgrade from 2.0.4-1
+  --------------------
+
+    - nothing to do.
+    - Note that for the client part, we advice to let castor-lib 2.0.4-1 live
+      aside the new one, so that application linked with libshift.2.0 don't
+      break suddently. Once all users have relinked there applications with
+      the new version, it can be removed.
+
+-----------
 - 2.0.4-1 -
 -----------
 
