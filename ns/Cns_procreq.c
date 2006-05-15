@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_procreq.c,v $ $Revision: 1.6 $ $Date: 2006/05/12 09:44:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_procreq.c,v $ $Revision: 1.7 $ $Date: 2006/05/15 14:30:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
@@ -4273,8 +4273,6 @@ struct Cns_srv_thread_info *thip;
 	char *rbp;		// Pointer to recieve buffer
 	
 	char func[23];		// Name of the function
-	char tmpbuf[21];
-	char tmpbuf2[21];
 	char logbuf[CA_MAXPATHLEN+34];
 	char newvid[CA_MAXVIDLEN+1];
 	char oldvid[CA_MAXVIDLEN+1];	
@@ -4300,8 +4298,7 @@ struct Cns_srv_thread_info *thip;
 	/* check if the user is authorized to replace segment attributes */
 
 	/* if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
-		RETURN (serrno);
-	*/
+		RETURN (serrno);*/
 	
 	
 	/* start transaction */
@@ -4320,44 +4317,66 @@ struct Cns_srv_thread_info *thip;
 	copyno = -1;		
 	bof = 1;	/* first time: open cursor */
 	nboldsegs = 0;
+	
 	while ((rc = Cns_get_smd_by_pfid (&thip->dbfd, bof,
                                           filentry.fileid, 
                                           &old_smd_entry[nboldsegs],
-					  1, 
+					  0, 
 					  &backup_rec_addr[nboldsegs],
 					  0, 
 					  &dblistptr)) == 0 )
 	{
-		// we want only segments, which are on the oldvid !
+		// we want only segments, which are on the oldvid
 		if ( strcmp( old_smd_entry[nboldsegs].vid,oldvid )==0 ){
 			/* Store the copyno for first right segment.
 			   we have to know it for the new segments */
 			if (!nboldsegs){
 				copyno = old_smd_entry[nboldsegs].copyno;
+				break;
 			}
-
-			/** this marks the old segment as deleted in ns*/
-			old_smd_entry[nboldsegs].s_status = 'D';
-			nboldsegs++;
 		}
 		
 		bof = 0;	/* no creation of cursor for next call */
+	}
+
+	if ( copyno == -1 ){
+		sprintf (logbuf, "Can't find old copyno.");
+		Cns_logreq (func, logbuf);
+		RETURN (-1);
+	}
+	
+	/** 
+	 * after we have the copyno, we get the old segs by this no 
+	 */
+	bof = 1;
+	dblistptr = 0;
+	while ((rc = Cns_get_smd_by_copyno (&thip->dbfd, bof,
+                                          filentry.fileid,
+					  copyno, 
+                                          &old_smd_entry[nboldsegs],
+					  1, 
+					  &backup_rec_addr[nboldsegs],
+					  0,
+					  &dblistptr )) == 0 )
+	{
+		nboldsegs++;
+		bof = 0;
 		
 		/* SHOULD NEVER HAPPEN !*/
 		if (nboldsegs > CA_MAXSEGS ){ 
-			sprintf (logbuf,"Abort! Too many segments for file %s.",
-			  	u64tostr (fileid, tmpbuf, 0), nboldsegs );
+			sprintf (logbuf,"Too many segments for file %lld.",
+			  	fileid);
 			Cns_logreq (func, logbuf);
 			RETURN (EINVAL);
 		}
 	}
-		    
+	
    	if (rc < 0){
 		RETURN (serrno);
 	}
    	
-	if ( !nboldsegs || copyno == -1 ) {
-		sprintf (logbuf, "Can't find old segs or copyno.Abort!%d,%d", nboldsegs, copyno);
+	if ( !nboldsegs ) {
+		sprintf (logbuf, "Can't find old segs for copyno %d.", copyno);
 		Cns_logreq (func, logbuf);
 		RETURN (-1);
 	}
@@ -4419,9 +4438,9 @@ struct Cns_srv_thread_info *thip;
 				} 
 		}
 		
-		sprintf (logbuf, "replaceseg %s %d %d %s %d %c %s %d %02x%02x%02x%02x %s:%x",
-		    u64tostr (new_smd_entry[i].s_fileid, tmpbuf, 0), new_smd_entry[i].copyno,
-		    new_smd_entry[i].fsec, u64tostr (new_smd_entry[i].segsize, tmpbuf2, 0),
+		sprintf (logbuf, "replacetapecpy %lld %d %d %lld %d %c %s %d %02x%02x%02x%02x %s:%x",
+		    new_smd_entry[i].s_fileid, new_smd_entry[i].copyno,
+		    new_smd_entry[i].fsec, new_smd_entry[i].segsize,
 		    new_smd_entry[i].compression, new_smd_entry[i].s_status, new_smd_entry[i].vid,
 		    new_smd_entry[i].fseq, new_smd_entry[i].blockid[0], new_smd_entry[i].blockid[1],
                     new_smd_entry[i].blockid[2], new_smd_entry[i].blockid[3],
@@ -4439,7 +4458,8 @@ struct Cns_srv_thread_info *thip;
 	for (i=0; i< nboldsegs; i++){
 		
 		if (Cns_delete_smd_entry (&thip->dbfd,
-		                      &backup_rec_addr[i])  )
+				      &backup_rec_addr[i]
+				      )  )
 		{
 			sprintf (logbuf,"%s",sstrerror(serrno));
 			Cns_logreq (func, logbuf);
