@@ -1,0 +1,226 @@
+#!/usr/bin/perl -w
+
+#script to clean up orphaned network connections 
+#between disknodes and clients in lxplus/lxb
+#may 2006
+#this version skips lxplus056
+
+use strict;
+use diagnostics;
+use Data::Dumper;
+use Getopt::Long;
+
+  sub my_filter {
+        my ($hash) = @_;
+        return (sort {$a <=> $b} keys %$hash);
+    }
+
+my $TEST = 0;    #data dumper output 
+my $nokill = 0;
+
+my %data = ();   #key = client -> connections
+my @server = (); #key = diskserver -> connections 
+my %data3 = ();  #key = diskserver -> pids
+
+my $sshcount = 0; #tally of ssh connections
+
+
+
+#######################################################################
+
+my $rc = Getopt::Long::GetOptions("diskserver=s" => \@server,
+                                  "verbose"      => \$TEST,
+				  "nokill"       => \$nokill,
+				  "help"         => sub {
+					print "clean-connections.pl finds all the rfiod ";
+					print "connections between the diskservers\nspecified by user";
+					print " or rmgetnodes and checks they are still active.\n";
+					print "Orphaned ones are killed.\n\n";
+    					print "--diskserver \"<node>, <node>\" or --diskserver <node>\n";
+					print "--verbose\t-- adds Data::Dumper output of info\n";
+					print "--nokill\t-- dry run\n";
+					print "--help\t\t-- help message\n\n";
+    					exit;}
+                                 );
+
+#######################################################################
+
+if ($#server == -1){
+
+  if (not -e "/usr/bin/rmgetnodes") {
+    print "Unable to find file /usr/bin/rmgetnodes\n";
+    exit;
+  }
+ 
+  #get the names of diskservers in this pool
+  open (NODES, "/usr/bin/rmgetnodes |") or die "Unable to get data from rmgetnodes: $!\n";
+  for (<NODES>){
+    next unless /NODE/;
+    $_ =~ s/NODE\s+(\S+)$/$1/g;
+    chomp;
+    next if $_ eq "localhost";
+    push(@server,$_);
+  }
+  close (NODES);
+}
+
+print "Have ".scalar(@server)." server nodes - now for connections\n";
+
+#######################################################################
+
+for my $node (sort @server) {
+
+  my $cmd = "ssh -o BatchMode=yes -o StrictHostKeyChecking=no -q root\@$node netstat -ap";
+
+eval {
+  # set local signal handler to trap alarms
+  local $SIG{ALRM} = sub { die "operation timed out\n" };
+ alarm(5); 
+ open (COM, "$cmd |") 
+	or print "Unable to connect to $node\n";
+
+    alarm(0);
+    # errors ?
+    if ($@) {
+	if ($@ =~ /operation timed out/) {print "Failed to connect to $node\n"; next;}
+    }
+};
+
+  $sshcount++;
+  print "Getting details of $node...\n";
+  foreach (<COM>){
+    next unless /rfio/;
+    chomp();
+    my ($server,$client,$pid) = (split())[3,4,6];
+    next if $server =~ /\*:*/; #eg eq "*:5001" or "*:*"
+    next if $client !~ /^(lxb|lxplus)/; #limit clients to lxb &lxplus machines
+    $pid =~ s/(\d+)\/rfiod$/$1/g;
+    my $lclient = $client;		#need client fqdn without port # at end
+    $lclient =~ s/(\S+):\d+$/$1/g;
+    push(@{$data{$lclient}}, [$server, $client, $pid]);#here
+  }
+  close(COM) or print "Unable to disconnect from ${node}\n";
+}
+
+print "Have connections from ".scalar (keys %data)." lxb*/plus* nodes - now checking clients - This may take a while!\n";
+
+#######################################################################
+
+for my $node (sort keys %data) {
+  my $cmd = "ssh -o BatchMode=yes -o StrictHostKeyChecking=no -q root\@$node netstat -ap";
+  print "Connecting to $node ...\n";
+
+
+eval {
+  # set local signal handler to trap alarms
+  local $SIG{ALRM} = sub { die "operation timed out\n" };
+ alarm(5); 
+ open (COM, "$cmd |") 
+	or print "Unable to connect to $node\n";
+
+    alarm(0);
+    # errors ?
+    if ($@) {
+	if ($@ =~ /operation timed out/) {print "Failed to connect to $node\n"; next;}
+    }
+};
+  $sshcount++;
+
+  foreach (<COM>) {
+    for (my $i = 0; $i <= $#{$data{$node}}; $i++){
+      my $pointer = ${$data{$node}}[$i];
+      my ($diskserver,$lclient) = ($pointer->[0],$pointer->[1]);
+
+      if (/^tcp\s+.*\s+$lclient\s+$diskserver\s+.*/){
+        splice(@{$data{$node}},$i,1);		#delete details if connection is active
+#        print " ignoring active connection $_";
+      }
+    }	
+  }
+  close (COM);
+}
+
+#######################################################################
+
+#delete nodes where there is no dead connection
+foreach my $node (keys %data){
+   delete $data{$node} if $#{$data{$node}} == -1;
+}
+
+
+#create a new data structure based on diskserver where value is array of pid's for dead connections 
+foreach my $node (keys %data){
+  for (my $i = 0; $i <= $#{$data{$node}}; $i++)
+  {
+    my $pointer = ${$data{$node}}[$i];
+    my $server = $pointer->[0];
+    $server =~ s/(\S+):\d+/$1/g;
+    push(@{$data3{$server}}, $pointer->[2]);
+  }
+} 
+
+#######################################################################
+
+foreach my $node (keys %data3){
+  my $max;
+  my $cmd = "ssh -o BatchMode=yes -o StrictHostKeyChecking=no -q root\@$node netstat -ap";
+
+  if ( defined $#{$data3{$node}} ) {$max = $#{$data3{$node}} } else {next;}
+
+  for (my $j = 0; $j <= $max; $j++){
+	my $string = undef;
+	$string = "${$data3{$node}}[$j]" unless not defined ${$data3{$node}}[$j];
+	next if not defined $string;
+
+    if ($nokill == 0){
+      eval {
+       # set local signal handler to trap alarms
+       local $SIG{ALRM} = sub { die "operation timed out\n" };
+       alarm(5); 
+       open (COM, "$cmd |") 
+	 or print "Unable to connect to $node\n";
+       alarm(0);
+       # errors ?
+       if ($@) {
+	  if ($@ =~  /operation timed out/) {print "Failed to connect to $node\n"; next;}
+       }
+    };
+
+      $sshcount++;
+      foreach (<COM>){
+        next unless /$string\/rfiod/;
+	print "Error killing file - $node PID = $string\n" unless system("kill -9 $string") == 0;
+      }
+      close(COM) or print "Unable to disconnect from ${node}\n";
+
+     } else {
+      eval {
+       # set local signal handler to trap alarms
+       local $SIG{ALRM} = sub { die "operation timed out\n" };
+       alarm(5); 
+       open (COM, "$cmd |") 
+	 or print "Unable to connect to $node\n";
+       alarm(0);
+       # errors ?
+       if ($@) {
+	  if ($@ =~ /operation timed out/) {print "Unable to connect to $node\n"; next;}
+       }
+    };
+        $sshcount++;
+        foreach (<COM>){
+          next unless /$string\/rfiod/;
+          print "Found and would kill file - $node PID = $string\n";
+        }
+        close(COM) or print "Unable to disconnect from ${node}\n";
+    }
+  }#end for
+}#end foreach
+
+#######################################################################
+
+  print "ssh count = $sshcount\n";
+if ($TEST == 1)
+{
+  print Dumper([\%data,\%data3]);
+}
+exit;
