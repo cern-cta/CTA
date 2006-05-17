@@ -165,14 +165,16 @@ foreach my $node (keys %data3){
   my $max;
   my $cmd = "ssh -o BatchMode=yes -o StrictHostKeyChecking=no -q root\@$node netstat -ap";
 
-  if ( defined $#{$data3{$node}} ) {$max = $#{$data3{$node}} } else {next;}
+  if ( defined $#{$data3{$node}} ) {$max = $#{$data3{$node}} } else {next;} #clears empties
 
-  for (my $j = 0; $j <= $max; $j++){
+  for (my $j = 0; $j <= $max; $j++){ #for each connection left
+
 	my $string = undef;
-	$string = "${$data3{$node}}[$j]" unless not defined ${$data3{$node}}[$j];
+	$string = "${$data3{$node}}[$j]" unless not defined ${$data3{$node}}[$j]; #pid
 	next if not defined $string;
 
-    if ($nokill == 0){
+    if ($nokill == 0){ #start to kill processes
+
       eval {
        # set local signal handler to trap alarms
        local $SIG{ALRM} = sub { die "operation timed out\n" };
@@ -182,18 +184,20 @@ foreach my $node (keys %data3){
        alarm(0);
        # errors ?
        if ($@) {
-	  if ($@ =~  /operation timed out/) {print "Failed to connect to $node\n"; next;}
+	  if ($@ =~ /operation timed out/) {print "Failed to connect to $node\n"; next;}
        }
-    };
-
+      };
       $sshcount++;
       foreach (<COM>){
         next unless /$string\/rfiod/;
-	print "Error killing file - $node PID = $string\n" unless system("kill -9 $string") == 0;
+	#if here have found pid still running on diskserver so we should kill it
+	open (COM2, "ssh -o BatchMode=yes -o StrictHostKeyChecking=no -q root\@$node kill -9 $string |");
+	close(COM2);
       }
       close(COM) or print "Unable to disconnect from ${node}\n";
 
-     } else {
+     } else { #for the info only run ...
+
       eval {
        # set local signal handler to trap alarms
        local $SIG{ALRM} = sub { die "operation timed out\n" };
@@ -205,7 +209,8 @@ foreach my $node (keys %data3){
        if ($@) {
 	  if ($@ =~ /operation timed out/) {print "Unable to connect to $node\n"; next;}
        }
-    };
+      };
+
         $sshcount++;
         foreach (<COM>){
           next unless /$string\/rfiod/;
@@ -219,6 +224,7 @@ foreach my $node (keys %data3){
 #######################################################################
 
   print "ssh count = $sshcount\n";
+  print "Finished!\n";
 if ($TEST == 1)
 {
   print Dumper([\%data,\%data3]);
