@@ -1,5 +1,8 @@
 INSTALL http://lxservb02.cern.ch/swrep/i386_slc3/ca_CERN-1.0-1.noarch.rpm
 
+
+/opt/globus/bin/grid-proxy-init -cert ~slopiens/.globus/usercert.pem -key ~slopiens/.globus/userkey.pem
+
 Compiling the test suite
 ------------------------
 
