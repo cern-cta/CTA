@@ -13,10 +13,12 @@
   Upgrade from 2.0.4-1
   --------------------
 
-    - nothing to do.
+    - The only upgrade to be done concerns the castor.conf: it has to be
+      upgraded everywhere (head nodes and diskservers) with the new library
+      name (ends with 2.1 instead of 2.0).
     - Note that for the client part, we advice to let castor-lib 2.0.* live
-      aside the new one, so that application linked with libshift.2.0 don't
-      break suddently. Once all users have relinked there applications with
+      aside the new one, so that applications linked with libshift.2.0 don't
+      break suddenly. Once all users have relinked there applications with
       the new version, it can be removed.
 
 -----------
@@ -43,8 +45,6 @@
 
     - The database schema has not evolved. However, some fixes in the PL/SQL code
       were added. Use upgrades/2.0.4-0_to_2.0.4-1.sql to upgrade.
-    - The castor.conf has to be upgraded everywhere (head nodes and diskservers)
-      with the new library name (ends with 2.1 instead of 2.0)
     - Clients can be updated completely independently (before or after the server
       update).
 
