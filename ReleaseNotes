@@ -41,9 +41,10 @@
   Upgrade from 2.0.4-0
   --------------------
 
-    - The 2 releases are fully compatible and can be freely mixed
     - The database schema has not evolved. However, some fixes in the PL/SQL code
       were added. Use upgrades/2.0.4-0_to_2.0.4-1.sql to upgrade.
+    - The castor.conf has to be upgraded everywhere (head nodes and diskservers)
+      with the new library name (ends with 2.1 instead of 2.0)
     - Clients can be updated completely independently (before or after the server
       update).
 
