@@ -93,7 +93,7 @@ eval {
     chomp();
     my ($server,$client,$pid) = (split())[3,4,6];
     next if $server =~ /\*:*/; #eg eq "*:5001" or "*:*"
-    next if $client !~ /^(lxb|lxplus)/; #limit clients to lxb &lxplus machines
+    next if $client !~ /^(lxb|lxplus|castorgrid)/; #limit clients to lxb &lxplus machines
     $pid =~ s/(\d+)\/rfiod$/$1/g;
     my $lclient = $client;		#need client fqdn without port # at end
     $lclient =~ s/(\S+):\d+$/$1/g;
