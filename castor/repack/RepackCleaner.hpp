@@ -28,6 +28,7 @@
 
 #include "RepackCommonHeader.hpp"
 #include "DatabaseHelper.hpp"
+#include "FileListHelper.hpp"
 #include "castor/server/IThread.hpp"
 #include "stager_client_api.h"
 #include "castor/stager/SubRequestStatusCodes.hpp"
@@ -35,35 +36,42 @@
 
 namespace castor {
 	namespace repack {
-		
+  
+  /** forward declaration */
+  class RepackServer;	
+	
 	class RepackCleaner : public castor::server::IThread {
 		
 		public :
 		
-		RepackCleaner();
-		~RepackCleaner();
+		  RepackCleaner(RepackServer* svr);
+		  ~RepackCleaner();
 		
-		/* 
-		 * Implementation from IThread
-		 */
-		virtual void run(void* param) throw();
-		/* 
-		 * Implementation from IThread
-		 */
+		  /** 
+		   * Implementation from IThread
+		   */
+		  virtual void run(void* param) throw();
+		  /** 
+		   * Implementation from IThread
+		   */
 	    virtual void stop() throw();
 		
 		private:
 			/**
 			 * Retrieves the SubRequestStatus from the DB
 			 */
-			int getStageStatus(RepackSubRequest* sreq) throw();
+			int cleanupTape(RepackSubRequest* sreq) throw(castor::exception::Internal);
 		
 		
-			/*
+			/**
 			 * The DatabaseHelper for updatting finished jobs in the Repack Tables
 			 */
 			DatabaseHelper *m_dbhelper;
-			bool m_stop;
+      
+      /**
+       * Pointer to the server instance, which I was added to.
+       */
+      RepackServer* ptr_server;
 	};
 		
 		
