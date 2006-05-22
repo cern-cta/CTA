@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/05/06 15:35:25 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/05/22 06:33:12 $ $Author: felixehm $
  *
  *
  *
@@ -53,6 +53,9 @@
 namespace castor {
 
  namespace repack {
+
+  class DatabaseHelper;
+  class FileListHelper;
 
   /**
    * A thread to process Put/Get request and submit them to the stager.
@@ -107,12 +110,12 @@ namespace castor {
      * the FileListHelper, which helps to get the filelist from the nameserver
      * of a tape.
      */
-    castor::repack::FileListHelper* m_filelisthelper;
+    FileListHelper* m_filelisthelper;
 
     /**
      * the DatabaseHelper, which helps to store the Request in the DB.
      */
-    castor::repack::DatabaseHelper* m_databasehelper;
+    DatabaseHelper* m_databasehelper;
     
   };
 
