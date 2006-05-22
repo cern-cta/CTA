@@ -95,6 +95,9 @@ void castor::io::StreamRepackSubRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->xsize();
   ad->stream() << obj->status();
   ad->stream() << obj->cuuid();
+  ad->stream() << obj->filesMigrating();
+  ad->stream() << obj->filesStaging();
+  ad->stream() << obj->files();
   ad->stream() << obj->id();
 }
 
@@ -120,6 +123,15 @@ castor::IObject* castor::io::StreamRepackSubRequestCnv::createObj(castor::IAddre
   std::string cuuid;
   ad->stream() >> cuuid;
   object->setCuuid(cuuid);
+  unsigned int filesMigrating;
+  ad->stream() >> filesMigrating;
+  object->setFilesMigrating(filesMigrating);
+  unsigned int filesStaging;
+  ad->stream() >> filesStaging;
+  object->setFilesStaging(filesStaging);
+  unsigned int files;
+  ad->stream() >> files;
+  object->setFiles(files);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
