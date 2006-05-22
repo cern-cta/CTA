@@ -116,22 +116,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_segsize
-       * @return the value of m_segsize
-       */
-      u_signed64 segsize() const {
-        return m_segsize;
-      }
-
-      /**
-       * Set the value of m_segsize
-       * @param new_var the new value of m_segsize
-       */
-      void setSegsize(u_signed64 new_var) {
-        m_segsize = new_var;
-      }
-
-      /**
        * Get the value of m_compression
        * @return the value of m_compression
        */
@@ -148,10 +132,26 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_segsize
+       * @return the value of m_segsize
+       */
+      u_signed64 segsize() const {
+        return m_segsize;
+      }
+
+      /**
+       * Set the value of m_segsize
+       * @param new_var the new value of m_segsize
+       */
+      void setSegsize(u_signed64 new_var) {
+        m_segsize = new_var;
+      }
+
+      /**
        * Get the value of m_filesec
        * @return the value of m_filesec
        */
-      int filesec() const {
+      u_signed64 filesec() const {
         return m_filesec;
       }
 
@@ -159,8 +159,24 @@ namespace castor {
        * Set the value of m_filesec
        * @param new_var the new value of m_filesec
        */
-      void setFilesec(int new_var) {
+      void setFilesec(u_signed64 new_var) {
         m_filesec = new_var;
+      }
+
+      /**
+       * Get the value of m_copyno
+       * @return the value of m_copyno
+       */
+      int copyno() const {
+        return m_copyno;
+      }
+
+      /**
+       * Set the value of m_copyno
+       * @param new_var the new value of m_copyno
+       */
+      void setCopyno(int new_var) {
+        m_copyno = new_var;
       }
 
       /**
@@ -201,11 +217,13 @@ namespace castor {
 
       u_signed64 m_fileid;
 
-      u_signed64 m_segsize;
-
       int m_compression;
 
-      int m_filesec;
+      u_signed64 m_segsize;
+
+      u_signed64 m_filesec;
+
+      int m_copyno;
 
       /// The id of this object
       u_signed64 m_id;
