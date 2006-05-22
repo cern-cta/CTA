@@ -194,7 +194,8 @@ namespace castor {
          */
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
-                             unsigned int type)
+                             unsigned int type,
+                             bool autocommit)
           throw (castor::exception::Exception);
 
         /**

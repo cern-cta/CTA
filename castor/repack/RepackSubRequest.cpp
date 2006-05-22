@@ -46,7 +46,9 @@ castor::repack::RepackSubRequest::RepackSubRequest() throw() :
   m_xsize(0),
   m_status(0),
   m_cuuid(""),
-  m_originPool(""),
+  m_filesMigrating(0),
+  m_filesStaging(0),
+  m_files(0),
   m_id(0),
   m_requestID(0) {
 };
@@ -81,7 +83,9 @@ void castor::repack::RepackSubRequest::print(std::ostream& stream,
   stream << indent << "xsize : " << m_xsize << std::endl;
   stream << indent << "status : " << m_status << std::endl;
   stream << indent << "cuuid : " << m_cuuid << std::endl;
-  stream << indent << "originPool : " << m_originPool << std::endl;
+  stream << indent << "filesMigrating : " << m_filesMigrating << std::endl;
+  stream << indent << "filesStaging : " << m_filesStaging << std::endl;
+  stream << indent << "files : " << m_files << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

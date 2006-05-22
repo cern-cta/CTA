@@ -170,23 +170,55 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_originPool
-       * This Attribute is the original tape pool.
-       * It is used for Migration process to write the files to the correct tape pool.
-       * @return the value of m_originPool
+       * Get the value of m_filesMigrating
+       * The amount files which are still being migrated to tape.
+       * @return the value of m_filesMigrating
        */
-      std::string originPool() const {
-        return m_originPool;
+      unsigned int filesMigrating() const {
+        return m_filesMigrating;
       }
 
       /**
-       * Set the value of m_originPool
-       * This Attribute is the original tape pool.
-       * It is used for Migration process to write the files to the correct tape pool.
-       * @param new_var the new value of m_originPool
+       * Set the value of m_filesMigrating
+       * The amount files which are still being migrated to tape.
+       * @param new_var the new value of m_filesMigrating
        */
-      void setOriginPool(std::string new_var) {
-        m_originPool = new_var;
+      void setFilesMigrating(unsigned int new_var) {
+        m_filesMigrating = new_var;
+      }
+
+      /**
+       * Get the value of m_filesStaging
+       * The amount of file to be staged.
+       * @return the value of m_filesStaging
+       */
+      unsigned int filesStaging() const {
+        return m_filesStaging;
+      }
+
+      /**
+       * Set the value of m_filesStaging
+       * The amount of file to be staged.
+       * @param new_var the new value of m_filesStaging
+       */
+      void setFilesStaging(unsigned int new_var) {
+        m_filesStaging = new_var;
+      }
+
+      /**
+       * Get the value of m_files
+       * @return the value of m_files
+       */
+      unsigned int files() const {
+        return m_files;
+      }
+
+      /**
+       * Set the value of m_files
+       * @param new_var the new value of m_files
+       */
+      void setFiles(unsigned int new_var) {
+        m_files = new_var;
       }
 
       /**
@@ -264,11 +296,13 @@ namespace castor {
 
       std::string m_cuuid;
 
-      /*
-       * This Attribute is the original tape pool.
-       * It is used for Migration process to write the files to the correct tape pool.
-      */
-      std::string m_originPool;
+      /// The amount files which are still being migrated to tape.
+      unsigned int m_filesMigrating;
+
+      /// The amount of file to be staged.
+      unsigned int m_filesStaging;
+
+      unsigned int m_files;
 
       /// The id of this object
       u_signed64 m_id;

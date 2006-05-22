@@ -56,7 +56,7 @@ static castor::CnvFactory<castor::db::ora::OraRepackSubRequestCnv>* s_factoryOra
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraRepackSubRequestCnv::s_insertStatementString =
-"INSERT INTO RepackSubRequest (vid, xsize, status, cuuid, originPool, id, requestID) VALUES (:1,:2,:3,:4,:5,ids_seq.nextval,:6) RETURNING id INTO :7";
+"INSERT INTO RepackSubRequest (vid, xsize, status, cuuid, filesMigrating, filesStaging, files, id, requestID) VALUES (:1,:2,:3,:4,:5,:6,:7,ids_seq.nextval,:8) RETURNING id INTO :9";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraRepackSubRequestCnv::s_deleteStatementString =
@@ -64,11 +64,11 @@ const std::string castor::db::ora::OraRepackSubRequestCnv::s_deleteStatementStri
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraRepackSubRequestCnv::s_selectStatementString =
-"SELECT vid, xsize, status, cuuid, originPool, id, requestID FROM RepackSubRequest WHERE id = :1";
+"SELECT vid, xsize, status, cuuid, filesMigrating, filesStaging, files, id, requestID FROM RepackSubRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraRepackSubRequestCnv::s_updateStatementString =
-"UPDATE RepackSubRequest SET vid = :1, xsize = :2, status = :3, cuuid = :4, originPool = :5 WHERE id = :6";
+"UPDATE RepackSubRequest SET vid = :1, xsize = :2, status = :3, cuuid = :4, filesMigrating = :5, filesStaging = :6, files = :7 WHERE id = :8";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraRepackSubRequestCnv::s_storeTypeStatementString =
@@ -379,7 +379,7 @@ void castor::db::ora::OraRepackSubRequestCnv::fillObjRepackRequest(castor::repac
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 requestIDId = (u_signed64)rset->getDouble(7);
+  u_signed64 requestIDId = (u_signed64)rset->getDouble(9);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -419,7 +419,7 @@ void castor::db::ora::OraRepackSubRequestCnv::createRep(castor::IAddress* addres
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(7, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(9, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -429,10 +429,12 @@ void castor::db::ora::OraRepackSubRequestCnv::createRep(castor::IAddress* addres
     m_insertStatement->setDouble(2, obj->xsize());
     m_insertStatement->setInt(3, obj->status());
     m_insertStatement->setString(4, obj->cuuid());
-    m_insertStatement->setString(5, obj->originPool());
-    m_insertStatement->setDouble(6, (type == OBJ_RepackRequest && obj->requestID() != 0) ? obj->requestID()->id() : 0);
+    m_insertStatement->setInt(5, obj->filesMigrating());
+    m_insertStatement->setInt(6, obj->filesStaging());
+    m_insertStatement->setInt(7, obj->files());
+    m_insertStatement->setDouble(8, (type == OBJ_RepackRequest && obj->requestID() != 0) ? obj->requestID()->id() : 0);
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(7));
+    obj->setId((u_signed64)m_insertStatement->getDouble(9));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -461,7 +463,9 @@ void castor::db::ora::OraRepackSubRequestCnv::createRep(castor::IAddress* addres
                     << "  xsize : " << obj->xsize() << std::endl
                     << "  status : " << obj->status() << std::endl
                     << "  cuuid : " << obj->cuuid() << std::endl
-                    << "  originPool : " << obj->originPool() << std::endl
+                    << "  filesMigrating : " << obj->filesMigrating() << std::endl
+                    << "  filesStaging : " << obj->filesStaging() << std::endl
+                    << "  files : " << obj->files() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  requestID : " << obj->requestID() << std::endl;
     throw ex;
@@ -489,8 +493,10 @@ void castor::db::ora::OraRepackSubRequestCnv::updateRep(castor::IAddress* addres
     m_updateStatement->setDouble(2, obj->xsize());
     m_updateStatement->setInt(3, obj->status());
     m_updateStatement->setString(4, obj->cuuid());
-    m_updateStatement->setString(5, obj->originPool());
-    m_updateStatement->setDouble(6, obj->id());
+    m_updateStatement->setInt(5, obj->filesMigrating());
+    m_updateStatement->setInt(6, obj->filesStaging());
+    m_updateStatement->setInt(7, obj->files());
+    m_updateStatement->setDouble(8, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->commit();
@@ -593,8 +599,10 @@ castor::IObject* castor::db::ora::OraRepackSubRequestCnv::createObj(castor::IAdd
     object->setXsize((u_signed64)rset->getDouble(2));
     object->setStatus(rset->getInt(3));
     object->setCuuid(rset->getString(4));
-    object->setOriginPool(rset->getString(5));
-    object->setId((u_signed64)rset->getDouble(6));
+    object->setFilesMigrating(rset->getInt(5));
+    object->setFilesStaging(rset->getInt(6));
+    object->setFiles(rset->getInt(7));
+    object->setId((u_signed64)rset->getDouble(8));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -644,8 +652,10 @@ void castor::db::ora::OraRepackSubRequestCnv::updateObj(castor::IObject* obj)
     object->setXsize((u_signed64)rset->getDouble(2));
     object->setStatus(rset->getInt(3));
     object->setCuuid(rset->getString(4));
-    object->setOriginPool(rset->getString(5));
-    object->setId((u_signed64)rset->getDouble(6));
+    object->setFilesMigrating(rset->getInt(5));
+    object->setFilesStaging(rset->getInt(6));
+    object->setFiles(rset->getInt(7));
+    object->setId((u_signed64)rset->getDouble(8));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {
