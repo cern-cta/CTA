@@ -20,29 +20,36 @@
 namespace castor {
 	
 	namespace repack {
+  
+  /** forward declaration */
+  class RepackServer;
+
 
 	/**
-     * class RepackFileStager
-     */
+   * class RepackFileStager
+   */
 	class RepackFileStager : public castor::server::IThread
 	{
 		public : 
 		
 		/**
-	     * Empty Constructor
-	     */
-		RepackFileStager() throw ();
+	   * Empty Constructor
+	   */
+		RepackFileStager(RepackServer* srv) throw ();
 		
 		/**
-	     * Destructor
-	     */
+	   * Destructor
+	   */
 		~RepackFileStager() throw();
-		/**
+		
+    /**
 		 * Stopping the run() method. It is just a flag which is set to false
 		 * and the loop is not executed anymore.
 		 */
 		virtual void stop()				throw();
-		/**
+		
+    
+   /**
 		 * The run method polls the database for new requests. If a request
 		 * arrives the stage_files Method is executed.
 		 * this can be stopped by calling the stop method, then it is not possible
@@ -57,28 +64,20 @@ namespace castor {
 		 */
 		void stage_files(RepackSubRequest* sreq) throw();
 
-		void RepackFileStager::sendStagerRepackRequest(castor::stager::StagePrepareToGetRequest* req, std::string *reqId) throw ();
-		/**
+		void sendStagerRepackRequest(castor::stager::StagePrepareToGetRequest* req, std::string *reqId) throw ();
+		
+
+    /**
 		 * Pointer to DatabaseHelper Instance. Created by the contructor.
 		 * Stores and updates RepackRequest.
 		 */
-		castor::repack::DatabaseHelper* m_dbhelper;
-		castor::repack::FileListHelper* m_filehelper;
+		DatabaseHelper* m_dbhelper;
+		FileListHelper* m_filehelper;
 
-		/**
-		 * Flag to implement the stop() method.
-		 */
-		bool m_run;
-		
-		/**
-		 * The nameserver
-		 */
-		std::string* m_ns;
-		
-		/**
-		 * The polling time for the DB, standard is 10sec.
-		 */
-		unsigned long polling_time;
+	  /** A pointer to the server instance, which keeps information
+      * about Nameserver, stager etc.
+      */	
+    RepackServer* ptr_server;
 	};
 
 
