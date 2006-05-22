@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/03/10 09:48:11 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/05/22 06:42:16 $ $Author: felixehm $
  *
  *
  *
@@ -36,47 +36,26 @@
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
 
-	char* port;
-	const char* REPACK_PORT = "REPACK_PORT";
-	int iport;
-	if ( (port = getenv (REPACK_PORT)) != 0 ) {
-	    char* dp = port;
-	    iport = strtoul(port, &dp, 0);
-	    if (*dp != 0) {
-			std::cerr << "Bad port value in enviroment variable " << REPACK_PORT
-			<< std::endl;
-			return 1;
-    	}
-    	if ( iport > 65535 ){
-    		std::cerr << "Given port no. in enviroment variable " << REPACK_PORT 
-			<< "exceeds 65535 !"<< std::endl;
-			return 1;
-		}
-	}
-	else
-		iport = castor::repack::CSP_REPACKSERVER_PORT;
-	
-
 	try {
 
     castor::repack::RepackServer server;
 	
     server.addThreadPool(
-      new castor::server::ListenerThreadPool("Worker", new castor::repack::RepackWorker(), iport));
-	server.getThreadPool('W')->setNbThreads(1);
+      new castor::server::ListenerThreadPool("Worker", new castor::repack::RepackWorker(), server.getListenPort()));
+	  server.getThreadPool('W')->setNbThreads(1);
 	
     server.addThreadPool(
-      new castor::server::SignalThreadPool("Stager", new castor::repack::RepackFileStager() ));
-	server.getThreadPool('S')->setNbThreads(1);
+      new castor::server::SignalThreadPool("Stager", new castor::repack::RepackFileStager(&server) ));
+	  server.getThreadPool('S')->setNbThreads(1);
 	
-	server.addThreadPool(
-    new castor::server::SignalThreadPool("Migrator", new castor::repack::RepackFileMigrator() ));
-	server.getThreadPool('M')->setNbThreads(1);
-	/*
-	server.addThreadPool(
-      new castor::server::SignalThreadPool("Cleaner", new castor::repack::RepackCleaner() ));
-	server.getThreadPool('C')->setNbThreads(1);
-    */
+	  server.addThreadPool(
+      new castor::server::SignalThreadPool("Monitor", new castor::repack::RepackMonitor(&server), 60 ));
+	  server.getThreadPool('M')->setNbThreads(1);
+ 
+	  server.addThreadPool(
+        new castor::server::SignalThreadPool("Cleaner", new castor::repack::RepackCleaner(&server),60 ));
+	  server.getThreadPool('C')->setNbThreads(1);
+   
     
     server.parseCommandLine(argc, argv);
     server.start();
@@ -142,14 +121,112 @@ castor::repack::RepackServer::RepackServer() :
      {30, "DatabaseHelper: SubRequest updated!"},
      {31, "RepackFileMigrator: Found candidates for CANBEMIGRATED!"},
      {32, "RepackFileMigrator: Stager returned error for putDone()!"},
+     {33, "RepackFileStager: Changing CUUID to stager one"},
+     {34, "RepackCleaner: No files found for cleanup phase"},
+     {35, "RepackCleaner: Cleaner started"},
+     {40, "RepackMonitor: Changing status"},
+     {40, "RepackMonitor: Stager query failed"},
      {99, "TODO::MESSAGE"},
      {-1, ""}};
-  castor::dlf::dlf_init("Repack", messages); 
+  castor::dlf::dlf_init("Repack", messages);
+  
+  
+  /* --------------------------------------------------------------------- */
+  /** This gets the repack port configuration in the enviroment, this 
+      is the only on, which is taken from the enviroment */
+  char* tmp;
+
+  if ( (tmp = getenv ("REPACK_PORT")) != 0 ) {
+      char* dp = tmp;
+      m_listenPort = strtoul(tmp, &dp, 0);
+      
+      if (*dp != 0) {
+        castor::exception::Internal ex;
+        ex.getMessage() << "Bad port value in enviroment variable " 
+                        << tmp << std::endl;
+        throw ex;
+      }
+      if ( m_listenPort > 65535 ){
+        castor::exception::Internal ex;
+        ex.getMessage() << "Given port no. in enviroment variable "
+                        << "exceeds 65535 !"<< std::endl;
+        throw ex;
+    }
+  }
+  else
+    m_listenPort = castor::repack::CSP_REPACKSERVER_PORT;
+  free(tmp);
+
+  /* --------------------------------------------------------------------- */
+
+  /** the RepackServer reads the configuration for Nameserver, stager etc.
+      at the beginning and keeps the information for the threads
+    */
+  char* tmp2;
+  if ( !(tmp2 = getconfent("CNS", "HOST",0)) ){
+    castor::exception::Internal ex;
+    ex.getMessage() << "Unable to initialise RepackServer with nameserver "
+                    << "entry in castor config file" << std::endl;
+    throw ex; 
+  }
+  m_ns = new std::string(tmp2);
+
+
+  /* --------------------------------------------------------------------- */
+
+  /** the stager name 
+  */
+  if ( !(tmp2 = getconfent("STAGER", "HOST",0)) ){
+    castor::exception::Internal ex;
+    ex.getMessage() << "Unable to initialise RepackServer with stager "
+                    << "entry in castor config file" << std::endl;
+    throw ex; 
+  }
+  m_stager = new std::string(tmp2);
+
+
+  /* --------------------------------------------------------------------- */
+
+  /** Get the repack service class, which is used for staging in files 
+    * The diskpool in this service class is used for recall process.
+    */
+  if ( !(tmp2 = getconfent("REPACK", "SVCCLASS",0)) ){
+    castor::exception::Internal ex;
+    ex.getMessage() << "Unable to initialise RepackServer with service class "
+                    << "entry in castor config file" << std::endl;
+    throw ex; 
+  }
+  m_serviceClass = new std::string(tmp2);
+  
+
+  /* --------------------------------------------------------------------- */
+
+  /** Get the repack service class, which is used for staging in files 
+    * The diskpool in this service class is used for recall process.
+    */
+  if ( !(tmp2 = getconfent("REPACK", "PROTOCOL",0)) ){
+    castor::exception::Internal ex;
+    ex.getMessage() << "Unable to initialise RepackServer with protocol "
+                    << "entry in castor config file" << std::endl;
+    throw ex; 
+  }
+  m_protocol = new std::string(tmp2);
+  /* --------------------------------------------------------------------- */
+
 }
+
+
+
 
 castor::repack::RepackServer::~RepackServer() throw()
 {
+    if ( m_ns != NULL ) delete m_ns;
+    if ( m_stager != NULL ) delete m_stager;
+    if ( m_serviceClass != NULL ) delete m_serviceClass;
+    if ( m_protocol != NULL ) delete m_protocol;
 }
+
+
 
 
 

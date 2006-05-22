@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/03/03 17:14:03 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/05/22 06:42:16 $ $Author: felixehm $
  *
  *
  *
@@ -35,8 +35,7 @@
 #include "RepackWorker.hpp"
 #include "RepackCleaner.hpp"
 #include "RepackFileStager.hpp"
-#include "RepackFileMigrator.hpp"
-
+#include "RepackMonitor.hpp"
 
 
 
@@ -46,6 +45,7 @@
 namespace castor {
 
  namespace repack {
+  
   
   /**
    * CASTOR Repack main daemon.
@@ -64,7 +64,37 @@ namespace castor {
      * destructor
      */
     virtual ~RepackServer() throw();
+  
+    /** Retrieves the Nameserver name */
+    std::string getNsName() const {
+      return (*m_ns);
+    }
+    /** Retrieves the Stager name */
+    std::string getStagerName() const {
+      return (*m_stager);
+    }
+    /** Retrieves the service class for repack process */
+    std::string getServiceClass() const {
+      return (*m_serviceClass);
+    }
+    /** Retrieves the protocol for file transfer */
+    std::string getProtocol() const {
+      return (*m_protocol);
+    }
+    /** Retrieves Port from env (if given) */
+    int getListenPort() const {
+      return m_listenPort;
+    }
 
+  private:
+    /**
+      * The Nameserver (this name is queries by RepackFileStager and RepackCleaner
+      */
+    std::string* m_ns;
+    std::string* m_stager;
+    std::string* m_serviceClass;
+    std::string* m_protocol;
+    int m_listenPort; 
   };
 
  } // end of namespace repack
