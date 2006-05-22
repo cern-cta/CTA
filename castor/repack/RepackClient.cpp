@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/03/14 17:44:20 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/05/22 07:05:33 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -294,7 +294,7 @@ void RepackClient::run(int argc, char** argv)
     
     if ( req == NULL )
     	return;
-    req->print();
+   // req->print();
 
     // creates a socket
     castor::io::ClientSocket s(m_defaultport, m_defaulthost);
@@ -317,7 +317,19 @@ void RepackClient::run(int argc, char** argv)
 }
 
 
-void RepackClient::handleResponse(RepackAck* ack){
+
+
+//------------------------------------------------------------------------------
+// handleResponse
+//------------------------------------------------------------------------------
+void RepackClient::handleResponse(RepackAck* ack) {
+	
+	std::map<int,std::string> statuslist;
+	statuslist[SUBREQUEST_READYFORSTAGING] = "START";
+	statuslist[SUBREQUEST_STAGING] = "STAGING";
+	statuslist[SUBREQUEST_MIGRATING] = "MIGRATING";
+	statuslist[SUBREQUEST_READYFORCLEANUP] = "CLEANUP";
+	statuslist[SUBREQUEST_DONE] = "FINISHED";
 	
 	if ( ack->errorCode() ){
 			std::cerr << "Repackserver respond :" << std::endl
@@ -325,22 +337,32 @@ void RepackClient::handleResponse(RepackAck* ack){
 			return;
 		}
 
+	if ( ack->request().size() > 0 ){
 	RepackRequest* rreq = ack->request().at(0);
-	std::cout << "==========================================================" << std::endl;
-	std::cout << " Tape Request : " << std::endl;
+	std::cout << "============================================================================" << std::endl;
+	std::cout << " Server response " << std::endl;
 	switch ( rreq->command() ){
 		case GET_STATUS_ALL : 
-   	case GET_STATUS : 
+    case GET_STATUS : 
+		case REPACK :
 		{
-			std::cout << "VID\tSTATUS\tCUUID" <<std::endl;
+			std::cout << "VID\tMIGRATING\tSTAGING\tTOTAL\tSTATUS\t\tCUUID" <<std::endl;
 			
 			std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
 			while ( tape != rreq->subRequest().end() ){
-         	std::cout << (*tape)->vid() << "\t" << (*tape)->status() << "\t" << (*tape)->cuuid() << std::endl;
+				std::cout << (*tape)->vid() 
+					<< "\t" << (*tape)->filesMigrating()
+          << "\t\t" << (*tape)->filesStaging()
+          << "\t" << (*tape)->files()
+					<< "\t" << statuslist[(*tape)->status()]
+          << "\t" << (*tape)->cuuid()
+					<< std::endl;
 				tape++;
 			}
 			break;
 		}
+
+	}
 	}
 
 
