@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Release$ $Date: 2006/03/14 17:40:17 $ $Author: felixehm $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Release$ $Date: 2006/05/22 06:54:51 $ $Author: felixehm $
 #
 # Make Castor Repack System
 #
@@ -60,7 +60,7 @@ REPACKSERVERBIN_SRCS =  RepackServer.cpp \
 		FileListHelper.cpp \
 		Tools.cpp \
 		RepackFileStager.cpp \
-		RepackFileMigrator.cpp \
+		RepackMonitor.cpp \
 		RepackCleaner.cpp \
 		$(REPACKDBCNVSRC) \
 		$(REPACKCOMMON_SRC) 
