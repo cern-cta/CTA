@@ -47,6 +47,17 @@ const std::string castor::repack::DatabaseHelper::m_selectCheckSubRequestStateme
   "SELECT q.id FROM RepackSubRequest q WHERE q.status= :1 AND ROWNUM < 2";
 const std::string castor::repack::DatabaseHelper::m_selectAllSubRequestsStatementString =
   "SELECT id FROM RepackSubRequest";
+const std::string castor::repack::DatabaseHelper::m_selectExistingSegmentsStatementString =
+  "SELECT fileid,compression,segsize,filesec,id,vid FROM RepackSegment,RepackSubrequest where RepackSegment.fileid = :1 and RepackSegment.copyno = :2";
+const std::string castor::repack::DatabaseHelper::m_isStoredStatementString =
+  "SELECT id FROM RepackSubRequest where vid=:1";
+
+
+
+
+
+
+
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -56,7 +67,9 @@ castor::repack::DatabaseHelper::DatabaseHelper() :
 	 m_selectToDoStatement(NULL),
     m_selectCheckStatement(NULL),
     m_selectCheckSubRequestStatement(NULL),
-    m_selectAllSubRequestsStatement(NULL) {
+    m_selectAllSubRequestsStatement(NULL),
+    m_selectExistingSegmentsStatement(NULL),
+    m_isStoredStatement(NULL) {
   try {
 	ad.setCnvSvcName("DbCnvSvc");
 	ad.setCnvSvcType(castor::SVC_DBCNV);
@@ -93,13 +106,17 @@ void castor::repack::DatabaseHelper::reset() throw() {
    if ( m_selectToDoStatement ) delete m_selectToDoStatement;
    if ( m_selectCheckStatement ) delete m_selectCheckStatement;
    if ( m_selectCheckSubRequestStatement ) delete m_selectCheckSubRequestStatement;
-	if ( m_selectAllSubRequestsStatement ) delete m_selectAllSubRequestsStatement;
+   if ( m_selectAllSubRequestsStatement ) delete m_selectAllSubRequestsStatement;
+   if ( m_selectExistingSegmentsStatement ) delete m_selectExistingSegmentsStatement;
+   if ( m_isStoredStatement ) delete m_isStoredStatement;
   } catch (castor::exception::SQLError ignored) {};
   // Now reset all pointers to 0
    m_selectToDoStatement = NULL;
    m_selectCheckStatement = NULL;
    m_selectCheckSubRequestStatement = NULL;
    m_selectAllSubRequestsStatement = NULL;
+   m_selectExistingSegmentsStatement = NULL;
+   m_isStoredStatement = NULL;
 }
 
 
@@ -120,12 +137,12 @@ void castor::repack::DatabaseHelper::storeRequest(castor::repack::RepackRequest*
 		if ( rreq != NULL ) {
 		  svcs()->createRep(&ad, rreq, false);			// Create Representation in DB
 		  svcs()->fillRep(&ad, rreq, OBJ_RepackSubRequest, false);	//and fill it
-		/*
+		
 		  // we must not forget the segments
-		  for (int i = 0; i < rreq->subRequest().segment().size(); i++)
-			  svcs()->fillRep(&ad, rreq->subRequest().segment().at(i), OBJ_RepackSegment, false);
-		}
-		*/
+		  for (int i = 0; i < rreq->subRequest().size(); i++){
+			  svcs()->fillRep(&ad, rreq->subRequest().at(i), OBJ_RepackSegment, false);
+		  }
+		
 		svcs()->commit(&ad);
 		// "Request stored in DB" message
 		castor::dlf::Param params[] =
@@ -158,18 +175,38 @@ bool castor::repack::DatabaseHelper::is_stored(std::string vid)
 						throw (castor::exception::Internal)
 {
 	bool result = false;
-	stage_trace(2,"Checking, if %s is already in DB ",vid.c_str());
 	
-	if ( getSubRequestByVid(vid) ){
-		castor::dlf::Param params[] =
-		{castor::dlf::Param("VID", vid)};
-		 castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28, 1, params);
-		stage_trace(3," VID : %s already in Database ! Skipping..", 
-								vid.c_str());
-		result = true;
-	}
 	
+	try {
+		// Check whether the statements are ok
+		if ( m_isStoredStatement == NULL ) {
+			m_isStoredStatement = 
+					createStatement(m_isStoredStatementString);
+		}
+		m_isStoredStatement->setString(1, vid);
+		castor::db::IDbResultSet *rset = 
+				m_isStoredStatement->executeQuery();
 
+		if ( rset->next() )	/* Something found*/
+		{
+			castor::dlf::Param params[] =
+			{castor::dlf::Param("VID", vid)};
+		 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28, 1, params);
+			result = true;
+		}
+		delete rset;
+	
+	}catch (castor::exception::SQLError e){
+		delete m_selectCheckStatement;
+		castor::exception::Internal ex;
+		ex.getMessage() << "DatabaseHelper::Unable to execute check" 
+				<< std::endl << e.getMessage();
+		throw ex;
+	}	
+	
+	delete m_isStoredStatement;
+	m_isStoredStatement = NULL;
+	
 	return result;
 }
 
@@ -196,6 +233,8 @@ castor::repack::RepackSubRequest*
 		{
 			u_signed64 id = (u_signed64)rset->getDouble(1);
 			result = getSubRequest(id);
+			
+			svcs()->fillObj(&ad,result,OBJ_RepackSegment);
 		}
 		delete rset;
 	
@@ -219,24 +258,27 @@ castor::repack::RepackSubRequest*
 // updateSubRequest
 //------------------------------------------------------------------------------
 void castor::repack::DatabaseHelper::updateSubRequest(
-				castor::repack::RepackSubRequest* obj,
+        castor::repack::RepackSubRequest* obj,
+        bool fill,
 				Cuuid_t& cuuid) 
 				throw (castor::exception::Internal)
 {
 	try {
-		// Stores it into the data base
+		// stores it into the database
 		svcs()->updateRep(&ad, obj, false);
-		for (int i = 0; i < obj->segment().size(); i++){
-			try {
-				svcs()->updateRep(&ad, obj->segment().at(i), false);
-			}catch ( castor::exception::Exception e){
-				// we ignore the exception
-			}
+    
+    /** we add the segments to the repacksubrequest */
+    if (fill) {
+        svcs()->fillRep(&ad, obj, OBJ_RepackSegment, false);
+    }
+    else {
+        for (int i = 0; i < obj->segment().size(); i++)
+          svcs()->updateRep(&ad, obj->segment().at(i), false);
 		}
 		svcs()->commit(&ad);
 		
-	 } catch (castor::exception::Exception e) {
-	 	svcs()->rollback(&ad);
+	} catch (castor::exception::Exception e) {
+	 	 svcs()->rollback(&ad);
 	    	castor::dlf::Param params[] =
       		{castor::dlf::Param("Standard Message", sstrerror(e.code())),
       	 	 castor::dlf::Param("Precise Message", e.getMessage().str())};
@@ -257,40 +299,11 @@ castor::repack::RepackSubRequest* castor::repack::DatabaseHelper::requestToDo()
 					throw (castor::exception::Internal)
 {
 	RepackSubRequest* result = NULL;
+	result = checkSubRequestStatus(SUBREQUEST_READYFORSTAGING);
 	
-	// Check whether the statements are ok
-	if ( m_selectToDoStatement == NULL ) {
-		m_selectToDoStatement = createStatement(m_selectToDoStatementString);
-	}	
-	// Execute statement and get result
-	try {
-		castor::db::IDbResultSet *rset = m_selectToDoStatement->executeQuery();
-		if ( !rset->next() ){	/* no Job to be done */
-			delete rset;
-			return NULL;	
-		}
-		else	/* jepp, we found a job, happy about that, 
-				we try to return the RepackRequest */
-		{
-			// get the request we found, which the ID we got from DB
-			u_signed64 id = (u_signed64)rset->getDouble(1);
-			delete rset;
-			result = getSubRequest(id);
-		    
-			svcs()->fillObj(&ad,result,OBJ_RepackSegment);
-			return result;
-		}
-	} catch (castor::exception::SQLError e) {
-		delete result;
-		castor::exception::Internal ex;
-		ex.getMessage()
-		<< "DatabaseHelper::requestToDo(): "
-		<< "Unable to get a RepackSubRequest from DB " 
-		<< std::endl << e.getMessage();
-		throw ex;
-	}
-    
+	return result;
 }
+
 
 //------------------------------------------------------------------------------
 // internal : getSubRequest
@@ -324,8 +337,10 @@ castor::repack::RepackSubRequest*
   return result;
 }
 
+
+
 //------------------------------------------------------------------------------
-// private : getSubRequest
+// private : checkSubRequestStatus
 //------------------------------------------------------------------------------
 castor::repack::RepackSubRequest* 
 		castor::repack::DatabaseHelper::checkSubRequestStatus(int status)
@@ -353,6 +368,7 @@ castor::repack::RepackSubRequest*
 				u_signed64 id = (u_signed64)rset->getDouble(1);
 				delete rset;
 				result = getSubRequest(id);
+				svcs()->fillObj(&ad,result,OBJ_RepackSegment);
 		}
 	}catch (castor::exception::SQLError e) {
 		delete result;
@@ -381,12 +397,16 @@ void castor::repack::DatabaseHelper::remove(castor::IObject* obj)
 {
 	try {
 		if ( obj->type() == OBJ_RepackSubRequest ){
-			RepackSubRequest* rseq = dynamic_cast<RepackSubRequest*>(obj);
-			//stage_abortRequest( (char*)rseq->cuuid().c_str() ,NULL);
+			RepackSubRequest* sreq = dynamic_cast<RepackSubRequest*>(obj);
+			for (int i=0; i<sreq->segment().size(); i++ ){
+				svcs()->deleteRep(&ad,sreq->segment().at(i), false);
+			}
 		}
 		svcs()->deleteRep(&ad,obj, false);
 		svcs()->commit(&ad);
+	
 	}catch (castor::exception::SQLError e){
+		svcs()->rollback(&ad);
 		castor::exception::Internal ex;
 		ex.getMessage()
 		<< "DatabaseHelper::remove():"
@@ -435,4 +455,53 @@ std::vector<castor::repack::RepackSubRequest*>*
 	}
 	
 	return result;
+}
+
+
+
+
+
+//------------------------------------------------------------------------------
+// private : getTapeCopy 
+//------------------------------------------------------------------------------
+castor::repack::RepackSegment* 
+                    castor::repack::DatabaseHelper::getTapeCopy(
+                                           castor::repack::RepackSegment* lookup
+					   )
+                    throw (castor::exception::Internal)
+{
+
+  castor::repack::RepackSegment* result = NULL;
+
+  if ( m_selectExistingSegmentsStatement == NULL ) {
+    m_selectExistingSegmentsStatement = createStatement(m_selectExistingSegmentsStatementString);
+  }
+  
+  try {
+    m_selectExistingSegmentsStatement->setDouble(1, lookup->fileid() );
+    m_selectExistingSegmentsStatement->setDouble(1, lookup->copyno() );
+    castor::db::IDbResultSet *rset = 
+      m_selectAllSubRequestsStatement->executeQuery();
+		
+    if ( rset->next() ){
+      result = new castor::repack::RepackSegment();
+      result->setFileid((u_signed64)rset->getDouble(1));
+      result->setCompression(rset->getInt(2));
+      result->setSegsize((u_signed64)rset->getDouble(3));
+      result->setFilesec(rset->getInt(4));
+      result->setId((u_signed64)rset->getDouble(5));
+      RepackSubRequest* tmp = new RepackSubRequest();
+      tmp->setId((u_signed64)rset->getDouble(6));
+      result->setVid(tmp);
+    }
+    delete rset;
+  }catch (castor::exception::SQLError e) {
+		castor::exception::Internal ex;
+		ex.getMessage()
+		<< "DatabaseHelper::getTapeCopy():"
+		<< "Unable to get all RepackSubRequests" 
+		<< std::endl << e.getMessage();
+		throw ex;
+	}
+  return result;
 }
