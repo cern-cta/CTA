@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/05/06 14:55:04 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/05/22 06:55:48 $ $Author: felixehm $
  *
  *
  *
@@ -175,6 +175,7 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq, Cu
 			rseg->setFilesec(dtp->fsec);
 			rseg->setCompression(dtp->compression);
 			rseg->setSegsize(dtp->segsize);
+			rseg->setCopyno(dtp->copyno);
 			subreq->addSegment(rseg);
 
 			segs_size += dtp->segsize;
