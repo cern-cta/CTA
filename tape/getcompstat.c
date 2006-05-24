@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.19 $ $Date: 2005/11/04 09:53:44 $ CERN Fabien Collin/Jean-Philippe Baud/Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.20 $ $Date: 2006/05/24 14:26:23 $ CERN Fabien Collin/Jean-Philippe Baud/Benjamin Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -209,7 +209,8 @@ COMPRESSION_STATS *comp_stats;
 			p += *(p+3) + 4;
 		}
 	} else if (strcmp (devtype, "9840") == 0 ||
-		   strcmp (devtype, "9940") == 0) {      /* values in bytes */
+		   strcmp (devtype, "9940") == 0 || 
+		   strcmp (devtype, "T10000") == 0) {      /* values in bytes */
 		while (p < endpage) {
 			parmcode = *p << 8 | *(p+1);
 			switch (parmcode) {
