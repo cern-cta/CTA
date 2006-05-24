@@ -18,7 +18,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: gcAllFS,v $ $Revision: 1.1 $ $Release$ $Date: 2005/09/22 14:22:58 $ $Author: sponcec3 $
+# * @(#)$RCSfile: gcAllFS,v $ $Revision: 1.2 $ $Release$ $Date: 2006/05/24 15:06:15 $ $Author: sponcec3 $
 # *
 # * garbage collect all filesystems in one go
 # *
@@ -50,7 +50,7 @@ if ($help) {
 # but I fear there is currently no way to do otherwise...
 my $dbquery = <<EOF;
 BEGIN
-  FOR fs in (SELECT id from filesytem) LOOP
+  FOR fs in (SELECT id from filesystem) LOOP
     garbageCollectFS(fs.id);
   end LOOP;
 END;
