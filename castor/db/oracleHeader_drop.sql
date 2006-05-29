@@ -10,7 +10,6 @@ DROP SEQUENCE ids_seq;
 /* indexes for optimizing queries */
 DROP INDEX I_Id2Type_typeId;
 DROP INDEX I_DiskServer_name;
-DROP INDEX I_CastorFile_fileIdNsHost;
 DROP INDEX I_DiskCopy_Castorfile;
 DROP INDEX I_DiskCopy_FileSystem;
 DROP INDEX I_TapeCopy_Castorfile;
