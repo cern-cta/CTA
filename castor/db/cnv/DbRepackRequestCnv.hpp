@@ -156,7 +156,6 @@ namespace castor {
 
         /**
          * Fill the foreign representation with some of the objects.refered by a given C++
-         * object.
          * @param address the place where to find the foreign representation
          * @param object the original C++ object
          * @param type the type of the refered objects to store
@@ -172,7 +171,6 @@ namespace castor {
 
         /**
          * Fill the database with objects of type RepackSubRequest refered by a given
-         * object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
@@ -187,12 +185,12 @@ namespace castor {
          */
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
-                             unsigned int type)
+                             unsigned int type,
+                             bool autocommit)
           throw (castor::exception::Exception);
 
         /**
          * Retrieve from the database objects of type RepackSubRequest refered by a given
-         * object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */

@@ -102,6 +102,7 @@ namespace castor {
       /*********************************/
       /**
        * Get the value of m_machine
+       * The machine name from which the request is send.
        * @return the value of m_machine
        */
       std::string machine() const {
@@ -110,6 +111,7 @@ namespace castor {
 
       /**
        * Set the value of m_machine
+       * The machine name from which the request is send.
        * @param new_var the new value of m_machine
        */
       void setMachine(std::string new_var) {
@@ -118,6 +120,7 @@ namespace castor {
 
       /**
        * Get the value of m_userName
+       * The username of the user, who submits the request.
        * @return the value of m_userName
        */
       std::string userName() const {
@@ -126,6 +129,7 @@ namespace castor {
 
       /**
        * Set the value of m_userName
+       * The username of the user, who submits the request.
        * @param new_var the new value of m_userName
        */
       void setUserName(std::string new_var) {
@@ -134,6 +138,7 @@ namespace castor {
 
       /**
        * Get the value of m_creationTime
+       * The creation time of the request
        * @return the value of m_creationTime
        */
       unsigned long creationTime() const {
@@ -142,6 +147,7 @@ namespace castor {
 
       /**
        * Set the value of m_creationTime
+       * The creation time of the request
        * @param new_var the new value of m_creationTime
        */
       void setCreationTime(unsigned long new_var) {
@@ -149,21 +155,25 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_pool
-       * The tape pool to be repacked
-       * @return the value of m_pool
+       * Get the value of m_serviceclass
+       * The service class to where the file have to be written. It is not possible to
+       * specify directly the target tapes or tapepools. By default, the files are written
+       * to the tapepool belonging to the repack service class specified in the castor
+       * @return the value of m_serviceclass
        */
-      std::string pool() const {
-        return m_pool;
+      std::string serviceclass() const {
+        return m_serviceclass;
       }
 
       /**
-       * Set the value of m_pool
-       * The tape pool to be repacked
-       * @param new_var the new value of m_pool
+       * Set the value of m_serviceclass
+       * The service class to where the file have to be written. It is not possible to
+       * specify directly the target tapes or tapepools. By default, the files are written
+       * to the tapepool belonging to the repack service class specified in the castor
+       * @param new_var the new value of m_serviceclass
        */
-      void setPool(std::string new_var) {
-        m_pool = new_var;
+      void setServiceclass(std::string new_var) {
+        m_serviceclass = new_var;
       }
 
       /**
@@ -184,8 +194,6 @@ namespace castor {
 
       /**
        * Get the value of m_command
-       * This field is set from the Client and can be commands for Repack.
-       * i.e  the removal of tapes from Repack
        * @return the value of m_command
        */
       int command() const {
@@ -194,8 +202,6 @@ namespace castor {
 
       /**
        * Set the value of m_command
-       * This field is set from the Client and can be commands for Repack.
-       * i.e  the removal of tapes from Repack
        * @param new_var the new value of m_command
        */
       void setCommand(int new_var) {
@@ -251,21 +257,20 @@ namespace castor {
 
     private:
 
+      /// The machine name from which the request is send.
       std::string m_machine;
 
+      /// The username of the user, who submits the request.
       std::string m_userName;
 
+      /// The creation time of the request
       unsigned long m_creationTime;
 
-      /// The tape pool to be repacked
-      std::string m_pool;
+      /// The service class to where the file have to be written. It is not possible to specify directly the target tapes or tapepools. By default, the files are written to the tapepool belonging to the repack service class specified in the castor config file.
+      std::string m_serviceclass;
 
       u_signed64 m_pid;
 
-      /*
-       * This field is set from the Client and can be commands for Repack.
-       * i.e  the removal of tapes from Repack
-      */
       int m_command;
 
       /// The id of this object

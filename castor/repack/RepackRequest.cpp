@@ -44,7 +44,7 @@ castor::repack::RepackRequest::RepackRequest() throw() :
   m_machine(""),
   m_userName(""),
   m_creationTime(0),
-  m_pool(""),
+  m_serviceclass(""),
   m_pid(0),
   m_command(0),
   m_id(0) {
@@ -76,7 +76,7 @@ void castor::repack::RepackRequest::print(std::ostream& stream,
   stream << indent << "machine : " << m_machine << std::endl;
   stream << indent << "userName : " << m_userName << std::endl;
   stream << indent << "creationTime : " << m_creationTime << std::endl;
-  stream << indent << "pool : " << m_pool << std::endl;
+  stream << indent << "serviceclass : " << m_serviceclass << std::endl;
   stream << indent << "pid : " << m_pid << std::endl;
   stream << indent << "command : " << m_command << std::endl;
   stream << indent << "id : " << m_id << std::endl;
