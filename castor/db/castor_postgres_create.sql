@@ -83,7 +83,7 @@ CREATE TABLE StageRequestQueryRequest (flags INT8, userName VARCHAR(2048), euid 
 CREATE TABLE StageFindRequestRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type SubRequest */
-CREATE TABLE SubRequest (retryCounter INT4, fileName VARCHAR(2048), protocol VARCHAR(2048), xsize INT8, priority INT4, subreqId VARCHAR(2048), flags INT4, modeBits INT4, creationTime INT8, lastModificationTime INT8, answered INT4, repackVid std:string, id INT8 PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER);
+CREATE TABLE SubRequest (retryCounter INT4, fileName VARCHAR(2048), protocol VARCHAR(2048), xsize INT8, priority INT4, subreqId VARCHAR(2048), flags INT4, modeBits INT4, creationTime INT8, lastModificationTime INT8, answered INT4, repackVid VARCHAR(2048), id INT8 PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER);
 
 /* SQL statements for type StageReleaseFilesRequest */
 CREATE TABLE StageReleaseFilesRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 PRIMARY KEY, svcClass INTEGER, client INTEGER);
