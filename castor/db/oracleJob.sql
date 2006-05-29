@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.266 $ $Release$ $Date: 2006/05/26 09:43:09 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.267 $ $Release$ $Date: 2006/05/29 12:02:53 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -741,37 +741,6 @@ BEGIN
   END IF;
 END;
 
-/* PL/SQL method implementing fileRecalled */
-CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
-  SubRequestId NUMBER;
-  dci NUMBER;
-  fsId NUMBER;
-  fileSize NUMBER;
-  repackVid VARCHAR2(2048);
-  cfid NUMBER;
-BEGIN
-  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize, SubRequest.repackVid, CastorFile.id
-    INTO SubRequestId, dci, fileSize, repackVid, cfid
-    FROM TapeCopy, SubRequest, DiskCopy, CastorFile
-   WHERE TapeCopy.id = tapecopyId
-     AND CastorFile.id = TapeCopy.castorFile
-     AND DiskCopy.castorFile = TapeCopy.castorFile
-     AND SubRequest.diskcopy(+) = DiskCopy.id
-     AND DiskCopy.status = 2;
-  UPDATE DiskCopy SET status = decode(repackVid, NULL,NULL, 6)  -- DISKCOPY_STAGEOUT if repackVid != NULL, else DISKCOPY_STAGED 
-   WHERE id = dci RETURNING fileSystem INTO fsid;
-  IF repackVid IS NOT NULL THEN
-  	putDoneFunc(cfid, fsId, 0);
-  END IF;
-  IF subRequestId IS NOT NULL THEN
-    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
-     WHERE id = SubRequestId; 
-    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
-     WHERE parent = SubRequestId;
-  END IF;
-  updateFsFileClosed(fsId, fileSize, fileSize);
-END;
-
 /* PL/SQL method implementing fileRecallFailed */
 CREATE OR REPLACE PROCEDURE fileRecallFailed(tapecopyId IN INTEGER) AS
  SubRequestId NUMBER;
@@ -1435,6 +1404,37 @@ BEGIN
  COMMIT;
 END;
 
+/* PL/SQL method implementing fileRecalled */
+CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
+  SubRequestId NUMBER;
+  dci NUMBER;
+  fsId NUMBER;
+  fileSize NUMBER;
+  repackVid VARCHAR2(2048);
+  cfid NUMBER;
+BEGIN
+  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize, SubRequest.repackVid, CastorFile.id
+    INTO SubRequestId, dci, fileSize, repackVid, cfid
+    FROM TapeCopy, SubRequest, DiskCopy, CastorFile
+   WHERE TapeCopy.id = tapecopyId
+     AND CastorFile.id = TapeCopy.castorFile
+     AND DiskCopy.castorFile = TapeCopy.castorFile
+     AND SubRequest.diskcopy(+) = DiskCopy.id
+     AND DiskCopy.status = 2;
+  UPDATE DiskCopy SET status = decode(repackVid, NULL,NULL, 6)  -- DISKCOPY_STAGEOUT if repackVid != NULL, else DISKCOPY_STAGED 
+   WHERE id = dci RETURNING fileSystem INTO fsid;
+  IF repackVid IS NOT NULL THEN
+  	putDoneFunc(cfid, fsId, 0);
+  END IF;
+  IF subRequestId IS NOT NULL THEN
+    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
+     WHERE id = SubRequestId; 
+    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
+     WHERE parent = SubRequestId;
+  END IF;
+  updateFsFileClosed(fsId, fileSize, fileSize);
+END;
+
 /* PL/SQL method implementing selectCastorFile */
 CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
                                               nh IN VARCHAR2,
@@ -1913,7 +1913,7 @@ BEGIN
  FOR sr IN (SELECT id, status
               FROM SubRequest
              WHERE castorFile = cfId) LOOP
-   IF sr.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10)   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+   IF sr.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
      UPDATE SubRequest SET status = 7 WHERE id = sr.id;  -- FAILED
    END IF;
  END LOOP;
@@ -2278,7 +2278,7 @@ BEGIN
     -- ok, we queue this filesystem for being garbage collected
     SELECT count(*) INTO gccount FROM FileSystemGC;
     INSERT INTO FileSystemGC VALUES (:new.id, getTime());
-    -- are we the only filesystem waiting for GC?
+    -- is it the only filesystem waiting for GC?
     IF gccount = 0 THEN
       -- we spawn a job to do the real work. This avoids mutating table error
       -- and ensures that the current update does not fail if GC fails
@@ -2340,7 +2340,7 @@ END;
  * PL/SQL method implementing the core part of stage queries full version (for admins)
  * It takes a list of castorfile ids as input
  *
-CREATE OR REPLACE PROCEDURE internalFullStageQuery
+CREATE PROCEDURE internalFullStageQuery
  (cfs IN "numList",
   svcClassId IN NUMBER,
   result OUT castor.QueryLine_Cur) AS
@@ -2382,13 +2382,18 @@ CREATE OR REPLACE PROCEDURE fileNameStageQuery
   cfs "numList";
 BEGIN
  IF substr(fn, 1, 7) = 'regexp:' THEN  -- posix-syle regular expressions
-   SELECT id BULK COLLECT INTO cfs FROM CastorFile
-    WHERE REGEXP_LIKE(lastKnownFileName,substr(fn, 8)) AND ROWNUM <= maxNbResponses + 1;
+   SELECT id BULK COLLECT INTO cfs
+     FROM CastorFile
+    WHERE REGEXP_LIKE(lastKnownFileName,substr(fn, 8)) 
+      AND ROWNUM <= maxNbResponses + 1;
  ELSIF substr(fn, -1, 1) = '/' THEN    -- files in a 'subdirectory'
-   SELECT id BULK COLLECT INTO cfs FROM CastorFile 
-    WHERE lastKnownFileName LIKE fn||'%' AND ROWNUM <= maxNbResponses + 1;
+   SELECT /*+ INDEX(CastorFile I_CastorFile_LastKnownFileName) */ id BULK COLLECT INTO cfs
+     FROM CastorFile 
+    WHERE lastKnownFileName LIKE fn||'%'
+      AND ROWNUM <= maxNbResponses + 1;
  ELSE                                  -- exact match
-   SELECT id BULK COLLECT INTO cfs FROM CastorFile 
+   SELECT /*+ INDEX(CastorFile I_CastorFile_LastKnownFileName) */ id BULK COLLECT INTO cfs
+     FROM CastorFile 
     WHERE lastKnownFileName = fn;
  END IF;
  IF cfs.COUNT > maxNbResponses THEN
@@ -2661,7 +2666,7 @@ END;
  * the new way) and by the modification time.
  * Returns 1 if a couple was found, 0 otherwise.
  *
-CREATE OR REPLACE PROCEDURE matchTape2TapeDrive
+CREATE PROCEDURE matchTape2TapeDrive
  (tapeDriveID OUT NUMBER, tapeRequestID OUT NUMBER) AS
 BEGIN
   SELECT TapeDrive.id, TapeRequest.id INTO tapeDriveID, tapeRequestID
