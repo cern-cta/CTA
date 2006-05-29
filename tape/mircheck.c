@@ -27,7 +27,7 @@ int is_mir_invalid_unload(int tapefd, char *path, char *devtype) {
 }
 
 
-/* Functions that checks whether the 9840/9940 tape MIR is valid */
+/* Functions that checks whether the 9840/9940/T10000/LTO/3592 tape MIR is valid */
 int
 is_mir_invalid(tapefd, path, devtype, checktype)
 int tapefd;
@@ -58,7 +58,9 @@ int checktype;
     if (strcmp (devtype, "9840") == 0 ||
         strcmp (devtype, "9940") == 0 ||
         strcmp (devtype, "994B") == 0 ||
-        strcmp (devtype, "T10000") == 0) {
+        strcmp (devtype, "T10000") == 0 ||
+        strcmp (devtype, "LTO") == 0 ||
+        strcmp (devtype, "3592") == 0) {
         cdb[2] = 0x40 | 0x2E;   /* PC = 1, Tape Alerts Page */
 	} else {
 		serrno = SEOPNOTSUP;
@@ -82,7 +84,9 @@ int checktype;
     if (strcmp (devtype, "9840") == 0 ||
         strcmp (devtype, "9940") == 0 ||
         strcmp (devtype, "994B") == 0 ||
-        strcmp (devtype, "T10000") == 0) {
+        strcmp (devtype, "T10000") == 0 ||
+        strcmp (devtype, "LTO") == 0 ||
+        strcmp (devtype, "3592") == 0) {
         
         while (p < endpage) {
             parmcode = *p << 8 | *(p+1);
@@ -98,7 +102,7 @@ int checktype;
             p += *(p+3) + 4;
         }
     } else {
-        return 0;
+		return 0;
     }
     
 
