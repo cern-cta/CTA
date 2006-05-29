@@ -57,7 +57,8 @@ int checktype;
 	cdb[8] = sizeof(buffer) & 0x00FF;
     if (strcmp (devtype, "9840") == 0 ||
         strcmp (devtype, "9940") == 0 ||
-        strcmp (devtype, "994B") == 0) {
+        strcmp (devtype, "994B") == 0 ||
+        strcmp (devtype, "T10000") == 0) {
         cdb[2] = 0x40 | 0x2E;   /* PC = 1, Tape Alerts Page */
 	} else {
 		serrno = SEOPNOTSUP;
@@ -80,7 +81,8 @@ int checktype;
 
     if (strcmp (devtype, "9840") == 0 ||
         strcmp (devtype, "9940") == 0 ||
-        strcmp (devtype, "994B") == 0) {
+        strcmp (devtype, "994B") == 0 ||
+        strcmp (devtype, "T10000") == 0) {
         
         while (p < endpage) {
             parmcode = *p << 8 | *(p+1);
