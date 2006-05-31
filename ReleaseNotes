@@ -1,5 +1,28 @@
 -----------
-- 2.1.0.0 -
+- 2.1.0-2 -
+-----------
+
+  New Features and Changes (from 2.1.0-0)
+  ---------------------------------------
+  
+  This is a bug fix release, strictly identical to 2.1.0-0 except
+  for the tape part.
+  On previous releases of Castor, the report of compression statistics
+  from SUN T10000 tape drives was wrong. This behaviour was due to the
+  wrong handling of the T10000 device when decoding the sequential log page.
+  Castor will report wrong compression statistics on IBM3592 tape drives
+  if the tape drive is set with NVC mode on. The tape drive will only post
+  correct statistics after the flush of the NVC buffer, this behaviour is
+  particularly seen when files are smaller than the NVC buffer size
+  (~300MBytes).
+
+  Upgrade from 2.1.0-0
+  --------------------
+
+    - The only upgrade to be done concerns the tape servers.
+
+-----------
+- 2.1.0-0 -
 -----------
 
   New Features and Changes (from 2.0.4-1)
