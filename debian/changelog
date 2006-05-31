@@ -1,4 +1,4 @@
-castor (2.1.0-1) unstable; urgency=low
+castor (2.1.0-2) unstable; urgency=low
 
   * Bug fix release on top of the 2.1.0-0 one (branching)
   * CASTOR2/tape/getcompstat.c:
@@ -12,7 +12,14 @@ castor (2.1.0-1) unstable; urgency=low
 
  -- rosa maria garcia rioja <rioja@cern.ch>  Wed, 31 May 2006 16:36:59 +0200
 
-castor (2.1.0-0) unstable; urgency=low
+castor (2.1.0-1) unstable; urgency=low
+
+  * No changes, this release number has been used by the Linux team to
+    temporarily fix a problem in SLC3.
+
+ -- rosa maria garcia rioja <rioja@cern.ch>  Wed, 31 May 2006 16:36:59 +0200
+
+castor (2.1.0-2) unstable; urgency=low
 
   * Identical to 2.0.4-1. Only the version number changed so that the soname
     of the libraries change since we introduced a lack of backward compatibility in version 2.0.4-* that force applications to relink.
