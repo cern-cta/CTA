@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.13 2006/05/09 16:16:49 sponcec3 Exp $
+## $Id: PACKAGING.howto,v 1.14 2006/06/01 09:16:13 riojac3 Exp $
 #
 
 #
@@ -63,10 +63,10 @@ fakeroot make deb
 ## To export on the download web page
 #  ----------------------------------
 cd /afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/DIST/CERN/savannah/CASTOR.pkg
-mkdir -p x.y.z-r/Linux/i386
-cd x.y.z-r/Linux/i386
+mkdir -p x.y.z-r/SLC3/i386
+cd x.y.z-r/SLC3/i386
 cp /usr/src/redhat/RPMS/i386/*x.y.z-r*.rpm .
-cp /usr/src/redhat/SRPMS/castor-x.y.z-r.src.rpm .
+cp /usr/src/redhat/SRPMS/castor-x.y.z-r.src.rpm ../../
 
 #
 ## To enter the rpms into swrep
