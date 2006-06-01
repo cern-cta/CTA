@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.268 $ $Release$ $Date: 2006/05/30 14:07:15 $ $Author: felixehm $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.269 $ $Release$ $Date: 2006/06/01 13:13:48 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2117,6 +2117,11 @@ BEGIN
   END LOOP;
   -- if no candidate has been found (this can happen with the null GC policy) just give up
   IF bestCandidate = -1 THEN
+    -- update Filesystem toBeFreed space back to the previous value
+    UPDATE FileSystem
+       SET spaceToBeFreed = spaceToBeFreed - toBeFreed
+     WHERE FileSystem.id = fsId;
+    COMMIT;
     RETURN;
   END IF;
   -- Now extract the diskcopies that will be garbaged and
@@ -2171,8 +2176,8 @@ END;
 
 /*
  * Runs only default policy garbage collection on the specified FileSystem
- */
-CREATE OR REPLACE PROCEDURE defGarbageCollectFS(fsId INTEGER) AS
+ *
+CREATE PROCEDURE defGarbageCollectFS(fsId INTEGER) AS
   toBeFreed INTEGER;
   freed INTEGER := 0;
   dpID INTEGER;
@@ -2222,6 +2227,7 @@ BEGIN
   -- commit everything
   COMMIT;
 END;
+*/
 
 
 /* This table keeps the current queue of the garbage collector:
