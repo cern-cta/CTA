@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/05/22 06:42:16 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/06/02 09:24:12 $ $Author: felixehm $
  *
  *
  *
@@ -47,11 +47,11 @@ int main(int argc, char *argv[]) {
     server.addThreadPool(
       new castor::server::SignalThreadPool("Stager", new castor::repack::RepackFileStager(&server) ));
 	  server.getThreadPool('S')->setNbThreads(1);
-	
+	  
 	  server.addThreadPool(
-      new castor::server::SignalThreadPool("Monitor", new castor::repack::RepackMonitor(&server), 60 ));
+      new castor::server::SignalThreadPool("Monitor", new castor::repack::RepackMonitor(&server),0, 60 ));
 	  server.getThreadPool('M')->setNbThreads(1);
- 
+    
 	  server.addThreadPool(
         new castor::server::SignalThreadPool("Cleaner", new castor::repack::RepackCleaner(&server),60 ));
 	  server.getThreadPool('C')->setNbThreads(1);
@@ -114,18 +114,17 @@ castor::repack::RepackServer::RepackServer() :
      {23, "RepackFileStager: Not enough space for this RepackRequest. Skipping..."},// RepackFileStager:stage_files
      {24, "FileListHelper: Retrieved segs for SubRequest."},							//FileListHelper:getFileListSegs()
      {25, "RepackFileStager: Updating Request to STAGING and add its segs."},		// RepackFileStager:stage_files
+     {36, "RepackFileStager: No files found on tape."},               // RepackFileStager:stage_files
      {26, "RepackFileStager: Staging files."},												// RepackFileStager:stage_files
      {27, "DatabaseHelper: Unable to update SubRequest!"},
      {28, "DatabaseHelper: Tape already in repack que!"},
      {29, "RepackFileStager: Getting Segs for SubRequest!"},
      {30, "DatabaseHelper: SubRequest updated!"},
-     {31, "RepackFileMigrator: Found candidates for CANBEMIGRATED!"},
-     {32, "RepackFileMigrator: Stager returned error for putDone()!"},
      {33, "RepackFileStager: Changing CUUID to stager one"},
      {34, "RepackCleaner: No files found for cleanup phase"},
      {35, "RepackCleaner: Cleaner started"},
      {40, "RepackMonitor: Changing status"},
-     {40, "RepackMonitor: Stager query failed"},
+     {41, "RepackMonitor: Stager query failed"},
      {99, "TODO::MESSAGE"},
      {-1, ""}};
   castor::dlf::dlf_init("Repack", messages);
