@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/06/02 09:06:09 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/06/02 12:45:32 $ $Author: felixehm $
  *
  *
  *
@@ -105,7 +105,7 @@ void RepackFileStager::stop() throw() {
 //------------------------------------------------------------------------------
 // stage_files
 //------------------------------------------------------------------------------
-void RepackFileStager::stage_files(RepackSubRequest* sreq) throw() {
+void RepackFileStager::stage_files(RepackSubRequest* sreq) {
 
 	int rc=0;				// the return code for the stager_prepareToGet call.
 	int i,j;
@@ -152,11 +152,10 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq) throw() {
 
 
 	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 26, 0, NULL);
+
 	try {
-		
-			sendStagerRepackRequest(&req, &reqId, sreq->requestID()->serviceclass());
-	  
-      
+      sendStagerRepackRequest(&req, &reqId, sreq->requestID()->serviceclass());
+
 	}catch (castor::exception::Exception ex){
 		castor::dlf::Param params[] =
 		{castor::dlf::Param("Standard Message", sstrerror(ex.code())),
@@ -179,6 +178,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq) throw() {
   filelist->clear();
   delete filelist;
 	
+  /// doesn't throw exceptions
   m_dbhelper->updateSubRequest(sreq,true, cuuid);
 
   stage_trace(2,"File are sent to stager, repack request updated.");
