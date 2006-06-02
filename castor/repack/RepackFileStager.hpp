@@ -60,23 +60,45 @@ namespace castor {
 
 		private:
 		/**
-		 * Stages the files
+		 * Stages the files. It retrieves the files for the tape and
+     * sends a StagePrepareToGetRequest to the stager. If the submit
+     * was successfull the state of the RepackSubRequest is changed 
+     * to SUBREQUEST_STAGING.
+     * @param sreq The RepackSubRequest to stage in files
+     * @throws castor::exeption::Internal Internal Exception in case of an error
 		 */
-		void stage_files(RepackSubRequest* sreq) throw();
+		void stage_files(RepackSubRequest* sreq) throw(castor::exception::Internal);
 
-		void sendStagerRepackRequest(castor::stager::StagePrepareToGetRequest* req, std::string *reqId) throw ();
+
+    /** private method to send the request to the stager.
+      * @param req The Request to send
+      * @param reqId the returned request id (cuuid) from stager
+      * @param 
+      * @throws castor::exeption::Internal Internal Exception in case of an error
+      */
+		void sendStagerRepackRequest(
+                                  castor::stager::StagePrepareToGetRequest* req,
+                                  std::string *reqId,
+                                  std::string serviceclass
+                                )
+                                throw (castor::exception::Internal);
 		
 
     /**
-		 * Pointer to DatabaseHelper Instance. Created by the contructor.
+		 * Pointer to DatabaseHelper instance. Created by the contructor.
 		 * Stores and updates RepackRequest.
 		 */
 		DatabaseHelper* m_dbhelper;
-		FileListHelper* m_filehelper;
+    
+
+    /**
+     * Pointer to a FileListHelper instance. Created by the contructor.
+     */
+    FileListHelper* m_filehelper;
 
 	  /** A pointer to the server instance, which keeps information
-      * about Nameserver, stager etc.
-      */	
+     * about Nameserver, stager etc.
+     */	
     RepackServer* ptr_server;
 	};
 
