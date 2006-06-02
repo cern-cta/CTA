@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/05/22 06:55:48 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/06/02 10:04:36 $ $Author: felixehm $
  *
  *
  *
@@ -69,7 +69,7 @@ FileListHelper::~FileListHelper()
 // getFilePathnames
 //------------------------------------------------------------------------------
 std::vector<std::string>* FileListHelper::getFilePathnames(
-								castor::repack::RepackSubRequest *subreq, Cuuid_t& cuuid) throw()
+								castor::repack::RepackSubRequest *subreq, Cuuid_t& cuuid) 
 {
 	int i=0;
 	char path[CA_MAXPATHLEN+1];
@@ -81,7 +81,6 @@ std::vector<std::string>* FileListHelper::getFilePathnames(
 	/* and get the parentfileids */
 	tmp = getFileList(subreq, cuuid);
 
-	stage_trace(2,"Fetching filenames for %d Files",tmp->size());
 	for ( i=0; i< tmp->size(); i++ )
 	{
 		/* get the full path and push it into the list */
@@ -107,7 +106,7 @@ std::vector<std::string>* FileListHelper::getFilePathnames(
 // getFileList, check if double entries are in list (should never happen !!!)
 //------------------------------------------------------------------------------
 std::vector<u_signed64>* FileListHelper::getFileList(
-      							castor::repack::RepackSubRequest *subreq, Cuuid_t& cuuid) throw()
+      							castor::repack::RepackSubRequest *subreq, Cuuid_t& cuuid) 
 {
 	unsigned long i = 0;
 	double vecsize = 0;
@@ -140,7 +139,6 @@ std::vector<u_signed64>* FileListHelper::getFileList(
 		}
 		j++;
 	}
-	stage_trace(3,"Number of parents: %d",parentlist->size());
 	return parentlist;
 }
 
@@ -183,7 +181,6 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq, Cu
 		}
 		
 		Cns_listtape ((char*)m_ns.c_str(), (char*)subreq->vid().c_str(), CNS_LIST_END, &list);
-		stage_trace(2,"Size on disk to be allocated: %u", segs_size);
 		subreq->setXsize(segs_size);
 
 		castor::dlf::Param params[] =

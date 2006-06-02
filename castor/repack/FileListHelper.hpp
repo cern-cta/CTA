@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/23 12:43:12 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/06/02 10:04:36 $ $Author: felixehm $
  *
  * The Filelisthelper offers some little functions for getting the file 
  * information for a tape.
@@ -74,7 +74,7 @@ namespace castor {
        * @param rreq The Request of the Tape
        */
       std::vector<u_signed64>* getFileList(
-      							castor::repack::RepackSubRequest *sreq, Cuuid_t& cuuid) throw();
+      							castor::repack::RepackSubRequest *sreq, Cuuid_t& cuuid) ;
 
       /**
        * Fills the Request with the segments on the tape
@@ -86,7 +86,7 @@ namespace castor {
       
       
       std::vector<std::string>* getFilePathnames(
-								castor::repack::RepackSubRequest *subreq, Cuuid_t& cuuid) throw();
+								castor::repack::RepackSubRequest *subreq, Cuuid_t& cuuid) ;
                           
 	private:
 		/**
