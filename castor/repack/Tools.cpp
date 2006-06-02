@@ -5,6 +5,10 @@
 
 namespace castor {
 	namespace repack {
+
+
+  // forward declaration
+  void freeRepackSubRequest(castor::repack::RepackSubRequest* obj);
 //------------------------------------------------------------------------------
 // Helper for shit Cuuid C structs
 //------------------------------------------------------------------------------
@@ -31,7 +35,45 @@ namespace castor {
     free( resp->diskserver);
     free( resp->poolname);
     if ( resp->errorCode) free( resp->errorMessage);
-    //free (resp);
+  }
+
+//------------------------------------------------------------------------------
+// Helper for cleaning the repack objects
+//------------------------------------------------------------------------------  
+  void freeRepackObj(castor::IObject* obj)
+  {
+    if ( obj != NULL ) {
+      if ( obj->type() == OBJ_RepackRequest)
+      {
+        RepackRequest* tmp = dynamic_cast<RepackRequest*>(obj);
+        for (int i=0;i<tmp->subRequest().size(); i++){
+          freeRepackSubRequest( tmp->subRequest().at(i) );
+        }
+        tmp->subRequest().clear();
+        delete tmp;
+      }
+      else if ( obj->type() == OBJ_RepackSubRequest) {
+        RepackSubRequest* tmp = dynamic_cast<RepackSubRequest*>(obj);
+        freeRepackSubRequest( tmp );
+      }
+      else
+        return;
+    }
+  }
+
+//------------------------------------------------------------------------------
+// Helper for cleaning a RepackSubRequest
+//------------------------------------------------------------------------------  
+  void freeRepackSubRequest(castor::repack::RepackSubRequest* obj)
+  {
+    if ( obj != NULL ) {
+      for (int i=0;i<obj->segment().size(); i++){
+        delete obj->segment().at(i);
+      }
+      obj->segment().clear();
+      delete obj;
+      obj = NULL;
+    }
   }
 
 
