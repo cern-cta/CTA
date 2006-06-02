@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2006/05/22 06:33:12 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2006/06/02 12:51:42 $ $Author: felixehm $
  *
  *
  *
@@ -82,11 +82,7 @@ void RepackWorker::run(void* param)
   }
   
   
-  // "New Request Arrival" message
-  castor::dlf::Param params[] =
-    {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-     castor::dlf::Param("Port", port)};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 1, 2, params);
+  
   
   stage_trace(2, "Request from %3d.%3d.%3d.%3d:%d", 
   				 (ip%265),((ip >> 8)%256),((ip >> 16)%256),(ip >> 24), port);
@@ -120,25 +116,44 @@ void RepackWorker::run(void* param)
   
 /****************************************************************************/
   try{
-      
+  
+  // "New Request Arrival" message
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+     castor::dlf::Param("Port", port),
+     castor::dlf::Param("Command", rreq->command()),
+     castor::dlf::Param("User", rreq->userName()),
+     castor::dlf::Param("Machine", rreq->machine()),};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 1, 5, params);
 
-	switch ( rreq->command() ){
-	
-	 case REMOVE_TAPE:	removeRequest(rreq);break;
-	 
-	 case REPACK: 		handleRepack(rreq);
-				ack.addRequest(rreq);
-	 			break;
-	 
-	 case GET_STATUS: 	getStatus(rreq);
-				ack.addRequest(rreq);
-				break;
-				
-	 case GET_STATUS_ALL:   getStatusAll(rreq);
-				ack.addRequest(rreq);
-				break;
-				
-	 default:break;	/** Do nothing by default */
+  switch ( rreq->command() ){
+
+  case REMOVE_TAPE:       removeRequest(rreq);
+                          break;
+
+  case REPACK:            handleRepack(rreq);
+                          ack.addRequest(rreq);
+                          break;
+
+  case GET_STATUS: /** the old RepackRequest is removed */
+                          rreq = getStatus(rreq);
+                          rreq->setCommand(GET_STATUS);
+                          ack.addRequest(rreq);
+                          break;
+
+  case GET_STATUS_ALL:    getStatusAll(rreq);
+                          ack.addRequest(rreq);
+                          break;
+
+  case GET_STATUS_ARCHIVED:
+                          //getAllArchived(rreq);
+                          ack.addRequest(rreq);
+                          break;
+  case ARCHIVE:           archiveSubRequests(rreq);
+                          ack.addRequest(rreq);
+                          break;
+
+	  default:break;	/** Do nothing by default */
 	}
 
   }catch (castor::exception::Internal e) {
@@ -159,8 +174,12 @@ void RepackWorker::run(void* param)
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 11, 2, params);
     std::cerr << e.getMessage();
   }
-  
-  delete rreq;
+
+
+  /** Clean everything. */  
+  freeRepackObj(rreq);
+  //delete rreq;
+  rreq = NULL;
   delete sock;  // originally created from RepackServer
 
 }
@@ -177,24 +196,36 @@ void RepackWorker::stop()
 }
 
 //------------------------------------------------------------------------------
-// Retrieves the subrequests for client answer
+// Retrieves the subrequest for client answer
 //------------------------------------------------------------------------------
-void RepackWorker::getStatus(RepackRequest* rreq) throw (castor::exception::Internal)
+RepackRequest* RepackWorker::getStatus(RepackRequest* rreq) throw (castor::exception::Internal)
 {
-	std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
+  /** this method takes only 1! subrequest, this is normaly ensured by the 
+    * repack client 
+    */
+  RepackRequest* result = NULL;
 
-	while ( tape != rreq->subRequest().end() ){
-		
-		RepackSubRequest* tmp = m_databasehelper->getSubRequestByVid( (*tape)->vid());
-		
-		if ( tmp != NULL ) {
-			rreq->subRequest().erase((tape)); /** we don't need the subrequest from 
-								the client, we replace it with the 
-								one from DB*/
-			rreq->subRequest().insert(tape,tmp);
-	 	}
-		tape++;
-	}
+  if ( rreq== NULL || rreq->subRequest().size()==0 ) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "RepackWorker::getStatus(..) : Invalid Request" << std::endl;
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 0, NULL);
+    throw ex;
+  }
+  /** Get the SubRequest. We query by VID and recieve a full subrequest */
+  std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
+  RepackSubRequest* tmp = m_databasehelper->getSubRequestByVid( (*tape)->vid());
+
+  if ( tmp != NULL ) {
+    result = tmp->requestID();
+  }
+  delete (*tape);  // we have only one, must be  ensured by the repack client!
+  
+  /** we don't need the request from the client, we replace it with the 
+    *            one from DB
+    */
+  rreq->subRequest().clear();
+  delete rreq;
+  return result;
 }
 
 
@@ -203,7 +234,7 @@ void RepackWorker::getStatus(RepackRequest* rreq) throw (castor::exception::Inte
 //------------------------------------------------------------------------------
 void RepackWorker::getStatusAll(RepackRequest* rreq) throw (castor::exception::Internal)
 {
-	std::vector<castor::repack::RepackSubRequest*>* result = 
+  std::vector<castor::repack::RepackSubRequest*>* result = 
 						m_databasehelper->getAllSubRequests();
 	
 	std::vector<RepackSubRequest*>::iterator tape = result->begin();
@@ -212,7 +243,31 @@ void RepackWorker::getStatusAll(RepackRequest* rreq) throw (castor::exception::I
 		rreq->subRequest().push_back((*tape));
 		tape++;
 	}
+	
+	delete result;
 }
+
+
+//------------------------------------------------------------------------------
+// Archives the finished tapes
+//------------------------------------------------------------------------------
+void RepackWorker::archiveSubRequests(RepackRequest* rreq) throw (castor::exception::Internal)
+{
+  std::vector<castor::repack::RepackSubRequest*>* result = 
+            m_databasehelper->getAllSubRequestsStatus(SUBREQUEST_DONE);
+  
+  std::vector<RepackSubRequest*>::iterator tape = result->begin();
+    
+  while ( tape != result->end() ){
+    (*tape)->setStatus(SUBREQUEST_ARCHIVED);
+    rreq->subRequest().push_back((*tape));
+    tape++;
+  }
+  delete result;
+  m_databasehelper->archive();
+}
+
+
 
 
 
@@ -221,19 +276,23 @@ void RepackWorker::getStatusAll(RepackRequest* rreq) throw (castor::exception::I
 //------------------------------------------------------------------------------
 void RepackWorker::removeRequest(RepackRequest* rreq) throw (castor::exception::Internal)
 {
-	std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
+	
+  std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
 	while ( tape != rreq->subRequest().end() ){
-		
+		/** if the vid is not in the repack system, a exception in thrown and
+      * send to the client
+      */
 		RepackSubRequest* tmp = 
 			m_databasehelper->getSubRequestByVid( (*tape)->vid() );
-
-		/** TODO:: call does not work properly */
-		//stage_abortRequest( (char*)tmp->cuuid().c_str() ,NULL);
+    
+    Cuuid_t cuuid = stringtoCuuid((*tape)->cuuid());
 
 		if ( tmp != NULL ) {
-			m_databasehelper->remove(tmp);
-			tape++;
+			tmp->setStatus(SUBREQUEST_READYFORCLEANUP);
+      m_databasehelper->updateSubRequest(tmp,false,cuuid);
+      freeRepackObj(tmp);
 		}
+    tape++;
 	}
 }
 
@@ -287,10 +346,10 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor
 	
 
 	if ( rreq != NULL )	{
-	
-		/** Pool Handling */
+	   /*
+		// Pool Handling 
 		if ( rreq->pool().length() > 0 ) {
-			/* check if exists */
+			//check if exists 
 			pool_name = (char*)rreq->pool().c_str();
 			
 			if (vmgr_querypool (pool_name, NULL, NULL, NULL, NULL) < 0) {
@@ -304,7 +363,7 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor
 				throw ex;
 			}
 			
-			/* get the tapes, check them and add them to the Request */
+			// get the tapes, check them and add them to the Request 
 			flags = VMGR_LIST_BEGIN;
 			castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 20, 0, NULL);
 			
@@ -317,17 +376,17 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor
 					rreq->addSubRequest(tmp);
 					nbvol++;
 				}
-				/** if the tape is unvalid for repacking, a message is already
-				 * written to DLF by checkTapeforRepack(..)*/
+				// if the tape is unvalid for repacking, a message is already
+				//  written to DLF by checkTapeforRepack(..)
 				 free(lp);
 			}
 			vmgr_listtape (NULL, pool_name, VMGR_LIST_END, &list);
 			return nbvol;
 		}
 
-
-		/* No tape pool given, so check the given tapes */
-		else {
+     */
+		/** No tape pool given, so check the given tapes */ 
+		//else {
 			lp   = (struct vmgr_tape_info*)(malloc(sizeof(vmgr_tape_info)));
 			tape = rreq->subRequest().begin();
 			while ( tape != rreq->subRequest().end() ){
@@ -344,7 +403,7 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor
 
 			}
 			free(lp);
-		}
+		//}
 		return nbvol;
 	}
 	return -1;
