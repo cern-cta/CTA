@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/05/22 06:47:22 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/06/02 09:06:09 $ $Author: felixehm $
  *
  *
  *
@@ -69,7 +69,7 @@ RepackFileStager::~RepackFileStager() throw() {
 void RepackFileStager::run(void *param) throw() {
 	
 		/* Lets see, if good old pal DB has a Job for us */
-		RepackSubRequest* sreq = m_dbhelper->requestToDo();
+    RepackSubRequest* sreq = m_dbhelper->requestToDo();
 		
 		if ( sreq != NULL ){
 	    	
@@ -85,13 +85,11 @@ void RepackFileStager::run(void *param) throw() {
 				stage_files(sreq);
 			/* stage the files, and we forget errors, the logs are written anyway */
 			}
-			catch (castor::exception::Internal e){
-				delete sreq;
-			}
 			catch (castor::exception::Exception ex){
-				delete sreq;
+				freeRepackObj(sreq->requestID());
 			}
 			delete sreq;
+      sreq = NULL;
 		}
 }
 
@@ -115,24 +113,33 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq) throw() {
 	_Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
 	castor::stager::StagePrepareToGetRequest req;
 	
-	stage_trace(3,"Updating SubRequest with its segs");
 	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 29, 0, NULL);
 	/* get the Segs for this tape !*/
 	if ( m_filehelper->getFileListSegs(sreq,cuuid) )
 		return;
 
-
   // ---------------------------------------------------------------
 	// This part has to be removed, if the stager also accepts only fileid
 	// as parameter. For now we have to get the paths first.
-	stage_trace(3,"Now, get the paths.");
+
 	std::vector<std::string>* filelist = m_filehelper->getFilePathnames(sreq,cuuid);
 	std::vector<std::string>::iterator filename = filelist->begin();
 	// ---------------------------------------------------------------
 //	std::vector<u_signed64>* filelist = m_filehelper->getFileList(sreq,cuuid);
 //	std::vector<u_signed64>::iterator fileid;
 	
-	/* here we build the Request for the stager */
+	
+  /** check, if we got something back */
+  if ( filelist->size() == 0 ){
+    castor::dlf::Param params[] =
+    {castor::dlf::Param("VID", sreq->vid())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 36, 1, params);
+    delete filelist;
+    return;
+  }
+
+
+  /* here we build the Request for the stager */
 	while (filename != filelist->end()) {
 		castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
 		subreq->setFileName((*filename));
@@ -143,48 +150,65 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq) throw() {
 		filename++;
 	}
 
-	stage_trace(3,"Sending the stager request.");
+
 	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 26, 0, NULL);
 	try {
-		if (filelist->size() > 0 )
-			sendStagerRepackRequest(&req, &reqId);
-	
+		
+			sendStagerRepackRequest(&req, &reqId, sreq->requestID()->serviceclass());
+	  
+      
 	}catch (castor::exception::Exception ex){
 		castor::dlf::Param params[] =
 		{castor::dlf::Param("Standard Message", sstrerror(ex.code())),
 		 castor::dlf::Param("Precise Message", ex.getMessage().str())};
 		castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 21, 2, params);
+    return;
 	}
 	
-	/* Setting the SubRequest's Cuuid to the stager one for better follow */
+	/** Setting the SubRequest's Cuuid to the stager one for better follow */
 	stage_trace(3," Stagerrequest (now new RepackSubRequest CUUID ): %s",(char*)reqId.c_str());
 	castor::dlf::Param param[] = {castor::dlf::Param("New reqID", reqId)};
 	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 33, 1, param);
 	cuuid = stringtoCuuid(reqId);
 	sreq->setCuuid(reqId);
 
-	stage_trace(2,"File are sent to stager, repack request updated.");
-	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 25, 0, NULL);
 	sreq->setFilesStaging(filelist->size());
-        sreq->setFiles(filelist->size());
-        sreq->setStatus(SUBREQUEST_STAGING);
-	m_dbhelper->updateSubRequest(sreq,true, cuuid);
+  sreq->setFiles(filelist->size());
+  sreq->setStatus(SUBREQUEST_STAGING);
+  
+  filelist->clear();
+  delete filelist;
+	
+  m_dbhelper->updateSubRequest(sreq,true, cuuid);
 
-	filelist->clear();
-	delete filelist;
-      
+  stage_trace(2,"File are sent to stager, repack request updated.");
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 25, 0, NULL);
 
 	// the Request has now status SUBREQUEST_STAGING
 }
 		
 
 
-void RepackFileStager::sendStagerRepackRequest(castor::stager::StagePrepareToGetRequest* req, std::string *reqId) throw ()
+
+//------------------------------------------------------------------------------
+// stage_files
+//------------------------------------------------------------------------------
+void RepackFileStager::sendStagerRepackRequest(
+                                                castor::stager::StagePrepareToGetRequest* req,
+                                                std::string *reqId,
+                                                std::string serviceclass
+                                              ) throw (castor::exception::Internal)
 {
 	struct stage_options opts;
   char *tmp;
 	opts.stage_host = (char*)ptr_server->getStagerName().c_str();	
-	opts.service_class = (char*)ptr_server->getServiceClass().c_str();
+	
+  /** is a special service class given (for writing to tape(pools)) */
+  if ( serviceclass.length() )
+    opts.service_class = (char*)serviceclass.c_str();
+  /** otherwise we take the one specified in the castor config file */
+  else     
+    opts.service_class = (char*)ptr_server->getServiceClass().c_str();
 
 	/** Uses a BaseClient to handle the request */
 	castor::client::BaseClient client(stage_getClientTimeout());
@@ -206,7 +230,7 @@ void RepackFileStager::sendStagerRepackRequest(castor::stager::StagePrepareToGet
       // Casting the response into a FileResponse !
       castor::rh::FileResponse* fr = dynamic_cast<castor::rh::FileResponse*>(respvec[i]);
       if (0 == fr) {
-        castor::exception::Exception e(SEINTERNAL);
+        castor::exception::Internal e;
         e.getMessage() << "Error in dynamic cast, response was NOT a file response.\n"
                        << "Object type is "
                        << castor::ObjectsIdStrings[respvec[i]->type()];
@@ -227,30 +251,6 @@ void RepackFileStager::sendStagerRepackRequest(castor::stager::StagePrepareToGet
 	respvec.clear();
 }
 
-
-
-//------------------------------------------------------------------------------
-// createSvcClass, for repacking to different tapepool than origin
-//------------------------------------------------------------------------------	
-/*
-void RepackFileStager::createSvcClass(RepackSubRequest *rsub)
-{
-	// 1. enter new SvcClass into DB 
-	
-	std::ofstream myfile;
-	struct vmgr_tape_info tape_info;
-
-	if (vmgr_querytape (vid, 0, &tape_info, NULL) < 0) {
-		// The check was done before !
-		return;
-	}
-	
-	myfile.open ("migratorPolicy.pl");
-	myfile << "";
-	myfile.close();
-}
-		
-*/	
 		
 	} //END NAMESPACE REPACK
 }//END NAMESPACE CASTOR
