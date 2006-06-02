@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/05/22 07:05:33 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/06/02 08:31:18 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -93,6 +93,7 @@ RepackClient::RepackClient()
 
   cp.vid =  NULL;
   cp.pool = NULL;
+  cp.serviceclass = NULL;
 
   svc = svcs()->cnvService("StreamCnvSvc", castor::SVC_STREAMCNV);
   if (0 == svc) {
@@ -119,22 +120,23 @@ RepackClient::~RepackClient() throw()
 //------------------------------------------------------------------------------
 bool RepackClient::parseInput(int argc, char** argv)
 {
-  const char* cmdParams = "S:sR:V:P:h";
+  const char* cmdParams = "o:aS:sR:V:P:h";
   if (argc == 1){
     usage();
     return false;
   }
   struct Coptions longopts[] = {
+    {"output_svcclass", REQUIRED_ARGUMENT, 0, 'o'},
     {"status", 0,NULL, 's' },
-	 {"status", REQUIRED_ARGUMENT,NULL, 'S' },
+    {"Status", REQUIRED_ARGUMENT,NULL, 'S' },
     {"delete", REQUIRED_ARGUMENT,NULL, 'R' },
     {"volumeid", REQUIRED_ARGUMENT, NULL, 'V'},
-    {"poolid", REQUIRED_ARGUMENT, NULL, 'P'},
+    //{"poolid", REQUIRED_ARGUMENT, NULL, 'P'},
+    {"archive", NO_ARGUMENT, 0, 'a'},
     /*{"library", REQUIRED_ARGUMENT, 0, OPT_LIBRARY_NAME},
     {"min_free", REQUIRED_ARGUMENT, 0, 'm'},
     {"model", REQUIRED_ARGUMENT, 0, OPT_MODEL},
     {"nodelete", NO_ARGUMENT, &nodelete_flag, 1},
-    {"output_tppool", REQUIRED_ARGUMENT, 0, 'o'},
     {"otp", REQUIRED_ARGUMENT, 0, 'o'},*/
     {"help", NO_ARGUMENT,NULL, 'h' },
     {NULL, 0, NULL, 0}
@@ -162,14 +164,19 @@ bool RepackClient::parseInput(int argc, char** argv)
       cp.vid = Coptarg;
       cp.command = REMOVE_TAPE;
       break;
-	 case 'S':
-		cp.vid = Coptarg;
-		cp.command = GET_STATUS;
-		return true;
-	case 's':
-		cp.command = GET_STATUS_ALL;
-		return true;
-    default:
+	  case 'S':
+		  cp.vid = Coptarg;
+		  cp.command = GET_STATUS;
+		  break;
+	  case 's':
+		  cp.command = GET_STATUS_ALL;
+		  return true;
+    case 'o':
+      cp.serviceclass = Coptarg;
+      break;
+    case 'a':
+      cp.command = ARCHIVE;
+      return true;
       break;
     }
   }
@@ -185,7 +192,8 @@ bool RepackClient::parseInput(int argc, char** argv)
 //------------------------------------------------------------------------------
 void RepackClient::usage() 
 {
-	std::cout << "Usage: repack -V [VolumeID] -P [PoolID] | -h " << std::endl;
+	std::cout << "Usage: repack -V [VID1:VID2..] [-o serviceclass] " << std::endl 
+            << "-P [PoolID] | -S [VID] | -h | -s | -R [VID1:VID2..]" << std::endl;
 }
 
 
@@ -198,7 +206,7 @@ void RepackClient::help(){
 	<< "Several tapes can be added by sperating them by ':'.It is also possible to repack a tape pool."<< std::endl 
 	<< "Here, only the name of one tape pool is allowed." << std::endl;
 
-	std::cout << "The hostname and port can be changed easily by changing them in your castor " << std::endl 
+	std::cout << "The hostname and port can be changed in your castor " << std::endl 
 	<< "config file or by defining them in your enviroment." << std::endl << std::endl 
 	<< "The enviroment variables are: "<< std::endl 
 	<< "REPACK_PORT or REPACK_PORT_ALT "<< std::endl 
@@ -206,7 +214,7 @@ void RepackClient::help(){
 	<< "The castor config file :" << std::endl
 	<< "REPACK PORT <port number> "<< std::endl
 	<< "REPACK HOST <hostname> "<< std::endl<< std::endl
-	<< "If the enviroment has no vaild entries the castor configuration file" << std::endl
+	<< "If the enviroment has no vaild entries, the castor configuration file" << std::endl
 	<< "is read." << std::endl << std::endl;
 		
         usage();
@@ -248,7 +256,7 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
   
   if ( gethostname(cName, CA_MAXHOSTNAMELEN) != 0 ){
   	std::cerr << "Cannot get hostname ! Aborting.." << std::endl;
- 	delete rreq;
+   	delete rreq;
   	return NULL;
   }
 
@@ -258,10 +266,10 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
   /* or, we want to repack a pool */
   if ( cp.pool != NULL ) {
   	if ( !rreq->subRequest().size() )
-       rreq->setPool(cp.pool);
+       ;//rreq->setPool(cp.pool);
     else
     {
-    	std::cerr << "You must specify either a pool name or one or more volume ids" 
+    	std::cerr << "You must specify either a pool name or one or more volumes." 
     			  << std::endl;
     	usage();
     	delete rreq;
@@ -273,7 +281,7 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
   rreq->setUserName(pw->pw_name);
   rreq->setCreationTime(time(NULL));
   rreq->setMachine(cName);
-  
+  if ( cp.serviceclass != NULL ) rreq->setServiceclass(cp.serviceclass);
   return rreq;
   
 }
@@ -287,14 +295,16 @@ void RepackClient::run(int argc, char** argv)
   try {
     // parses the command line
     if (!parseInput(argc, argv)) {
+      usage();
       return;
     }
     // builds a request and prints it
     castor::repack::RepackRequest* req = buildRequest();
     
-    if ( req == NULL )
+    if ( req == NULL ){
     	return;
-   // req->print();
+    }
+   
 
     // creates a socket
     castor::io::ClientSocket s(m_defaultport, m_defaulthost);
@@ -307,7 +317,6 @@ void RepackClient::run(int argc, char** argv)
 	if ( ack != 0 ){
 		handleResponse(ack);
 	}
-	
     // free memory
     delete req;
     delete ack;
@@ -330,44 +339,52 @@ void RepackClient::handleResponse(RepackAck* ack) {
 	statuslist[SUBREQUEST_MIGRATING] = "MIGRATING";
 	statuslist[SUBREQUEST_READYFORCLEANUP] = "CLEANUP";
 	statuslist[SUBREQUEST_DONE] = "FINISHED";
+  statuslist[SUBREQUEST_ARCHIVED] = "ARCHIVED";
 	
 	if ( ack->errorCode() ){
-			std::cerr << "Repackserver respond :" << std::endl
-					  << ack->errorMessage() << std::endl;
-			return;
-		}
+		std::cerr << "Repackserver respond :" << std::endl
+					<< ack->errorMessage() << std::endl;
+		return;
+  }
 
 	if ( ack->request().size() > 0 ){
-	RepackRequest* rreq = ack->request().at(0);
-	std::cout << "============================================================================" << std::endl;
-	std::cout << " Server response " << std::endl;
-	switch ( rreq->command() ){
-		case GET_STATUS_ALL : 
-    case GET_STATUS : 
-		case REPACK :
-		{
-			std::cout << "VID\tMIGRATING\tSTAGING\tTOTAL\tSTATUS\t\tCUUID" <<std::endl;
-			
-			std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
-			while ( tape != rreq->subRequest().end() ){
-				std::cout << (*tape)->vid() 
-					<< "\t" << (*tape)->filesMigrating()
-          << "\t\t" << (*tape)->filesStaging()
-          << "\t" << (*tape)->files()
-					<< "\t" << statuslist[(*tape)->status()]
-          << "\t" << (*tape)->cuuid()
-					<< std::endl;
-				tape++;
-			}
-			break;
-		}
-
-	}
+	  RepackRequest* rreq = ack->request().at(0);
+	  std::cout << "==================================================================================" 
+              << std::endl;
+	  
+    switch ( rreq->command() ){
+		  case GET_STATUS : 
+       std::cout 
+        << "Details for Request :" << std::endl
+        << "created\t\tmachine\t\tuser" << std::endl
+        << rreq->creationTime() << "\t" << rreq->machine() << "\t" << rreq->userName() 
+        << std::endl << std::endl; 
+      
+      case GET_STATUS_ALL : 
+      case ARCHIVE : 
+		  case REPACK : 
+		  {
+			  std::cout << "vid\tmigration\tstaging\ttotal\tstatus\t\tcuuid" <<std::endl;
+			  
+			  std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
+			  while ( tape != rreq->subRequest().end() ){
+				  std::cout << (*tape)->vid() 
+					  << "\t" << (*tape)->filesMigrating()
+            << "\t\t" << (*tape)->filesStaging()
+            << "\t" << (*tape)->files()
+					  << "\t" << statuslist[(*tape)->status()]
+            << "\t\t" << (*tape)->cuuid()
+					  << std::endl;
+				  tape++;
+			  }
+			  break;
+		  }
+  
+	  }
 	}
 
 
 }
-
 
 
 //------------------------------------------------------------------------------
