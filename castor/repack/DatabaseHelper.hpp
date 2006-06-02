@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/05/22 09:20:36 $ $Author: felixehm $
+ * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/06/02 08:16:52 $ $Author: felixehm $
  *
  * 
  *
@@ -38,6 +38,7 @@
 #include "castor/exception/SQLError.hpp"
 #include "stager_client_api.h"
 
+
 namespace castor {
 	
   namespace repack {
@@ -45,7 +46,7 @@ namespace castor {
     // Forward declarations
     class RepackRequest;
     class IObject;
-	class Services;
+	  class Services;
     
 
     /**
@@ -108,7 +109,11 @@ namespace castor {
 
 	  /**
 	   * Checks the RepackDB for SubRequests in a certain status.
+     * The returned Object is filled (all segments and the corresponding 
+     * RepackRequest This means that the caller has to free the 
+     * allocated memory.
      * @param status The status to be queried
+     * @return RepackSubRequest a full RepackSubRequest Object
      * @throws castor::exception::Internal in case of an error
 	   */
 	  RepackSubRequest* checkSubRequestStatus(int status) 
@@ -144,8 +149,16 @@ namespace castor {
      */
      std::vector<castor::repack::RepackSubRequest*>* 
 	                   getAllSubRequests() throw (castor::exception::Internal);
-     
-     
+
+     /**
+     * Gets all RepackSubRequests in a certain status from the DB
+     * @return an pointer to a vector of Repack SubRequests
+     * @throws castor::exception::Internal in case of an error
+     */
+     std::vector<castor::repack::RepackSubRequest*>* 
+                     getAllSubRequestsStatus(int status)
+                                          throw (castor::exception::Internal);
+
      /**
       * Returns the already existing RepackSegment in the DB.
       * Note that even a file is multi segmented the file is being
@@ -153,8 +166,17 @@ namespace castor {
       */
      RepackSegment* DatabaseHelper::getTapeCopy(RepackSegment* lookup)
                     throw (castor::exception::Internal);
+    
+
+     /** Archives the finished RepackSubRequests.
+      * It just updates the DB for Requests in SUBREQUEST_DONE
+      * to SUBREQUEST_ARCHIVED.
+      * @throw castor::exception::Internal in case of an error
+      */
+     void archive() throw (castor::exception::Internal);
      
-     
+
+
       private:
       
         /**
@@ -165,26 +187,41 @@ namespace castor {
         RepackSubRequest* DatabaseHelper::getSubRequest(u_signed64 sub_id) 
 						throw(castor::exception::Internal);
       
-        /// SQL statement for function ToDo
-        static const std::string m_selectToDoStatementString;
-        castor::db::IDbStatement *m_selectToDoStatement;
-        
-        static const std::string m_selectCheckStatementString;
+       /**
+        * Gets a bunch of RepackSubRequest from DB. This method is only used
+        * internally.
+        * @param castor::db::IDbStatement The Statement to get the SubRequests
+        * @throw castor::exception::Internal in case of an error
+        * @return pointer to vector of RepackSubRequests
+        */
+        std::vector<RepackSubRequest*>* DatabaseHelper::internalgetSubRequests
+                                              (castor::db::IDbStatement* statement) 
+                                              throw (castor::exception::Internal);
+
+
+
+        static const std::string s_selectCheckStatementString;
         castor::db::IDbStatement *m_selectCheckStatement;
         
-        static const std::string m_selectCheckSubRequestStatementString;
+        static const std::string s_selectCheckSubRequestStatementString;
         castor::db::IDbStatement *m_selectCheckSubRequestStatement;
           
-        static const std::string m_selectAllSubRequestsStatementString;
+        static const std::string s_selectAllSubRequestsStatementString;
         castor::db::IDbStatement *m_selectAllSubRequestsStatement;
 
-        static const std::string m_selectExistingSegmentsStatementString;
-	castor::db::IDbStatement *m_selectExistingSegmentsStatement;
-        
-        static const std::string m_isStoredStatementString;
-	castor::db::IDbStatement *m_isStoredStatement;
+        static const std::string s_selectExistingSegmentsStatementString;
+        castor::db::IDbStatement *m_selectExistingSegmentsStatement;
+
+        static const std::string s_isStoredStatementString;
+        castor::db::IDbStatement *m_isStoredStatement;
 	
-	castor::BaseAddress ad;
+        static const std::string s_selectAllSubRequestsStatusStatementString;
+        castor::db::IDbStatement *m_selectAllSubRequestsStatusStatement;
+
+        static const std::string s_archiveStatementString;
+        castor::db::IDbStatement  *m_archiveStatement;
+        //oracle::occi::Statement  *m_archiveStatement;
+        castor::BaseAddress ad;
       
     }; // end of class DatabaseHelper
 
