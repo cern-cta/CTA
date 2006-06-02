@@ -38,10 +38,10 @@ void RepackCleaner::run(void* param) throw(){
         {castor::dlf::Param("VID", tape->vid())};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 35, 1, params);
         tape->setStatus(SUBREQUEST_DONE);
-	m_dbhelper->updateSubRequest(tape,false,cuuid);
+        m_dbhelper->updateSubRequest(tape,false,cuuid);
       }
       cuuid = nullCuuid;
-      delete tape;
+      freeRepackObj(tape);
       tape = NULL;
     }
 
@@ -77,7 +77,10 @@ int RepackCleaner::cleanupTape(RepackSubRequest* sreq) throw(castor::exception::
 
   /** we query by request, easier for stager to fill */
   opts.stage_host = (char*)ptr_server->getStagerName().c_str();
-  opts.service_class = (char*)ptr_server->getServiceClass().c_str();
+  if ( sreq->requestID()->serviceclass().length() )
+    opts.service_class = (char*)sreq->requestID()->serviceclass().c_str();
+  else
+    opts.service_class = (char*)ptr_server->getServiceClass().c_str();
   
   if ( !filelist->size() ) {
     /* this means that there are no files for a repack tape in SUBREQUEST_READYFORCLEANUP
@@ -96,8 +99,8 @@ int RepackCleaner::cleanupTape(RepackSubRequest* sreq) throw(castor::exception::
   
   rc = stage_rm( requests,filelist->size(),&responses, &nbresps, NULL ,&opts); 
   if ( rc == 0 ) {
-  //m_dbhelper->remove(sreq);
-  
+    m_dbhelper->remove(sreq);
+
     for ( int i=0; i< nbresps; i++){
       free( responses[i].filename );
       if (  responses[i].errorCode ) free ( responses[i].errorMessage);
