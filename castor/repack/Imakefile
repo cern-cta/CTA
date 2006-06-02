@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Release$ $Date: 2006/05/22 06:54:51 $ $Author: felixehm $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.12 $ $Release$ $Date: 2006/06/02 08:25:18 $ $Author: felixehm $
 #
 # Make Castor Repack System
 #
@@ -110,7 +110,8 @@ depend:
 	makedepend $(INCLUDES) $(REPACKBIN_SRCS) 2> /dev/null
 #endif
 
-install: FileName($(BIN),repackserver)
+install: FileName($(BIN),repackserver) \
+FileName($(BIN),repack)
 
 InstallProgram(repackserver,$(BIN),root,bin,755)
 InstallProgram(repack,$(BIN),root,bin,755)
