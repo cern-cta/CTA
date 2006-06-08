@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.270 $ $Release$ $Date: 2006/06/08 13:40:31 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.271 $ $Release$ $Date: 2006/06/08 14:45:00 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -497,6 +497,7 @@ CREATE OR REPLACE PROCEDURE updateFsFileClosed
 (fs IN INTEGER, reservation IN INTEGER, fileSize IN INTEGER) AS
   deviation NUMBER;
   ds INTEGER;
+  unused INTEGER;
 BEGIN
  /* We have to do this first in order to take locks on all the filesystems
     of the DiskServer in an atomical way. Otherwise, the fact that
@@ -504,7 +505,7 @@ BEGIN
     leads to a dead lock if 2 threads are running this in parallel :
     they will both lock one filesystem to start with and try to get the
     others locks afterwards. */
- SELECT * FROM FileSystem WHERE diskServer = ds FOR UPDATE;
+ SELECT id into unused FROM FileSystem WHERE diskServer = ds FOR UPDATE;
  /* now we can safely go */
  UPDATE FileSystem SET deltaWeight = deltaWeight + deviation
   WHERE diskServer = ds;
