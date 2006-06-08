@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.269 $ $Release$ $Date: 2006/06/01 13:13:48 $ $Author: itglp $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.270 $ $Release$ $Date: 2006/06/08 13:40:31 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -498,12 +498,20 @@ CREATE OR REPLACE PROCEDURE updateFsFileClosed
   deviation NUMBER;
   ds INTEGER;
 BEGIN
+ /* We have to do this first in order to take locks on all the filesystems
+    of the DiskServer in an atomical way. Otherwise, the fact that
+    we update the "single" filesystem fs first and then all the others
+    leads to a dead lock if 2 threads are running this in parallel :
+    they will both lock one filesystem to start with and try to get the
+    others locks afterwards. */
+ SELECT * FROM FileSystem WHERE diskServer = ds FOR UPDATE;
+ /* now we can safely go */
+ UPDATE FileSystem SET deltaWeight = deltaWeight + deviation
+  WHERE diskServer = ds;
  UPDATE FileSystem SET fsDeviation = fsdeviation / 2,
                        deltaFree = deltaFree - fileSize,
                        reservedSpace = reservedSpace - reservation
   WHERE id = fs RETURNING fsDeviation, diskServer INTO deviation, ds;
- UPDATE FileSystem SET deltaWeight = deltaWeight + deviation
-  WHERE diskServer = ds;
 END;
 
 /* This table is needed to insure that bestTapeCopyForStream works Ok.
