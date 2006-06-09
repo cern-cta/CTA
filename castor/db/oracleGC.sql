@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.273 $ $Release$ $Date: 2006/06/09 13:16:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.274 $ $Release$ $Date: 2006/06/09 13:20:11 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1989,7 +1989,7 @@ BEGIN
   OPEN result FOR
     SELECT /*+ INDEX(CF) INDEX(DS) */ DS.id, CF.fileSize,
          CASE status
-           WHEN 7 THEN 0
+           WHEN 7 THEN 100000000000    -- INVALID, they go the very first
            WHEN 0 THEN getTime() - CF.lastAccessTime + greatest(0,86400*ln((CF.fileSize+1)/1024))
          END
      FROM DiskCopy DS, CastorFile CF
