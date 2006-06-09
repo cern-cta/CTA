@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.272 $ $Release$ $Date: 2006/06/09 13:15:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.273 $ $Release$ $Date: 2006/06/09 13:16:51 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -879,7 +879,7 @@ BEGIN
   -- Try to see whether we have available DiskCopies
   SELECT DiskCopy.status, DiskCopy.id
     BULK COLLECT INTO stat, dci
-    FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
+    FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
    WHERE DiskCopy.castorfile = cfId
      AND DiskCopy.fileSystem = FileSystem.id
      AND FileSystem.diskpool = DiskPool2SvcClass.parent
