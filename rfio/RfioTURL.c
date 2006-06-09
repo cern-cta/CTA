@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.12 $ $Release$ $Date: 2006/05/09 10:24:06 $ $Author: obarring $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.13 $ $Release$ $Date: 2006/06/09 07:05:57 $ $Author: gtaur $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.12 $ $Release$ $Date: 2006/05/09 10:24:06 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.13 $ $Release$ $Date: 2006/06/09 07:05:57 $ Olof Barring";
 #endif /* not lint */
 /** RfioTURL.c - RFIO TURL handling
  *
@@ -53,7 +53,8 @@ static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.12 $ $Release$
 #include <sys/types.h>
 
 #define DEFAULT_HOST "stagepublic"
-#define DEFAULT_PORT 9002
+#define DEFAULT_PORT2 9002
+#define DEFAULT_PORT1 5007
 #define DEFAULT_SVCCLASS "ITDC"  
 #define DEFAULT_VERSION 1
 
@@ -165,18 +166,7 @@ int getDefaultForGlobal(
 			}
 		}
 	}
-	if (portDefault<=0){
-		aux=getenv("STAGE_PORT");
-		portDefault=aux==NULL?0:atoi(aux);
-		if (portDefault<=0){
-			aux=(char*)getconfent("STAGER", "PORT", 0);
-			portDefault=aux==NULL?0:atoi(aux);
-			if (portDefault<=0){
-				portDefault= DEFAULT_PORT;
-			}
-		}
-		
-	}
+	
 
 	if (svcDefault==NULL || strcmp(svcDefault,"")==0){
 		if(svcDefault){free(svcDefault);}
@@ -214,11 +204,25 @@ int getDefaultForGlobal(
 			}
 		}
 	}
+
+	if (portDefault<=0){
+		aux=getenv("STAGE_PORT");
+		portDefault=aux==NULL?0:atoi(aux);
+		if (portDefault<=0){
+			aux=(char*)getconfent("STAGER", "PORT", 0);
+			portDefault=aux==NULL?0:atoi(aux);
+			if (portDefault<=0){
+			   portDefault= versionDefault==2?DEFAULT_PORT2:DEFAULT_PORT1;
+			}
+		}
+		
+	}
+
 	if (*host==NULL || strcmp(*host,"")){*host=hostDefault;}	
 	if (port==NULL || *port<=0) {*port=portDefault;}
 	if (*svc==NULL || strcmp(*svc,"")){*svc=svcDefault;}
 	if (version==NULL || *version<=0){*version=versionDefault;}
- 
+
 	return (1);
 }
 
