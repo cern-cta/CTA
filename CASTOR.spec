@@ -196,30 +196,10 @@ done
 %package -n CASTOR-client
 Summary: Cern Advanced mass STORage
 Group: Application/Castor
-Requires: castor-commands,castor-stager-clientold,castor-lib,castor-doc,castor-rtcopy-client,castor-upv-client,castor-rtcopy-messages,castor-ns-client,castor-stager-client,castor-vdqm-client,castor-rfio-client,castor-vmgr-client,castor-devel,castor-tape-client
+Requires: castor-commands,castor-stager-clientold,castor-lib,castor-doc,castor-rtcopy-client,castor-upv-client,castor-rtcopy-messages,castor-ns-client,castor-stager-client,castor-vdqm-client,castor-rfio-client,castor-vmgr-client,castor-devel,castor-tape-client,castor-lib-compat
 %description -n CASTOR-client
 castor (Cern Advanced STORage system)  Meta package for CASTOR-client from castor1 transition to castor2
 %files -n CASTOR-client
-
-
-## One more hardcoded package for RPM transition from castor2.0 to castor2.1
-%package -n castor-lib-compat
-Summary: Cern Advanced mass STORage
-Group: Application/Castor
-%description -n castor-lib-compat
-castor (Cern Advanced STORage system) - Shared libraries for end-users
-(backward compatibiliy version for CASTOR 2.0 users)
-%files -n castor-lib-compat
-%defattr(-,root,root)
-%ifarch x86_64
-%attr(-,root,root) /usr/lib64/libshift.so.2.0
-%attr(-,root,root) /usr/lib64/libshift.so.2.0.2.1
-%else
-%attr(-,root,root) /usr/lib/libshift.so.2.0
-%attr(-,root,root) /usr/lib/libshift.so.2.0.2.1
-%endif
-%post -n castor-lib-compat -p /sbin/ldconfig
-%postun -n castor-lib-compat -p /sbin/ldconfig
 
 
 #
