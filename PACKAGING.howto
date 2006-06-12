@@ -1,14 +1,14 @@
 #
-## $Id: PACKAGING.howto,v 1.14 2006/06/01 09:16:13 riojac3 Exp $
+## $Id: PACKAGING.howto,v 1.15 2006/06/12 09:46:16 itglp Exp $
 #
 
 #
 ## To create the source tar ball
 #
-cd somewhere
+cd /tmp
 cvs -d:kserver:isscvs.cern.ch:2000/local/reps/castor co CASTOR2
 # cvs -d :gserver:lxcvs05.cern.ch/local/reps/castor co CASTOR2
-CASTOR2/tools/CASTOR.cvslogs.pl -rvx_y_z_r::   # last tagged version so far
+CASTOR2/tools/CASTOR.cvslogs.pl . -rvx_y_z_r::     # last tagged version so far
 cd CASTOR2
 dch -i
 cvs commit debian/changelog
@@ -67,6 +67,7 @@ mkdir -p x.y.z-r/SLC3/i386
 cd x.y.z-r/SLC3/i386
 cp /usr/src/redhat/RPMS/i386/*x.y.z-r*.rpm .
 cp /usr/src/redhat/SRPMS/castor-x.y.z-r.src.rpm ../../
+cp /tmp/CASTOR2/ReleaseNotes ../../
 
 #
 ## To enter the rpms into swrep

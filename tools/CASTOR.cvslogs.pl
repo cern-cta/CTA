@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 #
-# $Id: CASTOR.cvslogs.pl,v 1.4 2006/04/20 18:23:46 itglp Exp $
+# $Id: CASTOR.cvslogs.pl,v 1.5 2006/06/12 09:46:16 itglp Exp $
 #
 
 use strict;
@@ -43,7 +43,7 @@ sub printit($$) {
 # goto doitnow;
 my $comm;
 
-$comm = "cd CASTOR2; cvs log \"@ARGV\" . > ../CASTOR2.cvslog.txt";
+$comm = "cd CASTOR2; cvs log @ARGV > ../CASTOR2.cvslog.txt";
 print STDERR "$comm\n"; system($comm);
 
 # doitnow:
