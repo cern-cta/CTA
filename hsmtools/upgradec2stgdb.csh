@@ -2,7 +2,7 @@
 #
 # This script upgrades all castor2 stager databases by running the given SQL file.
 #
-# @(#)$RCSfile: upgradec2stgdb.csh,v $ $Revision: 1.2 $ $Date: 2006/06/12 08:24:22 $ $Author: itglp $
+# @(#)$RCSfile: upgradec2stgdb.csh,v $ $Revision: 1.3 $ $Date: 2006/06/12 09:28:43 $ $Author: itglp $
 # 
 # @author Castor Dev team, castor-dev@cern.ch
 # ********************************************************************************
