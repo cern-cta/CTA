@@ -192,7 +192,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.60 $ $Release$ $Date: 2006/05/30 14:07:15 $ $Author: felixehm $
+ * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.61 $ $Release$ $Date: 2006/06/12 09:18:16 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -689,13 +689,22 @@ CREATE OR REPLACE PROCEDURE updateFsFileClosed
 (fs IN INTEGER, reservation IN INTEGER, fileSize IN INTEGER) AS
   deviation NUMBER;
   ds INTEGER;
+  unused "numList";
 BEGIN
+ /* We have to do this first in order to take locks on all the filesystems
+    of the DiskServer in an atomical way. Otherwise, the fact that
+    we update the "single" filesystem fs first and then all the others
+    leads to a dead lock if 2 threads are running this in parallel :
+    they will both lock one filesystem to start with and try to get the
+    others locks afterwards. */
+ SELECT id BULK COLLECT INTO unused FROM FileSystem WHERE diskServer = ds FOR UPDATE;
+ /* now we can safely go */
+ UPDATE FileSystem SET deltaWeight = deltaWeight + deviation
+  WHERE diskServer = ds;
  UPDATE FileSystem SET fsDeviation = fsdeviation / 2,
                        deltaFree = deltaFree - fileSize,
                        reservedSpace = reservedSpace - reservation
   WHERE id = fs RETURNING fsDeviation, diskServer INTO deviation, ds;
- UPDATE FileSystem SET deltaWeight = deltaWeight + deviation
-  WHERE diskServer = ds;
 END;
 
 /* This table is needed to insure that bestTapeCopyForStream works Ok.
@@ -1062,7 +1071,7 @@ BEGIN
   -- Try to see whether we have available DiskCopies
   SELECT DiskCopy.status, DiskCopy.id
     BULK COLLECT INTO stat, dci
-    FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
+    FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
    WHERE DiskCopy.castorfile = cfId
      AND DiskCopy.fileSystem = FileSystem.id
      AND FileSystem.diskpool = DiskPool2SvcClass.parent
@@ -2105,7 +2114,7 @@ BEGIN
  FOR sr IN (SELECT id, status
               FROM SubRequest
              WHERE castorFile = cfId) LOOP
-   IF sr.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10) THEN   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+   IF sr.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
      UPDATE SubRequest SET status = 7 WHERE id = sr.id;  -- FAILED
    END IF;
  END LOOP;
@@ -2172,7 +2181,7 @@ BEGIN
   OPEN result FOR
     SELECT /*+ INDEX(CF) INDEX(DS) */ DS.id, CF.fileSize,
          CASE status
-           WHEN 7 THEN 0
+           WHEN 7 THEN 100000000000    -- INVALID, they go the very first
            WHEN 0 THEN getTime() - CF.lastAccessTime + greatest(0,86400*ln((CF.fileSize+1)/1024))
          END
      FROM DiskCopy DS, CastorFile CF
@@ -2309,6 +2318,11 @@ BEGIN
   END LOOP;
   -- if no candidate has been found (this can happen with the null GC policy) just give up
   IF bestCandidate = -1 THEN
+    -- update Filesystem toBeFreed space back to the previous value
+    UPDATE FileSystem
+       SET spaceToBeFreed = spaceToBeFreed - toBeFreed
+     WHERE FileSystem.id = fsId;
+    COMMIT;
     RETURN;
   END IF;
   -- Now extract the diskcopies that will be garbaged and
@@ -2363,8 +2377,8 @@ END;
 
 /*
  * Runs only default policy garbage collection on the specified FileSystem
- */
-CREATE OR REPLACE PROCEDURE defGarbageCollectFS(fsId INTEGER) AS
+ *
+CREATE PROCEDURE defGarbageCollectFS(fsId INTEGER) AS
   toBeFreed INTEGER;
   freed INTEGER := 0;
   dpID INTEGER;
@@ -2414,6 +2428,7 @@ BEGIN
   -- commit everything
   COMMIT;
 END;
+*/
 
 
 /* This table keeps the current queue of the garbage collector:

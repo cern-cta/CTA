@@ -274,7 +274,6 @@ DROP FUNCTION defaultGCPolicy;
 DROP FUNCTION nopinGCPolicy;
 DROP FUNCTION nullGCPolicy;
 DROP PROCEDURE garbageCollectFS;
-DROP PROCEDURE defGarbageCollectFS;
 DROP PROCEDURE garbageCollect;
 DROP PROCEDURE internalStageQuery;
 DROP PROCEDURE fileNameStageQuery;
