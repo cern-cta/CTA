@@ -1,20 +1,47 @@
 #
-## $Id: PACKAGING.howto,v 1.15 2006/06/12 09:46:16 itglp Exp $
+## $Id: PACKAGING.howto,v 1.16 2006/06/12 12:48:13 itglp Exp $
 #
 
 #
-## To create the source tar ball
+## To download from CVS
 #
 cd /tmp
 cvs -d:kserver:isscvs.cern.ch:2000/local/reps/castor co CASTOR2
 # cvs -d :gserver:lxcvs05.cern.ch/local/reps/castor co CASTOR2
-CASTOR2/tools/CASTOR.cvslogs.pl . -rvx_y_z_r::     # last tagged version so far
+
+#
+## Two options:
+## 1) to release from CVS HEAD
+#
+CASTOR2/tools/CASTOR.cvslogs.pl -rvx_y_z_r::     # last tagged version so far
 cd CASTOR2
 dch -i
 cvs commit debian/changelog
 vim ReleaseNotes
 cvs commit ReleaseNotes
 cvs tag vx_y_z_r .
+
+#
+## 2) otherwise, To releae from a bug-fix branch
+#
+cd CASTOR2
+cvs update -rBug_fix_branch_tag
+# backport any fix to be included and commit them with the original cvs log message
+cvs tag vx_y_z_r .
+cd ..
+CASTOR2/tools/CASTOR.cvslogs.pl -rvx_y_z_r-1::vx_y_z_r
+cd CASTOR2
+dch -i
+cvs commit debian/changelog
+cvs tag -F vx_y_z_r debian/changelog
+vim ReleaseNotes
+cvs commit ReleaseNotes
+cvs tag -F vx_y_z_r ReleaseNotes
+
+
+#
+## To create the source tar ball
+#
 make -f Makefile.ini Makefiles
 make tar
 
