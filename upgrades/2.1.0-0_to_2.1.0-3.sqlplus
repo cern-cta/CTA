@@ -38,6 +38,13 @@ CREATE INDEX I_CastorFile_lastKnownFileName on CastorFile (lastKnownFileName);
 CREATE INDEX I_SubRequest_Parent on SubRequest (parent);
 CREATE UNIQUE INDEX I_pk_Stream2TapeCopy ON Stream2TapeCopy (parent, child);
 
+/* This table keeps the current queue of the garbage collector:
+ * whenever a new filesystem has to be garbage collected, a row is inserted
+ * in this table and a db job runs on it to actually execute the gc.
+ * In low load conditions this table will be empty and the db job is fired
+ * for each new entered filesystem. In high load conditions a single db job
+ * will keep running and no other jobs will be fired */
+CREATE TABLE FileSystemGC (fsid NUMBER PRIMARY KEY, submissionTime NUMBER);
 
 /*******************************************/
 /* From now on, all PLSQL code is updated  */
