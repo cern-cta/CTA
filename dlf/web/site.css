@@ -1,0 +1,441 @@
+a:link {
+	color: #000000;
+}
+
+a:visited {
+	color: #000000;
+}
+
+a:hover {
+	color: #999999;
+}
+
+a:active {
+	color: #000000;
+}
+
+a.vanish {
+	color: #FFFFFF;
+}
+
+BODY {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+}
+
+.querySelect {
+	width: 160px;
+	background-color: #FFFFFF;
+}
+
+.queryInput {
+	width: 155px;
+	background-color: #FFFFFF;
+}
+
+.queryTime {
+	width: 80px;
+	background-color: #FFFFFF;
+}
+
+IMG {
+	border-top-width: 0px; 
+	border-left-width: 0px; 
+	border-bottom-width: 0px; 
+	border-right-width: 0px
+}
+
+TABLE.noborder {
+	border-top-width: 0px;
+	border-left-width: 0px;
+	border-bottom-width: 0px;
+	border-right-width: 0px;
+}
+
+TABLE.border {
+	border: 1px solid #666666;
+}
+
+TR.banner {
+	background-color: #999999;
+	color: #333333;
+	font-weight: bold;
+	text-align: center;
+}
+
+TD.banner {
+	background-color: #999999;
+	color: #333333;
+	font-weight: bold;
+	text-align: center;
+}
+
+TD.timestamp {
+	border: 1px solid #999999;
+	text-align: center;
+	width: 95px;
+}
+
+TD.msgtext {
+	border: 1px solid #999999;
+	text-align: left;
+	width: 160px;
+}
+
+TD.nshostname {
+	border: 1px solid #999999;
+	text-align: center;
+	width: 30pt;
+}
+
+TD.tid {
+	border: 1px solid #999999;
+	text-align: center;
+	width: 20pt;
+}
+
+TD.pid {
+	border: 1px solid #999999;
+	text-align: center;
+	width: 20pt;
+}
+
+TD.hostname {
+	border: 1px solid #999999;
+	text-align: center;
+	width: 40pt;
+}
+
+TD.facility {
+	border: 1px solid #999999;
+	text-align: center;
+	width: 50pt;
+}
+
+TD.nsfileid {
+	border: 1px solid #999999;
+	text-align: center;
+	width: 40pt;
+}
+
+TD.reqid {
+	border: 1px solid #999999;
+	text-align: center;
+	width: 60pt;
+}
+
+TD.subreqid {
+	border: 1px solid #999999;
+	text-align: center;
+	width: 60pt;
+}
+
+TD.tapevid {
+	border: 1px solid #999999;
+	text-align: center;
+	width: 40pt;
+}
+
+TD.parameters {
+	border: 1px solid #999999;
+	text-align: center;
+	width: 160px;
+}
+
+TD.sev_emergency {
+	background-color : #FF0000;
+	border: 1px solid #999999;
+	text-align: center;
+	width: 60px;
+}
+
+TD.sev_alert {
+	background-color : #FF388B;
+	border: 1px solid #999999;
+	text-align: center;
+	width: 60px;
+}
+
+TD.sev_error {
+	background-color : #FF724B;
+	border: 1px solid #999999;
+	text-align: center;
+	width: 60px;
+}
+
+TD.sev_warning {
+	background-color : #FFEC5A;
+	border: 1px solid #999999;
+	text-align: center;
+	width: 60px;
+}
+
+TD.sev_auth {
+	background-color : #94422C;
+	border: 1px solid #999999;
+	text-align: center;
+	width: 60px;
+}
+
+TD.sev_security {
+	background-color : #EB981D;
+	border: 1px solid #999999;
+	text-align: center;
+	width: 60px;
+}
+
+TD.sev_usage {
+	background-color : #11AA55;
+	border: 1px solid #999999;
+	text-align: center;
+	width: 60px;
+}
+
+TD.sev_system {
+	background-color : #AB09EB;
+	border: 1px solid #999999;
+	text-align: center;
+	width: 60px;
+}
+
+TD.sev_important {
+	background-color : #EB6227;
+	border: 1px solid #999999;
+	text-align: center;
+	width: 60px;
+}
+
+TD.sev_debug {
+	background-color : #1D73EB;
+	border: 1px solid #999999;
+	text-align: center;
+	width: 60px;
+}
+
+TR.header {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 24px;
+	font-style: italic;
+	color: #FFFFFF;
+	background-color: #999999;
+}
+
+TABLE.workspace {
+	border-top-width: 0px;
+	border-left-width: 0px;
+	border-bottom-width: 0px;
+	border-right-width: 0px;
+	height: 500px;
+}
+
+TABLE.results {
+	border-top-width: 0px;
+	border-left-width: 0px;
+	border-bottom-width: 0px;
+	border-right-width: 0px;
+	background-image: url(images/backdrop.png);
+	background-repeat: no-repeat;
+	background-position: center center;
+	height: 500px;
+}
+
+TABLE.backdrop {
+	background-image: url(images/backdrop.png);
+	background-repeat: no-repeat;
+	background-position: center center;
+	height: 500px;
+}
+
+/**
+ * Calendar Popup
+ */
+ 
+.CalendarcpYearNavigation {
+	font-weight: bold; 
+	color: #ffffff; 
+	background-color: #999999; 
+	text-align: center; 
+	text-decoration: none
+}
+
+.CalendarcpMonthNavigation {
+	font-weight: bold; 
+	color: #ffffff; 
+	background-color: #999999; 
+	text-align: center; 
+	text-decoration: none
+}
+
+.CalendarcpDayColumnHeader {
+	font-size: 8pt; 
+	font-family: arial
+}
+
+.CalendarcpYearNavigation {
+	font-size: 8pt;
+	font-family: arial
+}
+
+.CalendarcpMonthNavigation {
+	font-size: 8pt; 
+	font-family: arial
+}
+
+.CalendarcpCurrentMonthDate {
+	font-size: 8pt; 
+	font-family: arial
+}
+
+.CalendarcpCurrentMonthDateDisabled {
+	font-size: 8pt; 
+	font-family: arial
+}
+
+.CalendarcpOtherMonthDate {
+	font-size: 8pt; 
+	font-family: arial
+}
+
+.CalendarcpOtherMonthDateDisabled {
+	font-size: 8pt; 
+	font-family: arial
+}
+
+.CalendarcpCurrentDate {
+	font-size: 8pt; 
+	font-family: arial
+}
+
+.CalendarcpCurrentDateDisabled {
+	font-size: 8pt; 
+	font-family: arial
+}
+
+.CalendarcpTodayText {
+	font-size: 8pt; 
+	font-family: arial
+}
+
+.CalendarcpTodayTextDisabled {
+	font-size: 8pt; 
+	font-family: arial
+}
+
+.CalendarcpText {
+	font-size: 8pt; 
+	font-family: arial
+}
+
+TD.CalendarcpDayColumnHeader {
+	text-align: right;
+	border-top-width: 0px;
+	border-right-width: 0px;
+	border-bottom-width: 1px;
+	border-left-width: 0px;
+	border-top-style: solid;
+	border-right-style: solid;
+	border-bottom-style: solid;
+	border-left-style: solid;
+	border-top-color: #777BB4;
+	border-right-color: #777BB4;
+	border-bottom-color: #777BB4;
+	border-left-color: #777BB4;
+}
+
+.CalendarcpCurrentMonthDate {
+	text-align: right; 
+	text-decoration: none
+}
+
+.CalendarcpOtherMonthDate {
+	text-align: right; 
+	text-decoration: none
+}
+
+.CalendarcpCurrentDate {
+	text-align: right; 
+	text-decoration: none
+}
+
+.CalendarcpCurrentMonthDateDisabled {
+	color: #d0d0d0; 
+	text-align: right; 
+	text-decoration: line-through
+}
+
+.CalendarcpOtherMonthDateDisabled {
+	color: #d0d0d0; 
+	text-align: right; 
+	text-decoration: line-through
+}
+
+.CalendarcpCurrentDateDisabled {
+	color: #d0d0d0; 
+	text-align: right; 
+	text-decoration: line-through
+}
+
+.CalendarcpCurrentMonthDate {
+	font-weight: bold; 
+	color: #000000
+}
+
+.CalendarcpCurrentDate {
+	font-weight: bold; 
+	color: #ffffff
+}
+
+.CalendarcpOtherMonthDate {
+	color: #808080
+}
+
+TD.CalendarcpCurrentDate {
+	border-right: #000000 thin solid; 
+	border-top: #000000 thin solid; 
+	border-left: #000000 thin solid; 
+	color: #ffffff; 
+	border-bottom: #000000 thin solid; 
+	background-color: #999999
+}
+
+TD.CalendarcpCurrentDateDisabled {
+	border-right: #ffaaaa thin solid; 
+	border-top: #ffaaaa thin solid; 
+	border-left: #ffaaaa thin solid; 
+	border-bottom: #ffaaaa thin solid
+}
+
+TD.CalendarcpTodayText {
+	border-right: #6677dd 0px solid; 
+	border-top: #6677dd 1px solid; 
+	border-left: #6677dd 0px solid; 
+	border-bottom: #6677dd 0px solid
+}
+
+TD.CalendarcpTodayTextDisabled {
+	border-right: #6677dd 0px solid; 
+	border-top: #6677dd 1px solid; 
+	border-left: #6677dd 0px solid; 
+	border-bottom: #6677dd 0px solid
+}
+
+A.CalendarcpTodayText {
+	height: 20px
+}
+
+SPAN.CalendarcpTodayTextDisabled {
+	height: 20px
+}
+
+A.CalendarcpTodayText {
+	font-weight: bold; 
+	color: #000000
+}
+
+SPAN.CalendarcpTodayTextDisabled {
+	color: #d0d0d0
+}
+
+.CalendarcpBorder {
+	border: thin solid #777BB4;
+}

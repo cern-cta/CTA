@@ -1,0 +1,77 @@
+COMM -----------------------------------------------------------------------------------------------------#
+COMM                                                                                                      #
+COMM  Imakefile - Castor Distribution Logging Facility                                                    #
+COMM  Copyright (C) 2005 CERN IT/FIO (castor-dev@cern.ch)                                                 #
+COMM                                                                                                      #
+COMM  This program is free software; you can redistribute it and/or modify it under the terms of the GNU  #
+COMM  General Public License as published by the Free Software Foundation; either version 2 of the        #
+COMM  License, or (at your option) any later version.                                                     #
+COMM                                                                                                      #
+COMM  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without   #
+COMM  even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU      #
+COMM  General Public License for more details.                                                            #
+COMM                                                                                                      #
+COMM  You should have received a copy of the GNU General Public License along with this program; if not,  #
+COMM  write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,   #
+COMM  USA.                                                                                                #
+COMM                                                                                                      #
+COMM -----------------------------------------------------------------------------------------------------#
+
+#include <Project.tmpl>
+
+IFILES = $(DLFWEB)/config.php          \
+	 $(DLFWEB)/index.php           \
+	 $(DLFWEB)/query.php           \
+	 $(DLFWEB)/results.php         \
+	 $(DLFWEB)/site.css            \
+	 $(DLFWEB)/utils.php           \
+	 $(DLFWEB)/db/mysql.php        \
+	 $(DLFWEB)/db/oracle.php       \
+	 $(DLFWEB)/js/CalendarPopup.js \
+	 $(DLFWEB)/js/Date.js          \
+	 $(DLFWEB)/images/backdrop.png \
+	 $(DLFWEB)/images/css.png      \
+	 $(DLFWEB)/images/php.png      \
+	 $(DLFWEB)/images/xhtml.png    \
+
+all:
+
+install: $(DLFWEB) $(IFILES)
+
+$(DLFWEB):
+	mkdir -p $(DESTDIR)$(DLFWEB)/db
+	mkdir -p $(DESTDIR)$(DLFWEB)/js
+	mkdir -p $(DESTDIR)$(DLFWEB)/images
+
+InstallNonExecFile(config.php,$(DLFWEB),root,root,600)
+InstallNonExecFile(index.php,$(DLFWEB),root,root,644)
+InstallNonExecFile(query.php,$(DLFWEB),root,root,644)
+InstallNonExecFile(results.php,$(DLFWEB),root,root,644)
+InstallNonExecFile(site.css,$(DLFWEB),root,root,644)
+InstallNonExecFile(utils.php,$(DLFWEB),root,root,644)
+
+INSUBDIR=db/
+InstallNonExecFile(mysql.php,$(DLFWEB)/db,root,root,644)
+InstallNonExecFile(oracle.php,$(DLFWEB)/db,root,root,644)
+
+INSUBDIR=js/
+InstallNonExecFile(CalendarPopup.js,$(DLFWEB)/js,root,root,644)
+InstallNonExecFile(Date.js,$(DLFWEB)/js,root,root,644)
+
+INSUBDIR=images/
+InstallNonExecFile(backdrop.png,$(DLFWEB)/images,root,root,644)
+InstallNonExecFile(css.png,$(DLFWEB)/images,root,root,644)
+InstallNonExecFile(php.png,$(DLFWEB)/images,root,root,644)
+InstallNonExecFile(xhtml.png,$(DLFWEB)/images,root,root,644)
+
+clean:
+
+clobber:        clean
+
+depend:
+
+Makefiles:
+
+COMM -- End-of-File -------------------------------------------------------------------------------------#
+
+COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
