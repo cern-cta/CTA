@@ -1,0 +1,217 @@
+COMM -----------------------------------------------------------------------------------------------------#
+COMM                                                                                                      #
+COMM  Imakefile - Castor Distribution Logging Facility                                                    #
+COMM  Copyright (C) 2005 CERN IT/FIO (castor-dev@cern.ch)                                                 #
+COMM                                                                                                      #
+COMM  This program is free software; you can redistribute it and/or modify it under the terms of the GNU  #
+COMM  General Public License as published by the Free Software Foundation; either version 2 of the        #
+COMM  License, or (at your option) any later version.                                                     #
+COMM                                                                                                      #
+COMM  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without   #
+COMM  even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU      #
+COMM  General Public License for more details.                                                            #
+COMM                                                                                                      #
+COMM  You should have received a copy of the GNU General Public License along with this program; if not,  #
+COMM  write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,   #
+COMM  USA.                                                                                                #
+COMM                                                                                                      #
+COMM -----------------------------------------------------------------------------------------------------#
+
+#include <Project.tmpl>
+
+SUBDIRS   = $(DLFWEBDIR)
+INCLUDES  = FileName(..,h)
+MANSUBDIR = doc/man/
+
+#if _AIX
+LIBS = -L../shlib -lshift
+#else
+#if defined(__alpha) && defined(__osf__)
+LIBS = -no_so -L../shlib -lshift -so_archive
+#else
+#if hpux
+LIBS = -L../shlib -lshift
+#else
+#if linux
+LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl
+#else
+#if sgi
+LIBS = -L../shlib -lshift
+#else
+#if SOLARIS
+LIBS = -L../shlib -lshift -lsocket -lnsl
+#else
+#if _WIN32
+LIBS = ..\lib\shift.lib wsock32.lib advapi32.lib
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
+
+SPOOL     = DlfSpool
+LOGFILE   = FileName($(SPOOL),log)
+DLFCONFIG = DlfConfigFile
+
+#if UseOracle
+DBOBJS    = oracle.Osuf
+DBFLAG    = -DUSE_ORACLE
+#else
+#if UseMySQL
+DBOBJS    = mysql.Osuf
+DBFLAG    = -DUSE_MYSQL
+MYSQLINC  = $(shell /usr/bin/mysql_config --include)
+MYSQLLIB  = $(shell /usr/bin/mysql_config --libs_r)
+
+#endif
+#endif
+
+DFLAGS    = -DLOGFILE=\"$(LOGFILE)\" -DDLFCONFIG=\"$(DLFCONFIG)\" $(DBFLAG)
+CFLAGS    = -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS)
+DEPLIB    = DepSharedLibraryTargetName(shlib,shift)
+
+MANPAGES  = $(MANDIR)/dlfserver.$(MANSUFFIX)    \
+	    $(MANDIR)/dlf_init.$(MANSUFFIX)     \
+	    $(MANDIR)/dlf_regtext.$(MANSUFFIX)  \
+	    $(MANDIR)/dlf_write.$(MANSUFFIX)    \
+	    $(MANDIR)/dlf_shutdown.$(MANSUFFIX)
+
+EXPORTMANPAGES = $(EXPORTMAN)/man1/dlfserver.$(MANSUFFIX)       \
+		 $(EXPORTMAN)/man3/dlf_init.$(LIBMANSUFFIX)     \
+		 $(EXPORTMAN)/man3/dlf_regtext.$(LIBMANSUFFIX)  \
+		 $(EXPORTMAN)/man3/dlf_write.$(LIBMANSUFFIX)    \
+		 $(EXPORTMAN)/man3/dlf_shutdown.$(LIBMANSUFFIX)
+
+#if BuildDlfLibrary
+DLFLIB = LibraryTargetName(dlf)
+#endif
+
+#if BuildDlfDaemon
+ PROGS = ProgramTargetName(dlfserver)
+IPROGS = FileName($(BIN),ProgramTargetName(dlfserver))
+EPROGS = $(EXPORTBIN)/dlfserver
+#endif
+
+DLFSRV_OBJS = queue.Osuf hash.Osuf process.Osuf common.Osuf server.Osuf $(DBOBJS)
+DLFLIB_OBJS = queue.Osuf hash.Osuf common.Osuf lib.Osuf
+
+all: $(DLFLIBTARGET) $(PROGS)
+oracle.c: oracle.pc
+	proc iname=oracle include=$(INCLUDES) threads=yes char_map=string parse=full
+
+mysql.o: mysql.c
+	$(CC) $(CFLAGS) $(MYSQLINC) -c -o $@ mysql.c
+
+#if UseOracle
+dlfserver: $(DLFSRV_OBJS) $(DEPLIB) $(DLFLIB)
+	$(MAKE) -f oralink.mk dlfserver DLFSERVER_OBJS="$(DLFSRV_OBJS)" CLDFLAGS=$(MTLDFLAGS) LIBS="$(LIBS)"
+#else
+#if UseMySQL
+NormalProgramTarget(dlfserver, $(DLFSRV_OBJS), $(DEPLIB), $(MTLDFLAGS) $(LIBS) $(MYSQLINC) $(MYSQLLIB))
+#endif
+#endif
+
+NormalLibraryTarget(dlf,$(DLFLIB_OBJS))
+
+MakeDepSharedLibrary(shlib,shift)
+
+#if BuildDlfDaemon
+install: $(IPROGS) $(SPOOL)
+	for i in $(SUBDIRS) ;\
+	do (if [ -d $$i ] ;\
+	    then \
+	      (echo " $$i:" ; cd $$i ;\
+	      $(MAKE) $(MFLAGS) $@) ;\
+	    else \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;\
+	    fi )\
+	done ;
+
+InstallProgram(dlfserver,$(BIN),root,bin,750)
+IEXPORT(dlfserver,$(EXPORTBIN),750)
+
+MakeDir($(BIN),root,bin,0755)
+MakeDir($(SPOOL),root,bin,0755)
+#endif
+
+install.man: $(MANDIR) $(MANPAGES)
+
+MakeDir($(MANDIR),root,bin,0755)
+MakeDir($(LIBMANDIR),root,bin,0755)
+
+IMANPAGE(dlfserver,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(dlf_init,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(dlf_regtext,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(dlf_write,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(dlf_shutdown,$(MANDIDR),$(MANSUFFIX))
+
+EMANPAGE(dlfserver,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(dlf_init,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(dlf_regtext,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(dlf_write,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(dlf_shutdown,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+
+MakeSubdirs(all,$(SUBDIRS))
+MakeCondSubdirs(clean,$(SUBDIRS),clean0)
+MakeCondSubdirs(clobber,$(SUBDIRS),clobber0)
+
+export: $(EPROGS)
+
+exportman: $(EXPORTMANPAGES)
+
+exportshr:
+
+#if _WIN32
+Makefiles:
+	-@for 0 in ( $(SUBDIRS) ) \
+	do @(echo 0 - & cd 0 & \
+		..\..\imake\imake -I..\..\config & \
+		$(MAKE) $(MFLAGS) $@ & cd .. )
+
+depend:
+	@echo Not supported on this platform
+#else
+Makefiles:
+	@. ../setosflags ;\
+	for i in $(SUBDIRS) ;\
+	do (if [ -d $$i ] ;\
+	    then \
+	      (echo " $$i:" ; cd $$i ;\
+	      ../../imake/imake -I../../config -DOSMajorVersion="$$OSMAJNO" -DOSMinorVersion="$$OSMINNO" ;\
+	      $(MAKE) $(MFLAGS) $@) ;\
+	    else \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;\
+	    fi )\
+	done ;
+
+depend:
+	makedepend -Y$(INCLUDES) *.c 2> /dev/null
+	for i in $(DEPENDDIRS) ;\
+	do (if [ -d $$i ] ;\
+	    then \
+	      (echo " $$i:" ; cd $$i ;\
+	      $(MAKE) $(MFLAGS) $@) ;\
+	    else \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;\
+	    fi )\
+	done ;
+
+#endif
+
+clean0:
+	-@RemoveFiles(FilesToClean lib)
+
+clobber0: clean
+	-@RemoveFiles($(DLFLIB) $(PROGS) oracle.c oracle.lis tp*)
+
+FORCE:
+
+
+COMM -- End-of-File -------------------------------------------------------------------------------------#
+
+COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.

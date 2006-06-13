@@ -1,0 +1,141 @@
+.lf 3 dlf_write.man
+.TH dlf_write 3 "2006/06/12 12:00:00 CERN IT-FIO" CASTOR "DLF Library Functions"
+.SH NAME
+dlf_write \- writes a log message to the log destinations/targets
+.SH SYNOPSIS
+.B #include "dlf_api.h"
+
+.BI "int dlf_write (Cuuid_t " reqid ", int " severity 
+.BI ", int " msg_no ", struct Cns_fileid * " ns 
+.BI ", int " numparams ", ...)"
+.SH DESCRIPTION
+.B dlf_write
+write a log message to the log destinations/targets initialised during the call to
+.BR "dlf_init" (3). 
+Common logging fields such as the timestamp, hostname, process id, thread id etc... are added to the log message internally within this function
+
+The
+.I facility
+argument defines the name of the facility under which messages should be logged. The name must not exceed 
+.BR DLF_MAXFACNAMELEN 
+characters in length.
+
+The
+.I reqid
+is the unique request identifier associated with the log message.
+
+.I severity
+is the severity level of the message and must be one of the following values:
+.RS
+.TP
+.B DLF_LVL_EMERGENCY
+.TP
+.B DLF_LVL_ALERT
+.TP
+.B DLF_LVL_ERROR
+.TP
+.B DLF_LVL_WARNING
+.TP
+.B DLF_LVL_AUTH
+.TP
+.B DLF_LVL_SECURITY
+.TP
+.B DLF_LVL_USAGE
+.TP
+.B DLF_LVL_SYSTEM
+.TP
+.B DLF_LVL_IMPORTANT
+.TP
+.B DLF_LVL_DEBUG
+.RE
+
+
+.I msg_no
+Is the unique number which corresponds to a particular message text. The message number and its associated text message must have been previously registered with the api using a call to 
+.BR "dlf_regtext" (3).
+If the message text has not been successfully registered an message trying to log under that message will fail.
+
+.I ns
+is a pointer to the structure containing the CASTOR name server invariant associated with this message. The CASTOR name server invariant consists of the CASTOR name server hostname and a file identifier. This parameter must be set to NULL if there is no invariant for the message. When set to NULL the CASTOR name server string in the log message will be "N/A" and the file id reported as "0" (zero).
+
+.I numparams
+is the number of log message parameters passed to the function. Each log message parameter is passed to the function through three parameters:
+
+.I parameter name
+,
+.I parameter type
+, and 
+.I parameter value.
+So
+.I numparams
+must actually represent the number of triplets.
+.TP
+.I parameter name
+is of type
+.B const char *.
+The character string must not exceed DLF_LEN_PARAMNAME characters in length. The parameter names for the tape VIDs and sub request identifiers are ignored by this function but the argument must be present - it may contain any value but must be of type 
+.B const char *.
+.TP
+.I parameter type
+is of type
+.B int
+and specifies the type of the parameter. It must be one of the following:
+.RS
+.TP
+.B DLF_MSG_PARAM_STR
+ - for the character string parameter value,
+.TP
+.B DLF_MSG_PARAM_INT
+ - for the integer parameter value,
+.TP
+.B DLF_MSG_PARAM_INT64
+ - for the 64-bit integer,
+.TP
+.B DLF_MSG_PARAM_FLOAT
+ - for the single precision floating point parameter value,
+.TP
+.B DLF_MSG_PARAM_DOUBLE
+ - for the double precision floating point value,
+.TP
+.B DLF_MSG_PARAM_TPVID
+ - for the tape visual identifier character string,
+.TP
+.B DLF_MSG_PARAM_UUID
+ - for the sub request identifier.
+.RE
+.TP
+.I parameter value
+must be in accordance with the parameter type and must be:
+.B const char *
+for string and tape VID parameter types;
+.B int
+for the integer parameter type;
+.B long long
+for the int64 parameter type;
+.B float
+for the floating parameter type;
+.B double
+for the double precision floating parameter type;
+.B Cuuid_t
+for the uuid parameter type.
+
+.SH "RETURN VALUE"
+The function returns 0 on success and -1 on error
+
+.SH "WARNING"
+Although the function may return successfully, this does not mean that the message has been successfully transmitted to the server. The api is asynchronous and depending on the load on the server and the network conditions it could take several minutes for a message to make it to the server and several minutes after that before insertion into the database
+
+.SH "NOTES"
+When an error occurs it could be because of multiple problems. At the moment the api returns no serrno and errno style return codes. The reason for this is that there is very little the client can do without recompilation to correct the problem. Also as the api is asynchronous with respect to sending messages to a remote host its very difficult to throw an error with an association to a specific message as messages are not uniquely identifiable.
+
+The most common errors are using an invalid severity level or attempting to log a message for a message number that has either not be pre registered with the api or is NULL.
+
+If the api encounters problems sending messages to the server because of network/transport issues. An error message will be added to the LOGERROR log under the facility DLF. DLF errors written here are not reported to the server. Users should pay particular attention to this category especially when parsing the file with scripts as not all messages in the file maybe associated to one particular facility!
+
+.SH "SEE ALSO"
+.BR dlf_shutdown (3),
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
+

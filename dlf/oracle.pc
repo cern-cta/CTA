@@ -1,0 +1,1702 @@
+/******************************************************************************************************
+ *                                                                                                    *
+ * oracle.pc - Castor Distribution Logging Facility                                                   *
+ * Copyright (C) 2005 CERN IT/FIO (castor-dev@cern.ch)                                                *
+ *                                                                                                    *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU *
+ * General Public License as published by the Free Software Foundation; either version 2 of the       *
+ * License, or (at your option) any later version.                                                    *
+ *                                                                                                    *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without  *
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU     *
+ * General Public License for more details.                                                           *
+ *                                                                                                    *
+ * You should have received a copy of the GNU General Public License along with this program; if not, *
+ * write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  *
+ * USA.                                                                                               *
+ *                                                                                                    *
+ ******************************************************************************************************/
+
+/**
+ * $Id
+ */
+
+/* headers */
+#include <errno.h>
+#include <sqlca.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
+
+#include "Cthread_api.h"
+#include "dbi.h"
+#include "dlf_api.h"
+#include "hash.h"
+#include "log.h"
+#include "queue.h"
+#include "serrno.h"
+
+
+/* pools */
+static database_t   *dpool[MAX_THREADS];     /**< thread pool for database connections  */
+
+/* hashes */
+static hash_t       *hosthash    = NULL;     /**< hostname hash                         */
+static hash_t       *nshosthash  = NULL;     /**< name server hostname hash             */
+
+/* mutexes
+ *   - used to generate msg sequence numbers and lock access to arrays
+ */
+static int database_mutex;
+
+/* database sequences */
+static long   seq_id       = -1;             /**< primary key id for dlf_messages       */
+static long   seq_hostid   = -1;             /**< primary key id for dlf_host_map       */
+static long   seq_nshostid = -1;             /**< primary key id for dlf_nshost_map     */
+
+/* global variables */
+static time_t last_monitoring = 0;           /**< time of last call to dlf_monitoring() */
+static time_t last_stats      = 0;           /**< time of last call to dlf_stats()      */
+
+/* externs */
+extern int       server_mode;                /**< server mode                           */
+extern queue_t   *queue;                     /**< internal server fifo queue            */
+
+/**
+ * structures
+ */
+
+struct database_t {
+	int                tid;
+	int                index;
+	long               mode;  
+	time_t             last_flush;    
+	int                mutex;          
+
+	sql_context        ctx;       
+	
+	/* database tables */
+	struct msgtable_t  *mtable;        
+	struct numtable_t  *ntable;       
+	struct strtable_t  *stable;     
+	struct reqtable_t  *rtable;       
+	struct taptable_t  *ttable;      
+
+	/* statistics 
+	 *   - must be purged at a regular interval, otherwise overflows in the counters will occur
+	 */
+	unsigned long      commits;      
+	unsigned long      errors;        
+	unsigned long      inserts;    
+	unsigned long      rollbacks; 
+	unsigned long      selects;         
+	unsigned long      updates;         
+	unsigned long      messages;        
+	unsigned long      cursors;         
+	unsigned long      inits;           
+	double             response;        
+};
+
+
+/** oracle specific structures
+ *   - used to store records prior to bulk insertion
+ *   - this may appear to be far more duplication of data then necessary, but oracle bulk insertion
+ *     requires this and wont allow dynamic memory allocation - only fixed arrays or a fixed length!
+ */
+
+struct msgtable_t {
+	int       count;                    
+	long      id[DB_ORA_ARRAY_SIZE];               
+	char      timestamp[DB_ORA_ARRAY_SIZE][15];    
+	int       timeusec[DB_ORA_ARRAY_SIZE];         
+	char      reqid[DB_ORA_ARRAY_SIZE][37];        
+	int       hostid[DB_ORA_ARRAY_SIZE];           
+	int       facility[DB_ORA_ARRAY_SIZE];         
+	int       severity[DB_ORA_ARRAY_SIZE];         
+	int       msg_no[DB_ORA_ARRAY_SIZE];           
+	int       pid[DB_ORA_ARRAY_SIZE];              
+	int       tid[DB_ORA_ARRAY_SIZE];              
+	int       nshostid[DB_ORA_ARRAY_SIZE];         
+	char      nsfileid[DB_ORA_ARRAY_SIZE][37];     
+
+};
+
+struct numtable_t {
+	int       count;                    
+	long      id[DB_ORA_ARRAY_SIZE];               
+	char      timestamp[DB_ORA_ARRAY_SIZE][15];    
+	char      parname[DB_ORA_ARRAY_SIZE][DLF_LEN_PARAMNAME + 1];      
+	char      parvalue[DB_ORA_ARRAY_SIZE][DLF_LEN_NUMBERVALUE + 1];     
+};
+
+struct strtable_t {
+	int       count;                    
+	long      id[DB_ORA_ARRAY_SIZE];               
+	char      timestamp[DB_ORA_ARRAY_SIZE][15];    
+	char      parname[DB_ORA_ARRAY_SIZE][DLF_LEN_PARAMNAME + 1];      
+	char      parvalue[DB_ORA_ARRAY_SIZE][DLF_LEN_STRINGVALUE + 1];
+};	
+
+struct reqtable_t {
+	int       count;                    
+	long      id[DB_ORA_ARRAY_SIZE];               
+	char      timestamp[DB_ORA_ARRAY_SIZE][DLF_LEN_TIMESTAMP + 1];    
+	char      reqid[DB_ORA_ARRAY_SIZE][37];        
+	char      subreqid[DB_ORA_ARRAY_SIZE][37];     
+};
+
+struct taptable_t {
+	int       count;                    
+	long      id[DB_ORA_ARRAY_SIZE];               
+	char      timestamp[DB_ORA_ARRAY_SIZE][15];    
+	char      tapevid[DB_ORA_ARRAY_SIZE][DLF_LEN_TAPEID + 1];      
+};
+
+
+/*
+ * db_init
+ */
+
+int DLL_DECL db_init(int threads) {
+
+        /* variables */
+        database_t *db;
+        struct     sqlca sqlca;
+        char       err_msg[512];
+        size_t     err_size;    
+        size_t     err_len;
+        int        i;  
+        int        rv;
+
+        /* flush thread pool */
+        for (i = 0; i < MAX_THREADS; i++) {
+		dpool[i] = NULL;	
+        }
+	db = NULL;
+
+	/* pro*c thread mode */
+	EXEC SQL ENABLE THREADS;
+
+	/* suspend database insertion until init completion
+	 *   - at this point data may already be waiting for insertion in the central queue, allowing
+	 *     the newly created threads in the next section to begin working on data would cause data 
+	 *     corruption as the sequence numbers have yet to be determined.
+ 	 */
+	SetSuspended(server_mode);
+
+	/* initialise hashes */
+	rv = hash_create(&hosthash, 512);
+	if (rv != APP_SUCCESS) {
+		log(LOG_ERR, "db_init() - failed to initialise host hash\n");
+		return APP_FAILURE;
+	}
+
+	rv = hash_create(&nshosthash, 100);	
+	if (rv != APP_SUCCESS) {
+		log(LOG_ERR, "db_init() - failed to initialise name server host hash\n");
+		return APP_FAILURE;
+	}
+	
+	last_monitoring = time(NULL);
+	last_stats      = time(NULL);
+
+	if (threads <= 0) {
+		return APP_SUCCESS;
+	}
+
+	/* create database threads */
+	for (i = 0; i < threads; i++) {
+	
+		/* create structure */
+		db = (database_t *) malloc(sizeof(database_t));
+		if (db == NULL) {
+			log(LOG_ERR, "db_init() - failed to malloc() database structure : %s\n", strerror(errno));
+			return APP_FAILURE;			
+		}
+
+		/* initialise database_t structure */
+		db->index      = i;
+		db->last_flush = time(NULL);
+		db->mode       = MODE_DEFAULT;
+
+		/* table structures */
+		db->mtable = (struct msgtable_t *) malloc(sizeof(struct msgtable_t));
+		db->ntable = (struct numtable_t *) malloc(sizeof(struct numtable_t));
+		db->stable = (struct strtable_t *) malloc(sizeof(struct strtable_t));
+		db->rtable = (struct reqtable_t *) malloc(sizeof(struct reqtable_t));
+		db->ttable = (struct taptable_t *) malloc(sizeof(struct taptable_t));
+
+		/* malloc errors ? */
+		if ((db->mtable == NULL) || (db->ntable == NULL) || (db->stable == NULL) ||
+	 	    (db->rtable == NULL) || (db->ttable == NULL)) {
+			log(LOG_ERR, "db_init() - failued to malloc() table structures : %s\n", strerror(errno));
+			return APP_FAILURE;
+		}
+
+		/* initialise statistics */
+		db->commits = db->errors  = db->inserts  = db->rollbacks = 0;
+		db->selects = db->updates = db->messages = db->cursors   = 0;	
+		db->inits   = 0;
+
+  		/* allocate context for thread safe pro*c */
+		EXEC SQL CONTEXT ALLOCATE :db->ctx;
+
+		/* create thread */
+		db->tid = Cthread_create_detached((void *)db_worker, (database_t *)db);
+		if (db->tid == APP_FAILURE) {
+			log(LOG_EMERG, "db_init() - failed to Cthread_create_detached() : %s\n", sstrerror(serrno));
+			return APP_FAILURE;
+		}
+
+		/* assign thread to database pool */
+		dpool[i] = db;	
+	}
+	
+	/* initialise internal sequence numbers
+	 *   - failure to determine the sequence numbers for tables dlf_messages, dlf_nshost_map and 
+	 *     dlf_host_map result in db_shutdown(). This error is unrecoverable!
+	 */	
+	
+	/* use the first thread in the pool */
+	rv = db_open(dpool[0], 3);
+	if (rv != APP_SUCCESS) {
+		log(LOG_ERR, "db_init() - maximum connection attempts reached\n");
+		return APP_FAILURE;
+	}	
+
+	/* set context and error handling */
+	Cthread_mutex_lock(&dpool[0]->mutex);
+
+	SetActive(dpool[0]->mode);
+	EXEC SQL WHENEVER SQLERROR GOTO error;
+	EXEC SQL CONTEXT USE :dpool[0]->ctx;
+	
+	EXEC SQL SELECT seq_no INTO :seq_id       FROM dlf_sequences WHERE (seq_name = 'id');
+	EXEC SQL SELECT seq_no INTO :seq_hostid   FROM dlf_sequences WHERE (seq_name = 'hostid');
+	EXEC SQL SELECT seq_no INTO :seq_nshostid FROM dlf_sequences WHERE (seq_name = 'nshostid');
+
+	dpool[0]->selects = 3;
+
+        ClrActive(dpool[0]->mode);
+	Cthread_mutex_unlock(&dpool[0]->mutex);
+
+	/* unsuspend */
+	ClrSuspended(server_mode);
+
+	return APP_SUCCESS;
+
+error:
+
+        /* get error message (thread-safe) */
+        err_size = sizeof(err_msg);
+        sqlglmt(dpool[0]->ctx, err_msg, &err_size, &err_len);
+  
+        if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012)) {
+                ClrConnected(dpool[0]->mode);
+        }
+
+        log(LOG_ERR, "db_init() : %.*s", err_len, err_msg);
+
+        dpool[0]->errors++;
+        EXEC SQL WHENEVER SQLERROR CONTINUE;
+        ClrActive(dpool[0]->mode);
+
+        Cthread_mutex_unlock(&dpool[0]->mutex);
+        return APP_FAILURE;	
+}
+
+
+/*
+ * db_open
+ */
+
+int DLL_DECL db_open(database_t *db, unsigned int retries) {
+
+	/* variables */
+	struct  sqlca sqlca; 
+	char    username[100];
+	char    password[100];
+	char    database[100];
+	char    buf[100];   
+	int     count;   	
+	
+	char    err_msg[512]; 
+	size_t  err_size;   
+	size_t  err_len;     
+
+	FILE    *fp;   
+
+	/* initialise variables */
+	username[0] = password[0] = database[0] = '\0';
+	count = 0;
+
+	/* connection already open */
+	if (IsConnected(db->mode)) {
+		return APP_SUCCESS;
+	}
+
+	/* try to establish a connection until the maximum number of retries has been reached */
+	do {
+		/* throttle the connection attempts */
+		if (count != 0) {
+			sleep(10);
+		}
+		count++;
+
+		/* read connection string 
+		 *    - the string should be in the format <username>/<password>@<database>
+		 *    - all parameters are mandatory and must not be blank
+		 */
+		fp = fopen(DLFCONFIG, "r");	
+		if (fp == NULL) {
+			log(LOG_ERR, "db_open() - failed to open config '%s' : %s\n", 
+				DLFCONFIG, strerror(errno));
+			continue;
+		}
+		
+		/* read the first line */
+		if (fgets(buf, sizeof(buf) - 1, fp) == NULL) {
+			fclose(fp);
+			continue;
+		}
+
+		fclose(fp);
+
+		/* extract values */
+		if (sscanf(buf, "%25[^/]/%25[^@]@%25s", username, password, database) != 3) {
+			log(LOG_ERR, "db_open() - invalid connect string in '%s'", DLFCONFIG);
+			continue;
+		}
+
+		log(LOG_DEBUG, "db_open() - attempting connection to %s@%s\n", username, database);
+	
+		/* connect to database, set commits to not block
+		 *   - http://www.oracle-base.com/articles/10g/Commit_10gR2.php
+	 	 */
+		EXEC SQL CONTEXT USE :db->ctx;
+		EXEC SQL WHENEVER SQLERROR GOTO error;
+		EXEC SQL CONNECT :username IDENTIFIED BY :password USING :database;
+		EXEC SQL ALTER SESSION SET COMMIT_WRITE = 'NOWAIT';
+		EXEC SQL ALTER SESSION SET NLS_DATE_FORMAT = 'YYYYMMDDHH24MISS';
+	
+		/* flag new connection status */
+		SetConnected(db->mode);
+		log(LOG_DEBUG, "db_open() - connection established\n");
+		
+		return APP_SUCCESS;
+
+	error:
+		/* get error message (thread-safe) */
+		err_size = sizeof(err_msg);
+		sqlglmt(db->ctx, err_msg, &err_size, &err_len);
+
+		log(LOG_ERR, "db_open() : %.*s", err_len, err_msg);
+
+		EXEC SQL WHENEVER SQLERROR CONTINUE;
+			
+	} while ((retries == 0) || (count < retries));
+
+	return APP_FAILURE;
+}
+
+
+/*
+ * Shutdown database layer
+ */
+
+int DLL_DECL db_shutdown(void) {
+
+	/* variables */
+	struct    sqlca sqlca; 
+	int       i; 
+
+	/* destroy database thread pool */
+	for (i = 0; i < MAX_THREADS; i++) {
+		if (dpool[i] != NULL) {
+			 
+			/* commit all pending changes and disconnect from the database */
+			Cthread_mutex_lock(&dpool[i]->mutex);
+
+			EXEC SQL CONTEXT USE :dpool[i]->ctx;
+			EXEC SQL COMMIT WORK RELEASE;
+			EXEC SQL CONTEXT FREE :dpool[i]->ctx;
+	
+			/* free allocated structures */
+			free(dpool[i]->mtable);
+			free(dpool[i]->ntable);
+			free(dpool[i]->stable);
+			free(dpool[i]->rtable);
+			free(dpool[i]->ttable);
+
+			if (IsConnected(dpool[i]->mode)) {
+				log(LOG_NOTICE, "db_shutdown() - connection closed\n");
+			}
+			Cthread_mutex_unlock(&dpool[i]->mutex);
+	
+			free(dpool[i]);
+		}	
+	}
+
+	/* destroy hashes */
+	hash_destroy(hosthash,   (void *)free);
+	hash_destroy(nshosthash, (void *)free);
+
+	return APP_SUCCESS;
+}
+
+
+/*
+ * db_initfac
+ */
+
+int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
+
+	/* variables */
+	database_t *db;  
+	struct     sqlca sqlca;
+	char       err_msg[512];
+	size_t     err_size;   
+	size_t     err_len;    
+	int        i;      
+	int        found;   
+
+	/* attempt to find a database connection which is currently connected and not in a busy state
+	 *   - if no connection can be found pick any connected connection
+	 */
+	for (i = 0, found = 0; i < MAX_THREADS; i++) {
+		if (dpool[i] == NULL) 
+			continue;
+		if (IsConnected(dpool[i]->mode) && !IsActive(dpool[i]->mode)) {
+			found = 1;
+			break;
+		}
+	}	
+
+	/* pick any ? */
+	if (found != 1) {
+		for (i = 0, found = 0; i < MAX_THREADS; i++) {
+			if (dpool[i] == NULL)
+				continue;
+			if (IsConnected(dpool[i]->mode)) {
+				found = 1;
+				break;
+			}
+		}
+	}
+	
+	/* no connections available ? */
+	if (found == 0) {
+		log(LOG_ERR, "db_initfac() - no database connections available\n");
+		return APP_FAILURE;
+	}
+	db = dpool[i];
+
+	/* inserting msg texts bypasses the central fifo queue and has priority over normal incoming
+	 * data. As threads are heavily coupled to the queue concept it is necessary to hijack another
+	 * threads db connection. This requires us to hold a mutex over the statistics data
+	 *   - any delays here will impact insertion globally across the system
+	 */
+	Cthread_mutex_lock(&db->mutex);
+	db->inits++;
+
+	/* set context and error handling */
+	SetActive(db->mode);
+	EXEC SQL WHENEVER SQLERROR GOTO error;
+	EXEC SQL WHENEVER NOTFOUND GOTO not_found;	
+	EXEC SQL CONTEXT USE :db->ctx;	
+	
+	/* resolve the facility name to a number */
+	db->selects++;
+	EXEC SQL SELECT fac_no INTO :fac_no FROM dlf_facilities WHERE fac_name = :facility;
+
+	/* the arrays msg_text array passed to this function cannot simply be insert'ed into the database
+	 * checks must be performed first to determine whether the message is new to the system or 
+	 * already exists and requires an update.
+	 */
+
+	for (i = 0; i < DLF_MAX_MSGTEXTS; i++) {
+		if (texts[i] == NULL)
+			continue;
+		
+		/* entry already exists ? */
+		db->selects++;
+		EXEC SQL SELECT COUNT(*) INTO :found FROM dlf_msg_texts 
+		WHERE (fac_no = :fac_no) AND (msg_no = :texts[i]->msg_no);
+
+		/* found results, update as opposed to select */
+		if (found) {
+			db->updates++;
+
+			EXEC SQL UPDATE dlf_msg_texts SET msg_text = :texts[i]->msg_text 
+			WHERE (fac_no = :fac_no) AND (msg_no = :texts[i]->msg_no);
+		} else {
+			db->inserts++;
+
+			EXEC SQL INSERT INTO dlf_msg_texts (fac_no, msg_no, msg_text)
+			VALUES (:fac_no, :texts[i]->msg_no, :texts[i]->msg_text);
+		}		
+	}
+
+	db->commits++;
+	EXEC SQL COMMIT WORK;
+
+ 	ClrActive(db->mode);
+
+	Cthread_mutex_unlock(&db->mutex);
+	return APP_SUCCESS;
+
+not_found:
+
+	ClrActive(db->mode);
+
+	*fac_no = -1;
+	
+	Cthread_mutex_unlock(&db->mutex);
+	return APP_FAILURE;
+
+error:	
+
+	/* get error message (thread-safe) */
+	err_size = sizeof(err_msg);
+	sqlglmt(db->ctx, err_msg, &err_size, &err_len);
+
+	log(LOG_ERR, "db_initfac() : %.*s", err_len, err_msg);
+
+	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012)) {
+		ClrConnected(db->mode);
+	}
+
+	db->errors++;
+	EXEC SQL WHENEVER SQLERROR CONTINUE;
+	ClrActive(db->mode);
+
+	Cthread_mutex_unlock(&db->mutex);
+	return APP_FAILURE;
+}
+
+
+/*
+ * db_hostid
+ */
+
+int DLL_DECL db_hostid(database_t *db, char *hostname, int *id) {
+
+        /* variables */
+        struct    sqlca sqlca; 
+        char      err_msg[512];
+        size_t    err_size;  
+        size_t    err_len;   
+        int       rv;  
+        int       hostid;
+        int       *value = NULL;
+        void      *v     = NULL;
+
+        /* hostname defined ? */
+        if (hostname == NULL) {
+                return APP_FAILURE;
+        }
+
+        /* cached ? */
+        rv = hash_search(hosthash, hostname, &v);
+        if (rv == APP_SUCCESS) {
+		*id = *(int *)v;
+                return APP_SUCCESS;
+        }
+
+        Cthread_mutex_lock(&database_mutex);
+
+        /* re-check the hash
+         *   - the last thread may have inserted the data we are looking for.
+         */
+        rv = hash_search(hosthash, hostname, &v);
+        if (rv == APP_SUCCESS) {
+		*id = *(int *)v;
+                Cthread_mutex_unlock(&database_mutex);
+                return APP_SUCCESS;
+        }
+
+        /* set context and error handling */
+        Cthread_mutex_lock(&db->mutex);
+
+        SetActive(db->mode);
+        EXEC SQL WHENEVER SQLERROR GOTO error;
+        EXEC SQL WHENEVER NOTFOUND GOTO not_found;
+        EXEC SQL CONTEXT USE :db->ctx;
+
+        db->selects++;
+   	EXEC SQL SELECT hostid INTO :hostid FROM dlf_host_map WHERE hostname = :hostname;
+        ClrActive(db->mode);
+
+        /* cache the value */
+	value = malloc(sizeof(int));
+	if (value == NULL) {
+		log(LOG_CRIT, "db_hostid() - failed to malloc hash entry : %s", strerror(errno));
+
+		db->errors++;
+		Cthread_mutex_unlock(&db->mutex);
+		Cthread_mutex_unlock(&database_mutex);
+	
+		return APP_FAILURE;
+	}
+	*value = hostid;
+
+        hash_insert(hosthash, hostname, value);
+        *id = hostid;
+
+        Cthread_mutex_unlock(&db->mutex);
+        Cthread_mutex_unlock(&database_mutex);
+
+        return APP_SUCCESS;
+
+not_found:
+
+        /* insert a new host */
+        hostid = seq_hostid++;
+
+        db->inserts++;
+        EXEC SQL INSERT INTO dlf_host_map (hostid, hostname) VALUES (:hostid, :hostname);
+        db->updates++;
+        EXEC SQL UPDATE dlf_sequences SET seq_no = (seq_no + 1) WHERE seq_name = 'hostid';
+        db->commits++;
+        EXEC SQL COMMIT WORK;
+
+        *id = hostid;
+
+        EXEC SQL WHENEVER NOTFOUND CONTINUE;
+        ClrActive(db->mode);
+
+        Cthread_mutex_unlock(&db->mutex);
+        Cthread_mutex_unlock(&database_mutex);
+
+        return APP_SUCCESS;
+
+error:
+
+        /* get error message (thread-safe) */
+        err_size = sizeof(err_msg);
+        sqlglmt(db->ctx, err_msg, &err_size, &err_len);
+
+        if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012)) {
+                ClrConnected(db->mode);
+        }
+
+        log(LOG_ERR, "db_hostid() : %.*s", err_len, err_msg);
+
+        db->errors++;
+        EXEC SQL WHENEVER SQLERROR CONTINUE;
+        db->rollbacks++;
+        EXEC SQL ROLLBACK WORK;
+        ClrActive(db->mode);
+
+        Cthread_mutex_unlock(&db->mutex);
+        Cthread_mutex_unlock(&database_mutex);
+
+        return APP_FAILURE;
+}
+
+
+/* db_nshostid
+ *   - this function is almost identical to db_hostid() apart from the querying of different tables and
+ *     updating of different sequences. We could have created one generic function to do both hostnames
+ *     and nshostnames but it would just be full of IF statements!!
+ */
+
+int DLL_DECL db_nshostid(database_t *db, char *hostname, int *id) {
+
+	/* variables */
+	struct    sqlca sqlca; 
+	char      err_msg[512];
+	size_t    err_size;  
+	size_t    err_len;    
+	int       rv;     	
+	int       nshostid;     
+	int       *value = NULL;
+	void      *v     = NULL;
+
+	/* hostname defined ? */
+	if (hostname == NULL) {
+		return APP_FAILURE;
+	}
+
+	/* cached ? */	
+	rv = hash_search(nshosthash, hostname, &v);
+	if (rv == APP_SUCCESS) {
+		*id = *(int *)v;
+		return APP_SUCCESS;
+	}
+
+	Cthread_mutex_lock(&database_mutex);
+
+	/* re-check the hash
+	 *   - the last thread may have inserted the data we are looking for.
+	 */
+	rv = hash_search(nshosthash, hostname, &v);
+	if (rv == APP_SUCCESS) {
+		*id = *(int *)v;
+		Cthread_mutex_unlock(&database_mutex);
+		return APP_SUCCESS;
+	}
+
+	/* set context and error handling */
+	Cthread_mutex_lock(&db->mutex);
+
+	SetActive(db->mode);
+	EXEC SQL WHENEVER SQLERROR GOTO error;
+	EXEC SQL WHENEVER NOTFOUND GOTO not_found;
+	EXEC SQL CONTEXT USE :db->ctx;	
+	
+	db->selects++;
+	EXEC SQL SELECT nshostid INTO :nshostid FROM dlf_nshost_map WHERE nshostname = :hostname;
+	ClrActive(db->mode);
+
+	/* cache the value */
+	value = malloc(sizeof(int));
+	if (value == NULL) {
+		log(LOG_CRIT, "db_nshostid() - failed to malloc nshash entry : %s", strerror(errno));
+
+		db->errors++;
+		Cthread_mutex_unlock(&db->mutex);
+		Cthread_mutex_unlock(&database_mutex);
+	
+		return APP_FAILURE;
+	}
+	*value = nshostid;
+
+	hash_insert(nshosthash, hostname, value);
+	*id = nshostid;
+		
+	Cthread_mutex_unlock(&db->mutex);
+	Cthread_mutex_unlock(&database_mutex);
+
+	return APP_SUCCESS;
+
+not_found:
+
+	/* insert a new host */
+	nshostid = seq_nshostid++;
+
+	db->inserts++;
+	EXEC SQL INSERT INTO dlf_nshost_map (nshostid, nshostname) VALUES (:nshostid, :hostname);
+	db->updates++;
+	EXEC SQL UPDATE dlf_sequences SET seq_no = (seq_no + 1) WHERE seq_name = 'nshostid';
+	db->commits++;
+	EXEC SQL COMMIT WORK;
+
+	*id = nshostid;
+
+	EXEC SQL WHENEVER NOTFOUND CONTINUE;
+	ClrActive(db->mode);
+
+	Cthread_mutex_unlock(&db->mutex);
+	Cthread_mutex_unlock(&database_mutex);
+	return APP_SUCCESS;
+
+error:
+
+	/* get error message (thread-safe) */
+	err_size = sizeof(err_msg);
+	sqlglmt(db->ctx, err_msg, &err_size, &err_len);
+
+	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012)) {
+		ClrConnected(db->mode);
+	}
+
+	log(LOG_ERR, "db_nshostid() : %.*s", err_len, err_msg);
+
+	db->errors++;
+	EXEC SQL WHENEVER SQLERROR CONTINUE;
+	db->rollbacks++;
+	EXEC SQL ROLLBACK WORK; 
+	ClrActive(db->mode);
+
+	Cthread_mutex_unlock(&db->mutex);
+	Cthread_mutex_unlock(&database_mutex);
+
+	return APP_FAILURE;
+}
+
+
+/*
+ * db_flush
+ */
+
+int DLL_DECL db_flush(database_t *db) {
+
+        /* variables */
+        struct    sqlca sqlca;
+        char      err_msg[512];
+        size_t    err_size;
+        size_t    err_len;
+
+        /* set context and error handling */
+        Cthread_mutex_lock(&db->mutex);
+
+        SetActive(db->mode);
+        EXEC SQL WHENEVER NOTFOUND GOTO error;
+        EXEC SQL WHENEVER SQLERROR GOTO error;
+        EXEC SQL CONTEXT USE :db->ctx;
+
+        /* table: dlf_messages */
+        if (db->mtable->count) {
+                EXEC SQL FOR :db->mtable->count
+                INSERT INTO dlf_messages
+                        (id, timestamp, timeusec, reqid, hostid, facility, severity, msg_no, pid, tid, nshostid, nsfileid)
+                VALUES (:db->mtable->id,
+                        TO_DATE(:db->mtable->timestamp, 'YYYYMMDDHH24MISS'),
+                        :db->mtable->timeusec,
+                        :db->mtable->reqid,
+                        :db->mtable->hostid,
+                        :db->mtable->facility,
+                        :db->mtable->severity,
+                        :db->mtable->msg_no,
+                        :db->mtable->pid,
+                        :db->mtable->tid,
+                        :db->mtable->nshostid,
+                        TO_NUMBER(:db->mtable->nsfileid));
+        }
+
+        /* table: dlf_num_param_values */
+        if (db->ntable->count) {
+                EXEC SQL FOR :db->ntable->count
+                INSERT INTO dlf_num_param_values
+                        (id, timestamp, name, value)
+                VALUES (:db->ntable->id,
+                        TO_DATE(:db->ntable->timestamp, 'YYYYMMDDHH24MISS'),
+                        :db->ntable->parname,
+                        TO_NUMBER(:db->ntable->parvalue));
+        }
+
+        /* table: dlf_str_param_values */
+        if (db->stable->count) {
+                EXEC SQL FOR :db->stable->count
+                INSERT INTO dlf_str_param_values
+                        (id, timestamp, name, value)
+                VALUES (:db->stable->id,
+                        TO_DATE(:db->stable->timestamp, 'YYYYMMDDHH24MISS'),
+                        :db->stable->parname,
+                        :db->stable->parvalue);
+        }
+
+        /* table: dlf_reqid_map */
+        if (db->rtable->count) {
+                EXEC SQL FOR :db->rtable->count
+                INSERT INTO dlf_reqid_map
+                        (id, timestamp, reqid, subreqid)
+                VALUES (:db->rtable->id,
+                        TO_DATE(:db->rtable->timestamp, 'YYYYMMDDHH24MISS'),
+                        :db->rtable->reqid,
+                        :db->rtable->subreqid);
+        }
+
+        /* table: dlf_tape_ids */
+        if (db->ttable->count) {
+                EXEC SQL FOR :db->ttable->count
+                INSERT INTO dlf_tape_ids
+                        (id, timestamp, tapevid)
+                VALUES (:db->ttable->id,
+                        TO_DATE(:db->ttable->timestamp, 'YYYYMMDDHH24MISS'),
+                        :db->ttable->tapevid);
+        }
+
+        /* update the sequence number
+         *   - this could have been done with a trigger, but this is costly for bulk inserts so we do
+         *     it manually. We have to do a commit here otherwise deadlocks would occur
+         */
+
+        db->updates++;
+        EXEC SQL UPDATE dlf_sequences SET seq_no = (seq_no + :db->mtable->count) WHERE seq_name = 'id';
+        db->commits++;
+        EXEC SQL COMMIT WORK;
+
+        ClrActive(db->mode);
+
+        Cthread_mutex_unlock(&db->mutex);
+        return APP_SUCCESS;
+        /* process any sql errors which may of occurred during the bulk insertion
+         *   - these errors are rare so under these circumstances we rollback any changes and move onto
+         *     the next set of data.
+         *   - we could create a global error handler for sql queries but as the number of functions
+         *     using embedded sql is low its easier to handler the issue here!
+         */
+error:
+
+        /* get error message (thread-safe) */
+        err_size = sizeof(err_msg);
+        sqlglmt(db->ctx, err_msg, &err_size, &err_len);
+
+        if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012)) {
+                ClrConnected(db->mode);
+        }
+
+        log(LOG_ERR, "db_flush() : %.*s", err_len, err_msg);
+
+        /* rollback */
+        db->errors++;
+        EXEC SQL WHENEVER SQLERROR CONTINUE;
+        db->rollbacks++;
+        EXEC SQL ROLLBACK WORK;
+        ClrActive(db->mode);
+
+        Cthread_mutex_unlock(&db->mutex);
+        return APP_FAILURE;
+}
+
+
+/*
+ * db_worker
+ */
+
+void DLL_DECL db_worker(database_t *db) {
+
+	/* variables */
+	struct timeval tv;  
+	message_t *message;  	
+	param_t   *param;  	
+	int       rv;       
+	int       i;         
+
+	/* initialise table and statistic variables */
+	db->commits  = db->errors = db->inserts = db->rollbacks = db->updates = db->messages = 0;
+	db->response = 0.0;
+
+	db->mtable->count = 0;
+	db->ntable->count = 0;
+	db->stable->count = 0;
+	db->rtable->count = 0;
+	db->ttable->count = 0;
+
+	/* worker thread
+	 *   - extract messages from the central fifo queue and translate the messages into host arrays
+	 *     required for oracle bulk insertion
+	 */  
+	while (!IsShutdown(server_mode)) {
+
+		/* server suspended ?
+		 *    - this maybe a user suspension via a signal or we are still in an initialisation
+	 	 *      determining the unique id for the first message, either way we sleep and loop
+		 */
+		if (IsSuspended(server_mode)) {
+			sleep(1);
+			continue;
+		}
+
+		/* connected to database ? */
+		if (!IsConnected(db->mode)) {
+			if ((rv = db_open(db, 1)) != APP_SUCCESS) {
+				continue;
+			}
+		}
+		message = NULL;
+		i       = 0;
+		
+		/* pop a message from the queue */
+		rv = queue_pop(queue, (void **)&message);
+
+		/* queue errors ? */
+		if (rv == APP_QUEUE_TERMINATED) {
+			break;                        /* queue terminated, shutdown  */
+		}
+		else if (rv == APP_QUEUE_EMPTY) {
+			if ((time(NULL) - db->last_flush) < DB_FLUSH_TIME) {
+				sleep(1);
+				continue;             /* not time to flush the queue */
+			}
+			db->last_flush = 0;
+		}
+		else if (rv != APP_SUCCESS) {
+			log(LOG_CRIT, "db_worker() - failed to queue_pop()\n");
+			break;
+		}
+
+		/* count the number of rows this new message would insert 
+		 *   - this calculation is necessary before checking for the host arrays reaching max
+		 *     capacity as if this message has enough parameters it could cause the arrays to
+		 *     overflow resulting in a segmentation fault.
+		 */
+		if (message != NULL) {
+			for (param = message->plist; param != NULL; param = param->next, i++);
+		}
+	
+		/* host arrays reaching critical capacity ? */
+		if ((db->mtable->count + i > DB_FLUSH_ROWS) || (db->ntable->count + i > DB_FLUSH_ROWS) ||
+		    (db->stable->count + i > DB_FLUSH_ROWS) || (db->rtable->count + i > DB_FLUSH_ROWS) ||
+		    (db->ttable->count + i > DB_FLUSH_ROWS) || (db->last_flush == 0)) {
+
+			if (db->mtable->count != 0) {
+				int i = (db->mtable->count + db->ntable->count +
+					 db->stable->count + db->rtable->count + db->ttable->count);
+
+				rv = db_flush(db);
+				Cthread_mutex_lock(&db->mutex);
+				if (rv != APP_SUCCESS) {
+					db->errors  += i;
+				} else {
+					db->inserts += i;
+				}
+				Cthread_mutex_unlock(&db->mutex);
+
+				/* reset counters */
+				db->mtable->count = 0;
+				db->ntable->count = 0;
+				db->stable->count = 0;
+				db->rtable->count = 0;
+				db->ttable->count = 0;	
+			}
+
+			db->last_flush = time(NULL);		
+		}
+
+		/* message defined ? */
+		if (message == NULL) {
+			continue;
+		}
+
+		Cthread_mutex_lock(&db->mutex);
+		db->messages++;
+		Cthread_mutex_unlock(&db->mutex);
+
+		/* accumulate the sql response time */
+		rv = gettimeofday(&tv, NULL);
+		if (rv == APP_SUCCESS) {
+			Cthread_mutex_lock(&db->mutex);
+			db->response += ((((double)tv.tv_sec * 1000) + 
+				  	 ((double)tv.tv_usec / 1000)) - message->received) * 0.001;
+			Cthread_mutex_unlock(&db->mutex);
+		}
+
+		/* determine the next available unique id (primary key)
+		 *   - the next number in the oracle sequence is determined at initialisation and updated
+		 *     using a global mutex.
+		 *   - a failure here is a clear indicator that something serious has gone wrong and the
+		 *     thread will exit.
+		 */
+		if ((rv = Cthread_mutex_lock(&database_mutex)) != APP_SUCCESS) {
+			break;
+		}	
+	
+		db->mtable->id[db->mtable->count] = seq_id;
+		seq_id++;
+		
+		/* release mutex lock */
+		if ((rv = Cthread_mutex_unlock(&database_mutex)) != APP_SUCCESS) {
+			break;
+		}
+
+		/* table: dlf_messages */
+		db->mtable->facility[db->mtable->count] = message->facility;
+		db->mtable->msg_no[db->mtable->count]   = message->msg_no;
+		db->mtable->pid[db->mtable->count]      = message->pid;
+		db->mtable->severity[db->mtable->count] = message->severity;
+		db->mtable->tid[db->mtable->count]      = message->tid;
+		db->mtable->timeusec[db->mtable->count] = message->timeusec;		
+	
+		/* hostname resolution (nshostname, hostname) 
+		 *   - if an error occurs attempting to resolve the hostname to an id, we simply ignore
+		 *     the message
+		 */
+		if (db_hostid(db, message->hostname, 
+			&db->mtable->hostid[db->mtable->count]) != APP_SUCCESS) {
+			free_message(message); 
+			continue;
+		}
+
+		if (db_nshostid(db, message->nshostname, 
+			&db->mtable->nshostid[db->mtable->count]) != APP_SUCCESS) {
+			free_message(message); 
+			continue;
+		}
+		
+		/* strings */
+		strcpy(db->mtable->timestamp[db->mtable->count], message->timestamp);
+		strcpy(db->mtable->reqid[db->mtable->count], message->reqid);
+		strcpy(db->mtable->nsfileid[db->mtable->count], message->nsfileid);
+
+		/* process parameters */
+		for (param = message->plist; param != NULL; param = param->next) {
+			switch (param->type) {
+
+			/* table: dlf_str_param_values */
+			case DLF_MSG_PARAM_STR: {
+				db->stable->id[db->stable->count] = db->mtable->id[db->mtable->count];
+				strcpy(db->stable->timestamp[db->stable->count], db->mtable->timestamp[db->mtable->count]);
+				strncpy(db->stable->parname[db->stable->count], param->name, DLF_LEN_PARAMNAME);
+				strncpy(db->stable->parvalue[db->stable->count], param->value, DLF_LEN_STRINGVALUE);
+				db->stable->count++;
+				break;
+			}
+
+			/* table: dlf_reqid_map */
+			case DLF_MSG_PARAM_UUID: {
+				db->rtable->id[db->rtable->count] = db->mtable->id[db->mtable->count];
+				strcpy(db->rtable->timestamp[db->rtable->count], db->mtable->timestamp[db->mtable->count]);
+				strcpy(db->rtable->reqid[db->rtable->count], db->mtable->reqid[db->mtable->count]);		
+				strcpy(db->rtable->subreqid[db->rtable->count], param->value);
+				db->rtable->count++;
+				break;
+			}
+	
+			/* table: dlf_num_param_values */
+			case DLF_MSG_PARAM_DOUBLE: {
+				db->ntable->id[db->ntable->count] = db->mtable->id[db->mtable->count];
+				strcpy(db->ntable->timestamp[db->ntable->count], db->mtable->timestamp[db->mtable->count]);
+				strncpy(db->ntable->parname[db->ntable->count], param->name, DLF_LEN_PARAMNAME);
+				strncpy(db->ntable->parvalue[db->ntable->count],param->value, DLF_LEN_NUMBERVALUE);
+				db->ntable->count++;
+				break;
+			}
+
+			/* table: dlf_num_param_values */
+			case DLF_MSG_PARAM_INT64: {
+				db->ntable->id[db->ntable->count] = db->mtable->id[db->mtable->count];
+				strcpy(db->ntable->timestamp[db->ntable->count], db->mtable->timestamp[db->mtable->count]);
+				strncpy(db->ntable->parname[db->ntable->count], param->name, DLF_LEN_PARAMNAME);
+				strncpy(db->ntable->parvalue[db->ntable->count], param->value, DLF_LEN_NUMBERVALUE);
+				db->ntable->count++;
+				break;
+			}
+
+			/* table: dlf_num_param_values */
+			case DLF_MSG_PARAM_INT: {
+				db->ntable->id[db->ntable->count] = db->mtable->id[db->mtable->count];
+				strcpy(db->ntable->timestamp[db->ntable->count], db->mtable->timestamp[db->mtable->count]);
+				strncpy(db->ntable->parname[db->ntable->count], param->name, DLF_LEN_PARAMNAME);
+				strncpy(db->ntable->parvalue[db->ntable->count], param->value, DLF_LEN_NUMBERVALUE);
+				db->ntable->count++;
+				break;
+			}
+
+			/* table: dlf_tape_ids */
+			case DLF_MSG_PARAM_TPVID: {
+				db->ttable->id[db->ttable->count] = db->mtable->id[db->mtable->count];
+				strcpy(db->ttable->timestamp[db->ttable->count], db->mtable->timestamp[db->mtable->count]);
+				strncpy(db->ttable->tapevid[db->ttable->count], param->value, DLF_LEN_TAPEID);	
+				db->ttable->count++;
+				break;
+			}
+
+			/* we shouldn't get here, but if we do we simple stop processing the params and
+			 * enter the message to the database as normal. We could rollback the host
+			 * arrays if we want the data to have 100% integrity
+			 */	
+			default:
+				break;
+			}
+		}
+
+		db->mtable->count++;
+
+		/* free messages */
+		free_message(message);
+	}
+
+	/* exit */
+	Cthread_exit(0);
+}
+
+
+/*
+ * db_stats
+ */
+
+int DLL_DECL db_stats(unsigned int interval) {
+
+	/* variables */
+	database_t *db;        
+	struct     tm tm_str;   
+	struct     sqlca sqlca; 
+	char       err_msg[512]; 
+	char       timestr[15];
+	size_t     err_size; 
+	size_t     err_len;   
+	time_t     now; 
+	int        i;  
+	int        found;   
+	
+	char       ctime1[15];
+	char       ctime2[15];
+
+	/* host arrays */
+	int        job_fac,    rhlog_fac;
+	int        h_starting, h_exiting, h_type, h_count;
+	float      h_stddev,   h_avg,     h_min,  h_max;
+
+	/* statistics are built up using multiple sql queries as a result information needs to be 
+	 * organised logically. This inline structure provides for this
+	 */
+	static struct {
+		int    type;    
+		float  avg;     
+		float  stddev;  
+		float  min;    
+		float  max;    
+		int    starting;
+		int    exiting;  
+		int    count; 
+	} data[] = {
+		{ 35, 0.0, 0.0, 0.0, 0.0, 0, 0, 0 },
+		{ 36, 0.0, 0.0, 0.0, 0.0, 0, 0, 0 },
+		{ 37, 0.0, 0.0, 0.0, 0.0, 0, 0, 0 },
+		{ 38, 0.0, 0.0, 0.0, 0.0, 0, 0, 0 },
+		{ -1, 0.0, 0.0, 0.0, 0.0, 0, 0, 0 }    /**< termination */
+	};
+	
+
+	/* interval passed ? */
+	if ((time(NULL) - last_stats) < interval) {
+		return APP_SUCCESS;
+	}
+	last_stats = time(NULL);
+
+        /* attempt to find a database connection which is currently connected and not in a busy state
+         *   - if no connection can be found pick any connected connection
+         */
+        for (i = 0, found = 0; i < MAX_THREADS; i++) {
+                if (dpool[i] == NULL)
+                        continue;
+                if (IsConnected(dpool[i]->mode) && !IsActive(dpool[i]->mode)) {
+                        found = 1;
+                        break;
+                }
+        }
+
+        /* pick any ? */
+        if (found != 1) {
+                for (i = 0, found = 0; i < MAX_THREADS; i++) {
+                        if (dpool[i] == NULL)
+                                continue;
+                        if (IsConnected(dpool[i]->mode)) {
+                                found = 1;
+                                break;
+                        }
+                }
+        }
+
+	/* no database connections? */
+	if (found == 0) {
+		log(LOG_ERR, "db_stats() : no database connections available\n");
+		return APP_FAILURE;
+	}
+	db = dpool[i];
+
+	/* set context and error handling */
+	Cthread_mutex_lock(&db->mutex);
+
+	SetActive(db->mode);
+	EXEC SQL WHENEVER SQLERROR GOTO error;
+	EXEC SQL CONTEXT USE :db->ctx;	
+
+	/* resolve the required facilities to numbers */
+	db->selects++;
+	EXEC SQL SELECT fac_no INTO :job_fac   FROM dlf_facilities WHERE fac_name = 'job';
+	db->selects++;
+	EXEC SQL SELECT fac_no INTO :rhlog_fac FROM dlf_facilities WHERE fac_name = 'RHLog';	
+	
+	/* create the timestamps requied in the sql queries */
+	now = last_stats - interval - 43200;
+	localtime_r(&now, &tm_str);
+	strftime(ctime1, DLF_LEN_TIMESTAMP + 1, "%Y%m%d%H%M%S", &tm_str);
+	
+	now = last_stats - interval;
+	localtime_r(&now, &tm_str);
+	strftime(ctime2, DLF_LEN_TIMESTAMP + 1, "%Y%m%d%H%M%S", &tm_str);
+	
+	/* create the table timestamp */
+	now = time(NULL);
+	localtime_r(&now, &tm_str);
+	strftime(timestr, DLF_LEN_TIMESTAMP + 1, "%Y%m%d%H%M%S", &tm_str);	
+	
+	/* Phase 1 (job statistics: Part 1)
+	 *   - the following query obtains the average execution time, standard deviation, minimum and
+	 *     maximum times for all jobs which exited over the last sampling period.
+	 */
+	EXEC SQL DECLARE stats1 CURSOR FOR
+		SELECT  s.value, count(*),
+			AVG(e.timestamp - s.timestamp), STDDEV_POP(e.timestamp - s.timestamp),
+			MIN(e.timestamp - s.timestamp), MAX(e.timestamp - s.timestamp) FROM 
+
+		/* starting job */
+		(SELECT m.reqid, m.timestamp, p.value FROM dlf_messages m, dlf_num_param_values p
+			WHERE m.timestamp > TO_DATE(:ctime1, 'YYYYMMDDHH24MISS')
+			AND   m.facility = :job_fac
+			AND   m.msg_no = 12
+			AND   m.id = p.id
+			AND   p.name = 'Type'
+			AND   p.value IN (35, 36, 37, 38)) s,
+
+		/* exiting job */
+		(SELECT reqid, timestamp FROM dlf_messages 
+			WHERE timestamp > TO_DATE(:ctime2, 'YYYYMMDDHH24MISS')
+			AND   facility = :job_fac
+			AND   msg_no = 15) e
+			
+		WHERE s.reqid = e.reqid 
+		GROUP BY s.value;
+
+	/* set error handling and open cursor
+	 *   - we need to define this here otherwise when we come to the end of the cursor a NOT FOUND
+	 *     error will be thrown.
+	 */
+	EXEC SQL WHENEVER NOT FOUND GOTO end_stats1;
+	db->cursors++;
+	EXEC SQL OPEN stats1;
+
+	/* loop over cursor results */
+	while (sqlca.sqlcode == 0) {
+		EXEC SQL FETCH stats1 INTO :h_type, :h_exiting, :h_avg, :h_stddev, :h_min, h_max;
+
+		/* update data structure/array */
+		for (i = 0; data[i].type != -1; i++) {
+			if (data[i].type != h_type)
+				continue;
+			data[i].exiting = h_exiting;
+			data[i].avg     = h_avg;
+			data[i].stddev  = h_stddev;
+			data[i].min     = h_min;
+			data[i].max     = h_max;
+		}
+	}	
+
+end_stats1:
+
+	EXEC SQL CLOSE stats1;
+
+	/* Phase 1 (job statistics: Part 2)
+	 *   - the follow query simple returns the count of the number of starting of each type
+	 */
+	EXEC SQL DECLARE stats2 CURSOR FOR
+		SELECT p.value, count(m.reqid) FROM dlf_messages m, dlf_num_param_values p
+		WHERE m.timestamp > TO_DATE(:ctime2, 'YYYYMMDDHH24MISS')
+		AND   m.facility = :job_fac
+		AND   m.msg_no = 12
+		AND   m.id = p.id
+		AND   p.name = 'Type'
+		AND   p.value IN (35, 36, 37, 38)
+		GROUP BY p.value;
+
+	/* set error handling and open cursor */
+	EXEC SQL WHENEVER NOT FOUND GOTO end_stats2;
+	db->cursors++;
+	EXEC SQL OPEN stats2;
+
+	/* loop over cursor results */
+	while (sqlca.sqlcode == 0) {
+		EXEC SQL FETCH stats2 INTO :h_type, :h_starting;
+
+		/* update data structure/array */
+		for (i = 0; data[i].type != -1; i++) {
+			if (data[i].type != h_type)
+				continue;
+			data[i].starting = h_starting;
+		}
+	}		
+
+end_stats2:
+
+	EXEC SQL CLOSE stats2;
+
+	/* insert data into dlf_jobstats */
+	for (i = 0; data[i].type != -1; i++, db->inserts++) {
+		EXEC SQL INSERT INTO dlf_jobstats
+			(timestamp, type, min_time, max_time, avg_time, starting, exiting, std_dev, interval)
+		VALUES (TO_DATE(:timestr, 'YYYYMMDDHH24MISS'),
+			:data[i].type,     
+			:data[i].min,  
+			:data[i].max, 
+			:data[i].avg,
+			:data[i].starting, 
+			:data[i].exiting,
+			:data[i].stddev,
+			:interval);
+	}	
+
+	/* reset the data array for phase 2 */
+	for (i = 0; data[i].type != -1; i++) {
+		data[i].starting = data[i].exiting = data[i].count = 0;
+		data[i].avg      = data[i].stddev  = data[i].min   = data[i].max = 0.0;
+	}
+	
+	/* Phase 2 (request statistics)
+	 *   - the following query generates statistics about how long it takes between receive a request
+	 *     and a job being started.
+	 */
+	EXEC SQL DECLARE stats3 CURSOR FOR
+		SELECT  b.value, count(*),
+			AVG(b.timestamp - a.timestamp), STDDEV_POP(b.timestamp - a.timestamp),
+			MIN(b.timestamp - a.timestamp), MAX(b.timestamp - a.timestamp) FROM
+
+		/* request recieved */
+		(SELECT reqid, timestamp FROM dlf_messages
+			WHERE timestamp > TO_DATE(:ctime1, 'YYYYMMDDHH24MISS')
+			AND   facility = :rhlog_fac
+			AND   msg_no = 8) a,
+	
+		/* starting jobs */
+		(SELECT m.reqid, m.timestamp, p.value FROM dlf_messages m, dlf_num_param_values p
+			WHERE m.timestamp > TO_DATE(:ctime2, 'YYYYMMDDHH24MISS')
+			AND   m.facility = :job_fac
+			AND   m.msg_no = 12
+			AND   m.id = p.id
+			AND   p.name = 'Type'
+			AND   p.value IN (35, 36, 37, 38)) b
+			
+		WHERE a.reqid = b.reqid 
+		GROUP BY b.value;
+
+	/* set error handling and open cursor */
+	EXEC SQL WHENEVER NOT FOUND GOTO end_stats3;
+	db->cursors++;
+	EXEC SQL OPEN stats3;
+
+	/* loop over cursor results */
+	while (sqlca.sqlcode == 0) {
+		EXEC SQL FETCH stats3 INTO :h_type, :h_count, :h_avg, :h_stddev, :h_min, :h_max;
+
+		/* update data structure/array */
+		for (i = 0; data[i].type != -1; i++) {
+			if (data[i].type != h_type)
+				continue;
+			data[i].count  = h_count;
+			data[i].avg    = h_avg;
+			data[i].stddev = h_stddev;
+			data[i].min    = h_min;
+			data[i].max    = h_max;
+		}		
+	}	
+
+end_stats3:
+	
+	EXEC SQL CLOSE stats3;
+
+	/* insert data into dlf_reqstats */
+	for (i = 0; data[i].type != -1; i++, db->inserts++) {
+		EXEC SQL INSERT INTO dlf_reqstats
+			(timestamp, type, min_time, max_time, avg_time, std_dev, req_count, interval)
+		VALUES (TO_DATE(:timestr, 'YYYYMMDDHH24MISS'),
+			:data[i].type,     
+			:data[i].min,  
+			:data[i].max, 
+			:data[i].avg,
+			:data[i].stddev,
+			:data[i].count,
+			:interval);
+	}		
+
+	db->commits++;
+	EXEC SQL COMMIT WORK;
+
+	ClrActive(db->mode);
+	Cthread_mutex_unlock(&db->mutex);
+
+	return APP_SUCCESS;	
+
+error:
+
+	/* get error message (thread-safe) */
+	err_size = sizeof(err_msg);
+	sqlglmt(db->ctx, err_msg, &err_size, &err_len);	
+
+	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012)) {
+		ClrConnected(db->mode);
+	}
+
+	log(LOG_ERR, "db_stats() : %.*s", err_len, err_msg);
+
+	db->errors = (db->errors + 8);
+	EXEC SQL WHENEVER SQLERROR CONTINUE;
+	db->rollbacks++;
+	EXEC SQL ROLLBACK WORK; 
+	ClrActive(db->mode);
+
+	/* close cursors */
+	EXEC SQL CLOSE stats1;
+	EXEC SQL CLOSE stats2;
+	EXEC SQL CLOSE stats3;
+	
+	Cthread_mutex_unlock(&db->mutex);
+	return APP_FAILURE;
+}
+
+
+/*
+ * db_monitoring
+ */
+
+int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
+
+	/* variables */
+	database_t *db;        
+	struct     tm tm_str;  
+	struct     sqlca sqlca; 
+	char       err_msg[512];
+	char       timestr[15];
+	size_t     err_size;   
+	size_t     err_len;   
+	time_t     now;    
+	int        i;    
+	int        found;    
+
+	/* database accumulated stats */
+	int db_threads, h_threads;
+
+	long long db_commits    = 0, db_errors    = 0, db_inserts  = 0, db_rollbacks = 0;
+	long long db_selects    = 0, db_updates   = 0, db_cursors  = 0, db_messages  = 0, db_inits = 0;
+	long long h_connections = 0, h_clientpeak = 0, h_messages  = 0, h_errors     = 0;
+	long long h_inits       = 0, h_timeouts   = 0;
+    
+	unsigned int size = 0;
+	double response   = 0.0;
+
+
+	/* interval passed ? */
+	if ((time(NULL) - last_monitoring) < interval) {
+		return APP_SUCCESS;
+	}
+	last_monitoring = time(NULL);
+
+        /* attempt to find a database connection which is currently connected and not in a busy state
+         *   - if no connection can be found pick any connected connection
+         */
+        for (i = 0, found = 0; i < MAX_THREADS; i++) {
+                if (dpool[i] == NULL)
+                        continue;
+                if (IsConnected(dpool[i]->mode) && !IsActive(dpool[i]->mode)) {
+                        found = 1;
+                        break;
+                }
+        }
+
+        /* pick any ? */
+        if (found != 1) {
+                for (i = 0, found = 0; i < MAX_THREADS; i++) {
+                        if (dpool[i] == NULL)
+                                continue;
+                        if (IsConnected(dpool[i]->mode)) {
+                                found = 1;
+                                break;
+                        }
+                }
+        }
+	db = dpool[i];
+
+	/* handler based statistics */
+	for (i = 0, h_threads = 0; i < MAX_THREADS; i++) {
+		if (hpool[i] == NULL)
+			continue;
+
+		Cthread_mutex_lock(&hpool[i]->mutex);
+	
+		h_threads++;
+		h_connections += hpool[i]->connections;
+		h_clientpeak  += hpool[i]->clientpeak;
+		h_messages    += hpool[i]->messages;
+		h_inits       += hpool[i]->inits;
+		h_errors      += hpool[i]->errors;
+		h_timeouts    += hpool[i]->timeouts;
+
+		hpool[i]->connections = hpool[i]->clientpeak = hpool[i]->timeouts = 0;
+		hpool[i]->messages    = hpool[i]->inits      = hpool[i]->errors   = 0;
+
+		Cthread_mutex_unlock(&hpool[i]->mutex);
+	}
+
+	/* database based statistics */
+        for (i = 0, db_threads = 0; i < MAX_THREADS; i++) {
+		if (dpool[i] == NULL)
+                        continue;
+
+		Cthread_mutex_lock(&dpool[i]->mutex);
+
+		db_threads++;
+		db_commits    += dpool[i]->commits;
+		db_errors     += dpool[i]->errors;
+		db_inserts    += dpool[i]->inserts;
+		db_rollbacks  += dpool[i]->rollbacks;
+		db_selects    += dpool[i]->selects;
+		db_updates    += dpool[i]->updates;
+		db_messages   += dpool[i]->messages;
+		db_cursors    += dpool[i]->cursors;
+		db_inits      += dpool[i]->inits;
+
+		/* average response rate */
+		if (dpool[i]->messages > 0) {
+			response += (dpool[i]->response / dpool[i]->messages);
+		}
+
+		/* reset counters */
+		dpool[i]->commits  = dpool[i]->errors  = dpool[i]->inserts  = dpool[i]->rollbacks = 0;
+		dpool[i]->selects  = dpool[i]->updates = dpool[i]->messages = dpool[i]->cursors   = 0;
+		dpool[i]->inits    = 0;
+		dpool[i]->response = 0.0;
+
+		Cthread_mutex_unlock(&dpool[i]->mutex);
+	}
+
+	if (response > 0) {
+		response = (response / db_threads);
+	}	
+	size = queue_size(queue);
+
+	/* create the table timestamp */
+	now = time(NULL);
+	localtime_r(&now, &tm_str);
+	strftime(timestr, DLF_LEN_TIMESTAMP + 1, "%Y%m%d%H%M%S", &tm_str);
+
+	/* no database connections available ? 
+	 *   - we could have checked this earlier, however we need to reset the counters otherwise
+	 *     overflows will occur
+	 */
+	if (found == 0) {
+		log(LOG_ERR, "db_monitoring() : no database connections available\n");
+		return APP_FAILURE;
+	}
+	
+	/* set context and error handling */
+	Cthread_mutex_lock(&db->mutex);
+
+	SetActive(db->mode);
+	EXEC SQL WHENEVER SQLERROR GOTO error;
+	EXEC SQL WHENEVER NOT FOUND GOTO error;
+	EXEC SQL CONTEXT USE :db->ctx;	
+	
+	db->inserts++;
+	EXEC SQL INSERT INTO dlf_monitoring 
+	VALUES (TO_DATE(:timestr, 'YYYYMMDDHH24MISS'),
+		:h_threads,    :h_messages,   :h_inits,     :h_errors,   :h_connections, 
+	 	:h_clientpeak, :h_timeouts,   :db_threads,  :db_commits, :db_errors,   
+		:db_inserts,   :db_rollbacks, :db_selects,  :db_updates, :db_cursors,  
+		:db_messages,  :db_inits,     :server_mode, :size,       :response,      :interval);
+
+	db->commits++;
+	EXEC SQL COMMIT WORK;
+
+	ClrActive(db->mode);
+	Cthread_mutex_unlock(&db->mutex);
+
+	return APP_SUCCESS;	
+
+error:
+
+	/* get error message (thread-safe) */
+	err_size = sizeof(err_msg);
+	sqlglmt(db->ctx, err_msg, &err_size, &err_len);	
+
+	log(LOG_ERR, "db_monitoring() : %.*s", err_len, err_msg);
+
+	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012)) {
+		ClrConnected(db->mode);
+	}
+
+	db->errors++;
+	EXEC SQL WHENEVER SQLERROR CONTINUE;
+	ClrActive(db->mode);	
+
+	Cthread_mutex_unlock(&db->mutex);
+	return APP_FAILURE;
+}
+
+
+/** End-of-File **/
+

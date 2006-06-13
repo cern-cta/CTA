@@ -1,0 +1,222 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta name="author" content="Dennis Waldron" />
+<meta name="description" content="Distributed Logging Facility" />
+<meta http-equiv="Content-Type" content="text/html; charset=" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Cache-Control" content="no-cache" />
+<meta http-equiv="Default-Style" content="compact" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+
+<title>Distributed Logging Facility - Documentation</title>
+<style type="text/css">
+
+a:link       { 
+color: #0033CC; 
+font-weight: bold 
+}
+a:hover      { 
+color: #3366CC;
+ font-weight: bold 
+ }
+a:active     { 
+color: #0033CC; 
+font-weight: bold 
+}
+a:visited    { 
+color: #0033CC; 
+font-weight: bold 
+}
+a            { 
+color: #0033CC; 
+font-weight: bold; 
+text-decoration:none 
+}
+
+BODY {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+}
+
+TABLE.noborder {
+	border-top-width: 0px;
+	border-left-width: 0px;
+	border-bottom-width: 0px;
+	border-right-width: 0px;
+}
+
+TABLE.border {
+	border: 1px solid #666666;
+}
+
+TR.header {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 24px;
+	font-style: italic;
+	color: #FFFFFF;
+	background-color: #999999;
+}
+
+TR.subheader {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 18px;
+	font-style: italic;
+	color: #FFFFFF;
+	background-color: #999999;
+}
+.style2 {color: #0033CC; font-weight: bold; }
+</style>
+
+</head>
+<body>
+
+	<!-- header -->
+	<table class="noborder" cellspacing="0" cellpadding="0" width="100%">
+		<tr class="header">
+			<td>&nbsp;CASTOR Distributed Logging Facility - Documentation</td>
+		</tr>
+	</table>
+
+	<!-- break 1 -->
+	<hr align="left" size="1" />
+    <ol>
+      <li><a href="index.html#Introduction">Introduction</a></li>
+      <li><a href="index.html#requirements">Requirements</a></li>
+      <li><a href="index.html#Installation">Installation</a></li>
+      <li><a href="index.html#Configuration">Configuration</a></li>
+      <li><a href="index.html#FAQ">Frequently Asked Questions</a>
+        <!-- header -->
+      </li>
+    </ol>
+    <table class="noborder" cellspacing="0" cellpadding="0" width="100%">
+		<tr class="subheader">
+			<td>&nbsp;<a name="Introduction" id="Introduction"></a>1. Introduction</td>
+		</tr>
+				<tr>
+			<td><p>&nbsp;</p>
+			  <p>The Distributed Logging Facility (DLF) is facility provided by the CASTOR2 project (<a href="http://castor.web.cern.ch/castor/">http://castor.web.cern.ch/castor/</a>) and is designed for centrally logging messages and accoutning information from CASTOR services/facilities to a relational database backend. The framework consists of a dlf server daemon acting as a centralised collector of log messages, a client api for writing log messages and a web interface for retrieving the messages once they have been stored in the database. </p>
+			  <p>The DLF framework was completely re-written in 2006 to address issues of data management, scalability and recoverability within the numerous framwork components. In partcular, partitioning was added to the Oracle Enterprise backend version of the dlf server. With partition support enabled messages are partitioned by day and subpartitioned by facility name allowing for quicker archival and retrieval times of the data and faster sql execution. Numerous enhancements have also been made to the core dlf server to increase the message throughput performance and decrease message acknowledgement times between server and client. As a result the server now has the capability of easily handling 2,500 messages per second with an average of 5 parameters each (3.75 million rows of data every 5 minutes).</p>
+			  <p>The client API has also undergoing some major modifications. Most noticable is that the api is now asynchronise meaning the client application no longer waits for the dlf server to acknowlegde reciept of a message and can now continue normal functionality unhindered or unaffected by any dlf server related issues or network problems. Furthermore, all threads of a given process now communicate via one socket connection to the server as opposed to one for each thread. The underlying api will now also deal transparently and recovery from any errors which may occur during runtime such as central database interventions or the dlf server not being available. </p>
+			  <p>The DLF server itself is essentially a memory cache acting as a gateway between the DLF clients and a relational database. The internal cache or queue has the capacity to store by default 250,000 messages pending database insertion.</p>
+			  <p>Currently DLF supports the following relational database backends:</p>
+			  <ul>
+			    <li><a href="http://www.oracle.com/technology/products/database/oracle10g/index.html">Oracle Database 10g Enterprise Edition</a></li>
+			    <li><a href="http://www.oracle.com/technology/products/database/xe/index.html">Oracle Database 10g Express Edition</a> (Free Download available) </li>
+			    <li><a href="http://www.mysql.com/products/database/">MySQL 5.0</a></li>
+		      </ul>			  
+			  <p>Please Note: </p>
+			  <ul>
+			    <li>Partitioning abilities are only offered via the enterprise edition of Oracle. </li>
+			    <li>Any site wishing to use the Express edition of oracle should be aware that the amount of data that can be stored is limited to 4GB, no backups are available and no support is given by Oracle. </li>
+			    <li>The MySQL support is intended for small sites only!!! </li>
+			    <li>Only the Oracle versions provide statistics on job and request statistics. </li>
+		      </ul>			  <p>Thanks goes to Vitaly Motyakov and Victor Kotlyar for their previous work on DLF v1. </p></td>
+	  </tr>
+	</table>
+
+	<p />
+		<!-- header -->
+	<table class="noborder" cellspacing="0" cellpadding="0" width="100%">
+		<tr class="subheader">
+			<td>&nbsp;<a name="Requirements" id="Requirements"></a>2. Software Requirements</td>
+		</tr>
+				<tr>
+			<td><p>&nbsp;</p>
+			  <p>To install the DLF framework you will need some or all of the following components: </p>
+			  <ul>
+			    <li>Apache web server 1.3 or 2.0 or newer.</li>
+			    <li>PHP v4.3.2 or newer compiled with OCI (if using an oracle backend)</li>
+			    <li>Relational database server, one of:
+			      <ul>
+			        <li><a href="http://www.oracle.com/technology/products/database/oracle10g/index.html">Oracle Database 10g Enterprise Edition</a></li>
+			        <li><a href="http://www.oracle.com/technology/products/database/xe/index.html">Oracle Database 10g Express Edition</a></li>
+			        <li><a href="http://www.mysql.com/products/database/">MySQL 5.0</a></li>
+	              </ul>
+			    </li>
+		        <li>The DLF CASTOR2 software available from <a href="http://castor.web.cern.ch/castor/software.htm">http://castor.web.cern.ch/castor/software.htm</a> </li>
+			  </ul>			  
+			  <p>Caution:</p>
+			  <ul>
+			    <li>In PHP 5 mysql support was removed from the default binary distribution. If you intend on using MySQL and the web interface together you will need to recompile the PHP sources to utilise the correct mysql-devel libraries for building mysql support natively into PHP. Please refer to your PHP documentation. </li>
+			    <li>If using the ORACLE backend plese make sure that you have setup the Oracle Environment variables <strong>ORACLE_HOME</strong>, <strong>LD_LIBRARY_PATH</strong> and <strong>TNS_NAMES</strong> correctly. This can be done by modifying <strong>/etc/profile</strong> or in /etc/sysconfig/httpd and must be accessible to user <strong>apache</strong> which runs the PHP scripts. </li>
+		      </ul></td>
+	  </tr>
+</table>
+
+	<p />
+		<!-- header -->
+	<table class="noborder" cellspacing="0" cellpadding="0" width="100%">
+		<tr class="subheader">
+			<td>&nbsp;<a name="Installation" id="Installation"></a>3. Installation</td>
+		</tr>
+				<tr>
+			<td><p>&nbsp;</p>
+			  <p>The following installation notes are designed specifically for setting up the DLF framework and are not concerned with any other CASTOR2 related software components. If you wish to use a more general installation procedure for CASTOR2 software please refer to: <a href="http://castor.web.cern.ch/castor/docs.htm">http://castor.web.cern.ch/castor/docs.htm</a> (Guides and Administration -&gt; Operations)</p>
+			  <p>This guide assumes all DLF related packages will be installed using rpms and that those rpms have already been generated for the correct database version from the source rpm </p>
+			  <p>To install the dlf server use:</p>
+			  <blockquote>
+			    <p><strong>rpm -Uvh &lt;path_to_rpms&gt;/castor-2.<em>x.x-x.arch.rpm</em></strong></p>
+		      </blockquote>
+			  <p>To install the dlf web interface use:</p>
+			  <blockquote>
+			    <p><strong>rpm -Uvh &lt;path_to_rpms/castor-2<em>.x.x-x.arch.rpm</em></strong></p>
+		      </blockquote></td>
+	  </tr>
+	</table>
+	
+	<p />
+		<!-- header -->
+	<table class="noborder" cellspacing="0" cellpadding="0" width="100%">
+		<tr class="subheader">
+			<td>&nbsp;<a name="Configuration" id="Configuration"></a>4. Configuration</td>
+		</tr>
+				<tr>
+			<td><p>&nbsp;</p>
+			  <p>Before running the dlf server for the first time. The DLF database schema must first be created. The scripts for creating the database schema can be found in cvs in the subdirectory dlf/scripts. Different creation scripts exist for Oracle, Oracle Express (XE) and MySQL.</p>
+			  <p class="style2">For Oracle:</p>
+			  <p>Prior to creating the schema two tablespaces must exist. One called DLF_DATA and another called DLF_IDX to store the table data and indexes respectively. Creation of the schema must be done as &quot;sysdba&quot; or the user must have privileges to add DBMS jobs to the database. Using your favourite sql client (e.g. sqlplus) you can then execute the creation script (create.sql) </p>
+			  <p class="style2">For Oracle Express:</p>
+			  <p>The only pre-requiste that exists before creating the DLF schema is that two tablespaces must exist. One called DLF_DATA and another called DLF_IDX to store the table data and indexes respectively.  Using your favourite sql client (e.g. sqlplus) you can then execute the creation script (create.sql) </p>
+			  <p class="style2">For MySQL:</p>
+			  <p>There are no special requirements simpley run the creation script.</p>
+			  <p>At anytime the DLF schema can be dropped using the (drop.sql) customised for each database backend.  </p>
+			  <p>Once the schema is in place the username and password for connecting to the database needs to be configured in <strong>/etc/castor/DLFCONFIG</strong>. The format of this file is:</p>
+			  <p>The dlf server can the be started using the init.d script: <strong>service dlfserver start</strong></p>
+			  <p>By default the server logs its own error messages to /var/spool/dlf/log </p></td>
+		</tr>
+	</table>
+
+	<p />
+		<!-- header -->
+	<table class="noborder" cellspacing="0" cellpadding="0" width="100%">
+		<tr class="subheader">
+			<td>&nbsp;<a name="FAQ" id="FAQ"></a>5. FAQ</td>
+		</tr>
+		<tr>
+			<td><p>Question: How do I add a new facility to DLF?</p>
+		    <p>There is no tool which allows a client to self-register itself or for a user to run a command to enter a facility into the schema. This must be done by hand using a query such as</p>
+		    <p>INSERT INTO dlf_facilities (fac_name, fac_name) VALUES (X, 'facility_name');</p>
+		    <p>Question: How do I change a message text for a given facility ? </p>
+		    <p>Caution: You should never change a message text number to mean something else. This will invalidate data within the database!!!!!!!!!! However, if you are simply changing the text to elaborate more on the subject matter or need to correct a spelling mistake then simple alter your text at the client level and the api will automatically update the text in the database. </p>
+		    <p>Question: I need to perform maintenance on the database server. But I don't want to lose any messages which would normally be recorded centrally. can this be done?</p>
+		    <p>Yes, The dlf server is basically a memory cache in front of a database server. By default this cache has the capacity to store 250,000 messages pending insertion into the database. If your intervention is not for a long time you can send a kill -USR1 &lt;dlfserver_pid&gt; to the dlfserver process which will effectively suspend all database insertion. Please note however that the memory consumption of the processs can increase very rapidally. It is also possible to take down the dlf server for very short periods of time as clients also have an internal queue which can store 5,000 messages awaiting transmission to the server.</p>
+		    <p>Question: How do I know if my server is performing well?</p>
+		    <p>In the new version of DLF a dlf_monitoring table exists which details performance related statistics about the server every 5 minutes. You can examine the data in here to see for example how many inserts, commits, connection for clients and messages you are processing.</p>
+		    <p>Question: The dlf_monitoring statistics table shows me that the S_QUEUE value is very high, should I be concerned?</p>
+		    <p>It depends, If the value is static there is very little cause for concern. If the number if growing steadily or rapdily this is a clear indication that the dlf server is not capable of handling the number of incoming messages  that it is buffering. If your are using the MySQL backend it is suggested that if this problem persists to move to Oracle. The reason being that the MySQL version inserts row into the database one by one which is extremely costly whereas the oracle version uses bulk insertion of many thousands of rows in one go. The performance gained from the Oracle version far exceeds MySQL. </p>
+		    </td>
+		</tr>
+	</table>
+
+	<p />
+	
+	<!-- break 1 -->
+	<hr align="left" size="1" />
+	Page last modified by <a href="mailto:Dennis.Waldron@cern.ch">Dennis Waldron</a> on:
+	<script language="javascript">
+    	document.write(document.lastModified);
+	</script>
+</body>
+</html>

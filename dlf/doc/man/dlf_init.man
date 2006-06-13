@@ -1,0 +1,104 @@
+.lf 3 dlf_init.man
+.TH dlf_init 3 "2006/06/12 12:00:00 CERN IT-FIO" CASTOR "DLF Library Functions"
+.SH NAME
+dlf_init \- initialise the DLF interface
+.SH SYNOPSIS
+.B #include "dlf_api.h"
+
+.BI "int dlf_init (const char * " facility, " char * " error ")"
+.SH DESCRIPTION
+.B dlf_init 
+initialises the DLF (Distributed Logging Facility) interface and must be called before any other DLF library related functions. All other function calls relating to the DLF library will fail upon unsuccessful initialisation.
+
+The function will read the logging destinations/targets from the castor2 common configuration file "/etc/castor/castor.conf" or from the facility's logging related environment variables. The configuration information is then used to create the DLF global data structures. For destinations/targets where messages are to be sent to a remote host, the function will also create the necessary threads for handling 
+bi-directional communication between the server and the client. One thread will be created per remote server.
+
+The
+.I facility
+argument defines the name of the facility under which messages should be logged. The name must not exceed 
+.BR DLF_MAXFACNAMELEN 
+characters in length.
+
+The
+.I errptr
+argument is a  pointer to a buffer to store an error message on error. The message is terminated by a 
+newline character 
+'\n' and the buffer must have a minimum size of CA_MAXLINELEN. If the errptr is NULL, 
+.BR "dlf_init" (3) 
+returns immediately with -1. The 
+.I errptr
+is only ever written too during calls to
+.BR "dlf_init" (3)
+
+.SH "CONFIGURATION"
+/etc/castor/castor.conf provides a configuration file for defining the log destinations. A log destination must be defined in the following way either in the config file or by using environment variables (environment variables take precendense over the configuration file):
+
+<facility_name>_LOG<severity_level> <destination1> [destination2] ...
+
+Where
+.I facility_name 
+is the name of the facility in UPPER CASE and
+.I severity_level 
+is the name of the severity and must be one of the following values:
+.RS
+.TP
+.B DLF_LVL_EMERGENCY
+.TP
+.B DLF_LVL_ALERT
+.TP
+.B DLF_LVL_ERROR
+.TP
+.B DLF_LVL_WARNING
+.TP
+.B DLF_LVL_AUTH
+.TP
+.B DLF_LVL_SECURITY
+.TP
+.B DLF_LVL_USAGE
+.TP
+.B DLF_LVL_SYSTEM
+.TP
+.B DLF_LVL_IMPORTANT
+.TP
+.B DLF_LVL_DEBUG
+.RE
+
+The
+.I destination 
+is the target or location to where the log message should be record or transmitted too. For writing too files the destination format is
+
+.B file://<full_path_to_file>
+
+and for servers:
+
+.B x-dlf://<hostname>:[port]
+
+If the port number is not specified the default will be chosen.
+
+.SH "EXAMPLE"
+
+The following example would configure all ERROR and EMERGENCY messages created by the RHLog facility to be recorded to a local file and transmitted to a central DLF server
+
+.B RHLOG_LOGERROR file:///var/spool/dlf/log x-dlf://castordev.cern.ch
+.B RHLOG_LOGEMERGENCY file:///var/spool/dlf/log x-dlf://castordev2.cern.ch
+
+For convenience a _LOGALL severity level exists to allow all messages to be logged without the need for defining each severity level on its own. Multiple targets of the same type are supported.
+
+.SH "RETURN VALUE"
+The function returns 0 on success and -1 on error and an appropriate message is stored in 
+.I errptr
+
+.SH NOTE
+The DLF interface is restricted to 
+.BR API_MAX_TARGETS
+\- 20 log destinations/targets in total and
+.BR API_MAX_THREADS
+\- 4 threads for connecting to remote servers. Should any of these values be exceeded the function will fail.
+
+.SH "SEE ALSO"
+.BR dlf_regtext (3),
+.BR dlf_shutdown (3),
+.BR dlf_write (3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
