@@ -1,8 +1,8 @@
-.\" $Id: serrno.man,v 1.3 2004/12/03 10:19:30 obarring Exp $
+.\" serrno.man,v 1.3 2004/12/03 10:19:30 obarring Exp
 .\"
 .\" Man page for the CASTOR's error variable serrno
 .\"
-.TH SERRNO "3" "$Date: 2004/12/03 10:19:30 $" "CASTOR" "Castor Library Functions"
+.TH SERRNO "3" "2004/12/03 10:19:30" "CASTOR" "Castor Library Functions"
 .SH NAME
 \fBserrno\fP \- CASTOR internal error variable
 
@@ -60,9 +60,6 @@ The serrno variable is divided into common values and per package values, that a
 .TP
 .B UPV
 - User Privilege
-.TP
-.B DLF
-- Distributed Logging Facility
 .TP
 .B EXP
 - Expert Facility
@@ -770,24 +767,6 @@ The following error values are returned only by the User Privilege Validation pa
 .TP 1.9i
 .B ECUPVNACT
 (2401) UPV not active or service being drained
-
-.SH DLF ERRORS
-The following error values are returned only by the Distributed Logging Facility package:
-.TP 1.9i
-.B EDLFNACT
-(2501) Logging facility not active or service being drained
-.TP
-.B EDLFNOFAC
-(2502) No such facility in the database
-.TP
-.B EDLFREFEXIST
-(2503) References exist
-.TP
-.B EDLFNOTFOUND
-(2504) Row was not found in the database
-.TP
-.B EDLFLOGFORMAT
-(2504) Log file format error
 
 .SH EXPERT ERRORS
 The following error values are returned only by the Expert Facility package:
