@@ -175,9 +175,6 @@ CREATE TABLE TapeDriveCompatibility (tapeDriveModel VARCHAR2(2048), priorityLeve
 /* SQL statements for type DeviceGroupName */
 CREATE TABLE DeviceGroupName (dgName VARCHAR2(2048), libraryName VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
-/* SQL statements for type DiskPoolQuery */
-CREATE TABLE DiskPoolQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskPoolName VARCHAR2(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
-
 ALTER TABLE SvcClass2TapePool
   ADD CONSTRAINT fk_SvcClass2TapePool_P FOREIGN KEY (Parent) REFERENCES SvcClass (id)
   ADD CONSTRAINT fk_SvcClass2TapePool_C FOREIGN KEY (Child) REFERENCES TapePool (id);
@@ -192,7 +189,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.61 $ $Release$ $Date: 2006/06/12 09:18:16 $ $Author: itglp $
+ * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.62 $ $Release$ $Date: 2006/06/13 08:36:54 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -521,7 +518,8 @@ BEGIN
                  WHERE SubRequest.diskCopy = DiskCopy.id
                    AND DiskCopy.id = dci
                    AND SubRequest.parent = 0
-                   AND DiskCopy.status IN (1, 2, 5, 11)), -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING
+                   AND DiskCopy.status IN (1, 2, 5, 6, 11) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, WAITFS_SCHEDULING
+                   AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6)), -- START, RESTART, RETRY, WAIT*, READY
       status = 5,
       lastModificationTime = getTime() -- WAITSUBREQ
   WHERE SubRequest.id = srId;
@@ -1049,7 +1047,7 @@ BEGIN
      AND FileSystem.status = 0 -- PRODUCTION
      AND FileSystem.diskserver = DiskServer.id
      AND DiskServer.status = 0 -- PRODUCTION
-     AND DiskCopy.status IN (1, 2, 5, 11); -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING
+     AND DiskCopy.status IN (1, 2, 5, 6, 11); -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, WAITFS_SCHEDULING
   IF stat.COUNT > 0 THEN
     -- Only DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
     makeSubRequestWait(rsubreqId, dci(1));
@@ -1079,7 +1077,7 @@ BEGIN
      AND FileSystem.status = 0 -- PRODUCTION
      AND FileSystem.diskserver = DiskServer.id
      AND DiskServer.status = 0 -- PRODUCTION
-     AND DiskCopy.status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
+     AND DiskCopy.status IN (0, 10); -- STAGED, STAGEOUT, CANBEMIGR
   IF stat.COUNT > 0 THEN
     -- In case of PutDone, Check there is no put going on
     -- If any, we'll wait on one of them
@@ -1125,7 +1123,7 @@ BEGIN
              AND SubRequest.castorfile = DiskCopy.castorfile
              AND FileSystem.diskpool = DiskPool2SvcClass.parent
              AND DiskPool2SvcClass.child = svcClassId
-             AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
+             AND DiskCopy.status IN (0, 10) -- STAGED, STAGEOUT, CANBEMIGR
              AND FileSystem.id = DiskCopy.fileSystem
              AND FileSystem.status = 0 -- PRODUCTION
              AND DiskServer.id = FileSystem.diskServer
@@ -1492,6 +1490,7 @@ CREATE OR REPLACE PROCEDURE putDoneFunc (cfId IN INTEGER,
   nc INTEGER;
   tcId INTEGER;
   fsId INTEGER;
+  dcId INTEGER;
 BEGIN
  -- get number of TapeCopies to create
  SELECT nbCopies INTO nc FROM FileClass, CastorFile
@@ -1501,7 +1500,7 @@ BEGIN
  IF nc = 0 OR fs = 0 THEN
    UPDATE DiskCopy SET status = 0 -- STAGED
     WHERE castorFile = cfId AND status = 6 -- STAGEOUT
-   RETURNING fileSystem INTO fsId;
+   RETURNING fileSystem, id INTO fsId, dcId;
  ELSE
    -- update the DiskCopy status to CANBEMIGR
    UPDATE DiskCopy SET status = 10 -- CANBEMIGR
@@ -1514,6 +1513,11 @@ BEGIN
       RETURNING id INTO tcId;
     INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
    END LOOP;
+   -- Restart any waiting Disk2DiskCopies
+   UPDATE SubRequest -- SUBREQUEST_RESTART
+      SET status = 1, lastModificationTime = getTime(), parent = 0
+    WHERE status = 5 -- WAIT_SUBREQ
+      AND parent IN (SELECT id from SubRequest WHERE diskCopy = dcId);
  END IF;
  -- If we are a real PutDone (and not a put outside of a prepareToPut)
  -- then we have to archive the original preapareToPut subRequest
