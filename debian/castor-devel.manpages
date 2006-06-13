@@ -63,9 +63,11 @@ debian/castor/usr/share/man/man3/Cupv_delete.3castor
 debian/castor/usr/share/man/man3/Cupv_list.3castor
 debian/castor/usr/share/man/man3/Cupv_modify.3castor
 debian/castor/usr/share/man/man3/Cuuid.3castor
-debian/castor/usr/share/man/man3/dlf_init.1castor
-debian/castor/usr/share/man/man3/dlf_seterrbuf.1castor
-debian/castor/usr/share/man/man3/dlf_write.1castor
+debian/castor/usr/share/man/man1/dlfserver.1castor
+debian/castor/usr/share/man/man3/dlf_init.3castor
+debian/castor/usr/share/man/man3/dlf_write.3castor
+debian/castor/usr/share/man/man3/dlf_regtext.3castor
+debian/castor/usr/share/man/man3/dlf_shutdown.3castor
 debian/castor/usr/share/man/man3/expert_receive_data.1castor
 debian/castor/usr/share/man/man3/expert_send_data.1castor
 debian/castor/usr/share/man/man3/expert_send_request.1castor

@@ -1,6 +1,6 @@
 
 /*
- * $Id: site.Win32.def,v 1.1 2005/10/21 08:20:40 jdurand Exp $
+ * $Id: site.Win32.def,v 1.2 2006/06/13 14:07:02 waldron Exp $
 */
 /*
  * Copyright (C) 1993-2003 by CERN/IT/ADC/CA
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: site.Win32.def,v $ $Revision: 1.1 $ $Date: 2005/10/21 08:20:40 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: site.Win32.def,v $ $Revision: 1.2 $ $Date: 2006/06/13 14:07:02 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Platform is normally guessed from the CPP predefined symbols
    But you may define special flags, for example
@@ -218,7 +218,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #else
 #define DlfConfigFile  /etc/castor/DLFCONFIG
 #endif
-#define DlfHost        "castordlf"
 #define DlfSpool       /var/spool/dlf
 #if defined(_WIN32)
 #define ExpertConfigFile  %%SystemRoot%%\\system32\\drivers\\etc\\castor\\EXPCONFIG

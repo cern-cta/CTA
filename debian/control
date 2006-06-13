@@ -52,12 +52,6 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib-oracle
 Description: castor (Cern Advanced STORage system)
  Oracle API
 
-Package: castor-dlf-client
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: castor (Cern Advanced STORage system)
- Distributed Logging Facility clients
-
 Package: castor-dlf-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
@@ -328,9 +322,9 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  Volume Manager server
 
-Package: castor-dlf-gui
+Package: castor-dlf-web
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
- Distributed Logging Facility GUI
+ Distributed Logging Facility Web Interface
   

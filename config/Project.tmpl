@@ -466,20 +466,6 @@
 #endif
 #endif
 
-/* --- */
-/* DLF */
-/* --- */
-#if BuildDlfClient || BuildDlfDaemon
-#if !BuildDlfLibrary
-#undef BuildDlfLibrary
-#define BuildDlfLibrary YES
-#endif
-#if !BuildCupvLibrary
-#undef BuildCupvLibrary
-#define BuildCupvLibrary YES
-#endif
-#endif
-
 /* ------ */
 /* EXPERT */
 /* ------ */
@@ -684,7 +670,7 @@ VDQMDIR = vdqm
 #if BuildVolumeMgrClient || BuildVolumeMgrDaemon || BuildVolumeMgrLibrary
 VMGRDIR = vmgr
 #endif
-#if BuildDlfClient || BuildDlfDaemon || BuildDlfLibrary
+#if BuildDlfDaemon || BuildDlfLibrary
 DLFDIR = dlf
 #endif
 #if BuildExpertClient || BuildExpertDaemon || BuildExpertLibrary
@@ -743,8 +729,8 @@ SCHEDULERDIR=scheduler
 #if BuildTankPerfMonLibrary
 TANKDIR=tank
 #endif
-#if BuildDlfGui
-DLFGUIDIR=dlfquery
+#if BuildDlfWeb
+DLFWEBDIR=web
 DLFWEB=/var/www/html/dlf
 #endif
 

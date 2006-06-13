@@ -1,9 +1,15 @@
+# Arguments for the dlfserver
+#   -d             enable debugging mode
+#   -f             keep process in the foreground, do not fork
+#   -h             display help and exit
+#   -l <path>      path to the log file (default: config/site.def/DlfSpool)
+#   -p <int>       the server listening port (default: 5036)
+#   -t <int>:<int> the number of transport threads in relation to database threads
 #
-# $Id: dlfserver.sysconfig,v 1.3 2006/01/16 14:30:58 itglp Exp $
-#
+DLFSERVER_OPTIONS=" -t 2:2"
 
-RUN_DLFSERVER=yes
+# run the server by default ?
+DLFSERVER_RUN=yes
 
-# options for dlfserver
-#
-OPTIONS="-t 100"
+# set stack size
+ULIMIT_S=2148

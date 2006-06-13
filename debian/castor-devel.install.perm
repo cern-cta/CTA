@@ -53,11 +53,7 @@
 %attr(0644,root,bin) usr/include/shift/Cuuid.h
 %attr(0644,root,bin) usr/include/shift/RfioTURL.h
 %attr(0644,root,bin) usr/include/shift/common.h
-%attr(0644,root,bin) usr/include/shift/dlf.h
 %attr(0644,root,bin) usr/include/shift/dlf_api.h
-%attr(0644,root,bin) usr/include/shift/dlf_constants.h
-%attr(0644,root,bin) usr/include/shift/dlf_server.h
-%attr(0644,root,bin) usr/include/shift/dlf_struct.h
 %attr(0644,root,bin) usr/include/shift/dmc.h
 %attr(0644,root,bin) usr/include/shift/expert.h
 %attr(0644,root,bin) usr/include/shift/expert_api.h

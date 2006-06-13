@@ -223,7 +223,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #else
 #define DlfConfigFile  /etc/castor/DLFCONFIG
 #endif
-#define DlfHost        "castordlf"
 #define DlfSpool       /var/spool/dlf
 #if defined(_WIN32)
 #define ExpertConfigFile  %%SystemRoot%%\\system32\\drivers\\etc\\castor\\EXPCONFIG
@@ -293,10 +292,9 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildVolumeMgrClient	NO
 #define BuildVolumeMgrDaemon	NO
 #define BuildVolumeMgrLibrary	NO
-#define BuildDlfClient    	NO
 #define BuildDlfDaemon    	NO
 #define BuildDlfLibrary    	NO
-#define BuildDlfGui      	NO
+#define BuildDlfWeb      	NO
 #define BuildExpertClient	NO
 #define BuildExpertDaemon	NO
 #define BuildExpertLibrary	NO
