@@ -89,11 +89,7 @@ ICOMMON_H = \
 	 FileName($(DESTDIRCASTOR),Cupv_util.h) \
 	 FileName($(DESTDIRCASTOR),Cuuid.h) \
 	 FileName($(DESTDIRCASTOR),RfioTURL.h) \
-	 FileName($(DESTDIRCASTOR),dlf.h) \
 	 FileName($(DESTDIRCASTOR),dlf_api.h) \
-	 FileName($(DESTDIRCASTOR),dlf_constants.h) \
-	 FileName($(DESTDIRCASTOR),dlf_server.h) \
-	 FileName($(DESTDIRCASTOR),dlf_struct.h) \
 	 FileName($(DESTDIRCASTOR),dmc.h) \
 	 FileName($(DESTDIRCASTOR),expert.h) \
 	 FileName($(DESTDIRCASTOR),expert_api.h) \
@@ -192,11 +188,7 @@ ECOMMON_H = \
 	 $(EXPORTH)/Cupv_util.h \
 	 $(EXPORTH)/Cuuid.h \
 	 $(EXPORTH)/RfioTURL.h \
-	 $(EXPORTH)/dlf.h \
 	 $(EXPORTH)/dlf_api.h \
-	 $(EXPORTH)/dlf_constants.h \
-	 $(EXPORTH)/dlf_server.h \
-	 $(EXPORTH)/dlf_struct.h \
 	 $(EXPORTH)/dmc.h \
 	 $(EXPORTH)/expert.h \
 	 $(EXPORTH)/expert_api.h \
@@ -558,20 +550,8 @@ IEXPORT(rfio_lcastorfdt.h,$(EXPORTH),644)
 InstallNonExecFile(common.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(common.h,$(EXPORTH),644)
 
-InstallNonExecFile(dlf.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(dlf.h,$(EXPORTH),644)
-
 InstallNonExecFile(dlf_api.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(dlf_api.h,$(EXPORTH),644)
-
-InstallNonExecFile(dlf_constants.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(dlf_constants.h,$(EXPORTH),644)
-
-InstallNonExecFile(dlf_server.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(dlf_server.h,$(EXPORTH),644)
-
-InstallNonExecFile(dlf_struct.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(dlf_struct.h,$(EXPORTH),644)
 
 InstallNonExecFile(dmc.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(dmc.h,$(EXPORTH),644)
