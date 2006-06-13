@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.275 $ $Release$ $Date: 2006/06/13 08:21:20 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.276 $ $Release$ $Date: 2006/06/13 09:50:55 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2056,7 +2056,7 @@ CREATE OR REPLACE FUNCTION nullGCPolicy
   result castorGC.GCItem_Cur;
   badValue NUMBER;
 BEGIN
-  badValue := 2**31;
+  badValue := 100000000001; -- Take care that this is greater than the value given in defaultGCPolicy
   OPEN result FOR
     SELECT 0, -1, badValue
       FROM Dual;
@@ -2107,7 +2107,7 @@ BEGIN
   -- Get candidates for each policy
   nextItems.EXTEND(policies.COUNT);
   bestCandidate := -1;
-  bestValue := 2**31;
+  bestValue := 100000000001; -- Take care that this is greater than the value given in defaultGCPolicy
   IF policies.COUNT > 0 THEN
     EXECUTE IMMEDIATE 'BEGIN :1 := '||policies(policies.FIRST)||'(:2, :3); END;'
       USING OUT cur1, IN fsId, IN toBeFreed;
@@ -2160,7 +2160,7 @@ BEGIN
     -- Shall we continue ?
     IF toBeFreed > freed THEN
       -- find next candidate
-      bestValue := 2**31;
+      bestValue := 100000000001; -- Take care that this is greater than the value given in defaultGCPolicy
       FOR i IN nextItems.FIRST .. nextItems.LAST LOOP
         IF nextItems(i).utility < bestValue THEN
           bestCandidate := i;
