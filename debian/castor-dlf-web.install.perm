@@ -1,0 +1,14 @@
+%attr(0600,root,bin) var/www/html/dlf/config.php
+%attr(0644,root,bin) var/www/html/dlf/index.php
+%attr(0644,root,bin) var/www/html/dlf/query.php
+%attr(0644,root,bin) var/www/html/dlf/results.php
+%attr(0644,root,bin) var/www/html/dlf/site.css
+%attr(0644,root,bin) var/www/html/dlf/utils.php
+%attr(0644,root,bin) var/www/html/dlf/db/mysql.php
+%attr(0644,root,bin) var/www/html/dlf/db/oracle.php
+%attr(0644,root,bin) var/www/html/dlf/js/CalendarPopup.js
+%attr(0644,root,bin) var/www/html/dlf/js/Date.js
+%attr(0644,root,bin) var/www/html/dlf/images/backdrop.png
+%attr(0644,root,bin) var/www/html/dlf/images/css.png
+%attr(0644,root,bin) var/www/html/dlf/images/php.png
+%attr(0644,root,bin) var/www/html/dlf/images/xhtml.png
