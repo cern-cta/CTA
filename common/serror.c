@@ -344,23 +344,6 @@ char *sys_uperrlist[EUPMAXERR-EUPBASEOFF+2] =
 
 /*
  *------------------------------------------------------------------------
- * DLF (Distributed Logging Facility) specific error messages
- *------------------------------------------------------------------------
- */
-char *sys_dlferrlist[EDLFMAXERR-EDLFBASEOFF+2] =
-  {"Error 0",
-   "DLF server not active",
-   "Facility was not found in the database",
-   "Can not delete or update parent row: references exist",
-   "Row was not found in the database",
-   "Log file format error",
-   "No connection to database",
-   "BAD ERROR NUMBER"
-  };
-
-
-/*
- *------------------------------------------------------------------------
  * Expert service specific error messages
  *------------------------------------------------------------------------
  */
@@ -560,11 +543,6 @@ char DLL_DECL *  sstrerror_r(n,buf,buflen)
      * UPV specific error messages
      */
     tmpstr = sys_uperrlist[n-EUPBASEOFF];
-  } else if ((n>EDLFBASEOFF) && (n<=EDLFMAXERR)) {
-    /*
-     * DLF specific error messages
-     */
-    tmpstr = sys_dlferrlist[n-EDLFBASEOFF];
   } else if ((n>EEXPBASEOFF) && (n<=EEXPMAXERR)) {
     /*
      * Expert service specific error messages
