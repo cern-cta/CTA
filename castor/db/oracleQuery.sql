@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.274 $ $Release$ $Date: 2006/06/09 13:20:11 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.275 $ $Release$ $Date: 2006/06/13 08:21:20 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -329,7 +329,8 @@ BEGIN
                  WHERE SubRequest.diskCopy = DiskCopy.id
                    AND DiskCopy.id = dci
                    AND SubRequest.parent = 0
-                   AND DiskCopy.status IN (1, 2, 5, 11)), -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING
+                   AND DiskCopy.status IN (1, 2, 5, 6, 11) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, WAITFS_SCHEDULING
+		   AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6)), -- START, RESTART, RETRY, WAIT*, READY
       status = 5,
       lastModificationTime = getTime() -- WAITSUBREQ
   WHERE SubRequest.id = srId;
@@ -1004,7 +1005,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   FROM DiskCopy, SubRequest, FileSystem, DiskServer
   WHERE SubRequest.id = srId
     AND SubRequest.castorfile = DiskCopy.castorfile
-    AND DiskCopy.status IN (1, 2, 5, 11) -- WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, WAITFS_SCHEDULING
+    AND DiskCopy.status IN (1, 2, 5, 6, 11) -- WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, WAITFS_SCHEDULING
     AND FileSystem.id(+) = DiskCopy.fileSystem
     AND FileSystem.status(+) = 0 -- PRODUCTION
     AND DiskServer.id(+) = FileSystem.diskserver
@@ -1023,7 +1024,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
    FROM DiskCopy, SubRequest, FileSystem, DiskServer
    WHERE SubRequest.id = srId
      AND SubRequest.castorfile = DiskCopy.castorfile
-     AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
+     AND DiskCopy.status IN (0, 10) -- STAGED, STAGEOUT, CANBEMIGR
      AND FileSystem.id = DiskCopy.fileSystem
      AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
      AND DiskServer.id = FileSystem.diskserver
@@ -1037,7 +1038,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     FROM DiskCopy, SubRequest, FileSystem, DiskServer
     WHERE SubRequest.id = srId
       AND SubRequest.castorfile = DiskCopy.castorfile
-      AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
+      AND DiskCopy.status IN (0, 10) -- STAGED, STAGEOUT, CANBEMIGR
       AND FileSystem.id = DiskCopy.fileSystem
       AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
       AND DiskServer.id = FileSystem.diskServer
@@ -1300,6 +1301,7 @@ CREATE OR REPLACE PROCEDURE putDoneFunc (cfId IN INTEGER,
   nc INTEGER;
   tcId INTEGER;
   fsId INTEGER;
+  dcId INTEGER;
 BEGIN
  -- get number of TapeCopies to create
  SELECT nbCopies INTO nc FROM FileClass, CastorFile
@@ -1314,7 +1316,7 @@ BEGIN
    -- update the DiskCopy status to CANBEMIGR
    UPDATE DiskCopy SET status = 10 -- CANBEMIGR
     WHERE castorFile = cfId AND status = 6 -- STAGEOUT
-    RETURNING fileSystem INTO fsId;
+    RETURNING fileSystem, id INTO fsId, dcId;
    -- Create TapeCopies
    FOR i IN 1..nc LOOP
     INSERT INTO TapeCopy (id, copyNb, castorFile, status)
@@ -1322,6 +1324,11 @@ BEGIN
       RETURNING id INTO tcId;
     INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
    END LOOP;
+   -- Restart any waiting Disk2DiskCopies
+   UPDATE SubRequest -- SUBREQUEST_RESTART
+      SET status = 1, lastModificationTime = getTime(), parent = 0
+    WHERE status = 5 -- WAIT_SUBREQ
+      AND parent IN (SELECT id from SubRequest WHERE diskCopy = dcId);
  END IF;
  -- If we are a real PutDone (and not a put outside of a prepareToPut)
  -- then we have to archive the original preapareToPut subRequest
