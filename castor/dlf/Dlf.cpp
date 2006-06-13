@@ -28,30 +28,22 @@
 #include "castor/dlf/Dlf.hpp"
 
 // -----------------------------------------------------------------------
-// dlf_writep
+// dlf_init
 // -----------------------------------------------------------------------
 void castor::dlf::dlf_init
 (char* facilityName, Message messages[]) {
-  // First set the DLF error buffer. Otherwise it may
-  // write to standard ouput
-  char *dlfErrBuf;
-  dlfErrBuf = (char *)malloc(CA_MAXLINELEN+1);
-  (void)dlf_seterrbuf(dlfErrBuf,CA_MAXLINELEN);
-  // initialize DLF, ignore output so that we don't give up
-  // if the DLF server is not available
-  ::dlf_init(facilityName);
-  // Enter messages in the facility, even if initialization
-  // was not successful since it could be used for local
+  // Initialise the DLF interface, ignore any errors that may be generated
+  char dlfErrBuf[CA_MAXLINELEN+1];  
+
+  ::dlf_init(facilityName, dlfErrBuf);
+
+  // Register the facility's messages with the interface. We do this even
+  // if the interface fails to initialisation as it is used for local 
   // logging
   int i = 0;
-  extern dlf_facility_info_t g_dlf_fac_info;
   while (messages[i].number >= 0) {
-    ::dlf_add_to_text_list(messages[i].number,
-                           messages[i].text.c_str(),
-                           &g_dlf_fac_info.text_list);
-    ::dlf_entertext(facilityName,
-                    messages[i].number,
-                    messages[i].text.c_str());
+    ::dlf_regtext(messages[i].number,
+		  messages[i].text.c_str());
     i++;
   }
 }
@@ -67,7 +59,7 @@ void castor::dlf::dlf_writep
  castor::dlf::Param params[],
  struct Cns_fileid *ns_invariant) {
   // Place holder for the C version of the parameters
-//  dlf_write_param_t cparams[numparams]; // Doesn't work on windows compiler!!!
+  // dlf_write_param_t cparams[numparams]; // Doesn't work on windows compiler!!!
   dlf_write_param_t* cparams = new dlf_write_param_t[numparams];
   // Translate paramters from C++ to C
   for (int i = 0; i < numparams; i++) {

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlfbuf.h,v $ $Revision: 1.11 $ $Release$ $Date: 2006/01/30 14:10:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: dlfbuf.h,v $ $Revision: 1.12 $ $Release$ $Date: 2006/06/13 14:32:12 $ $Author: waldron $
  *
  * A string buffer for logging into dlf
  *
@@ -49,21 +49,8 @@ namespace castor {
     dlfbuf(const std::string &name)
       throw (castor::exception::Exception) :
       castor::logbuf() {
-      // If dlf_seterrbuf was not yet called in this thread
-      // then create a buffer and call dlf_seterrbuf
-      char** errBuf = errorBuffer();
-      if (0 == *errBuf) {
-        *errBuf = (char*) malloc(LOGBUFSZ);
-        int rc = dlf_seterrbuf(*errBuf, LOGBUFSZ);
-        if (rc < 0) {
-          castor::exception::Internal e;
-          e.getMessage()
-            << "Unable to initialize error buffer of DLF :"
-            << std::endl
-            << sstrerror(serrno);
-          throw e;
-        }
-      }
+      char dlfErrBuf[CA_MAXLINELEN+1];
+ 
       if (!s_dlfInitCalled) {
         // If dlf_init not already called,
         // try to call it. But thread safety
@@ -72,19 +59,11 @@ namespace castor {
         // It could be that somebody was quicker
         if (!s_dlfInitCalled) {
           int rc;
-          if ((rc = dlf_init(name.c_str())) != 0) {
+          if ((rc = dlf_init(name.c_str(), dlfErrBuf)) != 0) {
             castor::exception::Internal e;
-            if (rc > 0) {
-              e.getMessage()
-                << "The log destination used in dlf_init ("
-                << name
-                << ") cannot be found in the configuration file.\n"
-                << "Please check your configuration.";
-            } else {
-              e.getMessage() << "Unable to initialize DLF :\n"
-                             << sstrerror(serrno) << "\n"
-                             << *(errorBuffer());
-            }
+	    e.getMessage() << "Unable to initialize DLF :\n"
+		           << dlfErrBuf << "\n";
+	    
             // Don't forget the mutex !
             Cthread_mutex_unlock(&s_lock);
             throw e;
@@ -105,20 +84,20 @@ namespace castor {
       // Write current message to DLF
       std::string msg = str();
       // Take care of long messages
-      if (str().size() <= DLF_MAXSTRVALLEN) {
+      if (str().size() <= DLF_LEN_STRINGVALUE) {
         dlf_write_internal("MESSAGE", msg.c_str());
       } else {
         // Message too long, cut it into pieces
         const char* longmsg = msg.c_str();
         int size = msg.size();
-        char buffer[DLF_MAXSTRVALLEN+1];
-        strncpy(buffer, longmsg, DLF_MAXSTRVALLEN);
-        buffer[DLF_MAXSTRVALLEN] = 0;
+        char buffer[DLF_LEN_STRINGVALUE+1];
+        strncpy(buffer, longmsg, DLF_LEN_STRINGVALUE);
+        buffer[DLF_LEN_STRINGVALUE] = 0;
         dlf_write_internal("MESSAGE", buffer);
-        int index = DLF_MAXSTRVALLEN;
+        int index = DLF_LEN_STRINGVALUE;
         while (index < size) {
-          int bitLength = DLF_MAXSTRVALLEN;
-          if (size - index < DLF_MAXSTRVALLEN) {
+          int bitLength = DLF_LEN_STRINGVALUE;
+          if (size - index < DLF_LEN_STRINGVALUE) {
             bitLength = size - index;
           }
           strncpy(buffer, longmsg, bitLength);
@@ -135,41 +114,13 @@ namespace castor {
   private:
 
     /**
-     * get the thread specific error buffer for DLF
-     */
-    char** errorBuffer() throw() {
-      static int C_dlfbuf_TLSkey = -1;
-      char** buffer;
-      castor::BaseObject::getTLS(&C_dlfbuf_TLSkey,
-                                 (void **)&buffer);
-      return buffer;
-    }
-
-    /**
      * write something to DLF and checks for errors.
      * If any, throws an exception
      */
     void dlf_write_internal(const char* name, const char* msg)
       throw(castor::exception::Exception) {
-      // XXX For the time being, we ignore completely
-      // XXX errors of dlf_write. Shall we syslog them ?
-      //int rc =
-      dlf_write (m_uuid, level(), 0, m_fileId, 1,
+       dlf_write (m_uuid, level(), 0, m_fileId, 1,
                  name, DLF_MSG_PARAM_STR, msg);
-      //if (0 != rc) {
-      //  castor::exception::Internal e;
-      //  if (rc > 0) {
-      //    e.getMessage()
-      //      << "The log destination used in dlf_write) "
-      //      << "cannot be found in the configuration file.\n"
-      //      << "Please check your configuration.";
-      //  } else {
-      //    e.getMessage() << "Unable to initialize DLF :\n"
-      //                   << sstrerror(serrno) << "\n"
-      //                   << errorBuffer();
-      //  }
-      //  throw e;
-      //}
     }
 
   private:

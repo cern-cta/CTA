@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.23 $ $Release$ $Date: 2005/07/06 09:56:14 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.24 $ $Release$ $Date: 2006/06/13 14:32:14 $ $Author: waldron $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.23 $ $Release$ $Date: 2005/07/06 09:56:14 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.24 $ $Release$ $Date: 2006/06/13 14:32:14 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -512,9 +512,7 @@ int recallerCallback(
   struct Cns_fileid *castorFileId = NULL;
   file_list_t *file = NULL;
   char *blkid = NULL, *func = NULL;
-  char dlfErrBuf[CA_MAXLINELEN+1];  
 
-  (void)dlf_seterrbuf(dlfErrBuf,CA_MAXLINELEN);
   if ( tapereq == NULL || filereq == NULL ) {
     (void)dlf_write(
                     childUuid,

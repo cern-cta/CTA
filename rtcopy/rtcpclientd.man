@@ -1,9 +1,9 @@
-.\" @(#)$RCSfile: rtcpclientd.man,v $ $Revision: 1.1 $ $Date: 2005/03/10 10:09:30 $ CERN CERN IT-PDP/DM Olof Barring
+.\" @(#)$RCSfile: rtcpclientd.man,v $ $Revision: 1.2 $ $Date: 2006/06/13 14:32:14 $ CERN CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 2000-2005 by CERN IT-ADC
 .\" All rights reserved
 .\"
 .nh
-.TH RTCPD 1 "$Date: 2005/03/10 10:09:30 $" CASTOR "RTCOPY client daemon"
+.TH RTCPD 1 "$Date: 2006/06/13 14:32:14 $" CASTOR "RTCOPY client daemon"
 .SH NAME
 rtcpclientd \- CASTOR remote tape copy client daemon
 .SH SYNOPSIS
@@ -119,7 +119,7 @@ CASTOR configuration file
 
 .SH SEE ALSO
 .BI rtcpd(1castor),
-.BI dlf(1castor)
+.BI dlf_api(3castor)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

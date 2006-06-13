@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.32 $ $Release$ $Date: 2006/01/20 09:47:55 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.33 $ $Release$ $Date: 2006/06/13 14:32:14 $ $Author: waldron $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.32 $ $Release$ $Date: 2006/01/20 09:47:55 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.33 $ $Release$ $Date: 2006/06/13 14:32:14 $ Olof Barring";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -145,23 +145,15 @@ int rtcpcld_initLogging(
      char *facilityName;
 {
   int rc, i;
-  char *dlfErrBuf;
-  extern dlf_facility_info_t g_dlf_fac_info;  
+  char dlfErrBuf[CA_MAXLINELEN+1];
 
-  dlfErrBuf = (char *)malloc(CA_MAXLINELEN+1);
-  (void)dlf_seterrbuf(dlfErrBuf,CA_MAXLINELEN);
-  rc = dlf_init(facilityName);
+  rc = dlf_init(facilityName,dlfErrBuf);
   
   i=-1;
   while ( *rtcpcldMessages[++i].messageTxt != '\0' ) {
-    (void)dlf_add_to_text_list(rtcpcldMessages[i].msgNo,
-                               rtcpcldMessages[i].messageTxt,
-                               &g_dlf_fac_info.text_list);
-    (void)dlf_entertext(
-                        facilityName,
-                        rtcpcldMessages[i].msgNo,
-                        rtcpcldMessages[i].messageTxt
-                        );
+    (void)dlf_regtext(rtcpcldMessages[i].msgNo,
+		      rtcpcldMessages[i].messageTxt
+		      );
   }
   rtcp_log = rtcpcld_extlog;
   return(0);

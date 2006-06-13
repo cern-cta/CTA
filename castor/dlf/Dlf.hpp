@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Dlf.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/04/05 11:51:33 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Dlf.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/06/13 14:32:12 $ $Author: waldron $
  *
  * C++ interface to DLF
  *
@@ -28,7 +28,7 @@
 #define DLF_DLF_WRITE_HPP 1
 
 // Include Files
-#include "dlf_constants.h"
+#include "dlf_api.h"
 #include "castor/dlf/Message.hpp"
 #include "castor/dlf/Param.hpp"
 

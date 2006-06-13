@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Param.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/04/14 12:54:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Param.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/06/13 14:32:12 $ $Author: waldron $
  *
  * A parameter for the DLF (Distributed Logging System)
  *
@@ -29,7 +29,6 @@
 
 // Include Files
 #include "dlf_api.h"
-#include "dlf_struct.h"
 #include "castor/IObject.hpp"
 #include "castor/stager/TapeVid.hpp"
 #include "castor/dlf/IPAddress.hpp"
