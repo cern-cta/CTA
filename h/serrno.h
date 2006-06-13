@@ -33,7 +33,6 @@
 #define ERMBASEOFF      2200            /* RMC error base offset        */
 #define EMONBASEOFF     2300            /* Monitoring Error base offset */
 #define EUPBASEOFF      2400            /* UPV error base offset        */
-#define EDLFBASEOFF     2500            /* DLF error base offset        */
 #define ESECBASEOFF     2700            /* Security error base offset   */
 #define EEXPBASEOFF     2900            /* Expert system error base offset */
 #define EDNSBASEOFF     3000            /* DNS error base offset        */
@@ -339,19 +338,6 @@
  */
 #define	ECUPVNACT	EUPBASEOFF+1	/* User Privilege Validator not active or service being drained */
 #define EUPMAXERR       EUPBASEOFF+1
-
-/*
- *------------------------------------------------------------------------
- * DLF (Distributed Logging Facility) errors
- *------------------------------------------------------------------------
- */
-#define EDLFNACT        EDLFBASEOFF+1   /* Logging facility not active or service being drained */
-#define EDLFNOFAC       EDLFBASEOFF+2   /* No such facility in the database */
-#define EDLFREFEXIST    EDLFBASEOFF+3   /* References exist */
-#define EDLFNOTFOUND    EDLFBASEOFF+4   /* Row was not found in the database */
-#define EDLFLOGFORMAT   EDLFBASEOFF+5   /* Log file format error */
-#define EDLFNOTCONNECTED EDLFBASEOFF+6  /* Connection lost to the database */
-#define EDLFMAXERR      EDLFBASEOFF+6
 
 /*
  *------------------------------------------------------------------------
