@@ -1,50 +1,49 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Date: 2004/06/09 16:10:41 $ CERN IT-ADC Vitaly Motyakov
-COMM
-COMM  Copyright (C) 2003 by CERN/IT/ADC
-COMM  All rights reserved
-COMM
-
-COMM		Make CASTOR tests for "dlf" directory
+COMM -----------------------------------------------------------------------------------------------------#
+COMM                                                                                                      #
+COMM  Imakefile - Castor Distribution Logging Facility                                                    #
+COMM  Copyright (C) 2005 CERN IT/FIO (castor-dev@cern.ch)                                                 #
+COMM                                                                                                      #
+COMM  This program is free software; you can redistribute it and/or modify it under the terms of the GNU  #
+COMM  General Public License as published by the Free Software Foundation; either version 2 of the        #
+COMM  License, or (at your option) any later version.                                                     #
+COMM                                                                                                      #
+COMM  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without   #
+COMM  even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU      #
+COMM  General Public License for more details.                                                            #
+COMM                                                                                                      #
+COMM  You should have received a copy of the GNU General Public License along with this program; if not,  #
+COMM  write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,   #
+COMM  USA.                                                                                                #
+COMM                                                                                                      #
+COMM -----------------------------------------------------------------------------------------------------#
 
 #include <Project.tmpl>
 
 INCLUDES = FileName(FileName(..,..),h)
 #if linux
-LIBS = -L../../dlf -ldlf -L../../common -lcommon  $(ADNSLIB) -lnsl
+LIBS = -L../../dlf -ldlf -L../../common -lcommon -lnsl
 #else
 #if SOLARIS
 LIBS = -L../../dlf -ldlf -L../../common -lcommon -lsocket -lnsl
 #else
-#if _WIN32
-LIBS = ..\..\dlf\dlf.lib ..\..\common\common.lib wsock32.lib advapi32.lib
-#else
 LIBS = -L../../dlf -ldlf -L../../common -lcommon
 #endif
 #endif
-#endif
 
-PROGS = ProgramTargetName(dlftest)
-
-CFLAGS         = -I$(INCLUDES)
-LDFLAGS        = $(MTLDFLAGS)
-
+CFLAGS  = -I$(INCLUDES) -I../../dlf/
+LDFLAGS = $(MTLDFLAGS)
+PROGS   = ProgramTargetName(dlftest)
 
 DEPLIBS = DepLibraryTargetName(FileName(..,dlf),dlf) \
 	  DepLibraryTargetName(FileName(..,common),common)
 
 all: $(PROGS)
 
-NormalProgramTarget(dlftest,dlftest.Osuf,$(DEPLIBS),$(DEPLIBS) $(LIBS) $(MTLDLIBS))
+NormalProgramTarget(dlftest,dlftest.Osuf,$(DEPLIBS),$(LIBS) $(MTLDLIBS))
 
 MakeDepLibrary(FileName(..,common),common)
 MakeDepLibrary(FileName(..,dlf),dlf)
 
-clean:
-	-@RemoveFiles(FilesToClean)
- 
-clobber:        clean
-	-@RemoveFiles($(PROGS))
- 
 #if _WIN32
 depend:
 	@echo Not supported on this platform
@@ -54,9 +53,16 @@ depend:
 #endif
 
 Makefiles:
- 
+
+clean:
+	-@RemoveFiles(FilesToClean $(PROGS))
+
+clobber: clean
+	-@RemoveFiles($(PROGS))
+
 FORCE:
 
-COMM###################### DEPENDENCIES ##########################
+
+COMM -- End-of-File -------------------------------------------------------------------------------------#
 
 COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
