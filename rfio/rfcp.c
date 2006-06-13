@@ -412,8 +412,6 @@ int main(argc, argv)
 		/* Output is not CASTOR but input is : we will follow the classic rfcp behaviour */
 		/* but we want neverthless to handle the termination signals v.s. stager */
 		TRACE(2,"rfio","Instructing signal handler to exit");
-		free(cleanInp);
-		free(cleanOut);
 		copyfile_stgcleanup_instruction = CLEANER_EXIT;
 	  }
 	}
