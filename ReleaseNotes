@@ -8,15 +8,14 @@
   - The garbage collection was optimized 
   - Added the check of MIR validity at mount time for SUN/STK T10000, LTO and IBM3592
   - Fixes concerning the deadlocks in PL/SQL and avoiding replication of STAGEOUT files
-  - Added dependency on castor_lib_compact 2.0.2_1 to avoid relinking.
-  - Fixed the inicialitation of the file systemd for minAllowedFreeSpace
+  - Added dependency on castor_lib_compat 2.0.2_1 to avoid relinking.
   
 
   Upgrade from 2.1.0-2
   --------------------
 
     - The upgrade to be done concerns to the whole system (database, stager, client, tape servers)
-    - Upgrade the database (you don't need to stop the services nor daemos for that).
+    - Upgrade the database (you don't need to stop the services nor daemons for that).
     - Then upgrade the rest of the system. 
 
 
@@ -135,12 +134,15 @@
 
     - The database schema has evolved. Use upgrades/2.0.3_to_2.0.4.sql to upgrade.
       This can be done anytime before the software upgrade and does not imply any
-      service interruption.
-    - The server code can be updated after the DB, still without service interruption
+      service interruption. However, note that servers have to be updated right after
+      the schema update, and though old servers can serve user request within the new
+      schema, administrator procedures like adding a diskserver will lead to errors
+      in case servers are not updated.
+    - Servers can be updated after the DB, still without service interruption
       if you play with several processes.
     - Clients can be updated completely independently (before or after the server
-      update). However, new functionnalities will lead to strange errors in case
-      servers were not updated, typically :
+      update). However, new functionnalities will again lead to strange errors
+      in case servers were not updated, typically :
           > stager_qry -s
           Error: Invalid argument
           stage_diskpoolsquery: Server Error 22 :
