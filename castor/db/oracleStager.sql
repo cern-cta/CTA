@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.276 $ $Release$ $Date: 2006/06/13 09:50:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.277 $ $Release$ $Date: 2006/06/14 14:19:25 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1339,7 +1339,8 @@ BEGIN
      SELECT SubRequest.id INTO srId
        FROM SubRequest, StagePrepareToPutRequest
       WHERE SubRequest.castorFile = cfId
-        AND SubRequest.request = StagePrepareToPutRequest.id;
+        AND SubRequest.request = StagePrepareToPutRequest.id
+        AND SubRequest.status = 6;
      archiveSubReq(srId);
    END;
  END IF;
