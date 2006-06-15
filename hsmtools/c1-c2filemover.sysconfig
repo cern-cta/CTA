@@ -1,0 +1,4 @@
+export PYTHONPATH=$PYTHONPATH:/usr/local/lib/python2.2/site-packages
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/oracle/10.2.0.1/client/lib
+export TNS_ADMIN=/etc
+ls $TNS_ADMIN/tnsnames.ora
