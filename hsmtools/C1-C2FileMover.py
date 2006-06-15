@@ -18,7 +18,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: C1-C2FileMover.py,v $ $Revision: 1.1 $ $Release$ $Date: 2006/06/15 14:01:57 $ $Author: itglp $
+# * @(#)$RCSfile: C1-C2FileMover.py,v $ $Revision: 1.2 $ $Release$ $Date: 2006/06/15 14:18:40 $ $Author: itglp $
 # *
 # * Imports a list of files from a Castor1 stager to a Castor2 one.
 # * The file is moved from the original staging area to a Castor2 one on this
@@ -125,7 +125,7 @@ CREATE OR REPLACE PROCEDURE importCastor1File(cfname IN VARCHAR2,
                                               nsHost IN VARCHAR2,
                                               svcClass IN VARCHAR2,
                                               fcname IN VARCHAR2,
-                                              diskserver IN VARCHAR2,
+                                              disksrv IN VARCHAR2,
                                               toBeMigr IN INTEGER) AS
   scId NUMBER;
   fcId NUMBER;
@@ -144,7 +144,7 @@ BEGIN
   SELECT FileSystem.id BULK COLLECT INTO fsIds
     FROM FileSystem, DiskServer
    WHERE FileSystem.diskServer = DiskServer.id
-     AND DiskServer.name = 'diskserv-san-29';
+     AND DiskServer.name = disksrv;
   fsId := fsIds(MOD(fileid, fsids.COUNT)+1);  -- "randomly" select a FileSystem on this DiskServer
 
   -- create CastorFile
@@ -179,7 +179,7 @@ sql = '''SELECT FS.mountPoint || DC.path FROM FileSystem FS, CastorFile CF, Disk
 try:
   while(1):
     (oldpath, fsize, cfname, fid, fcname, tobemigr) = getItem()
-    if tobemigr: continue         # don't import tobemigr files
+    if(tobemigr == 1): continue         # don't import tobemigr files
     print "\n  importing %s" % cfname
 
     dbcursor.callproc('importCastor1File',
