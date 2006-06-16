@@ -18,22 +18,29 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: C1-C2FileMover.py,v $ $Revision: 1.2 $ $Release$ $Date: 2006/06/15 14:18:40 $ $Author: itglp $
+# * @(#)$RCSfile: C1-C2FileMover.py,v $ $Revision: 1.3 $ $Release$ $Date: 2006/06/16 16:03:43 $ $Author: itglp $
 # *
 # * Imports a list of files from a Castor1 stager to a Castor2 one.
-# * The file is moved from the original staging area to a Castor2 one on this
-# * diskserver, without passing through the scheduler. The filesystem is
-# * chosen (pseudo)randomly.
+# *
+# * The files are moved from the original staging area to a Castor2 one on this
+# * diskserver and on the given filesystem, without passing through the scheduler
+# * and without producing disk I/O.
 # * Info about the original files has to be obtained by issuing stageqry --dump -a
-# * and files that don't belong to this diskserver are ignored (no scp performed).
+# * and files that don't belong to this diskserver/filesystem are ignored.
 # * Moreover, currently only STAGED files are taken into account.
+# *
 # *
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
 import os
 import sys
-import cx_Oracle
+try:
+  import cx_Oracle
+except:
+  print '''Fatal: couldn't load module cx_Oracle.
+  Make sure it is installed and $PYTHONPATH includes the directory where cx_Oracle.so resides.\n'''
+  sys.exit(2)
 
 nsHost = "castor-8.cr.cnaf.infn.it"                # write your nameserver here
 stagerDb = "user/pwd@CASTORSTAGER"     # write your stager db login here
@@ -41,14 +48,17 @@ stagerDb = "user/pwd@CASTORSTAGER"     # write your stager db login here
 nsFileCl = {'0' : 'null'}
 svcClass = ''
 currentLine = ''
-localhost = os.popen('hostname --short').read().strip(' \n')
 
 
 # usage function
 def usage():
-  print "Usage:", sys.argv[0], "<stgdump> <svcclass>"
-  print "  <stgdump> is the dump of the stgdaemon catalogue (see stageqry --dump)"
-  print "  <svcclass> is the name of the target service class"
+  print "Usage:", sys.argv[0], "stgdump mountpoint svcclass"
+  print "  stgdump    : dump of the stgdaemon catalogue (as from stageqry --dump -a)"
+  print "  mountpoint : mount point to be imported; other files are ignored."
+  print "               This parameter may contain an hostname too, useful when importing"
+  print "               after a diskserver reinstallation/renaming."
+  print "  svcclass   : name of the target service class.\n"
+  sys.exit(0)
 
 
 # create the nsFileCl dictionary from nslistclass
@@ -83,7 +93,7 @@ def getItem():
     getline()
     tobemigr = (currentLine.find('CANBEMIGR') >= 0 or currentLine.find('PUT_FAILED') >= 0)
     for i in range(14): getline()
-    if(currentLine.find(localhost) < 0):
+    if(currentLine.find(localhost) < 0 or currentLine.find(mntpoint) < 0):
       for i in range(19): getline()
 
   # grep other info
@@ -106,14 +116,19 @@ def getItem():
 ## main()
 
 # first parse options
-if (len(sys.argv) != 3):
+if (len(sys.argv) != 4):
   usage()
-  sys.exit(0)
+
+localhost = sys.argv[2]
+if localhost.find(':') < 0:
+  localhost = os.popen('hostname --short').read().strip(' \n')
+else:
+  localhost = localhost[:localhost.find(':')]
 
 parseNsListClass()
 
 # connect to DB
-print "Connecting to Castor2 stager db..."
+print "Connecting to CASTOR 2 stager db..."
 conn = cx_Oracle.connect(stagerDb)
 dbcursor = conn.cursor()
 
@@ -123,29 +138,26 @@ CREATE OR REPLACE PROCEDURE importCastor1File(cfname IN VARCHAR2,
                                               cfsize IN NUMBER,
                                               fileid IN NUMBER,
                                               nsHost IN VARCHAR2,
-                                              svcClass IN VARCHAR2,
+                                              fsId IN NUMBER,
+                                              scId IN NUMBER,
                                               fcname IN VARCHAR2,
-                                              disksrv IN VARCHAR2,
                                               toBeMigr IN INTEGER) AS
-  scId NUMBER;
   fcId NUMBER;
   cfId NUMBER;
   fsIds "numList";
-  fsId NUMBER;
   dcId NUMBER;
   newpath VARCHAR2(2048);
 
 BEGIN
-  -- retrieve svcClass and fileClass. **Warning: no protection against errors here!
-  SELECT id INTO scId FROM SvcClass WHERE name = svcClass;
+  -- retrieve fileClass
   SELECT id INTO fcId FROM FileClass WHERE name = fcname;
 
-  -- select FileSystem
-  SELECT FileSystem.id BULK COLLECT INTO fsIds
-    FROM FileSystem, DiskServer
-   WHERE FileSystem.diskServer = DiskServer.id
-     AND DiskServer.name = disksrv;
-  fsId := fsIds(MOD(fileid, fsids.COUNT)+1);  -- "randomly" select a FileSystem on this DiskServer
+  -- select FileSystem - not used anymore
+  --  SELECT FileSystem.id BULK COLLECT INTO fsIds
+  --    FROM FileSystem, DiskServer
+  --   WHERE FileSystem.diskServer = DiskServer.id
+  --     AND DiskServer.name = 'here goes the diskserver';
+  --  fsId := fsIds(MOD(fileid, fsids.COUNT)+1);  -- "randomly" select a FileSystem on this DiskServer
 
   -- create CastorFile
   selectCastorFile(fileid, nsHost, scId, fcId, cfsize, cfname, cfId, dcId);  -- dcId is unused here
@@ -169,8 +181,30 @@ END;
 '''
 dbcursor.execute(sql)
 
+# Verify input parameters against stager db
+mntpoint = sys.argv[2]
+if mntpoint.find(':') > 0: mntpoint = mntpoint[mntpoint.find(':')+1:]
+if mntpoint[-1] != '/': mntpoint += '/'
+try:
+  sql = "SELECT id FROM FileSystem WHERE mountPoint = '%s'" % mntpoint;
+  dbcursor.execute(sql)
+  fsId = dbcursor.fetchone()[0]
+except:
+  print "Error: File system", mntpoint, "unknown in the stager db.\n"
+  sys.exit(1)
+
+try:
+  sql = "SELECT id FROM SvcClass WHERE name = '%s'" % sys.argv[3];
+  dbcursor.execute(sql)
+  svcclassId = dbcursor.fetchone()[0]
+except:
+  print "Error: Service class", sys.argv[3], "unknown in the stager db.\n"
+  sys.exit(1)
+
+
 # Loop over the stg entries and perform import
-print "Starting import..."
+print "Starting import of files on %s:%s ..." % (localhost, mntpoint)
+counter = 0
 source = open(sys.argv[1], 'r')
 getline()
 sql = '''SELECT FS.mountPoint || DC.path FROM FileSystem FS, CastorFile CF, DiskCopy DC 
@@ -179,20 +213,22 @@ sql = '''SELECT FS.mountPoint || DC.path FROM FileSystem FS, CastorFile CF, Disk
 try:
   while(1):
     (oldpath, fsize, cfname, fid, fcname, tobemigr) = getItem()
-    if(tobemigr == 1): continue         # don't import tobemigr files
-    print "\n  importing %s" % cfname
+    if tobemigr: continue         # don't import tobemigr files
+    print "\n  importing", cfname
 
+    # create needed entries in the db
     dbcursor.callproc('importCastor1File',
-      (cfname, long(fsize), long(fid), nsHost, sys.argv[2], fcname, localhost, int(tobemigr)))
+      (cfname, long(fsize), long(fid), nsHost, int(fsId), int(svcclassId), fcname, int(tobemigr)))
     dbcursor.execute(sql, [long(fid)])
     targetpath = dbcursor.fetchone()[0]
     
     # really move it
-    print "  mv %s %s" % (oldpath, targetpath)
+    print "  mv", oldpath, targetpath
     os.system("mv %s %s" % (oldpath, targetpath))
     os.system("chown stage.st %s" % targetpath)
+    counter += 1
 
 except ValueError:
   source.close()
   conn.close()
-  print "\nImport complete."
+  print "\nImport complete,", counter, "files imported."
