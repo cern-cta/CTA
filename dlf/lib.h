@@ -21,7 +21,7 @@
  * @file  lib.h
  * @brief definitions and structures for api internals
  *
- * $Id
+ * $Id: lib.h,v 1.2 2006/06/19 06:52:55 waldron Exp $
  */
 
 #ifndef _API_H

@@ -21,7 +21,7 @@
  * @file  dbi.h
  * @brief database interface layer
  *
- * $Id
+ * $Id: dbi.h,v 1.2 2006/06/19 06:52:55 waldron Exp $
  */
 
 #ifndef _DBI_H

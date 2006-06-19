@@ -21,7 +21,7 @@
  * @file  dlf/common.h
  * @brief defines common definitions, prototypes and structures for use between all DLF applications
  *
- * $Id
+ * $Id: common.h,v 1.2 2006/06/19 06:52:55 waldron Exp $
  */
 
 #ifndef _COMMON_H

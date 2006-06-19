@@ -21,7 +21,7 @@
  * @file  queue.h
  * @brief Thread safe FIFO bounded queue
  *
- * $Id
+ * $Id: queue.h,v 1.2 2006/06/19 06:52:55 waldron Exp $
  */
 
 #ifndef _QUEUE_H

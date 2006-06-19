@@ -21,7 +21,7 @@
  * @file  server.h
  * @brief definitions and structures associated with the server core
  *
- * $Id
+ * $Id: server.h,v 1.2 2006/06/19 06:52:55 waldron Exp $
  */
 
 #ifndef _SERVER_H

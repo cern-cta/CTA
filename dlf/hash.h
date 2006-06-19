@@ -21,7 +21,7 @@
  * @file  hash.h
  * @brief Thread safe hash implementation
  *
- * $Id
+ * $Id: hash.h,v 1.2 2006/06/19 06:52:55 waldron Exp $
  */
 
 #ifndef _HASH_H
