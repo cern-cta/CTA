@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.277 $ $Release$ $Date: 2006/06/14 14:19:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.278 $ $Release$ $Date: 2006/06/19 15:49:06 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -500,17 +500,18 @@ CREATE OR REPLACE PROCEDURE updateFsFileClosed
   ds INTEGER;
   unused "numList";
 BEGIN
- /* We have to do this first in order to take locks on all the filesystems
-    of the DiskServer in an atomical way. Otherwise, the fact that
-    we update the "single" filesystem fs first and then all the others
-    leads to a dead lock if 2 threads are running this in parallel :
-    they will both lock one filesystem to start with and try to get the
-    others locks afterwards. */
- SELECT id BULK COLLECT INTO unused FROM FileSystem WHERE diskServer = ds FOR UPDATE;
- /* now we can safely go */
- UPDATE FileSystem SET deltaWeight = deltaWeight + deviation
-  WHERE diskServer = ds;
- UPDATE FileSystem SET fsDeviation = fsdeviation / 2,
+  /* We have to do this first in order to take locks on all the filesystems
+     of the DiskServer in an atomical way. Otherwise, the fact that
+     we update the "single" filesystem fs first and then all the others
+     leads to a dead lock if 2 threads are running this in parallel :
+     they will both lock one filesystem to start with and try to get the
+     others locks afterwards. */
+  SELECT DiskServer INTO ds FROM FileSystem WHERE id = fs;
+  SELECT id BULK COLLECT INTO unused FROM FileSystem WHERE diskServer = ds FOR UPDATE;
+  /* now we can safely go */
+  UPDATE FileSystem SET deltaWeight = deltaWeight + deviation
+   WHERE diskServer = ds;
+  UPDATE FileSystem SET fsDeviation = fsdeviation / 2,
                        deltaFree = deltaFree - fileSize,
                        reservedSpace = reservedSpace - reservation
   WHERE id = fs RETURNING fsDeviation, diskServer INTO deviation, ds;
