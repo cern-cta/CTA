@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: server.c,v 1.2 2006/06/19 06:52:55 waldron Exp $
+ * $Id: server.c,v 1.3 2006/06/20 13:36:44 waldron Exp $
  */
 
 /* headers */
@@ -377,7 +377,8 @@ int main(int argc, char **argv) {
 	int        d_threads;
 	int        port;             
 	int        debug      = 0;  
-	int        foreground = 0;      
+	int        foreground = 0;
+	int        stats      = 1;
 	char       *logfile   = NULL; 
 	char       *value;   
 
@@ -446,10 +447,14 @@ int main(int argc, char **argv) {
 			printf("  -l <path>        path to log file\n");
 			printf("  -p <int>         servers listening port (default: %d)\n", port);
 			printf("  -t <int>:<int>   the number of transport threads in relation to database threads\n");
+			printf("  -n               disable the generation of job and request statistics\n");
 			printf("\nReport bugs to castor.support@cern.ch\n");
 			return APP_SUCCESS;
 		case 'p':
 			port = atoi(optarg);
+			break;
+		case 'n':
+			stats = 0;
 			break;
 		case ':':
 			return APP_FAILURE;   /* missing parameter */
@@ -465,8 +470,12 @@ int main(int argc, char **argv) {
 		rv = fork();
 		if (rv < APP_SUCCESS) {
 			fprintf(stderr, "dlfserver: failed to fork() : %s\n", strerror(errno));
-			return APP_FAILURE;
+			return 1;
+		} else if (rv > APP_SUCCESS) {
+			return 0;
 		}
+
+		/* child */
 
 		/* new process group */
 		setsid();
@@ -624,8 +633,10 @@ int main(int argc, char **argv) {
 
 	/* main loop */
 	while (!IsShutdown(server_mode)) {
-		db_monitoring(hpool, 300);
-		db_stats(300);
+		db_monitoring(hpool, 10);
+		if (stats) {
+			db_stats(300);
+		}
 		sleep(1);
 	}
 

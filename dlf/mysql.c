@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.c,v 1.2 2006/06/19 06:52:55 waldron Exp $
+ * $Id: mysql.c,v 1.3 2006/06/20 13:36:44 waldron Exp $
  */
 
 /* headers */
@@ -1170,18 +1170,21 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 	int          i;    
 	int          found;
 	int          rv;
+	int          s_hosthash;
+	int          s_nshosthash;
 	unsigned int mysql_errnum;
 
 	/* database accumulated stats */
 	int db_threads, h_threads;
 
-	unsigned long db_commits    = 0, db_errors    = 0, db_inserts  = 0, db_rollbacks = 0;
+	unsigned long db_commits    = 0, db_errors    = 0, db_inserts  = 0, db_rollbacks = 0, db_hashtexts = 0;
 	unsigned long db_selects    = 0, db_updates   = 0, db_cursors  = 0, db_messages  = 0, db_inits = 0;
 	unsigned long h_connections = 0, h_clientpeak = 0, h_messages  = 0, h_errors     = 0;
 	unsigned long h_inits       = 0, h_timeouts   = 0;
-    
-	unsigned int size = 0;
-	double response   = 0.0;
+	
+	unsigned int size   = 0;
+	double response     = 0.0;
+	double db_hashstats = -1.0;
 
 
 	/* interval passed ? */
@@ -1291,15 +1294,25 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 	Cthread_mutex_lock(&db->mutex);
 	SetActive(db->mode);
 
+	/* calculate the hash statistics */
+	s_hosthash   = hash_stat(hosthash);
+	s_nshosthash = hash_stat(nshosthash);
+	
+	if ((s_hosthash != APP_FAILURE) && (s_nshosthash != APP_FAILURE)) {
+		db_hashstats = s_hosthash + s_nshosthash;
+	} else {
+		db_hashstats = -1.0;
+	}
 
 	db->inserts++;
-	snprintf(query, sizeof(query), "INSERT INTO dlf_monitoring VALUES                      \
-                ('%s', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu',   \
-                 '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lf','%lu')", 
-		 timestr,      h_threads,    h_messages,  h_inits,    h_errors,   h_connections, 
-		 h_clientpeak, h_timeouts,   db_threads,  db_commits, db_errors, 
-		 db_inserts,   db_rollbacks, db_selects,  db_updates, db_cursors, 
-		 db_messages,  db_inits,     server_mode, size,       response,   interval);
+	snprintf(query, sizeof(query), "INSERT INTO dlf_monitoring VALUES                        \
+                 ('%s',  '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu',   \
+                  '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lf', '%lu')",
+		 timestr,      h_threads,    h_messages,   h_inits,     h_errors,   h_connections,
+		 h_clientpeak, h_timeouts,   db_threads,   db_commits,  db_errors,
+		 db_inserts,   db_rollbacks, db_selects,   db_updates,  db_cursors,
+		 db_messages,  db_inits,     db_hashtexts, server_mode, size, response,   interval);
+
 	if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
 		goto error;
 	}	 

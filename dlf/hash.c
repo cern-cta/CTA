@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: hash.c,v 1.2 2006/06/19 06:52:55 waldron Exp $
+ * $Id: hash.c,v 1.3 2006/06/20 13:36:44 waldron Exp $
  */
 
 /* headers */
@@ -153,7 +153,7 @@ int DLL_DECL hash_index(hash_t *h, char *key) {
 			s += atol(c); 
 			break;
 		} else {
-			s += (*c - 'A');
+			s += *c;
 		}
 	}
 
@@ -163,7 +163,7 @@ int DLL_DECL hash_index(hash_t *h, char *key) {
 		return APP_FAILURE;
 	} 
 	
-       	return s % h->size;
+	return s % h->size;
 }
 
 
@@ -252,6 +252,34 @@ int DLL_DECL hash_search(hash_t *h, char *key, void **value) {
 	}
 
 	return APP_FAILURE;
+}
+
+
+/*
+ * Hash stats
+ */
+
+int DLL_DECL hash_stat(hash_t *h) {
+
+	/* variables */
+	entry_t *l;
+	int     total, j, i;
+
+	/* handle defined ? */
+	if (h == NULL) {
+		return APP_FAILURE;
+	}
+
+	/* loop over hash entries */
+	for (i = 0, total = 0; i < h->size; i++) {
+		for (j = 0, l = h->table[i]; l != NULL; l = l->next) {
+			j++;
+		}
+		if (j > 1) {
+			total += j;
+		}
+	}
+	return total;
 }
 
 

@@ -21,7 +21,7 @@
  * @file  hash.h
  * @brief Thread safe hash implementation
  *
- * $Id: hash.h,v 1.2 2006/06/19 06:52:55 waldron Exp $
+ * $Id: hash.h,v 1.3 2006/06/20 13:36:44 waldron Exp $
  */
 
 #ifndef _HASH_H
@@ -61,7 +61,7 @@ EXTERN_C int DLL_DECL hash_create _PROTO((hash_t **h, unsigned int size));
  * @param func  : a pointer to the function used to free the data within the queue
  *
  * @returns     : APP_SUCCESS on success
- * @returns     : APP_FAILURE on null file handle
+ * @returns     : APP_FAILURE on null hash handle
  */
 
 EXTERN_C int DLL_DECL hash_destroy _PROTO((hash_t *h, void (*func)(void *)));
@@ -93,6 +93,21 @@ EXTERN_C int DLL_DECL hash_insert _PROTO((hash_t *h, char *key, void *value));
  */
 
 EXTERN_C int DLL_DECL hash_search _PROTO((hash_t *h, char *key, void **value));
+
+
+/**
+ * Generate the performance statistic for the given hash
+ * 
+ * The performance value of the hash is the total number of entries where an index (nelt) has more then
+ * one associated value.
+ *
+ * @param h     : the hash handle
+ *
+ * @returns     : APP_FAILURE on null hash handle
+ * @returns     : The computed statistics value on success
+ */
+
+EXTERN_C int DLL_DECL hash_stats _PROTO((hash_t *h));
 
 
 #endif

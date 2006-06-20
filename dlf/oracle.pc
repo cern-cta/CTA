@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.2 2006/06/19 06:52:55 waldron Exp $
+ * $Id: oracle.pc,v 1.3 2006/06/20 13:36:44 waldron Exp $
  */
 
 /* headers */
@@ -199,7 +199,7 @@ int DLL_DECL db_init(int threads) {
 		log(LOG_ERR, "db_init() - failed to initialise name server host hash\n");
 		return APP_FAILURE;
 	}
-	
+
 	last_monitoring = time(NULL);
 	last_stats      = time(NULL);
 
@@ -1536,12 +1536,14 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 	size_t     err_len;   
 	time_t     now;    
 	int        i;    
-	int        found;    
+	int        found;
+	int        s_hosthash;
+	int        s_nshosthash; 
 
 	/* database accumulated stats */
 	int db_threads, h_threads;
 
-	long long db_commits    = 0, db_errors    = 0, db_inserts  = 0, db_rollbacks = 0;
+	long long db_commits    = 0, db_errors    = 0, db_inserts  = 0, db_rollbacks = 0, db_hashstats = 0;
 	long long db_selects    = 0, db_updates   = 0, db_cursors  = 0, db_messages  = 0, db_inits = 0;
 	long long h_connections = 0, h_clientpeak = 0, h_messages  = 0, h_errors     = 0;
 	long long h_inits       = 0, h_timeouts   = 0;
@@ -1652,7 +1654,17 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 		log(LOG_ERR, "db_monitoring() : no database connections available\n");
 		return APP_FAILURE;
 	}
+
+	/* calculate the hash statistics */
+	s_hosthash   = hash_stat(hosthash);
+	s_nshosthash = hash_stat(nshosthash);
 	
+	if ((s_hosthash != APP_FAILURE) && (s_nshosthash != APP_FAILURE)) {
+		db_hashstats = s_hosthash + s_nshosthash;
+	} else {
+		db_hashstats = -1.0;
+	}
+
 	/* set context and error handling */
 	Cthread_mutex_lock(&db->mutex);
 
@@ -1664,10 +1676,11 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 	db->inserts++;
 	EXEC SQL INSERT INTO dlf_monitoring 
 	VALUES (TO_DATE(:timestr, 'YYYYMMDDHH24MISS'),
-		:h_threads,    :h_messages,   :h_inits,     :h_errors,   :h_connections, 
-	 	:h_clientpeak, :h_timeouts,   :db_threads,  :db_commits, :db_errors,   
-		:db_inserts,   :db_rollbacks, :db_selects,  :db_updates, :db_cursors,  
-		:db_messages,  :db_inits,     :server_mode, :size,       :response,      :interval);
+		:h_threads,    :h_messages,   :h_inits,      :h_errors,    :h_connections, 
+	 	:h_clientpeak, :h_timeouts,   :db_threads,   :db_commits,  :db_errors,   
+		:db_inserts,   :db_rollbacks, :db_selects,   :db_updates,  :db_cursors,  
+		:db_messages,  :db_inits,     :db_hashstats, :server_mode, :size,
+		:response,     :interval);
 
 	db->commits++;
 	EXEC SQL COMMIT WORK;
