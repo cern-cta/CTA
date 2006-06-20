@@ -65,9 +65,8 @@ namespace castor {
      * was successfull the state of the RepackSubRequest is changed 
      * to SUBREQUEST_STAGING.
      * @param sreq The RepackSubRequest to stage in files
-     * @throws castor::exeption::Internal Internal Exception in case of an error
 		 */
-		void stage_files(RepackSubRequest* sreq) throw(castor::exception::Internal);
+		void stage_files(RepackSubRequest* sreq) ;
 
 
     /** private method to send the request to the stager.
@@ -79,7 +78,7 @@ namespace castor {
 		void sendStagerRepackRequest(
                                   castor::stager::StagePrepareToGetRequest* req,
                                   std::string *reqId,
-                                  std::string serviceclass
+                                  struct stage_options* opts
                                 )
                                 throw (castor::exception::Internal);
 		

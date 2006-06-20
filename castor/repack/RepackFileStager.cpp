@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/06/02 12:45:32 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/06/20 09:40:57 $ $Author: felixehm $
  *
  *
  *
@@ -69,28 +69,36 @@ RepackFileStager::~RepackFileStager() throw() {
 void RepackFileStager::run(void *param) throw() {
 	
 		/* Lets see, if good old pal DB has a Job for us */
-    RepackSubRequest* sreq = m_dbhelper->requestToDo();
+    RepackSubRequest* sreq = NULL;
+    try {
+      sreq = m_dbhelper->checkSubRequestStatus(SUBREQUEST_READYFORSTAGING);
+    }catch (castor::exception::Exception e){
+      castor::dlf::Param params[] = 
+      {castor::dlf::Param("Error", e.getMessage().str() )};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 5, 1, params);
+      return;
+    }
 		
 		if ( sreq != NULL ){
-	    	
-			stage_trace(2,"New Job! %s , %s ",sreq->vid().c_str(), sreq->cuuid().c_str());
-			castor::dlf::Param params[] =
-			{castor::dlf::Param("VID", sreq->vid()),
-			 castor::dlf::Param("ID", sreq->id()),
-			 castor::dlf::Param("STATUS", sreq->status())};
-			castor::dlf::dlf_writep(stringtoCuuid(sreq->cuuid()), DLF_LVL_SYSTEM, 22, 3, params);
+    //m_dbhelper->lock(sreq);
+    castor::dlf::Param params[] =
+    {castor::dlf::Param("VID", sreq->vid()),
+      castor::dlf::Param("ID", sreq->id()),
+      castor::dlf::Param("STATUS", sreq->status())};
+    castor::dlf::dlf_writep(stringtoCuuid(sreq->cuuid()), DLF_LVL_SYSTEM, 22, 3, params);
 
-			/* main decision for further handling */
+			/// main handling
 			try {
 				stage_files(sreq);
-			/* stage the files, and we forget errors, the logs are written anyway */
+			/// try to stage the files, and forget the errors
 			}
 			catch (castor::exception::Exception ex){
 				freeRepackObj(sreq->requestID());
 			}
-			delete sreq;
+      freeRepackObj(sreq->requestID()); /// always delete from the top
       sreq = NULL;
 		}
+    //m_dbhelper->unlock();
 }
 
 
@@ -135,6 +143,8 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq) {
     {castor::dlf::Param("VID", sreq->vid())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 36, 1, params);
     delete filelist;
+    sreq->setStatus(SUBREQUEST_DONE);
+    m_dbhelper->updateSubRequest(sreq,false, cuuid);
     return;
   }
 
@@ -150,14 +160,29 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq) {
 		filename++;
 	}
 
+  /// We need to set the stage options. 
+  struct stage_options opts;
+  opts.stage_host = (char*)ptr_server->getStagerName().c_str(); 
+  
+  /** is a special service class given (for writing to tape(pools)) */
+  if ( sreq->requestID()->serviceclass().length() )
+    opts.service_class = (char*)sreq->requestID()->serviceclass().c_str();
+  /** otherwise we take the one specified in the castor config file */
+  else     
+    opts.service_class = (char*)ptr_server->getServiceClass().c_str();
+
 
 	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 26, 0, NULL);
 
 	try {
-      sendStagerRepackRequest(&req, &reqId, sreq->requestID()->serviceclass());
+      sendStagerRepackRequest(&req, &reqId, &opts);
 
 	}catch (castor::exception::Exception ex){
-		castor::dlf::Param params[] =
+    for (int i=0; i<req.subRequests().size(); i++)
+      delete req.subRequests().at(i);
+    req.subRequests().clear();
+		
+    castor::dlf::Param params[] =
 		{castor::dlf::Param("Standard Message", sstrerror(ex.code())),
 		 castor::dlf::Param("Precise Message", ex.getMessage().str())};
 		castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 21, 2, params);
@@ -196,26 +221,17 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq) {
 void RepackFileStager::sendStagerRepackRequest(
                                                 castor::stager::StagePrepareToGetRequest* req,
                                                 std::string *reqId,
-                                                std::string serviceclass
+                                                struct stage_options* opts
                                               ) throw (castor::exception::Internal)
 {
-	struct stage_options opts;
-  char *tmp;
-	opts.stage_host = (char*)ptr_server->getStagerName().c_str();	
 	
-  /** is a special service class given (for writing to tape(pools)) */
-  if ( serviceclass.length() )
-    opts.service_class = (char*)serviceclass.c_str();
-  /** otherwise we take the one specified in the castor config file */
-  else     
-    opts.service_class = (char*)ptr_server->getServiceClass().c_str();
 
 	/** Uses a BaseClient to handle the request */
 	castor::client::BaseClient client(stage_getClientTimeout());
 	client.setOption(NULL);	/** to initialize the RH,stager, etc. */
 	
 	castor::stager::RequestHelper reqh(req);
-	reqh.setOptions(&opts);
+	reqh.setOptions(opts);
 
 	/** Send the Request */
 	std::vector<castor::rh::Response*>respvec;
