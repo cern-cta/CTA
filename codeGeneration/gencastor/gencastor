@@ -33,12 +33,13 @@ mkdir -p ${TMPDIR}/${TOPNS}/db
 cp ${WORKDIR}/${TOPNS}/db/*.sql ${TMPDIR}/${TOPNS}/db/
 grep 'CREATE OR REPLACE' ${TMPDIR}/${TOPNS}/db/oracleTrailer.sql | grep -v 'TRIGGER' | grep -v I_CastorFile_fileIdNsHost | awk 'BEGIN { FS="[ (]+" } { print "DROP " $4, $5 ";" }' > ${TMPDIR}/${TOPNS}/db/oracleTrailer_drop.sql
 grep 'CREATE OR REPLACE' ${TMPDIR}/${TOPNS}/db/postgresTrailer.sql | grep -v 'TRIGGER' | grep -v I_CastorFile_fileIdNsHost | awk 'BEGIN { FS="[ (]+" } { print "DROP " $4, $5 ";" }' > ${TMPDIR}/${TOPNS}/db/postgresTrailer_drop.sql
-sed 's/^END;/END;\n\//' ${TMPDIR}/${TOPNS}/db/castor_oracle_create.sql | sed 's/^\(END castor[a-zA-Z]*;\)/\1\n\//' | sed 's/\(CREATE OR REPLACE TYPE .*\)$/\1\n\//' > ${TMPDIR}/${TOPNS}/db/castor_oracle_create.sqlplus
 
 # hack to prevent Umbrello from overwriting the original XMI file
 cp ${XMIFILE} ${TMPDIR}
 set XMITOUSE=`echo ${XMIFILE} | awk -F'/' '{ print $NF }'`
 (/usr/bin/gencastor.bin -o ${TMPDIR} -c ${TOPNS} --nocrashhandler ${TMPDIR}/${XMITOUSE} > /dev/tty) >& /dev/null
+sed 's/^END;/END;\n\//' ${TMPDIR}/${TOPNS}/db/${TOPNS}_oracle_create.sql | sed 's/^\(END castor[a-zA-Z]*;\)/\1\n\//' | sed 's/\(CREATE OR REPLACE TYPE .*\)$/\1\n\//' > ${TMPDIR}/${TOPNS}/db/${TOPNS}_oracle_create.sqlplus
+
 set pushdsilent
 pushd ${TMPDIR}
 rm -f ${TOPNS}/db/*Generated*
