@@ -1,3 +1,8 @@
+#!/bin/sh
+
+# chkconfig: 345 67 38
+# description: DLF server
+
 #------------------------------------------------------------------------------------------------------#
 #                                                                                                      #
 #  dlfserver.init - Castor Distribution Logging Facility Control Script                                #
@@ -15,317 +20,112 @@
 #  write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,   #
 #  USA.                                                                                                #
 #                                                                                                      #
-#  Usage: dlfserver {start|stop|status|restart|suspend|resume}                                         #
+#  Usage: dlfserver {start|stop|status|restart|condrestart|suspend|resume}                             #
 #                                                                                                      #
 #------------------------------------------------------------------------------------------------------#
 
-#
-# Oracle environment not needed if cern-instant client is used
-#
-if [ -r /etc/sysconfig/castor ]; then
-        . /etc/sysconfig/castor
-fi
+# Source function library.
+. /etc/rc.d/init.d/functions
 
-sysname=`uname -s`
-
-# source function library
-if [ -r /etc/rc.d/init.d/functions ]; then
-	. /etc/rc.d/init.d/functions
-	DAEMON=daemon
-	FAILURE=failure
-	ECHO_FAILURE=failure
-	SUCCESS=success
-	ECHO_SUCCESS=echo_success
-	ECHO_END=echo
-	if [ $sysname = "Linux" ]; then
-		ECHOOPT=-n
-	fi
-else
-	DAEMON=
-	FAILURE=
-	ECHO_FAILURE=
-	SUCCESS=
-	ECHO_SUCCESS=
-	ECHOOPT=
-	ECHO_END=
-fi
-
-RETVAL=0
+# Variables
 prog="dlfserver"
-PIDFILE=/var/run/$prog.pid
-PIDDIR=/var/run
-SUBSYS=/var/lock/subsys/$prog
-SUBSYSDIR=/var/lock/subsys
-[ -z "$SILENTSTOP" ] && SILENTSTOP=0
-DLFSERVER=/usr/bin/$prog
-OPTIONS=""
-SYSCONFIGDLFSERVER=/etc/sysconfig/$prog
+RETVAL=0
 
-#
-# Blindly attempt to create useful directories
-#
-[ ! -d $PIDDIR ] && mkdir -p $PIDDIR >& /dev/null
-[ ! -d $SUBSYSDIR ] && mkdir -p $SUBSYSDIR >& /dev/null
-
-if [ $sysname = "HP-UX" ]; then
-	export UNIX95=1
-fi
-if [ $sysname = "SunOS" ]; then
-	format4comm="fname"
-else
-	format4comm="comm"
+# Source sysconfig
+if [ -f /etc/sysconfig/$prog ] ; then
+	. /etc/sysconfig/$prog
 fi
 
-#
-# Unless sysconfig says no the default is to run the server
-#
-DLFSERVER_RUN=yes
+start() {
+	# run daemon
+	echo -n $"Starting $prog: "
+	daemon /usr/bin/$prog $DLFSERVER_OPTIONS
 
-mycheckpid() {
-    pid=`ps -eo pid,ppid,$format4comm | egrep " 1 $prog\$" | awk '{print $1}'`
-    [ "$pid" = "$1" ] && return 1
-    return 0
-}
+	# process sysconfig settings
+	if [ -f /etc/sysconfig/$prog ] ; then
 
+		# enabled ?	    
+		if [ "${DLFSERVER_RUN}" != "YES" ]; then
+			echo -n $"$prog disabled in /etc/sysconfig/$prog" 
+			failure && echo && exit
+		fi
 
-# Process options
-case "$1" in
-  start)
-	echo $ECHOOPT "Starting $prog: "
-    	if [ $sysname = "Linux" -a `whoami` = "root" ]; then
-        	netstat -ap | egrep '\*:5035|\*:dlf' | grep LISTEN | egrep "\/$prog *\$" > /dev/null
-    	else
-        	netstat -a  | egrep '\*:5035|\*:dlf' | egrep 'LISTEN *$' > /dev/null
-    	fi
-	# ps -eo ppid,$format4comm | egrep '^[ \t]+1 $prog' > /dev/null
-	if [ $? -eq 0 ]; then
-		echo $ECHOOPT "$prog already started: "
-		[ -n "$FAILURE" ] && $FAILURE "$prog already started: "
-		RETVAL=1
-	else
-        if [ -r $SYSCONFIGDLFSERVER ]; then
-            	#
-            	# Source the configuration
-            	#
-            	. $SYSCONFIGDLFSERVER
-            	if [ "${RUN_DLFSERVER}" != "yes" ]; then
-                	echo $ECHOOPT "$SYSCONFIGDLFSERVER says NO: "
-                	[ -n "$FAILURE" ] && $FAILURE "$SYSCONFIGDLFSERVER says NO: "
-                	RETVAL=1
-            	fi
-            	if [ -n "${ULIMIT_N}" ]; then
-                	ulimit -n ${ULIMIT_N}
-            	fi
+		# ulimit
 		if [ -n "${ULIMIT_S}" ]; then
 			ulimit -s ${ULIMIT_S}
 		fi
-        fi
-        if [ $RETVAL -eq 0 ]; then
-            	#
-            	# Because we might generate a core file we explicitely chdir in the workdir
-            	#
-	    	cd /var/spool/dlf
-            	$DAEMON $DLFSERVER_OPTIONS
-            	if [ $? -eq 0 ]; then
-                	[ -d $SUBSYSDIR ] && touch $SUBSYS
-                	if [ -d $PIDDIR ]; then
-                    	pid=`ps -eo pid,ppid,$format4comm | egrep " 1 $prog\$" | awk '{print $1}'`
-                    	# The point of $PIDFILE is that it kills only
-                    	# the master daemon.
-                    	rm -f $PIDFILE
-		    	if [ -n "$pid" ]; then
-				echo $pid > $PIDFILE
-				RETVAL=0
-		    	else
-				echo $ECHOOPT "$prog not started: "
-				[ -n "$FAILURE" ] && $FAILURE "$prog not started: "
-				RETVAL=1
-		    	fi
-                	else
-                  		RETVAL=0
-			fi
-            	else
-                	echo $ECHOOPT "$prog not started: "
-                	[ -n "$FAILURE" ] && $FAILURE "$prog not started: "
-                	RETVAL=1
-            	fi
-        fi
 	fi
-	$ECHO_END
-	;;
+	
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
+	echo
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
+	return $RETVAL
+}
 
-  stop)
-    	if [ -f $PIDFILE ]; then
-        	[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Stopping $prog: "
-        	kill -15 -`cat $PIDFILE` >& /dev/null
-        	#
-        	# Wait 60 seconds maximum
-        	#
-        	stopped=0
-        	for i in 0 10 20 30 40 50; do
-            		for j in 0 1 2 3 4 5 6 7 8 9; do
-                		sleep 1
-    	        	    	mycheckpid `cat $PIDFILE`
-        	        	if [ $? -eq 0 ]; then
-                    			stopped=1
-                    			break
-                		fi
-                		[ $stopped -eq 1 ] && break
-            		done
-        	done
-        	if [ $stopped -ne 1 ]; then
-            		[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Using kill -9 `cat $PIDFILE` "
-            		kill -9 -`cat $PIDFILE` >& /dev/null
-            		RETVAL=$?
-       		 else
-            		RETVAL=0
-        	fi
-        	if [ $RETVAL -eq 0 ]; then
-            		rm -f $PIDFILE
-       		fi
-   	else
+stop() {
+	echo -n $"Stopping $prog: "
+	killproc $prog
+	
+	RETVAL=$?
+	echo
+	[ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
+	[ -f /var/run/$prog.pid ] && rm -f /var/run/$prog.pid
+	return $RETVAL	
+}
 
-        # dlfserver might have been started by hand
-        pid=`ps -eo pid,ppid,$format4comm | egrep " 1 $prog\$" | awk '{print $1}'`
-        if [ -n "$pid" ]; then
-            	[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Stopping $prog: "
-            	kill -15 -$pid >& /dev/null
-            	#
-            	# Wait 60 seconds maximum
-            	#
-            	stopped=0
-            	for i in 0 10 20 30 40 50; do
-                	for j in 0 1 2 3 4 5 6 7 8 9; do
-                    	sleep 1
-                    	mycheckpid $pid
-                    	if [ $? -eq 0 ]; then
-                        	stopped=1
-                        	break
-                    	fi
-                    	[ $stopped -eq 1 ] && break
-                	done
-            	done
-            	if [ $stopped -ne 1 ]; then
-                	[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Using kill -9 `cat $PIDFILE` "
-               		 kill -9 -`cat $PIDFILE` >& /dev/null
-                	RETVAL=$?
-            	else
-                	RETVAL=0
-            	fi
-        	else
-            		[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "$prog already stopped: "
-            		[ $SILENTSTOP -eq 0 -a -n "$FAILURE" ] && $FAILURE "$prog already stopped: "
-            		RETVAL=1
-        	fi
-    	fi
-    	if [ $SILENTSTOP -eq 0 -a $sysname = "Linux" ]; then
-        	if [ $RETVAL -eq 0 ]; then
-           		$ECHO_SUCCESS
-        	else
-           		$ECHO_FAILURE
-        	fi
-    	fi
-    	[ -d $SUBSYSDIR ] && rm -f $SUBSYS
-    	[ $SILENTSTOP -eq 0 -a -n "$ECHO_END" ] && $ECHO_END
-    	#
-    	# Basically: if SILENTSTOP is not 0 when we never print something
-    	# But if the stop is successful... One might want to see stop: OK
-    	# anyway ?
-    	#
-    	if [ $SILENTSTOP -ne 0 -a $RETVAL -eq 0 ]; then
-        	echo $ECHOOPT "Stopping $prog: "
-        	[ $sysname = "Linux" ] && $ECHO_SUCCESS
-        	[ -n "$ECHO_END" ] && $ECHO_END
-    	fi
-  restart)
-        $0 stop
-        if [ $? -eq 0 -o $SILENTSTOP -eq 0 ]; then
-            	$0 start
-            	RETVAL=$?
-        else
-        	#
-        	# It is legal to return zero it if was a conditional restart
-        	#
-         	if [ $SILENTSTOP -eq 0 ]; then
-                	RETVAL=1
-            	else
-                	RETVAL=0
-            	fi
-        fi
-        ;;
-  condrestart)
-        SILENTSTOP=1
-        export SILENTSTOP
-        $0 restart
-        RETVAL=$?
-        ;;
-  suspend)
-	if [ -f $PIDFILE ]; then
-		echo $ECHOOPT "Suspending $prog: "
-        	kill -10 -`cat $PIDFILE` >& /dev/null
+restart() {
+	stop
+        start 
+}
+
+suspend() {
+	echo -n $"Sending SIGUSR1 to $prog: "
+	killproc $prog -USR1
+
+	RETVAL=$?
+	echo
+	return $RETVAL
+}
+
+resume() {
+	echo -n $"Sending SIGUSR2 to $prog: "
+	killproc $prog -USR2
+
+	RETVAL=$?
+	echo
+	return $RETVAL
+}
+
+# See how we were called
+case "$1" in
+	
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	status)
+		status $prog
 		RETVAL=$?
-	else
-		pid=`ps -eo pid,ppid,$format4comm | egrep " 1 $prog\$" | awk '{print $1}'`
-        	if [ -n "$pid" ]; then
-			echo $ECHOOPT "Suspending $prog: "
-        		kill -10 -`cat $pid` >& /dev/null
-			RETVAL=$?	
-		else 
-			echo $ECHOOPT "$prog not started: "
-			[ -n "$FAILURE" ] && $FAILURE "$prog not started: "
-			RETVAL=1
-		fi		
-	fi
-	$ECHO_END
-	;;
-  resume)
-	if [ -f $PIDFILE ]; then
-		echo $ECHOOPT "Suspending $prog: "
-        	kill -12 -`cat $PIDFILE` >& /dev/null
-		RETVAL=$?
-	else
-		pid=`ps -eo pid,ppid,$format4comm | egrep " 1 $prog\$" | awk '{print $1}'`
-        	if [ -n "$pid" ]; then
-			echo $ECHOOPT "Suspending $prog: "
-        		kill -12 -`cat $pid` >& /dev/null
-			RETVAL=$?	
-		else 
-			echo $ECHOOPT "$prog not started: "
-			[ -n "$FAILURE" ] && $FAILURE "$prog not started: "
-			RETVAL=1
-		fi		
-	fi
-	$ECHO_END
-	;;
-  status)
-        pid=`ps -eo pid,ppid,$format4comm | egrep " 1 $prog\$" | awk '{print $1}'`
-        if [ -n "$pid" ]; then
-            	echo $ECHOOPT "$prog (pid $pid) is running..."
-            	$ECHO_SUCCESS
-            	$ECHO_END
-        else
-            	if [ -f $PIDFILE ]; then
-                	pid=`head -1 $PIDFILE`
-                	if [ "$pid" != "" ] ; then
-                    		echo $ECHOOPT "$prog dead but pid file exists"
-                    		$ECHO_FAILURE
-                    		$ECHO_END
-                	fi
-            	else
-                	if [ -f $SUBSYS ]; then
-                    		echo $ECHOOPT "$prog dead but subsys ($SUBSYS) locked"
-                	else
-                    		echo $ECHOOPT "$prog is stopped"
-                	fi
-                	$ECHO_FAILURE
-                	$ECHO_END
-            	fi
-        fi
-        ;;
-  *)
-        echo "Usage: $0 {start|stop|status|restart|condrestart|suspend|resume}"
-        RETVAL=1
-        ;;
+		;;
+	restart)
+		restart
+		;;
+	condrestart)
+		[ -f /var/lock/subsys/$prog ] && restart || :
+		;;
+	suspend)
+		suspend
+		;;
+	resume)
+		resume
+		;;
+
+	*)
+		echo $"Usage: $0 {start|stop|status|restart|condrestart|suspend|resume}"
+		exit 1
 esac
 
 exit $RETVAL
