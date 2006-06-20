@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/06/02 09:24:12 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/06/20 08:48:07 $ $Author: felixehm $
  *
  *
  *
@@ -40,20 +40,37 @@ int main(int argc, char *argv[]) {
 
     castor::repack::RepackServer server;
 	
+    /// The Repack Worker Instance
     server.addThreadPool(
-      new castor::server::ListenerThreadPool("Worker", new castor::repack::RepackWorker(), server.getListenPort()));
+      new castor::server::ListenerThreadPool("Worker", 
+                                              new castor::repack::RepackWorker(),
+                                              server.getListenPort()
+                                            ));
 	  server.getThreadPool('W')->setNbThreads(1);
 	
+    /// The Repack File Stager Instance
     server.addThreadPool(
-      new castor::server::SignalThreadPool("Stager", new castor::repack::RepackFileStager(&server) ));
+      new castor::server::SignalThreadPool("Stager", 
+                                            new castor::repack::RepackFileStager(&server)
+                                          ));
 	  server.getThreadPool('S')->setNbThreads(1);
-	  
+
+    /// The Repack Monitor Instance (only 1 !)
 	  server.addThreadPool(
-      new castor::server::SignalThreadPool("Monitor", new castor::repack::RepackMonitor(&server),0, 60 ));
+      new castor::server::SignalThreadPool("Monitor", 
+                                            new castor::repack::RepackMonitor(&server),
+                                            0,
+                                            server.getPollTime()
+                                          ));
 	  server.getThreadPool('M')->setNbThreads(1);
-    
+
+    /// The Repack Cleaner
 	  server.addThreadPool(
-        new castor::server::SignalThreadPool("Cleaner", new castor::repack::RepackCleaner(&server),60 ));
+      new castor::server::SignalThreadPool("Cleaner",
+                                            new castor::repack::RepackCleaner(&server),
+                                            0,
+                                            server.getPollTime()
+                                          ));
 	  server.getThreadPool('C')->setNbThreads(1);
    
     
@@ -123,6 +140,7 @@ castor::repack::RepackServer::RepackServer() :
      {33, "RepackFileStager: Changing CUUID to stager one"},
      {34, "RepackCleaner: No files found for cleanup phase"},
      {35, "RepackCleaner: Cleaner started"},
+     {36, "RepackCleaner: Remove request sending failed"},
      {40, "RepackMonitor: Changing status"},
      {41, "RepackMonitor: Stager query failed"},
      {99, "TODO::MESSAGE"},
@@ -212,6 +230,31 @@ castor::repack::RepackServer::RepackServer() :
   m_protocol = new std::string(tmp2);
   /* --------------------------------------------------------------------- */
 
+  /** Get the polling time for the Monitor and Cleaner service. This value should be not less
+      than 120 ( to stage a file takes about that time).
+    */
+  if ( (tmp2 = getenv ("REPACK_POLLTIME")) != 0 ){
+    char* dp = tmp2;
+    m_pollingTime = strtoul(tmp2, &dp, 0);
+      
+    if (*dp != 0) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Bad polling time value in enviroment variable " 
+                      << tmp2 << std::endl;
+      throw ex;
+    }
+    if ( m_pollingTime > 65535 ){
+      castor::exception::Internal ex;
+      ex.getMessage() << "Given polling time no. in enviroment variable "
+                      << "exceeds limit !" << std::endl;
+      throw ex;
+    }
+  }
+  else
+    m_pollingTime = castor::repack::CSP_REPACKPOLLTIME;
+  /* --------------------------------------------------------------------- */
+
+
 }
 
 
@@ -223,6 +266,7 @@ castor::repack::RepackServer::~RepackServer() throw()
     if ( m_stager != NULL ) delete m_stager;
     if ( m_serviceClass != NULL ) delete m_serviceClass;
     if ( m_protocol != NULL ) delete m_protocol;
+    m_pollingTime = 0;
 }
 
 

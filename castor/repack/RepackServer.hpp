@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/05/22 06:42:16 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/06/20 08:48:07 $ $Author: felixehm $
  *
  *
  *
@@ -86,6 +86,11 @@ namespace castor {
       return m_listenPort;
     }
 
+    /** Retrieves Port from env (if given) */
+    int getPollTime() const {
+      return m_pollingTime;
+    }
+
   private:
     /**
       * The Nameserver (this name is queries by RepackFileStager and RepackCleaner
@@ -94,7 +99,8 @@ namespace castor {
     std::string* m_stager;
     std::string* m_serviceClass;
     std::string* m_protocol;
-    int m_listenPort; 
+    int m_listenPort;
+    int m_pollingTime;
   };
 
  } // end of namespace repack
