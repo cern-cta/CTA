@@ -75,6 +75,7 @@ CREATE TABLE dlf_monitoring
 	db_cursors      NUMBER,
 	db_messages	NUMBER,
 	db_inits	NUMBER,
+	db_hashstats	NUMBER,
 	s_mode          NUMBER,
 	s_queued	NUMBER,
 	s_response	NUMBER(*,4),
@@ -607,7 +608,7 @@ END;
  */
 BEGIN
 DBMS_SCHEDULER.CREATE_JOB (
-	JOB_NAME 	=> 'dlf_partition',
+	JOB_NAME 	=> 'dlf_partition_job',
 	JOB_TYPE 	=> 'STORED_PROCEDURE',
 	JOB_ACTION 	=> 'DLF',
 	START_DATE 	=> TRUNC(SYSDATE) + 1/24,
@@ -716,11 +717,11 @@ END;
  * dlf_archive scheduler
  */
 BEGIN
-exec DBMS_SCHEDULER.CREATE_JOB (
-	JOB_NAME 	=> 'dlf_archive',
+DBMS_SCHEDULER.CREATE_JOB (
+	JOB_NAME 	=> 'dlf_archive_job',
 	JOB_TYPE 	=> 'STORED_PROCEDURE',
 	JOB_ACTION 	=> 'DLF',
-	START_DATE 	=> TRUNC(SYSDATE) + 1/24,
+	START_DATE 	=> TRUNC(SYSDATE) + 2/24,
 	REPEAT_INTERVAL => 'FREQ=DAILY',
 	ENABLED 	=> TRUE,
 	COMMENTS	=> 'Daily archiving procedure');

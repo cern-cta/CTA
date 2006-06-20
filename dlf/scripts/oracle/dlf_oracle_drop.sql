@@ -24,8 +24,8 @@ DROP PROCEDURE dlf_partition;
 DROP PROCEDURE dlf_archive;
 
 /* scheduler */
-exec DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'dlf_partition');
-exec DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'dlf_archive');
+exec DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'dlf_partition_job');
+exec DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'dlf_archive_job');
 
 
 /* End-of-File */
