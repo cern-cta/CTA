@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/06/02 08:16:52 $ $Author: felixehm $
+ * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/06/20 08:51:32 $ $Author: felixehm $
  *
  * 
  *
@@ -88,7 +88,18 @@ namespace castor {
 					throw(castor::exception::Internal);
 
 
-
+    /**
+      * Selects a RepackSubRequest as to be updated.
+      * After calling this method, the unlock has to be executed to commit.
+      * otherwise the table entry is locked forever.
+      * @exception Exception if the RepackSubRequest was not found.
+      */
+    void lock(castor::repack::RepackSubRequest* tape) throw (castor::exception::Internal);
+    /**
+      * Executes an explicit commit on the db connection. Since the statements are all FOR UPDATE
+      * (pessimistic CC), we have to do a commit, even if we didn't do anything with a table row.
+      */
+    void unlock() throw ();
 	  
 
 	  /**
@@ -111,7 +122,8 @@ namespace castor {
 	   * Checks the RepackDB for SubRequests in a certain status.
      * The returned Object is filled (all segments and the corresponding 
      * RepackRequest This means that the caller has to free the 
-     * allocated memory.
+     * allocated memory. 
+     * Be aware : the affected table is locked! do an unlock() after use;
      * @param status The status to be queried
      * @return RepackSubRequest a full RepackSubRequest Object
      * @throws castor::exception::Internal in case of an error
@@ -128,11 +140,12 @@ namespace castor {
 
 
     /**
-     * Retrieves and RepackSbu Request from DB by a given volume id
-     * @param the volume name
+     * Retrieves and RepackSubRequest from DB by a given volume id
+     * @param vid the volume name to search for
+     * @param fill flag, if the segments should be added
      * @throws castor::exception::Internal in case of an error
      */
-    RepackSubRequest* getSubRequestByVid(std::string vid) 
+    RepackSubRequest* getSubRequestByVid(std::string vid, bool fill) 
 	  					throw(castor::exception::Internal);
     
     /**
@@ -152,6 +165,7 @@ namespace castor {
 
      /**
      * Gets all RepackSubRequests in a certain status from the DB
+     * Be aware : the affected table is locked! do an unlock() after use;
      * @return an pointer to a vector of Repack SubRequests
      * @throws castor::exception::Internal in case of an error
      */
@@ -221,6 +235,10 @@ namespace castor {
         static const std::string s_archiveStatementString;
         castor::db::IDbStatement  *m_archiveStatement;
         //oracle::occi::Statement  *m_archiveStatement;
+
+        static const std::string s_selectLockStatementString;
+        castor::db::IDbStatement *m_selectLockStatement;
+  
         castor::BaseAddress ad;
       
     }; // end of class DatabaseHelper
