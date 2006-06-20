@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.13 $ $Release$ $Date: 2006/06/09 07:05:57 $ $Author: gtaur $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.14 $ $Release$ $Date: 2006/06/20 14:15:00 $ $Author: riojac3 $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.13 $ $Release$ $Date: 2006/06/09 07:05:57 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.14 $ $Release$ $Date: 2006/06/20 14:15:00 $ Olof Barring";
 #endif /* not lint */
 /** RfioTURL.c - RFIO TURL handling
  *
@@ -51,7 +51,7 @@ static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.13 $ $Release$
 #include <Castor_limits.h>
 #include <grp.h>
 #include <sys/types.h>
-
+#include <common.h>
 #define DEFAULT_HOST "stagepublic"
 #define DEFAULT_PORT2 9002
 #define DEFAULT_PORT1 5007
