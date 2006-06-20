@@ -1,5 +1,5 @@
 .lf 3 dlf_reqtext.man
-.TH dlf_reqtext 3 "2006/06/12 12:00:00 CERN IT-FIO" CASTOR "DLF Library Functions"
+.TH dlf_reqtext 3 "$Date: 2006/06/20 13:35:02 $ CERN IT-FIO" CASTOR "DLF Library Functions"
 .SH NAME
 dlf_regtext \- register a message text for the given facility 
 .SH SYNOPSIS

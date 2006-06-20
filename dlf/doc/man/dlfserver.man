@@ -1,5 +1,5 @@
 .lf 1 dlfserver.man
-.TH dlfserver 1 "2006/06/12 12:00:00 CERN IT-FIO" CASTOR "DLF Server"
+.TH dlfserver 1 "$Date: 2006/06/20 13:35:02 $ CERN IT-FIO" CASTOR "DLF Server"
 .SH NAME
 dlfserver \- start the CASTOR Distributed Logginf Facility server
 .SH SYNOPSIS
@@ -33,6 +33,9 @@ The servers listening port.
 .TP
 .B \-t <transport_threads>:<db_threads>
 The number of transport threads in relation to database threads. Please note, that the transport threads are multiplexed and are capable of handle multiple connections. By default the server utilises 2 transport threads each capable of servicing 150 each.
+.TP
+.B \-n
+Disable the generation of job and request statistics.
 
 .SH "FILES"
 In order to connect to the DLF database a username, password and server are required. The configuration file /etc/DLFCONFIG defines this information using a signal line in the format:
