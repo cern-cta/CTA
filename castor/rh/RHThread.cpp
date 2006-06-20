@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/02/01 17:12:33 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/06/20 16:14:18 $ $Author: itglp $
  *
  *
  *
@@ -123,7 +123,7 @@ void castor::rh::RHThread::run(void* param) throw() {
       // "Processing Request" message
       castor::dlf::Param params[] =
         {castor::dlf::Param("Type", fr->type())};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 8, 1, params);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 8, 1, params);
 
       // Complete its client field
       castor::rh::Client *client =
@@ -214,7 +214,7 @@ void castor::rh::RHThread::handleRequest
     // "Request stored in DB" message
     castor::dlf::Param params[] =
       {castor::dlf::Param("ID", fr->id())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 12, 1, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 12, 1, params);
 
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);
