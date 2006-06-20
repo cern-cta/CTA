@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/06/02 10:04:36 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2006/06/20 09:42:22 $ $Author: felixehm $
  *
  *
  *
@@ -131,8 +131,14 @@ std::vector<u_signed64>* FileListHelper::getFileList(
 	
 	while ( j!= parentlist->end() ){
 		if ( fileid == (*j) ){
-			std::cerr << "ERROR : Double entry for fileid " << (*j) 
-					  << "on tape " << subreq->vid() << std::endl;
+      /// give a message if a double entry was found
+      /// this means that the given sreq has already the segments, or
+      /// the fileid is twice on a tape (not possible)
+      castor::dlf::Param params[] =
+      {castor::dlf::Param("FileID", (*j)),
+       castor::dlf::Param("VID",subreq->vid() )
+      };
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 99, 2, params);
 		}
 		else{
 			fileid = (*j);
