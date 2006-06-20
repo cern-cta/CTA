@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2006/06/02 12:51:42 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2006/06/20 08:54:01 $ $Author: felixehm $
  *
  *
  *
@@ -213,7 +213,9 @@ RepackRequest* RepackWorker::getStatus(RepackRequest* rreq) throw (castor::excep
   }
   /** Get the SubRequest. We query by VID and recieve a full subrequest */
   std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
-  RepackSubRequest* tmp = m_databasehelper->getSubRequestByVid( (*tape)->vid());
+  RepackSubRequest* tmp = m_databasehelper->getSubRequestByVid( (*tape)->vid(), false );
+
+  /// but we don't need the segment data for the client. -> remove them
 
   if ( tmp != NULL ) {
     result = tmp->requestID();
@@ -283,7 +285,7 @@ void RepackWorker::removeRequest(RepackRequest* rreq) throw (castor::exception::
       * send to the client
       */
 		RepackSubRequest* tmp = 
-			m_databasehelper->getSubRequestByVid( (*tape)->vid() );
+			m_databasehelper->getSubRequestByVid( (*tape)->vid(), true );
     
     Cuuid_t cuuid = stringtoCuuid((*tape)->cuuid());
 
