@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.28 $ $Date: 2006/06/21 12:58:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.29 $ $Date: 2006/06/21 13:08:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -140,9 +140,9 @@ char	**argv;
           tapealerts = get_tape_alerts(tapefd, dvn, devtype);
     	  if (tapealerts >= 0) {
        	      harderror = tapealerts & 0x0001;
-       	      mediaerror = tapealerts & 0x0010;
-       	      readfailure = tapealerts & 0x0100;
-       	      writefailure = tapealerts & 0x1000;
+       	      mediaerror = (tapealerts >> 2) & 0x0001;
+       	      readfailure = (tapealerts >> 4) & 0x0001;
+       	      writefailure = (tapealerts >> 8) & 0x0001;
               tplogit (func, "tape alerts: hardware error %d, media error %d, read failure %d, write failure %d\n", 
                        harderror,
                        mediaerror, 
