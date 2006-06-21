@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: server.c,v 1.3 2006/06/20 13:36:44 waldron Exp $
+ * $Id: server.c,v 1.4 2006/06/21 07:45:09 waldron Exp $
  */
 
 /* headers */
@@ -400,7 +400,7 @@ int main(int argc, char **argv) {
 
 
 	/* process options */
-	while ((c = getopt(argc, argv, "hdfl:t:p:")) != -1) {
+	while ((c = getopt(argc, argv, "hdfl:t:p:n")) != -1) {
 		switch(c) {
 		case 'd':
 			debug = 1;
@@ -633,7 +633,7 @@ int main(int argc, char **argv) {
 
 	/* main loop */
 	while (!IsShutdown(server_mode)) {
-		db_monitoring(hpool, 10);
+		db_monitoring(hpool, 300);
 		if (stats) {
 			db_stats(300);
 		}
