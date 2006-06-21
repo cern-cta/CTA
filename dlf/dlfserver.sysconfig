@@ -11,6 +11,3 @@ DLFSERVER_OPTIONS="-t 2:2"
 
 # run the server by default ?
 DLFSERVER_RUN="YES"
-
-# set stack size
-ULIMIT_S=2148

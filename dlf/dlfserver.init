@@ -49,11 +49,6 @@ start() {
 			echo -n $"$prog disabled in /etc/sysconfig/$prog" 
 			failure && echo && exit
 		fi
-
-		# ulimit
-		if [ -n "${ULIMIT_S}" ]; then
-			ulimit -s ${ULIMIT_S}
-		fi
 	fi
 	
 	RETVAL=$?
