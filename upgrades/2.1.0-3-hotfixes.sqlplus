@@ -194,7 +194,6 @@ BEGIN
       -- and ensures that the current update does not fail if GC fails
       DBMS_JOB.SUBMIT(jobid,'garbageCollect();');
     END IF;
-    COMMIT;
     -- otherwise, a job is already running and will take over this file system too
   END IF;
   EXCEPTION
