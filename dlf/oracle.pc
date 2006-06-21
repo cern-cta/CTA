@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.3 2006/06/20 13:36:44 waldron Exp $
+ * $Id: oracle.pc,v 1.4 2006/06/21 07:48:56 waldron Exp $
  */
 
 /* headers */
@@ -34,6 +34,7 @@
 #include "Cthread_api.h"
 #include "dbi.h"
 #include "dlf_api.h"
+#include "getconfent.h"
 #include "hash.h"
 #include "log.h"
 #include "queue.h"
@@ -1213,8 +1214,10 @@ int DLL_DECL db_stats(unsigned int interval) {
 	size_t     err_len;   
 	time_t     now; 
 	int        i;  
-	int        found;   
+	int        found;
+	int        period;  
 	
+	char       *value;
 	char       ctime1[15];
 	char       ctime2[15];
 
@@ -1294,8 +1297,18 @@ int DLL_DECL db_stats(unsigned int interval) {
 	db->selects++;
 	EXEC SQL SELECT fac_no INTO :rhlog_fac FROM dlf_facilities WHERE fac_name = 'RHLog';	
 	
-	/* create the timestamps requied in the sql queries */
-	now = last_stats - interval - 43200;
+	/* determine the historical lookup period. i.e. how far back should we scan the tables for
+	 * messages relating to the start of a job/request
+	 */
+	if ((value = getenv("DLF_SCAN_PERIOD")) == NULL) {
+		if ((value = getconfent("DLF", "SCAN_PERIOD", 1)) == NULL) {
+			value = "12";
+		}
+	}
+	period = atoi(value) * 3600;
+
+	/* create the timestamps required in the sql queries */
+	now = last_stats - interval - period;
 	localtime_r(&now, &tm_str);
 	strftime(ctime1, DLF_LEN_TIMESTAMP + 1, "%Y%m%d%H%M%S", &tm_str);
 	
