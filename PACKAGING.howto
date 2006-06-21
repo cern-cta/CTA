@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.16 2006/06/12 12:48:13 itglp Exp $
+## $Id: PACKAGING.howto,v 1.17 2006/06/21 08:29:36 sponcec3 Exp $
 #
 
 #
@@ -71,8 +71,14 @@ cd /tmp
 mkdir `whoami`
 cd `whoami`
 mkdir BUILD  RPMS  SOURCES  SPECS  SRPMS RPMS/i386 RPMS/ia64 RPMS/x86_64
-export RPM_BUILD_ROOT=/tmp/castor
+export RPM_BUILD_ROOT=/tmp/`whoami`
 
+#
+## WARNING: If you are on a platform where you don't want to build the
+## ORACLE packages, unset ORACLE_HOME. It may be set by default by some
+## "group script trying to be clever". This usually makes the build fail
+## due to a bad ProC version
+#
 #
 ## WARNING: FOR RPM BUILD you might need /etc/sysconfig/castor CORRECT
 ## IN ADVANCE.
@@ -102,3 +108,12 @@ cp /tmp/CASTOR2/ReleaseNotes ../../
 foreach f (`ls *.rpm`)
   swrep-client put i386_slc3 $f /cern/cc
 end
+
+#
+## To install in AFS
+#  -----------------
+vim tools/installOnAFS
+python tools/installOnAFS > /tmp/afsInstallScript
+# You will have to modify it by hand here to add the lib-compat
+# packages until the installOnAFS script is fixed for this
+source /tmp/afsInstallScript
