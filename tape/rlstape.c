@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.27 $ $Date: 2003/09/15 08:41:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.28 $ $Date: 2006/06/21 12:58:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -77,6 +77,11 @@ char	**argv;
 	int vdqm_rc;
 	int vdqm_status;
 	char *vid;
+        int tapealerts;
+        int harderror;
+        int mediaerror;
+        int readfailure;
+        int writefailure;
 
 	ENTRY (rlstape);
 
@@ -97,8 +102,15 @@ char	**argv;
 	loader = argv[15];
 	mode = atoi (argv[16]);
 	den = atoi (argv[17]);
+        tapealerts = 0;
+        harderror = 0;
+        mediaerror = 0;
+        readfailure = 0;
+        writefailure = 0;  
+
 
 	tplogit (func, "rls dvn=<%s>, vid=<%s>, rlsflags=%d\n", dvn, vid, rlsflags);
+
 #if SONYRAW
 	if (strcmp (devtype, "DIR1") == 0 && den == SRAW)
 		sonyraw = 1;
@@ -108,6 +120,58 @@ char	**argv;
 
 	(void) Ctape_seterrbuf (errbuf, sizeof(errbuf));
 	devinfo = Ctape_devinfo (devtype);
+
+#if SONYRAW
+    if (! sonyraw) {
+#endif
+#if defined(ADSTAR)
+	while ((tapefd = open (dvn, O_RDONLY|O_NDELAY)) < 0 &&
+	    (errno == EBUSY || errno == EAGAIN))
+#else
+#ifndef SOLARIS
+	while ((tapefd = open (dvn, O_RDONLY|O_NDELAY)) < 0 && errno == EBUSY)
+#else
+	while ((tapefd = open (dvn, O_RDONLY)) < 0 && errno == EBUSY)
+#endif
+#endif
+		sleep (UCHECKI);
+	if (tapefd >= 0) {
+	
+          tapealerts = get_tape_alerts(tapefd, dvn, devtype);
+    	  if (tapealerts >= 0) {
+       	      harderror = tapealerts & 0x0001;
+       	      mediaerror = tapealerts & 0x0010;
+       	      readfailure = tapealerts & 0x0100;
+       	      writefailure = tapealerts & 0x1000;
+              tplogit (func, "tape alerts: hardware error %d, media error %d, read failure %d, write failure %d\n", 
+                       harderror,
+                       mediaerror, 
+                       readfailure,
+                       writefailure);
+       	      if (tapealerts > 0) {
+	            configdown (drive);
+                return -1;
+              }
+    	  } else {
+	    	tplogit (func, "tape alerts: no information available\n");
+    	  }
+
+	  close (tapefd);
+ 	} else {
+#if defined(sun)
+		if (errno != EIO)
+#endif
+#if defined(_IBMR2)
+		if (strcmp (dvrname, "tape") || (errno != EIO && errno != ENOTREADY))
+#endif
+			tplogit (func, TP042, dvn, "open", strerror(errno));
+ 	}
+#if SONYRAW
+    } else {
+       tplogit (func, "tape alerts: no information available\n");
+
+    }
+#endif
 
 	/* delay VDQM_UNIT_RELEASE so that a new request for the same volume
 	   has a chance to keep the volume mounted */
@@ -150,7 +214,7 @@ char	**argv;
 
 unload_loop:
 #if SONYRAW
-    if (! sonyraw) {
+	if (! sonyraw) {
 #endif
 #if defined(ADSTAR)
 	while ((tapefd = open (dvn, O_RDONLY|O_NDELAY)) < 0 &&
@@ -272,6 +336,7 @@ configdown(drive)
 char *drive;
 {
 	sprintf (msg, TP033, drive, hostname); /* ops msg */
+	usrmsg ("rlstape", "%s\n", msg);
 	omsgr ("configdown", msg, 0);
 	(void) Ctape_config (drive, CONF_DOWN, TPCD_SYS);
 }
