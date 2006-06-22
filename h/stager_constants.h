@@ -1,5 +1,5 @@
 /*
- * $Id: stager_constants.h,v 1.17 2005/09/22 13:57:31 jdurand Exp $
+ * $Id: stager_constants.h,v 1.18 2006/06/22 10:43:25 itglp Exp $
  */
 
 #ifndef __stager_constants_h
@@ -18,12 +18,12 @@
 #define STAGER_DEFAULT_SECURE        0                   /* Default secure mode - to be 1 in the future */
 #define STAGER_DEFAULT_DEBUG         0                   /* Default debug mode (!= 0 means yes) */
 #define STAGER_DEFAULT_TRACE         0                   /* Default trace mode (!= 0 means yes) */
-#define STAGER_DEFAULT_DB_NBTHREAD   5                   /* Default number of db threads */
+#define STAGER_DEFAULT_DB_NBTHREAD   20                  /* Default number of db threads */
 #define STAGER_DEFAULT_GC_NBTHREAD   5                   /* Default number of GC threads */
 #define STAGER_DEFAULT_ERROR_NBTHREAD 5                  /* Default number of ERROR threads */
-#define STAGER_DEFAULT_QUERY_NBTHREAD 5                  /* Default number of query threads */
-#define STAGER_DEFAULT_GETNEXT_NBTHREAD 5                /* Default number of getnext threads */
-#define STAGER_DEFAULT_JOB_NBTHREAD  5                   /* Default number of job threads */
+#define STAGER_DEFAULT_QUERY_NBTHREAD 10                 /* Default number of query threads */
+#define STAGER_DEFAULT_GETNEXT_NBTHREAD 2                /* Default number of getnext threads */
+#define STAGER_DEFAULT_JOB_NBTHREAD  20                  /* Default number of job threads */
 #define STAGER_DEFAULT_ADMIN_NBTHREAD   1                /* Default number of admin threads */
 #define STAGER_DEFAULT_FS_NBTHREAD   1                   /* Default number of filesystem threads */
 #define STAGER_DEFAULT_FACILITY   "stager"               /* Default Facility name */
