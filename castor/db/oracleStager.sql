@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.278 $ $Release$ $Date: 2006/06/19 15:49:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.279 $ $Release$ $Date: 2006/06/22 08:59:52 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -9,8 +9,8 @@
  *******************************************************************/
 
 /* A small table used to cross check code and DB versions */
-CREATE TABLE CastorVersion (version VARCHAR2(2048));
-INSERT INTO CastorVersion VALUES ('2_0_3_0');
+CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.279 $ $Date: 2006/06/22 08:59:52 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq;
@@ -2300,6 +2300,9 @@ BEGIN
      -- so we accept it only if it will free more than 5 Gb)
      :new.maxFreeSpace * :new.totalSize > freeSpace + 5000000000 THEN
     -- ok, we queue this filesystem for being garbage collected
+    -- we have to take a lock so that a previous job that would finish right
+    -- now will wait for our insert and take the new filesystem
+    LOCK TABLE FileSystemGC IN ROW SHARE MODE;
     SELECT count(*) INTO gccount FROM FileSystemGC;
     INSERT INTO FileSystemGC VALUES (:new.id, getTime());
     -- is it the only filesystem waiting for GC?
@@ -2309,8 +2312,6 @@ BEGIN
       DBMS_JOB.SUBMIT(jobid,'garbageCollect();');
     END IF;
     -- otherwise, a job is already running and will take over this file system too
-    -- (the check is not thread-safe, no problem as the only effect
-    -- could be to spawn more than one job)
   END IF;
   EXCEPTION
     -- the filesystem was already selected for GC, do nothing
