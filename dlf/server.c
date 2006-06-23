@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: server.c,v 1.4 2006/06/21 07:45:09 waldron Exp $
+ * $Id: server.c,v 1.5 2006/06/23 08:07:35 waldron Exp $
  */
 
 /* headers */
@@ -59,8 +59,8 @@ queue_t    *queue;                       /**< internal server fifo queue    */
 int server_mutex;
 
 /* server variables */
-long server_mode = MODE_DEFAULT;         /**< servers mode e.g. suspended   */
-
+long server_mode  = MODE_DEFAULT;        /**< servers mode e.g. suspended   */
+long server_start = 0;                   /**< the servers start-up time     */
 
 /* 
  * Worker
@@ -397,6 +397,7 @@ int main(int argc, char **argv) {
 	} else if ((servent = getservbyname("dlf", "tcp"))) {
 		port = servent->s_port;
 	}
+	server_start = time(NULL);
 
 
 	/* process options */
