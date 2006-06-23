@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_procreq.c,v $ $Revision: 1.8 $ $Date: 2006/06/21 16:24:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_procreq.c,v $ $Revision: 1.9 $ $Date: 2006/06/23 08:04:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
@@ -4400,14 +4400,6 @@ struct Cns_srv_thread_info *thip;
 		unmarshall_LONG (rbp, new_smd_entry[i].compression);
 		unmarshall_BYTE (rbp, new_smd_entry[i].s_status);
   
-                /// we know that the arriving segment must be on tape, 
-                /// so we set the s_status bit to 'm' and give a message
-                if (  new_smd_entry[i].s_status != 'm' ) {
-                  sprintf (logbuf, "%s: Warning: s_status is set to 'm' ", func);
-                  Cns_logreq (func, logbuf);
-                  new_smd_entry[i].s_status = 'm';
-                } 
- 
 		if (unmarshall_STRINGN (rbp, new_smd_entry[i].vid, CA_MAXVIDLEN+1))
 			RETURN (EINVAL);
 		if (magic >= CNS_MAGIC2)
