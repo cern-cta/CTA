@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.144 $ $Release$ $Date: 2006/05/11 12:25:54 $ $Author: felixehm $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.145 $ $Release$ $Date: 2006/06/23 19:54:27 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.144 $ $Release$ $Date: 2006/05/11 12:25:54 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.145 $ $Release$ $Date: 2006/06/23 19:54:27 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -3245,24 +3245,26 @@ int rtcpcld_updcFileMigrated(
  *  - Flag all Segments SEGMENT_FAILED
  */
 int rtcpcld_putFailed(
-                      tapeCopy
+                      _tapeCopy
                       ) 
-     struct Cstager_TapeCopy_t *tapeCopy;
+     struct Cstager_TapeCopy_t *_tapeCopy;
 {
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t **svcs = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_ITapeSvc_t *tpSvc = NULL;
+  struct Cstager_TapeCopy_t *tapeCopy;
   struct Cstager_Segment_t **segmentArray = NULL;
   struct Cstager_DiskCopy_t **diskCopyArray = NULL;
   struct Cstager_CastorFile_t *castorFile = NULL;
   enum Cstager_SegmentStatusCodes_t segmentStatus;
   enum Cstager_DiskCopyStatusCodes_t diskCopyStatus;
-  int rc, i, nbSegments = 0, nbDiskCopies = 0;
+  enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
+  int rc, i, nbSegments = 0, nbDiskCopies = 0, copyNb;
   ID_TYPE key;
 
-  if ( tapeCopy == NULL ) {
+  if ( _tapeCopy == NULL ) {
     serrno = EINVAL;
     return(-1);
   }
@@ -3282,7 +3284,15 @@ int rtcpcld_putFailed(
   C_BaseAddress_setCnvSvcType(baseAddr,SVC_DBCNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
+  Cstager_TapeCopy_create(&tapeCopy);
   iObj = Cstager_TapeCopy_getIObject(tapeCopy);
+  Cstager_TapeCopy_id(_tapeCopy,&key);
+  Cstager_TapeCopy_setId(tapeCopy,key);
+  Cstager_TapeCopy_copyNb(_tapeCopy,&copyNb);
+  Cstager_TapeCopy_setCopyNb(tapeCopy,copyNb);
+  Cstager_TapeCopy_status(_tapeCopy,&tapeCopyStatus);
+  Cstager_TapeCopy_setStatus(tapeCopy,tapeCopyStatus);
+  Cstager_TapeCopy_setCastorFile(tapeCopy,NULL);
   rc = C_Services_fillObj(
                           *svcs,
                           iAddr,
@@ -3297,19 +3307,22 @@ int rtcpcld_putFailed(
     C_IAddress_delete(iAddr);
     return(-1);
   }
-  rc = C_Services_fillObj(
-                          *svcs,
-                          iAddr,
-                          iObj,
-                          OBJ_CastorFile
-                          );
-  if ( rc == -1 ) {
-    Cstager_TapeCopy_id(tapeCopy,&key);
-    LOG_DBCALLANDKEY_ERR("C_Services_fillObj(tapeCopy,OBJ_CastorFile)",
-                         C_Services_errorMsg(*svcs),
-                         key);
-    C_IAddress_delete(iAddr);
-    return(-1);
+  Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
+  if ( castorFile == NULL ) {
+    rc = C_Services_fillObj(
+                            *svcs,
+                            iAddr,
+                            iObj,
+                            OBJ_CastorFile
+                            );
+    if ( rc == -1 ) {
+      Cstager_TapeCopy_id(tapeCopy,&key);
+      LOG_DBCALLANDKEY_ERR("C_Services_fillObj(tapeCopy,OBJ_CastorFile)",
+                           C_Services_errorMsg(*svcs),
+                           key);
+      C_IAddress_delete(iAddr);
+      return(-1);
+    }
   }
 
   Cstager_TapeCopy_segments(tapeCopy,&segmentArray,&nbSegments);
@@ -3346,6 +3359,7 @@ int rtcpcld_putFailed(
    * Flag the TapeCopy FAILED
    */
   iObj = Cstager_TapeCopy_getIObject(tapeCopy);
+  Cstager_TapeCopy_setStatus(_tapeCopy,TAPECOPY_FAILED); /* Also flag the original */
   Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_FAILED);
   rc = C_Services_updateRep(
                             *svcs,
