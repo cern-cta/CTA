@@ -5,13 +5,16 @@
 %attr(0755,root,bin) usr/bin/nsdeleteclass
 %attr(0755,root,bin) usr/bin/nsenterclass
 %attr(0755,root,bin) usr/bin/nsfind
+%attr(0755,root,bin) usr/bin/nsgetacl
 %attr(0755,root,bin) usr/bin/nslistclass
 %attr(0755,root,bin) usr/bin/nslisttape
+%attr(0755,root,bin) usr/bin/nsln
 %attr(0755,root,bin) usr/bin/nsls
 %attr(0755,root,bin) usr/bin/nsmkdir
 %attr(0755,root,bin) usr/bin/nsmodifyclass
 %attr(0755,root,bin) usr/bin/nsrename
 %attr(0755,root,bin) usr/bin/nsrm
 %attr(0755,root,bin) usr/bin/nssetchecksum
+%attr(0755,root,bin) usr/bin/nssetacl
 %attr(0755,root,bin) usr/bin/nssetcomment
 %attr(0755,root,bin) usr/bin/nstouch
