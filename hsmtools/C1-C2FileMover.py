@@ -18,7 +18,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: C1-C2FileMover.py,v $ $Revision: 1.3 $ $Release$ $Date: 2006/06/16 16:03:43 $ $Author: itglp $
+# * @(#)$RCSfile: C1-C2FileMover.py,v $ $Revision: 1.4 $ $Release$ $Date: 2006/06/23 18:47:23 $ $Author: itglp $
 # *
 # * Imports a list of files from a Castor1 stager to a Castor2 one.
 # *
@@ -213,7 +213,9 @@ sql = '''SELECT FS.mountPoint || DC.path FROM FileSystem FS, CastorFile CF, Disk
 try:
   while(1):
     (oldpath, fsize, cfname, fid, fcname, tobemigr) = getItem()
-    if tobemigr: continue         # don't import tobemigr files
+    if tobemigr:
+      print "\n  ** skipping", cfname, "because it is NOT STAGED" 
+      continue         # don't import tobemigr files for the time being
     print "\n  importing", cfname
 
     # create needed entries in the db
