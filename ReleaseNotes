@@ -5,10 +5,11 @@
   ---------------------------------------
   This is a bug fix release, strictly identical to 2.1.0-2 with some exceptions:
   - Fixes concerning the TURL parsing in RFIO
+  - Addressed memory problem in rfcp when using CASTOR 1
   - The garbage collection was optimized 
   - Added the check of MIR validity at mount time for SUN/STK T10000, LTO and IBM3592
   - Fixes concerning the deadlocks in PL/SQL and avoiding replication of STAGEOUT files
-  - Added dependency on castor_lib_compat 2.0.2_1 to avoid relinking.
+  - Added dependency on castor_lib_compat 2.0.2-1 to avoid relinking.
   
 
   Upgrade from 2.1.0-2
