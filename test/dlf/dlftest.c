@@ -147,7 +147,7 @@ void worker(void *arg) {
 		pard   = 35.535;
 
 		if (!extensive) {
-			rv = dlf_write(req_id, severity, msg_no, &nsfileid, 1,
+			rv = dlf_write(req_id, severity, msg_no, &nsfileid, 6,
 				       "String",     DLF_MSG_PARAM_STR, "This is a string!",
 				       NULL,         DLF_MSG_PARAM_UUID, subreq_id,
 				       "Integer 64", DLF_MSG_PARAM_INT64, pari64,
