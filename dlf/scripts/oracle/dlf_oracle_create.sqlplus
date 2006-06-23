@@ -23,9 +23,9 @@ CREATE TABLE dlf_jobstats
 	min_time	NUMBER(*,4),
 	max_time	NUMBER(*,4),
 	avg_time	NUMBER(*,4),
+	std_dev		NUMBER(*,4),
 	starting	NUMBER,
 	exiting		NUMBER,
-	std_dev		NUMBER(*,4),
 	interval        NUMBER)
 PARTITION BY RANGE (timestamp)
 (
