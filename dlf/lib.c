@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: lib.c,v 1.2 2006/06/19 06:52:55 waldron Exp $
+ * $Id: lib.c,v 1.3 2006/06/23 08:07:12 waldron Exp $
  */
 
 /* headers */
@@ -623,6 +623,12 @@ int dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, i
 		j = 0;
 		do {
 			rv = queue_push(targets[i]->queue, m);
+
+			/* should we report that the queue is full ? */
+			if ((rv == APP_QUEUE_FULL) && (targets[i]->err_full < (time(NULL) - 30))) {
+				dlf_error("MSG=\"Internal server queue full\" SERVER=\"%s\" QUEUE_SIZE=\"%ld\"", targets[i]->server, queue_size(targets[i]->queue));
+				targets[i]->err_full = time(NULL);
+			}
 			j++;
 		} while ((rv == APP_QUEUE_FULL) && (j < 3));
 		
@@ -915,7 +921,7 @@ void dlf_worker(target_t *t) {
 		/* marshall parameters */
 		for (param = message->plist; param != NULL; param = param->next) {
 			marshall_BYTE(sbp, param->type);
-			marshall_STRING(sbp, param->name);
+		marshall_STRING(sbp, param->name);
 			marshall_STRING(sbp, param->value);
 		}
 		
@@ -1071,14 +1077,18 @@ int dlf_init(const char *facility, char *errptr) {
 
 	target_t   *t;
 	int        i;
-	int        j;  
-	int        rv;      
-	int        port;   
-	int        found;   
-	char       *value;       
-	char       buffer[1024];    
-	char       uri[10];    
- 	char       envname[1024];  
+	int        j;
+	int        m;
+	int        n;
+	int        rv;
+	int        port;
+	int        found;
+	int        queue_size;
+	char       *value;
+	char       buffer[1024];
+	char       word[1026];
+	char       uri[10];
+ 	char       envname[1024];
      
 	/* we can't pass an error message back if the pointer to the error is NULL */
 	if (errptr == NULL) {
@@ -1089,15 +1099,14 @@ int dlf_init(const char *facility, char *errptr) {
 	/* this function shouldn't be called from within a thread as initialisation should only occur
 	 * once and only once for the whole system. Re-initialisation is of course possible but a call
 	 * to dlf_shutdown() must be made beforehand. Here we hold a global mutex to prevent multiple
-	 * dlf_init()'s at the same time
+	 * dlf_init()'s at the same time.
 	 */
 	Cthread_mutex_lock(&api_mutex);
 
 	/* already initialised ? */
 	if (IsInitialised(api_mode)) {
-		snprintf(errptr, CA_MAXLINELEN, "dlf_init(): interface already initialised");
 		Cthread_mutex_unlock(&api_mutex);
-		return -1;
+		return 0;
 	}
 	SetInitialised(api_mode);
 
@@ -1108,8 +1117,8 @@ int dlf_init(const char *facility, char *errptr) {
 	for (i = 0; i < DLF_MAX_MSGTEXTS; i++) {
 		texts[i] = NULL;
 	}
-	value = NULL;
-	t     = NULL;
+	value  = NULL;
+	t      = NULL;
 
        	/* convert facility name to upper case */
 	if (strlen(facility) > (sizeof(api_facname) - 1)) {
@@ -1127,6 +1136,16 @@ int dlf_init(const char *facility, char *errptr) {
 	/* initialise global hashes for fast message text lookups */
 	hash_create(&hashtexts, 100);
 
+	/* determine the queue size of use, if not the default */
+	snprintf(envname, sizeof(envname) - 1, "%s_DLF_QUEUESIZE", api_ucfacname);
+	if (value = getenv(envname)) {
+		queue_size = atoi(value);
+	} else if (value = getconfent(api_facname, "DLF_QUEUESIZE", 1)) {
+		queue_size = atoi(value);
+	} else {
+		queue_size = API_QUEUE_SIZE;
+	}
+
 	/* the logging targets can be configured either through environment variables or via confents in
 	 * the castor configuration file (e.g. /etc/castor/castor.conf). The format for the target name:
 	 *   - <facility_name>_<severity_name>
@@ -1138,111 +1157,136 @@ int dlf_init(const char *facility, char *errptr) {
 		 *    - environment variables take precedince over confents
 		 */
 		if ((value = getenv(envname)) == NULL) {
-			if ((value = getconfent(api_ucfacname, severitylist[i].confentname, 1)) == NULL) {
+			if ((value = getconfent(api_facname, severitylist[i].confentname, 1)) == NULL) {
 				continue;
 			}
 		}
-	
-		/* logging targets take the following format:
-		 *   - <uri>://<[server|filepath]>:[port]
-		 */
-		if (sscanf(value, "%9[^://]://%1023s", uri, buffer) != 2) {
-			continue;
-		}
 
-		/* invalid uniform resource identifer ? */
-		if (!strcasecmp(uri, "file") && !strcasecmp(uri, "x-dlf")) {
-			continue;
-		}
+		/* we need to copy the value as multiple calls to getconfent re-define this value */
+		value = strdup(value);
 
-		/* determine server port */
-		if (sscanf(buffer, "%1023[^:]:%d", buffer, &port) == 2) {
-			port = port;
-		} else if ((value = getenv("DLF_PORT")) || (value = getconfent("DLF", "PORT", 0))) {
-			port = atoi(value);
-		} else if ((servent = getservbyname("dlf", "tcp"))) {
-			port = servent->s_port;
-		} else {
-			port = DEFAULT_SERVER_PORT;
-		}
+		/* loop over each word in the value */
+		for (m = 0, n = 0, word[0] = '\0'; value[m] != '\0'; m++, n = 0, word[0] = '\0') {
 
-		/* lookup the server and port or filepath and alter the severity mask accordingly
-		 *   - note: multiple servers are allowed with different ports!
-		 */
-		for (j = 0, found = 0; j < API_MAX_TARGETS; j++) {
-			if (targets[j] == NULL)
+			/* skip whitespace */
+			while (isspace(value[m])) {
+				m++;
+			}
+			
+			/* cut the word */
+			while (!isspace(value[m]) && (value[m] != '\0')) {
+				word[n] = value[m];
+				m++, n++;
+			}
+			word[n] = '\0';
+
+			/* logging targets take the following format:
+			 *   - <uri>://<[server|filepath]>:[port]
+			 */
+			if (sscanf(word, "%9[^://]://%1023s", uri, buffer) != 2) {
 				continue;
-
-			if (strcmp(targets[j]->path, buffer)) 
-				continue;                            /* incorrect path */
-
-			/* servers have an additional port attribute to consider */
-			if (IsServer(targets[j]->mode)) {
-				if (targets[j]->port != port) {
-					continue;                    /* incorrect port */
-				}
-			} 
-
-			/* alter severity mask */
-			targets[j]->sevmask |= severitylist[i].sevmask;
-
-			found = 1;
-			break;
-		}
-
-		/* found an entry ? */
-		if (found == 1) {
-			continue;
-		}
-
-		/* find an available target slot */
-		for (j = 0, found = 0; j < API_MAX_TARGETS; j++) {
-			if (targets[j] == NULL) {
+			}
+			
+			/* invalid uniform resource identifer ? */
+			if (!strcasecmp(uri, "file") && !strcasecmp(uri, "x-dlf")) {
+				continue;
+			}
+			
+			/* determine server port */
+			if (sscanf(buffer, "%1023[^:]:%d", buffer, &port) == 2) {
+				port = port;        
+			} else if (getenv("DLF_PORT") != NULL) {
+				port = atoi(getenv("DLF_PORT")); 
+			} else if (getconfent("DLF", "PORT", 0) != NULL) {
+				port = atoi(getconfent("DLF", "PORT", 0)); 
+			} else if ((servent = getservbyname("dlf", "tcp"))) {
+				port = servent->s_port;                        
+			} else {
+				port = DEFAULT_SERVER_PORT;
+			}
+			
+			/* lookup the server and port or filepath and alter the severity mask accordingly
+			 *   - note: multiple servers are allowed with different ports!
+			 */
+			for (j = 0, found = 0; j < API_MAX_TARGETS; j++) {
+				if (targets[j] == NULL)
+					continue;
+				
+				if (strcmp(targets[j]->path, buffer)) 
+					continue;                            /* incorrect path */
+				
+				/* servers have an additional port attribute to consider */
+				if (IsServer(targets[j]->mode)) {
+					if (targets[j]->port != port) {
+						continue;                    /* incorrect port */
+					}
+				} 
+				
+				/* alter severity mask */
+				targets[j]->sevmask |= severitylist[i].sevmask;
+				
 				found = 1;
 				break;
 			}
-		}
+			
+			/* found an entry ? */
+			if (found == 1) {
+				continue;
+			}
+			
+			/* find an available target slot */
+			for (j = 0, found = 0; j < API_MAX_TARGETS; j++) {
+				if (targets[j] == NULL) {
+					found = 1;
+					break;
+				}
+			}
+			
+			/* too many targets defined ? */
+			if (found == 0) {
+				snprintf(errptr, CA_MAXLINELEN, "dlf_init(): too many logging destinations defined");
+				Cthread_mutex_unlock(&api_mutex);
+				free(value);
+				return -1;
+			}
+			
+			/* create structure */
+			t = (target_t *) malloc(sizeof(target_t));
+			if (t == NULL) {
+				snprintf(errptr, CA_MAXLINELEN, "dlf_init(): failed to malloc() : %s", strerror(errno));
+				Cthread_mutex_unlock(&api_mutex);
+				free(value);
+				return -1;
+			}
+			
+			/* initialise target_t structure
+			 *   - files are fare less complicated then servers. We simple initialise everything too
+			 *     NULL here and later create the server threads, queue and hash'ing structures once
+			 *     the whole initialisation sequences has completed.
+			 */
+			t->pause    = time(NULL) + 3;
+			t->err_full = 0;
+			t->port     = port;
+			t->tid      = -1;
+			t->index    = j;
+			t->socket   = -1;
+			t->queue    = NULL;
+			t->mode     = MODE_DEFAULT;
+			t->fac_no   = -1;
+			t->sevmask  = severitylist[i].sevmask;
+			
+			/* set the type */
+			if (!strcasecmp(uri, "file")) {
+				strncpy(t->path, buffer, sizeof(t->path) - 1);
+				SetFile(t->mode);
+			} else {
+				strncpy(t->server, buffer, sizeof(t->server) - 1);
+				SetServer(t->mode);
+			}
 		
-		/* too many targets defined ? */
-		if (found == 0) {
-			snprintf(errptr, CA_MAXLINELEN, "dlf_init(): too many log destinations defined");
-       			Cthread_mutex_unlock(&api_mutex);
-			return -1;
+			targets[j] = t;
 		}
-
-		/* create structure */
-		t = (target_t *) malloc(sizeof(target_t));
-		if (t == NULL) {
-			snprintf(errptr, CA_MAXLINELEN, "dlf_init(): failed to malloc() : %s", strerror(errno));
-			Cthread_mutex_unlock(&api_mutex);
-			return -1;
-		}
-
-		/* initialise target_t structure
-		 *   - files are fare less complicated then servers. We simple initialise everything too
-		 *     NULL here and later create the server threads, queue and hash'ing structures once
-		 *     the whole initialisation sequences has completed.
-		 */
-		t->pause    = time(NULL) + 3;
-		t->port     = port;
-		t->tid      = -1;
-		t->index    = j;
-		t->socket   = -1;
-		t->queue    = NULL;
-		t->mode     = MODE_DEFAULT;
-		t->fac_no   = -1;
-		t->sevmask  = severitylist[i].sevmask;
-
-		/* set the type */
-		if (!strcasecmp(uri, "file")) {
-			strncpy(t->path, buffer, sizeof(t->path) - 1);
-			SetFile(t->mode);
-		} else {
-			strncpy(t->server, buffer, sizeof(t->server) - 1);
-			SetServer(t->mode);
-		}
-
-		targets[j] = t;
+		free(value);
 	}
 
 	/* at this point we haven't initialised any threads, if we've exceed API_MAX_THREADS then the 
@@ -1269,7 +1313,7 @@ int dlf_init(const char *facility, char *errptr) {
 			continue;            /* not a server */
 		
 		/* create server specific bounded fifo queue */
-		rv = queue_create(&targets[i]->queue, API_QUEUE_SIZE);
+		rv = queue_create(&targets[i]->queue, queue_size);
 		if (rv != 0) {
 			snprintf(errptr, CA_MAXLINELEN, "dlf_init(): failed to queue_create() : code %d", rv);
 			Cthread_mutex_unlock(&api_mutex);
