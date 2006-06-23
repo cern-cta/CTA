@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.4 2006/06/21 07:48:56 waldron Exp $
+ * $Id: oracle.pc,v 1.5 2006/06/23 08:00:56 waldron Exp $
  */
 
 /* headers */
@@ -64,6 +64,7 @@ static time_t last_stats      = 0;           /**< time of last call to dlf_stats
 
 /* externs */
 extern int       server_mode;                /**< server mode                           */
+extern long      server_start;               /**< server startup time                   */
 extern queue_t   *queue;                     /**< internal server fifo queue            */
 
 /**
@@ -1220,6 +1221,7 @@ int DLL_DECL db_stats(unsigned int interval) {
 	char       *value;
 	char       ctime1[15];
 	char       ctime2[15];
+	char       ctime3[15];
 
 	/* host arrays */
 	int        job_fac,    rhlog_fac;
@@ -1252,6 +1254,11 @@ int DLL_DECL db_stats(unsigned int interval) {
 		return APP_SUCCESS;
 	}
 	last_stats = time(NULL);
+
+	/* first run ? */
+	if ((time(NULL) - (interval * 2)) < server_start) {
+		return APP_SUCCESS;
+	}
 
         /* attempt to find a database connection which is currently connected and not in a busy state
          *   - if no connection can be found pick any connected connection
@@ -1308,16 +1315,20 @@ int DLL_DECL db_stats(unsigned int interval) {
 	period = atoi(value) * 3600;
 
 	/* create the timestamps required in the sql queries */
-	now = last_stats - interval - period;
+	now = last_stats - (interval * 2) - period;
 	localtime_r(&now, &tm_str);
 	strftime(ctime1, DLF_LEN_TIMESTAMP + 1, "%Y%m%d%H%M%S", &tm_str);
 	
-	now = last_stats - interval;
+	now = last_stats - (interval * 2);
 	localtime_r(&now, &tm_str);
 	strftime(ctime2, DLF_LEN_TIMESTAMP + 1, "%Y%m%d%H%M%S", &tm_str);
 	
+	now = last_stats - interval;
+	localtime_r(&now, &tm_str);
+	strftime(ctime3, DLF_LEN_TIMESTAMP + 1, "%Y%m%d%H%M%S", &tm_str);
+
 	/* create the table timestamp */
-	now = time(NULL);
+	now = time(NULL) - interval;
 	localtime_r(&now, &tm_str);
 	strftime(timestr, DLF_LEN_TIMESTAMP + 1, "%Y%m%d%H%M%S", &tm_str);	
 	
@@ -1327,8 +1338,10 @@ int DLL_DECL db_stats(unsigned int interval) {
 	 */
 	EXEC SQL DECLARE stats1 CURSOR FOR
 		SELECT  s.value, count(*),
-			AVG(e.timestamp - s.timestamp), STDDEV_POP(e.timestamp - s.timestamp),
-			MIN(e.timestamp - s.timestamp), MAX(e.timestamp - s.timestamp) FROM 
+			AVG(TO_NUMBER(e.timestamp) - TO_NUMBER(s.timestamp)), 
+			STDDEV_POP(TO_NUMBER(e.timestamp) - TO_NUMBER(s.timestamp)),
+			MIN(TO_NUMBER(e.timestamp) - TO_NUMBER(s.timestamp)), 
+			MAX(TO_NUMBER(e.timestamp) - TO_NUMBER(s.timestamp)) FROM 
 
 		/* starting job */
 		(SELECT m.reqid, m.timestamp, p.value FROM dlf_messages m, dlf_num_param_values p
@@ -1341,7 +1354,8 @@ int DLL_DECL db_stats(unsigned int interval) {
 
 		/* exiting job */
 		(SELECT reqid, timestamp FROM dlf_messages 
-			WHERE timestamp > TO_DATE(:ctime2, 'YYYYMMDDHH24MISS')
+			WHERE timestamp >  TO_DATE(:ctime2, 'YYYYMMDDHH24MISS')
+			AND   timestamp <= TO_DATE(:ctime3, 'YYYYMMDDHH24MISS')
 			AND   facility = :job_fac
 			AND   msg_no = 15) e
 			
@@ -1381,7 +1395,8 @@ end_stats1:
 	 */
 	EXEC SQL DECLARE stats2 CURSOR FOR
 		SELECT p.value, count(m.reqid) FROM dlf_messages m, dlf_num_param_values p
-		WHERE m.timestamp > TO_DATE(:ctime2, 'YYYYMMDDHH24MISS')
+		WHERE m.timestamp >  TO_DATE(:ctime2, 'YYYYMMDDHH24MISS')
+		AND   m.timestamp <= TO_DATE(:ctime3, 'YYYYMMDDHH24MISS')
 		AND   m.facility = :job_fac
 		AND   m.msg_no = 12
 		AND   m.id = p.id
@@ -1393,7 +1408,7 @@ end_stats1:
 	EXEC SQL WHENEVER NOT FOUND GOTO end_stats2;
 	db->cursors++;
 	EXEC SQL OPEN stats2;
-
+		
 	/* loop over cursor results */
 	while (sqlca.sqlcode == 0) {
 		EXEC SQL FETCH stats2 INTO :h_type, :h_starting;
@@ -1402,6 +1417,7 @@ end_stats1:
 		for (i = 0; data[i].type != -1; i++) {
 			if (data[i].type != h_type)
 				continue;
+	
 			data[i].starting = h_starting;
 		}
 	}		
@@ -1413,15 +1429,15 @@ end_stats2:
 	/* insert data into dlf_jobstats */
 	for (i = 0; data[i].type != -1; i++, db->inserts++) {
 		EXEC SQL INSERT INTO dlf_jobstats
-			(timestamp, type, min_time, max_time, avg_time, starting, exiting, std_dev, interval)
+			(timestamp, type, min_time, max_time, avg_time, std_dev, starting, exiting, interval)
 		VALUES (TO_DATE(:timestr, 'YYYYMMDDHH24MISS'),
 			:data[i].type,     
 			:data[i].min,  
 			:data[i].max, 
 			:data[i].avg,
+			:data[i].stddev,
 			:data[i].starting, 
 			:data[i].exiting,
-			:data[i].stddev,
 			:interval);
 	}	
 
@@ -1432,13 +1448,15 @@ end_stats2:
 	}
 	
 	/* Phase 2 (request statistics)
-	 *   - the following query generates statistics about how long it takes between receive a request
+	 *   - the following query generates statistics about how long it takes between receiving a request
 	 *     and a job being started.
 	 */
 	EXEC SQL DECLARE stats3 CURSOR FOR
 		SELECT  b.value, count(*),
-			AVG(b.timestamp - a.timestamp), STDDEV_POP(b.timestamp - a.timestamp),
-			MIN(b.timestamp - a.timestamp), MAX(b.timestamp - a.timestamp) FROM
+			AVG(TO_NUMBER(b.timestamp) - TO_NUMBER(a.timestamp)), 
+			STDDEV_POP(TO_NUMBER(b.timestamp) - TO_NUMBER(a.timestamp)),
+			MIN(TO_NUMBER(b.timestamp) - TO_NUMBER(a.timestamp)), 
+			MAX(TO_NUMBER(b.timestamp) - TO_NUMBER(a.timestamp)) FROM
 
 		/* request recieved */
 		(SELECT reqid, timestamp FROM dlf_messages
@@ -1448,7 +1466,8 @@ end_stats2:
 	
 		/* starting jobs */
 		(SELECT m.reqid, m.timestamp, p.value FROM dlf_messages m, dlf_num_param_values p
-			WHERE m.timestamp > TO_DATE(:ctime2, 'YYYYMMDDHH24MISS')
+			WHERE m.timestamp >  TO_DATE(:ctime2, 'YYYYMMDDHH24MISS')
+			AND   m.timestamp <= TO_DATE(:ctime3, 'YYYYMMDDHH24MISS')
 			AND   m.facility = :job_fac
 			AND   m.msg_no = 12
 			AND   m.id = p.id
