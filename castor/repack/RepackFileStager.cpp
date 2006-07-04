@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/06/20 09:40:57 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/07/04 13:41:28 $ $Author: felixehm $
  *
  *
  *
@@ -36,21 +36,9 @@ namespace castor {
 //------------------------------------------------------------------------------
 RepackFileStager::RepackFileStager(RepackServer* srv) throw ()
 {
-	/*
-  char *tmp = (char*) malloc(CA_MAXHOSTNAMELEN*sizeof(char));
-	
-	if ( !(tmp = getconfent((char*)CNS_CAT, (char*)CNS_HOST,0)) ){
-		castor::exception::Internal ex;
-		ex.getMessage() << "Unable to initialise FileListHelper with nameserver "
-		                << "entry in castor config file";
-		throw ex;	
-	}
-	m_ns = new std::string(tmp);
-  */
   ptr_server = srv;
 	m_filehelper = new FileListHelper(ptr_server->getNsName());
   m_dbhelper = new DatabaseHelper();	
-	//m_filehelper = new FileListHelper((*m_ns));
 }
 
 
@@ -68,7 +56,7 @@ RepackFileStager::~RepackFileStager() throw() {
 //------------------------------------------------------------------------------
 void RepackFileStager::run(void *param) throw() {
 	
-		/* Lets see, if good old pal DB has a Job for us */
+		/// Lets see, if good old pal DB has a Job for us */
     RepackSubRequest* sreq = NULL;
     try {
       sreq = m_dbhelper->checkSubRequestStatus(SUBREQUEST_READYFORSTAGING);
@@ -98,7 +86,7 @@ void RepackFileStager::run(void *param) throw() {
       freeRepackObj(sreq->requestID()); /// always delete from the top
       sreq = NULL;
 		}
-    //m_dbhelper->unlock();
+    m_dbhelper->unlock();
 }
 
 
@@ -115,28 +103,27 @@ void RepackFileStager::stop() throw() {
 //------------------------------------------------------------------------------
 void RepackFileStager::stage_files(RepackSubRequest* sreq) {
 
-	int rc=0;				// the return code for the stager_prepareToGet call.
+	int rc=0;				/// the return code for the stager_prepareToGet call.
 	int i,j;
 	std::string reqId = "";
 	_Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
 	castor::stager::StagePrepareToGetRequest req;
 	
 	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 29, 0, NULL);
-	/* get the Segs for this tape !*/
+	/// get the Segs for this tape !
 	if ( m_filehelper->getFileListSegs(sreq,cuuid) )
 		return;
 
   // ---------------------------------------------------------------
 	// This part has to be removed, if the stager also accepts only fileid
 	// as parameter. For now we have to get the paths first.
-
 	std::vector<std::string>* filelist = m_filehelper->getFilePathnames(sreq,cuuid);
 	std::vector<std::string>::iterator filename = filelist->begin();
 	// ---------------------------------------------------------------
-//	std::vector<u_signed64>* filelist = m_filehelper->getFileList(sreq,cuuid);
-//	std::vector<u_signed64>::iterator fileid;
-	
-	
+	//std::vector<u_signed64>* filelist = m_filehelper->getFileList(sreq,cuuid);
+	//std::vector<u_signed64>::iterator fileid;
+
+  	
   /** check, if we got something back */
   if ( filelist->size() == 0 ){
     castor::dlf::Param params[] =
