@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/06/02 08:31:18 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/07/04 14:11:58 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -120,7 +120,7 @@ RepackClient::~RepackClient() throw()
 //------------------------------------------------------------------------------
 bool RepackClient::parseInput(int argc, char** argv)
 {
-  const char* cmdParams = "o:aS:sR:V:P:h";
+  const char* cmdParams = "o:aS:sR:V:P:r:h";
   if (argc == 1){
     usage();
     return false;
@@ -131,6 +131,7 @@ bool RepackClient::parseInput(int argc, char** argv)
     {"Status", REQUIRED_ARGUMENT,NULL, 'S' },
     {"delete", REQUIRED_ARGUMENT,NULL, 'R' },
     {"volumeid", REQUIRED_ARGUMENT, NULL, 'V'},
+    {"restart", REQUIRED_ARGUMENT, NULL, 'r'},
     //{"poolid", REQUIRED_ARGUMENT, NULL, 'P'},
     {"archive", NO_ARGUMENT, 0, 'a'},
     /*{"library", REQUIRED_ARGUMENT, 0, OPT_LIBRARY_NAME},
@@ -171,6 +172,10 @@ bool RepackClient::parseInput(int argc, char** argv)
 	  case 's':
 		  cp.command = GET_STATUS_ALL;
 		  return true;
+    case 'r':
+      cp.vid = Coptarg;
+      cp.command = RESTART;
+      return true;
     case 'o':
       cp.serviceclass = Coptarg;
       break;
@@ -193,7 +198,7 @@ bool RepackClient::parseInput(int argc, char** argv)
 void RepackClient::usage() 
 {
 	std::cout << "Usage: repack -V [VID1:VID2..] [-o serviceclass] " << std::endl 
-            << "-P [PoolID] | -S [VID] | -h | -s | -R [VID1:VID2..]" << std::endl;
+            << "-P [PoolID] | -S [VID] | -h | -s | -R [VID1:VID2..] | -r [VID1:VID2..]" << std::endl;
 }
 
 
@@ -252,14 +257,24 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
   char cName[CA_MAXHOSTNAMELEN];
   struct passwd *pw = Cgetpwuid(getuid());
 
-  RepackRequest* rreq = new RepackRequest();
+  
   
   if ( gethostname(cName, CA_MAXHOSTNAMELEN) != 0 ){
   	std::cerr << "Cannot get hostname ! Aborting.." << std::endl;
-   	delete rreq;
   	return NULL;
   }
+  
+  /// be sure to repack to the default service class tape pool
+  if ( cp.command == REPACK && cp.serviceclass == NULL ){
+    std::string answer;
+    std::cout << "Do you want to repack to the tape pool specified in default repack service class? [ y\\n ] :";
+    std::cin >> answer;
+    if ( answer.compare("n") == 0 )
+      return NULL;
+  }
+  
 
+  RepackRequest* rreq = new RepackRequest();
   addTapes(rreq);
   rreq->setCommand(cp.command);
   
@@ -281,6 +296,8 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
   rreq->setUserName(pw->pw_name);
   rreq->setCreationTime(time(NULL));
   rreq->setMachine(cName);
+
+  
   if ( cp.serviceclass != NULL ) rreq->setServiceclass(cp.serviceclass);
   return rreq;
   
@@ -305,13 +322,14 @@ void RepackClient::run(int argc, char** argv)
     	return;
     }
    
+    //req->print();
 
     // creates a socket
     castor::io::ClientSocket s(m_defaultport, m_defaulthost);
     s.connect();
     // sends the request
     s.sendObject(*req);
-	castor::IObject* obj = s.readObject();
+    castor::IObject* obj = s.readObject();
 	
 	RepackAck* ack = dynamic_cast<castor::repack::RepackAck*>(obj);
 	if ( ack != 0 ){
@@ -356,8 +374,9 @@ void RepackClient::handleResponse(RepackAck* ack) {
 		  case GET_STATUS : 
        std::cout 
         << "Details for Request :" << std::endl
-        << "created\t\tmachine\t\tuser" << std::endl
-        << rreq->creationTime() << "\t" << rreq->machine() << "\t" << rreq->userName() 
+        << "created\t\tmachine\t\tuser\tservice class" << std::endl
+        << rreq->creationTime() << "\t" << rreq->machine() << "\t" 
+        << rreq->userName() << "\t" << rreq->serviceclass()
         << std::endl << std::endl; 
       
       case GET_STATUS_ALL : 
