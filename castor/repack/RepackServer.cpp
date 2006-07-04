@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/06/20 08:48:07 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/07/04 13:50:01 $ $Author: felixehm $
  *
  *
  *
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
       new castor::server::SignalThreadPool("Cleaner",
                                             new castor::repack::RepackCleaner(&server),
                                             0,
-                                            server.getPollTime()
+                                            10
                                           ));
 	  server.getThreadPool('C')->setNbThreads(1);
    
@@ -141,8 +141,10 @@ castor::repack::RepackServer::RepackServer() :
      {34, "RepackCleaner: No files found for cleanup phase"},
      {35, "RepackCleaner: Cleaner started"},
      {36, "RepackCleaner: Remove request sending failed"},
+     {37, "RepackCleaner: Restart Repack"},
      {40, "RepackMonitor: Changing status"},
      {41, "RepackMonitor: Stager query failed"},
+     {42, "RepackMonitor: Files in invalid status found"},
      {99, "TODO::MESSAGE"},
      {-1, ""}};
   castor::dlf::dlf_init("Repack", messages);
