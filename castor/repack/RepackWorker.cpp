@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2006/06/20 08:54:01 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2006/07/04 13:48:00 $ $Author: felixehm $
  *
  *
  *
@@ -130,6 +130,9 @@ void RepackWorker::run(void* param)
 
   case REMOVE_TAPE:       removeRequest(rreq);
                           break;
+  
+  case RESTART:           restart(rreq);
+                          break;
 
   case REPACK:            handleRepack(rreq);
                           ack.addRequest(rreq);
@@ -214,7 +217,7 @@ RepackRequest* RepackWorker::getStatus(RepackRequest* rreq) throw (castor::excep
   /** Get the SubRequest. We query by VID and recieve a full subrequest */
   std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
   RepackSubRequest* tmp = m_databasehelper->getSubRequestByVid( (*tape)->vid(), false );
-
+  //m_databasehelper->unlock();
   /// but we don't need the segment data for the client. -> remove them
 
   if ( tmp != NULL ) {
@@ -254,22 +257,58 @@ void RepackWorker::getStatusAll(RepackRequest* rreq) throw (castor::exception::I
 // Archives the finished tapes
 //------------------------------------------------------------------------------
 void RepackWorker::archiveSubRequests(RepackRequest* rreq) throw (castor::exception::Internal)
-{
+{ ///get all finished repack tapes
   std::vector<castor::repack::RepackSubRequest*>* result = 
             m_databasehelper->getAllSubRequestsStatus(SUBREQUEST_DONE);
   
   std::vector<RepackSubRequest*>::iterator tape = result->begin();
-    
+  /// for the answer we set the status to archived
   while ( tape != result->end() ){
     (*tape)->setStatus(SUBREQUEST_ARCHIVED);
     rreq->subRequest().push_back((*tape));
     tape++;
   }
   delete result;
+
+  /// now the real archive.
   m_databasehelper->archive();
+  //m_databasehelper->unlock();
 }
 
 
+
+
+
+//------------------------------------------------------------------------------
+// Removes a request from repack
+//------------------------------------------------------------------------------
+void RepackWorker::restart(RepackRequest* rreq) throw (castor::exception::Internal)
+{   
+
+    std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
+    
+    while ( tape != rreq->subRequest().end() ){
+      if ( (*tape) == NULL )
+        continue;
+      /// this DB method returns only running processes (no archived ones)
+      RepackSubRequest* tmp = 
+        m_databasehelper->getSubRequestByVid( (*tape)->vid(), false );
+
+      if (tmp != NULL ) {
+        Cuuid_t cuuid = stringtoCuuid(tmp->cuuid());
+        if ( tmp->status() == SUBREQUEST_ARCHIVED){
+          castor::exception::Internal ex;
+          ex.getMessage() << "This Tape is already archived (" << tmp->vid() << ")" 
+                          << std::endl;
+          throw ex;
+        }
+        tmp->setStatus(SUBREQUEST_RESTART);
+        m_databasehelper->updateSubRequest(tmp,false,cuuid);
+        freeRepackObj(tmp);
+      }
+      tape++;
+    }
+}
 
 
 
@@ -287,12 +326,14 @@ void RepackWorker::removeRequest(RepackRequest* rreq) throw (castor::exception::
 		RepackSubRequest* tmp = 
 			m_databasehelper->getSubRequestByVid( (*tape)->vid(), true );
     
-    Cuuid_t cuuid = stringtoCuuid((*tape)->cuuid());
+    
 
 		if ( tmp != NULL ) {
+      Cuuid_t cuuid = stringtoCuuid(tmp->cuuid());
 			tmp->setStatus(SUBREQUEST_READYFORCLEANUP);
       m_databasehelper->updateSubRequest(tmp,false,cuuid);
       freeRepackObj(tmp);
+      //m_databasehelper->unlock();
 		}
     tape++;
 	}
@@ -329,6 +370,7 @@ void RepackWorker::handleRepack(RepackRequest* rreq) throw (castor::exception::I
 	/* Go to DB, but only if tapes were found !*/
 	if ( tapecnt ){
 	  	m_databasehelper->storeRequest(rreq);
+      //m_databasehelper->unlock(); 
 	}
 		
 }

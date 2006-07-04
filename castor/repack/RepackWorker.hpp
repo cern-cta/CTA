@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/06/02 12:51:42 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/07/04 13:48:00 $ $Author: felixehm $
  *
  *
  *
@@ -122,6 +122,15 @@ namespace castor {
       */
     void removeRequest(RepackRequest* rreq) throw (castor::exception::Internal);
 
+
+
+    /**
+      *.Restarts a RepackSubRequest in the given RepackRequest. Note that 
+      * it is not checked if the repack process is finished or not.
+      * @param RepackRequest The request with the tapes to remove
+      * @throws castor::exception::Exception if an error occurs
+      */
+    void RepackWorker::restart(RepackRequest* rreq) throw (castor::exception::Internal);
 
     /**
       *.Removes a RepackSubRequest in the given RepackRequest. Note that 
