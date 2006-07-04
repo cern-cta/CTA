@@ -189,7 +189,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.63 $ $Release$ $Date: 2006/06/13 09:50:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.64 $ $Release$ $Date: 2006/07/04 15:40:48 $ $Author: felixehm $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -531,9 +531,15 @@ CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
   rtype INTEGER;
   rclient INTEGER;
   nb INTEGER;
+  repackVid VARCHAR2(2038);
 BEGIN
+
+  -- depending on the repackvid the new status is decided
+  SELECT SubRequest.repackvid INTO repackVid 
+   FROM SubRequest WHERE SubRequest.id = srId;
+
   -- update status of SubRequest
-  UPDATE SubRequest SET status = 8 -- FINISHED
+  UPDATE SubRequest SET status = decode(repackvid, NULL ,8, 12) -- FINISHED / REPACK
    WHERE id = srId RETURNING request INTO rid;
 
   -- Try to see whether another subrequest in the same

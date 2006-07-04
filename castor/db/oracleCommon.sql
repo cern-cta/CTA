@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.279 $ $Release$ $Date: 2006/06/22 08:59:52 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.280 $ $Release$ $Date: 2006/07/04 15:40:48 $ $Author: felixehm $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.279 $ $Date: 2006/06/22 08:59:52 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.280 $ $Date: 2006/07/04 15:40:48 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq;
@@ -342,9 +342,14 @@ CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
   rtype INTEGER;
   rclient INTEGER;
   nb INTEGER;
+  repackVid VARCHAR2(2048);
 BEGIN
+  -- depending on the repackvid the new status is decided
+  SELECT SubRequest.repackvid INTO repackVid 
+   FROM SubRequest WHERE SubRequest.id = srId;
+        
   -- update status of SubRequest
-  UPDATE SubRequest SET status = 8 -- FINISHED
+  UPDATE SubRequest SET status = decode(repackvid, NULL, 8, 12) -- FINISHED / REPACK
    WHERE id = srId RETURNING request INTO rid;
 
   -- Try to see whether another subrequest in the same
