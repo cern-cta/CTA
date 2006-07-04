@@ -74,8 +74,7 @@ namespace castor {
           cuuid = stringtoCuuid(tapelist->at(i)->cuuid());
           getStats(tapelist->at(i));
           m_dbhelper->unlock();
-          delete ( tapelist->at(i)->requestID());
-          freeRepackObj(tapelist->at(i));
+          freeRepackObj(tapelist->at(i)->requestID());
 	}
       }
       if ( tapelist2 != NULL ) {
@@ -84,8 +83,7 @@ namespace castor {
           cuuid = stringtoCuuid(tapelist2->at(i)->cuuid());
           getStats(tapelist2->at(i));
           m_dbhelper->unlock();
-          delete ( tapelist2->at(i)->requestID());
-          freeRepackObj(tapelist2->at(i));
+          freeRepackObj(tapelist2->at(i)->requestID());
         }
       }
 
@@ -117,8 +115,8 @@ namespace castor {
     Cuuid_t cuuid;
     cuuid = stringtoCuuid(sreq->cuuid());
     /** status counters */
-    int canbemig_status,stagein_status,waitingmig_status;
-    canbemig_status = stagein_status = waitingmig_status = 0;
+    int canbemig_status,stagein_status,waitingmig_status, stageout_status, invalid_status;
+    canbemig_status = stagein_status = waitingmig_status = stageout_status = invalid_status = 0;
    
     /** for stager request */
     struct stage_query_req request;
@@ -129,6 +127,8 @@ namespace castor {
     request.type = BY_REQID;
     request.param = (void*)sreq->cuuid().c_str();
     opts.stage_host = (char*)ptr_server->getStagerName().c_str();
+    opts.stage_port = 0;
+    opts.stage_version = 0;
     if ( sreq->requestID() != NULL )
       opts.service_class = (char*)sreq->requestID()->serviceclass().c_str();
     else {
@@ -152,6 +152,7 @@ namespace castor {
       {castor::dlf::Param("Error Message", sstrerror(serrno) ),
       castor::dlf::Param("Responses", nbresps )};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 2, params);
+      //if ( nbresps) free_filequery_resp(responses, nbresps);
       return;
     }
 /*    
@@ -171,27 +172,36 @@ namespace castor {
         {castor::dlf::Param("Error Message", responses[i].errorMessage)};
          castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 1, params);
       }
-      else {
-        switch ( responses[i].status ){
-          case FILE_CANBEMIGR  : canbemig_status++;  break;
-          case FILE_STAGEIN    : stagein_status++;   break;
-          case FILE_WAITINGMIGR: waitingmig_status++;break;
-        }
+      switch ( responses[i].status ){
+        case FILE_CANBEMIGR  : canbemig_status++;  break;
+        case FILE_STAGEIN    : stagein_status++;   break;
+        case FILE_WAITINGMIGR: waitingmig_status++;break;
+        case FILE_STAGEOUT:    stageout_status++;break;
+        case FILE_INVALID_STATUS: invalid_status++; break;
       }
-      free_stager_response(&responses[i]);
+      //free_stager_response(&responses[i]);
     }
-    free (responses);
-    
+    //free (responses);
+
+    free_filequery_resp(responses, nbresps);
+
+    if ( invalid_status ) {
+      stage_trace(3,"Found %d files in invalid status", invalid_status);
+      castor::dlf::Param params[] =
+       {castor::dlf::Param("Number", invalid_status)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 42, 1, params);
+    }
+
     /// we only update the subrequest, if something has changed */
     if ( (waitingmig_status + canbemig_status) !=  sreq->filesMigrating() 
-          || stagein_status != sreq->filesStaging()
+          || stagein_status != sreq->filesStaging() &&  invalid_status
     )
     {
 
       sreq->setFilesMigrating( waitingmig_status + canbemig_status );
       sreq->setFilesStaging( stagein_status );
   
-      /// we just change the status from staging, if we find migration candidates
+      /// if we find migration candidates, we just change the status from staging, 
       ///    or if all files are staged 
       
       if ( waitingmig_status + canbemig_status 
@@ -204,7 +214,8 @@ namespace castor {
         castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 2, params);
       }
       
-      else if ( !(waitingmig_status + canbemig_status + stagein_status ) ) {
+      else if ( !(waitingmig_status + canbemig_status + stagein_status + stageout_status + invalid_status) )
+      {
         sreq->setStatus(SUBREQUEST_READYFORCLEANUP);
         castor::dlf::Param params[] =
         {castor::dlf::Param("VID", sreq->vid()),
