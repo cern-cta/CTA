@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      RepackCleaner.cpp
+ *                      RepackCleaner.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -57,11 +57,30 @@ namespace castor {
 	    virtual void stop() throw();
 		
 		private:
-			/**
-			 * Retrieves the SubRequestStatus from the DB
+			
+
+      /** 
+       * Restarts a Repack Process. It removes the segments from the RepackSubRequest and sets
+       * its status to SUBREQUEST_READYFORSTAGING
+       * @param sreq The RepackSubRequest to restart
+       * @throws exception in case on an error.
+       */
+      void RepackCleaner::restartRepack(RepackSubRequest* sreq) throw(castor::exception::Internal);
+
+      /**
+			 * Finishes a RepackSubRequest.It calls 'removeFilesFromStager' to remove 
+       * the files from stager. Then the status is set to SUBREQUEST_DONE and updated in the DB.
+       * @param sreq The RepackSubRequest to cleanup
+       * @throws exception in case on an error.
 			 */
 			int cleanupTape(RepackSubRequest* sreq) throw(castor::exception::Internal);
-		
+		  
+
+      /**
+        * Removes the files for this RepackSubRequest from the stager. In fact
+        * it sends a stage_rm command with the filelist.
+        */
+      void removeFilesFromStager(RepackSubRequest* sreq) throw(castor::exception::Internal);
 		
 			/**
 			 * The DatabaseHelper for updatting finished jobs in the Repack Tables
