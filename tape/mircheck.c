@@ -85,8 +85,7 @@ int checktype;
         strcmp (devtype, "9940") == 0 ||
         strcmp (devtype, "994B") == 0 ||
         strcmp (devtype, "T10000") == 0 ||
-        strcmp (devtype, "LTO") == 0 ||
-        strcmp (devtype, "3592") == 0) {
+        strcmp (devtype, "LTO") == 0) { 
         
         while (p < endpage) {
             parmcode = *p << 8 | *(p+1);
