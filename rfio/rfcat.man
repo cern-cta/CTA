@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfcat.man,v 1.1 2002/12/09 12:59:01 baud Exp $
+.\" $Id: rfcat.man,v 1.2 2006/07/05 14:36:17 riojac3 Exp $
 .\"
-.\" @(#)$RCSfile: rfcat.man,v $ $Revision: 1.1 $ $Date: 2002/12/09 12:59:01 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfcat.man,v $ $Revision: 1.2 $ $Date: 2006/07/05 14:36:17 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2001-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFCAT 1 "$Date: 2002/12/09 12:59:01 $" CASTOR "Rfio User Commands"
+.TH RFCAT 1 "$Date: 2006/07/05 14:36:17 $" CASTOR "Rfio User Commands"
 .SH NAME
 rfcat \- Remote file concatenation to standard output
 .SH SYNOPSIS
@@ -30,6 +30,22 @@ or an HSM filename /castor/...
 With no filename, or when
 .I filename
 is -, read standard input.
+
+.LP
+For castor files we can use as remote file the new Turl sintax, there are two way to specify it:
+.LP
+ 'rfio://[stagehost][:port]/?[svcClass=MySvcClass&][castorVersion=MyCastorVersion&]path=/castor/cern.ch/user/n/nobody/Myfile' 
+.LP
+.B or
+.LP
+ 'rfio://[stagehost][:port]/[/castor/cern.ch/user/n/nobody/file][?[svcClass=MySvcClass&][castorVersion=MyCastorVersion]]'
+.LP
+If there is the pamameter "path", it must be the last one. The order of the other option is not taken into account.
+.LP
+The path must be specified as path in the parameters or before the parameters.
+Of course the old Rfio sintax (rfio://[diskserver][:port]/path) is still valid.
+.LP
+
 .SH RETURN CODES
 \
 .br

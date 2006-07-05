@@ -1,5 +1,5 @@
 .\"
-.\" $Id: rfrm.man,v 1.4 2001/09/26 09:28:45 jdurand Exp $
+.\" $Id: rfrm.man,v 1.5 2006/07/05 14:36:18 riojac3 Exp $
 .\"
 .\" @(#)rfrm.man	1.1 09/07/98     CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 1998 by CERN/IT/PDP
@@ -39,6 +39,22 @@ argument is either a remote path name of the form:
 .IB hostname : path
 .LP
 or a local path name (not containing the :/ character combination).
+
+.LP
+For castor files we can use as remote file the new Turl sintax, there are two way to specify it:
+.LP
+ 'rfio://[stagehost][:port]/?[svcClass=MySvcClass&][castorVersion=MyCastorVersion&]path=/castor/cern.ch/user/n/nobody/Myfile' 
+.LP
+.B or
+.LP
+ 'rfio://[stagehost][:port]/[/castor/cern.ch/user/n/nobody/file][?[svcClass=MySvcClass&][castorVersion=MyCastorVersion]]'
+.LP
+If there is the pamameter "path", it must be the last one. The order of the other option is not taken into account.
+.LP
+The path must be specified as path in the parameters or before the parameters.
+Of course the old Rfio sintax (rfio://[diskserver][:port]/path) is still valid.
+.LP
+
 .SH "OPTIONS"
 The following options apply to
 .B rfrm:

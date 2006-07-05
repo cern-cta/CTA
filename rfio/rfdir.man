@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfdir.man,v 1.5 2002/02/13 11:11:43 baud Exp $
+.\" $Id: rfdir.man,v 1.6 2006/07/05 14:36:18 riojac3 Exp $
 .\"
 .\" @(#)rfdir.man	1.2 09/21/98     CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 1998-2002 by CERN/IT/PDP
 .\" All rights reserved
 .\"
-.TH RFDIR 1 "$Date: 2002/02/13 11:11:43 $" CASTOR "Rfio User Commands"
+.TH RFDIR 1 "$Date: 2006/07/05 14:36:18 $" CASTOR "Rfio User Commands"
 .SH NAME
 rfdir \- Remote directory list
 .SH SYNOPSIS
@@ -34,6 +34,22 @@ command is a full directory listing
 similar to that of the
 .BR "ls -al"
 command for listing local files or directories.
+.LP
+
+For castor files we can use as remote file the new Turl sintax, there are two way to specify it:
+.LP
+ 'rfio://[stagehost][:port]/?[svcClass=MySvcClass&][castorVersion=MyCastorVersion&]path=/castor/cern.ch/user/n/nobody/Myfile' 
+.LP
+.B or
+.LP
+ 'rfio://[stagehost][:port]/[/castor/cern.ch/user/n/nobody/file][?[svcClass=MySvcClass&][castorVersion=MyCastorVersion]]'
+.LP
+If there is the pamameter "path", it must be the last one. The order of the other option is not taken into account.
+.LP
+The path must be specified as path in the parameters or before the parameters.
+Of course the old Rfio sintax (rfio://[diskserver][:port]/path) is still valid.
+.LP
+
 .SH "SEE ALSO"
 .BR rcp(1), 
 .BR rfiod(1)

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfcp.man,v 1.14 2006/07/03 08:11:55 gtaur Exp $
+.\" $Id: rfcp.man,v 1.15 2006/07/05 14:36:18 riojac3 Exp $
 .\"
-.\" @(#)$RCSfile: rfcp.man,v $ $Revision: 1.14 $ $Date: 2006/07/03 08:11:55 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand
+.\" @(#)$RCSfile: rfcp.man,v $ $Revision: 1.15 $ $Date: 2006/07/05 14:36:18 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand
 .\" Copyright (C) 1998-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFCP 1 "$Date: 2006/07/03 08:11:55 $" CASTOR "Rfio User Commands"
+.TH RFCP 1 "$Date: 2006/07/05 14:36:18 $" CASTOR "Rfio User Commands"
 .SH NAME
 rfcp \- Remote file copy
 .SH SYNOPSIS
@@ -57,21 +57,6 @@ argument is either a remote file name of the form:
 or a local file name (not containing the :/ character combination). The standard input is supported with the
 .BI \-
 character. Then directory in output is not supported.
-.LP
-For castor files we can use as remote file the new Turl sintax, there are two way to specify it:
-.LP
- 'rfio://[stagehost][:port]/?[svcClass=MySvcClass&][castorVersion=MyCastorVersion&]path=/castor/cern.ch/user/n/nobody/Myfile' 
-.LP
-.B or
-.LP
- 'rfio://[stagehost][:port]/[/castor/cern.ch/user/n/nobody/file][?[svcClass=MySvcClass&][castorVersion=MyCastorVersion]]'
-.LP
-If there is the pamameter "path", it must be the last one. The order of the other option is not taken into account.
-.LP
-The path must be specified as path in the parameters or before the parameters.
-Of course the old Rfio sintax (rfio://[diskserver][:port]/path) is still valid.
-.LP
-
 .SH OPTIONS
 .TP
 .BI \-a
