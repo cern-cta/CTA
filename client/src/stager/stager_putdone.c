@@ -56,7 +56,7 @@ main(int argc, char *argv[]) {
   memset(&errbuf,  '\0', sizeof(errbuf));
   args.opts.stage_host = NULL;
   args.opts.service_class = NULL;
-  args.opts.stage_version=0;
+  args.opts.stage_version=2;
   args.opts.stage_port=0;
   
   errflg =  cmd_parse(argc, argv, &args);

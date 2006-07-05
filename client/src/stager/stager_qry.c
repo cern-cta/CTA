@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.20 2006/04/24 13:38:43 sponcec3 Exp $
+ * $Id: stager_qry.c,v 1.21 2006/07/05 14:38:31 riojac3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.20 $ $Date: 2006/04/24 13:38:43 $ $Author: sponcec3 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.21 $ $Date: 2006/07/05 14:38:31 $ $Author: riojac3 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -185,7 +185,7 @@ void handleFileQuery(int argc, char *argv[], int nbArgs) {
 #endif
   args.opts.stage_host = NULL;
   args.opts.service_class = NULL;
-  args.opts.stage_version=0;
+  args.opts.stage_version=2;
   args.opts.stage_port=0;
   args.nbreqs = nbArgs;
 

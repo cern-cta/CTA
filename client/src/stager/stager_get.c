@@ -1,5 +1,5 @@
 /*
- * $Id: stager_get.c,v 1.8 2006/04/11 14:30:20 gtaur Exp $
+ * $Id: stager_get.c,v 1.9 2006/07/05 14:38:31 riojac3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_get.c,v $ $Revision: 1.8 $ $Date: 2006/04/11 14:30:20 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_get.c,v $ $Revision: 1.9 $ $Date: 2006/07/05 14:38:31 $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -118,7 +118,7 @@ int main(argc, argv)
   opts.stage_host = NULL;
   opts.service_class = NULL;
   opts.stage_port=0;
-  opts.stage_version=0;
+  opts.stage_version=2;
 
   usertag = NULL;
 

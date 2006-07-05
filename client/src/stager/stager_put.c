@@ -57,7 +57,7 @@ main(int argc, char *argv[]) {
   
   args.opts.stage_host = NULL;
   args.opts.service_class = NULL;
-  args.opts.stage_version=0;
+  args.opts.stage_version=2;
   args.opts.stage_port=0;
   
  /* Parsing the command line */

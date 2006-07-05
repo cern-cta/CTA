@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_rm.c,v $ $Revision: 1.2 $ $Release$ $Date: 2006/04/07 10:14:31 $ $Author: gtaur $
+ * @(#)$RCSfile: stager_rm.c,v $ $Revision: 1.3 $ $Release$ $Date: 2006/07/05 14:38:31 $ $Author: riojac3 $
  *
  * command line for stager_rm
  *
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
 
   opts.stage_host = NULL;
   opts.service_class = NULL;
-  opts.stage_version=0;
+  opts.stage_version=2;
   opts.stage_port=0;
   ret=getDefaultForGlobal (&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
 
