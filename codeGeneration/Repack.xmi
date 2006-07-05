@@ -1,277 +1,297 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<XMI xmlns:UML="http://schema.omg.org/spec/UML/1.3" verified="false" timestamp="2006-03-17T15:42:29" xmi.version="1.2" >
+<XMI xmlns:UML="http://schema.omg.org/spec/UML/1.3" verified="false" timestamp="2006-07-05T14:13:56" xmi.version="1.2" >
  <XMI.header>
   <XMI.documentation>
    <XMI.exporter>umbrello uml modeller http://uml.sf.net</XMI.exporter>
-   <XMI.exporterVersion>1.4.2</XMI.exporterVersion>
+   <XMI.exporterVersion>1.5.3</XMI.exporterVersion>
    <XMI.exporterEncoding>UnicodeUTF8</XMI.exporterEncoding>
   </XMI.documentation>
   <XMI.metamodel xmi.name="UML" href="UML.xml" xmi.version="1.3" />
  </XMI.header>
  <XMI.content>
-  <UML:Model isSpecification="false" isLeaf="false" isRoot="false" isAbstract="false" >
+  <UML:Model isSpecification="false" isLeaf="false" isRoot="false" xmi.id="m1" isAbstract="false" name="UML Model" >
    <UML:Namespace.ownedElement>
-    <UML:Stereotype isSpecification="false" isLeaf="false" visibility="public" xmi.id="126756" isRoot="false" isAbstract="false" name="datatype" />
-    <UML:Stereotype isSpecification="false" isLeaf="false" visibility="public" xmi.id="126768" isRoot="false" isAbstract="false" name="interface" />
-    <UML:DataType stereotype="126756" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126786" isRoot="false" isAbstract="false" name="IObject*" />
-    <UML:DataType stereotype="126756" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126785" isRoot="false" isAbstract="false" name="int" />
-    <UML:DataType stereotype="126756" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126783" isRoot="false" isAbstract="false" name="void" />
-    <UML:DataType stereotype="126756" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126794" isRoot="false" isAbstract="false" name="u_signed64" />
-    <UML:DataType stereotype="126756" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126938" isRoot="false" isAbstract="false" name="unsigned long" />
-    <UML:DataType stereotype="126756" isSpecification="false" isLeaf="false" visibility="public" xmi.id="127052" isRoot="false" isAbstract="false" name="string" />
-    <UML:Package isSpecification="false" isLeaf="false" visibility="public" xmi.id="126769" isRoot="false" isAbstract="false" name="castor" >
+    <UML:Stereotype isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="126756" isRoot="false" isAbstract="false" name="datatype" />
+    <UML:Stereotype isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="126768" isRoot="false" isAbstract="false" name="interface" />
+    <UML:Stereotype isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="128139" isRoot="false" isAbstract="false" name="constructor" />
+    <UML:Stereotype isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="128140" isRoot="false" isAbstract="false" name="friend" />
+    <UML:Stereotype isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="128141" isRoot="false" isAbstract="false" name="virtual" />
+    <UML:DataType stereotype="126756" isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="126786" isRoot="false" isAbstract="false" name="IObject*" />
+    <UML:DataType stereotype="126756" isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="126785" isRoot="false" isAbstract="false" name="int" />
+    <UML:DataType stereotype="126756" isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="126783" isRoot="false" isAbstract="false" name="void" />
+    <UML:DataType stereotype="126756" isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="126794" isRoot="false" isAbstract="false" name="u_signed64" />
+    <UML:DataType stereotype="126756" isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="126938" isRoot="false" isAbstract="false" name="unsigned long" />
+    <UML:DataType stereotype="126756" isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="127052" isRoot="false" isAbstract="false" name="string" />
+    <UML:Package isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="126769" isRoot="false" isAbstract="false" name="castor" >
      <UML:Namespace.ownedElement>
-      <UML:Interface stereotype="126768" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126767" isRoot="false" isAbstract="true" name="IPersistent" />
-      <UML:Interface stereotype="126768" comment="Base class for all objects Implements the id methods" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126773" isRoot="false" isAbstract="true" name="IObject" >
+      <UML:Interface stereotype="126768" isSpecification="false" isLeaf="false" visibility="public" namespace="126769" xmi.id="126767" isRoot="false" isAbstract="true" name="IPersistent" />
+      <UML:Interface stereotype="126768" comment="Base class for all objects Implements the id methods" isSpecification="false" isLeaf="false" visibility="public" namespace="126769" xmi.id="126773" isRoot="false" isAbstract="true" name="IObject" >
        <UML:Classifier.feature>
-        <UML:Operation comment="Sets the id of the object" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126775" isRoot="false" isAbstract="true" name="setId" >
+        <UML:Operation comment="Sets the id of the object" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126775" isRoot="false" isAbstract="true" isQuery="false" name="setId" >
          <UML:BehavioralFeature.parameter>
-          <UML:Parameter comment="The new id" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126776" isRoot="false" value="" type="126794" isAbstract="false" name="id" />
+          <UML:Parameter comment="The new id" isSpecification="false" visibility="public" xmi.id="126776" value="" type="126794" name="id" />
          </UML:BehavioralFeature.parameter>
         </UML:Operation>
-        <UML:Operation comment="gets the id of the object" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126777" isRoot="false" isAbstract="true" name="id const" >
+        <UML:Operation comment="gets the id of the object" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126777" isRoot="false" isAbstract="true" isQuery="false" name="id const" >
          <UML:BehavioralFeature.parameter>
-          <UML:Parameter kind="return" xmi.id="127992" type="126794" />
+          <UML:Parameter kind="return" xmi.id="128471" type="126794" />
          </UML:BehavioralFeature.parameter>
         </UML:Operation>
-        <UML:Operation comment="Gets the type of the object" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126778" isRoot="false" isAbstract="true" name="type const" >
+        <UML:Operation comment="Gets the type of the object" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126778" isRoot="false" isAbstract="true" isQuery="false" name="type const" >
          <UML:BehavioralFeature.parameter>
-          <UML:Parameter kind="return" xmi.id="127993" type="126785" />
+          <UML:Parameter kind="return" xmi.id="128472" type="126785" />
          </UML:BehavioralFeature.parameter>
         </UML:Operation>
-        <UML:Operation comment="virtual method to clone any object" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126779" isRoot="false" isAbstract="true" name="clone" >
+        <UML:Operation comment="virtual method to clone any object" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126779" isRoot="false" isAbstract="true" isQuery="false" name="clone" >
          <UML:BehavioralFeature.parameter>
-          <UML:Parameter kind="return" xmi.id="127994" type="126786" />
+          <UML:Parameter kind="return" xmi.id="128473" type="126786" />
          </UML:BehavioralFeature.parameter>
         </UML:Operation>
        </UML:Classifier.feature>
       </UML:Interface>
-      <UML:Interface stereotype="126768" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126781" isRoot="false" isAbstract="true" name="IStreamable" />
-      <UML:Package isSpecification="false" isLeaf="false" visibility="public" xmi.id="126804" isRoot="false" isAbstract="false" name="repack" >
+      <UML:Interface stereotype="126768" isSpecification="false" isLeaf="false" visibility="public" namespace="126769" xmi.id="126781" isRoot="false" isAbstract="true" name="IStreamable" />
+      <UML:Package isSpecification="false" isLeaf="false" visibility="public" namespace="126769" xmi.id="126804" isRoot="false" isAbstract="false" name="repack" >
        <UML:Namespace.ownedElement>
-        <UML:Class isSpecification="false" isLeaf="false" visibility="public" xmi.id="126808" isRoot="false" isAbstract="false" name="RepackSubRequest" >
+        <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="126804" xmi.id="126808" isRoot="false" isAbstract="false" name="RepackSubRequest" >
          <UML:Classifier.feature>
-          <UML:Attribute comment="The Tape Volumes for one Request." isSpecification="false" isLeaf="false" visibility="public" xmi.id="126913" isRoot="false" initialValue="" type="127052" isAbstract="false" name="vid" />
-          <UML:Attribute comment="The full size of the request in Bytes." isSpecification="false" isLeaf="false" visibility="public" xmi.id="127000" isRoot="false" initialValue="" type="126794" isAbstract="false" name="xsize" />
-          <UML:Attribute isSpecification="false" isLeaf="false" visibility="public" xmi.id="127720" isRoot="false" initialValue="" type="126785" isAbstract="false" name="status" />
-          <UML:Attribute isSpecification="false" isLeaf="false" visibility="public" xmi.id="127874" isRoot="false" initialValue="" type="127052" isAbstract="false" name="cuuid" />
+          <UML:Attribute comment="The Tape Volumes for one Request." isSpecification="false" visibility="public" xmi.id="126913" type="127052" name="vid" />
+          <UML:Attribute comment="The full size of the request in Bytes." isSpecification="false" visibility="public" xmi.id="127000" type="126794" name="xsize" />
+          <UML:Attribute isSpecification="false" visibility="public" xmi.id="127720" type="126785" name="status" />
+          <UML:Attribute isSpecification="false" visibility="public" xmi.id="127874" type="127052" name="cuuid" />
+          <UML:Attribute comment="The amount files which are still being migrated to tape." isSpecification="false" visibility="public" xmi.id="128071" type="128072" name="filesMigrating" />
+          <UML:Attribute comment="The amount of file to be staged." isSpecification="false" visibility="public" xmi.id="128085" type="128072" name="filesStaging" />
+          <UML:Attribute isSpecification="false" visibility="public" xmi.id="128101" type="128072" name="files" />
+          <UML:Attribute isSpecification="false" visibility="public" xmi.id="128324" type="128072" name="filesFailed" />
          </UML:Classifier.feature>
         </UML:Class>
-        <UML:Class isSpecification="false" isLeaf="false" visibility="public" xmi.id="126812" isRoot="false" isAbstract="false" name="RepackSegment" >
+        <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="126804" xmi.id="126812" isRoot="false" isAbstract="false" name="RepackSegment" >
          <UML:Classifier.feature>
-          <UML:Attribute isSpecification="false" isLeaf="false" visibility="public" xmi.id="126896" isRoot="false" initialValue="" type="126794" isAbstract="false" name="fileid" />
-          <UML:Attribute isSpecification="false" isLeaf="false" visibility="public" xmi.id="126903" isRoot="false" initialValue="" type="126785" isAbstract="false" name="compression" />
-          <UML:Attribute isSpecification="false" isLeaf="false" visibility="public" xmi.id="127888" isRoot="false" initialValue="" type="126794" isAbstract="false" name="segsize" />
-          <UML:Attribute isSpecification="false" isLeaf="false" visibility="public" xmi.id="127895" isRoot="false" initialValue="" type="126794" isAbstract="false" name="filesec" />
+          <UML:Attribute isSpecification="false" visibility="public" xmi.id="126896" type="126794" name="fileid" />
+          <UML:Attribute isSpecification="false" visibility="public" xmi.id="126903" type="126785" name="compression" />
+          <UML:Attribute isSpecification="false" visibility="public" xmi.id="127888" type="126794" name="segsize" />
+          <UML:Attribute isSpecification="false" visibility="public" xmi.id="127895" type="126794" name="filesec" />
+          <UML:Attribute isSpecification="false" visibility="public" xmi.id="128142" type="126785" name="copyno" />
          </UML:Classifier.feature>
         </UML:Class>
-        <UML:Class isSpecification="false" isLeaf="false" visibility="public" xmi.id="127239" isRoot="false" isAbstract="false" name="RepackRequest" >
+        <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="126804" xmi.id="127239" isRoot="false" isAbstract="false" name="RepackRequest" >
          <UML:Classifier.feature>
-          <UML:Attribute isSpecification="false" isLeaf="false" visibility="public" xmi.id="127257" isRoot="false" initialValue="" type="127052" isAbstract="false" name="machine" />
-          <UML:Attribute isSpecification="false" isLeaf="false" visibility="public" xmi.id="127261" isRoot="false" initialValue="" type="127052" isAbstract="false" name="userName" />
-          <UML:Attribute isSpecification="false" isLeaf="false" visibility="public" xmi.id="127265" isRoot="false" initialValue="" type="126938" isAbstract="false" name="creationTime" />
-          <UML:Attribute comment="The tape pool to be repacked" isSpecification="false" isLeaf="false" visibility="public" xmi.id="127013" isRoot="false" initialValue="" type="127052" isAbstract="false" name="pool" />
-          <UML:Attribute isSpecification="false" isLeaf="false" visibility="public" xmi.id="127509" isRoot="false" initialValue="" type="126794" isAbstract="false" name="pid" />
-          <UML:Attribute isSpecification="false" isLeaf="false" visibility="public" xmi.id="127866" isRoot="false" initialValue="" type="126785" isAbstract="false" name="command" />
+          <UML:Attribute comment="The machine name from which the request is send." isSpecification="false" visibility="public" xmi.id="127257" type="127052" name="machine" />
+          <UML:Attribute comment="The username of the user, who submits the request." isSpecification="false" visibility="public" xmi.id="127261" type="127052" name="userName" />
+          <UML:Attribute comment="The creation time of the request" isSpecification="false" visibility="public" xmi.id="127265" type="126938" name="creationTime" />
+          <UML:Attribute comment="The service class to where the file have to be written. It is not possible to specify directly the target tapes or tapepools. By default, the files are written to the tapepool belonging to the repack service class specified in the castor config file." isSpecification="false" visibility="public" xmi.id="127013" type="127052" name="serviceclass" />
+          <UML:Attribute isSpecification="false" visibility="public" xmi.id="127509" type="126794" name="pid" />
+          <UML:Attribute isSpecification="false" visibility="public" xmi.id="127866" type="126785" name="command" />
          </UML:Classifier.feature>
         </UML:Class>
-        <UML:Class isSpecification="false" isLeaf="false" visibility="public" xmi.id="127790" isRoot="false" isAbstract="false" name="RepackAck" >
+        <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="126804" xmi.id="127790" isRoot="false" isAbstract="false" name="RepackAck" >
          <UML:Classifier.feature>
-          <UML:Attribute isSpecification="false" isLeaf="false" visibility="public" xmi.id="127941" isRoot="false" initialValue="" type="126785" isAbstract="false" name="errorCode" />
-          <UML:Attribute isSpecification="false" isLeaf="false" visibility="public" xmi.id="127948" isRoot="false" initialValue="" type="127052" isAbstract="false" name="errorMessage" />
+          <UML:Attribute isSpecification="false" visibility="public" xmi.id="127941" type="126785" name="errorCode" />
+          <UML:Attribute isSpecification="false" visibility="public" xmi.id="127948" type="127052" name="errorMessage" />
          </UML:Classifier.feature>
         </UML:Class>
        </UML:Namespace.ownedElement>
       </UML:Package>
      </UML:Namespace.ownedElement>
     </UML:Package>
-    <UML:Generalization isSpecification="false" child="126808" visibility="public" xmi.id="126822" parent="126773" discriminator="" name="" />
-    <UML:Generalization isSpecification="false" child="126808" visibility="public" xmi.id="126855" parent="126767" discriminator="" name="" />
-    <UML:Generalization isSpecification="false" child="126808" visibility="public" xmi.id="126985" parent="126781" discriminator="" name="" />
-    <UML:Generalization isSpecification="false" child="126812" visibility="public" xmi.id="126831" parent="126773" discriminator="" name="" />
-    <UML:Generalization isSpecification="false" child="126812" visibility="public" xmi.id="126864" parent="126767" discriminator="" name="" />
-    <UML:Generalization isSpecification="false" child="127239" visibility="public" xmi.id="127333" parent="126767" discriminator="" name="" />
-    <UML:Generalization isSpecification="false" child="127239" visibility="public" xmi.id="127444" parent="126781" discriminator="" name="" />
-    <UML:Generalization isSpecification="false" child="127239" visibility="public" xmi.id="127497" parent="126773" discriminator="" name="" />
-    <UML:Association isSpecification="false" visibility="public" xmi.id="126873" name="" >
+    <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="m1" xmi.id="128072" isRoot="false" isAbstract="false" name="unsigned int" />
+    <UML:Abstraction isSpecification="false" visibility="public" namespace="m1" xmi.id="126822" client="126808" name="" supplier="126773" />
+    <UML:Abstraction isSpecification="false" visibility="public" namespace="m1" xmi.id="126855" client="126808" name="" supplier="126767" />
+    <UML:Abstraction isSpecification="false" visibility="public" namespace="m1" xmi.id="126985" client="126808" name="" supplier="126781" />
+    <UML:Abstraction isSpecification="false" visibility="public" namespace="m1" xmi.id="126831" client="126812" name="" supplier="126773" />
+    <UML:Abstraction isSpecification="false" visibility="public" namespace="m1" xmi.id="126864" client="126812" name="" supplier="126767" />
+    <UML:Abstraction isSpecification="false" visibility="public" namespace="m1" xmi.id="127333" client="127239" name="" supplier="126767" />
+    <UML:Abstraction isSpecification="false" visibility="public" namespace="m1" xmi.id="127444" client="127239" name="" supplier="126781" />
+    <UML:Abstraction isSpecification="false" visibility="public" namespace="m1" xmi.id="127497" client="127239" name="" supplier="126773" />
+    <UML:Association isSpecification="false" visibility="public" namespace="m1" xmi.id="126873" name="" >
      <UML:Association.connection>
-      <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="126874" aggregation="none" type="126812" name="" multiplicity="1..n" />
-      <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="126875" aggregation="none" type="126808" name="" multiplicity="1" />
+      <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="126874" aggregation="none" type="126812" name="segment" multiplicity="1..n" />
+      <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="126875" aggregation="none" type="126808" name="vid" multiplicity="1" />
      </UML:Association.connection>
     </UML:Association>
-    <UML:Association isSpecification="false" visibility="public" xmi.id="127124" name="" >
+    <UML:Association isSpecification="false" visibility="public" namespace="m1" xmi.id="127124" name="" >
      <UML:Association.connection>
       <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="127125" aggregation="none" type="127052" name="" />
       <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="127126" aggregation="none" type="126808" name="" multiplicity="1..n" />
      </UML:Association.connection>
     </UML:Association>
-    <UML:Association isSpecification="false" visibility="public" xmi.id="127313" name="" >
+    <UML:Association isSpecification="false" visibility="public" namespace="m1" xmi.id="127313" name="" >
      <UML:Association.connection>
-      <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="127314" aggregation="none" type="126808" name="" multiplicity="1..n" />
-      <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="127315" aggregation="none" type="127239" name="" multiplicity="1" />
+      <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="127314" aggregation="none" type="126808" name="subRequest" multiplicity="1..n" />
+      <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="127315" aggregation="none" type="127239" name="requestID" multiplicity="1" />
      </UML:Association.connection>
     </UML:Association>
-    <UML:Generalization isSpecification="false" child="127790" visibility="public" xmi.id="127800" parent="126781" discriminator="" name="" />
-    <UML:Association isSpecification="false" visibility="public" xmi.id="127812" name="" >
+    <UML:Abstraction isSpecification="false" visibility="public" namespace="m1" xmi.id="127800" client="127790" name="" supplier="126781" />
+    <UML:Association isSpecification="false" visibility="public" namespace="m1" xmi.id="127812" name="" >
      <UML:Association.connection>
       <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="127813" aggregation="none" type="127790" name="" />
-      <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="127814" aggregation="none" type="127239" name="" multiplicity="1..n" />
+      <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="127814" aggregation="none" type="127239" name="request" multiplicity="1..n" />
      </UML:Association.connection>
     </UML:Association>
-    <UML:Generalization isSpecification="false" child="127790" visibility="public" xmi.id="127983" parent="126773" discriminator="" name="" />
+    <UML:Abstraction isSpecification="false" visibility="public" namespace="m1" xmi.id="127983" client="127790" name="" supplier="126773" />
    </UML:Namespace.ownedElement>
   </UML:Model>
  </XMI.content>
  <XMI.extensions xmi.extender="umbrello" >
-  <docsettings viewid="126772" documentation="" uniqueid="127994" />
+  <docsettings viewid="126780" documentation="" uniqueid="128473" />
   <diagrams>
-   <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="946" snapy="10" showatts="1" xmi.id="126766" documentation="" type="402" showops="1" showpackage="0" name="Persistency" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="883" >
+   <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1036" snapy="10" showatts="1" xmi.id="126766" documentation="" type="402" showops="1" showpackage="0" name="Persistency" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="881" >
     <widgets>
-     <interfacewidget usesdiagramfillcolour="0" width="135" usesdiagramusefillcolour="0" x="332" linecolour="#ff0000" y="43" drawascircle="0" showopsigs="600" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="52" usefillcolor="1" isinstance="0" xmi.id="126767" showoperations="1" showpackage="1" showscope="1" font="Bitstream Charter,12,-1,5,75,1,0,0,0,0" />
-     <classwidget usesdiagramfillcolour="0" width="154" showattsigs="601" usesdiagramusefillcolour="0" x="382" linecolour="#ff0000" y="380" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="115" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="126808" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Bitstream Charter,12,-1,5,75,0,0,0,0,0" />
-     <classwidget usesdiagramfillcolour="0" width="170" showattsigs="601" usesdiagramusefillcolour="0" x="699" linecolour="#ff0000" y="378" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="115" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="126812" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Bitstream Charter,12,-1,5,75,0,0,0,0,0" />
-     <classwidget usesdiagramfillcolour="1" width="235" showattsigs="601" usesdiagramusefillcolour="1" x="21" linecolour="none" y="337" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="165" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="127239" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="helvetica,12,-1,0,75,0,0,0,0,0" />
+     <interfacewidget usesdiagramfillcolour="0" width="147" usesdiagramusefillcolour="0" x="332" y="43" drawascircle="0" showopsigs="600" linewidth="none" fillcolour="#ffffc0" height="41" usefillcolor="1" showpubliconly="0" isinstance="0" xmi.id="126767" showoperations="1" showpackage="1" showscope="1" font="Bitstream Charter,12,-1,5,75,1,0,0,0,0" linecolor="#ff0000" />
+     <classwidget usesdiagramfillcolour="0" width="221" showattsigs="601" usesdiagramusefillcolour="0" x="382" y="380" showopsigs="601" linewidth="none" fillcolour="#ffffc0" height="199" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="126808" showoperations="1" showpackage="0" showscope="1" font="Bitstream Charter,12,-1,5,75,0,0,0,0,0" linecolor="#ff0000" />
+     <classwidget usesdiagramfillcolour="0" width="169" showattsigs="601" usesdiagramusefillcolour="0" x="699" y="378" showopsigs="601" linewidth="none" fillcolour="#ffffc0" height="136" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="126812" showoperations="1" showpackage="0" showscope="1" font="Bitstream Charter,12,-1,5,75,0,0,0,0,0" linecolor="#ff0000" />
+     <classwidget usesdiagramfillcolour="1" width="235" showattsigs="601" usesdiagramusefillcolour="1" x="21" y="337" showopsigs="601" linewidth="none" fillcolour="none" height="165" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="127239" showoperations="1" showpackage="0" showscope="1" font="helvetica,12,-1,0,75,0,0,0,0,0" linecolor="none" />
     </widgets>
     <messages/>
     <associations>
-     <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="2" widgetbid="126767" widgetaid="126808" xmi.id="126855" >
+     <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="2" linewidth="none" widgetbid="126767" widgetaid="126808" xmi.id="126855" linecolor="none" >
       <linepath>
-       <startpoint startx="459" starty="380" />
-       <endpoint endx="399" endy="95" />
+       <startpoint startx="492" starty="380" />
+       <endpoint endx="405" endy="84" />
       </linepath>
      </assocwidget>
-     <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="3" widgetbid="126767" widgetaid="126812" xmi.id="126864" >
+     <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="3" linewidth="none" widgetbid="126767" widgetaid="126812" xmi.id="126864" linecolor="none" >
       <linepath>
-       <startpoint startx="784" starty="378" />
-       <endpoint endx="433" endy="95" />
+       <startpoint startx="783" starty="378" />
+       <endpoint endx="442" endy="84" />
       </linepath>
      </assocwidget>
-     <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" widgetbid="126808" widgetaid="126812" xmi.id="126873" >
+     <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" linewidth="none" widgetbid="126808" widgetaid="126812" xmi.id="126873" linecolor="none" >
       <linepath>
-       <startpoint startx="699" starty="435" />
-       <endpoint endx="536" endy="437" />
+       <startpoint startx="699" starty="446" />
+       <endpoint endx="603" endy="479" />
       </linepath>
-      <floatingtext usesdiagramfillcolour="1" width="34" usesdiagramusefillcolour="1" x="663" linecolour="none" y="408" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="701" fillcolour="none" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="127911" text="1..n" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" />
-      <floatingtext usesdiagramfillcolour="1" width="17" usesdiagramusefillcolour="1" x="551" linecolour="none" y="477" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="702" fillcolour="none" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="127912" text="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" />
-      <floatingtext usesdiagramfillcolour="1" width="78" usesdiagramusefillcolour="1" x="619" linecolour="none" y="437" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="709" fillcolour="none" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="127909" text="segment" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" />
-      <floatingtext usesdiagramfillcolour="1" width="42" usesdiagramusefillcolour="1" x="551" linecolour="none" y="452" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="710" fillcolour="none" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="127910" text="vid" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" />
+      <floatingtext usesdiagramfillcolour="1" width="34" usesdiagramusefillcolour="1" x="661" y="408" linewidth="none" posttext="" role="701" fillcolour="none" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="128344" text="1..n" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
+      <floatingtext usesdiagramfillcolour="1" width="17" usesdiagramusefillcolour="1" x="617" y="517" linewidth="none" posttext="" role="702" fillcolour="none" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="128345" text="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
+      <floatingtext usesdiagramfillcolour="1" width="78" usesdiagramusefillcolour="1" x="619" y="437" linewidth="none" posttext="" role="709" fillcolour="none" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="128342" text="segment" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
+      <floatingtext usesdiagramfillcolour="1" width="42" usesdiagramusefillcolour="1" x="618" y="494" linewidth="none" posttext="" role="710" fillcolour="none" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="128343" text="vid" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
      </assocwidget>
-     <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" widgetbid="127239" widgetaid="126808" xmi.id="127313" >
+     <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" linewidth="none" widgetbid="127239" widgetaid="126808" xmi.id="127313" linecolor="none" >
       <linepath>
-       <startpoint startx="382" starty="437" />
+       <startpoint startx="382" starty="479" />
        <endpoint endx="256" endy="419" />
       </linepath>
-      <floatingtext usesdiagramfillcolour="1" width="34" usesdiagramusefillcolour="1" x="346" linecolour="none" y="439" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="701" fillcolour="none" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="127915" text="1..n" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" />
-      <floatingtext usesdiagramfillcolour="1" width="17" usesdiagramusefillcolour="1" x="258" linecolour="none" y="392" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="702" fillcolour="none" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="127916" text="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" />
-      <floatingtext usesdiagramfillcolour="1" width="99" usesdiagramusefillcolour="1" x="281" linecolour="none" y="410" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="709" fillcolour="none" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="127913" text="subRequest" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" />
-      <floatingtext usesdiagramfillcolour="1" width="87" usesdiagramusefillcolour="1" x="258" linecolour="none" y="421" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="710" fillcolour="none" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="127914" text="requestID" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" />
+      <floatingtext usesdiagramfillcolour="1" width="34" usesdiagramusefillcolour="1" x="347" y="480" linewidth="none" posttext="" role="701" fillcolour="none" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="128350" text="1..n" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
+      <floatingtext usesdiagramfillcolour="1" width="17" usesdiagramusefillcolour="1" x="257" y="394" linewidth="none" posttext="" role="702" fillcolour="none" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="128351" text="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
+      <floatingtext usesdiagramfillcolour="1" width="99" usesdiagramusefillcolour="1" x="281" y="452" linewidth="none" posttext="" role="709" fillcolour="none" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="128348" text="subRequest" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
+      <floatingtext usesdiagramfillcolour="1" width="87" usesdiagramusefillcolour="1" x="258" y="421" linewidth="none" posttext="" role="710" fillcolour="none" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="128349" text="requestID" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
      </assocwidget>
-     <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="1" widgetbid="126767" widgetaid="127239" xmi.id="127333" >
+     <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="1" linewidth="none" widgetbid="126767" widgetaid="127239" xmi.id="127333" linecolor="none" >
       <linepath>
        <startpoint startx="138" starty="337" />
-       <endpoint endx="365" endy="95" />
+       <endpoint endx="368" endy="84" />
       </linepath>
      </assocwidget>
     </associations>
    </diagram>
-   <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="946" snapy="10" showatts="1" xmi.id="126772" documentation="" type="402" showops="1" showpackage="0" name="Inheritance" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="883" >
+   <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1036" snapy="10" showatts="1" xmi.id="126772" documentation="" type="402" showops="1" showpackage="0" name="Inheritance" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="881" >
     <widgets>
-     <interfacewidget usesdiagramfillcolour="0" width="196" usesdiagramusefillcolour="0" x="406" linecolour="#ff0000" y="94" drawascircle="0" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="126" usefillcolor="1" isinstance="0" xmi.id="126773" showoperations="1" showpackage="1" showscope="1" font="Bitstream Charter,12,-1,5,75,1,0,0,0,0" />
-     <classwidget usesdiagramfillcolour="0" width="154" showattsigs="601" usesdiagramusefillcolour="0" x="113" linecolour="#ff0000" y="414" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="115" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="126808" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Bitstream Charter,12,-1,5,75,0,0,0,0,0" />
-     <classwidget usesdiagramfillcolour="1" width="173" showattsigs="601" usesdiagramusefillcolour="1" x="575" linecolour="none" y="394" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="121" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="126812" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="helvetica,12,-1,0,75,0,0,0,0,0" />
-     <classwidget usesdiagramfillcolour="0" width="239" showattsigs="601" usesdiagramusefillcolour="0" x="339" linecolour="#ff0000" y="571" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="157" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="127239" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Bitstream Charter,12,-1,5,75,0,0,0,0,0" />
-     <classwidget usesdiagramfillcolour="1" width="175" showattsigs="601" usesdiagramusefillcolour="1" x="105" linecolour="none" y="282" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="77" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="127790" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="helvetica,12,-1,0,75,0,0,0,0,0" />
+     <interfacewidget usesdiagramfillcolour="0" width="196" usesdiagramusefillcolour="0" x="444" y="96" drawascircle="0" showopsigs="601" linewidth="none" fillcolour="#ffffc0" height="126" usefillcolor="1" showpubliconly="0" isinstance="0" xmi.id="126773" showoperations="1" showpackage="1" showscope="1" font="Bitstream Charter,12,-1,5,75,1,0,0,0,0" linecolor="#ff0000" />
+     <classwidget usesdiagramfillcolour="0" width="289" showattsigs="601" usesdiagramusefillcolour="0" x="27" y="414" showopsigs="601" linewidth="none" fillcolour="#ffffc0" height="180" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="126808" showoperations="1" showpackage="0" showscope="1" font="Bitstream Vera Sans Mono,11,-1,5,75,0,0,0,0,0" linecolor="#ff0000" />
+     <classwidget usesdiagramfillcolour="0" width="230" showattsigs="601" usesdiagramusefillcolour="0" x="61" y="94" showopsigs="601" linewidth="none" fillcolour="#ffffc0" height="130" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="126812" showoperations="1" showpackage="0" showscope="1" font="Bitstream Vera Sans Mono,11,-1,5,75,0,0,0,0,0" linecolor="#ff0000" />
+     <classwidget usesdiagramfillcolour="0" width="280" showattsigs="601" usesdiagramusefillcolour="0" x="412" y="303" showopsigs="601" linewidth="none" fillcolour="#ffffc0" height="142" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="127239" showoperations="1" showpackage="0" showscope="1" font="Bitstream Vera Sans Mono,11,-1,5,75,0,0,0,0,0" linecolor="#ff0000" />
+     <classwidget usesdiagramfillcolour="1" width="187" showattsigs="601" usesdiagramusefillcolour="1" x="785" y="412" showopsigs="601" linewidth="none" fillcolour="none" height="66" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="127790" showoperations="1" showpackage="0" showscope="1" font="Bitstream Vera Sans,11,-1,5,75,0,0,0,0,0" linecolor="none" />
     </widgets>
     <messages/>
     <associations>
-     <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="1" widgetbid="126773" widgetaid="126808" xmi.id="126822" >
+     <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="1" linewidth="none" widgetbid="126773" widgetaid="126808" xmi.id="126822" linecolor="none" >
       <linepath>
-       <startpoint startx="190" starty="414" />
-       <endpoint endx="455" endy="220" />
+       <startpoint startx="171" starty="414" />
+       <endpoint endx="493" endy="222" />
       </linepath>
      </assocwidget>
-     <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="3" widgetbid="126773" widgetaid="126812" xmi.id="126831" >
+     <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" linewidth="none" widgetbid="126773" widgetaid="126812" xmi.id="126831" linecolor="none" >
       <linepath>
-       <startpoint startx="661" starty="394" />
-       <endpoint endx="553" endy="220" />
+       <startpoint startx="291" starty="159" />
+       <endpoint endx="444" endy="159" />
       </linepath>
      </assocwidget>
-     <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="1" widgetbid="127239" widgetaid="126808" xmi.id="127313" >
+     <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" linewidth="none" widgetbid="127239" widgetaid="126808" xmi.id="127313" linecolor="none" >
       <linepath>
-       <startpoint startx="267" starty="471" />
-       <endpoint endx="398" endy="571" />
+       <startpoint startx="316" starty="504" />
+       <endpoint endx="412" endy="374" />
       </linepath>
-      <floatingtext usesdiagramfillcolour="1" width="34" usesdiagramusefillcolour="1" x="269" linecolour="none" y="443" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="701" fillcolour="none" height="26" usefillcolor="1" pretext="" isinstance="0" xmi.id="127921" text="1..n" font="helvetica,12,-1,0,50,0,0,0,0,0" />
-      <floatingtext usesdiagramfillcolour="1" width="17" usesdiagramusefillcolour="1" x="433" linecolour="none" y="569" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="702" fillcolour="none" height="26" usefillcolor="1" pretext="" isinstance="0" xmi.id="127922" text="1" font="helvetica,12,-1,0,50,0,0,0,0,0" />
-      <floatingtext usesdiagramfillcolour="1" width="103" usesdiagramusefillcolour="1" x="269" linecolour="none" y="473" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="709" fillcolour="none" height="26" usefillcolor="1" pretext="+" isinstance="0" xmi.id="127919" text="subRequest" font="helvetica,12,-1,0,50,0,0,0,0,0" />
-      <floatingtext usesdiagramfillcolour="1" width="86" usesdiagramusefillcolour="1" x="360" linecolour="none" y="543" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="710" fillcolour="none" height="26" usefillcolor="1" pretext="+" isinstance="0" xmi.id="127920" text="requestID" font="helvetica,12,-1,0,50,0,0,0,0,0" />
+      <floatingtext usesdiagramfillcolour="1" width="34" usesdiagramusefillcolour="1" x="303" y="497" linewidth="none" posttext="" role="701" fillcolour="none" height="26" usefillcolor="1" pretext="" isinstance="0" xmi.id="128356" text="1..n" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+      <floatingtext usesdiagramfillcolour="1" width="17" usesdiagramusefillcolour="1" x="409" y="378" linewidth="none" posttext="" role="702" fillcolour="none" height="26" usefillcolor="1" pretext="" isinstance="0" xmi.id="128357" text="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+      <floatingtext usesdiagramfillcolour="1" width="103" usesdiagramusefillcolour="1" x="316" y="476" linewidth="none" posttext="" role="709" fillcolour="none" height="26" usefillcolor="1" pretext="+" isinstance="0" xmi.id="128354" text="subRequest" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+      <floatingtext usesdiagramfillcolour="1" width="86" usesdiagramusefillcolour="1" x="324" y="348" linewidth="none" posttext="" role="710" fillcolour="none" height="26" usefillcolor="1" pretext="+" isinstance="0" xmi.id="128355" text="requestID" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
      </assocwidget>
-     <assocwidget totalcounta="4" indexa="3" totalcountb="4" indexb="2" widgetbid="126773" widgetaid="127239" xmi.id="127497" >
+     <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="2" linewidth="none" widgetbid="126773" widgetaid="127239" xmi.id="127497" linecolor="none" >
       <linepath>
-       <startpoint startx="518" starty="571" />
-       <endpoint endx="504" endy="220" />
+       <startpoint startx="553" starty="303" />
+       <endpoint endx="542" endy="222" />
       </linepath>
      </assocwidget>
-     <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="2" widgetbid="127239" widgetaid="127790" xmi.id="127812" >
+     <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" linewidth="none" widgetbid="127239" widgetaid="127790" xmi.id="127812" linecolor="none" >
       <linepath>
-       <startpoint startx="192" starty="359" />
-       <endpoint endx="458" endy="571" />
+       <startpoint startx="785" starty="445" />
+       <endpoint endx="692" endy="374" />
       </linepath>
-      <floatingtext usesdiagramfillcolour="1" width="34" usesdiagramusefillcolour="1" x="486" linecolour="none" y="569" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="702" fillcolour="none" height="26" usefillcolor="1" pretext="" isinstance="0" xmi.id="127979" text="1..n" font="helvetica,12,-1,0,50,0,0,0,0,0" />
-      <floatingtext usesdiagramfillcolour="1" width="70" usesdiagramusefillcolour="1" x="446" linecolour="none" y="543" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="710" fillcolour="none" height="26" usefillcolor="1" pretext="+" isinstance="0" xmi.id="127977" text="request" font="helvetica,12,-1,0,50,0,0,0,0,0" />
+      <floatingtext usesdiagramfillcolour="1" width="34" usesdiagramusefillcolour="1" x="694" y="399" linewidth="none" posttext="" role="702" fillcolour="none" height="26" usefillcolor="1" pretext="" isinstance="0" xmi.id="128359" text="1..n" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+      <floatingtext usesdiagramfillcolour="1" width="70" usesdiagramusefillcolour="1" x="694" y="376" linewidth="none" posttext="" role="710" fillcolour="none" height="26" usefillcolor="1" pretext="+" isinstance="0" xmi.id="128358" text="request" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
      </assocwidget>
-     <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" widgetbid="126773" widgetaid="127790" xmi.id="127983" >
+     <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="3" linewidth="none" widgetbid="126773" widgetaid="127790" xmi.id="127983" linecolor="none" >
       <linepath>
-       <startpoint startx="192" starty="282" />
-       <endpoint endx="406" endy="157" />
+       <startpoint startx="878" starty="412" />
+       <endpoint endx="591" endy="222" />
       </linepath>
      </assocwidget>
     </associations>
    </diagram>
-   <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="946" snapy="10" showatts="1" xmi.id="126780" documentation="" type="402" showops="1" showpackage="0" name="Streaming" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="883" >
+   <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1036" snapy="10" showatts="1" xmi.id="126780" documentation="" type="402" showops="1" showpackage="0" name="Streaming" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="881" >
     <widgets>
-     <interfacewidget usesdiagramfillcolour="0" width="147" usesdiagramusefillcolour="0" x="317" linecolour="#ff0000" y="55" drawascircle="0" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="52" usefillcolor="1" isinstance="0" xmi.id="126781" showoperations="1" showpackage="1" showscope="1" font="Bitstream Charter,12,-1,5,75,1,0,0,0,0" />
-     <classwidget usesdiagramfillcolour="0" width="154" showattsigs="601" usesdiagramusefillcolour="0" x="104" linecolour="#ff0000" y="369" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="115" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="126808" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Bitstream Charter,12,-1,5,75,0,0,0,0,0" />
-     <classwidget usesdiagramfillcolour="1" width="235" showattsigs="601" usesdiagramusefillcolour="1" x="597" linecolour="none" y="345" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="165" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="127239" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="helvetica,12,-1,0,75,0,0,0,0,0" />
-     <classwidget usesdiagramfillcolour="0" width="177" showattsigs="601" usesdiagramusefillcolour="0" x="319" linecolour="#ff0000" y="173" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="73" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="127790" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Bitstream Charter,12,-1,5,75,0,0,0,0,0" />
+     <interfacewidget usesdiagramfillcolour="0" width="160" usesdiagramusefillcolour="0" x="327" y="55" drawascircle="0" showopsigs="601" linewidth="none" fillcolour="#ffffc0" height="41" usefillcolor="1" showpubliconly="0" isinstance="0" xmi.id="126781" showoperations="1" showpackage="1" showscope="1" font="Bitstream Charter,12,-1,5,75,1,0,0,0,0" linecolor="#ff0000" />
+     <classwidget usesdiagramfillcolour="0" width="221" showattsigs="601" usesdiagramusefillcolour="0" x="46" y="361" showopsigs="601" linewidth="none" fillcolour="#ffffc0" height="199" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="126808" showoperations="1" showpackage="0" showscope="1" font="Bitstream Charter,12,-1,5,75,0,0,0,0,0" linecolor="#ff0000" />
+     <classwidget usesdiagramfillcolour="1" width="235" showattsigs="601" usesdiagramusefillcolour="1" x="597" y="345" showopsigs="601" linewidth="none" fillcolour="none" height="165" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="127239" showoperations="1" showpackage="0" showscope="1" font="helvetica,12,-1,0,75,0,0,0,0,0" linecolor="none" />
+     <classwidget usesdiagramfillcolour="0" width="177" showattsigs="601" usesdiagramusefillcolour="0" x="319" y="173" showopsigs="601" linewidth="none" fillcolour="#ffffc0" height="73" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="127790" showoperations="1" showpackage="0" showscope="1" font="Bitstream Charter,12,-1,5,75,0,0,0,0,0" linecolor="#ff0000" />
+     <classwidget usesdiagramfillcolour="1" width="175" showattsigs="601" usesdiagramusefillcolour="1" x="471" y="548" showopsigs="601" linewidth="none" fillcolour="none" height="143" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="126812" showoperations="1" showpackage="0" showscope="1" font="helvetica,12,-1,0,75,0,0,0,0,0" linecolor="none" />
     </widgets>
     <messages/>
     <associations>
-     <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="1" widgetbid="126781" widgetaid="126808" xmi.id="126985" >
+     <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="1" linewidth="none" widgetbid="126781" widgetaid="126808" xmi.id="126985" linecolor="none" >
       <linepath>
-       <startpoint startx="181" starty="369" />
-       <endpoint endx="353" endy="107" />
+       <startpoint startx="156" starty="361" />
+       <endpoint endx="367" endy="96" />
       </linepath>
      </assocwidget>
-     <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" widgetbid="127239" widgetaid="126808" xmi.id="127313" >
+     <assocwidget totalcounta="3" indexa="1" totalcountb="2" indexb="1" linewidth="none" widgetbid="127239" widgetaid="126808" xmi.id="127313" linecolor="none" >
       <linepath>
-       <startpoint startx="258" starty="426" />
+       <startpoint startx="267" starty="427" />
        <endpoint endx="597" endy="427" />
       </linepath>
-      <floatingtext usesdiagramfillcolour="1" width="34" usesdiagramusefillcolour="1" x="260" linecolour="none" y="398" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="701" fillcolour="none" height="26" usefillcolor="1" pretext="" isinstance="0" xmi.id="127927" text="1..n" font="helvetica,12,-1,0,50,0,0,0,0,0" />
-      <floatingtext usesdiagramfillcolour="1" width="17" usesdiagramusefillcolour="1" x="582" linecolour="none" y="425" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="702" fillcolour="none" height="26" usefillcolor="1" pretext="" isinstance="0" xmi.id="127928" text="1" font="helvetica,12,-1,0,50,0,0,0,0,0" />
-      <floatingtext usesdiagramfillcolour="1" width="103" usesdiagramusefillcolour="1" x="260" linecolour="none" y="428" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="709" fillcolour="none" height="26" usefillcolor="1" pretext="+" isinstance="0" xmi.id="127925" text="subRequest" font="helvetica,12,-1,0,50,0,0,0,0,0" />
-      <floatingtext usesdiagramfillcolour="1" width="86" usesdiagramusefillcolour="1" x="509" linecolour="none" y="399" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="710" fillcolour="none" height="26" usefillcolor="1" pretext="+" isinstance="0" xmi.id="127926" text="requestID" font="helvetica,12,-1,0,50,0,0,0,0,0" />
+      <floatingtext usesdiagramfillcolour="1" width="34" usesdiagramusefillcolour="1" x="287" y="455" linewidth="none" posttext="" role="701" fillcolour="none" height="26" usefillcolor="1" pretext="" isinstance="0" xmi.id="128364" text="1..n" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+      <floatingtext usesdiagramfillcolour="1" width="17" usesdiagramusefillcolour="1" x="573" y="372" linewidth="none" posttext="" role="702" fillcolour="none" height="26" usefillcolor="1" pretext="" isinstance="0" xmi.id="128365" text="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+      <floatingtext usesdiagramfillcolour="1" width="103" usesdiagramusefillcolour="1" x="269" y="459" linewidth="none" posttext="" role="709" fillcolour="none" height="26" usefillcolor="1" pretext="+" isinstance="0" xmi.id="128362" text="subRequest" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+      <floatingtext usesdiagramfillcolour="1" width="86" usesdiagramusefillcolour="1" x="509" y="429" linewidth="none" posttext="" role="710" fillcolour="none" height="26" usefillcolor="1" pretext="+" isinstance="0" xmi.id="128363" text="requestID" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
      </assocwidget>
-     <assocwidget totalcounta="3" indexa="2" totalcountb="4" indexb="3" widgetbid="126781" widgetaid="127239" xmi.id="127444" >
+     <assocwidget totalcounta="3" indexa="2" totalcountb="4" indexb="3" linewidth="none" widgetbid="126781" widgetaid="127239" xmi.id="127444" linecolor="none" >
       <linepath>
        <startpoint startx="753" starty="345" />
-       <endpoint endx="427" endy="107" />
+       <endpoint endx="447" endy="96" />
       </linepath>
      </assocwidget>
-     <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="2" widgetbid="126781" widgetaid="127790" xmi.id="127800" >
+     <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="2" linewidth="none" widgetbid="126781" widgetaid="127790" xmi.id="127800" linecolor="none" >
       <linepath>
        <startpoint startx="407" starty="173" />
-       <endpoint endx="390" endy="107" />
+       <endpoint endx="407" endy="96" />
       </linepath>
      </assocwidget>
-     <assocwidget totalcounta="2" indexa="1" totalcountb="3" indexb="1" widgetbid="127239" widgetaid="127790" xmi.id="127812" >
+     <assocwidget totalcounta="2" indexa="1" totalcountb="3" indexb="1" linewidth="none" widgetbid="127239" widgetaid="127790" xmi.id="127812" linecolor="none" >
       <linepath>
        <startpoint startx="407" starty="246" />
        <endpoint endx="675" endy="345" />
       </linepath>
-      <floatingtext usesdiagramfillcolour="1" width="34" usesdiagramusefillcolour="1" x="627" linecolour="none" y="309" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="702" fillcolour="none" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="127930" text="1..n" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" />
-      <floatingtext usesdiagramfillcolour="1" width="71" usesdiagramusefillcolour="1" x="554" linecolour="none" y="311" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="710" fillcolour="none" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="127929" text="request" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" />
+      <floatingtext usesdiagramfillcolour="1" width="34" usesdiagramusefillcolour="1" x="627" y="309" linewidth="none" posttext="" role="702" fillcolour="none" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="128367" text="1..n" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
+      <floatingtext usesdiagramfillcolour="1" width="71" usesdiagramusefillcolour="1" x="554" y="311" linewidth="none" posttext="" role="710" fillcolour="none" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="128366" text="request" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
+     </assocwidget>
+     <assocwidget totalcounta="2" indexa="1" totalcountb="3" indexb="2" linewidth="none" widgetbid="126808" widgetaid="126812" xmi.id="126873" linecolor="none" >
+      <linepath>
+       <startpoint startx="471" starty="619" />
+       <endpoint endx="267" endy="493" />
+      </linepath>
+      <floatingtext usesdiagramfillcolour="1" width="34" usesdiagramusefillcolour="1" x="464" y="589" linewidth="none" posttext="" role="701" fillcolour="none" height="26" usefillcolor="1" pretext="" isinstance="0" xmi.id="128372" showstereotype="1" text="1..n" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+      <floatingtext usesdiagramfillcolour="1" width="32" usesdiagramusefillcolour="1" x="310" y="490" linewidth="none" posttext="" role="702" fillcolour="none" height="32" usefillcolor="1" pretext="" isinstance="0" xmi.id="128373" showstereotype="1" text="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+      <floatingtext usesdiagramfillcolour="1" width="78" usesdiagramusefillcolour="1" x="391" y="591" linewidth="none" posttext="" role="709" fillcolour="none" height="26" usefillcolor="1" pretext="+" isinstance="0" xmi.id="128370" text="segment" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+      <floatingtext usesdiagramfillcolour="1" width="38" usesdiagramusefillcolour="1" x="338" y="489" linewidth="none" posttext="" role="710" fillcolour="none" height="26" usefillcolor="1" pretext="+" isinstance="0" xmi.id="128371" text="vid" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
      </assocwidget>
     </associations>
    </diagram>
@@ -284,6 +304,7 @@
       <listitem open="0" type="807" id="126766" label="Persistency" />
       <listitem open="0" type="807" id="126780" label="Streaming" />
      </listitem>
+     <listitem open="1" type="813" id="128072" />
      <listitem open="1" type="818" id="126769" >
       <listitem open="0" type="817" id="126773" >
        <listitem open="0" type="815" id="126775" />
@@ -294,7 +315,7 @@
       <listitem open="1" type="817" id="126767" />
       <listitem open="1" type="817" id="126781" />
       <listitem open="1" type="818" id="126804" >
-       <listitem open="1" type="813" id="127790" >
+       <listitem open="0" type="813" id="127790" >
         <listitem open="0" type="814" id="127941" />
         <listitem open="0" type="814" id="127948" />
        </listitem>
@@ -311,12 +332,17 @@
         <listitem open="0" type="814" id="126903" />
         <listitem open="0" type="814" id="127888" />
         <listitem open="0" type="814" id="127895" />
+        <listitem open="0" type="814" id="128142" />
        </listitem>
        <listitem open="0" type="813" id="126808" >
         <listitem open="0" type="814" id="126913" />
         <listitem open="0" type="814" id="127000" />
         <listitem open="0" type="814" id="127720" />
         <listitem open="0" type="814" id="127874" />
+        <listitem open="0" type="814" id="128071" />
+        <listitem open="0" type="814" id="128085" />
+        <listitem open="0" type="814" id="128101" />
+        <listitem open="0" type="814" id="128324" />
        </listitem>
       </listitem>
      </listitem>
@@ -336,7 +362,7 @@
    </listitem>
   </listview>
   <codegeneration>
-   <codegenerator language="Cpp" >
+   <codegenerator language="C++" >
     <classifiercodedocument writeOutCode="true" package="castor" id="126767" parent_class="126767" fileExt=".cpp" fileName="ipersistent" >
      <textblocks>
       <codeblockwithcomments tag="includes" text="#include &quot;ipersistent.h&quot;&amp;#010;" >
@@ -358,7 +384,7 @@
       </hierarchicalcodeblock>
      </textblocks>
      <header>
-      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      ipersistent.cpp&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.3 $ $Release$ $Date: 2006/03/17 15:37:10 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      ipersistent.cpp&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.4 $ $Release$ $Date: 2006/07/05 12:11:12 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
      </header>
      <classfields/>
     </classifiercodedocument>
@@ -404,45 +430,9 @@
       </hierarchicalcodeblock>
      </textblocks>
      <header>
-      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      iobject.cpp&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.3 $ $Release$ $Date: 2006/03/17 15:37:10 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      iobject.cpp&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.4 $ $Release$ $Date: 2006/07/05 12:11:12 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
      </header>
-     <classfields>
-      <codeclassfield parent_id="127983" field_type="21" initialValue="" role_id="0" writeOutMethods="true" listClassName="" >
-       <header>
-        <cppcodedocumentation tag="" />
-       </header>
-       <ccfdeclarationcodeblock parent_id="127983" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="1" text="FIX ME;" >
-        <header>
-         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
-        </header>
-       </ccfdeclarationcodeblock>
-       <codeaccessormethod accessType="0" parent_id="127983" tag="" canDelete="false" writeOutText="false" classfield_id="127983" role_id="1" >
-        <header>
-         <cppcodedocumentation tag="" />
-        </header>
-       </codeaccessormethod>
-       <codeaccessormethod accessType="1" parent_id="127983" tag="" canDelete="false" writeOutText="false" classfield_id="127983" role_id="1" >
-        <header>
-         <cppcodedocumentation tag="" />
-        </header>
-       </codeaccessormethod>
-       <codeaccessormethod accessType="2" parent_id="127983" tag="" canDelete="false" writeOutText="false" classfield_id="127983" role_id="1" >
-        <header>
-         <cppcodedocumentation tag="" />
-        </header>
-       </codeaccessormethod>
-       <codeaccessormethod accessType="3" parent_id="127983" tag="" canDelete="false" writeOutText="false" classfield_id="127983" role_id="1" >
-        <header>
-         <cppcodedocumentation tag="" />
-        </header>
-       </codeaccessormethod>
-       <codeaccessormethod accessType="4" parent_id="127983" tag="" canDelete="false" writeOutText="false" classfield_id="127983" role_id="1" >
-        <header>
-         <cppcodedocumentation tag="" />
-        </header>
-       </codeaccessormethod>
-      </codeclassfield>
-     </classfields>
+     <classfields/>
     </classifiercodedocument>
     <classifiercodedocument writeOutCode="true" package="castor" id="126781" parent_class="126781" fileExt=".cpp" fileName="istreamable" >
      <textblocks>
@@ -465,11 +455,11 @@
       </hierarchicalcodeblock>
      </textblocks>
      <header>
-      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      istreamable.cpp&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.3 $ $Release$ $Date: 2006/03/17 15:37:10 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      istreamable.cpp&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.4 $ $Release$ $Date: 2006/07/05 12:11:12 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
      </header>
      <classfields/>
     </classifiercodedocument>
-    <classifiercodedocument writeOutCode="true" package="castor.repack" id="126808" parent_class="126808" fileExt=".cpp" fileName="repacksubrequest" >
+    <classifiercodedocument writeOutCode="true" package="castor::repack" id="126808" parent_class="126808" fileExt=".cpp" fileName="repacksubrequest" >
      <textblocks>
       <codeblockwithcomments tag="includes" text="#include &quot;repacksubrequest.h&quot;&amp;#010;" >
        <header>
@@ -527,11 +517,51 @@
           <cppcodedocumentation tag="" />
          </header>
         </codeaccessormethod>
+        <codeaccessormethod accessType="0" parent_id="128071" tag="hblock_tag_8" canDelete="false" classfield_id="128071" >
+         <header>
+          <cppcodedocumentation tag="" text="Get the value of filesMigrating&amp;#010;The amount files which are still being migrated to tape.&amp;#010;@return the value of filesMigrating" />
+         </header>
+        </codeaccessormethod>
+        <codeaccessormethod accessType="1" parent_id="128071" tag="hblock_tag_9" canDelete="false" classfield_id="128071" >
+         <header>
+          <cppcodedocumentation tag="" text="Set the value of filesMigrating&amp;#010;The amount files which are still being migrated to tape.&amp;#010;@param value the value of filesMigrating" />
+         </header>
+        </codeaccessormethod>
+        <codeaccessormethod accessType="0" parent_id="128085" tag="hblock_tag_10" canDelete="false" classfield_id="128085" >
+         <header>
+          <cppcodedocumentation tag="" text="Get the value of filesStaging&amp;#010;The amount of file to be staged.&amp;#010;@return the value of filesStaging" />
+         </header>
+        </codeaccessormethod>
+        <codeaccessormethod accessType="1" parent_id="128085" tag="hblock_tag_11" canDelete="false" classfield_id="128085" >
+         <header>
+          <cppcodedocumentation tag="" text="Set the value of filesStaging&amp;#010;The amount of file to be staged.&amp;#010;@param value the value of filesStaging" />
+         </header>
+        </codeaccessormethod>
+        <codeaccessormethod accessType="0" parent_id="128101" tag="hblock_tag_12" canDelete="false" classfield_id="128101" >
+         <header>
+          <cppcodedocumentation tag="" />
+         </header>
+        </codeaccessormethod>
+        <codeaccessormethod accessType="1" parent_id="128101" tag="hblock_tag_13" canDelete="false" classfield_id="128101" >
+         <header>
+          <cppcodedocumentation tag="" />
+         </header>
+        </codeaccessormethod>
+        <codeaccessormethod accessType="0" parent_id="128324" tag="hblock_tag_14" canDelete="false" classfield_id="128324" >
+         <header>
+          <cppcodedocumentation tag="" />
+         </header>
+        </codeaccessormethod>
+        <codeaccessormethod accessType="1" parent_id="128324" tag="hblock_tag_15" canDelete="false" classfield_id="128324" >
+         <header>
+          <cppcodedocumentation tag="" />
+         </header>
+        </codeaccessormethod>
        </textblocks>
       </hierarchicalcodeblock>
      </textblocks>
      <header>
-      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      repacksubrequest.cpp&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.3 $ $Release$ $Date: 2006/03/17 15:37:10 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      repacksubrequest.cpp&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.4 $ $Release$ $Date: 2006/07/05 12:11:12 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="126913" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
@@ -614,9 +644,89 @@
         </header>
        </codeaccessormethod>
       </codeclassfield>
+      <codeclassfield parent_id="128071" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" text="The amount files which are still being migrated to tape." />
+       </header>
+       <ccfdeclarationcodeblock parent_id="128071" tag="" canDelete="false" indentLevel="1" text="FIX ME;" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="128071" tag="hblock_tag_8" canDelete="false" classfield_id="128071" >
+        <header>
+         <cppcodedocumentation tag="" text="Get the value of filesMigrating&amp;#010;The amount files which are still being migrated to tape.&amp;#010;@return the value of filesMigrating" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="128071" tag="hblock_tag_9" canDelete="false" classfield_id="128071" >
+        <header>
+         <cppcodedocumentation tag="" text="Set the value of filesMigrating&amp;#010;The amount files which are still being migrated to tape.&amp;#010;@param value the value of filesMigrating" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+      <codeclassfield parent_id="128085" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" text="The amount of file to be staged." />
+       </header>
+       <ccfdeclarationcodeblock parent_id="128085" tag="" canDelete="false" indentLevel="1" text="FIX ME;" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="128085" tag="hblock_tag_10" canDelete="false" classfield_id="128085" >
+        <header>
+         <cppcodedocumentation tag="" text="Get the value of filesStaging&amp;#010;The amount of file to be staged.&amp;#010;@return the value of filesStaging" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="128085" tag="hblock_tag_11" canDelete="false" classfield_id="128085" >
+        <header>
+         <cppcodedocumentation tag="" text="Set the value of filesStaging&amp;#010;The amount of file to be staged.&amp;#010;@param value the value of filesStaging" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+      <codeclassfield parent_id="128101" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="128101" tag="" canDelete="false" indentLevel="1" text="FIX ME;" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="128101" tag="hblock_tag_12" canDelete="false" classfield_id="128101" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="128101" tag="hblock_tag_13" canDelete="false" classfield_id="128101" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+      <codeclassfield parent_id="128324" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="128324" tag="" canDelete="false" indentLevel="1" text="FIX ME;" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="128324" tag="hblock_tag_14" canDelete="false" classfield_id="128324" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="128324" tag="hblock_tag_15" canDelete="false" classfield_id="128324" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
      </classfields>
     </classifiercodedocument>
-    <classifiercodedocument writeOutCode="true" package="castor.repack" id="126812" parent_class="126812" fileExt=".cpp" fileName="repacksegment" >
+    <classifiercodedocument writeOutCode="true" package="castor::repack" id="126812" parent_class="126812" fileExt=".cpp" fileName="repacksegment" >
      <textblocks>
       <codeblockwithcomments tag="includes" text="#include &quot;repacksegment.h&quot;&amp;#010;" >
        <header>
@@ -674,11 +784,21 @@
           <cppcodedocumentation tag="" />
          </header>
         </codeaccessormethod>
+        <codeaccessormethod accessType="0" parent_id="128142" tag="hblock_tag_8" canDelete="false" classfield_id="128142" >
+         <header>
+          <cppcodedocumentation tag="" />
+         </header>
+        </codeaccessormethod>
+        <codeaccessormethod accessType="1" parent_id="128142" tag="hblock_tag_9" canDelete="false" classfield_id="128142" >
+         <header>
+          <cppcodedocumentation tag="" />
+         </header>
+        </codeaccessormethod>
        </textblocks>
       </hierarchicalcodeblock>
      </textblocks>
      <header>
-      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      repacksegment.cpp&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.3 $ $Release$ $Date: 2006/03/17 15:37:10 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      repacksegment.cpp&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.4 $ $Release$ $Date: 2006/07/05 12:11:12 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="126896" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
@@ -761,9 +881,29 @@
         </header>
        </codeaccessormethod>
       </codeclassfield>
+      <codeclassfield parent_id="128142" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="128142" tag="" canDelete="false" indentLevel="1" text="FIX ME;" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="128142" tag="hblock_tag_8" canDelete="false" classfield_id="128142" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="128142" tag="hblock_tag_9" canDelete="false" classfield_id="128142" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
      </classfields>
     </classifiercodedocument>
-    <classifiercodedocument writeOutCode="true" package="castor.repack" id="127239" parent_class="127239" fileExt=".cpp" fileName="repackrequest" >
+    <classifiercodedocument writeOutCode="true" package="castor::repack" id="127239" parent_class="127239" fileExt=".cpp" fileName="repackrequest" >
      <textblocks>
       <codeblockwithcomments tag="includes" text="#include &quot;repackrequest.h&quot;&amp;#010;" >
        <header>
@@ -783,42 +923,42 @@
        <textblocks>
         <codeaccessormethod accessType="0" parent_id="127257" tag="hblock_tag_0" canDelete="false" classfield_id="127257" >
          <header>
-          <cppcodedocumentation tag="" />
+          <cppcodedocumentation tag="" text="Get the value of machine&amp;#010;The machine name from which the request is send.&amp;#010;@return the value of machine" />
          </header>
         </codeaccessormethod>
         <codeaccessormethod accessType="1" parent_id="127257" tag="hblock_tag_1" canDelete="false" classfield_id="127257" >
          <header>
-          <cppcodedocumentation tag="" />
+          <cppcodedocumentation tag="" text="Set the value of machine&amp;#010;The machine name from which the request is send.&amp;#010;@param value the value of machine" />
          </header>
         </codeaccessormethod>
         <codeaccessormethod accessType="0" parent_id="127261" tag="hblock_tag_2" canDelete="false" classfield_id="127261" >
          <header>
-          <cppcodedocumentation tag="" />
+          <cppcodedocumentation tag="" text="Get the value of userName&amp;#010;The username of the user, who submits the request.&amp;#010;@return the value of userName" />
          </header>
         </codeaccessormethod>
         <codeaccessormethod accessType="1" parent_id="127261" tag="hblock_tag_3" canDelete="false" classfield_id="127261" >
          <header>
-          <cppcodedocumentation tag="" />
+          <cppcodedocumentation tag="" text="Set the value of userName&amp;#010;The username of the user, who submits the request.&amp;#010;@param value the value of userName" />
          </header>
         </codeaccessormethod>
         <codeaccessormethod accessType="0" parent_id="127265" tag="hblock_tag_4" canDelete="false" classfield_id="127265" >
          <header>
-          <cppcodedocumentation tag="" />
+          <cppcodedocumentation tag="" text="Get the value of creationTime&amp;#010;The creation time of the request&amp;#010;@return the value of creationTime" />
          </header>
         </codeaccessormethod>
         <codeaccessormethod accessType="1" parent_id="127265" tag="hblock_tag_5" canDelete="false" classfield_id="127265" >
          <header>
-          <cppcodedocumentation tag="" />
+          <cppcodedocumentation tag="" text="Set the value of creationTime&amp;#010;The creation time of the request&amp;#010;@param value the value of creationTime" />
          </header>
         </codeaccessormethod>
         <codeaccessormethod accessType="0" parent_id="127013" tag="hblock_tag_6" canDelete="false" classfield_id="127013" >
          <header>
-          <cppcodedocumentation tag="" text="Get the value of pool&amp;#010;The tape pool to be repacked&amp;#010;@return the value of pool" />
+          <cppcodedocumentation tag="" text="Get the value of serviceclass&amp;#010;The service class to where the file have to be written. It is not possible to specify directly the target tapes or tapepools. By default, the files are written to the tapepool belonging to the repack service class specified in the castor config file.&amp;#010;@return the value of serviceclass" />
          </header>
         </codeaccessormethod>
         <codeaccessormethod accessType="1" parent_id="127013" tag="hblock_tag_7" canDelete="false" classfield_id="127013" >
          <header>
-          <cppcodedocumentation tag="" text="Set the value of pool&amp;#010;The tape pool to be repacked&amp;#010;@param value the value of pool" />
+          <cppcodedocumentation tag="" text="Set the value of serviceclass&amp;#010;The service class to where the file have to be written. It is not possible to specify directly the target tapes or tapepools. By default, the files are written to the tapepool belonging to the repack service class specified in the castor config file.&amp;#010;@param value the value of serviceclass" />
          </header>
         </codeaccessormethod>
         <codeaccessormethod accessType="0" parent_id="127509" tag="hblock_tag_8" canDelete="false" classfield_id="127509" >
@@ -845,12 +985,12 @@
       </hierarchicalcodeblock>
      </textblocks>
      <header>
-      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      repackrequest.cpp&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.3 $ $Release$ $Date: 2006/03/17 15:37:10 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      repackrequest.cpp&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.4 $ $Release$ $Date: 2006/07/05 12:11:12 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="127257" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
        <header>
-        <cppcodedocumentation tag="" />
+        <cppcodedocumentation tag="" text="The machine name from which the request is send." />
        </header>
        <ccfdeclarationcodeblock parent_id="127257" tag="" canDelete="false" indentLevel="1" text="FIX ME;" >
         <header>
@@ -859,18 +999,18 @@
        </ccfdeclarationcodeblock>
        <codeaccessormethod accessType="0" parent_id="127257" tag="hblock_tag_0" canDelete="false" classfield_id="127257" >
         <header>
-         <cppcodedocumentation tag="" />
+         <cppcodedocumentation tag="" text="Get the value of machine&amp;#010;The machine name from which the request is send.&amp;#010;@return the value of machine" />
         </header>
        </codeaccessormethod>
        <codeaccessormethod accessType="1" parent_id="127257" tag="hblock_tag_1" canDelete="false" classfield_id="127257" >
         <header>
-         <cppcodedocumentation tag="" />
+         <cppcodedocumentation tag="" text="Set the value of machine&amp;#010;The machine name from which the request is send.&amp;#010;@param value the value of machine" />
         </header>
        </codeaccessormethod>
       </codeclassfield>
       <codeclassfield parent_id="127261" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
        <header>
-        <cppcodedocumentation tag="" />
+        <cppcodedocumentation tag="" text="The username of the user, who submits the request." />
        </header>
        <ccfdeclarationcodeblock parent_id="127261" tag="" canDelete="false" indentLevel="1" text="FIX ME;" >
         <header>
@@ -879,18 +1019,18 @@
        </ccfdeclarationcodeblock>
        <codeaccessormethod accessType="0" parent_id="127261" tag="hblock_tag_2" canDelete="false" classfield_id="127261" >
         <header>
-         <cppcodedocumentation tag="" />
+         <cppcodedocumentation tag="" text="Get the value of userName&amp;#010;The username of the user, who submits the request.&amp;#010;@return the value of userName" />
         </header>
        </codeaccessormethod>
        <codeaccessormethod accessType="1" parent_id="127261" tag="hblock_tag_3" canDelete="false" classfield_id="127261" >
         <header>
-         <cppcodedocumentation tag="" />
+         <cppcodedocumentation tag="" text="Set the value of userName&amp;#010;The username of the user, who submits the request.&amp;#010;@param value the value of userName" />
         </header>
        </codeaccessormethod>
       </codeclassfield>
       <codeclassfield parent_id="127265" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
        <header>
-        <cppcodedocumentation tag="" />
+        <cppcodedocumentation tag="" text="The creation time of the request" />
        </header>
        <ccfdeclarationcodeblock parent_id="127265" tag="" canDelete="false" indentLevel="1" text="FIX ME;" >
         <header>
@@ -899,18 +1039,18 @@
        </ccfdeclarationcodeblock>
        <codeaccessormethod accessType="0" parent_id="127265" tag="hblock_tag_4" canDelete="false" classfield_id="127265" >
         <header>
-         <cppcodedocumentation tag="" />
+         <cppcodedocumentation tag="" text="Get the value of creationTime&amp;#010;The creation time of the request&amp;#010;@return the value of creationTime" />
         </header>
        </codeaccessormethod>
        <codeaccessormethod accessType="1" parent_id="127265" tag="hblock_tag_5" canDelete="false" classfield_id="127265" >
         <header>
-         <cppcodedocumentation tag="" />
+         <cppcodedocumentation tag="" text="Set the value of creationTime&amp;#010;The creation time of the request&amp;#010;@param value the value of creationTime" />
         </header>
        </codeaccessormethod>
       </codeclassfield>
       <codeclassfield parent_id="127013" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
        <header>
-        <cppcodedocumentation tag="" text="The tape pool to be repacked" />
+        <cppcodedocumentation tag="" text="The service class to where the file have to be written. It is not possible to specify directly the target tapes or tapepools. By default, the files are written to the tapepool belonging to the repack service class specified in the castor config file." />
        </header>
        <ccfdeclarationcodeblock parent_id="127013" tag="" canDelete="false" indentLevel="1" text="FIX ME;" >
         <header>
@@ -919,12 +1059,12 @@
        </ccfdeclarationcodeblock>
        <codeaccessormethod accessType="0" parent_id="127013" tag="hblock_tag_6" canDelete="false" classfield_id="127013" >
         <header>
-         <cppcodedocumentation tag="" text="Get the value of pool&amp;#010;The tape pool to be repacked&amp;#010;@return the value of pool" />
+         <cppcodedocumentation tag="" text="Get the value of serviceclass&amp;#010;The service class to where the file have to be written. It is not possible to specify directly the target tapes or tapepools. By default, the files are written to the tapepool belonging to the repack service class specified in the castor config file.&amp;#010;@return the value of serviceclass" />
         </header>
        </codeaccessormethod>
        <codeaccessormethod accessType="1" parent_id="127013" tag="hblock_tag_7" canDelete="false" classfield_id="127013" >
         <header>
-         <cppcodedocumentation tag="" text="Set the value of pool&amp;#010;The tape pool to be repacked&amp;#010;@param value the value of pool" />
+         <cppcodedocumentation tag="" text="Set the value of serviceclass&amp;#010;The service class to where the file have to be written. It is not possible to specify directly the target tapes or tapepools. By default, the files are written to the tapepool belonging to the repack service class specified in the castor config file.&amp;#010;@param value the value of serviceclass" />
         </header>
        </codeaccessormethod>
       </codeclassfield>
@@ -970,7 +1110,7 @@
       </codeclassfield>
      </classfields>
     </classifiercodedocument>
-    <classifiercodedocument writeOutCode="true" package="castor.repack" id="127790" parent_class="127790" fileExt=".cpp" fileName="repackack" >
+    <classifiercodedocument writeOutCode="true" package="castor::repack" id="127790" parent_class="127790" fileExt=".cpp" fileName="repackack" >
      <textblocks>
       <codeblockwithcomments tag="includes" text="#include &quot;repackack.h&quot;&amp;#010;" >
        <header>
@@ -1012,7 +1152,7 @@
       </hierarchicalcodeblock>
      </textblocks>
      <header>
-      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      repackack.cpp&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.3 $ $Release$ $Date: 2006/03/17 15:37:10 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      repackack.cpp&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.4 $ $Release$ $Date: 2006/07/05 12:11:12 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="127941" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
@@ -1055,49 +1195,33 @@
         </header>
        </codeaccessormethod>
       </codeclassfield>
-      <codeclassfield parent_id="127983" field_type="10" initialValue="" role_id="1" writeOutMethods="true" listClassName="" >
-       <header>
-        <cppcodedocumentation tag="" />
-       </header>
-       <ccfdeclarationcodeblock parent_id="127983" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="0" text="FIX ME;" >
-        <header>
-         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
-        </header>
-       </ccfdeclarationcodeblock>
-       <codeaccessormethod accessType="0" parent_id="127983" tag="" canDelete="false" writeOutText="false" classfield_id="127983" role_id="0" >
-        <header>
-         <cppcodedocumentation tag="" />
-        </header>
-       </codeaccessormethod>
-       <codeaccessormethod accessType="1" parent_id="127983" tag="" canDelete="false" writeOutText="false" classfield_id="127983" role_id="0" >
-        <header>
-         <cppcodedocumentation tag="" />
-        </header>
-       </codeaccessormethod>
-       <codeaccessormethod accessType="2" parent_id="127983" tag="" canDelete="false" writeOutText="false" classfield_id="127983" role_id="0" >
-        <header>
-         <cppcodedocumentation tag="" />
-        </header>
-       </codeaccessormethod>
-       <codeaccessormethod accessType="3" parent_id="127983" tag="" canDelete="false" writeOutText="false" classfield_id="127983" role_id="0" >
-        <header>
-         <cppcodedocumentation tag="" />
-        </header>
-       </codeaccessormethod>
-       <codeaccessormethod accessType="4" parent_id="127983" tag="" canDelete="false" writeOutText="false" classfield_id="127983" role_id="0" >
-        <header>
-         <cppcodedocumentation tag="" />
-        </header>
-       </codeaccessormethod>
-      </codeclassfield>
      </classfields>
     </classifiercodedocument>
-    <codedocument writeOutCode="false" package="" id="Makefile_DOC" fileExt="" fileName="Makefile" >
-     <textblocks/>
+    <classifiercodedocument writeOutCode="true" package="" id="128072" parent_class="128072" fileExt=".cpp" fileName="unsigned int" >
+     <textblocks>
+      <codeblockwithcomments tag="includes" text="#include &quot;unsigned int.h&quot;&amp;#010;" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <hierarchicalcodeblock tag="constructionMethodsBlock" canDelete="false" >
+       <header>
+        <cppcodedocumentation tag="" text="Constructors/Destructors" />
+       </header>
+       <textblocks/>
+      </hierarchicalcodeblock>
+      <hierarchicalcodeblock tag="otherMethodsBlock" canDelete="false" >
+       <header>
+        <cppcodedocumentation tag="" text="Methods" />
+       </header>
+       <textblocks/>
+      </hierarchicalcodeblock>
+     </textblocks>
      <header>
-      <codecomment tag="" />
+      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      unsigned int.cpp&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.4 $ $Release$ $Date: 2006/07/05 12:11:12 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
      </header>
-    </codedocument>
+     <classfields/>
+    </classifiercodedocument>
     <classifiercodedocument writeOutCode="true" package="castor" id="cppheader126767" parent_class="126767" fileExt=".h" fileName="ipersistent" >
      <textblocks>
       <codeblockwithcomments tag="hashDefBlock" text="#ifndef IPERSISTENT_H&amp;#010;#define IPERSISTENT_H" >
@@ -1295,7 +1419,7 @@
       </codeblockwithcomments>
      </textblocks>
      <header>
-      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      ipersistent.h&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.3 $ $Release$ $Date: 2006/03/17 15:37:10 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      ipersistent.h&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.4 $ $Release$ $Date: 2006/07/05 12:11:12 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
      </header>
      <classfields/>
     </classifiercodedocument>
@@ -1517,45 +1641,9 @@
       </codeblockwithcomments>
      </textblocks>
      <header>
-      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      iobject.h&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.3 $ $Release$ $Date: 2006/03/17 15:37:10 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      iobject.h&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.4 $ $Release$ $Date: 2006/07/05 12:11:12 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
      </header>
-     <classfields>
-      <codeclassfield parent_id="127983" field_type="24" initialValue="" role_id="0" writeOutMethods="true" listClassName="" >
-       <header>
-        <cppcodedocumentation tag="" />
-       </header>
-       <ccfdeclarationcodeblock parent_id="127983" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="1" text=" RepackAck ;" >
-        <header>
-         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
-        </header>
-       </ccfdeclarationcodeblock>
-       <codeaccessormethod accessType="0" parent_id="127983" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="127983" role_id="1" >
-        <header>
-         <cppcodedocumentation tag="" indentLevel="1" />
-        </header>
-       </codeaccessormethod>
-       <codeaccessormethod accessType="1" parent_id="127983" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="127983" role_id="1" >
-        <header>
-         <cppcodedocumentation tag="" indentLevel="1" />
-        </header>
-       </codeaccessormethod>
-       <codeaccessormethod accessType="2" parent_id="127983" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="127983" role_id="1" >
-        <header>
-         <cppcodedocumentation tag="" indentLevel="1" />
-        </header>
-       </codeaccessormethod>
-       <codeaccessormethod accessType="3" parent_id="127983" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="127983" role_id="1" >
-        <header>
-         <cppcodedocumentation tag="" indentLevel="1" />
-        </header>
-       </codeaccessormethod>
-       <codeaccessormethod accessType="4" parent_id="127983" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="127983" role_id="1" >
-        <header>
-         <cppcodedocumentation tag="" indentLevel="1" />
-        </header>
-       </codeaccessormethod>
-      </codeclassfield>
-     </classfields>
+     <classfields/>
     </classifiercodedocument>
     <classifiercodedocument writeOutCode="true" package="castor" id="cppheader126781" parent_class="126781" fileExt=".h" fileName="istreamable" >
      <textblocks>
@@ -1754,23 +1842,23 @@
       </codeblockwithcomments>
      </textblocks>
      <header>
-      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      istreamable.h&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.3 $ $Release$ $Date: 2006/03/17 15:37:10 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      istreamable.h&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.4 $ $Release$ $Date: 2006/07/05 12:11:12 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
      </header>
      <classfields/>
     </classifiercodedocument>
-    <classifiercodedocument writeOutCode="true" package="castor.repack" id="cppheader126808" parent_class="126808" fileExt=".h" fileName="repacksubrequest" >
+    <classifiercodedocument writeOutCode="true" package="castor::repack" id="cppheader126808" parent_class="126808" fileExt=".h" fileName="repacksubrequest" >
      <textblocks>
       <codeblockwithcomments tag="hashDefBlock" text="#ifndef REPACKSUBREQUEST_H&amp;#010;#define REPACKSUBREQUEST_H" >
        <header>
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
       </codeblockwithcomments>
-      <codeblockwithcomments tag="includes" text="#include &lt;string>&amp;#010;#include &quot;ipersistent.h&quot;&amp;#010;#include &quot;repacksegment.h&quot;&amp;#010;#include &quot;repackrequest.h&quot;&amp;#010;" >
+      <codeblockwithcomments tag="includes" text="#include &lt;string>&amp;#010;#include &quot;istreamable.h&quot;&amp;#010;#include &quot;repackrequest.h&quot;&amp;#010;#include &quot;unsigned int.h&quot;&amp;#010;" >
        <header>
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
       </codeblockwithcomments>
-      <codeblockwithcomments tag="using" text="using castor.repack::RepackSubRequest;&amp;#010;using castor.repack::RepackSubRequest;&amp;#010;using castor.repack::RepackSubRequest;&amp;#010;" >
+      <codeblockwithcomments tag="using" text="using castor::repack::RepackSubRequest;&amp;#010;using castor::repack::RepackSubRequest;&amp;#010;using castor::repack::RepackSubRequest;&amp;#010;" >
        <header>
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
@@ -1820,6 +1908,26 @@
                 <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
                </header>
               </ccfdeclarationcodeblock>
+              <ccfdeclarationcodeblock parent_id="128071" tag="tblock_4" canDelete="false" indentLevel="1" text=" unsigned int filesMigrating;" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="The amount files which are still being migrated to tape." />
+               </header>
+              </ccfdeclarationcodeblock>
+              <ccfdeclarationcodeblock parent_id="128085" tag="tblock_5" canDelete="false" indentLevel="1" text=" unsigned int filesStaging;" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="The amount of file to be staged." />
+               </header>
+              </ccfdeclarationcodeblock>
+              <ccfdeclarationcodeblock parent_id="128101" tag="tblock_6" canDelete="false" indentLevel="1" text=" unsigned int files;" >
+               <header>
+                <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+               </header>
+              </ccfdeclarationcodeblock>
+              <ccfdeclarationcodeblock parent_id="128324" tag="tblock_20" canDelete="false" indentLevel="1" text=" unsigned int filesFailed;" >
+               <header>
+                <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+               </header>
+              </ccfdeclarationcodeblock>
              </textblocks>
             </hierarchicalcodeblock>
             <hierarchicalcodeblock tag="pubMethodsBlock" canDelete="false" indentLevel="1" >
@@ -1860,37 +1968,77 @@
                     <cppcodedocumentation tag="" indentLevel="1" text="Get the value of vid&amp;#010;The Tape Volumes for one Request.&amp;#010;@return the value of vid" />
                    </header>
                   </codeaccessormethod>
-                  <codeaccessormethod accessType="1" parent_id="126913" tag="hblock_tag_4" canDelete="false" indentLevel="1" classfield_id="126913" >
+                  <codeaccessormethod accessType="1" parent_id="126913" tag="hblock_tag_7" canDelete="false" indentLevel="1" classfield_id="126913" >
                    <header>
                     <cppcodedocumentation tag="" indentLevel="1" text="Set the value of vid&amp;#010;The Tape Volumes for one Request.&amp;#010;@param value the value of vid" />
                    </header>
                   </codeaccessormethod>
-                  <codeaccessormethod accessType="0" parent_id="127000" tag="hblock_tag_5" canDelete="false" indentLevel="1" classfield_id="127000" >
+                  <codeaccessormethod accessType="0" parent_id="127000" tag="hblock_tag_8" canDelete="false" indentLevel="1" classfield_id="127000" >
                    <header>
                     <cppcodedocumentation tag="" indentLevel="1" text="Get the value of xsize&amp;#010;The full size of the request in Bytes.&amp;#010;@return the value of xsize" />
                    </header>
                   </codeaccessormethod>
-                  <codeaccessormethod accessType="1" parent_id="127000" tag="hblock_tag_6" canDelete="false" indentLevel="1" classfield_id="127000" >
+                  <codeaccessormethod accessType="1" parent_id="127000" tag="hblock_tag_9" canDelete="false" indentLevel="1" classfield_id="127000" >
                    <header>
                     <cppcodedocumentation tag="" indentLevel="1" text="Set the value of xsize&amp;#010;The full size of the request in Bytes.&amp;#010;@param value the value of xsize" />
                    </header>
                   </codeaccessormethod>
-                  <codeaccessormethod accessType="0" parent_id="127720" tag="hblock_tag_7" canDelete="false" indentLevel="1" classfield_id="127720" >
+                  <codeaccessormethod accessType="0" parent_id="127720" tag="hblock_tag_10" canDelete="false" indentLevel="1" classfield_id="127720" >
                    <header>
                     <cppcodedocumentation tag="" indentLevel="1" />
                    </header>
                   </codeaccessormethod>
-                  <codeaccessormethod accessType="1" parent_id="127720" tag="hblock_tag_8" canDelete="false" indentLevel="1" classfield_id="127720" >
+                  <codeaccessormethod accessType="1" parent_id="127720" tag="hblock_tag_11" canDelete="false" indentLevel="1" classfield_id="127720" >
                    <header>
                     <cppcodedocumentation tag="" indentLevel="1" />
                    </header>
                   </codeaccessormethod>
-                  <codeaccessormethod accessType="0" parent_id="127874" tag="hblock_tag_9" canDelete="false" indentLevel="1" classfield_id="127874" >
+                  <codeaccessormethod accessType="0" parent_id="127874" tag="hblock_tag_12" canDelete="false" indentLevel="1" classfield_id="127874" >
                    <header>
                     <cppcodedocumentation tag="" indentLevel="1" />
                    </header>
                   </codeaccessormethod>
-                  <codeaccessormethod accessType="1" parent_id="127874" tag="hblock_tag_10" canDelete="false" indentLevel="1" classfield_id="127874" >
+                  <codeaccessormethod accessType="1" parent_id="127874" tag="hblock_tag_13" canDelete="false" indentLevel="1" classfield_id="127874" >
+                   <header>
+                    <cppcodedocumentation tag="" indentLevel="1" />
+                   </header>
+                  </codeaccessormethod>
+                  <codeaccessormethod accessType="0" parent_id="128071" tag="hblock_tag_14" canDelete="false" indentLevel="1" classfield_id="128071" >
+                   <header>
+                    <cppcodedocumentation tag="" indentLevel="1" text="Get the value of filesMigrating&amp;#010;The amount files which are still being migrated to tape.&amp;#010;@return the value of filesMigrating" />
+                   </header>
+                  </codeaccessormethod>
+                  <codeaccessormethod accessType="1" parent_id="128071" tag="hblock_tag_15" canDelete="false" indentLevel="1" classfield_id="128071" >
+                   <header>
+                    <cppcodedocumentation tag="" indentLevel="1" text="Set the value of filesMigrating&amp;#010;The amount files which are still being migrated to tape.&amp;#010;@param value the value of filesMigrating" />
+                   </header>
+                  </codeaccessormethod>
+                  <codeaccessormethod accessType="0" parent_id="128085" tag="hblock_tag_16" canDelete="false" indentLevel="1" classfield_id="128085" >
+                   <header>
+                    <cppcodedocumentation tag="" indentLevel="1" text="Get the value of filesStaging&amp;#010;The amount of file to be staged.&amp;#010;@return the value of filesStaging" />
+                   </header>
+                  </codeaccessormethod>
+                  <codeaccessormethod accessType="1" parent_id="128085" tag="hblock_tag_17" canDelete="false" indentLevel="1" classfield_id="128085" >
+                   <header>
+                    <cppcodedocumentation tag="" indentLevel="1" text="Set the value of filesStaging&amp;#010;The amount of file to be staged.&amp;#010;@param value the value of filesStaging" />
+                   </header>
+                  </codeaccessormethod>
+                  <codeaccessormethod accessType="0" parent_id="128101" tag="hblock_tag_18" canDelete="false" indentLevel="1" classfield_id="128101" >
+                   <header>
+                    <cppcodedocumentation tag="" indentLevel="1" />
+                   </header>
+                  </codeaccessormethod>
+                  <codeaccessormethod accessType="1" parent_id="128101" tag="hblock_tag_19" canDelete="false" indentLevel="1" classfield_id="128101" >
+                   <header>
+                    <cppcodedocumentation tag="" indentLevel="1" />
+                   </header>
+                  </codeaccessormethod>
+                  <codeaccessormethod accessType="0" parent_id="128324" tag="hblock_tag_21" canDelete="false" indentLevel="1" classfield_id="128324" >
+                   <header>
+                    <cppcodedocumentation tag="" indentLevel="1" />
+                   </header>
+                  </codeaccessormethod>
+                  <codeaccessormethod accessType="1" parent_id="128324" tag="hblock_tag_22" canDelete="false" indentLevel="1" classfield_id="128324" >
                    <header>
                     <cppcodedocumentation tag="" indentLevel="1" />
                    </header>
@@ -2022,7 +2170,7 @@
       </codeblockwithcomments>
      </textblocks>
      <header>
-      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      repacksubrequest.h&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.3 $ $Release$ $Date: 2006/03/17 15:37:10 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      repacksubrequest.h&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.4 $ $Release$ $Date: 2006/07/05 12:11:12 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="126913" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
@@ -2039,7 +2187,7 @@
          <cppcodedocumentation tag="" indentLevel="1" text="Get the value of vid&amp;#010;The Tape Volumes for one Request.&amp;#010;@return the value of vid" />
         </header>
        </codeaccessormethod>
-       <codeaccessormethod accessType="1" parent_id="126913" tag="hblock_tag_4" canDelete="false" indentLevel="1" classfield_id="126913" >
+       <codeaccessormethod accessType="1" parent_id="126913" tag="hblock_tag_7" canDelete="false" indentLevel="1" classfield_id="126913" >
         <header>
          <cppcodedocumentation tag="" indentLevel="1" text="Set the value of vid&amp;#010;The Tape Volumes for one Request.&amp;#010;@param value the value of vid" />
         </header>
@@ -2054,12 +2202,12 @@
          <cppcodedocumentation tag="" indentLevel="1" text="The full size of the request in Bytes." />
         </header>
        </ccfdeclarationcodeblock>
-       <codeaccessormethod accessType="0" parent_id="127000" tag="hblock_tag_5" canDelete="false" indentLevel="1" classfield_id="127000" >
+       <codeaccessormethod accessType="0" parent_id="127000" tag="hblock_tag_8" canDelete="false" indentLevel="1" classfield_id="127000" >
         <header>
          <cppcodedocumentation tag="" indentLevel="1" text="Get the value of xsize&amp;#010;The full size of the request in Bytes.&amp;#010;@return the value of xsize" />
         </header>
        </codeaccessormethod>
-       <codeaccessormethod accessType="1" parent_id="127000" tag="hblock_tag_6" canDelete="false" indentLevel="1" classfield_id="127000" >
+       <codeaccessormethod accessType="1" parent_id="127000" tag="hblock_tag_9" canDelete="false" indentLevel="1" classfield_id="127000" >
         <header>
          <cppcodedocumentation tag="" indentLevel="1" text="Set the value of xsize&amp;#010;The full size of the request in Bytes.&amp;#010;@param value the value of xsize" />
         </header>
@@ -2074,12 +2222,12 @@
          <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
         </header>
        </ccfdeclarationcodeblock>
-       <codeaccessormethod accessType="0" parent_id="127720" tag="hblock_tag_7" canDelete="false" indentLevel="1" classfield_id="127720" >
+       <codeaccessormethod accessType="0" parent_id="127720" tag="hblock_tag_10" canDelete="false" indentLevel="1" classfield_id="127720" >
         <header>
          <cppcodedocumentation tag="" indentLevel="1" />
         </header>
        </codeaccessormethod>
-       <codeaccessormethod accessType="1" parent_id="127720" tag="hblock_tag_8" canDelete="false" indentLevel="1" classfield_id="127720" >
+       <codeaccessormethod accessType="1" parent_id="127720" tag="hblock_tag_11" canDelete="false" indentLevel="1" classfield_id="127720" >
         <header>
          <cppcodedocumentation tag="" indentLevel="1" />
         </header>
@@ -2094,12 +2242,92 @@
          <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
         </header>
        </ccfdeclarationcodeblock>
-       <codeaccessormethod accessType="0" parent_id="127874" tag="hblock_tag_9" canDelete="false" indentLevel="1" classfield_id="127874" >
+       <codeaccessormethod accessType="0" parent_id="127874" tag="hblock_tag_12" canDelete="false" indentLevel="1" classfield_id="127874" >
         <header>
          <cppcodedocumentation tag="" indentLevel="1" />
         </header>
        </codeaccessormethod>
-       <codeaccessormethod accessType="1" parent_id="127874" tag="hblock_tag_10" canDelete="false" indentLevel="1" classfield_id="127874" >
+       <codeaccessormethod accessType="1" parent_id="127874" tag="hblock_tag_13" canDelete="false" indentLevel="1" classfield_id="127874" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+      <codeclassfield parent_id="128071" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" text="The amount files which are still being migrated to tape." />
+       </header>
+       <ccfdeclarationcodeblock parent_id="128071" tag="tblock_4" canDelete="false" indentLevel="1" text=" unsigned int filesMigrating;" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" text="The amount files which are still being migrated to tape." />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="128071" tag="hblock_tag_14" canDelete="false" indentLevel="1" classfield_id="128071" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" text="Get the value of filesMigrating&amp;#010;The amount files which are still being migrated to tape.&amp;#010;@return the value of filesMigrating" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="128071" tag="hblock_tag_15" canDelete="false" indentLevel="1" classfield_id="128071" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" text="Set the value of filesMigrating&amp;#010;The amount files which are still being migrated to tape.&amp;#010;@param value the value of filesMigrating" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+      <codeclassfield parent_id="128085" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" text="The amount of file to be staged." />
+       </header>
+       <ccfdeclarationcodeblock parent_id="128085" tag="tblock_5" canDelete="false" indentLevel="1" text=" unsigned int filesStaging;" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" text="The amount of file to be staged." />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="128085" tag="hblock_tag_16" canDelete="false" indentLevel="1" classfield_id="128085" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" text="Get the value of filesStaging&amp;#010;The amount of file to be staged.&amp;#010;@return the value of filesStaging" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="128085" tag="hblock_tag_17" canDelete="false" indentLevel="1" classfield_id="128085" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" text="Set the value of filesStaging&amp;#010;The amount of file to be staged.&amp;#010;@param value the value of filesStaging" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+      <codeclassfield parent_id="128101" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="128101" tag="tblock_6" canDelete="false" indentLevel="1" text=" unsigned int files;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="128101" tag="hblock_tag_18" canDelete="false" indentLevel="1" classfield_id="128101" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="128101" tag="hblock_tag_19" canDelete="false" indentLevel="1" classfield_id="128101" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+      <codeclassfield parent_id="128324" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="128324" tag="tblock_20" canDelete="false" indentLevel="1" text=" unsigned int filesFailed;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="128324" tag="hblock_tag_21" canDelete="false" indentLevel="1" classfield_id="128324" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="128324" tag="hblock_tag_22" canDelete="false" indentLevel="1" classfield_id="128324" >
         <header>
          <cppcodedocumentation tag="" indentLevel="1" />
         </header>
@@ -2107,19 +2335,19 @@
       </codeclassfield>
      </classfields>
     </classifiercodedocument>
-    <classifiercodedocument writeOutCode="true" package="castor.repack" id="cppheader126812" parent_class="126812" fileExt=".h" fileName="repacksegment" >
+    <classifiercodedocument writeOutCode="true" package="castor::repack" id="cppheader126812" parent_class="126812" fileExt=".h" fileName="repacksegment" >
      <textblocks>
       <codeblockwithcomments tag="hashDefBlock" text="#ifndef REPACKSEGMENT_H&amp;#010;#define REPACKSEGMENT_H" >
        <header>
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
       </codeblockwithcomments>
-      <codeblockwithcomments tag="includes" text="#include &lt;string>&amp;#010;#include &quot;ipersistent.h&quot;&amp;#010;#include &quot;repacksubrequest.h&quot;&amp;#010;" >
+      <codeblockwithcomments tag="includes" text="#include &lt;string>&amp;#010;#include &quot;repacksubrequest.h&quot;&amp;#010;" >
        <header>
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
       </codeblockwithcomments>
-      <codeblockwithcomments tag="using" text="using castor.repack::RepackSegment;&amp;#010;using castor.repack::RepackSegment;&amp;#010;" >
+      <codeblockwithcomments tag="using" text="using castor::repack::RepackSegment;&amp;#010;using castor::repack::RepackSegment;&amp;#010;" >
        <header>
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
@@ -2165,6 +2393,11 @@
                </header>
               </ccfdeclarationcodeblock>
               <ccfdeclarationcodeblock parent_id="127895" tag="tblock_3" canDelete="false" indentLevel="1" text=" u_signed64 filesec;" >
+               <header>
+                <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+               </header>
+              </ccfdeclarationcodeblock>
+              <ccfdeclarationcodeblock parent_id="128142" tag="tblock_11" canDelete="false" indentLevel="1" text=" int copyno;" >
                <header>
                 <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
                </header>
@@ -2240,6 +2473,16 @@
                    </header>
                   </codeaccessormethod>
                   <codeaccessormethod accessType="1" parent_id="127895" tag="hblock_tag_10" canDelete="false" indentLevel="1" classfield_id="127895" >
+                   <header>
+                    <cppcodedocumentation tag="" indentLevel="1" />
+                   </header>
+                  </codeaccessormethod>
+                  <codeaccessormethod accessType="0" parent_id="128142" tag="hblock_tag_12" canDelete="false" indentLevel="1" classfield_id="128142" >
+                   <header>
+                    <cppcodedocumentation tag="" indentLevel="1" />
+                   </header>
+                  </codeaccessormethod>
+                  <codeaccessormethod accessType="1" parent_id="128142" tag="hblock_tag_13" canDelete="false" indentLevel="1" classfield_id="128142" >
                    <header>
                     <cppcodedocumentation tag="" indentLevel="1" />
                    </header>
@@ -2371,7 +2614,7 @@
       </codeblockwithcomments>
      </textblocks>
      <header>
-      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      repacksegment.h&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.3 $ $Release$ $Date: 2006/03/17 15:37:10 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      repacksegment.h&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.4 $ $Release$ $Date: 2006/07/05 12:11:12 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="126896" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
@@ -2454,21 +2697,41 @@
         </header>
        </codeaccessormethod>
       </codeclassfield>
+      <codeclassfield parent_id="128142" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="128142" tag="tblock_11" canDelete="false" indentLevel="1" text=" int copyno;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="128142" tag="hblock_tag_12" canDelete="false" indentLevel="1" classfield_id="128142" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="128142" tag="hblock_tag_13" canDelete="false" indentLevel="1" classfield_id="128142" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
      </classfields>
     </classifiercodedocument>
-    <classifiercodedocument writeOutCode="true" package="castor.repack" id="cppheader127239" parent_class="127239" fileExt=".h" fileName="repackrequest" >
+    <classifiercodedocument writeOutCode="true" package="castor::repack" id="cppheader127239" parent_class="127239" fileExt=".h" fileName="repackrequest" >
      <textblocks>
       <codeblockwithcomments tag="hashDefBlock" text="#ifndef REPACKREQUEST_H&amp;#010;#define REPACKREQUEST_H" >
        <header>
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
       </codeblockwithcomments>
-      <codeblockwithcomments tag="includes" text="#include &lt;string>&amp;#010;#include &quot;repacksubrequest.h&quot;&amp;#010;#include &quot;ipersistent.h&quot;&amp;#010;" >
+      <codeblockwithcomments tag="includes" text="#include &lt;string>&amp;#010;#include &quot;iobject.h&quot;&amp;#010;" >
        <header>
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
       </codeblockwithcomments>
-      <codeblockwithcomments tag="using" text="using castor.repack::RepackRequest;&amp;#010;using castor.repack::RepackRequest;&amp;#010;using castor.repack::RepackRequest;&amp;#010;" >
+      <codeblockwithcomments tag="using" text="using castor::repack::RepackRequest;&amp;#010;using castor::repack::RepackRequest;&amp;#010;using castor::repack::RepackRequest;&amp;#010;" >
        <header>
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
@@ -2500,22 +2763,22 @@
              <textblocks>
               <ccfdeclarationcodeblock parent_id="127257" tag="tblock_0" canDelete="false" indentLevel="1" text=" string machine;" >
                <header>
-                <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                <cppcodedocumentation tag="" indentLevel="1" text="The machine name from which the request is send." />
                </header>
               </ccfdeclarationcodeblock>
               <ccfdeclarationcodeblock parent_id="127261" tag="tblock_1" canDelete="false" indentLevel="1" text=" string userName;" >
                <header>
-                <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                <cppcodedocumentation tag="" indentLevel="1" text="The username of the user, who submits the request." />
                </header>
               </ccfdeclarationcodeblock>
               <ccfdeclarationcodeblock parent_id="127265" tag="tblock_2" canDelete="false" indentLevel="1" text=" unsigned long creationTime;" >
                <header>
-                <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                <cppcodedocumentation tag="" indentLevel="1" text="The creation time of the request" />
                </header>
               </ccfdeclarationcodeblock>
-              <ccfdeclarationcodeblock parent_id="127013" tag="tblock_3" canDelete="false" indentLevel="1" text=" string pool;" >
+              <ccfdeclarationcodeblock parent_id="127013" tag="tblock_3" canDelete="false" indentLevel="1" text=" string serviceclass;" >
                <header>
-                <cppcodedocumentation tag="" indentLevel="1" text="The tape pool to be repacked" />
+                <cppcodedocumentation tag="" indentLevel="1" text="The service class to where the file have to be written. It is not possible to specify directly the target tapes or tapepools. By default, the files are written to the tapepool belonging to the repack service class specified in the castor config file." />
                </header>
               </ccfdeclarationcodeblock>
               <ccfdeclarationcodeblock parent_id="127509" tag="tblock_4" canDelete="false" indentLevel="1" text=" u_signed64 pid;" >
@@ -2565,42 +2828,42 @@
                  <textblocks>
                   <codeaccessormethod accessType="0" parent_id="127257" tag="hblock_tag_0" canDelete="false" indentLevel="1" classfield_id="127257" >
                    <header>
-                    <cppcodedocumentation tag="" indentLevel="1" />
+                    <cppcodedocumentation tag="" indentLevel="1" text="Get the value of machine&amp;#010;The machine name from which the request is send.&amp;#010;@return the value of machine" />
                    </header>
                   </codeaccessormethod>
                   <codeaccessormethod accessType="1" parent_id="127257" tag="hblock_tag_6" canDelete="false" indentLevel="1" classfield_id="127257" >
                    <header>
-                    <cppcodedocumentation tag="" indentLevel="1" />
+                    <cppcodedocumentation tag="" indentLevel="1" text="Set the value of machine&amp;#010;The machine name from which the request is send.&amp;#010;@param value the value of machine" />
                    </header>
                   </codeaccessormethod>
                   <codeaccessormethod accessType="0" parent_id="127261" tag="hblock_tag_7" canDelete="false" indentLevel="1" classfield_id="127261" >
                    <header>
-                    <cppcodedocumentation tag="" indentLevel="1" />
+                    <cppcodedocumentation tag="" indentLevel="1" text="Get the value of userName&amp;#010;The username of the user, who submits the request.&amp;#010;@return the value of userName" />
                    </header>
                   </codeaccessormethod>
                   <codeaccessormethod accessType="1" parent_id="127261" tag="hblock_tag_8" canDelete="false" indentLevel="1" classfield_id="127261" >
                    <header>
-                    <cppcodedocumentation tag="" indentLevel="1" />
+                    <cppcodedocumentation tag="" indentLevel="1" text="Set the value of userName&amp;#010;The username of the user, who submits the request.&amp;#010;@param value the value of userName" />
                    </header>
                   </codeaccessormethod>
                   <codeaccessormethod accessType="0" parent_id="127265" tag="hblock_tag_9" canDelete="false" indentLevel="1" classfield_id="127265" >
                    <header>
-                    <cppcodedocumentation tag="" indentLevel="1" />
+                    <cppcodedocumentation tag="" indentLevel="1" text="Get the value of creationTime&amp;#010;The creation time of the request&amp;#010;@return the value of creationTime" />
                    </header>
                   </codeaccessormethod>
                   <codeaccessormethod accessType="1" parent_id="127265" tag="hblock_tag_10" canDelete="false" indentLevel="1" classfield_id="127265" >
                    <header>
-                    <cppcodedocumentation tag="" indentLevel="1" />
+                    <cppcodedocumentation tag="" indentLevel="1" text="Set the value of creationTime&amp;#010;The creation time of the request&amp;#010;@param value the value of creationTime" />
                    </header>
                   </codeaccessormethod>
                   <codeaccessormethod accessType="0" parent_id="127013" tag="hblock_tag_11" canDelete="false" indentLevel="1" classfield_id="127013" >
                    <header>
-                    <cppcodedocumentation tag="" indentLevel="1" text="Get the value of pool&amp;#010;The tape pool to be repacked&amp;#010;@return the value of pool" />
+                    <cppcodedocumentation tag="" indentLevel="1" text="Get the value of serviceclass&amp;#010;The service class to where the file have to be written. It is not possible to specify directly the target tapes or tapepools. By default, the files are written to the tapepool belonging to the repack service class specified in the castor config file.&amp;#010;@return the value of serviceclass" />
                    </header>
                   </codeaccessormethod>
                   <codeaccessormethod accessType="1" parent_id="127013" tag="hblock_tag_12" canDelete="false" indentLevel="1" classfield_id="127013" >
                    <header>
-                    <cppcodedocumentation tag="" indentLevel="1" text="Set the value of pool&amp;#010;The tape pool to be repacked&amp;#010;@param value the value of pool" />
+                    <cppcodedocumentation tag="" indentLevel="1" text="Set the value of serviceclass&amp;#010;The service class to where the file have to be written. It is not possible to specify directly the target tapes or tapepools. By default, the files are written to the tapepool belonging to the repack service class specified in the castor config file.&amp;#010;@param value the value of serviceclass" />
                    </header>
                   </codeaccessormethod>
                   <codeaccessormethod accessType="0" parent_id="127509" tag="hblock_tag_13" canDelete="false" indentLevel="1" classfield_id="127509" >
@@ -2750,86 +3013,86 @@
       </codeblockwithcomments>
      </textblocks>
      <header>
-      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      repackrequest.h&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.3 $ $Release$ $Date: 2006/03/17 15:37:10 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      repackrequest.h&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.4 $ $Release$ $Date: 2006/07/05 12:11:12 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="127257" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
        <header>
-        <cppcodedocumentation tag="" />
+        <cppcodedocumentation tag="" text="The machine name from which the request is send." />
        </header>
        <ccfdeclarationcodeblock parent_id="127257" tag="tblock_0" canDelete="false" indentLevel="1" text=" string machine;" >
         <header>
-         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+         <cppcodedocumentation tag="" indentLevel="1" text="The machine name from which the request is send." />
         </header>
        </ccfdeclarationcodeblock>
        <codeaccessormethod accessType="0" parent_id="127257" tag="hblock_tag_0" canDelete="false" indentLevel="1" classfield_id="127257" >
         <header>
-         <cppcodedocumentation tag="" indentLevel="1" />
+         <cppcodedocumentation tag="" indentLevel="1" text="Get the value of machine&amp;#010;The machine name from which the request is send.&amp;#010;@return the value of machine" />
         </header>
        </codeaccessormethod>
        <codeaccessormethod accessType="1" parent_id="127257" tag="hblock_tag_6" canDelete="false" indentLevel="1" classfield_id="127257" >
         <header>
-         <cppcodedocumentation tag="" indentLevel="1" />
+         <cppcodedocumentation tag="" indentLevel="1" text="Set the value of machine&amp;#010;The machine name from which the request is send.&amp;#010;@param value the value of machine" />
         </header>
        </codeaccessormethod>
       </codeclassfield>
       <codeclassfield parent_id="127261" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
        <header>
-        <cppcodedocumentation tag="" />
+        <cppcodedocumentation tag="" text="The username of the user, who submits the request." />
        </header>
        <ccfdeclarationcodeblock parent_id="127261" tag="tblock_1" canDelete="false" indentLevel="1" text=" string userName;" >
         <header>
-         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+         <cppcodedocumentation tag="" indentLevel="1" text="The username of the user, who submits the request." />
         </header>
        </ccfdeclarationcodeblock>
        <codeaccessormethod accessType="0" parent_id="127261" tag="hblock_tag_7" canDelete="false" indentLevel="1" classfield_id="127261" >
         <header>
-         <cppcodedocumentation tag="" indentLevel="1" />
+         <cppcodedocumentation tag="" indentLevel="1" text="Get the value of userName&amp;#010;The username of the user, who submits the request.&amp;#010;@return the value of userName" />
         </header>
        </codeaccessormethod>
        <codeaccessormethod accessType="1" parent_id="127261" tag="hblock_tag_8" canDelete="false" indentLevel="1" classfield_id="127261" >
         <header>
-         <cppcodedocumentation tag="" indentLevel="1" />
+         <cppcodedocumentation tag="" indentLevel="1" text="Set the value of userName&amp;#010;The username of the user, who submits the request.&amp;#010;@param value the value of userName" />
         </header>
        </codeaccessormethod>
       </codeclassfield>
       <codeclassfield parent_id="127265" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
        <header>
-        <cppcodedocumentation tag="" />
+        <cppcodedocumentation tag="" text="The creation time of the request" />
        </header>
        <ccfdeclarationcodeblock parent_id="127265" tag="tblock_2" canDelete="false" indentLevel="1" text=" unsigned long creationTime;" >
         <header>
-         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+         <cppcodedocumentation tag="" indentLevel="1" text="The creation time of the request" />
         </header>
        </ccfdeclarationcodeblock>
        <codeaccessormethod accessType="0" parent_id="127265" tag="hblock_tag_9" canDelete="false" indentLevel="1" classfield_id="127265" >
         <header>
-         <cppcodedocumentation tag="" indentLevel="1" />
+         <cppcodedocumentation tag="" indentLevel="1" text="Get the value of creationTime&amp;#010;The creation time of the request&amp;#010;@return the value of creationTime" />
         </header>
        </codeaccessormethod>
        <codeaccessormethod accessType="1" parent_id="127265" tag="hblock_tag_10" canDelete="false" indentLevel="1" classfield_id="127265" >
         <header>
-         <cppcodedocumentation tag="" indentLevel="1" />
+         <cppcodedocumentation tag="" indentLevel="1" text="Set the value of creationTime&amp;#010;The creation time of the request&amp;#010;@param value the value of creationTime" />
         </header>
        </codeaccessormethod>
       </codeclassfield>
       <codeclassfield parent_id="127013" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
        <header>
-        <cppcodedocumentation tag="" text="The tape pool to be repacked" />
+        <cppcodedocumentation tag="" text="The service class to where the file have to be written. It is not possible to specify directly the target tapes or tapepools. By default, the files are written to the tapepool belonging to the repack service class specified in the castor config file." />
        </header>
-       <ccfdeclarationcodeblock parent_id="127013" tag="tblock_3" canDelete="false" indentLevel="1" text=" string pool;" >
+       <ccfdeclarationcodeblock parent_id="127013" tag="tblock_3" canDelete="false" indentLevel="1" text=" string serviceclass;" >
         <header>
-         <cppcodedocumentation tag="" indentLevel="1" text="The tape pool to be repacked" />
+         <cppcodedocumentation tag="" indentLevel="1" text="The service class to where the file have to be written. It is not possible to specify directly the target tapes or tapepools. By default, the files are written to the tapepool belonging to the repack service class specified in the castor config file." />
         </header>
        </ccfdeclarationcodeblock>
        <codeaccessormethod accessType="0" parent_id="127013" tag="hblock_tag_11" canDelete="false" indentLevel="1" classfield_id="127013" >
         <header>
-         <cppcodedocumentation tag="" indentLevel="1" text="Get the value of pool&amp;#010;The tape pool to be repacked&amp;#010;@return the value of pool" />
+         <cppcodedocumentation tag="" indentLevel="1" text="Get the value of serviceclass&amp;#010;The service class to where the file have to be written. It is not possible to specify directly the target tapes or tapepools. By default, the files are written to the tapepool belonging to the repack service class specified in the castor config file.&amp;#010;@return the value of serviceclass" />
         </header>
        </codeaccessormethod>
        <codeaccessormethod accessType="1" parent_id="127013" tag="hblock_tag_12" canDelete="false" indentLevel="1" classfield_id="127013" >
         <header>
-         <cppcodedocumentation tag="" indentLevel="1" text="Set the value of pool&amp;#010;The tape pool to be repacked&amp;#010;@param value the value of pool" />
+         <cppcodedocumentation tag="" indentLevel="1" text="Set the value of serviceclass&amp;#010;The service class to where the file have to be written. It is not possible to specify directly the target tapes or tapepools. By default, the files are written to the tapepool belonging to the repack service class specified in the castor config file.&amp;#010;@param value the value of serviceclass" />
         </header>
        </codeaccessormethod>
       </codeclassfield>
@@ -2875,7 +3138,7 @@
       </codeclassfield>
      </classfields>
     </classifiercodedocument>
-    <classifiercodedocument writeOutCode="true" package="castor.repack" id="cppheader127790" parent_class="127790" fileExt=".h" fileName="repackack" >
+    <classifiercodedocument writeOutCode="true" package="castor::repack" id="cppheader127790" parent_class="127790" fileExt=".h" fileName="repackack" >
      <textblocks>
       <codeblockwithcomments tag="hashDefBlock" text="#ifndef REPACKACK_H&amp;#010;#define REPACKACK_H" >
        <header>
@@ -2887,7 +3150,7 @@
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
       </codeblockwithcomments>
-      <codeblockwithcomments tag="using" text="using castor.repack::RepackAck;&amp;#010;using castor.repack::RepackAck;&amp;#010;" >
+      <codeblockwithcomments tag="using" text="using castor::repack::RepackAck;&amp;#010;using castor::repack::RepackAck;&amp;#010;" >
        <header>
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
@@ -2922,12 +3185,7 @@
                 <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
                </header>
               </ccfdeclarationcodeblock>
-              <ccfdeclarationcodeblock parent_id="127948" tag="tblock_2" canDelete="false" indentLevel="1" text=" string errorMessage;" >
-               <header>
-                <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
-               </header>
-              </ccfdeclarationcodeblock>
-              <ccfdeclarationcodeblock parent_id="127983" tag="tblock_5" canDelete="false" writeOutText="false" indentLevel="1" role_id="0" text=" IObject ;" >
+              <ccfdeclarationcodeblock parent_id="127948" tag="tblock_1" canDelete="false" indentLevel="1" text=" string errorMessage;" >
                <header>
                 <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
                </header>
@@ -2972,7 +3230,7 @@
                     <cppcodedocumentation tag="" indentLevel="1" />
                    </header>
                   </codeaccessormethod>
-                  <codeaccessormethod accessType="1" parent_id="127941" tag="hblock_tag_1" canDelete="false" indentLevel="1" classfield_id="127941" >
+                  <codeaccessormethod accessType="1" parent_id="127941" tag="hblock_tag_2" canDelete="false" indentLevel="1" classfield_id="127941" >
                    <header>
                     <cppcodedocumentation tag="" indentLevel="1" />
                    </header>
@@ -2983,31 +3241,6 @@
                    </header>
                   </codeaccessormethod>
                   <codeaccessormethod accessType="1" parent_id="127948" tag="hblock_tag_4" canDelete="false" indentLevel="1" classfield_id="127948" >
-                   <header>
-                    <cppcodedocumentation tag="" indentLevel="1" />
-                   </header>
-                  </codeaccessormethod>
-                  <codeaccessormethod accessType="0" parent_id="127983" tag="hblock_tag_6" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="127983" role_id="0" >
-                   <header>
-                    <cppcodedocumentation tag="" indentLevel="1" />
-                   </header>
-                  </codeaccessormethod>
-                  <codeaccessormethod accessType="1" parent_id="127983" tag="hblock_tag_7" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="127983" role_id="0" >
-                   <header>
-                    <cppcodedocumentation tag="" indentLevel="1" />
-                   </header>
-                  </codeaccessormethod>
-                  <codeaccessormethod accessType="2" parent_id="127983" tag="hblock_tag_8" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="127983" role_id="0" >
-                   <header>
-                    <cppcodedocumentation tag="" indentLevel="1" />
-                   </header>
-                  </codeaccessormethod>
-                  <codeaccessormethod accessType="3" parent_id="127983" tag="hblock_tag_9" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="127983" role_id="0" >
-                   <header>
-                    <cppcodedocumentation tag="" indentLevel="1" />
-                   </header>
-                  </codeaccessormethod>
-                  <codeaccessormethod accessType="4" parent_id="127983" tag="hblock_tag_10" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="127983" role_id="0" >
                    <header>
                     <cppcodedocumentation tag="" indentLevel="1" />
                    </header>
@@ -3139,7 +3372,7 @@
       </codeblockwithcomments>
      </textblocks>
      <header>
-      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      repackack.h&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.3 $ $Release$ $Date: 2006/03/17 15:37:10 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      repackack.h&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.4 $ $Release$ $Date: 2006/07/05 12:11:12 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="127941" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
@@ -3156,7 +3389,7 @@
          <cppcodedocumentation tag="" indentLevel="1" />
         </header>
        </codeaccessormethod>
-       <codeaccessormethod accessType="1" parent_id="127941" tag="hblock_tag_1" canDelete="false" indentLevel="1" classfield_id="127941" >
+       <codeaccessormethod accessType="1" parent_id="127941" tag="hblock_tag_2" canDelete="false" indentLevel="1" classfield_id="127941" >
         <header>
          <cppcodedocumentation tag="" indentLevel="1" />
         </header>
@@ -3166,7 +3399,7 @@
        <header>
         <cppcodedocumentation tag="" />
        </header>
-       <ccfdeclarationcodeblock parent_id="127948" tag="tblock_2" canDelete="false" indentLevel="1" text=" string errorMessage;" >
+       <ccfdeclarationcodeblock parent_id="127948" tag="tblock_1" canDelete="false" indentLevel="1" text=" string errorMessage;" >
         <header>
          <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
         </header>
@@ -3182,42 +3415,213 @@
         </header>
        </codeaccessormethod>
       </codeclassfield>
-      <codeclassfield parent_id="127983" field_type="3" initialValue="" role_id="1" writeOutMethods="true" listClassName="" >
-       <header>
-        <cppcodedocumentation tag="" />
-       </header>
-       <ccfdeclarationcodeblock parent_id="127983" tag="tblock_5" canDelete="false" writeOutText="false" indentLevel="1" role_id="0" text=" IObject ;" >
-        <header>
-         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
-        </header>
-       </ccfdeclarationcodeblock>
-       <codeaccessormethod accessType="0" parent_id="127983" tag="hblock_tag_6" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="127983" role_id="0" >
-        <header>
-         <cppcodedocumentation tag="" indentLevel="1" />
-        </header>
-       </codeaccessormethod>
-       <codeaccessormethod accessType="1" parent_id="127983" tag="hblock_tag_7" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="127983" role_id="0" >
-        <header>
-         <cppcodedocumentation tag="" indentLevel="1" />
-        </header>
-       </codeaccessormethod>
-       <codeaccessormethod accessType="2" parent_id="127983" tag="hblock_tag_8" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="127983" role_id="0" >
-        <header>
-         <cppcodedocumentation tag="" indentLevel="1" />
-        </header>
-       </codeaccessormethod>
-       <codeaccessormethod accessType="3" parent_id="127983" tag="hblock_tag_9" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="127983" role_id="0" >
-        <header>
-         <cppcodedocumentation tag="" indentLevel="1" />
-        </header>
-       </codeaccessormethod>
-       <codeaccessormethod accessType="4" parent_id="127983" tag="hblock_tag_10" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="127983" role_id="0" >
-        <header>
-         <cppcodedocumentation tag="" indentLevel="1" />
-        </header>
-       </codeaccessormethod>
-      </codeclassfield>
      </classfields>
+    </classifiercodedocument>
+    <classifiercodedocument writeOutCode="true" package="" id="cppheader128072" parent_class="128072" fileExt=".h" fileName="unsigned int" >
+     <textblocks>
+      <codeblockwithcomments tag="hashDefBlock" text="#ifndef UNSIGNED_INT_H&amp;#010;#define UNSIGNED_INT_H" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <codeblockwithcomments tag="includes" text="#include &lt;string>&amp;#010;" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <codeblockwithcomments tag="using" writeOutText="false" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <hierarchicalcodeblock tag="namespace" canDelete="false" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" text="Namespace" />
+       </header>
+       <textblocks>
+        <codeblockwithcomments tag="enums" writeOutText="false" >
+         <header>
+          <cppcodedocumentation tag="" writeOutText="false" />
+         </header>
+        </codeblockwithcomments>
+        <cppheaderclassdeclarationblock parent_id="128072" tag="classDeclarationBlock" canDelete="false" >
+         <header>
+          <cppcodedocumentation tag="" text="Class unsigned int&amp;#010;" />
+         </header>
+         <textblocks>
+          <hierarchicalcodeblock tag="publicBlock" canDelete="false" >
+           <header>
+            <cppcodedocumentation tag="" text="Public stuff" />
+           </header>
+           <textblocks>
+            <hierarchicalcodeblock tag="publicFieldsDecl" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" text="Fields" />
+             </header>
+             <textblocks/>
+            </hierarchicalcodeblock>
+            <hierarchicalcodeblock tag="pubMethodsBlock" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" />
+             </header>
+             <textblocks>
+              <hierarchicalcodeblock tag="constructionMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Constructors" />
+               </header>
+               <textblocks>
+                <codeblockwithcomments tag="emptyconstructor" writeOutText="false" indentLevel="1" text="unsigned int ( ) { }" >
+                 <header>
+                  <cppcodedocumentation tag="" indentLevel="1" text="Empty Constructor" />
+                 </header>
+                </codeblockwithcomments>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="accessorMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Accessor Methods" />
+               </header>
+               <textblocks>
+                <hierarchicalcodeblock tag="pubStaticAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+                <hierarchicalcodeblock tag="pubRegularAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="operationMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Operations" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+             </textblocks>
+            </hierarchicalcodeblock>
+           </textblocks>
+          </hierarchicalcodeblock>
+          <hierarchicalcodeblock tag="protectedBlock" canDelete="false" >
+           <header>
+            <cppcodedocumentation tag="" text="Protected stuff" />
+           </header>
+           <textblocks>
+            <hierarchicalcodeblock tag="protectedFieldsDecl" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" text="Fields" />
+             </header>
+             <textblocks/>
+            </hierarchicalcodeblock>
+            <hierarchicalcodeblock tag="protMethodsBlock" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" />
+             </header>
+             <textblocks>
+              <hierarchicalcodeblock tag="constructionMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Constructors" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="accessorMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Accessor Methods" />
+               </header>
+               <textblocks>
+                <hierarchicalcodeblock tag="protStaticAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+                <hierarchicalcodeblock tag="protRegularAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="operationMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Operations" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+             </textblocks>
+            </hierarchicalcodeblock>
+           </textblocks>
+          </hierarchicalcodeblock>
+          <hierarchicalcodeblock tag="privateBlock" canDelete="false" >
+           <header>
+            <cppcodedocumentation tag="" text="Private stuff" />
+           </header>
+           <textblocks>
+            <hierarchicalcodeblock tag="privateFieldsDecl" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" text="Fields" />
+             </header>
+             <textblocks/>
+            </hierarchicalcodeblock>
+            <hierarchicalcodeblock tag="privMethodsBlock" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" />
+             </header>
+             <textblocks>
+              <hierarchicalcodeblock tag="constructionMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Constructors" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="accessorMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Accessor Methods" />
+               </header>
+               <textblocks>
+                <hierarchicalcodeblock tag="privStaticAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+                <hierarchicalcodeblock tag="privRegularAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="operationMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Operations" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+             </textblocks>
+            </hierarchicalcodeblock>
+           </textblocks>
+          </hierarchicalcodeblock>
+         </textblocks>
+        </cppheaderclassdeclarationblock>
+       </textblocks>
+      </hierarchicalcodeblock>
+      <codeblockwithcomments tag="hashDefBlockEnd" text="#endif //UNSIGNED_INT_H" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+     </textblocks>
+     <header>
+      <codecomment tag="" text="/******************************************************************************&amp;#010; *                      unsigned int.h&amp;#010; *&amp;#010; * This file is part of the Castor project.&amp;#010; * See http://castor.web.cern.ch/castor&amp;#010; *&amp;#010; * Copyright (C) 2003  CERN&amp;#010; * This program is free software; you can redistribute it and/or&amp;#010; * modify it under the terms of the GNU General Public License&amp;#010; * as published by the Free Software Foundation; either version 2&amp;#010; * of the License, or (at your option) any later version.&amp;#010; * This program is distributed in the hope that it will be useful,&amp;#010; * but WITHOUT ANY WARRANTY; without even the implied warranty of&amp;#010; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the&amp;#010; * GNU General Public License for more details.&amp;#010; * You should have received a copy of the GNU General Public License&amp;#010; * along with this program; if not, write to the Free Software&amp;#010; * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.&amp;#010; *&amp;#010; * @(#)$RCSfile: Repack.xmi,v $ $Revision: 1.4 $ $Release$ $Date: 2006/07/05 12:11:12 $ $Author: felixehm $&amp;#010; *&amp;#010; * &amp;#010; *&amp;#010; * @author Castor Dev team, castor-dev@cern.ch&amp;#010; *****************************************************************************/&amp;#010;" />
+     </header>
+     <classfields/>
     </classifiercodedocument>
    </codegenerator>
   </codegeneration>
