@@ -330,7 +330,7 @@ int main(argc, argv)
 		strcpy(shost1,host1) ;
 		input_is_local = 0;
 	}
-	cleanInp=strdup((!path1 || !strstr(path1,"/castor"))?inpfile:path1);
+	cleanInp=strdup((!path1 || strstr(path1,"/castor")!= path1)?inpfile:path1);
 	strcpy( filename, path1 );
 
 	l2 = rfio_parseln( filename_sav , &host2, &path2, NORDLINKS ) ;
@@ -339,7 +339,7 @@ int main(argc, argv)
 		free(cleanInp);
 		exit(USERR);
 	}
-	cleanOut=strdup((!path2 || !strstr(path2,"/castor"))?filename_sav:path2);
+	cleanOut=strdup((!path2 || strstr(path2,"/castor")!=path2)?filename_sav:path2);
 	
 
 	/* Command is of the form cp f1 f2. */
@@ -412,6 +412,8 @@ int main(argc, argv)
 		/* Output is not CASTOR but input is : we will follow the classic rfcp behaviour */
 		/* but we want neverthless to handle the termination signals v.s. stager */
 		TRACE(2,"rfio","Instructing signal handler to exit");
+		free(cleanInp);
+		free(cleanOut);
 		copyfile_stgcleanup_instruction = CLEANER_EXIT;
 	  }
 	}
