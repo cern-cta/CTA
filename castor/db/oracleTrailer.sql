@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.280 $ $Release$ $Date: 2006/07/04 15:40:48 $ $Author: felixehm $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.281 $ $Release$ $Date: 2006/07/06 12:48:11 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.280 $ $Date: 2006/07/04 15:40:48 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.281 $ $Date: 2006/07/06 12:48:11 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq;
@@ -1011,7 +1011,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   FROM DiskCopy, SubRequest, FileSystem, DiskServer
   WHERE SubRequest.id = srId
     AND SubRequest.castorfile = DiskCopy.castorfile
-    AND DiskCopy.status IN (1, 2, 5, 6, 11) -- WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, WAITFS_SCHEDULING
+    AND DiskCopy.status IN (1, 2, 5, 6, 11) -- WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, WAITFS_SCHEDULING, STAGEOUT
     AND FileSystem.id(+) = DiskCopy.fileSystem
     AND FileSystem.status(+) = 0 -- PRODUCTION
     AND DiskServer.id(+) = FileSystem.diskserver
@@ -1030,7 +1030,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
    FROM DiskCopy, SubRequest, FileSystem, DiskServer
    WHERE SubRequest.id = srId
      AND SubRequest.castorfile = DiskCopy.castorfile
-     AND DiskCopy.status IN (0, 10) -- STAGED, STAGEOUT, CANBEMIGR
+     AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
      AND FileSystem.id = DiskCopy.fileSystem
      AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
      AND DiskServer.id = FileSystem.diskserver
@@ -1044,7 +1044,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     FROM DiskCopy, SubRequest, FileSystem, DiskServer
     WHERE SubRequest.id = srId
       AND SubRequest.castorfile = DiskCopy.castorfile
-      AND DiskCopy.status IN (0, 10) -- STAGED, STAGEOUT, CANBEMIGR
+      AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
       AND FileSystem.id = DiskCopy.fileSystem
       AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
       AND DiskServer.id = FileSystem.diskServer
@@ -1081,6 +1081,14 @@ CREATE OR REPLACE PROCEDURE putStart
          rdcId OUT INTEGER, rdcStatus OUT INTEGER,
          rdcPath OUT VARCHAR2) AS
 BEGIN
+ -- Get older castorFiles with the same name and drop their lastKnownFileName
+ UPDATE CastorFile SET lastKnownFileName = ''
+  WHERE id IN (
+    SELECT cfOld.id FROM CastorFile cfOld, CastorFile cfNew, SubRequest
+     WHERE cfOld.lastKnownFileName = cfNew.lastKnownFileName
+       AND cfOld.fileid <> cfNew.fileid
+       AND cfNew.id = SubRequest.castorFile
+       AND SubRequest.id = srId);
  -- Get diskCopy Id
  SELECT diskCopy INTO rdcId FROM SubRequest WHERE SubRequest.id = srId;
  -- In case the DiskCopy was in WAITFS_SCHEDULING, PUT the
@@ -1457,6 +1465,7 @@ BEGIN
   END IF;
   updateFsFileClosed(fsId, fileSize, fileSize);
 END;
+
 
 /* PL/SQL method implementing selectCastorFile */
 CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
@@ -2349,7 +2358,7 @@ BEGIN
            DiskPool2SvcClass, SubRequest,
            (SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
             SELECT id, svcClass FROM StageGetRequest) Req
-     WHERE CastorFile.id IN (SELECT * FROM TABLE(cfs))
+     WHERE CastorFile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
        AND CastorFile.id = DiskCopy.castorFile(+)    -- search for valid diskcopy
        AND FileSystem.id(+) = DiskCopy.fileSystem
        AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
