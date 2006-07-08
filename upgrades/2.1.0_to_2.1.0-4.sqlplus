@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile $ $Revision $ $Release$ $Date $ $Author $
+ * @(#)$RCSfile: 2.1.0_to_2.1.0-4.sqlplus,v $ $Revision: 1.2 $ $Release$ $Date: 2006/07/08 08:54:02 $ $Author: itglp $
  *
  * This script upgrades a CASTOR v2.1.0-x database into v2.1.0-4
  *
@@ -209,9 +209,6 @@ BEGIN
   RETURN 1000*(weight + deltaWeight) - fsDeviation;
 END;
 /
-
-/* FileSystem index based on the rate. */
-CREATE INDEX I_FileSystem_Rate ON FileSystem(FileSystemRate(weight, deltaWeight, fsDeviation));
 
 
 
@@ -431,24 +428,6 @@ BEGIN
   WHERE id = fs RETURNING fsDeviation, diskServer INTO deviation, ds;
 END;
 /
-
-/* This table is needed to insure that bestTapeCopyForStream works Ok.
- * It basically serializes the queries ending to the same diskserver.
- * This is only needed because of lack of funstionnality in ORACLE.
- * The original goal was to lock the selected filesystem in the first
- * query of bestTapeCopyForStream. But a SELECT FOR UPDATE was not enough
- * because it does not revalidate the inner select and we were thus selecting
- * n times the same filesystem when n queries were processed in parallel.
- * (take care, they were processed sequentially due to the lock, but they
- * were still locking the same filesystem). Thus an UPDATE was needed but
- * UPDATE cannot use joins. Thus it was impossible to lock DiskServer
- * and FileSystem at the same time (we need to avoid the DiskServer to
- * be chosen again (with a different filesystem) before we update the
- * weight of all filesystems). Locking the diskserver only was fine but
- * was introducing a possible deadlock with a place where the FileSystem
- * is locked before the DiskServer. Thus this table..... */
-CREATE TABLE LockTable (DiskServerId NUMBER PRIMARY KEY, TheLock NUMBER);
-INSERT INTO LockTable SELECT id, id FROM DiskServer;
 
 /* Used to create a row INTO LockTable whenever a new
    DiskServer is created */
@@ -2210,15 +2189,6 @@ BEGIN
 END;
 /
 */
-
-
-/* This table keeps the current queue of the garbage collector:
- * whenever a new filesystem has to be garbage collected, a row is inserted
- * in this table and a db job runs on it to actually execute the gc.
- * In low load conditions this table will be empty and the db job is fired
- * for each new entered filesystem. In high load conditions a single db job
- * will keep running and no other jobs will be fired */
-CREATE TABLE FileSystemGC (fsid NUMBER PRIMARY KEY, submissionTime NUMBER);
 
 /*
  * Runs Garbage collection anywhere needed.
