@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.17 2006/06/21 08:29:36 sponcec3 Exp $
+## $Id: PACKAGING.howto,v 1.18 2006/07/08 09:12:38 itglp Exp $
 #
 
 #
@@ -22,7 +22,7 @@ cvs commit ReleaseNotes
 cvs tag vx_y_z_r .
 
 #
-## 2) otherwise, To releae from a bug-fix branch
+## 2) otherwise, To release from a bug-fix branch
 #
 cd CASTOR2
 cvs update -rBug_fix_branch_tag
@@ -31,12 +31,12 @@ cvs tag vx_y_z_r .
 cd ..
 CASTOR2/tools/CASTOR.cvslogs.pl -rvx_y_z_r-1::vx_y_z_r
 cd CASTOR2
+cvs update -A debian/changelog ReleaseNotes
 dch -i
 cvs commit debian/changelog
-cvs tag -F vx_y_z_r debian/changelog
 vim ReleaseNotes
 cvs commit ReleaseNotes
-cvs tag -F vx_y_z_r ReleaseNotes
+cvs tag -F vx_y_z_r debian/changelog ReleaseNotes
 
 
 #
