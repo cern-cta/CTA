@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.18 2006/07/08 09:12:38 itglp Exp $
+## $Id: PACKAGING.howto,v 1.19 2006/07/10 09:57:34 itglp Exp $
 #
 
 #
@@ -112,8 +112,5 @@ end
 #
 ## To install in AFS
 #  -----------------
-vim tools/installOnAFS
-python tools/installOnAFS > /tmp/afsInstallScript
-# You will have to modify it by hand here to add the lib-compat
-# packages until the installOnAFS script is fixed for this
-source /tmp/afsInstallScript
+./tools/installOnAFS.py > /tmp/afsInstallScript
+source /tmp/afsInstallScript   # run it from lxplus or make sure you have rpm utilities (rpm2cpio)
