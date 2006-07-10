@@ -33,8 +33,8 @@ my $doRetry = 1;
 
 END {print "$doRetry\n";}
 
-if ( $#ARGV > 16 ) {
-	$doRetry = 0;
-}
+#if ( $#ARGV > 16 ) {
+#	$doRetry = 0;
+#}
 
 exit(EXIT_SUCCESS);
