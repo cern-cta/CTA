@@ -1,0 +1,12 @@
+CREATE OR REPLACE PROCEDURE GC_job_workaround (p_maxratio_num number) AS
+begin
+	for l_id_cur in (
+	  select id from filesystem 
+	   where totalsize is not null and 
+                 (free + deltaFree - reservedSpace + spaceToBeFreed) < p_maxratio_num * totalsize
+	   )
+	loop     
+		garbageCollectFS(l_id_cur.id);
+	end loop;
+end;
+/
