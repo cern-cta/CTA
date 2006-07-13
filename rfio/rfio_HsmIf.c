@@ -1509,7 +1509,7 @@ int DLL_DECL use_castor2_api() {
     /* Variable not set: compat mode */
     return(0);
   }
-  if ((strcmp(p,"YES") == 0) || (strcmp(p,"yes") == 0) || (atoi(p) == 1)) {
+  if ((strcasecmp(p,"YES") == 0) || (atoi(p) == 1)) {
     /* Variable set to yes or 1 : new mode */
     return(1);
   }

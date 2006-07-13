@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.14 $ $Release$ $Date: 2006/06/20 14:15:00 $ $Author: riojac3 $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.15 $ $Release$ $Date: 2006/07/13 11:55:18 $ $Author: gtaur $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.14 $ $Release$ $Date: 2006/06/20 14:15:00 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.15 $ $Release$ $Date: 2006/07/13 11:55:18 $ Olof Barring";
 #endif /* not lint */
 /** RfioTURL.c - RFIO TURL handling
  *
@@ -191,7 +191,8 @@ int getDefaultForGlobal(
 	if (versionDefault<=0){
 		aux=getenv("RFIO_USE_CASTOR_V2");
 		if(aux){
-			versionDefault=strcmp(aux,"YES")==0?2:1;
+		        
+			versionDefault=strcasecmp(aux,"YES")==0?2:1;
 		}else{versionDefault=0;}
     		if (versionDefault<=0){
 			versionDefault=versionMap;
@@ -540,124 +541,3 @@ int rfioTURLFromString(
 }
 
 
-/********************************UNUSED FUNCTIONS TO BE DELETED ********************************************
- *                                                                                                         * 
- *  All the functions from here to the end are not used anymore in Castor code and they should be deleted  *   
- *  soon. In SRM are used fuctions with the same name but the implementation is in RfioTURL.c of SRM       *
- *  folder. That file is has not been touched.                                                             *
- *                                                                                                         *
- **********************************************************************************************************/
-
-/*
-
-EXTERN_C int DLL_DECL rfio_parse _PROTO((char *, char **, char **));
-
-int initRfioTURLPrefix(char *prefix) 
-{
-  char *str = NULL;
-  int rc, len, *tURLLen = NULL;
-  if ( prefix == NULL ) {
-    serrno = EINVAL;
-    return(-1);
-  }
-  
-  len = strlen(prefix)+1;
-  if ( len < CA_MAXLINELEN + 1 ) len = CA_MAXLINELEN+1;
-  rc = Cglobals_get(&tURLPrefixKey,(void *)&str,len);
-  if ( rc == -1 || str == NULL ) return(-1);
-  strcpy(str,prefix);
-
-  rc = Cglobals_get(&tURLPrefixLenKey,(void *)&tURLLen,sizeof(int));
-  if ( rc == -1 || tURLLen == NULL ) return(-1);
-  *tURLLen = len;
-  
-  return(0);
-}
-
-
-int rfioTURLToString(RfioTURL_t *tURL, char *str, int len) 
-{
-  char *prefix, portStr[12];
-  int _len = 0;
-
-  if ( tURL == NULL || str == NULL || len <= 0 ) {
-    serrno = EINVAL;
-    return(-1);
-  }
-
-  prefix = getRfioTURLPrefix();
-  if ( prefix != NULL ) _len = strlen(prefix);
-
-  _len += strlen(tURL->rfioHostName);
-  *portStr = '\0';
-  if ( tURL->rfioPort > 0 ) {
-    _len++; // for the ':' delimiter 
-    sprintf(portStr,"%lu",tURL->rfioPort);
-    _len += strlen(portStr);
-  }
-  _len++; // '/' between [host][:port] and path.
-  _len += strlen(tURL->rfioPath);
-  _len++; // terminating '\0'
-  if ( len < _len ) {
-    serrno = E2BIG;
-    return(-1);
-  }
-
-  sprintf(str,"%s%s%s%s/%s",prefix,tURL->rfioHostName,(tURL->rfioPort > 0 ? ":" : ""),
-     (tURL->rfioPort > 0 ? portStr : ""),tURL->rfioPath);  
-
-  return(0);
-}
-
-int rfioPathToTURL(char *rfioPath, RfioTURL_t *tURL) 
-{
-  char *host = NULL, *path = NULL;
-  char lhost[CA_MAXHOSTNAMELEN+1];
-  RfioTURL_t _tURL;
-  int rc;
-  char* svc;
-
-  if ( rfioPath == NULL || tURL == NULL ) {
-    serrno = EINVAL;
-    return(-1);
-  }
-
-  if ( (rc = rfio_parse(rfioPath,&host,&path)) == -1 ) return(-1);
-
-  if ( path == NULL ) path = rfioPath;
-  if ( strlen(path) >= sizeof(tURL->rfioPath) ) {
-    serrno = E2BIG;
-    return(-1);
-  }
-  strcpy(_tURL.rfioProtocolName,RFIO_PROTOCOL_NAME);
-  _tURL.rfioPort = 0; // use whatever local default is set to
-  if ( host == NULL ) {
-
-    // Local file 
-    if ( gethostname(lhost,sizeof(lhost)) == -1 ) return(-1);
-    host = lhost;
-    if ( strlen(host) >= sizeof(tURL->rfioHostName) ) {
-      serrno = E2BIG;
-      return(-1);
-    }
-    strcpy(_tURL.rfioHostName,host);
-  } else if ( rc == 0 ) {
-    // HSM (Castor) file 
-
-    *_tURL.rfioHostName = '\0';
-
-  } else {
-
-    //  host specified  
-
-    strcpy(_tURL.rfioHostName,host);
-  }
-   
-  strcpy(_tURL.rfioPath,path);
-
-  *tURL = _tURL;  
-  return(0);
-}
-
-
-*/
