@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/07/13 15:28:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/07/13 15:34:54 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -60,7 +60,6 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Busy.hpp"
-#include "castor/exception/SegmentNotAccessible.hpp";
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/NotSupported.hpp"
@@ -339,7 +338,7 @@ castor::db::ora::OraJobSvc::getUpdateStart
 
       if(crSegFailed == 0) return 0;
       // else throw the exception to the stager_job_service
-      castor::exception::SegmentNotAccessible e;
+      castor::exception::Internal e;
       e.getMessage() << "getUpdateStart : no valid copy found on tape";
       throw e;
     }
