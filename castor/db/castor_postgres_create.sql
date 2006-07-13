@@ -175,9 +175,6 @@ CREATE TABLE TapeDriveCompatibility (tapeDriveModel VARCHAR(2048), priorityLevel
 /* SQL statements for type DeviceGroupName */
 CREATE TABLE DeviceGroupName (dgName VARCHAR(2048), libraryName VARCHAR(2048), id INT8 PRIMARY KEY);
 
-/* SQL statements for type DiskPoolQuery */
-CREATE TABLE DiskPoolQuery (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, diskPoolName VARCHAR(2048), id INT8 PRIMARY KEY, svcClass INTEGER, client INTEGER);
-
 ALTER TABLE SvcClass2TapePool
   ADD CONSTRAINT fk_SvcClass2TapePool_P FOREIGN KEY (Parent) REFERENCES SvcClass (id)
   ADD CONSTRAINT fk_SvcClass2TapePool_C FOREIGN KEY (Child) REFERENCES TapePool (id);

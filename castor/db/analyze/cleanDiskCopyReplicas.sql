@@ -1,27 +1,29 @@
 -- This script garbage collects diskcopies that are replicas:
 -- only the diskcopy in the filesystem with least copies is kept.
 -- Note that for files with more than 2 replicas you have to run it more times
+declare
+  cf number;
 begin
-  for cf in (
-        select id from
+   loop
+        select id INTO cf from
 		(select count(*) as c, castorfile.id
 		  from Diskcopy, Castorfile
 		 where Diskcopy.castorfile = castorfile.id
 		   and Diskcopy.status = 0    -- STAGED
 		 group by castorfile.id)
-        where c > 1) loop
+        where c > 1 and rownum < 2;
 
     update diskcopy set status = 88 where id = (
         select dc1.id
           from diskcopy dc1
-         where dc1.castorfile = cf.id
+         where dc1.castorfile = cf
 	   and dc1.status = 0      -- STAGED
            and dc1.filesystem = (
 		   select fsid from (
 		        -- here we select the filesystems and their diskcopy count
 			select dccount.filesystem as fsid
 			  from diskcopy dc, filesystem fs, diskcopy dccount
-			 where dc.castorfile = cf.id
+			 where dc.castorfile = cf
 			   and dc.status = 0     -- STAGED
 			   and dc.filesystem = fs.id
 			   and dccount.filesystem = fs.id
@@ -33,7 +35,12 @@ begin
 		   )
 	   and rownum < 2
 	);
+  commit;
   end loop;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- No data found means the selected filesystem has no
+    -- tapecopies to be migrated. Thus we go to next one
+    NULL;
 end;
 
 update diskcopy set status = 8 where status = 88;

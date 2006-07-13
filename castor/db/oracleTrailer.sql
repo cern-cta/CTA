@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.282 $ $Release$ $Date: 2006/07/07 11:53:21 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.283 $ $Release$ $Date: 2006/07/13 15:28:56 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.282 $ $Date: 2006/07/07 11:53:21 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.283 $ $Date: 2006/07/13 15:28:56 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 200;
@@ -2040,7 +2040,7 @@ CREATE OR REPLACE FUNCTION nopinGCPolicy
   result castorGC.GCItem_Cur;
 BEGIN
   OPEN result FOR
-    SELECT DiskCopy.id, CastorFile.fileSize, 0
+    SELECT DiskCopy.id, CastorFile.fileSize, 100000000000
       FROM DiskCopy, CastorFile
      WHERE CastorFile.id = DiskCopy.castorFile
        AND DiskCopy.fileSystem = fsId
@@ -2070,12 +2070,13 @@ CREATE OR REPLACE FUNCTION nullGCPolicy
 (fsId INTEGER, garbageSize INTEGER)
   RETURN castorGC.GCItem_Cur AS
   result castorGC.GCItem_Cur;
-  badValue NUMBER;
 BEGIN
-  badValue := 100000000001; -- Take care that this is greater than the value given in defaultGCPolicy
   OPEN result FOR
-    SELECT 0, -1, badValue
-      FROM Dual;
+    SELECT DiskCopy.id, CastorFile.fileSize, 100000000000
+      FROM DiskCopy, CastorFile
+     WHERE CastorFile.id = DiskCopy.castorFile
+       AND DiskCopy.fileSystem = fsId
+       AND DiskCopy.status = 7; -- INVALID
   return result;
 END;
 
