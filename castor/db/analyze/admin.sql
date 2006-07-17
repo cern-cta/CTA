@@ -13,5 +13,6 @@ grant execute on dbms_lock to username;
 -- to take a snapshot of the db for monitoring:
 begin dbms_workload_repository.create_snapshot; end;
 
-
+-- too see deadlocks and sessions
+https://oraweb.cern.ch/pls/castor_dev/webinstance.sessions.show_sessions
 
