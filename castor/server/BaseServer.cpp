@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/05/02 10:10:33 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/07/18 12:12:32 $ $Author: waldron $
  *
  *
  *
@@ -86,13 +86,19 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
 {
   // init daemon if to be run in background 
   if (!m_foreground) {
+
+    // prepare the DLF interface for forking
+    dlf_prepare();
+
     int rc;
     if ((rc = Cinitdaemon((char *)m_serverName.c_str(), 0)) < 0) {
       castor::exception::Internal ex;
       ex.getMessage() << "Background daemon initialization failed with result "
                       << rc << std::endl;
+      dlf_parent();
       throw ex;
     }
+    dlf_child();
   }
 
   // Ignore SIGPIPE (connection lost with client),

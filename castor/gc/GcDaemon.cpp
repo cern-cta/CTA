@@ -68,6 +68,32 @@ castor::gc::GcDaemon::GcDaemon() : m_foreground(false) {
 
   // Initializes Logging (old version)
   initLog("GC", SVC_DLFMSG);
+}
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+castor::gc::GcDaemon::~GcDaemon() throw() {
+  // hack to release specific allocated memory
+  castor::Services* svcs = services();
+  if (0 != svcs) {
+    delete svcs;
+  }
+}
+
+//------------------------------------------------------------------------------
+// start
+//------------------------------------------------------------------------------
+int castor::gc::GcDaemon::start()
+  throw (castor::exception::Exception) {
+
+  // Switch to daemon mode
+  int rc;
+  if (!m_foreground) {
+    if ((rc = Cinitdaemon ("GcDaemon", 0)) < 0) {
+      return -1;
+    }
+  }
 
   // Initializes Logging
   castor::dlf::Message messages[] =
@@ -90,34 +116,9 @@ castor::gc::GcDaemon::GcDaemon() : m_foreground(false) {
      {16, "Error caught while informing stager of the failed deletions"},
      {-1, ""}};
   castor::dlf::dlf_init("GC", messages);
-}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-castor::gc::GcDaemon::~GcDaemon() throw() {
-  // hack to release specific allocated memory
-  castor::Services* svcs = services();
-  if (0 != svcs) {
-    delete svcs;
-  }
-}
-
-//------------------------------------------------------------------------------
-// start
-//------------------------------------------------------------------------------
-int castor::gc::GcDaemon::start()
-  throw (castor::exception::Exception) {
 
   // "Starting Garbage Collector Daemon" message
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 1);
-  // Switch to daemon mode
-  int rc;
-  if (!m_foreground) {
-    if ((rc = Cinitdaemon ("GcDaemon", 0)) < 0) {
-      return -1;
-    }
-  }
 
   // get RemoteGCSvc
   castor::IService* svc =
@@ -407,5 +408,8 @@ int main(int argc, char *argv[]) {
   } catch (...) {
     std::cerr << "Caught exception!" << std::endl;
   }
+
+  // shutdown the DLF interface
+  dlf_shutdown(10);
 }
 

@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.22 2005/06/16 15:51:32 jdurand Exp $
+ * $Id: stager_macros.h,v 1.23 2006/07/18 12:12:32 waldron Exp $
  */
 
 #ifndef __stager_macros_h
@@ -81,6 +81,7 @@
 	      "EXIT STATUS",DLF_MSG_PARAM_INT,value \
 	      ); \
     serrno = _save_serrno; \
+    dlf_shutdown(5); \
     exit(value); \
   } \
 }
@@ -126,6 +127,7 @@
 	      "serrno",DLF_MSG_PARAM_INT,serrno \
 	      ); \
     serrno = _save_serrno; \
+    dlf_shutdown(5); \
     exit(value); \
   } \
 }

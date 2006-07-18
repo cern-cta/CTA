@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.13 $ $Release$ $Date: 2006/04/12 13:40:04 $ $Author: obarring $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.14 $ $Release$ $Date: 2006/07/18 12:12:32 $ $Author: waldron $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.13 $ $Release$ $Date: 2006/04/12 13:40:04 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.14 $ $Release$ $Date: 2006/07/18 12:12:32 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1349,6 +1349,7 @@ int main(
   rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("prepareForDBAccess()");
+    dlf_shutdown(5);
     return(1);
   }
 
@@ -1363,10 +1364,12 @@ int main(
       LOG_DBCALL_ERR("C_Services_failedSegments()",
                      Cstager_ITapeSvc_errorMsg(tpSvc));
       C_IAddress_delete(iAddr);
+      dlf_shutdown(5);
       return(1);
     }
   }
   if ( (nbFailedSegments == 0) || (failedSegments == NULL) ) {
+    dlf_shutdown(5);
     return(0);
   }
 
@@ -1496,5 +1499,6 @@ int main(
     }
   }
   if ( failedSegments != NULL ) free(failedSegments);
+  dlf_shutdown(10);
   return(0);
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2006/05/02 10:07:02 $ $Author: itglp $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2006/07/18 12:12:32 $ $Author: waldron $
  *
  *
  *
@@ -54,6 +54,8 @@ int main(int argc, char *argv[]) {
   } catch (...) {
     std::cerr << "Caught general exception!" << std::endl;
   }
+
+  dlf_shutdown(10);
   return 0;
 }
 

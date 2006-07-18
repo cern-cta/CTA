@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.31 $ $Release$ $Date: 2006/01/20 09:47:02 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.32 $ $Release$ $Date: 2006/07/18 12:12:33 $ $Author: waldron $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.31 $ $Release$ $Date: 2006/01/20 09:47:02 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.32 $ $Release$ $Date: 2006/07/18 12:12:33 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -710,6 +710,7 @@ static void shutdownService(
   sleep(1);
   (void)blockChild(0);
   (void)checkWorkerExit(1);
+  dlf_shutdown(10);
   exit(0);
   return;
 }
@@ -726,16 +727,19 @@ static void startTapeErrorHandler()
    */
   if ( tapeErrorHandlerPid > 0 ) return;
 
+  dlf_prepare();
   pid = fork();
   if ( pid > 0 ) {
     /*
      * Parent
      */
+    dlf_parent();
     tapeErrorHandlerPid = pid;
   } else if ( pid == 0 ) {
     /*
      * Child
      */
+    dlf_child();
     sprintf(cmd,"%s/%s",BIN,TAPEERRORHANDLER_CMD);
 #ifndef _WIN32
 #if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(sgi)
@@ -800,6 +804,7 @@ static void startTapeErrorHandler()
                     strerror(errno),
                     RTCPCLD_LOG_WHERE
                     );
+    dlf_shutdown(10);
     exit(SYERR);
 #endif /* _WIN32 */    
   } else {
@@ -1004,6 +1009,7 @@ static int startWorker(
                   strerror(errno),
                   RTCPCLD_LOG_WHERE
                   );
+  dlf_shutdown(10);
   exit(SYERR);
 #endif /* _WIN32 */
   
@@ -1555,10 +1561,17 @@ int main(
     /*
      * UNIX
      */
-    if ( Cinitdaemon("rtcpcld",SIG_IGN) == -1 ) exit(1);
+    dlf_prepare();
+    if ( Cinitdaemon("rtcpcld",SIG_IGN) == -1 ) {
+	    dlf_parent();
+	    dlf_shutdown(10);
+	    exit(1);
+    }
 #endif /* _WIN32 */
+    dlf_child();
     rc = rtcpcld_main(NULL);
   }
+  dlf_shutdown(10);
   if ( rc != 0 ) exit(1);
   else exit(0);
 }

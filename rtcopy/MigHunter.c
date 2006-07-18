@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.30 $ $Release$ $Date: 2006/04/12 13:40:04 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.31 $ $Release$ $Date: 2006/07/18 12:12:32 $ $Author: waldron $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.30 $ $Release$ $Date: 2006/04/12 13:40:04 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.31 $ $Release$ $Date: 2006/07/18 12:12:32 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1521,6 +1521,7 @@ static void shutdownService(
     }
     restoreMigrCandidates(*_migrCandidates,*_nbMigrCandidates);
   }
+  dlf_shutdown(10);
   exit(0);
   return;
 }
@@ -1624,7 +1625,13 @@ int main(int argc, char *argv[])
 #endif /* __DATE__ && __TIME__ */
   
   if ( runAsDaemon == 1 ) {
-    if ( (Cinitdaemon("MigHunter",SIG_IGN) == -1) ) exit(1);
+    dlf_prepare();
+    if ( (Cinitdaemon("MigHunter",SIG_IGN) == -1) ) {
+      dlf_parent();
+      dlf_shutdown(10);
+      exit(1);
+    }
+    dlf_child();
     if ( sleepTime == 0 ) sleepTime = 300;
   }
   
@@ -1635,6 +1642,7 @@ int main(int argc, char *argv[])
               sstrerror(serrno));
     }
     LOG_SYSCALL_ERR("prepareForDBAccess()");
+    dlf_shutdown(10);
     return(1);
   }
   do {

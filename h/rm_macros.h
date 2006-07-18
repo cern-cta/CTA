@@ -8,19 +8,20 @@
 #include "Castor_limits.h"
 #include "marshall.h"
 #include "serrno.h"
+#include "dlf_api.h"
 
 #define RM_NB_ELEMENTS(a) (sizeof(a)/sizeof((a)[0]))
 
-#define INIT_HOST(thishost) {                               \
-	(thishost)->s_addr = clientAddress.sin_addr.s_addr;     \
-	(thishost)->nbrestart = nbrestart;                      \
+#define INIT_HOST(thishost) {                                      \
+	(thishost)->s_addr = clientAddress.sin_addr.s_addr;        \
+	(thishost)->nbrestart = nbrestart;                         \
 	strncpy((thishost)->host,rec_host_name,CA_MAXHOSTNAMELEN); \
-	(thishost)->hostlen = strlen((thishost)->host);         \
-	strcpy((thishost)->state,"Idle");                       \
+	(thishost)->hostlen = strlen((thishost)->host);            \
+	strcpy((thishost)->state,"Idle");                          \
 }
 
 #ifdef LSF
-#define INIT_JOB(thisjob) {                      \
+#define INIT_JOB(thisjob) {                          \
 	(thisjob)->update = (u_signed64) time(NULL); \
 	(thisjob)->wclimit = 864000;                 \
 	(thisjob)->tasks = 1;                        \
@@ -28,7 +29,7 @@
 	(thisjob)->openflags = RM_O_RDWR;            \
 }
 #else
-#define INIT_JOB(thisjob) {                      \
+#define INIT_JOB(thisjob) {                          \
 	strcpy((thisjob)->state,"Idle");             \
 	(thisjob)->update = (u_signed64) time(NULL); \
 	(thisjob)->wclimit = 864000;                 \
@@ -57,7 +58,7 @@
 	} \
 }
 
-#define marshall_RMNODE(p, rmnode) {                                     \
+#define marshall_RMNODE(p, rmnode) {                                         \
 	marshall_STRING(p, (rmnode)->host);                                  \
 	marshall_HYPER(p, (rmnode)->hostlen);                                \
 	marshall_STRING(p, (rmnode)->stagerhost);                            \
@@ -78,91 +79,91 @@
 	marshall_HYPER(p, (rmnode)->totalproc);                              \
 	marshall_HYPER(p, (rmnode)->availproc);                              \
 	marshall_HYPER(p, (rmnode)->nifce);                                  \
-    if ((rmnode)->nifce > 0) {                                           \
-		int i;                                                           \
+    if ((rmnode)->nifce > 0) {                                               \
+		int i;                                                       \
 	    struct Crm_ifconf *ifce  = (rmnode)->ifce;                       \
-		for (i = 0; i < (rmnode)->nifce; ifce++, i++) {                  \
-	  	  marshall_STRING(p, ifce->name);                                \
-	  	  marshall_STRING(p, ifce->status);                              \
+		for (i = 0; i < (rmnode)->nifce; ifce++, i++) {              \
+	  	  marshall_STRING(p, ifce->name);                            \
+	  	  marshall_STRING(p, ifce->status);                          \
 	    }                                                                \
 	}                                                                    \
 	marshall_HYPER(p, (rmnode)->load);                                   \
 	marshall_STRING(p, (rmnode)->feature);                               \
 	marshall_HYPER(p, (rmnode)->nfs);                                    \
-    if ((rmnode)->nfs > 0) {                                             \
-		int i;                                                           \
-		for (i = 0; i < (rmnode)->nfs; i++) {                            \
-		    marshall_STRING(p, (rmnode)->fs[i].name);                    \
-		    marshall_STRING(p, (rmnode)->fs[i].partition);               \
-			marshall_STRING(p, (rmnode)->fs[i].nickname);                \
-		    marshall_HYPER(p,  (rmnode)->fs[i].totalspace);              \
-		    marshall_HYPER(p,  (rmnode)->fs[i].freespace);               \
-		    marshall_HYPER(p,  (rmnode)->fs[i].rd);                      \
-		    marshall_HYPER(p,  (rmnode)->fs[i].wr);                      \
-		    marshall_HYPER(p,  (rmnode)->fs[i].wr);                      \
-		    marshall_HYPER(p,  (rmnode)->fs[i].r_rate);                  \
-		    marshall_HYPER(p,  (rmnode)->fs[i].w_rate);                  \
-		    marshall_HYPER(p,  (rmnode)->fs[i].tot_rate);                \
-		    marshall_HYPER(p,  (rmnode)->fs[i].n_rdonly);                \
-		    marshall_HYPER(p,  (rmnode)->fs[i].n_wronly);                \
-		    marshall_HYPER(p,  (rmnode)->fs[i].n_rdwr);                  \
-		    marshall_HYPER(p,  (rmnode)->fs[i].spacefrequency);          \
-		    marshall_HYPER(p,  (rmnode)->fs[i].ioratefrequency)          \
-		    marshall_LONG (p,  (rmnode)->fs[i].localaccess);             \
-		    marshall_STRING(p, (rmnode)->fs[i].state);                   \
-		    if (magic >= RMMAGIC03) {                                    \
-	  		marshall_LONG(p, (rmnode)->fs[i].forced_state);          \
-	  	    }                                                            \
+    if ((rmnode)->nfs > 0) {                                                 \
+		int i;                                                       \
+		for (i = 0; i < (rmnode)->nfs; i++) {                        \
+		    marshall_STRING(p, (rmnode)->fs[i].name);                \
+		    marshall_STRING(p, (rmnode)->fs[i].partition);           \
+			marshall_STRING(p, (rmnode)->fs[i].nickname);        \
+		    marshall_HYPER(p,  (rmnode)->fs[i].totalspace);          \
+		    marshall_HYPER(p,  (rmnode)->fs[i].freespace);           \
+		    marshall_HYPER(p,  (rmnode)->fs[i].rd);                  \
+		    marshall_HYPER(p,  (rmnode)->fs[i].wr);                  \
+		    marshall_HYPER(p,  (rmnode)->fs[i].wr);                  \
+		    marshall_HYPER(p,  (rmnode)->fs[i].r_rate);              \
+		    marshall_HYPER(p,  (rmnode)->fs[i].w_rate);              \
+		    marshall_HYPER(p,  (rmnode)->fs[i].tot_rate);            \
+		    marshall_HYPER(p,  (rmnode)->fs[i].n_rdonly);            \
+		    marshall_HYPER(p,  (rmnode)->fs[i].n_wronly);            \
+		    marshall_HYPER(p,  (rmnode)->fs[i].n_rdwr);              \
+		    marshall_HYPER(p,  (rmnode)->fs[i].spacefrequency);      \
+		    marshall_HYPER(p,  (rmnode)->fs[i].ioratefrequency)      \
+		    marshall_LONG (p,  (rmnode)->fs[i].localaccess);         \
+		    marshall_STRING(p, (rmnode)->fs[i].state);               \
+		    if (magic >= RMMAGIC03) {                                \
+	  		marshall_LONG(p, (rmnode)->fs[i].forced_state);      \
+	  	    }                                                        \
 	  	}                                                            \
 	}                                                                    \
 	marshall_HYPER(p, (rmnode)->n_rdonly);                               \
 	marshall_HYPER(p, (rmnode)->n_wronly);                               \
 	marshall_HYPER(p, (rmnode)->n_rdwr);                                 \
-	marshall_HYPER(p, (rmnode)->maxtask);                                 \
-	marshall_STRING(p, (rmnode)->partition);                              \
-	marshall_STRING(p, (rmnode)->feature);                                \
+	marshall_HYPER(p, (rmnode)->maxtask);                                \
+	marshall_STRING(p, (rmnode)->partition);                             \
+	marshall_STRING(p, (rmnode)->feature);                               \
 }
 
-#define unmarshall_RMNODE(p, rmnode) {                                     \
-	unmarshall_STRING(p, (rmnode)->host);                                  \
-	unmarshall_HYPER(p, (rmnode)->hostlen);                                \
-	unmarshall_STRING(p, (rmnode)->stagerhost);                            \
-	unmarshall_HYPER(p, (rmnode)->stagerport);                             \
-	unmarshall_TIME_T(p, (rmnode)->update);                                \
-	unmarshall_STRING(p, (rmnode)->state);                                 \
-	unmarshall_STRING(p, (rmnode)->osname);                                \
-	unmarshall_STRING(p, (rmnode)->arch);                                  \
-	unmarshall_HYPER(p, (rmnode)->totalram);                               \
-	unmarshall_HYPER(p, (rmnode)->freeram);                                \
-	unmarshall_HYPER(p, (rmnode)->usedram);                                \
-	unmarshall_HYPER(p, (rmnode)->totalmem);                               \
-	unmarshall_HYPER(p, (rmnode)->usedmem);                                \
-	unmarshall_HYPER(p, (rmnode)->freemem);                                \
-	unmarshall_HYPER(p, (rmnode)->totalswap);                              \
-	unmarshall_HYPER(p, (rmnode)->usedswap);                               \
-	unmarshall_HYPER(p, (rmnode)->freeswap);                               \
-	unmarshall_HYPER(p, (rmnode)->totalproc);                              \
-	unmarshall_HYPER(p, (rmnode)->availproc);                              \
-	unmarshall_HYPER(p, (rmnode)->nifce);                                  \
-    if ((rmnode)->nifce > 0) {                                             \
-	  if (((rmnode)->ifce = (struct Crm_ifconf *)                          \
-		   malloc(((rmnode)->nifce * sizeof(struct Crm_ifconf)))) != NULL) { \
-		  int i;                                                           \
-		  struct Crm_ifconf *ifce  = (rmnode)->ifce;                       \
-		  for (i = 0; i < (rmnode)->nifce; ifce++, i++) {                  \
+#define unmarshall_RMNODE(p, rmnode) {                                       \
+	unmarshall_STRING(p, (rmnode)->host);                                \
+	unmarshall_HYPER(p, (rmnode)->hostlen);                              \
+	unmarshall_STRING(p, (rmnode)->stagerhost);                          \
+	unmarshall_HYPER(p, (rmnode)->stagerport);                           \
+	unmarshall_TIME_T(p, (rmnode)->update);                              \
+	unmarshall_STRING(p, (rmnode)->state);                               \
+	unmarshall_STRING(p, (rmnode)->osname);                              \
+	unmarshall_STRING(p, (rmnode)->arch);                                \
+	unmarshall_HYPER(p, (rmnode)->totalram);                             \
+	unmarshall_HYPER(p, (rmnode)->freeram);                              \
+	unmarshall_HYPER(p, (rmnode)->usedram);                              \
+	unmarshall_HYPER(p, (rmnode)->totalmem);                             \
+	unmarshall_HYPER(p, (rmnode)->usedmem);                              \
+	unmarshall_HYPER(p, (rmnode)->freemem);                              \
+	unmarshall_HYPER(p, (rmnode)->totalswap);                            \
+	unmarshall_HYPER(p, (rmnode)->usedswap);                             \
+	unmarshall_HYPER(p, (rmnode)->freeswap);                             \
+	unmarshall_HYPER(p, (rmnode)->totalproc);                            \
+	unmarshall_HYPER(p, (rmnode)->availproc);                            \
+	unmarshall_HYPER(p, (rmnode)->nifce);                                \
+    if ((rmnode)->nifce > 0) {                                               \
+	  if (((rmnode)->ifce = (struct Crm_ifconf *)                        \
+		   malloc(((rmnode)->nifce * sizeof(struct Crm_ifconf)))) != NULL) {   \
+		  int i;                                                               \
+		  struct Crm_ifconf *ifce  = (rmnode)->ifce;                           \
+		  for (i = 0; i < (rmnode)->nifce; ifce++, i++) {                      \
 			  unmarshall_STRING(p, ifce->name);                            \
 			  unmarshall_STRING(p, ifce->status);                          \
-		  }                                                                \
-	  }                                                                    \
-	}                                                                      \
-	unmarshall_HYPER(p, (rmnode)->load);                                   \
-	unmarshall_STRING(p, (rmnode)->feature);                               \
-	unmarshall_HYPER(p, (rmnode)->nfs);                                    \
-    if ((rmnode)->nfs > 0) {                                               \
-	  if (((rmnode)->fs = (struct Crm_filesystem *)                        \
+		  }                                                                    \
+	  }                                                                            \
+	}                                                                              \
+	unmarshall_HYPER(p, (rmnode)->load);                                           \
+	unmarshall_STRING(p, (rmnode)->feature);                                       \
+	unmarshall_HYPER(p, (rmnode)->nfs);                                            \
+    if ((rmnode)->nfs > 0) {                                                           \
+	  if (((rmnode)->fs = (struct Crm_filesystem *)                                \
 		   malloc(((rmnode)->nfs * sizeof(struct Crm_filesystem)))) != NULL) { \
-		  int i;                                                           \
-		  for (i = 0; i < (rmnode)->nfs; i++) {                            \
+		  int i;                                                               \
+		  for (i = 0; i < (rmnode)->nfs; i++) {                                \
 			  unmarshall_STRING(p, (rmnode)->fs[i].name);                  \
 			  unmarshall_STRING(p, (rmnode)->fs[i].partition);             \
 			  unmarshall_STRING(p, (rmnode)->fs[i].nickname);              \
@@ -184,18 +185,18 @@
 		    	  if (magic >= RMMAGIC03) {                                    \
 	  		  	 unmarshall_LONG(p, (rmnode)->fs[i].forced_state);     \
 	  	    	  }                                                            \
-		}                                                                  \
-	  }                                                                    \
-	}                                                                      \
-	unmarshall_HYPER(p, (rmnode)->n_rdonly);                               \
-	unmarshall_HYPER(p, (rmnode)->n_wronly);                               \
-	unmarshall_HYPER(p, (rmnode)->n_rdwr);                                 \
-	unmarshall_HYPER(p, (rmnode)->maxtask);                                 \
-	unmarshall_STRING(p, (rmnode)->partition);                              \
-	unmarshall_STRING(p, (rmnode)->feature);                                \
+		}                                                                      \
+	  }                                                                            \
+	}                                                                              \
+	unmarshall_HYPER(p, (rmnode)->n_rdonly);                                       \
+	unmarshall_HYPER(p, (rmnode)->n_wronly);                                       \
+	unmarshall_HYPER(p, (rmnode)->n_rdwr);                                         \
+	unmarshall_HYPER(p, (rmnode)->maxtask);                                        \
+	unmarshall_STRING(p, (rmnode)->partition);                                     \
+	unmarshall_STRING(p, (rmnode)->feature);                                       \
 }
 
-#define marshall_RMJOB(p, rmjob) {                      \
+#define marshall_RMJOB(p, rmjob) {                          \
 	marshall_STRING(p, (rmjob)->jobid);                 \
 	marshall_TIME_T(p, (rmjob)->update);                \
 	marshall_STRING(p, (rmjob)->state);                 \
@@ -380,8 +381,8 @@
             strcpy((out)->clientStruct,(in)->clientStruct);   \
           }                                                   \
     }                                                         \
-    if ((in)->hostlist[0] != '\0') strcpy((out)->hostlist,(in)->hostlist);          \
-    if ((in)->rfs[0] != '\0') strcpy((out)->rfs,(in)->rfs);                         \
+    if ((in)->hostlist[0] != '\0') strcpy((out)->hostlist,(in)->hostlist);             \
+    if ((in)->rfs[0] != '\0') strcpy((out)->rfs,(in)->rfs);                            \
     if ((in)->castorFileId != 0) (out)->castorFileId = (in)->castorFileId;             \
     if ((in)->castorNsHost[0] != '\0') strcpy((out)->castorNsHost,(in)->castorNsHost); \
 }
@@ -418,7 +419,7 @@
     if ((filter)->dswap > 0 && (ref)->dswap != (filter)->dswap)                                    status++;  \
     if ((filter)->qos > 0 && (ref)->qos != (filter)->qos)                                          status++;  \
     if ((filter)->enddate > 0 && (ref)->enddate != (filter)->enddate)                              status++;  \
-    if ((filter)->dprocs != 1 && (ref)->dprocs != (filter)->dprocs)                                status++; \
+    if ((filter)->dprocs != 1 && (ref)->dprocs != (filter)->dprocs)                                status++;  \
     if ((filter)->reservation[0] != '\0' && strcmp((ref)->reservation,(filter)->reservation) != 0) status++;  \
     if ((filter)->stageid[0] != '\0' && strcmp((ref)->stageid,(filter)->stageid) != 0)             status++;  \
     if ((filter)->tasklist[0] != '\0' && strcmp((ref)->tasklist,(filter)->tasklist) != 0)          status++;  \
@@ -442,11 +443,11 @@
 }
 
 #define unmarshall_RELEVANT_RMJOB(p, out, status) {  \
-    struct rmjob rmjobtmp;                    \
-    unmarshall_RMJOB(p, &rmjobtmp,status);    \
-    if (status == 0) {                        \
-      overwrite_RMJOB(out,&rmjobtmp,status);  \
-    }                                         \
+    struct rmjob rmjobtmp;                     \
+    unmarshall_RMJOB(p, &rmjobtmp,status);     \
+    if (status == 0) {                         \
+      overwrite_RMJOB(out,&rmjobtmp,status);   \
+    }                                          \
 }
 
 #define unmarshall_RELEVANT_RMNODE(p, out) {   \
@@ -483,7 +484,7 @@
     if ((in)->n_rdwr > 0) (out)->n_rdwr = (in)->n_rdwr;                              \
     if ((in)->maxtask > 0) (out)->maxtask = (in)->maxtask;                           \
     if ((in)->partition[0] != '\0') strcpy((out)->partition,(in)->partition);        \
-    if ((in)->feature[0] != '\0') strcpy((out)->feature,(in)->feature);        \
+    if ((in)->feature[0] != '\0') strcpy((out)->feature,(in)->feature);              \
 }
 
 /* NOTE: IFCE and FS are not supported in this method */
@@ -516,46 +517,47 @@
     if ((filter)->feature[0] != '\0' && strcmp((ref)->feature,(filter)->feature) != 0)          status++;  \
 }
 
-#define RM_ENTER() {                              \
+#define RM_ENTER() {                                  \
 	strcpy(funcrep_name,func);                    \
 	funcrep_name[MAX_FUNCREP_NAME_LENGTH] = '\0'; \
 	log(LOG_INFO, "%s: Entering\n", func);        \
-	if (! nodlf_flag) {                          \
-	    int _save_serrno = serrno;               \
-	    dlf_write(                               \
-	   	     rmmaster_uuid,                  \
-	     	     DLF_LVL_DEBUG,                  \
-	     	     RM_DLF_MSG_ENTERING,      \
-		     (struct Cns_fileid *) NULL,     \
-		     1,                              \
-		     "FUNC",DLF_MSG_PARAM_STR,func); \
-	   serrno = _save_serrno;                    \
-       }                                             \
+	if (! nodlf_flag) {                           \
+	    int _save_serrno = serrno;                \
+	    dlf_write(                                \
+	   	     rmmaster_uuid,                   \
+	     	     DLF_LVL_DEBUG,                   \
+	     	     RM_DLF_MSG_ENTERING,             \
+		     (struct Cns_fileid *) NULL,      \
+		     1,                               \
+		     "FUNC",DLF_MSG_PARAM_STR,func);  \
+	   serrno = _save_serrno;                     \
+       }                                              \
 }
 
-#define RM_LEAVE() {                              \
+#define RM_LEAVE() {                                  \
 	log(LOG_INFO, "%s: Leaving\n", func);         \
-	if (! nodlf_flag) {                          \
-	    int _save_serrno = serrno;               \
-	    dlf_write(                               \
-	   	     rmmaster_uuid,                  \
-	     	     DLF_LVL_DEBUG,                  \
-	     	     RM_DLF_MSG_LEAVING,      \
-		     (struct Cns_fileid *) NULL,     \
-		     1,                              \
-		     "FUNC",DLF_MSG_PARAM_STR,func); \
-	   serrno = _save_serrno;                    \
-       }                                             \
+	if (! nodlf_flag) {                           \
+	    int _save_serrno = serrno;                \
+	    dlf_write(                                \
+	   	     rmmaster_uuid,                   \
+	     	     DLF_LVL_DEBUG,                   \
+	     	     RM_DLF_MSG_LEAVING,              \
+		     (struct Cns_fileid *) NULL,      \
+		     1,                               \
+		     "FUNC",DLF_MSG_PARAM_STR,func);  \
+	   serrno = _save_serrno;                     \
+       }                                              \
 }
 
-#define RM_RETURN(value) {                        \
+#define RM_RETURN(value) {                            \
 	RM_LEAVE();                                   \
 	return(value);                                \
 }
 
-#define RM_EXIT(value) {                        \
+#define RM_EXIT(value) {                              \
 	RM_LEAVE();                                   \
-	exit(value);                                \
+	dlf_shutdown(10);                             \
+	exit(value);                                  \
 }
 
 #endif /* __rm_macros_h */

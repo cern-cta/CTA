@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/05/02 10:10:33 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/07/18 12:12:32 $ $Author: waldron $
  *
  *
  *
@@ -147,6 +147,7 @@ void* castor::server::_signalThread_run(void* arg)
       /* e.g. things unsafe in a signal handler */
       /* so from now on this function is calling nothing external */
       daemon->m_signalMutex->setValueNoMutex(1);
+      dlf_shutdown(10);
       exit(0);  // EXIT_SUCCESS
     }
   }

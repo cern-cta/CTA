@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.46 $ $Release$ $Date: 2006/06/13 14:32:14 $ $Author: waldron $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.47 $ $Release$ $Date: 2006/07/18 12:12:32 $ $Author: waldron $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.46 $ $Release$ $Date: 2006/06/13 14:32:14 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.47 $ $Release$ $Date: 2006/07/18 12:12:32 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -697,18 +697,21 @@ int main(
   rc = rtcp_NewTapeList(&tape,NULL,WRITE_ENABLE);
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("rtcp_NewTapeList()");
+    dlf_shutdown(5);
     return(1);
   }
 
   rc = rtcpcld_initLocks(tape);
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("rtcpcld_initLocks()");
+    dlf_shutdown(5);
     return(1);
   }
 
   rc = rtcpcld_initNsInterface();
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("rtcpcld_initNsInterface()");
+    dlf_shutdown(5);
     return(1);
   }
 
@@ -762,5 +765,6 @@ int main(
                               rc,
                               save_serrno
                               );
+  dlf_shutdown(5);
   return(rc);
 }
