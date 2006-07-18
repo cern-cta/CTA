@@ -21,7 +21,7 @@
  * @file  server.h
  * @brief definitions and structures associated with the server core
  *
- * $Id: server.h,v 1.2 2006/06/19 06:52:55 waldron Exp $
+ * $Id: server.h,v 1.3 2006/07/18 12:04:35 waldron Exp $
  */
 
 #ifndef _SERVER_H
@@ -54,6 +54,9 @@
 /* server related */
 #define DEFAULT_SERVER_BACKLOG   25         /**< the number of connections to queue pending accept() */
 #define DEFAULT_SERVER_PORT      5036       /**< the default port to listen on                       */
+
+/* log helpers */
+#define CLIENT_IDENT(client)     client->index, client->ip
 
 
 /**

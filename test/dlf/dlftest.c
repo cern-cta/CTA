@@ -99,12 +99,13 @@ void worker(void *arg) {
 	double   pard;
 	char     pars[DLF_LEN_STRINGVALUE + 100];
 	char     parname[DLF_LEN_PARAMNAME + 10];
-		
+	
+	
        	while (1) {
 
-		/* usleep doesn't provide a high enough accuracy and is highly dependant on the scheduler. To
-		 * compensate we hold internal variables discribing the throughput rate per second. If the
-		 * throughput exceeds the desired amount we sleep for a while
+		/* usleep doesn't provide a high enough accuracy and is highly dependant on the scheduler. 
+		 * To compensate we hold internal variables discribing the throughput rate per second. If 
+		 * the throughput exceeds the desired amount we sleep for a while
 		 */ 
 		if (now == time(NULL)) {
 			if (throughput > rate) {
@@ -118,7 +119,7 @@ void worker(void *arg) {
 		}
 			
 		/* total number of messages reached ? */
-		if (count != 0) {
+		if (total != 0) {
 			Cthread_mutex_lock(&test_mutex);
 			if (count >= total) {
 				Cthread_mutex_unlock(&test_mutex);
@@ -202,15 +203,15 @@ int main (int argc, char **argv) {
 	int    *tid;
 	int    *status;
 	int    threads;
-	int    adjusted;
-	
+	int    daemonise = 0;
+
 	/* initialise variables to defaults */
 	threads = DEFAULT_THREAD_COUNT;
 	total   = DEFAULT_MSG_TOTAL;
 	gettimeofday(&start, NULL);
 
 	/* process options */
-	while ((c = getopt(argc, argv, "ht:r:n:xf:")) != -1) {
+	while ((c = getopt(argc, argv, "ht:r:n:xf:D")) != -1) {
 		switch(c) {
 		case 'h':
 			printf("Usage: %s [OPTIONS]\n", argv[0]);
@@ -221,6 +222,7 @@ int main (int argc, char **argv) {
 			printf("  -x               extensive test designed to crash the api and server\n");
 			printf("  -n               number of messages to generate before exiting\n");
 			printf("  -f <name>        name of the facility, default DLFTest\n");
+			printf("  -D               fork the process into the background\n");
 			printf("\nReport bugs to castor.support@cern.ch\n");
 			return 0;
 		case 't':
@@ -239,13 +241,16 @@ int main (int argc, char **argv) {
 			free(facility);
 			facility = strdup(optarg);
 			break;
+		case 'D':
+			daemonise = 1;
+			break;
 		case ':':
 			return -1;  /* missing parameter */
 		case '?':
 			return -1;  /* unknown parameter */
 		}
 	}
-
+		
 	/* initialise interface 
 	 *   - note: the facility should be registered prior to the test, self registration from a client
 	 *     is not supported!!
@@ -281,20 +286,33 @@ int main (int argc, char **argv) {
 		return -1;
 	}
 
-	/* adjust the rate if not reasonable */
-	adjusted = 0;
-	if ((rate * threads) > API_QUEUE_SIZE) {
-		rate = (API_QUEUE_SIZE / (threads * 2));
-		adjusted = 1;
+	/* daemonise the process ? */
+	if (daemonise == 1) {
+		dlf_prepare();
+		rv = fork();
+		if (rv < 0) {
+			fprintf(stderr, "dlfserver: failed to fork() : %s\n", strerror(errno));
+			return 1;
+		} else if (rv > 0) {
+			return 0;
+		}
+		
+		setsid();
+		
+		fclose(stdin);
+		fclose(stdout);
+		fclose(stderr);
+		
+		dlf_child();
 	}
 
 	/* startup message */
 	printf("-------------------------------------------------------------------------------------\n");
-	printf("Test started with %d thread%s generating %d message%s per second %s\n",  
-	       threads, threads == 1 ? "" : "s", 
-	       rate * threads, rate * threads == 1 ? "" : "s", adjusted ? "(adjusted)" : "");
+	printf("Test started with %d thread%s generating %d message%s per second\n",  
+	       threads, threads == 1 ? "" : "s", rate * threads, rate * threads == 1 ? "" : "s");
 	printf("Facility name: %s\n", facility);
 	printf("-------------------------------------------------------------------------------------\n");
+
 
 	/* create the thread pool */
 	for (i = 0; i < threads; i++) {
@@ -311,12 +329,11 @@ int main (int argc, char **argv) {
 	free(tid);
 	free(facility);
 
-	printf("\nAll threads exited - sleeping 5 seconds\n");
+	printf("\nAll threads exited\n");
 	gettimeofday(&end, NULL);
-	sleep(5);
 
 	/* shutdown the interface */
-	rv = dlf_shutdown();
+	rv = dlf_shutdown(5);
 	if (rv < 0) {
 		fprintf(stderr, "Failed to dlf_shutdown()\n");
 		return -1;

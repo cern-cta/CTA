@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.c,v 1.3 2006/06/20 13:36:44 waldron Exp $
+ * $Id: mysql.c,v 1.4 2006/07/18 12:04:35 waldron Exp $
  */
 
 /* headers */
@@ -60,6 +60,7 @@ static long   seq_nshostid = -1;             /**< primary key id for dlf_nshost_
 
 /* global variables */
 static time_t last_monitoring = 0;           /**< time of last call to dlf_monitoring() */
+static time_t last_mode       = 0;           /**< time of last call to dlf_mode()       */
 
 /* externs */
 extern int       server_mode;                /**< server mode                           */
@@ -78,19 +79,19 @@ struct database_t {
 
 	MYSQL              mysql;
 
-	/* statistics 
+	/* statistics
 	 *   - must be purged at a regular interval, otherwise overflows in the counters will occur
 	 */
-	unsigned long      commits;      
-	unsigned long      errors;        
-	unsigned long      inserts;    
-	unsigned long      rollbacks; 
-	unsigned long      selects;         
-	unsigned long      updates;         
-	unsigned long      messages;        
-	unsigned long      cursors;         
-	unsigned long      inits;           
-	double             response; 	
+	unsigned long      commits;
+	unsigned long      errors;
+	unsigned long      inserts;
+	unsigned long      rollbacks;
+	unsigned long      selects;
+	unsigned long      updates;
+	unsigned long      messages;
+	unsigned long      cursors;
+	unsigned long      inits;
+	double             response;
 };
 
 
@@ -117,10 +118,10 @@ int DLL_DECL db_init(int threads) {
 
 	/* suspend database insertion until init completion
 	 *   - at this point data may already be waiting for insertion in the central queue, allowing
-	 *     the newly created threads in the next section to begin working on data would cause data 
+	 *     the newly created threads in the next section to begin working on data would cause data
 	 *     corruption as the sequence numbers have yet to be determined.
  	 */
-	SetSuspended(server_mode);
+	SetSuspendedDB(server_mode);
 
 	/* initialise hashes */
 	rv = hash_create(&hosthash, 512);
@@ -129,13 +130,14 @@ int DLL_DECL db_init(int threads) {
 		return APP_FAILURE;
 	}
 
-	rv = hash_create(&nshosthash, 100);	
+	rv = hash_create(&nshosthash, 100);
 	if (rv != APP_SUCCESS) {
 		log(LOG_ERR, "db_init() - failed to initialise name server host hash\n");
 		return APP_FAILURE;
 	}
-	
+
 	last_monitoring = time(NULL);
+	last_mode       = time(NULL) - 60;
 
 	if (threads <= 0) {
 		return APP_SUCCESS;
@@ -148,7 +150,7 @@ int DLL_DECL db_init(int threads) {
 		log(LOG_NOTICE, "db_init() - mysql client libraries not compiled as thread-safe\n");
 		threads = 1;
 	}
-	
+
 	/* create database threads */
 	for (i = 0; i < threads; i++) {
 
@@ -156,7 +158,7 @@ int DLL_DECL db_init(int threads) {
 		db = (database_t *) malloc(sizeof(database_t));
 		if (db == NULL) {
 			log(LOG_ERR, "db_init() - failed to malloc() database structure : %s\n", strerror(errno));
-			return APP_FAILURE;			
+			return APP_FAILURE;
 		}
 
 		/* initialise database_t structure */
@@ -165,7 +167,7 @@ int DLL_DECL db_init(int threads) {
 
 		/* initialise statistics */
 		db->commits = db->errors  = db->inserts  = db->rollbacks = 0;
-		db->selects = db->updates = db->messages = db->cursors   = 0;	
+		db->selects = db->updates = db->messages = db->cursors   = 0;
 		db->inits   = 0;
 
 		/* create thread */
@@ -176,20 +178,20 @@ int DLL_DECL db_init(int threads) {
 		}
 
 		/* assign thread to database pool */
-		dpool[i] = db;	
+		dpool[i] = db;
 	}
 
 	/* initialise internal sequence numbers
-	 *   - failure to determine the sequence numbers for tables dlf_messages, dlf_nshost_map and 
+	 *   - failure to determine the sequence numbers for tables dlf_messages, dlf_nshost_map and
 	 *     dlf_host_map result in db_shutdown(). This error is unrecoverable!
-	 */	
-	
+	 */
+
 	/* use the first thread in the pool */
 	rv = db_open(dpool[0], 3);
 	if (rv != APP_SUCCESS) {
 		log(LOG_ERR, "db_init() - maximum connection attempts reached\n");
 		return APP_FAILURE;
-	}	
+	}
 
 	/* execute query */
 	Cthread_mutex_lock(&dpool[0]->mutex);
@@ -209,7 +211,7 @@ int DLL_DECL db_init(int threads) {
 
 	/* loop over results */
 	while ((row = mysql_fetch_row(res))) {
-		if (!strcasecmp(row[0], "id"))          
+		if (!strcasecmp(row[0], "id"))
 			seq_id       = atol(row[1]);    /* table: dlf_messages   */
 		if (!strcasecmp(row[0], "hostid"))
 			seq_hostid   = atol(row[1]);    /* table: dlf_host_map   */
@@ -225,12 +227,12 @@ int DLL_DECL db_init(int threads) {
 		dpool[0]->errors++;
 		Cthread_mutex_unlock(&dpool[0]->mutex);
 		return APP_FAILURE;
-	} 
+	}
 
 	Cthread_mutex_unlock(&dpool[0]->mutex);
 
 	/* unsuspend */
-	ClrSuspended(server_mode);
+	ClrSuspendedDB(server_mode);
 
 	return APP_SUCCESS;
 
@@ -264,11 +266,10 @@ int DLL_DECL db_open(database_t *db, unsigned int retries) {
 	char    username[100];
 	char    password[100];
 	char    func[30];
-	char    buf[100];   
-	int     count;   
-	int     rv;
+	char    buf[100];
+	int     count;
 
-	FILE    *fp;   
+	FILE    *fp;
 
 	/* initialise variables */
 	username[0] = password[0] = hostname[0] = '\0';
@@ -287,17 +288,17 @@ int DLL_DECL db_open(database_t *db, unsigned int retries) {
 		}
 		count++;
 
-		/* read connection string 
+		/* read connection string
 		 *    - the string should be in the format <username>/<password>@<hostname>
 		 *    - all parameters are mandatory and must not be blank
 		 */
-		fp = fopen(DLFCONFIG, "r");	
+		fp = fopen(DLFCONFIG, "r");
 		if (fp == NULL) {
-			log(LOG_ERR, "db_open() - failed to open config '%s' : %s\n", 
+			log(LOG_ERR, "db_open() - failed to open config '%s' : %s\n",
 				DLFCONFIG, strerror(errno));
 			continue;
 		}
-		
+
 		/* read the first line */
 		if (fgets(buf, sizeof(buf) - 1, fp) == NULL) {
 			fclose(fp);
@@ -324,19 +325,19 @@ int DLL_DECL db_open(database_t *db, unsigned int retries) {
 			strcpy(func, "mysql_real_connect()");
 			goto error;
 		}
-	
+
 		/* turn off automatic commits, we want a transactional database mode */
 		if (mysql_autocommit(&db->mysql, 0) != APP_SUCCESS) {
 			strcpy(func, "mysql_autocommit()");
 			goto error;
 		}
-	
+
 		/* flag new connection status */
 		SetConnected(db->mode);
 		log(LOG_DEBUG, "db_open() - connection established\n");
-		
+
 		return APP_SUCCESS;
-		
+
 	error:
 		log(LOG_ERR, "db_open() - %s : %s\n", func, mysql_error(&db->mysql));
 
@@ -353,12 +354,12 @@ int DLL_DECL db_open(database_t *db, unsigned int retries) {
 int DLL_DECL db_shutdown(void) {
 
 	/* variables */
-	int       i; 
-	
+	int       i;
+
 	/* destroy database thread pool */
 	for (i = 0; i < MAX_THREADS; i++) {
 		if (dpool[i] != NULL) {
-			 
+
 			/* close database connection if connected */
 			Cthread_mutex_lock(&dpool[i]->mutex);
 
@@ -367,14 +368,14 @@ int DLL_DECL db_shutdown(void) {
 				log(LOG_NOTICE, "db_shutdown() - connection closed\n");
 			}
 			Cthread_mutex_unlock(&dpool[i]->mutex);
-	
+
 			free(dpool[i]);
-		}	
+		}
 	}
 
 	/* destroy hashes */
 	hash_destroy(hosthash,   NULL);
-	hash_destroy(nshosthash, NULL);	
+	hash_destroy(nshosthash, NULL);
 
 	return APP_SUCCESS;
 }
@@ -389,26 +390,25 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 	/* variables */
 	MYSQL_RES    *res;
 	MYSQL_ROW    row;
-	database_t   *db;  
+	database_t   *db;
 	char         func[30];
        	char         query[1024];
 	int          i;
 	int          id;
 	int          found;
-	int          rv;
 	unsigned int mysql_errnum;
 
 	/* attempt to find a database connection which is currently connected and not in a busy state
 	 *   - if no connection can be found pick any connected connection
 	 */
 	for (i = 0, found = 0; i < MAX_THREADS; i++) {
-		if (dpool[i] == NULL) 
+		if (dpool[i] == NULL)
 			continue;
 		if (IsConnected(dpool[i]->mode) && !IsActive(dpool[i]->mode)) {
 			found = 1;
 			break;
 		}
-	}	
+	}
 
 	/* pick any ? */
 	if (found != 1) {
@@ -421,7 +421,7 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 			}
 		}
 	}
-	
+
 	/* no connections available ? */
 	if (found == 0) {
 		log(LOG_ERR, "db_initfac() - no database connections available\n");
@@ -446,7 +446,7 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 	if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
 		strcpy(func, "mysql_query()");
 		goto error;
-	}	
+	}
 
 	/* store the result */
 	if ((res = mysql_store_result(&db->mysql)) == NULL) {
@@ -468,7 +468,7 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 	*fac_no = id;
 
 	/* the arrays msg_text array passed to this function cannot simply be insert'ed into the database
-	 * checks must be performed first to determine whether the message is new to the system or 
+	 * checks must be performed first to determine whether the message is new to the system or
 	 * already exists and requires an update.
 	 */
 
@@ -487,7 +487,7 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 			strcpy(func, "mysql_query()");
 			goto error;
 		}
-	
+
 		/* store the result */
 		if ((res = mysql_store_result(&db->mysql)) == NULL) {
 			strcpy(func, "mysql_store_result()");
@@ -495,7 +495,7 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 		}
 
 		/* fetch the first row which tells us if the message already exists for the given
-		 * facility 
+		 * facility
 		 */
 		if ((row = mysql_fetch_row(res)) == NULL) {
 			strcpy(func, "mysql_fetch_row()");
@@ -509,7 +509,7 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 			db->updates++;
 			snprintf(query, sizeof(query), "UPDATE dlf_msg_texts \
                                                         SET msg_text = '%s'  \
-                                                        WHERE (fac_no = '%d') AND (msg_no = '%d')", 
+                                                        WHERE (fac_no = '%d') AND (msg_no = '%d')",
 				 texts[i]->msg_text, id, texts[i]->msg_no);
 
 			/* execute query */
@@ -529,7 +529,7 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 			if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
 				strcpy(func, "mysql_query()");
 				goto error;
-			}				
+			}
 		}
 	}
 
@@ -548,25 +548,25 @@ not_found:
 	ClrActive(db->mode);
 
 	*fac_no = -1;
-	
+
 	mysql_free_result(res);
 	Cthread_mutex_unlock(&db->mutex);
 	return APP_FAILURE;
 
-error:	
+error:
 
 	/* display error message */
 	mysql_errnum = mysql_errno(&db->mysql);
 	if ((mysql_errnum == CR_SERVER_GONE_ERROR) || (mysql_errnum == CR_SERVER_LOST)) {
 		ClrConnected(db->mode);
-	} 
+	}
 	db->errors++;
 
 	log(LOG_ERR, "db_initfac() - %s : %s %d\n", func, mysql_error(&db->mysql), mysql_errnum);
 
 	mysql_free_result(res);
 	ClrActive(db->mode);
-	
+
 	Cthread_mutex_unlock(&db->mutex);
 	return APP_FAILURE;
 }
@@ -583,7 +583,7 @@ int DLL_DECL db_hostid(database_t *db, char *hostname, int *id) {
 	MYSQL_ROW    row;
 	char         func[30];
 	char         query[1024];
-        int          rv;  
+        int          rv;
 	int          hostid;
 	int          *value = NULL;
 	void         *v     = NULL;
@@ -653,7 +653,7 @@ int DLL_DECL db_hostid(database_t *db, char *hostname, int *id) {
 		mysql_free_result(res);
 		Cthread_mutex_unlock(&db->mutex);
 		Cthread_mutex_unlock(&database_mutex);
-	
+
 		return APP_FAILURE;
 	}
 	*value = hostid;
@@ -681,7 +681,7 @@ not_found:
 		strcpy(func, "mysql_query()");
 		goto error;
 	}
-	     
+
 	/* update sequences */
 	db->updates++;
 	snprintf(query, sizeof(query), "UPDATE dlf_sequences SET seq_no = (seq_no + 1) WHERE seq_name = 'hostid'");
@@ -709,13 +709,13 @@ error:
 	mysql_errnum = mysql_errno(&db->mysql);
 	if ((mysql_errnum == CR_SERVER_GONE_ERROR) || (mysql_errnum == CR_SERVER_LOST)) {
 		ClrConnected(db->mode);
-	} 
+	}
 	db->errors++;
 
 	log(LOG_ERR, "db_hostid() - %s : %s\n", func, mysql_error(&db->mysql));
 
-	/* attempt to rollback 
-	 *   - only necessary if we fail in the insert, we ignore errors here 
+	/* attempt to rollback
+	 *   - only necessary if we fail in the insert, we ignore errors here
 	 */
 	if (IsConnected(db->mode)) {
 		if (mysql_rollback(&db->mysql) != 0) {
@@ -747,7 +747,7 @@ int DLL_DECL db_nshostid(database_t *db, char *hostname, int *id) {
 	MYSQL_ROW    row;
 	char         func[30];
 	char         query[1024];
-        int          rv;  
+        int          rv;
 	int          nshostid;
 	int          *value = NULL;
 	void         *v     = NULL;
@@ -816,7 +816,7 @@ int DLL_DECL db_nshostid(database_t *db, char *hostname, int *id) {
 		mysql_free_result(res);
 		Cthread_mutex_unlock(&db->mutex);
 		Cthread_mutex_unlock(&database_mutex);
-	
+
 		return APP_FAILURE;
 	}
 	*value = nshostid;
@@ -844,7 +844,7 @@ not_found:
 		strcpy(func, "mysql_query()");
 		goto error;
 	}
-	
+
 	/* update sequences */
 	db->updates++;
 	snprintf(query, sizeof(query), "UPDATE dlf_sequences SET seq_no = (seq_no + 1) WHERE seq_name = 'nshostid'");
@@ -852,7 +852,7 @@ not_found:
 		strcpy(func, "mysql_query()");
 		goto error;
 	}
-	
+
 	/* commit all changes */
 	db->commits++;
 	(void)mysql_query(&db->mysql, "COMMIT");
@@ -872,13 +872,13 @@ error:
 	mysql_errnum = mysql_errno(&db->mysql);
 	if ((mysql_errnum == CR_SERVER_GONE_ERROR) || (mysql_errnum == CR_SERVER_LOST)) {
 		ClrConnected(db->mode);
-	} 
+	}
 	db->errors++;
 
 	log(LOG_ERR, "db_nshostid() - %s : %s\n", func, mysql_error(&db->mysql));
 
-	/* attempt to rollback 
-	 *   - only necessary if we fail in the insert, we ignore errors here 
+	/* attempt to rollback
+	 *   - only necessary if we fail in the insert, we ignore errors here
 	 */
 	if (IsConnected(db->mode)) {
 		if (mysql_rollback(&db->mysql) != 0) {
@@ -904,12 +904,12 @@ error:
 void DLL_DECL db_worker(database_t *db) {
 
 	/* variables */
-	struct timeval tv;  
-	message_t    *message;  	
+	struct timeval tv;
+	message_t    *message;
 	param_t      *param;
 	char         func[50];
 	char         query[4096];
-	int          rv;       
+	int          rv;
 	int          id;
 	int          hostid;
 	int          nshostid;
@@ -927,14 +927,14 @@ void DLL_DECL db_worker(database_t *db) {
 	/* worker thread
 	 *   - extract messages from the central fifo queue and insert the message into the mysql db
 	 *     this is done one row at a time. Not very efficient!!!
-	 */  
+	 */
 	while (!IsShutdown(server_mode)) {
 
 		/* server suspended ?
 		 *    - this maybe a user suspension via a signal or we are still in an initialisation
 	 	 *      determining the unique id for the first message, either way we sleep and loop
 		 */
-		if (IsSuspended(server_mode)) {
+		if (IsSuspendedDB(server_mode)) {
 			sleep(1);
 			continue;
 		}
@@ -944,9 +944,9 @@ void DLL_DECL db_worker(database_t *db) {
 			if ((rv = db_open(db, 1)) != APP_SUCCESS) {
 				continue;
 			}
-		}	
+		}
 		message = NULL;
-	
+
 		/* pop a message from the queue */
 		rv = queue_pop(queue, (void **)&message);
 
@@ -976,7 +976,7 @@ void DLL_DECL db_worker(database_t *db) {
 		rv = gettimeofday(&tv, NULL);
 		if (rv == APP_SUCCESS) {
 			Cthread_mutex_lock(&db->mutex);
-			db->response += ((((double)tv.tv_sec * 1000) + 
+			db->response += ((((double)tv.tv_sec * 1000) +
 				  	 ((double)tv.tv_usec / 1000)) - message->received) * 0.001;
 			Cthread_mutex_unlock(&db->mutex);
 		}
@@ -989,27 +989,27 @@ void DLL_DECL db_worker(database_t *db) {
 		 */
 		if ((rv = Cthread_mutex_lock(&database_mutex)) != APP_SUCCESS) {
 			break;
-		}	
-	
+		}
+
 		id = seq_id;
 		seq_id++;
-		
+
 		/* release mutex lock */
 		if ((rv = Cthread_mutex_unlock(&database_mutex)) != APP_SUCCESS) {
 			break;
 		}
 
-		/* hostname resolution (nshostname, hostname) 
+		/* hostname resolution (nshostname, hostname)
 		 *   - if an error occurs attempting to resolve the hostname to an id, we simply ignore
 		 *     the message
 		 */
 		if (db_hostid(db, message->hostname, &hostid) != APP_SUCCESS) {
-			free_message(message); 
+			free_message(message);
 			continue;
 		}
 
 		if (db_nshostid(db, message->nshostname, &nshostid) != APP_SUCCESS) {
-			free_message(message); 
+			free_message(message);
 			continue;
 		}
 
@@ -1049,7 +1049,7 @@ void DLL_DECL db_worker(database_t *db) {
 					 id, message->timestamp, param->name, param->value);
 
 				strcpy(func, "mysql_query() into table dlf_str_param_values");
-			} 
+			}
 
 			/* table: dlf_reqid_map */
 			else if (param->type == DLF_MSG_PARAM_UUID) {
@@ -1059,7 +1059,7 @@ void DLL_DECL db_worker(database_t *db) {
 					 id, message->timestamp, message->reqid, param->value);
 
 				strcpy(func, "mysql_query() into table dlf_reqid_map");
-			} 
+			}
 
 			/* table: dlf_num_param_values */
 			else if ((param->type == DLF_MSG_PARAM_DOUBLE) ||
@@ -1071,8 +1071,8 @@ void DLL_DECL db_worker(database_t *db) {
 					 id, message->timestamp, param->name, param->value);
 
 				strcpy(func, "mysql_query() into table: dlf_num_param_values");
-			} 
-			
+			}
+
 			/* table: dlf_tape_ids */
 			else if (param->type == DLF_MSG_PARAM_TPVID) {
 				snprintf(query, sizeof(query), "INSERT INTO dlf_tape_ids        \
@@ -1098,18 +1098,18 @@ void DLL_DECL db_worker(database_t *db) {
 		if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
 			strcpy(func, "mysql_query() into table: dlf_sequences");
 			goto error;
-		}	
+		}
 
 		/* commit all changes */
 		db->commits++;
 		(void)mysql_query(&db->mysql, "COMMIT");
-		
+
 		ClrActive(db->mode);
 		Cthread_mutex_unlock(&db->mutex);
 
 		/* free message */
 		free_message(message);
-	
+
 		continue;
 
 	error:
@@ -1118,11 +1118,11 @@ void DLL_DECL db_worker(database_t *db) {
 		mysql_errnum = mysql_errno(&db->mysql);
 		if ((mysql_errnum == CR_SERVER_GONE_ERROR) || (mysql_errnum == CR_SERVER_LOST)) {
 			ClrConnected(db->mode);
-		} 
+		}
 		db->errors++;
-		
+
 		log(LOG_ERR, "db_worker() - %s : %s\n", func, mysql_error(&db->mysql));
-		
+
 		if (mysql_rollback(&db->mysql) != 0) {
 			log(LOG_ERR, "db_worker() - failed to rollback : %s\n", mysql_error(&db->mysql));
 		}
@@ -1130,11 +1130,11 @@ void DLL_DECL db_worker(database_t *db) {
 
 		ClrActive(db->mode);
 		Cthread_mutex_unlock(&db->mutex);
-		
+
 		/* free message */
 		free_message(message);
 	}
-	
+
 	if (mysql_thread_safe() != 0) {
 		mysql_thread_end();
 	}
@@ -1161,15 +1161,13 @@ int DLL_DECL db_stats(unsigned int interval) {
 int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 
 	/* variables */
-	struct       tm tm_str;  
+	struct       tm tm_str;
 	database_t   *db;
 	char         query[1024];
-	char         err_msg[512];
 	char         timestr[15];
-	time_t       now;    
-	int          i;    
+	time_t       now;
+	int          i;
 	int          found;
-	int          rv;
 	int          s_hosthash;
 	int          s_nshosthash;
 	unsigned int mysql_errnum;
@@ -1181,7 +1179,7 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 	unsigned long db_selects    = 0, db_updates   = 0, db_cursors  = 0, db_messages  = 0, db_inits = 0;
 	unsigned long h_connections = 0, h_clientpeak = 0, h_messages  = 0, h_errors     = 0;
 	unsigned long h_inits       = 0, h_timeouts   = 0;
-	
+
 	unsigned int size   = 0;
 	double response     = 0.0;
 	double db_hashstats = -1.0;
@@ -1224,7 +1222,7 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 			continue;
 
 		Cthread_mutex_lock(&hpool[i]->mutex);
-	
+
 		h_threads++;
 		h_connections += hpool[i]->connections;
 		h_clientpeak  += hpool[i]->clientpeak;
@@ -1273,7 +1271,7 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 
 	if (response > 0) {
 		response = (response / db_threads);
-	}	
+	}
 	size = queue_size(queue);
 
 	/* create the table timestamp */
@@ -1281,7 +1279,7 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 	localtime_r(&now, &tm_str);
 	strftime(timestr, DLF_LEN_TIMESTAMP + 1, "%Y%m%d%H%M%S", &tm_str);
 
-	/* no database connections available ? 
+	/* no database connections available ?
 	 *   - we could have checked this earlier, however we need to reset the counters otherwise
 	 *     overflows will occur
 	 */
@@ -1289,7 +1287,7 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 		log(LOG_ERR, "db_monitoring() : no database connections available\n");
 		return APP_FAILURE;
 	}
-	
+
 	/* execute query */
 	Cthread_mutex_lock(&db->mutex);
 	SetActive(db->mode);
@@ -1297,7 +1295,7 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 	/* calculate the hash statistics */
 	s_hosthash   = hash_stat(hosthash);
 	s_nshosthash = hash_stat(nshosthash);
-	
+
 	if ((s_hosthash != APP_FAILURE) && (s_nshosthash != APP_FAILURE)) {
 		db_hashstats = s_hosthash + s_nshosthash;
 	} else {
@@ -1315,8 +1313,8 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 
 	if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
 		goto error;
-	}	 
-	
+	}
+
 	/* commit all changes */
 	db->commits++;
 	(void)mysql_query(&db->mysql, "COMMIT");
@@ -1324,7 +1322,7 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 	ClrActive(db->mode);
 	Cthread_mutex_unlock(&db->mutex);
 
-	return APP_SUCCESS;	
+	return APP_SUCCESS;
 
 error:
 
@@ -1332,7 +1330,7 @@ error:
 	mysql_errnum = mysql_errno(&db->mysql);
 	if ((mysql_errnum == CR_SERVER_GONE_ERROR) || (mysql_errnum == CR_SERVER_LOST)) {
 		ClrConnected(db->mode);
-	} 
+	}
 	db->errors++;
 
 	log(LOG_ERR, "db_monitoring() : %s\n", mysql_error(&db->mysql));
@@ -1341,6 +1339,113 @@ error:
 	ClrActive(db->mode);
 	Cthread_mutex_unlock(&db->mutex);
 
+	return APP_FAILURE;
+}
+
+
+/*
+ * db_mode
+ */
+
+int DLL_DECL db_mode(unsigned int interval) {
+
+	/* variables */
+	MYSQL_RES    *res;
+	MYSQL_ROW    row;
+	database_t   *db;
+	char         func[30];
+	int          i;
+	int          found;
+	unsigned int mysql_errnum;
+
+	/* interval passed ? */
+	if ((time(NULL) - last_mode) < interval) {
+		return APP_SUCCESS;
+	}
+	last_mode = time(NULL);
+
+        /* attempt to find a database connection which is currently connected and not in a busy state
+         *   - if no connection can be found pick any connected connection
+         */
+        for (i = 0, found = 0; i < MAX_THREADS; i++) {
+                if (dpool[i] == NULL)
+                        continue;
+                if (IsConnected(dpool[i]->mode) && !IsActive(dpool[i]->mode)) {
+                        found = 1;
+                        break;
+                }
+        }
+
+        /* pick any ? */
+        if (found != 1) {
+                for (i = 0, found = 0; i < MAX_THREADS; i++) {
+                        if (dpool[i] == NULL)
+                                continue;
+                        if (IsConnected(dpool[i]->mode)) {
+                                found = 1;
+                                break;
+                        }
+                }
+        }
+	db = dpool[i];
+
+	if (found == 0) {
+		log(LOG_ERR, "db_mode() : no database connections available\n");
+		return APP_FAILURE;
+	}
+
+	/* execute query */
+	Cthread_mutex_lock(&db->mutex);
+	SetActive(db->mode);
+
+	db->selects++;
+	if (mysql_query(&db->mysql, "SELECT name, enabled FROM dlf_mode") != APP_SUCCESS) {
+		goto error;
+	}
+
+	/* store the result */
+	if ((res = mysql_store_result(&db->mysql)) == NULL) {
+		strcpy(func, "mysql_store_result()");
+		goto error;
+	}
+
+	/* loop over results */
+	while ((row = mysql_fetch_row(res))) {
+		if (!strcasecmp(row[0], "queue_purge")) {
+			if (row[1]) SetServerPurge(server_mode);
+			else ClrServerPurge(server_mode);			
+		} 
+		if (!strcasecmp(row[0], "queue_suspend")) {
+			if (row[1]) SetSuspendedQueue(server_mode);
+			else ClrSuspendedQueue(server_mode);
+		}
+		if (!strcasecmp(row[0], "database_suspend")) {
+			if (row[1]) SetSuspendedDB(server_mode);
+			else ClrSuspendedDB(server_mode);
+		}
+	}
+	mysql_free_result(res);
+
+	ClrActive(db->mode);
+	Cthread_mutex_unlock(&db->mutex);
+
+	return APP_SUCCESS;
+
+error:
+
+	/* display error message */
+	mysql_errnum = mysql_errno(&db->mysql);
+	if ((mysql_errnum == CR_SERVER_GONE_ERROR) || (mysql_errnum == CR_SERVER_LOST)) {
+		ClrConnected(dpool[0]->mode);
+	}
+
+	log(LOG_ERR, "db_mode() - %s : %s\n", func, mysql_error(&dpool[0]->mysql));
+
+	mysql_free_result(res);
+	db->errors++;
+	ClrActive(dpool[0]->mode);
+
+	Cthread_mutex_unlock(&db->mutex);
 	return APP_FAILURE;
 }
 

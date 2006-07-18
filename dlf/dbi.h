@@ -21,7 +21,7 @@
  * @file  dbi.h
  * @brief database interface layer
  *
- * $Id: dbi.h,v 1.2 2006/06/19 06:52:55 waldron Exp $
+ * $Id: dbi.h,v 1.3 2006/07/18 12:04:35 waldron Exp $
  */
 
 #ifndef _DBI_H
@@ -100,6 +100,18 @@ EXTERN_C int DLL_DECL db_open _PROTO((database_t *db, unsigned int retries));
  */
 
 EXTERN_C void DLL_DECL db_worker _PROTO((database_t *db));
+
+
+/**
+ * This function is responsible for changing the internal mode of the DLF server based on the state 
+ * information in the dlf_status table. The function should be called periodically in order to make sure
+ * changes are detected and propagated throughout the system.
+ *
+ * @returns     : APP_SUCCESS on success
+ * @returns     : APP_FAILURE on failure of the database
+ */
+
+EXTERN_C int DLL_DECL db_mode _PROTO((unsigned int interval));
 
 
 /**

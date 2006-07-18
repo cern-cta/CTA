@@ -1,0 +1,20 @@
+.lf 3 dlf_parent.man
+.TH dlf_parent 3 "CERN IT-FIO" CASTOR "DLF Library Functions"
+.SH NAME
+dlf_parent \- parent process handler for fork(2) 
+.SH SYNOPSIS
+.B #include "dlf_api.h"
+
+.BI "void dlf_parent (void)"
+.SH DESCRIPTION
+.B dlf_parent
+essentially reverses all the locks on the interface established by a previous call to
+.BR dlf_prepare()
+.If a previous call to dlf_prepare() was never made the function will return immediately.
+
+.SH "SEE ALSO"
+.BR dlf_prepare (3),
+.BR dlf_child (3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

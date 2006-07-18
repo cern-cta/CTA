@@ -4,10 +4,11 @@
 #   -h             display help and exit
 #   -l <path>      path to the log file (default: config/site.def/DlfSpool)
 #   -p <int>       the server listening port (default: 5036)
-#   -t <int>:<int> the number of transport threads in relation to database threads
+#   -T <int>       number of handler/transport threads
+#   -D <int>       number of database threads
 #   -n             disable the generation of job and request statistics
 #
-DLFSERVER_OPTIONS="-t 2:2"
+DLFSERVER_OPTIONS="-T 2 -D 2"
 
 # run the server by default ?
 DLFSERVER_RUN="YES"

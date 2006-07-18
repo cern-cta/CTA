@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: queue.c,v 1.2 2006/06/19 06:52:55 waldron Exp $
+ * $Id: queue.c,v 1.3 2006/07/18 12:04:35 waldron Exp $
  */
 
 /* headers */
@@ -40,13 +40,13 @@
 
 /* structures */
 struct queue_t {
-	void             **data;           
+	void             **data;
  	unsigned int     size;             /**< size of the queue         */
 	unsigned int     nelts;            /**< number of queue entries   */
 	unsigned int     in;               /**< next empty table entry    */
 	unsigned int     out;              /**< next filled table entry   */
-	int              queue_mutex;     
-	int              terminated;      
+	int              queue_mutex;
+	int              terminated;
 };
 
 
@@ -93,7 +93,7 @@ int DLL_DECL queue_create(queue_t **q, unsigned int size) {
  */
 
 int DLL_DECL queue_terminate(queue_t *queue) {
-	
+
 	/* variables */
 	int     rv;
 
@@ -101,7 +101,7 @@ int DLL_DECL queue_terminate(queue_t *queue) {
 		log(LOG_ERR, "queue_terminate() - failed to Cthread_mutex_lock() : %s\n", sstrerror(serrno));
 		return APP_FAILURE;
 	}
-	
+
 	/* we must hold one big mutex when setting this... otherwise we could cause a would-be popper
 	 * or pusher to extract or insert data after termination
 	 */
@@ -122,7 +122,7 @@ int DLL_DECL queue_terminate(queue_t *queue) {
  */
 
 int DLL_DECL queue_destroy(queue_t *queue, void (*func)(void *)) {
-	
+
 	/* variables */
 	void    *data;
 	int     rv;
@@ -151,7 +151,7 @@ int DLL_DECL queue_destroy(queue_t *queue, void (*func)(void *)) {
 		data = queue->data[queue->out];
 		queue->nelts--;
 		queue->out = (queue->out + 1) % queue->size;
-		
+
 		/* call function */
 		(*func)(data);
 	}
@@ -159,7 +159,7 @@ int DLL_DECL queue_destroy(queue_t *queue, void (*func)(void *)) {
 
 	/* release mutex lock */
 	Cthread_mutex_unlock(&queue->queue_mutex);
-	
+
 	return APP_SUCCESS;
 }
 
@@ -200,7 +200,7 @@ int DLL_DECL queue_push(queue_t *queue, void *data) {
 	queue->nelts++;
 
 	/* release mutex lock */
-	Cthread_mutex_unlock(&queue->queue_mutex);	
+	Cthread_mutex_unlock(&queue->queue_mutex);
 
 	return APP_SUCCESS;
 }
@@ -228,12 +228,12 @@ int DLL_DECL queue_pop(queue_t *queue, void **data) {
 		log(LOG_ERR, "queue_pop() - failed to Cthread_mutex_lock() : %s\n", sstrerror(serrno));
 		return APP_FAILURE;
 	}
-	
+
 	/* nothing available ? */
 	if (queue->nelts == 0) {
 		if ((rv = Cthread_mutex_unlock(&queue->queue_mutex)) != APP_SUCCESS) {
 			log(LOG_ERR, "queue_pop() - failed to Cthread_mutex_unlock() : %s\n", sstrerror(serrno));
-				return APP_FAILURE;
+			return APP_FAILURE;
 		}
 		return APP_QUEUE_EMPTY;
 	}
@@ -241,20 +241,20 @@ int DLL_DECL queue_pop(queue_t *queue, void **data) {
 	*data = queue->data[queue->out];
 	queue->nelts--;
 	queue->out = (queue->out + 1) % queue->size;
-	
+
 	/* release mutex lock */
-	Cthread_mutex_unlock(&queue->queue_mutex);	
+	Cthread_mutex_unlock(&queue->queue_mutex);
 
 	return APP_SUCCESS;
 }
 
 
 /*
- * Return the number of values in the 
+ * Return the number of values in the
  */
 
 unsigned int DLL_DECL queue_size(queue_t *queue) {
-	
+
 	/* variables */
 	unsigned int size = APP_FAILURE;
 
@@ -262,8 +262,32 @@ unsigned int DLL_DECL queue_size(queue_t *queue) {
 	Cthread_mutex_lock(&queue->queue_mutex);
 	size = queue->nelts;
 	Cthread_mutex_unlock(&queue->queue_mutex);
-	
+
 	return size;
+}
+
+
+/*
+ * Lock the global queue mutex
+ */
+
+void DLL_DECL queue_lock(queue_t *queue) {
+
+	if (queue != NULL) {
+		Cthread_mutex_lock(&queue->queue_mutex);
+	}
+}
+
+
+/*
+ * Unlock the global queue mutex
+ */
+
+void DLL_DECL queue_unlock(queue_t *queue) {
+
+	if (queue != NULL) {
+		Cthread_mutex_unlock(&queue->queue_mutex);
+	}
 }
 
 

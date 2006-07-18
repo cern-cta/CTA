@@ -14,6 +14,15 @@ CREATE TABLE dlf_sequences
 );
 
 /*
+ * dlf_mode
+ */
+CREATE TABLE dlf_mode
+(
+	name		VARCHAR2(20),
+	enabled		NUMBER(1)
+);
+
+/*
  * dlf_jobstats
  */
 CREATE TABLE dlf_jobstats
@@ -86,7 +95,7 @@ PARTITION BY RANGE (timestamp)
 )
 TABLESPACE dlf_data;
 
-/* 
+/*
  * dlf_messages main/primary link table
  */
 CREATE TABLE dlf_messages
@@ -255,7 +264,7 @@ ALTER TABLE dlf_host_map ADD CONSTRAINT i_hostname UNIQUE (hostname) ENABLE;
 /*
  * dlf_nshost_map
  */
-CREATE TABLE dlf_nshost_map 
+CREATE TABLE dlf_nshost_map
 (
 	nshostid	NUMBER,
 	nshostname	VARCHAR2(64)
@@ -301,9 +310,14 @@ INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (15, 'Repack');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (16, 'cleaning');
 
 /* initialise sequences */
-INSERT INTO dlf_sequences (seq_name, seq_no) VALUES ('id',       1);	
+INSERT INTO dlf_sequences (seq_name, seq_no) VALUES ('id',       1);
 INSERT INTO dlf_sequences (seq_name, seq_no) VALUES ('hostid',   1);
 INSERT INTO dlf_sequences (seq_name, seq_no) VALUES ('nshostid', 1);
+
+/* initialise mode information */
+INSERT INTO dlf_mode (name, enabled) VALUES ('queue_purge',      0);
+INSERT INTO dlf_mode (name, enabled) VALUES ('queue_suspend',    0);
+INSERT INTO dlf_mode (name, enabled) VALUES ('database_suspend', 0);
 
 
 /*
@@ -327,22 +341,22 @@ AS
 	v_date		VARCHAR(30);
 	v_rows		INTEGER;
 	v_boundary	DATE;
-	
+
 BEGIN
 
 	-- set the nls_time_date for this session, the partitioning is sensitive to the
 	-- date format reported by sysdate. (alternative: to_char sysdate)
 	v_cur_setting := DBMS_SQL.OPEN_CURSOR;
 	v_rows := 0;
-	
+
 	DBMS_SQL.PARSE(v_cur_setting,
-		'ALTER SESSION 
+		'ALTER SESSION
 		 SET NLS_DATE_FORMAT = ''DD-MON-YYYY''',
 		DBMS_SQL.NATIVE);
 	v_rows := DBMS_SQL.EXECUTE(v_cur_setting);
 
 	-- free resources
-	DBMS_SQL.CLOSE_CURSOR(v_cur_setting);	
+	DBMS_SQL.CLOSE_CURSOR(v_cur_setting);
 
 	-- variables
 	v_cur_table := DBMS_SQL.OPEN_CURSOR;
@@ -352,11 +366,11 @@ BEGIN
 	DBMS_SQL.PARSE(v_cur_table,
 		'SELECT TABLE_NAME, SUM(SUBPARTITION_COUNT)
 		 FROM USER_TAB_PARTITIONS
-		 WHERE TABLE_NAME LIKE ''DLF_%'' 
+		 WHERE TABLE_NAME LIKE ''DLF_%''
 		 GROUP BY TABLE_NAME
 		 ORDER BY TABLE_NAME',
 		DBMS_SQL.NATIVE);
-	
+
 	-- define columns, execute statement
 	DBMS_SQL.DEFINE_COLUMN(v_cur_table, 1, v_tablename, 30);
 	DBMS_SQL.DEFINE_COLUMN(v_cur_table, 2, v_subflag);
@@ -369,7 +383,7 @@ BEGIN
 		END IF;
 		DBMS_SQL.COLUMN_VALUE(v_cur_table, 1, v_tablename);
 		DBMS_SQL.COLUMN_VALUE(v_cur_table, 2, v_subflag);
-	
+
 		-- determine the maximum partition boundary
 		v_cur_partition := DBMS_SQL.OPEN_CURSOR;
 		v_rows := 0;
@@ -385,7 +399,7 @@ BEGIN
 		-- define columns, execute statement
 		DBMS_SQL.DEFINE_COLUMN(v_cur_partition, 1, v_date, 30);
 		v_rows := DBMS_SQL.EXECUTE(v_cur_partition);
-	
+
 		-- get max partition date
 		LOOP
 			IF DBMS_SQL.FETCH_ROWS(v_cur_partition) = 0 THEN
@@ -402,7 +416,7 @@ BEGIN
 		-- free resources
 		DBMS_SQL.CLOSE_CURSOR(v_cur_partition);
 
-		-- generate a list of partition boundary dates from 'v_date' for 7 days 
+		-- generate a list of partition boundary dates from 'v_date' for 7 days
 		-- into the future
 		v_cur_range := DBMS_SQL.OPEN_CURSOR;
 		v_rows := 0;
@@ -410,8 +424,8 @@ BEGIN
 		DBMS_SQL.PARSE(v_cur_range,
 			'SELECT TO_DATE(:s, ''DD-MON-YYYY'') + ROWNUM - 1
 			 FROM ALL_OBJECTS
-			 WHERE ROWNUM <= 
-			 TO_DATE(TO_CHAR(SYSDATE + 7, ''DD-MON-YYYY''), ''DD-MON-YYYY'') - 
+			 WHERE ROWNUM <=
+			 TO_DATE(TO_CHAR(SYSDATE + 7, ''DD-MON-YYYY''), ''DD-MON-YYYY'') -
 			 TO_DATE(:s , ''DD-MON-YYYY'') + 1',
 			DBMS_SQL.NATIVE);
 		DBMS_SQL.BIND_VARIABLE(v_cur_range, ':s', TO_DATE(v_date, 'DD-MON-YYYY') + 1);
@@ -425,7 +439,7 @@ BEGIN
 			IF DBMS_SQL.FETCH_ROWS(v_cur_range) = 0 THEN
 				EXIT;
 			END IF;
-			DBMS_SQL.COLUMN_VALUE(v_cur_range, 1, v_date);	
+			DBMS_SQL.COLUMN_VALUE(v_cur_range, 1, v_date);
 			v_boundary := TRUNC(TO_DATE(v_date, 'DD-MON-YYYY') + 1);
 
 			-- split the MAX_VALUE partition
@@ -440,7 +454,7 @@ BEGIN
 			v_rows := DBMS_SQL.EXECUTE(v_cur_partition);
 
 			-- free resources
-			DBMS_SQL.CLOSE_CURSOR(v_cur_partition);			
+			DBMS_SQL.CLOSE_CURSOR(v_cur_partition);
 
 		END LOOP;
 
@@ -451,7 +465,7 @@ BEGIN
 		IF v_subflag = 0 THEN
 			GOTO eotl;
 		END IF;
-	
+
 		-- loop over all partitions for 'v_tablename'
 		v_cur_partition := DBMS_SQL.OPEN_CURSOR;
 		v_rows := 0;
@@ -467,21 +481,21 @@ BEGIN
 		-- define columns, execute statement
 		DBMS_SQL.DEFINE_COLUMN(v_cur_partition, 1, v_partname, 30);
 		v_rows := DBMS_SQL.EXECUTE(v_cur_partition);
-	
+
 		-- loop over results
 		LOOP
 			IF DBMS_SQL.FETCH_ROWS(v_cur_partition) = 0 THEN
 				EXIT;
 			END IF;
 			DBMS_SQL.COLUMN_VALUE(v_cur_partition, 1, v_partname);
-			
+
 			-- generate a list of facilities which do not have a subpartition
 			v_cur_range := DBMS_SQL.OPEN_CURSOR;
 			v_rows := 0;
 
 			DBMS_SQL.PARSE(v_cur_range,
 				'SELECT FAC_NO FROM DLF_FACILITIES
-				 WHERE FAC_NO NOT IN  
+				 WHERE FAC_NO NOT IN
 				 (SELECT TO_NUMBER(SUBSTR(SUBPARTITION_NAME, 13), ''99'')
 				 FROM USER_TAB_SUBPARTITIONS
 				 WHERE SUBPARTITION_NAME NOT LIKE ''%DEFAULT%''
@@ -512,21 +526,21 @@ BEGIN
 					'ALTER TABLE '||v_tablename||'
 					 SPLIT SUBPARTITION '||v_partname||'_S_DEFAULT VALUES ('||v_facno||')
 					 INTO (SUBPARTITION '||v_subname||', SUBPARTITION '||v_partname||'_S_DEFAULT)',
-					DBMS_SQL.NATIVE);	
+					DBMS_SQL.NATIVE);
 				v_rows := DBMS_SQL.EXECUTE(v_cur_subpart);
-			
+
 				-- free resources
 				DBMS_SQL.CLOSE_CURSOR(v_cur_subpart);
 			END LOOP;
 
 			-- free resources
 			DBMS_SQL.CLOSE_CURSOR(v_cur_range);
-				
-		END LOOP;	
+
+		END LOOP;
 
 		-- free resources
 		DBMS_SQL.CLOSE_CURSOR(v_cur_partition);
-		
+
 		<<eotl>>
 		NULL;
 	END LOOP;
@@ -542,7 +556,7 @@ BEGIN
 	DBMS_SQL.PARSE(v_cur_table,
 		'SELECT PARTITION_NAME, TABLE_NAME
 		 FROM USER_TAB_PARTITIONS
-		 WHERE COMPRESSION = ''DISABLED'' 
+		 WHERE COMPRESSION = ''DISABLED''
 		 AND TABLE_NAME LIKE ''DLF_%''
 		 AND SUBPARTITION_COUNT = 0
 		 AND (PARTITION_NAME <> ''MAX_VALUE''
@@ -567,7 +581,7 @@ BEGIN
 		v_cur_partition := DBMS_SQL.OPEN_CURSOR;
 		v_rows := 0;
 
-		DBMS_SQL.PARSE(v_cur_partition,	
+		DBMS_SQL.PARSE(v_cur_partition,
 			'ALTER TABLE '||v_tablename||'
 			 MOVE PARTITION '||v_partname||'
 			 COMPRESS',
@@ -582,8 +596,8 @@ BEGIN
 	DBMS_SQL.CLOSE_CURSOR(v_cur_table);
 
 EXCEPTION
-	WHEN OTHERS THEN	
-	
+	WHEN OTHERS THEN
+
 		-- close all open cursors
 		IF DBMS_SQL.IS_OPEN(v_cur_table) THEN
 			DBMS_SQL.CLOSE_CURSOR(v_cur_table);
@@ -642,15 +656,15 @@ BEGIN
 	-- date format reported by sysdate. (alternative: to_char sysdate)
 	v_cur_setting := DBMS_SQL.OPEN_CURSOR;
 	v_rows := 0;
-	
+
 	DBMS_SQL.PARSE(v_cur_setting,
-		'ALTER SESSION 
+		'ALTER SESSION
 		 SET NLS_DATE_FORMAT = ''DD-MON-YYYY''',
 		DBMS_SQL.NATIVE);
 	v_rows := DBMS_SQL.EXECUTE(v_cur_setting);
 
 	-- free resources
-	DBMS_SQL.CLOSE_CURSOR(v_cur_setting);	
+	DBMS_SQL.CLOSE_CURSOR(v_cur_setting);
 
 	-- variables
 	v_cur_partition := DBMS_SQL.OPEN_CURSOR;
@@ -665,12 +679,12 @@ BEGIN
 		 AND PARTITION_NAME < CONCAT(''P_'', TO_CHAR(SYSDATE - '||v_expire||', ''YYYYMMDD''))
 		 ORDER BY PARTITION_NAME',
 		DBMS_SQL.NATIVE);
-	
+
 	-- define columns, execute statement
 	DBMS_SQL.DEFINE_COLUMN(v_cur_partition, 1, v_tablename, 30);
 	DBMS_SQL.DEFINE_COLUMN(v_cur_partition, 2, v_partname, 30);
 	v_rows := DBMS_SQL.EXECUTE(v_cur_partition);
-	
+
 	-- loop over results
 	LOOP
 		IF DBMS_SQL.FETCH_ROWS(v_cur_partition) = 0 THEN
@@ -688,7 +702,7 @@ BEGIN
 			 DROP PARTITION '||v_partname||'',
 			DBMS_SQL.NATIVE);
 		v_rows := DBMS_SQL.EXECUTE(v_cur_drop);
-	
+
 		-- free resources
 		DBMS_SQL.CLOSE_CURSOR(v_cur_drop);
 
@@ -698,8 +712,8 @@ BEGIN
 	DBMS_SQL.CLOSE_CURSOR(v_cur_partition);
 
 EXCEPTION
-	WHEN OTHERS THEN	
-	
+	WHEN OTHERS THEN
+
 		-- close all open cursors
 		IF DBMS_SQL.IS_OPEN(v_cur_partition) THEN
 			DBMS_SQL.CLOSE_CURSOR(v_cur_partition);

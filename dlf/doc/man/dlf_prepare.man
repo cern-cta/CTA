@@ -1,0 +1,22 @@
+.lf 3 dlf_prepare.man
+.TH dlf_prepare 3 "CERN IT-FIO" CASTOR "DLF Library Functions"
+.SH NAME
+dlf_prepare \- prepare the DLF interface for forking
+.SH SYNOPSIS
+.B #include "dlf_api.h"
+
+.BI "void dlf_prepare (void)"
+.SH DESCRIPTION
+.B dlf_prepare
+prepares the DLF interface for a 
+.BR fork(2)
+system call. It effectively mimics the prepare handler functionality of the 
+.BR pthread_atfork(3) 
+function and locks all the interface mutexs and shared memory structures so that they do not become unusable after the fork. 
+
+.SH "SEE ALSO"
+.BR dlf_child (3),
+.BR dlf_parent (3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -31,16 +31,16 @@
 #include "osdep.h"
 
 /* severity levels */
-#define DLF_LVL_EMERGENCY     10            /**< system is unusable                       */
-#define DLF_LVL_ALERT         9             /**< action must be taken immediately         */
-#define DLF_LVL_ERROR         8             /**< error conditions                         */
-#define DLF_LVL_WARNING       7             /**< warning conditions                       */
-#define DLF_LVL_AUTH          6             /**< auth error                               */
-#define DLF_LVL_SECURITY      5             /**< Csec error                               */
-#define DLF_LVL_USAGE         4             /**< trace of routines                        */
-#define DLF_LVL_SYSTEM        3             /**< system error condition                   */
-#define DLF_LVL_IMPORTANT     2             /**< informative                              */
-#define DLF_LVL_DEBUG         1             /**< debug-level messages                     */
+#define DLF_LVL_EMERGENCY     1             /**< system is unusable                       */
+#define DLF_LVL_ALERT         2             /**< action must be taken immediately         */
+#define DLF_LVL_ERROR         3             /**< error conditions                         */
+#define DLF_LVL_WARNING       4             /**< warning conditions                       */
+#define DLF_LVL_AUTH          5             /**< auth error                               */
+#define DLF_LVL_SECURITY      6             /**< Csec error                               */
+#define DLF_LVL_USAGE         7             /**< trace of routines                        */
+#define DLF_LVL_SYSTEM        8             /**< system error condition                   */
+#define DLF_LVL_IMPORTANT     9             /**< informative                              */
+#define DLF_LVL_DEBUG         10            /**< debug-level messages                     */
 
 /* parameter types */
 #define DLF_MSG_PARAM_DOUBLE  1             /**< double precision floating point value    */
@@ -147,14 +147,17 @@ EXTERN_C int DLL_DECL dlf_init _PROTO((const char *facility, char *errptr));
 
 /**
  * Shutdown the DLF interface, terminate all threads and reclaim all allocated resources. If the interface
- * is already shutdown then no action will be taken. The api will attempt to shutdown its associated
- * threads for anything up to 10 seconds, this gives threads enough time to gracefully shutdown. After
- * this time any threads left running will have all their data destroyed.
+ * is already shutdown then no action will be taken. If a wait time is greater then 0, then the api will
+ * wait up to X seconds for the threads to flush there queues to the central server. After this time any 
+ * threads left running will have all their data destroyed.
+ *
+ * @param wait     : the number of seconds to wait for threads to flush there queues before thread
+ *                   termination.
  *
  * @returns        : 0 on success
  */
 
-EXTERN_C int DLL_DECL dlf_shutdown _PROTO((void));
+EXTERN_C int DLL_DECL dlf_shutdown _PROTO((int wait));
 
 
 /**
@@ -227,8 +230,8 @@ EXTERN_C int DLL_DECL dlf_writep _PROTO((Cuuid_t reqid,
  * This function writes a log message to the logging targets/destinations specified in the castor2 common
  * configuration file "/etc/castor/castor.conf" or through environment variables. dlf_write() is a wrapper
  * function around dlf_writep(). It basically takes a variable argument list '...' and converts it to an
- * array of dlf_write_param_t structures which is passed to dlf_writep() along with the other parameters. All
- * the other arguments and returns values are identical to that of dlf_write()
+ * array of dlf_write_param_t structures which is passed to dlf_writep() along with the other parameters. 
+ * All the other arguments and returns values are identical to that of dlf_write()
  *
  * @see dlf_write()
  */
@@ -238,6 +241,35 @@ EXTERN_C int DLL_DECL dlf_write _PROTO((Cuuid_t reqid,
 					int msg_no,
 					struct Cns_fileid *ns,
 					int numparams, ...));
+
+
+/**
+ * This function must be called prior to a fork(2) and after a dlf_init() call. It is necessary to ensure
+ * that the api's mutexes remain in a valid and known state. The dlf_prepare(), dlf_child() and 
+ * dlf_parent() calls effectively provide the same style functionality as pthread_atfork(3) but its
+ * specific to the dlf api and portable.
+ */
+
+EXTERN_C void DLL_DECL dlf_prepare _PROTO((void));
+
+
+/**
+ * This function should be called from within the child process after a fork(2). It essential reverse the
+ * locks imposed by dlf_prepare and recreates all the dlf server threads. The threads must be recreated as
+ * fork(2)'ing does not duplicate additional threads other then the main calling thread.
+ *
+ * @warn failure to call dlf_child after a fork(2) will result in NO logging through the dlf api
+ */
+
+EXTERN_C void DLL_DECL dlf_child _PROTO((void));
+
+
+/**
+ * This function should be called from within the parent process after a fork(2). It essentially removes 
+ * all locks and allows the api to resume normal logging for the parent
+ */
+
+EXTERN_C void DLL_DECL dlf_parent _PROTO((void));
 
 
 #endif

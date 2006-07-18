@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: hash.c,v 1.3 2006/06/20 13:36:44 waldron Exp $
+ * $Id: hash.c,v 1.4 2006/07/18 12:04:35 waldron Exp $
  */
 
 /* headers */
@@ -48,7 +48,7 @@ struct hash_t {
 struct entry_t {
 	char             *key;             /**< hash key                   */
 	void             *value;           /**< hash value                 */
-	entry_t          *next;            /**< next entry in linked list  */   
+	entry_t          *next;            /**< next entry in linked list  */
 };
 
 /*
@@ -88,7 +88,7 @@ int DLL_DECL hash_create(hash_t **h, unsigned int size) {
 	}
 
 	hash->size  = size;
-	
+
 	return APP_SUCCESS;
 }
 
@@ -98,7 +98,7 @@ int DLL_DECL hash_create(hash_t **h, unsigned int size) {
  */
 
 int DLL_DECL hash_destroy(hash_t *h, void (*func)(void *)) {
-	
+
 	/* variables */
 	entry_t *l;
 	entry_t	*n;
@@ -108,26 +108,26 @@ int DLL_DECL hash_destroy(hash_t *h, void (*func)(void *)) {
 	if (h == NULL) {
 		return APP_FAILURE;
 	}
-	
+
 	/* free hash entries */
 	for (i = 0; i < h->size; i++) {
 
 		/* free hash entries */
 		for (l = h->table[i]; l != NULL; l = n) {
 			free(l->key);
-			if (func != NULL) {
+			if ((func != NULL) && (l->value != NULL)) {
 				(*func)(l->value);
 			}
 			n = l->next;
 			free(l);
 		}
 	}
-	
+
 	/* free resources */
 	free(h->table);
 	free(h->mutex);
 	free(h);
-		
+
 	return APP_SUCCESS;
 }
 
@@ -141,7 +141,7 @@ int DLL_DECL hash_index(hash_t *h, char *key) {
 	/* variables */
 	char *c;
 	int   s = 0;
-	
+
 	/* handle and key defined ? */
 	if ((h == NULL) || (key == NULL)) {
 		return APP_FAILURE;
@@ -150,7 +150,7 @@ int DLL_DECL hash_index(hash_t *h, char *key) {
 	/* create hash key */
 	for (c = key; *c != 0; c++) {
 		if (isdigit(*c)) {
-			s += atol(c); 
+			s += atol(c);
 			break;
 		} else {
 			s += *c;
@@ -161,8 +161,8 @@ int DLL_DECL hash_index(hash_t *h, char *key) {
 	if (h->size == 0) {
 		log(LOG_ERR, "hash_index() : floating point exception\n");
 		return APP_FAILURE;
-	} 
-	
+	}
+
 	return s % h->size;
 }
 
@@ -182,7 +182,7 @@ int DLL_DECL hash_insert(hash_t *h, char *key, void *value) {
 	if ((h == NULL) || (key == NULL) || (!value)) {
 		return APP_FAILURE;
 	}
-	
+
 	/* get hashtable entry to use */
 	i = hash_index(h, key);
 	if (i == -1) {
@@ -230,19 +230,19 @@ int DLL_DECL hash_search(hash_t *h, char *key, void **value) {
 	/* handle and key defined ? */
 	if ((h == NULL) || (key == NULL)) {
 		return APP_FAILURE;
-	}	
+	}
 
 	/* get hashtable entry to use */
 	i = hash_index(h, key);
 	if (i == -1) {
 		return APP_FAILURE;
 	}
-	
+
 	/* lookup the index */
 	Cthread_mutex_lock(&h->mutex[i]);
 	l = h->table[i];
 	Cthread_mutex_unlock(&h->mutex[i]);
-	
+
 	/* find key ? */
 	for (; l != NULL; l = l->next) {
 		if (!strcmp(key, l->key)) {
@@ -252,6 +252,38 @@ int DLL_DECL hash_search(hash_t *h, char *key, void **value) {
 	}
 
 	return APP_FAILURE;
+}
+
+
+/*
+ * Hash lock
+ */
+
+void DLL_DECL hash_lock(hash_t *h) {
+
+	/* variables */
+	int     i;
+
+     	/* loop over hash entries and lock all mutexes */
+	for (i = 0; (i < h->size) && (h != NULL); i++) {
+		Cthread_mutex_lock(&h->mutex[i]);
+	}
+}
+
+
+/*
+ * Hash unlock
+ */
+
+void DLL_DECL hash_unlock(hash_t *h) {
+	
+	/* variable */
+	int     i;
+
+	/* loop over hash entries and unlock all the mutexes */
+	for (i = 0; (i < h->size) && (h != NULL); i++) {
+		Cthread_mutex_unlock(&h->mutex[i]);
+	}
 }
 
 

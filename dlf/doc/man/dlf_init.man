@@ -1,5 +1,5 @@
 .lf 3 dlf_init.man
-.TH dlf_init 3 "$Date: 2006/06/20 13:35:02 $ CERN IT-FIO" CASTOR "DLF Library Functions"
+.TH dlf_init 3 "CERN IT-FIO" CASTOR "DLF Library Functions"
 .SH NAME
 dlf_init \- initialise the DLF interface
 .SH SYNOPSIS
@@ -7,25 +7,25 @@ dlf_init \- initialise the DLF interface
 
 .BI "int dlf_init (const char * " facility, " char * " error ")"
 .SH DESCRIPTION
-.B dlf_init 
+.B dlf_init
 initialises the DLF (Distributed Logging Facility) interface and must be called before any other DLF library related functions. All other function calls relating to the DLF library will fail upon unsuccessful initialisation.
 
-The function will read the logging destinations/targets from the castor2 common configuration file "/etc/castor/castor.conf" or from the facility's logging related environment variables. The configuration information is then used to create the DLF global data structures. For destinations/targets where messages are to be sent to a remote host, the function will also create the necessary threads for handling 
+The function will read the logging destinations/targets from the castor2 common configuration file "/etc/castor/castor.conf" or from the facility's logging related environment variables. The configuration information is then used to create the DLF global data structures. For destinations/targets where messages are to be sent to a remote host, the function will also create the necessary threads for handling
 bi-directional communication between the server and the client. One thread will be created per remote server.
 
 The
 .I facility
-argument defines the name of the facility under which messages should be logged. The name must not exceed 
-.BR DLF_MAXFACNAMELEN 
+argument defines the name of the facility under which messages should be logged. The name must not exceed
+.BR DLF_MAXFACNAMELEN
 characters in length.
 
 The
 .I errptr
-argument is a  pointer to a buffer to store an error message on error. The message is terminated by a 
-newline character 
-'\n' and the buffer must have a minimum size of CA_MAXLINELEN. If the errptr is NULL, 
-.BR "dlf_init" (3) 
-returns immediately with -1. The 
+argument is a  pointer to a buffer to store an error message on error. The message is terminated by a
+newline character
+'\n' and the buffer must have a minimum size of CA_MAXLINELEN. If the errptr is NULL,
+.BR "dlf_init" (3)
+returns immediately with -1. The
 .I errptr
 is only ever written too during calls to
 .BR "dlf_init" (3)
@@ -36,9 +36,9 @@ is only ever written too during calls to
 <facility_name>_LOG<severity_level> <destination1> [destination2] ...
 
 Where
-.I facility_name 
+.I facility_name
 is the name of the facility in UPPER CASE and
-.I severity_level 
+.I severity_level
 is the name of the severity and must be one of the following values:
 .RS
 .TP
@@ -64,7 +64,7 @@ is the name of the severity and must be one of the following values:
 .RE
 
 The
-.I destination 
+.I destination
 is the target or location to where the log message should be record or transmitted too. For writing too files the destination format is
 
 .B file://<full_path_to_file>
@@ -85,20 +85,33 @@ The following example would configure all ERROR and EMERGENCY messages created b
 For convenience a _LOGALL severity level exists to allow all messages to be logged without the need for defining each severity level on its own. Multiple targets of the same type are supported.
 
 .SH "RETURN VALUE"
-The function returns 0 on success and -1 on error and an appropriate message is stored in 
+The function returns 0 on success and -1 on error and an appropriate message is stored in
 .I errptr
 
 .SH NOTE
-The DLF interface is restricted to 
+The DLF interface is restricted to
 .BR API_MAX_TARGETS
 \- 20 log destinations/targets in total and
 .BR API_MAX_THREADS
 \- 4 threads for connecting to remote servers. Should any of these values be exceeded the function will fail.
 
+If you intend to 
+.BR dlf_init(3)
+and then 
+.BR fork (2) 
+the process, please refer to 
+.BR dlf_prepare (3), 
+.BR dlf_child (3) and 
+.BR dlf_parent (3) 
+library calls. If you fail to use these sending messages to remote DLF servers will fail in the child process after forking.
+
 .SH "SEE ALSO"
 .BR dlf_regtext (3),
 .BR dlf_shutdown (3),
-.BR dlf_write (3)
+.BR dlf_write (3),
+.BR dlf_prepare (3),
+.BR dlf_child (3),
+.BR dlf_parent (3)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

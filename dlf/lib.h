@@ -21,7 +21,7 @@
  * @file  lib.h
  * @brief definitions and structures for api internals
  *
- * $Id: lib.h,v 1.3 2006/06/23 08:07:12 waldron Exp $
+ * $Id: lib.h,v 1.4 2006/07/18 12:04:35 waldron Exp $
  */
 
 #ifndef _API_H
@@ -66,8 +66,9 @@ struct target_t {
 	long               mode;            /**< the targets mode e.g. initialised, connected etc  */
 	time_t             pause;           /**< do nothing until pause time is in the past        */
 	queue_t            *queue;          /**< internal fifo message queue                       */
+	long               queue_size;      /**< the size of the queue                             */
 	int                tid;             /**< thread id                                         */
-	time_t             err_full;        /**< the last time a queue full error was reported     */ 
+	time_t             err_full;        /**< the last time a queue full error was reported     */
 };
 
 

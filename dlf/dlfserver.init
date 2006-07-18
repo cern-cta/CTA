@@ -20,7 +20,7 @@
 #  write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,   #
 #  USA.                                                                                                #
 #                                                                                                      #
-#  Usage: dlfserver {start|stop|status|restart|condrestart|suspend|resume}                             #
+#  Usage: dlfserver {start|stop|status|restart|condrestart}                                            #
 #                                                                                                      #
 #------------------------------------------------------------------------------------------------------#
 
@@ -39,7 +39,6 @@ fi
 start() {
 	# run daemon
 	echo -n $"Starting $prog: "
-	daemon /usr/bin/$prog $DLFSERVER_OPTIONS
 
 	# process sysconfig settings
 	if [ -f /etc/sysconfig/$prog ] ; then
@@ -50,6 +49,8 @@ start() {
 			failure && echo && exit
 		fi
 	fi
+
+	daemon /usr/bin/$prog $DLFSERVER_OPTIONS
 	
 	RETVAL=$?
 	[ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
@@ -74,24 +75,6 @@ restart() {
         start 
 }
 
-suspend() {
-	echo -n $"Sending SIGUSR1 to $prog: "
-	killproc $prog -USR1
-
-	RETVAL=$?
-	echo
-	return $RETVAL
-}
-
-resume() {
-	echo -n $"Sending SIGUSR2 to $prog: "
-	killproc $prog -USR2
-
-	RETVAL=$?
-	echo
-	return $RETVAL
-}
-
 # See how we were called
 case "$1" in
 	
@@ -111,15 +94,8 @@ case "$1" in
 	condrestart)
 		[ -f /var/lock/subsys/$prog ] && restart || :
 		;;
-	suspend)
-		suspend
-		;;
-	resume)
-		resume
-		;;
-
 	*)
-		echo $"Usage: $0 {start|stop|status|restart|condrestart|suspend|resume}"
+		echo $"Usage: $0 {start|stop|status|restart|condrestart}"
 		exit 1
 esac
 

@@ -19,9 +19,9 @@
 
 /**
  * @file  process.h
- * @brief message processing for the server
+ * @brief message processing prototypes for the server
  *
- * $Id: process.h,v 1.2 2006/06/19 06:52:55 waldron Exp $
+ * $Id: process.h,v 1.3 2006/07/18 12:04:35 waldron Exp $
  */
 
 #ifndef _PROCESS_H

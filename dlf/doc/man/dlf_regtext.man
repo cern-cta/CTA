@@ -1,7 +1,7 @@
 .lf 3 dlf_reqtext.man
-.TH dlf_reqtext 3 "$Date: 2006/06/20 13:35:02 $ CERN IT-FIO" CASTOR "DLF Library Functions"
+.TH dlf_reqtext 3 "CERN IT-FIO" CASTOR "DLF Library Functions"
 .SH NAME
-dlf_regtext \- register a message text for the given facility 
+dlf_regtext \- register a message text for the given facility
 .SH SYNOPSIS
 .B #include "dlf_api.h"
 
@@ -9,12 +9,12 @@ dlf_regtext \- register a message text for the given facility
 .SH DESCRIPTION
 .B dlf_regtext
 is used to register a message text for a given facility, previously defined in a call to
-.BR "dlf_init" (3) 
+.BR "dlf_init" (3)
 with the DLF client api. All message texts should be registered with the api after calling
-.BR "dlf_init" (3) 
-and before any calls to log messages through 
-.BR "dlf_write" (3) 
-If the message is not registered any logging messages which would like to log a message with that particular 
+.BR "dlf_init" (3)
+and before any calls to log messages through
+.BR "dlf_write" (3)
+If the message is not registered any logging messages which would like to log a message with that particular
 text will fail.
 
 The
@@ -26,12 +26,12 @@ The
 argument is a string to the text associated with the message number
 
 .SH "RETURN VALUE"
-The function returns 0 on success and -1 on error normally caused by the maximum amount of messages texts 
+The function returns 0 on success and -1 on error normally caused by the maximum amount of messages texts
 being reached.
 
 .SH NOTE
 The api will not register more then
-.BR DLF_MAX_MSGTEXTS 
+.BR DLF_MAX_MSGTEXTS
 .\- 1024 messages at any given time and the message itself cannot exceed more then
 .BR DLF_LEN_MSGTEXTS
 .\- 512 chacraters in length.

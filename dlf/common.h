@@ -21,7 +21,7 @@
  * @file  dlf/common.h
  * @brief defines common definitions, prototypes and structures for use between all DLF applications
  *
- * $Id: common.h,v 1.2 2006/06/19 06:52:55 waldron Exp $
+ * $Id: common.h,v 1.3 2006/07/18 12:04:35 waldron Exp $
  */
 
 #ifndef _COMMON_H
@@ -48,10 +48,14 @@
 #define MODE_INITIALISED      0x0000001
 #define MODE_CONNECTED        0x0000002
 #define MODE_ACTIVE           0x0000004
-#define MODE_SUSPENDED        0x0000008
-#define MODE_SHUTDOWN         0x0000010
-#define MODE_SERVER           0x0000020
-#define MODE_FILE             0x0001000
+#define MODE_FORKING          0x0000008
+#define MODE_SUSPENDED_QUEUE  0x0000010
+#define MODE_SUSPENDED_DB     0x0000020
+#define MODE_SERVER_PURGE     0x0000030
+#define MODE_SHUTDOWN         0x0000040
+
+#define MODE_SERVER           0x0001000
+#define MODE_FILE             0x0002000
 
 
 /**
@@ -61,7 +65,10 @@
 #define IsConnected(x)       ((x) &   MODE_CONNECTED)
 #define IsInitialised(x)     ((x) &   MODE_INITIALISED)
 #define IsActive(x)          ((x) &   MODE_ACTIVE)
-#define IsSuspended(x)       ((x) &   MODE_SUSPENDED)
+#define IsForking(x)         ((x) &   MODE_FORKING)
+#define IsSuspendedQueue(x)  ((x) &   MODE_SUSPENDED_QUEUE)
+#define IsSuspendedDB(x)     ((x) &   MODE_SUSPENDED_DB)
+#define IsServerPurge(x)     ((x) &   MODE_SERVER_PURGE)
 #define IsShutdown(x)        ((x) &   MODE_SHUTDOWN)
 #define IsServer(x)          ((x) &   MODE_SERVER)
 #define IsFile(x)            ((x) &   MODE_FILE)
@@ -69,7 +76,10 @@
 #define SetConnected(x)      ((x) |=  MODE_CONNECTED)
 #define SetInitialised(x)    ((x) |=  MODE_INITIALISED)
 #define SetActive(x)         ((x) |=  MODE_ACTIVE)
-#define SetSuspended(x)      ((x) |=  MODE_SUSPENDED)
+#define SetForking(x)        ((x) |=  MODE_FORKING)
+#define SetSuspendedQueue(x) ((x) |=  MODE_SUSPENDED_QUEUE)
+#define SetSuspendedDB(x)    ((x) |=  MODE_SUSPENDED_DB)
+#define SetServerPurge(x)    ((x) |=  MODE_SERVER_PURGE)
 #define SetShutdown(x)       ((x) |=  MODE_SHUTDOWN)
 #define SetServer(x)         ((x) |=  MODE_SERVER)
 #define SetFile(x)           ((x) |=  MODE_FILE)
@@ -77,7 +87,10 @@
 #define ClrConnected(x)      ((x) &= ~MODE_CONNECTED)
 #define ClrInitialised(x)    ((x) &= ~MODE_INITIALISED)
 #define ClrActive(x)         ((x) &= ~MODE_ACTIVE)
-#define ClrSuspended(x)      ((x) &= ~MODE_SUSPENDED)
+#define ClrForking(x)        ((x) &= ~MODE_FORKING)
+#define ClrSuspendedQueue(x) ((x) &= ~MODE_SUSPENDED_QUEUE)
+#define ClrSuspendedDB(x)    ((x) &= ~MODE_SUSPENDED_DB)
+#define ClrServerPurge(x)    ((x) &= ~MODE_SERVER_PURGE)
 #define ClrShutdown(x)       ((x) &= ~MODE_SHUTDOWN)
 #define ClrFile(x)           ((x) &= ~MODE_FILE)
 

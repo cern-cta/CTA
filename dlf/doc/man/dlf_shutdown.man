@@ -1,20 +1,22 @@
 .lf 3 dlf_shutdown.man
-.TH dlf_shutdown3 "$Date: 2006/06/20 13:35:02 $ CERN IT-FIO" CASTOR "DLF Library Functions"
+.TH dlf_shutdown 3 "CERN IT-FIO" CASTOR "DLF Library Functions"
 .SH NAME
 dlf_shutdown \- shutdown the DLF interface
 .SH SYNOPSIS
 .B #include "dlf_api.h"
 
-.BI "int dlf_shutdown (void)"
+.BI "int dlf_shutdown (int " wait ")"
 .SH DESCRIPTION
 .B dlf_shutdown
 shuts down the DLF interface terminating all threads and free global data structures. If the interface is already shutdown by a previous call or the interface was not previous initialised with a call to
 .BR "dlf_init" (3)
 then no action will be taken.
 
-The api will attempt to shutdown its associated threads in a controlled and graceful fashion for up to 10 seconds. Should any api based threads still be active after this time period all data pending in the threads queue for transport to the 
-.BR dlfserver 
-will be deleted.
+If a
+.I wait
+time is greater then 0, then the api will wait up to X seconds for the threads to flush there queues to the
+.BR dlfserver
+. After this time any threads left running will have all their data destroyed.
 
 After a successful shutdown, the api can be reinitialised with another call to
 .BR "dlf_init" (3)

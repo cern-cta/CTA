@@ -19,9 +19,9 @@
 
 /**
  * @file  queue.h
- * @brief Thread safe FIFO bounded queue
+ * @brief Prototypes for a thread safe FIFO bounded queue
  *
- * $Id: queue.h,v 1.2 2006/06/19 06:52:55 waldron Exp $
+ * $Id: queue.h,v 1.3 2006/07/18 12:04:35 waldron Exp $
  */
 
 #ifndef _QUEUE_H
@@ -123,6 +123,28 @@ EXTERN_C int DLL_DECL queue_push _PROTO((queue_t *queue, void *data));
  */
 
 EXTERN_C unsigned int DLL_DECL queue_size _PROTO((queue_t *queue));
+
+
+/**
+ * This function effectively locks all the mutexes within a given queue and prevents any access to the 
+ * data stored within it. This function is needed by the api, to protect mutexes and keep them in a 
+ * valid state during a fork(2).
+ *
+ * @param queue : the queue handle
+ * @returns     : void, this function is always successful.
+ */
+
+EXTERN_C void DLL_DECL queue_lock _PROTO((queue_t *queue));
+
+
+/**
+ * This function unlocks all the mutexes previously locked by a call to queue_lock()
+ *
+ * @param h     : the queue handle
+ * @returns     : void, this function is always successful.
+ */
+
+EXTERN_C void DLL_DECL queue_unlock _PROTO((queue_t *queue));
 
 
 #endif

@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: common.c,v 1.2 2006/06/19 06:52:55 waldron Exp $
+ * $Id: common.c,v 1.3 2006/07/18 12:04:35 waldron Exp $
  */
 
 /* headers */
@@ -42,7 +42,7 @@ void DLL_DECL free_message(void *arg) {
 	if (arg == NULL) {
 		return;
 	}
-	
+
 	/* initialise variables */
 	message = (message_t *)arg;
 
@@ -51,7 +51,7 @@ void DLL_DECL free_message(void *arg) {
 		param = p->next;
 		free_param(p);
 	}
-       	
+
 	free(message);
 }
 
@@ -67,7 +67,7 @@ void DLL_DECL free_param(param_t *param) {
 
 
 /*
- * Free msgtext 
+ * Free msgtext
  */
 
 void DLL_DECL free_msgtexts(msgtext_t *texts[]) {

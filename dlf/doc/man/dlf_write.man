@@ -1,23 +1,23 @@
 .lf 3 dlf_write.man
-.TH dlf_write 3 "$Date: 2006/06/20 13:35:02 $ CERN IT-FIO" CASTOR "DLF Library Functions"
+.TH dlf_write 3 "CERN IT-FIO" CASTOR "DLF Library Functions"
 .SH NAME
 dlf_write \- writes a log message to the log destinations/targets
 .SH SYNOPSIS
 .B #include "dlf_api.h"
 
-.BI "int dlf_write (Cuuid_t " reqid ", int " severity 
-.BI ", int " msg_no ", struct Cns_fileid * " ns 
+.BI "int dlf_write (Cuuid_t " reqid ", int " severity
+.BI ", int " msg_no ", struct Cns_fileid * " ns
 .BI ", int " numparams ", ...)"
 .SH DESCRIPTION
 .B dlf_write
 write a log message to the log destinations/targets initialised during the call to
-.BR "dlf_init" (3). 
+.BR "dlf_init" (3).
 Common logging fields such as the timestamp, hostname, process id, thread id etc... are added to the log message internally within this function
 
 The
 .I facility
-argument defines the name of the facility under which messages should be logged. The name must not exceed 
-.BR DLF_MAXFACNAMELEN 
+argument defines the name of the facility under which messages should be logged. The name must not exceed
+.BR DLF_MAXFACNAMELEN
 characters in length.
 
 The
@@ -51,7 +51,7 @@ is the severity level of the message and must be one of the following values:
 
 
 .I msg_no
-Is the unique number which corresponds to a particular message text. The message number and its associated text message must have been previously registered with the api using a call to 
+Is the unique number which corresponds to a particular message text. The message number and its associated text message must have been previously registered with the api using a call to
 .BR "dlf_regtext" (3).
 If the message text has not been successfully registered an message trying to log under that message will fail.
 
@@ -64,7 +64,7 @@ is the number of log message parameters passed to the function. Each log message
 .I parameter name
 ,
 .I parameter type
-, and 
+, and
 .I parameter value.
 So
 .I numparams
@@ -73,7 +73,7 @@ must actually represent the number of triplets.
 .I parameter name
 is of type
 .B const char *.
-The character string must not exceed DLF_LEN_PARAMNAME characters in length. The parameter names for the tape VIDs and sub request identifiers are ignored by this function but the argument must be present - it may contain any value but must be of type 
+The character string must not exceed DLF_LEN_PARAMNAME characters in length. The parameter names for the tape VIDs and sub request identifiers are ignored by this function but the argument must be present - it may contain any value but must be of type
 .B const char *.
 .TP
 .I parameter type

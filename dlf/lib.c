@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: lib.c,v 1.3 2006/06/23 08:07:12 waldron Exp $
+ * $Id: lib.c,v 1.4 2006/07/18 12:04:35 waldron Exp $
  */
 
 /* headers */
@@ -37,6 +37,7 @@
 
 #include "Cglobals.h"
 #include "Cnetdb.h"
+#include "Csnprintf.h"
 #include "common.h"
 #include "Cthread_api.h"
 #include "dlf_api.h"
@@ -49,19 +50,18 @@
 #include "server.h"
 #include "u64subr.h"
 
-
 /* hashes, tables and pools */
-static target_t  *targets[API_MAX_TARGETS];     /**< target pool for targets/destinations   */
-static msgtext_t *texts[DLF_MAX_MSGTEXTS];      /**< the clients message texts              */
-static hash_t    *hashtexts = NULL;             /**< fast lookup of message texts           */
+target_t  *targets[API_MAX_TARGETS];     /**< target pool for targets/destinations   */
+msgtext_t *texts[DLF_MAX_MSGTEXTS];      /**< the clients message texts              */
+hash_t    *hashtexts = NULL;             /**< fast lookup of message texts           */
 
 /* mutexes */
-static int api_mutex;
+int api_mutex;
 
 /* api variables */
-static long api_mode = MODE_DEFAULT;            /**< api mode                               */
-static char api_facname[DLF_LEN_FACNAME + 1];   /**< facility name as provided to db_init() */
-static char api_ucfacname[DLF_LEN_FACNAME + 1]; /**< facility name in upper case            */
+long api_mode = MODE_DEFAULT;            /**< api mode                               */
+char api_facname[DLF_LEN_FACNAME + 1];   /**< facility name as provided to db_init() */
+char api_ucfacname[DLF_LEN_FACNAME + 1]; /**< facility name in upper case            */
 
 /* prototype for common/socket_timeout.c */
 EXTERN_C int DLL_DECL netconnect_timeout _PROTO((SOCKET, struct sockaddr *, size_t, int));
@@ -77,8 +77,8 @@ EXTERN_C int DLL_DECL netconnect_timeout _PROTO((SOCKET, struct sockaddr *, size
 void dlf_error(char *format, ...) {
 
 	/* variables */
-	struct timeval tv;     
-	struct tm      tm_str;  
+	struct timeval tv;
+	struct tm      tm_str;
 
 	int       rv;
 	int       i;
@@ -87,7 +87,7 @@ void dlf_error(char *format, ...) {
 	int       len;
 	char      buffer[1024];
 	char      hostname[DLF_LEN_HOSTNAME + 1];
-	
+
 	va_list   ap;
 
 	/* timestamp */
@@ -107,7 +107,7 @@ void dlf_error(char *format, ...) {
 			hostname,
 			getpid(),
 			tid);
-	
+
 	/* format message */
 	va_start(ap, format);
 	vsnprintf(&buffer[len], sizeof(buffer) - len - 1, format, ap);
@@ -122,7 +122,7 @@ void dlf_error(char *format, ...) {
 	for (i = 0; i < API_MAX_TARGETS; i++) {
 		if (targets[i] == NULL)
 			continue;
-		if (!IsFile(targets[i]->mode))   
+		if (!IsFile(targets[i]->mode))
 			continue;                     /* not a file               */
 		if (!(targets[i]->sevmask & severitylist[2].sevmask))
 			continue;                     /* severity not of interest */
@@ -137,7 +137,7 @@ void dlf_error(char *format, ...) {
 #else
         		fd = open(targets[i]->path, O_APPEND|O_WRONLY|O_CREAT, 0644);
 #endif
-		    
+
 			if (fd < 0) {
 				continue;
 			}
@@ -155,14 +155,14 @@ void dlf_error(char *format, ...) {
 int dlf_read(target_t *t, int *rtype, int *rcode) {
 
 	/* variables */
-	int       len;           
-	int       rc; 
+	int       len;
+	int       rc;
 	int       err_no;
-	int       type;          
-	int       magic;        
-	char      header[3 * LONGSIZE];  
-	char      *rbp;          
- 	
+	int       type;
+	int       magic;
+	char      header[3 * LONGSIZE];
+	char      *rbp;
+
 	/* extract header */
 	len = netread_timeout(t->socket, header, sizeof(header), API_READ_TIMEOUT);
 	if (len != sizeof(header)) {
@@ -171,7 +171,7 @@ int dlf_read(target_t *t, int *rtype, int *rcode) {
 
 	/* initialise variables */
 	rbp = header;
-	
+
 	unmarshall_LONG(rbp, magic);
 	unmarshall_LONG(rbp, type);
 	unmarshall_LONG(rbp, rc);
@@ -217,7 +217,7 @@ int dlf_send(target_t *t, char *data, int len) {
 	/* variables */
 	struct sockaddr_in server_addr;
 	struct hostent     *hp;
-	
+
 	int    rv;
 	int    opts;
 
@@ -240,7 +240,7 @@ int dlf_send(target_t *t, char *data, int len) {
 		if (t->socket < 0) {
 			return errno;
 		}
-		
+
 		/* keep connection alive */
 		opts = 1;
 		rv = setsockopt(t->socket, SOL_SOCKET, SO_KEEPALIVE, &opts, sizeof(opts));
@@ -255,7 +255,7 @@ int dlf_send(target_t *t, char *data, int len) {
 			ClrConnected(t->mode);
 			return rv;
 		}
-		SetConnected(t->mode);	
+		SetConnected(t->mode);
 	}
 
 	/* attempt to send data to the server
@@ -268,7 +268,7 @@ int dlf_send(target_t *t, char *data, int len) {
 		ClrConnected(t->mode);
 		return APP_FAILURE;
 	}
-	
+
 	return APP_SUCCESS;
 }
 
@@ -277,30 +277,34 @@ int dlf_send(target_t *t, char *data, int len) {
  * dlf_writep
  */
 
-int dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, int numparams, dlf_write_param_t params[]) {
+int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, int numparams, dlf_write_param_t params[]) {
 
 	/* variables */
-	struct timeval tv;     
-	struct tm      tm_str;  
+	struct timeval tv;
+	struct tm      tm_str;
 
 	message_t *message;
 	message_t *m;
-	param_t   *param;          
-	param_t   *p;            
-	param_t   *p2;          
-	int       rv;          
-	int       fd;          
-	int       i;             
-	int       j; 
-	int       k;
-	int       error;            
-	int       len;        
-	int       found;        
-	int       sevmask;        
-	char      *text = NULL;     
-	char      buffer[8192];        
+	param_t   *param;
+	param_t   *p;
+	param_t   *p2;
+	int       rv;
+	int       fd;
+	int       i, j, k, n;
+	int       error;
+	int       left;
+	int       found;
+	int       sevmask;
+	char      *pos = NULL;
+	char      *text = NULL;
+	char      buffer[8192];
 	char      value[DLF_LEN_STRINGVALUE + 1];
 	Cuuid_t   preqid;
+
+	/* interface initialised ? */
+	if (!IsInitialised(api_mode)) {
+		return APP_FAILURE;
+	}
 
 	/* valid severity ? */
 	for (j = 0, found = 0; severitylist[j].name != NULL; j++) {
@@ -313,13 +317,13 @@ int dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, i
 		return APP_FAILURE;
 	}
 	sevmask = severitylist[j].sevmask;
-	
+
 	/* convert the msg_no to a message text
-	 *   - this is only used by targets of type file. Here we specify the text as opposed to the 
+	 *   - this is only used by targets of type file. Here we specify the text as opposed to the
 	 *     number as this is more useful in standard log files
 	 */
 	snprintf(buffer, sizeof(buffer) - 1, "%d", msg_no);
-	
+
 	rv = hash_search(hashtexts, buffer, (void **)&text);
 	if (rv != APP_SUCCESS) {
 		return APP_FAILURE;
@@ -332,7 +336,7 @@ int dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, i
 	}
 	message->plist = NULL;
 	message->size  = sizeof(unsigned char);
-	
+
 	/* timestamp */
 	gettimeofday(&tv, NULL);
 	localtime_r(&tv.tv_sec, &tm_str);
@@ -362,7 +366,7 @@ int dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, i
 	/* nameserver info */
 	if (ns != NULL) {
 		strncpy(message->nshostname, ns->server, sizeof(message->nshostname) - 1);
-		u64tostr(ns->fileid, message->nsfileid, -1);		
+		u64tostr(ns->fileid, message->nsfileid, -1);
 	} else {
 		strcpy(message->nshostname, "N/A");
 		strcpy(message->nsfileid, "0");
@@ -374,7 +378,7 @@ int dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, i
 
 	/* update message size */
 	message->size += strlen(message->hostname) + strlen(message->reqid) + strlen(message->nshostname)
-		      +  strlen(message->nsfileid) + sizeof(unsigned char)  + sizeof(unsigned char)     
+		      +  strlen(message->nsfileid) + sizeof(unsigned char)  + sizeof(unsigned char)
 		      +  sizeof(unsigned short)    + sizeof(pid_t)          + sizeof(int) + 4;
 
        	/* process parameter */
@@ -386,7 +390,7 @@ int dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, i
 			free_message(message);
 			return APP_FAILURE;
 		}
-				
+
 		/* extract name and type */
 		if (params[i].name != NULL) {
 			strncpy(param->name, params[i].name, DLF_LEN_PARAMNAME);
@@ -396,7 +400,7 @@ int dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, i
 		}
 		param->name[DLF_LEN_PARAMNAME] = '\0';
 		param->type = params[i].type;
-	       		
+
 		/* process type */
 		if (param->type == DLF_MSG_PARAM_TPVID) {
 			strncpy(value, params[i].par.par_string, DLF_LEN_TAPEID);
@@ -444,7 +448,7 @@ int dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, i
 
 		/* first parameter ? */
 		if (message->plist == NULL) {
-			message->plist = param;			
+			message->plist = param;
 		} else {
 			for (p = message->plist; p->next != NULL; p = p->next);
 			p->next = param;
@@ -452,7 +456,7 @@ int dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, i
 		param->next = NULL;
 	}
 
-	/* replace all occurrences of the new line '\n' character in all parameter strings 
+	/* replace all occurrences of the new line '\n' character in all parameter strings
 	 *   - in parameter names we simply collapse all '\n' and spaces ' '
 	 */
 	for (param = message->plist; param != NULL; param = param->next) {
@@ -478,57 +482,61 @@ int dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, i
 		message->size += sizeof(int) + strlen(param->name) + strlen(param->value) + 2;
 	}
 
+
+
 	/* deal with files first, they take priority! */
 	for (i = 0; i < API_MAX_TARGETS; i++) {
 		if (targets[i] == NULL)
 			continue;
-		if (!IsFile(targets[i]->mode))   
-			continue;                     /* not a file               */
 		if (!(targets[i]->sevmask & sevmask) &&
 		    !(targets[i]->sevmask & severitylist[10].sevmask))
 			continue;                     /* severity not of interest */
-	
+
+		left = sizeof(buffer) - 2;
+
 		/* construct message */
-		len = snprintf(buffer, sizeof(buffer), 
-			"DATE=%s.%06d HOST=%s LVL=%s FACILITY=%s PID=%d TID=%d MSG=\"%s\" REQID=%s NSHOSTNAME=%s NSFILEID=%s",
-			message->timestamp,
-			message->timeusec,
-			message->hostname,
-			severitylist[j].name,
-			api_facname,
-			message->pid,
-			message->tid,
-			text != NULL ? text : "Unknown",
-			message->reqid,
-			message->nshostname,
-			message->nsfileid);
+		buffer[0]='\0';
+		n = Csnprintf(buffer, left,
+			      "DATE=%s.%06d HOST=%s LVL=%s FACILITY=%s PID=%d TID=%d MSG=\"%s\" REQID=%s NSHOSTNAME=%s NSFILEID=%s",
+			      message->timestamp,
+			      message->timeusec,
+			      message->hostname,
+			      severitylist[j].name,
+			      api_facname,
+			      message->pid,
+			      message->tid,
+			      text != NULL ? text : "Unknown",
+			      message->reqid,
+			      message->nshostname,
+			      message->nsfileid);
 
 		/* buffer too small ? */
-		if (len >= sizeof(buffer)) {
+		if (n >= sizeof(buffer)) {
 			continue;
 		}
-		
+		left -= n;
+		pos  = buffer + n;
+
 		/* add parameters */
 		for (param = message->plist, error = 0; param != NULL; param = param->next) {
 			if (param->type == DLF_MSG_PARAM_STR) {
-				len += snprintf(&buffer[len], sizeof(buffer) - len - 1, " %s=\"%s\"", param->name, param->value);
+				n = Csnprintf(pos, left, " %s=\"%s\"", param->name, param->value);
 			} else {
-				len += snprintf(&buffer[len], sizeof(buffer) - len - 1, " %s=%s", param->name, param->value);
+				n = Csnprintf(pos, left, " %s=%s", param->name, param->value);
 			}
-			if (len >= sizeof(buffer)) {
+			if (n >= left) {
 				error = 1;
 				break;
 			}
+			left -= n;
+			pos += n;
 		}
 		if (error == 1) {
 			continue;
 		}
-	
+
 		/* terminate string */
-		len = strlen(buffer);
-		if (buffer[len - 1] != '\n') {
-			sprintf(&buffer[len], "\n");
-		}
+		n = Csnprintf(pos, left, "\n");
 
 		/* write to stdout or file */
 		if (!strncasecmp(targets[i]->path, "stdout", 6)) {
@@ -540,16 +548,16 @@ int dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, i
 #else
         		fd = open(targets[i]->path, O_APPEND|O_WRONLY|O_CREAT, 0644);
 #endif
-		    
+
 			if (fd < 0) {
 				continue;
 			}
-			write(fd, buffer, len + 1);
+			write(fd, buffer, pos - buffer + 1);
 			close(fd);
-		}	
+		}
 	}
 
-	/* servers 
+	/* servers
 	 *   - push the message onto the internal message queue of each server, this requires adding a
 	 *     message_t structure
 	 */
@@ -559,9 +567,9 @@ int dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, i
 		if (!IsServer(targets[i]->mode))
 			continue;                     /* not a server             */
 		if (!(targets[i]->sevmask & sevmask) &&
-		    !(targets[i]->sevmask & severitylist[10].sevmask)) 
+		    !(targets[i]->sevmask & severitylist[10].sevmask))
 			continue;                     /* severity not of interest */
-		
+
 		/* it is necessary to create a copy of the message before passing it into the targets fifo
 		 * queue. If we don't do this all queues will be sharing the same data as the queue just
 		 * holds a pointer to a structure of type void.
@@ -578,16 +586,15 @@ int dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, i
 		m->severity = message->severity;
 		m->tid      = message->tid;
 		m->timeusec = message->timeusec;
-
 		strcpy(m->hostname,   message->hostname);
 		strcpy(m->nsfileid,   message->nsfileid);
 		strcpy(m->nshostname, message->nshostname);
 		strcpy(m->reqid,      message->reqid);
 		strcpy(m->timestamp,  message->timestamp);
-		
+
 		/* copy parameters */
 		for (param = message->plist; param != NULL; param = param->next) {
-			
+
 			/* allocate memory for new parameter */
 			p = (param_t *) malloc(sizeof(param_t));
 			if (p == NULL) {
@@ -599,7 +606,7 @@ int dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, i
 
 			p->type = param->type;
 			strcpy(p->name,  param->name);
-			
+
 			/* copy the parameter value */
 			p->value = strdup(param->value);
 			if (p->value == NULL) {
@@ -611,7 +618,7 @@ int dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, i
 
 			/* first parameter ? */
 			if (m->plist == NULL) {
-				m->plist = p;			
+				m->plist = p;
 			} else {
 				for (p2 = m->plist; p2->next != NULL; p2 = p2->next);
 				p2->next = p;
@@ -631,7 +638,7 @@ int dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, i
 			}
 			j++;
 		} while ((rv == APP_QUEUE_FULL) && (j < 3));
-		
+
 		/* free message on queue failure */
 		if (rv != APP_SUCCESS) {
 			free_message(m);
@@ -648,7 +655,7 @@ int dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, i
  * dlf_write
  */
 
-int dlf_write(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, int numparams, ...) {
+int DLL_DECL dlf_write(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, int numparams, ...) {
 
 	/* variables */
 	dlf_write_param_t plist[numparams];
@@ -671,7 +678,7 @@ int dlf_write(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, in
 			plist[i].name = strdup(name);
 		}
 		plist[i].type = va_arg(ap, int);
-	
+
 		/* process type */
 		if ((plist[i].type == DLF_MSG_PARAM_TPVID) || (plist[i].type == DLF_MSG_PARAM_STR)) {
 			string = va_arg(ap, char *);
@@ -692,35 +699,35 @@ int dlf_write(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, in
 		}
 		else if (plist[i].type == DLF_MSG_PARAM_UUID) {
 			plist[i].par.par_uuid = va_arg(ap, Cuuid_t);
-		} 
+		}
 		else if (plist[i].type == DLF_MSG_PARAM_FLOAT) {
 			plist[i].par.par_double = va_arg(ap, double);
 			plist[i].type = DLF_MSG_PARAM_DOUBLE;
 		}
-		else { 
+		else {
 			ok = 0;
 			break;
-		}	
+		}
 	}
 	va_end(ap);
 
 	/* everything ok ? */
 	rv = APP_FAILURE;
 	if (ok == 1) {
-		rv = dlf_writep(reqid, severity, msg_no, ns, numparams, plist);		
+		rv = dlf_writep(reqid, severity, msg_no, ns, numparams, plist);
 	}
-	
+
 	/* free resources */
 	for (i = 0; i < numparams; i++) {
 		if (plist[i].name != NULL)
 			free(plist[i].name);
 		if ((plist[i].type == DLF_MSG_PARAM_TPVID) || (plist[i].type == DLF_MSG_PARAM_STR)) {
-			if (plist[i].par.par_string != NULL) { 
-				free(plist[i].par.par_string);			
+			if (plist[i].par.par_string != NULL) {
+				free(plist[i].par.par_string);
 			}
 		}
 	}
-	
+
 	return rv;
 }
 
@@ -734,30 +741,30 @@ void dlf_worker(target_t *t) {
 	/* variables */
 	message_t *message;
 	param_t   *param;
-	uid_t     uid; 
+	uid_t     uid;
 	gid_t     gid;
 	int       i;
-	int       rv;               
-	int       len;           
-	int       code;    
+	int       rv;
+	int       len;
+	int       code;
 	int       type;
-	char      *sbp;   
-	char      *buffer;     
-	char      *ptr;       
+	char      *sbp;
+	char      *buffer;
+	char      *ptr;
 
 	/* initialise variables */
 	uid = geteuid();
 	gid = getegid();
 
 	/* worker thread loop
-	 *   - deals with all outgoing connections and message transfers to the remote dlf server, this 
+	 *   - deals with all outgoing connections and message transfers to the remote dlf server, this
 	 *     is done in an endless loop until a shutdown is requested.
-	 *   - it is important not to sleep(3) in this loop, this can cause shutdown requests to be 
+	 *   - it is important not to sleep(3) in this loop, this can cause shutdown requests to be
 	 *     missed
 	 */
 	while (!IsShutdown(api_mode)) {
 
-		/* the client-server communication protocol has the capacity for the server to notify 
+		/* the client-server communication protocol has the capacity for the server to notify
 		 * the client to slow down or pause message send for X seconds of time. This helps reduce
 		 * the load on a heavily loaded DLF server.
 		 */
@@ -780,8 +787,8 @@ void dlf_worker(target_t *t) {
                                         continue;
 
                                 len += sizeof(unsigned short) + strlen(texts[i]->msg_text) + 1;
-			}			
-	
+			}
+
 			/* allocate memory for DLF_INIT message */
 			buffer = (char *) malloc((5 * LONGSIZE) + len);
 			if (buffer == NULL) {
@@ -792,28 +799,32 @@ void dlf_worker(target_t *t) {
 			/* build request header */
 			sbp = buffer;
 			marshall_LONG(sbp, DLF_MAGIC);     /* protocol version     */
-			marshall_LONG(sbp, DLF_INIT);      /* request method       */ 
+			marshall_LONG(sbp, DLF_INIT);      /* request method       */
 
 			ptr = sbp;
 			len = 5 * LONGSIZE;
 
 			marshall_LONG(sbp, len);           /* total message length */
-			
+
 			/* build request body */
 			marshall_LONG(sbp, uid);
 			marshall_LONG(sbp, gid);
 
 			/* marshall the facility name */
-			marshall_STRING(sbp, api_facname); 
+			marshall_STRING(sbp, api_facname);
 
 			/* marshall the message texts */
-			Cthread_mutex_lock(&api_mutex);
+			rv = Cthread_mutex_timedlock(&api_mutex, 1);
+			if (rv != APP_SUCCESS) {
+				free(buffer);
+				continue;
+			}
 			for (i = 0; i < DLF_MAX_MSGTEXTS; i++) {
 				if (texts[i] == NULL)
 					continue;
 
 				marshall_SHORT(sbp,  texts[i]->msg_no);
-				marshall_STRING(sbp, texts[i]->msg_text);				
+				marshall_STRING(sbp, texts[i]->msg_text);
 			}
 			Cthread_mutex_unlock(&api_mutex);
 
@@ -834,7 +845,7 @@ void dlf_worker(target_t *t) {
 				free(buffer);
 				continue;
 			}
-			
+
 			/* read the response */
 			rv = dlf_read(t, &type, &code);
 			if (rv != APP_SUCCESS) {
@@ -850,9 +861,9 @@ void dlf_worker(target_t *t) {
 			if (type == DLF_REP_RC) {
 				SetInitialised(t->mode);
 				t->fac_no = code;
-			} 		 
+			}
 
-			free(buffer);			
+			free(buffer);
 			continue;
 		}
 
@@ -869,13 +880,13 @@ void dlf_worker(target_t *t) {
 			t->pause = time(NULL) + 5;
 			continue;
 		}
-		
+
 		if (message == NULL) {
 			t->pause = time(NULL) + 5;
 			continue;
 		}
-
-		/* allocate memory for DLF_LOG message 
+	
+		/* allocate memory for DLF_LOG message
 		 *   - the length of bytes to allocate should have been pre-calculated in dlf_write()
 		 */
 		buffer = (char *) malloc((5 * LONGSIZE) + message->size);
@@ -887,17 +898,17 @@ void dlf_worker(target_t *t) {
 		/* build request header */
 		sbp = buffer;
 		marshall_LONG(sbp, DLF_MAGIC);             /* protocol version     */
-		marshall_LONG(sbp, DLF_LOG);               /* request method       */ 
-		
+		marshall_LONG(sbp, DLF_LOG);               /* request method       */
+
 		ptr = sbp;
 		len = 5 * LONGSIZE;
-			
+
 		marshall_LONG(sbp, len);                   /* total message length */
-		
+
 		/* build request body */
 		marshall_LONG(sbp, uid);
 		marshall_LONG(sbp, gid);
-		
+
 		/*  this is the last message in the queue ? */
 		if (queue_size(t->queue) == 0) {
 			marshall_BYTE(sbp, 1);
@@ -921,10 +932,10 @@ void dlf_worker(target_t *t) {
 		/* marshall parameters */
 		for (param = message->plist; param != NULL; param = param->next) {
 			marshall_BYTE(sbp, param->type);
-		marshall_STRING(sbp, param->name);
+			marshall_STRING(sbp, param->name);
 			marshall_STRING(sbp, param->value);
 		}
-		
+
 		/* update message length */
 		len = sbp - buffer;
 		marshall_LONG(ptr, len);
@@ -951,7 +962,7 @@ void dlf_worker(target_t *t) {
 			free(buffer);
 			free_message(message);
 			continue;
-		}		
+		}
 
 		/* instructed to throttle by the server ? */
 		if ((type == DLF_REP_IRC) && (code > 0)) {
@@ -965,11 +976,120 @@ void dlf_worker(target_t *t) {
 		free_message(message);
 	}
 
-	/* flag the shutdown */
-	t->tid = -1;
-	
 	/* exit */
 	Cthread_exit(0);
+}
+
+
+
+/*
+ * dlf_prepare
+ */
+
+void DLL_DECL dlf_prepare(void) {
+
+	/* variables */
+	int     i;
+
+	/* prevent dlf_regtext(), dlf_init() and dlf_shutdown() calls being made */
+	Cthread_mutex_lock(&api_mutex);
+	if (!IsInitialised(api_mode) || IsForking(api_mode)) {
+		Cthread_mutex_unlock(&api_mode);
+		return;
+	}
+	SetForking(api_mode);
+
+	/* prevent further dlf_write() and dlf_writep() calls */
+	hash_lock(hashtexts);
+		
+	/* lock all server queues */
+	for (i = 0; i < API_MAX_TARGETS; i++) {
+		if (targets[i] == NULL)
+			continue;
+		if (!IsServer(targets[i]->mode))
+			continue;     
+		if (targets[i]->queue == NULL)
+			continue;
+		queue_lock(targets[i]->queue);
+	}	
+}
+
+
+/*
+ * dlf_child
+ */
+
+void DLL_DECL dlf_child(void) {
+
+	/* variables */
+	int     i;
+
+	/* never initialised, so never did any locks! */
+	if (!IsInitialised(api_mode) || !IsForking(api_mode)) {
+		return;
+	}
+	ClrForking(api_mode);
+
+	/* fork(2) doesn't duplicate threads other then its main calling thread. Therefore, it is 
+	 * neccessary to recreate the thread in the child
+	 */
+	for (i = 0; i < API_MAX_TARGETS; i++) {
+		if (targets[i] == NULL)
+			continue;
+		if (!IsServer(targets[i]->mode))
+			continue;     
+		if (targets[i]->queue == NULL)
+			continue;
+		queue_unlock(targets[i]->queue);
+
+		/* recreate the server's internal queue */
+		(void)queue_destroy(targets[i]->queue, (void *)free_message);
+		free(targets[i]->queue);
+		(void)queue_create(&targets[i]->queue, targets[i]->queue_size);
+
+		/* recreate the thread */
+		targets[i]->tid = Cthread_create((void *)dlf_worker, (target_t *)targets[i]);
+	}
+
+	/* allow dlf_write() and dlf_writep() calls */
+	hash_unlock(hashtexts);
+
+	/* restore global api mutex */
+	Cthread_mutex_unlock(&api_mutex);	
+}
+
+
+/*
+ * dlf_parent
+ */
+
+void DLL_DECL dlf_parent(void) {
+
+	/* variables */
+	int     i;
+
+	/* never initialised, so never did any locks! */
+	if (!IsInitialised(api_mode) || !IsForking(api_mode)) {
+		return;
+	}
+	ClrForking(api_mode);
+
+	/* unlock all server queues */
+	for (i = 0; i < API_MAX_TARGETS; i++) {
+		if (targets[i] == NULL)
+			continue;
+		if (!IsServer(targets[i]->mode))
+			continue;     
+		if (targets[i]->queue == NULL)
+			continue;
+		queue_unlock(targets[i]->queue);
+	}
+
+	/* allow dlf_write() and dlf_writep() calls */
+	hash_unlock(hashtexts);
+
+	/* restore global api mutex */
+	Cthread_mutex_unlock(&api_mutex);
 }
 
 
@@ -977,20 +1097,20 @@ void dlf_worker(target_t *t) {
  * dlf_regtext
  */
 
-int dlf_regtext(unsigned short msg_no, const char *msg_text) {
+int DLL_DECL dlf_regtext(unsigned short msg_no, const char *msg_text) {
 
 	/* variables */
-	msgtext_t  *entry;       
-	int        i;       
-	int        rv;      
+	msgtext_t  *entry;
+	int        i;
+	int        rv;
 	int        found;
-	
+
 	char       *message;
-	char       num[10];  
+	char       num[10];
 	char       text[DLF_LEN_MSGTEXT + 1];
 
 	/* although the fast lookup hash is thread safe, the message text global table isn't hence the
-	 * need for this global mutex lock of the entire interface. 
+	 * need for this global mutex lock of the entire interface.
 	 */
 	Cthread_mutex_lock(&api_mutex);
 
@@ -1013,7 +1133,7 @@ int dlf_regtext(unsigned short msg_no, const char *msg_text) {
 		Cthread_mutex_unlock(&api_mutex);
 		return -1;
 	}
-	
+
 	/* find an available msgtext slot */
 	for (i = 0, found = 0; i < DLF_MAX_MSGTEXTS; i++) {
 		if (texts[i] == NULL) {
@@ -1021,19 +1141,19 @@ int dlf_regtext(unsigned short msg_no, const char *msg_text) {
 			break;
 		}
 	}
-	
+
 	/* too many msgtexts defined ? */
 	if (found == 0) {
 		free(entry);
 		Cthread_mutex_unlock(&api_mutex);
 		return -1;
 	}
-	
+
 	/* to provide fast msgtext to msgno lookups we use a global hash. Here we check to make sure
 	 * the next entry will not be a duplicate
 	 */
 	snprintf(num,  sizeof(int), "%d", msg_no);
-	snprintf(text, sizeof(text), "%s", msg_text);	
+	snprintf(text, sizeof(text), "%s", msg_text);
 
 	message = strdup(text);
 	if (message == NULL) {
@@ -1052,15 +1172,14 @@ int dlf_regtext(unsigned short msg_no, const char *msg_text) {
 	/* add entry to msgtext table */
 	entry->msg_text = strdup(text);
 	if (entry->msg_text == NULL) {
-		free(message);
 		free(entry);
 		Cthread_mutex_unlock(&api_mutex);
 		return -1;
 	}
 	entry->msg_no = msg_no;
-	
+
 	texts[i] = entry;
-	
+
 	Cthread_mutex_unlock(&api_mutex);
 	return 0;
 }
@@ -1070,26 +1189,24 @@ int dlf_regtext(unsigned short msg_no, const char *msg_text) {
  * dlf_init
  */
 
-int dlf_init(const char *facility, char *errptr) {
+int DLL_DECL dlf_init(const char *facility, char *errptr) {
 
 	/* variables */
-	struct servent *servent; 
+	struct servent *servent;
 
 	target_t   *t;
 	int        i;
 	int        j;
-	int        m;
-	int        n;
 	int        rv;
 	int        port;
 	int        found;
 	int        queue_size;
 	char       *value;
+	char       *word;
 	char       buffer[1024];
-	char       word[1026];
 	char       uri[10];
  	char       envname[1024];
-     
+
 	/* we can't pass an error message back if the pointer to the error is NULL */
 	if (errptr == NULL) {
 		return -1;
@@ -1118,6 +1235,7 @@ int dlf_init(const char *facility, char *errptr) {
 		texts[i] = NULL;
 	}
 	value  = NULL;
+	word   = NULL;
 	t      = NULL;
 
        	/* convert facility name to upper case */
@@ -1131,16 +1249,16 @@ int dlf_init(const char *facility, char *errptr) {
 	for (i = 0, api_ucfacname[0] = '\0'; facility[i] != '\0'; i++) {
 		api_ucfacname[i] = toupper(facility[i]);
 	}
-	api_ucfacname[i] = '\0';	
+	api_ucfacname[i] = '\0';
 
 	/* initialise global hashes for fast message text lookups */
 	hash_create(&hashtexts, 100);
 
 	/* determine the queue size of use, if not the default */
 	snprintf(envname, sizeof(envname) - 1, "%s_DLF_QUEUESIZE", api_ucfacname);
-	if (value = getenv(envname)) {
+	if ((value = getenv(envname))) {
 		queue_size = atoi(value);
-	} else if (value = getconfent(api_facname, "DLF_QUEUESIZE", 1)) {
+	} else if ((value = getconfent(api_facname, "DLF_QUEUESIZE", 1))) {
 		queue_size = atoi(value);
 	} else {
 		queue_size = API_QUEUE_SIZE;
@@ -1153,7 +1271,7 @@ int dlf_init(const char *facility, char *errptr) {
 	for (i = 0; severitylist[i].name != NULL; i++, value = NULL) {
 		snprintf(envname, sizeof(envname) - 1, "%s_%s", api_ucfacname, severitylist[i].confentname);
 
-		/* option defined ? 
+		/* option defined ?
 		 *    - environment variables take precedince over confents
 		 */
 		if ((value = getenv(envname)) == NULL) {
@@ -1166,19 +1284,7 @@ int dlf_init(const char *facility, char *errptr) {
 		value = strdup(value);
 
 		/* loop over each word in the value */
-		for (m = 0, n = 0, word[0] = '\0'; value[m] != '\0'; m++, n = 0, word[0] = '\0') {
-
-			/* skip whitespace */
-			while (isspace(value[m])) {
-				m++;
-			}
-			
-			/* cut the word */
-			while (!isspace(value[m]) && (value[m] != '\0')) {
-				word[n] = value[m];
-				m++, n++;
-			}
-			word[n] = '\0';
+		for (word = strtok(value," \t"); word != NULL; word = strtok(NULL," \t")) {
 
 			/* logging targets take the following format:
 			 *   - <uri>://<[server|filepath]>:[port]
@@ -1186,54 +1292,66 @@ int dlf_init(const char *facility, char *errptr) {
 			if (sscanf(word, "%9[^://]://%1023s", uri, buffer) != 2) {
 				continue;
 			}
-			
+
 			/* invalid uniform resource identifer ? */
 			if (!strcasecmp(uri, "file") && !strcasecmp(uri, "x-dlf")) {
 				continue;
 			}
-			
+
+			/* remove trailing '/' in server urls */
+			if (!strcasecmp(uri, "x-dlf")) {
+				j = strlen(buffer) - 1;
+				if (buffer[j] == '/') {
+					buffer[j] = '\0';
+				}
+			}
+
 			/* determine server port */
 			if (sscanf(buffer, "%1023[^:]:%d", buffer, &port) == 2) {
-				port = port;        
+				port = port;
 			} else if (getenv("DLF_PORT") != NULL) {
-				port = atoi(getenv("DLF_PORT")); 
+				port = atoi(getenv("DLF_PORT"));
 			} else if (getconfent("DLF", "PORT", 0) != NULL) {
-				port = atoi(getconfent("DLF", "PORT", 0)); 
+				port = atoi(getconfent("DLF", "PORT", 0));
 			} else if ((servent = getservbyname("dlf", "tcp"))) {
-				port = servent->s_port;                        
+				port = servent->s_port;
 			} else {
 				port = DEFAULT_SERVER_PORT;
 			}
-			
+
 			/* lookup the server and port or filepath and alter the severity mask accordingly
 			 *   - note: multiple servers are allowed with different ports!
 			 */
 			for (j = 0, found = 0; j < API_MAX_TARGETS; j++) {
 				if (targets[j] == NULL)
 					continue;
-				
-				if (strcmp(targets[j]->path, buffer)) 
-					continue;                            /* incorrect path */
-				
+
+				if (IsServer(targets[j]->mode)) {
+					if (strcmp(targets[j]->server, buffer))
+						continue;
+				} else {
+					if (strcmp(targets[j]->path, buffer))
+						continue;
+				}
 				/* servers have an additional port attribute to consider */
 				if (IsServer(targets[j]->mode)) {
 					if (targets[j]->port != port) {
 						continue;                    /* incorrect port */
 					}
-				} 
-				
+				}
+
 				/* alter severity mask */
 				targets[j]->sevmask |= severitylist[i].sevmask;
-				
+
 				found = 1;
 				break;
 			}
-			
+
 			/* found an entry ? */
 			if (found == 1) {
 				continue;
 			}
-			
+
 			/* find an available target slot */
 			for (j = 0, found = 0; j < API_MAX_TARGETS; j++) {
 				if (targets[j] == NULL) {
@@ -1241,7 +1359,7 @@ int dlf_init(const char *facility, char *errptr) {
 					break;
 				}
 			}
-			
+
 			/* too many targets defined ? */
 			if (found == 0) {
 				snprintf(errptr, CA_MAXLINELEN, "dlf_init(): too many logging destinations defined");
@@ -1249,7 +1367,7 @@ int dlf_init(const char *facility, char *errptr) {
 				free(value);
 				return -1;
 			}
-			
+
 			/* create structure */
 			t = (target_t *) malloc(sizeof(target_t));
 			if (t == NULL) {
@@ -1258,23 +1376,25 @@ int dlf_init(const char *facility, char *errptr) {
 				free(value);
 				return -1;
 			}
-			
+
 			/* initialise target_t structure
 			 *   - files are fare less complicated then servers. We simple initialise everything too
 			 *     NULL here and later create the server threads, queue and hash'ing structures once
 			 *     the whole initialisation sequences has completed.
 			 */
-			t->pause    = time(NULL) + 3;
-			t->err_full = 0;
-			t->port     = port;
-			t->tid      = -1;
-			t->index    = j;
-			t->socket   = -1;
-			t->queue    = NULL;
-			t->mode     = MODE_DEFAULT;
-			t->fac_no   = -1;
-			t->sevmask  = severitylist[i].sevmask;
-			
+			t->pause      = time(NULL) + 1;
+			t->err_full   = 0;
+			t->port       = port;
+			t->tid        = -1;
+			t->index      = j;
+			t->socket     = -1;
+			t->queue      = NULL;
+			t->queue_size = queue_size;
+			t->mode       = MODE_DEFAULT;
+			t->fac_no     = -1;
+			t->sevmask    = severitylist[i].sevmask;
+			t->path[0]    = '\0';
+
 			/* set the type */
 			if (!strcasecmp(uri, "file")) {
 				strncpy(t->path, buffer, sizeof(t->path) - 1);
@@ -1283,13 +1403,13 @@ int dlf_init(const char *facility, char *errptr) {
 				strncpy(t->server, buffer, sizeof(t->server) - 1);
 				SetServer(t->mode);
 			}
-		
+
 			targets[j] = t;
 		}
 		free(value);
 	}
 
-	/* at this point we haven't initialised any threads, if we've exceed API_MAX_THREADS then the 
+	/* at this point we haven't initialised any threads, if we've exceed API_MAX_THREADS then the
 	 * whole initialisation phase fails!
 	 */
 	for (i = 0, j = 0; i < API_MAX_TARGETS; i++) {
@@ -1304,35 +1424,35 @@ int dlf_init(const char *facility, char *errptr) {
 		Cthread_mutex_unlock(&api_mutex);
 		return -1;
 	}
-   
+
 	/* create server threads */
 	for (i = 0; i < API_MAX_TARGETS; i++) {
 		if (targets[i] == NULL)
 			continue;
 		if (!IsServer(targets[i]->mode))
 			continue;            /* not a server */
-		
+
 		/* create server specific bounded fifo queue */
-		rv = queue_create(&targets[i]->queue, queue_size);
+		rv = queue_create(&targets[i]->queue, targets[i]->queue_size);
 		if (rv != 0) {
 			snprintf(errptr, CA_MAXLINELEN, "dlf_init(): failed to queue_create() : code %d", rv);
 			Cthread_mutex_unlock(&api_mutex);
 			return -1;
 		}
-	
+
 		/* create thread */
-		targets[i]->tid = Cthread_create_detached((void *)dlf_worker, (target_t *)targets[i]);
+		targets[i]->tid = Cthread_create((void *)dlf_worker, (target_t *)targets[i]);
 		if (targets[i]->tid == -1) {
-			snprintf(errptr, CA_MAXLINELEN, "dlf_init(): failed to Cthread_create_detached() : %s", strerror(errno));
+			snprintf(errptr, CA_MAXLINELEN, "dlf_init(): failed to Cthread_create() : %s", strerror(errno));
 			Cthread_mutex_unlock(&api_mutex);
 			return -1;
 		}
 	}
-	
+
 	/* destroy thread attributes and mutex */
 	Cthread_mutex_unlock(&api_mutex);
 
-	return 0;
+	return 0;	
 }
 
 
@@ -1340,70 +1460,77 @@ int dlf_init(const char *facility, char *errptr) {
  * dlf_shutdown
  */
 
-int dlf_shutdown(void) {
+int DLL_DECL dlf_shutdown(int wait) {
 
 	/* variables */
-	int    i;        
-	int    j;         
-	int    found;     
+	int    i;
+	int    j;
+	int    found;
 
 	/* interface already shutdown */
 	Cthread_mutex_lock(&api_mutex);
-	if (IsShutdown(api_mode)) {
+	if (IsShutdown(api_mode) || !IsInitialised(api_mode)) {
 		Cthread_mutex_unlock(&api_mutex);
 		return 0;
 	}
-	SetShutdown(api_mode);
+	Cthread_mutex_unlock(&api_mutex);
 
-	/* worker threads are responsible for cleaning up their own thread related data at shutdown. 
-	 * Here we simply wait upto a maximum of 10 seconds for all threads to exit
+	/* if a wait has been defined, wait X seconds for all threads to flush there data to the
+	 * central server
 	 */
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < wait; i++) {
 		for (j = 0, found = 0; j < API_MAX_TARGETS; j++) {
 			if (targets[j] == NULL)
 				continue;
 			if (!IsServer(targets[j]->mode))
 				continue;
-			if (targets[j]->tid != -1) 
+			if (queue_size(targets[j]->queue))
 				found++;
+			   
+			/* data still exists, reset the pause time as a last desperate attempt */
+			targets[j]->pause = time(NULL);
 		}
 
-		/* all threads have exited ? */
+		/* all threads have flushed there data ? */
 		if (found == 0) {
 			break;
 		}
 		sleep(1);
 	}
 
-	/* cleanup targets 
-	 *   - some threads may still be running, we destroy its internal queue in the hope it will see
-	 *     the shutdown
-	 */
+	Cthread_mutex_lock(&api_mutex);
+	SetShutdown(api_mode);
+
+	/* cleanup targets */
 	for (i = 0; i < API_MAX_TARGETS; i++) {
 		if (targets[i] == NULL)
 			continue;
 
 		/* if a connection to a server is established, close it */
 		if (IsServer(targets[i]->mode)) {
+			Cthread_join(targets[i]->tid, NULL);
+
 			if (targets[i]->socket != -1) {
 				netclose(targets[i]->socket);
 			}
 			queue_destroy(targets[i]->queue, (void *)free_message);
+			free(targets[i]->queue);
 		}
-
+	
 		free(targets[i]);
 	}
 
 	/* destroy global hashes */
 	hash_destroy(hashtexts, (void *)free);
-	
+
 	/* clear msg texts */
 	free_msgtexts(texts);
 
 	ClrInitialised(api_mode);
 	ClrShutdown(api_mode);
-	
+
 	Cthread_mutex_unlock(&api_mutex);
+       
 	return 0;
 }
 

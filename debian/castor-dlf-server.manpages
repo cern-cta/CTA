@@ -1,5 +1,8 @@
 debian/castor/usr/share/man/man1/dlfserver.1castor
+debian/castor/usr/share/man/man3/dlf_child.3castor
 debian/castor/usr/share/man/man3/dlf_init.3castor
+debian/castor/usr/share/man/man3/dlf_parent.3castor
+debian/castor/usr/share/man/man3/dlf_prepare.3castor
 debian/castor/usr/share/man/man3/dlf_regtext.3castor
 debian/castor/usr/share/man/man3/dlf_write.3castor
 debian/castor/usr/share/man/man3/dlf_shutdown.3castor

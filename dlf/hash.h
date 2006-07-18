@@ -21,7 +21,7 @@
  * @file  hash.h
  * @brief Thread safe hash implementation
  *
- * $Id: hash.h,v 1.3 2006/06/20 13:36:44 waldron Exp $
+ * $Id: hash.h,v 1.4 2006/07/18 12:04:35 waldron Exp $
  */
 
 #ifndef _HASH_H
@@ -96,8 +96,30 @@ EXTERN_C int DLL_DECL hash_search _PROTO((hash_t *h, char *key, void **value));
 
 
 /**
+ * This function effectively locks all the mutexes within a given hash and prevents any access to the 
+ * data stored within it. This function is needed by the api, to protect mutexes and keep them in a 
+ * valid state during a fork(2).
+ *
+ * @param h     : the hash handle
+ * @returns     : void, this function is always successful.
+ */
+
+EXTERN_C void DLL_DECL hash_lock _PROTO((hash_t *h));
+
+
+/**
+ * This function unlocks all the mutexes previously locked by a call to hash_lock()
+ *
+ * @param h     : the hash handle
+ * @returns     : void, this function is always successful.
+ */
+
+EXTERN_C void DLL_DECL hash_unlock _PROTO((hash_t *h));
+
+
+/**
  * Generate the performance statistic for the given hash
- * 
+ *
  * The performance value of the hash is the total number of entries where an index (nelt) has more then
  * one associated value.
  *
@@ -107,7 +129,7 @@ EXTERN_C int DLL_DECL hash_search _PROTO((hash_t *h, char *key, void **value));
  * @returns     : The computed statistics value on success
  */
 
-EXTERN_C int DLL_DECL hash_stats _PROTO((hash_t *h));
+EXTERN_C int DLL_DECL hash_stat _PROTO((hash_t *h));
 
 
 #endif

@@ -1,0 +1,20 @@
+.lf 3 dlf_cbild.man
+.TH dlf_child 3 "CERN IT-FIO" CASTOR "DLF Library Functions"
+.SH NAME
+dlf_child \- child process handler for fork(2)
+.SH SYNOPSIS
+.B #include "dlf_api.h"
+
+.BI "void dlf_child (void)"
+.SH DESCRIPTION
+.B dlf_child
+essentially reverses all the locks on the interface established by a previous call to
+.BR dlf_prepare()
+and recreates the server threads. It should only ever be called from within the child process. If a previous call to dlf_prepare() was never made, the function will return immediately
+
+.SH "SEE ALSO"
+.BR dlf_prepare (3),
+.BR dlf_parent (3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

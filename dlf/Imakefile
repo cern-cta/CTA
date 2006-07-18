@@ -73,13 +73,19 @@ CFLAGS    = -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS)
 DEPLIB    = DepSharedLibraryTargetName(shlib,shift)
 
 MANPAGES  = $(MANDIR)/dlfserver.$(MANSUFFIX)    \
+	    $(MANDIR)/dlf_child.$(MANSUFFIX)    \
 	    $(MANDIR)/dlf_init.$(MANSUFFIX)     \
+	    $(MANDIR)/dlf_parent.$(MANSUFFIX)   \
+	    $(MANDIR)/dlf_prepare.$(MANSUFFIX)  \
 	    $(MANDIR)/dlf_regtext.$(MANSUFFIX)  \
 	    $(MANDIR)/dlf_write.$(MANSUFFIX)    \
 	    $(MANDIR)/dlf_shutdown.$(MANSUFFIX)
 
 EXPORTMANPAGES = $(EXPORTMAN)/man1/dlfserver.$(MANSUFFIX)       \
+		 $(EXPORTMAN)/man3/dlf_child.$(LIBMANSUFFIX)    \
 		 $(EXPORTMAN)/man3/dlf_init.$(LIBMANSUFFIX)     \
+		 $(EXPORTMAN)/man3/dlf_parent.$(LIBMANSUFFIX)   \
+		 $(EXPORTMAN)/man3/dlf_prepare.$(LIBMANSUFFIX)  \
 		 $(EXPORTMAN)/man3/dlf_regtext.$(LIBMANSUFFIX)  \
 		 $(EXPORTMAN)/man3/dlf_write.$(LIBMANSUFFIX)    \
 		 $(EXPORTMAN)/man3/dlf_shutdown.$(LIBMANSUFFIX)
@@ -143,13 +149,19 @@ MakeDir($(MANDIR),root,bin,0755)
 MakeDir($(LIBMANDIR),root,bin,0755)
 
 IMANPAGE(dlfserver,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(dlf_child,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlf_init,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(dlf_parent,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(dlf_prepare,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlf_regtext,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlf_write,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlf_shutdown,$(MANDIDR),$(MANSUFFIX))
 
 EMANPAGE(dlfserver,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(dlf_child,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(dlf_init,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(dlf_parent,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(dlf_prepare,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(dlf_regtext,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(dlf_write,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(dlf_shutdown,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
