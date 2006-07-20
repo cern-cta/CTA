@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.14 $ $Release$ $Date: 2006/07/18 12:12:32 $ $Author: waldron $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.15 $ $Release$ $Date: 2006/07/20 16:58:20 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.14 $ $Release$ $Date: 2006/07/18 12:12:32 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.15 $ $Release$ $Date: 2006/07/20 16:58:20 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -926,7 +926,7 @@ static int checkMigrationRetry(
   int fileSystemAvailable, diskServerAvailable;
   char *expertBuffer = NULL, *tmpBuf, *errMsgTxt, *p, *nsHost = NULL;
   char castorFileName[CA_MAXPATHLEN+1];
-  int expertBufferLen = 0;
+  int expertBufferLen = 0, save_serrno = 0;
   ID_TYPE key;
 
   if ( tapeCopy == NULL ) {
@@ -1274,7 +1274,7 @@ static int checkMigrationRetry(
   }
   strcat(expertBuffer,"\n");
   rc = callExpert(WRITE_ENABLE,expertBuffer);
-  if ( rc <= 0 ) {
+  if ( rc == 0 ) {
     /*
      * PUT_FAILED
      */
@@ -1289,6 +1289,30 @@ static int checkMigrationRetry(
                     RTCPCLD_LOG_WHERE
                     );
     serrno = SERTYEXHAUST;
+    rc = -1;
+  } else if ( rc < 0 ) {
+    /*
+     * The call to the expert system failed. Log it and let the next TapeErrorHandler pick
+     * up the segment with the hope that the error was temporary.
+     */
+    save_serrno = serrno;
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
+                    (struct Cns_fileid *)&fileid,
+                    RTCPCLD_NB_PARAMS+3,
+                    "SYSCALL",
+                    DLF_MSG_PARAM_STR,
+                    "callExpert(WRITE_ENABLE)",
+                    "ERROR_STRING",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(save_serrno),
+                    "DBKEY",
+                    DLF_MSG_PARAM_INT64,
+                    key,
+                    RTCPCLD_LOG_WHERE
+                    );
+    serrno = save_serrno;
     rc = -1;
   } else {
     /*
@@ -1334,6 +1358,7 @@ int main(
   int nbFailedSegments = 0, nbSegms, i, j, fseq, rc;
   int tpErrorCode, tpSeverity, segErrorCode, segSeverity, mode;
   char *vid, *tpErrMsgTxt, *segErrMsgTxt, cns_error_buffer[512];
+  int deleteDiskCopy = 0;
   ID_TYPE key;
 
   C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
@@ -1448,7 +1473,8 @@ int main(
         } else if (serrno == ENOENT ) {
           (void)cleanupSegment(segm);
         } else if ( serrno = SERTYEXHAUST ) {
-          rc = rtcpcld_putFailed(tapeCopy);
+          deleteDiskCopy = 0;
+          rc = rtcpcld_putFailed(tapeCopy, deleteDiskCopy);
           if ( rc == -1 ) {
             LOG_SYSCALL_ERR("rtcpcld_putFailed()");
           }
