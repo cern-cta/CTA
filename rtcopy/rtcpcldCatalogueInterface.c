@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.145 $ $Release$ $Date: 2006/06/23 19:54:27 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.146 $ $Release$ $Date: 2006/07/20 16:56:48 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.145 $ $Release$ $Date: 2006/06/23 19:54:27 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.146 $ $Release$ $Date: 2006/07/20 16:56:48 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -3245,9 +3245,11 @@ int rtcpcld_updcFileMigrated(
  *  - Flag all Segments SEGMENT_FAILED
  */
 int rtcpcld_putFailed(
-                      _tapeCopy
+                      _tapeCopy,
+                      deleteDiskCopy
                       ) 
      struct Cstager_TapeCopy_t *_tapeCopy;
+     int deleteDiskCopy;
 {
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t **svcs = NULL;
@@ -3392,34 +3394,36 @@ int rtcpcld_putFailed(
     C_IAddress_delete(iAddr);
     return(-1);
   }
-  Cstager_CastorFile_diskCopies(castorFile,&diskCopyArray,&nbDiskCopies);
-  if ( diskCopyArray != NULL ) {
-    for ( i=0; i<nbDiskCopies; i++ ) {
-      Cstager_DiskCopy_status(diskCopyArray[i],&diskCopyStatus);
-      if ( diskCopyStatus == DISKCOPY_CANBEMIGR ) {
-        /*
-         * Flag all CANBEMIGR diskCopies for GC
-         */
-        iObj = Cstager_DiskCopy_getIObject(diskCopyArray[i]);
-        Cstager_DiskCopy_setStatus(diskCopyArray[i],DISKCOPY_GCCANDIDATE);
-         rc = C_Services_updateRep(
-                                  *svcs,
-                                  iAddr,
-                                  iObj,
-                                  1
-                                  );
-        if ( rc == -1 ) {
-          Cstager_DiskCopy_id(diskCopyArray[i],&key);
-          LOG_DBCALLANDKEY_ERR("C_Services_updateRep(diskCopy)",
-                               C_Services_errorMsg(*svcs),
-                               key);
-          C_IAddress_delete(iAddr);
-          return(-1);
+  if ( deleteDiskCopy == 1 ) {
+    Cstager_CastorFile_diskCopies(castorFile,&diskCopyArray,&nbDiskCopies);
+    if ( diskCopyArray != NULL ) {
+      for ( i=0; i<nbDiskCopies; i++ ) {
+        Cstager_DiskCopy_status(diskCopyArray[i],&diskCopyStatus);
+        if ( diskCopyStatus == DISKCOPY_CANBEMIGR ) {
+          /*
+           * Flag all CANBEMIGR diskCopies for GC
+           */
+          iObj = Cstager_DiskCopy_getIObject(diskCopyArray[i]);
+          Cstager_DiskCopy_setStatus(diskCopyArray[i],DISKCOPY_GCCANDIDATE);
+          rc = C_Services_updateRep(
+                                    *svcs,
+                                    iAddr,
+                                    iObj,
+                                    1
+                                    );
+          if ( rc == -1 ) {
+            Cstager_DiskCopy_id(diskCopyArray[i],&key);
+            LOG_DBCALLANDKEY_ERR("C_Services_updateRep(diskCopy)",
+                                 C_Services_errorMsg(*svcs),
+                                 key);
+            C_IAddress_delete(iAddr);
+            return(-1);
+          }
         }
+        Cstager_DiskCopy_delete(diskCopyArray[i]);
       }
-      Cstager_DiskCopy_delete(diskCopyArray[i]);
+      free(diskCopyArray);
     }
-    free(diskCopyArray);
   }
   Cstager_CastorFile_delete(castorFile);
 

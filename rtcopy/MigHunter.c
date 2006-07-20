@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.31 $ $Release$ $Date: 2006/07/18 12:12:32 $ $Author: waldron $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.32 $ $Release$ $Date: 2006/07/20 16:56:49 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.31 $ $Release$ $Date: 2006/07/18 12:12:32 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.32 $ $Release$ $Date: 2006/07/20 16:56:49 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1361,7 +1361,7 @@ static int addMigrationCandidatesToStreams(
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_ITapeSvc_t *tpSvc = NULL;
   ID_TYPE key;
-  int rc, i, save_serrno = 0;
+  int rc, i, save_serrno = 0, deleteDiskCopy = 0;
   char *nsHost, buf[22];
   struct Cns_fileid fileid;
 
@@ -1457,9 +1457,10 @@ static int addMigrationCandidatesToStreams(
         }
         if ( save_serrno == ENOENT ) {
           /*
-           * Castor file has been deleted
+           * Castor file has been deleted. Can safely remove the diskcopy
            */
-          if ( rtcpcld_putFailed(tapeCopyArray[i]) == -1 ) {
+          deleteDiskCopy = 1;
+          if ( rtcpcld_putFailed(tapeCopyArray[i], deleteDiskCopy) == -1 ) {
             LOG_SYSCALL_ERR("rtcpcld_putFailed");
             C_IAddress_delete(iAddr);
             return(-1);
