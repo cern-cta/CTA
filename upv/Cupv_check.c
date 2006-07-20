@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_check.c,v $ $Revision: 1.8 $ $Date: 2003/11/04 15:04:15 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_check.c,v $ $Revision: 1.9 $ $Date: 2006/07/20 16:29:16 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
  
 
@@ -77,7 +77,7 @@ Cupv_check(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt, int
 	  if (src == NULL && tgt == NULL) {
 	    /* Both NULL, authorized */
 	    return(0);
-	  } else if (strcmp(src, tgt)==0) {
+	  } else if ((src != NULL) && (tgt != NULL) && (strcmp(src, tgt)==0)) {
 	    /* src == tmp */
 	    return(0);
 	  }
