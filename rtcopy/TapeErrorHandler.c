@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.15 $ $Release$ $Date: 2006/07/20 16:58:20 $ $Author: obarring $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.16 $ $Release$ $Date: 2006/07/21 07:23:25 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.15 $ $Release$ $Date: 2006/07/20 16:58:20 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.16 $ $Release$ $Date: 2006/07/21 07:23:25 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1001,28 +1001,6 @@ static int checkMigrationRetry(
   rc = Cns_statx(castorFileName,&fileid,&statbuf);
   if ( rc == -1 ) {
     C_IAddress_delete(iAddr);
-    return(-1);
-  }
-
-  if ( statbuf.status == 'm' ) {
-    /*
-     * File already migrated !
-     */
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
-                    (struct Cns_fileid *)&fileid,
-                    RTCPCLD_NB_PARAMS+2,
-                    "DBKEY",
-                    DLF_MSG_PARAM_INT64,
-                    key,
-                    "REASON",
-                    DLF_MSG_PARAM_STR,
-                    "CASTOR file already migrated ('m' bit is set)",
-                    RTCPCLD_LOG_WHERE
-                    );
-    C_IAddress_delete(iAddr);
-    serrno = ENOENT;
     return(-1);
   }
 
