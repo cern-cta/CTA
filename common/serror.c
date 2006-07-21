@@ -262,6 +262,7 @@ char *sys_sterrlist[ESTMAXERR-ESTBASEOFF+2] =
    "Request killed",
    "Request too long (socket buffer size)",
    "Stage configuration error",
+   "Required tape segments are not all accessible",
    "BAD ERROR NUMBER"
   };
 

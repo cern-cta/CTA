@@ -269,7 +269,8 @@
 #define ESTKILLED       ESTBASEOFF+13	/* aborted by kill */
 #define ESTMEM          ESTBASEOFF+14	/* request too long (api) */
 #define ESTCONF         ESTBASEOFF+15	/* Stage configuration error */
-#define ESTMAXERR       ESTBASEOFF+15
+#define ESTSEGNOACC     ESTBASEOFF+16	/* Required tape segments are not all accessible */
+#define ESTMAXERR       ESTBASEOFF+16
 
 /*
  *------------------------------------------------------------------------
