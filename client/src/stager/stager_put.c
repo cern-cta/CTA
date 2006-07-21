@@ -144,6 +144,7 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
     switch (c) {
     case 'M':
       args->reqs[nbfiles].filename = Coptarg;
+      args->reqs[nbfiles].mode = 0777;
       nbfiles++;
       break;
     case 'U':
