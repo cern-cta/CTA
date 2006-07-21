@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.283 $ $Release$ $Date: 2006/07/13 15:28:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.284 $ $Release$ $Date: 2006/07/21 08:13:45 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.283 $ $Date: 2006/07/13 15:28:56 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.284 $ $Date: 2006/07/21 08:13:45 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 200;
@@ -124,6 +124,11 @@ END;
 /* Global temporary table to handle output of the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
   (fileid NUMBER, nshost VARCHAR2(2048))
+ON COMMIT DELETE ROWS;
+
+/* Global temporary table to help selectFiles2Delete procedure */
+CREATE GLOBAL TEMPORARY TABLE SelectFiles2DeleteProcHelper
+  (id NUMBER, path VARCHAR2(2048))
 ON COMMIT DELETE ROWS;
 
 /****************************************************************/
@@ -503,23 +508,21 @@ CREATE OR REPLACE PROCEDURE updateFsFileClosed
 (fs IN INTEGER, reservation IN INTEGER, fileSize IN INTEGER) AS
   deviation NUMBER;
   ds INTEGER;
-  unused "numList";
 BEGIN
-  /* We have to do this first in order to take locks on all the filesystems
-     of the DiskServer in an atomical way. Otherwise, the fact that
-     we update the "single" filesystem fs first and then all the others
-     leads to a dead lock if 2 threads are running this in parallel :
-     they will both lock one filesystem to start with and try to get the
-     others locks afterwards. */
-  SELECT DiskServer INTO ds FROM FileSystem WHERE id = fs;
-  SELECT id BULK COLLECT INTO unused FROM FileSystem WHERE diskServer = ds FOR UPDATE;
+  /* We have to lock first the diskserver in order to lock all the
+     filesystems of this DiskServer in an atomical way.
+     Otherwise, the fact that we update the "single" filesystem fs
+     first and then all the others leads to a dead lock if 2 threads
+     are running this in parallel : they will both lock one
+     filesystem to start with and try to get the others locks afterwards. */
+  SELECT DiskServer INTO ds FROM FileSystem WHERE id = fs FOR UPDATE;
   /* now we can safely go */
-  UPDATE FileSystem SET deltaWeight = deltaWeight + deviation
-   WHERE diskServer = ds;
   UPDATE FileSystem SET fsDeviation = fsdeviation / 2,
                        deltaFree = deltaFree - fileSize,
                        reservedSpace = reservedSpace - reservation
   WHERE id = fs RETURNING fsDeviation, diskServer INTO deviation, ds;
+  UPDATE FileSystem SET deltaWeight = deltaWeight + deviation
+   WHERE diskServer = ds;
 END;
 
 /* This table is needed to insure that bestTapeCopyForStream works Ok.
@@ -841,6 +844,10 @@ CREATE OR REPLACE PACKAGE castor AS
         fileSystemmaxFreeSpace INTEGER,
         fileSystemStatus INTEGER);
   TYPE DiskPoolsQueryLine_Cur IS REF CURSOR RETURN DiskPoolsQueryLine;
+  TYPE SelectFiles2DeleteLine IS RECORD (
+        id NUMBER,
+        path VARCHAR2(2048));
+  TYPE SelectFiles2DeleteLine_Cur IS REF CURSOR RETURN SelectFiles2DeleteLine;
 END castor;
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
@@ -1658,6 +1665,24 @@ BEGIN
 END;
 
 /* PL/SQL method implementing selectFiles2Delete */
+CREATE OR REPLACE PROCEDURE selectFiles2Delete
+(diskServerName IN VARCHAR2,
+ files OUT castor.SelectFiles2DeleteLine_Cur) AS
+BEGIN
+  INSERT INTO SelectFiles2DeleteProcHelper
+    SELECT FileSystem.id, FileSystem.mountPoint
+      FROM FileSystem, DiskServer
+     WHERE FileSystem.diskServer = DiskServer.id
+       AND DiskServer.name = diskServerName;
+  OPEN files FOR
+    SELECT DiskCopy.id, SelectFiles2DeleteProcHelper.path||DiskCopy.path
+      FROM DiskCopy, SelectFiles2DeleteProcHelper
+     WHERE DiskCopy.status = 8
+       AND DiskCopy.fileSystem = SelectFiles2DeleteProcHelper.id
+       FOR UPDATE;
+END;
+
+/* PL/SQL method implementing updateFiles2Delete */
 CREATE OR REPLACE PROCEDURE updateFiles2Delete
 (dcIds IN castor."cnumList") AS
 BEGIN
