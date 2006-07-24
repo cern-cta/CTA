@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.46 $ $Date: 2006/07/05 10:04:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.47 $ $Date: 2006/07/24 15:18:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -650,7 +650,8 @@ unload_loop1:
         strcmp (devtype, "9940") == 0 ||
         strcmp (devtype, "994B") == 0 || 
         strcmp (devtype, "T10000") == 0 ||
-        strcmp (devtype, "LTO") == 0) {
+        strcmp (devtype, "LTO") == 0 ||
+        strcmp (devtype, "3592") == 0) {
         
         /* BC Now checking the MIR */
         if (is_mir_invalid_load(tapefd, path, devtype) == 1) {
