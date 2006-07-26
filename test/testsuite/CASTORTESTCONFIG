@@ -1,0 +1,22 @@
+CLIENT  	PREREQ  	NO
+CLIENT		PUT		NO
+CLIENT		GET		NO
+CLIENT		PUTDONE		NO
+CLIENT		RM		NO
+CLIENT		EXTRAQRY	NO
+
+DLF		TEST            NO
+
+COMMON          TEST            NO 
+
+SERVER          TEST            NO 
+
+RFIO            TEST            NO  
+
+CSVCS           TEST            NO 
+
+DISKSVR         TEST            NO 
+
+TAPE            TEST            NO
+
+ADMIN           TEST            NO
