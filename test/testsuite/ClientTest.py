@@ -6,15 +6,17 @@ import time
 
 ticket= UtilityForCastorTest.getTicket() 
 localDir="./tmpClientTest"+ticket+"/"
-dirCastor=UtilityForCastorTest.prepareCastorString()+"TestClient"+ticket+"/"
-UtilityForCastorTest.runOnShell("mkdir "+localDir)
+myCastor=UtilityForCastorTest.prepareCastorString()
+dirCastor=myCastor+"TestClient"+ticket+"/"
 
 class PreRequisitesCase(unittest.TestCase):
 	def userValid(self):
 		assert (UtilityForCastorTest.checkUser != -1), "you don't have a valid castor directory"
 		
 	def stagerUp(self):
-		UtilityForCastorTest.saveOnFile(localDir+"stagerUp1","stager_qry -M "+dirCastor)
+		UtilityForCastorTest.runOnShell("mkdir "+localDir)
+		time.sleep(2)
+		UtilityForCastorTest.saveOnFile(localDir+"stagerUp1","stager_qry -M "+myCastor+"noFile"+ticket)
 		fi=open(localDir+"stagerUp1","r")
 		outBuff=fi.read()
 		fi.close()
@@ -309,11 +311,3 @@ class StagerQuerySpecialSuite(unittest.TestSuite):
 
 
  
-#class StagerClientSuite(unittest.TestSuite):
-#    def __init__(self):    
-#	unittest.TestSuite.__init__(self,(StagerPreClientSuite(),StagerPutSuite(),StagerPutDoneSuite(),StagerGetSuite(),StagerRmSuite(),StagerQuerySpecialSuite()))
-
-#mySuite=StagerClientSuite()
-#runner=unittest.TextTestRunner()
-#runner.run(mySuite)
-

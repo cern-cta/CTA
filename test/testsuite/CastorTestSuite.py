@@ -1,8 +1,8 @@
 import os
 import sys
 import unittest
-import ClientTest
 import string
+import ClientTest
 
 
 ########################### for each module its own test suite ##########################
@@ -44,7 +44,7 @@ class AdminSuite(unittest.TestSuite):
 	unittest.TestSuite.__init__(self)
 	
 
-#####  allCastorSuites is a dictonary with a test suite for each module
+#####  allCastorSuites is a dictonary with a test suite for each module ###########
 	
 allCastorSuites={'COMMON':CommonSuite(),'SERVER':ServerSuite(),'CLIENT':ClientSuite(),'RFIO':RfioSuite(),'DLF':DlfSuite(),'CSVC':CsvcsSuite(),'DISKSVR':DisksvrSuite(),'TAPE':TapeSuite(),'ADMIN':AdminSuite()}
 
@@ -52,13 +52,20 @@ allCastorSuites={'COMMON':CommonSuite(),'SERVER':ServerSuite(),'CLIENT':ClientSu
 ################ for each module all the possible test suites included #######################
 
 commonTest={'TEST':0}
+
 serverTest={'TEST':0}
+
 clientTest={'PREREQ': ClientTest.StagerPreClientSuite(),'PUT':ClientTest.StagerPutSuite(),'PUTDONE':ClientTest.StagerPutDoneSuite(),'GET':ClientTest.StagerGetSuite(),'RM':ClientTest.StagerRmSuite(),'EXTRAQRY':ClientTest.StagerQuerySpecialSuite()}
 rfioTest={'TEST':0}
+
 dlfTest={'TEST':0}
+
 csvcsTest={'TEST':0}
+
 disksvrTest={'TEST':0}
+
 tapeTest={'TEST':0}
+
 adminTest={'TEST':0}
 
 listOfTest={'COMMON':commonTest,'SERVER':serverTest,'CLIENT':clientTest,'RFIO':rfioTest,'DLF':dlfTest,'CSVCS':csvcsTest,'DISKSVR':disksvrTest,'TAPE':tapeTest,'ADMIN':adminTest}
@@ -75,7 +82,7 @@ newSuites=configFileInfo.split("\n\n")
 for mySuite in newSuites:
     newCases=mySuite.splitlines()
     for myCase in newCases:
-       	if myCase.find("YES"):
+       	if myCase.find("YES") != -1:
             elem=myCase.split()
             testToAdd=(listOfTest[elem[0]])[elem[1]]
             if testToAdd != 0:
@@ -96,3 +103,4 @@ for differentSuite in allCastorSuites:
 	
 runner=unittest.TextTestRunner()
 runner.run(myGlobalSuite)
+os._exit(0)

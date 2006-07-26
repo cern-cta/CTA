@@ -27,14 +27,15 @@ def saveOnFile(namefile,cmdS):
     t=threading.Timer(120.0,timeOut,[cmdS])
     t.start()
     fin=open(namefile,"wb")
-    fin.write(os.popen(cmdS).read())
+    myOut=os.popen4(cmdS)
+    fin.write((myOut[1]).read())
     fin.close()
     t.cancel()
       
 def runOnShell(cmdS):
     t=threading.Timer(120.0,timeOut,[cmdS])
     t.start()
-    os.system(cmdS)
+    os.popen4(cmdS)
     t.cancel()
     
     
