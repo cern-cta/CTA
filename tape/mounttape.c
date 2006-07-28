@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.47 $ $Date: 2006/07/24 15:18:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.48 $ $Date: 2006/07/28 15:08:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -632,7 +632,8 @@ unload_loop1:
 			continue;
 		demountforce = 1;
 		do {
-			c = rbtdemount (vid, drive, dvn, loader, demountforce);
+            vsnretry++;  
+			c = rbtdemount (vid, drive, dvn, loader, demountforce, vsnretry);
 			if ((n = rbtdmntchk (&c, drive, &demountforce)) < 0)
 				goto reply;
 		} while (n == 1);
@@ -1033,7 +1034,8 @@ char *loader;
 	fd_set readfds;
 	struct timeval rbttimeval;
 	int tapefd;
-
+    int vsnretry=0;
+    
 	switch (*c) {
 	case 0:
 		return (0);
@@ -1066,7 +1068,8 @@ char *loader;
 		close (tapefd);
 		demountforce = 1;
 		do {
-			*c = rbtdemount (vid, drive, dvn, loader, demountforce);
+             vsnretry++;
+			*c = rbtdemount (vid, drive, dvn, loader, demountforce, vsnretry);
 			if ((n = rbtdmntchk (c, drive, &demountforce)) < 0)
 				return (-1);
 		} while (n == 1);

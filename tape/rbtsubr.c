@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.17 $ $Date: 2006/03/01 14:44:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.18 $ $Date: 2006/07/28 15:08:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -145,12 +145,13 @@ char *loader;
 
 /*	rbtdemount - demounts a volume from a specified drive  */
 
-rbtdemount (vid, unm, dvn, loader, force)
+rbtdemount (vid, unm, dvn, loader, force, vsnretry)
 char *vid;
 char *unm;
 char *dvn;
 char *loader;
 unsigned int force;
+int vsnretry;
 {
 	char func[16];
 
@@ -219,7 +220,7 @@ unsigned int force;
 	}
 	if (*loader == 's') {
 		int c;
-		c = smcdismount (vid, loader, force);
+		c = smcdismount (vid, loader, force, vsnretry);
 		closesmc();
 		return (c);
 	}
@@ -1187,7 +1188,7 @@ char *loader;
 	RETURN (0);
 }
 
-smcmount(vid, side, loader)
+smcmount(vid, side, loader, vsnretry)
 char *vid;
 int side;
 char *loader;
@@ -1206,10 +1207,18 @@ char *loader;
 	if (rmc_host) {
 		c = rmc_mount (rmc_host, smc_ldr, vid, side, drvord);
 		if (c) {
+            
 			p = strrchr (rmc_errbuf, ':');
 			sprintf (msg, TP041, "mount", vid, cur_unm,
 				p ? p + 2 : rmc_errbuf);
-			usrmsg (func, "%s\n", msg);
+            /* Just send message to operator after two retries*/ 
+            if (vsnretry > 2 && (serrno == SECOMERR)) {  
+			   usrmsg (func, "%s\n", msg);
+            } else if (vsnretry <= 2 && (serrno == SECOMERR)) {
+			   tplogit (func, "%s", msg);
+            } else {
+			   usrmsg (func, "%s\n", msg);
+            }
 			c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
 		}
 		RETURN (c);
@@ -1251,10 +1260,11 @@ char *loader;
 	RETURN (0);
 }
 
-smcdismount(vid, loader, force)
+smcdismount(vid, loader, force, vsnretry)
 char *vid;
 char *loader;
 int force;
+int vsnretry;
 {
 	int c;
 	struct smc_element_info element_info;
@@ -1269,10 +1279,17 @@ int force;
 	if (rmc_host) {
 		c = rmc_dismount (rmc_host, smc_ldr, vid, drvord, force);
 		if (c) {
-			p = strrchr (rmc_errbuf, ':');
-			sprintf (msg, TP041, "demount", vid, cur_unm,
-				p ? p + 2 : rmc_errbuf);
-			usrmsg (func, "%s\n", msg);
+			  p = strrchr (rmc_errbuf, ':');
+			  sprintf (msg, TP041, "demount", vid, cur_unm,
+				  p ? p + 2 : rmc_errbuf);
+            /* Just send message to operator after two retries on connection reset*/ 
+            if (vsnretry > 2 && (serrno == SECOMERR)) {
+			  usrmsg (func, "%s\n", msg);
+            } else if (vsnretry <= 2 && (serrno == SECOMERR)){
+			   tplogit (func, "%s", msg);
+            } else {
+			   usrmsg (func, "%s\n", msg);
+            }
 			c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
 		}
 		RETURN (c);

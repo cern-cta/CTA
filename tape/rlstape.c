@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.29 $ $Date: 2006/06/21 13:08:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.30 $ $Date: 2006/07/28 15:08:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -82,6 +82,7 @@ char	**argv;
         int mediaerror;
         int readfailure;
         int writefailure;
+        int vsnretry;
 
 	ENTRY (rlstape);
 
@@ -107,7 +108,7 @@ char	**argv;
         mediaerror = 0;
         readfailure = 0;
         writefailure = 0;  
-
+        vsnretry = 0;
 
 	tplogit (func, "rls dvn=<%s>, vid=<%s>, rlsflags=%d\n", dvn, vid, rlsflags);
 
@@ -276,7 +277,8 @@ unload_loop:
 	if (*loader != 'm') {
 		demountforce = 0;
 		do {
-			c = rbtdemount (vid, drive, dvn, loader, demountforce);
+                        vsnretry++;
+			c = rbtdemount (vid, drive, dvn, loader, demountforce,vsnretry);
 			if ((n = rbtdmntchk (&c, drive, &demountforce)) < 0)
 				goto freevol;
 		} while (n == 1);
