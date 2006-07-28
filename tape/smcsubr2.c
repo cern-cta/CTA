@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smcsubr2.c,v $ $Revision: 1.4 $ $Date: 2006/03/01 14:44:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smcsubr2.c,v $ $Revision: 1.5 $ $Date: 2006/07/28 15:11:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -55,6 +55,20 @@ char *vid;
 		usrmsg (func, SR018, "demount", vid, drvord, msgaddr);
 		RETURN (c);
 	}
+    /* check that the vid is in a slot before returning */
+    while (1) {   
+          if ((c = smc_find_cartridge (fd, loader, vid, 0, 0, 1, &element_info)) < 0) {
+              c = smc_lasterror (&smc_status, &msgaddr);
+              usrmsg (func, SR017, "find_cartridge", vid, msgaddr);
+              RETURN (c);
+          }
+         
+          /* vid is in a storage slot */  
+          if (element_info.element_type == 2) break; 
+          /* give time for the tape enter the slot */
+          sleep (2);
+    }
+
 	RETURN (0);
 }
 
