@@ -23,6 +23,15 @@ SUBDIRS   = $(DLFWEBDIR)
 INCLUDES  = FileName(..,h)
 MANSUBDIR = doc/man/
 
+COMM
+COMM Set this flag to -O for optimization, or -g for debug
+COMM
+#if _WIN32
+CCOPTIM =
+#else
+CCOPTIM = -g
+#endif
+
 #if _AIX
 LIBS = -L../shlib -lshift
 #else
@@ -69,7 +78,7 @@ MYSQLLIB  = $(shell /usr/bin/mysql_config --libs_r)
 #endif
 
 DFLAGS    = -DLOGFILE=\"$(LOGFILE)\" -DDLFCONFIG=\"$(DLFCONFIG)\" $(DBFLAG)
-CFLAGS    = -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS)
+CFLAGS    = $(CCOPTIM) -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS)
 DEPLIB    = DepSharedLibraryTargetName(shlib,shift)
 
 MANPAGES  = $(MANDIR)/dlfserver.$(MANSUFFIX)    \
