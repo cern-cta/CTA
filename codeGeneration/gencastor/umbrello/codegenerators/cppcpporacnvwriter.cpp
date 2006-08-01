@@ -514,7 +514,7 @@ void CppCppOraCnvWriter::writeSqlStatements() {
            IO_WriteOnly | IO_Append);
   QTextStream tStream(&tFile);
   openFile(hFileD,
-           s_topNS + "/db/oracleGeneratedHeader_drop.sql",
+           s_topNS + "/db/oracleGeneratedHeader_.sql",
            IO_WriteOnly | IO_Append);
   QTextStream hStreamD(&hFileD);
   openFile(fileD,
@@ -912,6 +912,8 @@ void CppCppOraCnvWriter::writeReset() {
       }
     }
   }
+  *m_stream << getIndent();
+	    
   // End of the method
   m_indent--;
   *m_stream << "}" << endl << endl;
@@ -1004,10 +1006,12 @@ void CppCppOraCnvWriter::writeFillRep() {
             << endl;
   m_indent++;
   *m_stream << getIndent()
+	    << "castor::db::ora::OraBaseObj::handleException(e);"<<endl
+	    << getIndent()
             << fixTypeName("Internal",
                            "castor.exception",
                            m_classInfo->packageName)
-            << " ex; // XXX Fix it, depending on ORACLE error"
+            << " ex; "
             << endl << getIndent()
             << "ex.getMessage() << \"Error in fillRep for type \" << type"
             << endl << getIndent()
@@ -2741,37 +2745,13 @@ void CppCppOraCnvWriter::printSQLError(QString name,
                                        MemberList& members,
                                        AssocList& assocs) {
   fixTypeName("OraCnvSvc", "castor::db::ora", m_classInfo->packageName);
-  *m_stream << getIndent() << "try {" << endl;
-  m_indent++;
-  *m_stream << getIndent()
-            << "// Always try to rollback" << endl
-            << getIndent()
-            << "cnvSvc()->rollback();"
-            << endl << getIndent()
-            << "if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {"
-            << endl;
-  m_indent++;
-  *m_stream << getIndent()
-            << "// We've obviously lost the ORACLE connection here"
-            << endl << getIndent() << "cnvSvc()->dropConnection();"
-            << endl;
-  m_indent--;
-  *m_stream << getIndent() << "}" << endl;
-  m_indent--;
-  *m_stream << getIndent()
-            << "} catch (castor::exception::Exception e) {"
-            << endl;
-  m_indent++;
-  *m_stream << getIndent()
-            << "// rollback failed, let's drop the connection for security"
-            << endl << getIndent() << "cnvSvc()->dropConnection();"
-            << endl;
-  m_indent--;
-  *m_stream << getIndent() << "}" << endl << getIndent()
+   m_indent++;
+  *m_stream << getIndent() <<"castor::db::ora::OraBaseObj::handleException(e);" << endl;
+  *m_stream<< getIndent()
             << fixTypeName("InvalidArgument",
                            "castor.exception",
                            m_classInfo->packageName)
-            << " ex; // XXX Fix it, depending on ORACLE error"
+            << " ex;" 
             << endl << getIndent()
             << "ex.getMessage() << \"Error in " << name
             << " request :\""
