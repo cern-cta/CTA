@@ -94,6 +94,8 @@ namespace castor {
          * access to the Oracle conversion service for child classes
          */
         castor::db::ora::OraCnvSvc* cnvSvc() const;
+	
+	void handleException(oracle::occi::SQLException e);
 
       protected:
 

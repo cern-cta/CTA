@@ -40,6 +40,9 @@
 #include <iomanip>
 #include <stdlib.h>                            // For getenv()
 
+#include "castor/IAddress.hpp"
+#include "occi.h"
+
 // Local Files
 #include "OraCnvSvc.hpp"
 
@@ -92,12 +95,7 @@ castor::db::ora::OraCnvSvc::OraCnvSvc(const std::string name) :
 // ~OraCnvSvc
 // -----------------------------------------------------------------------
 castor::db::ora::OraCnvSvc::~OraCnvSvc() throw() {
-  dropConnection();
-  if (0 != m_environment) {
-    try {
-      oracle::occi::Environment::terminateEnvironment(m_environment);
-    } catch (...) { }
-  }
+  reset();
 }
 
 // -----------------------------------------------------------------------
@@ -113,6 +111,21 @@ const unsigned int castor::db::ora::OraCnvSvc::id() const {
 const unsigned int castor::db::ora::OraCnvSvc::ID() {
   return castor::SVC_ORACNV;
 }
+
+
+//------------------------------------------------------------------------------
+// reset
+//------------------------------------------------------------------------------
+void castor::db::ora::OraCnvSvc::reset() throw() {
+  //Here we attempt to delete the statements correctly
+  // If something goes wrong, we just ignore it
+  try {
+    m_connection->terminateStatement(m_getTypeStatement); // (deleteStatement is not available)
+  } catch (oracle::occi::SQLException e) {};
+  // Now reset all pointers to 0
+  m_getTypeStatement= 0;
+}
+
 
 // -----------------------------------------------------------------------
 // repType
@@ -300,10 +313,10 @@ castor::db::ora::OraCnvSvc::getTypeFromId(const u_signed64 id)
     m_getTypeStatement->closeResultSet(rset);
     return res;
   } catch (oracle::occi::SQLException e) {
-    try {
+      try {
       m_getTypeStatement->closeResultSet(rset);
     } catch (oracle::occi::SQLException e2) {}
-    try {
+      try { // I cannot use the handleException function because it is in OraBaseObj
       getConnection()->rollback();
       if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
         // We've obviously lost the ORACLE connection here
@@ -312,7 +325,7 @@ castor::db::ora::OraCnvSvc::getTypeFromId(const u_signed64 id)
     } catch (oracle::occi::SQLException e2) {
       // rollback failed, let's drop the connection for security
       dropConnection();
-    }
+      }
     castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE error
     ex.getMessage() << "Error in getting type from id."
                     << std::endl << e.what();

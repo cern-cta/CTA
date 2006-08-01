@@ -1,12 +1,13 @@
-/* SQL statements for type BaseAddress */
-CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR2(2048), cnvSvcType NUMBER, target INTEGER, id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
+/* SQL statements for type RepackSubRequest */
+CREATE TABLE RepackSubRequest (vid VARCHAR2(2048), xsize INTEGER, status NUMBER, cuuid VARCHAR2(2048), id INTEGER PRIMARY KEY, requestID INTEGER) INITRANS 50 PCTFREE 50;
 
-/* SQL statements for type Client */
-CREATE TABLE Client (ipAddress NUMBER, port NUMBER, id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
+/* SQL statements for type RepackSegment */
+CREATE TABLE RepackSegment (fileid INTEGER, compression NUMBER, segsize INTEGER, filesec INTEGER, id INTEGER PRIMARY KEY, vid INTEGER) INITRANS 50 PCTFREE 50;
 
-/* SQL statements for type ClientIdentification */
-CREATE TABLE ClientIdentification (machine VARCHAR2(2048), userName VARCHAR2(2048), port NUMBER, euid NUMBER, egid NUMBER, magic NUMBER, id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
+/* SQL statements for type RepackRequest */
+CREATE TABLE RepackRequest (machine VARCHAR2(2048), userName VARCHAR2(2048), creationTime NUMBER, pool VARCHAR2(2048), pid INTEGER, command NUMBER, id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
+<<<<<<< castor_oracle_create.sql
 /* SQL statements for type Disk2DiskCopyDoneRequest */
 CREATE TABLE Disk2DiskCopyDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskCopyId INTEGER, status NUMBER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
@@ -187,9 +188,11 @@ ALTER TABLE Stream2TapeCopy
 ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_P FOREIGN KEY (Parent) REFERENCES TapeDrive (id)
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
+=======
+>>>>>>> 1.58.2.1
 /*******************************************************************
  *
- * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.64 $ $Release$ $Date: 2006/07/04 15:40:48 $ $Author: felixehm $
+ * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.65 $ $Release$ $Date: 2006/08/01 16:00:24 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code

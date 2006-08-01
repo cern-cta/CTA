@@ -28,10 +28,20 @@
 #define CASTOR_ORACNVSVC_HPP 1
 
 // Include Files
-#include "occi.h"
+
 #include "castor/BaseCnvSvc.hpp"
-#include "castor/exception/Exception.hpp"
 #include <set>
+
+#ifdef ORACDBC
+#include "castor/db/newora/OraCommonSvc.hpp"
+#else
+#include "castor/db/ora/OraCommonSvc.hpp"
+#endif
+
+#include "castor/BaseSvc.hpp"
+
+#include "occi.h"
+#include <vector>
 
 namespace castor {
 
@@ -76,6 +86,12 @@ namespace castor {
          * the representation this conversion service can deal with
          */
         static const unsigned int REPTYPE();
+
+	/**
+         * Reset the converter statements.
+         */
+
+        void reset() throw ();
 
         /**
          * Get a connection to the database. The service opens

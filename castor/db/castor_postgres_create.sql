@@ -1,12 +1,13 @@
-/* SQL statements for type BaseAddress */
-CREATE TABLE BaseAddress (objType INT4, cnvSvcName VARCHAR(2048), cnvSvcType INT4, target INT8, id INT8 PRIMARY KEY);
+/* SQL statements for type RepackSubRequest */
+CREATE TABLE RepackSubRequest (vid VARCHAR(2048), xsize INT8, status INT4, cuuid VARCHAR(2048), id INT8 PRIMARY KEY, requestID INTEGER);
 
-/* SQL statements for type Client */
-CREATE TABLE Client (ipAddress INT4, port INT4, id INT8 PRIMARY KEY);
+/* SQL statements for type RepackSegment */
+CREATE TABLE RepackSegment (fileid INT8, compression INT4, segsize INT8, filesec INT8, id INT8 PRIMARY KEY, vid INTEGER);
 
-/* SQL statements for type ClientIdentification */
-CREATE TABLE ClientIdentification (machine VARCHAR(2048), userName VARCHAR(2048), port INT4, euid INT4, egid INT4, magic INT4, id INT8 PRIMARY KEY);
+/* SQL statements for type RepackRequest */
+CREATE TABLE RepackRequest (machine VARCHAR(2048), userName VARCHAR(2048), creationTime INT4, pool VARCHAR(2048), pid INT8, command INT4, id INT8 PRIMARY KEY);
 
+<<<<<<< castor_postgres_create.sql
 /* SQL statements for type Disk2DiskCopyDoneRequest */
 CREATE TABLE Disk2DiskCopyDoneRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, diskCopyId INT8, status INT4, id INT8 PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
@@ -187,6 +188,8 @@ ALTER TABLE Stream2TapeCopy
 ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_P FOREIGN KEY (Parent) REFERENCES TapeDrive (id)
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
+=======
+>>>>>>> 1.12.2.1
 /* This file contains SQL code that is not generated automatically */
 /* and is inserted at the end of the generated code           */
 

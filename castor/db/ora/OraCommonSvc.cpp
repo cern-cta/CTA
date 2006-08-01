@@ -427,6 +427,6 @@ castor::db::ora::OraCommonSvc::rollback() {
     cnvSvc()->getConnection()->rollback();
   } catch (castor::exception::Exception) {
     // rollback failed, let's drop the connection for security
-    cnvSvc()->dropConnection();
+    reset(); //cnvSvc()->dropConnection();
   }
 }

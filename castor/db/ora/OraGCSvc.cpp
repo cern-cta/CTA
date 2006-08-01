@@ -17,7 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/07/21 08:12:54 $ $Author: sponcec3 $
+<<<<<<< OraGCSvc.cpp
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/08/01 16:00:43 $ $Author: gtaur $
+=======
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/08/01 16:00:43 $ $Author: gtaur $
+>>>>>>> 1.9.4.1
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -234,16 +238,11 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
     commit();
     return result;
   } catch (oracle::occi::SQLException e) {
+
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select files to delete :\n"
       << e.getMessage();
-    try {
-      rollback();
-    } catch (oracle::occi::SQLException e2) {
-      ex.getMessage() << "\nAnd I was not even able to rollback:\n"
-                      << e2.getMessage();
-    }
     // release memory if needed
     if (0 != result) {
       for (std::vector<castor::stager::GCLocalFile*>::iterator it =
@@ -254,6 +253,7 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
       }
       delete result;
     }
+    handleException(e);
     throw ex;
   }
 }
@@ -417,6 +417,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
     // commit everything into the DB
     cnvSvc()->commit();
   } catch (oracle::occi::SQLException e) {
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to remove deleted files :\n"
@@ -425,6 +426,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
     try {
       cnvSvc()->commit();
     } catch (oracle::occi::SQLException e2) {
+      handleException(e2);
       ex.getMessage()
       << "Got an extra error while trying to commit connection :\n"
       << e2.getMessage();
@@ -470,6 +472,7 @@ void castor::db::ora::OraGCSvc::filesDeletionFailed
     // execute the statement
     m_filesDeletionFailedStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to remove files for which deletion failed :"
@@ -525,7 +528,7 @@ castor::db::ora::OraGCSvc::requestToDo()
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
-    rollback();
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in requestToDo."

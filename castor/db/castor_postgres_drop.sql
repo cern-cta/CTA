@@ -35,24 +35,13 @@ DROP TABLE NbTapeCopiesInFS;
 DROP TABLE LockTable;
 
 
-ALTER TABLE SvcClass2TapePool
-  DROP CONSTRAINT fk_SvcClass2TapePool_P
-  DROP CONSTRAINT fk_SvcClass2TapePool_C;
-ALTER TABLE DiskPool2SvcClass
-  DROP CONSTRAINT fk_DiskPool2SvcClass_P
-  DROP CONSTRAINT fk_DiskPool2SvcClass_C;
-ALTER TABLE Stream2TapeCopy
-  DROP CONSTRAINT fk_Stream2TapeCopy_P
-  DROP CONSTRAINT fk_Stream2TapeCopy_C;
-ALTER TABLE TapeDrive2TapeDriveComp
-  DROP CONSTRAINT fk_TapeDrive2TapeDriveComp_P
-  DROP CONSTRAINT fk_TapeDrive2TapeDriveComp_C;
-/* SQL statements for type BaseAddress */
-DROP TABLE BaseAddress;
+/* SQL statements for type RepackSubRequest */
+DROP TABLE RepackSubRequest;
 
-/* SQL statements for type Client */
-DROP TABLE Client;
+/* SQL statements for type RepackSegment */
+DROP TABLE RepackSegment;
 
+<<<<<<< castor_postgres_drop.sql
 /* SQL statements for type ClientIdentification */
 DROP TABLE ClientIdentification;
 
@@ -224,6 +213,11 @@ DROP TABLE TapeDriveCompatibility;
 /* SQL statements for type DeviceGroupName */
 DROP TABLE DeviceGroupName;
 
+=======
+/* SQL statements for type RepackRequest */
+DROP TABLE RepackRequest;
+
+>>>>>>> 1.5.2.1
 DROP FUNCTION getTime;
 DROP FUNCTION FileSystemRate;
 DROP PROCEDURE makeSubRequestWait;

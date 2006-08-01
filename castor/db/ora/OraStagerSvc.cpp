@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.183 $ $Release$ $Date: 2006/05/11 08:07:40 $ $Author: felixehm $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.184 $ $Release$ $Date: 2006/08/01 16:00:46 $ $Author: gtaur $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -293,6 +293,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in subRequestToDo."
@@ -359,6 +360,7 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in subRequestFailedToDo."
@@ -418,7 +420,7 @@ bool castor::db::ora::OraStagerSvc::isSubRequestToSchedule
           status = rs->next();
         }
       } catch (oracle::occi::SQLException e) {
-        rollback();
+        handleException(e);
         if (e.getErrorCode() != 24338) {
           // if not "statement handle not executed"
           // it's really wrong, else, it's normal
@@ -428,7 +430,7 @@ bool castor::db::ora::OraStagerSvc::isSubRequestToSchedule
     }
     return 0 != rc;
   } catch (oracle::occi::SQLException e) {
-    rollback();
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in isSubRequestToSchedule."
@@ -483,6 +485,7 @@ castor::db::ora::OraStagerSvc::selectCastorFile
     result->setFileSize((u_signed64)m_selectCastorFileStatement->getDouble(8));
     return result;
   } catch (oracle::occi::SQLException e) {
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select castorFile by fileId :"
@@ -519,7 +522,7 @@ bool castor::db::ora::OraStagerSvc::updateAndCheckSubRequest
     // return
     return m_updateAndCheckSubRequestStatement->getDouble(3) != 0;
   } catch (oracle::occi::SQLException e) {
-    rollback();
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in updateAndCheckSubRequest."
@@ -576,17 +579,7 @@ castor::db::ora::OraStagerSvc::recreateCastorFile
     result->setDiskServer(m_recreateCastorFileStatement->getString(6));
     return result;
   } catch (oracle::occi::SQLException e) {
-    rollback();
-    if (1422 == e.getErrorCode()) {
-      // exact fetch returns more than requested number of rows
-      // this means we are a PrepareToPut and another PrepareToPut
-      // is already running. This is forbidden
-      castor::exception::Busy ex;
-      ex.getMessage()
-        << "RecreateCastorFile called with several prepareToPut going on."
-        << std::endl << e.what();
-      throw ex;
-    }
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in recreateCastorFile."
@@ -694,7 +687,7 @@ void castor::db::ora::OraStagerSvc::bestFileSystemForJob
     *mountPoint = m_bestFileSystemForJobStatement->getString(4);
     *diskServer = m_bestFileSystemForJobStatement->getString(5);
   } catch (oracle::occi::SQLException e) {
-    rollback();
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in bestFileSystemForJob."
@@ -730,7 +723,7 @@ void castor::db::ora::OraStagerSvc::updateFileSystemForJob
       throw ex;
     }
   } catch (oracle::occi::SQLException e) {
-    rollback();
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in updateFileSystemForJob."
@@ -757,6 +750,7 @@ void castor::db::ora::OraStagerSvc::archiveSubReq
     m_archiveSubReqStatement->setDouble(1, subReqId);
     m_archiveSubReqStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to archive subRequest :"
@@ -802,6 +796,7 @@ void castor::db::ora::OraStagerSvc::stageRelease
       throw e;
     }
   } catch (oracle::occi::SQLException e) {
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in stageRelease."
@@ -849,6 +844,7 @@ void castor::db::ora::OraStagerSvc::stageRm
       throw e;
     }
   } catch (oracle::occi::SQLException e) {
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in stageRm."
@@ -882,6 +878,7 @@ void castor::db::ora::OraStagerSvc::setFileGCWeight
       throw ex;
     }
   } catch (oracle::occi::SQLException e) {
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in setFileGCWeight."
