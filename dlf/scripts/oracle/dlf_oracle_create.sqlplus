@@ -11,7 +11,8 @@ CREATE TABLE dlf_sequences
 (
 	seq_name	CHAR(15),
 	seq_no		NUMBER
-);
+)
+TABLESPACE dlf_data;
 
 /*
  * dlf_mode
@@ -20,7 +21,8 @@ CREATE TABLE dlf_mode
 (
 	name		VARCHAR2(20),
 	enabled		NUMBER(1)
-);
+)
+TABLESPACE dlf_data;
 
 /*
  * dlf_jobstats
@@ -85,6 +87,7 @@ CREATE TABLE dlf_monitoring
 	db_messages	NUMBER,
 	db_inits	NUMBER,
 	db_hashstats	NUMBER,
+	s_uptime	NUMBER,
 	s_mode          NUMBER,
 	s_queued	NUMBER,
 	s_response	NUMBER(*,4),
