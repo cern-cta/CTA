@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbCnvSvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/08/18 10:01:35 $ $Author: itglp $
+ * @(#)$RCSfile: DbCnvSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/08/02 16:47:20 $ $Author: itglp $
  *
  *
  *
@@ -99,6 +99,15 @@ namespace castor {
          * deletes the connection to the database
          */
         virtual void dropConnection() throw();
+        
+        /**
+         * Handles database exceptions and make sure everything is reset
+         * so that next time a new connection is established.
+         * Default implementation does nothing
+         * @param e the database exception
+         */
+         virtual void handleException(std::exception e) {};
+       
 
         /**
          * Registration of DB converters.
