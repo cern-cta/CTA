@@ -73,7 +73,7 @@ listOfTest={'COMMON':commonTest,'SERVER':serverTest,'CLIENT':clientTest,'RFIO':r
 
 #################### opening the file with the list of tests wanted  ################################
 
-f=open("/home/gtaur/CASTORTESTCONFIG","r")
+f=open("/home/gtaur/CASTOR2/test/CASTORTESTCONFIG","r")
 configFileInfo=f.read()
 f.close
 
@@ -101,6 +101,6 @@ for differentSuite in allCastorSuites:
 	myGlobalSuite.addTest(allCastorSuites[differentSuite])
 	
 	
-runner=unittest.TextTestRunner()
+runner=unittest.TextTestRunner(verbosity=2)
 runner.run(myGlobalSuite)
 os._exit(0)
