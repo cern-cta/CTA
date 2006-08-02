@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: lib.c,v 1.4 2006/07/18 12:04:35 waldron Exp $
+ * $Id: lib.c,v 1.5 2006/08/02 16:19:11 waldron Exp $
  */
 
 /* headers */
@@ -51,17 +51,17 @@
 #include "u64subr.h"
 
 /* hashes, tables and pools */
-target_t  *targets[API_MAX_TARGETS];     /**< target pool for targets/destinations   */
-msgtext_t *texts[DLF_MAX_MSGTEXTS];      /**< the clients message texts              */
-hash_t    *hashtexts = NULL;             /**< fast lookup of message texts           */
+static target_t  *targets[API_MAX_TARGETS];     /**< target pool for targets/destinations   */
+static msgtext_t *texts[DLF_MAX_MSGTEXTS];      /**< the clients message texts              */
+static hash_t    *hashtexts = NULL;             /**< fast lookup of message texts           */
 
 /* mutexes */
-int api_mutex;
+static int api_mutex;
 
 /* api variables */
-long api_mode = MODE_DEFAULT;            /**< api mode                               */
-char api_facname[DLF_LEN_FACNAME + 1];   /**< facility name as provided to db_init() */
-char api_ucfacname[DLF_LEN_FACNAME + 1]; /**< facility name in upper case            */
+static long api_mode = MODE_DEFAULT;            /**< api mode                               */
+static char api_facname[DLF_LEN_FACNAME + 1];   /**< facility name as provided to db_init() */
+static char api_ucfacname[DLF_LEN_FACNAME + 1]; /**< facility name in upper case            */
 
 /* prototype for common/socket_timeout.c */
 EXTERN_C int DLL_DECL netconnect_timeout _PROTO((SOCKET, struct sockaddr *, size_t, int));
@@ -994,7 +994,7 @@ void DLL_DECL dlf_prepare(void) {
 	/* prevent dlf_regtext(), dlf_init() and dlf_shutdown() calls being made */
 	Cthread_mutex_lock(&api_mutex);
 	if (!IsInitialised(api_mode) || IsForking(api_mode)) {
-		Cthread_mutex_unlock(&api_mode);
+		Cthread_mutex_unlock(&api_mutex);
 		return;
 	}
 	SetForking(api_mode);
@@ -1205,7 +1205,7 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 	char       *word;
 	char       buffer[1024];
 	char       uri[10];
- 	char       envname[1024];
+ 	char       tmp[1024];
 
 	/* we can't pass an error message back if the pointer to the error is NULL */
 	if (errptr == NULL) {
@@ -1255,8 +1255,8 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 	hash_create(&hashtexts, 100);
 
 	/* determine the queue size of use, if not the default */
-	snprintf(envname, sizeof(envname) - 1, "%s_DLF_QUEUESIZE", api_ucfacname);
-	if ((value = getenv(envname))) {
+	snprintf(tmp, sizeof(tmp) - 1, "%s_DLF_QUEUESIZE", api_ucfacname);
+	if ((value = getenv(tmp))) {
 		queue_size = atoi(value);
 	} else if ((value = getconfent(api_facname, "DLF_QUEUESIZE", 1))) {
 		queue_size = atoi(value);
@@ -1269,12 +1269,12 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 	 *   - <facility_name>_<severity_name>
 	 */
 	for (i = 0; severitylist[i].name != NULL; i++, value = NULL) {
-		snprintf(envname, sizeof(envname) - 1, "%s_%s", api_ucfacname, severitylist[i].confentname);
+		snprintf(tmp, sizeof(tmp) - 1, "%s_%s", api_ucfacname, severitylist[i].confentname);
 
 		/* option defined ?
-		 *    - environment variables take precedince over confents
+		 *    - environment variables take precedence over confents
 		 */
-		if ((value = getenv(envname)) == NULL) {
+		if ((value = getenv(tmp)) == NULL) {
 			if ((value = getconfent(api_facname, severitylist[i].confentname, 1)) == NULL) {
 				continue;
 			}
@@ -1307,7 +1307,8 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 			}
 
 			/* determine server port */
-			if (sscanf(buffer, "%1023[^:]:%d", buffer, &port) == 2) {
+			if (sscanf(buffer, "%1023[^:]:%d", tmp, &port) == 2) {
+				strcpy(buffer, tmp);
 				port = port;
 			} else if (getenv("DLF_PORT") != NULL) {
 				port = atoi(getenv("DLF_PORT"));
@@ -1479,6 +1480,7 @@ int DLL_DECL dlf_shutdown(int wait) {
 	 * central server
 	 */
 	for (i = 0; i < wait; i++) {
+		
 		for (j = 0, found = 0; j < API_MAX_TARGETS; j++) {
 			if (targets[j] == NULL)
 				continue;
@@ -1486,18 +1488,18 @@ int DLL_DECL dlf_shutdown(int wait) {
 				continue;
 			if (queue_size(targets[j]->queue))
 				found++;
-			   
+			
 			/* data still exists, reset the pause time as a last desperate attempt */
 			targets[j]->pause = time(NULL);
 		}
-
+	
 		/* all threads have flushed there data ? */
 		if (found == 0) {
 			break;
 		}
 		sleep(1);
 	}
-
+	
 	Cthread_mutex_lock(&api_mutex);
 	SetShutdown(api_mode);
 
