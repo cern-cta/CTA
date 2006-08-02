@@ -348,7 +348,7 @@ castor::vdqm::TapeServer*
     
     return tapeServer;
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select tapeServer for id " << id  << " :"
@@ -437,7 +437,7 @@ bool castor::db::ora::OraVdqmSvc::checkTapeRequest(
     m_checkTapeRequestStatement1->closeResultSet(rset);
     return true;
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+	  cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in checkTapeRequest."
@@ -481,7 +481,7 @@ int castor::db::ora::OraVdqmSvc::getQueuePosition(
     // XXX: Maybe in future the return value should be double!
     return queuePosition;
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in getQueuePosition."
@@ -524,7 +524,7 @@ castor::vdqm::TapeDrive*
     id = (u_signed64)rset->getDouble(1);
     m_selectTapeDriveStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select tapeDrive by driveName and tapeServer id: "
@@ -576,7 +576,7 @@ castor::vdqm::TapeDrive*
     
     return tapeDrive;
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select tapeDrive for id " << id  << " :"
@@ -617,7 +617,7 @@ bool
     id = (u_signed64)rset->getDouble(1);
     m_existTapeDriveWithTapeInUseStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select tape by vid: "
@@ -659,7 +659,7 @@ bool
     id = (u_signed64)rset->getDouble(1);
     m_existTapeDriveWithTapeMountedStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select tape by vid: "
@@ -698,7 +698,7 @@ castor::stager::Tape*
     id = (u_signed64)rset->getDouble(1);
     m_selectTapeByVidStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select tape by vid: "
@@ -723,7 +723,7 @@ castor::stager::Tape*
     }
     return tape;
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select tape for id " << id  << " :"
@@ -769,7 +769,7 @@ castor::vdqm::TapeRequest*
     id = (u_signed64)rset->getDouble(1);
     m_selectTapeReqForMountedTapeStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select tapeDrive by vid, side and tpmode :"
@@ -807,7 +807,7 @@ castor::vdqm::TapeRequest*
     
     return tapeRequest;
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select tapeRequest for id " << id  << " :"
@@ -857,7 +857,7 @@ castor::vdqm::TapeAccessSpecification*
     m_selectTapeAccessSpecificationStatement->closeResultSet(rset);
   
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select TapeAccessSpecification by accessMode, density, tapeModel:"
@@ -882,7 +882,7 @@ castor::vdqm::TapeAccessSpecification*
     }
     return tapeAccessSpec;
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select TapeAccessSpecification for id " << id  << " :"
@@ -922,7 +922,7 @@ castor::vdqm::DeviceGroupName*
     id = (u_signed64)rset->getDouble(1);
     m_selectDeviceGroupNameStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select DeviceGroupName by dgName :"
@@ -947,7 +947,7 @@ castor::vdqm::DeviceGroupName*
     }
     return deviceGroupName;
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select DeviceGroupName for id " << id  << " :"
@@ -990,7 +990,7 @@ std::vector<castor::vdqm::TapeRequest*>*
       return NULL;
     }    
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "OraVdqmSvc::selectTapeRequestQueue(): "
@@ -1053,7 +1053,7 @@ std::vector<castor::vdqm::TapeRequest*>*
     
     return result;  	
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to find a TapeRequest for id "
@@ -1097,7 +1097,7 @@ std::vector<castor::vdqm::TapeDrive*>*
       return NULL;
     }    
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "OraVdqmSvc::selectTapeRequestQueue(): "
@@ -1169,7 +1169,7 @@ std::vector<castor::vdqm::TapeDrive*>*
     
     return result;  	
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to find a TapeDrive for id "
@@ -1208,7 +1208,7 @@ castor::vdqm::TapeRequest*
     id = (u_signed64)rset->getDouble(1);
     m_selectTapeRequestStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select tape request by VolReqID: "
@@ -1240,7 +1240,7 @@ castor::vdqm::TapeRequest*
     
     return tapeRequest;
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select tape request for id " << id  << " :"
@@ -1292,7 +1292,7 @@ void castor::db::ora::OraVdqmSvc::matchTape2TapeDrive (
     }
     
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to find a TapeRequest for a free TapeDrive: "
@@ -1352,7 +1352,7 @@ void castor::db::ora::OraVdqmSvc::matchTape2TapeDrive (
     *waitingTapeRequest = tapeRequest;      
     
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to find a TapeRequest or a TapeDrive for id(TapeDrive) " 
@@ -1397,7 +1397,7 @@ std::vector<castor::vdqm::TapeDriveCompatibility*>*
     // If we reach this point, then we selected successfully
     // a TapeDriveCompatibility object and it's id is in rset
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select TapeDriveCompatibility by tapeDriveModel :"
@@ -1438,7 +1438,7 @@ std::vector<castor::vdqm::TapeDriveCompatibility*>*
 		m_selectCompatibilitiesForDriveModelStatement->closeResultSet(rset);
 		return result;
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select TapeDriveCompatibility for id " << id  << " :"
@@ -1490,7 +1490,7 @@ std::vector<castor::vdqm::TapeAccessSpecification*>*
     // If we reach this point, then we selected successfully
     // a TapeAccessSpecification object and it's id is in rset
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select TapeAccessSpecification by tapeModel :"
@@ -1531,7 +1531,7 @@ std::vector<castor::vdqm::TapeAccessSpecification*>*
 		m_selectTapeAccessSpecificationsStatement->closeResultSet(rset);
 		return result;
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select TapeAccessSpecification for id " << id  << " :"

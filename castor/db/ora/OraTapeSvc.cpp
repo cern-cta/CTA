@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)OraTapeSvc.cpp,v 1.8 $Release$ 2006/08/01 16:00:47 gtaur
+ * @(#)OraTapeSvc.cpp,v 1.9 $Release$ 2006/08/02 14:04:21 gtaur
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -249,7 +249,7 @@ int castor::db::ora::OraTapeSvc::anySegmentsForTape
     unsigned int nb = m_anySegmentsForTapeStatement->executeUpdate();
     return m_anySegmentsForTapeStatement->getInt(2);
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in anySegmentsForTape."
@@ -312,7 +312,7 @@ castor::db::ora::OraTapeSvc::segmentsForTape
       status = rs->next();
     }
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in segmentsForTape."
@@ -372,7 +372,7 @@ castor::db::ora::OraTapeSvc::bestFileSystemForSegment
       // No data found error, this is ok
       return 0;
     }
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in bestFileSystemForSegment."
@@ -408,7 +408,7 @@ bool castor::db::ora::OraTapeSvc::anyTapeCopyForStream
     }
     return result;
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in anyTapeCopyForStream."
@@ -497,7 +497,7 @@ castor::db::ora::OraTapeSvc::bestTapeCopyForStream
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in bestTapeCopyForStream."
@@ -561,7 +561,7 @@ void castor::db::ora::OraTapeSvc::streamsForTapePool
       remoteObj->setTapePool(tapePool);
     }
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in streamsForTapePool."
@@ -595,7 +595,7 @@ void castor::db::ora::OraTapeSvc::fileRecalled
       throw ex;
     }
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in fileRecalled."
@@ -628,7 +628,7 @@ void castor::db::ora::OraTapeSvc::fileRecallFailed
       throw ex;
     }
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in fileRecallFailed."
@@ -669,7 +669,7 @@ castor::db::ora::OraTapeSvc::tapesToDo()
     }
     m_tapesToDoStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error in tapesToDo while retrieving list of tapes."
@@ -719,7 +719,7 @@ castor::db::ora::OraTapeSvc::streamsToDo()
     }
     m_streamsToDoStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error in streamsToDo while retrieving list of streams."
@@ -772,7 +772,7 @@ castor::db::ora::OraTapeSvc::selectTapeCopiesForMigration
     m_selectTapeCopiesForMigrationStatement->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select TapeCopies for migration :"
@@ -798,7 +798,7 @@ void castor::db::ora::OraTapeSvc::resetStream
     m_resetStreamStatement->setDouble(1, stream->id());
     unsigned int nb = m_resetStreamStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in resetStream."
@@ -855,7 +855,7 @@ castor::db::ora::OraTapeSvc::failedSegments ()
       status = rs->next();
     }
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in failedSegments."
@@ -915,7 +915,7 @@ castor::db::ora::OraTapeSvc::checkFileForRepack
     
   
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in checkFileForRepack(): Fileid (" 
