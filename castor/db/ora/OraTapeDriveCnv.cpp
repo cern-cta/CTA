@@ -300,7 +300,7 @@ void castor::db::ora::OraTapeDriveCnv::fillRep(castor::IAddress* address,
       cnvSvc()->commit();
     }
   } catch (oracle::occi::SQLException e) {
-    castor::db::ora::OraBaseObj::handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex; 
     ex.getMessage() << "Error in fillRep for type " << type
                     << std::endl << e.what() << std::endl;

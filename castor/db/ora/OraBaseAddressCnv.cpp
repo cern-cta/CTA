@@ -125,7 +125,7 @@ void castor::db::ora::OraBaseAddressCnv::fillRep(castor::IAddress* address,
       cnvSvc()->commit();
     }
   } catch (oracle::occi::SQLException e) {
-    castor::db::ora::OraBaseObj::handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex; 
     ex.getMessage() << "Error in fillRep for type " << type
                     << std::endl << e.what() << std::endl;
@@ -355,13 +355,13 @@ void castor::db::ora::OraBaseAddressCnv::createRep(castor::IAddress* address,
             m_selectStatement->closeResultSet(rset);
           } catch (oracle::occi::SQLException e) {
               castor::db::ora::OraBaseObj::handleException(e);
-              castor::exception::InvalidArgument ex2;
-              ex2.getMessage() << "Error in update request :"
+              castor::exception::InvalidArgument ex;
+              ex.getMessage() << "Error in update request :"
                               << std::endl << e.what() << std::endl
                               << "Statement was :" << std::endl
                               << s_updateStatementString << std::endl
                               << "and id was " << obj->id() << std::endl;;
-              throw ex2;
+              throw ex;
             }
 }
 
