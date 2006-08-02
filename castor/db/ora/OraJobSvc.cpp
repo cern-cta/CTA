@@ -17,11 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
-<<<<<<< OraJobSvc.cpp
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/08/01 16:00:44 $ $Author: gtaur $
-=======
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/08/01 16:00:44 $ $Author: gtaur $
->>>>>>> 1.8.4.1
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/08/02 13:25:55 $ $Author: itglp $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -63,7 +59,7 @@
 #include "castor/db/ora/OraJobSvc.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/SegmentNotAccessible.hpp";
+#include "castor/exception/SegmentNotAccessible.hpp"
 #include "castor/exception/Busy.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NoEntry.hpp"

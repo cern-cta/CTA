@@ -412,7 +412,7 @@ castor::db::ora::OraCommonSvc::commit() {
 	try {
 	  cnvSvc()->getConnection()->commit();
 	} catch (castor::exception::Exception) {
-	  // commit failed, let's drop the connection for security
+	  // commit failed, let's rollback
 	  rollback();
 	}
 }
@@ -426,7 +426,7 @@ castor::db::ora::OraCommonSvc::rollback() {
   try {
     cnvSvc()->getConnection()->rollback();
   } catch (castor::exception::Exception) {
-    // rollback failed, let's drop the connection for security
-    reset(); //cnvSvc()->dropConnection();
+    // rollback failed, let's reset everything for security
+    reset();
   }
 }

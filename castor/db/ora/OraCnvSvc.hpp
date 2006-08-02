@@ -87,7 +87,7 @@ namespace castor {
          */
         static const unsigned int REPTYPE();
 
-	/**
+        /**
          * Reset the converter statements.
          */
 
@@ -139,6 +139,13 @@ namespace castor {
          */
         virtual void rollback()
           throw (castor::exception::Exception);
+
+        /**
+         * Handles Oracle exceptions and make sure everything is reset
+         * so that next time a new connection is established
+         * @param e an Oracle exception
+         */
+        void handleException(oracle::occi::SQLException e);
 
         /**
          * Get an object from its id.

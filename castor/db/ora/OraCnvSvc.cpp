@@ -164,8 +164,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     }
     m_connection =
       m_environment->createConnection(m_user, m_passwd, m_dbName);
-    clog() << DEBUG << "Created new Oracle connection : "
-           << m_connection << std::endl;
+    clog() << DEBUG << "Created new Oracle connection" << std::endl;
     std::string codeVersion = "2_0_3_0";
     std::string DBVersion = "";
     oracle::occi::Statement* stmt = 0;
@@ -283,6 +282,25 @@ void castor::db::ora::OraCnvSvc::rollback()
                     << std::endl << e.what();
     throw ex;
   }
+}
+
+// -------------------------------------------------------------------------
+//  handleException
+// -------------------------------------------------------------------------
+void castor::db::ora::OraCnvSvc::handleException(oracle::occi::SQLException e) {
+	try {
+    // Always try to rollback
+    rollback();
+    
+    if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+      // We've obviously lost the ORACLE connection here
+      dropConnection(); // reset values and drop the connection
+    }
+  }
+  catch (castor::exception::Exception e) {
+    // rollback failed, let's drop the connection for security
+	  dropConnection(); // instead of reset .... 
+  }	
 }
 
 // -----------------------------------------------------------------------
