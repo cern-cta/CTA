@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.284 $ $Release$ $Date: 2006/07/21 08:13:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.285 $ $Release$ $Date: 2006/08/02 09:51:59 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.284 $ $Date: 2006/07/21 08:13:45 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.285 $ $Date: 2006/08/02 09:51:59 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 200;
@@ -1886,9 +1886,14 @@ BEGIN
     -- In such a case, we do not cleanup DiskCopy and CastorFile
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- this means we are a standalone put
-    -- thus cleanup DiskCopy and CastorFile
-    DELETE FROM DiskCopy WHERE id = dcId;
-    DELETE FROM CastorFile WHERE id = cfId;
+    -- thus cleanup DiskCopy and maybe the CastorFile
+    DECLARE
+      dcIds castor."cnumList";
+      fileIds castor.FileList_Cur;
+    BEGIN
+      dcIds(1) := dcId;
+      filesDeletedProc(dcIds, fileIds);
+    END;
   END;   
 END;
 
