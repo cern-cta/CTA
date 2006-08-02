@@ -307,61 +307,71 @@ std::string castor::client::BaseClient::sendRequest
   while (!stop) {
     //std::cerr << "starting 1st loop" << std::endl;
     castor::io::ServerSocket* socket = waitForCallBack();
-    pollit.fd = socket->socket();
-    //std::cerr << "Socket created" << std::endl;
-    // Then loop on the responses sent over a given connection
-    while (!stop) {  
-      /* Will return > 0 if the descriptor is readable
-         No timeout is used, we wait forever */
-      pollit.revents = 0;
-      //std::cerr << "starting poll" << std::endl;
-      
-      int rc = poll(&pollit,1,-1);
-      //std::cerr << "rc=" << rc << " errno=" << errno 
-      //          << " error:" << strerror(errno) << std::endl;
-      
-      if (0 == rc) {
-        castor::exception::Communication e(requestId, SEINTERNAL);
-        e.getMessage() << "Poll with no timeout did timeout !";
-        delete socket;
-        throw e;
-      } else if (rc < 0) {
-        if (errno == EINTR) {
-          //std::cerr <<  "EINTR caught" << std::endl;
-          continue;
-        }
-        castor::exception::Communication e(requestId, SEINTERNAL);
-        e.getMessage() << "Poll error for request" << requestId;
-        delete socket;
-        throw e;
-      }
-      // We had a POLLIN event, read the data
-      IObject* obj = socket->readObject();
-      if (OBJ_EndResponse == obj->type()) {
-        // flush messages
-        clog() << std::flush;
-        // terminate response handler
-        rh->terminate();
-        stop = true;
-      } else {
-        // cast response into Response*
-        castor::rh::Response* res =
-          dynamic_cast<castor::rh::Response*>(obj);
-        if (0 == res) {
+    try {
+      pollit.fd = socket->socket();
+      //std::cerr << "Socket created" << std::endl;
+      // Then loop on the responses sent over a given connection
+      while (!stop) {  
+        /* Will return > 0 if the descriptor is readable
+           No timeout is used, we wait forever */
+        pollit.revents = 0;
+        //std::cerr << "starting poll" << std::endl;
+        
+        int rc = poll(&pollit,1,-1);
+        //std::cerr << "rc=" << rc << " errno=" << errno 
+        //          << " error:" << strerror(errno) << std::endl;
+        
+        if (0 == rc) {
           castor::exception::Communication e(requestId, SEINTERNAL);
-          e.getMessage() << "Receive bad response type :"
-                         << obj->type();
-          delete obj;
+          e.getMessage() << "Poll with no timeout did timeout !";
+          delete socket;
+          throw e;
+        } else if (rc < 0) {
+          if (errno == EINTR) {
+            //std::cerr <<  "EINTR caught" << std::endl;
+            continue;
+          }
+          castor::exception::Communication e(requestId, SEINTERNAL);
+          e.getMessage() << "Poll error for request" << requestId;
           delete socket;
           throw e;
         }
-        // Print the request
-        rh->handleResponse(*res);
+        // We had a POLLIN event, read the data
+        IObject* obj = socket->readObject();
+        try {
+          if (OBJ_EndResponse == obj->type()) {
+            // flush messages
+            clog() << std::flush;
+            // terminate response handler
+            rh->terminate();
+            stop = true;
+          } else {
+            // cast response into Response*
+            castor::rh::Response* res =
+              dynamic_cast<castor::rh::Response*>(obj);
+            if (0 == res) {
+              castor::exception::Communication e(requestId, SEINTERNAL);
+              e.getMessage() << "Receive bad response type :"
+                             << obj->type();
+              delete obj;
+              delete socket;
+              throw e;
+            }
+            // Print the request
+            rh->handleResponse(*res);
+          }
+          delete obj;
+        } catch (castor::exception::Exception e) {
+          if (0 != obj) delete obj;
+          throw e;
+        }
       }
-      delete obj;
+      // delete the socket
+      delete socket;
+    } catch (castor::exception::Exception e) {      
+      if (0 != socket) delete socket;
+      throw e;
     }
-    // delete the socket
-    delete socket;
   }
   return requestId;
 }
