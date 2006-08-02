@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: server.c,v 1.6 2006/07/18 12:04:35 waldron Exp $
+ * $Id: server.c,v 1.7 2006/08/02 16:19:42 waldron Exp $
  */
 
 /* headers */
@@ -56,7 +56,7 @@ queue_t    *queue;                       /**< internal server fifo queue    */
 /* mutexes
  *    - used to block multiple worker threads from picking up the same connection
  */
-int server_mutex;
+static int server_mutex;
 
 /* server variables */
 long server_mode  = MODE_DEFAULT;        /**< servers mode e.g. suspended   */
