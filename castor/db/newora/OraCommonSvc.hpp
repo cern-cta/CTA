@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/08/02 13:23:40 $ $Author: itglp $
+ * @(#)$RCSfile: OraCommonSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/08/02 16:45:48 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for Oracle/CDBC
  *
@@ -145,12 +145,6 @@ namespace castor {
          */
         virtual void rollback();
         
-        /**
-         * helper method to handle Oracle specific exceptions - see OraCnvSvc
-         * @param e an Oracle exception
-         */
-        void handleException(oracle::occi::SQLException e);
-
         /**
          * helper method to create Oracle statement
          */

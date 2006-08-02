@@ -348,7 +348,7 @@ void castor::db::ora::OraDiskServerCnv::createRep(castor::IAddress* address,
       cnvSvc()->commit();
     }
   } catch (oracle::occi::SQLException e) {
-      castor::db::ora::OraBaseObj::handleException(e);
+      cnvSvc()->handleException(e);
       castor::exception::InvalidArgument ex;
       ex.getMessage() << "Error in insert request :"
                       << std::endl << e.what() << std::endl
@@ -387,7 +387,7 @@ void castor::db::ora::OraDiskServerCnv::createRep(castor::IAddress* address,
         cnvSvc()->commit();
       }
     } catch (oracle::occi::SQLException e) {
-        castor::db::ora::OraBaseObj::handleException(e);
+        cnvSvc()->handleException(e);
         castor::exception::InvalidArgument ex;
         ex.getMessage() << "Error in update request :"
                         << std::endl << e.what() << std::endl
@@ -426,7 +426,7 @@ void castor::db::ora::OraDiskServerCnv::createRep(castor::IAddress* address,
           cnvSvc()->commit();
         }
       } catch (oracle::occi::SQLException e) {
-          castor::db::ora::OraBaseObj::handleException(e);
+          cnvSvc()->handleException(e);
           castor::exception::InvalidArgument ex;
           ex.getMessage() << "Error in delete request :"
                           << std::endl << e.what() << std::endl
@@ -466,7 +466,7 @@ void castor::db::ora::OraDiskServerCnv::createRep(castor::IAddress* address,
           m_selectStatement->closeResultSet(rset);
           return object;
         } catch (oracle::occi::SQLException e) {
-            castor::db::ora::OraBaseObj::handleException(e);
+            cnvSvc()->handleException(e);
             castor::exception::InvalidArgument ex;
             ex.getMessage() << "Error in select request :"
                             << std::endl << e.what() << std::endl
@@ -503,7 +503,7 @@ void castor::db::ora::OraDiskServerCnv::createRep(castor::IAddress* address,
             object->setStatus((enum castor::stager::DiskServerStatusCode)rset->getInt(3));
             m_selectStatement->closeResultSet(rset);
           } catch (oracle::occi::SQLException e) {
-              castor::db::ora::OraBaseObj::handleException(e);
+              cnvSvc()->handleException(e);
               castor::exception::InvalidArgument ex;
               ex.getMessage() << "Error in update request :"
                               << std::endl << e.what() << std::endl

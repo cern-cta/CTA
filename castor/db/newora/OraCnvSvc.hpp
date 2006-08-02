@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: OraCnvSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/08/02 13:23:40 $ $Author: itglp $
+* @(#)$RCSfile: OraCnvSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/08/02 16:45:48 $ $Author: itglp $
 *
 *
 *
@@ -114,7 +114,7 @@ namespace castor {
         * so that next time a new connection is established
         * @param e an Oracle exception
         */
-        void handleException(oracle::occi::SQLException e);
+        virtual void handleException(std::exception& e);
         
       private:
         

@@ -287,12 +287,13 @@ void castor::db::ora::OraCnvSvc::rollback()
 // -------------------------------------------------------------------------
 //  handleException
 // -------------------------------------------------------------------------
-void castor::db::ora::OraCnvSvc::handleException(oracle::occi::SQLException e) {
+void castor::db::ora::OraCnvSvc::handleException(std::exception& e) {
 	try {
     // Always try to rollback
     rollback();
-    
-    if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+
+    std::exception* pe = &e;
+    if (3114 == ((oracle::occi::SQLException*)pe)->getErrorCode() || 28 == ((oracle::occi::SQLException*)pe)->getErrorCode()) {
       // We've obviously lost the ORACLE connection here
       dropConnection(); // reset values and drop the connection
     }
