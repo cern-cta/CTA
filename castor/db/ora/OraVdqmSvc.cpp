@@ -301,7 +301,7 @@ castor::vdqm::TapeServer*
     id = (u_signed64)rset->getDouble(1);
     m_selectTapeServerStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
+    cnvSvc()->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select tapeServer by vid, side and tpmode :"

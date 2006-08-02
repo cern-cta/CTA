@@ -94,7 +94,7 @@ namespace castor {
          * access to the Oracle conversion service for child classes
          */
         castor::db::ora::OraCnvSvc* cnvSvc() const;
-	
+
       protected:
 
         /***********/
@@ -116,3 +116,10 @@ namespace castor {
 } // end of namespace castor
 
 #endif // DB_ORABASEOBJ_HPP
+
+
+
+
+
+
+

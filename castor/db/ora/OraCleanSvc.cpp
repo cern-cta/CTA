@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCleanSvc.cpp,v $ $Author: itglp $
+ * @(#)$RCSfile: OraCleanSvc.cpp,v $ $Author: gtaur $
  *
  * @author Giulia Taurelli
  *****************************************************************************/
@@ -160,7 +160,8 @@ int castor::db::ora::OraCleanSvc::removeOutOfDateRequests(int numDays)
        return 0;
 
     }catch (oracle::occi::SQLException e) {
-            handleException(e);
+
+            cnvSvc()->handleException(e);
             castor::exception::Internal ex;
 
 	    castor::dlf::Param params[] =
@@ -203,7 +204,7 @@ int  castor::db::ora::OraCleanSvc::removeArchivedRequests(int hours)
        return 0;
     }catch (oracle::occi::SQLException e) {
 
-      handleException(e);
+      cnvSvc()->handleException(e);
       castor::exception::Internal ex;
 
       castor::dlf::Param params[] =

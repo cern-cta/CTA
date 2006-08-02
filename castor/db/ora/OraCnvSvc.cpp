@@ -333,17 +333,8 @@ castor::db::ora::OraCnvSvc::getTypeFromId(const u_signed64 id)
   } catch (oracle::occi::SQLException e) {
       try {
       m_getTypeStatement->closeResultSet(rset);
-    } catch (oracle::occi::SQLException e2) {}
-      try { // I cannot use the handleException function because it is in OraBaseObj
-      getConnection()->rollback();
-      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-        // We've obviously lost the ORACLE connection here
-        dropConnection();
-      }
-    } catch (oracle::occi::SQLException e2) {
-      // rollback failed, let's drop the connection for security
-      dropConnection();
-      }
+     } catch (oracle::occi::SQLException e2) {}
+      handleException(e);
     castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE error
     ex.getMessage() << "Error in getting type from id."
                     << std::endl << e.what();
@@ -365,3 +356,26 @@ castor::IObject* castor::db::ora::OraCnvSvc::getObjFromId
   clientAd.setCnvSvcType(repType());
   return createObj(&clientAd);
 }
+
+
+// -----------------------------------------------------------------------
+// handleException
+// -----------------------------------------------------------------------
+
+void  castor::db::ora::OraCnvSvc::handleException(oracle::occi::SQLException e) {
+   try {
+      		// Always try to rollback
+      	 rollback();
+      		
+         if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+        // We've obviously lost the ORACLE connection here
+           dropConnection(); // reset values and drop the connection
+     	  }
+		
+    	} catch (castor::exception::Exception e) {
+      	// rollback failed, let's drop the connection for security
+	  dropConnection(); // instead of reset .... 
+   	 } 
+}
+
+
