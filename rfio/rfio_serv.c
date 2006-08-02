@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.22 2006/04/24 09:10:48 obarring Exp $
+ * $Id: rfio_serv.c,v 1.23 2006/08/02 13:45:15 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.22 $ $Date: 2006/04/24 09:10:48 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.23 $ $Date: 2006/08/02 13:45:15 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */
@@ -633,7 +633,7 @@ char    **argv;
 	  }
 
 #ifndef _WIN32
-      FD_SET (s, &readmask);
+      if ( s != INVALID_SOCKET ) FD_SET (s, &readmask);
 #endif
 
       max_rcvbuf = setsock_ceiling;
@@ -702,8 +702,8 @@ char    **argv;
 
       for (;;) {
 #ifndef _WIN32
-        check_child_exit(); /* check childs [pid,status] */
-        if (FD_ISSET (s, &readfd)) {
+        check_child_exit((subrequest_id>0 ? have_a_child : 0)); /* check childs [pid,status] */
+        if ( (s != INVALID_SOCKET) && FD_ISSET (s, &readfd)) {
 #endif
          fromlen = sizeof(from);
          ns = accept(s, (struct sockaddr *)&from, &fromlen);
@@ -732,21 +732,21 @@ char    **argv;
             goto select_continue;
          }
 #endif
- {
-   char *p;
-
-   if (((p = getenv("RFIOD_TCP_NODELAY")) != NULL) ||
-       ((p = getconfent("RFIOD", "TCP_NODELAY", 0)) != NULL)
-       ) {
-     if ((strcmp(p,"YES") == 0) || (strcmp(p,"yes") == 0)) {
-       int rcode = 1;
-       if ( setsockopt(ns,IPPROTO_TCP,TCP_NODELAY,(char *)&rcode,sizeof(rcode)) == -1 ) {
-	 log(LOG_ERR, "setsockopt(..,TCP_NODELAY,...): %s\n",strerror(errno));
-       }
-     }
-   }
-   
- }
+         {
+           char *p;
+           
+           if (((p = getenv("RFIOD_TCP_NODELAY")) != NULL) ||
+               ((p = getconfent("RFIOD", "TCP_NODELAY", 0)) != NULL)
+               ) {
+             if ((strcmp(p,"YES") == 0) || (strcmp(p,"yes") == 0)) {
+               int rcode = 1;
+               if ( setsockopt(ns,IPPROTO_TCP,TCP_NODELAY,(char *)&rcode,sizeof(rcode)) == -1 ) {
+                 log(LOG_ERR, "setsockopt(..,TCP_NODELAY,...): %s\n",strerror(errno));
+               }
+             }
+           }
+           
+         }
          if (!singlethread)      {
 #if defined(HPSS)
             if ( rhpss_startreq(ns,&from,fromlen,privhosts,threadData,nb_threads) ) {
@@ -804,8 +804,18 @@ char    **argv;
                   doit(ns, &from, mode);
                   break;
             }
-	    have_a_child = 1;
+            have_a_child = 1;
             close(ns);                          /* Parent */
+            if ( subrequest_id > 0 ) {
+              /*
+               * If we are started by the stagerJob we don't allow for
+               * more than one connection. Close the listen socket and loop back
+               * to wait for the child we just forked.
+               */
+              close(Socket_parent);
+              s = Socket_parent = INVALID_SOCKET;
+              continue;
+            }
 #endif /* WIN32 */  
          } else {	/* singlethread */
             mode = 1;
@@ -813,37 +823,40 @@ char    **argv;
          }
 #ifndef _WIN32
          FD_CLR (ns, &readfd);
-      }
+        }
 #endif
     select_continue:
-      memcpy (&readfd, &readmask, sizeof(readmask));
-      timeval.tv_sec = (once_only && have_a_child) ? 1 : select_timeout;  /* must set each time for linux */
-      timeval.tv_usec = 0;
-      if ((select_status = select (s + 1, &readfd, NULL, NULL, &timeval)) < 0) { /* Error */
-	log(LOG_DEBUG,"select error No %d (%s)\n", errno, strerror(errno));
-		  if (once_only) {
-		    if (have_a_child && exit_code_from_last_child >= 0) {
-		      log(LOG_DEBUG,"Exiting with status %d\n", exit_code_from_last_child);
-		      exit(exit_code_from_last_child);
-		    } else if (! have_a_child) {
-		      /* error and no child : we assume very old client */
-		      log(LOG_DEBUG,"Exiting with status %d\n", 0);
-		      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-		    }
-		  }
-		  FD_ZERO (&readfd);
+        if ( s != INVALID_SOCKET ) {
+          memcpy (&readfd, &readmask, sizeof(readmask));
+          timeval.tv_sec = (once_only && have_a_child) ? 1 : select_timeout;  /* must set each time for linux */
+          timeval.tv_usec = 0;
+          select_status = select (s + 1, &readfd, NULL, NULL, &timeval);
+        } else select_status = 0;
+        if ( select_status < 0 ) {
+          log(LOG_DEBUG,"select error No %d (%s)\n", errno, strerror(errno));
+          if (once_only) {
+            if (have_a_child && exit_code_from_last_child >= 0) {
+              log(LOG_DEBUG,"Exiting with status %d\n", exit_code_from_last_child);
+              exit(exit_code_from_last_child);
+            } else if (! have_a_child) {
+              /* error and no child : we assume very old client */
+              log(LOG_DEBUG,"Exiting with status %d\n", 0);
+              exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+            }
+          }
+          FD_ZERO (&readfd);
+        }
+        if (select_status == 0 && once_only) { /* Timeout */
+          if (have_a_child && exit_code_from_last_child >= 0) {
+            log(LOG_DEBUG,"Exiting with status %d\n", exit_code_from_last_child);
+            exit(exit_code_from_last_child);
+          } else if (! have_a_child) {
+            /* timeout and no child : we assume very old client */
+            log(LOG_DEBUG,"Exiting with status %d\n", 0);
+            exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+          }
+        }
       }
-	  if (select_status == 0 && once_only) { /* Timeout */
-	    if (have_a_child && exit_code_from_last_child >= 0) {
-	      log(LOG_DEBUG,"Exiting with status %d\n", exit_code_from_last_child);
-	      exit(exit_code_from_last_child);
-	    } else if (! have_a_child) {
-	      /* timeout and no child : we assume very old client */
-	      log(LOG_DEBUG,"Exiting with status %d\n", 0);
-	      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-	    }
-	  }
-     }
    } else {       /* !standalone */
 
 #if defined(_WIN32)
@@ -1846,12 +1859,13 @@ int s,value;
 #endif
 
 #ifndef _WIN32
-void check_child_exit()
+void check_child_exit(int block)
 {
   int child_pid;
   int term_status;
 
-  while ((child_pid = waitpid(-1, &term_status, WNOHANG)) > 0) {
+  if ( block == 1 ) {
+    child_pid = wait(&term_status);
     exit_code_from_last_child = WEXITSTATUS(term_status);
     if (WIFEXITED(term_status)) {
       log(LOG_ERR,"Waiting for end of child %d, status %d\n", child_pid, exit_code_from_last_child);
@@ -1860,6 +1874,18 @@ void check_child_exit()
     } else {
       log(LOG_ERR,"Waiting for end of child %d, stopped\n", child_pid);
     }
+  } else {
+    while ((child_pid = waitpid(-1, &term_status, WNOHANG)) > 0) {
+      exit_code_from_last_child = WEXITSTATUS(term_status);
+      if (WIFEXITED(term_status)) {
+        log(LOG_ERR,"Waiting for end of child %d, status %d\n", child_pid, exit_code_from_last_child);
+      } else if (WIFSIGNALED(term_status)) {
+        log(LOG_ERR,"Waiting for end of child %d, uncaught signal %d\n", child_pid, WTERMSIG(term_status));
+      } else {
+        log(LOG_ERR,"Waiting for end of child %d, stopped\n", child_pid);
+      }
+    }
   }
+  return;
 }
 #endif
