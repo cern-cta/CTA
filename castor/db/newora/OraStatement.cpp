@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/10/13 10:31:11 $ $Author: itglp $
+ * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/08/02 13:23:40 $ $Author: itglp $
  *
  * 
  *
@@ -122,20 +122,12 @@ throw (castor::exception::Exception) {
   try {
     return new castor::db::ora::OraResultSet(m_statement->executeQuery(), m_statement);
   } catch(oracle::occi::SQLException e) {
-    try {
-      m_cnvSvc->rollback();
-      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-        // We've obviosly lost the Oracle connection here
-        m_cnvSvc->dropConnection();
-      }
-    } catch (oracle::occi::SQLException bad) {
-      // rollback failed, let's drop the connection for security
-      m_cnvSvc->dropConnection();
-    }
+    m_cnvSvc->handleException(e);
+
     castor::exception::SQLError ex;
-    // there was an old XXX - fix depending on Oracle error code
     ex.getMessage() << "Database error, Oracle code: " << e.getErrorCode()
                     << std::endl << e.what();
+    ex.setSQLErrorCode(e.getErrorCode());
     throw ex;
   }
 }
@@ -145,18 +137,9 @@ throw (castor::exception::Exception) {
   try {
     return m_statement->executeUpdate();
   } catch(oracle::occi::SQLException e) {
-    try {
-      m_cnvSvc->rollback();
-      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-        // We've obviosly lost the Oracle connection here
-        m_cnvSvc->dropConnection();
-      }
-    } catch (oracle::occi::SQLException bad) {
-      // rollback failed, let's drop the connection for security
-      m_cnvSvc->dropConnection();
-    }
+    m_cnvSvc->handleException(e);
+
     castor::exception::SQLError ex;
-    // there was an old XXX - fix depending on Oracle error code
     ex.getMessage() << "Database error, Oracle code: " << e.getErrorCode()
                     << std::endl << e.what();
     ex.setSQLErrorCode(e.getErrorCode());

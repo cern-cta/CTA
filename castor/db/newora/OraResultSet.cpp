@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraResultSet.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/08/22 16:32:34 $ $Author: itglp $
+ * @(#)$RCSfile: OraResultSet.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/08/02 13:23:40 $ $Author: itglp $
  *
  * 
  *
@@ -36,9 +36,7 @@ castor::db::ora::OraResultSet::~OraResultSet()
 {
   try {
 	  m_statement->closeResultSet(m_rset);
-  } catch(oracle::occi::SQLException ignored) {
-	 // XXX ignored for now...what could happen?
-  }
+  } catch(oracle::occi::SQLException ignored) {}
 }
 
 bool castor::db::ora::OraResultSet::next()
