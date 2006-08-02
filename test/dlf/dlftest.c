@@ -106,13 +106,12 @@ void worker(void *arg) {
 		/* usleep doesn't provide a high enough accuracy and is highly dependant on the scheduler. 
 		 * To compensate we hold internal variables discribing the throughput rate per second. If 
 		 * the throughput exceeds the desired amount we sleep for a while
-		 */ 
+		 */
 		if (now == time(NULL)) {
-			if (throughput > rate) {
+			if (throughput >= rate) {
 				usleep(1000);
 				continue;
-			}
-			throughput++;
+			} 
 		} else {
 			now        = time(NULL);
 			throughput = 0;
@@ -171,6 +170,7 @@ void worker(void *arg) {
 				       parname, DLF_MSG_PARAM_FLOAT, parf);
 			
 		}
+		throughput++;
 
 		if (rv < 0) {
 			fprintf(stderr, "Thread: %d - failed to dlf_write()\n", Cthread_self());
