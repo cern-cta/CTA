@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.c,v 1.4 2006/07/18 12:04:35 waldron Exp $
+ * $Id: mysql.c,v 1.5 2006/08/02 16:24:55 waldron Exp $
  */
 
 /* headers */
@@ -64,6 +64,7 @@ static time_t last_mode       = 0;           /**< time of last call to dlf_mode(
 
 /* externs */
 extern int       server_mode;                /**< server mode                           */
+extern long      server_start;               /**< server startup time                   */
 extern queue_t   *queue;                     /**< internal server fifo queue            */
 
 
@@ -76,6 +77,7 @@ struct database_t {
 	int                index;
 	long               mode;
 	int                mutex;
+	time_t             last_connect;
 
 	MYSQL              mysql;
 
@@ -102,7 +104,7 @@ struct database_t {
 int DLL_DECL db_init(int threads) {
 
 	/* variables */
-	MYSQL_RES    *res;
+	MYSQL_RES    *res = NULL;
 	MYSQL_ROW    row;
 	database_t   *db;
 	char         func[30];
@@ -162,8 +164,9 @@ int DLL_DECL db_init(int threads) {
 		}
 
 		/* initialise database_t structure */
-		db->index   = i;
-		db->mode    = MODE_DEFAULT;
+		db->index        = i;
+		db->mode         = MODE_DEFAULT;
+		db->last_connect = 0;
 
 		/* initialise statistics */
 		db->commits = db->errors  = db->inserts  = db->rollbacks = 0;
@@ -280,6 +283,11 @@ int DLL_DECL db_open(database_t *db, unsigned int retries) {
 		return APP_SUCCESS;
 	}
 
+	/* throttle connection attempts */
+	if (db->last_connect > (time(NULL) - 10)) {
+		return APP_FAILURE;
+	}
+
 	/* try to establish a connection until the maximum number of retries has been reached */
 	do {
 		/* throttle the connection attempts */
@@ -320,6 +328,7 @@ int DLL_DECL db_open(database_t *db, unsigned int retries) {
 			log(LOG_CRIT, "db_open() - failed to mysql_init() MYSQL handler : memory allocation error\n");
 			return APP_FAILURE;
 		}
+		db->last_connect = time(NULL);
 
 		if ((mysql_real_connect(&db->mysql, hostname, username, password, "dlf", 0, NULL, 0)) == NULL) {
 			strcpy(func, "mysql_real_connect()");
@@ -333,6 +342,7 @@ int DLL_DECL db_open(database_t *db, unsigned int retries) {
 		}
 
 		/* flag new connection status */
+		db->last_connect = 0;
 		SetConnected(db->mode);
 		log(LOG_DEBUG, "db_open() - connection established\n");
 
@@ -388,7 +398,7 @@ int DLL_DECL db_shutdown(void) {
 int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 
 	/* variables */
-	MYSQL_RES    *res;
+	MYSQL_RES    *res = NULL;
 	MYSQL_ROW    row;
 	database_t   *db;
 	char         func[30];
@@ -579,7 +589,7 @@ error:
 int DLL_DECL db_hostid(database_t *db, char *hostname, int *id) {
 
         /* variables */
-	MYSQL_RES    *res;
+	MYSQL_RES    *res = NULL;
 	MYSQL_ROW    row;
 	char         func[30];
 	char         query[1024];
@@ -743,7 +753,7 @@ error:
 int DLL_DECL db_nshostid(database_t *db, char *hostname, int *id) {
 
         /* variables */
-	MYSQL_RES    *res;
+	MYSQL_RES    *res   = NULL;
 	MYSQL_ROW    row;
 	char         func[30];
 	char         query[1024];
@@ -1173,7 +1183,7 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 	unsigned int mysql_errnum;
 
 	/* database accumulated stats */
-	int db_threads, h_threads;
+	int db_threads, h_threads, s_uptime;
 
 	unsigned long db_commits    = 0, db_errors    = 0, db_inserts  = 0, db_rollbacks = 0, db_hashtexts = 0;
 	unsigned long db_selects    = 0, db_updates   = 0, db_cursors  = 0, db_messages  = 0, db_inits = 0;
@@ -1301,15 +1311,18 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 	} else {
 		db_hashstats = -1.0;
 	}
+	s_uptime = (time(NULL) - server_start);
 
 	db->inserts++;
 	snprintf(query, sizeof(query), "INSERT INTO dlf_monitoring VALUES                        \
                  ('%s',  '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu',   \
-                  '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lf', '%lu')",
-		 timestr,      h_threads,    h_messages,   h_inits,     h_errors,   h_connections,
-		 h_clientpeak, h_timeouts,   db_threads,   db_commits,  db_errors,
-		 db_inserts,   db_rollbacks, db_selects,   db_updates,  db_cursors,
-		 db_messages,  db_inits,     db_hashtexts, server_mode, size, response,   interval);
+                  '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu',   \
+                  '%lf', '%lu')",
+		 timestr,       h_threads,    h_messages,   h_inits,      h_errors,   
+		 h_connections, h_clientpeak, h_timeouts,   db_threads,   db_commits,  
+		 db_errors,     db_inserts,   db_rollbacks, db_selects,   db_updates,  
+		 db_cursors,    db_messages,  db_inits,     db_hashtexts, s_uptime,    
+		 server_mode,   size,         response,     interval);
 
 	if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
 		goto error;
@@ -1350,7 +1363,7 @@ error:
 int DLL_DECL db_mode(unsigned int interval) {
 
 	/* variables */
-	MYSQL_RES    *res;
+	MYSQL_RES    *res = NULL;
 	MYSQL_ROW    row;
 	database_t   *db;
 	char         func[30];
@@ -1412,15 +1425,15 @@ int DLL_DECL db_mode(unsigned int interval) {
 	/* loop over results */
 	while ((row = mysql_fetch_row(res))) {
 		if (!strcasecmp(row[0], "queue_purge")) {
-			if (row[1]) SetServerPurge(server_mode);
+			if (atoi(row[1])) SetServerPurge(server_mode);
 			else ClrServerPurge(server_mode);			
 		} 
 		if (!strcasecmp(row[0], "queue_suspend")) {
-			if (row[1]) SetSuspendedQueue(server_mode);
+			if (atoi(row[1])) SetSuspendedQueue(server_mode);
 			else ClrSuspendedQueue(server_mode);
 		}
 		if (!strcasecmp(row[0], "database_suspend")) {
-			if (row[1]) SetSuspendedDB(server_mode);
+			if (atoi(row[1])) SetSuspendedDB(server_mode);
 			else ClrSuspendedDB(server_mode);
 		}
 	}
@@ -1439,7 +1452,7 @@ error:
 		ClrConnected(dpool[0]->mode);
 	}
 
-	log(LOG_ERR, "db_mode() - %s : %s\n", func, mysql_error(&dpool[0]->mysql));
+	log(LOG_ERR, "db_mode() : %s\n", mysql_error(&dpool[0]->mysql));
 
 	mysql_free_result(res);
 	db->errors++;
