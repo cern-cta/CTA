@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/08/02 16:45:48 $ $Author: itglp $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/08/03 09:35:12 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -404,6 +404,29 @@ castor::db::ora::OraCommonSvc::rollback() {
     reset();
   }
 }
+
+
+// -------------------------------------------------------------------------
+//  handleException
+// -------------------------------------------------------------------------
+void castor::db::ora::OraCnvSvc::handleException(oracle::occi::SQLException& e) {
+	try {
+    // Always try to rollback
+    cnvSvc->rollback();
+    
+    std::exception* pe = &e;
+    if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+      // We've obviously lost the ORACLE connection here
+      cnvSvc->dropConnection();  // reset values and drop the connection
+    }
+  }
+  catch (castor::exception::Exception e) {
+    // rollback failed, let's drop the connection for security
+	  cnvSvc->dropConnection(); 
+  }	
+}
+
+
 
 // -----------------------------------------------------------------------
 // createStatement - for Oracle specific statements

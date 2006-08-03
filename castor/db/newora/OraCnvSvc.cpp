@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/08/02 16:45:48 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/08/03 09:35:12 $ $Author: itglp $
  *
  *
  *
@@ -279,25 +279,5 @@ void castor::db::ora::OraCnvSvc::closeStatement(castor::db::IDbStatement* stmt)
                     << std::endl << e.what();
     throw ex;
   }
-}
-
-// -------------------------------------------------------------------------
-//  handleException
-// -------------------------------------------------------------------------
-void castor::db::ora::OraCnvSvc::handleException(std::exception& e) {
-	try {
-    // Always try to rollback
-    rollback();
-    
-    std::exception* pe = &e;
-    if (3114 == ((oracle::occi::SQLException*)pe)->getErrorCode() || 28 == ((oracle::occi::SQLException*)pe)->getErrorCode()) {
-      // We've obviously lost the ORACLE connection here
-      dropConnection(); // reset values and drop the connection
-    }
-  }
-  catch (castor::exception::Exception e) {
-    // rollback failed, let's drop the connection for security
-	  dropConnection(); // instead of reset .... 
-  }	
 }
 
