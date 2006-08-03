@@ -95,6 +95,8 @@ namespace castor {
          */
         castor::db::ora::OraCnvSvc* cnvSvc() const;
 
+	void handleException(oracle::occi::SQLException e);
+
       protected:
 
         /***********/

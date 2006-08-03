@@ -101,3 +101,33 @@ castor::db::ora::OraCnvSvc* castor::db::ora::OraBaseObj::cnvSvc() const {
   return m_cnvSvc;
 }
 
+
+
+
+// -------------------------------------------------------------------------
+//  handleException
+// -------------------------------------------------------------------------
+void castor::db::ora::OraBaseObj::handleException(oracle::occi::SQLException e){
+
+	try {
+      		// Always try to rollback
+      		cnvSvc()->rollback();
+      		
+                if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+        // We've obviously lost the ORACLE connection here
+        	cnvSvc()->dropConnection(); // reset values and drop the connection
+     		 }
+		
+    	} catch (castor::exception::Exception e) {
+      	// rollback failed, let's drop the connection for security
+	  cnvSvc()->dropConnection(); // instead of reset .... 
+   	 }	
+}
+
+
+
+
+
+
+
+
