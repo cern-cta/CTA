@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbCnvSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/08/02 16:47:20 $ $Author: itglp $
+ * @(#)$RCSfile: DbCnvSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/08/03 09:35:49 $ $Author: itglp $
  *
  *
  *
@@ -106,7 +106,7 @@ namespace castor {
          * Default implementation does nothing
          * @param e the database exception
          */
-         virtual void handleException(std::exception e) {};
+        virtual void handleException(std::exception e) {};
        
 
         /**
