@@ -93,12 +93,6 @@ namespace castor {
 
         void reset() throw ();
 
-	/** 
-         * to handle Exceptions when the connection of the db is down
-	 */
-
-	void  handleException(oracle::occi::SQLException e);
-
         /**
          * Get a connection to the database. The service opens
          * this connection when this function is called for the
