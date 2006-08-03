@@ -1006,7 +1006,7 @@ void CppCppOraCnvWriter::writeFillRep() {
             << endl;
   m_indent++;
   *m_stream << getIndent()
-	    << "cnvSvc()->handleException(e);"<<endl
+	    << "handleException(e);"<<endl
 	    << getIndent()
             << fixTypeName("Internal",
                            "castor.exception",
@@ -2746,7 +2746,7 @@ void CppCppOraCnvWriter::printSQLError(QString name,
                                        AssocList& assocs) {
   fixTypeName("OraCnvSvc", "castor::db::ora", m_classInfo->packageName);
    m_indent++;
-  *m_stream << getIndent() <<"cnvSvc()->handleException(e);" << endl;
+  *m_stream << getIndent() <<"handleException(e);" << endl;
   *m_stream<< getIndent()
             << fixTypeName("InvalidArgument",
                            "castor.exception",
