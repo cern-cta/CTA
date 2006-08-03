@@ -216,7 +216,7 @@ void castor::db::ora::OraStageFileQueryRequestCnv::fillRep(castor::IAddress* add
       cnvSvc()->commit();
     }
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->handleException(e);
+    handleException(e);
     castor::exception::Internal ex; 
     ex.getMessage() << "Error in fillRep for type " << type
                     << std::endl << e.what() << std::endl;
@@ -531,7 +531,7 @@ void castor::db::ora::OraStageFileQueryRequestCnv::createRep(castor::IAddress* a
       cnvSvc()->commit();
     }
   } catch (oracle::occi::SQLException e) {
-      cnvSvc()->handleException(e);
+      handleException(e);
       castor::exception::InvalidArgument ex;
       ex.getMessage() << "Error in insert request :"
                       << std::endl << e.what() << std::endl
@@ -593,7 +593,7 @@ void castor::db::ora::OraStageFileQueryRequestCnv::createRep(castor::IAddress* a
         cnvSvc()->commit();
       }
     } catch (oracle::occi::SQLException e) {
-        cnvSvc()->handleException(e);
+        handleException(e);
         castor::exception::InvalidArgument ex;
         ex.getMessage() << "Error in update request :"
                         << std::endl << e.what() << std::endl
@@ -640,7 +640,7 @@ void castor::db::ora::OraStageFileQueryRequestCnv::createRep(castor::IAddress* a
           cnvSvc()->commit();
         }
       } catch (oracle::occi::SQLException e) {
-          cnvSvc()->handleException(e);
+          handleException(e);
           castor::exception::InvalidArgument ex;
           ex.getMessage() << "Error in delete request :"
                           << std::endl << e.what() << std::endl
@@ -691,7 +691,7 @@ void castor::db::ora::OraStageFileQueryRequestCnv::createRep(castor::IAddress* a
           m_selectStatement->closeResultSet(rset);
           return object;
         } catch (oracle::occi::SQLException e) {
-            cnvSvc()->handleException(e);
+            handleException(e);
             castor::exception::InvalidArgument ex;
             ex.getMessage() << "Error in select request :"
                             << std::endl << e.what() << std::endl
@@ -739,7 +739,7 @@ void castor::db::ora::OraStageFileQueryRequestCnv::createRep(castor::IAddress* a
             object->setId((u_signed64)rset->getDouble(14));
             m_selectStatement->closeResultSet(rset);
           } catch (oracle::occi::SQLException e) {
-              cnvSvc()->handleException(e);
+              handleException(e);
               castor::exception::InvalidArgument ex;
               ex.getMessage() << "Error in update request :"
                               << std::endl << e.what() << std::endl

@@ -18,9 +18,9 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
 <<<<<<< OraGCSvc.cpp
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/08/03 08:14:30 $ $Author: felixehm $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/08/03 10:03:16 $ $Author: gtaur $
 =======
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/08/03 08:14:30 $ $Author: felixehm $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/08/03 10:03:16 $ $Author: gtaur $
 >>>>>>> 1.9.4.1
  *
  * Implementation of the IGCSvc for Oracle
@@ -253,7 +253,7 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
       }
       delete result;
     }
-    cnvSvc()->handleException(e);
+    handleException(e);
     throw ex;
   }
 }
@@ -417,7 +417,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
     // commit everything into the DB
     cnvSvc()->commit();
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->handleException(e);
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to remove deleted files :\n"
@@ -426,7 +426,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
     try {
       cnvSvc()->commit();
     } catch (oracle::occi::SQLException e2) {
-      cnvSvc()->handleException(e2);
+      handleException(e2);
       ex.getMessage()
       << "Got an extra error while trying to commit connection :\n"
       << e2.getMessage();
@@ -472,7 +472,7 @@ void castor::db::ora::OraGCSvc::filesDeletionFailed
     // execute the statement
     m_filesDeletionFailedStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->handleException(e);
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to remove files for which deletion failed :"
@@ -528,7 +528,7 @@ castor::db::ora::OraGCSvc::requestToDo()
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->handleException(e);
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in requestToDo."

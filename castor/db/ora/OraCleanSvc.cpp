@@ -161,7 +161,7 @@ int castor::db::ora::OraCleanSvc::removeOutOfDateRequests(int numDays)
 
     }catch (oracle::occi::SQLException e) {
 
-            cnvSvc()->handleException(e);
+            handleException(e);
             castor::exception::Internal ex;
 
 	    castor::dlf::Param params[] =
@@ -204,7 +204,7 @@ int  castor::db::ora::OraCleanSvc::removeArchivedRequests(int hours)
        return 0;
     }catch (oracle::occi::SQLException e) {
 
-      cnvSvc()->handleException(e);
+      handleException(e);
       castor::exception::Internal ex;
 
       castor::dlf::Param params[] =

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/08/02 14:04:20 $ $Author: gtaur $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/08/03 10:03:16 $ $Author: gtaur $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -385,7 +385,7 @@ castor::db::ora::OraJobSvc::getUpdateStart
     cnvSvc()->commit();
     return result;
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->handleException(e);
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in getUpdateStart."
@@ -440,7 +440,7 @@ castor::db::ora::OraJobSvc::putStart
     if (0 != result) {
       delete result;
     }
-    cnvSvc()->handleException(e);
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in putStart."
@@ -493,7 +493,7 @@ castor::db::ora::OraJobSvc::putDoneStart(u_signed64 subreqId)
     if (0 != result) {
       delete result;
     }
-    cnvSvc()->handleException(e);
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in putDoneStart."
@@ -521,7 +521,7 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyDone
     m_disk2DiskCopyDoneStatement->setDouble(2, status);
     m_disk2DiskCopyDoneStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->handleException(e);
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in disk2DiskCopyDone."
@@ -598,7 +598,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       throw ex;
     }
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->handleException(e);
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in prepareForMigration."
@@ -625,7 +625,7 @@ void castor::db::ora::OraJobSvc::getUpdateDone
     m_getUpdateDoneStatement->setDouble(1, subReqId);
     m_getUpdateDoneStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->handleException(e);
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to clean Get/Update subRequest :"
@@ -652,7 +652,7 @@ void castor::db::ora::OraJobSvc::getUpdateFailed
     m_getUpdateFailedStatement->setDouble(1, subReqId);
     m_getUpdateFailedStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->handleException(e);
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to mark subRequest as FAILED :"
@@ -679,7 +679,7 @@ void castor::db::ora::OraJobSvc::putFailed
     m_putFailedStatement->setDouble(1, subReqId);
     m_putFailedStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->handleException(e);
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to clean Put subRequest :"
@@ -891,7 +891,7 @@ castor::db::ora::OraJobSvc::requestToDo()
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->handleException(e);
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in requestToDo."

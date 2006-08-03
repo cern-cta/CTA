@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraFSSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/08/02 14:04:20 $ $Author: gtaur $
+ * @(#)$RCSfile: OraFSSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/08/03 10:03:16 $ $Author: gtaur $
  *
  * Implementation of the IFSSvc for Oracle
  *
@@ -181,7 +181,7 @@ castor::db::ora::OraFSSvc::selectDiskPool
     m_selectDiskPoolStatement->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->handleException(e);
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select DiskPool by name :"
@@ -219,7 +219,7 @@ castor::db::ora::OraFSSvc::selectTapePool
     m_selectTapePoolStatement->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->handleException(e);
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select TapePool by name :"
@@ -261,7 +261,7 @@ castor::db::ora::OraFSSvc::selectDiskServer
     m_selectDiskServerStatement->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {
-    cnvSvc()->handleException(e);
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select DiskServer by name :"
