@@ -18,9 +18,9 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
 <<<<<<< OraGCSvc.cpp
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/08/02 14:04:20 $ $Author: gtaur $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/08/03 08:14:30 $ $Author: felixehm $
 =======
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/08/02 14:04:20 $ $Author: gtaur $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/08/03 08:14:30 $ $Author: felixehm $
 >>>>>>> 1.9.4.1
  *
  * Implementation of the IGCSvc for Oracle
@@ -209,8 +209,8 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
       foundSomething = true;
       // Fill result
       castor::stager::GCLocalFile* f = new castor::stager::GCLocalFile();
-      f->setFileName(rset->getString(1));
-      f->setDiskCopyId((u_signed64)rset->getDouble(2));      
+      f->setFileName(rset->getString(2));
+      f->setDiskCopyId((u_signed64)rset->getDouble(1));      
       result->push_back(f);
       // keep id
       dcIds.push_back(f->diskCopyId());
