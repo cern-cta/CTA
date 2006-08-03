@@ -15,7 +15,7 @@
   --------------------
 
   - Upgrade the Database 
-  - Upgrade first the head node
+  - Upgrade the head node
   - Then for the other components there are no restrictions in that release.
 
 -----------
