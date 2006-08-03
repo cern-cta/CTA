@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/08/03 09:35:12 $ $Author: itglp $
+ * @(#)$RCSfile: OraCommonSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/08/03 12:40:26 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for Oracle/CDBC
  *
@@ -146,8 +146,7 @@ namespace castor {
         virtual void rollback();
         
         /**
-         * Handles Oracle exceptions and make sure everything is reset
-         * so that next time a new connection is established
+         * Helper method to handle exceptions - see OraCnvSvc
          * @param e an Oracle exception
          */
         void handleException(oracle::occi::SQLException& e);

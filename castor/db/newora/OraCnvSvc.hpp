@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: OraCnvSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/08/03 09:35:12 $ $Author: itglp $
+* @(#)$RCSfile: OraCnvSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/08/03 12:40:26 $ $Author: itglp $
 *
 *
 *
@@ -67,67 +67,74 @@ namespace castor {
         static const unsigned int ID();
         
         /**
-         * Get the real representation type from the
-         * concrete class, that is the database type
-         * to which this conversion service is connected.
-         */
+        * Get the real representation type from the
+        * concrete class, that is the database type
+        * to which this conversion service is connected.
+        */
         virtual const unsigned int getPhysRepType() const;
-       
+        
         /**
-         * Forces the commit of the last changes.
-         * @param address what to commit
-         * @exception Exception throws an Exception in case of error
-         */
+        * Forces the commit of the last changes.
+        * @param address what to commit
+        * @exception Exception throws an Exception in case of error
+        */
         virtual void commit()
           throw (castor::exception::Exception);
         
         /**
-         * Forces the rollback of the last changes
-         * @exception Exception throws an Exception in case of error
-         */
+        * Forces the rollback of the last changes
+        * @exception Exception throws an Exception in case of error
+        */
         virtual void rollback()
           throw (castor::exception::Exception);
         
         /**
-         * Creates an Oracle prepared statement wrapped with the
-         * db-independent CDBC API
-         * @param stmt the string statement to be prepared 
-         */
+        * Creates an Oracle prepared statement wrapped with the
+        * db-independent CDBC API
+        * @param stmt the string statement to be prepared 
+        */
         virtual castor::db::IDbStatement* createStatement(const std::string& stmt)
           throw (castor::exception::Exception);
         
         /**
-         * Creates an Oracle prepared statement exposed with the Oracle API
-         * @param stmt the string statement to be prepared 
-         */
+        * Creates an Oracle prepared statement exposed with the Oracle API
+        * @param stmt the string statement to be prepared 
+        */
         oracle::occi::Statement*
         castor::db::ora::OraCnvSvc::createOraStatement(const std::string& stmt)
           throw (castor::exception::Exception);
         
         /**
-         * Deletes the connection to the database
-         */
+        * Deletes the connection to the database
+        */
         virtual void dropConnection() throw();
+        
+        /**
+        * Handles Oracle exceptions and make sure everything is reset
+        * so that next time a new connection is established
+        * @param e an Oracle exception
+        */
+        virtual void handleException(std::exception& e);
         
       private:
         
         /**
-         * Get a connection to the database. The service opens
-         * this connection when this function is called for the
-         * first time and returns pointers to it for all
-         * subsequent calls. The does thus not own the connection
-         * @return the newly created connection
-         * @exception SQLException thrown by Oracle
-         */
+        * Get a connection to the database. The service opens
+        * this connection when this function is called for the
+        * first time and returns pointers to it for all
+        * subsequent calls. The does thus not own the connection
+        * @return the newly created connection
+        * @exception SQLException thrown by Oracle
+        */
         oracle::occi::Connection* getConnection()
           throw (oracle::occi::SQLException, castor::exception::Exception);
         
         /**
-         * Closes a prepared statement wrapped with the
-         * db-independent CDBC API.
-         * This is called by ~OraStatement.
-         * @param stmt the statement to be deleted 
-         */
+        * Closes a prepared statement wrapped with the
+        * db-independent CDBC API.
+        * This is called by ~OraStatement.
+        * @param stmt the statement to be deleted 
+        */
         virtual void closeStatement(castor::db::IDbStatement* stmt)
           throw (castor::exception::Exception);
         
@@ -141,20 +148,20 @@ namespace castor {
         std::string m_dbName;
         
         /**
-         * The Oracle environment for this service
-         */
+        * The Oracle environment for this service
+        */
         oracle::occi::Environment* m_environment;
         
         /**
-         * The Oracle connection for this service
-         */
+        * The Oracle connection for this service
+        */
         oracle::occi::Connection* m_connection;
         
         
         /**
-         * Friend declaration for OraStatement to allow call
-         * the private method closeStatement()
-         */
+        * Friend declaration for OraStatement to allow call
+        * the private method closeStatement()
+        */
         friend class OraStatement;
         
       };
