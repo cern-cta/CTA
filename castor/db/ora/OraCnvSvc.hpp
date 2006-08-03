@@ -147,13 +147,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Handles Oracle exceptions and make sure everything is reset
-         * so that next time a new connection is established
-         * @param e an Oracle exception
-         */
-        virtual void handleException(std::exception& e);
-
-        /**
          * Get an object from its id.
          * Essentially a wrapper around createObj that
          * don't call it if the object is in the newlyCreated

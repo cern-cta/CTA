@@ -1006,7 +1006,7 @@ void CppCppOraCnvWriter::writeFillRep() {
             << endl;
   m_indent++;
   *m_stream << getIndent()
-	    << "castor::db::ora::OraBaseObj::handleException(e);"<<endl
+	    << "cnvSvc()->handleException(e);"<<endl
 	    << getIndent()
             << fixTypeName("Internal",
                            "castor.exception",
