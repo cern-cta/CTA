@@ -1,13 +1,35 @@
 -----------
+- 2.1.0-5 -
+-----------
+  New Features and Changes (from 2.1.0-5)
+  ---------------------------------------
+  - Fixed some deadlock between the GC and the updateFsFileClosed PL/SQL function
+  - Fixed a missing chkconfig line in debian/cleaning.init
+  - RFIO_USE_CASTOR_V2 NOT case sensitive.
+  - Fixed the bug of permissions when creating a file (stager_put)
+  - Remove check for already migrated files preventing recreated files from being migrated
+  - Fixed stage_open, broken since the integration of O_LARGEFILE
+  - Fixed tpdump for toot usage
+
+  Upgrade from 2.1.0-4
+  --------------------
+
+  - Upgrade the Database 
+  - Upgrade first the head node
+  - Then for the other components there are no restrictions in that release.
+
+-----------
 - 2.1.0-4 -
 -----------
   New Features and Changes (from 2.1.0-3)
   ---------------------------------------
+  This is a bug fix release, strictly identical to 2.1.0-3 with some exceptions:
   - The name server client commands(nsln, nsgetacl and nssetacl) for manipulating the ACLs are included in castor-ns-client package
   - Fixed TURL parsing in rfcp
   - Updated the man pages with the new turl
   - Added some changes in the stager and disk server to support xrootd protocol
   - Fixed bug #17720, backport fix in rtcpcld_putFailed from 1.143.0.2
+  - Added message when skipping not-staged files
   - Stager client command line is CASTOR2 by default (RFIO_USE_CASTOR_V2 doesn't need to be set with this client version)
   - Check of tapealerts hard error, media error, write failure, read failure at release time. 
   - Removal of MIR validity check, on IBM3592EO5 in some situation gives false positive results.
@@ -16,9 +38,11 @@
   Upgrade from 2.1.0-3
   --------------------
 
-   - The upgrade to be done concerns the whole system (database, stager, client, disk servers and tape servers)
-   - Upgrade the database (you don't need to stop the services nor daemons for that).
-   - If your are upgrading 2.1.0-3 no order is required, but if you are upgrading from 2.1.0-2 or previous versions please follow the order specified in "2.1.0-3 upgrade from 2.1.0-2"
+   - The upgrade to be done concerns to the whole system but the database( stager, client, disk servers and tape servers)
+   - There are no specific modifications of the database
+   - If your are upgrading 2.1.0-3 no order is required, but if you are upgrading from 2.1.0-2 or previous versions please follow the order specified in "2.1.0-3 upgrade from 2.1.0-2"  
+   
+
 
 
 -----------
@@ -26,6 +50,7 @@
 -----------
   New Features and Changes (from 2.1.0-2)
   ---------------------------------------
+  This is a bug fix release, strictly identical to 2.1.0-2 with some exceptions:
   - Fixes concerning the TURL parsing in RFIO
   - The garbage collection was optimized 
   - Added the check of MIR validity at mount time for SUN/STK T10000, LTO and IBM3592
@@ -37,9 +62,11 @@
   Upgrade from 2.1.0-2
   --------------------
 
-    - The upgrade to be done concerns the whole system (database, stager, client, tape servers)
-    - Upgrade the database (you don't need to stop the services nor daemons for that).
+    - The upgrade to be done concerns to the whole system (database, stager, client, tape servers)
+    - Upgrade the database (you don't need to stop the services nor daemos for that).
     - Then upgrade the rest of the system. 
+
+
   
 
 -----------
@@ -73,8 +100,7 @@
   New Features and Changes (from 2.1.0-0)
   ---------------------------------------
   This is not really a release but modifications at the rpm level
-
-
+  
 -----------
 - 2.1.0.0 -
 -----------
