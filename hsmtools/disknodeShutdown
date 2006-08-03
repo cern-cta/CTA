@@ -237,7 +237,7 @@ sub check_progress () {
                 
 	for ($i =0; $i <= $#ary; $i++) {
 
-	  open (CHECK, "stager_qry -M `nsGetPath castor $ary[$i]` 2>&1 |");
+	  open (CHECK, "stager_qry -M `nsGetPath castorns $ary[$i]` 2>&1 |");
 	  while (<CHECK>) {
  		print $_;
  		if ($_ =~ m/(STAGED$|CANBEMIGR$)/i ){ print $_; $total++;}
@@ -274,7 +274,7 @@ sub create_file ($) {
 
         while ($line = <CMD>) {
 		chomp($line);
-        	open(X, "nsGetPath castor $line |");
+        	open(X, "nsGetPath castorns $line |");
 		print FILE $line . " " . <X>;
 		$count++;
 		if ($count % 100 == 0) {print ".";}
@@ -375,8 +375,8 @@ sub TransferManager($)
 
      if (!$DUMMY_MODE) {
 
-	if (-e "/etc/sysconf/castor") {`source /etc/sysconf/castor`;} 
-	else {print "Unable to find \"/etc/sysconf/castor\". Continuing but you may need to do this by hand.\n";}
+	if (-e "/etc/sysconfig/castor") {`source /etc/sysconfig/castor`;} 
+	else {print "Unable to find \"/etc/sysconfig/castor\". Continuing but you may need to do this by hand.\n";}
 
 	foreach $NODE (@NODES){
 
@@ -391,7 +391,7 @@ sub TransferManager($)
 	}
      else {
 
-	 print $DUMMY_MSG . "source /etc/sysconf/castor\n";
+	 print $DUMMY_MSG . "source /etc/sysconfig/castor\n";
 	 foreach $NODE (@NODES){
 
 	   print $DUMMY_MSG . "Moving $NODE to recovery pool.\n";
