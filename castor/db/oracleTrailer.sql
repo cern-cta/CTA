@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.286 $ $Release$ $Date: 2006/08/02 15:21:10 $ $Author: felixehm $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.287 $ $Release$ $Date: 2006/08/03 08:15:16 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.286 $ $Date: 2006/08/02 15:21:10 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.287 $ $Date: 2006/08/03 08:15:16 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 200;
@@ -1727,7 +1727,7 @@ CREATE OR REPLACE PROCEDURE updateFiles2Delete
 BEGIN
   FOR i in dcIds.FIRST .. dcIds.LAST LOOP
     UPDATE DiskCopy set status = 9 -- BEING_DELETED
-     WHERE id = i;
+     WHERE id = dcIds(i);
   END LOOP;
 END;
 
