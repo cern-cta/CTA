@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.21 $ $Release$ $Date: 2006/03/21 14:30:41 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.22 $ $Release$ $Date: 2006/08/03 15:49:48 $ $Author: felixehm $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.21 $ $Release$ $Date: 2006/03/21 14:30:41 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.22 $ $Release$ $Date: 2006/08/03 15:49:48 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -415,7 +415,7 @@ int rtcpcld_gettape(
                   (inChild == 0 ? mainUuid : childUuid),
                   RTCPCLD_LOG_MSG(RTCPCLD_MSG_GOTTAPE),
                   (struct Cns_fileid *)NULL,
-                  RTCPCLD_NB_PARAMS+4,
+                  4,
                   "",
                   DLF_MSG_PARAM_TPVID,
                   tapereq->vid,
