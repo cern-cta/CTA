@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.146 $ $Release$ $Date: 2006/07/20 16:56:48 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.147 $ $Release$ $Date: 2006/08/03 16:01:45 $ $Author: waldron $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.146 $ $Release$ $Date: 2006/07/20 16:56:48 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.147 $ $Release$ $Date: 2006/08/03 16:01:45 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1752,7 +1752,7 @@ int nextSegmentToMigrate(
                         (inChild == 0 ? mainUuid : childUuid),
                         RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                         (struct Cns_fileid *)castorFileId,
-                        RTCPCLD_NB_PARAMS+4,
+                        RTCPCLD_NB_PARAMS+3,
                         "SYSCALL",
                         DLF_MSG_PARAM_STR,
                         "rfio_stat64()",
@@ -1803,7 +1803,7 @@ int nextSegmentToMigrate(
                       (inChild == 0 ? mainUuid : childUuid),
                       RTCPCLD_LOG_MSG(RTCPCLD_MSG_CPEXIST),
                       (struct Cns_fileid *)fileid,
-                      RTCPCLD_NB_PARAMS+1,
+                      1,
                       "",
                       DLF_MSG_PARAM_TPVID,
                       tape->tapereq.vid
@@ -2892,7 +2892,7 @@ int rtcpcld_updcFileRecalled(
                         (inChild == 0 ? mainUuid : childUuid),
                         RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                         (struct Cns_fileid *)fileid,
-                        RTCPCLD_NB_PARAMS+4,
+                        RTCPCLD_NB_PARAMS+3,
                         "SYSCALL",
                         DLF_MSG_PARAM_STR,
                         "rfio_stat64()",
