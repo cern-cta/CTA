@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: diskServer_qry.man,v $ $Revision: 1.4 $ $Date: 2006/04/24 16:13:40 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: diskServer_qry.man,v $ $Revision: 1.5 $ $Date: 2006/08/04 14:46:47 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH DISKSERVER_QRY 1 "$Date: 2006/04/24 16:13:40 $" CASTOR "List files on a DiskServer"
+.TH DISKSERVER_QRY 1 "$Date: 2006/08/04 14:46:47 $" CASTOR "List files on a DiskServer"
 .SH NAME
 diskServer_qry
 .SH SYNOPSIS
@@ -30,7 +30,7 @@ status.
 Get usage information
 .TP
 .B \-i,\ \-\-fileId
-Prints the castorFileId of each file
+Prints the castor fileId and HSM name of each file
 .TP
 .B \-d,\ \-\-diskCopyId
 Prints the diskCopyId of each file
@@ -42,24 +42,24 @@ is the name of the disk server to be queried
 .SH EXAMPLES
 .BI #\ diskServer_qry\ lxfsrk605
 .fi
-Status                         FileName
+Status               Physical FileName
 .fi
-DISKCOPY_CANBEMIGR             /shift/lxfsrk605/data01/05/61263405@lxs5010.450
+DISKCOPY_CANBEMIGR   /shift/lxfsrk605/data01/05/61263405@lxs5010.450
 .fi
-DISKCOPY_CANBEMIGR             /shift/lxfsrk605/data01/21/61270821@lxs5010.529
+DISKCOPY_CANBEMIGR   /shift/lxfsrk605/data01/21/61270821@lxs5010.529
 .fi
-DISKCOPY_STAGEOUT              /shift/lxfsrk605/data01/46/61312846@lxs5010.718
+DISKCOPY_STAGEOUT    /shift/lxfsrk605/data01/46/61312846@lxs5010.718
 .ft
 
 .BI #\ diskServer_qry\ -id\ lxfsrk605
 .fi
-FileId          DiskCopyId      Status                         FileName
+FileId     DiskCopyId   Status               Physical FileName                                  HSM FileName
 .fi
-61263405        450             DISKCOPY_CANBEMIGR             /shift/lxfsrk605/data01/05/61263405@lxs5010.450
+61263405   450          DISKCOPY_CANBEMIGR   /shift/lxfsrk605/data01/05/61263405@lxs5010.450    /castor/cern.ch/some/hsm/path
 .fi
-61270821        529             DISKCOPY_CANBEMIGR             /shift/lxfsrk605/data01/21/61270821@lxs5010.529
+61270821   529          DISKCOPY_CANBEMIGR   /shift/lxfsrk605/data01/21/61270821@lxs5010.529    /castor/cern.ch/some/hsm/path
 .fi
-61312846        718             DISKCOPY_STAGEOUT              /shift/lxfsrk605/data01/46/61312846@lxs5010.718
+61312846   718          DISKCOPY_STAGEOUT    /shift/lxfsrk605/data01/46/61312846@lxs5010.718    /castor/cern.ch/some/hsm/path
 .ft
 .fi
 .SH NOTES

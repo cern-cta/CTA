@@ -18,7 +18,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: diskServer_qry,v $ $Revision: 1.2 $ $Release$ $Date: 2006/04/19 08:13:32 $ $Author: sponcec3 $
+# * @(#)$RCSfile: diskServer_qry,v $ $Revision: 1.3 $ $Release$ $Date: 2006/08/04 14:46:47 $ $Author: itglp $
 # *
 # * queries the stager for the files residing on a given diskServer
 # *
@@ -36,8 +36,8 @@ sub usage {
 
 # first parse the options
 my $help;
-my $giveFileId;
-my $giveDCId;
+my $giveFileId = 0;
+my $giveDCId = 0;
 if (0 == Getopt::Long::GetOptions ('h|help' => \$help,
                                    'i|fileId' => \$giveFileId,
                                    'd|diskCopyId' => \$giveDCId)) {
@@ -63,7 +63,7 @@ my $dbh = DBI->connect('dbi:Oracle:',$castor_conf[0] ,$castor_conf[1]);
 my $dbquery;
 if ($giveFileId) {
   $dbquery .= <<EOF;
-SELECT FileSystem.mountPoint||DiskCopy.path, DiskCopy.status, DiskCopy.id, CastorFile.fileId
+SELECT FileSystem.mountPoint||DiskCopy.path, DiskCopy.status, DiskCopy.id, CastorFile.fileId, CastorFile.lastKnownFileName
   FROM FileSystem, DiskServer, DiskCopy, CastorFile
  WHERE FileSystem.diskServer = DiskServer.id
    AND DiskCopy.fileSystem = FileSystem.id
@@ -84,22 +84,26 @@ my $sth = $dbh->prepare("$dbquery");
 $sth->execute;
 
 # display Header
-if ($giveFileId) { printf("%-15s ", "FileId"); }
-if ($giveDCId) { printf("%-15s ", "DiskCopyId"); }
-printf("%-30s %s\n", "Status", "FileName");
+if ($giveFileId) { printf("%-10s ", "FileId"); }
+if ($giveDCId) { printf("%-12s ", "DiskCopyId"); }
+printf("%-20s %-50s ", "Status", "Physical FileName");
+if ($giveFileId) { printf("%s", "HSM FileName"); }
+printf("\n");
 
 # display results
 my @row;
-my $statusStr;
+my $statusStr = "";
 while (@row = $sth->fetchrow_array) {
-  if ($giveFileId) { printf("%-15lld ", $row[3]); }
-  if ($giveDCId) { printf("%-15lld ", $row[2]); }
+  if ($giveFileId) { printf("%-10lld ", $row[3]); }
+  if ($giveDCId) { printf("%-12lld ", $row[2]); }
   if ($row[1] <= $#DiskCopyStatus) {
     $statusStr = $DiskCopyStatus[$row[1]];
   } else {
     $statusStr = "Unknown status : " . $row[1];
   }
-  printf("%-30s %s\n", $statusStr, $row[0]);
+  printf("%-20s %-50s ", $statusStr, $row[0]);
+  if ($giveFileId) { printf("%s", $row[4]); }
+  printf("\n");
 }
 
 # Close DB connection
