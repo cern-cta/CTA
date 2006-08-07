@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.7 2006/08/02 16:24:11 waldron Exp $
+ * $Id: oracle.pc,v 1.8 2006/08/07 06:03:26 waldron Exp $
  */
 
 /* headers */
@@ -1262,7 +1262,7 @@ int DLL_DECL db_stats(unsigned int interval) {
 		{ 35, 0.0, 0.0, 0.0, 0.0, 0, 0, 0 },
 		{ 36, 0.0, 0.0, 0.0, 0.0, 0, 0, 0 },
 		{ 37, 0.0, 0.0, 0.0, 0.0, 0, 0, 0 },
-		{ 38, 0.0, 0.0, 0.0, 0.0, 0, 0, 0 },
+		{ 40, 0.0, 0.0, 0.0, 0.0, 0, 0, 0 },
 		{ -1, 0.0, 0.0, 0.0, 0.0, 0, 0, 0 }    /**< termination */
 	};
 
@@ -1369,7 +1369,7 @@ int DLL_DECL db_stats(unsigned int interval) {
 			AND   m.msg_no = 12
 			AND   m.id = p.id
 			AND   p.name = 'Type'
-			AND   p.value IN (35, 36, 37, 38)) s,
+			AND   p.value IN (35, 36, 37, 40)) s,
 
 		/* exiting job */
 		(SELECT reqid, timestamp FROM dlf_messages
@@ -1421,7 +1421,7 @@ end_stats1:
 		AND   m.msg_no = 12
 		AND   m.id = p.id
 		AND   p.name = 'Type'
-		AND   p.value IN (35, 36, 37, 38)
+		AND   p.value IN (35, 36, 37, 40)
 		GROUP BY p.value;
 
 	/* set error handling and open cursor */
@@ -1493,7 +1493,7 @@ end_stats2:
 			AND   m.msg_no = 12
 			AND   m.id = p.id
 			AND   p.name = 'Type'
-			AND   p.value IN (35, 36, 37, 38)) b
+			AND   p.value IN (35, 36, 37, 40)) b
 
 		WHERE a.reqid = b.reqid
 		GROUP BY b.value;
