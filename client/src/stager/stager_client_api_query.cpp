@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.24 2006/08/07 07:24:55 sponcec3 Exp $
+ * $Id: stager_client_api_query.cpp,v 1.25 2006/08/07 12:00:44 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.24 $ $Date: 2006/08/07 07:24:55 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.25 $ $Date: 2006/08/07 12:00:44 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -146,7 +146,8 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
         if (0 == res) {
           // Not even a Response !
           castor::exception::Exception e(SEINTERNAL);
-          e.getMessage() << "Error in dynamic cast, response was NOT a Response";
+          e.getMessage() << "Error in dynamic cast, response was NOT a Response (type was "
+                         << respvec[i]->type() << ")";
           throw e;
         } else {
           (*responses)[i].errorCode = res->errorCode();
