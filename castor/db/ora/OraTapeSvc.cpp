@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)OraTapeSvc.cpp,v 1.10 $Release$ 2006/08/03 10:03:17 gtaur
+ * @(#)OraTapeSvc.cpp,v 1.11 $Release$ 2006/08/07 15:18:54 felixehm
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -146,7 +146,12 @@ const std::string castor::db::ora::OraTapeSvc::s_failedSegmentsStatementString =
 
 /// SQL statement for checkFileForRepack
 const std::string castor::db::ora::OraTapeSvc::s_checkFileForRepackStatementString = 
- "SELECT subrequest.id FROM subrequest, diskcopy, castorfile WHERE diskcopy.id = subrequest.diskcopy AND diskcopy.status = 10 AND diskcopy.castorfile = castorfile.id AND castorfile.fileid = :1 AND subrequest.repackvid IS NOT NULL";
+ "UPDATE subrequest SET subrequest.status = 11 WHERE id = (SELECT subrequest.id FROM subrequest, diskcopy, castorfile WHERE diskcopy.id = subrequest.diskcopy AND diskcopy.status = 10 AND subrequest.status = 12 AND diskcopy.castorfile = castorfile.id AND castorfile.fileid = :1 AND subrequest.repackvid IS NOT NULL AND ROWNUM < 2) RETURNING subrequest.id INTO :2";
+
+/// SQL statement for checkExistingTapeCopy
+const std::string castor::db::ora::OraTapeSvc::s_checkExistingTapeCopyStatementString = "SELECT tapecopy.id, castorfile.fileid FROM tapecopy, castorfile, stream2tapecopy WHERE castorfile.fileid = :1 AND stream2tapecopy.parent = :2  AND tapecopy.id = stream2tapecopy.child AND tapecopy.castorfile = castorfile.id";
+
+
 // -----------------------------------------------------------------------
 // OraTapeSvc
 // -----------------------------------------------------------------------
@@ -165,7 +170,8 @@ castor::db::ora::OraTapeSvc::OraTapeSvc(const std::string name) :
   m_segmentsForTapeStatement(0),
   m_anySegmentsForTapeStatement(0),
   m_failedSegmentsStatement(0),
-  m_checkFileForRepackStatement(0) {
+  m_checkFileForRepackStatement(0), 
+  m_checkExistingTapeCopyStatement (0) {
 }
 
 // -----------------------------------------------------------------------
@@ -211,6 +217,7 @@ void castor::db::ora::OraTapeSvc::reset() throw() {
     deleteStatement(m_anySegmentsForTapeStatement);
     deleteStatement(m_failedSegmentsStatement);
     deleteStatement(m_checkFileForRepackStatement);
+    deleteStatement(m_checkExistingTapeCopyStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;
@@ -227,6 +234,7 @@ void castor::db::ora::OraTapeSvc::reset() throw() {
   m_anySegmentsForTapeStatement = 0;
   m_failedSegmentsStatement = 0;
   m_checkFileForRepackStatement = 0;
+  m_checkExistingTapeCopyStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -874,8 +882,7 @@ castor::db::ora::OraTapeSvc::checkFileForRepack
 (const u_signed64 fileId)
   throw (castor::exception::Exception) {
   
-  
-  oracle::occi::ResultSet *rset = NULL;
+  oracle::occi::ResultSet *rset = NULL;  
   castor::stager::SubRequest* result = NULL;
   u_signed64 id = 0;
   
@@ -885,28 +892,21 @@ castor::db::ora::OraTapeSvc::checkFileForRepack
       m_checkFileForRepackStatement =
         createStatement(s_checkFileForRepackStatementString);
     }
-    
+    m_checkFileForRepackStatement->registerOutParam
+        (2, oracle::occi::OCCIDOUBLE);
     m_checkFileForRepackStatement->setDouble(1, fileId); 
-    rset = m_checkFileForRepackStatement->executeQuery();
-    rset->next();
+    m_checkFileForRepackStatement->setAutoCommit(true);
+
+    m_checkFileForRepackStatement->executeUpdate();
+
+    id = (u_signed64)m_checkFileForRepackStatement->getDouble(2);
     
-    if ( rset != NULL ){
+    if ( id ){
       
-      id = (u_signed64)rset->getDouble(1);
-  
-      // Create result
+        // Create result
       castor::IObject* obj = cnvSvc()->getObjFromId( id );
       result = dynamic_cast<castor::stager::SubRequest*>(obj);
 
-
-      /** we are supposed to have only one result on a repack system */
-      if ( rset->next() != oracle::occi::ResultSet::END_OF_FETCH){
-        delete rset;
-        castor::exception::Internal ex;
-        ex.getMessage() << "Found >1 candidates for fileid " 
-        << fileId  << "for repack purpose in stager catalogue!" << std::endl;
-         throw ex;
-      }
     }
 
     delete rset;
@@ -925,4 +925,49 @@ castor::db::ora::OraTapeSvc::checkFileForRepack
     throw ex;
   }
 }
+
+
+// -----------------------------------------------------------------------
+// checkExistingTapeCopy
+// -----------------------------------------------------------------------
+bool castor::db::ora::OraTapeSvc::checkExistingTapeCopy
+(const u_signed64 fileId, castor::stager::Stream* stream)
+                                    throw (castor::exception::Exception) {
+
+
+  oracle::occi::ResultSet *rset = NULL;
+  bool result = false;
+
+  if ( fileId == 0 || stream == NULL )
+    return result;
+
+  try {
+
+    if (0 == m_checkExistingTapeCopyStatement) {
+      m_checkExistingTapeCopyStatement =
+        createStatement(s_checkExistingTapeCopyStatementString);
+    }
+    m_checkExistingTapeCopyStatement->setDouble(1, fileId);
+    m_checkExistingTapeCopyStatement->setDouble(2, stream->id());
+    m_checkExistingTapeCopyStatement->setAutoCommit(true);
+
+    rset = m_checkExistingTapeCopyStatement->executeQuery();
+    if ( rset->next() )
+     result = true;
+
+    delete rset;
+    // return
+    return result;
+
+
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in checkExistingTapeCopy(): Fileid "
+      << fileId << ", Stream " << stream->id() << std::endl << e.what();
+    throw ex;
+  }                                                     
+}
+
+
 

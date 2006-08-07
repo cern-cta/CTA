@@ -283,8 +283,26 @@ namespace castor {
 	  * @return the corresponding SubRequest object in the catalogue
 	  * @exception in case of an error
           */
-        virtual castor::stager::SubRequest* checkFileForRepack
-		  (const u_signed64 file)	 throw (castor::exception::Exception);
+        virtual castor::stager::SubRequest* checkFileForRepack 
+        (const u_signed64 file)	 throw (castor::exception::Exception);
+
+
+
+       /**
+         * Checks, if a TapeCopy of a file is already in a given Stream
+         * This is the case, when 2 tapecopies are allowed and no migration
+         * policy is available to split the TapeCopies to 2 different Streams.
+         * The result is that both TapeCopies are written to one Tape.
+         * (used by MigHunter, when adding the TapeCopies to Streams)
+         * @return true, if the TP is already in Stream
+         * @param fileid The file to check
+         * @param stream The stream in which to look for the TapeCopy
+         * @exception in case of an error
+         */
+       virtual bool checkExistingTapeCopy 
+       (const u_signed64 fileId, castor::stager::Stream* stream)
+       throw (castor::exception::Exception);
+
 
 
       private:
@@ -372,6 +390,12 @@ namespace castor {
 
         /// SQL statement object for function checkFileForRepack
         oracle::occi::Statement *m_checkFileForRepackStatement;
+
+        /// SQL statement for checkExistingTapeCopy
+        static const std::string s_checkExistingTapeCopyStatementString;
+
+        /// SQL statement object for function checkExistingTapeCopy
+        oracle::occi::Statement *m_checkExistingTapeCopyStatement;
 
       }; // end of class OraTapeSvc
 

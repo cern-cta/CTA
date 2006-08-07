@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/05/11 12:46:38 $ $Author: felixehm $
+ * @(#)$RCSfile: ITapeSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/08/07 15:18:54 $ $Author: felixehm $
  *
  * This class provides methods related to tape handling
  *
@@ -269,13 +269,27 @@ namespace castor {
        * Checks, if the fileid is in a actual repack process.
        * This method is run by the migrator. It looks into the
        * Stager Catalog, if a repack vid was assigned with a subrequest.
-       * @return the corresponding SubRequest object in the catalogue
+       * @param fileId the ID of the castorfile to check
+       * @return the corresponding SubRequest object in the catalogue or NULL
        * @exception in case of an error
        */
       virtual castor::stager::SubRequest* checkFileForRepack
       (const u_signed64 fileId) throw (castor::exception::Exception) = 0;
 
-
+      /**
+       * Checks, if a TapeCopy of a file is already in a given Stream
+       * This is the case, when 2 tapecopies are allowed and no migration
+       * policy is available to split the TapeCopies to 2 different Streams.
+       * The result is that both TapeCopies are written to one Tape.
+       * (used by MigHunter, when adding the TapeCopies to Streams)
+       * @return true, if the TP is already in Stream
+       * @param fileid The ID of the file to check
+       * @param stream The stream in which to look for the TapeCopy
+       * @exception in case of an error
+       */
+      virtual bool checkExistingTapeCopy(
+      const u_signed64 fileId, castor::stager::Stream* stream)
+      throw (castor::exception::Exception) = 0;
 
     }; // end of class ITapeSvc
 
