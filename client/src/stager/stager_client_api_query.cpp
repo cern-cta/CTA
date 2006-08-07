@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.23 2006/07/31 17:09:48 itglp Exp $
+ * $Id: stager_client_api_query.cpp,v 1.24 2006/08/07 07:24:55 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.23 $ $Date: 2006/07/31 17:09:48 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.24 $ $Date: 2006/08/07 07:24:55 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -140,23 +140,32 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
       castor::rh::FileQryResponse* fr = 
         dynamic_cast<castor::rh::FileQryResponse*>(respvec[i]);
       if (0 == fr) {
+        // try a simple Response
+        castor::rh::Response* res = 
+          dynamic_cast<castor::rh::Response*>(respvec[i]);
+        if (0 == res) {
+          // Not even a Response !
           castor::exception::Exception e(SEINTERNAL);
-          e.getMessage() << "Error in dynamic cast, response was NOT a FileQryResponse";
+          e.getMessage() << "Error in dynamic cast, response was NOT a Response";
           throw e;
+        } else {
+          (*responses)[i].errorCode = res->errorCode();
+          (*responses)[i].errorMessage = strdup(res->errorMessage().c_str());
+        }
+      } else {
+        (*responses)[i].errorCode = fr->errorCode();
+        (*responses)[i].errorMessage = strdup(fr->errorMessage().c_str());
+        (*responses)[i].filename = strdup(fr->fileName().c_str());
+        (*responses)[i].castorfilename = strdup(fr->castorFileName().c_str());
+        (*responses)[i].fileid = fr->fileId();
+        (*responses)[i].status = fr->status();
+        (*responses)[i].size = fr->size();
+        (*responses)[i].diskserver = strdup(fr->diskServer().c_str());
+        (*responses)[i].poolname = strdup(fr->poolName().c_str());
+        (*responses)[i].creationTime = (time_t)fr->creationTime();
+        (*responses)[i].accessTime = (time_t)fr->accessTime();
+        (*responses)[i].nbAccesses = fr->nbAccesses();
       }
-
-      (*responses)[i].errorCode = fr->errorCode();
-      (*responses)[i].errorMessage = strdup(fr->errorMessage().c_str());
-      (*responses)[i].filename = strdup(fr->fileName().c_str());
-      (*responses)[i].castorfilename = strdup(fr->castorFileName().c_str());
-      (*responses)[i].fileid = fr->fileId();
-      (*responses)[i].status = fr->status();
-      (*responses)[i].size = fr->size();
-      (*responses)[i].diskserver = strdup(fr->diskServer().c_str());
-      (*responses)[i].poolname = strdup(fr->poolName().c_str());
-      (*responses)[i].creationTime = (time_t)fr->creationTime();
-      (*responses)[i].accessTime = (time_t)fr->accessTime();
-      (*responses)[i].nbAccesses = fr->nbAccesses();
 
       // The responses should be deallocated by the API !
       delete respvec[i];
