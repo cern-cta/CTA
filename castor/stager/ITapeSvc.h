@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvc.h,v $ $Revision: 1.3 $ $Release$ $Date: 2006/08/07 15:18:54 $ $Author: felixehm $
+ * @(#)$RCSfile: ITapeSvc.h,v $ $Revision: 1.4 $ $Release$ $Date: 2006/08/07 16:29:50 $ $Author: felixehm $
  *
  *
  *
@@ -367,6 +367,7 @@ int Cstager_ITapeSvc_checkFileForRepack
 int Cstager_ITapeSvc_checkExistingTapeCopy
   (struct Cstager_ITapeSvc_t* tpSvc,
    const u_signed64 fileid,
-   castor::stager::Stream* stream );
+   struct Cstager_Stream_t* stream );
 
 #endif // CASTOR_ITAPESVC_H
+
