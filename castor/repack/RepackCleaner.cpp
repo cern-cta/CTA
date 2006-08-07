@@ -53,6 +53,8 @@ void RepackCleaner::run(void* param) throw(){
 	
   RepackSubRequest* tape = NULL;
   Cuuid_t cuuid;
+
+
 	
   try {
     tape = m_dbhelper->checkSubRequestStatus(SUBREQUEST_READYFORCLEANUP);
@@ -164,11 +166,8 @@ void RepackCleaner::removeFilesFromStager(RepackSubRequest* sreq) throw(castor::
   opts.stage_host = (char*)ptr_server->getStagerName().c_str();
   opts.stage_port = 0; 
   opts.stage_version = 0;
-  
-  if ( sreq->requestID()->serviceclass().length() )
-    opts.service_class = (char*)sreq->requestID()->serviceclass().c_str();
-  else  /// the default one
-    opts.service_class = (char*)ptr_server->getServiceClass().c_str();
+  /// set the service class information from repackrequest
+  getServiceClass(&opts, sreq);
   
   if ( !filelist->size() ) {
     /// this means that there are no files for a repack tape in SUBREQUEST_READYFORCLEANUP

@@ -1,7 +1,8 @@
-
-
-
 #include "Tools.hpp"
+
+#include <vector>
+
+
 
 namespace castor {
 	namespace repack {
@@ -75,7 +76,33 @@ namespace castor {
       obj = NULL;
     }
   }
+ 
+//------------------------------------------------------------------------------
+// Helper for getting the ServiceClass in a stager request
+//------------------------------------------------------------------------------ 
+  void getServiceClass(struct stage_options* opts, RepackSubRequest* sreq) 
+                                              throw (castor::exception::Internal)
+  {
+    /// first check the output stage_options
+    if ( opts == NULL ){
+      castor::exception::Internal ex;
+      ex.getMessage() << "Passed stager option struct is NULL!" << std::endl;
+      throw ex;
+    }
+    
+    /// retrieve the information from RepackSubRequest
+    if ( sreq->requestID() != NULL )
+      opts->service_class = (char*)sreq->requestID()->serviceclass().c_str();
+    else {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Can't get service class from request " << std::endl
+                      << "(corresponding RepackRequest not available)";
+      throw ex;
 
+    }
 
-	}
+  }
+
+ }
 }
+

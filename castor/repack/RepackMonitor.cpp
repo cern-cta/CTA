@@ -53,6 +53,7 @@ namespace castor {
 // run
 //------------------------------------------------------------------------------
   void RepackMonitor::run(void *param) throw() {
+
     //TODO: own query for this purpose
     Cuuid_t cuuid;
     std::vector<RepackSubRequest*>* tapelist = NULL;
@@ -129,15 +130,9 @@ namespace castor {
     opts.stage_host = (char*)ptr_server->getStagerName().c_str();
     opts.stage_port = 0;
     opts.stage_version = 0;
-    if ( sreq->requestID() != NULL )
-      opts.service_class = (char*)sreq->requestID()->serviceclass().c_str();
-    else {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Can't get service class from request " << std::endl
-                      << "(corresponding RepackRequest not available)";
-      throw ex;
-
-    }
+    /// set the service class information from repackrequest
+    getServiceClass(&opts, sreq);
+    
 
     
     rc = errno = serrno = nbresps = 0;
@@ -200,6 +195,7 @@ namespace castor {
 
       sreq->setFilesMigrating( waitingmig_status + canbemig_status );
       sreq->setFilesStaging( stagein_status );
+      sreq->setFilesFailed( invalid_status );
   
       /// if we find migration candidates, we just change the status from staging, 
       ///    or if all files are staged 
