@@ -1,4 +1,27 @@
 -----------
+- 2.1.0-6 -
+-----------
+  New Features and Changes (from 2.1.0-5)
+  ---------------------------------------
+  - Made the output of stager_qry -s less wide
+  - Added CF.lastKnownFileName as a result of diskServer_qry -i 
+  - Mir valid/invalid checking on IBM3592E05 tape drives, new IBM3592E05 firmware release (172E) fixed problem seen before.
+  - Connection reset messages from rmc are just sent to msgdaemon after 2 retries.
+  - Rmcdaemon now checks if tape is in the storage slot before returning dismount OK
+  - Fixed the cleaning of the DiskCopy in case of put failure. This was leading to orphaned DiskCopies
+  - Fixed a bug in updateFiles2Delete
+  - Handle properly exceptions in sendRequest and especially release memory and close the socket
+  - Fixed missing filling of the svcclass of a castorfile in memory.The consequence was that the svcclass could be overwritten in case  of reuse of a castorfile in 2 different service classes
+
+
+  Upgrade from 2.1.0-5
+  --------------------
+
+  - Upgrade the Database
+  - Upgrade  the head node
+  - Then for the other components there are no restrictions in that release.
+
+-----------
 - 2.1.0-5 -
 -----------
   New Features and Changes (from 2.1.0-5)
@@ -14,8 +37,8 @@
   Upgrade from 2.1.0-4
   --------------------
 
-  - Upgrade the Database 
-  - Upgrade the head node
+  - Upgrade the Database
+  - Upgrade  the head node
   - Then for the other components there are no restrictions in that release.
 
 -----------
