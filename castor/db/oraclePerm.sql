@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.287 $ $Release$ $Date: 2006/08/03 08:15:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.288 $ $Release$ $Date: 2006/08/07 07:48:19 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.287 $ $Date: 2006/08/03 08:15:16 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.288 $ $Date: 2006/08/07 07:48:19 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 200;
@@ -462,8 +462,8 @@ END;
  * This implementation is not the original one. It uses NbTapeCopiesInFS
  * because a join on the tables between DiskServer and Stream2TapeCopy
  * costs too much. It should actually not be the case but ORACLE is unable
- * to optimize correctly queries having a ROWNUM clause. It procesed the
- * the query without it (yes !!!) and apply the clause afterwards.
+ * to optimize correctly queries having a ROWNUM clause. It processes the
+ * the query without it (yes !!!) and applies the clause afterwards.
  * Here is the previous select in case ORACLE improves some day :
  * SELECT \/*+ FIRST_ROWS *\/ TapeCopy.id INTO unused
  * FROM DiskServer, FileSystem, DiskCopy, CastorFile, TapeCopy, Stream2TapeCopy
@@ -481,9 +481,13 @@ CREATE OR REPLACE PROCEDURE anyTapeCopyForStream(streamId IN INTEGER, res OUT IN
   unused INTEGER;
 BEGIN
   SELECT NbTapeCopiesInFS.NbTapeCopies INTO unused
-    FROM NbTapeCopiesInFS
+    FROM NbTapeCopiesInFS,FileSystem,DiskServer
    WHERE NbTapeCopiesInFS.stream = streamId
      AND NbTapeCopiesInFS.NbTapeCopies > 0
+     AND FileSystem.id = NbTapeCopiesInFS.FS
+     AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+     AND DiskServer.id = FileSystem.DiskServer
+     AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
      AND ROWNUM < 2;
   res := 1;
 EXCEPTION
