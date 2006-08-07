@@ -64,6 +64,7 @@ int main(int argc, char *argv[]) {
         policy->setOutputDirectory(QDir(args->getOption("o")));
       }
       // Now generate code
+      std::cout << "Generation started" << std::endl;
       if (1 == args->count()) {
         gen->writeCodeToFile();
       } else {
@@ -81,11 +82,11 @@ int main(int argc, char *argv[]) {
       }
     }
     args->clear();
+    std::cout << "Generation ended" << std::endl;
   } else {
     std::cout << "Invalid number of arguments\n"
               << "syntax : " << argv[0] << " <xmi File>"
               << std::endl;
   }
-  std::cout << "Generation ended !" << std::endl;
   uml->close();
 }

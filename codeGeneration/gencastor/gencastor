@@ -1,4 +1,12 @@
 #!/usr/bin/tcsh
+#
+# A wrapper script for gencastor.bin, to put files in the proper places and avoid to overwrite not modified ones.
+# It also manages the generated SQL scripts.
+#
+# @author Castor dev team, castor-dev@cern.ch
+#
+# @(#)$RCSfile: gencastor,v $ $Revision: 1.14 $ $Release$ $Date: 2006/08/07 14:44:59 $ $Author: itglp $
+# 
 
 if ("$1" == "-h") then
   echo "Usage :"
@@ -36,8 +44,10 @@ grep 'CREATE OR REPLACE' ${TMPDIR}/${TOPNS}/db/postgresTrailer.sql | grep -v 'TR
 
 # hack to prevent Umbrello from overwriting the original XMI file
 cp ${XMIFILE} ${TMPDIR}
-set XMITOUSE=`echo ${XMIFILE} | awk -F'/' '{ print $NF }'`
+set XMITOUSE=`basename ${XMIFILE}`
+
 (/usr/bin/gencastor.bin -o ${TMPDIR} -c ${TOPNS} --nocrashhandler ${TMPDIR}/${XMITOUSE} > /dev/tty) >& /dev/null
+
 sed 's/^END;/END;\n\//' ${TMPDIR}/${TOPNS}/db/${TOPNS}_oracle_create.sql | sed 's/^\(END castor[a-zA-Z]*;\)/\1\n\//' | sed 's/\(CREATE OR REPLACE TYPE .*\)$/\1\n\//' > ${TMPDIR}/${TOPNS}/db/${TOPNS}_oracle_create.sqlplus
 
 set pushdsilent
@@ -54,8 +64,13 @@ foreach f (`find . -type f`)
     endif
     echo "Creating $f"
     cp ${TMPDIR}/${f} ${WORKDIR}/$f
-  else 
-    set d = `diff -q ${WORKDIR}/${f}  ${TMPDIR}/${f}`
+  else
+    if (-f ${WORKDIR}/${f}_clone) then
+      echo Merging clone before upgrading $f
+      `dirname $0`/codemerge.py ${TMPDIR}/${f} ${WORKDIR}/${f}_clone ${TMPDIR}/${f}_merge
+      mv ${TMPDIR}/${f}_merge ${TMPDIR}/${f}
+    endif
+    set d = `diff -q ${WORKDIR}/${f} ${TMPDIR}/${f}`
     #echo "Diff gave --$d--"
     if ("$d" != "") then
       echo "Upgrading $f"

@@ -34,7 +34,6 @@
 
 CppWriter::CppWriter( ) :
   CppCastorWriter(UMLApp::app()->getDocument(), "Cpp"), firstGeneration(true) {
-  std::cout << "Generation started !" << std::endl;
   // Create all needed generators
   hppw = new CppHClassWriter(m_doc, ".hpp file generator");
   hw = new CHClassWriter(m_doc, ".h file generator for C interfaces");

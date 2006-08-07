@@ -1,5 +1,5 @@
 DEV=$(CASTORDEV_HOME)/codeGeneration/gencastor
-UMBRELLOBASE=../kdesdk-3.5.1
+UMBRELLOBASE=kdesdk-3.5
 
 UMBRELLO=$(UMBRELLOBASE)/umbrello/umbrello
 UMBRELLOOBJBASE=$(UMBRELLOBASE)
@@ -30,6 +30,7 @@ all : gencastor.bin
 install : gencastor.bin
 	@echo Installing gencastor
 	@install gencastor $(DESTDIR)/usr/bin
+	@install codemerge.py $(DESTDIR)/usr/bin
 	@install gencastor.bin $(DESTDIR)/usr/bin
 	@install gencastor.1 $(DESTDIR)/usr/share/man/man1
 	@install -D headers/heading.cpp $(DESTDIR)/etc/castor/gencastor/heading.cpp
