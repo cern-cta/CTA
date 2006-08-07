@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/07/04 14:11:58 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2006/08/07 17:05:01 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -35,7 +35,7 @@
 
 /* Client  includes */
 #include "castor/repack/RepackClient.hpp"
-
+#include <time.h>
 
 
 /** 
@@ -358,7 +358,9 @@ void RepackClient::handleResponse(RepackAck* ack) {
 	statuslist[SUBREQUEST_READYFORCLEANUP] = "CLEANUP";
 	statuslist[SUBREQUEST_DONE] = "FINISHED";
   statuslist[SUBREQUEST_ARCHIVED] = "ARCHIVED";
-	
+
+  time_t seconds;
+
 	if ( ack->errorCode() ){
 		std::cerr << "Repackserver respond :" << std::endl
 					<< ack->errorMessage() << std::endl;
@@ -367,32 +369,34 @@ void RepackClient::handleResponse(RepackAck* ack) {
 
 	if ( ack->request().size() > 0 ){
 	  RepackRequest* rreq = ack->request().at(0);
-	  std::cout << "==================================================================================" 
+	  std::cout << "=========================================================================================" 
               << std::endl;
 	  
     switch ( rreq->command() ){
-		  case GET_STATUS : 
+		  case GET_STATUS :
+       seconds = (long)rreq->creationTime(); 
        std::cout 
-        << "Details for Request :" << std::endl
-        << "created\t\tmachine\t\tuser\tservice class" << std::endl
-        << rreq->creationTime() << "\t" << rreq->machine() << "\t" 
-        << rreq->userName() << "\t" << rreq->serviceclass()
+        << "Details for Request created on " << ctime (&seconds) << std::endl
+        << "machine\t\tuser\t\t\tservice class" << std::endl
+        << rreq->machine() << "\t" 
+        << rreq->userName() << "\t\t" << rreq->serviceclass()
         << std::endl << std::endl; 
       
       case GET_STATUS_ALL : 
       case ARCHIVE : 
 		  case REPACK : 
 		  {
-			  std::cout << "vid\tmigration\tstaging\ttotal\tstatus\t\tcuuid" <<std::endl;
-			  
+			  std::cout << "vid\tcuuid\t\t\t\t\ttotal\tstaging\tmigration\tstatus" <<std::endl;
+        std::cout << "-----------------------------------------------------------------------------------------"
+<<std::endl;
 			  std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
 			  while ( tape != rreq->subRequest().end() ){
 				  std::cout << (*tape)->vid() 
-					  << "\t" << (*tape)->filesMigrating()
-            << "\t\t" << (*tape)->filesStaging()
+            << "\t" << (*tape)->cuuid()
             << "\t" << (*tape)->files()
-					  << "\t" << statuslist[(*tape)->status()]
-            << "\t\t" << (*tape)->cuuid()
+            << "\t" << (*tape)->filesStaging()
+					  << "\t" << (*tape)->filesMigrating()
+					  << "\t\t" << statuslist[(*tape)->status()]
 					  << std::endl;
 				  tape++;
 			  }
@@ -400,6 +404,8 @@ void RepackClient::handleResponse(RepackAck* ack) {
 		  }
   
 	  }
+    std::cout << "=========================================================================================" 
+              << std::endl;
 	}
 
 
