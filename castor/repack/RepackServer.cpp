@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/07/04 13:50:01 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2006/08/07 17:09:49 $ $Author: felixehm $
  *
  *
  *
@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
     /// The Repack Worker Instance
     server.addThreadPool(
       new castor::server::ListenerThreadPool("Worker", 
-                                              new castor::repack::RepackWorker(),
+                                              new castor::repack::RepackWorker(&server),
                                               server.getListenPort()
                                             ));
 	  server.getThreadPool('W')->setNbThreads(1);
