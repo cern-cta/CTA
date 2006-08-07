@@ -121,6 +121,14 @@ int castor::query::DiskPoolQueryResponse::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::query::DiskPoolQueryResponse::clone() {
-  return new DiskPoolQueryResponse(*this);
+  castor::query::DiskPoolQueryResponse* c = new DiskPoolQueryResponse(*this);
+  c->diskServers().clear();
+  for (std::vector<DiskServerDescription*>::iterator it =
+	 diskServers().begin();
+       it != diskServers().end();
+       it++) {
+    c->addDiskServers(dynamic_cast<DiskServerDescription*>((*it)->clone()));
+  }
+  return c;
 }
 
