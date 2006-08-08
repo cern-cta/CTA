@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.19 2006/07/10 09:57:34 itglp Exp $
+## $Id: PACKAGING.howto,v 1.20 2006/08/08 07:00:50 riojac3 Exp $
 #
 
 #
@@ -112,5 +112,10 @@ end
 #
 ## To install in AFS
 #  -----------------
+#
+#you should request the (automatic) creation of the volume by following the instructions at: 
+#https://twiki.cern.ch/twiki/bin/view/SPI/SpiSpaceRequests 
+#
+
 ./tools/installOnAFS.py > /tmp/afsInstallScript
 source /tmp/afsInstallScript   # run it from lxplus or make sure you have rpm utilities (rpm2cpio)
