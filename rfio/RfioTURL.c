@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.15 $ $Release$ $Date: 2006/07/13 11:55:18 $ $Author: gtaur $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.16 $ $Release$ $Date: 2006/08/08 14:04:05 $ $Author: gtaur $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.15 $ $Release$ $Date: 2006/07/13 11:55:18 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.16 $ $Release$ $Date: 2006/08/08 14:04:05 $ Olof Barring";
 #endif /* not lint */
 /** RfioTURL.c - RFIO TURL handling
  *
@@ -183,6 +183,7 @@ int getDefaultForGlobal(
 				}
 			}
 			else{
+				if(svcDefault){free(hostDefault);}
 				svcDefault=strdup(DEFAULT_SVCCLASS);
 			}
 		}
