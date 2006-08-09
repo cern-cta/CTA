@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: lib.c,v 1.5 2006/08/02 16:19:11 waldron Exp $
+ * $Id: lib.c,v 1.6 2006/08/09 06:09:01 waldron Exp $
  */
 
 /* headers */
@@ -51,17 +51,19 @@
 #include "u64subr.h"
 
 /* hashes, tables and pools */
-static target_t  *targets[API_MAX_TARGETS];     /**< target pool for targets/destinations   */
-static msgtext_t *texts[DLF_MAX_MSGTEXTS];      /**< the clients message texts              */
-static hash_t    *hashtexts = NULL;             /**< fast lookup of message texts           */
+static target_t  *targets[API_MAX_TARGETS];     /**< target pool for targets/destinations    */
+static msgtext_t *texts[DLF_MAX_MSGTEXTS];      /**< the clients message texts               */
+static hash_t    *hashtexts = NULL;             /**< fast lookup of message texts            */
 
 /* mutexes */
 static int api_mutex;
 
 /* api variables */
-static long api_mode = MODE_DEFAULT;            /**< api mode                               */
-static char api_facname[DLF_LEN_FACNAME + 1];   /**< facility name as provided to db_init() */
-static char api_ucfacname[DLF_LEN_FACNAME + 1]; /**< facility name in upper case            */
+static long api_mode = MODE_DEFAULT;            /**< api mode                                */
+static char api_facname[DLF_LEN_FACNAME + 1];   /**< facility name as provided to db_init()  */
+static char api_ucfacname[DLF_LEN_FACNAME + 1]; /**< facility name in upper case             */
+static int  api_targetcount = 0;                /**< the number of targets the client should
+						     write too                               */
 
 /* prototype for common/socket_timeout.c */
 EXTERN_C int DLL_DECL netconnect_timeout _PROTO((SOCKET, struct sockaddr *, size_t, int));
@@ -178,7 +180,7 @@ int dlf_read(target_t *t, int *rtype, int *rcode) {
 
 	/* correct protocol version ?
 	 *   - this should never happen as the server shouldn't answer requests from clients using an
-	 *     incorrect protocol version
+	 *     incorrect protocol version!
 	 */
 	if (magic != DLF_MAGIC) {
 		SetShutdown(t->mode);
@@ -304,6 +306,11 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 	/* interface initialised ? */
 	if (!IsInitialised(api_mode)) {
 		return APP_FAILURE;
+	}
+
+	/* no targets to write too ? */
+	if (api_targetcount == 0) {
+		return APP_SUCCESS;
 	}
 
 	/* valid severity ? */
@@ -665,6 +672,11 @@ int DLL_DECL dlf_write(Cuuid_t reqid, int severity, int msg_no, struct Cns_filei
 	int		  rv;
 	int               ok;
 	va_list           ap;
+
+	/* no targets to write too ? */
+	if (api_targetcount == 0) {
+		return APP_SUCCESS;
+	}
 
 	/* translate the variable argument list to a dlf_write_param_t array */
        	va_start(ap, numparams);
@@ -1406,6 +1418,7 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 			}
 
 			targets[j] = t;
+			api_targetcount++;
 		}
 		free(value);
 	}
@@ -1527,6 +1540,7 @@ int DLL_DECL dlf_shutdown(int wait) {
 
 	/* clear msg texts */
 	free_msgtexts(texts);
+	api_targetcount = 0;
 
 	ClrInitialised(api_mode);
 	ClrShutdown(api_mode);
