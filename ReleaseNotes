@@ -1,4 +1,17 @@
 -----------
+- 2.1.0-7 -
+-----------
+  
+  New Features and Changes (from 2.1.0-6)
+  ---------------------------------------
+  - Fixed a problem with the memory leak in RFIO
+  - Temporary fix, the port used in the bind is now a pseudo-random value that change for each request.To reduce the probability that the answer of an aborted request is returned to a new one.
+
+  Upgrade from 2.1.0-6
+  --------------------
+  Non special order is required.
+  
+-----------
 - 2.1.0-6 -
 -----------
   New Features and Changes (from 2.1.0-5)
