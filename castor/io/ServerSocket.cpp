@@ -47,6 +47,8 @@
 #include "castor/io/biniostream.h"
 #include "castor/io/StreamAddress.hpp"
 
+#include <time.h>
+
 // Local Includes
 #include "ServerSocket.hpp"
 
@@ -204,29 +206,16 @@ void castor::io::ServerSocket::bind(int lowPort, int highPort)
   throw (castor::exception::Exception) {
   // let's go through the port range
   int rc = -1;
-  for (int port = lowPort;
-       (port <= highPort) && 0 != rc;
-       port++) {
-    // trying to bind the socket
+
+  // fix to be removed ... 
+  int port;
+
+  srand(time(NULL));
+
+  while (0 != rc){
+    port=(rand()% 3975)+1024; /* port number between 1024 and 4999*/
     m_saddr.sin_port = htons(port);
-    rc = ::bind(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr));
+    rc=::bind(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr));
   }
-  if (rc != 0) {
-    castor::exception::Exception ex(errno);
-    ex.getMessage() << "Unable to bind socket";
-    if (lowPort == highPort) {
-      if (0 != lowPort) {
-        ex.getMessage() << " on port " << lowPort;
-      }
-    } else {
-      ex.getMessage() << " in port range ["
-                      << lowPort << ", " << highPort << "]";
-    }
-#if !defined(_WIN32)
-    close(m_socket);
-#else
-    closesocket(m_socket);
-#endif
-    throw ex;
-  }
+
 }
