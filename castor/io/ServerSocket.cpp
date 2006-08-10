@@ -212,8 +212,9 @@ void castor::io::ServerSocket::bind(int lowPort, int highPort)
 
   srand(time(NULL));
 
+  int valMax=highPort-lowPort;
   while (0 != rc){
-    port=(rand()% 3975)+1024; /* port number between 1024 and 4999*/
+    port=(rand()% valMax)+lowPort; 
     m_saddr.sin_port = htons(port);
     rc=::bind(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr));
   }
