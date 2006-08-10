@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.291 $ $Release$ $Date: 2006/08/07 15:11:42 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.292 $ $Release$ $Date: 2006/08/10 08:13:02 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.291 $ $Date: 2006/08/07 15:11:42 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.292 $ $Date: 2006/08/10 08:13:02 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -338,8 +338,8 @@ BEGIN
                    AND SubRequest.parent = 0
                    AND DiskCopy.status IN (1, 2, 5, 6, 11) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, WAITFS_SCHEDULING
 		   AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6)), -- START, RESTART, RETRY, WAIT*, READY
-      status = 5,
-      lastModificationTime = getTime() -- WAITSUBREQ
+      status = 5, -- WAITSUBREQ
+      lastModificationTime = getTime()
   WHERE SubRequest.id = srId;
 END;
 
@@ -1357,16 +1357,18 @@ BEGIN
     WHERE status = 5 -- WAIT_SUBREQ
       AND parent IN (SELECT id from SubRequest WHERE diskCopy = dcId);
  END IF;
- -- If we are a real PutDone (and not a put outside of a prepareToPut)
- -- then we have to archive the original preapareToPut subRequest
+ -- If we are a real PutDone (and not a put outside of a prepareToPut/Update)
+ -- then we have to archive the original preapareToPut/Update subRequest
  IF context = 2 THEN
    DECLARE
      srId NUMBER;
    BEGIN
      SELECT SubRequest.id INTO srId
-       FROM SubRequest, StagePrepareToPutRequest
+       FROM SubRequest, 
+        (SELECT id from StagePrepareToPutRequest UNION ALL
+         SELECT id from StagePrepareToUpdateRequest) Request
       WHERE SubRequest.castorFile = cfId
-        AND SubRequest.request = StagePrepareToPutRequest.id
+        AND SubRequest.request = Request.id
         AND SubRequest.status = 6;
      archiveSubReq(srId);
    END;
@@ -1386,7 +1388,7 @@ BEGIN
  SELECT nbCopies INTO nc FROM FileClass, CastorFile
   WHERE CastorFile.id = cfId AND CastorFile.fileClass = FileClass.id;
  -- and execute the internal putDoneFunc with the number of TapeCopies to be created
- internalputDoneFunc(cfId, fs, 0, nc);
+ internalputDoneFunc(cfId, fs, context, nc);
 END;
 
 
@@ -1411,17 +1413,21 @@ BEGIN
   RETURNING fileId, nsHost INTO fId, nh;
  -- Determine the context (Put inside PrepareToPut or not)
  BEGIN
-   -- check that we are a Put
-   SELECT StagePutRequest.id INTO unused
-     FROM StagePutRequest, SubRequest
+   -- check that we are a Put or an Update
+   SELECT Request.id INTO unused
+     FROM SubRequest,
+        (SELECT id FROM StagePutRequest UNION ALL
+         SELECT id FROM StageUpdateRequest) Request
     WHERE SubRequest.id = srId
-      AND StagePutRequest.id = SubRequest.request;
+      AND Request.id = SubRequest.request;
    BEGIN
      -- check that there is a PrepareToPut going on
      SELECT SubRequest.diskCopy INTO unused
-       FROM StagePrepareToPutRequest, SubRequest
+       FROM SubRequest,
+        (SELECT id FROM StagePrepareToPutRequest UNION ALL
+        SELECT id FROM StagePrepareToUpdateRequest) Request
       WHERE SubRequest.CastorFile = cfId
-        AND StagePrepareToPutRequest.id = SubRequest.request
+        AND Request.id = SubRequest.request
         AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
      -- if we got here, we are a Put inside a PrepareToPut
      contextPIPP := 0;
@@ -1436,6 +1442,7 @@ BEGIN
  -- get uid, gid and reserved space from Request
  SELECT euid, egid, xsize INTO userId, groupId, reservedSpace FROM SubRequest,
      (SELECT euid, egid, id from StagePutRequest UNION ALL
+      SELECT euid, egid, id from StageUpdateRequest UNION ALL
       SELECT euid, egid, id from StagePutDoneRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
  -- If not a put inside a PrepareToPut, update the FileSystem free space
@@ -1446,12 +1453,12 @@ BEGIN
  END IF;
  -- archive Subrequest
  archiveSubReq(srId);
- --  If not a put inside a PrepareToPut, create TapeCopies and update DiskCopy status
+ --  If not a put inside a PrepareToPut/Update, create TapeCopies and update DiskCopy status
  IF contextPIPP != 0 THEN
    putDoneFunc(cfId, fs, contextPIPP);
  END IF;
- -- If put inside PrepareToPut, restart any PutDone currently
- -- waiting on this put
+ -- If put inside PrepareToPut/Update, restart any PutDone currently
+ -- waiting on this put/update
  IF contextPIPP = 0 THEN
    UPDATE SubRequest SET status = 1 -- RESTART
     WHERE id IN
