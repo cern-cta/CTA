@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvc.h,v $ $Revision: 1.4 $ $Release$ $Date: 2006/08/07 16:29:50 $ $Author: felixehm $
+ * @(#)$RCSfile: ITapeSvc.h,v $ $Revision: 1.5 $ $Release$ $Date: 2006/08/11 07:13:52 $ $Author: felixehm $
  *
  *
  *
@@ -351,23 +351,6 @@ int Cstager_ITapeSvc_checkFileForRepack
  struct Cstager_SubRequest_t* subRequest,
  const u_signed64 key);
 
-/**
- * Checks, if a TapeCopy of a file is already in a given Stream
- * This is the case, when 2 tapecopies are allowed and no migration
- * policy is available to split the TapeCopies to 2 different Streams.
- * The result is that both TapeCopies are written to one Tape.
- * (used by MigHunter, when adding the TapeCopies to Streams)
- * @return true, if the TP is already in Stream
- * @param fileid The file to check
- * @param stream The stream in which to look for the TapeCopy
- * -1 : an error occurred and serrno is set to the corresponding error code
- * A detailed error message can be retrieved by calling
- * Cstager_ITapeSvc_errorMsg
- */
-int Cstager_ITapeSvc_checkExistingTapeCopy
-  (struct Cstager_ITapeSvc_t* tpSvc,
-   const u_signed64 fileid,
-   struct Cstager_Stream_t* stream );
 
 #endif // CASTOR_ITAPESVC_H
 

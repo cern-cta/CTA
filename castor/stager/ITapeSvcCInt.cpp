@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/08/07 15:21:13 $ $Author: felixehm $
+ * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/08/11 07:13:52 $ $Author: felixehm $
  *
  *
  *
@@ -398,27 +398,6 @@ extern "C" {
     }
     return 0;
   }
-
-
-  //-------------------------------------------------------------------------
-  // C_stager_ITapeSvc_checkExistingTapeCopy
-  //-------------------------------------------------------------------------
-  int Cstager_ITapeSvc_checkExistingTapeCopy
-  (struct Cstager_ITapeSvc_t* tpSvc,
-   const u_signed64 fileid, 
-   castor::stager::Stream* stream ) {
-    bool result = false;
-    if (!checkITapeSvc(tpSvc) ) return -1;
-    try {
-      result = tpSvc->tpSvc->checkExistingTapeCopy(fileid, stream);
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      tpSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return result;
-  }
-
 
 
 }
