@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.8 2006/08/07 06:03:26 waldron Exp $
+ * $Id: oracle.pc,v 1.9 2006/08/11 08:19:49 waldron Exp $
  */
 
 /* headers */
@@ -300,15 +300,16 @@ error:
         err_size = sizeof(err_msg);
         sqlglmt(dpool[0]->ctx, err_msg, &err_size, &err_len);
 
-        if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
-	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114)) {
-                ClrConnected(dpool[0]->mode);
-        }
+        EXEC SQL WHENEVER SQLERROR CONTINUE;
 
         log(LOG_ERR, "db_init() : %.*s", err_len, err_msg);
 
+        if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
+	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
+	    (sqlca.sqlcode == -2131)  || (sqlca.sqlcode == -3113)) {
+                ClrConnected(dpool[0]->mode);
+        }
         dpool[0]->errors++;
-        EXEC SQL WHENEVER SQLERROR CONTINUE;
         ClrActive(dpool[0]->mode);
 
         Cthread_mutex_unlock(&dpool[0]->mutex);
@@ -346,7 +347,7 @@ int DLL_DECL db_open(database_t *db, unsigned int retries) {
 	}
 
 	/* throttle connection attempts */
-	if (db->last_connect > (time(NULL) - 10)) {
+	if (db->last_connect > (time(NULL) - 30)) {
 		return APP_FAILURE;
 	}
 
@@ -564,6 +565,9 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 
 not_found:
 
+	EXEC SQL WHENEVER SQLERROR CONTINUE;
+	EXEC SQL WHENEVER NOTFOUND CONTINUE;
+
 	ClrActive(db->mode);
 
 	*fac_no = -1;
@@ -577,15 +581,17 @@ error:
 	err_size = sizeof(err_msg);
 	sqlglmt(db->ctx, err_msg, &err_size, &err_len);
 
+	EXEC SQL WHENEVER SQLERROR CONTINUE;
+
 	log(LOG_ERR, "db_initfac() : %.*s", err_len, err_msg);
 
 	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
-	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114)) {
+	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
+	    (sqlca.sqlcode == -2131)  || (sqlca.sqlcode == -3113)) {
 		ClrConnected(db->mode);
 	}
 
 	db->errors++;
-	EXEC SQL WHENEVER SQLERROR CONTINUE;
 	ClrActive(db->mode);
 
 	Cthread_mutex_unlock(&db->mutex);
@@ -671,6 +677,8 @@ not_found:
         /* insert a new host */
         hostid = seq_hostid++;
 
+        EXEC SQL WHENEVER NOTFOUND CONTINUE;
+
         db->inserts++;
         EXEC SQL INSERT INTO dlf_host_map (hostid, hostname) VALUES (:hostid, :hostname);
         db->updates++;
@@ -679,8 +687,6 @@ not_found:
         EXEC SQL COMMIT WORK;
 
         *id = hostid;
-
-        EXEC SQL WHENEVER NOTFOUND CONTINUE;
         ClrActive(db->mode);
 
         Cthread_mutex_unlock(&db->mutex);
@@ -694,15 +700,17 @@ error:
         err_size = sizeof(err_msg);
         sqlglmt(db->ctx, err_msg, &err_size, &err_len);
 
-        if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
-	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114)) {
-                ClrConnected(db->mode);
-        }
+        EXEC SQL WHENEVER SQLERROR CONTINUE;
 
         log(LOG_ERR, "db_hostid() : %.*s", err_len, err_msg);
 
+        if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
+	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
+	    (sqlca.sqlcode == -2131)  || (sqlca.sqlcode == -3113)) {
+                ClrConnected(db->mode);
+        }
         db->errors++;
-        EXEC SQL WHENEVER SQLERROR CONTINUE;
+
         db->rollbacks++;
         EXEC SQL ROLLBACK WORK;
         ClrActive(db->mode);
@@ -794,6 +802,8 @@ not_found:
 	/* insert a new host */
 	nshostid = seq_nshostid++;
 
+	EXEC SQL WHENEVER NOTFOUND CONTINUE;
+
 	db->inserts++;
 	EXEC SQL INSERT INTO dlf_nshost_map (nshostid, nshostname) VALUES (:nshostid, :hostname);
 	db->updates++;
@@ -802,8 +812,6 @@ not_found:
 	EXEC SQL COMMIT WORK;
 
 	*id = nshostid;
-
-	EXEC SQL WHENEVER NOTFOUND CONTINUE;
 	ClrActive(db->mode);
 
 	Cthread_mutex_unlock(&db->mutex);
@@ -816,15 +824,17 @@ error:
 	err_size = sizeof(err_msg);
 	sqlglmt(db->ctx, err_msg, &err_size, &err_len);
 
-	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
-	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114)) {
-		ClrConnected(db->mode);
-	}
+	EXEC SQL WHENEVER SQLERROR CONTINUE;
 
 	log(LOG_ERR, "db_nshostid() : %.*s", err_len, err_msg);
 
+	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
+	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
+	    (sqlca.sqlcode == -2131)  || (sqlca.sqlcode == -3113)) {
+		ClrConnected(db->mode);
+	}
 	db->errors++;
-	EXEC SQL WHENEVER SQLERROR CONTINUE;
+
 	db->rollbacks++;
 	EXEC SQL ROLLBACK WORK;
 	ClrActive(db->mode);
@@ -946,16 +956,18 @@ error:
         err_size = sizeof(err_msg);
         sqlglmt(db->ctx, err_msg, &err_size, &err_len);
 
-        if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
-	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114)) {
-                ClrConnected(db->mode);
-        }
+        EXEC SQL WHENEVER SQLERROR CONTINUE;
+        EXEC SQL WHENEVER NOTFOUND CONTINUE;
 
         log(LOG_ERR, "db_flush() : %.*s", err_len, err_msg);
 
-        /* rollback */
+        if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
+	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
+	    (sqlca.sqlcode == -2131)  || (sqlca.sqlcode == -3113)) {
+                ClrConnected(db->mode);
+        }
         db->errors++;
-        EXEC SQL WHENEVER SQLERROR CONTINUE;
+
         db->rollbacks++;
         EXEC SQL ROLLBACK WORK;
         ClrActive(db->mode);
@@ -1006,6 +1018,7 @@ void DLL_DECL db_worker(database_t *db) {
 		/* connected to database ? */
 		if (!IsConnected(db->mode)) {
 			if ((rv = db_open(db, 1)) != APP_SUCCESS) {
+				sleep(1);
 				continue;
 			}
 		}
@@ -1551,8 +1564,11 @@ error:
 	err_size = sizeof(err_msg);
 	sqlglmt(db->ctx, err_msg, &err_size, &err_len);
 
+	EXEC SQL WHENEVER SQLERROR CONTINUE;
+
 	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
-	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114)) {
+	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
+	    (sqlca.sqlcode == -2131)  || (sqlca.sqlcode == -3113)) {
 		ClrConnected(db->mode);
 	}
 	
@@ -1564,8 +1580,6 @@ error:
 		db->rollbacks++;
 		EXEC SQL ROLLBACK WORK;	
 	}
-	
-	EXEC SQL WHENEVER SQLERROR CONTINUE;
 	ClrActive(db->mode);
 
 	/* close cursors */
@@ -1755,15 +1769,17 @@ error:
 	err_size = sizeof(err_msg);
 	sqlglmt(db->ctx, err_msg, &err_size, &err_len);
 
+	EXEC SQL WHENEVER SQLERROR CONTINUE;
+
 	log(LOG_ERR, "db_monitoring() : %.*s", err_len, err_msg);
 
 	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
-	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114)) {
+	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
+	    (sqlca.sqlcode == -2131)  || (sqlca.sqlcode == -3113)) {
 		ClrConnected(db->mode);
 	}
-
 	db->errors++;
-	EXEC SQL WHENEVER SQLERROR CONTINUE;
+
 	ClrActive(db->mode);
 
 	Cthread_mutex_unlock(&db->mutex);
@@ -1875,10 +1891,13 @@ error:
 	err_size = sizeof(err_msg);
 	sqlglmt(db->ctx, err_msg, &err_size, &err_len);
 
+	EXEC SQL WHENEVER SQLERROR CONTINUE;
+
 	log(LOG_ERR, "db_mode() : %.*s", err_len, err_msg);
 
 	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
-	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114)) {
+	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
+	    (sqlca.sqlcode == -2131)  || (sqlca.sqlcode == -3113)) {
 		ClrConnected(db->mode);
 	}
 
@@ -1886,7 +1905,6 @@ error:
 	EXEC SQL CLOSE status1;
 
 	db->errors++;
-	EXEC SQL WHENEVER SQLERROR CONTINUE;
 	ClrActive(db->mode);
 
 	Cthread_mutex_unlock(&db->mutex);
