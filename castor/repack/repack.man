@@ -1,0 +1,135 @@
+.\" Copyright (C) 2001-2006 by CERN/IT/FIO/FD
+.\" All rights reserved
+.\" 
+.TH "REPACK" "2" "July, 2006" "CASTOR" "vmgr Administrator Commands"
+.SH "NAME"
+repack \- Move files from tape(s) to other tape destination 
+.SH "SYNOPSIS"
+.B repack
+.br 
+[
+.BI \-V " VID1:VID2"
+[
+.BI \-o " OutputServiceClass"
+]
+]
+.br 
+[
+.BI  \-h
+]
+.br 
+[
+.B \-s 
+]
+.br 
+[
+.B \-a 
+]
+.br 
+[
+.BI \-S " VID"
+]
+.br 
+[
+.BI \-P " SourcePoolname"
+[
+.BI \-o " OutputServiceClass"
+] ]
+.SH "DESCRIPTION"
+.B repack
+move files of active segments from a set of tape(s) to a target tape pool and gives 
+a status overview of the tapes in the repack system.
+Only volumes having
+.B FULL
+status may be repacked. One can either specify a single volume using
+.B \-V
+option, a list of volumes by sperating them by ':'
+or a given tape pool (option
+\fB\-P\fR). repack sends a request to the repackserver and returns immediately.
+If an error occurs on the server side during the submission and error message
+is returned.
+The repackserver to contact, has to be provided by adding the line 
+
+REPACK HOST <hostname>
+
+in the castor config file. Additionally the following enviroment 
+variables can be specified to override the default port (6800) and host defaults. 
+
+REPACK_HOST=<hostname>
+.br 
+REPACK_PORT=<port>
+
+When the repack process has been successfully completed (FINISHED status), the volume can be 
+reclaimed using the reclaim command.
+.LP 
+This command requires ADMIN privilege in the Cupv database. In case an error 
+occurs during a repack, messages can be found on the server in 
+/var/spool/repack/log.
+
+.TP 
+.I VID
+The volume visual identifier of the single volume to be repacked.
+It must be at most CA_MAXVIDLEN characters long. The status in the VMGR has to be 
+.BR FULL
+.TP 
+.I OutputServiceClass
+The name of the service class which is used for writing back the files to tape.
+to. The tape pool information in this service class is taken by the CASTOR II
+migrator to get a destination tape from the VMGR. To write to one specific tape, this
+service class has to have a tape pool containing this tape.
+.BR 
+.B Note that this service class has to be known by the stager given in the castor config file.
+.TP 
+.I SourcePoolname
+is the tape pool name. It must be at most CA_MAXPOOLNAMELEN characters long.
+The list of pools can be obtained with
+.BR vmgrlistpool .
+
+.SH "OPTIONS"
+\fB\-V\fR
+specifies the volumes to repack.
+
+\fB\-o\fR
+The service class used for migration (see obove). If none specified, the default is taken from the castor config file
+on the repackserver.
+
+\fB\-s\fR
+Prints information about all tapes in an active repack process.
+
+\fB\-S\fR
+Prints detailed information of the given volume.
+
+\fB\-h\fR
+Help
+
+\fB\-a\fR
+Archives repacked tapes. They are not listed anymore when the \fB\-s\fR option is 
+given
+.SH "EXAMPLE"
+.nf 
+.ft CW
+Repack to default service class:
+repack \-V L30076
+
+Repack of two tapes to service class alicemdc:
+repack \-V L30076:L30077 \-o alicemdc
+
+Repack of a tape pool to service class alicemdc:
+repack \-P alicemdc3_9940 \-o alicemdc
+
+.ft
+.fi 
+.SH "EXIT STATUS"
+This program returns 0 if the operation was successful or >0 if the operation failed:
+
+.br 
+0	Ok.
+.br 
+1	An error occured.
+.SH "SEE ALSO"
+.BR Castor_limits(4) ,
+.BR Cns_listtape(3) ,
+.BR reclaim(1) ,
+.BR vmgr_listtape(3) ,
+.BR vmgr_querypool(3) ,
+.B vmgr_querytape(3)
