@@ -209,12 +209,13 @@ void castor::io::ServerSocket::bind(int lowPort, int highPort)
 
   // fix to be removed ... 
   int port;
-
   srand(time(NULL));
-
   int valMax=highPort-lowPort;
+  port=lowPort;
   while (0 != rc){
-    port=(rand()% valMax)+lowPort; 
+    if (valMax !=0){ 
+       port=(rand()% valMax)+lowPort;
+    }
     m_saddr.sin_port = htons(port);
     rc=::bind(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr));
   }
