@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2006/08/07 17:09:49 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2006/08/14 13:02:28 $ $Author: felixehm $
  *
  *
  *
@@ -128,23 +128,25 @@ castor::repack::RepackServer::RepackServer() :
      {20, "RepackWorker : Adding tapes for pool repacking!"},							// RepackWorker:getPoolInfo()
      {21, "RepackFileStager: Unable to stage files!"},									// RepackFileStager:stage_files
      {22, "RepackFileStager: New request for staging files"},							// RepackFileStager:run()
-     {23, "RepackFileStager: Not enough space for this RepackRequest. Skipping..."},// RepackFileStager:stage_files
+     {23, "RepackFileStager: Error during mulit-Repack check."},// RepackFileStager:stage_files
      {24, "FileListHelper: Retrieved segs for SubRequest."},							//FileListHelper:getFileListSegs()
      {25, "RepackFileStager: Updating Request to STAGING and add its segs."},		// RepackFileStager:stage_files
-     {36, "RepackFileStager: No files found on tape."},               // RepackFileStager:stage_files
      {26, "RepackFileStager: Staging files."},												// RepackFileStager:stage_files
      {27, "DatabaseHelper: Unable to update SubRequest!"},
      {28, "DatabaseHelper: Tape already in repack que!"},
      {29, "RepackFileStager: Getting Segs for SubRequest!"},
      {30, "DatabaseHelper: SubRequest updated!"},
+     {31, "RepackFileStager: Found same TapeCopy on two tapes"},
      {33, "RepackFileStager: Changing CUUID to stager one"},
      {34, "RepackCleaner: No files found for cleanup phase"},
      {35, "RepackCleaner: Cleaner started"},
-     {36, "RepackCleaner: Remove request sending failed"},
+     {36, "RepackCleaner: There are no more files on tape to repack"},
+     {36, "RepackFileStager: No files found on tape."},               // RepackFileStager:stage_files
      {37, "RepackCleaner: Restart Repack"},
      {40, "RepackMonitor: Changing status"},
      {41, "RepackMonitor: Stager query failed"},
      {42, "RepackMonitor: Files in invalid status found"},
+     {45, "RepackFileStager: File could not be added due to an existing Tapecopy. Please try again later."},
      {99, "TODO::MESSAGE"},
      {-1, ""}};
   castor::dlf::dlf_init("Repack", messages);
