@@ -1,5 +1,5 @@
 /*
- * $Id: rmdir.c,v 1.11 2006/05/08 13:37:03 gtaur Exp $
+ * $Id: rmdir.c,v 1.12 2006/08/14 10:46:50 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmdir.c,v $ $Revision: 1.11 $ $Date: 2006/05/08 13:37:03 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rmdir.c,v $ $Revision: 1.12 $ $Date: 2006/08/14 10:46:50 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* rmdir.c       Remote File I/O - make a directory file                */
@@ -40,12 +40,12 @@ char		*dirpath;          /* remote directory path             */
                     /*
                      * HSM file
                      */
-                    TRACE(1,"rfio","rfio_rmdir: %s is an HSM path",
-                          dirpath);
+                    TRACE(1,"rfio","rfio_rmdir: %s is an HSM path %s",
+                          dirpath,host);
                     END_TRACE();
                     rfio_errno = 0;
-                    if (filename && (strstr(filename,"/castor")==filename || strstr(filename,"//castor")==filename) ) 
-				return rfio_HsmIf_rmdir(filename);
+                    if (filename && (strstr(host,"castorns")==host) ) 
+		     		return rfio_HsmIf_rmdir(filename);
 		    return(rfio_HsmIf_rmdir(dirpath));
                 }
 
@@ -110,3 +110,25 @@ char		*dirpath;          /* remote directory path             */
 	END_TRACE();
 	return (0);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
