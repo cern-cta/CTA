@@ -1,5 +1,5 @@
 /*
- * $Id: rfrm.c,v 1.18 2006/05/08 13:37:03 gtaur Exp $
+ * $Id: rfrm.c,v 1.19 2006/08/14 17:35:20 gtaur Exp $
  */
 
 /*
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.18 $ $Date: 2006/05/08 13:37:03 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.19 $ $Date: 2006/08/14 17:35:20 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -200,6 +200,7 @@ int *yesno;
   int empty = 1;
   char* hostname,*pathname;
   int rc;
+  int ret;
   
   if ( !rfio_lstat64(path,&st) ) {
     if ( S_ISDIR(st.st_mode) ) {
@@ -214,8 +215,8 @@ int *yesno;
         if ( strcmp(de->d_name,".") && strcmp(de->d_name,"..") ) {
           empty = 0;
           p = (char *)malloc(strlen(path)+strlen(de->d_name)+2);
-          rfio_parse(path,&hostname,&pathname);
-          if (pathname && (strstr(pathname,"/castor")==pathname ||strstr(pathname,"//castor")==pathname  )) strcpy(p,pathname);
+          ret=rfio_parse(path,&hostname,&pathname);
+          if (ret>=0 && pathname && hostname == NULL) strcpy(p,pathname);
 	  else strcpy(p,path);
           strcat(p,"/");
           strcat(p,de->d_name);
@@ -260,3 +261,15 @@ int *yesno;
   }
   return(0);
 }
+
+
+
+
+
+
+
+
+
+
+
+
