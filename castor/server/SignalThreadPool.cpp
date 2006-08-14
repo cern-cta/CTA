@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/05/02 10:10:33 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/08/14 19:13:06 $ $Author: itglp $
  *
  *
  *
@@ -49,7 +49,8 @@ castor::server::SignalThreadPool::SignalThreadPool(const std::string poolName,
 //------------------------------------------------------------------------------
 castor::server::SignalThreadPool::~SignalThreadPool() throw()
 {
-  delete m_notifTPool;
+  if(m_notifTPool)
+    delete m_notifTPool;
   delete m_poolMutex;
 }
 
@@ -101,6 +102,7 @@ void castor::server::SignalThreadPool::run()
   }
 
   /* create and start notification thread if requested */
+  m_notifTPool = 0;
   if(m_notifPort <= 0)
     return;
 
@@ -112,6 +114,7 @@ void castor::server::SignalThreadPool::run()
   if(Cthread_create_detached(castor::server::_thread_run, nArgs) < 0) {
     delete nArgs;
     delete m_notifTPool;
+    m_notifTPool = 0;
     return;
   }
 
