@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.292 $ $Release$ $Date: 2006/08/10 08:13:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.293 $ $Release$ $Date: 2006/08/14 18:49:38 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.292 $ $Date: 2006/08/10 08:13:02 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.293 $ $Date: 2006/08/14 18:49:38 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -205,8 +205,8 @@ BEGIN
 END;
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
-   whenever a TapeCopy is unlinked from a Stream
-CREATE TRIGGER tr_Stream2TapeCopy_Delete
+   whenever a TapeCopy is unlinked from a Stream */
+CREATE OR REPLACE TRIGGER tr_Stream2TapeCopy_Delete
 BEFORE DELETE ON Stream2TapeCopy
 FOR EACH ROW
 BEGIN
@@ -218,12 +218,12 @@ BEGIN
                    AND DiskCopy.status = 10) -- CANBEMIGR
      AND Stream = :old.parent;
 END;
-*/
+
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
    whenever a TapeCopy has failed to be migrated and is
-   put back in WAITINSTREAM from the SELECTED status */
-CREATE OR REPLACE TRIGGER tr_TapeCopy_Update
+   put back in WAITINSTREAM from the SELECTED status *
+CREATE TRIGGER tr_TapeCopy_Update
 AFTER UPDATE of status ON TapeCopy
 FOR EACH ROW
 WHEN (old.status = 3 AND new.status = 2) -- SELECTED AND WAITINSTREAMS
@@ -655,7 +655,7 @@ BEGIN
            AND DiskCopy.filesystem = fileSystemId 
        ) DC,
        TapeCopy, Stream2TapeCopy
- WHERE TapeCopy.castorfile = DC.castorfile_id
+  WHERE TapeCopy.castorfile = DC.castorfile_id
    AND Stream2TapeCopy.child = TapeCopy.id
    AND Stream2TapeCopy.parent = streamId
    AND TapeCopy.status = 2 -- WAITINSTREAMS
@@ -667,24 +667,10 @@ BEGIN
   UPDATE Stream SET status = 3 -- RUNNING
    WHERE id = streamId;
 
-  -- update NbTapeCopiesInFS accordingly. Take care to remove the
-  -- TapeCopy from all streams and all filesystems
-  UPDATE NbTapeCopiesInFS NTC 
-     SET NTC.NbTapeCopies = NTC.NbTapeCopies - 1
-   WHERE EXISTS (
-       SELECT 'x' 
-         FROM DiskCopy, TapeCopy
-        WHERE DiskCopy.CastorFile = TapeCopy.castorFile
-          AND TapeCopy.id = tapeCopyId
-          AND DiskCopy.status = 10 -- CANBEMIGR
-          AND DiskCopy.FileSystem = NTC.FS
-       )
-     AND EXISTS (
-       SELECT 'x' 
-         FROM Stream2TapeCopy 
-        WHERE child = tapeCopyId
-          AND parent = NTC.Stream
-       );
+  -- detach the tapecopy from the stream now that it is SELECTED
+  -- the triggers will update NbTapeCopiesInFS accordingly 
+  DELETE FROM Stream2TapeCopy
+   WHERE child = tapeCopyId;
 
   -- Update Filesystem state
   updateFSFileOpened(fsDiskServer, fileSystemId, deviation, 0);
@@ -1321,13 +1307,13 @@ BEGIN
  COMMIT;
 END;
 
-/* PL/SQL method internalputDoneFunc, used by fileRecalled, putdonefunc
+/* PL/SQL method internalPutDoneFunc, used by fileRecalled, putDoneFunc
   checks for diskcopies in STAGEOUT and creates the tapecopies for migration
 */
-CREATE OR REPLACE PROCEDURE internalputDoneFunc (cfId IN INTEGER,
-                                         fs IN INTEGER,
-					 context IN INTEGER,
-					 nbTC IN INTEGER) AS
+CREATE OR REPLACE PROCEDURE internalPutDoneFunc (cfId IN INTEGER,
+                                                 fs IN INTEGER,
+                                                 context IN INTEGER,
+                                                 nbTC IN INTEGER) AS
   tcId INTEGER;
   fsId INTEGER;
   dcId INTEGER;
@@ -1378,17 +1364,14 @@ END;
 /* PL/SQL method putDoneFunc */
 CREATE OR REPLACE PROCEDURE putDoneFunc (cfId IN INTEGER,
                                          fs IN INTEGER,
-					 context IN INTEGER) AS
+                                         context IN INTEGER) AS
   nc INTEGER;
-  tcId INTEGER;
-  fsId INTEGER;
-  dcId INTEGER;
 BEGIN
  -- get number of TapeCopies to create
  SELECT nbCopies INTO nc FROM FileClass, CastorFile
   WHERE CastorFile.id = cfId AND CastorFile.fileClass = FileClass.id;
  -- and execute the internal putDoneFunc with the number of TapeCopies to be created
- internalputDoneFunc(cfId, fs, context, nc);
+ internalPutDoneFunc(cfId, fs, context, nc);
 END;
 
 
@@ -1488,34 +1471,36 @@ BEGIN
    WHERE TapeCopy.id = tapecopyId
      AND CastorFile.id = TapeCopy.castorFile
      AND DiskCopy.castorFile = TapeCopy.castorFile
+     AND FileClass.id = Castorfile.fileclass
      AND SubRequest.diskcopy(+) = DiskCopy.id
-     AND DiskCopy.status = 2
-     AND FileClass.id  = Castorfile.fileclass;
+     AND DiskCopy.status = 2;
   UPDATE DiskCopy SET status = decode(repackVid, NULL,0, 6)  -- DISKCOPY_STAGEOUT if repackVid != NULL, else DISKCOPY_STAGED 
    WHERE id = dci RETURNING fileSystem INTO fsid;
+
   -- Repack handling:
   -- create the number of tapcopies for waiting subrequests and update their diskcopy.
   IF repackVid IS NOT NULL THEN
-        -- how many do we have to create ?
-	SELECT count(repackvid) INTO nbTC FROM subrequest 
-         WHERE subrequest.castorfile = cfid
-	   AND subrequest.repackvid IS NOT NULL
-	   AND subrequest.status in (4,5,6);
+    -- how many do we have to create ?
+	  SELECT count(repackvid) INTO nbTC FROM subrequest 
+     WHERE subrequest.castorfile = cfid
+	     AND subrequest.repackvid IS NOT NULL
+	     AND subrequest.status in (4,5,6);
 	
-	-- we are not allowed to create more Tapecopies than in the fileclass specified
-	IF fcnbcopies < nbTC THEN 
-	 nbTC := fcnbcopies;
-	END IF;
+	  -- we are not allowed to create more Tapecopies than in the fileclass specified
+	  IF fcnbcopies < nbTC THEN 
+	    nbTC := fcnbcopies;
+	  END IF;
 	
-	-- we need to update other subrequests with the diskcopy
-	UPDATE SubRequest SET diskcopy = dci 
-	 WHERE subrequest.castorfile = cfid
-	   AND subrequest.repackvid IS NOT NULL
-	   AND subrequest.status in (4,5,6); 
+	  -- we need to update other subrequests with the diskcopy
+	  UPDATE SubRequest SET diskcopy = dci 
+	   WHERE subrequest.castorfile = cfid
+	     AND subrequest.repackvid IS NOT NULL
+	     AND subrequest.status in (4,5,6); 
 	   
-	-- create the number of tapecopies for the files
-	internalputDoneFunc(cfid, fsId, 0, nbTC);
+	  -- create the number of tapecopies for the files
+	  internalPutDoneFunc(cfid, fsId, 0, nbTC);
   END IF;
+  
   IF subRequestId IS NOT NULL THEN
     UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
      WHERE id = SubRequestId; 
