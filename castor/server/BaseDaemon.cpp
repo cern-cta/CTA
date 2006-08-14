@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/07/18 12:12:32 $ $Author: waldron $
+ * @(#)$RCSfile: BaseDaemon.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/08/14 19:10:38 $ $Author: itglp $
  *
  *
  *
@@ -38,6 +38,7 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <vector>
 
 
 //------------------------------------------------------------------------------
@@ -113,7 +114,37 @@ void castor::server::BaseDaemon::start() throw(castor::exception::Exception)
 //------------------------------------------------------------------------------
 void castor::server::BaseDaemon::waitAllThreads() throw()
 {
-  /*
+  std::vector<castor::server::SignalThreadPool*> idleTPools;
+
+  while(true) {
+    idleTPools.clear();
+
+    try {
+      std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
+      for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
+
+        if(typeid(tp->second) == typeid(castor::server::SignalThreadPool)) {
+          // only SignalThreadPools have to be checked
+          if(((castor::server::SignalThreadPool*)tp->second)->getActiveThreads() > 0) {
+            castor::exception::Internal ex;
+            throw ex;
+          }
+          else  // fine, it's idle
+            idleTPools.push_back((castor::server::SignalThreadPool*)tp->second);
+        }
+      }
+      break;   // if all thread pools have 0 active threads, we're done
+    }
+    catch (castor::exception::Exception e) {
+      // a thread lock could not be acquired or a thread pool still has some threads running
+      // hence release previously acquired locks and try again
+      for(int i = 0; i < idleTPools.size(); i++) {
+        idleTPools[i]->getMutex()->release();
+      }
+    }
+  }
+
+  /* old C implementation (see also stager.c:1169)
   while (true) {
     int nbthread;
 
@@ -146,7 +177,10 @@ void* castor::server::_signalThread_run(void* arg)
       /* Note: from now on this is unsafe but here we go, we cannot use mutex/condition/printing etc... */
       /* e.g. things unsafe in a signal handler */
       /* so from now on this function is calling nothing external */
+      
+      // XXX to be implemented the stager way (stager.c:1116)
       daemon->m_signalMutex->setValueNoMutex(1);
+      
       dlf_shutdown(10);
       exit(0);  // EXIT_SUCCESS
     }

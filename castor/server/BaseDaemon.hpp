@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/08/14 19:10:38 $ $Author: itglp $
  *
  *
  *
@@ -32,7 +32,7 @@
 #include <map>
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
-#include "castor/server/BaseThreadPool.hpp"
+#include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/BaseServer.hpp"
 #include "castor/server/Mutex.hpp"
 
