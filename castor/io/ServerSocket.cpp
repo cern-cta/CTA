@@ -210,12 +210,17 @@ void castor::io::ServerSocket::bind(int lowPort, int highPort)
   // fix to be removed ... 
   int port;
   srand(time(NULL));
-  int valMax=highPort-lowPort;
-  port=lowPort;
+  int valMax=highPort-lowPort+1;
+
+ if (lowPort<1024 || highPort> 65535 || lowPort>highPort ) {
+    castor::exception::Exception ex(errno);
+    ex.getMessage() << "Unable to use socket in port range ["
+                    << lowPort << ", " << highPort << "]";
+    throw ex;
+  }
+  
   while (0 != rc){
-    if (valMax !=0){ 
-       port=(rand()% valMax)+lowPort;
-    }
+    port=(rand()% valMax)+lowPort;
     m_saddr.sin_port = htons(port);
     rc=::bind(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr));
   }
