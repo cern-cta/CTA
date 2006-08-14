@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/05/02 10:10:33 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/08/14 19:04:11 $ $Author: itglp $
  *
  *
  *
@@ -109,14 +109,6 @@ namespace castor {
      * is available.
      */
     std::ostream& log() throw (castor::exception::Exception);
-
-    /**
-     * Output stream to logfile
-     */
-    //std::ostream *m_log;
-
-
-  private:
 
     /**
      * Flag indicating whether the server should
