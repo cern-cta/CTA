@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/06/20 08:51:32 $ $Author: felixehm $
+ * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/08/14 14:18:54 $ $Author: felixehm $
  *
  * 
  *
@@ -75,20 +75,7 @@ namespace castor {
 					throw(castor::exception::Internal);
 
 
-      /**
-	   * Selects the next request the Repack daemon should deal with.
-	   * It returns a RepackSubRequest, so directly the tape to repack.
-	   * The corresponding main Request can be fetched by TODO:: <other function>>
- 	   * TODO: select statement
-	   * 
-	   * @return the Request to process
-	   * @exception Exception in case of error
-	   */
-	  castor::repack::RepackSubRequest* requestToDo() 
-					throw(castor::exception::Internal);
-
-
-    /**
+     /**
       * Selects a RepackSubRequest as to be updated.
       * After calling this method, the unlock has to be executed to commit.
       * otherwise the table entry is locked forever.
@@ -212,7 +199,8 @@ namespace castor {
                                               (castor::db::IDbStatement* statement) 
                                               throw (castor::exception::Internal);
 
-
+        
+        /** The SQL Statement Objects and their strings */
 
         static const std::string s_selectCheckStatementString;
         castor::db::IDbStatement *m_selectCheckStatement;
@@ -234,7 +222,6 @@ namespace castor {
 
         static const std::string s_archiveStatementString;
         castor::db::IDbStatement  *m_archiveStatement;
-        //oracle::occi::Statement  *m_archiveStatement;
 
         static const std::string s_selectLockStatementString;
         castor::db::IDbStatement *m_selectLockStatement;
