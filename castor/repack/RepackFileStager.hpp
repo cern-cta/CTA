@@ -33,7 +33,8 @@ namespace castor {
 		public : 
 		
 		/**
-	   * Empty Constructor
+	   * Constructor.
+     * @param srv The refernce to the constructing RepackServer Instance.
 	   */
 		RepackFileStager(RepackServer* srv) throw ();
 		
@@ -65,23 +66,40 @@ namespace castor {
      * was successfull the state of the RepackSubRequest is changed 
      * to SUBREQUEST_STAGING.
      * @param sreq The RepackSubRequest to stage in files
+     * @throws castor::exeption::Internal in case of an error
 		 */
-		void stage_files(RepackSubRequest* sreq) ;
+		void stage_files(RepackSubRequest* sreq)
+                                          throw (castor::exception::Exception);
 
 
     /** private method to send the request to the stager.
       * @param req The Request to send
       * @param reqId the returned request id (cuuid) from stager
       * @param 
-      * @throws castor::exeption::Internal Internal Exception in case of an error
+      * @throws castor::exeption::Internal in case of an error
       */
 		void sendStagerRepackRequest(
-                                  castor::stager::StagePrepareToGetRequest* req,
-                                  std::string *reqId,
-                                  struct stage_options* opts
+                                 castor::stager::StagePrepareToGetRequest* req,
+                                 std::string *reqId,
+                                 struct stage_options* opts
                                 )
                                 throw (castor::exception::Internal);
 		
+
+    /**
+      * Checks for double tapecopy repacking. This happens whenever there 
+      * are >1 tapecopies of a file to be repacked. If the first one is already
+      * staged, the user gets a warning in DLF to restart the repack for the 
+      * second tape. The reason for this is the creation of the tapecopies of
+      * a file, whenever it is recalled. The FILERECALLED PL/SQL creates the 
+      * amount of tapecopies which have been submitted as Stager SubRequest till
+      * that time. Everyone reaching it after the physical recall, would be 
+      * ignored. This is here checked and in case the user informed.
+      * @param sreq The RepackSubRequest to check
+      * @throws castor::exception::Internal in case of an error
+      */
+    int checkMultiRepack(RepackSubRequest* sreq)
+	                                    throw (castor::exception::Internal);
 
     /**
 		 * Pointer to DatabaseHelper instance. Created by the contructor.
