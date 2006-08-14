@@ -195,8 +195,8 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
 
     // Display number of messages received/sent statistics !
     time_t curtime = time(0);
-    if ((curtime - m_lastStatTime) >= 60) {
-      clog() << IMPORTANT << SETW func
+    if ((curtime - m_lastStatTime) >= 600) {
+      clog() << DEBUG << SETW func
              << " STATISTICS During last " << (curtime - m_lastStatTime)
              << " s New Requests:" << m_nbQueuedResponses
              << " Processed:" <<  m_nbDequeuedResponses << std::endl;
