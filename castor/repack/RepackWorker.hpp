@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/07/04 13:48:00 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2006/08/14 13:01:44 $ $Author: felixehm $
  *
  *
  *
@@ -56,7 +56,7 @@ namespace castor {
 
   class DatabaseHelper;
   class FileListHelper;
-
+  class RepackServer;
   /**
    * A thread to process Put/Get request and submit them to the stager.
    */
@@ -67,7 +67,7 @@ namespace castor {
     /**
      * Initializes the db access.
      */
-    RepackWorker();
+    RepackWorker(RepackServer* pserver);
     
     /**
      * Standard destructor
@@ -151,7 +151,7 @@ namespace castor {
       * @throws castor::exception::Exception if the tape was not found
       */
     RepackRequest* getStatus(RepackRequest* rreq) throw (castor::exception::Internal);
-    
+
     
     /** Gets the status of all RepackSubRequests from the DB. The given tape vid
       * is searched in the Repack DB and if it is found, returned.
@@ -166,6 +166,11 @@ namespace castor {
      * the DatabaseHelper, which helps to store the Request in the DB.
      */
     DatabaseHelper* m_databasehelper;
+
+    /**
+     * The RepackServer instance pointer.
+     */
+    RepackServer* ptr_server;
     
   };
 

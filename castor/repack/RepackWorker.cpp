@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2006/07/04 13:48:00 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2006/08/14 13:01:44 $ $Author: felixehm $
  *
  *
  *
@@ -39,9 +39,10 @@ namespace castor {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RepackWorker::RepackWorker()
+RepackWorker::RepackWorker(RepackServer* pserver)
 {
   m_databasehelper = new castor::repack::DatabaseHelper();
+  ptr_server = pserver;
 }
 
 
