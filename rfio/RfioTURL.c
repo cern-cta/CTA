@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.16 $ $Release$ $Date: 2006/08/08 14:04:05 $ $Author: gtaur $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.17 $ $Release$ $Date: 2006/08/15 14:15:53 $ $Author: gtaur $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.16 $ $Release$ $Date: 2006/08/08 14:04:05 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.17 $ $Release$ $Date: 2006/08/15 14:15:53 $ Olof Barring";
 #endif /* not lint */
 /** RfioTURL.c - RFIO TURL handling
  *
@@ -246,6 +246,7 @@ int rfioTURLFromString(
   char* buff;
   int versionNum=0;
   //void ** auxPointer=0;
+  char endMark;
 
   char ** globalHost,  **globalSvc;
   int *globalVersion, *globalPort;
@@ -304,13 +305,19 @@ int rfioTURLFromString(
    */
 
   q = strstr(p,"/");
-  if ( q == NULL ) {
-    serrno = EINVAL;
-    free(orig);
-    return(-1);
+  q1= strstr(p,"?");
+
+  if ( q == NULL) {
+       serrno = EINVAL;
+       free(orig);
+       return(-1);
   }
 
+  if (q1 && q1<q) q=q1;
+
+  endMark=*q;
   *q = '\0';
+
   q1 = strstr(p,":");
   if ( q1 != NULL ) {
     *q1 = '\0';
@@ -333,27 +340,20 @@ int rfioTURLFromString(
   /*
    * Finally we only have the path and parameters  left
    */
+
+/*  magic things to deal with a single slash */	
   
-  p = q+1;
-
-  if (!p){
-
-   // the path should be specified ... it cannot be missing
-
-      serrno = EINVAL;
-      free(orig);
-      return(-1);
-  }
+  *q=endMark;
+  p=q;
 
   q=strstr(p,"?");
   if (!q){
-
      // no parameters specified
         path1=p;
   }
   else{  // parameters to parse
   
-  	if(p==q){
+        if(p==q){
 	    // no path after the port number
             path1=NULL;
 	    *p='\0';
@@ -398,19 +398,12 @@ int rfioTURLFromString(
 	}
 
   }
+   
+   if (path2)
+       path1=NULL;  // if I have the path given as option is ignored the other one.
 
 
-   if (path1 && path2){
-
-     // not possible to have the path twice
-      serrno = EINVAL;
-      free(orig);
-      return(-1);
-   }
-
-
-   if (!path1 && !path2){
-
+   if (!path1 && !path2 ){
    // at least the path should be specified
       serrno = EINVAL;
       free(orig);
@@ -442,15 +435,20 @@ int rfioTURLFromString(
      strcpy(_tURL.rfioPath,path2);
    }
 
-   if (_tURL.rfioPath && strstr(_tURL.rfioPath,"//")){ 
-	strcpy(_tURL.rfioPath,(char*)&_tURL.rfioPath[1]);}
- 
-   
-   if (strstr(_tURL.rfioPath,"/castor") == _tURL.rfioPath ){ 
-                               // the //castor is due to srm 1 problems
+/* to remove the // or /// because of srm1 problems */
 
+   if (_tURL.rfioPath && (strstr(_tURL.rfioPath,"//")==_tURL.rfioPath )){ 
+	strcpy(_tURL.rfioPath,(char*)&_tURL.rfioPath[1]);
+        if (_tURL.rfioPath && (strstr(_tURL.rfioPath,"//") == _tURL.rfioPath)){ 
+	   strcpy(_tURL.rfioPath,(char*)&_tURL.rfioPath[1]);
+        }
+   }
+
+   if (strstr(_tURL.rfioPath,"/castor") == _tURL.rfioPath ){ 
+     
     /* from here setting the proper enviroment variable */
     /* getting default value that can be used */
+
 	if (myCastorVersion){ 
       		if (!strcmp(myCastorVersion,"2")){
        			 versionNum=2;
