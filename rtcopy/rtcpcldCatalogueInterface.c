@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.148 $ $Release$ $Date: 2006/08/03 16:21:50 $ $Author: felixehm $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.149 $ $Release$ $Date: 2006/08/16 13:39:36 $ $Author: felixehm $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.148 $ $Release$ $Date: 2006/08/03 16:21:50 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.149 $ $Release$ $Date: 2006/08/16 13:39:36 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1793,20 +1793,6 @@ int nextSegmentToMigrate(
   }
   
   C_IAddress_delete(iAddr);
-
-  (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_IGNORE_ENOENT),
-                      (struct Cns_fileid *)castorFileId,
-                      2,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "rtcpcld_checkDualCopy()",
-                      "VID",
-                      DLF_MSG_PARAM_STR,
-                      tape->tapereq.vid
-                      );
-
 
   rc = rtcpcld_checkDualCopies(fl);
   if ( rc == -1 ) {
