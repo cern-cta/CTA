@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.149 $ $Release$ $Date: 2006/08/16 13:39:36 $ $Author: felixehm $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.150 $ $Release$ $Date: 2006/08/16 16:33:57 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.149 $ $Release$ $Date: 2006/08/16 13:39:36 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.150 $ $Release$ $Date: 2006/08/16 16:33:57 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -3243,7 +3243,7 @@ int rtcpcld_updcFileMigrated(
  * Called by the TapeErrorHandler or MigHunter when a migration has failed after retries
  * or a retry would not make sense (e.g. castor file has been removed).
  *  - Flag all TapeCopies TAPECOPY_FAILED
- *  - Flag all DiskCopies that are in DISKCOPY_CANBEMIGR status DISKCOPY_GCCANDIDATE
+ *  - Flag all DiskCopies that are in DISKCOPY_CANBEMIGR status DISKCOPY_INVALID
  *  - Flag all Segments SEGMENT_FAILED
  */
 int rtcpcld_putFailed(
@@ -3406,7 +3406,7 @@ int rtcpcld_putFailed(
            * Flag all CANBEMIGR diskCopies for GC
            */
           iObj = Cstager_DiskCopy_getIObject(diskCopyArray[i]);
-          Cstager_DiskCopy_setStatus(diskCopyArray[i],DISKCOPY_GCCANDIDATE);
+          Cstager_DiskCopy_setStatus(diskCopyArray[i],DISKCOPY_INVALID);
           rc = C_Services_updateRep(
                                     *svcs,
                                     iAddr,
