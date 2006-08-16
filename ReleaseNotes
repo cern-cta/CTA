@@ -9,7 +9,8 @@
 
   Upgrade from 2.1.0-6
   --------------------
-  Non special order is required.
+  Upgrade only the client.
+  Do NOT use this release for the server.
   
 -----------
 - 2.1.0-6 -
