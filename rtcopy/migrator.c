@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.47 $ $Release$ $Date: 2006/07/18 12:12:32 $ $Author: waldron $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.48 $ $Release$ $Date: 2006/08/16 16:31:34 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.47 $ $Release$ $Date: 2006/07/18 12:12:32 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.48 $ $Release$ $Date: 2006/08/16 16:31:34 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -530,6 +530,15 @@ int migratorCallback(
     }
     if ( filereq->proc_status == RTCP_REQUEST_MORE_WORK ) {
       msgNo = RTCPCLD_MSG_CALLBACK_ADDGETW;
+    }
+    castorFileId = (struct Cns_fileid *)calloc(1,sizeof(struct Cns_fileid));
+    if ( castorFileId != NULL ) {
+      castorFileId->fileid = filereq->castorSegAttr.castorFileId;
+      strncpy(
+              castorFileId->server,
+              filereq->castorSegAttr.nameServerHostName,
+              sizeof(castorFileId->server)-1
+              );
     }
     break;
   default:
