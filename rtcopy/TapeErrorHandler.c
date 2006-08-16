@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.16 $ $Release$ $Date: 2006/07/21 07:23:25 $ $Author: obarring $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.17 $ $Release$ $Date: 2006/08/16 16:33:01 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.16 $ $Release$ $Date: 2006/07/21 07:23:25 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.17 $ $Release$ $Date: 2006/08/16 16:33:01 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -831,8 +831,9 @@ static int doMigrationRetry(
   struct C_Services_t *dbSvc;
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
+  struct Cstager_Stream_t **streamArray = NULL;
   struct Cstager_ITapeSvc_t *tpSvc = NULL;
-  int rc;
+  int rc, nbStreams = 0;
   ID_TYPE key;
 
   if ( (segment == NULL) || (tapeCopy == NULL) ) {
@@ -860,7 +861,34 @@ static int doMigrationRetry(
   }
 
   iObj = Cstager_TapeCopy_getIObject(tapeCopy);
-  Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_CREATED);
+  rc = C_Services_fillObj(
+                          dbSvc,
+                          iAddr,
+                          iObj,
+                          OBJ_Stream
+                          );
+  if ( rc == -1 ) {
+    LOG_DBCALLANDKEY_ERR("C_Services_fillObj(tapeCopy,OBJ_Stream)",
+                         C_Services_errorMsg(dbSvc),
+                         key);
+    (void)C_Services_rollback(dbSvc,iAddr);
+    C_IAddress_delete(iAddr);
+    return(-1);
+  }
+  Cstager_TapeCopy_stream(tapeCopy,&streamArray,&nbStreams);
+  if ( (nbStreams > 0) && (streamArray != NULL) ) {
+    /*
+     * If already attached to stream(s), leave it
+     */
+    Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_WAITINSTREAMS);
+    free(streamArray);
+  } else {
+    /*
+     * Else, the MigHunter must re-attach it
+     */
+    Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_CREATED);
+  }
+  
   rc = C_Services_updateRep(
                             dbSvc,
                             iAddr,
@@ -902,9 +930,13 @@ static int doMigrationRetry(
  *
  */
 static int checkMigrationRetry(
-                               tapeCopy
+                               tapeCopy,
+                               deleteDiskCopy,
+                               _fileid
                                )
      struct Cstager_TapeCopy_t *tapeCopy;
+     int *deleteDiskCopy;
+     struct Cns_fileid *_fileid;
 {
   enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
   enum Cstager_SegmentStatusCodes_t segmentStatus;
@@ -929,6 +961,8 @@ static int checkMigrationRetry(
   int expertBufferLen = 0, save_serrno = 0;
   ID_TYPE key;
 
+  if ( deleteDiskCopy != NULL ) *deleteDiskCopy = 0;
+  if ( _fileid != NULL ) memset(_fileid,'\0',sizeof(struct Cns_fileid));
   if ( tapeCopy == NULL ) {
     serrno = EINVAL;
     return(-1);
@@ -991,6 +1025,7 @@ static int checkMigrationRetry(
             sizeof(fileid.server)
             );
   }
+  if ( _fileid != NULL ) memcpy(_fileid,&fileid,sizeof(fileid));
 
   /*
    * If castor file has been removed, the Cns_statx() returns ENOENT
@@ -1000,9 +1035,22 @@ static int checkMigrationRetry(
   memset(&statbuf,'\0',sizeof(statbuf));
   rc = Cns_statx(castorFileName,&fileid,&statbuf);
   if ( rc == -1 ) {
+    save_serrno = serrno;
     C_IAddress_delete(iAddr);
+
+    if ( save_serrno == ENOENT ) {
+      /*
+       * CASTOR file doesn't exist anymore. We can then safely delete the DiskCopies,
+       * but only in that case!
+       */
+      if ( deleteDiskCopy != NULL ) *deleteDiskCopy = 1;
+      save_serrno = SERTYEXHAUST;
+    }
+    
+    serrno = save_serrno;
     return(-1);
   }
+  if ( deleteDiskCopy != NULL ) *deleteDiskCopy = 0;
 
   /*
    * Check if any disk copy is accessible
@@ -1337,6 +1385,7 @@ int main(
   int tpErrorCode, tpSeverity, segErrorCode, segSeverity, mode;
   char *vid, *tpErrMsgTxt, *segErrMsgTxt, cns_error_buffer[512];
   int deleteDiskCopy = 0;
+  struct Cns_fileid fileid;
   ID_TYPE key;
 
   C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
@@ -1442,7 +1491,8 @@ int main(
     Cstager_Segment_copy(segm,&tapeCopy);
     if ( tapeCopy != NULL ) {
       if ( mode == WRITE_ENABLE ) {
-        rc = checkMigrationRetry(tapeCopy);
+        deleteDiskCopy = 0;
+        rc = checkMigrationRetry(tapeCopy,&deleteDiskCopy,&fileid);
         if ( rc == 0 ) {
           rc = doMigrationRetry(segm,tapeCopy);
           if ( rc == -1 ) {
@@ -1451,7 +1501,23 @@ int main(
         } else if (serrno == ENOENT ) {
           (void)cleanupSegment(segm);
         } else if ( serrno = SERTYEXHAUST ) {
-          deleteDiskCopy = 0;
+          Cstager_TapeCopy_id(tapeCopy,&key);
+          /*
+           * PUT_FAILED
+           */
+          (void)dlf_write(
+                          (inChild == 0 ? mainUuid : childUuid),
+                          RTCPCLD_LOG_MSG(RTCPCLD_MSG_PUTFAILED),
+                          (struct Cns_fileid *)&fileid,
+                          RTCPCLD_NB_PARAMS+2,
+                          "GC_DCP",
+                          DLF_MSG_PARAM_INT,
+                          deleteDiskCopy,
+                          "DBKEY",
+                          DLF_MSG_PARAM_INT64,
+                          key,
+                          RTCPCLD_LOG_WHERE
+                          );
           rc = rtcpcld_putFailed(tapeCopy, deleteDiskCopy);
           if ( rc == -1 ) {
             LOG_SYSCALL_ERR("rtcpcld_putFailed()");
