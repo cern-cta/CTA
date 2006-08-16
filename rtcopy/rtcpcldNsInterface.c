@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.31 $ $Release$ $Date: 2006/05/11 12:25:54 $ $Author: felixehm $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.32 $ $Release$ $Date: 2006/08/16 11:28:55 $ $Author: felixehm $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.31 $ $Release$ $Date: 2006/05/11 12:25:54 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.32 $ $Release$ $Date: 2006/08/16 11:28:55 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -399,7 +399,7 @@ int rtcpcld_updateNsSegmentAttributes(
     Cstager_SubRequest_repackVid(sreq,&oldvid);
     
     /* replace the old tapecopy. Note that the old segments are deleted!
-       and the old tapecopyno is assigned to the new tapecopy.*/
+       and the old tapecopyno is assigned to the new tapecopy.*/ 
     rc = Cns_replacetapecopy(
                        &castorFileId,
                        oldvid,
@@ -409,14 +409,14 @@ int rtcpcld_updateNsSegmentAttributes(
                        );
   }
   else {
-
-  /* the normal Case */
+  
+  /* the normal Case */ 
     rc = Cns_setsegattrs(
                        (char *)NULL, // CASTOR file name 
                        &castorFileId,
                        nbSegms,
                        nsSegAttrs
-                       );
+                       ); 
   }
   
 
@@ -446,7 +446,7 @@ int rtcpcld_updateNsSegmentAttributes(
                       (inChild == 0 ? mainUuid : childUuid),
                       RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                       (struct Cns_fileid *)&castorFileId,
-                      RTCPCLD_NB_PARAMS+2,
+                      RTCPCLD_NB_PARAMS+1,
                       "SYSCALL",
                       DLF_MSG_PARAM_STR,
                       "Cns_setsegattrs()/Cns_replacetapecopy()",
@@ -778,7 +778,40 @@ int rtcpcld_checkDualCopies(
     free(fileId);
     return(-1);
   }
-  
+
+  /*
+   * We need to check, if there is already a tapecopy of a file in the same 
+   * migrator cue. Usually this is avoided by a migration policy, but if there
+   * is none, it can then happen that >1 tapecopies are written to the same
+   * tape.This is avoided here.
+   */
+   file_list_t* fl = NULL;
+   struct Cns_fileid* fid = NULL;
+   struct Cns_fileid* prev_fid = NULL;
+   /* go through the list of files and compare the fileids 
+
+          iteration ->      file
+                   |         |
+                   V         V
+     fileid:   1 2 3 4 5 6 7 3
+   */
+
+   CLIST_ITERATE_BEGIN(tape->file, fl)
+     {
+        rtcpcld_getFileId(fl,&fid);
+        if ( prev_fid!= NULL && //first time
+             prev_fid != fid->fileid &&  // pointer is not the same
+             prev_fid->fileid == fid->fileid ) { // fileid is the same
+           dualCopyFound = 1;
+           break;
+        }
+        prev_fid = fid;
+     }
+   CLIST_ITERATE_END(tape->file, fl);
+   free(fid);
+   free(prev_fid);
+
+
   for ( i=0; i<nbSegs; i++ ) {
     if ( strncmp(tape->tapereq.vid,segArray[i].vid,CA_MAXVIDLEN) == 0 ) {
       dualCopyFound = 1;
