@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.32 $ $Release$ $Date: 2006/08/16 11:28:55 $ $Author: felixehm $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.33 $ $Release$ $Date: 2006/08/16 13:41:45 $ $Author: felixehm $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.32 $ $Release$ $Date: 2006/08/16 11:28:55 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.33 $ $Release$ $Date: 2006/08/16 13:41:45 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -446,7 +446,7 @@ int rtcpcld_updateNsSegmentAttributes(
                       (inChild == 0 ? mainUuid : childUuid),
                       RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                       (struct Cns_fileid *)&castorFileId,
-                      RTCPCLD_NB_PARAMS+1,
+                      RTCPCLD_NB_PARAMS+2,
                       "SYSCALL",
                       DLF_MSG_PARAM_STR,
                       "Cns_setsegattrs()/Cns_replacetapecopy()",
