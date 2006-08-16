@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.293 $ $Release$ $Date: 2006/08/14 18:49:38 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.294 $ $Release$ $Date: 2006/08/16 13:44:50 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.293 $ $Date: 2006/08/14 18:49:38 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.294 $ $Date: 2006/08/16 13:44:50 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -442,7 +442,7 @@ CREATE OR REPLACE PROCEDURE deleteOutOfDateRequests(timeOut IN NUMBER) AS
   myReq SubRequest.request%TYPE;
   CURSOR cur IS
    SELECT DISTINCT request FROM SubRequest
-    WHERE getTime() - lastModificationTime >= timeOut;
+    WHERE status IN (8, 9, 10) AND getTime() - lastModificationTime >= timeOut;
   counter NUMBER := 0;
 BEGIN
   OPEN cur;
