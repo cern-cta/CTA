@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.40 2006/04/28 18:19:01 itglp Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.41 2006/08/17 13:41:31 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.40 $ $Date: 2006/04/28 18:19:01 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.41 $ $Date: 2006/08/17 13:41:31 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -243,10 +243,13 @@ namespace castor {
           fr->setNbAccesses(dc->nbAccesses());
           foundDiskCopy = true;
         } else {
-          // If there are several diskcopies for the file
-          // set the status to staged if ANY of the disk copies is
-          // staged, otherwise keep the original status.
-          if (dc->diskCopyStatus() == DISKCOPY_STAGED) {
+          // If there are several diskcopies for the file,
+          // we apply some recedence rules :
+          // STAGED, CANBEMIGR > STAGEOUT, STAGEIN > INVALID
+          if (((FILE_STAGEOUT == st || FILE_STAGEIN == st) &&
+               (FILE_INVALID_STATUS == fr->status())) ||
+              ((FILE_STAGED == st || FILE_CANBEMIGR == st))) {
+            fr->setStatus(st);
             fr->setStatus(FILE_STAGED);
             fr->setDiskServer(diskServer);
             fr->setNbAccesses(dc->nbAccesses());
