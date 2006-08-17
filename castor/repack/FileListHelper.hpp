@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/06/02 10:04:36 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/08/17 17:05:02 $ $Author: felixehm $
  *
  * The Filelisthelper offers some little functions for getting the file 
  * information for a tape.
@@ -52,15 +52,9 @@ namespace castor {
     public:
 
       /**
-       * Empty Constructor, initialises with the nameserver given by the castor
-       * config file.
-       * @throws castor::exception::Internal if no entry is found in the config file.
-       */
-      FileListHelper() throw (castor::exception::Internal);
-      
-      /**
        * Contructor, which initialises the FilelistHelper 
-       * with a special nameserver
+       * with a nameserver a parameter
+       * @param nameserver The Nameserver to contact for file information
        */
       FileListHelper(std::string nameserver);
 
@@ -72,21 +66,28 @@ namespace castor {
       /**
        * Returns a vector with a filelist with full pathname.
        * @param rreq The Request of the Tape
+       * @return pointer to vector of u_signed64
        */
       std::vector<u_signed64>* getFileList(
-      							castor::repack::RepackSubRequest *sreq, Cuuid_t& cuuid) ;
+                                    castor::repack::RepackSubRequest *sreq) ;
 
       /**
        * Fills the Request with the segments on the tape
        * elements
-       * @param vid The Request of the Tape
+       * @param sreq The RepackSubRequest to fill
        * @return -1 in case of an error, the error Message is written to DLF!
        */
-      int getFileListSegs(castor::repack::RepackSubRequest *sreq, Cuuid_t& cuuid);
+      int getFileListSegs(castor::repack::RepackSubRequest *sreq);
       
-      
+      /**
+        * Retrieves the filenames for the fileids given in the passed
+        * RepackSubRequest.
+        * @param subreq The RepackSubRequest with the fileids
+        * @return pointer to vector of strings 
+        */
       std::vector<std::string>* getFilePathnames(
-								castor::repack::RepackSubRequest *subreq, Cuuid_t& cuuid) ;
+                                    castor::repack::RepackSubRequest *subreq) 
+                                          throw (castor::exception::Internal);
                           
 	private:
 		/**

@@ -152,9 +152,9 @@ void RepackCleaner::removeFilesFromStager(RepackSubRequest* sreq) throw(castor::
     throw ex;
   }
   /// get the files using the Filelisthelper
-  FileListHelper flp;
+  FileListHelper flp(ptr_server->getNsName());
   Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
-  std::vector<std::string>* filelist = flp.getFilePathnames(sreq,cuuid);
+  std::vector<std::string>* filelist = flp.getFilePathnames(sreq);
   std::string reqid; /// the requestid from the stager, which we get, 
                      /// when we send the remove request
   

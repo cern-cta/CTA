@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/08/14 14:07:47 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/08/17 17:05:01 $ $Author: felixehm $
  *
  *
  *
@@ -113,7 +113,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
 	
 	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 29, 0, NULL);
 	/// get the Segs for this tape !
-	if ( m_filehelper->getFileListSegs(sreq,cuuid) )
+	if ( m_filehelper->getFileListSegs(sreq) )
 		return;
 
   /// check the filelist for multi-tapecopy repacking - we can easily
@@ -123,7 +123,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   // ---------------------------------------------------------------
 	// This part has to be removed, if the stager also accepts only fileid
 	// as parameter. For now we have to get the paths first.
-	std::vector<std::string>* filelist = m_filehelper->getFilePathnames(sreq,cuuid);
+	std::vector<std::string>* filelist = m_filehelper->getFilePathnames(sreq);
 	std::vector<std::string>::iterator filename = filelist->begin();
 	// ---------------------------------------------------------------
 	//std::vector<u_signed64>* filelist = m_filehelper->getFileList(sreq,cuuid);
@@ -143,15 +143,15 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
 
   
   /// here we build the Request for the stager 
-	while (filename != filelist->end()) {
-		castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
-		subreq->setFileName((*filename));
-		subreq->setRepackVid(sreq->vid());	// this marks the Request as a 'special' one.
-		subreq->setProtocol(ptr_server->getProtocol());	// we have to specify a protocol, otherwise our call is not scheduled!
-		subreq->setRequest(&req);
-		req.addSubRequests(subreq);
-		filename++;
-	}
+  while (filename != filelist->end()) {
+    castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
+    subreq->setFileName((*filename));
+    subreq->setRepackVid(sreq->vid());	// this marks the Request as a 'special' one.
+    subreq->setProtocol(ptr_server->getProtocol());	// we have to specify a protocol, otherwise our call is not scheduled!
+    subreq->setRequest(&req);
+    req.addSubRequests(subreq);
+    filename++;
+  }
 
   /// We need to set the stage options. 
   struct stage_options opts;
