@@ -173,8 +173,7 @@ int main(argc, argv)
 	char shost1[32];
 	int l1, l2 ;
 	int v;
-	char* cleanInp=NULL;
-	char* cleanOut=NULL;
+	
 	extern char * getifnam() ;
 #if defined(_WIN32)
 	WSADATA wsadata;
@@ -330,22 +329,22 @@ int main(argc, argv)
 		strcpy(shost1,host1) ;
 		input_is_local = 0;
 	}
-	cleanInp=strdup((!path1 || strstr(path1,"/castor")!= path1)?inpfile:path1);
+
 	strcpy( filename, path1 );
 
 	l2 = rfio_parseln( filename_sav , &host2, &path2, NORDLINKS ) ;
 	if (l2 < 0) {
 		fprintf(stderr,"%s\n",sstrerror(serrno));
-		free(cleanInp);
+		
 		exit(USERR);
 	}
-	cleanOut=strdup((!path2 || strstr(path2,"/castor")!=path2)?filename_sav:path2);
+
 	
 
 	/* Command is of the form cp f1 f2. */
 	serrno = rfio_errno = 0;
 	if (strcmp(inpfile,"-") != 0) {
-		rc = rfio_stat64(cleanInp, &sbuf);
+		rc = rfio_stat64(inpfile, &sbuf);
 		if ( rc == 0 && ( S_ISDIR(sbuf.st_mode) || S_ISCHR(sbuf.st_mode)
 #if !defined(_WIN32)
 						  || S_ISBLK(sbuf.st_mode)
@@ -355,8 +354,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 			WSACleanup();
 #endif
-			free(cleanOut);
-			free(cleanInp);
+			
 			exit(USERR) ;
 		} else if (rc == 0) {
 			inpfile_size = (u_signed64) sbuf.st_size;
@@ -378,8 +376,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 		WSACleanup();
 #endif
-			free(cleanOut);
-			free(cleanInp);
+			
 		exit (USERR) ;
 	}
 
@@ -391,7 +388,7 @@ int main(argc, argv)
 
 	  if (rfio_HsmIf_IsHsmFile(filename) && (! input_is_local)) {
 		/* We switch to the explicit STAGE mode */
-		int rc = copyfile_stage((char *) cleanInp, (char *) (cleanOut), (mode_t) (sbuf.st_mode & 0777), (((have_maxsize > 0) && (inpfile_size > maxsize)) ? maxsize : inpfile_size), (int) (( sbuf.st_dev  == 0 && sbuf.st_ino  == 1 ) ? 1 : 0));
+		int rc = copyfile_stage((char *) inpfile, (char *) (filename), (mode_t) (sbuf.st_mode & 0777), (((have_maxsize > 0) && (inpfile_size > maxsize)) ? maxsize : inpfile_size), (int) (( sbuf.st_dev  == 0 && sbuf.st_ino  == 1 ) ? 1 : 0));
 		if (rc >= 0) {
 		 exit(rc);
 		}
@@ -400,7 +397,7 @@ int main(argc, argv)
 		/* Note that this switch requires anyway the output filename to be in the limits */
 	  } else if (rfio_HsmIf_IsHsmFile(filename)) {
 		/* The output is in CASTOR, and input is local or maxsize possibly not bound exactly to the MB unit */
-		int rc = copyfile_stage_from_local((char *) cleanInp, (char *)cleanOut, (mode_t) (sbuf.st_mode & 0777), (((have_maxsize > 0) && (inpfile_size > maxsize)) ? maxsize : inpfile_size), (int) (( sbuf.st_dev  == 0 && sbuf.st_ino  == 1 ) ? 1 : 0));
+		int rc = copyfile_stage_from_local((char *) inpfile, (char *)filename, (mode_t) (sbuf.st_mode & 0777), (((have_maxsize > 0) && (inpfile_size > maxsize)) ? maxsize : inpfile_size), (int) (( sbuf.st_dev  == 0 && sbuf.st_ino  == 1 ) ? 1 : 0));
 		if (rc >= 0) {
 		 exit(rc);
 		}
@@ -412,8 +409,7 @@ int main(argc, argv)
 		/* Output is not CASTOR but input is : we will follow the classic rfcp behaviour */
 		/* but we want neverthless to handle the termination signals v.s. stager */
 		TRACE(2,"rfio","Instructing signal handler to exit");
-		free(cleanInp);
-		free(cleanOut);
+		
 		copyfile_stgcleanup_instruction = CLEANER_EXIT;
 	  }
 	}
@@ -439,7 +435,7 @@ int main(argc, argv)
 	if ( cp != NULL ) {
 		*cp = '\0';
 		if ( *filename ) {
-			rc = rfio_stat64(cleanOut,&sbuf2);
+			rc = rfio_stat64(filename,&sbuf2);
 		}
 		*cp = '/';
 		if ( sbuf2.st_dev == 0 && sbuf2.st_ino == 1 ) {
@@ -486,7 +482,7 @@ int main(argc, argv)
 		if (strcmp(inpfile,"-") == 0) {
 			fd1 = fileno(stdin);
 		} else {
-			fd1 = rfio_open64(cleanInp,O_RDONLY|binmode ,0644);
+			fd1 = rfio_open64(inpfile,O_RDONLY|binmode ,0644);
 		}
 #ifdef CNS_ROOT
 	}
@@ -570,7 +566,7 @@ int main(argc, argv)
 
 	serrno = rfio_errno = 0;
 	
-        fd2 = rfio_open64(cleanOut, O_WRONLY|O_CREAT|O_TRUNC|binmode ,sbuf.st_mode & 0777);
+        fd2 = rfio_open64(filename, O_WRONLY|O_CREAT|O_TRUNC|binmode ,sbuf.st_mode & 0777);
 	if (fd2 < 0) {
 		if (serrno) {
 			rfio_perror(outfile);
@@ -627,8 +623,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 		WSACleanup();
 #endif
-		free(cleanInp);
-		free(cleanOut);
+		
 		exit (c);
 	}
 	/*
@@ -657,8 +652,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 			WSACleanup();
 #endif
-			free(cleanInp);
-			free(cleanOut);
+			
 			exit(SYERR);
 		}
 	}
@@ -667,7 +661,7 @@ int main(argc, argv)
 			struct stat64 sbuf;
 			mode_t mode;
 			rfio_perror("close target");
-			rfio_stat64(cleanOut, &sbuf);	/* check for special files */
+			rfio_stat64(filename, &sbuf);	/* check for special files */
 			mode = sbuf.st_mode & S_IFMT;
 			if (mode == S_IFREG) {
 				rfio_unlink(filename);
@@ -675,8 +669,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 			WSACleanup();
 #endif
-			free(cleanInp);
-			free(cleanOut);
+			
 			exit(SYERR);
 		}
 	}
@@ -747,8 +740,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 	WSACleanup();
 #endif
-	free(cleanInp);
-	free(cleanOut);
+	
 	exit(rc2);
 }
 
