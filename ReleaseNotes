@@ -1,4 +1,33 @@
 -----------
+- 2.1.1-0 -
+-----------
+  
+  New Features and Changes (from 2.1.0-7)
+  ---------------------------------------
+  - Imported modifications to recover after a dropped db connection 
+
+  - Added a new error code SegmentNotAccessible
+
+  - Fixed missing creation of directory /var/spool/cleaning
+
+  - Removed option RFIO NFS_ROOT from castor.conf
+
+  - Changed default nb of threads to 20 for DB and JOB (optimal value according to Olof's tests)
+ 
+  - Modifications to be ready with RFIO merge
+
+  - connection reset messages from rmc are just sent to msg after 2 retries 
+  
+  - Increase the test suites
+
+
+  Upgrade from 2.1.0-7
+  --------------------
+  - Upgrade first the Database
+  - Then upgrade the servers 
+  - finally upgrade the clients.  
+
+-----------
 - 2.1.0-7 -
 -----------
   
