@@ -1,6 +1,75 @@
+castor (2.1.0-7) unstable; urgency=low
+
+  * identical to the 2.1.0-7 but with some more bugs fixed 
+  
+  *castor/io/ServerSocket.cpp
+  Random port in bind() to wait the answer from the stager. Port with limited values...
+  
+  *rfio/RfioTURL.c
+  Removed memory leak in Rfio
+
+castor (2.1.0-6) unstable; urgency=low
+
+  * identical to the 2.1.0-5 but with some more bugs fixed 
+  
+  * stager/stager_client_api_query.cpp
+  Handle the case of a simple 'Response' instead of a FileQryResponse. This could happen in case of error
+  
+  * hsmtools/diskServer_qry
+  Added CF.lastKnownFileName as a result of diskServer_qry
+  
+  * hsmtools/diskServer_qry.man
+  
+  * tape/mircheck.c
+  
+  * tape/mounttape.c
+  
+  * tape/rlstape.c 
+  
+  * tape/rbtsubr.c 
+  
+  * tape/smcsubr2.c  
+  Mir valid/invalid checking on IBM3592E05 tape drives, new IBM3592E05 firmware release (172E) fixed problem seen before.Connection reset messages from rmc are just sent to msgdaemon after 2 retries. Rmcdaemon now checks if tape is in the storage slot before returning dismount OK.
+  
+  * castor/db/oracleTrailer.sql
+  Fix mistake in updateFiles2Delete
+  
+  * castor/client/BaseClient.cpp
+  Handle properly exceptions in sendRequest and especially release memory and close the socket
+  
+  * stager/stager_db_service.c
+  Fixed missing filling of the svcclass of a castorfile in memory. The consequence was that the svcclass could be overwritten in case of reuse of a castorfile in 2 different service classes
+  
+castor (2.1.0-5) unstable; urgency=low
+
+  * identical to the 2.1.0-4 but with some more bugs fixed 
+
+  * castor/db/ora/OraGCSvc.cpp
+    Fixed some deadlock between the GC and the updateFsFileClosed PL/SQL function  
+  * castor/db/ora/oracleTrailer.sql 
+    Fixed some deadlock between the GC and the updateFsFileClosed PL/SQL function
+  * debian/cleaning.init
+    Fixed missing chkconfig line
+  * rfio/RfioTURL.c rfio/rfio_HsmIf.c
+    RFIO_USE_CASTOR_V2 NoT cAse SeNsItiVe and removed in Rfio Turl a part not used which was giving warning.
+  * rfio/rfcp.man
+    Replacing ' with " to make SLC man happy
+  * rtcopy/TapeErrorHandler.c
+    Backport 1.16: Remove check for already migrated files preventing recreated files from being migrated (apparently the 'm' bit is not reset when file is recreated?)
+  * stager/stager_client_api_open.cpp
+    Fixed stage_open, broken since the integration of O_LARGEFILE
+  * upv/Cupv_check.c
+    check if src and tgt are not null before comparing
+  * stager/stager_put.c
+    set mode for file creations
+
+  
+ -- rosa maria garcia rioja <riojac3@localhost.localdomain>  Fri,  29 Jul 2006 10:58:14 +0200
+
+
 castor (2.1.0-4) unstable; urgency=low
 
-  * identical to the 2.1.0-2 but with some more bugs fixed 
+  * identical to the 2.1.0-3 but with some more bugs fixed 
 
   * rfio/rfcp.c
   * rfio/rfcat.man
