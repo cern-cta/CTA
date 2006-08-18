@@ -73,7 +73,7 @@ listOfTest={'COMMON':commonTest,'SERVER':serverTest,'CLIENT':clientTest,'RFIO':r
 
 #################### opening the file with the list of tests wanted  ################################
 
-f=open("/home/gtaur/CASTOR2/test/CASTORTESTCONFIG","r")
+f=open("/etc/castor/CASTORTESTCONFIG","r")
 configFileInfo=f.read()
 f.close
 
