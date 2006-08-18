@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2006/04/13 15:51:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2006/08/18 09:53:06 $ $Author: gtaur $
  *
  *
  *
@@ -40,9 +40,9 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "DiskFile",
   "DiskPool",
   "DiskServer",
-  "EndResponse",
+  "OldEndResponse",
   "FileClass",
-  "FileResponse",
+  "OldFileResponse",
   "FileSystem",
   "IClient",
   "MessageAck",
@@ -63,7 +63,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "Tape",
   "TapeCopy",
   "TapePool",
-  "StringResponse",
+  "OldStringResponse",
   "StageFileQueryRequest",
   "StageFindRequestRequest",
   "StageGetRequest",
@@ -83,30 +83,30 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "StageUpdateNextRequest",
   "StageAbortRequest",
   "StageReleaseFilesRequest",
-  "Response",
-  "IOResponse",
-  "AbortResponse",
-  "RequestQueryResponse",
+  "OldResponse",
+  "OldIOResponse",
+  "OldAbortResponse",
+  "OldRequestQueryResponse",
   "DELETED TYPE",
-  "FindReqResponse",
+  "OldFindReqResponse",
   "DiskCopyForRecall",
   "TapeCopyForMigration",
   "GetUpdateStartRequest",
-  "GetUpdateStartResponse",
+  "OldGetUpdateStartResponse",
   "BaseAddress",
-  "BasicResponse",
+  "OldBasicResponse",
   "Disk2DiskCopyDoneRequest",
   "MoverCloseRequest",
   "StartRequest",
   "PutStartRequest",
-  "StartResponse",
+  "OldStartResponse",
   "IObject",
   "IAddress",
   "QueryParameter",
   "DiskCopyInfo",
   "Files2Delete",
   "FilesDeleted",
-  "GCFilesResponse",
+  "OldGCFilesResponse",
   "GCLocalFile",
   "DELETED TYPE",
   "GetUpdateDone",
@@ -127,17 +127,33 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "TapeDriveCompatibility",
   
   "PutDoneStart",
-  "FileQryResponse",
+  "OldFileQryResponse",
   "SetFileGCWeight",
   "RepackRequest",
   "RepackSubRequest",
   "RepackSegment",
   "RepackAck",
 
-  "DiskPoolQueryResponse",
+  "OldDiskPoolQueryResponse",
   "DiskServerDescription",
   "FileSystemDescription",
-  "DiskPoolQuery"};
+  "DiskPoolQuery",
+  "EndResponse",
+  "FileResponse",
+  "StringResponse",
+  "Response",
+  "IOResponse",
+  "AbortResponse",
+  "RequestQueryResponse",
+  "FileQueryResponse",
+  "FindReqResponse",
+  "GetUpdateStartResponse",
+  "BasicResponse",
+  "StartResponse",
+  "GCFilesResponse",
+  "FileQryResponse", 
+  "DiskPoolQueryResponse"
+   };
 
 //=============================================================================
 // ServicesIdStrings

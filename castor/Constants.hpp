@@ -48,9 +48,9 @@ namespace castor {
     OBJ_DiskFile = 6,
     OBJ_DiskPool = 7,
     OBJ_DiskServer = 8,
-    OBJ_EndResponse = 9,
+    OBJ_OldEndResponse = 9,
     OBJ_FileClass = 10,
-    OBJ_FileResponse = 11,
+    OBJ_OldFileResponse = 11,
     OBJ_FileSystem = 12,
     OBJ_IClient = 13,
     OBJ_MessageAck = 14,
@@ -65,7 +65,7 @@ namespace castor {
     OBJ_Tape = 29,
     OBJ_TapeCopy = 30,
     OBJ_TapePool = 31,
-    OBJ_StringResponse = 32,
+    OBJ_OldStringResponse = 32,
     OBJ_StageFileQueryRequest = 33,
     OBJ_StageFindRequestRequest = 34,
     OBJ_StageGetRequest = 35,
@@ -84,30 +84,30 @@ namespace castor {
     OBJ_StageUpdateNextRequest = 49,
     OBJ_StageAbortRequest = 50,
     OBJ_StageReleaseFilesRequest = 51,
-    OBJ_Response = 52,
-    OBJ_IOResponse = 53,
-    OBJ_AbortResponse = 54,
-    OBJ_RequestQueryResponse = 55,
-    OBJ_FileQueryResponse = 56,
-    OBJ_FindReqResponse = 57,
+    OBJ_OldResponse = 52,
+    OBJ_OldIOResponse = 53,
+    OBJ_OldAbortResponse = 54,
+    OBJ_OldRequestQueryResponse = 55,
+    OBJ_OldFileQueryResponse = 56,
+    OBJ_OldFindReqResponse = 57,
     OBJ_DiskCopyForRecall = 58,
     OBJ_TapeCopyForMigration = 59,
     OBJ_GetUpdateStartRequest = 60,
-    OBJ_GetUpdateStartResponse = 61,
+    OBJ_OldGetUpdateStartResponse = 61,
     OBJ_BaseAddress = 62,
-    OBJ_BasicResponse = 63,
+    OBJ_OldBasicResponse = 63,
     OBJ_Disk2DiskCopyDoneRequest = 64,
     OBJ_MoverCloseRequest = 65,
     OBJ_StartRequest = 66,
     OBJ_PutStartRequest = 67,
-    OBJ_StartResponse = 68,
+    OBJ_OldStartResponse = 68,
     OBJ_IObject = 69,
     OBJ_IAddress = 70,
     OBJ_QueryParameter = 71,
     OBJ_DiskCopyInfo = 72,
     OBJ_Files2Delete = 73,
     OBJ_FilesDeleted = 74,
-    OBJ_GCFilesResponse = 75,
+    OBJ_OldGCFilesResponse = 75,
     OBJ_GCLocalFile = 76,
     OBJ_GetUpdateDone = 78,
     OBJ_GetUpdateFailed = 79,
@@ -128,17 +128,36 @@ namespace castor {
     OBJ_TapeDriveCompatibility = 92,   
 
     OBJ_PutDoneStart = 93,
-    OBJ_FileQryResponse = 94,
+    OBJ_OldFileQryResponse = 94,
     OBJ_SetFileGCWeight = 95,
     OBJ_RepackRequest = 96,
     OBJ_RepackSubRequest = 97,
     OBJ_RepackSegment = 98,
     OBJ_RepackAck = 99,
 
-    OBJ_DiskPoolQueryResponse = 100,
+    OBJ_OldDiskPoolQueryResponse = 100,
     OBJ_DiskServerDescription = 101,
     OBJ_FileSystemDescription = 102,
-    OBJ_DiskPoolQuery = 103
+    OBJ_DiskPoolQuery = 103,
+
+// Object to replace the old response	
+
+    OBJ_EndResponse = 104,
+    OBJ_FileResponse = 105,
+    OBJ_StringResponse = 106,
+    OBJ_Response = 107,
+    OBJ_IOResponse = 108,
+    OBJ_AbortResponse = 109,
+    OBJ_RequestQueryResponse = 110,
+    OBJ_FileQueryResponse = 111,
+    OBJ_FindReqResponse = 112,
+    OBJ_GetUpdateStartResponse = 113,
+    OBJ_BasicResponse = 114,
+    OBJ_StartResponse = 115,
+    OBJ_GCFilesResponse = 116,
+    OBJ_FileQryResponse = 117, 
+    OBJ_DiskPoolQueryResponse = 118
+
   };
     
   /**
@@ -218,7 +237,7 @@ namespace castor {
   /**
    * Nb of objectIds currently existing
    */
-  static const unsigned int ObjectsIdsNb = 104;
+  static const unsigned int ObjectsIdsNb = 119;
 
   /**
    * Nb of ServicesIds currently existing
@@ -234,7 +253,7 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[104];
+  extern const char* ObjectsIdStrings[119];
 
   /**
    * Names of the differents Services, used to display
