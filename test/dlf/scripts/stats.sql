@@ -42,23 +42,23 @@ INSERT INTO dlf_msg_texts VALUES(5, 15, 'Job exiting');
 
 /* starting request phase */
 INSERT INTO dlf_messages VALUES (1, SYSDATE - 3/1440, 00001, '44987639-0000-1000-9faf-ad392699000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (1, SYSDATE - 3/1440, 'Type', 35);
+INSERT INTO dlf_num_param_values VALUES (1, SYSDATE - 3/1440, 'type', 35);
 INSERT INTO dlf_messages VALUES (2, SYSDATE - 3/1440, 00002, '44993320-0000-1000-ac12-ef56b5c5000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (2, SYSDATE - 3/1440, 'Type', 36);
+INSERT INTO dlf_num_param_values VALUES (2, SYSDATE - 3/1440, 'type', 36);
 INSERT INTO dlf_messages VALUES (3, SYSDATE - 3/1440, 00003, '44993320-0000-1000-ad84-d44f3a1d000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (3, SYSDATE - 3/1440, 'Type', 37);
+INSERT INTO dlf_num_param_values VALUES (3, SYSDATE - 3/1440, 'type', 37);
 INSERT INTO dlf_messages VALUES (4, SYSDATE - 3/1440, 00004, '44993320-0000-1000-ac78-dae70482000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (4, SYSDATE - 3/1440, 'Type', 40);
+INSERT INTO dlf_num_param_values VALUES (4, SYSDATE - 3/1440, 'type', 40);
 
 /* starting job phase */
 INSERT INTO dlf_messages VALUES (5, SYSDATE - 2/1440, 00001, '44987639-0000-1000-9faf-ad392699000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (5, SYSDATE - 2/1440, 'Type', 35);
+INSERT INTO dlf_num_param_values VALUES (5, SYSDATE - 2/1440, 'type', 35);
 INSERT INTO dlf_messages VALUES (6, SYSDATE - 2/1440, 00002, '44993320-0000-1000-ac12-ef56b5c5000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (6, SYSDATE - 2/1440, 'Type', 36);
+INSERT INTO dlf_num_param_values VALUES (6, SYSDATE - 2/1440, 'type', 36);
 INSERT INTO dlf_messages VALUES (7, SYSDATE - 2/1440, 00003, '44993320-0000-1000-ad84-d44f3a1d000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (7, SYSDATE - 2/1440, 'Type', 37);
+INSERT INTO dlf_num_param_values VALUES (7, SYSDATE - 2/1440, 'type', 37);
 INSERT INTO dlf_messages VALUES (8, SYSDATE - 2/1440, 00004, '44993320-0000-1000-ac78-dae70482000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (8, SYSDATE - 2/1440, 'Type', 40);
+INSERT INTO dlf_num_param_values VALUES (8, SYSDATE - 2/1440, 'type', 40);
 
 /* exiting phase */
 INSERT INTO dlf_messages VALUES (9,  SYSDATE, 00001, '44987639-0000-1000-9faf-ad392699000', 1, 5, 9, 15, 1111, 1, 1, 0);
@@ -92,47 +92,47 @@ COMMIT;
 
 /* starting request phase */
 INSERT INTO dlf_messages VALUES (1, SYSDATE - 11/1440, 00001, '44987639-0000-1000-9faf-ad392699000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (1, SYSDATE - 11/1440, 'Type', 35);
+INSERT INTO dlf_num_param_values VALUES (1, SYSDATE - 11/1440, 'type', 35);
 INSERT INTO dlf_messages VALUES (2, SYSDATE - 12/1440, 00002, '44993320-0000-1000-ac12-ef56b5c6000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (2, SYSDATE - 12/1440, 'Type', 36);
+INSERT INTO dlf_num_param_values VALUES (2, SYSDATE - 12/1440, 'type', 36);
 INSERT INTO dlf_messages VALUES (3, SYSDATE - 13/1440, 00002, '44993320-0000-1000-ac12-ef56b5c7000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (3, SYSDATE - 13/1440, 'Type', 36);
+INSERT INTO dlf_num_param_values VALUES (3, SYSDATE - 13/1440, 'type', 36);
 INSERT INTO dlf_messages VALUES (4, SYSDATE - 14/1440, 00003, '44993320-0000-1000-ad84-d44f3a18000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (4, SYSDATE - 14/1440, 'Type', 37);
+INSERT INTO dlf_num_param_values VALUES (4, SYSDATE - 14/1440, 'type', 37);
 INSERT INTO dlf_messages VALUES (5, SYSDATE - 15/1440, 00003, '44993320-0000-1000-ad84-d44f3a19000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (5, SYSDATE - 15/1440, 'Type', 37);
+INSERT INTO dlf_num_param_values VALUES (5, SYSDATE - 15/1440, 'type', 37);
 INSERT INTO dlf_messages VALUES (6, SYSDATE - 16/1440, 00003, '44993320-0000-1000-ad84-d44f3a10000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (6, SYSDATE - 16/1440, 'Type', 37);
+INSERT INTO dlf_num_param_values VALUES (6, SYSDATE - 16/1440, 'type', 37);
 INSERT INTO dlf_messages VALUES (7, SYSDATE - 17/1440, 00004, '44993320-0000-1000-ac78-dae70481000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (7, SYSDATE - 17/1440, 'Type', 40);
+INSERT INTO dlf_num_param_values VALUES (7, SYSDATE - 17/1440, 'type', 40);
 INSERT INTO dlf_messages VALUES (8, SYSDATE - 18/1440, 00004, '44993320-0000-1000-ac78-dae70482000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (8, SYSDATE - 18/1440, 'Type', 40);
+INSERT INTO dlf_num_param_values VALUES (8, SYSDATE - 18/1440, 'type', 40);
 INSERT INTO dlf_messages VALUES (9, SYSDATE - 19/1440, 00004, '44993320-0000-1000-ac78-dae70483000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (9, SYSDATE - 19/1440, 'Type', 40);
+INSERT INTO dlf_num_param_values VALUES (9, SYSDATE - 19/1440, 'type', 40);
 INSERT INTO dlf_messages VALUES (10, SYSDATE - 20/1440, 00004, '44993320-0000-1000-ac78-dae70484000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (10, SYSDATE - 20/1440, 'Type', 40);
+INSERT INTO dlf_num_param_values VALUES (10, SYSDATE - 20/1440, 'type', 40);
 
 /* starting job phase */
 INSERT INTO dlf_messages VALUES (11, SYSDATE - 1/1440, 00001, '44987639-0000-1000-9faf-ad392699000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (11, SYSDATE - 1/1440, 'Type', 35);
+INSERT INTO dlf_num_param_values VALUES (11, SYSDATE - 1/1440, 'type', 35);
 INSERT INTO dlf_messages VALUES (12, SYSDATE - 2/1440, 00002, '44993320-0000-1000-ac12-ef56b5c6000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (12, SYSDATE - 2/1440, 'Type', 36);
+INSERT INTO dlf_num_param_values VALUES (12, SYSDATE - 2/1440, 'type', 36);
 INSERT INTO dlf_messages VALUES (13, SYSDATE - 3/1440, 00002, '44993320-0000-1000-ac12-ef56b5c7000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (13, SYSDATE - 3/1440, 'Type', 36);
+INSERT INTO dlf_num_param_values VALUES (13, SYSDATE - 3/1440, 'type', 36);
 INSERT INTO dlf_messages VALUES (14, SYSDATE - 4/1440, 00003, '44993320-0000-1000-ad84-d44f3a18000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (14, SYSDATE - 4/1440, 'Type', 37);
+INSERT INTO dlf_num_param_values VALUES (14, SYSDATE - 4/1440, 'type', 37);
 INSERT INTO dlf_messages VALUES (15, SYSDATE - 5/1440, 00003, '44993320-0000-1000-ad84-d44f3a19000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (15, SYSDATE - 5/1440, 'Type', 37);
+INSERT INTO dlf_num_param_values VALUES (15, SYSDATE - 5/1440, 'type', 37);
 INSERT INTO dlf_messages VALUES (16, SYSDATE - 6/1440, 00003, '44993320-0000-1000-ad84-d44f3a10000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (16, SYSDATE - 6/1440, 'Type', 37);
+INSERT INTO dlf_num_param_values VALUES (16, SYSDATE - 6/1440, 'type', 37);
 INSERT INTO dlf_messages VALUES (17, SYSDATE - 7/1440, 00004, '44993320-0000-1000-ac78-dae70481000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (17, SYSDATE - 7/1440, 'Type', 40);
+INSERT INTO dlf_num_param_values VALUES (17, SYSDATE - 7/1440, 'type', 40);
 INSERT INTO dlf_messages VALUES (18, SYSDATE - 8/1440, 00004, '44993320-0000-1000-ac78-dae70482000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (18, SYSDATE - 8/1440, 'Type', 40);
+INSERT INTO dlf_num_param_values VALUES (18, SYSDATE - 8/1440, 'type', 40);
 INSERT INTO dlf_messages VALUES (19, SYSDATE - 9/1440, 00004, '44993320-0000-1000-ac78-dae70483000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (19, SYSDATE - 9/1440, 'Type', 40);
+INSERT INTO dlf_num_param_values VALUES (19, SYSDATE - 9/1440, 'type', 40);
 INSERT INTO dlf_messages VALUES (20, SYSDATE - 10/1440, 00004, '44993320-0000-1000-ac78-dae70484000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (20, SYSDATE - 10/1440, 'Type', 40);
+INSERT INTO dlf_num_param_values VALUES (20, SYSDATE - 10/1440, 'type', 40);
 
 /* exiting phase */
 INSERT INTO dlf_messages VALUES (21, SYSDATE, 00001, '44987639-0000-1000-9faf-ad392699000', 1, 5, 9, 15, 1111, 1, 1, 0);
@@ -172,47 +172,47 @@ COMMIT;
 
 /* starting request phase */
 INSERT INTO dlf_messages VALUES (1, SYSDATE - 4/1440, 00001, '44987639-0000-1000-9faf-ad392699000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (1, SYSDATE - 4/1440, 'Type', 35);
+INSERT INTO dlf_num_param_values VALUES (1, SYSDATE - 4/1440, 'type', 35);
 INSERT INTO dlf_messages VALUES (2, SYSDATE - 4/1440, 00002, '44993320-0000-1000-ac12-ef56b5c6000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (2, SYSDATE - 4/1440, 'Type', 36);
+INSERT INTO dlf_num_param_values VALUES (2, SYSDATE - 4/1440, 'type', 36);
 INSERT INTO dlf_messages VALUES (3, SYSDATE - 4/1440, 00002, '44993320-0000-1000-ac12-ef56b5c7000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (3, SYSDATE - 4/1440, 'Type', 36);
+INSERT INTO dlf_num_param_values VALUES (3, SYSDATE - 4/1440, 'type', 36);
 INSERT INTO dlf_messages VALUES (4, SYSDATE - 4/1440, 00003, '44993320-0000-1000-ad84-d44f3a18000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (4, SYSDATE - 4/1440, 'Type', 37);
+INSERT INTO dlf_num_param_values VALUES (4, SYSDATE - 4/1440, 'type', 37);
 INSERT INTO dlf_messages VALUES (5, SYSDATE - 4/1440, 00003, '44993320-0000-1000-ad84-d44f3a19000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (5, SYSDATE - 4/1440, 'Type', 37);
+INSERT INTO dlf_num_param_values VALUES (5, SYSDATE - 4/1440, 'type', 37);
 INSERT INTO dlf_messages VALUES (6, SYSDATE - 4/1440, 00003, '44993320-0000-1000-ad84-d44f3a10000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (6, SYSDATE - 4/1440, 'Type', 37);
+INSERT INTO dlf_num_param_values VALUES (6, SYSDATE - 4/1440, 'type', 37);
 INSERT INTO dlf_messages VALUES (7, SYSDATE - 4/1440, 00004, '44993320-0000-1000-ac78-dae70481000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (7, SYSDATE - 4/1440, 'Type', 40);
+INSERT INTO dlf_num_param_values VALUES (7, SYSDATE - 4/1440, 'type', 40);
 INSERT INTO dlf_messages VALUES (8, SYSDATE - 4/1440, 00004, '44993320-0000-1000-ac78-dae70482000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (8, SYSDATE - 4/1440, 'Type', 40);
+INSERT INTO dlf_num_param_values VALUES (8, SYSDATE - 4/1440, 'type', 40);
 INSERT INTO dlf_messages VALUES (9, SYSDATE - 4/1440, 00004, '44993320-0000-1000-ac78-dae70483000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (9, SYSDATE - 4/1440, 'Type', 40);
+INSERT INTO dlf_num_param_values VALUES (9, SYSDATE - 4/1440, 'type', 40);
 INSERT INTO dlf_messages VALUES (10, SYSDATE - 4/1440, 00004, '44993320-0000-1000-ac78-dae70484000', 1, 4, 9, 8, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (10, SYSDATE - 4/1440, 'Type', 40);
+INSERT INTO dlf_num_param_values VALUES (10, SYSDATE - 4/1440, 'type', 40);
 
 /* starting job phase */
 INSERT INTO dlf_messages VALUES (11, SYSDATE - 3/1440, 00001, '44987639-0000-1000-9faf-ad392699000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (11, SYSDATE - 3/1440, 'Type', 35);
+INSERT INTO dlf_num_param_values VALUES (11, SYSDATE - 3/1440, 'type', 35);
 INSERT INTO dlf_messages VALUES (12, SYSDATE - 4/1440, 00002, '44993320-0000-1000-ac12-ef56b5c6000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (12, SYSDATE - 4/1440, 'Type', 36);
+INSERT INTO dlf_num_param_values VALUES (12, SYSDATE - 4/1440, 'type', 36);
 INSERT INTO dlf_messages VALUES (13, SYSDATE - 3/1440, 00002, '44993320-0000-1000-ac12-ef56b5c7000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (13, SYSDATE - 3/1440, 'Type', 36);
+INSERT INTO dlf_num_param_values VALUES (13, SYSDATE - 3/1440, 'type', 36);
 INSERT INTO dlf_messages VALUES (14, SYSDATE - 4/1440, 00003, '44993320-0000-1000-ad84-d44f3a18000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (14, SYSDATE - 4/1440, 'Type', 37);
+INSERT INTO dlf_num_param_values VALUES (14, SYSDATE - 4/1440, 'type', 37);
 INSERT INTO dlf_messages VALUES (15, SYSDATE - 4/1440, 00003, '44993320-0000-1000-ad84-d44f3a19000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (15, SYSDATE - 4/1440, 'Type', 37);
+INSERT INTO dlf_num_param_values VALUES (15, SYSDATE - 4/1440, 'type', 37);
 INSERT INTO dlf_messages VALUES (16, SYSDATE - 3/1440, 00003, '44993320-0000-1000-ad84-d44f3a10000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (16, SYSDATE - 3/1440, 'Type', 37);
+INSERT INTO dlf_num_param_values VALUES (16, SYSDATE - 3/1440, 'type', 37);
 INSERT INTO dlf_messages VALUES (17, SYSDATE - 4/1440, 00004, '44993320-0000-1000-ac78-dae70481000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (17, SYSDATE - 4/1440, 'Type', 40);
+INSERT INTO dlf_num_param_values VALUES (17, SYSDATE - 4/1440, 'type', 40);
 INSERT INTO dlf_messages VALUES (18, SYSDATE - 4/1440, 00004, '44993320-0000-1000-ac78-dae70482000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (18, SYSDATE - 4/1440, 'Type', 40);
+INSERT INTO dlf_num_param_values VALUES (18, SYSDATE - 4/1440, 'type', 40);
 INSERT INTO dlf_messages VALUES (19, SYSDATE - 3/1440, 00004, '44993320-0000-1000-ac78-dae70483000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (19, SYSDATE - 3/1440, 'Type', 40);
+INSERT INTO dlf_num_param_values VALUES (19, SYSDATE - 3/1440, 'type', 40);
 INSERT INTO dlf_messages VALUES (20, SYSDATE - 4/1440, 00004, '44993320-0000-1000-ac78-dae70484000', 1, 5, 9, 12, 1111, 1, 1, 0);
-INSERT INTO dlf_num_param_values VALUES (20, SYSDATE - 4/1440, 'Type', 40);
+INSERT INTO dlf_num_param_values VALUES (20, SYSDATE - 4/1440, 'type', 40);
 
 /* exiting phase */
 INSERT INTO dlf_messages VALUES (21, SYSDATE - 2/1440, 00001, '44987639-0000-1000-9faf-ad392699000', 1, 5, 9, 15, 1111, 1, 1, 0);
