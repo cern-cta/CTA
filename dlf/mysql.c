@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.c,v 1.5 2006/08/02 16:24:55 waldron Exp $
+ * $Id: mysql.c,v 1.6 2006/08/18 07:53:12 waldron Exp $
  */
 
 /* headers */
@@ -77,8 +77,9 @@ struct database_t {
 	int                index;
 	long               mode;
 	int                mutex;
+	int                first_connect;
 	time_t             last_connect;
-
+	
 	MYSQL              mysql;
 
 	/* statistics
@@ -164,9 +165,10 @@ int DLL_DECL db_init(int threads) {
 		}
 
 		/* initialise database_t structure */
-		db->index        = i;
-		db->mode         = MODE_DEFAULT;
-		db->last_connect = 0;
+		db->index         = i;
+		db->mode          = MODE_DEFAULT;
+		db->last_connect  = 0;
+		db->first_connect = 1;
 
 		/* initialise statistics */
 		db->commits = db->errors  = db->inserts  = db->rollbacks = 0;
@@ -344,7 +346,10 @@ int DLL_DECL db_open(database_t *db, unsigned int retries) {
 		/* flag new connection status */
 		db->last_connect = 0;
 		SetConnected(db->mode);
-		log(LOG_DEBUG, "db_open() - connection established\n");
+		if (!db->first_connect) {
+			log(LOG_INFO, "db_open() - connection established to %s@%s\n", username, hostname);
+		}
+		db->first_connect = 0;
 
 		return APP_SUCCESS;
 
