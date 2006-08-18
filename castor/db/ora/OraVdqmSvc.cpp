@@ -1022,20 +1022,18 @@ std::vector<castor::vdqm::TapeRequest*>*
       idTapeRequest = (u_signed64)rs->getDouble(4); // 4 = Col number of ID
       
       if ( idTapeRequest != 0 ) {
-	      castor::BaseAddress ad;
-		    ad.setTarget(idTapeRequest);
-		    ad.setCnvSvcName("DbCnvSvc");
-		    ad.setCnvSvcType(castor::SVC_DBCNV);
+	        castor::BaseAddress ad;
+		ad.setTarget(idTapeRequest);
+		ad.setCnvSvcName("DbCnvSvc");
+		ad.setCnvSvcType(castor::SVC_DBCNV);
 				
-				tmpTapeRequest = new castor::vdqm::TapeRequest();
-					
-				tmpTapeRequest->setId(idTapeRequest);
-				tmpTapeRequest->setPriority(rs->getInt(1));
-				tmpTapeRequest->setModificationTime((u_signed64)rs->getDouble(2));
-				
+		tmpTapeRequest = new castor::vdqm::TapeRequest();			
+		tmpTapeRequest->setId(idTapeRequest);
+		tmpTapeRequest->setPriority(rs->getInt(1));
+		tmpTapeRequest->setModificationTime((u_signed64)rs->getDouble(2));
 		    
 		    // Get the foreign related objects
-		    cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_DeviceGroupName);
+		tmpTapeRequest->setDeviceGroupName();
 		    cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_TapeAccessSpecification);
 		    cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_TapeServer);
 		    cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_Tape);

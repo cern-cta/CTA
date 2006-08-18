@@ -110,6 +110,16 @@ int Cquery_DiskPoolQueryResponse_errorMessage(struct Cquery_DiskPoolQueryRespons
  */
 int Cquery_DiskPoolQueryResponse_setErrorMessage(struct Cquery_DiskPoolQueryResponse_t* instance, const char* new_var);
 
+/**
+ * Get the value of reqAssociated
+ */
+int Cquery_DiskPoolQueryResponse_reqAssociated(struct Cquery_DiskPoolQueryResponse_t* instance, const char** var);
+
+/**
+ * Set the value of reqAssociated
+ */
+int Cquery_DiskPoolQueryResponse_setReqAssociated(struct Cquery_DiskPoolQueryResponse_t* instance, const char* new_var);
+
 /***************************************/
 /* Implementation of IObject interface */
 /***************************************/

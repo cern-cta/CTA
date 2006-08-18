@@ -192,7 +192,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.67 $ $Release$ $Date: 2006/08/02 15:30:58 $ $Author: gtaur $
+ * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.68 $ $Release$ $Date: 2006/08/18 14:22:14 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -202,10 +202,10 @@ ALTER TABLE TapeDrive2TapeDriveComp
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.67 $ $Date: 2006/08/02 15:30:58 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.68 $ $Date: 2006/08/18 14:22:14 $');
 
 /* Sequence for indices */
-CREATE SEQUENCE ids_seq CACHE 200;
+CREATE SEQUENCE ids_seq CACHE 300;
 
 /* SQL statements for object types */
 CREATE TABLE Id2Type (id INTEGER PRIMARY KEY, type NUMBER);
@@ -267,9 +267,13 @@ CREATE INDEX I_SubRequest_Castorfile on SubRequest (castorFile);
 CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_Request on SubRequest (request);
 CREATE INDEX I_SubRequest_Parent on SubRequest (parent);
+
+/* function base indexes to speed up subrequestToDo, subrequestFailedToDo and getLastRecalls */
+CREATE INDEX I_SubRequest_Status on SubRequest (decode(status,0,status,1,status,2,status,NULL));
+CREATE INDEX I_SubRequest_Status7 on SubRequest (decode(status,7,status,null));
 CREATE INDEX I_SubRequest_GetNextStatus on SubRequest (decode(getNextStatus,1,getNextStatus,NULL));
 
-/* A primary key for better scan of Stream2TapeCopy */
+/* A primary key index for better scan of Stream2TapeCopy */
 CREATE UNIQUE INDEX I_pk_Stream2TapeCopy ON Stream2TapeCopy (parent, child);
 
 /* some constraints */
@@ -282,12 +286,6 @@ ALTER TABLE DiskServer MODIFY (status NOT NULL);
 
 /* enable row movements in Diskcopy */
 ALTER TABLE DiskCopy ENABLE ROW MOVEMENT;
-
-/* A little function base index to speed up subrequestToDo */
-CREATE INDEX I_SubRequest_Status on SubRequest (decode(status,0,status,1,status,2,status,NULL));
-
-/* Same kind of index to speed up subRequestFailedToDo */
-CREATE INDEX I_SubRequest_Status7 on SubRequest (decode(status,7,status,null));
 
 /* an index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
 CREATE INDEX I_QueryParameter_Query on QueryParameter (query);
@@ -303,6 +301,9 @@ ALTER TABLE CastorFile ADD UNIQUE (fileId, nsHost);
 
 /* Add unique constraint on tapes */
 ALTER TABLE Tape ADD UNIQUE (VID, side, tpMode); 
+
+/* the primary key in this table allows for materialized views */
+ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT pk_DiskPool2SvcClass PRIMARY KEY (parent, child);
 
 
 /* get current time as a time_t. Not that easy in ORACLE */
@@ -405,15 +406,16 @@ BEGIN
    WHERE FS IN (SELECT DiskCopy.FileSystem
                   FROM DiskCopy, TapeCopy
                  WHERE DiskCopy.CastorFile = TapeCopy.castorFile
-                   AND TapeCopy.id = :new.child
+                   AND TapeCopy.id = :old.child
                    AND DiskCopy.status = 10) -- CANBEMIGR
-     AND Stream = :new.parent;
+     AND Stream = :old.parent;
 END;
+
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
    whenever a TapeCopy has failed to be migrated and is
-   put back in WAITINSTREAM from the SELECTED status */
-CREATE OR REPLACE TRIGGER tr_TapeCopy_Update
+   put back in WAITINSTREAM from the SELECTED status *
+CREATE TRIGGER tr_TapeCopy_Update
 AFTER UPDATE of status ON TapeCopy
 FOR EACH ROW
 WHEN (old.status = 3 AND new.status = 2) -- SELECTED AND WAITINSTREAMS
@@ -528,8 +530,8 @@ BEGIN
                    AND SubRequest.parent = 0
                    AND DiskCopy.status IN (1, 2, 5, 6, 11) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, WAITFS_SCHEDULING
 		   AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6)), -- START, RESTART, RETRY, WAIT*, READY
-      status = 5,
-      lastModificationTime = getTime() -- WAITSUBREQ
+      status = 5, -- WAITSUBREQ
+      lastModificationTime = getTime()
   WHERE SubRequest.id = srId;
 END;
 
@@ -632,7 +634,7 @@ CREATE OR REPLACE PROCEDURE deleteOutOfDateRequests(timeOut IN NUMBER) AS
   myReq SubRequest.request%TYPE;
   CURSOR cur IS
    SELECT DISTINCT request FROM SubRequest
-    WHERE getTime() - lastModificationTime >= timeOut;
+    WHERE status IN (8, 9, 10) AND getTime() - lastModificationTime >= timeOut;
   counter NUMBER := 0;
 BEGIN
   OPEN cur;
@@ -654,8 +656,8 @@ END;
  * This implementation is not the original one. It uses NbTapeCopiesInFS
  * because a join on the tables between DiskServer and Stream2TapeCopy
  * costs too much. It should actually not be the case but ORACLE is unable
- * to optimize correctly queries having a ROWNUM clause. It procesed the
- * the query without it (yes !!!) and apply the clause afterwards.
+ * to optimize correctly queries having a ROWNUM clause. It processes the
+ * the query without it (yes !!!) and applies the clause afterwards.
  * Here is the previous select in case ORACLE improves some day :
  * SELECT \/*+ FIRST_ROWS *\/ TapeCopy.id INTO unused
  * FROM DiskServer, FileSystem, DiskCopy, CastorFile, TapeCopy, Stream2TapeCopy
@@ -673,9 +675,13 @@ CREATE OR REPLACE PROCEDURE anyTapeCopyForStream(streamId IN INTEGER, res OUT IN
   unused INTEGER;
 BEGIN
   SELECT NbTapeCopiesInFS.NbTapeCopies INTO unused
-    FROM NbTapeCopiesInFS
+    FROM NbTapeCopiesInFS, FileSystem, DiskServer
    WHERE NbTapeCopiesInFS.stream = streamId
      AND NbTapeCopiesInFS.NbTapeCopies > 0
+     AND FileSystem.id = NbTapeCopiesInFS.FS
+     AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+     AND DiskServer.id = FileSystem.DiskServer
+     AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
      AND ROWNUM < 2;
   res := 1;
 EXCEPTION
@@ -841,7 +847,7 @@ BEGIN
            AND DiskCopy.filesystem = fileSystemId 
        ) DC,
        TapeCopy, Stream2TapeCopy
- WHERE TapeCopy.castorfile = DC.castorfile_id
+  WHERE TapeCopy.castorfile = DC.castorfile_id
    AND Stream2TapeCopy.child = TapeCopy.id
    AND Stream2TapeCopy.parent = streamId
    AND TapeCopy.status = 2 -- WAITINSTREAMS
@@ -853,24 +859,10 @@ BEGIN
   UPDATE Stream SET status = 3 -- RUNNING
    WHERE id = streamId;
 
-  -- update NbTapeCopiesInFS accordingly. Take care to remove the
-  -- TapeCopy from all streams and all filesystems
-  UPDATE NbTapeCopiesInFS NTC 
-     SET NTC.NbTapeCopies = NTC.NbTapeCopies - 1
-   WHERE EXISTS (
-       SELECT 'x' 
-         FROM DiskCopy, TapeCopy
-        WHERE DiskCopy.CastorFile = TapeCopy.castorFile
-          AND TapeCopy.id = tapeCopyId
-          AND DiskCopy.status = 10 -- CANBEMIGR
-          AND DiskCopy.FileSystem = NTC.FS
-       )
-     AND EXISTS (
-       SELECT 'x' 
-         FROM Stream2TapeCopy 
-        WHERE child = tapeCopyId
-          AND parent = NTC.Stream
-       );
+  -- detach the tapecopy from the stream now that it is SELECTED
+  -- the triggers will update NbTapeCopiesInFS accordingly 
+  DELETE FROM Stream2TapeCopy
+   WHERE child = tapeCopyId;
 
   -- Update Filesystem state
   updateFSFileOpened(fsDiskServer, fileSystemId, deviation, 0);
@@ -1507,21 +1499,21 @@ BEGIN
  COMMIT;
 END;
 
-/* PL/SQL method putDoneFunc */
-CREATE OR REPLACE PROCEDURE putDoneFunc (cfId IN INTEGER,
-                                         fs IN INTEGER,
-					 context IN INTEGER) AS
-  nc INTEGER;
+/* PL/SQL method internalPutDoneFunc, used by fileRecalled, putDoneFunc
+  checks for diskcopies in STAGEOUT and creates the tapecopies for migration
+*/
+CREATE OR REPLACE PROCEDURE internalPutDoneFunc (cfId IN INTEGER,
+                                                 fs IN INTEGER,
+                                                 context IN INTEGER,
+                                                 nbTC IN INTEGER) AS
   tcId INTEGER;
   fsId INTEGER;
   dcId INTEGER;
+
 BEGIN
- -- get number of TapeCopies to create
- SELECT nbCopies INTO nc FROM FileClass, CastorFile
-  WHERE CastorFile.id = cfId AND CastorFile.fileClass = FileClass.id;
  -- if no tape copy or 0 length file, no migration
  -- so we go directly to status STAGED
- IF nc = 0 OR fs = 0 THEN
+ IF nbTC = 0 OR fs = 0 THEN
    UPDATE DiskCopy SET status = 0 -- STAGED
     WHERE castorFile = cfId AND status = 6 -- STAGEOUT
    RETURNING fileSystem INTO fsId;
@@ -1531,7 +1523,7 @@ BEGIN
     WHERE castorFile = cfId AND status = 6 -- STAGEOUT
     RETURNING fileSystem, id INTO fsId, dcId;
    -- Create TapeCopies
-   FOR i IN 1..nc LOOP
+   FOR i IN 1..nbTC LOOP
     INSERT INTO TapeCopy (id, copyNb, castorFile, status)
       VALUES (ids_seq.nextval, i, cfId, 0) -- TAPECOPY_CREATED
       RETURNING id INTO tcId;
@@ -1543,20 +1535,35 @@ BEGIN
     WHERE status = 5 -- WAIT_SUBREQ
       AND parent IN (SELECT id from SubRequest WHERE diskCopy = dcId);
  END IF;
- -- If we are a real PutDone (and not a put outside of a prepareToPut)
- -- then we have to archive the original preapareToPut subRequest
+ -- If we are a real PutDone (and not a put outside of a prepareToPut/Update)
+ -- then we have to archive the original preapareToPut/Update subRequest
  IF context = 2 THEN
    DECLARE
      srId NUMBER;
    BEGIN
      SELECT SubRequest.id INTO srId
-       FROM SubRequest, StagePrepareToPutRequest
+       FROM SubRequest, 
+        (SELECT id from StagePrepareToPutRequest UNION ALL
+         SELECT id from StagePrepareToUpdateRequest) Request
       WHERE SubRequest.castorFile = cfId
-        AND SubRequest.request = StagePrepareToPutRequest.id
+        AND SubRequest.request = Request.id
         AND SubRequest.status = 6;
      archiveSubReq(srId);
    END;
  END IF;
+END;
+
+/* PL/SQL method putDoneFunc */
+CREATE OR REPLACE PROCEDURE putDoneFunc (cfId IN INTEGER,
+                                         fs IN INTEGER,
+                                         context IN INTEGER) AS
+  nc INTEGER;
+BEGIN
+ -- get number of TapeCopies to create
+ SELECT nbCopies INTO nc FROM FileClass, CastorFile
+  WHERE CastorFile.id = cfId AND CastorFile.fileClass = FileClass.id;
+ -- and execute the internal putDoneFunc with the number of TapeCopies to be created
+ internalPutDoneFunc(cfId, fs, context, nc);
 END;
 
 
@@ -1581,17 +1588,21 @@ BEGIN
   RETURNING fileId, nsHost INTO fId, nh;
  -- Determine the context (Put inside PrepareToPut or not)
  BEGIN
-   -- check that we are a Put
-   SELECT StagePutRequest.id INTO unused
-     FROM StagePutRequest, SubRequest
+   -- check that we are a Put or an Update
+   SELECT Request.id INTO unused
+     FROM SubRequest,
+        (SELECT id FROM StagePutRequest UNION ALL
+         SELECT id FROM StageUpdateRequest) Request
     WHERE SubRequest.id = srId
-      AND StagePutRequest.id = SubRequest.request;
+      AND Request.id = SubRequest.request;
    BEGIN
      -- check that there is a PrepareToPut going on
      SELECT SubRequest.diskCopy INTO unused
-       FROM StagePrepareToPutRequest, SubRequest
+       FROM SubRequest,
+        (SELECT id FROM StagePrepareToPutRequest UNION ALL
+        SELECT id FROM StagePrepareToUpdateRequest) Request
       WHERE SubRequest.CastorFile = cfId
-        AND StagePrepareToPutRequest.id = SubRequest.request
+        AND Request.id = SubRequest.request
         AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
      -- if we got here, we are a Put inside a PrepareToPut
      contextPIPP := 0;
@@ -1606,6 +1617,7 @@ BEGIN
  -- get uid, gid and reserved space from Request
  SELECT euid, egid, xsize INTO userId, groupId, reservedSpace FROM SubRequest,
      (SELECT euid, egid, id from StagePutRequest UNION ALL
+      SELECT euid, egid, id from StageUpdateRequest UNION ALL
       SELECT euid, egid, id from StagePutDoneRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
  -- If not a put inside a PrepareToPut, update the FileSystem free space
@@ -1616,12 +1628,12 @@ BEGIN
  END IF;
  -- archive Subrequest
  archiveSubReq(srId);
- --  If not a put inside a PrepareToPut, create TapeCopies and update DiskCopy status
+ --  If not a put inside a PrepareToPut/Update, create TapeCopies and update DiskCopy status
  IF contextPIPP != 0 THEN
    putDoneFunc(cfId, fs, contextPIPP);
  END IF;
- -- If put inside PrepareToPut, restart any PutDone currently
- -- waiting on this put
+ -- If put inside PrepareToPut/Update, restart any PutDone currently
+ -- waiting on this put/update
  IF contextPIPP = 0 THEN
    UPDATE SubRequest SET status = 1 -- RESTART
     WHERE id IN
@@ -1641,21 +1653,46 @@ CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   fsId NUMBER;
   fileSize NUMBER;
   repackVid VARCHAR2(2048);
+  nbTC NUMBER(2);
   cfid NUMBER;
+  fcnbcopies NUMBER; --number of tapecopies in fileclass
 BEGIN
-  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize, SubRequest.repackVid, CastorFile.id
-    INTO SubRequestId, dci, fileSize, repackVid, cfid
-    FROM TapeCopy, SubRequest, DiskCopy, CastorFile
+  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize, SubRequest.repackVid, CastorFile.id, FileClass.nbcopies
+    INTO SubRequestId, dci, fileSize, repackVid, cfid, fcnbcopies
+    FROM TapeCopy, SubRequest, DiskCopy, CastorFile, FileClass
    WHERE TapeCopy.id = tapecopyId
      AND CastorFile.id = TapeCopy.castorFile
      AND DiskCopy.castorFile = TapeCopy.castorFile
+     AND FileClass.id = Castorfile.fileclass
      AND SubRequest.diskcopy(+) = DiskCopy.id
      AND DiskCopy.status = 2;
   UPDATE DiskCopy SET status = decode(repackVid, NULL,0, 6)  -- DISKCOPY_STAGEOUT if repackVid != NULL, else DISKCOPY_STAGED 
    WHERE id = dci RETURNING fileSystem INTO fsid;
+
+  -- Repack handling:
+  -- create the number of tapcopies for waiting subrequests and update their diskcopy.
   IF repackVid IS NOT NULL THEN
-  	putDoneFunc(cfid, fsId, 0);
+    -- how many do we have to create ?
+	  SELECT count(repackvid) INTO nbTC FROM subrequest 
+     WHERE subrequest.castorfile = cfid
+	     AND subrequest.repackvid IS NOT NULL
+	     AND subrequest.status in (4,5,6);
+	
+	  -- we are not allowed to create more Tapecopies than in the fileclass specified
+	  IF fcnbcopies < nbTC THEN 
+	    nbTC := fcnbcopies;
+	  END IF;
+	
+	  -- we need to update other subrequests with the diskcopy
+	  UPDATE SubRequest SET diskcopy = dci 
+	   WHERE subrequest.castorfile = cfid
+	     AND subrequest.repackvid IS NOT NULL
+	     AND subrequest.status in (4,5,6); 
+	   
+	  -- create the number of tapecopies for the files
+	  internalPutDoneFunc(cfid, fsId, 0, nbTC);
   END IF;
+  
   IF subRequestId IS NOT NULL THEN
     UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
      WHERE id = SubRequestId; 
@@ -1880,7 +1917,7 @@ CREATE OR REPLACE PROCEDURE updateFiles2Delete
 BEGIN
   FOR i in dcIds.FIRST .. dcIds.LAST LOOP
     UPDATE DiskCopy set status = 9 -- BEING_DELETED
-     WHERE id = i;
+     WHERE id = dcIds(i);
   END LOOP;
 END;
 
@@ -2078,9 +2115,14 @@ BEGIN
     -- In such a case, we do not cleanup DiskCopy and CastorFile
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- this means we are a standalone put
-    -- thus cleanup DiskCopy and CastorFile
-    DELETE FROM DiskCopy WHERE id = dcId;
-    DELETE FROM CastorFile WHERE id = cfId;
+    -- thus cleanup DiskCopy and maybe the CastorFile
+    DECLARE
+      dcIds castor."cnumList";
+      fileIds castor.FileList_Cur;
+    BEGIN
+      dcIds(1) := dcId;
+      filesDeletedProc(dcIds, fileIds);
+    END;
   END;   
 END;
 
@@ -2551,6 +2593,7 @@ BEGIN
 END;
 
 
+
 /*
  * PL/SQL method implementing the core part of stage queries
  * It takes a list of castorfile ids as input
@@ -2813,195 +2856,6 @@ BEGIN
     internalStageQuery(cfs, svcClassId, result);
   ELSE
     notfound := 1;
-  END IF;
-END;
-
-
-
-/* PL/SQL code for castorVdqm package */
-CREATE OR REPLACE PACKAGE castorVdqm AS
-  TYPE Drive2Req IS RECORD (
-        tapeDrive NUMBER,
-        tapeRequest NUMBER);
-  TYPE Drive2Req_Cur IS REF CURSOR RETURN Drive2Req;
-	TYPE TapeDrive_Cur IS REF CURSOR RETURN TapeDrive%ROWTYPE;
-	TYPE TapeRequest_Cur IS REF CURSOR RETURN TapeRequest%ROWTYPE;
-END castorVdqm;
-
-
-/**
- * PL/SQL method to dedicate a tape to a tape drive.
- * First it checks the preconditions that a tapeDrive must meet in order to be
- * assigned. The couples (drive,requests) are then orderd by the priorityLevel 
- * and by the modification time and processed one by one to verify
- * if any dedication exists and has to be applied.
- * Returns the relevant IDs if a couple was found, (0,0) otherwise.
- */  
-CREATE OR REPLACE PROCEDURE matchTape2TapeDrive
- (tapeDriveID OUT NUMBER, tapeRequestID OUT NUMBER) AS
-  d2rCur castorVdqm.Drive2Req_Cur;
-  d2r castorVdqm.Drive2Req;
-  countDed INTEGER;
-BEGIN
-  tapeDriveID := 0;
-  tapeRequestID := 0;
-  
-  -- Check all preconditions a tape drive must meet in order to be used by pending tape requests
-  OPEN d2rCur FOR
-  SELECT TapeDrive.id, TapeRequest.id
-    FROM TapeDrive, TapeRequest, TapeDrive2TapeDriveComp, TapeDriveCompatibility, TapeServer
-   WHERE TapeDrive.status = 0  -- UNIT_UP
-     AND TapeDrive.runningTapeReq = 0  -- not associated with tapeReq
-     AND TapeDrive.tapeServer = TapeServer.id 
-     AND TapeServer.actingMode = 0  -- ACTIVE
-     AND TapeRequest.tapeDrive = 0
-     AND (TapeRequest.requestedSrv = TapeServer.id OR TapeRequest.requestedSrv = 0)
-     AND TapeDrive2TapeDriveComp.parent = TapeDrive.id 
-     AND TapeDrive2TapeDriveComp.child = TapeDriveCompatibility.id 
-     AND TapeDriveCompatibility.tapeAccessSpecification = TapeRequest.tapeAccessSpecification
-     AND TapeDrive.deviceGroupName = TapeRequest.deviceGroupName
-     /*
-     AND TapeDrive.deviceGroupName = tapeDriveDgn.id 
-     AND TapeRequest.deviceGroupName = tapeRequestDgn.id 
-     AND tapeDriveDgn.libraryName = tapeRequestDgn.libraryName 
-         -- in case we want to match by libraryName only
-     */
-     ORDER BY TapeDriveCompatibility.priorityLevel ASC, 
-              TapeRequest.modificationTime ASC;
-
-  LOOP
-    -- For each candidate couple, verify that the dedications (if any) are met
-    FETCH d2rCur INTO d2r;
-    EXIT WHEN d2rCur%NOTFOUND;
-
-    SELECT count(*) INTO countDed
-      FROM TapeDriveDedication
-     WHERE tapeDrive = d2r.tapeDrive
-       AND getTime() BETWEEN startTime AND endTime;
-    IF countDed = 0 THEN    -- no dedications valid for this TapeDrive
-      tapeDriveID := d2r.tapeDrive;   -- fine, we can assign it
-      tapeRequestID := d2r.tapeRequest;
-      EXIT;
-    END IF;
-
-    -- We must check if the request matches the dedications for this tape drive
-    SELECT count(*) INTO countDed
-      FROM TapeDriveDedication tdd, Tape, TapeRequest, ClientIdentification, 
-           TapeAccessSpecification, TapeDrive
-     WHERE tdd.tapeDrive = d2r.tapeDrive
-       AND getTime() BETWEEN startTime AND endTime
-       AND tdd.clientHost(+) = ClientIdentification.machine
-       AND tdd.euid(+) = ClientIdentification.euid
-       AND tdd.egid(+) = ClientIdentification.egid
-       AND tdd.vid(+) = Tape.vid
-       AND tdd.accessMode(+) = TapeAccessSpecification.accessMode
-       AND TapeRequest.id = d2r.tapeRequest
-       AND TapeRequest.tape = Tape.id
-       AND TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
-       AND TapeRequest.client = ClientIdentification.id;
-    IF countDed > 0 THEN  -- there's a matching dedication for at least a criterium
-      tapeDriveID := d2r.tapeDrive;   -- fine, we can assign it
-      tapeRequestID := d2r.tapeRequest;
-      EXIT;
-    END IF;
-    -- else the tape drive is dedicated to other request(s) and we can't use it, go on
-  END LOOP;
-  -- if the loop has been fully completed without assignment,
-  -- no free tape drive has been found. 
-  CLOSE d2rCur;
-END;
-
-
-/**
- * This is the main select statement to dedicate a tape to a tape drive.
- * It respects the old and of course the new way to select a tape for a 
- * tape drive.
- * The old way is to look, if the tapeDrive and the tapeRequest have the same
- * dgn.
- * The new way is to look if the TapeAccessSpecification can be served by a 
- * specific tapeDrive. The tape Request are then orderd by the priorityLevel (for 
- * the new way) and by the modification time.
- * Returns 1 if a couple was found, 0 otherwise.
- *
-CREATE PROCEDURE matchTape2TapeDrive
- (tapeDriveID OUT NUMBER, tapeRequestID OUT NUMBER) AS
-BEGIN
-  SELECT TapeDrive.id, TapeRequest.id INTO tapeDriveID, tapeRequestID
-    FROM TapeDrive, TapeRequest, TapeServer, DeviceGroupName tapeDriveDgn, DeviceGroupName tapeRequestDgn
-    WHERE TapeDrive.status=0
-          AND TapeDrive.runningTapeReq=0
-          AND TapeDrive.tapeServer=TapeServer.id
-          AND TapeRequest.tape NOT IN (SELECT tape FROM TapeDrive WHERE status!=0)
-          AND TapeServer.actingMode=0
-          AND TapeRequest.tapeDrive IS NULL
-          AND (TapeRequest.requestedSrv=TapeDrive.tapeServer OR TapeRequest.requestedSrv=0)
-          AND (TapeDrive.deviceGroupName=TapeRequest.deviceGroupName)
-          AND rownum < 2
-          ORDER BY TapeRequest.modificationTime ASC; 
-  EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-    tapeDriveID := 0;
-    tapeRequestID := 0;
-END;
-*/
-
-
-/*
- * PL/SQL method implementing the select from tapereq queue
- */
-CREATE OR REPLACE PROCEDURE selectTapeRequestQueue
- (dgn IN VARCHAR2, server IN VARCHAR2, tapeRequests OUT castorVdqm.TapeRequest_Cur) AS
-BEGIN
-  IF dgn IS NULL AND server IS NULL THEN
-    OPEN tapeRequests FOR SELECT * FROM TapeRequest
-		  ORDER BY TapeRequest.modificationTime ASC;
-  ELSIF dgn IS NULL THEN
-    OPEN tapeRequests FOR SELECT TapeRequest.* FROM TapeRequest, TapeServer
-      WHERE TapeServer.serverName = server
-            AND TapeServer.id = TapeRequest.requestedSrv
-			ORDER BY TapeRequest.modificationTime ASC;
-  ELSIF server IS NULL THEN
-    OPEN tapeRequests FOR SELECT TapeRequest.* FROM TapeRequest, DeviceGroupName
-      WHERE DeviceGroupName.dgName = dgn
-            AND DeviceGroupName.id = TapeRequest.deviceGroupName
-			ORDER BY TapeRequest.modificationTime ASC;
-  ELSE 
-    OPEN tapeRequests FOR SELECT TapeRequest.* FROM TapeRequest, DeviceGroupName, TapeServer
-      WHERE DeviceGroupName.dgName = dgn
-            AND DeviceGroupName.id = TapeRequest.deviceGroupName
-            AND TapeServer.serverName = server
-            AND TapeServer.id = TapeRequest.requestedSrv
-			ORDER BY TapeRequest.modificationTime ASC;
-  END IF;
-END;
-
-
-/*
- * PL/SQL method implementing the select from tapedrive queue
- */
-CREATE OR REPLACE PROCEDURE selectTapeDriveQueue
- (dgn IN VARCHAR2, server IN VARCHAR2, tapeDrives OUT castorVdqm.TapeDrive_Cur) AS
-BEGIN
-  IF dgn IS NULL AND server IS NULL THEN
-    OPEN tapeDrives FOR SELECT * FROM TapeDrive
-		  ORDER BY TapeDrive.driveName ASC;
-  ELSIF dgn IS NULL THEN
-    OPEN tapeDrives FOR SELECT TapeDrive.* FROM TapeDrive, TapeServer
-      WHERE TapeServer.serverName = server
-            AND TapeServer.id = TapeDrive.tapeServer
-			ORDER BY TapeDrive.driveName ASC;
-  ELSIF server IS NULL THEN
-    OPEN tapeDrives FOR SELECT TapeDrive.* FROM TapeDrive, DeviceGroupName
-      WHERE DeviceGroupName.dgName = dgn
-            AND DeviceGroupName.id = TapeDrive.deviceGroupName
-			ORDER BY TapeDrive.driveName ASC;
-  ELSE 
-    OPEN tapeDrives FOR SELECT TapeDrive.* FROM TapeDrive, DeviceGroupName, TapeServer
-      WHERE DeviceGroupName.dgName = dgn
-            AND DeviceGroupName.id = TapeDrive.deviceGroupName
-            AND TapeServer.serverName = server
-            AND TapeServer.id = TapeDrive.tapeServer
-			ORDER BY TapeDrive.driveName ASC;
   END IF;
 END;
 

@@ -129,6 +129,23 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cquery_DiskPoolQueryResponse_reqAssociated
+  //----------------------------------------------------------------------------
+  int Cquery_DiskPoolQueryResponse_reqAssociated(castor::query::DiskPoolQueryResponse* instance, const char** var) {
+    *var = instance->reqAssociated().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cquery_DiskPoolQueryResponse_setReqAssociated
+  //----------------------------------------------------------------------------
+  int Cquery_DiskPoolQueryResponse_setReqAssociated(castor::query::DiskPoolQueryResponse* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setReqAssociated(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cquery_DiskPoolQueryResponse_type
   //----------------------------------------------------------------------------
   int Cquery_DiskPoolQueryResponse_type(castor::query::DiskPoolQueryResponse* instance,
