@@ -90,6 +90,7 @@ void castor::io::StreamRequestQueryResponseCnv::createRep(castor::IAddress* addr
   ad->stream() << obj->type();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
+  ad->stream() << obj->reqAssociated();
   ad->stream() << obj->reqId();
   ad->stream() << obj->status();
   ad->stream() << obj->creationTime();
@@ -113,6 +114,9 @@ castor::IObject* castor::io::StreamRequestQueryResponseCnv::createObj(castor::IA
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
+  std::string reqAssociated;
+  ad->stream() >> reqAssociated;
+  object->setReqAssociated(reqAssociated);
   std::string reqId;
   ad->stream() >> reqId;
   object->setReqId(reqId);

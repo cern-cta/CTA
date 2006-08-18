@@ -92,6 +92,7 @@ void castor::io::StreamDiskPoolQueryResponseCnv::createRep(castor::IAddress* add
   ad->stream() << obj->type();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
+  ad->stream() << obj->reqAssociated();
   ad->stream() << obj->diskPoolName();
   ad->stream() << obj->freeSpace();
   ad->stream() << obj->totalSpace();
@@ -115,6 +116,9 @@ castor::IObject* castor::io::StreamDiskPoolQueryResponseCnv::createObj(castor::I
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
+  std::string reqAssociated;
+  ad->stream() >> reqAssociated;
+  object->setReqAssociated(reqAssociated);
   std::string diskPoolName;
   ad->stream() >> diskPoolName;
   object->setDiskPoolName(diskPoolName);

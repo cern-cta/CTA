@@ -90,6 +90,7 @@ void castor::io::StreamFileResponseCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->type();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
+  ad->stream() << obj->reqAssociated();
   ad->stream() << obj->status();
   ad->stream() << obj->castorFileName();
   ad->stream() << obj->fileSize();
@@ -114,6 +115,9 @@ castor::IObject* castor::io::StreamFileResponseCnv::createObj(castor::IAddress* 
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
+  std::string reqAssociated;
+  ad->stream() >> reqAssociated;
+  object->setReqAssociated(reqAssociated);
   unsigned int status;
   ad->stream() >> status;
   object->setStatus(status);

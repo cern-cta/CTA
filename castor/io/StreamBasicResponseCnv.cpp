@@ -90,6 +90,7 @@ void castor::io::StreamBasicResponseCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->type();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
+  ad->stream() << obj->reqAssociated();
   ad->stream() << obj->id();
 }
 
@@ -109,6 +110,9 @@ castor::IObject* castor::io::StreamBasicResponseCnv::createObj(castor::IAddress*
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
+  std::string reqAssociated;
+  ad->stream() >> reqAssociated;
+  object->setReqAssociated(reqAssociated);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

@@ -90,6 +90,7 @@ void castor::io::StreamAbortResponseCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->type();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
+  ad->stream() << obj->reqAssociated();
   ad->stream() << obj->aborted();
   ad->stream() << obj->id();
 }
@@ -110,6 +111,9 @@ castor::IObject* castor::io::StreamAbortResponseCnv::createObj(castor::IAddress*
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
+  std::string reqAssociated;
+  ad->stream() >> reqAssociated;
+  object->setReqAssociated(reqAssociated);
   bool aborted;
   ad->stream() >> aborted;
   object->setAborted(aborted);
