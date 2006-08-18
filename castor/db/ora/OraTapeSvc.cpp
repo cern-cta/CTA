@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)OraTapeSvc.cpp,v 1.12 $Release$ 2006/08/11 07:13:52 felixehm
+ * @(#)OraTapeSvc.cpp,v 1.13 $Release$ 2006/08/18 07:28:44 felixehm
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -879,7 +879,7 @@ castor::db::ora::OraTapeSvc::checkFileForRepack
   oracle::occi::ResultSet *rset = NULL;  
   castor::stager::SubRequest* result = NULL;
   u_signed64 id = 0;
-  
+/*  
   try {
     
     if (0 == m_checkFileForRepackStatement) {
@@ -918,6 +918,8 @@ castor::db::ora::OraTapeSvc::checkFileForRepack
       << std::endl << e.what();
     throw ex;
   }
+  */
+  return NULL;
 }
 
 
