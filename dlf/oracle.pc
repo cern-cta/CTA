@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.9 2006/08/11 08:19:49 waldron Exp $
+ * $Id: oracle.pc,v 1.10 2006/08/18 07:54:42 waldron Exp $
  */
 
 /* headers */
@@ -78,6 +78,7 @@ struct database_t {
 	long               mode;
 	time_t             last_flush;
 	time_t             last_connect;
+	int                first_connect;
 	int                mutex;
 
 	sql_context        ctx;
@@ -223,10 +224,11 @@ int DLL_DECL db_init(int threads) {
 		}
 
 		/* initialise database_t structure */
-		db->index        = i;
-		db->last_flush   = time(NULL);
-		db->last_connect = 0;
-		db->mode         = MODE_DEFAULT;
+		db->index         = i;
+		db->last_flush    = time(NULL);
+		db->last_connect  = 0;
+		db->first_connect = 1;
+		db->mode          = MODE_DEFAULT;
 
 		/* table structures */
 		db->mtable = (struct msgtable_t *) malloc(sizeof(struct msgtable_t));
@@ -399,7 +401,10 @@ int DLL_DECL db_open(database_t *db, unsigned int retries) {
 		/* flag new connection status */	
 		db->last_connect = 0;
 		SetConnected(db->mode);
-		log(LOG_DEBUG, "db_open() - connection established\n");
+		if (!db->first_connect) {
+			log(LOG_INFO, "db_open() - connection established to %s@%s\n", username, database);
+		}
+		db->first_connect = 0;
 
 		return APP_SUCCESS;
 
@@ -1381,7 +1386,7 @@ int DLL_DECL db_stats(unsigned int interval) {
 			AND   m.facility = :job_fac
 			AND   m.msg_no = 12
 			AND   m.id = p.id
-			AND   p.name = 'Type'
+			AND   p.name = 'type'
 			AND   p.value IN (35, 36, 37, 40)) s,
 
 		/* exiting job */
@@ -1433,7 +1438,7 @@ end_stats1:
 		AND   m.facility = :job_fac
 		AND   m.msg_no = 12
 		AND   m.id = p.id
-		AND   p.name = 'Type'
+		AND   p.name = 'type'
 		AND   p.value IN (35, 36, 37, 40)
 		GROUP BY p.value;
 
@@ -1505,7 +1510,7 @@ end_stats2:
 			AND   m.facility = :job_fac
 			AND   m.msg_no = 12
 			AND   m.id = p.id
-			AND   p.name = 'Type'
+			AND   p.name = 'type'
 			AND   p.value IN (35, 36, 37, 40)) b
 
 		WHERE a.reqid = b.reqid
