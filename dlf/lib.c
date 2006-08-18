@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: lib.c,v 1.7 2006/08/18 07:52:26 waldron Exp $
+ * $Id: lib.c,v 1.8 2006/08/18 09:22:03 waldron Exp $
  */
 
 /* headers */
@@ -200,7 +200,7 @@ int dlf_read(target_t *t, int *rtype, int *rcode) {
 	} else if (type == DLF_REP_IRC) {
 
 	} else {
-		return APP_FAILURE;          /* unknown response type */
+		return APP_FAILURE;  /* unknown response type */
 	}
 
 	*rtype = type;
@@ -834,7 +834,6 @@ void dlf_worker(target_t *t) {
 			for (i = 0; i < DLF_MAX_MSGTEXTS; i++) {
 				if (texts[i] == NULL)
 					continue;
-
 				marshall_SHORT(sbp,  texts[i]->msg_no);
 				marshall_STRING(sbp, texts[i]->msg_text);
 			}
@@ -1192,7 +1191,21 @@ int DLL_DECL dlf_regtext(unsigned short msg_no, const char *msg_text) {
 
 	texts[i] = entry;
 
+	/* if the message is new to the api and the server threads have already completed initialisation
+	 * with the server, force them to reinitialise causing the message texts to be re-registered
+	 */
+	for (i = 0; i < API_MAX_TARGETS; i++) {
+		if (targets[i] == NULL)
+			continue;
+		if (!IsServer(targets[i]->mode))
+			continue;     
+		if (IsInitialised(targets[i]->mode)) {
+			ClrInitialised(targets[i]->mode);
+		}		
+	}
+
 	Cthread_mutex_unlock(&api_mutex);
+
 	return 0;
 }
 
