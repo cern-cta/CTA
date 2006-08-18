@@ -53,7 +53,6 @@ castor::stager::SubRequest::SubRequest() throw() :
   m_creationTime(0),
   m_lastModificationTime(0),
   m_answered(0),
-  m_repackVid(""),
   m_id(0),
   m_diskcopy(0),
   m_castorFile(0),
@@ -102,7 +101,6 @@ void castor::stager::SubRequest::print(std::ostream& stream,
   stream << indent << "creationTime : " << m_creationTime << std::endl;
   stream << indent << "lastModificationTime : " << m_lastModificationTime << std::endl;
   stream << indent << "answered : " << m_answered << std::endl;
-  stream << indent << "repackVid : " << m_repackVid << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Diskcopy : " << std::endl;

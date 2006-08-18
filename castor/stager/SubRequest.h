@@ -226,18 +226,6 @@ int Cstager_SubRequest_answered(struct Cstager_SubRequest_t* instance, int* var)
 int Cstager_SubRequest_setAnswered(struct Cstager_SubRequest_t* instance, int new_var);
 
 /**
- * Get the value of repackVid
- * If the request comes from repack, this field contains the Vid of the tape to be
- */
-int Cstager_SubRequest_repackVid(struct Cstager_SubRequest_t* instance, const char** var);
-
-/**
- * Set the value of repackVid
- * If the request comes from repack, this field contains the Vid of the tape to be
- */
-int Cstager_SubRequest_setRepackVid(struct Cstager_SubRequest_t* instance, const char* new_var);
-
-/**
  * Get the value of id
  * The id of this object
  */

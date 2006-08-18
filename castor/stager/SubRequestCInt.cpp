@@ -282,23 +282,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_SubRequest_repackVid
-  //----------------------------------------------------------------------------
-  int Cstager_SubRequest_repackVid(castor::stager::SubRequest* instance, const char** var) {
-    *var = instance->repackVid().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_SubRequest_setRepackVid
-  //----------------------------------------------------------------------------
-  int Cstager_SubRequest_setRepackVid(castor::stager::SubRequest* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setRepackVid(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_SubRequest_id
   //----------------------------------------------------------------------------
   int Cstager_SubRequest_id(castor::stager::SubRequest* instance, u_signed64* var) {

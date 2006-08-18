@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.186 $ $Release$ $Date: 2006/08/03 10:03:17 $ $Author: gtaur $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.187 $ $Release$ $Date: 2006/08/18 16:49:16 $ $Author: felixehm $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -94,7 +94,7 @@ static castor::SvcFactory<castor::db::ora::OraStagerSvc>* s_factoryOraStagerSvc 
 /// SQL statement for subRequestFailedToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestFailedToDoStatementString =
   // 10 = SUBREQUEST_FAILED_ANSWERING, 7 = SUBREQUEST_FAILED
-  "UPDATE SubRequest SET status = 10 WHERE decode(status,7,status,null) = 7 AND ROWNUM < 2 RETURNING id, retryCounter, fileName, protocol, xsize, priority,  status, modeBits, flags, repackVid INTO :1, :2, :3, :4, :5 ,:6 , :7, :8, :9, :10";
+  "UPDATE SubRequest SET status = 10 WHERE decode(status,7,status,null) = 7 AND ROWNUM < 2 RETURNING id, retryCounter, fileName, protocol, xsize, priority,  status, modeBits, flags INTO :1, :2, :3, :4, :5 ,:6 , :7, :8, :9";
 
 /// SQL statement for isSubRequestToSchedule
 const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStatementString =
@@ -240,8 +240,8 @@ castor::db::ora::OraStagerSvc::subRequestToDo
       }
       stmtString
         << ") RETURNING id, retryCounter, fileName, "
-        << "protocol, xsize, priority, status, modeBits, flags, repackVid"
-        << " INTO :1, :2, :3, :4, :5 ,:6 , :7, :8, :9, :10";
+        << "protocol, xsize, priority, status, modeBits, flags"
+        << " INTO :1, :2, :3, :4, :5 ,:6 , :7, :8, :9 ";
 
       m_subRequestToDoStatement =
         createStatement(stmtString.str());
@@ -263,8 +263,6 @@ castor::db::ora::OraStagerSvc::subRequestToDo
         (8, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
         (9, oracle::occi::OCCIINT);
-      m_subRequestToDoStatement->registerOutParam
-        (10, oracle::occi::OCCISTRING, 10);
       m_subRequestToDoStatement->setAutoCommit(true);
     }
     // build the list of
@@ -289,7 +287,6 @@ castor::db::ora::OraStagerSvc::subRequestToDo
        m_subRequestToDoStatement->getInt(7));
     result->setModeBits(m_subRequestToDoStatement->getInt(8));
     result->setFlags(m_subRequestToDoStatement->getInt(9));
-    result->setRepackVid(m_subRequestToDoStatement->getString(10));
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
@@ -331,8 +328,6 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
         (8, oracle::occi::OCCIINT);
       m_subRequestFailedToDoStatement->registerOutParam
         (9, oracle::occi::OCCIINT);
-      m_subRequestFailedToDoStatement->registerOutParam
-        (10, oracle::occi::OCCISTRING, 2048);
       m_subRequestFailedToDoStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
@@ -356,7 +351,6 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
        m_subRequestFailedToDoStatement->getInt(7));
     result->setModeBits(m_subRequestFailedToDoStatement->getInt(8));
     result->setFlags(m_subRequestFailedToDoStatement->getInt(9));
-    result->setRepackVid(m_subRequestFailedToDoStatement->getString(10));
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
