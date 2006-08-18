@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_service_helper.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/02/09 17:05:36 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_service_helper.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/08/18 16:00:13 $ $Author: sponcec3 $
  *
  * Just a little helper function replying to a client
  *
@@ -26,6 +26,8 @@
 
 #ifndef H_STAGER_SERVICE_HELPER_HPP 
 #define H_STAGER_SERVICE_HELPER_HPP 1
+
+#include <string>
 
 namespace castor {
 
@@ -46,9 +48,11 @@ namespace castor {
      * In case of error, on writes a message to the log
      * @param client the client where to send the response
      * @param res the response to send
+     * @param reqId the uuid of the correponding request
      */
     void replyToClient(castor::IClient* client,
-                       castor::rh::Response* res);
+                       castor::rh::Response* res,
+                       std::string reqId);
       
   } // End of namespace stager
 

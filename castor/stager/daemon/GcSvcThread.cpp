@@ -1,5 +1,5 @@
 /*
- * $Id: GcSvcThread.cpp,v 1.10 2006/08/18 15:35:22 sponcec3 Exp $
+ * $Id: GcSvcThread.cpp,v 1.11 2006/08/18 15:59:29 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.10 $ $Date: 2006/08/18 15:35:22 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.11 $ $Date: 2006/08/18 15:59:29 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -200,7 +200,6 @@ namespace castor {
       /* ------------------------------ */
       STAGER_LOG_DEBUG(NULL, "Building Response");
       castor::rh::BasicResponse res;
-      res.setReqAssociated(req->reqId());
       if (0 != serrno) {
         res.setErrorCode(serrno);
         res.setErrorMessage(error);
@@ -208,7 +207,7 @@ namespace castor {
 
       /* Reply To Client                */
       /* ------------------------------ */
-      replyToClient(client, &res);
+      replyToClient(client, &res, req->reqId());
 
     }
 
@@ -254,7 +253,6 @@ namespace castor {
       /* ------------------------------ */
       STAGER_LOG_DEBUG(NULL, "Building Response");
       castor::rh::GCFilesResponse res;
-      res.setReqAssociated(req->reqId());
       if (0 != serrno) {
         res.setErrorCode(serrno);
         res.setErrorMessage(error);
@@ -272,7 +270,7 @@ namespace castor {
 
       /* Reply To Client                */
       /* ------------------------------ */
-      replyToClient(client, &res);
+      replyToClient(client, &res, req->reqId());
 
       /* Cleanup                        */
       /* ------------------------------ */
