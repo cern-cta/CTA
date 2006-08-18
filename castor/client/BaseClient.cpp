@@ -353,7 +353,7 @@ std::string castor::client::BaseClient::sendRequest
               		throw e;
             	}
 
-                if ( endRes->reqAssociated().length() && endRes->reqAssociated() != requestId )
+                if ( endRes->reqAssociated().length() && endRes->reqAssociated() != requestId ){
                 	// it was not the Response of this  Request and it is a new converter
 
 			delete obj;
