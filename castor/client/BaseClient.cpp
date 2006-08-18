@@ -339,12 +339,37 @@ std::string castor::client::BaseClient::sendRequest
         // We had a POLLIN event, read the data
         IObject* obj = socket->readObject();
         try {
-          if (OBJ_EndResponse == obj->type()) {
-            // flush messages
-            clog() << std::flush;
-            // terminate response handler
-            rh->terminate();
-            stop = true;
+          if (OBJ_EndResponse == obj->type() ) {
+	       
+                 // cast response into Response*
+
+                castor::rh::Response* endRes = dynamic_cast<castor::rh::Response*>(obj);
+            	if (0 == endRes) {
+              		castor::exception::Communication e(requestId, SEINTERNAL);
+              		e.getMessage() << "Receive bad response type :"
+                             << obj->type();
+              		delete obj;
+              		delete socket;
+              		throw e;
+            	}
+
+		std::string EndReqIdAssoc(endRes->reqAssociated());
+	            // check the the request id only for new converter
+
+                if (EndReqIdAssoc.c_str() && EndReqIdAssoc.compare(requestId)){ 
+                	// it was not the Response of this  Request and it is a new converter
+
+			delete obj;
+			continue;
+			
+                }
+     
+                // flush messages
+               clog() << std::flush;
+               // terminate response handler
+               rh->terminate();
+               stop = true;
+
           } else {
             // cast response into Response*
             castor::rh::Response* res =
@@ -357,9 +382,20 @@ std::string castor::client::BaseClient::sendRequest
               delete socket;
               throw e;
             }
+	    
+
+            std::string reqIdAssoc(res->reqAssociated());
+
+            if (reqIdAssoc.c_str() && reqIdAssoc.compare(requestId)){ 
+                	// I'm using a new convertr and it was not the Response of this  Request
+			delete obj;
+			continue;
+			
+             }	
             // Print the request
             rh->handleResponse(*res);
           }
+
           delete obj;
         } catch (castor::exception::Exception e) {
           if (0 != obj) delete obj;
