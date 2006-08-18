@@ -353,10 +353,7 @@ std::string castor::client::BaseClient::sendRequest
               		throw e;
             	}
 
-		std::string EndReqIdAssoc(endRes->reqAssociated());
-	            // check the the request id only for new converter
-
-                if ( !endRes->reqAssociated().length() && endRes->reqAssociated() != requestId )
+                if ( endRes->reqAssociated().length() && endRes->reqAssociated() != requestId )
                 	// it was not the Response of this  Request and it is a new converter
 
 			delete obj;
