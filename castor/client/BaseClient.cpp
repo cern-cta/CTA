@@ -258,7 +258,7 @@ std::string castor::client::BaseClient::sendRequest
     }
     req->setMachine(hostname);
     if (m_rhHost == "") {
-	    clog() << "Rh host not speciefied: "
+	    clog() << "Rh host not specified: "
                    << strerror(errno) << std::endl;
                    free(hostname);
             castor::exception::Exception e(errno);
@@ -356,7 +356,7 @@ std::string castor::client::BaseClient::sendRequest
 		std::string EndReqIdAssoc(endRes->reqAssociated());
 	            // check the the request id only for new converter
 
-                if (EndReqIdAssoc.c_str() && EndReqIdAssoc.compare(requestId)){ 
+                if ( !endRes->reqAssociated().length() && endRes->reqAssociated() != requestId )
                 	// it was not the Response of this  Request and it is a new converter
 
 			delete obj;
