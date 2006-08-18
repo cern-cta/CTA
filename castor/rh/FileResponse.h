@@ -109,6 +109,16 @@ int Crh_FileResponse_errorMessage(struct Crh_FileResponse_t* instance, const cha
  */
 int Crh_FileResponse_setErrorMessage(struct Crh_FileResponse_t* instance, const char* new_var);
 
+/**
+ * Get the value of reqAssociated
+ */
+int Crh_FileResponse_reqAssociated(struct Crh_FileResponse_t* instance, const char** var);
+
+/**
+ * Set the value of reqAssociated
+ */
+int Crh_FileResponse_setReqAssociated(struct Crh_FileResponse_t* instance, const char* new_var);
+
 /***************************************/
 /* Implementation of IObject interface */
 /***************************************/

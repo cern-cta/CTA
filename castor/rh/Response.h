@@ -88,4 +88,14 @@ int Crh_Response_errorMessage(struct Crh_Response_t* instance, const char** var)
  */
 int Crh_Response_setErrorMessage(struct Crh_Response_t* instance, const char* new_var);
 
+/**
+ * Get the value of reqAssociated
+ */
+int Crh_Response_reqAssociated(struct Crh_Response_t* instance, const char** var);
+
+/**
+ * Set the value of reqAssociated
+ */
+int Crh_Response_setReqAssociated(struct Crh_Response_t* instance, const char* new_var);
+
 #endif // CASTOR_RH_RESPONSE_H

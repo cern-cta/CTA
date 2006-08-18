@@ -110,6 +110,16 @@ int Crh_StartResponse_errorMessage(struct Crh_StartResponse_t* instance, const c
  */
 int Crh_StartResponse_setErrorMessage(struct Crh_StartResponse_t* instance, const char* new_var);
 
+/**
+ * Get the value of reqAssociated
+ */
+int Crh_StartResponse_reqAssociated(struct Crh_StartResponse_t* instance, const char** var);
+
+/**
+ * Set the value of reqAssociated
+ */
+int Crh_StartResponse_setReqAssociated(struct Crh_StartResponse_t* instance, const char* new_var);
+
 /***************************************/
 /* Implementation of IObject interface */
 /***************************************/

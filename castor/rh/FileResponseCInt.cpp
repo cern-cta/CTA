@@ -127,6 +127,23 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_FileResponse_reqAssociated
+  //----------------------------------------------------------------------------
+  int Crh_FileResponse_reqAssociated(castor::rh::FileResponse* instance, const char** var) {
+    *var = instance->reqAssociated().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileResponse_setReqAssociated
+  //----------------------------------------------------------------------------
+  int Crh_FileResponse_setReqAssociated(castor::rh::FileResponse* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setReqAssociated(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_FileResponse_type
   //----------------------------------------------------------------------------
   int Crh_FileResponse_type(castor::rh::FileResponse* instance,

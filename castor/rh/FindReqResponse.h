@@ -109,6 +109,16 @@ int Crh_FindReqResponse_errorMessage(struct Crh_FindReqResponse_t* instance, con
  */
 int Crh_FindReqResponse_setErrorMessage(struct Crh_FindReqResponse_t* instance, const char* new_var);
 
+/**
+ * Get the value of reqAssociated
+ */
+int Crh_FindReqResponse_reqAssociated(struct Crh_FindReqResponse_t* instance, const char** var);
+
+/**
+ * Set the value of reqAssociated
+ */
+int Crh_FindReqResponse_setReqAssociated(struct Crh_FindReqResponse_t* instance, const char* new_var);
+
 /***************************************/
 /* Implementation of IObject interface */
 /***************************************/

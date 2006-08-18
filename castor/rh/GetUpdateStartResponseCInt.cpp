@@ -177,6 +177,23 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_GetUpdateStartResponse_reqAssociated
+  //----------------------------------------------------------------------------
+  int Crh_GetUpdateStartResponse_reqAssociated(castor::rh::GetUpdateStartResponse* instance, const char** var) {
+    *var = instance->reqAssociated().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_GetUpdateStartResponse_setReqAssociated
+  //----------------------------------------------------------------------------
+  int Crh_GetUpdateStartResponse_setReqAssociated(castor::rh::GetUpdateStartResponse* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setReqAssociated(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_GetUpdateStartResponse_type
   //----------------------------------------------------------------------------
   int Crh_GetUpdateStartResponse_type(castor::rh::GetUpdateStartResponse* instance,

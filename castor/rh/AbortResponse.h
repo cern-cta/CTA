@@ -109,6 +109,16 @@ int Crh_AbortResponse_errorMessage(struct Crh_AbortResponse_t* instance, const c
  */
 int Crh_AbortResponse_setErrorMessage(struct Crh_AbortResponse_t* instance, const char* new_var);
 
+/**
+ * Get the value of reqAssociated
+ */
+int Crh_AbortResponse_reqAssociated(struct Crh_AbortResponse_t* instance, const char** var);
+
+/**
+ * Set the value of reqAssociated
+ */
+int Crh_AbortResponse_setReqAssociated(struct Crh_AbortResponse_t* instance, const char* new_var);
+
 /***************************************/
 /* Implementation of IObject interface */
 /***************************************/

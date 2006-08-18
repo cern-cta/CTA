@@ -109,6 +109,16 @@ int Crh_FileQryResponse_errorMessage(struct Crh_FileQryResponse_t* instance, con
  */
 int Crh_FileQryResponse_setErrorMessage(struct Crh_FileQryResponse_t* instance, const char* new_var);
 
+/**
+ * Get the value of reqAssociated
+ */
+int Crh_FileQryResponse_reqAssociated(struct Crh_FileQryResponse_t* instance, const char** var);
+
+/**
+ * Set the value of reqAssociated
+ */
+int Crh_FileQryResponse_setReqAssociated(struct Crh_FileQryResponse_t* instance, const char* new_var);
+
 /***************************************/
 /* Implementation of IObject interface */
 /***************************************/

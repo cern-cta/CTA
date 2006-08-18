@@ -109,6 +109,16 @@ int Crh_RequestQueryResponse_errorMessage(struct Crh_RequestQueryResponse_t* ins
  */
 int Crh_RequestQueryResponse_setErrorMessage(struct Crh_RequestQueryResponse_t* instance, const char* new_var);
 
+/**
+ * Get the value of reqAssociated
+ */
+int Crh_RequestQueryResponse_reqAssociated(struct Crh_RequestQueryResponse_t* instance, const char** var);
+
+/**
+ * Set the value of reqAssociated
+ */
+int Crh_RequestQueryResponse_setReqAssociated(struct Crh_RequestQueryResponse_t* instance, const char* new_var);
+
 /***************************************/
 /* Implementation of IObject interface */
 /***************************************/

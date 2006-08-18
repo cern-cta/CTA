@@ -111,6 +111,22 @@ namespace castor {
         m_errorMessage = new_var;
       }
 
+      /**
+       * Get the value of m_reqAssociated
+       * @return the value of m_reqAssociated
+       */
+      std::string reqAssociated() const {
+        return m_reqAssociated;
+      }
+
+      /**
+       * Set the value of m_reqAssociated
+       * @param new_var the new value of m_reqAssociated
+       */
+      void setReqAssociated(std::string new_var) {
+        m_reqAssociated = new_var;
+      }
+
     private:
 
       /// The error code in case of error
@@ -118,6 +134,8 @@ namespace castor {
 
       /// The error message in case of error
       std::string m_errorMessage;
+
+      std::string m_reqAssociated;
 
     }; // end of class Response
 

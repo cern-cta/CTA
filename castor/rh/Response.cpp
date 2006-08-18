@@ -37,7 +37,8 @@
 //------------------------------------------------------------------------------
 castor::rh::Response::Response() throw() :
   m_errorCode(0),
-  m_errorMessage("") {
+  m_errorMessage(""),
+  m_reqAssociated("") {
 };
 
 //------------------------------------------------------------------------------
@@ -61,6 +62,7 @@ void castor::rh::Response::print(std::ostream& stream,
   // Output of all members
   stream << indent << "errorCode : " << m_errorCode << std::endl;
   stream << indent << "errorMessage : " << m_errorMessage << std::endl;
+  stream << indent << "reqAssociated : " << m_reqAssociated << std::endl;
   alreadyPrinted.insert(this);
 }
 

@@ -110,6 +110,16 @@ int Crh_GCFilesResponse_errorMessage(struct Crh_GCFilesResponse_t* instance, con
  */
 int Crh_GCFilesResponse_setErrorMessage(struct Crh_GCFilesResponse_t* instance, const char* new_var);
 
+/**
+ * Get the value of reqAssociated
+ */
+int Crh_GCFilesResponse_reqAssociated(struct Crh_GCFilesResponse_t* instance, const char** var);
+
+/**
+ * Set the value of reqAssociated
+ */
+int Crh_GCFilesResponse_setReqAssociated(struct Crh_GCFilesResponse_t* instance, const char* new_var);
+
 /***************************************/
 /* Implementation of IObject interface */
 /***************************************/

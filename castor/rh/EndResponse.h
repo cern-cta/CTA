@@ -109,6 +109,16 @@ int Crh_EndResponse_errorMessage(struct Crh_EndResponse_t* instance, const char*
  */
 int Crh_EndResponse_setErrorMessage(struct Crh_EndResponse_t* instance, const char* new_var);
 
+/**
+ * Get the value of reqAssociated
+ */
+int Crh_EndResponse_reqAssociated(struct Crh_EndResponse_t* instance, const char** var);
+
+/**
+ * Set the value of reqAssociated
+ */
+int Crh_EndResponse_setReqAssociated(struct Crh_EndResponse_t* instance, const char* new_var);
+
 /***************************************/
 /* Implementation of IObject interface */
 /***************************************/
