@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: lib.c,v 1.6 2006/08/09 06:09:01 waldron Exp $
+ * $Id: lib.c,v 1.7 2006/08/18 07:52:26 waldron Exp $
  */
 
 /* headers */
@@ -196,7 +196,7 @@ int dlf_read(target_t *t, int *rtype, int *rcode) {
 		if (err_no > DLF_ERR_MAX) {
 			err_no = DLF_ERR_MAX;
 		}
-		dlf_error("MSG=\"%s\" SERVER=\"%s\"", t->server, dlf_errorlist[(err_no - 1)].err_str);
+		dlf_error("SERVER=\"%s\" ERROR=\"%s\"", t->server, dlf_errorlist[(err_no - 1)].err_str);
 	} else if (type == DLF_REP_IRC) {
 
 	} else {
@@ -1391,9 +1391,9 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 			}
 
 			/* initialise target_t structure
-			 *   - files are fare less complicated then servers. We simple initialise everything too
+			 *   - files are far less complicated then servers. We simple initialise everything too
 			 *     NULL here and later create the server threads, queue and hash'ing structures once
-			 *     the whole initialisation sequences has completed.
+			 *     the whole initialisation sequence has completed.
 			 */
 			t->pause      = time(NULL) + 1;
 			t->err_full   = 0;
