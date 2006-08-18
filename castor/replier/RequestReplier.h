@@ -100,13 +100,16 @@ int Creplier_RequestReplier_sendResponse(struct Creplier_RequestReplier_t *rr,
  * @param rr the request replier used
  * @param client the client object indicating the client address
  * to this client.
+ * @param reqId the uuid of the corresponding request
  * @return 0 : call was successful,
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
  * Creplier_RequestReplier_errorMsg
  */
-int Creplier_RequestReplier_sendEndResponse(struct Creplier_RequestReplier_t *rr,
-					    struct C_IClient_t *client);
+int Creplier_RequestReplier_sendEndResponse
+(struct Creplier_RequestReplier_t *rr,
+ struct C_IClient_t *client,
+ const char* reqId);
 
 
 /**

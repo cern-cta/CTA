@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/03/30 16:31:46 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplier.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/08/18 15:35:23 $ $Author: sponcec3 $
  *
  *
  *
@@ -102,9 +102,11 @@ namespace castor {
        * Sends an EndResponse over a connection, to indicate that
        * there are no more messages to send.
        * @param client The client object indicating the client address
+       * @param reqId the uuid of the corresponding request
        * @exception Exception in case of error
        */
-      void sendEndResponse(castor::IClient *client)
+      void sendEndResponse(castor::IClient *client,
+                           std::string reqId)
         throw(castor::exception::Exception);
       
 

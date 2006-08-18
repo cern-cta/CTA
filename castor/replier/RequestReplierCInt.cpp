@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplierCInt.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/03/31 15:37:18 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplierCInt.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/08/18 15:35:23 $ $Author: sponcec3 $
  *
  * 
  *
@@ -117,11 +117,13 @@ extern "C" {
   //---------------------------------------------------------------------------
   // Creplier_RequestReplier_replyToClient
   //---------------------------------------------------------------------------
-  int Creplier_RequestReplier_sendEndResponse(Creplier_RequestReplier_t *rr,
-					      castor::IClient *client) {
+  int Creplier_RequestReplier_sendEndResponse
+  (Creplier_RequestReplier_t *rr,
+   castor::IClient *client,
+   const char* reqId) {
     if (!checkRequestReplier(rr)) return -1;
     try {
-      rr->rr->sendEndResponse(client);
+      rr->rr->sendEndResponse(client, reqId);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       rr->errorMsg = e.getMessage().str();

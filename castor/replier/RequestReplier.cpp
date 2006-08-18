@@ -865,7 +865,9 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
 // Method to add an EndResponse
 //-----------------------------------------------------------------------------
 void
-castor::replier::RequestReplier::sendEndResponse(castor::IClient *client)
+castor::replier::RequestReplier::sendEndResponse
+(castor::IClient *client,
+ std::string reqId)
   throw(castor::exception::Exception) {
 
   char *func = "rr::sendEndResponse CLIENT ";
@@ -881,6 +883,7 @@ castor::replier::RequestReplier::sendEndResponse(castor::IClient *client)
   Cthread_mutex_lock(&m_clientQueue);
 
   castor::rh::EndResponse endresp;
+  endresp.setReqAssociated(reqId);
   castor::io::biniostream* buffer = new castor::io::biniostream();
   castor::io::StreamAddress ad(*buffer, "StreamCnvSvc", castor::SVC_STREAMCNV);
   svcs()->createRep(&ad, &endresp, true);

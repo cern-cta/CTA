@@ -1,5 +1,5 @@
 /*
- * $Id: ErrorSvcThread.cpp,v 1.9 2005/07/21 09:13:11 itglp Exp $
+ * $Id: ErrorSvcThread.cpp,v 1.10 2006/08/18 15:35:22 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.9 $ $Date: 2005/07/21 09:13:11 $ CERN IT-FIO/DS Sebastien Ponce";
+static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.10 $ $Date: 2006/08/18 15:35:22 $ CERN IT-FIO/DS Sebastien Ponce";
 #endif
 
 /* ================================================================= */
@@ -243,6 +243,7 @@ EXTERN_C int DLL_DECL stager_error_process(void *output) {
     res.setStatus(castor::stager::SUBREQUEST_FAILED);
     res.setCastorFileName(subReq->fileName());
     res.setSubreqId(subReq->subreqId());
+    res.setReqAssociated(req->reqId());
   
     // Reply to client
     try {
@@ -261,7 +262,7 @@ EXTERN_C int DLL_DECL stager_error_process(void *output) {
       // the last subrequest of the request
       if (!stgSvc->updateAndCheckSubRequest(subReq)) {
         if (0 == rr) {
-          rr->sendEndResponse(client);
+          rr->sendEndResponse(client, req->reqId());
         }
       }
     } catch (castor::exception::Exception e) {

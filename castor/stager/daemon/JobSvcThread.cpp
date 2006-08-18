@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.33 2005/09/06 14:49:36 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.34 2006/08/18 15:35:22 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.33 $ $Date: 2005/09/06 14:49:36 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.34 $ $Date: 2006/08/18 15:35:22 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -248,6 +248,7 @@ namespace castor {
       /* ------------------------------ */
       STAGER_LOG_DEBUG(NULL, "Building Response");
       castor::rh::GetUpdateStartResponse res;
+      res.setReqAssociated(req->reqId());
       if (0 != serrno) {
         res.setErrorCode(serrno);
         res.setErrorMessage(error);
@@ -347,6 +348,7 @@ namespace castor {
       /* ------------------------------ */
       STAGER_LOG_DEBUG(NULL, "Building Response");
       castor::rh::StartResponse res;
+      res.setReqAssociated(req->reqId());
       if (0 != serrno) {
         res.setErrorCode(serrno);
         res.setErrorMessage(error);
@@ -414,6 +416,7 @@ namespace castor {
       /* ------------------------------ */
       STAGER_LOG_DEBUG(NULL, "Building Response");
       castor::rh::BasicResponse res;
+      res.setReqAssociated(req->reqId());
       if (0 != serrno) {
         res.setErrorCode(serrno);
         res.setErrorMessage(error);
@@ -498,6 +501,7 @@ namespace castor {
       /* ------------------------------ */
       STAGER_LOG_DEBUG(NULL, "Building Response");
       castor::rh::BasicResponse res;
+      res.setReqAssociated(req->reqId());
       if (0 != serrno) {
         res.setErrorCode(serrno);
         res.setErrorMessage(error);
@@ -550,6 +554,7 @@ namespace castor {
       /* ------------------------------ */
       STAGER_LOG_DEBUG(NULL, "Building Response");
       castor::rh::BasicResponse res;
+      res.setReqAssociated(req->reqId());
       if (0 != serrno) {
         res.setErrorCode(serrno);
         res.setErrorMessage(error);
@@ -602,6 +607,7 @@ namespace castor {
       /* ------------------------------ */
       STAGER_LOG_DEBUG(NULL, "Building Response");
       castor::rh::BasicResponse res;
+      res.setReqAssociated(req->reqId());
       if (0 != serrno) {
         res.setErrorCode(serrno);
         res.setErrorMessage(error);
@@ -654,6 +660,7 @@ namespace castor {
       /* ------------------------------ */
       STAGER_LOG_DEBUG(NULL, "Building Response");
       castor::rh::BasicResponse res;
+      res.setReqAssociated(req->reqId());
       if (0 != serrno) {
         res.setErrorCode(serrno);
         res.setErrorMessage(error);
@@ -808,6 +815,7 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
     castor::rh::BasicResponse res;
     res.setErrorCode(serrno);
     res.setErrorMessage(oss.str().c_str());
+    res.setReqAssociated(req->reqId());
     castor::stager::replyToClient(client, &res);
 
   }

@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.41 2006/08/17 13:41:31 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.42 2006/08/18 15:35:22 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.41 $ $Date: 2006/08/17 13:41:31 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.42 $ $Date: 2006/08/18 15:35:22 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -175,13 +175,14 @@ namespace castor {
       }
 
 
-      void sendEndResponse(castor::IClient* client) {
+      void sendEndResponse(castor::IClient* client,
+                           std::string reqId) {
         char *func =  "castor::stager::sendEndResponse";
         try {
           STAGER_LOG_DEBUG(NULL, "Sending End Response");
           castor::replier::RequestReplier *rr =
             castor::replier::RequestReplier::getInstance();
-          rr->sendEndResponse(client);
+          rr->sendEndResponse(client, reqId);
         } catch (castor::exception::Exception e) {
           serrno = e.code();
           STAGER_LOG_DB_ERROR(NULL, func,
@@ -270,7 +271,8 @@ namespace castor {
       void handle_fileQueryRequest_byFileName(castor::query::IQuerySvc* qrySvc,
                                               castor::IClient *client,
                                               std::string& fileName,
-                                              u_signed64 svcClassId) {
+                                              u_signed64 svcClassId,
+                                              std::string reqId) {
         
         char *func =  "castor::stager::queryService::handle_fileQueryRequest_byFileName";
 
@@ -297,6 +299,7 @@ namespace castor {
         u_signed64 fileid = 0;
         std::string nshost = "";
         castor::rh::FileQryResponse res;
+        res.setReqAssociated(reqId);
         bool foundDiskCopy = false;
 
         for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
@@ -354,7 +357,8 @@ namespace castor {
                                             castor::IClient *client,
                                             std::string &fid,
                                             std::string &nshost,
-                                            u_signed64 svcClassId) {
+                                            u_signed64 svcClassId,
+                                            std::string reqId) {
 
         char *func =  "castor::stager::queryService::handle_fileQueryRequest_byFileId";
 
@@ -375,6 +379,7 @@ namespace castor {
         /* Preparing the response */
         /* ---------------------- */
         castor::rh::FileQryResponse res;
+        res.setReqAssociated(reqId);
         std::ostringstream sst;
         sst << fid << "@" << nshost;
         res.setFileName(sst.str());
@@ -412,7 +417,8 @@ namespace castor {
                                              castor::IClient *client,
                                              castor::stager::RequestQueryType reqType,
                                              std::string &val,
-                                             u_signed64 svcClassId) {
+                                             u_signed64 svcClassId,
+                                             std::string reqId) {
         char *func =  "castor::stager::queryService::handle_fileQueryRequest_byRequest";
 
         // Performing the query on the database
@@ -446,6 +452,7 @@ namespace castor {
         u_signed64 fileid = 0;
         std::string nshost = "";
         castor::rh::FileQryResponse res;
+        res.setReqAssociated(reqId);
         bool foundDiskCopy = false;
 
         for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
@@ -608,21 +615,24 @@ namespace castor {
                 handle_fileQueryRequest_byFileName(qrySvc,
                                                    client,
                                                    pval,
-                                                   svcClassId);
+                                                   svcClassId,
+                                                   req->reqId());
               } else if (ptype == REQUESTQUERYTYPE_FILEID) {
                 STAGER_LOG_DEBUG(NULL, "Calling handle_fileQueryRequest_byFileId");
                 handle_fileQueryRequest_byFileId(qrySvc,
                                                  client,
                                                  fid,
                                                  nshost,
-                                                 svcClassId);
+                                                 svcClassId,
+                                                 req->reqId());
               } else {
                 STAGER_LOG_DEBUG(NULL, "Calling handle_fileQueryRequest_byRequest");
                 handle_fileQueryRequest_byRequest(qrySvc,
                                                   client,
                                                   ptype,
                                                   pval,
-                                                  svcClassId);
+                                                  svcClassId,
+                                                  req->reqId());
               }
 
             } catch (castor::exception::Exception e) {
@@ -641,6 +651,7 @@ namespace castor {
               /* Send the exception to the client */
               /* -------------------------------- */
               castor::rh::FileQryResponse res;
+              res.setReqAssociated(req->reqId());
               if (0 != serrno) {
                 res.setStatus(naStatusCode);
                 res.setFileName(pval);
@@ -664,6 +675,7 @@ namespace castor {
           /* Send the exception to the client */
           /* -------------------------------- */
           castor::rh::FileQryResponse res;
+          res.setReqAssociated(req->reqId());
           res.setStatus(naStatusCode);
           if (0 != serrno) {
             res.setErrorCode(serrno);
@@ -675,7 +687,7 @@ namespace castor {
           replyToClient(client, &res);
         }
 
-        sendEndResponse(client);
+        sendEndResponse(client, req->reqId());
       }
 
 
@@ -766,11 +778,12 @@ namespace castor {
 		   result->begin();
 		 it != result->end();
 		 it++) {
+              (*it)->setReqAssociated(req->reqId());
 	      replyToClient(client, *it);
 	    }
 
 	    // Send the last response if necessary
-	    sendEndResponse(client);
+	    sendEndResponse(client, req->reqId());
 
 	    // Cleanup
 	    delete result;
@@ -788,8 +801,9 @@ namespace castor {
 	      throw e;
 	    }
 
+            result->setReqAssociated(req->reqId());
 	    replyToClient(client, result);
-	    sendEndResponse(client);
+	    sendEndResponse(client, req->reqId());
 
 	  }
 
@@ -804,6 +818,7 @@ namespace castor {
           /* Send the exception to the client */
           /* -------------------------------- */
           castor::query::DiskPoolQueryResponse res;
+          res.setReqAssociated(req->reqId());
           if (0 != serrno) {
             res.setErrorCode(serrno);
             res.setErrorMessage(error);
@@ -814,7 +829,7 @@ namespace castor {
           replyToClient(client, &res);
         }
 
-        sendEndResponse(client);
+        sendEndResponse(client, req->reqId());
       }
 
     } // End of namespace query service
@@ -945,11 +960,12 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
                         e.getMessage().str().c_str());
     // reply to the client
     castor::rh::FileQryResponse res;
+    res.setReqAssociated(req->reqId());
     res.setStatus(10001); // XXX put decent status for bad SvcClassName 
     res.setErrorCode(serrno);
     res.setErrorMessage(e.getMessage().str());
     castor::stager::queryService::replyToClient(client, &res);
-    castor::stager::queryService::sendEndResponse(client);
+    castor::stager::queryService::sendEndResponse(client, req->reqId());
     if (0 != req) {
       castor::stager::SvcClass *svcClass = req->svcClass();
       if (0 != svcClass) {
