@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.33 $ $Release$ $Date: 2006/08/16 13:41:45 $ $Author: felixehm $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.34 $ $Release$ $Date: 2006/08/21 12:48:52 $ $Author: felixehm $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.33 $ $Release$ $Date: 2006/08/16 13:41:45 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.34 $ $Release$ $Date: 2006/08/21 12:48:52 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -379,7 +379,7 @@ int rtcpcld_updateNsSegmentAttributes(
       which has a valid repack attribute and which 
       DISKCOPY is in CANBEMIGRATED
    */
-  rc = rtcpcld_checkFileForRepack( castorFile, &sreq );
+  //rc = rtcpcld_checkFileForRepack( castorFile, &sreq );
   
   if (rc == -1){
    (void)dlf_write(
@@ -396,7 +396,7 @@ int rtcpcld_updateNsSegmentAttributes(
   if ( sreq != NULL ) {
     /* we found a repackfile, so get the oldvid, from the SubRequest*/
     const char** oldvid;
-    Cstager_SubRequest_repackVid(sreq,&oldvid);
+    //Cstager_SubRequest_repackVid(sreq,&oldvid);
     
     /* replace the old tapecopy. Note that the old segments are deleted!
        and the old tapecopyno is assigned to the new tapecopy.*/ 
@@ -800,7 +800,7 @@ int rtcpcld_checkDualCopies(
      {
         rtcpcld_getFileId(fl,&fid);
         if ( prev_fid!= NULL && //first time
-             prev_fid != fid->fileid &&  // pointer is not the same
+             prev_fid != fid &&  // pointer is not the same
              prev_fid->fileid == fid->fileid ) { // fileid is the same
            dualCopyFound = 1;
            break;
