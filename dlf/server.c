@@ -1,7 +1,7 @@
 /******************************************************************************************************
  *                                                                                                    *
  * server.c - Castor Distribution Logging Facility                                                    *
- * Copyright (C) 2005 CERN IT/FIO (castor-dev@cern.ch)                                                *
+ * Copyright (C) 2006 CERN IT/FIO (castor-dev@cern.ch)                                                *
  *                                                                                                    *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU *
  * General Public License as published by the Free Software Foundation; either version 2 of the       *
@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: server.c,v 1.7 2006/08/02 16:19:42 waldron Exp $
+ * $Id: server.c,v 1.8 2006/08/21 06:41:49 waldron Exp $
  */
 
 /* headers */

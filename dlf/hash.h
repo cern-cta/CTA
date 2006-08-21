@@ -1,7 +1,7 @@
 /******************************************************************************************************
  *                                                                                                    *
  * hash.h - Castor Distribution Logging Facility                                                      *
- * Copyright (C) 2005 CERN IT/FIO (castor-dev@cern.ch)                                                *
+ * Copyright (C) 2006 CERN IT/FIO (castor-dev@cern.ch)                                                *
  *                                                                                                    *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU *
  * General Public License as published by the Free Software Foundation; either version 2 of the       *
@@ -21,7 +21,7 @@
  * @file  hash.h
  * @brief Thread safe hash implementation
  *
- * $Id: hash.h,v 1.4 2006/07/18 12:04:35 waldron Exp $
+ * $Id: hash.h,v 1.5 2006/08/21 06:41:49 waldron Exp $
  */
 
 #ifndef _HASH_H
