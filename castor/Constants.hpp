@@ -60,7 +60,6 @@ namespace castor {
     OBJ_StageGetNextRequest = 21,    
     OBJ_Stream = 26,
     OBJ_SubRequest = 25,
-    OBJ_OldSubRequest = 27,
     OBJ_SvcClass = 28,
     OBJ_Tape = 29,
     OBJ_TapeCopy = 30,
