@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.17 $ $Release$ $Date: 2006/08/15 14:15:53 $ $Author: gtaur $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.18 $ $Release$ $Date: 2006/08/22 08:17:21 $ $Author: gtaur $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.17 $ $Release$ $Date: 2006/08/15 14:15:53 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.18 $ $Release$ $Date: 2006/08/22 08:17:21 $ Olof Barring";
 #endif /* not lint */
 /** RfioTURL.c - RFIO TURL handling
  *
@@ -55,7 +55,7 @@ static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.17 $ $Release$
 #define DEFAULT_HOST "stagepublic"
 #define DEFAULT_PORT2 9002
 #define DEFAULT_PORT1 5007
-#define DEFAULT_SVCCLASS "ITDC"  
+#define DEFAULT_SVCCLASS ""  
 #define DEFAULT_VERSION 1
 
 static int tURLPrefixKey = -1;
