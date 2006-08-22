@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.18 $ $Release$ $Date: 2006/08/22 08:17:21 $ $Author: gtaur $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.19 $ $Release$ $Date: 2006/08/22 08:25:12 $ $Author: gtaur $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.18 $ $Release$ $Date: 2006/08/22 08:17:21 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.19 $ $Release$ $Date: 2006/08/22 08:25:12 $ Olof Barring";
 #endif /* not lint */
 /** RfioTURL.c - RFIO TURL handling
  *
@@ -179,12 +179,12 @@ int getDefaultForGlobal(
 				svcDefault=aux==NULL?NULL:strdup(aux);
 				if (svcDefault==NULL || strcmp(svcDefault,"")==0 ){
 					if(svcDefault){free(svcDefault);}
-					svcDefault=strdup("");
+					svcDefault=strdup(DEFAULT_SVCCLASS);
 				}
 			}
 			else{
 				if(svcDefault){free(hostDefault);}
-				svcDefault=strdup(DEFAULT_SVCCLASS);
+				svcDefault=strdup(svcMap);
 			}
 		}
 
