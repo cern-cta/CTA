@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.20 2006/08/08 07:00:50 riojac3 Exp $
+## $Id: PACKAGING.howto,v 1.21 2006/08/24 14:22:06 riojac3 Exp $
 #
 
 #
@@ -96,8 +96,11 @@ fakeroot make deb
 ## To export on the download web page
 #  ----------------------------------
 cd /afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/DIST/CERN/savannah/CASTOR.pkg
+mkdir  x.y.z-r
+cd  x.y.z-r
+mkdir SLC3 SLC4 SLC3/i386 SLC3/ia64 SLC3/x86_64 SLC4/i386 SLC4/ia64 SLC4/x86_64
 mkdir -p x.y.z-r/SLC3/i386
-cd x.y.z-r/SLC3/i386
+cd x.y.z-r/SLC3/i386 #copy here the rmps for lxs5010
 cp /usr/src/redhat/RPMS/i386/*x.y.z-r*.rpm .
 cp /usr/src/redhat/SRPMS/castor-x.y.z-r.src.rpm ../../
 cp /tmp/CASTOR2/ReleaseNotes ../../
