@@ -1,11 +1,13 @@
-castor (2.1.1-0) unstable; urgency=low
-  
-  * identical to the 2.1.0-7 but with some more bugs fixed 
-  
-  * Files modified are not included in that file due to the extension. Please
-    check release notes to have a global idea of the changes.
 
--- rosa maria garcia rioja <riojac3@cern.ch>  Tue, 17 Aug 2006 11:30:52 +0200
+castor (2.1.0-8) unstable; urgency=low
+  * identical to the 2.1.0-7 but with some more bugs fixed
+  
+  * rfio/rfcp.c free cleanInp and cleanOut are commented, they should be
+    properly set.
+
+    
+-- rosa maria garcia rioja <rosa.garcia@cern.ch>  Thurs,  24 Aug 2006
+15:37:14 
 
 castor (2.1.0-7) unstable; urgency=low
 
