@@ -155,8 +155,9 @@ namespace castor {
     OBJ_StartResponse = 115,
     OBJ_GCFilesResponse = 116,
     OBJ_FileQryResponse = 117, 
-    OBJ_DiskPoolQueryResponse = 118
+    OBJ_DiskPoolQueryResponse = 118,
 
+    OBJ_StageRepackRequest = 119
   };
     
   /**

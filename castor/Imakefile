@@ -160,7 +160,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamStringResponseCnv.cpp \
               io/StreamTapeCnv.cpp \
               io/StreamSubRequestCnv.cpp \
-              io/StreamOldSubRequestCnv.cpp \
               io/StreamTapeCopyCnv.cpp \
               io/StreamTapeCopyForMigrationCnv.cpp \
               io/StreamTapePoolCnv.cpp \
@@ -180,6 +179,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamStageRmRequestCnv.cpp \
               io/StreamStageUpdateNextRequestCnv.cpp \
               io/StreamStageUpdateRequestCnv.cpp \
+	      io/StreamStageRepackRequestCnv.cpp \
               io/StreamOldAbortResponseCnv.cpp \
               io/StreamAbortResponseCnv.cpp \
               io/StreamOldFileQryResponseCnv.cpp \
@@ -324,6 +324,8 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/StagePrepareToPutRequestCInt.cpp \
               stager/StagePrepareToUpdateRequest.cpp \
               stager/StagePrepareToUpdateRequestCInt.cpp \
+	      stager/StageRepackRequest.cpp \
+	      stager/StageRepackRequestCInt.cpp \
               stager/StagePutDoneRequest.cpp \
               stager/StagePutDoneRequestCInt.cpp \
               stager/StagePutNextRequest.cpp \
