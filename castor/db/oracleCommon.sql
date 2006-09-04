@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.294 $ $Release$ $Date: 2006/08/16 13:44:50 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.295 $ $Release$ $Date: 2006/09/04 12:49:39 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.294 $ $Date: 2006/08/16 13:44:50 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.295 $ $Date: 2006/09/04 12:49:39 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -598,7 +598,7 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
                                                   castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                   nsHost OUT VARCHAR2, fileSize OUT INTEGER,
                                                   tapeCopyId OUT INTEGER) AS
- fileSystemId INTEGER;
+ fileSystemId INTEGER := 0;
  dsid NUMBER;
  deviation NUMBER;
  fsDiskServer NUMBER;
@@ -678,9 +678,23 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- No data found means the selected filesystem has no
     -- tapecopies to be migrated. Thus we go to next one
-    NULL;
+    IF 0 != fileSystemId THEN
+      UPDATE NbTapeCopiesInFS
+         SET NbTapeCopies = 0
+       WHERE Stream = StreamId
+         AND NbTapeCopiesInFS.FS = fileSystemId;
+      bestTapeCopyForStream(streamId,
+                            diskServerName,
+                            mountPoint,
+                            path,
+                            dci,
+                            castorFileId,
+                            fileId,
+                            nsHost,
+                            fileSize,
+                            tapeCopyId);
+    END IF;
 END;
-
 
 /* PL/SQL method implementing bestFileSystemForSegment */
 CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskServerName OUT VARCHAR2,
