@@ -209,6 +209,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_pool
+       * @return the value of m_pool
+       */
+      std::string pool() const {
+        return m_pool;
+      }
+
+      /**
+       * Set the value of m_pool
+       * @param new_var the new value of m_pool
+       */
+      void setPool(std::string new_var) {
+        m_pool = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -272,6 +288,8 @@ namespace castor {
       u_signed64 m_pid;
 
       int m_command;
+
+      std::string m_pool;
 
       /// The id of this object
       u_signed64 m_id;
