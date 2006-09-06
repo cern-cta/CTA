@@ -8,7 +8,7 @@
 #include "stager_client_api.h"
 #include <common.h>
 /* for sending the request to stager */
-#include "castor/stager/StagePrepareToGetRequest.hpp"
+#include "castor/stager/StageRepackRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/rh/Response.hpp"
 #include "castor/rh/FileResponse.hpp"
@@ -79,11 +79,11 @@ namespace castor {
       * @throws castor::exeption::Internal in case of an error
       */
 		void sendStagerRepackRequest(
-                                 castor::stager::StagePrepareToGetRequest* req,
+                                 castor::stager::StageRepackRequest* req,
                                  std::string *reqId,
                                  struct stage_options* opts
                                 )
-                                throw (castor::exception::Internal);
+                                throw (castor::exception::Exception);
 		
 
     /**

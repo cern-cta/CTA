@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/08/17 17:05:01 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/09/06 09:15:38 $ $Author: felixehm $
  *
  *
  *
@@ -109,7 +109,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
 	int i,j;
 	std::string reqId = "";
 	_Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
-	castor::stager::StagePrepareToGetRequest req;
+	castor::stager::StageRepackRequest req;
 	
 	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 29, 0, NULL);
 	/// get the Segs for this tape !
@@ -146,13 +146,13 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   while (filename != filelist->end()) {
     castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
     subreq->setFileName((*filename));
-    subreq->setRepackVid(sreq->vid());	// this marks the Request as a 'special' one.
     subreq->setProtocol(ptr_server->getProtocol());	// we have to specify a protocol, otherwise our call is not scheduled!
     subreq->setRequest(&req);
     req.addSubRequests(subreq);
     filename++;
   }
 
+  req.setRepackVid(sreq->vid());
   /// We need to set the stage options. 
   struct stage_options opts;
   opts.stage_host = (char*)ptr_server->getStagerName().c_str(); 
@@ -211,10 +211,10 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
 // stage_files
 //------------------------------------------------------------------------------
 void RepackFileStager::sendStagerRepackRequest(
-                                                castor::stager::StagePrepareToGetRequest* req,
+                                                castor::stager::StageRepackRequest* req,
                                                 std::string *reqId,
                                                 struct stage_options* opts
-                                              ) throw (castor::exception::Internal)
+                                              ) throw (castor::exception::Exception)
 {
 	
 
