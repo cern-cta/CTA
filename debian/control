@@ -179,6 +179,18 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-db-interface, cas
 Description: castor (Cern Advanced STORage system)
  Request Handler server
 
+Package: castor-repack-server
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-db-interface, castor-scriptlets
+Description: castor (Cern Advanced STORage system)
+ Repack server
+
+Package: castor-repack-client
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: castor (Cern Advanced STORage system)
+ Repack client
+
 Package: castor-rmc-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
