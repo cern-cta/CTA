@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.296 $ $Release$ $Date: 2006/09/06 12:47:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.297 $ $Release$ $Date: 2006/09/06 13:26:11 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.296 $ $Date: 2006/09/06 12:47:27 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.297 $ $Date: 2006/09/06 13:26:11 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2035,6 +2035,9 @@ BEGIN
  UPDATE DiskCopy SET status = 8 -- GCCANDIDATE
   WHERE castorFile = cfId
     AND status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
+ UPDATE DiskCopy SET status = 7 -- INVALID
+  WHERE castorFile = cfId
+    AND status IN (5, 11); -- WAITFS, WAITFS_SCHEDULING
  DECLARE
   segId INTEGER;
  BEGIN
