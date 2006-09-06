@@ -1,4 +1,5 @@
 %attr(0600,root,bin) var/www/html/dlf/config.php
+%attr(0644,root,bin) var/www/html/dlf/dbview.php
 %attr(0644,root,bin) var/www/html/dlf/index.php
 %attr(0644,root,bin) var/www/html/dlf/query.php
 %attr(0644,root,bin) var/www/html/dlf/results.php
