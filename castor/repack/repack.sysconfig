@@ -1,0 +1,21 @@
+#
+# $Id: repack.sysconfig,v 1.1 2006/09/06 12:19:18 sponcec3 Exp $
+#
+# @(#)$RCSfile: repack.sysconfig,v $ $Revision: 1.1 $ $Date: 2006/09/06 12:19:18 $ CERN/IT/ADC/CA Jean-Damien Durand
+#
+# should repack run?
+# any string but "yes" will equivalent to "NO"
+#
+RUN_REPACK="yes"
+#
+# should we run with another limit on the number of file descriptors than the default?
+# any string will be passed to ulimit -n
+#ULIMIT_N=4096
+#
+# should we run with another limit on the core file size than the default?
+# any string will be passed to ulimit -c
+ULIMIT_C=unlimited
+
+if [ -r /etc/sysconfig/castor ]; then
+  . /etc/sysconfig/castor
+fi
