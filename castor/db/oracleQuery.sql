@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.295 $ $Release$ $Date: 2006/09/04 12:49:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.296 $ $Release$ $Date: 2006/09/06 12:47:27 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.295 $ $Date: 2006/09/04 12:49:39 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.296 $ $Date: 2006/09/06 12:47:27 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -873,10 +873,10 @@ BEGIN
     FROM DiskCopy, SubRequest, FileSystem, DiskServer
    WHERE SubRequest.id = rsubreqId
      AND SubRequest.castorfile = DiskCopy.castorfile
-     AND DiskCopy.fileSystem = FileSystem.id
-     AND FileSystem.status = 0 -- PRODUCTION
-     AND FileSystem.diskserver = DiskServer.id
-     AND DiskServer.status = 0 -- PRODUCTION
+     AND FileSystem.id(+) = DiskCopy.fileSystem
+     AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
+     AND DiskServer.id(+) = FileSystem.diskServer
+     AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
      AND DiskCopy.status IN (1, 2, 5, 11); -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING
   IF stat.COUNT > 0 THEN
     -- Only DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
