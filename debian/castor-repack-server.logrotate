@@ -1,0 +1,6 @@
+/var/spool/repack/log {
+    compress
+    daily
+    missingok
+    rotate 60
+}
