@@ -61,8 +61,8 @@ export MINOR_CASTOR_VERSION
 %if ! %has_oracle
 echo "### Warning, no ORACLE environment"
 echo "The following packages will NOT be built:"
-echo "castor-devel-oracle, castor-dlf-server, castor-lib-oracle, castor-lsf-plugin, castor-ns-server, castor-rh-server, castor-rtcopy-clientserver, castor-rtcopy-mighunter, castor-stager-server, castor-upv-server, castor-vmgr-server"
-for this in BuildCupvDaemon BuildDlfDaemon BuildNameServerDaemon BuildRHCpp BuildRtcpclientd BuildSchedPlugin BuildVolumeMgrDaemon UseOracle UseScheduler BuildOraCpp BuildStageDaemon BuildVDQMCpp BuildDbTools BuildCleaning; do
+echo "castor-devel-oracle, castor-dlf-server, castor-lib-oracle, castor-lsf-plugin, castor-ns-server, castor-rh-server, castor-repack-server, castor-rtcopy-clientserver, castor-rtcopy-mighunter, castor-stager-server, castor-upv-server, castor-vmgr-server"
+for this in BuildCupvDaemon BuildDlfDaemon BuildNameServerDaemon BuildRHCpp BuildRepack BuildRtcpclientd BuildSchedPlugin BuildVolumeMgrDaemon UseOracle UseScheduler BuildOraCpp BuildStageDaemon BuildVDQMCpp BuildDbTools BuildCleaning; do
 	perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
 done
 %else
@@ -137,6 +137,7 @@ mkdir -p ${RPM_BUILD_ROOT}/var/spool/msg
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/ns
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rfio
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rhserver
+mkdir -p ${RPM_BUILD_ROOT}/var/spool/repack
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rmc
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rmmaster
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rmnode
