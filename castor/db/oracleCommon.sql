@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.297 $ $Release$ $Date: 2006/09/06 13:26:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.298 $ $Release$ $Date: 2006/09/06 14:05:39 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.297 $ $Date: 2006/09/06 13:26:11 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.298 $ $Date: 2006/09/06 14:05:39 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1093,6 +1093,7 @@ CREATE OR REPLACE PROCEDURE putStart
         (srId IN INTEGER, fileSystemId IN INTEGER,
          rdcId OUT INTEGER, rdcStatus OUT INTEGER,
          rdcPath OUT VARCHAR2) AS
+  srStatus INTEGER;
 BEGIN
  -- Get older castorFiles with the same name and drop their lastKnownFileName
  UPDATE CastorFile SET lastKnownFileName = ''
@@ -1103,7 +1104,12 @@ BEGIN
        AND cfNew.id = SubRequest.castorFile
        AND SubRequest.id = srId);
  -- Get diskCopy Id
- SELECT diskCopy INTO rdcId FROM SubRequest WHERE SubRequest.id = srId;
+ SELECT diskCopy, status INTO rdcId, srStatus
+   FROM SubRequest WHERE SubRequest.id = srId;
+ -- Check that we did not cancel the SubRequest in the mean time
+ IF srStatus IN (7, 9, 10) THEN -- FAILED, FAILED_FINISHED, FAILED_ANSWERING
+   raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
+ END IF;
  -- In case the DiskCopy was in WAITFS_SCHEDULING, PUT the
  -- waiting SubRequests in RESTART
  UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0 -- SUBREQUEST_RESTART
