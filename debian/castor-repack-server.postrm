@@ -1,0 +1,7 @@
+#! /bin/sh
+CASTOR_SERVICE=repackserver
+export CASTOR_SERVICE
+CASTOR_SERVICE_SPOOL=/var/spool/repackserver
+export CASTOR_SERVICE_SPOOL
+[ -x /usr/sbin/castor-service.postrm ] && /usr/sbin/castor-service.postrm ${1+"$@"}
+exit $?
