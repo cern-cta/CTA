@@ -19,16 +19,19 @@
  *                                                                                                    *
  ******************************************************************************************************/
 
+/**
+ * $Id: index.php,v 1.2 2006/09/06 12:53:43 waldron Exp $
+ */
+
 require("utils.php");
 include("config.php");
 
-$page_start = getmicrotime();
+$gen_start = getmicrotime();
 
 ?>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<meta name="author" content="Dennis Waldron" />
 	<meta name="description" content="Distributed Logging Facility" />
@@ -37,81 +40,69 @@ $page_start = getmicrotime();
 	<meta http-equiv="Cache-Control" content="no-cache" />
 	<meta http-equiv="Default-Style" content="compact" />
 	<meta http-equiv="Content-Style-Type" content="text/css" />
-	<link rel="stylesheet" type="text/css" title="compact" href="site.css" />
-
 	<title>Distributed Logging Facility - Home</title>
+	<link href="site.css" rel="stylesheet" type="text/css" />
 </head>
-
 <body>
-
+	<table class="workspace" cellspacing="0" cellpadding="0">
+	
 	<!-- header -->
-	<table class="noborder" cellspacing="0" cellpadding="0" width="100%">
-		<tr class="header">
-			<td>&nbsp;CASTOR Distributed Logging Facility</td>
-		</tr>
-	</table>
-
-	<!-- break 1 -->
-	<hr align="left" size="1" />
+  	<tr class="header">
+    	<td colspan="3">CASTOR Distributed Logging Facility</td>
+  	</tr>
+  	<tr>
+    	<td colspan="3"><hr size="1"/></td>
+  	</tr>
+		
+	<!-- content -->
+  	<tr class="content">
+    	<td colspan="3" align="center">
+		
+		<!-- selection box -->
+		<form action="query.php" method="get" name="instance" id="instance">
+		
+		<table class="border" cellspacing="0" cellpadding="4">
+			<tr class="banner">
+				<td>Select Instance:</td>
+			</tr>
+			<tr>
+				<td valign="middle">&nbsp;&nbsp;Use Database:&nbsp;&nbsp;
+					<select name="instance">
+					<?php
+						sort(array_keys($db_instances));
+						foreach (array_keys($db_instances) as $name) {
+							echo "<option value=\"".$name."\"";
+							echo ">".$db_instances[$name]['type']." (".$db_instances[$name]['username']."@".$db_instances[$name]['server'].")</option>";
+						}					
+					?>
+					</select>&nbsp;&nbsp;
+					<input type="submit" name="Submit" value="Connect" class="button"/>&nbsp;
+				</td>
+			</tr>
+		</table>
+		
+		</form>
+		
+		</td>
+  	</tr>
 	
-	<!-- main workspace -->
-	<table class="workspace, noborder, backdrop" cellspacing="0" cellpadding="0" width="100%">
-		<tr>
-			<td>
-
-				<!-- start form -->
-				<form action="query.php" method="post" name="instance" id="instance">
-				 
-					<!-- central selection box -->
-					<table class="border" align="center" cellspacing="0" cellpadding="4">
-						<tr class="banner">
-							<td>Select Instance:</td>
-						</tr>
-
-						<tr>
-							<td valign="middle">&nbsp;&nbsp;Use Database:&nbsp;&nbsp; <select name="instance">
-							<?php
-
-							foreach (array_keys($db_instances) as $instance) {
-								echo "<option value=\"".$instance."\"";
-								echo ">".$db_instances[$instance]['type']." (".$db_instances[$instance]['username']."@".$db_instances[$instance]['server'].")</option>";
-							}
-	
-							?>
-							</select> &nbsp;&nbsp; <input type="submit" name="Submit" value="Connect" /> &nbsp;&nbsp;</td>
-						</tr>
-					</table>
-					<!-- end central selection box -->
-
-				</form>
-				<!-- end form -->
-	   
-			</td>
-		</tr>
-	</table>
-	
-	<!-- connectivity information -->
-	<table class="noborder" cellspacing="0" cellpadding="0" width="100%">
-		<tr>
-			<td align="left">&nbsp;</td>
-		</tr>
-	</table>
-
-	<!-- break 2 -->
-	<hr align="left" size="1" />
+	<tr>
+		<td colspan="3">&nbsp;</td>
+	</tr>
 	
 	<!-- footer -->
-	<table class="noborder" cellspacing="0" cellpadding="0" width="100%">
-		<tr valign="top">
-			<?php $page_end = getmicrotime(); ?>
-			<td align="left" width="33%">DLF interface version: <?php echo $version ?></td>
-			<td align="center" width="33%"><?php printf("Page generated in %.3f seconds.", $page_end - $page_start); ?></td>
-			<td align="right" width="33%">
-			<a href="http://validator.w3.org/check?uri=referer"><img src="images/xhtml.png" alt="Valid XHTML 1.0 Strict" /></a>&nbsp; 
-			<a href="http://jigsaw.w3.org/css-validator/check/referer"><img src="images/css.png" alt="Valid CSS 2.0" /></a>&nbsp; 
-			<a href="http://www.php.net/"><img src="images/php.png" alt="Powered by PHP" /></a>&nbsp;
-			</td>
-		</tr>
+  	<tr>
+    	<td colspan="3"><hr size="1"/></td>
+	</tr>
+  	<tr class="footer">
+    	<td width="33%" align="left"  >DLF interface version: <?php echo $version ?></td>
+    	<td width="33%" align="center"><?php printf("Page generated in %.3f seconds.", getmicrotime() - $gen_start); ?></td>
+    	<td width="33%" align="right" >
+			<a href="http://validator.w3.org/check?uri=referer"><img src="images/xhtml.png" alt="Valid XHTML 1.0 Strict" /></a>&nbsp;
+			<a href="http://jigsaw.w3.org/css-validator/check/referer"><img src="images/css.png" alt="Valid CSS 2.0" /></a>&nbsp;
+			<a href="http://www.php.net/"><img src="images/php.png" alt="Powered by PHP" /></a>		
+		</td>
+  	</tr>
 	</table>
 </body>
 </html>

@@ -20,6 +20,12 @@
  ******************************************************************************************************/
 
 /**
+ * $Id: utils.php,v 1.2 2006/09/06 12:53:44 waldron Exp $
+ */
+
+include("config.php");
+
+/**
  * get micro time
  */
 function getmicrotime() {  
@@ -27,5 +33,7 @@ function getmicrotime() {
 	$returntime = $temparray[0] + $temparray[1];  
 	return $returntime;  
 }
+
+/**********************************************************************************************/
 
 ?>

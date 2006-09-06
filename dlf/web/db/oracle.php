@@ -19,6 +19,10 @@
  *                                                                                                    *
  ******************************************************************************************************/
 
+/**
+ * $Id: oracle.php,v 1.2 2006/09/06 12:53:44 waldron Exp $
+ */
+
 /* definitions */
 if (!defined("DB_LAYER")) {
 	define("DB_LAYER", "oracle");
@@ -28,7 +32,7 @@ if (!defined("DB_LAYER")) {
 /**
  * Open connection
  */
-function db_connect($instance, $persistency) {
+function db_connect($instance, $persistency, $stager) {
 	
 	include("config.php");
 
@@ -36,16 +40,26 @@ function db_connect($instance, $persistency) {
 	$server   = "";
 	$username = "";
 	$password = "";
-	$database = "";
 
 	/* lookup the instance name for connection details */
 	if (!$db_instances[$instance]) {
 		trigger_error("Faled to resolve instance name '$instance' to castor instance", E_USER_ERROR);
 		exit;
-	} else { 
-		$server   = $db_instances[$instance]['server'];
-		$user	  = $db_instances[$instance]['username'];
-		$pass	  = $db_instances[$instance]['password'];
+	} else if ($stager == 0) { 
+		$server = $db_instances[$instance]['server'];
+		$user	= $db_instances[$instance]['username'];
+		$pass	= $db_instances[$instance]['password'];
+	} else {
+	
+		/* stagerdb exists for this instance of dlf ? */
+		if (!$db_instances[$instance]['stagerdb']) {
+			trigger_error("Failed to resolves instance name '$instance' to castor stager instance", E_USER_ERROR);
+			exit;
+		}
+		
+		$server = $db_instances[$instance]['stagerdb']['server'];
+		$user	= $db_instances[$instance]['stagerdb']['username'];
+		$pass	= $db_instances[$instance]['stagerdb']['password'];		
 	}
 	
 	/* open connection to a mysql database */
@@ -118,5 +132,51 @@ function db_server_version($conn) {
 	return trim("- version: ". $db_version[0]);;
 }
 
+
+/*
+ *
+ */
+function db_result($results, $field) {
+	return $value = ociresult($results, strtoupper($field));
+}
+
+
+/**
+ * Partition count
+ */
+function db_partition_count($conn) {
+	
+	/* database supports partitioning ? */
+	$version = db_server_version($conn);
+	if (!stristr($version, "Enterprise")) {
+		return;
+	}
+
+	/* increment the number of queries executed */
+	global $query_count;
+	$query_count++;
+
+	/* execute query */
+	$stmt = ociparse($conn, "SELECT COUNT(*) FROM USER_TAB_PARTITIONS WHERE PARTITION_NAME != 'MAX_VALUE' AND TABLE_NAME = 'DLF_MESSAGES' AND PARTITION_NAME <= CONCAT('P_', TO_CHAR(SYSDATE, 'YYYYMMDD'))");
+	if (!$stmt) {
+		trigger_error("ociparse() - ".ocierror($conn), E_USER_ERROR);
+		exit;
+	}
+	$rtn = ociexecute($stmt, OCI_DEFAULT);
+	if (!$rtn) {
+		trigger_error("ociexecute() - ".ocierror($stmt), E_USER_ERROR);
+		exit;
+	}
+	$row = db_fetch_row($stmt);
+
+	/* no partitions online ? 
+	 *   - this is mostly likely caused by a unpartitioned database!
+	 */
+	if ($row[0] > 0) {
+		return "Partitions online: ".$row[0];
+	} else {
+		return;
+	}
+}
 
 ?>

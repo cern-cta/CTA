@@ -19,6 +19,10 @@
  *                                                                                                    *
  ******************************************************************************************************/
 
+/**
+ * $Id: mysql.php,v 1.2 2006/09/06 12:53:44 waldron Exp $
+ */
+
 /* definitions */
 if (!defined("DB_LAYER")) {
 	define("DB_LAYER", "mysql");
@@ -28,7 +32,7 @@ if (!defined("DB_LAYER")) {
 /** 
  * Open connection
  */
-function db_connect($instance, $persistency) {
+function db_connect($instance, $persistency, $stager) {
 	
 	include("config.php");
 
@@ -42,11 +46,23 @@ function db_connect($instance, $persistency) {
 	if (!$db_instances[$instance]) {
 		trigger_error("Faled to resolve instance name '$instance' to castor instance", E_USER_ERROR);
 		exit;
-	} else { 
+	} else if ($stager == 0) { 
 		$server   = $db_instances[$instance]['server'];
 		$user	  = $db_instances[$instance]['username'];
 		$pass	  = $db_instances[$instance]['password'];
 		$database = $db_instances[$instance]['database'];
+	} else {
+	
+		/* stagerdb exists for this instance of dlf ? */
+		if (!$db_instances[$instance]['stagerdb']) {
+			trigger_error("Failed to resolves instance name '$instance' to castor stager instance", E_USER_ERROR);
+			exit;
+		}
+		
+		$server   = $db_instances[$instance]['stagerdb']['server'];
+		$user	  = $db_instances[$instance]['stagerdb']['username'];
+		$pass	  = $db_instances[$instance]['stagerdb']['password'];		
+		$database = $db_instances[$instance]['stagerdb']['database'];
 	}
 	
 	/* open connection to a mysql database */
@@ -87,7 +103,7 @@ function db_query($query, $conn) {
 }
 
 /**
- *
+ * Fetch row
  */
 function db_fetch_row($results) {
 	return mysql_fetch_row($results);
@@ -107,5 +123,11 @@ function db_server_version($conn) {
 	return "- version: ".mysql_get_server_info($conn);
 }
 
+/**
+ * Partition count
+ */
+function db_partition_count($conn) {
+	return;
+}
 
 ?>

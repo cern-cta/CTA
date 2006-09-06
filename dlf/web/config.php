@@ -36,9 +36,8 @@ $use_strict_hosts = 1;
 
 /**
  * Use the database view to expand information on ns file ids
- *   - note: not available in versions < 1.0.0-1
  */
-$use_database_view = 0;
+$use_database_view = 1;
 
 /**
  * Display the version of the database on results pages?
@@ -46,23 +45,46 @@ $use_database_view = 0;
 $show_db_version = 1;
 
 /**
+ * Display the number of partition online in the database?
+ */
+$show_partition_count = 1;
+
+
+/**
  * Database connectivity information
  */
 $db_instances = array(
 
 	"castor1" => array(
-		"type"	   => "MySQL",
+		"type"     => "MySQL",
 		"username" => "castor_dlf",
 		"password" => "password",
 		"server"   => "dbserver2.domain.com",
 		"database" => "dlf"                   /* only required for mysql! */
+		
+		/* stager database */
+		"stagerdb" => array(
+			"type"	   => "MySQL",
+			"username" => "stager_read",
+			"password" => "password",
+			"server"   => "dbserver2.domain.com",
+			"database" => "dlf",
+		),
 	),
-
+	
 	"castor2" => array(
-		"type"	   => "Oracle",
+		"type"     => "Oracle",
 		"username" => "castor_dlf",
 		"password" => "password",
 		"server"   => "dbserver1.domain.com"
+		
+		/* stager database */
+		"stagerdb" => array(
+			"type"	   => "Oracle",
+			"username" => "stager_read",
+			"password" => "password",
+			"server"   => "dbserver2.domain.com",
+		),
 	),
 );
 
@@ -77,11 +99,11 @@ $db_instances = array(
 $db_drilldown_time = 48;
 
 /**
- * SQL fields
+ * DLF SQL fields
  *
- * Caution: changing these settings will change the way in which sql queries are dynamically constructed			
+ * Caution: changing these settings will change the way in which sql queries are dynamically constructed
  */
-$db_sql_columns = array(
+$dlf_sql_columns = array(
 
 	"col_severity" => array(
 		"field"	   => "t2.sev_name",
@@ -195,9 +217,9 @@ $db_sql_columns = array(
 );
 
 /**
- * SQL WHERE conditions
+ * DLF SQL WHERE conditions
  */
-$db_sql_conditions = array(
+$dlf_sql_conditions = array(
 
 	"severity" => array(
 		"field"	    => "t1.severity",
@@ -258,6 +280,198 @@ $db_sql_conditions = array(
 		"defined"   => 0,
 		"wildcard"  => 0
 	)
+);
+
+/**
+ * Stager SQL Tables
+ *
+ * The configuration information below describes the internal database schema of the stager database and 
+ * how tables relate to each. The format is:
+ *
+ * <tablename> =  array(
+ *	"table"		=> "name of the database table"
+ *	"lookup"	=> "which column name to lookup the parameter value on"
+ *	"fields"	=> array(
+ *		This is an array of fields to display to the user and information on how the data should  
+ *      	be presented. The format is <column name>:[display option] where display option is one of 
+ *      	[size|link|time|status]
+ *
+ *		When utilising options link and status a corresponding links array and status arrays must 
+ *		be defined!
+ *	)
+ *	"links"		=> array(
+ *		This section resolves the link option of the fields above. Every column_name with a link 
+ *		shoudl be listed here as a separate array where the options in the array take the format:
+ *		<table_name>:<uselinklookup [yes|no]>
+ *	)
+ *
+ *	This option is special and only needs to be defined if one of the link resolvers in the link array
+ *	above has the uselinkloop option enabled. We have this because some tables while navigating between
+ *	lookup different column names as a foreign key. To resolve this when uselinklookup=yes the 
+ *	linklookup value overrides the lookup value defined above
+ *
+ *	"linklookup"	=> "column_name" 
+ * )
+ *
+ */
+$stager_sql_tables = array(
+	
+	"castorfile" => array(
+		"table"		=> "castorfile",
+		"lookup" 	=> "fileid",
+		"fields" 	=> array(
+			"id:link", "nshost", "fileid", "filesize:size", "creationtime:time", "lastaccesstime:time", "svcclass:link", "nbaccesses", "fileclass"
+		),
+		"links"		=> array(
+			"id"		=> array("tapecopy:no", "diskcopy:no", "subrequest:no"),
+			"svcclass"	=> array("svcclass:no")
+		),
+		
+		/* */
+		"linklookup" => "id",
+	),	
+	
+	"tapecopy"	=> array(
+		"table"		=> "tapecopy",
+		"lookup"	=> "castorfile",
+		"fields"	=> array(
+			"id:link", "copynb", "status:status"
+		),
+		"links"		=> array(
+			"id"	=> array("stream2tapecopy:no")
+		),
+		"status"	=> array(
+			"created", "to be migrated", "waiting streams", "selected", "to be recalled", "staged", "failed"
+		),
+	),
+	
+	"diskcopy"	=> array(
+		"table"		=> "diskcopy",
+		"lookup"	=> "castorfile",
+		"fields"	=> array(
+			"castorfile:link", "filesystem:link", "path", "creationtime:time", "status:status", "gcweight"
+		),
+		"links"		=> array(
+			"castorfile" => array("castorfile:yes"),
+			"filesystem" => array("filesystem:no")
+		),	
+		"status"	=> array(
+			"staged", "wait disk2disk copy", "wait tape recall", "deleted", "failed", "waitfs", "stageout", "invalid", "gc candidate, being deleted", "can be migrated", "wait fs scheduling"
+		),
+		
+		/* */
+		"linklookup" => "id",
+	),
+	
+	"filesystem"	=> array(
+		"table"		=> "filesystem",
+		"lookup"	=> "id",
+		"fields"	=> array(
+			"diskpool:expand", "diskserver:expand", "status:status", "spacetobefreed:size", "free:size", "mountpoint", "minfreespace:size", "maxfreespace:size"
+		),
+		"status"	=> array(
+			"production", "draining", "disabled"
+		),	
+		"expands"	=> array(
+			"diskpool"	=> array("name"),
+			"diskserver"=> array("name", "status:status")
+		),
+	),
+	
+	"diskpool"	=> array(
+		"table"		=> "diskpool",
+		"lookup"	=> "id",
+		"fields"	=> array(
+			"name"
+		),
+	),
+	
+	"diskserver"	=> array(
+		"table"		=> "diskserver",
+		"lookup"	=> "id",
+		"fields"	=> array(
+			"name", "status:status"
+		),	
+		"status"	=> array(
+			"production", "draining", "disabled"
+		),
+	),
+	
+	"subrequest"	=> array(
+		"table"		=> "subrequest",
+		"lookup"	=> "castorfile",
+		"fields"	=> array(
+			"diskcopy:link", "castorfile:link", "retrycounter", "filename", "protocol", "xsize", "priority", "subreqid", "status:status", "parent", "request", "creationtime:time", "lastmodificationtime:time"
+		),
+		"links"		=> array(
+			"diskcopy" 	 => array("diskcopy:yes"),
+			"castorfile" => array("castorfile:yes")
+		),	
+		"status"	=> array(
+			"start", "restart", "retry", "wait sched", "wait tape recall", "wait subreq", "ready", "failed", "finished", "failed finished", "failed answering", "archived"
+		),
+	),	
+	
+	"tape"		=> array(
+		"table"		=> "tape",
+		"lookup"	=> "id",
+		"fields"	=> array(
+			"vid", "side", "tpmode", "errmsgtext", "errorcode", "xsize", "severity", "stream", "status:status"
+		),
+		"links"		=> array(
+			"diskcopy" 	 => array("diskcopy:no"),
+			"castorfile" => array("castorfile:no")
+		),	
+		"status"	=> array(
+			"unused", "pending", "wait drive", "wait monunt", "mounted", "finished", "failed", "unknown"
+		),
+	),	
+	
+	"stream"	=> array(
+		"table"		=> "stream",
+		"lookup"	=> "tape",
+		"fields"	=> array(
+			"initialsizetotransfer:size", "tape", "tapepool:expand"
+		),
+		"expands"	=> array(
+			"tapepool"	=> array("name"),
+		),
+	),	
+
+	"tapepool"	=> array(
+		"table"		=> "tapepool",
+		"lookup"	=> "id",
+		"fields"	=> array(
+			"name"
+		),	
+	),
+	
+	"segment"	=> array(
+		"table"		=> "segment",
+		"lookup"	=> "id",
+		"fields"	=> array(
+			"fseq", "offset", "bytes_in:size", "status:status", "bytes_out:size", "host_bytes:size", "segmcksumalgorithm", "segmcksum", "errmsgtxt", "errorcode", "severity", "tape", "copy", "status:status"
+		),
+		"status"	=> array(
+			"unprocesses", "deprecated", "deprecated", "deprecated", "deprecated", "file copied", "failed", "selected", "retired"
+		),
+	),		
+
+	"svcclass"	=> array(
+		"table"		=> "svcclass",
+		"lookup"	=> "id",
+		"fields"	=> array(
+			"nbdrives", "name", "defaultfilesize:size", "maxperlicanb", "replicationpolicy", "gcpolicy", "migratorpolicy", "recallerpolicy"
+		),
+	),
+
+	"stream2tapecopy"	=> array(
+		"table"		=> "stream2tapecopy",
+		"lookup"	=> "child",
+		"fields"	=> array(
+			"parent", "child"
+		),	
+	),
 );
 
 

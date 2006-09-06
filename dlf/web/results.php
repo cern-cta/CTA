@@ -23,10 +23,10 @@ require("utils.php");
 include("config.php");
 include("db/".strtolower($db_instances[$_GET['instance']]['type']).".php");
 
-$page_start = getmicrotime();
-$querycount = 0;
+$gen_start  = getmicrotime();
+$query_count = 0;
 
-$dbh = db_connect($_GET['instance'], 1);
+$dbh = db_connect($_GET['instance'], 1, 0);
 
 ?>
 
@@ -53,17 +53,17 @@ $dbh = db_connect($_GET['instance'], 1);
 	if ($_GET['msgtext'] == -1) { 
 		$_GET['msgtext'] = "All"; 
 	}
-	if ($_GET['nav'] == "Prev") { 
+	if ($_GET['nav'] == "Previous") { 
 		$_GET['page']--; 
 	} else if ($_GET['nav'] == "Next") {
 		$_GET['page']++;
 	}
 
 	/* flag columns required for display */
-	foreach (array_keys($db_sql_columns) as $name) {
+	foreach (array_keys($dlf_sql_columns) as $name) {
 		if (($_GET['columns'] == "default") || ($_GET[$name] == "on")) {
-			$db_sql_columns[$name]['display']  = 1;
-			$db_sql_columns[$name]['required'] = 1;
+			$dlf_sql_columns[$name]['display']  = 1;
+			$dlf_sql_columns[$name]['required'] = 1;
 		}
 	}
 
@@ -71,14 +71,14 @@ $dbh = db_connect($_GET['instance'], 1);
 	 * the constraint refers too. Here we flag that a join on a particular field/column
 	 * is necessary to satisfy the constraint
 	 */
-	foreach (array_keys($db_sql_conditions) as $condition) {
+	foreach (array_keys($dlf_sql_conditions) as $condition) {
 
 		/* ignore arrays with/or values set to "All" */
 		if ((is_array($_GET[$condition])) && ($_GET[$condition][0] == "All")) {
 			continue;
 		}
 		if (($_GET[$condition] != "") && ($_GET[$condition] != "All")) {
-			$db_sql_conditions[$condition]['defined'] = 1;
+			$dlf_sql_conditions[$condition]['defined'] = 1;
 		}
 	}
 
@@ -86,17 +86,17 @@ $dbh = db_connect($_GET['instance'], 1);
 	$query_fields = "t1.id t1.timestamp t1.timeusec t1.severity t1.facility t1.hostid t1.nshostid";
 
 	/* append option fields */
-	foreach (array_keys($db_sql_columns) as $name) {
-		if ($db_sql_columns[$name]['display']) {
-			$query_fields .= " ".$db_sql_columns[$name]['field'];
+	foreach (array_keys($dlf_sql_columns) as $name) {
+		if ($dlf_sql_columns[$name]['display']) {
+			$query_fields .= " ".$dlf_sql_columns[$name]['field'];
 		}
 	}
 	$query_fields = str_replace(" ", ",", trim($query_fields));
 
 	/* generate the join criteria needed to satisfy the field requirements */
-	foreach (array_keys($db_sql_columns) as $name) {
-		if ($db_sql_columns[$name]['required']) {
-			$query_joins .= " ".$db_sql_columns[$name]['join'];
+	foreach (array_keys($dlf_sql_columns) as $name) {
+		if ($dlf_sql_columns[$name]['required']) {
+			$query_joins .= " ".$dlf_sql_columns[$name]['join'];
 		}
 	}
 
@@ -104,8 +104,8 @@ $dbh = db_connect($_GET['instance'], 1);
 	 *   - note: it just so happens that all mandatory fields come from the primary dlf table
 	 *		   and do not require any joins to resolve data
 	 */
-	foreach (array_keys($db_sql_conditions) as $column) {
-		if ($db_sql_conditions[$column]['defined'] != 1) {
+	foreach (array_keys($dlf_sql_conditions) as $column) {
+		if ($dlf_sql_conditions[$column]['defined'] != 1) {
 			continue;
 		}
 
@@ -116,7 +116,7 @@ $dbh = db_connect($_GET['instance'], 1);
 		/* an array requires the use of 'OR' */
 		if (is_array($_GET[$column])) {
 			for ($i = 0, $query_where .= " ("; $i < count($_GET[$column]); $i++) {
-				$query_where .= "(".trim($db_sql_conditions[$column]['field'])." = '".$_GET[$column][$i]."')";
+				$query_where .= "(".trim($dlf_sql_conditions[$column]['field'])." = '".$_GET[$column][$i]."')";
 				if (($i + 1) != count($_GET[$column])) {
 					$query_where .= " OR";
 				}
@@ -125,10 +125,10 @@ $dbh = db_connect($_GET['instance'], 1);
 		}
 
 		/* wildcards allowed in this field ? */
-		else if (($db_sql_conditions[$column]['wildcard']) && (strpos($_GET[$column], "%"))) {
-			$query_where .= " ".$db_sql_conditions[$column]['field']." LIKE '".$_GET[$column]."' ";
+		else if (($dlf_sql_conditions[$column]['wildcard']) && (strpos($_GET[$column], "%"))) {
+			$query_where .= " ".$dlf_sql_conditions[$column]['field']." LIKE '".$_GET[$column]."' ";
 		} else {
-			$query_where .= " ".$db_sql_conditions[$column]['field']." = '".$_GET[$column]."' ";
+			$query_where .= " ".$dlf_sql_conditions[$column]['field']." = '".$_GET[$column]."' ";
 		}
 	}
 
@@ -213,7 +213,7 @@ $dbh = db_connect($_GET['instance'], 1);
 	echo "<!-- finalise: ".$query_finalise." -->\n";	
  	
 	/* execute query */
-	$querycount++;
+	$query_count++;
 	$results = db_query($query_fields." FROM dlf_messages t1 ".$query_joins." ".$query_where." ".$query_period." ".$query_finalise, $dbh);
 	if (!$results) {
 		exit;
@@ -231,17 +231,17 @@ $dbh = db_connect($_GET['instance'], 1);
 		$data[$id]['m_nshostname'] = $row[6];
 
 		$i = 7;
-		foreach (array_keys($db_sql_columns) as $name) {
-			if (!$db_sql_columns[$name]['display']) {
+		foreach (array_keys($dlf_sql_columns) as $name) {
+			if (!$dlf_sql_columns[$name]['display']) {
 				continue;
 			}
-			$data[$id][$db_sql_columns[$name]['name']] = $row[$i];
+			$data[$id][$dlf_sql_columns[$name]['name']] = $row[$i];
 			$i++;
 		}
 	}
 
 	/* count the total number of possible results in the resultset */
-	$querycount++;
+	$query_count++;
 	$results = db_query("SELECT count(*) FROM dlf_messages t1 ".$query_joins." ".$query_where." ".$query_period, $dbh);
 	if (!$results) {
 		exit;
@@ -265,7 +265,7 @@ $dbh = db_connect($_GET['instance'], 1);
 		foreach (explode(" ", "dlf_str_param_values dlf_num_param_values") as $table) {
 		
 			/* execute query */
-			$querycount++;
+			$query_count++;
 			$results = db_query("SELECT id, name, value FROM ".$table." WHERE id IN ".$query_list, $dbh);
 			if (!$results) {
 				exit;
@@ -289,213 +289,247 @@ $dbh = db_connect($_GET['instance'], 1);
 
 	?>
 </head>
+
 <body>
-
+	<table class="workspace" cellspacing="0" cellpadding="0">
+	
 	<!-- header -->
-	<table class="noborder" cellspacing="0" cellpadding="0" width="100%">
-		<tr class="header">
-			<td>&nbsp;CASTOR Distributed Logging Facility</td>
-		</tr>
-	</table>
-
-	<!-- break 1 -->
-	<hr align="left" size="1" />
+  	<tr class="header">
+    	<td colspan="3">CASTOR Distributed Logging Facility</td>
+  	</tr>
+  	<tr>
+    	<td colspan="3"><hr size="1"/></td>
+  	</tr>
 	
-	<!-- main workspace -->
-	<table class="<?php if (count($data)) { echo "workspace"; } else { echo "results"; } ?>" cellspacing="0" cellpadding="0" width="100%">
-		<tr>
-			<td valign="top">
-
-			<!-- data header -->
-			<?php
-
-			/* calculate message snapshot numbers */
-			if ($_GET['page'] == 1) {
-				$start_no = !count($data) ? 0 : 1;
-			} else {
-				$start_no = (($_GET['page'] - 1) * $_GET['limit']) + 1;
-			}
-				
-			$start_no = $start_no > $query_total ? $query_total : $start_no;
-	  		$end_no   = ($start_no == 1 ? 1 : $start_no) + ($_GET['limit'] - 1);
-			$end_no   = $end_no > $query_total ? $query_total : $end_no;
-				
-			echo "Total number of messages found: <strong>".$query_total."</strong> ";
-			if ($_GET['drilltime']) {
-				$buf = explode(".", $_GET['drilltime']);
-				echo "from <strong>".$buf[0]." +/-".$db_drilldown_time."</strong> hours";
-			} else if ($_GET['last']) {
-				$date_to   = explode(" ", date("d/m/Y H:i", time() + ($_GET['last'] * 60)));
-				$date_from = explode(" ", date("d/m/Y H:i", time()));
-
-				$_GET['from']	  = $date_from[0];
-				$_GET['fromtime'] = $date_from[1];
-				$_GET['to']	  = $date_to[0];
-				$_GET['totime']   = $date_to[1];
-		
-				echo "between <strong>".$_GET['from']." ".$_GET['fromtime']."</strong> ";
-				echo "and <strong>".$_GET['to']." ".$_GET['totime']."</strong> - (".$_GET['last']." minutes)";
-			} else {
-				echo "between <strong>".$_GET['from']." ".$_GET['fromtime']."</strong> ";
-				echo "and <strong>".$_GET['to']." ".$_GET['totime']."</strong>";
-			}
-			echo "<br/>";
-			echo "Displaying messages <strong> $start_no </strong> through <strong> $end_no </strong><br/>&nbsp;";
-
-			?>
-
-		  	<!-- table data -->
-			<?php 
+	<!-- content -->
+  	<tr class="content">
+    	<td colspan="3" valign="top">
+	
+			<!-- results table -->
+			<table class="noborder" cellspacing="0" cellpadding="0" width="100%">
 			
-				if (!count($data)) {
-					echo "<table cellspacing=\"3\" cellpadding=\"3\" align=\"center\" width=\"100%\">";
-				} else {
-					echo "<table class=\"backdrop\" border=\"1\" cellspacing=\"3\" cellpadding=\"3\">";	
-				}
-			
-			?>			
+				<!-- summary header -->
 				<tr>
+					<td align="left">
+					<?php
 
-				<?php
+					/* calculate message snapshot numbers */
+					if ($_GET['page'] == 1) {
+						$start_no = !count($data) ? 0 : 1;
+					} else {
+						$start_no = (($_GET['page'] - 1) * $_GET['limit']) + 1;
+					}
+				
+					$start_no = $start_no > $query_total ? $query_total : $start_no;
+	  				$end_no   = ($start_no == 1 ? 1 : $start_no) + ($_GET['limit'] - 1);
+					$end_no   = $end_no > $query_total ? $query_total : $end_no;
+				
+					echo "Total number of messages found: <strong>".$query_total."</strong> ";
+					if ($_GET['drilltime']) {
+						$buf = explode(".", $_GET['drilltime']);
+						echo "from <strong>".$buf[0]." +/-".$db_drilldown_time."</strong> hours";
+					} else if ($_GET['last']) {
+						$date_to   = explode(" ", date("d/m/Y H:i", time()));
+						$date_from = explode(" ", date("d/m/Y H:i", time() - ($_GET['last'] * 60)));
+
+						$_GET['from']	  = $date_from[0];
+						$_GET['fromtime'] = $date_from[1];
+						$_GET['to']	  = $date_to[0];
+						$_GET['totime']   = $date_to[1];
 		
-				if (count($data)) {
+						echo "between <strong>".$_GET['from']." ".$_GET['fromtime']."</strong> ";
+						echo "and <strong>".$_GET['to']." ".$_GET['totime']."</strong> - (".$_GET['last']." minutes)";
+					} else {
+						echo "between <strong>".$_GET['from']." ".$_GET['fromtime']."</strong> ";
+						echo "and <strong>".$_GET['to']." ".$_GET['totime']."</strong>";
+					}
+					echo "<br/>";
+					echo "Displaying messages <strong> $start_no </strong> through <strong> $end_no </strong><br/>&nbsp;";
 
-					/* generate table header
-			 		*   - display the mandatory 'timestamp; field first followed by the user define columns
-			 		*/
-					echo "<td class=\"banner\">Timestamp</td>";
+					?>
+					</td>
 
-					foreach(array_keys($db_sql_columns) as $name) {
-						if (($db_sql_columns[$name]['name']) && 
-						    ($db_sql_columns[$name]['display'])) {
-							echo "<td class=\"banner\">".$db_sql_columns[$name]['name']."</td>";
+					<!-- navigation -->
+					<td align="right">
+					<?php
+
+					echo "<form id=\"navigation1\" name=\"navigation\" method=\"get\" action=\"results.php\">";
+				
+					/* duplicate original form values */
+					foreach (array_keys($HTTP_GET_VARS) as $name) {
+						if ($name == "Submit") {
+							continue;
+						}
+						if (is_array($_GET[$name])) {
+							for ($i = 0; $i < count($_GET[$name]); $i++) {
+								echo "<input type=\"hidden\" name=\"".$name."[]\" value=\"".$_GET[$name][$i]."\"/>";
+							}
+						} else {
+							echo "<input type=\"hidden\" name=\"".$name."\" value=\"".$_GET[$name]."\"/>";
 						}
 					}
-			
-					if (($_GET['col_params'] == on) || ($_GET['columns'] == "default")) {
-						echo "<td class=\"banner\">Parameters</td>";
-					}
-		 
-					/* generate the common request url used when drilling down through the data */
-					$get_url  = "columns=".$_GET['columns']."&amp;limit=".$_GET['limit'];
-					$get_url .= "&amp;instance=".$_GET['instance']."&amp;page=1";
+					echo "<input type=\"submit\" name=\"nav\" value=\"Query\" class=\"button\" onclick=\"this.form.action='query.php';\"/>";
 
-					foreach (array_keys($db_sql_columns) as $name) {
-						$get_url .= "&amp;".$name."=".$_GET[$name];
+					if ($_GET['page'] > 1) {
+						echo "&nbsp; &nbsp; &nbsp;<input type=\"submit\" name=\"nav\" value=\"Previous\" class=\"button\"/>";
 					}
-			
-					if ($_GET['col_params']) {
-						$get_url .= "&amp;col_params=".$_GET['col_params'];
+					if ($query_total > ($_GET['limit'] * $_GET['page'])) {
+						echo "&nbsp; &nbsp;<input type=\"submit\" name=\"nav\" value=\"Next\" class=\"button\"/>";
+					} else {
+						echo "&nbsp;";
 					}
-				
-				} else {
-					echo "<td>";
-					echo "<table align=\"center\" cellspacing=\"0\" cellpadding=\"4\" width=\"200\">";
-					echo	"<tr align=\"center\">";
-					echo		"<td><strong>No results found!</strong></td>";
-					echo	"</tr>";
-					echo "</table>";
-					echo "</td>";	
-				}
-				
-				/* append rows to table */
-				if (count($data)) {
-					echo "</tr>";
 
-					for ($i = 0, $keys = array_keys($data); $i < count($keys); $i++) {
+					echo "</form>";
+
+					?>
+					</td>
+				</tr>
+				
+				<!-- results -->
+				<tr>
+					<td colspan="2" height="300" valign="<?php if (!count($data)) { echo "middle"; } else { echo "top"; } ?>">
+					
+					<?php
+					
+					if (!count($data)) {
+						echo "<strong>No results found!</strong>";
+					} else {
+		
+						echo "<table border=\"1\" cellspacing=\"3\" cellpadding=\"3\" width=\"100%\">";	
+						
+						/* table header */
 						echo "<tr>";
-	
-						/* mandatory fields */
-						echo "<td class=\"timestamp\">".$data[$keys[$i]]['Timestamp']."</td>";
-			
-						/* user defined fields */
-						foreach (array_keys($db_sql_columns) as $name) {
-							if ((!$db_sql_columns[$name]['name']) || 
-					 		   (!$db_sql_columns[$name]['display'])) {
-								continue;
-							}
-	
-							$value = $data[$keys[$i]][$db_sql_columns[$name]['name']];
-							$class = str_replace("col_", "", $name);
-			
-							/* apply correct css class for severity field */
-							if ($db_sql_columns[$name]['name'] == "Severity") {
-								echo "<td class=\"sev_".strtolower($value)."\">".$value."</td>";  
-							}
+						
+						/* generate table header
+			 			*   - display the mandatory 'timestamp; field first followed by the user define columns
+			 			*/
+						echo "<td class=\"banner\">Timestamp</td>";
 
-							/* if no value is available we still pad the table cell otherwise the table
-			 				 * borders are not rendered correctly
-			 				 */
-							else if (!$value) {
-								echo "<td >&nbsp;</td>";
-							}
-				
-							/* hyperlink required for drill down */
-							else if ($db_sql_columns[$name]['href'] != "") {
-
-								/* adjustments required to handle ns file id */
-								if (($db_sql_columns[$name]['name'] == "NS File ID") && ($use_database_view)) {
-									echo "<td class=\"".$class."\">";
-									echo "<a href=\"dbview.php?instance=".$_GET['instance']."&nsfileid=".urlencode($value)."\" target=\"blank\">".$value."</a>";
-									echo "</td>";
-									continue;
-								} 
-			
-								$drill = explode(".", $data[$keys[$i]]['Timestamp']);
-								$drill = "drilltime=".urlencode($drill[0]);
-	
-								echo "<td class=\"".$class."\">";
-								if ($data[$keys[$i]]["m_".$db_sql_columns[$name]['href']]) {
-									echo "<a href=\"".$PHP_SELF."?".$drill."&amp;".$get_url."&amp;".$db_sql_columns[$name]['href']."=".$data[$keys[$i]]["m_".$db_sql_columns[$name]['href']]."\">".$value."</a>";
-								} else {
-									echo "<a href=\"".$PHP_SELF."?".$drill."&amp;".$get_url."&amp;".$db_sql_columns[$name]['href']."=".urlencode($value)."\">".$value."</a>";
-								}				
-								echo "</td>";
-							} 
-
-							/* normal data */
-							else {
-								echo "<td class=\"".$class."\">".$value."</td>";
+						foreach(array_keys($dlf_sql_columns) as $name) {
+							if (($dlf_sql_columns[$name]['name']) && 
+						 	   ($dlf_sql_columns[$name]['display'])) {
+								echo "<td class=\"banner\">".$dlf_sql_columns[$name]['name']."</td>";
 							}
 						}
-
-						/* parameters */
-						if (($_GET['col_params'] == "on") || ($_GET['columns'] == "default")) {
-							echo "<td class=\"".$class."\">";
-							if (count($data[$keys[$i]]['Parameters'])) {
-								for ($j = 0; $j < count($data[$keys[$i]]['Parameters']); $j++) {
-									echo $data[$keys[$i]]['Parameters'][$j]."<br/>";
-								}
-							} else {
-								echo "&nbsp;";
-							}
-							echo "</td>";
+			
+						if (($_GET['col_params'] == on) || ($_GET['columns'] == "default")) {
+							echo "<td class=\"banner\">Parameters</td>";
 						}
+		 
+						/* generate the common request url used when drilling down through the data */
+						$get_url  = "columns=".$_GET['columns']."&amp;limit=".$_GET['limit'];
+						$get_url .= "&amp;instance=".$_GET['instance']."&amp;page=1";
+
+						foreach (array_keys($dlf_sql_columns) as $name) {
+							$get_url .= "&amp;".$name."=".$_GET[$name];
+						}
+			
+						if ($_GET['col_params']) {
+							$get_url .= "&amp;col_params=".$_GET['col_params'];
+						}
+						
 						echo "</tr>";
+						
+						/* table data */
+						for ($i = 0, $keys = array_keys($data); $i < count($keys); $i++) {
+							echo "<tr>";
+	
+							/* mandatory fields */
+							echo "<td class=\"timestamp\">".$data[$keys[$i]]['Timestamp']."</td>";
+			
+							/* user defined fields */
+							foreach (array_keys($dlf_sql_columns) as $name) {
+								if ((!$dlf_sql_columns[$name]['name']) || 
+					 		 	  (!$dlf_sql_columns[$name]['display'])) {
+									continue;
+								}
+	
+								$value = $data[$keys[$i]][$dlf_sql_columns[$name]['name']];
+								$class = str_replace("col_", "", $name);
+			
+								/* apply correct css class for severity field */
+								if ($dlf_sql_columns[$name]['name'] == "Severity") {
+									echo "<td class=\"sev_".strtolower($value)."\">".$value."</td>";  
+								}
+
+								/* if no value is available we still pad the table cell otherwise the table
+			 					 * borders are not rendered correctly
+			 					 */
+								else if (!$value) {
+									echo "<td class=\"".$class."\">N/A</td>";
+								}
+				
+								/* hyperlink required for drill down */
+								else if ($dlf_sql_columns[$name]['href'] != "") {
+
+									/* adjustments required to handle ns file id */
+									if (($dlf_sql_columns[$name]['name'] == "NS File ID") && ($use_database_view)) {
+										echo "<td class=\"".$class."\">";
+										echo "<a href=\"dbview.php?instance=".$_GET['instance']."&amp;entry=castorfile&amp;param=".urlencode($value)."\" target=\"blank\">".$value."</a>";
+										echo "</td>";
+										continue;
+									} 
+			
+									$drill = explode(".", $data[$keys[$i]]['Timestamp']);
+									$drill = "drilltime=".urlencode($drill[0]);
+								
+									/* add an invisible word-break to request and sub request ids */
+									if (($dlf_sql_columns[$name]['name'] == "Request ID") ||
+										($dlf_sql_columns[$name]['name'] == "Sub Request ID")) {
+											$value = str_replace("-", "-<wbr />", $value);
+									}
+	
+									echo "<td class=\"".$class."\">";
+									if ($value != "N/A") {
+										if ($data[$keys[$i]]["m_".$dlf_sql_columns[$name]['href']]) {
+											echo "<a href=\"".$PHP_SELF."?".$drill."&amp;".$get_url."&amp;".$dlf_sql_columns[$name]['href']."=".$data[$keys[$i]]["m_".$dlf_sql_columns[$name]['href']]."\">".$value."</a>";
+										} else {
+											echo "<a href=\"".$PHP_SELF."?".$drill."&amp;".$get_url."&amp;".$dlf_sql_columns[$name]['href']."=".urlencode(str_replace("-<wbr />","-",$value))."\">".$value."</a>";
+										}	
+									} else {
+										echo $value;
+									}				
+									echo "</td>";
+								} 
+
+								/* normal data */
+								else {
+									echo "<td class=\"".$class."\">".$value."</td>";
+								}
+							}	
+
+							/* parameters */
+							if (($_GET['col_params'] == "on") || ($_GET['columns'] == "default")) {
+								echo "<td class=\"parameters\">";
+								if (count($data[$keys[$i]]['Parameters'])) {
+									for ($j = 0; $j < count($data[$keys[$i]]['Parameters']); $j++) {
+										echo $data[$keys[$i]]['Parameters'][$j]."<br/>";
+									}
+								} else {
+									echo "&nbsp;";
+								}
+								echo "</td>";
+							}
+							echo "</tr>";
+						}
+						echo "</table>";
 					}
-				}
-
-				?>
-				</table>
-			</td>
-		</tr>
-	</table>
-
-	<!-- navigation -->
-	<table class="noborder" cellspacing="0" cellpadding="0" width="100%">
-		<tr>
-			<td align="left" valign="bottom">Connected to: 
-			<?php 
-			if ($show_db_version) { 
-				echo $db_instances[$_GET['instance']]['username']."@".$db_instances[$_GET['instance']]['server']." (".$db_instances[$_GET['instance']]['type']." ".db_server_version($dbh).")";
-			} else {
-				echo $db_instances[$_GET['instance']]['username']."@".$db_instances[$_GET['instance']]['server']." (".$db_instances[$_GET['instance']]['type'].")";
-			}
+						
+					
+					echo "<br />";
+					
+					?>
+					
+					</td>		
+				</tr>
+				
+				<!-- navigation -->
+				<?php 
 		
-			if (count($data)) {
-				echo "</td>";
-				echo "<td align=\"right\">";
-					echo "<form id=\"navigation\" name=\"navigation\" method=\"get\" action=\"results.php\">";
+				if (count($data)) {
+					echo "<tr>";
+					echo "<td align=\"right\" valign=\"bottom\" colspan=\"2\">";
+					echo "<form id=\"navigation2\" name=\"navigation\" method=\"get\" action=\"results.php\">";
 				
 					/* duplicate original form values */
 					foreach (array_keys($HTTP_GET_VARS) as $name) {
@@ -512,38 +546,57 @@ $dbh = db_connect($_GET['instance'], 1);
 					}
 
 					if ($_GET['page'] > 1) {
-						echo "<input type=\"submit\" name=\"nav\" value=\"Prev\" />&nbsp;&nbsp;";
+						echo "<input type=\"submit\" name=\"nav\" value=\"Previous\" class=\"button\"/>&nbsp;&nbsp;";
 					}
-					if ($query_total > $_GET['limit']) {
-						echo "<input type=\"submit\" name=\"nav\" value=\"Next\" />";
+					if ($query_total > ($_GET['limit'] * $_GET['page'])) {
+						echo "<input type=\"submit\" name=\"nav\" value=\"Next\" class=\"button\"/>";
 					} else {
 						echo "&nbsp;";
 					}
 
-				echo "</form>";
-		 		echo "</td>";
+					echo "</form>";
+		 			echo "</td>";
+					echo "</tr>";
+				}
 
+				?>
+			</table>
+		</td>
+	</tr>
+
+	<!-- connectivity information -->
+	<tr>
+		<td colspan="2">Connected to:
+			<?php
+			if ($show_db_version) { 
+				echo $db_instances[$_GET['instance']]['username']."@".$db_instances[$_GET['instance']]['server']." (".$db_instances[$_GET['instance']]['type']." ".db_server_version($dbh).")";
+			} else {
+				echo $db_instances[$_GET['instance']]['username']."@".$db_instances[$_GET['instance']]['server']." (".$db_instances[$_GET['instance']]['type'].")";
 			}
-
+			?>	
+		</td>
+		<td align="right">
+			<?php
+			if ($show_partition_count) {
+				echo db_partition_count($dbh);
+			}
 			?>
-		</tr>
-	</table>
+		</td>
+	</tr>
 
-	<!-- break 2 -->
-	<hr align="left" size="1" />
-	
 	<!-- footer -->
-	<table class="noborder" cellspacing="0" cellpadding="0" width="100%">
-		<tr valign="top">
-			<?php $page_end = getmicrotime(); ?>
-			<td align="left" width="33%">DLF interface version: <?php echo $version ?></td>
-			<td align="center" width="33%"><?php printf("Page generated in %.3f seconds with %d sql queries", $page_end - $page_start, $querycount); ?></td>
-			<td align="right" width="33%">
-			<a href="http://validator.w3.org/check?uri=referer"><img src="images/xhtml.png" alt="Valid XHTML 1.0 Strict" /></a>&nbsp; 
-			<a href="http://jigsaw.w3.org/css-validator/check/referer"><img src="images/css.png" alt="Valid CSS 2.0" /></a>&nbsp; 
-			<a href="http://www.php.net/"><img src="images/php.png" alt="Powered by PHP" /></a>&nbsp;
-			</td>
-		</tr>
+  	<tr>
+    	<td colspan="3"><hr size="1"/></td>
+	</tr>
+  	<tr class="footer">
+    	<td width="33%" align="left"  >DLF interface version: <?php echo $version ?></td>
+    	<td width="33%" align="center"><?php printf("Page generated in %.3f seconds with %d sql queries.", getmicrotime() - $gen_start, $query_count); ?></td>
+    	<td width="33%" align="right" >
+			<a href="http://validator.w3.org/check?uri=referer"><img src="images/xhtml.png" alt="Valid XHTML 1.0 Strict" /></a>&nbsp;
+			<a href="http://jigsaw.w3.org/css-validator/check/referer"><img src="images/css.png" alt="Valid CSS 2.0" /></a>&nbsp;
+			<a href="http://www.php.net/"><img src="images/php.png" alt="Powered by PHP" /></a>		
+		</td>
+  	</tr>
 	</table>
 </body>
 </html>
