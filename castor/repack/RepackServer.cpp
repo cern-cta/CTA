@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2006/08/14 13:02:28 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2006/09/08 09:53:06 $ $Author: felixehm $
  *
  *
  *
@@ -184,10 +184,12 @@ castor::repack::RepackServer::RepackServer() :
       at the beginning and keeps the information for the threads
     */
   char* tmp2;
-  if ( !(tmp2 = getconfent("CNS", "HOST",0)) ){
+  if ( !(tmp2 = getconfent("CNS", "HOST",0)) &&
+       !(tmp2 = getenv("CNS_HOST")) ){
     castor::exception::Internal ex;
     ex.getMessage() << "Unable to initialise RepackServer with nameserver "
-                    << "entry in castor config file" << std::endl;
+                    << "entry in castor config file or enviroment variable"
+		    << std::endl;
     throw ex; 
   }
   m_ns = new std::string(tmp2);
@@ -197,10 +199,12 @@ castor::repack::RepackServer::RepackServer() :
 
   /** the stager name 
   */
-  if ( !(tmp2 = getconfent("STAGER", "HOST",0)) ){
+  if ( !(tmp2 = getconfent("STAGER", "HOST",0)) &&
+       !(tmp2 = getenv("STAGER_HOST")) ){
     castor::exception::Internal ex;
     ex.getMessage() << "Unable to initialise RepackServer with stager "
-                    << "entry in castor config file" << std::endl;
+                    << "entry in castor config file or enviroment variable" 
+		    << std::endl;
     throw ex; 
   }
   m_stager = new std::string(tmp2);
@@ -211,27 +215,30 @@ castor::repack::RepackServer::RepackServer() :
   /** Get the repack service class, which is used for staging in files 
     * The diskpool in this service class is used for recall process.
     */
-  if ( !(tmp2 = getconfent("REPACK", "SVCCLASS",0)) ){
+  if ( !(tmp2 = getconfent("REPACK", "SVCCLASS",0)) && 
+       !(tmp2 = getenv ("REPACK_SVCCLASS")) ){
     castor::exception::Internal ex;
     ex.getMessage() << "Unable to initialise RepackServer with service class "
-                    << "entry in castor config file" << std::endl;
+                    << "entry in castor config file or enviroment variable"
+		    << std::endl;
     throw ex; 
   }
   m_serviceClass = new std::string(tmp2);
-  
 
   /* --------------------------------------------------------------------- */
 
   /** Get the repack service class, which is used for staging in files 
     * The diskpool in this service class is used for recall process.
     */
-  if ( !(tmp2 = getconfent("REPACK", "PROTOCOL",0)) ){
+  if ( !(tmp2 = getconfent("REPACK", "PROTOCOL",0)) &&
+       !(tmp2 = getenv("REPACK_PROTOCOL")) ){
     castor::exception::Internal ex;
     ex.getMessage() << "Unable to initialise RepackServer with protocol "
                     << "entry in castor config file" << std::endl;
     throw ex; 
   }
   m_protocol = new std::string(tmp2);
+
   /* --------------------------------------------------------------------- */
 
   /** Get the polling time for the Monitor and Cleaner service. This value should be not less
