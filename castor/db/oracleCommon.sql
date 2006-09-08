@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.298 $ $Release$ $Date: 2006/09/06 14:05:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.299 $ $Release$ $Date: 2006/09/08 09:10:38 $ $Author: felixehm $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.298 $ $Date: 2006/09/06 14:05:39 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.299 $ $Date: 2006/09/08 09:10:38 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -352,8 +352,10 @@ CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
   repackVid VARCHAR2(2048);
 BEGIN
   -- depending on the repackvid the new status is decided
-  SELECT SubRequest.repackvid INTO repackVid 
-   FROM SubRequest WHERE SubRequest.id = srId;
+  SELECT StageRepackRequest.repackvid INTO repackVid 
+   FROM SubRequest, StageRepackRequest 
+   WHERE SubRequest.id = srId
+   AND  StageRepackRequest.id = SubRequest.request;
         
   -- update status of SubRequest
   UPDATE SubRequest SET status = decode(repackvid, NULL, 8, 12) -- FINISHED / REPACK
@@ -399,6 +401,8 @@ BEGIN  -- delete Request, Client and SubRequests
     DELETE FROM StagePrepareToPutRequest WHERE id = rId RETURNING client INTO rclient;
   ELSIF rtype = 38 THEN -- StagePrepareToUpdateRequest
     DELETE FROM StagePrepareToUpdateRequest WHERE id = rId RETURNING client INTO rclient;
+  ELSIF rtype = 119 THEN -- StageRepackRequest
+    DELETE FROM StageRepackRequest WHERE id = rId RETURNING client INTO rclient;
   END IF;
 
   -- Delete Client
@@ -741,6 +745,7 @@ BEGIN
                     FROM DiskServer, FileSystem, DiskPool2SvcClass,
                          (SELECT id, svcClass from StageGetRequest UNION ALL
                           SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
+			  SELECT id, svcClass from StageRepackRequest UNION ALL
                           SELECT id, svcClass from StageGetNextRequest UNION ALL
                           SELECT id, svcClass from StageUpdateRequest UNION ALL
                           SELECT id, svcClass from StagePrepareToUpdateRequest UNION ALL
@@ -890,6 +895,7 @@ BEGIN
     INTO reqId, svcClassId, cfId
     FROM (SELECT id, svcClass from StageGetRequest UNION ALL
           SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
+	  SELECT id, svcClass from StageRepackRequest UNION ALL
           SELECT id, svcClass from StageUpdateRequest UNION ALL
           SELECT id, svcClass from StagePrepareToUpdateRequest UNION ALL
           SELECT id, svcClass from StagePutDoneRequest) Request,
@@ -992,6 +998,7 @@ BEGIN
  SELECT euid, egid INTO reuid, regid FROM SubRequest,
       (SELECT id, euid, egid from StageGetRequest UNION ALL
        SELECT id, euid, egid from StagePrepareToGetRequest UNION ALL
+       SELECT id, euid, egid from StageRepackRequest UNION ALL
        SELECT id, euid, egid from StageUpdateRequest UNION ALL
        SELECT id, euid, egid from StagePrepareToUpdateRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
@@ -1485,40 +1492,42 @@ CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   cfid NUMBER;
   fcnbcopies NUMBER; --number of tapecopies in fileclass
 BEGIN
-  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize, SubRequest.repackVid, CastorFile.id, FileClass.nbcopies
+  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize, StageRepackRequest.repackVid, CastorFile.id, FileClass.nbcopies
     INTO SubRequestId, dci, fileSize, repackVid, cfid, fcnbcopies
-    FROM TapeCopy, SubRequest, DiskCopy, CastorFile, FileClass
+    FROM TapeCopy, SubRequest, DiskCopy, CastorFile, FileClass, StageRepackRequest
    WHERE TapeCopy.id = tapecopyId
      AND CastorFile.id = TapeCopy.castorFile
      AND DiskCopy.castorFile = TapeCopy.castorFile
      AND FileClass.id = Castorfile.fileclass
      AND SubRequest.diskcopy(+) = DiskCopy.id
+     AND SubRequest.parent(+) = StageRepackRequest.id
      AND DiskCopy.status = 2;
   UPDATE DiskCopy SET status = decode(repackVid, NULL,0, 6)  -- DISKCOPY_STAGEOUT if repackVid != NULL, else DISKCOPY_STAGED 
    WHERE id = dci RETURNING fileSystem INTO fsid;
 
   -- Repack handling:
-  -- create the number of tapcopies for waiting subrequests and update their diskcopy.
+  -- create the number of tapecopies for waiting subrequests and update their diskcopy.
   IF repackVid IS NOT NULL THEN
     -- how many do we have to create ?
-	  SELECT count(repackvid) INTO nbTC FROM subrequest 
+     SELECT count(StageRepackRequest.repackvid) INTO nbTC FROM subrequest, StageRepackRequest 
      WHERE subrequest.castorfile = cfid
-	     AND subrequest.repackvid IS NOT NULL
-	     AND subrequest.status in (4,5,6);
+     AND SubRequest.parent = StageRepackRequest.id
+     AND subrequest.status in (4,5,6);
 	
-	  -- we are not allowed to create more Tapecopies than in the fileclass specified
-	  IF fcnbcopies < nbTC THEN 
-	    nbTC := fcnbcopies;
-	  END IF;
+     -- we are not allowed to create more Tapecopies than in the fileclass specified
+     IF fcnbcopies < nbTC THEN 
+       nbTC := fcnbcopies;
+     END IF;
 	
-	  -- we need to update other subrequests with the diskcopy
-	  UPDATE SubRequest SET diskcopy = dci 
-	   WHERE subrequest.castorfile = cfid
-	     AND subrequest.repackvid IS NOT NULL
-	     AND subrequest.status in (4,5,6); 
+     -- we need to update other subrequests with the diskcopy
+     UPDATE SubRequest SET diskcopy = dci 
+     WHERE subrequest.castorfile = cfid
+     AND subrequest.status in (4,5,6)
+     AND SubRequest.parent in 
+     		(SELECT id FROM StageRepackRequest); 
 	   
-	  -- create the number of tapecopies for the files
-	  internalPutDoneFunc(cfid, fsId, 0, nbTC);
+     -- create the number of tapecopies for the files
+    internalPutDoneFunc(cfid, fsId, 0, nbTC);
   END IF;
   
   IF subRequestId IS NOT NULL THEN
@@ -2449,6 +2458,7 @@ BEGIN
       FROM CastorFile, DiskCopy, FileSystem, DiskServer,
            DiskPool2SvcClass, SubRequest,
            (SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
+            SELECT id, svcClass FROM StageRepackRequest UNION ALL
             SELECT id, svcClass FROM StageGetRequest) Req
      WHERE CastorFile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
        AND CastorFile.id = DiskCopy.castorFile(+)    -- search for valid diskcopy
@@ -2562,6 +2572,10 @@ BEGIN
     FROM SubRequest sr,
          (SELECT id
             FROM StagePreparetogetRequest
+           WHERE reqid LIKE rid
+          UNION ALL
+	  SELECT id
+            FROM StageRepackRequest
            WHERE reqid LIKE rid
           UNION ALL
           SELECT id
@@ -2761,5 +2775,27 @@ BEGIN
            (dp.name)
           )
        order by IsDSGrouped desc, ds.name, IsGrouped desc, fs.mountpoint;
+END;
+
+
+/* PL/SQL procedure which is executed whenever a files has been written to tape by the migrator to
+   check, whether the file information has to be added to the NameServer or to replace an entry 
+   (repack case)
+*/
+CREATE OR REPLACE PROCEDURE checkFileForRepack(fileid IN INTEGER, repackvid OUT VARCHAR2) AS
+sreqid NUMBER;
+BEGIN
+   -- Get the repackvid field from the existing request (if none, then we are not in a repack process)
+      SELECT SubRequest.id, StageRepackRequest.repackvid INTO sreqid, repackvid
+      FROM SubRequest, DiskCopy, CastorFile, StageRepackRequest
+      WHERE stagerepackrequest.id = subrequest.request
+      AND diskcopy.id = subrequest.diskcopy 
+      AND diskcopy.status = 10 -- CANBEMIGR
+      AND subrequest.status = 12 -- SUBREQUEST_REPACK
+      AND diskcopy.castorfile = castorfile.id 
+      AND castorfile.fileid = fileid;
+      -- update the subrequest  
+      UPDATE SubRequest SET subrequest.status = 11 
+      WHERE subrequest.id = sreqid;
 END;
 
