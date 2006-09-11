@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.300 $ $Release$ $Date: 2006/09/11 09:01:42 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.301 $ $Release$ $Date: 2006/09/11 17:33:05 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.300 $ $Date: 2006/09/11 09:01:42 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.301 $ $Date: 2006/09/11 17:33:05 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -349,22 +349,20 @@ CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
   rtype INTEGER;
   rclient INTEGER;
   nb INTEGER;
-  repackVid VARCHAR2(2048);
+  reqType INTEGER;
 BEGIN
-  -- depending on the repackvid the new status is decided
-  SELECT StageRepackRequest.repackVid INTO repackVid 
-    FROM SubRequest, StageRepackRequest 
-   WHERE SubRequest.id = srId
-     AND StageRepackRequest.id(+) = SubRequest.request;
-        
+  -- depending on the type (whether repack or not) the new status is decided
+  SELECT type INTO reqType FROM Id2Type WHERE id =
+    (SELECT request FROM SubRequest WHERE id = srId);
+
   -- update status of SubRequest
-  UPDATE SubRequest SET status = decode(repackvid, NULL, 8, 12) -- FINISHED / REPACK
+  UPDATE SubRequest SET status = decode(reqType, 119,12, 8) -- REPACK if OBJ_StageRepackRequest, else FINISHED
    WHERE id = srId RETURNING request INTO rid;
 
   -- Try to see whether another subrequest in the same
   -- request is still processing
   SELECT count(*) INTO nb FROM SubRequest
-   WHERE request = rid AND status NOT IN (8); -- all but FINISHED
+   WHERE request = rid AND status <> 8;  -- all but FINISHED
 
   -- Archive request if all subrequests have finished
   IF nb = 0 THEN
@@ -1487,31 +1485,34 @@ CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   dci NUMBER;
   fsId NUMBER;
   fileSize NUMBER;
-  repackVid VARCHAR2(2048);
+  reqType NUMBER;
   nbTC NUMBER(2);
   cfid NUMBER;
   fcnbcopies NUMBER; --number of tapecopies in fileclass
 BEGIN
-  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize, StageRepackRequest.repackVid, CastorFile.id, FileClass.nbcopies
-    INTO SubRequestId, dci, fileSize, repackVid, cfid, fcnbcopies
-    FROM TapeCopy, SubRequest, DiskCopy, CastorFile, FileClass, StageRepackRequest
+  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize, CastorFile.id, FileClass.nbcopies
+    INTO SubRequestId, dci, fileSize, cfid, fcnbcopies
+    FROM TapeCopy, SubRequest, DiskCopy, CastorFile, FileClass
    WHERE TapeCopy.id = tapecopyId
      AND CastorFile.id = TapeCopy.castorFile
      AND DiskCopy.castorFile = TapeCopy.castorFile
      AND FileClass.id = Castorfile.fileclass
-     AND SubRequest.diskcopy = DiskCopy.id(+)
-     AND SubRequest.parent = StageRepackRequest.id(+)
+     AND SubRequest.diskcopy(+) = DiskCopy.id
      AND DiskCopy.status = 2;
-  UPDATE DiskCopy SET status = decode(repackVid, NULL,0, 6)  -- DISKCOPY_STAGEOUT if repackVid != NULL, else DISKCOPY_STAGED 
+   
+  SELECT type INTO reqType FROM Id2Type WHERE id =
+    (SELECT request FROM SubRequest WHERE id = subRequestId);
+
+  UPDATE DiskCopy SET status = decode(reqType, 119,6, 0)  -- DISKCOPY_STAGEOUT if OBJ_StageRepackRequest, else DISKCOPY_STAGED 
    WHERE id = dci RETURNING fileSystem INTO fsid;
 
   -- Repack handling:
   -- create the number of tapecopies for waiting subrequests and update their diskcopy.
-  IF repackVid IS NOT NULL THEN
+  IF reqType = 119 THEN      -- OBJ_StageRepackRequest
     -- how many do we have to create ?
      SELECT count(StageRepackRequest.repackvid) INTO nbTC FROM subrequest, StageRepackRequest 
      WHERE subrequest.castorfile = cfid
-     AND SubRequest.parent = StageRepackRequest.id
+     AND SubRequest.request = StageRepackRequest.id
      AND subrequest.status in (4,5,6);
 	
      -- we are not allowed to create more Tapecopies than in the fileclass specified
@@ -1523,7 +1524,7 @@ BEGIN
      UPDATE SubRequest SET diskcopy = dci 
      WHERE subrequest.castorfile = cfid
      AND subrequest.status in (4,5,6)
-     AND SubRequest.parent in 
+     AND SubRequest.request in 
      		(SELECT id FROM StageRepackRequest); 
 	   
      -- create the number of tapecopies for the files
