@@ -130,6 +130,14 @@ int castor::query::DiskServerDescription::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::query::DiskServerDescription::clone() {
-  return new DiskServerDescription(*this);
+  castor::query::DiskServerDescription* c = new DiskServerDescription(*this);
+  c->fileSystems().clear();
+  for (std::vector<FileSystemDescription*>::iterator it =
+	 fileSystems().begin();
+       it != fileSystems().end();
+       it++) {
+    c->addFileSystems(dynamic_cast<FileSystemDescription*>((*it)->clone()));
+  }
+  return c;
 }
 
