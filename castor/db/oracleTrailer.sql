@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.299 $ $Release$ $Date: 2006/09/08 09:10:38 $ $Author: felixehm $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.300 $ $Release$ $Date: 2006/09/11 09:01:42 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.299 $ $Date: 2006/09/08 09:10:38 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.300 $ $Date: 2006/09/11 09:01:42 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -337,7 +337,7 @@ BEGIN
                    AND DiskCopy.id = dci
                    AND SubRequest.parent = 0
                    AND DiskCopy.status IN (1, 2, 5, 6, 11) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, WAITFS_SCHEDULING
-		   AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6)), -- START, RESTART, RETRY, WAIT*, READY
+                   AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6)), -- START, RESTART, RETRY, WAIT*, READY
       status = 5, -- WAITSUBREQ
       lastModificationTime = getTime()
   WHERE SubRequest.id = srId;
@@ -352,10 +352,10 @@ CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
   repackVid VARCHAR2(2048);
 BEGIN
   -- depending on the repackvid the new status is decided
-  SELECT StageRepackRequest.repackvid INTO repackVid 
-   FROM SubRequest, StageRepackRequest 
+  SELECT StageRepackRequest.repackVid INTO repackVid 
+    FROM SubRequest, StageRepackRequest 
    WHERE SubRequest.id = srId
-   AND  StageRepackRequest.id = SubRequest.request;
+     AND StageRepackRequest.id(+) = SubRequest.request;
         
   -- update status of SubRequest
   UPDATE SubRequest SET status = decode(repackvid, NULL, 8, 12) -- FINISHED / REPACK
@@ -895,7 +895,7 @@ BEGIN
     INTO reqId, svcClassId, cfId
     FROM (SELECT id, svcClass from StageGetRequest UNION ALL
           SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
-	  SELECT id, svcClass from StageRepackRequest UNION ALL
+          SELECT id, svcClass from StageRepackRequest UNION ALL
           SELECT id, svcClass from StageUpdateRequest UNION ALL
           SELECT id, svcClass from StagePrepareToUpdateRequest UNION ALL
           SELECT id, svcClass from StagePutDoneRequest) Request,
@@ -1499,8 +1499,8 @@ BEGIN
      AND CastorFile.id = TapeCopy.castorFile
      AND DiskCopy.castorFile = TapeCopy.castorFile
      AND FileClass.id = Castorfile.fileclass
-     AND SubRequest.diskcopy(+) = DiskCopy.id
-     AND SubRequest.parent(+) = StageRepackRequest.id
+     AND SubRequest.diskcopy = DiskCopy.id(+)
+     AND SubRequest.parent = StageRepackRequest.id(+)
      AND DiskCopy.status = 2;
   UPDATE DiskCopy SET status = decode(repackVid, NULL,0, 6)  -- DISKCOPY_STAGEOUT if repackVid != NULL, else DISKCOPY_STAGED 
    WHERE id = dci RETURNING fileSystem INTO fsid;
@@ -2574,10 +2574,6 @@ BEGIN
             FROM StagePreparetogetRequest
            WHERE reqid LIKE rid
           UNION ALL
-	  SELECT id
-            FROM StageRepackRequest
-           WHERE reqid LIKE rid
-          UNION ALL
           SELECT id
             FROM StagePreparetoputRequest
            WHERE reqid LIKE rid
@@ -2592,6 +2588,10 @@ BEGIN
           UNION ALL
           SELECT id
             FROM stagePutRequest
+           WHERE reqid LIKE rid
+          UNION ALL
+          SELECT id
+            FROM StageRepackRequest
            WHERE reqid LIKE rid) reqlist
    WHERE sr.request = reqlist.id;
   IF cfs.COUNT > 0 THEN
@@ -2658,6 +2658,10 @@ BEGIN
           UNION ALL
           SELECT id
             FROM StagePreparetoupdateRequest
+           WHERE reqid LIKE rid
+          UNION ALL
+          SELECT id
+            FROM StageRepackRequest
            WHERE reqid LIKE rid
           );
   IF reqs.COUNT > 0 THEN
