@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.150 $ $Release$ $Date: 2006/08/16 16:33:57 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.151 $ $Release$ $Date: 2006/09/11 12:58:16 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.150 $ $Release$ $Date: 2006/08/16 16:33:57 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.151 $ $Release$ $Date: 2006/09/11 12:58:16 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -3640,9 +3640,10 @@ int rtcpcld_restoreSelectedTapeCopies(
   struct C_IObject_t *iObj;
   struct Cstager_Tape_t *tp = NULL;
   struct Cstager_Segment_t *segment;
+  struct Cstager_Stream_t **streamArray = NULL;
   struct Cstager_TapeCopy_t *tapeCopy;
   file_list_t *file;
-  int rc, doCommit = 0;
+  int rc, doCommit = 0, nbStreams = 0;
   struct Cns_fileid *fileId = NULL;
   ID_TYPE key = 0;
 
@@ -3698,9 +3699,35 @@ int rtcpcld_restoreSelectedTapeCopies(
           if ( segment != NULL ) {
             Cstager_Segment_copy(segment,&tapeCopy);
             if ( tapeCopy != NULL ) {
-              Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_WAITINSTREAMS);
-              Cstager_TapeCopy_id(tapeCopy,&key);
+              /*
+               * Check if still attached to a stream (normally not) and
+               * reset the status to WAITINSTREAMS or TOBEMIGRATED depending
+               * on whether it needs to be re-attached or not.
+               */
               iObj = Cstager_TapeCopy_getIObject(tapeCopy);
+              Cstager_TapeCopy_id(tapeCopy,&key);
+              rc = C_Services_fillObj(
+                                      *svcs,
+                                      iAddr,
+                                      iObj,
+                                      OBJ_Stream
+                                      );
+              if ( rc == -1 ) {
+                LOG_DBCALLANDKEY_ERR(
+                                     "C_Services_fillObj()",
+                                     C_Services_errorMsg(*svcs),
+                                     key
+                                     );
+              }
+              streamArray = NULL;
+              nbStreams = 0;
+              Cstager_TapeCopy_stream(tapeCopy,&streamArray,&nbStreams);
+              if ( (nbStreams>0) && (streamArray != NULL) ) {
+                Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_WAITINSTREAMS);
+                free(streamArray);
+              } else {
+                Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_TOBEMIGRATED);
+              }
               rc = C_Services_updateRep(
                                         *svcs,
                                         iAddr,
