@@ -197,6 +197,9 @@ DROP TABLE DiskServer;
 /* SQL statements for type SetFileGCWeight */
 DROP TABLE SetFileGCWeight;
 
+/* SQL statements for type StageRepackRequest */
+DROP TABLE StageRepackRequest;
+
 /* SQL statements for type TapeAccessSpecification */
 DROP TABLE TapeAccessSpecification;
 
@@ -286,3 +289,4 @@ DROP PROCEDURE reqIdLastRecallsStageQuery;
 DROP PROCEDURE userTagLastRecallsStageQuery;
 DROP PROCEDURE describeDiskPools;
 DROP PROCEDURE describeDiskPool;
+DROP PROCEDURE checkFileForRepack;

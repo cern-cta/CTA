@@ -83,7 +83,7 @@ CREATE TABLE StageRequestQueryRequest (flags INTEGER, userName VARCHAR2(2048), e
 CREATE TABLE StageFindRequestRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type SubRequest */
-CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, repackVid VARCHAR2(2048), id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StageReleaseFilesRequest */
 CREATE TABLE StageReleaseFilesRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
@@ -148,6 +148,9 @@ CREATE TABLE DiskServer (name VARCHAR2(2048), id INTEGER PRIMARY KEY, status INT
 /* SQL statements for type SetFileGCWeight */
 CREATE TABLE SetFileGCWeight (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, weight float, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
+/* SQL statements for type StageRepackRequest */
+CREATE TABLE StageRepackRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, repackVid VARCHAR2(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
+
 /* SQL statements for type TapeAccessSpecification */
 CREATE TABLE TapeAccessSpecification (accessMode NUMBER, density VARCHAR2(2048), tapeModel VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
@@ -192,7 +195,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)$RCSfile: castor_oracle_create.sqlplus,v $ $Revision: 1.13 $ $Release$ $Date: 2006/08/18 14:22:14 $ $Author: gtaur $
+ * @(#)$RCSfile: castor_oracle_create.sqlplus,v $ $Revision: 1.14 $ $Release$ $Date: 2006/09/12 09:59:37 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -202,7 +205,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.13 $ $Date: 2006/08/18 14:22:14 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.14 $ $Date: 2006/09/12 09:59:37 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -542,7 +545,7 @@ BEGIN
                    AND DiskCopy.id = dci
                    AND SubRequest.parent = 0
                    AND DiskCopy.status IN (1, 2, 5, 6, 11) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, WAITFS_SCHEDULING
-		   AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6)), -- START, RESTART, RETRY, WAIT*, READY
+                   AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6)), -- START, RESTART, RETRY, WAIT*, READY
       status = 5, -- WAITSUBREQ
       lastModificationTime = getTime()
   WHERE SubRequest.id = srId;
@@ -555,20 +558,20 @@ CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
   rtype INTEGER;
   rclient INTEGER;
   nb INTEGER;
-  repackVid VARCHAR2(2048);
+  reqType INTEGER;
 BEGIN
-  -- depending on the repackvid the new status is decided
-  SELECT SubRequest.repackvid INTO repackVid 
-   FROM SubRequest WHERE SubRequest.id = srId;
-        
+  -- depending on the type (whether repack or not) the new status is decided
+  SELECT type INTO reqType FROM Id2Type WHERE id =
+    (SELECT request FROM SubRequest WHERE id = srId);
+
   -- update status of SubRequest
-  UPDATE SubRequest SET status = decode(repackvid, NULL, 8, 12) -- FINISHED / REPACK
+  UPDATE SubRequest SET status = decode(reqType, 119,12, 8) -- REPACK if OBJ_StageRepackRequest, else FINISHED
    WHERE id = srId RETURNING request INTO rid;
 
   -- Try to see whether another subrequest in the same
   -- request is still processing
   SELECT count(*) INTO nb FROM SubRequest
-   WHERE request = rid AND status NOT IN (8); -- all but FINISHED
+   WHERE request = rid AND status <> 8;  -- all but FINISHED
 
   -- Archive request if all subrequests have finished
   IF nb = 0 THEN
@@ -606,6 +609,8 @@ BEGIN  -- delete Request, Client and SubRequests
     DELETE FROM StagePrepareToPutRequest WHERE id = rId RETURNING client INTO rclient;
   ELSIF rtype = 38 THEN -- StagePrepareToUpdateRequest
     DELETE FROM StagePrepareToUpdateRequest WHERE id = rId RETURNING client INTO rclient;
+  ELSIF rtype = 119 THEN -- StageRepackRequest
+    DELETE FROM StageRepackRequest WHERE id = rId RETURNING client INTO rclient;
   END IF;
 
   -- Delete Client
@@ -814,7 +819,7 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
                                                   castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                   nsHost OUT VARCHAR2, fileSize OUT INTEGER,
                                                   tapeCopyId OUT INTEGER) AS
- fileSystemId INTEGER;
+ fileSystemId INTEGER := 0;
  dsid NUMBER;
  deviation NUMBER;
  fsDiskServer NUMBER;
@@ -894,10 +899,24 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- No data found means the selected filesystem has no
     -- tapecopies to be migrated. Thus we go to next one
-    NULL;
+    IF 0 != fileSystemId THEN
+      UPDATE NbTapeCopiesInFS
+         SET NbTapeCopies = 0
+       WHERE Stream = StreamId
+         AND NbTapeCopiesInFS.FS = fileSystemId;
+      bestTapeCopyForStream(streamId,
+                            diskServerName,
+                            mountPoint,
+                            path,
+                            dci,
+                            castorFileId,
+                            fileId,
+                            nsHost,
+                            fileSize,
+                            tapeCopyId);
+    END IF;
 END;
 /
-
 
 /* PL/SQL method implementing bestFileSystemForSegment */
 CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskServerName OUT VARCHAR2,
@@ -944,6 +963,7 @@ BEGIN
                     FROM DiskServer, FileSystem, DiskPool2SvcClass,
                          (SELECT id, svcClass from StageGetRequest UNION ALL
                           SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
+			  SELECT id, svcClass from StageRepackRequest UNION ALL
                           SELECT id, svcClass from StageGetNextRequest UNION ALL
                           SELECT id, svcClass from StageUpdateRequest UNION ALL
                           SELECT id, svcClass from StagePrepareToUpdateRequest UNION ALL
@@ -1080,10 +1100,10 @@ BEGIN
     FROM DiskCopy, SubRequest, FileSystem, DiskServer
    WHERE SubRequest.id = rsubreqId
      AND SubRequest.castorfile = DiskCopy.castorfile
-     AND DiskCopy.fileSystem = FileSystem.id
-     AND FileSystem.status = 0 -- PRODUCTION
-     AND FileSystem.diskserver = DiskServer.id
-     AND DiskServer.status = 0 -- PRODUCTION
+     AND FileSystem.id(+) = DiskCopy.fileSystem
+     AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
+     AND DiskServer.id(+) = FileSystem.diskServer
+     AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
      AND DiskCopy.status IN (1, 2, 5, 11); -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING
   IF stat.COUNT > 0 THEN
     -- Only DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
@@ -1097,6 +1117,7 @@ BEGIN
     INTO reqId, svcClassId, cfId
     FROM (SELECT id, svcClass from StageGetRequest UNION ALL
           SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
+          SELECT id, svcClass from StageRepackRequest UNION ALL
           SELECT id, svcClass from StageUpdateRequest UNION ALL
           SELECT id, svcClass from StagePrepareToUpdateRequest UNION ALL
           SELECT id, svcClass from StagePutDoneRequest) Request,
@@ -1201,6 +1222,7 @@ BEGIN
  SELECT euid, egid INTO reuid, regid FROM SubRequest,
       (SELECT id, euid, egid from StageGetRequest UNION ALL
        SELECT id, euid, egid from StagePrepareToGetRequest UNION ALL
+       SELECT id, euid, egid from StageRepackRequest UNION ALL
        SELECT id, euid, egid from StageUpdateRequest UNION ALL
        SELECT id, euid, egid from StagePrepareToUpdateRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
@@ -1303,6 +1325,7 @@ CREATE OR REPLACE PROCEDURE putStart
         (srId IN INTEGER, fileSystemId IN INTEGER,
          rdcId OUT INTEGER, rdcStatus OUT INTEGER,
          rdcPath OUT VARCHAR2) AS
+  srStatus INTEGER;
 BEGIN
  -- Get older castorFiles with the same name and drop their lastKnownFileName
  UPDATE CastorFile SET lastKnownFileName = ''
@@ -1313,7 +1336,12 @@ BEGIN
        AND cfNew.id = SubRequest.castorFile
        AND SubRequest.id = srId);
  -- Get diskCopy Id
- SELECT diskCopy INTO rdcId FROM SubRequest WHERE SubRequest.id = srId;
+ SELECT diskCopy, status INTO rdcId, srStatus
+   FROM SubRequest WHERE SubRequest.id = srId;
+ -- Check that we did not cancel the SubRequest in the mean time
+ IF srStatus IN (7, 9, 10) THEN -- FAILED, FAILED_FINISHED, FAILED_ANSWERING
+   raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
+ END IF;
  -- In case the DiskCopy was in WAITFS_SCHEDULING, PUT the
  -- waiting SubRequests in RESTART
  UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0 -- SUBREQUEST_RESTART
@@ -1692,13 +1720,13 @@ CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   dci NUMBER;
   fsId NUMBER;
   fileSize NUMBER;
-  repackVid VARCHAR2(2048);
+  reqType NUMBER;
   nbTC NUMBER(2);
   cfid NUMBER;
   fcnbcopies NUMBER; --number of tapecopies in fileclass
 BEGIN
-  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize, SubRequest.repackVid, CastorFile.id, FileClass.nbcopies
-    INTO SubRequestId, dci, fileSize, repackVid, cfid, fcnbcopies
+  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize, CastorFile.id, FileClass.nbcopies
+    INTO SubRequestId, dci, fileSize, cfid, fcnbcopies
     FROM TapeCopy, SubRequest, DiskCopy, CastorFile, FileClass
    WHERE TapeCopy.id = tapecopyId
      AND CastorFile.id = TapeCopy.castorFile
@@ -1706,31 +1734,36 @@ BEGIN
      AND FileClass.id = Castorfile.fileclass
      AND SubRequest.diskcopy(+) = DiskCopy.id
      AND DiskCopy.status = 2;
-  UPDATE DiskCopy SET status = decode(repackVid, NULL,0, 6)  -- DISKCOPY_STAGEOUT if repackVid != NULL, else DISKCOPY_STAGED 
+   
+  SELECT type INTO reqType FROM Id2Type WHERE id =
+    (SELECT request FROM SubRequest WHERE id = subRequestId);
+
+  UPDATE DiskCopy SET status = decode(reqType, 119,6, 0)  -- DISKCOPY_STAGEOUT if OBJ_StageRepackRequest, else DISKCOPY_STAGED 
    WHERE id = dci RETURNING fileSystem INTO fsid;
 
   -- Repack handling:
-  -- create the number of tapcopies for waiting subrequests and update their diskcopy.
-  IF repackVid IS NOT NULL THEN
+  -- create the number of tapecopies for waiting subrequests and update their diskcopy.
+  IF reqType = 119 THEN      -- OBJ_StageRepackRequest
     -- how many do we have to create ?
-	  SELECT count(repackvid) INTO nbTC FROM subrequest 
+     SELECT count(StageRepackRequest.repackvid) INTO nbTC FROM subrequest, StageRepackRequest 
      WHERE subrequest.castorfile = cfid
-	     AND subrequest.repackvid IS NOT NULL
-	     AND subrequest.status in (4,5,6);
+     AND SubRequest.request = StageRepackRequest.id
+     AND subrequest.status in (4,5,6);
 	
-	  -- we are not allowed to create more Tapecopies than in the fileclass specified
-	  IF fcnbcopies < nbTC THEN 
-	    nbTC := fcnbcopies;
-	  END IF;
+     -- we are not allowed to create more Tapecopies than in the fileclass specified
+     IF fcnbcopies < nbTC THEN 
+       nbTC := fcnbcopies;
+     END IF;
 	
-	  -- we need to update other subrequests with the diskcopy
-	  UPDATE SubRequest SET diskcopy = dci 
-	   WHERE subrequest.castorfile = cfid
-	     AND subrequest.repackvid IS NOT NULL
-	     AND subrequest.status in (4,5,6); 
+     -- we need to update other subrequests with the diskcopy
+     UPDATE SubRequest SET diskcopy = dci 
+     WHERE subrequest.castorfile = cfid
+     AND subrequest.status in (4,5,6)
+     AND SubRequest.request in 
+     		(SELECT id FROM StageRepackRequest); 
 	   
-	  -- create the number of tapecopies for the files
-	  internalPutDoneFunc(cfid, fsId, 0, nbTC);
+     -- create the number of tapecopies for the files
+    internalPutDoneFunc(cfid, fsId, 0, nbTC);
   END IF;
   
   IF subRequestId IS NOT NULL THEN
@@ -2269,6 +2302,9 @@ BEGIN
  UPDATE DiskCopy SET status = 8 -- GCCANDIDATE
   WHERE castorFile = cfId
     AND status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
+ UPDATE DiskCopy SET status = 7 -- INVALID
+  WHERE castorFile = cfId
+    AND status IN (5, 11); -- WAITFS, WAITFS_SCHEDULING
  DECLARE
   segId INTEGER;
  BEGIN
@@ -2683,6 +2719,7 @@ BEGIN
       FROM CastorFile, DiskCopy, FileSystem, DiskServer,
            DiskPool2SvcClass, SubRequest,
            (SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
+            SELECT id, svcClass FROM StageRepackRequest UNION ALL
             SELECT id, svcClass FROM StageGetRequest) Req
      WHERE CastorFile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
        AND CastorFile.id = DiskCopy.castorFile(+)    -- search for valid diskcopy
@@ -2816,6 +2853,10 @@ BEGIN
           UNION ALL
           SELECT id
             FROM stagePutRequest
+           WHERE reqid LIKE rid
+          UNION ALL
+          SELECT id
+            FROM StageRepackRequest
            WHERE reqid LIKE rid) reqlist
    WHERE sr.request = reqlist.id;
   IF cfs.COUNT > 0 THEN
@@ -2884,6 +2925,10 @@ BEGIN
           UNION ALL
           SELECT id
             FROM StagePreparetoupdateRequest
+           WHERE reqid LIKE rid
+          UNION ALL
+          SELECT id
+            FROM StageRepackRequest
            WHERE reqid LIKE rid
           );
   IF reqs.COUNT > 0 THEN
@@ -3004,6 +3049,29 @@ BEGIN
            (dp.name)
           )
        order by IsDSGrouped desc, ds.name, IsGrouped desc, fs.mountpoint;
+END;
+/
+
+
+/* PL/SQL procedure which is executed whenever a files has been written to tape by the migrator to
+   check, whether the file information has to be added to the NameServer or to replace an entry 
+   (repack case)
+*/
+CREATE OR REPLACE PROCEDURE checkFileForRepack(fileid IN INTEGER, repackvid OUT VARCHAR2) AS
+sreqid NUMBER;
+BEGIN
+   -- Get the repackvid field from the existing request (if none, then we are not in a repack process)
+      SELECT SubRequest.id, StageRepackRequest.repackvid INTO sreqid, repackvid
+      FROM SubRequest, DiskCopy, CastorFile, StageRepackRequest
+      WHERE stagerepackrequest.id = subrequest.request
+      AND diskcopy.id = subrequest.diskcopy 
+      AND diskcopy.status = 10 -- CANBEMIGR
+      AND subrequest.status = 12 -- SUBREQUEST_REPACK
+      AND diskcopy.castorfile = castorfile.id 
+      AND castorfile.fileid = fileid;
+      -- update the subrequest  
+      UPDATE SubRequest SET subrequest.status = 11 
+      WHERE subrequest.id = sreqid;
 END;
 /
 
