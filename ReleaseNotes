@@ -9,7 +9,12 @@
   - New rewritten version of DLF
   - Resurrection of the db connection when it's lost
   - Many fixes to the SQL code
-
+  - Fixed some deadlock between the GC and the updateFsFileClosed PL/SQL function
+  - Fixed the random port issue.
+  - Changed default nb of threads to 20 for DB and JOB (optimal value according to Olof's tests)
+  - Modifications to be ready with RFIO merge
+  - Increase the number of test suites
+  
   Upgrade from 2.1.0-x
   --------------------
   The upgrade to be done concerns the whole system (database, stager, clients, tape servers)
