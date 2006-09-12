@@ -1,22 +1,2128 @@
+castor (2.1.1-0) unstable; urgency=low
+
+  * CASTOR2/Imakefile:
+    [r1.20,2006-08-01,sponcec3] Dropped the (very) old C gc code
+  * CASTOR2/PACKAGING.howto:
+    [r1.21,2006-08-24,riojac3] create directories on savannah
+    [r1.20,2006-08-08,riojac3] How to create the volume in afs
+    [r1.19,2006-07-10,itglp] Modified installation to AFS
+    [r1.18,2006-07-08,itglp] Few more fixes for packaging out of a branch
+    [r1.17,2006-06-21,sponcec3] Added some comments and the part on installing on AFS
+    [r1.16,2006-06-12,itglp] Added procedure to make a release out of a bug fix branch (to be tested)
+    [r1.15,2006-06-12,itglp] Modified usage of CASTOR.cvslogs and updated instructions accordingly
+    [r1.14,2006-06-01,riojac3] Modification of minor issue (name of a directory, place to copy the SRPMs)
+    [r1.13,2006-05-09,sponcec3] Added the list of ref platforms
+    [r1.12,2006-05-09,sponcec3] Removed old stuff + added hints on how to make RPMS without being root
+  * CASTOR2/castor/BaseCnvSvc.cpp:
+    [r1.19,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/BaseCnvSvc.hpp:
+    [r1.15,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/Constants.cpp:
+    [r1.34,2006-08-18,gtaur] added object type for new response
+  * CASTOR2/castor/Constants.hpp:
+    [r1.64,2006-08-25,felixehm] Added new Stager Request : StageRepackRequest
+    [r1.63,2006-08-22,felixehm] Removed entry OldSubRequest Converter from Imakefile and the converter
+    [r1.63,2006-08-22,felixehm] itself
+    [r1.62,2006-08-18,gtaur] added object type for new response
+    [r1.61,2006-05-11,felixehm] Added new Stream converter for old SubRequests
+    [r1.61,2006-05-11,felixehm] changed sql Procedure filerecalled:
+    [r1.61,2006-05-11,felixehm] whenever a file is staged in as a repack request (the new subrequest field
+    [r1.61,2006-05-11,felixehm] repackvid is set with the origin tape), the diskcopy status is
+    [r1.61,2006-05-11,felixehm] directly put into CANBEMIGRATED.
+  * CASTOR2/castor/IAddress.h:
+    [r 1.8,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/IAddress.hpp:
+    [r1.10,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/ICnvSvc.hpp:
+    [r1.14,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/IConverter.hpp:
+    [r1.14,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/IObject.h:
+    [r1.11,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/IObject.hpp:
+    [r1.10,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/IObjectCInt.cpp:
+  * CASTOR2/castor/Imakefile:
+    [r1.132,2006-08-25,felixehm] Added new Stager Request : StageRepackRequest
+    [r1.131,2006-08-18,gtaur] new Response
+    [r1.130,2006-07-21,sponcec3] Added new error code SegmentNotAccessible
+    [r1.129,2006-05-11,felixehm] Added new Stream converter for old SubRequests
+    [r1.129,2006-05-11,felixehm] changed sql Procedure filerecalled:
+    [r1.129,2006-05-11,felixehm] whenever a file is staged in as a repack request (the new subrequest field
+    [r1.129,2006-05-11,felixehm] repackvid is set with the origin tape), the diskcopy status is
+    [r1.129,2006-05-11,felixehm] directly put into CANBEMIGRATED.
+  * CASTOR2/castor/MessageAck.cpp:
+  * CASTOR2/castor/MessageAck.h:
+  * CASTOR2/castor/MessageAck.hpp:
+  * CASTOR2/castor/MessageAckCInt.cpp:
+  * CASTOR2/castor/cleaning/CleaningDaemon.cpp:
+    [r 1.9,2006-05-02,itglp] Fixed call to addThreadPool due to changes in BaseServer.
+  * CASTOR2/castor/db/DbCnvSvc.cpp:
+    [r 1.3,2006-08-03,itglp] handleException() has finally found his place in ... OraCnvSvc
+  * CASTOR2/castor/db/DbCnvSvc.hpp:
+    [r 1.3,2006-08-03,itglp] Dropped 'generic' handleException
+    [r 1.2,2006-08-02,itglp] Added a virtual handleException method - see OraCnvSvc
+  * CASTOR2/castor/db/analyze/admin.sql:
+    [r 1.3,2006-07-17,itglp] Added link to Oracle session handling (not SQL but admin related...)
+  * CASTOR2/castor/db/analyze/cleanDiskCopyReplicas.sql:
+    [r 1.6,2006-07-13,sponcec3] undo previous commit
+    [r 1.5,2006-07-13,sponcec3] Fixed nullGCPolicy so that Invalid files are deleted
+  * CASTOR2/castor/db/analyze/config.sql:
+    [r 1.3,2006-05-09,itglp] Enhanced query on the file systems
+  * CASTOR2/castor/db/castor_oracle_drop.sql:
+    [r1.25,2006-08-18,gtaur] try for response modifications
+    [r1.22,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.21,2006-07-13,sponcec3] Fixed nullGCPolicy so that Invalid files are deleted
+    [r1.20,2006-06-12,itglp] Imported latest fixes in the SQL code (oracleTrailer.sql rev 1.274)
+    [r1.19,2006-05-29,itglp] Removed a DROP INDEX statement leading to errors
+    [r1.18,2006-05-10,itglp] Added field repackVid to SubRequest (on behalf of Felix)
+  * CASTOR2/castor/db/castor_postgres_create.sql:
+    [r1.15,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.14,2006-07-13,sponcec3] Fixed nullGCPolicy so that Invalid files are deleted
+    [r1.13,2006-05-29,itglp] Imported modifications in oracleTrailer.sql up to version 1.267
+    [r1.12,2006-05-10,itglp] Added field repackVid to SubRequest (on behalf of Felix)
+  * CASTOR2/castor/db/castor_postgres_drop.sql:
+    [r 1.7,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.6,2006-07-13,sponcec3] Fixed nullGCPolicy so that Invalid files are deleted
+  * CASTOR2/castor/db/cnv/DbBaseAddressCnv.cpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbBaseAddressCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbCastorFileCnv.cpp:
+    [r 1.7,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.6,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbCastorFileCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbClientCnv.cpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbClientCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbClientIdentificationCnv.cpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbClientIdentificationCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbDeviceGroupNameCnv.cpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbDeviceGroupNameCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbDisk2DiskCopyDoneRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbDisk2DiskCopyDoneRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbDiskCopyCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbDiskCopyCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbDiskPoolCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbDiskPoolCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbDiskPoolQueryCnv.cpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbDiskPoolQueryCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbDiskServerCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbDiskServerCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbErrorHistoryCnv.cpp:
+    [r 1.7,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.6,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbErrorHistoryCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbFileClassCnv.cpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbFileClassCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbFileSystemCnv.cpp:
+    [r 1.7,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.6,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbFileSystemCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbFiles2DeleteCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbFiles2DeleteCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbFilesDeletedCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbFilesDeletedCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbFilesDeletionFailedCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbFilesDeletionFailedCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbGCFileCnv.cpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbGCFileCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbGCLocalFileCnv.cpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbGCLocalFileCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbGetUpdateDoneCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbGetUpdateDoneCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbGetUpdateFailedCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbGetUpdateFailedCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbGetUpdateStartRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbGetUpdateStartRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbMoverCloseRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbMoverCloseRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbPutDoneStartCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbPutDoneStartCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbPutFailedCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbPutFailedCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbPutStartRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbPutStartRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbQueryParameterCnv.cpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbQueryParameterCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbRepackRequestCnv.cpp:
+    [r 1.9,2006-09-06,felixehm] added pool name for repacking tape pools
+    [r 1.8,2006-08-18,gtaur] try for response modifications
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-29,felixehm] Changed field pool->serviceclass name.
+    [r 1.5,2006-05-29,felixehm] 
+    [r 1.5,2006-05-29,felixehm] This is the service class to where the file have to be written to. It is not
+    [r 1.5,2006-05-29,felixehm] possible to specify directly the target tapes or tapepools, but we can use
+    [r 1.5,2006-05-29,felixehm] the information stored in the service classes.
+    [r 1.5,2006-05-29,felixehm] 
+    [r 1.5,2006-05-29,felixehm] By default, the files are written to the tapepool belonging to the repack
+    [r 1.5,2006-05-29,felixehm] service class specified in the castor config file.
+  * CASTOR2/castor/db/cnv/DbRepackRequestCnv.hpp:
+    [r 1.8,2006-08-18,gtaur] try for response modifications
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-29,felixehm] Changed field pool->serviceclass name.
+    [r 1.5,2006-05-29,felixehm] 
+    [r 1.5,2006-05-29,felixehm] This is the service class to where the file have to be written to. It is not
+    [r 1.5,2006-05-29,felixehm] possible to specify directly the target tapes or tapepools, but we can use
+    [r 1.5,2006-05-29,felixehm] the information stored in the service classes.
+    [r 1.5,2006-05-29,felixehm] 
+    [r 1.5,2006-05-29,felixehm] By default, the files are written to the tapepool belonging to the repack
+    [r 1.5,2006-05-29,felixehm] service class specified in the castor config file.
+  * CASTOR2/castor/db/cnv/DbRepackSegmentCnv.cpp:
+    [r 1.8,2006-08-18,gtaur] try for response modifications
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-22,felixehm] Added new attribute : copyno
+    [r 1.5,2006-05-22,felixehm] This is important for repacking 1 file with two different tapecopy at one time
+    [r 1.5,2006-05-22,felixehm] The copyno is also part of an index with the fileid in the repack DB.
+  * CASTOR2/castor/db/cnv/DbRepackSegmentCnv.hpp:
+    [r 1.8,2006-08-18,gtaur] try for response modifications
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-22,felixehm] Added new attribute : copyno
+    [r 1.5,2006-05-22,felixehm] This is important for repacking 1 file with two different tapecopy at one time
+    [r 1.5,2006-05-22,felixehm] The copyno is also part of an index with the fileid in the repack DB.
+  * CASTOR2/castor/db/cnv/DbRepackSubRequestCnv.cpp:
+    [r 1.9,2006-08-18,gtaur] try for response modifications
+    [r 1.7,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.6,2006-05-22,felixehm] Added new fields for statistics. The Repacking process is monitored by the Repack Monitor
+    [r 1.6,2006-05-22,felixehm] and the numbers of staging and migrating files are stored with the RepackSubRequest.
+    [r 1.6,2006-05-22,felixehm] The User (and Repack itself) is now able to check the status of a repack process.
+  * CASTOR2/castor/db/cnv/DbRepackSubRequestCnv.hpp:
+    [r 1.9,2006-08-18,gtaur] try for response modifications
+    [r 1.7,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.6,2006-05-22,felixehm] Added new fields for statistics. The Repacking process is monitored by the Repack Monitor
+    [r 1.6,2006-05-22,felixehm] and the numbers of staging and migrating files are stored with the RepackSubRequest.
+    [r 1.6,2006-05-22,felixehm] The User (and Repack itself) is now able to check the status of a repack process.
+  * CASTOR2/castor/db/cnv/DbSegmentCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbSegmentCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbSetFileGCWeightCnv.cpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbSetFileGCWeightCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageAbortRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageAbortRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageFileQueryRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageFileQueryRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageFindRequestRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageFindRequestRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageGetNextRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageGetNextRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageGetRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageGetRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStagePrepareToGetRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStagePrepareToGetRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStagePrepareToPutRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStagePrepareToPutRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStagePrepareToUpdateRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStagePrepareToUpdateRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStagePutDoneRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStagePutDoneRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStagePutNextRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStagePutNextRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStagePutRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStagePutRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageReleaseFilesRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageReleaseFilesRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageRequestQueryRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageRequestQueryRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageRmRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageRmRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageUpdateNextRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageUpdateNextRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageUpdateRequestCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStageUpdateRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStreamCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbStreamCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbSubRequestCnv.cpp:
+    [r 1.9,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.8,2006-05-10,itglp] Fixed generated code for repackVid (broken by previous commit)
+    [r 1.7,2006-05-10,itglp] Added field repackVid to SubRequest (on behalf of Felix)
+    [r 1.6,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+    [r1.11,2006-08-18,felixehm] Removed repackVid from SubRequest
+    [r1.11,2006-08-18,felixehm] new solution will be a RepackRequest for the Stager
+  * CASTOR2/castor/db/cnv/DbSubRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbSvcClassCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbSvcClassCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbTapeAccessSpecificationCnv.cpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbTapeAccessSpecificationCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbTapeCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbTapeCnv.hpp:
+    [r 1.4,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.3,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbTapeCopyCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbTapeCopyCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbTapeDriveCnv.cpp:
+    [r 1.9,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.8,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbTapeDriveCnv.hpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbTapeDriveCompatibilityCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbTapeDriveCompatibilityCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbTapeDriveDedicationCnv.cpp:
+    [r 1.9,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+    [r1.10,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+  * CASTOR2/castor/db/cnv/DbTapeDriveDedicationCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbTapePoolCnv.cpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbTapePoolCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbTapeRequestCnv.cpp:
+    [r 1.7,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.6,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbTapeRequestCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbTapeServerCnv.cpp:
+    [r 1.7,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.6,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/DbTapeServerCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/cnv/Imakefile:
+    [r 1.7,2006-08-25,felixehm] Added new Stager Request : StageRepackRequest
+  * CASTOR2/castor/db/newora/OraCnvSvc.cpp:
+    [r 1.9,2006-08-03,itglp] Moved handleException() to OraCommonSvc
+    [r 1.8,2006-08-02,itglp] One more fix for handleException
+    [r 1.7,2006-08-02,itglp] Imported modifications to recover after a dropped db connection
+    [r1.10,2006-08-03,itglp] handleException() has finally found his place in ... OraCnvSvc
+  * CASTOR2/castor/db/newora/OraCnvSvc.hpp:
+    [r 1.5,2006-08-03,itglp] handleException() has finally found his place in ... OraCnvSvc
+    [r 1.4,2006-08-03,itglp] Moved handleException() to OraCommonSvc
+    [r 1.3,2006-08-02,itglp] One more fix for handleException
+    [r 1.2,2006-08-02,itglp] Imported modifications to recover after a dropped db connection
+  * CASTOR2/castor/db/newora/OraCommonSvc.cpp:
+    [r 1.9,2006-08-03,itglp] handleException() has finally found his place in ... OraCnvSvc
+    [r 1.8,2006-08-03,itglp] Moved handleException() to OraCommonSvc
+    [r 1.7,2006-08-02,itglp] One more fix for handleException
+    [r 1.6,2006-08-02,itglp] Imported modifications to recover after a dropped db connection
+  * CASTOR2/castor/db/newora/OraCommonSvc.hpp:
+    [r 1.8,2006-08-03,itglp] handleException() has finally found his place in ... OraCnvSvc
+    [r 1.7,2006-08-03,itglp] Moved handleException() to OraCommonSvc
+    [r 1.6,2006-08-02,itglp] One more fix for handleException
+    [r 1.5,2006-08-02,itglp] Imported modifications to recover after a dropped db connection
+  * CASTOR2/castor/db/newora/OraResultSet.cpp:
+    [r 1.2,2006-08-02,itglp] Imported modifications to recover after a dropped db connection
+  * CASTOR2/castor/db/newora/OraStatement.cpp:
+    [r 1.3,2006-08-02,itglp] Imported modifications to recover after a dropped db connection
+  * CASTOR2/castor/db/ora/Imakefile:
+    [r1.60,2006-08-25,felixehm] Added new Stager Request : StageRepackRequest
+  * CASTOR2/castor/db/ora/OraBaseAddressCnv.cpp:
+    [r 1.9,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+    [r1.13,2006-08-02,itglp] One more fix for handleException
+    [r1.10,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+  * CASTOR2/castor/db/ora/OraBaseAddressCnv.hpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraBaseObj.cpp:
+    [r 1.9,2006-08-03,gtaur] now it compiles also without new ora
+    [r 1.8,2006-08-02,itglp] Moved handleException() from OraBaseObj to OraCnvSvc
+    [r 1.7,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+  * CASTOR2/castor/db/ora/OraBaseObj.hpp:
+    [r 1.8,2006-08-03,gtaur] now it compiles also without new ora
+    [r 1.7,2006-08-02,gtaur] solved conflict with giuseppe ...
+    [r 1.6,2006-08-02,itglp] Moved handleException() from OraBaseObj to OraCnvSvc
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+  * CASTOR2/castor/db/ora/OraCastorFileCnv.cpp:
+    [r1.45,2006-08-02,itglp] One more fix for handleException
+    [r1.42,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.41,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraCastorFileCnv.hpp:
+    [r1.19,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.18,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraCleanSvc.cpp:
+    [r 1.7,2006-08-02,gtaur] solved conflict with giuseppe ...
+    [r 1.6,2006-08-02,itglp] Moved handleException() from OraBaseObj to OraCnvSvc
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+  * CASTOR2/castor/db/ora/OraCleanSvc.hpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+  * CASTOR2/castor/db/ora/OraClientCnv.cpp:
+    [r1.36,2006-08-02,itglp] One more fix for handleException
+    [r1.33,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.32,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraClientCnv.hpp:
+    [r1.18,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.17,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraClientIdentificationCnv.cpp:
+    [r 1.9,2006-08-02,itglp] One more fix for handleException
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraClientIdentificationCnv.hpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraCnvSvc.cpp:
+    [r1.59,2006-08-03,gtaur] now it compiles also without new ora
+    [r1.58,2006-08-03,gtaur] back to the previous one
+    [r1.57,2006-08-02,itglp] One more fix for handleException
+    [r1.56,2006-08-02,gtaur] solved conflict with giuseppe ...
+    [r1.55,2006-08-02,itglp] Moved handleException() from OraBaseObj to OraCnvSvc
+    [r1.54,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+  * CASTOR2/castor/db/ora/OraCnvSvc.hpp:
+    [r1.26,2006-08-03,itglp] Once again removed handleException...
+    [r1.25,2006-08-03,gtaur] double declaration of handleException removed
+    [r1.24,2006-08-02,itglp] One more fix for handleException
+    [r1.23,2006-08-02,gtaur] solved conflict with giuseppe ...
+    [r1.22,2006-08-02,itglp] Moved handleException() from OraBaseObj to OraCnvSvc
+    [r1.21,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+  * CASTOR2/castor/db/ora/OraCommonSvc.cpp:
+    [r 1.9,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.10,2006-08-02,itglp] Moved handleException() from OraBaseObj to OraCnvSvc
+  * CASTOR2/castor/db/ora/OraDeviceGroupNameCnv.cpp:
+    [r 1.9,2006-08-02,itglp] One more fix for handleException
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraDeviceGroupNameCnv.hpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraDisk2DiskCopyDoneRequestCnv.cpp:
+    [r1.16,2006-08-02,itglp] One more fix for handleException
+    [r1.13,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.12,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraDisk2DiskCopyDoneRequestCnv.hpp:
+    [r 1.8,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.7,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraDiskCopyCnv.cpp:
+    [r1.46,2006-08-02,itglp] One more fix for handleException
+    [r1.43,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.42,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraDiskCopyCnv.hpp:
+    [r1.19,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.18,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraDiskPoolCnv.cpp:
+    [r1.41,2006-08-02,itglp] One more fix for handleException
+    [r1.38,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.37,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraDiskPoolCnv.hpp:
+    [r1.18,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.17,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraDiskPoolQueryCnv.cpp:
+    [r 1.6,2006-08-02,itglp] One more fix for handleException
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraDiskPoolQueryCnv.hpp:
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraDiskServerCnv.cpp:
+    [r1.38,2006-08-02,itglp] One more fix for handleException
+    [r1.35,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.34,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraDiskServerCnv.hpp:
+    [r1.16,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.15,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraErrorHistoryCnv.cpp:
+    [r 1.8,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.7,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+    [r1.11,2006-08-02,itglp] One more fix for handleException
+  * CASTOR2/castor/db/ora/OraErrorHistoryCnv.hpp:
+    [r 1.7,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.6,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraFSSvc.cpp:
+    [r 1.5,2006-08-02,gtaur] handle Exception now in OraCnvSvc
+    [r 1.4,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+  * CASTOR2/castor/db/ora/OraFileClassCnv.cpp:
+    [r1.32,2006-08-02,itglp] One more fix for handleException
+    [r1.29,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.28,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraFileClassCnv.hpp:
+    [r1.18,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.17,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraFileSystemCnv.cpp:
+    [r1.45,2006-08-02,itglp] One more fix for handleException
+    [r1.42,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.41,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraFileSystemCnv.hpp:
+    [r1.17,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.16,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraFiles2DeleteCnv.cpp:
+    [r 1.9,2006-08-02,itglp] One more fix for handleException
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraFiles2DeleteCnv.hpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraFilesDeletedCnv.cpp:
+    [r 1.9,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.8,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+    [r1.12,2006-08-02,itglp] One more fix for handleException
+  * CASTOR2/castor/db/ora/OraFilesDeletedCnv.hpp:
+    [r 1.7,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.6,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraFilesDeletionFailedCnv.cpp:
+    [r 1.9,2006-08-02,itglp] One more fix for handleException
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraFilesDeletionFailedCnv.hpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraGCFileCnv.cpp:
+    [r 1.8,2006-08-02,itglp] One more fix for handleException
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraGCFileCnv.hpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraGCLocalFileCnv.cpp:
+    [r 1.9,2006-08-02,itglp] One more fix for handleException
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraGCLocalFileCnv.hpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraGetUpdateDoneCnv.cpp:
+    [r 1.9,2006-08-02,itglp] One more fix for handleException
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraGetUpdateDoneCnv.hpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraGetUpdateFailedCnv.cpp:
+    [r 1.9,2006-08-02,itglp] One more fix for handleException
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraGetUpdateFailedCnv.hpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraGetUpdateStartRequestCnv.cpp:
+    [r1.18,2006-08-02,itglp] One more fix for handleException
+    [r1.15,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.14,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraGetUpdateStartRequestCnv.hpp:
+    [r 1.8,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.7,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraJobSvc.cpp:
+    [r 1.9,2006-07-13,sponcec3] Fixed nullGCPolicy so that Invalid files are deleted
+    [r1.14,2006-08-02,gtaur] handle Exception now in OraCnvSvc
+    [r1.13,2006-08-02,itglp] Moved handleException() from OraBaseObj to OraCnvSvc
+    [r1.12,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.11,2006-07-21,sponcec3] Used new error code SegmentNotAccessible
+    [r1.10,2006-07-13,sponcec3] undo previous commit
+  * CASTOR2/castor/db/ora/OraMoverCloseRequestCnv.cpp:
+    [r1.18,2006-08-02,itglp] One more fix for handleException
+    [r1.15,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.14,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraMoverCloseRequestCnv.hpp:
+    [r 1.8,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.7,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraPutDoneStartCnv.cpp:
+    [r 1.8,2006-08-02,itglp] One more fix for handleException
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraPutDoneStartCnv.hpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraPutFailedCnv.cpp:
+    [r 1.9,2006-08-02,itglp] One more fix for handleException
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraPutFailedCnv.hpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraPutStartRequestCnv.cpp:
+    [r1.18,2006-08-02,itglp] One more fix for handleException
+    [r1.15,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.14,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraPutStartRequestCnv.hpp:
+    [r 1.8,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.7,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraQueryParameterCnv.cpp:
+    [r 1.8,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.7,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+    [r1.11,2006-08-02,itglp] One more fix for handleException
+  * CASTOR2/castor/db/ora/OraQueryParameterCnv.hpp:
+    [r 1.7,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.6,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraQuerySvc.cpp:
+    [r1.37,2006-08-02,gtaur] handle Exception now in OraCnvSvc
+    [r1.36,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.35,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraRepackRequestCnv.cpp:
+    [r 1.9,2006-09-06,felixehm] added pool name for repacking tape pools
+    [r 1.7,2006-08-02,itglp] One more fix for handleException
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-29,felixehm] Changed field pool->serviceclass name.
+    [r 1.4,2006-05-29,felixehm] 
+    [r 1.4,2006-05-29,felixehm] This is the service class to where the file have to be written to. It is not
+    [r 1.4,2006-05-29,felixehm] possible to specify directly the target tapes or tapepools, but we can use
+    [r 1.4,2006-05-29,felixehm] the information stored in the service classes.
+    [r 1.4,2006-05-29,felixehm] 
+    [r 1.4,2006-05-29,felixehm] By default, the files are written to the tapepool belonging to the repack
+    [r 1.4,2006-05-29,felixehm] service class specified in the castor config file.
+  * CASTOR2/castor/db/ora/OraRepackRequestCnv.hpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-29,felixehm] Changed field pool->serviceclass name.
+    [r 1.4,2006-05-29,felixehm] 
+    [r 1.4,2006-05-29,felixehm] This is the service class to where the file have to be written to. It is not
+    [r 1.4,2006-05-29,felixehm] possible to specify directly the target tapes or tapepools, but we can use
+    [r 1.4,2006-05-29,felixehm] the information stored in the service classes.
+    [r 1.4,2006-05-29,felixehm] 
+    [r 1.4,2006-05-29,felixehm] By default, the files are written to the tapepool belonging to the repack
+    [r 1.4,2006-05-29,felixehm] service class specified in the castor config file.
+  * CASTOR2/castor/db/ora/OraRepackSegmentCnv.cpp:
+    [r 1.7,2006-08-02,itglp] One more fix for handleException
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-22,felixehm] Added new attribute : copyno
+    [r 1.4,2006-05-22,felixehm] This is important for repacking 1 file with two different tapecopy at one time
+    [r 1.4,2006-05-22,felixehm] The copyno is also part of an index with the fileid in the repack DB.
+  * CASTOR2/castor/db/ora/OraRepackSegmentCnv.hpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-22,felixehm] Added new attribute : copyno
+    [r 1.4,2006-05-22,felixehm] This is important for repacking 1 file with two different tapecopy at one time
+    [r 1.4,2006-05-22,felixehm] The copyno is also part of an index with the fileid in the repack DB.
+  * CASTOR2/castor/db/ora/OraRepackSubRequestCnv.cpp:
+    [r 1.9,2006-08-02,itglp] One more fix for handleException
+    [r 1.7,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.6,2006-05-22,felixehm] Added new fields for statistics. The Repacking process is monitored by the Repack Monitor
+    [r 1.6,2006-05-22,felixehm] and the numbers of staging and migrating files are stored with the RepackSubRequest.
+    [r 1.6,2006-05-22,felixehm] The User (and Repack itself) is now able to check the status of a repack process.
+  * CASTOR2/castor/db/ora/OraRepackSubRequestCnv.hpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-22,felixehm] Added new fields for statistics. The Repacking process is monitored by the Repack Monitor
+    [r 1.5,2006-05-22,felixehm] and the numbers of staging and migrating files are stored with the RepackSubRequest.
+    [r 1.5,2006-05-22,felixehm] The User (and Repack itself) is now able to check the status of a repack process.
+  * CASTOR2/castor/db/ora/OraSegmentCnv.cpp:
+    [r1.39,2006-08-02,itglp] One more fix for handleException
+    [r1.36,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.35,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraSegmentCnv.hpp:
+    [r1.15,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.14,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraSetFileGCWeightCnv.cpp:
+    [r 1.6,2006-08-02,itglp] One more fix for handleException
+    [r 1.3,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.2,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraSetFileGCWeightCnv.hpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageAbortRequestCnv.cpp:
+    [r1.26,2006-08-02,itglp] One more fix for handleException
+    [r1.23,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.22,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageAbortRequestCnv.hpp:
+    [r 1.9,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+    [r1.10,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+  * CASTOR2/castor/db/ora/OraStageFileQueryRequestCnv.cpp:
+    [r1.30,2006-08-02,itglp] One more fix for handleException
+    [r1.27,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.26,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageFileQueryRequestCnv.hpp:
+    [r1.12,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.11,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageFindRequestRequestCnv.cpp:
+    [r1.29,2006-08-02,itglp] One more fix for handleException
+    [r1.26,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.25,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageFindRequestRequestCnv.hpp:
+    [r1.12,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.11,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageGetNextRequestCnv.cpp:
+    [r1.31,2006-08-02,itglp] One more fix for handleException
+    [r1.28,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.27,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageGetNextRequestCnv.hpp:
+    [r1.15,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.14,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageGetRequestCnv.cpp:
+    [r1.30,2006-08-02,itglp] One more fix for handleException
+    [r1.27,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.26,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageGetRequestCnv.hpp:
+    [r1.11,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.10,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStagePrepareToGetRequestCnv.cpp:
+    [r1.30,2006-08-02,itglp] One more fix for handleException
+    [r1.27,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.26,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStagePrepareToGetRequestCnv.hpp:
+    [r1.11,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.10,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStagePrepareToPutRequestCnv.cpp:
+    [r1.30,2006-08-02,itglp] One more fix for handleException
+    [r1.27,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.26,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStagePrepareToPutRequestCnv.hpp:
+    [r1.11,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.10,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStagePrepareToUpdateRequestCnv.cpp:
+    [r1.30,2006-08-02,itglp] One more fix for handleException
+    [r1.27,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.26,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStagePrepareToUpdateRequestCnv.hpp:
+    [r1.11,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.10,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStagePutDoneRequestCnv.cpp:
+    [r1.32,2006-08-02,itglp] One more fix for handleException
+    [r1.29,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.28,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStagePutDoneRequestCnv.hpp:
+    [r1.12,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.11,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStagePutNextRequestCnv.cpp:
+    [r1.22,2006-08-02,itglp] One more fix for handleException
+    [r1.19,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.18,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStagePutNextRequestCnv.hpp:
+    [r 1.8,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.7,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStagePutRequestCnv.cpp:
+    [r1.30,2006-08-02,itglp] One more fix for handleException
+    [r1.27,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.26,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStagePutRequestCnv.hpp:
+    [r1.11,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.10,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageReleaseFilesRequestCnv.cpp:
+    [r1.24,2006-08-02,itglp] One more fix for handleException
+    [r1.21,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.20,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageReleaseFilesRequestCnv.hpp:
+    [r 1.8,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.7,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageRequestQueryRequestCnv.cpp:
+    [r1.30,2006-08-02,itglp] One more fix for handleException
+    [r1.27,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.26,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageRequestQueryRequestCnv.hpp:
+    [r1.12,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.11,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageRmRequestCnv.cpp:
+    [r1.30,2006-08-02,itglp] One more fix for handleException
+    [r1.27,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.26,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageRmRequestCnv.hpp:
+    [r1.11,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.10,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageUpdateNextRequestCnv.cpp:
+    [r1.22,2006-08-02,itglp] One more fix for handleException
+    [r1.19,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.18,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageUpdateNextRequestCnv.hpp:
+    [r 1.8,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.7,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageUpdateRequestCnv.cpp:
+    [r1.30,2006-08-02,itglp] One more fix for handleException
+    [r1.27,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.26,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStageUpdateRequestCnv.hpp:
+    [r1.11,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.10,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStagerSvc.cpp:
+    [r1.187,2006-08-18,felixehm] Removed repackVid from SubRequest
+    [r1.187,2006-08-18,felixehm] new solution will be a RepackRequest for the Stager
+    [r1.185,2006-08-02,gtaur] handle Exception now in OraCnvSvc
+    [r1.184,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.183,2006-05-11,felixehm] Added new Stream converter for old SubRequests
+    [r1.183,2006-05-11,felixehm] changed sql Procedure filerecalled:
+    [r1.183,2006-05-11,felixehm] whenever a file is staged in as a repack request (the new subrequest field
+    [r1.183,2006-05-11,felixehm] repackvid is set with the origin tape), the diskcopy status is
+    [r1.183,2006-05-11,felixehm] directly put into CANBEMIGRATED.
+  * CASTOR2/castor/db/ora/OraStreamCnv.cpp:
+    [r1.53,2006-08-02,itglp] One more fix for handleException
+    [r1.50,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.49,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraStreamCnv.hpp:
+    [r1.19,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.18,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraSubRequestCnv.cpp:
+    [r1.49,2006-08-18,felixehm] Removed repackVid from SubRequest
+    [r1.49,2006-08-18,felixehm] new solution will be a RepackRequest for the Stager
+    [r1.47,2006-08-02,itglp] One more fix for handleException
+    [r1.44,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.43,2006-05-10,itglp] Fixed generated code for repackVid (broken by previous commit)
+    [r1.42,2006-05-10,itglp] Added field repackVid to SubRequest (on behalf of Felix)
+    [r1.41,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraSubRequestCnv.hpp:
+    [r1.19,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.18,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraSvcClassCnv.cpp:
+    [r1.45,2006-08-02,itglp] One more fix for handleException
+    [r1.42,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.41,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraSvcClassCnv.hpp:
+    [r1.18,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.17,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraTapeAccessSpecificationCnv.cpp:
+    [r 1.8,2006-08-02,itglp] One more fix for handleException
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraTapeAccessSpecificationCnv.hpp:
+    [r 1.8,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.7,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraTapeCnv.cpp:
+    [r1.49,2006-08-02,itglp] One more fix for handleException
+    [r1.46,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.45,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraTapeCnv.hpp:
+    [r1.22,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.21,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraTapeCopyCnv.cpp:
+    [r1.51,2006-08-02,itglp] One more fix for handleException
+    [r1.48,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.47,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraTapeCopyCnv.hpp:
+    [r1.18,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.17,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraTapeDriveCnv.cpp:
+    [r1.25,2006-08-02,itglp] One more fix for handleException
+    [r1.22,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.21,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraTapeDriveCnv.hpp:
+    [r1.16,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.15,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraTapeDriveCompatibilityCnv.cpp:
+    [r 1.8,2006-08-02,itglp] One more fix for handleException
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraTapeDriveCompatibilityCnv.hpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraTapeDriveDedicationCnv.cpp:
+    [r 1.9,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.8,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+    [r1.12,2006-08-02,itglp] One more fix for handleException
+  * CASTOR2/castor/db/ora/OraTapeDriveDedicationCnv.hpp:
+    [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.4,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraTapePoolCnv.cpp:
+    [r1.44,2006-08-02,itglp] One more fix for handleException
+    [r1.41,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.40,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraTapePoolCnv.hpp:
+    [r1.19,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.18,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraTapeRequestCnv.cpp:
+    [r1.16,2006-08-02,itglp] One more fix for handleException
+    [r1.13,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r1.12,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraTapeRequestCnv.hpp:
+    [r 1.9,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+    [r1.10,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+  * CASTOR2/castor/db/ora/OraTapeServerCnv.cpp:
+    [r 1.9,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.8,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+    [r1.12,2006-08-02,itglp] One more fix for handleException
+  * CASTOR2/castor/db/ora/OraTapeServerCnv.hpp:
+    [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.5,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/db/ora/OraTapeSvc.cpp:
+    [r 1.9,2006-08-02,gtaur] handle Exception now in OraCnvSvc
+    [r 1.8,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+    [r 1.7,2006-05-15,felixehm] Altered error message in checkFileforRepack() if more than one candidate
+    [r 1.7,2006-05-15,felixehm] is found. This should never(!) happen.
+    [r 1.7,2006-05-15,felixehm] The maximum number of files for repack purpose in the stager catalogue, which
+    [r 1.7,2006-05-15,felixehm] have a diskcopy in CANBEMIGRATED is 1!
+    [r 1.6,2006-05-11,felixehm] sql Statement corrected, the subrequest.repackvid has to be null, so
+    [r 1.6,2006-05-11,felixehm] normal" files can be staged.
+    [r 1.5,2006-05-11,felixehm] Added new function to retrieve a subrequest, which belongs to a "repack" file.
+    [r 1.5,2006-05-11,felixehm] This is needed for the rtcpclientd (rtcpcldCatalogueInterface.c) to check during
+    [r 1.5,2006-05-11,felixehm] a migration, if the written segments have to replace or to be added in the NS.
+    [r1.13,2006-08-18,felixehm] Commented checkFileForRepack code,now returning always NULL.
+    [r1.13,2006-08-18,felixehm] This is temporariliy due to HEAD release of CVS code !!!
+    [r1.13,2006-08-18,felixehm] new solution: no repackvid field in future
+    [r1.12,2006-08-11,felixehm] removed method checkExistingTapeCopy
+    [r1.11,2006-08-07,felixehm] modified checkFileForRepack SQL Statement: the subrequest is archived when
+    [r1.11,2006-08-07,felixehm] statement was successfull.
+    [r1.11,2006-08-07,felixehm] 
+    [r1.11,2006-08-07,felixehm] added method checkExistingTapeCopy:
+    [r1.11,2006-08-07,felixehm] used in migration part (MigHunter), when TapeCopies are added to Streams
+    [r1.11,2006-08-07,felixehm] to ensure to have 2 TapeCopies on one tape.
+  * CASTOR2/castor/db/ora/OraTapeSvc.hpp:
+    [r 1.6,2006-08-11,felixehm] removed method checkExistingTapeCopy
+    [r 1.5,2006-08-07,felixehm] modified checkFileForRepack SQL Statement: the subrequest is archived when
+    [r 1.5,2006-08-07,felixehm] statement was successfull.
+    [r 1.5,2006-08-07,felixehm] 
+    [r 1.5,2006-08-07,felixehm] added method checkExistingTapeCopy:
+    [r 1.5,2006-08-07,felixehm] used in migration part (MigHunter), when TapeCopies are added to Streams
+    [r 1.5,2006-08-07,felixehm] to ensure to have 2 TapeCopies on one tape.
+    [r 1.4,2006-05-11,felixehm] Added new function to retrieve a subrequest, which belongs to a "repack" file.
+    [r 1.4,2006-05-11,felixehm] This is needed for the rtcpclientd (rtcpcldCatalogueInterface.c) to check during
+    [r 1.4,2006-05-11,felixehm] a migration, if the written segments have to replace or to be added in the NS.
+  * CASTOR2/castor/db/ora/OraVdqmSvc.cpp:
+    [r1.44,2006-08-18,gtaur] try for response modifications
+    [r1.42,2006-08-02,gtaur] handle Exception now in OraCnvSvc
+    [r1.41,2006-08-02,gtaur] solved conflict with giuseppe ...
+    [r1.40,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
+  * CASTOR2/castor/db/oracleHeader_drop.sql:
+    [r 1.6,2006-05-29,itglp] Removed a DROP INDEX statement leading to errors
+    [r 1.5,2006-05-09,itglp] First release of an improved garbage collector, with a single db job and
+    [r 1.5,2006-05-09,itglp] a queue of FileSystems to be garbage collected stored in the db.
+  * CASTOR2/castor/dlf/Dlf.cpp:
+    [r 1.3,2006-06-13,waldron] updated to use new DLF client api
+  * CASTOR2/castor/dlf/Dlf.hpp:
+    [r 1.2,2006-06-13,waldron] updated to use new DLF client api
+  * CASTOR2/castor/dlf/Param.hpp:
+    [r 1.4,2006-06-13,waldron] updated to use new DLF client api
+  * CASTOR2/castor/dlfbuf.h:
+    [r1.12,2006-06-13,waldron] updated to use new DLF client api
+  * CASTOR2/castor/gc/GcDaemon.cpp:
+    [r1.32,2006-07-18,waldron] dlf api integration
+  * CASTOR2/castor/io/StreamAbortResponseCnv.cpp:
+    [r 1.8,2006-08-18,gtaur] modifications done to deal with the new response.
+  * CASTOR2/castor/io/StreamBaseCnv.cpp:
+    [r1.14,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/io/StreamBaseCnv.hpp:
+    [r1.10,2006-05-02,itglp] Implemented fillObj() with autocommit parameter as in fillRep()
+  * CASTOR2/castor/io/StreamBasicResponseCnv.cpp:
+    [r 1.7,2006-08-18,gtaur] modifications done to deal with the new response.
+  * CASTOR2/castor/io/StreamDiskPoolQueryResponseCnv.cpp:
+    [r 1.4,2006-08-18,gtaur] modifications done to deal with the new response.
+  * CASTOR2/castor/io/StreamEndResponseCnv.cpp:
+    [r1.18,2006-08-18,gtaur] modifications done to deal with the new response.
+  * CASTOR2/castor/io/StreamFileQryResponseCnv.cpp:
+    [r 1.5,2006-08-18,gtaur] modifications done to deal with the new response.
+  * CASTOR2/castor/io/StreamFileResponseCnv.cpp:
+    [r1.21,2006-08-18,gtaur] modifications done to deal with the new response.
+  * CASTOR2/castor/io/StreamFindReqResponseCnv.cpp:
+    [r 1.8,2006-08-18,gtaur] modifications done to deal with the new response.
+  * CASTOR2/castor/io/StreamGCFilesResponseCnv.cpp:
+    [r 1.7,2006-08-18,gtaur] modifications done to deal with the new response.
+  * CASTOR2/castor/io/StreamGetUpdateStartResponseCnv.cpp:
+    [r1.10,2006-08-18,gtaur] modifications done to deal with the new response.
+  * CASTOR2/castor/io/StreamGetUpdateStartResponseCnv.hpp:
+  * CASTOR2/castor/io/StreamIOResponseCnv.cpp:
+    [r 1.9,2006-08-18,gtaur] modifications done to deal with the new response.
+  * CASTOR2/castor/io/StreamRepackAckCnv.cpp:
+    [r 1.3,2006-08-18,gtaur] modifications done to deal with the new response.
+  * CASTOR2/castor/io/StreamRepackAckCnv.hpp:
+    [r 1.3,2006-08-18,gtaur] modifications done to deal with the new response.
+  * CASTOR2/castor/io/StreamRepackRequestCnv.cpp:
+    [r 1.7,2006-09-06,felixehm] added pool name for repacking tape pools
+    [r 1.6,2006-08-18,gtaur] modifications done to deal with the new response.
+    [r 1.4,2006-05-29,felixehm] Changed field pool->serviceclass name.
+    [r 1.4,2006-05-29,felixehm] 
+    [r 1.4,2006-05-29,felixehm] This is the service class to where the file have to be written to. It is not
+    [r 1.4,2006-05-29,felixehm] possible to specify directly the target tapes or tapepools, but we can use
+    [r 1.4,2006-05-29,felixehm] the information stored in the service classes.
+    [r 1.4,2006-05-29,felixehm] 
+    [r 1.4,2006-05-29,felixehm] By default, the files are written to the tapepool belonging to the repack
+    [r 1.4,2006-05-29,felixehm] service class specified in the castor config file.
+  * CASTOR2/castor/io/StreamRepackRequestCnv.hpp:
+    [r 1.6,2006-08-18,gtaur] modifications done to deal with the new response.
+    [r 1.4,2006-05-29,felixehm] Changed field pool->serviceclass name.
+    [r 1.4,2006-05-29,felixehm] 
+    [r 1.4,2006-05-29,felixehm] This is the service class to where the file have to be written to. It is not
+    [r 1.4,2006-05-29,felixehm] possible to specify directly the target tapes or tapepools, but we can use
+    [r 1.4,2006-05-29,felixehm] the information stored in the service classes.
+    [r 1.4,2006-05-29,felixehm] 
+    [r 1.4,2006-05-29,felixehm] By default, the files are written to the tapepool belonging to the repack
+    [r 1.4,2006-05-29,felixehm] service class specified in the castor config file.
+  * CASTOR2/castor/io/StreamRepackSubRequestCnv.cpp:
+    [r 1.7,2006-08-18,gtaur] modifications done to deal with the new response.
+    [r 1.5,2006-05-22,felixehm] Added new attributes for Streaming part.
+  * CASTOR2/castor/io/StreamRepackSubRequestCnv.hpp:
+    [r 1.5,2006-08-18,gtaur] modifications done to deal with the new response.
+  * CASTOR2/castor/io/StreamRequestQueryResponseCnv.cpp:
+    [r 1.8,2006-08-18,gtaur] modifications done to deal with the new response.
+  * CASTOR2/castor/io/StreamStartResponseCnv.cpp:
+    [r 1.8,2006-08-18,gtaur] modifications done to deal with the new response.
+  * CASTOR2/castor/io/StreamStringResponseCnv.cpp:
+    [r1.18,2006-08-18,gtaur] modifications done to deal with the new response.
+  * CASTOR2/castor/io/StreamSubRequestCnv.cpp:
+    [r1.27,2006-08-18,felixehm] Removed repackVid from SubRequest
+    [r1.27,2006-08-18,felixehm] new solution will be a RepackRequest for the Stager
+    [r1.24,2006-05-10,itglp] Fixed generated code for repackVid (broken by previous commit)
+    [r1.23,2006-05-10,itglp] Added field repackVid to SubRequest (on behalf of Felix)
+  * CASTOR2/castor/query/DiskPoolQueryResponse.cpp:
+    [r 1.6,2006-08-18,gtaur] try for response modifications
+    [r 1.5,2006-08-07,itglp] Revert these classes back to previous version, and make gencastor generate
+    [r 1.5,2006-08-07,itglp] the class with the correct clone() by adding the custom implementation in
+    [r 1.5,2006-08-07,itglp] the .cpp_clone files.
+  * CASTOR2/castor/query/DiskPoolQueryResponse.h:
+    [r 1.4,2006-08-18,gtaur] try for response modifications
+  * CASTOR2/castor/query/DiskPoolQueryResponseCInt.cpp:
+    [r 1.4,2006-08-18,gtaur] try for response modifications
+  * CASTOR2/castor/query/DiskServerDescription.cpp:
+    [r 1.6,2006-08-18,gtaur] try for response modifications
+    [r 1.5,2006-08-07,itglp] Revert these classes back to previous version, and make gencastor generate
+    [r 1.5,2006-08-07,itglp] the class with the correct clone() by adding the custom implementation in
+    [r 1.5,2006-08-07,itglp] the .cpp_clone files.
+  * CASTOR2/castor/repack/DatabaseHelper.cpp:
+    [r1.17,2006-08-14,felixehm] removed requestToDo (not needed any more)
+    [r1.17,2006-08-14,felixehm] fixed getTapeCopy method
+    [r1.17,2006-08-14,felixehm] added commits (try to solve Oracle error 'Too many cursors open')
+    [r1.16,2006-06-20,felixehm] The FOR UPDATE Statements however block other select statements, although
+    [r1.16,2006-06-20,felixehm] the method used the FOR UPDATE did a already a commit. A new try for CC is the new
+    [r1.16,2006-06-20,felixehm] lock und unlock method.
+    [r1.15,2006-06-02,felixehm] New functionality:
+    [r1.15,2006-06-02,felixehm] method to retrieve all SubRequests in a certain status at once.
+    [r1.15,2006-06-02,felixehm] method to put subrequests in archived state
+    [r1.15,2006-06-02,felixehm] method which is used internally by getSubRequests and getSubRequestsStatus
+    [r1.15,2006-06-02,felixehm] avoid of redundant code)
+    [r1.15,2006-06-02,felixehm] 
+    [r1.15,2006-06-02,felixehm] changed sql statements:
+    [r1.15,2006-06-02,felixehm] Added locking whenever a request or subrequest is to be
+    [r1.15,2006-06-02,felixehm] fetched due to complete crashes of the server.
+    [r1.15,2006-06-02,felixehm] 
+    [r1.15,2006-06-02,felixehm] getSubRequest returns now a full Object
+    [r1.15,2006-06-02,felixehm] filled with RepackRequest and Segments)
+    [r1.15,2006-06-02,felixehm] 
+    [r1.15,2006-06-02,felixehm] fixed some mem leaks
+    [r1.15,2006-06-02,felixehm] 
+    [r1.15,2006-06-02,felixehm] future use: added method for checking a specific TapeCopy
+    [r1.15,2006-06-02,felixehm] used, to avoid double entry for same tapecopy. (repacking one
+    [r1.15,2006-06-02,felixehm] file is allowed as long as it is another tapecopy)
+    [r1.14,2006-05-22,felixehm] fixed storing of segments
+    [r1.14,2006-05-22,felixehm] added new function: getTapeCopy which checks, if a tapecopy of a file
+    [r1.14,2006-05-22,felixehm] is already in the repack process (no double recall).
+    [r1.13,2006-05-04,felixehm] removed the stage_abortRequest from DB Helper.
+    [r1.13,2006-05-04,felixehm] This is shifted to the caller of the remove method.
+    [r1.13,2006-05-04,felixehm] RepackWorker::removeRequest(.)
+  * CASTOR2/castor/repack/DatabaseHelper.hpp:
+    [r1.13,2006-08-14,felixehm] removed requestToDo (not needed any more)
+    [r1.13,2006-08-14,felixehm] fixed getTapeCopy method
+    [r1.13,2006-08-14,felixehm] added commits (try to solve Oracle error 'Too many cursors open')
+    [r1.12,2006-06-20,felixehm] The FOR UPDATE Statements however block other select statements, although
+    [r1.12,2006-06-20,felixehm] the method used the FOR UPDATE did a already a commit. A new try for CC is the new
+    [r1.12,2006-06-20,felixehm] lock und unlock method.
+    [r1.11,2006-06-02,felixehm] New functionality:
+    [r1.11,2006-06-02,felixehm] method to retrieve all SubRequests in a certain status at once.
+    [r1.11,2006-06-02,felixehm] method to put subrequests in archived state
+    [r1.11,2006-06-02,felixehm] method which is used internally by getSubRequests and getSubRequestsStatus
+    [r1.11,2006-06-02,felixehm] avoid of redundant code)
+    [r1.11,2006-06-02,felixehm] 
+    [r1.11,2006-06-02,felixehm] changed sql statements:
+    [r1.11,2006-06-02,felixehm] Added locking whenever a request or subrequest is to be
+    [r1.11,2006-06-02,felixehm] fetched due to complete crashes of the server.
+    [r1.11,2006-06-02,felixehm] 
+    [r1.11,2006-06-02,felixehm] getSubRequest returns now a full Object
+    [r1.11,2006-06-02,felixehm] filled with RepackRequest and Segments)
+    [r1.11,2006-06-02,felixehm] 
+    [r1.11,2006-06-02,felixehm] fixed some mem leaks
+    [r1.11,2006-06-02,felixehm] 
+    [r1.11,2006-06-02,felixehm] future use: added method for checking a specific TapeCopy
+    [r1.11,2006-06-02,felixehm] used, to avoid double entry for same tapecopy. (repacking one
+    [r1.11,2006-06-02,felixehm] file is allowed as long as it is another tapecopy)
+    [r1.10,2006-05-22,felixehm] fixed storing of segments
+    [r1.10,2006-05-22,felixehm] added new function: getTapeCopy which checks, if a tapecopy of a file
+    [r1.10,2006-05-22,felixehm] is already in the repack process (no double recall).
+  * CASTOR2/castor/repack/FileListHelper.cpp:
+    [r1.17,2006-08-17,felixehm] modfied signature of FileListHelper method.
+    [r1.17,2006-08-17,felixehm] Not neccessary to pass the cuuid, because the information can be taken
+    [r1.17,2006-08-17,felixehm] from the already passed RepackSubRequest
+    [r1.16,2006-06-20,felixehm] Added DLF logging message, if a file was already added to the repacksubrequest. This should not happen !
+    [r1.15,2006-06-02,felixehm] removed stage_trace
+    [r1.15,2006-06-02,felixehm] removed throw() declaration, now the caller has to catch the exceptions
+    [r1.14,2006-05-22,felixehm] Now the new RepackSegment copyno is also set.
+    [r1.13,2006-05-06,felixehm] ADDED check for valid segmentes which status is not 'D'
+  * CASTOR2/castor/repack/FileListHelper.hpp:
+    [r 1.8,2006-08-17,felixehm] modfied signature of FileListHelper method.
+    [r 1.8,2006-08-17,felixehm] Not neccessary to pass the cuuid, because the information can be taken
+    [r 1.8,2006-08-17,felixehm] from the already passed RepackSubRequest
+    [r 1.7,2006-06-02,felixehm] removed stage_trace
+    [r 1.7,2006-06-02,felixehm] removed throw() declaration, now the caller has to catch the exceptions
+  * CASTOR2/castor/repack/Imakefile:
+    [r1.12,2006-06-02,felixehm] added installation of repack client
+    [r1.11,2006-05-22,felixehm] Added the new RepackMonitor
+  * CASTOR2/castor/repack/RepackAck.cpp:
+    [r 1.3,2006-08-18,gtaur] try for response modifications
+  * CASTOR2/castor/repack/RepackAck.hpp:
+    [r 1.3,2006-08-18,gtaur] try for response modifications
+  * CASTOR2/castor/repack/RepackCleaner.cpp:
+    [r 1.8,2006-08-17,felixehm] modfied signature of FileListHelper method.
+    [r 1.8,2006-08-17,felixehm] Not neccessary to pass the cuuid, because the information can be taken
+    [r 1.8,2006-08-17,felixehm] from the already passed RepackSubRequest
+    [r 1.7,2006-08-07,felixehm] extracted common handling for retrieving the serviceClass information from a repackSubRequest into Tools
+    [r 1.6,2006-07-04,felixehm] fixed bug : wrong port number was taken, due to non init of port value in stager_options.
+    [r 1.6,2006-07-04,felixehm] more comments
+    [r 1.6,2006-07-04,felixehm] new method which is only responsible for removing files from stager
+    [r 1.6,2006-07-04,felixehm] logic now in 2 smaller methods
+    [r 1.6,2006-07-04,felixehm] added prolog
+    [r 1.5,2006-06-02,felixehm] improved cleanup procedure for a tape;
+    [r 1.5,2006-06-02,felixehm] now the the file are cleaned from the stager and the subrequest is put to finished status ( not archived - this should be done in a seperate step).
+    [r 1.4,2006-05-22,felixehm] implemented fully working cleaner module.
+    [r 1.4,2006-05-22,felixehm] cleans the repacked files from stager
+  * CASTOR2/castor/repack/RepackCleaner.hpp:
+    [r 1.3,2006-07-04,felixehm] fixed bug : wrong port number was taken, due to non init of port value in stager_options.
+    [r 1.3,2006-07-04,felixehm] more comments
+    [r 1.3,2006-07-04,felixehm] new method which is only responsible for removing files from stager
+    [r 1.3,2006-07-04,felixehm] logic now in 2 smaller methods
+    [r 1.3,2006-07-04,felixehm] added prolog
+    [r 1.2,2006-05-22,felixehm] implemented fully working cleaner module.
+    [r 1.2,2006-05-22,felixehm] cleans the repacked files from stager
+  * CASTOR2/castor/repack/RepackClient.cpp:
+    [r1.16,2006-08-07,felixehm] changed status output with proper shown time
+    [r1.15,2006-07-04,felixehm] added new restart command. This causes the repack process to start again (the stager request is send again);
+    [r1.15,2006-07-04,felixehm] 
+    [r1.15,2006-07-04,felixehm] added check: the user is questioned in case no service class is given.
+    [r1.15,2006-07-04,felixehm] believe me: thats important! )
+    [r1.14,2006-06-02,felixehm] added new functionality:
+    [r1.14,2006-06-02,felixehm] user can now specify a target service class (thereby also a certain target tapepool).
+    [r1.14,2006-06-02,felixehm] 
+    [r1.14,2006-06-02,felixehm] improved the handling of the output.
+    [r1.13,2006-05-22,felixehm] Changed the output to show the stats for a repack process
+  * CASTOR2/castor/repack/RepackClient.hpp:
+    [r1.10,2006-06-02,felixehm] added new functionality:
+    [r1.10,2006-06-02,felixehm] user can now specify a target service class (thereby also a certain target tapepool).
+    [r1.10,2006-06-02,felixehm] 
+    [r1.10,2006-06-02,felixehm] improved the handling of the output.
+  * CASTOR2/castor/repack/RepackCommonHeader.hpp:
+    [r1.12,2006-07-04,felixehm] New header file to separate the command defines.
+    [r1.12,2006-07-04,felixehm] 
+    [r1.12,2006-07-04,felixehm] The RepackCommonHeader is also used to create the Magic Numbers List.
+    [r1.12,2006-07-04,felixehm] We don't want to have the commands in this list.
+    [r1.11,2006-06-02,felixehm] Added new Commands, still some of them are not implemented.
+  * CASTOR2/castor/repack/RepackFileMigrator.cpp:
+    [r 1.3,2006-05-23,felixehm] Not needed anymore. The files are automatically put into CANBEMIGRATED,
+    [r 1.3,2006-05-23,felixehm] because the stager recognize the file as a repack one. After the file has
+    [r 1.3,2006-05-23,felixehm] been recalled, the catalogue procedure putDone is executed.
+    [r 1.3,2006-05-23,felixehm] So, there is no additional step necessary.
+  * CASTOR2/castor/repack/RepackFileMigrator.hpp:
+    [r 1.3,2006-05-23,felixehm] Not needed anymore. The files are automatically put into CANBEMIGRATED,
+    [r 1.3,2006-05-23,felixehm] because the stager recognize the file as a repack one. After the file has
+    [r 1.3,2006-05-23,felixehm] been recalled, the catalogue procedure putDone is executed.
+    [r 1.3,2006-05-23,felixehm] So, there is no additional step necessary.
+  * CASTOR2/castor/repack/RepackFileStager.cpp:
+    [r 1.9,2006-07-04,felixehm] Added prolog, no functional changements
+    [r 1.8,2006-06-20,felixehm] The information for the service class for staging files is now taken from the server.
+    [r 1.8,2006-06-20,felixehm] An bug was removed : crash due to an exception while fetching a subrequest in a certain status.
+    [r 1.8,2006-06-20,felixehm] The exception from the method fom DatabaseHelper wasn't catched.
+    [r 1.7,2006-06-02,felixehm] changed the throwing of exceptions. The stage_files(..) method should not catch exception. Instead of that the caller (run method) catches them. In case of this messages are written to DLF.
+    [r 1.6,2006-06-02,felixehm] for staging the service class from the repackrequest is taken, otherwise the standard one from the castor config file is taken from the RepackServer.
+    [r 1.6,2006-06-02,felixehm] 
+    [r 1.6,2006-06-02,felixehm] fixed some memory issues
+    [r 1.5,2006-05-22,felixehm] Added pointer to instanciating class (RepackServer)
+    [r 1.5,2006-05-22,felixehm] 
+    [r 1.5,2006-05-22,felixehm] Removed the part for reading the stager information from castor config file
+    [r 1.5,2006-05-22,felixehm] now done by server)
+    [r 1.4,2006-05-04,felixehm] Added vmgr_modifytape for changing the status of a tape after sending
+    [r 1.4,2006-05-04,felixehm] the stage request to the stager.
+    [r 1.4,2006-05-04,felixehm] We would like to be sure that this tape is not used for writing! Sometimes
+    [r 1.4,2006-05-04,felixehm] we have the case that a tape still has free space and it is repacked. There
+    [r 1.4,2006-05-04,felixehm] is a chance, that exactly this tape is then used for migration. This is not
+    [r 1.4,2006-05-04,felixehm] intended
+    [r1.12,2006-09-06,felixehm] Changed sending Request to new StageRepackRequest
+    [r1.11,2006-08-17,felixehm] modfied signature of FileListHelper method.
+    [r1.11,2006-08-17,felixehm] Not neccessary to pass the cuuid, because the information can be taken
+    [r1.11,2006-08-17,felixehm] from the already passed RepackSubRequest
+    [r1.10,2006-08-14,felixehm] added method to check for double tapecopy repackaging.
+    [r1.10,2006-08-14,felixehm] corrected exception throwing
+  * CASTOR2/castor/repack/RepackFileStager.hpp:
+    [r 1.7,2006-09-06,felixehm] Changed sending Request to new StageRepackRequest
+    [r 1.6,2006-08-14,felixehm] added method to check for double tapecopy repackaging.
+    [r 1.6,2006-08-14,felixehm] corrected exception throwing
+    [r 1.5,2006-06-20,felixehm] The information for the service class for staging files is now taken from the server.
+    [r 1.5,2006-06-20,felixehm] An bug was removed : crash due to an exception while fetching a subrequest in a certain status.
+    [r 1.5,2006-06-20,felixehm] The exception from the method fom DatabaseHelper wasn't catched.
+    [r 1.4,2006-06-02,felixehm] added more comments for better understanding
+    [r 1.3,2006-05-22,felixehm] Added pointer to instanciating class (RepackServer)
+    [r 1.3,2006-05-22,felixehm] 
+    [r 1.3,2006-05-22,felixehm] Removed the part for reading the stager information from castor config file
+    [r 1.3,2006-05-22,felixehm] now done by server)
+  * CASTOR2/castor/repack/RepackRequest.cpp:
+    [r 1.9,2006-05-29,felixehm] Changed field pool->serviceclass name.
+    [r 1.9,2006-05-29,felixehm] 
+    [r 1.9,2006-05-29,felixehm] This is the service class to where the file have to be written to. It is not
+    [r 1.9,2006-05-29,felixehm] possible to specify directly the target tapes or tapepools, but we can use
+    [r 1.9,2006-05-29,felixehm] the information stored in the service classes.
+    [r 1.9,2006-05-29,felixehm] 
+    [r 1.9,2006-05-29,felixehm] By default, the files are written to the tapepool belonging to the repack
+    [r 1.9,2006-05-29,felixehm] service class specified in the castor config file.
+    [r1.12,2006-09-06,felixehm] added field pool name for tape pool repacking
+    [r1.11,2006-08-18,gtaur] try for response modifications
+  * CASTOR2/castor/repack/RepackRequest.hpp:
+    [r 1.9,2006-05-29,felixehm] Changed field pool->serviceclass name.
+    [r 1.9,2006-05-29,felixehm] 
+    [r 1.9,2006-05-29,felixehm] This is the service class to where the file have to be written to. It is not
+    [r 1.9,2006-05-29,felixehm] possible to specify directly the target tapes or tapepools, but we can use
+    [r 1.9,2006-05-29,felixehm] the information stored in the service classes.
+    [r 1.9,2006-05-29,felixehm] 
+    [r 1.9,2006-05-29,felixehm] By default, the files are written to the tapepool belonging to the repack
+    [r 1.9,2006-05-29,felixehm] service class specified in the castor config file.
+    [r1.12,2006-09-06,felixehm] added field pool name for tape pool repacking
+    [r1.11,2006-08-18,gtaur] try for response modifications
+  * CASTOR2/castor/repack/RepackSegment.cpp:
+    [r 1.8,2006-05-22,felixehm] Added new attribute : copyno
+    [r 1.8,2006-05-22,felixehm] This is important for repacking 1 file with two different tapecopy at one time
+    [r 1.8,2006-05-22,felixehm] The copyno is also part of an index with the fileid in the repack DB.
+    [r1.10,2006-08-18,gtaur] try for response modifications
+  * CASTOR2/castor/repack/RepackSegment.hpp:
+    [r 1.8,2006-05-22,felixehm] Added new attribute : copyno
+    [r 1.8,2006-05-22,felixehm] This is important for repacking 1 file with two different tapecopy at one time
+    [r 1.8,2006-05-22,felixehm] The copyno is also part of an index with the fileid in the repack DB.
+    [r1.10,2006-08-18,gtaur] try for response modifications
+  * CASTOR2/castor/repack/RepackServer.cpp:
+    [r1.18,2006-09-08,felixehm] Server now survives without CASTOR config file. user can set the variables in
+    [r1.18,2006-09-08,felixehm] enviroment.
+    [r1.17,2006-08-14,felixehm] Changed (added) Messages
+    [r1.16,2006-08-07,felixehm] RepackWorker now also is created by passing a reference to the RepackServer
+    [r1.15,2006-07-04,felixehm] New messages for Cleaner and Monitor.
+    [r1.15,2006-07-04,felixehm] the Cleaner runs now as the Filestager every 10sec
+    [r1.14,2006-06-20,felixehm] Added : polling time in enviroment/config file for cleaner and monitor
+    [r1.13,2006-06-02,felixehm] Added new DLF Messages for RepackMonitor
+    [r1.12,2006-05-22,felixehm] The server now keeps the information about the stager, nameserver, service class etc.
+    [r1.12,2006-05-22,felixehm] which is used by some threads. Before this changement each module
+    [r1.12,2006-05-22,felixehm] RepackWorker, RepackFileStager,..) tried to get this information on its own.
+    [r1.12,2006-05-22,felixehm] This is not neccessary.
+    [r1.12,2006-05-22,felixehm] The Modules have a pointer to the server which instanciates them, and they can
+    [r1.12,2006-05-22,felixehm] ask the server.So the information is read once from the castor config file
+    [r1.12,2006-05-22,felixehm] at the beginning and then whenever needed queried by the Modules.
+  * CASTOR2/castor/repack/RepackServer.hpp:
+    [r 1.9,2006-06-20,felixehm] Added : polling time in enviroment/config file for cleaner and monitor
+    [r 1.8,2006-05-22,felixehm] The server now keeps the information about the stager, nameserver, service class etc.
+    [r 1.8,2006-05-22,felixehm] which is used by some threads. Before this changement each module
+    [r 1.8,2006-05-22,felixehm] RepackWorker, RepackFileStager,..) tried to get this information on its own.
+    [r 1.8,2006-05-22,felixehm] This is not neccessary.
+    [r 1.8,2006-05-22,felixehm] The Modules have a pointer to the server which instanciates them, and they can
+    [r 1.8,2006-05-22,felixehm] ask the server.So the information is read once from the castor config file
+    [r 1.8,2006-05-22,felixehm] at the beginning and then whenever needed queried by the Modules.
+  * CASTOR2/castor/repack/RepackSubRequest.cpp:
+    [r 1.8,2006-05-22,felixehm] Added new fields for statistics. The Repacking process is monitored by the Repack Monitor
+    [r 1.8,2006-05-22,felixehm] and the numbers of staging and migrating files are stored with the RepackSubRequest.
+    [r 1.8,2006-05-22,felixehm] The User (and Repack itself) is now able to check the status of a repack process.
+    [r1.10,2006-08-18,gtaur] try for response modifications
+  * CASTOR2/castor/repack/RepackSubRequest.hpp:
+    [r 1.8,2006-05-22,felixehm] Added new fields for statistics. The Repacking process is monitored by the Repack Monitor
+    [r 1.8,2006-05-22,felixehm] and the numbers of staging and migrating files are stored with the RepackSubRequest.
+    [r 1.8,2006-05-22,felixehm] The User (and Repack itself) is now able to check the status of a repack process.
+    [r1.10,2006-08-18,gtaur] try for response modifications
+  * CASTOR2/castor/repack/RepackWorker.cpp:
+    [r1.21,2006-09-12,felixehm] added checkMultiRepack method for notifying the user in case a multirepack
+    [r1.21,2006-09-12,felixehm] (two tapecopies for one file) are processed. If the second request arrives too
+    [r1.21,2006-09-12,felixehm] late, it has to be restarted due to non created second tapecopy.
+    [r1.20,2006-08-14,felixehm] Added reference to RepackServer in Contructor.
+    [r1.19,2006-07-04,felixehm] Added function : restart of a repack process. Still this is not the optimum solution , because this just triggers the repack system to send the same StagePrepareToGet request again.
+    [r1.19,2006-07-04,felixehm] So there will be 2 Subrequests for one file. One is waiting for the other one to be finished.
+    [r1.19,2006-07-04,felixehm] Until now this is only available for debugging and test purpose.
+    [r1.19,2006-07-04,felixehm] 
+    [r1.19,2006-07-04,felixehm] future : the stage_abort request should be used to restart the preparetoget request)
+    [r1.18,2006-06-20,felixehm] Changed method call for get SubRequestByVid(). Now it is possible to specify, whether the fetched object has to be filled with its segments or not. We need this for remove  as well as to find a tape. But in the case of removal, we need the segments.
+    [r1.17,2006-06-02,felixehm] new functionality:
+    [r1.17,2006-06-02,felixehm] archive finished repack processes
+    [r1.17,2006-06-02,felixehm] 
+    [r1.17,2006-06-02,felixehm] the removeRequest (command sent by user) method, now doesn't delete the subrequest direktly, but changes the status into READYFORCLEANUP, so that the RepackCleaner can remove the process.
+    [r1.17,2006-06-02,felixehm] 
+    [r1.17,2006-06-02,felixehm] getStatus(..) now sends also the RepackRequest corresponding
+    [r1.17,2006-06-02,felixehm] to the queried RepackSubRequest.This means more details for the status.
+    [r1.16,2006-05-22,felixehm] The Repack Monitor Service. It queries the stager for the files, with are on
+    [r1.16,2006-05-22,felixehm] a actual repack process and gets their statistics. the user can have a summerised
+    [r1.16,2006-05-22,felixehm] overview, what the state of a repack process is.
+    [r1.16,2006-05-22,felixehm] The Monitor queries the stager using the stager query api.
+    [r1.15,2006-05-06,felixehm] fixed throwing of exceptions
+    [r1.15,2006-05-06,felixehm] now sending answer to client also for removal of tapes
+  * CASTOR2/castor/repack/RepackWorker.hpp:
+    [r1.16,2006-08-14,felixehm] Added reference to RepackServer in Contructor.
+    [r1.15,2006-07-04,felixehm] Added function : restart of a repack process. Still this is not the optimum solution , because this just triggers the repack system to send the same StagePrepareToGet request again.
+    [r1.15,2006-07-04,felixehm] So there will be 2 Subrequests for one file. One is waiting for the other one to be finished.
+    [r1.15,2006-07-04,felixehm] Until now this is only available for debugging and test purpose.
+    [r1.15,2006-07-04,felixehm] 
+    [r1.15,2006-07-04,felixehm] future : the stage_abort request should be used to restart the preparetoget request)
+    [r1.14,2006-06-02,felixehm] new functionality:
+    [r1.14,2006-06-02,felixehm] archive finished repack processes
+    [r1.14,2006-06-02,felixehm] 
+    [r1.14,2006-06-02,felixehm] the removeRequest (command sent by user) method, now doesn't delete the subrequest direktly, but changes the status into READYFORCLEANUP, so that the RepackCleaner can remove the process.
+    [r1.14,2006-06-02,felixehm] 
+    [r1.14,2006-06-02,felixehm] getStatus(..) now sends also the RepackRequest corresponding
+    [r1.14,2006-06-02,felixehm] to the queried RepackSubRequest.This means more details for the status.
+    [r1.13,2006-05-22,felixehm] The Repack Monitor Service. It queries the stager for the files, with are on
+    [r1.13,2006-05-22,felixehm] a actual repack process and gets their statistics. the user can have a summerised
+    [r1.13,2006-05-22,felixehm] overview, what the state of a repack process is.
+    [r1.13,2006-05-22,felixehm] The Monitor queries the stager using the stager query api.
+    [r1.12,2006-05-06,felixehm] fixed throwing of exceptions
+    [r1.12,2006-05-06,felixehm] now sending answer to client also for removal of tapes
+  * CASTOR2/castor/repack/Tools.cpp:
+    [r 1.4,2006-08-07,felixehm] extracted common handling for retrieving the serviceClass information from a repackSubRequest into Tools
+    [r 1.3,2006-06-02,felixehm] new function to free a Repack Object. The function tries to delete
+    [r 1.3,2006-06-02,felixehm] everything, which is in the Object.
+    [r 1.2,2006-05-22,felixehm] Added new function which frees a stager response
+  * CASTOR2/castor/repack/Tools.hpp:
+    [r 1.4,2006-08-07,felixehm] extracted common handling for retrieving the serviceClass information from a repackSubRequest into Tools
+    [r 1.3,2006-06-02,felixehm] new function to free a Repack Object. The function tries to delete
+    [r 1.3,2006-06-02,felixehm] everything, which is in the Object.
+    [r 1.2,2006-05-22,felixehm] Added new function which frees a stager response
+  * CASTOR2/castor/replier/RequestReplier.cpp:
+    [r1.26,2006-08-18,sponcec3] Set the request id in all responses
+    [r1.25,2006-08-14,itglp] Log statistics as DEBUG and only every 10 minutes
+  * CASTOR2/castor/replier/RequestReplier.h:
+    [r 1.7,2006-08-18,sponcec3] Set the request id in all responses
+  * CASTOR2/castor/replier/RequestReplier.hpp:
+    [r 1.7,2006-08-18,sponcec3] Set the request id in all responses
+  * CASTOR2/castor/replier/RequestReplierCInt.cpp:
+    [r 1.7,2006-08-18,sponcec3] Set the request id in all responses
+  * CASTOR2/castor/rh/AbortResponse.cpp:
+  * CASTOR2/castor/rh/AbortResponse.h:
+    [r1.11,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/AbortResponse.hpp:
+  * CASTOR2/castor/rh/AbortResponseCInt.cpp:
+    [r 1.9,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/BasicResponse.cpp:
+  * CASTOR2/castor/rh/BasicResponse.h:
+    [r 1.6,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/BasicResponse.hpp:
+  * CASTOR2/castor/rh/BasicResponseCInt.cpp:
+    [r 1.5,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/EndResponse.cpp:
+  * CASTOR2/castor/rh/EndResponse.h:
+    [r1.16,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/EndResponse.hpp:
+  * CASTOR2/castor/rh/EndResponseCInt.cpp:
+    [r1.11,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/FileQryResponse.cpp:
+  * CASTOR2/castor/rh/FileQryResponse.h:
+    [r 1.4,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/FileQryResponse.hpp:
+  * CASTOR2/castor/rh/FileQryResponseCInt.cpp:
+    [r 1.4,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/FileResponse.cpp:
+  * CASTOR2/castor/rh/FileResponse.h:
+    [r1.19,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/FileResponse.hpp:
+  * CASTOR2/castor/rh/FileResponseCInt.cpp:
+    [r1.14,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/FindReqResponse.cpp:
+  * CASTOR2/castor/rh/FindReqResponse.h:
+    [r1.11,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/FindReqResponse.hpp:
+  * CASTOR2/castor/rh/FindReqResponseCInt.cpp:
+    [r 1.9,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/GCFilesResponse.cpp:
+  * CASTOR2/castor/rh/GCFilesResponse.h:
+    [r 1.6,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/GCFilesResponse.hpp:
+  * CASTOR2/castor/rh/GCFilesResponseCInt.cpp:
+    [r 1.5,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/GetUpdateStartResponse.cpp:
+  * CASTOR2/castor/rh/GetUpdateStartResponse.h:
+    [r1.10,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/GetUpdateStartResponse.hpp:
+  * CASTOR2/castor/rh/GetUpdateStartResponseCInt.cpp:
+    [r 1.9,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/IOResponse.cpp:
+  * CASTOR2/castor/rh/IOResponse.h:
+    [r1.12,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/IOResponse.hpp:
+  * CASTOR2/castor/rh/IOResponseCInt.cpp:
+    [r1.12,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/RHThread.cpp:
+    [r 1.4,2006-06-20,itglp] Downgraded two log messages from SYSTEM to DEBUG
+  * CASTOR2/castor/rh/RequestQueryResponse.cpp:
+  * CASTOR2/castor/rh/RequestQueryResponse.h:
+    [r1.11,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/RequestQueryResponse.hpp:
+  * CASTOR2/castor/rh/RequestQueryResponseCInt.cpp:
+    [r 1.9,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/Response.cpp:
+    [r 1.9,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/Response.h:
+    [r 1.9,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/Response.hpp:
+    [r 1.7,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/ResponseCInt.cpp:
+    [r 1.7,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/Server.cpp:
+    [r1.47,2006-07-18,waldron] dlf api integration
+  * CASTOR2/castor/rh/StartResponse.cpp:
+  * CASTOR2/castor/rh/StartResponse.h:
+    [r 1.6,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/StartResponse.hpp:
+  * CASTOR2/castor/rh/StartResponseCInt.cpp:
+    [r 1.6,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/StringResponse.cpp:
+  * CASTOR2/castor/rh/StringResponse.h:
+    [r1.16,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/rh/StringResponse.hpp:
+  * CASTOR2/castor/rh/StringResponseCInt.cpp:
+    [r1.11,2006-08-18,gtaur] new Response generated
+  * CASTOR2/castor/server/BaseDaemon.cpp:
+    [r 1.8,2006-08-14,itglp] Implemented waitAllThreads. To be completed with code from stager.c
+    [r 1.7,2006-07-18,waldron] dlf api integration
+    [r 1.6,2006-05-02,itglp] Better handling of notification thread
+  * CASTOR2/castor/server/BaseDaemon.hpp:
+    [r 1.4,2006-08-14,itglp] Implemented waitAllThreads. To be completed with code from stager.c
+  * CASTOR2/castor/server/BaseServer.cpp:
+    [r1.14,2006-07-18,waldron] dlf api integration
+    [r1.13,2006-05-02,itglp] Better handling of notification thread
+  * CASTOR2/castor/server/BaseServer.hpp:
+    [r 1.7,2006-08-14,itglp] Made private fields protected
+    [r 1.6,2006-05-02,itglp] Better handling of notification thread
+  * CASTOR2/castor/server/BaseThreadPool.hpp:
+    [r1.10,2006-05-02,itglp] Better handling of notification thread
+  * CASTOR2/castor/server/ListenerThreadPool.cpp:
+    [r 1.5,2006-05-02,itglp] Better handling of notification thread
+  * CASTOR2/castor/server/SignalThreadPool.cpp:
+    [r1.11,2006-08-14,itglp] Fixed delete statement
+    [r1.10,2006-05-02,itglp] Better handling of notification thread
+  * CASTOR2/castor/server/SignalThreadPool.hpp:
+    [r 1.9,2006-05-02,itglp] Better handling of notification thread
+    [r1.10,2006-08-14,itglp] new function getActiveThreads()
+  * CASTOR2/castor/stager/ITapeSvc.h:
+    [r 1.5,2006-08-11,felixehm] removed method checkExistingTapeCopy
+    [r 1.4,2006-08-07,felixehm] fixed wrong definition of struct Cstager_Stream
+    [r 1.3,2006-08-07,felixehm] modified checkFileForRepack SQL Statement: the subrequest is archived when
+    [r 1.3,2006-08-07,felixehm] statement was successfull.
+    [r 1.3,2006-08-07,felixehm] 
+    [r 1.3,2006-08-07,felixehm] added method checkExistingTapeCopy:
+    [r 1.3,2006-08-07,felixehm] used in migration part (MigHunter), when TapeCopies are added to Streams
+    [r 1.3,2006-08-07,felixehm] to ensure to have 2 TapeCopies on one tape.
+    [r 1.2,2006-05-11,felixehm] Added new function to retrieve a subrequest, which belongs to a "repack" file.
+    [r 1.2,2006-05-11,felixehm] This is needed for the rtcpclientd (rtcpcldCatalogueInterface.c) to check during
+    [r 1.2,2006-05-11,felixehm] a migration, if the written segments have to replace or to be added in the NS.
+  * CASTOR2/castor/stager/ITapeSvc.hpp:
+    [r 1.4,2006-08-11,felixehm] removed method checkExistingTapeCopy
+    [r 1.3,2006-08-07,felixehm] modified checkFileForRepack SQL Statement: the subrequest is archived when
+    [r 1.3,2006-08-07,felixehm] statement was successfull.
+    [r 1.3,2006-08-07,felixehm] 
+    [r 1.3,2006-08-07,felixehm] added method checkExistingTapeCopy:
+    [r 1.3,2006-08-07,felixehm] used in migration part (MigHunter), when TapeCopies are added to Streams
+    [r 1.3,2006-08-07,felixehm] to ensure to have 2 TapeCopies on one tape.
+    [r 1.2,2006-05-11,felixehm] Added new function to retrieve a subrequest, which belongs to a "repack" file.
+    [r 1.2,2006-05-11,felixehm] This is needed for the rtcpclientd (rtcpcldCatalogueInterface.c) to check during
+    [r 1.2,2006-05-11,felixehm] a migration, if the written segments have to replace or to be added in the NS.
+  * CASTOR2/castor/stager/ITapeSvcCInt.cpp:
+    [r 1.5,2006-08-11,felixehm] removed method checkExistingTapeCopy
+    [r 1.4,2006-08-07,felixehm] added method checkExistingTapeCopy:
+    [r 1.4,2006-08-07,felixehm] used in migration part (MigHunter), when TapeCopies are added to Streams
+    [r 1.4,2006-08-07,felixehm] to ensure to have 2 TapeCopies on one tape.
+    [r 1.3,2006-05-11,felixehm] Added new function to retrieve a subrequest, which belongs to a "repack" file.
+    [r 1.3,2006-05-11,felixehm] This is needed for the rtcpclientd (rtcpcldCatalogueInterface.c) to check during
+    [r 1.3,2006-05-11,felixehm] a migration, if the written segments have to replace or to be added in the NS.
+  * CASTOR2/castor/stager/SubRequest.cpp:
+    [r1.27,2006-08-18,felixehm] Removed repackVid from SubRequest
+    [r1.27,2006-08-18,felixehm] new solution will be a RepackRequest for the Stager
+    [r1.24,2006-05-10,itglp] Fixed generated code for repackVid (broken by previous commit)
+    [r1.23,2006-05-10,itglp] Added field repackVid to SubRequest (on behalf of Felix)
+  * CASTOR2/castor/stager/SubRequest.h:
+    [r1.28,2006-08-18,felixehm] Removed repackVid from SubRequest
+    [r1.28,2006-08-18,felixehm] new solution will be a RepackRequest for the Stager
+    [r1.25,2006-05-10,itglp] Fixed generated code for repackVid (broken by previous commit)
+    [r1.24,2006-05-10,itglp] Added field repackVid to SubRequest (on behalf of Felix)
+  * CASTOR2/castor/stager/SubRequest.hpp:
+    [r1.21,2006-08-18,felixehm] Removed repackVid from SubRequest
+    [r1.21,2006-08-18,felixehm] new solution will be a RepackRequest for the Stager
+    [r1.18,2006-05-10,itglp] Fixed generated code for repackVid (broken by previous commit)
+    [r1.17,2006-05-10,itglp] Added field repackVid to SubRequest (on behalf of Felix)
+  * CASTOR2/castor/stager/SubRequestCInt.cpp:
+    [r1.21,2006-08-18,felixehm] Removed repackVid from SubRequest
+    [r1.21,2006-08-18,felixehm] new solution will be a RepackRequest for the Stager
+    [r1.18,2006-05-10,itglp] Fixed generated code for repackVid (broken by previous commit)
+    [r1.17,2006-05-10,itglp] Added field repackVid to SubRequest (on behalf of Felix)
+  * CASTOR2/clips/migratorRetryPolicy.pl:
+    [r 1.2,2006-07-10,sponcec3] Set nb retries to infinite
+  * CASTOR2/codeGeneration/RH.xmi:
+    [r1.128,2006-09-06,felixehm] Removed repackvid field from SubRequest
+    [r1.127,2006-08-25,felixehm] Added new Stager Request : StageRepackRequest
+    [r1.126,2006-08-18,gtaur] new field in castor::rh::Response class
+    [r1.125,2006-08-08,itglp] Updated TapeCopy status diagram
+    [r1.124,2006-07-04,felixehm] Added new Status for the Stager SubRequest. This is needed for the handling
+    [r1.124,2006-07-04,felixehm] of a file in a repakc process. In the recaller part, the new status is set,
+    [r1.124,2006-07-04,felixehm] instead of archiving the subrequest. In case of a repack the subrequest life
+    [r1.124,2006-07-04,felixehm] is not over, when the file is recalled. We extend the validation of it by this
+    [r1.124,2006-07-04,felixehm] special state for repack.
+    [r1.124,2006-07-04,felixehm] Note that at the end of the repack process (migration) the subrequest is set to
+    [r1.124,2006-07-04,felixehm] archived (see OraTapeSvc  -->checkFileForRepack).
+    [r1.123,2006-05-10,itglp] Fixed generated code for repackVid (broken by previous commit)
+    [r1.122,2006-05-10,itglp] Added field repackVid to SubRequest (on behalf of Felix)
+    [r1.121,2006-05-04,itglp] Added new state ARCHIVED in the SubRequest state diagram
+  * CASTOR2/codeGeneration/Repack.xmi:
+    [r 1.4,2006-07-05,felixehm] Added new attributes to RepackSubRequest.
+  * CASTOR2/codeGeneration/gencastor/Makefile:
+    [r1.13,2006-08-07,itglp] Improved clone() implementation for special cases: if <EntityName>.cpp_clone
+    [r1.13,2006-08-07,itglp] is found in the source, its code is included in the generated <EntityName>.cpp class.
+    [r1.12,2006-08-03,gtaur] empty log message ***
+    [r1.11,2006-08-03,gtaur] double declaration of handleException removed
+  * CASTOR2/codeGeneration/gencastor/debian/control:
+    [r 1.5,2006-05-04,itglp] Removed dependency on kdelibs4, fixed changelog for version 5.0-0.
+  * CASTOR2/codeGeneration/gencastor/debian/files:
+    [r1.21,2006-08-07,itglp] Version 5.1 for gencastor
+  * CASTOR2/codeGeneration/gencastor/genCastor.cpp:
+    [r1.23,2006-08-07,itglp] Version 5.1 for gencastor
+    [r1.22,2006-08-07,itglp] Improved clone() implementation for special cases: if <EntityName>.cpp_clone
+    [r1.22,2006-08-07,itglp] is found in the source, its code is included in the generated <EntityName>.cpp class.
+  * CASTOR2/codeGeneration/gencastor/gencastor:
+    [r1.14,2006-08-07,itglp] Improved clone() implementation for special cases: if <EntityName>.cpp_clone
+    [r1.14,2006-08-07,itglp] is found in the source, its code is included in the generated <EntityName>.cpp class.
+    [r1.13,2006-06-20,itglp] Fixed sql script preprocessing when namespace != castor
+  * CASTOR2/codeGeneration/gencastor/umbrello/codegenerators/cppcpporacnvwriter.cpp:
+    [r1.65,2006-08-03,gtaur] and now ... handle exception moved  in OraCommonSvc ...
+    [r1.64,2006-08-03,gtaur] handle exception new fix
+    [r1.63,2006-08-03,gtaur] double declaration of handleException removed
+    [r1.62,2006-08-01,gtaur] modification to deal exceptions
+  * CASTOR2/codeGeneration/gencastor/umbrello/codegenerators/cppwriter.cpp:
+    [r1.26,2006-08-07,itglp] Improved clone() implementation for special cases: if <EntityName>.cpp_clone
+    [r1.26,2006-08-07,itglp] is found in the source, its code is included in the generated <EntityName>.cpp class.
+  * CASTOR2/common/serror.c:
+    [r1.13,2006-07-21,sponcec3] Added new error code SegmentNotAccessible
+    [r1.12,2006-06-13,waldron] removed DLF related error messages
+  * CASTOR2/config/Imake.rules:
+    [r1.22,2006-06-13,waldron] updated for new dlf packaging
+  * CASTOR2/config/Project.tmpl:
+    [r1.56,2006-08-01,sponcec3] Dropped the (very) olg C gc code
+    [r1.55,2006-06-13,waldron] updated for new dlf packaging
+  * CASTOR2/config/site.Win32.def:
+    [r 1.2,2006-06-13,waldron] updated for new dlf packaging
+  * CASTOR2/config/site.def:
+    [r1.90,2006-08-03,gtaur] double declaration of handleException removed
+    [r1.89,2006-08-01,sponcec3] Dropped the (very) olg C gc code
+    [r1.88,2006-06-13,waldron] updated for new dlf packaging
+  * CASTOR2/debian/castor-devel.install.perm:
+    [r 1.6,2006-06-13,waldron] updated for new dlf packaging
+  * CASTOR2/debian/castor-devel.manpages:
+    [r 1.4,2006-06-13,waldron] updated for new dlf packaging
+  * CASTOR2/debian/castor-dlf-client.install.perm:
+    [r 1.2,2006-06-13,waldron] no longer required
+  * CASTOR2/debian/castor-dlf-client.manpages:
+    [r 1.2,2006-06-13,waldron] no longer required
+  * CASTOR2/debian/castor-dlf-gui.dirs:
+    [r 1.2,2006-06-13,waldron] renamed to castor-dlf-web
+  * CASTOR2/debian/castor-dlf-gui.install.perm:
+    [r 1.2,2006-06-13,waldron] renamed to castor-dlf-web
+  * CASTOR2/debian/castor-dlf-server.install.perm:
+    [r 1.4,2006-06-13,waldron] updated for new dlf packaging
+  * CASTOR2/debian/castor-dlf-server.manpages:
+    [r 1.3,2006-07-18,waldron] second revision
+    [r 1.2,2006-06-13,waldron] updated for new dlf packaging
+  * CASTOR2/debian/castor-stager-server.dirs:
+    [r 1.4,2006-06-20,sponcec3] Fixed missing creation of directory /var/spool/cleaning
+  * CASTOR2/debian/castor.conf:
+    [r1.21,2006-09-06,felixehm] Added configuration lines for correct execution of repack
+    [r1.20,2006-08-15,sponcec3] Removed old and misleading option
+    [r1.19,2006-06-21,waldron] removed DLF HOST variable
+  * CASTOR2/debian/control:
+    [r1.42,2006-09-06,sponcec3] defined packages castor-repack-server and client
+    [r1.41,2006-06-13,waldron] updated for new dlf packaging
+  * CASTOR2/debian/dlfserver.init:
+    [r 1.9,2006-06-21,waldron] removed ULIMIT_S sysconfig option
+    [r 1.8,2006-06-20,waldron] fixed chkconfig and added condrestart option
+    [r 1.7,2006-06-13,waldron] updated for new dlf packaging
+    [r1.10,2006-07-18,waldron] second revision
+  * CASTOR2/debian/dlfserver.sysconfig:
+    [r 1.7,2006-07-18,waldron] second revision
+    [r 1.6,2006-06-21,waldron] removed ULIMIT_S sysconfig option
+    [r 1.5,2006-06-20,waldron] fixed chkconfig and added condrestart option
+    [r 1.4,2006-06-13,waldron] updated for new dlf packaging
+  * CASTOR2/debian/lsf.sysconfig:
+    [r 1.3,2006-05-09,itglp] Removed unused line
+  * CASTOR2/dlf/Imakefile:
+    [r 1.9,2006-07-18,waldron] second revision
+    [r 1.8,2006-06-13,waldron] initial commit
+    [r 1.7,2006-06-13,waldron] removal of old DLF
+    [r1.10,2006-08-01,sponcec3] Compile DLF in debug mode by default
+  * CASTOR2/dlf/delete_by_facility_name.sql:
+    [r 1.2,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/delete_by_facility_number.sql:
+    [r 1.2,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlf.man:
+    [r 1.3,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlf_api.c:
+    [r1.25,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlf_apiinit.c:
+    [r 1.2,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlf_errmsg.c:
+    [r 1.4,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlf_init.man:
+    [r 1.3,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlf_lib.c:
+    [r 1.3,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlf_mysql_drop.sql:
+    [r 1.3,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlf_mysql_tbl.sql:
+    [r 1.5,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlf_oracle_drop.sql:
+    [r 1.2,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlf_oracle_grant.sql:
+    [r 1.3,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlf_oracle_ifce.pc:
+    [r1.19,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlf_oracle_tbl.sql:
+    [r1.13,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlf_procreq.c:
+    [r1.11,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlf_seterrbuf.man:
+    [r 1.2,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlf_shutdown.man:
+    [r 1.2,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlf_write.man:
+    [r 1.5,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlfdeletefacility.c:
+    [r 1.4,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlfdeletefacility.man:
+    [r 1.2,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlfdeletetext.c:
+    [r 1.4,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlfdeletetext.man:
+    [r 1.2,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlfenterfacility.c:
+    [r 1.4,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlfenterfacility.man:
+    [r 1.2,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlfentertext.c:
+    [r 1.4,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlfentertext.man:
+    [r 1.2,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlflistfacility.c:
+    [r 1.2,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlflistfacility.man:
+    [r 1.2,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlflisttext.c:
+    [r 1.4,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlflisttext.man:
+    [r 1.2,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlflogit.c:
+    [r 1.5,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlflogstore.c:
+    [r 1.9,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlflogstore.man:
+    [r 1.2,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlfmodifyfacility.c:
+    [r 1.4,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlfmodifyfacility.man:
+    [r 1.2,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlfmodifytext.c:
+    [r 1.4,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlfmodifytext.man:
+    [r 1.2,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlfmysetup.sh:
+    [r 1.6,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlforasetup.sh:
+    [r 1.8,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlfquery/CERN72.gif:
+    [r 1.2,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/ConfEditor.jar:
+    [r 1.2,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/Imakefile:
+    [r 1.5,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/adjacency.txt:
+    [r 1.2,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/base.cfg.php:
+    [r 1.3,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/castor_logo_trans.gif:
+    [r 1.2,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/config.mysql.php:
+    [r 1.2,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/config.ora.php:
+    [r 1.3,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/config.php:
+    [r 1.3,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/config.txt:
+    [r 1.2,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/db.gif:
+    [r 1.2,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/dbgui.php:
+    [r 1.3,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/dlf_showmsg.mysql.log.php:
+    [r 1.5,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/dlf_showmsg.mysql.php:
+    [r 1.5,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/dlf_showmsg.ora.log.php:
+    [r 1.5,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/dlf_showmsg.ora.php:
+    [r 1.7,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/dlf_start.php:
+    [r 1.5,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/down.gif:
+    [r 1.2,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/func.php:
+    [r 1.3,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/image.php:
+    [r 1.3,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/index.php:
+    [r 1.2,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/magicnumbers.php:
+    [r 1.2,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/main.css:
+    [r 1.4,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/schema.php:
+    [r 1.3,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/trans.gif:
+    [r 1.2,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfquery/up.gif:
+    [r 1.2,2006-06-13,waldron] removal of old DLF gui
+  * CASTOR2/dlf/dlfserver.c:
+    [r1.16,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlfserver.man:
+    [r 1.4,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlfshutdown.c:
+    [r 1.4,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/dlfshutdown.man:
+    [r 1.2,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/oralink.mk:
+    [r 1.3,2006-06-13,waldron] initial commit
+    [r 1.2,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/send2dlf.c:
+    [r 1.7,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/dlf/sendrep.c:
+    [r 1.4,2006-06-13,waldron] removal of old DLF
+  * CASTOR2/doc/uml/Repack.xmi:
+    [r 1.4,2006-08-17,felixehm] updated documentation: class diagramm
+    [r 1.3,2006-07-05,felixehm] Added sequence diagrams. Still, more have to be created
+  * CASTOR2/doc/uml/StagerSvcs.xmi:
+    [r1.13,2006-08-04,itglp] Class diagrams updated with latest changes
+  * CASTOR2/doc/uml/ThreadsDaemons.xmi:
+    [r 1.7,2006-08-04,itglp] Cosmetic changes
+  * CASTOR2/gc/Imakefile:
+    [r 1.3,2006-08-01,sponcec3] Dropped the (very) olg C gc code
+  * CASTOR2/gc/gcdaemon.c:
+    [r 1.3,2006-08-01,sponcec3] Dropped the (very) olg C gc code
+  * CASTOR2/h/Cns.h:
+    [r 1.3,2006-05-11,felixehm] Added new function for replacing a tapecopy for a file.
+    [r 1.3,2006-05-11,felixehm] This is used for the repack process. A file is removed from a tape and written
+    [r 1.3,2006-05-11,felixehm] to a another one. In this case, we would like to keep the old tapecopy number
+    [r 1.3,2006-05-11,felixehm] and set it to the new segment tapecopy.
+    [r 1.3,2006-05-11,felixehm] 
+    [r 1.3,2006-05-11,felixehm] Note, that the old segments of that tapecopy are removed from the NS database.
+  * CASTOR2/h/Cns_api.h:
+    [r 1.5,2006-05-11,felixehm] Added new function for replacing a tapecopy for a file.
+    [r 1.5,2006-05-11,felixehm] This is used for the repack process. A file is removed from a tape and written
+    [r 1.5,2006-05-11,felixehm] to a another one. In this case, we would like to keep the old tapecopy number
+    [r 1.5,2006-05-11,felixehm] and set it to the new segment tapecopy.
+    [r 1.5,2006-05-11,felixehm] 
+    [r 1.5,2006-05-11,felixehm] Note, that the old segments of that tapecopy are removed from the NS database.
+  * CASTOR2/h/Cns_server.h:
+    [r 1.7,2006-05-15,felixehm] Added new function to retrieve all segments for one tapecopy.
+    [r 1.7,2006-05-15,felixehm] used in Cns_procreq.c for replacing a tapecopy (repack process).
+  * CASTOR2/h/Imakefile:
+    [r1.15,2006-06-13,waldron] modified because of removed files
+  * CASTOR2/h/dlf.h:
+    [r 1.4,2006-06-13,waldron] rmeoved for new version of DLF
+  * CASTOR2/h/dlf_api.h:
+    [r1.15,2006-07-18,waldron] second revision
+    [r1.14,2006-06-13,waldron] new DLF interface definitions
+  * CASTOR2/h/dlf_constants.h:
+    [r 1.2,2006-06-13,waldron] rmeoved for new version of DLF
+  * CASTOR2/h/dlf_server.h:
+    [r 1.5,2006-06-13,waldron] rmeoved for new version of DLF
+  * CASTOR2/h/dlf_struct.h:
+    [r 1.6,2006-06-13,waldron] rmeoved for new version of DLF
+  * CASTOR2/h/rm_macros.h:
+    [r1.15,2006-07-18,waldron] dlf api integration
+  * CASTOR2/h/serrno.h:
+    [r1.15,2006-07-21,sponcec3] Added new error code SegmentNotAccessible
+    [r1.14,2006-06-13,waldron] removed DLF related error messages
+  * CASTOR2/h/serrno.man:
+    [r 1.4,2006-06-13,waldron] removed DLF related error messages
+  * CASTOR2/h/stager_constants.h:
+    [r1.18,2006-06-22,itglp] Changed default nb of threads to 20 for DB and JOB (optimal value according to Olof's tests)
+  * CASTOR2/h/stager_macros.h:
+    [r1.23,2006-07-18,waldron] dlf api integration
+  * CASTOR2/h/stager_service_helper.hpp:
+    [r 1.2,2006-08-18,sponcec3] Fix last problems with send back the request id
+  * CASTOR2/hsmtools/C1-C2FileMover.pl:
+    [r 1.2,2006-06-15,itglp] First working version of a script to migrate a castor1 staging area to castor2
+  * CASTOR2/hsmtools/disknodeShutdown:
+    [r 1.5,2006-08-03,mmarques] from castor to castorns
+  * CASTOR2/hsmtools/gcAllFS:
+    [r 1.2,2006-05-24,sponcec3] Fixed Typo, thanks to Bonny
+  * CASTOR2/hsmtools/upgradec2stgdb.csh:
+    [r 1.4,2006-07-10,itglp] Added prompt to ask for stgdb password
+    [r 1.3,2006-06-12,itglp] Updated with latest logins/passwd
+    [r 1.2,2006-06-12,itglp] Updated with latest logins/passwd
+  * CASTOR2/job/stagerJob.shell:
+    [r1.40,2006-08-30,jveldik] simplifed (and optimized!)
+  * CASTOR2/maketar.sh:
+    [r1.48,2006-09-06,sponcec3] included repack
+    [r1.47,2006-06-13,waldron] updated for new dlf packaging
+  * CASTOR2/ns/Cns_listtape.c:
+    [r 1.4,2006-05-11,felixehm] Added new function for replacing a tapecopy for a file.
+    [r 1.4,2006-05-11,felixehm] This is used for the repack process. A file is removed from a tape and written
+    [r 1.4,2006-05-11,felixehm] to a another one. In this case, we would like to keep the old tapecopy number
+    [r 1.4,2006-05-11,felixehm] and set it to the new segment tapecopy.
+    [r 1.4,2006-05-11,felixehm] 
+    [r 1.4,2006-05-11,felixehm] Note, that the old segments of that tapecopy are removed from the NS database.
+  * CASTOR2/ns/Cns_main.c:
+    [r1.14,2006-05-11,felixehm] Added new function for replacing a tapecopy for a file.
+    [r1.14,2006-05-11,felixehm] This is used for the repack process. A file is removed from a tape and written
+    [r1.14,2006-05-11,felixehm] to a another one. In this case, we would like to keep the old tapecopy number
+    [r1.14,2006-05-11,felixehm] and set it to the new segment tapecopy.
+    [r1.14,2006-05-11,felixehm] 
+    [r1.14,2006-05-11,felixehm] Note, that the old segments of that tapecopy are removed from the NS database.
+  * CASTOR2/ns/Cns_oracle_ifce.pc:
+    [r 1.3,2006-05-15,felixehm] Added new function to retrieve all segments for one tapecopy.
+    [r 1.3,2006-05-15,felixehm] used in Cns_procreq.c for replacing a tapecopy (repack process).
+  * CASTOR2/ns/Cns_procreq.c:
+    [r 1.9,2006-06-23,felixehm] UNDO of the previous commit. The segment has to be in '-' status!
+    [r 1.8,2006-06-21,felixehm] Fixed bug : there is now a check if the new segment status is 'm' (migrated).
+    [r 1.8,2006-06-21,felixehm] If not it is set to this status. We know that this file is on a tape, otherwise we wouldn't call this function.
+    [r 1.7,2006-05-15,felixehm] Changed replacement of segments by using the Cns_get_smd_by_copyno() function.
+    [r 1.7,2006-05-15,felixehm] This ensures that we replace all segments belonging to one tapecopy, even
+    [r 1.7,2006-05-15,felixehm] if this tapecopy is splitted on > 1 tapes.
+    [r 1.7,2006-05-15,felixehm] lets say, this is a nicer solution than iterating twice over all segments of file
+    [r 1.7,2006-05-15,felixehm] to find the copyno and then the segments with this copyno.
+    [r 1.6,2006-05-12,felixehm] fixed little, but nasty error.
+    [r 1.6,2006-05-12,felixehm] fixed output function name
+    [r 1.5,2006-05-11,felixehm] Added new function for replacing a tapecopy for a file.
+    [r 1.5,2006-05-11,felixehm] This is used for the repack process. A file is removed from a tape and written
+    [r 1.5,2006-05-11,felixehm] to a another one. In this case, we would like to keep the old tapecopy number
+    [r 1.5,2006-05-11,felixehm] and set it to the new segment tapecopy.
+    [r 1.5,2006-05-11,felixehm] 
+    [r 1.5,2006-05-11,felixehm] Note, that the old segments of that tapecopy are removed from the NS database.
+  * CASTOR2/ns/Imakefile:
+    [r 1.7,2006-05-11,felixehm] Added new function for replacing a tapecopy for a file.
+    [r 1.7,2006-05-11,felixehm] This is used for the repack process. A file is removed from a tape and written
+    [r 1.7,2006-05-11,felixehm] to a another one. In this case, we would like to keep the old tapecopy number
+    [r 1.7,2006-05-11,felixehm] and set it to the new segment tapecopy.
+    [r 1.7,2006-05-11,felixehm] 
+    [r 1.7,2006-05-11,felixehm] Note, that the old segments of that tapecopy are removed from the NS database.
+  * CASTOR2/resourcemonitoring/Crmd_recv_from_maui.c:
+    [r1.53,2006-09-04,kotlyar] added implementation for Maui scheduler:
+    [r1.53,2006-09-04,kotlyar] 
+    [r1.53,2006-09-04,kotlyar] defined WIKI_1_1 means to use wiki 1.1 protocol between rmmaster and scheduler;
+    [r1.53,2006-09-04,kotlyar] for wiki 1.1 all filesystems are converted into node/filesystem presentation and a node information
+    [r1.53,2006-09-04,kotlyar] is duplicated if it has several file systems except the information about a local disk;
+    [r1.53,2006-09-04,kotlyar] each node/filesystem features must be described in the maui.cfg;
+    [r1.53,2006-09-04,kotlyar] all nodes and jobs have default partition for scheduler;
+    [r1.53,2006-09-04,kotlyar] jobs use hostlist field from wiki 1.1 for the requested filesystem parameter.
+  * CASTOR2/resourcemonitoring/Crmd_recv_from_rmnode.c:
+    [r1.25,2006-08-03,waldron] fixed bug : crash due to inconsistant number of parameters for dlf logging
+  * CASTOR2/resourcemonitoring/Crmd_recv_from_users.c:
+    [r1.84,2006-08-02,waldron] fix to dlf api mutex lock issues
+    [r1.83,2006-07-18,waldron] dlf api integration
+  * CASTOR2/resourcemonitoring/rmmaster.c:
+    [r1.23,2006-08-02,waldron] removed error line
+    [r1.22,2006-08-02,waldron] another dlf integration fix
+    [r1.21,2006-08-02,waldron] fix to dlf api mutex lock issues
+    [r1.20,2006-07-18,waldron] dlf api integration
+    [r1.19,2006-06-13,waldron] updated to use new DLF client api
+  * CASTOR2/rfio/rfio_callhandlers.c:
+    [r 1.8,2006-08-02,itglp] cosmetic changes (indentation)
+  * CASTOR2/rfio/rfrm.c:
+    [r1.19,2006-08-14,gtaur] checked the value of host instead of the path starting with /castor
+  * CASTOR2/rfio/rmdir.c:
+    [r1.12,2006-08-14,gtaur] more elegant solution for the future merge
+  * CASTOR2/rtcopy/recaller.c:
+    [r1.25,2006-07-18,waldron] dlf api integration
+    [r1.24,2006-06-13,waldron] updated to use new DLF client api
+  * CASTOR2/rtcopy/rtcpcldNsInterface.c:
+    [r1.34,2006-08-21,felixehm] Commented reackvid in SubRequest, until other solution with own RepackRequest in Stager
+    [r1.34,2006-08-21,felixehm] is developed
+    [r1.34,2006-08-21,felixehm] removed little bug in comparision for checkDualTapeCopies:
+    [r1.34,2006-08-21,felixehm] pointer <-> u_signed64
+    [r1.33,2006-08-16,felixehm] Redo number of parameters for dlf_write
+    [r1.32,2006-08-16,felixehm] Added check to avoid 2 tapecopies on one tape.
+    [r1.32,2006-08-16,felixehm] fixed number of params for a dlf_write command
+    [r1.31,2006-05-11,felixehm] Added new function which checks if a file belongs to a repack process
+    [r1.31,2006-05-11,felixehm] the tape svc in the stager is queried).
+    [r1.31,2006-05-11,felixehm] If so, then the written segments have to replace(!) the old tapecopy
+    [r1.31,2006-05-11,felixehm] for that file in the nameserver.
+    [r1.31,2006-05-11,felixehm] In the normal case the segments are created in the NS (not changed)
+  * CASTOR2/rtcopy/rtcpcldVmgrInterface.c:
+    [r1.22,2006-08-03,felixehm] fixed bug : crash due to inconsistant number of parameters for dlf logging
+  * CASTOR2/rtcopy/rtcpcldcommon.c:
+    [r1.33,2006-06-13,waldron] updated to use new DLF client api
+  * CASTOR2/rtcopy/rtcpclientd.c:
+    [r1.32,2006-07-18,waldron] dlf api integration
+  * CASTOR2/rtcopy/rtcpclientd.man:
+    [r 1.2,2006-06-13,waldron] updated to use new DLF client api
+  * CASTOR2/scheduler/LSF/schmod_castor.c:
+    [r1.38,2006-06-13,waldron] updated to use new DLF client api
+  * CASTOR2/stager/stager.c:
+    [r1.88,2006-07-18,waldron] dlf api integration
+    [r1.87,2006-06-13,waldron] updated to use new DLF client api
+  * CASTOR2/stager/stager_error_service.cpp:
+    [r1.10,2006-08-18,sponcec3] Set the request id in all responses
+  * CASTOR2/stager/stager_gc_service.cpp:
+    [r1.11,2006-08-18,sponcec3] Fix last problems with send back the request id
+    [r1.10,2006-08-18,sponcec3] Set the request id in all responses
+  * CASTOR2/stager/stager_job_service.cpp:
+    [r1.35,2006-08-18,sponcec3] Fix last problems with send back the request id
+    [r1.34,2006-08-18,sponcec3] Set the request id in all responses
+  * CASTOR2/stager/stager_query_service.cpp:
+    [r1.42,2006-08-18,sponcec3] Set the request id in all responses
+    [r1.41,2006-08-17,sponcec3] Fixed precedence of diskcopies status when queryin a file with multiple diskcopies
+  * CASTOR2/stager/stager_service_helper.cpp:
+    [r 1.2,2006-08-18,sponcec3] Fix last problems with send back the request id
+  * CASTOR2/test/dlf/Imakefile:
+    [r 1.4,2006-06-13,waldron] new test program for DLF
+  * CASTOR2/test/dlf/dlftest.c:
+    [r 1.9,2006-08-02,waldron] fixed throughput rate option (-r)
+    [r 1.8,2006-07-18,waldron] second revision
+    [r 1.7,2006-06-23,waldron] corrected the number of parameters in dlf_write
+    [r 1.6,2006-06-13,waldron] new test program for DLF
+  * CASTOR2/test/security/notes.txt:
+    [r 1.5,2006-05-17,lopic3] user's proxy cert
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    [r1.301,2006-09-11,itglp] Fixed archiveSubReq and fileRecalled to properly handle repack/non-repack requests
+    [r1.300,2006-09-11,itglp] Fixing some outer join queries for repack
+    [r1.299,2006-09-08,felixehm] Added changements for StageRepackRequest scheduling,quering, etc.
+    [r1.298,2006-09-06,sponcec3] Fixed putStart to take into account SubRequest cancelation by stageRm during the queuing. This bug was leading to updating DiskCopies to status STAGEOUT while the job was due to fail. After that, all requests were waiting on this STAGEOUT but their parents were put to NULL since the failing STAGEOUT SubRequest was set tO FAILED and thus not found by makeSubReqWait
+    [r1.297,2006-09-06,sponcec3] Fixing missing invalidation of DiskCopy in stageRm. This was leading to DiskCopies in WAITFS status with no 'valid' associated SubRequest and thus to an accumulation of SubRequests in WAITSUBREQ status waiting on nothing (null parent)
+    [r1.296,2006-09-06,sponcec3] Fixed wrong check of FileSystem and DiskServer status in isSubRequestToSchedule. They were checked even when non applicable, leading to scheduling requests that should have waited
+    [r1.295,2006-09-04,sponcec3] Nasty work-around to the nbTapeCopiesInFS problem
+    [r1.294,2006-08-16,gtaur] delete of out date now delete only the failed one status in (8,9,10)
+    [r1.293,2006-08-14,itglp] Fixed triggers around NbTapeCopiesInFS according to new TapeCopy state diagram. To be still tested.
+    [r1.293,2006-08-14,itglp] Better indentation for fileRecalled.
+    [r1.292,2006-08-10,sponcec3] Fixed 2 bugs in prepareForMigration/putDoneFunc : the context was not passed properly and the update requests were not taken into account
+    [r1.291,2006-08-07,itglp] Fixed DiskPool2ServiceClass -> DiskPool2SvcClass
+    [r1.290,2006-08-07,itglp] Added missing ';'
+    [r1.289,2006-08-07,itglp] From Nilo: changed sequence cache from 200 to 300, added PK in DP2SC.
+    [r1.289,2006-08-07,itglp] Fixed' and commented out tr_Stream2TapeCopy_Delete. To be fully understood
+    [r1.289,2006-08-07,itglp] yet what's wrong around the triggers around NBTapeCopiesInFS.
+    [r1.289,2006-08-07,itglp] Removed VDQM2 specific code, added to an upcoming oracleTrailer.
+    [r1.288,2006-08-07,sponcec3] Some improvements in anyTapeCopyForStream thanks to Olof. We were not taking into account the status of the filesystems and diskservers
+    [r1.287,2006-08-03,sponcec3] Fix stupid mistake in updateFiles2Delete
+    [r1.286,2006-08-02,felixehm] Added internalputDoneFunc:
+    [r1.286,2006-08-02,felixehm] in fact an extraction from putDoneFunc. It creates a specified number
+    [r1.286,2006-08-02,felixehm] of tapecopies for a diskcopy in STAGEOUT. This number is passed as a
+    [r1.286,2006-08-02,felixehm] parameter.
+    [r1.286,2006-08-02,felixehm] 
+    [r1.286,2006-08-02,felixehm] Changed fileRecalled:
+    [r1.286,2006-08-02,felixehm] Whenever a file is recalled its repackvid in the subrequest is checked and
+    [r1.286,2006-08-02,felixehm] for each found 'repack-subrequest' for this file the number of tapecopies
+    [r1.286,2006-08-02,felixehm] are created. Only subrequest in WAITTAPERECALL,WAITSUBREQ and READY are
+    [r1.286,2006-08-02,felixehm] considered. This is neccessary for >1 tapecopy repacking (otherwise only
+    [r1.286,2006-08-02,felixehm] one tapecopy is created for the migration).
+    [r1.286,2006-08-02,felixehm] 
+    [r1.286,2006-08-02,felixehm] 
+    [r1.286,2006-08-02,felixehm] Changed putDoneFunc:
+    [r1.286,2006-08-02,felixehm] Reduced by the extracted part now in internalputDoneFunc
+    [r1.285,2006-08-02,sponcec3] Fixed the cleaning of the DiskCopy in case of put failure. This was leading to orphaned DiskCopies
+    [r1.284,2006-07-21,sponcec3] Fixed some deadlock between the GC and the updateFsFileClosed PL/SQL function
+    [r1.283,2006-07-13,sponcec3] Fixed nullGCPolicy so that Invalid files are deleted
+    [r1.282,2006-07-07,itglp] Create main id sequence with bigger cache (optimization from Nilo)
+    [r1.281,2006-07-06,itglp] Improved internalStageQuery (credits to Eric).
+    [r1.281,2006-07-06,itglp] Fix for bug #17948: after a put, any existing castorFile having the same lastKnownFileName
+    [r1.281,2006-07-06,itglp] but different fileid will be reset to lastKnownFileName = '' so to avoid false
+    [r1.281,2006-07-06,itglp] duplicates in queries.
+    [r1.281,2006-07-06,itglp] Fixed comments.
+    [r1.280,2006-07-04,felixehm] Added new Status for the Stager SubRequest. This is needed for the handling
+    [r1.280,2006-07-04,felixehm] of a file in a repakc process. In the recaller part, the new status is set,
+    [r1.280,2006-07-04,felixehm] instead of archiving the subrequest. In case of a repack the subrequest life
+    [r1.280,2006-07-04,felixehm] is not over, when the file is recalled. We extend the validation of it by this
+    [r1.280,2006-07-04,felixehm] special state for repack.
+    [r1.280,2006-07-04,felixehm] Note that at the end of the repack process (migration) the subrequest is set to
+    [r1.280,2006-07-04,felixehm] archived (see OraTapeSvc  -->checkFileForRepack).
+    [r1.279,2006-06-22,itglp] Fixed FS trigger for GC
+    [r1.279,2006-06-22,itglp] Attempt to add a revision into CastorVersion table
+    [r1.278,2006-06-19,sponcec3] Yet another fix on updateFsFileClosed
+    [r1.277,2006-06-14,sponcec3] Fixed a missing condition on the select defining which is the prepareToPut statement to delete on a putDone
+    [r1.276,2006-06-13,sponcec3] Fix last fix of GC
+    [r1.275,2006-06-13,sponcec3] Make disk2diskCopy wait when the replicated file is in STAGEOUT. And wake it up after the put done
+    [r1.274,2006-06-09,itglp] Fix defaultGCPolicy to delete INVALID diskcopies first
+    [r1.274,2006-06-09,itglp] bug introduced in v. 1.248)
+    [r1.273,2006-06-09,sponcec3] Fix isSubRequestToSchedule. This was allowing replications of STAGEOUT diskcopies in case replication was enabled and several svcclasses were defines
+    [r1.272,2006-06-09,sponcec3] Fix (again !) fsupdateFileClosed
+    [r1.271,2006-06-08,sponcec3] Fixes the previous fix
+    [r1.270,2006-06-08,sponcec3] Fixed a deadlock in updateFsFileClosed
+    [r1.269,2006-06-01,itglp] Fixed bug in GC procedure
+    [r1.268,2006-05-30,felixehm] Fixed wrong set of diskcopy status.
+    [r1.268,2006-05-30,felixehm] If a file is recalled we want to have the diskcopy in 0,
+    [r1.268,2006-05-30,felixehm] otherwise for repack purpose we want to have it in 6.
+    [r1.267,2006-05-29,itglp] Added index hints in fileNameStageQuery (from Nilo)
+    [r1.267,2006-05-29,itglp] Moved fileRecalled after putDoneFunc
+    [r1.267,2006-05-29,itglp] Fixed statement in stageRm
+    [r1.266,2006-05-26,itglp] Added new indexes.
+    [r1.266,2006-05-26,itglp] Optimized bestTapeCopyForStream (thanks to Nilo).
+    [r1.266,2006-05-26,itglp] Fixed several queries related to SubRequest.status: now a NOT IN (...) clause
+    [r1.266,2006-05-26,itglp] is present nowhere and all the states are mentioned explicitly, properly
+    [r1.266,2006-05-26,itglp] taking into account the new ARCHIVED one.
+    [r1.266,2006-05-26,itglp] Improved GC trigger, now working fine.
+    [r1.265,2006-05-11,felixehm] Added new Stream converter for old SubRequests
+    [r1.265,2006-05-11,felixehm] changed sql Procedure filerecalled:
+    [r1.265,2006-05-11,felixehm] whenever a file is staged in as a repack request (the new subrequest field
+    [r1.265,2006-05-11,felixehm] repackvid is set with the origin tape), the diskcopy status is
+    [r1.265,2006-05-11,felixehm] directly put into CANBEMIGRATED.
+    
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Mon, 11 Sep 2006 20:02:30 +0200
+
 castor (2.1.0-8) unstable; urgency=low
+
   * identical to the 2.1.0-7 but with some more bugs fixed
   
   * rfio/rfcp.c free cleanInp and cleanOut are commented, they should be
     properly set.
 
--- rosa maria garcia rioja <rosa.garcia@cern.ch>  Thu,  24 Aug 2006 15:37:14 +0200
+ -- rosa maria garcia rioja <rosa.garcia@cern.ch>  Thu,  24 Aug 2006 15:37:14 +0200
 
 castor (2.1.0-7) unstable; urgency=low
 
   * identical to the 2.1.0-6 but with some more bugs fixed 
   
-  *castor/io/ServerSocket.cpp
+  * castor/io/ServerSocket.cpp
   Random port in bind() to wait the answer from the stager. Port with limited values...
   
-  *rfio/RfioTURL.c
+  * rfio/RfioTURL.c
   Removed memory leak in Rfio
 
--- rosa maria garcia rioja <riojac3@localhost.localdomain>  Fri,  10 Aug 2006  0:00:00 +0200
+ -- rosa maria garcia rioja <riojac3@localhost.localdomain>  Fri,  10 Aug 2006  0:00:00 +0200
 
 castor (2.1.0-6) unstable; urgency=low
 
@@ -1505,10 +3611,6 @@ castor (2.0.2-4) unstable; urgency=low
     [r1.113,2005-11-22,mbraeger] Removed the UNIT_WAITDOWN status of the TapeDriveStatusCodes table in the VDQM database diagram.
     [r1.113,2005-11-22,mbraeger] It is not used any more!
     [r1.112,2005-11-16,itglp] field for a 'reason' added to the TapeDriveDedication table in the VDQM diagram
-  * PROTO2/codeGeneration/gencastor/debian/changelog:
-    [r1.19,2005-11-24,itglp] Version 3.6-0.
-  * PROTO2/codeGeneration/gencastor/debian/files:
-    [r1.18,2005-11-24,itglp] Version 3.6-0.
   * PROTO2/codeGeneration/gencastor/genCastor.cpp:
     [r1.20,2005-11-24,itglp] Version 3.6-0.
   * PROTO2/codeGeneration/gencastor/umbrello/codegenerators/cppcppbasecnvwriter.cpp:
@@ -1567,8 +3669,6 @@ castor (2.0.2-3) unstable; urgency=low
       [2005-11-14,mbraeger] Extension of the selectServer() function in OraVdqmSvc
   * PROTO2/common/Cdlopen.c:
     [r 1.4,2005-11-14,jdurand] Fix segfault in Cdlerror
-  * PROTO2/debian/changelog:
-    [r1.83,2005-11-10,sponcec3] Added tape blocksize change to release
   * PROTO2/resourcemonitoring/Crmd_recv_from_users.c:
     [r1.80,2005-11-14,jdurand] Automatic close of connection between rmmaster thread and the LSF proxy - otherwise the LSF proxy will wait for an event until netread timeout (not fatal, though)
     [r1.79,2005-11-14,jdurand] Stop submitting the job in PSUSP: now the job is submitted in a normal state, a message box sent afterwards (which triggers another parsing of resources)

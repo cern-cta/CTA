@@ -1,10 +1,29 @@
 -----------
+- 2.1.1-0 -
+-----------
+
+  New Features and Changes
+  ------------------------
+  This is a major release with many fixes and features. See the changelog for all the details.
+  The most important new features are:
+  - New rewritten version of DLF
+  - Resurrection of the db connection when it's lost
+  - Many fixes to the SQL code
+
+  Upgrade from 2.1.0-x
+  --------------------
+  The upgrade to be done concerns the whole system (database, stager, clients, tape servers)
+  - Upgrade the database (you don't need to stop the services nor daemons for that).
+  - Then upgrade the head nodes. 
+  - Clients must be upgraded once all servers are upgraded: a new client cannot connect to an OLD stager.
+
+-----------
 - 2.1.0-8 -
 -----------
 
   New Features and Changes (from 2.1.0-7)
   ---------------------------------------
-    - Fixed temporaly the problems with rfcp command for CASTOR1
+  - Fixed temporaly the problems with rfcp command for CASTOR1
 
   Upgrade from 2.1.0-7
   --------------------
@@ -43,7 +62,7 @@
   --------------------
 
   - Upgrade the Database
-  - Upgrade  the head node
+  - Upgrade the head nodes
   - Then for the other components there are no restrictions in that release.
 
 -----------
@@ -63,7 +82,7 @@
   --------------------
 
   - Upgrade the Database
-  - Upgrade  the head node
+  - Upgrade the head nodes
   - Then for the other components there are no restrictions in that release.
 
 -----------
@@ -110,8 +129,8 @@
   Upgrade from 2.1.0-2
   --------------------
 
-    - The upgrade to be done concerns to the whole system (database, stager, client, tape servers)
-    - Upgrade the database (you don't need to stop the services nor daemos for that).
+    - The upgrade to be done concerns the whole system (database, stager, client, tape servers)
+    - Upgrade the database (you don't need to stop the services nor daemons for that).
     - Then upgrade the rest of the system. 
 
 
