@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2006/08/14 13:01:44 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2006/09/12 10:10:45 $ $Author: felixehm $
  *
  *
  *
@@ -67,7 +67,9 @@ namespace castor {
     /**
      * Initializes the db access.
      */
+
     RepackWorker(RepackServer* pserver);
+
     
     /**
      * Standard destructor
@@ -151,6 +153,21 @@ namespace castor {
       * @throws castor::exception::Exception if the tape was not found
       */
     RepackRequest* getStatus(RepackRequest* rreq) throw (castor::exception::Internal);
+
+
+    /**
+      * Checks for double tapecopy repacking. This happens whenever there are >1 tapecopies
+      * of a file to be repacked. If the first one is migrated, the user 
+      * gets a message to restart the concerning remaining tapes again. The reason for
+      * this is the creation of the tapecopies of a file, whenever it is recalled. 
+      * The FILERECALLED PL/SQL creates the amount of tapecopies which have been 
+      * submitted as Stager SubRequest till that time. Everyone reaching it after 
+      * the physical recall, would be ignored. This has to be checked an in case the user
+      * informed.
+      */
+    int RepackWorker::checkMultiRepack(RepackSubRequest* sreq) 
+                                                  throw (castor::exception::Internal);
+
 
     
     /** Gets the status of all RepackSubRequests from the DB. The given tape vid
