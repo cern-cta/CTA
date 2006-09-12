@@ -1,5 +1,6 @@
 castor (2.1.1-0) unstable; urgency=low
 
+  * <Packaging>: in this release Repack2 and VDQM2 are not packaged, but their changelog is here.
   * CASTOR2/Imakefile:
     [r1.20,2006-08-01,sponcec3] Dropped the (very) old C gc code
   * CASTOR2/PACKAGING.howto:
@@ -2101,7 +2102,7 @@ castor (2.1.1-0) unstable; urgency=low
     [r1.265,2006-05-11,felixehm] repackvid is set with the origin tape), the diskcopy status is
     [r1.265,2006-05-11,felixehm] directly put into CANBEMIGRATED.
     
- -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Mon, 11 Sep 2006 20:02:30 +0200
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Mon, 12 Sep 2006 13:00:00 +0200
 
 castor (2.1.0-8) unstable; urgency=low
 
