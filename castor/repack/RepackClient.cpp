@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2006/08/07 17:05:01 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2006/09/12 10:07:39 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -36,7 +36,7 @@
 /* Client  includes */
 #include "castor/repack/RepackClient.hpp"
 #include <time.h>
-
+#include <ios>
 
 /** 
  * By including the Header file, the Factory is automatically active !! 
@@ -351,29 +351,29 @@ void RepackClient::run(int argc, char** argv)
 //------------------------------------------------------------------------------
 void RepackClient::handleResponse(RepackAck* ack) {
 	
-	std::map<int,std::string> statuslist;
-	statuslist[SUBREQUEST_READYFORSTAGING] = "START";
-	statuslist[SUBREQUEST_STAGING] = "STAGING";
-	statuslist[SUBREQUEST_MIGRATING] = "MIGRATING";
-	statuslist[SUBREQUEST_READYFORCLEANUP] = "CLEANUP";
-	statuslist[SUBREQUEST_DONE] = "FINISHED";
+  std::map<int,std::string> statuslist;
+  statuslist[SUBREQUEST_READYFORSTAGING] = "START";
+  statuslist[SUBREQUEST_STAGING] = "STAGING";
+  statuslist[SUBREQUEST_MIGRATING] = "MIGRATING";
+  statuslist[SUBREQUEST_READYFORCLEANUP] = "CLEANUP";
+  statuslist[SUBREQUEST_DONE] = "FINISHED";
   statuslist[SUBREQUEST_ARCHIVED] = "ARCHIVED";
 
   time_t seconds;
 
-	if ( ack->errorCode() ){
-		std::cerr << "Repackserver respond :" << std::endl
-					<< ack->errorMessage() << std::endl;
-		return;
+  if ( ack->errorCode() ){
+    std::cerr << "Repackserver respond :" << std::endl
+              << ack->errorMessage() << std::endl;
+    return;
   }
 
-	if ( ack->request().size() > 0 ){
-	  RepackRequest* rreq = ack->request().at(0);
-	  std::cout << "=========================================================================================" 
+  if ( ack->request().size() > 0 ){
+    RepackRequest* rreq = ack->request().at(0);
+    std::cout << "=========================================================================================" 
               << std::endl;
-	  
+
     switch ( rreq->command() ){
-		  case GET_STATUS :
+      case GET_STATUS :
        seconds = (long)rreq->creationTime(); 
        std::cout 
         << "Details for Request created on " << ctime (&seconds) << std::endl
@@ -384,29 +384,29 @@ void RepackClient::handleResponse(RepackAck* ack) {
       
       case GET_STATUS_ALL : 
       case ARCHIVE : 
-		  case REPACK : 
-		  {
-			  std::cout << "vid\tcuuid\t\t\t\t\ttotal\tstaging\tmigration\tstatus" <<std::endl;
+      case REPACK : 
+      {
+        std::cout << "vid\tcuuid\t\t\t\t\ttotal  staging  migration  failed   status" <<std::endl;
         std::cout << "-----------------------------------------------------------------------------------------"
-<<std::endl;
-			  std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
-			  while ( tape != rreq->subRequest().end() ){
-				  std::cout << (*tape)->vid() 
-            << "\t" << (*tape)->cuuid()
-            << "\t" << (*tape)->files()
-            << "\t" << (*tape)->filesStaging()
-					  << "\t" << (*tape)->filesMigrating()
-					  << "\t\t" << statuslist[(*tape)->status()]
-					  << std::endl;
-				  tape++;
-			  }
-			  break;
-		  }
-  
-	  }
+                  << std::endl;
+        std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
+        while ( tape != rreq->subRequest().end() ){
+          std::cout << (*tape)->vid() << 
+            "\t"<< (*tape)->cuuid() <<
+            "\t" << std::setw(7)<< std::left << (*tape)->files() <<
+            std::setw(9)<< std::left<< (*tape)->filesStaging() <<
+            std::setw(11)<< std::left<< (*tape)->filesMigrating() <<
+            std::setw(9)<< std::left<< (*tape)->filesFailed() <<
+            std::setw(9)<< statuslist[(*tape)->status()] <<
+            std::endl;
+          tape++;
+        }
+        break;
+      }
+    }
     std::cout << "=========================================================================================" 
               << std::endl;
-	}
+  }
 
 
 }
