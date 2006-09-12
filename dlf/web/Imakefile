@@ -20,6 +20,7 @@ COMM ---------------------------------------------------------------------------
 #include <Project.tmpl>
 
 IFILES = $(DLFWEB)/config.php          \
+	 $(DLFWEB)/dbview.php          \
 	 $(DLFWEB)/index.php           \
 	 $(DLFWEB)/query.php           \
 	 $(DLFWEB)/results.php         \
@@ -44,6 +45,7 @@ $(DLFWEB):
 	mkdir -p $(DESTDIR)$(DLFWEB)/images
 
 InstallNonExecFile(config.php,$(DLFWEB),root,root,600)
+InstallNonExecFile(dbview.php,$(DLFWEB),root,root,644)
 InstallNonExecFile(index.php,$(DLFWEB),root,root,644)
 InstallNonExecFile(query.php,$(DLFWEB),root,root,644)
 InstallNonExecFile(results.php,$(DLFWEB),root,root,644)
