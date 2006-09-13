@@ -133,7 +133,7 @@ NormalLibraryTarget(dlf,$(DLFLIB_OBJS))
 MakeDepSharedLibrary(shlib,shift)
 
 #if BuildDlfDaemon
-install: $(IPROGS) $(SPOOL)
+install: $(BIN) $(IPROGS) $(SPOOL)
 	for i in $(SUBDIRS) ;\
 	do (if [ -d $$i ] ;\
 	    then \
@@ -150,6 +150,19 @@ IEXPORT(dlfserver,$(EXPORTBIN),750)
 
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
+
+#else
+install: $(BIN)
+	for i in $(SUBDIRS) ;\
+	do (if [ -d $$i ] ;\
+	    then \
+	      (echo " $$i:" ; cd $$i ;\
+	      $(MAKE) $(MFLAGS) $@) ;\
+	    else \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;\
+	    fi )\
+	done ;
 #endif
 
 install.man: $(MANDIR) $(MANPAGES)
