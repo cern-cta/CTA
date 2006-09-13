@@ -17,11 +17,12 @@
   
   Upgrade from 2.1.0-x
   --------------------
-  The upgrade to be done concerns the whole system (database, stager, clients, tape servers)
+  The upgrade to be done concerns the whole system (database, stager, clients, tape servers),
+  and backward compatibility is ensured only if clients are uprgraded BEFORE servers.
+  - Upgrade all clients (they can still connect to an OLD stager).
   - Upgrade the stager database (you don't need to stop the services nor daemons for that).
   - Drop and recreate the DLF database.
-  - Then upgrade the head nodes. 
-  - Clients must be upgraded once all servers are upgraded: a new client cannot connect to an OLD stager.
+  - Then upgrade the head nodes.
 
 -----------
 - 2.1.0-8 -
