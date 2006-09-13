@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)OraTapeSvc.cpp,v 1.13 $Release$ 2006/08/18 07:28:44 felixehm
+ * @(#)OraTapeSvc.cpp,v 1.14 $Release$ 2006/09/13 08:35:57 felixehm
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -146,7 +146,7 @@ const std::string castor::db::ora::OraTapeSvc::s_failedSegmentsStatementString =
 
 /// SQL statement for checkFileForRepack
 const std::string castor::db::ora::OraTapeSvc::s_checkFileForRepackStatementString = 
- "UPDATE subrequest SET subrequest.status = 11 WHERE id = (SELECT subrequest.id FROM subrequest, diskcopy, castorfile WHERE diskcopy.id = subrequest.diskcopy AND diskcopy.status = 10 AND subrequest.status = 12 AND diskcopy.castorfile = castorfile.id AND castorfile.fileid = :1 AND subrequest.repackvid IS NOT NULL AND ROWNUM < 2) RETURNING subrequest.id INTO :2";
+ "BEGIN checkFileForRepack(:1, :2); END;";
 
 
 // -----------------------------------------------------------------------
@@ -871,15 +871,14 @@ castor::db::ora::OraTapeSvc::failedSegments ()
 // -----------------------------------------------------------------------
 // checkFileForRepack
 // -----------------------------------------------------------------------
-castor::stager::SubRequest*
-castor::db::ora::OraTapeSvc::checkFileForRepack
+std::string castor::db::ora::OraTapeSvc::checkFileForRepack
 (const u_signed64 fileId)
   throw (castor::exception::Exception) {
   
   oracle::occi::ResultSet *rset = NULL;  
-  castor::stager::SubRequest* result = NULL;
+  std::string repackvid = "";
+  
   u_signed64 id = 0;
-/*  
   try {
     
     if (0 == m_checkFileForRepackStatement) {
@@ -887,26 +886,15 @@ castor::db::ora::OraTapeSvc::checkFileForRepack
         createStatement(s_checkFileForRepackStatementString);
     }
     m_checkFileForRepackStatement->registerOutParam
-        (2, oracle::occi::OCCIDOUBLE);
+        (2, oracle::occi::OCCISTRING);
     m_checkFileForRepackStatement->setDouble(1, fileId); 
     m_checkFileForRepackStatement->setAutoCommit(true);
 
     m_checkFileForRepackStatement->executeUpdate();
 
-    id = (u_signed64)m_checkFileForRepackStatement->getDouble(2);
+    repackvid = m_checkFileForRepackStatement->getString(2);
     
-    if ( id ){
-      
-        // Create result
-      castor::IObject* obj = cnvSvc()->getObjFromId( id );
-      result = dynamic_cast<castor::stager::SubRequest*>(obj);
-
-    }
-
     delete rset;
-    // return
-    return result;
-    
   
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -914,12 +902,11 @@ castor::db::ora::OraTapeSvc::checkFileForRepack
     ex.getMessage()
       << "Error caught in checkFileForRepack(): Fileid (" 
       << fileId << ","
-      << id << ")"
+      << repackvid<< ")"
       << std::endl << e.what();
     throw ex;
   }
-  */
-  return NULL;
+  return repackvid;
 }
 
 

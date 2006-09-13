@@ -279,11 +279,14 @@ namespace castor {
         /**
           * Checks, if the fileid is in a actual repack process.
 	  * This method is run by the migrator. It looks into the
-	  * Stager Catalog, if a repack vid was assigned with a subrequest.
-	  * @return the corresponding SubRequest object in the catalogue
+	  * Stager Catalog, if a StageRepackRequest object is assigned to
+	  * a subrequest for this  file. In this case it returns the 
+	  * volume name (repackvid field) of the request. The SubRequest is 
+	  * set to ARCHIVED.
+	  * @return the name of the tape
 	  * @exception in case of an error
           */
-        virtual castor::stager::SubRequest* checkFileForRepack 
+        virtual std::string checkFileForRepack 
         (const u_signed64 file)	 throw (castor::exception::Exception);
 
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvc.h,v $ $Revision: 1.5 $ $Release$ $Date: 2006/08/11 07:13:52 $ $Author: felixehm $
+ * @(#)$RCSfile: ITapeSvc.h,v $ $Revision: 1.6 $ $Release$ $Date: 2006/09/13 08:35:58 $ $Author: felixehm $
  *
  *
  *
@@ -337,18 +337,19 @@ int Cstager_ITapeSvc_failedSegments
 /**
  * Checks, if the fileid is in a actual repack process.
  * This method is run by the migrator. It looks into the
- * Stager Catalog, if a repack vid was assigned with a subrequest.
+ * Stager Catalog, if a StageRepackRequest object is assigned to
+ * a subrequest for this  file. In this case it returns the 
+ * volume name (repackvid field) of the request. 
  * @param stgSvc the ITapeSvc used
- * @param subRequest the found subRequest or NULL
+ * @param repackvid the found tape name or NULL
  * @param key the castorfile to check
- * @return the corresponding SubRequest object in the catalogue
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
  * Cstager_ITapeSvc_errorMsg
  */
 int Cstager_ITapeSvc_checkFileForRepack
 (struct Cstager_ITapeSvc_t* stgSvc, 
- struct Cstager_SubRequest_t* subRequest,
+ char* repackvid,
  const u_signed64 key);
 
 
