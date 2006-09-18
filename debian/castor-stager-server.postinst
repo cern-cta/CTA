@@ -1,8 +1,12 @@
 #! /bin/sh
 #
-# $Id: castor-stager-server.postinst,v 1.7 2005/08/08 16:51:23 jdurand Exp $
+# $Id: castor-stager-server.postinst,v 1.8 2006/09/18 14:53:46 sponcec3 Exp $
 #
 CASTOR_SERVICE=stager
+export CASTOR_SERVICE
+[ -x /usr/sbin/castor-service.postinst ] && /usr/sbin/castor-service.postinst ${1+"$@"}
+[ $? -ne 0 ] && exit $?
+CASTOR_SERVICE=cleaning
 export CASTOR_SERVICE
 [ -x /usr/sbin/castor-service.postinst ] && /usr/sbin/castor-service.postinst ${1+"$@"}
 exit $?
