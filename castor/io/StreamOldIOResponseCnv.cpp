@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamOldIOResponseCnv.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/08/18 10:00:38 $ $Author: gtaur $
+ * @(#)$RCSfile: StreamOldIOResponseCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/09/18 16:25:35 $ $Author: itglp $
  *
  * 
  *
@@ -96,7 +96,6 @@ void castor::io::StreamOldIOResponseCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->id();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
-  ad->stream() << obj->reqAssociated();
   ad->stream() << obj->fileName();
   ad->stream() << obj->server();
   ad->stream() << obj->port();
@@ -137,9 +136,6 @@ castor::IObject* castor::io::StreamOldIOResponseCnv::createObj(castor::IAddress*
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
-  std::string reqAssociated;
-  ad->stream() >> reqAssociated;
-  object->setReqAssociated(reqAssociated);
   std::string fileName;
   ad->stream() >> fileName;
   object->setFileName(fileName);

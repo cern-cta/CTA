@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamOldAbortResponseCnv.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/08/18 10:00:37 $ $Author: gtaur $
+ * @(#)$RCSfile: StreamOldAbortResponseCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/09/18 16:25:34 $ $Author: itglp $
  *
  * 
  *
@@ -90,7 +90,6 @@ void castor::io::StreamOldAbortResponseCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->type();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
-  ad->stream() << obj->reqAssociated();
   ad->stream() << obj->aborted();
   ad->stream() << obj->id();
 }
@@ -111,9 +110,6 @@ castor::IObject* castor::io::StreamOldAbortResponseCnv::createObj(castor::IAddre
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
-  std::string reqAssociated;
-  ad->stream() >> reqAssociated;
-  object->setReqAssociated(reqAssociated);
   bool aborted;
   ad->stream() >> aborted;
   object->setAborted(aborted);
