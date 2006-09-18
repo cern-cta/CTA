@@ -43,7 +43,6 @@
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
-#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "osdep.h"
 #include <string>
@@ -106,7 +105,6 @@ void castor::io::StreamSubRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->answered();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
-  ad->stream() << obj->getNextStatus();
 }
 
 //------------------------------------------------------------------------------
@@ -158,9 +156,6 @@ castor::IObject* castor::io::StreamSubRequestCnv::createObj(castor::IAddress* ad
   int status;
   ad->stream() >> status;
   object->setStatus((castor::stager::SubRequestStatusCodes)status);
-  int getNextStatus;
-  ad->stream() >> getNextStatus;
-  object->setGetNextStatus((castor::stager::SubRequestGetNextStatusCodes)getNextStatus);
   return object;
 }
 
