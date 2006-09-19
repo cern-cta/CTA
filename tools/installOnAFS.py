@@ -1,8 +1,13 @@
 #!/usr/bin/python
+from os import sys
+
+if len(sys.argv) != 2:
+	print 'Usage:', sys.argv[0], 'castorversion > /tmp/afsInstallScript ; source /tmp/afsInstallScript'
+	sys.exit(1)
 
 castordir = '/afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/DIST/CERN/savannah/'
 afsdir = '/afs/cern.ch/sw/lcg/external/castor/'
-version = '2.0.4-1'
+version = sys.argv[1]
 compatversion = '2.0.2-1'
 packages = ['ns-client', 'doc', 'rtcopy-client', 'upv-client', 'commands', 'stager-client', 'vdqm-client', 'rfio-server', 'lib', 'devel', 'stager-clientold', 'vmgr-client', 'rtcopy-messages', 'tape-client', 'rfio-client', 'scriptlets']
 
