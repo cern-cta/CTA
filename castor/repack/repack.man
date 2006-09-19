@@ -46,7 +46,7 @@ status may be repacked. One can either specify a single volume using
 option, a list of volumes by sperating them by ':'
 or a given tape pool (option
 \fB\-P\fR). repack sends a request to the repackserver and returns immediately.
-If an error occurs on the server side during the submission and error message
+If an error occurs on the server side during the submission an error message
 is returned.
 The repackserver to contact, has to be provided by adding the line 
 
@@ -74,24 +74,23 @@ It must be at most CA_MAXVIDLEN characters long. The status in the VMGR has to b
 .TP 
 .I OutputServiceClass
 The name of the service class which is used for writing back the files to tape.
-to. The tape pool information in this service class is taken by the CASTOR II
+The tape pool information in this service class is taken by the CASTOR II
 migrator to get a destination tape from the VMGR. To write to one specific tape, this
 service class has to have a tape pool containing this tape.
-.BR 
+.br 
 .B Note that this service class has to be known by the stager given in the castor config file.
 .TP 
 .I SourcePoolname
-is the tape pool name. It must be at most CA_MAXPOOLNAMELEN characters long.
+The name of the tape pool which is to be repacked . It must be at most CA_MAXPOOLNAMELEN characters long.
 The list of pools can be obtained with
 .BR vmgrlistpool .
 
 .SH "OPTIONS"
 \fB\-V\fR
-specifies the volumes to repack.
+specifies the volumes to repack seperated by ':'.
 
 \fB\-o\fR
-The service class used for migration (see obove). If none specified, the default is taken from the castor config file
-on the repackserver.
+The service class used for migration (see obove). If none specified, the default is taken from the castor config file on the repackserver machine.
 
 \fB\-s\fR
 Prints information about all tapes in an active repack process.
