@@ -356,7 +356,7 @@ $stager_sql_tables = array(
 			"filesystem" => array("filesystem:no")
 		),	
 		"status"	=> array(
-			"staged", "wait disk2disk copy", "wait tape recall", "deleted", "failed", "waitfs", "stageout", "invalid", "gc candidate, being deleted", "can be migrated", "wait fs scheduling"
+			"staged", "wait disk2disk copy", "wait tape recall", "deleted", "failed", "waitfs", "stageout", "invalid", "gc candidate", "being deleted", "can be migrated", "wait fs scheduling"
 		),
 		
 		/* */
@@ -408,7 +408,7 @@ $stager_sql_tables = array(
 			"castorfile" => array("castorfile:yes")
 		),	
 		"status"	=> array(
-			"start", "restart", "retry", "wait sched", "wait tape recall", "wait subreq", "ready", "failed", "finished", "failed finished", "failed answering", "archived"
+			"start", "restart", "retry", "wait sched", "wait tape recall", "wait subreq", "ready", "failed", "finished", "failed finished", "failed answering", "archived", "repack"
 		),
 	),	
 	
