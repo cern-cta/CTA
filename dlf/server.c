@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: server.c,v 1.8 2006/08/21 06:41:49 waldron Exp $
+ * $Id: server.c,v 1.9 2006/09/19 12:47:15 waldron Exp $
  */
 
 /* headers */
@@ -555,7 +555,7 @@ int main(int argc, char **argv) {
 		h->timeouts    = 0;
 
 		/* create client structure */
-		h->clients = (client_t *) malloc(sizeof(client_t) * 150);
+		h->clients = (client_t *) malloc(sizeof(client_t) * MAX_CLIENTS);
 		if (h->clients == NULL) {
 			log(LOG_CRIT, "malloc() failed for handler client structure - %s\n", strerror(errno));
 			return APP_FAILURE;
