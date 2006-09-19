@@ -1,4 +1,20 @@
 -----------
+- 2.1.1-1 -
+-----------
+
+  New Features and Changes
+  ------------------------
+  This release is exactly the same as the 2.1.1-0 except for a minor fix on the DLF server.
+  It has been rebuilt to widely deploy it at CERN, as the first attempt for the 2.1.1-0 had
+  a major problem leading to backward incompatibilities on the client.
+  Note that the RPMs in the castor download area are correct for both 2.1.1-0 and 2.1.1-1.
+
+  Upgrade from 2.1.1-0
+  --------------------
+  Not needed. If you're running an older version, please follow upgrade instructions below.
+
+
+-----------
 - 2.1.1-0 -
 -----------
 
@@ -10,10 +26,10 @@
   - Resurrection of the db connection when it's lost
   - Many fixes to the SQL code
   - Fixed some deadlock between the GC and the updateFsFileClosed PL/SQL function
-  - Fixed the random port issue.
+  - Fixed the random port issue on the client
   - Changed default nb of threads to 20 for DB and JOB (optimal value according to Olof's tests)
   - Modifications to be ready with RFIO merge
-  - Increase the number of test suites
+  - Increased the number of test suites
   
   Upgrade from 2.1.0-x
   --------------------
