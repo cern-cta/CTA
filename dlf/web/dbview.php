@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dbview.php,v 1.1 2006/09/06 12:53:43 waldron Exp $
+ * $Id: dbview.php,v 1.2 2006/09/19 12:46:43 waldron Exp $
  */
 
 require("utils.php");
@@ -90,7 +90,7 @@ function navigation_form() {
 	<!-- content -->
   	<tr class="content">
     	<td colspan="3" valign="top">
-			<table width="100%" border="0">
+			<table width="100%" border="0"">
 				<tr>
 					<?php	
 					if (!$entry || !$param || !$_GET['instance']) {
@@ -100,11 +100,11 @@ function navigation_form() {
 					} else {
 
 						/* tabular data */
-						echo "<td width=\"80%\" valign=\"top\">";
+						echo "<td width=\"80%\" valign=\"top\" align=\"center\">";
 
 						/* navigation */
 						navigation_form();
-											
+										
 						/* execute query */
 						$query_count++;
 						$query_lookup = $stager_sql_tables[$entry]['lookup'];
@@ -116,13 +116,13 @@ function navigation_form() {
 	
 						$results = db_query("SELECT * FROM ".$stager_sql_tables[$entry]['table']." WHERE $query_lookup = '$param'", $dbh);
 						if (!$results) {
-					
+						
 						}
 	
 						/* start table information */
 						while ($row = db_fetch_row($results)) {
 							echo "<table width=\"50%\" border=\"1\" cellspacing=\"3\" cellpadding=\"3\">";
-							echo "<tr class=\"banner\"><td colspan=\"2\">$entry</td></tr>";
+							echo "<tr class=\"banner\"><td colspan=\"2\" align=\"center\">$entry</td></tr>";
 						
 							foreach ($stager_sql_tables[$entry]['fields'] as $config) {
 						
@@ -133,7 +133,7 @@ function navigation_form() {
 								$value  = db_result($results, strtoupper($name));
 												
 								echo "<tr>";
-								echo "<td class=\"header\" width=\"110\">$name</td>";
+								echo "<td class=\"header\" width=\"110\" align=\"center\">$name</td>";
 							
 								/* process options */
 								array_flip($fields);
@@ -214,9 +214,9 @@ function navigation_form() {
 								}
 								
 								if ($value != "") {
-									echo "<td>$value</td>";
+									echo "<td align=\"center\">$value</td>";
 								} else {
-									echo "<td>&nbsp;</td>";
+									echo "<td align=\"center\">&nbsp;</td>";
 								}
 								echo "</tr>";
 							}				
