@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IDbResultSet.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/08/22 16:26:40 $ $Author: itglp $
+ * @(#)$RCSfile: IDbResultSet.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/09/21 07:10:49 $ $Author: felixehm $
  *
  * 
  *
@@ -41,6 +41,9 @@ namespace castor {
 class IDbResultSet {
 
 	public:
+
+    virtual ~IDbResultSet() {};
+
     /**
      * 
      */
