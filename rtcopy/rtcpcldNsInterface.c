@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.34 $ $Release$ $Date: 2006/08/21 12:48:52 $ $Author: felixehm $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.35 $ $Release$ $Date: 2006/09/21 17:46:45 $ $Author: felixehm $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.34 $ $Release$ $Date: 2006/08/21 12:48:52 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.35 $ $Release$ $Date: 2006/09/21 17:46:45 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -372,15 +372,14 @@ int rtcpcld_updateNsSegmentAttributes(
       to call. In one case we update (replace), and in the normal case we
       add (setsegattr)
    */
-  struct Cstager_SubRequest_t *sreq = NULL;
+  char* repackvid = NULL;
   serrno = rc = 0;
   
-  /** try to get a subrequest in the stager catalogue for this file
-      which has a valid repack attribute and which 
-      DISKCOPY is in CANBEMIGRATED
+  /** check the stager catalogue, the diskcopy in STAGEOUT and a
+      StageRepackRequest is found 
    */
-  //rc = rtcpcld_checkFileForRepack( castorFile, &sreq );
-  
+  rc = rtcpcld_checkFileForRepack( castorFile, &repackvid );
+
   if (rc == -1){
    (void)dlf_write(
                       (inChild == 0 ? mainUuid : childUuid),
@@ -393,34 +392,43 @@ int rtcpcld_updateNsSegmentAttributes(
     return (-1);
   }
 
-  if ( sreq != NULL ) {
-    /* we found a repackfile, so get the oldvid, from the SubRequest*/
-    const char** oldvid;
-    //Cstager_SubRequest_repackVid(sreq,&oldvid);
-    
+  if ( repackvid != NULL ) {
+
+     (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_REPACK),
+                      (struct Cns_fileid *)&castorFileId,
+                      1,
+                      "OldVid",
+                      DLF_MSG_PARAM_STR,
+                      repackvid);
+
+   
+    /* we found a repackfile initiate different NS behavior*/
+   
     /* replace the old tapecopy. Note that the old segments are deleted!
-       and the old tapecopyno is assigned to the new tapecopy.*/ 
+       and the old tapecopyno is assigned to the new tapecopy.*/
     rc = Cns_replacetapecopy(
                        &castorFileId,
-                       oldvid,
+                       repackvid,
                        nsSegAttrs->vid,
                        nbSegms,
                        nsSegAttrs
                        );
+    free(repackvid);
+    repackvid = NULL;
   }
   else {
-  
-  /* the normal Case */ 
+  /* the normal Case */
     rc = Cns_setsegattrs(
                        (char *)NULL, // CASTOR file name 
                        &castorFileId,
                        nbSegms,
                        nsSegAttrs
-                       ); 
+                       );
   }
   
-
-
+  
   if ( rc == -1 ) {
     save_serrno = serrno;
     if ( save_serrno == ENOENT ) {
@@ -795,7 +803,7 @@ int rtcpcld_checkDualCopies(
                    V         V
      fileid:   1 2 3 4 5 6 7 3
    */
-
+   
    CLIST_ITERATE_BEGIN(tape->file, fl)
      {
         rtcpcld_getFileId(fl,&fid);
@@ -810,7 +818,7 @@ int rtcpcld_checkDualCopies(
    CLIST_ITERATE_END(tape->file, fl);
    free(fid);
    free(prev_fid);
-
+  
 
   for ( i=0; i<nbSegs; i++ ) {
     if ( strncmp(tape->tapereq.vid,segArray[i].vid,CA_MAXVIDLEN) == 0 ) {

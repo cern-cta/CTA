@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.151 $ $Release$ $Date: 2006/09/11 12:58:16 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.152 $ $Release$ $Date: 2006/09/21 17:46:45 $ $Author: felixehm $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.151 $ $Release$ $Date: 2006/09/11 12:58:16 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.152 $ $Release$ $Date: 2006/09/21 17:46:45 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1124,8 +1124,6 @@ static int procSegmentsForTape(
    * order so that at least consecutive tape files are positioned
    * efficiently.
    */
-  
-  
   qsort(
         (void *)segmArray,
         (size_t)nbItems,
@@ -1133,7 +1131,6 @@ static int procSegmentsForTape(
         compareSegments
         );
   
-   
   tl = tape;
   for ( i=0; i<nbItems; i++ ) {
     Cstager_Segment_status(segmArray[i],&cmpStatus);
@@ -4032,19 +4029,20 @@ int rtcpcld_setVidWorkerAddress(
 
 
 
-/** This function retrieves the (1!)SubRequest for a file
-  * from the stager DB. We don't get more than one, because
-  * a file always belongs to one active (DISKCOPY in CANBEMIGRATED)
-  * repack process.
-  * This is needed for the migrator. It checks, if the
-  * subrequest is a repack one or not.
+
+/** This function checks the stager database, if the given
+  * file is in a repack process and its DISKCOPY in CANBEMIGRATED.
+  * In that case, the subrequest is automatically set to ARCHIVED 
+  * and the Volume ID of the origin tape is returned.
+  * used for replacing/adding segment information after a file has been
+  * written to tape.
   */
 int rtcpcld_checkFileForRepack(
                                castorFile,
-                               sreq
+                               repackvid
                                )
      struct Cns_fileid *castorFile;
-     struct Cstager_SubRequest_t **sreq;
+     char **repackvid;
 {
   int rc = 0;
   ID_TYPE key;
@@ -4061,8 +4059,8 @@ int rtcpcld_checkFileForRepack(
     return(-1);
   }
   rc =0;
-  
-  rc = Cstager_ITapeSvc_checkFileForRepack( *tpSvc, sreq, castorFile->fileid );
+
+  rc = Cstager_ITapeSvc_checkFileForRepack( *tpSvc, repackvid, castorFile->fileid );
   
   if (rc == -1){
     LOG_DBCALL_ERR(
@@ -4073,3 +4071,4 @@ int rtcpcld_checkFileForRepack(
   }
   return 0;
 }
+
