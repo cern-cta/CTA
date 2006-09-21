@@ -1,5 +1,12 @@
+gencastor (5.1-1) unstable; urgency=low
+
+  * Fixed generation of Stream converters for enumerationNoStream stereotype.
+
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Thu, 21 Sep 2006 09:06:55 +0200
+
 gencastor (5.1-0) unstable; urgency=low
 
+  * Improved exception handling for Oracle converters.
   * Improved generation of classes with custom clone() methods: now is it possible
     to provide a custom implementation in a file called EntityName.cpp_clone
     and it is taken into account when EntityName.cpp is generated.
