@@ -1495,24 +1495,32 @@ static int rfio_CnsFilesfdt_freeentry(s)
 
 /* Function that is saying if we work in old CASTOR1 compat mode (default) or CASTOR2 mode */
 int DLL_DECL use_castor2_api() {
-  char *p;
-  int *auxVal;
+  /* Function that is saying if we work in old CASTOR1 compat mode (default) or CASTOR2 mode */
   int ret=0;
-  ret=Cglobals_get(& tCastorVersionKey, (void**) &auxVal,sizeof(int));
-  if(ret==0 && (*auxVal==1 ||*auxVal==2)){
-    return (*auxVal-1);
+  char** globalHost;
+  char** globalSvc;
+  int* globalVersion;
+  int* globalPort;
+
+  ret=Cglobals_get(& tCastorVersionKey, (void**) &globalVersion,sizeof(int));
+  if(ret==0 && (*globalVersion==1 ||*globalVersion==2)){
+    return (*globalVersion-1);
 
   }
+  if (ret<0) return 0;
 
-  if (((p = getenv(RFIO_USE_CASTOR_V2)) == NULL) &&
-      ((p = getconfent("RFIO","USE_CASTOR_V2",0)) == NULL)) {
-    /* Variable not set: compat mode */
-    return(0);
-  }
-  if ((strcasecmp(p,"YES") == 0) || (atoi(p) == 1)) {
-    /* Variable set to yes or 1 : new mode */
-    return(1);
-  }
-  /* Variable set but not to 1 : compat mode */
-  return(0);
+/* Let's now find the global variable thread specific */
+
+  ret=Cglobals_get(&tStageHostKey,(void **)&globalHost,sizeof(void*));
+  if (ret<0) return 0; 
+
+  ret=Cglobals_get(&tSvcClassKey,(void **)&globalSvc,sizeof(void*));
+  if (ret<0) return 0;
+
+  ret=Cglobals_get(&tStagePortKey,(void **)&globalPort,sizeof(int));
+  if (ret<0) return 0;
+
+  ret=getDefaultForGlobal(globalHost,globalPort,globalSvc,globalVersion);
+  if (ret<0) return 0;
+  if (globalVersion) return (*globalVersion)-1;
 }

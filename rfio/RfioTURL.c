@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.19 $ $Release$ $Date: 2006/08/22 08:25:12 $ $Author: gtaur $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.20 $ $Release$ $Date: 2006/09/21 11:25:17 $ $Author: gtaur $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.19 $ $Release$ $Date: 2006/08/22 08:25:12 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.20 $ $Release$ $Date: 2006/09/21 11:25:17 $ Olof Barring";
 #endif /* not lint */
 /** RfioTURL.c - RFIO TURL handling
  *
@@ -196,7 +196,7 @@ int getDefaultForGlobal(
 			versionDefault=strcasecmp(aux,"YES")==0?2:1;
 		}else{versionDefault=0;}
     		if (versionDefault<=0){
-			versionDefault=versionMap;
+			versionDefault=versionMap+1;
 			if (versionDefault<=0){
 			aux=(char*)getconfent("STAGER","VERSION",0);
 			versionDefault=aux==NULL?0:atoi(aux);
