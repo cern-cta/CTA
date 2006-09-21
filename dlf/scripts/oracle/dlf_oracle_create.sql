@@ -634,7 +634,9 @@ DBMS_SCHEDULER.CREATE_JOB (
 END;
 
 /* trigger a partition run immediately */
-exec dlf_partition;
+BEGIN
+	dlf_partition;
+END;
 
 
 /* archive/backup procedure */
