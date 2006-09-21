@@ -17,11 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
-<<<<<<< OraGCSvc.cpp
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/08/03 10:03:16 $ $Author: gtaur $
-=======
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/08/03 10:03:16 $ $Author: gtaur $
->>>>>>> 1.9.4.1
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/09/21 16:26:06 $ $Author: itglp $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -209,8 +205,8 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
       foundSomething = true;
       // Fill result
       castor::stager::GCLocalFile* f = new castor::stager::GCLocalFile();
-      f->setFileName(rset->getString(2));
-      f->setDiskCopyId((u_signed64)rset->getDouble(1));      
+      f->setFileName(rset->getString(1));
+      f->setDiskCopyId((u_signed64)rset->getDouble(2));      
       result->push_back(f);
       // keep id
       dcIds.push_back(f->diskCopyId());
