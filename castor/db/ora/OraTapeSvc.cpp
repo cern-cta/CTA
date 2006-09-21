@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)OraTapeSvc.cpp,v 1.14 $Release$ 2006/09/13 08:35:57 felixehm
+ * @(#)OraTapeSvc.cpp,v 1.15 $Release$ 2006/09/21 17:38:54 felixehm
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -875,18 +875,17 @@ std::string castor::db::ora::OraTapeSvc::checkFileForRepack
 (const u_signed64 fileId)
   throw (castor::exception::Exception) {
   
-  oracle::occi::ResultSet *rset = NULL;  
   std::string repackvid = "";
-  
+ 
   u_signed64 id = 0;
   try {
     
     if (0 == m_checkFileForRepackStatement) {
       m_checkFileForRepackStatement =
         createStatement(s_checkFileForRepackStatementString);
+      m_checkFileForRepackStatement->registerOutParam
+        (2, oracle::occi::OCCISTRING, 2048);
     }
-    m_checkFileForRepackStatement->registerOutParam
-        (2, oracle::occi::OCCISTRING);
     m_checkFileForRepackStatement->setDouble(1, fileId); 
     m_checkFileForRepackStatement->setAutoCommit(true);
 
@@ -894,8 +893,6 @@ std::string castor::db::ora::OraTapeSvc::checkFileForRepack
 
     repackvid = m_checkFileForRepackStatement->getString(2);
     
-    delete rset;
-  
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
