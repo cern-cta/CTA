@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvc.h,v $ $Revision: 1.6 $ $Release$ $Date: 2006/09/13 08:35:58 $ $Author: felixehm $
+ * @(#)$RCSfile: ITapeSvc.h,v $ $Revision: 1.7 $ $Release$ $Date: 2006/09/21 15:41:09 $ $Author: felixehm $
  *
  *
  *
@@ -349,7 +349,7 @@ int Cstager_ITapeSvc_failedSegments
  */
 int Cstager_ITapeSvc_checkFileForRepack
 (struct Cstager_ITapeSvc_t* stgSvc, 
- char* repackvid,
+ char** repackvid,
  const u_signed64 key);
 
 

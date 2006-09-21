@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/09/13 08:35:58 $ $Author: felixehm $
+ * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/09/21 15:41:09 $ $Author: felixehm $
  *
  *
  *
@@ -386,7 +386,7 @@ extern "C" {
   //-------------------------------------------------------------------------
   int Cstager_ITapeSvc_checkFileForRepack
   (struct Cstager_ITapeSvc_t* tpSvc,
-   char* repackvid,
+   char** repackvid,
    const u_signed64 fileid) {
     std::string tmp;
     if (!checkITapeSvc(tpSvc) ) return -1;
@@ -397,7 +397,20 @@ extern "C" {
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
     }
-    (tmp.length())? repackvid = strdup(tmp.c_str()) :  repackvid=NULL;
+    FILE *fp;
+    fp = fopen("/tmp/TAPESVC_DEBUG","a+");
+    fprintf(fp,"found VID : %s",tmp.c_str());
+    fclose (fp);
+    if ( tmp.length() >0 ){
+       *repackvid = strdup(tmp.c_str());
+       if ((*repackvid) == NULL ){
+         serrno = EINVAL;
+         tpSvc->errorMsg = 
+           "ITapeSvc: Could not allocate memory for returning repackVid information";
+         return EINVAL;
+       }
+    }
+    
     return 0;
   }
 
