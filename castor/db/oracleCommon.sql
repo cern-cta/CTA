@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.303 $ $Release$ $Date: 2006/09/21 15:27:21 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.304 $ $Release$ $Date: 2006/09/21 17:36:20 $ $Author: felixehm $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.303 $ $Date: 2006/09/21 15:27:21 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.304 $ $Date: 2006/09/21 17:36:20 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2792,20 +2792,28 @@ END;
    check, whether the file information has to be added to the NameServer or to replace an entry 
    (repack case)
 */
-CREATE OR REPLACE PROCEDURE checkFileForRepack(fileid IN INTEGER, repackvid OUT VARCHAR2) AS
+CREATE OR REPLACE PROCEDURE main_dev3.checkFileForRepack(fid IN INTEGER, ret OUT VARCHAR2) AS
 sreqid NUMBER;
 BEGIN
+   BEGIN
+   ret := NULL;
    -- Get the repackvid field from the existing request (if none, then we are not in a repack process)
-      SELECT SubRequest.id, StageRepackRequest.repackvid INTO sreqid, repackvid
-      FROM SubRequest, DiskCopy, CastorFile, StageRepackRequest
-      WHERE stagerepackrequest.id = subrequest.request
-      AND diskcopy.id = subrequest.diskcopy 
+   SELECT SubRequest.id, StageRepackRequest.repackvid 
+     INTO sreqid, ret
+     FROM SubRequest, DiskCopy, CastorFile, StageRepackRequest
+    WHERE stagerepackrequest.id = subrequest.request
+      AND diskcopy.id = subrequest.diskcopy
       AND diskcopy.status = 10 -- CANBEMIGR
       AND subrequest.status = 12 -- SUBREQUEST_REPACK
-      AND diskcopy.castorfile = castorfile.id 
-      AND castorfile.fileid = fileid;
-      -- update the subrequest  
-      UPDATE SubRequest SET subrequest.status = 11 
-      WHERE subrequest.id = sreqid;
+      AND diskcopy.castorfile = castorfile.id
+      AND castorfile.fileid = fid
+      AND ROWNUM < 2;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+          NULL;
+          END;
+       IF ret IS NOT NULL THEN
+          UPDATE SubRequest set status = 11
+          WHERE SubRequest.id = sreqid;
+          COMMIT;
+   END IF;
 END;
-
