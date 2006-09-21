@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.301 $ $Release$ $Date: 2006/09/11 17:33:05 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.302 $ $Release$ $Date: 2006/09/21 09:33:12 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.301 $ $Date: 2006/09/11 17:33:05 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.302 $ $Date: 2006/09/21 09:33:12 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -92,8 +92,9 @@ ALTER TABLE FileSystem MODIFY (status NOT NULL);
 ALTER TABLE FileSystem MODIFY (diskServer NOT NULL);
 ALTER TABLE DiskServer MODIFY (status NOT NULL);
 
-/* enable row movements in Diskcopy */
+/* enable row movements in Diskcopy and SubRequest */
 ALTER TABLE DiskCopy ENABLE ROW MOVEMENT;
+ALTER TABLE SubRequest ENABLE ROW MOVEMENT;
 
 /* an index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
 CREATE INDEX I_QueryParameter_Query on QueryParameter (query);
@@ -1633,8 +1634,9 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForJob (fileSystems IN castor."strList
        WHERE FileSystem.mountPoint = fileSystems(i)
          AND DiskServer.name = machines(i)
          AND FileSystem.diskServer = DiskServer.id
-         AND FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(i) 
-             > FileSystem.minAllowedFreeSpace * FileSystem.totalSize
+         AND (minFree(i) = 0     -- get requests should always go through
+           OR FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(i) 
+              > FileSystem.minAllowedFreeSpace * FileSystem.totalSize)
          AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
          AND FileSystem.status = 0; -- FILESYSTEM_PRODUCTION
       nextIndex := nextIndex + 1;
@@ -1676,8 +1678,9 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForJob (fileSystems IN castor."strList
      FROM FileSystem, DiskServer
      WHERE FileSystem.diskserver = DiskServer.id
        AND DiskServer.id MEMBER OF mIds
-       AND FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(1) 
-           > FileSystem.minAllowedFreeSpace * FileSystem.totalSize
+       AND (minFree(1) = 0     -- get requests should always go through
+         OR FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(1) 
+            > FileSystem.minAllowedFreeSpace * FileSystem.totalSize)
        AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION       
      ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
               FileSystem.fsDeviation ASC;
@@ -1688,8 +1691,9 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForJob (fileSystems IN castor."strList
            DiskServer.id, FileSystem.id, FileSystem.fsDeviation
     FROM FileSystem, DiskServer
     WHERE FileSystem.diskserver = DiskServer.id
-      AND FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(1) 
-          > FileSystem.minAllowedFreeSpace * FileSystem.totalSize
+      AND (minFree(1) = 0     -- get requests should always go through
+        OR FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(1) 
+           > FileSystem.minAllowedFreeSpace * FileSystem.totalSize)
       AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
       AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
     ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
@@ -2033,11 +2037,11 @@ BEGIN
   WHERE status = 1 -- DISKCOPY_WAITDISK2DISKCOPY
     AND castorFile = cfId;
  IF nbRes > 0 THEN
-   -- We found something, thus we cannot recreate
+   -- We found something, thus we cannot remove
    ret := 2;
    RETURN;
  END IF;
- -- mark all requests for the file as failed
+ -- mark all get/put requests for the file as failed
  -- so the clients eventually get an answer
  FOR sr IN (SELECT id, status
               FROM SubRequest
