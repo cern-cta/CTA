@@ -1,7 +1,7 @@
 #
-# $Id: repack.sysconfig,v 1.1 2006/09/06 12:19:18 sponcec3 Exp $
+# $Id: repackserver.sysconfig,v 1.1 2006/09/22 15:16:05 itglp Exp $
 #
-# @(#)$RCSfile: repack.sysconfig,v $ $Revision: 1.1 $ $Date: 2006/09/06 12:19:18 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: repackserver.sysconfig,v $ $Revision: 1.1 $ $Date: 2006/09/22 15:16:05 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 # should repack run?
 # any string but "yes" will equivalent to "NO"
