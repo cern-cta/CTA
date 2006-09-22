@@ -37,7 +37,7 @@ repack \- Move files from tape(s) to other tape destination
 ] ]
 .SH "DESCRIPTION"
 .B repack
-move files of active segments from a set of tape(s) to a target tape pool and gives 
+moves files of active segments from a set of tape(s) to a target tape pool and gives 
 a status overview of the tapes in the repack system.
 Only volumes having
 .B FULL
@@ -52,7 +52,7 @@ The repackserver to contact, has to be provided by adding the line
 
 REPACK HOST <hostname>
 
-in the castor config file. Additionally the following enviroment 
+in the castor config file. Additionally the following environment 
 variables can be specified to override the default port (6800) and host defaults. 
 
 REPACK_HOST=<hostname>
@@ -63,7 +63,7 @@ When the repack process has been successfully completed (FINISHED status), the v
 reclaimed using the reclaim command.
 .LP 
 This command requires ADMIN privilege in the Cupv database. In case an error 
-occurs during a repack, messages can be found on the server in 
+occurs during a repack, messages can be found on the server side in 
 /var/spool/repack/log.
 
 .TP 
