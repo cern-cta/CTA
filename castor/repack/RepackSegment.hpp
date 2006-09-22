@@ -180,6 +180,38 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_blockid
+       * @return the value of m_blockid
+       */
+      u_signed64 blockid() const {
+        return m_blockid;
+      }
+
+      /**
+       * Set the value of m_blockid
+       * @param new_var the new value of m_blockid
+       */
+      void setBlockid(u_signed64 new_var) {
+        m_blockid = new_var;
+      }
+
+      /**
+       * Get the value of m_fileseq
+       * @return the value of m_fileseq
+       */
+      u_signed64 fileseq() const {
+        return m_fileseq;
+      }
+
+      /**
+       * Set the value of m_fileseq
+       * @param new_var the new value of m_fileseq
+       */
+      void setFileseq(u_signed64 new_var) {
+        m_fileseq = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -224,6 +256,10 @@ namespace castor {
       u_signed64 m_filesec;
 
       int m_copyno;
+
+      u_signed64 m_blockid;
+
+      u_signed64 m_fileseq;
 
       /// The id of this object
       u_signed64 m_id;

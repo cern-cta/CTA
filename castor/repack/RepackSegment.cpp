@@ -45,6 +45,8 @@ castor::repack::RepackSegment::RepackSegment() throw() :
   m_segsize(0),
   m_filesec(0),
   m_copyno(0),
+  m_blockid(0),
+  m_fileseq(0),
   m_id(0),
   m_vid(0) {
 };
@@ -76,6 +78,8 @@ void castor::repack::RepackSegment::print(std::ostream& stream,
   stream << indent << "segsize : " << m_segsize << std::endl;
   stream << indent << "filesec : " << m_filesec << std::endl;
   stream << indent << "copyno : " << m_copyno << std::endl;
+  stream << indent << "blockid : " << m_blockid << std::endl;
+  stream << indent << "fileseq : " << m_fileseq << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Vid : " << std::endl;
