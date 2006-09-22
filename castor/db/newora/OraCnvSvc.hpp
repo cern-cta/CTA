@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: OraCnvSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/08/03 12:40:26 $ $Author: itglp $
+* @(#)$RCSfile: OraCnvSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/09/22 14:35:02 $ $Author: itglp $
 *
 *
 *
@@ -101,7 +101,7 @@ namespace castor {
         * @param stmt the string statement to be prepared 
         */
         oracle::occi::Statement*
-        castor::db::ora::OraCnvSvc::createOraStatement(const std::string& stmt)
+        createOraStatement(const std::string& stmt)
           throw (castor::exception::Exception);
         
         /**
