@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2006/08/17 17:05:02 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2006/09/22 12:50:51 $ $Author: felixehm $
  *
  *
  *
@@ -174,6 +174,15 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
       rseg->setCompression(dtp->compression);
       rseg->setSegsize(dtp->segsize);
       rseg->setCopyno(dtp->copyno);
+      rseg->setFileseq(dtp->fseq);
+      /** the Blockid -> u_signed64 */
+      u_signed64 total_blockid;   
+      total_blockid = dtp->blockid[0]<< 24;
+      total_blockid = total_blockid | dtp->blockid[1] << 16;
+      total_blockid = total_blockid | dtp->blockid[2] << 8;
+      total_blockid = total_blockid | dtp->blockid[3];
+      rseg->setBlockid(total_blockid);
+
       subreq->addSegment(rseg);
       
       segs_size += dtp->segsize;
