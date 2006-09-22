@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2006/09/12 10:07:39 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2006/09/22 12:19:55 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -160,6 +160,7 @@ bool RepackClient::parseInput(int argc, char** argv)
       break;
     case 'P':
       cp.pool = Coptarg; // store it for later use in building Request
+      cp.command = REPACK;
       break;
     case 'R':
       cp.vid = Coptarg;
@@ -281,7 +282,7 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
   /* or, we want to repack a pool */
   if ( cp.pool != NULL ) {
   	if ( !rreq->subRequest().size() )
-       ;//rreq->setPool(cp.pool);
+       rreq->setPool(cp.pool);
     else
     {
     	std::cerr << "You must specify either a pool name or one or more volumes." 
@@ -351,14 +352,6 @@ void RepackClient::run(int argc, char** argv)
 //------------------------------------------------------------------------------
 void RepackClient::handleResponse(RepackAck* ack) {
 	
-  std::map<int,std::string> statuslist;
-  statuslist[SUBREQUEST_READYFORSTAGING] = "START";
-  statuslist[SUBREQUEST_STAGING] = "STAGING";
-  statuslist[SUBREQUEST_MIGRATING] = "MIGRATING";
-  statuslist[SUBREQUEST_READYFORCLEANUP] = "CLEANUP";
-  statuslist[SUBREQUEST_DONE] = "FINISHED";
-  statuslist[SUBREQUEST_ARCHIVED] = "ARCHIVED";
-
   time_t seconds;
 
   if ( ack->errorCode() ){
@@ -369,46 +362,69 @@ void RepackClient::handleResponse(RepackAck* ack) {
 
   if ( ack->request().size() > 0 ){
     RepackRequest* rreq = ack->request().at(0);
-    std::cout << "=========================================================================================" 
+    std::cout << "======================================================================================================" 
               << std::endl;
 
     switch ( rreq->command() ){
       case GET_STATUS :
        seconds = (long)rreq->creationTime(); 
        std::cout 
-        << "Details for Request created on " << ctime (&seconds) << std::endl
-        << "machine\t\tuser\t\t\tservice class" << std::endl
-        << rreq->machine() << "\t" 
-        << rreq->userName() << "\t\t" << rreq->serviceclass()
+        << "Details for Request created on " << ctime (&seconds) << std::endl <<
+        std::setw(35) << std::left << "machine" << 
+        std::setw(10) << std::left << "user" <<
+        std::setw(15) << std::left << "service class" << std::endl <<
+        std::setw(35) << std::left << rreq->machine() <<
+        std::setw(10) << std::left << rreq->userName() << 
+        std::setw(15) << std::left << rreq->serviceclass()
         << std::endl << std::endl; 
       
       case GET_STATUS_ALL : 
       case ARCHIVE : 
       case REPACK : 
       {
-        std::cout << "vid\tcuuid\t\t\t\t\ttotal  staging  migration  failed   status" <<std::endl;
-        std::cout << "-----------------------------------------------------------------------------------------"
+        std::cout << "vid\tcuuid\t\t\t\t\ttotal  size     staging  migration  failed   status" <<std::endl;
+        std::cout << "-----------------------------------------------------------------------------------------------------"
                   << std::endl;
         std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
         while ( tape != rreq->subRequest().end() ){
-          std::cout << (*tape)->vid() << 
-            "\t"<< (*tape)->cuuid() <<
-            "\t" << std::setw(7)<< std::left << (*tape)->files() <<
-            std::setw(9)<< std::left<< (*tape)->filesStaging() <<
-            std::setw(11)<< std::left<< (*tape)->filesMigrating() <<
-            std::setw(9)<< std::left<< (*tape)->filesFailed() <<
-            std::setw(9)<< statuslist[(*tape)->status()] <<
-            std::endl;
+          printTapeDetail((*tape));
           tape++;
         }
         break;
       }
     }
-    std::cout << "=========================================================================================" 
+    std::cout << "======================================================================================================" 
               << std::endl;
   }
 
 
+}
+
+
+//------------------------------------------------------------------------------
+// printTapeDetail()
+//------------------------------------------------------------------------------
+void RepackClient::printTapeDetail(RepackSubRequest *tape){
+  char buf[21];
+  std::map<int,std::string> statuslist;
+  statuslist[SUBREQUEST_READYFORSTAGING] = "START";
+  statuslist[SUBREQUEST_STAGING] = "STAGING";
+  statuslist[SUBREQUEST_MIGRATING] = "MIGRATING";
+  statuslist[SUBREQUEST_READYFORCLEANUP] = "CLEANUP";
+  statuslist[SUBREQUEST_DONE] = "FINISHED";
+  statuslist[SUBREQUEST_ARCHIVED] = "ARCHIVED";
+   
+  u64tostru(tape->xsize(), buf, 0);
+
+  std::cout << tape->vid() << 
+      "\t" << tape->cuuid() <<
+      "\t" << std::setw(7)<< std::left << tape->files() <<
+      std::setw(9) << std::left << buf <<
+      std::setw(9) << std::left << tape->filesStaging() <<
+      std::setw(11) << std::left << tape->filesMigrating() <<
+      std::setw(9) << std::left << tape->filesFailed() <<
+      std::setw(9) << statuslist[tape->status()] <<
+      std::endl;
 }
 
 
