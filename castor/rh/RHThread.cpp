@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/06/20 16:14:18 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/09/25 07:28:27 $ $Author: felixehm $
  *
  *
  *
@@ -225,6 +225,7 @@ void castor::rh::RHThread::handleRequest
   switch (fr->type()) {
   case OBJ_StageGetRequest:
   case OBJ_StagePrepareToGetRequest:
+  case OBJ_StageRepackRequest:
   case OBJ_StagePutRequest:
   case OBJ_StagePrepareToPutRequest:
   case OBJ_StageUpdateRequest:
