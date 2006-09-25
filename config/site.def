@@ -323,7 +323,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define	UseHpss			NO
 #define UseMtx			NO
 #define UseOracle		YES
-#define UseOraCDBC		NO
+#define UseOraCDBC		YES
 #define UsePgSQL		NO
 #define UseMySQL		NO
 #define UseVmgr			YES
