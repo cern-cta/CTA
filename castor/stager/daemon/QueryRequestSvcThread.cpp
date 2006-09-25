@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.42 2006/08/18 15:35:22 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.43 2006/09/25 14:04:28 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.42 $ $Date: 2006/08/18 15:35:22 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.43 $ $Date: 2006/09/25 14:04:28 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -940,12 +940,12 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
     /* -------------------- */
     STAGER_LOG_VERBOSE(NULL, "Getting query's className");
     std::string className = req->svcClassName();
-    if ("" != className) {
+    if ("" != className && "*" != className) {     // here we take an empty svcClass or '*' as a wildcard 
       castor::stager::SvcClass* svcClass = qrySvc->selectSvcClass(className);
       if (0 == svcClass) {
-	castor::exception::InvalidArgument e;
-	e.getMessage() << "Invalid className : " << className;
-	throw e;
+        castor::exception::InvalidArgument e;
+        e.getMessage() << "Invalid className : " << className;
+        throw e;
       }
 
       /* Filling SvcClass in the DataBase */
