@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.20 $ $Release$ $Date: 2006/09/21 11:25:17 $ $Author: gtaur $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.21 $ $Release$ $Date: 2006/09/25 15:45:35 $ $Author: gtaur $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.20 $ $Release$ $Date: 2006/09/21 11:25:17 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.21 $ $Release$ $Date: 2006/09/25 15:45:35 $ Olof Barring";
 #endif /* not lint */
 /** RfioTURL.c - RFIO TURL handling
  *
@@ -128,12 +128,16 @@ int getDefaultForGlobal(
         struct group* grp=NULL; 
 	gid_t gid;
 
-       hostMap=hostDefault=svcMap=svcDefault=NULL;
-       versionMap=versionDefault=portDefault=ret=0;
+        hostMap=hostDefault=svcMap=svcDefault=NULL;
+        versionMap=versionDefault=portDefault=ret=0;
 
 	if(host == NULL || port == NULL || svc == NULL || version == NULL ){ return (-1);}
-	hostDefault=*host;
-	svcDefault=*svc;
+	if (*host) hostDefault=strdup(*host);
+	else hostDefault=NULL;
+	
+        if (*svc) svcDefault=strdup(*svc);
+	else svcDefault=NULL;
+
 	portDefault=*port;
 	versionDefault=*version;
 
@@ -147,21 +151,21 @@ int getDefaultForGlobal(
 	}
 
 	if(hostDefault==NULL || strcmp(hostDefault,"")==0){
-		if(hostDefault){free(hostDefault);}
+		if(hostDefault != NULL){free(hostDefault);hostDefault=NULL;}
 		aux=getenv("STAGE_HOST");
 		hostDefault=aux==NULL?NULL:strdup(aux);
 		if (hostDefault==NULL || strcmp(hostDefault,"")==0 ){
-			if(hostDefault){free(hostDefault);}
+			if(hostDefault !=NULL){free(hostDefault);}
 			if (hostMap==NULL || strcmp(hostMap,"")==0 ){
 				aux=(char*)getconfent("STAGER","HOST", 0);
 				hostDefault=aux==NULL?NULL:strdup(aux);
 				if (hostDefault==NULL || strcmp(hostDefault,"")==0 ){
-					if(hostDefault){free(hostDefault);}
+					if(hostDefault != NULL){free(hostDefault);hostDefault=NULL;}
 					hostDefault=strdup(DEFAULT_HOST);
 				}
 			}
 			else{
-				if(hostDefault){free(hostDefault);}
+				if(hostDefault!=NULL){free(hostDefault);hostDefault=NULL;}
 				hostDefault=strdup(hostMap);
 			}
 		}
@@ -169,21 +173,21 @@ int getDefaultForGlobal(
 	
 
 	if (svcDefault==NULL || strcmp(svcDefault,"")==0){
-		if(svcDefault){free(svcDefault);}
+	  if(svcDefault != NULL){free(svcDefault);svcDefault=NULL;}
 		aux=getenv("STAGE_SVCCLASS");
 		svcDefault= aux==NULL? NULL: strdup(aux);
 		if (svcDefault==NULL || strcmp(svcDefault,"")==0 ){
-			if(svcDefault){free(svcDefault);}
+		  if(svcDefault!= NULL &&strcmp(svcDefault,"")){free(svcDefault);svcDefault=NULL;}
 			if (svcMap==NULL || strcmp(svcMap,"")==0 ){
 				aux=(char*)getconfent("STAGER","SVC_CLASS", 0);
 				svcDefault=aux==NULL?NULL:strdup(aux);
 				if (svcDefault==NULL || strcmp(svcDefault,"")==0 ){
-					if(svcDefault){free(svcDefault);}
+				        if(svcDefault!=NULL){free(svcDefault);svcDefault=NULL;}
 					svcDefault=strdup(DEFAULT_SVCCLASS);
 				}
 			}
 			else{
-				if(svcDefault){free(hostDefault);}
+			  if(svcDefault!=NULL && strcmp(svcDefault,"") ){free(svcDefault);svcDefault=NULL;}
 				svcDefault=strdup(svcMap);
 			}
 		}
@@ -220,9 +224,9 @@ int getDefaultForGlobal(
 		
 	}
 
-	if (*host==NULL || strcmp(*host,"")){*host=hostDefault;}	
+	if (*host==NULL || strcmp(*host,"")){*host=strdup(hostDefault);}	
 	if (port==NULL || *port<=0) {*port=portDefault;}
-	if (*svc==NULL || strcmp(*svc,"")){*svc=svcDefault;}
+	if (*svc==NULL || strcmp(*svc,"")){*svc=strdup(svcDefault);}
 	if (version==NULL || *version<=0){*version=versionDefault;}
 
 	return (1);
@@ -469,7 +473,7 @@ int rfioTURLFromString(
 		return -1;
 
 	}
-	if(*globalHost){free(*globalHost); *globalHost=NULL;}
+	if(*globalHost!=NULL){free(*globalHost); *globalHost=NULL;}
 
 	if (strcmp(_tURL.rfioHostName,"")){
 		*globalHost=strdup(_tURL.rfioHostName);	
@@ -479,12 +483,12 @@ int rfioTURLFromString(
 
 	if (ret<0){
 		serrno = EINVAL;
-		if(*globalHost){free(*globalHost);*globalHost=NULL;}
+		if(*globalHost!=NULL){free(*globalHost);*globalHost=NULL;}
 		free(orig);
 		return -1;
 
 	}
-	if(*globalSvc){free(*globalSvc);*globalSvc=NULL;}
+	if(*globalSvc !=NULL){free(*globalSvc);*globalSvc=NULL;}
 
 	if (mySvcClass && strcmp(mySvcClass,"")){
 		*globalSvc=strdup(mySvcClass);
@@ -492,8 +496,8 @@ int rfioTURLFromString(
 	ret=Cglobals_get(&tStagePortKey,(void **)&globalPort,sizeof(int));
 	if (ret<0){
 		serrno = EINVAL;
-		if(*globalHost){free(*globalHost);*globalHost=NULL;}
-		if(*globalSvc){free(*globalSvc);*globalSvc=NULL;}
+		if(*globalHost!=NULL){free(*globalHost);*globalHost=NULL;}
+		if(*globalSvc!=NULL){free(*globalSvc);*globalSvc=NULL;}
 		free(orig);
 		return -1;
 
@@ -506,8 +510,8 @@ int rfioTURLFromString(
 
 	if (ret<0){
 		serrno = EINVAL;
-		if(*globalHost){free(*globalHost);*globalHost=NULL;}
-		if(*globalSvc){free(*globalSvc);*globalSvc=NULL;}
+		if(*globalHost!=NULL){free(*globalHost);*globalHost=NULL;}
+		if(*globalSvc!=NULL){free(*globalSvc);*globalSvc=NULL;}
 		free(orig);
 		return -1;
 
@@ -519,8 +523,8 @@ int rfioTURLFromString(
 	ret=getDefaultForGlobal(globalHost,globalPort,globalSvc,globalVersion);
 	if (ret<0){
 			serrno = EINVAL;
-			if(*globalHost){free(*globalHost);*globalHost=NULL;}
-			if(*globalSvc){free(*globalSvc);*globalSvc=NULL;}
+			if(*globalHost!=NULL){free(*globalHost);*globalHost=NULL;}
+			if(*globalSvc!=NULL){free(*globalSvc);*globalSvc=NULL;}
 			free(orig);
 			return -1;
 
