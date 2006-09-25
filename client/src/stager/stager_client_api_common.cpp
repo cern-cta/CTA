@@ -116,13 +116,21 @@ int _free_query_req (struct stage_query_req  *ptr){
 }
 
 int _free_filequery_resp (struct stage_filequery_resp  *ptr){ 
+  if (ptr->castorfilename != NULL) free (ptr->castorfilename);
   if (ptr->filename != NULL) free (ptr->filename);
   if (ptr->poolname != NULL) free (ptr->poolname);
+  if (ptr->diskserver != NULL) free(ptr->diskserver);
+  if (ptr->errorMessage) free (ptr->errorMessage);
   return 0; 
 }
 
 int _free_requestquery_resp (struct stage_requestquery_resp  *ptr){ 
   if (ptr->requestId != NULL) free (ptr->requestId);
+  if (ptr->errorMessage != NULL) free (ptr->errorMessage);
+  if (ptr->subrequests != NULL){
+    for (int=0; i<ptr->nbsubrequests; i++)
+      free_subrequestquery_resp(subrequests[i]);
+    }
   return 0; 
 }
 
