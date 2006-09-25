@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.152 $ $Release$ $Date: 2006/09/21 17:46:45 $ $Author: felixehm $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.153 $ $Release$ $Date: 2006/09/25 14:51:06 $ $Author: felixehm $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.152 $ $Release$ $Date: 2006/09/21 17:46:45 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.153 $ $Release$ $Date: 2006/09/25 14:51:06 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1124,12 +1124,53 @@ static int procSegmentsForTape(
    * order so that at least consecutive tape files are positioned
    * efficiently.
    */
+  /* ------------------------------------------------------------*/
+  
+  
+  
+  struct Cns_direntape nslist[nbItems];
+  for ( i=0; i<nbItems; i++ ) {
+      Cstager_Segment_blockId0(
+                               segmArray[i],
+                               (unsigned char *)&nslist[i].blockid[0]
+			       );
+      Cstager_Segment_blockId1(
+                               segmArray[i],
+                               (unsigned char *)&nslist[i].blockid[1]
+                               );
+      Cstager_Segment_blockId2(
+                               segmArray[i],
+                               (unsigned char *)&nslist[i].blockid[2]
+                               );
+      Cstager_Segment_blockId3(
+                               segmArray[i],
+                               (unsigned char *)&nslist[i].blockid[3]
+                               );
+      Cstager_Segment_fseq(
+                           segmArray[i],
+                           &nslist[i].fseq
+                          );
+			  
+			        
+  }
+  /*
+  Ctape_sort_Segments( tape_list_t->rtcpTapeRequest_t->devtype,
+                       nbItems,
+		       nslist);
+  */
+  
+  
+  
+  /* ------------------------------------------------------------*/
+  
   qsort(
         (void *)segmArray,
         (size_t)nbItems,
         sizeof(struct Cstager_Segment_t *),
         compareSegments
         );
+  
+  /** TODO::here should be the new sorting algorithm */
   
   tl = tape;
   for ( i=0; i<nbItems; i++ ) {
@@ -4028,8 +4069,6 @@ int rtcpcld_setVidWorkerAddress(
 }
 
 
-
-
 /** This function checks the stager database, if the given
   * file is in a repack process and its DISKCOPY in CANBEMIGRATED.
   * In that case, the subrequest is automatically set to ARCHIVED 
@@ -4071,4 +4110,5 @@ int rtcpcld_checkFileForRepack(
   }
   return 0;
 }
+
 
