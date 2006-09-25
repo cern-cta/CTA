@@ -128,9 +128,9 @@ int _free_requestquery_resp (struct stage_requestquery_resp  *ptr){
   if (ptr->requestId != NULL) free (ptr->requestId);
   if (ptr->errorMessage != NULL) free (ptr->errorMessage);
   if (ptr->subrequests != NULL){
-    for (int=0; i<ptr->nbsubrequests; i++)
-      free_subrequestquery_resp(subrequests[i]);
-    }
+    for (int i=0; i<ptr->nbsubrequests; i++)
+      ;//free_subrequestquery_resp(&ptr->subrequests[i]);
+  }
   return 0; 
 }
 
