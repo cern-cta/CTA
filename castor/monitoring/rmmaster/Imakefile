@@ -1,0 +1,90 @@
+#
+#                   castor/rmmaster/Imakefile
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)Imakefile,v 1.2 $Release$ 2005/03/15 23:24:32 bcouturi
+#
+# Make Castor rmmaster daemon
+#
+# @author Castor Dev team, castor-dev@cern.ch
+#
+
+#include <Project.tmpl>
+
+#if !defined(_WIN32)
+#if linux
+DEBUG  = -g -O0
+#else
+DEBUG  = -g
+#endif
+#endif
+
+MANPAGES = 
+EXPORTMANPAGES = 
+
+INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
+
+CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
+
+LIBS = -lshift
+RMMASTERDAEMONBIN_SRCS = Collector.cpp RmMasterDaemon.cpp
+
+RMMASTERDAEMONBIN_OBJS = $(RMMASTERDAEMONBIN_SRCS:.cpp=.Osuf)
+
+DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift)
+
+LDFLAGS = -L FileName(..,FileName(..,shlib)) $(MTLDFLAGS)
+LD = g++
+
+all:ProgramTargetName(rmMasterDaemon)
+
+NormalProgramTarget(rmMasterDaemon,$(RMMASTERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS))
+
+MakeDepSharedLibrary(FileName(..,shlib),shift)
+
+Makefiles:
+
+#if defined(_WIN32)
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend $(INCLUDES) $(RMMASTERDAEMONBIN_SRCS) 2> /dev/null
+#endif
+
+install: FileName($(BIN),rmMasterDaemon)
+
+InstallProgram(rmMasterDaemon,$(BIN),root,bin,755)
+
+install.man: $(MANDIR) $(MANPAGES)
+MakeDir($(MANDIR),root,bin,0755)
+IMANPAGE(rmMasterDaemon,$(MANDIR),$(MANSUFFIX))
+EMANPAGE(rmMasterDaemon,$(EXPORTMAN)/man1,$(MANSUFFIX))
+
+exportman: $(EXPORTMANPAGES)
+
+clean:
+	@echo rmmaster in CurDir
+	-@RemoveFiles(FilesToClean)
+
+clobber:	clean
+	@echo clobbering in CurDir
+	-@RemoveFiles(ProgramTargetName(rmMasterDaemon))
+
+FORCE:
+
