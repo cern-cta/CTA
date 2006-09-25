@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.304 $ $Release$ $Date: 2006/09/21 17:36:20 $ $Author: felixehm $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.305 $ $Release$ $Date: 2006/09/25 14:34:41 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.304 $ $Date: 2006/09/21 17:36:20 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.305 $ $Date: 2006/09/25 14:34:41 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2464,6 +2464,8 @@ BEGIN
       FROM CastorFile, DiskCopy, FileSystem, DiskServer,
            DiskPool2SvcClass, SubRequest,
            (SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
+            SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
+            SELECT id, svcClass FROM StagePrepareToUpdateRequest UNION ALL
             SELECT id, svcClass FROM StageRepackRequest UNION ALL
             SELECT id, svcClass FROM StageGetRequest) Req
      WHERE CastorFile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
@@ -2792,28 +2794,28 @@ END;
    check, whether the file information has to be added to the NameServer or to replace an entry 
    (repack case)
 */
-CREATE OR REPLACE PROCEDURE main_dev3.checkFileForRepack(fid IN INTEGER, ret OUT VARCHAR2) AS
+CREATE OR REPLACE PROCEDURE checkFileForRepack(fid IN INTEGER, ret OUT VARCHAR2) AS
 sreqid NUMBER;
 BEGIN
    BEGIN
-   ret := NULL;
-   -- Get the repackvid field from the existing request (if none, then we are not in a repack process)
-   SELECT SubRequest.id, StageRepackRequest.repackvid 
-     INTO sreqid, ret
-     FROM SubRequest, DiskCopy, CastorFile, StageRepackRequest
-    WHERE stagerepackrequest.id = subrequest.request
-      AND diskcopy.id = subrequest.diskcopy
-      AND diskcopy.status = 10 -- CANBEMIGR
-      AND subrequest.status = 12 -- SUBREQUEST_REPACK
-      AND diskcopy.castorfile = castorfile.id
-      AND castorfile.fileid = fid
-      AND ROWNUM < 2;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-          NULL;
-          END;
-       IF ret IS NOT NULL THEN
-          UPDATE SubRequest set status = 11
-          WHERE SubRequest.id = sreqid;
-          COMMIT;
+     ret := NULL;
+     -- Get the repackvid field from the existing request (if none, then we are not in a repack process)
+     SELECT SubRequest.id, StageRepackRequest.repackvid 
+       INTO sreqid, ret
+       FROM SubRequest, DiskCopy, CastorFile, StageRepackRequest
+      WHERE stagerepackrequest.id = subrequest.request
+        AND diskcopy.id = subrequest.diskcopy
+        AND diskcopy.status = 10 -- CANBEMIGR
+        AND subrequest.status = 12 -- SUBREQUEST_REPACK
+        AND diskcopy.castorfile = castorfile.id
+        AND castorfile.fileid = fid
+        AND ROWNUM < 2;
+   EXCEPTION WHEN NO_DATA_FOUND THEN
+     NULL;
+   END;
+   IF ret IS NOT NULL THEN
+     UPDATE SubRequest set status = 11
+     WHERE SubRequest.id = sreqid;
+     COMMIT;
    END IF;
 END;
