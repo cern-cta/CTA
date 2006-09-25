@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/08/14 19:10:38 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/09/25 13:32:11 $ $Author: sponcec3 $
  *
  *
  *
@@ -29,7 +29,6 @@
 #include "castor/server/BaseDaemon.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/MsgSvc.hpp"
-#include "castor/Services.hpp"
 #include "Cgetopt.h"
 #include "Cinit.h"
 #include "Cuuid.h"
