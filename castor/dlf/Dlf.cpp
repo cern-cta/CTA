@@ -40,9 +40,16 @@ void castor::dlf::dlf_init
   // Register the facility's messages with the interface. We do this even
   // if the interface fails to initialisation as it is used for local 
   // logging
+  dlf_addMessages(0, messages);
+}
+
+// -----------------------------------------------------------------------
+// dlf_addMessages
+// -----------------------------------------------------------------------
+void castor::dlf::dlf_addMessages (int offset, Message messages[]) {
   int i = 0;
   while (messages[i].number >= 0) {
-    ::dlf_regtext(messages[i].number,
+    ::dlf_regtext(offset + messages[i].number,
 		  messages[i].text.c_str());
     i++;
   }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Dlf.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/06/13 14:32:12 $ $Author: waldron $
+ * @(#)$RCSfile: Dlf.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/09/25 13:28:02 $ $Author: sponcec3 $
  *
  * C++ interface to DLF
  *
@@ -45,6 +45,17 @@ namespace castor {
      */
     void dlf_init(char* facilityName,
                   Message messages[]);
+
+    /**
+     * Adds messages to the current DLF facility
+     * @param offset the offset to add to each message number.
+     * This is to avoid collisions with previously added messages
+     * @param messages array of messages to decalre in the
+     * facility. The end of the array is marked by a
+     * message with negative number.
+     */
+    void dlf_addMessages(int offset,
+                         Message messages[]);
 
     /**
      * prints a message into dlf.
