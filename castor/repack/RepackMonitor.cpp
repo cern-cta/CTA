@@ -76,7 +76,9 @@ namespace castor {
           getStats(tapelist->at(i));
           m_dbhelper->unlock();
           freeRepackObj(tapelist->at(i)->requestID());
-	}
+	      }
+        tapelist->clear();
+        delete tapelist;
       }
       if ( tapelist2 != NULL ) {
         for (int i=0; i< tapelist2->size(); i++){
@@ -86,11 +88,10 @@ namespace castor {
           m_dbhelper->unlock();
           freeRepackObj(tapelist2->at(i)->requestID());
         }
+        tapelist2->clear();
+        delete tapelist2;
       }
-
-      tapelist->clear();
-      tapelist2->clear();
-      delete tapelist;
+      
     }
     catch ( castor::exception::Exception e){
       castor::dlf::Param params[] =
@@ -184,7 +185,7 @@ namespace castor {
       stage_trace(3,"Found %d files in invalid status", invalid_status);
       castor::dlf::Param params[] =
        {castor::dlf::Param("Number", invalid_status)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 42, 1, params);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 42, 1, params);
     }
 
     /// we only update the subrequest, if something has changed */
@@ -223,7 +224,6 @@ namespace castor {
       m_dbhelper->updateSubRequest(sreq,false,cuuid);
     }
   }
-
 
 
 //------------------------------------------------------------------------------
