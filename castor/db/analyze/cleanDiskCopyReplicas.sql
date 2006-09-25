@@ -5,9 +5,13 @@ begin
   for cf in (
         select id from
 		(select count(*) as c, castorfile.id
-		  from Diskcopy, Castorfile
+		  from Diskcopy, Castorfile, FileSystem, DiskServer
 		 where Diskcopy.castorfile = castorfile.id
 		   and Diskcopy.status = 0    -- STAGED
+		   and diskcopy.filesystem = FileSystem.id
+		   and filesystem.diskserver = diskserver.id
+		   and filesystem.status = 0
+		   and diskserver.status = 0
 		 group by castorfile.id)
         where c > 1) loop
 
@@ -20,12 +24,15 @@ begin
 		   select fsid from (
 		        -- here we select the filesystems and their diskcopy count
 			select dccount.filesystem as fsid
-			  from diskcopy dc, filesystem fs, diskcopy dccount
+			  from diskcopy dc, filesystem fs, diskcopy dccount, diskserver d
 			 where dc.castorfile = cf.id
 			   and dc.status = 0     -- STAGED
 			   and dc.filesystem = fs.id
 			   and dccount.filesystem = fs.id
                            and dccount.status = 0   -- STAGED
+			   and fs.diskserver = d.id
+			   and fs.status = 0
+			   and d.status = 0
 			 group by dccount.filesystem
 			 order by count(dccount.id) desc
 			)
