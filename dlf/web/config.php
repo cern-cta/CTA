@@ -47,7 +47,8 @@ $show_db_version = 1;
 /**
  * Display the number of partition online in the database?
  */
-$show_partition_count = 1;
+$show_partition_count  = 1;
+$max_partitions_online = 30;
 
 
 /**
