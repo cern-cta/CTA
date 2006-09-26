@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.308 $ $Release$ $Date: 2006/09/26 13:54:43 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.309 $ $Release$ $Date: 2006/09/26 15:12:32 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.308 $ $Date: 2006/09/26 13:54:43 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.309 $ $Date: 2006/09/26 15:12:32 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1614,6 +1614,7 @@ BEGIN
   EXCEPTION  WHEN NO_DATA_FOUND THEN
     -- We've found nothing, delete stream
     DELETE FROM Stream2TapeCopy WHERE Parent = sid;
+    DELETE FROM Id2Type WHERE id = sid;
     DELETE FROM Stream WHERE id = sid;
   END;
   -- in any case, unlink tape and stream
