@@ -1,3 +1,151 @@
+castor (2.1.1-2) unstable; urgency=low
+
+  * <Packaging>: Repack2 is now fully included
+  * CASTOR2/castor/cleaning/CleaningDaemon.cpp:
+    [r1.10,2006-09-25,sponcec3] Fixed typo in a comment
+  * CASTOR2/castor/db/IDbResultSet.hpp:
+    [r 1.3,2006-09-21,felixehm] Fixed bug: Destructor of concrete Resultset and Statement was never called
+    [r 1.3,2006-09-21,felixehm] therefore the connection not closed.
+  * CASTOR2/castor/db/IDbStatement.hpp:
+    [r 1.4,2006-09-21,felixehm] Fixed bug: Destructor of concrete Resultset and Statement was never called
+    [r 1.4,2006-09-21,felixehm] therefore the connection not closed.
+  * CASTOR2/castor/db/analyze/cleanDiskCopyReplicas.sql:
+    [r 1.7,2006-09-25,sponcec3] Take status of DiskServer and FileSystems into account
+  * CASTOR2/castor/db/cnv/DbRepackSegmentCnv.cpp:
+    [r 1.9,2006-09-22,felixehm] Added new fields for storing location on old tape for recovering.
+  * CASTOR2/castor/db/cnv/DbRepackSegmentCnv.hpp:
+    [r 1.9,2006-09-22,felixehm] Added new fields for storing location on old tape for recovering.
+  * CASTOR2/castor/db/newora/OraCnvSvc.hpp:
+    [r 1.6,2006-09-22,itglp] Fixed wrong signature
+  * CASTOR2/castor/db/ora/OraGCSvc.cpp:
+    [r1.15,2006-09-21,itglp] Fixed' selectFiles2Delete to meet latest SQL code
+  * CASTOR2/castor/db/ora/OraRepackSegmentCnv.cpp:
+    [r 1.9,2006-09-22,felixehm] Added new fields for storing location on old tape for recovering.
+  * CASTOR2/castor/db/ora/OraRepackSegmentCnv.hpp:
+    [r 1.8,2006-09-22,felixehm] Added new fields for storing location on old tape for recovering.
+  * CASTOR2/castor/db/ora/OraTapeSvc.cpp:
+    [r1.15,2006-09-21,felixehm] removed not necessary ResultSet
+    [r1.15,2006-09-21,felixehm] fixed setting of the output parameter
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    [r1.309,2006-09-26,sponcec3] Fixed a missing delete from id2type in resetStream
+    [r1.308,2006-09-26,gtaur] to avoid that PutDone waits on the prepareToPut
+    [r1.307,2006-09-26,sponcec3] Fixed the cleaning of PutDone requests in case of ORACLE error in the PutDoneStart
+    [r1.306,2006-09-26,sponcec3] Removing a deadlock in the updateFsFileOpen/Close methods
+    [r1.305,2006-09-25,itglp] Added PrepareTo{Put,Update} to the set of requests checked in internalStageQuery
+    [r1.305,2006-09-25,itglp] Fixed declaration of checkFileForRepack
+    [r1.304,2006-09-21,felixehm] Fixed checkFileForRepack PL/SQL: the old repackvid wasn't returned correctly.
+    [r1.303,2006-09-21,itglp] Fixed selectFiles2Delete to match the cursor in OraGCSvc.cpp.
+    [r1.302,2006-09-21,itglp] Let get requests go through even when the diskpool is full over the hard limit.
+    [r1.302,2006-09-21,itglp] Added ROW MOVEMENT to SubRequest.
+  * CASTOR2/castor/dlf/Dlf.cpp:
+    [r 1.4,2006-09-25,sponcec3] Adapted the C++ API of DLF to Dennis' improvments concerning additions of new messages on the fly
+  * CASTOR2/castor/dlf/Dlf.hpp:
+    [r 1.3,2006-09-25,sponcec3] Adapted the C++ API of DLF to Dennis' improvments concerning additions of new messages on the fly
+  * CASTOR2/castor/repack/DatabaseHelper.cpp:
+    [r1.18,2006-09-22,felixehm] Cleaned code
+    [r1.18,2006-09-22,felixehm] Segment information is kept, even if the tape is archived
+  * CASTOR2/castor/repack/FileListHelper.cpp:
+    [r1.18,2006-09-22,felixehm] Segment Information is stored with the RepackSegment to keep recover information
+    [r1.18,2006-09-22,felixehm] in case the old tape has to be restored.
+  * CASTOR2/castor/repack/RepackCleaner.cpp:
+    [r 1.9,2006-09-26,felixehm] RepackFileStager is now restarting a repack process (moved from RepackCleaner)
+    [r 1.9,2006-09-26,felixehm] fixed mem leak in RepackFileStager : after sending the stager request the
+    [r 1.9,2006-09-26,felixehm] subrequest weren't deleted.
+  * CASTOR2/castor/repack/RepackCleaner.hpp:
+    [r 1.4,2006-09-26,felixehm] RepackFileStager is now restarting a repack process (moved from RepackCleaner)
+    [r 1.4,2006-09-26,felixehm] fixed mem leak in RepackFileStager : after sending the stager request the
+    [r 1.4,2006-09-26,felixehm] subrequest weren't deleted.
+  * CASTOR2/castor/repack/RepackClient.cpp:
+  * CASTOR2/castor/repack/RepackClient.hpp:
+    [2006-09-22,felixehm] Modified output, now the total filesize of a tape is shown
+  * CASTOR2/castor/repack/RepackFileStager.cpp:
+  * CASTOR2/castor/repack/RepackFileStager.hpp:
+    [2006-09-26,felixehm] RepackFileStager is now restarting a repack process (moved from RepackCleaner)
+    [2006-09-26,felixehm] fixed mem leak in RepackFileStager : after sending the stager request the
+    [2006-09-26,felixehm] subrequest weren't deleted.
+  * CASTOR2/castor/repack/RepackMonitor.cpp:
+    [r 1.6,2006-09-25,felixehm] fixed clear after deletion of pointer.
+  * CASTOR2/castor/repack/RepackSegment.cpp:
+  * CASTOR2/castor/repack/RepackSegment.hpp:
+    [r1.11,2006-09-22,felixehm] Added new fields for storing location on old tape for recovering.
+  * CASTOR2/castor/repack/repack.man:
+    [r 1.3,2006-09-22,felixehm] fixed mistakes
+    [r 1.2,2006-09-19,felixehm] Corrected some mistakes
+  * CASTOR2/castor/repack/repack.sysconfig:
+    [r 1.2,2006-09-22,itglp] Renamed sysconfig for repack
+  * CASTOR2/castor/rh/RHThread.cpp:
+    [r 1.5,2006-09-25,felixehm] Added StageRepackRequest for repack request handling
+  * CASTOR2/castor/server/BaseDaemon.cpp:
+    [r 1.9,2006-09-25,sponcec3] Removing unneeded include
+  * CASTOR2/castor/stager/ITapeSvc.h:
+  * CASTOR2/castor/stager/ITapeSvcCInt.cpp:
+    [r 1.7,2006-09-21,felixehm] Changed passing parameter of checkFileForRepack
+    [r 1.7,2006-09-21,felixehm] considering char-array memory allocation error
+  * CASTOR2/codeGeneration/Repack.xmi:
+    [r 1.5,2006-09-22,felixehm] Added new fields blockid and fseq for emergency recovering
+  * CASTOR2/config/Project.tmpl:
+    [r1.57,2006-09-25,sponcec3] Build target for the new rmmaster
+  * CASTOR2/config/site.def:
+    [r1.91,2006-09-25,itglp] Use new Oracle API by default
+  * CASTOR2/debian/castor-lib-oracle.install.perm:
+    [r 1.2,2006-09-25,itglp] Use new Oracle API by default
+  * CASTOR2/debian/castor-stager-server.postinst:
+    [r 1.8,2006-09-18,sponcec3] Fixed non starting cleaning daemon
+  * CASTOR2/dlf/doc/index.html:
+    [r 1.7,2006-09-25,waldron] added instructions for importing partitions into the DLF schema
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_create.sql:
+    [r 1.3,2006-09-25,waldron] support for exporting partitions using oracle data pump
+    [r 1.2,2006-09-21,waldron] replaced 'exec dlf_partition;' for non sqlplus safe alternative
+  * CASTOR2/dlf/web/config.php:
+    [r 1.4,2006-09-25,waldron] minor alteration to partition count display to take into account that partitions aren't dropped but truncated
+  * CASTOR2/dlf/web/db/oracle.php:
+    [r 1.3,2006-09-25,waldron] minor alteration to partition count display to take into account that partitions aren't dropped but truncated
+  * CASTOR2/h/rtcpcld_messages.h:
+    [r1.46,2006-09-21,felixehm] Added new Message for migration. If the written file was in a repack process
+    [r1.46,2006-09-21,felixehm] and the old vid for replacing segment information was sucessfully
+    [r1.46,2006-09-21,felixehm] retrieved, it is shown as a system message.
+  * CASTOR2/job/stagerJob.c:
+    [r1.154,2006-09-26,riojac3] Modification to invoke xrootd script in the child process
+  * CASTOR2/maketar.sh:
+    [r1.50,2006-09-22,itglp] Compile Repack2 too by default
+  * CASTOR2/rfio/RfioTURL.c:
+    [r1.21,2006-09-25,gtaur] weird behaviour with svcclass not set fixed
+    [r1.20,2006-09-21,gtaur] fixed problem to retrieve castor version from stagetype.conf
+  * CASTOR2/rfio/rfio_HsmIf.c:
+    [r1.18,2006-09-21,gtaur] fixed problem to retrieve castor version from stagetype.conf
+  * CASTOR2/rtcopy/rtcpcldCatalogueInterface.c:
+    [r1.153,2006-09-25,felixehm] Readded segment adding passage for sorting, which was removed by mistake.
+    [r1.152,2006-09-21,felixehm] changed signature of rtcpcld_checkFileForRepack function
+    [r1.152,2006-09-21,felixehm] activated repack ability
+    [r1.152,2006-09-21,felixehm] removed retrievement of full Subrequest, now (in case of a repack file
+    [r1.152,2006-09-21,felixehm] the old vid from the stager catalogue is returned)
+  * CASTOR2/rtcopy/rtcpcldNsInterface.c:
+    [r1.36,2006-09-26,hcacote] changing compression factor for IBM3592 in order to activate NVC bit
+    [r1.35,2006-09-21,felixehm] changed signature of rtcpcld_checkFileForRepack function
+    [r1.35,2006-09-21,felixehm] activated repack ability
+    [r1.35,2006-09-21,felixehm] removed retrievement of full Subrequest, now (in case of a repack file
+    [r1.35,2006-09-21,felixehm] the old vid from the stager catalogue is returned)
+  * CASTOR2/rtcopy/rtcpcldVmgrInterface.c:
+    [r1.23,2006-09-26,hcacote] changing compression factor for IBM3592 in order to activate NVC bit
+  * CASTOR2/scheduler/LSF/schmod_castor.cpp:
+    [r 1.2,2006-09-25,sponcec3] Adapted implementation to new shared memory code
+  * CASTOR2/stager/stager_client_api_common.cpp:
+    [r1.25,2006-09-25,felixehm] commented function call of free_subrequestquery_resp, since
+    [r1.25,2006-09-25,felixehm] the stage_requestquery_resp struct don't contain any fields to free extra.
+    [r1.24,2006-09-25,felixehm] fixed mem leaks in :
+    [r1.24,2006-09-25,felixehm] free_filequery_resp : stage_filequery_resp
+    [r1.24,2006-09-25,felixehm] free_requestquery_resp : stage_requestquery_resp
+  * CASTOR2/stager/stager_db_service.c:
+    [r1.147,2006-09-26,riojac3] fill the fileIF in the IOResponse for xrootd
+    [r1.146,2006-09-21,itglp] Fixed leaking of stageRm request left in READY. Now they're archived
+  * CASTOR2/stager/stager_query_service.cpp:
+    [r1.44,2006-09-26,riojac3] add fileID to the response so client will receive this field filled (xrootd)
+    [r1.43,2006-09-25,itglp] Take svcClassName = '*' as wildcard (the same as '') for stager_qry
+  * CASTOR2/test/UtilityForCastorTest.py:
+    [r 1.4,2006-09-26,gtaur] new way to use the threads
+
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Mon, 26 Sep 2006 17:45:00 +0200
+
 castor (2.1.1-1) unstable; urgency=low
 
   * CASTOR2/dlf/server.c:
@@ -6517,4 +6665,3 @@ castor (2.0.0-0) unstable; urgency=low
   * Initial Release.
 
  -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Wed, 19 Jan 2005 14:53:30 +0100
-
