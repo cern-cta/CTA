@@ -24,19 +24,26 @@ def timeOut(myCmd):
 
 
 def saveOnFile(namefile,cmdS):
-    t=threading.Timer(120.0,timeOut,[cmdS])
-    t.start()
-    fin=open(namefile,"wb")
-    myOut=os.popen4(cmdS)
-    fin.write((myOut[1]).read())
-    fin.close()
-    t.cancel()
+    count=0
+    for singleCmd in cmdS:
+        t=threading.Timer(120.0,timeOut,[singleCmd])
+        t.start()
+        if count == 0:
+            fin=open(namefile,"wb")
+        else:
+            fin=open(namefile+("%d"%count),"wb")
+        myOut=os.popen4(singleCmd)
+        fin.write((myOut[1]).read())
+        fin.close()
+        count=count+1
+        t.cancel()
       
 def runOnShell(cmdS):
-    t=threading.Timer(120.0,timeOut,[cmdS])
-    t.start()
-    os.popen4(cmdS)
-    t.cancel()
+    for singleCmd in cmdS:
+        t=threading.Timer(120.0,timeOut,[singleCmd])
+        t.start()
+        os.popen4(cmdS)
+        t.cancel()
     
     
 def logUser():
@@ -75,7 +82,4 @@ def checkUser():
         return -1
     return userId
 
-
-
-
-
+ 
