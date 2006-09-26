@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.25 2006/04/20 09:52:13 gtaur Exp $
+ * $Id: stager_client_api_put.cpp,v 1.26 2006/09/26 13:02:40 riojac3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.25 $ $Date: 2006/04/20 09:52:13 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.26 $ $Date: 2006/09/26 13:02:40 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -437,6 +437,7 @@ EXTERN_C int DLL_DECL stage_putDone(char *putRequestId,
         throw e;
       }
 
+      (*responses)[i].fileId = fr->fileId();
       (*responses)[i].filename = strdup(fr->castorFileName().c_str());
       (*responses)[i].status = fr->status();
       (*responses)[i].errorCode = fr->errorCode();
