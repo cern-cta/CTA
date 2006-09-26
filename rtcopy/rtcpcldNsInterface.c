@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.35 $ $Release$ $Date: 2006/09/21 17:46:45 $ $Author: felixehm $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.36 $ $Release$ $Date: 2006/09/26 13:29:23 $ $Author: hcacote $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.35 $ $Release$ $Date: 2006/09/21 17:46:45 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.36 $ $Release$ $Date: 2006/09/26 13:29:23 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -278,6 +278,10 @@ int rtcpcld_updateNsSegmentAttributes(
   nsSegAttrs->segsize = filereq->bytes_in;
   if ( filereq->bytes_out > 0 ) {
     compressionFactor = (filereq->host_bytes * 100) / filereq->bytes_out;
+    if ( (compressionFactor < 95) && (strcmp(tapereq->devtype,"3592") == 0)  )
+      compressionFactor = 100;
+  } else if ( (filereq->bytes_out == 0) && (strcmp(tapereq->devtype,"3592") == 0) ) {
+    compressionFactor = 100;
   } else {
     compressionFactor = 0;
   }
