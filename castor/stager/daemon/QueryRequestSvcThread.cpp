@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.43 2006/09/25 14:04:28 itglp Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.44 2006/09/26 12:23:48 riojac3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.43 $ $Date: 2006/09/25 14:04:28 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.44 $ $Date: 2006/09/26 12:23:48 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -325,6 +325,7 @@ namespace castor {
             std::ostringstream sst;
             sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
             res.setFileName(sst.str());
+	    res.setFileId(fileid);
           }
 
           /* Preparing the response */
@@ -376,6 +377,11 @@ namespace castor {
           throw e;
         }
 
+	
+        castor::stager::DiskCopyInfo* diskcopy = *result->begin();
+        bool foundDiskCopy = false;
+
+
         /* Preparing the response */
         /* ---------------------- */
         castor::rh::FileQryResponse res;
@@ -383,13 +389,14 @@ namespace castor {
         std::ostringstream sst;
         sst << fid << "@" << nshost;
         res.setFileName(sst.str());
-
+        res.setFileId(diskcopy->fileId());
         //char cfn[CA_MAXPATHLEN+1];     // XXX unchecked string length in Cns_getpath() call
         //Cns_getpath((char*)nshost.c_str(), strtou64(fid.c_str()), cfn);
 
-        castor::stager::DiskCopyInfo* diskcopy = *result->begin();
-        bool foundDiskCopy = false;
-        setFileResponseStatus(&res, diskcopy, foundDiskCopy);
+        /*castor::stager::DiskCopyInfo* diskcopy = *result->begin();
+        bool foundDiskCopy = false;*/
+        
+	setFileResponseStatus(&res, diskcopy, foundDiskCopy);
 
         // INVALID status is like nothing
         if (res.status() == FILE_INVALID_STATUS) {
@@ -479,6 +486,7 @@ namespace castor {
             std::ostringstream sst;
             sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
             res.setFileName(sst.str());
+	    res.setFileId(diskcopy->fileId());
           }
 
           /* Preparing the response */
