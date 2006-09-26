@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.22 2006/09/12 12:26:39 itglp Exp $
+## $Id: PACKAGING.howto,v 1.23 2006/09/26 16:56:47 itglp Exp $
 #
 
 #
@@ -102,22 +102,23 @@ mkdir -p SLC3/i386 SLC3/ia64 SLC3/x86_64 SLC4/i386 SLC4/ia64 SLC4/x86_64
 cd x.y.z-r/SLC3/i386 #copy here the rmps for lxs5010
 cp /usr/src/redhat/RPMS/i386/*x.y.z-r*.rpm .
 cp /usr/src/redhat/SRPMS/castor-x.y.z-r.src.rpm ../../
-cp /tmp/`whoami`/castor-x.y.z.tar.gz ../../
+cp /tmp/`whoami`/castor-*.tar.gz ../../
 cp /tmp/`whoami`/CASTOR2/ReleaseNotes ../../
 
 #
 ## To enter the rpms into swrep
 #  ----------------------------
-# You need to go to lxadm and have swrep-soap-client properly configured. Jan can do it :-)
-swrep-soap-client put i386_slc3 /cern/cc /afs/cern.ch/project/castor/www/DIST/CERN/savannah/CASTOR.pkg/x.y.z-r/SLC3/i386/
-
+#
+# You need to send a mail to linux.3rdlevel@cern.ch to ask them to sign the RPMs. Afterwards they'll go to swrep.
+# More info at: https://twiki.cern.ch/twiki/bin/view/CastorHowtoRPMs
 #
 ## To install in AFS
 #  -----------------
 #
-#you should request the (automatic) creation of the volume by following the instructions at: 
-#https://twiki.cern.ch/twiki/bin/view/SPI/SpiSpaceRequests 
+# You should request the (automatic) creation of the volume by following the instructions at: 
+# https://twiki.cern.ch/twiki/bin/view/SPI/SpiSpaceRequests 
 #
 
 ./tools/installOnAFS.py > /tmp/afsInstallScript
 source /tmp/afsInstallScript   # run it from lxplus or make sure you have rpm utilities (rpm2cpio)
+
