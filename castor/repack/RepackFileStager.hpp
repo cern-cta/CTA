@@ -36,7 +36,7 @@ namespace castor {
 	   * Constructor.
      * @param srv The refernce to the constructing RepackServer Instance.
 	   */
-		RepackFileStager(RepackServer* srv) throw ();
+		RepackFileStager(RepackServer* srv);
 		
 		/**
 	   * Destructor
@@ -100,6 +100,17 @@ namespace castor {
       */
     int checkMultiRepack(RepackSubRequest* sreq)
 	                                    throw (castor::exception::Internal);
+
+    /**
+      * Method to start a Repack process  
+      */
+    void RepackFileStager::startRepack(RepackSubRequest* sreq);
+
+    /**
+      * Method to restart a Repack process
+      */
+    void RepackFileStager::restartRepack(RepackSubRequest* sreq);
+
 
     /**
 		 * Pointer to DatabaseHelper instance. Created by the contructor.

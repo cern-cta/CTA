@@ -60,32 +60,20 @@ void RepackCleaner::run(void* param) throw(){
     tape = m_dbhelper->checkSubRequestStatus(SUBREQUEST_READYFORCLEANUP);
 
     if ( tape != NULL )	{
-      //m_dbhelper->lock(tape);
+      m_dbhelper->lock(tape);
       cuuid = stringtoCuuid(tape->cuuid());
       if ( cleanupTape(tape) ){
         castor::dlf::Param params[] =
         {castor::dlf::Param("VID", tape->vid())};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 35, 1, params);
       }
+      m_dbhelper->unlock();
       cuuid = nullCuuid;
       freeRepackObj(tape->requestID()); 
       tape = NULL;
     }
-    //m_dbhelper->unlock();
+    
 
-
-    tape = m_dbhelper->checkSubRequestStatus(SUBREQUEST_RESTART);
-    if ( tape != NULL ){
-      //m_dbhelper->lock(tape);
-      cuuid = stringtoCuuid(tape->cuuid());
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("VID", tape->vid())};
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 37, 1, params);
-      restartRepack(tape);
-      freeRepackObj(tape->requestID());
-      tape = NULL;
-      //m_dbhelper->unlock();
-    }
 
   }catch (castor::exception::Exception e){
     castor::dlf::Param params[] =
@@ -102,27 +90,6 @@ void RepackCleaner::run(void* param) throw(){
 void RepackCleaner::stop() throw(){
 	
 }
-
-
-
-void RepackCleaner::restartRepack(RepackSubRequest* sreq) throw(castor::exception::Internal)
-{
-    Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
-    
-    /// for a restart, we just need to remove the segments from the RepackSubRequest
-    /// so the RepackFileStager will again send the file query to the stager
-    
-    /// the DB Helper removes the segs from DB and puts the RepackSubRequest into ARCHIVED
-    m_dbhelper->remove(sreq);
-    
-    /// of course, now we have to change the status, so the process begins again
-    sreq->setStatus(SUBREQUEST_READYFORSTAGING);
-    sreq->setFiles(0);
-    sreq->setFilesMigrating(0);
-    sreq->setFilesStaging(0);
-    m_dbhelper->updateSubRequest(sreq,false,cuuid);
-}
-
 
 //------------------------------------------------------------------------------
 // getStageStatus

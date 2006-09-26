@@ -59,14 +59,6 @@ namespace castor {
 		private:
 			
 
-      /** 
-       * Restarts a Repack Process. It removes the segments from the RepackSubRequest and sets
-       * its status to SUBREQUEST_READYFORSTAGING
-       * @param sreq The RepackSubRequest to restart
-       * @throws exception in case on an error.
-       */
-      void RepackCleaner::restartRepack(RepackSubRequest* sreq) throw(castor::exception::Internal);
-
       /**
 			 * Finishes a RepackSubRequest.It calls 'removeFilesFromStager' to remove 
        * the files from stager. Then the status is set to SUBREQUEST_DONE and updated in the DB.
