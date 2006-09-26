@@ -167,7 +167,7 @@ void CppCppBaseCnvWriter::writeDeleteRep() {
   writeDeleteRepContent();
   // End of the method
   m_indent--;
-  *m_stream << "}" << endl << endl;
+  *m_stream << getIndent() << "}" << endl << endl;
 }
 
 //=============================================================================
