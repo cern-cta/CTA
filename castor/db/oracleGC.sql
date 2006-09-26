@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.306 $ $Release$ $Date: 2006/09/26 10:29:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.307 $ $Release$ $Date: 2006/09/26 10:31:55 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.306 $ $Date: 2006/09/26 10:29:07 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.307 $ $Date: 2006/09/26 10:31:55 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1178,7 +1178,13 @@ BEGIN
   SELECT DiskCopy.id, DiskCopy.status, DiskCopy.path
     INTO dcId, dcStatus, dcPath
     FROM SubRequest, DiskCopy
-   WHERE SubRequest.id = srId AND DiskCopy.castorfile = SubRequest.castorfile AND DiskCopy.status = 6; -- STAGEOUT
+   WHERE SubRequest.id = srId
+     AND DiskCopy.castorfile = SubRequest.castorfile
+     AND DiskCopy.status = 6; -- STAGEOUT
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- We need to clean set the original putDone request to FAILED_FINISHED
+    UPDATE SubRequest SET status = 9 WHERE id = srId;
+    RAISE;
 END;
 
 /* PL/SQL method implementing updateAndCheckSubRequest */
@@ -1878,7 +1884,7 @@ BEGIN
      UPDATE SubRequest SET status = 7 WHERE id = sr.id;  -- FAILED
    END IF;
  END LOOP;
- -- set DiskCopies to GCCANDIDATE. Note that we keep
+ -- set DiskCopies to GCCANDIDATE/INVALID. Note that we keep
  -- WAITTAPERECALL diskcopies so that recalls can continue
  UPDATE DiskCopy SET status = 8 -- GCCANDIDATE
   WHERE castorFile = cfId
