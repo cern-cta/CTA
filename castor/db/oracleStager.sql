@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.307 $ $Release$ $Date: 2006/09/26 10:31:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.308 $ $Release$ $Date: 2006/09/26 13:54:43 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.307 $ $Date: 2006/09/26 10:31:55 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.308 $ $Date: 2006/09/26 13:54:43 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -880,8 +880,10 @@ BEGIN
   -- First see whether we should wait on an ongoing request
   SELECT DiskCopy.status, DiskCopy.id
     BULK COLLECT INTO stat, dci
-    FROM DiskCopy, SubRequest, FileSystem, DiskServer
+    FROM DiskCopy, SubRequest, FileSystem, DiskServer, Id2Type
    WHERE SubRequest.id = rsubreqId
+     AND SubRequest.request = Id2Type.id  -- Avoid that PutDone waits
+     AND Id2Type.type != 39               -- on the prepareToPut
      AND SubRequest.castorfile = DiskCopy.castorfile
      AND FileSystem.id(+) = DiskCopy.fileSystem
      AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
