@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.305 $ $Release$ $Date: 2006/09/25 14:34:41 $ $Author: itglp $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.306 $ $Release$ $Date: 2006/09/26 10:29:07 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.305 $ $Date: 2006/09/25 14:34:41 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.306 $ $Date: 2006/09/26 10:29:07 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -504,19 +504,7 @@ END;
 CREATE OR REPLACE PROCEDURE updateFsFileOpened
 (ds IN INTEGER, fs IN INTEGER,
  deviation IN INTEGER, fileSize IN INTEGER) AS
-BEGIN
- UPDATE FileSystem SET deltaWeight = deltaWeight - deviation
-  WHERE diskServer = ds;
- UPDATE FileSystem SET fsDeviation = LEAST(2 * deviation, 1000),
-                       reservedSpace = reservedSpace + fileSize
-  WHERE id = fs;
-END;
-
-/* PL/SQL method to update FileSystem free space when file are closed */
-CREATE OR REPLACE PROCEDURE updateFsFileClosed
-(fs IN INTEGER, reservation IN INTEGER, fileSize IN INTEGER) AS
-  deviation NUMBER;
-  ds INTEGER;
+  unused INTEGER;
 BEGIN
   /* We have to lock first the diskserver in order to lock all the
      filesystems of this DiskServer in an atomical way.
@@ -524,7 +512,29 @@ BEGIN
      first and then all the others leads to a dead lock if 2 threads
      are running this in parallel : they will both lock one
      filesystem to start with and try to get the others locks afterwards. */
-  SELECT DiskServer INTO ds FROM FileSystem WHERE id = fs FOR UPDATE;
+  SELECT id INTO unused FROM DiskServer WHERE id = ds FOR UPDATE;
+  UPDATE FileSystem SET deltaWeight = deltaWeight - deviation
+   WHERE diskServer = ds;
+  UPDATE FileSystem SET fsDeviation = LEAST(2 * deviation, 1000),
+                        reservedSpace = reservedSpace + fileSize
+   WHERE id = fs;
+END;
+
+/* PL/SQL method to update FileSystem free space when file are closed */
+CREATE OR REPLACE PROCEDURE updateFsFileClosed
+(fs IN INTEGER, reservation IN INTEGER, fileSize IN INTEGER) AS
+  deviation NUMBER;
+  ds INTEGER;
+  unused INTEGER;
+BEGIN
+  /* We have to lock first the diskserver in order to lock all the
+     filesystems of this DiskServer in an atomical way.
+     Otherwise, the fact that we update the "single" filesystem fs
+     first and then all the others leads to a dead lock if 2 threads
+     are running this in parallel : they will both lock one
+     filesystem to start with and try to get the others locks afterwards. */
+  SELECT DiskServer INTO ds FROM FileSystem WHERE id = fs;
+  SELECT id INTO unused FROM DiskServer WHERE id = ds FOR UPDATE;
   /* now we can safely go */
   UPDATE FileSystem SET fsDeviation = fsdeviation / 2,
                        deltaFree = deltaFree - fileSize,
