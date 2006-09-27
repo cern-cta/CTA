@@ -11,6 +11,7 @@
   - Fix concerning retrieval of castorversion from stagemap if the env variable is not set
   - Take '*' as a wildcard for the svcClass in a stager_qry
   - Changed compression factor for IBM3592 in order to activate NVC bit
+  - Included modifications for xrootd
 
   Upgrade from 2.1.1-0
   --------------------
