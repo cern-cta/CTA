@@ -1,5 +1,5 @@
 -----------
-- 2.1.1-2 -
+- 2.1.1-3 -
 -----------
 
   New Features and Changes
@@ -8,8 +8,23 @@
   - Fixed leak of stager_rm subrequests in status ready
   - Fixed deadlock in the updateFsFileOpen/Close SQL methods
   - Fixed stager_qry for prepareToPut requests
+  - Fix concerning retrieval of castorversion from stagemap if the env variable is not set
   - Take '*' as a wildcard for the svcClass in a stager_qry
   - Changed compression factor for IBM3592 in order to activate NVC bit
+
+  Upgrade from 2.1.1-0
+  --------------------
+  - Upgrade the database
+  - Upgrade the head nodes
+  - Then for the other components no special order is required.
+
+
+-----------
+- 2.1.1-2 -
+-----------
+
+  - This release is broken in the rtcpclientd.
+
 
 -----------
 - 2.1.1-1 -

@@ -1,3 +1,19 @@
+castor (2.1.1-3) unstable; urgency=low
+
+  * CASTOR2/debian/repackserver.init:
+    [r 1.2,2006-09-27,itglp] Removed duplicated line
+  * CASTOR2/rfio/rfio_HsmIf.c:
+    [r1.19,2006-09-27,gtaur] fix in use_castor2_api()
+  * CASTOR2/rtcopy/rtcpcldCatalogueInterface.c:
+    [r1.154,2006-09-27,felixehm] commented retrievement of segment information for future tape-optimised
+    [r1.154,2006-09-27,felixehm] reading order, since the Ctape_sort(..) hasn't been implemented.
+  * CASTOR2/rtcopy/rtcpcldVmgrInterface.c:
+    [r1.24,2006-09-27,felixehm] fixed strcmp bug. logic was therefore not working correctly
+  * CASTOR2/stager/stager_db_service.c:
+    [r1.148,2006-09-27,sponcec3] Fixed some messages by adding the file name
+
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Wed, 27 Sep 2006 16:32:32 +0200
+
 castor (2.1.1-2) unstable; urgency=low
 
   * <Packaging>: Repack2 is now fully included
