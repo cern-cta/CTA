@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: repackserver.init,v $ $Revision: 1.1 $ $Release$ $Date: 2006/09/06 12:27:53 $ $Author: sponcec3 $
+# @(#)$RCSfile: repackserver.init,v $ $Revision: 1.2 $ $Release$ $Date: 2006/09/27 07:51:08 $ $Author: itglp $
 #
 # init script for the repack daemon
 #
@@ -141,7 +141,6 @@ case "$1" in
             [ -n "$FAILURE" ] && $FAILURE "repackserver not started: "
             RETVAL=1
         fi
-    fi
     fi
     $ECHO_END
     ;;
