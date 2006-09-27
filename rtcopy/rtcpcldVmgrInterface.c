@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.23 $ $Release$ $Date: 2006/09/26 13:29:23 $ $Author: hcacote $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.24 $ $Release$ $Date: 2006/09/27 12:47:43 $ $Author: felixehm $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.23 $ $Release$ $Date: 2006/09/26 13:29:23 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.24 $ $Release$ $Date: 2006/09/27 12:47:43 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -722,7 +722,7 @@ int rtcpcld_updateTape(
               compressionFactor = (filereq->host_bytes * 100) / filereq->bytes_out;
               if ( (compressionFactor < 95) && (strcmp(tapereq->devtype,"3592") == 0) )
                 compressionFactor = 100;
-            } else if ( (filereq->bytes_out == 0) && (strcmp(tapereq->devtype,"3592" == 0)) ) {
+            } else if ( (filereq->bytes_out == 0) && (strcmp(tapereq->devtype,"3592") == 0) ) {
               compressionFactor = 100;
             } else {
               compressionFactor = 100;
