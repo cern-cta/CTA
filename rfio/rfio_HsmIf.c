@@ -1501,6 +1501,9 @@ int DLL_DECL use_castor2_api() {
   char** globalSvc;
   int* globalVersion;
   int* globalPort;
+  globalHost=globalSvc=0;
+  globalVersion=globalPort=0;
+
 
   ret=Cglobals_get(& tCastorVersionKey, (void**) &globalVersion,sizeof(int));
   if(ret==0 && (*globalVersion==1 ||*globalVersion==2)){
