@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.153 $ $Release$ $Date: 2006/09/25 14:51:06 $ $Author: felixehm $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.154 $ $Release$ $Date: 2006/09/27 12:36:11 $ $Author: felixehm $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.153 $ $Release$ $Date: 2006/09/25 14:51:06 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.154 $ $Release$ $Date: 2006/09/27 12:36:11 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1127,7 +1127,7 @@ static int procSegmentsForTape(
   /* ------------------------------------------------------------*/
   
   
-  
+  /* 
   struct Cns_direntape nslist[nbItems];
   for ( i=0; i<nbItems; i++ ) {
       Cstager_Segment_blockId0(
@@ -1153,7 +1153,7 @@ static int procSegmentsForTape(
 			  
 			        
   }
-  /*
+  
   Ctape_sort_Segments( tape_list_t->rtcpTapeRequest_t->devtype,
                        nbItems,
 		       nslist);
