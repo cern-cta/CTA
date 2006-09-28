@@ -47,13 +47,14 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbDisk2DiskCopyDoneRequestCnv.cpp \
      DbDiskCopyCnv.cpp \
      DbDiskPoolCnv.cpp \
+     DbDiskPoolQueryCnv.cpp \
      DbDiskServerCnv.cpp \
      DbErrorHistoryCnv.cpp \
      DbFileClassCnv.cpp \
+     DbFileSystemCnv.cpp \
      DbFiles2DeleteCnv.cpp \
      DbFilesDeletedCnv.cpp \
      DbFilesDeletionFailedCnv.cpp \
-     DbFileSystemCnv.cpp \
      DbGCFileCnv.cpp \
      DbGCLocalFileCnv.cpp \
      DbGetUpdateDoneCnv.cpp \
@@ -74,11 +75,11 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbStagePrepareToGetRequestCnv.cpp \
      DbStagePrepareToPutRequestCnv.cpp \
      DbStagePrepareToUpdateRequestCnv.cpp \
-     DbStageRepackRequestCnv.cpp \
      DbStagePutDoneRequestCnv.cpp \
      DbStagePutNextRequestCnv.cpp \
      DbStagePutRequestCnv.cpp \
      DbStageReleaseFilesRequestCnv.cpp \
+     DbStageRepackRequestCnv.cpp \
      DbStageRequestQueryRequestCnv.cpp \
      DbStageRmRequestCnv.cpp \
      DbStageUpdateNextRequestCnv.cpp \
