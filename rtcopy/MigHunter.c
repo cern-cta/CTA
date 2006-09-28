@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.32 $ $Release$ $Date: 2006/07/20 16:56:49 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.33 $ $Release$ $Date: 2006/09/28 14:12:41 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.32 $ $Release$ $Date: 2006/07/20 16:56:49 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.33 $ $Release$ $Date: 2006/09/28 14:12:41 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -52,6 +52,7 @@ WSADATA wsadata;
 #endif /* _WIN32 */
 #include <sys/stat.h>
 #include <patchlevel.h>
+#include <getconfent.h>
 #include <Castor_limits.h>
 #include <Cinit.h>
 #include <log.h>
@@ -748,6 +749,8 @@ static int streamCreator(
   int rc, nbTapePools, nbStreams, i, j;
   unsigned int nbDrives, nbStreamsTotal;
   int *streamsPerTapePool = NULL, _nbNewStreams = 0;
+  char *p = NULL, u64buf[22];
+  u_signed64 initialSizeCeiling = 0, gettapeSize = 0;
 
   if ( nbNewStreams != NULL ) *nbNewStreams = 0;
   if ( svcClass == NULL ) {
@@ -756,6 +759,11 @@ static int streamCreator(
     }
     serrno = EINVAL;
     return(-1);
+  }
+  if ( (p = getconfent("MigHunter","SIZECIELING",1)) != NULL ) {
+    initialSizeCeiling = strutou64(p);
+    fprintf(stdout,"Use configured size ceiling %s\n",
+            u64tostr(initialSizeCeiling,u64buf,-1));
   }
 
   Cstager_SvcClass_nbDrives(svcClass,&nbDrives);
@@ -837,7 +845,11 @@ static int streamCreator(
        * a chance to throw TapeCopies into it.
        */
       Cstager_Stream_setStatus(newStream,STREAM_CREATED);
-      Cstager_Stream_setInitialSizeToTransfer(newStream,initialSizeToTransfer);
+      gettapeSize = initialSizeToTransfer/(nbDrives>1 ? nbDrives : 1);
+      if ( (initialSizeCeiling>0) && (gettapeSize>initialSizeCeiling) ) {
+        gettapeSize = initialSizeCeiling;
+      }
+      Cstager_Stream_setInitialSizeToTransfer(newStream,gettapeSize);
       Cstager_TapePool_addStreams(tapePoolArray[j],newStream);
       Cstager_Stream_setTapePool(newStream,tapePoolArray[j]);
       streamsPerTapePool[j]++;
