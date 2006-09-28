@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2006/09/12 10:10:45 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2006/09/28 12:28:49 $ $Author: felixehm $
  *
  *
  *
@@ -468,7 +468,7 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor
 	
 
 	if ( rreq != NULL )	{
-	   /*
+	   
 		// Pool Handling 
 		if ( rreq->pool().length() > 0 ) {
 			//check if exists 
@@ -506,9 +506,9 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor
 			return nbvol;
 		}
 
-     */
+     
 		/** No tape pool given, so check the given tapes */ 
-		//else {
+		else {
 			lp   = (struct vmgr_tape_info*)(malloc(sizeof(vmgr_tape_info)));
 			tape = rreq->subRequest().begin();
 			while ( tape != rreq->subRequest().end() ){
@@ -525,7 +525,7 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor
 
 			}
 			free(lp);
-		//}
+		}
 		return nbvol;
 	}
 	return -1;
@@ -561,7 +561,10 @@ int RepackWorker::getTapeStatus(std::string tapename) throw (castor::exception::
 	/* check if the volume exists and get its status */
   if (vmgr_querytape (vid, 0, &tape_info, NULL) < 0) {
     castor::exception::Internal ex;
-    ex.getMessage() << sstrerror(serrno);
+    ex.getMessage() << "VMGR returns \"" << sstrerror(serrno) 
+                    << "\" for Tape "
+                    << tapename 
+                    << " (wrong volume name?) " << std::endl;
     castor::dlf::Param params[] =
         {castor::dlf::Param("VID", vid),
          castor::dlf::Param("ErrorText", sstrerror(serrno))};

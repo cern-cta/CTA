@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2006/09/22 12:19:55 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2006/09/28 12:28:48 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -252,16 +252,24 @@ int RepackClient::addTapes(RepackRequest *rreq)
 //------------------------------------------------------------------------------
 castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
 {
-  setRemotePort();
-  setRemoteHost();
+  
   char* vid;
   char cName[CA_MAXHOSTNAMELEN];
   struct passwd *pw = Cgetpwuid(getuid());
-
   
+  /** Get Remote Host and Port Number from environment or from castor config 
+    *  file
+    */
+  try {
+    setRemotePort();
+    setRemoteHost();
+  }catch (castor::exception::Exception ex){
+    std::cerr << ex.getMessage().str() << " Aborting.." << std::endl;
+    return NULL;
+  }
   
   if ( gethostname(cName, CA_MAXHOSTNAMELEN) != 0 ){
-  	std::cerr << "Cannot get hostname ! Aborting.." << std::endl;
+  	std::cerr << "Cannot get own hostname !" << std::endl << " Aborting.." << std::endl;
   	return NULL;
   }
   
