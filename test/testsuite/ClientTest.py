@@ -46,7 +46,7 @@ class PreRequisitesCase(unittest.TestCase):
 		assert os.stat(localDir+"fileRfcp2Copy")[6] != 0, "Rfcp doesn't work"
 		assert os.stat(localDir+"rfioFine6")[6] == 0, "Rfcp doesn't work"
                 assert os.stat(localDir+"rfioFine7")[6] == 0, "Rfcp doesn't work"
-		 
+
 	
 class StagerPutCase(unittest.TestCase):
 	def basicPut(self):
@@ -290,7 +290,14 @@ class StagerRmCase(unittest.TestCase):
 		
 class StagerSpecialQueryCase(unittest.TestCase):
 	def queryS(self):
-		pass
+	        cmd=["stager_qry -s"]
+	        UtilityForCastorTest.saveOnFile(localDir+"queryS",cmd)
+		
+		fi=open(localDir+"queryS","r")
+		assert fi.read().find("Error") == -1, "stager_qry -s doesn't work"
+		fi.close()
+		
+		
 	def queryE(self):
 		pass
 		
