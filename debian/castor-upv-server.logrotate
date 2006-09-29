@@ -1,21 +1,9 @@
 #
-# $Id: castor-upv-server.logrotate,v 1.3 2006/09/28 12:38:23 felixehm Exp $
+# $Id: castor-upv-server.logrotate,v 1.4 2006/09/29 06:53:52 jveldik Exp $
 #
-# @(#)$RCSfile: castor-upv-server.logrotate,v $ $Revision: 1.3 $ $Date: 2006/09/28 12:38:23 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-upv-server.logrotate,v $ $Revision: 1.4 $ $Date: 2006/09/29 06:53:52 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
-/var/log/Cupvdaemon {
-    compress
-    daily
-    missingok
-    rotate 15
-}
-/var/spool/Cupv/log {
-    compress
-    daily
-    missingok
-    rotate 15
-}
-/var/spool/upv/log {
+/var/log/Cupvdaemon /var/spool/Cupv/log /var/spool/upv/log {
     compress
     daily
     missingok
