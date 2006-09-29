@@ -1,15 +1,9 @@
 #
-# $Id: castor-dlf-server.logrotate,v 1.2 2005/10/31 11:02:01 jdurand Exp $
+# $Id: castor-dlf-server.logrotate,v 1.3 2006/09/29 08:08:04 jveldik Exp $
 #
-# @(#)$RCSfile: castor-dlf-server.logrotate,v $ $Revision: 1.2 $ $Date: 2005/10/31 11:02:01 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-dlf-server.logrotate,v $ $Revision: 1.3 $ $Date: 2006/09/29 08:08:04 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
-/var/log/dlf {
-    compress
-    daily
-    missingok
-    rotate 15
-}
-/var/spool/dlf/log {
+/var/log/dlf /var/spool/dlf/log {
     compress
     daily
     missingok

@@ -1,15 +1,9 @@
 #
-# $Id: castor-lsf-plugin.logrotate,v 1.2 2005/10/31 11:02:01 jdurand Exp $
+# $Id: castor-lsf-plugin.logrotate,v 1.3 2006/09/29 08:08:06 jveldik Exp $
 #
-# @(#)$RCSfile: castor-lsf-plugin.logrotate,v $ $Revision: 1.2 $ $Date: 2005/10/31 11:02:01 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-lsf-plugin.logrotate,v $ $Revision: 1.3 $ $Date: 2006/09/29 08:08:06 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
-/var/log/scheduler {
-    compress
-    daily
-    missingok
-    rotate 15
-}
-/var/spool/scheduler/log {
+/var/log/scheduler /var/spool/scheduler/log {
     compress
     daily
     missingok

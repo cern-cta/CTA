@@ -1,13 +1,7 @@
 #
-# $Id: castor-rmmaster-server.logrotate,v 1.2 2005/10/31 11:02:01 jdurand Exp $
+# $Id: castor-rmmaster-server.logrotate,v 1.3 2006/09/29 08:08:06 jveldik Exp $
 #
-/var/log/rmmaster {
-    compress
-    daily
-    missingok
-    rotate 15
-}
-/var/spool/rmmaster/log {
+/var/log/rmmaster /var/spool/rmmaster/log {
     compress
     daily
     missingok
