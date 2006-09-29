@@ -1,0 +1,16 @@
+
+## =====================================================================
+## Cleaning Daemon options:
+##
+## DAYS4OUTDATED as max time in days that a subrequest can stay in the database
+## HOURS4ARCHIVED as max time in hours that an archieved request can stay in
+## the database.
+## PERIODOUTDATE minutes between two operations of cleaning out of date requests 
+## PERIODARCHIVED minutes between two operations of cleaning archived requests
+##
+## =====================================================================
+
+Cleaning DAYS4OUTDATE 7
+Cleaning HOURS4ARCHIVED 24
+Cleaning PERIODOUTDATE 300
+Cleaning PERIODARCHIVED 1
