@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dbview.php,v 1.2 2006/09/19 12:46:43 waldron Exp $
+ * $Id: dbview.php,v 1.3 2006/09/29 14:23:40 waldron Exp $
  */
 
 require("utils.php");
@@ -116,11 +116,11 @@ function navigation_form() {
 	
 						$results = db_query("SELECT * FROM ".$stager_sql_tables[$entry]['table']." WHERE $query_lookup = '$param'", $dbh);
 						if (!$results) {
-						
+							exit;
 						}
-	
+							
 						/* start table information */
-						while ($row = db_fetch_row($results)) {
+						for ($i = 0; $row = db_fetch_row($results); $i++) {
 							echo "<table width=\"50%\" border=\"1\" cellspacing=\"3\" cellpadding=\"3\">";
 							echo "<tr class=\"banner\"><td colspan=\"2\" align=\"center\">$entry</td></tr>";
 						
@@ -224,6 +224,10 @@ function navigation_form() {
 							/* end table information */
 							echo "</table>";
 							echo "<br>";
+						}
+						
+						if ($i == 0) {
+							echo "<strong>No stager information available</strong>";
 						}
 							
 						/* navigation */

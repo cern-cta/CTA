@@ -199,7 +199,7 @@ $dlf_sql_columns = array(
 	"col_subreqid" => array(
 		"field"	   => "t7.subreqid",
 		"name"     => "Sub Request ID",
-		"join"	   => "LEFT JOIN dlf_reqid_map t7 on (t1.id = t7.id)",
+		"join"	   => "LEFT JOIN dlf_reqid_map t7 on (t1.id = t7.id AND timestamp_predicate)",
 		"display"  => 0,
 		"required" => 0,
 		"href"	   => "subreqid",
@@ -209,7 +209,7 @@ $dlf_sql_columns = array(
 	"col_tapevid" => array(
 		"field"	   => "t8.tapevid",
 		"name"	   => "Tape VID",
-		"join"	   => "LEFT JOIN dlf_tape_ids t8 on (t1.id = t8.id)",
+		"join"	   => "LEFT JOIN dlf_tape_ids t8 on (t1.id = t8.id AND timestamp_predicate)",
 		"display"  => 0,
 		"required" => 0,
 		"href"	   => "tapevid",

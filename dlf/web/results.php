@@ -93,10 +93,33 @@ $dbh = db_connect($_GET['instance'], 1, 0);
 	}
 	$query_fields = str_replace(" ", ",", trim($query_fields));
 
+	/* determine period of lookup */
+	if (DB_LAYER == "mysql") {
+		if ($_GET['drilltime']) {
+			$period = " ((t1.timestamp >= DATE_SUB(STR_TO_DATE('".$_GET['drilltime']."', '%Y-%m-%d %H:%i:%s'), interval ".$db_drilldown_time." hour)) AND
+						(t1.timestamp < DATE_ADD(STR_TO_DATE('".$_GET['drilltime']."', '%Y-%m-%d %H:%i:%s'), interval ".$db_drilldown_time." hour)))";
+		} else if ($_GET['last'] != 0) {
+			$period .= " t1.timestamp > DATE_SUB(NOW(), interval ".$_GET['last']." minute)";
+		} else if ($_GET['mode'] != "drilldown") {
+			$period .= " ((t1.timestamp >= STR_TO_DATE('".$_GET['from']." ".$_GET['fromtime'].":00', '%d/%m/%Y %H:%i:%s')) AND
+						(t1.timestamp <  STR_TO_DATE('". $_GET['to']. " " .$_GET['totime'].":00', '%d/%m/%Y %H:%i:%s')))";
+		}  	
+	} else {
+		if ($_GET['drilltime']) {
+			$period .= " ((t1.timestamp >= (TO_DATE('".$_GET['drilltime']."', 'DD/MM/YYYY HH24:MI:SS') - ".$db_drilldown_time."/24)) AND
+						(t1.timestamp <  (TO_DATE('".$_GET['drilltime']."', 'DD/MM/YYYY HH24:MI:SS') + ".$db_drilldown_time."/24)))"; 
+		} else if ($_GET['last'] != 0) {
+			$period .= " t1.timestamp > (SYSDATE - ".$_GET['last']."/1440)";
+		} else if ($_GET['mode'] != "drilldown") {
+			$period .= " ((t1.timestamp >= TO_DATE('".$_GET['from'] ." " .$_GET['fromtime'].":00', 'DD/MM/YYYY HH24:MI:SS')) AND
+						(t1.timestamp <  TO_DATE('".$_GET['to']." " .$_GET['totime'].":00', 'DD/MM/YYYY HH24:MI:SS')))";  
+		}   	
+	}
+
 	/* generate the join criteria needed to satisfy the field requirements */
 	foreach (array_keys($dlf_sql_columns) as $name) {
 		if ($dlf_sql_columns[$name]['required']) {
-			$query_joins .= " ".$dlf_sql_columns[$name]['join'];
+			$query_joins .= " ".str_replace("timestamp_predicate", str_replace("t1.", substr($dlf_sql_columns[$name]['field'],0,3), $period), $dlf_sql_columns[$name]['join']);
 		}
 	}
 
@@ -160,30 +183,10 @@ $dbh = db_connect($_GET['instance'], 1, 0);
 
 	/* append time period to query */
 	$query_period .= $query_conditions ? " AND" : " WHERE";
+	$query_period .= $period;
+	
 	$query_conditions++;
-
-	if (DB_LAYER == "mysql") {
-		if ($_GET['drilltime']) {
-			$query_period .= " ((t1.timestamp >= DATE_SUB(STR_TO_DATE('".$_GET['drilltime']."', '%Y-%m-%d %H:%i:%s'), interval ".$db_drilldown_time." hour)) AND
-						(t1.timestamp < DATE_ADD(STR_TO_DATE('".$_GET['drilltime']."', '%Y-%m-%d %H:%i:%s'), interval ".$db_drilldown_time." hour)))";
-		} else if ($_GET['last'] != 0) {
-			$query_period .= " t1.timestamp > DATE_SUB(NOW(), interval ".$_GET['last']." minute)";
-		} else if ($_GET['mode'] != "drilldown") {
-			$query_period .= " ((t1.timestamp >= STR_TO_DATE('".$_GET['from']." ".$_GET['fromtime'].":00', '%d/%m/%Y %H:%i:%s')) AND
-						(t1.timestamp <  STR_TO_DATE('". $_GET['to']. " " .$_GET['totime'].":00', '%d/%m/%Y %H:%i:%s')))";
-		}  	
-	} else {
-		if ($_GET['drilltime']) {
-			$query_period .= " ((t1.timestamp >= (TO_DATE('".$_GET['drilltime']."', 'DD/MM/YYYY HH24:MI:SS') - ".$db_drilldown_time."/24)) AND
-						(t1.timestamp <  (TO_DATE('".$_GET['drilltime']."', 'DD/MM/YYYY HH24:MI:SS') + ".$db_drilldown_time."/24)))"; 
-		} else if ($_GET['last'] != 0) {
-			$query_period .= " t1.timestamp > (SYSDATE - ".$_GET['last']."/1440)";
-		} else if ($_GET['mode'] != "drilldown") {
-			$query_period .= " ((t1.timestamp >= TO_DATE('".$_GET['from'] ." " .$_GET['fromtime'].":00', 'DD/MM/YYYY HH24:MI:SS')) AND
-						(t1.timestamp <  TO_DATE('".$_GET['to']." " .$_GET['totime'].":00', 'DD/MM/YYYY HH24:MI:SS')))";  
-		}   	
-	}
-
+	
 	/* finalise the query (limits) */
 	if (DB_LAYER == "mysql") {
 		$query_fields   = "SELECT ".$query_fields;
@@ -205,13 +208,8 @@ $dbh = db_connect($_GET['instance'], 1, 0);
 	$query_finalise = trim($query_finalise);
   
 	/* debugging (html comments) */
-	echo "<!-- Query 1 -->\n";
-	echo "<!-- Fields:   ".$query_fields.  " -->\n";
-	echo "<!-- joins:    ".$query_joins.   " -->\n";
-	echo "<!-- where:    ".$query_where.   " -->\n";
-	echo "<!-- period:   ".$query_period.  " -->\n";
-	echo "<!-- finalise: ".$query_finalise." -->\n";	
- 	
+	echo "<!-- Query 1: $query_fields FROM dlf_messages t1 $query_joins $query_where $query_period $query_finalise -->\n";
+
 	/* execute query */
 	$query_count++;
 	$results = db_query($query_fields." FROM dlf_messages t1 ".$query_joins." ".$query_where." ".$query_period." ".$query_finalise, $dbh);
@@ -266,7 +264,7 @@ $dbh = db_connect($_GET['instance'], 1, 0);
 		
 			/* execute query */
 			$query_count++;
-			$results = db_query("SELECT id, name, value FROM ".$table." WHERE id IN ".$query_list, $dbh);
+			$results = db_query("SELECT id, name, value FROM ".$table." WHERE id IN ".$query_list." AND ".str_replace("t1.", "", $period), $dbh);
 			if (!$results) {
 				exit;
 			}
