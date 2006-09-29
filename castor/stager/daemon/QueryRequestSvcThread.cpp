@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.44 2006/09/26 12:23:48 riojac3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.45 2006/09/29 07:18:42 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.44 $ $Date: 2006/09/26 12:23:48 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.45 $ $Date: 2006/09/29 07:18:42 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -108,10 +108,16 @@ EXTERN_C int DLL_DECL stager_query_select(void **output) {
     svcs = castor::BaseObject::services();
     castor::IService* svc = svcs->service("DbQuerySvc", castor::SVC_DBQUERYSVC);
     qrySvc = dynamic_cast<castor::query::IQuerySvc*>(svc);
+ 
+    if(!qrySvc) {
+      STAGER_LOG_DB_ERROR(NULL,"stager_qry_service","Impossible create/locate castor::SVC_DBQUERYSVC");
+      return -1;
+    }
 
 
     /* Get any new request to do    */
     /* ---------------------------- */
+
     STAGER_LOG_VERBOSE(NULL,"Getting any request to do");
     castor::stager::Request* req = qrySvc->requestToDo();
 
@@ -120,6 +126,7 @@ EXTERN_C int DLL_DECL stager_query_select(void **output) {
       STAGER_LOG_VERBOSE(NULL,"Nothing to do");
       serrno = ENOENT;
       rc = -1;
+
     } else {
       STAGER_LOG_VERBOSE(NULL,"req FOUND");
       *output = req;

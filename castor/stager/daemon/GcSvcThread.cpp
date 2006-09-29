@@ -1,5 +1,5 @@
 /*
- * $Id: GcSvcThread.cpp,v 1.11 2006/08/18 15:59:29 sponcec3 Exp $
+ * $Id: GcSvcThread.cpp,v 1.12 2006/09/29 07:18:41 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.11 $ $Date: 2006/08/18 15:59:29 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.12 $ $Date: 2006/09/29 07:18:41 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -90,6 +90,11 @@ EXTERN_C int DLL_DECL stager_gc_select(void **output) {
     castor::IService* svc =
       svcs->service("DbGCSvc", castor::SVC_DBGCSVC);
     gcSvc = dynamic_cast<castor::stager::IGCSvc*>(svc);
+
+     if(!gcSvc) {
+      STAGER_LOG_DB_ERROR(NULL,"stager_gc_service","Impossible create/locate castor::SVC_DBGCSVC");
+      return -1;
+    }
 
 
     /* Get any new request to do    */

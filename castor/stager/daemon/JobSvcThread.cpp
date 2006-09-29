@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.35 2006/08/18 15:59:29 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.36 2006/09/29 07:18:42 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.35 $ $Date: 2006/08/18 15:59:29 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.36 $ $Date: 2006/09/29 07:18:42 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -103,7 +103,11 @@ EXTERN_C int DLL_DECL stager_job_select(void **output) {
       svcs->service("DbJobSvc", castor::SVC_DBJOBSVC);
     jobSvc = dynamic_cast<castor::stager::IJobSvc*>(svc);
 
-
+    if(!jobSvc) {
+      STAGER_LOG_DB_ERROR(NULL,"stager_job_service","Impossible create/locate castor::SVC_DBJOBSVC");
+      return -1;
+    }
+    
     /* Get any new request to do    */
     /* ---------------------------- */
     STAGER_LOG_VERBOSE(NULL,"Getting any request to do");
