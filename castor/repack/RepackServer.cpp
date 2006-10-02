@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2006/09/08 09:53:06 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2006/10/02 17:30:28 $ $Author: felixehm $
  *
  *
  *
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
                                             server.getPollTime()
                                           ));
 	  server.getThreadPool('M')->setNbThreads(1);
-
+    
     /// The Repack Cleaner
 	  server.addThreadPool(
       new castor::server::SignalThreadPool("Cleaner",
@@ -142,7 +142,8 @@ castor::repack::RepackServer::RepackServer() :
      {35, "RepackCleaner: Cleaner started"},
      {36, "RepackCleaner: There are no more files on tape to repack"},
      {36, "RepackFileStager: No files found on tape."},               // RepackFileStager:stage_files
-     {37, "RepackCleaner: Restart Repack"},
+     {37, "RepackFileStager: checkExistingTapeCopy failed"}, 
+     {38, "RepackFileStager: Failed to submit recall for file to Stager"},
      {40, "RepackMonitor: Changing status"},
      {41, "RepackMonitor: Stager query failed"},
      {42, "RepackMonitor: Files in invalid status found"},
@@ -199,8 +200,8 @@ castor::repack::RepackServer::RepackServer() :
 
   /** the stager name 
   */
-  if ( !(tmp2 = getconfent("STAGER", "HOST",0)) &&
-       !(tmp2 = getenv("STAGER_HOST")) ){
+  if ( !(tmp2 = getconfent("RH", "HOST",0)) &&
+       !(tmp2 = getenv("RH_HOST")) ){
     castor::exception::Internal ex;
     ex.getMessage() << "Unable to initialise RepackServer with stager "
                     << "entry in castor config file or enviroment variable" 
