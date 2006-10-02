@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.36 $ $Release$ $Date: 2006/09/26 13:29:23 $ $Author: hcacote $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.37 $ $Release$ $Date: 2006/10/02 13:58:17 $ $Author: felixehm $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.36 $ $Release$ $Date: 2006/09/26 13:29:23 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.37 $ $Release$ $Date: 2006/10/02 13:58:17 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -798,8 +798,7 @@ int rtcpcld_checkDualCopies(
    * tape.This is avoided here.
    */
    file_list_t* fl = NULL;
-   struct Cns_fileid* fid = NULL;
-   struct Cns_fileid* prev_fid = NULL;
+   file_list_t* prev_fid = NULL;
    /* go through the list of files and compare the fileids 
 
           iteration ->      file
@@ -810,18 +809,17 @@ int rtcpcld_checkDualCopies(
    
    CLIST_ITERATE_BEGIN(tape->file, fl)
      {
-        rtcpcld_getFileId(fl,&fid);
-        if ( prev_fid!= NULL && //first time
-             prev_fid != fid &&  // pointer is not the same
-             prev_fid->fileid == fid->fileid ) { // fileid is the same
+        
+        if ( prev_fid != NULL &&  //first time
+             prev_fid != fl  &&  // pointer is not the same
+             prev_fid->filereq.castorSegAttr.castorFileId == fl->filereq.castorSegAttr.castorFileId )
+	{ // fileid is the same
            dualCopyFound = 1;
            break;
         }
-        prev_fid = fid;
+        prev_fid = fl;
      }
    CLIST_ITERATE_END(tape->file, fl);
-   free(fid);
-   free(prev_fid);
   
 
   for ( i=0; i<nbSegs; i++ ) {
