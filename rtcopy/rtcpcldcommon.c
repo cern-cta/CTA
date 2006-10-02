@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.33 $ $Release$ $Date: 2006/06/13 14:32:14 $ $Author: waldron $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.34 $ $Release$ $Date: 2006/10/02 13:56:16 $ $Author: felixehm $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.33 $ $Release$ $Date: 2006/06/13 14:32:14 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.34 $ $Release$ $Date: 2006/10/02 13:56:16 $ Olof Barring";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -809,7 +809,7 @@ int rtcpcld_runWorker(
                                  RTCPCLD_MSG_MIGRATOR_STARTED :
                                  RTCPCLD_MSG_RECALLER_STARTED)),
                   (struct Cns_fileid *)NULL,
-                  5,
+                  4,
                   "",
                   DLF_MSG_PARAM_UUID,
                   childUuid,
