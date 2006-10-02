@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/09/26 08:21:04 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/10/02 17:27:47 $ $Author: felixehm $
  *
  *
  *
@@ -84,7 +84,7 @@ void RepackFileStager::run(void *param) throw() {
         }
         else
           restartRepack(sreq);
-
+        m_dbhelper->unlock();
         stage_trace(2,"File are sent to stager, repack request updated.");
         castor::dlf::dlf_writep(stringtoCuuid(sreq->cuuid()), DLF_LVL_DEBUG, 25, 0, NULL);
 
@@ -129,7 +129,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
 
   /// check the filelist for multi-tapecopy repacking - we can easily
   /// return, because a message was written to DLF.
-  if ( checkMultiRepack(sreq) == -1 ) return; 
+  if ( sreq->status() == SUBREQUEST_READYFORSTAGING && checkMultiRepack(sreq) == -1 ) return; 
 
   // ---------------------------------------------------------------
 	// This part has to be removed, if the stager also accepts only fileid
@@ -278,6 +278,13 @@ void RepackFileStager::sendStagerRepackRequest(
         throw e;
       }
 		if ( fr->errorCode() || fr->status() != 6 ){
+      struct Cns_fileid fileid;
+      fileid.fileid = fr->fileId();
+      castor::dlf::Param param[] = 
+      {castor::dlf::Param("Filename",fr->castorFileName()),
+       castor::dlf::Param("Message", fr->errorMessage()) 
+      };
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 38, 1, param, &fileid);
 			/** TODO: DLF logging for errors on files*/
 			std::cerr 
 					<< fr->castorFileName() << " " << fr->fileId() << " "
@@ -330,7 +337,9 @@ int RepackFileStager::checkMultiRepack(RepackSubRequest* sreq)
           castor::dlf::Param params[] =
           {castor::dlf::Param("Existing", retSeg->vid()->vid() ),
           castor::dlf::Param("To be added", sreq->vid() )};
-          castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 2, params);
+          castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 37, 2, params);
+          /// TODO: IF this error occurs, the subreques MUST be set to an invalid status
+          /// so it is not taken the next time !
           return -1;
         }
         /** we create the name of the file like the stager_api likes it 
