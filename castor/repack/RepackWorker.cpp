@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2006/09/28 12:28:49 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2006/10/02 17:39:42 $ $Author: felixehm $
  *
  *
  *
@@ -437,11 +437,13 @@ int RepackWorker::checkMultiRepack(RepackSubRequest* sreq) throw (castor::except
       /// ( in DB : WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS )
       if (     responses[0].status != FILE_STAGEIN 
             && responses[0].status != FILE_INVALID_STATUS )
-      {
+      { 
+        struct Cns_fileid fileid;
+        fileid.fileid = responses[0].fileid;
         castor::dlf::Param params[] =
         {castor::dlf::Param("Message", "File already staged, restart repack when its removed."),
          castor::dlf::Param("VID", sreq->vid() )};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 99, 2, params);
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 99, 2, params, &fileid);
       }
 
       free_stager_response(&responses[0]);
@@ -491,44 +493,48 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor
 			
 			while ((lp = vmgr_listtape (NULL, pool_name, flags, &list)) != NULL) {
 				flags = VMGR_LIST_CONTINUE;
-				if ( checkTapeForRepack(lp->vid)){
+        /** we don't throw an exception if we find a tape in this pool not 
+            in RDONLY/FULL because they are not taken in account for repacking.
+          */
+				if ( checkTapeForRepack(lp->vid) ){
 					RepackSubRequest* tmp = new RepackSubRequest();
 					tmp->setVid(lp->vid);
 					tmp->setRequestID(rreq);
 					rreq->addSubRequest(tmp);
 					nbvol++;
 				}
-				// if the tape is unvalid for repacking, a message is already
-				//  written to DLF by checkTapeforRepack(..)
-				 free(lp);
+				/** if the tape is unvalid for repacking, a message is already
+				    written to DLF by checkTapeforRepack(..) 
+            The lp is just a pointer to a vmgr_list struct, which we allocated,
+            therefore no need for freeing 
+         */
 			}
 			vmgr_listtape (NULL, pool_name, VMGR_LIST_END, &list);
 			return nbvol;
 		}
 
-     
+
 		/** No tape pool given, so check the given tapes */ 
 		else {
-			lp   = (struct vmgr_tape_info*)(malloc(sizeof(vmgr_tape_info)));
-			tape = rreq->subRequest().begin();
-			while ( tape != rreq->subRequest().end() ){
-
-        /** throws exception if tape is already in cue or has invalid status, as
-            well as in any other error cases 
-          */
-				if ( checkTapeForRepack((*tape)->vid()) ){
-					memset((void*)lp,'\0',sizeof(vmgr_tape_info));
-					vmgr_querytape ((char*)(*tape)->vid().c_str(), 0, lp, NULL);
-					nbvol++;
-					tape++;
-				}
-
-			}
-			free(lp);
-		}
-		return nbvol;
-	}
-	return -1;
+      tape = rreq->subRequest().begin();
+      while ( tape != rreq->subRequest().end() ){
+      /** throws exception if tape is already in cue or has invalid status, as
+          well as in any other error cases 
+        */
+        if ( !checkTapeForRepack((*tape)->vid()) ){
+          castor::exception::Internal ex;
+          ex.getMessage() << " Tape " << (*tape)->vid() 
+                          << " is not marked as FULL or RDONLY !" 
+                          << std::endl;
+          throw ex;
+          nbvol++;
+          tape++;
+        }
+      }
+    }
+    return nbvol;
+  }
+  return -1;
 }
 
 
@@ -540,7 +546,7 @@ bool RepackWorker::checkTapeForRepack(std::string tapename) throw (castor::excep
   /** checks if already in cue */
   if  ( m_databasehelper->is_stored(tapename)  ){
     castor::exception::Internal ex;
-    ex.getMessage() << "Tape "<< tapename << " already in repack cue." << std::endl;
+    ex.getMessage() << "Tape " << tapename << " already in repack cue." << std::endl;
     throw ex;
   }
   
@@ -550,7 +556,7 @@ bool RepackWorker::checkTapeForRepack(std::string tapename) throw (castor::excep
 
 
 //------------------------------------------------------------------------------
-// Gets the Tape information
+// Validates the status of the tape
 //------------------------------------------------------------------------------
 int RepackWorker::getTapeStatus(std::string tapename) throw (castor::exception::Internal)
 {
@@ -573,15 +579,13 @@ int RepackWorker::getTapeStatus(std::string tapename) throw (castor::exception::
   }
 
   if ( !(tape_info.status & TAPE_FULL) && !(tape_info.status & TAPE_RDONLY)) {
-    castor::exception::Internal ex;
-    ex.getMessage() <<  "Tape "<< vid << " is not marked as FULL or RDONLY.";
     castor::dlf::Param params[] =
       {castor::dlf::Param("VID", vid)};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 18, 1, params);
-    throw ex;
+    return 0;
   }
 
-	return tape_info.status;
+	return 1;
 }
 
 
