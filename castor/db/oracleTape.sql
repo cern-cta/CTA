@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.309 $ $Release$ $Date: 2006/09/26 15:12:32 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.310 $ $Release$ $Date: 2006/10/03 12:30:55 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.309 $ $Date: 2006/09/26 15:12:32 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.310 $ $Date: 2006/10/03 12:30:55 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -92,8 +92,9 @@ ALTER TABLE FileSystem MODIFY (status NOT NULL);
 ALTER TABLE FileSystem MODIFY (diskServer NOT NULL);
 ALTER TABLE DiskServer MODIFY (status NOT NULL);
 
-/* enable row movements in Diskcopy and SubRequest */
+/* enable row movements in Diskcopy, TapeCopy, and SubRequest */
 ALTER TABLE DiskCopy ENABLE ROW MOVEMENT;
+ALTER TABLE TapeCopy ENABLE ROW MOVEMENT;
 ALTER TABLE SubRequest ENABLE ROW MOVEMENT;
 
 /* an index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
@@ -2426,7 +2427,7 @@ FOR EACH ROW
 DECLARE
   freeSpace NUMBER;
   jobid NUMBER;
-  gccount INTEGER;
+  gcstime INTEGER;
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
 BEGIN
@@ -2438,19 +2439,21 @@ BEGIN
      -- is it really worth launching it? (some other GCs maybe are already running
      -- so we accept it only if it will free more than 5 Gb)
      :new.maxFreeSpace * :new.totalSize > freeSpace + 5000000000 THEN
+
     -- ok, we queue this filesystem for being garbage collected
     -- we have to take a lock so that a previous job that would finish right
     -- now will wait for our insert and take the new filesystem
     LOCK TABLE FileSystemGC IN ROW SHARE MODE;
-    SELECT count(*) INTO gccount FROM FileSystemGC;
+    SELECT min(submissionTime) INTO gcstime FROM FileSystemGC;
     INSERT INTO FileSystemGC VALUES (:new.id, getTime());
-    -- is it the only filesystem waiting for GC?
-    IF gccount = 0 THEN
+    -- is it the only FS waiting for GC, or are there other old FSs waiting
+    -- (it can happen if the job failed or it has been killed)?
+    IF gcstime IS NULL OR gcstime < getTime() - 1000 THEN
       -- we spawn a job to do the real work. This avoids mutating table error
       -- and ensures that the current update does not fail if GC fails
       DBMS_JOB.SUBMIT(jobid,'garbageCollect();');
     END IF;
-    -- otherwise, a job is already running and will take over this file system too
+    -- otherwise, a recent job is already running and will take over this FS too
   END IF;
   EXCEPTION
     -- the filesystem was already selected for GC, do nothing
