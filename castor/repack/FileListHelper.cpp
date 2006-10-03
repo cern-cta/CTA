@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2006/09/22 12:50:51 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2006/10/03 14:10:19 $ $Author: felixehm $
  *
  *
  *
@@ -129,7 +129,9 @@ std::vector<u_signed64>* FileListHelper::getFileList(
       {castor::dlf::Param("FileID", (*j)),
         castor::dlf::Param("VID",subreq->vid() )
       };
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 99, 2, params);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 46, 2, params);
+      parentlist->erase(j);
+      j--;  /// because we increment after this step again.
 	  }
     else{
       fileid = (*j);
