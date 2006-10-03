@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2006/10/02 17:39:42 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2006/10/03 14:25:06 $ $Author: felixehm $
  *
  *
  *
@@ -361,7 +361,6 @@ void RepackWorker::handleRepack(RepackRequest* rreq) throw (castor::exception::I
 	
 	for ( tapecnt = 0; tapecnt < rreq->subRequest().size() ; tapecnt++ ) 
 	{
-    checkMultiRepack( rreq->subRequest().at(tapecnt) );
 		RepackSubRequest* subRequest = rreq->subRequest().at(tapecnt);
 		// set the status
 		subRequest->setStatus(SUBREQUEST_READYFORSTAGING);
@@ -381,79 +380,6 @@ void RepackWorker::handleRepack(RepackRequest* rreq) throw (castor::exception::I
 	}
 		
 }
-
-
-//------------------------------------------------------------------------------
-// checkMultiRepack
-//------------------------------------------------------------------------------
-int RepackWorker::checkMultiRepack(RepackSubRequest* sreq) throw (castor::exception::Internal)
-{
-  std::vector<RepackSegment*>::iterator tape = sreq->segment().begin();
-  
-  /// check for another tapecopy in the system for each file
-  /// which is to be repacked. In case of an invalid state (see below)
-  /// we inform the user.
-  
-  while ( tape != sreq->segment().end() ){
-    /// check the db for first tapecopy on another repack tape
-    if ( m_databasehelper->getTapeCopy((*tape)) ){
-      /// Query the stager for file status
-      struct stage_query_req request;
-      struct stage_filequery_resp *responses;
-      struct stage_options opts;
-      request.type = BY_FILEID;
-      request.param = (void*)((*tape)->fileid());
-      opts.stage_host = (char*)ptr_server->getStagerName().c_str();
-      opts.stage_port = 0;
-      opts.stage_version = 0;
-      
-      /// set the service class information from repackrequest
-      getServiceClass(&opts, sreq);
-      int rc,nbresps;
-      rc = nbresps  = errno = serrno = 0;
-                          
-      /// Send request to stager 
-      rc = stage_filequery(&request,
-                          1,
-                          &responses,
-                          &nbresps,
-                          &(opts));
-      
-      if ( rc == -1 ){
-        castor::dlf::Param params[] =
-        {castor::dlf::Param("Error Message", sstrerror(serrno) ),
-         castor::dlf::Param("Responses", nbresps ),
-         castor::dlf::Param("VID", sreq->vid() )};
-         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 99, 3, params);
-        castor::exception::Internal ex;
-        ex.getMessage() << "Could not query Stager "<< opts.stage_host 
-                        << "(" << sstrerror(serrno) << ")" <<std::endl;
-        throw ex;
-      }
-
-
-      /// now check, if the first tapecopy was already recalled
-      /// for this the status must be STAGEIN or FAILED
-      /// ( in DB : WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS )
-      if (     responses[0].status != FILE_STAGEIN 
-            && responses[0].status != FILE_INVALID_STATUS )
-      { 
-        struct Cns_fileid fileid;
-        fileid.fileid = responses[0].fileid;
-        castor::dlf::Param params[] =
-        {castor::dlf::Param("Message", "File already staged, restart repack when its removed."),
-         castor::dlf::Param("VID", sreq->vid() )};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 99, 2, params, &fileid);
-      }
-
-      free_stager_response(&responses[0]);
-
-    } /// end if
-  }/// end while 
-
-}
-
-
 
 
 //------------------------------------------------------------------------------
