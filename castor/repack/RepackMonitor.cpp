@@ -97,7 +97,7 @@ namespace castor {
       castor::dlf::Param params[] =
        {castor::dlf::Param("Error Message", e.getMessage().str() ),
         castor::dlf::Param("ErrorCode", e.code() )};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 99, 2, params);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 5, 2, params);
     }
   }
 
@@ -190,14 +190,18 @@ namespace castor {
 
     /// we only update the subrequest, if something has changed */
     if ( (waitingmig_status + canbemig_status) !=  sreq->filesMigrating() 
-          || stagein_status != sreq->filesStaging() &&  invalid_status
+          || stagein_status != sreq->filesStaging() ||  invalid_status != sreq->filesFailed()
     )
     {
-
+      
       sreq->setFilesMigrating( waitingmig_status + canbemig_status );
       sreq->setFilesStaging( stagein_status );
       sreq->setFilesFailed( invalid_status );
-  
+      
+      stage_trace(3,"Updating RepackSubRequest: Mig: %d\tStaging: %d\t Invalid %d\n",
+          sreq->filesMigrating(), sreq->filesStaging(),sreq->filesFailed() );  
+
+
       /// if we find migration candidates, we just change the status from staging, 
       ///    or if all files are staged 
       
