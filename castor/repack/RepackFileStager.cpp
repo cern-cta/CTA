@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/10/02 17:27:47 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/10/03 14:15:22 $ $Author: felixehm $
  *
  *
  *
@@ -58,6 +58,8 @@ void RepackFileStager::run(void *param) throw() {
 
 		/// Lets see, if good old pal DB has a Job for us 
     RepackSubRequest* sreq = NULL;
+    Cuuid_t cuuid = nullCuuid;
+
     try {
       sreq = m_dbhelper->checkSubRequestStatus(SUBREQUEST_READYFORSTAGING);
       /// no one ready for staging, so look for restartable ones
@@ -72,18 +74,20 @@ void RepackFileStager::run(void *param) throw() {
 
     if ( sreq != NULL ){
       //m_dbhelper->lock(sreq);
+      cuuid = stringtoCuuid(sreq->cuuid());
       castor::dlf::Param params[] =
       {castor::dlf::Param("VID", sreq->vid()),
         castor::dlf::Param("ID", sreq->id()),
         castor::dlf::Param("STATUS", sreq->status())};
-      castor::dlf::dlf_writep(stringtoCuuid(sreq->cuuid()), DLF_LVL_SYSTEM, 22, 3, params);
+      castor::dlf::dlf_writep( cuuid, DLF_LVL_SYSTEM, 22, 3, params);
       try {
-        /// main handling
-        if ( sreq->status() == SUBREQUEST_READYFORSTAGING ){ 
-          startRepack(sreq);
-        }
-        else
-          restartRepack(sreq);
+          /// main handling
+          if ( sreq->status() == SUBREQUEST_READYFORSTAGING ){ 
+            startRepack(sreq);
+          }
+          else
+            restartRepack(sreq);
+
         m_dbhelper->unlock();
         stage_trace(2,"File are sent to stager, repack request updated.");
         castor::dlf::dlf_writep(stringtoCuuid(sreq->cuuid()), DLF_LVL_DEBUG, 25, 0, NULL);
@@ -116,36 +120,36 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
                                             throw (castor::exception::Exception)
 {
 
-	int rc=0;				/// the return code for the stager_prepareToGet call.
-	int i,j;
-	std::string reqId = "";
-	_Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
-	castor::stager::StageRepackRequest req;
-	
-	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 29, 0, NULL);
-	/// get the Segs for this tape !
-	if ( m_filehelper->getFileListSegs(sreq) )
-		return;
-
+  int rc=0;				/// the return code for the stager_prepareToGet call.
+  int i,j;
+  std::string reqId = "";
+  _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
+  castor::stager::StageRepackRequest req;
+  
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 29, 0, NULL);
+  /// get the Segs for this tape !
+  if ( m_filehelper->getFileListSegs(sreq) )
+	  return;
+  
   /// check the filelist for multi-tapecopy repacking - we can easily
   /// return, because a message was written to DLF.
   if ( sreq->status() == SUBREQUEST_READYFORSTAGING && checkMultiRepack(sreq) == -1 ) return; 
-
+  
   // ---------------------------------------------------------------
-	// This part has to be removed, if the stager also accepts only fileid
-	// as parameter. For now we have to get the paths first.
-	std::vector<std::string>* filelist = m_filehelper->getFilePathnames(sreq);
-	std::vector<std::string>::iterator filename = filelist->begin();
-	// ---------------------------------------------------------------
-	//std::vector<u_signed64>* filelist = m_filehelper->getFileList(sreq,cuuid);
-	//std::vector<u_signed64>::iterator fileid;
+  // This part has to be removed, if the stager also accepts only fileid
+  // as parameter. For now we have to get the paths first.
+  std::vector<std::string>* filelist = m_filehelper->getFilePathnames(sreq);
+  std::vector<std::string>::iterator filename = filelist->begin();
+  // ---------------------------------------------------------------
+  //std::vector<u_signed64>* filelist = m_filehelper->getFileList(sreq,cuuid);
+  //std::vector<u_signed64>::iterator fileid;
 
-  	
+
   /** check, if we got something back */
   if ( filelist->size() == 0 ){
     castor::dlf::Param params[] =
     {castor::dlf::Param("VID", sreq->vid())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 36, 1, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 39, 1, params);
     delete filelist;
     sreq->setStatus(SUBREQUEST_DONE);
     m_dbhelper->updateSubRequest(sreq,false, cuuid);
@@ -216,11 +220,17 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
 //------------------------------------------------------------------------------		
 void RepackFileStager::restartRepack(RepackSubRequest* sreq){
    _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
+
+   sreq->setFilesFailed(0);
+   sreq->setFilesMigrating(0);
+   sreq->setFilesStaging(0);
+   sreq->setFiles(0);
+
    stage_files(sreq);
 
    /// do not remove or update the segment information. We persume that this has
    /// not been changed in between.
-  
+   
    m_dbhelper->updateSubRequest(sreq,false,cuuid);
 }
 
@@ -238,7 +248,6 @@ void RepackFileStager::startRepack(RepackSubRequest* sreq){
   m_dbhelper->updateSubRequest(sreq,true, cuuid);
 
 }
-
 
 //------------------------------------------------------------------------------
 // stage_files
@@ -366,11 +375,12 @@ int RepackFileStager::checkMultiRepack(RepackSubRequest* sreq)
           castor::dlf::Param params[] =
           {castor::dlf::Param("Error Message", sstrerror(serrno) ),
           castor::dlf::Param("Responses", nbresps )};
-          castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 2, params, &fileid);
+          castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 23, 2, params, &fileid);
           //if ( nbresps) free_filequery_resp(responses, nbresps);
           return -1;
         }
-        if ( nbresps && responses[0].status != FILE_STAGEIN ) {
+        if ( nbresps && responses[0].status != FILE_STAGEIN 
+             && responses[0].status != FILE_INVALID_STATUS ) {
           castor::dlf::Param params[] =
           {castor::dlf::Param("CopyNo", retSeg->copyno() ),
           castor::dlf::Param("Existing Tape", retSeg->vid()->vid()),
