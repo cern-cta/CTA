@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/06/20 08:48:07 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/10/03 14:23:37 $ $Author: felixehm $
  *
  *
  *
@@ -32,11 +32,12 @@
 #include "castor/server/ListenerThreadPool.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/BaseDaemon.hpp"
+#include "castor/server/BaseThreadPool.hpp"
 #include "RepackWorker.hpp"
 #include "RepackCleaner.hpp"
 #include "RepackFileStager.hpp"
 #include "RepackMonitor.hpp"
-
+#include "RepackSynchroniser.hpp"
 
 
 
@@ -91,16 +92,45 @@ namespace castor {
       return m_pollingTime;
     }
 
+    /** Returns true, if Server runs in synchronise mode.*/
+    bool synchronise() {
+      return m_synchronise;
+    }
+
+    
+    /** Overloaded method from BaseServer for individual command line parser */
+    virtual void parseCommandLine(int argc, char *argv[]);
+
   private:
     /**
-      * The Nameserver (this name is queries by RepackFileStager and RepackCleaner
+      * The Nameserver (this name is queries by RepackFileStager and RepackCleaner (config file)
       */
     std::string* m_ns;
+    /**
+      * The Stager (Request Handler,RH) to contact (config file)
+      */
     std::string* m_stager;
+     /**
+      * The default service class to use (config file)
+      */
     std::string* m_serviceClass;
+     /**
+      * The default transfer protocol to use (config file)
+      */
     std::string* m_protocol;
+     /**
+      * The port to accept connections (environment)
+      */
     int m_listenPort;
+     /**
+      * The repack monitor DB polling interval (environment) 
+      */
     int m_pollingTime;
+     /**
+      * Flag, if the user wishes to synchronise with the stager (in case
+      * a crash happend when a StageRepackRequest is submitted to the Stager
+      */
+    bool m_synchronise;
   };
 
  } // end of namespace repack
