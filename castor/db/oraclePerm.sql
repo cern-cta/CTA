@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.310 $ $Release$ $Date: 2006/10/03 12:30:55 $ $Author: itglp $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.311 $ $Release$ $Date: 2006/10/04 13:29:19 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.310 $ $Date: 2006/10/03 12:30:55 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.311 $ $Date: 2006/10/04 13:29:19 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1111,7 +1111,7 @@ CREATE OR REPLACE PROCEDURE putStart
   srStatus INTEGER;
 BEGIN
  -- Get older castorFiles with the same name and drop their lastKnownFileName
- UPDATE CastorFile SET lastKnownFileName = ''
+ UPDATE /*+ INDEX (castorfile) */ CastorFile SET lastKnownFileName = TO_CHAR(id)
   WHERE id IN (
     SELECT cfOld.id FROM CastorFile cfOld, CastorFile cfNew, SubRequest
      WHERE cfOld.lastKnownFileName = cfNew.lastKnownFileName
