@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.154 $ $Release$ $Date: 2006/09/27 12:36:11 $ $Author: felixehm $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.155 $ $Release$ $Date: 2006/10/04 16:58:47 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.154 $ $Release$ $Date: 2006/09/27 12:36:11 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.155 $ $Release$ $Date: 2006/10/04 16:58:47 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -74,6 +74,7 @@ WSADATA wsadata;
 #include <castor/stager/Tape.h>
 #include <castor/stager/Segment.h>
 #include <castor/stager/Stream.h>
+#include <castor/stager/SvcClass.h>
 #include <castor/stager/TapeCopy.h>
 #include <castor/stager/SubRequest.h>
 #include <castor/stager/TapeCopyForMigration.h>
@@ -1649,6 +1650,21 @@ int nextSegmentToMigrate(
     return(-1);
   }
   Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
+  Cstager_CastorFile_id(castorFile,&key);
+  iObj = Cstager_CastorFile_getIObject(castorFile);
+  rc = C_Services_fillObj(
+                          *svcs,
+                          iAddr,
+                          iObj,
+                          OBJ_SvcClass
+                          );
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    LOG_DBCALLANDKEY_ERR("C_Services_fillObj()",
+                         C_Services_errorMsg(*svcs),
+                         key);
+    /* Not fatal. We wanted the svcclass for logging only */
+  }
 
   Cstager_CastorFile_diskCopies(
                                 castorFile,
@@ -1967,6 +1983,45 @@ int rtcpcld_getTapeCopyNumber(
     else *tapeCopyNb = 0;
   }
   
+  return(0);
+}
+
+int rtcpcld_getMigrSvcClassName(
+                                file,
+                                svcClassName
+                                )
+     file_list_t *file;
+     char **svcClassName;
+{
+  struct Cstager_Segment_t *segment = NULL;
+  struct Cstager_TapeCopy_t *tapeCopy = NULL;
+  struct Cstager_CastorFile_t *castorFile = NULL;
+  struct Cstager_SvcClass_t *svcClass = NULL;
+
+  if ( (file == NULL) || (file->dbRef == NULL) || (file->dbRef->row == NULL) ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  segment = (struct Cstager_Segment_t *)file->dbRef->row;
+  Cstager_Segment_copy(segment,&tapeCopy);
+  if ( tapeCopy == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
+  Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
+  if ( castorFile == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
+  Cstager_CastorFile_svcClass(castorFile,&svcClass);
+  if ( svcClass == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
+  Cstager_SvcClass_name(svcClass,(CONST char **)svcClassName);
   return(0);
 }
 

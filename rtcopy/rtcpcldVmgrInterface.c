@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.24 $ $Release$ $Date: 2006/09/27 12:47:43 $ $Author: felixehm $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.25 $ $Release$ $Date: 2006/10/04 16:58:47 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.24 $ $Release$ $Date: 2006/09/27 12:47:43 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.25 $ $Release$ $Date: 2006/10/04 16:58:47 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -807,6 +807,37 @@ int rtcpcld_updateTape(
   }
   
   if ( fileId != NULL ) free(fileId);
+  return(0);
+}
+
+int rtcpcld_getTapePoolName(
+                            tape,
+                            tapePoolName
+                            )
+     tape_list_t *tape;
+     char **tapePoolName;
+{
+  vmgr_list list;
+  struct vmgr_tape_info *lp;
+  char pool_name[CA_MAXPOOLNAMELEN+1];
+  struct vmgr_tape_info *tape_info;
+  int flags;
+  
+  if ( (tape == NULL) || (*(tape->tapereq.vid) == '\0') ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
+  pool_name[0] = '\0';
+  flags = VMGR_LIST_BEGIN;
+  while ((lp = vmgr_listtape(tape->tapereq.vid,pool_name,flags,&list)) != NULL) {
+    if ( strcmp(tape->tapereq.vid,lp->vid) == 0 ) {
+      if ( tapePoolName != NULL ) *tapePoolName = strdup(lp->poolname);
+      break;
+    }
+    flags = VMGR_LIST_CONTINUE;
+  }
+  (void) vmgr_listtape (tape->tapereq.vid, pool_name, VMGR_LIST_END, &list);
   return(0);
 }
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.48 $ $Release$ $Date: 2006/08/16 16:31:34 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.49 $ $Release$ $Date: 2006/10/04 16:58:44 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.48 $ $Release$ $Date: 2006/08/16 16:31:34 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.49 $ $Release$ $Date: 2006/10/04 16:58:44 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -90,10 +90,89 @@ extern char *getconfent _PROTO((char *, char *, int));
 Cuuid_t childUuid, mainUuid;
 int inChild = 1;
 extern int checkFile;
+static char *tapePoolName = NULL;
 static int diskFseq = 0;
 static int filesCopied = 0;
 static u_signed64 bytesCopied = 0;
 static tape_list_t *tape = NULL;
+typedef struct SvcClassList {
+  char *svcClassName;
+  u_signed64 totBytes;
+  int totFiles;
+  struct SvcClassList *next;
+  struct SvcClassList *prev;
+} SvcClassList_t;
+static SvcClassList_t *svcClassList = NULL;
+
+void updateSvcClassList(
+                        svcClassName,
+                        nbBytes
+                        )
+     char *svcClassName;
+     u_signed64 nbBytes;
+{
+  SvcClassList_t *iterator;
+  int found = 0;
+
+  if ( svcClassName == NULL ) return;
+  CLIST_ITERATE_BEGIN(svcClassList,iterator) 
+    {
+      if ( strcmp(iterator->svcClassName,svcClassName) == 0 ) {
+        iterator->totFiles++;
+        iterator->totBytes += nbBytes;
+        found = 1;
+      }
+    }
+  CLIST_ITERATE_END(svcClassList,iterator);
+
+  if ( found == 0 ) {
+    iterator = (SvcClassList_t *)calloc(1,sizeof(SvcClassList_t));
+    if ( iterator == NULL ) return;
+    iterator->svcClassName = strdup(svcClassName);
+    iterator->totFiles = 1;
+    iterator->totBytes = nbBytes;
+    CLIST_INSERT(svcClassList,iterator);
+  }
+  return;
+}
+
+void logSvcClassTotals() 
+{
+  SvcClassList_t *iterator;
+  
+  CLIST_ITERATE_BEGIN(svcClassList,iterator) 
+    {
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_STATS),
+                      (struct Cns_fileid *)NULL,
+                      7,
+                      "",
+                      DLF_MSG_PARAM_TPVID,
+                      (tape != NULL ? tape->tapereq.vid : "UNKN"),
+                      "TPSERV",
+                      DLF_MSG_PARAM_STR,
+                      (tape != NULL ? tape->tapereq.server : "UNKN"),
+                      "TPDRIVE",
+                      DLF_MSG_PARAM_STR,
+                      (tape != NULL ? tape->tapereq.unit : "UNKN"),
+                      "TAPEPOOL",
+                      DLF_MSG_PARAM_STR,
+                      (tapePoolName != NULL ? tapePoolName : "unknown"),
+                      "SVCCLASS",
+                      DLF_MSG_PARAM_STR,
+                      (iterator->svcClassName != NULL ? iterator->svcClassName : "unknown"),
+                      "TOTFILES",
+                      DLF_MSG_PARAM_INT,
+                      iterator->totFiles,
+                      "TOTBYTES",
+                      DLF_MSG_PARAM_INT64,
+                      iterator->totBytes
+                      );      
+    }
+  CLIST_ITERATE_END(svcClassList,iterator);
+  return;
+}
 
 int migratorCallbackFileCopied(
                                tapereq,
@@ -105,7 +184,7 @@ int migratorCallbackFileCopied(
   file_list_t *file = NULL;
   int rc, save_serrno, tapeCopyNb = 0, ownerUid = -1, ownerGid = -1;
   struct Cns_fileid *castorFileId = NULL;
-  char *blkid;
+  char *blkid, *svcClassName = NULL;
 
   if ( (tapereq == NULL) || (filereq == NULL) ) {
     (void)dlf_write(
@@ -147,6 +226,7 @@ int migratorCallbackFileCopied(
                             );
   if ( blkid == NULL ) blkid = strdup("unknown");
   (void)rtcpcld_getOwner(castorFileId,&ownerUid,&ownerGid);
+  (void)rtcpcld_getMigrSvcClassName(file,&svcClassName);
 
   if ( ((filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED)) ||
        ((filereq->cprc == -1) && ((filereq->err.errorcode == ENOSPC) ||
@@ -268,7 +348,7 @@ int migratorCallbackFileCopied(
                       childUuid,
                       RTCPCLD_LOG_MSG(RTCPCLD_MSG_STAGED),
                       castorFileId,
-                      11,
+                      13,
                       "",
                       DLF_MSG_PARAM_TPVID,
                       tapereq->vid,
@@ -301,8 +381,15 @@ int migratorCallbackFileCopied(
                       filesCopied,
                       "TOTBYTES",
                       DLF_MSG_PARAM_INT64,
-                      bytesCopied
+                      bytesCopied,
+                      "SVCCLASS",
+                      DLF_MSG_PARAM_STR,
+                      (svcClassName != NULL ? svcClassName : "unknown"),
+                      "TAPEPOOL",
+                      DLF_MSG_PARAM_STR,
+                      (tapePoolName != NULL ? tapePoolName : "unknown")
                       );
+      updateSvcClassList(svcClassName,filereq->bytes_in);
     }
     if ( rtcpcld_lockTape() == -1 ) {
       LOG_SYSCALL_ERR("rtcpcld_lockTape()");
@@ -745,6 +832,7 @@ int main(
       if ( rc == -1 ) {
         LOG_SYSCALL_ERR("rtcpcld_setTapeFseq()");
       } else {
+        (void)rtcpcld_getTapePoolName(tape,&tapePoolName);
         rc = rtcpcld_runWorker(
                                tape,
                                (tape->tapereq.VolReqID <= 0 ? NULL : &sock),
@@ -764,6 +852,7 @@ int main(
     LOG_SYSCALL_ERR("rtcpcld_restoreSelectedTapeCopies()");
   }
 
+  logSvcClassTotals();
   endTime = time(NULL);
   runTime = (int)endTime-startTime;
   rc = rtcpcld_workerFinished(
