@@ -344,6 +344,14 @@ int rtcpcld_updcFileRecalled _PROTO((
                                      tape_list_t *,
                                      file_list_t *
                                      ));
+int rtcpcld_getMigrSvcClassName _PROTO((
+                                        file_list_t *,
+                                        char **
+                                        ));
+int rtcpcld_getTapePoolName _PROTO((
+                                    tape_list_t *,
+                                    char **
+                                    ));
 
 #ifdef CASTOR_STAGER_TAPECOPY_H
 int rtcpcld_putFailed _PROTO((
