@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: lib.c,v 1.9 2006/08/21 06:41:49 waldron Exp $
+ * $Id: lib.c,v 1.10 2006/10/04 12:23:33 waldron Exp $
  */
 
 /* headers */
@@ -342,13 +342,13 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 		return APP_FAILURE;
 	}
 	message->plist = NULL;
-	message->size  = sizeof(unsigned char);
+	message->size  = 0;
 
 	/* timestamp */
 	gettimeofday(&tv, NULL);
 	localtime_r(&tv.tv_sec, &tm_str);
 	strftime(message->timestamp, DLF_LEN_TIMESTAMP + 1, "%Y%m%d%H%M%S", &tm_str);
-	message->timestamp[DLF_LEN_TIMESTAMP + 1] = '\0';
+	message->timestamp[DLF_LEN_TIMESTAMP] = '\0';
 	message->timeusec = tv.tv_usec;
 	message->size = strlen(message->timestamp) + sizeof(int) + 1;
 
@@ -386,7 +386,8 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 	/* update message size */
 	message->size += strlen(message->hostname) + strlen(message->reqid) + strlen(message->nshostname)
 		      +  strlen(message->nsfileid) + sizeof(unsigned char)  + sizeof(unsigned char)
-		      +  sizeof(unsigned short)    + sizeof(pid_t)          + sizeof(int) + 4;
+		      +  sizeof(unsigned short)    + sizeof(pid_t)          + sizeof(uid_t) 
+		      +  sizeof(gid_t)             + sizeof(int)            + 4;
 
        	/* process parameter */
 	for (i = 0; i < numparams; i++) {
@@ -794,6 +795,7 @@ void dlf_worker(target_t *t) {
 
 			/* calculate message size */
 			len = strlen(api_facname) + 1;
+			rv  = Cthread_mutex_timedlock(&api_mutex, 1);
                         for (i = 0; i < DLF_MAX_MSGTEXTS; i++) {
                                 if (texts[i] == NULL)
                                         continue;
@@ -805,6 +807,7 @@ void dlf_worker(target_t *t) {
 			buffer = (char *) malloc((5 * LONGSIZE) + len);
 			if (buffer == NULL) {
 				t->pause = time(NULL) + 10;
+				Cthread_mutex_unlock(&api_mutex);
 				continue;
 			}
 
@@ -825,10 +828,10 @@ void dlf_worker(target_t *t) {
 			/* marshall the facility name */
 			marshall_STRING(sbp, api_facname);
 
-			/* marshall the message texts */
-			rv = Cthread_mutex_timedlock(&api_mutex, 1);
+			/* marshall the message texts */			
 			if (rv != APP_SUCCESS) {
 				free(buffer);
+				Cthread_mutex_unlock(&api_mutex);
 				continue;
 			}
 			for (i = 0; i < DLF_MAX_MSGTEXTS; i++) {
