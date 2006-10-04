@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.45 2006/09/29 07:18:42 gtaur Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.46 2006/10/04 15:10:15 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.45 $ $Date: 2006/09/29 07:18:42 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.46 $ $Date: 2006/10/04 15:10:15 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -252,13 +252,12 @@ namespace castor {
           foundDiskCopy = true;
         } else {
           // If there are several diskcopies for the file,
-          // we apply some recedence rules :
+          // we apply some precedence rules :
           // STAGED, CANBEMIGR > STAGEOUT, STAGEIN > INVALID
           if (((FILE_STAGEOUT == st || FILE_STAGEIN == st) &&
                (FILE_INVALID_STATUS == fr->status())) ||
               ((FILE_STAGED == st || FILE_CANBEMIGR == st))) {
             fr->setStatus(st);
-            fr->setStatus(FILE_STAGED);
             fr->setDiskServer(diskServer);
             fr->setNbAccesses(dc->nbAccesses());
             STAGER_LOG_DEBUG(NULL, "Setting diskServer");
