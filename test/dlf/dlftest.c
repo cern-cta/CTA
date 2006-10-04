@@ -157,9 +157,9 @@ void worker(void *arg) {
 		} else {
 			
 			/* generate string values designed to overflow the internal buffers */
-			genstring(pars, sizeof(pars));
-			genstring(parname, sizeof(parname));
-			genstring(tpname, sizeof(tpname));
+			genstring(pars, sizeof(pars) - 1);
+			genstring(parname, sizeof(parname) - 1);
+			genstring(tpname, sizeof(tpname) - 1);
 
 			rv = dlf_write(req_id, severity, msg_no, &nsfileid, 6,
 				       parname, DLF_MSG_PARAM_STR, pars,
