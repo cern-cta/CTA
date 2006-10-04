@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.33 $ $Release$ $Date: 2006/09/28 14:12:41 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.34 $ $Release$ $Date: 2006/10/04 15:35:14 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.33 $ $Release$ $Date: 2006/09/28 14:12:41 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.34 $ $Release$ $Date: 2006/10/04 15:35:14 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -760,7 +760,7 @@ static int streamCreator(
     serrno = EINVAL;
     return(-1);
   }
-  if ( (p = getconfent("MigHunter","SIZECIELING",1)) != NULL ) {
+  if ( (p = getconfent("MigHunter","SIZECEILING",1)) != NULL ) {
     initialSizeCeiling = strutou64(p);
     fprintf(stdout,"Use configured size ceiling %s\n",
             u64tostr(initialSizeCeiling,u64buf,-1));
