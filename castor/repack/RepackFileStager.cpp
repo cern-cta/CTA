@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2006/10/05 08:50:30 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2006/10/05 13:58:56 $ $Author: felixehm $
  *
  *
  *
@@ -82,7 +82,7 @@ void RepackFileStager::run(void *param) throw() {
       castor::dlf::dlf_writep( cuuid, DLF_LVL_SYSTEM, 22, 3, params);
       try {
           /// main handling
-          if ( sreq->status() == SUBREQUEST_READYFORSTAGING ){ 
+          if ( sreq->status() == SUBREQUEST_TOBESTAGED ){ 
             startRepack(sreq);
           }
           else
@@ -118,8 +118,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
                                             throw (castor::exception::Exception)
 {
 
-  int rc=0;				/// the return code for the stager_prepareToGet call.
-  int i,j;
+  int failed = 0;
   std::string reqId = "";
   _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
   castor::stager::StageRepackRequest req;
@@ -161,6 +160,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   /// We need to set the stage options. 
   struct stage_options opts;
   opts.stage_host = (char*)ptr_server->getStagerName().c_str(); 
+
   
   /// the service class information is checked and in case of default stored
   /// with the RepackRequest
@@ -168,12 +168,14 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   if ( sreq->requestID()->serviceclass().length() == 0 )
     sreq->requestID()->setServiceclass(ptr_server->getServiceClass());
 
+
 	/// Msg: Staging files
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 26, 0, NULL);
 
+
   /// here, we send the stager request
 	try {
-      sendStagerRepackRequest(&req, &reqId, &opts);
+      failed = sendStagerRepackRequest(&req, &reqId, &opts);
 	}catch (castor::exception::Exception ex){
     for (int i=0; i<req.subRequests().size(); i++)
       delete req.subRequests().at(i);
@@ -185,7 +187,12 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
 		castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 21, 2, params);
     return;
 	}
-  
+
+  /// we want to know how many files were successfully submitted
+  sreq->setFilesStaging(req.subRequests().size());
+  sreq->setFilesFailed(failed);
+
+
   /// delete the allocated Stager SubRequests
 	for (int i=0; i<req.subRequests().size(); i++) delete req.subRequests().at(i);
 
@@ -289,13 +296,13 @@ void RepackFileStager::startRepack(RepackSubRequest* sreq){
 //------------------------------------------------------------------------------
 // stage_files
 //------------------------------------------------------------------------------
-void RepackFileStager::sendStagerRepackRequest(
+int RepackFileStager::sendStagerRepackRequest(
                                                 castor::stager::StageRepackRequest* req,
                                                 std::string *reqId,
                                                 struct stage_options* opts
                                               ) throw (castor::exception::Exception)
 {
-	
+  int failed = 0; /** counter for failed files during submit */	
 
 	/** Uses a BaseClient to handle the request */
 	castor::client::BaseClient client(stage_getClientTimeout());
@@ -338,6 +345,7 @@ void RepackFileStager::sendStagerRepackRequest(
 					<<"status "<< fr->status() << ") "
 					<<":"<< fr->errorMessage() << "(" << fr->errorCode() << ")"
 					<< std::endl;
+      failed++;
 		}
 		
 		delete fr;
