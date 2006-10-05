@@ -86,6 +86,7 @@ void RepackFileChecker::run(void* param) throw(){
         castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 39, 1, params);
         sreq->setStatus(SUBREQUEST_DONE);
         m_dbhelper->updateSubRequest(sreq,false, cuuid);
+        stage_trace(3,"Nothing found to do for Tape %s",(char*)sreq->vid().c_str());
         return;
       }
   
@@ -93,12 +94,11 @@ void RepackFileChecker::run(void* param) throw(){
           return, because a message was written to DLF. */
       if ( checkMultiRepack(sreq) == -1 ) return; 
       
-      std::vector<std::string>* filelist = m_filehelper.getFilePathnames(sreq);
-      sreq->setFilesStaging(filelist->size());
+      std::vector<std::string>* filelist = m_filehelper.getFilePathnames(sreq); 
       sreq->setFiles(filelist->size());
       sreq->setStatus(SUBREQUEST_TOBESTAGED);
       m_dbhelper->updateSubRequest(sreq,true, cuuid);
-
+      stage_trace(3,"Found %d files, RepackSubRequest for Tape %s ready for Staging ",sreq->files(),(char*)sreq->vid().c_str());
     }catch (castor::exception::Exception e){
       /** do nothing, messages were written by the dbhelper in case of an exception*/
     }
@@ -176,16 +176,23 @@ int RepackFileChecker::checkMultiRepack(RepackSubRequest* sreq)
           //if ( nbresps) free_filequery_resp(responses, nbresps);
           return -1;
         }
-        if ( nbresps && responses[0].status != FILE_STAGEIN 
-             && responses[0].status != FILE_INVALID_STATUS ) {
-          castor::dlf::Param params[] =
-          {castor::dlf::Param("CopyNo", retSeg->copyno() ),
-          castor::dlf::Param("Existing Tape", retSeg->vid()->vid()),
-          castor::dlf::Param("To be added Tape", sreq->vid())};
-          castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 45, 3, params, &fileid);
-          /** the file is remove from list, if invalid */
-          sreq->removeSegment((*segment));
-          segment--; /// removeSegment sets the pointer already to the next one.
+        else {
+          /** check, if the file can be send again (no diskcopy or in STAGEIN) */
+          if ( nbresps 
+                && responses[0].errorCode != ENOENT /// there is a file with that name 
+                && responses[0].status != FILE_STAGEIN  /// it is not staging in  
+                && responses[0].status != FILE_INVALID_STATUS ) /// and not in invalid status
+          {
+            /** Give a message that the existing file has to be removed first */
+            castor::dlf::Param params[] =
+            {castor::dlf::Param("CopyNo", retSeg->copyno() ),
+            castor::dlf::Param("Existing Tape", retSeg->vid()->vid()),
+            castor::dlf::Param("To be added Tape", sreq->vid())};
+            castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 45, 3, params, &fileid);
+            /** the file is remove from list, if invalid */
+            sreq->removeSegment((*segment));
+            segment--; /// removeSegment sets the pointer already to the next one.
+          }
           free_filequery_resp(responses,nbresps );
         }
 
