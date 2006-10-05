@@ -1,4 +1,24 @@
 -----------
+- 2.1.1-4 -
+-----------
+
+  New Features and Changes
+  ------------------------
+  This release brings a number of bug fixes:
+  - Fixes around the Repack system
+  - Improved cleaning procedures for the cleaningDaemon
+  - Fixed Oracle deadlock which was leading to many diskcopies left in status 9
+  - Improved GC trigger to resurrect the GC job if it previously died
+  - Fixes in the migrator
+  - Improved stagerJob to prevent it to loop forever for a missing msgbox 4 from LSF
+
+  Upgrade from 2.1.1-0
+  --------------------
+  - Upgrade the database
+  - Upgrade the head nodes
+  - Then for the other components no special order is required.
+
+-----------
 - 2.1.1-3 -
 -----------
 
@@ -15,7 +35,6 @@
 
   Upgrade from 2.1.1-0
   --------------------
-  - Upgrade the database
   - Upgrade the head nodes
   - Then for the other components no special order is required.
 
