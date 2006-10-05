@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2006/09/28 12:28:48 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2006/10/05 14:00:40 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -421,6 +421,8 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
   statuslist[SUBREQUEST_READYFORCLEANUP] = "CLEANUP";
   statuslist[SUBREQUEST_DONE] = "FINISHED";
   statuslist[SUBREQUEST_ARCHIVED] = "ARCHIVED";
+  statuslist[SUBREQUEST_TOBESTAGED] = "TOBESTAGED";
+  statuslist[SUBREQUEST_RESTART] = "RESTART";
    
   u64tostru(tape->xsize(), buf, 0);
 
