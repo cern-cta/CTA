@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.312 $ $Release$ $Date: 2006/10/05 09:42:37 $ $Author: cvscasto $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.313 $ $Release$ $Date: 2006/10/05 10:00:55 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.312 $ $Date: 2006/10/05 09:42:37 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.313 $ $Date: 2006/10/05 10:00:55 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1995,6 +1995,7 @@ END;
  * fileIds returns the list of castor files to be removed
  * from the name server
  */
+
 CREATE OR REPLACE PROCEDURE filesDeletedProc
 (dcIds IN castor."cnumList",
  fileIds OUT castor.FileList_Cur) AS
@@ -2002,7 +2003,9 @@ CREATE OR REPLACE PROCEDURE filesDeletedProc
   fsId NUMBER;
   fsize NUMBER;
   nb NUMBER;
+  isFirst NUMBER;
 BEGIN
+ isFirst := 1;
  IF dcIds.COUNT > 0 THEN
   -- Loop over the deleted files
   FOR i in dcIds.FIRST .. dcIds.LAST LOOP
@@ -2010,6 +2013,18 @@ BEGIN
     DELETE FROM Id2Type WHERE id = dcIds(i);
     DELETE FROM DiskCopy WHERE id = dcIds(i)
       RETURNING castorFile, fileSystem INTO cfId, fsId;
+    -- agaist deadlock with castor_stager.prepareformigration --
+    -- I need a lock on the diskserver if I need more than one filesystem on it --	
+    IF isFirst = 1 THEN
+        DECLARE
+          dsId NUMBER;
+          unused NUMBER;
+        BEGIN
+          SELECT diskServer INTO dsId FROM FileSystem WHERE id = fsId;
+          SELECT id INTO unused FROM DiskServer WHERE id=dsId FOR UPDATE;
+          isFirst := 0;	
+        END;
+    END IF; 
     -- Lock the Castor File and retrieve size
     SELECT fileSize INTO fsize FROM CastorFile where id = cfID FOR UPDATE;
     -- update the FileSystem
@@ -2059,6 +2074,7 @@ BEGIN
  END IF;
  OPEN fileIds FOR SELECT * FROM FilesDeletedProcOutput;
 END;
+
 
 /*
  * PL/SQL method removing completely a file from the stager
