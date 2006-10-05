@@ -84,22 +84,7 @@ namespace castor {
                                  struct stage_options* opts
                                 )
                                 throw (castor::exception::Exception);
-		
 
-    /**
-      * Checks for double tapecopy repacking. This happens whenever there 
-      * are >1 tapecopies of a file to be repacked. If the first one is already
-      * staged, the user gets a warning in DLF to restart the repack for the 
-      * second tape. The reason for this is the creation of the tapecopies of
-      * a file, whenever it is recalled. The FILERECALLED PL/SQL creates the 
-      * amount of tapecopies which have been submitted as Stager SubRequest till
-      * that time. Everyone reaching it after the physical recall, would be 
-      * ignored. This is here checked and in case the user informed.
-      * @param sreq The RepackSubRequest to check
-      * @throws castor::exception::Internal in case of an error
-      */
-    int checkMultiRepack(RepackSubRequest* sreq)
-	                                    throw (castor::exception::Internal);
 
     /**
       * Method to start a Repack process  

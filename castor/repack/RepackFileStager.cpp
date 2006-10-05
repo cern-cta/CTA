@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/10/03 14:15:22 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2006/10/05 08:50:30 $ $Author: felixehm $
  *
  *
  *
@@ -61,7 +61,7 @@ void RepackFileStager::run(void *param) throw() {
     Cuuid_t cuuid = nullCuuid;
 
     try {
-      sreq = m_dbhelper->checkSubRequestStatus(SUBREQUEST_READYFORSTAGING);
+      sreq = m_dbhelper->checkSubRequestStatus(SUBREQUEST_TOBESTAGED);
       /// no one ready for staging, so look for restartable ones
       if ( sreq == NULL )
         sreq = m_dbhelper->checkSubRequestStatus(SUBREQUEST_RESTART);
@@ -89,8 +89,6 @@ void RepackFileStager::run(void *param) throw() {
             restartRepack(sreq);
 
         m_dbhelper->unlock();
-        stage_trace(2,"File are sent to stager, repack request updated.");
-        castor::dlf::dlf_writep(stringtoCuuid(sreq->cuuid()), DLF_LVL_DEBUG, 25, 0, NULL);
 
         /// the Request has now status SUBREQUEST_STAGING
         /// try to stage the files, and forget the errors
@@ -126,15 +124,14 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
   castor::stager::StageRepackRequest req;
   
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 29, 0, NULL);
-  /// get the Segs for this tape !
-  if ( m_filehelper->getFileListSegs(sreq) )
-	  return;
-  
-  /// check the filelist for multi-tapecopy repacking - we can easily
-  /// return, because a message was written to DLF.
-  if ( sreq->status() == SUBREQUEST_READYFORSTAGING && checkMultiRepack(sreq) == -1 ) return; 
-  
+  /** check if the passed RepackSubRequest has segment members */
+  if ( !sreq->segment().size() ){
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 36, 0, NULL);
+    sreq->setStatus(SUBREQUEST_DONE);
+    m_dbhelper->updateSubRequest(sreq,false,cuuid);
+    return;
+  }
+
   // ---------------------------------------------------------------
   // This part has to be removed, if the stager also accepts only fileid
   // as parameter. For now we have to get the paths first.
@@ -145,18 +142,6 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   //std::vector<u_signed64>::iterator fileid;
 
 
-  /** check, if we got something back */
-  if ( filelist->size() == 0 ){
-    castor::dlf::Param params[] =
-    {castor::dlf::Param("VID", sreq->vid())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 39, 1, params);
-    delete filelist;
-    sreq->setStatus(SUBREQUEST_DONE);
-    m_dbhelper->updateSubRequest(sreq,false, cuuid);
-    return;
-  }
-
-  
   /// here we build the Request for the stager 
   while (filename != filelist->end()) {
     castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
@@ -166,6 +151,11 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
     req.addSubRequests(subreq);
     filename++;
   }
+
+  
+
+  filelist->clear();
+  delete filelist;
 
   req.setRepackVid(sreq->vid());
   /// We need to set the stage options. 
@@ -181,7 +171,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
 	/// Msg: Staging files
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 26, 0, NULL);
 
-  /// in fact, we send here the stager request
+  /// here, we send the stager request
 	try {
       sendStagerRepackRequest(&req, &reqId, &opts);
 	}catch (castor::exception::Exception ex){
@@ -199,19 +189,14 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   /// delete the allocated Stager SubRequests
 	for (int i=0; i<req.subRequests().size(); i++) delete req.subRequests().at(i);
 
-	/// Setting the SubRequest's Cuuid to the stager one for better follow
+	/// Setting the SubRequest's Cuuid to the stager one for monitoring
 	stage_trace(3," Stagerrequest (now new RepackSubRequest CUUID ): %s",(char*)reqId.c_str());
 	castor::dlf::Param param[] = {castor::dlf::Param("New reqID", reqId)};
 	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 33, 1, param);
 	cuuid = stringtoCuuid(reqId);
 	sreq->setCuuid(reqId);
-  
-	sreq->setFilesStaging(filelist->size());
-  sreq->setFiles(filelist->size());
   sreq->setStatus(SUBREQUEST_STAGING);
-
-  filelist->clear();
-  delete filelist;
+ 
 }
 
 
@@ -219,19 +204,69 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
 // restartRepack
 //------------------------------------------------------------------------------		
 void RepackFileStager::restartRepack(RepackSubRequest* sreq){
-   _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
 
-   sreq->setFilesFailed(0);
-   sreq->setFilesMigrating(0);
-   sreq->setFilesStaging(0);
-   sreq->setFiles(0);
+    _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
+    struct stage_filequery_resp *responses;
+    int nbresps;
+    sreq->setFilesFailed(0);
+    sreq->setFilesMigrating(0);
+    sreq->setFilesStaging(0);
+    
+    /** we only want to restart a repack for the files, which made problems 
+       (status in invalid) */
+    RepackMonitor monitor(ptr_server);
+    try {
+      monitor.getStats(sreq, &responses, &nbresps);
+    }catch (castor::exception::Exception ex){
+      castor::dlf::Param params[] =
+      {castor::dlf::Param("Module", "RepackFileStager" ),
+       castor::dlf::Param("Error Message", ex.getMessage().str() ),
+       castor::dlf::Param("Responses", nbresps )};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 3, params);
+     return;
+    }
 
-   stage_files(sreq);
+    /** fake the original sreq */
+    RepackSubRequest* faked = new RepackSubRequest();
+    faked->setCuuid(sreq->cuuid());
+    faked->setVid(sreq->vid());
+    faked->setStatus(sreq->status());
+    /** we need the service class info in the original repackRequest for staging */
+    faked->setRequestID(sreq->requestID()); 
 
-   /// do not remove or update the segment information. We persume that this has
-   /// not been changed in between.
-   
-   m_dbhelper->updateSubRequest(sreq,false,cuuid);
+
+    /** add the files which are in invalid status.
+        we only add the fileid, because this used in the stage_files part to 
+        get the full pathname 
+    */
+    for ( int i=0; i<nbresps; i++ ) {
+      if (responses[i].status == FILE_INVALID_STATUS){
+        RepackSegment* seg = new RepackSegment();
+        seg->setFileid(responses[i].fileid);
+        faked->addSegment(seg);
+      }
+    }
+    free_filequery_resp(responses, nbresps);
+    
+    /** Are there files in invalid status ? */
+    if ( !faked->segment().size() )
+      sreq->setStatus(SUBREQUEST_DONE);
+    else {
+      stage_files(faked);
+      sreq->setCuuid(faked->cuuid());
+      sreq->setStatus(SUBREQUEST_STAGING);
+    }
+
+    faked->setRequestID(NULL);  /** set to NULL;just to be sure, it pointed to a foreign one */ 
+
+    freeRepackObj(faked);  /** we know that there is no RepackRequest for 
+                              the faked one, so we can delete it directly */
+    
+    /** do not remove or update the segment information */ 
+    m_dbhelper->updateSubRequest(sreq,false,cuuid);
+
+    stage_trace(2,"File are sent to stager, repack request updated.");
+    castor::dlf::dlf_writep(stringtoCuuid(sreq->cuuid()), DLF_LVL_DEBUG, 25, 0, NULL);
 }
 
 
@@ -245,7 +280,9 @@ void RepackFileStager::startRepack(RepackSubRequest* sreq){
   /// doesn't throw exceptions and we want the RepackSubrequest to be updated with 
   /// the segment information
 
-  m_dbhelper->updateSubRequest(sreq,true, cuuid);
+  m_dbhelper->updateSubRequest(sreq,false, cuuid);
+  stage_trace(2,"File are sent to stager, repack request updated.");
+  castor::dlf::dlf_writep(stringtoCuuid(sreq->cuuid()), DLF_LVL_DEBUG, 25, 0, NULL);
 
 }
 
@@ -309,101 +346,6 @@ void RepackFileStager::sendStagerRepackRequest(
   
 }
 
-
-//------------------------------------------------------------------------------
-// checkMultiRepack
-//------------------------------------------------------------------------------
-int RepackFileStager::checkMultiRepack(RepackSubRequest* sreq)
-	                                           throw (castor::exception::Internal)
-{
-  _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
-  std::vector<RepackSegment*>::iterator segment = sreq->segment().begin();
-  RepackSegment* retSeg = NULL;
-
-  /** for stager request */
-  struct stage_query_req request;
-  struct stage_filequery_resp *responses;
-  struct stage_options opts;
-  struct Cns_fileid fileid;
-  
-  int nbresps, rc;
-    
-  /** iterate through the segments and check if there is another tapecopy for this segment
-     in a repack process. If so, check the status and in case of STAGED or CANBEMIGR
-     the file cannot be submitted as to be repacked, because the migration part would fail
-     due to the not existing tapecopy (see FILERECALLED PL/SQL procedure */
-
-  try {
-    while ( segment != sreq->segment().end() ) {
-      retSeg = m_dbhelper->getTapeCopy( (*segment) );
-
-      /**  we only check, if we got an answer from the DB */
-      if ( retSeg != NULL ) {
-      
-        /** this should never happen ! It means, that there are tapes with the 
-            same TapeCopy on 2 Tapes */
-        if ( retSeg->copyno() == (*segment)->copyno() ){
-          castor::dlf::Param params[] =
-          {castor::dlf::Param("Existing", retSeg->vid()->vid() ),
-          castor::dlf::Param("To be added", sreq->vid() )};
-          castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 37, 2, params);
-          /// TODO: IF this error occurs, the subreques MUST be set to an invalid status
-          /// so it is not taken the next time !
-          return -1;
-        }
-        /** we create the name of the file like the stager_api likes it 
-          "fileid@nameserver"  and set the query request parameter*/
-        std::ostringstream buf;
-        buf << (*segment)->fileid() << "@" << ptr_server->getNsName(); 
-        request.type = (int)BY_FILEID;
-        request.param = (void*)(buf.str().c_str());
-        fileid.fileid = (*segment)->fileid();
-        /// set the options
-        getServiceClass(&opts, sreq);
-        opts.stage_host = (char*)ptr_server->getStagerName().c_str(); 
-        opts.stage_port = 0;
-        opts.stage_version = 0;
-
-        rc = errno = serrno = nbresps = 0;                                                           
-        /// Send request to stager 
-        rc = stage_filequery(&request,
-                            1,
-                            &responses,
-                            &nbresps,
-                            &(opts));
-        if ( rc == -1 ){
-          castor::dlf::Param params[] =
-          {castor::dlf::Param("Error Message", sstrerror(serrno) ),
-          castor::dlf::Param("Responses", nbresps )};
-          castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 23, 2, params, &fileid);
-          //if ( nbresps) free_filequery_resp(responses, nbresps);
-          return -1;
-        }
-        if ( nbresps && responses[0].status != FILE_STAGEIN 
-             && responses[0].status != FILE_INVALID_STATUS ) {
-          castor::dlf::Param params[] =
-          {castor::dlf::Param("CopyNo", retSeg->copyno() ),
-          castor::dlf::Param("Existing Tape", retSeg->vid()->vid()),
-          castor::dlf::Param("To be added Tape", sreq->vid())};
-          castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 45, 3, params, &fileid);
-          /** the file is remove from list, if invalid */
-          sreq->removeSegment((*segment));
-          segment--; /// removeSegment sets the pointer already to the next one.
-          free_filequery_resp(responses,nbresps );
-        }
-
-        delete retSeg;
-        retSeg = NULL;
-      } // end if retSeg == NULL
-      segment++;
-    } // end while loop
-  }catch (castor::exception::Exception e){
-     castor::dlf::Param params[] =
-     {castor::dlf::Param("ErrorMessage", e.getMessage().str() )};
-     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 23, 1, params);
-     return -1;
-  }
-}
 
 		
 	} //END NAMESPACE REPACK
