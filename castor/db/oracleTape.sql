@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.311 $ $Release$ $Date: 2006/10/04 13:29:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.312 $ $Release$ $Date: 2006/10/05 09:42:37 $ $Author: cvscasto $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.311 $ $Date: 2006/10/04 13:29:19 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.312 $ $Date: 2006/10/05 09:42:37 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -421,8 +421,13 @@ END;
 CREATE OR REPLACE PROCEDURE deleteArchivedRequests(timeOut IN NUMBER) AS
   myReq SubRequest.request%TYPE;
   CURSOR cur IS 
-   SELECT DISTINCT request FROM SubRequest
-    WHERE status=11 AND getTime() - lastModificationTime >= timeOut;
+    SELECT request FROM (
+      SELECT request, max(lastModificationTime) as latestTime, min(status) as minStatus, max(status) as maxStatus
+        FROM SubRequest
+       GROUP BY request
+      )
+    WHERE minStatus = 11 AND maxStatus = 11  -- only requests with ALL subreqs in ARCHIVED are taken 
+      AND latestTime < getTime() - timeOut; 
   counter NUMBER := 0;
 BEGIN
   OPEN cur;
@@ -445,8 +450,13 @@ END;
 CREATE OR REPLACE PROCEDURE deleteOutOfDateRequests(timeOut IN NUMBER) AS
   myReq SubRequest.request%TYPE;
   CURSOR cur IS
-   SELECT DISTINCT request FROM SubRequest
-    WHERE status IN (8, 9, 10) AND getTime() - lastModificationTime >= timeOut;
+    SELECT request FROM (
+      SELECT request, max(lastModificationTime) as latestTime, min(status) as minStatus, max(status) as maxStatus
+        FROM SubRequest
+       GROUP BY request
+      )
+    WHERE minStatus = 8 AND maxStatus = 11  -- only requests with ALL subreqs either FAILED or ARCHIVED are taken 
+      AND latestTime < getTime() - timeOut; 
   counter NUMBER := 0;
 BEGIN
   OPEN cur;
