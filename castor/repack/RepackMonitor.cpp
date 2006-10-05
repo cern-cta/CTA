@@ -73,7 +73,7 @@ namespace castor {
         for (int i=0; i< tapelist->size(); i++){
           //m_dbhelper->lock(tapelist->at(i));
           cuuid = stringtoCuuid(tapelist->at(i)->cuuid());
-          getStats(tapelist->at(i));
+          updateTape(tapelist->at(i));
           m_dbhelper->unlock();
           freeRepackObj(tapelist->at(i)->requestID());
 	      }
@@ -84,7 +84,7 @@ namespace castor {
         for (int i=0; i< tapelist2->size(); i++){
           //m_dbhelper->lock(tapelist2->at(i));
           cuuid = stringtoCuuid(tapelist2->at(i)->cuuid());
-          getStats(tapelist2->at(i));
+          updateTape(tapelist2->at(i));
           m_dbhelper->unlock();
           freeRepackObj(tapelist2->at(i)->requestID());
         }
@@ -111,123 +111,141 @@ namespace castor {
 //------------------------------------------------------------------------------
 // getStats
 //------------------------------------------------------------------------------
-  void RepackMonitor::getStats(RepackSubRequest* sreq) throw (castor::exception::Internal){
+int RepackMonitor::getStats(RepackSubRequest* sreq, 
+                            struct stage_filequery_resp **responses,
+                            int* nbresps) 
+throw (castor::exception::Internal)
+{
    
-    int rc, nbresps;
-    Cuuid_t cuuid;
-    cuuid = stringtoCuuid(sreq->cuuid());
-    /** status counters */
-    int canbemig_status,stagein_status,waitingmig_status, stageout_status, invalid_status;
-    canbemig_status = stagein_status = waitingmig_status = stageout_status = invalid_status = 0;
-   
-    /** for stager request */
-    struct stage_query_req request;
-    struct stage_filequery_resp *responses;
-    struct stage_options opts;
+  int rc;
+  Cuuid_t cuuid;
+  cuuid = stringtoCuuid(sreq->cuuid());
+
+  /** for stager request */
+  struct stage_query_req request;
+  struct stage_options opts;
+
+  /** we query by request, easier for stager to fill */
+  request.type = BY_REQID;
+  request.param = (void*)sreq->cuuid().c_str();
+  opts.stage_host = (char*)ptr_server->getStagerName().c_str();
+  opts.stage_port = 0;
+  opts.stage_version = 0;
+  /// set the service class information from repackrequest
+  getServiceClass(&opts, sreq);
   
-    /** we query by request, easier for stager to fill */
-    request.type = BY_REQID;
-    request.param = (void*)sreq->cuuid().c_str();
-    opts.stage_host = (char*)ptr_server->getStagerName().c_str();
-    opts.stage_port = 0;
-    opts.stage_version = 0;
-    /// set the service class information from repackrequest
-    getServiceClass(&opts, sreq);
-    
+  rc = errno = serrno = *nbresps = 0;
+  /// Send request to stager 
+  rc = stage_filequery(&request,
+                      1,
+                      responses,
+                      nbresps,
+                      &(opts));
 
-    
-    rc = errno = serrno = nbresps = 0;
-    /// Send request to stager 
-    rc = stage_filequery(&request,
-                        1,
-                        &responses,
-                        &nbresps,
-                        &(opts));
-    if ( rc == -1 ){
-      castor::dlf::Param params[] =
-      {castor::dlf::Param("Error Message", sstrerror(serrno) ),
-      castor::dlf::Param("Responses", nbresps )};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 2, params);
-      //if ( nbresps) free_filequery_resp(responses, nbresps);
-      return;
-    }
-/*    
-    if (  nbresps == 1 && responses[0].errorCode ){
-      castor::dlf::Param params[] =
-      {castor::dlf::Param("Error Message", responses[0].errorMessage)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 1, params);
-      free_stager_response(&responses[0]);
-      free (responses);
-      return;
-    }
-*/
-    /// see, in which status the files are 
-    for ( int i=0; i<nbresps; i++ ) {
-      if ( responses[i].errorCode > 0 ){
-        castor::dlf::Param params[] =
-        {castor::dlf::Param("Error Message", responses[i].errorMessage)};
-         castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 1, params);
-      }
-      switch ( responses[i].status ){
-        case FILE_CANBEMIGR  : canbemig_status++;  break;
-        case FILE_STAGEIN    : stagein_status++;   break;
-        case FILE_WAITINGMIGR: waitingmig_status++;break;
-        case FILE_STAGEOUT:    stageout_status++;break;
-        case FILE_INVALID_STATUS: invalid_status++; break;
-      }
-      //free_stager_response(&responses[i]);
-    }
-    //free (responses);
-
-    free_filequery_resp(responses, nbresps);
-
-    if ( invalid_status ) {
-      stage_trace(3,"Found %d files in invalid status", invalid_status);
-      castor::dlf::Param params[] =
-       {castor::dlf::Param("Number", invalid_status)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 42, 1, params);
-    }
-
-    /// we only update the subrequest, if something has changed */
-    if ( (waitingmig_status + canbemig_status) !=  sreq->filesMigrating() 
-          || stagein_status != sreq->filesStaging() ||  invalid_status != sreq->filesFailed()
-    )
-    {
-      
-      sreq->setFilesMigrating( waitingmig_status + canbemig_status );
-      sreq->setFilesStaging( stagein_status );
-      sreq->setFilesFailed( invalid_status );
-      
-      stage_trace(3,"Updating RepackSubRequest: Mig: %d\tStaging: %d\t Invalid %d\n",
-          sreq->filesMigrating(), sreq->filesStaging(),sreq->filesFailed() );  
-
-
-      /// if we find migration candidates, we just change the status from staging, 
-      ///    or if all files are staged 
-      
-      if ( waitingmig_status + canbemig_status 
-          && sreq->status() != SUBREQUEST_MIGRATING )
-      {
-        sreq->setStatus(SUBREQUEST_MIGRATING);
-        castor::dlf::Param params[] =
-        {castor::dlf::Param("VID", sreq->vid()),
-        castor::dlf::Param("STATUS", sreq->status())};
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 2, params);
-      }
-      
-      else if ( !(waitingmig_status + canbemig_status + stagein_status + stageout_status + invalid_status) )
-      {
-        sreq->setStatus(SUBREQUEST_READYFORCLEANUP);
-        castor::dlf::Param params[] =
-        {castor::dlf::Param("VID", sreq->vid()),
-        castor::dlf::Param("STATUS", sreq->status())};
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 2, params);
-      }
-      
-      /** update the RepackSubRequest with the latest stats */
-      m_dbhelper->updateSubRequest(sreq,false,cuuid);
-    }
+  if ( rc == -1 || (*responses)[0].errorCode == 22 ){
+    castor::exception::Exception ex(serrno);
+    ex.getMessage() << (*responses[0]).errorMessage << "(" << sstrerror(serrno) << ")";
+    throw ex;
   }
+}
+
+
+
+
+//------------------------------------------------------------------------------
+// updateTape
+//------------------------------------------------------------------------------
+void RepackMonitor::updateTape(RepackSubRequest *sreq)
+                          throw (castor::exception::Internal)
+{ 
+  int nbresps = 0;
+  /** status counters */
+  int canbemig_status,stagein_status,waitingmig_status, stageout_status, invalid_status;
+  canbemig_status = stagein_status = waitingmig_status = stageout_status = invalid_status = 0;
+
+  struct stage_filequery_resp *responses = NULL;
+  Cuuid_t cuuid;  
+  cuuid = stringtoCuuid(sreq->cuuid());
+
+  try {
+    /** get the stats by quering the stager */
+    getStats(sreq, &responses, &nbresps);
+  }catch (castor::exception::Exception ex){
+    castor::dlf::Param params[] =
+    {castor::dlf::Param("Error Message", ex.getMessage().str() ),
+    castor::dlf::Param("Responses", nbresps )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 2, params);
+    //if ( nbresps) free_filequery_resp(responses, nbresps);
+    return;
+  }
+
+    /// see, in which status the files are 
+  for ( int i=0; i<nbresps; i++ ) {
+    if ( responses[i].errorCode > 0 ){
+      castor::dlf::Param params[] =
+      {castor::dlf::Param("Error Message", responses[i].errorMessage)};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 1, params);
+    }
+    switch ( responses[i].status ){
+      case FILE_CANBEMIGR  : canbemig_status++;  break;
+      case FILE_STAGEIN    : stagein_status++;   break;
+      case FILE_WAITINGMIGR: waitingmig_status++;break;
+      case FILE_STAGEOUT:    stageout_status++;break;
+      case FILE_INVALID_STATUS: invalid_status++; break;
+    }
+    //free_stager_response(&responses[i]);
+  }
+  //free (responses);
+
+  free_filequery_resp(responses, nbresps);
+
+  if ( invalid_status ) {
+    stage_trace(3,"Found %d files in invalid status", invalid_status);
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Number", invalid_status)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 42, 1, params);
+  }
+
+  /// we only update the subrequest, if something has changed */
+  if ( (waitingmig_status + canbemig_status) !=  sreq->filesMigrating() 
+        || stagein_status != sreq->filesStaging() ||  invalid_status != sreq->filesFailed()
+  )
+  {
+    
+    sreq->setFilesMigrating( waitingmig_status + canbemig_status );
+    sreq->setFilesStaging( stagein_status );
+    sreq->setFilesFailed( invalid_status );
+    
+    stage_trace(3,"Updating RepackSubRequest: Mig: %d\tStaging: %d\t Invalid %d\n",
+        sreq->filesMigrating(), sreq->filesStaging(),sreq->filesFailed() );  
+
+
+    /// if we find migration candidates, we just change the status from staging, 
+    ///    or if all files are staged 
+    
+    if ( waitingmig_status + canbemig_status 
+        && sreq->status() != SUBREQUEST_MIGRATING )
+    {
+      sreq->setStatus(SUBREQUEST_MIGRATING);
+      castor::dlf::Param params[] =
+      {castor::dlf::Param("VID", sreq->vid()),
+      castor::dlf::Param("STATUS", sreq->status())};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 2, params);
+    }
+    
+    else if ( !(waitingmig_status + canbemig_status + stagein_status + stageout_status + invalid_status) )
+    {
+      sreq->setStatus(SUBREQUEST_READYFORCLEANUP);
+      castor::dlf::Param params[] =
+      {castor::dlf::Param("VID", sreq->vid()),
+      castor::dlf::Param("STATUS", sreq->status())};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 2, params);
+    }
+    
+    /** update the RepackSubRequest with the latest stats */
+    m_dbhelper->updateSubRequest(sreq,false,cuuid);
+  }
+}
 
 
 //------------------------------------------------------------------------------

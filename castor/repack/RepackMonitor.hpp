@@ -51,7 +51,20 @@ namespace castor {
 
       RepackSubRequest* getFinishedTapes() throw (castor::exception::Internal);
 
-      void getStats(RepackSubRequest*) throw (castor::exception::Internal);
+      void updateTape(RepackSubRequest*)   throw (castor::exception::Internal);
+      
+
+      /** Retrieves the stats from a request (by the given cuuid in the 
+       *  RepackSubRequest).
+       *  @param sreq The RepackSubRequest to check
+       *  @param responses The allocated stager API file response struct
+       *  @param nbresps The Number of reponses
+       *  @returns -1 in case of an error (Message has been written to DLF) 
+       */
+      int RepackMonitor::getStats(RepackSubRequest* sreq, 
+                            struct stage_filequery_resp **responses,
+                            int* nbresps)   throw (castor::exception::Internal);
+
     private:
       DatabaseHelper* m_dbhelper;
       RepackServer* ptr_server;
