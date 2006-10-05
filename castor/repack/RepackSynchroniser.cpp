@@ -61,7 +61,7 @@ void RepackSynchroniser::run(void* param) throw(){
 
   try {
     /** get the possible tapelist */
-    tapelist = m_dbhelper->getAllSubRequestsStatus(SUBREQUEST_READYFORSTAGING);
+    tapelist = m_dbhelper->getAllSubRequestsStatus(SUBREQUEST_TOBESTAGED);
 
     if ( tapelist != NULL )	{
 
@@ -88,22 +88,20 @@ void RepackSynchroniser::run(void* param) throw(){
 
         /** get the segs the cuuid and update the status to STAGING */
         if ( !error ) {
-          m_filehelper.getFileListSegs((*tape));
-          (*tape)->setStatus(SUBREQUEST_STAGING);
-          
           std::string cuuid;
           std::cout << "Please give the Stager CUUID the former RepackRequest was sent with: ";
           
           std::cin >> answer;
           (*tape)->setCuuid(answer);
-          
+          (*tape)->setStatus(SUBREQUEST_STAGING);
+
           m_dbhelper->updateSubRequest((*tape), true, nullCuuid);
-          
+
           std::cout << "Tape " << (*tape)->vid() 
                     << "with "<< (*tape)->segment().size() << "Files" 
                     << "and CUUID " << (*tape)->cuuid() << "has been updated to status " 
                     << SUBREQUEST_STAGING <<std::endl;
-          
+
           freeRepackObj((*tape)->requestID());
           tapelist->erase(tape);
         }
