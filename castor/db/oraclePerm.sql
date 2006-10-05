@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.313 $ $Release$ $Date: 2006/10/05 10:00:55 $ $Author: gtaur $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.314 $ $Release$ $Date: 2006/10/05 15:52:11 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.313 $ $Date: 2006/10/05 10:00:55 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.314 $ $Date: 2006/10/05 15:52:11 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -193,10 +193,14 @@ END;
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
    whenever a TapeCopy is linked to a Stream */
+
 CREATE OR REPLACE TRIGGER tr_Stream2TapeCopy_Insert
 AFTER INSERT ON Stream2TapeCopy
 FOR EACH ROW
 BEGIN
+-- added this lock because of severaval copies of different file systems 
+--  from different streams which can cause deadlock  
+  LOCK TABLE NbTapeCopiesInFS IN ROW SHARE MODE;
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
    WHERE FS IN (SELECT DiskCopy.FileSystem
                   FROM DiskCopy, TapeCopy
@@ -211,7 +215,10 @@ END;
 CREATE OR REPLACE TRIGGER tr_Stream2TapeCopy_Delete
 BEFORE DELETE ON Stream2TapeCopy
 FOR EACH ROW
-BEGIN
+BEGIN  
+-- added this lock because of severaval copies of different file systems 
+--  from different streams which can cause deadlock
+  LOCK TABLE NbTapeCopiesInFS IN ROW SHARE MODE;
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies - 1
    WHERE FS IN (SELECT DiskCopy.FileSystem
                   FROM DiskCopy, TapeCopy
@@ -246,6 +253,9 @@ FOR EACH ROW
 WHEN (old.status = 1 AND -- WAITDISK2DISKCOPY
       new.status = 10) -- CANBEMIGR
 BEGIN
+-- added this lock because of severaval copies of different file systems 
+--  from different streams which can cause deadlock
+  LOCK TABLE  NbTapeCopiesInFS IN ROW SHARE MODE;
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
    WHERE FS = :new.fileSystem
      AND Stream IN (SELECT Stream2TapeCopy.parent
@@ -290,7 +300,9 @@ END;
 /* Used to avoid LOCK TABLE Stream2TapeCopy whenever someone wants
    to deal with the TapeCopies of a Stream.
    Due to this trigger, locking the Stream is enough
-   to be safe */
+   to be safe.
+Removed because it was not solving the problem.
+
 CREATE OR REPLACE TRIGGER tr_Stream2TapeCopy_Stream
 BEFORE INSERT OR UPDATE ON Stream2TapeCopy
 FOR EACH ROW
@@ -300,6 +312,8 @@ BEGIN
   SELECT * INTO unused FROM Stream
    WHERE id = :new.Parent FOR UPDATE;
 END;
+
+*/
 
 /*********************/
 /* FileSystem rating */
