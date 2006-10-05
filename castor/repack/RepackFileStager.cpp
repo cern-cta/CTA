@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2006/10/05 13:58:56 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2006/10/05 14:43:10 $ $Author: felixehm $
  *
  *
  *
@@ -351,6 +351,7 @@ int RepackFileStager::sendStagerRepackRequest(
 		delete fr;
 	}
 	respvec.clear();
+  return failed;
   
 }
 
