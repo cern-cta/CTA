@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2006/10/03 14:23:04 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2006/10/05 08:26:51 $ $Author: felixehm $
  *
  *
  *
@@ -48,6 +48,15 @@ int main(int argc, char *argv[]) {
                                             ));
 	  server.getThreadPool('W')->setNbThreads(1);
 	
+    /// The Repack File Checker
+    server.addThreadPool(
+      new castor::server::SignalThreadPool("checker",
+                                            new castor::repack::RepackCleaner(&server),
+                                            0,
+                                            10
+                                          ));
+    server.getThreadPool('c')->setNbThreads(1);
+
     /// The Repack File Stager Instance
     server.addThreadPool(
       new castor::server::SignalThreadPool("Stager", 
@@ -143,22 +152,22 @@ castor::repack::RepackServer::RepackServer() :
      {22, "RepackFileStager: New request for staging files"},							// RepackFileStager:run()
      {23, "RepackFileStager: Error during multi-Repack check"},// RepackFileStager:stage_files
      {24, "FileListHelper: Retrieved segs for SubRequest"},							//FileListHelper:getFileListSegs()
-     {25, "RepackFileStager: Updating Request to STAGING and add its segs"},		// RepackFileStager:stage_files
+     {25, "RepackFileStager: Stager reques sent and RepackSubRequest updated"},		// RepackFileStager:stage_files
      {26, "RepackFileStager: Staging files"},												// RepackFileStager:stage_files
-     {27, "DatabaseHelper: Unable to update SubRequest!"},
+     {27, "DatabaseHelper: Unable to update RepackSubRequest"},
      {28, "DatabaseHelper: Tape already in repack que!"},
-     {29, "RepackFileStager: Getting Segs for SubRequest"},
-     {30, "DatabaseHelper: SubRequest updated"},
+     {29, "RepackFileChecker: Getting Segs for RepackSubRequest"},
+     {30, "DatabaseHelper: RepackSubRequest updated"},
      {31, "RepackFileStager: Found same TapeCopy on two tapes"},
      {33, "RepackFileStager: Changing CUUID to stager one"},
      {34, "RepackCleaner: No files found for cleanup phase"},
      {35, "RepackCleaner: Cleaner started"},
-     {36, "RepackCleaner: There are no more files on tape to repack"},
-     {39, "RepackFileStager: No files found on tape"},               // RepackFileStager:stage_files
+     {36, "There are no more files on tape to repack"},
+     {39, "RepackFileChecker: No files found on tape"},               // RepackFileStager:stage_files
      {37, "RepackFileStager: checkExistingTapeCopy failed"}, 
      {38, "RepackFileStager: Failed to submit recall for file to Stager"},
      {40, "RepackMonitor: Changing status"},
-     {41, "RepackMonitor: Stager query failed"},
+     {41, "Stager query failed"},
      {42, "RepackMonitor: Files in invalid status found"},
      {45, "RepackFileStager: File has already a STAGED diskcopy. To be restarted later"},
      {46, "FileListHelper: Found same file twice on tape" },
@@ -355,6 +364,7 @@ void castor::repack::RepackServer::parseCommandLine(int argc, char *argv[])
         m_threadPools['C']->setNbThreads(0);
         m_threadPools['M']->setNbThreads(0);
         m_threadPools['S']->setNbThreads(0);
+        m_threadPools['c']->setNbThreads(0);
         m_threadPools['Z']->setNbThreads(1);
         break;
       }

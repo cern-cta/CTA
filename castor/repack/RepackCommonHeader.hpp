@@ -56,7 +56,8 @@ namespace castor{
     SUBREQUEST_READYFORCLEANUP = 4,
     SUBREQUEST_DONE            = 5,
     SUBREQUEST_ARCHIVED        = 6,
-    SUBREQUEST_RESTART         = 7
+    SUBREQUEST_RESTART         = 7,
+    SUBREQUEST_TOBESTAGED      = 8
 
     };
 
