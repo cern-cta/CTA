@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: query.php,v 1.2 2006/09/06 12:53:44 waldron Exp $
+ * $Id: query.php,v 1.3 2006/10/06 06:49:14 waldron Exp $
  */
 
 require("utils.php");
@@ -53,7 +53,7 @@ $query_count = 0;
 
 	/* load calendar popup ? */
 	if ($use_calendar_popup) {
-		print "<script language=\"javascript\" src=\"js/CalendarPopup.js\" type=\"text/javascript\"></script>";
+		print "<script language=\"javascript\" src=\"js/CalendarPopup.js\" type=\"text/javascript\"></script>\n";
 	}
 
 	/* generate message text array */
@@ -68,17 +68,17 @@ $query_count = 0;
 
 		/* a new facility ? */
 		if ($row[0] != $fac_no) {
-			$all_msgtexts .= "['".$row[0]."', 'All', 'All'],";
+			$all_msgtexts .= "['".$row[0]."','All','All'],\n\t\t";
 		}
 		$fac_no = $row[0];
 	
 		/* array entry */
-		$all_msgtexts .= "['".$row[0]."','".$row[1]."','".$row[2]."']";
+		$all_msgtexts .= "['".$row[0]."','".$row[1]."','".str_replace("\n", "", $row[2])."']";
 	}
 
-	echo "<script type=\"text/javascript\"> var txtOptions = [";
-	echo str_replace("']['", "'],['", trim($all_msgtexts));
-	echo "];";
+	echo "\t<script type=\"text/javascript\"> \n\t\tvar txtOptions = [";
+	echo str_replace("']['", "'],\n\t\t['", trim($all_msgtexts));
+	echo "]\n;";
 
 	?>
 
