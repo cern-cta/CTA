@@ -62,6 +62,7 @@ char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
    "Entry already exists",
    "Group unknown",
    "Bad checksum",
+   "This service class is not available for this host",
    "Got SQL exception from database",
    "Too many symbolic links",
    "BAD ERROR NUMBER"
