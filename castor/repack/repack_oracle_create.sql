@@ -10,5 +10,9 @@ CREATE TABLE RepackRequest (machine VARCHAR2(2048), userName VARCHAR2(2048), cre
 /* SQL statements for Castor_Version */
 CREATE TABLE castor_version (version VARCHAR2(2048));
 
-/* SQL statements for ID2Type*/
-CREATE TABLE ID2TYPE (ID INTEGER, TYPE NUMBER);
+/* Sequence for indices */
+CREATE SEQUENCE ids_seq CACHE 300;
+
+/* SQL statements for object types */
+CREATE TABLE Id2Type (id INTEGER PRIMARY KEY, type NUMBER);
+CREATE INDEX I_Id2Type_typeId on Id2Type (type, id);
