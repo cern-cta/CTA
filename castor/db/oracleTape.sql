@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.314 $ $Release$ $Date: 2006/10/05 15:52:11 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.315 $ $Release$ $Date: 2006/10/09 12:51:09 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.314 $ $Date: 2006/10/05 15:52:11 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.315 $ $Date: 2006/10/09 12:51:09 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1922,9 +1922,10 @@ BEGIN
     AND status IN (5, 11); -- WAITFS, WAITFS_SCHEDULING
  DECLARE
   segId INTEGER;
+  unusedIds "numList";
  BEGIN
    -- First lock all segments for the file
-   SELECT segment.id INTO segId
+   SELECT segment.id BULK COLLECT INTO unusedIds
      FROM Segment, TapeCopy
     WHERE TapeCopy.castorfile = cfId
       AND TapeCopy.id = Segment.copy
