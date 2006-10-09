@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/09/25 09:21:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/10/09 15:41:22 $ $Author: sponcec3 $
  *
  * Initialization of the DLF messages for the Shared memory part
  *
@@ -42,6 +42,7 @@ castor::sharedMemory::DLFInit::DLFInit () {
      { 1, "Unable to create shared memory. Giving up"},
      { 2, "Created the shared memory."},
      { 3, "Unable to get pointer to shared memory. Giving up"},
-     { 4, "Not enough space for header in shared memory. Giving up"}};
+     { 4, "Not enough space for header in shared memory. Giving up"},
+     { -1, ""} };
   castor::dlf::dlf_addMessages(DLF_BASE_SHAREDMEMORY, messages);
 }

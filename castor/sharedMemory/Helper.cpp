@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Helper.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/09/25 09:21:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Helper.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/10/09 15:41:22 $ $Author: sponcec3 $
  *
  * A singleton for the shared memory usage in rmMaster
  *
@@ -34,6 +34,7 @@
 
 #define SHARED_MEMORY_SIZE 1048576
 #define SHARED_MEMORY_KEY 2374
+#define SHARED_MEMORY_ADDRESS 0x30000000
 
 //------------------------------------------------------------------------------
 // s_smBlockAddress
@@ -47,8 +48,10 @@ castor::sharedMemory::Block* castor::sharedMemory::Helper::getBlock()
   throw (castor::exception::Exception) {
   // Check whether the block needs to be created
   if (0 == s_smBlockAddress) {
-    s_smBlockAddress = 
-      new Block(SHARED_MEMORY_SIZE, SHARED_MEMORY_KEY);
+    Block* b =
+      new Block(SHARED_MEMORY_KEY, SHARED_MEMORY_SIZE, (void*)SHARED_MEMORY_ADDRESS);
+    s_smBlockAddress = b;
+    b->initialize();
   }
   return (castor::sharedMemory::Block*)s_smBlockAddress;
 }

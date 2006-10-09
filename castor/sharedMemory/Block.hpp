@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/09/25 09:21:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/10/09 15:41:22 $ $Author: sponcec3 $
  *
  * a block of shared memory with incorporated memory
  * allocation
@@ -42,8 +42,10 @@ namespace castor {
   namespace sharedMemory {
 
     /**
-     * a class holding a table of free and used areas in the
-     * shared memory
+     * a class dealing with a Block of Shared memory.
+     * The Block contains its own table of free and used areas
+     * so that it's self contained as well as a description of
+     * the Cluster status.
      */
     class Block {
 
@@ -51,12 +53,15 @@ namespace castor {
 
       /**
        * Constructor
-       * Initiates a block of shared memory
+       * Initiates a block of shared memory.
        * @param key the key for this block
        * @param size the size of the block to create when
        * creation is needed
+       * @param address the process address to be used to
+       * attach the memory block. If null, the system will
+       * choose a suitable address
        */
-      Block(key_t key, size_t size)
+      Block(key_t key, size_t size, const void* address)
         throw (castor::exception::Exception);
 
       /**
@@ -87,24 +92,71 @@ namespace castor {
        */
       void print(std::iostream& out) throw();
 
-    private:
-      
       /**
-       * key of the block (not used)
+       * initializes the Block.
+       * Cannot be called by the constructor because we need
+       * to return before the initialization if we don't want
+       * to loop in the sharedMemory::Helper. The loop is due
+       * to the fact that the initialization itself will need
+       * some memory allocation that will call the Helper and
+       * it will try to create again the Block since it would
+       * not have got an answer yet
+       */
+      void initialize()
+        throw (castor::exception::Exception);
+
+    private:
+
+      /**
+       * key of the block
        */
       key_t m_key;
 
       /**
-       * size of the block (not used)
+       * size of the block
        */
       size_t m_size;
 
       // Convenience typedef
+      typedef std::pair<void* const, size_t> SharedNode;
       typedef std::map<void*,
                        size_t,
                        std::less<void*>,
-                       castor::sharedMemory::Allocator<std::pair<void* const, size_t> > >
+                       castor::sharedMemory::Allocator<SharedNode> >
       SharedMap;
+
+      /**
+       * Did this block create the shared memory segment ?
+       */
+      bool m_createdSharedMemory;
+
+      /**
+       * Did we initialize properly the Block ?
+       */
+      bool m_initialized;
+
+      /**
+       * Are we initializing the Block and if yes (non 0)
+       * at which step are we (number of next node to
+       * initialize in the allocation table)
+       */
+      unsigned int m_initializing;
+
+      /**
+       * Pointer to the raw shared memory block
+       * The mapping of the memory is as follows.
+       * of the Block is the following :
+       * \verbatim
+       *   Begin of Block
+       *     Head node of the Allocation Table
+       *     First nodes of the Allocation Table
+       *     Allocation Table
+       *     ClusterStatus Data
+       *     Available memory for nodes of the 2 tables
+       *   End of Block
+       * \endverbatim
+       */
+      void* m_sharedMemoryBlock;
 
       /**
        * map of free regions.
