@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2006/10/05 14:43:10 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2006/10/09 18:25:42 $ $Author: felixehm $
  *
  *
  *
@@ -214,14 +214,23 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq){
 
     _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
     struct stage_filequery_resp *responses;
-    int nbresps;
-    sreq->setFilesFailed(0);
+    int nbresps= 0;
+
+    RepackMonitor monitor(ptr_server);
+    FileListHelper filelisthelper(ptr_server->getNsName());
     sreq->setFilesMigrating(0);
-    sreq->setFilesStaging(0);
+
+    /** fake the original sreq */
+    RepackSubRequest* faked = new RepackSubRequest();
+    faked->setCuuid(sreq->cuuid());
+    faked->setVid(sreq->vid());
+    faked->setStatus(sreq->status());
+    /** we need the service class info in the original RepackRequest for staging */
+    faked->setRequestID(sreq->requestID()); 
+
     
     /** we only want to restart a repack for the files, which made problems 
-       (status in invalid) */
-    RepackMonitor monitor(ptr_server);
+        (status in invalid) and are still on the original tape */
     try {
       monitor.getStats(sreq, &responses, &nbresps);
     }catch (castor::exception::Exception ex){
@@ -230,38 +239,43 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq){
        castor::dlf::Param("Error Message", ex.getMessage().str() ),
        castor::dlf::Param("Responses", nbresps )};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 3, params);
-     return;
     }
-
-    /** fake the original sreq */
-    RepackSubRequest* faked = new RepackSubRequest();
-    faked->setCuuid(sreq->cuuid());
-    faked->setVid(sreq->vid());
-    faked->setStatus(sreq->status());
-    /** we need the service class info in the original repackRequest for staging */
-    faked->setRequestID(sreq->requestID()); 
-
-
-    /** add the files which are in invalid status.
-        we only add the fileid, because this used in the stage_files part to 
-        get the full pathname 
+    
+    /** if we got an answer for this cuuid, its means that the StageRepackRequest is
+        not over. We are not allowed to send a new Request, but to try to finish the
+        files in invalid.
     */
     for ( int i=0; i<nbresps; i++ ) {
-      if (responses[i].status == FILE_INVALID_STATUS){
+      if ( responses[i].status == FILE_INVALID_STATUS )
+      {
         RepackSegment* seg = new RepackSegment();
         seg->setFileid(responses[i].fileid);
         faked->addSegment(seg);
       }
     }
     free_filequery_resp(responses, nbresps);
+
+    /** next check: if there are no files in failed, staging or migrating, get the
+        remaining files on tape, they have to be submitted again */
+    if (   !faked->segment().size()    
+        && !sreq->filesMigrating()
+        && !sreq->filesStaging() ) 
+    {
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ALERT, 43, 0, NULL);
+      filelisthelper.getFileListSegs(faked);
+      filelisthelper.getFileListPathname(faked);
+    }
+
     
-    /** Are there files in invalid status ? */
+    /** Both checks obove returned no candidates-> fine, we're done */
     if ( !faked->segment().size() )
       sreq->setStatus(SUBREQUEST_DONE);
     else {
       stage_files(faked);
       sreq->setCuuid(faked->cuuid());
       sreq->setStatus(SUBREQUEST_STAGING);
+      sreq->setFilesFailed(faked->filesFailed());
+      sreq->setFilesStaging(faked->filesStaging());
     }
 
     faked->setRequestID(NULL);  /** set to NULL;just to be sure, it pointed to a foreign one */ 
