@@ -54,23 +54,25 @@ int main(int argc, char* argv[]) {
 
   try {
 
-    castor::IService* orasvc = castor::BaseObject::services()-> service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
-    if (0 == orasvc) {
-      // "Could Not get OraStagerSvc" message
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("ID", "37"),
-         castor::dlf::Param("Name", "SVC_ORASTAGERSVC")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 0, 2, params);
-      return -1;
-    }
-
-    castor::stager::IStagerSvc* myService = dynamic_cast<castor::stager::IStagerSvc*>(orasvc);
-    if (0 == myService) {
-      // "Could Not get OraStagerSvc" message
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("ID", "37"),
-         castor::dlf::Param("Name", "SVC_ORASTAGERSVC")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 0, 2, params);
+    castor::stager::IStagerSvc* myService;
+    try {
+      castor::IService* orasvc = castor::BaseObject::services()-> service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
+      if (0 == orasvc) {
+	std::cout << "Could Not get OraStagerSvc" << std::endl;
+	return -1;
+      }
+      
+      myService = dynamic_cast<castor::stager::IStagerSvc*>(orasvc);
+      if (0 == myService) {
+	std::cout << "Could Not cast OraStagerSvc into IStagerSvc" << std::endl;
+	return -1;
+      }
+      
+    } catch (castor::exception::Exception e) {
+      // up to now, we are not a daemon, so we log to std::cerr
+      std::cerr << "Exception caught problem to start the daemon :\n"
+		<< sstrerror(e.code()) << "\n"
+		<< e.getMessage().str() << std::endl;
       return -1;
     }
 

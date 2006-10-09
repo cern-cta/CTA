@@ -48,7 +48,7 @@ void castor::rmmaster::ClusterStatus::print(std::ostream& out) throw() {
     out << "No machine in shared memory" << std::endl;
     return;
   }
-  for (iterator it = this->begin(); it != this->end(); it++) {
+  for (iterator it = begin(); it != end(); it++) {
     out << it->first;
     it->second.print(out);
   }
