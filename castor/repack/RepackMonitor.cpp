@@ -114,7 +114,7 @@ namespace castor {
 int RepackMonitor::getStats(RepackSubRequest* sreq, 
                             struct stage_filequery_resp **responses,
                             int* nbresps) 
-throw (castor::exception::Internal)
+throw (castor::exception::Exception)
 {
    
   int rc;
@@ -142,9 +142,12 @@ throw (castor::exception::Internal)
                       nbresps,
                       &(opts));
 
-  if ( rc == -1 || (*responses)[0].errorCode == 22 ){
+  if ( rc == -1 || ( (*nbresps) == 1 && (**responses).errorCode == ENOENT || (**responses).errorCode ==EINVAL) )
+  {
     castor::exception::Exception ex(serrno);
-    ex.getMessage() << (*responses[0]).errorMessage << "(" << sstrerror(serrno) << ")";
+    if ( nbresps = 0 )
+      ex.getMessage() << "No responses recieved ";
+    ex.getMessage() << "(" <<sstrerror(serrno) << ")" << std::endl;
     throw ex;
   }
 }
@@ -174,8 +177,12 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
     castor::dlf::Param params[] =
     {castor::dlf::Param("Error Message", ex.getMessage().str() ),
     castor::dlf::Param("Responses", nbresps )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 2, params);
-    //if ( nbresps) free_filequery_resp(responses, nbresps);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 41, 2, params);
+    stage_trace(1,"No responses found for request %s. Assuming it is over. Set new status to CLEANUP. ", ex.getMessage().str().c_str() );
+    sreq->setFilesMigrating(0);
+    sreq->setFilesStaging(0);
+    sreq->setStatus(SUBREQUEST_READYFORCLEANUP);
+    m_dbhelper->updateSubRequest(sreq,false,cuuid);
     return;
   }
 
@@ -193,9 +200,7 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
       case FILE_STAGEOUT:    stageout_status++;break;
       case FILE_INVALID_STATUS: invalid_status++; break;
     }
-    //free_stager_response(&responses[i]);
   }
-  //free (responses);
 
   free_filequery_resp(responses, nbresps);
 
@@ -217,7 +222,7 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
     sreq->setFilesFailed( invalid_status );
     
     stage_trace(3,"Updating RepackSubRequest: Mig: %d\tStaging: %d\t Invalid %d\n",
-        sreq->filesMigrating(), sreq->filesStaging(),sreq->filesFailed() );  
+    sreq->filesMigrating(), sreq->filesStaging(),sreq->filesFailed() );  
 
 
     /// if we find migration candidates, we just change the status from staging, 

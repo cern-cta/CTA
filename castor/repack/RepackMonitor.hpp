@@ -63,7 +63,7 @@ namespace castor {
        */
       int RepackMonitor::getStats(RepackSubRequest* sreq, 
                             struct stage_filequery_resp **responses,
-                            int* nbresps)   throw (castor::exception::Internal);
+                            int* nbresps)   throw (castor::exception::Exception);
 
     private:
       DatabaseHelper* m_dbhelper;
