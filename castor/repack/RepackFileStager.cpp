@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2006/10/09 18:25:42 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2006/10/09 18:33:15 $ $Author: felixehm $
  *
  *
  *
@@ -263,7 +263,6 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq){
     {
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ALERT, 43, 0, NULL);
       filelisthelper.getFileListSegs(faked);
-      filelisthelper.getFileListPathname(faked);
     }
 
     
