@@ -1,6 +1,11 @@
 as oracle user:
 $ sqlplus "/ as sysdba"
 
+-- better output format in sqlplus
+set pagesize 500
+set linesize 500
+column columnname format a20  -- alphanumeric 20 chars max
+
 -- to create a new user:
 select * from dba_tablespaces;
 

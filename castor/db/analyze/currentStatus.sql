@@ -4,6 +4,10 @@
 -- are given in solutions.sql.                                         --
 -------------------------------------------------------------------------
 
+-- distribution of running subrequests per type
+-----------------------------------------------
+select type, count(*) from Id2Type, subrequest where subrequest.request = id2type.id and status <= 6 group by type;
+
 -- distribution of old subrequests (more than 10000s)
 -----------------------------------------------------
 select status, count(*) from subrequest where creationtime < getTime() - 10000 group by status;
