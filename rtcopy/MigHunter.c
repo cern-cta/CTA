@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.34 $ $Release$ $Date: 2006/10/04 15:35:14 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.35 $ $Release$ $Date: 2006/10/10 12:19:36 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.34 $ $Release$ $Date: 2006/10/04 15:35:14 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.35 $ $Release$ $Date: 2006/10/10 12:19:36 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -922,7 +922,9 @@ static int startStreams(
   u_signed64 sz;
   enum Cstager_StreamStatusCodes_t streamStatus;
   char *tapePoolName;
-  int rc, i, j, nbTapePools = 0, nbStreams = 0;
+  char *p = NULL, u64buf[22];
+  int rc, i, j, nbDrives = 0, nbTapePools = 0, nbStreams = 0;
+  u_signed64 initialSizeCeiling = 0, gettapeSize = 0;
   
   if ( svcClass == NULL ) {
     if ( runAsDaemon == 0 ) {
@@ -943,6 +945,7 @@ static int startStreams(
   }
 
   Cstager_SvcClass_tapePools(svcClass,&tapePoolArray,&nbTapePools);
+  Cstager_SvcClass_nbDrives(svcClass,&nbDrives);
   for ( i=0; i<nbTapePools; i++ ) {
     streamArray = NULL;
     Cstager_TapePool_streams(tapePoolArray[i],&streamArray,&nbStreams);
@@ -967,9 +970,19 @@ static int startStreams(
          * be a reasonable guess for the next vmgr_gettape()
          */
         if ( initialSizeToTransfer > 0 ) {
+          if ( (p = getconfent("MigHunter","SIZECEILING",1)) != NULL ) {
+            initialSizeCeiling = strutou64(p);
+            fprintf(stdout,"Use configured size ceiling %s\n",
+                    u64tostr(initialSizeCeiling,u64buf,-1));
+          }
+
+          gettapeSize = initialSizeToTransfer/(nbDrives>1 ? nbDrives : 1);
+          if ( (initialSizeCeiling>0) && (gettapeSize>initialSizeCeiling) ) {
+            gettapeSize = initialSizeCeiling;
+          }
           Cstager_Stream_setInitialSizeToTransfer(
                                                   streamArray[j],
-                                                  initialSizeToTransfer
+                                                  gettapeSize
                                                   );
         }
         iObj = Cstager_Stream_getIObject(streamArray[j]);
