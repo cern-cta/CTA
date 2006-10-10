@@ -2341,6 +2341,7 @@ struct rfiostat *infop;
    char        tmpbuf[21], tmpbuf2[21];
    struct stat filestat;
    int rc;
+   int ret;
 
 #if defined(_WIN32)
    struct thData *td;
@@ -2367,8 +2368,12 @@ struct rfiostat *infop;
 #endif   /* else HPSS */
    rcode = ( status < 0 ) ? errno : 0 ;
 
-   rfio_handle_close(handler_context, &filestat, rcode);
-   
+   ret=rfio_handle_close(handler_context, &filestat, rcode);
+   if (ret<0){
+      log(LOG_ERR, "srclose: rfio_handle_close failed\n");
+      return -1 ;
+      }
+
    /* Close the data socket */
    if (data_sock >= 0) {
 #if defined(_WIN32)

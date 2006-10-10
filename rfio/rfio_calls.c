@@ -2353,6 +2353,7 @@ struct rfiostat * infop ;
    char tmpbuf[21], tmpbuf2[21];
    struct stat filestat;
    int rc;
+   int ret;
 #if defined(_WIN32)
    struct thData *td;
    td = (struct thData*)TlsGetValue(tls_i);
@@ -2382,7 +2383,11 @@ struct rfiostat * infop ;
    }
    iobufsiz= 0 ;
 #endif /* HPSS */
-   rfio_handle_close(handler_context, &filestat, rcode);
+    ret=rfio_handle_close(handler_context, &filestat, rcode);
+    if (ret<0){
+      log(LOG_ERR, "srclose: rfio_handle_close failed\n");
+      return -1 ;
+      }
    p= rqstbuf ; 
    marshall_WORD(p,RQST_CLOSE) ;
    marshall_LONG(p,status) ;
@@ -4282,6 +4287,7 @@ struct rfiostat *infop;
    char tmpbuf[21], tmpbuf2[21];
    struct stat filestat;
    int rc;
+   int ret;
 
 #if defined(_WIN32)
    struct thData *td;
@@ -4308,7 +4314,11 @@ struct rfiostat *infop;
 #endif /* HPSS */
    rcode = ( status < 0 ) ? errno : 0 ;
 
-   rfio_handle_close(handler_context, &filestat, rcode);
+   ret=rfio_handle_close(handler_context, &filestat, rcode);
+   if (ret<0){
+      log(LOG_ERR, "srclose_v3: rfio_handle_close failed\n");
+      return -1 ;
+      }
 
 #if !defined(HPSS)
    /* Close data socket */
