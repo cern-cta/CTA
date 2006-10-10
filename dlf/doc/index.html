@@ -8,7 +8,7 @@
 <meta http-equiv="Cache-Control" content="no-cache" />
 <meta http-equiv="Default-Style" content="compact" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
-<!-- $Id: index.html,v 1.7 2006/09/25 11:44:56 waldron Exp $ -->
+<!-- $Id: index.html,v 1.8 2006/10/10 12:41:46 waldron Exp $ -->
 <title>Distributed Logging Facility - Documentation</title>
 <style type="text/css">
 
@@ -287,6 +287,8 @@ TR.subheader {
       </ol>
       <p><strong>Question: I've initialised my interface and forked my process to daemonise, but messages are no longer sent to the central server? </strong></p>
       <p><span class="style2">Answer:</span> The DLF library uses threads and shared memory structures protected by mutexes to connect to DLF servers. When a call to fork(2) is done after a call to dlf_init(3) those mutexes may not be in a valid state any longer causing the whole api to block. Also fork(2) only duplicates the memory area of its main calling thread and no other additional threads such as the DLF server transport threads. Therefore, the child process is configured but the threads are no longer present after a fork. The solution is to use the calls dlf_prepare(), dlf_child() and dlf_parent() during the forking phase. </p>
+      <p><strong>Question:</strong> My DLF server has lost its connection to its database and has not detected this, can it be recovered?</p>
+      <p><span class="style2">Answer:</span> DLF tries as best as possible to detect when a database connection has been dropped. Unfortunately and especially for the oracle interface sometimes strange error messages returned by oracle are not interrupted correctly and DLF does not acknowledge  a connection has been lost. To recover from this situation without restarting DLF you can send the DLF server process a SIGHUP command (kill -1 &lt;pid&gt;). This should be used as a last attempt solution to recover a dead connection!!!!  </p>
       <p><strong>Question: How do I import old data back into the DLF schema?</strong> (ORACLE ENTERPRISE EDITION ONLY) </p>
       <p><span class="style2">Answer:</span> DLF partitions its data on a daily basis and keeps 30 days online by default. After 30 days internal DLF plsql  procedures  automatically export the data to the database directory object  DLF_DATAPUMP_DIR. The location of the directory to which exports are exported can  be found by executing the query 'SELECT directory_path FROM dba_directories  WHERE directory_name = 'DLF_DATAPUMP_DIR';'.</p>
       <p>Depending on your backup solution this  directory maybe empty as the files may have been migrated to an external  storage system such as TSM (Tivoli Storage Manager) or into CASTOR. If this is  the case you will need to re-import the required files back on to a  file  system accessible by the DLF database. The files are named using the following  format: 'YYYYMMDD.dmp and YYYYMMDD.log'. E.g 20060920.dmp represents September 20th 2006. Each dmp file  presents 1 day of dlf logging data. Once you are happy that the files are  present or been restored from backup an import must be executed.</p>

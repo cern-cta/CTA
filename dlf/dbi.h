@@ -21,7 +21,7 @@
  * @file  dbi.h
  * @brief database interface layer
  *
- * $Id: dbi.h,v 1.4 2006/08/21 06:41:49 waldron Exp $
+ * $Id: dbi.h,v 1.5 2006/10/10 12:41:46 waldron Exp $
  */
 
 #ifndef _DBI_H
@@ -75,6 +75,20 @@ EXTERN_C int DLL_DECL db_init _PROTO((int threads));
  */
 
 EXTERN_C int DLL_DECL db_shutdown _PROTO((void));
+
+
+/**
+ * Reset the active status of all database connections. This will force the database threads to reset 
+ * themselves and attempt a reconnection to the database. 
+ *
+ * @returns     : APP_SUCCESS on success
+ * @returns     : APR_FAILURE on failure
+ *
+ * @note this function should not be used lightly! It should only be used to recover a dlf server which
+ * hash not recognised its database connection has been lost.
+ */
+
+EXTERN_C int DLL_DECL db_reset _PROTO((void));
 
 
 /**

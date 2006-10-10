@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: server.c,v 1.9 2006/09/19 12:47:15 waldron Exp $
+ * $Id: server.c,v 1.10 2006/10/10 12:41:46 waldron Exp $
  */
 
 /* headers */
@@ -319,6 +319,11 @@ void signal_handler(void *arg) {
 		}
 		case SIGCONT: break;
 		case SIGSTOP: break;
+		case SIGHUP: {
+			log(LOG_NOTICE, "Caught SIGHUP - resetting database connections\n");
+			db_reset();
+			break;
+		}
 		default: {
 			log(LOG_NOTICE, "Caught signal %d - ignored\n", signal);
 			break;

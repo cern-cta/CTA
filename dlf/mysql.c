@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.c,v 1.7 2006/08/21 06:41:49 waldron Exp $
+ * $Id: mysql.c,v 1.8 2006/10/10 12:41:46 waldron Exp $
  */
 
 /* headers */
@@ -391,6 +391,26 @@ int DLL_DECL db_shutdown(void) {
 	/* destroy hashes */
 	hash_destroy(hosthash,   NULL);
 	hash_destroy(nshosthash, NULL);
+
+	return APP_SUCCESS;
+}
+
+
+/*
+ * db_reset
+ */
+
+int DLL_DECL db_reset(void) {
+
+	/* variables */
+	int       i;
+
+	/* reset the active state of all threads */
+	for (i = 0; i < MAX_THREADS; i++) {
+		if (dpool[i] == NULL)
+			continue;
+		ClrConnected(dpool[i]->mode);			
+	}	
 
 	return APP_SUCCESS;
 }
