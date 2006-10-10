@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.10 $ $Date: 2005/01/20 16:31:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.11 $ $Date: 2006/10/10 14:16:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -26,6 +26,8 @@ static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.10 $ $Date: 20
 #else
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
+#include <linux/version.h>
+#include <sys/utsname.h>
 #endif
 #endif
 #include "Ctape.h"
@@ -43,6 +45,11 @@ int n;
 	char *msgaddr;
 	struct mtop mtop;
 	int tobeskipped;
+    static struct utsname un;
+    int major = 0; 
+    int minor = 0; 
+    int patch = 0; 
+    int nr = 0;
 
 	ENTRY (skiptpfff);
 	mtop.mt_op = MTFSF;	/* skip n files forward */
@@ -59,10 +66,21 @@ int n;
 				errcat = gettperror (tapefd, path, &msgaddr);
 #if defined(__alpha) && defined(__osf__) && ! defined(DUXV4)
 				if (errcat == ETNOSNS)
+                   RETURN (tobeskipped - count + mt_rescnt);
+#elif defined(linux) 
+                uname(&un);
+                nr = sscanf(un.release, "%d.%d.%d", &major, &minor, &patch);
+                if (nr == 3 && major == 2) {
+                  if ((minor >= 6) && ((errcat == ETBLANK) || (errcat == ETNOSNS))) {
+                     RETURN (tobeskipped - count + mt_rescnt);
+                  } else if ((minor < 6) && (errcat == ETBLANK)) {
+                     RETURN (tobeskipped - count + mt_rescnt);
+                  }
+                }
 #else
 				if (errcat == ETBLANK)
+                   RETURN (tobeskipped - count + mt_rescnt);
 #endif
-					RETURN (tobeskipped - count + mt_rescnt);
 			} else
 				msgaddr = strerror(errno);
 			serrno = errno;

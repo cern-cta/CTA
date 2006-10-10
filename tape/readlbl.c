@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.11 $ $Date: 2005/01/20 16:31:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.12 $ $Date: 2006/10/10 14:16:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	readlbl - read one possible label record */
@@ -17,6 +17,10 @@ static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.11 $ $Date: 200
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
+#if defined(linux)
+#include <sys/mtio.h>
+#include <sys/utsname.h>
+#endif
 #include "Ctape.h"
 #include "serrno.h"
 readlbl(tapefd, path, lblbuf)
@@ -29,6 +33,15 @@ char *lblbuf;
 	char *msgaddr;
 	int n;
 	int rc;
+    int c;
+#if defined(linux) 
+    struct mtget mt_info;
+    static struct utsname un;
+    int major = 0;
+    int minor = 0;
+    int patch = 0;
+    int nr = 0;
+#endif
 
 	ENTRY (readlbl);
 	if ((n = read (tapefd, lblbuf, LBLBUFSZ)) < 0) {
@@ -77,6 +90,20 @@ char *lblbuf;
 		}
 	}
 	if (n == 0) {
+#if defined(linux) 
+        /* try first to determine blank tape via st macro for 2.6 kernels */
+        uname(&un);
+        nr = sscanf(un.release, "%d.%d.%d", &major, &minor, &patch);
+        if (nr == 3 && major == 2) {
+          if (minor >= 6) {
+            if (ioctl (tapefd, MTIOCGET, &mt_info) >= 0) {
+              if (GMT_EOD(mt_info.mt_gstat))
+                 RETURN(3);	/* blank tape - end of data */
+            }
+          }
+        } 
+#endif
+
 #if defined(sun) || defined(linux)
 		if (gettperror (tapefd, path, &msgaddr) == ETBLANK)
 			RETURN (3);	/* blank tape */
