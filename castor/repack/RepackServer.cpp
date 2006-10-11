@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2006/10/05 08:26:51 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2006/10/11 17:43:08 $ $Author: felixehm $
  *
  *
  *
@@ -51,10 +51,8 @@ int main(int argc, char *argv[]) {
     /// The Repack File Checker
     server.addThreadPool(
       new castor::server::SignalThreadPool("checker",
-                                            new castor::repack::RepackCleaner(&server),
-                                            0,
-                                            10
-                                          ));
+                                            new castor::repack::RepackFileChecker(&server)
+                                             ));
     server.getThreadPool('c')->setNbThreads(1);
 
     /// The Repack File Stager Instance
@@ -169,6 +167,8 @@ castor::repack::RepackServer::RepackServer() :
      {40, "RepackMonitor: Changing status"},
      {41, "Stager query failed"},
      {42, "RepackMonitor: Files in invalid status found"},
+     {43, "Will continue to send new RepackRequest for remaining files"},
+     {44, "There are still files in staging/migrating. Restart abort"},
      {45, "RepackFileStager: File has already a STAGED diskcopy. To be restarted later"},
      {46, "FileListHelper: Found same file twice on tape" },
      {99, "TODO::MESSAGE"},
