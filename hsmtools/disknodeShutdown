@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 # 
 # This program is for removing castor disk nodes from production for 
 # intervention. It should be run from one of the castoradm nodes under a 
@@ -8,7 +8,7 @@
 
 # author         : alasdair.earl@cern.ch 
 # first released : 15/12/2005 
-# last change    : 6/02/06
+# last change    : 9/10/06
 
 use strict;
 use POSIX qw(setsid);
@@ -20,24 +20,24 @@ use vars qw/ %opt /;
 
 =head1 NAME
 
-disknodeShutdown - migrates files off a disk server node in Castor for shutdown. This version deals with multiple nodes.
+disknodeShutdown - migrates files off a disk server node in Castor for
+shutdown. This version deals with multiple nodes. Files are checked at
+conclusion for sucessful migration and summary presented.
 
 =head1 SYNOPSIS
 
-This program is used to move a node from its current to the Recovery pool, generate a list 
-of files it contains and migrate these as necessary. The node is then available to be 
-physically powered down for intervention.
+This program is used to move a node from its current to the Recovery
+pool, generate a list  of files it contains and migrate these as
+necessary. The node is then available to be  physically powered down
+for intervention.
 
 =head1 DESCRIPTION
 
-disknodeShutdown can (must) be run from a user account on the castoradm nodes with 
-various command line arguments. This moves the specified node from the production svcclass 
-to recovery and then migrates valid files from the node to others. It is then possible to 
-shutdown the node without effecting the rest of the Castor system. 
-
-It is possible to run disknodeShutdown in a "dummy mode" which generates the list of 
-files which need migrating from the node but without moving the node's service class or 
-actually migrating any files.
+disknodeShutdown can (must) be run from a user account on the
+castoradm nodes with  various command line arguments. This moves the
+specified node from the production svcclass  to recovery and then
+migrates valid files from the node to others. It is then possible to
+shutdown the node without effecting the rest of the Castor system.
 
 =head2 Command Line Options
 
@@ -51,9 +51,6 @@ actually migrating any files.
 
 
 =item -m <email>	additional email address to send messages to
-
-
-=item -d		dummy mode. Provides a dry run of what would happen without changing node or files.
 
 
 =item -h		provides help on usage
@@ -79,23 +76,15 @@ Support for partially completed lists.
 
 ########################### Variables ########################################
 
- my $DUMMY_MODE = 0;    # the secret don't do anything mode 
-                        # which should be set to 0 for release version
- 
- my $DUMMY_MSG = "DUMMY MODE : ";
+ my $DELAY      = 60;                              #delay between checks of the node for monitoring progress
+ my $DEF_EMAIL  = "castor-operations\@cern.ch";    #default email address for status
 
- my $DELAY = 60;       #delay between checks of the node for monitoring progress
- my $DEF_EMAIL = "castor-operations\@cern.ch";    #default email address for status
 
- my $MSG1 = "ShutdownDiskServer has set the node : "; 
- my $MSG2 = " to DOWN and is draining it"; 
- my $SUBJECT = "Disk Server Node Shutdown Alert"; 
- 
  my $USER_EMAIL;
  my @NODES;
  my $NODE;
  my $SVCCLASS;
- my $VALUES = "DISKCOPY_STAGED|DISKCOPY_CANBEMIGR";
+ my $VALUES = 'DISKCOPY_CANBEMIGR';
 
  my $count = 0;
 
@@ -109,17 +98,15 @@ sub init_vars()
 #################################################################################
     {
         use Getopt::Std;
-        my $opt_string = 'dhn:s:a:m:v:';
+        my $opt_string = 'hn:s:a:m:v:';
         getopts( "$opt_string", \%opt ) or usage();
         usage() if $opt{h};
-        $DUMMY_MODE = 1 if $opt{d};
 	@NODES       = split / /,$opt{n} if $opt{n};
 	$SVCCLASS   = $opt{s} if $opt{s};
 	$DEF_EMAIL  = $opt{a} if $opt{a};
 	$USER_EMAIL = $opt{m} if $opt{m};
 	$VALUES     = $opt{v} if $opt{v} 
   }#end init_vars
-
 
 #################################################################################
 #sub usage() 
@@ -159,46 +146,25 @@ sub send_email ()
 #################################################################################
 {
     foreach $NODE (@NODES){
-     if (!$DUMMY_MODE) {
-        if (!$USER_EMAIL){
-            `echo $MSG1 . $NODE . $MSG2 | mail -s \"$SUBJECT\" $DEF_EMAIL`;
-        } else{
-            `echo $MSG1 . $NODE . $MSG2 | mail -s \"$SUBJECT\" $DEF_EMAIL -c $USER_EMAIL`;
-        }
-     } else {
-     	 if (!$USER_EMAIL){
-            print $DUMMY_MSG . "mail message : \"$MSG1 . $NODE . $MSG2 | mail -s \"$SUBJECT\" $DEF_EMAIL\"\n\n";
-        } else{
-            print $DUMMY_MSG . "mail message : \"$MSG1 . $NODE . $MSG2 | mail -s \"$SUBJECT\" $DEF_EMAIL -c $USER_EMAIL\"\n\n";
-        }
-     }#end else email
+
+    my $message ="### This is an automatic mail. Please do not reply. ###\n\n";
+    $message .="disknodeShutdown has set the node $NODE to DOWN and is draining it\n\n";
+    $message .="\n\nRegards,\n\ndisknodeShutdown\n";
+
+    open (SENDMAIL, "| /usr/sbin/sendmail -t -oi -f disknodeShutdown\@spam.cern.ch");
+print SENDMAIL <<End_of_Mail;
+To: $DEF_EMAIL
+Cc: $USER_EMAIL
+Reply-to:disknodeShutdown\@cern.ch
+Subject: Server being taken out of production
+$message
+End_of_Mail
+close(SENDMAIL);
+  
+
      }#end foreach node
+
 }#end send_email
-
-
-#################################################################################
-# sub dummy_mode_msg()
-# INPUT  : none 
-# OUTPUT : none
-#
-#
-sub dummy_mode_msg()
-#################################################################################
-{
-     if ($DUMMY_MODE) {
-         print "\n\n##################################################################################################\n\n";
-	 print "You have now entered dummy mode of the disk server intervention software.\n";
-         print "No commands which change things will be issued BUT we will check if the node is reachable and its status\n\n";
-         print "Email option set to : ";
-	 if ($USER_EMAIL) { 
-	     print $USER_EMAIL . " and " . $DEF_EMAIL . "\n\n"; 
-	 }
-	 else {
-	     print $DEF_EMAIL . "\n\n";
-	 }
-	 print "##################################################################################################\n\n";
-     }
-}#end dummy_mode_msg
 
 #################################################################################
 # sub wait_for_input()
@@ -210,25 +176,22 @@ sub dummy_mode_msg()
 sub wait_for_input()
 #################################################################################
 {
-        my $data = "";
-
-        do {
-                print "Please enter y(es) to continue or q(uit) to quit program and then enter.\n";
-                chomp ($data = <STDIN>);
-        }while ($data !~ m/(y|yes|q|quit)$/i);
-
-        if ($data =~ m/(y|yes)$/i) { return 1; }
-
-        if ($data =~ m/(quit|q)$/i) { exit; }
-
-}#end wait_for_input()
+  my $data = "";
+  do {
+    print "Please enter y(es) to continue or q(uit) to quit program and then enter.\n";
+    chomp ($data = <STDIN>);
+  }while ($data !~ m/^(y|yes|q|quit)$/i);
+  if ($data =~ m/^(y|yes)$/i) { return 1; }
+  if ($data =~ m/^(quit|q)$/i) { exit; }
+}
 
 #################################################################################
 # sub check_progress () 
 # INPUT  :
 # OUTPUT :
 #
-#
+# todo nsls
+
 sub check_progress () {
 #################################################################################
 	my @ary = @_;    
@@ -237,57 +200,97 @@ sub check_progress () {
                 
 	for ($i =0; $i <= $#ary; $i++) {
 
-	  open (CHECK, "stager_qry -M `nsGetPath castorns $ary[$i]` 2>&1 |");
+	  open (CHECK, "stager_qry -S $SVCCLASS  -M `nsGetPath castorns $ary[$i]` 2>&1 |");
+
 	  while (<CHECK>) {
  		print $_;
- 		if ($_ =~ m/(STAGED$|CANBEMIGR$)/i ){ print $_; $total++;}
-		if ($_ =~ m/No\ such\ file\ or\ directory/i){ print $_; $total++;}
+ 		if ($_ =~ m/($VALUES|CANBE_MIGRATED|STAGED)/i ){ print $_; $total++;}
+		#if ($_ =~ m/No\ such\ file\ or\ directory/i){ print $_; $total++;}
 	  }
+	  close(CHECK);
 	}
 
-	if ($total != 10) { print $total . "\n"; sleep (60);} else { sleep(2); }
+	if ($total != 10) { 
+	    print $total . "\n"; 
+	    sleep ($DELAY);
+	} else { sleep(2); }
+
 	return $total;
 }
 
 
 #################################################################################
-# INPUT  : none
+# INPUT  : node name
 # OUTPUT : filename as string
 #
+# This produced a file in the format  - FileID State localpath castorpath
 #
-sub create_file ($) {
+sub create_file () {
 #################################################################################
 
-    my ($NODE) = @_[0];
+    my ($NODE) = shift;
     my ($line);	
     my $file = "/tmp/recov.$NODE" . time();
+    my $count = 0;
 
     print "Creating file to contain list of files to move.\n"; 
 
-    open (TOUCH, "touch $file |"); close (TOUCH);
+    system("/bin/touch $file");
 
     print "Creating a list of files to move - this should not take long\n";
 
     open(FILE, ">$file") or die "Problem opening file $file for writing\n";
 
-    open(CMD, "diskServer_qry -i $NODE | egrep '$VALUES' | awk \'{print \$1}\' |");
+    open(CMD, "diskServer_qry -i $NODE |"); # egrep '$VALUES' | awk \'{print \$1}\' |");
+    <CMD>;
 
-        while ($line = <CMD>) {
-		chomp($line);
-        	open(X, "nsGetPath castorns $line |");
-		print FILE $line . " " . <X>;
+        foreach (<CMD>) { #was while ($line = <CMD>) {
+		chomp;
+		next if /^FileId/;
+		next if ! /($VALUES)/;
+                my @line = split (/\s+/);
+        	open(X, "nsGetPath castorns $line[0] |");
+		print FILE $_ . " ". <X>;
 		$count++;
 		if ($count % 100 == 0) {print ".";}
 		if ($count % 1000 == 0) {print " $count files processed.\n";}
         }
-
     close(CMD);
     close(FILE);
-    print "\n";
+    print "List of files to move has been created with $count entries.\n";
 
     return $file;
 }
 
+#################################################################################
+# sub final_check
+#
+#
+#
+#################################################################################
+
+sub final_check() {
+    my $node = shift;
+    my $file = shift;
+
+    open (F, $file) or die "Unable to open $file for final check";
+
+
+    foreach (<F>) {
+	my @tmp = split(/\s+/);
+
+	open (X, "/usr/bin/stager_qry -S $SVCCLASS -M 'nsGetPath $tmp[0]' |");
+	foreach (<X>) {
+	    chomp;
+	    next if /^Received/;
+	    last if /(CANBEMIGR|STAGED)/;
+	    print "Problem with $tmp[2]";
+	}
+
+	close (X);
+    }
+    close (F);
+}
 #################################################################################
 # sub TransferManager()
 # process to transfer files off the node
@@ -297,10 +300,10 @@ sub create_file ($) {
 #      notes: log into castorscheduler and run bhoststo get current status
 #
 #
-sub TransferManager($)
+sub TransferManager()
 #################################################################################
 {
-    my ($NODE) = @_[0];
+    my ($NODE) = shift;
     my @working_files; 		#an array of the files currently being worked on
     my $file;			#file name for list of files on node
     my $active_transfers = 0;
@@ -310,47 +313,35 @@ sub TransferManager($)
     $file = &create_file($NODE);
 
     open(FILE, $file) or die "Problem opening file $file for reading\n";
-    print "List of files to move has been created with $count entries. Do you want to start the transfer?.\n"; 
+    print "Do you want to start the transfer?.\n"; 
     &wait_for_input();
    
     $active = 0;
     foreach (<FILE>){
-	my ($ID, $URL) = split / /, $_;
+      my ($ID, $LOCAL, $Notsure, $URL) = split /\s+/, $_;
 
-	if ($active < 10) {
+      if ($active < 10) {
+        open(EXECUTE, "stager_get -S $SVCCLASS -M $URL |"); 
+        $working_files[$active++] = $ID;
+	print <EXECUTE>; 
+        close (EXECUTE);
+      } else {
+	print "End of 10 file ops. Checking progress before continuing.\n";
+	do { 
+	  $active_transfers = &check_progress(@working_files); 
+	} while ($active_transfers != 10); 
+	
+	$active = 0;	
+	$total_done += 10;
+	print "$total_done files of $count processed. \n"; 
+	   
+      } #end else COUNT !=10
 
-	    if ( !$DUMMY_MODE ) { 
-		open(EXECUTE, "stager_get -U recovery -S $SVCCLASS -M $URL |"); 
-                $working_files[$active++] = $ID;
-		print <EXECUTE>; 
-                close (EXECUTE);
-            }
-	    else { 
-		print $DUMMY_MSG . "stager_get -U recovery -S $SVCCLASS -M $URL"; 
-                $working_files[$active++] = $ID;
-	    }
-
-        } else {
-            if ( !$DUMMY_MODE ) {
-		print "End of 10 file ops. Checking progress before continuing.\n";
-		do { 
-			$active_transfers = &check_progress(@working_files); 
-		} while ($active_transfers != 10); 
-		$active = 0;	
-		$total_done += 10;
-		print "$total_done files of $count processed. \n"; 
-	    } else {
-		print $DUMMY_MSG . "End of 10 file ops. Checking progress before continuing.\n";
-                &check_progress(@working_files);  
-		do { 
-			$active_transfers = &check_progress(@working_files); 
-		} while ($active_transfers != 10); 
-		$active = 0;
-		$total_done += 10;
-		print "$total_done files of $count processed. \n"; 
-	    }
-        } #end else COUNT !=10
     }#END FOREACH
+    close(FILE);
+
+    &final_check($NODE, $file);
+
     print "Finished!\n";
     return; #RETURN TO MAIN
 
@@ -364,48 +355,40 @@ sub TransferManager($)
 #       execute on the command line wasn't translating the variables to their value
 #       This was the best work around we could find. 
 
+
      &init_vars();                 #sort out the getopts arguments for node name and email addresses
-     &dummy_mode_msg();	
 
-     if (!@NODES){ print "You need to supply the name of a node to be taken out of service.\n"; exit;} 
 
-     if ($USER_EMAIL && $USER_EMAIL !~ /@/) { print "Your email address - $USER_EMAIL - needs an \@ somewhere.\n"; exit;} 	
+  for (0 .. $#NODES){ $NODES[$_] =~ tr/A-Z/a-z/; }
+  $USER_EMAIL =~ s/@/\\@/;
 
-     if ($DEF_EMAIL !~ /@/) { print "Your email address - $DEF_EMAIL - needs an \@ somewhere!\n"; exit;}
+  if (!@NODES){ print "You need to supply the name of a node to be taken out of service.\n"; exit;} 
+  if ($USER_EMAIL && $USER_EMAIL !~ /@/) { print "Your email address - $USER_EMAIL - needs an \@ somewhere.\n"; exit;} 	
+  if ($DEF_EMAIL !~ /@/) { print "Your email address - $DEF_EMAIL - needs an \@ somewhere!\n"; exit;}
 
-     if (!$DUMMY_MODE) {
+  foreach $NODE (@NODES){
 
-	if (-e "/etc/sysconfig/castor") {`source /etc/sysconfig/castor`;} 
-	else {print "Unable to find \"/etc/sysconfig/castor\". Continuing but you may need to do this by hand.\n";}
+    open(JUNKVAL, "diskServer_qry $NODE | egrep 'DISKCOPY_WAIT|DISKCOPY_STAGEOUT' |"); close (JUNKVAL); 
 
-	foreach $NODE (@NODES){
+    print "If there are active transfers for $NODE please decide if you wish to continue.\n";	
+    &wait_for_input();		
 
-        open(JUNKVAL, "diskServer_qry $NODE | egrep 'DISKCOPY_WAIT|DISKCOPY_STAGEOUT' |"); close (JUNKVAL); 
-	print "If there are active transfers for $NODE please decide if you wish to continue.\n";	
-	&wait_for_input();		
-	print "Moving $NODE to recovery pool.\n";
-        open(JUNKVAL, "moveDiskServer recovery $NODE |"); close (JUNKVAL); 	
-	print "$NODE has been moved to recovery.\n";
+    print "Moving $NODE to recovery pool.\n";
+  
+    if (system("/usr/bin/moveDiskServer recovery $NODE") == 0) {
+#          if !~ /has been moved to recovery/ exit
+       print "$NODE has been moved to recovery.\n";
+    } else {
+       print "Failed to move $NODE to recovery. Now exiting.\n";
+       exit;
+    }
 
-        }#end foreach
-	}
-     else {
+  }#end foreach
 
-	 print $DUMMY_MSG . "source /etc/sysconfig/castor\n";
-	 foreach $NODE (@NODES){
+  &send_email();	
 
-	   print $DUMMY_MSG . "Moving $NODE to recovery pool.\n";
-	   print $DUMMY_MSG . "moveDiskServer recovery $NODE\n";
-  	   print $DUMMY_MSG . "$NODE has been moved to recovery. Querying open files.\n";
-	   print $DUMMY_MSG . "diskServer_qry $NODE | egrep 'DISKCOPY_WAIT|DISKCOPY_STAGEOUT'\n";
- 	   print "If there are active transfers please decide if you wish to continue.\n";
-	   &wait_for_input();		
-         }#end foreach nodes
-     }
+  foreach (@NODES) {	
+    &TransferManager($_); #now start transfering file
+  }
 
-     &send_email();	
-
-     foreach (@NODES) {	
-        &TransferManager($_); #now start transfering files
-     }
-    1;
+  1;
