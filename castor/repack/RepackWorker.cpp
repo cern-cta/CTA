@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2006/10/03 14:25:06 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2006/10/11 17:41:49 $ $Author: felixehm $
  *
  *
  *
@@ -285,7 +285,7 @@ void RepackWorker::archiveSubRequests(RepackRequest* rreq) throw (castor::except
 //------------------------------------------------------------------------------
 void RepackWorker::restart(RepackRequest* rreq) throw (castor::exception::Internal)
 {   
-
+    /** more than one tape can be restarted at once */
     std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
     
     while ( tape != rreq->subRequest().end() ){
@@ -301,6 +301,13 @@ void RepackWorker::restart(RepackRequest* rreq) throw (castor::exception::Intern
           castor::exception::Internal ex;
           ex.getMessage() << "This Tape is already archived (" << tmp->vid() << ")" 
                           << std::endl;
+          delete tmp;
+          throw ex;
+        }
+        if ( tmp->filesMigrating() || tmp->filesStaging() ){
+          castor::exception::Internal ex;
+          ex.getMessage() << "There are still files staging/migrating, Restart abort." <<std::endl;
+          delete tmp;
           throw ex;
         }
         tmp->setStatus(SUBREQUEST_RESTART);

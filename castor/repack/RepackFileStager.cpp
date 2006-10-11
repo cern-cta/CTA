@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2006/10/09 18:33:15 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2006/10/11 17:41:49 $ $Author: felixehm $
  *
  *
  *
@@ -177,10 +177,10 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
 	try {
       failed = sendStagerRepackRequest(&req, &reqId, &opts);
 	}catch (castor::exception::Exception ex){
-    for (int i=0; i<req.subRequests().size(); i++)
+    for (int i=0; i<req.subRequests().size(); i++)  
       delete req.subRequests().at(i);
     req.subRequests().clear();
-		
+
     castor::dlf::Param params[] =
 		{castor::dlf::Param("Standard Message", sstrerror(ex.code())),
 		 castor::dlf::Param("Precise Message", ex.getMessage().str())};
@@ -218,7 +218,7 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq){
 
     RepackMonitor monitor(ptr_server);
     FileListHelper filelisthelper(ptr_server->getNsName());
-    sreq->setFilesMigrating(0);
+
 
     /** fake the original sreq */
     RepackSubRequest* faked = new RepackSubRequest();
@@ -264,29 +264,32 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq){
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ALERT, 43, 0, NULL);
       filelisthelper.getFileListSegs(faked);
     }
-
+    else {
+      stage_trace(1,"There are still files to be staging/migrating, restart abort!");
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 44, 0, NULL);
+      sreq->setStatus(SUBREQUEST_STAGING);
+      m_dbhelper->updateSubRequest(sreq,false,cuuid);
+    }
     
     /** Both checks obove returned no candidates-> fine, we're done */
     if ( !faked->segment().size() )
       sreq->setStatus(SUBREQUEST_DONE);
     else {
+      sreq->setFilesMigrating(0);
       stage_files(faked);
       sreq->setCuuid(faked->cuuid());
       sreq->setStatus(SUBREQUEST_STAGING);
       sreq->setFilesFailed(faked->filesFailed());
       sreq->setFilesStaging(faked->filesStaging());
-    }
+      /** do not remove or update the segment information */ 
+      m_dbhelper->updateSubRequest(sreq,false,cuuid);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 25, 0, NULL); 
+   }
 
     faked->setRequestID(NULL);  /** set to NULL;just to be sure, it pointed to a foreign one */ 
 
     freeRepackObj(faked);  /** we know that there is no RepackRequest for 
                               the faked one, so we can delete it directly */
-    
-    /** do not remove or update the segment information */ 
-    m_dbhelper->updateSubRequest(sreq,false,cuuid);
-
-    stage_trace(2,"File are sent to stager, repack request updated.");
-    castor::dlf::dlf_writep(stringtoCuuid(sreq->cuuid()), DLF_LVL_DEBUG, 25, 0, NULL);
 }
 
 
