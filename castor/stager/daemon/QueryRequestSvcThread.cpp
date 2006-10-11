@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.46 2006/10/04 15:10:15 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.47 2006/10/11 16:27:51 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.46 $ $Date: 2006/10/04 15:10:15 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.47 $ $Date: 2006/10/11 16:27:51 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -290,7 +290,10 @@ namespace castor {
 
         if(result == 0 || result->size() == 0) {   // sanity check, result always is != 0
           castor::exception::Exception e(ENOENT);
-          e.getMessage() << "File " << fileName << " not in stager";
+          if(svcClassId > 0)
+            e.getMessage() << "File " << fileName << " not in given svcClass";
+          else
+            e.getMessage() << "File " << fileName << " not in stager";
           if(result != 0)
             delete result;
           throw e;
@@ -331,7 +334,7 @@ namespace castor {
             std::ostringstream sst;
             sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
             res.setFileName(sst.str());
-	    res.setFileId(fileid);
+            res.setFileId(fileid);
           }
 
           /* Preparing the response */
@@ -377,7 +380,10 @@ namespace castor {
 
         if(result == 0 || result->size() != 1) {   // sanity check, result.size() must be == 1
           castor::exception::Exception e(ENOENT);
-          e.getMessage() << "File " << fid << "@" << nshost << " not in stager";
+          if(svcClassId > 0)
+            e.getMessage() << "File " << fid << "@" << nshost << " not in given svcClass";
+          else
+            e.getMessage() << "File " << fid << "@" << nshost << " not in stager";
           if(result != 0)
             delete result;
           throw e;
@@ -402,15 +408,8 @@ namespace castor {
         /*castor::stager::DiskCopyInfo* diskcopy = *result->begin();
         bool foundDiskCopy = false;*/
         
-	setFileResponseStatus(&res, diskcopy, foundDiskCopy);
-
-        // INVALID status is like nothing
-        if (res.status() == FILE_INVALID_STATUS) {
-          castor::exception::Exception e(ENOENT);
-          e.getMessage() << "File " << fid << "@"
-                         << nshost << " not in stager";
-          throw e;
-        }
+        // compute the status; INVALID is taken into account too
+        setFileResponseStatus(&res, diskcopy, foundDiskCopy);
 
         /* Sending the response */
         /* -------------------- */
@@ -492,7 +491,7 @@ namespace castor {
             std::ostringstream sst;
             sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
             res.setFileName(sst.str());
-	    res.setFileId(diskcopy->fileId());
+            res.setFileId(diskcopy->fileId());
           }
 
           /* Preparing the response */
