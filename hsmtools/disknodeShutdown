@@ -77,7 +77,7 @@ Support for partially completed lists.
 ########################### Variables ########################################
 
  my $DELAY      = 60;                              #delay between checks of the node for monitoring progress
- my $DEF_EMAIL  = "castor-operations\@cern.ch";    #default email address for status
+ my $DEF_EMAIL  = 'castor-operations@cern.ch';    #default email address for status
 
 
  my $USER_EMAIL;
@@ -360,7 +360,7 @@ sub TransferManager()
 
 
   for (0 .. $#NODES){ $NODES[$_] =~ tr/A-Z/a-z/; }
-  $USER_EMAIL =~ s/@/\\@/;
+#  $USER_EMAIL =~ s/@/\\@/;
 
   if (!@NODES){ print "You need to supply the name of a node to be taken out of service.\n"; exit;} 
   if ($USER_EMAIL && $USER_EMAIL !~ /@/) { print "Your email address - $USER_EMAIL - needs an \@ somewhere.\n"; exit;} 	
