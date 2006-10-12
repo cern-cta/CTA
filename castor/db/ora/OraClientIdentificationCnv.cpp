@@ -315,7 +315,7 @@ void castor::db::ora::OraClientIdentificationCnv::createRep(castor::IAddress* ad
                           << "and id was " << obj->id() << std::endl;;
           throw ex;
         }
-}
+      }
 
       //------------------------------------------------------------------------
       // createObj

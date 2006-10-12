@@ -514,7 +514,7 @@ void castor::db::ora::OraFiles2DeleteCnv::createRep(castor::IAddress* address,
                           << "and id was " << obj->id() << std::endl;;
           throw ex;
         }
-}
+      }
 
       //------------------------------------------------------------------------
       // createObj

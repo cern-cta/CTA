@@ -376,7 +376,7 @@ void castor::db::ora::OraQueryParameterCnv::createRep(castor::IAddress* address,
                           << "and id was " << obj->id() << std::endl;;
           throw ex;
         }
-}
+      }
 
       //------------------------------------------------------------------------
       // createObj

@@ -517,7 +517,7 @@ void castor::db::ora::OraMoverCloseRequestCnv::createRep(castor::IAddress* addre
                           << "and id was " << obj->id() << std::endl;;
           throw ex;
         }
-}
+      }
 
       //------------------------------------------------------------------------
       // createObj

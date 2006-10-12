@@ -732,7 +732,7 @@ void castor::db::ora::OraTapeCnv::createRep(castor::IAddress* address,
                           << "and id was " << obj->id() << std::endl;;
           throw ex;
         }
-}
+      }
 
       //------------------------------------------------------------------------
       // createObj

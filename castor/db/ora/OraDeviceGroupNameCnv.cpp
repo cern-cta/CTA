@@ -303,7 +303,7 @@ void castor::db::ora::OraDeviceGroupNameCnv::createRep(castor::IAddress* address
                           << "and id was " << obj->id() << std::endl;;
           throw ex;
         }
-}
+      }
 
       //------------------------------------------------------------------------
       // createObj

@@ -303,7 +303,7 @@ void castor::db::ora::OraGCLocalFileCnv::createRep(castor::IAddress* address,
                           << "and id was " << obj->id() << std::endl;;
           throw ex;
         }
-}
+      }
 
       //------------------------------------------------------------------------
       // createObj

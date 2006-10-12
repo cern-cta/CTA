@@ -633,7 +633,7 @@ void castor::db::ora::OraStageUpdateRequestCnv::createRep(castor::IAddress* addr
                           << "and id was " << obj->id() << std::endl;;
           throw ex;
         }
-}
+      }
 
       //------------------------------------------------------------------------
       // createObj

@@ -417,7 +417,7 @@ void castor::db::ora::OraTapeDriveDedicationCnv::createRep(castor::IAddress* add
                           << "and id was " << obj->id() << std::endl;;
           throw ex;
         }
-}
+      }
 
       //------------------------------------------------------------------------
       // createObj
