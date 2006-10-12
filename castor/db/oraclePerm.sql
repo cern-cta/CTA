@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.316 $ $Release$ $Date: 2006/10/11 16:28:43 $ $Author: itglp $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.317 $ $Release$ $Date: 2006/10/12 10:33:40 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.316 $ $Date: 2006/10/11 16:28:43 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.317 $ $Date: 2006/10/12 10:33:40 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2541,11 +2541,12 @@ BEGIN
        AND CastorFile.id = SubRequest.castorFile(+)  -- or search for a get request
        AND SubRequest.request = Req.id(+)
        AND nvl(DiskCopy.status, 2) IN (0, 1, 2, 4, 5, 6, 7, 10, 11)
+               -- search for diskCopies not GCCANDIDATE or BEINGDELETED
        AND (svcClassId = 0                  -- no svcClass given
-         OR DiskPool2SvcClass.child = svcClassId    -- found diskcopy on the given svcClass
+         OR DiskPool2SvcClass.child = svcClassId    -- found diskCopy on the given svcClass
          OR ((DiskCopy.fileSystem = 0       -- diskcopy not yet associated with filesystem...
-             OR DiskCopy.id IS NULL)        -- or diskcopy not yet created at all...
-           AND Req.svcClass = svcClassId))    -- ...but found stagein request
+             OR DiskCopy.id IS NULL)        -- or diskcopy not yet created at all (prepareToXxx req)...
+           AND Req.svcClass = svcClassId))    -- ...but found stagein or prepareToPut request
   ORDER BY fileid, nshost;
 END;
 
