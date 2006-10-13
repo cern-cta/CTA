@@ -1,4 +1,22 @@
 -----------
+- 2.1.1-5 -
+-----------
+
+  New Features and Changes
+  ------------------------
+  This release brings a number of bug fixes and improvements:
+  - Fixes and improvements around the Repack system
+  - Improved stagerJob to support GridFTPv2
+  - Fixed Oracle deadlock in streams leading to inconsistencies in NbTapeCopiesInFS
+  - Minor fixes in DLF
+
+  Upgrade from 2.1.1-0
+  --------------------
+  - Upgrade the database
+  - Upgrade the head nodes and the diskservers (the order is not important)
+
+
+-----------
 - 2.1.1-4 -
 -----------
 
@@ -15,8 +33,8 @@
   Upgrade from 2.1.1-0
   --------------------
   - Upgrade the database
-  - Upgrade the head nodes
-  - Then for the other components no special order is required.
+  - Upgrade the head nodes and the diskservers (the order is not important)
+
 
 -----------
 - 2.1.1-3 -
@@ -36,7 +54,7 @@
   Upgrade from 2.1.1-0
   --------------------
   - Upgrade the head nodes
-  - Then for the other components no special order is required.
+  - Then for the other nodes no special order is required.
 
 
 -----------

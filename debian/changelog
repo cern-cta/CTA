@@ -1,3 +1,121 @@
+castor (2.1.1-5) unstable; urgency=low
+
+  * CASTOR2/castor/Imakefile:
+    [r1.133,2006-10-13,itglp] Added System.cpp to the main library
+  * CASTOR2/castor/System.cpp:
+    [r1.1,2006-10-13,itglp] Class with system-level static methods (only one so far)
+  * CASTOR2/castor/client/BaseClient.hpp:
+  * CASTOR2/castor/client/BaseClient.cpp:
+    [r1.56,2006-10-13,itglp] Use the new System class
+    [2006-10-13,felixehm] Refactoring of the BaseClient. functional parts were seperated like getting the (client) host information, sending the request and polling the stager answers.
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    [r1.316,2006-10-11,itglp] Restrict internalStageQuery to DiskCopies not GCCANDIDATE or BEINGDELETED
+    [r1.315,2006-10-09,itglp] Fixed a SELECT FOR UPDATE in stageRm that could select more than one row
+    [r1.314,2006-10-05,gtaur] added a lock on the table NbCopiesInFS by the trigger Tr_stream2tapecopy_delete, Tr_stream2tapecopy_insert and Tr_diskcopy_update.
+    [r1.314,2006-10-05,gtaur] removed the Tr_stream2tapecopy_stream.
+    [r1.314,2006-10-05,gtaur] Due to several copies on different filesystem called from different stream, we had deadlock concerning  stream and NbTapecopiesInFs,
+    [r1.314,2006-10-05,gtaur] this modification should avoid that.
+  * CASTOR2/castor/monitoring/rmmaster/ClusterStatus.cpp:
+    [r 1.2,2006-10-09,sponcec3] Debugged working version
+  * CASTOR2/castor/monitoring/rmmaster/RmMasterDaemon.cpp:
+    [r 1.2,2006-10-09,sponcec3] Debugged working version
+  * CASTOR2/castor/repack/RepackFileStager.cpp:
+    [r1.21,2006-10-11,felixehm] fixed the update of a RepackSubRequest took place, even if it was not restarted.
+    [r1.21,2006-10-11,felixehm] now this is done after the new request was sent to the stager.
+    [r1.21,2006-10-11,felixehm]
+    [r1.21,2006-10-11,felixehm] The RepackWorker checks now if a RepackSubRequets can be set to restart.
+    [r1.21,2006-10-11,felixehm] This is forbidden, if there are still files in staging or migrating status.
+    [r1.21,2006-10-11,felixehm] We must not restart it, because we loose the cuuid from the unfinished
+    [r1.21,2006-10-11,felixehm] files.
+    [r1.20,2006-10-09,felixehm] forgot to remove a line
+    [r1.19,2006-10-09,felixehm] modified restart process :
+    [r1.19,2006-10-09,felixehm] If the user restarts a repack request, only the files in invalid will be send
+    [r1.19,2006-10-09,felixehm] again.
+    [r1.19,2006-10-09,felixehm] Otherwise, if no answer for the cuuid is given by tge stager, the remaining files on the tape are send again as a new Request to the stager.
+  * CASTOR2/castor/repack/RepackMonitor.cpp:
+  * CASTOR2/castor/repack/RepackMonitor.hpp:
+    [2006-10-09,felixehm] thrown Exception caused seg fault (wrong type was declared ), fixed
+    [2006-10-09,felixehm]
+    [2006-10-09,felixehm] if a cuuid is not known anymore by the stager during monitoring, it is taken as granted that the request is over. The state of the repacksubrequest is then set to ready_forcleanup.
+  * CASTOR2/castor/repack/RepackServer.cpp:
+    [r1.22,2006-10-11,felixehm] fixed stupid bug : instead of initialising the RepackFileChecker
+    [r1.22,2006-10-11,felixehm] the Cleaner was created
+  * CASTOR2/castor/repack/RepackWorker.cpp:
+    [r1.25,2006-10-11,felixehm] fixed the update of a RepackSubRequest took place, even if it was not restarted.
+    [r1.25,2006-10-11,felixehm] now this is done after the new request was sent to the stager.
+    [r1.25,2006-10-11,felixehm]
+    [r1.25,2006-10-11,felixehm] The RepackWorker checks now if a RepackSubRequets can be set to restart.
+    [r1.25,2006-10-11,felixehm] This is forbidden, if there are still files in staging or migrating status.
+    [r1.25,2006-10-11,felixehm] We must not restart it, because we loose the cuuid from the unfinished
+    [r1.25,2006-10-11,felixehm] files.
+  * CASTOR2/castor/repack/repack_oracle_create.sql:
+    [r 1.2,2006-10-06,felixehm] Added missing statement for creating a sequence
+  * CASTOR2/castor/sharedMemory/Block.cpp:
+  * CASTOR2/castor/sharedMemory/Block.hpp:
+  * CASTOR2/castor/sharedMemory/DLFInit.cpp:
+  * CASTOR2/castor/sharedMemory/Helper.cpp:
+    [r 1.2,2006-10-09,sponcec3] Debugged working version
+  * CASTOR2/codeGeneration/RH.xmi:
+    [r1.130,2006-10-12,sponcec3] Included objects for the new monitoring framework
+  * CASTOR2/common/serror.c:
+    [r1.14,2006-10-06,gtaur] specific serrno added for svc class not found and modification done to be compatible for dpm merge.
+  * CASTOR2/dlf/dbi.h:
+  * CASTOR2/dlf/doc/index.html:
+  * CASTOR2/dlf/mysql.c:
+  * CASTOR2/dlf/oracle.pc:
+  * CASTOR2/dlf/server.c:
+    [2006-10-10,waldron] added db_reset() function
+  * CASTOR2/dlf/web/query.php:
+    [r 1.3,2006-10-06,waldron] trim newline characters from msgtexts to prevent javascript errors
+  * CASTOR2/doc/ug/overview.tex:
+    [r 1.2,2006-10-10,obarring] Various changes after feedback from Veronique
+  * CASTOR2/doc/ug/ug.tex:
+    [r 1.2,2006-10-10,obarring] url package already included
+  * CASTOR2/h/serrno.h:
+    [r1.16,2006-10-06,gtaur] specific serrno added for svc class not found and modification done to be compatible for dpm merge.
+  * CASTOR2/h/stager_client_api.h:
+    [r1.34,2006-10-09,kotlyar] added  known mover protocols
+    [r1.34,2006-10-09,kotlyar] define MOVER_PROTOCOL_XROOT "xroot"
+    [r1.34,2006-10-09,kotlyar] define MOVER_PROTOCOL_GSIFTP "gsiftp"
+  * CASTOR2/hsmtools/diskServer_qry:
+    [r 1.4,2006-10-12,sponcec3] Fixed case where there is no lastKnownFileNameForTheFile. ORACLE was returning null instead of '' and perl was complaining that the variable was not initialized
+  * CASTOR2/hsmtools/disknodeShutdown:
+    [r 1.7,2006-10-12,aearl] removal of tr for user email and removal of \ in caster ops email address
+    [r 1.6,2006-10-11,aearl] improved version
+  * CASTOR2/job/stagerJob.c:
+    [r1.155,2006-10-09,kotlyar] added support for gsiftp mover protocol:
+    [r1.155,2006-10-09,kotlyar] stagerJob exec gridftp-server in inetd mode under stager:st privileges (like root section);
+    [r1.155,2006-10-09,kotlyar] in castor.conf following variable can be used:
+    [r1.155,2006-10-09,kotlyar] GSIFTP GLOBUS_LOCATION - main globus variable, default /opt/globus;
+    [r1.155,2006-10-09,kotlyar] GSIFTP GRIDMAP - grid-mapfile for disk server, default /etc/grid-security/grid-mapfile;
+    [r1.155,2006-10-09,kotlyar] GSIFTP LOGFILE - server log file, default /var/spool/gridftp/log;
+    [r1.155,2006-10-09,kotlyar] GSIFTP NETLOGFILE - log file in net logger format, default /var/spool/gridftp/netlog;
+    [r1.155,2006-10-09,kotlyar] in debug mode for job gridftp-server also is started with debug level loginfo;
+    [r1.155,2006-10-09,kotlyar] stagerJob sets environment UUID, FULLDESTPATH, ACCESS_MODE to specify destpath and mode
+    [r1.155,2006-10-09,kotlyar] to access file inside gridftp-server by DSI CASTOR2 module.
+  * CASTOR2/rfio/rfio_call64.c:
+    [r1.12,2006-10-10,gtaur] returned an error code if the prepareForMigration failed instead saying that it is ok
+  * CASTOR2/rfio/rfio_callhandlers.c:
+    [r 1.9,2006-10-10,gtaur] returned an error code if the prepareForMigration failed instead saying that it is ok
+  * CASTOR2/rfio/rfio_calls.c:
+    [r1.16,2006-10-10,gtaur] returned an error code if the prepareForMigration failed instead saying that it is ok
+  * CASTOR2/rtcopy/MigHunter.c:
+    [r1.35,2006-10-10,obarring] Forward port from v2_1_0_1: fix second place where initialSizeToTransfer is set
+  * CASTOR2/stager/stager_db_service.c:
+    [r1.149,2006-10-06,gtaur] specific serrno added for svc class not found and modification done to be compatible for dpm merge.
+  * CASTOR2/stager/stager_query_service.cpp:
+    [r1.47,2006-10-11,itglp] Enhanced answer to stager_qry: it's 'file not in given svcClass' when a svcClass is provided
+  * CASTOR2/tape/readlbl.c:
+    [r1.12,2006-10-10,hcacote]
+    [r1.12,2006-10-10,hcacote] with the removal of the patch tape_ansi_eof in kernel 2.6 the end of data has to
+    [r1.12,2006-10-10,hcacote] be determined via st device driver.
+  * CASTOR2/tape/skiptape.c:
+    [r1.11,2006-10-10,hcacote]
+    [r1.11,2006-10-10,hcacote] with the removal of the patch tape_ansi_eof in kernel 2.6 the end of data has to
+    [r1.11,2006-10-10,hcacote] be determined via st device driver.
+
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Fri, 13 Oct 2006 17:00:54 +0200
+
 castor (2.1.1-4) unstable; urgency=low
 
   * CASTOR2/castor/cleaning/CleaningDaemon.cpp:
