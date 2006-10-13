@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.23 2006/09/26 16:56:47 itglp Exp $
+## $Id: PACKAGING.howto,v 1.24 2006/10/13 15:02:50 itglp Exp $
 #
 
 #
@@ -104,6 +104,10 @@ cp /usr/src/redhat/RPMS/i386/*x.y.z-r*.rpm .
 cp /usr/src/redhat/SRPMS/castor-x.y.z-r.src.rpm ../../
 cp /tmp/`whoami`/castor-*.tar.gz ../../
 cp /tmp/`whoami`/CASTOR2/ReleaseNotes ../../
+
+# to verify that the built RPMs are the 'right' number
+foreach i ( SLC*/* ) ; ls -1 $i | wc -l ; end
+
 
 #
 ## To enter the rpms into swrep
