@@ -103,6 +103,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               ObjectSet.cpp \
               Services.cpp \
               ServicesCInt.cpp \
+	      System.cpp \
               logstream.cpp \
               logbuf.cpp \
               stdbuf.cpp \
