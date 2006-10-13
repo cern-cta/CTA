@@ -156,255 +156,19 @@ std::string castor::client::BaseClient::sendRequest
 (castor::stager::Request* req,
  castor::client::IResponseHandler* rh)
   throw(castor::exception::Exception) {
-   // Now the common part of the request
-  // Request handler host and port
-  
-//setRhHost();
-//  setRhPort();
-  
-// Uid
-  uid_t euid;
-  char *stgeuid = getenv(castor::client::STAGE_EUID);
-  if (0 != stgeuid) {
-    euid = atoi(stgeuid);
-  } else {
-    if (m_hasAuthorizationId) {
-      euid = m_authUid;
-    } else {
-      euid = geteuid();
-    }
-  }
-  stage_trace(3, "Setting euid: %d", euid);
-  req->setEuid(euid);
-  // GID
-  uid_t egid;
-  char *stgegid = getenv(castor::client::STAGE_EGID);
-  if (0 != stgegid) {
-    egid = atoi(stgegid);
-  } else {
-    if (m_hasAuthorizationId) {
-      egid = m_authGid;
-    } else {
-      egid = getegid();
-    }
-  }
-  stage_trace(3, "Setting egid: %d", egid);
-  req->setEgid(egid);
-  // Username
-  errno = 0;
-  struct passwd *pw = Cgetpwuid(euid);
-  if (0 == pw) {
-    castor::exception::Exception e(EINVAL);
-    e.getMessage() << "Unknown User" << std::endl;
-    throw e;
-  } else {
-	  req->setUserName(pw->pw_name);
-  }
-  // Mask
-  mode_t mask = umask(0);
-  umask(mask);
-  req->setMask(mask);
-  // Pid
-  req->setPid(getpid());
-  // Machine
-  {
-    // All this to get the hostname, thanks to C !
-    int len = 64;
-    char* hostname;
-    hostname = (char*) calloc(len, 1);
-    if (gethostname(hostname, len) < 0) {
-      // Test whether error is due to a name too long
-      // The errno depends on the glibc version
-      if (EINVAL != errno &&
-          ENAMETOOLONG != errno) {
-        clog() << "Unable to get hostname : "
-               << strerror(errno) << std::endl;
-        free(hostname);
-        castor::exception::Exception e(errno);
-        e.getMessage() << "gethostname error";
-        throw e;
 
-      }
-      // So the name was too long
-      while (hostname[len - 1] != 0) {
-        len *= 2;
-        char *hostnameLonger = (char*) realloc(hostname, len);
-        if (0 == hostnameLonger) {
-          clog() << "Unable to allocate memory for hostname."
-                 << std::endl;
-          free(hostname);
-          castor::exception::Exception e(ENOMEM);
-          e.getMessage() << "Could not allocate memory for hostname";
-          throw e;
+  // builds and send the Request with the Client information
+  createClientAndSend(req);
 
-        }
-        hostname = hostnameLonger;
-        memset(hostname, 0, len);
-        if (gethostname(hostname, len) < 0) {
-          // Test whether error is due to a name too long
-          // The errno depends on the glibc version
-          if (EINVAL != errno &&
-              ENAMETOOLONG != errno) {
-            clog() << "Unable to get hostname : "
-                   << strerror(errno) << std::endl;
-            free(hostname);
-            castor::exception::Exception e(errno);
-            e.getMessage() << "Could not get hostname"
-                           <<  strerror(errno);
-            throw e;
-          }
-        }
-      }
-    }
-    req->setMachine(hostname);
-    if (m_rhHost == "") {
-	    clog() << "Rh host not specified: "
-                   << strerror(errno) << std::endl;
-                   free(hostname);
-            castor::exception::Exception e(errno);
-            e.getMessage() << "Could not get rh host name"
-                           <<  strerror(errno);
-            throw e;
-      //m_rhHost = hostname;
-    }
-    free(hostname);
-  }
-  // create a socket for the callback with no port
-  stage_trace(3, "Creating socket for stager callback");
-  m_callbackSocket = new castor::io::ServerSocket(true);
-  // get the port range to be used
-  int lowPort = LOW_CLIENT_PORT_RANGE;
-  int highPort = HIGH_CLIENT_PORT_RANGE;
-  char* sport;
-  if ((sport = getconfent((char *)castor::client::CLIENT_CONF,
-                         (char *)castor::client::LOWPORT_CONF,0)) != 0) {
-    lowPort = porttoi(sport);
-  }
-  if ((sport = getconfent((char *)castor::client::CLIENT_CONF,
-                         (char *)castor::client::HIGHPORT_CONF,0)) != 0) {
-    highPort = porttoi(sport);
-  }
-  // bind the socket
-  m_callbackSocket->bind(lowPort, highPort);
-  m_callbackSocket->listen();
-  unsigned short port;
-  unsigned long ip;
-  m_callbackSocket->getPortIp(port, ip);
-  clog() << DEBUG << "Opened callback socket on port "
-         << port << std::endl;
-  stage_trace(3, "Will wait for stager callback on port %d", port);
-  // set the Client
-  castor::IClient *cl = createClient();
-  req->setClient(cl);
-  // sends the request
-  std::string requestId = internalSendRequest(*req);
-  stage_trace(3, "Request sent to RH - Request ID: %s", requestId.c_str());
-  // waits for callbacks, first loop on the request
-  // replier connections
-  bool stop = false;
-  struct pollfd pollit;
-  pollit.events = POLLIN | POLLHUP;
-  while (!stop) {
-    //std::cerr << "starting 1st loop" << std::endl;
-    castor::io::ServerSocket* socket = waitForCallBack();
-    try {
-      pollit.fd = socket->socket();
-      //std::cerr << "Socket created" << std::endl;
-      // Then loop on the responses sent over a given connection
-      while (!stop) {  
-        /* Will return > 0 if the descriptor is readable
-           No timeout is used, we wait forever */
-        pollit.revents = 0;
-        //std::cerr << "starting poll" << std::endl;
-        
-        int rc = poll(&pollit,1,-1);
-        //std::cerr << "rc=" << rc << " errno=" << errno 
-        //          << " error:" << strerror(errno) << std::endl;
-        
-        if (0 == rc) {
-          castor::exception::Communication e(requestId, SEINTERNAL);
-          e.getMessage() << "Poll with no timeout did timeout !";
-          delete socket;
-          throw e;
-        } else if (rc < 0) {
-          if (errno == EINTR) {
-            //std::cerr <<  "EINTR caught" << std::endl;
-            continue;
-          }
-          castor::exception::Communication e(requestId, SEINTERNAL);
-          e.getMessage() << "Poll error for request" << requestId;
-          delete socket;
-          throw e;
-        }
-        // We had a POLLIN event, read the data
-        IObject* obj = socket->readObject();
-        try {
-          if (OBJ_EndResponse == obj->type() ) {
-	       
-                 // cast response into Response*
+  // waits for callbacks, first loop on the 
+  // request replier connections
+  pollAnswersFromStager(req, rh);
 
-                castor::rh::Response* endRes = dynamic_cast<castor::rh::Response*>(obj);
-            	if (0 == endRes) {
-              		castor::exception::Communication e(requestId, SEINTERNAL);
-              		e.getMessage() << "Receive bad response type :"
-                             << obj->type();
-              		delete obj;
-              		delete socket;
-              		throw e;
-            	}
-
-                if (0 != endRes->reqAssociated().length() && endRes->reqAssociated() != requestId){
-                	// it was not the Response of this  Request and it is a new converter
-
-			delete obj;
-			continue;
-			
-                }
-     
-                // flush messages
-               clog() << std::flush;
-               // terminate response handler
-               rh->terminate();
-               stop = true;
-
-          } else {
-            // cast response into Response*
-            castor::rh::Response* res =
-              dynamic_cast<castor::rh::Response*>(obj);
-            if (0 == res) {
-              castor::exception::Communication e(requestId, SEINTERNAL);
-              e.getMessage() << "Receive bad response type :"
-                             << obj->type();
-              delete obj;
-              delete socket;
-              throw e;
-            }
-	    
-            if (0 != res->reqAssociated().length() && res->reqAssociated() != requestId){ 
-                	// I'm using a new convertr and it was not the Response of this  Request
-			delete obj;
-			continue;
-			
-             }	
-            // Print the request
-            rh->handleResponse(*res);
-          }
-
-          delete obj;
-        } catch (castor::exception::Exception e) {
-          if (0 != obj) delete obj;
-          throw e;
-        }
-      }
-      // delete the socket
-      delete socket;
-    } catch (castor::exception::Exception e) {      
-      if (0 != socket) delete socket;
-      throw e;
-    }
-  }
-  return requestId;
+  return requestId();
 }
+
+
+
 
 
 //------------------------------------------------------------------------------
@@ -725,4 +489,289 @@ int castor::client::BaseClient::porttoi(char* str)
   }
   return iport;
 }
+
+
+
+//------------------------------------------------------------------------------
+// createClientAndSend
+//------------------------------------------------------------------------------
+std::string castor::client::BaseClient::createClientAndSend(
+                                                   castor::stager::Request *req)
+                                            throw (castor::exception::Exception)
+{
+  // builds the Client (uuid,guid,hostname,etc)
+  buildClient(req);
+
+  // sends the request
+  std::string requestId = internalSendRequest(*req);
+  stage_trace(3, "Request sent to RH - Request ID: %s", requestId.c_str());
+  return requestId;
+}
+
+
+
+//------------------------------------------------------------------------------
+// buildClient
+//------------------------------------------------------------------------------
+void castor::client::BaseClient::buildClient(castor::stager::Request* req)
+                                            throw (castor::exception::Exception)
+{ 
+  // Uid
+  uid_t euid;
+  char *stgeuid = getenv(castor::client::STAGE_EUID);
+  if (0 != stgeuid) {
+    euid = atoi(stgeuid);
+  } else {
+    if (m_hasAuthorizationId) {
+      euid = m_authUid;
+    } else {
+      euid = geteuid();
+    }
+  }
+  stage_trace(3, "Setting euid: %d", euid);
+  req->setEuid(euid);
+  // GID
+  uid_t egid;
+  char *stgegid = getenv(castor::client::STAGE_EGID);
+  if (0 != stgegid) {
+    egid = atoi(stgegid);
+  } else {
+    if (m_hasAuthorizationId) {
+      egid = m_authGid;
+    } else {
+      egid = getegid();
+    }
+  }
+  stage_trace(3, "Setting egid: %d", egid);
+  req->setEgid(egid);
+  // Username
+  errno = 0;
+  struct passwd *pw = Cgetpwuid(euid);
+  if (0 == pw) {
+    castor::exception::Exception e(EINVAL);
+    e.getMessage() << "Unknown User" << std::endl;
+    throw e;
+  } else {
+    req->setUserName(pw->pw_name);
+  }
+  // Mask
+  mode_t mask = umask(0);
+  umask(mask);
+  req->setMask(mask);
+  // Pid
+  req->setPid(getpid());
+  // Machine
+  {
+    // All this to get the hostname, thanks to C !
+    int len = 64;
+    char* hostname;
+    hostname = (char*) calloc(len, 1);
+    if (gethostname(hostname, len) < 0) {
+      // Test whether error is due to a name too long
+      // The errno depends on the glibc version
+      if (EINVAL != errno &&
+          ENAMETOOLONG != errno) {
+        clog() << "Unable to get hostname : "
+               << strerror(errno) << std::endl;
+        free(hostname);
+        castor::exception::Exception e(errno);
+        e.getMessage() << "gethostname error";
+        throw e;
+
+      }
+      // So the name was too long
+      while (hostname[len - 1] != 0) {
+        len *= 2;
+        char *hostnameLonger = (char*) realloc(hostname, len);
+        if (0 == hostnameLonger) {
+          clog() << "Unable to allocate memory for hostname."
+                 << std::endl;
+          free(hostname);
+          castor::exception::Exception e(ENOMEM);
+          e.getMessage() << "Could not allocate memory for hostname";
+          throw e;
+
+        }
+        hostname = hostnameLonger;
+        memset(hostname, 0, len);
+        if (gethostname(hostname, len) < 0) {
+          // Test whether error is due to a name too long
+          // The errno depends on the glibc version
+          if (EINVAL != errno &&
+              ENAMETOOLONG != errno) {
+            clog() << "Unable to get hostname : "
+                   << strerror(errno) << std::endl;
+            free(hostname);
+            castor::exception::Exception e(errno);
+            e.getMessage() << "Could not get hostname"
+                           <<  strerror(errno);
+            throw e;
+          }
+        }
+      }
+    }
+    req->setMachine(hostname);
+    if (m_rhHost == "") {
+      clog() << "Rh host not specified: "
+                   << strerror(errno) << std::endl;
+                   free(hostname);
+            castor::exception::Exception e(errno);
+            e.getMessage() << "Could not get rh host name"
+                           <<  strerror(errno);
+            throw e;
+      //m_rhHost = hostname;
+    }
+    free(hostname);
+  }
+  // create a socket for the callback with no port
+  stage_trace(3, "Creating socket for stager callback");
+  m_callbackSocket = new castor::io::ServerSocket(true);
+  // get the port range to be used
+  int lowPort = LOW_CLIENT_PORT_RANGE;
+  int highPort = HIGH_CLIENT_PORT_RANGE;
+  char* sport;
+  if ((sport = getconfent((char *)castor::client::CLIENT_CONF,
+                         (char *)castor::client::LOWPORT_CONF,0)) != 0) {
+    lowPort = porttoi(sport);
+  }
+  if ((sport = getconfent((char *)castor::client::CLIENT_CONF,
+                         (char *)castor::client::HIGHPORT_CONF,0)) != 0) {
+    highPort = porttoi(sport);
+  }
+  // bind the socket
+  m_callbackSocket->bind(lowPort, highPort);
+  m_callbackSocket->listen();
+  unsigned short port;
+  unsigned long ip;
+  m_callbackSocket->getPortIp(port, ip);
+  clog() << DEBUG << "Opened callback socket on port "
+         << port << std::endl;
+  stage_trace(3, "Will wait for stager callback on port %d", port);
+  // set the Client
+  castor::IClient *cl = createClient();
+  req->setClient(cl);
+}
+
+
+
+
+//------------------------------------------------------------------------------
+// pollAnswersFromStager
+//------------------------------------------------------------------------------
+void castor::client::BaseClient::pollAnswersFromStager(
+                                           castor::stager::Request* req,
+                                           castor::client::IResponseHandler* rh)
+                                            throw (castor::exception::Exception)
+{
+  if ( req == NULL || req->client() == NULL ){
+    castor::exception::Internal ex;
+    ex.getMessage() << "Passed Request is NULL" << std::endl;
+    throw ex;
+  }
+
+  bool stop = false;
+  struct pollfd pollit;
+  pollit.events = POLLIN | POLLHUP;
+  while (!stop) {
+    //std::cerr << "starting 1st loop" << std::endl;
+    castor::io::ServerSocket* socket = waitForCallBack();
+    try {
+      pollit.fd = socket->socket();
+      //std::cerr << "Socket created" << std::endl;
+      // Then loop on the responses sent over a given connection
+      while (!stop) {  
+        /* Will return > 0 if the descriptor is readable
+           No timeout is used, we wait forever */
+        pollit.revents = 0;
+        //std::cerr << "starting poll" << std::endl;
+        
+        int rc = poll(&pollit,1,-1);
+        //std::cerr << "rc=" << rc << " errno=" << errno 
+        //          << " error:" << strerror(errno) << std::endl;
+        
+        if (0 == rc) {
+          castor::exception::Communication e(requestId(), SEINTERNAL);
+          e.getMessage() << "Poll with no timeout did timeout !";
+          delete socket;
+          throw e;
+        } else if (rc < 0) {
+          if (errno == EINTR) {
+            //std::cerr <<  "EINTR caught" << std::endl;
+            continue;
+          }
+          castor::exception::Communication e(requestId(), SEINTERNAL);
+          e.getMessage() << "Poll error for request" << requestId();
+          delete socket;
+          throw e;
+        }
+        // We had a POLLIN event, read the data
+        IObject* obj = socket->readObject();
+        try {
+          if (OBJ_EndResponse == obj->type() ) {
+         
+                 // cast response into Response*
+
+                castor::rh::Response* endRes = dynamic_cast<castor::rh::Response*>(obj);
+              if (0 == endRes) {
+                  castor::exception::Communication e(requestId(), SEINTERNAL);
+                  e.getMessage() << "Receive bad response type :"
+                             << obj->type();
+                  delete obj;
+                  delete socket;
+                  throw e;
+              }
+
+                if (0 != endRes->reqAssociated().length() && endRes->reqAssociated() != requestId()){
+                  // it was not the Response of this  Request and it is a new converter
+
+      delete obj;
+      continue;
+      
+                }
+     
+                // flush messages
+               clog() << std::flush;
+               // terminate response handler
+               rh->terminate();
+               stop = true;
+
+          } else {
+            // cast response into Response*
+            castor::rh::Response* res =
+              dynamic_cast<castor::rh::Response*>(obj);
+            if (0 == res) {
+              castor::exception::Communication e(requestId(), SEINTERNAL);
+              e.getMessage() << "Receive bad response type :"
+                             << obj->type();
+              delete obj;
+              delete socket;
+              throw e;
+            }
+      
+            if (0 != res->reqAssociated().length() && res->reqAssociated() != requestId()){ 
+                  // I'm using a new convertr and it was not the Response of this  Request
+      delete obj;
+      continue;
+      
+             }  
+            // Print the request
+            rh->handleResponse(*res);
+          }
+
+          delete obj;
+        } catch (castor::exception::Exception e) {
+          if (0 != obj) delete obj;
+          throw e;
+        }
+      }
+      // delete the socket
+      delete socket;
+    } catch (castor::exception::Exception e) {      
+      if (0 != socket) delete socket;
+      throw e;
+    }
+  }
+}
+
+
 

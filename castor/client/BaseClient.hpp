@@ -149,7 +149,26 @@ namespace castor {
        * Returns the request id 
        */
       std::string requestId();
+
+      /**
+       * polls the answers from stager after sending a request by 
+       * internalSendRequest.  
+       * @param req The StagerRequest the Client is to be added to
+       * @exception in case of an error 
+       */
+      void pollAnswersFromStager( castor::stager::Request* req,
+                                  castor::client::IResponseHandler* rh)
+                                           throw (castor::exception::Exception);
       
+      /**
+       * calls buildClient and internalSendRequest to create and send the
+       * Request.  
+       * @param req The StagerRequest to be handled
+       * @exception in case of an error 
+       */
+      std::string createClientAndSend(castor::stager::Request *req)
+                                            throw (castor::exception::Exception);
+
 
     private:
       
@@ -185,7 +204,15 @@ namespace castor {
        */
       int porttoi(char* str)
         throw (castor::exception::Exception);
-
+    
+      /**
+       * Builds the Client for a Request. The userid, groupid, hostname, etc
+       * are set and the Client object added to the Request.
+       * @param req The StagerRequest the Client is to be added to
+       * @exception in case of an error 
+       */
+      void buildClient(castor::stager::Request* req)
+                                           throw (castor::exception::Exception);
     public: // protected:
       
       /// The request handler host
