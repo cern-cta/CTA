@@ -44,6 +44,7 @@
 #include "castor/io/ClientSocket.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/Constants.hpp"
+#include "castor/System.hpp"
 #include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
 #include "castor/MessageAck.hpp"
@@ -561,68 +562,17 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
   // Pid
   req->setPid(getpid());
   // Machine
-  {
-    // All this to get the hostname, thanks to C !
-    int len = 64;
-    char* hostname;
-    hostname = (char*) calloc(len, 1);
-    if (gethostname(hostname, len) < 0) {
-      // Test whether error is due to a name too long
-      // The errno depends on the glibc version
-      if (EINVAL != errno &&
-          ENAMETOOLONG != errno) {
-        clog() << "Unable to get hostname : "
-               << strerror(errno) << std::endl;
-        free(hostname);
-        castor::exception::Exception e(errno);
-        e.getMessage() << "gethostname error";
-        throw e;
-
-      }
-      // So the name was too long
-      while (hostname[len - 1] != 0) {
-        len *= 2;
-        char *hostnameLonger = (char*) realloc(hostname, len);
-        if (0 == hostnameLonger) {
-          clog() << "Unable to allocate memory for hostname."
-                 << std::endl;
-          free(hostname);
-          castor::exception::Exception e(ENOMEM);
-          e.getMessage() << "Could not allocate memory for hostname";
-          throw e;
-
-        }
-        hostname = hostnameLonger;
-        memset(hostname, 0, len);
-        if (gethostname(hostname, len) < 0) {
-          // Test whether error is due to a name too long
-          // The errno depends on the glibc version
-          if (EINVAL != errno &&
-              ENAMETOOLONG != errno) {
-            clog() << "Unable to get hostname : "
-                   << strerror(errno) << std::endl;
-            free(hostname);
-            castor::exception::Exception e(errno);
-            e.getMessage() << "Could not get hostname"
-                           <<  strerror(errno);
-            throw e;
-          }
-        }
-      }
-    }
-    req->setMachine(hostname);
-    if (m_rhHost == "") {
-      clog() << "Rh host not specified: "
-                   << strerror(errno) << std::endl;
-                   free(hostname);
-            castor::exception::Exception e(errno);
-            e.getMessage() << "Could not get rh host name"
-                           <<  strerror(errno);
-            throw e;
-      //m_rhHost = hostname;
-    }
-    free(hostname);
+  req->setMachine(castor::System::getHostName());
+  if (m_rhHost == "") {
+    clog() << "RH host not specified: "
+           << strerror(errno) << std::endl;
+    castor::exception::Exception e(errno);
+    e.getMessage() << "Could not get rh host name"
+                   <<  strerror(errno);
+    throw e;
+    //m_rhHost = hostname;
   }
+
   // create a socket for the callback with no port
   stage_trace(3, "Creating socket for stager callback");
   m_callbackSocket = new castor::io::ServerSocket(true);
