@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 // Include Files
+#include <unistd.h>
 #include <errno.h>
 
 // Local includes
