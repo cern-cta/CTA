@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.318 $ $Release$ $Date: 2006/10/16 09:48:27 $ $Author: felixehm $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.319 $ $Release$ $Date: 2006/10/16 14:43:34 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.318 $ $Date: 2006/10/16 09:48:27 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.319 $ $Date: 2006/10/16 14:43:34 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -114,7 +114,6 @@ ALTER TABLE Tape ADD UNIQUE (VID, side, tpMode);
 
 /* the primary key in this table allows for materialized views */
 ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT pk_DiskPool2SvcClass PRIMARY KEY (parent, child);
-
 
 /* get current time as a time_t. Not that easy in ORACLE */
 CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
@@ -2491,7 +2490,7 @@ BEGIN
     INSERT INTO FileSystemGC VALUES (:new.id, getTime());
     -- is it the only FS waiting for GC, or are there other old FSs waiting
     -- (it can happen if the job failed or it has been killed)?
-    IF gcstime IS NULL OR gcstime < getTime() - 1000 THEN
+    IF gcstime IS NULL OR gcstime < getTime() - 500 THEN
       -- we spawn a job to do the real work. This avoids mutating table error
       -- and ensures that the current update does not fail if GC fails
       DBMS_JOB.SUBMIT(jobid,'garbageCollect();');
@@ -2504,6 +2503,20 @@ BEGIN
 END;
 
 
+CREATE MATERIALIZED VIEW MView_FS_DS_DP2SC
+ORGANIZATION HEAP PCTFREE 0 COMPRESS
+CACHE NOPARALLEL BUILD IMMEDIATE
+REFRESH ON COMMIT COMPLETE
+WITH PRIMARY KEY USING ENFORCED CONSTRAINTS
+DISABLE QUERY REWRITE
+AS
+  SELECT FS.id fsId, DP2SC.child scId,
+         FS.mountpoint fsMountPoint, DS.name dsName
+    FROM diskpool2svcclass DP2SC, diskserver DS, filesystem FS
+   WHERE FS.status = 0   -- PRODUCTION
+     AND DS.status = 0   -- PRODUCTION
+     AND DS.id(+) = FS.diskServer
+     AND DP2SC.parent(+) = FS.diskPool;
 
 /*
  * PL/SQL method implementing the core part of stage queries
@@ -2515,77 +2528,41 @@ CREATE OR REPLACE PROCEDURE internalStageQuery
   result OUT castor.QueryLine_Cur) AS
 BEGIN
   OPEN result FOR
-    -- Here we get the status for each cf as follows: if a valid diskCopy is found,
-    -- its status is returned, else if a (prepareTo)Get request is found and no diskCopy is there,
+    -- Here we get the status for each CastorFile as follows: if a valid diskCopy is found,
+    -- its status is returned, else if a (prepareTo)Get|Put request is found and no diskCopy is there,
     -- WAITTAPERECALL is returned, else -1 (INVALID) is returned
-    SELECT /*+ INDEX (CastorFile) INDEX (DiskCopy) INDEX (FileSystem) INDEX (DiskServer) INDEX (SubRequest) */
-           -- we need to give these hints to the optimizer otherwise it goes for a full table scan (!)
-           UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
-           DiskCopy.path, CastorFile.filesize,
-           nvl(DiskCopy.status, decode(SubRequest.status, 0,2, 3,2, -1)), 
+    SELECT UNIQUE CF_DC.fileid, CF_DC.nsHost, CF_DC.dcId, CF_DC.path, CF_DC.filesize,
+           nvl(CF_DC.status, decode(SubRequest.status, 0,2, 3,2, -1)), 
                -- SubRequest in status 0,3 (START,WAITSCHED) => 2 = DISKCOPY_WAITTAPERECALL is returned
-           DiskServer.name, FileSystem.mountPoint,
-           CastorFile.nbaccesses, CastorFile.lastKnownFileName
-      FROM CastorFile, DiskCopy, FileSystem, DiskServer,
-           DiskPool2SvcClass, SubRequest,
+           FS_DS.dsName, FS_DS.fsMountPoint, CF_DC.nbaccesses, CF_DC.lastKnownFileName
+      FROM SubRequest, MView_FS_DS_DP2SC FS_DS,
            (SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
             SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
             SELECT id, svcClass FROM StagePrepareToUpdateRequest UNION ALL
             SELECT id, svcClass FROM StageRepackRequest UNION ALL
-            SELECT id, svcClass FROM StageGetRequest) Req
-     WHERE CastorFile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
-       AND CastorFile.id = DiskCopy.castorFile(+)    -- search for valid diskcopy
-       AND FileSystem.id(+) = DiskCopy.fileSystem
-       AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
-       AND DiskServer.id(+) = FileSystem.diskServer
-       AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
-       AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool 
-       AND CastorFile.id = SubRequest.castorFile(+)  -- or search for a get request
+            SELECT id, svcClass FROM StageGetRequest
+           ) Req,            
+           (SELECT /*+ INDEX (CastorFile) INDEX (DiskCopy) */
+                   UNIQUE CastorFile.id as cfId, CastorFile.fileid, CastorFile.nsHost,
+                   CastorFile.fileSize, CastorFile.nbaccesses, CastorFile.lastKnownFileName,
+                   DiskCopy.id as dcId, DiskCopy.path, DiskCopy.status, DiskCopy.fileSystem as fsId
+              FROM CastorFile, DiskCopy
+             WHERE CastorFile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
+               AND CastorFile.id = DiskCopy.castorFile(+)   -- search for a valid diskcopy
+               AND DiskCopy.status IN (0, 1, 2, 4, 5, 6, 7, 10, 11)
+                -- ignore diskCopies in status GCCANDIDATE, BEINGDELETED or any other 'unknown' one
+           ) CF_DC
+     WHERE FS_DS.fsId(+) = CF_DC.fsId
+       AND CF_DC.cfId = SubRequest.castorFile(+)            -- OR search for a running request
        AND SubRequest.request = Req.id(+)
-       AND nvl(DiskCopy.status, 2) IN (0, 1, 2, 4, 5, 6, 7, 10, 11)
-               -- search for diskCopies not GCCANDIDATE or BEINGDELETED
-       AND (svcClassId = 0                  -- no svcClass given
-         OR DiskPool2SvcClass.child = svcClassId    -- found diskCopy on the given svcClass
-         OR ((DiskCopy.fileSystem = 0       -- diskcopy not yet associated with filesystem...
-             OR DiskCopy.id IS NULL)        -- or diskcopy not yet created at all (prepareToXxx req)...
-           AND Req.svcClass = svcClassId))    -- ...but found stagein or prepareToPut request
+       AND (svcClassId = 0             -- no svcClass given, or...
+         OR FS_DS.scId = svcClassId        -- found diskCopy on the given svcClass
+         OR ((CF_DC.fsId = 0               -- diskcopy not yet associated with filesystem...
+             OR CF_DC.dcId IS NULL)        -- or diskcopy not yet created at all (prepareToXxx req)...
+           AND Req.svcClass = svcClassId))     -- ...but found stagein or prepareToPut request
   ORDER BY fileid, nshost;
 END;
 
-/*
- * PL/SQL method implementing the core part of stage queries full version (for admins)
- * It takes a list of castorfile ids as input
- *
-CREATE PROCEDURE internalFullStageQuery
- (cfs IN "numList",
-  svcClassId IN NUMBER,
-  result OUT castor.QueryLine_Cur) AS
-BEGIN
- OPEN result FOR
-    SELECT UNIQUE castorfile.fileid, castorfile.nshost, DiskCopy.id,
-           DiskCopy.path, CastorFile.filesize,
-           nvl(DiskCopy.status, -1), nvl(tpseg.tstatus, -1),
-           nvl(tpseg.sstatus, -1), DiskServer.name,
-           FileSystem.mountPoint
-      FROM CastorFile, DiskCopy,
-           -- Tape and Segment part
-           (SELECT tapecopy.castorfile, tapecopy.id,
-                   tapecopy.status AS tstatus, segment.status AS sstatus
-              FROM tapecopy, segment
-             WHERE tapecopy.id = segment.copy (+)) tpseg,
-           FileSystem, DiskServer, DiskPool2SvcClass
-     WHERE CastorFile.id IN (SELECT * FROM TABLE(cfs))
-       AND CastorFile.id = DiskCopy.castorFile (+)
-       AND castorfile.id = tpseg.castorfile(+)
-       AND FileSystem.id(+) = DiskCopy.fileSystem
-       AND nvl(FileSystem.status,0) = 0 -- PRODUCTION
-       AND DiskServer.id(+) = FileSystem.diskServer
-       AND nvl(DiskServer.status,0) = 0 -- PRODUCTION
-       AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool
-       AND (DiskPool2SvcClass.child = svcClassId OR DiskPool2SvcClass.child IS NULL)
-  ORDER BY fileid, nshost;
-END;
-*/
 
 /*
  * PL/SQL method implementing the stager_qry based on file name
