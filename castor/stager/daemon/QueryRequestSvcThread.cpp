@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.47 2006/10/11 16:27:51 itglp Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.48 2006/10/16 13:37:33 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.47 $ $Date: 2006/10/11 16:27:51 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.48 $ $Date: 2006/10/16 13:37:33 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -607,7 +607,12 @@ namespace castor {
                 }
 
                 struct Cns_filestat Cnsfilestat;
-                Cns_stat(pval.c_str(), &Cnsfilestat);
+                if (Cns_stat(pval.c_str(), &Cnsfilestat) < 0) {
+                  castor::exception::Exception e(serrno);
+                  e.getMessage() << "Cns_stat returned error for file "
+                                 << pval;
+                  throw e;
+                }
                 if((Cnsfilestat.filemode & S_IFDIR) == S_IFDIR) {
                   // it is a directory, query for the content (don't perform a query by ID)
                   ptype = REQUESTQUERYTYPE_FILENAME;
