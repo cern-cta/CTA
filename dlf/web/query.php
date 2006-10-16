@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: query.php,v 1.5 2006/10/16 13:30:57 waldron Exp $
+ * $Id: query.php,v 1.6 2006/10/16 13:34:56 waldron Exp $
  */
 
 require("utils.php");
@@ -154,7 +154,7 @@ $query_count = 0;
 	// validate form content
 	function validate_form() {
 		if (document.query.last.value == 0) {
-			if (document.query.to.value == "dd/mm/yyyy") {
+			if ((document.query.from.value != "dd/mm/yyyy") && (document.query.to.value == "dd/mm/yyyy")) {
 				document.query.to.value     = <?php echo "\"".date('d/m/Y')."\";"; ?>
 				document.query.totime.value = <?php echo "\"".date('H:i')."\";"; ?>
 			}
