@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.48 2006/10/16 13:37:33 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.49 2006/10/16 14:09:45 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.48 $ $Date: 2006/10/16 13:37:33 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.49 $ $Date: 2006/10/16 14:09:45 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -597,15 +597,22 @@ namespace castor {
                                << pval;
                 throw e;
               }
-              
-              // Verify whether we are querying a directory
-              if(ptype == REQUESTQUERYTYPE_FILEID || ptype == REQUESTQUERYTYPE_FILENAME) {
+
+              // Verify whether we are querying a directory (if not regexp)
+              if(ptype == REQUESTQUERYTYPE_FILEID ||
+                 (ptype == REQUESTQUERYTYPE_FILENAME && pval.compare(0, 7, "regexp:"))) {
+                // Get PATH for queries by fileId
                 if(ptype == REQUESTQUERYTYPE_FILEID) {
                   char cfn[CA_MAXPATHLEN+1];     // XXX unchecked string length in Cns_getpath() call
-                  Cns_getpath((char*)nshost.c_str(), strtou64(fid.c_str()), cfn);
+                  if (Cns_getpath((char*)nshost.c_str(),
+                                  strtou64(fid.c_str()), cfn) < 0) {
+                    castor::exception::Exception e(serrno);
+                    e.getMessage() << "Cns_getpath returned error for fileid "
+                                   << fid;
+                    throw e;
+                  }
                   pval = cfn;
                 }
-
                 struct Cns_filestat Cnsfilestat;
                 if (Cns_stat(pval.c_str(), &Cnsfilestat) < 0) {
                   castor::exception::Exception e(serrno);
