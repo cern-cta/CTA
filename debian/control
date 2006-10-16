@@ -32,13 +32,6 @@ Recommends: castor-lib, castor-lib-oracle
 Description: castor (Cern Advanced STORage system)
  castor.conf example
 
-Package: castor-allservicesbuttapeservers-config
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Recommends: castor-lib, castor-lib-oracle
-Description: castor (Cern Advanced STORage system)
- castor.conf recommended file for all nodes running a service (not needed on pure clients)
-
 Package: castor-devel
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib

@@ -168,8 +168,6 @@ install -m 755 debian/castor-service.postrm ${RPM_BUILD_ROOT}/usr/sbin/castor-se
 install -m 755 debian/castor-service.prerm ${RPM_BUILD_ROOT}/usr/sbin/castor-service.prerm
 # Install the sample castor.conf
 install -m 644 debian/castor.conf ${RPM_BUILD_ROOT}/etc/castor/castor.conf.example
-# Install the recommended castor.conf for all nodes but tape servers
-install -m 644 debian/castor-allservicesbuttapeservers.conf ${RPM_BUILD_ROOT}/etc/castor/castor.conf
 for i in debian/*.logrotate; do
     install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/logrotate.d/`basename ${i} | sed 's/\.logrotate//g'`
 done

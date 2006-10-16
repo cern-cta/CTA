@@ -122,8 +122,6 @@ endif
 	install -o root -g bin -m 755 $(CURDIR)/debian/castor-service.prerm $(CURDIR)/debian/castor/usr/sbin/castor-service.prerm
 	# Install the sample castor.conf
 	install -o root -g bin -m 644 $(CURDIR)/debian/castor.conf $(CURDIR)/debian/castor/etc/castor/castor.conf.example
-	# Install the recommended castor.conf for all nodes but tape servers
-	install -o root -g bin -m 644 $(CURDIR)/debian/castor-allservicesbuttapeservers.conf $(CURDIR)/debian/castor/etc/castor/castor.conf
 
 # Build architecture-independent files here.
 binary-indep: build install
