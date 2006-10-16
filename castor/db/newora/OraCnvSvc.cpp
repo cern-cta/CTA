@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/08/03 12:40:26 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/10/16 15:24:56 $ $Author: sponcec3 $
  *
  *
  *
@@ -65,16 +65,7 @@ castor::db::ora::OraCnvSvc::OraCnvSvc(const std::string name) :
   m_passwd(""),
   m_dbName(""),
   m_environment(0),
-  m_connection(0) {
-  std::string full_name = name;
-  if(char* p = getenv("CASTOR_INSTANCE")) full_name = full_name + "_" + p;
-  char* cuser = getconfent_fromfile(ORASTAGERCONFIGFILE, full_name.c_str(), "user", 0);
-  if (0 != cuser) m_user = std::string(cuser);
-  char* cpasswd = getconfent_fromfile(ORASTAGERCONFIGFILE, full_name.c_str(), "passwd", 0);
-  if (0 != cpasswd) m_passwd = std::string(cpasswd);
-  char* cdbName = getconfent_fromfile(ORASTAGERCONFIGFILE, full_name.c_str(), "dbName", 0);
-  if (0 != cdbName) m_dbName = std::string(cdbName);
-}
+  m_connection(0) {}
 
 // -----------------------------------------------------------------------
 // ~OraCnvSvc
@@ -124,11 +115,22 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
   }
   if (0 == m_connection) {
     if ("" == m_user || "" == m_dbName) {
-      // Try to avoid connecting with empty string, since
-      // ORACLE would core dump !
-      castor::exception::InvalidArgument e;
-      e.getMessage() << "Empty user name or db name, cannot connect to database.";
-      throw e;
+      // get the new values
+      std::string full_name = name();
+      if (char* p = getenv("CASTOR_INSTANCE")) full_name = full_name + "_" + p;
+      char* cuser = getconfent_fromfile(ORASTAGERCONFIGFILE, full_name.c_str(), "user", 0);
+      if (0 != cuser) m_user = std::string(cuser);
+      char* cpasswd = getconfent_fromfile(ORASTAGERCONFIGFILE, full_name.c_str(), "passwd", 0);
+      if (0 != cpasswd) m_passwd = std::string(cpasswd);
+      char* cdbName = getconfent_fromfile(ORASTAGERCONFIGFILE, full_name.c_str(), "dbName", 0);
+      if (0 != cdbName) m_dbName = std::string(cdbName);
+      if ("" == m_user || "" == m_dbName) {
+        // If still empty, try to avoid connecting with empty string, since
+        // ORACLE would core dump !
+        castor::exception::InvalidArgument e;
+        e.getMessage() << "Empty user name or db name, cannot connect to database.";
+        throw e;
+      }
     }
     m_connection =
       m_environment->createConnection(m_user, m_passwd, m_dbName);
@@ -190,6 +192,10 @@ void castor::db::ora::OraCnvSvc::dropConnection() throw() {
   } catch (oracle::occi::SQLException e) {};
   // reset all whatever the state is
   m_connection = 0;
+  // also reset the connection string so that we reload parameters next time
+  m_user = "";
+  m_passwd = "";
+  m_dbName = "";
 }
 
 //------------------------------------------------------------------------------
