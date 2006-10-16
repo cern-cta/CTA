@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: query.php,v 1.4 2006/10/16 11:50:13 waldron Exp $
+ * $Id: query.php,v 1.5 2006/10/16 13:30:57 waldron Exp $
  */
 
 require("utils.php");
@@ -153,11 +153,11 @@ $query_count = 0;
 
 	// validate form content
 	function validate_form() {
-	    if (document.query.to.value == "dd/mm/yyyy") {
-			document.query.to.value     = <?php echo "\"".date('d/m/Y')."\";"; ?>
-			document.query.totime.value = <?php echo "\"".date('H:i')."\";"; ?>
-		}
 		if (document.query.last.value == 0) {
+			if (document.query.to.value == "dd/mm/yyyy") {
+				document.query.to.value     = <?php echo "\"".date('d/m/Y')."\";"; ?>
+				document.query.totime.value = <?php echo "\"".date('H:i')."\";"; ?>
+			}
 			if (isDate(document.query.from.value + " " + document.query.fromtime.value, 'dd/MM/yyyy HH:mm') == false) {
 				alert("Invalid from date specified, required format: dd/mm/yyyy");
 				return false;
@@ -531,8 +531,11 @@ $query_count = 0;
 							<select name="limit" size="1" class="querySelect" tabindex="19">
 								<option value="10">10</option>
 								<option value="20">20</option>
-								<option value="50" selected="selected">50</option>
+								<option value="50">50</option>
 								<option value="100">100</option>
+								<option value="200" selected="selected">200</option>
+								<option value="500">500</option>
+								<option value="1000">1000</option>
 							</select>						
 						</td>
 					</tr>
