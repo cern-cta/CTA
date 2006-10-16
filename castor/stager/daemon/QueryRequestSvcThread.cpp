@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.49 2006/10/16 14:09:45 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.50 2006/10/16 14:20:04 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.49 $ $Date: 2006/10/16 14:09:45 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.50 $ $Date: 2006/10/16 14:20:04 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -600,15 +600,14 @@ namespace castor {
 
               // Verify whether we are querying a directory (if not regexp)
               if(ptype == REQUESTQUERYTYPE_FILEID ||
-                 (ptype == REQUESTQUERYTYPE_FILENAME && pval.compare(0, 7, "regexp:"))) {
+                 (ptype == REQUESTQUERYTYPE_FILENAME && 0 != pval.compare(0, 7, "regexp:"))) {
                 // Get PATH for queries by fileId
                 if(ptype == REQUESTQUERYTYPE_FILEID) {
                   char cfn[CA_MAXPATHLEN+1];     // XXX unchecked string length in Cns_getpath() call
                   if (Cns_getpath((char*)nshost.c_str(),
                                   strtou64(fid.c_str()), cfn) < 0) {
                     castor::exception::Exception e(serrno);
-                    e.getMessage() << "Cns_getpath returned error for fileid "
-                                   << fid;
+                    e.getMessage() << "fileid " << fid;
                     throw e;
                   }
                   pval = cfn;
@@ -616,8 +615,7 @@ namespace castor {
                 struct Cns_filestat Cnsfilestat;
                 if (Cns_stat(pval.c_str(), &Cnsfilestat) < 0) {
                   castor::exception::Exception e(serrno);
-                  e.getMessage() << "Cns_stat returned error for file "
-                                 << pval;
+                  e.getMessage() << "file " << pval;
                   throw e;
                 }
                 if((Cnsfilestat.filemode & S_IFDIR) == S_IFDIR) {
