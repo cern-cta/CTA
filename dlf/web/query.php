@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: query.php,v 1.3 2006/10/06 06:49:14 waldron Exp $
+ * $Id: query.php,v 1.4 2006/10/16 11:50:13 waldron Exp $
  */
 
 require("utils.php");
@@ -153,6 +153,10 @@ $query_count = 0;
 
 	// validate form content
 	function validate_form() {
+	    if (document.query.to.value == "dd/mm/yyyy") {
+			document.query.to.value     = <?php echo "\"".date('d/m/Y')."\";"; ?>
+			document.query.totime.value = <?php echo "\"".date('H:i')."\";"; ?>
+		}
 		if (document.query.last.value == 0) {
 			if (isDate(document.query.from.value + " " + document.query.fromtime.value, 'dd/MM/yyyy HH:mm') == false) {
 				alert("Invalid from date specified, required format: dd/mm/yyyy");
