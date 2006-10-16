@@ -1,5 +1,5 @@
 /*
- * $Id: stager_mapper.c,v 1.9 2006/04/04 12:26:39 gtaur Exp $
+ * $Id: stager_mapper.c,v 1.10 2006/10/16 09:17:59 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_mapper.c,v $ $Revision: 1.9 $ $Date: 2006/04/04 12:26:39 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_mapper.c,v $ $Revision: 1.10 $ $Date: 2006/10/16 09:17:59 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -270,6 +270,7 @@ int
   }
  
   if (stager != NULL) stgtype = get_stager_type(stager) ;
+    else stgtype=V1;
 
   if (stager!= NULL) {
     
