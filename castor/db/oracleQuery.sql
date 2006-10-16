@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.317 $ $Release$ $Date: 2006/10/12 10:33:40 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.318 $ $Release$ $Date: 2006/10/16 09:48:27 $ $Author: felixehm $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.317 $ $Date: 2006/10/12 10:33:40 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.318 $ $Date: 2006/10/16 09:48:27 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -367,13 +367,9 @@ CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
   nb INTEGER;
   reqType INTEGER;
 BEGIN
-  -- depending on the type (whether repack or not) the new status is decided
-  SELECT type INTO reqType FROM Id2Type WHERE id =
-    (SELECT request FROM SubRequest WHERE id = srId);
 
-  -- update status of SubRequest
-  UPDATE SubRequest SET status = decode(reqType, 119,12, 8) -- REPACK if OBJ_StageRepackRequest, else FINISHED
-   WHERE id = srId RETURNING request INTO rid;
+  UPDATE SubRequest SET status = 8 -- FINISHED
+     WHERE id = srId RETURNING request INTO rid;
 
   -- Try to see whether another subrequest in the same
   -- request is still processing
@@ -1569,6 +1565,12 @@ BEGIN
 	   
      -- create the number of tapecopies for the files
     internalPutDoneFunc(cfid, fsId, 0, nbTC);
+    /** to avoid additional scheduling of the subrequest(s) 
+        (because it is now in 1), we do it
+     */
+    UPDATE subrequest SET status = 12 -- SUBREQUEST_REPACK
+     WHERE subrequest.castorfile = cfid
+       AND subrequest.status = 1; -- SUBREQUEST_RESTART
   END IF;
   
   IF subRequestId IS NOT NULL THEN
