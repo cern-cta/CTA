@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.319 $ $Release$ $Date: 2006/10/16 14:43:34 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.320 $ $Release$ $Date: 2006/10/16 17:03:13 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.319 $ $Date: 2006/10/16 14:43:34 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.320 $ $Date: 2006/10/16 17:03:13 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2446,12 +2446,10 @@ CREATE OR REPLACE PROCEDURE garbageCollect AS
   fs NUMBER;
 BEGIN
   LOOP
-    -- get the oldest FileSystem to be garbage collected
-    SELECT fsid INTO fs FROM
-      (SELECT fsid FROM FileSystemGC ORDER BY submissionTime ASC)
-    WHERE ROWNUM < 2;
+    -- get a FileSystem to be garbage collected
+    DELETE FROM FileSystemGC WHERE ROWNUM < 2
+    RETURNING fsid INTO fs;
     garbageCollectFS(fs);
-    DELETE FROM FileSystemGC WHERE fsid = fs;
     -- yield to other jobs/transactions
     DBMS_LOCK.sleep(seconds => 1.0);
   END LOOP;
@@ -2469,7 +2467,7 @@ FOR EACH ROW
 DECLARE
   freeSpace NUMBER;
   jobid NUMBER;
-  gcstime INTEGER;
+  gcstime NUMBER;
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
 BEGIN
@@ -2488,9 +2486,9 @@ BEGIN
     LOCK TABLE FileSystemGC IN ROW SHARE MODE;
     SELECT min(submissionTime) INTO gcstime FROM FileSystemGC;
     INSERT INTO FileSystemGC VALUES (:new.id, getTime());
-    -- is it the only FS waiting for GC, or are there other old FSs waiting
+    -- is it the only FS waiting for GC, or are there other FSs waiting since >10 mins
     -- (it can happen if the job failed or it has been killed)?
-    IF gcstime IS NULL OR gcstime < getTime() - 500 THEN
+    IF gcstime IS NULL OR gcstime < getTime() - 600 THEN
       -- we spawn a job to do the real work. This avoids mutating table error
       -- and ensures that the current update does not fail if GC fails
       DBMS_JOB.SUBMIT(jobid,'garbageCollect();');
