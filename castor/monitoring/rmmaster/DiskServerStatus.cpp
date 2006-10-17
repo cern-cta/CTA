@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      MachineStatus.cpp
+ *                      DiskServerStatus.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,24 +19,24 @@
  *
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * Describes the status of one machine
+ * Describes the status of one disk server
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#include "castor/rmmaster/MachineStatus.hpp"
+#include "castor/rmmaster/DiskServerStatus.hpp"
 #include <iostream>
 
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::rmmaster::MachineStatus::MachineStatus
+castor::rmmaster::DiskServerStatus::DiskServerStatus
 (u_signed64 id) : m_id(id) { }
 
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::rmmaster::MachineStatus::print(std::ostream& out) throw() {
+void castor::rmmaster::DiskServerStatus::print(std::ostream& out) throw() {
   out << "[" << m_id << "]" << std::endl;
   if (0 == size()) {
     out << "No filesystem" << std::endl;

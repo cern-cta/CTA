@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      MachineStatus.hpp
+ *                      DiskServerStatus.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,13 +19,13 @@
  *
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * Describes the status of one machine
+ * Describes the status of one diskServer
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef RMMASTER_MACHINESTATUS_HPP
-#define RMMASTER_MACHINESTATUS_HPP 1
+#ifndef RMMASTER_DISKSERVERSTATUS_HPP
+#define RMMASTER_DISKSERVERSTATUS_HPP 1
 
 #include "castor/rmmaster/FileSystemStatus.hpp"
 #include "castor/sharedMemory/Allocator.hpp"
@@ -37,10 +37,10 @@ namespace castor {
   namespace rmmaster {
 
     /*
-     * Describes the status of one machine
+     * Describes the status of one diskServer
      * Enforces usage of an external memory allocator for the Filesystem list
      */
-    class MachineStatus :
+    class DiskServerStatus :
       public std::map<castor::sharedMemory::string,
 		      castor::rmmaster::FileSystemStatus,
                       std::less<castor::sharedMemory::string>,
@@ -53,7 +53,7 @@ namespace castor {
       /*
        * Constructor
        */
-      MachineStatus(u_signed64 id = 0);
+      DiskServerStatus(u_signed64 id = 0);
 
       /**
        * print method
@@ -62,18 +62,18 @@ namespace castor {
 
     public:
 
-      /// Accessor to machine id
+      /// Accessor to diskServer id
       u_signed64 id() const { return m_id; }
 
     private:
 
-      /// the machine id
+      /// the diskServer id
       u_signed64 m_id;
 
-    }; // end MachineStatus
+    }; // end DiskServerStatus
 
   } // end rmmaster
 
 } // end castor
 
-#endif // RMMASTER_MACHINESTATUS_HPP
+#endif // RMMASTER_DISKSERVERSTATUS_HPP
