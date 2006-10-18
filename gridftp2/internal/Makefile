@@ -1,6 +1,6 @@
 # This Makefile is taken and adapted from the Globus toolkit
 #
-# * @(#)$RCSfile: Makefile,v $ $Revision: 1.1 $ $Release$ $Date: 2006/10/18 07:46:26 $ $Author: itglp $
+# * @(#)$RCSfile: Makefile,v $ $Revision: 1.2 $ $Release$ $Date: 2006/10/18 07:58:59 $ $Author: kotlyar $
 #
 
 include makefile_header
@@ -10,7 +10,7 @@ include makefile_header
 DSI_CFLAGS=$(GLOBUS_CFLAGS)
 
 # add needed includes here
-DSI_INCLUDES=$(GLOBUS_INCLUDES) -I ../../h 
+DSI_INCLUDES=$(GLOBUS_INCLUDES) 
 
 # added needed ldflags here
 DSI_LDFLAGS=$(GLOBUS_LDFLAGS)

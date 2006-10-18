@@ -1,6 +1,6 @@
 # This Makefile is taken and adapted from the Globus toolkit
 #
-# * @(#)$RCSfile: Makefile,v $ $Revision: 1.1 $ $Release$ $Date: 2006/10/18 07:46:25 $ $Author: itglp $
+# * @(#)$RCSfile: Makefile,v $ $Revision: 1.2 $ $Release$ $Date: 2006/10/18 07:58:59 $ $Author: kotlyar $
 #
 
 include makefile_header
@@ -13,7 +13,7 @@ DSI_CFLAGS=$(GLOBUS_CFLAGS)
 DSI_INCLUDES=$(GLOBUS_INCLUDES) -I ../../h 
 
 # added needed ldflags here
-DSI_LDFLAGS=$(GLOBUS_LDFLAGS)
+DSI_LDFLAGS=$(GLOBUS_LDFLAGS) -L ../../shlib
 
 # add needed libraries here
 DSI_LIBS=-lshift
@@ -23,7 +23,7 @@ FLAVOR=gcc32dbg
 globus_gridftp_server_CASTOR2ext.o:
 	$(GLOBUS_CC) $(DSI_CFLAGS) $(DSI_INCLUDES) \
 		-shared -o libglobus_gridftp_server_CASTOR2ext_$(FLAVOR).so \
-		globus_gridftp_server_CASTOR2.c \
+		globus_gridftp_server_CASTOR2ext.c \
 		$(DSI_LDFLAGS) $(DSI_LIBS)
 
 install:
