@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.320 $ $Release$ $Date: 2006/10/16 17:03:13 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.321 $ $Release$ $Date: 2006/10/18 10:35:30 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.320 $ $Date: 2006/10/16 17:03:13 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.321 $ $Date: 2006/10/18 10:35:30 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -790,10 +790,33 @@ BEGIN
                      AND DiskServer.id = FileSystem.diskServer
                      AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
                    ORDER BY FileSystem.weight + FileSystem.deltaWeight DESC, FileSystem.fsDeviation ASC;
+      NotOk NUMBER := 1;
+      nb NUMBER;
     BEGIN
       OPEN c1;
-      FETCH c1 INTO diskServerName, rmountPoint, fileSystemId, deviation, fsDiskServer, fileSize;
+      LOOP
+        FETCH c1 INTO diskServerName, rmountPoint, fileSystemId, deviation, fsDiskServer, fileSize;
+        -- Check that we don't alredy have a copy of this file on this filesystem.
+        -- This will never happend in normal operations but may be the case if a filesystem
+        -- was disabled and did come back while the tape recall was waiting.
+        -- Even if we could optimize by canceling remaining unneeded tape recalls when a
+        -- fileSystem comes backs, the ones running at the time of the come back will have
+        -- the problem.
+        EXIT WHEN c1%NOTFOUND;
+        SELECT count(*) INTO nb
+          FROM DiskCopy
+         WHERE fileSystem = fileSystemId
+           AND CastorFile = castorfileId
+           AND status = 0; -- STAGED
+        IF nb = 0 THEN
+          NotOk := 0;
+          EXIT;
+        END IF;
+      END LOOP;
       CLOSE c1;
+      IF NotOk != 0 THEN
+        raise_application_error(-20101, 'Recall could not find a FileSystem with no copy of this file !');
+      END IF;      
       UPDATE DiskCopy SET fileSystem = fileSystemId WHERE id = dci;
       updateFsFileOpened(fsDiskServer, fileSystemId, deviation, fileSize);
     END;
