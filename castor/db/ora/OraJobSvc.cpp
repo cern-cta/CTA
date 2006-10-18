@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/08/03 10:03:16 $ $Author: gtaur $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2006/10/18 12:31:46 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -325,11 +325,11 @@ castor::db::ora::OraJobSvc::getUpdateStart
       // create needed TapeCopy(ies) and Segment(s)
       int crSegFailed = createTapeCopySegmentsForRecall(dc->castorFile(), euid, egid);
       if(crSegFailed == -1) {      
-          // no valid copy found, set the diskcopy status to failed
-          dc->setStatus(castor::stager::DISKCOPY_FAILED);
+        // no valid copy found, in such a case, we delete the DiskCopy
+        // and set the subrequest to failed
           subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
-          cnvSvc()->updateRep(&ad, dc, false);
           cnvSvc()->updateRep(&ad, subreq, false);
+          cnvSvc()->deleteRep(&ad, dc, false);
       }          
       // cleanup
       delete dc->castorFile();
