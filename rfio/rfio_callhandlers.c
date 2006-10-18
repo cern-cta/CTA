@@ -134,6 +134,7 @@ int close_status) {
       }
     }
   }
+  else {return 0;}
 
   if (forced_mover_exit_error != 0){
     return -1;
