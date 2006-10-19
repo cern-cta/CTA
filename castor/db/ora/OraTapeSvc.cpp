@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)OraTapeSvc.cpp,v 1.15 $Release$ 2006/09/21 17:38:54 felixehm
+ * @(#)OraTapeSvc.cpp,v 1.16 $Release$ 2006/10/19 16:21:27 felixehm
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -126,7 +126,7 @@ const std::string castor::db::ora::OraTapeSvc::s_fileRecallFailedStatementString
 
 /// SQL statement for selectTapeCopiesForMigration
 const std::string castor::db::ora::OraTapeSvc::s_selectTapeCopiesForMigrationStatementString =
-  "SELECT TapeCopy.id FROM TapeCopy, CastorFile WHERE TapeCopy.castorFile = CastorFile.id AND CastorFile.svcClass = :1 AND TapeCopy.status IN (0, 1)";
+  "BEGIN selectTapeCopiesForMigration(:1,:2); END;";
 
 /// SQL statement for resetStream
 const std::string castor::db::ora::OraTapeSvc::s_resetStreamStatementString =
@@ -744,13 +744,18 @@ castor::db::ora::OraTapeSvc::selectTapeCopiesForMigration
   if (0 == m_selectTapeCopiesForMigrationStatement) {
     m_selectTapeCopiesForMigrationStatement =
       createStatement(s_selectTapeCopiesForMigrationStatementString);
+    m_selectTapeCopiesForMigrationStatement->registerOutParam
+        (2, oracle::occi::OCCICURSOR);
+    m_selectTapeCopiesForMigrationStatement->setAutoCommit(true);
   }
   // Execute statement and get result
   unsigned long id;
   try {
     m_selectTapeCopiesForMigrationStatement->setDouble(1, svcClass->id());
+    m_selectTapeCopiesForMigrationStatement->executeUpdate();
+
     oracle::occi::ResultSet *rset =
-      m_selectTapeCopiesForMigrationStatement->executeQuery();
+      m_selectTapeCopiesForMigrationStatement->getCursor(2);
     // create result
     std::vector<castor::stager::TapeCopy*> result;
     // Fill it
