@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.c,v 1.8 2006/10/10 12:41:46 waldron Exp $
+ * $Id: mysql.c,v 1.9 2006/10/19 15:13:33 waldron Exp $
  */
 
 /* headers */
@@ -319,7 +319,7 @@ int DLL_DECL db_open(database_t *db, unsigned int retries) {
 
 		/* extract values */
 		if (sscanf(buf, "%25[^/]/%25[^@]@%25s", username, password, hostname) != 3) {
-			log(LOG_ERR, "db_open() - invalid connect string in '%s'", DLFCONFIG);
+			log(LOG_ERR, "db_open() - invalid connect string in '%s'\n", DLFCONFIG);
 			continue;
 		}
 
