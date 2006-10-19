@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.321 $ $Release$ $Date: 2006/10/18 10:35:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.322 $ $Release$ $Date: 2006/10/19 08:37:12 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.321 $ $Date: 2006/10/18 10:35:30 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.322 $ $Date: 2006/10/19 08:37:12 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2472,12 +2472,13 @@ BEGIN
     -- get a FileSystem to be garbage collected
     DELETE FROM FileSystemGC WHERE ROWNUM < 2
     RETURNING fsid INTO fs;
+    IF fs = 0 THEN     -- nothing to do anymore, terminate the job
+      EXIT;
+    END IF;
     garbageCollectFS(fs);
     -- yield to other jobs/transactions
     DBMS_LOCK.sleep(seconds => 1.0);
   END LOOP;
-  EXCEPTION
-    WHEN NO_DATA_FOUND THEN NULL;  -- terminate the job
 END;
 
 /*
