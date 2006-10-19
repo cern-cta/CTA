@@ -61,3 +61,19 @@ select status, count(*) from diskcopy where creationtime < getTime() - 10000 gro
 
 -- What are the WAITDisk2DiskCopy ones ?
 select * from diskcopy where creationtime < getTime() - 10000 and status = 1;
+
+
+-- Status of the GC
+-------------------
+
+-- diskservers for which GC is running
+select count(*), diskpool.name as dpname, diskserver.name as diskserver, filesystem.mountpoint
+  from diskcopy, filesystem, diskserver, diskpool
+ where diskcopy.filesystem = filesystem.id and filesystem.diskserver = diskserver.id and filesystem.diskpool = diskpool.id
+   and diskcopy.status in (8,9)
+group by diskserver.name, diskpool.name, filesystem.mountpoint order by 1 desc;
+
+-- current queue for the GC
+select filesystemgc.*, diskpool.name as DPName from filesystemgc, filesystem,diskpool 
+where filesystem.diskpool = diskpool.id and filesystem.id = filesystemgc.fsid;
+
