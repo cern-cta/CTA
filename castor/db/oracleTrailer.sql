@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.323 $ $Release$ $Date: 2006/10/19 10:10:03 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.324 $ $Release$ $Date: 2006/10/19 16:25:32 $ $Author: felixehm $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.323 $ $Date: 2006/10/19 10:10:03 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.324 $ $Date: 2006/10/19 16:25:32 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -907,6 +907,8 @@ CREATE OR REPLACE PACKAGE castor AS
         fileSystemmaxFreeSpace INTEGER,
         fileSystemStatus INTEGER);
   TYPE DiskPoolsQueryLine_Cur IS REF CURSOR RETURN DiskPoolsQueryLine;
+  TYPE IDRecord IS RECORD (id INTEGER);
+  TYPE IDRecord_Cur IS REF CURSOR RETURN IDRecord;
 END castor;
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
@@ -2886,4 +2888,20 @@ BEGIN
      WHERE SubRequest.id = sreqid;
      COMMIT;
    END IF;
+END;
+
+
+/* PL/SQL Procedure to find migration candidates (TapeCopies) for the passed ServiceClass.
+It checks for the TapeCopies in CREATED and TOBEMIGRATED if there is a RepackRequest
+going on. If so, it returns for the requested svcclass the Migration candidates.
+*/
+CREATE OR REPLACE PROCEDURE selectTapeCopiesForMigration
+(svcclassId IN NUMBER, result OUT castor.IDRecord_Cur) AS
+BEGIN 
+OPEN result FOR 
+	SELECT TapeCopy.id 
+	FROM TapeCopy, CastorFile 
+	WHERE TapeCopy.castorFile = CastorFile.id 
+	AND CastorFile.svcClass = svcclassId
+	AND TapeCopy.status IN (0, 1);
 END;
