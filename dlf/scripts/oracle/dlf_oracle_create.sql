@@ -1,7 +1,7 @@
 /*                        ORACLE ENTERPRISE EDITION                         */
 /*                                                                          */
 /* This file contains SQL code that will generate the dlf database schema   */
-/* tablespaces DLF_IDX and DLF_DATA must be present on the target database  */
+/* tablespaces DLF_INDX and DLF_DATA must be present on the target database */
 /* and DBA privileges must be present for scheduling the maintenance job    */
 
 /*
@@ -128,11 +128,11 @@ SUBPARTITION TEMPLATE
 TABLESPACE dlf_data;
 
 /* local indexes */
-CREATE INDEX i_msg_fac ON dlf_messages (facility) LOCAL TABLESPACE dlf_idx;
-CREATE INDEX i_msg_reqid ON dlf_messages (reqid) LOCAL TABLESPACE dlf_idx;
-CREATE INDEX i_msg_hostid ON dlf_messages (hostid) LOCAL TABLESPACE dlf_idx;
-CREATE INDEX i_msg_nshostid ON dlf_messages (nshostid) LOCAL TABLESPACE dlf_idx;
-CREATE INDEX i_msg_fileid ON dlf_messages (nsfileid) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_msg_fac ON dlf_messages (facility) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_reqid ON dlf_messages (reqid) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_hostid ON dlf_messages (hostid) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_nshostid ON dlf_messages (nshostid) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_fileid ON dlf_messages (nsfileid) LOCAL TABLESPACE dlf_indx;
 
 /*
  * dlf_num_param_values
@@ -149,7 +149,7 @@ PARTITION BY RANGE (timestamp)
 )
 TABLESPACE dlf_data;
 
-CREATE INDEX i_num_id ON dlf_num_param_values (id) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_num_id ON dlf_num_param_values (id) LOCAL TABLESPACE dlf_indx;
 
 /*
  * dlf_str_param_values
@@ -166,7 +166,7 @@ PARTITION BY RANGE (timestamp)
 )
 TABLESPACE dlf_data;
 
-CREATE INDEX i_str_id ON dlf_str_param_values (id) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_str_id ON dlf_str_param_values (id) LOCAL TABLESPACE dlf_indx;
 
 /*
  * dlf_reqid_map
@@ -183,8 +183,8 @@ PARTITION BY RANGE (timestamp)
 )
 TABLESPACE dlf_data;
 
-CREATE INDEX i_req_id ON dlf_reqid_map (id) LOCAL TABLESPACE dlf_idx;
-CREATE INDEX i_req_subreqid ON dlf_reqid_map (subreqid) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_req_id ON dlf_reqid_map (id) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_req_subreqid ON dlf_reqid_map (subreqid) LOCAL TABLESPACE dlf_indx;
 
 /*
  * dlf_tape_ids
@@ -200,7 +200,7 @@ PARTITION BY RANGE (timestamp)
 )
 TABLESPACE dlf_data;
 
-CREATE INDEX i_tape_id ON dlf_tape_ids (id) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_tape_id ON dlf_tape_ids (id) LOCAL TABLESPACE dlf_indx;
 
 /*
  * dlf_severities
@@ -212,8 +212,8 @@ CREATE TABLE dlf_severities
 )
 TABLESPACE dlf_data;
 
-CREATE UNIQUE INDEX i_sev_no ON dlf_severities (sev_no) TABLESPACE dlf_idx;
-CREATE UNIQUE INDEX i_sev_name ON dlf_severities (sev_name) TABLESPACE dlf_idx;
+CREATE UNIQUE INDEX i_sev_no ON dlf_severities (sev_no) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_sev_name ON dlf_severities (sev_name) TABLESPACE dlf_indx;
 
 ALTER TABLE dlf_severities ADD CONSTRAINT i_sev_no UNIQUE (sev_no) ENABLE;
 ALTER TABLE dlf_severities ADD CONSTRAINT i_sev_name UNIQUE (sev_name) ENABLE;
@@ -229,8 +229,8 @@ CREATE TABLE dlf_facilities
 )
 TABLESPACE dlf_data;
 
-CREATE UNIQUE INDEX i_fac_no ON dlf_facilities (fac_no) TABLESPACE dlf_idx;
-CREATE UNIQUE INDEX i_fac_name ON dlf_facilities (fac_name) TABLESPACE dlf_idx;
+CREATE UNIQUE INDEX i_fac_no ON dlf_facilities (fac_no) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_fac_name ON dlf_facilities (fac_name) TABLESPACE dlf_indx;
 
 ALTER TABLE dlf_facilities ADD CONSTRAINT i_fac_no UNIQUE (fac_no) ENABLE;
 ALTER TABLE dlf_facilities ADD CONSTRAINT i_fac_name UNIQUE (fac_name) ENABLE;
@@ -258,8 +258,8 @@ CREATE TABLE dlf_host_map
 )
 TABLESPACE dlf_data;
 
-CREATE UNIQUE INDEX i_hostid ON dlf_host_map (hostid) TABLESPACE dlf_idx;
-CREATE UNIQUE INDEX i_hostname ON dlf_host_map (hostname) TABLESPACE dlf_idx;
+CREATE UNIQUE INDEX i_hostid ON dlf_host_map (hostid) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_hostname ON dlf_host_map (hostname) TABLESPACE dlf_indx;
 
 ALTER TABLE dlf_host_map ADD CONSTRAINT i_hostid UNIQUE (hostid) ENABLE;
 ALTER TABLE dlf_host_map ADD CONSTRAINT i_hostname UNIQUE (hostname) ENABLE;
@@ -274,8 +274,8 @@ CREATE TABLE dlf_nshost_map
 )
 TABLESPACE dlf_data;
 
-CREATE UNIQUE INDEX i_nshostid ON dlf_nshost_map (nshostid) TABLESPACE dlf_idx;
-CREATE UNIQUE INDEX i_nshostname ON dlf_nshost_map (nshostname) TABLESPACE dlf_idx;
+CREATE UNIQUE INDEX i_nshostid ON dlf_nshost_map (nshostid) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_nshostname ON dlf_nshost_map (nshostname) TABLESPACE dlf_indx;
 
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostid UNIQUE (nshostid) ENABLE;
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostname UNIQUE (nshostname) ENABLE;

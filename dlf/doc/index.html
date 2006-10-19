@@ -8,7 +8,7 @@
 <meta http-equiv="Cache-Control" content="no-cache" />
 <meta http-equiv="Default-Style" content="compact" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
-<!-- $Id: index.html,v 1.8 2006/10/10 12:41:46 waldron Exp $ -->
+<!-- $Id: index.html,v 1.9 2006/10/19 14:51:51 waldron Exp $ -->
 <title>Distributed Logging Facility - Documentation</title>
 <style type="text/css">
 
@@ -173,12 +173,12 @@ TR.subheader {
       <p><strong>Server and Database Schema </strong></p>
       <p>Before running the DLF server for the first time. The DLF database schema must first be created. The scripts for creating the database schema can be found in CVS in the subdirectory dlf/scripts. Different creation scripts exist for Oracle, Oracle Express (XE) and MySQL. If upgrade from a previous schema, that schema must be dropped first!! </p>
       <p class="style2">For Oracle:</p>
-      <p>Prior to creating the schema two tablespaces must exist. One called DLF_DATA and another called DLF_IDX to store the table data and indexes respectively. Creation of the schema must be done as &quot;sysdba&quot; or the user must have privileges to add DBMS jobs to the database. Using your favourite sql client (e.g. sqlplus) you can then execute the creation script (dlf_oracle_create.sqlplus)</p>
+      <p>Prior to creating the schema two tablespaces must exist. One called DLF_DATA and another called DLF_INDX to store the table data and indexes respectively. Creation of the schema must be done as &quot;sysdba&quot; or the user must have privileges to add DBMS jobs to the database. Using your favourite sql client (e.g. sqlplus) you can then execute the creation script (dlf_oracle_create.sqlplus)</p>
       <p>For the automatic exporting of partitions to disk, a directory object must be created in oracle. The location of the directory should not be /var/ or /tmp/ and should be significantly large enough to store dlf data.</p>
       CREATE DIRECTORY DLF_DATAPUMP_DIR AS '&lt;full path to directory&gt;';<br />
 	  GRANT READ, WRITE ON DIRECTORY DLF_DATAPUMP_DIR TO &lt;dlf_username&gt;;<br />
       <p class="style2">For Oracle Express:</p>
-      <p>The only prerequisite that exists before creating the DLF schema is that two tablespaces must exist. One called DLF_DATA and another called DLF_IDX to store the table data and indexes respectively.  Using your favourite sql client (e.g. sqlplus) you can then execute the creation script (dlf_oracle_create.sql) </p>
+      <p>The only prerequisite that exists before creating the DLF schema is that two tablespaces must exist. One called DLF_DATA and another called DLF_INDX to store the table data and indexes respectively.  Using your favourite sql client (e.g. sqlplus) you can then execute the creation script (dlf_oracle_create.sql) </p>
       <p class="style2">For MySQL:</p>
       <p>There are no special requirements simply run the creation script.</p>
       <p align="center"><strong>At anytime the DLF schema can be dropped using the (dlf_[oracle|mysql]_drop.sql) customised for each database backend. </strong></p>
