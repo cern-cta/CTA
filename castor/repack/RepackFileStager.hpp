@@ -73,13 +73,16 @@ namespace castor {
 
 
     /** private method to send the request to the stager.
+      * The passed RepackSubRequest cuuid is updated as soon as the 
+      * RequestHandler from the Stager answers.
+      * @param rsreq The RepackSubRequest to update the cuuid 
       * @param req The Request to send
       * @param reqId the returned request id (cuuid) from stager
       * @param opts The Stager options struct
       * @returns The Number of files for which the stager request failed.
       * @throws castor::exeption::Internal in case of an error
       */
-		int sendStagerRepackRequest(
+		int sendStagerRepackRequest( RepackSubRequest* rsreq,
                                  castor::stager::StageRepackRequest* req,
                                  std::string *reqId,
                                  struct stage_options* opts

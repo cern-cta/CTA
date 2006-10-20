@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2006/10/11 17:41:49 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2006/10/20 16:00:16 $ $Author: felixehm $
  *
  *
  *
@@ -127,7 +127,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   if ( !sreq->segment().size() ){
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 36, 0, NULL);
     sreq->setStatus(SUBREQUEST_DONE);
-    m_dbhelper->updateSubRequest(sreq,false,cuuid);
+    m_dbhelper->updateSubRequest(sreq,false,cuuid);   // doesn't throw
     return;
   }
 
@@ -152,7 +152,6 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   }
 
   
-
   filelist->clear();
   delete filelist;
 
@@ -161,7 +160,6 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   struct stage_options opts;
   opts.stage_host = (char*)ptr_server->getStagerName().c_str(); 
 
-  
   /// the service class information is checked and in case of default stored
   /// with the RepackRequest
   getServiceClass(&opts, sreq);  /// would through an exception, if repackrequest is not available
@@ -175,7 +173,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
 
   /// here, we send the stager request
 	try {
-      failed = sendStagerRepackRequest(&req, &reqId, &opts);
+      failed = sendStagerRepackRequest(sreq, &req, &reqId, &opts);
 	}catch (castor::exception::Exception ex){
     for (int i=0; i<req.subRequests().size(); i++)  
       delete req.subRequests().at(i);
@@ -183,13 +181,14 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
 
     castor::dlf::Param params[] =
 		{castor::dlf::Param("Standard Message", sstrerror(ex.code())),
-		 castor::dlf::Param("Precise Message", ex.getMessage().str())};
-		castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 21, 2, params);
+		 castor::dlf::Param("Precise Message", ex.getMessage().str()),
+     castor::dlf::Param("VID", sreq->vid())
+    };
+		castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 21, 3, params);
     return;
 	}
 
   /// we want to know how many files were successfully submitted
-  sreq->setFilesStaging(req.subRequests().size());
   sreq->setFilesFailed(failed);
 
 
@@ -312,13 +311,14 @@ void RepackFileStager::startRepack(RepackSubRequest* sreq){
 //------------------------------------------------------------------------------
 // stage_files
 //------------------------------------------------------------------------------
-int RepackFileStager::sendStagerRepackRequest(
+int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
                                                 castor::stager::StageRepackRequest* req,
                                                 std::string *reqId,
                                                 struct stage_options* opts
                                               ) throw (castor::exception::Exception)
 {
   int failed = 0; /** counter for failed files during submit */	
+  Cuuid_t cuuid = stringtoCuuid(rsreq->cuuid());
 
 	/** Uses a BaseClient to handle the request */
 	castor::client::BaseClient client(stage_getClientTimeout());
@@ -327,12 +327,23 @@ int RepackFileStager::sendStagerRepackRequest(
 	castor::stager::RequestHelper reqh(req);
 	reqh.setOptions(opts);
 
-	/** Send the Request */
+	/** 1. Send the Request */
 	std::vector<castor::rh::Response*>respvec;
 	castor::client::VectorResponseHandler rh(&respvec);
-	
-	
-	*reqId = client.sendRequest(req, &rh);
+	*reqId = client.createClientAndSend(req);
+  
+
+  /** 2. we need to store the recieved cuuid from the request replier and save it
+      in case the pollAnswersFromStager fails */
+  rsreq->setCuuid(*reqId);
+  rsreq->setStatus(SUBREQUEST_STAGING);
+  rsreq->setFilesStaging(req->subRequests().size());
+  m_dbhelper->updateSubRequest(rsreq,false,cuuid); 
+  
+
+  /** 3. now try to poll for the answers. If there is an timeout it will throw
+      an exception */
+  client.pollAnswersFromStager(req, &rh);
 
 	/** like the normale api call, we have to check for errors in the answer*/
 	for (int i=0; i<respvec.size(); i++) {
@@ -354,7 +365,6 @@ int RepackFileStager::sendStagerRepackRequest(
        castor::dlf::Param("Message", fr->errorMessage()) 
       };
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 38, 1, param, &fileid);
-			/** TODO: DLF logging for errors on files*/
 			std::cerr 
 					<< fr->castorFileName() << " " << fr->fileId() << " "
 					<<"(size "<< fr->fileSize() << ", "
