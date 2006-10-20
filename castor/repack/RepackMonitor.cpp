@@ -142,7 +142,8 @@ throw (castor::exception::Exception)
                       nbresps,
                       &(opts));
 
-  if ( rc == -1 || ( (*nbresps) == 1 && (**responses).errorCode == ENOENT || (**responses).errorCode ==EINVAL) )
+  /** we ignore ENOENT ("Could not find results for request") */
+  if ( rc == -1 || ( (*nbresps) == 1 && (**responses).errorCode ==EINVAL) )
   {
     castor::exception::Exception ex(serrno);
     if ( nbresps = 0 )
@@ -183,6 +184,14 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
     sreq->setFilesStaging(0);
     sreq->setStatus(SUBREQUEST_READYFORCLEANUP);
     m_dbhelper->updateSubRequest(sreq,false,cuuid);
+    return;
+  }
+
+  /** we ignore that we didn't find anything for the Request ID */
+  if ( nbresps==1 && responses[0].errorCode == ENOENT ){
+    stage_trace(1,"No Results found for CUUID. Will try again later.");
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 47, 0, NULL);
+    free_filequery_resp(responses, nbresps);
     return;
   }
 
