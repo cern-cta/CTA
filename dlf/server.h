@@ -21,7 +21,7 @@
  * @file  server.h
  * @brief definitions and structures associated with the server core
  *
- * $Id: server.h,v 1.4 2006/08/21 06:41:49 waldron Exp $
+ * $Id: server.h,v 1.5 2006/10/20 15:55:03 waldron Exp $
  */
 
 #ifndef _SERVER_H
@@ -40,7 +40,7 @@
 #define THROTTLE_PENALTIY        1000       /**< the throttle penalty in milliseconds for every 1000
                                                  messages over the threshold limit                   */
 
-#define MAX_CLIENTS              150        /**< maximum amount of clients per thread                */
+#define MAX_CLIENTS              300        /**< maximum amount of clients per thread                */
 #define MAX_CLIENT_TIMEOUT       300        /**< the number of seconds to allow a client to be
                                                  connected without transmitting any data             */
 
