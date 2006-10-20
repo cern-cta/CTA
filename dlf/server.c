@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: server.c,v 1.10 2006/10/10 12:41:46 waldron Exp $
+ * $Id: server.c,v 1.11 2006/10/20 15:56:15 waldron Exp $
  */
 
 /* headers */
@@ -540,8 +540,14 @@ int main(int argc, char **argv) {
 		hpool[i] = NULL;
 	}
 
+	rv = db_init(d_threads);
+	if (rv != APP_SUCCESS) {
+		log(LOG_CRIT, "Failed to initialise database interface layer - shutting down\n");
+		SetShutdown(server_mode);
+	}
+
 	/* create thread pool */
-	for (i = 0; i < h_threads; i++) {
+	for (i = 0; (i < h_threads) && !IsShutdown(server_mode); i++) {
 
 		/* create structure */
 		h = (handler_t *) malloc(sizeof(handler_t));
@@ -581,12 +587,6 @@ int main(int argc, char **argv) {
 
 		/* assign thread to handler pool */
 		hpool[i] = h;
-	}
-
-	rv = db_init(d_threads);
-	if (rv != APP_SUCCESS) {
-		log(LOG_CRIT, "Failed to initialise database interface layer - shutting down\n");
-		SetShutdown(server_mode);
 	}
 
 	sleep(2);
