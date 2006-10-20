@@ -317,7 +317,7 @@ void castor::repack::DatabaseHelper::updateSubRequest(
         throw (castor::exception::Internal)
 {
   try {
-    // stores it into the database
+    /// stores it into the database
     svcs()->updateRep(&ad, obj, false);
 
     /// we add the segments to the repacksubrequest 
@@ -331,7 +331,7 @@ void castor::repack::DatabaseHelper::updateSubRequest(
     svcs()->commit(&ad);
   /// Exception handling
   } catch (castor::exception::Exception e) {
-    cnvSvc()->rollback();
+    svcs()->rollback(&ad);
     castor::dlf::Param params[] =
     {castor::dlf::Param("Standard Message", sstrerror(e.code())),
      castor::dlf::Param("Precise Message", e.getMessage().str())};
@@ -378,15 +378,19 @@ castor::repack::RepackSubRequest*
 }
 
 
-
+//------------------------------------------------------------------------------
+// unlock
+//------------------------------------------------------------------------------
 void castor::repack::DatabaseHelper::lock(RepackSubRequest* tape) throw (castor::exception::Internal)
 {
   if ( tape != NULL ){
-    
+  /// Since the RepacksubRequest is the only object, which is changed in the DB
+  /// we take a statement which locks only this in the DB   
   try {
       if ( m_selectLockStatement == NULL ) {
         m_selectLockStatement = createStatement(s_selectLockStatementString);
       }
+      /** Lock the entry */
       m_selectLockStatement->setInt(1, tape->id());
       castor::db::IDbResultSet *rset = m_selectLockStatement->executeQuery();
       if ( !rset->next() ){
@@ -409,6 +413,10 @@ void castor::repack::DatabaseHelper::lock(RepackSubRequest* tape) throw (castor:
 }
 
 
+
+//------------------------------------------------------------------------------
+// unlock
+//------------------------------------------------------------------------------
 void castor::repack::DatabaseHelper::unlock() throw ()
 {
    try {
@@ -464,7 +472,6 @@ castor::repack::RepackSubRequest*
     if ( m_selectCheckSubRequestStatement) delete m_selectCheckSubRequestStatement;
     m_selectCheckSubRequestStatement = NULL;
     svcs()->rollback(&ad);
-    cnvSvc()->rollback();
     castor::exception::Internal ex;
 	  ex.getMessage() 
 	  << "DatabaseHelper::checkSubRequestStatus(..): "
@@ -518,11 +525,7 @@ void castor::repack::DatabaseHelper::remove(castor::IObject* obj)
     if ( obj->type() == OBJ_RepackSubRequest ){
       
       RepackSubRequest* sreq = dynamic_cast<RepackSubRequest*>(obj);
-      /*
-      for (int i=0; i<sreq->segment().size(); i++ )
-          svcs()->deleteRep(&ad,sreq->segment().at(i), false);
-      */
-      sreq->setStatus(SUBREQUEST_ARCHIVED);
+      sreq->setStatus(SUBREQUEST_DONE);
       svcs()->updateRep(&ad, sreq, false);
       svcs()->commit(&ad);
     }
