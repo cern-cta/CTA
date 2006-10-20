@@ -69,7 +69,6 @@ DEPLIB2 = $(DEPLIB)
 COMM######################### RULES ##############################
 
 MANPAGES = $(MANDIR)/reclaim.$(MANSUFFIX) \
-	   $(MANDIR)/repack.$(MANSUFFIX) \
 	   $(MANDIR)/tapetohsm.$(MANSUFFIX) \
 	   $(MANDIR)/cleanLostFiles.$(MANSUFFIX) \
 	   $(MANDIR)/enterFileClass.$(MANSUFFIX) \
@@ -91,7 +90,6 @@ MANPAGES = $(MANDIR)/reclaim.$(MANSUFFIX) \
 	   $(MANDIR)/springCleaning.$(MANSUFFIX) \
 	   $(MANDIR)/adminMultiInstance.$(MANSUFFIX)
 EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),repack.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tapetohsm.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),cleanLostFiles.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),enterFileClass.$(MANSUFFIX))) \
@@ -116,7 +114,6 @@ EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUF
 COMM Warning Warning, our default clean rule deletes PROGS... Changed it to use PROGS_TO_CLEAN
 
 PROGS_TO_CLEAN =  ProgramTargetName(reclaim) \
-	 ProgramTargetName(repack) \
 	 ProgramTargetName(tapetohsm) \
 	 ProgramTargetName(enterFileClass) \
 	 ProgramTargetName(enterSvcClass) \
@@ -149,7 +146,6 @@ PROGS_TO_KEEP =  ProgramTargetName(cleanLostFiles) \
 #endif
 
 IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
-	 FileName($(BIN),ProgramTargetName(repack)) \
 	 FileName($(BIN),ProgramTargetName(tapetohsm)) \
 	 FileName($(BIN),ProgramTargetName(cleanLostFiles)) \
 	 FileName($(BIN),ProgramTargetName(enterFileClass)) \
@@ -178,7 +174,6 @@ IPROGS += FileName($(BIN),ProgramTargetName(vdqmDBInit))
 #endif
 
 EPROGS = $(EXPORTBIN)/reclaim \
-	 $(EXPORTBIN)/repack \
 	 $(EXPORTBIN)/tapetohsm \
 	 $(EXPORTBIN)/cleanLostFiles \
 	 $(EXPORTBIN)/enterFileClass \
@@ -212,7 +207,6 @@ EPERL = $(EXPORTPERL)/castor_tools.pm
 all: $(PROGS_TO_KEEP) $(PROGS_TO_CLEAN)
 
 NormalProgramTarget(reclaim,reclaim.Osuf,$(DEPLIB),$(LIBS))
-NormalProgramTarget(repack,repack.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(tapetohsm,tapetohsm.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(enterFileClass,enterFileClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(enterSvcClass,enterSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
@@ -235,9 +229,6 @@ install: $(BIN) $(IPROGS) $(SPOOL) $(PERLLIBDIR) $(IPERL)
 
 InstallProgram(reclaim,$(BIN),root,bin,755)
 IEXPORT(reclaim,$(EXPORTBIN),755);
-
-InstallProgram(repack,$(BIN),root,bin,755)
-IEXPORT(repack,$(EXPORTBIN),755);
 
 InstallProgram(tapetohsm,$(BIN),root,bin,755)
 IEXPORT(tapetohsm,$(EXPORTBIN),755);
@@ -320,7 +311,6 @@ install.man: $(MANDIR) $(MANPAGES)
 MakeDir($(MANDIR),root,bin,0755)
 
 IMANPAGE(reclaim,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(repack,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(tapetohsm,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(cleanLostFiles,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(enterFileClass,$(MANDIR),$(MANSUFFIX))
@@ -342,7 +332,6 @@ IMANPAGE(houseKeeping,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(springCleaning,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(adminMultiInstance,$(MANDIR),$(MANSUFFIX))
 EMANPAGE(reclaim,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(repack,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(tapetohsm,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(cleanLostFiles,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(enterFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
