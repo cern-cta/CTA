@@ -1,3 +1,2 @@
 %attr(0755,root,bin) usr/bin/reclaim
-%attr(0755,root,bin) usr/bin/repack
 %attr(0755,root,bin) usr/bin/tapetohsm
