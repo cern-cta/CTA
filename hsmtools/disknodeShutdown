@@ -272,9 +272,11 @@ sub create_file () {
 sub final_check() {
     my $node = shift;
     my $file = shift;
-
+    my $outfile = "/tmp/error_${node}_" . time();
+   
     open (F, $file) or die "Unable to open $file for final check";
 
+    open (O, ">$outfile");
 
     foreach (<F>) {
 	my @tmp = split(/\s+/);
@@ -284,10 +286,13 @@ sub final_check() {
 	    chomp;
 	    next if /^Received/;
 	    last if /(CANBEMIGR|STAGED)/;
-	    print "Problem with $tmp[2]";
+	    print "Problem with $tmp[2]\n";
+	    print O "$tmp[2]\n";
 	}
 
 	close (X);
+	print "File name for errors is $outfile\n";
+	close (O);
     }
     close (F);
 }
