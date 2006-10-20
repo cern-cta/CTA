@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.324 $ $Release$ $Date: 2006/10/19 16:25:32 $ $Author: felixehm $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.325 $ $Release$ $Date: 2006/10/20 14:39:09 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.324 $ $Date: 2006/10/19 16:25:32 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.325 $ $Date: 2006/10/20 14:39:09 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1565,7 +1565,11 @@ BEGIN
 
   UPDATE DiskCopy SET status = decode(reqType, 119,6, 0)  -- DISKCOPY_STAGEOUT if OBJ_StageRepackRequest, else DISKCOPY_STAGED 
    WHERE id = dci RETURNING fileSystem INTO fsid;
-
+  
+  -- delete any previous failed diskcopy for this castorfile (due to failed recall attempts for instance)
+  DELETE FROM Id2Type WHERE id IN (SELECT id FROM DiskCopy WHERE castorFile = cfId AND status = 4);
+  DELETE FROM DiskCopy WHERE castorFile = cfId AND status = 4;
+  
   -- Repack handling:
   -- create the number of tapecopies for waiting subrequests and update their diskcopy.
   IF reqType = 119 THEN      -- OBJ_StageRepackRequest
@@ -2471,12 +2475,12 @@ CREATE OR REPLACE PROCEDURE garbageCollect AS
   fs NUMBER;
 BEGIN
   LOOP
-    -- get a FileSystem to be garbage collected
-    DELETE FROM FileSystemGC WHERE ROWNUM < 2
-    RETURNING fsid INTO fs;
-    IF fs = 0 THEN   -- nothing to do anymore, terminate the job
-      EXIT;
-    END IF;
+    -- get the oldest FileSystem to be garbage collected
+    SELECT fsid INTO fs FROM
+     (SELECT fsid FROM FileSystemGC ORDER BY submissionTime ASC)
+    WHERE ROWNUM < 2;
+    DELETE FROM FileSystemGC WHERE fsid = fs;
+    -- run the GC
     garbageCollectFS(fs);
     -- yield to other jobs/transactions
     DBMS_LOCK.sleep(seconds => 1.0);
