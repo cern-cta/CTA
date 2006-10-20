@@ -1,0 +1,77 @@
+.\" Copyright (C) 2001-2006 by CERN/IT/FIO/FD
+.\" All rights reserved
+.TH "REPACK" "" "July, 2006" "CASTOR" "REPACK"
+.SH "NAME"
+repackserver \- The server part for the CASTOR II Repack system.
+.SH "SYNOPSIS"
+.B repackserver
+[
+.BI \-f
+] [
+.BI \-c 
+] [
+.BI \-h
+]
+.SH "DESCRIPTION"
+The repackserver accepts connections from repack clients and processes their
+requests.  
+
+The following information are neccessary and have to be provided in the 
+castor config file or specified in environment variables:
+
+CASTOR config file          | Evironment variable
+.br
+\------------------------------------------------
+.br
+CNS     HOST <hostname>     | CNS_HOST=<hostname>
+.br 
+STAGER  HOST <hostname>     | STAGER_HOST=<hostname>
+.br 
+RH      HOST <hostname>     | RH_HOST=<hostname>
+.br 
+REPACK  PROTOCOL <protocol> | REPACK_PROTOCOL=<protocol>
+.br 
+REPACK  SVCCLASS <name>     | REPACK_SVCCLASS=<name>
+
+The default port and polling time for the Monitoring service can only be 
+changed via the following environment variables:
+.br
+REPACK_PORT=<port number>
+.br 
+REPACK_POLLTIME=<time>
+
+
+.SH "REQUIREMENTS"
+\- configured Oracle/MySQL Database with the database connection 
+username/password specified as the following in the /etc/castor/ORASTAGERCONFIG:
+.br
+DbCnvSvc        user repack
+.br
+DbCnvSvc        passwd <DB_PASSWD> 
+.br
+DbCnvSvc        dbName <DB_NAME>
+.br 
+
+\- created repack table schema (see scripts directory in CVS directory)
+
+\- open default repack port (62800)  
+
+
+
+.SH "OPTIONS"
+\fB\-f\fR
+Runs in foreground
+
+\fB\-h\fR
+Help
+
+.SH "EXIT STATUS"
+In case of an error <> 0.
+
+.SH "SEE ALSO"
+.br repack
+
+
+
+
+
