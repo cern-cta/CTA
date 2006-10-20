@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2006/10/11 17:41:49 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2006/10/20 16:03:12 $ $Author: felixehm $
  *
  *
  *
@@ -127,6 +127,8 @@ void RepackWorker::run(void* param)
      castor::dlf::Param("Machine", rreq->machine()),};
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 1, 5, params);
 
+  
+
   switch ( rreq->command() ){
 
   case REMOVE_TAPE:       removeRequest(rreq);
@@ -182,7 +184,6 @@ void RepackWorker::run(void* param)
 
   /** Clean everything. */  
   freeRepackObj(rreq);
-  //delete rreq;
   rreq = NULL;
   delete sock;  // originally created from RepackServer
 
@@ -460,9 +461,9 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor
                           << " is not marked as FULL or RDONLY !" 
                           << std::endl;
           throw ex;
-          nbvol++;
-          tape++;
         }
+        nbvol++;
+        tape++;
       }
     }
     return nbvol;
