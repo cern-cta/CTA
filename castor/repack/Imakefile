@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.13 $ $Release$ $Date: 2006/10/05 08:26:51 $ $Author: felixehm $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.14 $ $Release$ $Date: 2006/10/23 13:03:21 $ $Author: felixehm $
 #
 # Make Castor Repack System
 #
@@ -71,6 +71,8 @@ REPACKBIN_SRCS =  RepackClient.cpp \
 		../io/ClientSocket.cpp \
 		$(REPACKCOMMON_SRC)
 
+MANPAGES_REPACK = FileName($(MANDIR),repack.$(MANSUFFIX)) FileName($(MANDIR),repackserver.$(MANSUFFIX))
+EMANPAGES_REPACK = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),repack.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),repackserver.$(MANSUFFIX))) 
 
 #Repack library
 REPACKLIB_SRCS = $(REPACKCOMMON_SRC)
@@ -118,7 +120,15 @@ FileName($(BIN),repack)
 InstallProgram(repackserver,$(BIN),root,bin,755)
 InstallProgram(repack,$(BIN),root,bin,755)
 
-exportman:
+install.man: $(MANDIR) $(MANPAGES_REPACK)
+
+IMANPAGE(repack,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(repackserver,$(MANDIR),$(MANSUFFIX))
+
+exportman: $(EMANPAGES_REPACK)
+
+EMANPAGE(repack,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(repackserver,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 
 clean:
 	@echo cleaning in CurDir
@@ -130,4 +140,3 @@ clobber:	clean
 	-@RemoveFiles(ProgramTargetName(repack))
 
 FORCE:
-
