@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.325 $ $Release$ $Date: 2006/10/20 14:39:09 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.326 $ $Release$ $Date: 2006/10/23 13:03:55 $ $Author: felixehm $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.325 $ $Date: 2006/10/20 14:39:09 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.326 $ $Date: 2006/10/23 13:03:55 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1565,11 +1565,19 @@ BEGIN
 
   UPDATE DiskCopy SET status = decode(reqType, 119,6, 0)  -- DISKCOPY_STAGEOUT if OBJ_StageRepackRequest, else DISKCOPY_STAGED 
    WHERE id = dci RETURNING fileSystem INTO fsid;
+<<<<<<< oracleTrailer.sql
+
+  -- delete any previous failed diskcopy for this castorfile (due to failed recall attempts for instance)
+  DELETE FROM Id2Type WHERE id IN (SELECT id FROM DiskCopy WHERE castorFile = cfId AND status = 4);
+  DELETE FROM DiskCopy WHERE castorFile = cfId AND status = 4;
+
+=======
   
   -- delete any previous failed diskcopy for this castorfile (due to failed recall attempts for instance)
   DELETE FROM Id2Type WHERE id IN (SELECT id FROM DiskCopy WHERE castorFile = cfId AND status = 4);
   DELETE FROM DiskCopy WHERE castorFile = cfId AND status = 4;
   
+>>>>>>> 1.325
   -- Repack handling:
   -- create the number of tapecopies for waiting subrequests and update their diskcopy.
   IF reqType = 119 THEN      -- OBJ_StageRepackRequest
@@ -2902,10 +2910,23 @@ going on. If so, it returns for the requested svcclass the Migration candidates.
 CREATE OR REPLACE PROCEDURE selectTapeCopiesForMigration
 (svcclassId IN NUMBER, result OUT castor.IDRecord_Cur) AS
 BEGIN 
-OPEN result FOR 
-	SELECT TapeCopy.id 
-	FROM TapeCopy, CastorFile 
-	WHERE TapeCopy.castorFile = CastorFile.id 
-	AND CastorFile.svcClass = svcclassId
-	AND TapeCopy.status IN (0, 1);
+  OPEN result FOR 
+    -- we look first for repack condidates for this svcclass
+    SELECT TapeCopy.id
+      FROM TapeCopy, SubRequest, StageRepackRequest
+     WHERE StageRepackRequest.svcclass = svcclassId
+       AND SubRequest.request = StageRepackRequest.id
+       AND SubRequest.status = 12  --SUBREQUEST_REPACK
+       AND TapeCopy.castorfile = SubRequest.castorfile
+       AND TapeCopy.status IN (0, 1);  -- CREATED / TOBEMIGRATED
+    -- if we didn't find anything, we look 
+    -- the usual svcclass from castorfile table.
+  IF result%ROWCOUNT = 0 THEN
+  OPEN result FOR 
+    SELECT TapeCopy.id 
+      FROM TapeCopy, CastorFile 
+     WHERE TapeCopy.castorFile = CastorFile.id 
+       AND CastorFile.svcClass = svcclassId
+       AND TapeCopy.status IN (0, 1); --CREATED / TOBEMIGRATED
+    END;
 END;
