@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.326 $ $Release$ $Date: 2006/10/23 13:03:55 $ $Author: felixehm $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.327 $ $Release$ $Date: 2006/10/23 13:56:42 $ $Author: felixehm $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.326 $ $Date: 2006/10/23 13:03:55 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.327 $ $Date: 2006/10/23 13:56:42 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2928,5 +2928,5 @@ BEGIN
      WHERE TapeCopy.castorFile = CastorFile.id 
        AND CastorFile.svcClass = svcclassId
        AND TapeCopy.status IN (0, 1); --CREATED / TOBEMIGRATED
-    END;
+  END IF;
 END;
