@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.327 $ $Release$ $Date: 2006/10/23 13:56:42 $ $Author: felixehm $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.328 $ $Release$ $Date: 2006/10/23 13:57:56 $ $Author: felixehm $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.327 $ $Date: 2006/10/23 13:56:42 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.328 $ $Date: 2006/10/23 13:57:56 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1565,19 +1565,10 @@ BEGIN
 
   UPDATE DiskCopy SET status = decode(reqType, 119,6, 0)  -- DISKCOPY_STAGEOUT if OBJ_StageRepackRequest, else DISKCOPY_STAGED 
    WHERE id = dci RETURNING fileSystem INTO fsid;
-<<<<<<< oracleTrailer.sql
-
-  -- delete any previous failed diskcopy for this castorfile (due to failed recall attempts for instance)
-  DELETE FROM Id2Type WHERE id IN (SELECT id FROM DiskCopy WHERE castorFile = cfId AND status = 4);
-  DELETE FROM DiskCopy WHERE castorFile = cfId AND status = 4;
-
-=======
-  
   -- delete any previous failed diskcopy for this castorfile (due to failed recall attempts for instance)
   DELETE FROM Id2Type WHERE id IN (SELECT id FROM DiskCopy WHERE castorFile = cfId AND status = 4);
   DELETE FROM DiskCopy WHERE castorFile = cfId AND status = 4;
   
->>>>>>> 1.325
   -- Repack handling:
   -- create the number of tapecopies for waiting subrequests and update their diskcopy.
   IF reqType = 119 THEN      -- OBJ_StageRepackRequest
