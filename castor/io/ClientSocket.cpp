@@ -64,7 +64,7 @@ castor::io::ClientSocket::ClientSocket(int socket) throw () {
 castor::io::ClientSocket::ClientSocket(const unsigned short port,
                            const std::string host)
   throw (castor::exception::Exception) {
-  m_socket = 0;
+  m_socket = -1;
   createSocket();
   m_saddr = buildAddress(port, host);
 }
@@ -75,7 +75,7 @@ castor::io::ClientSocket::ClientSocket(const unsigned short port,
 castor::io::ClientSocket::ClientSocket(const unsigned short port,
                            const unsigned long ip)
   throw (castor::exception::Exception) {
-  m_socket = 0; 
+  m_socket = -1; 
   createSocket();
   m_saddr = buildAddress(port, ip);
 }

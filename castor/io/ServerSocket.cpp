@@ -72,7 +72,7 @@ castor::io::ServerSocket::ServerSocket(int socket) throw () :
 castor::io::ServerSocket::ServerSocket(const bool reusable)
   throw (castor::exception::Exception) :
   m_listening(false) {
-  m_socket =0;
+  m_socket = -1;
   createSocket();
   if (reusable) this->reusable();
   m_saddr = buildAddress(0);
@@ -85,7 +85,7 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
                                        const bool reusable)
   throw (castor::exception::Exception) :
   m_listening(false) {
-  m_socket =0;
+  m_socket = -1;
   createSocket();
   if (reusable) this->reusable();
   m_saddr = buildAddress(port);
@@ -100,7 +100,7 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
                                        const bool reusable)
   throw (castor::exception::Exception) :
   m_listening(false) {
-  m_socket = 0;
+  m_socket = -1;
   createSocket();
   if (reusable) this->reusable();
   struct sockaddr_in saddr = buildAddress(port, host);
@@ -115,7 +115,7 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
                                        const bool reusable)
   throw (castor::exception::Exception) :
   m_listening(false) {
-  m_socket = 0;
+  m_socket = -1;
   createSocket();
   if (reusable) this->reusable();
   m_saddr = buildAddress(port, ip);
@@ -147,8 +147,6 @@ void castor::io::ServerSocket::reusable()
   }
 }
 
-
-
 //------------------------------------------------------------------------------
 // listen
 //------------------------------------------------------------------------------
@@ -162,7 +160,7 @@ void castor::io::ServerSocket::listen()
 #else
     closesocket(m_socket);
 #endif
-    m_socket = 0;
+    m_socket = -1;
     throw ex;
   }
   m_listening = true;
@@ -197,7 +195,6 @@ castor::io::ServerSocket* castor::io::ServerSocket::accept()
     return new ServerSocket(fdc);
   }
 }
-
 
 //------------------------------------------------------------------------------
 // bind
