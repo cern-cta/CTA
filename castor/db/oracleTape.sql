@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.328 $ $Release$ $Date: 2006/10/23 13:57:56 $ $Author: felixehm $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.329 $ $Release$ $Date: 2006/10/24 07:29:29 $ $Author: felixehm $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.328 $ $Date: 2006/10/23 13:57:56 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.329 $ $Date: 2006/10/24 07:29:29 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2889,7 +2889,6 @@ BEGIN
    IF ret IS NOT NULL THEN
      UPDATE SubRequest set status = 11
      WHERE SubRequest.id = sreqid;
-     COMMIT;
    END IF;
 END;
 
