@@ -3,6 +3,7 @@ import sys
 import unittest
 import string
 import ClientTest
+import RfioTest
 
 
 ########################### for each module its own test suite ##########################
@@ -56,7 +57,7 @@ commonTest={'TEST':0}
 serverTest={'TEST':0}
 
 clientTest={'PREREQ': ClientTest.StagerPreClientSuite(),'PUT':ClientTest.StagerPutSuite(),'PUTDONE':ClientTest.StagerPutDoneSuite(),'GET':ClientTest.StagerGetSuite(),'RM':ClientTest.StagerRmSuite(),'EXTRAQRY':ClientTest.StagerQuerySpecialSuite()}
-rfioTest={'TEST':0}
+rfioTest={'PREREQ':RfioTest.RfioPreRequisitesSuite(),'BASIC_RFCP':RfioTest.RfioRfcpSimpleSuite(),'CASTOR_RFCP':RfioTest.RfioRfcpEnvSuite() ,'CASTOR_RFCP_FANCY_TURL': RfioTest.RfioRfcpFancyTurlSuite()}
 
 dlfTest={'TEST':0}
 
@@ -99,8 +100,7 @@ class CastorGlobalSuite(unittest.TestSuite):
 myGlobalSuite=CastorGlobalSuite()
 for differentSuite in allCastorSuites:
 	myGlobalSuite.addTest(allCastorSuites[differentSuite])
-	
-	
+		
 runner=unittest.TextTestRunner(verbosity=2)
 runner.run(myGlobalSuite)
 os._exit(0)
