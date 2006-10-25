@@ -8,8 +8,6 @@ repackserver \- The server part for the CASTOR II Repack system.
 [
 .BI \-f
 ] [
-.BI \-c 
-] [
 .BI \-h
 ]
 .SH "DESCRIPTION"
@@ -25,8 +23,6 @@ CASTOR config file          | Evironment variable
 .br
 CNS     HOST <hostname>     | CNS_HOST=<hostname>
 .br 
-STAGER  HOST <hostname>     | STAGER_HOST=<hostname>
-.br 
 RH      HOST <hostname>     | RH_HOST=<hostname>
 .br 
 REPACK  PROTOCOL <protocol> | REPACK_PROTOCOL=<protocol>
@@ -38,12 +34,13 @@ changed via the following environment variables:
 .br
 REPACK_PORT=<port number>
 .br 
-REPACK_POLLTIME=<time>
+REPACK_POLLTIME=<time in seconds>
 
 
 .SH "REQUIREMENTS"
-\- configured Oracle/MySQL Database with the database connection 
-username/password specified as the following in the /etc/castor/ORASTAGERCONFIG:
+The repackserver needs a configured Oracle/MySQL Database with the database 
+connection username/password specified as the following in the 
+/etc/castor/ORASTAGERCONFIG:
 .br
 DbCnvSvc        user repack
 .br
@@ -52,15 +49,31 @@ DbCnvSvc        passwd <DB_PASSWD>
 DbCnvSvc        dbName <DB_NAME>
 .br 
 
-\- created repack table schema (see scripts directory in CVS directory)
 
-\- open default repack port (62800)  
+NOTE : If the repackserver runs with other CASTOR II modules on the same machine
+which use also this configuration file, the connection parameters name has to be
+seperated through the environment variable CASTOR_INSTANCE.
+
+
+e.g. in case CASTOR_INSTANCE=Repack the corresponding entry in the
+ORASTAGERCONFIG looks like:
+.br
+DbCnvSvc_Repack        user repack
+.br
+DbCnvSvc_Repack        passwd <DB_PASSWD>
+.br
+DbCnvSvc_Repack        dbName <DB_NAME>
+.br
+
+
+The database schema has to be created using the sql scripts from CVS.
+The repackserver accepts connections on the 62800 port (unless no environment variable is given).
 
 
 
 .SH "OPTIONS"
 \fB\-f\fR
-Runs in foreground
+Runs in foreground, if STAGER_TRACE is set to level 1-3, debug messages can be seen on the console.
 
 \fB\-h\fR
 Help
@@ -69,7 +82,8 @@ Help
 In case of an error <> 0.
 
 .SH "SEE ALSO"
-.br repack
+.BR repack
+
 
 
 
