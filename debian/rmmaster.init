@@ -5,9 +5,9 @@
 # chkconfig: 345 72 33
 # description: RMMASTER (Node Resource Monitoring Master Daemon)
 #
-# $Id: rmmaster.init,v 1.3 2006/01/27 09:49:12 itglp Exp $
+# $Id: rmmaster.init,v 1.4 2006/10/25 13:30:03 sponcec3 Exp $
 #
-# @(#)$RCSfile: rmmaster.init,v $ $Revision: 1.3 $ $Date: 2006/01/27 09:49:12 $ CERN/IT/ADC/CA Vitaly Motyakov
+# @(#)$RCSfile: rmmaster.init,v $ $Revision: 1.4 $ $Date: 2006/10/25 13:30:03 $ CERN/IT/ADC/CA Vitaly Motyakov
 #
 
 sysname=`uname -s`
@@ -202,6 +202,8 @@ case "$1" in
   restart)
 	$0 stop
 	if [ $? -eq 0 -o $SILENTSTOP -eq 0 ]; then
+		# We have to wait a bit so that the former rmmaster exits
+		sleep 10
 		$0 start
 		RETVAL=$?
 	else
