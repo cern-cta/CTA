@@ -1,3 +1,141 @@
+castor (2.1.1-7) unstable; urgency=low
+
+  * CASTOR2/CASTOR.spec:
+    [r1.52,2006-10-16,sponcec3] Do not generate this package castor-allservicesbuttapeservers anymore
+  * CASTOR2/castor/db/analyze/currentStatus.sql:
+    [r 1.4,2006-10-19,itglp] Added useful queries to check the status of the GC
+  * CASTOR2/castor/db/newora/OraCnvSvc.cpp:
+    [r1.11,2006-10-16,sponcec3] Force reloading of connection string for each single reconnection to the DB
+  * CASTOR2/castor/db/ora/OraJobSvc.cpp:
+    [r1.16,2006-10-18,sponcec3] Avoid to create FAILED diskcopies in case of 'no valid copy on tape' error. Rather delete the diskcopy
+  * CASTOR2/castor/db/ora/OraTapeSvc.cpp:
+    [r1.16,2006-10-19,felixehm] shifted selectTapeCopiesForMigration SQL Statement to a PL/SQL Procedure
+    [r1.16,2006-10-19,felixehm] in the DB and adapted the fetch of the results in the c++ method.
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    [r1.329,2006-10-24,felixehm] removed 'commit' statement in checkFileForRepack
+    [r1.328,2006-10-23,felixehm] removed 'cvs diff' Indicators
+    [r1.327,2006-10-23,felixehm] added missing END IF in selectTapeCopiesForMigration
+    [r1.326,2006-10-23,felixehm] modified selectTapeCopiesFor Migration:
+    [r1.326,2006-10-23,felixehm] SELECT into a cursor does not throw an exception in case northin has been
+    [r1.326,2006-10-23,felixehm] found. Instead we now have to check the cursor rowcount varible
+    [r1.325,2006-10-20,itglp] Rolled back the select statement in garbageCollect()
+    [r1.325,2006-10-20,itglp] In fileRecalled(), drop FAILED diskcopies for the same castorfile that
+    [r1.325,2006-10-20,itglp] has been successfully recalled
+    [r1.324,2006-10-19,felixehm] Added new result type for fetching only ids within a cursor
+    [r1.324,2006-10-19,felixehm] Added new PL/SQL procedure, which retrieves the migration candidates
+    [r1.324,2006-10-19,felixehm] TapeCopies) for a specified ServiceClass
+    [r1.323,2006-10-19,itglp] One more fix to GC
+    [r1.322,2006-10-19,itglp] Fixed the garbageCollect() job, previous fix leads to an infinite loop!
+    [r1.321,2006-10-18,sponcec3] Handling of existing STAGED DiskCopy when a recall takes place. This can happend if a diskServer is disabled and comes back during the tape recall is queuing
+    [r1.320,2006-10-16,itglp] Better GC job, atomically deletes completed FSs from the queue; minor fix
+    [r1.320,2006-10-16,itglp] in the GC trigger.
+    [r1.319,2006-10-16,itglp] internalStageQuery rewritten to use a materialized view for some joins
+    [r1.319,2006-10-16,itglp] credits to Nilo) and a subquery to prevent O(n^2) results for files with
+    [r1.319,2006-10-16,itglp] many failed diskcopies/subrequests - only O(n) will be returned
+    [r1.318,2006-10-16,felixehm] The SubRequest is not started in a new job, when another diskcopy is waiting.
+    [r1.318,2006-10-16,felixehm] Instead, the fileRecalled PL/SQL sets the diskcopy id, creates the TapeCopies
+    [r1.318,2006-10-16,felixehm] and sets the status of the SubRequest into 12 (SUBREQUEST_REPACK).
+    [r1.318,2006-10-16,felixehm]
+    [r1.318,2006-10-16,felixehm] Therefore the archiveSubRequest is not anymore scheduled and executed in case of
+    [r1.318,2006-10-16,felixehm] a Repack process by the stagerJob. This part has now been reversed to the
+    [r1.318,2006-10-16,felixehm] original version.
+    [r1.318,2006-10-16,felixehm] independend from the subrequest it is set to 8 (SUBREQUEST_FINISHED).
+  * CASTOR2/castor/io/ClientSocket.cpp:
+    [r 1.6,2006-10-24,sponcec3] reset the m_socket to -1 and not 0
+  * CASTOR2/castor/io/ServerSocket.cpp:
+    [r1.12,2006-10-25,itglp] Made bind() and listen() process- and thread-safe
+    [r1.12,2006-10-25,itglp] Fixed initialization in one constructor
+    [r1.11,2006-10-24,sponcec3] reset the m_socket to -1 and not 0
+  * CASTOR2/castor/io/ServerSocket.hpp:
+    [r 1.5,2006-10-25,itglp] Made bind() and listen() process- and thread-safe
+    [r 1.5,2006-10-25,itglp] Fixed initialization in one constructor
+  * CASTOR2/castor/monitoring/rmmaster/Collector.cpp:
+  * CASTOR2/castor/monitoring/rmmaster/Collector.hpp:
+    [2006-10-18,sponcec3] End of this temporary files
+  * CASTOR2/castor/monitoring/rmmaster/DiskServerStatus.cpp:
+  * CASTOR2/castor/monitoring/rmmaster/DiskServerStatus.hpp:
+    [2006-10-17,sponcec3] renames machine into diskServer to be coherent
+  * CASTOR2/castor/repack/DatabaseHelper.cpp:
+    [r1.19,2006-10-20,felixehm] A removal of a RepackSubRequest will put the status into FINISHED.
+    [r1.19,2006-10-20,felixehm] Removed a possible deadlock
+  * CASTOR2/castor/repack/Imakefile:
+    [r1.14,2006-10-23,felixehm] Added install part for man pages
+  * CASTOR2/castor/repack/RepackFileStager.cpp:
+  * CASTOR2/castor/repack/RepackFileStager.hpp:
+    [2006-10-20,felixehm] Seperating sending the StageRepackRequest through the BaseClient class:
+    [2006-10-20,felixehm] 1.The Request is send and the returned CUUID immedialty stored with the
+    [2006-10-20,felixehm] RepackSubRequest.
+    [2006-10-20,felixehm] 2. The answers from the stager for the submitted request are then polled.
+  * CASTOR2/castor/repack/RepackMonitor.cpp:
+    [r1.10,2006-10-20,felixehm] special handling if the requestid wasn't found on the stager. Repack assumes that the Request is then over.
+  * CASTOR2/castor/repack/RepackWorker.cpp:
+    [r1.26,2006-10-20,felixehm] fixed little nasty bug: if only one tape is submitted for a repack the repackserver looped an never answered.
+  * CASTOR2/codeGeneration/RH.xmi:
+    [r1.134,2006-10-20,sponcec3] Next round of fixes/changes in the monitoring objects
+    [r1.133,2006-10-19,sponcec3] new improvements for the monitoring objects
+    [r1.132,2006-10-17,sponcec3] fixed monitoring objects by adding a missing member and a missing link
+    [r1.131,2006-10-13,sponcec3] Fixed missing multiplicities
+  * CASTOR2/codeGeneration/gencastor/Makefile:
+    [r1.14,2006-10-19,sponcec3] Small improvements so that it's quick and does not ask dummy questions
+  * CASTOR2/codeGeneration/gencastor/umbrello/codegenerators/cppcppclasswriter.cpp:
+    [r1.19,2006-10-24,sponcec3] Fixed missing namespace when initializing enums
+  * CASTOR2/debian/castor-allservicesbuttapeservers-config.install.perm:
+  * CASTOR2/debian/castor-allservicesbuttapeservers.conf:
+    [2006-10-16,sponcec3] Do not generate this package anymore
+  * CASTOR2/debian/castor-hsmtools.install.perm:
+  * CASTOR2/debian/castor-hsmtools.manpages:
+    [2006-10-20,itglp] Don't install old repack anymore and install correct man pages for the new one
+  * CASTOR2/debian/control:
+    [r1.43,2006-10-16,sponcec3] Do not generate this package castor-allservicesbuttapeservers anymore
+  * CASTOR2/debian/repackserver.init:
+    [r 1.4,2006-10-20,felixehm] Converted file into unix format (formerly DOS)
+  * CASTOR2/debian/rmmaster.init:
+    [r 1.4,2006-10-25,sponcec3] Fix in the restart target. We need to wait after the stop before the start is issued
+  * CASTOR2/debian/rules:
+    [r1.39,2006-10-16,sponcec3] Do not generate this package castor-allservicesbuttapeservers anymore
+  * CASTOR2/dlf/doc/index.html:
+    [r 1.9,2006-10-19,waldron] changed dlf_idx to dlf_indx
+  * CASTOR2/dlf/mysql.c:
+  * CASTOR2/dlf/oracle.pc:
+    [2006-10-19,waldron] added missing '\n' in db_open() - invalid connect string message
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_create.sql:
+    [r 1.4,2006-10-19,waldron] changed dlf_idx to dlf_indx
+  * CASTOR2/dlf/server.c:
+    [r1.11,2006-10-20,waldron] Initialise the db layer prior to creating listener threads. This prevents new clients from trying to initialise their api's on the db interface which is not ready to answer them
+  * CASTOR2/dlf/server.h:
+    [r 1.5,2006-10-20,waldron] increase the max clients per thread to 300
+  * CASTOR2/dlf/web/query.php:
+    [r 1.6,2006-10-16,waldron] minor correction to javascript logic
+    [r 1.5,2006-10-16,waldron] added additional 'lines per page' options, set default to 200
+    [r 1.4,2006-10-16,waldron] auto set the 'from' date when the 'to' date is populated
+  * CASTOR2/hsmtools/Imakefile:
+    [r1.29,2006-10-20,itglp] Don't compile repack by default
+  * CASTOR2/hsmtools/disknodeShutdown:
+    [r 1.8,2006-10-20,aearl] new version with bug fixes
+  * CASTOR2/job/stagerJob.c:
+    [r1.157,2006-10-25,kotlyar] increased select timeout for gsiftp to 15min
+    [r1.157,2006-10-25,kotlyar] changed the name for dsi module for GridFTP server from CASTOR2 to CASTOR2int
+    [r1.156,2006-10-25,sponcec3] increased select timeout for gsiftp to 15min
+    [r1.156,2006-10-25,sponcec3] changed the name for dsi module for GridFTP server from CASTOR2 to CASTOR2int
+  * CASTOR2/rfio/rfio_callhandlers.c:
+    [r1.10,2006-10-18,gtaur] Special case of internal_context NULL now taken into account.
+  * CASTOR2/rtcopy/rtcpcldNsInterface.c:
+    [r1.38,2006-10-19,felixehm] Changed DLF parameter for logging the checksum of a segment.
+    [r1.38,2006-10-19,felixehm] By definition it is unsigned long, but was formerly logged as INT. Changed
+    [r1.38,2006-10-19,felixehm] now to INT64
+  * CASTOR2/stager/stager_mapper.c:
+    [r1.10,2006-10-16,gtaur] valgrind error about variable not initialized corrected
+  * CASTOR2/stager/stager_query_service.cpp:
+    [r1.50,2006-10-16,sponcec3] minor improvements for returned messages
+    [r1.49,2006-10-16,sponcec3] Added another missing check (this time for Cns_getpath) and avoid checking for directory query when regexp
+    [r1.48,2006-10-16,sponcec3] Added missing check on the result of Cns_stat leading to random behavior under certain circumstances
+  * CASTOR2/test/CASTORTESTCONFIG:
+  * CASTOR2/test/CastorTestSuite.py:
+    [2006-10-24,gtaur] added test for rfcp in different scenarium and with different TURL
+
+ -- Felix Ehm <felix.ehm@cern.ch>  Wed, 25 Oct 2006 17:20:00 +0200
+
+
 castor (2.1.1-5) unstable; urgency=low
 
   * CASTOR2/castor/Imakefile:
