@@ -201,13 +201,23 @@ globus_l_gfs_CASTOR2int_stat(
     int                                 status=0;
     globus_result_t                     result;
     char *                              pathname;
+    char *				uuid_path;
     
     GlobusGFSName(globus_l_gfs_CASTOR2int_stat);
 
     CASTOR2int_handle = (globus_l_gfs_CASTOR2int_handle_t *) user_arg;
-
-    pathname=strdup(stat_info->pathname);
     
+    if(CASTOR2int_handle->use_uuid) { /* we will use fullDestPath instead of client "path", and "path" must be in uuid form */
+       uuid_path=stat_info->pathname;
+       if( *uuid_path=='/') {
+	  uuid_path++; /* path like  "/uuid" */
+	  if(strcmp(uuid_path,CASTOR2int_handle->uuid)==0) pathname=strdup(CASTOR2int_handle->fullDestPath);
+	  else pathname=strdup(func); /* we want that stat64 will fail */
+       }
+       else pathname=strdup(func);	  
+    } 
+    else pathname=strdup(func);
+        
     globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: pathname: %s\n",func,pathname);
     
     status=stat64(pathname,&statbuf);
