@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.329 $ $Release$ $Date: 2006/10/24 07:29:29 $ $Author: felixehm $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.330 $ $Release$ $Date: 2006/10/25 15:54:16 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.329 $ $Date: 2006/10/24 07:29:29 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.330 $ $Date: 2006/10/25 15:54:16 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1934,10 +1934,11 @@ BEGIN
  END IF;
  -- mark all get/put requests for the file as failed
  -- so the clients eventually get an answer
+ -- don't touch recalls for the moment
  FOR sr IN (SELECT id, status
               FROM SubRequest
              WHERE castorFile = cfId) LOOP
-   IF sr.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+   IF sr.status IN (0, 1, 2, 3, 5, 6, 7, 10) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
      UPDATE SubRequest SET status = 7 WHERE id = sr.id;  -- FAILED
    END IF;
  END LOOP;
@@ -1984,6 +1985,10 @@ BEGIN
       SET status = 8  -- GCCANDIDATE
     WHERE status = 2  -- WAITTAPERECALL
       AND castorFile = cfId;
+   -- Mark the 'recall' SubRequests as failed
+   -- so that client get an answer
+   UPDATE SubRequest SET status = 7   -- FAILED
+   WHERE castorFile = cfId and status = 4;
  END;
  ret := 0;
 END;
