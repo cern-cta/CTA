@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServerSocket.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/05/03 11:57:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServerSocket.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/10/25 13:15:13 $ $Author: itglp $
  *
  * defines a dedicated socket that handles most of the network
  * calls
@@ -108,10 +108,13 @@ namespace castor {
       /**
        * Sets the SO_REUSEADDR option on the socket
        */
-      void reusable() throw (castor::exception::Exception);
+      void setReusable() throw (castor::exception::Exception);
 
       /**
-       * start listening on the socket
+       * Start listening on the socket.
+       * In case the socket has been bound by another process (it may
+       * happen because bind() is not process/thread-safe), a new bind()
+       * is performed, so to make this class process-safe.
        */
       virtual void listen() throw(castor::exception::Exception);
 
@@ -138,7 +141,25 @@ namespace castor {
        * Tells whether listen was already called
        */
       bool m_listening;
+      
+      /**
+       * Tells whether the socket's address is reusable
+       */
+      bool m_reusable;
+      
+      /**
+       * Low and high value in the port range
+       */
+      int m_lowPort, m_highPort;
 
+      /**
+       * binds the socket and let the system choose a port
+       * in a range. The range must already have been initialized
+       * by a previous call to bind(lowPort, highPort)
+       */
+      void bind()
+        throw (castor::exception::Exception);
+        
     };
 
   } // end of namespace io

@@ -62,7 +62,9 @@
 //------------------------------------------------------------------------------
 castor::io::ServerSocket::ServerSocket(int socket) throw () :
   m_listening(false) {
+  srand(time(NULL));
   m_socket = socket;
+  m_lowPort = m_highPort = -1;
 }
 
 
@@ -71,11 +73,13 @@ castor::io::ServerSocket::ServerSocket(int socket) throw () :
 //------------------------------------------------------------------------------
 castor::io::ServerSocket::ServerSocket(const bool reusable)
   throw (castor::exception::Exception) :
-  m_listening(false) {
+  m_listening(false), m_reusable(reusable) {
+  srand(time(NULL));
   m_socket = -1;
   createSocket();
-  if (reusable) this->reusable();
+  setReusable();
   m_saddr = buildAddress(0);
+  m_lowPort = m_highPort = -1;
 }
 
 //------------------------------------------------------------------------------
@@ -84,10 +88,10 @@ castor::io::ServerSocket::ServerSocket(const bool reusable)
 castor::io::ServerSocket::ServerSocket(const unsigned short port,
                                        const bool reusable)
   throw (castor::exception::Exception) :
-  m_listening(false) {
+  m_listening(false), m_reusable(reusable) {
   m_socket = -1;
   createSocket();
-  if (reusable) this->reusable();
+  setReusable();
   m_saddr = buildAddress(port);
   bind(port, port);
 }
@@ -99,11 +103,11 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
                                        const std::string host,
                                        const bool reusable)
   throw (castor::exception::Exception) :
-  m_listening(false) {
+  m_listening(false), m_reusable(reusable) {
   m_socket = -1;
   createSocket();
-  if (reusable) this->reusable();
-  struct sockaddr_in saddr = buildAddress(port, host);
+  setReusable();
+  m_saddr = buildAddress(port, host);
   bind(port, port);
 }
 
@@ -114,10 +118,10 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
                                        const unsigned long ip,
                                        const bool reusable)
   throw (castor::exception::Exception) :
-  m_listening(false) {
+  m_listening(false), m_reusable(reusable) {
   m_socket = -1;
   createSocket();
-  if (reusable) this->reusable();
+  setReusable();
   m_saddr = buildAddress(port, ip);
   bind(port, port);
 }
@@ -134,10 +138,11 @@ castor::io::ServerSocket::~ServerSocket() throw () {
 }
 
 //------------------------------------------------------------------------------
-// Sets the socket to Reusable address
+// Sets the socket to reusable address
 //------------------------------------------------------------------------------
-void castor::io::ServerSocket::reusable()
+void castor::io::ServerSocket::setReusable()
   throw (castor::exception::Exception) {
+  if(!m_reusable) return;
   int on = 1;
   if (setsockopt (m_socket, SOL_SOCKET, SO_REUSEADDR,
                   (char *)&on, sizeof(on)) < 0) {
@@ -153,15 +158,26 @@ void castor::io::ServerSocket::reusable()
 void castor::io::ServerSocket::listen()
   throw(castor::exception::Exception) {
   if (::listen(m_socket, STG_CALLBACK_BACKLOG) < 0) {
-    castor::exception::Exception ex(errno);
-    ex.getMessage() << "Unable to listen on socket";
 #if !defined(_WIN32)
     close(m_socket);
 #else
     closesocket(m_socket);
 #endif
     m_socket = -1;
-    throw ex;
+    if(errno == EADDRINUSE && m_lowPort > 0) {
+      /* it may happen that another bind() successfully got the same port at the
+         same time (bind() is not entirely process-safe!). In this case, we
+         just reinit, rebind again and recursively retry */
+      createSocket();
+      setReusable();
+      bind(); 
+      listen();
+    }
+    else {
+      castor::exception::Exception ex(errno);
+      ex.getMessage() << "Unable to listen on socket";
+      throw ex;
+    }
   }
   m_listening = true;
 }
@@ -201,25 +217,38 @@ castor::io::ServerSocket* castor::io::ServerSocket::accept()
 //------------------------------------------------------------------------------
 void castor::io::ServerSocket::bind(int lowPort, int highPort)
   throw (castor::exception::Exception) {
-  // let's go through the port range
-  int rc = -1;
-
-  // fix to be removed ... 
-  int port;
-  srand(time(NULL));
-  int valMax=highPort-lowPort+1;
-
- if (lowPort<1024 || highPort> 65535 || lowPort>highPort ) {
+  // check range validity
+  if (lowPort < 1024 || highPort > 65535 || lowPort > highPort) {
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Unable to use socket in port range ["
                     << lowPort << ", " << highPort << "]";
     throw ex;
   }
+  m_lowPort = lowPort;
+  m_highPort = highPort;
   
-  while (0 != rc){
-    port=(rand()% valMax)+lowPort;
-    m_saddr.sin_port = htons(port);
-    rc=::bind(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr));
+  bind();
+}
+
+//------------------------------------------------------------------------------
+// bind
+//------------------------------------------------------------------------------
+void castor::io::ServerSocket::bind()
+  throw (castor::exception::Exception) {
+  int rc = -1;
+  int port;
+  
+  if(m_lowPort == -1 || m_highPort == -1) {
+    // it won't happen, bind() is private!
+    castor::exception::Exception ex(errno);
+    ex.getMessage() << "Unable to bind on an uninitialized port range";
+    throw ex;
   }
 
+  // randomly select a free port in the allowed port range
+  while (0 != rc){
+    port=(rand() % (m_highPort-m_lowPort+1)) + m_lowPort;
+    m_saddr.sin_port = htons(port);
+    rc = ::bind(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr));
+  }
 }
