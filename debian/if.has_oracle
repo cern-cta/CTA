@@ -1,5 +1,5 @@
 #
-# $Id: if.has_oracle,v 1.6 2006/09/13 06:07:07 waldron Exp $
+# $Id: if.has_oracle,v 1.7 2006/10/26 12:35:03 felixehm Exp $
 #
 ## List of packages to do only if oracle is available
 #
@@ -18,3 +18,4 @@ castor-vdqm2-lib-oracle
 castor-vdqm2-server
 castor-dbtools
 castor-repack-server
+castor-repack-client
