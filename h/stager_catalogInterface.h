@@ -1,5 +1,5 @@
 /*
- * $Id: stager_catalogInterface.h,v 1.21 2006/02/01 11:37:33 sponcec3 Exp $
+ * $Id: stager_catalogInterface.h,v 1.22 2006/10/26 15:21:06 cvscasto Exp $
  */
 
 #ifndef __stager_catalogInterface_h
@@ -38,6 +38,5 @@
 
 EXTERN_C int DLL_DECL stager_getDbSvc _PROTO((struct C_Services_t ***));
 EXTERN_C int DLL_DECL stager_getStgAndDbSvc _PROTO((struct Cstager_IStagerSvc_t ***, struct C_Services_t ***));
-EXTERN_C int DLL_DECL stager_getRemStgAndDbSvc _PROTO((struct Cstager_IJobSvc_t ***, struct C_Services_t ***));
 
 #endif /* __stager_catalogInterface_h */

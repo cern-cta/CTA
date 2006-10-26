@@ -15,7 +15,7 @@ COMM
 
 NOMORERFIO = FileName(OperatorDir,nomorerfio)
 
-INCLUDES = FileName(..,h)
+INCLUDES = FileName(..,h) -I FileName(..,job)
 SPOOL = RfioSpool
 LOGFILE = FileName($(SPOOL),rfiod.log)
 
@@ -313,7 +313,7 @@ EPROGS = FileName($(EXPORTBIN),rfiod)
 SRVOBJS = $(NTSERVICEO) Csemaphore.Osuf rfio_serv.Osuf rfio_calls.Osuf \
 		rfio_call64.Osuf rfio_fcalls.Osuf rfio_callhandlers.Osuf switch_req.Osuf \
 		checkkey.Osuf $(FIOO) $(CRAYFORTRANO) rfstatfs.Osuf alrm.Osuf \
-		rfioacct.Osuf
+		rfioacct.Osuf ../job/RemoteJobSvc.Osuf
 
 #if defined(linux)
 #if UseXFSPrealloc

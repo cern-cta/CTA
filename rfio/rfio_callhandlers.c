@@ -22,6 +22,7 @@ static char sccsid[] = "@(#)rfio_callhandlers.c,v 1.6 2005/07/21 09:13:07 CERN I
 #include "log.h"
 #include "castor/BaseObject.h"
 #include "castor/Constants.h"
+#include "RemoteJobSvc.h"
 
 struct internal_context {
   int one_byte_at_least;
