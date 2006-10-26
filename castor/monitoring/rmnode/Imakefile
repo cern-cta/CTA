@@ -1,5 +1,5 @@
 #
-#           castor/monitoring/rmmaster/Imakefile
+#            castor/monitoring/rmnode/Imakefile
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -19,7 +19,7 @@
 #
 # @(#)Imakefile,v 1.2 $Release$ 2005/03/15 23:24:32 bcouturi
 #
-# Make Castor rmmaster daemon
+# Make Castor rmnode daemon
 #
 # @author Castor Dev team, castor-dev@cern.ch
 #
@@ -35,22 +35,22 @@ INCLUDES = -I FileName(../../..,h) -I FileName(../..,..)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
 LIBS = -lcastorMonitor -lshift
-RMMASTERDAEMONBIN_SRCS = CollectorThread.cpp RmMasterDaemon.cpp
+RMNODEDAEMONBIN_SRCS = MetricsThread.cpp StateThread.cpp RmNodeDaemon.cpp
 
-RMMASTERDAEMONBIN_OBJS = $(RMMASTERDAEMONBIN_SRCS:.cpp=.Osuf)
+RMNODEDAEMONBIN_OBJS = $(RMNODEDAEMONBIN_SRCS:.cpp=.Osuf)
 
-DEPLIB = DepSharedLibraryTargetName(../../shlib,castorMonitor) \
-         DepSharedLibraryTargetName(../../shlib,shift)
+DEPLIB = DepSharedLibraryTargetName(FileName(../..,shlib),castorMonitor) \
+         DepSharedLibraryTargetName(FileName(../..,shlib),shift)
 
-LDFLAGS = -L FileName(../../..,shlib) $(MTLDFLAGS)
+LDFLAGS = -L FileName(..,FileName(../..,shlib)) $(MTLDFLAGS)
 LD = g++
 
-all:ProgramTargetName(rmMasterDaemon)
+all:ProgramTargetName(rmNodeDaemon)
 
-NormalProgramTarget(rmMasterDaemon,$(RMMASTERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS))
+NormalProgramTarget(rmNodeDaemon,$(RMNODEDAEMONBIN_OBJS),$(DEPLIB),$(LIBS))
 
-MakeDepSharedLibrary(../../shlib,castorMonitor)
-MakeDepSharedLibrary(../../shlib,shift)
+MakeDepSharedLibrary(FileName(../..,shlib),castorMonitor)
+MakeDepSharedLibrary(FileName(../..,shlib),shift)
 
 Makefiles:
 
@@ -59,27 +59,27 @@ depend:
 	@echo Not supported on this platform
 #else
 depend:
-	makedepend $(INCLUDES) $(RMMASTERDAEMONBIN_SRCS) 2> /dev/null
+	makedepend $(INCLUDES) $(RMNODEDAEMONBIN_SRCS) 2> /dev/null
 #endif
 
-install: FileName($(BIN),rmMasterDaemon)
+install: FileName($(BIN),rmNodeDaemon)
 
-InstallProgram(rmMasterDaemon,$(BIN),root,bin,755)
+InstallProgram(rmNodeDaemon,$(BIN),root,bin,755)
 
 install.man: $(MANDIR) $(MANPAGES)
 MakeDir($(MANDIR),root,bin,0755)
-IMANPAGE(rmMasterDaemon,$(MANDIR),$(MANSUFFIX))
-EMANPAGE(rmMasterDaemon,$(EXPORTMAN)/man1,$(MANSUFFIX))
+IMANPAGE(rmNodeDaemon,$(MANDIR),$(MANSUFFIX))
+EMANPAGE(rmNodeDaemon,$(EXPORTMAN)/man1,$(MANSUFFIX))
 
 exportman: $(EXPORTMANPAGES)
 
 clean:
-	@echo rmmaster in CurDir
+	@echo rmnode in CurDir
 	-@RemoveFiles(FilesToClean)
 
 clobber:	clean
 	@echo clobbering in CurDir
-	-@RemoveFiles(ProgramTargetName(rmMasterDaemon))
+	-@RemoveFiles(ProgramTargetName(rmNodeDaemon))
 
 FORCE:
 

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      RmMasterDaemon.hpp
+ *                      RmNodeDaemon.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,15 +19,14 @@
  *
  * @(#)$RCSfile$ $ $Author $
  *
- * The monitoring Daemon master, collecting all the inputs from
- * the different nodes and updating both the database and the
- * LSF scheduler shared memory
+ * This daemons collects data concerning its node and sends them to
+ * the monitoring master daemon
  *
  * @author castor-dev team
  *****************************************************************************/
 
-#ifndef RMMASTER_RMMASTERDAEMON_HPP
-#define RMMASTER_RMMASTERDAEMON_HPP 1
+#ifndef RMNODE_RMNODEDAEMON_HPP
+#define RMNODE_RMNODEDAEMON_HPP 1
 
 // Include Files
 
@@ -35,56 +34,33 @@
 
 namespace castor {
 
-  // Forward Declarations
-  namespace stager {
-    class IStagerSvc;
-  }
-
   namespace monitoring{
 
-    // Forward Declarations
-    class ClusterStatus;
-
-    namespace rmmaster{
+    namespace rmnode{
 
       /**
-       * Castor RmMaster daemon.
+       * Castor RmNode daemon.
        */
-      class RmMasterDaemon : public castor::server::BaseDaemon {
+      class RmNodeDaemon : public castor::server::BaseDaemon {
 
       public:
 
         /**
          * constructor
          */
-        RmMasterDaemon();
+        RmNodeDaemon();
 
         /**
          * destructor
          */
-        virtual ~RmMasterDaemon() throw() {};
-
-        /**
-         * accessor to the Cluster status
-         */
-        castor::monitoring::ClusterStatus* clusterStatus() {
-          return m_clusterStatus;
-        }
-
-      private:
-
-        // the shared memory area identifier
-        int m_smemoryId;
-
-        // the shared memory area
-        castor::monitoring::ClusterStatus* m_clusterStatus;
+        virtual ~RmNodeDaemon() throw() {};
 
       };
 
-    } // end of namespace rmmaster
+    } // end of namespace rmnode
 
   } // end of namespace monitoring
 
 } // end of namespace castor
 
-#endif // RMMASTER_RMMASTERDAEMON_HPP
+#endif // RMNODE_RMNODEDAEMON_HPP

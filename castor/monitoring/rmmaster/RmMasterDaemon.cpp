@@ -31,13 +31,15 @@
 #include "castor/Constants.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/server/SignalThreadPool.hpp"
-#include "castor/rmmaster/RmMasterDaemon.hpp"
-#include "castor/rmmaster/ClusterStatus.hpp"
-#include "castor/rmmaster/Collector.hpp"
+#include "castor/server/ListenerThreadPool.hpp"
+#include "castor/monitoring/rmmaster/RmMasterDaemon.hpp"
+#include "castor/monitoring/ClusterStatus.hpp"
+#include "castor/monitoring/rmmaster/CollectorThread.hpp"
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/Services.hpp"
 
 #define UPDATE_INTERVAL 10 // in seconds
+#define RMMASTER_DEFAULT_PORT 15003
 
 // -----------------------------------------------------------------------
 // External C function used for getting configuration from shift.conf file
@@ -77,8 +79,9 @@ int main(int argc, char* argv[]) {
     }
 
     // new BaseDaemon as Server
-    castor::rmmaster::RmMasterDaemon daemon;
+    castor::monitoring::rmmaster::RmMasterDaemon daemon;
     int interval;
+    int port;
 
     //default values
     interval = UPDATE_INTERVAL;
@@ -96,20 +99,41 @@ int main(int argc, char* argv[]) {
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, initParams);
       }
     }
+    char* portStr = getconfent("RmMaster","PORT", 0);
+    if (portStr){
+      port = std::strtol(portStr,0,10);
+      if (0 == port) {
+        // Go back to default
+        interval = RMMASTER_DEFAULT_PORT;
+        // Log this
+        castor::dlf::Param initParams[] =
+          {castor::dlf::Param("Given value", portStr)};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 18, 1, initParams);
+      }
+    }
 
     // Inform user
     castor::dlf::Param initParams[] =
       {castor::dlf::Param("Update interval value", interval)};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 2, 1, initParams);
 
-    // Create the thread pool (actually a single thread here)
-    daemon.addThreadPool
+    // DB threadPool
+    /*    daemon.addThreadPool
       (new castor::server::SignalThreadPool
-       ("Collector",
-        new castor::rmmaster::Collector
+       ("DatabaseActuator",
+        new castor::monitoring::rmmaster::DatabaseActuator
         (myService,
          daemon.clusterStatus()), 0, interval));
-    daemon.getThreadPool('C')->setNbThreads(1);
+    daemon.getThreadPool('D')->setNbThreads(1);
+    */
+    // Monitor threadpool
+    daemon.addThreadPool
+      (new castor::server::ListenerThreadPool
+       ("Collector",
+        new castor::monitoring::rmmaster::CollectorThread
+        (daemon.clusterStatus()),
+        port));
+    daemon.getThreadPool('C')->setNbThreads(5);
 
     daemon.parseCommandLine(argc, argv);
     daemon.start();
@@ -136,11 +160,9 @@ int main(int argc, char* argv[]) {
 }
 
 //------------------------------------------------------------------------------
-// RmMasterDaemon Constructor
-// also initialises the logging facility
+// Constructor
 //------------------------------------------------------------------------------
-
-castor::rmmaster::RmMasterDaemon::RmMasterDaemon() :
+castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon() :
   castor::server::BaseDaemon("RmMasterDaemon") {
 
   castor::BaseObject::initLog("newrmmaster", castor::SVC_DLFMSG);
@@ -157,12 +179,21 @@ castor::rmmaster::RmMasterDaemon::RmMasterDaemon() :
      { 6, "Created the shared memory."},
      { 7, "Unable to get pointer to shared memory. Giving up"},
      { 8, "Exception caught in Collector::run"},
-     { 9, "Thread Collector started. Updating shared memory data."},
+     { 9, "Thread Collector started."},
+     {10, "Thread Collector created."},
+     {11, "Error caught in CollectorThread::run"},
+     {12, "Unable to read Object from socket"},
+     {13, "Received unknown object from socket"},
+     {14, "Caught exception in CollectorThread"},
+     {15, "Sending acknowledgement to client"},
+     {16, "Unable to send Ack to client"},
+     {17, "General exception caught"},
+     {18, "Bad port value in configuration file"},
      {-1, ""}};
   castor::dlf::dlf_init("newrmmaster", messages);
 
   // get the cluster status singleton
-  m_clusterStatus = ClusterStatus::getClusterStatus();
+  m_clusterStatus = castor::monitoring::ClusterStatus::getClusterStatus();
   m_clusterStatus->clear();
 
 }
