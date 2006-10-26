@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      Helper.hpp
+ *                      BlockKey.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,51 +17,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Helper.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/09/25 09:21:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BlockKey.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/10/26 13:40:55 $ $Author: felixehm $
  *
- * A singleton for the shared memory usage
+ * The identification of a shared memory block
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef SHAREDMEMORY_HELPER_HPP 
-#define SHAREDMEMORY_HELPER_HPP 1
+#include "castor/sharedMemory/BlockKey.hpp"
 
-#include "castor/exception/Exception.hpp"
-
-namespace castor {
-
-  namespace sharedMemory {
-
-    // Forward declaration
-    class Block;
-
-    /**
-     * A singleton class dedicated to the handling of
-     * shared memory and using the internal classes.
-     */
-    class Helper {
-
-    public:
-
-      /**
-       * gets a pointer to THE shared memory block
-       */
-      static Block* getBlock() throw (castor::exception::Exception);
-
-    private:
-
-      /**
-       * the shared memory block address, when attached
-       */
-      static void* s_smBlockAddress;
-
-    };
-
-  }  // namespace sharedMemory
-
-} // namespace castor
-
-
-
-#endif // SHAREDMEMORY_HELPER_HPP
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::sharedMemory::BlockKey::BlockKey
+(key_t key, size_t size, const void* address) throw() :
+  m_key(key), m_size(size), m_address(address) {}
