@@ -97,6 +97,9 @@
 #define DLF_INIT              1             /**< initialisation request                   */
 #define DLF_LOG               2             /**< log message request                      */
 
+/* message ranges */
+// 0 - 999 is reserved for local messages
+#define DLF_BASE_SHAREDMEMORY 1000 // Shared Memory related code
 
 /**
  * opaque structures
