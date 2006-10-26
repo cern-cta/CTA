@@ -26,7 +26,7 @@ SHLIBREQLIBS1 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshif
 SHLIBREQLIBS1 += -lcastorCnvs
 #endif
 
-LIBRARIES2 = $(TANKLIB)
+LIBRARIES2 = $(MONITORCPPLIB)
 SHLIBREQLIBS2 = $(SHLIBREQLIBS)
 
 LIBRARIES3 = $(CNVSLIB)
@@ -51,8 +51,8 @@ ALL1=SharedLibraryTargetName(castorCnvs)
 ALL1+=SharedLibraryTargetName(castorCommonOra)
 #endif
 
-#if BuildTankPerfMonLibrary
-ALL2=SharedLibraryTargetName(castorTankPerfMon)
+#if BuildRmMasterCpp || BuildRmNodeCpp
+ALL2=SharedLibraryTargetName(castorMonitor)
 #endif
 
 #if BuildMyCpp
@@ -102,8 +102,8 @@ INSTALL1=FileName($(LIBDIR),SharedLibraryTargetName(castorCommonOra))
 INSTALL1+=FileName($(LIBDIR),SharedLibraryTargetName(castorCnvs))
 #endif
 #endif
-#if BuildTankPerfMonLibrary
-INSTALL2=FileName($(LIBDIR),SharedLibraryTargetName(castorTankPerfMon))
+#if BuildRmMasterCpp || BuildRmNodeCpp
+INSTALL2=FileName($(LIBDIR),SharedLibraryTargetName(castorMonitor))
 #endif
 #if BuildMyCpp
 INSTALL4=FileName($(LIBDIR),SharedLibraryTargetName(castorCommonMysql)) FileName($(LIBDIR),SharedLibraryTargetName(castorCnvs))
@@ -126,8 +126,8 @@ EXPORT1=$(EXPORTLIB)/SharedLibraryTargetName(castorCommonOra)
 EXPORT1+=$(EXPORTLIB)/SharedLibraryTargetName(castorCnvs)
 #endif
 #endif
-#if BuildTankPerfMonLibrary
-EXPORT2=$(EXPORTLIB)/SharedLibraryTargetName(castorTankPerfMon)
+#if BuildRmMasterCpp || BuildRmNodeCpp
+EXPORT2=$(EXPORTLIB)/SharedLibraryTargetName(castorMonitor)
 #endif
 #if BuildMyCpp
 EXPORT4=$(EXPORTLIB)/SharedLibraryTargetName(castorCommonMysql) $(EXPORTLIB)/SharedLibraryTargetName(castorCnvs)
@@ -193,13 +193,13 @@ libcastorVdqmOra.so: $(LIBRARIES6)
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
 	./makeshlib.sh '$(CXX)' libcastorVdqmOra.so $(SHLIBLDFLAGS) $(SHLIBREQLIBS6)
 
-libcastorTankPerfMon.so: $(LIBRARIES2)
+libcastorMonitor.so: $(LIBRARIES2) libshift.so
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
 	@for i in $(LIBRARIES2) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	./makeshlib.sh '$(CXX)' libcastorTankPerfMon.so $(SHLIBLDFLAGS) $(SHLIBREQLIBS2)
+	./makeshlib.sh '$(CXX)' libcastorMonitor.so -lshift $(SHLIBLDFLAGS) $(SHLIBREQLIBS2)
 
 
 shift.dll:	$(LIBRARIES0)
@@ -210,7 +210,7 @@ libcastorCommonOra.dll:	$(LIBRARIES1)
 	@echo  making $@ in CurDir
 	link /dll /noentry /nologo /out:$@ $**
 
-libcastorTankPerfMon.dll:	$(LIBRARIES2)
+libcastorMonitor.dll:	$(LIBRARIES2)
 	@echo  making $@ in CurDir
 	link /dll /noentry /nologo /out:$@ $**
 
@@ -239,7 +239,7 @@ InstallSharedLibrary(castorCommonOra,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERS
 InstallSharedLibrary(castorCommonMysql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
 InstallSharedLibrary(castorCommonPgsql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
 InstallSharedLibrary(castorVdqmOra,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
-InstallSharedLibrary(castorTankPerfMon,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
+InstallSharedLibrary(castorMonitor,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
 
 InstallSharedLibrary(shift,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
 InstallSharedLibrary(castorCnvs,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
@@ -247,7 +247,7 @@ InstallSharedLibrary(castorCommonOra,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERS
 InstallSharedLibrary(castorCommonMysql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
 InstallSharedLibrary(castorCommonPgsql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
 InstallSharedLibrary(castorVdqmOra,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
-InstallSharedLibrary(castorTankPerfMon,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
+InstallSharedLibrary(castorMonitor,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
 
 install.man:
 
@@ -311,6 +311,8 @@ MakeDepLibrary(db,db)
 
 MakeDepLibrary(monitor,monitor)
 
+MakeDepLibrary(castor/monitoring,CastorMonitor)
+
 MakeDepLibrary(rmc,rmc)
 
 #if BuildSecurity
@@ -344,8 +346,8 @@ SharedLibraryTargetName(Csec_plugin_KRB4): DepSharedLibraryTargetName(security,C
 #endif
 #endif
 
-#if BuildTankPerfMonLibrary
-MakeDepLibrary(tank,castorTankPerfMon)
+#if BuildRmMasterCpp || BuildRmNodeCpp
+MakeDepLibrary(castor/monitoring,castorMonitor)
 #endif
 
 FORCE:
