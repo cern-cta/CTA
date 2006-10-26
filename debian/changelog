@@ -135,6 +135,11 @@ castor (2.1.1-7) unstable; urgency=low
 
  -- Felix Ehm <felix.ehm@cern.ch>  Wed, 25 Oct 2006 17:20:00 +0200
 
+castor (2.1.1-6) unstable; urgency=low
+
+  * Failed attempt to make the release
+
+ -- Felix Ehm <felix.ehm@cern.ch>  Wed, 25 Oct 2006 12:00:00 +0200
 
 castor (2.1.1-5) unstable; urgency=low
 
