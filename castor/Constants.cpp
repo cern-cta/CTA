@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2006/08/18 09:53:06 $ $Author: gtaur $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2006/10/26 14:04:59 $ $Author: felixehm $
  *
  *
  *
@@ -152,8 +152,15 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "StartResponse",
   "GCFilesResponse",
   "FileQryResponse", 
-  "DiskPoolQueryResponse"
-   };
+  "DiskPoolQueryResponse",
+
+  "StageRepackRequest",
+
+  "DiskServerStateReport",
+  "DiskServerMetricsReport",
+  "FileSystemStateReport",
+  "FileSystemMetricsReport"
+};
 
 //=============================================================================
 // ServicesIdStrings

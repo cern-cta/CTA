@@ -28,7 +28,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_CONSTANTS_HPP 
+#ifndef CASTOR_CONSTANTS_HPP
 #define CASTOR_CONSTANTS_HPP 1
 
 #ifdef __cplusplus
@@ -57,7 +57,7 @@ namespace castor {
     OBJ_ReqIdRequest = 16,
     OBJ_Request = 17,
     OBJ_Segment = 18,
-    OBJ_StageGetNextRequest = 21,    
+    OBJ_StageGetNextRequest = 21,
     OBJ_Stream = 26,
     OBJ_SubRequest = 27,
     OBJ_SvcClass = 28,
@@ -124,7 +124,7 @@ namespace castor {
     OBJ_ErrorHistory = 89,
     OBJ_TapeDriveDedication = 90,
     OBJ_TapeAccessSpecification = 91,
-    OBJ_TapeDriveCompatibility = 92,   
+    OBJ_TapeDriveCompatibility = 92,
 
     OBJ_PutDoneStart = 93,
     OBJ_OldFileQryResponse = 94,
@@ -139,7 +139,7 @@ namespace castor {
     OBJ_FileSystemDescription = 102,
     OBJ_DiskPoolQuery = 103,
 
-// Object to replace the old response	
+    // Object to replace the old response
 
     OBJ_EndResponse = 104,
     OBJ_FileResponse = 105,
@@ -154,12 +154,19 @@ namespace castor {
     OBJ_BasicResponse = 114,
     OBJ_StartResponse = 115,
     OBJ_GCFilesResponse = 116,
-    OBJ_FileQryResponse = 117, 
+    OBJ_FileQryResponse = 117,
     OBJ_DiskPoolQueryResponse = 118,
 
-    OBJ_StageRepackRequest = 119
+    OBJ_StageRepackRequest = 119,
+
+    // Monitoring Objects
+    OBJ_DiskServerStateReport = 120,
+    OBJ_DiskServerMetricsReport = 121,
+    OBJ_FileSystemStateReport = 122,
+    OBJ_FileSystemMetricsReport = 123,
+
   };
-    
+
   /**
    * Ids of services
    */
@@ -204,11 +211,11 @@ namespace castor {
     SVC_PGVDQMSVC = 33,
 
     SVC_MYCNV = 34,
-    
+
     SVC_DBSRMSVC = 35,
     SVC_DBSRMDAEMONSVC = 36,
     SVC_ORACLEANSVC = 37
-    
+
 
   };
 
@@ -237,7 +244,7 @@ namespace castor {
   /**
    * Nb of objectIds currently existing
    */
-  static const unsigned int ObjectsIdsNb = 119;
+  static const unsigned int ObjectsIdsNb = 124;
 
   /**
    * Nb of ServicesIds currently existing
@@ -253,7 +260,7 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[119];
+  extern const char* ObjectsIdStrings[124];
 
   /**
    * Names of the differents Services, used to display
@@ -266,7 +273,7 @@ namespace castor {
    * correctly the RepresentationsIds enum
    */
   extern const char* RepresentationsIdStrings[6];
-    
+
 #ifdef __cplusplus
 } // end of namespace castor
 #endif
