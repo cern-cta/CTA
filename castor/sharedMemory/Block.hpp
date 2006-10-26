@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/10/09 15:41:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/10/26 13:33:30 $ $Author: felixehm $
  *
  * a block of shared memory with incorporated memory
  * allocation
@@ -34,18 +34,12 @@
 
 namespace castor {
 
-  // Forward Declaration
-  namespace rmmaster { 
-    class ClusterStatus;
-  }
-
   namespace sharedMemory {
 
     /**
      * a class dealing with a Block of Shared memory.
      * The Block contains its own table of free and used areas
-     * so that it's self contained as well as a description of
-     * the Cluster status.
+     * so that it's self contained.
      */
     class Block {
 
@@ -64,11 +58,6 @@ namespace castor {
       Block(key_t key, size_t size, const void* address)
         throw (castor::exception::Exception);
 
-      /**
-       * get a pointer to the cluster status
-       */
-      castor::rmmaster::ClusterStatus* clusterStatus() throw();
-
     public:
 
       /**
@@ -86,21 +75,10 @@ namespace castor {
       void free(void* pointer, size_t nbBytes)
         throw (castor::exception::Exception);
 
-      /**
-       * prints the status of the allocation table
-       * @param out the stream where to print
-       */
-      void print(std::iostream& out) throw();
+    private:
 
       /**
        * initializes the Block.
-       * Cannot be called by the constructor because we need
-       * to return before the initialization if we don't want
-       * to loop in the sharedMemory::Helper. The loop is due
-       * to the fact that the initialization itself will need
-       * some memory allocation that will call the Helper and
-       * it will try to create again the Block since it would
-       * not have got an answer yet
        */
       void initialize()
         throw (castor::exception::Exception);
@@ -143,6 +121,11 @@ namespace castor {
       unsigned int m_initializing;
 
       /**
+       * List of already attached memory blocks
+       */
+      static std::map<int, void*> s_attachedBlocks;
+
+      /**
        * Pointer to the raw shared memory block
        * The mapping of the memory is as follows.
        * of the Block is the following :
@@ -151,8 +134,7 @@ namespace castor {
        *     Head node of the Allocation Table
        *     First nodes of the Allocation Table
        *     Allocation Table
-       *     ClusterStatus Data
-       *     Available memory for nodes of the 2 tables
+       *     Available memory
        *   End of Block
        * \endverbatim
        */
@@ -162,11 +144,6 @@ namespace castor {
        * map of free regions.
        */
       SharedMap* m_freeRegions;
-
-      /**
-       * ClusterStatus object
-       */
-      castor::rmmaster::ClusterStatus* m_clusterStatus;
 
     }; // end class Block
 
