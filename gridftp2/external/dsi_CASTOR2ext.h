@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dsi_CASTOR2ext.h,v $ $Revision: 1.1 $ $Release$ $Date: 2006/10/18 07:46:25 $ $Author: itglp $
+ * @(#)$RCSfile: dsi_CASTOR2ext.h,v $ $Revision: 1.2 $ $Release$ $Date: 2006/10/26 15:23:26 $ $Author: kotlyar $
  *
  * 
  *
@@ -30,7 +30,7 @@
 #include "globus_gridftp_server.h"
 #include <shift.h>
 
-typedef struct globus_l_gfs_CASTOR2_handle_s
+typedef struct globus_l_gfs_CASTOR2ext_handle_s
    {
    globus_mutex_t		mutex;
    int				fd;
@@ -47,7 +47,7 @@ typedef struct globus_l_gfs_CASTOR2_handle_s
    char *			fullDestPath;   /* we do not allocate or free memory here    */
    char *                       access_mode;
    
-   } globus_l_gfs_CASTOR2_handle_t;
+   } globus_l_gfs_CASTOR2ext_handle_t;
    
 static void globus_l_gfs_rfio_net_read_cb(
 	        globus_gfs_operation_t,
@@ -58,14 +58,14 @@ static void globus_l_gfs_rfio_net_read_cb(
 		globus_bool_t,
 		void *);
 
-static void globus_l_gfs_CASTOR2_read_from_net(globus_l_gfs_CASTOR2_handle_t * );
+static void globus_l_gfs_CASTOR2ext_read_from_net(globus_l_gfs_CASTOR2ext_handle_t * );
 extern int rfio_parse(char *, char **, char **);
 static globus_result_t globus_l_gfs_rfio_make_error(const char *);
 
 void fill_stat_array(globus_gfs_stat_t *, struct stat64, char *);
 void free_stat_array(globus_gfs_stat_t * ,int);
-int CASTOR2_handle_open(char *, int, int, globus_l_gfs_CASTOR2_handle_t *);
-static globus_bool_t globus_l_gfs_CASTOR2_send_next_to_client(globus_l_gfs_CASTOR2_handle_t *);
+int CASTOR2ext_handle_open(char *, int, int, globus_l_gfs_CASTOR2ext_handle_t *);
+static globus_bool_t globus_l_gfs_CASTOR2ext_send_next_to_client(globus_l_gfs_CASTOR2ext_handle_t *);
 static void globus_l_gfs_net_write_cb(
 		globus_gfs_operation_t,
 		globus_result_t,
