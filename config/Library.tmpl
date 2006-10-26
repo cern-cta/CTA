@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.28 $ $Date: 2006/01/20 17:47:39 $ CERN IT-ADC/CA Jean-Damien Durand
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.29 $ $Date: 2006/10/26 15:00:59 $ CERN IT-ADC/CA Jean-Damien Durand
  */
 
 #include <Project.tmpl>
@@ -85,4 +85,7 @@ TANKLIB = DepLibraryTargetName(tank,castorTankPerfMon)
 #if BuildOraCpp
 VDQMORALIB = DepLibraryTargetName(castor/db/$(ORACPPDIR),castorVdqmOra)
 #endif
+#endif
+#if BuildRmMasterCpp || BuildRmNodeCpp
+MONITORCPPLIB = DepLibraryTargetName(castor/monitoring,castorMonitor)
 #endif

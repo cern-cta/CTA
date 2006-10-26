@@ -731,7 +731,12 @@ DLFWEBDIR=web
 DLFWEB=/var/www/html/dlf
 #endif
 #if BuildRmMasterCpp
+MONITORINGDIR = monitoring
 RMMASTERDIR = rmmaster
+#endif
+#if BuildRmNodeCpp
+MONITORINGDIR = monitoring
+RMNODEDIR = rmnode
 #endif
 
 /* Those directories are always defined because we always build at least */
