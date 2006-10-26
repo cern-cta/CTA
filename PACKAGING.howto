@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.24 2006/10/13 15:02:50 itglp Exp $
+## $Id: PACKAGING.howto,v 1.25 2006/10/26 12:29:22 felixehm Exp $
 #
 
 #
@@ -114,15 +114,18 @@ foreach i ( SLC*/* ) ; ls -1 $i | wc -l ; end
 #  ----------------------------
 #
 # You need to send a mail to linux.3rdlevel@cern.ch to ask them to sign the RPMs. Afterwards they'll go to swrep.
-# More info at: https://twiki.cern.ch/twiki/bin/view/CastorHowtoRPMs
+# More info at: https://twiki.cern.ch/twiki/bin/view/FIOgroup/CastorHowtoRPMs
 #
+## By hand : (ONLY FOR INTEGRATION RELEASES)
+#  this command has to executed in the directory with the rpms
+swrep-soap-client put i386_slc3 /cern/cc `ls castor-*.i386.rpm`
+
 ## To install in AFS
 #  -----------------
 #
-# You should request the (automatic) creation of the volume by following the instructions at: 
-# https://twiki.cern.ch/twiki/bin/view/SPI/SpiSpaceRequests 
+# You should request the (automatic) creation of the volume by following the instructions at:
+# https://twiki.cern.ch/twiki/bin/view/SPI/SpiSpaceRequests
 #
-
 ./tools/installOnAFS.py > /tmp/afsInstallScript
 source /tmp/afsInstallScript   # run it from lxplus or make sure you have rpm utilities (rpm2cpio)
 
