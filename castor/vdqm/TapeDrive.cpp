@@ -36,6 +36,7 @@
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
+#include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "osdep.h"
