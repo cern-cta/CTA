@@ -28,8 +28,8 @@ COMM
 
 RH_HOST=RhHost
 
-SUBDIRS = $(DBCPPDIR) $(RHCPPDIR) $(VDQMCPPDIR) $(GCCPPDIR) $(REPACKDIR) $(CLEANINGDIR) 
-DEPENDDIRS = $(DBCPPDIR) $(RHCPPDIR) $(VDQMCPPDIR) $(GCCPPDIR) $(REPACKDIR) $(CLEANINGDIR)
+SUBDIRS = $(DBCPPDIR) $(RHCPPDIR) $(VDQMCPPDIR) $(GCCPPDIR) $(REPACKDIR) $(CLEANINGDIR) $(MONITORINGDIR)
+DEPENDDIRS = $(DBCPPDIR) $(RHCPPDIR) $(VDQMCPPDIR) $(GCCPPDIR) $(REPACKDIR) $(CLEANINGDIR) $(MONITORINGDIR)
 
 #if _AIX
 OSLIBS = -L FileName(..,shlib) -lshift
@@ -377,6 +377,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               exception/InvalidArgument.cpp \
               exception/Internal.cpp \
               exception/NotSupported.cpp \
+              exception/OutOfMemory.cpp \
               exception/Communication.cpp \
               exception/NoEntry.cpp \
               exception/SQLError.cpp \
@@ -389,7 +390,10 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               query/DiskServerDescriptionCInt.cpp \
               query/DiskServerDescription.cpp \
               query/DiskPoolQueryCInt.cpp \
-              query/DiskPoolQuery.cpp
+              query/DiskPoolQuery.cpp \
+              sharedMemory/Block.cpp \
+              sharedMemory/BlockKey.cpp \
+              sharedMemory/DLFInit.cpp
 
 #if !defined(_WIN32)
 STGLIB_SRCSNW32 =  server/BaseDaemon.cpp  server/BaseServer.cpp server/NotificationThread.cpp
