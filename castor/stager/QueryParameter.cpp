@@ -32,6 +32,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/QryRequest.hpp"
 #include "castor/stager/QueryParameter.hpp"
+#include "castor/stager/RequestQueryType.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>

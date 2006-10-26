@@ -33,6 +33,7 @@
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
+#include "castor/stager/TapeStatusCodes.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
 #include "osdep.h"
 #include <iostream>
