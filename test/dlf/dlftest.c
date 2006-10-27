@@ -31,7 +31,7 @@
 #include "Cthread_api.h"
 #include "Cuuid.h"
 #include "dlf_api.h"
-#include "lib.h"
+#include "dlf_lib.h"
 
 /* definitions */
 #define DEFAULT_THREAD_COUNT 1        /**< number of threads to use to generate messages  */
@@ -99,6 +99,8 @@ void worker(void *arg) {
 	double   pard;
 	char     pars[DLF_LEN_STRINGVALUE + 100];
 	char     parname[DLF_LEN_PARAMNAME + 10];
+	char     pars2[DLF_LEN_STRINGVALUE + 100];
+	char     parname2[DLF_LEN_PARAMNAME + 10];
 	
 	
        	while (1) {
@@ -133,7 +135,7 @@ void worker(void *arg) {
 		Cuuid_create(&req_id);
 		Cuuid_create(&subreq_id);
 
-		severity = 1 + (int) (10.0  * rand()/(RAND_MAX + 1.0));
+		severity = 1 + (int) (11.0  * rand()/(RAND_MAX + 1.0));
 		msg_no   = 1 + (int) (255.0 * rand()/(RAND_MAX + 1.0));
 		
 		tpnum    = 1 + (int) (9999.0 * rand()/(RAND_MAX + 1.0));
@@ -157,17 +159,20 @@ void worker(void *arg) {
 		} else {
 			
 			/* generate string values designed to overflow the internal buffers */
-			genstring(pars, sizeof(pars) - 1);
-			genstring(parname, sizeof(parname) - 1);
-			genstring(tpname, sizeof(tpname) - 1);
+			genstring(pars,     sizeof(pars) - 1);
+			genstring(parname,  sizeof(parname) - 1);
+			genstring(tpname,   sizeof(tpname) - 1);
+			genstring(pars2,    sizeof(pars2) - 1);
+			genstring(parname2, sizeof(parname2) - 1);
 
 			rv = dlf_write(req_id, severity, msg_no, &nsfileid, 6,
-				       parname, DLF_MSG_PARAM_STR, pars,
-				       NULL,    DLF_MSG_PARAM_UUID, subreq_id,
-				       parname, DLF_MSG_PARAM_INT64, pari64,
-				       NULL,    DLF_MSG_PARAM_TPVID, tpname,
-				       parname, DLF_MSG_PARAM_DOUBLE, pard,
-				       parname, DLF_MSG_PARAM_FLOAT, parf);
+				       parname,  DLF_MSG_PARAM_STR, pars,
+				       parname2, DLF_MSG_PARAM_STR, pars2,
+				       NULL,     DLF_MSG_PARAM_UUID, subreq_id,
+				       parname,  DLF_MSG_PARAM_INT64, pari64,
+				       NULL,     DLF_MSG_PARAM_TPVID, tpname,
+				       parname,  DLF_MSG_PARAM_DOUBLE, pard,
+				       parname,  DLF_MSG_PARAM_FLOAT, parf);
 			
 		}
 		throughput++;
