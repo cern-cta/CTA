@@ -128,7 +128,9 @@ SUBPARTITION TEMPLATE
 TABLESPACE dlf_data;
 
 /* local indexes */
+CREATE INDEX i_msg_timestamp ON dlf_message (timestamp) LOCAL TABLESPACE dlf_indx;
 CREATE INDEX i_msg_fac ON dlf_messages (facility) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_pid ON dlf_messages (pid) LOCAL TABLESPACE dlf_indx;
 CREATE INDEX i_msg_reqid ON dlf_messages (reqid) LOCAL TABLESPACE dlf_indx;
 CREATE INDEX i_msg_hostid ON dlf_messages (hostid) LOCAL TABLESPACE dlf_indx;
 CREATE INDEX i_msg_nshostid ON dlf_messages (nshostid) LOCAL TABLESPACE dlf_indx;
@@ -291,7 +293,8 @@ INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('6', 'Security');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('7', 'Usage');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('8', 'System');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('9', 'Important');
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('10', 'Debug');
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('10', 'Monitoring');
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('11', 'Debug');
 
 /* initialise facilities */
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (0, 'rtcpcld');
