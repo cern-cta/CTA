@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/10/26 13:33:30 $ $Author: felixehm $
+ * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/10/27 15:29:32 $ $Author: sponcec3 $
  *
  * Allocator for the Shared Memory space
  *
@@ -95,7 +95,7 @@ namespace castor {
     private:
 
       /**
-       * created the internal shared memory Block
+       * creates the internal shared memory Block
        */
       inline Block* createSharedMemoryBlock();
 
@@ -136,9 +136,7 @@ template<class T>
 castor::sharedMemory::Block*
 castor::sharedMemory::Allocator<T>::createSharedMemoryBlock() {
   castor::sharedMemory::BlockKey key = getBlockKey();
-  m_smBlock = new Block(key.key(),
-                        key.size(),
-                        key.address());
+  m_smBlock = new Block(key);
 }
 
 //------------------------------------------------------------------------------

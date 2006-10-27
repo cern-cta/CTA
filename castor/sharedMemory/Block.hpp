@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/10/26 13:33:30 $ $Author: felixehm $
+ * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/10/27 15:29:32 $ $Author: sponcec3 $
  *
  * a block of shared memory with incorporated memory
  * allocation
@@ -30,6 +30,7 @@
 
 #include <map>
 #include "castor/sharedMemory/Allocator.hpp"
+#include "castor/sharedMemory/BlockKey.hpp"
 #include "castor/exception/Exception.hpp"
 
 namespace castor {
@@ -49,13 +50,8 @@ namespace castor {
        * Constructor
        * Initiates a block of shared memory.
        * @param key the key for this block
-       * @param size the size of the block to create when
-       * creation is needed
-       * @param address the process address to be used to
-       * attach the memory block. If null, the system will
-       * choose a suitable address
        */
-      Block(key_t key, size_t size, const void* address)
+      Block(BlockKey& key)
         throw (castor::exception::Exception);
 
     public:
@@ -78,22 +74,26 @@ namespace castor {
     private:
 
       /**
-       * initializes the Block.
+       * A hook to be used by subclasses to initialize
+       * specific things, like objects located in the
+       * shared memory. Default implementation is empty
+       * @param address the address where to put objects
+       * @param isSMCreated tells whether the shared memory was
+       * created by this call, or only attached
+       * @return the address immediately after the last
+       * object created by this method
        */
-      void initialize()
-        throw (castor::exception::Exception);
+      virtual void* initialize(void* address, bool isSMCreated)
+        throw (castor::exception::Exception) {};
 
     private:
 
       /**
-       * key of the block
+       * key of the block. This includes the actual key,
+       * the size of the block and the desired mapping address
+       * (may be null)
        */
-      key_t m_key;
-
-      /**
-       * size of the block
-       */
-      size_t m_size;
+      BlockKey m_key;
 
       // Convenience typedef
       typedef std::pair<void* const, size_t> SharedNode;
@@ -104,21 +104,10 @@ namespace castor {
       SharedMap;
 
       /**
-       * Did this block create the shared memory segment ?
+       * Are we initializing the Block ? If yes, we cannot yet
+       * use the free regions table.
        */
-      bool m_createdSharedMemory;
-
-      /**
-       * Did we initialize properly the Block ?
-       */
-      bool m_initialized;
-
-      /**
-       * Are we initializing the Block and if yes (non 0)
-       * at which step are we (number of next node to
-       * initialize in the allocation table)
-       */
-      unsigned int m_initializing;
+      bool m_initializing;
 
       /**
        * List of already attached memory blocks
@@ -131,8 +120,8 @@ namespace castor {
        * of the Block is the following :
        * \verbatim
        *   Begin of Block
-       *     Head node of the Allocation Table
-       *     First nodes of the Allocation Table
+       *     First node of the Allocation Table
+       *     [Custom objects created by subclasses via initialize]
        *     Allocation Table
        *     Available memory
        *   End of Block
