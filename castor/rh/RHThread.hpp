@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/02/01 17:12:33 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/10/27 14:59:35 $ $Author: itglp $
  *
  *
  *
@@ -28,9 +28,11 @@
 #define RH_RHTHREAD_HPP 1
 
 #include "castor/server/IThread.hpp"
+#include "castor/stager/Request.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/dlf/Param.hpp"
 
 namespace castor {
 
@@ -47,7 +49,7 @@ namespace castor {
        * Method called once per request, where all the code resides
        * @param param the socket obtained from the calling thread pool
        */
-      virtual void run(void *param) throw();
+      virtual void run(void *param);
       
       /// not implemented
       virtual void stop() {};
@@ -58,8 +60,10 @@ namespace castor {
        * handles an incoming request
        * @param fr the request
        * @param cuuid its uuid (for logging purposes only)
+       * @param peerParams IP and port of the client (again for logging)
        */
-      void handleRequest(castor::IObject* fr, Cuuid_t cuuid)
+      void handleRequest(castor::stager::Request* fr, Cuuid_t cuuid, 
+      			 castor::dlf::Param* peerParams)
         throw (castor::exception::Exception);
 
     }; // class RHThread

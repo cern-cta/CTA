@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/10/27 07:54:15 $ $Author: cvscasto $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/10/27 14:59:33 $ $Author: itglp $
  *
  *
  *
@@ -55,7 +55,7 @@
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::rh::RHThread::run(void* param) throw() {
+void castor::rh::RHThread::run(void* param) {
   MessageAck ack;
   ack.setStatus(true);
 
@@ -77,10 +77,10 @@ void castor::rh::RHThread::run(void* param) throw() {
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 5, 2, params);
   }
   // "New Request Arrival" message
-  castor::dlf::Param params[] =
+  castor::dlf::Param peerParams[] =
     {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
      castor::dlf::Param("Port", port)};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 1, 2, params);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 1, 2, peerParams);
 
   // get the incoming request
   try {
@@ -121,9 +121,7 @@ void castor::rh::RHThread::run(void* param) throw() {
       Cuuid2string(uuid, CUUID_STRING_LEN+1, &cuuid);
       fr->setReqId(uuid);
       // "Processing Request" message
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Type", fr->type())};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 8, 1, params);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 8);
 
       // Complete its client field
       castor::rh::Client *client =
@@ -136,8 +134,8 @@ void castor::rh::RHThread::run(void* param) throw() {
       }
       client->setIpAddress(ip);
       
-      // handle the request
-      handleRequest(fr, cuuid);
+      // handle the request. Pass the ip:port for logging purposes
+      handleRequest(fr, cuuid, peerParams);
       ack.setRequestId(uuid);
       ack.setStatus(true);
       
@@ -154,7 +152,7 @@ void castor::rh::RHThread::run(void* param) throw() {
   }
 
   // "Sending reply to client" message
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 10);
+  //castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 10);
   try {
     sock->sendObject(ack);
   } catch (castor::exception::Exception e) {
@@ -173,11 +171,11 @@ void castor::rh::RHThread::run(void* param) throw() {
 // handleRequest
 //------------------------------------------------------------------------------
 void castor::rh::RHThread::handleRequest
-(castor::IObject* fr, Cuuid_t cuuid)
+(castor::stager::Request* fr, Cuuid_t cuuid, castor::dlf::Param* peerParams)
   throw (castor::exception::Exception) {
   // Number of subrequests (when applicable)
   unsigned int nbSubReqs = 1;
-  // Stores it into Oracle
+  // Stores it into DB
   castor::BaseAddress ad;
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
@@ -211,10 +209,15 @@ void castor::rh::RHThread::handleRequest
       svcs()->fillRep(&ad, fdReq, OBJ_GCFile, false);
     }
     svcs()->commit(&ad);
+    
     // "Request stored in DB" message
+    // here we attach all data for monitoring/tracking purposes
     castor::dlf::Param params[] =
-      {castor::dlf::Param("ID", fr->id())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 12, 1, params);
+      {peerParams[0],
+       peerParams[1],
+       castor::dlf::Param("DBKey", fr->id()),
+       castor::dlf::Param("Type", fr->type())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 12, 4, params);
 
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);
