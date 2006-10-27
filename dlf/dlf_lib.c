@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.4 2006/10/27 07:06:53 waldron Exp $
+ * $Id: dlf_lib.c,v 1.5 2006/10/27 14:12:56 waldron Exp $
  */
 
 /* headers */
@@ -585,7 +585,6 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 			free_message(message);
 			return APP_FAILURE;
 		}
-		m->text     = NULL;
 		m->size     = message->size;
 		m->msg_no   = message->msg_no;
 		m->pid      = message->pid;
