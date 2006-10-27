@@ -133,7 +133,7 @@ input.button {
 
 
 /**
- * Results
+ *
  */
 
 TR.banner {
@@ -277,6 +277,13 @@ TD.sev_system {
 
 TD.sev_important {
 	background-color : #EB6227;
+	border: 1px solid #999999;
+	text-align: center;
+	width: 60px;
+}
+
+TD.sev_monitoring {
+	background-color : ##663300;
 	border: 1px solid #999999;
 	text-align: center;
 	width: 60px;
