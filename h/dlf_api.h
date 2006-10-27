@@ -40,7 +40,8 @@
 #define DLF_LVL_USAGE         7             /**< trace of routines                        */
 #define DLF_LVL_SYSTEM        8             /**< system error condition                   */
 #define DLF_LVL_IMPORTANT     9             /**< informative                              */
-#define DLF_LVL_DEBUG         10            /**< debug-level messages                     */
+#define DLF_LVL_MONITORING    10            /**< monitoring and statistics                */
+#define DLF_LVL_DEBUG         11            /**< debug-level messages                     */
 
 /* parameter types */
 #define DLF_MSG_PARAM_DOUBLE  1             /**< double precision floating point value    */
