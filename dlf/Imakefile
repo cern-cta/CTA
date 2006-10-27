@@ -110,7 +110,7 @@ EPROGS = $(EXPORTBIN)/dlfserver
 #endif
 
 DLFSRV_OBJS = queue.Osuf hash.Osuf process.Osuf common.Osuf server.Osuf $(DBOBJS)
-DLFLIB_OBJS = queue.Osuf hash.Osuf common.Osuf lib.Osuf
+DLFLIB_OBJS = queue.Osuf hash.Osuf common.Osuf dlf_lib.Osuf
 
 all: $(DLFLIBTARGET) $(PROGS)
 oracle.c: oracle.pc
