@@ -38,6 +38,7 @@ STGLIB_SRCS = ClusterStatus.cpp \
               DiskServerStatus.cpp \
               FileSystemStatus.cpp \
               AdminStatusCodes.cpp \
+              ClusterStatusBlockKey.cpp \
               DiskServerMetricsReport.cpp \
               DiskServerStateReport.cpp \
               FileSystemMetricsReport.cpp \

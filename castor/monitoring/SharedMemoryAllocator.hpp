@@ -29,6 +29,7 @@
 
 #include "castor/sharedMemory/Allocator.hpp"
 #include "castor/sharedMemory/BlockKey.hpp"
+#include "castor/monitoring/ClusterStatusBlockKey.hpp"
 
 namespace castor {
 
@@ -81,24 +82,13 @@ namespace castor {
 // Implementation of templated parts
 ////////////////////////////////////////////////////////////////////////////////
 
-#define SHARED_MEMORY_SIZE 1048576
-#define SHARED_MEMORY_KEY 2374
-#define SHARED_MEMORY_ADDRESS 0x30000000
-
 //------------------------------------------------------------------------------
 // getBlockKey
 //------------------------------------------------------------------------------
 template<class T>
 castor::sharedMemory::BlockKey
 castor::monitoring::SharedMemoryAllocator<T>::getBlockKey() {
-  castor::sharedMemory::BlockKey b(SHARED_MEMORY_SIZE,
-                                   SHARED_MEMORY_KEY,
-                                   (void*)SHARED_MEMORY_ADDRESS);
-  return b;
+  return castor::monitoring::getClusterStatusBlockKey();
 }
-
-#undef SHARED_MEMORY_SIZE
-#undef SHARED_MEMORY_KEY
-#undef SHARED_MEMORY_ADDRESS
 
 #endif // MONITORING_SHAREDMEMORYALLOCATOR_HPP

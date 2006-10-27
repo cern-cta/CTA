@@ -19,12 +19,14 @@
  *
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * 
+ *
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
+#include "castor/sharedMemory/SingletonBlock.hpp"
 #include "castor/monitoring/ClusterStatus.hpp"
+#include "castor/monitoring/ClusterStatusBlockKey.hpp"
 #include "castor/monitoring/SharedMemoryAllocator.hpp"
 #include <iostream>
 #include <iomanip>
@@ -38,10 +40,12 @@ castor::monitoring::ClusterStatus::getClusterStatus() {
   static ClusterStatus* smStatus = 0;
   // If first call, we have to initialize the singleton
   if (0 == smStatus) {
-    // Use an Allocator
-    castor::monitoring::SharedMemoryAllocator<ClusterStatus> alloc;
-    // Create the ClusterStatus Object
-    smStatus = new (alloc.allocate(1))ClusterStatus();
+    // get the ClusterStatus Object
+    castor::sharedMemory::BlockKey bk =
+      castor::monitoring::getClusterStatusBlockKey();
+    castor::sharedMemory::SingletonBlock
+      <castor::monitoring::ClusterStatus> b(bk);
+    smStatus = b.getSingleton();
   }
   return smStatus;
 }
@@ -57,7 +61,7 @@ void castor::monitoring::ClusterStatus::print
         << std::endl;
   } else {
     std::string dsIndent = indentation + "   ";
-    for (const_iterator it = begin(); it != end(); it++) {      
+    for (const_iterator it = begin(); it != end(); it++) {
       out << dsIndent << std::setw(20)
           << "name" << ": " << it->first;
       it->second.print(out, dsIndent);
