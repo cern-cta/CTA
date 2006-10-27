@@ -77,7 +77,7 @@ $dbh = db_connect($_GET['instance'], 1, 0);
 		if ((is_array($_GET[$condition])) && ($_GET[$condition][0] == "All")) {
 			continue;
 		}
-		if (($_GET[$condition] != "") && ($_GET[$condition] != "All")) {
+		if ((trim($_GET[$condition]) != "") && ($_GET[$condition] != "All")) {
 			$dlf_sql_conditions[$condition]['defined'] = 1;
 		}
 	}
@@ -139,7 +139,7 @@ $dbh = db_connect($_GET['instance'], 1, 0);
 		/* an array requires the use of 'OR' */
 		if (is_array($_GET[$column])) {
 			for ($i = 0, $query_where .= " ("; $i < count($_GET[$column]); $i++) {
-				$query_where .= "(".trim($dlf_sql_conditions[$column]['field'])." = '".$_GET[$column][$i]."')";
+				$query_where .= "(".trim($dlf_sql_conditions[$column]['field'])." = '".trim($_GET[$column][$i])."')";
 				if (($i + 1) != count($_GET[$column])) {
 					$query_where .= " OR";
 				}
@@ -148,22 +148,22 @@ $dbh = db_connect($_GET['instance'], 1, 0);
 		}
 
 		/* wildcards allowed in this field ? */
-		else if (($dlf_sql_conditions[$column]['wildcard']) && (strpos($_GET[$column], "%"))) {
-			$query_where .= " ".$dlf_sql_conditions[$column]['field']." LIKE '".$_GET[$column]."' ";
+		else if (($dlf_sql_conditions[$column]['wildcard']) && (strpos(trim($_GET[$column]), "%"))) {
+			$query_where .= " ".$dlf_sql_conditions[$column]['field']." LIKE '".trim($_GET[$column])."' ";
 		} else {
-			$query_where .= " ".$dlf_sql_conditions[$column]['field']." = '".$_GET[$column]."' ";
+			$query_where .= " ".$dlf_sql_conditions[$column]['field']." = '".trim($_GET[$column])."' ";
 		}
 	}
 
 	/*
 	 * parameters are special as they require sql statements across two tables
 	 */
-	if (($_GET['paramvalue'] || $_GET['paramname'])) {
+	if ((trim($_GET['paramvalue']) || trim($_GET['paramname']))) {
 		$query_joins .= " LEFT JOIN dlf_str_param_values t9 on (t1.id = t9.id) LEFT JOIN dlf_num_param_values t10 on (t1.id = t10.id)";
 	
 		/* loop over tables */
 		foreach (explode(" ", "paramname paramvalue") as $name) {
-			if (!$_GET[$name]) {
+			if (!trim($_GET[$name])) {
 				continue;
 			}
 			$field = ($name == "paramname") ? "name" : "value";
@@ -173,10 +173,10 @@ $dbh = db_connect($_GET['instance'], 1, 0);
 			$query_conditions++;
 
 			/* wildcards allowed in this field ? */
-			if (strpos($_GET[$name], "%")) {
-				$query_where .= " ((t9.".$field." LIKE '".$_GET[$name]."') OR (t10.".$field." LIKE '".$_GET[$name]."'))";
+			if (strpos(trim($_GET[$name]), "%")) {
+				$query_where .= " ((t9.".$field." LIKE '".trim($_GET[$name])."') OR (t10.".$field." LIKE '".trim($_GET[$name])."'))";
 			} else {
-				$query_where .= " ((t9.".$field." = '".$_GET[$name]."') OR (t10.".$field." = '".$_GET[$name]."'))";
+				$query_where .= " ((t9.".$field." = '".trim($_GET[$name])."') OR (t10.".$field." = '".trim($_GET[$name])."'))";
 			}
 		}
 	}
