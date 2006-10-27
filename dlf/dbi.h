@@ -21,7 +21,7 @@
  * @file  dbi.h
  * @brief database interface layer
  *
- * $Id: dbi.h,v 1.5 2006/10/10 12:41:46 waldron Exp $
+ * $Id: dbi.h,v 1.6 2006/10/27 07:05:55 waldron Exp $
  */
 
 #ifndef _DBI_H
@@ -156,20 +156,6 @@ EXTERN_C int DLL_DECL db_initfac _PROTO((char *facility, msgtext_t *texts[], int
  */
 
 EXTERN_C int DLL_DECL db_monitoring _PROTO((handler_t **hpool, unsigned int interval));
-
-
-/**
- * Generate the castor2 job and request statistics. This computes the max, mim, standard deviation,
- * average time, incoming request and outgoing requests per sample interval for each job and request
- * types 'Get, PrepareToGet, Put, PrepareToPut etc...'
- *
- * @param interval : how often the statistics should be generated in seconds
- *
- * @returns        : APP_SUCCESS on success
- * @returns        : APP_FAILURE on failure of the database
- */
-
-EXTERN_C int DLL_DECL db_stats _PROTO((unsigned int interval));
 
 
 #endif

@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: server.c,v 1.11 2006/10/20 15:56:15 waldron Exp $
+ * $Id: server.c,v 1.12 2006/10/27 07:05:54 waldron Exp $
  */
 
 /* headers */
@@ -379,7 +379,7 @@ int main(int argc, char **argv) {
 
 
 	/* process options */
-	while ((c = getopt(argc, argv, "hdfl:T:D:p:n")) != -1) {
+	while ((c = getopt(argc, argv, "hdfl:T:D:p:")) != -1) {
 		switch(c) {
 		case 'd':
 			debug = 1;
@@ -420,9 +420,6 @@ int main(int argc, char **argv) {
 			return APP_SUCCESS;
 		case 'p':
 			port = atoi(optarg);
-			break;
-		case 'n':
-			stats = 0;
 			break;
 		case ':':
 			return APP_FAILURE;   /* missing parameter */
@@ -605,9 +602,6 @@ int main(int argc, char **argv) {
 		(void)db_monitoring(hpool, 300);
 		(void)db_mode(60);
 
-		if (stats) {
-			(void)db_stats(300);
-		}
 		sleep(1);
 	}
 
