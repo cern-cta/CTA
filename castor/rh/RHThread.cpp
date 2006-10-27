@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/09/25 07:28:27 $ $Author: felixehm $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/10/27 07:54:15 $ $Author: cvscasto $
  *
  *
  *
@@ -123,7 +123,7 @@ void castor::rh::RHThread::run(void* param) throw() {
       // "Processing Request" message
       castor::dlf::Param params[] =
         {castor::dlf::Param("Type", fr->type())};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 8, 1, params);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 8, 1, params);
 
       // Complete its client field
       castor::rh::Client *client =
