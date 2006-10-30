@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2006/07/18 12:12:32 $ $Author: waldron $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2006/10/30 09:26:29 $ $Author: itglp $
  *
  *
  *
@@ -80,7 +80,7 @@ castor::rh::Server::Server() :
      { 7, "Unable to read Request from socket"},
      { 8, "Processing Request"},
      { 9, "Exception caught"},
-     {10, "Sending reply to client"},
+     {10, "Reply sent to client"},
      {11, "Unable to send Ack to client"},
      {12, "Request stored in DB"},
      {13, "Waked up all services at once"},
