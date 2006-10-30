@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/10/27 14:59:33 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/10/30 09:30:12 $ $Author: itglp $
  *
  *
  *
@@ -50,6 +50,7 @@
 
 #include <iostream>
 #include <errno.h>
+#include <sys/times.h>
 
 
 //------------------------------------------------------------------------------
@@ -59,9 +60,12 @@ void castor::rh::RHThread::run(void* param) {
   MessageAck ack;
   ack.setStatus(true);
 
+  // clock the time to process this request
+  struct tms buf;
+  clock_t startTime = times(&buf);
+
   // We know it's a ServerSocket
   castor::io::ServerSocket* sock = (castor::io::ServerSocket*) param;
-
   castor::stager::Request* fr = 0;
 
   // Retrieve info on the client
@@ -151,10 +155,19 @@ void castor::rh::RHThread::run(void* param) {
     }
   }
 
-  // "Sending reply to client" message
-  //castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 10);
+  // the process is over, don't include the time to send the ack
+  clock_t endTime = times(&buf);
   try {
     sock->sendObject(ack);
+    char procTime[10];
+    sprintf(procTime, "%.3f", 
+            (endTime - startTime) * 1000.0 / (float)sysconf(_SC_CLK_TCK)); 
+    castor::dlf::Param params[] =
+      {peerParams[0], 
+       peerParams[1],
+       castor::dlf::Param("Processing time (ms)", procTime)};
+    // "Reply sent to client" message
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 10, 3, params);
   } catch (castor::exception::Exception e) {
     // "Unable to send Ack to client" message
     castor::dlf::Param params[] =
