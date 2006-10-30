@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2006/10/20 16:00:16 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2006/10/30 17:50:44 $ $Author: felixehm $
  *
  *
  *
@@ -37,7 +37,7 @@ namespace castor {
 RepackFileStager::RepackFileStager(RepackServer* srv) 
 {
   ptr_server = srv;
-	m_filehelper = new FileListHelper(ptr_server->getNsName());
+  m_filehelper = new FileListHelper(ptr_server->getNsName());
   m_dbhelper = new DatabaseHelper();	
 }
 
@@ -46,8 +46,8 @@ RepackFileStager::RepackFileStager(RepackServer* srv)
 // Destructor
 //------------------------------------------------------------------------------
 RepackFileStager::~RepackFileStager() throw() {
-	delete m_dbhelper;
-	delete m_filehelper;
+  delete m_dbhelper;
+  delete m_filehelper;
 }
 
 
@@ -158,13 +158,9 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   req.setRepackVid(sreq->vid());
   /// We need to set the stage options. 
   struct stage_options opts;
-  opts.stage_host = (char*)ptr_server->getStagerName().c_str(); 
 
-  /// the service class information is checked and in case of default stored
-  /// with the RepackRequest
-  getServiceClass(&opts, sreq);  /// would through an exception, if repackrequest is not available
-  if ( sreq->requestID()->serviceclass().length() == 0 )
-    sreq->requestID()->setServiceclass(ptr_server->getServiceClass());
+  /// the service class information is checked and 
+  getStageOpts(&opts, sreq);  /// would through an exception, if repackrequest is not available
 
 
 	/// Msg: Staging files
@@ -172,35 +168,36 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
 
 
   /// here, we send the stager request
-	try {
-      failed = sendStagerRepackRequest(sreq, &req, &reqId, &opts);
-	}catch (castor::exception::Exception ex){
+  try {
+    failed = sendStagerRepackRequest(sreq, &req, &reqId, &opts);
+  }catch (castor::exception::Exception ex){
+    
     for (int i=0; i<req.subRequests().size(); i++)  
       delete req.subRequests().at(i);
     req.subRequests().clear();
 
     castor::dlf::Param params[] =
-		{castor::dlf::Param("Standard Message", sstrerror(ex.code())),
-		 castor::dlf::Param("Precise Message", ex.getMessage().str()),
+    {castor::dlf::Param("Standard Message", sstrerror(ex.code())),
+     castor::dlf::Param("Precise Message", ex.getMessage().str()),
      castor::dlf::Param("VID", sreq->vid())
     };
-		castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 21, 3, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 21, 3, params);
     return;
-	}
+  }
 
   /// we want to know how many files were successfully submitted
   sreq->setFilesFailed(failed);
 
 
   /// delete the allocated Stager SubRequests
-	for (int i=0; i<req.subRequests().size(); i++) delete req.subRequests().at(i);
+  for (int i=0; i<req.subRequests().size(); i++) delete req.subRequests().at(i);
 
-	/// Setting the SubRequest's Cuuid to the stager one for monitoring
-	stage_trace(3," Stagerrequest (now new RepackSubRequest CUUID ): %s",(char*)reqId.c_str());
-	castor::dlf::Param param[] = {castor::dlf::Param("New reqID", reqId)};
-	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 33, 1, param);
-	cuuid = stringtoCuuid(reqId);
-	sreq->setCuuid(reqId);
+  /// Setting the SubRequest's Cuuid to the stager one for monitoring
+  stage_trace(3," Stagerrequest (now new RepackSubRequest CUUID ): %s",(char*)reqId.c_str());
+  castor::dlf::Param param[] = {castor::dlf::Param("New reqID", reqId)};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 33, 1, param);
+  cuuid = stringtoCuuid(reqId);
+  sreq->setCuuid(reqId);
   sreq->setStatus(SUBREQUEST_STAGING);
  
 }
@@ -321,16 +318,16 @@ int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
   Cuuid_t cuuid = stringtoCuuid(rsreq->cuuid());
 
 	/** Uses a BaseClient to handle the request */
-	castor::client::BaseClient client(stage_getClientTimeout());
-	client.setOption(NULL);	/** to initialize the RH,stager, etc. */
-	
-	castor::stager::RequestHelper reqh(req);
-	reqh.setOptions(opts);
+  castor::client::BaseClient client(stage_getClientTimeout());
+  client.setOption(NULL);	/** to initialize the RH,stager, etc. */
 
-	/** 1. Send the Request */
-	std::vector<castor::rh::Response*>respvec;
-	castor::client::VectorResponseHandler rh(&respvec);
-	*reqId = client.createClientAndSend(req);
+  castor::stager::RequestHelper reqh(req);
+  reqh.setOptions(opts);
+
+  /** 1. Send the Request */
+  std::vector<castor::rh::Response*>respvec;
+  castor::client::VectorResponseHandler rh(&respvec);
+  *reqId = client.createClientAndSend(req);
   
 
   /** 2. we need to store the recieved cuuid from the request replier and save it

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2006/10/20 16:03:12 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2006/10/30 17:50:45 $ $Author: felixehm $
  *
  *
  *
@@ -355,37 +355,41 @@ void RepackWorker::removeRequest(RepackRequest* rreq) throw (castor::exception::
 //------------------------------------------------------------------------------
 void RepackWorker::handleRepack(RepackRequest* rreq) throw (castor::exception::Internal)
 {
-	int tapecnt =0;
-	/* check if the tape(s)/pool exist */
-	if ( !getPoolInfo(rreq) ) {
-		return;
-	}
+  int tapecnt =0;
+  /* check if the tape(s)/pool exist  and if all tapes are valid for repacking*/
+  if ( !getPoolInfo(rreq) ) {
+    return;
+  }
  
   /// set the default serviceclass if none is given
   if ( rreq->serviceclass().length() == 0 ){
     rreq->setServiceclass(ptr_server->getServiceClass());
   }
 
-	
-	for ( tapecnt = 0; tapecnt < rreq->subRequest().size() ; tapecnt++ ) 
-	{
-		RepackSubRequest* subRequest = rreq->subRequest().at(tapecnt);
-		// set the status
-		subRequest->setStatus(SUBREQUEST_READYFORSTAGING);
-		// and for each subrequest a own cuuid, for DLF logging
-		Cuuid_t cuuid = nullCuuid;
-		Cuuid_create(&cuuid);
-		char buf[CUUID_STRING_LEN+1];
-		Cuuid2string(buf, CUUID_STRING_LEN+1, &cuuid);
-		std::string tmp (buf,CUUID_STRING_LEN);
-		subRequest->setCuuid(tmp);
-	}
+  /// set the default stager if none is given 
+  if ( rreq->stager().length() == 0 ){
+    rreq->setStager(ptr_server->getStagerName());
+  }
+  
+  for ( tapecnt = 0; tapecnt < rreq->subRequest().size() ; tapecnt++ ) 
+  {
+    RepackSubRequest* subRequest = rreq->subRequest().at(tapecnt);
+    // set the status
+    subRequest->setStatus(SUBREQUEST_READYFORSTAGING);
+    // and for each subrequest a own cuuid, for DLF logging
+    Cuuid_t cuuid = nullCuuid;
+    Cuuid_create(&cuuid);
+    char buf[CUUID_STRING_LEN+1];
+    Cuuid2string(buf, CUUID_STRING_LEN+1, &cuuid);
+    std::string tmp (buf,CUUID_STRING_LEN);
+    subRequest->setCuuid(tmp);
+  }
 
-	/* Go to DB, but only if tapes were found !*/
-	if ( tapecnt ){
-	  	m_databasehelper->storeRequest(rreq);
-      //m_databasehelper->unlock(); 
-	}
+  /* Go to DB, but only if tapes were found !*/
+  if ( tapecnt ){
+    m_databasehelper->storeRequest(rreq);
+    //m_databasehelper->unlock(); 
+  }
 		
 }
 

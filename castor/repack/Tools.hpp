@@ -12,7 +12,7 @@ namespace castor {
     _Cuuid_t stringtoCuuid(std::string strcuuid);
     void free_stager_response(struct  stage_filequery_resp* resp);
     void freeRepackObj(castor::IObject* obj);
-    void getServiceClass(struct stage_options* opts, RepackSubRequest* sreq)
+    void getStageOpts(struct stage_options* opts, RepackSubRequest* sreq)
                                        throw (castor::exception::Internal);
   }
 }

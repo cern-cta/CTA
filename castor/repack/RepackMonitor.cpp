@@ -128,11 +128,10 @@ throw (castor::exception::Exception)
   /** we query by request, easier for stager to fill */
   request.type = BY_REQID;
   request.param = (void*)sreq->cuuid().c_str();
-  opts.stage_host = (char*)ptr_server->getStagerName().c_str();
   opts.stage_port = 0;
   opts.stage_version = 0;
   /// set the service class information from repackrequest
-  getServiceClass(&opts, sreq);
+  getStageOpts(&opts, sreq);
   
   rc = errno = serrno = *nbresps = 0;
   /// Send request to stager 

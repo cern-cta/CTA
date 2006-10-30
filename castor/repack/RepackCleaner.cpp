@@ -60,7 +60,7 @@ void RepackCleaner::run(void* param) throw(){
     tape = m_dbhelper->checkSubRequestStatus(SUBREQUEST_READYFORCLEANUP);
 
     if ( tape != NULL )	{
-      m_dbhelper->lock(tape);
+      //m_dbhelper->lock(tape);
       cuuid = stringtoCuuid(tape->cuuid());
       if ( cleanupTape(tape) ){
         castor::dlf::Param params[] =
@@ -130,11 +130,10 @@ void RepackCleaner::removeFilesFromStager(RepackSubRequest* sreq) throw(castor::
   /// we need the stager name and service class for correct removal
   /// the port and version has to be set be the BaseClient. Nevertheless the 
   /// values have to be 0.
-  opts.stage_host = (char*)ptr_server->getStagerName().c_str();
   opts.stage_port = 0; 
   opts.stage_version = 0;
   /// set the service class information from repackrequest
-  getServiceClass(&opts, sreq);
+  getStageOpts(&opts, sreq);
   
   if ( !filelist->size() ) {
     /// this means that there are no files for a repack tape in SUBREQUEST_READYFORCLEANUP
@@ -145,29 +144,7 @@ void RepackCleaner::removeFilesFromStager(RepackSubRequest* sreq) throw(castor::
               << std::endl;
     throw ex;
   }
-  /* 
-  /// here we build the request 
-  castor::stager::StageRmRequest* req = new castor::stager::StageRmRequest();
-  for ( int i=0; i< filelist->size(); i++){
-    castor::stager::SubRequest* subreq = new castor::stager::SubRequest();
-    subreq->setFileName(filelist->at(i) ); 
-    subreq->setRequest(req);
-    req->addSubRequests(subreq);
-  }
-
-  /// .. and send it to the stager
-  std::vector<castor::rh::FileResponse*>* result = NULL;
-  try {
-    result = sendStagerFileRequest(req, &reqid, &opts);
-  }catch ( castor::exception::Exception e){
-    castor::exception::Internal internal;
-    internal.getMessage() << "Sending Request to Stager failed!" 
-                          << e.getMessage()
-                          << std::endl;
-    throw internal;
-
-  }
-  */
+  
   struct stage_filereq requests[filelist->size()];
   struct stage_fileresp* responses;
   for ( int i=0; i< filelist->size(); i++)
@@ -184,7 +161,6 @@ void RepackCleaner::removeFilesFromStager(RepackSubRequest* sreq) throw(castor::
       free(responses[i].filename);
     }
     free(responses);
-    //result->clear();
   }
 }
 
