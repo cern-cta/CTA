@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.330 $ $Release$ $Date: 2006/10/25 15:54:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.331 $ $Release$ $Date: 2006/10/30 12:58:19 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.330 $ $Date: 2006/10/25 15:54:16 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.331 $ $Date: 2006/10/30 12:58:19 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -229,20 +229,6 @@ END;
 
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
-   whenever a TapeCopy has failed to be migrated and is
-   put back in WAITINSTREAM from the SELECTED status *
-CREATE TRIGGER tr_TapeCopy_Update
-AFTER UPDATE of status ON TapeCopy
-FOR EACH ROW
-WHEN (old.status = 3 AND new.status = 2) -- SELECTED AND WAITINSTREAMS
-BEGIN
-  UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
-   WHERE FS IN (SELECT FileSystem FROM DiskCopy
-                 WHERE CastorFile = :new.castorFile AND status = 10) -- CANBEMIGR
-     AND Stream IN (SELECT parent FROM Stream2TapeCopy WHERE child = :new.id);
-END;
-
-/* Updates the count of tapecopies in NbTapeCopiesInFS
    whenever a DiskCopy has been replicated and the new one
    is put into CANBEMIGR status from the
    WAITDISK2DISKCOPY status */
@@ -296,23 +282,6 @@ BEGIN
    WHERE id = :new.castorFile FOR UPDATE;
 END;
 
-/* Used to avoid LOCK TABLE Stream2TapeCopy whenever someone wants
-   to deal with the TapeCopies of a Stream.
-   Due to this trigger, locking the Stream is enough
-   to be safe.
-Removed because it was not solving the problem.
-
-CREATE OR REPLACE TRIGGER tr_Stream2TapeCopy_Stream
-BEFORE INSERT OR UPDATE ON Stream2TapeCopy
-FOR EACH ROW
-DECLARE
-  unused Stream%ROWTYPE;
-BEGIN
-  SELECT * INTO unused FROM Stream
-   WHERE id = :new.Parent FOR UPDATE;
-END;
-
-*/
 
 /*********************/
 /* FileSystem rating */
