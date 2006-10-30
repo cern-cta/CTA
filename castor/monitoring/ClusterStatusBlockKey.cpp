@@ -36,8 +36,8 @@
 //------------------------------------------------------------------------------
 castor::sharedMemory::BlockKey
 castor::monitoring::getClusterStatusBlockKey() throw() {
-  castor::sharedMemory::BlockKey b(SHARED_MEMORY_SIZE,
-                                   SHARED_MEMORY_KEY,
+  castor::sharedMemory::BlockKey b(SHARED_MEMORY_KEY,
+                                   SHARED_MEMORY_SIZE,
                                    (void*)SHARED_MEMORY_ADDRESS);
   return b;
 }
