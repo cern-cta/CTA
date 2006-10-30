@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/10/30 09:30:12 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/10/30 10:31:31 $ $Author: itglp $
  *
  *
  *
@@ -51,6 +51,7 @@
 #include <iostream>
 #include <errno.h>
 #include <sys/times.h>
+#include <unistd.h>
 
 
 //------------------------------------------------------------------------------
@@ -159,7 +160,7 @@ void castor::rh::RHThread::run(void* param) {
   clock_t endTime = times(&buf);
   try {
     sock->sendObject(ack);
-    char procTime[10];
+    char procTime[20];
     sprintf(procTime, "%.3f", 
             (endTime - startTime) * 1000.0 / (float)sysconf(_SC_CLK_TCK)); 
     castor::dlf::Param params[] =
@@ -254,6 +255,7 @@ void castor::rh::RHThread::handleRequest
   case OBJ_StageFileQueryRequest :
   case OBJ_StageFindRequestRequest :
   case OBJ_StageRequestQueryRequest :
+  case OBJ_DiskPoolQuery :
     // Query Service
     stager_notifyService(::STAGER_SERVICE_QUERY);
     break;
