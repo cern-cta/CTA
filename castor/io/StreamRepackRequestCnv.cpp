@@ -97,6 +97,7 @@ void castor::io::StreamRepackRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->pid();
   ad->stream() << obj->command();
   ad->stream() << obj->pool();
+  ad->stream() << obj->stager();
   ad->stream() << obj->id();
 }
 
@@ -131,6 +132,9 @@ castor::IObject* castor::io::StreamRepackRequestCnv::createObj(castor::IAddress*
   std::string pool;
   ad->stream() >> pool;
   object->setPool(pool);
+  std::string stager;
+  ad->stream() >> stager;
+  object->setStager(stager);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

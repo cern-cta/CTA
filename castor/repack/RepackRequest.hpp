@@ -225,6 +225,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_stager
+       * @return the value of m_stager
+       */
+      std::string stager() const {
+        return m_stager;
+      }
+
+      /**
+       * Set the value of m_stager
+       * @param new_var the new value of m_stager
+       */
+      void setStager(std::string new_var) {
+        m_stager = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -290,6 +306,8 @@ namespace castor {
       int m_command;
 
       std::string m_pool;
+
+      std::string m_stager;
 
       /// The id of this object
       u_signed64 m_id;

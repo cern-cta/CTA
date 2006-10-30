@@ -5,7 +5,9 @@ CREATE TABLE RepackSubRequest (vid VARCHAR2(2048), xsize INTEGER, status NUMBER,
 CREATE TABLE RepackSegment (fileid INTEGER, compression NUMBER, segsize INTEGER, filesec INTEGER, copyno NUMBER, blockid INTEGER, fileseq INTEGER, id INTEGER PRIMARY KEY, vid INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type RepackRequest */
-CREATE TABLE RepackRequest (machine VARCHAR2(2048), userName VARCHAR2(2048), creationTime NUMBER, serviceclass VARCHAR2(2048), pid INTEGER, command NUMBER, pool VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
+CREATE TABLE RepackRequest (machine VARCHAR2(2048), userName VARCHAR2(2048), creationTime NUMBER, serviceclass VARCHAR2(2048), pid INTEGER, command NUMBER, pool VARCHAR2(2048), stager VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
+
+
 
 /* SQL statements for Castor_Version */
 CREATE TABLE castor_version (version VARCHAR2(2048));
