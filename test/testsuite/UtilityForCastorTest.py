@@ -23,25 +23,30 @@ def timeOut(myCmd):
     os._exit(0)  
 
 
-def saveOnFile(namefile,cmdS):
+def saveOnFile(namefile,cmdS,scen=None):
     count=0
     for singleCmd in cmdS:
+
         t=threading.Timer(120.0,timeOut,[singleCmd])
         t.start()
         if count == 0:
             fin=open(namefile,"wb")
         else:
             fin=open(namefile+("%d"%count),"wb")
+        if scen != None:
+            singleCmd=scen+singleCmd
         myOut=os.popen4(singleCmd)
         fin.write((myOut[1]).read())
         fin.close()
         count=count+1
         t.cancel()
       
-def runOnShell(cmdS):
+def runOnShell(cmdS,scen=None):
     for singleCmd in cmdS:
         t=threading.Timer(120.0,timeOut,[singleCmd])
         t.start()
+        if scen != None:
+            singleCmd=scen+singleCmd
         os.popen4(cmdS)
         t.cancel()
     
@@ -72,14 +77,70 @@ def prepareCastorString():
 	    
 # check if the user of the program is a castor user
 
-def checkUser():
-    userId=logUser()
-    myCmd=prepareString("","")
+def checkUser(filePath):
+    myCmd=prepareCastorString()
     myCmd="nsls "+myCmd
-    ret=runSafe(myCmd)
+    ret=os.popen(myCmd).read()
+    userId=logUser()
     if ret.find("No such file or directory") != -1:
         print "You are "+userId+" and you are not a Castor user. Go away!"
         return -1
     return userId
 
  
+#different scenarium for env
+
+def createScenarium(host,port,serviceClass,version,opt=None):
+	myShell=os.popen('ls -l /bin/sh').read()
+	myScen=""
+	if myShell.find("bash") != -1:
+		if host !=-1:
+			myScen+="export STAGE_HOST="+host+";"
+		else:
+			myScen+="unset STAGE_HOST;"
+		if port !=-1:
+			myScen+="export STAGE_PORT="+port+";"
+		else:
+			myScen+="unset STAGE_PORT;"	
+		if serviceClass !=-1:
+			myScen+="export STAGE_SVCCLASS="+serviceClass+";"
+		else:
+			myScen+="unset STAGE_SVCCLASS;"
+		if version !=-1:
+			myScen+="export RFIO_USE_CASTOR_V2="+version+";"
+		else:
+			myScen+="unset RFIO_USE_CASTOR_V2;"
+                if opt != None:
+                    for envVar in opt:
+                        if envVar[1] != -1:
+                            myScen+="export "+envVar[0]+"="+envVar[1]+";"
+                        else:
+                            myScen+="unset "+envVar[0]+";"
+		return myScen
+
+	if myShell.find("tcsh"):
+	        if host !=-1:
+			myScen+="setenv STAGE_HOST "+host+";"
+		else:
+			myScen+="unsetenv STAGE_HOST;"
+		if port !=-1:
+			myScen+="setenv  STAGE_PORT  "+port+";"
+		else:
+			myScen+="unsetenv STAGE_PORT;"	
+		if serviceClass !=-1:
+			myScen+="setenv  STAGE_SVCCLASS "+serviceClass+";"
+		else:
+			myScen+="unsetenv STAGE_SVCCLASS;"
+	        if version !=-1:
+			myScen+="setenv RFIO_USE_CASTOR_V2 "+version+";"
+		else:
+			myScen+="unsetenv RFIO_USE_CASTOR_V2;"
+                if opt != None:
+                    for envVar in opt:
+                        if envVar[1] != -1:
+                            myScen+="setenv "+envVar[0]+" "+envVar[1]+";"
+                        else:
+                            myScen+="unsetenv "+envVar[0]+";"
+                
+	        return myScen
+	return myScen
