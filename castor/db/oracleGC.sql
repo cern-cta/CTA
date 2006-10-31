@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.331 $ $Release$ $Date: 2006/10/30 12:58:19 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.332 $ $Release$ $Date: 2006/10/31 08:53:51 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.331 $ $Date: 2006/10/30 12:58:19 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.332 $ $Date: 2006/10/31 08:53:51 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1789,45 +1789,6 @@ BEGIN
    WHERE id = srId;
 END;
 
-/* PL/SQL method implementing putFailedProc */
-CREATE OR REPLACE PROCEDURE putFailedProc(srId IN NUMBER) AS
-  dcId INTEGER;
-  fsId INTEGER;
-  cfId INTEGER;
-  unused INTEGER;
-  reservedSpace INTEGER;
-BEGIN
-  -- Set SubRequest in FAILED status
-  UPDATE SubRequest
-     SET status = 7 -- FAILED
-   WHERE id = srId
-  RETURNING diskCopy, xsize, castorFile
-    INTO dcId, reservedSpace, cfId;
-  SELECT fileSystem INTO fsId FROM DiskCopy WHERE id = dcId;
-  -- free reserved space
-  updateFsFileClosed(fsId, reservedSpace, 0);
-  -- Determine the context (Put inside PrepareToPut ?)
-  BEGIN
-    -- check that there is a PrepareToPut going on
-    SELECT SubRequest.diskCopy INTO unused
-      FROM StagePrepareToPutRequest, SubRequest
-     WHERE SubRequest.CastorFile = cfId
-       AND StagePrepareToPutRequest.id = SubRequest.request;
-    -- the select worked out, so we have a prepareToPut
-    -- In such a case, we do not cleanup DiskCopy and CastorFile
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- this means we are a standalone put
-    -- thus cleanup DiskCopy and maybe the CastorFile
-    DECLARE
-      dcIds castor."cnumList";
-      fileIds castor.FileList_Cur;
-    BEGIN
-      dcIds(1) := dcId;
-      filesDeletedProc(dcIds, fileIds);
-    END;
-  END;   
-END;
-
 /* PL/SQL method implementing failedSegments */
 CREATE OR REPLACE PROCEDURE failedSegments
 (segments OUT castor.Segment_Cur) AS
@@ -2168,6 +2129,46 @@ BEGIN
   END LOOP;
  END IF;
 END;
+
+/* PL/SQL method implementing putFailedProc */
+CREATE OR REPLACE PROCEDURE putFailedProc(srId IN NUMBER) AS
+  dcId INTEGER;
+  fsId INTEGER;
+  cfId INTEGER;
+  unused INTEGER;
+  reservedSpace INTEGER;
+BEGIN
+  -- Set SubRequest in FAILED status
+  UPDATE SubRequest
+     SET status = 7 -- FAILED
+   WHERE id = srId
+  RETURNING diskCopy, xsize, castorFile
+    INTO dcId, reservedSpace, cfId;
+  SELECT fileSystem INTO fsId FROM DiskCopy WHERE id = dcId;
+  -- free reserved space
+  updateFsFileClosed(fsId, reservedSpace, 0);
+  -- Determine the context (Put inside PrepareToPut ?)
+  BEGIN
+    -- check that there is a PrepareToPut going on
+    SELECT SubRequest.diskCopy INTO unused
+      FROM StagePrepareToPutRequest, SubRequest
+     WHERE SubRequest.CastorFile = cfId
+       AND StagePrepareToPutRequest.id = SubRequest.request;
+    -- the select worked out, so we have a prepareToPut
+    -- In such a case, we do not cleanup DiskCopy and CastorFile
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- this means we are a standalone put
+    -- thus cleanup DiskCopy and maybe the CastorFile
+    DECLARE
+      dcIds castor."cnumList";
+      fileIds castor.FileList_Cur;
+    BEGIN
+      dcIds(1) := dcId;
+      filesDeletedProc(dcIds, fileIds);
+    END;
+  END;   
+END;
+
 
 /*
  * GC policy that mimic the old GC :
