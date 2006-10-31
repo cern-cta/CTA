@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/10/30 10:31:31 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/10/31 17:41:58 $ $Author: itglp $
  *
  *
  *
@@ -140,7 +140,7 @@ void castor::rh::RHThread::run(void* param) {
       client->setIpAddress(ip);
       
       // handle the request. Pass the ip:port for logging purposes
-      handleRequest(fr, cuuid, peerParams);
+      handleRequest(fr, cuuid, ip, port);
       ack.setRequestId(uuid);
       ack.setStatus(true);
       
@@ -160,15 +160,13 @@ void castor::rh::RHThread::run(void* param) {
   clock_t endTime = times(&buf);
   try {
     sock->sendObject(ack);
-    char procTime[20];
-    sprintf(procTime, "%.3f", 
-            (endTime - startTime) * 1000.0 / (float)sysconf(_SC_CLK_TCK)); 
     castor::dlf::Param params[] =
-      {peerParams[0], 
-       peerParams[1],
-       castor::dlf::Param("Processing time (ms)", procTime)};
+      {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+       castor::dlf::Param("Port", port),
+       castor::dlf::Param("ProcTime",    // processing time in ms
+         (int)((endTime - startTime) * 1000.0 / (float)sysconf(_SC_CLK_TCK)))};
     // "Reply sent to client" message
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 10, 3, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_MONITORING, 10, 3, params);
   } catch (castor::exception::Exception e) {
     // "Unable to send Ack to client" message
     castor::dlf::Param params[] =
@@ -185,7 +183,7 @@ void castor::rh::RHThread::run(void* param) {
 // handleRequest
 //------------------------------------------------------------------------------
 void castor::rh::RHThread::handleRequest
-(castor::stager::Request* fr, Cuuid_t cuuid, castor::dlf::Param* peerParams)
+(castor::stager::Request* fr, Cuuid_t cuuid, unsigned long peerIP, unsigned short peerPort)
   throw (castor::exception::Exception) {
   // Number of subrequests (when applicable)
   unsigned int nbSubReqs = 1;
@@ -227,8 +225,8 @@ void castor::rh::RHThread::handleRequest
     // "Request stored in DB" message
     // here we attach all data for monitoring/tracking purposes
     castor::dlf::Param params[] =
-      {peerParams[0],
-       peerParams[1],
+      {castor::dlf::Param("IP", castor::dlf::IPAddress(peerIP)),
+       castor::dlf::Param("Port", peerPort),
        castor::dlf::Param("DBKey", fr->id()),
        castor::dlf::Param("Type", fr->type())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 12, 4, params);

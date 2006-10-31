@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/10/27 14:59:35 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/10/31 17:41:58 $ $Author: itglp $
  *
  *
  *
@@ -60,10 +60,10 @@ namespace castor {
        * handles an incoming request
        * @param fr the request
        * @param cuuid its uuid (for logging purposes only)
-       * @param peerParams IP and port of the client (again for logging)
+       * @param peerIP, peerPort IP and port of the client (again for logging)
        */
       void handleRequest(castor::stager::Request* fr, Cuuid_t cuuid, 
-      			 castor::dlf::Param* peerParams)
+      			 unsigned long peerIP, unsigned short peerPort)
         throw (castor::exception::Exception);
 
     }; // class RHThread
