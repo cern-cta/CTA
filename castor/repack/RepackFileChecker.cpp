@@ -156,8 +156,7 @@ int RepackFileChecker::checkMultiRepack(RepackSubRequest* sreq)
         request.param = (void*)(buf.str().c_str());
         fileid.fileid = (*segment)->fileid();
         /// set the options
-        getServiceClass(&opts, sreq);
-        opts.stage_host = (char*)ptr_server->getStagerName().c_str(); 
+        getStageOpts(&opts, sreq);
         opts.stage_port = 0;
         opts.stage_version = 0;
 
