@@ -642,7 +642,9 @@ BEGIN
 END;
 
 
-/* archive/backup procedure */
+/*
+ * archive/backup procedure 
+ */
 CREATE OR REPLACE
 PROCEDURE dlf_archive
 AS
@@ -875,5 +877,113 @@ DBMS_SCHEDULER.CREATE_JOB (
 	ENABLED 	=> TRUE,
 	COMMENTS	=> 'Daily archiving procedure');
 END;
+
+
+/*
+ * dlf_stats_requests (Populates table: dlf_reqstats)
+ */
+CREATE OR REPLACE 
+PROCEDURE dlf_stats_requests
+AS
+
+	-- cursors
+	CURSOR v_cur IS	
+	    SELECT p.value, avg(diff) avg, stddev_pop(diff) stddev, min(diff) min, 
+		   max(diff) max, count(*) count  
+	    FROM (
+
+		-- elapsed time of a request
+		SELECT id, reqid, timestamp, msg_no,
+		    LEAD(TO_NUMBER(timestamp), 1) 
+			OVER (partition BY reqid 
+			ORDER BY timestamp, msg_no) next_timestamp,
+		    LEAD(TO_NUMBER(timestamp), 1) 
+			OVER (ORDER BY reqid) - TO_NUMBER(timestamp) diff 
+		FROM (
+
+		-- intersection of request ids
+		SELECT * FROM dlf_messages WHERE reqid IN(
+		    SELECT reqid FROM dlf_messages
+			WHERE timestamp >  TO_DATE(SYSDATE - 20/1440, 'YYYYMMDDHH24MISS')
+			AND   timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
+			AND   facility = 5
+			AND   msg_no   = 15
+		      INTERSECT
+		    SELECT reqid FROM dlf_messages
+			WHERE timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
+			AND   facility = 5
+			AND   msg_no   = 12)
+		AND facility = 5
+		AND ((msg_no = 12) OR (msg_no = 15))
+   
+		) ORDER BY reqid
+	    ) m, dlf_num_param_values p   
+
+	    WHERE m.msg_no = 12
+	    AND   m.id     = p.id
+	    AND   p.name   = 'type'
+	    AND   p.value  IN (35, 36, 37, 40)
+	    GROUP BY p.value ORDER BY p.value;
+
+	-- variables
+	v_record   v_cur%ROWTYPE;
+	v_time	   DATE;
+
+BEGIN
+
+	-- set the nls_date_format 
+	EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "YYYYMMDDHH24MISS"';
+
+	-- we define the time as a variable so that all data recorded will be synchronised
+ 	v_time := TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS');
+
+	FOR i IN 35..40 LOOP
+		IF ((i = 35)  OR    -- GetRequest
+		    (i = 36)  OR    -- PrepareToGetRequest
+		    (i = 37)  OR    -- PrepareToPutRequest
+		    (i = 40)) THEN  -- PutRequest
+			INSERT INTO dlf_reqstats VALUES(v_time, i, 0, 0, 0, 0, 0, 300);
+		END IF;
+	END LOOP;
+
+	-- insert the statistics data
+	OPEN v_cur;
+	LOOP
+		FETCH v_cur INTO v_record;
+			EXIT WHEN v_cur%NOTFOUND;
+
+			UPDATE dlf_reqstats SET
+				min_time  = v_record.min,
+				max_time  = v_record.max,
+				avg_time  = v_record.avg,
+				std_dev   = v_record.stddev,
+				req_count = v_record.count
+			WHERE timestamp = v_time
+			AND   type      = v_record.value;
+	END LOOP;
+
+	CLOSE v_cur;
+	COMMIT;
+
+EXCEPTION 
+	WHEN OTHERS THEN
+		CLOSE v_cur;
+		ROLLBACK;
+END;
+
+/*
+ * statistics scheduler
+ */
+BEGIN
+DBMS_SCHEDULER.CREATE_JOB (
+	JOB_NAME 	=> 'DLF_STATS_5MINS',
+	JOB_TYPE 	=> 'STORED_PROCEDURE',
+	JOB_ACTION 	=> 'DLF_STATS_REQUESTS',
+	START_DATE 	=> SYSDATE,
+	REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
+	ENABLED 	=> TRUE,
+	COMMENTS	=> 'CASTOR2 Monitoring Statistics (5 Minute Frequency)');
+END;
+
 
 /** End-of-File **/

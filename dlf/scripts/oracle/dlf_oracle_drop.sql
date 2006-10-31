@@ -23,10 +23,14 @@ DROP TABLE dlf_mode;
 /* procedures */
 DROP PROCEDURE dlf_partition;
 DROP PROCEDURE dlf_archive;
+DROP PROCEDURE dlf_stats_requests;
 
 /* scheduler */
-exec DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'dlf_partition_job');
-exec DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'dlf_archive_job');
+BEGIN
+	DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'dlf_partition_job');
+	DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'dlf_archive_job');
+	DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'dlf_stats_5mins');
+END;
 
 
 /* End-of-File */
