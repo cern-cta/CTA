@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# File		$Id: castorStart.sh,v 1.2 2006/03/16 13:33:38 itglp Exp $
+# File		$Id: castorStart.sh,v 1.3 2006/10/31 08:34:24 itglp Exp $
 #
 # Purpose	Start up CASTOR DAEMONS 
 #
@@ -26,7 +26,7 @@ echo ""
 # Just in case we forgot the castor config:
 if [ ! -f ${CONFIGFILE} ]
 then
-	echo "\n ${CONFIGFILE} NOT AVAILABLE ! Abort.."
+	echo "${CONFIGFILE} NOT AVAILABLE ! Abort.."
 	exit 1
 fi
 
@@ -73,7 +73,7 @@ function shut_down_running_daemons() {
 						echo "WARNING:"
 						echo "was not able to stop " $DAEMON "."
 						echo "Please kill process manually!"
-						echo "$PID \n"
+						echo "$PID"
 				fi
 		fi
 	done
