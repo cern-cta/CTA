@@ -1,0 +1,8 @@
+USE_STAGEMAP.CONF NO
+USE_CASTOR.CONF   NO    
+
+STAGE_HOST        lxb1366
+STAGE_PORT        9002
+STAGE_SVCCLASS    default
+CASTOR_V2         yes 
+
