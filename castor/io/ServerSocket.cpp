@@ -89,6 +89,8 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
                                        const bool reusable)
   throw (castor::exception::Exception) :
   m_listening(false), m_reusable(reusable) {
+  srand(time(NULL));
+  m_lowPort = m_highPort = -1;
   m_socket = -1;
   createSocket();
   setReusable();
@@ -104,6 +106,8 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
                                        const bool reusable)
   throw (castor::exception::Exception) :
   m_listening(false), m_reusable(reusable) {
+  srand(time(NULL));
+  m_lowPort = m_highPort = -1;
   m_socket = -1;
   createSocket();
   setReusable();
@@ -120,6 +124,7 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
   throw (castor::exception::Exception) :
   m_listening(false), m_reusable(reusable) {
   m_socket = -1;
+  m_lowPort = m_highPort = -1;
   createSocket();
   setReusable();
   m_saddr = buildAddress(port, ip);
