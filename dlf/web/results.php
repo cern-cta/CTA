@@ -157,6 +157,8 @@ $dbh = db_connect($_GET['instance'], 1, 0);
 	/*
 	 * parameters are special as they require sql statements across two tables
 	 */
+	$_GET['paramname']  = str_replace('\"', '"', urldecode($_GET['paramname']));
+	$_GET['paramvalue'] = str_replace('\"', '"', urldecode($_GET['paramvalue']));
 	if ((trim($_GET['paramvalue']) || trim($_GET['paramname']))) {
 		$query_joins .= " LEFT JOIN dlf_str_param_values t9 on (t1.id = t9.id) LEFT JOIN dlf_num_param_values t10 on (t1.id = t10.id)";
 	
@@ -173,9 +175,17 @@ $dbh = db_connect($_GET['instance'], 1, 0);
 
 			/* wildcards allowed in this field ? */
 			if (strpos(trim($_GET[$name]), "%")) {
-				$query_where .= " ((t9.".$field." LIKE '".trim($_GET[$name])."') OR (t10.".$field." LIKE '".trim($_GET[$name])."'))";
+				if (!is_numeric(trim($_GET[$name]))) {
+					$query_where .= " (t9.".$field." LIKE '".trim($_GET[$name])."')";
+				} else {
+					$query_where .= " ((t9.".$field." LIKE '".trim($_GET[$name])."') OR (t10.".$field." LIKE '".trim($_GET[$name])."'))";
+				}
 			} else {
-				$query_where .= " ((t9.".$field." = '".trim($_GET[$name])."') OR (t10.".$field." = '".trim($_GET[$name])."'))";
+				if (!is_numeric(trim($_GET[$name]))) {
+					$query_where .= " (t9.".$field." = '".trim($_GET[$name])."')";	
+				} else {
+					$query_where .= " ((t9.".$field." = '".trim($_GET[$name])."') OR (t10.".$field." = '".trim($_GET[$name])."'))";				
+				}
 			}
 		}
 	}
@@ -275,11 +285,7 @@ $dbh = db_connect($_GET['instance'], 1, 0);
 				}
 				$prev_row = $row[0];
 
-				if (strpos($row[2], " ")) {
-					$data[$row[0]]['Parameters'][$i] = $row[1]."=\"".$row[2]."\"";
-				} else {
-					$data[$row[0]]['Parameters'][$i] = $row[1]."=".$row[2];
-				}
+				$data[$row[0]]['Parameters'][$i] = $row[1]."=".$row[2];
 			}
 		}
 	}
