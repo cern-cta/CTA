@@ -21,7 +21,7 @@
  * @file  dlf/common.h
  * @brief defines common definitions, prototypes and structures for use between all DLF applications
  *
- * $Id: common.h,v 1.4 2006/08/21 06:41:49 waldron Exp $
+ * $Id: common.h,v 1.5 2006/11/01 12:34:17 waldron Exp $
  */
 
 #ifndef _COMMON_H
@@ -176,6 +176,16 @@ EXTERN_C void DLL_DECL free_msgtexts _PROTO((msgtext_t *texts[]));
  */
 
 EXTERN_C void DLL_DECL free_param _PROTO((param_t *param));
+
+
+/**
+ * Small utility function to strip newlines '\n' characters from the end of a string
+ * 
+ * @param msg   : a pointer to the message to strip
+ * @param len   : the length of the message
+ * @returns     : void, this function is always successful.
+ */
+EXTERN_C void DLL_DECL stip_newline _PROTO((char *msg, int len));
 
 
 #endif

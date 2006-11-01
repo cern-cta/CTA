@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.14 2006/10/27 07:11:34 waldron Exp $
+ * $Id: oracle.pc,v 1.15 2006/11/01 12:34:17 waldron Exp $
  */
 
 /* headers */
@@ -302,7 +302,8 @@ error:
 
         EXEC SQL WHENEVER SQLERROR CONTINUE;
 
-        log(LOG_ERR, "db_init() : %.*s", err_len, err_msg);
+	strip_newline(err_msg, err_len);
+        log(LOG_ERR, "db_init() : %.*s\n", err_len, err_msg);
 
         if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
 	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
@@ -412,7 +413,8 @@ int DLL_DECL db_open(database_t *db, unsigned int retries) {
 		err_size = sizeof(err_msg);
 		sqlglmt(db->ctx, err_msg, &err_size, &err_len);
 
-		log(LOG_ERR, "db_open() : %.*s", err_len, err_msg);
+		strip_newline(err_msg, err_len);
+		log(LOG_ERR, "db_open() : %.*s\n", err_len, err_msg);
 
 		EXEC SQL WHENEVER SQLERROR CONTINUE;
 
@@ -608,7 +610,8 @@ error:
 
 	EXEC SQL WHENEVER SQLERROR CONTINUE;
 
-	log(LOG_ERR, "db_initfac() : %.*s", err_len, err_msg);
+	strip_newline(err_msg, err_len);
+	log(LOG_ERR, "db_initfac() : %.*s\n", err_len, err_msg);
 
 	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
 	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
@@ -728,7 +731,8 @@ error:
 
         EXEC SQL WHENEVER SQLERROR CONTINUE;
 
-        log(LOG_ERR, "db_hostid() : %.*s", err_len, err_msg);
+	strip_newline(err_msg, err_len);
+        log(LOG_ERR, "db_hostid() : %.*s\n", err_len, err_msg);
 
         if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
 	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
@@ -853,7 +857,8 @@ error:
 
 	EXEC SQL WHENEVER SQLERROR CONTINUE;
 
-	log(LOG_ERR, "db_nshostid() : %.*s", err_len, err_msg);
+	strip_newline(err_msg, err_len);
+	log(LOG_ERR, "db_nshostid() : %.*s\n", err_len, err_msg);
 
 	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
 	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
@@ -987,7 +992,8 @@ error:
         EXEC SQL WHENEVER SQLERROR CONTINUE;
         EXEC SQL WHENEVER NOTFOUND CONTINUE;
 
-        log(LOG_ERR, "db_flush() : %.*s", err_len, err_msg);
+	strip_newline(err_msg, err_len);
+        log(LOG_ERR, "db_flush() : %.*s\n", err_len, err_msg);
 
         if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
 	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
@@ -1414,7 +1420,7 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 	EXEC SQL CONTEXT USE :db->ctx;
 
 	db->inserts++;
-	EXEC SQL INSERT INTO dlf_monitoring
+	EXEC SQL INSERT INTO dlf_monitoring2
 	VALUES (TO_DATE(:timestr, 'YYYYMMDDHH24MISS'),
 		:h_threads,    :h_messages,   :h_inits,      :h_errors,    :h_connections,
 	 	:h_clientpeak, :h_timeouts,   :db_threads,   :db_commits,  :db_errors,
@@ -1438,7 +1444,8 @@ error:
 
 	EXEC SQL WHENEVER SQLERROR CONTINUE;
 
-	log(LOG_ERR, "db_monitoring() : %.*s", err_len, err_msg);
+	strip_newline(err_msg, err_len);
+	log(LOG_ERR, "db_monitoring() : %.*s\n", err_len, err_msg);
 
 	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
 	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
@@ -1561,7 +1568,8 @@ error:
 
 	EXEC SQL WHENEVER SQLERROR CONTINUE;
 
-	log(LOG_ERR, "db_mode() : %.*s", err_len, err_msg);
+	strip_newline(err_msg, err_len);
+	log(LOG_ERR, "db_mode() : %.*s\n", err_len, err_msg);
 
 	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
 	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||

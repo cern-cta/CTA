@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: common.c,v 1.4 2006/08/21 06:41:49 waldron Exp $
+ * $Id: common.c,v 1.5 2006/11/01 12:34:17 waldron Exp $
  */
 
 /* headers */
@@ -81,6 +81,17 @@ void DLL_DECL free_msgtexts(msgtext_t *texts[]) {
 			free(texts[i]->msg_text);
 			free(texts[i]);
 		}
+	}
+}
+
+
+/*
+ * Strip newline
+ */
+
+void DLL_DECL strip_newline(char *msg, int len) {
+	if (msg[len - 1] == '\n') {
+		msg[len - 1] = '\0';
 	}
 }
 
