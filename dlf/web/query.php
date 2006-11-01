@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: query.php,v 1.6 2006/10/16 13:34:56 waldron Exp $
+ * $Id: query.php,v 1.7 2006/11/01 09:48:49 waldron Exp $
  */
 
 require("utils.php");
@@ -46,7 +46,7 @@ $query_count = 0;
 	<meta http-equiv="Cache-Control" content="no-cache" />
 	<meta http-equiv="Default-Style" content="compact" />
 	<meta http-equiv="Content-Style-Type" content="text/css" />
-	<title>Distributed Logging Facility - Query</title>
+	<title><?php printf("%s - ", strtoupper($_GET['instance'])); ?>Distributed Logging Facility - Query</title>
 	<link href="site.css" rel="stylesheet" type="text/css" />
 	
 	<?php
@@ -189,7 +189,8 @@ $query_count = 0;
 	
 	<!-- header -->
   	<tr class="header">
-    	<td colspan="3">CASTOR Distributed Logging Facility</td>
+    	<td colspan="2">CASTOR Distributed Logging Facility</td>
+		<td align="right"><?php printf("%s", strtoupper($_GET['instance'])); ?></td>
   	</tr>
   	<tr>
     	<td colspan="3"><hr size="1"/></td>

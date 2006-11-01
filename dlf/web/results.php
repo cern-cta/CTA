@@ -42,8 +42,7 @@ $dbh = db_connect($_GET['instance'], 1, 0);
 	<meta http-equiv="Default-Style" content="compact" />
 	<meta http-equiv="Content-Style-Type" content="text/css" />
 	<link rel="stylesheet" type="text/css" title="compact" href="site.css" />
-
-	<title>Distributed Logging Facility - Results</title>
+	<title><?php printf("%s - ", strtoupper($_GET['instance'])); ?>Distributed Logging Facility - Results</title>
 
 	<?php
 
@@ -293,7 +292,8 @@ $dbh = db_connect($_GET['instance'], 1, 0);
 	
 	<!-- header -->
   	<tr class="header">
-    	<td colspan="3">CASTOR Distributed Logging Facility</td>
+    	<td colspan="2">CASTOR Distributed Logging Facility</td>
+		<td align="right"><?php printf("%s", strtoupper($_GET['instance'])); ?></td>
   	</tr>
   	<tr>
     	<td colspan="3"><hr size="1"/></td>
@@ -476,7 +476,7 @@ $dbh = db_connect($_GET['instance'], 1, 0);
 										($dlf_sql_columns[$name]['name'] == "Sub Request ID")) {
 											$value = str_replace("-", "-<wbr />", $value);
 									}
-	
+
 									echo "<td class=\"".$class."\">";
 									if ($value != "N/A") {
 										if ($data[$keys[$i]]["m_".$dlf_sql_columns[$name]['href']]) {
@@ -501,7 +501,15 @@ $dbh = db_connect($_GET['instance'], 1, 0);
 								echo "<td class=\"parameters\">";
 								if (count($data[$keys[$i]]['Parameters'])) {
 									for ($j = 0; $j < count($data[$keys[$i]]['Parameters']); $j++) {
-										echo $data[$keys[$i]]['Parameters'][$j]."<br/>";
+									
+										/* deal with long lines */
+										$value = $data[$keys[$i]]['Parameters'][$j];
+										if (strlen($value) > 150) {
+											$value = str_replace("/", "/<wbr />", $value);
+											$value = "<br/>".str_replace(".", ".<wbr />", $value)."<br/>";
+										}				
+									
+										echo $value."<br/>";
 									}
 								} else {
 									echo "&nbsp;";

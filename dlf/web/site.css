@@ -165,6 +165,7 @@ TD.msgtext {
 TD.nshostname {
 	border: 1px solid #999999;
 	text-align: center;
+	width: 90pt;
 }
 
 TD.tid {
@@ -182,6 +183,7 @@ TD.pid {
 TD.hostname {
 	border: 1px solid #999999;
 	text-align: center;
+	width: 90pt;
 }
 
 TD.facility {

@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dbview.php,v 1.3 2006/09/29 14:23:40 waldron Exp $
+ * $Id: dbview.php,v 1.4 2006/11/01 09:48:49 waldron Exp $
  */
 
 require("utils.php");
@@ -73,7 +73,7 @@ function navigation_form() {
 	<meta http-equiv="Cache-Control" content="no-cache" />
 	<meta http-equiv="Default-Style" content="compact" />
 	<meta http-equiv="Content-Style-Type" content="text/css" />
-	<title>Distributed Logging Facility - Database View</title>
+	<title><?php printf("%s - ", strtoupper($_GET['instance'])); ?>Distributed Logging Facility - Database View</title>
 	<link href="site.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -81,7 +81,8 @@ function navigation_form() {
 	
 	<!-- header -->
   	<tr class="header">
-		<td colspan="3">CASTOR Distributed Logging Facility - Database View</td>
+		<td colspan="2">CASTOR Distributed Logging Facility - Database View</td>
+		<td align="right"><?php printf("%s", strtoupper($_GET['instance'])); ?></td>
   	</tr>
   	<tr>
 		<td colspan="3"><hr size="1"/></td>
