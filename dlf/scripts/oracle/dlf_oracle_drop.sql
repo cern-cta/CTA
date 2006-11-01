@@ -23,7 +23,7 @@ DROP TABLE dlf_mode;
 /* procedures */
 DROP PROCEDURE dlf_partition;
 DROP PROCEDURE dlf_archive;
-DROP PROCEDURE dlf_stats_requests;
+DROP PROCEDURE dlf_stats_jobs;
 
 /* scheduler */
 BEGIN
