@@ -113,54 +113,66 @@ int RepackCleaner::cleanupTape(RepackSubRequest* sreq) throw(castor::exception::
 //------------------------------------------------------------------------------
 void RepackCleaner::removeFilesFromStager(RepackSubRequest* sreq) throw(castor::exception::Internal)
 {
+  
+  struct stage_options opts;
+  castor::stager::StageRmRequest req;
+
+ 
   if ( sreq == NULL ){
     castor::exception::Internal ex;
     ex.getMessage() << "passed SubRequest ist NULL" << std::endl; 
     throw ex;
   }
-  /// get the files using the Filelisthelper
+  
+  /* get the files using the Filelisthelper */
   FileListHelper flp(ptr_server->getNsName());
   Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
   std::vector<std::string>* filelist = flp.getFilePathnames(sreq);
-  std::string reqid; /// the requestid from the stager, which we get, 
-                     /// when we send the remove request
-  
-  struct stage_options opts;
-  
-  /// we need the stager name and service class for correct removal
-  /// the port and version has to be set be the BaseClient. Nevertheless the 
-  /// values have to be 0.
-  opts.stage_port = 0; 
-  opts.stage_version = 0;
-  /// set the service class information from repackrequest
-  getStageOpts(&opts, sreq);
-  
+  std::vector<std::string>::iterator filename = filelist->begin();
+
   if ( !filelist->size() ) {
-    /// this means that there are no files for a repack tape in SUBREQUEST_READYFORCLEANUP
-    /// => ERROR, this must not happen!
-    /// but we leave it to the Monitor Service to solve that problem
+    /* this means that there are no files for a repack tape in SUBREQUEST_READYFORCLEANUP
+     * => ERROR, this must not happen!
+     * but we leave it to the Monitor Service to solve that problem
+     */
     castor::exception::Internal ex;
     ex.getMessage() << "No files found during cleanup phase for " << sreq->vid() 
               << std::endl;
     throw ex;
   }
-  
-  struct stage_filereq requests[filelist->size()];
-  struct stage_fileresp* responses;
-  for ( int i=0; i< filelist->size(); i++)
-   requests[i].filename = (char*)filelist->at(i).c_str();
-  int nbresps =0;
-  int rc =0;
 
-  ///send the request to the server to remove files 
-  rc = stage_rm( requests,filelist->size(),&responses, &nbresps, NULL ,&opts); 
-  if ( rc >= 0 ) {
-    /// we don't need the answers
-    for (int i=0; i< nbresps; i++) {
-      if (responses[i].errorCode) free(responses[i].errorMessage);
-      free(responses[i].filename);
-    }
-    free(responses);
+  /* add the SubRequests to the Request */
+  while (filename != filelist->end()) {
+    castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
+    subreq->setFileName((*filename));
+    subreq->setRequest(&req);
+     req.addSubRequests(subreq);
+     filename++;
+  }
+  
+  /* we need the stager name and service class for correct removal
+   * the port and version has to be set be the BaseClient. Nevertheless the 
+   * values have to be 0.
+   */
+  opts.stage_port = 0; 
+  opts.stage_version = 0;
+
+  /* set the service class information from repackrequest */
+  getStageOpts(&opts, sreq);
+  
+  castor::client::BaseClient client(stage_getClientTimeout());
+  client.setOption(NULL);       /** to initialize the RH,stager, etc. */
+
+  castor::stager::RequestHelper reqh(&req);
+  std::vector<castor::rh::Response *>respvec;
+  castor::client::VectorResponseHandler rh(&respvec);
+  reqh.setOptions(&opts);
+  client.setAuthorizationId(sreq->requestID()->userid(), sreq->requestID()->groupid());
+  client.sendRequest(&req,&rh); 
+
+  /** we ignore the results from the stager */
+  for (int i=0; i<respvec.size(); i++) {
+    delete respvec[i];
   }
 }
 
