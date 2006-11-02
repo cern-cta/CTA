@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/09/21 15:41:09 $ $Author: felixehm $
+ * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/11/02 14:33:02 $ $Author: felixehm $
  *
  *
  *
@@ -397,10 +397,6 @@ extern "C" {
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
     }
-    FILE *fp;
-    fp = fopen("/tmp/TAPESVC_DEBUG","a+");
-    fprintf(fp,"found VID : %s",tmp.c_str());
-    fclose (fp);
     if ( tmp.length() >0 ){
        *repackvid = strdup(tmp.c_str());
        if ((*repackvid) == NULL ){
