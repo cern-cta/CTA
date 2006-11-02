@@ -98,6 +98,8 @@ void castor::io::StreamRepackRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->command();
   ad->stream() << obj->pool();
   ad->stream() << obj->stager();
+  ad->stream() << obj->groupid();
+  ad->stream() << obj->userid();
   ad->stream() << obj->id();
 }
 
@@ -135,6 +137,12 @@ castor::IObject* castor::io::StreamRepackRequestCnv::createObj(castor::IAddress*
   std::string stager;
   ad->stream() >> stager;
   object->setStager(stager);
+  unsigned long groupid;
+  ad->stream() >> groupid;
+  object->setGroupid(groupid);
+  unsigned long userid;
+  ad->stream() >> userid;
+  object->setUserid(userid);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

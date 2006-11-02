@@ -241,6 +241,38 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_groupid
+       * @return the value of m_groupid
+       */
+      unsigned long groupid() const {
+        return m_groupid;
+      }
+
+      /**
+       * Set the value of m_groupid
+       * @param new_var the new value of m_groupid
+       */
+      void setGroupid(unsigned long new_var) {
+        m_groupid = new_var;
+      }
+
+      /**
+       * Get the value of m_userid
+       * @return the value of m_userid
+       */
+      unsigned long userid() const {
+        return m_userid;
+      }
+
+      /**
+       * Set the value of m_userid
+       * @param new_var the new value of m_userid
+       */
+      void setUserid(unsigned long new_var) {
+        m_userid = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -308,6 +340,10 @@ namespace castor {
       std::string m_pool;
 
       std::string m_stager;
+
+      unsigned long m_groupid;
+
+      unsigned long m_userid;
 
       /// The id of this object
       u_signed64 m_id;
