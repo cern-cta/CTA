@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.332 $ $Release$ $Date: 2006/10/31 08:53:51 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.333 $ $Release$ $Date: 2006/11/02 16:56:35 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.332 $ $Date: 2006/10/31 08:53:51 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.333 $ $Date: 2006/11/02 16:56:35 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -66,19 +66,22 @@ CREATE INDEX I_CastorFile_lastKnownFileName on CastorFile (lastKnownFileName);
 
 CREATE INDEX I_DiskCopy_Castorfile on DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem on DiskCopy (fileSystem);
+/* function base index to speed up selectFiles2Delete */
+CREATE INDEX I_DiskCopy_Status8 on DiskCopy (decode(status,8,status,NULL));
+
 CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
 
 CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
-CREATE INDEX I_FileSystem_DiskServer on FileSystem(diskServer);
+CREATE INDEX I_FileSystem_DiskServer on FileSystem (diskServer);
 
 CREATE INDEX I_SubRequest_Castorfile on SubRequest (castorFile);
 CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_Request on SubRequest (request);
 CREATE INDEX I_SubRequest_Parent on SubRequest (parent);
 
-/* function base indexes to speed up subrequestToDo, subrequestFailedToDo and getLastRecalls */
+/* function base indexes to speed up subrequestToDo, subrequestFailedToDo, and getLastRecalls */
 CREATE INDEX I_SubRequest_Status on SubRequest (decode(status,0,status,1,status,2,status,NULL));
-CREATE INDEX I_SubRequest_Status7 on SubRequest (decode(status,7,status,null));
+CREATE INDEX I_SubRequest_Status7 on SubRequest (decode(status,7,status,NULL));
 CREATE INDEX I_SubRequest_GetNextStatus on SubRequest (decode(getNextStatus,1,getNextStatus,NULL));
 
 /* A primary key index for better scan of Stream2TapeCopy */
@@ -335,7 +338,6 @@ CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
   nb INTEGER;
   reqType INTEGER;
 BEGIN
-
   UPDATE SubRequest SET status = 8 -- FINISHED
      WHERE id = srId RETURNING request INTO rid;
 
@@ -398,14 +400,12 @@ END;
 
 CREATE OR REPLACE PROCEDURE deleteArchivedRequests(timeOut IN NUMBER) AS
   myReq SubRequest.request%TYPE;
-  CURSOR cur IS 
-    SELECT request FROM (
-      SELECT request, max(lastModificationTime) as latestTime, min(status) as minStatus, max(status) as maxStatus
-        FROM SubRequest
-       GROUP BY request
-      )
-    WHERE minStatus = 11 AND maxStatus = 11  -- only requests with ALL subreqs in ARCHIVED are taken 
-      AND latestTime < getTime() - timeOut; 
+  CURSOR cur IS
+    SELECT request FROM SubRequest
+     GROUP BY request
+        -- only requests with ALL subreqs in ARCHIVED are taken
+    HAVING min(status) = 11 AND max(status) = 11 
+       AND max(lastModificationTime) < getTime() - timeOut;
   counter NUMBER := 0;
 BEGIN
   OPEN cur;
@@ -428,13 +428,11 @@ END;
 CREATE OR REPLACE PROCEDURE deleteOutOfDateRequests(timeOut IN NUMBER) AS
   myReq SubRequest.request%TYPE;
   CURSOR cur IS
-    SELECT request FROM (
-      SELECT request, max(lastModificationTime) as latestTime, min(status) as minStatus, max(status) as maxStatus
-        FROM SubRequest
-       GROUP BY request
-      )
-    WHERE minStatus = 8 AND maxStatus = 11  -- only requests with ALL subreqs either FAILED or ARCHIVED are taken 
-      AND latestTime < getTime() - timeOut; 
+    SELECT request FROM SubRequest
+     GROUP BY request
+        -- only requests with ALL subreqs either FAILED or ARCHIVED are taken 
+    HAVING min(status) = 8 AND max(status) = 11 
+       AND max(lastModificationTime) < getTime() - timeOut;
   counter NUMBER := 0;
 BEGIN
   OPEN cur;
@@ -451,6 +449,7 @@ BEGIN
     COMMIT;
   CLOSE cur;
 END;
+
 
 /* PL/SQL method implementing anyTapeCopyForStream.
  * This implementation is not the original one. It uses NbTapeCopiesInFS
