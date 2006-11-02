@@ -12,6 +12,9 @@ repack \- Move files from tape(s) to other tape destination
 [
 .BI \-o " OutputServiceClass"
 ]
+[
+.BI \-S " Stager"
+]
 ]
 .br 
 [
@@ -27,7 +30,7 @@ repack \- Move files from tape(s) to other tape destination
 ]
 .br 
 [
-.BI \-S " VID"
+.BI \-x " VID"
 ]
 .br 
 [
@@ -92,10 +95,13 @@ specifies the volumes to repack seperated by ':'.
 \fB\-o\fR
 The service class used for migration (see obove). If none specified, the default is taken from the castor config file on the repackserver machine.
 
+\fB\-o\fR
+The stager to be used to do the repack of the tape.
+
 \fB\-s\fR
 Prints information about all tapes in an active repack process.
 
-\fB\-S\fR
+\fB\-x\fR
 Prints detailed information of the given volume.
 
 \fB\-h\fR
