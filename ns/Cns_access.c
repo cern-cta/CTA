@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_access.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_access.c,v $ $Revision: 1.3 $ $Date: 2006/11/02 16:41:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Cns_access - check accessibility of a file/directory */
@@ -23,25 +23,20 @@ static char sccsid[] = "@(#)$RCSfile: Cns_access.c,v $ $Revision: 1.2 $ $Date: 2
 #include "Cns.h"
 #include "serrno.h"
 
-int DLL_DECL
-Cns_access(const char *path, int amode)
+static int 
+Cns_access_internal(const char* func, const char *path, int amode, uid_t uid, gid_t gid)
 {
 	char *actual_path;
 	int c, n;
-	char func[16];
-	gid_t gid;
 	int msglen;
 	char *q;
 	char *sbp;
 	char sendbuf[REQBUFSZ];
 	char server[CA_MAXHOSTNAMELEN+1];
 	struct Cns_api_thread_info *thip;
-	uid_t uid;
  
-	strcpy (func, "Cns_access");
 	if (Cns_apiinit (&thip))
 		return (-1);
-	Cns_getrealid(&uid, &gid);
 #if defined(_WIN32)
 	if (uid < 0 || gid < 0) {
 		Cns_errmsg (func, NS053);
@@ -90,24 +85,46 @@ Cns_access(const char *path, int amode)
 	return (c);
 }
 
+
+int DLL_DECL
+Cns_access(const char *path, int amode)
+{
+  gid_t gid;
+  uid_t uid;
+  Cns_getrealid(&uid, &gid);
+  char* func = "Cns_access";
+
+  return Cns_access_internal(func, path, amode, uid, gid);
+}
+
+
+int DLL_DECL
+Cns_accessUser(const char *path, int amode, uid_t uid, gid_t gid)
+{
+  char* func = "Cns_accessUser";
+
+  return Cns_access_internal(func, path, amode, uid, gid);
+}
+
+
 int DLL_DECL
 Cns_accessr(const char *sfn, int amode)
 {
 	int c;
 	char func[16];
-	gid_t gid;
 	int msglen;
 	char *q;
 	char *sbp;
 	char sendbuf[REQBUFSZ];
 	struct Cns_api_thread_info *thip;
 	uid_t uid;
- 
+	gid_t gid; 
+
 	strcpy (func, "Cns_accessr");
 	if (Cns_apiinit (&thip))
 		return (-1);
 	Cns_getid(&uid, &gid);
-	
+
 #if defined(_WIN32)
 	if (uid < 0 || gid < 0) {
 		Cns_errmsg (func, NS053);
