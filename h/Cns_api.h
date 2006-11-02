@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_api.h,v 1.5 2006/05/11 12:38:38 felixehm Exp $
+ * $Id: Cns_api.h,v 1.6 2006/11/02 16:48:58 felixehm Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.5 $ $Date: 2006/05/11 12:38:38 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.6 $ $Date: 2006/11/02 16:48:58 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_API_H
@@ -261,6 +261,7 @@ struct Cns_segattrs {
 
 EXTERN_C int DLL_DECL Cns_access _PROTO((const char *, int));
 EXTERN_C int DLL_DECL Cns_accessr _PROTO((const char *, int));
+EXTERN_C int DLL_DECL Cns_accessUser _PROTO((const char *, int, uid_t, gid_t));
 EXTERN_C int DLL_DECL Cns_aborttrans _PROTO(());
 EXTERN_C int DLL_DECL Cns_addreplica _PROTO((const char *, struct Cns_fileid *, const char *, const char *, const char, const char, const char *, const char *));
 EXTERN_C int DLL_DECL Cns_apiinit _PROTO((struct Cns_api_thread_info **));
