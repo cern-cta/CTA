@@ -202,7 +202,8 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
         castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 1, params);
     }
     switch ( responses[i].status ){
-      case FILE_CANBEMIGR  : canbemig_status++;  break;
+      case FILE_CANBEMIGR  : 
+      case FILE_BEINGMIGR  : canbemig_status++;  break;
       case FILE_STAGEIN    : stagein_status++;   break;
       case FILE_WAITINGMIGR: waitingmig_status++;break;
       case FILE_STAGEOUT:    stageout_status++;break;
