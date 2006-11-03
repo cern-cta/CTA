@@ -35,6 +35,7 @@ def saveOnFile(namefile,cmdS,scen=None):
             fin=open(namefile+("%d"%count),"wb")
         if scen != None:
             singleCmd=scen+singleCmd
+        
         myOut=os.popen4(singleCmd)
         fin.write((myOut[1]).read())
         fin.close()

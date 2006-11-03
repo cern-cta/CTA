@@ -12,6 +12,12 @@ dirCastor=myCastor+"TestClient"+ticket+"/"
 os.system("mkdir "+localDir)
 myScen=""
 
+print "After the test, delete the different log files used in:"
+print "- "+localDir
+print "- "+dirCastor
+print "- REMOTE_HOST:/tmp"+localDir[1:]+" (with remoteHostSpecified in the CLIENTTESTCONFIG)"
+print
+
 def MakeBigFile():
 	size=0
 	fout=open("/tmp/bigFile"+ticket,"wb")
@@ -47,8 +53,8 @@ class PreRequisitesCase(unittest.TestCase):
 		 	stagerVersion=(configFileInfo[configFileInfo.find("CASTOR_V2"):]).split()[1]
 
 			global myScen
-			myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,[["STAGER_TRACE","3"]])		 
-			
+			myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,[["STAGER_TRACE","3"]])
+					
 	        except IOError:
 			assert 0==-1, "An error in the preparation of the main setting occurred ... test is not valid"
 	
@@ -63,13 +69,14 @@ class PreRequisitesCase(unittest.TestCase):
 		assert (outBuff.rfind("Internal error")== -1), "the stager gives Internal errors" 
 	
 	def rfioFine(self):
-		cmd=["rfmkdir "+dirCastor,localDir+"rfioFine1","rfcp /etc/group "+dirCastor+"fileRfcp1"+ticket,"rfcp "+dirCastor+"fileRfcp1"+ticket+" "+dirCastor+"fileRfcp2"+ticket,"rfcp "+dirCastor+"fileRfcp1"+ticket+"  "+localDir+"fileRfcp1Copy","rfcp "+dirCastor+"fileRfcp2"+ticket+"  "+localDir+"fileRfcp2Copy","diff /etc/group "+localDir+"fileRfcp1Copy","diff /etc/group "+localDir+"fileRfcp2Copy"]
+		cmd=["nsmkdir "+dirCastor,"rfcp /etc/group "+dirCastor+"fileRfcp1"+ticket,"rfcp "+dirCastor+"fileRfcp1"+ticket+" "+dirCastor+"fileRfcp2"+ticket,"rfcp "+dirCastor+"fileRfcp1"+ticket+"  "+localDir+"fileRfcp1Copy","rfcp "+dirCastor+"fileRfcp2"+ticket+"  "+localDir+"fileRfcp2Copy","diff /etc/group "+localDir+"fileRfcp1Copy","diff /etc/group "+localDir+"fileRfcp2Copy"]
+		
 		UtilityForCastorTest.saveOnFile(localDir+"rfioFine",cmd,myScen)
 
 	        assert os.stat(localDir+"fileRfcp1Copy")[6] != 0, "Rfcp doesn't work"
 		assert os.stat(localDir+"fileRfcp2Copy")[6] != 0, "Rfcp doesn't work"
-		assert os.stat(localDir+"rfioFine6")[6] == 0, "Rfcp doesn't work"
-                assert os.stat(localDir+"rfioFine7")[6] == 0, "Rfcp doesn't work"
+		assert os.stat(localDir+"rfioFine5")[6] == 0, "Rfcp doesn't work"
+                assert os.stat(localDir+"rfioFine6")[6] == 0, "Rfcp doesn't work"
 
 	
 class StagerPutCase(unittest.TestCase):
@@ -246,8 +253,7 @@ class StagerPutDoneCase(unittest.TestCase):
 	
 	def putDoneAndLongFile(self):
 		fileBig=MakeBigFile()
-		t=threading.Timer(120.0,UtilityForCastorTest.timeOut,"fake")
-		t2=threading.Timer(120.0,UtilityForCastorTest.timeOut,"fake")
+	
 		cmd1=["stager_put -M "+dirCastor+"fileDone5"+ticket,"rfcp "+fileBig+" "+dirCastor+"fileDone5"+ticket]
 		cmd2=["stager_rm "+dirCastor+"fileDone5"+ticket,"stager_putdone -M "+dirCastor+"fileDone5"+ticket]
 
@@ -314,7 +320,7 @@ class StagerGetCase(unittest.TestCase):
 	def getTag(self):
 	        cmd=["stager_put -M "+dirCastor+"fileGet5"+ticket+" -U tagGet"+ticket,"stager_get -M "+dirCastor+"fileGet5"+ticket+" -U tagGet"+ticket,"rfcp /etc/group "+dirCastor+"fileGet5"+ticket,"stager_get  -M "+dirCastor+"fileGet5"+ticket+" -U tagGet"+ticket,"stager_putdone -M "+dirCastor+"fileGet5"+ticket,"stager_get -M "+dirCastor+"fileGet5"+ticket+" -U tagGet"+ticket ]
 
-	        UtilityForCastorTest.saveOnFile(localDir+"getTag",cmd)
+	        UtilityForCastorTest.saveOnFile(localDir+"getTag",cmd,myScen)
 	
 		fi=open(localDir+"getTag1","r")
 		assert fi.read().find("SUBREQUEST_READY") != -1, "stager_get doesn't work with tag after put"
@@ -389,7 +395,7 @@ class StagerRmCase(unittest.TestCase):
 
                 cmd=["stager_put -M "+dirCastor+"fileRm4"+ticket,"rfcp /etc/group "+dirCastor+"fileRm4"+ticket,"stager_putdone -M "+dirCastor+"fileRm4"+ticket,"stager_rm -M "+dirCastor+"fileRm4"+ticket]
 
-		UtilityForCastorTest.saveOnFile(localDir+"rmAndRfcpBis",cmd)
+		UtilityForCastorTest.saveOnFile(localDir+"rmAndRfcpBis",cmd,myScen)
 
 		fi=open(localDir+"rmAndRfcpBis3","r")
 		assert fi.read().find("SUBREQUEST_FAILED") != -1, "stager_rm doesn't work after put, rfcp and putdone"
