@@ -125,6 +125,7 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
   m_listening(false), m_reusable(reusable) {
   m_socket = -1;
   m_lowPort = m_highPort = -1;
+  srand(time(NULL));
   createSocket();
   setReusable();
   m_saddr = buildAddress(port, ip);
@@ -162,6 +163,10 @@ void castor::io::ServerSocket::setReusable()
 //------------------------------------------------------------------------------
 void castor::io::ServerSocket::listen()
   throw(castor::exception::Exception) {
+
+  // watch out sometimes for high-stress tests the listen may not return
+  // error code  EADDRINUSE
+
   if (::listen(m_socket, STG_CALLBACK_BACKLOG) < 0) {
 #if !defined(_WIN32)
     close(m_socket);
@@ -169,6 +174,7 @@ void castor::io::ServerSocket::listen()
     closesocket(m_socket);
 #endif
     m_socket = -1;
+
     if(errno == EADDRINUSE && m_lowPort > 0) {
       /* it may happen that another bind() successfully got the same port at the
          same time (bind() is not entirely process-safe!). In this case, we
@@ -185,6 +191,7 @@ void castor::io::ServerSocket::listen()
     }
   }
   m_listening = true;
+
 }
 
 //------------------------------------------------------------------------------

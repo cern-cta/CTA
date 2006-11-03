@@ -575,7 +575,9 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
 
   // create a socket for the callback with no port
   stage_trace(3, "Creating socket for stager callback");
-  m_callbackSocket = new castor::io::ServerSocket(true);
+
+  //not to let the client to reuse the port 
+  m_callbackSocket = new castor::io::ServerSocket(false); 
   // get the port range to be used
   int lowPort = LOW_CLIENT_PORT_RANGE;
   int highPort = HIGH_CLIENT_PORT_RANGE;
