@@ -53,7 +53,7 @@ PERLLIBDIR = /usr/lib/perl/CASTOR
  
 COMM######################### FLAGS ##############################
  
-DFLAGS = -D$(TMS)
+DFLAGS = -D$(TMS) -g -pthread
  
 CPPFLAGS =        -I$(INCLUDES) -I$(INCLUDES_CPP) $(DFLAGS)
 CFLAGS =        -I$(INCLUDES) -I$(INCLUDES_CPP) $(DFLAGS)
