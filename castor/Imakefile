@@ -391,7 +391,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               query/DiskServerDescription.cpp \
               query/DiskPoolQueryCInt.cpp \
               query/DiskPoolQuery.cpp \
-              sharedMemory/Block.cpp \
+              sharedMemory/BasicBlock.cpp \
               sharedMemory/BlockKey.cpp \
               sharedMemory/DLFInit.cpp
 

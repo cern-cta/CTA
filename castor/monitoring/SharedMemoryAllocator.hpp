@@ -27,6 +27,7 @@
 #ifndef MONITORING_SHAREDMEMORYALLOCATOR_HPP 
 #define MONITORING_SHAREDMEMORYALLOCATOR_HPP 1
 
+#include "castor/sharedMemory/IBlock.hpp"
 #include "castor/sharedMemory/Allocator.hpp"
 #include "castor/sharedMemory/BlockKey.hpp"
 #include "castor/monitoring/ClusterStatusBlockKey.hpp"
@@ -65,11 +66,12 @@ namespace castor {
       template <class U>
       struct rebind {typedef SharedMemoryAllocator<U> other; };
 
+    protected:
+
       /**
-       * returns identification of the shared memory block
-       * to be used by this allocator
+       * creates the internal shared memory Block
        */
-      virtual castor::sharedMemory::BlockKey getBlockKey();
+      virtual castor::sharedMemory::IBlock* createSharedMemoryBlock();
 
     }; // class SharedMemoryAllocator
 
@@ -82,13 +84,18 @@ namespace castor {
 // Implementation of templated parts
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "castor/sharedMemory/Block.hpp"
+
 //------------------------------------------------------------------------------
-// getBlockKey
+// createSharedMemoryBlock
 //------------------------------------------------------------------------------
 template<class T>
-castor::sharedMemory::BlockKey
-castor::monitoring::SharedMemoryAllocator<T>::getBlockKey() {
-  return castor::monitoring::getClusterStatusBlockKey();
+castor::sharedMemory::IBlock*
+castor::monitoring::SharedMemoryAllocator<T>::createSharedMemoryBlock() {
+  castor::sharedMemory::BlockKey key =
+    castor::monitoring::getClusterStatusBlockKey();
+  return new castor::sharedMemory::Block
+    <SharedMemoryAllocator<castor::sharedMemory::SharedNode> >(key);
 }
 
 #endif // MONITORING_SHAREDMEMORYALLOCATOR_HPP

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SingletonBlock.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/10/27 15:28:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: SingletonBlock.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/11/03 11:08:39 $ $Author: sponcec3 $
  *
  * 
  *
@@ -39,9 +39,11 @@ namespace castor {
      * a singleton object of type T. This is actually a kind
      * of super singleton where the object is shared by all
      * threads of all processes using this block.
+     * @param T the type of the singleton object
+     * @param A the allocator for the underlying block
      */
-    template <typename T>
-    class SingletonBlock : public Block {
+    template <typename T, typename A>
+    class SingletonBlock : public Block<A> {
 
     public:
 
@@ -79,11 +81,11 @@ namespace castor {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-template<class T>
-castor::sharedMemory::SingletonBlock<T>::SingletonBlock
+template<class T, class A>
+castor::sharedMemory::SingletonBlock<T,A>::SingletonBlock
 (castor::sharedMemory::BlockKey& key)
   throw (castor::exception::Exception) :
-  Block(key) {
+  Block<A>(key) {
   // Create the singleton object
   m_singleton =
     static_cast<T*>(this->malloc(sizeof(T)));

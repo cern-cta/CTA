@@ -38,6 +38,7 @@
 #include <sys/sysinfo.h>
 #include "getconfent.h"
 #include <sys/vfs.h>
+#include "errno.h"
 
 /// The XFS stat file
 #define XFS_STAT_FILE "/proc/fs/xfs/stat"

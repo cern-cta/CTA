@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/10/27 15:29:32 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/11/03 11:08:39 $ $Author: sponcec3 $
  *
  * Allocator for the Shared Memory space
  *
@@ -33,9 +33,6 @@
 namespace castor {
 
   namespace sharedMemory {
-
-    // Forward declaration
-    class Block;
 
     /**
      * A shared memory allocator to be used for allocating
@@ -86,23 +83,17 @@ namespace castor {
       void deallocate(std::allocator<void>::pointer ptrToMemory,
                       std::allocator<void>::size_type numObjects);
 
-      /**
-       * returns identification of the shared memory block
-       * to be used by this allocator
-       */
-      virtual BlockKey getBlockKey() = 0;
-
-    private:
+    protected:
 
       /**
        * creates the internal shared memory Block
        */
-      inline Block* createSharedMemoryBlock();
+      virtual IBlock* createSharedMemoryBlock() = 0;
 
     private:
 
       /// the shared memory block to be used by this allocator
-      castor::sharedMemory::Block* m_smBlock;
+      castor::sharedMemory::IBlock* m_smBlock;
 
     }; // class Allocator
 
@@ -110,14 +101,13 @@ namespace castor {
 
 } // namespace castor
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // Implementation of templated parts
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <memory>
 #include "castor/sharedMemory/Allocator.hpp"
-#include "castor/sharedMemory/Block.hpp"
+#include "castor/sharedMemory/IBlock.hpp"
 
 //------------------------------------------------------------------------------
 // destructor
@@ -127,16 +117,6 @@ castor::sharedMemory::Allocator<T>::~Allocator() throw() {
   if (0 != m_smBlock) {
     delete m_smBlock;
   }
-}
-
-//------------------------------------------------------------------------------
-// createSharedMemoryBlock
-//------------------------------------------------------------------------------
-template<class T>
-castor::sharedMemory::Block*
-castor::sharedMemory::Allocator<T>::createSharedMemoryBlock() {
-  castor::sharedMemory::BlockKey key = getBlockKey();
-  m_smBlock = new Block(key);
 }
 
 //------------------------------------------------------------------------------

@@ -44,27 +44,29 @@ castor::monitoring::ClusterStatus::getClusterStatus() {
     castor::sharedMemory::BlockKey bk =
       castor::monitoring::getClusterStatusBlockKey();
     castor::sharedMemory::SingletonBlock
-      <castor::monitoring::ClusterStatus> b(bk);
+      <castor::monitoring::ClusterStatus,
+      castor::monitoring::SharedMemoryAllocator
+      <castor::sharedMemory::SharedNode> > b(bk);
     smStatus = b.getSingleton();
   }
-  return smStatus;
-}
+      return smStatus;
+  }
 
-//------------------------------------------------------------------------------
-// print
-//------------------------------------------------------------------------------
-void castor::monitoring::ClusterStatus::print
-(std::ostream& out, const std::string& indentation) const
-  throw() {
-  if (0 == size()) {
-    out << indentation << "No diskServer registered"
-        << std::endl;
-  } else {
-    std::string dsIndent = indentation + "   ";
-    for (const_iterator it = begin(); it != end(); it++) {
-      out << dsIndent << std::setw(20)
-          << "name" << ": " << it->first;
-      it->second.print(out, dsIndent);
+  //------------------------------------------------------------------------------
+  // print
+  //------------------------------------------------------------------------------
+  void castor::monitoring::ClusterStatus::print
+    (std::ostream& out, const std::string& indentation) const
+    throw() {
+    if (0 == size()) {
+      out << indentation << "No diskServer registered"
+          << std::endl;
+    } else {
+      std::string dsIndent = indentation + "   ";
+      for (const_iterator it = begin(); it != end(); it++) {
+        out << dsIndent << std::setw(20)
+            << "name" << ": " << it->first;
+        it->second.print(out, dsIndent);
+      }
     }
   }
-}
