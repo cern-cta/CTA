@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/11/03 15:51:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/11/03 20:58:51 $ $Author: sponcec3 $
  *
  * Allocator for the Shared Memory space
  *
@@ -59,7 +59,7 @@ namespace castor {
        * templated constructor
        */
       template <class U> Allocator(const Allocator<U>& a) throw() :
-        std::allocator<T>(a) {};
+        std::allocator<T>(a), m_smBlock(a.m_smBlock) {};
 
       /**
        * destructor
@@ -103,7 +103,8 @@ namespace castor {
        */
       void getBlock();
 
-    private:
+    // should be private but the templated constructor would not compile
+    public:
 
       /// the shared memory block to be used by this allocator
       castor::sharedMemory::IBlock* m_smBlock;
