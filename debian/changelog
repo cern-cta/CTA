@@ -1,3 +1,278 @@
+castor (2.1.1-8) unstable; urgency=low
+
+  * CASTOR2/PACKAGING.howto:
+    [r1.25,2006-10-26,felixehm] Added command for putting files into swrep
+  * CASTOR2/castor/Constants.cpp:
+  * CASTOR2/castor/Constants.hpp:
+    [2006-10-26,felixehm] New constants for monitoring objects
+  * CASTOR2/castor/Imakefile:
+    [r1.135,2006-11-03,sponcec3] Next iteration of the shared memory saga. Should now compile, even on gcc 4.1
+    [r1.134,2006-10-26,felixehm] Compilation of the sharead memory part and of the new monitoring
+  * CASTOR2/castor/client/BaseClient.cpp:
+    [r1.57,2006-11-03,gtaur] to avoid weird behaviour of the listen and the bind, it is not possible anymore for the client recycle a hot-port and the srand is in all constructors
+  * CASTOR2/castor/db/castor_oracle_create.sql:
+  * CASTOR2/castor/db/castor_oracle_create.sqlplus:
+  * CASTOR2/castor/db/castor_oracle_drop.sql:
+    [2006-10-31,itglp] Regenerated with latest schema and PL/SQL code
+  * CASTOR2/castor/db/cnv/DbRepackRequestCnv.cpp:
+    [r1.10,2006-11-02,felixehm] Added new field to RepackRequest for keeping the uid and gid from the
+    [r1.10,2006-11-02,felixehm] submitting user. This is neccessary for the later createment and submitment
+    [r1.10,2006-11-02,felixehm] of the StagerRepackRequest as the original user.
+  * CASTOR2/castor/db/newora/OraCnvSvc.cpp:
+    [r1.14,2006-11-01,itglp] One more error code to look for db reconnection
+    [r1.13,2006-10-31,felixehm] assigned and comparison was mixed
+    [r1.12,2006-10-30,itglp] Added checks for many Oracle errors that can be fixed by resetting the connection
+  * CASTOR2/castor/db/ora/OraRepackRequestCnv.cpp:
+    [r1.11,2006-11-02,felixehm] Added new field to RepackRequest for keeping the uid and gid from the
+    [r1.11,2006-11-02,felixehm] submitting user. This is neccessary for the later createment and submitment
+    [r1.11,2006-11-02,felixehm] of the StagerRepackRequest as the original user.
+    [r1.10,2006-10-30,felixehm] Added new field to RepackRequest object to store the stager name, which was
+    [r1.10,2006-10-30,felixehm] used for sending the initial request. This is the preparation for the next
+    [r1.10,2006-10-30,felixehm] feature in repack (dealing with >1 stager)
+  * CASTOR2/castor/db/oracleHeader_drop.sql:
+    [r 1.7,2006-10-31,itglp] Added missing DROP statement
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    [r1.333,2006-11-02,itglp] Better select in delete[Archived,Outofdate]Requests
+    [r1.333,2006-11-02,itglp] A new index for diskcopies in status 8 (adviced by Nilo)
+    [r1.332,2006-10-31,itglp] Moved putFailedProc after filesDeletedProc because 2nd is used by 1st
+    [r1.331,2006-10-30,itglp] Removed triggers that are not used anymore (already commented out)
+    [r1.330,2006-10-25,sponcec3] Fixed deletion of SubRequests linked to recalls in case of stageRm
+  * CASTOR2/castor/io/ServerSocket.cpp:
+    [r1.14,2006-11-03,gtaur] to avoid weird behaviour of the listen and the bind, it is not possible anymore for the client recycle a hot-port and the srand is in all constructors
+    [r1.13,2006-11-01,gtaur] put the missing sdrand in all the costructors where it was missing
+  * CASTOR2/castor/io/StreamRepackRequestCnv.cpp:
+    [r 1.9,2006-11-02,felixehm] Added new field to RepackRequest for keeping the uid and gid from the
+    [r 1.9,2006-11-02,felixehm] submitting user. This is neccessary for the later createment and submitment
+    [r 1.9,2006-11-02,felixehm] of the StagerRepackRequest as the original user.
+    [r 1.8,2006-10-30,felixehm] Added new field to RepackRequest object to store the stager name, which was
+    [r 1.8,2006-10-30,felixehm] used for sending the initial request. This is the preparation for the next
+    [r 1.8,2006-10-30,felixehm] feature in repack (dealing with >1 stager)
+  * CASTOR2/castor/monitoring/rmmaster/Imakefile:
+  * CASTOR2/castor/monitoring/rmmaster/RmMasterDaemon.cpp:
+  * CASTOR2/castor/monitoring/rmmaster/RmMasterDaemon.hpp:
+    [2006-10-26,felixehm] First compiling version of the new monitoring
+  * CASTOR2/castor/repack/RepackCleaner.cpp:
+    [r1.11,2006-11-02,felixehm] the RepackCleaner now sends the removal Request for the found files as the user, who submitted the repackrequest.
+    [r1.10,2006-10-30,felixehm] Added server side ability for make difference between request for >1 stagers.
+    [r1.10,2006-10-30,felixehm] This enables the server to distinguish between the requests send to different
+    [r1.10,2006-10-30,felixehm] stagers. It further avoids finishing a repacksubrequest in case the wrong stager
+    [r1.10,2006-10-30,felixehm] is contacted and no information about a request is returned.
+  * CASTOR2/castor/repack/RepackClient.cpp:
+  * CASTOR2/castor/repack/RepackClient.hpp:
+    [2006-11-03,felixehm] changed option 'S' to Stager, which can be specified.
+    [2006-11-03,felixehm] new option 'x' for getting details about a repack process
+    [2006-11-03,felixehm] in the details : the name of the user, who submitted the Request is
+    [2006-11-03,felixehm] retrieved by the user id field in the RepackRequest and Cgetpwuid.
+  * CASTOR2/castor/repack/RepackFileChecker.cpp:
+    [r 1.3,2006-10-31,felixehm] getServiceClass method was replaced by getStageOpts
+  * CASTOR2/castor/repack/RepackFileStager.cpp:
+    [r1.24,2006-11-02,felixehm] The uid and guid from the user who submitted the RepackRequest is now set in the StageRepackRequest
+    [r1.23,2006-10-30,felixehm] Added server side ability for make difference between request for >1 stagers.
+    [r1.23,2006-10-30,felixehm] This enables the server to distinguish between the requests send to different
+    [r1.23,2006-10-30,felixehm] stagers. It further avoids finishing a repacksubrequest in case the wrong stager
+    [r1.23,2006-10-30,felixehm] is contacted and no information about a request is returned.
+  * CASTOR2/castor/repack/RepackMonitor.cpp:
+    [r1.12,2006-11-03,felixehm] RepackMonitor now considers stager answers with diskcopies in
+    [r1.12,2006-11-03,felixehm] BEINGMIGR.
+    [r1.11,2006-10-30,felixehm] Added server side ability for make difference between request for >1 stagers.
+    [r1.11,2006-10-30,felixehm] This enables the server to distinguish between the requests send to different
+    [r1.11,2006-10-30,felixehm] stagers. It further avoids finishing a repacksubrequest in case the wrong stager
+    [r1.11,2006-10-30,felixehm] is contacted and no information about a request is returned.
+  * CASTOR2/castor/repack/RepackRequest.cpp:
+  * CASTOR2/castor/repack/RepackRequest.hpp:
+    [2006-11-02,felixehm] Added new field to RepackRequest for keeping the uid and gid from the
+    [2006-11-02,felixehm] submitting user. This is neccessary for the later createment and submitment
+    [2006-11-02,felixehm] of the StagerRepackRequest as the original user.
+    [2006-10-30,felixehm] Added new field to RepackRequest object to store the stager name, which was
+    [2006-10-30,felixehm] used for sending the initial request. This is the preparation for the next
+    [2006-10-30,felixehm] feature in repack (dealing with >1 stager)
+  * CASTOR2/castor/repack/RepackWorker.cpp:
+  * CASTOR2/castor/repack/Tools.cpp:
+  * CASTOR2/castor/repack/Tools.hpp:
+    [2006-10-30,felixehm] Added server side ability for make difference between request for >1 stagers.
+    [2006-10-30,felixehm] This enables the server to distinguish between the requests send to different
+    [2006-10-30,felixehm] stagers. It further avoids finishing a repacksubrequest in case the wrong stager
+    [2006-10-30,felixehm] is contacted and no information about a request is returned.
+  * CASTOR2/castor/repack/repack.man:
+    [r 1.5,2006-11-03,felixehm] added more information for the usage of the repack client
+    [r 1.4,2006-11-02,felixehm] Added new options :
+    [r 1.4,2006-11-02,felixehm] x (former -S)
+    [r 1.4,2006-11-02,felixehm] S specifying the Stager to use for repack
+  * CASTOR2/castor/repack/repack_oracle_create.sql:
+    [r 1.4,2006-11-02,felixehm] the uid and gid from the original user, who submitted the RepackRequest is stored with the request
+    [r 1.3,2006-10-30,felixehm] Added new field to RepackRequest object to store the stager name, which was
+    [r 1.3,2006-10-30,felixehm] used for sending the initial request. This is the preparation for the next
+    [r 1.3,2006-10-30,felixehm] feature in repack (dealing with >1 stager)
+  * CASTOR2/castor/rh/RHThread.cpp:
+    [r 1.9,2006-10-30,itglp] Added missing include, added DiskPoolQuery among the cases where we want to wake up a Query thread in the stager
+    [r 1.8,2006-10-30,itglp] Added processing time to "Reply sent" log message
+    [r 1.7,2006-10-27,itglp] Refactored logging messages for monitoring according to bug report #21069
+    [r 1.6,2006-10-27,cvscasto] Upgraded msg 8 (Processing Request) to SYSTEM level for monitoring purposes
+    [r1.10,2006-10-31,itglp] Fixed DLF messages, and moved "Reply sent to client" to MONITORING level
+  * CASTOR2/castor/rh/RHThread.hpp:
+    [r 1.4,2006-10-31,itglp] Fixed DLF messages, and moved "Reply sent to client" to MONITORING level
+    [r 1.3,2006-10-27,itglp] Refactored logging messages for monitoring according to bug report #21069
+  * CASTOR2/castor/rh/Server.cpp:
+    [r1.48,2006-10-30,itglp] Changed "Sending reply" -> "Reply sent" DLF message
+  * CASTOR2/castor/sharedMemory/Allocator.hpp:
+    [r 1.4,2006-11-03,sponcec3] Next iteration of the shared memory saga. Should now compile, even on gcc 4.1
+    [r 1.3,2006-10-27,sponcec3] Fixes some inconstitencies of the shared memory part architecture
+    [r 1.2,2006-10-26,felixehm] Improve version of the shared memory code. Now fully independent of monitoring and much cleaner
+  * CASTOR2/castor/sharedMemory/Block.cpp:
+    [r 1.5,2006-11-03,sponcec3] Next iteration of the shared memory saga. Should now compile, even on gcc 4.1
+    [r 1.4,2006-10-27,sponcec3] Fixes some inconstitencies of the shared memory part architecture
+    [r 1.3,2006-10-26,felixehm] Improve version of the shared memory code. Now fully independent of monitoring and much cleaner
+  * CASTOR2/castor/sharedMemory/Block.hpp:
+    [r 1.5,2006-11-03,sponcec3] Next iteration of the shared memory saga. Should now compile, even on gcc 4.1
+    [r 1.4,2006-10-27,sponcec3] Fixes some inconstitencies of the shared memory part architecture
+    [r 1.3,2006-10-26,felixehm] Improve version of the shared memory code. Now fully independent of monitoring and much cleaner
+  * CASTOR2/castor/sharedMemory/Helper.cpp:
+  * CASTOR2/castor/sharedMemory/Helper.hpp:
+  * CASTOR2/castor/sharedMemory/string:
+    [2006-10-26,felixehm] Improved version of the shared memory code. Now fully independent of monitoring and much cleaner
+  * CASTOR2/castor/stager/DiskCopy.cpp:
+  * CASTOR2/castor/stager/DiskServer.cpp:
+  * CASTOR2/castor/stager/FileSystem.cpp:
+    [2006-10-26,felixehm] Some fixes in the list of includes, thanks to some fix in the code generator
+  * CASTOR2/castor/stager/ITapeSvcCInt.cpp:
+    [r 1.8,2006-11-02,felixehm] Removed debug statement
+  * CASTOR2/castor/stager/QueryParameter.cpp:
+  * CASTOR2/castor/stager/Segment.cpp:
+  * CASTOR2/castor/stager/Stream.cpp:
+  * CASTOR2/castor/stager/SubRequest.cpp:
+  * CASTOR2/castor/stager/Tape.cpp:
+  * CASTOR2/castor/stager/TapeCopy.cpp:
+  * CASTOR2/castor/vdqm/TapeDrive.cpp:
+  * CASTOR2/castor/vdqm/TapeServer.cpp:
+    [2006-10-26,felixehm] Some fixes in the list of includes, thanks to some fix in the code generator
+  * CASTOR2/codeGeneration/RH.xmi:
+    [r1.135,2006-10-26,felixehm] Last changes to the monitoring objects
+  * CASTOR2/config/Library.tmpl:
+  * CASTOR2/config/Project.tmpl:
+  * CASTOR2/config/site.def:
+    [2006-10-26,felixehm] infrastructure for compiling new rmNode and ne rmMaster
+  * CASTOR2/debian/changelog:
+    [r1.124,2006-10-26,cvscasto] Added entry for 2.1.1-6
+  * CASTOR2/debian/if.has_oracle:
+    [r 1.7,2006-10-26,felixehm] the repack Client is currently not build on 64bit architectures
+  * CASTOR2/disksrv/src/gridftp2/external/dsi_CASTOR2ext.h:
+    [r 1.2,2006-10-26,kotlyar] changed name from CASTOR2 to CASTOR2ext inside of sources
+    [r 1.2,2006-10-26,kotlyar] because DSI module name should be the same for gridftp server
+  * CASTOR2/disksrv/src/gridftp2/external/globus_gridftp_server_CASTOR2ext.c:
+    [r 1.2,2006-10-26,kotlyar] changed name from CASTOR2 to CASTOR2ext inside of sources
+    [r 1.2,2006-10-26,kotlyar] because DSI module name should be the same for gridftp server
+  * CASTOR2/dlf/Imakefile:
+    [r1.13,2006-10-27,waldron] changed to reflect name change of lib to dlf_lib
+  * CASTOR2/dlf/common.c:
+  * CASTOR2/dlf/common.h:
+    [2006-11-01,waldron] strip newline characters returned by pro*c oracle errors
+  * CASTOR2/dlf/dbi.h:
+    [r 1.6,2006-10-27,waldron] removed db_stats call
+  * CASTOR2/dlf/lib.c:
+  * CASTOR2/dlf/lib.h:
+    [2006-10-27,waldron] renamed
+  * CASTOR2/dlf/oracle.pc:
+    [r1.15,2006-11-01,waldron] strip newline characters returned by pro*c oracle errors
+    [r1.14,2006-10-27,waldron] removal of db_stats in favour of plsql procedure
+  * CASTOR2/dlf/scripts/mysql/dlf_mysql_create.sql:
+    [r 1.5,2006-10-27,waldron] additional indexes and DLF_MONITORING log level entry for dlf_severities
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_create.sql:
+    [r 1.7,2006-11-01,waldron] minor updates
+    [r 1.6,2006-10-31,waldron] added dlf_stats_requests procedure
+    [r 1.5,2006-10-27,waldron] additional indexes and DLF_MONITORING log level entry for dlf_severities
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_create.sqlplus:
+    [r 1.9,2006-11-01,waldron] added DLF_MONITORING severity
+    [r 1.8,2006-11-01,waldron] minor updates
+    [r 1.7,2006-10-31,waldron] added dlf_stats_requests procedure
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_drop.sql:
+    [r 1.5,2006-11-01,waldron] minor updates
+    [r 1.4,2006-10-31,waldron] added dlf_stats_requests procedure
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_grant.sql:
+    [r 1.3,2006-10-31,waldron] added dlf_stats_requests procedure
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_create.sql:
+    [r 1.9,2006-11-01,waldron] minor updates
+    [r 1.8,2006-11-01,waldron] minor updates
+    [r 1.7,2006-10-31,waldron] added dlf_stats_requests procedure
+    [r 1.6,2006-10-27,waldron] additional indexes and DLF_MONITORING log level entry for dlf_severities
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_drop.sql:
+    [r 1.4,2006-11-01,waldron] minor updates
+    [r 1.3,2006-10-31,waldron] added dlf_stats_requests procedure
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_grant.sql:
+    [r 1.3,2006-10-31,waldron] added dlf_stats_requests procedure
+  * CASTOR2/dlf/server.c:
+    [r1.12,2006-10-27,waldron] removed db_stats call
+  * CASTOR2/dlf/web/config.php:
+  * CASTOR2/dlf/web/dbview.php:
+  * CASTOR2/dlf/web/query.php:
+    [2006-11-01,waldron] support to deal with really long parameter lines and instance id in banner
+  * CASTOR2/dlf/web/results.php:
+    [r 1.6,2006-11-01,waldron] fixes to:
+    [r 1.6,2006-11-01,waldron] urldecode input parameters
+    [r 1.6,2006-11-01,waldron] not search dlf_num_param_values with non numeric values
+    [r 1.5,2006-11-01,waldron] support to deal with really long parameter lines and instance id in banner
+    [r 1.4,2006-10-27,waldron] trim leading and trailing whitespace from user input fields
+  * CASTOR2/dlf/web/site.css:
+    [r 1.4,2006-11-01,waldron] support to deal with really long parameter lines and instance id in banner
+    [r 1.3,2006-10-27,waldron] aded DLF_MONITORING severity style
+  * CASTOR2/doc/ug/advanced.tex:
+    [r 1.2,2006-10-25,obarring] Add RFIO TURL section
+  * CASTOR2/doc/ug/overview.tex:
+    [r 1.3,2006-10-25,obarring] Add missing label
+  * CASTOR2/doc/uml/Repack.xmi:
+    [r 1.6,2006-10-26,felixehm] updated the Repack documentation with activity diagram and Stager
+    [r 1.6,2006-10-26,felixehm] TapeCopy/DiskCopy/SubRequest simplified state diagrams.
+  * CASTOR2/h/Cns_api.h:
+    [r 1.6,2006-11-02,felixehm] Added new function Cns_accessUser
+  * CASTOR2/h/dlf_api.h:
+    [r1.17,2006-10-27,waldron] added DLF_MONITORING lvl
+    [r1.16,2006-10-26,felixehm] First attempt to define ranges in DLf
+  * CASTOR2/h/stager_catalogInterface.h:
+    [r1.22,2006-10-26,cvscasto] Extracted getRemJobAndSvc() and moved to RemoteJobSvc.c for the upcoming refactoring
+  * CASTOR2/hsmtools/Imakefile:
+    [r1.30,2006-11-03,felixehm] Added pthread compiler flag. Without it, the initialisation of thread save
+    [r1.30,2006-11-03,felixehm] variables failed.
+  * CASTOR2/hsmtools/upgradec2stgdb.csh:
+    [r 1.5,2006-10-30,itglp] Updated castor instances' names
+  * CASTOR2/job/Imakefile:
+  * CASTOR2/job/stagerJob.c:
+  * CASTOR2/rfio/Imakefile:
+  * CASTOR2/rfio/rfio_callhandlers.c:
+    [2006-10-26,cvscasto] Extracted getRemJobAndSvc() and moved to RemoteJobSvc.c for the upcoming refactoring
+  * CASTOR2/lib/Imakefile:
+    [r1.21,2006-10-26,felixehm] infrastructure for compiling new rmNode and new rmMaster
+  * CASTOR2/ns/Cns_access.c:
+    [r 1.3,2006-11-02,felixehm] added new access check function Cns_accessUser which is common with
+    [r 1.3,2006-11-02,felixehm] Cns_access, but it takes a user id and group id as parameter.
+    [r 1.3,2006-11-02,felixehm]
+    [r 1.3,2006-11-02,felixehm] factorised common part for Cns_access and new function Cns_accessUser
+  * CASTOR2/scheduler/LSF/schmod_castor.cpp:
+    [r 1.3,2006-10-26,felixehm] new version of the new LSF plugin, using the new monitoring
+  * CASTOR2/shlib/Imakefile:
+    [r1.50,2006-10-26,felixehm] Modifications for compiling libcastorMonitor and removal of tank related code
+  * CASTOR2/stager/stager_catalogInterface.c:
+    [r 1.7,2006-10-26,cvscasto] Extracted getRemJobAndSvc() and moved to RemoteJobSvc.c for the upcoming refactoring
+  * CASTOR2/stager/stager_db_service.c:
+    [r1.150,2006-11-02,felixehm] Modified check of accessing a file. Nameserver is now queried via
+    [r1.150,2006-11-02,felixehm] Cns_accessUser function. This considers ACLs and the Cupv rights.
+    [r1.150,2006-11-02,felixehm]
+    [r1.150,2006-11-02,felixehm] Removed obsolete stager_db_service_access function
+  * CASTOR2/test/UtilityForCastorTest.py:
+    [r 1.5,2006-10-31,gtaur] small fixed related to directories for tests output
+  * CASTOR2/test/dlf/dlftest.c:
+    [r1.12,2006-10-27,waldron] test for DLF_MONITORING severity log level
+  * CASTOR2/test/rfio/RfioTest.py:
+    [r 1.2,2006-10-31,gtaur] small fixed related to directories for tests output
+  * CASTOR2/test/stager/ClientTest.py:
+    [r 1.5,2006-10-31,gtaur] implemented options that were not before and corrected the putdone-without-a-put asserts
+  * CASTOR2/tools/castorStart.sh:
+    [r 1.3,2006-10-31,itglp] Removed few \n
+  * CASTOR2/upgrades/2.1.1-4_to_2.1.1-6.sql:
+    [r 1.2,2006-10-30,itglp] Added latest SQL hotfixes to be run on top of version 2.1.1
+
+ -- Felix Ehm <felix.ehm@cern.ch>  Wed, 25 Oct 2006 17:20:00 +0200
+
+
+
 castor (2.1.1-7) unstable; urgency=low
 
   * CASTOR2/CASTOR.spec:
