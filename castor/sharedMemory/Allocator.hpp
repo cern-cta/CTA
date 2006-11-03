@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/11/03 15:41:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/11/03 15:51:02 $ $Author: sponcec3 $
  *
  * Allocator for the Shared Memory space
  *
@@ -160,8 +160,8 @@ void castor::sharedMemory::Allocator<T>::getBlock() {
     castor::sharedMemory::BlockDict::getBlock(key);
   // If failed, create a block
   if (0 == m_smBlock) {
+    // note : the block will register by itself
     m_smBlock = createSharedMemoryBlock();
-    castor::sharedMemory::BlockDict::insertBlock(key, m_smBlock);
   }
   // unlock dictionnary
   castor::sharedMemory::BlockDict::unlock();

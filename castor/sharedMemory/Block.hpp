@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/11/03 11:08:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/11/03 15:51:02 $ $Author: sponcec3 $
  *
  * A block of shared memory with incorporated memory allocation
  *
@@ -198,6 +198,8 @@ castor::sharedMemory::Block<A>::Block (BlockKey& key)
     } else {
       m_sharedMemoryBlock = it->second;
     }
+    // register the block
+    castor::sharedMemory::BlockDict::insertBlock(key, this);
     // start of memory initialization
     m_initializing = true;
     // now create/extract the map of allocated regions
