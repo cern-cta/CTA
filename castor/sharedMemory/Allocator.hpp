@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/11/03 11:08:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/11/03 15:34:38 $ $Author: sponcec3 $
  *
  * Allocator for the Shared Memory space
  *
@@ -64,7 +64,7 @@ namespace castor {
       /**
        * destructor
        */
-      virtual ~Allocator() throw();
+      virtual ~Allocator() throw() {};
 
       /**
        * allocates objects in the shared memory
@@ -90,6 +90,19 @@ namespace castor {
        */
       virtual IBlock* createSharedMemoryBlock() = 0;
 
+      /**
+       * returns the key for the shared memory block to be used
+       */
+      virtual BlockKey getBlockKey() = 0;
+
+    private:
+
+      /**
+       * retrieves the shared Memory Block to be used
+       * or create it if necessary
+       */
+      void getBlock();
+
     private:
 
       /// the shared memory block to be used by this allocator
@@ -108,16 +121,7 @@ namespace castor {
 #include <memory>
 #include "castor/sharedMemory/Allocator.hpp"
 #include "castor/sharedMemory/IBlock.hpp"
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-template<class T>
-castor::sharedMemory::Allocator<T>::~Allocator() throw() {
-  if (0 != m_smBlock) {
-    delete m_smBlock;
-  }
-}
+#include "castor/sharedMemory/BlockDict.hpp"
 
 //------------------------------------------------------------------------------
 // allocate
@@ -126,10 +130,7 @@ template<class T>
 T* castor::sharedMemory::Allocator<T>::allocate
 (std::allocator<void>::size_type numObjects,
  std::allocator<void>::const_pointer hint) {
-  if (0 == m_smBlock) {
-    // we should create the block
-    m_smBlock = createSharedMemoryBlock();
-  }
+  if (0 == m_smBlock) getBlock();
   return static_cast<T*>
     (m_smBlock->malloc(numObjects*sizeof(T)));
 }
@@ -142,11 +143,28 @@ template<class T>
 void castor::sharedMemory::Allocator<T>::deallocate
 (std::allocator<void>::pointer ptrToMemory,
  std::allocator<void>::size_type numObjects) {
-  if (0 == m_smBlock) {
-    // we should create the block
-    m_smBlock = createSharedMemoryBlock();
-  }
+  if (0 == m_smBlock) getBlock();
   m_smBlock->free(ptrToMemory, numObjects*sizeof(T));
+}
+
+//------------------------------------------------------------------------------
+// getBlock
+//------------------------------------------------------------------------------
+template<class T>
+void castor::sharedMemory::Allocator<T>::getBlock() {
+  // insure thread safety
+  castor::sharedMemory::BlockDict::lock();
+  // try to get an existing block
+  BlockKey key = getBlockKey();
+  m_smBlock =
+    castor::sharedMemory::BlockDict::getBlock(key);
+  // If failed, create a block
+  if (0 == m_smBlock) {
+    IBlock *block = createSharedMemoryBlock();
+    castor::sharedMemory::BlockDict::insertBlock(key, block);
+  }
+  // unlock dictionnary
+  castor::sharedMemory::BlockDict::unlock();
 }
 
 #endif // SHAREDMEMORY_ALLOCATOR_HPP

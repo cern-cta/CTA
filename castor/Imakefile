@@ -393,6 +393,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               query/DiskPoolQuery.cpp \
               sharedMemory/BasicBlock.cpp \
               sharedMemory/BlockKey.cpp \
+              sharedMemory/BlockDict.cpp \
               sharedMemory/DLFInit.cpp
 
 #if !defined(_WIN32)

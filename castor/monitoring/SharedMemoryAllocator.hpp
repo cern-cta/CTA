@@ -73,6 +73,11 @@ namespace castor {
        */
       virtual castor::sharedMemory::IBlock* createSharedMemoryBlock();
 
+      /**
+       * returns the key for the shared memory block to be used
+       */
+      virtual castor::sharedMemory::BlockKey getBlockKey();
+
     }; // class SharedMemoryAllocator
 
   } // namespace monitoring
@@ -92,10 +97,18 @@ namespace castor {
 template<class T>
 castor::sharedMemory::IBlock*
 castor::monitoring::SharedMemoryAllocator<T>::createSharedMemoryBlock() {
-  castor::sharedMemory::BlockKey key =
-    castor::monitoring::getClusterStatusBlockKey();
+  castor::sharedMemory::BlockKey key = getBlockKey();
   return new castor::sharedMemory::Block
     <SharedMemoryAllocator<castor::sharedMemory::SharedNode> >(key);
+}
+
+//------------------------------------------------------------------------------
+// createSharedMemoryBlock
+//------------------------------------------------------------------------------
+template<class T>
+castor::sharedMemory::BlockKey
+castor::monitoring::SharedMemoryAllocator<T>::getBlockKey() {
+  return castor::monitoring::getClusterStatusBlockKey();
 }
 
 #endif // MONITORING_SHAREDMEMORYALLOCATOR_HPP

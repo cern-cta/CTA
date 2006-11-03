@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BlockKey.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/10/26 13:40:55 $ $Author: felixehm $
+ * @(#)$RCSfile: BlockKey.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/11/03 15:34:38 $ $Author: sponcec3 $
  *
  * The identification of a shared memory block
  *
@@ -51,7 +51,7 @@ namespace castor {
        * Get accessor to member m_key
        * @return the current value of m_key
        */
-      key_t key () {
+      key_t key () const {
         return m_key;
       }
 
@@ -59,7 +59,7 @@ namespace castor {
        * Get accessor to member m_size
        * @return the current value of m_size
        */
-      size_t size () {
+      size_t size () const {
         return m_size;
       }
 
@@ -67,8 +67,15 @@ namespace castor {
        * Get accessor to member m_address
        * @return the current value of m_address
        */
-      const void* address () {
+      const void* address () const {
         return m_address;
+      }
+
+      /**
+       * operator < so that it can be used as map index
+       */
+      bool operator<(const BlockKey k) const {
+        return key() < k.key();
       }
 
     private:
