@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2006/10/05 14:00:40 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2006/11/03 12:31:54 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -120,25 +120,24 @@ RepackClient::~RepackClient() throw()
 //------------------------------------------------------------------------------
 bool RepackClient::parseInput(int argc, char** argv)
 {
-  const char* cmdParams = "o:aS:sR:V:P:r:h";
+  const char* cmdParams = "o:aS:sR:V:P:r:hx:";
   if (argc == 1){
-    usage();
     return false;
   }
   struct Coptions longopts[] = {
     {"output_svcclass", REQUIRED_ARGUMENT, 0, 'o'},
     {"status", 0,NULL, 's' },
-    {"Status", REQUIRED_ARGUMENT,NULL, 'S' },
+    {"stager", REQUIRED_ARGUMENT,NULL, 'S' },
     {"delete", REQUIRED_ARGUMENT,NULL, 'R' },
     {"volumeid", REQUIRED_ARGUMENT, NULL, 'V'},
     {"restart", REQUIRED_ARGUMENT, NULL, 'r'},
-    //{"poolid", REQUIRED_ARGUMENT, NULL, 'P'},
+    {"pool", REQUIRED_ARGUMENT, NULL, 'P'},
     {"archive", NO_ARGUMENT, 0, 'a'},
     /*{"library", REQUIRED_ARGUMENT, 0, OPT_LIBRARY_NAME},
     {"min_free", REQUIRED_ARGUMENT, 0, 'm'},
     {"model", REQUIRED_ARGUMENT, 0, OPT_MODEL},
-    {"nodelete", NO_ARGUMENT, &nodelete_flag, 1},
-    {"otp", REQUIRED_ARGUMENT, 0, 'o'},*/
+    {"nodelete", NO_ARGUMENT, &nodelete_flag, 1} ,*/
+    {"details", REQUIRED_ARGUMENT, 0, 'x'},
     {"help", NO_ARGUMENT,NULL, 'h' },
     {NULL, 0, NULL, 0}
   };
@@ -166,13 +165,16 @@ bool RepackClient::parseInput(int argc, char** argv)
       cp.vid = Coptarg;
       cp.command = REMOVE_TAPE;
       break;
-	  case 'S':
-		  cp.vid = Coptarg;
-		  cp.command = GET_STATUS;
-		  break;
-	  case 's':
-		  cp.command = GET_STATUS_ALL;
-		  return true;
+    case 'x' :
+      cp.vid = Coptarg;
+      cp.command = GET_STATUS;
+      return true;
+    case 'S':
+      cp.stager = Coptarg;
+      break;
+    case 's':
+      cp.command = GET_STATUS_ALL;
+      return true;
     case 'r':
       cp.vid = Coptarg;
       cp.command = RESTART;
@@ -186,7 +188,7 @@ bool RepackClient::parseInput(int argc, char** argv)
       break;
     }
   }
-  
+  if ( cp.command == GET_STATUS && cp.vid == NULL ) return false; 
   return ( cp.pool != NULL || cp.vid != NULL );
 }
 
@@ -198,8 +200,12 @@ bool RepackClient::parseInput(int argc, char** argv)
 //------------------------------------------------------------------------------
 void RepackClient::usage() 
 {
-	std::cout << "Usage: repack -V [VID1:VID2..] [-o serviceclass] " << std::endl 
-            << "-P [PoolID] | -S [VID] | -h | -s | -R [VID1:VID2..] | -r [VID1:VID2..]" << std::endl;
+	std::cout << "Usage: repack [-V [VID1:VID2:..] | -P [PoolID] ] [-o serviceclass] [-S stager_hostname]" << std::endl 
+                  << "              -x [VID] " << std::endl
+		  << "              -h " << std::endl
+		  << "              -s " << std::endl
+		  << "              -R [VID1:VID2:..] " << std::endl
+		  << "              -r [VID1:VID2:..] " << std::endl;
 }
 
 
@@ -210,7 +216,7 @@ void RepackClient::help(){
 	std::cout << "The RepackClient" << std::endl
 	<< "This client sends a request to the repack server with tapes or one pool to be repacked. "<< std::endl 
 	<< "Several tapes can be added by sperating them by ':'.It is also possible to repack a tape pool."<< std::endl 
-	<< "Here, only the name of one tape pool is allowed." << std::endl;
+	<< "Here, only the name of one tape pool is allowed and a output ." << std::endl;
 
 	std::cout << "The hostname and port can be changed in your castor " << std::endl 
 	<< "config file or by defining them in your enviroment." << std::endl << std::endl 
@@ -303,6 +309,8 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
   
   rreq->setPid(getpid());
   rreq->setUserName(pw->pw_name);
+  rreq->setUserid((unsigned long)pw->pw_uid);
+  rreq->setGroupid((unsigned long)pw->pw_gid);
   rreq->setCreationTime(time(NULL));
   rreq->setMachine(cName);
 
@@ -376,13 +384,15 @@ void RepackClient::handleResponse(RepackAck* ack) {
     switch ( rreq->command() ){
       case GET_STATUS :
        seconds = (long)rreq->creationTime(); 
+       struct passwd *pw;
+       pw = Cgetpwuid((uid_t)rreq->userid());
        std::cout 
         << "Details for Request created on " << ctime (&seconds) << std::endl <<
         std::setw(35) << std::left << "machine" << 
         std::setw(10) << std::left << "user" <<
         std::setw(15) << std::left << "service class" << std::endl <<
         std::setw(35) << std::left << rreq->machine() <<
-        std::setw(10) << std::left << rreq->userName() << 
+        std::setw(10) << std::left <<  pw->pw_name << 
         std::setw(15) << std::left << rreq->serviceclass()
         << std::endl << std::endl; 
       
@@ -466,9 +476,6 @@ void RepackClient::setRemotePort()
     }
     m_defaultport = iport;
   }
-  else {
-		stage_trace(3,"No repack server port in enviroment found using default(%d)! ", CSP_REPACKSERVER_PORT);
-  }
   
   stage_trace(3, "Setting up Server Port - Using %d", m_defaultport);
 }
@@ -489,7 +496,7 @@ void RepackClient::setRemoteHost()
   } else {
     castor::exception::Exception e(serrno);
       e.getMessage()
-        << "No repack server hostname in config file or in enviroment found! " << std::endl;
+        << "No repack server hostname in config file or in enviroment found" << std::endl;
       throw e;
   }
   stage_trace(3, "Looking up Server Host - Using %s", m_defaulthost.c_str());
