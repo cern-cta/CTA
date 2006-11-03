@@ -13,7 +13,7 @@ repack \- Move files from tape(s) to other tape destination
 .BI \-o " OutputServiceClass"
 ]
 [
-.BI \-S " Stager"
+.BI \-S " StagerHostname"
 ]
 ]
 .br 
@@ -85,8 +85,11 @@ service class has to have a tape pool containing this tape.
 .TP 
 .I SourcePoolname
 The name of the tape pool which is to be repacked . It must be at most CA_MAXPOOLNAMELEN characters long.
-The list of pools can be obtained with
-.BR vmgrlistpool .
+The list of pools can be obtained with vmgrlistpool .
+.TP
+.I StagerHostname
+The hostname of the Stager this Repack process has to be send to.
+
 
 .SH "OPTIONS"
 \fB\-V\fR
