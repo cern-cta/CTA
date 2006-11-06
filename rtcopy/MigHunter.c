@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.36 $ $Release$ $Date: 2006/11/06 10:30:39 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.37 $ $Release$ $Date: 2006/11/06 10:36:37 $ $Author: sponcec3 $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.36 $ $Release$ $Date: 2006/11/06 10:30:39 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.37 $ $Release$ $Date: 2006/11/06 10:36:37 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -323,7 +323,8 @@ static int getSvcClass(
                        dbSvc,
                        iAddr,
                        iObj,
-                       OBJ_TapePool
+                       OBJ_TapePool,
+                       0
                        );
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
@@ -680,7 +681,8 @@ static int cloneStream(
                                           dbSvc,
                                           iAddr,
                                           iObj,
-                                          OBJ_TapeCopy
+                                          OBJ_TapeCopy,
+                                          0
                                           )));
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
@@ -1265,7 +1267,8 @@ static int getMigrCandidates(
                             dbSvc,
                             iAddr,
                             iObj,
-                            OBJ_CastorFile
+                            OBJ_CastorFile,
+                            0
                             );
     if ( rc == -1 ) {
       if ( runAsDaemon == 0 ) {

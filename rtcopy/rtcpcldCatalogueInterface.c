@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.155 $ $Release$ $Date: 2006/10/04 16:58:47 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.156 $ $Release$ $Date: 2006/11/06 10:36:38 $ $Author: sponcec3 $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.155 $ $Release$ $Date: 2006/10/04 16:58:47 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.156 $ $Release$ $Date: 2006/11/06 10:36:38 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -374,7 +374,8 @@ static int updateTapeFromDB(
                             *svcs,
                             iAddr,
                             iObj,
-                            OBJ_Stream
+                            OBJ_Stream,
+                            0
                             );
     if ( rc == -1 ) {
       save_serrno = serrno;
@@ -671,7 +672,8 @@ int rtcpcld_getTapesToDo(
                                                 *dbSvc,
                                                 iAddr,
                                                 iObj,
-                                                OBJ_TapePool
+                                                OBJ_TapePool,
+                                                0
                                                 );
         Cstager_Stream_tapePool(streamArray[i],&tapePool);
       }
@@ -1598,7 +1600,8 @@ int nextSegmentToMigrate(
                           *svcs,
                           iAddr,
                           iObj,
-                          OBJ_Segment
+                          OBJ_Segment,
+                          0
                           );
   if ( rc == -1 ) {
     save_serrno = serrno;
@@ -1656,7 +1659,8 @@ int nextSegmentToMigrate(
                           *svcs,
                           iAddr,
                           iObj,
-                          OBJ_SvcClass
+                          OBJ_SvcClass,
+                          0
                           );
   if ( rc == -1 ) {
     save_serrno = serrno;
@@ -2121,7 +2125,8 @@ int deleteSegmentFromDB(
                               *svcs,
                               iAddr,
                               iObj,
-                              OBJ_Tape
+                              OBJ_Tape,
+                              0
                               );
       if ( rc == -1 ) {
         save_serrno = serrno;
@@ -2146,7 +2151,8 @@ int deleteSegmentFromDB(
                               *svcs,
                               iAddr,
                               iObj,
-                              OBJ_TapeCopy
+                              OBJ_TapeCopy,
+                              0
                               );
       if ( rc == -1 ) {
         save_serrno = serrno;
@@ -2262,7 +2268,8 @@ int detachTapeCopyFromStream(
                           *svcs,
                           iAddr,
                           iObj,
-                          OBJ_Stream
+                          OBJ_Stream,
+                          0
                           );
   if ( rc == -1 ) {
     save_serrno = serrno;
@@ -2370,7 +2377,8 @@ int deleteTapeCopyFromDB(
                           *svcs,
                           iAddr,
                           iObj,
-                          OBJ_Stream
+                          OBJ_Stream,
+                          0
                           );
   if ( rc == -1 ) {
     save_serrno = serrno;
@@ -2835,7 +2843,8 @@ int rtcpcld_updcFileRecalled(
                             *svcs,
                             iAddr,
                             iObj,
-                            OBJ_TapeCopy
+                            OBJ_TapeCopy,
+                            0
                             );
     if ( rc == -1 ) {
       save_serrno = serrno;
@@ -2859,7 +2868,8 @@ int rtcpcld_updcFileRecalled(
                             *svcs,
                             iAddr,
                             iObj,
-                            OBJ_CastorFile
+                            OBJ_CastorFile,
+                            0
                             );
     if ( rc == -1 ) {
       save_serrno = serrno;
@@ -2903,7 +2913,8 @@ int rtcpcld_updcFileRecalled(
                           *svcs,
                           iAddr,
                           iObj,
-                          OBJ_Segment
+                          OBJ_Segment,
+                          0
                           );
   if ( rc == -1 ) {
     save_serrno = serrno;
@@ -3172,14 +3183,16 @@ int rtcpcld_updcFileMigrated(
                           *svcs,
                           iAddr,
                           iObj,
-                          OBJ_TapeCopy
+                          OBJ_TapeCopy,
+                          0
                           );
   if ( rc != -1 ) {
     rc = C_Services_fillObj(
                             *svcs,
                             iAddr,
                             iObj,
-                            OBJ_DiskCopy
+                            OBJ_DiskCopy,
+                            0
                             );
   }
     
@@ -3394,7 +3407,8 @@ int rtcpcld_putFailed(
                           *svcs,
                           iAddr,
                           iObj,
-                          OBJ_Segment
+                          OBJ_Segment,
+                          0
                           );
   if ( rc == -1 ) {
     Cstager_TapeCopy_id(tapeCopy,&key);
@@ -3410,7 +3424,8 @@ int rtcpcld_putFailed(
                             *svcs,
                             iAddr,
                             iObj,
-                            OBJ_CastorFile
+                            OBJ_CastorFile,
+                            0
                             );
     if ( rc == -1 ) {
       Cstager_TapeCopy_id(tapeCopy,&key);
@@ -3479,7 +3494,8 @@ int rtcpcld_putFailed(
                           *svcs,
                           iAddr,
                           iObj,
-                          OBJ_DiskCopy
+                          OBJ_DiskCopy,
+                          0
                           );
   if ( rc == -1 ) {
     Cstager_CastorFile_id(castorFile,&key);
@@ -3803,7 +3819,8 @@ int rtcpcld_restoreSelectedTapeCopies(
                                       *svcs,
                                       iAddr,
                                       iObj,
-                                      OBJ_Stream
+                                      OBJ_Stream,
+                                      0
                                       );
               if ( rc == -1 ) {
                 LOG_DBCALLANDKEY_ERR(
@@ -3927,7 +3944,8 @@ int rtcpcld_restoreSelectedSegments(
                           *svcs,
                           iAddr,
                           iObj,
-                          OBJ_Segment
+                          OBJ_Segment,
+                          0
                           );
   if ( rc == -1 ) {
     LOG_DBCALLANDKEY_ERR(

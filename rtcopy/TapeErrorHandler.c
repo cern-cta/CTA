@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.17 $ $Release$ $Date: 2006/08/16 16:33:01 $ $Author: obarring $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.18 $ $Release$ $Date: 2006/11/06 10:36:38 $ $Author: sponcec3 $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.17 $ $Release$ $Date: 2006/08/16 16:33:01 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.18 $ $Release$ $Date: 2006/11/06 10:36:38 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -335,7 +335,8 @@ static int doRecallRetry(
                             dbSvc,
                             iAddr,
                             iObj,
-                            OBJ_Tape
+                            OBJ_Tape,
+                            0
                             );
     if ( rc == -1 ) {
       LOG_DBCALLANDKEY_ERR("C_Services_fillObj(segment,OBJ_Tape)",
@@ -513,7 +514,8 @@ static int checkRecallRetry(
                           dbSvc,
                           iAddr,
                           iObj,
-                          OBJ_CastorFile
+                          OBJ_CastorFile,
+                          0
                           );
   if ( rc == -1 ) {
     LOG_DBCALLANDKEY_ERR("C_Services_fillObj(tapeCopy,OBJ_CastorFile)",
@@ -611,7 +613,8 @@ static int checkRecallRetry(
                           dbSvc,
                           iAddr,
                           iObj,
-                          OBJ_DiskCopy
+                          OBJ_DiskCopy,
+                          0
                           );
   if ( rc == -1 ) {
     LOG_DBCALLANDKEY_ERR("C_Services_fillObj(castorFile,OBJ_DiskCopy)",
@@ -630,7 +633,8 @@ static int checkRecallRetry(
                           dbSvc,
                           iAddr,
                           iObj,
-                          OBJ_Segment
+                          OBJ_Segment,
+                          0
                           );
   if ( rc == -1 ) {
     LOG_DBCALLANDKEY_ERR("C_Services_fillObj(tapeCopy,OBJ_Segment)",
@@ -865,7 +869,8 @@ static int doMigrationRetry(
                           dbSvc,
                           iAddr,
                           iObj,
-                          OBJ_Stream
+                          OBJ_Stream,
+                          0
                           );
   if ( rc == -1 ) {
     LOG_DBCALLANDKEY_ERR("C_Services_fillObj(tapeCopy,OBJ_Stream)",
@@ -981,7 +986,8 @@ static int checkMigrationRetry(
                           dbSvc,
                           iAddr,
                           iObj,
-                          OBJ_CastorFile
+                          OBJ_CastorFile,
+                          0
                           );
   if ( rc == -1 ) {
     LOG_DBCALLANDKEY_ERR("C_Services_fillObj(tapeCopy,OBJ_CastorFile)",
@@ -1061,7 +1067,8 @@ static int checkMigrationRetry(
                           dbSvc,
                           iAddr,
                           iObj,
-                          OBJ_DiskCopy
+                          OBJ_DiskCopy,
+                          0
                           );
   if ( rc == -1 ) {
     LOG_DBCALLANDKEY_ERR("C_Services_fillObj(castorFile,OBJ_DiskCopy)",
@@ -1105,7 +1112,8 @@ static int checkMigrationRetry(
                             dbSvc,
                             iAddr,
                             iObj,
-                            OBJ_FileSystem
+                            OBJ_FileSystem,
+                            0
                             );
     
     if ( rc == -1 ) {
@@ -1128,7 +1136,8 @@ static int checkMigrationRetry(
                             dbSvc,
                             iAddr,
                             iObj,
-                            OBJ_DiskServer
+                            OBJ_DiskServer,
+                            0
                             );
     
     if ( rc == -1 ) {
@@ -1203,7 +1212,8 @@ static int checkMigrationRetry(
                           dbSvc,
                           iAddr,
                           iObj,
-                          OBJ_Segment
+                          OBJ_Segment,
+                          0
                           );
   if ( rc == -1 ) {
     LOG_DBCALLANDKEY_ERR("C_Services_fillObj(tapeCopy,OBJ_Segment)",
@@ -1437,7 +1447,8 @@ int main(
                               dbSvc,
                               iAddr,
                               iObj,
-                              OBJ_Tape
+                              OBJ_Tape,
+                              0
                               );
       if ( rc == -1 ) {
         LOG_DBCALL_ERR("C_Services_fillObj(segment,OBJ_Tape)",
@@ -1479,7 +1490,8 @@ int main(
                             dbSvc,
                             iAddr,
                             iObj,
-                            OBJ_TapeCopy
+                            OBJ_TapeCopy,
+                            0
                             );
     if ( rc == -1 ) {
       LOG_DBCALL_ERR("C_Services_fillObj(segment,OBJ_TapeCopy)",
