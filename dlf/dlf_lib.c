@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.5 2006/10/27 14:12:56 waldron Exp $
+ * $Id: dlf_lib.c,v 1.6 2006/11/06 07:18:34 waldron Exp $
  */
 
 /* headers */
@@ -92,6 +92,11 @@ void dlf_error(char *format, ...) {
 
 	va_list   ap;
 
+	/* interface initialised ? */
+	if (!IsInitialised(api_mode)) {
+		return;
+	}
+	
 	/* timestamp */
 	gettimeofday(&tv, NULL);
 	localtime_r(&tv.tv_sec, &tm_str);
@@ -196,7 +201,9 @@ int dlf_read(target_t *t, int *rtype, int *rcode) {
 		if (err_no > DLF_ERR_MAX) {
 			err_no = DLF_ERR_MAX;
 		}
+		Cthread_mutex_lock(&api_mutex);
 		dlf_error("SERVER=\"%s\" ERROR=\"%s\"", t->server, dlf_errorlist[(err_no - 1)].err_str);
+		Cthread_mutex_unlock(&api_mutex);
 	} else if (type == DLF_REP_IRC) {
 
 	} else {
@@ -232,7 +239,9 @@ int dlf_send(target_t *t, char *data, int len) {
 
 		hp = Cgethostbyname(t->server);
 		if (hp == NULL) {
+			Cthread_mutex_lock(&api_mutex);
 			dlf_error("MSG=\"Failed to resolve hostname\" SERVER=\"%s\"", t->server);
+			Cthread_mutex_unlock(&api_mutex);
 			return h_errno;
 		}
 		server_addr.sin_addr.s_addr = ((struct in_addr *)hp->h_addr)->s_addr;
@@ -253,7 +262,9 @@ int dlf_send(target_t *t, char *data, int len) {
 		/* connect */
 		rv = netconnect_timeout(t->socket, (struct sockaddr *)&server_addr, sizeof(server_addr), API_CONNECT_TIMEOUT);
 		if (rv < 0) {
+			Cthread_mutex_lock(&api_mutex);
 			dlf_error("MSG=\"Failed to connect to remote host\" SERVER=\"%s\" TIMEOUT=\"%d\" ERROR=\"%s\"", t->server, API_CONNECT_TIMEOUT, neterror());
+			Cthread_mutex_unlock(&api_mutex);
 			ClrConnected(t->mode);
 			return rv;
 		}
@@ -725,7 +736,9 @@ int DLL_DECL dlf_write(Cuuid_t reqid, int severity, int msg_no, struct Cns_filei
 	/* everything ok ? */
 	rv = APP_FAILURE;
 	if (ok == 1) {
+		Cthread_mutex_lock(&api_mutex);
 		rv = dlf_writep(reqid, severity, msg_no, ns, numparams, plist);
+		Cthread_mutex_unlock(&api_mutex);
 	}
 
 	/* free resources */
@@ -805,7 +818,9 @@ void dlf_worker(target_t *t) {
 			buffer = (char *) malloc((5 * LONGSIZE) + len);
 			if (buffer == NULL) {
 				t->pause = time(NULL) + 10;
-				Cthread_mutex_unlock(&api_mutex);
+				if (rv == APP_SUCCESS) {
+					Cthread_mutex_unlock(&api_mutex);
+				}
 				continue;
 			}
 
@@ -1547,6 +1562,7 @@ int DLL_DECL dlf_shutdown(int wait) {
 		}
 	
 		free(targets[i]);
+		targets[i] = NULL;
 	}
 
 	/* destroy global hashes */
