@@ -83,6 +83,7 @@ void castor::monitoring::rmnode::StateThread::run(void* par)
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 16, 1, params);
     // cleanup memory
     delete state;
+    state = 0;
     // check the acknowledgment
     castor::IObject* obj = s.readObject();
     castor::MessageAck* ack =
