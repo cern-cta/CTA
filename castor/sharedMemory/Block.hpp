@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/11/06 16:07:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/11/06 16:08:43 $ $Author: sponcec3 $
  *
  * A block of shared memory with incorporated memory allocation
  *
@@ -47,7 +47,7 @@ namespace castor {
      * The mapping of the memory of the Block is the following :
      * \verbatim
      *   Begin of Block
-     *     First node of the Allocation Table
+     *     First and Second node of the Allocation Table
      *     Allocation Table
      *     Available memory
      *   End of Block
