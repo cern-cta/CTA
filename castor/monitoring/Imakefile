@@ -42,7 +42,11 @@ STGLIB_SRCS = ClusterStatus.cpp \
               DiskServerMetricsReport.cpp \
               DiskServerStateReport.cpp \
               FileSystemMetricsReport.cpp \
-              FileSystemStateReport.cpp
+              FileSystemStateReport.cpp \
+              ../io/StreamDiskServerMetricsReportCnv.cpp \
+              ../io/StreamDiskServerStateReportCnv.cpp \
+              ../io/StreamFileSystemMetricsReportCnv.cpp \
+              ../io/StreamFileSystemStateReportCnv.cpp
 
 STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
 COMMONLIB = LibraryTargetName(castorMonitor)
