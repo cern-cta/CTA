@@ -285,7 +285,7 @@ TD.sev_important {
 }
 
 TD.sev_monitoring {
-	background-color : ##663300;
+	background-color : #CCCCCC;
 	border: 1px solid #999999;
 	text-align: center;
 	width: 60px;
