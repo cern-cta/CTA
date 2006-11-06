@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.333 $ $Release$ $Date: 2006/11/02 16:56:35 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.334 $ $Release$ $Date: 2006/11/06 11:18:26 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.333 $ $Date: 2006/11/02 16:56:35 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.334 $ $Date: 2006/11/06 11:18:26 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -59,15 +59,15 @@ partition by list (type)
   partition notlisted values (default) tablespace stager_data
  );
 
-/* Indexes related to CastorFiles */
+/* Indexes related to most used entities */
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
+
 CREATE UNIQUE INDEX I_CastorFile_fileIdNsHost on CastorFile (fileId, nsHost);
 CREATE INDEX I_CastorFile_lastKnownFileName on CastorFile (lastKnownFileName);
 
 CREATE INDEX I_DiskCopy_Castorfile on DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem on DiskCopy (fileSystem);
-/* function base index to speed up selectFiles2Delete */
-CREATE INDEX I_DiskCopy_Status8 on DiskCopy (decode(status,8,status,NULL));
+CREATE INDEX I_DiskCopy_Status on DiskCopy (status);
 
 CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
 
@@ -828,6 +828,7 @@ CREATE OR REPLACE PACKAGE castor AS
         mountPoint VARCHAR2(2048),
         diskServer VARCHAR2(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
+  TYPE TapeCopy_Cur IS REF CURSOR RETURN TapeCopy%ROWTYPE;
   TYPE Segment_Cur IS REF CURSOR RETURN Segment%ROWTYPE;
   TYPE GCLocalFileCore IS RECORD (
         fileName VARCHAR2(2048),
@@ -852,12 +853,12 @@ CREATE OR REPLACE PACKAGE castor AS
         isDP INTEGER,
         isDS INTEGER,
         diskServerName VARCHAR(2048),
-	diskServerStatus INTEGER,
+        diskServerStatus INTEGER,
         fileSystemmountPoint VARCHAR(2048),
-	fileSystemfreeSpace INTEGER,
-	fileSystemtotalSpace INTEGER,
-	fileSystemreservedSpace INTEGER,
-	fileSystemminfreeSpace INTEGER,
+        fileSystemfreeSpace INTEGER,
+        fileSystemtotalSpace INTEGER,
+        fileSystemreservedSpace INTEGER,
+        fileSystemminfreeSpace INTEGER,
         fileSystemmaxFreeSpace INTEGER,
         fileSystemStatus INTEGER);
   TYPE DiskPoolQueryLine_Cur IS REF CURSOR RETURN DiskPoolQueryLine;
@@ -866,12 +867,12 @@ CREATE OR REPLACE PACKAGE castor AS
         isDS INTEGER,
         diskPoolName VARCHAR(2048),
         diskServerName VARCHAR(2048),
-	diskServerStatus INTEGER,
+        diskServerStatus INTEGER,
         fileSystemmountPoint VARCHAR(2048),
-	fileSystemfreeSpace INTEGER,
-	fileSystemtotalSpace INTEGER,
-	fileSystemreservedSpace INTEGER,
-	fileSystemminfreeSpace INTEGER,
+        fileSystemfreeSpace INTEGER,
+        fileSystemtotalSpace INTEGER,
+        fileSystemreservedSpace INTEGER,
+        fileSystemminfreeSpace INTEGER,
         fileSystemmaxFreeSpace INTEGER,
         fileSystemStatus INTEGER);
   TYPE DiskPoolsQueryLine_Cur IS REF CURSOR RETURN DiskPoolsQueryLine;
@@ -2838,9 +2839,9 @@ END;
 
 
 /* PL/SQL procedure which is executed whenever a files has been written to tape by the migrator to
-   check, whether the file information has to be added to the NameServer or to replace an entry 
-   (repack case)
-*/
+ * check, whether the file information has to be added to the NameServer or to replace an entry 
+ * (repack case)
+ */
 CREATE OR REPLACE PROCEDURE checkFileForRepack(fid IN INTEGER, ret OUT VARCHAR2) AS
 sreqid NUMBER;
 BEGIN
@@ -2867,30 +2868,43 @@ BEGIN
 END;
 
 
-/* PL/SQL Procedure to find migration candidates (TapeCopies) for the passed ServiceClass.
-It checks for the TapeCopies in CREATED and TOBEMIGRATED if there is a RepackRequest
-going on. If so, it returns for the requested svcclass the Migration candidates.
-*/
+/* PL/SQL Procedure to find migration candidates (TapeCopies) for the passed svcClass.
+ * It checks for the TapeCopies in CREATED and TOBEMIGRATED if there is a RepackRequest
+ * going on, otherwise it looks for the svcClass from the CastorFile table.
+ * In any case, it returns for the requested svcclass the Migration candidates.
+ */
 CREATE OR REPLACE PROCEDURE selectTapeCopiesForMigration
-(svcclassId IN NUMBER, result OUT castor.IDRecord_Cur) AS
-BEGIN 
-  OPEN result FOR 
-    -- we look first for repack condidates for this svcclass
-    SELECT TapeCopy.id
-      FROM TapeCopy, SubRequest, StageRepackRequest
-     WHERE StageRepackRequest.svcclass = svcclassId
-       AND SubRequest.request = StageRepackRequest.id
-       AND SubRequest.status = 12  --SUBREQUEST_REPACK
-       AND TapeCopy.castorfile = SubRequest.castorfile
-       AND TapeCopy.status IN (0, 1);  -- CREATED / TOBEMIGRATED
-    -- if we didn't find anything, we look 
-    -- the usual svcclass from castorfile table.
-  IF result%ROWCOUNT = 0 THEN
-  OPEN result FOR 
-    SELECT TapeCopy.id 
+(svcclassId IN NUMBER, result OUT castor.TapeCopy_Cur) AS
+  tcIds "numList";
+BEGIN
+  -- we look first for repack condidates for this svcclass
+  SELECT TapeCopy.id BULK COLLECT INTO tcIds
+    FROM TapeCopy, SubRequest, StageRepackRequest
+   WHERE StageRepackRequest.svcclass = svcclassId
+     AND SubRequest.request = StageRepackRequest.id
+     AND SubRequest.status = 12  --SUBREQUEST_REPACK
+     AND TapeCopy.castorfile = SubRequest.castorfile
+     AND TapeCopy.status IN (0, 1)  -- CREATED / TOBEMIGRATED
+     FOR UPDATE;
+  -- if we didn't find anything, we look 
+  -- the usual svcclass from castorfile table.
+  IF tcIds.count = 0 THEN
+    SELECT TapeCopy.id BULK COLLECT INTO tcIds 
       FROM TapeCopy, CastorFile 
      WHERE TapeCopy.castorFile = CastorFile.id 
        AND CastorFile.svcClass = svcclassId
-       AND TapeCopy.status IN (0, 1); --CREATED / TOBEMIGRATED
+       AND TapeCopy.status IN (0, 1) -- CREATED / TOBEMIGRATED
+       FOR UPDATE;
   END IF;
+  -- atomically update the status to WAITINSTREAMS (we got a lock
+  -- above with the FOR UPDATE clause)
+  UPDATE TapeCopy
+     SET status = 2   -- WAITINSTREAMS
+   WHERE id MEMBER OF tcIds;
+  -- release the lock
+  COMMIT;
+  -- return the full resultset
+  OPEN result FOR
+    SELECT * FROM TapeCopy
+    WHERE id MEMBER OF tcIds;
 END;
