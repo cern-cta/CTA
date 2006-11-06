@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/11/03 15:51:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/11/06 16:07:29 $ $Author: sponcec3 $
  *
  * A block of shared memory with incorporated memory allocation
  *
@@ -95,10 +95,11 @@ namespace castor {
                                 A> SharedMap;
 
       /**
-       * Are we initializing the Block ? If yes, we cannot yet
-       * use the free regions table.
+       * Are we initializing the Block ? And if yes (non 0) at which stage
+       * of the initialization ? This is actually used for the management
+       * of the m_freeRegions initialization.
        */
-      bool m_initializing;
+      int m_initializing;
 
       /**
        * map of free regions.
@@ -132,7 +133,7 @@ template <typename A>
 castor::sharedMemory::Block<A>::Block (BlockKey& key)
   throw (castor::exception::Exception) :
   BasicBlock(key),
-  m_initializing(false) {
+  m_initializing(0) {
     // Check that the given size is big enough
     size_t minimumSize =
       2*sizeof(std::_Rb_tree_node<SharedNode>) +
@@ -201,9 +202,9 @@ castor::sharedMemory::Block<A>::Block (BlockKey& key)
     // register the block
     castor::sharedMemory::BlockDict::insertBlock(key, this);
     // start of memory initialization
-    m_initializing = true;
+    m_initializing = 1;
     // now create/extract the map of allocated regions
-    size_t offset = sizeof(std::_Rb_tree_node<SharedNode>);
+    size_t offset = 2*sizeof(std::_Rb_tree_node<SharedNode>);
     void* m_freeRegionsRaw = (void*)((char*)m_sharedMemoryBlock + offset);
     if (createdSharedMemory) {
       // create the free region map
@@ -219,7 +220,7 @@ castor::sharedMemory::Block<A>::Block (BlockKey& key)
       m_freeRegions = (SharedMap*) (m_freeRegionsRaw);
     }
     // End of memory initialization
-    m_initializing = false;
+    m_initializing = 0;
     // Now we can release the lock
     Cmutex_unlock(&m_sharedMemoryBlock);
   }
@@ -235,7 +236,10 @@ void* castor::sharedMemory::Block<A>::malloc(size_t nbBytes)
     // for the creation of the first node of the map Btree.
     // We return straight the space dedicated to it, which
     // is located at the very beginning of the block
-    void* res = (void*) ((char*)m_sharedMemoryBlock);
+    void* res = (void*) (((char*)m_sharedMemoryBlock) +
+                         ((m_initializing-1) *
+                          sizeof(std::_Rb_tree_node<SharedNode>)));
+    m_initializing++;
     return res;
   }
   // loop over free regions to find a suitable one
