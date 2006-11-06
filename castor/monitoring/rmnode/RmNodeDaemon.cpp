@@ -94,6 +94,8 @@ int main(int argc, char* argv[]) {
       castor::exception::NoEntry e;
       e.getMessage() << "Found not entry RMMASTER/HOST in config file";
       throw e;
+    } else {
+      rmMasterHost = strdup(rmMasterHost);
     }
     int rmMasterPort = RMMASTER_PORT;
     char* rmMasterPortStr = getconfent("RMMASTER","PORT", 0);
