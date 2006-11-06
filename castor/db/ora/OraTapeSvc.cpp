@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)OraTapeSvc.cpp,v 1.16 $Release$ 2006/10/19 16:21:27 felixehm
+ * @(#)OraTapeSvc.cpp,v 1.17 $Release$ 2006/11/06 11:15:49 itglp
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -749,6 +749,7 @@ castor::db::ora::OraTapeSvc::selectTapeCopiesForMigration
     m_selectTapeCopiesForMigrationStatement->setAutoCommit(true);
   }
   // Execute statement and get result
+  // The procedure takes internally a lock and performs the commit
   unsigned long id;
   try {
     m_selectTapeCopiesForMigrationStatement->setDouble(1, svcClass->id());
@@ -758,23 +759,13 @@ castor::db::ora::OraTapeSvc::selectTapeCopiesForMigration
       m_selectTapeCopiesForMigrationStatement->getCursor(2);
     // create result
     std::vector<castor::stager::TapeCopy*> result;
-    // Fill it
+    // Fill it as in OraTapeCopyCnv
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1));
-      castor::stager::TapeCopy* tapeCopy =
-        dynamic_cast<castor::stager::TapeCopy*>(obj);
-      if (0 == tapeCopy) {
-        castor::exception::Internal ex;
-        ex.getMessage()
-          << "In method OraTapeSvc::selectTapeCopiesForMigration, "
-          << "got a non tapeCopy object";
-        delete obj;
-        throw ex;
-      }
-      // Change tapeCopy status
-      tapeCopy->setStatus(castor::stager::TAPECOPY_WAITINSTREAMS);
-      cnvSvc()->updateRep(0, tapeCopy, false);
-      result.push_back(tapeCopy);
+      castor::stager::TapeCopy* object = new castor::stager::TapeCopy();
+      object->setCopyNb(rset->getInt(1));
+      object->setId((u_signed64)rset->getDouble(2));
+      object->setStatus((enum castor::stager::TapeCopyStatusCodes)rset->getInt(4));
+      result.push_back(object);
     }
     m_selectTapeCopiesForMigrationStatement->closeResultSet(rset);
     return result;
