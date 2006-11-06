@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.35 $ $Release$ $Date: 2006/10/10 12:19:36 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.36 $ $Release$ $Date: 2006/11/06 10:30:39 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.35 $ $Release$ $Date: 2006/10/10 12:19:36 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.36 $ $Release$ $Date: 2006/11/06 10:30:39 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -954,13 +954,15 @@ static int startStreams(
     for ( j=0; j<nbStreams; j++ ) {
       Cstager_Stream_status(streamArray[j],&streamStatus);
       Cstager_Stream_initialSizeToTransfer(streamArray[j],&sz);
-      if ( (streamStatus == STREAM_CREATED) ||
+      if ( (streamStatus == STREAM_CREATED) || 
+           (streamStatus == STREAM_WAITSPACE) ||
            ((sz == 0) && (initialSizeToTransfer>0)) ) {
         if ( runAsDaemon == 0 ) {
           fprintf(stdout,"Start %d stream for tape pool %s\n",
                   j,tapePoolName);
         }
-        if ( streamStatus == STREAM_CREATED ) {
+        if ( (streamStatus == STREAM_CREATED) ||
+             (streamStatus == STREAM_WAITSPACE) ) {
           Cstager_Stream_setStatus(streamArray[j],STREAM_PENDING);
         }
         /*
@@ -1248,6 +1250,7 @@ static int getMigrCandidates(
     }
     LOG_DBCALL_ERR("Cstager_ITapeSvc_selectTapeCopiesForMigration()",
                    Cstager_ITapeSvc_errorMsg(tpSvc));
+    (void)C_Services_rollback(dbSvc,iAddr);
     C_IAddress_delete(iAddr);
     return(-1);
   }
@@ -1685,6 +1688,7 @@ int main(int argc, char *argv[])
           fprintf(stderr,"getSvcClass(): %s\n",sstrerror(serrno));
         }
         LOG_SYSCALL_ERR("getSvcClass()");
+        (void)C_Services_rollback(dbSvc,iAddr);
         continue;
       }
       freeMigrCandidates(migrCandidates,nbMigrCandidates);
@@ -1709,6 +1713,7 @@ int main(int argc, char *argv[])
           fprintf(stderr,"getMigrCandidates(%s): %s\n",argv[i],sstrerror(serrno));
         }
         LOG_SYSCALL_ERR("getMigrCandidates()");
+        (void)C_Services_rollback(dbSvc,iAddr);
         continue;
       }
       if ( runAsDaemon == 0 ) {
@@ -1744,6 +1749,7 @@ int main(int argc, char *argv[])
           }
           LOG_SYSCALL_ERR("tapePoolCreator()");
           restoreMigrCandidates(migrCandidates,nbMigrCandidates);
+          (void)C_Services_rollback(dbSvc,iAddr);
           continue;
         }
       }
@@ -1779,6 +1785,7 @@ int main(int argc, char *argv[])
                           );
         }
         restoreMigrCandidates(migrCandidates,nbMigrCandidates);
+        (void)C_Services_rollback(dbSvc,iAddr);
         continue;
       }
       if ( (nbOldStreams <= 0) && (initialSizeToTransfer<volumeThreshold) ) {
@@ -1821,6 +1828,7 @@ int main(int argc, char *argv[])
           LOG_SYSCALL_ERR("streamCreator()");
           (void)C_Services_rollback(dbSvc,iAddr);
           restoreMigrCandidates(migrCandidates,nbMigrCandidates);
+          (void)C_Services_rollback(dbSvc,iAddr);
           continue;
         }
         if ( runAsDaemon == 0 ) {
@@ -1873,6 +1881,7 @@ int main(int argc, char *argv[])
           LOG_SYSCALL_ERR("addMigrationCandidatesToStreams()");
           (void)C_Services_rollback(dbSvc,iAddr);
           restoreMigrCandidates(migrCandidates,nbMigrCandidates);
+          (void)C_Services_rollback(dbSvc,iAddr);
           continue;
         }
         if ( runAsDaemon == 0 ) {
