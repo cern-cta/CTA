@@ -165,6 +165,8 @@ int C_Services_fillRep(struct C_Services_t* svcs,
  * @param address the place where to find the foreign representation
  * @param object the original object
  * @param type the type of the refered objects to retrieve
+ * @param autocommit whether the changes to the database
+ * should be commited or not
  * @return -1 in case of error, 0 if successful
  * A detailed error message can be retrieved by calling
  * C_Services_errorMsg
@@ -172,7 +174,8 @@ int C_Services_fillRep(struct C_Services_t* svcs,
 int C_Services_fillObj(struct C_Services_t* svcs,
                        struct C_IAddress_t* address,
                        struct C_IObject_t* object,
-                       unsigned int type);
+                       unsigned int type,
+                       char autocommit);
 
 /**
  * Forces the commit of the last changes in a given DB

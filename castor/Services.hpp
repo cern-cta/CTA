@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/29 15:49:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2006/11/06 10:33:07 $ $Author: sponcec3 $
  *
  *
  *
@@ -164,11 +164,14 @@ namespace castor {
      * @param address the place where to find the foreign representation
      * @param object the original object
      * @param type the type of the refered objects to retrieve
+     * @param autocommit whether the locks taken in the database
+     * should be released or not
      * @exception Exception throws an Exception in case of error
      */
     virtual void fillObj(castor::IAddress* address,
                          castor::IObject* object,
-                         unsigned int type)
+                         unsigned int type,
+                         bool autocommit = false)
       throw (castor::exception::Exception);
 
     /**
