@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.25 $ $Date: 2006/01/23 12:21:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.26 $ $Date: 2006/11/07 10:25:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -144,6 +144,8 @@ int flags;
 	case D400GC:
 	case D500G:
 	case D500GC:
+    case D700G:
+	case D700GC:
 	case DDS:
 	case DDSC:
 		break;
@@ -645,6 +647,12 @@ u_signed64 *Size;
 				perc);
 		} else {
 		  Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A 3592B CARTRIDGE (500GB) *****\n",
+				perc);
+		}
+    } else if (den == D700G || den == D700GC) {
+		perc = tape_used / 5000000000UL;
+		if (strcmp (dmpparm.devtype, "3592") == 0) {
+		  Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A 3592B CARTRIDGE (700GB) *****\n",
 				perc);
 		}
 	} else if (den == D400G || den == D400GC) {

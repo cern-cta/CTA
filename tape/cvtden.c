@@ -14,10 +14,10 @@ static char sccsid[] = "@(#)cvtden.c,v 1.7 2002/11/06 10:11:26 CERN IT-PDP/DM Je
 #include "serrno.h"
 static char adens[CA_MAXDENNUM][6] = {"0", "800", "1600", "6250", "38000",
 	"8200", "8500", "38KD", "2G", "6G", "10G", "FMT", "RAW", "DDS",
-				      "20G", "25G", "35G", "50G", "40G", "60G", "100G", "200G", "110G","160G","300G", "400G", "500G"};
+				      "20G", "25G", "35G", "50G", "40G", "60G", "100G", "200G", "110G","160G","300G", "400G", "500G", "700G"};
 static char adensc[CA_MAXDENNUM][6] = {"", "", "", "", "38KC",
 	"8200C", "8500C", "38KDC", "", "", "10GC", "", "", "DDSC",
-				       "20GC", "25GC", "35GC", "50GC", "40GC", "60GC", "100GC", "200GC", "110GC","160GC","300GC", "400GC", "500GC"};
+				       "20GC", "25GC", "35GC", "50GC", "40GC", "60GC", "100GC", "200GC", "110GC","160GC","300GC", "400GC", "500GC", "700GC"};
 cvtden(aden)
 char	*aden;
 {
