@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.7 $ $Release$ $Date: 2005/11/30 17:28:19 $ $Author: obarring $
+ * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.8 $ $Release$ $Date: 2006/11/07 16:23:38 $ $Author: sponcec3 $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.7 $ $Release$ $Date: 2005/11/30 17:28:19 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.8 $ $Release$ $Date: 2006/11/07 16:23:38 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -528,7 +528,8 @@ int main(int argc, char *argv[])
                           svcs,
                           iAddr,
                           iObj,
-                          OBJ_TapePool
+                          OBJ_TapePool,
+                          0
                           );
   if ( rc == -1 ) {
     fprintf(stderr,"C_Services_fillObj(svcClass,OBJ_TapePool): %s, %s\n",
@@ -540,7 +541,8 @@ int main(int argc, char *argv[])
                           svcs,
                           iAddr,
                           iObj,
-                          OBJ_DiskPool
+                          OBJ_DiskPool,
+                          0
                           );
   if ( rc == -1 ) {
     fprintf(stderr,"C_Services_fillObj(svcClass,OBJ_DiskPool): %s, %s\n",
