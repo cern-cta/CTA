@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2006/11/03 12:31:54 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2006/11/08 14:25:39 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -94,6 +94,7 @@ RepackClient::RepackClient()
   cp.vid =  NULL;
   cp.pool = NULL;
   cp.serviceclass = NULL;
+  cp.stager = NULL ;
 
   svc = svcs()->cnvService("StreamCnvSvc", castor::SVC_STREAMCNV);
   if (0 == svc) {
@@ -292,6 +293,7 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
   RepackRequest* rreq = new RepackRequest();
   addTapes(rreq);
   rreq->setCommand(cp.command);
+  if ( cp.stager ) rreq->setStager(cp.stager);
   
   /* or, we want to repack a pool */
   if ( cp.pool != NULL ) {
@@ -388,12 +390,15 @@ void RepackClient::handleResponse(RepackAck* ack) {
        pw = Cgetpwuid((uid_t)rreq->userid());
        std::cout 
         << "Details for Request created on " << ctime (&seconds) << std::endl <<
-        std::setw(35) << std::left << "machine" << 
+        std::setw(30) << std::left << "machine" << 
         std::setw(10) << std::left << "user" <<
-        std::setw(15) << std::left << "service class" << std::endl <<
-        std::setw(35) << std::left << rreq->machine() <<
+        std::setw(20) << std::left << "service class" << 
+        std::setw(15) << std::left << "stager" 
+	<< std::endl <<
+        std::setw(30) << std::left << rreq->machine() <<
         std::setw(10) << std::left <<  pw->pw_name << 
-        std::setw(15) << std::left << rreq->serviceclass()
+        std::setw(20) << std::left << rreq->serviceclass()
+        << std::left << rreq->stager()
         << std::endl << std::endl; 
       
       case GET_STATUS_ALL : 
@@ -433,6 +438,7 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
   statuslist[SUBREQUEST_ARCHIVED] = "ARCHIVED";
   statuslist[SUBREQUEST_TOBESTAGED] = "TOBESTAGED";
   statuslist[SUBREQUEST_RESTART] = "RESTART";
+  statuslist[SUBREQUEST_FAILED] = "FAILED";
    
   u64tostru(tape->xsize(), buf, 0);
 
