@@ -1,5 +1,139 @@
 castor (2.1.1-8) unstable; urgency=low
 
+  * CASTOR2/castor/Imakefile:
+    [r1.136,2006-11-03,sponcec3] next iteration again...
+    [r1.135,2006-11-03,sponcec3] Next iteration of the shared memory saga. Should now compile, even on gcc 4.1
+  * CASTOR2/castor/Services.cpp:
+  * CASTOR2/castor/Services.h:
+  * CASTOR2/castor/Services.hpp:
+  * CASTOR2/castor/ServicesCInt.cpp:
+    [2006-11-06,sponcec3] Added an autocommit flag to fillObj
+  * CASTOR2/castor/db/castor_oracle_create.sql:
+    [r1.72,2006-11-08,felixehm] fixed bug in fileRecalled : an else was missing, so the setting of the
+    [r1.72,2006-11-08,felixehm] Subrequest status to 12 in the repack part was overrided by the last
+    [r1.72,2006-11-08,felixehm] update.
+  * CASTOR2/castor/db/newora/OraCommonSvc.cpp:
+  * CASTOR2/castor/db/ora/OraCommonSvc.cpp:
+    [2006-11-08,sponcec3] Fixed retrieval of minAllowedFreeSapce in selectFileSystem
+  * CASTOR2/castor/db/ora/OraTapeSvc.cpp:
+    [r1.17,2006-11-06,itglp] Changed selectTapeCopiesForMigration: moved the update part to PL/SQL
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    [r1.335,2006-11-08,felixehm] fixed logic error in fileRecalled PL/SQL for handling repack candidates.
+    [r1.334,2006-11-06,itglp] Refactored selectTapeCopiesForMigration: now it updates the status
+    [r1.334,2006-11-06,itglp] and performs a commit afterwards to release the lock on TapeCopy.
+  * CASTOR2/castor/monitoring/ClusterStatus.cpp:
+    [r 1.3,2006-11-03,sponcec3] Next iteration of the shared memory saga. Should now compile, even on gcc 4.1
+  * CASTOR2/castor/monitoring/Imakefile:
+    [r 1.3,2006-11-06,sponcec3] Forgot to compile converters !
+  * CASTOR2/castor/monitoring/SharedMemoryAllocator.hpp:
+    [r 1.4,2006-11-03,sponcec3] next iteration again...
+    [r 1.3,2006-11-03,sponcec3] Next iteration of the shared memory saga. Should now compile, even on gcc 4.1
+  * CASTOR2/castor/monitoring/rmnode/MetricsThread.cpp:
+    [r 1.2,2006-11-03,sponcec3] Next iteration of the shared memory saga. Should now compile, even on gcc 4.1
+  * CASTOR2/castor/monitoring/rmnode/RmNodeDaemon.cpp:
+    [r 1.2,2006-11-06,sponcec3] Use getconfent properly
+  * CASTOR2/castor/monitoring/rmnode/StateThread.cpp:
+    [r 1.3,2006-11-06,sponcec3] Fixed some initialization
+    [r 1.2,2006-11-03,sponcec3] Next iteration of the shared memory saga. Should now compile, even on gcc 4.1
+  * CASTOR2/castor/repack/RepackCleaner.cpp:
+    [r1.12,2006-11-08,felixehm] The Stager options are now set correctly to the information found in the RepackRequest
+  * CASTOR2/castor/repack/RepackClient.cpp:
+    [r1.22,2006-11-08,felixehm] setting the Stager information in the Request was missing.
+    [r1.22,2006-11-08,felixehm] it is also now printed in the detailed view of a process
+  * CASTOR2/castor/repack/RepackCommonHeader.hpp:
+    [r1.14,2006-11-08,felixehm] introduction of a new state : FAILED.
+    [r1.14,2006-11-08,felixehm]
+    [r1.14,2006-11-08,felixehm] A RepackSubRequest is set to FAILED if a initial submit of a StageRepackRequest was not successfull (Stager not available,etc)
+  * CASTOR2/castor/repack/RepackFileChecker.cpp:
+    [r 1.4,2006-11-08,felixehm] speed up of setting the number staging files by using the segment (not the file) information.
+    [r 1.4,2006-11-08,felixehm]
+    [r 1.4,2006-11-08,felixehm] we ignore, if the result from the queried stager returns ENOENT (invalid argument), because it means that the requested file is not in Stager and can be send to be repacked again.
+  * CASTOR2/castor/repack/RepackFileStager.cpp:
+    [r1.25,2006-11-08,felixehm] Errors during submit of the StagerRepackRequest are now catched and handles in a higher level (error handling is done more generally).
+    [r1.25,2006-11-08,felixehm]
+    [r1.25,2006-11-08,felixehm] removed bug in restart logic
+  * CASTOR2/castor/repack/RepackMonitor.cpp:
+    [r1.13,2006-11-08,felixehm] distinguishing the response of a stager_fileqry:
+    [r1.13,2006-11-08,felixehm] if case of 1 response, we assume it is a general error in the stager and
+    [r1.13,2006-11-08,felixehm] forward the message in the created exception,
+    [r1.13,2006-11-08,felixehm] otherwise the text from sstrerror(serrno) is taken
+  * CASTOR2/castor/repack/RepackWorker.cpp:
+    [r1.28,2006-11-08,felixehm] logic missing : A Request should be able to be restarted, if in FINISHED, when files are left in staging/migrating (e.g. in case the request was aborted with -R )
+  * CASTOR2/castor/repack/Tools.cpp:
+  * CASTOR2/castor/repack/Tools.hpp:
+    [2006-11-08,felixehm] getStagerOpts now also sets the stager port to contact.
+  * CASTOR2/castor/sharedMemory/Allocator.hpp:
+    [r 1.8,2006-11-03,sponcec3] Fixed templated constructor
+    [r 1.7,2006-11-03,sponcec3] Register blocks in the right place in the central block dictionnary
+    [r 1.6,2006-11-03,sponcec3] Fixed stupud mistake in the previous commit
+    [r 1.5,2006-11-03,sponcec3] next iteration again...
+    [r 1.4,2006-11-03,sponcec3] Next iteration of the shared memory saga. Should now compile, even on gcc 4.1
+  * CASTOR2/castor/sharedMemory/Block.cpp:
+    [r 1.5,2006-11-03,sponcec3] Next iteration of the shared memory saga. Should now compile, even on gcc 4.1
+  * CASTOR2/castor/sharedMemory/Block.hpp:
+    [r 1.8,2006-11-06,sponcec3] Fixed comment
+    [r 1.7,2006-11-06,sponcec3] Fixed problem of the garbage collection in case we use the map of libstdc++-5
+    [r 1.6,2006-11-03,sponcec3] Register blocks in the right place in the central block dictionnary
+    [r 1.5,2006-11-03,sponcec3] Next iteration of the shared memory saga. Should now compile, even on gcc 4.1
+  * CASTOR2/castor/sharedMemory/BlockKey.hpp:
+    [r 1.2,2006-11-03,sponcec3] next iteration again...
+  * CASTOR2/castor/sharedMemory/SingletonBlock.hpp:
+    [r 1.2,2006-11-03,sponcec3] Next iteration of the shared memory saga. Should now compile, even on gcc 4.1
+  * CASTOR2/debian/castor.conf:
+    [r1.24,2006-11-06,waldron] added LOGMONITORING lines
+  * CASTOR2/dlf/dlf_lib.c:
+    [r 1.6,2006-11-06,waldron] fix: bug #21093 overview: Strange files created in local spool when DLF is not able to log?
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_create.sql:
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_create.sqlplus:
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_drop.sql:
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_drop.sqlplus:
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_create.sql:
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_create.sqlplus:
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_drop.sql:
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_drop.sqlplus:
+    [2006-11-08,waldron] added procedure dlf_stats_requests
+  * CASTOR2/dlf/web/db/oracle.php:
+    [r 1.4,2006-11-08,waldron] fixed bug in db_partition_count()
+  * CASTOR2/dlf/web/site.css:
+    [r 1.5,2006-11-06,waldron] corrected dlf_monitoring severity colour
+  * CASTOR2/doc/ug/overview.tex:
+    [r 1.4,2006-11-06,obarring] Add some \smallsize around examples
+  * CASTOR2/h/Castor_limits.h:
+    [r1.11,2006-11-07,hcacote]
+    [r1.11,2006-11-07,hcacote] adding support to the 700GB tape
+  * CASTOR2/h/Ctape.h:
+    [r1.48,2006-11-07,hcacote]
+    [r1.48,2006-11-07,hcacote] adding support to the 700GB tape
+  * CASTOR2/hsmtools/modifySvcClass.c:
+    [r 1.8,2006-11-07,sponcec3] Fixed calls to fillObj adapting to the new API
+  * CASTOR2/rtcopy/MigHunter.c:
+    [r1.37,2006-11-06,sponcec3] Adapted to the new fillObj interface
+    [r1.36,2006-11-06,obarring] Add rollbacks in main loop just to make sure hidden locks are not kept for
+    [r1.36,2006-11-06,obarring] next iteration. Try to restart streams in WAITSPACE.
+  * CASTOR2/rtcopy/TapeErrorHandler.c:
+    [r1.18,2006-11-06,sponcec3] Adapted to the new fillObj interface
+  * CASTOR2/rtcopy/rtcpcldCatalogueInterface.c:
+    [r1.156,2006-11-06,sponcec3] Adapted to the new fillObj interface
+  * CASTOR2/stager/stager_db_service.c:
+    [r1.151,2006-11-06,sponcec3] Fixed call to fillObj, using the new API
+  * CASTOR2/tape/Ctape_dmpfil.c:
+    [r1.26,2006-11-07,hcacote]
+    [r1.26,2006-11-07,hcacote] adding support to 700GB tape
+  * CASTOR2/tape/cvtden.c:
+    [r1.11,2006-11-07,hcacote]
+    [r1.11,2006-11-07,hcacote] adding support to 700GB tape
+  * CASTOR2/test/UtilityForCastorTest.py:
+  * CASTOR2/test/stager/CLIENTTESTCONFIG:
+  * CASTOR2/test/stager/ClientTest.py:
+    [2006-11-03,gtaur] fix for enviroment variables for Client test
+
+ -- Felix Ehm <felix.ehm@cern.ch>  Wed, 08 Nov 2006 18:20:00 +0200
+
+
+
+
+castor (2.1.1-8) unstable; urgency=low
+
   * CASTOR2/PACKAGING.howto:
     [r1.25,2006-10-26,felixehm] Added command for putting files into swrep
   * CASTOR2/castor/Constants.cpp:
