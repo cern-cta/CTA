@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/08/03 12:40:26 $ $Author: itglp $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/11/08 09:06:26 $ $Author: sponcec3 $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -81,7 +81,7 @@ const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementStrin
 
   /// SQL statement for selectFileSystem
 const std::string castor::db::ora::OraCommonSvc::s_selectFileSystemStatementString =
-  "SELECT DiskServer.id, DiskServer.status, FileSystem.id, FileSystem.free, FileSystem.weight, FileSystem.fsDeviation, FileSystem.status, FileSystem.minFreeSpace, FileSystem.maxFreeSpace, FileSystem.reservedSpace, FileSystem.spaceToBeFreed, FileSystem.totalSize FROM FileSystem, DiskServer WHERE DiskServer.name = :1 AND FileSystem.mountPoint = :2 AND FileSystem.diskserver = DiskServer.id FOR UPDATE";
+  "SELECT DiskServer.id, DiskServer.status, FileSystem.id, FileSystem.free, FileSystem.weight, FileSystem.fsDeviation, FileSystem.status, FileSystem.minFreeSpace, FileSystem.maxFreeSpace, FileSystem.reservedSpace, FileSystem.spaceToBeFreed, FileSystem.totalSize, FileSystem.minAllowedFreeSpace FROM FileSystem, DiskServer WHERE DiskServer.name = :1 AND FileSystem.mountPoint = :2 AND FileSystem.diskserver = DiskServer.id FOR UPDATE";
 
   
 // -----------------------------------------------------------------------
@@ -364,6 +364,7 @@ castor::db::ora::OraCommonSvc::selectFileSystem
     result->setReservedSpace((u_signed64)rset->getDouble(10));
     result->setSpaceToBeFreed((u_signed64)rset->getDouble(11));
     result->setTotalSize((u_signed64)rset->getDouble(12));
+    result->setMinAllowedFreeSpace(rset->getFloat(13));
     result->setMountPoint(mountPoint);
     result->setDiskserver(ds);
     ds->addFileSystems(result);
