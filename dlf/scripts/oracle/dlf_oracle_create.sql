@@ -885,14 +885,14 @@ END;
 CREATE OR REPLACE 
 PROCEDURE dlf_stats_jobs
 AS
-	-- query to determine statistics on jobs exiting
+	-- query to determine statistics on exiting jobs
 	CURSOR v_cur_exit IS
 	    SELECT p.value, avg(diff) avg, stddev_pop(diff) stddev, min(diff) min,
 		   max(diff) max, count(*) count
 	    FROM (
 		SELECT id, reqid, timestamp, msg_no,
 			LEAD(TO_NUMBER(timestamp), 1)
-				OVER (partition by reqid
+				OVER (PARTITION BY reqid
 				ORDER by timestamp, msg_no) next_timestamp,
 			LEAD(TO_NUMBER(timestamp), 1)
 				OVER (ORDER BY reqid) - TO_NUMBER(timestamp) diff
@@ -901,15 +901,15 @@ AS
 		-- intersection of request ids
 		SELECT * FROM dlf_messages WHERE reqid IN(
 		    SELECT reqid FROM dlf_messages
-			WHERE timestamp >  TO_DATE(SYSDATE - 20/1440, 'YYYYMMDDHH24MISS')
+			WHERE timestamp >  TO_DATE(SYSDATE - 15/1440, 'YYYYMMDDHH24MISS')
 			AND   timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
 			AND   facility = 5
-			AND   msg_no = 15
+			AND   msg_no   = 15
 		      INTERSECT
 		    SELECT reqid FROM dlf_messages
 			WHERE timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
 			AND   facility = 5
-			AND   msg_no = 12)
+			AND   msg_no   = 12)
 		AND facility = 5
 		AND ((msg_no = 12) OR (msg_no = 15))
 
@@ -922,10 +922,10 @@ AS
 	    AND   p.value IN (35, 36, 37, 40)
 	    GROUP BY p.value ORDER BY p.value;
 
-	-- query to determine statistics on jobs starting
+	-- query to determine statistics on starting jobs
         CURSOR v_cur_start IS
             SELECT p.value, count(m.reqid) count FROM dlf_messages m, dlf_num_param_values p
-            WHERE  m.timestamp >  TO_DATE(SYSDATE - 20/1440, 'YYYYMMDDHH24MISS')
+            WHERE  m.timestamp >  TO_DATE(SYSDATE - 15/1440, 'YYYYMMDDHH24MISS')
             AND    m.timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
             AND    m.facility = 5
             AND    m.msg_no   = 12
@@ -955,7 +955,7 @@ BEGIN
 		END IF;
 	END LOOP;
 
-	-- update the exit statistics data
+	-- update the exiting statistics data
 	OPEN v_cur_exit;
 	LOOP
 		FETCH v_cur_exit INTO v_record_exit;
@@ -1000,13 +1000,105 @@ END;
 
 
 /*
+ * dlf_stats_requests (Populates table: dlf_reqstats)
+ */
+CREATE OR REPLACE 
+PROCEDURE dlf_stats_requests
+AS
+	-- query to determine statistics on exiting requests
+	CURSOR v_cur_exit IS
+	    SELECT type, avg(proctime) avg, stddev_pop(proctime) stddev, min(proctime) min,
+		   max(proctime) max, count(*) count
+	    FROM (
+
+		SELECT m.msg_no, (p.value * 0.001) proctime,
+			LEAD (p.value, 1) 
+			OVER (PARTITION BY m.reqid ORDER BY m.timestamp, m.msg_no) type
+		FROM (
+
+		    -- intersection of request ids
+		    SELECT * FROM dlf_messages WHERE reqid IN (
+		        SELECT reqid FROM dlf_messages
+			    WHERE timestamp >  TO_DATE(SYSDATE - 15/1440, 'YYYYMMDDHH24MISS')
+			    AND   timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
+			    AND   facility = 4
+			    AND   msg_no   = 10
+		          INTERSECT
+		        SELECT reqid FROM dlf_messages
+			    WHERE timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
+			    AND   facility = 4
+			    AND   msg_no   = 12
+		    )
+		    AND facility = 4
+		    AND ((msg_no = 10) OR (msg_no = 12))		    
+
+		) m, dlf_num_param_values p
+		WHERE p.timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
+		AND   m.id = p.id
+		AND   p.name IN ('Type', 'ProcTime')
+
+	    )
+	    WHERE msg_no = 10
+	    AND   type IN (35, 36, 37, 40)
+	    GROUP BY type ORDER BY type;
+            
+	-- variables
+	v_record_exit   v_cur_exit%ROWTYPE;
+	v_time	        DATE;
+
+BEGIN
+
+	-- set the nls_date_format
+	EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "YYYYMMDDHH24MISS"';
+
+	-- we define the time as a variable so that all data recorded will be synchronised
+ 	v_time := TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS');
+
+	FOR i IN 35..40 LOOP
+		IF ((i = 35)  OR
+		    (i = 36)  OR
+		    (i = 37)  OR
+		    (i = 40)) THEN
+			INSERT INTO dlf_reqstats VALUES(v_time, i, 0, 0, 0, 0, 0, 300);
+		END IF;
+	END LOOP;
+
+	-- update the statistics data
+	OPEN v_cur_exit;
+	LOOP
+		FETCH v_cur_exit INTO v_record_exit;
+			EXIT WHEN v_cur_exit%NOTFOUND;
+
+			UPDATE dlf_reqstats SET
+				min_time  = v_record_exit.min,
+				max_time  = v_record_exit.max,
+				avg_time  = v_record_exit.avg,
+				std_dev   = v_record_exit.stddev,
+				req_count = v_record_exit.count
+			WHERE timestamp = v_time
+			AND   type      = v_record_exit.type;
+	END LOOP;
+        
+	COMMIT;
+
+EXCEPTION
+	WHEN OTHERS THEN
+		CLOSE v_cur_exit;
+		ROLLBACK;
+END;
+
+
+/*
  * statistics scheduler
  */
 BEGIN
 DBMS_SCHEDULER.CREATE_JOB (
 	JOB_NAME 	=> 'DLF_STATS_5MINS',
-	JOB_TYPE 	=> 'STORED_PROCEDURE',
-	JOB_ACTION 	=> 'DLF_STATS_JOBS',
+	JOB_TYPE 	=> 'PLSQL_BLOCK',
+	JOB_ACTION 	=> 'BEGIN
+				DLF_STATS_JOBS();
+				DLF_STATS_REQUESTS();
+			   END;',
 	START_DATE 	=> SYSDATE,
 	REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
 	ENABLED 	=> TRUE,

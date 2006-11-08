@@ -24,6 +24,7 @@ DROP TABLE dlf_mode;
 DROP PROCEDURE dlf_partition;
 DROP PROCEDURE dlf_archive;
 DROP PROCEDURE dlf_stats_jobs;
+DROP PROCEDURE dlf_stats_requests;
 
 /* scheduler */
 BEGIN
