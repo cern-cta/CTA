@@ -195,7 +195,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.71 $ $Release$ $Date: 2006/10/31 08:56:31 $ $Author: itglp $
+ * @(#)$RCSfile: castor_oracle_create.sql,v $ $Revision: 1.72 $ $Release$ $Date: 2006/11/08 14:43:28 $ $Author: felixehm $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -205,7 +205,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.71 $ $Date: 2006/10/31 08:56:31 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.72 $ $Date: 2006/11/08 14:43:28 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1761,14 +1761,14 @@ BEGIN
      */
     UPDATE subrequest SET status = 12 -- SUBREQUEST_REPACK
      WHERE subrequest.castorfile = cfid
-       AND subrequest.status = 1; -- SUBREQUEST_RESTART
-  END IF;
-  
-  IF subRequestId IS NOT NULL THEN
-    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
-     WHERE id = SubRequestId; 
-    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
-     WHERE parent = SubRequestId;
+       AND subrequest.status in (1,4); -- SUBREQUEST_RESTART
+  ELSE
+    IF subRequestId IS NOT NULL THEN
+      UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
+       WHERE id = SubRequestId; 
+      UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
+       WHERE parent = SubRequestId;
+    END IF;
   END IF;
   updateFsFileClosed(fsId, fileSize, fileSize);
 END;
