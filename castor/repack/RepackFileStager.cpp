@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2006/11/02 17:01:52 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2006/11/08 14:18:06 $ $Author: felixehm $
  *
  *
  *
@@ -175,14 +175,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
     for (int i=0; i<req.subRequests().size(); i++)  
       delete req.subRequests().at(i);
     req.subRequests().clear();
-
-    castor::dlf::Param params[] =
-    {castor::dlf::Param("Standard Message", sstrerror(ex.code())),
-     castor::dlf::Param("Precise Message", ex.getMessage().str()),
-     castor::dlf::Param("VID", sreq->vid())
-    };
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 21, 3, params);
-    return;
+    throw ex;
   }
 
   /// we want to know how many files were successfully submitted
@@ -223,12 +216,12 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq){
     faked->setStatus(sreq->status());
     /** we need the service class info in the original RepackRequest for staging */
     faked->setRequestID(sreq->requestID()); 
-
+    
     
     /** we only want to restart a repack for the files, which made problems 
         (status in invalid) and are still on the original tape */
     try {
-      monitor.getStats(sreq, &responses, &nbresps);
+      monitor.getStats(faked, &responses, &nbresps);
     }catch (castor::exception::Exception ex){
       castor::dlf::Param params[] =
       {castor::dlf::Param("Module", "RepackFileStager" ),
@@ -254,8 +247,8 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq){
     /** next check: if there are no files in failed, staging or migrating, get the
         remaining files on tape, they have to be submitted again */
     if (   !faked->segment().size()    
-        && !sreq->filesMigrating()
-        && !sreq->filesStaging() ) 
+        && !faked->filesMigrating()
+        && !faked->filesStaging() ) 
     {
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ALERT, 43, 0, NULL);
       filelisthelper.getFileListSegs(faked);
@@ -294,10 +287,19 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq){
 //------------------------------------------------------------------------------
 void RepackFileStager::startRepack(RepackSubRequest* sreq){
   _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
-  stage_files(sreq);
-
-  /// doesn't throw exceptions and we want the RepackSubrequest to be updated with 
-  /// the segment information
+  try {
+    stage_files(sreq);
+  }catch (castor::exception::Exception ex){
+    castor::dlf::Param params[] =
+    {castor::dlf::Param("Standard Message", sstrerror(ex.code())),
+     castor::dlf::Param("Precise Message", ex.getMessage().str()),
+     castor::dlf::Param("VID", sreq->vid())
+    };
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 21, 3, params);
+    sreq->setStatus(SUBREQUEST_FAILED);
+    m_dbhelper->updateSubRequest(sreq,false, cuuid);
+    return;
+  }
 
   m_dbhelper->updateSubRequest(sreq,false, cuuid);
   stage_trace(2,"File are sent to stager, repack request updated.");
@@ -323,6 +325,7 @@ int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
 
   castor::stager::RequestHelper reqh(req);
   reqh.setOptions(opts);
+  client.setOption(opts);
 
   client.setAuthorizationId(rsreq->requestID()->userid(), rsreq->requestID()->groupid());
   
