@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.php,v 1.3 2006/09/25 11:43:53 waldron Exp $
+ * $Id: oracle.php,v 1.4 2006/11/08 13:05:31 waldron Exp $
  */
 
 /* definitions */
@@ -173,8 +173,8 @@ function db_partition_count($conn) {
 	 *   - this is mostly likely caused by a unpartitioned database!
 	 */
 	if ($row[0] > 0) {
-		if ($row[30] < $max_partitions_online) {
-			return "Partitions online: 30";
+		if ($row[0] > $max_partitions_online) {
+			return "Partitions online: 30 - (total: ".$row[0].")";
 		} else {
 			return "Partitions online: ".$row[0];
 		}
