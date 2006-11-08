@@ -5,6 +5,7 @@
 #include "Cuuid.h"
 #include "stager_client_api.h"
 #include "castor/repack/RepackCommonHeader.hpp"
+#include "stager_constants.h"
 
 namespace castor {
 	namespace repack {

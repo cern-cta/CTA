@@ -78,7 +78,7 @@ namespace castor {
   }
  
 //------------------------------------------------------------------------------
-// Helper for getting the ServiceClass in a stager request
+// Helper for setting the Stager Options 
 //------------------------------------------------------------------------------ 
   void getStageOpts(struct stage_options* opts, RepackSubRequest* sreq) 
                                               throw (castor::exception::Internal)
@@ -94,6 +94,8 @@ namespace castor {
     if ( sreq->requestID() != NULL ) {
       opts->service_class = (char*)sreq->requestID()->serviceclass().c_str();
       opts->stage_host = (char*)sreq->requestID()->stager().c_str();
+      opts->stage_port = opts->stage_port = DEFAULT_STAGER_PORT;
+      opts->stage_version = 0;
     }
     else {
       castor::exception::Internal ex;
