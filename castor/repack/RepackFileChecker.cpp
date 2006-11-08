@@ -94,8 +94,7 @@ void RepackFileChecker::run(void* param) throw(){
           return, because a message was written to DLF. */
       if ( checkMultiRepack(sreq) == -1 ) return; 
       
-      std::vector<std::string>* filelist = m_filehelper.getFilePathnames(sreq); 
-      sreq->setFiles(filelist->size());
+      sreq->setFiles(sreq->segment().size());
       sreq->setStatus(SUBREQUEST_TOBESTAGED);
       m_dbhelper->updateSubRequest(sreq,true, cuuid);
       stage_trace(3,"Found %d files, RepackSubRequest for Tape %s ready for Staging ",sreq->files(),(char*)sreq->vid().c_str());
@@ -157,8 +156,6 @@ int RepackFileChecker::checkMultiRepack(RepackSubRequest* sreq)
         fileid.fileid = (*segment)->fileid();
         /// set the options
         getStageOpts(&opts, sreq);
-        opts.stage_port = 0;
-        opts.stage_version = 0;
 
         rc = errno = serrno = nbresps = 0;                                                           
         /// Send request to stager 
@@ -177,8 +174,7 @@ int RepackFileChecker::checkMultiRepack(RepackSubRequest* sreq)
         }
         else {
           /** check, if the file can be send again (no diskcopy or in STAGEIN) */
-          if ( nbresps 
-                && responses[0].errorCode != ENOENT /// there is a file with that name 
+          if ( nbresps
                 && responses[0].status != FILE_STAGEIN  /// it is not staging in  
                 && responses[0].status != FILE_INVALID_STATUS ) /// and not in invalid status
           {
