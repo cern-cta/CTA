@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.334 $ $Release$ $Date: 2006/11/06 11:18:26 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.335 $ $Release$ $Date: 2006/11/08 17:11:59 $ $Author: felixehm $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.334 $ $Date: 2006/11/06 11:18:26 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.335 $ $Date: 2006/11/08 17:11:59 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1561,19 +1561,19 @@ BEGIN
 	   
      -- create the number of tapecopies for the files
     internalPutDoneFunc(cfid, fsId, 0, nbTC);
-    /** to avoid additional scheduling of the subrequest(s) 
+    /** to avoid additional scheduling of the waiting subrequest(s) 
         (because it is now in 1), we do it
      */
     UPDATE subrequest SET status = 12 -- SUBREQUEST_REPACK
      WHERE subrequest.castorfile = cfid
-       AND subrequest.status = 1; -- SUBREQUEST_RESTART
-  END IF;
-  
-  IF subRequestId IS NOT NULL THEN
-    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
-     WHERE id = SubRequestId; 
-    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
-     WHERE parent = SubRequestId;
+       AND subrequest.status IN (1,4); -- SUBREQUEST_RESTART
+  ELSE 
+    IF subRequestId IS NOT NULL THEN
+      UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
+       WHERE id = SubRequestId; 
+      UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
+       WHERE parent = SubRequestId;
+    END IF;
   END IF;
   updateFsFileClosed(fsId, fileSize, fileSize);
 END;
