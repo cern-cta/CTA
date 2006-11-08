@@ -144,11 +144,16 @@ throw (castor::exception::Exception)
   /** we ignore ENOENT ("Could not find results for request") */
   if ( rc == -1 || ( (*nbresps) == 1 && (**responses).errorCode ==EINVAL) )
   {
-    castor::exception::Exception ex(serrno);
-    if ( nbresps = 0 )
-      ex.getMessage() << "No responses recieved ";
-    ex.getMessage() << "(" <<sstrerror(serrno) << ")" << std::endl;
-    throw ex;
+    if ( (*nbresps) == 1 ){
+      castor::exception::Exception ex(EINVAL);
+      ex.getMessage() << (**responses).errorMessage;
+      throw ex;
+    }
+    else {
+      castor::exception::Exception ex(serrno);
+      ex.getMessage() << "(" <<sstrerror(serrno) << ")" << std::endl;
+      throw ex;
+    }
   }
 }
 
@@ -214,7 +219,7 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
   free_filequery_resp(responses, nbresps);
 
   if ( invalid_status ) {
-    stage_trace(3,"Found %d files in invalid status", invalid_status);
+    stage_trace(3,"Found  %d files in invalid status.", invalid_status);
     castor::dlf::Param params[] =
       {castor::dlf::Param("Number", invalid_status)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 42, 1, params);
@@ -230,8 +235,8 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
     sreq->setFilesStaging( stagein_status );
     sreq->setFilesFailed( invalid_status );
     
-    stage_trace(3,"Updating RepackSubRequest: Mig: %d\tStaging: %d\t Invalid %d\n",
-    sreq->filesMigrating(), sreq->filesStaging(),sreq->filesFailed() );  
+    stage_trace(3,"Updating RepackSubRequest with %d responses: Mig: %d\tStaging: %d\t Invalid %d\n",
+    nbresps, sreq->filesMigrating(), sreq->filesStaging(),sreq->filesFailed() );  
 
 
     /// if we find migration candidates, we just change the status from staging, 
