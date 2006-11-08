@@ -50,6 +50,8 @@ namespace castor{
     CSP_REPACKSERVER_PORT = 62800,  // the standard server port
     CSP_REPACKPOLLTIME = 240,       // the standard polling time for cleaner and monitor
 
+    DEFAULT_STAGER_PORT = 9002,
+    
     SUBREQUEST_READYFORSTAGING = 1,
     SUBREQUEST_STAGING		     = 2,
     SUBREQUEST_MIGRATING	     = 3,
@@ -57,12 +59,13 @@ namespace castor{
     SUBREQUEST_DONE            = 5,
     SUBREQUEST_ARCHIVED        = 6,
     SUBREQUEST_RESTART         = 7,
-    SUBREQUEST_TOBESTAGED      = 8
+    SUBREQUEST_TOBESTAGED      = 8,
+    SUBREQUEST_FAILED          = 9
 
     };
 
    
-	}
+    }
 }
 
 
