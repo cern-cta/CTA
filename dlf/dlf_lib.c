@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.6 2006/11/06 07:18:34 waldron Exp $
+ * $Id: dlf_lib.c,v 1.7 2006/11/09 10:07:24 waldron Exp $
  */
 
 /* headers */
@@ -371,7 +371,7 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 	}
 
 	/* request id */
-	rv = Cuuid2string(message->reqid, sizeof(message->reqid) - 1, &reqid);
+	rv = Cuuid2string(message->reqid, sizeof(message->reqid), &reqid);
 	if (rv < 0) {
 		free_message(message);
 		return APP_FAILURE;
@@ -441,7 +441,7 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 		}
 		else if (param->type == DLF_MSG_PARAM_UUID) {
 			preqid = params[i].par.par_uuid;
-			rv = Cuuid2string(value, sizeof(message->reqid) - 1, &preqid);
+			rv = Cuuid2string(value, sizeof(message->reqid), &preqid);
 			if (rv < 0) {
 				free_param(param);
 				free_message(message);

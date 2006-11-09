@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: process.c,v 1.4 2006/08/21 06:41:49 waldron Exp $
+ * $Id: process.c,v 1.5 2006/11/09 10:07:24 waldron Exp $
  */
 
 /* headers */
@@ -334,7 +334,7 @@ int parse_log(client_t *client, char *data, int len) {
 		} else if (param->type == DLF_MSG_PARAM_TPVID) {
 			rv = unmarshall_STRINGN(rbp, value, DLF_LEN_TAPEID + 1);
 		} else if (param->type == DLF_MSG_PARAM_UUID) {
-			rv = unmarshall_STRINGN(rbp, value, CUUID_STRING_LEN);
+			rv = unmarshall_STRINGN(rbp, value, CUUID_STRING_LEN + 1);
 		} else {
 			rv = unmarshall_STRINGN(rbp, value, DLF_LEN_STRINGVALUE + 1);
 		}
