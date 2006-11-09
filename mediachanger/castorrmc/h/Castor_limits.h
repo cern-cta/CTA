@@ -15,7 +15,6 @@
 #define _CASTOR_LIMITS_H
 
 	/* all maximum lengths defined below do not include the trailing null */
-#define CA_MAXDENNUM      28    /*  ...  */
 
 #define CA_MAXACLENTRIES 300	/* maximum number of ACL entries for a file/dir */
 #define CA_MAXCLASNAMELEN 15	/* maximum length for a fileclass name */
