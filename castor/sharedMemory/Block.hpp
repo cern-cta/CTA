@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/11/06 16:08:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/11/10 15:49:15 $ $Author: sponcec3 $
  *
  * A block of shared memory with incorporated memory allocation
  *
@@ -75,7 +75,7 @@ namespace castor {
        * allocates a new chunk of memory
        * @param nbBytes the number of bytes needed
        */
-      void* malloc(size_t nbBytes)
+      virtual void* malloc(size_t nbBytes)
         throw (castor::exception::Exception);
 
       /**
@@ -83,7 +83,7 @@ namespace castor {
        * @param pointer a pointer to the space to deallocate
        * @param nbBytes the number of bytes freed
        */
-      void free(void* pointer, size_t nbBytes)
+      virtual void free(void* pointer, size_t nbBytes)
         throw (castor::exception::Exception);
 
     private:
