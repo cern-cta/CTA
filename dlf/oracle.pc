@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.15 2006/11/01 12:34:17 waldron Exp $
+ * $Id: oracle.pc,v 1.16 2006/11/10 12:35:35 waldron Exp $
  */
 
 /* headers */
@@ -1420,7 +1420,7 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 	EXEC SQL CONTEXT USE :db->ctx;
 
 	db->inserts++;
-	EXEC SQL INSERT INTO dlf_monitoring2
+	EXEC SQL INSERT INTO dlf_monitoring
 	VALUES (TO_DATE(:timestr, 'YYYYMMDDHH24MISS'),
 		:h_threads,    :h_messages,   :h_inits,      :h_errors,    :h_connections,
 	 	:h_clientpeak, :h_timeouts,   :db_threads,   :db_commits,  :db_errors,
