@@ -57,7 +57,8 @@ commonTest={'TEST':0}
 serverTest={'TEST':0}
 
 clientTest={'PREREQ': ClientTest.StagerPreClientSuite(),'PUT':ClientTest.StagerPutSuite(),'PUTDONE':ClientTest.StagerPutDoneSuite(),'GET':ClientTest.StagerGetSuite(),'RM':ClientTest.StagerRmSuite(),'EXTRAQRY':ClientTest.StagerQuerySpecialSuite()}
-rfioTest={'PREREQ':RfioTest.RfioPreRequisitesSuite(),'BASIC_RFCP':RfioTest.RfioRfcpSimpleSuite(),'CASTOR_RFCP':RfioTest.RfioRfcpEnvSuite() ,'CASTOR_RFCP_FANCY_TURL': RfioTest.RfioRfcpFancyTurlSuite()}
+
+rfioTest={'PREREQ':RfioTest.RfioPreRequisitesSuite(),'BASIC_RFCP':RfioTest.RfioRfcpSimpleSuite(),'BASIC_OTHERCMD':RfioTest.RfioOtherCmdSimpleSuite(),'CASTOR_RFCP':RfioTest.RfioRfcpEnvSuite() ,'CASTOR_RFCP_FANCY_TURL': RfioTest.RfioRfcpFancyTurlSuite(),'CASTOR_OTHERCMD':RfioTest.RfioOtherCmdEnvSuite() ,'CASTOR_OTHERCMD_FANCY_TURL': RfioTest.RfioOtherCmdFancyTurlSuite()}
 
 dlfTest={'TEST':0}
 

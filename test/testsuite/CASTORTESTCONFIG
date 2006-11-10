@@ -11,10 +11,13 @@ COMMON          TEST            NO
 
 SERVER          TEST            NO 
 
-RFIO            PREREQ           NO  
-RFIO            BASIC_RFCP       NO
-RFIO            CASTOR_RFCP      NO
-RFIO            CASTOR_RFCP_FANCY_TURL  NO
+RFIO            PREREQ                       NO  
+RFIO            BASIC_RFCP                   NO
+RFIO            BASIC_OTHERCMD               NO
+RFIO            CASTOR_RFCP                  NO
+RFIO            CASTOR_RFCP_FANCY_TURL       NO
+RFIO            CASTOR_OTHERCMD              NO
+RFIO            CASTOR_OTHERCMD_FANCY_TURL   NO
 
 CSVCS           TEST            NO 
 

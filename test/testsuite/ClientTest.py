@@ -8,7 +8,7 @@ import threading
 ticket= UtilityForCastorTest.getTicket() 
 localDir="./tmpClientTest"+ticket+"/"
 myCastor=UtilityForCastorTest.prepareCastorString()
-dirCastor=myCastor+"TestClient"+ticket+"/"
+dirCastor=myCastor+"tmpClientTest"+ticket+"/"
 os.system("mkdir "+localDir)
 myScen=""
 
@@ -84,18 +84,25 @@ class StagerPutCase(unittest.TestCase):
 		cmd=["stager_put -M "+dirCastor+"filePut1"+ticket,"stager_qry -M "+dirCastor+"filePut1"+ticket]
 		UtilityForCastorTest.saveOnFile(localDir+"basicPut",cmd,myScen)
 		fi=open(localDir+"basicPut","r")
-        	assert fi.read().rfind("SUBREQUEST_READY") != -1, "stager_put doesn't work"
-        	fi.close()
+	        buffOut=fi.read()
+		fi.close()
+
+        	assert buffOut.rfind("SUBREQUEST_READY") != -1, "stager_put doesn't work"
 		fi=open(localDir+"basicPut1","r")
-        	assert fi.read().rfind("STAGEOUT") != -1, "stager_qry doesn't work after a simple put"
-        	fi.close()
+		buffOut=fi.read()
+		fi.close()
+        	assert buffOut.rfind("No such file or directory") != -1, "stager_qry doesn't work after a simple put"
+        	
 		
 	def putAndRfcp(self):
 		cmd=["stager_put -M "+dirCastor+"filePut2"+ticket,"rfcp /etc/group "+dirCastor+"filePut2"+ticket,"stager_qry -M "+dirCastor+"filePut2"+ticket]
 		UtilityForCastorTest.saveOnFile(localDir+"putAndRfcp",cmd,myScen)
 		fi=open(localDir+"putAndRfcp2","r")
-        	assert fi.read().find("STAGEOUT") != -1, "stager_qry doesn't work after stager_put and rfcp"
-        	fi.close()
+	        buffOut=fi.read()
+		fi.close()
+		
+        	assert buffOut.find("STAGEOUT") != -1, "stager_qry doesn't work after stager_put and rfcp"
+        	
 		
 	def putManyFiles(self):
 		cmd=["stager_put -M "+dirCastor+"filePut3"+ticket+" -M "+dirCastor+"filePut4"+ticket,"rfcp /etc/group "+dirCastor+"filePut3"+ticket,"stager_qry -M "+dirCastor+"filePut3"+ticket,"rfcp /etc/group "+dirCastor+"filePut4"+ticket,"stager_qry -M "+dirCastor+"filePut4"+ticket,"stager_qry -M "+dirCastor+"filePut3"+ticket+" -M "+dirCastor+"filePut4"+ticket]
@@ -103,20 +110,30 @@ class StagerPutCase(unittest.TestCase):
 	        UtilityForCastorTest.saveOnFile(localDir+"putManyFiles",cmd,myScen)
 
 		fi=open(localDir+"putManyFiles","r")
-        	assert fi.read().count("SUBREQUEST_READY") == 2, "stager_put doesn't work with two files"
-        	fi.close()
+	        buffOut=fi.read()
+		fi.close()
+		
+        	assert buffOut.count("SUBREQUEST_READY") == 2, "stager_put doesn't work with two files"
+        	
 
 		fi=open(localDir+"putManyFiles2","r")
-        	assert fi.read().find("STAGEOUT") != -1, "stager_qry doesn't work after stager_put with many files and rfcp"
+		buffOut=fi.read()
 		fi.close()
+		
+        	assert buffOut.find("STAGEOUT") != -1, "stager_qry doesn't work after stager_put with many files and rfcp"
 		 
 		fi=open(localDir+"putManyFiles4","r")
-        	assert fi.read().find("STAGEOUT") != -1, "stager_qry doesn't work after stager_put with many files and rfcp"
+		buffOut=fi.read()
 		fi.close()
+		
+        	assert buffOut.find("STAGEOUT") != -1, "stager_qry doesn't work after stager_put with many files and rfcp"
  
 		fi=open(localDir+"putManyFiles5","r")
-		assert fi.read().count("STAGEOUT") == 2, "stager_qry doesn't work with two parameters"
+		buffOut=fi.read()
 		fi.close()
+		
+		assert buffOut.count("STAGEOUT") == 2, "stager_qry doesn't work with two parameters"
+		
 		
 	def putTag(self):
 		cmd=["stager_put -M "+dirCastor+"filePut5"+ticket+" -U tagPut"+ticket,"stager_qry -M "+dirCastor+"filePut5"+ticket,"stager_qry -U tagPut"+ticket,"rfcp /etc/group "+dirCastor+"filePut5"+ticket,"stager_qry -M "+dirCastor+"filePut5"+ticket,"stager_qry -U tagPut"+ticket]
@@ -124,32 +141,44 @@ class StagerPutCase(unittest.TestCase):
 	        UtilityForCastorTest.saveOnFile(localDir+"putTag",cmd,myScen)
 	
 		fi=open(localDir+"putTag","r")
-        	assert fi.read().find("SUBREQUEST_READY") != -1, "put doesn't work with tag"
-        	fi.close()
-
-		fi=open(localDir+"putTag1","r")
-        	assert fi.read().find("STAGEOUT") != -1, "stager_qry doesn't work after a put with tag"
-        	fi.close()
-	
-		fi=open(localDir+"putTag2","r")
-        	assert fi.read().find("STAGEOUT") != -1, "stager_qry doesn't work after a put with tag"
-        	fi.close()
-
-		fi=open(localDir+"putTag4","r")
-		assert fi.read().find("STAGEOUT") != -1, "stager_qry doesn't work with tag"
+	        buffOut=fi.read()
 		fi.close()
 		
-		fi=open(localDir+"putTag5","r")
-		assert fi.read().find("STAGEOUT") != -1, "stager_qry doesn't work with tag"
+        	assert buffOut.find("SUBREQUEST_READY") != -1, "put doesn't work with tag"
+
+		fi=open(localDir+"putTag1","r")
+	        buffOut=fi.read()
 		fi.close()
+		
+        	assert buffOut.find("No such file or directory") != -1, "stager_qry doesn't work after a put with tag"
+	
+		fi=open(localDir+"putTag2","r")
+	        buffOut=fi.read()
+		fi.close()		
+        	assert buffOut.find("No such file or directory") != -1, "stager_qry doesn't work after a put with tag"
+
+		fi=open(localDir+"putTag4","r")
+	        buffOut=fi.read()
+		fi.close()
+		
+		assert buffOut.find("STAGEOUT") != -1, "stager_qry doesn't work with tag"
+		
+		fi=open(localDir+"putTag5","r")
+	        buffOut=fi.read()
+		fi.close()
+		
+		assert buffOut.find("STAGEOUT") != -1, "stager_qry doesn't work with tag"
+		
 		
 	def putSvcClass(self):
 
 		cmd=["stager_put -M "+dirCastor+"filePutSvc1"+ticket+" -S mySVC","stager_put -M "+dirCastor+"filePutSvc2"+ticket+" -S default","stager_qry -M "+dirCastor+"filePutSvc2"+ticket]
 		UtilityForCastorTest.saveOnFile(localDir+"putSvc",cmd,myScen)
 		fi=open(localDir+"putSvc","r")
-        	assert fi.read().rfind("Opt SVCCLASS=mySVC") != -1, "stager_put doesn't work with svc class option -S"
-        	fi.close()
+		buffOut=fi.read()
+		fi.close()
+        	assert buffOut.rfind("Opt SVCCLASS=mySVC") != -1, "stager_put doesn't work with svc class option -S"
+        	
 		
 		fi=open(localDir+"putSvc1","r")
 		outBuf=fi.read()
@@ -158,8 +187,10 @@ class StagerPutCase(unittest.TestCase):
 	        assert outBuf.find("SUBREQUEST_READY") != -1, "stager_qry doesn't work after a simple put"
 
 		fi=open(localDir+"putSvc2","r")
-        	assert fi.read().rfind("STAGEOUT") != -1, "stager_qry doesn't work with svc class option -S"
-        	fi.close()
+		buffOut=fi.read()
+		fi.close()
+        	assert buffOut.rfind("No such file or directory") != -1, "stager_qry doesn't work with svc class option -S"
+	
 		
 	def putR(self):
 		cmd=["stager_put -M "+dirCastor+"filePutR"+ticket+" -r","stager_qry -M "+dirCastor+"filePutR"+ticket]
@@ -175,8 +206,10 @@ class StagerPutCase(unittest.TestCase):
 
         	assert buffOut.count(reqId) == 4, "stager_put doesn't work with svc class the option -r"
 		fi=open(localDir+"putR1","r")
-        	assert fi.read().rfind("STAGEOUT") != -1, "stager_qry doesn't work with the  option -r"
-        	fi.close()
+		buffOut=fi.read()
+		fi.close()
+        	assert buffOut.rfind("No such file or directory") != -1, "stager_qry doesn't work with the  option -r"
+        	
 
 class StagerPutDoneCase(unittest.TestCase):
 	def basicPutDone(self):
@@ -185,12 +218,16 @@ class StagerPutDoneCase(unittest.TestCase):
 	        UtilityForCastorTest.saveOnFile(localDir+"basicPutDone",cmd,myScen)
 		
 		fi=open(localDir+"basicPutDone1","r")
-        	assert fi.read().find("putDone without a put") != -1, "putDone doesn't work"
-        	fi.close()
+		buffOut=fi.read()
+		fi.close()
+        	assert buffOut.find("putDone without a put") != -1, "putDone doesn't work"
 
 		fi=open(localDir+"basicPutDone2","r")
-        	assert fi.read().find("STAGEOUT") != -1, "stager_qry doesn't work after a putDone"
-        	fi.close()
+	        buffOut=fi.read()
+		fi.close()
+		
+        	assert buffOut.find("No such file or directory") != -1, "stager_qry doesn't work after a putDone"
+        	
 		
 	def putDoneAndRfcp(self):
 		cmd=["stager_put -M "+dirCastor+"fileDone2"+ticket,"rfcp /etc/group "+dirCastor+"fileDone2"+ticket,"stager_putdone -M "+dirCastor+"fileDone2"+ticket,"stager_qry -M "+dirCastor+"fileDone2"+ticket]
@@ -198,12 +235,14 @@ class StagerPutDoneCase(unittest.TestCase):
 	        UtilityForCastorTest.saveOnFile(localDir+"putDoneAndRfcp",cmd,myScen)
        
 		fi=open(localDir+"putDoneAndRfcp2","r")
-        	assert fi.read().find("error=0") != -1, "putDone doesn't work with rfcp"
-        	fi.close()
+	        buffOut=fi.read()
+		fi.close()
+        	assert buffOut.find("error=0") != -1, "putDone doesn't work with rfcp"
 	
 		fi=open(localDir+"putDoneAndRfcp3","r")
-        	assert fi.read().find("CANBEMIGR") != -1, "stager_qry doesn't work after a putDone with rfcp"
-        	fi.close()
+	        buffOut=fi.read()
+		fi.close()
+        	assert buffOut.find("CANBEMIGR") != -1, "stager_qry doesn't work after a putDone with rfcp"
 		
 	def putDoneManyFiles(self):
 		cmd=["stager_put -M "+dirCastor+"fileDone3"+ticket+" -M "+dirCastor+"fileDone4"+ticket,"rfcp /etc/group "+dirCastor+"fileDone3"+ticket,"rfcp /etc/group "+dirCastor+"fileDone4"+ticket,"stager_putdone -M "+dirCastor+"fileDone3"+ticket+" -M "+dirCastor+"fileDone4"+ticket,"stager_qry -M "+dirCastor+"fileDone3"+ticket,"stager_qry -M "+dirCastor+"fileDone4"+ticket,"stager_qry -M "+dirCastor+"fileDone3"+ticket+" -M "+dirCastor+"fileDone4"+ticket]
@@ -211,20 +250,30 @@ class StagerPutDoneCase(unittest.TestCase):
 		UtilityForCastorTest.saveOnFile(localDir+"putDoneManyFiles",cmd,myScen)
 
 		fi=open(localDir+"putDoneManyFiles3","r")
-        	assert fi.read().find("error=0") != -1, "putDone doesn't work with many files"
-        	fi.close()
+	        buffOut=fi.read()
+		fi.close()		
+        	assert buffOut.find("error=0") != -1, "putDone doesn't work with many files"
+        	
 	
 		fi=open(localDir+"putDoneManyFiles4","r")
-        	assert fi.read().find("CANBEMIGR") != -1, "stager_qry doesn't work after a putDone with many files"
-        	fi.close()
+	        buffOut=fi.read()
+		fi.close()		
+        	assert buffOut.find("CANBEMIGR") != -1, "stager_qry doesn't work after a putDone with many files"
+        	
 		
 		fi=open(localDir+"putDoneManyFiles5","r")
-        	assert fi.read().find("CANBEMIGR") != -1, "stager_qry doesn't work after a putDone with many files"
-        	fi.close()
+	        buffOut=fi.read()
+		fi.close()
+		
+        	assert buffOut.find("CANBEMIGR") != -1, "stager_qry doesn't work after a putDone with many files"
+
 		
 		fi=open(localDir+"putDoneManyFiles6","r")
-        	assert fi.read().count("CANBEMIGR") == 2,  "stager_qry doesn't work after a putDone with many files"
-        	fi.close()	
+	        buffOut=fi.read()
+		fi.close()
+		
+        	assert buffOut.count("CANBEMIGR") == 2,  "stager_qry doesn't work after a putDone with many files"
+        	
 		
 	def putDoneR(self):	
 			
@@ -248,8 +297,10 @@ class StagerPutDoneCase(unittest.TestCase):
         	assert buffOut.find("PutRequestId="+reqId)  != -1, "stager_put doesn't work with svc class the option -r"
 
 		fi=open(localDir+"putDoneR21","r")
-        	assert fi.read().find("CANBEMIGR") != -1, "stager_putdone doesn't work after a putDone -r"
-        	fi.close()
+	        buffOut=fi.read()
+		fi.close()
+        	assert buffOut.find("CANBEMIGR") != -1, "stager_putdone doesn't work after a putDone -r"
+        	
 	
 	def putDoneAndLongFile(self):
 		fileBig=MakeBigFile()
@@ -261,8 +312,9 @@ class StagerPutDoneCase(unittest.TestCase):
                 UtilityForCastorTest.saveOnFile(localDir+"putDoneAndLongFile",cmd2,myScen)
                 os.system("rm "+fileBig) 
 		fi=open(localDir+"putDoneAndLongFile1","r")
-        	assert fi.read().find("SUBREQUEST_FAILED") != -1, "putDone doesn't work with big files"
-        	fi.close()
+	        buffOut=fi.read()
+		fi.close()
+        	assert buffOut.find("SUBREQUEST_FAILED") != -1, "putDone doesn't work with big files"
 
 	
 class StagerGetCase(unittest.TestCase):
@@ -272,12 +324,15 @@ class StagerGetCase(unittest.TestCase):
 	        UtilityForCastorTest.saveOnFile(localDir+"basicGet",cmd,myScen)
 
 		fi=open(localDir+"basicGet1","r")
-            	assert fi.read().find("SUBREQUEST_READY") != -1, "stager_get doesn't work after put"
-            	fi.close()
+	        buffOut=fi.read()
+		fi.close()
+            	assert buffOut.find("SUBREQUEST_READY") != -1, "stager_get doesn't work after put"
 	
 		fi=open(localDir+"basicGet2","r")
-        	assert fi.read().find("STAGEOUT") != -1, "stager_get doesn't work after put"
-        	fi.close()
+	        buffOut=fi.read()
+		fi.close()		
+        	assert buffOut.find("STAGEOUT") != -1, "stager_get doesn't work after put"
+        	
 		
 	def getAndRfcp(self):
 		cmd=["stager_put -M "+dirCastor+"fileGet2"+ticket,"rfcp /etc/group "+dirCastor+"fileGet2"+ticket,"stager_get -M "+dirCastor+"fileGet2"+ticket,"stager_putdone -M "+dirCastor+"fileGet2"+ticket,"stager_get -M "+dirCastor+"fileGet2"+ticket,"stager_qry -M "+dirCastor+"fileGet2"+ticket]
@@ -285,36 +340,47 @@ class StagerGetCase(unittest.TestCase):
 		UtilityForCastorTest.saveOnFile(localDir+"getAndRfcp",cmd,myScen)
 	
 		fi=open(localDir+"getAndRfcp2","r")
-		assert fi.read().find("SUBREQUEST_READY") != -1, "stager_get doesn't work after stager_put and rfcp"
-		fi.close()
+	        buffOut=fi.read()
+		fi.close()		
+		assert buffOut.find("SUBREQUEST_READY") != -1, "stager_get doesn't work after stager_put and rfcp"
 	
 		fi=open(localDir+"getAndRfcp3","r")
-            	assert fi.read().find("error=0") != -1, "stager_get doesn't work after rfcp and putdone"
-            	fi.close()
+		buffOut=fi.read()
+		fi.close()
+            	assert buffOut.find("error=0") != -1, "stager_get doesn't work after rfcp and putdone"
+		
 	
 		fi=open(localDir+"getAndRfcp4","r")
         	assert fi.read().find("SUBREQUEST_READY") != -1, "stager_get doesn't work after a put, rfcp and putDone"
         	fi.close()
 		
 	        fi=open(localDir+"getAndRfcp5","r")
-        	assert fi.read().find("CANBEMIGR") != -1, "stager_get doesn't work after a put, rfcp and putDone"
-        	fi.close()
+		buffOut=fi.read()
+		fi.close()
+        	assert buffOut.find("CANBEMIGR") != -1, "stager_get doesn't work after a put, rfcp and putDone"
+        	
 		
 	def getManyFiles(self):
 		cmd=["stager_put -M "+dirCastor+"fileGet3"+ticket+" -M "+dirCastor+"fileGet4"+ticket,"rfcp /etc/group "+dirCastor+"fileGet3"+ticket,"rfcp /etc/group "+dirCastor+"fileGet4"+ticket,"stager_get -M "+dirCastor+"fileGet3"+ticket+" -M "+dirCastor+"fileGet4"+ticket,"stager_putdone -M "+dirCastor+"fileGet3"+ticket,"stager_putdone -M "+dirCastor+"fileGet4"+ticket,"stager_get -M "+dirCastor+"fileGet3"+ticket+" -M "+dirCastor+"fileGet4"+ticket,"stager_qry -M "+dirCastor+"fileGet3"+ticket+" -M "+dirCastor+"fileGet4"+ticket]
 	        UtilityForCastorTest.saveOnFile(localDir+"getManyFiles",cmd,myScen)
 	
 		fi=open(localDir+"getManyFiles3","r")
-		assert fi.read().count("SUBREQUEST_READY") == 2, "stager_get doesn't work after stager_put with many files and rfcp"
+		buffOut=fi.read()
 		fi.close()
+		assert buffOut.count("SUBREQUEST_READY") == 2, "stager_get doesn't work after stager_put with many files and rfcp"
+		
 		
 		fi=open(localDir+"getManyFiles6","r")
-		assert fi.read().count("SUBREQUEST_READY") == 2, "stager_get doesn't work after put, rfcp and putdone with many files"
-		fi.close()
+	        buffOut=fi.read()
+		fi.close()		
+		assert buffOut.count("SUBREQUEST_READY") == 2, "stager_get doesn't work after put, rfcp and putdone with many files"
+		
        
 		fi=open(localDir+"getManyFiles7","r")
-        	assert fi.read().count("CANBEMIGR") == 2,  "stager_qry doesn't work after put, rfcp and putdone with many files"
-        	fi.close()
+	        buffOut=fi.read()
+		fi.close()		
+        	assert buffOut.count("CANBEMIGR") == 2,  "stager_qry doesn't work after put, rfcp and putdone with many files"
+        	
 		
 	
 	def getTag(self):
@@ -323,16 +389,22 @@ class StagerGetCase(unittest.TestCase):
 	        UtilityForCastorTest.saveOnFile(localDir+"getTag",cmd,myScen)
 	
 		fi=open(localDir+"getTag1","r")
-		assert fi.read().find("SUBREQUEST_READY") != -1, "stager_get doesn't work with tag after put"
-		fi.close()
+	        buffOut=fi.read()
+		fi.close()		
+		assert buffOut.find("SUBREQUEST_READY") != -1, "stager_get doesn't work with tag after put"
+		
       
 		fi=open(localDir+"getTag3","r")
-		assert fi.read().find("SUBREQUEST_READY") != -1, "stager_get doesn't work with tag after put and rfcp"
-		fi.close()
+	        buffOut=fi.read()
+		fi.close()		
+		assert buffOut.find("SUBREQUEST_READY") != -1, "stager_get doesn't work with tag after put and rfcp"
+		
 
 		fi=open(localDir+"getTag5","r")
-		assert fi.read().find("SUBREQUEST_READY") != -1, "stager_get doesn't work with tag after put, rfcp and putdone"
-		fi.close()
+	        buffOut=fi.read()
+		fi.close()		
+		assert buffOut.find("SUBREQUEST_READY") != -1, "stager_get doesn't work with tag after put, rfcp and putdone"
+		
 		
 	def getSvcClass(self):
 		cmd=["stager_put -M "+dirCastor+"fileGetSvc1"+ticket,"stager_get -M "+dirCastor+"fileGetSvc1"+ticket+" -S mySVC","stager_put -M "+dirCastor+"fileGetSvc2"+ticket+" -S default","stager_get -M "+dirCastor+"fileGetSvc2"+ticket,"stager_qry -M "+dirCastor+"fileGetSvc2"+ticket]
@@ -340,8 +412,9 @@ class StagerGetCase(unittest.TestCase):
 	        UtilityForCastorTest.saveOnFile(localDir+"getSvc",cmd,myScen)
                 
 		fi=open(localDir+"getSvc1","r")
-        	assert fi.read().rfind("Opt SVCCLASS=mySVC") != -1, "stager_get doesn't work with svc class option -S"
-        	fi.close()
+	        buffOut=fi.read()
+		fi.close()		
+        	assert buffOut.rfind("Opt SVCCLASS=mySVC") != -1, "stager_get doesn't work with svc class option -S"
 
 		fi=open(localDir+"getSvc3","r")
 		buffOut=fi.read()
@@ -350,8 +423,10 @@ class StagerGetCase(unittest.TestCase):
 		assert buffOut.rfind("Opt SVCCLASS=default") != -1, "stager_get doesn't work with svc class option -S"
 	
 		fi=open(localDir+"getSvc4","r")
-        	assert fi.read().find("STAGEOUT") != -1, "stager_get doesn't work with svc class option -S"
-        	fi.close()
+		buffOut=fi.read()
+		fi.close()
+        	assert buffOut.find("STAGEOUT") != -1, "stager_get doesn't work with svc class option -S"
+        	
 		
 	def getR(self):		
 		cmd=["stager_put -M "+dirCastor+"fileGetR1"+ticket,"stager_get -M "+dirCastor+"fileGetR1"+ticket+" -r","stager_qry -M "+dirCastor+"fileGetR1"+ticket]
@@ -373,8 +448,10 @@ class StagerGetCase(unittest.TestCase):
 		
 	
 		fi=open(localDir+"getR2","r")
-        	assert fi.read().find("STAGEOUT") != -1, "stager_get doesn't work after put"
-        	fi.close()
+		buffOut=fi.read()
+		fi.close()
+        	assert buffOut.find("STAGEOUT") != -1, "stager_get doesn't work after put"
+        	
 
 class StagerRmCase(unittest.TestCase):
 	def basicRm(self):
@@ -382,24 +459,30 @@ class StagerRmCase(unittest.TestCase):
          	UtilityForCastorTest.saveOnFile(localDir+"basicRm",cmd,myScen)
 		     
 		fi=open(localDir+"basicRm1","r")
-		assert fi.read().find("SUBREQUEST_READY") != -1, "stager_rm doesn't work after put"
+		buffOut=fi.read()
 		fi.close()
+		assert buffOut.find("SUBREQUEST_READY") != -1, "stager_rm doesn't work after put"
+		
 		
 	def rmAndRfcp(self):
 		cmd=["stager_put -M "+dirCastor+"fileRm3"+ticket,"rfcp /etc/group "+dirCastor+"fileRm3"+ticket,"stager_rm -M "+dirCastor+"fileRm3"+ticket,]
 		UtilityForCastorTest.saveOnFile(localDir+"rmAndRfcp",cmd,myScen)
 	
 		fi=open(localDir+"rmAndRfcp2","r")
-		assert fi.read().find("SUBREQUEST_READY") != -1, "stager_rm doesn't work after put and rfcp"
+		buffOut=fi.read()
 		fi.close()
+		assert buffOut.find("SUBREQUEST_READY") != -1, "stager_rm doesn't work after put and rfcp"
 
                 cmd=["stager_put -M "+dirCastor+"fileRm4"+ticket,"rfcp /etc/group "+dirCastor+"fileRm4"+ticket,"stager_putdone -M "+dirCastor+"fileRm4"+ticket,"stager_rm -M "+dirCastor+"fileRm4"+ticket]
 
 		UtilityForCastorTest.saveOnFile(localDir+"rmAndRfcpBis",cmd,myScen)
 
 		fi=open(localDir+"rmAndRfcpBis3","r")
-		assert fi.read().find("SUBREQUEST_FAILED") != -1, "stager_rm doesn't work after put, rfcp and putdone"
-		fi.close() #weird .. not migrated yet ... 
+	        buffOut=fi.read()
+		fi.close()
+		
+		assert buffOut.find("SUBREQUEST_FAILED") != -1, "stager_rm doesn't work after put, rfcp and putdone"
+	        #weird .. not migrated yet ... 
 		
 	def rmManyFiles(self):
 		cmd=["stager_put -M "+dirCastor+"fileRm5"+ticket+" -M"+dirCastor+"fileRm6"+ticket,"rfcp /etc/group "+dirCastor+"fileRm5"+ticket,"rfcp /etc/group "+dirCastor+"fileRm6"+ticket,"stager_rm -M "+dirCastor+"fileRm5"+ticket+" -M"+dirCastor+"fileRm6"+ticket]
@@ -407,8 +490,10 @@ class StagerRmCase(unittest.TestCase):
 	        UtilityForCastorTest.saveOnFile(localDir+"rmManyFiles",cmd,myScen)
 
 		fi=open(localDir+"rmManyFiles3","r")
-		assert fi.read().count("SUBREQUEST_READY") == 2, "stager_rm doesn't work with many files"
+	        buffOut=fi.read()
 		fi.close()
+		assert buffOut.count("SUBREQUEST_READY") == 2, "stager_rm doesn't work with many files"
+		
 		
 class StagerSpecialQueryCase(unittest.TestCase):
 	def queryS(self):
@@ -416,8 +501,9 @@ class StagerSpecialQueryCase(unittest.TestCase):
 	        UtilityForCastorTest.saveOnFile(localDir+"queryS",cmd,myScen)
 		
 		fi=open(localDir+"queryS","r")
-		assert fi.read().find("Error") == -1, "stager_qry -s doesn't work"
-		fi.close()
+	        buffOut=fi.read()
+		fi.close()		
+		assert buffOut.find("Error") == -1, "stager_qry -s doesn't work"
 		
 		
 	def queryE(self):
@@ -427,8 +513,10 @@ class StagerSpecialQueryCase(unittest.TestCase):
 		
 	        UtilityForCastorTest.saveOnFile(localDir+"queryE",cmd,myScenE)
 		fi=open(localDir+"queryE2","r")
-		assert fi.read().find("STAGEOUT") != -1, "stager_qry -E doesn't work"
-		fi.close()
+	        buffOut=fi.read()
+		fi.close()		
+		assert buffOut.find("STAGEOUT") != -1, "stager_qry -E doesn't work"
+		
 		
 	
 casesPreClient=("mainScenarium","stagerUp","rfioFine")
