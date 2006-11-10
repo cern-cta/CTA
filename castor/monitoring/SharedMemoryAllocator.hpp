@@ -103,7 +103,7 @@ castor::monitoring::SharedMemoryAllocator<T>::createSharedMemoryBlock() {
 }
 
 //------------------------------------------------------------------------------
-// createSharedMemoryBlock
+// getBlockKey
 //------------------------------------------------------------------------------
 template<class T>
 castor::sharedMemory::BlockKey
