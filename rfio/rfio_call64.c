@@ -2015,12 +2015,12 @@ char        *host;         /* Where the request comes from        */
          flags = ntohopnflg(flags);
          if ( getconfent("RFIOD","DIRECTIO",0) ) {
 #if defined(linux)
-            log(LOG_DEBUG, "%s: O_DIRECT requested\n", __func__);
+            log(LOG_INFO, "%s: O_DIRECT requested\n", __func__);
             flags |= O_DIRECT;
 #elif defined(_WIN32)
-	    log(LOG_DEBUG, "%s: O_DIRECT requested but ignored.", __FUNCTION__);
+	    log(LOG_INFO, "%s: O_DIRECT requested but ignored.", __FUNCTION__);
 #else
-	    log(LOG_DEBUG, "%s: O_DIRECT requested but ignored.", __func__);
+	    log(LOG_INFO, "%s: O_DIRECT requested but ignored.", __func__);
 #endif
          }
          fd = open64(CORRECT_FILENAME(filename), flags, mode);
