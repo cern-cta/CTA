@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SingletonBlock.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/11/03 11:08:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: SingletonBlock.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/11/10 15:49:54 $ $Author: sponcec3 $
  *
  * 
  *
@@ -87,8 +87,8 @@ castor::sharedMemory::SingletonBlock<T,A>::SingletonBlock
   throw (castor::exception::Exception) :
   Block<A>(key) {
   // Create the singleton object
-  m_singleton =
-    static_cast<T*>(this->malloc(sizeof(T)));
+  void *ptr = this->malloc(sizeof(T));
+  m_singleton = new(ptr)T();
 };
 
 #endif // SHAREDMEMORY_SINGLETONBLOCK_HPP
