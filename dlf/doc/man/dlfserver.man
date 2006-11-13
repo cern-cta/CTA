@@ -36,9 +36,6 @@ The number of handler/transport threads
 .TP
 .B \-D <threads>
 The number of database threads
-.TP
-.B \-n
-Disable the generation of job and request statistics.
 
 .SH "FILES"
 In order to connect to the DLF database a username, password and server are required. The configuration file /etc/DLFCONFIG defines this information using a signal line in the format:

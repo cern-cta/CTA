@@ -6,7 +6,6 @@
 #   -p <int>       the server listening port (default: 5036)
 #   -T <int>       number of handler/transport threads
 #   -D <int>       number of database threads
-#   -n             disable the generation of job and request statistics
 #
 DLFSERVER_OPTIONS="-T 2 -D 2"
 
