@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: hash.c,v 1.5 2006/08/21 06:41:49 waldron Exp $
+ * $Id: hash.c,v 1.6 2006/11/14 17:02:17 waldron Exp $
  */
 
 /* headers */
@@ -202,6 +202,7 @@ int DLL_DECL hash_insert(hash_t *h, char *key, void *value) {
 	/* insert new key into the beginning of the hash */
 	n = (entry_t *) malloc(sizeof(entry_t));
 	if (n == NULL) {
+		Cthread_mutex_unlock(&h->mutex[i]);
 		log(LOG_ERR, "hash_insert() : %s\n", strerror(errno));
 		return APP_FAILURE;
 	}
