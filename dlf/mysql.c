@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.c,v 1.9 2006/10/19 15:13:33 waldron Exp $
+ * $Id: mysql.c,v 1.10 2006/11/14 10:47:46 waldron Exp $
  */
 
 /* headers */
@@ -1176,16 +1176,6 @@ void DLL_DECL db_worker(database_t *db) {
 
 	/* exit */
 	Cthread_exit(0);
-}
-
-
-/*
- * db_stats (not implemented)
- */
-
-int DLL_DECL db_stats(unsigned int interval) {
-
-	return APP_SUCCESS;
 }
 
 
