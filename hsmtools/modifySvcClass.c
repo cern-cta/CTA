@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.8 $ $Release$ $Date: 2006/11/07 16:23:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.9 $ $Release$ $Date: 2006/11/14 11:19:02 $ $Author: sponcec3 $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.8 $ $Release$ $Date: 2006/11/07 16:23:38 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.9 $ $Release$ $Date: 2006/11/14 11:19:02 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -38,6 +38,7 @@ static char sccsid[] = "@(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.8 $ $Rel
 #include <osdep.h>
 #include <serrno.h>
 #include <Cgetopt.h>
+#include <u64subr.h>
 #include <castor/stager/SvcClass.h>
 #include <castor/stager/FileClass.h>
 #include <castor/stager/TapeCopy.h>
