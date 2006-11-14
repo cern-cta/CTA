@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/11/01 18:10:37 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/11/14 10:53:58 $ $Author: itglp $
  *
  *
  *
@@ -296,7 +296,7 @@ void castor::db::ora::OraCnvSvc::handleException(std::exception& e) {
     rollback();
     
     int errcode = ((oracle::occi::SQLException&)e).getErrorCode();
-    if (errcode == 28 || errcode == 3113 || errcode == 3114 || errcode == 12170 
+    if (errcode == 28 || errcode == 3113 || errcode == 3114 || errcode == 3135 || errcode == 12170 
         || errcode == 12541 || errcode == 32102 || errcode == 1012 || errcode == 1003) {  
       // either we lost the connection here due to an Oracle restart or network glitch or whatever else
       // or we got an ORA-01003 'no statement parsed', which means a SQL procedure
