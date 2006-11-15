@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.7 2006/11/09 10:07:24 waldron Exp $
+ * $Id: dlf_lib.c,v 1.8 2006/11/15 14:14:03 waldron Exp $
  */
 
 /* headers */
@@ -196,6 +196,7 @@ int dlf_read(target_t *t, int *rtype, int *rcode) {
 	if (type == DLF_REP_RC) {
 		netclose(t->socket);
 		t->socket = -1;
+		ClrConnected(t->mode);
 	} else if (type == DLF_REP_ERR) {
 		err_no = rc;
 		if (err_no > DLF_ERR_MAX) {
@@ -1556,6 +1557,8 @@ int DLL_DECL dlf_shutdown(int wait) {
 
 			if (targets[i]->socket != -1) {
 				netclose(targets[i]->socket);
+				targets[i]->socket = -1;
+				ClrConnected(targets[i]->mode);
 			}
 			queue_destroy(targets[i]->queue, (void *)free_message);
 			free(targets[i]->queue);
