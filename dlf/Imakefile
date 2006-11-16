@@ -67,6 +67,7 @@ DLFCONFIG = DlfConfigFile
 #if UseOracle
 DBOBJS    = oracle.Osuf
 DBFLAG    = -DUSE_ORACLE
+ORAINC = -I$(ORACLE_HOME)/precomp/public
 #else
 #if UseMySQL
 DBOBJS    = mysql.Osuf
@@ -78,7 +79,7 @@ MYSQLLIB  = $(shell /usr/bin/mysql_config --libs_r)
 #endif
 
 DFLAGS    = -DLOGFILE=\"$(LOGFILE)\" -DDLFCONFIG=\"$(DLFCONFIG)\" $(DBFLAG)
-CFLAGS    = $(CCOPTIM) -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS)
+CFLAGS    = $(CCOPTIM) -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(ORAINC)
 DEPLIB    = DepSharedLibraryTargetName(shlib,shift)
 
 MANPAGES  = $(MANDIR)/dlfserver.$(MANSUFFIX)    \
