@@ -1,25 +1,24 @@
 -----------
-- 2.1.1-7 -
------------
-  = Internal Release = 
-
-
------------
-- 2.1.1-5 -
+- 2.1.1-9 -
 -----------
 
   New Features and Changes
   ------------------------
   This release brings a number of bug fixes and improvements:
-  - Fixes and improvements around the Repack system
-  - Improved stagerJob to support GridFTPv2
-  - Fixed Oracle deadlock in streams leading to inconsistencies in NbTapeCopiesInFS
-  - Minor fixes in DLF
+  - Improvements around the Repack system, added Repack multi-stager ability
+  - Bugfix for #21093 (strange files created on local disk, when DLF is not able to log)
+  - Bugfix for very large files
+  - Improved selection of migration candidates via PL/SQL procedure
+  - Improved port handling in clients in case of many concurrent callbacks on a small port range
+  - Improved stager_qry in case of castorFiles with many diskCopies
+  - Bugfix for stager_qry (#19044, #19836)
+  - Improved logging in the Request Handler
+  - Support for 700Gb tapes
 
-  Upgrade from 2.1.1-0
+  Upgrade from 2.1.1-4
   --------------------
   - Upgrade the database
-  - Upgrade the head nodes and the diskservers (the order is not important)
+  - Upgrade all nodes (the order is not important).
 
 
 -----------
@@ -30,16 +29,17 @@
   ------------------------
   This release brings a number of bug fixes:
   - Fixes around the Repack system
-  - Improved cleaning procedures for the cleaningDaemon
+  - Improved cleaning procedures and config for the cleaningDaemon, now it shares castor.conf
   - Fixed Oracle deadlock which was leading to many diskcopies left in status 9
-  - Improved GC trigger to resurrect the GC job if it previously died
+  - Fixed Oracle deadlock in streams leading to inconsistencies in NbTapeCopiesInFS
   - Fixes in the migrator
+  - Improved GC trigger to resurrect the GC job if it previously died
   - Improved stagerJob to prevent it to loop forever for a missing msgbox 4 from LSF
 
   Upgrade from 2.1.1-0
   --------------------
   - Upgrade the database
-  - Upgrade the head nodes and the diskservers (the order is not important)
+  - Upgrade the head nodes and the diskservers (the order is not important).
 
 
 -----------
