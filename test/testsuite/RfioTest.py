@@ -19,7 +19,7 @@ castorConf="no"
 
 # Directories used
 
-localDir="./tmpRfioTest"+ticket+"/"
+localDir="" 
 remoteDir=""
 castorDir=(UtilityForCastorTest.prepareCastorString())+"tmpRfioTest"+ticket+"/"
 
@@ -29,14 +29,6 @@ castorDir=(UtilityForCastorTest.prepareCastorString())+"tmpRfioTest"+ticket+"/"
 myTurl=""
 myTag=""
 caseScen=""
-
-
-
-print "After the test, delete the different log files used in:"
-print "- "+localDir
-print "- "+castorDir
-print "- REMOTE_HOST:/tmp"+localDir[1:]+" (with remoteHostSpecified in the RFIOTESTCONFIG)"
-print
 
 
 ###################
@@ -49,13 +41,22 @@ print
 class RfioPreRequisitesCase(unittest.TestCase):
 	def mainScenariumSetUp(self):
 		assert (UtilityForCastorTest.checkUser != -1), "you don't have a valid castor directory"
-		os.system("mkdir "+localDir)
-		os.system("rfmkdir "+castorDir)
 		try:
-		        f=open("/etc/castor/RFIOTESTCONFIG","r")
-		        configFileInfo=f.read()
-			f.close()
-  
+		        os.system("rfmkdir "+castorDir)
+			f=open("/etc/castor/CASTORTESTCONFIG","r")
+			configFileInfo=f.read()
+			f.close
+
+			index= configFileInfo.find("*** Rfio test specific parameters ***")
+			configFileInfo=configFileInfo[index:]
+			index=configFileInfo.find("***")
+			index=index-1
+			configFileInfo=configFileInfo[:index]
+
+			global localDir
+		        localDir=(configFileInfo[configFileInfo.find("LOCAL_DIR"):]).split()[1]+ticket+"/"
+			os.system("mkdir "+localDir)
+
 			global stagerHost
 		 	stagerHost=(configFileInfo[configFileInfo.find("STAGE_HOST"):]).split()[1]
 
@@ -71,7 +72,11 @@ class RfioPreRequisitesCase(unittest.TestCase):
 		 	remoteHost=(configFileInfo[configFileInfo.find("REMOTE_HOST"):]).split()[1]
 
 			global remoteDir
-			remoteDir=remoteHost +":/tmp"+localDir[1:]
+
+			remoteDir=(configFileInfo[configFileInfo.find("REMOTE_DIR"):]).split()[1]
+			remoteDir=remoteHost+":"+remoteDir+"/tmpRfio"+ticket
+			print remoteDir
+			
 			os.system("rfmkdir "+remoteDir)
 			
 			global stageMap
@@ -274,8 +279,8 @@ class RfioOtherCmdSimpleCase(unittest.TestCase):
                 fi=open(localDir+"RemoteRfdir"+myTag,"r")
 		buffOut=fi.read()
 		fi.close()
-	        assert buffOut.find("error") == -1, "rfdir is not working with remote dir"  
-
+	        assert buffOut.find("error") == -1, "rfdir is not working with remote dir"
+		assert buffOut.find("No such file or directory") == -1, "rfdir is not working with remote dir"
 			
 	def localRfmkdir(self):
 		cmd=["rfmkdir "+localDir+"fileLocalRfmkdir"+ticket,"ls "+localDir+"fileLocalRfmkdir"+ticket] 

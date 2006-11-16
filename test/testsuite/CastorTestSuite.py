@@ -79,6 +79,14 @@ f=open("/etc/castor/CASTORTESTCONFIG","r")
 configFileInfo=f.read()
 f.close
 
+index= configFileInfo.find("*** Test choice ***")
+configFileInfo=configFileInfo[index:]
+configFileInfo=configFileInfo.strip("*** Test choice ***\n\n")
+index=configFileInfo.find("***")
+index=index-1
+configFileInfo=configFileInfo[:index]
+
+
 newSuites=configFileInfo.split("\n\n")
 
 for mySuite in newSuites:

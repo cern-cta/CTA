@@ -1,3 +1,5 @@
+*** Test choice ***
+
 CLIENT  	PREREQ  	NO
 CLIENT		PUT		NO
 CLIENT		GET		NO
@@ -26,3 +28,31 @@ DISKSVR         TEST            NO
 TAPE            TEST            NO
 
 ADMIN           TEST            NO
+
+*** Generic Parameter ***
+
+
+*** Rfio test specific parameters ***
+
+USE_STAGEMAP.CONF NO
+USE_CASTOR.CONF   NO    
+
+STAGE_HOST        lxb1366
+STAGE_PORT        9002
+STAGE_SVCCLASS    default
+CASTOR_V2         yes 
+
+LOCAL_DIR         /usr/local/src/CASTOR2/test/tmpRfio
+
+REMOTE_HOST       lxfsrk384
+REMOTE_DIR        /tmp 
+
+
+*** Client test specific parameters ***
+
+STAGE_HOST        lxb1366
+STAGE_PORT        9002
+STAGE_SVCCLASS    default
+CASTOR_V2         yes 
+
+LOCAL_DIR         /usr/local/src/CASTOR2/test/tmpClient

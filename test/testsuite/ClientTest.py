@@ -6,17 +6,12 @@ import time
 import threading
 
 ticket= UtilityForCastorTest.getTicket() 
-localDir="./tmpClientTest"+ticket+"/"
+localDir=""
 myCastor=UtilityForCastorTest.prepareCastorString()
 dirCastor=myCastor+"tmpClientTest"+ticket+"/"
-os.system("mkdir "+localDir)
+
 myScen=""
 
-print "After the test, delete the different log files used in:"
-print "- "+localDir
-print "- "+dirCastor
-print "- REMOTE_HOST:/tmp"+localDir[1:]+" (with remoteHostSpecified in the CLIENTTESTCONFIG)"
-print
 
 def MakeBigFile():
 	size=0
@@ -37,9 +32,22 @@ class PreRequisitesCase(unittest.TestCase):
 		assert (UtilityForCastorTest.checkUser(localDir) != -1), "you don't have a valid castor directory"
 
 		try:
-		        f=open("/etc/castor/CLIENTTESTCONFIG","r")
-		        configFileInfo=f.read()
-			f.close()
+
+			f=open("/etc/castor/CASTORTESTCONFIG","r")
+			configFileInfo=f.read()
+			f.close
+
+			index= configFileInfo.find("*** Client test specific parameters ***")
+			configFileInfo=configFileInfo[index:]
+			index=configFileInfo.find("***")
+			index=index-1
+			configFileInfo=configFileInfo[:index]
+
+			global localDir
+			localDir=(configFileInfo[configFileInfo.find("LOCAL_DIR"):]).split()[1]
+			localDir=localDir+ticket+"/"
+			os.system("mkdir "+localDir)
+		        
 			global stagerHost
 		 	stagerHost=(configFileInfo[configFileInfo.find("STAGE_HOST"):]).split()[1]
 
@@ -91,7 +99,7 @@ class StagerPutCase(unittest.TestCase):
 		fi=open(localDir+"basicPut1","r")
 		buffOut=fi.read()
 		fi.close()
-        	assert buffOut.rfind("No such file or directory") != -1, "stager_qry doesn't work after a simple put"
+        	assert buffOut.rfind("STAGEOUT") != -1, "stager_qry doesn't work after a simple put"
         	
 		
 	def putAndRfcp(self):
@@ -150,12 +158,12 @@ class StagerPutCase(unittest.TestCase):
 	        buffOut=fi.read()
 		fi.close()
 		
-        	assert buffOut.find("No such file or directory") != -1, "stager_qry doesn't work after a put with tag"
+        	assert buffOut.find("STAGEOUT") != -1, "stager_qry doesn't work after a put with tag"
 	
 		fi=open(localDir+"putTag2","r")
 	        buffOut=fi.read()
 		fi.close()		
-        	assert buffOut.find("No such file or directory") != -1, "stager_qry doesn't work after a put with tag"
+        	assert buffOut.find("STAGEOUT") != -1, "stager_qry doesn't work after a put with tag"
 
 		fi=open(localDir+"putTag4","r")
 	        buffOut=fi.read()
@@ -189,7 +197,7 @@ class StagerPutCase(unittest.TestCase):
 		fi=open(localDir+"putSvc2","r")
 		buffOut=fi.read()
 		fi.close()
-        	assert buffOut.rfind("No such file or directory") != -1, "stager_qry doesn't work with svc class option -S"
+        	assert buffOut.rfind("STAGEOUT") != -1, "stager_qry doesn't work with svc class option -S"
 	
 		
 	def putR(self):
@@ -208,7 +216,7 @@ class StagerPutCase(unittest.TestCase):
 		fi=open(localDir+"putR1","r")
 		buffOut=fi.read()
 		fi.close()
-        	assert buffOut.rfind("No such file or directory") != -1, "stager_qry doesn't work with the  option -r"
+        	assert buffOut.rfind("STAGEOUT") != -1, "stager_qry doesn't work with the  option -r"
         	
 
 class StagerPutDoneCase(unittest.TestCase):
@@ -226,7 +234,7 @@ class StagerPutDoneCase(unittest.TestCase):
 	        buffOut=fi.read()
 		fi.close()
 		
-        	assert buffOut.find("No such file or directory") != -1, "stager_qry doesn't work after a putDone"
+        	assert buffOut.find("STAGEOUT") != -1, "stager_qry doesn't work after a putDone"
         	
 		
 	def putDoneAndRfcp(self):
