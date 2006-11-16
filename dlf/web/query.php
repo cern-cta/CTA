@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: query.php,v 1.7 2006/11/01 09:48:49 waldron Exp $
+ * $Id: query.php,v 1.8 2006/11/16 08:08:35 waldron Exp $
  */
 
 require("utils.php");
@@ -174,7 +174,7 @@ $query_count = 0;
 			if ((compareDates(document.query.to.value + " " + document.query.totime.value, 'dd/MM/yyyy HH:mm',
 				  <?php echo "\"".date('d/m/Y H:i')."\""; ?>, 'dd/MM/yyyy HH:mm') != 0) || 
 				(compareDates(document.query.from.value + " " + document.query.fromtime.value, 'dd/MM/yyyy HH:mm',
-				  <?php echo "\"".date('d/m/Y H:i')."\""; ?>, 'dd/MM/yyyy HH:mm') != 0)) {	
+				  <?php echo "\"".date('d/m/Y H:i', time() + 300)."\""; ?>, 'dd/MM/yyyy HH:mm') != 0)) {	
 				alert("You cannot make a query for data in the future");		
 				return false;				 
 			}	
