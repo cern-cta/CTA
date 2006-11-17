@@ -252,7 +252,7 @@ int castor::gc::GcDaemon::start()
           castor::dlf::Param params[] =
             {castor::dlf::Param("File name", (*it)->fileName()),
              castor::dlf::Param("File size", gcfilesize)};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 11, 2, params);
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 11, 2, params);
           // Add the file to the list of deleted ones
           u_signed64 *gcfileid = new u_signed64((*it)->diskCopyId());
           deletedFiles.push_back(gcfileid);
