@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.336 $ $Release$ $Date: 2006/11/15 14:06:33 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.337 $ $Release$ $Date: 2006/11/17 15:56:43 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.336 $ $Date: 2006/11/15 14:06:33 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.337 $ $Date: 2006/11/17 15:56:43 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2377,61 +2377,6 @@ BEGIN
   COMMIT;
 END;
 
-/*
- * Runs only default policy garbage collection on the specified FileSystem
- *
-CREATE PROCEDURE defGarbageCollectFS(fsId INTEGER) AS
-  toBeFreed INTEGER;
-  freed INTEGER := 0;
-  dpID INTEGER;
-  cur castorGC.GCItem_Cur;
-  nextItem castorGC.GCItem;
-BEGIN
-  -- Get the DiskPool and the minFree space we want to achieve
-  SELECT diskPool, maxFreeSpace * totalSize - free - deltaFree + reservedSpace - spaceToBeFreed
-    INTO dpId, toBeFreed
-    FROM FileSystem
-   WHERE FileSystem.id = fsId
-     FOR UPDATE;
-  -- Don't do anything if toBeFreed <= 0
-  IF toBeFreed <= 0 THEN
-    COMMIT;
-    RETURN;
-  END IF;
-  UPDATE FileSystem
-     SET spaceToBeFreed = spaceToBeFreed + toBeFreed
-   WHERE FileSystem.id = fsId;
-  -- release the filesystem lock so that other threads can go on
-  COMMIT;
-  -- policy to be applied defaults to defaultGCPolicy
-  cur := defaultGCPolicy(fsId, toBeFreed);
-  -- Now extract the diskcopies that will be garbaged and
-  -- mark them GCCandidate
-  LOOP
-    FETCH cur INTO nextItem;
-    EXIT WHEN cur%NOTFOUND;
-    -- Mark the DiskCopy
-    UPDATE DISKCOPY SET status = 8 -- GCCANDIDATE
-     WHERE id = nextItem.dcId;
-    -- Update toBeFreed
-    freed := freed + nextItem.fileSize;
-    -- Shall we continue ?
-    IF freed > toBeFreed THEN
-      -- enough space freed
-      EXIT;
-    END IF;
-  END LOOP;
-  -- Update Filesystem toBeFreed space to the exact value
-  UPDATE FileSystem
-     SET spaceToBeFreed = spaceToBeFreed + freed - toBeFreed
-   WHERE FileSystem.id = fsId;
-  -- Close cursor
-  CLOSE cur;
-  -- commit everything
-  COMMIT;
-END;
-*/
-
 
 /* This table keeps the current queue of the garbage collector:
  * whenever a new filesystem has to be garbage collected, a row is inserted
@@ -2457,7 +2402,7 @@ BEGIN
     -- run the GC
     garbageCollectFS(fs);
     -- yield to other jobs/transactions
-    DBMS_LOCK.sleep(seconds => 1.0);
+    DBMS_LOCK.sleep(seconds => 5.0);
   END LOOP;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     NULL;            -- terminate the job
@@ -2473,7 +2418,6 @@ FOR EACH ROW
 DECLARE
   freeSpace NUMBER;
   jobid NUMBER;
-  gcstime NUMBER;
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
 BEGIN
@@ -2487,23 +2431,21 @@ BEGIN
      :new.maxFreeSpace * :new.totalSize > freeSpace + 5000000000 THEN
 
     -- ok, we queue this filesystem for being garbage collected
-    -- we have to take a lock so that a previous job that would finish right
-    -- now will wait for our insert and take the new filesystem
-    LOCK TABLE FileSystemGC IN ROW SHARE MODE;
-    SELECT min(submissionTime) INTO gcstime FROM FileSystemGC;
-    INSERT INTO FileSystemGC VALUES (:new.id, getTime());
-    -- is it the only FS waiting for GC, or are there other FSs waiting since >10 mins
-    -- (it can happen if the job failed or it has been killed)?
-    IF gcstime IS NULL OR gcstime < getTime() - 600 THEN
+    BEGIN
+      INSERT INTO FileSystemGC VALUES (:new.id, getTime());
+    EXCEPTION
+      -- the filesystem was already selected for GC, do nothing
+      WHEN CONSTRAINT_VIOLATED THEN NULL;
+    END;
+    -- is the garbage collector job already running?
+    SELECT job INTO jobid FROM user_jobs WHERE what = 'garbageCollect();';
+    IF jobid IS NULL THEN
       -- we spawn a job to do the real work. This avoids mutating table error
       -- and ensures that the current update does not fail if GC fails
       DBMS_JOB.SUBMIT(jobid,'garbageCollect();');
     END IF;
     -- otherwise, a recent job is already running and will take over this FS too
   END IF;
-  EXCEPTION
-    -- the filesystem was already selected for GC, do nothing
-    WHEN CONSTRAINT_VIOLATED THEN NULL;
 END;
 
 
