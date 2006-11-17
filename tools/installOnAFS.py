@@ -13,7 +13,7 @@ packages = ['ns-client', 'doc', 'rtcopy-client', 'upv-client', 'commands', 'stag
 
 platformConversion = {'SLC3' : 'slc3', 'SLC4' : 'slc4'}
 archConversion = {'i386' : 'ia32', 'ia64': 'ia64', 'x86_64' : 'amd64'}
-gccVersion = {'SLC3' : 'gcc323', 'SLC4' : 'gcc345'}
+gccVersion = {'SLC3' : 'gcc323', 'SLC4' : 'gcc34'}
 
 for plat in ('SLC3', 'SLC4'):
     for arch in ('i386', 'ia64', 'x86_64'):
