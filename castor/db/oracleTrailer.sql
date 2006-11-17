@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.337 $ $Release$ $Date: 2006/11/17 15:56:43 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.338 $ $Release$ $Date: 2006/11/17 16:18:43 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.337 $ $Date: 2006/11/17 15:56:43 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.338 $ $Date: 2006/11/17 16:18:43 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2284,7 +2284,7 @@ BEGIN
   -- release the filesystem lock so that other threads can go on
   COMMIT;
   -- List policies to be applied
-  SELECT CASE
+  SELECT UNIQUE CASE
           WHEN svcClass.gcPolicy IS NULL THEN 'defaultGCPolicy'
           ELSE svcClass.gcPolicy
          END BULK COLLECT INTO policies
