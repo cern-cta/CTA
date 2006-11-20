@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.338 $ $Release$ $Date: 2006/11/17 16:18:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.339 $ $Release$ $Date: 2006/11/20 11:21:37 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.338 $ $Date: 2006/11/17 16:18:43 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.339 $ $Date: 2006/11/20 11:21:37 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2438,12 +2438,13 @@ BEGIN
       WHEN CONSTRAINT_VIOLATED THEN NULL;
     END;
     -- is the garbage collector job already running?
-    SELECT job INTO jobid FROM user_jobs WHERE what = 'garbageCollect();';
-    IF jobid IS NULL THEN
+    BEGIN
+      SELECT job INTO jobid FROM user_jobs WHERE what = 'garbageCollect();';
+    EXCEPTION WHEN NO_DATA_FOUND THEN
       -- we spawn a job to do the real work. This avoids mutating table error
       -- and ensures that the current update does not fail if GC fails
       DBMS_JOB.SUBMIT(jobid,'garbageCollect();');
-    END IF;
+    END;
     -- otherwise, a recent job is already running and will take over this FS too
   END IF;
 END;
