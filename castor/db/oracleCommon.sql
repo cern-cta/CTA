@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.339 $ $Release$ $Date: 2006/11/20 11:21:37 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.340 $ $Release$ $Date: 2006/11/20 18:33:35 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.339 $ $Date: 2006/11/20 11:21:37 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.340 $ $Date: 2006/11/20 18:33:35 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2283,6 +2283,7 @@ BEGIN
    WHERE FileSystem.id = fsId;
   -- release the filesystem lock so that other threads can go on
   COMMIT;
+
   -- List policies to be applied
   SELECT UNIQUE CASE
           WHEN svcClass.gcPolicy IS NULL THEN 'defaultGCPolicy'
@@ -2318,47 +2319,43 @@ BEGIN
       bestValue := nextItems(i).utility;
     END IF;
   END LOOP;
-  -- if no candidate has been found (this can happen with the null GC policy) just give up
-  IF bestCandidate = -1 THEN
-    -- update Filesystem toBeFreed space back to the previous value
-    UPDATE FileSystem
-       SET spaceToBeFreed = spaceToBeFreed - toBeFreed
-     WHERE FileSystem.id = fsId;
-    COMMIT;
-    RETURN;
+  
+  -- if no candidate has been found (this can happen with the null GC policy) just terminate
+  IF bestCandidate <> -1 THEN
+    -- Now extract the diskcopies that will be garbaged and
+    -- mark them GCCandidate
+    LOOP
+      -- Mark the DiskCopy
+      UPDATE DISKCOPY SET status = 8 -- GCCANDIDATE
+       WHERE id = nextItems(bestCandidate).dcId;
+      IF 1 = bestCandidate THEN
+        cur := cur1;
+      ELSIF 2 = bestCandidate THEN
+        cur := cur2;
+      ELSE
+        cur := cur3;
+      END IF;
+      FETCH cur INTO nextItems(bestCandidate);
+      EXIT WHEN cur%NOTFOUND;
+      -- Update toBeFreed
+      freed := freed + nextItems(bestCandidate).fileSize;
+      -- Shall we continue ?
+      IF toBeFreed > freed THEN
+        -- find next candidate
+        bestValue := 100000000001; -- Take care that this is greater than the value given in defaultGCPolicy
+        FOR i IN nextItems.FIRST .. nextItems.LAST LOOP
+          IF nextItems(i).utility < bestValue THEN
+            bestCandidate := i;
+            bestValue := nextItems(i).utility;
+          END IF;
+        END LOOP;
+      ELSE
+        -- enough space freed
+        EXIT;
+      END IF;
+    END LOOP;
   END IF;
-  -- Now extract the diskcopies that will be garbaged and
-  -- mark them GCCandidate
-  LOOP
-    -- Mark the DiskCopy
-    UPDATE DISKCOPY SET status = 8 -- GCCANDIDATE
-     WHERE id = nextItems(bestCandidate).dcId;
-    IF 1 = bestCandidate THEN
-      cur := cur1;
-    ELSIF 2 = bestCandidate THEN
-      cur := cur2;
-    ELSE
-      cur := cur3;
-    END IF;
-    FETCH cur INTO nextItems(bestCandidate);
-    EXIT WHEN cur%NOTFOUND;
-    -- Update toBeFreed
-    freed := freed + nextItems(bestCandidate).fileSize;
-    -- Shall we continue ?
-    IF toBeFreed > freed THEN
-      -- find next candidate
-      bestValue := 100000000001; -- Take care that this is greater than the value given in defaultGCPolicy
-      FOR i IN nextItems.FIRST .. nextItems.LAST LOOP
-        IF nextItems(i).utility < bestValue THEN
-          bestCandidate := i;
-          bestValue := nextItems(i).utility;
-        END IF;
-      END LOOP;
-    ELSE
-      -- enough space freed
-      EXIT;
-    END IF;
-  END LOOP;
+
   -- Update Filesystem toBeFreed space to the exact value
   UPDATE FileSystem
      SET spaceToBeFreed = spaceToBeFreed + freed - toBeFreed
