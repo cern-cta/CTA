@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2006/11/08 14:18:06 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2006/11/20 16:55:03 $ $Author: felixehm $
  *
  *
  *
@@ -130,7 +130,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
     m_dbhelper->updateSubRequest(sreq,false,cuuid);   // doesn't throw
     return;
   }
-
+  stage_trace(3,"Getting Pathnames");
   // ---------------------------------------------------------------
   // This part has to be removed, if the stager also accepts only fileid
   // as parameter. For now we have to get the paths first.
@@ -167,6 +167,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 26, 0, NULL);
 
 
+  stage_trace(3,"Sending Request");
   /// here, we send the stager request
   try {
     failed = sendStagerRepackRequest(sreq, &req, &reqId, &opts);
@@ -223,16 +224,22 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq){
     try {
       monitor.getStats(faked, &responses, &nbresps);
     }catch (castor::exception::Exception ex){
-      castor::dlf::Param params[] =
-      {castor::dlf::Param("Module", "RepackFileStager" ),
-       castor::dlf::Param("Error Message", ex.getMessage().str() ),
-       castor::dlf::Param("Responses", nbresps )};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 3, params);
+      if ( ex.code() != EINVAL ) /* we handle all,but not such requestID error*/ {
+        castor::dlf::Param params[] =
+        {castor::dlf::Param("Module", "RepackFileStager" ),
+         castor::dlf::Param("Error Message", ex.getMessage().str() ),
+         castor::dlf::Param("Responses", nbresps )};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 3, params);
+        sreq->setStatus(SUBREQUEST_FAILED);
+        m_dbhelper->updateSubRequest(sreq,false, cuuid);
+        delete faked;
+        return;
+      }
     }
     
     /** if we got an answer for this cuuid, its means that the StageRepackRequest is
         not over. We are not allowed to send a new Request, but to try to finish the
-        files in invalid.
+        files in invalid status.
     */
     for ( int i=0; i<nbresps; i++ ) {
       if ( responses[i].status == FILE_INVALID_STATUS )
