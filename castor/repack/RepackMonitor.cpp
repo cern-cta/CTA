@@ -193,7 +193,7 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
 
   /** we ignore that we didn't find anything for the Request ID */
   if ( nbresps==1 && responses[0].errorCode == ENOENT ){
-    stage_trace(1,"No Results found for CUUID. Will try again later.");
+    stage_trace(1,"No Results found for CUUID. Will try again later.i %s" );
     castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 47, 0, NULL);
     free_filequery_resp(responses, nbresps);
     return;

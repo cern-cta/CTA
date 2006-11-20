@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2006/10/11 17:43:08 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2006/11/20 16:49:17 $ $Author: felixehm $
  *
  *
  *
@@ -171,6 +171,7 @@ castor::repack::RepackServer::RepackServer() :
      {44, "There are still files in staging/migrating. Restart abort"},
      {45, "RepackFileStager: File has already a STAGED diskcopy. To be restarted later"},
      {46, "FileListHelper: Found same file twice on tape" },
+     {47, "No results yet found for this CUUID. Will try again later." },
      {99, "TODO::MESSAGE"},
      {-1, ""}};
   castor::dlf::dlf_init("Repack", messages);
