@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.340 $ $Release$ $Date: 2006/11/20 18:33:35 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.341 $ $Release$ $Date: 2006/11/21 15:35:12 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.340 $ $Date: 2006/11/20 18:33:35 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.341 $ $Date: 2006/11/21 15:35:12 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2496,18 +2496,18 @@ BEGIN
                AND DiskCopy.status IN (0, 1, 2, 4, 5, 6, 7, 10, 11)
                 -- ignore diskCopies in status GCCANDIDATE, BEINGDELETED or any other 'unknown' one
            ) CF_DC
-     WHERE FS.Id(+) = CF_DC.fsId
-       and ds.id = fs.diskserver
-       and FS.status IN (0, 1)   -- PRODUCTION, DRAINING
-       AND DS.status IN (0, 1)   -- PRODUCTION, DRAINING
-       AND DP2SC.parent(+) = FS.diskPool
-       AND CF_DC.cfId = SubRequest.castorFile(+)            -- OR search for a running request
-       AND SubRequest.request = Req.id(+)
-       AND (svcClassId = 0             -- no svcClass given, or...
-         OR DP2SC.child = svcClassId        -- found diskCopy on the given svcClass
-         OR ((CF_DC.fsId = 0               -- diskcopy not yet associated with filesystem...
-             OR CF_DC.dcId IS NULL)        -- or diskcopy not yet created at all (prepareToXxx req)...
-           AND Req.svcClass = svcClassId))     -- ...but found stagein or prepareToPut request
+	   WHERE FS.Id(+) = CF_DC.fsId
+             AND ds.id(+) = fs.diskserver
+             AND nvl(FS.status, 0) in (0,1)
+             AND nvl(DS.status, 0) in (0,1)
+             AND DP2SC.parent(+) = FS.diskPool
+             AND CF_DC.cfId = SubRequest.castorFile(+)            -- OR search for a running request
+             AND SubRequest.request = Req.id(+) 
+             AND (svcClassId = 0             -- no svcClass given, or...
+               OR DP2SC.child = svcClassId        -- found diskCopy on the given svcClass
+               OR ((CF_DC.fsId = 0               -- diskcopy not yet associated with filesystem...
+               OR CF_DC.dcId IS NULL)        -- or diskcopy not yet created at all (prepareToXxx req)...
+             AND Req.svcClass = svcClassId))     -- ...but found stagein or prepareToPut request
   ORDER BY fileid, nshost;
 END;
 
