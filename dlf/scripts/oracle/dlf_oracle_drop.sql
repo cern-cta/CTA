@@ -7,7 +7,6 @@
 DROP TABLE dlf_num_param_values;
 DROP TABLE dlf_str_param_values;
 DROP TABLE dlf_reqid_map;
-DROP TABLE dlf_tape_ids;
 DROP TABLE dlf_facilities;
 DROP TABLE dlf_severities;
 DROP TABLE dlf_msg_texts;

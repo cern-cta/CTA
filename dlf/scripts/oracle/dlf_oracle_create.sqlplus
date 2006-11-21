@@ -114,7 +114,8 @@ CREATE TABLE dlf_messages
 	pid		NUMBER(10),
 	tid		NUMBER(10),
 	nshostid	NUMBER,
-	nsfileid	NUMBER)
+	nsfileid	NUMBER,
+	tapevid		VARCHAR2(20))
 COMPRESS
 PARTITION BY RANGE (timestamp)
 SUBPARTITION BY LIST (facility)
@@ -135,6 +136,7 @@ CREATE INDEX i_msg_reqid ON dlf_messages (reqid) LOCAL TABLESPACE dlf_indx;
 CREATE INDEX i_msg_hostid ON dlf_messages (hostid) LOCAL TABLESPACE dlf_indx;
 CREATE INDEX i_msg_nshostid ON dlf_messages (nshostid) LOCAL TABLESPACE dlf_indx;
 CREATE INDEX i_msg_fileid ON dlf_messages (nsfileid) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_tapevid ON dlf_messages (tapevid) LOCAL TABLESPACE dlf_indx;
 
 /*
  * dlf_num_param_values
@@ -187,22 +189,6 @@ TABLESPACE dlf_data;
 
 CREATE INDEX i_req_id ON dlf_reqid_map (id) LOCAL TABLESPACE dlf_indx;
 CREATE INDEX i_req_subreqid ON dlf_reqid_map (subreqid) LOCAL TABLESPACE dlf_indx;
-
-/*
- * dlf_tape_ids
- */
-CREATE TABLE dlf_tape_ids
-(
-	id		NUMBER,
-	timestamp	DATE NOT NULL,
-	tapevid		VARCHAR2(20))
-PARTITION BY RANGE (timestamp)
-(
-	PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE) TABLESPACE dlf_data
-)
-TABLESPACE dlf_data;
-
-CREATE INDEX i_tape_id ON dlf_tape_ids (id) LOCAL TABLESPACE dlf_indx;
 
 /*
  * dlf_severities
@@ -651,6 +637,7 @@ AS
 	v_cur_partition	INTEGER;
 	v_cur_drop	INTEGER;
 	v_cur_setting	INTEGER;
+	v_cur_table	INTEGER;
 
 	-- variables
 	v_partname	USER_TAB_PARTITIONS.PARTITION_NAME%TYPE;
@@ -658,6 +645,11 @@ AS
 	v_rows		INTEGER;
 	v_expire	INTEGER;
 
+	-- data pump
+	dp_handle	NUMBER;
+	dp_job_state 	VARCHAR(30);
+	dp_status       KU$_STATUS;
+        
 BEGIN
 
 	-- set the nls_time_date for this session, the partitioning is sensitive to the
@@ -679,18 +671,18 @@ BEGIN
 	v_rows   := 0;
 	v_expire := 30;
 
-	-- determine partitions greater then 'x' days old
+	-- retrieve a unqiue list of partition names older the 'x' days old
 	DBMS_SQL.PARSE(v_cur_partition,
-		'SELECT TABLE_NAME, PARTITION_NAME
+		'SELECT DISTINCT(PARTITION_NAME)
 		 FROM USER_TAB_PARTITIONS
 		 WHERE PARTITION_NAME <> ''MAX_VALUE''
-		 AND PARTITION_NAME < CONCAT(''P_'', TO_CHAR(SYSDATE - '||v_expire||', ''YYYYMMDD''))
-		 ORDER BY PARTITION_NAME',
+		 AND PARTITION_NAME = CONCAT(''P_'', TO_CHAR(SYSDATE - '||v_expire||', ''YYYYMMDD''))
+                 AND TABLE_NAME IN (''DLF_MESSAGES'',''DLF_NUM_PARAM_VALUES'',''DLF_REQID_MAP'',''DLF_STR_PARAM_VALUES'')
+		 ORDER BY PARTITION_NAME ASC',
 		DBMS_SQL.NATIVE);
 
 	-- define columns, execute statement
-	DBMS_SQL.DEFINE_COLUMN(v_cur_partition, 1, v_tablename, 30);
-	DBMS_SQL.DEFINE_COLUMN(v_cur_partition, 2, v_partname, 30);
+	DBMS_SQL.DEFINE_COLUMN(v_cur_partition, 1, v_partname, 30);
 	v_rows := DBMS_SQL.EXECUTE(v_cur_partition);
 
 	-- loop over results
@@ -698,22 +690,142 @@ BEGIN
 		IF DBMS_SQL.FETCH_ROWS(v_cur_partition) = 0 THEN
 			EXIT;
 		END IF;
-		DBMS_SQL.COLUMN_VALUE(v_cur_partition, 1, v_tablename);
-		DBMS_SQL.COLUMN_VALUE(v_cur_partition, 2, v_partname);
+		DBMS_SQL.COLUMN_VALUE(v_cur_partition, 1, v_partname);
 
-		-- drop the partition
-		v_cur_drop := DBMS_SQL.OPEN_CURSOR;
-		v_rows := 0;
+		-- open a datapump handle
+		dp_handle := DBMS_DATAPUMP.OPEN(
+			OPERATION  => 'EXPORT',
+			JOB_MODE   => 'TABLE',
+			JOB_NAME   => CONCAT(SUBSTR(v_partname, 3, 10), 'DP'),
+			VERSION	   => 'COMPATIBLE'
+		);
 
-		DBMS_SQL.PARSE(v_cur_drop,
-			'ALTER TABLE '||v_tablename||'
-			 DROP PARTITION '||v_partname||'',
+		-- add the log and dump files
+		DBMS_DATAPUMP.ADD_FILE(
+			HANDLE     => dp_handle,
+			FILENAME   => CONCAT(SUBSTR(v_partname, 3, 10), '.dmp'),
+			DIRECTORY  => 'DLF_DATAPUMP_DIR',
+			FILETYPE   => DBMS_DATAPUMP.KU$_FILE_TYPE_DUMP_FILE
+		);
+		DBMS_DATAPUMP.ADD_FILE(
+			HANDLE     => dp_handle,
+			FILENAME   => CONCAT(SUBSTR(v_partname, 3, 10), '.log'),
+			DIRECTORY  => 'DLF_DATAPUMP_DIR',
+			FILETYPE   => DBMS_DATAPUMP.KU$_FILE_TYPE_LOG_FILE
+		);
+    
+		DBMS_DATAPUMP.SET_PARAMETER(
+			HANDLE     => dp_handle,
+			NAME       => 'INCLUDE_METADATA',
+			VALUE      => 0
+		);
+                
+		-- setup the metadata and data filters to restrict the export to partitioned tables
+		-- and a specific partition name representing a given day.
+		v_cur_table := DBMS_SQL.OPEN_CURSOR;
+		v_rows   := 0;
+
+		-- retrieve a unique list of partition names older the 'x' days old
+		DBMS_SQL.PARSE(v_cur_table,
+			'SELECT DISTINCT(TABLE_NAME)
+			 FROM USER_TAB_PARTITIONS
+			 WHERE PARTITION_NAME <> ''MAX_VALUE''
+			 AND PARTITION_NAME = :x
+			 ORDER BY TABLE_NAME ASC',
 			DBMS_SQL.NATIVE);
-		v_rows := DBMS_SQL.EXECUTE(v_cur_drop);
+		DBMS_SQL.BIND_VARIABLE(v_cur_table, ':x', v_partname);
+
+		-- define columns, execute statement
+		DBMS_SQL.DEFINE_COLUMN(v_cur_table, 1, v_tablename, 30);
+		v_rows := DBMS_SQL.EXECUTE(v_cur_table);
+        
+		-- only include the major dlf tables with partitions. We deliberately ignore the
+		-- smaller statistics tables as their size has relatively no impact on storage space. 
+		DBMS_DATAPUMP.METADATA_FILTER(
+			HANDLE 	    => dp_handle,
+			NAME	    => 'NAME_EXPR',
+			VALUE	    => 'IN (''DLF_MESSAGES'',''DLF_NUM_PARAM_VALUES'',''DLF_REQID_MAP'',''DLF_STR_PARAM_VALUES'')',
+			OBJECT_PATH => 'TABLE'
+		);    
+
+		LOOP
+			IF DBMS_SQL.FETCH_ROWS(v_cur_table) = 0 THEN
+				EXIT;
+			END IF;
+			DBMS_SQL.COLUMN_VALUE(v_cur_table, 1, v_tablename);
+
+			-- exclude partitions not in the scope of the dump
+			DBMS_DATAPUMP.DATA_FILTER(
+				HANDLE 	   => dp_handle,
+				NAME	   => 'PARTITION_EXPR',
+				VALUE	   => '= '''||v_partname||'''',
+				TABLE_NAME => v_tablename
+			);
+		END LOOP;
 
 		-- free resources
-		DBMS_SQL.CLOSE_CURSOR(v_cur_drop);
+		DBMS_SQL.CLOSE_CURSOR(v_cur_table);
 
+		-- start the data pump job
+		DBMS_DATAPUMP.START_JOB(dp_handle);
+
+		-- at this point we have a data pump job visible through: 'select * from dba_datapump_jobs'
+		-- in order to determine whether it is safe to drop the partition from the schema we must
+		-- monitoring the jobs progress and wait for completion
+		dp_job_state := 'UNDEFINED';
+                
+		WHILE (dp_job_state != 'COMPLETED') AND (dp_job_state != 'STOPPED')
+			LOOP
+				DBMS_DATAPUMP.GET_STATUS(
+					HANDLE    => dp_handle,
+					MASK      => 15,
+					TIMEOUT   => NULL,
+					JOB_STATE => dp_job_state,
+					STATUS    => dp_status                   
+				);                        
+			END LOOP;
+
+		-- a completed state equals a successful export
+		IF dp_job_state = 'COMPLETED' THEN
+                      
+		v_cur_table := DBMS_SQL.OPEN_CURSOR;
+		v_rows   := 0;
+                     
+		DBMS_SQL.PARSE(v_cur_table,
+			'SELECT TABLE_NAME
+			 FROM USER_TABLES
+			 WHERE TABLE_NAME IN (''DLF_MESSAGES'',''DLF_NUM_PARAM_VALUES'',''DLF_REQID_MAP'',''DLF_STR_PARAM_VALUES'')
+			 ORDER BY TABLE_NAME ASC',
+			DBMS_SQL.NATIVE);
+                
+		-- define columns, execute statement
+		DBMS_SQL.DEFINE_COLUMN(v_cur_table, 1, v_tablename, 30);
+		v_rows := DBMS_SQL.EXECUTE(v_cur_table);
+                
+		LOOP
+			IF DBMS_SQL.FETCH_ROWS(v_cur_table) = 0 THEN
+				EXIT;
+			END IF;
+			DBMS_SQL.COLUMN_VALUE(v_cur_table, 1, v_tablename);
+
+			-- drop the partition
+			v_cur_drop := DBMS_SQL.OPEN_CURSOR;
+			v_rows := 0;
+
+			DBMS_SQL.PARSE(v_cur_drop,
+				'ALTER TABLE '||v_tablename||'
+				 TRUNCATE PARTITION '||v_partname||'',
+				DBMS_SQL.NATIVE);
+			v_rows := DBMS_SQL.EXECUTE(v_cur_drop);
+
+			-- free resources
+			DBMS_SQL.CLOSE_CURSOR(v_cur_drop);
+   
+ 		END LOOP;
+                
+ 		DBMS_SQL.CLOSE_CURSOR(v_cur_table);
+           
+		END IF;
 	END LOOP;
 
 	-- free resources
@@ -731,6 +843,9 @@ EXCEPTION
 		END IF;
 		IF DBMS_SQL.IS_OPEN(v_cur_setting) THEN
 			DBMS_SQL.CLOSE_CURSOR(v_cur_setting);
+		END IF;
+		IF DBMS_SQL.IS_OPEN(v_cur_table) THEN
+			DBMS_SQL.CLOSE_CURSOR(v_cur_table);
 		END IF;
 END;
 /

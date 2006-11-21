@@ -114,7 +114,8 @@ CREATE TABLE dlf_messages
 	pid		NUMBER(10),
 	tid		NUMBER(10),
 	nshostid	NUMBER,
-	nsfileid	NUMBER)
+	nsfileid	NUMBER,
+	tapevid		VARCHAR2(20))
 COMPRESS
 PARTITION BY RANGE (timestamp)
 SUBPARTITION BY LIST (facility)
@@ -135,6 +136,7 @@ CREATE INDEX i_msg_reqid ON dlf_messages (reqid) LOCAL TABLESPACE dlf_indx;
 CREATE INDEX i_msg_hostid ON dlf_messages (hostid) LOCAL TABLESPACE dlf_indx;
 CREATE INDEX i_msg_nshostid ON dlf_messages (nshostid) LOCAL TABLESPACE dlf_indx;
 CREATE INDEX i_msg_fileid ON dlf_messages (nsfileid) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_tapevid ON dlf_messages (tapevid) LOCAL TABLESPACE dlf_indx;
 
 /*
  * dlf_num_param_values
@@ -187,22 +189,6 @@ TABLESPACE dlf_data;
 
 CREATE INDEX i_req_id ON dlf_reqid_map (id) LOCAL TABLESPACE dlf_indx;
 CREATE INDEX i_req_subreqid ON dlf_reqid_map (subreqid) LOCAL TABLESPACE dlf_indx;
-
-/*
- * dlf_tape_ids
- */
-CREATE TABLE dlf_tape_ids
-(
-	id		NUMBER,
-	timestamp	DATE NOT NULL,
-	tapevid		VARCHAR2(20))
-PARTITION BY RANGE (timestamp)
-(
-	PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE) TABLESPACE dlf_data
-)
-TABLESPACE dlf_data;
-
-CREATE INDEX i_tape_id ON dlf_tape_ids (id) LOCAL TABLESPACE dlf_indx;
 
 /*
  * dlf_severities
@@ -645,8 +631,7 @@ END;
 /*
  * archive/backup procedure 
  */
-CREATE OR REPLACE
-PROCEDURE dlf_archive
+CREATE OR REPLACE PROCEDURE dlf_archive
 AS
 	-- cursors
 	v_cur_partition	INTEGER;
@@ -663,7 +648,7 @@ AS
 	-- data pump
 	dp_handle	NUMBER;
 	dp_job_state 	VARCHAR(30);
-        dp_status       KU$_STATUS;
+	dp_status       KU$_STATUS;
         
 BEGIN
 
@@ -692,7 +677,7 @@ BEGIN
 		 FROM USER_TAB_PARTITIONS
 		 WHERE PARTITION_NAME <> ''MAX_VALUE''
 		 AND PARTITION_NAME = CONCAT(''P_'', TO_CHAR(SYSDATE - '||v_expire||', ''YYYYMMDD''))
-                 AND TABLE_NAME IN (''DLF_MESSAGES'',''DLF_NUM_PARAM_VALUES'',''DLF_REQID_MAP'',''DLF_STR_PARAM_VALUES'',''DLF_TAPE_IDS'')
+                 AND TABLE_NAME IN (''DLF_MESSAGES'',''DLF_NUM_PARAM_VALUES'',''DLF_REQID_MAP'',''DLF_STR_PARAM_VALUES'')
 		 ORDER BY PARTITION_NAME ASC',
 		DBMS_SQL.NATIVE);
 
@@ -759,7 +744,7 @@ BEGIN
 		DBMS_DATAPUMP.METADATA_FILTER(
 			HANDLE 	    => dp_handle,
 			NAME	    => 'NAME_EXPR',
-			VALUE	    => 'IN (''DLF_MESSAGES'',''DLF_NUM_PARAM_VALUES'',''DLF_REQID_MAP'',''DLF_STR_PARAM_VALUES'',''DLF_TAPE_IDS'')',
+			VALUE	    => 'IN (''DLF_MESSAGES'',''DLF_NUM_PARAM_VALUES'',''DLF_REQID_MAP'',''DLF_STR_PARAM_VALUES'')',
 			OBJECT_PATH => 'TABLE'
 		);    
 
@@ -809,7 +794,7 @@ BEGIN
 		DBMS_SQL.PARSE(v_cur_table,
 			'SELECT TABLE_NAME
 			 FROM USER_TABLES
-			 WHERE TABLE_NAME IN (''DLF_MESSAGES'',''DLF_NUM_PARAM_VALUES'',''DLF_REQID_MAP'',''DLF_STR_PARAM_VALUES'',''DLF_TAPE_IDS'')
+			 WHERE TABLE_NAME IN (''DLF_MESSAGES'',''DLF_NUM_PARAM_VALUES'',''DLF_REQID_MAP'',''DLF_STR_PARAM_VALUES'')
 			 ORDER BY TABLE_NAME ASC',
 			DBMS_SQL.NATIVE);
                 
