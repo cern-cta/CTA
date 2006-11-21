@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.16 2006/11/10 12:35:35 waldron Exp $
+ * $Id: oracle.pc,v 1.17 2006/11/21 16:32:49 waldron Exp $
  */
 
 /* headers */
@@ -87,7 +87,6 @@ struct database_t {
 	struct numtable_t  *ntable;
 	struct strtable_t  *stable;
 	struct reqtable_t  *rtable;
-	struct taptable_t  *ttable;
 
 	/* statistics
 	 *   - must be purged at a regular interval, otherwise overflows in the counters will occur
@@ -125,7 +124,7 @@ struct msgtable_t {
 	int       tid[DB_ORA_ARRAY_SIZE];
 	int       nshostid[DB_ORA_ARRAY_SIZE];
 	char      nsfileid[DB_ORA_ARRAY_SIZE][37];
-
+	char      tapevid[DB_ORA_ARRAY_SIZE][DLF_LEN_TAPEID + 1];
 };
 
 struct numtable_t {
@@ -150,13 +149,6 @@ struct reqtable_t {
 	char      timestamp[DB_ORA_ARRAY_SIZE][DLF_LEN_TIMESTAMP + 1];
 	char      reqid[DB_ORA_ARRAY_SIZE][37];
 	char      subreqid[DB_ORA_ARRAY_SIZE][37];
-};
-
-struct taptable_t {
-	int       count;
-	long      id[DB_ORA_ARRAY_SIZE];
-	char      timestamp[DB_ORA_ARRAY_SIZE][15];
-	char      tapevid[DB_ORA_ARRAY_SIZE][DLF_LEN_TAPEID + 1];
 };
 
 
@@ -233,11 +225,10 @@ int DLL_DECL db_init(int threads) {
 		db->ntable = (struct numtable_t *) malloc(sizeof(struct numtable_t));
 		db->stable = (struct strtable_t *) malloc(sizeof(struct strtable_t));
 		db->rtable = (struct reqtable_t *) malloc(sizeof(struct reqtable_t));
-		db->ttable = (struct taptable_t *) malloc(sizeof(struct taptable_t));
 
 		/* malloc errors ? */
 		if ((db->mtable == NULL) || (db->ntable == NULL) || (db->stable == NULL) ||
-	 	    (db->rtable == NULL) || (db->ttable == NULL)) {
+	 	    (db->rtable == NULL)) {
 			log(LOG_ERR, "db_init() - failued to malloc() table structures : %s\n", strerror(errno));
 			return APP_FAILURE;
 		}
@@ -450,7 +441,6 @@ int DLL_DECL db_shutdown(void) {
 			free(dpool[i]->ntable);
 			free(dpool[i]->stable);
 			free(dpool[i]->rtable);
-			free(dpool[i]->ttable);
 
 			if (IsConnected(dpool[i]->mode)) {
 				log(LOG_NOTICE, "db_shutdown() - connection closed\n");
@@ -905,7 +895,7 @@ int DLL_DECL db_flush(database_t *db) {
         if (db->mtable->count) {
                 EXEC SQL FOR :db->mtable->count
                 INSERT INTO dlf_messages
-                        (id, timestamp, timeusec, reqid, hostid, facility, severity, msg_no, pid, tid, nshostid, nsfileid)
+                        (id, timestamp, timeusec, reqid, hostid, facility, severity, msg_no, pid, tid, nshostid, nsfileid, tapevid)
                 VALUES (:db->mtable->id,
                         TO_DATE(:db->mtable->timestamp, 'YYYYMMDDHH24MISS'),
                         :db->mtable->timeusec,
@@ -916,8 +906,9 @@ int DLL_DECL db_flush(database_t *db) {
                         :db->mtable->msg_no,
                         :db->mtable->pid,
                         :db->mtable->tid,
-                        :db->mtable->nshostid,
-                        TO_NUMBER(:db->mtable->nsfileid));
+			:db->mtable->nshostid,
+			TO_NUMBER(:db->mtable->nsfileid),
+			:db->mtable->tapevid);
         }
 
         /* table: dlf_num_param_values */
@@ -953,17 +944,7 @@ int DLL_DECL db_flush(database_t *db) {
                         :db->rtable->subreqid);
         }
 
-        /* table: dlf_tape_ids */
-        if (db->ttable->count) {
-                EXEC SQL FOR :db->ttable->count
-                INSERT INTO dlf_tape_ids
-                        (id, timestamp, tapevid)
-                VALUES (:db->ttable->id,
-                        TO_DATE(:db->ttable->timestamp, 'YYYYMMDDHH24MISS'),
-                        :db->ttable->tapevid);
-        }
-
-        /* update the sequence number
+	/* update the sequence number
          *   - this could have been done with a trigger, but this is costly for bulk inserts so we do
          *     it manually. We have to do a commit here otherwise deadlocks would occur
          */
@@ -1033,7 +1014,6 @@ void DLL_DECL db_worker(database_t *db) {
 	db->ntable->count = 0;
 	db->stable->count = 0;
 	db->rtable->count = 0;
-	db->ttable->count = 0;
 
 	/* worker thread
 	 *   - extract messages from the central fifo queue and translate the messages into host arrays
@@ -1091,11 +1071,11 @@ void DLL_DECL db_worker(database_t *db) {
 		/* host arrays reaching critical capacity ? */
 		if ((db->mtable->count + i > DB_FLUSH_ROWS) || (db->ntable->count + i > DB_FLUSH_ROWS) ||
 		    (db->stable->count + i > DB_FLUSH_ROWS) || (db->rtable->count + i > DB_FLUSH_ROWS) ||
-		    (db->ttable->count + i > DB_FLUSH_ROWS) || (db->last_flush == 0)) {
+		    (db->last_flush == 0)) {
 
 			if (db->mtable->count != 0) {
 				int i = (db->mtable->count + db->ntable->count +
-					 db->stable->count + db->rtable->count + db->ttable->count);
+					 db->stable->count + db->rtable->count);
 
 				rv = db_flush(db);
 				Cthread_mutex_lock(&db->mutex);
@@ -1111,7 +1091,6 @@ void DLL_DECL db_worker(database_t *db) {
 				db->ntable->count = 0;
 				db->stable->count = 0;
 				db->rtable->count = 0;
-				db->ttable->count = 0;
 			}
 
 			db->last_flush = time(NULL);
@@ -1181,6 +1160,7 @@ void DLL_DECL db_worker(database_t *db) {
 		strcpy(db->mtable->timestamp[db->mtable->count], message->timestamp);
 		strcpy(db->mtable->reqid[db->mtable->count], message->reqid);
 		strcpy(db->mtable->nsfileid[db->mtable->count], message->nsfileid);
+		strcpy(db->mtable->tapevid[db->mtable->count], "N/A");
 
 		/* process parameters */
 		for (param = message->plist; param != NULL; param = param->next) {
@@ -1238,10 +1218,7 @@ void DLL_DECL db_worker(database_t *db) {
 
 			/* table: dlf_tape_ids */
 			case DLF_MSG_PARAM_TPVID: {
-				db->ttable->id[db->ttable->count] = db->mtable->id[db->mtable->count];
-				strcpy(db->ttable->timestamp[db->ttable->count], db->mtable->timestamp[db->mtable->count]);
-				strncpy(db->ttable->tapevid[db->ttable->count], param->value, DLF_LEN_TAPEID);
-				db->ttable->count++;
+				strncpy(db->mtable->tapevid[db->mtable->count], param->value, DLF_LEN_TAPEID);
 				break;
 			}
 
