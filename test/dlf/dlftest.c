@@ -165,7 +165,7 @@ void worker(void *arg) {
 			genstring(pars2,    sizeof(pars2) - 1);
 			genstring(parname2, sizeof(parname2) - 1);
 
-			rv = dlf_write(req_id, severity, msg_no, &nsfileid, 6,
+			rv = dlf_write(req_id, severity, msg_no, &nsfileid, 7,
 				       parname,  DLF_MSG_PARAM_STR, pars,
 				       parname2, DLF_MSG_PARAM_STR, pars2,
 				       NULL,     DLF_MSG_PARAM_UUID, subreq_id,
