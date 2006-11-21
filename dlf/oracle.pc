@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.17 2006/11/21 16:32:49 waldron Exp $
+ * $Id: oracle.pc,v 1.18 2006/11/21 16:51:29 waldron Exp $
  */
 
 /* headers */
@@ -299,7 +299,8 @@ error:
         if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
 	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
 	    (sqlca.sqlcode == -2131)  || (sqlca.sqlcode == -3113) ||
-	    (sqlca.sqlcode == -12170) || (sqlca.sqlcode == -12541)) {
+	    (sqlca.sqlcode == -12170) || (sqlca.sqlcode == -12541) ||
+	    (sqlca.sqlcode == -1003)) {
                 ClrConnected(dpool[0]->mode);
         }
         dpool[0]->errors++;
@@ -606,7 +607,8 @@ error:
 	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
 	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
 	    (sqlca.sqlcode == -2131)  || (sqlca.sqlcode == -3113) ||
-	    (sqlca.sqlcode == -12170) || (sqlca.sqlcode == -12541)) {
+	    (sqlca.sqlcode == -12170) || (sqlca.sqlcode == -12541) ||
+	    (sqlca.sqlcode == -1003)) {
 		ClrConnected(db->mode);
 	}
 
@@ -727,7 +729,8 @@ error:
         if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
 	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
 	    (sqlca.sqlcode == -2131)  || (sqlca.sqlcode == -3113) ||
-	    (sqlca.sqlcode == -12170) || (sqlca.sqlcode == -12541)) {
+	    (sqlca.sqlcode == -12170) || (sqlca.sqlcode == -12541) ||
+	    (sqlca.sqlcode == -1003)) {
                 ClrConnected(db->mode);
         }
         db->errors++;
@@ -853,7 +856,8 @@ error:
 	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
 	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
 	    (sqlca.sqlcode == -2131)  || (sqlca.sqlcode == -3113) ||
-	    (sqlca.sqlcode == -12170) || (sqlca.sqlcode == -12541)) {
+	    (sqlca.sqlcode == -12170) || (sqlca.sqlcode == -12541) ||
+	    (sqlca.sqlcode == -1003)) {
 		ClrConnected(db->mode);
 	}
 	db->errors++;
@@ -979,7 +983,8 @@ error:
         if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
 	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
 	    (sqlca.sqlcode == -2131)  || (sqlca.sqlcode == -3113) ||
-	    (sqlca.sqlcode == -12170) || (sqlca.sqlcode == -12541)) {
+	    (sqlca.sqlcode == -12170) || (sqlca.sqlcode == -12541) ||
+	    (sqlca.sqlcode == -1003)) {
                 ClrConnected(db->mode);
         }
         db->errors++;
@@ -1427,7 +1432,8 @@ error:
 	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
 	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
 	    (sqlca.sqlcode == -2131)  || (sqlca.sqlcode == -3113) ||
-	    (sqlca.sqlcode == -12170) || (sqlca.sqlcode == -12541)) {
+	    (sqlca.sqlcode == -12170) || (sqlca.sqlcode == -12541) ||
+	    (sqlca.sqlcode == -1003)) {
 		ClrConnected(db->mode);
 	}
 	db->errors++;
@@ -1551,7 +1557,8 @@ error:
 	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
 	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
 	    (sqlca.sqlcode == -2131)  || (sqlca.sqlcode == -3113) ||
-	    (sqlca.sqlcode == -12170) || (sqlca.sqlcode == -12541)) {
+	    (sqlca.sqlcode == -12170) || (sqlca.sqlcode == -12541) ||
+	    (sqlca.sqlcode == -1003)) {
 		ClrConnected(db->mode);
 	}
 
