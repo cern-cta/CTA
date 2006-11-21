@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: query.php,v 1.8 2006/11/16 08:08:35 waldron Exp $
+ * $Id: query.php,v 1.9 2006/11/21 12:59:23 waldron Exp $
  */
 
 require("utils.php");
@@ -171,13 +171,6 @@ $query_count = 0;
 				alert("The from date must be smaller then the to date");
 				return false;
 			}
-			if ((compareDates(document.query.to.value + " " + document.query.totime.value, 'dd/MM/yyyy HH:mm',
-				  <?php echo "\"".date('d/m/Y H:i')."\""; ?>, 'dd/MM/yyyy HH:mm') != 0) || 
-				(compareDates(document.query.from.value + " " + document.query.fromtime.value, 'dd/MM/yyyy HH:mm',
-				  <?php echo "\"".date('d/m/Y H:i', time() + 300)."\""; ?>, 'dd/MM/yyyy HH:mm') != 0)) {	
-				alert("You cannot make a query for data in the future");		
-				return false;				 
-			}	
 	  	}
 		return true;
 	}
