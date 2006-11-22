@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.c,v 1.10 2006/11/14 10:47:46 waldron Exp $
+ * $Id: mysql.c,v 1.11 2006/11/22 13:14:26 waldron Exp $
  */
 
 /* headers */
@@ -944,6 +944,7 @@ void DLL_DECL db_worker(database_t *db) {
 	param_t      *param;
 	char         func[50];
 	char         query[4096];
+	char         tapevid[DLF_LEN_TAPEID + 1];
 	int          rv;
 	int          id;
 	int          hostid;
@@ -1051,27 +1052,7 @@ void DLL_DECL db_worker(database_t *db) {
 		/* insert message into database */
 		Cthread_mutex_lock(&db->mutex);
 		SetActive(db->mode);
-
-		/* table: dlf_messages */
-		db->inserts++;
-		snprintf(query, sizeof(query), "INSERT INTO dlf_messages                                                                          \
-                                               (id, timestamp, timeusec, reqid, hostid, facility, severity, msg_no, pid, tid, nshostid, nsfileid) \
-                                               VALUES ('%ld','%s','%d','%s','%d','%d','%d','%d','%d','%d','%d','%s');",
-			 id, message->timestamp,
-			 message->timeusec,
-			 message->reqid,
-			 hostid,
-			 message->facility,
-			 message->severity,
-			 message->msg_no,
-			 message->pid,
-			 message->tid,
-			 nshostid,
-			 message->nsfileid);
-		if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
-			strcpy(func, "mysql_query() into table: dlf_messages");
-			goto error;
-		}
+		strcpy(tapevid, "N/A");
 
 		/* process parameters */
 		for (param = message->plist; param != NULL; param = param->next) {
@@ -1110,12 +1091,8 @@ void DLL_DECL db_worker(database_t *db) {
 
 			/* table: dlf_tape_ids */
 			else if (param->type == DLF_MSG_PARAM_TPVID) {
-				snprintf(query, sizeof(query), "INSERT INTO dlf_tape_ids        \
-                                                                (id, timestamp, tapevid)        \
-                                                                VALUES ('%ld', '%s', '%s')",
-					 id, message->timestamp, param->value);
-
-				strcpy(func, "mysql_query() into table: dlf_tape_ids");
+				strncpy(tapevid, param->value, DLF_LEN_TAPEID);
+				continue;
 			} else {
 				continue;
 			}
@@ -1126,6 +1103,29 @@ void DLL_DECL db_worker(database_t *db) {
 				goto error;
 			}
 		}
+
+		/* table: dlf_messages */
+		db->inserts++;
+		snprintf(query, sizeof(query), "INSERT INTO dlf_messages                                                                                   \
+                                               (id, timestamp, timeusec, reqid, hostid, facility, severity, msg_no, pid, tid, nshostid, nsfileid, tapevid) \
+                                               VALUES ('%ld','%s','%d','%s','%d','%d','%d','%d','%d','%d','%d','%s','%s');",
+			 id, message->timestamp,
+			 message->timeusec,
+			 message->reqid,
+			 hostid,
+			 message->facility,
+			 message->severity,
+			 message->msg_no,
+			 message->pid,
+			 message->tid,
+			 nshostid,
+			 message->nsfileid,
+			 tapevid);
+		if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
+			strcpy(func, "mysql_query() into table: dlf_messages");
+			goto error;
+		}
+
 
 		/* update sequences */
 		db->updates++;
