@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.341 $ $Release$ $Date: 2006/11/21 15:35:12 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.342 $ $Release$ $Date: 2006/11/22 16:05:02 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.341 $ $Date: 2006/11/21 15:35:12 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.342 $ $Date: 2006/11/22 16:05:02 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -679,6 +679,9 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- No data found means the selected filesystem has no
     -- tapecopies to be migrated. Thus we go to next one
+    -- However, we reset the NbTapeCopiesInFS row that failed
+    -- This is not 100% safe but is far better than retrying
+    -- in the same conditions
     IF 0 != fileSystemId THEN
       UPDATE NbTapeCopiesInFS
          SET NbTapeCopies = 0
