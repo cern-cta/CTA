@@ -139,7 +139,7 @@ static int process_request(int s) {
   
       
       /* Checking the VOMS extensions */
-/*
+      
       {
         int nbfqan = 0, i;
         char **fqan = NULL;
@@ -153,7 +153,7 @@ static int process_request(int s) {
         }
       }
       
-*/
+
 
     
       { 
@@ -180,31 +180,29 @@ static int process_request(int s) {
   
 
 	Csec_server_getClientId(&sec_ctx, &mech, &name);
-	if (log) fprintf(log, "Received connection from: %s/%s\n", 
+	if (log) fprintf(log, "Received connection from: mechanism='%s' name='%s'\n", 
 			 mech, name);
 	
 	Csec_server_getAuthorizationId(&sec_ctx, &amech, &aname);
 	if (log) fprintf(log, "Authorization ID is: %s/%s\n", 
 			 amech, aname);
 		
-	Csec_mapToLocalUser (mech, 
+	if (Csec_mapToLocalUser (mech, 
 			     name, 
 			     buf, 
 			     BUF_SIZE, 
 			     &uid, 
-			     &gid);
+			     &gid) != 0) {
+	  fprintf(log, "cannot map into local user!\n");
+	  return -1;
+	}
 	
 	if (log) fprintf(log, "%s/%s mapped to %s\n", 
 			 mech, name, buf);
 
-
-	free(mech);
-	free(name);
-	free(amech);
-	free(aname);
       }
 
-      /* Csec_clearContext(&sec_ctx); */
+      Csec_clearContext(&sec_ctx);
     /*   }  */
     return 0;
 }
