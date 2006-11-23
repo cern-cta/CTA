@@ -14,10 +14,15 @@ FILE* log;
 int main(argc, argv)
     int argc;
     char *argv[];
+
+
 {
   int s, rc, i,  nbauths = 1;
   Csec_context_t sec_ctx;
-  
+
+  static char *myvo="MyOwnVO";
+  static char *fqans[] = {"one","two","three"};
+  int nbfqan = 3;
   
   log = stderr;
   
@@ -43,8 +48,10 @@ int main(argc, argv)
     
     Csec_client_initContext(&sec_ctx,CSEC_SERVICE_TYPE_HOST, NULL);
     Csec_client_setSecurityOpts(&sec_ctx, 0); //CSEC_OPT_DELEG_FLAG);
-    // Csec_client_setAuthorizationId(&sec_ctx, "GSI", "totototototo");
+    Csec_client_setAuthorizationId(&sec_ctx, "foo", "totototototo");
 
+    Csec_client_setVOMS_data(&sec_ctx,myvo,&fqans,nbfqan);
+    
     if (log) fprintf(log, "<%d> Establishing context\n", i);    
 
     if ( (rc= Csec_client_establishContext(&sec_ctx, s))<0) {
