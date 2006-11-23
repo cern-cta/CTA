@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Csec_api.c,v $ $Revision: 1.17 $ $Date: 2005/12/07 10:19:21 $ CERN IT/ADC/CA Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: Csec_api.c,v $ $Revision: 1.18 $ $Date: 2006/11/23 16:03:01 $ CERN IT/ADC/CA Benjamin Couturier";
 #endif
 
 /*
@@ -1150,6 +1150,83 @@ error:
  *                                                               *
  *****************************************************************/
 
+/**
+ * Sets the authorization voname and fqans in the client's context
+ */
+int Csec_client_setVOMS_data(Csec_context_t *ctx, const char *voname, char **fqan, int nbfqan) {
+  char *func = "Csec_client_setVOMS_data";
+  int i;
+
+  Csec_trace(func, "Entering\n");
+
+  /* Checking ths status of the context */
+  if (ctx == NULL) {
+    serrno = EINVAL;
+    Csec_errmsg(func, "Context is NULL");
+    return -1;
+  }
+    
+  if (!(ctx->flags& CSEC_CTX_INITIALIZED)) {
+    serrno = ESEC_CTX_NOT_INITIALIZED;
+    return -1;
+  }
+
+  if (!Csec_context_is_client(ctx)) {
+    serrno = EINVAL;
+    Csec_errmsg(func, "Not a client context");
+    return -1;
+  }
+
+  /* Sanity check - complain if we already have an established security context */
+  if (ctx->flags& CSEC_CTX_CONTEXT_ESTABLISHED) {
+    serrno = EINVAL;
+    Csec_errmsg(func, "A security context has already been established");
+    return -1;
+  }
+
+  if (voname==NULL || strlen(voname) > CA_MAXCSECPROTOLEN) {
+    serrno = EINVAL;
+    Csec_errmsg(func, "Supplied vo name is invalid");
+    return -1;
+  }
+
+  if (fqan==NULL) {
+    serrno = EINVAL;
+    Csec_errmsg(func, "Supplied fqans are invalid");
+    return -1;
+  }
+
+  for (i = 0; i < nbfqan; i++) {
+    if (fqan[i]==NULL || strlen(fqan[i]) > CA_MAXCSECNAMELEN) {
+      serrno = EINVAL;
+      Csec_errmsg(func, "Supplied fqans are invalid");
+      return -1;
+    }
+  }
+
+  if ((ctx->voname = strdup(voname))==NULL) {
+    serrno = ENOMEM;
+    Csec_errmsg(func, "Unable to allocate memory for storing voname");
+    return -1;
+  }
+  if ((ctx->fqan = calloc(nbfqan, sizeof(char *)))==NULL) {
+    serrno = ENOMEM;
+    Csec_errmsg(func, "Unable to allocate memory for storing fqans");
+    return -1;
+  }
+  ctx->nbfqan = nbfqan;
+  for (i = 0; i < nbfqan; i++) {
+    if ((ctx->fqan[i] = strdup(fqan[i]))==NULL) {
+      serrno = ENOMEM;
+      Csec_errmsg(func, "Unable to allocate memory for storing fqans");
+      return -1;
+    }
+  }
+
+  ctx->flags |= CSEC_CTX_VOMS_AVAIL;
+
+  return 0;
+}
 
 
 /* Returns the VO name, if it could be retrieved via VOMS */

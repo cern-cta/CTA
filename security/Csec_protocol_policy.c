@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Csec_protocol_policy.c,v $ $Revision: 1.11 $ $Date: 2005/12/12 15:24:36 $ IT/ADC/CA Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: Csec_protocol_policy.c,v $ $Revision: 1.12 $ $Date: 2006/11/23 16:03:01 $ IT/ADC/CA Benjamin Couturier";
 #endif
 		
 /*
@@ -424,6 +424,24 @@ int Csec_server_negociate_protocol(int s, int timeout, Csec_context_t *ctx, char
     }
   } /* ctx->nb_peer_protocols>0 */
 
+  if (p < (char *)bigbuf.value + bigbuf.length) {
+    /* Has VOMS_data been set by the client ? */
+    unmarshall_LONG(p, l);
+    if (l) {
+      char tmp[CA_MAXCSECNAMELEN+1];
+      /* get the voname */
+      unmarshall_STRINGN(p, tmp, CA_MAXCSECNAMELEN+1);
+      ctx->voname = strdup(tmp);
+      /* get the fqans */
+      unmarshall_LONG(p, ctx->nbfqan);
+      ctx->fqan = calloc(ctx->nbfqan, sizeof(char *));
+      for (l = 0; l < ctx->nbfqan; l++) {
+        unmarshall_STRINGN(p, tmp, CA_MAXCSECNAMELEN+1);
+        ctx->fqan[l] = strdup(tmp);
+      }
+      ctx->flags |= CSEC_CTX_VOMS_AVAIL;
+    }
+  }
   if (_check_short_resp(func,&bigbuf, p)<0) {
     if (peer_flags != NULL) free(peer_flags);
     return -1;
@@ -694,6 +712,22 @@ int Csec_client_negociate_protocol(int s, int timeout, Csec_context_t *ctx) {
     return -1;
   }
   
+  /* VOMS_data to send to the server */
+  
+  i = (ctx->flags & CSEC_CTX_VOMS_AVAIL) ? 1 : 0;
+  marshall_LONG(p, ((unsigned long)i));
+
+  if (i) {
+    marshall_STRING(p, ctx->voname);
+    marshall_LONG(p, ctx->nbfqan);
+    for(i=0;i<ctx->nbfqan;i++) {
+      marshall_STRING(p, ctx->fqan[i]);
+      if (_add_to_bigbuf(func, &bigbuf, &bigbuf_size, tmpbuffer, &p) < 0) {
+        return -1;
+      }
+    }
+  }
+
   /* Send the packet to the server */
 
   Csec_trace(func, "Sending %d bytes\n", bigbuf.length);
