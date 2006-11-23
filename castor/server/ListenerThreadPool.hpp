@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/11/23 17:52:49 $ $Author: itglp $
  *
  *
  *
@@ -64,6 +64,12 @@ namespace castor {
      * destructor
      */
     virtual ~ListenerThreadPool() throw();
+	
+    /**
+     * Binds a standard ServerSocket to the given port.
+     * @throw castor::exception::Internal if the port is busy.
+     */
+    virtual void init() throw (castor::exception::Exception);
 
     /**
      * Starts the listener loop to accept connections.
@@ -73,24 +79,34 @@ namespace castor {
      * listening servers like the RH, this results in less overhead.
      */
     virtual void run();
-
+	
   protected:
   
     /**
-     * Forks and assigns work to a thread from the pool.
-     * @param param user parameter passed to thread->run().
-     */
-    virtual int threadAssign(void *param);
+	 * The real implementation for this Listener, using standard ServerSocket.
+	 * Child classes must override this method to provide different listener behaviors;
+	 * it is expected that this method implements a never-ending loop.
+	 */
+    virtual void runImpl();
 
     /// TCP port to listen for
     int m_port;
     
     /// flag to decide whether the listener loop has to run in a separate thread
     bool m_spawnListener;
+	
+  private:
+    /**
+     * Forks and assigns work to a thread from the pool.
+     * @param param user parameter passed to thread->run().
+     */
+    virtual int threadAssign(void* param);
+
+    /// The server socket to accept connections
+  	castor::io::ServerSocket* sock;
 
     /// Thread entrypoint made friend to access private fields.
     friend void* _listener_run(void* param);
-
   };
 
 
@@ -103,3 +119,4 @@ namespace castor {
 
 
 #endif // CASTOR_SERVER_LISTENERTHREADPOOL_HPP
+

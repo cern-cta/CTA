@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/05/02 10:10:33 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/11/23 17:52:49 $ $Author: itglp $
  *
  *
  *
@@ -34,7 +34,6 @@
 #include "Cuuid.h"
 #include "Cpool_api.h"
 #include "castor/logstream.h"
-#include <sstream>
 #include <iomanip>
 
 //------------------------------------------------------------------------------
@@ -53,15 +52,50 @@ castor::server::ListenerThreadPool::~ListenerThreadPool() throw() {}
 
 
 //------------------------------------------------------------------------------
+// init
+//------------------------------------------------------------------------------
+void castor::server::ListenerThreadPool::init() throw (castor::exception::Exception)
+{
+  /* Create a socket for the server, bind, and listen */
+  try {
+    sock = new castor::io::ServerSocket(m_port, true);
+  }
+  catch (castor::exception::Exception e) {
+    clog() << "Fatal error: cannot bind socket on port " << m_port << ": "
+           << e.getMessage().str() << std::endl;
+    throw e;         // calling server should exit() here
+  }
+}
+
+//------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
 void castor::server::ListenerThreadPool::run()
-{
+{  
   if(m_spawnListener) {
     Cthread_create_detached(castor::server::_listener_run, this);
   }
   else {
-    _listener_run(this);
+    runImpl();
+  }
+}
+
+//------------------------------------------------------------------------------
+// runImpl
+//------------------------------------------------------------------------------
+void castor::server::ListenerThreadPool::runImpl()
+{
+  try {
+    for (;;) {
+      /* accept connections */
+      castor::io::ServerSocket* s = sock->accept();
+      /* handle the command */
+      threadAssign(s);
+    }
+  }
+  catch(castor::exception::Exception any) {
+    clog() << "Error while accepting connections to port " << m_port << ": "
+           << any.getMessage().str() << std::endl;
   }
 }
 
@@ -71,21 +105,7 @@ void castor::server::ListenerThreadPool::run()
 void* castor::server::_listener_run(void* param)
 {
   castor::server::ListenerThreadPool* tp = (castor::server::ListenerThreadPool*)param;
-  
-  try {
-    /* Create a socket for the server, bind, and listen */
-    castor::io::ServerSocket sock(tp->m_port, true);
-    for (;;) {
-      /* accept connections */
-      castor::io::ServerSocket* s = sock.accept();
-      /* handle the command */
-      tp->threadAssign(s);
-    }
-  } catch(castor::exception::Exception any) {
-    tp->clog() << "Error while listening to port " << tp->m_port << ": "
-               << any.getMessage().str() << std::endl;
-  }
-
+  tp->runImpl();
   return 0;
 }
 
