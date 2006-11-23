@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.343 $ $Release$ $Date: 2006/11/23 10:26:32 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.344 $ $Release$ $Date: 2006/11/23 17:31:28 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.343 $ $Date: 2006/11/23 10:26:32 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.344 $ $Date: 2006/11/23 17:31:28 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2440,7 +2440,8 @@ BEGIN
     END;
     -- is the garbage collector job already running?
     BEGIN
-      SELECT job INTO jobid FROM user_jobs WHERE what = 'garbageCollect();';
+      SELECT job INTO jobid FROM user_jobs
+       WHERE what = 'garbageCollect();' AND failures IS NULL;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- we spawn a job to do the real work. This avoids mutating table error
       -- and ensures that the current update does not fail if GC fails
