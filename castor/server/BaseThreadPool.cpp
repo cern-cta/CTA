@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/11/23 17:53:49 $ $Author: itglp $
  *
  *
  *
@@ -95,6 +95,14 @@ void castor::server::BaseThreadPool::setNbThreads(int value)
   m_nbThreads = value;
 }
 
+//------------------------------------------------------------------------------
+// join XXX to be implemented later
+//------------------------------------------------------------------------------
+//void castor::server::BaseThreadPool::join(int tid)
+//{
+//  Cthread_join(tid, NULL);
+//}
+
 
 //------------------------------------------------------------------------------
 // _thread_run
@@ -119,10 +127,10 @@ void* castor::server::_thread_run(void* param)
   try {
     pool->m_thread->run(args->param);
   } catch(castor::exception::Exception any) {
-    pool->clog() << ERROR << "Uncatched exception in a thread from pool " 
+    pool->clog() << ERROR << "Uncaught exception in a thread from pool "
                  << pool->m_poolName << " : " << any.getMessage().str() << std::endl;
   } catch(...) {
-    pool->clog() << ERROR << "Uncatched GENERAL exception in a thread from pool " 
+    pool->clog() << ERROR << "Uncaught GENERAL exception in a thread from pool "
                  << pool->m_poolName << std::endl;
   }
   

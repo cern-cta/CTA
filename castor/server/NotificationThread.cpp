@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
+ * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/11/23 17:53:49 $ $Author: itglp $
  *
  *
  *
@@ -60,11 +60,9 @@ void castor::server::NotificationThread::run(void* param)
   struct sockaddr_in serverAddress, clientAddress;
   int on = 1;	/* for REUSEADDR */
   int ibind;
-#if defined(_WIN32)
-  WSADATA wsadata;
-#endif
 
 #if defined(_WIN32)
+  WSADATA wsadata;
   if (WSAStartup(MAKEWORD (2, 0), &wsadata)) {
     serrno = SEINTERNAL;
     return(NULL);
@@ -156,7 +154,7 @@ void castor::server::NotificationThread::run(void* param)
           nbThreadInactive = 0;
       	}
       	if (nbThreadInactive == 0) {
-      	  /* All threads are already busy : try to get one couting on timing windows */
+      	  /* All threads are already busy : try to get one counting on timing windows */
       	  m_owner->m_notified = 1;
       	} else {
       	  if (m_owner->m_notified > nbThreadInactive) {

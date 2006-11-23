@@ -17,9 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/08/14 19:10:38 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/11/23 17:53:49 $ $Author: itglp $
  *
- *
+ * A base multithreaded daemon supporting signal handling
+ * Credits to Jean-Damien Durand for the original C code
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -44,6 +45,11 @@ namespace castor {
   // Forward declaration
   class BaseServer;
 
+  ///  handled signals - see the signal handler thread
+  const int RESTART_GRACEFULLY = 0;
+  const int STOP_GRACEFULLY = 1;
+  const int STOP_NOW = 2;
+	
   /**
    * Basic CASTOR multithreaded daemon.
    */
@@ -67,6 +73,12 @@ namespace castor {
      * for incoming signals forever.
      */
     virtual void start() throw (castor::exception::Exception);
+	
+    /**
+     * Handles signals and performs graceful/immediate stop.
+     * Called by start()
+     */
+    virtual void signalHandler();
 
   protected:
 
@@ -78,7 +90,6 @@ namespace castor {
     /**
      * wait all threads to terminate before exiting.
      * This implements a graceful kill and is triggered by kill -2.
-     * XXX To be implemented later.
      */
     void waitAllThreads() throw ();
 
@@ -92,7 +103,7 @@ namespace castor {
 
     /// signal handler; friend function to access private fields.
     friend void* _signalThread_run(void* arg);
-
+	
   };
 
   // entrypoint for the signal handler thread
@@ -101,7 +112,6 @@ namespace castor {
  } // end of namespace server
 
 } // end of namespace castor
-
 
 
 #endif // CASTOR_SERVER_BASEDAEMON_HPP

@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/09/25 13:32:11 $ $Author: sponcec3 $
+ * @(#)BaseDaemon.cpp,v 1.8 $Release$ 2006/08/14 19:10:38 itglp
  *
- *
+ * A base multithreaded daemon supporting signal handling
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -67,8 +67,8 @@ void castor::server::BaseDaemon::init() throw(castor::exception::Exception)
   sigemptyset(&m_signalSet);
   sigaddset(&m_signalSet, SIGINT);
   sigaddset(&m_signalSet, SIGTERM);
-  //sigaddset(&m_signalSet, SIGHUP);
-  //sigaddset(&m_signalSet, SIGABRT);
+  sigaddset(&m_signalSet, SIGHUP);
+  sigaddset(&m_signalSet, SIGABRT);
 
   int c;
   if ((c = pthread_sigmask(SIG_BLOCK,&m_signalSet,NULL)) != 0) {
@@ -88,22 +88,67 @@ void castor::server::BaseDaemon::init() throw(castor::exception::Exception)
 void castor::server::BaseDaemon::start() throw(castor::exception::Exception)
 {
   castor::server::BaseServer::start();
-
+  
   /* Wait forever on a catched signal */
+  signalHandler();
+}
+
+
+//------------------------------------------------------------------------------
+// signalHandler
+//------------------------------------------------------------------------------
+void castor::server::BaseDaemon::signalHandler()
+{
+  int rc = 0;
+  
   try {
     m_signalMutex->lock();
 
     while (!m_signalMutex->getValue()) {
-      // Note: Without SINGLE_SERVICE_COND_TIMEOUT > 0 this will never work - because the condition variable
+      // Note: Without COND_TIMEOUT > 0 this will never work - because the condition variable
       // is changed in a signal handler - we cannot use condition signal in this signal handler
       m_signalMutex->wait();
     }
 
     m_signalMutex->release();
+    int stagerSignaled = m_signalMutex->getValue();
+	
+    switch (stagerSignaled) {
+      case RESTART_GRACEFULLY:
+        clog() << SYSTEM << "GRACEFUL RESTART [SIGHUP]" << std::endl;
+        /* wait on all threads to terminate */
+        waitAllThreads();
+        /* and restart them all */
+        start();   // XXX this is a blind attempt to restart, as it was implemented in stager.c:1065
+        break;
+      
+      case STOP_GRACEFULLY:
+        clog() << SYSTEM << "GRACEFUL STOP [SIGTERM]" << std::endl;
+        /* wait on all threads to terminate */
+        waitAllThreads();
+        rc = EXIT_SUCCESS;
+        break;
+      
+      case STOP_NOW:
+        clog() << ERROR << "IMMEDIATE STOP [SIGINT]" << std::endl;
+        rc = EXIT_SUCCESS;
+        /* just stop as fast as possible */
+        break;
+      
+      default:
+        /* Impossible !? */
+        clog() << ERROR << "Caught a not handled signal - IMMEDIATE STOP" << std::endl;
+        rc = EXIT_FAILURE;
+    }
+
   }
   catch (castor::exception::Exception e) {
     clog() << ERROR << "Exception during wait for signal loop: " << e.getMessage().str() << std::endl;
+    rc = EXIT_FAILURE;
   }
+
+  dlf_shutdown(10);
+  exit(rc);
 }
 
 
@@ -115,6 +160,7 @@ void castor::server::BaseDaemon::waitAllThreads() throw()
 {
   std::vector<castor::server::SignalThreadPool*> idleTPools;
 
+  /* old C implementation in stager.c:1169 */
   while(true) {
     idleTPools.clear();
 
@@ -125,6 +171,7 @@ void castor::server::BaseDaemon::waitAllThreads() throw()
         if(typeid(tp->second) == typeid(castor::server::SignalThreadPool)) {
           // only SignalThreadPools have to be checked
           if(((castor::server::SignalThreadPool*)tp->second)->getActiveThreads() > 0) {
+            tp->second->getThread()->stop();    // this is advisory, but SelectProcessThread implements it
             castor::exception::Internal ex;
             throw ex;
           }
@@ -140,50 +187,51 @@ void castor::server::BaseDaemon::waitAllThreads() throw()
       for(int i = 0; i < idleTPools.size(); i++) {
         idleTPools[i]->getMutex()->release();
       }
+      
+      sleep(1);         // wait before trying again
     }
   }
-
-  /* old C implementation (see also stager.c:1169)
-  while (true) {
-    int nbthread;
-
-    if (Cthread_mutex_timedlock_ext(singlePoolNidCthreadStructure,SINGLE_SERVICE_MUTEX_TIMEOUT) != 0) {
-      sleep(1);
-      continue;
-    }
-
-    nbthread = singlePoolNid;
-    Cthread_mutex_unlock_ext(singlePoolNidCthreadStructure);
-
-    if (nbthread <= 0) {
-      break;  // finished
-    }
-  }
-  */
 }
 
 
 //------------------------------------------------------------------------------
-// signalThread_run
+// _signalThread_run
 //------------------------------------------------------------------------------
 void* castor::server::_signalThread_run(void* arg)
 {
-  int sig_number;
+  int sig_number = SIGHUP;
   castor::server::BaseDaemon* daemon = (castor::server::BaseDaemon*)arg;
 
-  while (true) {
+  // keep looping until any caught signal except restart
+  while (sig_number == SIGHUP) {
     if (sigwait(&daemon->m_signalSet, &sig_number) == 0) {
       /* Note: from now on this is unsafe but here we go, we cannot use mutex/condition/printing etc... */
       /* e.g. things unsafe in a signal handler */
       /* so from now on this function is calling nothing external */
       
-      // XXX to be implemented the stager way (stager.c:1116)
-      daemon->m_signalMutex->setValueNoMutex(1);
-      
-      dlf_shutdown(10);
-      exit(0);  // EXIT_SUCCESS
-    }
+      switch (sig_number) {
+        case SIGHUP:
+          /* Administrator want us to restart */
+          // this wakes up the main thread (see line 104)
+          daemon->m_signalMutex->setValueNoMutex(castor::server::RESTART_GRACEFULLY);
+          break;
+        
+        case SIGABRT:
+        case SIGTERM:
+          /* Administrator want us to stop gracefully */
+          daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_GRACEFULLY);
+          break;
+        
+        case SIGINT:
+          /* Administrator want us to stop now */
+          daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_NOW);
+          break;
+        
+        default:
+          daemon->clog() << SYSTEM << "Caught signal: " << sig_number << std::endl;
+          break;
+      }
+	  }
   }
   return 0;
 }
-

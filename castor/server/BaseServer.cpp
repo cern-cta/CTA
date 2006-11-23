@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/07/18 12:12:32 $ $Author: waldron $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/11/23 17:53:49 $ $Author: itglp $
  *
  *
  *
@@ -211,6 +211,7 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
           printf("Using configuration file %s\n", Coptarg);
           putenv(cfgFile);
         }
+	free(cfgFile);
       }
       break;
     case 'h':
