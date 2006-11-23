@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.342 $ $Release$ $Date: 2006/11/22 16:05:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.343 $ $Release$ $Date: 2006/11/23 10:26:32 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.342 $ $Date: 2006/11/22 16:05:02 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.343 $ $Date: 2006/11/23 10:26:32 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -70,6 +70,7 @@ CREATE INDEX I_DiskCopy_FileSystem on DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_Status on DiskCopy (status);
 
 CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
+CREATE index I_TapeCopy_Status on Tapecopy (status);
 
 CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer on FileSystem (diskServer);
