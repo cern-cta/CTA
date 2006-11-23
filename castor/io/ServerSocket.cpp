@@ -43,7 +43,7 @@
 #include "castor/Constants.hpp"
 #include "castor/Services.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
+#include "castor/exception/Communication.hpp"
 #include "castor/io/biniostream.h"
 #include "castor/io/StreamAddress.hpp"
 
@@ -262,5 +262,12 @@ void castor::io::ServerSocket::bind()
     port=(rand() % (m_highPort-m_lowPort+1)) + m_lowPort;
     m_saddr.sin_port = htons(port);
     rc = ::bind(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr));
+    
+    if(0 != rc && errno == EADDRINUSE && m_lowPort == m_highPort) {
+      // this is a server-side daemon trying to bind to an used port
+      // don't retry and fire exception
+      castor::exception::Communication e("Port in use", EADDRINUSE);
+      throw e;
+    }
   }
 }
