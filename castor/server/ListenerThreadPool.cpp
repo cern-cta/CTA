@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/11/23 17:52:49 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/11/24 11:28:45 $ $Author: itglp $
  *
  *
  *
@@ -76,14 +76,14 @@ void castor::server::ListenerThreadPool::run()
     Cthread_create_detached(castor::server::_listener_run, this);
   }
   else {
-    runImpl();
+    listenLoop();
   }
 }
 
 //------------------------------------------------------------------------------
 // runImpl
 //------------------------------------------------------------------------------
-void castor::server::ListenerThreadPool::runImpl()
+void castor::server::ListenerThreadPool::listenLoop()
 {
   try {
     for (;;) {
@@ -105,7 +105,7 @@ void castor::server::ListenerThreadPool::runImpl()
 void* castor::server::_listener_run(void* param)
 {
   castor::server::ListenerThreadPool* tp = (castor::server::ListenerThreadPool*)param;
-  tp->runImpl();
+  tp->listenLoop();
   return 0;
 }
 

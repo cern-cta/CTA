@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/11/23 17:52:49 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/11/24 11:28:45 $ $Author: itglp $
  *
  *
  *
@@ -83,11 +83,11 @@ namespace castor {
   protected:
   
     /**
-	 * The real implementation for this Listener, using standard ServerSocket.
-	 * Child classes must override this method to provide different listener behaviors;
-	 * it is expected that this method implements a never-ending loop.
-	 */
-    virtual void runImpl();
+     * The listening loop implementation for this Listener, based on standard ServerSocket.
+     * Child classes must override this method to provide different listener behaviors;
+     * it is expected that this method implements a never-ending loop.
+     */
+    virtual void listenLoop();
 
     /// TCP port to listen for
     int m_port;
