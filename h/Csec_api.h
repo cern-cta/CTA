@@ -45,6 +45,7 @@ char DLL_DECL *Csec_server_get_client_vo _PROTO((Csec_context_t *));
 
 char DLL_DECL **Csec_server_get_client_fqans _PROTO((Csec_context_t *, int *));
 
+int DLL_DECL Csec_client_setVOMS_data _PROTO((Csec_context_t *, const char *, char **, int));
 
 /* Service type & name handling */
 

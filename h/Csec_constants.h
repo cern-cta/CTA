@@ -78,6 +78,7 @@ enum Csec_service_types {
 #define CSEC_CTX_USER_MAPPED          0x00000080L
 #define CSEC_CTX_DELEG_CRED_LOADED    0x00000100L
 #define CSEC_CTX_AUTHID_AVAIL         0x00000200L
+#define CSEC_CTX_VOMS_AVAIL           0x00000400L
 
 /* Status of the protocols when being checked */
 #define CSEC_PROT_NOSHLIB             0x00000001L
