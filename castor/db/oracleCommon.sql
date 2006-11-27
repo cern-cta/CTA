@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.345 $ $Release$ $Date: 2006/11/24 11:21:25 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.346 $ $Release$ $Date: 2006/11/27 11:03:48 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.345 $ $Date: 2006/11/24 11:21:25 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.346 $ $Date: 2006/11/27 11:03:48 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2271,7 +2271,7 @@ CREATE OR REPLACE PROCEDURE garbageCollectFS(fsId INTEGER) AS
   bestCandidate INTEGER;
   bestValue NUMBER;
 BEGIN
-  -- Get the DiskPool and the minFree space we want to achieve
+  -- Get the DiskPool and the maxFree space we want to achieve
   SELECT diskPool, maxFreeSpace * totalSize - free - deltaFree + reservedSpace - spaceToBeFreed
     INTO dpId, toBeFreed
     FROM FileSystem
@@ -2420,19 +2420,22 @@ FOR EACH ROW
 DECLARE
   freeSpace NUMBER;
   jobid NUMBER;
+  invalidCount NUMBER;
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
 BEGIN
   -- compute the actual free space taking into account reservations (reservedSpace)
   -- and already running GC processes (spaceToBeFreed)
   freeSpace := :new.free + :new.deltaFree - :new.reservedSpace + :new.spaceToBeFreed;
+  SELECT COUNT(*) INTO invalidCount FROM DiskCopy WHERE fileSystem = :new.id AND status = 7;
   -- shall we launch a new GC?
-  IF :new.minFreeSpace * :new.totalSize  > freeSpace AND
+  IF (:new.minFreeSpace * :new.totalSize  > freeSpace AND
      -- is it really worth launching it? (some other GCs maybe are already running
-     -- so we accept it only if it will free more than 5 Gb)
-     :new.maxFreeSpace * :new.totalSize > freeSpace + 5000000000 THEN
-
-    -- ok, we queue this filesystem for being garbage collected
+     -- so we accept it only if it will free more than 4%)
+     :new.maxFreeSpace * :new.totalSize > freeSpace + 0.04 * :new.totalSize) OR
+     -- or do we have enough invalid diskcopies to be cleaned up, regardless the current free space?
+     invalidCount > 100
+  THEN   -- ok, we queue this filesystem for being garbage collected
     BEGIN
       INSERT INTO FileSystemGC VALUES (:new.id, getTime());
     EXCEPTION
@@ -2451,6 +2454,7 @@ BEGIN
     -- otherwise, a recent job is already running and will take over this FS too
   END IF;
 END;
+
 
 
 /*CREATE MATERIALIZED VIEW MView_FS_DS_DP2SC
