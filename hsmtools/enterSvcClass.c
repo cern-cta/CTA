@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.4 $ $Release$ $Date: 2005/07/21 09:13:06 $ $Author: itglp $
+ * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.5 $ $Release$ $Date: 2006/11/27 14:55:38 $ $Author: sponcec3 $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.4 $ $Release$ $Date: 2005/07/21 09:13:06 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.5 $ $Release$ $Date: 2006/11/27 14:55:38 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -161,6 +161,7 @@ int main(int argc, char *argv[])
   char *cmd, buf[32], *name = NULL;
   char *tapePoolsStr = NULL, *diskPoolsStr = NULL;
   char **tapePoolsArray = NULL, **diskPoolsArray = NULL;
+  char *gcPolicy = NULL;
   int nbDiskPools = 0, nbTapePools = 0;
   int defaultReplicaNb = 1, maxReplicaNb = -1;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -173,6 +174,7 @@ int main(int argc, char *argv[])
   struct Cstager_TapePool_t *tapePool = NULL;
   struct Cstager_DiskPool_t *diskPool = NULL;
   u_signed64 u64;
+  const char* gcPolicyConst = NULL;
   
   Coptind = 1;
   Copterr = 1;
@@ -256,6 +258,15 @@ int main(int argc, char *argv[])
                                      svcClass,
                                      defaultReplicaNb
                                      );
+  }
+  gcPolicyConst = gcPolicy;
+  Cstager_SvcClass_gcPolicy(svcClass, &gcPolicyConst);
+  if ( NULL == gcPolicy ) {
+    Cstager_SvcClass_setGcPolicy(
+                                 svcClass,
+                                 "defaultGCPolicy"
+                                 );
+    fprintf(stdout,"No gc policy given, using default\n");    
   }
 
   fprintf(stdout,"Adding SvcClass: %s\n",name);
