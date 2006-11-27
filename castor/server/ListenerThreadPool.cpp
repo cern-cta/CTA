@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/11/24 11:28:45 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/11/27 15:41:08 $ $Author: itglp $
  *
  *
  *
@@ -58,7 +58,7 @@ void castor::server::ListenerThreadPool::init() throw (castor::exception::Except
 {
   /* Create a socket for the server, bind, and listen */
   try {
-    sock = new castor::io::ServerSocket(m_port, true);
+    m_sock = new castor::io::ServerSocket(m_port, true);
   }
   catch (castor::exception::Exception e) {
     clog() << "Fatal error: cannot bind socket on port " << m_port << ": "
@@ -81,14 +81,14 @@ void castor::server::ListenerThreadPool::run()
 }
 
 //------------------------------------------------------------------------------
-// runImpl
+// listenLoop
 //------------------------------------------------------------------------------
 void castor::server::ListenerThreadPool::listenLoop()
 {
   try {
     for (;;) {
       /* accept connections */
-      castor::io::ServerSocket* s = sock->accept();
+      castor::io::ServerSocket* s = m_sock->accept();
       /* handle the command */
       threadAssign(s);
     }

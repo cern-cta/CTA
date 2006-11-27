@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/11/24 11:28:45 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/11/27 15:41:08 $ $Author: itglp $
  *
  *
  *
@@ -89,6 +89,12 @@ namespace castor {
      */
     virtual void listenLoop();
 
+    /**
+     * Forks and assigns work to a thread from the pool.
+     * @param param user parameter passed to thread->run().
+     */
+    virtual int threadAssign(void* param);
+    
     /// TCP port to listen for
     int m_port;
     
@@ -96,14 +102,9 @@ namespace castor {
     bool m_spawnListener;
 	
   private:
-    /**
-     * Forks and assigns work to a thread from the pool.
-     * @param param user parameter passed to thread->run().
-     */
-    virtual int threadAssign(void* param);
 
     /// The server socket to accept connections
-  	castor::io::ServerSocket* sock;
+  	castor::io::ServerSocket* m_sock;
 
     /// Thread entrypoint made friend to access private fields.
     friend void* _listener_run(void* param);
