@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/11/27 15:41:08 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/11/27 16:54:51 $ $Author: itglp $
  *
  *
  *
@@ -63,7 +63,7 @@ namespace castor {
     /*
      * destructor
      */
-    virtual ~ListenerThreadPool() throw();
+     virtual ~ListenerThreadPool() throw() {};
 	
     /**
      * Binds a standard ServerSocket to the given port.
@@ -101,10 +101,10 @@ namespace castor {
     /// flag to decide whether the listener loop has to run in a separate thread
     bool m_spawnListener;
 	
-  private:
-
-    /// The server socket to accept connections
+    /// The server socket used to accept connections
   	castor::io::ServerSocket* m_sock;
+
+  private:
 
     /// Thread entrypoint made friend to access private fields.
     friend void* _listener_run(void* param);
