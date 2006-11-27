@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/11/27 15:41:08 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/11/27 16:54:19 $ $Author: itglp $
  *
  *
  *
@@ -45,17 +45,14 @@ castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolNam
                                                bool listenerOnOwnThread) throw() :
   BaseThreadPool(poolName, thread), m_port(listenPort), m_spawnListener(listenerOnOwnThread) {}
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-castor::server::ListenerThreadPool::~ListenerThreadPool() throw() {}
-
 
 //------------------------------------------------------------------------------
 // init
 //------------------------------------------------------------------------------
 void castor::server::ListenerThreadPool::init() throw (castor::exception::Exception)
 {
+  castor::server::BaseThreadPool::init();
+  
   /* Create a socket for the server, bind, and listen */
   try {
     m_sock = new castor::io::ServerSocket(m_port, true);
