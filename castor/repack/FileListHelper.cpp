@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2006/10/03 14:10:19 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2006/11/28 10:10:04 $ $Author: felixehm $
  *
  *
  *
@@ -178,7 +178,7 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
       rseg->setCopyno(dtp->copyno);
       rseg->setFileseq(dtp->fseq);
       /** the Blockid -> u_signed64 */
-      u_signed64 total_blockid;   
+      u_signed64 total_blockid = 0;   
       total_blockid = dtp->blockid[0]<< 24;
       total_blockid = total_blockid | dtp->blockid[1] << 16;
       total_blockid = total_blockid | dtp->blockid[2] << 8;
