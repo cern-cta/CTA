@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2006/11/20 16:55:03 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2006/11/28 10:07:56 $ $Author: felixehm $
  *
  *
  *
@@ -373,7 +373,7 @@ int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
       {castor::dlf::Param("Filename",fr->castorFileName()),
        castor::dlf::Param("Message", fr->errorMessage()) 
       };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 38, 1, param, &fileid);
+      castor::dlf::dlf_writep(stringtoCuuid(rsreq->cuuid()), DLF_LVL_ERROR, 38, 1, param, &fileid);
 			std::cerr 
 					<< fr->castorFileName() << " " << fr->fileId() << " "
 					<<"(size "<< fr->fileSize() << ", "
