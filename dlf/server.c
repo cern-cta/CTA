@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: server.c,v 1.12 2006/10/27 07:05:54 waldron Exp $
+ * $Id: server.c,v 1.13 2006/11/29 13:43:35 waldron Exp $
  */
 
 /* headers */
@@ -71,8 +71,8 @@ void worker(handler_t *h) {
 	/* variables */
 	struct sockaddr_in client_addr;
 	struct timeval     tv;
+	unsigned int       client_len;
 
-	int       client_len;
 	int       client_fd;
 	int       rv;
 	int       i;
@@ -363,7 +363,6 @@ int main(int argc, char **argv) {
 	int        port       = DEFAULT_SERVER_PORT;
 	int        debug      = 0;
 	int        foreground = 0;
-	int        stats      = 1;
 	char       *logfile   = strdup(LOGFILE);
 
 	/* initialise castor thread interface */
@@ -517,7 +516,7 @@ int main(int argc, char **argv) {
 	sigfillset(&set);
 	sigprocmask(SIG_SETMASK, &set, NULL);
 
-	sid = Cthread_create_detached((void *)signal_handler, NULL);
+	sid = Cthread_create_detached((void *(*)(void *))signal_handler, NULL);
 	if (sid == APP_FAILURE) {
 		log(LOG_CRIT, "Failed to Cthread_create_detached() signal thread - %s\n", sstrerror(serrno));
 		return APP_FAILURE;
@@ -561,6 +560,7 @@ int main(int argc, char **argv) {
 		h->messages    = 0;
 		h->errors      = 0;
 		h->timeouts    = 0;
+		h->inits       = 0;
 
 		/* create client structure */
 		h->clients = (client_t *) malloc(sizeof(client_t) * MAX_CLIENTS);
@@ -576,7 +576,7 @@ int main(int argc, char **argv) {
 		}
 
 		/* create thread */
-		h->tid = Cthread_create_detached((void *)worker, (handler_t *)h);
+		h->tid = Cthread_create_detached((void *(*)(void *))worker, (handler_t *)h);
 		if (h->tid == APP_FAILURE) {
 			log(LOG_CRIT, "Cthread_create_detached() failed for handler thread %d - %s\n", i, strerror(errno));
 			return APP_FAILURE;
@@ -619,7 +619,7 @@ int main(int argc, char **argv) {
 
 	/* shutting down */
 	log(LOG_NOTICE, "Deleted %d messages from the internal server queue\n", queue_size(queue));
-	rv = queue_destroy(queue, (void *)free_message);
+	rv = queue_destroy(queue, (void *(*)(void *))free_message);
 	if (rv != APP_SUCCESS) {
 		log(LOG_ERR, "Failed to queue_destroy() - %s\n", strerror(rv));
 	}

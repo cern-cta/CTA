@@ -21,7 +21,7 @@
  * @file  hash.h
  * @brief Thread safe hash implementation
  *
- * $Id: hash.h,v 1.5 2006/08/21 06:41:49 waldron Exp $
+ * $Id: hash.h,v 1.6 2006/11/29 13:42:47 waldron Exp $
  */
 
 #ifndef _HASH_H
@@ -64,7 +64,7 @@ EXTERN_C int DLL_DECL hash_create _PROTO((hash_t **h, unsigned int size));
  * @returns     : APP_FAILURE on null hash handle
  */
 
-EXTERN_C int DLL_DECL hash_destroy _PROTO((hash_t *h, void (*func)(void *)));
+EXTERN_C int DLL_DECL hash_destroy _PROTO((hash_t *h, void *(*)(void *)));
 
 
 /**

@@ -21,7 +21,7 @@
  * @file  queue.h
  * @brief Prototypes for a thread safe FIFO bounded queue
  *
- * $Id: queue.h,v 1.4 2006/08/21 06:41:49 waldron Exp $
+ * $Id: queue.h,v 1.5 2006/11/29 13:42:48 waldron Exp $
  */
 
 #ifndef _QUEUE_H
@@ -75,7 +75,7 @@ EXTERN_C int DLL_DECL queue_terminate _PROTO((queue_t *queue));
  * @returns     : APP_FAILURE on failure
  */
 
-EXTERN_C int DLL_DECL queue_destroy _PROTO((queue_t *queue, void (*func)(void *)));
+EXTERN_C int DLL_DECL queue_destroy _PROTO((queue_t *queue, void *(*)(void *)));
 
 
 /**

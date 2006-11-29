@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: hash.c,v 1.6 2006/11/14 17:02:17 waldron Exp $
+ * $Id: hash.c,v 1.7 2006/11/29 13:42:48 waldron Exp $
  */
 
 /* headers */
@@ -97,7 +97,7 @@ int DLL_DECL hash_create(hash_t **h, unsigned int size) {
  * Destroy hash
  */
 
-int DLL_DECL hash_destroy(hash_t *h, void (*func)(void *)) {
+int DLL_DECL hash_destroy(hash_t *h, void *(*func)(void *)) {
 
 	/* variables */
 	entry_t *l;

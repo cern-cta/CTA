@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: queue.c,v 1.4 2006/08/21 06:41:49 waldron Exp $
+ * $Id: queue.c,v 1.5 2006/11/29 13:42:48 waldron Exp $
  */
 
 /* headers */
@@ -121,7 +121,7 @@ int DLL_DECL queue_terminate(queue_t *queue) {
  * of the queue by passing a pointer to the function to free the data.
  */
 
-int DLL_DECL queue_destroy(queue_t *queue, void (*func)(void *)) {
+int DLL_DECL queue_destroy(queue_t *queue, void *(*func)(void *)) {
 
 	/* variables */
 	void    *data;
