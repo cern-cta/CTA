@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.php,v 1.5 2006/11/16 08:09:00 waldron Exp $
+ * $Id: oracle.php,v 1.6 2006/11/29 13:39:15 waldron Exp $
  */
 
 /* definitions */
@@ -29,12 +29,13 @@ if (!defined("DB_LAYER")) {
 }
 
 
-/**
+/*
  * Open connection
  */
 function db_connect($instance, $persistency, $stager) {
 	
 	include("config.php");
+	include("login.php");
 
 	/* variables */
 	$server   = "";
@@ -90,10 +91,14 @@ function db_connect($instance, $persistency, $stager) {
 	return $conn;
 }
 
-/**
+/*
  * Query
  */
 function db_query($query, $conn) {
+
+	/* increment the number of queries executed */
+	global $query_count;
+	$query_count++;
 
 	/* execute query */
 	$stmt = ociparse($conn, $query);
@@ -109,7 +114,7 @@ function db_query($query, $conn) {
 	return $stmt;
 }
 
-/**
+/*
  * Fetch row
  */
 function db_fetch_row($results) {
@@ -124,7 +129,7 @@ function db_fetch_row($results) {
 	return $row;
 }
 
-/**
+/*
  * Server version
  */
 function db_server_version($conn) {
@@ -132,16 +137,14 @@ function db_server_version($conn) {
 	return trim("- version: ". $db_version[0]);;
 }
 
-
 /*
- *
+ * Extract a value by name
  */
 function db_result($results, $field) {
 	return $value = ociresult($results, strtoupper($field));
 }
 
-
-/**
+/*
  * Partition count
  */
 function db_partition_count($conn) {
@@ -152,35 +155,21 @@ function db_partition_count($conn) {
 		return;
 	}
 
-	/* increment the number of queries executed */
-	global $query_count;
-	$query_count++;
-
 	/* execute query */
-	$stmt = ociparse($conn, "SELECT COUNT(*) FROM USER_TAB_PARTITIONS WHERE PARTITION_NAME != 'MAX_VALUE' AND TABLE_NAME = 'DLF_MESSAGES' AND PARTITION_NAME <= CONCAT('P_', TO_CHAR(SYSDATE, 'YYYYMMDD'))");
-	if (!$stmt) {
-		trigger_error("ociparse() - ".ocierror($conn), E_USER_ERROR);
-		exit;
-	}
-	$rtn = ociexecute($stmt, OCI_DEFAULT);
-	if (!$rtn) {
-		trigger_error("ociexecute() - ".ocierror($stmt), E_USER_ERROR);
-		exit;
-	}
-	$row = db_fetch_row($stmt);
+	$stmt = db_query("SELECT COUNT(*) FROM USER_TAB_PARTITIONS WHERE PARTITION_NAME != 'MAX_VALUE' AND TABLE_NAME = 'DLF_MESSAGES' AND PARTITION_NAME <= CONCAT('P_', TO_CHAR(SYSDATE, 'YYYYMMDD'))", $conn);
+	$row  = db_fetch_row($stmt);
 
-	/* no partitions online ? 
-	 *   - this is mostly likely caused by a unpartitioned database!
-	 */
-	if ($row[0] > 0) {
-		if ($row[0] > $max_partitions_online) {
-			return "Partitions online: 30 - (total: ".$row[0].")";
-		} else {
-			return "Partitions online: ".$row[0];
-		}
-	} else {
-		return;
-	}
+	return "Partitions online: ".$row[0];
+}
+
+/*
+ * Database schema version
+ */
+function db_schema_version($conn) {
+	$stmt = db_query("SELECT COUNT(*) FROM USER_TABLES WHERE TABLE_NAME = 'DLF_TAPE_IDS'", $conn);
+	$row  = db_fetch_row($stmt);
+	
+	return $row[0] ? 1 : 2;
 }
 
 ?>

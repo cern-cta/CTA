@@ -1,4 +1,4 @@
-/**
+/*
  * Table rows and data
  */
 
@@ -46,7 +46,11 @@ td.banner {
 	text-align: center;
 }
 
-/**
+td.padding {
+	height: 5px;
+}
+
+/*
  * Links
  */
  
@@ -75,8 +79,7 @@ a.vanish {
 	text-decoration: underline;
 }
 
-
-/**
+/*
  * Tables
  */
  
@@ -89,7 +92,7 @@ table.border {
 	border: 1px solid #666666;
 }
 
-/**
+/*
  * Main tags
  */
 
@@ -112,7 +115,7 @@ input.button {
 	width: 70px;
 }
 
-/**
+/*
  * Query Boxes
  */
  
@@ -132,173 +135,185 @@ input.button {
 }
 
 
-/**
- *
+/*
+ * columns
  */
 
-TR.banner {
+tr.banner {
 	background-color: #999999;
 	color: #333333;
 	font-weight: bold;
 	text-align: center;
 }
 
-TD.banner {
+td.banner {
 	background-color: #999999;
 	color: #333333;
 	font-weight: bold;
 	text-align: center;
 }
 
-TD.timestamp {
+td.timestamp {
 	border: 1px solid #999999;
 	text-align: center;
 	width: 95px;
 }
 
-TD.msgtext {
+td.msgtext {
 	border: 1px solid #999999;
 	text-align: center;
 	width: 160px;
 }
 
-TD.nshostname {
+td.nshostname {
 	border: 1px solid #999999;
 	text-align: center;
 	width: 90pt;
 }
 
-TD.tid {
+td.tid {
 	border: 1px solid #999999;
 	text-align: center;
 	width: 20pt;
 }
 
-TD.pid {
+td.pid {
 	border: 1px solid #999999;
 	text-align: center;
-	width: 20pt;
+	width: 30pt;
 }
 
-TD.hostname {
+td.hostname {
 	border: 1px solid #999999;
 	text-align: center;
 	width: 90pt;
 }
 
-TD.facility {
+td.facility {
 	border: 1px solid #999999;
 	text-align: center;
 	width: 50pt;
 }
 
-TD.nsfileid {
+td.nsfileid {
 	border: 1px solid #999999;
 	text-align: center;
-	width: 40pt;
+	width: 50pt;
 }
 
-TD.reqid {
-	border: 1px solid #999999;
-	text-align: center;
-	width: 60pt;
-}
-
-TD.subreqid {
+td.reqid {
 	border: 1px solid #999999;
 	text-align: center;
 	width: 60pt;
 }
 
-TD.tapevid {
+td.subreqid {
+	border: 1px solid #999999;
+	text-align: center;
+	width: 60pt;
+}
+
+td.reqid_long {
+	border: 1px solid #999999;
+	text-align: center;
+	width: 200pt;
+}
+
+td.subreqid_long {
+	border: 1px solid #999999;
+	text-align: center;
+	width: 200pt;
+}
+
+td.tapevid {
 	border: 1px solid #999999;
 	text-align: center;
 	width: 40pt;
 }
 
-TD.parameters {
+td.parameters {
 	border: 1px solid #999999;
 	text-align: center;
 }
 
-TD.sev_emergency {
+td.sev_emergency {
 	background-color : #FF0000;
 	border: 1px solid #999999;
 	text-align: center;
 	width: 60px;
 }
 
-TD.sev_alert {
+td.sev_alert {
 	background-color : #FF388B;
 	border: 1px solid #999999;
 	text-align: center;
 	width: 60px;
 }
 
-TD.sev_error {
+td.sev_error {
 	background-color : #FF724B;
 	border: 1px solid #999999;
 	text-align: center;
 	width: 60px;
 }
 
-TD.sev_warning {
+td.sev_warning {
 	background-color : #FFEC5A;
 	border: 1px solid #999999;
 	text-align: center;
 	width: 60px;
 }
 
-TD.sev_auth {
+td.sev_auth {
 	background-color : #94422C;
 	border: 1px solid #999999;
 	text-align: center;
 	width: 60px;
 }
 
-TD.sev_security {
+td.sev_security {
 	background-color : #EB981D;
 	border: 1px solid #999999;
 	text-align: center;
 	width: 60px;
 }
 
-TD.sev_usage {
+td.sev_usage {
 	background-color : #11AA55;
 	border: 1px solid #999999;
 	text-align: center;
 	width: 60px;
 }
 
-TD.sev_system {
+td.sev_system {
 	background-color : #AB09EB;
 	border: 1px solid #999999;
 	text-align: center;
 	width: 60px;
 }
 
-TD.sev_important {
+td.sev_important {
 	background-color : #EB6227;
 	border: 1px solid #999999;
 	text-align: center;
 	width: 60px;
 }
 
-TD.sev_monitoring {
+td.sev_monitoring {
 	background-color : #CCCCCC;
 	border: 1px solid #999999;
 	text-align: center;
 	width: 60px;
 }
 
-TD.sev_debug {
+td.sev_debug {
 	background-color : #1D73EB;
 	border: 1px solid #999999;
 	text-align: center;
 	width: 60px;
 }
 
-TR.header {
+tr.header {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: 24px;
 	font-style: italic;
@@ -307,7 +322,7 @@ TR.header {
 }
 
 
-/**
+/*
  * Calendar Popup
  */
  
@@ -387,7 +402,7 @@ TR.header {
 	font-family: arial
 }
 
-TD.CalendarcpDayColumnHeader {
+td.CalendarcpDayColumnHeader {
 	text-align: right;
 	border-top-width: 0px;
 	border-right-width: 0px;
@@ -450,7 +465,7 @@ TD.CalendarcpDayColumnHeader {
 	color: #808080
 }
 
-TD.CalendarcpCurrentDate {
+td.CalendarcpCurrentDate {
 	border-right: #000000 thin solid; 
 	border-top: #000000 thin solid; 
 	border-left: #000000 thin solid; 
@@ -459,21 +474,21 @@ TD.CalendarcpCurrentDate {
 	background-color: #999999
 }
 
-TD.CalendarcpCurrentDateDisabled {
+td.CalendarcpCurrentDateDisabled {
 	border-right: #ffaaaa thin solid; 
 	border-top: #ffaaaa thin solid; 
 	border-left: #ffaaaa thin solid; 
 	border-bottom: #ffaaaa thin solid
 }
 
-TD.CalendarcpTodayText {
+td.CalendarcpTodayText {
 	border-right: #6677dd 0px solid; 
 	border-top: #6677dd 1px solid; 
 	border-left: #6677dd 0px solid; 
 	border-bottom: #6677dd 0px solid
 }
 
-TD.CalendarcpTodayTextDisabled {
+td.CalendarcpTodayTextDisabled {
 	border-right: #6677dd 0px solid; 
 	border-top: #6677dd 1px solid; 
 	border-left: #6677dd 0px solid; 
@@ -502,3 +517,4 @@ SPAN.CalendarcpTodayTextDisabled {
 }
 
 /** End-of-File **/
+

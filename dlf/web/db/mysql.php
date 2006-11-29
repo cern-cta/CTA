@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.php,v 1.2 2006/09/06 12:53:44 waldron Exp $
+ * $Id: mysql.php,v 1.3 2006/11/29 13:39:15 waldron Exp $
  */
 
 /* definitions */
@@ -29,12 +29,13 @@ if (!defined("DB_LAYER")) {
 }
 
 
-/** 
+/*
  * Open connection
  */
 function db_connect($instance, $persistency, $stager) {
 	
 	include("config.php");
+	include("login.php");
 
 	/* variables */
 	$server   = "";
@@ -87,10 +88,14 @@ function db_connect($instance, $persistency, $stager) {
 	return $conn;
 }
 
-/**
+/*
  * Query
  */
 function db_query($query, $conn) {
+
+	/* increment the number of queries executed */
+	global $query_count;
+	$query_count++;
 
 	/* execute query */
 	$results = mysql_query($query, $conn);
@@ -102,32 +107,42 @@ function db_query($query, $conn) {
 	return $results;
 }
 
-/**
+/*
  * Fetch row
  */
 function db_fetch_row($results) {
 	return mysql_fetch_row($results);
 }
 
-/**
- * Row count
- */
-function db_row_count($results) {
-	return mysql_num_rows($results);
-}
-
-/**
+/*
  * Server version
  */
 function db_server_version($conn) {
 	return "- version: ".mysql_get_server_info($conn);
 }
 
-/**
+/*
+ * Extract a value by name
+ */
+function db_result($results, $field) {
+	
+}
+
+/*
  * Partition count
  */
 function db_partition_count($conn) {
 	return;
+}
+
+/*
+ * Database schema version
+ */
+function db_schema_version($conn) {
+	$stmt = db_query("SHOW TABLES LIKE 'dlf_tape_ids'", $conn);
+	$row  = db_fetch_row($stmt);
+	
+	return $row[0] ? 1 : 2;	
 }
 
 ?>

@@ -20,12 +20,12 @@
  ******************************************************************************************************/
 
 /**
- * $Id: utils.php,v 1.2 2006/09/06 12:53:44 waldron Exp $
+ * $Id: utils.php,v 1.3 2006/11/29 13:39:15 waldron Exp $
  */
 
 include("config.php");
 
-/**
+/*
  * get micro time
  */
 function getmicrotime() {  
@@ -33,6 +33,84 @@ function getmicrotime() {
 	$returntime = $temparray[0] + $temparray[1];  
 	return $returntime;  
 }
+
+/*
+ * page navigation (adapted from phpBB)
+ */
+function generate_pagination($num_items, $per_page, $start_item) {
+
+	$total_pages = ceil($num_items / $per_page);
+	if ( $total_pages == 1 ) {
+		return '';
+	}
+
+	$base_url = $_SERVER['PHP_SELF']."?".str_replace("&", "&amp;", $_SERVER['QUERY_STRING']);
+	$base_url = preg_replace('/&page=(\d)/', '', $base_url);
+	$on_page  = $start_item;
+
+	$page_string = '';
+	if ( $total_pages > 10 ) {
+		$init_page_max = ( $total_pages > 3 ) ? 3 : $total_pages;
+
+		for($i = 1; $i < $init_page_max + 1; $i++) {
+	
+			$page_string .= ( $i == $on_page ) ? '<b>'.$i.'</b>' : '<a href="'.$base_url. "&amp;page=".$i .'">'.$i.'</a>';
+			if ( $i <  $init_page_max ) {
+				$page_string .= ", ";
+			}
+		}
+
+		if ( $total_pages > 3 ) {
+			if ( $on_page > 1  && $on_page < $total_pages ) {
+				$page_string .= ( $on_page > 5 ) ? ' ... ' : ', ';
+
+				$init_page_min = ( $on_page > 4 ) ? $on_page : 5;
+				$init_page_max = ( $on_page < $total_pages - 4 ) ? $on_page : $total_pages - 4;
+
+				for($i = $init_page_min - 1; $i < $init_page_max + 2; $i++) {
+					$page_string .= ($i == $on_page) ? '<b>'.$i.'</b>' : '<a href="'.$base_url."&amp;page=".$i.'">'.$i.'</a>';
+					if ( $i <  $init_page_max + 1 ) {
+						$page_string .= ', ';
+					}
+				}
+
+				$page_string .= ( $on_page < $total_pages - 4 ) ? ' ... ' : ', ';
+			}
+			else {
+				$page_string .= ' ... ';
+			}
+
+			for($i = $total_pages - 2; $i < $total_pages + 1; $i++) {
+				$page_string .= ( $i == $on_page ) ? '<b>'.$i.'</b>' : '<a href="'.$base_url."&amp;page=".$i.'">'.$i.'</a>';
+				if( $i <  $total_pages ) {
+					$page_string .= ", ";
+				}
+			}
+		}
+	}
+	else {
+		for($i = 1; $i < $total_pages + 1; $i++) {
+			$page_string .= ( $i == $on_page ) ? '<b>'.$i.'</b>' : '<a href="'.$base_url."&amp;page=".$i.'">'.$i.'</a>';
+			if ( $i <  $total_pages ) {
+				$page_string .= ', ';
+			}
+		}
+	}
+
+	if ( $on_page > 1 ) {
+		$page_string = ' <a href="' . $base_url . "&amp;page=" . ($on_page - 1)  . '">Previous</a>&nbsp;&nbsp;' . $page_string;
+	}
+
+	if ( $on_page < $total_pages ) {
+		$page_string .= '&nbsp;&nbsp;<a href="' . $base_url . "&amp;page=" . ($on_page + 1) . '">Next</a>';
+	}
+	
+	if ($page_string) {
+		$page_string = 'Goto page ' . $page_string;
+	}
+	return $page_string;
+}
+
 
 /**********************************************************************************************/
 

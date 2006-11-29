@@ -20,15 +20,15 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dbview.php,v 1.4 2006/11/01 09:48:49 waldron Exp $
+ * $Id: dbview.php,v 1.5 2006/11/29 13:39:14 waldron Exp $
  */
 
 require("utils.php");
 include("config.php");
+include("login.php");
 include("db/".strtolower($db_instances[$_GET['instance']]['type']).".php");
 
 $gen_start   = getmicrotime();
-$query_count = 0;
 $dbh         = db_connect($_GET['instance'], 1, 1);
 
 /* parameters */
@@ -107,7 +107,6 @@ function navigation_form() {
 						navigation_form();
 										
 						/* execute query */
-						$query_count++;
 						$query_lookup = $stager_sql_tables[$entry]['lookup'];
 						
 						/* adjust the query to use a linklookup if needed */
@@ -184,7 +183,6 @@ function navigation_form() {
 										$sub_name   = $sub_fields[0];
 																			
 										/* execute query */
-										$query_count++;
 										$sub_results = db_query("SELECT * FROM ".$stager_sql_tables[$name]['table']." WHERE ".$stager_sql_tables[$name]['lookup']. " = '$value'", $dbh);
 										if (!$sub_results) {
 						

@@ -19,77 +19,38 @@
  *                                                                                                    *
  ******************************************************************************************************/
 
-/**
+/*
  * Version of the DLF web interface
  */
-$version = "1.0.1-1";
+$version = "1.0.2-1";
 
-/**
+/*
  * Use the javascript/css calendar popup for date selection?
  */
 $use_calendar_popup = 1;
 
-/**
+/*
  * Allow hosts to be manually entered by the user?
  */
 $use_strict_hosts = 1;
 
-/**
+/*
  * Use the database view to expand information on ns file ids
  */
 $use_database_view = 1;
 
-/**
+/*
  * Display the version of the database on results pages?
  */
 $show_db_version = 1;
 
-/**
+/*
  * Display the number of partition online in the database?
  */
 $show_partition_count  = 1;
-$max_partitions_online = 30;
 
 
-/**
- * Database connectivity information
- */
-$db_instances = array(
-
-	"castor1" => array(
-		"type"     => "MySQL",
-		"username" => "castor_dlf",
-		"password" => "password",
-		"server"   => "dbserver2.domain.com",
-		"database" => "dlf"                   /* only required for mysql! */
-		
-		/* stager database */
-		"stagerdb" => array(
-			"type"	   => "MySQL",
-			"username" => "stager_read",
-			"password" => "password",
-			"server"   => "dbserver2.domain.com",
-			"database" => "dlf",
-		),
-	),
-	
-	"castor2" => array(
-		"type"     => "Oracle",
-		"username" => "castor_dlf",
-		"password" => "password",
-		"server"   => "dbserver1.domain.com"
-		
-		/* stager database */
-		"stagerdb" => array(
-			"type"	   => "Oracle",
-			"username" => "stager_read",
-			"password" => "password",
-			"server"   => "dbserver2.domain.com",
-		),
-	),
-);
-
-/**
+/*
  * This setting defines the time frame the results should encompass when drilling down through data.
  * For example, when selecting a Request ID link the results page will group together all messages 
  * matching that request id +/- X hours from the selected message.
@@ -99,191 +60,8 @@ $db_instances = array(
  */
 $db_drilldown_time = 48;
 
-/**
- * DLF SQL fields
- *
- * Caution: changing these settings will change the way in which sql queries are dynamically constructed
- */
-$dlf_sql_columns = array(
 
-	"col_severity" => array(
-		"field"	   => "t2.sev_name",
-		"name"	   => "Severity",
-		"join"	   => "INNER JOIN dlf_severities t2 on (t1.severity = t2.sev_no)",
-		"display"  => 0,
-		"required" => 0,
-		"href"	   => "",
-		"width"	   => 60,
-	),
-
-	"col_hostname" => array(
-		"field"	   => "t3.hostname",
-		"name"	   => "Hostname",
-		"join"	   => "INNER JOIN dlf_host_map t3 on (t1.hostid = t3.hostid)",
-		"display"  => 0,
-		"required" => 0,
-		"href"	   => "hostname",
-		"width"	   => 100
-	),
-
-	"col_facility" => array(
-		"field"	   => "t4.fac_name",
-		"name"	   => "Facility",
-		"join"	   => "INNER JOIN dlf_facilities t4 on (t1.facility = t4.fac_no)",
-		"display"  => 0,
-		"required" => 0,
-		"href"	   => "facility",
-		"width"    => 100
-	),
-
-	"col_pid" => array(
-		"field"	   => "t1.pid",
-		"name"	   => "PID",
-		"join"	   => "",
-		"display"  => 0,
-		"required" => 0,
-		"href"	   => "pid",
-		"width"	   => 100
-	),
-
-	"col_tid" => array(
-		"field"	   => "t1.tid",
-		"name"	   => "TID",
-		"join"	   => "",
-		"display"  => 0,
-		"required" => 0,
-		"href"	   => "",
-		"width"	   => 100
-	),
-
-	"col_msgtext" => array(
-		"field"	   => "t5.msg_text",
-		"name"	   => "Message Text",
-		"join"	   => "INNER JOIN dlf_msg_texts t5 on ((t1.msg_no = t5.msg_no) AND (t1.facility = t5.fac_no))",
-		"display"  => 0,
-		"required" => 0,
-		"href"	   => "",
-		"width"    => 100
-	),
-
-	"col_nshostname" => array(
-		"field"	   => "t6.nshostname",
-		"name"	   => "NS Hostname",
-		"join"	   => "INNER JOIN dlf_nshost_map t6 on (t1.nshostid = t6.nshostid)",
-		"display"  => 0,
-		"required" => 0,
-		"href"	   => "nshostname",
-		"width"	   => 100
-	),
-
-	"col_nsfileid" => array(
-		"field"	   => "t1.nsfileid",
-		"name"	   => "NS File ID",
-		"join"	   => "",
-		"display"  => 0,
-		"required" => 0,
-		"href"	   => "nsfileid",
-		"width"	   => 100
-	),
-
-	"col_reqid" => array(
-		"field"	   => "t1.reqid",
-		"name"	   => "Request ID",
-		"join"	   => "",
-		"display"  => 0,
-		"required" => 0,
-		"href"	   => "reqid",
-		"width"	   => 100
-	),
-
-	"col_subreqid" => array(
-		"field"	   => "t7.subreqid",
-		"name"     => "Sub Request ID",
-		"join"	   => "LEFT JOIN dlf_reqid_map t7 on (t1.id = t7.id AND timestamp_predicate)",
-		"display"  => 0,
-		"required" => 0,
-		"href"	   => "subreqid",
-		"width"	   => 100
-	),
-
-	"col_tapevid" => array(
-		"field"	   => "t8.tapevid",
-		"name"	   => "Tape VID",
-		"join"	   => "LEFT JOIN dlf_tape_ids t8 on (t1.id = t8.id AND timestamp_predicate)",
-		"display"  => 0,
-		"required" => 0,
-		"href"	   => "tapevid",
-		"width"	   => 100
-	),
-);
-
-/**
- * DLF SQL WHERE conditions
- */
-$dlf_sql_conditions = array(
-
-	"severity" => array(
-		"field"	    => "t1.severity",
-		"defined"   => 0,
-		"wildcard"  => 0
-	),
-
-	"facility" => array(
-		"field"	    => "t1.facility",
-		"defined"   => 0,
-		"wildcard"  => 0
-	),
-
-	"hostname" => array(
-		"field"	    => "t1.hostid",
-		"defined"   => 0,
-		"wildcard"  => 1
-	),
-
-	"msgtext" => array(
-		"field"	    => "t5.msg_no",
-		"defined"   => 0,
-		"wildcard"  => 0
-	),
-
-	"pid" => array(
-		"field"	    => "t1.pid",
-		"defined"   => 0,
-		"wildcard"  => 0
-	),
-
-	"tapevid" => array(
-		"field"	    => "t8.tapevid",
-		"defined"   => 0,
-		"wildcard"  => 0
-	),
-
-	"reqid" => array(
-		"field"	    => "t1.reqid",
-		"defined"   => 0,
-		"wildcard"  => 0
-	),
-
-	"subreqid" => array(
-		"field"	    => "t7.subreqid",
-		"defined"   => 0,
-		"wildcard"  => 0
-	),
-
-	"nshostname" => array(
-		"field"     => "t1.nshostid",
-		"defined"   => 0,
-		"wildcard"  => 1
-	),
-
-	"nsfileid" => array(
-		"field"	    => "t1.nsfileid",
-		"defined"   => 0,
-		"wildcard"  => 0
-	)
-);
-
-/**
+/*
  * Stager SQL Tables
  *
  * The configuration information below describes the internal database schema of the stager database and 

@@ -20,11 +20,12 @@
  ******************************************************************************************************/
 
 /**
- * $Id: index.php,v 1.2 2006/09/06 12:53:43 waldron Exp $
+ * $Id: index.php,v 1.3 2006/11/29 13:39:14 waldron Exp $
  */
 
 require("utils.php");
 include("config.php");
+include("login.php");
 
 $gen_start = getmicrotime();
 
@@ -71,7 +72,11 @@ $gen_start = getmicrotime();
 					<?php
 						sort(array_keys($db_instances));
 						foreach (array_keys($db_instances) as $name) {
-							echo "<option value=\"".$name."\"";
+							if ($HTTP_COOKIE_VARS['instance'] == $name) {
+								echo "<option value=\"".$name."\" selected=\"selected\"";
+							} else {
+								echo "<option value=\"".$name."\"";
+							}
 							echo ">".$db_instances[$name]['type']." (".$db_instances[$name]['username']."@".$db_instances[$name]['server'].")</option>";
 						}					
 					?>
@@ -96,7 +101,7 @@ $gen_start = getmicrotime();
 	</tr>
   	<tr class="footer">
     	<td width="33%" align="left"  >DLF interface version: <?php echo $version ?></td>
-    	<td width="33%" align="center"><?php printf("Page generated in %.3f seconds.", getmicrotime() - $gen_start); ?></td>
+    	<td width="33%" align="center">&nbsp;</td>
     	<td width="33%" align="right" >
 			<a href="http://validator.w3.org/check?uri=referer"><img src="images/xhtml.png" alt="Valid XHTML 1.0 Strict" /></a>&nbsp;
 			<a href="http://jigsaw.w3.org/css-validator/check/referer"><img src="images/css.png" alt="Valid CSS 2.0" /></a>&nbsp;
