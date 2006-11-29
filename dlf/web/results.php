@@ -216,7 +216,7 @@ setcookie("style", $_GET['style']);
 		if ($schema_version > 1) {
 			$data[$id]['col_tapevid']  = $row[16];
 			$data[$id]['col_subreqid'] = $row[17];
-			if (($row[18] != -1) || ($row[19] != -1) || ($row[20] != "N/A") || ($row[21] != "N/A")) {
+			if ((($row[18] != -1) && ($row[18])) || (($row[19] != -1)  && ($row[19]))|| (($row[20] != "N/A") && ($row[20])) || (($row[21] != "N/A") && ($row[21]))) {
 				$data[$id]['col_security'] = "UID=".$row[18]." GID=".$row[19]." TYPE=\"".$row[20]."\" NAME=\"".$row[21]."\"";
 			}		
 		}
