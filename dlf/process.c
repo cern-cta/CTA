@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: process.c,v 1.5 2006/11/09 10:07:24 waldron Exp $
+ * $Id: process.c,v 1.6 2006/11/29 13:45:49 waldron Exp $
  */
 
 /* headers */
@@ -291,6 +291,9 @@ int parse_log(client_t *client, char *data, int len) {
 		free_message(message);
 		return APP_FAILURE;
 	}
+	if (message->nshostname[0] == '\0') {
+		strcpy(message->nshostname, "N/A");
+	}
 
 	/* file id */
 	rv = unmarshall_STRINGN(rbp, message->nsfileid, sizeof(message->nsfileid));
@@ -335,9 +338,13 @@ int parse_log(client_t *client, char *data, int len) {
 			rv = unmarshall_STRINGN(rbp, value, DLF_LEN_TAPEID + 1);
 		} else if (param->type == DLF_MSG_PARAM_UUID) {
 			rv = unmarshall_STRINGN(rbp, value, CUUID_STRING_LEN + 1);
+		} else if (param->type == DLF_MSG_PARAM_STYPE) {
+			rv = unmarshall_STRINGN(rbp, value, DLF_LEN_STYPE + 1);
+		} else if (param->type == DLF_MSG_PARAM_SNAME) {
+			rv = unmarshall_STRINGN(rbp, value, DLF_LEN_SNAME + 1);
 		} else {
 			rv = unmarshall_STRINGN(rbp, value, DLF_LEN_STRINGVALUE + 1);
-		}
+		} 
 		if (rv < 0) {
 			sendrep(client, DLF_REP_ERR, DLF_ERR_MARSHALL);
 			free_message(message);
@@ -356,11 +363,12 @@ int parse_log(client_t *client, char *data, int len) {
 		}
 
 		/* check for a valid number */
-		if (param->type == DLF_MSG_PARAM_INT) {
+		if ((param->type == DLF_MSG_PARAM_INT) || (param->type == DLF_MSG_PARAM_UID) ||
+		    (param->type == DLF_MSG_PARAM_GID)) {
 			rv = sscanf(param->value, "%d", &p_int);
 		}
 		else if (param->type == DLF_MSG_PARAM_INT64) {
-			rv = sscanf(param->value, "%Ld", &p_int64);
+			rv = sscanf(param->value, "%lld", &p_int64);
 		}
 		else if (param->type == DLF_MSG_PARAM_DOUBLE) {
 			rv = sscanf(param->value, "%lf", &p_double);
@@ -375,7 +383,7 @@ int parse_log(client_t *client, char *data, int len) {
 		}
 
 		/* unknown type ? */
-		if (param->type > 7) {
+		if (param->type > 11) {
 			sendrep(client, DLF_REP_ERR, DLF_ERR_UNKNOWNTYPE);
 			free_param(param);
 			free_message(message);

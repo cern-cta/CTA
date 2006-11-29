@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.8 2006/11/15 14:14:03 waldron Exp $
+ * $Id: dlf_lib.c,v 1.9 2006/11/29 13:45:50 waldron Exp $
  */
 
 /* headers */
@@ -383,7 +383,7 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 	Cglobals_getTid(&message->tid);
 
 	/* nameserver info */
-	if (ns != NULL) {
+	if ((ns != NULL) && (ns->server[0] != '\0')) {
 		strncpy(message->nshostname, ns->server, sizeof(message->nshostname) - 1);
 		u64tostr(ns->fileid, message->nsfileid, -1);
 	} else {
@@ -435,7 +435,7 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 			snprintf(value, DLF_LEN_NUMBERVALUE, "%d", params[i].par.par_int);
 		}
 		else if (param->type == DLF_MSG_PARAM_INT64) {
-			snprintf(value, DLF_LEN_NUMBERVALUE, "%Ld", params[i].par.par_u64);
+			snprintf(value, DLF_LEN_NUMBERVALUE, "%lld", params[i].par.par_u64);
 		}
 		else if (param->type == DLF_MSG_PARAM_DOUBLE) {
 			snprintf(value, DLF_LEN_NUMBERVALUE, "%f", params[i].par.par_double);
@@ -450,7 +450,25 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 			}
 			strncpy(param->name, "SUBREQID", sizeof(param->name) - 1);
 		}
-
+		else if (param->type == DLF_MSG_PARAM_UID) {
+			snprintf(value, DLF_LEN_NUMBERVALUE, "%d", params[i].par.par_int);
+			strncpy(param->name, "UID", sizeof(param->name) - 1);
+		}
+		else if (param->type == DLF_MSG_PARAM_GID) {
+			snprintf(value, DLF_LEN_NUMBERVALUE, "%d", params[i].par.par_int);
+			strncpy(param->name, "GID", sizeof(param->name) - 1);
+		}
+		else if (param->type == DLF_MSG_PARAM_STYPE) {
+			strncpy(value, params[i].par.par_string, DLF_LEN_STYPE);
+			strncpy(param->name, "SEC_TYPE", sizeof(param->name) - 1);
+			value[DLF_LEN_STYPE] = '\0';
+		}
+		else if (param->type == DLF_MSG_PARAM_SNAME) {
+			strncpy(value, params[i].par.par_string, DLF_LEN_SNAME);
+			strncpy(param->name, "SEC_NAME", sizeof(param->name) - 1);
+			value[DLF_LEN_SNAME] = '\0';
+		}
+							   
 		/* unknown, free resources */
 		else {
 			free_param(param);
@@ -537,7 +555,9 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 
 		/* add parameters */
 		for (param = message->plist, error = 0; param != NULL; param = param->next) {
-			if (param->type == DLF_MSG_PARAM_STR) {
+			if ((param->type == DLF_MSG_PARAM_STR)   || 
+			    (param->type == DLF_MSG_PARAM_STYPE) ||
+			    (param->type == DLF_MSG_PARAM_SNAME)) {
 				n = Csnprintf(pos, left, " %s=\"%s\"", param->name, param->value);
 			} else {
 				n = Csnprintf(pos, left, " %s=%s", param->name, param->value);
@@ -676,7 +696,7 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 int DLL_DECL dlf_write(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, int numparams, ...) {
 
 	/* variables */
-	dlf_write_param_t plist[numparams];
+	dlf_write_param_t *plist = NULL;
 	char              *name;
 	char              *string;
 	int               i;
@@ -687,6 +707,11 @@ int DLL_DECL dlf_write(Cuuid_t reqid, int severity, int msg_no, struct Cns_filei
 	/* no targets to write too ? */
 	if (api_targetcount == 0) {
 		return APP_SUCCESS;
+	}
+
+	plist = (dlf_write_param_t *) malloc(numparams * sizeof(dlf_write_param_t));
+	if (plist == NULL) {
+		return -1;
 	}
 
 	/* translate the variable argument list to a dlf_write_param_t array */
@@ -703,7 +728,8 @@ int DLL_DECL dlf_write(Cuuid_t reqid, int severity, int msg_no, struct Cns_filei
 		plist[i].type = va_arg(ap, int);
 
 		/* process type */
-		if ((plist[i].type == DLF_MSG_PARAM_TPVID) || (plist[i].type == DLF_MSG_PARAM_STR)) {
+		if ((plist[i].type == DLF_MSG_PARAM_TPVID) || (plist[i].type == DLF_MSG_PARAM_STR) || 
+		    (plist[i].type == DLF_MSG_PARAM_STYPE) || (plist[i].type == DLF_MSG_PARAM_SNAME)) {
 			string = va_arg(ap, char *);
 			if (string == NULL) {
 				plist[i].par.par_string = NULL;
@@ -711,7 +737,9 @@ int DLL_DECL dlf_write(Cuuid_t reqid, int severity, int msg_no, struct Cns_filei
 				plist[i].par.par_string = strdup(string);
 			}
 		}
-		else if (plist[i].type == DLF_MSG_PARAM_INT) {
+		else if ((plist[i].type == DLF_MSG_PARAM_INT) || 
+			 (plist[i].type == DLF_MSG_PARAM_UID) || 
+			 (plist[i].type == DLF_MSG_PARAM_GID)) {
 			plist[i].par.par_int = va_arg(ap, int);
 		}
 		else if (plist[i].type == DLF_MSG_PARAM_INT64) {
@@ -746,12 +774,14 @@ int DLL_DECL dlf_write(Cuuid_t reqid, int severity, int msg_no, struct Cns_filei
 	for (i = 0; i < numparams; i++) {
 		if (plist[i].name != NULL)
 			free(plist[i].name);
-		if ((plist[i].type == DLF_MSG_PARAM_TPVID) || (plist[i].type == DLF_MSG_PARAM_STR)) {
+		if ((plist[i].type == DLF_MSG_PARAM_TPVID) || (plist[i].type == DLF_MSG_PARAM_STR) ||
+		    (plist[i].type == DLF_MSG_PARAM_STYPE) || (plist[i].type == DLF_MSG_PARAM_SNAME)) {
 			if (plist[i].par.par_string != NULL) {
 				free(plist[i].par.par_string);
 			}
 		}
 	}
+	free(plist);
 
 	return rv;
 }
@@ -1071,12 +1101,12 @@ void DLL_DECL dlf_child(void) {
 		queue_unlock(targets[i]->queue);
 
 		/* recreate the server's internal queue */
-		(void)queue_destroy(targets[i]->queue, (void *)free_message);
+		(void)queue_destroy(targets[i]->queue, (void *(*)(void *))free_message);
 		free(targets[i]->queue);
 		(void)queue_create(&targets[i]->queue, targets[i]->queue_size);
 
 		/* recreate the thread */
-		targets[i]->tid = Cthread_create((void *)dlf_worker, (target_t *)targets[i]);
+		targets[i]->tid = Cthread_create((void *(*)(void *))dlf_worker, (target_t *)targets[i]);
 	}
 
 	/* allow dlf_write() and dlf_writep() calls */
@@ -1485,7 +1515,7 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 		}
 
 		/* create thread */
-		targets[i]->tid = Cthread_create((void *)dlf_worker, (target_t *)targets[i]);
+		targets[i]->tid = Cthread_create((void *(*)(void *))dlf_worker, (target_t *)targets[i]);
 		if (targets[i]->tid == -1) {
 			snprintf(errptr, CA_MAXLINELEN, "dlf_init(): failed to Cthread_create() : %s", strerror(errno));
 			Cthread_mutex_unlock(&api_mutex);
@@ -1560,7 +1590,7 @@ int DLL_DECL dlf_shutdown(int wait) {
 				targets[i]->socket = -1;
 				ClrConnected(targets[i]->mode);
 			}
-			queue_destroy(targets[i]->queue, (void *)free_message);
+			queue_destroy(targets[i]->queue, (void *(*)(void *))free_message);
 			free(targets[i]->queue);
 		}
 	
@@ -1569,7 +1599,7 @@ int DLL_DECL dlf_shutdown(int wait) {
 	}
 
 	/* destroy global hashes */
-	hash_destroy(hashtexts, (void *)free);
+	hash_destroy(hashtexts, (void *(*)(void *))free);
 
 	/* clear msg texts */
 	free_msgtexts(texts);
