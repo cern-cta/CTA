@@ -6,7 +6,6 @@
 
 GRANT SELECT ON castor_dlf.dlf_num_param_values TO castordlf_read;
 GRANT SELECT ON castor_dlf.dlf_str_param_values TO castordlf_read;
-GRANT SELECT ON castor_dlf.dlf_reqid_map        TO castordlf_read;
 GRANT SELECT ON castor_dlf.dlf_facilities       TO castordlf_read;
 GRANT SELECT ON castor_dlf.dlf_severities       TO castordlf_read;
 GRANT SELECT ON castor_dlf.dlf_msg_texts        TO castordlf_read;
