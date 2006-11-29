@@ -146,8 +146,7 @@ setcookie("style", $_GET['style']);
 		  INNER JOIN dlf_msg_texts  t5 ON (t1.msg_no   = t5.msg_no AND t1.facility = t5.fac_no) 
 		  INNER JOIN dlf_nshost_map t6 ON (t1.nshostid = t6.nshostid)
 		  $filter
-		  $timeframe
-		  ORDER BY t1.timestamp DESC, t1.timeusec DESC";
+		  $timeframe";
 	
 	$b_timeframe = str_replace("t1", "b", $timeframe);
 	$c_timeframe = str_replace("t1", "c", $timeframe);
@@ -191,8 +190,8 @@ setcookie("style", $_GET['style']);
 	} else {
 		$exe_query = str_replace('subquery', $query, $limit);
 	}
-	$exe_query = str_replace(' ORDER BY t1.timestamp DESC, t1.timeusec DESC', '', $exe_query);
-	echo '<!--'.$exe_query.'-->';
+	$exe_query .= " ORDER BY timestamp DESC, timeusec DESC";
+	echo '<!-- '.$exe_query.' -->';
 	
 	/* execute query */
 	$results = db_query($exe_query, $dbh);
@@ -237,9 +236,9 @@ setcookie("style", $_GET['style']);
 		$data[$id]['m_hostname']     = $row[5];
 		$data[$id]['m_nshostname']   = $row[6];
 	}
-	
+
 	$exe_query = "SELECT COUNT(*) FROM (".$query.") a";
-	echo '<!--'.$exe_query.'-->';
+	echo '<!-- '.$exe_query.' -->';
 	
 	/* fetch total amount of rows */
 	$results = db_query($exe_query, $dbh);
@@ -264,7 +263,7 @@ setcookie("style", $_GET['style']);
 		foreach (array('dlf_str_param_values', 'dlf_num_param_values') as $table) {
 			$exe_query = sprintf("SELECT * FROM %s t1
 				  		  		  WHERE id %s %s", $table, $idlist, $timeframe ? "AND ".$timeframe : "");
-			echo '<!--'.$exe_query.'-->';
+			echo '<!-- '.$exe_query.' -->';
 			
 			$results = db_query($exe_query, $dbh);
 			if (!$results) {
