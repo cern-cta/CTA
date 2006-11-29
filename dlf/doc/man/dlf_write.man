@@ -102,6 +102,18 @@ and specifies the type of the parameter. It must be one of the following:
 .TP
 .B DLF_MSG_PARAM_UUID
  - for the sub request identifier.
+.TP
+.B DLF_MSG_PARAM_UID
+ - for the user id associated with the message,
+.TP
+.B DLF_MSG_PARAM_GID
+ - for the group id associated with the message,
+.TP
+.B DLF_MSG_PARAM_STYPE
+ - for the type of authentication/authorisation used e.g. GSI, KRB5
+.TP
+.B DLF_MSG_PARAM_SNAME
+ - for the name of the user e.g distinguished name, Krb principal
 .RE
 .TP
 .I parameter value

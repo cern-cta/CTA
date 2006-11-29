@@ -52,6 +52,12 @@
 #define DLF_MSG_PARAM_FLOAT   6             /**< single precision floating point value    */
 #define DLF_MSG_PARAM_INT     7             /**< integer parameter                        */
 
+/* security related */
+#define DLF_MSG_PARAM_UID     8             /**< user id                                  */
+#define DLF_MSG_PARAM_GID     9             /**< group id                                 */
+#define DLF_MSG_PARAM_STYPE   10            /**< e.g KRB5, GSI                            */
+#define DLF_MSG_PARAM_SNAME   11            /**< e.g DN, Krb principal                    */
+
 /* protocol
  *   - changes these could have significant effects on the database interface layer!!
  */
@@ -65,6 +71,8 @@
 #define DLF_LEN_NUMBERVALUE   38            /**< max length of a number value             */
 #define DLF_LEN_MSGTEXT       512           /**< max length of a message text             */
 #define DLF_LEN_TAPEID        20            /**< max length of a tape id                  */
+#define DLF_LEN_STYPE         20            /**< max length of a security type            */
+#define DLF_LEN_SNAME         255           /**< max length of a security name            */
 
 /* limits */
 #define DLF_MAX_MSGTEXTS      1024          /**< max number of message texts per facility */
@@ -98,9 +106,10 @@
 #define DLF_INIT              1             /**< initialisation request                   */
 #define DLF_LOG               2             /**< log message request                      */
 
-/* message ranges */
-// 0 - 999 is reserved for local messages
-#define DLF_BASE_SHAREDMEMORY 1000 // Shared Memory related code
+/* message ranges 
+ *   0 - 999 is reserved for local messages
+ */
+#define DLF_BASE_SHAREDMEMORY 1000 	    /**< Shared Memory related code               */
 
 /**
  * opaque structures
@@ -114,16 +123,16 @@ typedef struct dlf_write_param_t dlf_write_param_t;
  */
 
 struct dlf_write_param_t {
-	char               *name;          /**< name of the parameter                    */
-	int                type;           /**< parameter type, one of DLF_MSG_PAARM_*   */
+	char               *name;           /**< name of the parameter                    */
+	int                type;            /**< parameter type, one of DLF_MSG_PAARM_*   */
 
 	/* types */
 	union {
-		char       *par_string;    /** param of type DLF_PARAM_STRING            */
-		int        par_int;        /** param of type DLF_PARAM_INT               */
-		U_HYPER    par_u64;        /** param of type DLF_PARAM_INT64             */
-		double     par_double;     /** param of type DLF_PARAM_DOUBLE            */
-		Cuuid_t    par_uuid;       /** param of type DLF_PARAM_UUID              */
+		char       *par_string;     /** param of type DLF_PARAM_STRING            */
+		int        par_int;         /** param of type DLF_PARAM_INT               */
+		U_HYPER    par_u64;         /** param of type DLF_PARAM_INT64             */
+		double     par_double;      /** param of type DLF_PARAM_DOUBLE            */
+		Cuuid_t    par_uuid;        /** param of type DLF_PARAM_UUID              */
 	} par;
 };
 
