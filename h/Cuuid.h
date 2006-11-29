@@ -1,12 +1,12 @@
 /*
- * $Id: Cuuid.h,v 1.8 2005/10/21 08:54:51 jdurand Exp $
+ * $Id: Cuuid.h,v 1.9 2006/11/29 13:29:30 waldron Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
  * Based on: http://www.webdav.org/specs/draft-leach-uuids-guids-01.txt
  *
- * $RCSfile: Cuuid.h,v $ $Revision: 1.8 $ $Date: 2005/10/21 08:54:51 $ CERN IT-PDP/DM Jean-Damien Durand
+ * $RCSfile: Cuuid.h,v $ $Revision: 1.9 $ $Date: 2006/11/29 13:29:30 $ CERN IT-PDP/DM Jean-Damien Durand
  */
 
 
@@ -31,7 +31,7 @@ typedef struct _Cuuid_t {
 	U_BYTE  node[6];
 } Cuuid_t;
 
-/// A usefull cuuid : the null one
+/* A usefull cuuid : the null one */
 extern Cuuid_t nullCuuid;
 
 EXTERN_C void DLL_DECL Cuuid_create _PROTO((Cuuid_t *));
