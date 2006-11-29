@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.c,v 1.11 2006/11/22 13:14:26 waldron Exp $
+ * $Id: mysql.c,v 1.12 2006/11/29 13:46:47 waldron Exp $
  */
 
 /* headers */
@@ -176,7 +176,7 @@ int DLL_DECL db_init(int threads) {
 		db->inits   = 0;
 
 		/* create thread */
-		db->tid = Cthread_create_detached((void *)db_worker, (database_t *)db);
+		db->tid = Cthread_create_detached((void *(*)(void *))db_worker, (database_t *)db);
 		if (db->tid == APP_FAILURE) {
 			log(LOG_EMERG, "db_init() - failed to Cthread_create_detached() : %s\n", sstrerror(serrno));
 			return APP_FAILURE;
@@ -389,8 +389,8 @@ int DLL_DECL db_shutdown(void) {
 	}
 
 	/* destroy hashes */
-	hash_destroy(hosthash,   NULL);
-	hash_destroy(nshosthash, NULL);
+	hash_destroy(hosthash,   (void *(*)(void *))free);
+	hash_destroy(nshosthash, (void *(*)(void *))free);
 
 	return APP_SUCCESS;
 }
@@ -945,8 +945,13 @@ void DLL_DECL db_worker(database_t *db) {
 	char         func[50];
 	char         query[4096];
 	char         tapevid[DLF_LEN_TAPEID + 1];
+	char         subreqid[CUUID_STRING_LEN + 1];
+	char         stype[DLF_LEN_STYPE + 1];
+	char         sname[DLF_LEN_SNAME + 1];
 	int          rv;
-	int          id;
+	long         id;
+	int          userid;
+	int          groupid;
 	int          hostid;
 	int          nshostid;
 	unsigned int mysql_errnum;
@@ -1053,6 +1058,10 @@ void DLL_DECL db_worker(database_t *db) {
 		Cthread_mutex_lock(&db->mutex);
 		SetActive(db->mode);
 		strcpy(tapevid, "N/A");
+		strcpy(subreqid, "N/A");
+		strcpy(stype, "N/A");
+		strcpy(sname, "N/A");
+		userid = groupid = -1;
 
 		/* process parameters */
 		for (param = message->plist; param != NULL; param = param->next) {
@@ -1065,16 +1074,14 @@ void DLL_DECL db_worker(database_t *db) {
 					 id, message->timestamp, param->name, param->value);
 
 				strcpy(func, "mysql_query() into table dlf_str_param_values");
+				continue;
 			}
 
 			/* table: dlf_reqid_map */
 			else if (param->type == DLF_MSG_PARAM_UUID) {
-				snprintf(query, sizeof(query), "INSERT INTO dlf_reqid_map         \
-                                                               (id, timestamp, reqid, subreqid)   \
-                                                               VALUES ('%ld', '%s', '%s', '%s')",
-					 id, message->timestamp, message->reqid, param->value);
-
-				strcpy(func, "mysql_query() into table dlf_reqid_map");
+				strncpy(subreqid, param->value, CUUID_STRING_LEN);
+				subreqid[CUUID_STRING_LEN] = '\0';
+				continue;
 			}
 
 			/* table: dlf_num_param_values */
@@ -1087,11 +1094,36 @@ void DLL_DECL db_worker(database_t *db) {
 					 id, message->timestamp, param->name, param->value);
 
 				strcpy(func, "mysql_query() into table: dlf_num_param_values");
+				continue;
 			}
 
 			/* table: dlf_tape_ids */
 			else if (param->type == DLF_MSG_PARAM_TPVID) {
 				strncpy(tapevid, param->value, DLF_LEN_TAPEID);
+				tapevid[DLF_LEN_TAPEID] = '\0';
+				continue;
+			} 
+
+			/* security related */
+			else if (param->type == DLF_MSG_PARAM_UID) {
+				userid = atoi(param->value);
+				continue;
+			}
+
+			else if (param->type == DLF_MSG_PARAM_GID) {
+				groupid = atoi(param->value);
+				continue;
+			}
+			
+			else if (param->type == DLF_MSG_PARAM_STYPE) {
+				strncpy(stype, param->value, DLF_LEN_STYPE);
+				stype[DLF_LEN_STYPE] = '\0';
+				continue;
+			}
+			
+			else if (param->type == DLF_MSG_PARAM_SNAME) {
+				strncpy(sname, param->value, DLF_LEN_SNAME);
+				sname[DLF_LEN_SNAME] = '\0';
 				continue;
 			} else {
 				continue;
@@ -1106,12 +1138,14 @@ void DLL_DECL db_worker(database_t *db) {
 
 		/* table: dlf_messages */
 		db->inserts++;
-		snprintf(query, sizeof(query), "INSERT INTO dlf_messages                                                                                   \
-                                               (id, timestamp, timeusec, reqid, hostid, facility, severity, msg_no, pid, tid, nshostid, nsfileid, tapevid) \
-                                               VALUES ('%ld','%s','%d','%s','%d','%d','%d','%d','%d','%d','%d','%s','%s');",
+		snprintf(query, sizeof(query), "INSERT INTO dlf_messages "
+                                               "(id, timestamp, timeusec, reqid, subreqid, hostid, facility, severity, msg_no, pid, tid, nshostid, "
+			                       "nsfileid, tapevid, userid, groupid, sec_type, sec_name) "
+                                               "VALUES ('%ld','%s','%d','%s','%s','%d','%d','%d','%d','%d','%d','%d','%s','%s','%d','%d','%s','%s');",
 			 id, message->timestamp,
 			 message->timeusec,
 			 message->reqid,
+			 subreqid,
 			 hostid,
 			 message->facility,
 			 message->severity,
@@ -1120,12 +1154,15 @@ void DLL_DECL db_worker(database_t *db) {
 			 message->tid,
 			 nshostid,
 			 message->nsfileid,
-			 tapevid);
+			 tapevid,
+			 userid,
+			 groupid,
+			 stype,
+			 sname);
 		if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
 			strcpy(func, "mysql_query() into table: dlf_messages");
 			goto error;
 		}
-
 
 		/* update sequences */
 		db->updates++;
@@ -1329,10 +1366,10 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 	s_uptime = (time(NULL) - server_start);
 
 	db->inserts++;
-	snprintf(query, sizeof(query), "INSERT INTO dlf_monitoring VALUES                        \
-                 ('%s',  '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu',   \
-                  '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu',   \
-                  '%lf', '%lu')",
+	snprintf(query, sizeof(query), "INSERT INTO dlf_monitoring VALUES                      \
+                 ('%s',  '%d',  '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%d', '%lu', '%lu',  \
+                  '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%lu', '%d', '%d', '%u',    \
+                  '%f',  '%d')",
 		 timestr,       h_threads,    h_messages,   h_inits,      h_errors,   
 		 h_connections, h_clientpeak, h_timeouts,   db_threads,   db_commits,  
 		 db_errors,     db_inserts,   db_rollbacks, db_selects,   db_updates,  

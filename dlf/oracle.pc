@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.18 2006/11/21 16:51:29 waldron Exp $
+ * $Id: oracle.pc,v 1.19 2006/11/29 13:46:47 waldron Exp $
  */
 
 /* headers */
@@ -86,7 +86,6 @@ struct database_t {
 	struct msgtable_t  *mtable;
 	struct numtable_t  *ntable;
 	struct strtable_t  *stable;
-	struct reqtable_t  *rtable;
 
 	/* statistics
 	 *   - must be purged at a regular interval, otherwise overflows in the counters will occur
@@ -113,9 +112,10 @@ struct database_t {
 struct msgtable_t {
 	int       count;
 	long      id[DB_ORA_ARRAY_SIZE];
-	char      timestamp[DB_ORA_ARRAY_SIZE][15];
+	char      timestamp[DB_ORA_ARRAY_SIZE][DLF_LEN_TIMESTAMP + 1];
 	int       timeusec[DB_ORA_ARRAY_SIZE];
-	char      reqid[DB_ORA_ARRAY_SIZE][37];
+	char      reqid[DB_ORA_ARRAY_SIZE][CUUID_STRING_LEN + 1];
+	char      subreqid[DB_ORA_ARRAY_SIZE][CUUID_STRING_LEN + 1];
 	int       hostid[DB_ORA_ARRAY_SIZE];
 	int       facility[DB_ORA_ARRAY_SIZE];
 	int       severity[DB_ORA_ARRAY_SIZE];
@@ -123,14 +123,18 @@ struct msgtable_t {
 	int       pid[DB_ORA_ARRAY_SIZE];
 	int       tid[DB_ORA_ARRAY_SIZE];
 	int       nshostid[DB_ORA_ARRAY_SIZE];
-	char      nsfileid[DB_ORA_ARRAY_SIZE][37];
+	char      nsfileid[DB_ORA_ARRAY_SIZE][CUUID_STRING_LEN + 1];
 	char      tapevid[DB_ORA_ARRAY_SIZE][DLF_LEN_TAPEID + 1];
+	int       userid[DB_ORA_ARRAY_SIZE];
+	int       groupid[DB_ORA_ARRAY_SIZE];
+	char      stype[DB_ORA_ARRAY_SIZE][DLF_LEN_STYPE + 1];
+	char      sname[DB_ORA_ARRAY_SIZE][DLF_LEN_SNAME + 1];
 };
 
 struct numtable_t {
 	int       count;
 	long      id[DB_ORA_ARRAY_SIZE];
-	char      timestamp[DB_ORA_ARRAY_SIZE][15];
+	char      timestamp[DB_ORA_ARRAY_SIZE][DLF_LEN_TIMESTAMP + 1];
 	char      parname[DB_ORA_ARRAY_SIZE][DLF_LEN_PARAMNAME + 1];
 	char      parvalue[DB_ORA_ARRAY_SIZE][DLF_LEN_NUMBERVALUE + 1];
 };
@@ -138,17 +142,9 @@ struct numtable_t {
 struct strtable_t {
 	int       count;
 	long      id[DB_ORA_ARRAY_SIZE];
-	char      timestamp[DB_ORA_ARRAY_SIZE][15];
+	char      timestamp[DB_ORA_ARRAY_SIZE][DLF_LEN_TIMESTAMP + 1];
 	char      parname[DB_ORA_ARRAY_SIZE][DLF_LEN_PARAMNAME + 1];
 	char      parvalue[DB_ORA_ARRAY_SIZE][DLF_LEN_STRINGVALUE + 1];
-};
-
-struct reqtable_t {
-	int       count;
-	long      id[DB_ORA_ARRAY_SIZE];
-	char      timestamp[DB_ORA_ARRAY_SIZE][DLF_LEN_TIMESTAMP + 1];
-	char      reqid[DB_ORA_ARRAY_SIZE][37];
-	char      subreqid[DB_ORA_ARRAY_SIZE][37];
 };
 
 
@@ -224,11 +220,9 @@ int DLL_DECL db_init(int threads) {
 		db->mtable = (struct msgtable_t *) malloc(sizeof(struct msgtable_t));
 		db->ntable = (struct numtable_t *) malloc(sizeof(struct numtable_t));
 		db->stable = (struct strtable_t *) malloc(sizeof(struct strtable_t));
-		db->rtable = (struct reqtable_t *) malloc(sizeof(struct reqtable_t));
 
 		/* malloc errors ? */
-		if ((db->mtable == NULL) || (db->ntable == NULL) || (db->stable == NULL) ||
-	 	    (db->rtable == NULL)) {
+		if ((db->mtable == NULL) || (db->ntable == NULL) || (db->stable == NULL)) {
 			log(LOG_ERR, "db_init() - failued to malloc() table structures : %s\n", strerror(errno));
 			return APP_FAILURE;
 		}
@@ -242,7 +236,7 @@ int DLL_DECL db_init(int threads) {
 		EXEC SQL CONTEXT ALLOCATE :db->ctx;
 
 		/* create thread */
-		db->tid = Cthread_create_detached((void *)db_worker, (database_t *)db);
+		db->tid = Cthread_create_detached((void *(*)(void *))db_worker, (database_t *)db);
 		if (db->tid == APP_FAILURE) {
 			log(LOG_EMERG, "db_init() - failed to Cthread_create_detached() : %s\n", sstrerror(serrno));
 			return APP_FAILURE;
@@ -441,7 +435,6 @@ int DLL_DECL db_shutdown(void) {
 			free(dpool[i]->mtable);
 			free(dpool[i]->ntable);
 			free(dpool[i]->stable);
-			free(dpool[i]->rtable);
 
 			if (IsConnected(dpool[i]->mode)) {
 				log(LOG_NOTICE, "db_shutdown() - connection closed\n");
@@ -453,8 +446,8 @@ int DLL_DECL db_shutdown(void) {
 	}
 
 	/* destroy hashes */
-	hash_destroy(hosthash,   (void *)free);
-	hash_destroy(nshosthash, (void *)free);
+	hash_destroy(hosthash,   (void *(*)(void *))free);
+	hash_destroy(nshosthash, (void *(*)(void *))free);
 
 	return APP_SUCCESS;
 }
@@ -899,11 +892,12 @@ int DLL_DECL db_flush(database_t *db) {
         if (db->mtable->count) {
                 EXEC SQL FOR :db->mtable->count
                 INSERT INTO dlf_messages
-                        (id, timestamp, timeusec, reqid, hostid, facility, severity, msg_no, pid, tid, nshostid, nsfileid, tapevid)
+                        (id, timestamp, timeusec, reqid, subreqid, hostid, facility, severity, msg_no, pid, tid, nshostid, nsfileid, tapevid, userid, groupid, sec_type, sec_name)
                 VALUES (:db->mtable->id,
                         TO_DATE(:db->mtable->timestamp, 'YYYYMMDDHH24MISS'),
                         :db->mtable->timeusec,
                         :db->mtable->reqid,
+			:db->mtable->subreqid,
                         :db->mtable->hostid,
                         :db->mtable->facility,
                         :db->mtable->severity,
@@ -912,7 +906,11 @@ int DLL_DECL db_flush(database_t *db) {
                         :db->mtable->tid,
 			:db->mtable->nshostid,
 			TO_NUMBER(:db->mtable->nsfileid),
-			:db->mtable->tapevid);
+			:db->mtable->tapevid,
+			:db->mtable->userid,
+			:db->mtable->groupid,
+			:db->mtable->stype,
+			:db->mtable->sname);
         }
 
         /* table: dlf_num_param_values */
@@ -935,17 +933,6 @@ int DLL_DECL db_flush(database_t *db) {
                         TO_DATE(:db->stable->timestamp, 'YYYYMMDDHH24MISS'),
                         :db->stable->parname,
                         :db->stable->parvalue);
-        }
-
-        /* table: dlf_reqid_map */
-        if (db->rtable->count) {
-                EXEC SQL FOR :db->rtable->count
-                INSERT INTO dlf_reqid_map
-                        (id, timestamp, reqid, subreqid)
-                VALUES (:db->rtable->id,
-                        TO_DATE(:db->rtable->timestamp, 'YYYYMMDDHH24MISS'),
-                        :db->rtable->reqid,
-                        :db->rtable->subreqid);
         }
 
 	/* update the sequence number
@@ -1018,7 +1005,6 @@ void DLL_DECL db_worker(database_t *db) {
 	db->mtable->count = 0;
 	db->ntable->count = 0;
 	db->stable->count = 0;
-	db->rtable->count = 0;
 
 	/* worker thread
 	 *   - extract messages from the central fifo queue and translate the messages into host arrays
@@ -1075,12 +1061,10 @@ void DLL_DECL db_worker(database_t *db) {
 
 		/* host arrays reaching critical capacity ? */
 		if ((db->mtable->count + i > DB_FLUSH_ROWS) || (db->ntable->count + i > DB_FLUSH_ROWS) ||
-		    (db->stable->count + i > DB_FLUSH_ROWS) || (db->rtable->count + i > DB_FLUSH_ROWS) ||
-		    (db->last_flush == 0)) {
+		    (db->stable->count + i > DB_FLUSH_ROWS) || (db->last_flush == 0)) {
 
 			if (db->mtable->count != 0) {
-				int i = (db->mtable->count + db->ntable->count +
-					 db->stable->count + db->rtable->count);
+				int i = (db->mtable->count + db->ntable->count + db->stable->count);
 
 				rv = db_flush(db);
 				Cthread_mutex_lock(&db->mutex);
@@ -1095,7 +1079,6 @@ void DLL_DECL db_worker(database_t *db) {
 				db->mtable->count = 0;
 				db->ntable->count = 0;
 				db->stable->count = 0;
-				db->rtable->count = 0;
 			}
 
 			db->last_flush = time(NULL);
@@ -1166,6 +1149,10 @@ void DLL_DECL db_worker(database_t *db) {
 		strcpy(db->mtable->reqid[db->mtable->count], message->reqid);
 		strcpy(db->mtable->nsfileid[db->mtable->count], message->nsfileid);
 		strcpy(db->mtable->tapevid[db->mtable->count], "N/A");
+		strcpy(db->mtable->stype[db->mtable->count], "N/A");
+		strcpy(db->mtable->sname[db->mtable->count], "N/A");
+		db->mtable->userid[db->mtable->count]  = -1;
+		db->mtable->groupid[db->mtable->count] = -1;
 
 		/* process parameters */
 		for (param = message->plist; param != NULL; param = param->next) {
@@ -1183,11 +1170,7 @@ void DLL_DECL db_worker(database_t *db) {
 
 			/* table: dlf_reqid_map */
 			case DLF_MSG_PARAM_UUID: {
-				db->rtable->id[db->rtable->count] = db->mtable->id[db->mtable->count];
-				strcpy(db->rtable->timestamp[db->rtable->count], db->mtable->timestamp[db->mtable->count]);
-				strcpy(db->rtable->reqid[db->rtable->count], db->mtable->reqid[db->mtable->count]);
-				strcpy(db->rtable->subreqid[db->rtable->count], param->value);
-				db->rtable->count++;
+				strcpy(db->mtable->subreqid[db->mtable->count], param->value);
 				break;
 			}
 
@@ -1227,6 +1210,27 @@ void DLL_DECL db_worker(database_t *db) {
 				break;
 			}
 
+			/* security related */
+			case DLF_MSG_PARAM_UID: {
+				db->mtable->userid[db->mtable->count] = atoi(param->value);
+				break;
+			}
+
+			case DLF_MSG_PARAM_GID: {
+				db->mtable->groupid[db->mtable->count] = atoi(param->value);
+				break;
+			}
+			
+			case DLF_MSG_PARAM_STYPE: {
+				strncpy(db->mtable->stype[db->mtable->count], param->value, DLF_LEN_STYPE);
+				break;
+			}
+
+			case DLF_MSG_PARAM_SNAME: {
+				strncpy(db->mtable->sname[db->mtable->count], param->value, DLF_LEN_SNAME);
+				break;
+			}
+
 			/* we shouldn't get here, but if we do we simple stop processing the params and
 			 * enter the message to the database as normal. We could rollback the host
 			 * arrays if we want the data to have 100% integrity
@@ -1258,7 +1262,7 @@ int DLL_DECL db_monitoring(handler_t **hpool, unsigned int interval) {
 	struct     tm tm_str;
 	struct     sqlca sqlca;
 	char       err_msg[512];
-	char       timestr[15];
+	char       timestr[DLF_LEN_TIMESTAMP + 1];
 	size_t     err_size;
 	size_t     err_len;
 	time_t     now;
