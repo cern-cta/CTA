@@ -79,7 +79,7 @@ MYSQLLIB  = $(shell /usr/bin/mysql_config --libs_r)
 #endif
 
 DFLAGS    = -DLOGFILE=\"$(LOGFILE)\" -DDLFCONFIG=\"$(DLFCONFIG)\" $(DBFLAG)
-CFLAGS    = $(CCOPTIM) -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(ORAINC)
+CFLAGS    = -pedantic -Wno-long-long $(CCOPTIM) -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(ORAINC)
 DEPLIB    = DepSharedLibraryTargetName(shlib,shift)
 
 MANPAGES  = $(MANDIR)/dlfserver.$(MANSUFFIX)    \
