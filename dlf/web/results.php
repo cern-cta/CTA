@@ -40,7 +40,7 @@ foreach (array_keys($_GET) as $name) {
 		foreach (array_keys($_GET[$name]) as $subname) {
 			$_GET[$name][$subname] = urldecode(trim($_GET[$name][$subname]));
 		}
-	} else if (($name == 'msgtext') && ($_GET[$name] < 0)) {
+	} else if (($name == 'msg_no') && ($_GET[$name] < 0)) {
 		$_GET[$name] = 'All';
 	} else {
 		$_GET[$name] = str_replace('\"', '"', urldecode(trim($_GET[$name])));	
@@ -115,7 +115,7 @@ setcookie("style", $_GET['style']);
 		$filter = preg_replace('/,$/', ')', $filter);
 	}
 
-	foreach (array('facility:1', 'hostid:1', 'pid:1', 'reqid:1', 'nshostid:1', 'nsfileid:1', 'subreqid:2', 
+	foreach (array('facility:1', 'hostid:1', 'pid:1', 'msg_no:1', 'reqid:1', 'nshostid:1', 'nsfileid:1', 'subreqid:2', 
 		           'tapevid:2', 'uid:2', 'gid:2', 'sec_type:2', 'sec_name:2') as $config) {
 		list ($name, $version) = split(":", $config, 2);
 		if ($schema_version != $version) {
@@ -155,9 +155,9 @@ setcookie("style", $_GET['style']);
 	if (($schema_version < 2) && 
 	    ($_GET['tapevid'] || ($_GET['columns'] == 'default') || $_GET['col_tapevid'])) {
 		$query = sprintf("SELECT a.*, b.tapevid
-				  FROM (%s) a
-				  LEFT JOIN dlf_tape_ids b ON (b.id = a.id %s %s)",
+				  FROM (%s) a %s JOIN dlf_tape_ids b ON (b.id = a.id %s %s)",
 				 $query, 
+				 $_GET['tapevid'] ? "INNER" : "LEFT",
 				 $timeframe ? "AND $b_timeframe" : "", 
 				 $_GET['tapevid'] ? "AND b.tapevid = '".$_GET['tapevid']."'" : "");
 	}
@@ -165,9 +165,9 @@ setcookie("style", $_GET['style']);
 	/* sub request */
 	if (($_GET['subreqid'] || ($_GET['columns'] == 'default') || $_GET['col_subreqid']) && ($schema_version < 2)) {
 		$query = sprintf("SELECT a.*, b.subreqid
-						  FROM (%s) a
-						  LEFT JOIN dlf_reqid_map b ON (b.id = a.id %s %s)",
+						  FROM (%s) a %s JOIN dlf_reqid_map b ON (b.id = a.id %s %s)",
 						 $query,
+				 		 $_GET['subreqid'] ? "INNER" : "LEFT",
 						 $timeframe ? "AND $b_timeframe" : "",
 						 $_GET['subreqid'] ? "AND b.subreqid = '".$_GET['subreqid']."'" : "");
 	}
@@ -344,7 +344,7 @@ setcookie("style", $_GET['style']);
 					$filters = array('severity:Severity', 
 									 'facility:Facility:', 
 									 'hostid:Hostname', 
-									 'msgtext:Message Text:', 
+									 'msg_no:Message Text:', 
 									 'pid:Pid', 
 									 'tapevid:Tape VID', 
 									 'reqid:Request ID', 
@@ -390,7 +390,7 @@ setcookie("style", $_GET['style']);
 							$row     = db_fetch_row($results);
 							$value   = $row[0] ? $row[0] : "???";
 						}
-						else if ($form_name == 'msgtext') {
+						else if ($form_name == 'msg_no') {
 							$results = db_query("SELECT msg_text FROM dlf_msg_texts WHERE fac_no = '".$_GET['facility']."' AND msg_no = '".$_GET[$form_name]."'", $dbh);
 							$row     = db_fetch_row($results);
 							$value   = $row[0] ? $row[0] : "???";							

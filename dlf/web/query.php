@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: query.php,v 1.10 2006/11/29 13:39:14 waldron Exp $
+ * $Id: query.php,v 1.11 2006/11/29 16:29:51 waldron Exp $
  */
 
 require("utils.php");
@@ -88,7 +88,7 @@ setcookie("instance", $_GET['instance']);
 	// javascript function to populate msgtext box
 	function fac_selected(theSel) {
 		theForm = theSel.form;
-		opt = theForm.msgtext.options;
+		opt = theForm.msg_no.options;
 		opt.length = 0;
 		for (i = 0, k = 0; i < txtOptions.length; i++) {
 			if (txtOptions[i][0] == theSel.value) {
@@ -376,7 +376,7 @@ setcookie("instance", $_GET['instance']);
 		<tr>
 			<td rowspan="2" align="left">Message Text :</td>
 			<td rowspan="2">
-			<select name="msgtext" class="querySelect" tabindex="4">
+			<select name="msg_no" class="querySelect" tabindex="4">
 				<option selected="selected">All</option>
 			</select>                  
 			</td>
