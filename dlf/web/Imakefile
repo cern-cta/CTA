@@ -22,6 +22,7 @@ COMM ---------------------------------------------------------------------------
 IFILES = $(DLFWEB)/config.php          \
 	 $(DLFWEB)/dbview.php          \
 	 $(DLFWEB)/index.php           \
+	 $(DLFWEB)/login.php           \
 	 $(DLFWEB)/query.php           \
 	 $(DLFWEB)/results.php         \
 	 $(DLFWEB)/site.css            \
@@ -44,9 +45,10 @@ $(DLFWEB):
 	mkdir -p $(DESTDIR)$(DLFWEB)/js
 	mkdir -p $(DESTDIR)$(DLFWEB)/images
 
-InstallNonExecFile(config.php,$(DLFWEB),root,root,600)
+InstallNonExecFile(config.php,$(DLFWEB),root,root,644)
 InstallNonExecFile(dbview.php,$(DLFWEB),root,root,644)
 InstallNonExecFile(index.php,$(DLFWEB),root,root,644)
+InstallNonExecFile(login.php,$(DLFWEB),root,root,600)
 InstallNonExecFile(query.php,$(DLFWEB),root,root,644)
 InstallNonExecFile(results.php,$(DLFWEB),root,root,644)
 InstallNonExecFile(site.css,$(DLFWEB),root,root,644)
