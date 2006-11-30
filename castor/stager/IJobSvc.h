@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.2 $ $Release$ $Date: 2005/09/05 12:54:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.3 $ $Release$ $Date: 2006/11/30 16:04:58 $ $Author: riojac3 $
  *
  *
  *
@@ -304,7 +304,7 @@ int Cstager_IJobSvc_getUpdateFailed
  u_signed64 subReqId);
 
 /**
- * Informs the stager the a Put SubRequest failed.
+ * Informs the stager the a Put or PutDone SubRequest failed.
  * The SubRequest's status will thus be set to FAILED
  * @param jobSvc the IJobSvc used
  * @param subReqId the id of the failing SubRequest

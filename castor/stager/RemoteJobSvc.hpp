@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/09/05 12:54:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteJobSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/11/30 16:04:58 $ $Author: riojac3 $
  *
  *
  *
@@ -215,7 +215,7 @@ namespace castor {
         throw (castor::exception::Exception);
 
       /**
-       * Informs the stager the a Put SubRequest failed.
+       * Informs the stager the a Put and PutDone SubRequest failed.
        * The SubRequest's status will thus be set to FAILED
        * @param subReqId the id of the failing SubRequest
        */
