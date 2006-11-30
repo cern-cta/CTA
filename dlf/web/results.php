@@ -248,6 +248,13 @@ setcookie("style", $_GET['style']);
 	$row = db_fetch_row($results);
 	$query_total = $row[0];
 
+	/* if we are display messages on the boundary of the timeframe the elapsed execution time of the
+	 * previous query may make us miss the parameters
+	 */
+	if (($_GET['last'] != 0) && ($_GET['last'] != -1)) {
+		$timeframe = str_replace($_GET['last']."/1440", ($_GET['last'] + 2)."/1440", $timeframe);
+	}
+
 	/* generate a list of ids to lookup */
 	if (count($data)) {
 		$idlist = "IN (";
