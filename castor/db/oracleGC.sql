@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.347 $ $Release$ $Date: 2006/11/30 15:26:00 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.348 $ $Release$ $Date: 2006/11/30 15:33:33 $ $Author: riojac3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.347 $ $Date: 2006/11/30 15:26:00 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.348 $ $Date: 2006/11/30 15:33:33 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1408,6 +1408,8 @@ BEGIN
         AND SubRequest.request = Request.id
         AND SubRequest.status = 6;
      archiveSubReq(srId);
+     EXCEPTION WHEN NO_DATA_FOUND THEN
+     NULL; --Ignore the missing subrequest
    END;
  END IF;
 END;
