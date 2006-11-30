@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2006/10/18 12:31:46 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2006/11/30 15:31:57 $ $Author: felixehm $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -197,58 +197,6 @@ void castor::db::ora::OraJobSvc::reset() throw() {
 }
 
 // -----------------------------------------------------------------------
-// compareSegments
-// -----------------------------------------------------------------------
-// Helper method to compare segments
-extern "C" {
-  int compareSegments
-  (const void* arg1, const void* arg2) {
-    struct Cns_segattrs *segAttr1 = (struct Cns_segattrs *)arg1;
-    struct Cns_segattrs *segAttr2 = (struct Cns_segattrs *)arg2;
-    int rc = 0;
-    if ( segAttr1->fsec < segAttr2->fsec ) rc = -1;
-    if ( segAttr1->fsec > segAttr2->fsec ) rc = 1;
-    return rc;
-  }
-}
-
-// -----------------------------------------------------------------------
-// validNsSegment
-// -----------------------------------------------------------------------
-int validNsSegment(struct Cns_segattrs *nsSegment) {
-  if ((0 == nsSegment) || (*nsSegment->vid == '\0') ||
-      (nsSegment->s_status != '-')) {
-    return 0;
-  }
-  struct vmgr_tape_info vmgrTapeInfo;
-  int rc = vmgr_querytape(nsSegment->vid,nsSegment->side,&vmgrTapeInfo,0);
-  if (-1 == rc) return 0;
-  if (((vmgrTapeInfo.status & DISABLED) == DISABLED) ||
-      ((vmgrTapeInfo.status & ARCHIVED) == ARCHIVED) ||
-      ((vmgrTapeInfo.status & EXPORTED) == EXPORTED)) {
-    return 0;
-  }
-  return 1;
-}
-
-// -----------------------------------------------------------------------
-// invalidateAllSegmentsForCopy
-// -----------------------------------------------------------------------
-void invalidateAllSegmentsForCopy(int copyNb,
-                                  struct Cns_segattrs * nsSegmentArray,
-                                  int nbNsSegments) {
-  if ((copyNb < 0) || (nbNsSegments <= 0) || (nsSegmentArray == 0)) {
-    return;
-  }
-  for (int i = 0; i < nbNsSegments; i++) {
-    if (nsSegmentArray[i].copyno == copyNb) {
-      nsSegmentArray[i].s_status = NS_SEGMENT_NOTOK;
-    }
-  }
-  return;
-}
-
-// -----------------------------------------------------------------------
 // getUpdateStart
 // -----------------------------------------------------------------------
 castor::stager::DiskCopy*
@@ -294,56 +242,14 @@ castor::db::ora::OraJobSvc::getUpdateStart
     // Check result
     u_signed64 id
       = (u_signed64)m_getUpdateStartStatement->getDouble(3);
-    // If no DiskCopy returned, return
+    // If no DiskCopy returned, we have to wait, hence return
     if (0 == id) {
       cnvSvc()->commit();
       return 0;
     }
-    // In case a diskcopy was created in WAITTAPERECALL
-    // status, create the associated TapeCopy and Segments
+    
     unsigned int status =
       m_getUpdateStartStatement->getInt(5);
-    if (status == 99) {
-      // First get the DiskCopy
-      castor::BaseAddress ad;
-      ad.setCnvSvcName("DbCnvSvc");
-      ad.setCnvSvcType(castor::SVC_DBCNV);
-      ad.setTarget(id);
-      castor::IObject* iobj = cnvSvc()->createObj(&ad);
-      castor::stager::DiskCopy *dc =
-        dynamic_cast<castor::stager::DiskCopy*>(iobj);
-      if (0 == dc) {
-        rollback();
-        castor::exception::Internal e;
-        e.getMessage() << "Dynamic cast to DiskCopy failed "
-                       << "in getUpdateStart";
-        delete iobj;
-        throw e;
-      }
-      // Then get the associated CastorFile
-      cnvSvc()->fillObj(&ad, iobj, castor::OBJ_CastorFile);
-      // create needed TapeCopy(ies) and Segment(s)
-      int crSegFailed = createTapeCopySegmentsForRecall(dc->castorFile(), euid, egid);
-      if(crSegFailed == -1) {      
-        // no valid copy found, in such a case, we delete the DiskCopy
-        // and set the subrequest to failed
-          subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
-          cnvSvc()->updateRep(&ad, subreq, false);
-          cnvSvc()->deleteRep(&ad, dc, false);
-      }          
-      // cleanup
-      delete dc->castorFile();
-      delete dc;
-      // commit and return
-      cnvSvc()->commit();
-
-      if(crSegFailed == 0) return 0;
-      // else throw the exception to the stager_job_service
-      castor::exception::SegmentNotAccessible e;
-      e.getMessage() << "getUpdateStart : no valid copy found on tape";
-      throw e;
-    }
-    // Else create a resulting DiskCopy
     castor::stager::DiskCopy* result =
       new castor::stager::DiskCopy();
     result->setId(id);
@@ -352,9 +258,11 @@ castor::db::ora::OraJobSvc::getUpdateStart
       result->setStatus(castor::stager::DISKCOPY_WAITDISK2DISKCOPY);
       *emptyFile = true;
     } else {
-      result->setStatus
-        ((enum castor::stager::DiskCopyStatusCodes) status);
+    result->setStatus((enum castor::stager::DiskCopyStatusCodes) status);
     }
+
+    // A diskcopy was created in WAITDISK2DISKCOPY
+    // create a resulting DiskCopy
     if (status == castor::stager::DISKCOPY_WAITDISK2DISKCOPY) {
       try {
         oracle::occi::ResultSet *rs =
@@ -686,162 +594,6 @@ void castor::db::ora::OraJobSvc::putFailed
       << std::endl << e.getMessage();
     throw ex;
   }
-}
-
-
-// -----------------------------------------------------------------------
-// createTapeCopySegmentsForRecall (private)
-// -----------------------------------------------------------------------
-int castor::db::ora::OraJobSvc::createTapeCopySegmentsForRecall
-(castor::stager::CastorFile *castorFile,
- unsigned long euid,
- unsigned long egid)
-  throw (castor::exception::Exception) {
-  // check argument
-  if (0 == castorFile) {
-    castor::exception::Internal e;
-    e.getMessage() << "createTapeCopySegmentsForRecall "
-                   << "called with null argument";
-    throw e;
-  }
-  // check nsHost name length
-  if (castorFile->nsHost().length() > CA_MAXHOSTNAMELEN) {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "createTapeCopySegmentsForRecall "
-                   << "name server host has too long name";
-    throw e;
-  }
-  // Prepare access to name server : avoid log and set uid
-  char cns_error_buffer[512];  /* Cns error buffer */
-  if (Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0) {
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "createTapeCopySegmentsForRecall : Cns_seterrbuf failed.";
-    throw ex;
-  }
-  if (Cns_setid(euid,egid) != 0) {
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "createTapeCopySegmentsForRecall : Cns_setid failed :"
-      << std::endl << cns_error_buffer;
-    throw ex;
-  }
-  // Get segments for castorFile
-  struct Cns_fileid fileid;
-  fileid.fileid = castorFile->fileId();
-  strncpy(fileid.server,
-          castorFile->nsHost().c_str(),
-          CA_MAXHOSTNAMELEN);
-  struct Cns_segattrs *nsSegmentAttrs = 0;
-  int nbNsSegments;
-  int rc = Cns_getsegattrs
-    (0, &fileid, &nbNsSegments, &nsSegmentAttrs);
-  if (-1 == rc) {
-    castor::exception::Exception e(serrno);
-    e.getMessage() << "createTapeCopySegmentsForRecall : "
-                   << "Cns_getsegattrs failed";
-    throw e;
-  }
-  // Sort segments
-  qsort((void *)nsSegmentAttrs,
-        (size_t)nbNsSegments,
-        sizeof(struct Cns_segattrs),
-        compareSegments);
-  // Find a valid copy
-  int useCopyNb = -1;
-  for (int i = 0; i < nbNsSegments; i++) {
-    if (validNsSegment(&nsSegmentAttrs[i]) == 0) {
-      invalidateAllSegmentsForCopy(nsSegmentAttrs[i].copyno,
-                                   nsSegmentAttrs,
-                                   nbNsSegments);
-      continue;
-    }
-    /*
-     * This segment is valid. Before we can decide to use
-     * it we must check all other segments for the same copy
-     */
-    useCopyNb = nsSegmentAttrs[i].copyno;
-    for (int j = 0; j < nbNsSegments; j++) {
-      if (j == i) continue;
-      if (nsSegmentAttrs[j].copyno != useCopyNb) continue;
-      if (0 == validNsSegment(&nsSegmentAttrs[j])) {
-        // This copy was no good
-        invalidateAllSegmentsForCopy(nsSegmentAttrs[i].copyno,
-                                     nsSegmentAttrs,
-                                     nbNsSegments);
-        useCopyNb = -1;
-        break;
-      }
-    }
-  }
-  if (useCopyNb == -1) {
-    // No valid copy found
-	return -1;
-    //castor::exception::Internal e;
-    //e.getMessage() << "createTapeCopySegmentsForRecall : "
-    //               << "No valid copy found";
-    //throw e;
-  }
-  // DB address
-  castor::BaseAddress ad;
-  ad.setCnvSvcName("OracnvSvc");
-  ad.setCnvSvcType(castor::SVC_ORACNV);
-  // create TapeCopy
-  castor::stager::TapeCopy tapeCopy;
-  tapeCopy.setCopyNb(useCopyNb);
-  tapeCopy.setStatus(castor::stager::TAPECOPY_TOBERECALLED);
-  tapeCopy.setCastorFile(castorFile);
-  castorFile->addTapeCopies(&tapeCopy);
-  cnvSvc()->fillRep(&ad, castorFile,
-                    castor::OBJ_TapeCopy, false);
-  // Go through Segments
-  u_signed64 totalSize = 0;
-  for (int i = 0; i < nbNsSegments; i++) {
-    // Only deal with segments of the copy we choose
-    if (nsSegmentAttrs[i].copyno != useCopyNb) continue;
-    // create Segment
-    castor::stager::Segment *segment =
-      new castor::stager::Segment();
-    segment->setBlockId0(nsSegmentAttrs[i].blockid[0]);
-    segment->setBlockId1(nsSegmentAttrs[i].blockid[1]);
-    segment->setBlockId2(nsSegmentAttrs[i].blockid[2]);
-    segment->setBlockId3(nsSegmentAttrs[i].blockid[3]);
-    segment->setFseq(nsSegmentAttrs[i].fseq);
-    segment->setOffset(totalSize);
-    segment->setStatus(castor::stager::SEGMENT_UNPROCESSED);
-    totalSize += nsSegmentAttrs[i].segsize;
-    // get tape for this segment
-    castor::stager::Tape *tape =
-      selectTape(nsSegmentAttrs[i].vid,
-                 nsSegmentAttrs[i].side,
-                 WRITE_DISABLE);
-    switch (tape->status()) {
-    case castor::stager::TAPE_UNUSED:
-    case castor::stager::TAPE_FINISHED:
-    case castor::stager::TAPE_FAILED:
-    case castor::stager::TAPE_UNKNOWN:
-      tape->setStatus(castor::stager::TAPE_PENDING);
-    }
-    cnvSvc()->updateRep(&ad, tape, false);
-    // Link Tape with Segment
-    segment->setTape(tape);
-    tape->addSegments(segment);
-    // Link Segment with TapeCopy
-    segment->setCopy(&tapeCopy);
-    tapeCopy.addSegments(segment);
-  }
-  // create Segments in DataBase
-  cnvSvc()->fillRep(&ad, &tapeCopy, castor::OBJ_Segment, false);
-  // Fill Segment to Tape link and Cleanup
-  for (unsigned int i = 0; i < tapeCopy.segments().size(); i++) {
-    castor::stager::Segment* seg = tapeCopy.segments()[i];
-    cnvSvc()->fillRep(&ad, seg, castor::OBJ_Tape, false);
-  }
-  while (tapeCopy.segments().size() > 0) {
-    delete tapeCopy.segments()[0]->tape();
-  }
-  cnvSvc()->commit();
-  return 0;
 }
 
 // -----------------------------------------------------------------------

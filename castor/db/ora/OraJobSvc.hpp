@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/01/27 14:40:35 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/11/30 15:31:57 $ $Author: felixehm $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -88,9 +88,6 @@ namespace castor {
          * responsability of the caller.
          * Depending on the available DiskCopies for the file
          * the SubRequest deals with, we have different cases :
-         *  - no DiskCopy at all and file is not of size 0 :
-         * a DiskCopy is created with status DISKCOPY_WAITTAPERECALL.
-         * Null pointer is returned
          *  - no DiskCopy at all and file is of size 0 :
          * a DiskCopy is created with status DISKCOPY_WAIDISK2DISKCOPY.
          * This diskCopy is returned and the emptyFile content is
@@ -239,26 +236,6 @@ namespace castor {
          * @exception Exception in case of error
          */
         virtual castor::stager::Request* requestToDo()
-          throw (castor::exception::Exception);
-
-      private:
-
-	   /**
-         * creation of TapeCopy(ies) and Segment(s) for
-         * recall of a CastorFile. This methods calls the
-         * name server and vmgr to gather information on
-         * what needs to be recalled. It then creates the
-         * appropriate TapeCopy(ies) and Segment(s) in the
-         * database.
-         * @param castorFile the CastorFile we want to recall
-         * @param euid the euid of the user recalling the file
-         * @param egid the egid of the user recalling the file
-         * @exception Exception throws an Exception in case of error
-         */
-        int createTapeCopySegmentsForRecall
-        (castor::stager::CastorFile *castorFile,
-         unsigned long euid,
-         unsigned long egid)
           throw (castor::exception::Exception);
 
       private:

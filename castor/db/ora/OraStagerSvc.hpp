@@ -114,24 +114,23 @@ namespace castor {
          * also returns a list of diskcopies available to the
          * subrequest.
          * The scheduling decision is taken this way :
-         *   - if no diskCopy is found, return true (scheduling
-         * for any recall) and sources stays empty.
-         *   - if some diskcopies are found but all in WAIT*
-         * status, return false (no schedule) and link the SubRequest
-         * to the one we're waiting on + set its status to
-         * SUBREQUEST_WAITSUBREQ. Sources stays empty and the
-         * DB transaction is commited.
-         *   - if some diskcopies are found in STAGED/STAGEOUT
-         * status, return true and list them in sources.
+         * 0: no scheduling, the SubRequest is set to WAIT and it
+              is linked to the parent SubRequest, which we're waiting
+              on (e.g. TapeRecall, Disk2DiskCopy,..)
+         * 1: schedule + list of avail sources, a DiskCopy was
+              found and the SubRequest needs to be rescheduled.
+         * 2: schedule + no sources, a disk2disk copy is necessary
+         * 3: no schedule, no DiskCopy anywhere found, we need a
+              Tape recall.
          * @param subreq the SubRequest to consider
          * @param sources this is a list of DiskCopies that
          * can be used by the subrequest.
          * Note that the DiskCopies returned in sources must be
          * deallocated by the caller.
-         * @return whether to schedule it
+         * @return 0,1,2,3
          * @exception Exception in case of error
          */
-        virtual bool isSubRequestToSchedule
+        virtual int isSubRequestToSchedule
         (castor::stager::SubRequest* subreq,
          std::list<castor::stager::DiskCopyForRecall*>& sources)
           throw (castor::exception::Exception);
@@ -316,8 +315,37 @@ namespace castor {
         virtual void setFileGCWeight
         (const u_signed64 fileId, const std::string nsHost, const float weight)
           throw (castor::exception::Exception);
+       
+        /**
+         * Creates a candidate for a recall. This includes TapeCopy with
+         * its Segment(s), a DiskCopy and a SubRequest in WAITTAPERECALL.
+         * @param subreq the subreq of the file to recall
+         * @param euid the user id
+         * @param egid the group id of the user
+         * @exception in case of error
+         */
+        virtual void createRecallCandidate
+        (castor::stager::SubRequest* subreq,
+         unsigned long euid,
+         unsigned long egid)
+           throw (castor::exception::Exception);
 
       private:
+
+        /**
+         * Creates a TapeCopy and corresponding Segment objects in the
+         * Stager catalogue. The segment information is fetched from the
+         * Nameserver and vmgr with the given uid, gid.
+         * @castorFile the Castorfile, from wich the fileid is taken for the segments
+         * @param euid the userid from the user
+         * @param guid the groupid from the user
+         *  
+         */
+        int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
+        (castor::stager::CastorFile *castorFile, 
+         unsigned long euid, 
+         unsigned long egid)
+          throw (castor::exception::Exception);
 
         /// SQL statement object for function subRequestToDo
         oracle::occi::Statement *m_subRequestToDoStatement;
