@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: query.php,v 1.11 2006/11/29 16:29:51 waldron Exp $
+ * $Id: query.php,v 1.12 2006/11/30 09:35:49 waldron Exp $
  */
 
 require("utils.php");
@@ -151,7 +151,7 @@ setcookie("instance", $_GET['instance']);
 		    <?php
 			    if ($schema_version > 1) {
 				   echo "(document.query.col_security.checked == true) &&";
-		    	    }
+		    	}
 		    ?>																		
 		    (document.query.col_nshostname.checked == true)) {
 			document.query.columns[0].checked = true;
@@ -175,6 +175,11 @@ setcookie("instance", $_GET['instance']);
 					  document.query.from.value + " " + document.query.fromtime.value, 'dd/MM/yyyy HH:mm')) != 1) {
 				alert("The from date must be smaller then the to date");
 				return false;
+			}
+			if (document.query.to.value == "dd/mm/yyyy") {
+				var now = new Date();
+				document.query.to.value     = now.getDate() + "/" + (now.getMonth() + 1) + "/" + now.getYear();
+				document.query.totime.value = now.getHours() + ":" + now.getMinutes();		
 			}
 	  	}
 		if (((document.query.paramname.value != "") && (document.query.paramvalue.value == "")) ||
