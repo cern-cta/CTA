@@ -10,6 +10,9 @@ except:
   sys.exit(2)
   
 
+# Retrieving tapes involved into the repack undo
+
+
 listOfTape=""
 tapePool=""
 
@@ -36,10 +39,11 @@ if res[0][0][0] == '-P':
   tapePool=res[0][0][1]
 
 if tapePool!="" and listOfTape == "":
-  (inTape,outTape,errTape)=os.popen3("/usr/local/src/CASTOR2/WORKDIR/PROTO2/vmgr/vmgrlisttape -P "+tapePool)
-  if errTape.read() != "":
+  (inTape,outTape,errTape)=os.popen3("vmgrlisttape -P "+tapePool)
+  errorMessage=errTape.read()
+  if errorMessage != "":
     print "Error:"
-    print errTape.read()
+    print errorMessage
     sys.exit(2)
   else:
     lineTape=outTape.read().splitlines()
@@ -47,6 +51,7 @@ if tapePool!="" and listOfTape == "":
     for singleLine in lineTape:
       listOfTape.append(singleLine.split(" ")[0])
 
+# Retrieve information to access repack db
 
 f=open("/etc/castor/REPACKUNDOCONFIG","r")
 configFileInfo=f.read()
@@ -67,6 +72,9 @@ for tape in listOfTape:
   print
   print "*** TAPE involved: ",tape," ***"
   print
+
+  # for each tape I retrieve the information saved into the repack db
+
   repackCursor.execute(repackQry,(tape,tape))
   repackResult=repackCursor.fetchall()
   listFile=[]
@@ -81,21 +89,53 @@ for tape in listOfTape:
     print "* FileID ",fileidRep
     print
 
-    (ret,infoSeg)=wrapcns.cnsGetSegInfo(fileidRep)
+    # Getting information from the ns for one file at the time
     
-    print "   Values from nameserver:"
-    print "   ",infoSeg
-
-    (ret,infoSeg)=wrapcns.cnsSetSegInfo(fileidRep,compressionRep,segsizeRep,filesecRep,copynoRep,blockidRep,fileseqRep,vidRep)
-
-    print "   Values from repack db (? mark for the not provided information):"
-    print "   ",infoSeg
-        
-    (ret,infoSeg)=wrapcns.cnsGetSegInfo(fileidRep)
-
+    try:
+      (ret,infoSeg)=wrapcns.cnsGetSegInfo(fileidRep)
+      if ret <0:
+        print "Error while getting information from the name server for fileid ",fileidRep
+        continue
+      
+      print "   Values from nameserver:"
+      print "   ",infoSeg
+      
+    except:
+      print "   Impossible to retrieve information from the ns for file ",fileidRep
+      print
+      continue
     
-    print "   Values from nameserver after the repack undo:"
-    print "   ",infoSeg
-    print
+    # Setting information in  the ns for one file at the time to do the repack undo
+
+    try:
+      (ret,infoSeg)=wrapcns.cnsSetSegInfo(fileidRep,compressionRep,segsizeRep,filesecRep,copynoRep,blockidRep,fileseqRep,vidRep)
+    
+      if ret <0:
+        print "Error while setting information from the name server for fileid ",fileidRep
+        continue  
+    
+      print "   Values from repack db (? for the information which are not provided):"
+      print "   ",infoSeg
+
+    except:
+      print "   Impossible to restore information in the ns for file ",fileidRep
+      print
+      continue
+
+    # Getting information from the ns after the repack undo
+
+    try:    
+      (ret,infoSeg)=wrapcns.cnsGetSegInfo(fileidRep)
+      if ret <0:
+        print "Error while getting information from the name server for fileid ",fileidRep," after the repack undo"
+        continue  
+  
+      print "   Values from nameserver after the repack undo:"
+      print "   ",infoSeg
+      print
+    except:
+      print "   Impossible to get information from the ns for file ",fileidRep," after the repack undo"
+      print
+      continue
     
     
