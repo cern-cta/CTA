@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.348 $ $Release$ $Date: 2006/11/30 15:33:33 $ $Author: riojac3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.349 $ $Release$ $Date: 2006/11/30 15:44:16 $ $Author: riojac3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.348 $ $Date: 2006/11/30 15:33:33 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.349 $ $Date: 2006/11/30 15:44:16 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2143,31 +2143,38 @@ BEGIN
    WHERE id = srId
   RETURNING diskCopy, xsize, castorFile
     INTO dcId, reservedSpace, cfId;
-  SELECT fileSystem INTO fsId FROM DiskCopy WHERE id = dcId;
-  -- free reserved space
-  updateFsFileClosed(fsId, reservedSpace, 0);
-  -- Determine the context (Put inside PrepareToPut ?)
-  BEGIN
-    -- check that there is a PrepareToPut going on
-    SELECT SubRequest.diskCopy INTO unused
-      FROM StagePrepareToPutRequest, SubRequest
-     WHERE SubRequest.CastorFile = cfId
-       AND StagePrepareToPutRequest.id = SubRequest.request;
-    -- the select worked out, so we have a prepareToPut
-    -- In such a case, we do not cleanup DiskCopy and CastorFile
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- this means we are a standalone put
-    -- thus cleanup DiskCopy and maybe the CastorFile
-    DECLARE
-      dcIds castor."cnumList";
-      fileIds castor.FileList_Cur;
+    -- Check if the operation is a PutDone
+   SELECT StagePutDoneRequest.id INTO unused 
+   FROM  StagePutDoneRequest, Subrequest
+   WHERE StagePutDoneRequest.id=srid AND 
+         StagePutDoneRequest.id=Subrequest.request;
+   EXCEPTION WHEN NO_DATA_FOUND  THEN
     BEGIN
-      dcIds(1) := dcId;
-      filesDeletedProc(dcIds, fileIds);
+      SELECT fileSystem INTO fsId FROM DiskCopy WHERE id = dcId;
+     -- free reserved space
+     updateFsFileClosed(fsId, reservedSpace, 0);
+     -- Determine the context (Put inside PrepareToPut ?)
+      BEGIN
+       -- check that there is a PrepareToPut going on
+       SELECT SubRequest.diskCopy INTO unused
+         FROM StagePrepareToPutRequest, SubRequest
+        WHERE SubRequest.CastorFile = cfId
+          AND StagePrepareToPutRequest.id = SubRequest.request;
+       -- the select worked out, so we have a prepareToPut
+       -- In such a case, we do not cleanup DiskCopy and CastorFile
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- this means we are a standalone put
+      -- thus cleanup DiskCopy and maybe the CastorFile
+      DECLARE
+        dcIds castor."cnumList";
+        fileIds castor.FileList_Cur;
+      BEGIN
+       dcIds(1) := dcId;
+       filesDeletedProc(dcIds, fileIds);
+      END;
     END;
-  END;   
+  END;  
 END;
-
 
 /*
  * GC policy that mimic the old GC :
