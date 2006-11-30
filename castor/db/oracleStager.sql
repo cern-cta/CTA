@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.346 $ $Release$ $Date: 2006/11/27 11:03:48 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.347 $ $Release$ $Date: 2006/11/30 15:26:00 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.346 $ $Date: 2006/11/27 11:03:48 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.347 $ $Date: 2006/11/30 15:26:00 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1067,7 +1067,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   dci := 0;
   rpath := '';
  EXCEPTION WHEN NO_DATA_FOUND THEN
-   -- No disk copy foundin WAIT*, we don't have to wait
+   -- No disk copy found in WAIT*, we don't have to wait
   BEGIN
    -- Check whether there are any diskcopy available
    SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
@@ -1105,17 +1105,10 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
     rstatus := 1; -- status WAITDISK2DISKCOPY
   EXCEPTION WHEN NO_DATA_FOUND THEN
-   -- No disk copy found on any FileSystem
-   -- create one for recall
-   UPDATE SubRequest SET diskCopy = ids_seq.nextval, status = 4,
-                         lastModificationTime = getTime() -- WAITTAPERECALL
-    WHERE id = srId RETURNING castorFile, diskCopy INTO cfid, dci;
-   SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
-   buildPathFromFileId(fid, nh, dci, rpath);
-   INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime)
-    VALUES (rpath, dci, 0, cfid, 2, getTime()); -- status WAITTAPERECALL
-   INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
-   rstatus := 99; -- WAITTAPERECALL, NEWLY CREATED
+   -- No disk copy found on any FileSystem. This is an error because
+   -- in case of tape recall the job should not have started.
+   -- Raise error to the Job service
+   raise_application_error(-20103, 'No valid DiskCopy found on any filesystem for this job');
   END;
  END;
 END;
@@ -2412,7 +2405,7 @@ END;
 
 /*
  * Trigger launching garbage collection whenever needed
- * Note that we only launch it when at least 5 gigs are to be deleted
+ * Note that we only launch it when at least 4% is to be deleted
  */
 CREATE OR REPLACE TRIGGER tr_FileSystem_Update
 AFTER UPDATE OF free, deltaFree, reservedSpace ON FileSystem
@@ -2457,7 +2450,8 @@ END;
 
 
 
-/*CREATE MATERIALIZED VIEW MView_FS_DS_DP2SC
+/*
+CREATE MATERIALIZED VIEW MView_FS_DS_DP2SC
 ORGANIZATION HEAP PCTFREE 0 COMPRESS
 CACHE NOPARALLEL BUILD IMMEDIATE
 REFRESH ON COMMIT COMPLETE
@@ -2472,6 +2466,7 @@ AS
      AND DS.id(+) = FS.diskServer
      AND DP2SC.parent(+) = FS.diskPool;
 */
+
 /*
  * PL/SQL method implementing the core part of stage queries
  * It takes a list of castorfile ids as input
@@ -2506,18 +2501,18 @@ BEGIN
                AND DiskCopy.status IN (0, 1, 2, 4, 5, 6, 7, 10, 11)
                 -- ignore diskCopies in status GCCANDIDATE, BEINGDELETED or any other 'unknown' one
            ) CF_DC
-	   WHERE FS.Id(+) = CF_DC.fsId
-             AND ds.id(+) = fs.diskserver
-             AND nvl(FS.status, 0) in (0,1)
-             AND nvl(DS.status, 0) in (0,1)
-             AND DP2SC.parent(+) = FS.diskPool
-             AND CF_DC.cfId = SubRequest.castorFile(+)            -- OR search for a running request
-             AND SubRequest.request = Req.id(+) 
-             AND (svcClassId = 0             -- no svcClass given, or...
-               OR DP2SC.child = svcClassId        -- found diskCopy on the given svcClass
-               OR ((CF_DC.fsId = 0               -- diskcopy not yet associated with filesystem...
-               OR CF_DC.dcId IS NULL)        -- or diskcopy not yet created at all (prepareToXxx req)...
-             AND Req.svcClass = svcClassId))     -- ...but found stagein or prepareToPut request
+	   WHERE FS.id(+) = CF_DC.fsId
+       AND DS.id(+) = fs.diskserver
+       AND nvl(FS.status, 0) in (0,1)    -- PRODUCTION, DRAINING
+       AND nvl(DS.status, 0) in (0,1)    -- PRODUCTION, DRAINING
+       AND DP2SC.parent(+) = FS.diskPool
+       AND CF_DC.cfId = SubRequest.castorFile(+)            -- OR search for a running request
+       AND SubRequest.request = Req.id(+) 
+       AND (svcClassId = 0             -- no svcClass given, or...
+         OR DP2SC.child = svcClassId        -- found diskCopy on the given svcClass
+         OR ((CF_DC.fsId = 0               -- diskcopy not yet associated with filesystem...
+           OR CF_DC.dcId IS NULL)        -- or diskcopy not yet created at all (prepareToXxx req)...
+           AND Req.svcClass = svcClassId))     -- ...but found stagein or prepareToPut request
   ORDER BY fileid, nshost;
 END;
 
