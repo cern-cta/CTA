@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.56 $ $Release$ $Date: 2006/02/01 11:36:58 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.57 $ $Release$ $Date: 2006/11/30 15:38:41 $ $Author: felixehm $
  *
  *
  *
@@ -104,10 +104,13 @@ extern "C" {
    castor::stager::SubRequest* subreq,
    castor::stager::DiskCopyForRecall*** sources,
    unsigned int* sourcesNb) {
+    int ret = 0;
+    *sourcesNb = 0;
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       std::list<castor::stager::DiskCopyForRecall*> sourcesList;
-      if (stgSvc->stgSvc->isSubRequestToSchedule(subreq, sourcesList)) {
+      ret = stgSvc->stgSvc->isSubRequestToSchedule(subreq, sourcesList);
+      if(ret == 1) {
         *sourcesNb = sourcesList.size();
         if (*sourcesNb > 0) {
           *sources = (castor::stager::DiskCopyForRecall**)
@@ -117,18 +120,14 @@ extern "C" {
           for (unsigned int i = 0; i < *sourcesNb; i++, it++) {
             (*sources)[i] = *it;
           }
-        }
-        return 1;
-      } else {
-        *sourcesNb = 0;
-        return 0;
+        } 
       }
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();
       return -1;
     }
-    return 0;
+    return ret;
   }
 
   //-------------------------------------------------------------------------
@@ -338,6 +337,26 @@ extern "C" {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       stgSvc->stgSvc->setFileGCWeight(fileId, nsHost, weight);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_createRecallCandidate
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_createRecallCandidate
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   castor::stager::SubRequest* subreq,
+   const unsigned long euid,
+   const unsigned long egid) {
+   
+   if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      stgSvc->stgSvc->createRecallCandidate(subreq, euid, egid);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

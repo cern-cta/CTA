@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.68 $ $Release$ $Date: 2006/02/01 11:36:58 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.69 $ $Release$ $Date: 2006/11/30 15:38:41 $ $Author: felixehm $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -108,24 +108,23 @@ namespace castor {
        * also returns a list of diskcopies available to the
        * subrequest.
        * The scheduling decision is taken this way :
-       *   - if no diskCopy is found, return true (scheduling
-       * for any recall) and sources stays empty.
-       *   - if some diskcopies are found but all in WAIT*
-       * status, return false (no schedule) and link the SubRequest
-       * to the one we're waiting on + set its status to
-       * SUBREQUEST_WAITSUBREQ. Sources stays empty and the
-       * DB transaction is commited.
-       *   - if some diskcopies are found in STAGED/STAGEOUT
-       * status, return true and list them in sources.
+       * 0: no scheduling, the SubRequest is set to WAIT and it
+            is linked to the parent SubRequest, which we're waiting
+            on (e.g. TapeRecall, Disk2DiskCopy,..)
+       * 1: schedule + list of avail sources, a DiskCopy was
+            found and the SubRequest needs to be rescheduled.
+       * 2: schedule + no sources, a disk2disk copy is necessary
+       * 3: no schedule, no DiskCopy anywhere found, we need a
+            Tape recall.
        * @param subreq the SubRequest to consider
        * @param sources this is a list of DiskCopies that
        * can be used by the subrequest.
        * Note that the DiskCopies returned in sources must be
        * deallocated by the caller.
-       * @return whether to schedule it
+       * @return 0,1,2,3
        * @exception Exception in case of error
        */
-      virtual bool isSubRequestToSchedule
+      virtual int isSubRequestToSchedule
       (castor::stager::SubRequest* subreq,
        std::list<castor::stager::DiskCopyForRecall*>& sources)
         throw (castor::exception::Exception) = 0;
@@ -312,6 +311,20 @@ namespace castor {
       virtual void setFileGCWeight
       (const u_signed64 fileId, const std::string nsHost, const float weight)
         throw (castor::exception::Exception) = 0;
+
+      /**
+       * Creates a candidate for a recall. This includes TapeCopy with
+       * its Segment(s), a DiskCopy and a SubRequest in WAITTAPERECALL. 
+       * @param subreq the subreq of the file to recall
+       * @param euid the user id
+       * @param egid the group id of the user
+       * @exception in case of error
+       */
+     virtual void createRecallCandidate
+     (castor::stager::SubRequest *subreq,
+      const unsigned long euid, const unsigned long egid) 
+        throw (castor::exception::Exception) = 0;
+
 
     }; // end of class IStagerSvc
 

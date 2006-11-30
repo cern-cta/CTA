@@ -114,28 +114,22 @@ int Cstager_IStagerSvc_requestToDo
  * also returns a list of diskcopies available to the
  * subrequest.
  * The scheduling decision is taken this way :
- *   - if no diskCopy is found, return true (scheduling
- * for any recall) and sources stays empty.
- *   - if some diskcopies are found but all in WAIT*
- * status, return false (no schedule) and link the SubRequest
- * to the one we're waiting on + set its status to
- * SUBREQUEST_WAITSUBREQ. Sources stays empty and the
- * DB transaction is commited.
- *   - if some diskcopies are found in STAGED/STAGEOUT
- * status, return true and list them in sources.
- * @param stgSvc the IStagerSvc used
+ * 0: no scheduling, the SubRequest is set to WAIT and it
+      is linked to the parent SubRequest, which we're waiting
+      on (e.g. TapeRecall, Disk2DiskCopy,..)
+ * 1: schedule + list of avail sources, a DiskCopy was
+      found and the SubRequest needs to be rescheduled.
+ * 2: schedule + no sources, a disk2disk copy is necessary
+ * 3: no schedule, no DiskCopy anywhere found, we need a
+      Tape recall.
  * @param subreq the SubRequest to consider
  * @param sources this is a list of DiskCopies that
  * can be used by the subrequest.
  * Note that the DiskCopies returned in sources must be
  * deallocated by the caller.
- * @param sourcesNb the length of the sources list
- * @return whether to schedule it. 1 for YES, 0 for NO,
- * -1 for an error. In the later case serrno is set to
- * the corresponding error code and a detailed error
- * message can be retrieved by calling Cstager_IStagerSvc_errorMsg
+ * @return 0,1,2,3
  * @exception Exception in case of error
- */
+*/
 int Cstager_IStagerSvc_isSubRequestToSchedule
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_SubRequest_t* subreq,
@@ -404,5 +398,19 @@ int Cstager_IStagerSvc_setFileGCWeight
  const u_signed64 fileId,
  const char* nsHost,
  const float weight);
+
+/**
+ * Creates a candidate for a recall. This includes TapeCopy with
+ * its Segment(s), a DiskCopy and a SubRequest in WAITTAPERECALL.
+ * @param subreq the subreq of the file to recall
+ * @param euid the user id
+ * @param egid the group id of the user
+ * @return -1 in case of an error.
+ */
+int Cstager_IStagerSvc_createRecallCandidate
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_SubRequest_t* subreq,
+ const unsigned long euid,
+ const unsigned long egid);
 
 #endif // CASTOR_ISTAGERSVC_H
