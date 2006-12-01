@@ -9,7 +9,7 @@ static PyObject* wrap_cns_getsegattrs(PyObject* self, PyObject* args) {
   struct Cns_fileid file_uniqueid;
   memset(&file_uniqueid,'\0',sizeof(file_uniqueid));
 
-  sprintf(file_uniqueid.server,"%s","castorns");
+  sprintf(file_uniqueid.server,"%s","lxs5012");
  
   if (!PyArg_ParseTuple(args,"i",&file_uniqueid.fileid)) return NULL;
 
@@ -70,7 +70,7 @@ static PyObject* wrap_cns_setsegattrs(PyObject* self, PyObject* args) {
 
   struct Cns_fileid file_uniqueid;
   memset(&file_uniqueid,'\0',sizeof(file_uniqueid));
-  sprintf(file_uniqueid.server,"%s","castorns");
+  sprintf(file_uniqueid.server,"%s","lxs5012");
 
   int nbseg=0;
   struct Cns_segattrs * segattrs=NULL; 
@@ -143,9 +143,9 @@ static PyObject* wrap_cns_setsegattrs(PyObject* self, PyObject* args) {
 	if (ok<0) return NULL;
 
 	// Call C function
-	
-        // IMPORTANT  ret=Cns_replaceseg(file_uniqueid.server,file_uniqueid.fileid,&segattrs[i],&repackSeg);
-      
+
+        ret=Cns_replaceseg(file_uniqueid.server,file_uniqueid.fileid,&segattrs[i],&repackSeg);
+
 	if (ret<0){
 	  return Py_BuildValue("[i,O]", -1,listOfSeg);
 	}
