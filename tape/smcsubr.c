@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.8 $ $Date: 2005/01/20 16:31:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.9 $ $Date: 2006/12/01 11:36:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -84,14 +84,32 @@ int type;
 	int rc;
 	char sense[MAXSENSE];
 	int voltag = 0x10;
+        int pause_mode = 1;
+        int nretries = 0;
  
  	memset (cdb, 0, sizeof(cdb));
  	cdb[0] = 0xB8;		/* read element status */
  	cdb[1] = voltag + type;
  	cdb[5] = 0;
  	cdb[9] = 16;
- 	rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, buf, 16,
- 		sense, 38, 60000, SCSI_IN, &nb_sense_ret, &msgaddr);
+
+        /* IBM library in pause mode  */ 
+        while (pause_mode && nretries <= 900) {
+ 	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, buf, 16,
+ 		  sense, 38, 900000, SCSI_IN, &nb_sense_ret, &msgaddr);
+             if (rc < 0) {
+               if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == 0xFFFFFF85 )) {
+                 sleep(60);
+                 pause_mode = 1;
+               } else  {
+                 pause_mode = 0; 
+               }
+             } else {
+                pause_mode = 0;
+             }
+             nretries++;
+        }
+
  	if (rc < 0) {
  		save_error (rc, nb_sense_ret, sense, msgaddr);
  		return (-1);
@@ -124,6 +142,8 @@ struct smc_element_info element_info[];
 	unsigned char *q;
 	int rc;
 	char sense[MAXSENSE];
+        int pause_mode = 1;
+        int nretries = 0;
 
 	strcpy (func, "get_elem_info");
 	if (type) {
@@ -158,8 +178,24 @@ struct smc_element_info element_info[];
 	cdb[7] = len >> 16;
 	cdb[8] = (len >> 8) & 0xFF;
 	cdb[9] = len & 0xFF;
-	rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, data, len,
-		sense, 38, 60000, SCSI_IN, &nb_sense_ret, &msgaddr);
+
+        /* IBM library in pause mode  */ 
+        while (pause_mode && nretries <= 900) {
+	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, data, len,
+		  sense, 38, 900000, SCSI_IN, &nb_sense_ret, &msgaddr);
+             if (rc < 0) {
+               if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == 0xFFFFFF85 )) {
+                 sleep(60);
+                 pause_mode = 1;
+               } else  {
+                 pause_mode = 0;
+               }
+             } else {
+                pause_mode = 0;
+             }
+             nretries++;
+        }
+
 	if (rc < 0) {
 		save_error (rc, nb_sense_ret, sense, msgaddr);
 		free (data);
@@ -217,6 +253,8 @@ struct smc_element_info element_info[];
 	char plist[40];
 	int rc;
 	char sense[MAXSENSE];
+        int pause_mode = 1;
+        int nretries = 0;
 
 	ENTRY (find_cartridge);
 	memset (cdb, 0, sizeof(cdb));
@@ -228,8 +266,24 @@ struct smc_element_info element_info[];
 	cdb[9] = 40;
 	memset (plist, 0, sizeof(plist));
 	strcpy (plist, template);
-	rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, plist, 40,
-		sense, 38, 60000, SCSI_OUT, &nb_sense_ret, &msgaddr);
+   
+       /* IBM library in pause mode  */ 
+        while (pause_mode && nretries <= 900) {
+	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, plist, 40,
+		  sense, 38, 900000, SCSI_OUT, &nb_sense_ret, &msgaddr);
+            if (rc < 0) {
+              if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == 0xFFFFFF85 )) {
+                 sleep(60);
+                 pause_mode = 1;
+              } else  {
+                 pause_mode = 0; 
+              }
+            } else {
+                pause_mode = 0;
+            }
+            nretries++;
+        }
+
 	if (rc < 0) {
 		if (rc == -4 && nb_sense_ret >= 14 && (sense[2] & 0xF) == 5) {
 			rc = smc_find_cartridge2 (fd, rbtdev, template, type,
@@ -323,13 +377,31 @@ struct robot_info *robot_info;
 	int nb_sense_ret;
 	int rc;
 	char sense[MAXSENSE];
+        int pause_mode = 1;        
+        int nretries = 0;     
 
 	ENTRY (get_geometry);
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0x12;		/* inquiry */
 	cdb[4] = 36;
-	rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 6, buf, 36,
-		sense, 38, 30000, SCSI_IN, &nb_sense_ret, &msgaddr);
+
+        /* IBM library in pause mode  */ 
+        while (pause_mode && nretries <= 900) { 
+	    rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 6, buf, 36,
+		sense, 38, 900000, SCSI_IN, &nb_sense_ret, &msgaddr);
+            if (rc < 0) {
+              if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == 0xFFFFFF85 )) {
+                 sleep(60);
+                 pause_mode = 1;
+              } else  {
+                 pause_mode = 0;
+              }
+            } else {
+                 pause_mode = 0;
+            }
+            nretries++;
+        }
+
 	if (rc < 0) {
 		save_error (rc, nb_sense_ret, sense, msgaddr);
 		RETURN (-1);
@@ -340,8 +412,26 @@ struct robot_info *robot_info;
 	cdb[0] = 0x1A;		/* mode sense */
 	cdb[2] = 0x1D;		/* element address assignment page */
 	cdb[4] = 24;
-	rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 6, buf, 24,
-		sense, 38, 180000, SCSI_IN, &nb_sense_ret, &msgaddr);
+        pause_mode = 1;
+        nretries = 0;
+
+        /* IBM library in pause mode  */ 
+        while (pause_mode && nretries<=900) { 
+	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 6, buf, 24,
+		 sense, 38, 180000, SCSI_IN, &nb_sense_ret, &msgaddr);
+             if (rc < 0) {
+               if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == 0xFFFFFF85 )) {
+                 sleep(60);
+                 pause_mode = 1;
+               } else  {
+                 pause_mode = 0;
+               }
+             } else {
+                 pause_mode = 0;
+             }
+             nretries++;
+        }
+
 	if (rc < 0) {
 		save_error (rc, nb_sense_ret, sense, msgaddr);
 		RETURN (-1);
@@ -446,6 +536,8 @@ int invert;
 	int nb_sense_ret;
 	int rc;
 	char sense[MAXSENSE];
+        int pause_mode = 1;
+        int nretries = 0;         
 
 	ENTRY (move_medium);
 	memset (cdb, 0, sizeof(cdb));
@@ -455,8 +547,23 @@ int invert;
 	cdb[6] = to >> 8;
 	cdb[7] = to & 0xFF;
 	cdb[10] = invert;
-	rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, NULL, 0,
-		sense, 38, 300000, SCSI_NONE, &nb_sense_ret, &msgaddr);
+        
+        while (pause_mode) {
+	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, NULL, 0,
+		sense, 38, 900000, SCSI_NONE, &nb_sense_ret, &msgaddr);
+            if (rc < 0) {
+              if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == 0xFFFFFF85 )) {
+                 sleep(60);
+                 pause_mode = 1;
+              } else  {
+                 pause_mode = 0;
+              }
+            } else {
+                 pause_mode = 0;
+            }
+            nretries++;
+        }
+
 	if (rc < 0) {
 		save_error (rc, nb_sense_ret, sense, msgaddr);
 		RETURN (-1);
@@ -491,14 +598,31 @@ int port;
 	int nb_sense_ret;
 	int rc;
 	char sense[MAXSENSE];
+        int pause_mode = 1;       
+        int nretries = 0;
 
 	ENTRY (ready_inport);
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0xDE;		/* ready inport */
 	cdb[2] = port >> 8;
 	cdb[3] = port & 0xFF;
-	rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 6, NULL, 0,
-		sense, 38, 30000, SCSI_NONE, &nb_sense_ret, &msgaddr);
+
+        while (pause_mode) {  
+	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 6, NULL, 0,
+		sense, 38, 900000, SCSI_NONE, &nb_sense_ret, &msgaddr);
+             if (rc < 0) {
+               if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == 0xFFFFFF85 )) {
+                 sleep(60);
+                 pause_mode = 1;
+               } else  {
+                 pause_mode = 0;
+               }
+             } else {
+                 pause_mode = 0;
+             }
+             nretries++;
+        }
+
 	if (rc < 0) {
 		save_error (rc, nb_sense_ret, sense, msgaddr);
 		RETURN (-1);
