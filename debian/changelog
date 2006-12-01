@@ -1,3 +1,249 @@
+castor (2.1.2-0) unstable; urgency=low
+
+  * CASTOR2/PACKAGING.howto:
+    [r1.26,2006-11-30,itglp] Updated instructions with the new reference machines
+  * CASTOR2/castor/db/newora/OraCnvSvc.cpp:
+    [r1.15,2006-11-14,itglp] Another error to catch to trigger the reconnection
+  * CASTOR2/castor/db/ora/OraJobSvc.cpp:
+  * CASTOR2/castor/db/ora/OraJobSvc.hpp:
+  * CASTOR2/castor/db/ora/OraStagerSvc.cpp:
+  * CASTOR2/castor/db/ora/OraStagerSvc.hpp:
+    [2006-11-30,felixehm] Removed scheduling from the JobService to StagerService
+    [2006-11-30,felixehm]
+    [2006-11-30,felixehm] created new createRecallCandidate method in StagerService which is
+    [2006-11-30,felixehm] responsible for creating the TapeCopy, Segments and DiskCopy for a
+    [2006-11-30,felixehm] recall and set the SubRequest to WAITTAPERECALL.
+    [2006-11-30,felixehm]
+    [2006-11-30,felixehm] removed mem leak in createTapeCopySegmentsForRecall, the NameServer segments
+    [2006-11-30,felixehm] for a file weren't deleted.
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    [r1.349,2006-11-30,riojac3] Bug 21823, putDone failure properly handled if file does not exist on diskserver
+    [r1.348,2006-11-30,riojac3] Bug 21824. catch the exception NO_DATA_FOUND
+    [r1.347,2006-11-30,itglp] Removed handling of tape recall in getUpdateStart, now directly performed by the stager
+    [r1.346,2006-11-27,itglp] Improved GC trigger for disk-only pools (running the nullGCPolicy)
+    [r1.345,2006-11-24,itglp] Added missing COMMIT in the GC job to fix a deadlock
+    [r1.344,2006-11-23,itglp] Stronger check in the GC trigger to verify that the GC job is actually running
+    [r1.343,2006-11-23,sponcec3] Added missing index for TapeCopy
+    [r1.342,2006-11-22,sponcec3] Added a comment on the nbTapeCopiesInFS workaround
+    [r1.341,2006-11-21,gtaur] In internalStageQuery the behaviour in case of files without FS e DS has been fixed
+    [r1.340,2006-11-20,itglp] Fixed garbageCollectFS, was leaking open cursors in case no candidate was found
+    [r1.339,2006-11-20,sponcec3] Fixed filesystem trigger dealing with GC, was always sending NO_DATA_FOUND error
+    [r1.338,2006-11-17,sponcec3] Avoid considering several policies if it's several times the same one
+    [r1.337,2006-11-17,itglp] Better implementation of the GC trigger to detect if the GC job is running or not
+    [r1.337,2006-11-17,itglp] Removed defGarbageCollectFS (already commented out)
+  * CASTOR2/castor/gc/GcDaemon.cpp:
+    [r1.33,2006-11-17,sponcec3] Log in SYSTEM the name of successfully deleted files, instead of debug
+  * CASTOR2/castor/io/ServerSocket.cpp:
+    [r1.15,2006-11-23,itglp] Throws exception if bind fails on the server side
+  * CASTOR2/castor/monitoring/ClusterStatus.cpp:
+  * CASTOR2/castor/monitoring/SharedMemoryAllocator.hpp:
+    [2006-11-10,sponcec3] fixed indentation and wrong comments
+  * CASTOR2/castor/repack/FileListHelper.cpp:
+    [r1.22,2006-11-30,felixehm] Changed the blockid order.
+    [r1.22,2006-11-30,felixehm] blockid[0] is the smallest blockid number
+    [r1.22,2006-11-30,felixehm] blockid[3] is the biggest
+    [r1.22,2006-11-30,felixehm] according to the nameserver entry.
+    [r1.21,2006-11-30,felixehm] Modified conversion of blockid from char to unsigned int 64 to more
+    [r1.21,2006-11-30,felixehm] platform portable method.
+    [r1.20,2006-11-28,felixehm] Fixed bug : initialisation of blockid value before use.
+  * CASTOR2/castor/repack/RepackFileStager.cpp:
+    [r1.27,2006-11-28,felixehm] Modified severity of Message which indicates an error during submit of Request
+    [r1.27,2006-11-28,felixehm] to stager.
+    [r1.27,2006-11-28,felixehm] Added the cuuid from the stager request to this message (instead of nullcuuid)
+    [r1.26,2006-11-20,felixehm] fixed misbehaviour for a restarting repacksubrequest.
+  * CASTOR2/castor/repack/RepackMonitor.cpp:
+  * CASTOR2/castor/repack/RepackServer.cpp:
+    [2006-11-20,felixehm] Added Message to inform the user, that a stager query wasn't successesfull yet.
+  * CASTOR2/castor/replier/RequestReplier.cpp:
+  * CASTOR2/castor/replier/RequestReplier.hpp:
+    [2006-11-29,itglp] Replaced mutexes with the new Mutex class, which implements the fast ones
+  * CASTOR2/castor/server/BaseDaemon.cpp:
+  * CASTOR2/castor/server/BaseDaemon.hpp:
+  * CASTOR2/castor/server/BaseServer.cpp:
+  * CASTOR2/castor/server/BaseThreadPool.cpp:
+    [2006-11-23,itglp] Finalized implementation of signal handling as from stager.c
+  * CASTOR2/castor/server/ListenerThreadPool.cpp:
+  * CASTOR2/castor/server/ListenerThreadPool.hpp:
+    [2006-11-27,itglp] empty log message ***
+    [2006-11-27,itglp] Cosmetic changes, threadAssign() method made protected from private
+    [2006-11-24,itglp] Renamed internal method
+    [2006-11-23,itglp] Refactored to help derived classes to be more modular
+  * CASTOR2/castor/server/NotificationThread.cpp:
+    [r 1.7,2006-11-23,itglp] Finalized implementation of signal handling as from stager.c
+  * CASTOR2/castor/sharedMemory/Block.hpp:
+    [r 1.9,2006-11-10,sponcec3] fixed missing virtual keyword
+  * CASTOR2/castor/sharedMemory/SingletonBlock.hpp:
+    [r 1.3,2006-11-10,sponcec3] Fixed object creation (forgot to call constructor...)
+  * CASTOR2/castor/stager/IJobSvc.h:
+  * CASTOR2/castor/stager/IJobSvc.hpp:
+    [2006-11-30,riojac3] Comments modified for putFailed in order to be consistent with the modifications done in oracleTrailer
+  * CASTOR2/castor/stager/IStagerSvc.h:
+  * CASTOR2/castor/stager/IStagerSvc.hpp:
+  * CASTOR2/castor/stager/IStagerSvcCInt.cpp:
+    [2006-11-30,felixehm] modified return value for isSubRequestToSchedule bool -> int.
+    [2006-11-30,felixehm]
+    [2006-11-30,felixehm] behavior of that method changed, returns now 0,1,3 in the C-part.
+    [2006-11-30,felixehm] see description of c++ method)
+    [2006-11-30,felixehm]
+    [2006-11-30,felixehm] added new method createRecallCandidate, which creates all objects which
+    [2006-11-30,felixehm] are neccessary for a recall.
+  * CASTOR2/castor/stager/RemoteJobSvc.hpp:
+    [r 1.5,2006-11-30,riojac3] Comments modified for putFailed in order to be consistent with the modifications done in oracleTrailer
+  * CASTOR2/codeGeneration/RH.xmi:
+    [r1.136,2006-11-30,felixehm] updated documentation of handling recalls
+  * CASTOR2/debian/castor-dlf-web.install.perm:
+    [r 1.3,2006-11-29,waldron] added login.php
+  * CASTOR2/debian/castor.conf:
+    [r1.28,2006-11-16,riojac3] XROOT variable added
+    [r1.27,2006-11-16,itglp] Fixed DIRECTIO tag and comment
+    [r1.26,2006-11-10,sponcec3] Avoid to put O_DIRECT as a default
+    [r1.25,2006-11-09,sponcec3] Added lines for O_DIRECT and XFS preallocation to default config
+  * CASTOR2/debian/changelog:
+    [r1.127,2006-11-08,felixehm] Forgot to update the version number for v2.1.1-9
+  * CASTOR2/debian/dlfserver.sysconfig:
+    [r 1.8,2006-11-13,waldron] removed -n option
+  * CASTOR2/dlf/Imakefile:
+    [r1.15,2006-11-29,waldron] added -pedantic
+    [r1.14,2006-11-16,riojac3] Include Oracle precompiled headers
+  * CASTOR2/dlf/dlf_lib.c:
+    [r 1.9,2006-11-29,waldron] support for security data types, fix for undefined server variable of Cns_fileid struct causing strange nshostnames to be inserted into dlf_nshost_map
+    [r 1.8,2006-11-15,waldron] minor update, flag closure of socket in dlf_shutdown()
+    [r 1.7,2006-11-09,waldron] fixed the length of Cuuid strings
+  * CASTOR2/dlf/doc/index.html:
+    [r1.11,2006-11-29,waldron] updated import procedure
+    [r1.10,2006-11-13,waldron] removed -n option
+  * CASTOR2/dlf/doc/man/dlf_write.man:
+    [r 1.4,2006-11-29,waldron] added security parameter types
+  * CASTOR2/dlf/doc/man/dlfserver.man:
+    [r 1.4,2006-11-13,waldron] removed -n option
+  * CASTOR2/dlf/hash.c:
+    [r 1.7,2006-11-29,waldron] silenced pedantic warning messages
+    [r 1.6,2006-11-14,waldron] release nelt mutex on memory allocation error
+  * CASTOR2/dlf/hash.h:
+    [r 1.6,2006-11-29,waldron] silenced pedantic warning messages
+  * CASTOR2/dlf/mysql.c:
+    [r1.12,2006-11-29,waldron] support for security data types and silencing of pedantic warning messages
+    [r1.11,2006-11-22,waldron] merged table dlf_tape_ids into dlf_messages
+    [r1.10,2006-11-14,waldron] removed depreciated db_stats function
+  * CASTOR2/dlf/oracle.pc:
+    [r1.19,2006-11-29,waldron] support for security data types and silencing of pedantic warning messages
+    [r1.18,2006-11-21,waldron] added ORA-01003 to list of errors to reset connection on
+    [r1.17,2006-11-21,waldron] merged table dlf_tape_ids into dlf_messages
+    [r1.16,2006-11-10,waldron] fix dlf_monitoring
+  * CASTOR2/dlf/process.c:
+    [r 1.6,2006-11-29,waldron] support for security data types, fix for undefined server variable of Cns_fileid struct causing strange nshostnames to be inserted into dlf_nshost_map
+    [r 1.5,2006-11-09,waldron] fixed the length of Cuuid strings
+  * CASTOR2/dlf/queue.c:
+  * CASTOR2/dlf/queue.h:
+    [2006-11-29,waldron] silenced pedantic warning messages
+  * CASTOR2/dlf/scripts/mysql/dlf_mysql_create.sql:
+    [r 1.7,2006-11-29,waldron] removed dlf_reqid_map table and support for security related information
+    [r 1.6,2006-11-21,waldron] merging of dlf_tape_ids with dlf_messages table
+  * CASTOR2/dlf/scripts/mysql/dlf_mysql_drop.sql:
+    [r 1.4,2006-11-29,waldron] remove table dlf_reqid_map
+    [r 1.3,2006-11-21,waldron] merging of dlf_tape_ids with dlf_messages table
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_create.sql:
+    [r 1.9,2006-11-21,waldron] merging of dlf_tape_ids with dlf_messages table
+    [r1.10,2006-11-29,waldron] removed dlf_reqid_map table, support for security related information and fixed the plsql archiving procedure which was making local indexes unusable when historically compressed
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_create.sqlplus:
+    [r1.12,2006-11-29,waldron] removed dlf_reqid_map table, support for security related information and fixed the plsql archiving procedure which was making local indexes unusable when historically compressed
+    [r1.11,2006-11-21,waldron] merging of dlf_tape_ids with dlf_messages table
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_drop.sql:
+    [r 1.8,2006-11-29,waldron] remove table dlf_reqid_map
+    [r 1.7,2006-11-21,waldron] merging of dlf_tape_ids with dlf_messages table
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_drop.sqlplus:
+    [r 1.5,2006-11-29,waldron] remove table dlf_reqid_map
+    [r 1.4,2006-11-21,waldron] merging of dlf_tape_ids with dlf_messages table
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_grant.sql:
+    [r 1.5,2006-11-29,waldron] removed grants to dlf_reqid_map
+    [r 1.4,2006-11-21,waldron] merging of dlf_tape_ids with dlf_messages table
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_create.sql:
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_create.sqlplus:
+    [2006-11-29,waldron] removed dlf_reqid_map table, support for security related information and fixed the plsql archiving procedure which was making local indexes unusable when historically compressed
+    [2006-11-21,waldron] merging of dlf_tape_ids with dlf_messages table
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_drop.sql:
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_drop.sqlplus:
+    [2006-11-29,waldron] remove table dlf_reqid_map
+    [2006-11-21,waldron] merging of dlf_tape_ids with dlf_messages table
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_grant.sql:
+    [r 1.5,2006-11-29,waldron] removed grants to dlf_reqid_map
+    [r 1.4,2006-11-21,waldron] merging of dlf_tape_ids with dlf_messages table
+  * CASTOR2/dlf/server.c:
+    [r1.13,2006-11-29,waldron] silenced pedantic warning messages
+  * CASTOR2/dlf/web/Imakefile:
+    [r 1.3,2006-11-29,waldron] added login.php
+  * CASTOR2/dlf/web/config.php:
+  * CASTOR2/dlf/web/db/mysql.php:
+    [2006-11-29,waldron] improved query optimisation, removal of timestamp checks, style support, backwards compatibility with versions < 2.1.1-10 and added pagination
+  * CASTOR2/dlf/web/db/oracle.php:
+    [r 1.6,2006-11-29,waldron] improved query optimisation, removal of timestamp checks, style support, backwards compatibility with versions < 2.1.1-10 and added pagination
+    [r 1.5,2006-11-16,waldron] minor correction to OCI option
+  * CASTOR2/dlf/web/dbview.php:
+  * CASTOR2/dlf/web/index.php:
+    [2006-11-29,waldron] improved query optimisation, removal of timestamp checks, style support, backwards compatibility with versions < 2.1.1-10 and added pagination
+  * CASTOR2/dlf/web/query.php:
+    [r 1.9,2006-11-21,waldron] removed future date check on date fields
+    [r 1.8,2006-11-16,waldron] make the futuristic date check a little less sensitive
+    [r1.12,2006-11-30,waldron] Auto fill the 'To:' timetamp field
+    [r1.11,2006-11-29,waldron] fixed lookup by message text and/or tapevid (INNER vs LEFT join)
+    [r1.10,2006-11-29,waldron] improved query optimisation, removal of timestamp checks, style support, backwards compatibility with versions < 2.1.1-10 and added pagination
+  * CASTOR2/dlf/web/results.php:
+    [r 1.9,2006-11-29,waldron] fixed time order sequence of results
+    [r 1.8,2006-11-29,waldron] minor update
+    [r 1.7,2006-11-29,waldron] improved query optimisation, removal of timestamp checks, style support, backwards compatibility with versions < 2.1.1-10 and added pagination
+    [r1.11,2006-11-30,waldron] add 2 minutes to the SYSDATE for parameter lookup. The additional 2 minutes is required as the elapsed time of previous queries can mean that parameters are not diaplyed for messages on the boundary of the timestamp condition
+    [r1.10,2006-11-29,waldron] fixed lookup by message text and/or tapevid (INNER vs LEFT join)
+  * CASTOR2/dlf/web/site.css:
+  * CASTOR2/dlf/web/utils.php:
+    [2006-11-29,waldron] improved query optimisation, removal of timestamp checks, style support, backwards compatibility with versions < 2.1.1-10 and added pagination
+  * CASTOR2/h/Castor_limits.h:
+  * CASTOR2/h/Ctape_constants.h:
+    [2006-11-09,itglp] Moved CA_MAXDENNUM to Ctape_constants.h
+  * CASTOR2/h/Csec_api.h:
+  * CASTOR2/h/Csec_constants.h:
+    [2006-11-24,gcancio] synchronized with LCG-DM
+  * CASTOR2/h/Cuuid.h:
+    [r 1.9,2006-11-29,waldron] silence -pedantic warning message
+  * CASTOR2/h/dlf_api.h:
+    [r1.18,2006-11-29,waldron] added security parameter types
+  * CASTOR2/hsmtools/enterSvcClass.c:
+    [r 1.5,2006-11-27,sponcec3] Set properly defaultGCPolicy if not given
+  * CASTOR2/hsmtools/modifySvcClass.c:
+    [r 1.9,2006-11-14,sponcec3] Fixed modifySvcClass for default file sizes > 2G
+  * CASTOR2/job/stagerJob.shell:
+    [r1.42,2006-11-17,jveldik] minor cleanup
+  * CASTOR2/maketar.sh:
+    [r1.51,2006-11-29,waldron] flag dlf configuration file as noreplace in rpm specfile
+  * CASTOR2/rfio/rfio_call64.c:
+    [r1.13,2006-11-10,riojac3] change O_DIRECT loglevel from DEBUG to INFO
+  * CASTOR2/security/Csec_api.c:
+  * CASTOR2/security/Csec_api.man:
+  * CASTOR2/security/Csec_protocol_policy.c:
+    [2006-11-23,gcancio] synchronized with DPM sources
+  * CASTOR2/stager/stager_db_service.c:
+    [r1.152,2006-11-30,felixehm] new behaviour for recall of files. An new Stager Service function is called to
+    [r1.152,2006-11-30,felixehm] do the neccessary DB operations. Therefore the recall is not scheduled and
+    [r1.152,2006-11-30,felixehm] handled anymore by the Job Service.
+  * CASTOR2/test/CASTORTESTCONFIG:
+  * CASTOR2/test/CastorTestSuite.py:
+  * CASTOR2/test/rfio/RfioTest.py:
+  * CASTOR2/test/stager/ClientTest.py:
+    [2006-11-16,gtaur] moved all the config information in a unique config file and added as parameters the local and remote directory name
+    [2006-11-10,gtaur] new rfio cmd added and fixes concerning the file naming convension.
+  * CASTOR2/test/dlf/dlftest.c:
+    [r1.13,2006-11-21,waldron] corrected number of params in dlf_write
+  * CASTOR2/test/security/Csec_client.c:
+    [r 1.6,2006-11-23,gcancio] sending now VOMS data via Csec_client_setVOMS_data()
+  * CASTOR2/test/security/Csec_server.c:
+    [r 1.4,2006-11-23,gcancio] minimal fixes
+  * CASTOR2/tools/installOnAFS.py:
+    [r 1.5,2006-11-17,riojac3] Remove ia64 architecture
+    [r 1.4,2006-11-17,riojac3] Modified the version of castor-compact  to 2.0.2-11
+    [r 1.3,2006-11-17,riojac3] Modification SCL4 platform name for consistent reasons
+
+ -- Felix Ehm <felix.ehm@cern.ch>  Wed, 08 Nov 2006 18:20:00 +0200
+
+
 castor (2.1.1-9) unstable; urgency=low
 
   * CASTOR2/castor/Imakefile:
