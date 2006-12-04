@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/12/04 16:07:49 $ $Author: felixehm $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/12/04 16:51:01 $ $Author: felixehm $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -170,7 +170,8 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
         return tape;
       } catch (castor::exception::Exception e) {
         delete tape;
-        if (1 == e.getErrorCode()) {
+        // XXX  Change createREp in CodeGenerator to forward the oracle errorcode 
+        if ( e.getMessage().str().find("ORA-00001", 0) != std::string::npos ) {
           // if violation of unique constraint, ie means that
           // some other thread was quicker than us on the insertion
           // So let's select what was inserted
