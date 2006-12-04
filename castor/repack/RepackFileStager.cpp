@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2006/12/04 12:51:40 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2006/12/04 15:38:14 $ $Author: felixehm $
  *
  *
  *
@@ -122,6 +122,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   std::string reqId = "";
   _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
   castor::stager::StageRepackRequest req;
+  std::vector<castor::stager::SubRequest*>::iterator stager_subreq;
   
   /** check if the passed RepackSubRequest has segment members */
   if ( !sreq->segment().size() ){
@@ -172,9 +173,9 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   try {
     failed = sendStagerRepackRequest(sreq, &req, &reqId, &opts);
   }catch (castor::exception::Exception ex){
-    
-    for (int i=0; i<req.subRequests().size(); i++)  
-      delete req.subRequests().at(i);
+    stager_subreq = req.subRequests().begin();
+    while ( stager_subreq != req.subRequests().end() )  
+      delete (*stager_subreq);
     req.subRequests().clear();
     throw ex;
   }
@@ -183,17 +184,25 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   sreq->setFilesFailed(failed);
 
 
-  /// delete the allocated Stager SubRequests
-  for (int i=0; i<req.subRequests().size(); i++) delete req.subRequests().at(i);
-
   /// Setting the SubRequest's Cuuid to the stager one for monitoring
   stage_trace(3," Stagerrequest (now new RepackSubRequest CUUID ): %s",(char*)reqId.c_str());
   castor::dlf::Param param[] = {castor::dlf::Param("New reqID", reqId)};
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 33, 1, param);
   cuuid = stringtoCuuid(reqId);
   sreq->setCuuid(reqId);
-  sreq->setStatus(SUBREQUEST_STAGING);
- 
+
+  /// in case all files failed, we set the status to failed.
+  if ( failed == req.subRequests().size() ){
+    sreq->setStatus(SUBREQUEST_FAILED);
+    sreq->setFilesStaging(0);
+  }
+  else sreq->setStatus(SUBREQUEST_STAGING);
+
+  /// delete the allocated Stager SubRequests
+  stager_subreq = req.subRequests().begin();
+  while ( stager_subreq != req.subRequests().end() )
+    delete (*stager_subreq);
+
 }
 
 
@@ -274,7 +283,7 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq){
       sreq->setFilesMigrating(0);
       stage_files(faked);
       sreq->setCuuid(faked->cuuid());
-      sreq->setStatus(SUBREQUEST_STAGING);
+      sreq->setStatus(faked->status());
       sreq->setFilesFailed(faked->filesFailed());
       sreq->setFilesStaging(faked->filesStaging());
       /** do not remove or update the segment information */ 
