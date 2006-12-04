@@ -183,7 +183,7 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
     {castor::dlf::Param("Error Message", ex.getMessage().str() ),
     castor::dlf::Param("Responses", nbresps )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 41, 2, params);
-    stage_trace(1,"No responses found for request %s. Assuming it is over. Set new status to CLEANUP. ", ex.getMessage().str().c_str() );
+    stage_trace(1,"No responses found for request (%s). Assuming it is over. Set new status to CLEANUP. ", ex.getMessage().str().c_str() );
     sreq->setFilesMigrating(0);
     sreq->setFilesStaging(0);
     sreq->setStatus(SUBREQUEST_READYFORCLEANUP);
