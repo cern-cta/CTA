@@ -338,14 +338,14 @@ void castor::db::ora::OraRepackRequestCnv::createRep(castor::IAddress* address,
     // Now Save the current object
     m_insertStatement->setString(1, obj->machine());
     m_insertStatement->setString(2, obj->userName());
-    m_insertStatement->setInt(3, time(0));
+    m_insertStatement->setDouble(3, time(0));
     m_insertStatement->setString(4, obj->serviceclass());
     m_insertStatement->setDouble(5, obj->pid());
     m_insertStatement->setInt(6, obj->command());
     m_insertStatement->setString(7, obj->pool());
     m_insertStatement->setString(8, obj->stager());
-    m_insertStatement->setInt(9, obj->groupid());
-    m_insertStatement->setInt(10, obj->userid());
+    m_insertStatement->setDouble(9, obj->groupid());
+    m_insertStatement->setDouble(10, obj->userid());
     m_insertStatement->executeUpdate();
     obj->setId((u_signed64)m_insertStatement->getDouble(11));
     m_storeTypeStatement->setDouble(1, obj->id());
@@ -401,8 +401,8 @@ void castor::db::ora::OraRepackRequestCnv::createRep(castor::IAddress* address,
       m_updateStatement->setInt(5, obj->command());
       m_updateStatement->setString(6, obj->pool());
       m_updateStatement->setString(7, obj->stager());
-      m_updateStatement->setInt(8, obj->groupid());
-      m_updateStatement->setInt(9, obj->userid());
+      m_updateStatement->setDouble(8, obj->groupid());
+      m_updateStatement->setDouble(9, obj->userid());
       m_updateStatement->setDouble(10, obj->id());
       m_updateStatement->executeUpdate();
       if (autocommit) {
@@ -484,14 +484,14 @@ void castor::db::ora::OraRepackRequestCnv::createRep(castor::IAddress* address,
           // Now retrieve and set members
           object->setMachine(rset->getString(1));
           object->setUserName(rset->getString(2));
-          object->setCreationTime(rset->getInt(3));
+          object->setCreationTime((u_signed64)rset->getDouble(3));
           object->setServiceclass(rset->getString(4));
           object->setPid((u_signed64)rset->getDouble(5));
           object->setCommand(rset->getInt(6));
           object->setPool(rset->getString(7));
           object->setStager(rset->getString(8));
-          object->setGroupid(rset->getInt(9));
-          object->setUserid(rset->getInt(10));
+          object->setGroupid((u_signed64)rset->getDouble(9));
+          object->setUserid((u_signed64)rset->getDouble(10));
           object->setId((u_signed64)rset->getDouble(11));
           m_selectStatement->closeResultSet(rset);
           return object;
@@ -530,14 +530,14 @@ void castor::db::ora::OraRepackRequestCnv::createRep(castor::IAddress* address,
               dynamic_cast<castor::repack::RepackRequest*>(obj);
             object->setMachine(rset->getString(1));
             object->setUserName(rset->getString(2));
-            object->setCreationTime(rset->getInt(3));
+            object->setCreationTime((u_signed64)rset->getDouble(3));
             object->setServiceclass(rset->getString(4));
             object->setPid((u_signed64)rset->getDouble(5));
             object->setCommand(rset->getInt(6));
             object->setPool(rset->getString(7));
             object->setStager(rset->getString(8));
-            object->setGroupid(rset->getInt(9));
-            object->setUserid(rset->getInt(10));
+            object->setGroupid((u_signed64)rset->getDouble(9));
+            object->setUserid((u_signed64)rset->getDouble(10));
             object->setId((u_signed64)rset->getDouble(11));
             m_selectStatement->closeResultSet(rset);
           } catch (oracle::occi::SQLException e) {

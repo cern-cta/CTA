@@ -141,7 +141,7 @@ namespace castor {
        * The creation time of the request
        * @return the value of m_creationTime
        */
-      unsigned long creationTime() const {
+      u_signed64 creationTime() const {
         return m_creationTime;
       }
 
@@ -150,7 +150,7 @@ namespace castor {
        * The creation time of the request
        * @param new_var the new value of m_creationTime
        */
-      void setCreationTime(unsigned long new_var) {
+      void setCreationTime(u_signed64 new_var) {
         m_creationTime = new_var;
       }
 
@@ -244,7 +244,7 @@ namespace castor {
        * Get the value of m_groupid
        * @return the value of m_groupid
        */
-      unsigned long groupid() const {
+      u_signed64 groupid() const {
         return m_groupid;
       }
 
@@ -252,7 +252,7 @@ namespace castor {
        * Set the value of m_groupid
        * @param new_var the new value of m_groupid
        */
-      void setGroupid(unsigned long new_var) {
+      void setGroupid(u_signed64 new_var) {
         m_groupid = new_var;
       }
 
@@ -260,7 +260,7 @@ namespace castor {
        * Get the value of m_userid
        * @return the value of m_userid
        */
-      unsigned long userid() const {
+      u_signed64 userid() const {
         return m_userid;
       }
 
@@ -268,7 +268,7 @@ namespace castor {
        * Set the value of m_userid
        * @param new_var the new value of m_userid
        */
-      void setUserid(unsigned long new_var) {
+      void setUserid(u_signed64 new_var) {
         m_userid = new_var;
       }
 
@@ -328,8 +328,8 @@ namespace castor {
       std::string m_userName;
 
       /// The creation time of the request
-      unsigned long m_creationTime;
-
+      u_signed64 m_creationTime;
+      
       /// The service class to where the file have to be written. It is not possible to specify directly the target tapes or tapepools. By default, the files are written to the tapepool belonging to the repack service class specified in the castor config file.
       std::string m_serviceclass;
 
@@ -341,9 +341,9 @@ namespace castor {
 
       std::string m_stager;
 
-      unsigned long m_groupid;
+      u_signed64 m_groupid;
 
-      unsigned long m_userid;
+      u_signed64 m_userid;
 
       /// The id of this object
       u_signed64 m_id;

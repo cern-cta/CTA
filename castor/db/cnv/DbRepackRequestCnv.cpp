@@ -337,14 +337,14 @@ void castor::db::cnv::DbRepackRequestCnv::createRep(castor::IAddress* address,
     // Now Save the current object
     m_insertStatement->setString(1, obj->machine());
     m_insertStatement->setString(2, obj->userName());
-    m_insertStatement->setInt(3, time(0));
+    m_insertStatement->setInt64(3, time(0));
     m_insertStatement->setString(4, obj->serviceclass());
     m_insertStatement->setInt64(5, obj->pid());
     m_insertStatement->setInt(6, obj->command());
     m_insertStatement->setString(7, obj->pool());
     m_insertStatement->setString(8, obj->stager());
-    m_insertStatement->setInt(9, obj->groupid());
-    m_insertStatement->setInt(10, obj->userid());
+    m_insertStatement->setInt64(9, obj->groupid());
+    m_insertStatement->setInt64(10, obj->userid());
     m_insertStatement->execute();
     obj->setId(m_insertStatement->getInt64(11));
     m_storeTypeStatement->setInt64(1, obj->id());
@@ -402,8 +402,8 @@ void castor::db::cnv::DbRepackRequestCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(5, obj->command());
     m_updateStatement->setString(6, obj->pool());
     m_updateStatement->setString(7, obj->stager());
-    m_updateStatement->setInt(8, obj->groupid());
-    m_updateStatement->setInt(9, obj->userid());
+    m_updateStatement->setInt64(8, obj->groupid());
+    m_updateStatement->setInt64(9, obj->userid());
     m_updateStatement->setInt64(10, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
@@ -489,14 +489,14 @@ castor::IObject* castor::db::cnv::DbRepackRequestCnv::createObj(castor::IAddress
     // Now retrieve and set members
     object->setMachine(rset->getString(1));
     object->setUserName(rset->getString(2));
-    object->setCreationTime(rset->getInt(3));
+    object->setCreationTime(rset->getInt64(3));
     object->setServiceclass(rset->getString(4));
     object->setPid(rset->getInt64(5));
     object->setCommand(rset->getInt(6));
     object->setPool(rset->getString(7));
     object->setStager(rset->getString(8));
-    object->setGroupid(rset->getInt(9));
-    object->setUserid(rset->getInt(10));
+    object->setGroupid(rset->getInt64(9));
+    object->setUserid(rset->getInt64(10));
     object->setId(rset->getInt64(11));
     delete rset;
     return object;
@@ -537,14 +537,14 @@ void castor::db::cnv::DbRepackRequestCnv::updateObj(castor::IObject* obj)
       dynamic_cast<castor::repack::RepackRequest*>(obj);
     object->setMachine(rset->getString(1));
     object->setUserName(rset->getString(2));
-    object->setCreationTime(rset->getInt(3));
+    object->setCreationTime(rset->getInt64(3));
     object->setServiceclass(rset->getString(4));
     object->setPid(rset->getInt64(5));
     object->setCommand(rset->getInt(6));
     object->setPool(rset->getString(7));
     object->setStager(rset->getString(8));
-    object->setGroupid(rset->getInt(9));
-    object->setUserid(rset->getInt(10));
+    object->setGroupid(rset->getInt64(9));
+    object->setUserid(rset->getInt64(10));
     object->setId(rset->getInt64(11));
     delete rset;
   } catch (castor::exception::SQLError e) {

@@ -119,7 +119,7 @@ castor::IObject* castor::io::StreamRepackRequestCnv::createObj(castor::IAddress*
   std::string userName;
   ad->stream() >> userName;
   object->setUserName(userName);
-  unsigned long creationTime;
+  u_signed64 creationTime;
   ad->stream() >> creationTime;
   object->setCreationTime(creationTime);
   std::string serviceclass;
@@ -137,10 +137,10 @@ castor::IObject* castor::io::StreamRepackRequestCnv::createObj(castor::IAddress*
   std::string stager;
   ad->stream() >> stager;
   object->setStager(stager);
-  unsigned long groupid;
+  u_signed64 groupid;
   ad->stream() >> groupid;
   object->setGroupid(groupid);
-  unsigned long userid;
+  u_signed64 userid;
   ad->stream() >> userid;
   object->setUserid(userid);
   u_signed64 id;
