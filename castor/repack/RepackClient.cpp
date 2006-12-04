@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2006/11/08 14:25:39 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2006/12/04 10:23:29 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -311,8 +311,8 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
   
   rreq->setPid(getpid());
   rreq->setUserName(pw->pw_name);
-  rreq->setUserid((unsigned long)pw->pw_uid);
-  rreq->setGroupid((unsigned long)pw->pw_gid);
+  rreq->setUserid((u_signed64)pw->pw_uid);
+  rreq->setGroupid((u_signed64)pw->pw_gid);
   rreq->setCreationTime(time(NULL));
   rreq->setMachine(cName);
 
@@ -370,7 +370,8 @@ void RepackClient::run(int argc, char** argv)
 //------------------------------------------------------------------------------
 void RepackClient::handleResponse(RepackAck* ack) {
 	
-  time_t seconds;
+  time_t creation_time = 0;
+  time_t submit_time = 0;
 
   if ( ack->errorCode() ){
     std::cerr << "Repackserver respond :" << std::endl
@@ -385,11 +386,14 @@ void RepackClient::handleResponse(RepackAck* ack) {
 
     switch ( rreq->command() ){
       case GET_STATUS :
-       seconds = (long)rreq->creationTime(); 
+       creation_time = (long)rreq->creationTime();
+       submit_time = (long)rreq->subRequest().at(0)->submitTime();
        struct passwd *pw;
        pw = Cgetpwuid((uid_t)rreq->userid());
-       std::cout 
-        << "Details for Request created on " << ctime (&seconds) << std::endl <<
+       std::cout << 
+        "Details for Request created on " << ctime (&creation_time) << std::endl <<
+        std::endl <<
+        "submitted : " << ctime (&submit_time) << std::endl << 
         std::setw(30) << std::left << "machine" << 
         std::setw(10) << std::left << "user" <<
         std::setw(20) << std::left << "service class" << 
