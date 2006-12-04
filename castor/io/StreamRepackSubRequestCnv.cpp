@@ -99,6 +99,7 @@ void castor::io::StreamRepackSubRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->filesStaging();
   ad->stream() << obj->files();
   ad->stream() << obj->filesFailed();
+  ad->stream() << obj->submitTime();
   ad->stream() << obj->id();
 }
 
@@ -136,6 +137,9 @@ castor::IObject* castor::io::StreamRepackSubRequestCnv::createObj(castor::IAddre
   unsigned int filesFailed;
   ad->stream() >> filesFailed;
   object->setFilesFailed(filesFailed);
+  u_signed64 submitTime;
+  ad->stream() >> submitTime;
+  object->setSubmitTime(submitTime);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

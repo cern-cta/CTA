@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2006/12/04 10:23:29 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2006/12/04 12:51:40 $ $Author: felixehm $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -391,9 +391,12 @@ void RepackClient::handleResponse(RepackAck* ack) {
        struct passwd *pw;
        pw = Cgetpwuid((uid_t)rreq->userid());
        std::cout << 
-        "Details for Request created on " << ctime (&creation_time) << std::endl <<
-        std::endl <<
-        "submitted : " << ctime (&submit_time) << std::endl << 
+        "Details for Request created on " << ctime (&creation_time) <<  std::endl ;
+        if ( submit_time )
+	  std::cout << "=> submitted : " << ctime (&submit_time) << " <=";
+        else
+          std::cout << "=> not yet submitted <=";
+        std::cout << std::endl << std::endl <<
         std::setw(30) << std::left << "machine" << 
         std::setw(10) << std::left << "user" <<
         std::setw(20) << std::left << "service class" << 

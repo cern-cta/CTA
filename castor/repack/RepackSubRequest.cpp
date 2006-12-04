@@ -50,6 +50,7 @@ castor::repack::RepackSubRequest::RepackSubRequest() throw() :
   m_filesStaging(0),
   m_files(0),
   m_filesFailed(0),
+  m_submitTime(0),
   m_id(0),
   m_requestID(0) {
 };
@@ -88,6 +89,7 @@ void castor::repack::RepackSubRequest::print(std::ostream& stream,
   stream << indent << "filesStaging : " << m_filesStaging << std::endl;
   stream << indent << "files : " << m_files << std::endl;
   stream << indent << "filesFailed : " << m_filesFailed << std::endl;
+  stream << indent << "submitTime : " << m_submitTime << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

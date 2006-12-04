@@ -238,6 +238,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_submitTime
+       * The submit time to the stager of the request
+       * @return the value of m_submitTime
+       */
+      u_signed64 submitTime() const {
+        return m_submitTime;
+      }
+
+      /**
+       * Set the value of m_submitTime
+       * The submit time to the stager of the request
+       * @param new_var the new value of m_submitTime
+       */
+      void setSubmitTime(u_signed64 new_var) {
+        m_submitTime = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -321,6 +339,9 @@ namespace castor {
       unsigned int m_files;
 
       unsigned int m_filesFailed;
+
+      /// The submit time to the stager of the request
+      u_signed64 m_submitTime;
 
       /// The id of this object
       u_signed64 m_id;

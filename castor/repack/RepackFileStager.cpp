@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2006/11/28 10:07:56 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2006/12/04 12:51:40 $ $Author: felixehm $
  *
  *
  *
@@ -345,6 +345,7 @@ int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
   /** 2. we need to store the recieved cuuid from the request replier and save it
       in case the pollAnswersFromStager fails */
   rsreq->setCuuid(*reqId);
+  rsreq->setSubmitTime(time(NULL));
   rsreq->setStatus(SUBREQUEST_STAGING);
   rsreq->setFilesStaging(req->subRequests().size());
   m_dbhelper->updateSubRequest(rsreq,false,cuuid); 
@@ -354,19 +355,19 @@ int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
       an exception */
   client.pollAnswersFromStager(req, &rh);
 
-	/** like the normale api call, we have to check for errors in the answer*/
-	for (int i=0; i<respvec.size(); i++) {
+  /** like the normale api call, we have to check for errors in the answer*/
+  for (int i=0; i<respvec.size(); i++) {
 
-      // Casting the response into a FileResponse !
-      castor::rh::FileResponse* fr = dynamic_cast<castor::rh::FileResponse*>(respvec[i]);
-      if (0 == fr) {
-        castor::exception::Internal e;
-        e.getMessage() << "Error in dynamic cast, response was NOT a file response.\n"
-                       << "Object type is "
-                       << castor::ObjectsIdStrings[respvec[i]->type()];
-        throw e;
-      }
-		if ( fr->errorCode() || fr->status() != 6 ){
+    // Casting the response into a FileResponse !
+    castor::rh::FileResponse* fr = dynamic_cast<castor::rh::FileResponse*>(respvec[i]);
+    if (0 == fr) {
+      castor::exception::Internal e;
+      e.getMessage() << "Error in dynamic cast, response was NOT a file response.\n"
+                     << "Object type is "
+                     << castor::ObjectsIdStrings[respvec[i]->type()];
+      throw e;
+    }
+    if ( fr->errorCode() || fr->status() != 6 ){
       struct Cns_fileid fileid;
       fileid.fileid = fr->fileId();
       castor::dlf::Param param[] = 
@@ -374,20 +375,17 @@ int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
        castor::dlf::Param("Message", fr->errorMessage()) 
       };
       castor::dlf::dlf_writep(stringtoCuuid(rsreq->cuuid()), DLF_LVL_ERROR, 38, 1, param, &fileid);
-			std::cerr 
-					<< fr->castorFileName() << " " << fr->fileId() << " "
-					<<"(size "<< fr->fileSize() << ", "
-					<<"status "<< fr->status() << ") "
-					<<":"<< fr->errorMessage() << "(" << fr->errorCode() << ")"
-					<< std::endl;
+      std::cerr << fr->castorFileName() << " " << fr->fileId() << " "
+                <<"(size "<< fr->fileSize() << ", "
+                <<"status "<< fr->status() << ") "
+                <<":"<< fr->errorMessage() << "(" << fr->errorCode() << ")"
+                << std::endl;
       failed++;
-		}
-		
-		delete fr;
-	}
-	respvec.clear();
+    }
+    delete fr;
+  }
+  respvec.clear();
   return failed;
-  
 }
 
 

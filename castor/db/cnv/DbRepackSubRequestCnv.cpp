@@ -56,7 +56,7 @@ static castor::CnvFactory<castor::db::cnv::DbRepackSubRequestCnv>* s_factoryDbRe
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_insertStatementString =
-"INSERT INTO RepackSubRequest (vid, xsize, status, cuuid, filesMigrating, filesStaging, files, filesFailed, id, requestID) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,ids_seq.nextval,:9) RETURNING id INTO :10";
+"INSERT INTO RepackSubRequest (vid, xsize, status, cuuid, filesMigrating, filesStaging, files, filesFailed, submitTime, id, requestID) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,ids_seq.nextval,:10) RETURNING id INTO :11";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_deleteStatementString =
@@ -64,11 +64,11 @@ const std::string castor::db::cnv::DbRepackSubRequestCnv::s_deleteStatementStrin
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_selectStatementString =
-"SELECT vid, xsize, status, cuuid, filesMigrating, filesStaging, files, filesFailed, id, requestID FROM RepackSubRequest WHERE id = :1";
+"SELECT vid, xsize, status, cuuid, filesMigrating, filesStaging, files, filesFailed, submittime, id, requestID FROM RepackSubRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_updateStatementString =
-"UPDATE RepackSubRequest SET vid = :1, xsize = :2, status = :3, cuuid = :4, filesMigrating = :5, filesStaging = :6, files = :7, filesFailed = :8 WHERE id = :9";
+"UPDATE RepackSubRequest SET vid = :1, xsize = :2, status = :3, cuuid = :4, filesMigrating = :5, filesStaging = :6, files = :7, filesFailed = :8, submittime = :9 WHERE id = :10";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_storeTypeStatementString =
@@ -382,7 +382,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::fillObjRepackRequest(castor::repack
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 requestIDId = rset->getInt64(10);
+  u_signed64 requestIDId = rset->getInt64(11);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -422,7 +422,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::createRep(castor::IAddress* address
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(10, castor::db::DBTYPE_INT64);
+      m_insertStatement->registerOutParam(11, castor::db::DBTYPE_INT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -436,9 +436,10 @@ void castor::db::cnv::DbRepackSubRequestCnv::createRep(castor::IAddress* address
     m_insertStatement->setInt(6, obj->filesStaging());
     m_insertStatement->setInt(7, obj->files());
     m_insertStatement->setInt(8, obj->filesFailed());
-    m_insertStatement->setInt64(9, (type == OBJ_RepackRequest && obj->requestID() != 0) ? obj->requestID()->id() : 0);
+    m_insertStatement->setInt64(9, obj->submitTime());
+    m_insertStatement->setInt64(10, (type == OBJ_RepackRequest && obj->requestID() != 0) ? obj->requestID()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getInt64(10));
+    obj->setId(m_insertStatement->getInt64(11));
     m_storeTypeStatement->setInt64(1, obj->id());
     m_storeTypeStatement->setInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -494,7 +495,8 @@ void castor::db::cnv::DbRepackSubRequestCnv::updateRep(castor::IAddress* address
     m_updateStatement->setInt(6, obj->filesStaging());
     m_updateStatement->setInt(7, obj->files());
     m_updateStatement->setInt(8, obj->filesFailed());
-    m_updateStatement->setInt64(9, obj->id());
+    m_updateStatement->setInt64(9, obj->submitTime());
+    m_updateStatement->setInt64(10, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -585,7 +587,8 @@ castor::IObject* castor::db::cnv::DbRepackSubRequestCnv::createObj(castor::IAddr
     object->setFilesStaging(rset->getInt(6));
     object->setFiles(rset->getInt(7));
     object->setFilesFailed(rset->getInt(8));
-    object->setId(rset->getInt64(9));
+    object->setSubmitTime(rset->getInt64(9));
+    object->setId(rset->getInt64(10));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -631,7 +634,8 @@ void castor::db::cnv::DbRepackSubRequestCnv::updateObj(castor::IObject* obj)
     object->setFilesStaging(rset->getInt(6));
     object->setFiles(rset->getInt(7));
     object->setFilesFailed(rset->getInt(8));
-    object->setId(rset->getInt64(9));
+    object->setSubmitTime(rset->getInt64(9));
+    object->setId(rset->getInt64(10));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
