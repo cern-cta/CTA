@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2006/11/08 14:04:45 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2006/12/04 15:33:59 $ $Author: felixehm $
  *
  *
  *
@@ -305,7 +305,9 @@ void RepackWorker::restart(RepackRequest* rreq) throw (castor::exception::Intern
           delete tmp;
           throw ex;
         }
-        if ( tmp->status() != SUBREQUEST_DONE && (tmp->filesMigrating() || tmp->filesStaging()) ){
+        if ( tmp->status() != SUBREQUEST_DONE && tmp->status() != SUBREQUEST_FAILED
+              && ( tmp->filesMigrating() || tmp->filesStaging() )
+           ) {
           castor::exception::Internal ex;
           ex.getMessage() << "There are still files staging/migrating, Restart abort." <<std::endl;
           delete tmp;
