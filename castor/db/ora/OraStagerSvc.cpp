@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.188 $ $Release$ $Date: 2006/11/30 15:31:57 $ $Author: felixehm $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.189 $ $Release$ $Date: 2006/12/05 18:05:28 $ $Author: felixehm $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -472,7 +472,9 @@ void castor::db::ora::OraStagerSvc::createRecallCandidate
       // note that this line duplicates the buildPathFromFileId PL/SQL
       // procedure, but we don't want to call Oracle only for it
       std::ostringstream spath;
-      spath <<  cf->fileId() % 100 << "/" << cf->fileId()
+      if ( cf->fileId() % 100 < 10 )
+        spath << "0";
+      spath << cf->fileId() % 100 << "/" << cf->fileId()
             << "@" << cf->nsHost() << "." << dc->id();
 
       // set the diskcopy to WAITTAPERECALL and the creationtime 
