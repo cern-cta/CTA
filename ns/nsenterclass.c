@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nsenterclass.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: nsenterclass.c,v $ $Revision: 1.3 $ $Date: 2006/12/05 17:00:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	nsenterclass - define a new file class */
@@ -18,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: nsenterclass.c,v $ $Revision: 1.2 $ $Date:
 #include "Cgetopt.h"
 #include "Cns_api.h"
 #include "serrno.h"
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {

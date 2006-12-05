@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nschclass.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: nschclass.c,v $ $Revision: 1.3 $ $Date: 2006/12/05 17:00:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	nschclass - change class on a directory in name server */
@@ -15,6 +15,8 @@ static char sccsid[] = "@(#)$RCSfile: nschclass.c,v $ $Revision: 1.2 $ $Date: 20
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <ctype.h>
+#include <getopt.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
@@ -29,9 +31,10 @@ extern char *strdup _PROTO((CONST char *));
 int errflg;
 int iflag;
 int rflag;
-main(argc, argv)
-int argc;
-char **argv;
+
+int chdirclass (char *dir,int oldclass,int newclass,char *newclass_name);
+
+int main(int argc,char **argv)
 {
 	int c;
 	char *dp;
@@ -120,7 +123,7 @@ char **argv;
 	exit (0);
 }
 
-isyes()
+int isyes()
 {
 	int c;
 	int fchar;
@@ -131,11 +134,7 @@ isyes()
 	return (fchar == 'y');
 }
 
-chdirclass (dir, oldclass, newclass, newclass_name)
-char *dir;
-int oldclass;
-int newclass;
-char *newclass_name;
+int chdirclass (char *dir,int oldclass,int newclass,char *newclass_name)
 {
 	int c;
 	int classtobechanged;
@@ -150,7 +149,7 @@ char *newclass_name;
 	struct dirlist *dlf = NULL;	/* pointer to first directory in the list */
 	struct dirlist *dll;		/* pointer to last directory in the list */
 	struct Cns_direnstat *dxp;
-	char fullpath[CA_MAXPATHLEN+1];
+	//char fullpath[CA_MAXPATHLEN+1];
 
 	classtobechanged = 1;
 	if (iflag) {

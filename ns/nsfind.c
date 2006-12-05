@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nsfind.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: nsfind.c,v $ $Revision: 1.3 $ $Date: 2006/12/05 17:00:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	nsfind - search for files in name server */
@@ -32,6 +32,7 @@ extern	char	*getenv();
 #if sgi
 extern char *strdup _PROTO((CONST char *));
 #endif
+int procpath (char *dir);
 char atimeflg;
 int atimeval;
 Cregexp_t *expstruct;
@@ -43,7 +44,9 @@ int lsflag;
 char mtimeflg;
 int mtimeval;
 time_t current_time;
-main(argc, argv)
+
+
+int main(argc, argv)
 int argc;
 char **argv;
 {
@@ -159,7 +162,7 @@ char **argv;
 	exit (0);
 }
 
-listentry(dir, path, statbuf)
+int listentry(dir, path, statbuf)
 char *dir;
 char *path;
 struct Cns_filestat *statbuf;
@@ -242,10 +245,8 @@ struct Cns_filestat *statbuf;
 	return (0);
 }
 
-procpath (dir)
-char *dir;
+int procpath (char *dir)
 {
-	int c;
 	char curdir[CA_MAXPATHLEN+1];
 	struct dirlist {
 		char *d_name;
@@ -256,7 +257,6 @@ char *dir;
 	struct dirlist *dlf = NULL;	/* pointer to first directory in the list */
 	struct dirlist *dll;		/* pointer to last directory in the list */
 	struct Cns_direnstat *dxp;
-	char fullpath[CA_MAXPATHLEN+1];
 
 	if ((dirp = Cns_opendir (dir)) == NULL)
 		return (-1);

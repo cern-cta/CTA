@@ -4,17 +4,21 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nsdeleteclass.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: nsdeleteclass.c,v $ $Revision: 1.3 $ $Date: 2006/12/05 17:00:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	nsdeleteclass - delete a fileclass definition */
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include "Cgetopt.h"
 #include "Cns_api.h"
 #include "serrno.h"
-main(argc, argv)
+
+
+int main(argc, argv)
 int argc;
 char **argv;
 {

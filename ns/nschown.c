@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nschown.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: nschown.c,v $ $Revision: 1.3 $ $Date: 2006/12/05 17:00:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	nschown - change directory/file ownership in name server */
@@ -16,6 +16,8 @@ static char sccsid[] = "@(#)$RCSfile: nschown.c,v $ $Revision: 1.2 $ $Date: 2006
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <ctype.h>
+#include <getopt.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
@@ -29,9 +31,9 @@ extern char *strdup _PROTO((CONST char *));
 #endif
 int hflag;
 int Rflag;
-main(argc, argv)
-int argc;
-char **argv;
+int chowndir (char *dir,uid_t newuid,gid_t newgid);
+
+int main(int argc,char **argv)
 {
 	int c;
 	char *dp;
@@ -168,10 +170,7 @@ char **argv;
 	exit (0);
 }
 
-chowndir (dir, newuid, newgid)
-char *dir;
-uid_t newuid;
-gid_t newgid;
+int chowndir (char *dir,uid_t newuid,gid_t newgid)
 {
 	int c;
 	char curdir[CA_MAXPATHLEN+1];

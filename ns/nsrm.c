@@ -43,6 +43,12 @@ char **argv;
 	char *p;
 	char *path;
 	struct Cns_filestat statbuf;
+	int classid = 0;
+	// classname=*path char *class_name = NULL;
+	struct Cns_fileclass Cns_fileclass;
+        struct Cns_fileclass *lp;
+        char *server=NULL;
+
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
@@ -106,6 +112,19 @@ char **argv;
 					c = -1;
 				}
 			} else {
+				//Check if the file is only on disk
+				//Cns_queryclass(char *server, int classid, char *class_name, struct Cns_fileclass *Cns_fileclass)
+                                //classid ?? Cns_lstat->fileid
+				//classname= path
+				//	if (Cns_selectsrvr (path, thip->server, server, &actual_path)) copiar de cns_accesss.c Cns_access_internal
+
+				if (Cns_queryclass (server,classid,path,&Cns_fileclass) < 0){
+					if (Cns_fileclass.nbcopies == 0){
+						fprintf (stderr, "nsrm %s: %s\n", buf,
+			    (serrno == ENOENT) ? "No such file" : sstrerror(serrno));
+
+						printf ("ES	%d\n", Cns_fileclass->nbcopies);
+
 				if ((statbuf.filemode & S_IFLNK) != S_IFLNK &&
 				    ! fflag && Cns_access (fullpath, W_OK) &&
 				    isatty (fileno (stdin))) {
