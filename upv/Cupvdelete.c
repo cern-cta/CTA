@@ -19,9 +19,7 @@ static char sccsid[] = "@(#)Cupvdelete.c,v 1.5 2002/06/12 08:17:11 CERN IT-DS/HS
 #include "Cupv_api.h"
 #include "Cupv.h"
 
-main(argc, argv)
-     int argc;
-     char **argv;
+int main(int argc,char **argv)
 {
   int c;
   char *dp;

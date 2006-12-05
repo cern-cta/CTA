@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_modify.c,v $ $Revision: 1.6 $ $Date: 2003/11/04 15:04:15 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_modify.c,v $ $Revision: 1.7 $ $Date: 2006/12/05 14:00:42 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
  
 
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: Cupv_modify.c,v $ $Revision: 1.6 $ $Date: 
 #include "serrno.h"
 
 
-Cupv_modify(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt,
+int Cupv_modify(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt,
 	    const char *newsrc, const char *newtgt, int priv)
 {
 	int c;

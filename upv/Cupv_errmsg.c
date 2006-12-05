@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_errmsg.c,v $ $Revision: 1.2 $ $Date: 2003/09/08 17:05:19 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_errmsg.c,v $ $Revision: 1.3 $ $Date: 2006/12/05 14:00:41 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -14,10 +14,11 @@ static char sccsid[] = "@(#)$RCSfile: Cupv_errmsg.c,v $ $Revision: 1.2 $ $Date: 
 #include <sys/types.h>
 #include "Cupv.h"
 #include "Cupv_api.h"
+#include "Cupv_util.h"
 
 /*	Cupv_seterrbuf - set receiving buffer for error messages */
 
-Cupv_seterrbuf(char *buffer, int buflen)
+int Cupv_seterrbuf(char *buffer, int buflen)
 {
 	struct Cupv_api_thread_info *thip;
 
@@ -30,7 +31,7 @@ Cupv_seterrbuf(char *buffer, int buflen)
 
 /* Cupv_errmsg - send error message to user defined client buffer or to stderr */
 
-Cupv_errmsg(char *func, char *msg, ...) {
+int Cupv_errmsg(char *func, char *msg, ...) {
 	va_list args;
 	char prtbuf[PRTBUFSZ];
 	int save_errno;

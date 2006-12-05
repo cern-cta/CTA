@@ -1,5 +1,5 @@
 /*
- * $Id: Cupv_util.h,v 1.1 2002/05/28 09:47:41 bcouturi Exp $
+ * $Id: Cupv_util.h,v 1.2 2006/12/05 14:00:43 riojac3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 /*
- * @(#)$RCSfile: Cupv_util.h,v $ $Revision: 1.1 $ $Date: 2002/05/28 09:47:41 $ CERN IT-DS/HSM Ben Couturier
+ * @(#)$RCSfile: Cupv_util.h,v $ $Revision: 1.2 $ $Date: 2006/12/05 14:00:43 $ CERN IT-DS/HSM Ben Couturier
  */
 
 #ifndef _CUPV_UTIL_H
@@ -27,6 +27,8 @@
 					
 
 /* Funtions fron Cupv_util.c */
+int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf_len);
+int Cupv_errmsg(char *func, char *msg, ...);
 EXTERN_C int  DLL_DECL Cupv_strtoi _PROTO((int *,char *,char **, int));
 EXTERN_C void DLL_DECL Cupv_util_time _PROTO((time_t, char *));
 EXTERN_C int DLL_DECL Cupv_parse_privstring _PROTO((char *));

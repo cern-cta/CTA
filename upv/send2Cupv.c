@@ -1,12 +1,12 @@
 /*
- * $Id: send2Cupv.c,v 1.4 2005/03/15 23:16:27 bcouturi Exp $
+ * $Id: send2Cupv.c,v 1.5 2006/12/05 14:00:43 riojac3 Exp $
  *
  * Copyright (C) 1999-2002 by CERN/IT-DS/HSM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2Cupv.c,v $ $Revision: 1.4 $ $Date: 2005/03/15 23:16:27 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: send2Cupv.c,v $ $Revision: 1.5 $ $Date: 2006/12/05 14:00:43 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -24,6 +24,7 @@ static char sccsid[] = "@(#)$RCSfile: send2Cupv.c,v $ $Revision: 1.4 $ $Date: 20
 #include "net.h"
 #include "serrno.h"
 #include "Cupv.h"
+#include "Cupv_util.h"
 #ifdef CSEC
 #include "Csec_api.h"
 #endif
@@ -33,12 +34,7 @@ extern char *ws_strerr;
 
 /* send2Cupv - send a request to the CUPV daemon and wait for the reply */
 
-send2Cupv(socketp, reqp, reql, user_repbuf, user_repbuf_len)
-int *socketp;
-char *reqp;
-int reql;
-char *user_repbuf;
-int user_repbuf_len;
+int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf_len)
 {
 #ifndef USE_CUPV
 	serrno = EPERM;

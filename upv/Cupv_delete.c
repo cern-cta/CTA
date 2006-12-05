@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_delete.c,v $ $Revision: 1.7 $ $Date: 2003/11/04 15:04:15 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_delete.c,v $ $Revision: 1.8 $ $Date: 2006/12/05 14:00:41 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
  
 
@@ -21,13 +21,12 @@ static char sccsid[] = "@(#)$RCSfile: Cupv_delete.c,v $ $Revision: 1.7 $ $Date: 
 #include "Cupv.h"
 #include "serrno.h"
 
-Cupv_delete(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt)
+int Cupv_delete(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt)
 {
 	int c;
 	char func[16];
 	int msglen;
 	char *q;
-	char *dp;
 	char *sbp;
 	char sendbuf[REQBUFSZ];
 	struct Cupv_api_thread_info *thip;

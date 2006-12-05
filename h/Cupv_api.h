@@ -1,5 +1,5 @@
 /*
- * $Id: Cupv_api.h,v 1.2 2002/10/21 14:02:50 bcouturi Exp $
+ * $Id: Cupv_api.h,v 1.3 2006/12/05 14:00:43 riojac3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cupv_api.h,v $ $Revision: 1.2 $ $Date: 2002/10/21 14:02:50 $ CERN IT-PDP/DM Ben Couturier
+ * @(#)$RCSfile: Cupv_api.h,v $ $Revision: 1.3 $ $Date: 2006/12/05 14:00:43 $ CERN IT-PDP/DM Ben Couturier
  */
 
 #ifndef _CUPV_API_H
@@ -41,6 +41,7 @@ typedef struct {
 	char		*buf;		/* cache buffer for list entries */
 } Cupv_entry_list;
 
+int Cupv_apiinit(struct Cupv_api_thread_info **thip);
 /* function prototypes */
 EXTERN_C struct Cupv_userpriv DLL_DECL *Cupv_list  _PROTO((int, Cupv_entry_list *, struct Cupv_userpriv *));
 EXTERN_C int DLL_DECL Cupv_add _PROTO ((uid_t, gid_t, const char *, const char *, int));

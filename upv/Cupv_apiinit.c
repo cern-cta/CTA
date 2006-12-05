@@ -4,12 +4,12 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_apiinit.c,v $ $Revision: 1.1 $ $Date: 2002/05/28 09:37:57 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_apiinit.c,v $ $Revision: 1.2 $ $Date: 2006/12/05 14:00:40 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 /*	Cupv_apiinit - allocate thread specific or global structures */
 
-#include <errno.h>
+#include <errno.h>    
 #include <stdlib.h>
 #include <sys/types.h>
 #include "Cglobals.h"
@@ -17,8 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: Cupv_apiinit.c,v $ $Revision: 1.1 $ $Date:
 #include "serrno.h"
 static int Cupv_api_key = -1;
 
-Cupv_apiinit(thip)
-struct Cupv_api_thread_info **thip;
+int Cupv_apiinit(struct Cupv_api_thread_info **thip)
 {
 	Cglobals_get (&Cupv_api_key,
 	    (void **) thip, sizeof(struct Cupv_api_thread_info));
