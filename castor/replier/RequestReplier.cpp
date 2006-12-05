@@ -131,7 +131,7 @@ castor::replier::RequestReplier::RequestReplier() throw() {
       // for this one the internal value represents the end processing flag (set to zero)
     m_terminateMutex = new castor::server::Mutex(0);
   }
-  catch (castor::exception::Internal ignored) {}    // mutex exceptions are ignored
+  catch (castor::exception::Internal ignored) {}    // XXX mutex exceptions were ignored
 
   // Setting the statistics values
   m_lastStatTime = 0;
@@ -655,7 +655,7 @@ castor::replier::RequestReplier::readFromClientQueue() throw() {
     clog() << VERBOSE << SETW func  <<  "Unlocking m_clientQueue" << std::endl;
     m_clientQueueMutex->release();
   }
-  catch (castor::exception::Internal ignored) {}    // mutex exceptions are ignored
+  catch (castor::exception::Internal ignored) {}    // XXX mutex exceptions were ignored
 }
 
 
@@ -675,7 +675,7 @@ castor::replier::RequestReplier::terminate()
   try {
     m_terminateMutex->setValue(1);
   }
-  catch (castor::exception::Internal ignored) {}   // mutex exceptions were ignored
+  catch (castor::exception::Internal ignored) {}   // XXX mutex exceptions were ignored
 
   // Waiting for the RequestReplier thread to finish
   Cthread_join(m_threadId, NULL);
