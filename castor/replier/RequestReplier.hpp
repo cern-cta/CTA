@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/11/29 17:38:47 $ $Author: itglp $
+ * @(#)$RCSfile: RequestReplier.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/12/05 17:01:42 $ $Author: felixehm $
  *
  *
  *
@@ -29,7 +29,6 @@
 #define CASTOR_REQUESTREPLIER_HPP 1
 
 #include "castor/replier/ClientConnection.hpp"
-#include "castor/server/Mutex.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/io/biniostream.h"
 #include "castor/exception/Exception.hpp"
@@ -185,7 +184,6 @@ namespace castor {
        * the caller thread and the request replier thread.
        */
       std::queue<ClientResponse> *m_clientQueue;
-      castor::server::Mutex* m_clientQueueMutex;
 
       /**
        * Map of client connections, indexed by file descriptor
@@ -209,7 +207,7 @@ namespace castor {
        * Flag indicating to the RR that it should finish the
        * processing
        */
-      castor::server::Mutex* m_terminateMutex;
+      int m_terminate;
 
       /**
        * Statistics variables
@@ -230,3 +228,8 @@ namespace castor {
 } // namespace castor
 
 #endif // CASTOR_REQUESTREPLIER_HPP
+
+
+
+
+

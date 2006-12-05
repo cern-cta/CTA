@@ -125,13 +125,8 @@ castor::replier::RequestReplier::RequestReplier() throw() {
   m_pipeRead = &m_commPipe[0];
   m_pipeWrite = &m_commPipe[1];
 
-  // Initialize mutexes
-  try {
-    m_clientQueueMutex = new castor::server::Mutex(0);
-      // for this one the internal value represents the end processing flag (set to zero)
-    m_terminateMutex = new castor::server::Mutex(0);
-  }
-  catch (castor::exception::Internal ignored) {}    // XXX mutex exceptions were ignored
+  // Setting the end processing flag to zero
+  m_terminate = 0;
 
   // Setting the statistics values
   m_lastStatTime = 0;
@@ -212,7 +207,9 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
 
 
     // Getting the value of the end processing flag
-    int terminate = m_terminateMutex->getValue();
+    Cthread_mutex_lock(&m_terminate);
+    int terminate = m_terminate;
+    Cthread_mutex_unlock(&m_terminate);
 
     if (terminate) {
       if(m_connections->size() == 0
@@ -610,52 +607,51 @@ castor::replier::RequestReplier::readFromClientQueue() throw() {
 
   char *func = "rr::readFromClientQueue ";
 
-  try {
-    
-    clog() << VERBOSE << SETW func  <<  "Locking m_clientQueue" << std::endl;
-    m_clientQueueMutex->lock();
-  
-    clog() << DEBUG << SETW func
-           << "*** Before processing - Client Queue size:"  << m_clientQueue->size()
-           << " Connection Queue size:"  << m_connections->size()
+  clog() << VERBOSE << SETW func  <<  "Locking m_clientQueue" << std::endl;
+  Cthread_mutex_lock(&m_clientQueue);
+
+  clog() << DEBUG << SETW func
+         << "*** Before processing - Client Queue size:"  << m_clientQueue->size()
+         << " Connection Queue size:"  << m_connections->size()
+         << std::endl;
+
+  if (m_clientQueue->size() == 0) {
+    clog() << DEBUG << SETW func  <<  "No client in queue, removing lock"
            << std::endl;
-  
-    if (m_clientQueue->size() == 0) {
-      clog() << DEBUG << SETW func  <<  "No client in queue, removing lock"
-             << std::endl;
-      m_clientQueueMutex->release();
-      return;
-    }
-  
-    int clients_in_queue = m_clientQueue->size();
-  
-    for(int i=0; i<clients_in_queue; i++) {
-  
-      // Increasing the statistics counter
-      m_nbQueuedResponses++;
-  
-  
-      ClientResponse cr = m_clientQueue->front();
-      m_clientQueue->pop();
-  
-      this->createNewClientConnection(cr);
-  
-      int val;
-      int rc = read(*m_pipeRead, &val, sizeof(val));
-      if (rc < 0) {
-        clog() << ERROR << SETW func  <<  "Error reading !" << std::endl;
-      }
-  
-    }
-    clog() << VERBOSE << SETW func
-           << "*** After processing - Client Queue size:"  << m_clientQueue->size()
-           << " Connection Queue size:"  << m_connections->size()
-           << std::endl;
-  
-    clog() << VERBOSE << SETW func  <<  "Unlocking m_clientQueue" << std::endl;
-    m_clientQueueMutex->release();
+    Cthread_mutex_unlock(&m_clientQueue);
+    return;
   }
-  catch (castor::exception::Internal ignored) {}    // XXX mutex exceptions were ignored
+
+  int clients_in_queue = m_clientQueue->size();
+
+  for(int i=0; i<clients_in_queue; i++) {
+
+    // Increasing the statistics counter
+    m_nbQueuedResponses++;
+
+
+    ClientResponse cr = m_clientQueue->front();
+    m_clientQueue->pop();
+
+    this->createNewClientConnection(cr);
+
+    int val;
+    int rc = read(*m_pipeRead, &val, sizeof(val));
+    if (rc < 0) {
+      clog() << ERROR << SETW func  <<  "Error reading !" << std::endl;
+    }
+
+  }
+  clog() << VERBOSE << SETW func
+         << "*** After processing - Client Queue size:"  << m_clientQueue->size()
+         << " Connection Queue size:"  << m_connections->size()
+         << std::endl;
+
+
+
+  clog() << VERBOSE << SETW func  <<  "Unlocking m_clientQueue" << std::endl;
+  Cthread_mutex_unlock(&m_clientQueue);
+
 }
 
 
@@ -672,10 +668,9 @@ castor::replier::RequestReplier::terminate()
          << std::endl;
 
   // Setting the end processing flag to 1
-  try {
-    m_terminateMutex->setValue(1);
-  }
-  catch (castor::exception::Internal ignored) {}   // XXX mutex exceptions were ignored
+  Cthread_mutex_lock(&m_terminate);
+  m_terminate = 1;
+  Cthread_mutex_unlock(&m_terminate);
 
   // Waiting for the RequestReplier thread to finish
   Cthread_join(m_threadId, NULL);
@@ -756,14 +751,16 @@ castor::replier::RequestReplier::setCallback(void (*callback)(castor::IClient *,
 
   // Setting the callback function, taking proper lock
   clog() << VERBOSE << SETW func  <<  "Locking m_clientQueue" << std::endl;
-  m_clientQueueMutex->lock();
+  Cthread_mutex_lock(&m_clientQueue);
 
   m_connectionStatusCallback = callback;
 
   // Exiting...
   clog() << VERBOSE << SETW func
          << "Unlocking m_clientQueue" << std::endl;
-  m_clientQueueMutex->release();
+  Cthread_mutex_unlock(&m_clientQueue);
+
+
 }
 
 
@@ -791,14 +788,14 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
 
   // Adding the client to the queue, taking proper lock
   clog() << VERBOSE << SETW func  <<  "Locking m_clientQueue" << std::endl;
-  m_clientQueueMutex->lock();
+  Cthread_mutex_lock(&m_clientQueue);
 
   ClientResponse cr;
   castor::rh::Client* cl = dynamic_cast<castor::rh::Client*>(client);
   if (0 == cl) {
     castor::exception::Internal e;
     e.getMessage() <<"Could not cast IClient to client";
-    m_clientQueueMutex->release();
+    Cthread_mutex_unlock(&m_clientQueue);
     throw e;
   }
 
@@ -860,7 +857,7 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
   // Exiting...
   clog() << VERBOSE << SETW func
          << "Unlocking m_clientQueue" << std::endl;
-  m_clientQueueMutex->release();
+  Cthread_mutex_unlock(&m_clientQueue);
 }
 
 
@@ -883,7 +880,7 @@ castor::replier::RequestReplier::sendEndResponse
 
   // Adding the client to the queue, taking proper lock
   clog() << VERBOSE << SETW func  <<  "Locking m_clientQueue" << std::endl;
-  m_clientQueueMutex->lock();
+  Cthread_mutex_lock(&m_clientQueue);
 
   castor::rh::EndResponse endresp;
   endresp.setReqAssociated(reqId);
@@ -915,6 +912,6 @@ castor::replier::RequestReplier::sendEndResponse
   // Exiting...
   clog() << VERBOSE << SETW func
          << "Unlocking m_clientQueue" << std::endl;
-  m_clientQueueMutex->release();
+  Cthread_mutex_unlock(&m_clientQueue);
 }
 
