@@ -11,6 +11,7 @@ static char sccsid[] = "@(#)Cupvshutdown.c,v 1.2 2002/06/12 08:17:11 CERN IT-DS/
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
@@ -20,10 +21,9 @@ static char sccsid[] = "@(#)Cupvshutdown.c,v 1.2 2002/06/12 08:17:11 CERN IT-DS/
 #include "serrno.h"
 extern	int	optind;
 #include "Cupv.h"
+#include "Cupv_util.h"
 
-main(argc, argv)
-int argc;
-char **argv;
+int main(int argc,char **argv)
 {
 #if defined(_WIN32)
       WSADATA wsadata;

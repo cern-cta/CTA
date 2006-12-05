@@ -21,9 +21,7 @@ static char sccsid[] = "@(#)Cupvmodify.c,v 1.5 2002/06/12 08:17:11 CERN IT-DS/HS
 
 #define CUPVMODIFYNAME "Cupvmodify"
 
-main(argc, argv)
-int argc;
-char **argv;
+int main(int argc,char **argv)
 {
   int c;
   int errflg = 0;

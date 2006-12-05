@@ -27,9 +27,7 @@ static char sccsid[] = "@(#)Cupvlist.c,v 1.5 2002/06/12 08:17:11 CERN IT-DS/HSM 
 
 int displayLine(struct Cupv_userpriv *lp, int verbose);
 
-main(argc, argv)
-     int argc;
-     char **argv;
+int main(int argc,char **argv)
 {
   int c;
   int flags;
