@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2006/12/04 15:38:14 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2006/12/06 12:43:16 $ $Author: felixehm $
  *
  *
  *
@@ -281,11 +281,15 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq){
       sreq->setStatus(SUBREQUEST_DONE);
     else {
       sreq->setFilesMigrating(0);
+
+      /** Here we send the stager request */
       stage_files(faked);
+
       sreq->setCuuid(faked->cuuid());
       sreq->setStatus(faked->status());
       sreq->setFilesFailed(faked->filesFailed());
       sreq->setFilesStaging(faked->filesStaging());
+      sreq->setSubmitTime(faked->submitTime());
       /** do not remove or update the segment information */ 
       m_dbhelper->updateSubRequest(sreq,false,cuuid);
       castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 25, 0, NULL); 
