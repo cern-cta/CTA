@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nsmkdir.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: nsmkdir.c,v $ $Revision: 1.3 $ $Date: 2006/12/06 16:05:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	nsmkdir - make name server directory entries */
@@ -13,6 +13,7 @@ static char sccsid[] = "@(#)$RCSfile: nsmkdir.c,v $ $Revision: 1.2 $ $Date: 2006
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <stdlib.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #include "statbits.h"
@@ -26,7 +27,8 @@ static char sccsid[] = "@(#)$RCSfile: nsmkdir.c,v $ $Revision: 1.2 $ $Date: 2006
 extern	char	*getenv();
 extern	char	*optarg;
 extern	int	optind;
-main(argc, argv)
+
+int main(argc, argv)
 int argc;
 char **argv;
 {

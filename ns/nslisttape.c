@@ -4,12 +4,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nslisttape.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: nslisttape.c,v $ $Revision: 1.3 $ $Date: 2006/12/06 16:05:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      nslisttape - list the file segments residing on a volume */
 #include <stdio.h>
 #include <sys/types.h>
+#include <string.h>
+#include <stdlib.h> 
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
@@ -18,13 +20,11 @@ static char sccsid[] = "@(#)$RCSfile: nslisttape.c,v $ $Revision: 1.2 $ $Date: 2
 #include "Cns_api.h"
 #include "serrno.h"
 #include "u64subr.h"
-main(argc, argv)
-int argc;
-char **argv;
+int main(int argc,char **argv)
 {
 	int c;
 	static int dsflag = 0;
-    static int checksumflag = 0;
+        static int checksumflag = 0;
 	struct Cns_direntape *dtp;
 	int errflg = 0;
 	int flags;
@@ -104,7 +104,7 @@ char **argv;
             if (dtp->checksum_name != NULL &&  strlen(dtp->checksum_name)>0) {
                 printf (" %*s %08lx", CA_MAXCKSUMNAMELEN, dtp->checksum_name, dtp->checksum);
             } else {
-                printf (" %*s %08lx", CA_MAXCKSUMNAMELEN, "-", 0);
+		    printf (" %*s %08x", CA_MAXCKSUMNAMELEN, "-", 0);
             }
         }
 

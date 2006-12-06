@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nssetacl.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:23 $ CERN IT-ADC/CA Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: nssetacl.c,v $ $Revision: 1.3 $ $Date: 2006/12/06 16:05:07 $ CERN IT-ADC/CA Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	nssetacl - set the Access Control List for a file/directory */
@@ -16,6 +16,8 @@ static char sccsid[] = "@(#)$RCSfile: nssetacl.c,v $ $Revision: 1.2 $ $Date: 200
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <getopt.h>
+#include <ctype.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
@@ -28,7 +30,12 @@ extern	int	optind;
 int dflag;
 int mflag;
 int sflag;
-main(argc, argv)
+
+int cvt_group(char *p);
+int cvt_perm(char *p);
+int cvt_user(char *p);
+
+int main(argc, argv)
 int argc;
 char **argv;
 {
@@ -259,7 +266,7 @@ parse_entries(char *entries, struct Cns_acl *acl)
 	return (nentries);
 }
 
-cvt_group(char *p)
+int cvt_group(char *p)
 {
 	char *dp;
 	gid_t gid;
@@ -288,7 +295,7 @@ cvt_group(char *p)
 	return (gid);
 }
 
-cvt_perm(char *p)
+int cvt_perm(char *p)
 {
 	char *dp;
 	mode_t mode;
@@ -329,7 +336,7 @@ cvt_perm(char *p)
 	return (mode);
 }
 
-cvt_user(char *p)
+int cvt_user(char *p)
 {
 	char *dp;
 	struct passwd *pwd;

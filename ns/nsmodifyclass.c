@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nsmodifyclass.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: nsmodifyclass.c,v $ $Revision: 1.3 $ $Date: 2006/12/06 16:05:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	nsmodifyclass - modify an existing file class */
@@ -18,7 +18,8 @@ static char sccsid[] = "@(#)$RCSfile: nsmodifyclass.c,v $ $Revision: 1.2 $ $Date
 #include "Cgetopt.h"
 #include "Cns_api.h"
 #include "serrno.h"
-main(argc, argv)
+
+int main(argc, argv)
 int argc;
 char **argv;
 {

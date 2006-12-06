@@ -33,7 +33,11 @@ int errflg;
 int fflag;
 int iflag;
 int rflag;
-main(argc, argv)
+
+int isyes();
+int removedir (char *dir);
+
+int main(argc, argv)
 int argc;
 char **argv;
 {
@@ -134,7 +138,7 @@ char **argv;
 	exit (0);
 }
 
-isyes()
+int isyes()
 {
 	int c;
 	int fchar;
@@ -145,8 +149,8 @@ isyes()
 	return (fchar == 'y');
 }
 
-removedir (dir)
-char *dir;
+int removedir (char *dir)
+//char *dir;
 {
 	char curdir[CA_MAXPATHLEN+1];
 	struct dirlist {

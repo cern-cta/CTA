@@ -1,10 +1,10 @@
-/*
+	/*
  * Copyright (C) 2003-2004 by CERN/IT/GD/CT
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nsln.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-GD/CT Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: nsln.c,v $ $Revision: 1.3 $ $Date: 2006/12/06 16:05:08 $ CERN IT-GD/CT Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	nsln - make a symbolic link to a file or a directory */
@@ -20,10 +20,12 @@ static char sccsid[] = "@(#)$RCSfile: nsln.c,v $ $Revision: 1.2 $ $Date: 2006/01
 #include "Cns.h"
 #include "Cns_api.h"
 #include "serrno.h"
+#include <getopt.h>
+
 extern	char	*getenv();
 extern	int	optind;
 int sflag;
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {

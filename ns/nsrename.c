@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nsrename.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: nsrename.c,v $ $Revision: 1.3 $ $Date: 2006/12/06 16:05:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	nsrename - rename entries in name server */
@@ -12,6 +12,7 @@ static char sccsid[] = "@(#)$RCSfile: nsrename.c,v $ $Revision: 1.2 $ $Date: 200
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
+#include <stdlib.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
@@ -21,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: nsrename.c,v $ $Revision: 1.2 $ $Date: 200
 #include "Cns_api.h"
 #include "serrno.h"
 extern	char	*getenv();
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {
