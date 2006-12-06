@@ -1,3 +1,53 @@
+castor (2.1.2-1) unstable; urgency=low
+
+  * CASTOR2/PACKAGING.howto:
+    [r1.27,2006-12-05,felixehm] modfied upload procedure to add the castor-lib package for x86_64
+  * CASTOR2/castor/db/ora/OraStagerSvc.cpp:
+    [r1.189,2006-12-05,felixehm] fixed building the diskpath in StagerSvc for TapeRecall, a leading '0' was missing
+    [r1.189,2006-12-05,felixehm] for directory numbers less than 10
+  * CASTOR2/castor/repack/RepackClient.cpp:
+    [r1.25,2006-12-05,felixehm] cosmetic changes for output
+  * CASTOR2/castor/replier/RequestReplier.cpp:
+    [r1.30,2006-12-05,felixehm] Rollback of previous changes for the mutex locking procedure, since this lead
+    [r1.30,2006-12-05,felixehm] to a block of the request replier
+    [r1.29,2006-12-05,itglp] empty log message ***
+    [r1.28,2006-12-05,itglp] Catch and ignore (!) mutex exceptions instead of leaving them uncaught
+  * CASTOR/castor/repack/RepackFileStager.cpp:
+    [r1.30, 2006-12-06,felixehm] fixed bug : the submittime of a repacksubrequest wasn't set to new one, if restarted
+  * CASTOR2/castor/replier/RequestReplier.hpp:
+    [r 1.9,2006-12-05,felixehm] Rollback of previous changes for the mutex locking procedure, since this lead
+    [r 1.9,2006-12-05,felixehm] to a block of the request replier
+  * CASTOR2/ns/nschclass.c:
+  * CASTOR2/ns/nschmod.c:
+  * CASTOR2/ns/nschown.c:
+  * CASTOR2/ns/nsdelcomment.c:
+  * CASTOR2/ns/nsdeleteclass.c:
+  * CASTOR2/ns/nsenterclass.c:
+  * CASTOR2/ns/nsfind.c:
+  * CASTOR2/ns/nsrm.c:
+    [2006-12-05,riojac3] 64bits cleaning warning
+  * CASTOR2/upv/Cupv_add.c:
+  * CASTOR2/h/Cupv_api.h:
+  * CASTOR2/h/Cupv_util.h:
+  * CASTOR2/upv/Cupv_apiinit.c:
+  * CASTOR2/upv/Cupv_check.c:
+  * CASTOR2/upv/Cupv_delete.c:
+  * CASTOR2/upv/Cupv_errmsg.c:
+  * CASTOR2/upv/Cupv_modify.c:
+  * CASTOR2/upv/Cupvadd.c:
+  * CASTOR2/upv/Cupvdelete.c:
+  * CASTOR2/upv/send2Cupv.c:
+    [2006-12-05,riojac3] 64bits: warnings implicit declaration and default return type have been cleaned
+  * CASTOR2/upv/Cupvcheck.c:
+  * CASTOR2/upv/Cupvlist.c:
+  * CASTOR2/upv/Cupvmodify.c:
+  * CASTOR2/upv/Cupvshutdown.c:
+    [2006-12-05,riojac3] 64 bits cleaned
+
+ -- Felix Ehm <felix.ehm@cern.ch>  Wed, 06 Dez 2006 14:20:00 +0200
+
+
+
 castor (2.1.2-0) unstable; urgency=low
 
   * CASTOR2/PACKAGING.howto:
