@@ -84,7 +84,7 @@ Support for partially completed lists.
  my @NODES;
  my $NODE;
  my $SVCCLASS;
- my $VALUES = 'DISKCOPY_CANBEMIGR';
+ my $VALUES = 'CANBEMIGR';
 
  my $count = 0;
 
@@ -197,17 +197,23 @@ sub check_progress () {
 	my @ary = @_;    
 	my $i;
 	my $total = 0;
+        my $filepath;
                 
 	for ($i =0; $i <= $#ary; $i++) {
 
-	  open (CHECK, "stager_qry -S $SVCCLASS  -M `nsGetPath castorns $ary[$i]` 2>&1 |");
+	  $filepath = `nsGetPath castorns $ary[$i]`;
+          if ($filepath !~ m/No\ such\ file\ or\ directory/i ) {
+	  	open (CHECK, "stager_qry -S $SVCCLASS  -M $filepath |");
 
-	  while (<CHECK>) {
- 		print $_;
- 		if ($_ =~ m/($VALUES|CANBE_MIGRATED|STAGED)/i ){ print $_; $total++;}
-		#if ($_ =~ m/No\ such\ file\ or\ directory/i){ print $_; $total++;}
+	  	while (<CHECK>) {
+ 			print $_;
+ 			if ($_ =~ m/($VALUES|CANBEMIGR|STAGED)/i ){ print $_; $total++;}
+			#if ($_ =~ m/No\ such\ file\ or\ directory/i){ print $_; $total++;}
+	  	}
+		close(CHECK);
+          } else {
+		print $_; $total++;
 	  }
-	  close(CHECK);
 	}
 
 	if ($total != 10) { 
@@ -232,6 +238,7 @@ sub create_file () {
     my ($line);	
     my $file = "/tmp/recov.$NODE" . time();
     my $count = 0;
+    my $filepath;
 
     print "Creating file to contain list of files to move.\n"; 
 
@@ -249,8 +256,10 @@ sub create_file () {
 		next if /^FileId/;
 		next if ! /($VALUES)/;
                 my @line = split (/\s+/);
-        	open(X, "nsGetPath castorns $line[0] |");
-		print FILE $_ . " ". <X>;
+                $filepath = `nsGetPath castorns $line[0]`;
+                if ($filepath !~ m/No\ such\ file\ or\ directory/i ) {
+			print FILE $_ . " ". $filepath;
+		}
 		$count++;
 		if ($count % 100 == 0) {print ".";}
 		if ($count % 1000 == 0) {print " $count files processed.\n";}
@@ -280,21 +289,23 @@ sub final_check() {
 
     foreach (<F>) {
 	my @tmp = split(/\s+/);
+        my $filepath = `nsGetPath castorns $tmp[0]`;
 
-	open (X, "/usr/bin/stager_qry -S $SVCCLASS -M 'nsGetPath $tmp[0]' |");
-	foreach (<X>) {
-	    chomp;
-	    next if /^Received/;
-	    last if /(CANBEMIGR|STAGED)/;
-	    print "Problem with $tmp[2]\n";
-	    print O "$tmp[2]\n";
+        if ($filepath !~ m/No\ such\ file\ or\ directory/i ) {
+		open (X, "/usr/bin/stager_qry -S $SVCCLASS -M $filepath |");
+		foreach (<X>) {
+ 	 		chomp;
+	    		next if /^Received/;
+	    		last if /(CANBEMIGR|STAGED)/;
+	    		print "Problem with $tmp[2]\n";
+	    		print O "$tmp[2]\n";
+		}
+		close (X);
 	}
-
-	close (X);
-	print "File name for errors is $outfile\n";
-	close (O);
     }
     close (F);
+    print "File name for errors is $outfile\n";
+    close (O);
 }
 #################################################################################
 # sub TransferManager()
@@ -323,7 +334,7 @@ sub TransferManager()
    
     $active = 0;
     foreach (<FILE>){
-      my ($ID, $LOCAL, $Notsure, $URL) = split /\s+/, $_;
+      my ($ID, $STATUS, $LOCAL, $Notsure, $URL) = split /\s+/, $_;
 
       if ($active < 10) {
         open(EXECUTE, "stager_get -S $SVCCLASS -M $URL |"); 
