@@ -154,7 +154,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define RfioSpool	/var/spool/rfio
 #define RmcSpool	/var/spool/rmc
 #define RtcopySpool	/var/spool/rtcopy
-#define RtcopyWorkDir	/var/tmp/RTCOPY
+#define RtcopyWorkDir	/var/RTCOPY
 #define	RtcpclientdHost	"castorrtcpcld"
 #define SacctDir	/var/spool/sacct
 #if defined(_WIN32)
