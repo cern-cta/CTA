@@ -37,7 +37,7 @@
 #include <sstream>
 
 #include "osdep.h" //for LONGSIZE
-#include "h/Cnetdb.h"
+#include "Cnetdb.h"
 #include <common.h>
 
 #include "castor/exception/InvalidArgument.hpp"

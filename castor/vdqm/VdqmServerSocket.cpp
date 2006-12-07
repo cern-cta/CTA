@@ -40,7 +40,7 @@
 
 #include <vdqm_constants.h>
 #include "osdep.h" //for LONGSIZE
-#include "h/Cnetdb.h"
+#include "Cnetdb.h"
 #include <common.h>
 
 // Local Includes
