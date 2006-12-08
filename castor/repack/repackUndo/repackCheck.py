@@ -2,6 +2,7 @@ import os
 import sys
 import wrapcns
 import getopt
+from threading import Thread
 
 
 try:
@@ -9,10 +10,64 @@ try:
 except:
   print "Fatal: couldn't load module cx_Oracle.Make sure it is installed and $PYTHONPATH includes the directory where cx_Oracle.so resides.\n"
   sys.exit(2)
+
+listOfThread=[]
+
+
+class RecallingThread(Thread):
+   def __init__ (self,tape,maxFileName,minFileName,middleFileName):
+       Thread.__init__(self)
+       self.tape=tape
+       self.max=maxFileName
+       self.min=minFileName
+       self.middle=middleFileName
+       self.response=""
+      
+   def run(self):
+       finFlag=0
+       while finFlag != -1 and finFlag!=3:
+           qryMax=os.popen4("stager_qry -M "+maxFileName)[1].read()
+           qryMin=os.popen4("stager_qry -M "+minFileName)[1].read()
+           qryMiddle=os.popen4("stager_qry -M "+middleFileName)[1].read()
   
+           if qryMax.find("INVALID")!=-1 or qryMin.find("INVALID")!=-1 or qryMiddle.find("INVALID")!=-1 or qryMax.find("No such file or directory")!=-1 or qryMin.find("No such file or directory")!=-1 or qryMiddle.find("No such file or directory")!=-1:
+               finFlag=-1
+           else:
+               if qryMax.find("STAGED")!=-1:
+                   maxSize=((os.popen("nsls -l "+maxFileName).read()).split())[4]
+                   fileMax=os.popen4("rfcp "+maxFileName+" /tmp/fileMax"+tape)[1].read()
+                   if fileMax.find(maxSize+" bytes") == -1:
+                       finFlag=-1
+                       continue
+                   else:
+                       finFlag=finFlag+1
+                    
+               if qryMin.find("STAGED")!=-1:
+                   minSize=((os.popen("nsls -l "+minFileName).read()).split())[4]
+                   fileMin=os.popen4("rfcp "+minFileName+" /tmp/fileMin"+tape)[1].read()
+                   if fileMin.find(minSize+" bytes") == -1:
+                       finFlag=-1
+                       continue
+                   else:
+                       finFlag=finFlag+1
+                    
+               if qryMiddle.find("STAGED")!=-1:
+                   middleSize=((os.popen("nsls -l "+middleFileName).read()).split())[4]
+                   fileMiddle=os.popen4("rfcp "+middleFileName+" /tmp/fileMiddle"+tape)[1].read()
+                   if fileMiddle.find(middleSize+" bytes") == -1:
+                       finFlag=-1
+                       continue
+                   else:
+                       finFlag=finFlag+1    
 
+           if finFlag == 3:
+               self.response="All files from tape "+self.tape+" have been retrieved correctly, delete them from /tmp"
+           else:
+               self.response="In tape "+tape+" it was not possible to  recall at least one of the files."
+
+
+        
 # Retrieving tapes involved 
-
 
 listOfTape=""
 tapePool=""
@@ -91,6 +146,8 @@ repackCheck2="select * from repacksubrequest  where vid =:1"
 repackCheck3="select fileid from repacksegment where vid in (select requestid from repacksubrequest where vid=:1)"
 repackCheck4="select * from  cns_seg_metadata where s_fileid=:1 "
 
+recallThread=[]
+
 for tape in listOfTape:
   print
   print "*** TAPE involved: ",tape," ***"
@@ -138,6 +195,8 @@ for tape in listOfTape:
   repackCursor.execute(reqQuery,(tape,))
   repackResult=repackCursor.fetchall()
   myReq=repackResult[0][0]
+
+  print "These are the files chosen to be recalled:"
   
   queryMin="select fileid,fileseq from repacksegment where vid = :1 and fileseq in (select min(fileseq) from repacksegment where vid=:1)"
   repackCursor.execute(queryMin,(myReq,))
@@ -145,13 +204,7 @@ for tape in listOfTape:
   fileidMin=minResult[0][0]
 
   minFileName=((os.popen("nsGetPath lxs5012 %i"% (fileidMin)).read()).split())[0]
-  minSize=((os.popen("nsls -l "+minFileName).read()).split())[4]
-  print  minFileName+" chosen"
-  
-  #minOut=(os.popen4("rfcp "+ minFileName+" /tmp/minFile"+tape))[1].read()
-  #if minOut.find(minSize+" bytes")== -1:
-  #    print "sorry it is not possible to read the first file of the tape anymore."
-
+  print  "   "+minFileName
 
   queryMax="select fileid,fileseq from repacksegment where vid = :1 and fileseq in (select max(fileseq) from repacksegment where vid=:1)"
   repackCursor.execute(queryMax,(myReq,))
@@ -159,12 +212,8 @@ for tape in listOfTape:
   fileidMax=maxResult[0][0]
 
   maxFileName=((os.popen("nsGetPath lxs5012 %i"% (fileidMax)).read()).split())[0]
-  maxSize=((os.popen("nsls -l "+maxFileName).read()).split())[4]
-  print maxFileName+" chosen"
-      
-  #maxOut=(os.popen4("rfcp "+ maxFileName+" /tmp/maxFile"+tape))[1].read()
-  #if maxOut.find(maxSize+" bytes")== -1:
-  #    print "sorry it is not possible to read the last file of the tape anymore."
+  print "   "+maxFileName
+
   
   fileSeqMiddle= (maxResult[0][1] - minResult[0][1])/2
 
@@ -174,13 +223,21 @@ for tape in listOfTape:
   fileidMiddle= middleResult[0][0]
 
   middleFileName=((os.popen("nsGetPath lxs5012 %i"% (fileidMiddle)).read()).split())[0]
-  middleSize=((os.popen("nsls -l "+middleFileName).read()).split())[4]
-  print  middleFileName+" chosen"
-      
-
-  #middleOut=(os.popen4("rfcp "+ middleFileName+" /tmp/middleFile"+tape))[1].read()
-  #if middleOut.find(middleSize+" bytes")== -1:
-  #    print "sorry it is not possible to read the file in the middle of the tape anymore."
-
-       
+  print  "   "+middleFileName
+  if ((os.popen4("stager_get -M "+ maxFileName+" -M "+minFileName+" -M "+middleFileName))[1].read()).count("SUBREQUEST_READY") != 3:
+      print "Error for the stager_get  of one of the file"
+      continue
+  fileRecall=RecallingThread(tape,maxFileName,minFileName,middleFileName)
+  listOfThread.append(fileRecall)
+  fileRecall.start()
+   
+print 
+print "Now, be patient please ... the results for the recalling will be ready soon."
 print
+
+for tid in listOfThread:
+   tid.join()
+   print tid.response
+   
+
+
