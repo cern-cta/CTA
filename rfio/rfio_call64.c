@@ -2013,7 +2013,15 @@ char        *host;         /* Where the request comes from        */
 
 	 /* NOTE(fuji): from now on, flags is in host byte-order... */
          flags = ntohopnflg(flags);
-         if ( getconfent("RFIOD","DIRECTIO",0) ) {
+         myinfo.directio = 0;
+         if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+            myinfo.directio = 1;
+         }
+         myinfo.xfsprealloc = 0;
+         if ( p = getconfent("RFIOD", "XFSPREALLOC", 0) ) {
+            myinfo.xfsprealloc = atoi(p);
+         }
+         if (myinfo.directio) {
 #if defined(linux)
             log(LOG_INFO, "%s: O_DIRECT requested\n", __func__);
             flags |= O_DIRECT;
@@ -2626,7 +2634,7 @@ char tmpbuf[21], tmpbuf2[21];
    if (!daemonv3_rdmt) {
       log(LOG_DEBUG,"readerror64_v3: freeing iobuffer at 0X%X\n", iobuffer);
       if (iobufsiz > 0) {
-         if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+         if (myinfo.directio) {
             free_page_aligned(iobuffer);
          } else {
             free(iobuffer);
@@ -2640,7 +2648,7 @@ char tmpbuf[21], tmpbuf2[21];
          int      el;
          for (el=0; el < daemonv3_rdmt_nbuf; el++) {
             log(LOG_DEBUG,"readerror64_v3: freeing array element %d at 0X%X\n", el,array[el].p);
-            if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+            if (myinfo.directio) {
                free_page_aligned(array[el].p);
             } else {
                free(array[el].p);
@@ -2772,7 +2780,7 @@ struct rfiostat* infop;
          for (el=0; el < daemonv3_rdmt_nbuf; el++) { 
             log(LOG_DEBUG, "rread64_v3: allocating circular buffer element %d: %d bytes\n",
                el, daemonv3_rdmt_bufsize);
-            if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+            if (myinfo.directio) {
                array[el].p = (char *)malloc_page_aligned(daemonv3_rdmt_bufsize);
             } else {
                array[el].p = (char *)malloc(daemonv3_rdmt_bufsize);
@@ -2789,7 +2797,7 @@ struct rfiostat* infop;
       }
       else {
          log(LOG_DEBUG, "rread64_v3: allocating malloc buffer : %d bytes\n", DISKBUFSIZE_READ);
-         if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+         if (myinfo.directio) {
             iobuffer = (char *)malloc_page_aligned(DISKBUFSIZE_READ);
          } else {
             iobuffer = (char *)malloc(DISKBUFSIZE_READ);
@@ -2952,7 +2960,7 @@ struct rfiostat* infop;
             if (!daemonv3_rdmt) {
                log(LOG_DEBUG,"srread64_v3: freeing iobuffer at 0X%X\n", iobuffer);
                if (iobufsiz > 0) {
-                  if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+                  if (myinfo.directio) {
                      free_page_aligned(iobuffer);
                   } else {
                      free(iobuffer);
@@ -2981,7 +2989,7 @@ struct rfiostat* infop;
                }
                for (el=0; el < daemonv3_rdmt_nbuf; el++) {
                   log(LOG_DEBUG,"srread64_v3: freeing array element %d at 0X%X\n", el,array[el].p);
-                  if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+                  if (myinfo.directio) {
                      free_page_aligned(array[el].p);
                   } else {
                      free(array[el].p);
@@ -3319,7 +3327,7 @@ struct rfiostat   *infop;
 #if !defined(HPSS)
    if (!daemonv3_wrmt) {
       log(LOG_DEBUG,"writerror64_v3: freeing iobuffer at 0X%X\n", iobuffer);
-      if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+      if (myinfo.directio) {
          free_page_aligned(iobuffer);
       } else {
          free(iobuffer);
@@ -3332,7 +3340,7 @@ struct rfiostat   *infop;
          for (el=0; el < daemonv3_wrmt_nbuf; el++) {
             log(LOG_DEBUG,"writerror64_v3: freeing array element %d at 0X%X\n",
                el,array[el].p);
-            if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+            if (myinfo.directio) {
                free_page_aligned(array[el].p);
             } else {
                free(array[el].p);
@@ -3403,9 +3411,9 @@ struct rfiostat   *infop;
       char *p;
       
 #ifdef USE_XFSPREALLOC
-	if ( p = getconfent("RFIOD","XFSPREALLOC",0) ) {
-		rfio_xfs_resvsp64(fd, atoi(p));
-	}
+      if (myinfo.xfsprealloc) {
+         rfio_xfs_resvsp64(fd, myinfo.xfsprealloc);
+      }
 #endif
 
       first_write = 0;
@@ -3459,7 +3467,7 @@ struct rfiostat   *infop;
          for (el=0; el < daemonv3_wrmt_nbuf; el++) { 
             log(LOG_DEBUG, "rwrite64_v3: allocating circular buffer element %d: %d bytes\n",
                el,daemonv3_wrmt_bufsize);
-            if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+            if (myinfo.directio) {
                array[el].p = (char *)malloc_page_aligned(daemonv3_wrmt_bufsize);
             } else {
                array[el].p = (char *)malloc(daemonv3_wrmt_bufsize);
@@ -3742,7 +3750,7 @@ struct rfiostat   *infop;
 #if !defined(HPSS)
          if (!daemonv3_wrmt) {
             log(LOG_DEBUG,"rwrite64_v3: freeing iobuffer at 0X%X\n", iobuffer);
-            if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+            if (myinfo.directio) {
                free_page_aligned(iobuffer);
             } else {
                free(iobuffer);
@@ -3794,7 +3802,7 @@ struct rfiostat   *infop;
             /* Free the buffers                                         */
             for (el=0; el < daemonv3_wrmt_nbuf; el++) {
                log(LOG_DEBUG,"rwrite64_v3: freeing array element %d at 0X%X\n", el, array[el].p);
-               if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+               if (myinfo.directio) {
                   free_page_aligned(array[el].p);
                } else {
                   free(array[el].p);
@@ -3807,8 +3815,8 @@ struct rfiostat   *infop;
          }
 #endif /* !HPSS */
 #ifdef USE_XFSPREALLOC
-         if ( p = getconfent("RFIOD","XFSPREALLOC",0) ) {
-            rfio_xfs_unresvsp64(fd, atoi(p), myinfo.wnbr);
+         if (myinfo.xfsprealloc) {
+            rfio_xfs_unresvsp64(fd, myinfo.xfsprealloc, myinfo.wnbr);
          }
 #endif
          /* Send back final status and close sockets... and return     */

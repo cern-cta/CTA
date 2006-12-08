@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.29 $ $Date: 2003/01/09 14:31:57 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.30 $ $Date: 2006/12/08 16:19:28 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -213,6 +213,8 @@ struct rfiostat	{
 	HYPER   rnbr ;          /* byte read count              */
 	HYPER   wnbr ;          /* byte written count           */
 	int     mode64;         /* Flag: true if 64bit in use   */
+	int	directio;	/* Flag: true if O_DIRECT req'd */
+	unsigned long xfsprealloc;	/* megabytes to be preallocated */
 } ;
 #endif /* RFIO_KERNEL */
 
