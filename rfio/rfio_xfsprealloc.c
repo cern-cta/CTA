@@ -1,9 +1,13 @@
 /* RFIO XFS preallocation support */
-/* 2006/02/15 KELEMEN Peter <Peter.Kelemen@cern.ch> CERN IT/FIO/LA */
+/* 2006/12/08 KELEMEN Peter <Peter.Kelemen@cern.ch> CERN IT/FIO/LA */
+
+/* $Id: rfio_xfsprealloc.c,v 1.2 2006/12/08 14:31:53 fuji Exp $ */
 
 #include <xfs/libxfs.h>
 #include "log.h"
 #include "rfio_xfsprealloc.h"
+
+#define XFSPREALLOC_LOG_LEVEL    LOG_INFO
 
 void
 rfio_xfs_resvsp64(int fd, unsigned long mbytes)
@@ -12,12 +16,12 @@ rfio_xfs_resvsp64(int fd, unsigned long mbytes)
 	xfs_flock64_t fl;
 
 	if (mbytes == 0) {
-		log(LOG_DEBUG, "%s: fd %d, 0 MB, ignored\n", __func__, fd);
+		log(XFSPREALLOC_LOG_LEVEL, "%s: fd %d, 0 MB, ignored\n", __func__, fd);
 		goto bailout;
 	}
 
 	if ( platform_test_xfs_fd(fd) == 0 ) {
-		log(LOG_DEBUG, "%s: fd %d, not on XFS\n", __func__, fd);
+		log(XFSPREALLOC_LOG_LEVEL, "%s: fd %d, not on XFS\n", __func__, fd);
 		goto bailout;
 	}
 
@@ -31,7 +35,7 @@ rfio_xfs_resvsp64(int fd, unsigned long mbytes)
 			__func__, fd, mbytes, errno);
 		goto bailout;
 	}
-	log(LOG_DEBUG, "%s: fd %d, %ld MB, success\n", __func__, fd, mbytes);
+	log(XFSPREALLOC_LOG_LEVEL, "%s: fd %d, %ld MB, success\n", __func__, fd, mbytes);
 bailout:
 	return;
 }
@@ -44,27 +48,27 @@ rfio_xfs_unresvsp64(int fd, unsigned long mbytes, off64_t written)
 	off64_t bytes;
 
 	if (mbytes == 0) {
-		log(LOG_DEBUG, "%s: fd %d, 0 MB, ignored\n", __func__, fd);
+		log(XFSPREALLOC_LOG_LEVEL, "%s: fd %d, 0 MB, ignored\n", __func__, fd);
 		goto bailout;
 	}
 
 	bytes = mbytes * 1024 * 1024ULL;
-	log(LOG_DEBUG, "%s: fd %d, %lld bytes reservation\n", __func__, fd, bytes);
-	log(LOG_DEBUG, "%s: fd %d, %lld bytes written\n", __func__, fd, written);
+	log(XFSPREALLOC_LOG_LEVEL, "%s: fd %d, %lld bytes reservation\n", __func__, fd, bytes);
+	log(XFSPREALLOC_LOG_LEVEL, "%s: fd %d, %lld bytes written\n", __func__, fd, written);
 
 	if (written >= bytes) {
-		log(LOG_DEBUG, "%s: fd %d, larger or equal to %ld MB, nothing to do\n",
+		log(XFSPREALLOC_LOG_LEVEL, "%s: fd %d, larger or equal to %ld MB, nothing to do\n",
 			__func__, fd, mbytes);
 		goto bailout;
 	}
 
 	if ( platform_test_xfs_fd(fd) == 0 ) {
-		log(LOG_DEBUG, "%s: fd %d, not on XFS\n", __func__, fd);
+		log(XFSPREALLOC_LOG_LEVEL, "%s: fd %d, not on XFS\n", __func__, fd);
 		goto bailout;
 	}
 
 	bytes = bytes - written;	/* remaining bytes to unreserve */
-	log(LOG_DEBUG, "%s: fd %d, %lld bytes remaining\n", __func__, fd, bytes);
+	log(XFSPREALLOC_LOG_LEVEL, "%s: fd %d, %lld bytes remaining\n", __func__, fd, bytes);
 	fl.l_whence = SEEK_SET;
 	fl.l_start = written;
 	fl.l_len = bytes;
@@ -75,7 +79,7 @@ rfio_xfs_unresvsp64(int fd, unsigned long mbytes, off64_t written)
 			__func__, fd, bytes, errno);
 		goto bailout;
 	}
-	log(LOG_DEBUG, "%s: fd %d, %lld bytes, success\n", __func__, fd, bytes);
+	log(XFSPREALLOC_LOG_LEVEL, "%s: fd %d, %lld bytes, success\n", __func__, fd, bytes);
 
 bailout:
 	return;

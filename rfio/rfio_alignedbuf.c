@@ -1,9 +1,13 @@
 /* RFIO O_DIRECT memory aligned buffer support */
-/* 2006/02/15 KELEMEN Peter <Peter.Kelemen@cern.ch> CERN IT/FIO/LA */
+/* 2006/12/08 KELEMEN Peter <Peter.Kelemen@cern.ch> CERN IT/FIO/LA */
+
+/* $Id: rfio_alignedbuf.c,v 1.2 2006/12/08 14:31:53 fuji Exp $ */
 
 #include <unistd.h>		/* getpagesize() */
 #include "log.h"
 #include "rfio_alignedbuf.h"
+
+#define ALIGNEDBUF_LOG_LEVEL    LOG_INFO
 
 typedef struct a_map_item {
 	void *unaligned;
@@ -50,17 +54,17 @@ static void
 		p->aligned = a;
 		p->next = NULL;
 
-		log(LOG_DEBUG,"%s: u=%p a=%p\n", __func__, u, a);
+		log(ALIGNEDBUF_LOG_LEVEL,"%s: u=%p a=%p\n", __func__, u, a);
 		if (q = a_map_find_unaligned(a)) {
 			log(LOG_ERR,"%s: mapping already exists!\n", __func__);
 			return a;
 		}
 		if (q = _a_map_get_tail()) {
 			q->next = p;
-			log(LOG_DEBUG, "tail q=%p\n", q);
+			log(ALIGNEDBUF_LOG_LEVEL, "tail q=%p\n", q);
 		} else {
 			aligned_mapping = p;
-			log(LOG_DEBUG, "head p=%p\n", p);
+			log(ALIGNEDBUF_LOG_LEVEL, "head p=%p\n", p);
 		}
 		return a;
 	} else {
@@ -93,7 +97,7 @@ static void
 		}
 		u = q->unaligned;
 		free(q);
-		log(LOG_DEBUG,"%s: u=%p a=%p\n", __func__, u, a);
+		log(ALIGNEDBUF_LOG_LEVEL,"%s: u=%p a=%p\n", __func__, u, a);
 	} else {
 		log(LOG_ERR,"%s: a=%p mapping not found!\n", __func__, a);
 	}
@@ -107,7 +111,7 @@ void
 	int padding;
 	void *unaligned, *aligned;
 
-	log(LOG_DEBUG,"%s(%ld)\n", __func__, size);
+	log(ALIGNEDBUF_LOG_LEVEL,"%s(%ld)\n", __func__, size);
 	page_size = getpagesize();
 	mask = page_size-1;
 	padding = (size + mask) / page_size;
@@ -116,13 +120,13 @@ void
 	if (unaligned) {
 		aligned = (void*)((intptr_t) (unaligned + mask) & ~mask);
 		if ( a_map_add(unaligned, aligned) ) {
-			log(LOG_DEBUG, "%s: success\n", __func__);
+			log(ALIGNEDBUF_LOG_LEVEL, "%s: success\n", __func__);
 			return (void*)aligned;
 		} else {
 			return NULL;
 		}
 	} else {
-		log(LOG_DEBUG, "%s: failure\n", __func__);
+		log(ALIGNEDBUF_LOG_LEVEL, "%s: failure\n", __func__);
 		return NULL;
 	}
 }
@@ -132,13 +136,13 @@ free_page_aligned(void *buf)
 {
 	void *unaligned;
 
-	log(LOG_DEBUG,"%s: buf=%p\n", __func__, buf);
+	log(ALIGNEDBUF_LOG_LEVEL,"%s: buf=%p\n", __func__, buf);
 	unaligned = a_map_del(buf);
 	if (unaligned) {
 		free(unaligned);
-		log(LOG_DEBUG, "%s: success\n", __func__);
+		log(ALIGNEDBUF_LOG_LEVEL, "%s: success\n", __func__);
 	} else {
-		log(LOG_DEBUG, "%s: failure\n", __func__);
+		log(ALIGNEDBUF_LOG_LEVEL, "%s: failure\n", __func__);
 	}
 }
 
