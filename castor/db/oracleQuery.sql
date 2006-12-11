@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.351 $ $Release$ $Date: 2006/12/11 10:37:51 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.352 $ $Release$ $Date: 2006/12/11 11:04:10 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.351 $ $Date: 2006/12/11 10:37:51 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.352 $ $Date: 2006/12/11 11:04:10 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2446,57 +2446,66 @@ CREATE OR REPLACE PROCEDURE gcInvalidDiskCopies AS
   dcIds "numList";
   fileSizes "numList";
 BEGIN
-  LOOP   -- loop forever
-    FOR fs IN (SELECT id FROM FileSystem) LOOP
-      
-      -- GC the INVALID unused diskCopies on this filesystem
-      BEGIN
-        SELECT DC.id, CF.fileSize
-          BULK COLLECT INTO dcIds, fileSizes
-          FROM DiskCopy DC, CastorFile CF
-         WHERE DC.castorFile = CF.id
-           AND DC.fileSystem = fs.id
-           AND DC.status = 7  -- INVALID
-           AND NOT EXISTS (
-             SELECT 'x' FROM SubRequest
-              WHERE DC.status = 0 AND diskcopy = DC.id
-                AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10));  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
-        UPDATE DiskCopy SET status = 8  -- GCCANDIDATE
-         WHERE id MEMBER OF dcIds; 
-        -- compute and update the filesystem's freed space
-        sumSize := 0;
-        FOR i in fileSizes.FIRST .. fileSizes.LAST LOOP
-          sumSize := sumSize + fileSizes(i);
-        END LOOP;
-        UPDATE FileSystem
-           SET spaceToBeFreed = spaceToBeFreed + sumSize
-         WHERE id = fs.id;
-        -- commit now the cleanup of this filesystem 
-        COMMIT;
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-        NULL;    -- no invalid diskcopies to be removed, move on
-      END;
-      
-      -- sanity check in case the filesystem got full over the hard threshold
-      SELECT free + deltaFree - reservedSpace + spaceToBeFreed, minAllowedFreeSpace * totalSize
-        INTO free, minFree
-        FROM FileSystem
+  FOR fs IN (SELECT id FROM FileSystem) LOOP
+    
+    -- GC the INVALID unused diskCopies on this filesystem
+    BEGIN
+      SELECT DC.id, CF.fileSize
+        BULK COLLECT INTO dcIds, fileSizes
+        FROM DiskCopy DC, CastorFile CF
+       WHERE DC.castorFile = CF.id
+         AND DC.fileSystem = fs.id
+         AND DC.status = 7  -- INVALID
+         AND NOT EXISTS (
+           SELECT 'x' FROM SubRequest
+            WHERE DC.status = 0 AND diskcopy = DC.id
+              AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10));  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+      UPDATE DiskCopy SET status = 8  -- GCCANDIDATE
+       WHERE id MEMBER OF dcIds; 
+      -- compute and update the filesystem's freed space
+      sumSize := 0;
+      FOR i in fileSizes.FIRST .. fileSizes.LAST LOOP
+        sumSize := sumSize + fileSizes(i);
+      END LOOP;
+      UPDATE FileSystem
+         SET spaceToBeFreed = spaceToBeFreed + sumSize
        WHERE id = fs.id;
-      IF free < minFree THEN
-        -- there is no more space on this filesystem and everything is stuck: this can
-        -- happen if the migration is stuck for a while and the file system fills up;
-        -- then we "manually" trigger the standard GC, it will unblock the situation somewhen
-        UPDATE FileSystem SET free = free - 1 WHERE id = fs.id;
-        COMMIT;
-      END IF;
-      
-      -- yield to other jobs/transactions
-      DBMS_LOCK.sleep(seconds => 5.0);
-    END LOOP;
+      -- commit now the cleanup of this filesystem 
+      COMMIT;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      NULL;    -- no invalid diskcopies to be removed, move on
+    END;
+    
+    -- sanity check in case the filesystem got full over the hard threshold
+    SELECT free + deltaFree - reservedSpace + spaceToBeFreed, minAllowedFreeSpace * totalSize
+      INTO free, minFree
+      FROM FileSystem
+     WHERE id = fs.id;
+    IF free < minFree THEN
+      -- there is no more space on this filesystem and everything is stuck: this can
+      -- happen if the migration is stuck for a while and the file system fills up;
+      -- then we "manually" trigger the standard GC, it will unblock the situation somewhen
+      UPDATE FileSystem SET free = free - 1 WHERE id = fs.id;
+      COMMIT;
+    END IF;
+    
+    -- yield to other jobs/transactions
+    DBMS_LOCK.sleep(seconds => 5.0);
   END LOOP;
 END;
 
-  
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+      JOB_NAME        => 'GCInvalidDiskCopiesJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN gcInvalidDiskCopies(); END;',
+      START_DATE      => SYSDATE,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=30',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Regular cleanup of INVALID disk copies');
+END;
+
+
 /*
  * Trigger launching garbage collection whenever needed
  * Note that we only launch it when at least 4% is to be deleted
