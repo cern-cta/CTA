@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.352 $ $Release$ $Date: 2006/12/11 11:04:10 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.353 $ $Release$ $Date: 2006/12/11 18:27:16 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.352 $ $Date: 2006/12/11 11:04:10 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.353 $ $Date: 2006/12/11 18:27:16 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -469,12 +469,14 @@ BEGIN
          AND creationTime < getTime() - timeOut
          AND ROWNUM < 100)
     LOOP
+      -- drop the DiskCopy; the SubRequests go with the other cleanup procedure
       DELETE FROM DiskCopy WHERE id = dc.id;
       DELETE FROM ID2Type WHERE id = dc.id;
       BEGIN
-        SELECT id INTO unused FROM DiskCopy WHERE castorFile = dc.castorFile;
+        SELECT id INTO unused FROM DiskCopy 
+         WHERE castorFile = dc.castorFile AND ROWNUM < 2;
       EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- no diskCopy is left for this castorFile, let's drop the castorFile too
+        -- no DiskCopy is left for this CastorFile, let's drop it too
         DELETE FROM CastorFile WHERE id = dc.castorFile;
         DELETE FROM ID2Type WHERE id = dc.castorFile;
       END;
