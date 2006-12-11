@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.350 $ $Release$ $Date: 2006/12/06 14:57:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.351 $ $Release$ $Date: 2006/12/11 10:37:51 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.350 $ $Date: 2006/12/06 14:57:34 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.351 $ $Date: 2006/12/11 10:37:51 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -356,7 +356,6 @@ END;
 
 
 /* PL/SQL method to delete request */
-
 CREATE OR REPLACE PROCEDURE deleteRequest(rId IN INTEGER) AS
   rtype INTEGER;
   rclient INTEGER;
@@ -393,13 +392,12 @@ BEGIN  -- delete Request, Client and SubRequests
   
   -- Delete SubRequests
   DELETE FROM Id2Type WHERE id IN
-        (SELECT id FROM SubRequest WHERE request = rId);
+    (SELECT id FROM SubRequest WHERE request = rId);
   DELETE FROM SubRequest WHERE request = rId;
 END;
 
 
 /* Search and delete too old archived subrequests and its request */
-
 CREATE OR REPLACE PROCEDURE deleteArchivedRequests(timeOut IN NUMBER) AS
   myReq SubRequest.request%TYPE;
   CURSOR cur IS
@@ -416,17 +414,18 @@ BEGIN
       FETCH cur into myReq;
         EXIT WHEN cur%NOTFOUND;
       deleteRequest(myReq);
+      -- do it 100 by 100 and wait before the next bunch
       IF (counter = 100) THEN
         COMMIT;
         counter := 0;
+        DBMS_LOCK.sleep(seconds => 5.0);
       END IF;
     END LOOP;
-    COMMIT;
+  COMMIT;
   CLOSE cur;
 END;
 
 /* Search and delete "out of date" subrequests and its request */
-
 CREATE OR REPLACE PROCEDURE deleteOutOfDateRequests(timeOut IN NUMBER) AS
   myReq SubRequest.request%TYPE;
   CURSOR cur IS
@@ -443,14 +442,51 @@ BEGIN
       FETCH cur into myReq;
         EXIT WHEN cur%NOTFOUND;
       deleteRequest(myReq);
+      -- do it 100 by 100 and wait before the next bunch
       IF (counter = 100) THEN
         COMMIT;
         counter := 0;
+        DBMS_LOCK.sleep(seconds => 5.0);
       END IF;
     END LOOP;
-    COMMIT;
+  COMMIT;
   CLOSE cur;
 END;
+
+/* Search and delete old diskCopies in bad states */
+CREATE OR REPLACE PROCEDURE deleteOutOfDateDiskCopies(timeOut IN NUMBER) AS
+  unused NUMBER;
+BEGIN
+  LOOP
+    FOR dc IN (
+      -- select INVALID diskcopies without filesystem (they can exist after a
+      -- stageRm that came before the diskcopy had been created on disk) and ALL FAILED
+      -- ones (coming from failed recalls or failed removals from the gcDaemon).
+      -- Note that we don't select INVALID diskcopies from recreation of files
+      -- because they are taken by the standard GC as they physically exist on disk.
+      SELECT id, castorFile FROM DiskCopy
+       WHERE (status = 4 OR (status = 7 AND fileSystem = 0))
+         AND creationTime < getTime() - timeOut
+         AND ROWNUM < 100)
+    LOOP
+      DELETE FROM DiskCopy WHERE id = dc.id;
+      DELETE FROM ID2Type WHERE id = dc.id;
+      BEGIN
+        SELECT id INTO unused FROM DiskCopy WHERE castorFile = dc.castorFile;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- no diskCopy is left for this castorFile, let's drop the castorFile too
+        DELETE FROM CastorFile WHERE id = dc.castorFile;
+        DELETE FROM ID2Type WHERE id = dc.castorFile;
+      END;
+      COMMIT;
+    END LOOP;
+    -- do it 100 by 100 and wait before the next bunch
+    DBMS_LOCK.sleep(seconds => 5.0);
+  END LOOP;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  NULL;
+END;
+
 
 
 /* PL/SQL method implementing anyTapeCopyForStream.
@@ -1872,11 +1908,13 @@ BEGIN
      UPDATE SubRequest SET status = 7 WHERE id = sr.id;  -- FAILED
    END IF;
  END LOOP;
- -- set DiskCopies to GCCANDIDATE/INVALID. Note that we keep
+ -- set real DiskCopies to GCCANDIDATE. Note that we keep
  -- WAITTAPERECALL diskcopies so that recalls can continue
  UPDATE DiskCopy SET status = 8 -- GCCANDIDATE
   WHERE castorFile = cfId
     AND status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
+ -- set pending DiskCopies to INVALID. Note that they don't exist on disk
+ -- so they will only be taken by the cleaning daemon for the failed DCs.
  UPDATE DiskCopy SET status = 7 -- INVALID
   WHERE castorFile = cfId
     AND status IN (5, 11); -- WAITFS, WAITFS_SCHEDULING
@@ -2106,7 +2144,7 @@ BEGIN
   END LOOP;
 END;
 
-/* PL/SQL method implementing filesDeleted */
+/* PL/SQL method implementing filesDeletionFailedProc */
 CREATE OR REPLACE PROCEDURE filesDeletionFailedProc
 (dcIds IN castor."cnumList") AS
   cfId NUMBER;
@@ -2177,6 +2215,7 @@ BEGIN
   END;  
 END;
 
+
 /*
  * GC policy that mimic the old GC :
  * a mix of oldest first and biggest first
@@ -2187,21 +2226,18 @@ CREATE OR REPLACE FUNCTION defaultGCPolicy
   result castorGC.GCItem_Cur;
 BEGIN
   OPEN result FOR
-    SELECT /*+ INDEX(CF) INDEX(DS) */ DS.id, CF.fileSize,
-         CASE status
-           WHEN 7 THEN 100000000000    -- INVALID, they go the very first
-           WHEN 0 THEN getTime() - CF.lastAccessTime + greatest(0,86400*ln((CF.fileSize+1)/1024))
-         END
-     FROM DiskCopy DS, CastorFile CF
-    WHERE CF.id = DS.castorFile
-      AND DS.fileSystem = fsId
-      AND NOT EXISTS (
-        SELECT 'x' FROM SubRequest 
-         WHERE DS.status = 0 AND diskcopy = DS.id 
-           AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10))   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
-      AND DS.status in (0,7)
+    SELECT /*+ INDEX(CF) INDEX(DC) */ DC.id, CF.fileSize,
+           getTime() - CF.lastAccessTime + greatest(0,86400*ln((CF.fileSize+1)/1024))
+      FROM DiskCopy DC, CastorFile CF
+     WHERE CF.id = DC.castorFile
+       AND DC.fileSystem = fsId
+       AND DC.status = 0 -- STAGED
+       AND NOT EXISTS (
+         SELECT 'x' FROM SubRequest 
+          WHERE DC.status = 0 AND diskcopy = DC.id 
+            AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10))   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
     ORDER BY 3 DESC;
-  return result;
+  RETURN result;
 END;
 
 /*
@@ -2217,45 +2253,25 @@ CREATE OR REPLACE FUNCTION nopinGCPolicy
   result castorGC.GCItem_Cur;
 BEGIN
   OPEN result FOR
-    SELECT DiskCopy.id, CastorFile.fileSize, 100000000000
-      FROM DiskCopy, CastorFile
-     WHERE CastorFile.id = DiskCopy.castorFile
-       AND DiskCopy.fileSystem = fsId
-       AND DiskCopy.status = 7 -- INVALID
-    UNION
-    SELECT DiskCopy.id, CastorFile.fileSize,
+    SELECT /*+ INDEX(CastorFile) INDEX(DiskCopy) */ DiskCopy.id, CastorFile.fileSize,
            getTime() - CastorFile.LastAccessTime -- oldest first
            + GREATEST(0,86400*LN((CastorFile.fileSize+1)/1024)) -- biggest first
            + CASE CastorFile.nbAccesses
                WHEN 0 THEN 86400 -- non accessed last
                ELSE 20000 * CastorFile.nbAccesses -- most accessed last
              END
-      FROM DiskCopy, CastorFile, SubRequest
-     WHERE CastorFile.id = DiskCopy.castorFile
-       AND DiskCopy.fileSystem = fsId
-       AND DiskCopy.status = 0 -- STAGED
-       AND DiskCopy.id = SubRequest.DiskCopy (+)
-       AND Subrequest.id IS NULL
-     ORDER BY 3 DESC;
-  return result;
-END;
-
-/*
- * dummy GC policy for disk-only file systems
- */
-CREATE OR REPLACE FUNCTION nullGCPolicy
-(fsId INTEGER, garbageSize INTEGER)
-  RETURN castorGC.GCItem_Cur AS
-  result castorGC.GCItem_Cur;
-BEGIN
-  OPEN result FOR
-    SELECT DiskCopy.id, CastorFile.fileSize, 100000000000
       FROM DiskCopy, CastorFile
      WHERE CastorFile.id = DiskCopy.castorFile
        AND DiskCopy.fileSystem = fsId
-       AND DiskCopy.status = 7; -- INVALID
-  return result;
+       AND DiskCopy.status = 0 -- STAGED
+       AND NOT EXISTS (
+         SELECT 'x' FROM SubRequest 
+          WHERE DC.status = 0 AND diskcopy = DC.id 
+            AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10))   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+     ORDER BY 3 DESC;
+  RETURN result;
 END;
+
 
 /*
  * Runs Garbage collection on the specified FileSystem
@@ -2274,7 +2290,20 @@ CREATE OR REPLACE PROCEDURE garbageCollectFS(fsId INTEGER) AS
   bestCandidate INTEGER;
   bestValue NUMBER;
 BEGIN
-  -- Get the DiskPool and the maxFree space we want to achieve
+  -- List policies to be applied
+  BEGIN
+    SELECT UNIQUE svcClass.gcPolicy
+           BULK COLLECT INTO policies
+      FROM SvcClass, DiskPool2SvcClass
+     WHERE DiskPool2SvcClass.Parent = dpId
+       AND SvcClass.Id = DiskPool2SvcClass.Child
+       AND SvcClass.gcPolicy IS NOT NULL;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- no policy defined, nothing to do
+    RETURN;
+  END;  
+
+  -- Now get the DiskPool and the maxFree space we want to achieve
   SELECT diskPool, maxFreeSpace * totalSize - free - deltaFree + reservedSpace - spaceToBeFreed
     INTO dpId, toBeFreed
     FROM FileSystem
@@ -2291,18 +2320,10 @@ BEGIN
   -- release the filesystem lock so that other threads can go on
   COMMIT;
 
-  -- List policies to be applied
-  SELECT UNIQUE CASE
-          WHEN svcClass.gcPolicy IS NULL THEN 'defaultGCPolicy'
-          ELSE svcClass.gcPolicy
-         END BULK COLLECT INTO policies
-    FROM SvcClass, DiskPool2SvcClass
-   WHERE DiskPool2SvcClass.Parent = dpId
-     AND SvcClass.Id = DiskPool2SvcClass.Child;
   -- Get candidates for each policy
   nextItems.EXTEND(policies.COUNT);
   bestCandidate := -1;
-  bestValue := 100000000001; -- Take care that this is greater than the value given in defaultGCPolicy
+  bestValue := 100000000001; -- Take care that this is greater than the value given in defaultGCPolicy XXX
   IF policies.COUNT > 0 THEN
     EXECUTE IMMEDIATE 'BEGIN :1 := '||policies(policies.FIRST)||'(:2, :3); END;'
       USING OUT cur1, IN fsId, IN toBeFreed;
@@ -2413,6 +2434,69 @@ BEGIN
     NULL;            -- terminate the job
 END;
 
+
+/*
+ * Runs Garbage collection of invalid DiskCopies anywhere needed.
+ * This is continuously run as a DBMS JOB.
+ */
+CREATE OR REPLACE PROCEDURE gcInvalidDiskCopies AS
+  sumSize NUMBER;
+  free NUMBER;
+  minFree NUMBER;
+  dcIds "numList";
+  fileSizes "numList";
+BEGIN
+  LOOP   -- loop forever
+    FOR fs IN (SELECT id FROM FileSystem) LOOP
+      
+      -- GC the INVALID unused diskCopies on this filesystem
+      BEGIN
+        SELECT DC.id, CF.fileSize
+          BULK COLLECT INTO dcIds, fileSizes
+          FROM DiskCopy DC, CastorFile CF
+         WHERE DC.castorFile = CF.id
+           AND DC.fileSystem = fs.id
+           AND DC.status = 7  -- INVALID
+           AND NOT EXISTS (
+             SELECT 'x' FROM SubRequest
+              WHERE DC.status = 0 AND diskcopy = DC.id
+                AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10));  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+        UPDATE DiskCopy SET status = 8  -- GCCANDIDATE
+         WHERE id MEMBER OF dcIds; 
+        -- compute and update the filesystem's freed space
+        sumSize := 0;
+        FOR i in fileSizes.FIRST .. fileSizes.LAST LOOP
+          sumSize := sumSize + fileSizes(i);
+        END LOOP;
+        UPDATE FileSystem
+           SET spaceToBeFreed = spaceToBeFreed + sumSize
+         WHERE id = fs.id;
+        -- commit now the cleanup of this filesystem 
+        COMMIT;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        NULL;    -- no invalid diskcopies to be removed, move on
+      END;
+      
+      -- sanity check in case the filesystem got full over the hard threshold
+      SELECT free + deltaFree - reservedSpace + spaceToBeFreed, minAllowedFreeSpace * totalSize
+        INTO free, minFree
+        FROM FileSystem
+       WHERE id = fs.id;
+      IF free < minFree THEN
+        -- there is no more space on this filesystem and everything is stuck: this can
+        -- happen if the migration is stuck for a while and the file system fills up;
+        -- then we "manually" trigger the standard GC, it will unblock the situation somewhen
+        UPDATE FileSystem SET free = free - 1 WHERE id = fs.id;
+        COMMIT;
+      END IF;
+      
+      -- yield to other jobs/transactions
+      DBMS_LOCK.sleep(seconds => 5.0);
+    END LOOP;
+  END LOOP;
+END;
+
+  
 /*
  * Trigger launching garbage collection whenever needed
  * Note that we only launch it when at least 4% is to be deleted
@@ -2423,21 +2507,17 @@ FOR EACH ROW
 DECLARE
   freeSpace NUMBER;
   jobid NUMBER;
-  invalidCount NUMBER;
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
 BEGIN
   -- compute the actual free space taking into account reservations (reservedSpace)
   -- and already running GC processes (spaceToBeFreed)
   freeSpace := :new.free + :new.deltaFree - :new.reservedSpace + :new.spaceToBeFreed;
-  SELECT COUNT(*) INTO invalidCount FROM DiskCopy WHERE fileSystem = :new.id AND status = 7;
   -- shall we launch a new GC?
-  IF (:new.minFreeSpace * :new.totalSize  > freeSpace AND
+  IF :new.minFreeSpace * :new.totalSize  > freeSpace AND
      -- is it really worth launching it? (some other GCs maybe are already running
      -- so we accept it only if it will free more than 4%)
-     :new.maxFreeSpace * :new.totalSize > freeSpace + 0.04 * :new.totalSize) OR
-     -- or do we have enough invalid diskcopies to be cleaned up, regardless the current free space?
-     invalidCount > 100
+     :new.maxFreeSpace * :new.totalSize > freeSpace + 0.04 * :new.totalSize
   THEN   -- ok, we queue this filesystem for being garbage collected
     BEGIN
       INSERT INTO FileSystemGC VALUES (:new.id, getTime());
