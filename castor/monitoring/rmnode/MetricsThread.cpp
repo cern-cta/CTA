@@ -88,6 +88,7 @@ void castor::monitoring::rmnode::MetricsThread::run(void* par)
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 17, 1, params);
     // cleanup memory
     delete metrics;
+    metrics = 0;
     // check the acknowledgment
     castor::IObject* obj = s.readObject();
     castor::MessageAck* ack =
