@@ -60,12 +60,13 @@ class RecallingThread(Thread):
                    else:
                        finFlag=finFlag+1    
 
-           if finFlag == 3:
-               self.response="All files from tape "+self.tape+" have been retrieved correctly, delete them from /tmp"
-           else:
-               self.response="In tape "+tape+" it was not possible to  recall at least one of the files."
-
-
+       if finFlag == 3:
+           self.response="All files from tape "+self.tape+" have been retrieved correctly, delete them from /tmp"
+       else:
+           self.response="In tape "+tape+" it was not possible to  recall at least one of the files."
+       
+   
+           
         
 # Retrieving tapes involved 
 
