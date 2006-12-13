@@ -66,7 +66,7 @@ repackConnection= cx_Oracle.connect(repackUser+"/"+repackPass+"@"+repackDb)
 repackCursor=repackConnection.cursor()
 
 
-repackQry="select *  from repacksegment where vid in (select repacksubrequest.id from repacksubrequest,repackrequest where repacksubrequest.requestid=repackrequest.id and repackrequest.creationtime in (select max(creationtime) from (select * from repackrequest where id in (select requestid from repacksubrequest where vid=:1))) and repacksubrequest.requestid in (select requestid from repacksubrequest where vid=:2))"
+repackQry="select fileid,compression,segsize,filesec,copyno,blockid,fileseq,id,vid  from repacksegment where vid in (select repacksubrequest.id from repacksubrequest,repackrequest where repacksubrequest.requestid=repackrequest.id and repackrequest.creationtime in (select max(creationtime) from (select * from repackrequest where id in (select requestid from repacksubrequest where vid=:1))) and repacksubrequest.requestid in (select requestid from repacksubrequest where vid=:2))"
 
 for tape in listOfTape:
   print
