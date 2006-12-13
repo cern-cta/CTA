@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.32 $ $Release$ $Date: 2006/07/18 12:12:33 $ $Author: waldron $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.33 $ $Release$ $Date: 2006/12/13 18:48:00 $ $Author: waldron $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.32 $ $Release$ $Date: 2006/07/18 12:12:33 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.33 $ $Release$ $Date: 2006/12/13 18:48:00 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -44,6 +44,7 @@ WSADATA wsadata;
 #include <serrno.h>
 #include <Cgetopt.h>
 #include <Cinit.h>
+#include <Cthread_api.h>
 #include <Cuuid.h>
 #include <Cgrp.h>
 #include <Cpwd.h>
@@ -686,6 +687,22 @@ static int blockChild(
   return(rc);
 }
 
+static void shutdownService _PROTO((
+                                    int
+                                    ));
+
+static void signal_handler(void *arg) {
+	sigset_t set;
+	int      signal;
+	sigfillset(&set);
+
+	while (1) {
+		if (sigwait(&set, &signal) == 0) {
+			shutdownService(signal);
+		}
+	}
+}
+
 static void shutdownService(
                             signo
                             )
@@ -710,7 +727,7 @@ static void shutdownService(
   sleep(1);
   (void)blockChild(0);
   (void)checkWorkerExit(1);
-  dlf_shutdown(10);
+  dlf_shutdown(5);
   exit(0);
   return;
 }
@@ -804,7 +821,7 @@ static void startTapeErrorHandler()
                     strerror(errno),
                     RTCPCLD_LOG_WHERE
                     );
-    dlf_shutdown(10);
+    dlf_shutdown(5);
     exit(SYERR);
 #endif /* _WIN32 */    
   } else {
@@ -1009,7 +1026,7 @@ static int startWorker(
                   strerror(errno),
                   RTCPCLD_LOG_WHERE
                   );
-  dlf_shutdown(10);
+  dlf_shutdown(5);
   exit(SYERR);
 #endif /* _WIN32 */
   
@@ -1032,7 +1049,7 @@ int rtcpcld_main(
   tape_list_t **tapeArray, *tape;
   rtcpTapeRequest_t tapereq;
 #if !defined(_WIN32)
-  struct sigaction saOther;
+  sigset_t set;
 #endif /* _WIN32 */
   char *p = NULL;
 
@@ -1041,14 +1058,18 @@ int rtcpcld_main(
   C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
 
 #if !defined(_WIN32)
-  memset(&saOther,'\0',sizeof(saOther));
-  saOther.sa_handler = SIG_IGN;
-  sigaction(SIGPIPE,&saOther,NULL);
-  sigaction(SIGXFSZ,&saOther,NULL);
-  saOther.sa_handler = shutdownService;
-  sigaction(SIGINT,&saOther,NULL);
-  sigaction(SIGTERM,&saOther,NULL);
-  sigaction(SIGABRT,&saOther,NULL);
+
+  /* ignore all signals apart from INT, TERM and ABRT */
+  sigemptyset(&set);
+  sigaddset(&set, SIGINT);
+  sigaddset(&set, SIGTERM);
+  sigaddset(&set, SIGABRT);
+  sigprocmask(SIG_SETMASK, &set, NULL);
+
+  rc = Cthread_create_detached((void *)signal_handler, NULL);
+  if (rc != 1) {
+	  exit(1);
+  }
 #endif /* _WIN32 */
 
 #if defined(__DATE__) && defined (__TIME__)
@@ -1564,7 +1585,7 @@ int main(
     dlf_prepare();
     if ( Cinitdaemon("rtcpcld",SIG_IGN) == -1 ) {
 	    dlf_parent();
-	    dlf_shutdown(10);
+	    dlf_shutdown(5);
 	    exit(1);
     }
 #endif /* _WIN32 */

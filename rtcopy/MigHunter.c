@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.37 $ $Release$ $Date: 2006/11/06 10:36:37 $ $Author: sponcec3 $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.38 $ $Release$ $Date: 2006/12/13 18:48:00 $ $Author: waldron $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.37 $ $Release$ $Date: 2006/11/06 10:36:37 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.38 $ $Release$ $Date: 2006/12/13 18:48:00 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -54,6 +54,7 @@ WSADATA wsadata;
 #include <patchlevel.h>
 #include <getconfent.h>
 #include <Castor_limits.h>
+#include <Cthread_api.h>
 #include <Cinit.h>
 #include <log.h>
 #include <net.h>
@@ -1532,6 +1533,18 @@ static int addMigrationCandidatesToStreams(
   return(0);
 }
 
+static void signal_handler(void *arg) {
+	sigset_t set;
+	int      signal;
+	sigfillset(&set);
+
+	while (1) {
+		if (sigwait(&set, &signal) == 0) {
+			shutdownService(signal);
+		}
+	}
+}
+
 static void shutdownService(
                             signo
                             )
@@ -1553,7 +1566,7 @@ static void shutdownService(
     }
     restoreMigrCandidates(*_migrCandidates,*_nbMigrCandidates);
   }
-  dlf_shutdown(10);
+  dlf_shutdown(5);
   exit(0);
   return;
 }
@@ -1589,20 +1602,25 @@ int main(int argc, char *argv[])
   int c, rc, i, nbMigrCandidates = 0, nbOldStreams = 0, nbNewStreams = 0;
   time_t sleepTime = 0;
 #if !defined(_WIN32)
-  struct sigaction saOther;
+  sigset_t set;
 #endif /* _WIN32 */
 
   _migrCandidates = &migrCandidates;
   _nbMigrCandidates = &nbMigrCandidates;
 #if !defined(_WIN32)
-  memset(&saOther,'\0',sizeof(saOther));
-  saOther.sa_handler = SIG_IGN;
-  sigaction(SIGPIPE,&saOther,NULL);
-  sigaction(SIGXFSZ,&saOther,NULL);
-  saOther.sa_handler = shutdownService;
-  sigaction(SIGINT,&saOther,NULL);
-  sigaction(SIGTERM,&saOther,NULL);
-  sigaction(SIGABRT,&saOther,NULL);
+
+  /* ignore all signals apart from INT, TERM and ABRT */
+  sigemptyset(&set);
+  sigaddset(&set,SIGINT);
+  sigaddset(&set,SIGTERM);
+  sigaddset(&set,SIGABRT);
+  sigprocmask(SIG_SETMASK,&set,NULL);
+
+  rc = Cthread_create_detached((void *)signal_handler,NULL);
+  if (rc != 1) {
+	  exit(1);
+  }
+
 #endif /* _WIN32 */
   
   cmdName = argv[0];
@@ -1660,7 +1678,7 @@ int main(int argc, char *argv[])
     dlf_prepare();
     if ( (Cinitdaemon("MigHunter",SIG_IGN) == -1) ) {
       dlf_parent();
-      dlf_shutdown(10);
+      dlf_shutdown(5);
       exit(1);
     }
     dlf_child();
@@ -1674,7 +1692,7 @@ int main(int argc, char *argv[])
               sstrerror(serrno));
     }
     LOG_SYSCALL_ERR("prepareForDBAccess()");
-    dlf_shutdown(10);
+    dlf_shutdown(5);
     return(1);
   }
   do {
