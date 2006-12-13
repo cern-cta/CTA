@@ -159,15 +159,15 @@ EXTERN_C int DLL_DECL dlf_init _PROTO((const char *facility, char *errptr));
 
 
 /**
- * Shutdown the DLF interface, terminate all threads and reclaim all allocated resources. If the interface
- * is already shutdown then no action will be taken. If a wait time is greater then 0, then the api will
- * wait up to X seconds for the threads to flush there queues to the central server. After this time any 
- * threads left running will have all their data destroyed.
+ * Shutdown the DLF interface. If the interface is already shutdown then no action will be taken. If a 
+ * wait time is greater then 0, then the api will wait up to X seconds for the threads to flush their 
+ * message queues to the central server.
  *
  * @param wait     : the number of seconds to wait for threads to flush there queues before thread
  *                   termination.
  *
  * @returns        : 0 on success
+ * @warning        : once the api is shutdown it cannot be re-initialised.
  */
 
 EXTERN_C int DLL_DECL dlf_shutdown _PROTO((int wait));

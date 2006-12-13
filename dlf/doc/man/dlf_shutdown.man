@@ -8,17 +8,16 @@ dlf_shutdown \- shutdown the DLF interface
 .BI "int dlf_shutdown (int " wait ")"
 .SH DESCRIPTION
 .B dlf_shutdown
-shuts down the DLF interface terminating all threads and free global data structures. If the interface is already shutdown by a previous call or the interface was not previous initialised with a call to
+shuts down the DLF interface. If the interface is already shutdown by a previous call or the interface was not previous initialised with a call to
 .BR "dlf_init" (3)
 then no action will be taken.
 
 If a
 .I wait
-time is greater then 0, then the api will wait up to X seconds for the threads to flush there queues to the
+time is greater then 0, then the api will wait up to X seconds for the threads to flush their messages queues to the
 .BR dlfserver
-. After this time any threads left running will have all their data destroyed.
 
-After a successful shutdown, the api can be reinitialised with another call to
+Note: once shutdown the api cannot be re initialised
 .BR "dlf_init" (3)
 
 .SH "RETURN VALUE"
