@@ -1,5 +1,5 @@
 /* SQL statements for type RepackSubRequest */
-CREATE TABLE RepackSubRequest (vid VARCHAR2(2048), xsize INTEGER, status NUMBER, cuuid VARCHAR2(2048), filesMigrating NUMBER, filesStaging NUMBER, files NUMBER, filesFailed NUMBER, id INTEGER PRIMARY KEY, requestID INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE RepackSubRequest (vid VARCHAR2(2048), xsize INTEGER, status NUMBER, cuuid VARCHAR2(2048), filesMigrating NUMBER, filesStaging NUMBER, files NUMBER, filesFailed NUMBER, submitTime INTEGER, id INTEGER PRIMARY KEY, requestID INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type RepackSegment */
 CREATE TABLE RepackSegment (fileid INTEGER, compression NUMBER, segsize INTEGER, filesec INTEGER, copyno NUMBER, blockid INTEGER, fileseq INTEGER, id INTEGER PRIMARY KEY, vid INTEGER) INITRANS 50 PCTFREE 50;
