@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2006/11/20 16:49:17 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2006/12/13 12:59:16 $ $Author: felixehm $
  *
  *
  *
@@ -150,7 +150,7 @@ castor::repack::RepackServer::RepackServer() :
      {22, "RepackFileStager: New request for staging files"},							// RepackFileStager:run()
      {23, "RepackFileStager: Error during multi-Repack check"},// RepackFileStager:stage_files
      {24, "FileListHelper: Retrieved segs for SubRequest"},							//FileListHelper:getFileListSegs()
-     {25, "RepackFileStager: Stager reques sent and RepackSubRequest updated"},		// RepackFileStager:stage_files
+     {25, "RepackFileStager: Stager request sent and RepackSubRequest updated"},		// RepackFileStager:stage_files
      {26, "RepackFileStager: Staging files"},												// RepackFileStager:stage_files
      {27, "DatabaseHelper: Unable to update RepackSubRequest"},
      {28, "DatabaseHelper: Tape already in repack que!"},
@@ -172,6 +172,7 @@ castor::repack::RepackServer::RepackServer() :
      {45, "RepackFileStager: File has already a STAGED diskcopy. To be restarted later"},
      {46, "FileListHelper: Found same file twice on tape" },
      {47, "No results yet found for this CUUID. Will try again later." },
+     {48, "RepackMonitor: Stager doesn't know this request id. Assuming it is over."},
      {99, "TODO::MESSAGE"},
      {-1, ""}};
   castor::dlf::dlf_init("Repack", messages);
