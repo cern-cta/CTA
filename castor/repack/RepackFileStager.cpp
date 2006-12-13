@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2006/12/06 12:43:16 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2006/12/13 12:42:56 $ $Author: felixehm $
  *
  *
  *
@@ -25,6 +25,7 @@
  *****************************************************************************/
  
 #include "RepackFileStager.hpp"
+#include "castor/rh/FileQryResponse.hpp"
  
 namespace castor {
 	namespace repack {
@@ -212,12 +213,12 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
 void RepackFileStager::restartRepack(RepackSubRequest* sreq){
 
     _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
-    struct stage_filequery_resp *responses;
-    int nbresps= 0;
-
     RepackMonitor monitor(ptr_server);
     FileListHelper filelisthelper(ptr_server->getNsName());
-
+    
+    /* this is for the monitor service for checking files in invalid status */
+    std::vector<castor::rh::FileQryResponse*> fr;
+    std::vector<castor::rh::FileQryResponse*>::iterator response;
 
     /** fake the original sreq */
     RepackSubRequest* faked = new RepackSubRequest();
@@ -231,34 +232,42 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq){
     /** we only want to restart a repack for the files, which made problems 
         (status in invalid) and are still on the original tape */
     try {
-      monitor.getStats(faked, &responses, &nbresps);
+
+      monitor.getStats(faked, &fr);
+
+    }catch (castor::exception::InvalidArgument inval){
+     // we don't handle this error, since, we ignore it. It means that the request id
+     // is not known by the stager.
     }catch (castor::exception::Exception ex){
-      if ( ex.code() != EINVAL ) /* we handle all,but not such requestID error*/ {
-        castor::dlf::Param params[] =
-        {castor::dlf::Param("Module", "RepackFileStager" ),
-         castor::dlf::Param("Error Message", ex.getMessage().str() ),
-         castor::dlf::Param("Responses", nbresps )};
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 3, params);
-        sreq->setStatus(SUBREQUEST_FAILED);
-        m_dbhelper->updateSubRequest(sreq,false, cuuid);
-        delete faked;
-        return;
-      }
+      // any other error (communication, whatever..) we set the SubRequest to FAILED */
+      castor::dlf::Param params[] =
+      {castor::dlf::Param("Module", "RepackFileStager" ),
+       castor::dlf::Param("Error Message", ex.getMessage().str() ),
+       castor::dlf::Param("Responses", fr.size() )};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 3, params);
+      sreq->setStatus(SUBREQUEST_FAILED);
+      m_dbhelper->updateSubRequest(sreq,false, cuuid);
+      delete faked;
+      return;
     }
     
     /** if we got an answer for this cuuid, its means that the StageRepackRequest is
         not over. We are not allowed to send a new Request, but to try to finish the
         files in invalid status.
     */
-    for ( int i=0; i<nbresps; i++ ) {
-      if ( responses[i].status == FILE_INVALID_STATUS )
+    response=fr.begin();
+    while ( response != fr.end() ) {
+      if ( (*response)->status() == FILE_INVALID_STATUS )
       {
         RepackSegment* seg = new RepackSegment();
-        seg->setFileid(responses[i].fileid);
+        seg->setFileid((*response)->fileId());
         faked->addSegment(seg);
       }
+      response++;
     }
-    free_filequery_resp(responses, nbresps);
+    for (int i=0; i < fr.size(); i++ ) {
+     delete fr[i];
+    }
 
     /** next check: if there are no files in failed, staging or migrating, get the
         remaining files on tape, they have to be submitted again */
@@ -298,7 +307,9 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq){
     faked->setRequestID(NULL);  /** set to NULL;just to be sure, it pointed to a foreign one */ 
 
     freeRepackObj(faked);  /** we know that there is no RepackRequest for 
-                              the faked one, so we can delete it directly */
+                             * the faked one, so we can delete it directly
+                             * note, that the RepackSegments are also deleted.
+                              */
 }
 
 
