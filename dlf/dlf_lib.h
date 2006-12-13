@@ -21,7 +21,7 @@
  * @file  lib.h
  * @brief definitions and structures for api internals
  *
- * $Id: dlf_lib.h,v 1.1 2006/10/27 07:06:53 waldron Exp $
+ * $Id: dlf_lib.h,v 1.2 2006/12/13 18:36:55 waldron Exp $
  */
 
 #ifndef _API_H
@@ -40,8 +40,8 @@
 
 /* socket related */
 #define API_CONNECT_TIMEOUT      5          /**< number of seconds to wait for a connection        */
-#define API_WRITE_TIMEOUT        120        /**< number of seconds to wait in netwrite_timeout     */
-#define API_READ_TIMEOUT         120        /**< number of seconds to wait in netread_timeout      */
+#define API_WRITE_TIMEOUT        20         /**< number of seconds to wait in netwrite_timeout     */
+#define API_READ_TIMEOUT         20         /**< number of seconds to wait in netread_timeout      */
 
 
 /**
@@ -58,17 +58,15 @@ typedef struct target_t   target_t;
 struct target_t {
 	char               path[1024];      /**< path to the log file                              */
 	char               server[64];      /**< url to the server                                 */
-	int                index;           /**< position of thread in target pool                 */
 	int                port;            /**< port to connect to on remote host                 */
 	int                socket;          /**< file descriptor for socket communications         */
 	int                fac_no;          /**< the facility number provided by a DLF_INIT call   */
 	int                sevmask;         /**< the severity mask                                 */
 	long               mode;            /**< the targets mode e.g. initialised, connected etc  */
-	time_t             pause;           /**< do nothing until pause time is in the past        */
 	queue_t            *queue;          /**< internal fifo message queue                       */
 	long               queue_size;      /**< the size of the queue                             */
-	int                tid;             /**< thread id                                         */
-	time_t             err_full;        /**< the last time a queue full error was reported     */
+	int                mutex;           /**< target specific mutex                             */
+	int                shutdown;        /**< flag to indicate whether the thread should die    */
 };
 
 
