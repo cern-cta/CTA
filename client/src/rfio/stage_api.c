@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.1 2004/10/18 21:46:44 jdurand Exp $
+ * $Id: stage_api.c,v 1.2 2006/12/13 17:44:46 itglp Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -35,7 +35,7 @@
 #include "net.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.1 $ $Date: 2004/10/18 21:46:44 $ CERN IT/DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.2 $ $Date: 2006/12/13 17:44:46 $ CERN IT/DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifdef hpux
@@ -48,7 +48,7 @@ static int DLL_DECL stageshutdown _PROTO((u_signed64, char *));
 
 extern char *getenv();         /* To get environment variables */
 extern char *getconfent();     /* To get configuration entries */
-extern int rfio_access _PROTO((char *, int));
+extern int rfio_access _PROTO((const char *, int));
 
 #if TMS
 static int stage_api_tmscheck _PROTO((char *, char *, char *, char *, char *));
