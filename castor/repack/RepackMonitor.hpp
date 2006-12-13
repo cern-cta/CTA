@@ -26,6 +26,7 @@
 #define REPACKMONITOR_HPP 1
 
 #include "RepackCommonHeader.hpp"
+#include "castor/rh/FileQryResponse.hpp"
 #include "DatabaseHelper.hpp"
 #include "FileListHelper.hpp"
 #include "castor/server/IThread.hpp"
@@ -42,28 +43,46 @@ namespace castor {
   class RepackMonitor : public castor::server::IThread {
 
     public:
+      /**
+       * The Constructor 
+       */
       RepackMonitor(RepackServer* svr);
+      
+      /**
+       * The Destructor
+       */
       ~RepackMonitor();
       
+      /**
+       * runs an update of file statistics if all available RepackSubRequests.
+       */
       void run(void *param) throw();
+
+      /**
+       * Not implemented
+       */
       void stop() throw();
 
 
-      RepackSubRequest* getFinishedTapes() throw (castor::exception::Internal);
-
+      /**
+       * Updates the file statistics from a RepackSubRequest by querying the
+       * assigned stager (in the RepackRequest). It takes the ServiceClass 
+       * information of the RepackRequest into account)
+       * @throws castor::exception::Exception in case of an error.
+       */
       void updateTape(RepackSubRequest*)   throw (castor::exception::Internal);
       
 
       /** Retrieves the stats from a request (by the given cuuid in the 
-       *  RepackSubRequest).
-       *  @param sreq The RepackSubRequest to check
-       *  @param responses The allocated stager API file response struct
-       *  @param nbresps The Number of reponses
-       *  @returns -1 in case of an error (Message has been written to DLF) 
+       *  RepackSubRequest). Beware that the returned objects in the vector
+       *  have to be deleted by the caller.
+       *  @param sreq The RepackSubRequest to check.
+       *  @param fr A vector with the allocated FileResponses.
+       *  @throws castor::exception::Exception in case of an error.
        */
-      int RepackMonitor::getStats(RepackSubRequest* sreq, 
-                            struct stage_filequery_resp **responses,
-                            int* nbresps)   throw (castor::exception::Exception);
+      void RepackMonitor::getStats(RepackSubRequest* sreq,
+                                   std::vector<castor::rh::FileQryResponse*>* fr)
+                                             throw (castor::exception::Exception);
 
     private:
       DatabaseHelper* m_dbhelper;
