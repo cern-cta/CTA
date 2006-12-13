@@ -1,8 +1,5 @@
-// CASTOR
-
-
 /*
- * parse.c,v 1.17 2004/03/02 09:17:40 obarring Exp
+ * $Id: parse.c,v 1.2 2006/12/13 17:47:36 itglp Exp $
  */
 
 /*
@@ -29,7 +26,8 @@ static char sccsid[] = "@(#)parse.c,v 1.17 2004/03/02 09:17:40 CERN/IT/PDP/DM Fr
 #endif
 #include "osdep.h"
 #include "Cns_api.h"
-#include "rfio.h"               /* remote file I/O definitions          */
+#include "rfio.h"               /* remote file I/O definitions */
+#include "stager_client_api_common.h"   /* for getDefaultForGlobal() */
 #include "Csnprintf.h"
 #include <Cglobals.h>
 
@@ -46,9 +44,9 @@ static int buffer_key = -1;
 
 
 
-/**************************************************************************/
-/*      code taken from RfioTURL .... file disapeared after the merge     */ 
-/**************************************************************************/
+/*******************************************************************************/
+/*      code taken from RfioTURL .... file disappeared after the DPM merge     */ 
+/*******************************************************************************/
 
 
 #define DEFAULT_RFIO_TURL_PREFIX "rfio://"
@@ -71,11 +69,6 @@ static int buffer_key = -1;
 #include <sys/types.h>
 #include <common.h>
 
-#define DEFAULT_HOST "stagepublic"
-#define DEFAULT_PORT2 9002
-#define DEFAULT_PORT1 5007
-#define DEFAULT_SVCCLASS ""  
-#define DEFAULT_VERSION 1
 
 typedef struct RfioTURL
 {
@@ -133,129 +126,6 @@ char *getRfioTURLPrefix()
   return(str);
 }
 
-
-/********************************************************************************************************************
- * This Function:                                                                                                   *
- * if *host or *svc are null or empty strings retrive the values, the same if *port and *version are <= 0.          * 
- * To retrive the values it looks if:                                                                               *
- * enviroment variables are set or stager_mapper as values defined or castor.conf or (if it doesn't have valid)     * 
- * it uses default hard coded values.                                                                               *
- *                                                                                                                  *
- *******************************************************************************************************************/   
-
-int getDefaultForGlobal(
-			char** host,
-			int* port,
-			char** svc,
-			int* version)
-
-
-{ 
-	char *hostMap, *hostDefault, *svcMap, *svcDefault;
-	int versionMap,versionDefault, portDefault, ret;
-	char* aux=NULL; 
-        struct group* grp=NULL; 
-	gid_t gid;
-
-       hostMap=hostDefault=svcMap=svcDefault=NULL;
-       versionMap=versionDefault=portDefault=ret=0;
-
-	if(host == NULL || port == NULL || svc == NULL || version == NULL ){ return (-1);}
-	hostDefault=*host;
-	svcDefault=*svc;
-	portDefault=*port;
-	versionDefault=*version;
-
-	gid=getgid();
-
-	if((grp = getgrgid(gid)) <= 0 ){
-		ret=just_stage_mapper(getenv("USER"),NULL,&hostMap,&svcMap,&versionMap); 
-	}
-	else{
-		ret=just_stage_mapper(NULL,grp->gr_name,&hostMap,&svcMap,&versionMap);
-	}
-
-	if(hostDefault==NULL || strcmp(hostDefault,"")==0){
-		if(hostDefault){free(hostDefault);}
-		aux=getenv("STAGE_HOST");
-		hostDefault=aux==NULL?NULL:strdup(aux);
-		if (hostDefault==NULL || strcmp(hostDefault,"")==0 ){
-			if(hostDefault){free(hostDefault);}
-			if (hostMap==NULL || strcmp(hostMap,"")==0 ){
-				aux=(char*)getconfent("STAGER","HOST", 0);
-				hostDefault=aux==NULL?NULL:strdup(aux);
-				if (hostDefault==NULL || strcmp(hostDefault,"")==0 ){
-					if(hostDefault){free(hostDefault);}
-					hostDefault=strdup(DEFAULT_HOST);
-				}
-			}
-			else{
-				if(hostDefault){free(hostDefault);}
-				hostDefault=strdup(hostMap);
-			}
-		}
-	}
-	
-
-	if (svcDefault==NULL || strcmp(svcDefault,"")==0){
-		if(svcDefault){free(svcDefault);}
-		aux=getenv("STAGE_SVCCLASS");
-		svcDefault= aux==NULL? NULL: strdup(aux);
-		if (svcDefault==NULL || strcmp(svcDefault,"")==0 ){
-			if(svcDefault){free(svcDefault);}
-			if (svcMap==NULL || strcmp(svcMap,"")==0 ){
-				aux=(char*)getconfent("STAGER","SVC_CLASS", 0);
-				svcDefault=aux==NULL?NULL:strdup(aux);
-				if (svcDefault==NULL || strcmp(svcDefault,"")==0 ){
-					if(svcDefault){free(svcDefault);}
-					svcDefault=strdup("");
-				}
-			}
-			else{
-				if(svcDefault){free(hostDefault);}
-				svcDefault=strdup(DEFAULT_SVCCLASS);
-			}
-		}
-
-	}
-	if (versionDefault<=0){
-		aux=getenv("RFIO_USE_CASTOR_V2");
-		if(aux){
-		        
-			versionDefault=strcasecmp(aux,"YES")==0?2:1;
-		}else{versionDefault=0;}
-    		if (versionDefault<=0){
-			versionDefault=versionMap+1;
-			if (versionDefault<=0){
-			aux=(char*)getconfent("STAGER","VERSION",0);
-			versionDefault=aux==NULL?0:atoi(aux);
-				if (versionDefault<=0){
-					   versionDefault= DEFAULT_VERSION;
-			 	}
-			}
-		}
-	}
-
-	if (portDefault<=0){
-		aux=getenv("STAGE_PORT");
-		portDefault=aux==NULL?0:atoi(aux);
-		if (portDefault<=0){
-			aux=(char*)getconfent("STAGER", "PORT", 0);
-			portDefault=aux==NULL?0:atoi(aux);
-			if (portDefault<=0){
-			   portDefault= versionDefault==2?DEFAULT_PORT2:DEFAULT_PORT1;
-			}
-		}
-		
-	}
-
-	if (*host==NULL || strcmp(*host,"")){*host=hostDefault;}	
-	if (port==NULL || *port<=0) {*port=portDefault;}
-	if (*svc==NULL || strcmp(*svc,"")){*svc=svcDefault;}
-	if (version==NULL || *version<=0){*version=versionDefault;}
-
-	return (1);
-}
 
 /********************************************************************************************************************
  * This Function is parsing the string and returning the Turl struct that will be used by rfio_parseln.             *
