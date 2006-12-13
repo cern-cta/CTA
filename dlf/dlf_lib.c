@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.9 2006/11/29 13:45:50 waldron Exp $
+ * $Id: dlf_lib.c,v 1.10 2006/12/13 18:38:33 waldron Exp $
  */
 
 /* headers */
@@ -56,7 +56,7 @@ static msgtext_t *texts[DLF_MAX_MSGTEXTS];      /**< the clients message texts  
 static hash_t    *hashtexts = NULL;             /**< fast lookup of message texts            */
 
 /* mutexes */
-static int api_mutex;
+static int global_mutex;
 
 /* api variables */
 static long api_mode = MODE_DEFAULT;            /**< api mode                                */
@@ -67,92 +67,6 @@ static int  api_targetcount = 0;                /**< the number of targets the c
 
 /* prototype for common/socket_timeout.c */
 EXTERN_C int DLL_DECL netconnect_timeout _PROTO((SOCKET, struct sockaddr *, size_t, int));
-
-
-/*
- * dlf_error
- *   - this function is used to log internal error messages from the api. It has some duplication of
- *     code from dlf_write but this is necessary to prevent recursive loops! Errors generated here are
- *     not reported.
- */
-
-void dlf_error(char *format, ...) {
-
-	/* variables */
-	struct timeval tv;
-	struct tm      tm_str;
-
-	int       rv;
-	int       i;
-	int       tid;
-	int       fd;
-	int       len;
-	char      buffer[1024];
-	char      hostname[DLF_LEN_HOSTNAME + 1];
-
-	va_list   ap;
-
-	/* interface initialised ? */
-	if (!IsInitialised(api_mode)) {
-		return;
-	}
-	
-	/* timestamp */
-	gettimeofday(&tv, NULL);
-	localtime_r(&tv.tv_sec, &tm_str);
-	len = strftime(buffer, sizeof(buffer), "DATE=%Y%m%d%H%M%S.", &tm_str);
-
-	rv = gethostname(hostname, sizeof(hostname));
-	if (rv < 0) {
-		return;
-	}
-	Cglobals_getTid(&tid);
-
-	/* main message */
-	len += snprintf(&buffer[len], sizeof(buffer) - len - 1, "%06d HOST=%s LVL=ERROR FACILITY=DLF PID=%d TID=%d ",
-			(int)tv.tv_usec,
-			hostname,
-			getpid(),
-			tid);
-
-	/* format message */
-	va_start(ap, format);
-	vsnprintf(&buffer[len], sizeof(buffer) - len - 1, format, ap);
-	va_end(ap);
-
-	/* terminate string */
-	len = strlen(buffer);
-	if (buffer[len - 1] != '\n') {
-		sprintf(&buffer[len], "\n");
-	}
-
-	for (i = 0; i < API_MAX_TARGETS; i++) {
-		if (targets[i] == NULL)
-			continue;
-		if (!IsFile(targets[i]->mode))
-			continue;                     /* not a file               */
-		if (!(targets[i]->sevmask & severitylist[2].sevmask))
-			continue;                     /* severity not of interest */
-
-		/* write to stdout or file */
-		if (!strncasecmp(targets[i]->path, "stdout", 6)) {
-			fprintf(stdout, "%s", buffer);
-			fflush(stdout);
-		} else {
-#ifdef O_LARGEFILE
-  			fd = open(targets[i]->path, O_APPEND|O_WRONLY|O_CREAT|O_LARGEFILE, 0644);
-#else
-        		fd = open(targets[i]->path, O_APPEND|O_WRONLY|O_CREAT, 0644);
-#endif
-
-			if (fd < 0) {
-				continue;
-			}
-			write(fd, buffer, len + 1);
-			close(fd);
-		}
-	}
-}
 
 
 /*
@@ -198,15 +112,9 @@ int dlf_read(target_t *t, int *rtype, int *rcode) {
 		t->socket = -1;
 		ClrConnected(t->mode);
 	} else if (type == DLF_REP_ERR) {
-		err_no = rc;
-		if (err_no > DLF_ERR_MAX) {
-			err_no = DLF_ERR_MAX;
-		}
-		Cthread_mutex_lock(&api_mutex);
-		dlf_error("SERVER=\"%s\" ERROR=\"%s\"", t->server, dlf_errorlist[(err_no - 1)].err_str);
-		Cthread_mutex_unlock(&api_mutex);
+		/* nothing */
 	} else if (type == DLF_REP_IRC) {
-
+		/* nothing */
 	} else {
 		return APP_FAILURE;  /* unknown response type */
 	}
@@ -240,9 +148,6 @@ int dlf_send(target_t *t, char *data, int len) {
 
 		hp = Cgethostbyname(t->server);
 		if (hp == NULL) {
-			Cthread_mutex_lock(&api_mutex);
-			dlf_error("MSG=\"Failed to resolve hostname\" SERVER=\"%s\"", t->server);
-			Cthread_mutex_unlock(&api_mutex);
 			return h_errno;
 		}
 		server_addr.sin_addr.s_addr = ((struct in_addr *)hp->h_addr)->s_addr;
@@ -263,9 +168,7 @@ int dlf_send(target_t *t, char *data, int len) {
 		/* connect */
 		rv = netconnect_timeout(t->socket, (struct sockaddr *)&server_addr, sizeof(server_addr), API_CONNECT_TIMEOUT);
 		if (rv < 0) {
-			Cthread_mutex_lock(&api_mutex);
-			dlf_error("MSG=\"Failed to connect to remote host\" SERVER=\"%s\" TIMEOUT=\"%d\" ERROR=\"%s\"", t->server, API_CONNECT_TIMEOUT, neterror());
-			Cthread_mutex_unlock(&api_mutex);
+			t->socket = -1;
 			ClrConnected(t->mode);
 			return rv;
 		}
@@ -668,12 +571,6 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 		j = 0;
 		do {
 			rv = queue_push(targets[i]->queue, m);
-
-			/* should we report that the queue is full ? */
-			if ((rv == APP_QUEUE_FULL) && (targets[i]->err_full < (time(NULL) - 30))) {
-				dlf_error("MSG=\"Internal server queue full\" SERVER=\"%s\" QUEUE_SIZE=\"%ld\"", targets[i]->server, queue_size(targets[i]->queue));
-				targets[i]->err_full = time(NULL);
-			}
 			j++;
 		} while ((rv == APP_QUEUE_FULL) && (j < 3));
 
@@ -765,9 +662,7 @@ int DLL_DECL dlf_write(Cuuid_t reqid, int severity, int msg_no, struct Cns_filei
 	/* everything ok ? */
 	rv = APP_FAILURE;
 	if (ok == 1) {
-		Cthread_mutex_lock(&api_mutex);
 		rv = dlf_writep(reqid, severity, msg_no, ns, numparams, plist);
-		Cthread_mutex_unlock(&api_mutex);
 	}
 
 	/* free resources */
@@ -806,6 +701,7 @@ void dlf_worker(target_t *t) {
 	char      *sbp;
 	char      *buffer;
 	char      *ptr;
+	time_t    pause = time(NULL);
 
 	/* initialise variables */
 	uid = geteuid();
@@ -817,13 +713,22 @@ void dlf_worker(target_t *t) {
 	 *   - it is important not to sleep(3) in this loop, this can cause shutdown requests to be
 	 *     missed
 	 */
-	while (!IsShutdown(api_mode)) {
+	while (1) {
+		Cthread_mutex_lock(&t->mutex);
+		if (t->shutdown) {
+			if (!queue_size(t->queue)) {
+				Cthread_mutex_unlock(&t->mutex);
+				break;
+			}
+			pause = 0;
+		}
+		Cthread_mutex_unlock(&t->mutex);
 
 		/* the client-server communication protocol has the capacity for the server to notify
 		 * the client to slow down or pause message send for X seconds of time. This helps reduce
 		 * the load on a heavily loaded DLF server.
 		 */
-		if (t->pause > time(NULL)) {
+		if (pause > time(NULL)) {
 			sleep(1);
 			continue;
 		}
@@ -833,24 +738,28 @@ void dlf_worker(target_t *t) {
 		 *     initialisation has occurred. This is because the thread doesn't know its facility
 		 *     number yet
 		 */
+		/* initialised ?
+		 *   - the thread cannot send any messages to the remote target/destination until
+		 *     initialisation has occurred. This is because the thread doesn't know its facility
+		 *     number yet
+		 */
 		if (!IsInitialised(t->mode)) {
 
 			/* calculate message size */
 			len = strlen(api_facname) + 1;
-			rv  = Cthread_mutex_timedlock(&api_mutex, 1);
+			rv  = Cthread_mutex_timedlock(&global_mutex, 1);
                         for (i = 0; i < DLF_MAX_MSGTEXTS; i++) {
                                 if (texts[i] == NULL)
                                         continue;
-
                                 len += sizeof(unsigned short) + strlen(texts[i]->msg_text) + 1;
 			}
 
 			/* allocate memory for DLF_INIT message */
 			buffer = (char *) malloc((5 * LONGSIZE) + len);
 			if (buffer == NULL) {
-				t->pause = time(NULL) + 10;
+				pause = time(NULL) + 10;
 				if (rv == APP_SUCCESS) {
-					Cthread_mutex_unlock(&api_mutex);
+					Cthread_mutex_unlock(&global_mutex);
 				}
 				continue;
 			}
@@ -875,7 +784,7 @@ void dlf_worker(target_t *t) {
 			/* marshall the message texts */			
 			if (rv != APP_SUCCESS) {
 				free(buffer);
-				Cthread_mutex_unlock(&api_mutex);
+				Cthread_mutex_unlock(&global_mutex);
 				continue;
 			}
 			for (i = 0; i < DLF_MAX_MSGTEXTS; i++) {
@@ -884,7 +793,7 @@ void dlf_worker(target_t *t) {
 				marshall_SHORT(sbp,  texts[i]->msg_no);
 				marshall_STRING(sbp, texts[i]->msg_text);
 			}
-			Cthread_mutex_unlock(&api_mutex);
+			Cthread_mutex_unlock(&global_mutex);
 
 			/* update message length */
 			len = sbp - buffer;
@@ -896,10 +805,7 @@ void dlf_worker(target_t *t) {
 			 */
 			rv = dlf_send(t, buffer, len);
 			if (rv != APP_SUCCESS) {
-				if (IsShutdown(api_mode)) {
-					break;
-				}
-				t->pause = time(NULL) + 10;
+				pause = time(NULL) + 10;
 				free(buffer);
 				continue;
 			}
@@ -907,10 +813,7 @@ void dlf_worker(target_t *t) {
 			/* read the response */
 			rv = dlf_read(t, &type, &code);
 			if (rv != APP_SUCCESS) {
-				if (IsShutdown(api_mode)) {
-					break;
-				}
-				t->pause = time(NULL) + 10;
+				pause = time(NULL) + 10;
 				free(buffer);
 				continue;
 			}
@@ -932,15 +835,15 @@ void dlf_worker(target_t *t) {
 		if (rv == APP_QUEUE_TERMINATED) {
 			break;                             /* queue terminated, signifies a shutdown */
 		} else if (rv == APP_QUEUE_EMPTY) {
-			t->pause = time(NULL) + 5;         /* no messages available                  */
+			pause = time(NULL) + 5;            /* no messages available                  */
 			continue;
 		} else if (rv != APP_SUCCESS) {
-			t->pause = time(NULL) + 5;
+			pause = time(NULL) + 5;
 			continue;
 		}
 
 		if (message == NULL) {
-			t->pause = time(NULL) + 5;
+			pause = time(NULL) + 3;
 			continue;
 		}
 	
@@ -949,7 +852,7 @@ void dlf_worker(target_t *t) {
 		 */
 		buffer = (char *) malloc((5 * LONGSIZE) + message->size);
 		if (buffer == NULL) {
-			t->pause = time(NULL) + 60;
+			pause = time(NULL) + 60;
 			continue;
 		}
 
@@ -1001,10 +904,7 @@ void dlf_worker(target_t *t) {
 		/* send data to server */
 		rv = dlf_send(t, buffer, len);
 		if (rv != APP_SUCCESS) {
-			if (IsShutdown(api_mode)) {
-				break;
-			}
-			t->pause = time(NULL) + 20;
+			pause = time(NULL) + 20;
 			free(buffer);
 			free_message(message);
 			continue;
@@ -1013,10 +913,7 @@ void dlf_worker(target_t *t) {
 		/* read the response */
 		rv = dlf_read(t, &type, &code);
 		if (rv != APP_SUCCESS) {
-			if (IsShutdown(api_mode)) {
-				break;
-			}
-			t->pause = time(NULL) + 10;
+			pause = time(NULL) + 10;
 			free(buffer);
 			free_message(message);
 			continue;
@@ -1025,19 +922,16 @@ void dlf_worker(target_t *t) {
 		/* instructed to throttle by the server ? */
 		if ((type == DLF_REP_IRC) && (code > 0)) {
 			usleep((code * 1000));
-			if (IsShutdown(api_mode)) {
-				break;
-			}
+			Cthread_mutex_unlock(&t->mutex);
 		}
 
 	       	free(buffer);
 		free_message(message);
 	}
-
+ 
 	/* exit */
 	Cthread_exit(0);
 }
-
 
 
 /*
@@ -1050,9 +944,9 @@ void DLL_DECL dlf_prepare(void) {
 	int     i;
 
 	/* prevent dlf_regtext(), dlf_init() and dlf_shutdown() calls being made */
-	Cthread_mutex_lock(&api_mutex);
+	Cthread_mutex_lock(&global_mutex);
 	if (!IsInitialised(api_mode) || IsForking(api_mode)) {
-		Cthread_mutex_unlock(&api_mutex);
+		Cthread_mutex_unlock(&global_mutex);
 		return;
 	}
 	SetForking(api_mode);
@@ -1069,6 +963,7 @@ void DLL_DECL dlf_prepare(void) {
 		if (targets[i]->queue == NULL)
 			continue;
 		queue_lock(targets[i]->queue);
+		Cthread_mutex_lock(&targets[i]->mutex);
 	}	
 }
 
@@ -1099,6 +994,7 @@ void DLL_DECL dlf_child(void) {
 		if (targets[i]->queue == NULL)
 			continue;
 		queue_unlock(targets[i]->queue);
+		Cthread_mutex_unlock(&targets[i]->mutex);
 
 		/* recreate the server's internal queue */
 		(void)queue_destroy(targets[i]->queue, (void *(*)(void *))free_message);
@@ -1106,14 +1002,14 @@ void DLL_DECL dlf_child(void) {
 		(void)queue_create(&targets[i]->queue, targets[i]->queue_size);
 
 		/* recreate the thread */
-		targets[i]->tid = Cthread_create((void *(*)(void *))dlf_worker, (target_t *)targets[i]);
+		Cthread_create((void *(*)(void *))dlf_worker, (target_t *)targets[i]);
 	}
 
 	/* allow dlf_write() and dlf_writep() calls */
 	hash_unlock(hashtexts);
 
 	/* restore global api mutex */
-	Cthread_mutex_unlock(&api_mutex);	
+	Cthread_mutex_unlock(&global_mutex);	
 }
 
 
@@ -1141,13 +1037,14 @@ void DLL_DECL dlf_parent(void) {
 		if (targets[i]->queue == NULL)
 			continue;
 		queue_unlock(targets[i]->queue);
+		Cthread_mutex_unlock(&targets[i]->mutex);
 	}
 
 	/* allow dlf_write() and dlf_writep() calls */
 	hash_unlock(hashtexts);
 
 	/* restore global api mutex */
-	Cthread_mutex_unlock(&api_mutex);
+	Cthread_mutex_unlock(&global_mutex);
 }
 
 
@@ -1170,25 +1067,25 @@ int DLL_DECL dlf_regtext(unsigned short msg_no, const char *msg_text) {
 	/* although the fast lookup hash is thread safe, the message text global table isn't hence the
 	 * need for this global mutex lock of the entire interface.
 	 */
-	Cthread_mutex_lock(&api_mutex);
+	Cthread_mutex_lock(&global_mutex);
 
 	/* not initialised ? */
 	if (!IsInitialised(api_mode)) {
-		Cthread_mutex_unlock(&api_mutex);
+		Cthread_mutex_unlock(&global_mutex);
 		return -1;
 	}
 
 	/* allocate memory */
 	entry = (msgtext_t *) malloc(sizeof(msgtext_t));
 	if (entry == NULL) {
-		Cthread_mutex_unlock(&api_mutex);
+		Cthread_mutex_unlock(&global_mutex);
 		return -1;
 	}
 	entry->msg_text = NULL;
 
 	if (strlen(msg_text) > DLF_LEN_STRINGVALUE) {
 		free(entry);
-		Cthread_mutex_unlock(&api_mutex);
+		Cthread_mutex_unlock(&global_mutex);
 		return -1;
 	}
 
@@ -1203,14 +1100,14 @@ int DLL_DECL dlf_regtext(unsigned short msg_no, const char *msg_text) {
 	/* too many msgtexts defined ? */
 	if (found == 0) {
 		free(entry);
-		Cthread_mutex_unlock(&api_mutex);
+		Cthread_mutex_unlock(&global_mutex);
 		return -1;
 	}
 
 	/* to provide fast msgtext to msgno lookups we use a global hash. Here we check to make sure
 	 * the next entry will not be a duplicate
 	 */
-	snprintf(num,  sizeof(int), "%d", msg_no);
+	snprintf(num,  sizeof(int),  "%d", msg_no);
 	snprintf(text, sizeof(text), "%s", msg_text);
 
 	message = strdup(text);
@@ -1223,7 +1120,7 @@ int DLL_DECL dlf_regtext(unsigned short msg_no, const char *msg_text) {
 	if (rv == -1) {
 		free(message);
 		free(entry);
-		Cthread_mutex_unlock(&api_mutex);
+		Cthread_mutex_unlock(&global_mutex);
 		return 0;     /* key already exits */
 	}
 
@@ -1231,7 +1128,7 @@ int DLL_DECL dlf_regtext(unsigned short msg_no, const char *msg_text) {
 	entry->msg_text = strdup(text);
 	if (entry->msg_text == NULL) {
 		free(entry);
-		Cthread_mutex_unlock(&api_mutex);
+		Cthread_mutex_unlock(&global_mutex);
 		return -1;
 	}
 	entry->msg_no = msg_no;
@@ -1251,7 +1148,7 @@ int DLL_DECL dlf_regtext(unsigned short msg_no, const char *msg_text) {
 		}		
 	}
 
-	Cthread_mutex_unlock(&api_mutex);
+	Cthread_mutex_unlock(&global_mutex);
 
 	return 0;
 }
@@ -1285,16 +1182,10 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 	}
 	Cthread_init();
 
-	/* this function shouldn't be called from within a thread as initialisation should only occur
-	 * once and only once for the whole system. Re-initialisation is of course possible but a call
-	 * to dlf_shutdown() must be made beforehand. Here we hold a global mutex to prevent multiple
-	 * dlf_init()'s at the same time.
-	 */
-	Cthread_mutex_lock(&api_mutex);
-
 	/* already initialised ? */
+	Cthread_mutex_lock(&global_mutex);
 	if (IsInitialised(api_mode)) {
-		Cthread_mutex_unlock(&api_mutex);
+		Cthread_mutex_unlock(&global_mutex);
 		return 0;
 	}
 	SetInitialised(api_mode);
@@ -1313,7 +1204,7 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
        	/* convert facility name to upper case */
 	if (strlen(facility) > (sizeof(api_facname) - 1)) {
 		snprintf(errptr, CA_MAXLINELEN, "dlf_init(): facility name exceeds %d characters in length", sizeof(api_facname) - 1);
-		Cthread_mutex_unlock(&api_mutex);
+		Cthread_mutex_unlock(&global_mutex);
 		return -1;
 	}
 	strncpy(api_facname, facility, sizeof(api_facname) - 1);
@@ -1436,7 +1327,7 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 			/* too many targets defined ? */
 			if (found == 0) {
 				snprintf(errptr, CA_MAXLINELEN, "dlf_init(): too many logging destinations defined");
-				Cthread_mutex_unlock(&api_mutex);
+				Cthread_mutex_unlock(&global_mutex);
 				free(value);
 				return -1;
 			}
@@ -1445,7 +1336,7 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 			t = (target_t *) malloc(sizeof(target_t));
 			if (t == NULL) {
 				snprintf(errptr, CA_MAXLINELEN, "dlf_init(): failed to malloc() : %s", strerror(errno));
-				Cthread_mutex_unlock(&api_mutex);
+				Cthread_mutex_unlock(&global_mutex);
 				free(value);
 				return -1;
 			}
@@ -1455,11 +1346,7 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 			 *     NULL here and later create the server threads, queue and hash'ing structures once
 			 *     the whole initialisation sequence has completed.
 			 */
-			t->pause      = time(NULL) + 1;
-			t->err_full   = 0;
 			t->port       = port;
-			t->tid        = -1;
-			t->index      = j;
 			t->socket     = -1;
 			t->queue      = NULL;
 			t->queue_size = queue_size;
@@ -1467,7 +1354,8 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 			t->fac_no     = -1;
 			t->sevmask    = severitylist[i].sevmask;
 			t->path[0]    = '\0';
-
+			t->shutdown   = 0;
+		     
 			/* set the type */
 			if (!strcasecmp(uri, "file")) {
 				strncpy(t->path, buffer, sizeof(t->path) - 1);
@@ -1495,7 +1383,7 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 	}
 	if (j > API_MAX_THREADS) {
 		snprintf(errptr, CA_MAXLINELEN, "dlf_init(): too many servers defined, maximum threads would be exceeded");
-		Cthread_mutex_unlock(&api_mutex);
+		Cthread_mutex_unlock(&global_mutex);
 		return -1;
 	}
 
@@ -1510,22 +1398,19 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 		rv = queue_create(&targets[i]->queue, targets[i]->queue_size);
 		if (rv != 0) {
 			snprintf(errptr, CA_MAXLINELEN, "dlf_init(): failed to queue_create() : code %d", rv);
-			Cthread_mutex_unlock(&api_mutex);
+			Cthread_mutex_unlock(&global_mutex);
 			return -1;
 		}
 
 		/* create thread */
-		targets[i]->tid = Cthread_create((void *(*)(void *))dlf_worker, (target_t *)targets[i]);
-		if (targets[i]->tid == -1) {
-			snprintf(errptr, CA_MAXLINELEN, "dlf_init(): failed to Cthread_create() : %s", strerror(errno));
-			Cthread_mutex_unlock(&api_mutex);
+		if (Cthread_create_detached((void *(*)(void *))dlf_worker, (target_t *)targets[i]) == -1) {
+			snprintf(errptr, CA_MAXLINELEN, "dlf_init(): failed to Cthread_create_detached() : %s", strerror(errno));
+			Cthread_mutex_unlock(&global_mutex);
 			return -1;
 		}
 	}
 
-	/* destroy thread attributes and mutex */
-	Cthread_mutex_unlock(&api_mutex);
-
+	Cthread_mutex_unlock(&global_mutex);
 	return 0;	
 }
 
@@ -1542,61 +1427,44 @@ int DLL_DECL dlf_shutdown(int wait) {
 	int    found;
 
 	/* interface already shutdown */
-	Cthread_mutex_lock(&api_mutex);
+	Cthread_mutex_lock(&global_mutex);
 	if (IsShutdown(api_mode) || !IsInitialised(api_mode)) {
-		Cthread_mutex_unlock(&api_mutex);
+		Cthread_mutex_unlock(&global_mutex);
 		return 0;
 	}
-	Cthread_mutex_unlock(&api_mutex);
+	Cthread_mutex_unlock(&global_mutex);
 
-	/* if a wait has been defined, wait X seconds for all threads to flush there data to the
-	 * central server
-	 */
+	/* flag the targets for shutdown */
+	for (i = 0; i < API_MAX_TARGETS; i++) {
+		if (targets[i] == NULL)
+			continue;
+		if (!IsServer(targets[i]->mode)) 
+			continue;
+		Cthread_mutex_lock(&targets[i]->mutex);
+		targets[i]->shutdown = 1;
+		Cthread_mutex_unlock(&targets[i]->mutex);
+	}
+
+	/* wait up to X seconds for targets to flush */
 	for (i = 0; i < wait; i++) {
-		
 		for (j = 0, found = 0; j < API_MAX_TARGETS; j++) {
 			if (targets[j] == NULL)
 				continue;
 			if (!IsServer(targets[j]->mode))
 				continue;
-			if (queue_size(targets[j]->queue))
+			if (queue_size(targets[j]->queue)) 
 				found++;
-			
-			/* data still exists, reset the pause time as a last desperate attempt */
-			targets[j]->pause = time(NULL);
 		}
-	
-		/* all threads have flushed there data ? */
 		if (found == 0) {
 			break;
 		}
 		sleep(1);
 	}
 	
-	Cthread_mutex_lock(&api_mutex);
-	SetShutdown(api_mode);
-
-	/* cleanup targets */
-	for (i = 0; i < API_MAX_TARGETS; i++) {
-		if (targets[i] == NULL)
-			continue;
-
-		/* if a connection to a server is established, close it */
-		if (IsServer(targets[i]->mode)) {
-			Cthread_join(targets[i]->tid, NULL);
-
-			if (targets[i]->socket != -1) {
-				netclose(targets[i]->socket);
-				targets[i]->socket = -1;
-				ClrConnected(targets[i]->mode);
-			}
-			queue_destroy(targets[i]->queue, (void *(*)(void *))free_message);
-			free(targets[i]->queue);
-		}
-	
-		free(targets[i]);
-		targets[i] = NULL;
-	}
+	/* we deliberately don't clear the initialisation and shutdown flags here, once shutdown,
+	 * reinitialisation is not possible, nor do we destroy the messages fifo queues as threads may 
+	 * still be using them
+	 */
 
 	/* destroy global hashes */
 	hash_destroy(hashtexts, (void *(*)(void *))free);
@@ -1604,14 +1472,10 @@ int DLL_DECL dlf_shutdown(int wait) {
 	/* clear msg texts */
 	free_msgtexts(texts);
 	api_targetcount = 0;
-
-	ClrInitialised(api_mode);
-	ClrShutdown(api_mode);
-
-	Cthread_mutex_unlock(&api_mutex);
        
 	return 0;
 }
 
 
 /** End-of-File **/
+
