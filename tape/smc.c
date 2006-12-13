@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smc.c,v $ $Revision: 1.9 $ $Date: 2005/12/05 10:23:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smc.c,v $ $Revision: 1.10 $ $Date: 2006/12/13 12:59:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -370,8 +370,8 @@ char *loader;
 struct robot_info *robot_info;
 int verbose;
 {
-        int c;
-        struct smc_element_info *element_info;
+    int c;
+    struct smc_element_info *element_info;
 	int i;
 	char *msgaddr;
 	int nbelem;

@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smcsubr2.c,v $ $Revision: 1.5 $ $Date: 2006/07/28 15:11:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smcsubr2.c,v $ $Revision: 1.6 $ $Date: 2006/12/13 12:59:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -24,8 +24,8 @@ struct robot_info *robot_info;
 int drvord;
 char *vid;
 {
-        int c;
-        struct smc_element_info element_info;
+    int c;
+    struct smc_element_info element_info;
 	char func[16];
 	char *msgaddr;
 	struct smc_status smc_status;
@@ -230,8 +230,8 @@ int drvord;
 char *vid;
 int invert;
 {
-        int c;
-        struct smc_element_info element_info;
+    int c;
+    struct smc_element_info element_info;
 	char func[16];
 	char *msgaddr;
 	struct smc_status smc_status;

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.18 $ $Date: 2006/07/28 15:08:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.19 $ $Date: 2006/12/13 12:59:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -1192,6 +1192,7 @@ smcmount(vid, side, loader, vsnretry)
 char *vid;
 int side;
 char *loader;
+int vsnretry;
 {
 	int c;
 	struct smc_element_info element_info;
@@ -1206,15 +1207,16 @@ char *loader;
 		RETURN (c);
 	if (rmc_host) {
 		c = rmc_mount (rmc_host, smc_ldr, vid, side, drvord);
-		if (c) {
-            
+        if (c == EBUSY) {
+           RETURN(RBT_FAST_RETRY);
+        } else if (c) {
 			p = strrchr (rmc_errbuf, ':');
 			sprintf (msg, TP041, "mount", vid, cur_unm,
 				p ? p + 2 : rmc_errbuf);
             /* Just send message to operator after two retries*/ 
-            if (vsnretry > 2 && (serrno == SECOMERR)) {  
+            if (vsnretry > 3 && (serrno == SECOMERR)) {  
 			   usrmsg (func, "%s\n", msg);
-            } else if (vsnretry <= 2 && (serrno == SECOMERR)) {
+            } else if (vsnretry <= 3 && (serrno == SECOMERR)) {
 			   tplogit (func, "%s", msg);
             } else {
 			   usrmsg (func, "%s\n", msg);
@@ -1225,9 +1227,12 @@ char *loader;
 	}
 	if ((c = smc_find_cartridge (smc_fd, smc_ldr, vid, 0, 0, 1, &element_info)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
-		if (smc_status.rc == -1 || smc_status.rc == -2)
+        if (c == EBUSY) {
+		    usrmsg (func, "%s\n", msgaddr);
+            RETURN(RBT_FAST_RETRY);
+		} else if (smc_status.rc == -1 || smc_status.rc == -2) {
 			usrmsg (func, "%s\n", msgaddr);
-		else {
+		} else {
 			p = strrchr (msgaddr, ':');
 			usrmsg (func, TP042, smc_ldr, "find_cartridge",
 				p ? p + 2 : msgaddr);
@@ -1247,9 +1252,12 @@ char *loader;
 	if ((c = smc_move_medium (smc_fd, smc_ldr, element_info.element_address,
 	    robot_info.device_start+drvord, side)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
-		if (smc_status.rc == -1 || smc_status.rc == -2)
+        if (c == EBUSY) {
 			usrmsg (func, "%s\n", msgaddr);
-		else {
+            RETURN (RBT_FAST_RETRY);
+		} else if (smc_status.rc == -1 || smc_status.rc == -2){
+			usrmsg (func, "%s\n", msgaddr);
+		} else {
 			p = strrchr (msgaddr, ':');
 			sprintf (msg, TP041, "mount", vid, cur_unm,
 				p ? p + 2 : msgaddr);
@@ -1278,14 +1286,16 @@ int vsnretry;
 		RETURN (c);
 	if (rmc_host) {
 		c = rmc_dismount (rmc_host, smc_ldr, vid, drvord, force);
-		if (c) {
-			  p = strrchr (rmc_errbuf, ':');
-			  sprintf (msg, TP041, "demount", vid, cur_unm,
+        if (c == EBUSY) {
+           RETURN (RBT_FAST_RETRY);
+        } else if (c) {
+			 p = strrchr (rmc_errbuf, ':');
+			 sprintf (msg, TP041, "demount", vid, cur_unm,
 				  p ? p + 2 : rmc_errbuf);
             /* Just send message to operator after two retries on connection reset*/ 
-            if (vsnretry > 2 && (serrno == SECOMERR)) {
+            if (vsnretry > 3 && (serrno == SECOMERR)) {
 			  usrmsg (func, "%s\n", msg);
-            } else if (vsnretry <= 2 && (serrno == SECOMERR)){
+            } else if (vsnretry <= 3 && (serrno == SECOMERR)){
 			   tplogit (func, "%s", msg);
             } else {
 			   usrmsg (func, "%s\n", msg);
@@ -1297,9 +1307,12 @@ int vsnretry;
 	if ((c = smc_read_elem_status (smc_fd, smc_ldr, 4,
 	    robot_info.device_start+drvord, 1, &element_info)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
-		if (smc_status.rc == -1 || smc_status.rc == -2)
+        if (c == EBUSY) {
+            usrmsg (func, "%s\n", msgaddr);
+            RETURN (RBT_FAST_RETRY);
+		} else if (smc_status.rc == -1 || smc_status.rc == -2) {
 			usrmsg (func, "%s\n", msgaddr);
-		else {
+		} else {
 			p = strrchr (msgaddr, ':');
 			usrmsg (func, TP042, smc_ldr, "read_elem_status",
 				p ? p + 2 : msgaddr);
@@ -1322,7 +1335,10 @@ int vsnretry;
 	    robot_info.device_start+drvord, element_info.source_address,
 	    (element_info.flags & 0x40) ? 1 : 0)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
-		if (smc_status.rc == -1 || smc_status.rc == -2)
+        if (c == EBUSY) {
+			usrmsg (func, "%s\n", msgaddr);
+            RETURN(RBT_FAST_RETRY);
+		} else if (smc_status.rc == -1 || smc_status.rc == -2)
 			usrmsg (func, "%s\n", msgaddr);
 		else {
 			p = strrchr (msgaddr, ':');

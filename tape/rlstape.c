@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.30 $ $Date: 2006/07/28 15:08:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.31 $ $Date: 2006/12/13 12:59:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -277,7 +277,7 @@ unload_loop:
 	if (*loader != 'm') {
 		demountforce = 0;
 		do {
-                        vsnretry++;
+            vsnretry++;
 			c = rbtdemount (vid, drive, dvn, loader, demountforce,vsnretry);
 			if ((n = rbtdmntchk (&c, drive, &demountforce)) < 0)
 				goto freevol;
