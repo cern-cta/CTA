@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.353 $ $Release$ $Date: 2006/12/11 18:27:16 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.354 $ $Release$ $Date: 2006/12/13 08:53:08 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.353 $ $Date: 2006/12/11 18:27:16 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.354 $ $Date: 2006/12/13 08:53:08 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2014,7 +2014,6 @@ END;
  * fileIds returns the list of castor files to be removed
  * from the name server
  */
-
 CREATE OR REPLACE PROCEDURE filesDeletedProc
 (dcIds IN castor."cnumList",
  fileIds OUT castor.FileList_Cur) AS
@@ -2028,10 +2027,27 @@ BEGIN
  IF dcIds.COUNT > 0 THEN
   -- Loop over the deleted files
   FOR i in dcIds.FIRST .. dcIds.LAST LOOP
+    SELECT castorFile, fileSystem INTO cfId, fsId
+      FROM DiskCopy WHERE id = dcIds(i);
+    LOOP
+      DECLARE
+        LockError EXCEPTION;
+        PRAGMA EXCEPTION_INIT (LockError, -54);
+      BEGIN
+        -- Try to lock the Castor File and retrieve size
+        SELECT fileSize INTO fsize FROM CastorFile where id = cfID FOR UPDATE NOWAIT;
+        -- we got the lock, exit the loop
+        EXIT;
+      EXCEPTION WHEN LockError THEN
+        -- then commit what we did to remove the dead lock
+        COMMIT;
+        -- and try again after some time
+        dbms_lock.sleep(0.2);
+      END;
+    END LOOP;
     -- delete the DiskCopy
     DELETE FROM Id2Type WHERE id = dcIds(i);
-    DELETE FROM DiskCopy WHERE id = dcIds(i)
-      RETURNING castorFile, fileSystem INTO cfId, fsId;
+    DELETE FROM DiskCopy WHERE id = dcIds(i);
     -- agaist deadlock with castor_stager.prepareformigration --
     -- I need a lock on the diskserver if I need more than one filesystem on it --	
     IF isFirst = 1 THEN
@@ -2044,8 +2060,6 @@ BEGIN
           isFirst := 0;	
         END;
     END IF; 
-    -- Lock the Castor File and retrieve size
-    SELECT fileSize INTO fsize FROM CastorFile where id = cfID FOR UPDATE;
     -- update the FileSystem
     UPDATE FileSystem
        SET spaceToBeFreed = spaceToBeFreed - fsize
