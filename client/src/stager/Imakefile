@@ -110,6 +110,7 @@ STAGERLIB_OBJS = \
 		stager_admin_api.Osuf \
 		stager_catalogInterface.Osuf \
 		stager_client_api_common.Osuf \
+		stager_client_commandline.Osuf \
 		stager_client_api_get.Osuf \
 		stager_client_api_put.Osuf \
 		stager_client_api_update.Osuf \
