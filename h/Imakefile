@@ -39,7 +39,6 @@ ICOMMON_H = \
 	 FileName($(DESTDIRCASTOR),stager_admin_api.h) \
 	 FileName($(DESTDIRCASTOR),stager_catalogInterface.h) \
 	 FileName($(DESTDIRCASTOR),stager_client_api.h) \
-	 FileName($(DESTDIRCASTOR),stager_client_api_common.h) \
 	 FileName($(DESTDIRCASTOR),stager_constants.h) \
 	 FileName($(DESTDIRCASTOR),stager_db_service.h) \
 	 FileName($(DESTDIRCASTOR),stager_errmsg.h) \
@@ -138,7 +137,6 @@ ECOMMON_H = \
 	 $(EXPORTH)/stager_admin_api.h \
 	 $(EXPORTH)/stager_catalogInterface.h \
 	 $(EXPORTH)/stager_client_api.h \
-	 $(EXPORTH)/stager_client_api_common.h \
 	 $(EXPORTH)/stager_constants.h \
 	 $(EXPORTH)/stager_db_service.h \
 	 $(EXPORTH)/stager_errmsg.h \
@@ -333,9 +331,6 @@ IEXPORT(stager.h,$(EXPORTH),644)
 
 InstallNonExecFile(stager_catalogInterface.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(stager_catalogInterface.h,$(EXPORTH),644)
-
-InstallNonExecFile(stager_client_api_common.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(stager_client_api_common.h,$(EXPORTH),644)
 
 InstallNonExecFile(stager_constants.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(stager_constants.h,$(EXPORTH),644)
