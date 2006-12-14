@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.354 $ $Release$ $Date: 2006/12/13 08:53:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.355 $ $Release$ $Date: 2006/12/14 11:25:49 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.354 $ $Date: 2006/12/13 08:53:08 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.355 $ $Date: 2006/12/14 11:25:49 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -933,6 +933,7 @@ CREATE OR REPLACE PROCEDURE isSubRequestToSchedule
   svcClassId NUMBER;
   reqId NUMBER;
   cfId NUMBER;
+  reqType NUMBER;
 BEGIN
   -- First see whether we should wait on an ongoing request
   SELECT DiskCopy.status, DiskCopy.id
@@ -981,36 +982,32 @@ BEGIN
   IF stat.COUNT > 0 THEN
     -- In case of PutDone, Check there is no put going on
     -- If any, we'll wait on one of them
-    DECLARE
-      ty NUMBER;
-    BEGIN
-      SELECT type INTO ty FROM Id2Type WHERE id = reqId;
-      IF ty = 39 THEN -- PutDone
-        DECLARE
-          putSubReq NUMBER;
-        BEGIN
-          -- Try to find a running put
-          SELECT subrequest.id INTO putSubReq
-            FROM SubRequest, Id2Type
-           WHERE SubRequest.castorfile = cfId
-             AND SubRequest.request = Id2Type.id
-             AND Id2Type.type = 40 -- Put
-             AND SubRequest.status IN (0, 1, 2, 3, 6) -- START, RESTART, RETRY, WAITSCHED, READY
-             AND ROWNUM < 2;
-          -- we've found one, putDone will have to wait
-          UPDATE SubRequest
-             SET parent = putSubReq,
-                 status = 5, -- WAITSUBREQ
-                 lastModificationTime = getTime()
-           WHERE id = rsubreqId;
-          result := 0;  -- no schedule
-          RETURN;
-        EXCEPTION WHEN NO_DATA_FOUND THEN
-          -- no put waiting, let continue
-          NULL;
-        END;
-      END IF;
-    END;
+    SELECT type INTO reqType FROM Id2Type WHERE id = reqId;
+    IF reqType = 39 THEN -- PutDone
+      DECLARE
+        putSubReq NUMBER;
+      BEGIN
+        -- Try to find a running put
+        SELECT subrequest.id INTO putSubReq
+          FROM SubRequest, Id2Type
+         WHERE SubRequest.castorfile = cfId
+           AND SubRequest.request = Id2Type.id
+           AND Id2Type.type = 40 -- Put
+           AND SubRequest.status IN (0, 1, 2, 3, 6) -- START, RESTART, RETRY, WAITSCHED, READY
+           AND ROWNUM < 2;
+        -- we've found one, putDone will have to wait
+        UPDATE SubRequest
+           SET parent = putSubReq,
+               status = 5, -- WAITSUBREQ
+               lastModificationTime = getTime()
+         WHERE id = rsubreqId;
+        result := 0;  -- no schedule
+        RETURN;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- no put waiting, let continue
+        NULL;
+      END;
+    END IF;
     -- We are not in the case of a putDone with a running put
     -- so we should schedule and give a list of sources
     result := 1;  -- schedule and try to use available diskcopies
@@ -1029,10 +1026,19 @@ BEGIN
              AND DiskServer.id = FileSystem.diskServer
              AND DiskServer.status = 0; -- PRODUCTION
   ELSE
-    -- We found no diskcopies for our svcclass, schedule anywhere
-    -- Note that this could mean a tape recall or a disk2disk copy
-    -- from an existing diskcopy not available to this svcclass
-    result := 2;
+    SELECT type INTO reqType FROM Id2Type WHERE id = reqId;
+    IF reqType = 39 THEN   -- PutDone
+      -- This is a PutDone without a put (otherwise we would have found
+      -- a DiskCopy on an available FileSystem). We answer 1 without sources,
+      -- so the stager correctly handles this case.
+      -- XXX this code has to be removed when PutDone is not scheduled anymore!
+      result := 1;
+    ELSE
+      -- We found no diskcopies for our svcclass, schedule anywhere
+      -- Note that this could mean a tape recall or a disk2disk copy
+      -- from an existing diskcopy not available to this svcclass
+      result := 2;
+    END IF;
   END IF;
 END;
 
@@ -2788,7 +2794,7 @@ BEGIN
     UPDATE SubRequest
        SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
      WHERE decode(getNextStatus,1,getNextStatus,NULL) = 1 -- GETNEXTSTATUS_FILESTAGED
-       AND request IN (SELECT * FROM TABLE(reqs))
+       AND request MEMBER OF reqs
     RETURNING castorfile BULK COLLECT INTO cfs;
     internalStageQuery(cfs, svcClassId, result);
   ELSE
@@ -2820,7 +2826,7 @@ BEGIN
     UPDATE SubRequest
        SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
      WHERE decode(getNextStatus,1,getNextStatus,NULL) = 1 -- GETNEXTSTATUS_FILESTAGED
-       AND request IN (SELECT * FROM TABLE(reqs))
+       AND request MEMBER OF reqs
     RETURNING castorfile BULK COLLECT INTO cfs;
     internalStageQuery(cfs, svcClassId, result);
   ELSE
