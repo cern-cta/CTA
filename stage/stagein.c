@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.59 2004/03/03 14:04:07 jdurand Exp $
+ * $Id: stagein.c,v 1.60 2006/12/14 15:14:41 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.59 $ $Date: 2004/03/03 14:04:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.60 $ $Date: 2006/12/14 15:14:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -52,7 +52,7 @@ EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, 
 extern	char	*getenv();
 extern	char	*getconfent();
 extern int getlist_of_vid _PROTO((char *, char[MAXVSN][7], int *));
-extern int  rfio_access _PROTO((char *, int));
+extern int  rfio_access _PROTO((const char *, int));
 
 static gid_t gid;
 static int pid;
