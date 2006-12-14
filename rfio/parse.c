@@ -31,6 +31,7 @@ static char sccsid[] = "@(#)parse.c,v 1.17 2004/03/02 09:17:40 CERN/IT/PDP/DM Fr
 #include "Csnprintf.h"
 #include <Cglobals.h>
 #include <RfioTURL.h>
+#include "stager_client_commandline.h"
 
 extern char *getconfent();
 #if defined(CNS_ROOT)

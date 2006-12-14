@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.h,v $ $Revision: 1.4 $ $Release$ $Date: 2006/04/07 10:14:31 $ $Author: gtaur $
+ * @(#)$RCSfile: RfioTURL.h,v $ $Revision: 1.5 $ $Release$ $Date: 2006/12/14 14:55:20 $ $Author: itglp $
  *
  *
  *
@@ -65,7 +65,7 @@
 #include <serrno.h>
 #include <Cglobals.h>
 #include <rfio_api.h>
-
+#include <stager_client_commandline.h>
 
 /** RFIO TURL structure */
 
@@ -78,13 +78,6 @@ typedef struct RfioTURL
 
 } RfioTURL_t;
 
-
-
-EXTERN_C int DLL_DECL getDefaultForGlobal _PROTO((
-				char** host,
-				int* port,
-				char** svc,
-				int* version));
 
 
 /** Build a RFIO TURL structure from a string representation
