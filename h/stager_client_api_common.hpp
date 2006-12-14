@@ -1,12 +1,22 @@
 /*
- * $Id: stager_client_api_common.h,v 1.4 2006/04/20 10:04:09 gtaur Exp $
+ * $Id: stager_client_api_common.hpp,v 1.1 2006/12/14 14:01:14 itglp Exp $
+ *
+ * Header file for internal stager client functions.
+ * Note that this is only included from C++ code and it *is* C++
+ * only because of the bool field in stager_client_api_thread_info.
  */
 
-#ifndef stager_client_api_common_h
-#define stager_client_api_common_h
+#ifndef STAGER_CLIENT_API_COMMON_HPP
+#define STAGER_CLIENT_API_COMMON_HPP
 
 #include <sys/types.h>
 #include "osdep.h"
+
+#define DEFAULT_HOST "stagepublic"
+#define DEFAULT_PORT1 5007
+#define DEFAULT_PORT2 9002
+#define DEFAULT_SVCCLASS ""  
+#define DEFAULT_VERSION 1
 
 #define STAGER_TRACE_NAME  "STAGER_TRACE"
 
@@ -39,4 +49,4 @@ stage_resetid();
 EXTERN_C int DLL_DECL 
 setDefaultOption(struct stage_options* opts);
 
-#endif /* stager_client_api_common_h */
+#endif /* STAGER_CLIENT_API_COMMON_HPP */
