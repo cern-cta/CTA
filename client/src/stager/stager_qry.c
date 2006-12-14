@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.21 2006/07/05 14:38:31 riojac3 Exp $
+ * $Id: stager_qry.c,v 1.22 2006/12/14 15:00:15 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.21 $ $Date: 2006/07/05 14:38:31 $ $Author: riojac3 $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.22 $ $Date: 2006/12/14 15:00:15 $ $Author: itglp $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -20,7 +20,7 @@ static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.21 $ $Date: 
 #include "stager_api.h"
 #include "serrno.h"
 #include "Cgetopt.h"
-#include "RfioTURL.h"
+#include "stager_client_commandline.h"
 
 #define BUFSIZE 200
 

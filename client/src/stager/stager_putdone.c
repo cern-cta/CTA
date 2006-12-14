@@ -17,7 +17,7 @@ static char sccsid[] = "";
 #include "stager_api.h"
 #include "serrno.h"
 #include "Cgetopt.h"
-#include "RfioTURL.h"
+#include "stager_client_commandline.h"
 
 struct cmd_args {
   int nbreqs;
