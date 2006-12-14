@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c,v 1.2 2006/12/13 17:47:36 itglp Exp $
+ * $Id: parse.c,v 1.3 2006/12/14 13:57:04 itglp Exp $
  */
 
 /*
@@ -27,7 +27,7 @@ static char sccsid[] = "@(#)parse.c,v 1.17 2004/03/02 09:17:40 CERN/IT/PDP/DM Fr
 #include "osdep.h"
 #include "Cns_api.h"
 #include "rfio.h"               /* remote file I/O definitions */
-#include "stager_client_api_common.h"   /* for getDefaultForGlobal() */
+#include "stager_client_commandline.h"   /* for getDefaultForGlobal */
 #include "Csnprintf.h"
 #include <Cglobals.h>
 
