@@ -1,8 +1,6 @@
 /*
- * stager_client_api_common.cpp,v 1.20 2006/02/03 11:40:17 sponcec3 Exp
- */
-
-/*
+ * $Id: stager_client_commandline.cpp,v 1.2 2006/12/14 14:50:00 itglp Exp $
+ *
  * Copyright (C) 2004-2006 by CERN/IT/FIO/FD
  * All rights reserved
  */
