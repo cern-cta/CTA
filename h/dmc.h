@@ -1,12 +1,12 @@
 /*
- * $Id: dmc.h,v 1.2 1999/12/09 13:46:16 jdurand Exp $
+ * $Id: dmc.h,v 1.3 2006/12/14 13:42:18 itglp Exp $
  */
 
 /*
  * Copyright (C) 1997-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
-/* @(#)$RCSfile: dmc.h,v $ $Revision: 1.2 $ $Date: 1999/12/09 13:46:16 $ CERN IT-PDP/DM  Olof Barring */
+/* @(#)$RCSfile: dmc.h,v $ $Revision: 1.3 $ $Date: 2006/12/14 13:42:18 $ CERN IT-PDP/DM  Olof Barring */
 
 /*
  * CERN interface to DEC Media Robot Driver (MRD) library.
@@ -64,8 +64,8 @@
 #include <serrno.h>
 #include <log.h>
 #else
-#include "../h/serrno.h"
-#include "../h/log.h"
+#include "serrno.h"
+#include "log.h"
 #endif
 #include <time.h>
 
