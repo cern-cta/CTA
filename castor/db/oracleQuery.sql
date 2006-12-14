@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.355 $ $Release$ $Date: 2006/12/14 11:25:49 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.356 $ $Release$ $Date: 2006/12/14 15:22:36 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.355 $ $Date: 2006/12/14 11:25:49 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.356 $ $Date: 2006/12/14 15:22:36 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2015,7 +2015,11 @@ END;
  * This is done by the monitoring daemon, that knows the
  * exact amount of free space. However, we decrease the
  * spaceToBeFreed counter so that a next GC knows the status
- * of the FileSystem
+ * of the FileSystem.
+ * THIS PROCEDURE SHOULD ONLY BE CALLED FOR DiskCopies
+ * THAT ALL BELONG TO THE SAME DISKSERVER.
+ * Otherwise, deadlocks will be created. Between 2 calls
+ * for different diskservers, a commit should be done.
  * dcIds gives the list of diskcopies to delete.
  * fileIds returns the list of castor files to be removed
  * from the name server
