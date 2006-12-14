@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestHelper.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/04/19 12:18:51 $ $Author: gtaur $
+ * @(#)$RCSfile: RequestHelper.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/12/14 15:02:41 $ $Author: itglp $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 // Include Files
 #include "castor/stager/RequestHelper.hpp"
-#include "stager_client_api_common.h"
+#include "stager_client_api_common.hpp"
 #include <iostream>
 #include <string>
 

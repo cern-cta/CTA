@@ -59,7 +59,7 @@
 #include "castor/exception/Communication.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-#include "stager_client_api_common.h"
+#include "stager_client_api_common.hpp"
 
 
 extern "C" {
