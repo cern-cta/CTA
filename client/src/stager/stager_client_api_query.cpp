@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.26 2006/08/14 18:50:59 itglp Exp $
+ * $Id: stager_client_api_query.cpp,v 1.27 2006/12/14 14:53:59 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.26 $ $Date: 2006/08/14 18:50:59 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.27 $ $Date: 2006/12/14 14:53:59 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -33,7 +33,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 
 #include "castor/stager/StageFileQueryRequest.hpp"
 #include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/SubRequest.hpp"
-#include "stager_client_api_common.h"
+#include "stager_client_api_common.hpp"
 #include "stager_client_api.h"
 #include "castor/stager/RequestHelper.hpp"
 #include "castor/query/DiskPoolQuery.hpp"

@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.27 2006/09/26 15:24:01 riojac3 Exp $
+ * $Id: stager_client_api_put.cpp,v 1.28 2006/12/14 14:53:59 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.27 $ $Date: 2006/09/26 15:24:01 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.28 $ $Date: 2006/12/14 14:53:59 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -35,7 +35,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.
 #include "castor/rh/Response.hpp"
 #include "castor/rh/FileResponse.hpp"
 #include "castor/rh/IOResponse.hpp"
-#include "stager_client_api_common.h"
+#include "stager_client_api_common.hpp"
 
 // To be removed when getting rid of 
 // request printing
