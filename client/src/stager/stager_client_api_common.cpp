@@ -1,9 +1,9 @@
 /*
- * stager_client_api_common.cpp,v 1.20 2006/02/03 11:40:17 sponcec3 Exp
+ * $Id: stager_client_api_common.cpp,v 1.26 2006/12/14 14:53:15 itglp Exp $
  */
 
 /*
- * Copyright (C) 2004 by CERN/IT/ADC/CA
+ * Copyright (C) 2004-2006 by CERN/IT/ADC/CA
  * All rights reserved
  */
 
@@ -18,33 +18,28 @@ static char *sccsid = "@(#)stager_client_api_common.cpp,v 1.20 2006/02/03 11:40:
 #include <string.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <sstream>
 #if !defined(_WIN32)
 #include <unistd.h>
 #else
 #include "pwd.h"	// For getuid(), getgid()
 #endif
-#include <sys/types.h>
-#include <sstream>
 
 /* ============= */
 /* Local headers */
 /* ============= */
-#include "stager_client_api_common.h"
 #include "serrno.h"
 #include "trace.h"
 #include "Cglobals.h"
 #include "Csnprintf.h"
 #include "stager_api.h"
+#include "stager_client_api_common.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/client/BaseClient.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/stager/FileSystemStatusCodes.hpp"
 #include "stager_client_api_authid.hpp"
-
-#define DEFAULT_HOST "stagepublic"
-#define DEFAULT_PORT 9002
-#define DEFAULT_SVCCLASS ""  
 
 EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
 
@@ -376,18 +371,17 @@ void DLL_DECL castor::client::setClientAuthorizationId
   client.setAuthorizationId(authUid, authGid);
 }
 
-int DLL_DECL setDefaultOption
-(struct stage_options* opts){
+int DLL_DECL setDefaultOption(struct stage_options* opts) {
 
 	if (!opts){
-                opts=(struct stage_options*)malloc(sizeof(struct stage_options));
+    opts=(struct stage_options*)malloc(sizeof(struct stage_options));
 		opts->stage_host=DEFAULT_HOST;
-		opts->stage_port =DEFAULT_PORT;
+		opts->stage_port =DEFAULT_PORT2;
 		opts->service_class =DEFAULT_SVCCLASS;
 		return -1;
 	}
 	if (!opts->stage_host){opts->stage_host=DEFAULT_HOST;}
-        if (!opts->stage_port){ opts->stage_port =DEFAULT_PORT;}
-        if (!opts->service_class){ opts->service_class =DEFAULT_SVCCLASS;}
-        return 0;
+  if (!opts->stage_port){ opts->stage_port =DEFAULT_PORT2;}
+  if (!opts->service_class){ opts->service_class =DEFAULT_SVCCLASS;}
+  return 0;
 }
