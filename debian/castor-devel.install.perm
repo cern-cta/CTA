@@ -113,7 +113,6 @@
 %attr(0644,root,bin) usr/include/shift/stager_api.h
 %attr(0644,root,bin) usr/include/shift/stager_catalogInterface.h
 %attr(0644,root,bin) usr/include/shift/stager_client_api.h
-%attr(0644,root,bin) usr/include/shift/stager_client_api_common.h
 %attr(0644,root,bin) usr/include/shift/stager_constants.h
 %attr(0644,root,bin) usr/include/shift/stager_db_service.h
 %attr(0644,root,bin) usr/include/shift/stager_errmsg.h
