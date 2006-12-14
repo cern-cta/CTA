@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.42 $ $Date: 2003/08/01 15:03:47 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.43 $ $Date: 2006/12/14 15:10:05 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -72,7 +72,7 @@ struct iovec64 {
  * RFIO library routines. Common internal and external prototypes
  */
 
-EXTERN_C int DLL_DECL rfio_access _PROTO((char *, int));
+EXTERN_C int DLL_DECL rfio_access _PROTO((const char *, int));
 EXTERN_C int DLL_DECL rfio_chdir _PROTO((char *));
 EXTERN_C int DLL_DECL rfio_chmod _PROTO((char *, int));
 EXTERN_C int DLL_DECL rfio_chown _PROTO((char *, int, int));
