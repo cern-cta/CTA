@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.38 $ $Release$ $Date: 2006/12/13 18:48:00 $ $Author: waldron $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.39 $ $Release$ $Date: 2006/12/15 10:55:45 $ $Author: waldron $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.38 $ $Release$ $Date: 2006/12/13 18:48:00 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.39 $ $Release$ $Date: 2006/12/15 10:55:45 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1617,7 +1617,7 @@ int main(int argc, char *argv[])
   sigprocmask(SIG_SETMASK,&set,NULL);
 
   rc = Cthread_create_detached((void *)signal_handler,NULL);
-  if (rc != 1) {
+  if (rc < 0) {
 	  exit(1);
   }
 

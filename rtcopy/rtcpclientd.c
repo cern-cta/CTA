@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.33 $ $Release$ $Date: 2006/12/13 18:48:00 $ $Author: waldron $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.34 $ $Release$ $Date: 2006/12/15 10:55:46 $ $Author: waldron $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.33 $ $Release$ $Date: 2006/12/13 18:48:00 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.34 $ $Release$ $Date: 2006/12/15 10:55:46 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1067,7 +1067,7 @@ int rtcpcld_main(
   sigprocmask(SIG_SETMASK, &set, NULL);
 
   rc = Cthread_create_detached((void *)signal_handler, NULL);
-  if (rc != 1) {
+  if (rc < 0) {
 	  exit(1);
   }
 #endif /* _WIN32 */
