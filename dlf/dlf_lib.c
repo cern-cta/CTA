@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.10 2006/12/13 18:38:33 waldron Exp $
+ * $Id: dlf_lib.c,v 1.11 2006/12/15 18:50:19 waldron Exp $
  */
 
 /* headers */
@@ -426,6 +426,8 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 	/* deal with files first, they take priority! */
 	for (i = 0; i < API_MAX_TARGETS; i++) {
 		if (targets[i] == NULL)
+			continue;
+		if (!IsFile(targets[i]->mode)) 
 			continue;
 		if (!(targets[i]->sevmask & sevmask) &&
 		    !(targets[i]->sevmask & severitylist[11].sevmask))
@@ -922,7 +924,6 @@ void dlf_worker(target_t *t) {
 		/* instructed to throttle by the server ? */
 		if ((type == DLF_REP_IRC) && (code > 0)) {
 			usleep((code * 1000));
-			Cthread_mutex_unlock(&t->mutex);
 		}
 
 	       	free(buffer);
