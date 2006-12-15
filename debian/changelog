@@ -1,5 +1,13 @@
 castor (2.1.2-2) unstable; urgency=low
 
+
+  * CASTOR2/castor/repack/repackUndo/WrapCns.cpp:
+    [r 1.4,2006-12-15,gtaur] side tape information hardcoded to 0
+  * CASTOR2/doc/uml/Repack.xmi:
+    [r 1.7,2006-12-14,felixehm] updated Repack documentation
+  * CASTOR2/rtcopy/MigHunter.c:
+  * CASTOR2/rtcopy/rtcpclientd.c:
+    [2006-12-15,waldron] corrected return code check on Cthread_create_detached
   * CASTOR2/castor/cleaning/HouseKeeping.cpp:
   * CASTOR2/castor/cleaning/SpringCleaning.cpp:
   * CASTOR2/castor/client/BaseClient.cpp:
