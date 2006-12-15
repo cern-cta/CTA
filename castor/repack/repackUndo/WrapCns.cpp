@@ -106,8 +106,8 @@ static PyObject* wrap_cns_setsegattrs(PyObject* self, PyObject* args) {
 
         repackSeg.s_status=segattrs[i].s_status; // not stored by repack
    // the following assumtion is WRONG ... 
-   // repack it is not storing the info side then  I have to take "1" because it is  usually 1 .... To be Checked
-        repackSeg.side=1; 
+   // repack it is not storing the info side then  I have to take "0" because it is  usually 0 .... To be Checked
+        repackSeg.side=0; 
 	strcpy(repackSeg.checksum_name,segattrs[i].checksum_name); // not stored by repack
 	repackSeg.checksum=segattrs[i].checksum; //not stored by repack
 
