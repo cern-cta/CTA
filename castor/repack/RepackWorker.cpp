@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2006/12/04 15:33:59 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2006/12/17 22:10:51 $ $Author: felixehm $
  *
  *
  *
@@ -330,24 +330,24 @@ void RepackWorker::removeRequest(RepackRequest* rreq) throw (castor::exception::
 {
 	
   std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
-	while ( tape != rreq->subRequest().end() ){
-		/** if the vid is not in the repack system, a exception in thrown and
-      * send to the client
-      */
-		RepackSubRequest* tmp = 
-			m_databasehelper->getSubRequestByVid( (*tape)->vid(), true );
+  while ( tape != rreq->subRequest().end() ){
+  /** if the vid is not in the repack system, a exception in thrown and
+   * send to the client
+   */
+    RepackSubRequest* tmp = m_databasehelper->getSubRequestByVid( (*tape)->vid(), true );
     
-    
-
-		if ( tmp != NULL ) {
+    if ( tmp != NULL ) {
       Cuuid_t cuuid = stringtoCuuid(tmp->cuuid());
-			tmp->setStatus(SUBREQUEST_READYFORCLEANUP);
+      if ( tmp->status() == SUBREQUEST_TOBESTAGED || SUBREQUEST_READYFORSTAGING )
+        tmp->setStatus(SUBREQUEST_DONE);
+      else
+        tmp->setStatus(SUBREQUEST_READYFORCLEANUP);
       m_databasehelper->updateSubRequest(tmp,false,cuuid);
       freeRepackObj(tmp);
       //m_databasehelper->unlock();
-		}
+    }
     tape++;
-	}
+   }
 }
 
 
