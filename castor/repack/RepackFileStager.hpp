@@ -25,55 +25,52 @@ namespace castor {
   class RepackServer;
 
 
-	/**
-   * class RepackFileStager
-   */
-	class RepackFileStager : public castor::server::IThread
-	{
-		public : 
-		
-		/**
-	   * Constructor.
+ /**
+  * class RepackFileStager
+  */
+  class RepackFileStager : public castor::server::IThread
+  {
+    public : 
+
+    /**
+     * Constructor.
      * @param srv The refernce to the constructing RepackServer Instance.
-	   */
-		RepackFileStager(RepackServer* srv);
-		
-		/**
-	   * Destructor
-	   */
-		~RepackFileStager() throw();
+     */
+     RepackFileStager(RepackServer* srv);
 		
     /**
-		 * Stopping the run() method. It is just a flag which is set to false
-		 * and the loop is not executed anymore.
-		 */
-		virtual void stop()				throw();
+     * Destructor
+     */
+     ~RepackFileStager() throw();
 		
-    
-   /**
-		 * The run method polls the database for new requests. If a request
-		 * arrives the stage_files Method is executed.
-		 * this can be stopped by calling the stop method, then it is not possible
-		 * to start the thread anymore! It has to be destroyed and recreated.
-		 */
-		virtual void run(void* param)	throw();
+    /**
+     * Inherited from IThread : not implemented
+     */
+     virtual void stop() throw();
+		
+    /**
+     * Checks the DB for new RepackSubRequests in TOBESTAGED/RESTART and
+     * performs the procedure.
+     * (execute startRepack/restartRepack method, described below).
+     */
+     virtual void run(void* param) throw();
+
+     
+     private:
+
+     /**
+      * Stages the files. It retrieves the files for the tape and
+      * sends a StageRepackRequest to the stager. If the submit
+      * was successfull the state of the RepackSubRequest is changed 
+      * to SUBREQUEST_STAGING.
+      * @param sreq The RepackSubRequest to stage in files
+      * @throws castor::exeption::Internal in case of an error
+      */
+      void stage_files(RepackSubRequest* sreq) throw (castor::exception::Exception);
 
 
-		private:
-		/**
-		 * Stages the files. It retrieves the files for the tape and
-     * sends a StagePrepareToGetRequest to the stager. If the submit
-     * was successfull the state of the RepackSubRequest is changed 
-     * to SUBREQUEST_STAGING.
-     * @param sreq The RepackSubRequest to stage in files
-     * @throws castor::exeption::Internal in case of an error
-		 */
-		void stage_files(RepackSubRequest* sreq)
-                                          throw (castor::exception::Exception);
-
-
-    /** private method to send the request to the stager.
-      * The passed RepackSubRequest cuuid is updated as soon as the 
+    /** Sends the request to the stager.
+      * The  RepackSubRequest cuuid is updated as soon as the 
       * RequestHandler from the Stager answers.
       * @param rsreq The RepackSubRequest to update the cuuid 
       * @param req The Request to send
@@ -82,42 +79,49 @@ namespace castor {
       * @returns The Number of files for which the stager request failed.
       * @throws castor::exeption::Internal in case of an error
       */
-		int sendStagerRepackRequest( RepackSubRequest* rsreq,
-                                 castor::stager::StageRepackRequest* req,
-                                 std::string *reqId,
-                                 struct stage_options* opts
-                                )
-                                throw (castor::exception::Exception);
+      int sendStagerRepackRequest( RepackSubRequest* rsreq,
+                                   castor::stager::StageRepackRequest* req,
+                                   std::string *reqId,
+                                   struct stage_options* opts
+                                 )
+                                  throw (castor::exception::Exception);
+
+    /**
+     * Excutes stage_files and updates the RepackSubRequest. In case
+     * stage_files gives an error the state is set to FAILED.
+     */
+     void RepackFileStager::startRepack(RepackSubRequest* sreq);
 
 
     /**
-      * Method to start a Repack process  
-      */
-    void RepackFileStager::startRepack(RepackSubRequest* sreq);
+     * Restarts a RepackSubRequest. The RepackMonitor is used to get the
+     * latest stats for this repack request and if files in invalid found,
+     * those are send as a new StageRepackRequest.
+     * If no answers are found, the NameServer is contacted for the remaining
+     * files on tape and for those a new StageRepackReques is send.
+     * In both cases the Cuuid is updated and the stats set to '0';
+     */
+     void RepackFileStager::restartRepack(RepackSubRequest* sreq);
+
 
     /**
-      * Method to restart a Repack process
-      */
-    void RepackFileStager::restartRepack(RepackSubRequest* sreq);
-
-
-    /**
-		 * Pointer to DatabaseHelper instance. Created by the contructor.
-		 * Stores and updates RepackRequest.
-		 */
-		DatabaseHelper* m_dbhelper;
+     * Pointer to DatabaseHelper instance. Created by the contructor.
+     * Stores and updates RepackRequest.
+     */
+     DatabaseHelper* m_dbhelper;
     
 
     /**
      * Pointer to a FileListHelper instance. Created by the contructor.
      */
-    FileListHelper* m_filehelper;
+     FileListHelper* m_filehelper;
 
-	  /** A pointer to the server instance, which keeps information
+    /** 
+     * A pointer to the server instance, which keeps information
      * about Nameserver, stager etc.
      */	
-    RepackServer* ptr_server;
-	};
+     RepackServer* ptr_server;
+};
 
 
 
