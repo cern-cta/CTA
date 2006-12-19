@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.356 $ $Release$ $Date: 2006/12/14 15:22:36 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.357 $ $Release$ $Date: 2006/12/19 13:29:55 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.356 $ $Date: 2006/12/14 15:22:36 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.357 $ $Date: 2006/12/19 13:29:55 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -138,6 +138,7 @@ CREATE GLOBAL TEMPORARY TABLE SelectFiles2DeleteProcHelper
   (id NUMBER, path VARCHAR2(2048))
 ON COMMIT DELETE ROWS;
 
+
 /****************************************************************/
 /* NbTapeCopiesInFS to work around ORACLE missing optimizations */
 /****************************************************************/
@@ -154,6 +155,68 @@ ON COMMIT DELETE ROWS;
 CREATE TABLE NbTapeCopiesInFS (FS NUMBER, Stream NUMBER, NbTapeCopies NUMBER);
 CREATE UNIQUE INDEX I_NbTapeCopiesInFS_FSStream on NbTapeCopiesInFS(FS, Stream);
 CREATE INDEX I_NbTapeCopiesInFS_Stream on NbTapeCopiesInFS(Stream);
+
+
+/*******************************************************************/
+/* LockTable to implement proper locking for bestTapeCopyForStream */
+/*******************************************************************/
+
+/* This table is needed to insure that bestTapeCopyForStream works Ok.
+ * It basically serializes the queries ending to the same diskserver.
+ * This is only needed because of lack of funstionnality in ORACLE.
+ * The original goal was to lock the selected filesystem in the first
+ * query of bestTapeCopyForStream. But a SELECT FOR UPDATE was not enough
+ * because it does not revalidate the inner select and we were thus selecting
+ * n times the same filesystem when n queries were processed in parallel.
+ * (take care, they were processed sequentially due to the lock, but they
+ * were still locking the same filesystem). Thus an UPDATE was needed but
+ * UPDATE cannot use joins. Thus it was impossible to lock DiskServer
+ * and FileSystem at the same time (we need to avoid the DiskServer to
+ * be chosen again (with a different filesystem) before we update the
+ * weight of all filesystems). Locking the diskserver only was fine but
+ * was introducing a possible deadlock with a place where the FileSystem
+ * is locked before the DiskServer. Thus this table..... */
+CREATE TABLE LockTable (DiskServerId NUMBER PRIMARY KEY, TheLock NUMBER);
+INSERT INTO LockTable SELECT id, id FROM DiskServer;
+
+
+/* This table keeps the current queue of the garbage collector:
+ * whenever a new filesystem has to be garbage collected, a row is inserted
+ * in this table and a db job runs on it to actually execute the gc.
+ * In low load conditions this table will be empty and the db job is fired
+ * for each new entered filesystem. In high load conditions a single db job
+ * keeps running and no other jobs will be fired */
+CREATE TABLE FileSystemGC (fsid NUMBER PRIMARY KEY, submissionTime NUMBER);
+
+
+/*********************/
+/* FileSystem rating */
+/*********************/
+
+/* Computes a 'rate' for the filesystem which is an agglomeration
+   of weight and fsDeviation. The goal is to be able to classify
+   the fileSystems using a single value and to put an index on it */
+CREATE OR REPLACE FUNCTION FileSystemRate
+(weight IN NUMBER,
+ deltaWeight IN NUMBER,
+ fsDeviation IN NUMBER)
+RETURN NUMBER DETERMINISTIC IS
+BEGIN
+  RETURN 1000*(weight + deltaWeight) - fsDeviation;
+END;
+
+/* FileSystem index based on the rate. */
+CREATE INDEX I_FileSystem_Rate ON FileSystem(FileSystemRate(weight, deltaWeight, fsDeviation));
+
+
+
+
+/*******************************************/
+/*                                         */
+/*   Triggers and Procedures definitions   */
+/*                                         */
+/*******************************************/
+
 
 /* Used to create a row INTO NbTapeCopiesInFS whenever a new
    FileSystem is created */
@@ -287,33 +350,6 @@ BEGIN
    WHERE id = :new.castorFile FOR UPDATE;
 END;
 
-
-/*********************/
-/* FileSystem rating */
-/*********************/
-
-/* Computes a 'rate' for the filesystem which is an agglomeration
-   of weight and fsDeviation. The goal is to be able to classify
-   the fileSystems using a single value and to put an index on it */
-CREATE OR REPLACE FUNCTION FileSystemRate
-(weight IN NUMBER,
- deltaWeight IN NUMBER,
- fsDeviation IN NUMBER)
-RETURN NUMBER DETERMINISTIC IS
-BEGIN
-  RETURN 1000*(weight + deltaWeight) - fsDeviation;
-END;
-
-/* FileSystem index based on the rate. */
-CREATE INDEX I_FileSystem_Rate ON FileSystem(FileSystemRate(weight, deltaWeight, fsDeviation));
-
-
-
-/*****************************/
-/*                           */
-/*   Procedure definitions   */
-/*                           */
-/*****************************/
 
 /* PL/SQL method to make a SubRequest wait on another one, linked to the given DiskCopy */
 CREATE OR REPLACE PROCEDURE makeSubRequestWait(srId IN INTEGER, dci IN INTEGER) AS
@@ -572,23 +608,6 @@ BEGIN
    WHERE diskServer = ds;
 END;
 
-/* This table is needed to insure that bestTapeCopyForStream works Ok.
- * It basically serializes the queries ending to the same diskserver.
- * This is only needed because of lack of funstionnality in ORACLE.
- * The original goal was to lock the selected filesystem in the first
- * query of bestTapeCopyForStream. But a SELECT FOR UPDATE was not enough
- * because it does not revalidate the inner select and we were thus selecting
- * n times the same filesystem when n queries were processed in parallel.
- * (take care, they were processed sequentially due to the lock, but they
- * were still locking the same filesystem). Thus an UPDATE was needed but
- * UPDATE cannot use joins. Thus it was impossible to lock DiskServer
- * and FileSystem at the same time (we need to avoid the DiskServer to
- * be chosen again (with a different filesystem) before we update the
- * weight of all filesystems). Locking the diskserver only was fine but
- * was introducing a possible deadlock with a place where the FileSystem
- * is locked before the DiskServer. Thus this table..... */
-CREATE TABLE LockTable (DiskServerId NUMBER PRIMARY KEY, TheLock NUMBER);
-INSERT INTO LockTable SELECT id, id FROM DiskServer;
 
 /* Used to create a row INTO LockTable whenever a new
    DiskServer is created */
@@ -826,7 +845,7 @@ BEGIN
       END LOOP;
       CLOSE c1;
       IF NotOk != 0 THEN
-        raise_application_error(-20101, 'Recall could not find a FileSystem with no copy of this file !');
+        raise_application_error(-20103, 'Recall could not find a FileSystem with no copy of this file !');
       END IF;      
       UPDATE DiskCopy SET fileSystem = fileSystemId WHERE id = dci;
       updateFsFileOpened(fsDiskServer, fileSystemId, deviation, fileSize);
@@ -1153,7 +1172,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
    -- No disk copy found on any FileSystem. This is an error because
    -- in case of tape recall the job should not have started.
    -- Raise error to the Job service
-   raise_application_error(-20103, 'No valid DiskCopy found on any filesystem for this job');
+   raise_application_error(-20105, 'No valid DiskCopy found on any filesystem for this job');
   END;
  END;
 END;
@@ -2253,11 +2272,14 @@ CREATE OR REPLACE FUNCTION defaultGCPolicy
 BEGIN
   OPEN result FOR
     SELECT /*+ INDEX(CF) INDEX(DC) */ DC.id, CF.fileSize,
-           getTime() - CF.lastAccessTime + greatest(0,86400*ln((CF.fileSize+1)/1024))
+         CASE DC.status
+           WHEN 7 THEN 100000000000    -- INVALID, they go the very first
+           WHEN 0 THEN getTime() - CF.lastAccessTime + greatest(0,86400*ln((CF.fileSize+1)/1024))
+         END
       FROM DiskCopy DC, CastorFile CF
      WHERE CF.id = DC.castorFile
        AND DC.fileSystem = fsId
-       AND DC.status = 0 -- STAGED
+       AND DC.status IN (0, 7) -- STAGED
        AND NOT EXISTS (
          SELECT 'x' FROM SubRequest 
           WHERE DC.status = 0 AND diskcopy = DC.id 
@@ -2349,7 +2371,7 @@ BEGIN
   -- Get candidates for each policy
   nextItems.EXTEND(policies.COUNT);
   bestCandidate := -1;
-  bestValue := 100000000001; -- Take care that this is greater than the value given in defaultGCPolicy XXX
+  bestValue := 100000000001; -- Take care that this is greater than the value given in defaultGCPolicy
   IF policies.COUNT > 0 THEN
     EXECUTE IMMEDIATE 'BEGIN :1 := '||policies(policies.FIRST)||'(:2, :3); END;'
       USING OUT cur1, IN fsId, IN toBeFreed;
@@ -2428,14 +2450,6 @@ BEGIN
   COMMIT;
 END;
 
-
-/* This table keeps the current queue of the garbage collector:
- * whenever a new filesystem has to be garbage collected, a row is inserted
- * in this table and a db job runs on it to actually execute the gc.
- * In low load conditions this table will be empty and the db job is fired
- * for each new entered filesystem. In high load conditions a single db job
- * will keep running and no other jobs will be fired */
-CREATE TABLE FileSystemGC (fsid NUMBER PRIMARY KEY, submissionTime NUMBER);
 
 /*
  * Runs Garbage collection anywhere needed.
@@ -2516,17 +2530,18 @@ BEGIN
     END IF;
     
     -- yield to other jobs/transactions
-    DBMS_LOCK.sleep(seconds => 5.0);
+    DBMS_LOCK.sleep(seconds => 2.0);
   END LOOP;
 END;
 
 BEGIN
+  DELETE FROM user_schedule_jobs WHERE JOB_NAME = 'GCInvalidDiskCopiesJob'; 
   DBMS_SCHEDULER.CREATE_JOB (
       JOB_NAME        => 'GCInvalidDiskCopiesJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN gcInvalidDiskCopies(); END;',
       START_DATE      => SYSDATE,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=30',
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=15',
       ENABLED         => TRUE,
       COMMENTS        => 'Regular cleanup of INVALID disk copies');
 END;
@@ -2561,14 +2576,13 @@ BEGIN
       WHEN CONSTRAINT_VIOLATED THEN NULL;
     END;
     -- is the garbage collector job already running?
-    BEGIN
-      SELECT job INTO jobid FROM user_jobs
-       WHERE what = 'garbageCollect();' AND failures IS NULL;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
+    SELECT count(*) INTO jobid FROM user_jobs
+     WHERE what = 'garbageCollect();' AND failures IS NULL;
+    IF jobid = 0 THEN
       -- we spawn a job to do the real work. This avoids mutating table error
       -- and ensures that the current update does not fail if GC fails
       DBMS_JOB.SUBMIT(jobid,'garbageCollect();');
-    END;
+    END IF;
     -- otherwise, a recent job is already running and will take over this FS too
   END IF;
 END;
