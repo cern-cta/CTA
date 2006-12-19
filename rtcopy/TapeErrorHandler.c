@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.19 $ $Release$ $Date: 2006/12/19 13:51:27 $ $Author: obarring $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.20 $ $Release$ $Date: 2006/12/19 13:58:38 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.19 $ $Release$ $Date: 2006/12/19 13:51:27 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.20 $ $Release$ $Date: 2006/12/19 13:58:38 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -945,6 +945,7 @@ static int checkMigrationRetry(
 {
   enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
   enum Cstager_SegmentStatusCodes_t segmentStatus;
+  enum Cstager_DiskCopyStatusCodes_t diskCopyStatus;
   enum Cstager_FileSystemStatusCodes_t fileSystemStatus;
   enum Cstager_DiskServerStatusCode_t diskServerStatus;
   struct Cstager_CastorFile_t *castorFile = NULL;
@@ -1106,6 +1107,8 @@ static int checkMigrationRetry(
       diskServer = NULL;
     }
     diskCopy = diskCopies[i];
+    Cstager_DiskCopy_status(diskCopy,&diskCopyStatus);
+    if ( diskCopyStatus != DISKCOPY_CANBEMIGR ) continue;
     iObj = Cstager_DiskCopy_getIObject(diskCopy);
     Cstager_DiskCopy_id(diskCopy,&key);
     rc = C_Services_fillObj(
