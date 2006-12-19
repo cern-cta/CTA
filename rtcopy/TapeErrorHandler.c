@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.18 $ $Release$ $Date: 2006/11/06 10:36:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.19 $ $Release$ $Date: 2006/12/19 13:51:27 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.18 $ $Release$ $Date: 2006/11/06 10:36:38 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.19 $ $Release$ $Date: 2006/12/19 13:51:27 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1124,6 +1124,7 @@ static int checkMigrationRetry(
       return(-1);
     }
     Cstager_DiskCopy_fileSystem(diskCopy,&fileSystem);
+    if ( fileSystem == NULL ) continue;
     Cstager_FileSystem_status(fileSystem,&fileSystemStatus);
     if ( (fileSystemStatus != FILESYSTEM_PRODUCTION) &&
          (fileSystemStatus != FILESYSTEM_DRAINING) ) {
@@ -1148,6 +1149,7 @@ static int checkMigrationRetry(
       return(-1);
     }
     Cstager_FileSystem_diskserver(fileSystem,&diskServer);
+    if ( diskServer == NULL ) continue;
     Cstager_DiskServer_status(diskServer,&diskServerStatus);
     if ( (diskServerStatus != DISKSERVER_PRODUCTION) &&
          (diskServerStatus != DISKSERVER_DRAINING) ) {
