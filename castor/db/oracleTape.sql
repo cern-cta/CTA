@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.357 $ $Release$ $Date: 2006/12/19 13:29:55 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.358 $ $Release$ $Date: 2006/12/19 13:36:22 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.357 $ $Date: 2006/12/19 13:29:55 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.358 $ $Date: 2006/12/19 13:36:22 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -64,7 +64,7 @@ CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
 
 CREATE UNIQUE INDEX I_CastorFile_fileIdNsHost on CastorFile (fileId, nsHost);
 CREATE INDEX I_CastorFile_lastKnownFileName on CastorFile (lastKnownFileName);
-CREATE INDEX I_CastorFile_scvcClass on CastorFile (svcClass);
+CREATE INDEX I_CastorFile_svcClass on CastorFile (svcClass);
 
 CREATE INDEX I_DiskCopy_Castorfile on DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem on DiskCopy (fileSystem);
