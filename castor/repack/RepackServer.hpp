@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2006/10/05 08:26:51 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/12/19 09:21:19 $ $Author: felixehm $
  *
  *
  *
@@ -40,7 +40,6 @@
 #include "RepackCleaner.hpp"
 
 #include "RepackMonitor.hpp"
-#include "RepackSynchroniser.hpp"
 
 namespace castor {
 

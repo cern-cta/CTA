@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2006/12/13 12:59:16 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2006/12/19 09:21:19 $ $Author: felixehm $
  *
  *
  *
@@ -80,14 +80,6 @@ int main(int argc, char *argv[]) {
                                           ));
 	  server.getThreadPool('C')->setNbThreads(1);
 
-    /// The Repack Synchroniser (normally switched off, parseCommandLine will enable it */
-    server.addThreadPool(
-      new castor::server::SignalThreadPool("Zychroniser",
-                                            new castor::repack::RepackSynchroniser(&server),
-                                            0
-                                          ));
-    server.getThreadPool('Z')->setNbThreads(0); 
-    
     /// Read the command line parameters
     server.parseCommandLine(argc, argv);
 
