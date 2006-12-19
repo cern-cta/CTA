@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.358 $ $Release$ $Date: 2006/12/19 13:36:22 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.359 $ $Release$ $Date: 2006/12/19 14:45:26 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.358 $ $Date: 2006/12/19 13:36:22 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.359 $ $Date: 2006/12/19 14:45:26 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2314,7 +2314,7 @@ BEGIN
        AND DiskCopy.status = 0 -- STAGED
        AND NOT EXISTS (
          SELECT 'x' FROM SubRequest 
-          WHERE DC.status = 0 AND diskcopy = DC.id 
+          WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id 
             AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10))   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
      ORDER BY 3 DESC;
   RETURN result;
