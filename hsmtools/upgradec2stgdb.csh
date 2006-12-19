@@ -2,7 +2,7 @@
 #
 # This script upgrades all castor2 stager databases by running the given SQL file.
 #
-# @(#)$RCSfile: upgradec2stgdb.csh,v $ $Revision: 1.5 $ $Date: 2006/10/30 12:55:16 $ $Author: itglp $
+# @(#)$RCSfile: upgradec2stgdb.csh,v $ $Revision: 1.6 $ $Date: 2006/12/19 15:40:12 $ $Author: itglp $
 # 
 # @author Castor Dev team, castor-dev@cern.ch
 # ********************************************************************************
@@ -15,7 +15,7 @@ if ( $#argv == 0 ) then
 endif
 
 set castordb='c2alicestgdb c2atlasstgdb c2cmsstgdb c2lhcbstgdb c2publicstgdb c2itdcstgdb c2teststgdb'
-set castordevdb='main_dev main_dev2 main_dev3 main_dev4 main_dev5'
+set castordevdb='main_dev main_dev2 main_dev3 main_dev4 main_dev5 main_dev6'
 
 if ( $#argv == 2 && "$2" == "-d" ) then
 foreach dbu ( $castordevdb )
