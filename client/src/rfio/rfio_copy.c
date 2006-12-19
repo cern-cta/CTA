@@ -24,8 +24,9 @@ static char sccsid[] = "@(#)rfcp.c,v 1.61 2004/03/02 16:18:33 CERN/IT/DS/HSM Fel
 #include <time.h>
 #include "osdep.h"
 #ifdef CNS_ROOT
-#include "stage_api.h" /* The CASTOR-aware rfcp needs the stage API */
-#include "stager_api.h" /* For the CASTOR new stager */  
+#include "stage_api.h"  /* For CASTOR-1 */
+#include "stager_api.h" /* For CASTOR-2 */  
+#include "stager_client_commandline.h"  /* For getDefaultForGlobal */
 #endif
 #include "u64subr.h"
 #ifndef _WIN32
@@ -62,9 +63,6 @@ extern char *strdup _PROTO((CONST char *));
 #endif
 
 EXTERN_C int DLL_DECL use_castor2_api _PROTO(());
-
-/* getDefaultForGlobal defined in the parse.c file */
-int getDefaultForGlobal(char** host,int* port,char** svc,int* version);
 
 
 #if defined(vms) && (vms == 1)
