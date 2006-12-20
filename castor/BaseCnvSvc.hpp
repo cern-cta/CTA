@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/05/02 10:01:18 $ $Author: itglp $
+ * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2006/12/20 11:15:55 $ $Author: itglp $
  *
  *
  *
@@ -34,7 +34,6 @@
 #include "ICnvSvc.hpp"
 #include "Constants.hpp"
 #include "BaseSvc.hpp"
-#include "castor/db/IDbStatement.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/SQLError.hpp"
 
