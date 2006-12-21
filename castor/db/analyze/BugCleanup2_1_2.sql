@@ -155,6 +155,7 @@ BEGIN
 END;
 DECLARE
   files castor."cnumList";
+  emptyFileList castor."cnumList";
   totalCount NUMBER;
   i number;
   fileIds castor.FileList_Cur;
@@ -163,16 +164,17 @@ BEGIN
   -- For logging
   INSERT INTO CleanupLogTable VALUES (2, 'Cleaning the GC candidates that have no filesystem', getTime());
   COMMIT;
-  SELECT COUNT(UNIQUE id) INTO totalCount FROM DiskCopy where status = 8 and (filesystem = 0 or filesystem is null);
+  SELECT COUNT(UNIQUE id) INTO totalCount FROM DiskCopy where status IN (7,8) and (filesystem = 0 or filesystem is null);
   LOOP
     i := 1;
+    files := emptyFileList; -- emptying collection
     -- do it 1000 by 1000 in order to not slow down the normal requests
-    FOR dc IN (SELECT UNIQUE id FROM DiskCopy where status = 8 and (filesystem = 0 or filesystem is null) AND ROWNUM <= 1000)
+    FOR dc IN (SELECT UNIQUE id FROM DiskCopy where status IN (7,8) and (filesystem = 0 or filesystem is null) AND ROWNUM <= 1000)
     LOOP
       files(i) := dc.id;
       i := i + 1;
     END LOOP;
-    filesDeletedProc(files, fileIds);
+    filesDeletedProcNoFS(files, fileIds);
     -- commit between each bunch of 500
     done := done + 1000;
     UPDATE CleanupLogTable
@@ -636,6 +638,44 @@ BEGIN
       UPDATE CleanupLogTable
          SET message = 'stagePutDoneRequest having no subrequest were cleaned', logDate = getTime()
        WHERE fac = 12;
+      COMMIT;
+      EXIT;
+    END IF;
+  END LOOP;
+END;
+
+-- Cleanup of old subrequests (code from deleteOutOfDateRequests)
+DECLARE
+  nothingLeft NUMBER;
+  totalCount NUMBER;
+  done NUMBER := 0;
+BEGIN
+  -- For logging
+  INSERT INTO CleanupLogTable VALUES (13, 'Cleaning old subrequests', getTime());
+  COMMIT;
+  SELECT COUNT(*) INTO totalCount FROM (SELECT UNIQUE request FROM SubRequest GROUP BY request
+    HAVING min(status) >= 8 AND max(status) <= 11 AND max(lastModificationTime) < getTime() - 600000);
+  LOOP
+    nothingLeft := 1;
+    -- do it 100 by 100 in order to not slow down the normal requests
+    FOR s IN (SELECT * FROM (SELECT request FROM SubRequest GROUP BY request
+              HAVING min(status) >= 8 AND max(status) <= 11 
+                 AND max(lastModificationTime) < getTime() - 600000) WHERE ROWNUM <= 100) LOOP
+      nothingLeft := 0;
+      deleteRequest(s.request);
+    END LOOP;
+    -- commit between each bunch of 100
+    done := done + 100;
+    UPDATE CleanupLogTable
+       SET message = 'Cleaning old subrequests' ||
+           TO_CHAR(100*done/(totalCount+1), '99.99') || '% done', logDate = getTime()
+     WHERE fac = 13;
+    COMMIT;
+    DBMS_LOCK.sleep(seconds => 1.0);
+    IF nothingLeft = 1 THEN
+      UPDATE CleanupLogTable
+         SET message = 'Old subrequests were cleaned', logDate = getTime()
+       WHERE fac = 13;
       COMMIT;
       EXIT;
     END IF;
