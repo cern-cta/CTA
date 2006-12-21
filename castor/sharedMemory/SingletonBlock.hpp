@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SingletonBlock.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/11/10 15:49:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: SingletonBlock.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/12/21 15:37:49 $ $Author: sponcec3 $
  *
  * 
  *
@@ -51,9 +51,16 @@ namespace castor {
        * Constructor
        * Initiates a block of shared memory.
        * @param key the key for this block
+       * @param rawMem pointer to the raw memory to be used
+       * of the raw memory block
        */
-      SingletonBlock(BlockKey& key)
+      SingletonBlock(BlockKey& key, void* rawMem)
         throw (castor::exception::Exception);
+
+      /**
+       * Destructor
+       */
+      virtual ~SingletonBlock() throw ();
 
       /**
        * accessor to tyhe singleton object
@@ -83,12 +90,16 @@ namespace castor {
 //------------------------------------------------------------------------------
 template<class T, class A>
 castor::sharedMemory::SingletonBlock<T,A>::SingletonBlock
-(castor::sharedMemory::BlockKey& key)
+(castor::sharedMemory::BlockKey& key, void* rawMem)
   throw (castor::exception::Exception) :
-  Block<A>(key) {
-  // Create the singleton object
-  void *ptr = this->malloc(sizeof(T));
-  m_singleton = new(ptr)T();
+  Block<A>(key, (void*)((char*)rawMem + sizeof(T))) {
+  m_singleton = new(rawMem)T();
 };
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+template<class T, class A>
+castor::sharedMemory::SingletonBlock<T,A>::~SingletonBlock () throw () {}
 
 #endif // SHAREDMEMORY_SINGLETONBLOCK_HPP

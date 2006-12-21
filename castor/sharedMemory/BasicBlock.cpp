@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BasicBlock.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/11/03 11:08:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BasicBlock.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/12/21 15:37:48 $ $Author: sponcec3 $
  *
  * A basic shared memory block, with a key and a static
  * table of attached addresses
@@ -30,9 +30,15 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::sharedMemory::BasicBlock::BasicBlock (BlockKey& key)
+castor::sharedMemory::BasicBlock::BasicBlock
+(BlockKey& key, void* rawMem)
   throw (castor::exception::Exception) :
-  m_key(key), m_sharedMemoryBlock(0) {}
+  m_key(key), m_sharedMemoryBlock(rawMem) {}
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+castor::sharedMemory::BasicBlock::~BasicBlock () throw () {}
 
 //------------------------------------------------------------------------------
 // attached blocks static member

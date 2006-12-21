@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BasicBlock.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/11/03 11:08:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BasicBlock.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/12/21 15:37:48 $ $Author: sponcec3 $
  *
  * A basic shared memory block, with a key and a static
  * table of attached addresses
@@ -47,9 +47,31 @@ namespace castor {
       /**
        * Constructor
        * @param key the key for this block
+       * @param rawMem pointer to the raw memory to be used
+       * header of the Block.
        */
-      BasicBlock(BlockKey& key)
+      BasicBlock(BlockKey& key, void* rawMem)
         throw (castor::exception::Exception);
+
+      /**
+       * Destructor
+       */
+      virtual ~BasicBlock() throw();
+
+      /**
+       * allocates a new chunk of memory
+       * @param nbBytes the number of bytes needed
+       */
+      virtual void* malloc(size_t nbBytes)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * deallocate some memory
+       * @param pointer a pointer to the space to deallocate
+       * @param nbBytes the number of bytes freed
+       */
+      virtual void free(void* pointer, size_t nbBytes)
+        throw (castor::exception::Exception) = 0;
 
     protected:
 

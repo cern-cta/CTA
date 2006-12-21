@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BlockDict.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/11/03 15:34:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BlockDict.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/12/21 15:37:48 $ $Author: sponcec3 $
  *
  * A static dictionnary of blocks, referenced by their
  * BlockKey
@@ -26,9 +26,15 @@
  *****************************************************************************/
 
 #include <map>
-#include "Cthread_api.h"
+#include "castor/dlf/Dlf.hpp"
+#include "castor/sharedMemory/IBlock.hpp"
 #include "castor/sharedMemory/BlockKey.hpp"
 #include "castor/sharedMemory/BlockDict.hpp"
+#include "castor/exception/Internal.hpp"
+#include "Cthread_api.h"
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <errno.h>
 
 //------------------------------------------------------------------------------
 // s_blockDict
@@ -37,15 +43,66 @@ std::map<castor::sharedMemory::BlockKey, castor::sharedMemory::IBlock*>
 castor::sharedMemory::BlockDict::s_blockDict;
 
 //------------------------------------------------------------------------------
-// getBlock
+// getIBlock
 //------------------------------------------------------------------------------
 castor::sharedMemory::IBlock*
-castor::sharedMemory::BlockDict::getBlock
+castor::sharedMemory::BlockDict::getIBlock
 (castor::sharedMemory::BlockKey &key) {
-  std::map<BlockKey, IBlock*>::iterator it =
+  // try to find the block in existing ones
+  std::map<BlockKey, IBlock*>::const_iterator it =
     s_blockDict.find(key);
-  if (it == s_blockDict.end()) return 0;
-  return it->second;
+  if (it != s_blockDict.end()) {
+    return it->second;
+  }
+  return 0;
+}
+
+//------------------------------------------------------------------------------
+// createBlock
+//------------------------------------------------------------------------------
+bool castor::sharedMemory::BlockDict::createBlock
+(castor::sharedMemory::BlockKey &key, void** pointer) {
+  bool created = false;
+  // Try to get the identifier of the shared memory
+  int shmid = shmget(key.key(), key.size(), 0666);
+  if (-1 == shmid) {
+    if (ENOENT != errno) {
+      // "Unable to get shared memory id. Giving up"
+      castor::dlf::Param initParams[] =
+	{castor::dlf::Param("Error Message", strerror(errno))};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 0, 1, initParams);
+      castor::exception::Internal e;
+      e.getMessage() << "Unable to get shared memory id. Giving up.";
+      throw e;
+    }
+    // Try to create the shared memory
+    shmid = shmget(key.key(), key.size(), IPC_CREAT | 0666);
+    if (-1 == shmid) {
+      // "Unable to create shared memory. Giving up"
+      castor::dlf::Param initParams[] =
+	{castor::dlf::Param("Error Message", strerror(errno))};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 1, 1, initParams);
+      castor::exception::Internal e;
+      e.getMessage() << "Unable to create shared memory. Giving up.";
+      throw e;
+    }
+    // "Created the shared memory."
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 2, 0, 0);
+    created = true;
+  }
+  // Attach the shared memory
+  void *sharedMemoryBlock = shmat(shmid, key.address(), SHM_REMAP);
+  if (-1 == (int)sharedMemoryBlock) {
+    // "Unable to get pointer to shared memory. Giving up"
+    castor::dlf::Param initParams[] =
+      {castor::dlf::Param("Error Message", strerror(errno))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 1, initParams);
+    castor::exception::Internal e;
+    e.getMessage() << "Unable to get pointer to shared memory. Giving up.";
+    throw e;
+  }
+  *pointer = sharedMemoryBlock;
+  return created;
 }
 
 //------------------------------------------------------------------------------
@@ -57,18 +114,4 @@ castor::sharedMemory::BlockDict::insertBlock
  castor::sharedMemory::IBlock *block) {
   return s_blockDict.insert
     (std::pair<BlockKey, IBlock*>(key, block)).second;
-}
-
-//------------------------------------------------------------------------------
-// lock
-//------------------------------------------------------------------------------
-void castor::sharedMemory::BlockDict::lock() {
-  Cthread_mutex_lock(&s_blockDict);
-}
-
-//------------------------------------------------------------------------------
-// unlock
-//------------------------------------------------------------------------------
-void castor::sharedMemory::BlockDict::unlock() {
-  Cthread_mutex_unlock(&s_blockDict);
 }

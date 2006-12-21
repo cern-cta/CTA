@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/11/10 15:49:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/12/21 15:37:48 $ $Author: sponcec3 $
  *
  * A block of shared memory with incorporated memory allocation
  *
@@ -29,7 +29,6 @@
 
 #include <map>
 #include "castor/sharedMemory/BasicBlock.hpp"
-#include "castor/sharedMemory/Allocator.hpp"
 #include "castor/sharedMemory/BlockKey.hpp"
 #include "castor/exception/Exception.hpp"
 
@@ -42,16 +41,22 @@ namespace castor {
 
     /**
      * a class dealing with a Block of Shared memory.
-     * The Block contains its own table of free and used areas
+     * The raw Block contains a sharedMemory::IBlock object
+     * to manage itself and its own table of free and used areas
      * so that it's self contained.
      * The mapping of the memory of the Block is the following :
      * \verbatim
      *   Begin of Block
+     *     Block object (this class)
+     *     Extra reserved memory (for use by child classes)
      *     First and Second node of the Allocation Table
      *     Allocation Table
      *     Available memory
      *   End of Block
      * \endverbatim
+     * Note that the 2 first items are not seen by this class.
+     * Hence the pointer to the raw memory handled here points
+     * to the "First and Second node of the Allocation Table"
      * @param A an allocator name that should be used for internal
      * memory allocation. Node that it must allocate
      * Block::SharedNode objects
@@ -63,11 +68,17 @@ namespace castor {
 
       /**
        * Constructor
-       * Initiates a block of shared memory.
        * @param key the key for this block
+       * @param rawMem pointer to the raw memory to be used
+       * objects
        */
-      Block(BlockKey& key)
+      Block(BlockKey& key, void* rawMem)
         throw (castor::exception::Exception);
+
+      /**
+       * Destructor
+       */
+      virtual ~Block() throw ();
 
     public:
 
@@ -117,113 +128,43 @@ namespace castor {
 // Implementation of templated parts
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "castor/sharedMemory/Allocator.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/OutOfMemory.hpp"
-#include "castor/dlf/Dlf.hpp"
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <errno.h>
-#include <Cmutex.h>
+#include "castor/sharedMemory/BlockDict.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 template <typename A>
-castor::sharedMemory::Block<A>::Block (BlockKey& key)
+castor::sharedMemory::Block<A>::Block
+(BlockKey& key, void* rawMem)
   throw (castor::exception::Exception) :
-  BasicBlock(key),
-  m_initializing(0) {
-    // Check that the given size is big enough
-    size_t minimumSize =
-      2*sizeof(std::_Rb_tree_node<SharedNode>) +
-      sizeof(SharedMap);
-    if (minimumSize > m_key.size()) {
-      // "Not enough space for headers in shared memory. Giving up"
-      castor::dlf::Param initParams[] =
-        {castor::dlf::Param("Allocated size", m_key.size()),
-         castor::dlf::Param("Requested size", minimumSize)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4, 0, 0);
-      castor::exception::Internal e;
-      e.getMessage() << "Not enough space for header in shared memory. Giving up.";
-      throw e;
-    }
-    // we need to assure that we create the shared memory only once
-    // so we serialize all the Block creation
-    Cmutex_lock(&m_sharedMemoryBlock, -1);
-    // Keep track of whether we created the shared memory block
-    bool createdSharedMemory = false;
-    // Try to get the identifier of the shared memory
-    int shmid = shmget(m_key.key(), m_key.size(), 0666);
-    if (-1 == shmid) {
-      if (ENOENT != errno) {
-        // "Unable to get shared memory id. Giving up"
-        castor::dlf::Param initParams[] =
-          {castor::dlf::Param("Error Message", strerror(errno))};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 0, 1, initParams);
-        castor::exception::Internal e;
-        e.getMessage() << "Unable to get shared memory id. Giving up.";
-        throw e;
-      }
-      // Try to create the shared memory
-      shmid = shmget(m_key.key(), m_key.size(), IPC_CREAT | 0666);
-      if (-1 == shmid) {
-        // "Unable to create shared memory. Giving up"
-        castor::dlf::Param initParams[] =
-          {castor::dlf::Param("Error Message", strerror(errno))};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 1, 1, initParams);
-        castor::exception::Internal e;
-        e.getMessage() << "Unable to create shared memory. Giving up.";
-        throw e;
-      }
-      createdSharedMemory = true;
-      // "Created the shared memory."
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 2, 0, 0);
-    }
-    // Check whether the block is already attached
-    std::map<int, void*>::const_iterator it =
-      s_attachedBlocks.find(shmid);
-    if (it == s_attachedBlocks.end()) {
-      // Attach the shared memory
-      m_sharedMemoryBlock = shmat(shmid, m_key.address(), SHM_REMAP);
-      if (-1 == (int)m_sharedMemoryBlock) {
-        // "Unable to get pointer to shared memory. Giving up"
-        castor::dlf::Param initParams[] =
-          {castor::dlf::Param("Error Message", strerror(errno))};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 1, initParams);
-        castor::exception::Internal e;
-        e.getMessage() << "Unable to get pointer to shared memory. Giving up.";
-        throw e;
-      }
-      s_attachedBlocks[shmid] = m_sharedMemoryBlock;
-    } else {
-      m_sharedMemoryBlock = it->second;
-    }
-    // register the block
-    castor::sharedMemory::BlockDict::insertBlock(key, this);
-    // start of memory initialization
-    m_initializing = 1;
-    // now create/extract the map of allocated regions
-    size_t offset = 2*sizeof(std::_Rb_tree_node<SharedNode>);
-    void* m_freeRegionsRaw = (void*)((char*)m_sharedMemoryBlock + offset);
-    if (createdSharedMemory) {
-      // create the free region map
-      m_freeRegions = new(m_freeRegionsRaw) SharedMap();
-      offset += sizeof(SharedMap);
-      // note that malloc will be called here since a new cell
-      // has to be created in the m_freeRegions container
-      // However, since m_initializing is true, it won't allocate memory
-      // but used the reserved node
-      (*m_freeRegions)[(void*)((char*)m_sharedMemoryBlock + offset)] =
-        m_key.size() - offset;
-    } else {
-      m_freeRegions = (SharedMap*) (m_freeRegionsRaw);
-    }
-    // End of memory initialization
-    m_initializing = 0;
-    // Now we can release the lock
-    Cmutex_unlock(&m_sharedMemoryBlock);
-  }
+  BasicBlock(key, rawMem), m_initializing(0) {
+  // Register block in the dictionnary before it's fully
+  // created since the SharedMap creation will use it
+  castor::sharedMemory::BlockDict::insertBlock(key, this);
+  // start of memory initialization
+  m_initializing = 1;
+  // now create the map of allocated regions
+  size_t offset = 2*sizeof(std::_Rb_tree_node<SharedNode>);
+  void* m_freeRegionsRaw = (void*)((char*)m_sharedMemoryBlock + offset);
+  // create the free region map
+  m_freeRegions = new(m_freeRegionsRaw) SharedMap();
+  offset += sizeof(SharedMap);
+  // note that malloc will be called here since a new cell
+  // has to be created in the m_freeRegions container
+  // However, since m_initializing is true, it won't allocate memory
+  // but used the reserved node
+  (*m_freeRegions)[(void*)((char*)m_sharedMemoryBlock + offset)] =
+    m_key.size() - offset;
+  // End of memory initialization
+  m_initializing = 0;
+}
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+template <typename A>
+castor::sharedMemory::Block<A>::~Block () throw () {}
 
 //------------------------------------------------------------------------------
 // malloc
@@ -238,7 +179,7 @@ void* castor::sharedMemory::Block<A>::malloc(size_t nbBytes)
     // is located at the very beginning of the block
     void* res = (void*) (((char*)m_sharedMemoryBlock) +
                          ((m_initializing-1) *
-                          sizeof(std::_Rb_tree_node<SharedNode>)));
+			  sizeof(std::_Rb_tree_node<SharedNode>)));
     m_initializing++;
     return res;
   }
