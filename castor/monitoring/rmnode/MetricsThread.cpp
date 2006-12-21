@@ -538,7 +538,7 @@ int castor::monitoring::rmnode::MetricsThread::Crm_util_io
   int major_disk = -1;
   int minor_disk = -1;
   int n, i_disk, major = -1, minor = -1;
-  unsigned long sectors, thisrd, thiswr;
+  unsigned long sectors;
   int found_major_minor = 0;
   char disk[CA_MAXPATHLEN+1];
   const char *diskbasename;
@@ -554,7 +554,7 @@ int castor::monitoring::rmnode::MetricsThread::Crm_util_io
       unsigned long long int xfs_strat, xfs_write, xfs_read;
 
       p += strlen("xpc ");
-      n = sscanf(p, "%lld %lld %lld", &xfs_strat, &xfs_write, &xfs_read);
+      n = sscanf(p, "%llu %llu %llu", &xfs_strat, &xfs_write, &xfs_read);
       if (n == 3) {
         /* Our caller expects output in blocks of 512 */
         result1 = (xfs_read >> 9);
@@ -668,7 +668,7 @@ int castor::monitoring::rmnode::MetricsThread::Crm_util_io
     if ((! found) && (major_disk >= 0) && (minor_disk >= 0)) {
       int disk_index;
       char *q;
-      int i;
+      unsigned int i;
       struct _disk_name_map *dm = NULL;
 
       /* We want to have the disk index */
