@@ -67,6 +67,11 @@ const std::string castor::repack::DatabaseHelper::s_selectLockStatementString =
   "SELECT * from RepackSubRequest where id = :1 FOR UPDATE";
 
 
+/// SQL for getting lattest information of a tapy copy to do a repack undo
+
+const std::string castor::repack::DatabaseHelper::s_selectLastSegmentsSituationStatementString=
+"select repacksubrequest.id from repacksubrequest,repackrequest where repacksubrequest.requestid=repackrequest.id and repackrequest.creationtime in (select max(creationtime) from (select * from repackrequest where id in (select requestid from repacksubrequest where vid=:1))) and repacksubrequest.vid=:1";
+
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -80,17 +85,18 @@ castor::repack::DatabaseHelper::DatabaseHelper() :
     m_isStoredStatement(NULL),
     m_archiveStatement(NULL),
     m_selectAllSubRequestsStatusStatement(NULL),
-    m_selectLockStatement(NULL) {
-  try {
+    m_selectLockStatement(NULL),
+    m_selectLastSegmentsSituationStatement(NULL){
+    try {
 	ad.setCnvSvcName("DbCnvSvc");
 	ad.setCnvSvcType(castor::SVC_DBCNV);
    
-  } catch(castor::exception::Exception e) {
+    } catch(castor::exception::Exception e) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
        castor::dlf::Param("Precise Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 2, params);
-  }
+    }
 
 };
 
@@ -123,6 +129,7 @@ void castor::repack::DatabaseHelper::reset() throw() {
    if ( m_archiveStatement ) delete m_archiveStatement;
    if ( m_selectAllSubRequestsStatusStatement ) delete m_selectAllSubRequestsStatusStatement;
    if ( m_selectLockStatement ) delete m_selectLockStatement;
+   if (m_selectLastSegmentsSituationStatement) delete m_selectLastSegmentsSituationStatement;
   } catch (castor::exception::SQLError ignored) {};
   // Now reset all pointers to 0
    m_selectCheckStatement = NULL;
@@ -133,6 +140,7 @@ void castor::repack::DatabaseHelper::reset() throw() {
    m_archiveStatement = NULL;
    m_selectAllSubRequestsStatusStatement = NULL;
    m_selectLockStatement = NULL;
+   m_selectLastSegmentsSituationStatement=NULL;
 }
 
 
@@ -558,9 +566,6 @@ std::vector<castor::repack::RepackSubRequest*>*
 }
 
 
-
-
-
 //------------------------------------------------------------------------------
 // getAllSubRequestsStatus 
 //------------------------------------------------------------------------------
@@ -577,7 +582,7 @@ std::vector<castor::repack::RepackSubRequest*>*
   m_selectAllSubRequestsStatusStatement->setInt(1, status);
   
   std::vector<castor::repack::RepackSubRequest*>* result = NULL;
-  result = internalgetSubRequests(m_selectAllSubRequestsStatusStatement );
+  result = internalgetSubRequests(m_selectAllSubRequestsStatusStatement);
   
   /// we want to have to corresponding RepackRequest for each RepackSubRequest
   for (int i=0; i<result->size(); i++ ){
@@ -687,4 +692,49 @@ castor::repack::RepackSegment*
 		throw ex;
 	}
   return result;
+}
+
+
+//------------------------------------------------------------------------------
+// private : getLastTapeInformation 
+//------------------------------------------------------------------------------
+castor::repack::RepackRequest* 
+ castor::repack::DatabaseHelper::getLastTapeInformation(std::string vidName)
+                    throw (castor::exception::Internal)
+{
+
+  castor::repack::RepackSubRequest* result=NULL;
+
+  if (vidName.length() ==0) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "passed Parameter is NULL" << std::endl;
+    throw ex;
+  }
+  
+  if ( m_selectLastSegmentsSituationStatement == NULL ) {
+    m_selectLastSegmentsSituationStatement = 
+                      createStatement(s_selectLastSegmentsSituationStatementString);
+  }
+  
+  try {
+    m_selectLastSegmentsSituationStatement->setString(1,vidName);
+    castor::db::IDbResultSet *rset = m_selectLastSegmentsSituationStatement->executeQuery();
+
+    if ( rset->next() ){
+      /// get the request we found
+      u_signed64 id = (u_signed64)rset->getDouble(1);
+      result = getSubRequest(id);
+      svcs()->fillObj(&ad,result,OBJ_RepackRequest);
+      svcs()->fillObj(&ad,result,OBJ_RepackSegment);
+    }
+    delete rset;
+  }catch (castor::exception::SQLError e) {
+		castor::exception::Internal ex;
+		ex.getMessage()
+		<< "DatabaseHelper::getLastTapeInformation():"
+		<< "Unable to get all RepackSubRequests" 
+		<< std::endl << e.getMessage().str();
+		throw ex;
+	}
+  return  (result==NULL)? NULL:(result->requestID());
 }

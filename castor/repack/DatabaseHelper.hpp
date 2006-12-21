@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/08/14 14:18:54 $ $Author: felixehm $
+ * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/12/21 14:29:02 $ $Author: gtaur $
  *
  * 
  *
@@ -169,6 +169,14 @@ namespace castor {
                     throw (castor::exception::Internal);
     
 
+
+
+     RepackRequest* DatabaseHelper::getLastTapeInformation(std::string vidName)
+                    throw (castor::exception::Internal);
+
+
+
+
      /** Archives the finished RepackSubRequests.
       * It just updates the DB for Requests in SUBREQUEST_DONE
       * to SUBREQUEST_ARCHIVED.
@@ -225,7 +233,10 @@ namespace castor {
 
         static const std::string s_selectLockStatementString;
         castor::db::IDbStatement *m_selectLockStatement;
-  
+
+        static const std::string s_selectLastSegmentsSituationStatementString;
+        castor::db::IDbStatement *m_selectLastSegmentsSituationStatement;
+
         castor::BaseAddress ad;
       
     }; // end of class DatabaseHelper

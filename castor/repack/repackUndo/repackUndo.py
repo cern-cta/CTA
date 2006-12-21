@@ -9,12 +9,17 @@ except:
   print "Fatal: couldn't load module cx_Oracle.Make sure it is installed and $PYTHONPATH includes the directory where cx_Oracle.so resides.\n"
   sys.exit(2)
   
+def segmentByFileId(elem1,elem2):
+  return elem1[1]-elem2[1]
+  
+
 
 # Retrieving tapes involved into the repack undo
 
 
 listOfTape=""
 tapePool=""
+
 
 try:
   res= getopt.getopt(sys.argv[1:],"V:P:")
@@ -65,77 +70,75 @@ repackDb=(differentElem[2].split(" "))[1]
 repackConnection= cx_Oracle.connect(repackUser+"/"+repackPass+"@"+repackDb)
 repackCursor=repackConnection.cursor()
 
+repackQry="select fileid,compression,segsize,filesec,copyno,blockid,fileseq,id,vid  from repacksegment where vid in (select repacksubrequest.id from repacksubrequest,repackrequest where repacksubrequest.requestid=repackrequest.id and repackrequest.creationtime in (select max(creationtime) from (select * from repackrequest where id in (select requestid from repacksubrequest where vid=:1))) and repacksubrequest.requestid in (select requestid from repacksubrequest where vid=:2))order by fileid"
 
-repackQry="select fileid,compression,segsize,filesec,copyno,blockid,fileseq,id,vid  from repacksegment where vid in (select repacksubrequest.id from repacksubrequest,repackrequest where repacksubrequest.requestid=repackrequest.id and repackrequest.creationtime in (select max(creationtime) from (select * from repackrequest where id in (select requestid from repacksubrequest where vid=:1))) and repacksubrequest.requestid in (select requestid from repacksubrequest where vid=:2))"
 
 for tape in listOfTape:
   print
   print "*** TAPE involved: ",tape," ***"
   print
 
-  # for each tape I retrieve the information saved into the repack db
+  # for each tape I retrieve the fileid saved into the repack db
 
   repackCursor.execute(repackQry,(tape,tape))
   repackResult=repackCursor.fetchall()
-  listFile=[]
-
+  listSegmentBeforeUndo=[]
+  listSegmentAfterUndo=[]
   for (fileidRep,compressionRep,segsizeRep,filesecRep,copynoRep,blockidRep,fileseqRep,idRep,vidRep) in repackResult:
-    listFile.append((fileidRep,copynoRep))
-    
-    repackQryForVid="select vid  from repacksubrequest where id=:1"
-    repackCursor.execute(repackQryForVid,(vidRep,))
-    vidRep=repackCursor.fetchall()[0][0]
 
-    print "* FileID ",fileidRep
+  # Getting information from the ns for one file at the time
+    (ret,infoSeg)=wrapcns.cnsGetSegInfo(fileidRep,copynoRep)
+    
+    if ret <0:
+      listSegmentBeforeUndo.append((-1,fileidRep))
+    else:
+      listSegmentBeforeUndo.append((0,fileidRep,infoSeg))
+
+
+  retSetOperation=wrapcns.cnsSetSegInfo(tape)
+
+  for (fileidRep,compressionRep,segsizeRep,filesecRep,copynoRep,blockidRep,fileseqRep,idRep,vidRep)in repackResult:
+
+  # Getting information from the ns for one file at the time
+
+    (ret,infoSeg)=wrapcns.cnsGetSegInfo(fileidRep,copynoRep)
+    
+    if ret <0:
+      listSegmentAfterUndo.append((-1,fileidRep))
+    else:
+      listSegmentAfterUndo.append((0,fileidRep,infoSeg))
+
+  #print the output FINIRE 
+
+  listSegmentBeforeUndo.sort(segmentByFileId)
+  listSegmentAfterUndo.sort(segmentByFileId)
+  retSetOperation.sort(segmentByFileId)
+
+  i=0;
+  for elem in  listSegmentBeforeUndo:
+    print  "* File Id ",elem[1]
     print
-
-    # Getting information from the ns for one file at the time
+    print "   Values from nameserver:"
+    if elem[0]==-1:
+      print "   problems to retrieve this file"
+    else:
+      print "   ",elem[2]
+    if  retSetOperation[0][i][0]== -1 :
+      print "   problems in setting information for file ",retSetOperation[0][i][1]
+    else:
+       print "   Values from repack for fileid ",repackResult[i][0],":"
+       print "    [[",repackResult[i][3],", ",repackResult[i][4],", ",repackResult[i][2],", ",repackResult[i][1],", ?, ",repackResult[i][8],", ?, ",repackResult[i][6],", ",repackResult[i][5],", ?, ? ]]"
+       
+    print "   Values from nameserver after the repack undo:"
+    if listSegmentAfterUndo[i][0]== -1:  
+      print "   problems to retrieve this file"
+    else:
+      print "   ",listSegmentAfterUndo[i][2]
+    print
+    i=i+1
     
-    try:
-      (ret,infoSeg)=wrapcns.cnsGetSegInfo(fileidRep)
-      if ret <0:
-        print "Error while getting information from the name server for fileid ",fileidRep
-        continue
+    
+
+    
       
-      print "   Values from nameserver:"
-      print "   ",infoSeg
-      
-    except:
-      print "   Impossible to retrieve information from the ns for file ",fileidRep
-      print
-      continue
-    
-    # Setting information in  the ns for one file at the time to do the repack undo
-
-    try:
-      (ret,infoSeg)=wrapcns.cnsSetSegInfo(fileidRep,compressionRep,segsizeRep,filesecRep,copynoRep,blockidRep,fileseqRep,vidRep)
-    
-      if ret <0:
-        print "Error while setting information from the name server for fileid ",fileidRep
-        continue  
-    
-      print "   Values from repack db (? for the information which are not provided):"
-      print "   ",infoSeg
-
-    except:
-      print "   Impossible to restore information in the ns for file ",fileidRep
-      print
-      continue
-
-    # Getting information from the ns after the repack undo
-
-    try:    
-      (ret,infoSeg)=wrapcns.cnsGetSegInfo(fileidRep)
-      if ret <0:
-        print "Error while getting information from the name server for fileid ",fileidRep," after the repack undo"
-        continue  
-  
-      print "   Values from nameserver after the repack undo:"
-      print "   ",infoSeg
-      print
-    except:
-      print "   Impossible to get information from the ns for file ",fileidRep," after the repack undo"
-      print
-      continue
-    
     
