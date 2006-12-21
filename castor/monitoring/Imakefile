@@ -30,7 +30,7 @@ SUBDIRS = $(RMMASTERDIR) $(RMNODEDIR)
 
 OSLIBS = -L FileName(..,shlib) -lshift $(ADNSLIB) -lnsl
 LIBS = $(OSLIBS) $(MTLDLIBS) -ldl
-DEBUG  = -g -O0
+DEBUG  = -g -O0 -pedantic -ansi -Wall -Wno-long-long
 INCLUDES = -I FileName(../..,h) -I ../..
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DRH_HOST=\"$(RH_HOST)\"
 
