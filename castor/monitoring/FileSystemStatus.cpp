@@ -26,7 +26,7 @@
 
 #include "castor/monitoring/FileSystemStatus.hpp"
 #include "castor/monitoring/AdminStatusCodes.hpp"
-#include "castor/stager/DiskServerStatusCode.hpp"
+#include "castor/stager/FileSystemStatusCodes.hpp"
 #include <iostream>
 #include <iomanip>
 
@@ -62,7 +62,7 @@ void castor::monitoring::FileSystemStatus::print
       << "space" << ": " << m_space << "\n"
       << indentation << std::setw(20)
       << "status" << ": "
-      << castor::stager::DiskServerStatusCodeStrings[m_status] << "\n"
+      << castor::stager::FileSystemStatusCodesStrings[m_status] << "\n"
       << indentation << std::setw(20)
       << "adminStatus" << ": "
       << castor::monitoring::AdminStatusCodesStrings[m_adminStatus] << "\n"

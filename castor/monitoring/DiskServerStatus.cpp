@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 #include "castor/monitoring/DiskServerStatus.hpp"
+#include "castor/stager/DiskServerStatusCode.hpp"
 #include <iostream>
 #include <iomanip>
 
@@ -54,9 +55,11 @@ void castor::monitoring::DiskServerStatus::print
       << indentation << std::setw(20)
       << "swap" << ": " << m_swap << "\n"
       << indentation << std::setw(20)
-      << "status" << ": " << m_status << "\n"
+      << "status" << ": "
+      << castor::stager::DiskServerStatusCodeStrings[m_status] << "\n"
       << indentation << std::setw(20)
-      << "adminStatus" << ": " << m_adminStatus << "\n"
+      << "adminStatus" << ": "
+      << castor::monitoring::AdminStatusCodesStrings[m_adminStatus] << "\n"
       << indentation << std::setw(20)
       << "freeRam" << ": " << m_freeRam << "\n"
       << indentation << std::setw(20)
@@ -77,7 +80,7 @@ void castor::monitoring::DiskServerStatus::print
     std::string fsIndent = indentation + "   ";
     for (const_iterator it = begin(); it != end(); it++) {
       out << fsIndent << std::setw(20)
-          << "mountPoint" << ": " << it->first;
+          << "mountPoint" << ": " << it->first << "\n";
       it->second.print(out, fsIndent);
     }
   }
