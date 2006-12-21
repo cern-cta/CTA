@@ -66,13 +66,6 @@ namespace castor {
       template <class U>
       struct rebind {typedef SharedMemoryAllocator<U> other; };
 
-    protected:
-
-      /**
-       * creates the internal shared memory Block
-       */
-      virtual castor::sharedMemory::IBlock* createSharedMemoryBlock();
-
       /**
        * returns the key for the shared memory block to be used
        */
@@ -90,17 +83,6 @@ namespace castor {
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "castor/sharedMemory/Block.hpp"
-
-//------------------------------------------------------------------------------
-// createSharedMemoryBlock
-//------------------------------------------------------------------------------
-template<class T>
-castor::sharedMemory::IBlock*
-castor::monitoring::SharedMemoryAllocator<T>::createSharedMemoryBlock() {
-  castor::sharedMemory::BlockKey key = getBlockKey();
-  return new castor::sharedMemory::Block
-    <SharedMemoryAllocator<castor::sharedMemory::SharedNode> >(key);
-}
 
 //------------------------------------------------------------------------------
 // getBlockKey

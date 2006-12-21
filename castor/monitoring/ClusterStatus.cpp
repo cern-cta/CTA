@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 #include "castor/sharedMemory/SingletonBlock.hpp"
+#include "castor/sharedMemory/BlockDict.hpp"
 #include "castor/monitoring/ClusterStatus.hpp"
 #include "castor/monitoring/ClusterStatusBlockKey.hpp"
 #include "castor/monitoring/SharedMemoryAllocator.hpp"
@@ -41,13 +42,21 @@ castor::monitoring::ClusterStatus::getClusterStatus() {
   // If first call, we have to initialize the singleton
   if (0 == smStatus) {
     // get the ClusterStatus Object
-    castor::sharedMemory::BlockKey bk =
+    castor::sharedMemory::BlockKey key =
       castor::monitoring::getClusterStatusBlockKey();
     castor::sharedMemory::SingletonBlock
       <castor::monitoring::ClusterStatus,
       castor::monitoring::SharedMemoryAllocator
-      <castor::sharedMemory::SharedNode> > b(bk);
-    smStatus = b.getSingleton();
+      <castor::sharedMemory::SharedNode> > *b =
+      castor::sharedMemory::BlockDict::getBlock
+      <castor::sharedMemory::SingletonBlock
+      <castor::monitoring::ClusterStatus,
+      castor::monitoring::SharedMemoryAllocator
+      <castor::sharedMemory::SharedNode> > >(key);
+    smStatus = b->getSingleton();
+    // Note that we don't delete the SingletonBlock.
+    // This is because it will register itself in the
+    // BlockDictionnary. I know, not a very nice interface...
   }
   return smStatus;
 }
@@ -65,7 +74,7 @@ void castor::monitoring::ClusterStatus::print
     std::string dsIndent = indentation + "   ";
     for (const_iterator it = begin(); it != end(); it++) {
       out << dsIndent << std::setw(20)
-          << "name" << ": " << it->first;
+          << "name" << ": " << it->first << "\n";
       it->second.print(out, dsIndent);
     }
   }
