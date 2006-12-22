@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
   KApplication app;
   UMLApp *uml = new UMLApp();
   app.config();
-  uml->initGenerators();
+  uml->initGenerator();
 
   KCmdLineArgs *args = KCmdLineArgs::parsedArgs();
   if (args->count()) {
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
         cgen->setTopNS(args->getOption("c"));
       }
       // retrieve policy
-      CodeGenerationPolicy *policy = gen->getPolicy();
+      CodeGenerationPolicy *policy = uml->getCommonPolicy();
       // take headers from /etc/castor/gencastor
       policy->setHeadingFileDir("/etc/castor/gencastor");
       // generate code into the right directory

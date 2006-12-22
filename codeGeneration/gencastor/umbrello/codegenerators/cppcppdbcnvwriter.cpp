@@ -1,5 +1,4 @@
 // Include files
-#include <iostream>
 #include <qmap.h>
 #include <qfile.h>
 #include <qregexp.h>

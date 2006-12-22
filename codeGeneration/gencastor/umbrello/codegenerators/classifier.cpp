@@ -28,6 +28,7 @@
 #include "umllistview.h"
 #include "object_factory.h"
 #include "model_utils.h"
+#include "uniqueid.h"
 #include "clipboard/idchangelog.h"
 #include "dialogs/umloperationdialog.h"
 #include "dialogs/umlattributedialog.h"
@@ -53,16 +54,16 @@ void UMLClassifier::init(bool bIsInterface /* = false */) {
 void UMLClassifier::setInterface(bool b /* = true */) {
     // @todo get rid of direct dependencies to UMLListView
     //  (e.g. move utility methods to Model_Utils and/or use signals)
-    UMLListView::Icon_Type newIcon;
+    Uml::Icon_Type newIcon;
     if (b) {
         m_BaseType = ot_Interface;
         UMLObject::setStereotype("interface");
         UMLObject::m_bAbstract = true;
-        newIcon = UMLListView::it_Interface;
+        newIcon = Uml::it_Interface;
     } else {
         m_BaseType = ot_Class;
         UMLObject::setStereotype(QString::null);
-        newIcon = UMLListView::it_Class;
+        newIcon = Uml::it_Class;
     }
     UMLListView *listView = UMLApp::app()->getListView();
     listView->changeIconOf(this, newIcon);
@@ -195,9 +196,9 @@ UMLOperation* UMLClassifier::createOperation(const QString &name /*=null*/,
         return NULL;
     }
 
-    // Comment that so that we don't save the XMI file each time we
-    // modify something. After all this is the code generation and we
-    // don't want to modify anything !
+    // Comment that so that we don't save the XMI file each time we 
+    // modify something. After all this is the code generation and we        
+    // don't want to modify anything !  
     //UMLDoc *umldoc = UMLApp::app()->getDocument();
     //umldoc->signalUMLObjectCreated(op);
     return op;
@@ -256,7 +257,7 @@ int UMLClassifier::removeOperation(UMLOperation *op) {
         return -1;
     }
     // disconnection needed.
-    // note that we dont delete the operation, just remove it from the Classifier
+    // note that we don't delete the operation, just remove it from the Classifier
     disconnect(op,SIGNAL(modified()),this,SIGNAL(modified()));
     emit operationRemoved(op);
     emit modified();
@@ -479,23 +480,22 @@ bool UMLClassifier::acceptAssociationType(Uml::Association_Type type)
     return false; //shutup compiler warning
 }
 
-UMLObject* UMLClassifier::createAttribute(const QString &name /*=null*/) {
-    UMLDoc *umldoc = UMLApp::app()->getDocument();
-    Uml::IDType id = umldoc->getUniqueID();
+UMLAttribute* UMLClassifier::createAttribute(const QString &name /*=null*/) {
+    Uml::IDType id = UniqueID::gen();
     QString currentName;
     if (name.isNull())  {
         currentName = uniqChildName(Uml::ot_Attribute);
     } else {
         currentName = name;
     }
-    const Settings::OptionState optionState = UMLApp::app()->getOptionState();
+    const Settings::OptionState optionState = Settings::getOptionState();
     Uml::Visibility scope = optionState.classState.defaultAttributeScope;
     UMLAttribute* newAttribute = new UMLAttribute(this, currentName, id, scope);
 
     int button = QDialog::Accepted;
     bool goodName = false;
 
-    //check for name.isNull() stops dialogue being shown
+    //check for name.isNull() stops dialog being shown
     //when creating attribute via list view
     while (button == QDialog::Accepted && !goodName && name.isNull()) {
         UMLAttributeDialog attributeDialogue(0, newAttribute);
@@ -517,6 +517,7 @@ UMLObject* UMLClassifier::createAttribute(const QString &name /*=null*/) {
 
     addAttribute(newAttribute);
 
+    UMLDoc *umldoc = UMLApp::app()->getDocument();
     umldoc->signalUMLObjectCreated(newAttribute);
     return newAttribute;
 }
@@ -527,8 +528,7 @@ UMLAttribute* UMLClassifier::addAttribute(const QString &name, Uml::IDType id /*
         if (obj->getBaseType() == Uml::ot_Attribute && obj->getName() == name)
             return static_cast<UMLAttribute*>(obj);
     }
-    UMLApp *app = UMLApp::app();
-    Uml::Visibility scope = app->getOptionState().classState.defaultAttributeScope;
+    Uml::Visibility scope = Settings::getOptionState().classState.defaultAttributeScope;
     UMLAttribute *a = new UMLAttribute(this, name, id, scope);
     m_List.append(a);
     emit modified();
@@ -575,7 +575,7 @@ int UMLClassifier::removeAttribute(UMLAttribute* a) {
     }
     emit attributeRemoved(a);
     emit modified();
-    // If we are deleteing the object, then we dont need to disconnect..this is done auto-magically
+    // If we are deleteing the object, then we don't need to disconnect..this is done auto-magically
     // for us by QObject. -b.t.
     // disconnect(a,SIGNAL(modified()),this,SIGNAL(modified()));
     delete a;
@@ -871,6 +871,7 @@ UMLClassifierListItem* UMLClassifier::makeChildObject(QString xmiTag) {
 
 bool UMLClassifier::load(QDomElement& element) {
     UMLClassifierListItem *child = NULL;
+    bool totalSuccess = true;
     for (QDomNode node = element.firstChild(); !node.isNull();
             node = node.nextSibling()) {
         if (node.isComment())
@@ -894,6 +895,7 @@ bool UMLClassifier::load(QDomElement& element) {
                             kdError() << "UMLClassifier::load: error from addOperation(op)"
                                       << endl;
                             delete child;
+                            totalSuccess = false;
                         }
                         break;
                     case Uml::ot_Attribute:
@@ -905,23 +907,27 @@ bool UMLClassifier::load(QDomElement& element) {
             } else {
                 kdWarning() << "UMLClassifier::load: failed to load " << tag << endl;
                 delete child;
+                totalSuccess = false;
             }
         } else if (!Model_Utils::isCommonXMIAttribute(tag)) {
             UMLDoc *umldoc = UMLApp::app()->getDocument();
             UMLObject *pObject = Object_Factory::makeObjectFromXMI(tag);
-            if( !pObject )
+            if (pObject == NULL) {
+                totalSuccess = false;
                 continue;
+            }
             pObject->setUMLPackage(this);
             if (pObject->loadFromXMI(element)) {
-                addObject(pObject);
                 if (tagEq(tag, "Generalization"))
                     umldoc->addAssocToConcepts((UMLAssociation *) pObject);
             } else {
+                removeObject(pObject);
                 delete pObject;
+                totalSuccess = false;
             }
         }
     }
-    return true;
+    return totalSuccess;
 }
 
 #include "classifier.moc"

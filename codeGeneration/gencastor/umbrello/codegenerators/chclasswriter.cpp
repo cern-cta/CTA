@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/04/06 07:08:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2006/12/22 11:00:10 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -102,7 +102,7 @@ bool CHClassWriter::init(UMLClassifier* c, QString fileName) {
   }
   // Write the hash define stuff to prevent multiple parsing/inclusion of header
   QString hashDefine = m_classInfo->packageName.upper().replace("::",  "_");
-  if (!hashDefine.isEmpty()) hashDefine.append('_');
+  if (!hashDefine.isEmpty() && !hashDefine.endsWith("_")) hashDefine.append('_');
   hashDefine.append(m_classInfo->className.upper().simplifyWhiteSpace().replace(QRegExp(" "),  "_"));
   *m_mainStream << "#ifndef "<< hashDefine + "_H" << endl;
   *m_mainStream << "#define "<< hashDefine + "_H" << endl << endl;
@@ -124,7 +124,7 @@ bool CHClassWriter::finalize(UMLClassifier* c) {
   *m_mainStream << m_buffer;
   // last thing : close our hashdefine
   QString hashDefine = m_classInfo->packageName.upper().replace("::",  "_");
-  if (!hashDefine.isEmpty()) hashDefine.append('_');
+  if (!hashDefine.isEmpty() && !hashDefine.endsWith("_")) hashDefine.append('_');
   hashDefine.append(m_classInfo->className.upper().simplifyWhiteSpace().replace(QRegExp(" "),  "_"));
   *m_mainStream << "#endif // " << hashDefine << "_H" << endl;
   // call upperclass method

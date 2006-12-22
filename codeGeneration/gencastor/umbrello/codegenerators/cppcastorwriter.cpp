@@ -7,8 +7,10 @@
 #include <kdebug.h>
 #include <klocale.h>
 #include <kmessagebox.h>
+#include <uml.h>
 
 // local includes
+#include "folder.h"
 #include "cppcastorwriter.h"
 #include "../attribute.h"
 #include "../classifier.h"
@@ -49,7 +51,7 @@ bool CppCastorWriter::openFile (QFile & file, QString fileName, int mode) {
 		kdWarning() << "cannot find a file name" << endl;
 		return false;
 	} else {
-		QDir outputDirectory = getPolicy()->getOutputDirectory();
+		QDir outputDirectory = UMLApp::app()->getCommonPolicy()->getOutputDirectory();
 		file.setName(outputDirectory.absFilePath(fileName));
 		if(!file.open(mode)) {
 			KMessageBox::sorry(0,i18n("Cannot open file %1. Please make sure the folder exists and you have permissions to write to it.").arg(file.name()),i18n("Cannot Open File"));
@@ -81,7 +83,7 @@ QString CppCastorWriter::computeFileName(UMLClassifier* concept, QString ext) {
   
   // if package is given add this as a directory to the file name
   if (!package.isEmpty()) {
-    name = package + "." + concept->getName();
+    name = package + concept->getName();
     package.replace(QRegExp("\\."), "/");
     package.replace(QString("::"),"/");
     package = "/" + package;
@@ -95,7 +97,7 @@ QString CppCastorWriter::computeFileName(UMLClassifier* concept, QString ext) {
   
   // if a package name exists check the existence of the package directory
   if (!package.isEmpty()) {
-    QDir packageDir(getPolicy()->getOutputDirectory().absPath() + package);
+    QDir packageDir(UMLApp::app()->getCommonPolicy()->getOutputDirectory().absPath() + package);
     if (! (packageDir.exists() || packageDir.mkdir(packageDir.absPath()) ) ) {
       KMessageBox::error(0, i18n("Cannot create the package folder:\n") +
                          packageDir.absPath() + i18n("\nPlease check the access rights"),
@@ -147,11 +149,5 @@ UMLClassifier* CppCastorWriter::getClassifier(QString type) {
 //=============================================================================
 UMLDatatype* CppCastorWriter::getDatatype(QString type) {
   QString name = getSimpleType(type);
-  UMLDatatypeList daList = m_doc->getDatatypes();
-  for (UMLDatatype * obj = daList.first(); obj != 0; obj = daList.next()) {
-    if (obj->getName() == name) {
-      return obj;
-    }
-  }
-  return NULL;
+  return new UMLDatatype(name);
 }

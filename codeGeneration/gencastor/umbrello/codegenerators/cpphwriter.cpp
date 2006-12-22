@@ -44,7 +44,7 @@ bool CppHWriter::postinit(UMLClassifier* /*c*/, QString fileName) {
   }
   // Write the hash define stuff to prevent multiple parsing/inclusion of header
   QString hashDefine = m_classInfo->packageName.upper().replace("::",  "_");
-  if (!hashDefine.isEmpty()) hashDefine.append('_');
+  if (!hashDefine.isEmpty() && !hashDefine.endsWith("_")) hashDefine.append('_');
   hashDefine.append(m_classInfo->className.upper().simplifyWhiteSpace().replace(QRegExp(" "),  "_"));
   *m_mainStream << "#ifndef "<< hashDefine + "_HPP" << endl;
   *m_mainStream << "#define "<< hashDefine + "_HPP" << endl << endl;
@@ -103,7 +103,7 @@ bool CppHWriter::finalize(UMLClassifier* c) {
   writeAfterNSClose();
   // last thing : close our hashdefine
   QString hashDefine = m_classInfo->packageName.upper().replace("::",  "_");
-  if (!hashDefine.isEmpty()) hashDefine.append('_');
+  if (!hashDefine.isEmpty() && !hashDefine.endsWith("_")) hashDefine.append('_');
   hashDefine.append(m_classInfo->className.upper().simplifyWhiteSpace().replace(QRegExp(" "),  "_"));
   *m_mainStream << "#endif // " << hashDefine << "_HPP" << endl;
   // call upperclass method

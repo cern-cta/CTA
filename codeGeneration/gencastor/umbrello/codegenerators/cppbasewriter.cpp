@@ -10,6 +10,7 @@
 #include "../attribute.h"
 #include "../classifier.h"
 #include "umlrole.h"
+#include <iostream>
 
 //-----------------------------------------------------------------------------
 // Implementation file for class : cppbasewriter
@@ -300,7 +301,13 @@ QString CppBaseWriter::fixTypeName(QString string,
   QString nsString = string;
   // First deal with namespaces
   typePackage = typePackage.replace(".","::");
+  if (typePackage.endsWith("::")) {
+    typePackage.truncate(typePackage.length() - 2);
+  }
   currentPackage = currentPackage.replace(".","::");
+  if (currentPackage.endsWith("::")) {
+    currentPackage.truncate(currentPackage.length() - 2);
+  }
   if (typePackage != "" && nsString.find("::") < 0) {
     int pos = nsString.find(QRegExp("[a-zA-Z]"));
     if (nsString.find(QString("const"), pos) == pos) {
@@ -399,6 +406,8 @@ bool CppBaseWriter::init(UMLClassifier* c, QString fileName) {
   m_classInfo = new ClassifierInfo(m_class, m_doc);
   m_classInfo->className = m_class->getName();
   m_classInfo->packageName = m_class->getPackage().replace(".","::");
+  if (m_classInfo->packageName.endsWith("::"))
+    m_classInfo->packageName.truncate(m_classInfo->packageName.length()-2);
   // Open a stream on the file handle
   m_mainStream = new QTextStream(&m_file);
   // creates another stream because we need to write the

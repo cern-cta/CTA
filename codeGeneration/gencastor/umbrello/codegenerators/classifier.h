@@ -30,11 +30,6 @@ class IDChangeLog;
  * This class inherits from @ref UMLPackage which allows classifiers
  * to also act as namespaces, i.e. it allows classifiers to nest.
  *
- * The @ref UMLDoc class creates instances of this type.  All Classifiers
- * need a unique id.  This will be given by the @ref UMLDoc class.  If you
- * don't leave it up to the @ref UMLDoc class then call the method @ref
- * UMLDoc::getUniqueID to get a unique id.
- *
  * @short Information for a non-graphical Concept/Class.
  * @author Paul Hensgen <phensgen@techie.com>
  * Bugs and comments to uml-devel@lists.sf.net or http://bugs.kde.org
@@ -87,7 +82,7 @@ public:
      * @param name  An optional name, used by when creating through UMLListView
      * @return  The UMLAttribute created
      */
-    virtual UMLObject* createAttribute(const QString &name = QString::null);
+    virtual UMLAttribute* createAttribute(const QString &name = QString::null);
 
     /**
      * Adds an attribute to the class.
@@ -115,7 +110,7 @@ public:
      *                  If the position is omitted, or if it is
      *                  negative or too large, the attribute is added
      *                  to the end of the list.
-     * @return  True if the attribute was sucessfully added.
+     * @return  True if the attribute was successfully added.
      */
     bool addAttribute(UMLAttribute* Att, IDChangeLog* Log = 0,
                       int position = -1);
@@ -257,7 +252,7 @@ public:
      *
      * @param newTemplate       Pointer to the UMLTemplate object to add.
      * @param log               Pointer to the IDChangeLog.
-     * @return  True if the template was sucessfully added.
+     * @return  True if the template was successfully added.
      */
     bool addTemplate(UMLTemplate* newTemplate, IDChangeLog* log = 0);
 
@@ -268,7 +263,7 @@ public:
      * @param Template  Pointer to the UMLTemplate to add.
      * @param position  The position of the template in the list.
      *                  A value of -1 will add the template at the end.
-     * @return  True if the template was sucessfully added.
+     * @return  True if the template was successfully added.
      */
     //TODO: if the param IDChangeLog from the method above is not being used,
     // give position a default value of -1 and the method can replace the above one

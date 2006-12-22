@@ -31,6 +31,7 @@
 #include <iostream>
 #include "model_utils.h"
 #include "uml.h"
+#include "uniqueid.h"
 
 CppWriter::CppWriter( ) :
   CppCastorWriter(UMLApp::app()->getDocument(), "Cpp"), firstGeneration(true) {
@@ -64,10 +65,6 @@ CppWriter::~CppWriter() {
 }
 
 void CppWriter::configGenerator(CppBaseWriter *cg) {
-  CodeGenerationPolicy *parentPolicy = getPolicy();
-  CodeGenerationPolicy *childPolicy = cg->getPolicy();
-  childPolicy->setHeadingFileDir(parentPolicy->getHeadingFileDir());
-  childPolicy->setOutputDirectory(parentPolicy->getOutputDirectory());
   cg->setTopNS(s_topNS);
 }
 
@@ -128,7 +125,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
       UMLOperation* printOp =
         c->createOperation("print const", NULL, &params);
       printOp->setTypeName("virtual void");
-      printOp->setID(m_doc->getUniqueID());
+      printOp->setID(UniqueID::get());
       printOp->setDoc("Outputs this object in a human readable format");
       if (classInfo.isInterface) {
         printOp->setAbstract(true);
@@ -156,7 +153,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
       // Second print method, with no arguments
       printOp = c->createOperation("print const", NULL, &params);
       printOp->setTypeName("virtual void");
-      printOp->setID(m_doc->getUniqueID());
+      printOp->setID(UniqueID::get());
       printOp->setDoc("Outputs this object in a human readable format");
       if (classInfo.isInterface) {
         printOp->setAbstract(true);
@@ -167,7 +164,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
         // TYPE method
         UMLOperation* typeOp = c->createOperation("TYPE", NULL, &params);
         typeOp->setTypeName("int");
-        typeOp->setID(m_doc->getUniqueID());
+        typeOp->setID(UniqueID::get());
         typeOp->setDoc("Gets the type of this kind of objects");
         typeOp->setStatic(true);
         c->getOpList().append(typeOp);
@@ -218,22 +215,22 @@ void CppWriter::writeClass(UMLClassifier *c) {
           const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
           if (classInfo->allImplementedAbstracts.contains(concept)) {
             // check existence of the directory
-            QDir outputDirectory = getPolicy()->getOutputDirectory();
-            QDir packageDir(getPolicy()->getOutputDirectory().absPath() + "/" + s_topNS + "/db");
+            QDir outputDirectory = UMLApp::app()->getCommonPolicy()->getOutputDirectory();
+            QDir packageDir(UMLApp::app()->getCommonPolicy()->getOutputDirectory().absPath() + "/" + s_topNS + "/db");
             if (! (packageDir.exists() || packageDir.mkdir(packageDir.absPath()) ) ) {
               std::cerr << "Cannot create the package folder "
                         << packageDir.absPath().ascii()
                         << "\nPlease check the access rights" << std::endl;
               return;
             }
-            QDir packageDirOra(getPolicy()->getOutputDirectory().absPath() + "/" + s_topNS + "/db/ora");
+            QDir packageDirOra(UMLApp::app()->getCommonPolicy()->getOutputDirectory().absPath() + "/" + s_topNS + "/db/ora");
             if (! (packageDirOra.exists() || packageDirOra.mkdir(packageDirOra.absPath()) ) ) {
               std::cerr << "Cannot create the package folder "
                         << packageDirOra.absPath().ascii()
                         << "\nPlease check the access rights" << std::endl;
               return;
             }
-            QDir packageDirDb(getPolicy()->getOutputDirectory().absPath() + "/" + s_topNS + "/db/cnv");
+            QDir packageDirDb(UMLApp::app()->getCommonPolicy()->getOutputDirectory().absPath() + "/" + s_topNS + "/db/cnv");
             if (! (packageDirDb.exists() || packageDirDb.mkdir(packageDirDb.absPath()) ) ) {
               std::cerr << "Cannot create the package folder "
                         << packageDirDb.absPath().ascii()
@@ -255,7 +252,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
         const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
         if (classInfo->allImplementedAbstracts.contains(concept)) {
           // check existence of the directory
-          QDir packageDir(getPolicy()->getOutputDirectory().absPath() + "/" + s_topNS + "/io");
+          QDir packageDir(UMLApp::app()->getCommonPolicy()->getOutputDirectory().absPath() + "/" + s_topNS + "/io");
           if (! (packageDir.exists() || packageDir.mkdir(packageDir.absPath()) ) ) {
             std::cerr << "Cannot create the package folder "
                       << packageDir.absPath().ascii()

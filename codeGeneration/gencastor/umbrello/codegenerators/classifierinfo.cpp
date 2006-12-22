@@ -177,9 +177,9 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
 
 	// set default class, file names
 	packageName = c->getPackage();
-  fullPackageName = packageName;
-  fullPackageName.replace(".", "::");
-  if (!fullPackageName.isEmpty()) fullPackageName.append("::");
+        fullPackageName = packageName;
+        fullPackageName.replace(".", "::");
+        if (!fullPackageName.isEmpty()&& !fullPackageName.endsWith("::")) fullPackageName.append("::");
 	className = c->getName();
 	fileName = c->getName().lower();
 

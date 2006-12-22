@@ -5,6 +5,8 @@
  *   the Free Software Foundation; either version 2 of the License, or     *
  *   (at your option) any later version.                                   *
  *                                                                         *
+ *   copyright (C) 2002-2006                                               *
+ *   Umbrello UML Modeller Authors <uml-devel@ uml.sf.net>                 *
  ***************************************************************************/
 
 #ifndef UMLDOC_H
@@ -50,12 +52,12 @@ class QSplitter;
 
 class KPrinter;
 
-class CodeGenerator;
 class DocWindow;
 class IDChangeLog;
 class ObjectWidget;
 class UMLWidget;
 class UMLPackage;
+class UMLFolder;
 
 /**
   * UMLDoc provides a document object for a document-view model.
@@ -85,6 +87,12 @@ public:
      * Destructor for the fileclass of the application
      */
     ~UMLDoc();
+
+    /**
+     * Initialize the UMLDoc.
+     * To be called after the constructor, before anything else.
+     */
+    void init();
 
     /**
      * Adds a view to the document which represents the document
@@ -263,11 +271,12 @@ public:
     /**
      * Creates a diagram of the given type.
      *
+     * @param folder            The folder in which tp create the diagram.
      * @param type              The type of diagram to create.
      * @param askForName        If true shows a dialog box asking for name,
      *                  else uses a default name.
      */
-    void createDiagram(Uml::Diagram_Type type, bool askForName = true);
+    void createDiagram(UMLFolder *folder, Uml::Diagram_Type type, bool askForName = true);
 
     /**
      * Removes an @ref UMLObject from the current file.  If this object
@@ -403,21 +412,13 @@ public:
     Uml::IDType getModelID() const;
 
     /**
-     * Used to give a unique ID to any sort of object.
-     *
-     * @return  A new unique ID.
-     */
-    Uml::IDType getUniqueID();
-
-    /**
      * This method is called for saving the given model as a XMI file.
      * It is virtual and calls the corresponding saveToXMI() functions
      * of the derived classes.
      *
      * @param file              The file to be saved to.
-     * @param saveSubmodelFiles True if external folders should be saved.
      */
-    virtual void saveToXMI(QIODevice& file, bool saveSubmodelFiles = false);
+    virtual void saveToXMI(QIODevice& file);
 
     /**
      * Checks the given XMI file if it was saved with correct Unicode
@@ -502,12 +503,12 @@ public:
     void signalUMLObjectCreated(UMLObject * o);
 
     /**
-     * Returns the current view.
+     * Returns the datatype folder.
      *
-     * @return  Pointer to the current UMLView.
+     * @return  Pointer to the predefined folder for datatypes.
      */
-    UMLView * getCurrentView() {
-        return m_currentView;
+    UMLFolder * getDatatypeFolder() {
+        return m_datatypeRoot;
     }
 
     /**
@@ -572,9 +573,7 @@ public:
      *
      * @return  List of UML views.
      */
-    const UMLViewList &getViewIterator() const {
-        return m_ViewList;
-    }
+    UMLViewList getViewIterator();
 
     /**
      * Assigns an already created UMLObject a new ID.
@@ -591,11 +590,9 @@ public:
      * any ids or signal.  Use AddUMLObjectPaste if pasting.
      *
      * @param object   The object to add.
-     * @param prepend  True if wish to prepend the object to the object list
-     *                 (default: append)
      * @return  True if the object was actually added.
      */
-    bool addUMLObject(UMLObject * object, bool prepend = false);
+    bool addUMLObject(UMLObject * object);
 
     /**
      * Adds an already created UMLView to the document, it gets
@@ -608,6 +605,34 @@ public:
      * @return  True if operation successful.
      */
     bool addUMLView(UMLView * pView );
+
+    /**
+     * Return the predefined root folder of the given type.
+     */
+    UMLFolder *getRootFolder(Uml::Model_Type mt);
+
+    /**
+     * Return the corresponding Model_Type if the given object
+     * is one of the root folders.
+     * When the given object is not one of the root folders then
+     * return Uml::N_MODELTYPES.
+     */
+    Uml::Model_Type rootFolderType(UMLObject *obj);
+
+    /**
+     * Return the currently selected root folder.
+     * This will be an element from the m_root[] array.
+     */
+    UMLFolder *currentRoot();
+
+    /**
+     * Set the current root folder.
+     *
+     * @param rootType    The type of the root folder to set.
+     *                    The element from m_root[] which is indexed
+     *                    by this type is selected.
+     */
+    void setCurrentRoot(Uml::Model_Type rootType);
 
     /**
      * Read property of IDChangeLog* m_pChangeLog.
@@ -657,8 +682,6 @@ public:
     /**
      * Activate all the diagrams/views after loading so all their
      * widgets keep their IDs.
-     *
-     * @return  True if operation successful.
      */
     void activateAllViews();
 
@@ -704,21 +727,6 @@ public:
     void clearRedoStack();
 
     /**
-     * Get the root node for the code generation parameters.
-     */
-    QDomElement getCodeGeneratorXMIParams ( const QString &lang );
-
-    /**
-     * Allow checking to see if saved XMI parameters exist already.
-     */
-    bool hasCodeGeneratorXMIParams ( const QString &lang );
-
-    /**
-     * All the UMLViews (i.e. diagrams)
-     */
-    UMLViewList m_ViewList;
-
-    /**
      * Returns a name for the new object, appended with a number
      * if the default name is taken e.g. class diagram, class
      * diagram_1 etc
@@ -736,37 +744,13 @@ public:
     void setLoading(bool state = true);
 
     /**
-     * Find a code generator by the given language.
-     */
-    CodeGenerator * findCodeGeneratorByLanguage (Uml::Programming_Language lang);
-
-    /**
-     * Add a CodeGenerator object to this UMLDoc
-     */
-    bool addCodeGenerator ( CodeGenerator * add_gen );
-
-    /**
-     * Remove and delete a CodeGenerator object from this UMLDoc.
-     * @return boolean - will return false if it couldnt remove a generator.
-     */
-    bool removeCodeGenerator ( CodeGenerator * remove_object );
-
-    /** Set the current (active) code generator for this document.
-     */
-    void setCurrentCodeGenerator ( CodeGenerator * gen );
-
-    /** Get the current (active) code generator for this document.
-     */
-    CodeGenerator* getCurrentCodeGenerator();
-
-    /**
      * Calls the active code generator to create its default datatypes
      */
     void addDefaultDatatypes();
 
     /**
      * Add a datatype if it doesn't already exist.
-     * Used by code generators and attribute dialogue.
+     * Used by code generators and attribute dialog.
      */
     void createDatatype(const QString &name);
 
@@ -787,7 +771,7 @@ public:
 
     /**
      * Add a stereotype if it doesn't already exist.
-     * Used by code generators, operations and attribute dialogue.
+     * Used by code generators, operations and attribute dialog.
      */
     void addDefaultStereotypes();
 
@@ -802,15 +786,6 @@ public:
      * Write text to the status bar.
      */
     void writeToStatusBar(const QString &text);
-
-    /**
-     * Folders in the listview can be marked such that their contents
-     * are saved to a separate file.
-     * This method loads the separate folder file.
-     * CAVEAT: This is not XMI standard compliant.
-     * If standard compliance is an issue then avoid folder files.
-     */
-    bool loadFolderFile(QString filename);
 
     /**
      * Type resolution pass.
@@ -829,8 +804,15 @@ private:
      */
     void initSaveTimer();
 
-    CodeGenerator * m_currentcodegenerator;
-    UMLObjectList m_objectList;
+    /**
+     * Array of predefined root folders.
+     */
+    UMLFolder *m_root[Uml::N_MODELTYPES];
+    /**
+     * Predefined root folder for datatypes, contained in
+     * m_root[Uml::mt_Logical]
+     */
+    UMLFolder *m_datatypeRoot;
 
     /**
      * The UMLDoc is the sole owner of all stereotypes.
@@ -841,35 +823,11 @@ private:
      */
     UMLStereotypeList m_stereoList;
 
-    /**
-     * In principle, each model object gets assigned a unique ID.
-     * NOTE: Currently this is an int although Uml::IDType is a string
-     *       (unless ID_USE_INT is defined.) Perhaps it should be changed
-     *       to Uml::IDType but then we need a unique string generator.
-     *       See also UMLView::m_nLocalID.
-     */
-    int m_uniqueID;
-
     QString m_Name; ///< name of this model as stored in the <UML:Model> tag
     Uml::IDType m_modelID; ///< xmi.id of this model in the <UML:Model>
     int m_count;   ///< auxiliary counter for the progress bar
     bool m_modified;
     KURL m_doc_url;
-    UMLView* m_currentView;
-
-    /**
-     * A dictionary of the parameters in the save XMI file
-     * sorted by language.
-     */
-    QMap<QString, QDomElement> * m_codeGenerationXMIParamMap;
-
-    /**
-     * A dictionary of various code generators we currently have
-     * configured for this UML document.
-     */
-    typedef QPtrList<CodeGenerator> CodeGeneratorList;
-    typedef QPtrListIterator<CodeGenerator> CodeGeneratorListIt;
-    CodeGeneratorList m_codeGenerators;
 
     /**
      * Contains all the UMLObject id changes of paste session.
@@ -931,18 +889,16 @@ private:
      */
     KPopupMenu* m_pTabPopupMenu;
 
+    /**
+     * Auxiliary variable for currentRoot():
+     * m_pCurrentRoot is only used if UMLApp::app()->getCurrentView()
+     * returns NULL.
+     */
+    UMLFolder * m_pCurrentRoot;
+
 public slots:
 
     void slotRemoveUMLObject(UMLObject*o);
-
-
-    /**
-     * Calls repaint() on all views connected to the document
-     * object and is called by the view by which the document has
-     * been changed.  As this view normally repaints itself, it is
-     * excluded from the paintEvent.
-     */
-    void slotUpdateAllViews(UMLView *sender);
 
     /**
      * Called after a specified time to autosave the document.

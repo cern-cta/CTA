@@ -19,6 +19,7 @@
 #include <qregexp.h>
 #include <qdir.h>
 
+#include <uml.h>
 #include <klocale.h>
 #include <kdebug.h>
 #include <kmessagebox.h>
@@ -38,7 +39,7 @@
 // Constructors/Destructors
 //
 
-SimpleCodeGenerator::SimpleCodeGenerator (UMLDoc * parentDoc , const char * name, bool /*createDirHierarchyForPackages*/)
+SimpleCodeGenerator::SimpleCodeGenerator (UMLDoc * parentDoc , const char * /*name*/, bool /*createDirHierarchyForPackages*/)
   : CodeGenerator()
 {
 	parentDoc->disconnect(this); // disconnect from UMLDoc.. we arent planning to be synced at all
@@ -235,7 +236,7 @@ void SimpleCodeGenerator::initFields ( UMLDoc * parentDoc ) {
 // the newer codegenpolicy object and the older class fields.
 void SimpleCodeGenerator::syncCodeToDocument() {
 
-	CodeGenerationPolicy *policy = getPolicy();
+	CodeGenerationPolicy *policy = UMLApp::app()->getCommonPolicy();
 
         m_overwrite = policy->getOverwritePolicy();
         m_modname = policy->getModifyPolicy();
