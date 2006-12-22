@@ -62,7 +62,7 @@ LIBS = $(OSLIBS) $(MTLDLIBS) -ldl
 
 #if !_WIN32
 #if linux
-DEBUG  = -g -O0
+DEBUG  = -g -O0 -pedantic -ansi -Wall -Wno-long-long
 #else
 DEBUG  = -g
 #endif
