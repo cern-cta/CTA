@@ -2673,6 +2673,9 @@ void CppCppOraCnvWriter::writeSingleGetFromSelect(Member mem,
   if (isAssoc || mem.typeName == "u_signed64") {
     *m_stream << "(u_signed64)";
   }
+  if (mem.typeName == "signed64") {
+    *m_stream << "(signed64)";
+  }
   *m_stream << "rset->get";
   if (isEnum) {
     *m_stream << "Int";
@@ -2697,7 +2700,7 @@ QString CppCppOraCnvWriter::getOraType(QString& type) {
       oraType == "bool" ||
       oraType == "int") {
     oraType = "int";
-  } else if (oraType == "u_signed64") {
+  } else if ((oraType == "u_signed64") || (oraType == "signed64")) {
     oraType = "double";
   }
   if (oraType.startsWith("char")) {
@@ -2721,7 +2724,7 @@ QString CppCppOraCnvWriter::getSQLType(QString& type) {
       SQLType == "bool" ||
       SQLType == "int") {
     SQLType = "NUMBER";
-  } else if (type == "u_signed64") {
+  } else if ((type == "u_signed64") || (type == "u_signed64")) {
     SQLType = "INTEGER";
   } else if (SQLType == "string") {
     SQLType = "VARCHAR2(2048)";

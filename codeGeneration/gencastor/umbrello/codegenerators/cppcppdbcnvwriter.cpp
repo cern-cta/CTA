@@ -2894,7 +2894,7 @@ QString CppCppDbCnvWriter::getDbType(QString& type) {
       oraType == "bool" ||
       oraType == "int") {
     oraType = "int";
-  } else if (oraType == "u_signed64") {
+  } else if ((oraType == "u_signed64") || (oraType == "signed64")) {
     oraType = "int64";
   }
   if (oraType.startsWith("char")) {
@@ -2918,7 +2918,7 @@ QString CppCppDbCnvWriter::getOraSQLType(QString& type) {
       SQLType == "bool" ||
       SQLType == "int") {
     SQLType = "NUMBER";
-  } else if (type == "u_signed64") {
+  } else if ((type == "u_signed64") || (type == "signed64")) {
     SQLType = "INTEGER";
   } else if (SQLType == "string") {
     SQLType = "VARCHAR2(2048)";
@@ -2945,7 +2945,7 @@ QString CppCppDbCnvWriter::getPgSQLType(QString& type) {
       SQLType == "bool" ||
       SQLType == "int") {
     SQLType = "INT4";
-  } else if (type == "u_signed64") {
+  } else if ((type == "u_signed64") || (type == "u_signed64")) {
     SQLType = "INT8";
   } else if (SQLType == "string") {
     SQLType = "VARCHAR(2048)";

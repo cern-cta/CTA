@@ -1394,7 +1394,8 @@ QString CppCppOdbcCnvWriter::getOdbcType(QString& type) {
       odbcType == "long" ||
       odbcType == "bool" ||
       odbcType == "int" ||
-      odbcType == "u_signed64")
+      odbcType == "u_signed64" ||
+      odbcType == "signed64")
     odbcType = "int";
   if (odbcType.startsWith("char")) odbcType = "string";
   odbcType = capitalizeFirstLetter(odbcType);

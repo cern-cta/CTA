@@ -37,6 +37,8 @@ CppCastorWriter::CppCastorWriter(UMLDoc* parent, const char *name) :
   m_castorIsComplexType[QString("Cuuid")] = true;
   m_castorTypes[QString("u_signed64")] = QString("\"osdep.h\"");
   m_castorIsComplexType[QString("u_signed64")] = false;
+  m_castorTypes[QString("signed64")] = QString("\"osdep.h\"");
+  m_castorIsComplexType[QString("signed64")] = false;
   // Types to ignore
   m_ignoreClasses.insert(QString("IPersistent"));
   m_ignoreClasses.insert(QString("IStreamable"));

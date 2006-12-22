@@ -2668,7 +2668,7 @@ QString CppCppMyCnvWriter::getMyType(QString& type) {
       myType == "bool" ||
       myType == "int") {
     myType = "int";
-  } else if (myType == "u_signed64") {
+  } else if ((myType == "u_signed64") || (myType == "signed64")) {
     //myType = "long int";
   } else if (myType == "string") {
 	myType = "std::string";
@@ -2694,7 +2694,7 @@ QString CppCppMyCnvWriter::getSQLType(QString& type) {
       SQLType == "bool" ||
       SQLType == "int") {
     SQLType = "INT";
-  } else if (type == "u_signed64") {
+  } else if ((type == "u_signed64") || (type == "signed64")) {
     SQLType = "BIGINT";
   } else if (SQLType == "string") {
     SQLType = "VARCHAR(1000)";
