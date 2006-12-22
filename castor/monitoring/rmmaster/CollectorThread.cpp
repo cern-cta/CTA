@@ -30,6 +30,8 @@
 #include "castor/monitoring/ClusterStatus.hpp"
 #include "castor/monitoring/DiskServerStatus.hpp"
 #include "castor/monitoring/FileSystemStatus.hpp"
+#include "castor/monitoring/DiskServerAdminReport.hpp"
+#include "castor/monitoring/FileSystemAdminReport.hpp"
 #include "castor/monitoring/DiskServerMetricsReport.hpp"
 #include "castor/monitoring/FileSystemMetricsReport.hpp"
 #include "castor/monitoring/DiskServerStateReport.hpp"
@@ -89,6 +91,14 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
           castor::monitoring::DiskServerMetricsReport* dss =
             dynamic_cast<castor::monitoring::DiskServerMetricsReport*>(obj);
           handleMetricsUpdate(dss);
+        } else if (OBJ_DiskServerAdminReport == obj->type()) {
+          castor::monitoring::DiskServerAdminReport* dss =
+            dynamic_cast<castor::monitoring::DiskServerAdminReport*>(obj);
+          handleDiskServerAdminUpdate(dss);
+        } else if (OBJ_FileSystemAdminReport == obj->type()) {
+          castor::monitoring::FileSystemAdminReport* dss =
+            dynamic_cast<castor::monitoring::FileSystemAdminReport*>(obj);
+          handleFileSystemAdminUpdate(dss);
         } else {
           // "Received unknown object from socket"
           castor::dlf::Param params[] =
@@ -244,5 +254,71 @@ void castor::monitoring::rmmaster::CollectorThread::handleMetricsUpdate
     it2->second.setFreeSpace((*itFs)->freeSpace());
     // Update lastUpdate
     it2->second.setLastMetricsUpdate(time(0));
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleDiskServerAdminUpdate
+//------------------------------------------------------------------------------
+void castor::monitoring::rmmaster::CollectorThread::handleDiskServerAdminUpdate
+(castor::monitoring::DiskServerAdminReport* admin)
+  throw (castor::exception::Exception) {
+  // Take care of DiskServer creation
+  const castor::monitoring::SharedMemoryString
+    smMachineName(admin->diskServerName().c_str());
+  castor::monitoring::ClusterStatus::iterator it =
+    m_clusterStatus->find(smMachineName);
+  if (it == m_clusterStatus->end()) {
+    it = m_clusterStatus->insert
+      (std::make_pair(smMachineName,
+                      castor::monitoring::DiskServerStatus())).first;
+  }
+  // Update status if needed
+  if (it->second.adminStatus() != ADMIN_FORCE ||
+      admin->adminStatus() != ADMIN_NONE) {
+    it->second.setStatus(admin->status());
+    if (admin->adminStatus() == ADMIN_FORCE) {
+      it->second.setAdminStatus(ADMIN_FORCE);
+    } else {
+      it->second.setAdminStatus(ADMIN_NONE);
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleFileSystemAdminUpdate
+//------------------------------------------------------------------------------
+void castor::monitoring::rmmaster::CollectorThread::handleFileSystemAdminUpdate
+(castor::monitoring::FileSystemAdminReport* admin)
+  throw (castor::exception::Exception) {
+  // Take care of FileSystem creation
+  const castor::monitoring::SharedMemoryString
+    smMachineName(admin->diskServerName().c_str());
+  castor::monitoring::ClusterStatus::iterator it =
+    m_clusterStatus->find(smMachineName);
+  if (it == m_clusterStatus->end()) {
+    it = m_clusterStatus->insert
+      (std::make_pair(smMachineName,
+                      castor::monitoring::DiskServerStatus())).first;
+  }
+  const castor::monitoring::SharedMemoryString smMountPoint
+    (admin->mountPoint().c_str());
+  castor::monitoring::DiskServerStatus::iterator it2 =
+    it->second.find(smMountPoint);
+  if (it2 == it->second.end()) {
+    it2 = it->second.insert
+      (std::make_pair
+       (smMountPoint,
+	castor::monitoring::FileSystemStatus())).first;
+  }
+  // Update status if needed
+  if (it2->second.adminStatus() != ADMIN_FORCE ||
+      admin->adminStatus() != ADMIN_NONE) {
+    it2->second.setStatus(admin->status());
+    if (admin->adminStatus() == ADMIN_FORCE) {
+      it2->second.setAdminStatus(ADMIN_FORCE);
+    } else {
+      it2->second.setAdminStatus(ADMIN_NONE);
+    }
   }
 }
