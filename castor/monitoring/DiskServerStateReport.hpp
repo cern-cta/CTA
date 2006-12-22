@@ -248,7 +248,9 @@ namespace castor {
 
       /**
        * Get the list of FileSystemStateReport* objects held by
+       * m_FileSystemStatesReportsVector
        * @return list of FileSystemStateReport* objects held by
+       * m_FileSystemStatesReportsVector
        */
       std::vector<FileSystemStateReport*>& FileSystemStatesReports() {
         return m_FileSystemStatesReportsVector;

@@ -48,6 +48,7 @@ namespace castor {
     /**
      * class TapeDriveCompatibility
      * A static table which specifies for a tape drive model the priority list for tape
+     * access
      */
     class TapeDriveCompatibility : public virtual castor::IObject {
 

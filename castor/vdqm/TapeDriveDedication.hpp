@@ -48,6 +48,7 @@ namespace castor {
     /**
      * class TapeDriveDedication
      * This class is used to specify time slots, where a tape drive should be dedicated
+     * for a specific tape.
      */
     class TapeDriveDedication : public virtual castor::IObject {
 
@@ -175,6 +176,7 @@ namespace castor {
       /**
        * Get the value of m_accessMode
        * the mode, which the client want to use to access the tape. This can be READ or
+       * WRITE access
        * @return the value of m_accessMode
        */
       int accessMode() const {
@@ -184,6 +186,7 @@ namespace castor {
       /**
        * Set the value of m_accessMode
        * the mode, which the client want to use to access the tape. This can be READ or
+       * WRITE access
        * @param new_var the new value of m_accessMode
        */
       void setAccessMode(int new_var) {
@@ -193,6 +196,7 @@ namespace castor {
       /**
        * Get the value of m_startTime
        * The starting time, which specifies the beginning of a time slot for a special
+       * tape on a specified tape drive from a specified user
        * @return the value of m_startTime
        */
       u_signed64 startTime() const {
@@ -202,6 +206,7 @@ namespace castor {
       /**
        * Set the value of m_startTime
        * The starting time, which specifies the beginning of a time slot for a special
+       * tape on a specified tape drive from a specified user
        * @param new_var the new value of m_startTime
        */
       void setStartTime(u_signed64 new_var) {
@@ -211,6 +216,7 @@ namespace castor {
       /**
        * Get the value of m_endTime
        * The ending time, which specifies the beginning of a time slot for a special tape
+       * on a specified tape drive from a specified user
        * @return the value of m_endTime
        */
       u_signed64 endTime() const {
@@ -220,6 +226,7 @@ namespace castor {
       /**
        * Set the value of m_endTime
        * The ending time, which specifies the beginning of a time slot for a special tape
+       * on a specified tape drive from a specified user
        * @param new_var the new value of m_endTime
        */
       void setEndTime(u_signed64 new_var) {

@@ -44,6 +44,8 @@ namespace castor {
 
     /**
      * class IOResponse
+     * Response dealing with an I/O. It gives everything to access the file
+     * considered.
      */
     class IOResponse : public FileResponse {
 

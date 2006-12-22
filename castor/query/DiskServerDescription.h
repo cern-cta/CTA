@@ -182,7 +182,8 @@ int Cquery_DiskServerDescription_removeFileSystems(struct Cquery_DiskServerDescr
 
 /**
  * Get the list of struct Cquery_FileSystemDescription_t* objects held by
- * fileSystems. Note that the caller is responsible for the deletion of the returned
+ * fileSystems. Note that the caller is responsible for the deletion of the
+ * returned vector.
  */
 int Cquery_DiskServerDescription_fileSystems(struct Cquery_DiskServerDescription_t* instance, struct Cquery_FileSystemDescription_t*** var, int* len);
 

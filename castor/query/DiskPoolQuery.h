@@ -182,12 +182,14 @@ int Cquery_DiskPoolQuery_setSvcClassName(struct Cquery_DiskPoolQuery_t* instance
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cquery_DiskPoolQuery_userTag(struct Cquery_DiskPoolQuery_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cquery_DiskPoolQuery_setUserTag(struct Cquery_DiskPoolQuery_t* instance, const char* new_var);
 
@@ -266,12 +268,14 @@ int Cquery_DiskPoolQuery_clone(struct Cquery_DiskPoolQuery_t* instance,
 /**
  * Get the value of diskPoolName
  * Name of the diskpool that should be described, or empty string for a description
+ * of all existing diskpools
  */
 int Cquery_DiskPoolQuery_diskPoolName(struct Cquery_DiskPoolQuery_t* instance, const char** var);
 
 /**
  * Set the value of diskPoolName
  * Name of the diskpool that should be described, or empty string for a description
+ * of all existing diskpools
  */
 int Cquery_DiskPoolQuery_setDiskPoolName(struct Cquery_DiskPoolQuery_t* instance, const char* new_var);
 

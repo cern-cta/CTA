@@ -54,6 +54,7 @@ namespace castor {
     /**
      * class StartResponse
      * A response dedicated to cases where an IClient and a DiskCopy are returned. This
+     * is typically the case in the first call when a job starts
      */
     class StartResponse : public virtual Response {
 

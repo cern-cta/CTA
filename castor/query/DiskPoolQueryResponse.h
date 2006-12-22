@@ -208,7 +208,8 @@ int Cquery_DiskPoolQueryResponse_removeDiskServers(struct Cquery_DiskPoolQueryRe
 
 /**
  * Get the list of struct Cquery_DiskServerDescription_t* objects held by
- * diskServers. Note that the caller is responsible for the deletion of the returned
+ * diskServers. Note that the caller is responsible for the deletion of the
+ * returned vector.
  */
 int Cquery_DiskPoolQueryResponse_diskServers(struct Cquery_DiskPoolQueryResponse_t* instance, struct Cquery_DiskServerDescription_t*** var, int* len);
 

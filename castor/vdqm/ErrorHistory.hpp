@@ -56,6 +56,7 @@ namespace castor {
     /**
      * class ErrorHistory
      * This table holds all the errors, which occures for a specified tape drive with a
+     * dedicated tape.
      */
     class ErrorHistory : public virtual castor::IObject {
 
@@ -111,6 +112,7 @@ namespace castor {
       /**
        * Get the value of m_errorMessage
        * The error message, which was thrown for the specified tape drive with the
+       * specified mounted tape.
        * @return the value of m_errorMessage
        */
       std::string errorMessage() const {
@@ -120,6 +122,7 @@ namespace castor {
       /**
        * Set the value of m_errorMessage
        * The error message, which was thrown for the specified tape drive with the
+       * specified mounted tape.
        * @param new_var the new value of m_errorMessage
        */
       void setErrorMessage(std::string new_var) {

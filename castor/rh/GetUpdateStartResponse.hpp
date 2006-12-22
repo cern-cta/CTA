@@ -147,7 +147,9 @@ namespace castor {
 
       /**
        * Get the list of castor::stager::DiskCopyForRecall* objects held by
+       * m_sourcesVector
        * @return list of castor::stager::DiskCopyForRecall* objects held by
+       * m_sourcesVector
        */
       std::vector<castor::stager::DiskCopyForRecall*>& sources() {
         return m_sourcesVector;

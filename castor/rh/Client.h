@@ -39,6 +39,7 @@ struct Crh_Client_t;
 // This defines a C interface to the following class
 // class Client
 // A simple castor client defined by its machine name and the port it is listening
+// to in this machine.
 //------------------------------------------------------------------------------
 
 /**

@@ -136,25 +136,29 @@ int Cquery_FileSystemDescription_setReservedSpace(struct Cquery_FileSystemDescri
 
 /**
  * Get the value of minFreeSpace
- * Minimum freespace the garbage collector should keep if possible (values from 0 to
+ * Minimum freespace the garbage collector should keep if possible (values from 0
+ * to 1, as a portion of the totalSpace)
  */
 int Cquery_FileSystemDescription_minFreeSpace(struct Cquery_FileSystemDescription_t* instance, float* var);
 
 /**
  * Set the value of minFreeSpace
- * Minimum freespace the garbage collector should keep if possible (values from 0 to
+ * Minimum freespace the garbage collector should keep if possible (values from 0
+ * to 1, as a portion of the totalSpace)
  */
 int Cquery_FileSystemDescription_setMinFreeSpace(struct Cquery_FileSystemDescription_t* instance, float new_var);
 
 /**
  * Get the value of maxFreeSpace
- * Minimum freespace the garbage collector should create when it runs (values from 0
+ * Minimum freespace the garbage collector should create when it runs (values from
+ * 0 to 1, as a portion of the totalSpace)
  */
 int Cquery_FileSystemDescription_maxFreeSpace(struct Cquery_FileSystemDescription_t* instance, float* var);
 
 /**
  * Set the value of maxFreeSpace
- * Minimum freespace the garbage collector should create when it runs (values from 0
+ * Minimum freespace the garbage collector should create when it runs (values from
+ * 0 to 1, as a portion of the totalSpace)
  */
 int Cquery_FileSystemDescription_setMaxFreeSpace(struct Cquery_FileSystemDescription_t* instance, float new_var);
 

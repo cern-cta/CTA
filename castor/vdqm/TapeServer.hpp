@@ -51,6 +51,7 @@ namespace castor {
      * class TapeServer
      * Holds the information about the tape server. Every tape server has several tape
      * drives. If its actingMode says that it is in SERVER_INACTIVE, then its tape
+     * drives are not involved in the CASTOR production.
      */
     class TapeServer : public virtual castor::IObject {
 

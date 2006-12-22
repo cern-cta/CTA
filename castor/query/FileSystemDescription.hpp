@@ -173,7 +173,8 @@ namespace castor {
 
       /**
        * Get the value of m_minFreeSpace
-       * Minimum freespace the garbage collector should keep if possible (values from 0 to
+       * Minimum freespace the garbage collector should keep if possible (values from 0
+       * to 1, as a portion of the totalSpace)
        * @return the value of m_minFreeSpace
        */
       float minFreeSpace() const {
@@ -182,7 +183,8 @@ namespace castor {
 
       /**
        * Set the value of m_minFreeSpace
-       * Minimum freespace the garbage collector should keep if possible (values from 0 to
+       * Minimum freespace the garbage collector should keep if possible (values from 0
+       * to 1, as a portion of the totalSpace)
        * @param new_var the new value of m_minFreeSpace
        */
       void setMinFreeSpace(float new_var) {
@@ -191,7 +193,8 @@ namespace castor {
 
       /**
        * Get the value of m_maxFreeSpace
-       * Minimum freespace the garbage collector should create when it runs (values from 0
+       * Minimum freespace the garbage collector should create when it runs (values from
+       * 0 to 1, as a portion of the totalSpace)
        * @return the value of m_maxFreeSpace
        */
       float maxFreeSpace() const {
@@ -200,7 +203,8 @@ namespace castor {
 
       /**
        * Set the value of m_maxFreeSpace
-       * Minimum freespace the garbage collector should create when it runs (values from 0
+       * Minimum freespace the garbage collector should create when it runs (values from
+       * 0 to 1, as a portion of the totalSpace)
        * @param new_var the new value of m_maxFreeSpace
        */
       void setMaxFreeSpace(float new_var) {

@@ -39,6 +39,7 @@ struct Cvdqm_TapeDrive_t;
 // This defines a C interface to the following class
 // class TapeDriveDedication
 // This class is used to specify time slots, where a tape drive should be dedicated
+// for a specific tape.
 //------------------------------------------------------------------------------
 
 /**
@@ -138,36 +139,42 @@ int Cvdqm_TapeDriveDedication_setVid(struct Cvdqm_TapeDriveDedication_t* instanc
 /**
  * Get the value of accessMode
  * the mode, which the client want to use to access the tape. This can be READ or
+ * WRITE access
  */
 int Cvdqm_TapeDriveDedication_accessMode(struct Cvdqm_TapeDriveDedication_t* instance, int* var);
 
 /**
  * Set the value of accessMode
  * the mode, which the client want to use to access the tape. This can be READ or
+ * WRITE access
  */
 int Cvdqm_TapeDriveDedication_setAccessMode(struct Cvdqm_TapeDriveDedication_t* instance, int new_var);
 
 /**
  * Get the value of startTime
  * The starting time, which specifies the beginning of a time slot for a special
+ * tape on a specified tape drive from a specified user
  */
 int Cvdqm_TapeDriveDedication_startTime(struct Cvdqm_TapeDriveDedication_t* instance, u_signed64* var);
 
 /**
  * Set the value of startTime
  * The starting time, which specifies the beginning of a time slot for a special
+ * tape on a specified tape drive from a specified user
  */
 int Cvdqm_TapeDriveDedication_setStartTime(struct Cvdqm_TapeDriveDedication_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of endTime
  * The ending time, which specifies the beginning of a time slot for a special tape
+ * on a specified tape drive from a specified user
  */
 int Cvdqm_TapeDriveDedication_endTime(struct Cvdqm_TapeDriveDedication_t* instance, u_signed64* var);
 
 /**
  * Set the value of endTime
  * The ending time, which specifies the beginning of a time slot for a special tape
+ * on a specified tape drive from a specified user
  */
 int Cvdqm_TapeDriveDedication_setEndTime(struct Cvdqm_TapeDriveDedication_t* instance, u_signed64 new_var);
 

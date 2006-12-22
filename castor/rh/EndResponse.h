@@ -39,6 +39,7 @@ struct Crh_Response_t;
 // This defines a C interface to the following class
 // class EndResponse
 // This type of response is used to inform the client that the server has nothing
+// more to send back.
 //------------------------------------------------------------------------------
 
 /**

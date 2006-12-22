@@ -173,6 +173,7 @@ namespace castor {
       /**
        * Get the value of m_subreqId
        * The Cuuid of the SubRequest that dealt with this file, given as a human readable
+       * string
        * @return the value of m_subreqId
        */
       std::string subreqId() const {
@@ -182,6 +183,7 @@ namespace castor {
       /**
        * Set the value of m_subreqId
        * The Cuuid of the SubRequest that dealt with this file, given as a human readable
+       * string
        * @param new_var the new value of m_subreqId
        */
       void setSubreqId(std::string new_var) {

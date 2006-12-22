@@ -39,6 +39,8 @@ struct Crh_Response_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class IOResponse
+// Response dealing with an I/O. It gives everything to access the file
+// considered.
 //------------------------------------------------------------------------------
 
 /**
@@ -146,12 +148,14 @@ int Crh_IOResponse_setFileId(struct Crh_IOResponse_t* instance, u_signed64 new_v
 /**
  * Get the value of subreqId
  * The Cuuid of the SubRequest that dealt with this file, given as a human readable
+ * string
  */
 int Crh_IOResponse_subreqId(struct Crh_IOResponse_t* instance, const char** var);
 
 /**
  * Set the value of subreqId
  * The Cuuid of the SubRequest that dealt with this file, given as a human readable
+ * string
  */
 int Crh_IOResponse_setSubreqId(struct Crh_IOResponse_t* instance, const char* new_var);
 

@@ -46,6 +46,7 @@ namespace castor {
     /**
      * class EndResponse
      * This type of response is used to inform the client that the server has nothing
+     * more to send back.
      */
     class EndResponse : public virtual Response {
 

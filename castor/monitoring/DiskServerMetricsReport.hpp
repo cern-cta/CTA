@@ -211,6 +211,7 @@ namespace castor {
 
       /**
        * Add a FileSystemMetricsReport* object to the m_fileSystemMetricsReportsVector
+       * list
        */
       void addFileSystemMetricsReports(FileSystemMetricsReport* add_object) {
         m_fileSystemMetricsReportsVector.push_back(add_object);
@@ -232,7 +233,9 @@ namespace castor {
 
       /**
        * Get the list of FileSystemMetricsReport* objects held by
+       * m_fileSystemMetricsReportsVector
        * @return list of FileSystemMetricsReport* objects held by
+       * m_fileSystemMetricsReportsVector
        */
       std::vector<FileSystemMetricsReport*>& fileSystemMetricsReports() {
         return m_fileSystemMetricsReportsVector;

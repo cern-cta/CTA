@@ -101,6 +101,7 @@ namespace castor {
       /**
        * Get the value of m_diskPoolName
        * Name of the diskpool that should be described, or empty string for a description
+       * of all existing diskpools
        * @return the value of m_diskPoolName
        */
       std::string diskPoolName() const {
@@ -110,6 +111,7 @@ namespace castor {
       /**
        * Set the value of m_diskPoolName
        * Name of the diskpool that should be described, or empty string for a description
+       * of all existing diskpools
        * @param new_var the new value of m_diskPoolName
        */
       void setDiskPoolName(std::string new_var) {

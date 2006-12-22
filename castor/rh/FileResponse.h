@@ -186,12 +186,14 @@ int Crh_FileResponse_setFileId(struct Crh_FileResponse_t* instance, u_signed64 n
 /**
  * Get the value of subreqId
  * The Cuuid of the SubRequest that dealt with this file, given as a human readable
+ * string
  */
 int Crh_FileResponse_subreqId(struct Crh_FileResponse_t* instance, const char** var);
 
 /**
  * Set the value of subreqId
  * The Cuuid of the SubRequest that dealt with this file, given as a human readable
+ * string
  */
 int Crh_FileResponse_setSubreqId(struct Crh_FileResponse_t* instance, const char* new_var);
 

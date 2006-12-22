@@ -38,6 +38,7 @@ namespace castor {
     /**
      * enum TapeServerStatusCodes
      * These flags are used to control, wether TapeRequests should be dedicated to tape
+     * drives on this tape server or not.
      */
     enum TapeServerStatusCodes {
       TAPESERVER_ACTIVE = 0, //If the tape server is in ACTIVE status, then its tape drives are used for the actual CASTOR production and the tapeRequest can be dedicated to this tape server

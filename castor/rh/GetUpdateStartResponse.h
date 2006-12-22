@@ -209,7 +209,8 @@ int Crh_GetUpdateStartResponse_addSources(struct Crh_GetUpdateStartResponse_t* i
 int Crh_GetUpdateStartResponse_removeSources(struct Crh_GetUpdateStartResponse_t* instance, struct Cstager_DiskCopyForRecall_t* obj);
 
 /**
- * Get the list of struct Cstager_DiskCopyForRecall_t* objects held by sources. Note
+ * Get the list of struct Cstager_DiskCopyForRecall_t* objects held by sources.
+ * Note that the caller is responsible for the deletion of the returned vector.
  */
 int Crh_GetUpdateStartResponse_sources(struct Crh_GetUpdateStartResponse_t* instance, struct Cstager_DiskCopyForRecall_t*** var, int* len);
 

@@ -62,7 +62,8 @@ namespace castor {
 
     /**
      * class TapeDrive
-     * An instance of this class contains the informations of one specific tape drive of
+     * An instance of this class contains the informations of one specific tape drive
+     * of a server.
      */
     class TapeDrive : public virtual castor::IObject {
 
@@ -118,6 +119,7 @@ namespace castor {
       /**
        * Get the value of m_jobID
        * The jobID is given by the tpdaemon to the tape drive, when a job has been
+       * assigned.
        * @return the value of m_jobID
        */
       int jobID() const {
@@ -127,6 +129,7 @@ namespace castor {
       /**
        * Set the value of m_jobID
        * The jobID is given by the tpdaemon to the tape drive, when a job has been
+       * assigned.
        * @param new_var the new value of m_jobID
        */
       void setJobID(int new_var) {
@@ -262,6 +265,8 @@ namespace castor {
       /**
        * Get the value of m_tapeAccessMode
        * The tape access mode is the information, how the tape drive is accessing the
+       * mounted tape. The value could  be WRITE_ENABLE, WRITE_DISABLE or -1 for
+       * UNKNOWN.
        * @return the value of m_tapeAccessMode
        */
       int tapeAccessMode() const {
@@ -271,6 +276,8 @@ namespace castor {
       /**
        * Set the value of m_tapeAccessMode
        * The tape access mode is the information, how the tape drive is accessing the
+       * mounted tape. The value could  be WRITE_ENABLE, WRITE_DISABLE or -1 for
+       * UNKNOWN.
        * @param new_var the new value of m_tapeAccessMode
        */
       void setTapeAccessMode(int new_var) {
@@ -378,6 +385,10 @@ namespace castor {
       }
 
       /**
+       * Get the list of TapeDriveDedication* objects held by
+       * m_tapeDriveDedicationVector
+       * @return list of TapeDriveDedication* objects held by
+       * m_tapeDriveDedicationVector
        */
       std::vector<TapeDriveDedication*>& tapeDriveDedication() {
         return m_tapeDriveDedicationVector;
@@ -385,6 +396,7 @@ namespace castor {
 
       /**
        * Add a TapeDriveCompatibility* object to the m_tapeDriveCompatibilitiesVector
+       * list
        */
       void addTapeDriveCompatibilities(TapeDriveCompatibility* add_object) {
         m_tapeDriveCompatibilitiesVector.push_back(add_object);
@@ -406,7 +418,9 @@ namespace castor {
 
       /**
        * Get the list of TapeDriveCompatibility* objects held by
+       * m_tapeDriveCompatibilitiesVector
        * @return list of TapeDriveCompatibility* objects held by
+       * m_tapeDriveCompatibilitiesVector
        */
       std::vector<TapeDriveCompatibility*>& tapeDriveCompatibilities() {
         return m_tapeDriveCompatibilitiesVector;

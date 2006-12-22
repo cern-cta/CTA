@@ -45,7 +45,8 @@ struct Cvdqm_TapeServer_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class TapeDrive
-// An instance of this class contains the informations of one specific tape drive of
+// An instance of this class contains the informations of one specific tape drive
+// of a server.
 //------------------------------------------------------------------------------
 
 /**
@@ -97,12 +98,14 @@ int Cvdqm_TapeDrive_clone(struct Cvdqm_TapeDrive_t* instance,
 /**
  * Get the value of jobID
  * The jobID is given by the tpdaemon to the tape drive, when a job has been
+ * assigned.
  */
 int Cvdqm_TapeDrive_jobID(struct Cvdqm_TapeDrive_t* instance, int* var);
 
 /**
  * Set the value of jobID
  * The jobID is given by the tpdaemon to the tape drive, when a job has been
+ * assigned.
  */
 int Cvdqm_TapeDrive_setJobID(struct Cvdqm_TapeDrive_t* instance, int new_var);
 
@@ -193,12 +196,16 @@ int Cvdqm_TapeDrive_setDriveName(struct Cvdqm_TapeDrive_t* instance, const char*
 /**
  * Get the value of tapeAccessMode
  * The tape access mode is the information, how the tape drive is accessing the
+ * mounted tape. The value could  be WRITE_ENABLE, WRITE_DISABLE or -1 for
+ * UNKNOWN.
  */
 int Cvdqm_TapeDrive_tapeAccessMode(struct Cvdqm_TapeDrive_t* instance, int* var);
 
 /**
  * Set the value of tapeAccessMode
  * The tape access mode is the information, how the tape drive is accessing the
+ * mounted tape. The value could  be WRITE_ENABLE, WRITE_DISABLE or -1 for
+ * UNKNOWN.
  */
 int Cvdqm_TapeDrive_setTapeAccessMode(struct Cvdqm_TapeDrive_t* instance, int new_var);
 
@@ -246,10 +253,13 @@ int Cvdqm_TapeDrive_removeErrorHistory(struct Cvdqm_TapeDrive_t* instance, struc
 
 /**
  * Get the list of struct Cvdqm_ErrorHistory_t* objects held by errorHistory. Note
+ * that the caller is responsible for the deletion of the returned vector.
  */
 int Cvdqm_TapeDrive_errorHistory(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_ErrorHistory_t*** var, int* len);
 
 /**
+ * Add a struct Cvdqm_TapeDriveDedication_t* object to the tapeDriveDedication
+ * list
  */
 int Cvdqm_TapeDrive_addTapeDriveDedication(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeDriveDedication_t* obj);
 
@@ -261,22 +271,26 @@ int Cvdqm_TapeDrive_removeTapeDriveDedication(struct Cvdqm_TapeDrive_t* instance
 /**
  * Get the list of struct Cvdqm_TapeDriveDedication_t* objects held by
  * tapeDriveDedication. Note that the caller is responsible for the deletion of the
+ * returned vector.
  */
 int Cvdqm_TapeDrive_tapeDriveDedication(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeDriveDedication_t*** var, int* len);
 
 /**
  * Add a struct Cvdqm_TapeDriveCompatibility_t* object to the
+ * tapeDriveCompatibilities list
  */
 int Cvdqm_TapeDrive_addTapeDriveCompatibilities(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeDriveCompatibility_t* obj);
 
 /**
  * Remove a struct Cvdqm_TapeDriveCompatibility_t* object from
+ * tapeDriveCompatibilities
  */
 int Cvdqm_TapeDrive_removeTapeDriveCompatibilities(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeDriveCompatibility_t* obj);
 
 /**
  * Get the list of struct Cvdqm_TapeDriveCompatibility_t* objects held by
- * tapeDriveCompatibilities. Note that the caller is responsible for the deletion of
+ * tapeDriveCompatibilities. Note that the caller is responsible for the deletion
+ * of the returned vector.
  */
 int Cvdqm_TapeDrive_tapeDriveCompatibilities(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeDriveCompatibility_t*** var, int* len);
 

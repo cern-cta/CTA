@@ -46,6 +46,7 @@ namespace castor {
     /**
      * class Client
      * A simple castor client defined by its machine name and the port it is listening
+     * to in this machine.
      */
     class Client : public virtual castor::IClient {
 

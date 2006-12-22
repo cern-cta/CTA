@@ -45,6 +45,7 @@ namespace castor {
     /**
      * class DeviceGroupName
      * Please note that this is a table with static entries! It contains all existing
+     * device group names.
      */
     class DeviceGroupName : public virtual castor::IObject {
 
@@ -100,6 +101,7 @@ namespace castor {
       /**
        * Get the value of m_dgName
        * The dgn, which comes with the old protocol and is now used to specify the
+       * physical library.
        * @return the value of m_dgName
        */
       std::string dgName() const {
@@ -109,6 +111,7 @@ namespace castor {
       /**
        * Set the value of m_dgName
        * The dgn, which comes with the old protocol and is now used to specify the
+       * physical library.
        * @param new_var the new value of m_dgName
        */
       void setDgName(std::string new_var) {

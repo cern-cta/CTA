@@ -41,6 +41,7 @@ struct Cvdqm_TapeServer_t;
 // class TapeServer
 // Holds the information about the tape server. Every tape server has several tape
 // drives. If its actingMode says that it is in SERVER_INACTIVE, then its tape
+// drives are not involved in the CASTOR production.
 //------------------------------------------------------------------------------
 
 /**
@@ -125,6 +126,7 @@ int Cvdqm_TapeServer_removeTapeDrives(struct Cvdqm_TapeServer_t* instance, struc
 
 /**
  * Get the list of struct Cvdqm_TapeDrive_t* objects held by tapeDrives. Note that
+ * the caller is responsible for the deletion of the returned vector.
  */
 int Cvdqm_TapeServer_tapeDrives(struct Cvdqm_TapeServer_t* instance, struct Cvdqm_TapeDrive_t*** var, int* len);
 

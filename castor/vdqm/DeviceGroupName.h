@@ -38,6 +38,7 @@ struct Cvdqm_DeviceGroupName_t;
 // This defines a C interface to the following class
 // class DeviceGroupName
 // Please note that this is a table with static entries! It contains all existing
+// device group names.
 //------------------------------------------------------------------------------
 
 /**
@@ -89,12 +90,14 @@ int Cvdqm_DeviceGroupName_clone(struct Cvdqm_DeviceGroupName_t* instance,
 /**
  * Get the value of dgName
  * The dgn, which comes with the old protocol and is now used to specify the
+ * physical library.
  */
 int Cvdqm_DeviceGroupName_dgName(struct Cvdqm_DeviceGroupName_t* instance, const char** var);
 
 /**
  * Set the value of dgName
  * The dgn, which comes with the old protocol and is now used to specify the
+ * physical library.
  */
 int Cvdqm_DeviceGroupName_setDgName(struct Cvdqm_DeviceGroupName_t* instance, const char* new_var);
 

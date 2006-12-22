@@ -40,6 +40,7 @@ struct Cvdqm_TapeDrive_t;
 // This defines a C interface to the following class
 // class ErrorHistory
 // This table holds all the errors, which occures for a specified tape drive with a
+// dedicated tape.
 //------------------------------------------------------------------------------
 
 /**
@@ -91,12 +92,14 @@ int Cvdqm_ErrorHistory_clone(struct Cvdqm_ErrorHistory_t* instance,
 /**
  * Get the value of errorMessage
  * The error message, which was thrown for the specified tape drive with the
+ * specified mounted tape.
  */
 int Cvdqm_ErrorHistory_errorMessage(struct Cvdqm_ErrorHistory_t* instance, const char** var);
 
 /**
  * Set the value of errorMessage
  * The error message, which was thrown for the specified tape drive with the
+ * specified mounted tape.
  */
 int Cvdqm_ErrorHistory_setErrorMessage(struct Cvdqm_ErrorHistory_t* instance, const char* new_var);
 
