@@ -195,7 +195,7 @@ namespace castor {
        * Estimation of the modifications of the free space since the last update.
        * @return the value of m_deltaFree
        */
-      int deltaFree() const {
+      signed64 deltaFree() const {
         return m_deltaFree;
       }
 
@@ -204,7 +204,7 @@ namespace castor {
        * Estimation of the modifications of the free space since the last update.
        * @param new_var the new value of m_deltaFree
        */
-      void setDeltaFree(int new_var) {
+      void setDeltaFree(signed64 new_var) {
         m_deltaFree = new_var;
       }
 
@@ -214,7 +214,7 @@ namespace castor {
        * account in free and deltaFree
        * @return the value of m_reservedSpace
        */
-      int reservedSpace() const {
+      u_signed64 reservedSpace() const {
         return m_reservedSpace;
       }
 
@@ -224,7 +224,7 @@ namespace castor {
        * account in free and deltaFree
        * @param new_var the new value of m_reservedSpace
        */
-      void setReservedSpace(int new_var) {
+      void setReservedSpace(u_signed64 new_var) {
         m_reservedSpace = new_var;
       }
 
@@ -445,10 +445,10 @@ namespace castor {
       float m_deltaWeight;
 
       /// Estimation of the modifications of the free space since the last update.
-      int m_deltaFree;
+      signed64 m_deltaFree;
 
       /// Space reserved on the filesystem but not yet used and thus not taken into account in free and deltaFree
-      int m_reservedSpace;
+      u_signed64 m_reservedSpace;
 
       /// Minimum free space that should be kept on this FileSystem. This limit can be transgressed but the garbage collector will then be launched. This is given as a fraction of the totalSize.
       float m_minFreeSpace;

@@ -185,7 +185,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cstager_FileSystem_deltaFree
   //----------------------------------------------------------------------------
-  int Cstager_FileSystem_deltaFree(castor::stager::FileSystem* instance, int* var) {
+  int Cstager_FileSystem_deltaFree(castor::stager::FileSystem* instance, signed64* var) {
     *var = instance->deltaFree();
     return 0;
   }
@@ -193,7 +193,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cstager_FileSystem_setDeltaFree
   //----------------------------------------------------------------------------
-  int Cstager_FileSystem_setDeltaFree(castor::stager::FileSystem* instance, int new_var) {
+  int Cstager_FileSystem_setDeltaFree(castor::stager::FileSystem* instance, signed64 new_var) {
     instance->setDeltaFree(new_var);
     return 0;
   }
@@ -201,7 +201,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cstager_FileSystem_reservedSpace
   //----------------------------------------------------------------------------
-  int Cstager_FileSystem_reservedSpace(castor::stager::FileSystem* instance, int* var) {
+  int Cstager_FileSystem_reservedSpace(castor::stager::FileSystem* instance, u_signed64* var) {
     *var = instance->reservedSpace();
     return 0;
   }
@@ -209,7 +209,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cstager_FileSystem_setReservedSpace
   //----------------------------------------------------------------------------
-  int Cstager_FileSystem_setReservedSpace(castor::stager::FileSystem* instance, int new_var) {
+  int Cstager_FileSystem_setReservedSpace(castor::stager::FileSystem* instance, u_signed64 new_var) {
     instance->setReservedSpace(new_var);
     return 0;
   }

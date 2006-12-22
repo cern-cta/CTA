@@ -134,10 +134,10 @@ castor::IObject* castor::io::StreamFileSystemCnv::createObj(castor::IAddress* ad
   float deltaWeight;
   ad->stream() >> deltaWeight;
   object->setDeltaWeight(deltaWeight);
-  int deltaFree;
+  signed64 deltaFree;
   ad->stream() >> deltaFree;
   object->setDeltaFree(deltaFree);
-  int reservedSpace;
+  u_signed64 reservedSpace;
   ad->stream() >> reservedSpace;
   object->setReservedSpace(reservedSpace);
   float minFreeSpace;

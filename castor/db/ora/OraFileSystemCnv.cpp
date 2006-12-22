@@ -528,8 +528,8 @@ void castor::db::ora::OraFileSystemCnv::createRep(castor::IAddress* address,
     m_insertStatement->setFloat(3, obj->fsDeviation());
     m_insertStatement->setString(4, obj->mountPoint());
     m_insertStatement->setFloat(5, obj->deltaWeight());
-    m_insertStatement->setInt(6, obj->deltaFree());
-    m_insertStatement->setInt(7, obj->reservedSpace());
+    m_insertStatement->setDouble(6, obj->deltaFree());
+    m_insertStatement->setDouble(7, obj->reservedSpace());
     m_insertStatement->setFloat(8, obj->minFreeSpace());
     m_insertStatement->setFloat(9, obj->minAllowedFreeSpace());
     m_insertStatement->setFloat(10, obj->maxFreeSpace());
@@ -596,8 +596,8 @@ void castor::db::ora::OraFileSystemCnv::createRep(castor::IAddress* address,
       m_updateStatement->setFloat(3, obj->fsDeviation());
       m_updateStatement->setString(4, obj->mountPoint());
       m_updateStatement->setFloat(5, obj->deltaWeight());
-      m_updateStatement->setInt(6, obj->deltaFree());
-      m_updateStatement->setInt(7, obj->reservedSpace());
+      m_updateStatement->setDouble(6, obj->deltaFree());
+      m_updateStatement->setDouble(7, obj->reservedSpace());
       m_updateStatement->setFloat(8, obj->minFreeSpace());
       m_updateStatement->setFloat(9, obj->minAllowedFreeSpace());
       m_updateStatement->setFloat(10, obj->maxFreeSpace());
@@ -688,8 +688,8 @@ void castor::db::ora::OraFileSystemCnv::createRep(castor::IAddress* address,
           object->setFsDeviation(rset->getFloat(3));
           object->setMountPoint(rset->getString(4));
           object->setDeltaWeight(rset->getFloat(5));
-          object->setDeltaFree(rset->getInt(6));
-          object->setReservedSpace(rset->getInt(7));
+          object->setDeltaFree((signed64)rset->getDouble(6));
+          object->setReservedSpace((u_signed64)rset->getDouble(7));
           object->setMinFreeSpace(rset->getFloat(8));
           object->setMinAllowedFreeSpace(rset->getFloat(9));
           object->setMaxFreeSpace(rset->getFloat(10));
@@ -737,8 +737,8 @@ void castor::db::ora::OraFileSystemCnv::createRep(castor::IAddress* address,
             object->setFsDeviation(rset->getFloat(3));
             object->setMountPoint(rset->getString(4));
             object->setDeltaWeight(rset->getFloat(5));
-            object->setDeltaFree(rset->getInt(6));
-            object->setReservedSpace(rset->getInt(7));
+            object->setDeltaFree((signed64)rset->getDouble(6));
+            object->setReservedSpace((u_signed64)rset->getDouble(7));
             object->setMinFreeSpace(rset->getFloat(8));
             object->setMinAllowedFreeSpace(rset->getFloat(9));
             object->setMaxFreeSpace(rset->getFloat(10));
