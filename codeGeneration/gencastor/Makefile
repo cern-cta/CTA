@@ -1,15 +1,16 @@
 DEV=$(CASTORDEV_HOME)/codeGeneration/gencastor
-UMBRELLOBASE=kdesdk-3.5
+UMBRELLOBASE=../kdesdk-3.5.5
 
 UMBRELLO=$(UMBRELLOBASE)/umbrello/umbrello
 UMBRELLOOBJBASE=$(UMBRELLOBASE)
 UMBRELLOOBJ=$(UMBRELLOOBJBASE)/umbrello/umbrello
 UMBRELLOGEN=$(UMBRELLOOBJ)/codegenerators
 
-RAWOBJS=activitywidget.o actor.o actorwidget.o aligntoolbar.o artifact.o artifactwidget.o association.o associationwidget.o assocrules.o attribute.o boxwidget.o classifiercodedocument.o classifierlistitem.o classifierwidget.o codeaccessormethod.o codeblock.o codeblockwithcomments.o codeclassfield.o codeclassfielddeclarationblock.o codecomment.o codedocument.o codegenerationpolicy.o codegenerator.o codegenobjectwithtextblocks.o codemethodblock.o codeoperation.o codeparameter.o component.o componentwidget.o configurable.o datatype.o datatypewidget.o docwindow.o dialog_utils.o entity.o entityattribute.o entitywidget.o enum.o enumliteral.o enumwidget.o floatingtext.o forkjoinwidget.o hierarchicalcodeblock.o infowidget.o kplayerslideraction.o kstartuplogo.o linepath.o linkwidget.o listpopupmenu.o messagewidget.o model_utils.o node.o nodewidget.o notewidget.o object_factory.o objectwidget.o operation.o ownedcodeblock.o ownedhierarchicalcodeblock.o package.o packagewidget.o plugin.o pluginloader.o seqlinewidget.o statewidget.o stereotype.o template.o textblock.o toolbarstate.o toolbarstatearrow.o toolbarstateassociation.o toolbarstatefactory.o toolbarstatemessages.o toolbarstateother.o toolbarstatepool.o uml.o umlattributelist.o umlcanvasobject.o umlclassifierlistitemlist.o umllistview.o umllistviewitem.o umlnamespace.o umlobject.o umlobjectlist.o umlrole.o umlview.o umlviewcanvas.o umlwidget.o usecase.o usecasewidget.o widgetbase.o widget_utils.o worktoolbar.o exportviewaction.o import_utils.o import_rose.o petaltree2uml.o petalnode.o
+RAWOBJS=activitywidget.o actor.o actorwidget.o aligntoolbar.o artifact.o artifactwidget.o association.o associationwidget.o assocrules.o attribute.o boxwidget.o classifiercodedocument.o classifierlistitem.o classifierwidget.o cmdlineexportallviewsevent.o codeaccessormethod.o codeblock.o codeblockwithcomments.o codeclassfield.o codeclassfielddeclarationblock.o codecomment.o codedocument.o codegenerationpolicy.o codegenerator.o codegenobjectwithtextblocks.o codemethodblock.o codeoperation.o codeparameter.o component.o componentwidget.o configurable.o datatype.o datatypewidget.o dialog_utils.o docwindow.o entity.o entityattribute.o entitywidget.o enum.o enumliteral.o enumwidget.o floatingtextwidget.o floatingtextwidgetcontroller.o folder.o forkjoinwidget.o hierarchicalcodeblock.o kplayerslideraction.o kstartuplogo.o linepath.o linkwidget.o listpopupmenu.o messagewidget.o messagewidgetcontroller.o model_utils.o node.o nodewidget.o notewidget.o notewidgetcontroller.o object_factory.o objectwidget.o objectwidgetcontroller.o operation.o optionstate.o ownedcodeblock.o ownedhierarchicalcodeblock.o package.o packagewidget.o plugin.o pluginloader.o seqlinewidget.o statewidget.o stereotype.o template.o textblock.o toolbarstate.o toolbarstatearrow.o toolbarstateassociation.o toolbarstatefactory.o toolbarstatemessages.o toolbarstateother.o toolbarstatepool.o uml.o umlattributelist.o umlcanvasobject.o umlclassifierlistitemlist.o umlviewimageexporter.o umllistview.o umllistviewitem.o umlnamespace.o umlobject.o umlobjectlist.o umlrole.o umlview.o umlviewcanvas.o umlviewimageexporterall.o umlviewimageexportermodel.o umlwidget.o umlwidgetcontroller.o uniqueid.o usecase.o usecasewidget.o widgetbase.o widget_factory.o widget_utils.o worktoolbar.o import_rose.o petaltree2uml.o petalnode.o
 OBJS=$(patsubst %,$(UMBRELLOOBJ)/%,$(RAWOBJS))
 
-UMBRELLORAWLIBS=refactoring/.libs/librefactoring.a classparser/.libs/libclassparser.a clipboard/.libs/libclipboard.a dialogs/.libs/libdialogs.a
+UMBRELLORAWLIBS=refactoring/.libs/librefactoring.a clipboard/.libs/libclipboard.a dialogs/.libs/libdialogs.a docgenerators/.libs/docbookgenerator.o docgenerators/.libs/xhtmlgenerator.o codeimport/.libs/import_utils.o 
+
 UMBRELLOLIBS=$(patsubst %,$(UMBRELLOOBJ)/%,$(UMBRELLORAWLIBS))
 
 MOCOBJS=umbrello/codegenerators/simplecodegenerator.moc umbrello/codegenerators/classifier.moc umbrello/codegenerators/umldoc.moc
@@ -18,12 +19,13 @@ OWNGENSRCS=classifier.cpp classifierinfo.cpp classimport.cpp codegenfactory.cpp 
 OWNGENOBJS=$(patsubst %.cpp,umbrello/codegenerators/%.lo,$(OWNGENSRCS))
 OWNGENRAWOBJS=$(patsubst %.cpp,umbrello/codegenerators/%.o,$(OWNGENSRCS))
 
-INCLUDES=-I$(DEV)/umbrello -I$(DEV)/umbrello/codegenerators -I$(UMBRELLO) -I$(UMBRELLOOBJBASE) -I$(UMBRELLOOBJ) -I$(UMBRELLO)/codegenerators -I$(UMBRELLOOBJ)/dialogs -I/usr/include/kde -I/usr/share/qt3/include -I/usr/X11R6/include -DQT_THREAD_SUPPORT -D_REENTRANT
+INCLUDES=-I$(DEV)/umbrello -I$(DEV)/umbrello/codegenerators -I$(UMBRELLO) -I$(UMBRELLOOBJBASE) -I$(UMBRELLOOBJ) -I$(UMBRELLO)/codegenerators -I$(UMBRELLOOBJ)/dialogs -I/usr/include/kde -I/usr/include/qt3 -I/usr/X11R6/include -DQT_THREAD_SUPPORT -D_REENTRANT
 COMPILEFLAGS= --mode=compile --tag=CXX g++
 LINKFLAGS= --mode=link --tag=CXX g++ -pthread
-LINKDEPS=-lfl -lkdeprint -lkio
+LINKDEPS=-lfl -lkdeprint -lkio -lxslt
 MACROS=-g -O0 -Wnon-virtual-dtor -Wno-long-long -Wundef -ansi -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -Wcast-align -Wconversion -Wchar-subscripts -Wall -W -Wpointer-arith -Wwrite-strings -DNDEBUG -DNO_DEBUG -Wformat-security -Wmissing-format-attribute -fno-exceptions -fno-check-new -fno-common -DQT_CLEAN_NAMESPACE -DQT_NO_ASCII_CAST -DQT_NO_STL -DQT_NO_COMPAT -DQT_NO_TRANSLATION
 
+.PHONY : all install clean
 
 all : gencastor.bin
 
