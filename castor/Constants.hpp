@@ -163,7 +163,9 @@ namespace castor {
     OBJ_DiskServerStateReport = 120,
     OBJ_DiskServerMetricsReport = 121,
     OBJ_FileSystemStateReport = 122,
-    OBJ_FileSystemMetricsReport = 123
+    OBJ_FileSystemMetricsReport = 123,
+    OBJ_DiskServerAdminReport = 124,
+    OBJ_FileSystemAdminReport = 125
   };
 
   /**
@@ -243,7 +245,7 @@ namespace castor {
   /**
    * Nb of objectIds currently existing
    */
-  static const unsigned int ObjectsIdsNb = 124;
+  static const unsigned int ObjectsIdsNb = 126;
 
   /**
    * Nb of ServicesIds currently existing
@@ -259,7 +261,7 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[124];
+  extern const char* ObjectsIdStrings[126];
 
   /**
    * Names of the differents Services, used to display
