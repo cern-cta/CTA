@@ -40,6 +40,7 @@ struct Cstager_QueryParameter_t;
 // This defines a C interface to the following class
 // class QueryParameter
 // A parameter of a query request. Depending on its type, its value can contain a
+// fileName, a requestId, a fileId, ...
 //------------------------------------------------------------------------------
 
 /**

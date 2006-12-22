@@ -41,6 +41,7 @@ struct Cstager_TapePool_t;
 // class SvcClass
 // A service, as seen by the user.
 // A SvcClass is a container of resources and may be given as parameter of the
+// request.
 //------------------------------------------------------------------------------
 
 /**
@@ -93,6 +94,7 @@ int Cstager_SvcClass_clone(struct Cstager_SvcClass_t* instance,
  * Get the value of nbDrives
  * Number of drives to use for this service class.
  * This is the default number, but it could be that occasionnally more drives are
+ * used, if a resource is shared with another service class using more drives
  */
 int Cstager_SvcClass_nbDrives(struct Cstager_SvcClass_t* instance, unsigned int* var);
 
@@ -100,6 +102,7 @@ int Cstager_SvcClass_nbDrives(struct Cstager_SvcClass_t* instance, unsigned int*
  * Set the value of nbDrives
  * Number of drives to use for this service class.
  * This is the default number, but it could be that occasionnally more drives are
+ * used, if a resource is shared with another service class using more drives
  */
 int Cstager_SvcClass_setNbDrives(struct Cstager_SvcClass_t* instance, unsigned int new_var);
 
@@ -118,12 +121,14 @@ int Cstager_SvcClass_setName(struct Cstager_SvcClass_t* instance, const char* ne
 /**
  * Get the value of defaultFileSize
  * Default size used for space allocation in the case of a stage put with no size
+ * explicitely given (ie size given was 0)
  */
 int Cstager_SvcClass_defaultFileSize(struct Cstager_SvcClass_t* instance, u_signed64* var);
 
 /**
  * Set the value of defaultFileSize
  * Default size used for space allocation in the case of a stage put with no size
+ * explicitely given (ie size given was 0)
  */
 int Cstager_SvcClass_setDefaultFileSize(struct Cstager_SvcClass_t* instance, u_signed64 new_var);
 
@@ -131,6 +136,7 @@ int Cstager_SvcClass_setDefaultFileSize(struct Cstager_SvcClass_t* instance, u_s
  * Get the value of maxReplicaNb
  * Maximum number of replicas for a file created with this service class. If 0, the
  * replication is ruled by the replication policy. If there is none, then 0 means
+ * infinity.
  */
 int Cstager_SvcClass_maxReplicaNb(struct Cstager_SvcClass_t* instance, int* var);
 
@@ -138,6 +144,7 @@ int Cstager_SvcClass_maxReplicaNb(struct Cstager_SvcClass_t* instance, int* var)
  * Set the value of maxReplicaNb
  * Maximum number of replicas for a file created with this service class. If 0, the
  * replication is ruled by the replication policy. If there is none, then 0 means
+ * infinity.
  */
 int Cstager_SvcClass_setMaxReplicaNb(struct Cstager_SvcClass_t* instance, int new_var);
 
@@ -213,6 +220,7 @@ int Cstager_SvcClass_removeTapePools(struct Cstager_SvcClass_t* instance, struct
 
 /**
  * Get the list of struct Cstager_TapePool_t* objects held by tapePools. Note that
+ * the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_SvcClass_tapePools(struct Cstager_SvcClass_t* instance, struct Cstager_TapePool_t*** var, int* len);
 
@@ -228,6 +236,7 @@ int Cstager_SvcClass_removeDiskPools(struct Cstager_SvcClass_t* instance, struct
 
 /**
  * Get the list of struct Cstager_DiskPool_t* objects held by diskPools. Note that
+ * the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_SvcClass_diskPools(struct Cstager_SvcClass_t* instance, struct Cstager_DiskPool_t*** var, int* len);
 

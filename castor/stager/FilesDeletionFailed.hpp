@@ -46,6 +46,7 @@ namespace castor {
     /**
      * class FilesDeletionFailed
      * Request for telling the stager which files caused a failure when the gcDaemon
+     * tried to delete them
      */
     class FilesDeletionFailed : public virtual GCFileList {
 

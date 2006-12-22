@@ -43,6 +43,7 @@ struct Cstager_SvcClass_t;
 // This defines a C interface to the following class
 // class FilesDeletionFailed
 // Request for telling the stager which files caused a failure when the gcDaemon
+// tried to delete them
 //------------------------------------------------------------------------------
 
 /**
@@ -111,6 +112,7 @@ int Cstager_FilesDeletionFailed_removeFiles(struct Cstager_FilesDeletionFailed_t
 
 /**
  * Get the list of struct Cstager_GCFile_t* objects held by files. Note that the
+ * caller is responsible for the deletion of the returned vector.
  */
 int Cstager_FilesDeletionFailed_files(struct Cstager_FilesDeletionFailed_t* instance, struct Cstager_GCFile_t*** var, int* len);
 
@@ -213,12 +215,14 @@ int Cstager_FilesDeletionFailed_setSvcClassName(struct Cstager_FilesDeletionFail
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_FilesDeletionFailed_userTag(struct Cstager_FilesDeletionFailed_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_FilesDeletionFailed_setUserTag(struct Cstager_FilesDeletionFailed_t* instance, const char* new_var);
 

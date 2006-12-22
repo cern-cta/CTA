@@ -182,12 +182,14 @@ int Cstager_Files2Delete_setSvcClassName(struct Cstager_Files2Delete_t* instance
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_Files2Delete_userTag(struct Cstager_Files2Delete_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_Files2Delete_setUserTag(struct Cstager_Files2Delete_t* instance, const char* new_var);
 

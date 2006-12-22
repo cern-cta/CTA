@@ -178,12 +178,14 @@ int Cstager_QryRequest_setSvcClassName(struct Cstager_QryRequest_t* instance, co
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_QryRequest_userTag(struct Cstager_QryRequest_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_QryRequest_setUserTag(struct Cstager_QryRequest_t* instance, const char* new_var);
 
@@ -254,7 +256,8 @@ int Cstager_QryRequest_addParameters(struct Cstager_QryRequest_t* instance, stru
 int Cstager_QryRequest_removeParameters(struct Cstager_QryRequest_t* instance, struct Cstager_QueryParameter_t* obj);
 
 /**
- * Get the list of struct Cstager_QueryParameter_t* objects held by parameters. Note
+ * Get the list of struct Cstager_QueryParameter_t* objects held by parameters.
+ * Note that the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_QryRequest_parameters(struct Cstager_QryRequest_t* instance, struct Cstager_QueryParameter_t*** var, int* len);
 

@@ -46,6 +46,7 @@ namespace castor {
     /**
      * class FilesDeleted
      * Request for telling the stager which files were actually deleted on a given
+     * DiskServer
      */
     class FilesDeleted : public virtual GCFileList {
 

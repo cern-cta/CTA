@@ -40,7 +40,10 @@ struct Cstager_SvcClass_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class Disk2DiskCopyDoneRequest
-// This request is there to avoid the jobs on the diskservers to handle a connection
+// Internal request for updating the database after a successful Disk to Disk
+// copy.
+// This request is there to avoid the jobs on the diskservers to handle a
+// connection to the database.
 //------------------------------------------------------------------------------
 
 /**
@@ -182,12 +185,14 @@ int Cstager_Disk2DiskCopyDoneRequest_setSvcClassName(struct Cstager_Disk2DiskCop
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_Disk2DiskCopyDoneRequest_userTag(struct Cstager_Disk2DiskCopyDoneRequest_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_Disk2DiskCopyDoneRequest_setUserTag(struct Cstager_Disk2DiskCopyDoneRequest_t* instance, const char* new_var);
 

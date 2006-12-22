@@ -297,6 +297,7 @@ namespace castor {
       /**
        * Get the value of m_lastKnownFileName
        * Last known file name for this file, from the stager point of view. This does not
+       * mean it is the current one in the nameserver
        * @return the value of m_lastKnownFileName
        */
       std::string lastKnownFileName() const {
@@ -306,6 +307,7 @@ namespace castor {
       /**
        * Set the value of m_lastKnownFileName
        * Last known file name for this file, from the stager point of view. This does not
+       * mean it is the current one in the nameserver
        * @param new_var the new value of m_lastKnownFileName
        */
       void setLastKnownFileName(std::string new_var) {

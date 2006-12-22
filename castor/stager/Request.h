@@ -162,12 +162,14 @@ int Cstager_Request_setSvcClassName(struct Cstager_Request_t* instance, const ch
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_Request_userTag(struct Cstager_Request_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_Request_setUserTag(struct Cstager_Request_t* instance, const char* new_var);
 

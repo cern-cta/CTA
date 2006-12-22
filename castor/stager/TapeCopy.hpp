@@ -106,6 +106,8 @@ namespace castor {
       /*********************************/
       /**
        * Get the value of m_copyNb
+       * The copy number allows to identify the different copies on tape of a single
+       * file
        * @return the value of m_copyNb
        */
       unsigned int copyNb() const {
@@ -114,6 +116,8 @@ namespace castor {
 
       /**
        * Set the value of m_copyNb
+       * The copy number allows to identify the different copies on tape of a single
+       * file
        * @param new_var the new value of m_copyNb
        */
       void setCopyNb(unsigned int new_var) {

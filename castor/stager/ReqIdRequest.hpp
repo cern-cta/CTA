@@ -81,6 +81,7 @@ namespace castor {
       /**
        * Get the value of m_parentUuid
        * The UUID of the parent request. This is used by clients to build the request and
+       * is converted to a link to an existing FileRequest in the stager
        * @return the value of m_parentUuid
        */
       std::string parentUuid() const {
@@ -90,6 +91,7 @@ namespace castor {
       /**
        * Set the value of m_parentUuid
        * The UUID of the parent request. This is used by clients to build the request and
+       * is converted to a link to an existing FileRequest in the stager
        * @param new_var the new value of m_parentUuid
        */
       void setParentUuid(std::string new_var) {

@@ -126,6 +126,7 @@ int Cstager_Stream_removeTapeCopy(struct Cstager_Stream_t* instance, struct Csta
 
 /**
  * Get the list of struct Cstager_TapeCopy_t* objects held by tapeCopy. Note that
+ * the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_Stream_tapeCopy(struct Cstager_Stream_t* instance, struct Cstager_TapeCopy_t*** var, int* len);
 

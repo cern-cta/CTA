@@ -125,6 +125,7 @@ namespace castor {
        * Get the value of m_fileName
        * Name of the file this SubRequest deals with.
        * When stored in the catalog, this is redundant with the link to the CastorFile
+       * table. However, this is needed in the client
        * @return the value of m_fileName
        */
       std::string fileName() const {
@@ -135,6 +136,7 @@ namespace castor {
        * Set the value of m_fileName
        * Name of the file this SubRequest deals with.
        * When stored in the catalog, this is redundant with the link to the CastorFile
+       * table. However, this is needed in the client
        * @param new_var the new value of m_fileName
        */
       void setFileName(std::string new_var) {
@@ -178,7 +180,8 @@ namespace castor {
       /**
        * Get the value of m_priority
        * The priority defines in which order the files will be processed by the user when
-       * calling stage_get_next. The files of the SubRequest of same priority are given in
+       * calling stage_get_next. The files of the SubRequest of same priority are given
+       * in a random order and lower priority files come first.
        * @return the value of m_priority
        */
       unsigned int priority() const {
@@ -188,7 +191,8 @@ namespace castor {
       /**
        * Set the value of m_priority
        * The priority defines in which order the files will be processed by the user when
-       * calling stage_get_next. The files of the SubRequest of same priority are given in
+       * calling stage_get_next. The files of the SubRequest of same priority are given
+       * in a random order and lower priority files come first.
        * @param new_var the new value of m_priority
        */
       void setPriority(unsigned int new_var) {
@@ -233,7 +237,8 @@ namespace castor {
 
       /**
        * Get the value of m_modeBits
-       * Permissions for the file handled by this SubRequest (essentially used at creation
+       * Permissions for the file handled by this SubRequest (essentially used at
+       * creation time)
        * @return the value of m_modeBits
        */
       int modeBits() const {
@@ -242,7 +247,8 @@ namespace castor {
 
       /**
        * Set the value of m_modeBits
-       * Permissions for the file handled by this SubRequest (essentially used at creation
+       * Permissions for the file handled by this SubRequest (essentially used at
+       * creation time)
        * @param new_var the new value of m_modeBits
        */
       void setModeBits(int new_var) {
@@ -288,7 +294,9 @@ namespace castor {
       /**
        * Get the value of m_answered
        * Whether somebody answered to this subRequest already. 1 means that it is the
-       * This was introduced to deal with prepareToGet where the answer is sent before the
+       * case, 0 does not ensure it is not the case.
+       * This was introduced to deal with prepareToGet where the answer is sent before
+       * the status of the subrequest changes
        * @return the value of m_answered
        */
       int answered() const {
@@ -298,7 +306,9 @@ namespace castor {
       /**
        * Set the value of m_answered
        * Whether somebody answered to this subRequest already. 1 means that it is the
-       * This was introduced to deal with prepareToGet where the answer is sent before the
+       * case, 0 does not ensure it is not the case.
+       * This was introduced to deal with prepareToGet where the answer is sent before
+       * the status of the subrequest changes
        * @param new_var the new value of m_answered
        */
       void setAnswered(int new_var) {

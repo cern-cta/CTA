@@ -46,6 +46,7 @@ namespace castor {
     /**
      * class SetFileGCWeight
      * Request for setting the weight of all diskcopies of a given files. This weight
+     * may then be used by the Garbage Collector
      */
     class SetFileGCWeight : public virtual FileRequest {
 

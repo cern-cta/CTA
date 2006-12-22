@@ -178,12 +178,14 @@ int Cstager_FileRequest_setSvcClassName(struct Cstager_FileRequest_t* instance, 
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_FileRequest_userTag(struct Cstager_FileRequest_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_FileRequest_setUserTag(struct Cstager_FileRequest_t* instance, const char* new_var);
 
@@ -255,6 +257,7 @@ int Cstager_FileRequest_removeSubRequests(struct Cstager_FileRequest_t* instance
 
 /**
  * Get the list of struct Cstager_SubRequest_t* objects held by subRequests. Note
+ * that the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_FileRequest_subRequests(struct Cstager_FileRequest_t* instance, struct Cstager_SubRequest_t*** var, int* len);
 

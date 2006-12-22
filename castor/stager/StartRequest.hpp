@@ -97,6 +97,7 @@ namespace castor {
       /**
        * Get the value of m_diskServer
        * The name of the diskserver on which the selected filesystem for the given
+       * SubRequest resides
        * @return the value of m_diskServer
        */
       std::string diskServer() const {
@@ -106,6 +107,7 @@ namespace castor {
       /**
        * Set the value of m_diskServer
        * The name of the diskserver on which the selected filesystem for the given
+       * SubRequest resides
        * @param new_var the new value of m_diskServer
        */
       void setDiskServer(std::string new_var) {

@@ -59,8 +59,9 @@ namespace castor {
     /**
      * class Tape
      * Tape Information
-     * The Tape Object contains all tape information required to be stored in the stager
-     * request catalog. The remaining tape parameters are taken from VMGR when the
+     * The Tape Object contains all tape information required to be stored in the
+     * stager request catalog. The remaining tape parameters are taken from VMGR when
+     * the request is processed by the rtcpclientd daemon.
      */
     class Tape : public virtual castor::IObject {
 
@@ -291,6 +292,10 @@ namespace castor {
       }
 
       /**
+       * Get the list of castor::vdqm::ErrorHistory* objects held by
+       * m_errorHistoryVector
+       * @return list of castor::vdqm::ErrorHistory* objects held by
+       * m_errorHistoryVector
        */
       std::vector<castor::vdqm::ErrorHistory*>& errorHistory() {
         return m_errorHistoryVector;

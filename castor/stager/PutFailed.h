@@ -182,12 +182,14 @@ int Cstager_PutFailed_setSvcClassName(struct Cstager_PutFailed_t* instance, cons
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_PutFailed_userTag(struct Cstager_PutFailed_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_PutFailed_setUserTag(struct Cstager_PutFailed_t* instance, const char* new_var);
 

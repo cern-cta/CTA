@@ -43,6 +43,7 @@ struct Cstager_TapeCopy_t;
 // This defines a C interface to the following class
 // class TapeCopyForMigration
 // This class is a wrapper around a Tape Copy that represents a TapCopy ready for
+// Migration. It thus has information about the physical file to be copied.
 //------------------------------------------------------------------------------
 
 /**
@@ -91,11 +92,15 @@ int Cstager_TapeCopyForMigration_TYPE(int* ret);
 
 /**
  * Get the value of copyNb
+ * The copy number allows to identify the different copies on tape of a single
+ * file
  */
 int Cstager_TapeCopyForMigration_copyNb(struct Cstager_TapeCopyForMigration_t* instance, unsigned int* var);
 
 /**
  * Set the value of copyNb
+ * The copy number allows to identify the different copies on tape of a single
+ * file
  */
 int Cstager_TapeCopyForMigration_setCopyNb(struct Cstager_TapeCopyForMigration_t* instance, unsigned int new_var);
 
@@ -123,6 +128,7 @@ int Cstager_TapeCopyForMigration_removeStream(struct Cstager_TapeCopyForMigratio
 
 /**
  * Get the list of struct Cstager_Stream_t* objects held by stream. Note that the
+ * caller is responsible for the deletion of the returned vector.
  */
 int Cstager_TapeCopyForMigration_stream(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_Stream_t*** var, int* len);
 
@@ -137,7 +143,8 @@ int Cstager_TapeCopyForMigration_addSegments(struct Cstager_TapeCopyForMigration
 int Cstager_TapeCopyForMigration_removeSegments(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_Segment_t* obj);
 
 /**
- * Get the list of struct Cstager_Segment_t* objects held by segments. Note that the
+ * Get the list of struct Cstager_Segment_t* objects held by segments. Note that
+ * the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_TapeCopyForMigration_segments(struct Cstager_TapeCopyForMigration_t* instance, struct Cstager_Segment_t*** var, int* len);
 

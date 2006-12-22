@@ -45,6 +45,7 @@ namespace castor {
     /**
      * class TapeCopyForMigration
      * This class is a wrapper around a Tape Copy that represents a TapCopy ready for
+     * Migration. It thus has information about the physical file to be copied.
      */
     class TapeCopyForMigration : public TapeCopy {
 

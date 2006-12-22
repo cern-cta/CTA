@@ -110,6 +110,7 @@ int Cstager_StagePrepareToUpdateRequest_removeSubRequests(struct Cstager_StagePr
 
 /**
  * Get the list of struct Cstager_SubRequest_t* objects held by subRequests. Note
+ * that the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_StagePrepareToUpdateRequest_subRequests(struct Cstager_StagePrepareToUpdateRequest_t* instance, struct Cstager_SubRequest_t*** var, int* len);
 
@@ -212,12 +213,14 @@ int Cstager_StagePrepareToUpdateRequest_setSvcClassName(struct Cstager_StagePrep
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_StagePrepareToUpdateRequest_userTag(struct Cstager_StagePrepareToUpdateRequest_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_StagePrepareToUpdateRequest_setUserTag(struct Cstager_StagePrepareToUpdateRequest_t* instance, const char* new_var);
 

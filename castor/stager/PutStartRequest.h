@@ -43,7 +43,10 @@ struct Cstager_SvcClass_t;
 // class PutStartRequest
 // Internal request used when a put job has just started. It creates the link
 // between the FileSystem and the DiskCopy associated to the SubRequest. It also
+// updates the DiskCopy statement and returns the Client object for the
+// SubRequest.
 // This request exists to avoid the jobs on the diskservers to handle a connection
+// to the database.
 //------------------------------------------------------------------------------
 
 /**
@@ -115,12 +118,14 @@ int Cstager_PutStartRequest_setSubreqId(struct Cstager_PutStartRequest_t* instan
 /**
  * Get the value of diskServer
  * The name of the diskserver on which the selected filesystem for the given
+ * SubRequest resides
  */
 int Cstager_PutStartRequest_diskServer(struct Cstager_PutStartRequest_t* instance, const char** var);
 
 /**
  * Set the value of diskServer
  * The name of the diskserver on which the selected filesystem for the given
+ * SubRequest resides
  */
 int Cstager_PutStartRequest_setDiskServer(struct Cstager_PutStartRequest_t* instance, const char* new_var);
 
@@ -235,12 +240,14 @@ int Cstager_PutStartRequest_setSvcClassName(struct Cstager_PutStartRequest_t* in
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_PutStartRequest_userTag(struct Cstager_PutStartRequest_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_PutStartRequest_setUserTag(struct Cstager_PutStartRequest_t* instance, const char* new_var);
 

@@ -210,7 +210,8 @@ namespace castor {
 
       /**
        * Get the value of m_reservedSpace
-       * Space reserved on the filesystem but not yet used and thus not taken into account
+       * Space reserved on the filesystem but not yet used and thus not taken into
+       * account in free and deltaFree
        * @return the value of m_reservedSpace
        */
       int reservedSpace() const {
@@ -219,7 +220,8 @@ namespace castor {
 
       /**
        * Set the value of m_reservedSpace
-       * Space reserved on the filesystem but not yet used and thus not taken into account
+       * Space reserved on the filesystem but not yet used and thus not taken into
+       * account in free and deltaFree
        * @param new_var the new value of m_reservedSpace
        */
       void setReservedSpace(int new_var) {
@@ -230,6 +232,7 @@ namespace castor {
        * Get the value of m_minFreeSpace
        * Minimum free space that should be kept on this FileSystem. This limit can be
        * transgressed but the garbage collector will then be launched. This is given as a
+       * fraction of the totalSize.
        * @return the value of m_minFreeSpace
        */
       float minFreeSpace() const {
@@ -240,6 +243,7 @@ namespace castor {
        * Set the value of m_minFreeSpace
        * Minimum free space that should be kept on this FileSystem. This limit can be
        * transgressed but the garbage collector will then be launched. This is given as a
+       * fraction of the totalSize.
        * @param new_var the new value of m_minFreeSpace
        */
       void setMinFreeSpace(float new_var) {
@@ -250,6 +254,7 @@ namespace castor {
        * Get the value of m_minAllowedFreeSpace
        * Minimum free space that shall be kept on this FileSystem. If this limit is
        * transgressed no jobs will be scheduled on this FileSystem. This is given as a
+       * fraction of the totalSize.
        * @return the value of m_minAllowedFreeSpace
        */
       float minAllowedFreeSpace() const {
@@ -260,6 +265,7 @@ namespace castor {
        * Set the value of m_minAllowedFreeSpace
        * Minimum free space that shall be kept on this FileSystem. If this limit is
        * transgressed no jobs will be scheduled on this FileSystem. This is given as a
+       * fraction of the totalSize.
        * @param new_var the new value of m_minAllowedFreeSpace
        */
       void setMinAllowedFreeSpace(float new_var) {
@@ -270,6 +276,7 @@ namespace castor {
        * Get the value of m_maxFreeSpace
        * Maximum free space this FileSystem should have. Of course this limit can be
        * transgressed but a Garbage Collector should never go under this limit. This is
+       * given as a fraction of the totalSize.
        * @return the value of m_maxFreeSpace
        */
       float maxFreeSpace() const {
@@ -280,6 +287,7 @@ namespace castor {
        * Set the value of m_maxFreeSpace
        * Maximum free space this FileSystem should have. Of course this limit can be
        * transgressed but a Garbage Collector should never go under this limit. This is
+       * given as a fraction of the totalSize.
        * @param new_var the new value of m_maxFreeSpace
        */
       void setMaxFreeSpace(float new_var) {
@@ -290,6 +298,7 @@ namespace castor {
        * Get the value of m_spaceToBeFreed
        * The space that will be deleted in the future by the GC workers. This are files
        * that were selected by the GC but are not yet physically removed. This value can
+       * help another iteration of the GC to know what to delete.
        * @return the value of m_spaceToBeFreed
        */
       u_signed64 spaceToBeFreed() const {
@@ -300,6 +309,7 @@ namespace castor {
        * Set the value of m_spaceToBeFreed
        * The space that will be deleted in the future by the GC workers. This are files
        * that were selected by the GC but are not yet physically removed. This value can
+       * help another iteration of the GC to know what to delete.
        * @param new_var the new value of m_spaceToBeFreed
        */
       void setSpaceToBeFreed(u_signed64 new_var) {

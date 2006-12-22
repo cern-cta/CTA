@@ -165,14 +165,18 @@ int Cstager_CastorFile_setNbAccesses(struct Cstager_CastorFile_t* instance, unsi
 /**
  * Get the value of lastKnownFileName
  * The name of the castorfile at the time it was created in this database. This can
+ * very well be different from the current name if the file was renamed.
  * This information is only here for efficient and approximate querying. It should
+ * never be used in processing. There, only the fileid/nshost couple is trustable
  */
 int Cstager_CastorFile_lastKnownFileName(struct Cstager_CastorFile_t* instance, const char** var);
 
 /**
  * Set the value of lastKnownFileName
  * The name of the castorfile at the time it was created in this database. This can
+ * very well be different from the current name if the file was renamed.
  * This information is only here for efficient and approximate querying. It should
+ * never be used in processing. There, only the fileid/nshost couple is trustable
  */
 int Cstager_CastorFile_setLastKnownFileName(struct Cstager_CastorFile_t* instance, const char* new_var);
 
@@ -220,6 +224,7 @@ int Cstager_CastorFile_removeDiskCopies(struct Cstager_CastorFile_t* instance, s
 
 /**
  * Get the list of struct Cstager_DiskCopy_t* objects held by diskCopies. Note that
+ * the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_CastorFile_diskCopies(struct Cstager_CastorFile_t* instance, struct Cstager_DiskCopy_t*** var, int* len);
 
@@ -235,6 +240,7 @@ int Cstager_CastorFile_removeTapeCopies(struct Cstager_CastorFile_t* instance, s
 
 /**
  * Get the list of struct Cstager_TapeCopy_t* objects held by tapeCopies. Note that
+ * the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_CastorFile_tapeCopies(struct Cstager_CastorFile_t* instance, struct Cstager_TapeCopy_t*** var, int* len);
 

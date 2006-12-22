@@ -38,6 +38,7 @@ struct Cstager_FileClass_t;
 // This defines a C interface to the following class
 // class FileClass
 // The FileClass of a file defines several attributes like the number of copies of
+// the file or its tapepool
 //------------------------------------------------------------------------------
 
 /**

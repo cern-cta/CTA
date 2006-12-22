@@ -223,6 +223,7 @@ namespace castor {
       /**
        * Get the value of m_userTag
        * This is a string that the user is free to use. It can be useful to classify and
+       * select requests.
        * @return the value of m_userTag
        */
       std::string userTag() const {
@@ -232,6 +233,7 @@ namespace castor {
       /**
        * Set the value of m_userTag
        * This is a string that the user is free to use. It can be useful to classify and
+       * select requests.
        * @param new_var the new value of m_userTag
        */
       void setUserTag(std::string new_var) {

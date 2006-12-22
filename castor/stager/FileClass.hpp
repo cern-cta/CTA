@@ -45,6 +45,7 @@ namespace castor {
     /**
      * class FileClass
      * The FileClass of a file defines several attributes like the number of copies of
+     * the file or its tapepool
      */
     class FileClass : public virtual castor::IObject {
 

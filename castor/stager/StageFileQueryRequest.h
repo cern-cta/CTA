@@ -109,7 +109,8 @@ int Cstager_StageFileQueryRequest_addParameters(struct Cstager_StageFileQueryReq
 int Cstager_StageFileQueryRequest_removeParameters(struct Cstager_StageFileQueryRequest_t* instance, struct Cstager_QueryParameter_t* obj);
 
 /**
- * Get the list of struct Cstager_QueryParameter_t* objects held by parameters. Note
+ * Get the list of struct Cstager_QueryParameter_t* objects held by parameters.
+ * Note that the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_StageFileQueryRequest_parameters(struct Cstager_StageFileQueryRequest_t* instance, struct Cstager_QueryParameter_t*** var, int* len);
 
@@ -212,12 +213,14 @@ int Cstager_StageFileQueryRequest_setSvcClassName(struct Cstager_StageFileQueryR
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_StageFileQueryRequest_userTag(struct Cstager_StageFileQueryRequest_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_StageFileQueryRequest_setUserTag(struct Cstager_StageFileQueryRequest_t* instance, const char* new_var);
 

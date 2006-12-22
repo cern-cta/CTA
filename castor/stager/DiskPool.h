@@ -41,6 +41,7 @@ struct Cstager_SvcClass_t;
 // class DiskPool
 // A Resource as seen by the Scheduler.
 // Resources can be allocated to one or many projects are are composed of a set of
+// filesystems.
 //------------------------------------------------------------------------------
 
 /**
@@ -125,6 +126,7 @@ int Cstager_DiskPool_removeFileSystems(struct Cstager_DiskPool_t* instance, stru
 
 /**
  * Get the list of struct Cstager_FileSystem_t* objects held by fileSystems. Note
+ * that the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_DiskPool_fileSystems(struct Cstager_DiskPool_t* instance, struct Cstager_FileSystem_t*** var, int* len);
 
@@ -140,6 +142,7 @@ int Cstager_DiskPool_removeSvcClasses(struct Cstager_DiskPool_t* instance, struc
 
 /**
  * Get the list of struct Cstager_SvcClass_t* objects held by svcClasses. Note that
+ * the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_DiskPool_svcClasses(struct Cstager_DiskPool_t* instance, struct Cstager_SvcClass_t*** var, int* len);
 

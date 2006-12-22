@@ -45,7 +45,10 @@ namespace castor {
 
     /**
      * class Disk2DiskCopyDoneRequest
-     * This request is there to avoid the jobs on the diskservers to handle a connection
+     * Internal request for updating the database after a successful Disk to Disk
+     * copy.
+     * This request is there to avoid the jobs on the diskservers to handle a
+     * connection to the database.
      */
     class Disk2DiskCopyDoneRequest : public virtual Request {
 

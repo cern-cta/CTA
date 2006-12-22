@@ -46,6 +46,7 @@ namespace castor {
     /**
      * class GetUpdateDone
      * Request to inform the stager that a Get or an Update request (with no write) was
+     * successful.
      */
     class GetUpdateDone : public virtual Request {
 

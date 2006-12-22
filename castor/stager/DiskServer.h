@@ -124,6 +124,7 @@ int Cstager_DiskServer_removeFileSystems(struct Cstager_DiskServer_t* instance, 
 
 /**
  * Get the list of struct Cstager_FileSystem_t* objects held by fileSystems. Note
+ * that the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_DiskServer_fileSystems(struct Cstager_DiskServer_t* instance, struct Cstager_FileSystem_t*** var, int* len);
 

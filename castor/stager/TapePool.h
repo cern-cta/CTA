@@ -124,6 +124,7 @@ int Cstager_TapePool_removeSvcClasses(struct Cstager_TapePool_t* instance, struc
 
 /**
  * Get the list of struct Cstager_SvcClass_t* objects held by svcClasses. Note that
+ * the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_TapePool_svcClasses(struct Cstager_TapePool_t* instance, struct Cstager_SvcClass_t*** var, int* len);
 
@@ -139,6 +140,7 @@ int Cstager_TapePool_removeStreams(struct Cstager_TapePool_t* instance, struct C
 
 /**
  * Get the list of struct Cstager_Stream_t* objects held by streams. Note that the
+ * caller is responsible for the deletion of the returned vector.
  */
 int Cstager_TapePool_streams(struct Cstager_TapePool_t* instance, struct Cstager_Stream_t*** var, int* len);
 

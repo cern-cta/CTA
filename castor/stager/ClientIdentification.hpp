@@ -46,6 +46,7 @@ namespace castor {
      * class ClientIdentification
      * An object to store all client related informations. In future this should be
      * replaced by an abstract class to support also other identification methods, like
+     * Kerberos.
      */
     class ClientIdentification : public virtual castor::IObject {
 
@@ -133,6 +134,7 @@ namespace castor {
       /**
        * Get the value of m_port
        * The port, to where the client want to have send its messages. It is not used for
+       * TapeDrive at the moment.
        * @return the value of m_port
        */
       int port() const {
@@ -142,6 +144,7 @@ namespace castor {
       /**
        * Set the value of m_port
        * The port, to where the client want to have send its messages. It is not used for
+       * TapeDrive at the moment.
        * @param new_var the new value of m_port
        */
       void setPort(int new_var) {

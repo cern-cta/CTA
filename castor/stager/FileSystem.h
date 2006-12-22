@@ -160,13 +160,15 @@ int Cstager_FileSystem_setDeltaFree(struct Cstager_FileSystem_t* instance, int n
 
 /**
  * Get the value of reservedSpace
- * Space reserved on the filesystem but not yet used and thus not taken into account
+ * Space reserved on the filesystem but not yet used and thus not taken into
+ * account in free and deltaFree
  */
 int Cstager_FileSystem_reservedSpace(struct Cstager_FileSystem_t* instance, int* var);
 
 /**
  * Set the value of reservedSpace
- * Space reserved on the filesystem but not yet used and thus not taken into account
+ * Space reserved on the filesystem but not yet used and thus not taken into
+ * account in free and deltaFree
  */
 int Cstager_FileSystem_setReservedSpace(struct Cstager_FileSystem_t* instance, int new_var);
 
@@ -174,6 +176,7 @@ int Cstager_FileSystem_setReservedSpace(struct Cstager_FileSystem_t* instance, i
  * Get the value of minFreeSpace
  * Minimum free space that should be kept on this FileSystem. This limit can be
  * transgressed but the garbage collector will then be launched. This is given as a
+ * fraction of the totalSize.
  */
 int Cstager_FileSystem_minFreeSpace(struct Cstager_FileSystem_t* instance, float* var);
 
@@ -181,6 +184,7 @@ int Cstager_FileSystem_minFreeSpace(struct Cstager_FileSystem_t* instance, float
  * Set the value of minFreeSpace
  * Minimum free space that should be kept on this FileSystem. This limit can be
  * transgressed but the garbage collector will then be launched. This is given as a
+ * fraction of the totalSize.
  */
 int Cstager_FileSystem_setMinFreeSpace(struct Cstager_FileSystem_t* instance, float new_var);
 
@@ -188,6 +192,7 @@ int Cstager_FileSystem_setMinFreeSpace(struct Cstager_FileSystem_t* instance, fl
  * Get the value of minAllowedFreeSpace
  * Minimum free space that shall be kept on this FileSystem. If this limit is
  * transgressed no jobs will be scheduled on this FileSystem. This is given as a
+ * fraction of the totalSize.
  */
 int Cstager_FileSystem_minAllowedFreeSpace(struct Cstager_FileSystem_t* instance, float* var);
 
@@ -195,6 +200,7 @@ int Cstager_FileSystem_minAllowedFreeSpace(struct Cstager_FileSystem_t* instance
  * Set the value of minAllowedFreeSpace
  * Minimum free space that shall be kept on this FileSystem. If this limit is
  * transgressed no jobs will be scheduled on this FileSystem. This is given as a
+ * fraction of the totalSize.
  */
 int Cstager_FileSystem_setMinAllowedFreeSpace(struct Cstager_FileSystem_t* instance, float new_var);
 
@@ -202,6 +208,7 @@ int Cstager_FileSystem_setMinAllowedFreeSpace(struct Cstager_FileSystem_t* insta
  * Get the value of maxFreeSpace
  * Maximum free space this FileSystem should have. Of course this limit can be
  * transgressed but a Garbage Collector should never go under this limit. This is
+ * given as a fraction of the totalSize.
  */
 int Cstager_FileSystem_maxFreeSpace(struct Cstager_FileSystem_t* instance, float* var);
 
@@ -209,6 +216,7 @@ int Cstager_FileSystem_maxFreeSpace(struct Cstager_FileSystem_t* instance, float
  * Set the value of maxFreeSpace
  * Maximum free space this FileSystem should have. Of course this limit can be
  * transgressed but a Garbage Collector should never go under this limit. This is
+ * given as a fraction of the totalSize.
  */
 int Cstager_FileSystem_setMaxFreeSpace(struct Cstager_FileSystem_t* instance, float new_var);
 
@@ -216,6 +224,7 @@ int Cstager_FileSystem_setMaxFreeSpace(struct Cstager_FileSystem_t* instance, fl
  * Get the value of spaceToBeFreed
  * The space that will be deleted in the future by the GC workers. This are files
  * that were selected by the GC but are not yet physically removed. This value can
+ * help another iteration of the GC to know what to delete.
  */
 int Cstager_FileSystem_spaceToBeFreed(struct Cstager_FileSystem_t* instance, u_signed64* var);
 
@@ -223,6 +232,7 @@ int Cstager_FileSystem_spaceToBeFreed(struct Cstager_FileSystem_t* instance, u_s
  * Set the value of spaceToBeFreed
  * The space that will be deleted in the future by the GC workers. This are files
  * that were selected by the GC but are not yet physically removed. This value can
+ * help another iteration of the GC to know what to delete.
  */
 int Cstager_FileSystem_setSpaceToBeFreed(struct Cstager_FileSystem_t* instance, u_signed64 new_var);
 
@@ -272,6 +282,7 @@ int Cstager_FileSystem_removeCopies(struct Cstager_FileSystem_t* instance, struc
 
 /**
  * Get the list of struct Cstager_DiskCopy_t* objects held by copies. Note that the
+ * caller is responsible for the deletion of the returned vector.
  */
 int Cstager_FileSystem_copies(struct Cstager_FileSystem_t* instance, struct Cstager_DiskCopy_t*** var, int* len);
 

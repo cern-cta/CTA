@@ -220,12 +220,14 @@ int Cstager_DiskCopyInfo_setNbAccesses(struct Cstager_DiskCopyInfo_t* instance, 
 /**
  * Get the value of lastKnownFileName
  * Last known file name for this file, from the stager point of view. This does not
+ * mean it is the current one in the nameserver
  */
 int Cstager_DiskCopyInfo_lastKnownFileName(struct Cstager_DiskCopyInfo_t* instance, const char** var);
 
 /**
  * Set the value of lastKnownFileName
  * Last known file name for this file, from the stager point of view. This does not
+ * mean it is the current one in the nameserver
  */
 int Cstager_DiskCopyInfo_setLastKnownFileName(struct Cstager_DiskCopyInfo_t* instance, const char* new_var);
 

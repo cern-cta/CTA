@@ -47,7 +47,10 @@ namespace castor {
      * class PutStartRequest
      * Internal request used when a put job has just started. It creates the link
      * between the FileSystem and the DiskCopy associated to the SubRequest. It also
+     * updates the DiskCopy statement and returns the Client object for the
+     * SubRequest.
      * This request exists to avoid the jobs on the diskservers to handle a connection
+     * to the database.
      */
     class PutStartRequest : public virtual StartRequest {
 

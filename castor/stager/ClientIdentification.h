@@ -39,6 +39,7 @@ struct Cstager_ClientIdentification_t;
 // class ClientIdentification
 // An object to store all client related informations. In future this should be
 // replaced by an abstract class to support also other identification methods, like
+// Kerberos.
 //------------------------------------------------------------------------------
 
 /**
@@ -110,12 +111,14 @@ int Cstager_ClientIdentification_setUserName(struct Cstager_ClientIdentification
 /**
  * Get the value of port
  * The port, to where the client want to have send its messages. It is not used for
+ * TapeDrive at the moment.
  */
 int Cstager_ClientIdentification_port(struct Cstager_ClientIdentification_t* instance, int* var);
 
 /**
  * Set the value of port
  * The port, to where the client want to have send its messages. It is not used for
+ * TapeDrive at the moment.
  */
 int Cstager_ClientIdentification_setPort(struct Cstager_ClientIdentification_t* instance, int new_var);
 

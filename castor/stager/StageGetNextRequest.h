@@ -101,12 +101,14 @@ int Cstager_StageGetNextRequest_TYPE(int* ret);
 /**
  * Get the value of parentUuid
  * The UUID of the parent request. This is used by clients to build the request and
+ * is converted to a link to an existing FileRequest in the stager
  */
 int Cstager_StageGetNextRequest_parentUuid(struct Cstager_StageGetNextRequest_t* instance, const char** var);
 
 /**
  * Set the value of parentUuid
  * The UUID of the parent request. This is used by clients to build the request and
+ * is converted to a link to an existing FileRequest in the stager
  */
 int Cstager_StageGetNextRequest_setParentUuid(struct Cstager_StageGetNextRequest_t* instance, const char* new_var);
 
@@ -219,12 +221,14 @@ int Cstager_StageGetNextRequest_setSvcClassName(struct Cstager_StageGetNextReque
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_StageGetNextRequest_userTag(struct Cstager_StageGetNextRequest_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_StageGetNextRequest_setUserTag(struct Cstager_StageGetNextRequest_t* instance, const char* new_var);
 

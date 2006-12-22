@@ -42,6 +42,7 @@ struct Cstager_SvcClass_t;
 // class MoverCloseRequest
 // Internal request used when a file was closed in a mover after writing.
 // This request exists to avoid the jobs on the diskservers to handle a connection
+// to the database.
 //------------------------------------------------------------------------------
 
 /**
@@ -183,12 +184,14 @@ int Cstager_MoverCloseRequest_setSvcClassName(struct Cstager_MoverCloseRequest_t
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_MoverCloseRequest_userTag(struct Cstager_MoverCloseRequest_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_MoverCloseRequest_setUserTag(struct Cstager_MoverCloseRequest_t* instance, const char* new_var);
 

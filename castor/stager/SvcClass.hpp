@@ -51,6 +51,7 @@ namespace castor {
      * class SvcClass
      * A service, as seen by the user.
      * A SvcClass is a container of resources and may be given as parameter of the
+     * request.
      */
     class SvcClass : public virtual castor::IObject {
 
@@ -107,6 +108,7 @@ namespace castor {
        * Get the value of m_nbDrives
        * Number of drives to use for this service class.
        * This is the default number, but it could be that occasionnally more drives are
+       * used, if a resource is shared with another service class using more drives
        * @return the value of m_nbDrives
        */
       unsigned int nbDrives() const {
@@ -117,6 +119,7 @@ namespace castor {
        * Set the value of m_nbDrives
        * Number of drives to use for this service class.
        * This is the default number, but it could be that occasionnally more drives are
+       * used, if a resource is shared with another service class using more drives
        * @param new_var the new value of m_nbDrives
        */
       void setNbDrives(unsigned int new_var) {
@@ -144,6 +147,7 @@ namespace castor {
       /**
        * Get the value of m_defaultFileSize
        * Default size used for space allocation in the case of a stage put with no size
+       * explicitely given (ie size given was 0)
        * @return the value of m_defaultFileSize
        */
       u_signed64 defaultFileSize() const {
@@ -153,6 +157,7 @@ namespace castor {
       /**
        * Set the value of m_defaultFileSize
        * Default size used for space allocation in the case of a stage put with no size
+       * explicitely given (ie size given was 0)
        * @param new_var the new value of m_defaultFileSize
        */
       void setDefaultFileSize(u_signed64 new_var) {
@@ -163,6 +168,7 @@ namespace castor {
        * Get the value of m_maxReplicaNb
        * Maximum number of replicas for a file created with this service class. If 0, the
        * replication is ruled by the replication policy. If there is none, then 0 means
+       * infinity.
        * @return the value of m_maxReplicaNb
        */
       int maxReplicaNb() const {
@@ -173,6 +179,7 @@ namespace castor {
        * Set the value of m_maxReplicaNb
        * Maximum number of replicas for a file created with this service class. If 0, the
        * replication is ruled by the replication policy. If there is none, then 0 means
+       * infinity.
        * @param new_var the new value of m_maxReplicaNb
        */
       void setMaxReplicaNb(int new_var) {

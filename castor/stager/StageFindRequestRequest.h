@@ -109,7 +109,8 @@ int Cstager_StageFindRequestRequest_addParameters(struct Cstager_StageFindReques
 int Cstager_StageFindRequestRequest_removeParameters(struct Cstager_StageFindRequestRequest_t* instance, struct Cstager_QueryParameter_t* obj);
 
 /**
- * Get the list of struct Cstager_QueryParameter_t* objects held by parameters. Note
+ * Get the list of struct Cstager_QueryParameter_t* objects held by parameters.
+ * Note that the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_StageFindRequestRequest_parameters(struct Cstager_StageFindRequestRequest_t* instance, struct Cstager_QueryParameter_t*** var, int* len);
 
@@ -212,12 +213,14 @@ int Cstager_StageFindRequestRequest_setSvcClassName(struct Cstager_StageFindRequ
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_StageFindRequestRequest_userTag(struct Cstager_StageFindRequestRequest_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_StageFindRequestRequest_setUserTag(struct Cstager_StageFindRequestRequest_t* instance, const char* new_var);
 

@@ -177,12 +177,14 @@ int Cstager_GCFileList_setSvcClassName(struct Cstager_GCFileList_t* instance, co
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_GCFileList_userTag(struct Cstager_GCFileList_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_GCFileList_setUserTag(struct Cstager_GCFileList_t* instance, const char* new_var);
 
@@ -254,6 +256,7 @@ int Cstager_GCFileList_removeFiles(struct Cstager_GCFileList_t* instance, struct
 
 /**
  * Get the list of struct Cstager_GCFile_t* objects held by files. Note that the
+ * caller is responsible for the deletion of the returned vector.
  */
 int Cstager_GCFileList_files(struct Cstager_GCFileList_t* instance, struct Cstager_GCFile_t*** var, int* len);
 

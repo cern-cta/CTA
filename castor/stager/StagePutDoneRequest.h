@@ -110,6 +110,7 @@ int Cstager_StagePutDoneRequest_removeSubRequests(struct Cstager_StagePutDoneReq
 
 /**
  * Get the list of struct Cstager_SubRequest_t* objects held by subRequests. Note
+ * that the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_StagePutDoneRequest_subRequests(struct Cstager_StagePutDoneRequest_t* instance, struct Cstager_SubRequest_t*** var, int* len);
 
@@ -212,12 +213,14 @@ int Cstager_StagePutDoneRequest_setSvcClassName(struct Cstager_StagePutDoneReque
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_StagePutDoneRequest_userTag(struct Cstager_StagePutDoneRequest_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_StagePutDoneRequest_setUserTag(struct Cstager_StagePutDoneRequest_t* instance, const char* new_var);
 
@@ -296,12 +299,14 @@ int Cstager_StagePutDoneRequest_clone(struct Cstager_StagePutDoneRequest_t* inst
 /**
  * Get the value of parentUuid
  * The UUID of the parent request. This is used by clients to build the request and
+ * is converted to a link to an existing FileRequest in the stager
  */
 int Cstager_StagePutDoneRequest_parentUuid(struct Cstager_StagePutDoneRequest_t* instance, const char** var);
 
 /**
  * Set the value of parentUuid
  * The UUID of the parent request. This is used by clients to build the request and
+ * is converted to a link to an existing FileRequest in the stager
  */
 int Cstager_StagePutDoneRequest_setParentUuid(struct Cstager_StagePutDoneRequest_t* instance, const char* new_var);
 

@@ -42,7 +42,9 @@ struct Cstager_SvcClass_t;
 // This defines a C interface to the following class
 // class GetUpdateStartRequest
 // Internal request used when a get or update job has just started. It does the
+// scheduling of the given subrequest and returns the client information.
 // This request exists to avoid the jobs on the diskservers to handle a connection
+// to the database.
 //------------------------------------------------------------------------------
 
 /**
@@ -114,12 +116,14 @@ int Cstager_GetUpdateStartRequest_setSubreqId(struct Cstager_GetUpdateStartReque
 /**
  * Get the value of diskServer
  * The name of the diskserver on which the selected filesystem for the given
+ * SubRequest resides
  */
 int Cstager_GetUpdateStartRequest_diskServer(struct Cstager_GetUpdateStartRequest_t* instance, const char** var);
 
 /**
  * Set the value of diskServer
  * The name of the diskserver on which the selected filesystem for the given
+ * SubRequest resides
  */
 int Cstager_GetUpdateStartRequest_setDiskServer(struct Cstager_GetUpdateStartRequest_t* instance, const char* new_var);
 
@@ -234,12 +238,14 @@ int Cstager_GetUpdateStartRequest_setSvcClassName(struct Cstager_GetUpdateStartR
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_GetUpdateStartRequest_userTag(struct Cstager_GetUpdateStartRequest_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_GetUpdateStartRequest_setUserTag(struct Cstager_GetUpdateStartRequest_t* instance, const char* new_var);
 

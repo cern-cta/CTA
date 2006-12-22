@@ -178,12 +178,14 @@ int Cstager_ReqIdRequest_setSvcClassName(struct Cstager_ReqIdRequest_t* instance
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_ReqIdRequest_userTag(struct Cstager_ReqIdRequest_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_ReqIdRequest_setUserTag(struct Cstager_ReqIdRequest_t* instance, const char* new_var);
 
@@ -246,12 +248,14 @@ int Cstager_ReqIdRequest_setClient(struct Cstager_ReqIdRequest_t* instance, stru
 /**
  * Get the value of parentUuid
  * The UUID of the parent request. This is used by clients to build the request and
+ * is converted to a link to an existing FileRequest in the stager
  */
 int Cstager_ReqIdRequest_parentUuid(struct Cstager_ReqIdRequest_t* instance, const char** var);
 
 /**
  * Set the value of parentUuid
  * The UUID of the parent request. This is used by clients to build the request and
+ * is converted to a link to an existing FileRequest in the stager
  */
 int Cstager_ReqIdRequest_setParentUuid(struct Cstager_ReqIdRequest_t* instance, const char* new_var);
 

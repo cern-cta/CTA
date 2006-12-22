@@ -215,7 +215,9 @@ namespace castor {
       /**
        * Get the value of m_lastKnownFileName
        * The name of the castorfile at the time it was created in this database. This can
+       * very well be different from the current name if the file was renamed.
        * This information is only here for efficient and approximate querying. It should
+       * never be used in processing. There, only the fileid/nshost couple is trustable
        * @return the value of m_lastKnownFileName
        */
       std::string lastKnownFileName() const {
@@ -225,7 +227,9 @@ namespace castor {
       /**
        * Set the value of m_lastKnownFileName
        * The name of the castorfile at the time it was created in this database. This can
+       * very well be different from the current name if the file was renamed.
        * This information is only here for efficient and approximate querying. It should
+       * never be used in processing. There, only the fileid/nshost couple is trustable
        * @param new_var the new value of m_lastKnownFileName
        */
       void setLastKnownFileName(std::string new_var) {

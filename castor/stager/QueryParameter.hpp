@@ -49,6 +49,7 @@ namespace castor {
     /**
      * class QueryParameter
      * A parameter of a query request. Depending on its type, its value can contain a
+     * fileName, a requestId, a fileId, ...
      */
     class QueryParameter : public virtual castor::IObject {
 

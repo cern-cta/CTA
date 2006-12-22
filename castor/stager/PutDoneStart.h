@@ -113,12 +113,14 @@ int Cstager_PutDoneStart_setSubreqId(struct Cstager_PutDoneStart_t* instance, u_
 /**
  * Get the value of diskServer
  * The name of the diskserver on which the selected filesystem for the given
+ * SubRequest resides
  */
 int Cstager_PutDoneStart_diskServer(struct Cstager_PutDoneStart_t* instance, const char** var);
 
 /**
  * Set the value of diskServer
  * The name of the diskserver on which the selected filesystem for the given
+ * SubRequest resides
  */
 int Cstager_PutDoneStart_setDiskServer(struct Cstager_PutDoneStart_t* instance, const char* new_var);
 
@@ -233,12 +235,14 @@ int Cstager_PutDoneStart_setSvcClassName(struct Cstager_PutDoneStart_t* instance
 /**
  * Get the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_PutDoneStart_userTag(struct Cstager_PutDoneStart_t* instance, const char** var);
 
 /**
  * Set the value of userTag
  * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
  */
 int Cstager_PutDoneStart_setUserTag(struct Cstager_PutDoneStart_t* instance, const char* new_var);
 
