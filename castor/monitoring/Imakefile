@@ -39,12 +39,16 @@ STGLIB_SRCS = ClusterStatus.cpp \
               FileSystemStatus.cpp \
               AdminStatusCodes.cpp \
               ClusterStatusBlockKey.cpp \
+              DiskServerAdminReport.cpp \
               DiskServerMetricsReport.cpp \
               DiskServerStateReport.cpp \
+              FileSystemAdminReport.cpp \
               FileSystemMetricsReport.cpp \
               FileSystemStateReport.cpp \
+              ../io/StreamDiskServerAdminReportCnv.cpp \
               ../io/StreamDiskServerMetricsReportCnv.cpp \
               ../io/StreamDiskServerStateReportCnv.cpp \
+              ../io/StreamFileSystemAdminReportCnv.cpp \
               ../io/StreamFileSystemMetricsReportCnv.cpp \
               ../io/StreamFileSystemStateReportCnv.cpp
 
