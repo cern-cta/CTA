@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
+ * @(#)$RCSfile: NotificationThread.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/12/22 17:24:15 $ $Author: sponcec3 $
  *
  *
  *
@@ -55,15 +55,18 @@ namespace castor {
     static const long NOTIFY_MAGIC = 0x44180876;
 
     /**
-  	 * Initializes a notification thread.
-  	 */
-  	NotificationThread(int notifPort);
+     * Initializes a notification thread.
+     */
+    NotificationThread(int notifPort);
     
-    ~NotificationThread() {};
+    /**
+     * Destructor
+     */
+    virtual ~NotificationThread() {};
 
-  	/**
+    /**
      * Main work for this thread.
-  	 */
+     */
     virtual void run(void* param);
 
     /**
