@@ -48,6 +48,15 @@ STGLIB_SRCS = ClusterStatus.cpp \
               ../io/StreamFileSystemMetricsReportCnv.cpp \
               ../io/StreamFileSystemStateReportCnv.cpp
 
+RMGETNODESBIN_SRCS = RmGetNodes.cpp
+RMGETNODESBIN_OBJS = $(RMGETNODESBIN_SRCS:.cpp=.Osuf)
+RMADMINNODESBIN_SRCS = RmAdminNode.cpp
+RMADMINNODESBIN_OBJS = $(RMADMINNODEBIN_SRCS:.cpp=.Osuf)
+
+LIBS = -lcastorMonitor -lshift
+DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),castorMonitor) \
+         DepSharedLibraryTargetName(FileName(..,shlib),shift)
+
 STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
 COMMONLIB = LibraryTargetName(castorMonitor)
 GLOBLIB = DepSharedLibraryTargetName(shlib,shift)
@@ -55,10 +64,16 @@ GLOBLIB = DepSharedLibraryTargetName(shlib,shift)
 LDFLAGS = $(DEBUG) $(MTLDFLAGS)
 LD = g++
 
-all: $(COMMONLIB)
+all: $(COMMONLIB) ProgramTargetName(rmGetNodes) ProgramTargetName(rmAdminNode)
 
 MakeDepSharedLibrary(shlib,shift)
 NormalLibraryTarget(castorMonitor,$(STGLIB_OBJS))
+
+NormalProgramTarget(rmGetNodes,$(RMGETNODESBIN_OBJS),$(DEPLIB),$(LIBS))
+NormalProgramTarget(rmAdminNode,$(RMGETNODESBIN_OBJS),$(DEPLIB),$(LIBS))
+
+MakeDepSharedLibrary(FileName(../..,shlib),castorMonitor)
+MakeDepSharedLibrary(FileName(../..,shlib),shift)
 
 MakeSubdirs(all,$(SUBDIRS))
 MakeSubdirs(install,$(SUBDIRS))
@@ -82,7 +97,7 @@ Makefiles:
 	done ;
 
 depend:
-	makedepend -- $(INCLUDES) -- $(STGLIB_SRCS) 2> /dev/null; \
+	makedepend -- $(INCLUDES) -- $(STGLIB_SRCS) $(RMGETNODESBIN_SRCS) $(RMADMINNODEBIN_SRCS) 2> /dev/null; \
 	for i in $(SUBDIRS) ;\
 	do (if [ -d $$i ] ;\
 	    then \
@@ -93,6 +108,11 @@ depend:
 	      exit 1) ;\
 	    fi )\
 	done ;
+
+install: FileName($(BIN),rmGetNodes) FileName($(BIN),rmAdminNode)
+
+InstallProgram(rmGetNodes,$(BIN),root,bin,755)
+InstallProgram(rmAdminNode,$(BIN),root,bin,755)
 
 clean0:
 	@echo cleaning in CurDir
