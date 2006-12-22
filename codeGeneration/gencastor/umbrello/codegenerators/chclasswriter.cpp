@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2006/12/22 11:00:10 $ $Author: sponcec3 $
+ * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2006/12/22 13:23:41 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -624,6 +624,7 @@ QString CHClassWriter::convertType(QString type,
   }
   QString result = QString("C");
   ns.replace(".", "::");
+  if (ns.endsWith("::")) ns.truncate(ns.length()-2);
   if (ns.find("::") > -1) {
     result += ns.right(ns.length() - ns.find("::") - 2);
     result.replace("::", "_");
