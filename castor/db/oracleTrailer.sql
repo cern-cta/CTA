@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.361 $ $Release$ $Date: 2006/12/20 10:18:31 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.362 $ $Release$ $Date: 2006/12/22 14:37:24 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.361 $ $Date: 2006/12/20 10:18:31 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.362 $ $Date: 2006/12/22 14:37:24 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -867,7 +867,8 @@ BEGIN
    WHERE TapeCopy.id = tapecopyId
      AND CastorFile.id = TapeCopy.castorFile
      AND DiskCopy.castorFile = TapeCopy.castorFile
-     AND SubRequest.diskcopy(+) = DiskCopy.id;
+     AND SubRequest.diskcopy(+) = DiskCopy.id
+     AND DiskCopy.status = 2;
   UPDATE DiskCopy SET status = 4 WHERE id = dci RETURNING fileSystem into fsid; -- DISKCOPY_FAILED
   IF SubRequestId IS NOT NULL THEN
     UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
@@ -879,6 +880,7 @@ BEGIN
                           lastModificationTime = getTime()
      WHERE parent = SubRequestId;
   END IF;
+  EXCEPTION WHEN NO_DATA_FOUND THEN NULL;
 END;
 
 /* PL/SQL method implementing castor package */
