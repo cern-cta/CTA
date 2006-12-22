@@ -163,8 +163,7 @@ namespace castor {
     OBJ_DiskServerStateReport = 120,
     OBJ_DiskServerMetricsReport = 121,
     OBJ_FileSystemStateReport = 122,
-    OBJ_FileSystemMetricsReport = 123,
-
+    OBJ_FileSystemMetricsReport = 123
   };
 
   /**
