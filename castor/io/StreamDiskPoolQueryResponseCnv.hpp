@@ -51,6 +51,7 @@ namespace castor {
     /**
      * class StreamDiskPoolQueryResponseCnv
      * A converter for marshalling/unmarshalling DiskPoolQueryResponse into/from stl
+     * streams
      */
     class StreamDiskPoolQueryResponseCnv : public StreamBaseCnv {
 

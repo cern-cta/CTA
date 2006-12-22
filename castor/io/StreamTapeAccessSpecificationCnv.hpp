@@ -51,6 +51,7 @@ namespace castor {
     /**
      * class StreamTapeAccessSpecificationCnv
      * A converter for marshalling/unmarshalling TapeAccessSpecification into/from stl
+     * streams
      */
     class StreamTapeAccessSpecificationCnv : public StreamBaseCnv {
 

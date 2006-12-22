@@ -51,6 +51,7 @@ namespace castor {
     /**
      * class StreamMoverCloseRequestCnv
      * A converter for marshalling/unmarshalling MoverCloseRequest into/from stl
+     * streams
      */
     class StreamMoverCloseRequestCnv : public StreamBaseCnv {
 

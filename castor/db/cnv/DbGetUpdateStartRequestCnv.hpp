@@ -56,6 +56,7 @@ namespace castor {
       /**
        * class DbGetUpdateStartRequestCnv
        * A converter for storing/retrieving GetUpdateStartRequest into/from a generic
+       * database
        */
       class DbGetUpdateStartRequestCnv : public DbBaseCnv {
 
@@ -156,6 +157,7 @@ namespace castor {
 
         /**
          * Fill the foreign representation with some of the objects.refered by a given C++
+         * object.
          * @param address the place where to find the foreign representation
          * @param object the original C++ object
          * @param type the type of the refered objects to store

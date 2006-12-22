@@ -51,6 +51,7 @@ namespace castor {
     /**
      * class StreamClientIdentificationCnv
      * A converter for marshalling/unmarshalling ClientIdentification into/from stl
+     * streams
      */
     class StreamClientIdentificationCnv : public StreamBaseCnv {
 

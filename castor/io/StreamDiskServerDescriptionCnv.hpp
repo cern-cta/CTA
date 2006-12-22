@@ -51,6 +51,7 @@ namespace castor {
     /**
      * class StreamDiskServerDescriptionCnv
      * A converter for marshalling/unmarshalling DiskServerDescription into/from stl
+     * streams
      */
     class StreamDiskServerDescriptionCnv : public StreamBaseCnv {
 

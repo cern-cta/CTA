@@ -51,6 +51,7 @@ namespace castor {
     /**
      * class StreamStageReleaseFilesRequestCnv
      * A converter for marshalling/unmarshalling StageReleaseFilesRequest into/from stl
+     * streams
      */
     class StreamStageReleaseFilesRequestCnv : public StreamBaseCnv {
 

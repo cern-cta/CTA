@@ -51,6 +51,7 @@ namespace castor {
     /**
      * class StreamTapeDriveDedicationCnv
      * A converter for marshalling/unmarshalling TapeDriveDedication into/from stl
+     * streams
      */
     class StreamTapeDriveDedicationCnv : public StreamBaseCnv {
 

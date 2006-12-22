@@ -51,6 +51,7 @@ namespace castor {
     /**
      * class StreamFileSystemStateReportCnv
      * A converter for marshalling/unmarshalling FileSystemStateReport into/from stl
+     * streams
      */
     class StreamFileSystemStateReportCnv : public StreamBaseCnv {
 

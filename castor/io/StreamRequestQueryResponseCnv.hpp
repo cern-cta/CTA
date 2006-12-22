@@ -51,6 +51,7 @@ namespace castor {
     /**
      * class StreamRequestQueryResponseCnv
      * A converter for marshalling/unmarshalling RequestQueryResponse into/from stl
+     * streams
      */
     class StreamRequestQueryResponseCnv : public StreamBaseCnv {
 

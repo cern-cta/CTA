@@ -51,6 +51,7 @@ namespace castor {
     /**
      * class StreamFilesDeletionFailedCnv
      * A converter for marshalling/unmarshalling FilesDeletionFailed into/from stl
+     * streams
      */
     class StreamFilesDeletionFailedCnv : public StreamBaseCnv {
 

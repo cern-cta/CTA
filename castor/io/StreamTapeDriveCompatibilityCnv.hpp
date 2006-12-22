@@ -51,6 +51,7 @@ namespace castor {
     /**
      * class StreamTapeDriveCompatibilityCnv
      * A converter for marshalling/unmarshalling TapeDriveCompatibility into/from stl
+     * streams
      */
     class StreamTapeDriveCompatibilityCnv : public StreamBaseCnv {
 

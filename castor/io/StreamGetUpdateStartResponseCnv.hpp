@@ -51,6 +51,7 @@ namespace castor {
     /**
      * class StreamGetUpdateStartResponseCnv
      * A converter for marshalling/unmarshalling GetUpdateStartResponse into/from stl
+     * streams
      */
     class StreamGetUpdateStartResponseCnv : public StreamBaseCnv {
 

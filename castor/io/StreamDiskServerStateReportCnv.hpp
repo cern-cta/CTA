@@ -51,6 +51,7 @@ namespace castor {
     /**
      * class StreamDiskServerStateReportCnv
      * A converter for marshalling/unmarshalling DiskServerStateReport into/from stl
+     * streams
      */
     class StreamDiskServerStateReportCnv : public StreamBaseCnv {
 

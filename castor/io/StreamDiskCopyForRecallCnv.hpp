@@ -51,6 +51,7 @@ namespace castor {
     /**
      * class StreamDiskCopyForRecallCnv
      * A converter for marshalling/unmarshalling DiskCopyForRecall into/from stl
+     * streams
      */
     class StreamDiskCopyForRecallCnv : public StreamBaseCnv {
 

@@ -51,6 +51,7 @@ namespace castor {
     /**
      * class StreamFileSystemDescriptionCnv
      * A converter for marshalling/unmarshalling FileSystemDescription into/from stl
+     * streams
      */
     class StreamFileSystemDescriptionCnv : public StreamBaseCnv {
 

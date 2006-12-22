@@ -51,6 +51,7 @@ namespace castor {
     /**
      * class StreamDisk2DiskCopyDoneRequestCnv
      * A converter for marshalling/unmarshalling Disk2DiskCopyDoneRequest into/from stl
+     * streams
      */
     class StreamDisk2DiskCopyDoneRequestCnv : public StreamBaseCnv {
 

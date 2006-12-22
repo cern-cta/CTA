@@ -156,6 +156,7 @@ namespace castor {
 
         /**
          * Fill the foreign representation with some of the objects.refered by a given C++
+         * object.
          * @param address the place where to find the foreign representation
          * @param object the original C++ object
          * @param type the type of the refered objects to store
@@ -222,6 +223,8 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Retrieve from the database objects of type DiskServer refered by a given
+         * object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */

@@ -51,6 +51,7 @@ namespace castor {
     /**
      * class StreamTapeCopyForMigrationCnv
      * A converter for marshalling/unmarshalling TapeCopyForMigration into/from stl
+     * streams
      */
     class StreamTapeCopyForMigrationCnv : public StreamBaseCnv {
 
