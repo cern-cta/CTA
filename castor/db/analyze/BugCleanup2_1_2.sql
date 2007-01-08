@@ -75,7 +75,7 @@ BEGIN
   END LOOP;
 END;
 
--- Cleaning the GC candidates that have no filesystem and will thus never be taken
+-- Cleaning the GC candidates and failed diskcopies that have no filesystem and will thus never be taken
 CREATE OR REPLACE PROCEDURE filesDeletedProcNoFS
 (dcIds IN castor."cnumList",
  fileIds OUT castor.FileList_Cur) AS
@@ -164,12 +164,12 @@ BEGIN
   -- For logging
   INSERT INTO CleanupLogTable VALUES (2, 'Cleaning the GC candidates that have no filesystem', getTime());
   COMMIT;
-  SELECT COUNT(UNIQUE id) INTO totalCount FROM DiskCopy where status IN (7,8) and (filesystem = 0 or filesystem is null);
+  SELECT COUNT(UNIQUE id) INTO totalCount FROM DiskCopy where status IN (4,7,8) and (filesystem = 0 or filesystem is null);
   LOOP
     i := 1;
     files := emptyFileList; -- emptying collection
     -- do it 1000 by 1000 in order to not slow down the normal requests
-    FOR dc IN (SELECT UNIQUE id FROM DiskCopy where status IN (7,8) and (filesystem = 0 or filesystem is null) AND ROWNUM <= 1000)
+    FOR dc IN (SELECT UNIQUE id FROM DiskCopy where status IN (4,7,8) and (filesystem = 0 or filesystem is null) AND ROWNUM <= 1000)
     LOOP
       files(i) := dc.id;
       i := i + 1;
@@ -194,7 +194,7 @@ BEGIN
 END;
 DROP PROCEDURE filesDeletedProcNoFS;
 
--- Cleaning the failed diskCopies
+-- Cleaning the failed diskCopies with filesystem
 DECLARE
   files castor."cnumList";
   emptyFileList castor."cnumList";
