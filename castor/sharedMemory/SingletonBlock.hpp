@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SingletonBlock.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/12/21 15:37:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: SingletonBlock.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/01/09 16:21:05 $ $Author: sponcec3 $
  *
  * 
  *
@@ -94,7 +94,7 @@ castor::sharedMemory::SingletonBlock<T,A>::SingletonBlock
   throw (castor::exception::Exception) :
   Block<A>(key, (void*)((char*)rawMem + sizeof(T))) {
   m_singleton = new(rawMem)T();
-};
+}
 
 //------------------------------------------------------------------------------
 // destructor

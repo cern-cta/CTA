@@ -57,7 +57,7 @@ namespace castor {
        */
       template <class U> SharedMemoryAllocator
       (const SharedMemoryAllocator<U>& a) throw() :
-        castor::sharedMemory::Allocator<T>(a) {};
+        castor::sharedMemory::Allocator<T>(a) {}
 
       /**
        * some complicated way to define a needed typedef
