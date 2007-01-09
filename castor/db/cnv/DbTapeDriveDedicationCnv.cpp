@@ -119,7 +119,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::reset() throw() {
     delete m_deleteTypeStatement;
     delete m_checkTapeDriveExistStatement;
     delete m_updateTapeDriveStatement;
-  } catch (castor::exception::SQLError ignored) {};
+  } catch (castor::exception::Exception ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
   m_deleteStatement = 0;
@@ -318,7 +318,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress* addr
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
     try { cnvSvc()->rollback(); }
-    catch(castor::exception::SQLError ignored) {}
+    catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -372,7 +372,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::updateRep(castor::IAddress* addr
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
     try { cnvSvc()->rollback(); }
-    catch(castor::exception::SQLError ignored) {}
+    catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -413,7 +413,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::deleteRep(castor::IAddress* addr
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
     try { cnvSvc()->rollback(); }
-    catch(castor::exception::SQLError ignored) {}
+    catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -461,7 +461,7 @@ castor::IObject* castor::db::cnv::DbTapeDriveDedicationCnv::createObj(castor::IA
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
     try { cnvSvc()->rollback(); }
-    catch(castor::exception::SQLError ignored) {}
+    catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -506,7 +506,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::updateObj(castor::IObject* obj)
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
     try { cnvSvc()->rollback(); }
-    catch(castor::exception::SQLError ignored) {}
+    catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl

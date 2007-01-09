@@ -105,7 +105,7 @@ void castor::db::cnv::DbDeviceGroupNameCnv::reset() throw() {
     delete m_updateStatement;
     delete m_storeTypeStatement;
     delete m_deleteTypeStatement;
-  } catch (castor::exception::SQLError ignored) {};
+  } catch (castor::exception::Exception ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
   m_deleteStatement = 0;
@@ -217,7 +217,7 @@ void castor::db::cnv::DbDeviceGroupNameCnv::createRep(castor::IAddress* address,
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
     try { cnvSvc()->rollback(); }
-    catch(castor::exception::SQLError ignored) {}
+    catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -258,7 +258,7 @@ void castor::db::cnv::DbDeviceGroupNameCnv::updateRep(castor::IAddress* address,
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
     try { cnvSvc()->rollback(); }
-    catch(castor::exception::SQLError ignored) {}
+    catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -299,7 +299,7 @@ void castor::db::cnv::DbDeviceGroupNameCnv::deleteRep(castor::IAddress* address,
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
     try { cnvSvc()->rollback(); }
-    catch(castor::exception::SQLError ignored) {}
+    catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -341,7 +341,7 @@ castor::IObject* castor::db::cnv::DbDeviceGroupNameCnv::createObj(castor::IAddre
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
     try { cnvSvc()->rollback(); }
-    catch(castor::exception::SQLError ignored) {}
+    catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -380,7 +380,7 @@ void castor::db::cnv::DbDeviceGroupNameCnv::updateObj(castor::IObject* obj)
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
     try { cnvSvc()->rollback(); }
-    catch(castor::exception::SQLError ignored) {}
+    catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl

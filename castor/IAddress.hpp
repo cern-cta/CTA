@@ -96,6 +96,6 @@ namespace castor {
 
   }; // end of class IAddress
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_IADDRESS_HPP

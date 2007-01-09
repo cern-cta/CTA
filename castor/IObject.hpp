@@ -92,7 +92,7 @@ namespace castor {
 
   }; // end of class IObject
 
-}; // end of namespace castor
+} // end of namespace castor
 
 /**
  * outputs this IObject to an output stream

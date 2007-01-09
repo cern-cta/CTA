@@ -204,6 +204,6 @@ namespace castor {
 
   }; // end of class MessageAck
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_MESSAGEACK_HPP

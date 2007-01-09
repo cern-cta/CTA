@@ -205,6 +205,6 @@ namespace castor {
 
   }; // end of class BaseAddress
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_BASEADDRESS_HPP
