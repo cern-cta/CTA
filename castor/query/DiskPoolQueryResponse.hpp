@@ -242,8 +242,8 @@ namespace castor {
 
     }; // end of class DiskPoolQueryResponse
 
-  }; // end of namespace query
+  } // end of namespace query
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_QUERY_DISKPOOLQUERYRESPONSE_HPP

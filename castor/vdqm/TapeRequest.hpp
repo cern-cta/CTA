@@ -47,7 +47,7 @@ namespace castor {
     class Tape;
     class ClientIdentification;
 
-  }; // end of namespace stager
+  } // end of namespace stager
 
   namespace vdqm {
 
@@ -306,8 +306,8 @@ namespace castor {
 
     }; // end of class TapeRequest
 
-  }; // end of namespace vdqm
+  } // end of namespace vdqm
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_VDQM_TAPEREQUEST_HPP

@@ -293,8 +293,8 @@ namespace castor {
 
     }; // end of class FileSystemDescription
 
-  }; // end of namespace query
+  } // end of namespace query
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_QUERY_FILESYSTEMDESCRIPTION_HPP

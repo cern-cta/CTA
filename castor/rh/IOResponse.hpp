@@ -186,8 +186,8 @@ namespace castor {
 
     }; // end of class IOResponse
 
-  }; // end of namespace rh
+  } // end of namespace rh
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_RH_IORESPONSE_HPP

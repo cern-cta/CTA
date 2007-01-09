@@ -114,8 +114,8 @@ namespace castor {
 
     }; // end of class QryRequest
 
-  }; // end of namespace stager
+  } // end of namespace stager
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_STAGER_QRYREQUEST_HPP

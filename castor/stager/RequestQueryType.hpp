@@ -55,9 +55,9 @@ namespace castor {
     extern const char* RequestQueryTypeStrings[6];
 
 #ifdef __cplusplus
-  }; // end of namespace stager
+  } // end of namespace stager
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif
 #endif // CASTOR_STAGER_REQUESTQUERYTYPE_HPP

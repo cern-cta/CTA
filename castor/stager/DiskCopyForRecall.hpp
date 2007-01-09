@@ -163,8 +163,8 @@ namespace castor {
 
     }; // end of class DiskCopyForRecall
 
-  }; // end of namespace stager
+  } // end of namespace stager
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_STAGER_DISKCOPYFORRECALL_HPP

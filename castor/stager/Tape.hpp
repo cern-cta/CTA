@@ -48,7 +48,7 @@ namespace castor {
     // Forward declarations
     class ErrorHistory;
 
-  }; // end of namespace vdqm
+  } // end of namespace vdqm
 
   namespace stager {
 
@@ -380,8 +380,8 @@ namespace castor {
 
     }; // end of class Tape
 
-  }; // end of namespace stager
+  } // end of namespace stager
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_STAGER_TAPE_HPP

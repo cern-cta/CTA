@@ -61,9 +61,9 @@ namespace castor {
     extern const char* DiskCopyStatusCodesStrings[12];
 
 #ifdef __cplusplus
-  }; // end of namespace stager
+  } // end of namespace stager
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif
 #endif // CASTOR_STAGER_DISKCOPYSTATUSCODES_HPP

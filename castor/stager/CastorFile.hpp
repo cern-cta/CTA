@@ -383,8 +383,8 @@ namespace castor {
 
     }; // end of class CastorFile
 
-  }; // end of namespace stager
+  } // end of namespace stager
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_STAGER_CASTORFILE_HPP

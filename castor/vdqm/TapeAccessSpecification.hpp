@@ -187,8 +187,8 @@ namespace castor {
 
     }; // end of class TapeAccessSpecification
 
-  }; // end of namespace vdqm
+  } // end of namespace vdqm
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_VDQM_TAPEACCESSSPECIFICATION_HPP

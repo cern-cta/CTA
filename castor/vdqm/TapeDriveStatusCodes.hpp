@@ -58,9 +58,9 @@ namespace castor {
     extern const char* TapeDriveStatusCodesStrings[9];
 
 #ifdef __cplusplus
-  }; // end of namespace vdqm
+  } // end of namespace vdqm
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif
 #endif // CASTOR_VDQM_TAPEDRIVESTATUSCODES_HPP

@@ -145,8 +145,8 @@ namespace castor {
 
     }; // end of class GetUpdateDone
 
-  }; // end of namespace stager
+  } // end of namespace stager
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_STAGER_GETUPDATEDONE_HPP

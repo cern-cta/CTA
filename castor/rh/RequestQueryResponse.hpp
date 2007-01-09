@@ -207,8 +207,8 @@ namespace castor {
 
     }; // end of class RequestQueryResponse
 
-  }; // end of namespace rh
+  } // end of namespace rh
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_RH_REQUESTQUERYRESPONSE_HPP

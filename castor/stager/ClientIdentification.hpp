@@ -240,8 +240,8 @@ namespace castor {
 
     }; // end of class ClientIdentification
 
-  }; // end of namespace stager
+  } // end of namespace stager
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_STAGER_CLIENTIDENTIFICATION_HPP

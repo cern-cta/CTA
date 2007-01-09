@@ -368,8 +368,8 @@ namespace castor {
 
     }; // end of class Request
 
-  }; // end of namespace stager
+  } // end of namespace stager
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_STAGER_REQUEST_HPP

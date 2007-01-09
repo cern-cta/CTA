@@ -139,8 +139,8 @@ namespace castor {
 
     }; // end of class Response
 
-  }; // end of namespace rh
+  } // end of namespace rh
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_RH_RESPONSE_HPP

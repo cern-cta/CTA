@@ -186,8 +186,8 @@ namespace castor {
 
     }; // end of class TapeDriveCompatibility
 
-  }; // end of namespace vdqm
+  } // end of namespace vdqm
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_VDQM_TAPEDRIVECOMPATIBILITY_HPP

@@ -55,9 +55,9 @@ namespace castor {
     extern const char* StreamStatusCodesStrings[6];
 
 #ifdef __cplusplus
-  }; // end of namespace stager
+  } // end of namespace stager
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif
 #endif // CASTOR_STAGER_STREAMSTATUSCODES_HPP

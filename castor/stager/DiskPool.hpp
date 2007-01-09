@@ -212,8 +212,8 @@ namespace castor {
 
     }; // end of class DiskPool
 
-  }; // end of namespace stager
+  } // end of namespace stager
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_STAGER_DISKPOOL_HPP

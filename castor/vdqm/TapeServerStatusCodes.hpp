@@ -52,9 +52,9 @@ namespace castor {
     extern const char* TapeServerStatusCodesStrings[2];
 
 #ifdef __cplusplus
-  }; // end of namespace vdqm
+  } // end of namespace vdqm
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif
 #endif // CASTOR_VDQM_TAPESERVERSTATUSCODES_HPP

@@ -197,7 +197,7 @@ void CppBaseWriter::writeNSOpen(QTextStream &stream,
 void CppBaseWriter::writeNSClose(QTextStream &stream,
                                  QString ns) {
   m_indent--;
-  stream << getIndent() << "}; // end of namespace " << ns << endl << endl;
+  stream << getIndent() << "} // end of namespace " << ns << endl << endl;
 }
 
 //=============================================================================

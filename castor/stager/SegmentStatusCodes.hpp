@@ -54,9 +54,9 @@ namespace castor {
     extern const char* SegmentStatusCodesStrings[9];
 
 #ifdef __cplusplus
-  }; // end of namespace stager
+  } // end of namespace stager
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif
 #endif // CASTOR_STAGER_SEGMENTSTATUSCODES_HPP

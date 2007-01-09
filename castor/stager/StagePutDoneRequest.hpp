@@ -163,8 +163,8 @@ namespace castor {
 
     }; // end of class StagePutDoneRequest
 
-  }; // end of namespace stager
+  } // end of namespace stager
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_STAGER_STAGEPUTDONEREQUEST_HPP

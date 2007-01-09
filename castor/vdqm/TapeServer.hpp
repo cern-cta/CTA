@@ -199,8 +199,8 @@ namespace castor {
 
     }; // end of class TapeServer
 
-  }; // end of namespace vdqm
+  } // end of namespace vdqm
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_VDQM_TAPESERVER_HPP

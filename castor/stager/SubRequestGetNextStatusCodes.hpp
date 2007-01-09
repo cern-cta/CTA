@@ -52,9 +52,9 @@ namespace castor {
     extern const char* SubRequestGetNextStatusCodesStrings[3];
 
 #ifdef __cplusplus
-  }; // end of namespace stager
+  } // end of namespace stager
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif
 #endif // CASTOR_STAGER_SUBREQUESTGETNEXTSTATUSCODES_HPP

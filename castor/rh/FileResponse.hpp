@@ -230,8 +230,8 @@ namespace castor {
 
     }; // end of class FileResponse
 
-  }; // end of namespace rh
+  } // end of namespace rh
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_RH_FILERESPONSE_HPP

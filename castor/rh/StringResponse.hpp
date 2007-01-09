@@ -144,8 +144,8 @@ namespace castor {
 
     }; // end of class StringResponse
 
-  }; // end of namespace rh
+  } // end of namespace rh
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_RH_STRINGRESPONSE_HPP
