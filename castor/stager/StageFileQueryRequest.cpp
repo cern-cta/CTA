@@ -43,13 +43,13 @@ castor::stager::StageFileQueryRequest::StageFileQueryRequest() throw() :
   QryRequest(),
   m_fileName(""),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::StageFileQueryRequest::~StageFileQueryRequest() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

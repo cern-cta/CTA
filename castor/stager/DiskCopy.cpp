@@ -51,7 +51,7 @@ castor::stager::DiskCopy::DiskCopy() throw() :
   m_fileSystem(0),
   m_castorFile(0),
   m_status(DiskCopyStatusCodes(0)) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -67,7 +67,7 @@ castor::stager::DiskCopy::~DiskCopy() throw() {
   if (0 != m_castorFile) {
     m_castorFile->removeDiskCopies(this);
   }
-};
+}
 
 //------------------------------------------------------------------------------
 // print

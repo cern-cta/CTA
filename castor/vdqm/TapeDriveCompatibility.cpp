@@ -44,13 +44,13 @@ castor::vdqm::TapeDriveCompatibility::TapeDriveCompatibility() throw() :
   m_priorityLevel(0),
   m_id(0),
   m_tapeAccessSpecification(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::vdqm::TapeDriveCompatibility::~TapeDriveCompatibility() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

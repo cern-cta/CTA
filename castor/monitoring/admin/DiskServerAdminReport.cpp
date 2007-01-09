@@ -45,13 +45,13 @@ castor::monitoring::admin::DiskServerAdminReport::DiskServerAdminReport() throw(
   m_id(0),
   m_adminStatus(castor::monitoring::AdminStatusCodes(0)),
   m_status(castor::stager::DiskServerStatusCode(0)) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::monitoring::admin::DiskServerAdminReport::~DiskServerAdminReport() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

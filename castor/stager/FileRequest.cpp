@@ -40,7 +40,7 @@
 //------------------------------------------------------------------------------
 castor::stager::FileRequest::FileRequest() throw() :
   Request() {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -51,7 +51,7 @@ castor::stager::FileRequest::~FileRequest() throw() {
     delete m_subRequestsVector[i];
   }
   m_subRequestsVector.clear();
-};
+}
 
 //------------------------------------------------------------------------------
 // print

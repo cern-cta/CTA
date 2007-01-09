@@ -44,13 +44,13 @@ castor::stager::Disk2DiskCopyDoneRequest::Disk2DiskCopyDoneRequest() throw() :
   m_diskCopyId(0),
   m_status(0),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::Disk2DiskCopyDoneRequest::~Disk2DiskCopyDoneRequest() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

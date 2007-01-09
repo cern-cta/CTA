@@ -43,7 +43,7 @@ castor::stager::GCFile::GCFile() throw() :
   m_diskCopyId(0),
   m_id(0),
   m_request(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -52,7 +52,7 @@ castor::stager::GCFile::~GCFile() throw() {
   if (0 != m_request) {
     m_request->removeFiles(this);
   }
-};
+}
 
 //------------------------------------------------------------------------------
 // print

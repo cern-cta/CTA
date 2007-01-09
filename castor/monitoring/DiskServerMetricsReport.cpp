@@ -47,7 +47,7 @@ castor::monitoring::DiskServerMetricsReport::DiskServerMetricsReport() throw() :
   m_freeSwap(0),
   m_load(0),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -58,7 +58,7 @@ castor::monitoring::DiskServerMetricsReport::~DiskServerMetricsReport() throw() 
     delete m_fileSystemMetricsReportsVector[i];
   }
   m_fileSystemMetricsReportsVector.clear();
-};
+}
 
 //------------------------------------------------------------------------------
 // print

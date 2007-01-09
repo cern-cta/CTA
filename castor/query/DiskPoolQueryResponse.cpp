@@ -48,7 +48,7 @@ castor::query::DiskPoolQueryResponse::DiskPoolQueryResponse() throw() :
   m_totalSpace(0),
   m_reservedSpace(0),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -59,7 +59,7 @@ castor::query::DiskPoolQueryResponse::~DiskPoolQueryResponse() throw() {
     delete m_diskServersVector[i];
   }
   m_diskServersVector.clear();
-};
+}
 
 //------------------------------------------------------------------------------
 // print

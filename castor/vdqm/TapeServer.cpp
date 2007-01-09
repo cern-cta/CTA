@@ -45,7 +45,7 @@ castor::vdqm::TapeServer::TapeServer() throw() :
   m_serverName(""),
   m_id(0),
   m_actingMode(TapeServerStatusCodes(0)) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -56,7 +56,7 @@ castor::vdqm::TapeServer::~TapeServer() throw() {
     delete m_tapeDrivesVector[i];
   }
   m_tapeDrivesVector.clear();
-};
+}
 
 //------------------------------------------------------------------------------
 // print

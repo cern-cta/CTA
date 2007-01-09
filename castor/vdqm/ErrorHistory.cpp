@@ -46,7 +46,7 @@ castor::vdqm::ErrorHistory::ErrorHistory() throw() :
   m_id(0),
   m_tapeDrive(0),
   m_tape(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -58,7 +58,7 @@ castor::vdqm::ErrorHistory::~ErrorHistory() throw() {
   if (0 != m_tape) {
     m_tape->removeErrorHistory(this);
   }
-};
+}
 
 //------------------------------------------------------------------------------
 // print

@@ -45,7 +45,7 @@ castor::stager::DiskServer::DiskServer() throw() :
   m_name(""),
   m_id(0),
   m_status(DiskServerStatusCode(0)) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -55,7 +55,7 @@ castor::stager::DiskServer::~DiskServer() throw() {
     m_fileSystemsVector[i]->setDiskserver(0);
   }
   m_fileSystemsVector.clear();
-};
+}
 
 //------------------------------------------------------------------------------
 // print

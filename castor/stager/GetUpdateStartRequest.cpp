@@ -42,13 +42,13 @@
 castor::stager::GetUpdateStartRequest::GetUpdateStartRequest() throw() :
   StartRequest(),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::GetUpdateStartRequest::~GetUpdateStartRequest() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

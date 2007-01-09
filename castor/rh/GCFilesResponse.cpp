@@ -44,7 +44,7 @@
 castor::rh::GCFilesResponse::GCFilesResponse() throw() :
   Response(),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -54,7 +54,7 @@ castor::rh::GCFilesResponse::~GCFilesResponse() throw() {
     delete m_filesVector[i];
   }
   m_filesVector.clear();
-};
+}
 
 //------------------------------------------------------------------------------
 // print

@@ -42,13 +42,13 @@
 castor::stager::StageRequestQueryRequest::StageRequestQueryRequest() throw() :
   QryRequest(),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::StageRequestQueryRequest::~StageRequestQueryRequest() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

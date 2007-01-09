@@ -43,13 +43,13 @@ castor::stager::StageRepackRequest::StageRepackRequest() throw() :
   FileRequest(),
   m_repackVid(""),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::StageRepackRequest::~StageRepackRequest() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

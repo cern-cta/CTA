@@ -42,13 +42,13 @@
 castor::stager::FilesDeletionFailed::FilesDeletionFailed() throw() :
   GCFileList(),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::FilesDeletionFailed::~FilesDeletionFailed() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

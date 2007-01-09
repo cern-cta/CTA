@@ -55,7 +55,7 @@ castor::vdqm::TapeRequest::TapeRequest() throw() :
   m_tapeDrive(0),
   m_deviceGroupName(0),
   m_client(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -68,7 +68,7 @@ castor::vdqm::TapeRequest::~TapeRequest() throw() {
     delete m_client;
     m_client = 0;
   }
-};
+}
 
 //------------------------------------------------------------------------------
 // print

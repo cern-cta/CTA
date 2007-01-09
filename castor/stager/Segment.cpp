@@ -60,7 +60,7 @@ castor::stager::Segment::Segment() throw() :
   m_tape(0),
   m_copy(0),
   m_status(SegmentStatusCodes(0)) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -72,7 +72,7 @@ castor::stager::Segment::~Segment() throw() {
   if (0 != m_copy) {
     m_copy->removeSegments(this);
   }
-};
+}
 
 //------------------------------------------------------------------------------
 // print

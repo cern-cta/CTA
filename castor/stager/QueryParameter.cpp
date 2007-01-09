@@ -45,7 +45,7 @@ castor::stager::QueryParameter::QueryParameter() throw() :
   m_id(0),
   m_query(0),
   m_queryType(RequestQueryType(0)) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -54,7 +54,7 @@ castor::stager::QueryParameter::~QueryParameter() throw() {
   if (0 != m_query) {
     m_query->removeParameters(this);
   }
-};
+}
 
 //------------------------------------------------------------------------------
 // print

@@ -42,13 +42,13 @@
 castor::stager::StagePutNextRequest::StagePutNextRequest() throw() :
   ReqIdRequest(),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::StagePutNextRequest::~StagePutNextRequest() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

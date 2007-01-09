@@ -48,7 +48,7 @@ castor::stager::TapeCopy::TapeCopy() throw() :
   m_id(0),
   m_castorFile(0),
   m_status(TapeCopyStatusCodes(0)) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -66,7 +66,7 @@ castor::stager::TapeCopy::~TapeCopy() throw() {
   if (0 != m_castorFile) {
     m_castorFile->removeTapeCopies(this);
   }
-};
+}
 
 //------------------------------------------------------------------------------
 // print

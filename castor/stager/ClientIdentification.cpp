@@ -46,13 +46,13 @@ castor::stager::ClientIdentification::ClientIdentification() throw() :
   m_egid(0),
   m_magic(0),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::ClientIdentification::~ClientIdentification() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

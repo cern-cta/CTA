@@ -49,7 +49,7 @@ castor::query::FileSystemDescription::FileSystemDescription() throw() :
   m_status(0),
   m_id(0),
   m_diskServer(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -58,7 +58,7 @@ castor::query::FileSystemDescription::~FileSystemDescription() throw() {
   if (0 != m_diskServer) {
     m_diskServer->removeFileSystems(this);
   }
-};
+}
 
 //------------------------------------------------------------------------------
 // print

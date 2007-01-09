@@ -44,13 +44,13 @@ castor::stager::MoverCloseRequest::MoverCloseRequest() throw() :
   m_subReqId(0),
   m_fileSize(0),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::MoverCloseRequest::~MoverCloseRequest() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

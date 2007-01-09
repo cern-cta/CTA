@@ -53,7 +53,7 @@ castor::stager::Request::Request() throw() :
   m_lastModificationTime(0),
   m_svcClass(0),
   m_client(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -63,7 +63,7 @@ castor::stager::Request::~Request() throw() {
     delete m_client;
     m_client = 0;
   }
-};
+}
 
 //------------------------------------------------------------------------------
 // print

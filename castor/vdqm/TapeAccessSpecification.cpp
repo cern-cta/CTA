@@ -43,13 +43,13 @@ castor::vdqm::TapeAccessSpecification::TapeAccessSpecification() throw() :
   m_density(""),
   m_tapeModel(""),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::vdqm::TapeAccessSpecification::~TapeAccessSpecification() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

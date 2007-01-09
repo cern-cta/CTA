@@ -49,7 +49,7 @@ castor::stager::Stream::Stream() throw() :
   m_tape(0),
   m_tapePool(0),
   m_status(StreamStatusCodes(0)) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -65,7 +65,7 @@ castor::stager::Stream::~Stream() throw() {
   if (0 != m_tapePool) {
     m_tapePool->removeStreams(this);
   }
-};
+}
 
 //------------------------------------------------------------------------------
 // print

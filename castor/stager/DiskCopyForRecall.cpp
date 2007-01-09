@@ -43,13 +43,13 @@ castor::stager::DiskCopyForRecall::DiskCopyForRecall() throw() :
   m_mountPoint(""),
   m_diskServer(""),
   m_fsWeight(0.0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::DiskCopyForRecall::~DiskCopyForRecall() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

@@ -44,7 +44,7 @@
 castor::stager::TapePool::TapePool() throw() :
   m_name(""),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -58,7 +58,7 @@ castor::stager::TapePool::~TapePool() throw() {
     m_streamsVector[i]->setTapePool(0);
   }
   m_streamsVector.clear();
-};
+}
 
 //------------------------------------------------------------------------------
 // print

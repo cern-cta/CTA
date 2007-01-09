@@ -48,7 +48,7 @@ castor::monitoring::FileSystemStateReport::FileSystemStateReport() throw() :
   m_status(castor::stager::FileSystemStatusCodes(0)),
   m_adminStatus(AdminStatusCodes(0)),
   m_diskServer(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -57,7 +57,7 @@ castor::monitoring::FileSystemStateReport::~FileSystemStateReport() throw() {
   if (0 != m_diskServer) {
     m_diskServer->removeFileSystemStatesReports(this);
   }
-};
+}
 
 //------------------------------------------------------------------------------
 // print

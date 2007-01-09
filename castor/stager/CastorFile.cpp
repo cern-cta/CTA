@@ -54,7 +54,7 @@ castor::stager::CastorFile::CastorFile() throw() :
   m_id(0),
   m_svcClass(0),
   m_fileClass(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -69,7 +69,7 @@ castor::stager::CastorFile::~CastorFile() throw() {
     delete m_tapeCopiesVector[i];
   }
   m_tapeCopiesVector.clear();
-};
+}
 
 //------------------------------------------------------------------------------
 // print

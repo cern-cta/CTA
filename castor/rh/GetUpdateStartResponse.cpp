@@ -43,14 +43,14 @@
 castor::rh::GetUpdateStartResponse::GetUpdateStartResponse() throw() :
   StartResponse(),
   m_emptyFile(false) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::rh::GetUpdateStartResponse::~GetUpdateStartResponse() throw() {
   m_sourcesVector.clear();
-};
+}
 
 //------------------------------------------------------------------------------
 // print

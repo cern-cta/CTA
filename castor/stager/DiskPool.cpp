@@ -44,7 +44,7 @@
 castor::stager::DiskPool::DiskPool() throw() :
   m_name(""),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -58,7 +58,7 @@ castor::stager::DiskPool::~DiskPool() throw() {
     m_svcClassesVector[i]->removeDiskPools(this);
   }
   m_svcClassesVector.clear();
-};
+}
 
 //------------------------------------------------------------------------------
 // print

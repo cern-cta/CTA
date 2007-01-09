@@ -42,13 +42,13 @@
 castor::stager::StagePrepareToUpdateRequest::StagePrepareToUpdateRequest() throw() :
   FileRequest(),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::StagePrepareToUpdateRequest::~StagePrepareToUpdateRequest() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

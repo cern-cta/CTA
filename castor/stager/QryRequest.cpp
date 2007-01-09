@@ -40,7 +40,7 @@
 //------------------------------------------------------------------------------
 castor::stager::QryRequest::QryRequest() throw() :
   Request() {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -51,7 +51,7 @@ castor::stager::QryRequest::~QryRequest() throw() {
     delete m_parametersVector[i];
   }
   m_parametersVector.clear();
-};
+}
 
 //------------------------------------------------------------------------------
 // print

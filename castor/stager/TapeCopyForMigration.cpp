@@ -42,13 +42,13 @@ castor::stager::TapeCopyForMigration::TapeCopyForMigration() throw() :
   TapeCopy(),
   m_diskServer(""),
   m_mountPoint("") {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::TapeCopyForMigration::~TapeCopyForMigration() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

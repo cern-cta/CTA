@@ -62,7 +62,7 @@ castor::stager::SubRequest::SubRequest() throw() :
   m_status(SubRequestStatusCodes(0)),
   m_request(0),
   m_getNextStatus(SubRequestGetNextStatusCodes(0)) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -77,7 +77,7 @@ castor::stager::SubRequest::~SubRequest() throw() {
   if (0 != m_request) {
     m_request->removeSubRequests(this);
   }
-};
+}
 
 //------------------------------------------------------------------------------
 // print

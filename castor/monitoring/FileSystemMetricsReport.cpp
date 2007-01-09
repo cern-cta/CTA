@@ -49,7 +49,7 @@ castor::monitoring::FileSystemMetricsReport::FileSystemMetricsReport() throw() :
   m_freeSpace(0),
   m_id(0),
   m_diskServer(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -58,7 +58,7 @@ castor::monitoring::FileSystemMetricsReport::~FileSystemMetricsReport() throw() 
   if (0 != m_diskServer) {
     m_diskServer->removeFileSystemMetricsReports(this);
   }
-};
+}
 
 //------------------------------------------------------------------------------
 // print

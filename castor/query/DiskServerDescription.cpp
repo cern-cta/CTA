@@ -49,7 +49,7 @@ castor::query::DiskServerDescription::DiskServerDescription() throw() :
   m_reservedSpace(0),
   m_id(0),
   m_query(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -63,7 +63,7 @@ castor::query::DiskServerDescription::~DiskServerDescription() throw() {
     delete m_fileSystemsVector[i];
   }
   m_fileSystemsVector.clear();
-};
+}
 
 //------------------------------------------------------------------------------
 // print

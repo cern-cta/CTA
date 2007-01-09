@@ -44,13 +44,13 @@ castor::stager::StagePutDoneRequest::StagePutDoneRequest() throw() :
   m_parentUuid(""),
   m_id(0),
   m_parent(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::StagePutDoneRequest::~StagePutDoneRequest() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

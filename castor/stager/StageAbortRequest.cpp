@@ -42,13 +42,13 @@
 castor::stager::StageAbortRequest::StageAbortRequest() throw() :
   ReqIdRequest(),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::StageAbortRequest::~StageAbortRequest() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

@@ -50,7 +50,7 @@ castor::monitoring::DiskServerStateReport::DiskServerStateReport() throw() :
   m_id(0),
   m_status(castor::stager::DiskServerStatusCode(0)),
   m_adminStatus(AdminStatusCodes(0)) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -61,7 +61,7 @@ castor::monitoring::DiskServerStateReport::~DiskServerStateReport() throw() {
     delete m_FileSystemStatesReportsVector[i];
   }
   m_FileSystemStatesReportsVector.clear();
-};
+}
 
 //------------------------------------------------------------------------------
 // print

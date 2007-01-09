@@ -63,7 +63,7 @@ castor::vdqm::TapeDrive::TapeDrive() throw() :
   m_deviceGroupName(0),
   m_status(TapeDriveStatusCodes(0)),
   m_tapeServer(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -84,7 +84,7 @@ castor::vdqm::TapeDrive::~TapeDrive() throw() {
   if (0 != m_tapeServer) {
     m_tapeServer->removeTapeDrives(this);
   }
-};
+}
 
 //------------------------------------------------------------------------------
 // print

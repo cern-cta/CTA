@@ -46,13 +46,13 @@ castor::rh::RequestQueryResponse::RequestQueryResponse() throw() :
   m_creationTime(0),
   m_modificationTime(0),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::rh::RequestQueryResponse::~RequestQueryResponse() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

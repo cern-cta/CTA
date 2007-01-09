@@ -60,7 +60,7 @@ castor::stager::FileSystem::FileSystem() throw() :
   m_diskPool(0),
   m_diskserver(0),
   m_status(FileSystemStatusCodes(0)) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -76,7 +76,7 @@ castor::stager::FileSystem::~FileSystem() throw() {
   if (0 != m_diskserver) {
     m_diskserver->removeFileSystems(this);
   }
-};
+}
 
 //------------------------------------------------------------------------------
 // print

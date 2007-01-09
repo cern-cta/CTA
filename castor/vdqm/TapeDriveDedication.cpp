@@ -50,7 +50,7 @@ castor::vdqm::TapeDriveDedication::TapeDriveDedication() throw() :
   m_reason(""),
   m_id(0),
   m_tapeDrive(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -59,7 +59,7 @@ castor::vdqm::TapeDriveDedication::~TapeDriveDedication() throw() {
   if (0 != m_tapeDrive) {
     m_tapeDrive->removeTapeDriveDedication(this);
   }
-};
+}
 
 //------------------------------------------------------------------------------
 // print

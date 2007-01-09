@@ -46,13 +46,13 @@ castor::monitoring::admin::FileSystemAdminReport::FileSystemAdminReport() throw(
   m_id(0),
   m_adminStatus(castor::monitoring::AdminStatusCodes(0)),
   m_status(castor::stager::FileSystemStatusCodes(0)) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::monitoring::admin::FileSystemAdminReport::~FileSystemAdminReport() throw() {
-};
+}
 
 //------------------------------------------------------------------------------
 // print

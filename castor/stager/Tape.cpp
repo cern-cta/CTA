@@ -54,7 +54,7 @@ castor::stager::Tape::Tape() throw() :
   m_id(0),
   m_stream(0),
   m_status(TapeStatusCodes(0)) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -72,7 +72,7 @@ castor::stager::Tape::~Tape() throw() {
     delete m_segmentsVector[i];
   }
   m_segmentsVector.clear();
-};
+}
 
 //------------------------------------------------------------------------------
 // print

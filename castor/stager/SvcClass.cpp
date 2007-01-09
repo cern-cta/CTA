@@ -51,7 +51,7 @@ castor::stager::SvcClass::SvcClass() throw() :
   m_migratorPolicy(""),
   m_recallerPolicy(""),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -65,7 +65,7 @@ castor::stager::SvcClass::~SvcClass() throw() {
     m_diskPoolsVector[i]->removeSvcClasses(this);
   }
   m_diskPoolsVector.clear();
-};
+}
 
 //------------------------------------------------------------------------------
 // print
