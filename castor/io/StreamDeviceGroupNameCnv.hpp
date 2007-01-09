@@ -138,8 +138,8 @@ namespace castor {
 
     }; // end of class StreamDeviceGroupNameCnv
 
-  }; // end of namespace io
+  } // end of namespace io
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_IO_DEVICEGROUPNAME_HPP

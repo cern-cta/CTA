@@ -139,8 +139,8 @@ namespace castor {
 
     }; // end of class StreamDiskPoolQueryResponseCnv
 
-  }; // end of namespace io
+  } // end of namespace io
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_IO_DISKPOOLQUERYRESPONSE_HPP

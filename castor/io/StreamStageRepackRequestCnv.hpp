@@ -139,8 +139,8 @@ namespace castor {
 
     }; // end of class StreamStageRepackRequestCnv
 
-  }; // end of namespace io
+  } // end of namespace io
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_IO_STAGEREPACKREQUEST_HPP

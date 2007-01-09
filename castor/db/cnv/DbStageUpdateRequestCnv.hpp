@@ -47,7 +47,7 @@ namespace castor {
     // Forward declarations
     class StageUpdateRequest;
 
-  }; // end of namespace stager
+  } // end of namespace stager
 
   namespace db {
 
@@ -314,10 +314,10 @@ namespace castor {
 
       }; // end of class DbStageUpdateRequestCnv
 
-    }; // end of namespace cnv
+    } // end of namespace cnv
 
-  }; // end of namespace db
+  } // end of namespace db
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_DB_CNV_STAGEUPDATEREQUEST_HPP

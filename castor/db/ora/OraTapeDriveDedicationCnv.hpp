@@ -47,7 +47,7 @@ namespace castor {
     // Forward declarations
     class TapeDriveDedication;
 
-  }; // end of namespace vdqm
+  } // end of namespace vdqm
 
   namespace db {
 
@@ -251,10 +251,10 @@ namespace castor {
 
       }; // end of class OraTapeDriveDedicationCnv
 
-    }; // end of namespace ora
+    } // end of namespace ora
 
-  }; // end of namespace db
+  } // end of namespace db
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_DB_ORA_TAPEDRIVEDEDICATION_HPP

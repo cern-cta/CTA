@@ -47,7 +47,7 @@ namespace castor {
     // Forward declarations
     class DiskPoolQuery;
 
-  }; // end of namespace query
+  } // end of namespace query
 
   namespace db {
 
@@ -278,10 +278,10 @@ namespace castor {
 
       }; // end of class OraDiskPoolQueryCnv
 
-    }; // end of namespace ora
+    } // end of namespace ora
 
-  }; // end of namespace db
+  } // end of namespace db
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_DB_ORA_DISKPOOLQUERY_HPP

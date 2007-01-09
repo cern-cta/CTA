@@ -138,8 +138,8 @@ namespace castor {
 
     }; // end of class StreamMessageAckCnv
 
-  }; // end of namespace io
+  } // end of namespace io
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_IO_MESSAGEACK_HPP

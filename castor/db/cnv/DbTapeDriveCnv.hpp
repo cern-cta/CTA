@@ -47,7 +47,7 @@ namespace castor {
     // Forward declarations
     class TapeDrive;
 
-  }; // end of namespace vdqm
+  } // end of namespace vdqm
 
   namespace db {
 
@@ -463,10 +463,10 @@ namespace castor {
 
       }; // end of class DbTapeDriveCnv
 
-    }; // end of namespace cnv
+    } // end of namespace cnv
 
-  }; // end of namespace db
+  } // end of namespace db
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_DB_CNV_TAPEDRIVE_HPP

@@ -214,10 +214,10 @@ namespace castor {
 
       }; // end of class DbBaseAddressCnv
 
-    }; // end of namespace cnv
+    } // end of namespace cnv
 
-  }; // end of namespace db
+  } // end of namespace db
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_DB_CNV_BASEADDRESS_HPP

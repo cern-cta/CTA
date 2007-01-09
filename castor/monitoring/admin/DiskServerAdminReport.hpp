@@ -183,10 +183,10 @@ namespace castor {
 
       }; // end of class DiskServerAdminReport
 
-    }; // end of namespace admin
+    } // end of namespace admin
 
-  }; // end of namespace monitoring
+  } // end of namespace monitoring
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_MONITORING_ADMIN_DISKSERVERADMINREPORT_HPP

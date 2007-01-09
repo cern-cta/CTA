@@ -215,10 +215,10 @@ namespace castor {
 
       }; // end of class OraClientIdentificationCnv
 
-    }; // end of namespace ora
+    } // end of namespace ora
 
-  }; // end of namespace db
+  } // end of namespace db
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_DB_ORA_CLIENTIDENTIFICATION_HPP

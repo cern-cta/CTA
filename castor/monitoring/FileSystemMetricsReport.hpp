@@ -290,8 +290,8 @@ namespace castor {
 
     }; // end of class FileSystemMetricsReport
 
-  }; // end of namespace monitoring
+  } // end of namespace monitoring
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_MONITORING_FILESYSTEMMETRICSREPORT_HPP

@@ -47,7 +47,7 @@ namespace castor {
     // Forward declarations
     class QueryParameter;
 
-  }; // end of namespace stager
+  } // end of namespace stager
 
   namespace db {
 
@@ -245,10 +245,10 @@ namespace castor {
 
       }; // end of class OraQueryParameterCnv
 
-    }; // end of namespace ora
+    } // end of namespace ora
 
-  }; // end of namespace db
+  } // end of namespace db
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_DB_ORA_QUERYPARAMETER_HPP

@@ -138,8 +138,8 @@ namespace castor {
 
     }; // end of class StreamEndResponseCnv
 
-  }; // end of namespace io
+  } // end of namespace io
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_IO_ENDRESPONSE_HPP

@@ -47,7 +47,7 @@ namespace castor {
     // Forward declarations
     class Disk2DiskCopyDoneRequest;
 
-  }; // end of namespace stager
+  } // end of namespace stager
 
   namespace db {
 
@@ -279,10 +279,10 @@ namespace castor {
 
       }; // end of class DbDisk2DiskCopyDoneRequestCnv
 
-    }; // end of namespace cnv
+    } // end of namespace cnv
 
-  }; // end of namespace db
+  } // end of namespace db
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // CASTOR_DB_CNV_DISK2DISKCOPYDONEREQUEST_HPP
