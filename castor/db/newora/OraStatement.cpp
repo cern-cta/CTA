@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/08/02 13:23:40 $ $Author: itglp $
+ * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/01/09 17:26:09 $ $Author: itglp $
  *
  * 
  *
@@ -71,7 +71,7 @@ void castor::db::ora::OraStatement::setDouble(int pos, double value)
 
 
 void castor::db::ora::OraStatement::registerOutParam(int pos, int dbType)
-throw (castor::exception::Exception) {
+throw (castor::exception::SQLError) {
     oracle::occi::Type oraType;
     if(dbType == castor::db::DBTYPE_INT)
         oraType = oracle::occi::OCCIINT;
@@ -118,7 +118,7 @@ double castor::db::ora::OraStatement::getDouble(int pos)
 
     
 castor::db::IDbResultSet* castor::db::ora::OraStatement::executeQuery()
-throw (castor::exception::Exception) {
+throw (castor::exception::SQLError) {
   try {
     return new castor::db::ora::OraResultSet(m_statement->executeQuery(), m_statement);
   } catch(oracle::occi::SQLException e) {
@@ -133,7 +133,7 @@ throw (castor::exception::Exception) {
 }
 
 int castor::db::ora::OraStatement::execute()
-throw (castor::exception::Exception) {
+throw (castor::exception::SQLError) {
   try {
     return m_statement->executeUpdate();
   } catch(oracle::occi::SQLException e) {

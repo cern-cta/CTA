@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/01/20 15:28:58 $ $Author: itglp $
+ * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/01/09 17:26:09 $ $Author: itglp $
  *
  * 
  *
@@ -64,7 +64,7 @@ class OraStatement : public virtual castor::db::IDbStatement {
     virtual void setDouble(int pos, double value);
     
     virtual void registerOutParam(int pos, int dbType)
-      throw (castor::exception::Exception);
+      throw (castor::exception::SQLError);
 
     virtual int getInt(int pos);
     virtual u_signed64 getInt64(int pos);
@@ -76,10 +76,10 @@ class OraStatement : public virtual castor::db::IDbStatement {
      * 
      */
     virtual IDbResultSet* executeQuery()
-	  throw (castor::exception::Exception);
+	  throw (castor::exception::SQLError);
       
     virtual int execute()
-	  throw (castor::exception::Exception);
+	  throw (castor::exception::SQLError);
 
     inline oracle::occi::Statement* getStatementImpl() {
       return m_statement;

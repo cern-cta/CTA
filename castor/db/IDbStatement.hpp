@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/12/20 09:03:52 $ $Author: itglp $
+ * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/01/09 17:26:09 $ $Author: itglp $
  *
  * 
  *
@@ -30,7 +30,7 @@
 #include <string>
 #include "osdep.h"
 #include "castor/db/IDbResultSet.hpp"
-#include "castor/exception/Exception.hpp"
+#include "castor/exception/SQLError.hpp"
 
 namespace castor {
 
@@ -60,7 +60,7 @@ class IDbStatement {
     virtual void setDouble(int pos, double value) = 0;
     
     virtual void registerOutParam(int pos, int dbType)
-      throw (castor::exception::Exception) = 0;
+      throw (castor::exception::SQLError) = 0;
 
     virtual int getInt(int pos) = 0;
     virtual u_signed64 getInt64(int pos) = 0;
@@ -72,13 +72,13 @@ class IDbStatement {
      * 
      */
     virtual castor::db::IDbResultSet* executeQuery()
-	  throw (castor::exception::Exception) = 0;
+	  throw (castor::exception::SQLError) = 0;
 
     /**
      * 
      */
     virtual int execute()
-	  throw (castor::exception::Exception) = 0;
+	  throw (castor::exception::SQLError) = 0;
 
 };
 
