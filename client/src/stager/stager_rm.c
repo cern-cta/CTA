@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_rm.c,v $ $Revision: 1.3 $ $Release$ $Date: 2006/07/05 14:38:31 $ $Author: riojac3 $
+ * @(#)$RCSfile: stager_rm.c,v $ $Revision: 1.4 $ $Release$ $Date: 2007/01/09 16:37:18 $ $Author: sponcec3 $
  *
  * command line for stager_rm
  *
@@ -116,7 +116,7 @@ int cmd_parse(int argc,
   }
 
   /* Creating the structure for files */
-  if (nbreqs > 0) {
+  if (*nbreqs > 0) {
     create_filereq(reqs, *nbreqs);
   }
 
