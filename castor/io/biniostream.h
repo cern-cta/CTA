@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: biniostream.h,v $ $Revision: 1.7 $ $Release$ $Date: 2005/10/03 13:30:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: biniostream.h,v $ $Revision: 1.8 $ $Release$ $Date: 2007/01/09 16:40:14 $ $Author: sponcec3 $
  *
  *
  *
@@ -142,6 +142,16 @@ namespace castor {
 
       biniostream& operator<< (u_signed64 d) {
         //write((char*)&d, sizeof(u_signed64));
+        
+        unsigned long n = (unsigned long)d;   // Least significant part first
+        write((char*)&n, LONGSIZE);
+        n = htoinl((unsigned long)(d >> 32));
+        write((char*)&n, LONGSIZE);
+        return *this;
+      }
+
+      biniostream& operator<< (signed64 d) {
+        //write((char*)&d, sizeof(signed64));
         unsigned long n = (unsigned long)d;   // Least significant part first
         write((char*)&n, LONGSIZE);
         n = htoinl((unsigned long)(d >> 32));
@@ -236,6 +246,17 @@ namespace castor {
 
       biniostream& operator>> (u_signed64& d) {
         //read((char*)&d, sizeof(u_signed64));
+        unsigned int n;
+        read((char*)&n, LONGSIZE);
+        d = intohl((unsigned int)n);     // Least Significant part first
+        read((char*)&n, LONGSIZE);
+        n = intohl((unsigned int)n);
+        d += (u_signed64)n << 32; 
+        return *this;
+      }
+      
+      biniostream& operator>> (signed64& d) {
+        //read((char*)&d, sizeof(signed64));
         unsigned int n;
         read((char*)&n, LONGSIZE);
         d = intohl((unsigned int)n);     // Least Significant part first
