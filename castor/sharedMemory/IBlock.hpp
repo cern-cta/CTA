@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IBlock.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/11/03 11:08:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IBlock.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/01/09 16:18:35 $ $Author: sponcec3 $
  *
  * abstract interface for a block of shared memory
  *
@@ -39,6 +39,11 @@ namespace castor {
     class IBlock {
 
     public:
+
+      /**
+       * virtual destructor
+       */
+      virtual ~IBlock() {};
 
       /**
        * allocates a new chunk of memory
