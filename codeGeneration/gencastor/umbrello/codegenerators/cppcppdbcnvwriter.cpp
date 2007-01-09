@@ -1055,7 +1055,7 @@ void CppCppDbCnvWriter::writeReset() {
   }
   m_indent--;
   *m_stream << getIndent()
-            << "} catch (castor::exception::SQLError ignored) {};"
+            << "} catch (castor::exception::Exception ignored) {};"
             << endl << getIndent()
             << "// Now reset all pointers to 0"
             << endl << getIndent()
@@ -2974,7 +2974,7 @@ void CppCppDbCnvWriter::printSQLError(QString name,
             << getIndent()
             << "try { cnvSvc()->rollback(); }"
             << endl << getIndent()
-            << "catch(castor::exception::SQLError ignored) {}"
+            << "catch(castor::exception::Exception ignored) {}"
             << endl << getIndent()
             << fixTypeName("InvalidArgument",
                            "castor.exception",
