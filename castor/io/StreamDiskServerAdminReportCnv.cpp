@@ -40,7 +40,7 @@
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/monitoring/AdminStatusCodes.hpp"
-#include "castor/monitoring/DiskServerAdminReport.hpp"
+#include "castor/monitoring/admin/DiskServerAdminReport.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "osdep.h"
 #include <string>
@@ -67,7 +67,7 @@ castor::io::StreamDiskServerAdminReportCnv::~StreamDiskServerAdminReportCnv() th
 // ObjType
 //------------------------------------------------------------------------------
 const unsigned int castor::io::StreamDiskServerAdminReportCnv::ObjType() {
-  return castor::monitoring::DiskServerAdminReport::TYPE();
+  return castor::monitoring::admin::DiskServerAdminReport::TYPE();
 }
 
 //------------------------------------------------------------------------------
@@ -85,8 +85,8 @@ void castor::io::StreamDiskServerAdminReportCnv::createRep(castor::IAddress* add
                                                            bool autocommit,
                                                            unsigned int type)
   throw (castor::exception::Exception) {
-  castor::monitoring::DiskServerAdminReport* obj = 
-    dynamic_cast<castor::monitoring::DiskServerAdminReport*>(object);
+  castor::monitoring::admin::DiskServerAdminReport* obj = 
+    dynamic_cast<castor::monitoring::admin::DiskServerAdminReport*>(object);
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
@@ -104,7 +104,7 @@ castor::IObject* castor::io::StreamDiskServerAdminReportCnv::createObj(castor::I
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   // create the new Object
-  castor::monitoring::DiskServerAdminReport* object = new castor::monitoring::DiskServerAdminReport();
+  castor::monitoring::admin::DiskServerAdminReport* object = new castor::monitoring::admin::DiskServerAdminReport();
   // Now retrieve and set members
   std::string diskServerName;
   ad->stream() >> diskServerName;
@@ -128,8 +128,8 @@ void castor::io::StreamDiskServerAdminReportCnv::marshalObject(castor::IObject* 
                                                                castor::io::StreamAddress* address,
                                                                castor::ObjectSet& alreadyDone)
   throw (castor::exception::Exception) {
-  castor::monitoring::DiskServerAdminReport* obj = 
-    dynamic_cast<castor::monitoring::DiskServerAdminReport*>(object);
+  castor::monitoring::admin::DiskServerAdminReport* obj = 
+    dynamic_cast<castor::monitoring::admin::DiskServerAdminReport*>(object);
   if (0 == obj) {
     // Case of a null pointer
     address->stream() << castor::OBJ_Ptr << ((unsigned int)0);
