@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamPtrCnv.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/05 17:47:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamPtrCnv.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/01/10 16:29:16 $ $Author: sponcec3 $
  *
  *
  *
@@ -134,8 +134,8 @@ namespace castor {
 
     }; // end of class StreamFileCnv
 
-  }; // end of namespace io
+  } // end of namespace io
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // IO_STREAMPTRCNV_HPP
