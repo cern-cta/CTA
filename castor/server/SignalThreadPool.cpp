@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/10/03 14:08:01 $ $Author: felixehm $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/01/10 16:53:37 $ $Author: sponcec3 $
  *
  *
  *
@@ -42,7 +42,7 @@ castor::server::SignalThreadPool::SignalThreadPool(const std::string poolName,
                                  const int notifPort,
                                  const int timeout) :
   BaseThreadPool(poolName, new castor::server::ServiceThread(thread)),
-  m_notifPort(notifPort), m_timeout(timeout) {}
+  m_timeout(timeout), m_notifPort(notifPort) {}
 
 //------------------------------------------------------------------------------
 // destructor

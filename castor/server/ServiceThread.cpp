@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServiceThread.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
+ * @(#)$RCSfile: ServiceThread.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/01/10 16:53:37 $ $Author: sponcec3 $
  *
  *
  *
@@ -32,15 +32,12 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::server::ServiceThread::ServiceThread(IThread* userThread) :
-  m_userThread(userThread), m_owner(0)
-{
-};
+  m_owner(0), m_userThread(userThread) {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::server::ServiceThread::~ServiceThread() throw()
-{
+castor::server::ServiceThread::~ServiceThread() throw() {
   if(m_userThread) {
     delete m_userThread;
     m_userThread = 0;
@@ -50,8 +47,7 @@ castor::server::ServiceThread::~ServiceThread() throw()
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::server::ServiceThread::run(void* param)
-{
+void castor::server::ServiceThread::run(void* param) {
   if (m_userThread == 0) {
     serrno = EINVAL;
     return;

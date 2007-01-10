@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServiceThread.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/02/20 14:39:14 $ $Author: itglp $
+ * @(#)$RCSfile: ServiceThread.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/01/10 16:53:37 $ $Author: sponcec3 $
  *
  *
  *
@@ -55,7 +55,7 @@ namespace castor {
     /**
      * Destructor
      */
-    ~ServiceThread() throw();
+    virtual ~ServiceThread() throw();
 
     /**
      * Main work for this thread.
