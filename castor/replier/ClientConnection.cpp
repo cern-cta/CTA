@@ -67,7 +67,7 @@ castor::replier::ClientConnection::ClientConnection() throw() :
     char *func = "cc::ClientConnection ";
     m_clientStr = buildClientStr(m_client);
     clog() << VERBOSE << SETW func  << this->toString() << " created" << std::endl;
-};
+}
 
 castor::replier::ClientConnection::ClientConnection(ClientResponse cr) throw() :
   BaseObject(), m_client(cr.client), m_messages(), m_fd(-1),
@@ -81,7 +81,7 @@ castor::replier::ClientConnection::ClientConnection(ClientResponse cr) throw() :
     clog() << VERBOSE << SETW func  << this->toString() << " created and added msg:" 
 	   << cr.messageId
 	   << std::endl;
-};
+}
 
 void castor::replier::ClientConnection::addMessage(ClientResponse cr) throw() {
   char *func = "cc::addMessage ";
@@ -327,7 +327,7 @@ void castor::replier::ClientConnection::send()
   }
 
   unsigned int len =  response->str().length();
-  int buflen = 2*sizeof(int) + len;
+  size_t buflen = 2*sizeof(int) + len;
   char *buf = new char[buflen];
   char *p = buf;
 
@@ -337,8 +337,6 @@ void castor::replier::ClientConnection::send()
   memcpy(p, &len, sizeof(int));
   p+=  sizeof(int);
   memcpy(p, response->str().data(), len);
-
-  char *pc = (char *)buf;
 
   size_t written = 0;
 #if !defined(_WIN32)

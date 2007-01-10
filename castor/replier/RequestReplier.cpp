@@ -184,7 +184,7 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
 
   int pollRc;
   const int pollTimeout = 5;
-  int nbPollFd = 1000;
+  unsigned int nbPollFd = 1000;
   struct ::pollfd *toPoll = new struct ::pollfd[nbPollFd];
 
   char *func = "rr::replierThread ";
@@ -292,8 +292,8 @@ void castor::replier::RequestReplier::createNewClientConnection(ClientResponse c
 
   // Looking in the hash of client to find if there is one already established
   ClientConnection *r = 0;
-  const int newhost = cr.client.ipAddress();
-  const int newport = cr.client.port();
+  const unsigned long newhost = cr.client.ipAddress();
+  const unsigned short newport = cr.client.port();
 
   for(std::map<int, ClientConnection *>::iterator iter = m_connections->begin();
       iter != m_connections->end();
@@ -380,7 +380,6 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
     if ((*iter).second->getStatus() == DONE_FAILURE) {
       // This connection was a failure
       toremove.push(cc->fd());
-      unsigned long ip = cc->client().ipAddress();
       clog() << DEBUG << SETW func  <<  cc->toString() << " in DONE_FAILURE - to remove" << std::endl;
       if (m_connectionStatusCallback) {
         m_connectionStatusCallback(&client, MCS_FAILURE);
@@ -391,7 +390,6 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
 
       // Terminating requestreplier
       toremove.push(cc->fd());
-      unsigned long ip = cc->client().ipAddress();
       clog() << DEBUG << SETW func  <<  cc->toString()
              << " terminate:true and no more messages - to remove" << std::endl;
 
@@ -403,7 +401,6 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
 
       // Terminating requestreplier
       toremove.push(cc->fd());
-      unsigned long ip = cc->client().ipAddress();
       clog() << DEBUG << SETW func  <<  cc->toString()
              << " inactive for " << (t - cc->lastEventDate()) << " s >" << TIMEOUT
              << std::endl;
