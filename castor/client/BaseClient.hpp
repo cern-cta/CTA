@@ -57,7 +57,7 @@ namespace castor {
     /**
      * Constants
      */
-    extern const char* HOST_ENV;;
+    extern const char* HOST_ENV;
     extern const char* HOST_ENV_ALT;
     extern const char* PORT_ENV;
     extern const char* PORT_ENV_ALT;
@@ -110,7 +110,7 @@ namespace castor {
       /**
        * Sets the authorization ID under which the request should be sent.
        */
-      int setAuthorizationId(uid_t uid, gid_t gid) throw();
+      void setAuthorizationId(uid_t uid, gid_t gid) throw();
 
     //protected:
 

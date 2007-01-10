@@ -139,7 +139,7 @@ void DLL_DECL BaseClient_util_time(time_t then, char *timestr) {
 // constructor
 //------------------------------------------------------------------------------
 castor::client::BaseClient::BaseClient(int acceptTimeout) throw() :
-  BaseObject(), m_callbackSocket(0), m_rhPort(-1), m_requestId(""),
+  BaseObject(), m_rhPort(-1), m_callbackSocket(0), m_requestId(""),
   m_acceptTimeout(acceptTimeout),  m_hasAuthorizationId(false), m_authUid(0), 
   m_authGid(0) {}
 
@@ -151,7 +151,7 @@ castor::client::BaseClient::~BaseClient() throw() {
 }
 
 //------------------------------------------------------------------------------
-// run
+// sendrequest
 //------------------------------------------------------------------------------
 std::string castor::client::BaseClient::sendRequest
 (castor::stager::Request* req,
@@ -194,7 +194,7 @@ castor::IClient* castor::client::BaseClient::createClient()
 }
 
 //------------------------------------------------------------------------------
-// sendRequest
+// internalSendRequest
 //------------------------------------------------------------------------------
 std::string castor::client::BaseClient::internalSendRequest(castor::stager::Request& request)
   throw (castor::exception::Exception) {
@@ -302,7 +302,7 @@ castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
       e.getMessage() << "Accept timeout";
       throw e;
     } else if (rc < 0) {
-      if (errno = EINTR) {
+      if (errno == EINTR) {
         continue;
       }
       castor::exception::Communication e(requestId(), errno); // XXX To be changed
@@ -462,7 +462,7 @@ std::string castor::client::BaseClient::requestId() {
 //------------------------------------------------------------------------------
 // setAutorizationId
 //------------------------------------------------------------------------------
-int castor::client::BaseClient::setAuthorizationId(uid_t uid, gid_t gid) throw() {
+void castor::client::BaseClient::setAuthorizationId(uid_t uid, gid_t gid) throw() {
   m_authUid = uid;
   m_authGid = gid;
   m_hasAuthorizationId = true;

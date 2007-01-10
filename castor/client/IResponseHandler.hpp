@@ -44,6 +44,11 @@ namespace castor {
     public:
       
       /**
+       * default destructor
+       */
+      virtual ~IResponseHandler() {}
+
+      /**
        * handles a response when one arrives
        * @param r the response to handle
        */
