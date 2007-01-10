@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2006/05/02 10:01:18 $ $Author: itglp $
+ * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2007/01/10 16:02:51 $ $Author: sponcec3 $
  *
  *
  *
@@ -127,7 +127,7 @@ castor::IConverter* castor::BaseCnvSvc::converter
                  << objType << " and representation type "
                  << repType();
   throw e;
-};
+}
 
 // -----------------------------------------------------------------------
 // createRep

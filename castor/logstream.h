@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.h,v $ $Revision: 1.18 $ $Release$ $Date: 2005/10/21 09:57:36 $ $Author: jdurand $
+ * @(#)$RCSfile: logstream.h,v $ $Revision: 1.19 $ $Release$ $Date: 2007/01/10 16:02:52 $ $Author: sponcec3 $
  *
  * A generic logstream for castor, handling IP addresses
  * and timestamps
@@ -257,27 +257,27 @@ namespace castor {
    * Manipulators that allow to set the priority
    * of the next messages given to a logstream
    */
-  MANIPULATOR(EMERGENCY);
-  MANIPULATOR(ALERT);
+  MANIPULATOR(EMERGENCY)
+  MANIPULATOR(ALERT)
 #ifdef _WIN32
   /* On VC7 (.NET) ERROR will expand to 0 */
 #ifdef ERROR
 #undef ERROR
 #endif
 #endif
-  MANIPULATOR(ERROR);
-  MANIPULATOR(WARNING);
-  MANIPULATOR(AUTH);
-  MANIPULATOR(SECURITY);
-  MANIPULATOR(USAGE);
-  MANIPULATOR(SYSTEM);
-  MANIPULATOR(IMPORTANT);
-  MANIPULATOR(DEBUG);
-  MANIPULATOR(VERBOSE);
+  MANIPULATOR(ERROR)
+  MANIPULATOR(WARNING)
+  MANIPULATOR(AUTH)
+  MANIPULATOR(SECURITY)
+  MANIPULATOR(USAGE)
+  MANIPULATOR(SYSTEM)
+  MANIPULATOR(IMPORTANT)
+  MANIPULATOR(DEBUG)
+  MANIPULATOR(VERBOSE)
 
-  MANIPULATOR(ip);
-  MANIPULATOR(trace);
-  MANIPULATOR(timeStamp);
+  MANIPULATOR(ip)
+  MANIPULATOR(trace)
+  MANIPULATOR(timeStamp)
 
 } // End of namespace Castor
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2005/08/22 15:22:12 $ $Author: itglp $
+ * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/01/10 16:02:51 $ $Author: sponcec3 $
  *
  * 
  *
@@ -100,7 +100,7 @@ castor::Services* castor::BaseObject::services()
     *tls = (void *)(new castor::Services());
   }
   return (castor::Services*) *tls;
-};
+}
 
 //------------------------------------------------------------------------------
 // getTLS

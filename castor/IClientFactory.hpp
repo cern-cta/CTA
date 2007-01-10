@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IClientFactory.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/16 11:01:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IClientFactory.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/01/10 16:02:52 $ $Author: sponcec3 $
  *
  * 
  *
@@ -70,6 +70,6 @@ namespace castor {
 
     }; // end of class IClientFactory
 
-}; // end of namespace castor
+} // end of namespace castor
 
 #endif // RH_CLIENTFACTORY_HPP
