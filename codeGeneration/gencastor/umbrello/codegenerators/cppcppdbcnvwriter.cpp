@@ -2945,7 +2945,7 @@ QString CppCppDbCnvWriter::getPgSQLType(QString& type) {
       SQLType == "bool" ||
       SQLType == "int") {
     SQLType = "INT4";
-  } else if ((type == "u_signed64") || (type == "u_signed64")) {
+  } else if ((type == "u_signed64") || (type == "signed64")) {
     SQLType = "INT8";
   } else if (SQLType == "string") {
     SQLType = "VARCHAR(2048)";
