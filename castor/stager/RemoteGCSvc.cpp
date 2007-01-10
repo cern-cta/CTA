@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2006/04/19 15:01:45 $ $Author: gtaur $
+ * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/01/10 17:08:36 $ $Author: sponcec3 $
  *
  *
  *
@@ -186,7 +186,7 @@ int castor::stager::RemoteGCSvc::getRemoteGCClientTimeout() {
 				0);
   if (strtimeout != 0) {
     char* dp = strtimeout;
-    int itimeout = strtoul(strtimeout, &dp, 0);
+    ret_timeout = strtoul(strtimeout, &dp, 0);
     if (*dp != 0) {
       castor::exception::Exception e(errno);
       e.getMessage() << "Bad RemoteGCSvc timeout value:" << strtimeout << std::endl;
