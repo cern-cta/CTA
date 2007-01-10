@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.362 $ $Release$ $Date: 2006/12/22 14:37:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.363 $ $Release$ $Date: 2007/01/10 09:43:37 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.362 $ $Date: 2006/12/22 14:37:24 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.363 $ $Date: 2007/01/10 09:43:37 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -97,6 +97,7 @@ ALTER TABLE FileSystem ADD CONSTRAINT diskserver_fk FOREIGN KEY (diskServer) REF
 ALTER TABLE FileSystem MODIFY (status NOT NULL);
 ALTER TABLE FileSystem MODIFY (diskServer NOT NULL);
 ALTER TABLE DiskServer MODIFY (status NOT NULL);
+ALTER TABLE SvcClass MODIFY (name NOT NULL);
 
 /* enable row movements in Diskcopy, TapeCopy, and SubRequest */
 ALTER TABLE DiskCopy ENABLE ROW MOVEMENT;
@@ -116,7 +117,10 @@ ALTER TABLE FileClass ADD UNIQUE (name);
 ALTER TABLE CastorFile ADD UNIQUE (fileId, nsHost); 
 
 /* Add unique constraint on tapes */
-ALTER TABLE Tape ADD UNIQUE (VID, side, tpMode); 
+ALTER TABLE Tape ADD UNIQUE (VID, side, tpMode);
+
+/* Add unique constraint on svcClass name */
+ALTER TABLE SvcClass ADD CONSTRAINT SvcClass_Name_UK UNIQUE (NAME); 
 
 /* the primary key in this table allows for materialized views */
 ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT pk_DiskPool2SvcClass PRIMARY KEY (parent, child);
