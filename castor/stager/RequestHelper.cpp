@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestHelper.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/12/14 15:02:41 $ $Author: itglp $
+ * @(#)$RCSfile: RequestHelper.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/01/10 17:10:15 $ $Author: sponcec3 $
  *
  * 
  *
@@ -39,12 +39,12 @@ const char *castor::stager::SVCCLASS_ENV_ALT = "SVCCLASS";
 //------------------------------------------------------------------------------
 castor::stager::RequestHelper::RequestHelper(castor::stager::Request* req) throw() :
   m_request(req) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::stager::RequestHelper::~RequestHelper() throw() {};
+castor::stager::RequestHelper::~RequestHelper() throw() {}
 
 //------------------------------------------------------------------------------
 // setOptions

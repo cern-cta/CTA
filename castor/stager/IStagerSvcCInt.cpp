@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.57 $ $Release$ $Date: 2006/11/30 15:38:41 $ $Author: felixehm $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.58 $ $Release$ $Date: 2007/01/10 17:10:15 $ $Author: sponcec3 $
  *
  *
  *
@@ -94,7 +94,7 @@ extern "C" {
       return -1;
     }
     return 0;
-  };
+  }
 
   //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_isSubRequestToSchedule
