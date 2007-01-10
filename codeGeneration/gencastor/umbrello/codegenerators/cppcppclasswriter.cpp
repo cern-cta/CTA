@@ -158,7 +158,7 @@ void CppCppClassWriter::writeConstructorMethods(QTextStream &stream) {
     }
   }
   m_indent--;
-  stream << "};" << endl << endl;
+  stream << "}" << endl << endl;
   // write destructor
   writeWideHeaderComment("Destructor", getIndent(), stream);
   stream << getIndent() << m_classInfo->fullPackageName
@@ -183,7 +183,7 @@ void CppCppClassWriter::writeConstructorMethods(QTextStream &stream) {
     writeAssocDeleteInDestructor(a);
   }
   m_indent--;
-  stream << "};" << endl << endl;
+  stream << "}" << endl << endl;
 }
 
 
