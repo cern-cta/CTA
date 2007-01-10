@@ -48,9 +48,7 @@ namespace castor {
     OBJ_DiskFile = 6,
     OBJ_DiskPool = 7,
     OBJ_DiskServer = 8,
-    OBJ_OldEndResponse = 9,
     OBJ_FileClass = 10,
-    OBJ_OldFileResponse = 11,
     OBJ_FileSystem = 12,
     OBJ_IClient = 13,
     OBJ_MessageAck = 14,
@@ -64,7 +62,6 @@ namespace castor {
     OBJ_Tape = 29,
     OBJ_TapeCopy = 30,
     OBJ_TapePool = 31,
-    OBJ_OldStringResponse = 32,
     OBJ_StageFileQueryRequest = 33,
     OBJ_StageFindRequestRequest = 34,
     OBJ_StageGetRequest = 35,
@@ -83,30 +80,20 @@ namespace castor {
     OBJ_StageUpdateNextRequest = 49,
     OBJ_StageAbortRequest = 50,
     OBJ_StageReleaseFilesRequest = 51,
-    OBJ_OldResponse = 52,
-    OBJ_OldIOResponse = 53,
-    OBJ_OldAbortResponse = 54,
-    OBJ_OldRequestQueryResponse = 55,
-    OBJ_OldFileQueryResponse = 56,
-    OBJ_OldFindReqResponse = 57,
     OBJ_DiskCopyForRecall = 58,
     OBJ_TapeCopyForMigration = 59,
     OBJ_GetUpdateStartRequest = 60,
-    OBJ_OldGetUpdateStartResponse = 61,
     OBJ_BaseAddress = 62,
-    OBJ_OldBasicResponse = 63,
     OBJ_Disk2DiskCopyDoneRequest = 64,
     OBJ_MoverCloseRequest = 65,
     OBJ_StartRequest = 66,
     OBJ_PutStartRequest = 67,
-    OBJ_OldStartResponse = 68,
     OBJ_IObject = 69,
     OBJ_IAddress = 70,
     OBJ_QueryParameter = 71,
     OBJ_DiskCopyInfo = 72,
     OBJ_Files2Delete = 73,
     OBJ_FilesDeleted = 74,
-    OBJ_OldGCFilesResponse = 75,
     OBJ_GCLocalFile = 76,
     OBJ_GetUpdateDone = 78,
     OBJ_GetUpdateFailed = 79,
@@ -127,14 +114,12 @@ namespace castor {
     OBJ_TapeDriveCompatibility = 92,
 
     OBJ_PutDoneStart = 93,
-    OBJ_OldFileQryResponse = 94,
     OBJ_SetFileGCWeight = 95,
     OBJ_RepackRequest = 96,
     OBJ_RepackSubRequest = 97,
     OBJ_RepackSegment = 98,
     OBJ_RepackAck = 99,
 
-    OBJ_OldDiskPoolQueryResponse = 100,
     OBJ_DiskServerDescription = 101,
     OBJ_FileSystemDescription = 102,
     OBJ_DiskPoolQuery = 103,
@@ -215,7 +200,8 @@ namespace castor {
 
     SVC_DBSRMSVC = 35,
     SVC_DBSRMDAEMONSVC = 36,
-    SVC_ORACLEANSVC = 37
+    SVC_ORACLEANSVC = 37,
+    SVC_ORARMMASTERSVC = 38
 
 
   };
@@ -250,7 +236,7 @@ namespace castor {
   /**
    * Nb of ServicesIds currently existing
    */
-  static const unsigned int ServicesIdsNb = 38;
+  static const unsigned int ServicesIdsNb = 39;
 
   /**
    * Nb of RepresentationsIds currently existing
@@ -267,7 +253,7 @@ namespace castor {
    * Names of the differents Services, used to display
    * correctly the ServicesIds enum
    */
-  extern const char* ServicesIdStrings[38];
+  extern const char* ServicesIdStrings[39];
 
   /**
    * Names of the differents representations, used to display

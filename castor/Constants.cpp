@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2006/12/22 17:26:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2007/01/10 16:22:25 $ $Author: sponcec3 $
  *
  *
  *
@@ -40,9 +40,9 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "DiskFile",
   "DiskPool",
   "DiskServer",
-  "OldEndResponse",
+  "DELETED TYPE",
   "FileClass",
-  "OldFileResponse",
+  "DELETED TYPE",
   "FileSystem",
   "IClient",
   "MessageAck",
@@ -63,7 +63,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "Tape",
   "TapeCopy",
   "TapePool",
-  "OldStringResponse",
+  "DELETED TYPE",
   "StageFileQueryRequest",
   "StageFindRequestRequest",
   "StageGetRequest",
@@ -83,30 +83,30 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "StageUpdateNextRequest",
   "StageAbortRequest",
   "StageReleaseFilesRequest",
-  "OldResponse",
-  "OldIOResponse",
-  "OldAbortResponse",
-  "OldRequestQueryResponse",
   "DELETED TYPE",
-  "OldFindReqResponse",
+  "DELETED TYPE",
+  "DELETED TYPE",
+  "DELETED TYPE",
+  "DELETED TYPE",
+  "DELETED TYPE",
   "DiskCopyForRecall",
   "TapeCopyForMigration",
   "GetUpdateStartRequest",
-  "OldGetUpdateStartResponse",
+  "DELETED TYPE",
   "BaseAddress",
-  "OldBasicResponse",
+  "DELETED TYPE",
   "Disk2DiskCopyDoneRequest",
   "MoverCloseRequest",
   "StartRequest",
   "PutStartRequest",
-  "OldStartResponse",
+  "DELETED TYPE",
   "IObject",
   "IAddress",
   "QueryParameter",
   "DiskCopyInfo",
   "Files2Delete",
   "FilesDeleted",
-  "OldGCFilesResponse",
+  "DELETED TYPE",
   "GCLocalFile",
   "DELETED TYPE",
   "GetUpdateDone",
@@ -127,14 +127,14 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "TapeDriveCompatibility",
   
   "PutDoneStart",
-  "OldFileQryResponse",
+  "DELETED TYPE",
   "SetFileGCWeight",
   "RepackRequest",
   "RepackSubRequest",
   "RepackSegment",
   "RepackAck",
 
-  "OldDiskPoolQueryResponse",
+  "DELETED TYPE",
   "DiskServerDescription",
   "FileSystemDescription",
   "DiskPoolQuery",
@@ -211,7 +211,8 @@ const char* castor::ServicesIdStrings[ServicesIdsNb] = {
   
   "DBSRMSVC",
   "DBSRMDAEMONSVC",
-  "ORACLEANSVC"
+  "ORACLEANSVC",
+  "ORARMMASTERSVC"
 
 };
 
