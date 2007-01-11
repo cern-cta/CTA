@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.363 $ $Release$ $Date: 2007/01/10 09:43:37 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.364 $ $Release$ $Date: 2007/01/11 15:18:29 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.363 $ $Date: 2007/01/10 09:43:37 $');
+INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.364 $ $Date: 2007/01/11 15:18:29 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -872,7 +872,7 @@ BEGIN
      AND CastorFile.id = TapeCopy.castorFile
      AND DiskCopy.castorFile = TapeCopy.castorFile
      AND SubRequest.diskcopy(+) = DiskCopy.id
-     AND DiskCopy.status = 2;
+     AND DiskCopy.status = 2; -- DISKCOPY_WAITTAPERECALL
   UPDATE DiskCopy SET status = 4 WHERE id = dci RETURNING fileSystem into fsid; -- DISKCOPY_FAILED
   IF SubRequestId IS NOT NULL THEN
     UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
@@ -2607,8 +2607,8 @@ AS
   SELECT FS.id fsId, DP2SC.child scId,
          FS.mountpoint fsMountPoint, DS.name dsName
     FROM diskpool2svcclass DP2SC, diskserver DS, filesystem FS
-   WHERE FS.status = 0   -- PRODUCTION
-     AND DS.status = 0   -- PRODUCTION
+   WHERE FS.status IN (0,1)   -- PRODUCTION, DRAINING
+     AND DS.status IN (0,1)   -- PRODUCTION, DRAINING
      AND DS.id(+) = FS.diskServer
      AND DP2SC.parent(+) = FS.diskPool;
 */
