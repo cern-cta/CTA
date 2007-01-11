@@ -300,7 +300,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillRepTape(castor::vdqm::TapeRequest* o
       m_checkTapeExistStatement = createStatement(s_checkTapeExistStatementString);
     }
     // retrieve the object from the database
-    m_checkTapeExistStatement->setInt64(1, obj->tape()->id());
+    m_checkTapeExistStatement->setUInt64(1, obj->tape()->id());
     castor::db::IDbResultSet *rset = m_checkTapeExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -316,8 +316,8 @@ void castor::db::cnv::DbTapeRequestCnv::fillRepTape(castor::vdqm::TapeRequest* o
     m_updateTapeStatement = createStatement(s_updateTapeStatementString);
   }
   // Update local object
-  m_updateTapeStatement->setInt64(1, 0 == obj->tape() ? 0 : obj->tape()->id());
-  m_updateTapeStatement->setInt64(2, obj->id());
+  m_updateTapeStatement->setUInt64(1, 0 == obj->tape() ? 0 : obj->tape()->id());
+  m_updateTapeStatement->setUInt64(2, obj->id());
   m_updateTapeStatement->execute();
 }
 
@@ -332,7 +332,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillRepTapeAccessSpecification(castor::v
       m_checkTapeAccessSpecificationExistStatement = createStatement(s_checkTapeAccessSpecificationExistStatementString);
     }
     // retrieve the object from the database
-    m_checkTapeAccessSpecificationExistStatement->setInt64(1, obj->tapeAccessSpecification()->id());
+    m_checkTapeAccessSpecificationExistStatement->setUInt64(1, obj->tapeAccessSpecification()->id());
     castor::db::IDbResultSet *rset = m_checkTapeAccessSpecificationExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -348,8 +348,8 @@ void castor::db::cnv::DbTapeRequestCnv::fillRepTapeAccessSpecification(castor::v
     m_updateTapeAccessSpecificationStatement = createStatement(s_updateTapeAccessSpecificationStatementString);
   }
   // Update local object
-  m_updateTapeAccessSpecificationStatement->setInt64(1, 0 == obj->tapeAccessSpecification() ? 0 : obj->tapeAccessSpecification()->id());
-  m_updateTapeAccessSpecificationStatement->setInt64(2, obj->id());
+  m_updateTapeAccessSpecificationStatement->setUInt64(1, 0 == obj->tapeAccessSpecification() ? 0 : obj->tapeAccessSpecification()->id());
+  m_updateTapeAccessSpecificationStatement->setUInt64(2, obj->id());
   m_updateTapeAccessSpecificationStatement->execute();
 }
 
@@ -364,7 +364,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillRepTapeServer(castor::vdqm::TapeRequ
       m_checkTapeServerExistStatement = createStatement(s_checkTapeServerExistStatementString);
     }
     // retrieve the object from the database
-    m_checkTapeServerExistStatement->setInt64(1, obj->requestedSrv()->id());
+    m_checkTapeServerExistStatement->setUInt64(1, obj->requestedSrv()->id());
     castor::db::IDbResultSet *rset = m_checkTapeServerExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -380,8 +380,8 @@ void castor::db::cnv::DbTapeRequestCnv::fillRepTapeServer(castor::vdqm::TapeRequ
     m_updateTapeServerStatement = createStatement(s_updateTapeServerStatementString);
   }
   // Update local object
-  m_updateTapeServerStatement->setInt64(1, 0 == obj->requestedSrv() ? 0 : obj->requestedSrv()->id());
-  m_updateTapeServerStatement->setInt64(2, obj->id());
+  m_updateTapeServerStatement->setUInt64(1, 0 == obj->requestedSrv() ? 0 : obj->requestedSrv()->id());
+  m_updateTapeServerStatement->setUInt64(2, obj->id());
   m_updateTapeServerStatement->execute();
 }
 
@@ -395,7 +395,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillRepTapeDrive(castor::vdqm::TapeReque
     m_selectTapeDriveStatement = createStatement(s_selectTapeDriveStatementString);
   }
   // retrieve the object from the database
-  m_selectTapeDriveStatement->setInt64(1, obj->id());
+  m_selectTapeDriveStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectTapeDriveStatement->executeQuery();
   if (rset->next()) {
     u_signed64 tapeDriveId = rset->getInt64(1);
@@ -405,7 +405,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillRepTapeDrive(castor::vdqm::TapeReque
       if (0 == m_deleteTapeDriveStatement) {
         m_deleteTapeDriveStatement = createStatement(s_deleteTapeDriveStatementString);
       }
-      m_deleteTapeDriveStatement->setInt64(1, tapeDriveId);
+      m_deleteTapeDriveStatement->setUInt64(1, tapeDriveId);
       m_deleteTapeDriveStatement->execute();
     }
   }
@@ -417,7 +417,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillRepTapeDrive(castor::vdqm::TapeReque
       m_checkTapeDriveExistStatement = createStatement(s_checkTapeDriveExistStatementString);
     }
     // retrieve the object from the database
-    m_checkTapeDriveExistStatement->setInt64(1, obj->tapeDrive()->id());
+    m_checkTapeDriveExistStatement->setUInt64(1, obj->tapeDrive()->id());
     castor::db::IDbResultSet *rset = m_checkTapeDriveExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -430,8 +430,8 @@ void castor::db::cnv::DbTapeRequestCnv::fillRepTapeDrive(castor::vdqm::TapeReque
         m_remoteUpdateTapeDriveStatement = createStatement(s_remoteUpdateTapeDriveStatementString);
       }
       // Update remote object
-      m_remoteUpdateTapeDriveStatement->setInt64(1, obj->id());
-      m_remoteUpdateTapeDriveStatement->setInt64(2, obj->tapeDrive()->id());
+      m_remoteUpdateTapeDriveStatement->setUInt64(1, obj->id());
+      m_remoteUpdateTapeDriveStatement->setUInt64(2, obj->tapeDrive()->id());
       m_remoteUpdateTapeDriveStatement->execute();
     }
     // Close resultset
@@ -442,8 +442,8 @@ void castor::db::cnv::DbTapeRequestCnv::fillRepTapeDrive(castor::vdqm::TapeReque
     m_updateTapeDriveStatement = createStatement(s_updateTapeDriveStatementString);
   }
   // Update local object
-  m_updateTapeDriveStatement->setInt64(1, 0 == obj->tapeDrive() ? 0 : obj->tapeDrive()->id());
-  m_updateTapeDriveStatement->setInt64(2, obj->id());
+  m_updateTapeDriveStatement->setUInt64(1, 0 == obj->tapeDrive() ? 0 : obj->tapeDrive()->id());
+  m_updateTapeDriveStatement->setUInt64(2, obj->id());
   m_updateTapeDriveStatement->execute();
 }
 
@@ -458,7 +458,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillRepDeviceGroupName(castor::vdqm::Tap
       m_checkDeviceGroupNameExistStatement = createStatement(s_checkDeviceGroupNameExistStatementString);
     }
     // retrieve the object from the database
-    m_checkDeviceGroupNameExistStatement->setInt64(1, obj->deviceGroupName()->id());
+    m_checkDeviceGroupNameExistStatement->setUInt64(1, obj->deviceGroupName()->id());
     castor::db::IDbResultSet *rset = m_checkDeviceGroupNameExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -474,8 +474,8 @@ void castor::db::cnv::DbTapeRequestCnv::fillRepDeviceGroupName(castor::vdqm::Tap
     m_updateDeviceGroupNameStatement = createStatement(s_updateDeviceGroupNameStatementString);
   }
   // Update local object
-  m_updateDeviceGroupNameStatement->setInt64(1, 0 == obj->deviceGroupName() ? 0 : obj->deviceGroupName()->id());
-  m_updateDeviceGroupNameStatement->setInt64(2, obj->id());
+  m_updateDeviceGroupNameStatement->setUInt64(1, 0 == obj->deviceGroupName() ? 0 : obj->deviceGroupName()->id());
+  m_updateDeviceGroupNameStatement->setUInt64(2, obj->id());
   m_updateDeviceGroupNameStatement->execute();
 }
 
@@ -490,7 +490,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillRepClientIdentification(castor::vdqm
       m_checkClientIdentificationExistStatement = createStatement(s_checkClientIdentificationExistStatementString);
     }
     // retrieve the object from the database
-    m_checkClientIdentificationExistStatement->setInt64(1, obj->client()->id());
+    m_checkClientIdentificationExistStatement->setUInt64(1, obj->client()->id());
     castor::db::IDbResultSet *rset = m_checkClientIdentificationExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -506,8 +506,8 @@ void castor::db::cnv::DbTapeRequestCnv::fillRepClientIdentification(castor::vdqm
     m_updateClientIdentificationStatement = createStatement(s_updateClientIdentificationStatementString);
   }
   // Update local object
-  m_updateClientIdentificationStatement->setInt64(1, 0 == obj->client() ? 0 : obj->client()->id());
-  m_updateClientIdentificationStatement->setInt64(2, obj->id());
+  m_updateClientIdentificationStatement->setUInt64(1, 0 == obj->client() ? 0 : obj->client()->id());
+  m_updateClientIdentificationStatement->setUInt64(2, obj->id());
   m_updateClientIdentificationStatement->execute();
 }
 
@@ -561,7 +561,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjTape(castor::vdqm::TapeRequest* o
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -599,7 +599,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjTapeAccessSpecification(castor::v
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -637,7 +637,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjTapeServer(castor::vdqm::TapeRequ
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -675,7 +675,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjTapeDrive(castor::vdqm::TapeReque
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -715,7 +715,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjDeviceGroupName(castor::vdqm::Tap
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -753,7 +753,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjClientIdentification(castor::vdqm
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -805,18 +805,18 @@ void castor::db::cnv::DbTapeRequestCnv::createRep(castor::IAddress* address,
     }
     // Now Save the current object
     m_insertStatement->setInt(1, obj->priority());
-    m_insertStatement->setInt64(2, obj->modificationTime());
+    m_insertStatement->setUInt64(2, obj->modificationTime());
     m_insertStatement->setInt(3, time(0));
-    m_insertStatement->setInt64(4, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
-    m_insertStatement->setInt64(5, (type == OBJ_TapeAccessSpecification && obj->tapeAccessSpecification() != 0) ? obj->tapeAccessSpecification()->id() : 0);
-    m_insertStatement->setInt64(6, (type == OBJ_TapeServer && obj->requestedSrv() != 0) ? obj->requestedSrv()->id() : 0);
-    m_insertStatement->setInt64(7, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
-    m_insertStatement->setInt64(8, (type == OBJ_DeviceGroupName && obj->deviceGroupName() != 0) ? obj->deviceGroupName()->id() : 0);
-    m_insertStatement->setInt64(9, (type == OBJ_ClientIdentification && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setUInt64(4, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
+    m_insertStatement->setUInt64(5, (type == OBJ_TapeAccessSpecification && obj->tapeAccessSpecification() != 0) ? obj->tapeAccessSpecification()->id() : 0);
+    m_insertStatement->setUInt64(6, (type == OBJ_TapeServer && obj->requestedSrv() != 0) ? obj->requestedSrv()->id() : 0);
+    m_insertStatement->setUInt64(7, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
+    m_insertStatement->setUInt64(8, (type == OBJ_DeviceGroupName && obj->deviceGroupName() != 0) ? obj->deviceGroupName()->id() : 0);
+    m_insertStatement->setUInt64(9, (type == OBJ_ClientIdentification && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getInt64(10));
-    m_storeTypeStatement->setInt64(1, obj->id());
-    m_storeTypeStatement->setInt64(2, obj->type());
+    obj->setId(m_insertStatement->getUInt64(10));
+    m_storeTypeStatement->setUInt64(1, obj->id());
+    m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -863,8 +863,8 @@ void castor::db::cnv::DbTapeRequestCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setInt(1, obj->priority());
-    m_updateStatement->setInt64(2, obj->modificationTime());
-    m_updateStatement->setInt64(3, obj->id());
+    m_updateStatement->setUInt64(2, obj->modificationTime());
+    m_updateStatement->setUInt64(3, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -903,9 +903,9 @@ void castor::db::cnv::DbTapeRequestCnv::deleteRep(castor::IAddress* address,
       m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
     }
     // Now Delete the object
-    m_deleteTypeStatement->setInt64(1, obj->id());
+    m_deleteTypeStatement->setUInt64(1, obj->id());
     m_deleteTypeStatement->execute();
-    m_deleteStatement->setInt64(1, obj->id());
+    m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
     if (obj->client() != 0) {
       cnvSvc()->deleteRep(0, obj->client(), false);
@@ -940,7 +940,7 @@ castor::IObject* castor::db::cnv::DbTapeRequestCnv::createObj(castor::IAddress* 
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, ad->target());
+    m_selectStatement->setUInt64(1, ad->target());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -951,9 +951,9 @@ castor::IObject* castor::db::cnv::DbTapeRequestCnv::createObj(castor::IAddress* 
     castor::vdqm::TapeRequest* object = new castor::vdqm::TapeRequest();
     // Now retrieve and set members
     object->setPriority(rset->getInt(1));
-    object->setModificationTime(rset->getInt64(2));
-    object->setCreationTime(rset->getInt64(3));
-    object->setId(rset->getInt64(4));
+    object->setModificationTime(rset->getUInt64(2));
+    object->setCreationTime(rset->getUInt64(3));
+    object->setId(rset->getUInt64(4));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -981,7 +981,7 @@ void castor::db::cnv::DbTapeRequestCnv::updateObj(castor::IObject* obj)
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, obj->id());
+    m_selectStatement->setUInt64(1, obj->id());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -992,9 +992,9 @@ void castor::db::cnv::DbTapeRequestCnv::updateObj(castor::IObject* obj)
     castor::vdqm::TapeRequest* object = 
       dynamic_cast<castor::vdqm::TapeRequest*>(obj);
     object->setPriority(rset->getInt(1));
-    object->setModificationTime(rset->getInt64(2));
-    object->setCreationTime(rset->getInt64(3));
-    object->setId(rset->getInt64(4));
+    object->setModificationTime(rset->getUInt64(2));
+    object->setCreationTime(rset->getUInt64(3));
+    object->setId(rset->getUInt64(4));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

@@ -205,11 +205,11 @@ void castor::db::cnv::DbGCLocalFileCnv::createRep(castor::IAddress* address,
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->fileName());
-    m_insertStatement->setInt64(2, obj->diskCopyId());
+    m_insertStatement->setUInt64(2, obj->diskCopyId());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getInt64(3));
-    m_storeTypeStatement->setInt64(1, obj->id());
-    m_storeTypeStatement->setInt64(2, obj->type());
+    obj->setId(m_insertStatement->getUInt64(3));
+    m_storeTypeStatement->setUInt64(1, obj->id());
+    m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -249,8 +249,8 @@ void castor::db::cnv::DbGCLocalFileCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setString(1, obj->fileName());
-    m_updateStatement->setInt64(2, obj->diskCopyId());
-    m_updateStatement->setInt64(3, obj->id());
+    m_updateStatement->setUInt64(2, obj->diskCopyId());
+    m_updateStatement->setUInt64(3, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -289,9 +289,9 @@ void castor::db::cnv::DbGCLocalFileCnv::deleteRep(castor::IAddress* address,
       m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
     }
     // Now Delete the object
-    m_deleteTypeStatement->setInt64(1, obj->id());
+    m_deleteTypeStatement->setUInt64(1, obj->id());
     m_deleteTypeStatement->execute();
-    m_deleteStatement->setInt64(1, obj->id());
+    m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -323,7 +323,7 @@ castor::IObject* castor::db::cnv::DbGCLocalFileCnv::createObj(castor::IAddress* 
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, ad->target());
+    m_selectStatement->setUInt64(1, ad->target());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -334,8 +334,8 @@ castor::IObject* castor::db::cnv::DbGCLocalFileCnv::createObj(castor::IAddress* 
     castor::stager::GCLocalFile* object = new castor::stager::GCLocalFile();
     // Now retrieve and set members
     object->setFileName(rset->getString(1));
-    object->setDiskCopyId(rset->getInt64(2));
-    object->setId(rset->getInt64(3));
+    object->setDiskCopyId(rset->getUInt64(2));
+    object->setId(rset->getUInt64(3));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -363,7 +363,7 @@ void castor::db::cnv::DbGCLocalFileCnv::updateObj(castor::IObject* obj)
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, obj->id());
+    m_selectStatement->setUInt64(1, obj->id());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -374,8 +374,8 @@ void castor::db::cnv::DbGCLocalFileCnv::updateObj(castor::IObject* obj)
     castor::stager::GCLocalFile* object = 
       dynamic_cast<castor::stager::GCLocalFile*>(obj);
     object->setFileName(rset->getString(1));
-    object->setDiskCopyId(rset->getInt64(2));
-    object->setId(rset->getInt64(3));
+    object->setDiskCopyId(rset->getUInt64(2));
+    object->setId(rset->getUInt64(3));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

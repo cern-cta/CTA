@@ -206,11 +206,11 @@ void castor::db::cnv::DbBaseAddressCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(1, obj->objType());
     m_insertStatement->setString(2, obj->cnvSvcName());
     m_insertStatement->setInt(3, obj->cnvSvcType());
-    m_insertStatement->setInt64(4, obj->target());
+    m_insertStatement->setUInt64(4, obj->target());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getInt64(5));
-    m_storeTypeStatement->setInt64(1, obj->id());
-    m_storeTypeStatement->setInt64(2, obj->type());
+    obj->setId(m_insertStatement->getUInt64(5));
+    m_storeTypeStatement->setUInt64(1, obj->id());
+    m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -254,8 +254,8 @@ void castor::db::cnv::DbBaseAddressCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(1, obj->objType());
     m_updateStatement->setString(2, obj->cnvSvcName());
     m_updateStatement->setInt(3, obj->cnvSvcType());
-    m_updateStatement->setInt64(4, obj->target());
-    m_updateStatement->setInt64(5, obj->id());
+    m_updateStatement->setUInt64(4, obj->target());
+    m_updateStatement->setUInt64(5, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -294,9 +294,9 @@ void castor::db::cnv::DbBaseAddressCnv::deleteRep(castor::IAddress* address,
       m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
     }
     // Now Delete the object
-    m_deleteTypeStatement->setInt64(1, obj->id());
+    m_deleteTypeStatement->setUInt64(1, obj->id());
     m_deleteTypeStatement->execute();
-    m_deleteStatement->setInt64(1, obj->id());
+    m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -328,7 +328,7 @@ castor::IObject* castor::db::cnv::DbBaseAddressCnv::createObj(castor::IAddress* 
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, ad->target());
+    m_selectStatement->setUInt64(1, ad->target());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -341,8 +341,8 @@ castor::IObject* castor::db::cnv::DbBaseAddressCnv::createObj(castor::IAddress* 
     object->setObjType(rset->getInt(1));
     object->setCnvSvcName(rset->getString(2));
     object->setCnvSvcType(rset->getInt(3));
-    object->setTarget(rset->getInt64(4));
-    object->setId(rset->getInt64(5));
+    object->setTarget(rset->getUInt64(4));
+    object->setId(rset->getUInt64(5));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -370,7 +370,7 @@ void castor::db::cnv::DbBaseAddressCnv::updateObj(castor::IObject* obj)
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, obj->id());
+    m_selectStatement->setUInt64(1, obj->id());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -383,8 +383,8 @@ void castor::db::cnv::DbBaseAddressCnv::updateObj(castor::IObject* obj)
     object->setObjType(rset->getInt(1));
     object->setCnvSvcName(rset->getString(2));
     object->setCnvSvcType(rset->getInt(3));
-    object->setTarget(rset->getInt64(4));
-    object->setId(rset->getInt64(5));
+    object->setTarget(rset->getUInt64(4));
+    object->setId(rset->getUInt64(5));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

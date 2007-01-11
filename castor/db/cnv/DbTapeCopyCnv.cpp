@@ -244,7 +244,7 @@ void castor::db::cnv::DbTapeCopyCnv::fillRepStream(castor::stager::TapeCopy* obj
   }
   // Get current database data
   std::set<int> streamList;
-  m_selectStreamStatement->setInt64(1, obj->id());
+  m_selectStreamStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStreamStatement->executeQuery();
   while (rset->next()) {
     streamList.insert(rset->getInt(1));
@@ -264,8 +264,8 @@ void castor::db::cnv::DbTapeCopyCnv::fillRepStream(castor::stager::TapeCopy* obj
       if (0 == m_insertStreamStatement) {
         m_insertStreamStatement = createStatement(s_insertStreamStatementString);
       }
-      m_insertStreamStatement->setInt64(1, obj->id());
-      m_insertStreamStatement->setInt64(2, (*it)->id());
+      m_insertStreamStatement->setUInt64(1, obj->id());
+      m_insertStreamStatement->setUInt64(2, (*it)->id());
       m_insertStreamStatement->execute();
     }
   }
@@ -276,8 +276,8 @@ void castor::db::cnv::DbTapeCopyCnv::fillRepStream(castor::stager::TapeCopy* obj
     if (0 == m_deleteStreamStatement) {
       m_deleteStreamStatement = createStatement(s_deleteStreamStatementString);
     }
-    m_deleteStreamStatement->setInt64(1, obj->id());
-    m_deleteStreamStatement->setInt64(2, *it);
+    m_deleteStreamStatement->setUInt64(1, obj->id());
+    m_deleteStreamStatement->setUInt64(2, *it);
     m_deleteStreamStatement->execute();
   }
 }
@@ -293,7 +293,7 @@ void castor::db::cnv::DbTapeCopyCnv::fillRepSegment(castor::stager::TapeCopy* ob
   }
   // Get current database data
   std::set<int> segmentsList;
-  m_selectSegmentStatement->setInt64(1, obj->id());
+  m_selectSegmentStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectSegmentStatement->executeQuery();
   while (rset->next()) {
     segmentsList.insert(rset->getInt(1));
@@ -311,8 +311,8 @@ void castor::db::cnv::DbTapeCopyCnv::fillRepSegment(castor::stager::TapeCopy* ob
         m_remoteUpdateSegmentStatement = createStatement(s_remoteUpdateSegmentStatementString);
       }
       // Update remote object
-      m_remoteUpdateSegmentStatement->setInt64(1, obj->id());
-      m_remoteUpdateSegmentStatement->setInt64(2, (*it)->id());
+      m_remoteUpdateSegmentStatement->setUInt64(1, obj->id());
+      m_remoteUpdateSegmentStatement->setUInt64(2, (*it)->id());
       m_remoteUpdateSegmentStatement->execute();
       std::set<int>::iterator item;
       if ((item = segmentsList.find((*it)->id())) != segmentsList.end()) {
@@ -327,7 +327,7 @@ void castor::db::cnv::DbTapeCopyCnv::fillRepSegment(castor::stager::TapeCopy* ob
     if (0 == m_deleteSegmentStatement) {
       m_deleteSegmentStatement = createStatement(s_deleteSegmentStatementString);
     }
-    m_deleteSegmentStatement->setInt64(1, *it);
+    m_deleteSegmentStatement->setUInt64(1, *it);
     m_deleteSegmentStatement->execute();
   }
 }
@@ -343,7 +343,7 @@ void castor::db::cnv::DbTapeCopyCnv::fillRepCastorFile(castor::stager::TapeCopy*
       m_checkCastorFileExistStatement = createStatement(s_checkCastorFileExistStatementString);
     }
     // retrieve the object from the database
-    m_checkCastorFileExistStatement->setInt64(1, obj->castorFile()->id());
+    m_checkCastorFileExistStatement->setUInt64(1, obj->castorFile()->id());
     castor::db::IDbResultSet *rset = m_checkCastorFileExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -359,8 +359,8 @@ void castor::db::cnv::DbTapeCopyCnv::fillRepCastorFile(castor::stager::TapeCopy*
     m_updateCastorFileStatement = createStatement(s_updateCastorFileStatementString);
   }
   // Update local object
-  m_updateCastorFileStatement->setInt64(1, 0 == obj->castorFile() ? 0 : obj->castorFile()->id());
-  m_updateCastorFileStatement->setInt64(2, obj->id());
+  m_updateCastorFileStatement->setUInt64(1, 0 == obj->castorFile() ? 0 : obj->castorFile()->id());
+  m_updateCastorFileStatement->setUInt64(2, obj->id());
   m_updateCastorFileStatement->execute();
 }
 
@@ -406,7 +406,7 @@ void castor::db::cnv::DbTapeCopyCnv::fillObjStream(castor::stager::TapeCopy* obj
   }
   // retrieve the object from the database
   std::set<int> streamList;
-  m_selectStreamStatement->setInt64(1, obj->id());
+  m_selectStreamStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStreamStatement->executeQuery();
   while (rset->next()) {
     streamList.insert(rset->getInt(1));
@@ -456,7 +456,7 @@ void castor::db::cnv::DbTapeCopyCnv::fillObjSegment(castor::stager::TapeCopy* ob
   }
   // retrieve the object from the database
   std::set<int> segmentsList;
-  m_selectSegmentStatement->setInt64(1, obj->id());
+  m_selectSegmentStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectSegmentStatement->executeQuery();
   while (rset->next()) {
     segmentsList.insert(rset->getInt(1));
@@ -505,7 +505,7 @@ void castor::db::cnv::DbTapeCopyCnv::fillObjCastorFile(castor::stager::TapeCopy*
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -559,12 +559,12 @@ void castor::db::cnv::DbTapeCopyCnv::createRep(castor::IAddress* address,
     }
     // Now Save the current object
     m_insertStatement->setInt(1, obj->copyNb());
-    m_insertStatement->setInt64(2, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
+    m_insertStatement->setUInt64(2, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
     m_insertStatement->setInt(3, (int)obj->status());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getInt64(4));
-    m_storeTypeStatement->setInt64(1, obj->id());
-    m_storeTypeStatement->setInt64(2, obj->type());
+    obj->setId(m_insertStatement->getUInt64(4));
+    m_storeTypeStatement->setUInt64(1, obj->id());
+    m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -606,7 +606,7 @@ void castor::db::cnv::DbTapeCopyCnv::updateRep(castor::IAddress* address,
     // Update the current object
     m_updateStatement->setInt(1, obj->copyNb());
     m_updateStatement->setInt(2, (int)obj->status());
-    m_updateStatement->setInt64(3, obj->id());
+    m_updateStatement->setUInt64(3, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -645,9 +645,9 @@ void castor::db::cnv::DbTapeCopyCnv::deleteRep(castor::IAddress* address,
       m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
     }
     // Now Delete the object
-    m_deleteTypeStatement->setInt64(1, obj->id());
+    m_deleteTypeStatement->setUInt64(1, obj->id());
     m_deleteTypeStatement->execute();
-    m_deleteStatement->setInt64(1, obj->id());
+    m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
     for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
          it != obj->segments().end();
@@ -684,7 +684,7 @@ castor::IObject* castor::db::cnv::DbTapeCopyCnv::createObj(castor::IAddress* add
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, ad->target());
+    m_selectStatement->setUInt64(1, ad->target());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -695,7 +695,7 @@ castor::IObject* castor::db::cnv::DbTapeCopyCnv::createObj(castor::IAddress* add
     castor::stager::TapeCopy* object = new castor::stager::TapeCopy();
     // Now retrieve and set members
     object->setCopyNb(rset->getInt(1));
-    object->setId(rset->getInt64(2));
+    object->setId(rset->getUInt64(2));
     object->setStatus((enum castor::stager::TapeCopyStatusCodes)rset->getInt(4));
     delete rset;
     return object;
@@ -724,7 +724,7 @@ void castor::db::cnv::DbTapeCopyCnv::updateObj(castor::IObject* obj)
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, obj->id());
+    m_selectStatement->setUInt64(1, obj->id());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -735,7 +735,7 @@ void castor::db::cnv::DbTapeCopyCnv::updateObj(castor::IObject* obj)
     castor::stager::TapeCopy* object = 
       dynamic_cast<castor::stager::TapeCopy*>(obj);
     object->setCopyNb(rset->getInt(1));
-    object->setId(rset->getInt64(2));
+    object->setId(rset->getUInt64(2));
     object->setStatus((enum castor::stager::TapeCopyStatusCodes)rset->getInt(4));
     delete rset;
   } catch (castor::exception::SQLError e) {

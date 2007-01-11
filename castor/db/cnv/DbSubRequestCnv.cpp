@@ -237,7 +237,7 @@ void castor::db::cnv::DbSubRequestCnv::fillRepDiskCopy(castor::stager::SubReques
       m_checkDiskCopyExistStatement = createStatement(s_checkDiskCopyExistStatementString);
     }
     // retrieve the object from the database
-    m_checkDiskCopyExistStatement->setInt64(1, obj->diskcopy()->id());
+    m_checkDiskCopyExistStatement->setUInt64(1, obj->diskcopy()->id());
     castor::db::IDbResultSet *rset = m_checkDiskCopyExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -253,8 +253,8 @@ void castor::db::cnv::DbSubRequestCnv::fillRepDiskCopy(castor::stager::SubReques
     m_updateDiskCopyStatement = createStatement(s_updateDiskCopyStatementString);
   }
   // Update local object
-  m_updateDiskCopyStatement->setInt64(1, 0 == obj->diskcopy() ? 0 : obj->diskcopy()->id());
-  m_updateDiskCopyStatement->setInt64(2, obj->id());
+  m_updateDiskCopyStatement->setUInt64(1, 0 == obj->diskcopy() ? 0 : obj->diskcopy()->id());
+  m_updateDiskCopyStatement->setUInt64(2, obj->id());
   m_updateDiskCopyStatement->execute();
 }
 
@@ -269,7 +269,7 @@ void castor::db::cnv::DbSubRequestCnv::fillRepCastorFile(castor::stager::SubRequ
       m_checkCastorFileExistStatement = createStatement(s_checkCastorFileExistStatementString);
     }
     // retrieve the object from the database
-    m_checkCastorFileExistStatement->setInt64(1, obj->castorFile()->id());
+    m_checkCastorFileExistStatement->setUInt64(1, obj->castorFile()->id());
     castor::db::IDbResultSet *rset = m_checkCastorFileExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -285,8 +285,8 @@ void castor::db::cnv::DbSubRequestCnv::fillRepCastorFile(castor::stager::SubRequ
     m_updateCastorFileStatement = createStatement(s_updateCastorFileStatementString);
   }
   // Update local object
-  m_updateCastorFileStatement->setInt64(1, 0 == obj->castorFile() ? 0 : obj->castorFile()->id());
-  m_updateCastorFileStatement->setInt64(2, obj->id());
+  m_updateCastorFileStatement->setUInt64(1, 0 == obj->castorFile() ? 0 : obj->castorFile()->id());
+  m_updateCastorFileStatement->setUInt64(2, obj->id());
   m_updateCastorFileStatement->execute();
 }
 
@@ -301,7 +301,7 @@ void castor::db::cnv::DbSubRequestCnv::fillRepSubRequest(castor::stager::SubRequ
       m_checkSubRequestExistStatement = createStatement(s_checkSubRequestExistStatementString);
     }
     // retrieve the object from the database
-    m_checkSubRequestExistStatement->setInt64(1, obj->parent()->id());
+    m_checkSubRequestExistStatement->setUInt64(1, obj->parent()->id());
     castor::db::IDbResultSet *rset = m_checkSubRequestExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -317,8 +317,8 @@ void castor::db::cnv::DbSubRequestCnv::fillRepSubRequest(castor::stager::SubRequ
     m_updateSubRequestStatement = createStatement(s_updateSubRequestStatementString);
   }
   // Update local object
-  m_updateSubRequestStatement->setInt64(1, 0 == obj->parent() ? 0 : obj->parent()->id());
-  m_updateSubRequestStatement->setInt64(2, obj->id());
+  m_updateSubRequestStatement->setUInt64(1, 0 == obj->parent() ? 0 : obj->parent()->id());
+  m_updateSubRequestStatement->setUInt64(2, obj->id());
   m_updateSubRequestStatement->execute();
 }
 
@@ -332,8 +332,8 @@ void castor::db::cnv::DbSubRequestCnv::fillRepFileRequest(castor::stager::SubReq
     m_updateFileRequestStatement = createStatement(s_updateFileRequestStatementString);
   }
   // Update local object
-  m_updateFileRequestStatement->setInt64(1, 0 == obj->request() ? 0 : obj->request()->id());
-  m_updateFileRequestStatement->setInt64(2, obj->id());
+  m_updateFileRequestStatement->setUInt64(1, 0 == obj->request() ? 0 : obj->request()->id());
+  m_updateFileRequestStatement->setUInt64(2, obj->id());
   m_updateFileRequestStatement->execute();
 }
 
@@ -381,7 +381,7 @@ void castor::db::cnv::DbSubRequestCnv::fillObjDiskCopy(castor::stager::SubReques
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -421,7 +421,7 @@ void castor::db::cnv::DbSubRequestCnv::fillObjCastorFile(castor::stager::SubRequ
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -459,7 +459,7 @@ void castor::db::cnv::DbSubRequestCnv::fillObjSubRequest(castor::stager::SubRequ
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -499,7 +499,7 @@ void castor::db::cnv::DbSubRequestCnv::fillObjFileRequest(castor::stager::SubReq
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -555,7 +555,7 @@ void castor::db::cnv::DbSubRequestCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(1, obj->retryCounter());
     m_insertStatement->setString(2, obj->fileName());
     m_insertStatement->setString(3, obj->protocol());
-    m_insertStatement->setInt64(4, obj->xsize());
+    m_insertStatement->setUInt64(4, obj->xsize());
     m_insertStatement->setInt(5, obj->priority());
     m_insertStatement->setString(6, obj->subreqId());
     m_insertStatement->setInt(7, obj->flags());
@@ -563,16 +563,16 @@ void castor::db::cnv::DbSubRequestCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(9, time(0));
     m_insertStatement->setInt(10, time(0));
     m_insertStatement->setInt(11, obj->answered());
-    m_insertStatement->setInt64(12, (type == OBJ_DiskCopy && obj->diskcopy() != 0) ? obj->diskcopy()->id() : 0);
-    m_insertStatement->setInt64(13, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
-    m_insertStatement->setInt64(14, (type == OBJ_SubRequest && obj->parent() != 0) ? obj->parent()->id() : 0);
+    m_insertStatement->setUInt64(12, (type == OBJ_DiskCopy && obj->diskcopy() != 0) ? obj->diskcopy()->id() : 0);
+    m_insertStatement->setUInt64(13, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
+    m_insertStatement->setUInt64(14, (type == OBJ_SubRequest && obj->parent() != 0) ? obj->parent()->id() : 0);
     m_insertStatement->setInt(15, (int)obj->status());
-    m_insertStatement->setInt64(16, (type == OBJ_FileRequest && obj->request() != 0) ? obj->request()->id() : 0);
+    m_insertStatement->setUInt64(16, (type == OBJ_FileRequest && obj->request() != 0) ? obj->request()->id() : 0);
     m_insertStatement->setInt(17, (int)obj->getNextStatus());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getInt64(18));
-    m_storeTypeStatement->setInt64(1, obj->id());
-    m_storeTypeStatement->setInt64(2, obj->type());
+    obj->setId(m_insertStatement->getUInt64(18));
+    m_storeTypeStatement->setUInt64(1, obj->id());
+    m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -629,7 +629,7 @@ void castor::db::cnv::DbSubRequestCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(1, obj->retryCounter());
     m_updateStatement->setString(2, obj->fileName());
     m_updateStatement->setString(3, obj->protocol());
-    m_updateStatement->setInt64(4, obj->xsize());
+    m_updateStatement->setUInt64(4, obj->xsize());
     m_updateStatement->setInt(5, obj->priority());
     m_updateStatement->setString(6, obj->subreqId());
     m_updateStatement->setInt(7, obj->flags());
@@ -638,7 +638,7 @@ void castor::db::cnv::DbSubRequestCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(10, obj->answered());
     m_updateStatement->setInt(11, (int)obj->status());
     m_updateStatement->setInt(12, (int)obj->getNextStatus());
-    m_updateStatement->setInt64(13, obj->id());
+    m_updateStatement->setUInt64(13, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -677,9 +677,9 @@ void castor::db::cnv::DbSubRequestCnv::deleteRep(castor::IAddress* address,
       m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
     }
     // Now Delete the object
-    m_deleteTypeStatement->setInt64(1, obj->id());
+    m_deleteTypeStatement->setUInt64(1, obj->id());
     m_deleteTypeStatement->execute();
-    m_deleteStatement->setInt64(1, obj->id());
+    m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -711,7 +711,7 @@ castor::IObject* castor::db::cnv::DbSubRequestCnv::createObj(castor::IAddress* a
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, ad->target());
+    m_selectStatement->setUInt64(1, ad->target());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -724,15 +724,15 @@ castor::IObject* castor::db::cnv::DbSubRequestCnv::createObj(castor::IAddress* a
     object->setRetryCounter(rset->getInt(1));
     object->setFileName(rset->getString(2));
     object->setProtocol(rset->getString(3));
-    object->setXsize(rset->getInt64(4));
+    object->setXsize(rset->getUInt64(4));
     object->setPriority(rset->getInt(5));
     object->setSubreqId(rset->getString(6));
     object->setFlags(rset->getInt(7));
     object->setModeBits(rset->getInt(8));
-    object->setCreationTime(rset->getInt64(9));
-    object->setLastModificationTime(rset->getInt64(10));
+    object->setCreationTime(rset->getUInt64(9));
+    object->setLastModificationTime(rset->getUInt64(10));
     object->setAnswered(rset->getInt(11));
-    object->setId(rset->getInt64(12));
+    object->setId(rset->getUInt64(12));
     object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(16));
     object->setGetNextStatus((enum castor::stager::SubRequestGetNextStatusCodes)rset->getInt(18));
     delete rset;
@@ -762,7 +762,7 @@ void castor::db::cnv::DbSubRequestCnv::updateObj(castor::IObject* obj)
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, obj->id());
+    m_selectStatement->setUInt64(1, obj->id());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -775,15 +775,15 @@ void castor::db::cnv::DbSubRequestCnv::updateObj(castor::IObject* obj)
     object->setRetryCounter(rset->getInt(1));
     object->setFileName(rset->getString(2));
     object->setProtocol(rset->getString(3));
-    object->setXsize(rset->getInt64(4));
+    object->setXsize(rset->getUInt64(4));
     object->setPriority(rset->getInt(5));
     object->setSubreqId(rset->getString(6));
     object->setFlags(rset->getInt(7));
     object->setModeBits(rset->getInt(8));
-    object->setCreationTime(rset->getInt64(9));
-    object->setLastModificationTime(rset->getInt64(10));
+    object->setCreationTime(rset->getUInt64(9));
+    object->setLastModificationTime(rset->getUInt64(10));
     object->setAnswered(rset->getInt(11));
-    object->setId(rset->getInt64(12));
+    object->setId(rset->getUInt64(12));
     object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(16));
     object->setGetNextStatus((enum castor::stager::SubRequestGetNextStatusCodes)rset->getInt(18));
     delete rset;

@@ -217,8 +217,8 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillRepFileRequest(castor::stager:
     m_updateFileRequestStatement = createStatement(s_updateFileRequestStatementString);
   }
   // Update local object
-  m_updateFileRequestStatement->setInt64(1, 0 == obj->parent() ? 0 : obj->parent()->id());
-  m_updateFileRequestStatement->setInt64(2, obj->id());
+  m_updateFileRequestStatement->setUInt64(1, 0 == obj->parent() ? 0 : obj->parent()->id());
+  m_updateFileRequestStatement->setUInt64(2, obj->id());
   m_updateFileRequestStatement->execute();
 }
 
@@ -233,7 +233,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillRepSvcClass(castor::stager::St
       m_checkSvcClassExistStatement = createStatement(s_checkSvcClassExistStatementString);
     }
     // retrieve the object from the database
-    m_checkSvcClassExistStatement->setInt64(1, obj->svcClass()->id());
+    m_checkSvcClassExistStatement->setUInt64(1, obj->svcClass()->id());
     castor::db::IDbResultSet *rset = m_checkSvcClassExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -249,8 +249,8 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillRepSvcClass(castor::stager::St
     m_updateSvcClassStatement = createStatement(s_updateSvcClassStatementString);
   }
   // Update local object
-  m_updateSvcClassStatement->setInt64(1, 0 == obj->svcClass() ? 0 : obj->svcClass()->id());
-  m_updateSvcClassStatement->setInt64(2, obj->id());
+  m_updateSvcClassStatement->setUInt64(1, 0 == obj->svcClass() ? 0 : obj->svcClass()->id());
+  m_updateSvcClassStatement->setUInt64(2, obj->id());
   m_updateSvcClassStatement->execute();
 }
 
@@ -264,8 +264,8 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillRepIClient(castor::stager::Sta
     m_updateIClientStatement = createStatement(s_updateIClientStatementString);
   }
   // Update local object
-  m_updateIClientStatement->setInt64(1, 0 == obj->client() ? 0 : obj->client()->id());
-  m_updateIClientStatement->setInt64(2, obj->id());
+  m_updateIClientStatement->setUInt64(1, 0 == obj->client() ? 0 : obj->client()->id());
+  m_updateIClientStatement->setUInt64(2, obj->id());
   m_updateIClientStatement->execute();
 }
 
@@ -310,7 +310,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillObjFileRequest(castor::stager:
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -348,7 +348,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillObjSvcClass(castor::stager::St
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -386,7 +386,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillObjIClient(castor::stager::Sta
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -441,7 +441,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::createRep(castor::IAddress* addres
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->parentUuid());
-    m_insertStatement->setInt64(2, obj->flags());
+    m_insertStatement->setUInt64(2, obj->flags());
     m_insertStatement->setString(3, obj->userName());
     m_insertStatement->setInt(4, obj->euid());
     m_insertStatement->setInt(5, obj->egid());
@@ -453,16 +453,16 @@ void castor::db::cnv::DbStageAbortRequestCnv::createRep(castor::IAddress* addres
     m_insertStatement->setString(11, obj->reqId());
     m_insertStatement->setInt(12, time(0));
     m_insertStatement->setInt(13, time(0));
-    m_insertStatement->setInt64(14, (type == OBJ_FileRequest && obj->parent() != 0) ? obj->parent()->id() : 0);
-    m_insertStatement->setInt64(15, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setInt64(16, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setUInt64(14, (type == OBJ_FileRequest && obj->parent() != 0) ? obj->parent()->id() : 0);
+    m_insertStatement->setUInt64(15, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setUInt64(16, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getInt64(17));
-    m_storeTypeStatement->setInt64(1, obj->id());
-    m_storeTypeStatement->setInt64(2, obj->type());
+    obj->setId(m_insertStatement->getUInt64(17));
+    m_storeTypeStatement->setUInt64(1, obj->id());
+    m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
-    m_insertNewReqStatement->setInt64(1, obj->id());
-    m_insertNewReqStatement->setInt64(2, obj->type());
+    m_insertNewReqStatement->setUInt64(1, obj->id());
+    m_insertNewReqStatement->setUInt64(2, obj->type());
     m_insertNewReqStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -516,7 +516,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::updateRep(castor::IAddress* addres
     }
     // Update the current object
     m_updateStatement->setString(1, obj->parentUuid());
-    m_updateStatement->setInt64(2, obj->flags());
+    m_updateStatement->setUInt64(2, obj->flags());
     m_updateStatement->setString(3, obj->userName());
     m_updateStatement->setInt(4, obj->euid());
     m_updateStatement->setInt(5, obj->egid());
@@ -527,7 +527,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::updateRep(castor::IAddress* addres
     m_updateStatement->setString(10, obj->userTag());
     m_updateStatement->setString(11, obj->reqId());
     m_updateStatement->setInt(12, time(0));
-    m_updateStatement->setInt64(13, obj->id());
+    m_updateStatement->setUInt64(13, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -566,9 +566,9 @@ void castor::db::cnv::DbStageAbortRequestCnv::deleteRep(castor::IAddress* addres
       m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
     }
     // Now Delete the object
-    m_deleteTypeStatement->setInt64(1, obj->id());
+    m_deleteTypeStatement->setUInt64(1, obj->id());
     m_deleteTypeStatement->execute();
-    m_deleteStatement->setInt64(1, obj->id());
+    m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
     if (obj->client() != 0) {
       cnvSvc()->deleteRep(0, obj->client(), false);
@@ -603,7 +603,7 @@ castor::IObject* castor::db::cnv::DbStageAbortRequestCnv::createObj(castor::IAdd
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, ad->target());
+    m_selectStatement->setUInt64(1, ad->target());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -614,7 +614,7 @@ castor::IObject* castor::db::cnv::DbStageAbortRequestCnv::createObj(castor::IAdd
     castor::stager::StageAbortRequest* object = new castor::stager::StageAbortRequest();
     // Now retrieve and set members
     object->setParentUuid(rset->getString(1));
-    object->setFlags(rset->getInt64(2));
+    object->setFlags(rset->getUInt64(2));
     object->setUserName(rset->getString(3));
     object->setEuid(rset->getInt(4));
     object->setEgid(rset->getInt(5));
@@ -624,9 +624,9 @@ castor::IObject* castor::db::cnv::DbStageAbortRequestCnv::createObj(castor::IAdd
     object->setSvcClassName(rset->getString(9));
     object->setUserTag(rset->getString(10));
     object->setReqId(rset->getString(11));
-    object->setCreationTime(rset->getInt64(12));
-    object->setLastModificationTime(rset->getInt64(13));
-    object->setId(rset->getInt64(14));
+    object->setCreationTime(rset->getUInt64(12));
+    object->setLastModificationTime(rset->getUInt64(13));
+    object->setId(rset->getUInt64(14));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -654,7 +654,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::updateObj(castor::IObject* obj)
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, obj->id());
+    m_selectStatement->setUInt64(1, obj->id());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -665,7 +665,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::updateObj(castor::IObject* obj)
     castor::stager::StageAbortRequest* object = 
       dynamic_cast<castor::stager::StageAbortRequest*>(obj);
     object->setParentUuid(rset->getString(1));
-    object->setFlags(rset->getInt64(2));
+    object->setFlags(rset->getUInt64(2));
     object->setUserName(rset->getString(3));
     object->setEuid(rset->getInt(4));
     object->setEgid(rset->getInt(5));
@@ -675,9 +675,9 @@ void castor::db::cnv::DbStageAbortRequestCnv::updateObj(castor::IObject* obj)
     object->setSvcClassName(rset->getString(9));
     object->setUserTag(rset->getString(10));
     object->setReqId(rset->getString(11));
-    object->setCreationTime(rset->getInt64(12));
-    object->setLastModificationTime(rset->getInt64(13));
-    object->setId(rset->getInt64(14));
+    object->setCreationTime(rset->getUInt64(12));
+    object->setLastModificationTime(rset->getUInt64(13));
+    object->setId(rset->getUInt64(14));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

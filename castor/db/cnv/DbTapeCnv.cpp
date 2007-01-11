@@ -262,7 +262,7 @@ void castor::db::cnv::DbTapeCnv::fillRepStream(castor::stager::Tape* obj)
     m_selectStreamStatement = createStatement(s_selectStreamStatementString);
   }
   // retrieve the object from the database
-  m_selectStreamStatement->setInt64(1, obj->id());
+  m_selectStreamStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStreamStatement->executeQuery();
   if (rset->next()) {
     u_signed64 streamId = rset->getInt64(1);
@@ -272,7 +272,7 @@ void castor::db::cnv::DbTapeCnv::fillRepStream(castor::stager::Tape* obj)
       if (0 == m_deleteStreamStatement) {
         m_deleteStreamStatement = createStatement(s_deleteStreamStatementString);
       }
-      m_deleteStreamStatement->setInt64(1, streamId);
+      m_deleteStreamStatement->setUInt64(1, streamId);
       m_deleteStreamStatement->execute();
     }
   }
@@ -284,7 +284,7 @@ void castor::db::cnv::DbTapeCnv::fillRepStream(castor::stager::Tape* obj)
       m_checkStreamExistStatement = createStatement(s_checkStreamExistStatementString);
     }
     // retrieve the object from the database
-    m_checkStreamExistStatement->setInt64(1, obj->stream()->id());
+    m_checkStreamExistStatement->setUInt64(1, obj->stream()->id());
     castor::db::IDbResultSet *rset = m_checkStreamExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -297,8 +297,8 @@ void castor::db::cnv::DbTapeCnv::fillRepStream(castor::stager::Tape* obj)
         m_remoteUpdateStreamStatement = createStatement(s_remoteUpdateStreamStatementString);
       }
       // Update remote object
-      m_remoteUpdateStreamStatement->setInt64(1, obj->id());
-      m_remoteUpdateStreamStatement->setInt64(2, obj->stream()->id());
+      m_remoteUpdateStreamStatement->setUInt64(1, obj->id());
+      m_remoteUpdateStreamStatement->setUInt64(2, obj->stream()->id());
       m_remoteUpdateStreamStatement->execute();
     }
     // Close resultset
@@ -309,8 +309,8 @@ void castor::db::cnv::DbTapeCnv::fillRepStream(castor::stager::Tape* obj)
     m_updateStreamStatement = createStatement(s_updateStreamStatementString);
   }
   // Update local object
-  m_updateStreamStatement->setInt64(1, 0 == obj->stream() ? 0 : obj->stream()->id());
-  m_updateStreamStatement->setInt64(2, obj->id());
+  m_updateStreamStatement->setUInt64(1, 0 == obj->stream() ? 0 : obj->stream()->id());
+  m_updateStreamStatement->setUInt64(2, obj->id());
   m_updateStreamStatement->execute();
 }
 
@@ -325,7 +325,7 @@ void castor::db::cnv::DbTapeCnv::fillRepErrorHistory(castor::stager::Tape* obj)
   }
   // Get current database data
   std::set<int> errorHistoryList;
-  m_selectErrorHistoryStatement->setInt64(1, obj->id());
+  m_selectErrorHistoryStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectErrorHistoryStatement->executeQuery();
   while (rset->next()) {
     errorHistoryList.insert(rset->getInt(1));
@@ -343,8 +343,8 @@ void castor::db::cnv::DbTapeCnv::fillRepErrorHistory(castor::stager::Tape* obj)
         m_remoteUpdateErrorHistoryStatement = createStatement(s_remoteUpdateErrorHistoryStatementString);
       }
       // Update remote object
-      m_remoteUpdateErrorHistoryStatement->setInt64(1, obj->id());
-      m_remoteUpdateErrorHistoryStatement->setInt64(2, (*it)->id());
+      m_remoteUpdateErrorHistoryStatement->setUInt64(1, obj->id());
+      m_remoteUpdateErrorHistoryStatement->setUInt64(2, (*it)->id());
       m_remoteUpdateErrorHistoryStatement->execute();
       std::set<int>::iterator item;
       if ((item = errorHistoryList.find((*it)->id())) != errorHistoryList.end()) {
@@ -359,7 +359,7 @@ void castor::db::cnv::DbTapeCnv::fillRepErrorHistory(castor::stager::Tape* obj)
     if (0 == m_deleteErrorHistoryStatement) {
       m_deleteErrorHistoryStatement = createStatement(s_deleteErrorHistoryStatementString);
     }
-    m_deleteErrorHistoryStatement->setInt64(1, *it);
+    m_deleteErrorHistoryStatement->setUInt64(1, *it);
     m_deleteErrorHistoryStatement->execute();
   }
 }
@@ -375,7 +375,7 @@ void castor::db::cnv::DbTapeCnv::fillRepSegment(castor::stager::Tape* obj)
   }
   // Get current database data
   std::set<int> segmentsList;
-  m_selectSegmentStatement->setInt64(1, obj->id());
+  m_selectSegmentStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectSegmentStatement->executeQuery();
   while (rset->next()) {
     segmentsList.insert(rset->getInt(1));
@@ -393,8 +393,8 @@ void castor::db::cnv::DbTapeCnv::fillRepSegment(castor::stager::Tape* obj)
         m_remoteUpdateSegmentStatement = createStatement(s_remoteUpdateSegmentStatementString);
       }
       // Update remote object
-      m_remoteUpdateSegmentStatement->setInt64(1, obj->id());
-      m_remoteUpdateSegmentStatement->setInt64(2, (*it)->id());
+      m_remoteUpdateSegmentStatement->setUInt64(1, obj->id());
+      m_remoteUpdateSegmentStatement->setUInt64(2, (*it)->id());
       m_remoteUpdateSegmentStatement->execute();
       std::set<int>::iterator item;
       if ((item = segmentsList.find((*it)->id())) != segmentsList.end()) {
@@ -409,7 +409,7 @@ void castor::db::cnv::DbTapeCnv::fillRepSegment(castor::stager::Tape* obj)
     if (0 == m_deleteSegmentStatement) {
       m_deleteSegmentStatement = createStatement(s_deleteSegmentStatementString);
     }
-    m_deleteSegmentStatement->setInt64(1, *it);
+    m_deleteSegmentStatement->setUInt64(1, *it);
     m_deleteSegmentStatement->execute();
   }
 }
@@ -455,7 +455,7 @@ void castor::db::cnv::DbTapeCnv::fillObjStream(castor::stager::Tape* obj)
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -496,7 +496,7 @@ void castor::db::cnv::DbTapeCnv::fillObjErrorHistory(castor::stager::Tape* obj)
   }
   // retrieve the object from the database
   std::set<int> errorHistoryList;
-  m_selectErrorHistoryStatement->setInt64(1, obj->id());
+  m_selectErrorHistoryStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectErrorHistoryStatement->executeQuery();
   while (rset->next()) {
     errorHistoryList.insert(rset->getInt(1));
@@ -546,7 +546,7 @@ void castor::db::cnv::DbTapeCnv::fillObjSegment(castor::stager::Tape* obj)
   }
   // retrieve the object from the database
   std::set<int> segmentsList;
-  m_selectSegmentStatement->setInt64(1, obj->id());
+  m_selectSegmentStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectSegmentStatement->executeQuery();
   while (rset->next()) {
     segmentsList.insert(rset->getInt(1));
@@ -615,12 +615,12 @@ void castor::db::cnv::DbTapeCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(5, obj->errorCode());
     m_insertStatement->setInt(6, obj->severity());
     m_insertStatement->setString(7, obj->vwAddress());
-    m_insertStatement->setInt64(8, (type == OBJ_Stream && obj->stream() != 0) ? obj->stream()->id() : 0);
+    m_insertStatement->setUInt64(8, (type == OBJ_Stream && obj->stream() != 0) ? obj->stream()->id() : 0);
     m_insertStatement->setInt(9, (int)obj->status());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getInt64(10));
-    m_storeTypeStatement->setInt64(1, obj->id());
-    m_storeTypeStatement->setInt64(2, obj->type());
+    obj->setId(m_insertStatement->getUInt64(10));
+    m_storeTypeStatement->setUInt64(1, obj->id());
+    m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -674,7 +674,7 @@ void castor::db::cnv::DbTapeCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(6, obj->severity());
     m_updateStatement->setString(7, obj->vwAddress());
     m_updateStatement->setInt(8, (int)obj->status());
-    m_updateStatement->setInt64(9, obj->id());
+    m_updateStatement->setUInt64(9, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -713,9 +713,9 @@ void castor::db::cnv::DbTapeCnv::deleteRep(castor::IAddress* address,
       m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
     }
     // Now Delete the object
-    m_deleteTypeStatement->setInt64(1, obj->id());
+    m_deleteTypeStatement->setUInt64(1, obj->id());
     m_deleteTypeStatement->execute();
-    m_deleteStatement->setInt64(1, obj->id());
+    m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
     for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
          it != obj->segments().end();
@@ -752,7 +752,7 @@ castor::IObject* castor::db::cnv::DbTapeCnv::createObj(castor::IAddress* address
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, ad->target());
+    m_selectStatement->setUInt64(1, ad->target());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -769,7 +769,7 @@ castor::IObject* castor::db::cnv::DbTapeCnv::createObj(castor::IAddress* address
     object->setErrorCode(rset->getInt(5));
     object->setSeverity(rset->getInt(6));
     object->setVwAddress(rset->getString(7));
-    object->setId(rset->getInt64(8));
+    object->setId(rset->getUInt64(8));
     object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(10));
     delete rset;
     return object;
@@ -798,7 +798,7 @@ void castor::db::cnv::DbTapeCnv::updateObj(castor::IObject* obj)
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, obj->id());
+    m_selectStatement->setUInt64(1, obj->id());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -815,7 +815,7 @@ void castor::db::cnv::DbTapeCnv::updateObj(castor::IObject* obj)
     object->setErrorCode(rset->getInt(5));
     object->setSeverity(rset->getInt(6));
     object->setVwAddress(rset->getString(7));
-    object->setId(rset->getInt64(8));
+    object->setId(rset->getUInt64(8));
     object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(10));
     delete rset;
   } catch (castor::exception::SQLError e) {

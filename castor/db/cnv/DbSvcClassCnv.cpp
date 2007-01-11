@@ -227,7 +227,7 @@ void castor::db::cnv::DbSvcClassCnv::fillRepTapePool(castor::stager::SvcClass* o
   }
   // Get current database data
   std::set<int> tapePoolsList;
-  m_selectTapePoolStatement->setInt64(1, obj->id());
+  m_selectTapePoolStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectTapePoolStatement->executeQuery();
   while (rset->next()) {
     tapePoolsList.insert(rset->getInt(1));
@@ -247,8 +247,8 @@ void castor::db::cnv::DbSvcClassCnv::fillRepTapePool(castor::stager::SvcClass* o
       if (0 == m_insertTapePoolStatement) {
         m_insertTapePoolStatement = createStatement(s_insertTapePoolStatementString);
       }
-      m_insertTapePoolStatement->setInt64(1, obj->id());
-      m_insertTapePoolStatement->setInt64(2, (*it)->id());
+      m_insertTapePoolStatement->setUInt64(1, obj->id());
+      m_insertTapePoolStatement->setUInt64(2, (*it)->id());
       m_insertTapePoolStatement->execute();
     }
   }
@@ -259,8 +259,8 @@ void castor::db::cnv::DbSvcClassCnv::fillRepTapePool(castor::stager::SvcClass* o
     if (0 == m_deleteTapePoolStatement) {
       m_deleteTapePoolStatement = createStatement(s_deleteTapePoolStatementString);
     }
-    m_deleteTapePoolStatement->setInt64(1, obj->id());
-    m_deleteTapePoolStatement->setInt64(2, *it);
+    m_deleteTapePoolStatement->setUInt64(1, obj->id());
+    m_deleteTapePoolStatement->setUInt64(2, *it);
     m_deleteTapePoolStatement->execute();
   }
 }
@@ -276,7 +276,7 @@ void castor::db::cnv::DbSvcClassCnv::fillRepDiskPool(castor::stager::SvcClass* o
   }
   // Get current database data
   std::set<int> diskPoolsList;
-  m_selectDiskPoolStatement->setInt64(1, obj->id());
+  m_selectDiskPoolStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectDiskPoolStatement->executeQuery();
   while (rset->next()) {
     diskPoolsList.insert(rset->getInt(1));
@@ -296,8 +296,8 @@ void castor::db::cnv::DbSvcClassCnv::fillRepDiskPool(castor::stager::SvcClass* o
       if (0 == m_insertDiskPoolStatement) {
         m_insertDiskPoolStatement = createStatement(s_insertDiskPoolStatementString);
       }
-      m_insertDiskPoolStatement->setInt64(1, obj->id());
-      m_insertDiskPoolStatement->setInt64(2, (*it)->id());
+      m_insertDiskPoolStatement->setUInt64(1, obj->id());
+      m_insertDiskPoolStatement->setUInt64(2, (*it)->id());
       m_insertDiskPoolStatement->execute();
     }
   }
@@ -308,8 +308,8 @@ void castor::db::cnv::DbSvcClassCnv::fillRepDiskPool(castor::stager::SvcClass* o
     if (0 == m_deleteDiskPoolStatement) {
       m_deleteDiskPoolStatement = createStatement(s_deleteDiskPoolStatementString);
     }
-    m_deleteDiskPoolStatement->setInt64(1, obj->id());
-    m_deleteDiskPoolStatement->setInt64(2, *it);
+    m_deleteDiskPoolStatement->setUInt64(1, obj->id());
+    m_deleteDiskPoolStatement->setUInt64(2, *it);
     m_deleteDiskPoolStatement->execute();
   }
 }
@@ -353,7 +353,7 @@ void castor::db::cnv::DbSvcClassCnv::fillObjTapePool(castor::stager::SvcClass* o
   }
   // retrieve the object from the database
   std::set<int> tapePoolsList;
-  m_selectTapePoolStatement->setInt64(1, obj->id());
+  m_selectTapePoolStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectTapePoolStatement->executeQuery();
   while (rset->next()) {
     tapePoolsList.insert(rset->getInt(1));
@@ -403,7 +403,7 @@ void castor::db::cnv::DbSvcClassCnv::fillObjDiskPool(castor::stager::SvcClass* o
   }
   // retrieve the object from the database
   std::set<int> diskPoolsList;
-  m_selectDiskPoolStatement->setInt64(1, obj->id());
+  m_selectDiskPoolStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectDiskPoolStatement->executeQuery();
   while (rset->next()) {
     diskPoolsList.insert(rset->getInt(1));
@@ -467,16 +467,16 @@ void castor::db::cnv::DbSvcClassCnv::createRep(castor::IAddress* address,
     // Now Save the current object
     m_insertStatement->setInt(1, obj->nbDrives());
     m_insertStatement->setString(2, obj->name());
-    m_insertStatement->setInt64(3, obj->defaultFileSize());
+    m_insertStatement->setUInt64(3, obj->defaultFileSize());
     m_insertStatement->setInt(4, obj->maxReplicaNb());
     m_insertStatement->setString(5, obj->replicationPolicy());
     m_insertStatement->setString(6, obj->gcPolicy());
     m_insertStatement->setString(7, obj->migratorPolicy());
     m_insertStatement->setString(8, obj->recallerPolicy());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getInt64(9));
-    m_storeTypeStatement->setInt64(1, obj->id());
-    m_storeTypeStatement->setInt64(2, obj->type());
+    obj->setId(m_insertStatement->getUInt64(9));
+    m_storeTypeStatement->setUInt64(1, obj->id());
+    m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -523,13 +523,13 @@ void castor::db::cnv::DbSvcClassCnv::updateRep(castor::IAddress* address,
     // Update the current object
     m_updateStatement->setInt(1, obj->nbDrives());
     m_updateStatement->setString(2, obj->name());
-    m_updateStatement->setInt64(3, obj->defaultFileSize());
+    m_updateStatement->setUInt64(3, obj->defaultFileSize());
     m_updateStatement->setInt(4, obj->maxReplicaNb());
     m_updateStatement->setString(5, obj->replicationPolicy());
     m_updateStatement->setString(6, obj->gcPolicy());
     m_updateStatement->setString(7, obj->migratorPolicy());
     m_updateStatement->setString(8, obj->recallerPolicy());
-    m_updateStatement->setInt64(9, obj->id());
+    m_updateStatement->setUInt64(9, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -568,9 +568,9 @@ void castor::db::cnv::DbSvcClassCnv::deleteRep(castor::IAddress* address,
       m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
     }
     // Now Delete the object
-    m_deleteTypeStatement->setInt64(1, obj->id());
+    m_deleteTypeStatement->setUInt64(1, obj->id());
     m_deleteTypeStatement->execute();
-    m_deleteStatement->setInt64(1, obj->id());
+    m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -602,7 +602,7 @@ castor::IObject* castor::db::cnv::DbSvcClassCnv::createObj(castor::IAddress* add
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, ad->target());
+    m_selectStatement->setUInt64(1, ad->target());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -614,13 +614,13 @@ castor::IObject* castor::db::cnv::DbSvcClassCnv::createObj(castor::IAddress* add
     // Now retrieve and set members
     object->setNbDrives(rset->getInt(1));
     object->setName(rset->getString(2));
-    object->setDefaultFileSize(rset->getInt64(3));
+    object->setDefaultFileSize(rset->getUInt64(3));
     object->setMaxReplicaNb(rset->getInt(4));
     object->setReplicationPolicy(rset->getString(5));
     object->setGcPolicy(rset->getString(6));
     object->setMigratorPolicy(rset->getString(7));
     object->setRecallerPolicy(rset->getString(8));
-    object->setId(rset->getInt64(9));
+    object->setId(rset->getUInt64(9));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -648,7 +648,7 @@ void castor::db::cnv::DbSvcClassCnv::updateObj(castor::IObject* obj)
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, obj->id());
+    m_selectStatement->setUInt64(1, obj->id());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -660,13 +660,13 @@ void castor::db::cnv::DbSvcClassCnv::updateObj(castor::IObject* obj)
       dynamic_cast<castor::stager::SvcClass*>(obj);
     object->setNbDrives(rset->getInt(1));
     object->setName(rset->getString(2));
-    object->setDefaultFileSize(rset->getInt64(3));
+    object->setDefaultFileSize(rset->getUInt64(3));
     object->setMaxReplicaNb(rset->getInt(4));
     object->setReplicationPolicy(rset->getString(5));
     object->setGcPolicy(rset->getString(6));
     object->setMigratorPolicy(rset->getString(7));
     object->setRecallerPolicy(rset->getString(8));
-    object->setId(rset->getInt64(9));
+    object->setId(rset->getUInt64(9));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

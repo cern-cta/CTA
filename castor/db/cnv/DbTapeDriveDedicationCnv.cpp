@@ -189,7 +189,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::fillRepTapeDrive(castor::vdqm::T
       m_checkTapeDriveExistStatement = createStatement(s_checkTapeDriveExistStatementString);
     }
     // retrieve the object from the database
-    m_checkTapeDriveExistStatement->setInt64(1, obj->tapeDrive()->id());
+    m_checkTapeDriveExistStatement->setUInt64(1, obj->tapeDrive()->id());
     castor::db::IDbResultSet *rset = m_checkTapeDriveExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -205,8 +205,8 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::fillRepTapeDrive(castor::vdqm::T
     m_updateTapeDriveStatement = createStatement(s_updateTapeDriveStatementString);
   }
   // Update local object
-  m_updateTapeDriveStatement->setInt64(1, 0 == obj->tapeDrive() ? 0 : obj->tapeDrive()->id());
-  m_updateTapeDriveStatement->setInt64(2, obj->id());
+  m_updateTapeDriveStatement->setUInt64(1, 0 == obj->tapeDrive() ? 0 : obj->tapeDrive()->id());
+  m_updateTapeDriveStatement->setUInt64(2, obj->id());
   m_updateTapeDriveStatement->execute();
 }
 
@@ -245,7 +245,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::fillObjTapeDrive(castor::vdqm::T
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -303,14 +303,14 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress* addr
     m_insertStatement->setInt(3, obj->egid());
     m_insertStatement->setString(4, obj->vid());
     m_insertStatement->setInt(5, obj->accessMode());
-    m_insertStatement->setInt64(6, obj->startTime());
-    m_insertStatement->setInt64(7, obj->endTime());
+    m_insertStatement->setUInt64(6, obj->startTime());
+    m_insertStatement->setUInt64(7, obj->endTime());
     m_insertStatement->setString(8, obj->reason());
-    m_insertStatement->setInt64(9, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
+    m_insertStatement->setUInt64(9, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getInt64(10));
-    m_storeTypeStatement->setInt64(1, obj->id());
-    m_storeTypeStatement->setInt64(2, obj->type());
+    obj->setId(m_insertStatement->getUInt64(10));
+    m_storeTypeStatement->setUInt64(1, obj->id());
+    m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -361,10 +361,10 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::updateRep(castor::IAddress* addr
     m_updateStatement->setInt(3, obj->egid());
     m_updateStatement->setString(4, obj->vid());
     m_updateStatement->setInt(5, obj->accessMode());
-    m_updateStatement->setInt64(6, obj->startTime());
-    m_updateStatement->setInt64(7, obj->endTime());
+    m_updateStatement->setUInt64(6, obj->startTime());
+    m_updateStatement->setUInt64(7, obj->endTime());
     m_updateStatement->setString(8, obj->reason());
-    m_updateStatement->setInt64(9, obj->id());
+    m_updateStatement->setUInt64(9, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -403,9 +403,9 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::deleteRep(castor::IAddress* addr
       m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
     }
     // Now Delete the object
-    m_deleteTypeStatement->setInt64(1, obj->id());
+    m_deleteTypeStatement->setUInt64(1, obj->id());
     m_deleteTypeStatement->execute();
-    m_deleteStatement->setInt64(1, obj->id());
+    m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -437,7 +437,7 @@ castor::IObject* castor::db::cnv::DbTapeDriveDedicationCnv::createObj(castor::IA
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, ad->target());
+    m_selectStatement->setUInt64(1, ad->target());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -452,10 +452,10 @@ castor::IObject* castor::db::cnv::DbTapeDriveDedicationCnv::createObj(castor::IA
     object->setEgid(rset->getInt(3));
     object->setVid(rset->getString(4));
     object->setAccessMode(rset->getInt(5));
-    object->setStartTime(rset->getInt64(6));
-    object->setEndTime(rset->getInt64(7));
+    object->setStartTime(rset->getUInt64(6));
+    object->setEndTime(rset->getUInt64(7));
     object->setReason(rset->getString(8));
-    object->setId(rset->getInt64(9));
+    object->setId(rset->getUInt64(9));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -483,7 +483,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::updateObj(castor::IObject* obj)
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, obj->id());
+    m_selectStatement->setUInt64(1, obj->id());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -498,10 +498,10 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::updateObj(castor::IObject* obj)
     object->setEgid(rset->getInt(3));
     object->setVid(rset->getString(4));
     object->setAccessMode(rset->getInt(5));
-    object->setStartTime(rset->getInt64(6));
-    object->setEndTime(rset->getInt64(7));
+    object->setStartTime(rset->getUInt64(6));
+    object->setEndTime(rset->getUInt64(7));
     object->setReason(rset->getString(8));
-    object->setId(rset->getInt64(9));
+    object->setId(rset->getUInt64(9));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

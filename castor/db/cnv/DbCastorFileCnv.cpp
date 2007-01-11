@@ -259,7 +259,7 @@ void castor::db::cnv::DbCastorFileCnv::fillRepSvcClass(castor::stager::CastorFil
       m_checkSvcClassExistStatement = createStatement(s_checkSvcClassExistStatementString);
     }
     // retrieve the object from the database
-    m_checkSvcClassExistStatement->setInt64(1, obj->svcClass()->id());
+    m_checkSvcClassExistStatement->setUInt64(1, obj->svcClass()->id());
     castor::db::IDbResultSet *rset = m_checkSvcClassExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -275,8 +275,8 @@ void castor::db::cnv::DbCastorFileCnv::fillRepSvcClass(castor::stager::CastorFil
     m_updateSvcClassStatement = createStatement(s_updateSvcClassStatementString);
   }
   // Update local object
-  m_updateSvcClassStatement->setInt64(1, 0 == obj->svcClass() ? 0 : obj->svcClass()->id());
-  m_updateSvcClassStatement->setInt64(2, obj->id());
+  m_updateSvcClassStatement->setUInt64(1, 0 == obj->svcClass() ? 0 : obj->svcClass()->id());
+  m_updateSvcClassStatement->setUInt64(2, obj->id());
   m_updateSvcClassStatement->execute();
 }
 
@@ -291,7 +291,7 @@ void castor::db::cnv::DbCastorFileCnv::fillRepFileClass(castor::stager::CastorFi
       m_checkFileClassExistStatement = createStatement(s_checkFileClassExistStatementString);
     }
     // retrieve the object from the database
-    m_checkFileClassExistStatement->setInt64(1, obj->fileClass()->id());
+    m_checkFileClassExistStatement->setUInt64(1, obj->fileClass()->id());
     castor::db::IDbResultSet *rset = m_checkFileClassExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -307,8 +307,8 @@ void castor::db::cnv::DbCastorFileCnv::fillRepFileClass(castor::stager::CastorFi
     m_updateFileClassStatement = createStatement(s_updateFileClassStatementString);
   }
   // Update local object
-  m_updateFileClassStatement->setInt64(1, 0 == obj->fileClass() ? 0 : obj->fileClass()->id());
-  m_updateFileClassStatement->setInt64(2, obj->id());
+  m_updateFileClassStatement->setUInt64(1, 0 == obj->fileClass() ? 0 : obj->fileClass()->id());
+  m_updateFileClassStatement->setUInt64(2, obj->id());
   m_updateFileClassStatement->execute();
 }
 
@@ -323,7 +323,7 @@ void castor::db::cnv::DbCastorFileCnv::fillRepDiskCopy(castor::stager::CastorFil
   }
   // Get current database data
   std::set<int> diskCopiesList;
-  m_selectDiskCopyStatement->setInt64(1, obj->id());
+  m_selectDiskCopyStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectDiskCopyStatement->executeQuery();
   while (rset->next()) {
     diskCopiesList.insert(rset->getInt(1));
@@ -341,8 +341,8 @@ void castor::db::cnv::DbCastorFileCnv::fillRepDiskCopy(castor::stager::CastorFil
         m_remoteUpdateDiskCopyStatement = createStatement(s_remoteUpdateDiskCopyStatementString);
       }
       // Update remote object
-      m_remoteUpdateDiskCopyStatement->setInt64(1, obj->id());
-      m_remoteUpdateDiskCopyStatement->setInt64(2, (*it)->id());
+      m_remoteUpdateDiskCopyStatement->setUInt64(1, obj->id());
+      m_remoteUpdateDiskCopyStatement->setUInt64(2, (*it)->id());
       m_remoteUpdateDiskCopyStatement->execute();
       std::set<int>::iterator item;
       if ((item = diskCopiesList.find((*it)->id())) != diskCopiesList.end()) {
@@ -357,7 +357,7 @@ void castor::db::cnv::DbCastorFileCnv::fillRepDiskCopy(castor::stager::CastorFil
     if (0 == m_deleteDiskCopyStatement) {
       m_deleteDiskCopyStatement = createStatement(s_deleteDiskCopyStatementString);
     }
-    m_deleteDiskCopyStatement->setInt64(1, *it);
+    m_deleteDiskCopyStatement->setUInt64(1, *it);
     m_deleteDiskCopyStatement->execute();
   }
 }
@@ -373,7 +373,7 @@ void castor::db::cnv::DbCastorFileCnv::fillRepTapeCopy(castor::stager::CastorFil
   }
   // Get current database data
   std::set<int> tapeCopiesList;
-  m_selectTapeCopyStatement->setInt64(1, obj->id());
+  m_selectTapeCopyStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectTapeCopyStatement->executeQuery();
   while (rset->next()) {
     tapeCopiesList.insert(rset->getInt(1));
@@ -391,8 +391,8 @@ void castor::db::cnv::DbCastorFileCnv::fillRepTapeCopy(castor::stager::CastorFil
         m_remoteUpdateTapeCopyStatement = createStatement(s_remoteUpdateTapeCopyStatementString);
       }
       // Update remote object
-      m_remoteUpdateTapeCopyStatement->setInt64(1, obj->id());
-      m_remoteUpdateTapeCopyStatement->setInt64(2, (*it)->id());
+      m_remoteUpdateTapeCopyStatement->setUInt64(1, obj->id());
+      m_remoteUpdateTapeCopyStatement->setUInt64(2, (*it)->id());
       m_remoteUpdateTapeCopyStatement->execute();
       std::set<int>::iterator item;
       if ((item = tapeCopiesList.find((*it)->id())) != tapeCopiesList.end()) {
@@ -407,7 +407,7 @@ void castor::db::cnv::DbCastorFileCnv::fillRepTapeCopy(castor::stager::CastorFil
     if (0 == m_deleteTapeCopyStatement) {
       m_deleteTapeCopyStatement = createStatement(s_deleteTapeCopyStatementString);
     }
-    m_deleteTapeCopyStatement->setInt64(1, *it);
+    m_deleteTapeCopyStatement->setUInt64(1, *it);
     m_deleteTapeCopyStatement->execute();
   }
 }
@@ -456,7 +456,7 @@ void castor::db::cnv::DbCastorFileCnv::fillObjSvcClass(castor::stager::CastorFil
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -494,7 +494,7 @@ void castor::db::cnv::DbCastorFileCnv::fillObjFileClass(castor::stager::CastorFi
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -533,7 +533,7 @@ void castor::db::cnv::DbCastorFileCnv::fillObjDiskCopy(castor::stager::CastorFil
   }
   // retrieve the object from the database
   std::set<int> diskCopiesList;
-  m_selectDiskCopyStatement->setInt64(1, obj->id());
+  m_selectDiskCopyStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectDiskCopyStatement->executeQuery();
   while (rset->next()) {
     diskCopiesList.insert(rset->getInt(1));
@@ -583,7 +583,7 @@ void castor::db::cnv::DbCastorFileCnv::fillObjTapeCopy(castor::stager::CastorFil
   }
   // retrieve the object from the database
   std::set<int> tapeCopiesList;
-  m_selectTapeCopyStatement->setInt64(1, obj->id());
+  m_selectTapeCopyStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectTapeCopyStatement->executeQuery();
   while (rset->next()) {
     tapeCopiesList.insert(rset->getInt(1));
@@ -645,17 +645,17 @@ void castor::db::cnv::DbCastorFileCnv::createRep(castor::IAddress* address,
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
-    m_insertStatement->setInt64(1, obj->fileId());
+    m_insertStatement->setUInt64(1, obj->fileId());
     m_insertStatement->setString(2, obj->nsHost());
-    m_insertStatement->setInt64(3, obj->fileSize());
+    m_insertStatement->setUInt64(3, obj->fileSize());
     m_insertStatement->setInt(4, time(0));
     m_insertStatement->setString(5, obj->lastKnownFileName());
-    m_insertStatement->setInt64(6, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setInt64(7, (type == OBJ_FileClass && obj->fileClass() != 0) ? obj->fileClass()->id() : 0);
+    m_insertStatement->setUInt64(6, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setUInt64(7, (type == OBJ_FileClass && obj->fileClass() != 0) ? obj->fileClass()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getInt64(8));
-    m_storeTypeStatement->setInt64(1, obj->id());
-    m_storeTypeStatement->setInt64(2, obj->type());
+    obj->setId(m_insertStatement->getUInt64(8));
+    m_storeTypeStatement->setUInt64(1, obj->id());
+    m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -701,11 +701,11 @@ void castor::db::cnv::DbCastorFileCnv::updateRep(castor::IAddress* address,
       m_updateStatement = createStatement(s_updateStatementString);
     }
     // Update the current object
-    m_updateStatement->setInt64(1, obj->fileId());
+    m_updateStatement->setUInt64(1, obj->fileId());
     m_updateStatement->setString(2, obj->nsHost());
-    m_updateStatement->setInt64(3, obj->fileSize());
+    m_updateStatement->setUInt64(3, obj->fileSize());
     m_updateStatement->setString(4, obj->lastKnownFileName());
-    m_updateStatement->setInt64(5, obj->id());
+    m_updateStatement->setUInt64(5, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -744,9 +744,9 @@ void castor::db::cnv::DbCastorFileCnv::deleteRep(castor::IAddress* address,
       m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
     }
     // Now Delete the object
-    m_deleteTypeStatement->setInt64(1, obj->id());
+    m_deleteTypeStatement->setUInt64(1, obj->id());
     m_deleteTypeStatement->execute();
-    m_deleteStatement->setInt64(1, obj->id());
+    m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
     for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->tapeCopies().begin();
          it != obj->tapeCopies().end();
@@ -783,7 +783,7 @@ castor::IObject* castor::db::cnv::DbCastorFileCnv::createObj(castor::IAddress* a
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, ad->target());
+    m_selectStatement->setUInt64(1, ad->target());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -793,14 +793,14 @@ castor::IObject* castor::db::cnv::DbCastorFileCnv::createObj(castor::IAddress* a
     // create the new Object
     castor::stager::CastorFile* object = new castor::stager::CastorFile();
     // Now retrieve and set members
-    object->setFileId(rset->getInt64(1));
+    object->setFileId(rset->getUInt64(1));
     object->setNsHost(rset->getString(2));
-    object->setFileSize(rset->getInt64(3));
-    object->setCreationTime(rset->getInt64(4));
-    object->setLastAccessTime(rset->getInt64(5));
+    object->setFileSize(rset->getUInt64(3));
+    object->setCreationTime(rset->getUInt64(4));
+    object->setLastAccessTime(rset->getUInt64(5));
     object->setNbAccesses(rset->getInt(6));
     object->setLastKnownFileName(rset->getString(7));
-    object->setId(rset->getInt64(8));
+    object->setId(rset->getUInt64(8));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -828,7 +828,7 @@ void castor::db::cnv::DbCastorFileCnv::updateObj(castor::IObject* obj)
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, obj->id());
+    m_selectStatement->setUInt64(1, obj->id());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -838,14 +838,14 @@ void castor::db::cnv::DbCastorFileCnv::updateObj(castor::IObject* obj)
     // Now retrieve and set members
     castor::stager::CastorFile* object = 
       dynamic_cast<castor::stager::CastorFile*>(obj);
-    object->setFileId(rset->getInt64(1));
+    object->setFileId(rset->getUInt64(1));
     object->setNsHost(rset->getString(2));
-    object->setFileSize(rset->getInt64(3));
-    object->setCreationTime(rset->getInt64(4));
-    object->setLastAccessTime(rset->getInt64(5));
+    object->setFileSize(rset->getUInt64(3));
+    object->setCreationTime(rset->getUInt64(4));
+    object->setLastAccessTime(rset->getUInt64(5));
     object->setNbAccesses(rset->getInt(6));
     object->setLastKnownFileName(rset->getString(7));
-    object->setId(rset->getInt64(8));
+    object->setId(rset->getUInt64(8));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

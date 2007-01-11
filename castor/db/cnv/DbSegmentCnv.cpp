@@ -208,7 +208,7 @@ void castor::db::cnv::DbSegmentCnv::fillRepTape(castor::stager::Segment* obj)
       m_checkTapeExistStatement = createStatement(s_checkTapeExistStatementString);
     }
     // retrieve the object from the database
-    m_checkTapeExistStatement->setInt64(1, obj->tape()->id());
+    m_checkTapeExistStatement->setUInt64(1, obj->tape()->id());
     castor::db::IDbResultSet *rset = m_checkTapeExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -224,8 +224,8 @@ void castor::db::cnv::DbSegmentCnv::fillRepTape(castor::stager::Segment* obj)
     m_updateTapeStatement = createStatement(s_updateTapeStatementString);
   }
   // Update local object
-  m_updateTapeStatement->setInt64(1, 0 == obj->tape() ? 0 : obj->tape()->id());
-  m_updateTapeStatement->setInt64(2, obj->id());
+  m_updateTapeStatement->setUInt64(1, 0 == obj->tape() ? 0 : obj->tape()->id());
+  m_updateTapeStatement->setUInt64(2, obj->id());
   m_updateTapeStatement->execute();
 }
 
@@ -240,7 +240,7 @@ void castor::db::cnv::DbSegmentCnv::fillRepTapeCopy(castor::stager::Segment* obj
       m_checkTapeCopyExistStatement = createStatement(s_checkTapeCopyExistStatementString);
     }
     // retrieve the object from the database
-    m_checkTapeCopyExistStatement->setInt64(1, obj->copy()->id());
+    m_checkTapeCopyExistStatement->setUInt64(1, obj->copy()->id());
     castor::db::IDbResultSet *rset = m_checkTapeCopyExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -256,8 +256,8 @@ void castor::db::cnv::DbSegmentCnv::fillRepTapeCopy(castor::stager::Segment* obj
     m_updateTapeCopyStatement = createStatement(s_updateTapeCopyStatementString);
   }
   // Update local object
-  m_updateTapeCopyStatement->setInt64(1, 0 == obj->copy() ? 0 : obj->copy()->id());
-  m_updateTapeCopyStatement->setInt64(2, obj->id());
+  m_updateTapeCopyStatement->setUInt64(1, 0 == obj->copy() ? 0 : obj->copy()->id());
+  m_updateTapeCopyStatement->setUInt64(2, obj->id());
   m_updateTapeCopyStatement->execute();
 }
 
@@ -299,7 +299,7 @@ void castor::db::cnv::DbSegmentCnv::fillObjTape(castor::stager::Segment* obj)
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -339,7 +339,7 @@ void castor::db::cnv::DbSegmentCnv::fillObjTapeCopy(castor::stager::Segment* obj
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -393,10 +393,10 @@ void castor::db::cnv::DbSegmentCnv::createRep(castor::IAddress* address,
     }
     // Now Save the current object
     m_insertStatement->setInt(1, obj->fseq());
-    m_insertStatement->setInt64(2, obj->offset());
-    m_insertStatement->setInt64(3, obj->bytes_in());
-    m_insertStatement->setInt64(4, obj->bytes_out());
-    m_insertStatement->setInt64(5, obj->host_bytes());
+    m_insertStatement->setUInt64(2, obj->offset());
+    m_insertStatement->setUInt64(3, obj->bytes_in());
+    m_insertStatement->setUInt64(4, obj->bytes_out());
+    m_insertStatement->setUInt64(5, obj->host_bytes());
     m_insertStatement->setString(6, obj->segmCksumAlgorithm());
     m_insertStatement->setInt(7, obj->segmCksum());
     m_insertStatement->setString(8, obj->errMsgTxt());
@@ -406,13 +406,13 @@ void castor::db::cnv::DbSegmentCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(12, obj->blockId1());
     m_insertStatement->setInt(13, obj->blockId2());
     m_insertStatement->setInt(14, obj->blockId3());
-    m_insertStatement->setInt64(15, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
-    m_insertStatement->setInt64(16, (type == OBJ_TapeCopy && obj->copy() != 0) ? obj->copy()->id() : 0);
+    m_insertStatement->setUInt64(15, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
+    m_insertStatement->setUInt64(16, (type == OBJ_TapeCopy && obj->copy() != 0) ? obj->copy()->id() : 0);
     m_insertStatement->setInt(17, (int)obj->status());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getInt64(18));
-    m_storeTypeStatement->setInt64(1, obj->id());
-    m_storeTypeStatement->setInt64(2, obj->type());
+    obj->setId(m_insertStatement->getUInt64(18));
+    m_storeTypeStatement->setUInt64(1, obj->id());
+    m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -467,10 +467,10 @@ void castor::db::cnv::DbSegmentCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setInt(1, obj->fseq());
-    m_updateStatement->setInt64(2, obj->offset());
-    m_updateStatement->setInt64(3, obj->bytes_in());
-    m_updateStatement->setInt64(4, obj->bytes_out());
-    m_updateStatement->setInt64(5, obj->host_bytes());
+    m_updateStatement->setUInt64(2, obj->offset());
+    m_updateStatement->setUInt64(3, obj->bytes_in());
+    m_updateStatement->setUInt64(4, obj->bytes_out());
+    m_updateStatement->setUInt64(5, obj->host_bytes());
     m_updateStatement->setString(6, obj->segmCksumAlgorithm());
     m_updateStatement->setInt(7, obj->segmCksum());
     m_updateStatement->setString(8, obj->errMsgTxt());
@@ -481,7 +481,7 @@ void castor::db::cnv::DbSegmentCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(13, obj->blockId2());
     m_updateStatement->setInt(14, obj->blockId3());
     m_updateStatement->setInt(15, (int)obj->status());
-    m_updateStatement->setInt64(16, obj->id());
+    m_updateStatement->setUInt64(16, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -520,9 +520,9 @@ void castor::db::cnv::DbSegmentCnv::deleteRep(castor::IAddress* address,
       m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
     }
     // Now Delete the object
-    m_deleteTypeStatement->setInt64(1, obj->id());
+    m_deleteTypeStatement->setUInt64(1, obj->id());
     m_deleteTypeStatement->execute();
-    m_deleteStatement->setInt64(1, obj->id());
+    m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -554,7 +554,7 @@ castor::IObject* castor::db::cnv::DbSegmentCnv::createObj(castor::IAddress* addr
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, ad->target());
+    m_selectStatement->setUInt64(1, ad->target());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -565,10 +565,10 @@ castor::IObject* castor::db::cnv::DbSegmentCnv::createObj(castor::IAddress* addr
     castor::stager::Segment* object = new castor::stager::Segment();
     // Now retrieve and set members
     object->setFseq(rset->getInt(1));
-    object->setOffset(rset->getInt64(2));
-    object->setBytes_in(rset->getInt64(3));
-    object->setBytes_out(rset->getInt64(4));
-    object->setHost_bytes(rset->getInt64(5));
+    object->setOffset(rset->getUInt64(2));
+    object->setBytes_in(rset->getUInt64(3));
+    object->setBytes_out(rset->getUInt64(4));
+    object->setHost_bytes(rset->getUInt64(5));
     object->setSegmCksumAlgorithm(rset->getString(6));
     object->setSegmCksum(rset->getInt(7));
     object->setErrMsgTxt(rset->getString(8));
@@ -578,7 +578,7 @@ castor::IObject* castor::db::cnv::DbSegmentCnv::createObj(castor::IAddress* addr
     object->setBlockId1(rset->getInt(12));
     object->setBlockId2(rset->getInt(13));
     object->setBlockId3(rset->getInt(14));
-    object->setId(rset->getInt64(15));
+    object->setId(rset->getUInt64(15));
     object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(18));
     delete rset;
     return object;
@@ -607,7 +607,7 @@ void castor::db::cnv::DbSegmentCnv::updateObj(castor::IObject* obj)
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, obj->id());
+    m_selectStatement->setUInt64(1, obj->id());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -618,10 +618,10 @@ void castor::db::cnv::DbSegmentCnv::updateObj(castor::IObject* obj)
     castor::stager::Segment* object = 
       dynamic_cast<castor::stager::Segment*>(obj);
     object->setFseq(rset->getInt(1));
-    object->setOffset(rset->getInt64(2));
-    object->setBytes_in(rset->getInt64(3));
-    object->setBytes_out(rset->getInt64(4));
-    object->setHost_bytes(rset->getInt64(5));
+    object->setOffset(rset->getUInt64(2));
+    object->setBytes_in(rset->getUInt64(3));
+    object->setBytes_out(rset->getUInt64(4));
+    object->setHost_bytes(rset->getUInt64(5));
     object->setSegmCksumAlgorithm(rset->getString(6));
     object->setSegmCksum(rset->getInt(7));
     object->setErrMsgTxt(rset->getString(8));
@@ -631,7 +631,7 @@ void castor::db::cnv::DbSegmentCnv::updateObj(castor::IObject* obj)
     object->setBlockId1(rset->getInt(12));
     object->setBlockId2(rset->getInt(13));
     object->setBlockId3(rset->getInt(14));
-    object->setId(rset->getInt64(15));
+    object->setId(rset->getUInt64(15));
     object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(18));
     delete rset;
   } catch (castor::exception::SQLError e) {

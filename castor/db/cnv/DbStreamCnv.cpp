@@ -258,7 +258,7 @@ void castor::db::cnv::DbStreamCnv::fillRepTapeCopy(castor::stager::Stream* obj)
   }
   // Get current database data
   std::set<int> tapeCopyList;
-  m_selectTapeCopyStatement->setInt64(1, obj->id());
+  m_selectTapeCopyStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectTapeCopyStatement->executeQuery();
   while (rset->next()) {
     tapeCopyList.insert(rset->getInt(1));
@@ -278,8 +278,8 @@ void castor::db::cnv::DbStreamCnv::fillRepTapeCopy(castor::stager::Stream* obj)
       if (0 == m_insertTapeCopyStatement) {
         m_insertTapeCopyStatement = createStatement(s_insertTapeCopyStatementString);
       }
-      m_insertTapeCopyStatement->setInt64(1, obj->id());
-      m_insertTapeCopyStatement->setInt64(2, (*it)->id());
+      m_insertTapeCopyStatement->setUInt64(1, obj->id());
+      m_insertTapeCopyStatement->setUInt64(2, (*it)->id());
       m_insertTapeCopyStatement->execute();
     }
   }
@@ -290,8 +290,8 @@ void castor::db::cnv::DbStreamCnv::fillRepTapeCopy(castor::stager::Stream* obj)
     if (0 == m_deleteTapeCopyStatement) {
       m_deleteTapeCopyStatement = createStatement(s_deleteTapeCopyStatementString);
     }
-    m_deleteTapeCopyStatement->setInt64(1, obj->id());
-    m_deleteTapeCopyStatement->setInt64(2, *it);
+    m_deleteTapeCopyStatement->setUInt64(1, obj->id());
+    m_deleteTapeCopyStatement->setUInt64(2, *it);
     m_deleteTapeCopyStatement->execute();
   }
 }
@@ -306,7 +306,7 @@ void castor::db::cnv::DbStreamCnv::fillRepTape(castor::stager::Stream* obj)
     m_selectTapeStatement = createStatement(s_selectTapeStatementString);
   }
   // retrieve the object from the database
-  m_selectTapeStatement->setInt64(1, obj->id());
+  m_selectTapeStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectTapeStatement->executeQuery();
   if (rset->next()) {
     u_signed64 tapeId = rset->getInt64(1);
@@ -316,7 +316,7 @@ void castor::db::cnv::DbStreamCnv::fillRepTape(castor::stager::Stream* obj)
       if (0 == m_deleteTapeStatement) {
         m_deleteTapeStatement = createStatement(s_deleteTapeStatementString);
       }
-      m_deleteTapeStatement->setInt64(1, tapeId);
+      m_deleteTapeStatement->setUInt64(1, tapeId);
       m_deleteTapeStatement->execute();
     }
   }
@@ -328,7 +328,7 @@ void castor::db::cnv::DbStreamCnv::fillRepTape(castor::stager::Stream* obj)
       m_checkTapeExistStatement = createStatement(s_checkTapeExistStatementString);
     }
     // retrieve the object from the database
-    m_checkTapeExistStatement->setInt64(1, obj->tape()->id());
+    m_checkTapeExistStatement->setUInt64(1, obj->tape()->id());
     castor::db::IDbResultSet *rset = m_checkTapeExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -341,8 +341,8 @@ void castor::db::cnv::DbStreamCnv::fillRepTape(castor::stager::Stream* obj)
         m_remoteUpdateTapeStatement = createStatement(s_remoteUpdateTapeStatementString);
       }
       // Update remote object
-      m_remoteUpdateTapeStatement->setInt64(1, obj->id());
-      m_remoteUpdateTapeStatement->setInt64(2, obj->tape()->id());
+      m_remoteUpdateTapeStatement->setUInt64(1, obj->id());
+      m_remoteUpdateTapeStatement->setUInt64(2, obj->tape()->id());
       m_remoteUpdateTapeStatement->execute();
     }
     // Close resultset
@@ -353,8 +353,8 @@ void castor::db::cnv::DbStreamCnv::fillRepTape(castor::stager::Stream* obj)
     m_updateTapeStatement = createStatement(s_updateTapeStatementString);
   }
   // Update local object
-  m_updateTapeStatement->setInt64(1, 0 == obj->tape() ? 0 : obj->tape()->id());
-  m_updateTapeStatement->setInt64(2, obj->id());
+  m_updateTapeStatement->setUInt64(1, 0 == obj->tape() ? 0 : obj->tape()->id());
+  m_updateTapeStatement->setUInt64(2, obj->id());
   m_updateTapeStatement->execute();
 }
 
@@ -369,7 +369,7 @@ void castor::db::cnv::DbStreamCnv::fillRepTapePool(castor::stager::Stream* obj)
       m_checkTapePoolExistStatement = createStatement(s_checkTapePoolExistStatementString);
     }
     // retrieve the object from the database
-    m_checkTapePoolExistStatement->setInt64(1, obj->tapePool()->id());
+    m_checkTapePoolExistStatement->setUInt64(1, obj->tapePool()->id());
     castor::db::IDbResultSet *rset = m_checkTapePoolExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
@@ -385,8 +385,8 @@ void castor::db::cnv::DbStreamCnv::fillRepTapePool(castor::stager::Stream* obj)
     m_updateTapePoolStatement = createStatement(s_updateTapePoolStatementString);
   }
   // Update local object
-  m_updateTapePoolStatement->setInt64(1, 0 == obj->tapePool() ? 0 : obj->tapePool()->id());
-  m_updateTapePoolStatement->setInt64(2, obj->id());
+  m_updateTapePoolStatement->setUInt64(1, 0 == obj->tapePool() ? 0 : obj->tapePool()->id());
+  m_updateTapePoolStatement->setUInt64(2, obj->id());
   m_updateTapePoolStatement->execute();
 }
 
@@ -432,7 +432,7 @@ void castor::db::cnv::DbStreamCnv::fillObjTapeCopy(castor::stager::Stream* obj)
   }
   // retrieve the object from the database
   std::set<int> tapeCopyList;
-  m_selectTapeCopyStatement->setInt64(1, obj->id());
+  m_selectTapeCopyStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectTapeCopyStatement->executeQuery();
   while (rset->next()) {
     tapeCopyList.insert(rset->getInt(1));
@@ -481,7 +481,7 @@ void castor::db::cnv::DbStreamCnv::fillObjTape(castor::stager::Stream* obj)
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -521,7 +521,7 @@ void castor::db::cnv::DbStreamCnv::fillObjTapePool(castor::stager::Stream* obj)
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -574,14 +574,14 @@ void castor::db::cnv::DbStreamCnv::createRep(castor::IAddress* address,
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
-    m_insertStatement->setInt64(1, obj->initialSizeToTransfer());
-    m_insertStatement->setInt64(2, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
-    m_insertStatement->setInt64(3, (type == OBJ_TapePool && obj->tapePool() != 0) ? obj->tapePool()->id() : 0);
+    m_insertStatement->setUInt64(1, obj->initialSizeToTransfer());
+    m_insertStatement->setUInt64(2, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
+    m_insertStatement->setUInt64(3, (type == OBJ_TapePool && obj->tapePool() != 0) ? obj->tapePool()->id() : 0);
     m_insertStatement->setInt(4, (int)obj->status());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getInt64(5));
-    m_storeTypeStatement->setInt64(1, obj->id());
-    m_storeTypeStatement->setInt64(2, obj->type());
+    obj->setId(m_insertStatement->getUInt64(5));
+    m_storeTypeStatement->setUInt64(1, obj->id());
+    m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -622,9 +622,9 @@ void castor::db::cnv::DbStreamCnv::updateRep(castor::IAddress* address,
       m_updateStatement = createStatement(s_updateStatementString);
     }
     // Update the current object
-    m_updateStatement->setInt64(1, obj->initialSizeToTransfer());
+    m_updateStatement->setUInt64(1, obj->initialSizeToTransfer());
     m_updateStatement->setInt(2, (int)obj->status());
-    m_updateStatement->setInt64(3, obj->id());
+    m_updateStatement->setUInt64(3, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -663,9 +663,9 @@ void castor::db::cnv::DbStreamCnv::deleteRep(castor::IAddress* address,
       m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
     }
     // Now Delete the object
-    m_deleteTypeStatement->setInt64(1, obj->id());
+    m_deleteTypeStatement->setUInt64(1, obj->id());
     m_deleteTypeStatement->execute();
-    m_deleteStatement->setInt64(1, obj->id());
+    m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -697,7 +697,7 @@ castor::IObject* castor::db::cnv::DbStreamCnv::createObj(castor::IAddress* addre
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, ad->target());
+    m_selectStatement->setUInt64(1, ad->target());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -707,8 +707,8 @@ castor::IObject* castor::db::cnv::DbStreamCnv::createObj(castor::IAddress* addre
     // create the new Object
     castor::stager::Stream* object = new castor::stager::Stream();
     // Now retrieve and set members
-    object->setInitialSizeToTransfer(rset->getInt64(1));
-    object->setId(rset->getInt64(2));
+    object->setInitialSizeToTransfer(rset->getUInt64(1));
+    object->setId(rset->getUInt64(2));
     object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(5));
     delete rset;
     return object;
@@ -737,7 +737,7 @@ void castor::db::cnv::DbStreamCnv::updateObj(castor::IObject* obj)
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, obj->id());
+    m_selectStatement->setUInt64(1, obj->id());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -747,8 +747,8 @@ void castor::db::cnv::DbStreamCnv::updateObj(castor::IObject* obj)
     // Now retrieve and set members
     castor::stager::Stream* object = 
       dynamic_cast<castor::stager::Stream*>(obj);
-    object->setInitialSizeToTransfer(rset->getInt64(1));
-    object->setId(rset->getInt64(2));
+    object->setInitialSizeToTransfer(rset->getUInt64(1));
+    object->setId(rset->getUInt64(2));
     object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(5));
     delete rset;
   } catch (castor::exception::SQLError e) {

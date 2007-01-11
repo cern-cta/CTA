@@ -182,8 +182,8 @@ void castor::db::cnv::DbQueryParameterCnv::fillRepQryRequest(castor::stager::Que
     m_updateQryRequestStatement = createStatement(s_updateQryRequestStatementString);
   }
   // Update local object
-  m_updateQryRequestStatement->setInt64(1, 0 == obj->query() ? 0 : obj->query()->id());
-  m_updateQryRequestStatement->setInt64(2, obj->id());
+  m_updateQryRequestStatement->setUInt64(1, 0 == obj->query() ? 0 : obj->query()->id());
+  m_updateQryRequestStatement->setUInt64(2, obj->id());
   m_updateQryRequestStatement->execute();
 }
 
@@ -222,7 +222,7 @@ void castor::db::cnv::DbQueryParameterCnv::fillObjQryRequest(castor::stager::Que
     m_selectStatement = createStatement(s_selectStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setInt64(1, obj->id());
+  m_selectStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
   if (!rset->next()) {
     castor::exception::NoEntry ex;
@@ -276,12 +276,12 @@ void castor::db::cnv::DbQueryParameterCnv::createRep(castor::IAddress* address,
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->value());
-    m_insertStatement->setInt64(2, (type == OBJ_QryRequest && obj->query() != 0) ? obj->query()->id() : 0);
+    m_insertStatement->setUInt64(2, (type == OBJ_QryRequest && obj->query() != 0) ? obj->query()->id() : 0);
     m_insertStatement->setInt(3, (int)obj->queryType());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getInt64(4));
-    m_storeTypeStatement->setInt64(1, obj->id());
-    m_storeTypeStatement->setInt64(2, obj->type());
+    obj->setId(m_insertStatement->getUInt64(4));
+    m_storeTypeStatement->setUInt64(1, obj->id());
+    m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -323,7 +323,7 @@ void castor::db::cnv::DbQueryParameterCnv::updateRep(castor::IAddress* address,
     // Update the current object
     m_updateStatement->setString(1, obj->value());
     m_updateStatement->setInt(2, (int)obj->queryType());
-    m_updateStatement->setInt64(3, obj->id());
+    m_updateStatement->setUInt64(3, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -362,9 +362,9 @@ void castor::db::cnv::DbQueryParameterCnv::deleteRep(castor::IAddress* address,
       m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
     }
     // Now Delete the object
-    m_deleteTypeStatement->setInt64(1, obj->id());
+    m_deleteTypeStatement->setUInt64(1, obj->id());
     m_deleteTypeStatement->execute();
-    m_deleteStatement->setInt64(1, obj->id());
+    m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -396,7 +396,7 @@ castor::IObject* castor::db::cnv::DbQueryParameterCnv::createObj(castor::IAddres
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, ad->target());
+    m_selectStatement->setUInt64(1, ad->target());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -407,7 +407,7 @@ castor::IObject* castor::db::cnv::DbQueryParameterCnv::createObj(castor::IAddres
     castor::stager::QueryParameter* object = new castor::stager::QueryParameter();
     // Now retrieve and set members
     object->setValue(rset->getString(1));
-    object->setId(rset->getInt64(2));
+    object->setId(rset->getUInt64(2));
     object->setQueryType((enum castor::stager::RequestQueryType)rset->getInt(4));
     delete rset;
     return object;
@@ -436,7 +436,7 @@ void castor::db::cnv::DbQueryParameterCnv::updateObj(castor::IObject* obj)
       m_selectStatement = createStatement(s_selectStatementString);
     }
     // retrieve the object from the database
-    m_selectStatement->setInt64(1, obj->id());
+    m_selectStatement->setUInt64(1, obj->id());
     castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
     if (!rset->next()) {
       castor::exception::NoEntry ex;
@@ -447,7 +447,7 @@ void castor::db::cnv::DbQueryParameterCnv::updateObj(castor::IObject* obj)
     castor::stager::QueryParameter* object = 
       dynamic_cast<castor::stager::QueryParameter*>(obj);
     object->setValue(rset->getString(1));
-    object->setId(rset->getInt64(2));
+    object->setId(rset->getUInt64(2));
     object->setQueryType((enum castor::stager::RequestQueryType)rset->getInt(4));
     delete rset;
   } catch (castor::exception::SQLError e) {
