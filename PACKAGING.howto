@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.27 2006/12/05 10:39:00 felixehm Exp $
+## $Id: PACKAGING.howto,v 1.28 2007/01/11 15:13:14 itglp Exp $
 #
 
 #
@@ -91,13 +91,13 @@ cd ../castor-x.y.z-r
 fakeroot make deb
 
 #
-## To export on the download web page
-#  ----------------------------------
-cd /afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/DIST/CERN/savannah/CASTOR.pkg
-mkdir  x.y.z-r
-cd  x.y.z-r
+## To export on the castor web area (for integration tests)
+#  --------------------------------------------------------
+cd /afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/DIST/intReleases
+mkdir x.y.z-r
+cd x.y.z-r
 mkdir -p SLC3/i386 SLC4/i386 SLC4/x86_64
-cd x.y.z-r/SLC3/i386 #copy here the rmps for lxs5010
+cd SLC3/i386     #copy here the rmps for lxs5010
 cp /usr/src/redhat/RPMS/i386/*x.y.z-r*.rpm .
 cp /usr/src/redhat/RPMS/i386/castor-lib*x.y.z-r*.rpm ../../SLC4/x86_64
 cp /usr/src/redhat/SRPMS/castor-x.y.z-r.src.rpm ../../
@@ -107,25 +107,30 @@ cp /tmp/`whoami`/CASTOR2/ReleaseNotes ../../
 # to verify that the built RPMs are the 'right' number
 foreach i ( SLC*/* ) ; ls -1 $i | wc -l ; end
 
+# to put the RPMs in swrep
+ssh lxadm
+cd /afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/DIST/intReleases/SLC3/i386
+swrep-soap-client put i386_slc3 /cern/cc castor-*.i386.rpm
+swrep-soap-client put x86_64_slc4 /cern/cc castor-lib-2*.i386.rpm  # this package is needed by x86_64 as well because of GridFTPv1
+cd ../../SLC4/x86_64
+swrep-soap-client put x86_64_slc4 /cern/cc castor-*.x86_64.rpm
+
+# to trigger castortest nodes' upgrade
+wassh root@c2test spma_wrapper.sh
 
 #
-## To enter the rpms into swrep
-#  ----------------------------
-#
-# You need to send a mail to linux.3rdlevel@cern.ch to ask them to sign the RPMs. Afterwards they'll go to swrep.
+## To publish the release for production
+#  -------------------------------------
+
+# 1. Publish it in savannah
+cd /afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/DIST
+mv intReleases/x.y.z-r CERN/savannah/CASTOR.pkg/
+# Put proper ReleaseNotes and SQL upgrade scripts as needed
+
+# You need to send a mail to linux.3rdlevel@cern.ch to ask them to sign the RPMs.
 # More info at: https://twiki.cern.ch/twiki/bin/view/FIOgroup/CastorHowtoRPMs
-#
-## By hand : (ONLY FOR INTEGRATION RELEASES)
-#  this command has to be executed in the directory with the rpms from castoradm
-swrep-soap-client put i386_slc3 /cern/cc `ls castor-*.i386.rpm`
 
-# FOR x86_64 we need also need to upload the castor-lib*.i386.rpm into the 64Bit dir
-swrep-soap-client put x86_64_slc4 /cern/cc castor-lib*.i386.rpm
-
-
-## To install in AFS
-#  -----------------
-#
+# 2. Install in AFS
 # You should request the (automatic) creation of the volume by following the instructions at:
 # https://twiki.cern.ch/twiki/bin/view/SPI/SpiSpaceRequests
 #
