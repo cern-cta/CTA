@@ -119,7 +119,7 @@ CREATE TABLE CastorFile (fileId INT8, nsHost VARCHAR(2048), fileSize INT8, creat
 CREATE TABLE DiskCopy (path VARCHAR(2048), gcWeight float, creationTime INT8, id INT8 PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER);
 
 /* SQL statements for type FileSystem */
-CREATE TABLE FileSystem (free INT8, weight float, fsDeviation float, mountPoint VARCHAR(2048), deltaWeight float, deltaFree INT4, reservedSpace INT4, minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, spaceToBeFreed INT8, totalSize INT8, id INT8 PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER);
+CREATE TABLE FileSystem (free INT8, weight float, fsDeviation float, mountPoint VARCHAR(2048), deltaWeight float, deltaFree INT8, reservedSpace INT8, minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, spaceToBeFreed INT8, totalSize INT8, id INT8 PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER);
 
 /* SQL statements for type SvcClass */
 CREATE TABLE SvcClass (nbDrives INT4, name VARCHAR(2048), defaultFileSize INT8, maxReplicaNb INT4, replicationPolicy VARCHAR(2048), gcPolicy VARCHAR(2048), migratorPolicy VARCHAR(2048), recallerPolicy VARCHAR(2048), id INT8 PRIMARY KEY);

@@ -32,6 +32,7 @@ DROP TABLE newRequests;
 /* support tables - check oracleTrailer_create.sql */
 DROP TABLE NbTapeCopiesInFS;
 DROP TABLE LockTable;
+DROP TABLE SelectFiles2DeleteProcHelper;
 DROP TABLE FilesDeletedProcOutput;
 DROP TABLE FileSystemGC;
 
@@ -237,6 +238,7 @@ DROP PROCEDURE archiveSubReq;
 DROP PROCEDURE deleteRequest;
 DROP PROCEDURE deleteArchivedRequests;
 DROP PROCEDURE deleteOutOfDateRequests;
+DROP PROCEDURE deleteOutOfDateDiskCopies;
 DROP PROCEDURE anyTapeCopyForStream;
 DROP PROCEDURE updateFsFileOpened;
 DROP PROCEDURE updateFsFileClosed;
@@ -277,9 +279,9 @@ DROP PROCEDURE filesDeletionFailedProc;
 DROP PROCEDURE putFailedProc;
 DROP FUNCTION defaultGCPolicy;
 DROP FUNCTION nopinGCPolicy;
-DROP FUNCTION nullGCPolicy;
 DROP PROCEDURE garbageCollectFS;
 DROP PROCEDURE garbageCollect;
+DROP PROCEDURE gcInvalidDiskCopies;
 DROP PROCEDURE internalStageQuery;
 DROP PROCEDURE fileNameStageQuery;
 DROP PROCEDURE fileIdStageQuery;
