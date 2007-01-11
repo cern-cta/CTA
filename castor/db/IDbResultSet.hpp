@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IDbResultSet.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/09/21 07:10:49 $ $Author: felixehm $
+ * @(#)$RCSfile: IDbResultSet.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/01/11 10:04:19 $ $Author: itglp $
  *
  * 
  *
@@ -42,6 +42,9 @@ class IDbResultSet {
 
 	public:
 
+    /**
+     * Default destructor 
+     */
     virtual ~IDbResultSet() {};
 
     /**
@@ -54,7 +57,8 @@ class IDbResultSet {
      * @param i 
      */
     virtual int getInt(int i) = 0;
-    virtual u_signed64 getInt64(int i) = 0;
+    virtual signed64 getInt64(int i) = 0;
+    virtual u_signed64 getUInt64(int i) = 0;
     virtual std::string getString(int i) = 0;
     virtual float getFloat(int i) = 0;
     virtual double getDouble(int i) = 0;

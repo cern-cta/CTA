@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/01/09 17:26:09 $ $Author: itglp $
+ * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/01/11 10:04:19 $ $Author: itglp $
  *
  * 
  *
@@ -54,7 +54,8 @@ class IDbStatement {
      * @param value its value
      */
     virtual void setInt(int pos, int value) = 0;
-    virtual void setInt64(int pos, u_signed64 value) = 0;
+    virtual void setInt64(int pos, signed64 value) = 0;
+    virtual void setUInt64(int pos, u_signed64 value) = 0;
     virtual void setString(int pos, std::string value) = 0;
     virtual void setFloat(int pos, float value) = 0;
     virtual void setDouble(int pos, double value) = 0;
@@ -63,7 +64,8 @@ class IDbStatement {
       throw (castor::exception::SQLError) = 0;
 
     virtual int getInt(int pos) = 0;
-    virtual u_signed64 getInt64(int pos) = 0;
+    virtual signed64 getInt64(int pos) = 0;
+    virtual u_signed64 getUInt64(int pos) = 0;
     virtual std::string getString(int pos) = 0;
     virtual float getFloat(int pos) = 0;
     virtual double getDouble(int pos) = 0;

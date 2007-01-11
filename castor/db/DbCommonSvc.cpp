@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbCommonSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/01 10:22:33 $ $Author: itglp $
+ * @(#)$RCSfile: DbCommonSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/01/11 10:04:19 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for CDBC
  *
@@ -223,7 +223,7 @@ castor::db::DbCommonSvc::selectTape(const std::string vid,
     }
     // If we reach this point, then we selected successfully
     // a tape and its id is in rset
-    id = rset->getInt64(1);
+    id = rset->getUInt64(1);
     delete rset;
   } catch (castor::exception::SQLError e) {
     castor::exception::Internal ex;
@@ -284,9 +284,9 @@ castor::db::DbCommonSvc::selectSvcClass
     // Found the SvcClass, so create it in memory
     castor::stager::SvcClass* result =
       new castor::stager::SvcClass();
-    result->setId(rset->getInt64(1));
+    result->setId(rset->getUInt64(1));
     result->setNbDrives(rset->getInt(2));
-    result->setDefaultFileSize(rset->getInt64(3));
+    result->setDefaultFileSize(rset->getUInt64(3));
     result->setMaxReplicaNb(rset->getInt(4));
     result->setReplicationPolicy(rset->getString(5));
     result->setGcPolicy(rset->getString(6));
@@ -329,9 +329,9 @@ castor::db::DbCommonSvc::selectFileClass
     // Found the FileClass, so create it in memory
     castor::stager::FileClass* result =
       new castor::stager::FileClass();
-    result->setId(rset->getInt64(1));
-    result->setMinFileSize(rset->getInt64(2));
-    result->setMaxFileSize(rset->getInt64(3));
+    result->setId(rset->getUInt64(1));
+    result->setMinFileSize(rset->getUInt64(2));
+    result->setMaxFileSize(rset->getUInt64(3));
     result->setNbCopies(rset->getInt(4));
     result->setName(name);
     delete rset;
@@ -373,23 +373,23 @@ castor::db::DbCommonSvc::selectFileSystem
     // create them in memory
     castor::stager::DiskServer* ds =
       new castor::stager::DiskServer();
-    ds->setId(rset->getInt64(1));
+    ds->setId(rset->getUInt64(1));
     ds->setStatus
       ((enum castor::stager::DiskServerStatusCode)rset->getInt(2));
     ds->setName(diskServer);
     castor::stager::FileSystem* result =
       new castor::stager::FileSystem();
-    result->setId(rset->getInt64(3));
-    result->setFree(rset->getInt64(4));
+    result->setId(rset->getUInt64(3));
+    result->setFree(rset->getUInt64(4));
     result->setWeight(rset->getDouble(5));
     result->setFsDeviation(rset->getDouble(6));
     result->setStatus
       ((enum castor::stager::FileSystemStatusCodes)rset->getInt(7));
     result->setMinFreeSpace(rset->getFloat(8));
     result->setMaxFreeSpace(rset->getFloat(9));
-    result->setReservedSpace(rset->getInt64(10));
-    result->setSpaceToBeFreed(rset->getInt64(11));
-    result->setTotalSize(rset->getInt64(12));
+    result->setReservedSpace(rset->getUInt64(10));
+    result->setSpaceToBeFreed(rset->getUInt64(11));
+    result->setTotalSize(rset->getUInt64(12));
     result->setMountPoint(mountPoint);
     result->setDiskserver(ds);
     ds->addFileSystems(result);
