@@ -1,5 +1,179 @@
-castor (2.1.2-2) unstable; urgency=low
+castor (2.1.2-3) unstable; urgency=low
 
+  * CASTOR2/PACKAGING.howto:
+    [r1.28,2007-01-11,itglp] Refactored instructions for internal and published releases
+  * CASTOR2/castor/BaseCnvSvc.hpp:
+    [r1.16,2006-12-20,itglp] Removed unused header (fixes warnings)
+  * CASTOR2/castor/Constants.cpp:
+    [r1.37,2007-01-10,sponcec3] Removed old Response converters
+    [r1.36,2006-12-22,sponcec3] Added new objects for rmAdminNode
+  * CASTOR2/castor/Constants.hpp:
+    [r1.69,2007-01-10,sponcec3] Removed old Response converters
+    [r1.68,2006-12-22,sponcec3] Added new objects for rmAdminNode
+    [r1.67,2006-12-22,sponcec3] fixes an extra ',' that was found by gcc 4
+  * CASTOR2/castor/Imakefile:
+    [r1.138,2007-01-10,sponcec3] Removed old Response converters
+    [r1.137,2006-12-22,sponcec3] now compile by default with -pedantic -ansi -Wall -Wno-long-long
+  * CASTOR2/castor/MessageAck.hpp:
+    [r1.10,2007-01-09,sponcec3] Fixed exception handling when committing/rollbacking
+  * CASTOR2/castor/client/BaseClient.cpp:
+    [r1.59,2007-01-10,sponcec3] Fixes to be able to compile on gcc 4.1. Note that some were real bugs !
+  * CASTOR2/castor/client/BaseClient.hpp:
+    [r1.21,2007-01-10,sponcec3] Fixes to be able to compile on gcc 4.1. Note that some were real bugs !
+  * CASTOR2/castor/client/IResponseHandler.hpp:
+    [r 1.3,2007-01-10,sponcec3] Fixes to be able to compile on gcc 4.1. Note that some were real bugs !
+  * CASTOR2/castor/db/IDbStatement.hpp:
+    [r 1.6,2007-01-09,itglp] Fixed exception handling: SQL specific methods throw SQLError exceptions instead of the generic one
+    [r 1.5,2006-12-20,itglp] Changed static definitions to const
+  * CASTOR2/castor/db/cnv/Db*Cnv.cpp:
+    [2007-01-09,sponcec3] Fixed exception handling when committing/rollbacking
+  * CASTOR2/castor/db/cnv/DbFileSystemCnv.cpp:
+    [r 1.9,2006-12-22,sponcec3] Fixed types of deltaFree and reservedSpace in FileSystem to 64 bits integers
+  * CASTOR2/castor/db/cnv/Imakefile:
+    [r 1.9,2007-01-11,itglp] Removed DbCommonSvc class as it is not really used
+  * CASTOR2/castor/db/newora/OraStatement.cpp:
+    [r 1.4,2007-01-09,itglp] Fixed exception handling: SQL specific methods throw SQLError exceptions instead of the generic one
+  * CASTOR2/castor/db/newora/OraStatement.hpp:
+    [r 1.4,2007-01-09,itglp] Fixed exception handling: SQL specific methods throw SQLError exceptions instead of the generic one
+  * CASTOR2/castor/db/ora/OraFileSystemCnv.cpp:
+    [r1.48,2006-12-22,sponcec3] Fixed types of deltaFree and reservedSpace in FileSystem to 64 bits integers
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    [r1.364,2007-01-11,itglp] Added a comment
+    [r1.363,2007-01-10,itglp] Added an index and a constraint on SvcClass.name after suggestions from Nilo
+    [r1.362,2006-12-22,sponcec3] Better error handling in fileRecallFailed
+    [r1.361,2006-12-20,sponcec3] Added index on subReqId for SubRequest
+    [r1.360,2006-12-20,sponcec3] Fixed query statement for cleanup of old, failed subrequests
+    [r1.359,2006-12-19,itglp] Fixed cut&paste typo...
+    [r1.358,2006-12-19,itglp] Fixed typo
+    [r1.357,2006-12-19,itglp] Better timing for the new GC job.
+    [r1.357,2006-12-19,itglp] Moved pure CREATE statements to the top to ease creation of upgrade scripts.
+  * CASTOR2/castor/io/StreamFileSystemCnv.cpp:
+    [r1.24,2006-12-22,sponcec3] Fixed types of deltaFree and reservedSpace in FileSystem to 64 bits integers
+  * CASTOR2/castor/io/StreamOld*Cnv.cpp:
+    [2007-01-10,sponcec3] Removed old Response converters
+  * CASTOR2/castor/monitoring/ClusterStatus.cpp:
+    [r 1.5,2006-12-21,sponcec3] Adapted to new shared memory implementation
+  * CASTOR2/castor/monitoring/DiskServerStatus.cpp:
+    [r 1.2,2006-12-21,sponcec3] Fixed details in output of print method
+  * CASTOR2/castor/monitoring/FileSystemStatus.cpp:
+    [r 1.2,2006-12-21,sponcec3] Fixed details in output of print method
+  * CASTOR2/castor/monitoring/Imakefile:
+    [r 1.6,2006-12-22,sponcec3] compilation of the new objects for rmAdminNode
+    [r 1.5,2006-12-22,sponcec3] Rules to compile rmGetNodes and rmAdminNodes
+    [r 1.4,2006-12-21,sponcec3] compile with -pedantic -ansi -Wall -Wno-long-long
+  * CASTOR2/castor/monitoring/SharedMemoryAllocator.hpp:
+    [r 1.6,2006-12-21,sponcec3] Adapted to new shared memory implementation
+  * CASTOR2/castor/monitoring/rmmaster/CollectorThread.cpp:
+    [r 1.2,2006-12-22,sponcec3] Deal with reports coming from rmAdminNode command
+  * CASTOR2/castor/monitoring/rmmaster/CollectorThread.hpp:
+    [r 1.2,2006-12-22,sponcec3] Deal with reports coming from rmAdminNode command
+  * CASTOR2/castor/monitoring/rmmaster/Imakefile:
+    [r 1.3,2006-12-21,sponcec3] compile with -pedantic -ansi -Wall -Wno-long-long
+  * CASTOR2/castor/monitoring/rmnode/Imakefile:
+    [r 1.2,2006-12-21,sponcec3] compile with -pedantic -ansi -Wall -Wno-long-long
+  * CASTOR2/castor/monitoring/rmnode/MetricsThread.cpp:
+    [r 1.4,2006-12-21,sponcec3] Fixed warnings due to -pedantic -ansi -Wall options
+  * CASTOR2/castor/repack/DatabaseHelper.cpp:
+    [r1.20,2006-12-21,gtaur] Solved the problem of python to deal with the blockid stored in repack db, operations to retrieve that moved into the C++ part
+  * CASTOR2/castor/repack/DatabaseHelper.hpp:
+    [r1.14,2006-12-21,gtaur] Solved the problem of python to deal with the blockid stored in repack db, operations to retrieve that moved into the C++ part
+  * CASTOR2/castor/repack/FileOrganizer.cpp:
+    [r 1.8,2006-12-19,felixehm] Removed not neccessary modules.
+  * CASTOR2/castor/repack/FileOrganizer.hpp:
+    [r 1.5,2006-12-19,felixehm] Removed not neccessary modules.
+  * CASTOR2/castor/repack/Imakefile:
+    [r1.15,2006-12-19,felixehm] Removed not neccessary modules.
+  * CASTOR2/castor/repack/RepackDaemon.cpp:
+    [r 1.2,2006-12-19,felixehm] removed not neccessary files
+  * CASTOR2/castor/repack/RepackDaemon.hpp:
+    [r 1.2,2006-12-19,felixehm] removed not neccessary files
+  * CASTOR2/castor/repack/RepackFileStager.hpp:
+    [r1.12,2006-12-18,felixehm] Updated the description in the header file
+  * CASTOR2/castor/repack/RepackServer.cpp:
+    [r1.25,2006-12-19,felixehm] Removed not neccessary modules.
+  * CASTOR2/castor/repack/RepackServer.hpp:
+    [r1.12,2006-12-19,felixehm] Removed not neccessary modules.
+  * CASTOR2/castor/repack/RepackSynchroniser.cpp:
+    [r 1.3,2006-12-19,felixehm] Removed not neccessary modules.
+  * CASTOR2/castor/repack/RepackSynchroniser.hpp:
+    [r 1.2,2006-12-19,felixehm] Removed not neccessary modules.
+  * CASTOR2/castor/repack/RepackWorker.cpp:
+    [r1.30,2006-12-17,felixehm] A non submitted repack request is directly put into FINISHED, if the
+    [r1.30,2006-12-17,felixehm] user requests to remove it (before it went through a cleanup).
+  * CASTOR2/castor/repack/repackUndo/WrapCns.cpp:
+    [r 1.5,2006-12-21,gtaur] Solved the problem of python to deal with the blockid stored in repack db, operations to retrieve that moved into the C++ part
+  * CASTOR2/castor/repack/repackUndo/repackUndo.py:
+    [r 1.4,2006-12-21,gtaur] Solved the problem of python to deal with the blockid stored in repack db, operations to retrieve that moved into the C++ part
+  * CASTOR2/castor/repack/repackUndo/wrapCSetup.py:
+    [r 1.2,2006-12-21,gtaur] Now create the .so in the correct way and there is no need of extra make files. It uses the .o and the library straight.
+  * CASTOR2/castor/replier/ClientConnection.cpp:
+    [r1.11,2007-01-10,sponcec3] Adapted to gcc4 and -pedantic, -Wall, etc
+  * CASTOR2/castor/replier/RequestReplier.cpp:
+    [r1.31,2007-01-10,sponcec3] Adapted to gcc4 and -pedantic, -Wall, etc
+  * CASTOR2/castor/server/BaseDaemon.cpp:
+    [r1.11,2007-01-11,sponcec3] small fix to comply to pedantic, Wall, ansi and so on
+  * CASTOR2/castor/server/IThread.hpp:
+    [r 1.7,2007-01-10,sponcec3] Fixes to be able to compile on gcc 4.1. Note that some were real bugs !
+  * CASTOR2/castor/server/NotificationThread.cpp:
+    [r 1.9,2007-01-11,sponcec3] small fix to comply to pedantic, Wall, ansi and so on
+  * CASTOR2/castor/server/NotificationThread.hpp:
+    [r 1.7,2006-12-22,sponcec3] Fixed missing virtual destructor
+  * CASTOR2/castor/server/ServiceThread.cpp:
+    [r 1.8,2007-01-10,sponcec3] Fixes to be able to compile on gcc 4.1. Note that some were real bugs !
+  * CASTOR2/castor/server/ServiceThread.hpp:
+    [r 1.7,2007-01-10,sponcec3] Fixes to be able to compile on gcc 4.1. Note that some were real bugs !
+  * CASTOR2/castor/server/SignalThreadPool.cpp:
+    [r1.13,2007-01-10,sponcec3] Fixes to be able to compile on gcc 4.1. Note that some were real bugs !
+  * CASTOR2/castor/sharedMemory/Allocator.hpp:
+    [r 1.9,2006-12-21,sponcec3] Second version of the shared memory part
+  * CASTOR2/castor/sharedMemory/BasicBlock.cpp:
+    [r 1.2,2006-12-21,sponcec3] Second version of the shared memory part
+  * CASTOR2/castor/sharedMemory/BasicBlock.hpp:
+    [r 1.2,2006-12-21,sponcec3] Second version of the shared memory part
+  * CASTOR2/castor/sharedMemory/Block.hpp:
+    [r1.10,2006-12-21,sponcec3] Second version of the shared memory part
+  * CASTOR2/castor/sharedMemory/BlockDict.cpp:
+    [r 1.2,2006-12-21,sponcec3] Second version of the shared memory part
+  * CASTOR2/castor/sharedMemory/BlockDict.hpp:
+    [r 1.2,2006-12-21,sponcec3] Second version of the shared memory part
+  * CASTOR2/castor/sharedMemory/BlockKey.cpp:
+    [r 1.2,2006-12-21,sponcec3] Second version of the shared memory part
+  * CASTOR2/castor/sharedMemory/DLFInit.cpp:
+    [r 1.3,2006-12-21,sponcec3] Second version of the shared memory part
+  * CASTOR2/castor/sharedMemory/IBlock.hpp:
+    [r 1.2,2007-01-09,sponcec3] Adding missing virtual destructor
+  * CASTOR2/castor/sharedMemory/SingletonBlock.hpp:
+    [r 1.4,2006-12-21,sponcec3] Second version of the shared memory part
+  * CASTOR2/castor/stager/FileSystem.h:
+  * CASTOR2/castor/stager/FileSystem.hpp:
+  * CASTOR2/castor/stager/FileSystemCInt.cpp:
+    [2006-12-22,sponcec3] Fixed types of deltaFree and reservedSpace in FileSystem to 64 bits integers
+  * CASTOR2/castor/stager/RemoteGCSvc.cpp:
+  * CASTOR2/castor/stager/RemoteJobSvc.cpp:
+    [r 1.7,2007-01-10,sponcec3] Fixed timeout setting, thanks to gcc4 and Wall, pedantic options
+  * CASTOR2/client/src/rfio/rfio_copy.c:
+    [r 1.2,2006-12-19,itglp] Include the new header stager_client_commandline.h
+  * CASTOR2/codeGeneration/RH.xmi:
+    [r1.139,2007-01-09,sponcec3] Fixed (again, was lost) types of deltaFree and reservedSpace in FileSystem to 64 bits integers
+    [r1.138,2007-01-09,sponcec3] Created objects used by rmAdminNode
+    [r1.137,2006-12-22,sponcec3] Fixed types of deltaFree and reservedSpace in FileSystem to 64 bits integers
+  * CASTOR2/dlf/dlf_lib.c:
+    [r1.11,2006-12-15,waldron] check for file target before open()
+  * CASTOR2/doc/uml/Repack.xmi:
+    [r 1.9,2006-12-19,felixehm] Updated Repack documentation
+    [r 1.8,2006-12-18,felixehm] updated Repack documentation
+  * CASTOR2/hsmtools/upgradec2stgdb.csh:
+    [r 1.6,2006-12-19,itglp] Updated scripts to automate some SQL operations
+  * CASTOR2/rtcopy/TapeErrorHandler.c:
+    [r1.20,2006-12-19,obarring] Add missing check on DiskCopy status (must be CANBEMIGR for a migration retry)
+    [r1.19,2006-12-19,obarring] Protect against diskCopy with fileSystem==NULL
+  * CASTOR2/stager/stager_rm.c:
+    [r 1.4,2007-01-09,sponcec3] Fixed missing dereferencing. Thanks Olof for spotting it
+
+ -- Giuseppe Lo Presti <itglp@cern.ch>  Thu, 11 Jan 2007 19:57:49 +0100
+
+
+castor (2.1.2-2) unstable; urgency=low
 
   * CASTOR2/castor/repack/repackUndo/WrapCns.cpp:
     [r 1.4,2006-12-15,gtaur] side tape information hardcoded to 0
@@ -148,9 +322,6 @@ castor (2.1.2-2) unstable; urgency=low
  -- Felix Ehm <felix.ehm@cern.ch>  Thur, 14 Dez 2006 17:30:00 +0200
 
 
-
-
-
 castor (2.1.2-1) unstable; urgency=low
 
   * CASTOR2/PACKAGING.howto:
@@ -198,7 +369,6 @@ castor (2.1.2-1) unstable; urgency=low
     [2006-12-05,riojac3] 64 bits cleaned
 
  -- Felix Ehm <felix.ehm@cern.ch>  Wed, 06 Dez 2006 14:20:00 +0200
-
 
 
 castor (2.1.2-0) unstable; urgency=low

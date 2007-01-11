@@ -1,4 +1,35 @@
 -----------
+- 2.1.2-3 -
+-----------
+
+  New Features and Changes
+  ------------------------
+  This release brings a number of bug fixes and improvements:
+  - A PrepareToGet request is not scheduled anymore if the requested file is to be recalled from tape
+  - Bugfixes and finalization of the Repack system
+  - Implemented Repack check and Repack undo
+  - Fixes around the DLF and the web interface
+  - Fixed all known database deadlocks to date
+  - Reconnection to the db more robust in case of transient failures, many more are recognized now
+  - Cleaned NS clients and CUPV code for 64bit
+  - Many optimizations in the PL/SQL code
+  - Minor fixes to be able to compile the C++ part with gcc-3.4 and gcc-4.1 without warnings
+  - Fixed a problem in TapeErrorHandler to allow tape retries upon error
+  - Fixed query used by the cleaningDaemon to delete old failed subRequests
+  - Bugfix for #22620: Uncaught C++ exception causes TapeErrorHandler to Abort
+  - Bugfix for #22382: rtcpclientd does not stop gracefully upon signal
+  - Bugfix for #21824: internalPutDoneFunc tries to delete the prepareTo request too hard
+  - Bugfix for #21541: change location of RTCOPY
+  - Bugfix for #21482: bad values on defaultFileSize when using modifySvcClass
+  
+  Upgrade from 2.1.1-9
+  --------------------
+  - Stop all the CASTOR daemons
+  - Upgrade the database; new database code does not work with old stagers
+  - Upgrade all nodes (the order is not important) and restart the service
+
+
+-----------
 - 2.1.1-9 -
 -----------
 
@@ -6,7 +37,8 @@
   ------------------------
   This release brings a number of bug fixes and improvements:
   - Improvements around the Repack system, added Repack multi-stager ability
-  - Bugfix for #21093 (strange files created on local disk, when DLF is not able to log)
+  - Bugfix for #21093: strange files created on local disk, when DLF is not able to log
+  - Bugfix for #20069: if user has the wrong (non existent) svcclass there is no intelligible error reported
   - Bugfix for very large files
   - Improved selection of migration candidates via PL/SQL procedure
   - Improved port handling in clients in case of many concurrent callbacks on a small port range
