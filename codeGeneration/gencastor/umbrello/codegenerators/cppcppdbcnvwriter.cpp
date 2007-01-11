@@ -1396,7 +1396,7 @@ void CppCppDbCnvWriter::writeBasicMult1FillRep(Assoc* as) {
               << "// retrieve the object from the database"
               << endl << getIndent() << "m_select"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setInt64(1, obj->id());"
+              << "Statement->setUInt64(1, obj->id());"
               << endl << getIndent()
               << "castor::db::IDbResultSet *rset = m_select"
               << capitalizeFirstLetter(as->remotePart.typeName)
@@ -1432,7 +1432,7 @@ void CppCppDbCnvWriter::writeBasicMult1FillRep(Assoc* as) {
     *m_stream << getIndent() << "}" << endl << getIndent()
               << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setInt64(1, "
+              << "Statement->setUInt64(1, "
               << as->remotePart.name
               << "Id);"
               << endl << getIndent() << "m_delete"
@@ -1473,7 +1473,7 @@ void CppCppDbCnvWriter::writeBasicMult1FillRep(Assoc* as) {
               << "// retrieve the object from the database"
               << endl << getIndent() << "m_check"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "ExistStatement->setInt64(1, obj->"
+              << "ExistStatement->setUInt64(1, obj->"
               << as->remotePart.name << "()->id());"
               << endl << getIndent()
               << "castor::db::IDbResultSet *rset = m_check"
@@ -1522,10 +1522,10 @@ void CppCppDbCnvWriter::writeBasicMult1FillRep(Assoc* as) {
                 << "// Update remote object"
                 << endl << getIndent()
                 << "m_remoteUpdate" << as->remotePart.typeName
-                << "Statement->setInt64(1, obj->id());"
+                << "Statement->setUInt64(1, obj->id());"
                 << endl << getIndent()
                 << "m_remoteUpdate" << as->remotePart.typeName
-                << "Statement->setInt64(2, obj->"
+                << "Statement->setUInt64(2, obj->"
                 << as->remotePart.name
                 << "()->id());"
                 << endl << getIndent()
@@ -1559,14 +1559,14 @@ void CppCppDbCnvWriter::writeBasicMult1FillRep(Assoc* as) {
             << "// Update local object"
             << endl << getIndent()
             << "m_update" << as->remotePart.typeName
-            << "Statement->setInt64(1, 0 == obj->"
+            << "Statement->setUInt64(1, 0 == obj->"
             << as->remotePart.name
             << "() ? 0 : obj->"
             << as->remotePart.name
             << "()->id());"
             << endl << getIndent()
             << "m_update" << as->remotePart.typeName
-            << "Statement->setInt64(2, obj->id());"
+            << "Statement->setUInt64(2, obj->id());"
             << endl << getIndent()
             << "m_update" << as->remotePart.typeName
             << "Statement->execute();"
@@ -1612,7 +1612,7 @@ void CppCppDbCnvWriter::writeBasicMult1FillObj(Assoc* as,
             << getIndent()
             << "// retrieve the object from the database"
             << endl << getIndent()
-            << "m_selectStatement->setInt64(1, obj->id());"
+            << "m_selectStatement->setUInt64(1, obj->id());"
             << endl << getIndent()
             << "castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();"
             << endl << getIndent()
@@ -1762,7 +1762,7 @@ void CppCppDbCnvWriter::writeBasicMultNFillRep(Assoc* as) {
             << "List;" << endl << getIndent()
             << "m_select"
             << capitalizeFirstLetter(as->remotePart.typeName)
-            << "Statement->setInt64(1, obj->id());"
+            << "Statement->setUInt64(1, obj->id());"
             << endl << getIndent()
             << "castor::db::IDbResultSet *rset = "
             << "m_select"
@@ -1827,10 +1827,10 @@ void CppCppDbCnvWriter::writeBasicMultNFillRep(Assoc* as) {
               << "// Update remote object"
               << endl << getIndent()
               << "m_remoteUpdate" << as->remotePart.typeName
-              << "Statement->setInt64(1, obj->id());"
+              << "Statement->setUInt64(1, obj->id());"
               << endl << getIndent()
               << "m_remoteUpdate" << as->remotePart.typeName
-              << "Statement->setInt64(2, (*it)->id());"
+              << "Statement->setUInt64(2, (*it)->id());"
               << endl << getIndent()
               << "m_remoteUpdate" << as->remotePart.typeName
               << "Statement->execute();"
@@ -1877,11 +1877,11 @@ void CppCppDbCnvWriter::writeBasicMultNFillRep(Assoc* as) {
               << getIndent()
               << "m_insert"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setInt64(1, obj->id());"
+              << "Statement->setUInt64(1, obj->id());"
               << endl << getIndent()
               << "m_insert"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setInt64(2, (*it)->id());"
+              << "Statement->setUInt64(2, (*it)->id());"
               << endl << getIndent()
               << "m_insert"
               << capitalizeFirstLetter(as->remotePart.typeName)
@@ -1928,10 +1928,10 @@ void CppCppDbCnvWriter::writeBasicMultNFillRep(Assoc* as) {
     *m_stream << getIndent() << "}" << endl << getIndent()
               << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setInt64(1, obj->id());"
+              << "Statement->setUInt64(1, obj->id());"
               << endl << getIndent() << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setInt64(2, *it);"
+              << "Statement->setUInt64(2, *it);"
               << endl << getIndent() << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
               << "Statement->execute();"
@@ -1955,7 +1955,7 @@ void CppCppDbCnvWriter::writeBasicMultNFillRep(Assoc* as) {
     *m_stream << getIndent() << "}" << endl << getIndent()
               << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setInt64(1, *it);"
+              << "Statement->setUInt64(1, *it);"
               << endl << getIndent() << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
               << "Statement->execute();"
@@ -2015,7 +2015,7 @@ void CppCppDbCnvWriter::writeBasicMultNFillObj(Assoc* as) {
             << "List;" << endl << getIndent()
             << "m_select"
             << capitalizeFirstLetter(as->remotePart.typeName)
-            << "Statement->setInt64(1, obj->id());"
+            << "Statement->setUInt64(1, obj->id());"
             << endl << getIndent()
             << "castor::db::IDbResultSet *rset = "
             << "m_select"
@@ -2274,7 +2274,7 @@ void CppCppDbCnvWriter::writeCreateRepContent() {
     } else if (as->type.multiRemote == MULT_ONE &&
                as->remotePart.name != "") {
       *m_stream << getIndent()
-                << "m_insertStatement->setInt64("
+                << "m_insertStatement->setUInt64("
                 << n << ", ";
       if (!isEnum(as->remotePart.typeName)) {
         *m_stream << "(type == OBJ_"
@@ -2291,26 +2291,26 @@ void CppCppDbCnvWriter::writeCreateRepContent() {
   *m_stream << getIndent()
             << "m_insertStatement->execute();"
             << endl << getIndent()
-            << "obj->setId(m_insertStatement->getInt64("
+            << "obj->setId(m_insertStatement->getUInt64("
             << n << "));" << endl << getIndent()
-            << "m_storeTypeStatement->setInt64(1, obj->id());"
+            << "m_storeTypeStatement->setUInt64(1, obj->id());"
             << endl << getIndent()
-            << "m_storeTypeStatement->setInt64(2, obj->type());"
+            << "m_storeTypeStatement->setUInt64(2, obj->type());"
             << endl << getIndent()
             << "m_storeTypeStatement->execute();"
             << endl;
   if (isNewRequest()) {
     *m_stream << getIndent()
-              << "m_insertNewReqStatement->setInt64(1, obj->id());"
+              << "m_insertNewReqStatement->setUInt64(1, obj->id());"
               << endl << getIndent()
-              << "m_insertNewReqStatement->setInt64(2, obj->type());"
+              << "m_insertNewReqStatement->setUInt64(2, obj->type());"
               << endl << getIndent()
               << "m_insertNewReqStatement->execute();"
               << endl;
   }
   if (isNewSubRequest()) {
     *m_stream << getIndent()
-              << "m_insertNewSubReqStatement->setInt64(1, obj->id());"
+              << "m_insertNewSubReqStatement->setUInt64(1, obj->id());"
               << endl << getIndent()
               << "m_insertNewSubReqStatement->execute();"
               << endl;
@@ -2476,11 +2476,11 @@ void CppCppDbCnvWriter::writeDeleteRepContent() {
   *m_stream << getIndent()
             << "// Now Delete the object"
             << endl << getIndent()
-            << "m_deleteTypeStatement->setInt64(1, obj->id());"
+            << "m_deleteTypeStatement->setUInt64(1, obj->id());"
             << endl << getIndent()
             << "m_deleteTypeStatement->execute();"
             << endl << getIndent()
-            << "m_deleteStatement->setInt64(1, obj->id());"
+            << "m_deleteStatement->setUInt64(1, obj->id());"
             << endl << getIndent()
             << "m_deleteStatement->execute();"
             << endl;
@@ -2580,12 +2580,12 @@ void CppCppDbCnvWriter::writeDeleteRepContent() {
                   << endl << getIndent()
                   << "m_delete"
                   << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "Statement->setInt64(1, obj->"
+                  << "Statement->setUInt64(1, obj->"
                   << as->remotePart.name << "()->id());"
                   << endl << getIndent()
                   << "m_delete"
                   << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "Statement->setInt64(2, obj->id());"
+                  << "Statement->setUInt64(2, obj->id());"
                   << endl << getIndent()
                   << "m_delete"
                   << capitalizeFirstLetter(as->remotePart.typeName)
@@ -2646,7 +2646,7 @@ void CppCppDbCnvWriter::writeCreateObjContent() {
   *m_stream << getIndent() << "}" << endl
             << getIndent() << "// retrieve the object from the database"
             << endl << getIndent()
-            << "m_selectStatement->setInt64(1, ad->target());"
+            << "m_selectStatement->setUInt64(1, ad->target());"
             << endl << getIndent()
             << "castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();"
             << endl << getIndent()
@@ -2732,7 +2732,7 @@ void CppCppDbCnvWriter::writeUpdateObjContent() {
             << getIndent()
             << "// retrieve the object from the database"
             << endl << getIndent()
-            << "m_selectStatement->setInt64(1, obj->id());"
+            << "m_selectStatement->setUInt64(1, obj->id());"
             << endl << getIndent()
             << "castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();"
             << endl << getIndent()
@@ -2888,24 +2888,26 @@ void CppCppDbCnvWriter::writeSingleGetFromSelect(Member mem,
 // getDbType
 //=============================================================================
 QString CppCppDbCnvWriter::getDbType(QString& type) {
-  QString oraType = getSimpleType(type);
-  if (oraType == "short" ||
-      oraType == "long" ||
-      oraType == "bool" ||
-      oraType == "int") {
-    oraType = "int";
-  } else if ((oraType == "u_signed64") || (oraType == "signed64")) {
-    oraType = "int64";
+  QString dbType = getSimpleType(type);
+  if (dbType == "short" ||
+      dbType == "long" ||
+      dbType == "bool" ||
+      dbType == "int") {
+    dbType = "Int";
+  } else if (dbType == "u_signed64") {
+    dbType = "UInt64";
+  } else if (dbType == "signed64") {
+    dbType = "Int64";
   }
-  if (oraType.startsWith("char")) {
+  if (dbType.startsWith("char")) {
     if (type.startsWith("unsigned")) {
-      oraType = "int";
+      dbType = "Int";
     } else {
-      oraType = "string";
+      dbType = "String";
     }
   }
-  oraType = capitalizeFirstLetter(oraType);
-  return oraType;
+  dbType = capitalizeFirstLetter(dbType);
+  return dbType;
 }
 
 //=============================================================================
