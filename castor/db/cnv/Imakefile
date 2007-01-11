@@ -97,8 +97,7 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbTapeRequestCnv.cpp \
      DbTapeServerCnv.cpp \
      ../DbBaseObj.cpp \
-     ../DbCnvSvc.cpp \
-     ../DbCommonSvc.cpp
+     ../DbCnvSvc.cpp
 
 CNVSLIB_OBJS = $(CNVSLIB_SRCS:.cpp=.Osuf)
 
