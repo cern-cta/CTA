@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Exception.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/19 16:37:21 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Exception.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/01/11 10:23:03 $ $Author: itglp $
  *
  * 
  *
@@ -27,11 +27,11 @@
 // Local Files
 #include "Exception.hpp"
 
-castor::exception::Exception::Exception(int se) : m_serrno(se) {};
+castor::exception::Exception::Exception(int se) : m_serrno(se) {}
 
 castor::exception::Exception::Exception(castor::exception::Exception& ex) {
   m_serrno = ex.code();
   m_message << ex.getMessage().str();
-};
+}
 
-castor::exception::Exception::~Exception() {};
+castor::exception::Exception::~Exception() {}

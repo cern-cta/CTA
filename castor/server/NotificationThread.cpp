@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/11/23 17:53:49 $ $Author: itglp $
+ * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/01/11 10:23:03 $ $Author: itglp $
  *
  *
  *
@@ -43,9 +43,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::server::NotificationThread::NotificationThread(int notifPort) :
-  m_notifPort(notifPort), m_owner(0)
-{
-};
+  m_notifPort(notifPort), m_owner(0) {}
 
 //------------------------------------------------------------------------------
 // run

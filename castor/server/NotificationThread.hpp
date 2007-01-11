@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/12/22 17:24:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: NotificationThread.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/01/11 10:23:03 $ $Author: itglp $
  *
  *
  *
@@ -70,15 +70,17 @@ namespace castor {
     virtual void run(void* param);
 
     /**
-  	 * The notification thread is never stopped.
+     * The notification thread is never stopped.
      */
     virtual void stop() {};
 
   private:
 
-    SignalThreadPool* m_owner;
-
+    /// port where this thread gets UDP notification packets
     int m_notifPort;
+    
+    /// the thread pool which controls this notification thread
+    SignalThreadPool* m_owner;
 
   };
 
