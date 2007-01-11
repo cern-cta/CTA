@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraResultSet.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/08/02 13:23:40 $ $Author: itglp $
+ * @(#)$RCSfile: OraResultSet.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/01/11 10:03:45 $ $Author: itglp $
  *
  * 
  *
@@ -49,7 +49,12 @@ int castor::db::ora::OraResultSet::getInt(int i)
 	return m_rset->getInt(i);
 }
 
-u_signed64 castor::db::ora::OraResultSet::getInt64(int i)
+signed64 castor::db::ora::OraResultSet::getInt64(int i)
+{
+	return (signed64)m_rset->getDouble(i);
+}
+
+u_signed64 castor::db::ora::OraResultSet::getUInt64(int i)
 {
 	return (u_signed64)m_rset->getDouble(i);
 }

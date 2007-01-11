@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/01/09 17:26:09 $ $Author: itglp $
+ * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/01/11 10:03:45 $ $Author: itglp $
  *
  * 
  *
@@ -58,7 +58,8 @@ class OraStatement : public virtual castor::db::IDbStatement {
      * @param value 
      */
     virtual void setInt(int pos, int value);
-    virtual void setInt64(int pos, u_signed64 value);
+    virtual void setInt64(int pos, signed64 value);
+    virtual void setUInt64(int pos, u_signed64 value);
     virtual void setString(int pos, std::string value);
     virtual void setFloat(int pos, float value);
     virtual void setDouble(int pos, double value);
@@ -67,7 +68,8 @@ class OraStatement : public virtual castor::db::IDbStatement {
       throw (castor::exception::SQLError);
 
     virtual int getInt(int pos);
-    virtual u_signed64 getInt64(int pos);
+    virtual signed64 getInt64(int pos);
+    virtual u_signed64 getUInt64(int pos);
     virtual std::string getString(int pos);
     virtual float getFloat(int pos);
     virtual double getDouble(int pos);

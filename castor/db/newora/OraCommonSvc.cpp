@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/12/04 16:51:01 $ $Author: felixehm $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/01/11 10:03:45 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -346,6 +346,8 @@ castor::db::ora::OraCommonSvc::selectFileSystem
     }
     // Found the FileSystem and the DiskServer,
     // create them in memory
+    // XXX NOTE: the FileSystem object is not complete, we are not
+    // XXX retrieving from the db the deltaFree value.
     castor::stager::DiskServer* ds =
       new castor::stager::DiskServer();
     ds->setId((u_signed64)rset->getDouble(1));

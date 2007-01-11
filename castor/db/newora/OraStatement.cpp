@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/01/09 17:26:09 $ $Author: itglp $
+ * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/01/11 10:03:45 $ $Author: itglp $
  *
  * 
  *
@@ -49,7 +49,12 @@ void castor::db::ora::OraStatement::setInt(int pos, int value)
 	m_statement->setInt(pos, value);
 }
 
-void castor::db::ora::OraStatement::setInt64(int pos, u_signed64 value)
+void castor::db::ora::OraStatement::setInt64(int pos, signed64 value)
+{
+	m_statement->setDouble(pos, (double)value);
+}
+
+void castor::db::ora::OraStatement::setUInt64(int pos, u_signed64 value)
 {
 	m_statement->setDouble(pos, (double)value);
 }
@@ -96,7 +101,12 @@ int castor::db::ora::OraStatement::getInt(int pos)
     return m_statement->getInt(pos);
 }
 
-u_signed64 castor::db::ora::OraStatement::getInt64(int pos)
+signed64 castor::db::ora::OraStatement::getInt64(int pos)
+{
+    return (signed64)m_statement->getDouble(pos);
+}
+
+u_signed64 castor::db::ora::OraStatement::getUInt64(int pos)
 {
     return (u_signed64)m_statement->getDouble(pos);
 }
