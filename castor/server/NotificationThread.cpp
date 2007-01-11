@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/01/11 10:23:03 $ $Author: itglp $
+ * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/01/11 10:45:03 $ $Author: sponcec3 $
  *
  *
  *
@@ -43,13 +43,12 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::server::NotificationThread::NotificationThread(int notifPort) :
-  m_notifPort(notifPort), m_owner(0) {}
+  m_owner(0), m_notifPort(notifPort) {}
 
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::server::NotificationThread::run(void* param)
-{
+void castor::server::NotificationThread::run(void* param) {
   m_owner = (SignalThreadPool*)param;
   int s = -1;
 

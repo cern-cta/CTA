@@ -184,7 +184,7 @@ void castor::server::BaseDaemon::waitAllThreads() throw()
     catch (castor::exception::Exception e) {
       // a thread lock could not be acquired or a thread pool still has some threads running
       // hence release previously acquired locks and try again
-      for(int i = 0; i < idleTPools.size(); i++) {
+      for(unsigned int i = 0; i < idleTPools.size(); i++) {
         idleTPools[i]->getMutex()->release();
       }
       
