@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: c2probe.c,v $ $Revision: 1.1 $ $Release$ $Date: 2007/01/12 15:12:36 $ $Author: obarring $
+ * @(#)$RCSfile: c2probe.c,v $ $Revision: 1.2 $ $Release$ $Date: 2007/01/12 16:58:34 $ $Author: obarring $
  *
  * 
  *
@@ -444,7 +444,7 @@ void dumpStat()
             DELTA_TIME(myItem->stager_qry),
             DELTA_TIME(myItem->stager_rm));
 
-    rc = write(fd,printBuffer,strlen(printBuffer)+1);
+    rc = write(fd,printBuffer,strlen(printBuffer));
     sprintf(printBuffer,
             "%s errors "
             "since %lu "
@@ -470,7 +470,7 @@ void dumpStat()
             countErrors(&(myItem->stager_qry_error)),
             countErrors(&(myItem->stager_rm_error)),
             countErrors(&(myItem->corruption_error)));
-    rc = write(fd,printBuffer,strlen(printBuffer)+1);
+    rc = write(fd,printBuffer,strlen(printBuffer));
     unlockTimingList();
   }
   close(fd);
