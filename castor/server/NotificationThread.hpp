@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/01/11 10:23:03 $ $Author: itglp $
+ * @(#)$RCSfile: NotificationThread.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/01/12 17:42:54 $ $Author: itglp $
  *
  *
  *
@@ -59,11 +59,6 @@ namespace castor {
      */
     NotificationThread(int notifPort);
     
-    /**
-     * Destructor
-     */
-    virtual ~NotificationThread() {};
-
     /**
      * Main work for this thread.
      */
