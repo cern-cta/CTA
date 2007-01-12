@@ -88,6 +88,7 @@ MANPAGES = $(MANDIR)/reclaim.$(MANSUFFIX) \
 	   $(MANDIR)/moveDiskServer.$(MANSUFFIX) \
 	   $(MANDIR)/houseKeeping.$(MANSUFFIX) \
 	   $(MANDIR)/springCleaning.$(MANSUFFIX) \
+	   $(MANDIR)/c2probe.$(MANSUFFIX) \
 	   $(MANDIR)/adminMultiInstance.$(MANSUFFIX)
 EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tapetohsm.$(MANSUFFIX))) \
@@ -109,6 +110,7 @@ EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUF
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),moveDiskServer.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),houseKeeping.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),springCleaning.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),c2probe.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),adminMultiInstance.$(MANSUFFIX)))
 
 COMM Warning Warning, our default clean rule deletes PROGS... Changed it to use PROGS_TO_CLEAN
@@ -124,6 +126,7 @@ PROGS_TO_CLEAN =  ProgramTargetName(reclaim) \
 	 ProgramTargetName(diskUsage) \
 	 ProgramTargetName(printFileClass) \
 	 ProgramTargetName(printSvcClass) \
+	 ProgramTargetName(c2probe) \
 	 ProgramTargetName(nsGetPath)
 
 #if BuildVDQMCpp
@@ -166,6 +169,7 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(dedicateTapeDrive)) \
 	 FileName($(BIN),ProgramTargetName(listDedications)) \
 	 FileName($(BIN),ProgramTargetName(houseKeeping)) \
+	 FileName($(BIN),ProgramTargetName(c2probe)) \
 	 FileName($(BIN),ProgramTargetName(springCleaning))
 
 
@@ -194,6 +198,7 @@ EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/dedicateTapeDrive \
 	 $(EXPORTBIN)/listDedications \
 	 $(EXPORTBIN)/houseKeeping \
+	 $(EXPORTBIN)/c2probe \
 	 $(EXPORTBIN)/springCleaning \
 
 
@@ -218,6 +223,7 @@ NormalProgramTarget(printFileClass,printFileClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(printSvcClass,printSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(diskUsage,diskUsage.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(nsGetPath,nsGetPath.Osuf,$(DEPLIB2),$(LIBS2))
+NormalProgramTarget(c2probe,c2probe.Osuf,$(DEPLIB2),$(LIBS2))
 
 #if BuildVDQMCpp
 NormalProgramTarget(vdqmDBInit,vdqmDBInit.Osuf,$(DEPLIB2),$(LIBS2))
@@ -284,6 +290,9 @@ IEXPORT(houseKeeping,$(EXPORTBIN),755);
 InstallProgram(springCleaning,$(BIN),root,bin,755)
 IEXPORT(springCleaning,$(EXPORTBIN),755);
 
+InstallProgram(c2probe,$(BIN),root,bin,755)
+IEXPORT(c2probe,$(EXPORTBIN),755);
+
 #if BuildVDQMCpp
 InstallProgram(vdqmDBInit,$(BIN),root,bin,755)
 IEXPORT(vdqmDBInit,$(EXPORTBIN),755);
@@ -330,6 +339,7 @@ IMANPAGE(gcAllFS,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(moveDiskServer,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(houseKeeping,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(springCleaning,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(c2probe,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(adminMultiInstance,$(MANDIR),$(MANSUFFIX))
 EMANPAGE(reclaim,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(tapetohsm,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
@@ -351,6 +361,7 @@ EMANPAGE(gcAllFS,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(moveDiskServer,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(houseKeeping,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(springCleaning,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(c2probe,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(adminMultiInstance,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 
 #if BuildVDQMCpp
