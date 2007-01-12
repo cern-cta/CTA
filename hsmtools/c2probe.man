@@ -1,0 +1,175 @@
+.\" @(#)$RCSfile: c2probe.man,v $ $Revision: 1.1 $ $Date: 2007/01/12 16:14:40 $ CERN IT/FIO Olof Barring
+.\" Copyright (C) 2007 by CERN IT/FIO
+.\" All rights reserved
+.\"
+.TH C2PROBE 1castor "$Date: 2007/01/12 16:14:40 $" CASTOR "stager catalogue administrative commands"
+.SH NAME
+c2probe \- CASTOR2 stager probe
+.SH SYNOPSIS
+.B c2probe
+[
+.BI --AppendStat " "
+]
+[
+.BI --BufferSize " BufferSize"
+]
+[
+.BI --DirectoryName " DirectoryName"
+]
+[
+.BI --KeepErrorTime " KeepErrorTime"
+]
+[
+.BI --LogFile " LogFile"
+]
+[
+.BI --NbBytesToWrite " NbBytesToWrite"
+]
+[
+.BI --NbLoops " NbLoops"
+]
+[
+.BI --RunAsUser " RunAsUser"
+]
+[
+.BI --SleepTime " SleepTime"
+]
+[
+.BI --StageHost " StageHost"
+]
+[
+.BI --StatFile " StatFile"
+]
+[
+.BI --SvcClasses " SvcClasses"
+]
+[
+.BI -h, 
+.BI --help
+]
+.SH DESCRIPTION
+.B c2probe
+is a standalone server for testing the service availability of a CASTOR2 instance.
+.TP
+.BI \-\-AppendStat
+Append timing and error counter records to the statistics file. By default the statistics
+files is overwritten at each new sampling
+.TP
+.BI \-\-BufferSize " BufferSize"
+Set the write and read buffer size for the rfio_write() and rfio_read() methods. Default is 1MB.
+.TP
+.BI \-\-DirectoryName " DirectoryName"
+is the name of an existing CASTOR directory to be used. For proper functioning of the
+.B c2probe
+server, the provided directory should be associated with a no-tape service class. Use the
+.B nslistclass
+and
+.B nschclass
+commands to link the castor directory with a no-tape fileclass. If a no-tape fileclass does not
+exist it can be created using the
+.B nsenterclass
+command. This option is
+.B required
+.TP
+.BI \-\-KeepErrorTime " KeepErrorTime"
+Sets the size (in seconds) of the sliding time window for the error counters.
+The default is 2 hours
+.TP
+.BI \-\-LogFile " LogFile"
+Sets the location for the logfile. The default is
+.I /tmp/c2probe.log
+.TP
+.BI \-\-NbBytesToWrite " NbBytesToWrite"
+Sets the number of bytes to write to the probe file. Default is 1 byte
+.TP
+.BI \-\-NbLoops " NbLoops"
+Sets the number of iterations of stager calls for each service class. The default is infinite.
+This option is mostly for debug purpose. Note that despite that the number of loops is limited
+the daemon will continue to run after the loop limit has be reached. The daemon process must
+be killed with a normal
+.B kill(1)
+.TP
+.BI \-\-RunAsUser " RunAsUser"
+If the program is started from the root account, the option specifies which user account should
+be used for writing and reading the probe files. The user account must have write access to the
+castor directory specified with the
+.B \-\-DirectoryName
+option
+.TP
+.BI \-\-SleepTime " SleepTime"
+Sets the sleep time (in seconds) between two iterations of stager commands in a service class.
+The default is 900 seconds (15mins)
+.TP
+.BI \-\-StageHost " StageHost"
+Specifies the stager host name to be used. This option is
+.B required
+.TP
+.BI \-\-StatFile " StatFile"
+Defines location of the file containing the timing and error counter statistics. The default is
+.I /tmp/c2probe.stat
+.TP
+.BI \-\-SvcClasses " SvcClasses"
+Specifies the list of service classes to be probed in the stager specified with the
+.B \-\-StageHost
+option. This option is
+.B required
+.TP
+.BI \-h,
+.BI \-\-help
+Get usage information
+.LP
+When started from the command line the program will automatically put itself in background.
+It will then start one thread for each of the service classes specified in the
+.B \-\-SvcClasses
+option. Each of the threads will attempt to create a subdirectory 
+.I StageHost/SvcClass
+under the root directory given by the
+.B \-\-DirectoryName
+option.
+
+Once the initialization phase has finished, the service class thread enters a loop, which is
+inifinite unless the
+.B \-\-NbLoops
+argument has been specified. For each iteration the thread will:
+.TP
+1) write a file of size " NbBytes"
+.TP
+2) read back the file and verify the content
+.TP
+3) query the stager for the file
+.TP
+4) remove the file from the stager (and eventually also the name server, provided the fileclass is no-tape).
+.LP
+
+For each step above an internal structure containing the timing and error counters is updated. The
+data is dumped to the file specfied with the
+.B \-\-StatFile
+option a regular interval by the main thread, independently of the service class threads. This
+means that even if one of the service class threads is blocked in one of the operations, the
+statistics file continues to be updated.
+
+.SH EXAMPLES
+.nf
+.ft CW
+c2probe --DirectoryName /castor/cern.ch/user/c/castorc3/c2probe --StatFile /tmp/c2probe.stat --AppendStat --LogFile /tmp/c2probe.log --StageHost castorpublic --SvcClasses default:dteam:na48:na48goldcmp:repack --NbBytesToWrite 1024 --RunAsUser castorc3 --SleepTime 60
+tail -11 /tmp/c2probe.stat
+default timing now 1168618362 updated 31 seconds ago rfio_open_w 5 rfio_write 0 rfio_close_w 0 rfio_open_r 6 rfio_read 0 rfio_close_r 0 stager_qry 0 stager_rm 0
+default errors since 1168611162 now 1168618362 rfio_open_w 0 rfio_write 0 rfio_close_w 0 rfio_open_r 0 rfio_read 0 rfio_close_r 0 stager_qry 0 stager_rm 0 corruptions 0
+dteam timing now 1168618362 updated 27 seconds ago rfio_open_w 3 rfio_write 0 rfio_close_w 0 rfio_open_r 6 rfio_read 0 rfio_close_r 0 stager_qry 0 stager_rm 0
+dteam errors since 1168611162 now 1168618362 rfio_open_w 0 rfio_write 0 rfio_close_w 0 rfio_open_r 0 rfio_read 0 rfio_close_r 0 stager_qry 0 stager_rm 0 corruptions 0
+na48 timing now 1168618362 updated 27 seconds ago rfio_open_w 2 rfio_write 1 rfio_close_w 0 rfio_open_r 5 rfio_read 0 rfio_close_r 0 stager_qry 0 stager_rm 0
+na48 errors since 1168611162 now 1168618362 rfio_open_w 0 rfio_write 0 rfio_close_w 0 rfio_open_r 0 rfio_read 0 rfio_close_r 0 stager_qry 0 stager_rm 0 corruptions 0
+na48goldcmp timing now 1168618362 updated 11 seconds ago rfio_open_w 3 rfio_write 0 rfio_close_w 0 rfio_open_r 6 rfio_read 0 rfio_close_r 0 stager_qry 0 stager_rm 0
+na48goldcmp errors since 1168611162 now 1168618362 rfio_open_w 0 rfio_write 0 rfio_close_w 0 rfio_open_r 0 rfio_read 0 rfio_close_r 0 stager_qry 0 stager_rm 0 corruptions 0
+repack timing now 1168618362 updated 21 seconds ago rfio_open_w 3 rfio_write 0 rfio_close_w 0 rfio_open_r 6 rfio_read 0 rfio_close_r 0 stager_qry 0 stager_rm 0
+repack errors since 1168611162 now 1168618362 rfio_open_w 0 rfio_write 0 rfio_close_w 0 rfio_open_r 0 rfio_read 0 rfio_close_r 0 stager_qry 0 stager_rm 0 corruptions 0
+.ft
+.fi
+.SH SEE ALSO
+.BR nslistclass(1castor),
+.BR nschclass(1castor),
+.BR nsenterclass(1castor),
+.BR kill(1)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
