@@ -542,8 +542,13 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
                               obj,
                               stream);
           } else if (!cl->isInterface() && isEnum(cl)) {
+	    QString rawType = a->getObject(Uml::B)->getName();
+	    QString type = obj->fixTypeName
+	      (rawType,
+	       obj->getNamespace(rawType),
+	       obj->classInfo()->packageName);
             writeEnumPrint (obj->getIndent(), a->getRoleName(Uml::B),
-                            a->getObject(Uml::B)->getName(), stream);
+                            type, stream);
           } else {
             writeSimplePrint (obj->getIndent(), a->getRoleName(Uml::B), stream);
           }
@@ -572,8 +577,13 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
                               obj,
                               stream);
           } else if (!cl->isInterface() && isEnum(cl)) {
+	    QString rawType = a->getObject(Uml::A)->getName();
+	    QString type = obj->fixTypeName
+	      (rawType,
+	       obj->getNamespace(rawType),
+	       obj->classInfo()->packageName);
             writeEnumPrint (obj->getIndent(), a->getRoleName(Uml::A),
-                            a->getObject(Uml::A)->getName(), stream);
+                            type, stream);
           } else {
             writeSimplePrint (obj->getIndent(), a->getRoleName(Uml::A), stream);
           }
