@@ -33,7 +33,6 @@
 #include "castor/stager/FileSystemStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
-struct C_signed64_t;
 struct Cstager_DiskCopy_t;
 struct Cstager_DiskPool_t;
 struct Cstager_DiskServer_t;
@@ -151,13 +150,13 @@ int Cstager_FileSystem_setDeltaWeight(struct Cstager_FileSystem_t* instance, flo
  * Get the value of deltaFree
  * Estimation of the modifications of the free space since the last update.
  */
-int Cstager_FileSystem_deltaFree(struct Cstager_FileSystem_t* instance, struct C_signed64_t* var);
+int Cstager_FileSystem_deltaFree(struct Cstager_FileSystem_t* instance, signed64* var);
 
 /**
  * Set the value of deltaFree
  * Estimation of the modifications of the free space since the last update.
  */
-int Cstager_FileSystem_setDeltaFree(struct Cstager_FileSystem_t* instance, struct C_signed64_t new_var);
+int Cstager_FileSystem_setDeltaFree(struct Cstager_FileSystem_t* instance, signed64 new_var);
 
 /**
  * Get the value of reservedSpace
