@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.364 $ $Release$ $Date: 2007/01/11 15:18:29 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.365 $ $Release$ $Date: 2007/01/15 17:17:24 $ $Author: riojac3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_0_3_0', '$Revision: 1.364 $ $Date: 2007/01/11 15:18:29 $');
+INSERT INTO CastorVersion VALUES ('2_1_2_4', '$Revision: 1.365 $ $Date: 2007/01/15 17:17:24 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
