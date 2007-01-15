@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: c2probe.c,v $ $Revision: 1.2 $ $Release$ $Date: 2007/01/12 16:58:34 $ $Author: obarring $
+ * @(#)$RCSfile: c2probe.c,v $ $Revision: 1.3 $ $Release$ $Date: 2007/01/15 14:17:43 $ $Author: obarring $
  *
  * 
  *
@@ -488,6 +488,7 @@ void *svcClassProbe(
   char *path = NULL;
   Cuuid_t myUuid;
   int rc, i = 0, fd = -1, nbBytesWritten = -1, nbBytesRead = -1, size=0;
+  int mySleepTime;
   char *myWriteBuffer, *myReadBuffer;
 
   if ( arg == NULL ) {
@@ -551,7 +552,10 @@ void *svcClassProbe(
 
   i=0;
   fullPath = NULL;
+  mySleepTime = sleepTime * Cthread_self() / nbSvcClasses;
   while ( (i<nbLoops) || (nbLoops<0) ) {
+    sleep(mySleepTime);
+    mySleepTime = sleepTime;
     i++;
     Cuuid_create(&myUuid);
     Cuuid2string(baseName,256,&myUuid);
@@ -655,7 +659,6 @@ void *svcClassProbe(
       path += strlen("path=");
       rmFile(mySvcClass,path);
     }
-    sleep(sleepTime);
   }
   
   return(NULL);
