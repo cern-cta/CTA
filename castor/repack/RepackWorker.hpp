@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2006/10/03 14:25:05 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.19 $ $Release$ $Date: 2007/01/15 12:35:39 $ $Author: riojac3 $
  *
  *
  *
@@ -74,7 +74,7 @@ namespace castor {
     /**
      * Standard destructor
      */
-    ~RepackWorker();
+    ~RepackWorker() throw();
 
 
     

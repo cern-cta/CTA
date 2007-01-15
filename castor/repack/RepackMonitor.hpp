@@ -51,7 +51,7 @@ namespace castor {
       /**
        * The Destructor
        */
-      ~RepackMonitor();
+      ~RepackMonitor() throw();
       
       /**
        * runs an update of file statistics if all available RepackSubRequests.

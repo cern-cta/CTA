@@ -42,7 +42,7 @@ RepackCleaner::RepackCleaner(RepackServer* svr){
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-RepackCleaner::~RepackCleaner(){
+RepackCleaner::~RepackCleaner() throw() {
 	delete m_dbhelper;
 }
 		

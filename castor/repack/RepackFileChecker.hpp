@@ -45,7 +45,7 @@ namespace castor {
 		public :
 		
 		  RepackFileChecker(RepackServer* svr);
-		  ~RepackFileChecker();
+		  ~RepackFileChecker() throw();
 		
 		  /** 
 		   * Implementation from IThread

@@ -46,7 +46,7 @@ namespace castor {
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-  RepackMonitor::~RepackMonitor(){
+  RepackMonitor::~RepackMonitor() throw() {
     delete m_dbhelper;
   }
 

@@ -45,7 +45,7 @@ namespace castor {
 		public :
 		
 		  RepackCleaner(RepackServer* svr);
-		  ~RepackCleaner();
+		  ~RepackCleaner() throw();
 		
 		  /** 
 		   * Implementation from IThread

@@ -41,7 +41,7 @@ RepackFileChecker::RepackFileChecker(RepackServer* svr){
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-RepackFileChecker::~RepackFileChecker(){
+RepackFileChecker::~RepackFileChecker() throw(){
 	delete m_dbhelper;
 }
 		
