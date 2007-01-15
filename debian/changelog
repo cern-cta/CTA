@@ -1,5 +1,12 @@
 castor (2.1.2-3) unstable; urgency=low
 
+  * Only changed PL/SQL code version
+
+ -- Sebastien Ponce <sponce@cern.ch>  Mon, 15 Jan 2007 18:57:49 +0100
+
+
+castor (2.1.2-3) unstable; urgency=low
+
   * CASTOR2/PACKAGING.howto:
     [r1.28,2007-01-11,itglp] Refactored instructions for internal and published releases
   * CASTOR2/castor/BaseCnvSvc.hpp:
