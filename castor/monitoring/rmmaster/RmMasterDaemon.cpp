@@ -31,10 +31,13 @@
 #include "castor/Constants.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/server/SignalThreadPool.hpp"
-#include "castor/server/ListenerThreadPool.hpp"
+#include "castor/server/UDPListenerThreadPool.hpp"
+#include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/monitoring/rmmaster/RmMasterDaemon.hpp"
 #include "castor/monitoring/ClusterStatus.hpp"
 #include "castor/monitoring/rmmaster/CollectorThread.hpp"
+#include "castor/monitoring/rmmaster/UpdateThread.hpp"
+#include "castor/monitoring/rmmaster/DatabaseActuatorThread.hpp"
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/Services.hpp"
 
@@ -55,28 +58,6 @@ extern "C" {
 int main(int argc, char* argv[]) {
 
   try {
-
-    castor::stager::IStagerSvc* myService;
-    try {
-      castor::IService* orasvc = castor::BaseObject::services()-> service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
-      if (0 == orasvc) {
-	std::cout << "Could Not get OraStagerSvc" << std::endl;
-	return -1;
-      }
-      
-      myService = dynamic_cast<castor::stager::IStagerSvc*>(orasvc);
-      if (0 == myService) {
-	std::cout << "Could Not cast OraStagerSvc into IStagerSvc" << std::endl;
-	return -1;
-      }
-      
-    } catch (castor::exception::Exception e) {
-      // up to now, we are not a daemon, so we log to std::cerr
-      std::cerr << "Exception caught problem to start the daemon :\n"
-		<< sstrerror(e.code()) << "\n"
-		<< e.getMessage().str() << std::endl;
-      return -1;
-    }
 
     // new BaseDaemon as Server
     castor::monitoring::rmmaster::RmMasterDaemon daemon;
@@ -104,7 +85,7 @@ int main(int argc, char* argv[]) {
       port = std::strtol(portStr,0,10);
       if (0 == port) {
         // Go back to default
-        interval = RMMASTER_DEFAULT_PORT;
+        port = RMMASTER_DEFAULT_PORT;
         // Log this
         castor::dlf::Param initParams[] =
           {castor::dlf::Param("Given value", portStr)};
@@ -118,17 +99,25 @@ int main(int argc, char* argv[]) {
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 2, 1, initParams);
 
     // DB threadPool
-    /*    daemon.addThreadPool
+    daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("DatabaseActuator",
-        new castor::monitoring::rmmaster::DatabaseActuator
-        (myService,
-         daemon.clusterStatus()), 0, interval));
+        new castor::monitoring::rmmaster::DatabaseActuatorThread
+        (daemon.clusterStatus()), 0, interval));
     daemon.getThreadPool('D')->setNbThreads(1);
-    */
+    
+    // Update threadpool
+    daemon.addThreadPool
+      (new castor::server::UDPListenerThreadPool
+       ("Update",
+        new castor::monitoring::rmmaster::UpdateThread
+        (daemon.clusterStatus()),
+        port));
+    daemon.getThreadPool('U')->setNbThreads(3);
+
     // Monitor threadpool
     daemon.addThreadPool
-      (new castor::server::ListenerThreadPool
+      (new castor::server::TCPListenerThreadPool
        ("Collector",
         new castor::monitoring::rmmaster::CollectorThread
         (daemon.clusterStatus()),
@@ -189,6 +178,8 @@ castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon() :
      {16, "Unable to send Ack to client"},
      {17, "General exception caught"},
      {18, "Bad port value in configuration file"},
+     {19, "Thread Update started."},
+     {20, "Caught exception in UpdateThread"},
      {-1, ""}};
   castor::dlf::dlf_init("newrmmaster", messages);
 

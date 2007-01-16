@@ -39,9 +39,11 @@ namespace castor {
     // Forward declarations
     class DiskServerStateReport;
     class DiskServerMetricsReport;
-    class DiskServerAdminReport;
-    class FileSystemAdminReport;
     class ClusterStatus;
+    namespace admin {
+      class DiskServerAdminReport;
+      class FileSystemAdminReport;
+    }
 
     namespace rmmaster {
 
@@ -90,7 +92,7 @@ namespace castor {
          * @param admin the new admin report
          */
         void handleDiskServerAdminUpdate
-        (castor::monitoring::DiskServerAdminReport* admin)
+        (castor::monitoring::admin::DiskServerAdminReport* admin)
           throw (castor::exception::Exception);
 
         /**
@@ -98,7 +100,7 @@ namespace castor {
          * @param admin the new admin report
          */
         void handleFileSystemAdminUpdate
-        (castor::monitoring::FileSystemAdminReport* admin)
+        (castor::monitoring::admin::FileSystemAdminReport* admin)
           throw (castor::exception::Exception);
 
       private:

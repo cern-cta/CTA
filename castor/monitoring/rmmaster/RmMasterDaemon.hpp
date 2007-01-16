@@ -21,7 +21,8 @@
  *
  * The monitoring Daemon master, collecting all the inputs from
  * the different nodes and updating both the database and the
- * LSF scheduler shared memory
+ * LSF scheduler shared memory. It also receives UDP messages
+ * migration and recall processes whenever a stream is open/closed
  *
  * @author castor-dev team
  *****************************************************************************/

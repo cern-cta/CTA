@@ -30,17 +30,18 @@
 #include "castor/monitoring/ClusterStatus.hpp"
 #include "castor/monitoring/DiskServerStatus.hpp"
 #include "castor/monitoring/FileSystemStatus.hpp"
-#include "castor/monitoring/DiskServerAdminReport.hpp"
-#include "castor/monitoring/FileSystemAdminReport.hpp"
 #include "castor/monitoring/DiskServerMetricsReport.hpp"
 #include "castor/monitoring/FileSystemMetricsReport.hpp"
 #include "castor/monitoring/DiskServerStateReport.hpp"
 #include "castor/monitoring/FileSystemStateReport.hpp"
+#include "castor/monitoring/admin/DiskServerAdminReport.hpp"
+#include "castor/monitoring/admin/FileSystemAdminReport.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/MessageAck.hpp"
 #include "castor/Constants.hpp"
 #include <time.h>
+#include <errno.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -92,12 +93,12 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
             dynamic_cast<castor::monitoring::DiskServerMetricsReport*>(obj);
           handleMetricsUpdate(dss);
         } else if (OBJ_DiskServerAdminReport == obj->type()) {
-          castor::monitoring::DiskServerAdminReport* dss =
-            dynamic_cast<castor::monitoring::DiskServerAdminReport*>(obj);
+          castor::monitoring::admin::DiskServerAdminReport* dss =
+            dynamic_cast<castor::monitoring::admin::DiskServerAdminReport*>(obj);
           handleDiskServerAdminUpdate(dss);
         } else if (OBJ_FileSystemAdminReport == obj->type()) {
-          castor::monitoring::FileSystemAdminReport* dss =
-            dynamic_cast<castor::monitoring::FileSystemAdminReport*>(obj);
+          castor::monitoring::admin::FileSystemAdminReport* dss =
+            dynamic_cast<castor::monitoring::admin::FileSystemAdminReport*>(obj);
           handleFileSystemAdminUpdate(dss);
         } else {
           // "Received unknown object from socket"
@@ -124,6 +125,8 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
         ack.setErrorMessage(stst.str());
       }
     }
+    // free memory
+    delete obj;
     // "Sending acknowledgement to client" message
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 15);
     try {
@@ -226,7 +229,8 @@ void castor::monitoring::rmmaster::CollectorThread::handleMetricsUpdate
   it->second.setFreeRam(metrics->freeRam());
   it->second.setFreeMemory(metrics->freeMemory());
   it->second.setFreeSwap(metrics->freeSwap());
-  it->second.setLoad(metrics->load());
+  it->second.setLoad(metrics->load() + it->second.deltaLoad());
+  it->second.setDeltaLoad(0);
   // Update lastUpdate
   it->second.setLastMetricsUpdate(time(0));
   // Update FileSystems
@@ -246,12 +250,18 @@ void castor::monitoring::rmmaster::CollectorThread::handleMetricsUpdate
           castor::monitoring::FileSystemStatus())).first;
     }
     // Update FileSystem metrics
-    it2->second.setReadRate((*itFs)->readRate());
-    it2->second.setWriteRate((*itFs)->writeRate());
-    it2->second.setReadStreams((*itFs)->readStreams());
-    it2->second.setWriteStreams((*itFs)->writeStreams());
-    it2->second.setReadWriteStreams((*itFs)->readWriteStreams());
-    it2->second.setFreeSpace((*itFs)->freeSpace());
+    it2->second.setReadRate((*itFs)->readRate() + it2->second.readRate());
+    it2->second.setDeltaReadRate(0);
+    it2->second.setWriteRate((*itFs)->writeRate() + it2->second.writeRate());
+    it2->second.setDeltaWriteRate(0);
+    it2->second.setNbReadStreams((*itFs)->nbReadStreams() + it2->second.nbReadStreams());
+    it2->second.setDeltaNbReadStreams(0);
+    it2->second.setNbWriteStreams((*itFs)->nbWriteStreams() + it2->second.nbWriteStreams());
+    it2->second.setDeltaNbWriteStreams(0);
+    it2->second.setNbReadWriteStreams((*itFs)->nbReadWriteStreams() + it2->second.nbReadWriteStreams());
+    it2->second.setDeltaNbReadWriteStreams(0);
+    it2->second.setFreeSpace((*itFs)->freeSpace() + it2->second.freeSpace());
+    it2->second.setDeltaFreeSpace(0);
     // Update lastUpdate
     it2->second.setLastMetricsUpdate(time(0));
   }
@@ -261,7 +271,7 @@ void castor::monitoring::rmmaster::CollectorThread::handleMetricsUpdate
 // handleDiskServerAdminUpdate
 //------------------------------------------------------------------------------
 void castor::monitoring::rmmaster::CollectorThread::handleDiskServerAdminUpdate
-(castor::monitoring::DiskServerAdminReport* admin)
+(castor::monitoring::admin::DiskServerAdminReport* admin)
   throw (castor::exception::Exception) {
   // Take care of DiskServer creation
   const castor::monitoring::SharedMemoryString
@@ -289,7 +299,7 @@ void castor::monitoring::rmmaster::CollectorThread::handleDiskServerAdminUpdate
 // handleFileSystemAdminUpdate
 //------------------------------------------------------------------------------
 void castor::monitoring::rmmaster::CollectorThread::handleFileSystemAdminUpdate
-(castor::monitoring::FileSystemAdminReport* admin)
+(castor::monitoring::admin::FileSystemAdminReport* admin)
   throw (castor::exception::Exception) {
   // Take care of FileSystem creation
   const castor::monitoring::SharedMemoryString
