@@ -71,8 +71,8 @@ void castor::monitoring::admin::FileSystemAdminReport::print(std::ostream& strea
   stream << indent << "mountPoint : " << m_mountPoint << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "adminStatus : " << AdminStatusCodesStrings[m_adminStatus] << std::endl;
-  stream << indent << "status : " << FileSystemStatusCodesStrings[m_status] << std::endl;
+  stream << indent << "adminStatus : " << castor::monitoring::AdminStatusCodesStrings[m_adminStatus] << std::endl;
+  stream << indent << "status : " << castor::stager::FileSystemStatusCodesStrings[m_status] << std::endl;
 }
 
 //------------------------------------------------------------------------------
