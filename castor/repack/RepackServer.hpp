@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2006/12/19 09:21:19 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/01/16 15:57:17 $ $Author: sponcec3 $
  *
  *
  *
@@ -29,7 +29,7 @@
 
 #include "RepackCommonHeader.hpp"
 
-#include "castor/server/ListenerThreadPool.hpp"
+#include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/BaseDaemon.hpp"
 #include "castor/server/BaseThreadPool.hpp"
