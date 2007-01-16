@@ -46,7 +46,7 @@ namespace castor {
       /*
        * Constructor
        */
-      FileSystemStatus(u_signed64 id = 0);
+      FileSystemStatus();
 
       /**
        * print method
@@ -56,30 +56,6 @@ namespace castor {
         throw();
 
     public:
-
-      /// Accessor to id
-      u_signed64 id() const { return m_id; }
-
-      /// Accessor to id
-      void setId(u_signed64 id) { m_id = id; }
-
-      /// Accessor to weigth
-      float weight() const { return m_weight; }
-
-      /// Accessor to weigth
-      void setWeight(float weight) { m_weight = weight; }
-
-      /// Accessor to deltaWeight
-      float deltaWeight() const { return m_deltaWeight; }
-
-      /// Accessor to deltaWeight
-      void setDeltaWeight(float deltaWeight) { m_deltaWeight = deltaWeight; }
-
-      /// Accessor to deviation
-      float deviation() const { return m_deviation; }
-
-      /// Accessor to deviation
-      void setDeviation(float deviation) { m_deviation = deviation; }
 
       /// Accessor to space
       u_signed64 space() const { return m_space; }
@@ -113,35 +89,84 @@ namespace castor {
       /// Accessor to readRate
       void setReadRate(u_signed64 readRate) { m_readRate = readRate; }
 
+      /// Accessor to deltaReadRate
+      signed64 deltaReadRate() const { return m_deltaReadRate; }
+
+      /// Accessor to deltaReadRate
+      void setDeltaReadRate(signed64 deltaReadRate) {
+	m_deltaReadRate = deltaReadRate;
+      }
+
       /// Accessor to writeRate
       u_signed64 writeRate() const { return m_writeRate; }
 
       /// Accessor to writeRate
       void setWriteRate(u_signed64 writeRate) { m_writeRate = writeRate; }
 
-      /// Accessor to readStreams
-      unsigned int readStreams() const { return m_readStreams; }
+      /// Accessor to deltaWriteRate
+      signed64 deltaWriteRate() const { return m_deltaWriteRate; }
 
-      /// Accessor to readStreams
-      void setReadStreams(unsigned int readStreams) { m_readStreams = readStreams; }
+      /// Accessor to deltaWriteRate
+      void setDeltaWriteRate(signed64 deltaWriteRate) {
+	m_deltaWriteRate = deltaWriteRate;
+      }
 
-      /// Accessor to writeStreams
-      unsigned int writeStreams() const { return m_writeStreams; }
+      /// Accessor to nbReadStreams
+      unsigned int nbReadStreams() const { return m_nbReadStreams; }
 
-      /// Accessor to writeStreams
-      void setWriteStreams(unsigned int writeStreams) { m_writeStreams = writeStreams; }
+      /// Accessor to nbReadStreams
+      void setNbReadStreams(unsigned int nbReadStreams) { m_nbReadStreams = nbReadStreams; }
 
-      /// Accessor to readWriteStreams
-      unsigned int readWriteStreams() const { return m_readWriteStreams; }
+      /// Accessor to deltaNbReadStreams
+      int deltaNbReadStreams() const { return m_deltaNbReadStreams; }
 
-      /// Accessor to readWriteStreams
-      void setReadWriteStreams(unsigned int readWriteStreams) { m_readWriteStreams = readWriteStreams; }
+      /// Accessor to deltaNbReadStreams
+      void setDeltaNbReadStreams(int deltaNbReadStreams) {
+	m_deltaNbReadStreams = deltaNbReadStreams;
+      }
+
+      /// Accessor to nbWriteStreams
+      unsigned int nbWriteStreams() const { return m_nbWriteStreams; }
+
+      /// Accessor to nbWriteStreams
+      void setNbWriteStreams(unsigned int nbWriteStreams) { m_nbWriteStreams = nbWriteStreams; }
+
+      /// Accessor to deltaNbWriteStreams
+      int deltaNbWriteStreams() const { return m_deltaNbWriteStreams; }
+
+      /// Accessor to deltaNbWriteStreams
+      void setDeltaNbWriteStreams(int deltaNbWriteStreams) {
+	m_deltaNbWriteStreams = deltaNbWriteStreams;
+      }
+
+      /// Accessor to nbReadWriteStreams
+      unsigned int nbReadWriteStreams() const { return m_nbReadWriteStreams; }
+
+      /// Accessor to nbReadWriteStreams
+      void setNbReadWriteStreams(unsigned int nbReadWriteStreams) {
+	m_nbReadWriteStreams = nbReadWriteStreams;
+      }
+
+      /// Accessor to deltaNbReadWriteStreams
+      int deltaNbReadWriteStreams() const { return m_deltaNbReadWriteStreams; }
+
+      /// Accessor to deltaNbReadWriteStreams
+      void setDeltaNbReadWriteStreams(int deltaNbReadWriteStreams)
+      { m_deltaNbReadWriteStreams = deltaNbReadWriteStreams; }
 
       /// Accessor to free space
       u_signed64 freeSpace() const { return m_freeSpace; }
 
       /// Accessor to free space
       void setFreeSpace(u_signed64 freeSpace) { m_freeSpace = freeSpace; }
+
+      /// Accessor to deltaFreeSpace
+      signed64 deltaFreeSpace() const { return m_deltaFreeSpace; }
+
+      /// Accessor to deltaFreeSpace
+      void setDeltaFreeSpace(signed64 deltaFreeSpace) {
+	m_deltaFreeSpace = deltaFreeSpace;
+      }
 
       /// Accessor to lastStateupdate
       void setLastStateUpdate (u_signed64 lastStateUpdate) {
@@ -161,18 +186,6 @@ namespace castor {
 
     private:
 
-      /// the filesystem id
-      u_signed64 m_id;
-
-      /// the fileSystem weigth
-      float m_weight;
-
-      /// the fileSystem deltaWeight
-      float m_deltaWeight;
-
-      /// the fileSystem deviation
-      float m_deviation;
-
       /// total space
       u_signed64 m_space;
 
@@ -185,20 +198,38 @@ namespace castor {
       /// The number of bytes read per second
       u_signed64 m_readRate;
 
+      /// Delta on the number of bytes read per second
+      signed64 m_deltaReadRate;
+
       /// The number of bytes written per second
       u_signed64 m_writeRate;
 
-      /// The number of read streams
-      unsigned int m_readStreams;
+      /// Delta on the number of bytes written per second
+      signed64 m_deltaWriteRate;
 
       /// The number of read streams
-      unsigned int m_writeStreams;
+      unsigned int m_nbReadStreams;
+
+      /// Delta on the number of read streams
+      int m_deltaNbReadStreams;
+
+      /// The number of read streams
+      unsigned int m_nbWriteStreams;
+
+      /// Delat on the number of read streams
+      int m_deltaNbWriteStreams;
 
       /// The number of read-write streams
-      unsigned int m_readWriteStreams;
+      unsigned int m_nbReadWriteStreams;
+
+      /// Delta on the number of read-write streams
+      int m_deltaNbReadWriteStreams;
 
       /// available space
       u_signed64 m_freeSpace;
+
+      /// Delta on the available space
+      signed64 m_deltaFreeSpace;
 
       /// Last state update (second since EPOCH)
       u_signed64 m_lastStateUpdate;

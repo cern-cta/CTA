@@ -33,15 +33,16 @@
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::monitoring::FileSystemStatus::FileSystemStatus
-(u_signed64 id) :
-  m_id(id), m_weight(0), m_deltaWeight(0),
-  m_deviation(0), m_space(0),
+castor::monitoring::FileSystemStatus::FileSystemStatus() :
+  m_space(0),
   m_status(castor::stager::FILESYSTEM_DISABLED),
-  m_adminStatus(ADMIN_FORCE), m_readRate(0),
-  m_writeRate(0), m_readStreams(0),
-  m_writeStreams(0), m_readWriteStreams(0),
-  m_freeSpace(0),
+  m_adminStatus(ADMIN_FORCE),
+  m_readRate(0), m_deltaReadRate(0),
+  m_writeRate(0), m_deltaWriteRate(0),
+  m_nbReadStreams(0), m_deltaNbReadStreams(0),
+  m_nbWriteStreams(0), m_deltaNbWriteStreams(0),
+  m_nbReadWriteStreams(0), m_deltaNbReadWriteStreams(0),
+  m_freeSpace(0), m_deltaFreeSpace(0),
   m_lastStateUpdate(0), m_lastMetricsUpdate(0) { }
 
 //------------------------------------------------------------------------------
@@ -51,14 +52,6 @@ void castor::monitoring::FileSystemStatus::print
 (std::ostream& out, const std::string& indentation) const
   throw() {
   out << indentation << std::setw(20)
-      << "id" << ": " << m_id << "\n"
-      << indentation << std::setw(20)
-      << "weight" << ": " << m_weight << "\n"
-      << indentation << std::setw(20)
-      << "deltaWeight" << ": " << m_deltaWeight << "\n"
-      << indentation << std::setw(20)
-      << "deviation" << ": " << m_deviation << "\n"
-      << indentation << std::setw(20)
       << "space" << ": " << m_space << "\n"
       << indentation << std::setw(20)
       << "status" << ": "
@@ -69,15 +62,27 @@ void castor::monitoring::FileSystemStatus::print
       << indentation << std::setw(20)
       << "readRate" << ": " << m_readRate << "\n"
       << indentation << std::setw(20)
+      << "deltaReadRate" << ": " << m_deltaReadRate << "\n"
+      << indentation << std::setw(20)
       << "writeRate" << ": " << m_writeRate << "\n"
       << indentation << std::setw(20)
-      << "readStreams" << ": " << m_readStreams << "\n"
+      << "deltaWriteRate" << ": " << m_deltaWriteRate << "\n"
       << indentation << std::setw(20)
-      << "writeStreams" << ": " << m_writeStreams << "\n"
+      << "nbReadStreams" << ": " << m_nbReadStreams << "\n"
       << indentation << std::setw(20)
-      << "readWriteStreams" << ": " << m_readWriteStreams << "\n"
+      << "deltaNbReadStreams" << ": " << m_deltaNbReadStreams << "\n"
+      << indentation << std::setw(20)
+      << "nbWriteStreams" << ": " << m_nbWriteStreams << "\n"
+      << indentation << std::setw(20)
+      << "deltaNbWriteStreams" << ": " << m_deltaNbWriteStreams << "\n"
+      << indentation << std::setw(20)
+      << "nbReadWriteStreams" << ": " << m_nbReadWriteStreams << "\n"
+      << indentation << std::setw(20)
+      << "deltaNbReadWriteStreams" << ": " << m_deltaNbReadWriteStreams << "\n"
       << indentation << std::setw(20)
       << "freeSpace" << ": " << m_freeSpace << "\n"
+      << indentation << std::setw(20)
+      << "deltaFreeSpace" << ": " << m_deltaFreeSpace << "\n"
       << indentation << std::setw(20)
       << "lastStateUpdate" << ": " << m_lastStateUpdate << "\n"
       << indentation << std::setw(20)

@@ -32,9 +32,8 @@
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::monitoring::DiskServerStatus::DiskServerStatus
-(u_signed64 id) :
-  m_id(id), m_ram(0), m_memory(0),
+castor::monitoring::DiskServerStatus::DiskServerStatus() :
+  m_ram(0), m_memory(0),
   m_swap(0), m_status(castor::stager::DISKSERVER_DISABLED),
   m_adminStatus(ADMIN_FORCE), m_freeRam(0),
   m_freeMemory(0), m_freeSwap(0), m_load(0),
@@ -47,8 +46,6 @@ void castor::monitoring::DiskServerStatus::print
 (std::ostream& out, const std::string& indentation) const
   throw() {
   out << indentation << std::setw(20)
-      << "id" << ": " << m_id << "\n"
-      << indentation << std::setw(20)
       << "ram" << ": " << m_ram << "\n"
       << indentation << std::setw(20)
       << "memory" << ": " << m_memory << "\n"

@@ -26,10 +26,9 @@ COMM
 
 #include <Project.tmpl>
 
-SUBDIRS = $(RMMASTERDIR) $(RMNODEDIR)
+SUBDIRS = $(RMMASTERDIR) $(RMNODEDIR) $(RMADMINDIR)
 
-OSLIBS = -L FileName(..,shlib) -lshift $(ADNSLIB) -lnsl
-LIBS = $(OSLIBS) $(MTLDLIBS) -ldl
+OSLIBS = -L FileName(../..,shlib) -lshift $(ADNSLIB) -lnsl -ldl
 DEBUG  = -g -O0 -pedantic -ansi -Wall -Wno-long-long
 INCLUDES = -I FileName(../..,h) -I ../..
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DRH_HOST=\"$(RH_HOST)\"
@@ -39,12 +38,14 @@ STGLIB_SRCS = ClusterStatus.cpp \
               FileSystemStatus.cpp \
               AdminStatusCodes.cpp \
               ClusterStatusBlockKey.cpp \
-              DiskServerAdminReport.cpp \
               DiskServerMetricsReport.cpp \
               DiskServerStateReport.cpp \
-              FileSystemAdminReport.cpp \
+              admin/DiskServerAdminReport.cpp \
               FileSystemMetricsReport.cpp \
               FileSystemStateReport.cpp \
+              StreamDirection.cpp \
+              StreamReport.cpp \
+              admin/FileSystemAdminReport.cpp \
               ../io/StreamDiskServerAdminReportCnv.cpp \
               ../io/StreamDiskServerMetricsReportCnv.cpp \
               ../io/StreamDiskServerStateReportCnv.cpp \
@@ -57,7 +58,7 @@ RMGETNODESBIN_OBJS = $(RMGETNODESBIN_SRCS:.cpp=.Osuf)
 RMADMINNODESBIN_SRCS = RmAdminNode.cpp
 RMADMINNODESBIN_OBJS = $(RMADMINNODEBIN_SRCS:.cpp=.Osuf)
 
-LIBS = -lcastorMonitor -lshift
+LIBS = $(OSLIBS) $(MTLDLIBS) -lcastorMonitor -lshift
 DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),castorMonitor) \
          DepSharedLibraryTargetName(FileName(..,shlib),shift)
 
@@ -76,8 +77,8 @@ NormalLibraryTarget(castorMonitor,$(STGLIB_OBJS))
 NormalProgramTarget(rmGetNodes,$(RMGETNODESBIN_OBJS),$(DEPLIB),$(LIBS))
 NormalProgramTarget(rmAdminNode,$(RMGETNODESBIN_OBJS),$(DEPLIB),$(LIBS))
 
-MakeDepSharedLibrary(FileName(../..,shlib),castorMonitor)
-MakeDepSharedLibrary(FileName(../..,shlib),shift)
+MakeDepSharedLibrary(FileName(..,shlib),castorMonitor)
+MakeDepSharedLibrary(FileName(..,shlib),shift)
 
 MakeSubdirs(all,$(SUBDIRS))
 MakeSubdirs(install,$(SUBDIRS))

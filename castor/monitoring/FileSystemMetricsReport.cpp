@@ -43,9 +43,9 @@ castor::monitoring::FileSystemMetricsReport::FileSystemMetricsReport() throw() :
   m_writeRate(0),
   m_mountPoint(""),
   m_readRate(0),
-  m_readStreams(0),
-  m_writeStreams(0),
-  m_readWriteStreams(0),
+  m_nbReadStreams(0),
+  m_nbWriteStreams(0),
+  m_nbReadWriteStreams(0),
   m_freeSpace(0),
   m_id(0),
   m_diskServer(0) {
@@ -76,9 +76,9 @@ void castor::monitoring::FileSystemMetricsReport::print(std::ostream& stream,
   stream << indent << "writeRate : " << m_writeRate << std::endl;
   stream << indent << "mountPoint : " << m_mountPoint << std::endl;
   stream << indent << "readRate : " << m_readRate << std::endl;
-  stream << indent << "readStreams : " << m_readStreams << std::endl;
-  stream << indent << "writeStreams : " << m_writeStreams << std::endl;
-  stream << indent << "readWriteStreams : " << m_readWriteStreams << std::endl;
+  stream << indent << "nbReadStreams : " << m_nbReadStreams << std::endl;
+  stream << indent << "nbWriteStreams : " << m_nbWriteStreams << std::endl;
+  stream << indent << "nbReadWriteStreams : " << m_nbReadWriteStreams << std::endl;
   stream << indent << "freeSpace : " << m_freeSpace << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);

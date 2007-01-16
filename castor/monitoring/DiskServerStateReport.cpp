@@ -82,7 +82,7 @@ void castor::monitoring::DiskServerStateReport::print(std::ostream& stream,
   stream << indent << "swap : " << m_swap << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "status : " << DiskServerStatusCodeStrings[m_status] << std::endl;
+  stream << indent << "status : " << castor::stager::DiskServerStatusCodeStrings[m_status] << std::endl;
   stream << indent << "adminStatus : " << AdminStatusCodesStrings[m_adminStatus] << std::endl;
   {
     stream << indent << "FileSystemStatesReports : " << std::endl;

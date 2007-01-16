@@ -155,57 +155,57 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_readStreams
+       * Get the value of m_nbReadStreams
        * The number of read streams accessing the filesystem
-       * @return the value of m_readStreams
+       * @return the value of m_nbReadStreams
        */
-      unsigned int readStreams() const {
-        return m_readStreams;
+      unsigned int nbReadStreams() const {
+        return m_nbReadStreams;
       }
 
       /**
-       * Set the value of m_readStreams
+       * Set the value of m_nbReadStreams
        * The number of read streams accessing the filesystem
-       * @param new_var the new value of m_readStreams
+       * @param new_var the new value of m_nbReadStreams
        */
-      void setReadStreams(unsigned int new_var) {
-        m_readStreams = new_var;
+      void setNbReadStreams(unsigned int new_var) {
+        m_nbReadStreams = new_var;
       }
 
       /**
-       * Get the value of m_writeStreams
+       * Get the value of m_nbWriteStreams
        * The number of write streams accessing the filesystem
-       * @return the value of m_writeStreams
+       * @return the value of m_nbWriteStreams
        */
-      unsigned int writeStreams() const {
-        return m_writeStreams;
+      unsigned int nbWriteStreams() const {
+        return m_nbWriteStreams;
       }
 
       /**
-       * Set the value of m_writeStreams
+       * Set the value of m_nbWriteStreams
        * The number of write streams accessing the filesystem
-       * @param new_var the new value of m_writeStreams
+       * @param new_var the new value of m_nbWriteStreams
        */
-      void setWriteStreams(unsigned int new_var) {
-        m_writeStreams = new_var;
+      void setNbWriteStreams(unsigned int new_var) {
+        m_nbWriteStreams = new_var;
       }
 
       /**
-       * Get the value of m_readWriteStreams
+       * Get the value of m_nbReadWriteStreams
        * The number of read-write streams accessing the filesystem
-       * @return the value of m_readWriteStreams
+       * @return the value of m_nbReadWriteStreams
        */
-      unsigned int readWriteStreams() const {
-        return m_readWriteStreams;
+      unsigned int nbReadWriteStreams() const {
+        return m_nbReadWriteStreams;
       }
 
       /**
-       * Set the value of m_readWriteStreams
+       * Set the value of m_nbReadWriteStreams
        * The number of read-write streams accessing the filesystem
-       * @param new_var the new value of m_readWriteStreams
+       * @param new_var the new value of m_nbReadWriteStreams
        */
-      void setReadWriteStreams(unsigned int new_var) {
-        m_readWriteStreams = new_var;
+      void setNbReadWriteStreams(unsigned int new_var) {
+        m_nbReadWriteStreams = new_var;
       }
 
       /**
@@ -272,13 +272,13 @@ namespace castor {
       u_signed64 m_readRate;
 
       /// The number of read streams accessing the filesystem
-      unsigned int m_readStreams;
+      unsigned int m_nbReadStreams;
 
       /// The number of write streams accessing the filesystem
-      unsigned int m_writeStreams;
+      unsigned int m_nbWriteStreams;
 
       /// The number of read-write streams accessing the filesystem
-      unsigned int m_readWriteStreams;
+      unsigned int m_nbReadWriteStreams;
 
       /// Amount of free space in bytes
       u_signed64 m_freeSpace;

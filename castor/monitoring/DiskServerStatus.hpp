@@ -55,7 +55,7 @@ namespace castor {
       /*
        * Constructor
        */
-      DiskServerStatus(u_signed64 id = 0);
+      DiskServerStatus();
 
       /**
        * print method
@@ -66,89 +66,89 @@ namespace castor {
 
     public:
 
-      /// Accessor to diskServer id
-      u_signed64 id() const { return m_id; }
+      /// Accessor to ram
+      void setRam(u_signed64 ram) { m_ram = ram; }
 
       /// Accessor to ram
-      void setRam (u_signed64 ram) { m_ram = ram; }
-
-      /// Accessor to ram
-      u_signed64 ram () { return m_ram; }
+      u_signed64 ram() const { return m_ram; }
 
       /// Accessor to memory
-      void setMemory (u_signed64 memory) { m_memory = memory; }
+      void setMemory(u_signed64 memory) { m_memory = memory; }
 
       /// Accessor to memory
-      u_signed64 memory () { return m_memory; }
+      u_signed64 memory() const { return m_memory; }
 
       /// Accessor to swap
-      void setSwap (u_signed64 swap) { m_swap = swap; }
+      void setSwap(u_signed64 swap) { m_swap = swap; }
 
       /// Accessor to swap
-      u_signed64 swap () { return m_swap; }
+      u_signed64 swap() const { return m_swap; }
 
       /// Accessor to status
-      void setStatus (castor::stager::DiskServerStatusCode status) {
+      void setStatus(castor::stager::DiskServerStatusCode status) {
         m_status = status;
       }
 
       /// Accessor to status
-      castor::stager::DiskServerStatusCode status () { return m_status; }
+      castor::stager::DiskServerStatusCode status() const { return m_status; }
 
       /// Accessor to adminStatus
-      void setAdminStatus (castor::monitoring::AdminStatusCodes adminStatus) {
+      void setAdminStatus(castor::monitoring::AdminStatusCodes adminStatus) {
         m_adminStatus = adminStatus;
       }
 
       /// Accessor to adminStatus
-      castor::monitoring::AdminStatusCodes adminStatus() {
+      castor::monitoring::AdminStatusCodes adminStatus() const {
         return m_adminStatus;
       }
 
       /// Accessor to freeRam
-      void setFreeRam (u_signed64 freeRam) { m_freeRam = freeRam; }
+      void setFreeRam(u_signed64 freeRam) { m_freeRam = freeRam; }
 
       /// Accessor to freeRam
-      u_signed64 freeRam () { return m_freeRam; }
+      u_signed64 freeRam()const { return m_freeRam; }
 
       /// Accessor to freeMemory
-      void setFreeMemory (u_signed64 freeMemory) { m_freeMemory = freeMemory; }
+      void setFreeMemory(u_signed64 freeMemory) { m_freeMemory = freeMemory; }
 
       /// Accessor to freeMemory
-      u_signed64 freeMemory () { return m_freeMemory; }
+      u_signed64 freeMemory()const { return m_freeMemory; }
 
       /// Accessor to freeSwap
-      void setFreeSwap (u_signed64 freeSwap) { m_freeSwap = freeSwap; }
+      void setFreeSwap(u_signed64 freeSwap) { m_freeSwap = freeSwap; }
 
       /// Accessor to freeSwap
-      u_signed64 freeSwap () { return m_freeSwap; }
+      u_signed64 freeSwap()const { return m_freeSwap; }
 
       /// Accessor to load
-      void setLoad (unsigned int load) { m_load = load; }
+      void setLoad(unsigned int load) { m_load = load; }
 
       /// Accessor to load
-      unsigned int load () { return m_load; }
+      unsigned int load()const { return m_load; }
+
+      /// Accessor to deltaLoad
+      void setDeltaLoad(int deltaLoad) { m_deltaLoad = deltaLoad; }
+
+      /// Accessor to deltaLoad
+      int deltaLoad() const { return m_deltaLoad; }
 
       /// Accessor to lastStateUpdate
-      void setLastStateUpdate (u_signed64 lastStateUpdate) {
+      void setLastStateUpdate(u_signed64 lastStateUpdate) {
         m_lastStateUpdate = lastStateUpdate;
       }
 
       /// Accessor to lastStateUpdate
-      u_signed64 lastStateUpdate () { return m_lastStateUpdate; }
+      u_signed64 lastStateUpdate() const { return m_lastStateUpdate; }
 
       /// Accessor to lastMetricsUpdate
-      void setLastMetricsUpdate (u_signed64 lastMetricsUpdate) {
+      void setLastMetricsUpdate(u_signed64 lastMetricsUpdate) {
         m_lastMetricsUpdate = lastMetricsUpdate;
       }
 
       /// Accessor to lastMetricsUpdate
-      u_signed64 lastMetricsUpdate () { return m_lastMetricsUpdate; }
+      u_signed64 lastMetricsUpdate() const { return m_lastMetricsUpdate; }
 
     private:
-
-      /// the diskServer id
-      u_signed64 m_id;
 
       /// Total ram (in bytes)
       u_signed64 m_ram;
@@ -177,10 +177,13 @@ namespace castor {
       /// Load
       unsigned int m_load;
 
-      /// Last state update (second since EPOCH)
+      /// DeltaLoad
+      int m_deltaLoad;
+
+      /// Last state update (seconds since EPOCH)
       u_signed64 m_lastStateUpdate;
 
-      /// Last metrics update (second since EPOCH)
+      /// Last metrics update (seconds since EPOCH)
       u_signed64 m_lastMetricsUpdate;
 
     }; // end DiskServerStatus

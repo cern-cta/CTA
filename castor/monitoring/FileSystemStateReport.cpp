@@ -76,7 +76,7 @@ void castor::monitoring::FileSystemStateReport::print(std::ostream& stream,
   stream << indent << "space : " << m_space << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "status : " << FileSystemStatusCodesStrings[m_status] << std::endl;
+  stream << indent << "status : " << castor::stager::FileSystemStatusCodesStrings[m_status] << std::endl;
   stream << indent << "adminStatus : " << AdminStatusCodesStrings[m_adminStatus] << std::endl;
   stream << indent << "DiskServer : " << std::endl;
   if (0 != m_diskServer) {
