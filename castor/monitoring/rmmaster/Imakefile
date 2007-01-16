@@ -35,7 +35,7 @@ INCLUDES = -I FileName(../../..,h) -I FileName(../..,..)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
 LIBS = -lcastorMonitor -lshift
-RMMASTERDAEMONBIN_SRCS = CollectorThread.cpp RmMasterDaemon.cpp
+RMMASTERDAEMONBIN_SRCS = RmMasterDaemon.cpp CollectorThread.cpp DatabaseActuatorThread.cpp UpdateThread.cpp
 
 RMMASTERDAEMONBIN_OBJS = $(RMMASTERDAEMONBIN_SRCS:.cpp=.Osuf)
 
