@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2007/01/10 16:22:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2007/01/16 16:07:30 $ $Author: sponcec3 $
  *
  *
  *
@@ -161,7 +161,8 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "FileSystemStateReport",
   "FileSystemMetricsReport",
   "DiskServerAdminReport",
-  "FileSystemAdminReport"
+  "FileSystemAdminReport",
+  "StreamReport"
 };
 
 //=============================================================================
