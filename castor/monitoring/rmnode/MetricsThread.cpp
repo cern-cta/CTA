@@ -96,7 +96,6 @@ void castor::monitoring::rmnode::MetricsThread::run(void* par)
     if (0 == ack) {
       castor::exception::InvalidArgument e; // XXX To be changed
       e.getMessage() << "No Acknowledgement from the Server";
-      delete ack;
       throw e;
     }
   }
@@ -193,9 +192,9 @@ castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
       << "MetricsThread::collectFileSystemMetrics : Crm_util_countstream failed";
     throw e;
   }
-  metrics->setReadStreams(nr);
-  metrics->setWriteStreams(nw);
-  metrics->setReadWriteStreams(nrw);
+  metrics->setNbReadStreams(nr);
+  metrics->setNbWriteStreams(nw);
+  metrics->setNbReadWriteStreams(nrw);
   // Set rates
   u_signed64 r, w;
   if (Crm_util_io_wrapper(mountPoint.c_str(), &r, &w, nr, nw, nrw) < 0) {
