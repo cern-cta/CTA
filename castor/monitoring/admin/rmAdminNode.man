@@ -1,0 +1,120 @@
+.TH RMADMINNODE 1 "$Date: 2007/01/16 16:14:52 $" CASTOR "stager catalogue administrative commands"
+.SH NAME
+rmAdminNode \- handle statuses in rmMaster
+.SH SYNOPSIS
+.B rmAdminNode
+[
+.BI -h, 
+.BI --help
+]
+.LP
+.B rmAdminNode
+[
+OPTIONS
+]
+.BI -n,
+.BI --node " nodeName"
+[
+.BI -s,
+.BI --state " nodeState"
+]
+[
+.BI -a,
+.BI --adminState " nodeAdminState"
+]
+.LP
+.B rmAdminNode
+[
+OPTIONS
+]
+.BI -n,
+.BI --node " nodeName"
+.BI -m,
+.BI --mountPoint " fileSystemMountPoint"
+[
+.BI -t,
+.BI --fsState " fileSystemState"
+]
+[
+.BI -d,
+.BI --adminFsState " fileSystemAdminState"
+]
+.LP
+Where OPTIONS are :
+[
+.BI --host " rmMasterHost"
+]
+[
+.BI --port " rmMasterPort"
+]
+.SH DESCRIPTION
+.B rmAdminNode
+is able to change status of nodes and filesystems in rmMaster.
+Both the status and admin status can be changed. Depending whether a mountPoint is given or not, one can either change the
+node status or the fileSystem status, but not both at the same time.
+.TP
+.BI \-h,
+.BI \-\-help
+Get usage information
+.TP
+.BI \-n,
+.BI \-\-node " nodeName"
+is the name of the node concerned. This is the only mandatory option
+.TP
+.BI \-s,
+.BI \-\-state " nodeState"
+is the new state of the node. Default value is "Production".
+This option can only be used if no mountPoint is given.
+.TP
+.BI \-a,
+.BI \-\-adminState " nodeAdminState"
+is the new admin state of the node. No action is taken if it is not given.
+This option can only be used if no mountPoint is given.
+.TP
+.BI \-m,
+.BI \-\-mountPoint " fileSystemMountPoint"
+is the mountPoint of the fileSystem concerned in case you want to modify the states of a filesystem
+and not the one of the node itself
+.TP
+.BI \-t,
+.BI \-\-fsState " fileSystemState"
+is the new state of the fileSystem. Default value is "Production".
+This option can only be used if a mountPoint is given.
+.TP
+.BI \-d,
+.BI \-\-adminFsState " fileSystemAdminState"
+is the new admin state of the fileSystem. No action is taken if it is not given.
+This option can only be used if a mountPoint is given.
+.LP
+.SH POSSIBLE STATES
+.TP 12
+.BI "Production"
+This is the default when no state is given and means that the node/FileSystem is ready for operation
+.TP
+.BI "Draining"
+This means that the node/FileSystem is not accepting user requests anymore but is still available for
+migrations
+.TP
+.BI "Disabled"
+In this state, the node is not used at all by the system.
+.LP
+.SH POSSIBLE ADMIN STATES
+.TP
+
+.BI "Force"
+A node/fileSystem with "Force" admin state will not change anymore its state
+according to monitoring data. Instead it will keep the current state until
+the "Force" is released.
+.TP
+.BI "Release"
+This allows to release a node/fileSystem in "Force" admin state, so that the
+update to states by the monitoring resumes.
+In this state, the node is not used at all by the system
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR rmMasterDaemon(1castor),
+.BR rmNodeDaemon(1castor),
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

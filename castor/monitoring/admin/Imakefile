@@ -1,0 +1,85 @@
+#
+#           castor/monitoring/admin/Imakefile
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)Imakefile,v 1.2 $Release$ 2005/03/15 23:24:32 bcouturi
+#
+# Make Castor rmmaster admin commands
+#
+# @author Castor Dev team, castor-dev@cern.ch
+#
+
+#include <Project.tmpl>
+
+DEBUG  = -g -O0 -pedantic -ansi -Wall -Wno-long-long
+MANPAGES = 
+EXPORTMANPAGES = 
+
+INCLUDES = -I FileName(../../..,h) -I FileName(../..,..)
+
+CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
+
+LIBS = -lcastorMonitor -lshift
+RMMASTERDAEMONBIN_SRCS = RmAdminNode.cpp
+
+RMMASTERDAEMONBIN_OBJS = $(RMMASTERDAEMONBIN_SRCS:.cpp=.Osuf)
+
+DEPLIB = DepSharedLibraryTargetName(../../shlib,castorMonitor) \
+         DepSharedLibraryTargetName(../../shlib,shift)
+
+LDFLAGS = -L FileName(../../..,shlib) $(MTLDFLAGS)
+LD = g++
+
+all:ProgramTargetName(rmAdminNode)
+
+NormalProgramTarget(rmAdminNode,$(RMMASTERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS))
+
+MakeDepSharedLibrary(../../shlib,castorMonitor)
+MakeDepSharedLibrary(../../shlib,shift)
+
+Makefiles:
+
+#if defined(_WIN32)
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend $(INCLUDES) $(RMMASTERDAEMONBIN_SRCS) 2> /dev/null
+#endif
+
+install: FileName($(BIN),rmAdminNode)
+
+InstallProgram(rmAdminNode,$(BIN),root,bin,755)
+
+install.man: $(MANDIR) $(MANPAGES)
+MakeDir($(MANDIR),root,bin,0755)
+IMANPAGE(rmAdminNode,$(MANDIR),$(MANSUFFIX))
+EMANPAGE(rmAdminNode,$(EXPORTMAN)/man1,$(MANSUFFIX))
+
+exportman: $(EXPORTMANPAGES)
+
+clean:
+	@echo rmmaster in CurDir
+	-@RemoveFiles(FilesToClean)
+
+clobber:	clean
+	@echo clobbering in CurDir
+	-@RemoveFiles(ProgramTargetName(rmMasterDaemon))
+
+FORCE:
+
