@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Communication.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/24 17:20:33 $ $Author: bcouturi $
+ * @(#)$RCSfile: Communication.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/01/16 16:37:26 $ $Author: sponcec3 $
  *
  * Communication error exception
  *
@@ -36,7 +36,7 @@ namespace castor {
   namespace exception {
 
     /**
-     * Invalid argument exception
+     * Communication exception
      */
     class Communication : public castor::exception::Exception {
       
