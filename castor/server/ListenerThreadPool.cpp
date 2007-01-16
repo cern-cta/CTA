@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      ListenerThreadPool.cpp
+ *                    ListenerThreadPool.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,21 +17,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/11/27 16:54:19 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/01/16 15:46:51 $ $Author: sponcec3 $
  *
+ * Abstract class defining a listener thread pool
  *
- *
- * @author Giuseppe Lo Presti
+ * @author castor dev team
  *****************************************************************************/
 
 // Include Files
 #include <signal.h>
+#include "castor/server/BaseThreadPool.hpp"
 #include "castor/server/ListenerThreadPool.hpp"
-#include "castor/MsgSvc.hpp"
-#include "castor/Services.hpp"
 #include "castor/exception/Internal.hpp"
 #include "Cinit.h"
-#include "Cuuid.h"
 #include "Cpool_api.h"
 #include "castor/logstream.h"
 #include <iomanip>
@@ -43,64 +41,32 @@ castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolNam
                                                castor::server::IThread* thread,
                                                int listenPort,
                                                bool listenerOnOwnThread) throw() :
-  BaseThreadPool(poolName, thread), m_port(listenPort), m_spawnListener(listenerOnOwnThread) {}
+  BaseThreadPool(poolName, thread), m_port(listenPort),
+  m_spawnListener(listenerOnOwnThread) {}
 
-
-//------------------------------------------------------------------------------
-// init
-//------------------------------------------------------------------------------
-void castor::server::ListenerThreadPool::init() throw (castor::exception::Exception)
-{
-  castor::server::BaseThreadPool::init();
-  
-  /* Create a socket for the server, bind, and listen */
-  try {
-    m_sock = new castor::io::ServerSocket(m_port, true);
-  }
-  catch (castor::exception::Exception e) {
-    clog() << "Fatal error: cannot bind socket on port " << m_port << ": "
-           << e.getMessage().str() << std::endl;
-    throw e;         // calling server should exit() here
-  }
-}
 
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::server::ListenerThreadPool::run()
-{  
+void castor::server::ListenerThreadPool::run() {  
   if(m_spawnListener) {
     Cthread_create_detached(castor::server::_listener_run, this);
-  }
-  else {
+  } else {
     listenLoop();
   }
 }
 
 //------------------------------------------------------------------------------
-// listenLoop
+// init
 //------------------------------------------------------------------------------
-void castor::server::ListenerThreadPool::listenLoop()
-{
-  try {
-    for (;;) {
-      /* accept connections */
-      castor::io::ServerSocket* s = m_sock->accept();
-      /* handle the command */
-      threadAssign(s);
-    }
-  }
-  catch(castor::exception::Exception any) {
-    clog() << "Error while accepting connections to port " << m_port << ": "
-           << any.getMessage().str() << std::endl;
-  }
+void castor::server::ListenerThreadPool::init() throw (castor::exception::Exception) {
+  castor::server::BaseThreadPool::init();  
 }
 
 //------------------------------------------------------------------------------
 // _listener_run
 //------------------------------------------------------------------------------
-void* castor::server::_listener_run(void* param)
-{
+void* castor::server::_listener_run(void* param) {
   castor::server::ListenerThreadPool* tp = (castor::server::ListenerThreadPool*)param;
   tp->listenLoop();
   return 0;
@@ -109,13 +75,11 @@ void* castor::server::_listener_run(void* param)
 //------------------------------------------------------------------------------
 // threadAssign
 //------------------------------------------------------------------------------
-int castor::server::ListenerThreadPool::threadAssign(void *param)
-{
+int castor::server::ListenerThreadPool::threadAssign(void *param) {
   // Initializing the arguments to pass to the static request processor
   struct threadArgs *args = new threadArgs();
   args->handler = this;
   args->param = param;
-
   if (m_nbThreads > 0) {   // always true
     int assign_rc = Cpool_assign(m_threadPoolId,
                                  &castor::server::_thread_run,
