@@ -92,9 +92,9 @@ void castor::io::StreamFileSystemMetricsReportCnv::createRep(castor::IAddress* a
   ad->stream() << obj->writeRate();
   ad->stream() << obj->mountPoint();
   ad->stream() << obj->readRate();
-  ad->stream() << obj->readStreams();
-  ad->stream() << obj->writeStreams();
-  ad->stream() << obj->readWriteStreams();
+  ad->stream() << obj->nbReadStreams();
+  ad->stream() << obj->nbWriteStreams();
+  ad->stream() << obj->nbReadWriteStreams();
   ad->stream() << obj->freeSpace();
   ad->stream() << obj->id();
 }
@@ -118,15 +118,15 @@ castor::IObject* castor::io::StreamFileSystemMetricsReportCnv::createObj(castor:
   u_signed64 readRate;
   ad->stream() >> readRate;
   object->setReadRate(readRate);
-  unsigned int readStreams;
-  ad->stream() >> readStreams;
-  object->setReadStreams(readStreams);
-  unsigned int writeStreams;
-  ad->stream() >> writeStreams;
-  object->setWriteStreams(writeStreams);
-  unsigned int readWriteStreams;
-  ad->stream() >> readWriteStreams;
-  object->setReadWriteStreams(readWriteStreams);
+  unsigned int nbReadStreams;
+  ad->stream() >> nbReadStreams;
+  object->setNbReadStreams(nbReadStreams);
+  unsigned int nbWriteStreams;
+  ad->stream() >> nbWriteStreams;
+  object->setNbWriteStreams(nbWriteStreams);
+  unsigned int nbReadWriteStreams;
+  ad->stream() >> nbReadWriteStreams;
+  object->setNbReadWriteStreams(nbReadWriteStreams);
   u_signed64 freeSpace;
   ad->stream() >> freeSpace;
   object->setFreeSpace(freeSpace);
