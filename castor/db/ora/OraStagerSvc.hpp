@@ -341,7 +341,7 @@ namespace castor {
          * @param guid the groupid from the user
          *  
          */
-        int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
+        int createTapeCopySegmentsForRecall
         (castor::stager::CastorFile *castorFile, 
          unsigned long euid, 
          unsigned long egid)
