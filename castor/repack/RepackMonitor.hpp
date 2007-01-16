@@ -36,23 +36,23 @@
 namespace castor {
   namespace repack {
 
-  /** forward declaration */
-  class RepackServer;
-    
+    /** forward declaration */
+    class RepackServer;
 
-  class RepackMonitor : public castor::server::IThread {
+
+    class RepackMonitor : public castor::server::IThread {
 
     public:
       /**
-       * The Constructor 
+       * The Constructor
        */
       RepackMonitor(RepackServer* svr);
-      
+
       /**
        * The Destructor
        */
       ~RepackMonitor() throw();
-      
+
       /**
        * runs an update of file statistics if all available RepackSubRequests.
        */
@@ -66,23 +66,23 @@ namespace castor {
 
       /**
        * Updates the file statistics from a RepackSubRequest by querying the
-       * assigned stager (in the RepackRequest). It takes the ServiceClass 
+       * assigned stager (in the RepackRequest). It takes the ServiceClass
        * information of the RepackRequest into account)
        * @throws castor::exception::Exception in case of an error.
        */
       void updateTape(RepackSubRequest*)   throw (castor::exception::Internal);
-      
 
-      /** Retrieves the stats from a request (by the given cuuid in the 
+
+      /** Retrieves the stats from a request (by the given cuuid in the
        *  RepackSubRequest). Beware that the returned objects in the vector
        *  have to be deleted by the caller.
        *  @param sreq The RepackSubRequest to check.
        *  @param fr A vector with the allocated FileResponses.
        *  @throws castor::exception::Exception in case of an error.
        */
-      void RepackMonitor::getStats(RepackSubRequest* sreq,
-                                   std::vector<castor::rh::FileQryResponse*>* fr)
-                                             throw (castor::exception::Exception);
+      void getStats(RepackSubRequest* sreq,
+                    std::vector<castor::rh::FileQryResponse*>* fr)
+        throw (castor::exception::Exception);
 
     private:
       DatabaseHelper* m_dbhelper;
