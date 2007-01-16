@@ -116,6 +116,8 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               dlf/Param.cpp \
               dlf/TimeStamp.cpp \
               io/AbstractSocket.cpp \
+              io/AbstractTCPSocket.cpp \
+              io/UDPSocket.cpp \
               io/ClientSocket.cpp \
               io/ServerSocket.cpp \
               io/StreamAddress.cpp \
@@ -216,6 +218,8 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               rh/BasicResponseCInt.cpp \
               server/BaseThreadPool.cpp \
               server/ListenerThreadPool.cpp \
+              server/TCPListenerThreadPool.cpp \
+              server/UDPListenerThreadPool.cpp \
               server/Mutex.cpp \
               server/ServiceThread.cpp \
               server/SignalThreadPool.cpp \
